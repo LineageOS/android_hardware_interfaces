@@ -1,0 +1,15 @@
+package android.hardware.nfc@1.0;
+
+interface INfcClientCallback {
+    /*
+     * The callback passed in from the NFC stack that the HAL
+     * can use to pass events back to the stack.
+     */
+    sendEvent(nfc_event_t event, nfc_status_t event_status);
+
+    /*
+     * The callback passed in from the NFC stack that the HAL
+     * can use to pass incomming data to the stack.
+     */
+    sendData(nfc_data_t data);
+};

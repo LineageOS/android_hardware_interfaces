@@ -1,0 +1,73 @@
+package android.hardware.nfc@1.0;
+
+import INfcClientCallback;
+
+interface INfc {
+    /*
+     * Opens the NFC controller device and performs initialization.
+     * This may include patch download and other vendor-specific initialization.
+     *
+     * If open completes successfully, the controller should be ready to perform
+     * NCI initialization - ie accept CORE_RESET and subsequent commands through
+     * the write() call.
+     *
+     * If open() returns 0, the NCI stack will wait for a HAL_NFC_OPEN_CPLT_EVT
+     * before continuing.
+     *
+     * If open() returns any other value, the NCI stack will stop.
+     *
+     */
+    open(INfcClientCallback clientCallback) generates (int32_t retval);
+
+    /*
+     * Performs an NCI write.
+     *
+     * This method may queue writes and return immediately. The only
+     * requirement is that the writes are executed in order.
+     */
+    write(nfc_data_t data) generates (int32_t retval);
+
+    /*
+     * core_initialized() is called after the CORE_INIT_RSP is received from the NFCC.
+     * At this time, the HAL can do any chip-specific configuration.
+     *
+     * If core_initialized() returns 0, the NCI stack will wait for a HAL_NFC_POST_INIT_CPLT_EVT
+     * before continuing.
+     *
+     * If core_initialized() returns any other value, the NCI stack will continue
+     * immediately.
+     */
+    core_initialized(vec<uint8_t> data) generates (int32_t retval);
+
+    /*
+     * pre_discover is called every time before starting RF discovery.
+     * It is a good place to do vendor-specific configuration that must be
+     * performed every time RF discovery is about to be started.
+     *
+     * If pre_discover() returns 0, the NCI stack will wait for a HAL_NFC_PRE_DISCOVER_CPLT_EVT
+     * before continuing.
+     *
+     * If pre_discover() returns any other value, the NCI stack will start
+     * RF discovery immediately.
+     */
+    pre_discover() generates (int32_t retval);
+
+    /*
+     * Close the NFC controller. Should free all resources.
+     */
+    close() generates (int32_t retval);
+
+    /*
+     * Grant HAL the exclusive control to send NCI commands.
+     * Called in response to HAL_REQUEST_CONTROL_EVT.
+     * Must only be called when there are no NCI commands pending.
+     * HAL_RELEASE_CONTROL_EVT will notify when HAL no longer needs exclusive control.
+     */
+    control_granted() generates (int32_t retval);
+
+     /*
+     * Restart controller by power cyle;
+     * HAL_OPEN_CPLT_EVT will notify when operation is complete.
+     */
+    power_cycle() generates (int32_t retval);
+};
