@@ -11,12 +11,14 @@ GEN := \
   $(intermediates)/android/hardware/nfc/1.0/NfcAll.cpp \
   $(intermediates)/android/hardware/nfc/1.0/NfcClientCallbackAll.cpp \
 
-$(GEN): hidl-gen
+HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
+
+$(GEN): $(HIDL)
 
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 
 $(GEN): PRIVATE_CUSTOM_TOOL = \
-  hidl-gen -o $(PRIVATE_OUTPUT_DIR) -r android.hardware:hardware/interfaces android.hardware.nfc@1.0
+  $(HIDL) -o $(PRIVATE_OUTPUT_DIR) -r android.hardware:hardware/interfaces android.hardware.nfc@1.0
 
 $(GEN): $(LOCAL_PATH)/types.hal $(LOCAL_PATH)/INfc.hal $(LOCAL_PATH)/INfcClientCallback.hal
 	$(transform-generated-source)
