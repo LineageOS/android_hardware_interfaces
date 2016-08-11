@@ -2,6 +2,7 @@ package android.hardware.nfc@1.0;
 
 import INfcClientCallback;
 
+@hal_type(type="NFC")
 interface INfc {
     /*
      * Opens the NFC controller device and performs initialization.

@@ -1,5 +1,6 @@
 package android.hardware.nfc@1.0;
 
+@hal_type(type="NFC")
 interface INfcClientCallback {
     /*
      * The callback passed in from the NFC stack that the HAL
