@@ -1,0 +1,33 @@
+package android.hardware.tests.expression@1.0;
+
+@hal_type(type="LIGHT")
+
+interface IExpression {
+  enum int_literals : int32_t {
+    literal = 4,
+    literalL = -4L,
+    simpleArithmetic = 4 + 1,
+    simpleIdentifier = literalL,
+    simpleIdentifier2 = literalL + simpleArithmetic,
+    boolExpr = 1 == 7 && !((3 != 4 || (2 < 3 <= 3 > 4)) >= 0),
+    bitExpr = ~42 & (1 << 3 | 16 >> 2) ^ 7,
+    arithmeticExpr = 2 + 3 - 4 * -7 / (10 % 3),
+    messyExpr = 2   + (-3&4   / 7),
+    paranExpr = (((((1 + 1))))),
+    ternary = 1?2:3,
+    ternary2 = 1&&2?3:4,
+    complicatedTernary2 = 1 - 1 && 2 + 3 || 5 ? 7 * 8 : -3
+  };
+  // const float SIMPLE_FLOAT1 = 1e20;
+  // const float SIMPLE_FLOAT2 = 1e-10L;
+  // const float SIMPLE_FLOAT3 = 1.;
+  // const float SIMPLE_FLOAT4 = 1.e-2;
+  // const float SIMPLE_FLOAT5 = 3.1416;
+  // const float SIMPLE_FLOAT6 = .5f;
+  // const float SIMPLE_FLOAT7 = 0.5e-3L;
+  // struct expressionist_t {
+  //   uint8_t[1 << 10] buffer;
+  // };
+  // @param(name = "mask", normal = 1 << 5)
+  // setExpression(expressionist_t state, int32_t mask) generates (int32_t ret);
+};
