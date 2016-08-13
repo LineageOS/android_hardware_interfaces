@@ -1,0 +1,52 @@
+package android.hardware.tests.foo@1.0;
+
+import IFooCallback;
+import types;
+
+interface IFoo {
+
+    enum SomeBaseEnum : uint8_t {
+        bar = 66
+    };
+
+    enum SomeEnum : SomeBaseEnum {
+        quux = 33,
+        goober = 192,
+        blah = goober
+    };
+
+    struct Fumble {
+        float x;
+    };
+
+    typedef Fumble Gumble;
+
+    struct Goober {
+        int32_t q;
+        string name;
+        string address;
+        double[10] numbers;
+        Fumble fumble;
+        Gumble gumble;
+        // vec<double> lotsOfFumbles;
+        // handle loveHandle;
+    };
+
+    doThis(float param);
+    doThatAndReturnSomething(int64_t param) generates (int32_t result);
+    doQuiteABit(int32_t a, int64_t b, float c, double d) generates (double something);
+    doSomethingElse(int32_t[15] param) generates (int32_t[32] something);
+    doStuffAndReturnAString() generates (string something);
+    mapThisVector(vec<int32_t> param) generates (vec<int32_t> something);
+    callMe(IFooCallback cb);
+    useAnEnum(SomeEnum zzz) generates (SomeEnum sleepy);
+
+    haveAGooberVec(vec<Goober> param);
+    haveAGoober(Goober g);
+    haveAGooberArray(Goober[20] lots);
+
+    haveATypeFromAnotherFile(Abc def);
+
+    haveSomeStrings(string[3] array) generates (string[2] result);
+    haveAStringVec(vec<string> vector) generates (vec<string> result);
+};

@@ -1,0 +1,7 @@
+package android.hardware.tests.foo@1.0;
+
+struct Abc {
+    string x;
+    float y;
+    handle z;
+};
