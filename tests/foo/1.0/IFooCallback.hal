@@ -5,6 +5,6 @@ package android.hardware.tests.foo@1.0;
 interface IFooCallback {
     //heyItsMe(IFoo cb);
     heyItsYou(IFooCallback cb);
-    heyItsYouIsntIt(IFooCallback cb) generates (uint8_t yesOrNo);
+    heyItsYouIsntIt(IFooCallback cb) generates (bool yesOrNo);
     oneway heyItsTheMeaningOfLife(uint8_t tmol);
 };
