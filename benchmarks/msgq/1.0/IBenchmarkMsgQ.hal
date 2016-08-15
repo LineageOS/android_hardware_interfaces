@@ -1,0 +1,30 @@
+package android.hardware.benchmarks.msgq@1.0;
+
+interface IBenchmarkMsgQ {
+
+  struct shm_t {
+    uint32_t fdIndex;
+    uint32_t offset;
+    uint32_t extent;
+  };
+  struct WireGrantorDescriptor {
+    uint32_t flags;
+    shm_t shm;
+  };
+
+  struct WireMQDescriptor {
+    vec<WireGrantorDescriptor> grantors;
+    handle mq_handle;
+    uint32_t quantum;
+    uint32_t nQuanta;
+    uint32_t flags;
+  };
+
+  ConfigureClientInbox() generates ( WireMQDescriptor mq_desc_in );
+  ConfigureClientOutbox() generates ( WireMQDescriptor mq_desc_out );
+  RequestWrite (int32_t count) generates (int32_t ret);
+  RequestRead(int32_t count) generates (int32_t ret);
+  BenchmarkPingPong(uint32_t numIter);
+  BenchmarkServiceWriteClientRead(uint32_t numIter);
+  SendTimeData(vec<int64_t> time_data);
+};
