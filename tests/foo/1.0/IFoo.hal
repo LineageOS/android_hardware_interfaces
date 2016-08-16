@@ -38,7 +38,7 @@ interface IFoo {
     doSomethingElse(int32_t[15] param) generates (int32_t[32] something);
     doStuffAndReturnAString() generates (string something);
     mapThisVector(vec<int32_t> param) generates (vec<int32_t> something);
-    callMe(IFooCallback cb);
+    oneway callMe(IFooCallback cb);
     useAnEnum(SomeEnum zzz) generates (SomeEnum sleepy);
 
     haveAGooberVec(vec<Goober> param);
