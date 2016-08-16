@@ -1,7 +1,6 @@
 package android.hardware.tests.foo@1.0;
 
 import IFooCallback;
-import types;
 
 interface IFoo {
 
