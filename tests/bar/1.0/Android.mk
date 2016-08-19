@@ -27,6 +27,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(intermediates)
 LOCAL_SHARED_LIBRARIES := \
+  libhidl \
   libhwbinder \
   libutils \
   android.hardware.tests.foo@1.0 \
