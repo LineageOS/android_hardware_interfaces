@@ -31,4 +31,5 @@ LOCAL_SHARED_LIBRARIES := \
   libhwbinder \
   libutils \
 
+LOCAL_MULTILIB := both
 include $(BUILD_SHARED_LIBRARY)

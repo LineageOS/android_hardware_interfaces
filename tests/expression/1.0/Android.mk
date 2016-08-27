@@ -31,6 +31,7 @@ LOCAL_SHARED_LIBRARIES := \
   libhwbinder \
   libutils \
 
+LOCAL_MULTILIB := both
 LOCAL_COMPATIBILITY_SUITE := vts
 -include test/vts/tools/build/Android.packaging_sharedlib.mk
 include $(BUILD_SHARED_LIBRARY)
