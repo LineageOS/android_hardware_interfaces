@@ -1,0 +1,31 @@
+package android.hardware.tests.baz@1.0;
+
+interface IBase {
+    enum SomeBaseEnum {
+        grrr = 1,
+    };
+
+    struct Foo {
+        struct Bar {
+            float z;
+            string s;
+        };
+
+        enum FooEnum : int8_t {
+            first = 1,
+            second = 2,
+        };
+
+        int32_t x;
+        vec<Bar> aaa;
+        Bar y;
+    };
+
+    someBaseMethod();
+
+    someBoolMethod(bool x) generates (bool y);
+    someBoolArrayMethod(bool[3] x) generates (bool[4] y);
+    someBoolVectorMethod(vec<bool> x) generates (vec<bool> y);
+
+    someOtherBaseMethod(Foo foo) generates (Foo result);
+};

@@ -1,0 +1,36 @@
+package android.hardware.tests.baz@1.0;
+
+import IBase;
+import IBazCallback;
+
+interface IBaz extends IBase {
+
+    enum SomeOtherEnum : uint8_t {
+        bar = 66
+    };
+
+    typedef SomeOtherEnum thisIsAnAlias;
+    typedef IBaz anIBazByAnyOtherName;
+
+    enum SomeEnum : SomeOtherEnum {
+        quux = 33,
+        goober = 192,
+        blah = goober
+    };
+
+    @Fragile @NoReally(very="yes", array={"a","b","c"})
+    oneway doThis(float param);
+
+    doThatAndReturnSomething(int64_t param) generates (int32_t result);
+    doQuiteABit(int32_t a, int64_t b, float c, double d) generates (double something);
+    doSomethingElse(int32_t[15] param) generates (int32_t[32] something);
+    doStuffAndReturnAString() generates (string something);
+    mapThisVector(vec<int32_t> param) generates (vec<int32_t> something);
+    callMe(IBazCallback cb);
+    useAnEnum(SomeEnum zzz) generates (SomeEnum kkk);
+
+    haveSomeStrings(string[3] array) generates (string[2] result);
+    haveAStringVec(vec<string> vector) generates (vec<string> result);
+
+    returnABunchOfStrings() generates (string a, string b, string c);
+};
