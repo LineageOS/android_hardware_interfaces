@@ -18,8 +18,8 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBenchmark.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
     $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-    -Lc++ -randroid.hardware:hardware/interfaces\
-    android.hardware.tests.libhwbinder@1.0::$(patsubst %.hal,%,$(notdir $(PRIVATE_DEPS)))
+    -Lc++ -randroid.hardware:hardware/interfaces \
+    android.hardware.tests.libhwbinder@1.0::IBenchmark
 
 $(GEN): $(LOCAL_PATH)/IBenchmark.hal
 	$(transform-generated-source)
@@ -35,3 +35,31 @@ LOCAL_MULTILIB := both
 LOCAL_COMPATIBILITY_SUITE := vts
 -include test/vts/tools/build/Android.packaging_sharedlib.mk
 include $(BUILD_SHARED_LIBRARY)
+
+################################################################################
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := android.hardware.tests.libhwbinder@1.0-java
+LOCAL_MODULE_CLASS := JAVA_LIBRARIES
+
+intermediates := $(local-generated-sources-dir)
+
+HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
+
+#
+# Build IBenchmark.hal
+#
+GEN := $(intermediates)/android/hardware/tests/libhwbinder/1.0/IBenchmark.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBenchmark.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+    $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+    -Ljava -randroid.hardware:hardware/interfaces \
+    android.hardware.tests.libhwbinder@1.0::IBenchmark
+
+$(GEN): $(LOCAL_PATH)/IBenchmark.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+include $(BUILD_JAVA_LIBRARY)
