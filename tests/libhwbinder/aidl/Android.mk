@@ -12,6 +12,4 @@ LOCAL_SHARED_LIBRARIES := \
 
 LOCAL_STATIC_LIBRARIES := libtestUtil
 
-LOCAL_COMPATIBILITY_SUITE := vts
--include test/vts/tools/build/Android.packaging_sharedlib.mk
 include $(BUILD_SHARED_LIBRARY)

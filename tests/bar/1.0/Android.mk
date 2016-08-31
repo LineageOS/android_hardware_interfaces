@@ -33,6 +33,4 @@ LOCAL_SHARED_LIBRARIES := \
   android.hardware.tests.foo@1.0 \
 
 LOCAL_MULTILIB := both
-LOCAL_COMPATIBILITY_SUITE := vts
--include test/vts/tools/build/Android.packaging_sharedlib.mk
 include $(BUILD_SHARED_LIBRARY)
