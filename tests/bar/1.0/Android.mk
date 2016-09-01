@@ -18,8 +18,8 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBar.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
     $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-    -Lc++ -randroid.hardware:hardware/interfaces\
-    android.hardware.tests.bar@1.0::$(patsubst %.hal,%,$(notdir $(PRIVATE_DEPS)))
+    -Lc++ -randroid.hardware:hardware/interfaces \
+    android.hardware.tests.bar@1.0::IBar
 
 $(GEN): $(LOCAL_PATH)/IBar.hal
 	$(transform-generated-source)
