@@ -4,6 +4,7 @@ subdirs = [
     "audio/common/2.0",
     "audio/effect/2.0",
     "benchmarks/msgq/1.0",
+    "biometrics/fingerprint/2.1",
     "graphics/allocator/2.0",
     "graphics/allocator/2.0/default",
     "graphics/mapper/2.0",
