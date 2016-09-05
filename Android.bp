@@ -4,6 +4,7 @@ subdirs = [
     "audio/effect/2.0",
     "benchmarks/msgq/1.0",
     "graphics/allocator/2.0",
+    "graphics/allocator/2.0/default",
     "memtrack/1.0",
     "memtrack/1.0/default",
     "nfc/1.0",
