@@ -9,12 +9,33 @@ intermediates := $(local-generated-sources-dir)
 HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
 
 #
+# Build types.hal
+#
+GEN := $(intermediates)/android/hardware/tests/foo/1.0/types.cpp
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+    $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+    -Lc++ -randroid.hardware:hardware/interfaces \
+    android.hardware.tests.foo@1.0::types
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
 # Build IFoo.hal
 #
 GEN := $(intermediates)/android/hardware/tests/foo/1.0/FooAll.cpp
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IFoo.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/IFooCallback.hal
+$(GEN): $(LOCAL_PATH)/IFooCallback.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/types.hal
+$(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
     $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
@@ -39,23 +60,6 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
     android.hardware.tests.foo@1.0::IFooCallback
 
 $(GEN): $(LOCAL_PATH)/IFooCallback.hal
-	$(transform-generated-source)
-LOCAL_GENERATED_SOURCES += $(GEN)
-
-#
-# Build types.hal
-#
-GEN := $(intermediates)/android/hardware/tests/foo/1.0/types.cpp
-$(GEN): $(HIDL)
-$(GEN): PRIVATE_HIDL := $(HIDL)
-$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
-$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
-$(GEN): PRIVATE_CUSTOM_TOOL = \
-    $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-    -Lc++ -randroid.hardware:hardware/interfaces \
-    android.hardware.tests.foo@1.0::types
-
-$(GEN): $(LOCAL_PATH)/types.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
 
