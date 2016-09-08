@@ -9,12 +9,33 @@ intermediates := $(local-generated-sources-dir)
 HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
 
 #
+# Build types.hal
+#
+GEN := $(intermediates)/android/hardware/nfc/1.0/types.cpp
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+    $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+    -Lc++ -randroid.hardware:hardware/interfaces \
+    android.hardware.nfc@1.0::types
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
 # Build INfc.hal
 #
 GEN := $(intermediates)/android/hardware/nfc/1.0/NfcAll.cpp
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/INfc.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/INfcClientCallback.hal
+$(GEN): $(LOCAL_PATH)/INfcClientCallback.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/types.hal
+$(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
     $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
@@ -32,6 +53,8 @@ GEN := $(intermediates)/android/hardware/nfc/1.0/NfcClientCallbackAll.cpp
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/INfcClientCallback.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/types.hal
+$(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
     $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
@@ -39,23 +62,6 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
     android.hardware.nfc@1.0::INfcClientCallback
 
 $(GEN): $(LOCAL_PATH)/INfcClientCallback.hal
-	$(transform-generated-source)
-LOCAL_GENERATED_SOURCES += $(GEN)
-
-#
-# Build types.hal
-#
-GEN := $(intermediates)/android/hardware/nfc/1.0/types.cpp
-$(GEN): $(HIDL)
-$(GEN): PRIVATE_HIDL := $(HIDL)
-$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
-$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
-$(GEN): PRIVATE_CUSTOM_TOOL = \
-    $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-    -Lc++ -randroid.hardware:hardware/interfaces \
-    android.hardware.nfc@1.0::types
-
-$(GEN): $(LOCAL_PATH)/types.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
 
@@ -77,40 +83,6 @@ LOCAL_MODULE_CLASS := JAVA_LIBRARIES
 intermediates := $(local-generated-sources-dir)
 
 HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
-
-#
-# Build INfc.hal
-#
-GEN := $(intermediates)/android/hardware/nfc/1.0/INfc.java
-$(GEN): $(HIDL)
-$(GEN): PRIVATE_HIDL := $(HIDL)
-$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/INfc.hal
-$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
-$(GEN): PRIVATE_CUSTOM_TOOL = \
-    $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-    -Ljava -randroid.hardware:hardware/interfaces \
-    android.hardware.nfc@1.0::INfc
-
-$(GEN): $(LOCAL_PATH)/INfc.hal
-	$(transform-generated-source)
-LOCAL_GENERATED_SOURCES += $(GEN)
-
-#
-# Build INfcClientCallback.hal
-#
-GEN := $(intermediates)/android/hardware/nfc/1.0/INfcClientCallback.java
-$(GEN): $(HIDL)
-$(GEN): PRIVATE_HIDL := $(HIDL)
-$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/INfcClientCallback.hal
-$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
-$(GEN): PRIVATE_CUSTOM_TOOL = \
-    $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-    -Ljava -randroid.hardware:hardware/interfaces \
-    android.hardware.nfc@1.0::INfcClientCallback
-
-$(GEN): $(LOCAL_PATH)/INfcClientCallback.hal
-	$(transform-generated-source)
-LOCAL_GENERATED_SOURCES += $(GEN)
 
 #
 # Build types.hal (nfc_data_t)
@@ -160,6 +132,46 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
     android.hardware.nfc@1.0::types.nfc_status_t
 
 $(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build INfc.hal
+#
+GEN := $(intermediates)/android/hardware/nfc/1.0/INfc.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/INfc.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/INfcClientCallback.hal
+$(GEN): $(LOCAL_PATH)/INfcClientCallback.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/types.hal
+$(GEN): $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+    $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+    -Ljava -randroid.hardware:hardware/interfaces \
+    android.hardware.nfc@1.0::INfc
+
+$(GEN): $(LOCAL_PATH)/INfc.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build INfcClientCallback.hal
+#
+GEN := $(intermediates)/android/hardware/nfc/1.0/INfcClientCallback.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/INfcClientCallback.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/types.hal
+$(GEN): $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+    $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+    -Ljava -randroid.hardware:hardware/interfaces \
+    android.hardware.nfc@1.0::INfcClientCallback
+
+$(GEN): $(LOCAL_PATH)/INfcClientCallback.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
 include $(BUILD_JAVA_LIBRARY)
