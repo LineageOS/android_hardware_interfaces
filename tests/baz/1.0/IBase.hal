@@ -28,4 +28,6 @@ interface IBase {
     someBoolVectorMethod(vec<bool> x) generates (vec<bool> y);
 
     someOtherBaseMethod(Foo foo) generates (Foo result);
+    someMethodWithFooArrays(Foo[2] fooInput) generates (Foo[2] fooOutput);
+    someMethodWithFooVectors(vec<Foo> fooInput) generates (vec<Foo> fooOutput);
 };
