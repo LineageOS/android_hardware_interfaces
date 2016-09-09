@@ -37,7 +37,7 @@ interface ITestMsgQ {
   };
 
 
-  configure() generates ( WireMQDescriptor mq_desc );
+  configure() generates (int32_t ret, WireMQDescriptor mq_desc);
   requestWrite (int32_t count) generates (int32_t ret);
   requestRead(int32_t count) generates (int32_t ret);
 
