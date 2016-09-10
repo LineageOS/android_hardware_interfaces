@@ -18,26 +18,7 @@ package android.hardware.tests.msgq@1.0;
 
 interface ITestMsgQ {
 
-  struct shm_t {
-    uint32_t fdIndex;
-    uint32_t offset;
-    uint32_t extent;
-  };
-  struct WireGrantorDescriptor {
-    uint32_t flags;
-    shm_t shm;
-  };
-
-  struct WireMQDescriptor {
-    vec<WireGrantorDescriptor> grantors;
-    handle mq_handle;
-    uint32_t quantum;
-    uint32_t nQuanta;
-    uint32_t flags;
-  };
-
-
-  configure() generates (int32_t ret, WireMQDescriptor mq_desc);
+  configure() generates (int32_t ret, MQDescriptor mq_desc);
   requestWrite (int32_t count) generates (int32_t ret);
   requestRead(int32_t count) generates (int32_t ret);
 
