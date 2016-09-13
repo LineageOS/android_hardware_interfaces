@@ -47,6 +47,20 @@ interface IFoo {
         // handle loveHandle;
     };
 
+    typedef float[3] ThreeFloats;
+    typedef float[5] FiveFloats;
+
+    struct Quux {
+        string first;
+        string last;
+    };
+
+    typedef Quux[3] ThreeQuuxes;
+
+    struct MultiDimensional {
+        ThreeQuuxes[5] quuxMatrix;
+    };
+
     doThis(float param);
     doThatAndReturnSomething(int64_t param) generates (int32_t result);
     doQuiteABit(int32_t a, int64_t b, float c, double d) generates (double something);
@@ -64,4 +78,7 @@ interface IFoo {
 
     haveSomeStrings(string[3] array) generates (string[2] result);
     haveAStringVec(vec<string> vector) generates (vec<string> result);
+
+    transposeMe(FiveFloats[3] in) generates (ThreeFloats[5] out);
+    callingDrWho(MultiDimensional in) generates (MultiDimensional out);
 };
