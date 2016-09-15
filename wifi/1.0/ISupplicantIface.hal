@@ -1,0 +1,213 @@
+/*
+ * Copyright 2016 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi@1.0;
+
+import ISupplicantIfaceCallback;
+import ISupplicantNetwork;
+
+/**
+ * Interface exposed by wpa_supplicant for each network interface (e.g wlan0)
+ * it controls.
+ */
+interface ISupplicantIface {
+  /**
+   * Retrieves the name of the network interface.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+   * @return name Name of the network interface, e.g., wlan0
+   */
+  getName() generates (SupplicantStatus status, string name);
+
+  /**
+   * Add a new network to the interface.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+   * @return network HIDL interface object representing the new network if
+   *         successful, null otherwise.
+   */
+  addNetwork()
+      generates (SupplicantStatus status, ISupplicantNetwork network);
+
+  /**
+   * Remove a network from the interface.
+   *
+   * Use |ISupplicantNetwork.getId()| on the corresponding network HIDL
+   * interface object to retrieve the ID.
+   *
+   * @param id Network ID allocated to the corresponding network.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_UNKNOWN|
+   */
+  removeNetwork(SupplicantNetworkId id)
+      generates (SupplicantStatus status);
+
+  /**
+   * Gets a HIDL interface object for the network corresponding to the
+   * |SupplicantNetworkId|.
+   *
+   * Use |ISupplicantNetwork.getId()| on the corresponding network HIDL
+   * interface object to retrieve the ID.
+   *
+   * @param id Network ID allocated to the corresponding network.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_UNKNOWN|
+   * @return network HIDL interface object representing the new network if
+   *         successful, null otherwise.
+   */
+  getNetwork(SupplicantNetworkId id)
+      generates (SupplicantStatus status, ISupplicantNetwork network);
+
+  /**
+   * Retrieve a list of all the network Id's controlled by wpa_supplicant.
+   *
+   * The corresponding |ISupplicantNetwork| object for any network can be
+   * retrieved using |getNetwork| method.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   * @return networkIds List of all network Id's controlled by wpa_supplicant.
+   */
+  listNetworks()
+      generates (SupplicantStatus status, vec<SupplicantNetworkId> networkIds);
+
+  /**
+   * Register for callbacks from this interface.
+   *
+   * These callbacks are invoked for events that are specific to this interface.
+   * Registration of multiple callback objects is supported. These objects must
+   * be automatically deleted when the corresponding client process is dead or
+   * if this interface is removed.
+   *
+   * @param callback An instance of the |ISupplicantIfaceCallback| HIDL
+   *        interface object.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+   */
+  registerCallback(ISupplicantIfaceCallback callback)
+      generates (SupplicantStatus status);
+
+  /**
+   * Reconnect to the currently active network, even if we are already
+   * connected.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_DISABLED|
+   */
+  reassociate() generates (SupplicantStatus status);
+
+  /**
+   * Reconnect to the currently active network, if we are currently
+   * disconnected.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_DISABLED|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_NOT_DISCONNECTED|
+   */
+  reconnect() generates (SupplicantStatus status);
+
+  /**
+   * Disconnect from the current active network.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_DISABLED|
+   */
+  disconnect() generates (SupplicantStatus status);
+
+  /**
+   * Turn on/off power save mode for the interface.
+   *
+   * @param enable Indicate if power save is to be turned on/off.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_DISABLED|
+   */
+  setPowerSave(bool enable) generates (SupplicantStatus status);
+
+  /**
+   * Initiate TDLS discover with the provided peer mac address.
+   *
+   * @param macAddress MAC address of the peer.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+   */
+  initiateTdlsDiscover(MacAddress macAddress)
+      generates (SupplicantStatus status);
+
+  /**
+   * Initiate TDLS setup with the provided peer mac address.
+   *
+   * @param macAddress MAC address of the peer.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+   */
+  initiateTdlsSetup(MacAddress macAddress)
+      generates (SupplicantStatus status);
+
+  /**
+   * Initiate TDLS teardown with the provided peer mac address.
+   *
+   * @param macAddress MAC address of the peer.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+   */
+  initiateTdlsTeardown(MacAddress macAddress)
+      generates (SupplicantStatus status);
+};
