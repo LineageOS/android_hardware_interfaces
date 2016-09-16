@@ -21,6 +21,17 @@ interface IBase {
         Bar y;
     };
 
+    typedef string[3] ThreeStrings;
+    typedef string[5] FiveStrings;
+
+    struct StringMatrix3x5 {
+        FiveStrings[3] s;
+    };
+
+    struct StringMatrix5x3 {
+        ThreeStrings[5] s;
+    };
+
     someBaseMethod();
 
     someBoolMethod(bool x) generates (bool y);
@@ -30,4 +41,6 @@ interface IBase {
     someOtherBaseMethod(Foo foo) generates (Foo result);
     someMethodWithFooArrays(Foo[2] fooInput) generates (Foo[2] fooOutput);
     someMethodWithFooVectors(vec<Foo> fooInput) generates (vec<Foo> fooOutput);
+
+    transpose(StringMatrix5x3 in) generates (StringMatrix3x5 out);
 };
