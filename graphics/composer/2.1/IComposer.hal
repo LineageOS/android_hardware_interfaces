@@ -1,0 +1,1166 @@
+/*
+ * Copyright (C) 2016 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.graphics.composer@2.1;
+
+import android.hardware.graphics.allocator@2.0::PixelFormat;
+import IComposerCallback;
+
+interface IComposer {
+    /*
+     * Optional capabilities which may be supported by some devices. The
+     * particular set of supported capabilities for a given device may be
+     * retrieved using getCapabilities.
+     */
+    enum Capability : int32_t {
+        INVALID = 0,
+
+        /*
+         * Specifies that the device supports sideband stream layers, for
+         * which buffer content updates and other synchronization will not be
+         * provided through the usual validate/present cycle and must be
+         * handled by an external implementation-defined mechanism. Only
+         * changes to layer state (such as position, size, etc.) need to be
+         * performed through the validate/present cycle.
+         */
+        SIDEBAND_STREAM = 1,
+
+        /*
+         * Specifies that the device will apply a color transform even when
+         * either the client or the device has chosen that all layers should
+         * be composed by the client. This will prevent the client from
+         * applying the color transform during its composition step.
+         */
+        SKIP_CLIENT_COLOR_TRANSFORM = 2,
+    };
+
+    /* Display attributes queryable through getDisplayAttribute. */
+    enum Attribute : int32_t {
+        INVALID = 0,
+
+        /* Dimensions in pixels */
+        WIDTH = 1,
+        HEIGHT = 2,
+
+        /* Vsync period in nanoseconds */
+        VSYNC_PERIOD = 3,
+
+        /*
+         * Dots per thousand inches (DPI * 1000). Scaling by 1000 allows these
+         * numbers to be stored in an int32_t without losing too much
+         * precision. If the DPI for a configuration is unavailable or is
+         * considered unreliable, the device may return UNSUPPORTED instead.
+         */
+        DPI_X = 4,
+        DPI_Y = 5,
+    };
+
+    /* Display requests returned by getDisplayRequests. */
+    enum DisplayRequest : uint32_t {
+        /*
+         * Instructs the client to provide a new client target buffer, even if
+         * no layers are marked for client composition.
+         */
+        FLIP_CLIENT_TARGET = 1 << 0,
+
+        /*
+         * Instructs the client to write the result of client composition
+         * directly into the virtual display output buffer. If any of the
+         * layers are not marked as Composition::CLIENT or the given display
+         * is not a virtual display, this request has no effect.
+         */
+        WRITE_CLIENT_TARGET_TO_OUTPUT = 1 << 1,
+    };
+
+    /* Layer requests returned from getDisplayRequests. */
+    enum LayerRequest : uint32_t {
+        /*
+         * The client should clear its target with transparent pixels where
+         * this layer would be. The client may ignore this request if the
+         * layer must be blended.
+         */
+        CLEAR_CLIENT_TARGET = 1 << 0,
+    };
+
+    /* Power modes for use with setPowerMode. */
+    enum PowerMode : int32_t {
+        /* The display is fully off (blanked). */
+        OFF = 0,
+
+        /*
+         * These are optional low power modes. getDozeSupport may be called to
+         * determine whether a given display supports these modes.
+         */
+
+        /*
+         * The display is turned on and configured in a low power state that
+         * is suitable for presenting ambient information to the user,
+         * possibly with lower fidelity than ON, but with greater efficiency.
+         */
+        DOZE = 1,
+
+        /*
+         * The display is configured as in DOZE but may stop applying display
+         * updates from the client. This is effectively a hint to the device
+         * that drawing to the display has been suspended and that the the
+         * device should remain on in a low power state and continue
+         * displaying its current contents indefinitely until the power mode
+         * changes.
+         *
+         * This mode may also be used as a signal to enable hardware-based
+         * doze functionality. In this case, the device is free to take over
+         * the display and manage it autonomously to implement a low power
+         * always-on display.
+         */
+        DOZE_SUSPEND = 3,
+
+        /* The display is fully on. */
+        ON = 2,
+    };
+
+    /* Vsync values passed to setVsyncEnabled. */
+    enum Vsync : int32_t {
+        INVALID = 0,
+
+        /* Enable vsync. */
+        ENABLE = 1,
+
+        /* Disable vsync. */
+        DISABLE = 2,
+    };
+
+    /* Blend modes, settable per layer. */
+    enum BlendMode : int32_t {
+        INVALID = 0,
+
+        /* colorOut = colorSrc */
+        NONE = 1,
+
+        /* colorOut = colorSrc + colorDst * (1 - alphaSrc) */
+        PREMULTIPLIED = 2,
+
+        /* colorOut = colorSrc * alphaSrc + colorDst * (1 - alphaSrc) */
+        COVERAGE = 3,
+    };
+
+    /* Possible composition types for a given layer. */
+    enum Composition : int32_t {
+        INVALID = 0,
+
+        /*
+         * The client will composite this layer into the client target buffer
+         * (provided to the device through setClientTarget).
+         *
+         * The device must not request any composition type changes for layers
+         * of this type.
+         */
+        CLIENT = 1,
+
+        /*
+         * The device will handle the composition of this layer through a
+         * hardware overlay or other similar means.
+         *
+         * Upon validateDisplay, the device may request a change from this
+         * type to CLIENT.
+         */
+        DEVICE = 2,
+
+        /*
+         * The device will render this layer using the color set through
+         * setLayerColor. If this functionality is not supported on a layer
+         * that the client sets to SOLID_COLOR, the device must request that
+         * the composition type of that layer is changed to CLIENT upon the
+         * next call to validateDisplay.
+         *
+         * Upon validateDisplay, the device may request a change from this
+         * type to CLIENT.
+         */
+        SOLID_COLOR = 3,
+
+        /*
+         * Similar to DEVICE, but the position of this layer may also be set
+         * asynchronously through setCursorPosition. If this functionality is
+         * not supported on a layer that the client sets to CURSOR, the device
+         * must request that the composition type of that layer is changed to
+         * CLIENT upon the next call to validateDisplay.
+         *
+         * Upon validateDisplay, the device may request a change from this
+         * type to either DEVICE or CLIENT.  Changing to DEVICE will prevent
+         * the use of setCursorPosition but still permit the device to
+         * composite the layer.
+         */
+        CURSOR = 4,
+
+        /*
+         * The device will handle the composition of this layer, as well as
+         * its buffer updates and content synchronization. Only supported on
+         * devices which provide Capability::SIDEBAND_STREAM.
+         *
+         * Upon validateDisplay, the device may request a change from this
+         * type to either DEVICE or CLIENT, but it is unlikely that content
+         * will display correctly in these cases.
+         */
+        SIDEBAND = 5,
+    };
+
+    /* Display types returned by getDisplayType. */
+    enum DisplayType : int32_t {
+        INVALID = 0,
+
+        /*
+         * All physical displays, including both internal displays and
+         * hotpluggable external displays.
+         */
+        PHYSICAL = 1,
+
+        /* Virtual displays created by createVirtualDisplay. */
+        VIRTUAL = 2,
+    };
+
+    struct Rect {
+        int32_t left;
+        int32_t top;
+        int32_t right;
+        int32_t bottom;
+    };
+
+    struct FRect {
+        float left;
+        float top;
+        float right;
+        float bottom;
+    };
+
+    struct Color {
+        uint8_t r;
+        uint8_t g;
+        uint8_t b;
+        uint8_t a;
+    };
+
+    /*
+     * Provides a list of supported capabilities (as described in the
+     * definition of Capability above). This list must not change after
+     * initialization.
+     *
+     * @return capabilities is a list of supported capabilities.
+     */
+    getCapabilities() generates (vec<Capability> capabilities);
+
+    /*
+     * Retrieves implementation-defined debug information, which will be
+     * displayed during, for example, `dumpsys SurfaceFlinger`.
+     *
+     * @return debugInfo is a string of debug information.
+     */
+    dumpDebugInfo() generates (string debugInfo);
+
+    /*
+     * Provides a IComposerCallback object for the device to call.
+     *
+     * @param callback is the IComposerCallback object.
+     */
+    registerCallback(IComposerCallback callback);
+
+    /*
+     * Returns the maximum number of virtual displays supported by this device
+     * (which may be 0). The client will not attempt to create more than this
+     * many virtual displays on this device. This number must not change for
+     * the lifetime of the device.
+     */
+    getMaxVirtualDisplayCount() generates (uint32_t count);
+
+    /*
+     * Creates a new virtual display with the given width and height. The
+     * format passed into this function is the default format requested by the
+     * consumer of the virtual display output buffers.
+     *
+     * The display will be assumed to be on from the time the first frame is
+     * presented until the display is destroyed.
+     *
+     * @param width is the width in pixels.
+     * @param height is the height in pixels.
+     * @param formatHint is the default output buffer format selected by
+     *        the consumer.
+     * @return error is NONE upon success. Otherwise,
+     *         UNSUPPORTED when the width or height is too large for the
+     *                     device to be able to create a virtual display.
+     *         NO_RESOURCES when the device is unable to create a new virtual
+     *                      display at this time.
+     * @return display is the newly-created virtual display.
+     * @return format is the format of the buffer the device will produce.
+     */
+    createVirtualDisplay(uint32_t width,
+                         uint32_t height,
+                         PixelFormat formatHint)
+              generates (Error error,
+                         Display display,
+                         PixelFormat format);
+
+    /*
+     * Destroys a virtual display. After this call all resources consumed by
+     * this display may be freed by the device and any operations performed on
+     * this display should fail.
+     *
+     * @param display is the virtual display to destroy.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_PARAMETER when the display handle which was passed in does
+     *                       not refer to a virtual display.
+     */
+    destroyVirtualDisplay(Display display) generates (Error error);
+
+    /*
+     * Accepts the changes required by the device from the previous
+     * validateDisplay call (which may be queried using
+     * getChangedCompositionTypes) and revalidates the display. This function
+     * is equivalent to requesting the changed types from
+     * getChangedCompositionTypes, setting those types on the corresponding
+     * layers, and then calling validateDisplay again.
+     *
+     * After this call it must be valid to present this display. Calling this
+     * after validateDisplay returns 0 changes must succeed with NONE, but
+     * should have no other effect.
+     *
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         NOT_VALIDATED when validateDisplay has not been called.
+     */
+    acceptDisplayChanges(Display display) generates (Error error);
+
+    /*
+     * Creates a new layer on the given display.
+     *
+     * @param display is the display on which to create the layer.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         NO_RESOURCES when the device was unable to create a layer this
+     *                      time.
+     * @return layer is the handle of the new layer.
+     */
+    createLayer(Display display) generates (Error error, Layer layer);
+
+    /*
+     * Destroys the given layer.
+     *
+     * @param display is the display on which the layer was created.
+     * @param layer is the layer to destroy.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_LAYER when an invalid layer handle was passed in.
+     */
+    destroyLayer(Display display, Layer layer) generates (Error error);
+
+    /*
+     * Retrieves which display configuration is currently active.
+     *
+     * If no display configuration is currently active, this function must
+     * return BAD_CONFIG. It is the responsibility of the client to call
+     * setActiveConfig with a valid configuration before attempting to present
+     * anything on the display.
+     *
+     * @param display is the display to which the active config is queried.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_CONFIG when no configuration is currently active.
+     * @return config is the currently active display configuration.
+     */
+    getActiveConfig(Display display) generates (Error error, Config config);
+
+    /*
+     * Retrieves the layers for which the device requires a different
+     * composition type than had been set prior to the last call to
+     * validateDisplay. The client will either update its state with these
+     * types and call acceptDisplayChanges, or will set new types and attempt
+     * to validate the display again.
+     *
+     * The number of changed layers must be the same as the value returned in
+     * numTypes from the last call to validateDisplay.
+     *
+     * @param display is the display to query.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         NOT_VALIDATED when validateDisplay has not been called.
+     * @return layers is an array of layer handles.
+     * @return types is an array of composition types, each corresponding to
+     *         an element of layers.
+     */
+    getChangedCompositionTypes(Display display)
+                    generates (Error error,
+                               vec<Layer> layers,
+                               vec<Composition> types);
+
+    /*
+     * Returns whether a client target with the given properties can be
+     * handled by the device.
+     *
+     * This function must return true for a client target with width and
+     * height equal to the active display configuration dimensions,
+     * PixelFormat::RGBA_8888, and Dataspace::UNKNOWN. It is not required to
+     * return true for any other configuration.
+     *
+     * @param display is the display to query.
+     * @param width is the client target width in pixels.
+     * @param height is the client target height in pixels.
+     * @param format is the client target format.
+     * @param dataspace is the client target dataspace, as described in
+     *        setLayerDataspace.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         UNSUPPORTED when the given configuration is not supported.
+     */
+    getClientTargetSupport(Display display,
+                           uint32_t width,
+                           uint32_t height,
+                           PixelFormat format,
+                           Dataspace dataspace)
+                generates (Error error);
+
+    /*
+     * Returns the color modes supported on this display.
+     *
+     * All devices must support at least ColorMode::NATIVE.
+     *
+     * @param display is the display to query.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     * @return modes is an array of color modes.
+     */
+    getColorModes(Display display)
+       generates (Error error,
+                  vec<ColorMode> modes);
+
+    /*
+     * Returns a display attribute value for a particular display
+     * configuration.
+     *
+     * @param display is the display to query.
+     * @param config is the display configuration for which to return
+     *        attribute values.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_CONFIG when config does not name a valid configuration for
+     *                    this display.
+     *         BAD_PARAMETER when attribute is unrecognized.
+     *         UNSUPPORTED when attribute cannot be queried for the config.
+     * @return value is the value of the attribute.
+     */
+    getDisplayAttribute(Display display,
+                        Config config,
+                        Attribute attribute)
+             generates (Error error,
+                        int32_t value);
+
+    /*
+     * Returns handles for all of the valid display configurations on this
+     * display.
+     *
+     * @param display is the display to query.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     * @return configs is an array of configuration handles.
+     */
+    getDisplayConfigs(Display display)
+           generates (Error error,
+                      vec<Config> configs);
+
+    /*
+     * Returns a human-readable version of the display's name.
+     *
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     * @return name is the name of the display.
+     */
+    getDisplayName(Display display) generates (Error error, string name);
+
+    /*
+     * Returns the display requests and the layer requests required for the
+     * last validated configuration.
+     *
+     * Display requests provide information about how the client should handle
+     * the client target. Layer requests provide information about how the
+     * client should handle an individual layer.
+     *
+     * The number of layer requests must be equal to the value returned in
+     * numRequests from the last call to validateDisplay.
+     *
+     * @param display is the display to query.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         NOT_VALIDATED when validateDisplay has not been called.
+     * @return displayRequestMask is the display requests for the current
+     *         validated state.
+     * @return layers is an array of layers which all have at least one
+     *         request.
+     * @return layerRequestMasks is the requests corresponding to each element
+     *         of layers.
+     */
+    getDisplayRequests(Display display)
+            generates (Error error,
+                       uint32_t displayRequestMask,
+                       vec<Layer> layers,
+                       vec<uint32_t> layerRequestMasks);
+
+    /*
+     * Returns whether the given display is a physical or virtual display.
+     *
+     * @param display is the display to query.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     * @return type is the type of the display.
+     */
+    getDisplayType(Display display) generates (Error error, DisplayType type);
+
+    /*
+     * Returns whether the given display supports PowerMode::DOZE and
+     * PowerMode::DOZE_SUSPEND. DOZE_SUSPEND may not provide any benefit over
+     * DOZE (see the definition of PowerMode for more information), but if
+     * both DOZE and DOZE_SUSPEND are no different from PowerMode::ON, the
+     * device should not claim support.
+     *
+     * @param display is the display to query.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     * @return support is true only when the display supports doze modes.
+     */
+    getDozeSupport(Display display) generates (Error error, bool support);
+
+    /*
+     * Returns the high dynamic range (HDR) capabilities of the given display,
+     * which are invariant with regard to the active configuration.
+     *
+     * Displays which are not HDR-capable must return no types.
+     *
+     * @param display is the display to query.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     * @return types is an array of HDR types, may have 0 elements if the
+     *         display is not HDR-capable.
+     * @return maxLuminance is the desired content maximum luminance for this
+     *         display in cd/m^2.
+     * @return maxAverageLuminance - the desired content maximum frame-average
+     *         luminance for this display in cd/m^2.
+     * @return minLuminance is the desired content minimum luminance for this
+     *         display in cd/m^2.
+     */
+    getHdrCapabilities(Display display)
+            generates (Error error,
+                       vec<Hdr> types,
+                       float maxLuminance,
+                       float maxAverageLuminance,
+                       float minLuminance);
+
+    /*
+     * Retrieves the release fences for device layers on this display which
+     * will receive new buffer contents this frame.
+     *
+     * A release fence is a file descriptor referring to a sync fence object
+     * which will be signaled after the device has finished reading from the
+     * buffer presented in the prior frame. This indicates that it is safe to
+     * start writing to the buffer again. If a given layer's fence is not
+     * returned from this function, it will be assumed that the buffer
+     * presented on the previous frame is ready to be written.
+     *
+     * The fences returned by this function should be unique for each layer
+     * (even if they point to the same underlying sync object).
+     *
+     * @param display is the display to query.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     * @return layers is an array of layer handles.
+     * @return fences is handle that contains an array of sync fence file
+     *         descriptors as described above, each corresponding to an
+     *         element of layers.
+     */
+    getReleaseFences(Display display)
+          generates (Error error,
+                     vec<Layer> layers,
+                     handle releaseFences);
+
+    /*
+     * Presents the current display contents on the screen (or in the case of
+     * virtual displays, into the output buffer).
+     *
+     * Prior to calling this function, the display must be successfully
+     * validated with validateDisplay. Note that setLayerBuffer and
+     * setLayerSurfaceDamage specifically do not count as layer state, so if
+     * there are no other changes to the layer state (or to the buffer's
+     * properties as described in setLayerBuffer), then it is safe to call
+     * this function without first validating the display.
+     *
+     * If this call succeeds, presentFence will be populated with a file
+     * descriptor referring to a present sync fence object. For physical
+     * displays, this fence will be signaled at the vsync when the result of
+     * composition of this frame starts to appear (for video-mode panels) or
+     * starts to transfer to panel memory (for command-mode panels). For
+     * virtual displays, this fence will be signaled when writes to the output
+     * buffer have completed and it is safe to read from it.
+     *
+     * @param display is the display to present.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         NO_RESOURCES when no valid output buffer has been set for a
+     *                      virtual display.
+     *         NOT_VALIDATED when validateDisplay has not successfully been
+     *                       called for this display.
+     * @return presentFence is a sync fence file descriptor as described
+     *         above.
+     */
+    presentDisplay(Display display)
+        generates (Error error,
+                   handle presentFence);
+
+    /*
+     * Sets the active configuration for this display. Upon returning, the
+     * given display configuration should be active and remain so until either
+     * this function is called again or the display is disconnected.
+     *
+     * @param display is the display to which the active config is set.
+     * @param config is the new display configuration.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_CONFIG when the configuration handle passed in is not valid
+     *                    for this display.
+     */
+    setActiveConfig(Display display, Config config) generates (Error error);
+
+    /*
+     * Sets the buffer handle which will receive the output of client
+     * composition.  Layers marked as Composition::CLIENT will be composited
+     * into this buffer prior to the call to presentDisplay, and layers not
+     * marked as Composition::CLIENT should be composited with this buffer by
+     * the device.
+     *
+     * The buffer handle provided may be empty if no layers are being
+     * composited by the client. This must not result in an error (unless an
+     * invalid display handle is also provided).
+     *
+     * Also provides a file descriptor referring to an acquire sync fence
+     * object, which will be signaled when it is safe to read from the client
+     * target buffer.  If it is already safe to read from this buffer, an
+     * empty handle may be passed instead.
+     *
+     * For more about dataspaces, see setLayerDataspace.
+     *
+     * The damage parameter describes a surface damage region as defined in
+     * the description of setLayerSurfaceDamage.
+     *
+     * Will be called before presentDisplay if any of the layers are marked as
+     * Composition::CLIENT. If no layers are so marked, then it is not
+     * necessary to call this function. It is not necessary to call
+     * validateDisplay after changing the target through this function.
+     *
+     * @param display is the display to which the client target is set.
+     * @param target is the new target buffer.
+     * @param acquireFence is a sync fence file descriptor as described above.
+     * @param dataspace is the dataspace of the buffer, as described in
+     *        setLayerDataspace.
+     * @param damage is the surface damage region.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_PARAMETER when the new target handle was invalid.
+     */
+    setClientTarget(Display display,
+                    handle target,
+                    handle acquireFence,
+                    Dataspace dataspace,
+                    vec<Rect> damage)
+         generates (Error error);
+
+    /*
+     * Sets the color mode of the given display.
+     *
+     * Upon returning from this function, the color mode change must have
+     * fully taken effect.
+     *
+     * All devices must support at least ColorMode::NATIVE, and displays are
+     * assumed to be in this mode upon hotplug.
+     *
+     * @param display is the display to which the color mode is set.
+     * @param mode is the mode to set to.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_PARAMETER when mode is not a valid color mode.
+     *         UNSUPPORTED when mode is not supported on this display.
+     */
+    setColorMode(Display display, ColorMode mode) generates (Error error);
+
+    /*
+     * Sets a color transform which will be applied after composition.
+     *
+     * If hint is not ColorTransform::ARBITRARY, then the device may use the
+     * hint to apply the desired color transform instead of using the color
+     * matrix directly.
+     *
+     * If the device is not capable of either using the hint or the matrix to
+     * apply the desired color transform, it should force all layers to client
+     * composition during validateDisplay.
+     *
+     * If Capability::SKIP_CLIENT_COLOR_TRANSFORM is present, then the client
+     * will never apply the color transform during client composition, even if
+     * all layers are being composed by the client.
+     *
+     * The matrix provided is an affine color transformation of the following
+     * form:
+     *
+     * |r.r r.g r.b 0|
+     * |g.r g.g g.b 0|
+     * |b.r b.g b.b 0|
+     * |Tr  Tg  Tb  1|
+     *
+     * This matrix will be provided in row-major form:
+     *
+     * {r.r, r.g, r.b, 0, g.r, ...}.
+     *
+     * Given a matrix of this form and an input color [R_in, G_in, B_in], the
+     * output color [R_out, G_out, B_out] will be:
+     *
+     * R_out = R_in * r.r + G_in * g.r + B_in * b.r + Tr
+     * G_out = R_in * r.g + G_in * g.g + B_in * b.g + Tg
+     * B_out = R_in * r.b + G_in * g.b + B_in * b.b + Tb
+     *
+     * @param display is the display to which the color transform is set.
+     * @param matrix is a 4x4 transform matrix (16 floats) as described above.
+     * @param hint is a hint value which may be used instead of the given
+     *        matrix unless it is ColorTransform::ARBITRARY.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_PARAMETER when hint is not a valid color transform hint.
+     */
+    setColorTransform(Display display,
+                      vec<float> matrix,
+                      ColorTransform hint)
+           generates (Error error);
+
+    /*
+     * Sets the output buffer for a virtual display. That is, the buffer to
+     * which the composition result will be written.
+     *
+     * Also provides a file descriptor referring to a release sync fence
+     * object, which will be signaled when it is safe to write to the output
+     * buffer. If it is already safe to write to the output buffer, an empty
+     * handle may be passed instead.
+     *
+     * Must be called at least once before presentDisplay, but does not have
+     * any interaction with layer state or display validation.
+     *
+     * @param display is the virtual display to which the output buffer is
+     *        set.
+     * @param buffer is the new output buffer.
+     * @param releaseFence is a sync fence file descriptor as described above.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_PARAMETER when the new output buffer handle was invalid.
+     *         UNSUPPORTED when display does not refer to a virtual display.
+     */
+    setOutputBuffer(Display display,
+                    handle buffer,
+                    handle releaseFence)
+         generates (Error error);
+
+    /*
+     * Sets the power mode of the given display. The transition must be
+     * complete when this function returns. It is valid to call this function
+     * multiple times with the same power mode.
+     *
+     * All displays must support PowerMode::ON and PowerMode::OFF.  Whether a
+     * display supports PowerMode::DOZE or PowerMode::DOZE_SUSPEND may be
+     * queried using getDozeSupport.
+     *
+     * @param display is the display to which the power mode is set.
+     * @param mode is the new power mode.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_PARAMETER when mode was not a valid power mode.
+     *         UNSUPPORTED when mode is not supported on this display.
+     */
+    setPowerMode(Display display, PowerMode mode) generates (Error error);
+
+    /*
+     * Enables or disables the vsync signal for the given display. Virtual
+     * displays never generate vsync callbacks, and any attempt to enable
+     * vsync for a virtual display though this function must succeed and have
+     * no other effect.
+     *
+     * @param display is the display to which the vsync mode is set.
+     * @param enabled indicates whether to enable or disable vsync
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_PARAMETER when enabled was an invalid value.
+     */
+    setVsyncEnabled(Display display, Vsync enabled) generates (Error error);
+
+    /*
+     * Instructs the device to inspect all of the layer state and determine if
+     * there are any composition type changes necessary before presenting the
+     * display. Permitted changes are described in the definition of
+     * Composition above.
+     *
+     * Also returns the number of layer requests required by the given layer
+     * configuration.
+     *
+     * @param display is the display to validate.
+     * @return error is NONE or HAS_CHANGES upon success.
+     *         NONE when no changes are necessary and it is safe to present
+     *              the display using the current layer state.
+     *         HAS_CHANGES when composition type changes are needed.
+     *         Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     * @return numTypes is the number of composition type changes required by
+     *         the device; if greater than 0, the client must either set and
+     *         validate new types, or call acceptDisplayChanges to accept the
+     *         changes returned by getChangedCompositionTypes. It must be the
+     *         same as the number of changes returned by
+     *         getChangedCompositionTypes (see the declaration of that
+     *         function for more information).
+     * @return numRequests is the number of layer requests required by this
+     *         layer configuration. It must be equal to the number of layer
+     *         requests returned by getDisplayRequests (see the declaration of
+     *         that function for more information).
+     */
+    validateDisplay(Display display)
+         generates (Error error,
+                    uint32_t numTypes,
+                    uint32_t numRequests);
+
+    /*
+     * Layer Functions
+     *
+     * These are functions which operate on layers, but which do not modify
+     * state that must be validated before use. See also 'Layer State
+     * Functions' below.
+     */
+
+    /*
+     * Asynchonously sets the position of a cursor layer.
+     *
+     * Prior to validateDisplay, a layer may be marked as Composition::CURSOR.
+     * If validation succeeds (i.e., the device does not request a composition
+     * change for that layer), then once a buffer has been set for the layer
+     * and it has been presented, its position may be set by this function at
+     * any time between presentDisplay and any subsequent validateDisplay
+     * calls for this display.
+     *
+     * Once validateDisplay is called, this function will not be called again
+     * until the validate/present sequence is completed.
+     *
+     * May be called from any thread so long as it is not interleaved with the
+     * validate/present sequence as described above.
+     *
+     * @param display is the display on which the layer was created.
+     * @param layer is the layer to which the position is set.
+     * @param x is the new x coordinate (in pixels from the left of the
+     *        screen).
+     * @param y is the new y coordinate (in pixels from the top of the
+     *        screen).
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_LAYER when the layer is invalid or is not currently marked
+     *                   as Composition::CURSOR.
+     *         NOT_VALIDATED when the device is currently in the middle of the
+     *                       validate/present sequence.
+     */
+    setCursorPosition(Display display,
+                      Layer layer,
+                      int32_t x,
+                      int32_t y)
+           generates (Error error);
+
+    /*
+     * Sets the buffer handle to be displayed for this layer. If the buffer
+     * properties set at allocation time (width, height, format, and usage)
+     * have not changed since the previous frame, it is not necessary to call
+     * validateDisplay before calling presentDisplay unless new state needs to
+     * be validated in the interim.
+     *
+     * Also provides a file descriptor referring to an acquire sync fence
+     * object, which will be signaled when it is safe to read from the given
+     * buffer. If it is already safe to read from the buffer, an empty handle
+     * may be passed instead.
+     *
+     * This function must return NONE and have no other effect if called for a
+     * layer with a composition type of Composition::SOLID_COLOR (because it
+     * has no buffer) or Composition::SIDEBAND or Composition::CLIENT (because
+     * synchronization and buffer updates for these layers are handled
+     * elsewhere).
+     *
+     * @param display is the display on which the layer was created.
+     * @param layer is the layer to which the buffer is set.
+     * @param buffer is the buffer handle to set.
+     * @param acquireFence is a sync fence file descriptor as described above.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_LAYER when an invalid layer handle was passed in.
+     *         BAD_PARAMETER when the buffer handle passed in was invalid.
+     */
+    setLayerBuffer(Display display,
+                   Layer layer,
+                   handle buffer,
+                   handle acquireFence)
+        generates (Error error);
+
+    /*
+     * Provides the region of the source buffer which has been modified since
+     * the last frame. This region does not need to be validated before
+     * calling presentDisplay.
+     *
+     * Once set through this function, the damage region remains the same
+     * until a subsequent call to this function.
+     *
+     * If damage is non-empty, then it may be assumed that any portion of the
+     * source buffer not covered by one of the rects has not been modified
+     * this frame. If damage is empty, then the whole source buffer must be
+     * treated as if it has been modified.
+     *
+     * If the layer's contents are not modified relative to the prior frame,
+     * damage will contain exactly one empty rect([0, 0, 0, 0]).
+     *
+     * The damage rects are relative to the pre-transformed buffer, and their
+     * origin is the top-left corner. They will not exceed the dimensions of
+     * the latched buffer.
+     *
+     * @param display is the display on which the layer was created.
+     * @param layer is the layer to which the damage region is set.
+     * @param damage is the new surface damage region.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_LAYER when an invalid layer handle was passed in.
+     */
+    setLayerSurfaceDamage(Display display,
+                          Layer layer,
+                          vec<Rect> damage)
+               generates (Error error);
+
+    /*
+     * Layer State Functions
+     *
+     * These functions modify the state of a given layer. They do not take
+     * effect until the display configuration is successfully validated with
+     * validateDisplay and the display contents are presented with
+     * presentDisplay.
+     */
+
+    /*
+     * Sets the blend mode of the given layer.
+     *
+     * @param display is the display on which the layer was created.
+     * @param layer is the layer to which the blend mode is set.
+     * @param mode is the new blend mode.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_LAYER when an invalid layer handle was passed in.
+     *         BAD_PARAMETER when an invalid blend mode was passed in.
+     */
+    setLayerBlendMode(Display display,
+                      Layer layer,
+                      BlendMode mode)
+           generates (Error error);
+
+    /*
+     * Sets the color of the given layer. If the composition type of the layer
+     * is not Composition::SOLID_COLOR, this call must succeed and have no
+     * other effect.
+     *
+     * @param display is the display on which the layer was created.
+     * @param layer is the layer to which the blend mode is set.
+     * @param color is the new color.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_LAYER when an invalid layer handle was passed in.
+     */
+    setLayerColor(Display display,
+                  Layer layer,
+                  Color color)
+       generates (Error error);
+
+    /*
+     * Sets the desired composition type of the given layer. During
+     * validateDisplay, the device may request changes to the composition
+     * types of any of the layers as described in the definition of
+     * Composition above.
+     *
+     * @param display is the display on which the layer was created.
+     * @param layer is the layer to which the blend mode is set.
+     * @param type is the new composition type.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_LAYER when an invalid layer handle was passed in.
+     *         BAD_PARAMETER when an invalid composition type was passed in.
+     *         UNSUPPORTED when a valid composition type was passed in, but it
+     *                     is not supported by this device.
+     */
+    setLayerCompositionType(Display display,
+                            Layer layer,
+                            Composition type)
+                 generates (Error error);
+
+    /*
+     * Sets the dataspace that the current buffer on this layer is in.
+     *
+     * The dataspace provides more information about how to interpret the
+     * buffer contents, such as the encoding standard and color transform.
+     *
+     * See the values of Dataspace for more information.
+     *
+     * @param display is the display on which the layer was created.
+     * @param layer is the layer to which the dataspace is set.
+     * @param dataspace is the new dataspace.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_LAYER when an invalid layer handle was passed in.
+     */
+    setLayerDataspace(Display display,
+                      Layer layer,
+                      Dataspace dataspace)
+           generates (Error error);
+
+    /*
+     * Sets the display frame (the portion of the display covered by a layer)
+     * of the given layer. This frame will not exceed the display dimensions.
+     *
+     * @param display is the display on which the layer was created.
+     * @param layer is the layer to which the frame is set.
+     * @param frame is the new display frame.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_LAYER when an invalid layer handle was passed in.
+     */
+    setLayerDisplayFrame(Display display,
+                         Layer layer,
+                         Rect frame)
+              generates (Error error);
+
+    /*
+     * Sets an alpha value (a floating point value in the range [0.0, 1.0])
+     * which will be applied to the whole layer. It can be conceptualized as a
+     * preprocessing step which applies the following function:
+     *   if (blendMode == BlendMode::PREMULTIPLIED)
+     *       out.rgb = in.rgb * planeAlpha
+     *   out.a = in.a * planeAlpha
+     *
+     * If the device does not support this operation on a layer which is
+     * marked Composition::DEVICE, it must request a composition type change
+     * to Composition::CLIENT upon the next validateDisplay call.
+     *
+     * @param display is the display on which the layer was created.
+     * @param layer is the layer to which the plane alpha is set.
+     * @param alpha is the plane alpha value to apply.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_LAYER when an invalid layer handle was passed in.
+     */
+    setLayerPlaneAlpha(Display display,
+                       Layer layer,
+                       float alpha)
+            generates (Error error);
+
+    /*
+     * Sets the sideband stream for this layer. If the composition type of the
+     * given layer is not Composition::SIDEBAND, this call must succeed and
+     * have no other effect.
+     *
+     * @param display is the display on which the layer was created.
+     * @param layer is the layer to which the sideband stream is set.
+     * @param stream is the new sideband stream.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_LAYER when an invalid layer handle was passed in.
+     *         BAD_PARAMETER when an invalid sideband stream was passed in.
+     */
+    setLayerSidebandStream(Display display,
+                           Layer layer,
+                           handle stream)
+                generates (Error error);
+
+    /*
+     * Sets the source crop (the portion of the source buffer which will fill
+     * the display frame) of the given layer. This crop rectangle will not
+     * exceed the dimensions of the latched buffer.
+     *
+     * If the device is not capable of supporting a true float source crop
+     * (i.e., it will truncate or round the floats to integers), it should set
+     * this layer to Composition::CLIENT when crop is non-integral for the
+     * most accurate rendering.
+     *
+     * If the device cannot support float source crops, but still wants to
+     * handle the layer, it should use the following code (or similar) to
+     * convert to an integer crop:
+     *   intCrop.left = (int) ceilf(crop.left);
+     *   intCrop.top = (int) ceilf(crop.top);
+     *   intCrop.right = (int) floorf(crop.right);
+     *   intCrop.bottom = (int) floorf(crop.bottom);
+     *
+     * @param display is the display on which the layer was created.
+     * @param layer is the layer to which the source crop is set.
+     * @param crop is the new source crop.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_LAYER when an invalid layer handle was passed in.
+     */
+    setLayerSourceCrop(Display display,
+                       Layer layer,
+                       FRect crop)
+            generates (Error error);
+
+    /*
+     * Sets the transform (rotation/flip) of the given layer.
+     *
+     * @param display is the display on which the layer was created.
+     * @param layer is the layer to which the transform is set.
+     * @param transform is the new transform.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_LAYER when an invalid layer handle was passed in.
+     *         BAD_PARAMETER when an invalid transform was passed in.
+     */
+    setLayerTransform(Display display,
+                      Layer layer,
+                      Transform transform)
+           generates (Error error);
+
+    /*
+     * Specifies the portion of the layer that is visible, including portions
+     * under translucent areas of other layers. The region is in screen space,
+     * and will not exceed the dimensions of the screen.
+     *
+     * @param display is the display on which the layer was created.
+     * @param layer is the layer to which the visible region is set.
+     * @param visible is the new visible region, in screen space.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_LAYER when an invalid layer handle was passed in.
+     */
+    setLayerVisibleRegion(Display display,
+                          Layer layer,
+                          vec<Rect> visible)
+               generates (Error error);
+
+    /*
+     * Sets the desired Z order (height) of the given layer. A layer with a
+     * greater Z value occludes a layer with a lesser Z value.
+     *
+     * @param display is the display on which the layer was created.
+     * @param layer is the layer to which the Z order is set.
+     * @param z is the new Z order.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_LAYER when an invalid layer handle was passed in.
+     */
+    setLayerZOrder(Display display,
+                   Layer layer,
+                   uint32_t z)
+        generates (Error error);
+};
