@@ -15,7 +15,7 @@
  */
 
 package android.hardware.tests.expression@1.0;
-@hal_type(type="LIGHT")
+
 interface IExpression {
   enum UInt64LiteralTypeGuessing : uint64_t {
     noSuffixDec1 = 0,
