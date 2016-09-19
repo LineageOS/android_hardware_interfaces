@@ -70,6 +70,7 @@ LOCAL_SHARED_LIBRARIES := \
   libhidl \
   libhwbinder \
   libutils \
+  libcutils \
 
 LOCAL_MULTILIB := both
 include $(BUILD_SHARED_LIBRARY)
