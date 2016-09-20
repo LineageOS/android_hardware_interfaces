@@ -61,6 +61,17 @@ interface IFoo {
         ThreeQuuxes[5] quuxMatrix;
     };
 
+    typedef string[3] ThreeStrings;
+    typedef string[5] FiveStrings;
+
+    struct StringMatrix3x5 {
+        FiveStrings[3] s;
+    };
+
+    struct StringMatrix5x3 {
+        ThreeStrings[5] s;
+    };
+
     doThis(float param);
     doThatAndReturnSomething(int64_t param) generates (int32_t result);
     doQuiteABit(int32_t a, int64_t b, float c, double d) generates (double something);
@@ -81,4 +92,7 @@ interface IFoo {
 
     transposeMe(FiveFloats[3] in) generates (ThreeFloats[5] out);
     callingDrWho(MultiDimensional in) generates (MultiDimensional out);
+
+    transpose(StringMatrix5x3 in) generates (StringMatrix3x5 out);
+    transpose2(ThreeStrings[5] in) generates (FiveStrings[3] out);
 };

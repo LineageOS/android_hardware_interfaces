@@ -43,4 +43,5 @@ interface IBase {
     someMethodWithFooVectors(vec<Foo> fooInput) generates (vec<Foo> fooOutput);
 
     transpose(StringMatrix5x3 in) generates (StringMatrix3x5 out);
+    transpose2(ThreeStrings[5] in) generates (FiveStrings[3] out);
 };
