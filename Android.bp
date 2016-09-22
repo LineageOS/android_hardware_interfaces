@@ -6,6 +6,7 @@ subdirs = [
     "benchmarks/msgq/1.0",
     "bluetooth/1.0",
     "biometrics/fingerprint/2.1",
+    "gnss/1.0",
     "graphics/allocator/2.0",
     "graphics/allocator/2.0/default",
     "graphics/composer/2.1",
