@@ -72,3 +72,6 @@ LOCAL_SHARED_LIBRARIES := \
 
 LOCAL_MULTILIB := both
 include $(BUILD_SHARED_LIBRARY)
+
+
+include $(call all-makefiles-under,$(LOCAL_PATH))

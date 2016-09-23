@@ -176,3 +176,6 @@ $(GEN): $(LOCAL_PATH)/INfcClientCallback.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
 include $(BUILD_JAVA_LIBRARY)
+
+
+include $(call all-makefiles-under,$(LOCAL_PATH))
