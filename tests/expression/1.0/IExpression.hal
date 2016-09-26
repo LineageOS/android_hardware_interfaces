@@ -144,4 +144,54 @@ interface IExpression {
     logand4 = (0 && 1) == 0,
   };
 
+  enum Grayscale : int8_t {
+    WHITE = 126,
+    GRAY, // 127
+    DARK_GRAY, // -128
+    BLACK // -127
+  };
+
+  enum Color : Grayscale {
+    RED, // -126
+    RUBY = 0,
+    GREEN, // 1
+    BLUE = 5,
+    CYAN, // 6
+    ORANGE, // 7
+    ROSE = WHITE,
+  };
+
+  enum Foo1 : int8_t {};
+  enum Foo2 : Foo1 {};
+  enum Foo3 : Foo2 {
+    BAR1, // 0
+    BAR2 = 10,
+  };
+  enum Foo4 : Foo3 {
+    BAR3, // 11
+    BAR4 = BAR2 + BAR3 // 21
+  };
+
+  enum Number : uint8_t {
+    MAX = 255,
+    MAX_PLUS_1, // 0
+    MAX_PLUS_2 // 1
+  };
+
+  enum Constants {
+    CONST_FOO,
+    CONST_BAR = 70,
+    MAX_ARRAY_SIZE = 20,
+    MAX_ARRAY_SIZE2,
+    MAX_ARRAY_SIZE3 = MAX_ARRAY_SIZE + MAX_ARRAY_SIZE,
+    MY_INT32_MAX_MINUS_1 = 0x7FFFFFFE,
+    MY_INT32_MAX, // 0x7FFFFFFF
+    MY_INT32_MIN, // 0x80000000
+    MY_INT32_MIN_PLUS_1, // 0x80000001
+  };
+
+  @callflow(key=Constants:CONST_FOO + 1)
+  foo1(int32_t[Constants:CONST_FOO + 1] array);
+  foo2(int32_t[5 + 8] array);
+  foo3(int32_t[Constants:MAX_ARRAY_SIZE] array);
 };
