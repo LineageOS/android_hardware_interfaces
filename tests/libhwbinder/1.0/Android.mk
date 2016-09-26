@@ -17,9 +17,9 @@ $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBenchmark.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
-    $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-    -Lc++ -randroid.hardware:hardware/interfaces \
-    android.hardware.tests.libhwbinder@1.0::IBenchmark
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Lc++ -randroid.hardware:hardware/interfaces \
+        android.hardware.tests.libhwbinder@1.0::IBenchmark
 
 $(GEN): $(LOCAL_PATH)/IBenchmark.hal
 	$(transform-generated-source)
@@ -27,10 +27,10 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(intermediates)
 LOCAL_SHARED_LIBRARIES := \
-  libhidl \
-  libhwbinder \
-  libutils \
-  libcutils \
+    libhidl \
+    libhwbinder \
+    libutils \
+    libcutils \
 
 LOCAL_MULTILIB := both
 include $(BUILD_SHARED_LIBRARY)
@@ -54,9 +54,9 @@ $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBenchmark.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
-    $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-    -Ljava -randroid.hardware:hardware/interfaces \
-    android.hardware.tests.libhwbinder@1.0::IBenchmark
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.tests.libhwbinder@1.0::IBenchmark
 
 $(GEN): $(LOCAL_PATH)/IBenchmark.hal
 	$(transform-generated-source)
@@ -83,9 +83,9 @@ $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBenchmark.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
-    $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-    -Ljava -randroid.hardware:hardware/interfaces \
-    android.hardware.tests.libhwbinder@1.0::IBenchmark
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.tests.libhwbinder@1.0::IBenchmark
 
 $(GEN): $(LOCAL_PATH)/IBenchmark.hal
 	$(transform-generated-source)
