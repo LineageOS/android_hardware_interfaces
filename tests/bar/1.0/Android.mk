@@ -17,9 +17,9 @@ $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBar.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
-    $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-    -Lc++ -randroid.hardware:hardware/interfaces \
-    android.hardware.tests.bar@1.0::IBar
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Lc++ -randroid.hardware:hardware/interfaces \
+        android.hardware.tests.bar@1.0::IBar
 
 $(GEN): $(LOCAL_PATH)/IBar.hal
 	$(transform-generated-source)
@@ -27,11 +27,11 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(intermediates)
 LOCAL_SHARED_LIBRARIES := \
-  libhidl \
-  libhwbinder \
-  libutils \
-  libcutils \
-  android.hardware.tests.foo@1.0 \
+    libhidl \
+    libhwbinder \
+    libutils \
+    libcutils \
+    android.hardware.tests.foo@1.0 \
 
 LOCAL_MULTILIB := both
 include $(BUILD_SHARED_LIBRARY)
