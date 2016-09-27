@@ -25,6 +25,25 @@ $(GEN): $(LOCAL_PATH)/IExpression.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
 
+#
+# Build IExpressionExt.hal
+#
+GEN := $(intermediates)/android/hardware/tests/expression/1.0/ExpressionExtAll.cpp
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IExpressionExt.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/IExpression.hal
+$(GEN): $(LOCAL_PATH)/IExpression.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+    $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+    -Lc++ -randroid.hardware:hardware/interfaces \
+    android.hardware.tests.expression@1.0::IExpressionExt
+
+$(GEN): $(LOCAL_PATH)/IExpressionExt.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(intermediates)
 LOCAL_SHARED_LIBRARIES := \
   libhidl \
@@ -59,6 +78,25 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
     android.hardware.tests.expression@1.0::IExpression
 
 $(GEN): $(LOCAL_PATH)/IExpression.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build IExpressionExt.hal
+#
+GEN := $(intermediates)/android/hardware/tests/expression/1.0/IExpressionExt.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IExpressionExt.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/IExpression.hal
+$(GEN): $(LOCAL_PATH)/IExpression.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+    $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+    -Ljava -randroid.hardware:hardware/interfaces \
+    android.hardware.tests.expression@1.0::IExpressionExt
+
+$(GEN): $(LOCAL_PATH)/IExpressionExt.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
 include $(BUILD_JAVA_LIBRARY)
