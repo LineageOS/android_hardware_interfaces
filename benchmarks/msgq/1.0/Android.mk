@@ -17,9 +17,9 @@ $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBenchmarkMsgQ.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
-    $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-    -Lc++ -randroid.hardware:hardware/interfaces \
-    android.hardware.benchmarks.msgq@1.0::IBenchmarkMsgQ
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Lc++ -randroid.hardware:hardware/interfaces \
+        android.hardware.benchmarks.msgq@1.0::IBenchmarkMsgQ
 
 $(GEN): $(LOCAL_PATH)/IBenchmarkMsgQ.hal
 	$(transform-generated-source)
@@ -27,10 +27,10 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(intermediates)
 LOCAL_SHARED_LIBRARIES := \
-  libhidl \
-  libhwbinder \
-  libutils \
-  libcutils \
+    libhidl \
+    libhwbinder \
+    libutils \
+    libcutils \
 
 LOCAL_MULTILIB := both
 include $(BUILD_SHARED_LIBRARY)
