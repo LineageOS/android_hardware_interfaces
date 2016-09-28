@@ -1,0 +1,16 @@
+cc_library_shared {
+    name: "android.hardware.graphics.composer@2.1-impl",
+    relative_install_path: "hw",
+    srcs: ["Hwc.cpp"],
+    shared_libs: [
+        "android.hardware.graphics.allocator@2.0",
+        "android.hardware.graphics.composer@2.1",
+        "libbase",
+        "libcutils",
+        "libhardware",
+        "libhidl",
+        "libhwbinder",
+        "liblog",
+        "libutils",
+    ],
+}

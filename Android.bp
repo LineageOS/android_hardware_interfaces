@@ -8,6 +8,7 @@ subdirs = [
     "graphics/allocator/2.0",
     "graphics/allocator/2.0/default",
     "graphics/composer/2.1",
+    "graphics/composer/2.1/default",
     "graphics/mapper/2.0",
     "graphics/mapper/2.0/default",
     "light/2.0",
