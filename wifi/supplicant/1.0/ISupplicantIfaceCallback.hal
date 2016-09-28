@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.hardware.wifi@1.0;
+package android.hardware.wifi.supplicant@1.0;
 
 /**
  * Callback Interface exposed by the wpa_supplicant service
