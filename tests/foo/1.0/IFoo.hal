@@ -95,4 +95,6 @@ interface IFoo {
 
     transpose(StringMatrix5x3 in) generates (StringMatrix3x5 out);
     transpose2(ThreeStrings[5] in) generates (FiveStrings[3] out);
+
+    sendVec(vec<uint8_t> data) generates (vec<uint8_t> data);
 };
