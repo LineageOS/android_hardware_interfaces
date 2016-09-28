@@ -58,6 +58,12 @@ interface IBase {
         ThreeStrings[5] s;
     };
 
+    typedef uint8_t[6] MacAddress;
+
+    struct VectorOfArray {
+        vec<MacAddress> addresses;
+    };
+
     someBaseMethod();
 
     someBoolMethod(bool x) generates (bool y);
@@ -67,6 +73,8 @@ interface IBase {
     someOtherBaseMethod(Foo foo) generates (Foo result);
     someMethodWithFooArrays(Foo[2] fooInput) generates (Foo[2] fooOutput);
     someMethodWithFooVectors(vec<Foo> fooInput) generates (vec<Foo> fooOutput);
+
+    someMethodWithVectorOfArray(VectorOfArray in) generates (VectorOfArray out);
 
     transpose(StringMatrix5x3 in) generates (StringMatrix3x5 out);
     transpose2(ThreeStrings[5] in) generates (FiveStrings[3] out);
