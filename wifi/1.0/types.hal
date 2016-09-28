@@ -44,3 +44,54 @@ struct FailureReason {
  * An identifier for a mode that the chip can be put in.
  */
 typedef uint32_t ChipModeId;
+
+/**
+ * Enum values indicating the status of any supplicant operation.
+ */
+enum SupplicantStatusCode : uint32_t {
+  /** No errors. */
+  SUCCESS,
+  /** Unknown failure occured. */
+  FAILURE_UNKNOWN,
+  /** One of the incoming args is invalid. */
+  FAILURE_ARGS_INVALID,
+  /** |ISupplicantIface| HIDL interface object is no longer valid. */
+  FAILURE_IFACE_INVALID,
+  /** Iface with the provided name does not exist. */
+  FAILURE_IFACE_UNKNOWN,
+  /** Iface with the provided name already exists. */
+  FAILURE_IFACE_EXISTS,
+  /** Iface is disabled and cannot be used. */
+  FAILURE_IFACE_DISABLED,
+  /** Iface is not currently disconnected, so cannot reconnect. */
+  FAILURE_IFACE_NOT_DISCONNECTED,
+  /** |ISupplicantNetwork| HIDL interface object is no longer valid. */
+  FAILURE_NETWORK_INVALID,
+  /** Network with the provided id does not exist. */
+  FAILURE_NETWORK_UNKNOWN
+};
+
+/**
+ * Generic structure to return the status of any supplicant operation.
+ */
+struct SupplicantStatus {
+  SupplicantStatusCode code;
+  /**
+   * A vendor specific error message to provide more information beyond the
+   * status code.
+   * This will be used for debbuging purposes only.
+   */
+  string debugMessage;
+};
+
+/** SSID type. Max of 32 octets representing service identifier of a network. */
+typedef vec<uint8_t> Ssid;
+
+/** MAC Address type. 6 octets representing physical address of a device. */
+typedef uint8_t[6] MacAddress;
+
+/** BSSID type. 6 octets representing the physical address of an AP. */
+typedef MacAddress Bssid;
+
+/** Supplicant network ID type. */
+typedef uint32_t SupplicantNetworkId;
