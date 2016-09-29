@@ -19,15 +19,13 @@
 
 #include <functional>
 #include <set>
-#include <thread>
 
 #include <android-base/macros.h>
 #include <android/hardware/wifi/1.0/IWifi.h>
-#include <hardware_legacy/wifi_hal.h>
 #include <utils/Looper.h>
 
-#include "wifi_hal_state.h"
 #include "wifi_chip.h"
+#include "wifi_legacy_hal.h"
 
 namespace android {
 namespace hardware {
@@ -35,44 +33,30 @@ namespace wifi {
 namespace V1_0 {
 namespace implementation {
 
+/**
+ * Root HIDL interface object used to control the Wifi HAL.
+ */
 class Wifi : public IWifi {
  public:
-  Wifi(sp<Looper>& looper);
+  Wifi();
 
+  // HIDL methods exposed.
   Return<void> registerEventCallback(
       const sp<IWifiEventCallback>& callback) override;
-
   Return<bool> isStarted() override;
   Return<void> start() override;
   Return<void> stop() override;
-
   Return<void> getChip(getChip_cb cb) override;
 
  private:
-  const wifi_interface_handle kInterfaceNotFoundHandle = nullptr;
-  /** Get a HAL interface handle by name */
-  wifi_interface_handle FindInterfaceHandle(const std::string& ifname);
+  enum class RunState { STOPPED, STARTED, STOPPING };
 
-  /**
-   * Called to indicate that the HAL implementation cleanup may be complete and
-   * the rest of HAL cleanup should be performed.
-   */
-  void FinishHalCleanup();
-
-  /**
-   * Entry point for HAL event loop thread. Handles cleanup when terminating.
-   */
-  void DoHalEventLoop();
-
+  // Instance is created in this root level |IWifi| HIDL interface object
+  // and shared with all the child HIDL interface objects.
+  std::shared_ptr<WifiLegacyHal> legacy_hal_;
+  RunState run_state_;
   std::set<sp<IWifiEventCallback>> callbacks_;
   sp<WifiChip> chip_;
-
-  WifiHalState state_;
-  std::thread event_loop_thread_;
-
-  // Variables to hold state while stopping the HAL
-  bool awaiting_hal_cleanup_command_;
-  bool awaiting_hal_event_loop_termination_;
 
   DISALLOW_COPY_AND_ASSIGN(Wifi);
 };

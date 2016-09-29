@@ -26,18 +26,17 @@ namespace wifi {
 namespace V1_0 {
 namespace implementation {
 
-WifiChip::WifiChip(WifiHalState* hal_state,
-                   wifi_interface_handle interface_handle)
-    : hal_state_(hal_state), interface_handle_(interface_handle) {}
+WifiChip::WifiChip(std::weak_ptr<WifiLegacyHal> legacy_hal)
+    : legacy_hal_(legacy_hal) {}
 
-void WifiChip::Invalidate() {
-  hal_state_ = nullptr;
+void WifiChip::invalidate() {
+  legacy_hal_.reset();
   callbacks_.clear();
 }
 
 Return<void> WifiChip::registerEventCallback(
     const sp<IWifiChipEventCallback>& callback) {
-  if (!hal_state_)
+  if (!legacy_hal_.lock())
     return Void();
   // TODO(b/31632518): remove the callback when the client is destroyed
   callbacks_.insert(callback);
@@ -45,7 +44,7 @@ Return<void> WifiChip::registerEventCallback(
 }
 
 Return<void> WifiChip::getAvailableModes(getAvailableModes_cb cb) {
-  if (!hal_state_) {
+  if (!legacy_hal_.lock()) {
     cb(hidl_vec<ChipMode>());
     return Void();
   } else {
@@ -55,54 +54,23 @@ Return<void> WifiChip::getAvailableModes(getAvailableModes_cb cb) {
 }
 
 Return<void> WifiChip::configureChip(uint32_t /*mode_id*/) {
-  if (!hal_state_)
+  if (!legacy_hal_.lock())
     return Void();
   // TODO add implementation
   return Void();
 }
 
 Return<uint32_t> WifiChip::getMode() {
-  if (!hal_state_)
+  if (!legacy_hal_.lock())
     return 0;
   // TODO add implementation
   return 0;
 }
 
 Return<void> WifiChip::requestChipDebugInfo() {
-  if (!hal_state_)
+  if (!legacy_hal_.lock())
     return Void();
-
-  IWifiChipEventCallback::ChipDebugInfo result;
-  result.driverDescription = "<unknown>";
-  result.firmwareDescription = "<unknown>";
-  char buffer[256];
-
-  // get driver version
-  bzero(buffer, sizeof(buffer));
-  wifi_error ret = hal_state_->func_table_.wifi_get_driver_version(
-      interface_handle_, buffer, sizeof(buffer));
-  if (ret == WIFI_SUCCESS) {
-    result.driverDescription = buffer;
-  } else {
-    LOG(WARNING) << "Failed to get driver version: "
-                 << LegacyErrorToString(ret);
-  }
-
-  // get firmware version
-  bzero(buffer, sizeof(buffer));
-  ret = hal_state_->func_table_.wifi_get_firmware_version(
-      interface_handle_, buffer, sizeof(buffer));
-  if (ret == WIFI_SUCCESS) {
-    result.firmwareDescription = buffer;
-  } else {
-    LOG(WARNING) << "Failed to get firmware version: "
-                 << LegacyErrorToString(ret);
-  }
-
-  // send callback
-  for (auto& callback : callbacks_) {
-    callback->onChipDebugInfoAvailable(result);
-  }
+  // TODO add implementation
   return Void();
 }
 
