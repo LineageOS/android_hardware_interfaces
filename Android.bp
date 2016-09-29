@@ -7,6 +7,7 @@ subdirs = [
     "nfc/1.0/default",
     "radio/1.0",
     "power/1.0",
+    "power/1.0/default",
     "tests/bar/1.0",
     "tests/baz/1.0",
     "tests/expression/1.0",
