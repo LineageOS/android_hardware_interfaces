@@ -5,6 +5,7 @@ subdirs = [
     "benchmarks/msgq/1.0",
     "memtrack/1.0",
     "memtrack/1.0/default",
+    "light/2.0",
     "nfc/1.0",
     "nfc/1.0/default",
     "radio/1.0",
