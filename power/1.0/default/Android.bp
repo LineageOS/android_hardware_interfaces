@@ -27,3 +27,20 @@ cc_library_shared {
     ],
 
 }
+
+cc_binary {
+    relative_install_path: "hw",
+    name: "android.hardware.power@1.0-service",
+    srcs: ["service.cpp"],
+
+    shared_libs: [
+        "liblog",
+        "libdl",
+        "libutils",
+        "libhardware",
+        "libhidl",
+        "libhwbinder",
+        "android.hardware.power@1.0",
+    ],
+
+}
