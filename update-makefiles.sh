@@ -15,4 +15,5 @@ packages=$(pushd hardware/interfaces > /dev/null; \
 for p in $packages; do
   echo "Updating $p";
   hidl-gen -Lmakefile -r android.hardware:hardware/interfaces $p;
+  hidl-gen -Landroidbp -r android.hardware:hardware/interfaces $p;
 done
