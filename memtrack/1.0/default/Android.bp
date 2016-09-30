@@ -28,3 +28,21 @@ cc_library_shared {
     ],
 
 }
+
+cc_binary {
+    relative_install_path: "hw",
+    name: "android.hardware.memtrack@1.0-service",
+    srcs: ["service.cpp"],
+
+    shared_libs: [
+        "liblog",
+        "libbase",
+        "libdl",
+        "libutils",
+        "libhardware",
+        "libhidl",
+        "libhwbinder",
+        "android.hardware.memtrack@1.0",
+    ],
+
+}
