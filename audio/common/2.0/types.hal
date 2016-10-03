@@ -85,6 +85,7 @@ struct Uuid {
 /*
  * Audio stream type describing the intented use case of a stream.
  */
+@export(name="audio_stream_type_t")
 enum AudioStreamType : int32_t {
     // These values must kept in sync with
     //  frameworks/base/media/java/android/media/AudioSystem.java
@@ -114,6 +115,7 @@ enum AudioStreamType : int32_t {
     AUDIO_STREAM_CNT              = AUDIO_STREAM_PATCH + 1
 };
 
+@export(name="audio_source_t")
 enum AudioSource {
     // These values must kept in sync with
     //  frameworks/base/media/java/android/media/MediaRecorder.java,
@@ -154,6 +156,7 @@ typedef int32_t AudioSession;
 /*
  * Special audio session values.
  */
+@export(name="audio_session_t")
 enum AudioSessionConsts : int32_t {
     /*
      * Session for effects attached to a particular output stream
@@ -194,6 +197,7 @@ enum AudioSessionConsts : int32_t {
  * also be used for certain formats to give informations not present in the
  * encoded audio stream (e.g. octet alignement for AMR).
  */
+@export(name="audio_format_t")
 enum AudioFormat : uint32_t {
     AUDIO_FORMAT_INVALID             = 0xFFFFFFFFUL,
     AUDIO_FORMAT_DEFAULT             = 0,
@@ -284,6 +288,7 @@ enum AudioFormat : uint32_t {
  * Usage of these values highlights places in the code that use 2- or 8- channel
  * assumptions.
  */
+@export(name="")
 enum FixedChannelCount {
     FCC_2 = 2, // This is typically due to legacy implementation of stereo I/O
     FCC_8 = 8  // This is typically due to audio mixer and resampler limitations
@@ -321,6 +326,7 @@ enum FixedChannelCount {
  * checking the channel mask, the implementer should look for ways to fix it
  * with additional information outside of the mask.
  */
+@export(name="")
 enum AudioChannelMask : uint32_t {
     AUDIO_CHANNEL_REPRESENTATION_POSITION = 0, /* must be 0 for compatibility */
     /* 1 is reserved for future use */
@@ -478,6 +484,7 @@ enum AudioChannelMask : uint32_t {
  * Major modes for a mobile device. The current mode setting affects audio
  * routing.
  */
+@export(name="audio_mode_t")
 enum AudioMode {
     AUDIO_MODE_INVALID          = -2,
     AUDIO_MODE_CURRENT          = -1,
@@ -490,7 +497,8 @@ enum AudioMode {
     AUDIO_MODE_MAX              = AUDIO_MODE_CNT - 1,
 };
 
-enum AudioDevice {
+@export(name="")
+enum AudioDevice : uint32_t {
     AUDIO_DEVICE_NONE                          = 0x0,
     /* reserved bits */
     AUDIO_DEVICE_BIT_IN                        = 0x80000000,
@@ -641,6 +649,7 @@ enum AudioDevice {
  * The audio policy manager will try to match the flags in the request
  * (when getOuput() is called) to an available output stream.
  */
+@export(name="audio_output_flags_t")
 enum AudioOutputFlag {
     AUDIO_OUTPUT_FLAG_NONE = 0x0,    // no attributes
     AUDIO_OUTPUT_FLAG_DIRECT = 0x1,  // this output directly connects a track
@@ -673,6 +682,7 @@ enum AudioOutputFlag {
  * to indicate a preference to be connected to an input stream with
  * attributes corresponding to the specified flags.
  */
+@export(name="audio_input_flags_t")
 enum AudioInputFlags {
     AUDIO_INPUT_FLAG_NONE       = 0x0,  // no attributes
     AUDIO_INPUT_FLAG_FAST       = 0x1,  // prefer an input that supports
@@ -718,6 +728,7 @@ struct AudioConfig {
 /*
  * Type of gain control exposed by an audio port.
  */
+@export(name="")
 enum AudioGainMode : uint32_t {
     AUDIO_GAIN_MODE_JOINT = 0x1,    // supports joint channel gain control
     AUDIO_GAIN_MODE_CHANNELS = 0x2, // supports separate channel gain control
@@ -774,6 +785,7 @@ struct AudioGainConfig {
  */
 
 /* Audio port role: either source or sink */
+@export(name="audio_port_role_t")
 enum AudioPortRole {
     AUDIO_PORT_ROLE_NONE,
     AUDIO_PORT_ROLE_SOURCE,
@@ -785,6 +797,7 @@ enum AudioPortRole {
  * a mix (e.g PlaybackThread output) or a physical device
  * (e.g AUDIO_DEVICE_OUT_SPEAKER)
  */
+@export(name="audio_port_type_t")
 enum AudioPortType {
     AUDIO_PORT_TYPE_NONE,
     AUDIO_PORT_TYPE_DEVICE,
@@ -813,6 +826,7 @@ struct AudioPortConfigSessionExt {
 /*
  * Flags indicating which fields are to be considered in AudioPortConfig.
  */
+@export(name="")
 enum AudioPortConfigMask : uint32_t {
     AUDIO_PORT_CONFIG_SAMPLE_RATE = 0x1,
     AUDIO_PORT_CONFIG_CHANNEL_MASK =  0x2,
@@ -863,6 +877,7 @@ struct AudioPortDeviceExt {
 /*
  * Latency class of the audio mix.
  */
+@export(name="audio_mix_latency_class_t")
 enum AudioMixLatencyClass {
     AUDIO_LATENCY_LOW,
     AUDIO_LATENCY_NORMAL
