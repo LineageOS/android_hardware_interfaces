@@ -26,6 +26,8 @@
 namespace android {
 namespace hardware {
 namespace wifi {
+namespace V1_0 {
+namespace implementation {
 
 /**
  * Class that stores common state and functionality shared between HAL services.
@@ -41,11 +43,7 @@ class WifiHalState {
   /** opaque handle from vendor for use while HAL is running */
   wifi_handle hal_handle_;
 
-  enum class RunState {
-    STOPPED,
-    STARTED,
-    STOPPING
-  };
+  enum class RunState { STOPPED, STARTED, STOPPING };
 
   RunState run_state_;
 
@@ -55,6 +53,8 @@ class WifiHalState {
   DISALLOW_COPY_AND_ASSIGN(WifiHalState);
 };
 
+}  // namespace implementation
+}  // namespace V1_0
 }  // namespace wifi
 }  // namespace hardware
 }  // namespace android
