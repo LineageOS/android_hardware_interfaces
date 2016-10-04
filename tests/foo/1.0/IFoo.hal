@@ -31,7 +31,7 @@ interface IFoo {
     };
 
     struct Fumble {
-        float x;
+        Outer.Inner data;
     };
 
     typedef Fumble Gumble;

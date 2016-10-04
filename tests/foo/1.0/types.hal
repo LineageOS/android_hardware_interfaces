@@ -21,3 +21,13 @@ struct Abc {
     float y;
     handle z;
 };
+
+struct Outer {
+    struct Inner {
+        int32_t data;
+    };
+};
+
+struct Unrelated {
+    Outer.Inner great;
+};
