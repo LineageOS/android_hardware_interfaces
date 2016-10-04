@@ -27,7 +27,7 @@ interface INfc {
      * NCI initialization - ie accept CORE_RESET and subsequent commands through
      * the write() call.
      *
-     * If open() returns 0, the NCI stack will wait for a NfcEvent.OPEN_CPLT
+     * If open() returns 0, the NCI stack will wait for a HAL_NFC_OPEN_CPLT_EVT
      * before continuing.
      *
      * If open() returns any other value, the NCI stack will stop.
@@ -41,32 +41,32 @@ interface INfc {
      * This method may queue writes and return immediately. The only
      * requirement is that the writes are executed in order.
      */
-    write(NfcData data) generates (int32_t retval);
+    write(nfc_data_t data) generates (int32_t retval);
 
     /*
-     * coreInitialized() is called after the CORE_INIT_RSP is received from the NFCC.
+     * core_initialized() is called after the CORE_INIT_RSP is received from the NFCC.
      * At this time, the HAL can do any chip-specific configuration.
      *
-     * If coreInitialized() returns 0, the NCI stack will wait for a NfcEvent.POST_INIT_CPLT
+     * If core_initialized() returns 0, the NCI stack will wait for a HAL_NFC_POST_INIT_CPLT_EVT
      * before continuing.
      *
-     * If coreInitialized() returns any other value, the NCI stack will continue
+     * If core_initialized() returns any other value, the NCI stack will continue
      * immediately.
      */
-    coreInitialized(NfcData data) generates (int32_t retval);
+    core_initialized(vec<uint8_t> data) generates (int32_t retval);
 
     /*
-     * prediscover is called every time before starting RF discovery.
+     * pre_discover is called every time before starting RF discovery.
      * It is a good place to do vendor-specific configuration that must be
      * performed every time RF discovery is about to be started.
      *
-     * If prediscover() returns 0, the NCI stack will wait for a NfcEvent.PREDISCOVER_CPLT
+     * If pre_discover() returns 0, the NCI stack will wait for a HAL_NFC_PRE_DISCOVER_CPLT_EVT
      * before continuing.
      *
-     * If prediscover() returns any other value, the NCI stack will start
+     * If pre_discover() returns any other value, the NCI stack will start
      * RF discovery immediately.
      */
-    prediscover() generates (int32_t retval);
+    pre_discover() generates (int32_t retval);
 
     /*
      * Close the NFC controller. Should free all resources.
@@ -75,15 +75,15 @@ interface INfc {
 
     /*
      * Grant HAL the exclusive control to send NCI commands.
-     * Called in response to NfcEvent.REQUEST_CONTROL.
+     * Called in response to HAL_REQUEST_CONTROL_EVT.
      * Must only be called when there are no NCI commands pending.
-     * NfcEvent.RELEASE_CONTROL will notify when HAL no longer needs exclusive control.
+     * HAL_RELEASE_CONTROL_EVT will notify when HAL no longer needs exclusive control.
      */
-    controlGranted() generates (int32_t retval);
+    control_granted() generates (int32_t retval);
 
      /*
      * Restart controller by power cyle;
-     * NfcEvent.OPEN_CPLT will notify when operation is complete.
+     * HAL_OPEN_CPLT_EVT will notify when operation is complete.
      */
-    powerCycle() generates (int32_t retval);
+    power_cycle() generates (int32_t retval);
 };
