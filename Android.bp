@@ -19,6 +19,7 @@ subdirs = [
     "tests/msgq/1.0",
     "tests/pointer/1.0",
     "vibrator/1.0",
+    "vehicle/2.0",
     "wifi/1.0",
     "wifi/supplicant/1.0",
 ]
