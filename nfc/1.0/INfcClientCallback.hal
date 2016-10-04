@@ -21,11 +21,11 @@ interface INfcClientCallback {
      * The callback passed in from the NFC stack that the HAL
      * can use to pass events back to the stack.
      */
-    sendEvent(NfcEvent event, NfcStatus status);
+    sendEvent(nfc_event_t event, nfc_status_t event_status);
 
     /*
      * The callback passed in from the NFC stack that the HAL
      * can use to pass incomming data to the stack.
      */
-    sendData(NfcData data);
+    sendData(nfc_data_t data);
 };
