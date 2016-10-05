@@ -114,68 +114,6 @@ enum AudioStreamType : int32_t {
     AUDIO_STREAM_CNT              = AUDIO_STREAM_PATCH + 1
 };
 
-/*
- * The content type expresses the general category of the content --
- * what is being played.
- */
-enum AudioContentType {
-    // These values must kept in sync with
-    //  frameworks/base/media/java/android/media/AudioAttributes.java
-    AUDIO_CONTENT_TYPE_UNKNOWN      = 0,
-    AUDIO_CONTENT_TYPE_SPEECH       = 1,
-    AUDIO_CONTENT_TYPE_MUSIC        = 2,
-    AUDIO_CONTENT_TYPE_MOVIE        = 3,
-    AUDIO_CONTENT_TYPE_SONIFICATION = 4,
-
-    AUDIO_CONTENT_TYPE_CNT,
-    AUDIO_CONTENT_TYPE_MAX          = AUDIO_CONTENT_TYPE_CNT - 1
-};
-
-/*
- * The usage defines what is the purpose of the sound -- why somebody
- * is playing it.
- */
-enum AudioUsage {
-    // These values must kept in sync with
-    //  frameworks/base/media/java/android/media/AudioAttributes.java
-    AUDIO_USAGE_UNKNOWN                            = 0,
-    AUDIO_USAGE_MEDIA                              = 1,
-    AUDIO_USAGE_VOICE_COMMUNICATION                = 2,
-    AUDIO_USAGE_VOICE_COMMUNICATION_SIGNALLING     = 3,
-    AUDIO_USAGE_ALARM                              = 4,
-    AUDIO_USAGE_NOTIFICATION                       = 5,
-    AUDIO_USAGE_NOTIFICATION_TELEPHONY_RINGTONE    = 6,
-    AUDIO_USAGE_NOTIFICATION_COMMUNICATION_REQUEST = 7,
-    AUDIO_USAGE_NOTIFICATION_COMMUNICATION_INSTANT = 8,
-    AUDIO_USAGE_NOTIFICATION_COMMUNICATION_DELAYED = 9,
-    AUDIO_USAGE_NOTIFICATION_EVENT                 = 10,
-    AUDIO_USAGE_ASSISTANCE_ACCESSIBILITY           = 11,
-    AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE     = 12,
-    AUDIO_USAGE_ASSISTANCE_SONIFICATION            = 13,
-    AUDIO_USAGE_GAME                               = 14,
-    AUDIO_USAGE_VIRTUAL_SOURCE                     = 15,
-
-    AUDIO_USAGE_CNT,
-    AUDIO_USAGE_MAX                                = AUDIO_USAGE_CNT - 1
-};
-
-/*
- * Additional flags that can affect playback of the sound.
- */
-enum AudioFlagsMask : uint32_t {
-    // These values must kept in sync with
-    //  frameworks/base/media/java/android/media/AudioAttributes.java
-    AUDIO_FLAG_AUDIBILITY_ENFORCED        = 0x1,
-    AUDIO_FLAG_SECURE                     = 0x2,
-    AUDIO_FLAG_SCO                        = 0x4,
-    AUDIO_FLAG_BEACON                     = 0x8,
-    AUDIO_FLAG_HW_AV_SYNC                 = 0x10,
-    AUDIO_FLAG_HW_HOTWORD                 = 0x20,
-    AUDIO_FLAG_BYPASS_INTERRUPTION_POLICY = 0x40,
-    AUDIO_FLAG_BYPASS_MUTE                = 0x80,
-    AUDIO_FLAG_LOW_LATENCY                = 0x100
-};
-
 enum AudioSource {
     // These values must kept in sync with
     //  frameworks/base/media/java/android/media/MediaRecorder.java,
@@ -210,14 +148,6 @@ enum AudioSource {
      * Used only internally to the framework.
      */
     AUDIO_SOURCE_HOTWORD             = 1999
-};
-
-struct AudioAttributes {
-    AudioContentType contentType;
-    AudioUsage usage;
-    AudioSource source;
-    AudioFlagsMask flags;
-    string tags;
 };
 
 typedef int32_t AudioSession;
