@@ -6,9 +6,11 @@ genrule {
     cmd: "$tool -o $genDir -Lc++ -randroid.hardware:hardware/interfaces android.hardware.tests.bar@1.0",
     srcs: [
         "IBar.hal",
+        "IImportTypes.hal",
     ],
     out: [
         "android/hardware/tests/bar/1.0/BarAll.cpp",
+        "android/hardware/tests/bar/1.0/ImportTypesAll.cpp",
     ],
 }
 
@@ -18,6 +20,7 @@ genrule {
     cmd: "$tool -o $genDir -Lc++ -randroid.hardware:hardware/interfaces android.hardware.tests.bar@1.0",
     srcs: [
         "IBar.hal",
+        "IImportTypes.hal",
     ],
     out: [
         "android/hardware/tests/bar/1.0/IBar.h",
@@ -25,6 +28,11 @@ genrule {
         "android/hardware/tests/bar/1.0/BnBar.h",
         "android/hardware/tests/bar/1.0/BpBar.h",
         "android/hardware/tests/bar/1.0/BsBar.h",
+        "android/hardware/tests/bar/1.0/IImportTypes.h",
+        "android/hardware/tests/bar/1.0/IHwImportTypes.h",
+        "android/hardware/tests/bar/1.0/BnImportTypes.h",
+        "android/hardware/tests/bar/1.0/BpImportTypes.h",
+        "android/hardware/tests/bar/1.0/BsImportTypes.h",
     ],
 }
 
