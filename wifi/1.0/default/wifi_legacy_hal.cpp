@@ -21,6 +21,8 @@
 
 #include <android-base/logging.h>
 #include <cutils/properties.h>
+#include <wifi_system/hal_tool.h>
+#include <wifi_system/interface_tool.h>
 
 namespace {
 std::string getWlanInterfaceName() {
@@ -50,15 +52,23 @@ namespace implementation {
 WifiLegacyHal::WifiLegacyHal()
     : global_handle_(nullptr),
       wlan_interface_handle_(nullptr),
-      awaiting_event_loop_termination_(false) {
-  CHECK_EQ(init_wifi_vendor_hal_func_table(&global_func_table_), WIFI_SUCCESS)
-      << "Failed to initialize legacy hal function table";
-}
+      awaiting_event_loop_termination_(false) {}
 
 wifi_error WifiLegacyHal::start() {
   // Ensure that we're starting in a good state.
   CHECK(!global_handle_ && !wlan_interface_handle_ &&
         !awaiting_event_loop_termination_);
+
+  android::wifi_system::HalTool hal_tool;
+  android::wifi_system::InterfaceTool if_tool;
+  if (!hal_tool.InitFunctionTable(&global_func_table_)) {
+    LOG(ERROR) << "Failed to initialize legacy hal function table";
+    return WIFI_ERROR_UNKNOWN;
+  }
+  if (!if_tool.SetWifiUpState(true)) {
+    LOG(ERROR) << "Failed to set WiFi interface up";
+    return WIFI_ERROR_UNKNOWN;
+  }
 
   LOG(INFO) << "Starting legacy HAL";
   wifi_error status = global_func_table_.wifi_initialize(&global_handle_);
@@ -130,6 +140,8 @@ void WifiLegacyHal::runEventLoop() {
   }
   LOG(VERBOSE) << "Legacy HAL event loop terminated";
   awaiting_event_loop_termination_ = false;
+  android::wifi_system::InterfaceTool if_tool;
+  if_tool.SetWifiUpState(false);
 }
 
 }  // namespace implementation
