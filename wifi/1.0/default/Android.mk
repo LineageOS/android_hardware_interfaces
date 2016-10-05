@@ -21,7 +21,7 @@ LOCAL_SRC_FILES := \
     failure_reason_util.cpp \
     wifi_chip.cpp \
     wifi.cpp \
-    wifi_hal_state.cpp
+    wifi_legacy_hal.cpp
 LOCAL_SHARED_LIBRARIES := \
     android.hardware.wifi@1.0 \
     libbase \
