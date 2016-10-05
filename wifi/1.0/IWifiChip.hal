@@ -24,7 +24,7 @@ import IWifiChipEventCallback;
  * to perform operations like NAN, RTT, etc.
  */
 interface IWifiChip {
-  enum InterfaceType : uint32_t {
+  enum IfaceType : uint32_t {
     STA, AP, P2P,
     /**
      * NAN control interface. Datapath support may be queried and created
@@ -35,11 +35,11 @@ interface IWifiChip {
 
   /**
    * Set of interface types with the maximum number of interfaces that can have
-   * one of the specified type for a given ChipInterfaceCombination. See
-   * ChipInterfaceCombination for examples.
+   * one of the specified type for a given ChipIfaceCombination. See
+   * ChipIfaceCombination for examples.
    */
-  struct ChipInterfaceCombinationLimit {
-    vec<InterfaceType> types; // Each InterfaceType may occur at most once
+  struct ChipIfaceCombinationLimit {
+    vec<IfaceType> types; // Each IfaceType may occur at most once
     uint32_t maxIfaces;
   };
 
@@ -66,8 +66,8 @@ interface IWifiChip {
    *       [], [STA], [STA+NAN], [STA+STA], [NAN]
    *       Not included [STA+STA+NAN]
    */
-  struct ChipInterfaceCombination {
-    vec<ChipInterfaceCombinationLimit> limits;
+  struct ChipIfaceCombination {
+    vec<ChipIfaceCombinationLimit> limits;
   };
 
   /**
@@ -80,7 +80,7 @@ interface IWifiChip {
    *
    * When in a mode, it must be possible to perform any combination of creating
    * and removing interfaces as long as at least one of the
-   * ChipInterfaceCombinations is satisfied. This means that if a chip has two
+   * ChipIfaceCombinations is satisfied. This means that if a chip has two
    * available combinations, [{STA} <= 1] and [{AP} <= 1] then it is expected
    * that exactly one STA interface or one AP interface can be created, but it
    * is not expected that both a STA and AP interface could be created. If it
@@ -118,48 +118,62 @@ interface IWifiChip {
      * A list of the possible interface combinations that the chip can have
      * while in this mode.
      */
-    vec<ChipInterfaceCombination> availableCombinations;
+    vec<ChipIfaceCombination> availableCombinations;
   };
 
   /**
    * Requests notifications of significant events on this chip. Multiple calls
    * to this will register multiple callbacks each of which will receive all
    * events.
+   *
+   * @param callback An instance of the |IWifiChipEventCallback| HIDL interface
+   *        object.
    */
   oneway registerEventCallback(IWifiChipEventCallback callback);
 
   /**
    * Get the set of operation modes that the chip supports.
+   *
+   * @return modes List of modes supported by the device.
    */
   getAvailableModes() generates (vec<ChipMode> modes);
 
   /**
-   * Reconfigure the Chip. Will trigger onChipReconfigured.
+   * Reconfigure the Chip.
+   * Must trigger |IWifiChipEventCallback.onChipReconfigured| on sucess,
+   * or |IWifiChipEventCallback.onChipReconfigureFailure| on failure.
    *
    * @param modeId The mode that the chip should switch to, corresponding to the
-   *               id property of the target ChipMode.
+   *        id property of the target ChipMode.
    */
   oneway configureChip(ChipModeId modeId);
 
   /**
    * Get the current mode that the chip is in.
+   *
+   * @return modeId The mode that the chip is currently configured to,
+   *         corresponding to the id property of the target ChipMode.
    */
   getMode() generates (ChipModeId modeId);
 
   /**
-   * Request information about the chip. Will trigger onChipDebugInfoAvailable.
+   * Request information about the chip.
+   * Must trigger |IWifiChipEventCallback.onChipDebugInfoAvailable| on sucess,
+   * or |IWifiChipEventCallback.onChipDebugInfoFailure| on failure.
    */
   oneway requestChipDebugInfo();
 
   /**
-   * Request vendor debug info from the driver. Will trigger
-   * onDriverDebugDumpAvailable.
+   * Request vendor debug info from the driver.
+   * Must trigger |IWifiChipEventCallback.onDriverDebugDumpAvailable| on success,
+   * or |IWifiChipEventCallback.onDriverDebugDumpFailure| on failure.
    */
   oneway requestDriverDebugDump();
 
   /**
-   * Request vendor debug info from the firmware. Will trigger
-   * onFirmwareDebugDumpAvailable.
+   * Request vendor debug info from the firmware.
+   * Must trigger |IWifiChipEventCallback.onFirmwareDebugDumpAvailable| on
+   * success, or |IWifiChipEventCallback.onFirmwareDebugDumpFailure| on failure.
    */
   oneway requestFirmwareDebugDump();
 };
