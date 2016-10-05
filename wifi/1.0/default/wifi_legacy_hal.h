@@ -39,8 +39,13 @@ class WifiLegacyHal {
   wifi_error start();
   // Deinitialize the legacy HAL and stop the event looper thread.
   wifi_error stop(const std::function<void()>& on_complete_callback);
+  // Wrappers for all the functions in the legacy HAL function table.
+  std::pair<wifi_error, std::string> getWlanDriverVersion();
+  std::pair<wifi_error, std::string> getWlanFirmwareVersion();
 
  private:
+  static const uint32_t kMaxVersionStringLength;
+
   // Retrieve the interface handle to be used for the "wlan" interface.
   wifi_error retrieveWlanInterfaceHandle();
   // Run the legacy HAL event loop thread.
