@@ -36,15 +36,15 @@ int OnBinderReadReady(int /*fd*/, int /*events*/, void* /*data*/) {
 }
 
 int main(int /*argc*/, char** argv) {
-  android::base::InitLogging(
-      argv, android::base::LogdLogger(android::base::SYSTEM));
+  android::base::InitLogging(argv,
+                             android::base::LogdLogger(android::base::SYSTEM));
   LOG(INFO) << "wifi_hal_legacy is starting up...";
 
   // Setup binder
   int binder_fd = -1;
   ProcessState::self()->setThreadPoolMaxThreadCount(0);
-  CHECK_EQ(IPCThreadState::self()->setupPolling(&binder_fd),
-           android::NO_ERROR) << "Failed to initialize binder polling";
+  CHECK_EQ(IPCThreadState::self()->setupPolling(&binder_fd), android::NO_ERROR)
+      << "Failed to initialize binder polling";
   CHECK_GE(binder_fd, 0) << "Invalid binder FD: " << binder_fd;
 
   // Setup looper
@@ -54,13 +54,14 @@ int main(int /*argc*/, char** argv) {
       << "Failed to watch binder FD";
 
   // Setup hwbinder service
-  android::sp<android::hardware::wifi::Wifi> service =
-      new android::hardware::wifi::Wifi(looper);
-  CHECK_EQ(service->registerAsService("wifi"),
-           android::NO_ERROR) << "Failed to register wifi HAL";
+  android::sp<android::hardware::wifi::V1_0::IWifi> service =
+      new android::hardware::wifi::V1_0::implementation::Wifi(looper);
+  CHECK_EQ(service->registerAsService("wifi"), android::NO_ERROR)
+      << "Failed to register wifi HAL";
 
   // Loop
-  while (looper->pollAll(-1) != Looper::POLL_ERROR);
+  while (looper->pollAll(-1) != Looper::POLL_ERROR)
+    ;
 
   LOG(INFO) << "wifi_hal_legacy is terminating...";
   return 0;
