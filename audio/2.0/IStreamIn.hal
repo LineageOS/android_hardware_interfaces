@@ -1,0 +1,85 @@
+/*
+ * Copyright (C) 2016 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.audio@2.0;
+
+import android.hardware.audio.common@2.0;
+import IStream;
+
+interface IStreamIn extends IStream {
+    typedef android.hardware.audio@2.0::Result Result;
+
+    /*
+     * Returns the source descriptor of the input stream. Calling this method is
+     * equivalent to getting AUDIO_PARAMETER_STREAM_INPUT_SOURCE on the legacy
+     * HAL.
+     *
+     * @return retval operation completion status.
+     * @return source audio source.
+     */
+    getAudioSource() generates (Result retval, AudioSource source);
+
+    /*
+     * Set the input gain for the audio driver.
+     *
+     * @param gain 1.0f is unity, 0.0f is zero.
+     * @result retval operation completion status.
+     */
+    setGain(float gain) generates (Result retval);
+
+    /*
+     * Read audio buffer in from driver. If at least one frame was read prior to
+     * the error, 'read' must return that byte count and then return an error
+     * in the subsequent call.
+     *
+     * @param size maximum amount of bytes to read.
+     * @return retval operation completion status.
+     * @return data audio data.
+     */
+    // TODO(mnaganov): Replace with FMQ version.
+    read(uint64_t size) generates (Result retval, vec<uint8_t> data);
+
+    /*
+     * Return the amount of input frames lost in the audio driver since the last
+     * call of this function.
+     *
+     * Audio driver is expected to reset the value to 0 and restart counting
+     * upon returning the current value by this function call. Such loss
+     * typically occurs when the user space process is blocked longer than the
+     * capacity of audio driver buffers.
+     *
+     * @return retval operation completion status.
+     * @return framesLost the number of input audio frames lost.
+     */
+    getInputFramesLost() generates (Result retval, uint32_t framesLost);
+
+    /**
+     * Return a recent count of the number of audio frames received and the
+     * clock time associated with that frame count.
+     *
+     * @return retval INVALID_STATE if the device is not ready/available,
+     *                NOT_SUPPORTED if the command is not supported,
+     *                OK otherwise.
+     * @return frames the total frame count received. This must be as early in
+     *                the capture pipeline as possible. In general, frames
+     *                must be non-negative and must not go "backwards".
+     * @return time is the clock monotonic time when frames was measured. In
+     *              general, time must be a positive quantity and must not
+     *              go "backwards".
+     */
+    getCapturePosition()
+            generates (Result retval, uint64_t frames, uint64_t time);
+};
