@@ -19,8 +19,8 @@
 
 #include <set>
 
-#include <android/hardware/wifi/1.0/IWifiChip.h>
 #include <android-base/macros.h>
+#include <android/hardware/wifi/1.0/IWifiChip.h>
 #include <hardware_legacy/wifi_hal.h>
 
 #include "wifi_hal_state.h"
@@ -28,16 +28,17 @@
 namespace android {
 namespace hardware {
 namespace wifi {
+namespace V1_0 {
+namespace implementation {
 
-class WifiChip : public V1_0::IWifiChip {
+class WifiChip : public IWifiChip {
  public:
-  WifiChip(
-      WifiHalState* hal_state, wifi_interface_handle interface_handle);
+  WifiChip(WifiHalState* hal_state, wifi_interface_handle interface_handle);
 
   void Invalidate();
 
   Return<void> registerEventCallback(
-      const sp<V1_0::IWifiChipEventCallback>& callback) override;
+      const sp<IWifiChipEventCallback>& callback) override;
 
   Return<void> getAvailableModes(getAvailableModes_cb cb) override;
 
@@ -54,11 +55,13 @@ class WifiChip : public V1_0::IWifiChip {
  private:
   WifiHalState* hal_state_;
   wifi_interface_handle interface_handle_;
-  std::set<sp<V1_0::IWifiChipEventCallback>> callbacks_;
+  std::set<sp<IWifiChipEventCallback>> callbacks_;
 
   DISALLOW_COPY_AND_ASSIGN(WifiChip);
 };
 
+}  // namespace implementation
+}  // namespace V1_0
 }  // namespace wifi
 }  // namespace hardware
 }  // namespace android

@@ -16,14 +16,14 @@
 
 #include "failure_reason_util.h"
 
-using ::android::hardware::wifi::V1_0::CommandFailureReason;
-
 namespace android {
 namespace hardware {
 namespace wifi {
+namespace V1_0 {
+namespace implementation {
 
 std::string LegacyErrorToString(wifi_error error) {
-  switch(error) {
+  switch (error) {
     case WIFI_SUCCESS:
       return "SUCCESS";
     case WIFI_ERROR_UNINITIALIZED:
@@ -48,17 +48,17 @@ std::string LegacyErrorToString(wifi_error error) {
   }
 }
 
-V1_0::FailureReason CreateFailureReason(
-    CommandFailureReason reason, const std::string& description) {
-  V1_0::FailureReason result;
+FailureReason CreateFailureReason(CommandFailureReason reason,
+                                  const std::string& description) {
+  FailureReason result;
   result.reason = reason;
   result.description = description.data();
   return result;
 }
 
-V1_0::FailureReason CreateFailureReasonLegacyError(
-    wifi_error error, const std::string& desc) {
-  switch(error) {
+FailureReason CreateFailureReasonLegacyError(wifi_error error,
+                                             const std::string& desc) {
+  switch (error) {
     case WIFI_ERROR_UNINITIALIZED:
     case WIFI_ERROR_NOT_AVAILABLE:
       return CreateFailureReason(CommandFailureReason::NOT_AVAILABLE, desc);
@@ -71,16 +71,16 @@ V1_0::FailureReason CreateFailureReasonLegacyError(
       return CreateFailureReason(CommandFailureReason::INVALID_ARGS, desc);
 
     case WIFI_ERROR_TIMED_OUT:
-      return CreateFailureReason(
-          CommandFailureReason::UNKNOWN, desc + ", timed out");
+      return CreateFailureReason(CommandFailureReason::UNKNOWN,
+                                 desc + ", timed out");
 
     case WIFI_ERROR_TOO_MANY_REQUESTS:
-      return CreateFailureReason(
-          CommandFailureReason::UNKNOWN, desc + ", too many requests");
+      return CreateFailureReason(CommandFailureReason::UNKNOWN,
+                                 desc + ", too many requests");
 
     case WIFI_ERROR_OUT_OF_MEMORY:
-      return CreateFailureReason(
-          CommandFailureReason::UNKNOWN, desc + ", out of memory");
+      return CreateFailureReason(CommandFailureReason::UNKNOWN,
+                                 desc + ", out of memory");
 
     case WIFI_ERROR_NONE:
     case WIFI_ERROR_UNKNOWN:
@@ -89,6 +89,8 @@ V1_0::FailureReason CreateFailureReasonLegacyError(
   }
 }
 
+}  // namespace implementation
+}  // namespace V1_0
 }  // namespace wifi
 }  // namespace hardware
 }  // namespace android
