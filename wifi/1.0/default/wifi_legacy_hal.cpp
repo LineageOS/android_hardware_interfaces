@@ -41,6 +41,22 @@ void onStopComplete(wifi_handle handle) {
     on_stop_complete_internal_callback(handle);
   }
 }
+
+// Callback to be invoked for driver dump.
+std::function<void(char*, int)> on_driver_memory_dump_internal_callback;
+void onDriverMemoryDump(char* buffer, int buffer_size) {
+  if (on_driver_memory_dump_internal_callback) {
+    on_driver_memory_dump_internal_callback(buffer, buffer_size);
+  }
+}
+
+// Callback to be invoked for firmware dump.
+std::function<void(char*, int)> on_firmware_memory_dump_internal_callback;
+void onFirmwareMemoryDump(char* buffer, int buffer_size) {
+  if (on_firmware_memory_dump_internal_callback) {
+    on_firmware_memory_dump_internal_callback(buffer, buffer_size);
+  }
+}
 }
 
 namespace android {
@@ -118,6 +134,32 @@ std::pair<wifi_error, std::string> WifiLegacyHal::getWlanFirmwareVersion() {
   wifi_error status = global_func_table_.wifi_get_firmware_version(
       wlan_interface_handle_, buffer.data(), buffer.size());
   return std::make_pair(status, buffer.data());
+}
+
+std::pair<wifi_error, std::vector<char>>
+WifiLegacyHal::requestWlanDriverMemoryDump() {
+  std::vector<char> driver_dump;
+  on_driver_memory_dump_internal_callback = [&driver_dump](char* buffer,
+                                                           int buffer_size) {
+    driver_dump.insert(driver_dump.end(), buffer, buffer + buffer_size);
+  };
+  wifi_error status = global_func_table_.wifi_get_driver_memory_dump(
+      wlan_interface_handle_, {onDriverMemoryDump});
+  on_driver_memory_dump_internal_callback = nullptr;
+  return std::make_pair(status, std::move(driver_dump));
+}
+
+std::pair<wifi_error, std::vector<char>>
+WifiLegacyHal::requestWlanFirmwareMemoryDump() {
+  std::vector<char> firmware_dump;
+  on_firmware_memory_dump_internal_callback = [&firmware_dump](
+      char* buffer, int buffer_size) {
+    firmware_dump.insert(firmware_dump.end(), buffer, buffer + buffer_size);
+  };
+  wifi_error status = global_func_table_.wifi_get_firmware_memory_dump(
+      wlan_interface_handle_, {onFirmwareMemoryDump});
+  on_firmware_memory_dump_internal_callback = nullptr;
+  return std::make_pair(status, std::move(firmware_dump));
 }
 
 wifi_error WifiLegacyHal::retrieveWlanInterfaceHandle() {
