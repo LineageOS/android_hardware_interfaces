@@ -22,7 +22,6 @@
 #include "failure_reason_util.h"
 #include "wifi_chip.h"
 
-using ::android::hardware::wifi::V1_0::CommandFailureReason;
 using RunState = ::android::hardware::wifi::WifiHalState::RunState;
 
 namespace {
@@ -36,6 +35,8 @@ std::string GetWlanInterfaceName() {
 namespace android {
 namespace hardware {
 namespace wifi {
+namespace V1_0 {
+namespace implementation {
 
 Wifi::Wifi(sp<Looper>& looper) : state_(looper) {
   CHECK_EQ(init_wifi_vendor_hal_func_table(&state_.func_table_), WIFI_SUCCESS)
@@ -43,7 +44,7 @@ Wifi::Wifi(sp<Looper>& looper) : state_(looper) {
 }
 
 Return<void> Wifi::registerEventCallback(
-    const sp<V1_0::IWifiEventCallback>& callback) {
+    const sp<IWifiEventCallback>& callback) {
   // TODO(b/31632518): remove the callback when the client is destroyed
   callbacks_.insert(callback);
   return Void();
@@ -72,8 +73,8 @@ Return<void> Wifi::start() {
   if (status != WIFI_SUCCESS) {
     LOG(ERROR) << "Failed to initialize Wifi HAL";
     for (auto& callback : callbacks_) {
-      callback->onStartFailure(CreateFailureReasonLegacyError(
-          status, "Failed to initialize HAL"));
+      callback->onStartFailure(
+          CreateFailureReasonLegacyError(status, "Failed to initialize HAL"));
     }
     return Void();
   }
@@ -95,8 +96,7 @@ Return<void> Wifi::start() {
   return Void();
 }
 
-wifi_interface_handle Wifi::FindInterfaceHandle(
-    const std::string& ifname) {
+wifi_interface_handle Wifi::FindInterfaceHandle(const std::string& ifname) {
   int num_iface_handles = 0;
   wifi_interface_handle* iface_handles = nullptr;
   wifi_error ret = state_.func_table_.wifi_get_ifaces(
@@ -124,7 +124,6 @@ wifi_interface_handle Wifi::FindInterfaceHandle(
   return kInterfaceNotFoundHandle;
 }
 
-
 void NoopHalCleanupHandler(wifi_handle) {}
 
 Return<void> Wifi::stop() {
@@ -142,7 +141,8 @@ Return<void> Wifi::stop() {
   awaiting_hal_event_loop_termination_ = true;
   state_.run_state_ = RunState::STOPPING;
 
-  if (chip_.get()) chip_->Invalidate();
+  if (chip_.get())
+    chip_->Invalidate();
   chip_.clear();
 
   state_.func_table_.wifi_cleanup(state_.hal_handle_, NoopHalCleanupHandler);
@@ -160,10 +160,10 @@ void Wifi::DoHalEventLoop() {
   }
   LOG(VERBOSE) << "HAL Event loop terminated";
   event_loop_thread_.detach();
-  state_.PostTask([this](){
-      awaiting_hal_event_loop_termination_ = false;
-      FinishHalCleanup();
-    });
+  state_.PostTask([this]() {
+    awaiting_hal_event_loop_termination_ = false;
+    FinishHalCleanup();
+  });
 }
 
 void Wifi::FinishHalCleanup() {
@@ -176,12 +176,13 @@ void Wifi::FinishHalCleanup() {
   }
 }
 
-
 Return<void> Wifi::getChip(getChip_cb cb) {
   cb(chip_);
   return Void();
 }
 
+}  // namespace implementation
+}  // namespace V1_0
 }  // namespace wifi
 }  // namespace hardware
 }  // namespace android

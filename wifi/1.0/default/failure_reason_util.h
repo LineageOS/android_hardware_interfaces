@@ -23,14 +23,18 @@
 namespace android {
 namespace hardware {
 namespace wifi {
+namespace V1_0 {
+namespace implementation {
 
 std::string LegacyErrorToString(wifi_error error);
 
-V1_0::FailureReason CreateFailureReason(
-    V1_0::CommandFailureReason reason, const std::string& description);
-V1_0::FailureReason CreateFailureReasonLegacyError(
-    wifi_error error, const std::string& description);
+FailureReason CreateFailureReason(CommandFailureReason reason,
+                                  const std::string& description);
+FailureReason CreateFailureReasonLegacyError(wifi_error error,
+                                             const std::string& description);
 
+}  // namespace implementation
+}  // namespace V1_0
 }  // namespace wifi
 }  // namespace hardware
 }  // namespace android

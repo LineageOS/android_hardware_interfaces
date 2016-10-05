@@ -23,9 +23,11 @@
 namespace android {
 namespace hardware {
 namespace wifi {
+namespace V1_0 {
+namespace implementation {
 
-WifiChip::WifiChip(
-    WifiHalState* hal_state, wifi_interface_handle interface_handle)
+WifiChip::WifiChip(WifiHalState* hal_state,
+                   wifi_interface_handle interface_handle)
     : hal_state_(hal_state), interface_handle_(interface_handle) {}
 
 void WifiChip::Invalidate() {
@@ -34,8 +36,9 @@ void WifiChip::Invalidate() {
 }
 
 Return<void> WifiChip::registerEventCallback(
-    const sp<V1_0::IWifiChipEventCallback>& callback) {
-  if (!hal_state_) return Void();
+    const sp<IWifiChipEventCallback>& callback) {
+  if (!hal_state_)
+    return Void();
   // TODO(b/31632518): remove the callback when the client is destroyed
   callbacks_.insert(callback);
   return Void();
@@ -52,21 +55,24 @@ Return<void> WifiChip::getAvailableModes(getAvailableModes_cb cb) {
 }
 
 Return<void> WifiChip::configureChip(uint32_t /*mode_id*/) {
-  if (!hal_state_) return Void();
+  if (!hal_state_)
+    return Void();
   // TODO add implementation
   return Void();
 }
 
 Return<uint32_t> WifiChip::getMode() {
-  if (!hal_state_) return 0;
+  if (!hal_state_)
+    return 0;
   // TODO add implementation
   return 0;
 }
 
 Return<void> WifiChip::requestChipDebugInfo() {
-  if (!hal_state_) return Void();
+  if (!hal_state_)
+    return Void();
 
-  V1_0::IWifiChipEventCallback::ChipDebugInfo result;
+  IWifiChipEventCallback::ChipDebugInfo result;
   result.driverDescription = "<unknown>";
   result.firmwareDescription = "<unknown>";
   char buffer[256];
@@ -110,7 +116,8 @@ Return<void> WifiChip::requestFirmwareDebugDump() {
   return Void();
 }
 
-
+}  // namespace implementation
+}  // namespace V1_0
 }  // namespace wifi
 }  // namespace hardware
 }  // namespace android
