@@ -97,4 +97,6 @@ interface IFoo {
     transpose2(ThreeStrings[5] in) generates (FiveStrings[3] out);
 
     sendVec(vec<uint8_t> data) generates (vec<uint8_t> data);
+
+    sendVecVec() generates (vec<vec<uint8_t>> vecvec);
 };
