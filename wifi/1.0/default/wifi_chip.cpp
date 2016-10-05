@@ -70,7 +70,29 @@ Return<uint32_t> WifiChip::getMode() {
 Return<void> WifiChip::requestChipDebugInfo() {
   if (!legacy_hal_.lock())
     return Void();
-  // TODO add implementation
+
+  IWifiChipEventCallback::ChipDebugInfo result;
+
+  std::pair<wifi_error, std::string> ret =
+      legacy_hal_.lock()->getWlanDriverVersion();
+  if (ret.first != WIFI_SUCCESS) {
+    LOG(ERROR) << "Failed to get driver version: "
+               << LegacyErrorToString(ret.first);
+    return Void();
+  }
+  result.driverDescription = ret.second.c_str();
+
+  ret = legacy_hal_.lock()->getWlanFirmwareVersion();
+  if (ret.first != WIFI_SUCCESS) {
+    LOG(ERROR) << "Failed to get firmware version: "
+               << LegacyErrorToString(ret.first);
+    return Void();
+  }
+  result.firmwareDescription = ret.second.c_str();
+
+  for (const auto& callback : callbacks_) {
+    callback->onChipDebugInfoAvailable(result);
+  }
   return Void();
 }
 
