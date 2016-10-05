@@ -24,7 +24,7 @@ import IWifiChipEventCallback;
  * to perform operations like NAN, RTT, etc.
  */
 interface IWifiChip {
-  enum InterfaceType : uint32_t {
+  enum IfaceType : uint32_t {
     STA, AP, P2P,
     /**
      * NAN control interface. Datapath support may be queried and created
@@ -35,11 +35,11 @@ interface IWifiChip {
 
   /**
    * Set of interface types with the maximum number of interfaces that can have
-   * one of the specified type for a given ChipInterfaceCombination. See
-   * ChipInterfaceCombination for examples.
+   * one of the specified type for a given ChipIfaceCombination. See
+   * ChipIfaceCombination for examples.
    */
-  struct ChipInterfaceCombinationLimit {
-    vec<InterfaceType> types; // Each InterfaceType may occur at most once
+  struct ChipIfaceCombinationLimit {
+    vec<IfaceType> types; // Each IfaceType may occur at most once
     uint32_t maxIfaces;
   };
 
@@ -66,8 +66,8 @@ interface IWifiChip {
    *       [], [STA], [STA+NAN], [STA+STA], [NAN]
    *       Not included [STA+STA+NAN]
    */
-  struct ChipInterfaceCombination {
-    vec<ChipInterfaceCombinationLimit> limits;
+  struct ChipIfaceCombination {
+    vec<ChipIfaceCombinationLimit> limits;
   };
 
   /**
@@ -80,7 +80,7 @@ interface IWifiChip {
    *
    * When in a mode, it must be possible to perform any combination of creating
    * and removing interfaces as long as at least one of the
-   * ChipInterfaceCombinations is satisfied. This means that if a chip has two
+   * ChipIfaceCombinations is satisfied. This means that if a chip has two
    * available combinations, [{STA} <= 1] and [{AP} <= 1] then it is expected
    * that exactly one STA interface or one AP interface can be created, but it
    * is not expected that both a STA and AP interface could be created. If it
@@ -118,7 +118,7 @@ interface IWifiChip {
      * A list of the possible interface combinations that the chip can have
      * while in this mode.
      */
-    vec<ChipInterfaceCombination> availableCombinations;
+    vec<ChipIfaceCombination> availableCombinations;
   };
 
   /**
