@@ -28,8 +28,12 @@ interface IWifi {
   /**
    * Requests notifications of significant events for the HAL. Multiple calls to
    * this must register multiple callbacks each of which must receive all
-   * events. IWifiEventCallback registration must be independent of the state
-   * of the rest of the HAL and must persist though stops/starts.
+   * events. |IWifiEventCallback| object registration must be independent of the
+   * state of the rest of the HAL and must persist though stops/starts. These
+   * objects must be deleted when the corresponding client process is dead.
+   *
+   * @param callback An instance of the |IWifiEventCallback| HIDL interface
+   *        object.
    */
   @entry
   @callflow(next={"*"})
@@ -37,6 +41,8 @@ interface IWifi {
 
   /**
    * Get the current state of the HAL.
+   *
+   * @return started true if started, false otherwise.
    */
   isStarted() generates (bool started);
 
