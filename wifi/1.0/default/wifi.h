@@ -21,25 +21,26 @@
 #include <set>
 #include <thread>
 
-#include <android/hardware/wifi/1.0/IWifi.h>
 #include <android-base/macros.h>
+#include <android/hardware/wifi/1.0/IWifi.h>
 #include <hardware_legacy/wifi_hal.h>
 #include <utils/Looper.h>
 
 #include "wifi_hal_state.h"
+#include "wifi_chip.h"
 
 namespace android {
 namespace hardware {
 namespace wifi {
+namespace V1_0 {
+namespace implementation {
 
-class WifiChip;
-
-class Wifi : public V1_0::IWifi {
+class Wifi : public IWifi {
  public:
   Wifi(sp<Looper>& looper);
 
   Return<void> registerEventCallback(
-      const sp<V1_0::IWifiEventCallback>& callback) override;
+      const sp<IWifiEventCallback>& callback) override;
 
   Return<bool> isStarted() override;
   Return<void> start() override;
@@ -63,7 +64,7 @@ class Wifi : public V1_0::IWifi {
    */
   void DoHalEventLoop();
 
-  std::set<sp<V1_0::IWifiEventCallback>> callbacks_;
+  std::set<sp<IWifiEventCallback>> callbacks_;
   sp<WifiChip> chip_;
 
   WifiHalState state_;
@@ -76,6 +77,8 @@ class Wifi : public V1_0::IWifi {
   DISALLOW_COPY_AND_ASSIGN(Wifi);
 };
 
+}  // namespace implementation
+}  // namespace V1_0
 }  // namespace wifi
 }  // namespace hardware
 }  // namespace android
