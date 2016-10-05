@@ -24,7 +24,7 @@ interface IWifiChipEventCallback {
    * considered invalid.
    *
    * @param modeId The mode that the chip switched to, corresponding to the id
-   *                property of the target ChipMode.
+   *        property of the target ChipMode.
    */
   oneway onChipReconfigured(ChipModeId modeId);
 
@@ -34,7 +34,8 @@ interface IWifiChipEventCallback {
    * assumed to be invalid.
    *
    * @param modeId The mode that the chip failed switched to, corresponding to
-   *                the id property of the target ChipMode.
+   *        the id property of the target ChipMode.
+   * @param reason Failure reason code.
    */
   oneway onChipReconfigureFailure(ChipModeId modeId, FailureReason reason);
 
@@ -51,18 +52,45 @@ interface IWifiChipEventCallback {
 
   /**
    * Callback with debug information about this chip
+   *
+   * @param info Instance of |ChipDebugInfo|.
    */
   oneway onChipDebugInfoAvailable(ChipDebugInfo info);
 
   /**
-   * Callback with a vendor specific debug blob from the driver.
-   * This blob will be dumped as part of the bug report.
+   * Callback to be invoked on failure to fetch debug info about this chip.
+   *
+   * @param reason Failure reason code.
    */
-  oneway onDriverDebugDumpAvailable(vec<uint8_t> blob);
+  oneway onChipDebugInfoFailure(FailureReason reason);
 
   /**
    * Callback with a vendor specific debug blob from the driver.
    * This blob will be dumped as part of the bug report.
+   *
+   * @param blob Vector of bytes retrieved from the driver.
+   */
+  oneway onDriverDebugDumpAvailable(vec<uint8_t> blob);
+
+  /**
+   * Callback to be invoked on failure to fetch debug blob from driver.
+   *
+   * @param reason Failure reason code.
+   */
+  oneway onDriverDebugDumpFailure(FailureReason reason);
+
+  /**
+   * Callback with a vendor specific debug blob from the driver.
+   * This blob will be dumped as part of the bug report.
+   *
+   * @param blob Vector of bytes retrieved from the driver.
    */
   oneway onFirmwareDebugDumpAvailable(vec<uint8_t> blob);
+
+  /**
+   * Callback to be invoked on failure to fetch debug blob from driver.
+   *
+   * @param reason Failure reason code.
+   */
+  oneway onFirmwareDebugDumpFailure(FailureReason reason);
 };
