@@ -55,13 +55,14 @@ int main(int /*argc*/, char** argv) {
 
   // Setup hwbinder service
   android::sp<android::hardware::wifi::V1_0::IWifi> service =
-      new android::hardware::wifi::V1_0::implementation::Wifi(looper);
+      new android::hardware::wifi::V1_0::implementation::Wifi();
   CHECK_EQ(service->registerAsService("wifi"), android::NO_ERROR)
       << "Failed to register wifi HAL";
 
   // Loop
-  while (looper->pollAll(-1) != Looper::POLL_ERROR)
-    ;
+  while (looper->pollAll(-1) != Looper::POLL_ERROR) {
+    // Keep polling until failure.
+  }
 
   LOG(INFO) << "wifi_hal_legacy is terminating...";
   return 0;
