@@ -38,7 +38,19 @@ namespace implementation {
 class WifiChip : public IWifiChip {
  public:
   WifiChip(ChipId chip_id, const std::weak_ptr<WifiLegacyHal> legacy_hal);
-  // Invalidate this instance once the HAL is stopped.
+  // HIDL does not provide a built-in mechanism to let the server invalidate
+  // a HIDL interface object after creation. If any client process holds onto
+  // a reference to the object in their context, any method calls on that
+  // reference will continue to be directed to the server.
+  //
+  // However Wifi HAL needs to control the lifetime of these objects. So, add
+  // a public |invalidate| method to |WifiChip| and it's child objects. This
+  // will be used to mark an object invalid when either:
+  // a) Wifi HAL is stopped, or
+  // b) Wifi Chip is reconfigured.
+  //
+  // All HIDL method implementations should check if the object is still marked
+  // valid before processing them.
   void invalidate();
 
   // HIDL methods exposed.
