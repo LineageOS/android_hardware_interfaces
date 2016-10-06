@@ -16,22 +16,24 @@
 
 package android.hardware.nfc@1.0;
 
-enum NfcEvent : uint32_t {
-    OPEN_CPLT           = 0,
-    CLOSE_CPLT          = 1,
-    POST_INIT_CPLT      = 2,
-    PRE_DISCOVER_CPLT   = 3,
-    REQUEST_CONTROL     = 4,
-    RELEASE_CONTROL     = 5,
-    ERROR               = 6
+enum nfc_event_t : uint32_t {
+    HAL_NFC_OPEN_CPLT_EVT           = 0,
+    HAL_NFC_CLOSE_CPLT_EVT          = 1,
+    HAL_NFC_POST_INIT_CPLT_EVT      = 2,
+    HAL_NFC_PRE_DISCOVER_CPLT_EVT   = 3,
+    HAL_NFC_REQUEST_CONTROL_EVT     = 4,
+    HAL_NFC_RELEASE_CONTROL_EVT     = 5,
+    HAL_NFC_ERROR_EVT               = 6
 };
 
-enum NfcStatus : uint32_t {
-    OK               = 0,
-    FAILED           = 1,
-    ERR_TRANSPORT    = 2,
-    ERR_CMD_TIMEOUT  = 3,
-    REFUSED          = 4
+enum nfc_status_t : uint32_t {
+    HAL_NFC_STATUS_OK               = 0,
+    HAL_NFC_STATUS_FAILED           = 1,
+    HAL_NFC_STATUS_ERR_TRANSPORT    = 2,
+    HAL_NFC_STATUS_ERR_CMD_TIMEOUT  = 3,
+    HAL_NFC_STATUS_REFUSED          = 4
 };
 
-typedef vec<uint8_t> NfcData;
+struct nfc_data_t {
+    vec<uint8_t> data;
+};
