@@ -13,6 +13,7 @@ namespace implementation {
 
 using ::android::hardware::nfc::V1_0::INfc;
 using ::android::hardware::nfc::V1_0::INfcClientCallback;
+using ::android::hardware::nfc::V1_0::nfc_data_t;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::hidl_vec;
@@ -22,23 +23,23 @@ using ::android::sp;
 struct Nfc : public INfc {
   Nfc(nfc_nci_device_t* device);
   ::android::hardware::Return<int32_t> open(const sp<INfcClientCallback>& clientCallback)  override;
-  ::android::hardware::Return<int32_t> write(const hidl_vec<uint8_t>& data)  override;
-  ::android::hardware::Return<int32_t> coreInitialized(const hidl_vec<uint8_t>& data)  override;
-  ::android::hardware::Return<int32_t> prediscover()  override;
+  ::android::hardware::Return<int32_t> write(const nfc_data_t& data)  override;
+  ::android::hardware::Return<int32_t> core_initialized(const hidl_vec<uint8_t>& data)  override;
+  ::android::hardware::Return<int32_t> pre_discover()  override;
   ::android::hardware::Return<int32_t> close()  override;
-  ::android::hardware::Return<int32_t> controlGranted()  override;
-  ::android::hardware::Return<int32_t> powerCycle()  override;
+  ::android::hardware::Return<int32_t> control_granted()  override;
+  ::android::hardware::Return<int32_t> power_cycle()  override;
 
-  static void eventCallback(uint8_t event, uint8_t status) {
+  static void event_callback(uint8_t event, uint8_t status) {
       if (mCallback != nullptr) {
           mCallback->sendEvent(
-                  (::android::hardware::nfc::V1_0::NfcEvent) event,
-                  (::android::hardware::nfc::V1_0::NfcStatus) status);
+                  (::android::hardware::nfc::V1_0::nfc_event_t) event,
+                  (::android::hardware::nfc::V1_0::nfc_status_t) status);
       }
   }
-  static void dataCallback(uint16_t data_len, uint8_t* p_data) {
-      hidl_vec<uint8_t> data;
-      data.setToExternal(p_data, data_len);
+  static void data_callback(uint16_t data_len, uint8_t* p_data) {
+      nfc_data_t data;
+      data.data.setToExternal(p_data, data_len);
       if (mCallback != nullptr) {
           mCallback->sendData(data);
       }
