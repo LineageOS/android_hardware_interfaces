@@ -55,12 +55,12 @@ typedef uint32_t AudioHwSync;
 /*
  * Each port has a unique ID or handle allocated by policy manager.
  */
+@export(name="")
 enum AudioHandleConsts {
     AUDIO_IO_HANDLE_NONE = 0,
     AUDIO_MODULE_HANDLE_NONE = 0,
     AUDIO_PORT_HANDLE_NONE = 0,
     AUDIO_PATCH_HANDLE_NONE = 0,
-    AUDIO_HW_SYNC_INVALID = 0
 };
 
 /*
