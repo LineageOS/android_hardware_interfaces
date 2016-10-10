@@ -1,0 +1,191 @@
+/*
+ * Copyright (C) 2016 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.radio@1.0;
+
+enum RadioConst : int32_t {
+    RADIO_VERSION = 12,
+    RADIO_LAST_IMPRECISE_RIL_VERSION = 12,
+    RADIO_VERSION_MIN = 6,
+    RADIO_CDMA_ALPHA_INFO_BUFFER_LENGTH = 64,
+    RADIO_CDMA_NUMBER_INFO_BUFFER_LENGTH = 81,
+    RADIO_MAX_RILDS = 3,
+    RADIO_MAX_SOCKET_NAME_LENGTH = 6,
+    RADIO_MAX_CLIENT_ID_LENGTH = 2,
+    RADIO_MAX_DEBUG_SOCKET_NAME_LENGTH = 12,
+    RADIO_MAX_QEMU_PIPE_NAME_LENGTH = 11,
+    RADIO_MAX_UUID_LENGTH = 64,
+    RADIO_RADIO_CAPABILITY_VERSION = 1,
+    RADIO_CARD_MAX_APPS = 8,
+    RADIO_CDMA_MAX_NUMBER_OF_INFO_RECS = 10,
+    RADIO_SS_INFO_MAX = 4,
+    RADIO_NUM_SERVICE_CLASSES = 7,
+    RADIO_NUM_TX_POWER_LEVELS = 5,
+};
+
+enum RadioCdmaSmsConst : int32_t {
+    ADDRESS_MAX = 36,
+    SUBADDRESS_MAX = 36,
+    BEARER_DATA_MAX = 255,
+    UDH_MAX_SND_SIZE = 128,
+    UDH_EO_DATA_SEGMENT_MAX = 131,
+    MAX_UD_HEADERS = 7,
+    USER_DATA_MAX = 229,
+    UDH_LARGE_PIC_SIZE = 128,
+    UDH_SMALL_PIC_SIZE = 32,
+    UDH_VAR_PIC_SIZE = 134,
+    UDH_ANIM_NUM_BITMAPS = 4,
+    UDH_LARGE_BITMAP_SIZE = 32,
+    UDH_SMALL_BITMAP_SIZE = 8,
+    UDH_OTHER_SIZE = 226,
+    IP_ADDRESS_SIZE = 4,
+};
+
+enum RadioRestrictedState : int32_t {
+    NONE = 0x00,
+    CS_EMERGENCY = 0x01,
+    CS_NORMAL = 0x02,
+    CS_ALL = 0x04,
+    PS_ALL = 0x10,
+};
+
+enum RadioCardState : int32_t {
+    ABSENT = 0,
+    PRESENT = 1,
+    ERROR = 2,
+    /* card is present but not usable due to carrier restrictions.*/
+    RESTRICTED = 3,
+};
+
+enum RadioPinState : int32_t {
+    UNKNOWN = 0,
+    ENABLED_NOT_VERIFIED = 1,
+    ENABLED_VERIFIED = 2,
+    DISABLED = 3,
+    ENABLED_BLOCKED = 4,
+    ENABLED_PERM_BLOCKED = 5,
+};
+
+enum RadioAppType : int32_t {
+    UNKNOWN = 0,
+    SIM = 1,
+    USIM = 2,
+    RUIM = 3,
+    CSIM = 4,
+    ISIM = 5,
+};
+
+enum RadioAppState : int32_t {
+    UNKNOWN = 0,
+    DETECTED = 1,
+    PIN = 2,
+    /* If PIN1 or UPin is required */
+    PUK = 3,
+    /* If PUK1 or Puk for UPin is required */
+    SUBSCRIPTION_PERSO = 4,
+    /* perso_substate should be look at when app_state is assigned to this value */
+    READY = 5,
+};
+
+enum RadioPersoSubstate : int32_t {
+    UNKNOWN = 0,
+    /* initial state */
+    IN_PROGRESS = 1,
+    /* in between each lock transition */
+    READY = 2,
+    /* when either SIM or RUIM Perso is finished since each app can only have 1 active perso
+    involved */
+    SIM_NETWORK = 3,
+    SIM_NETWORK_SUBSET = 4,
+    SIM_CORPORATE = 5,
+    SIM_SERVICE_PROVIDER = 6,
+    SIM_SIM = 7,
+    SIM_NETWORK_PUK = 8,
+    /* The corresponding perso lock is blocked */
+    SIM_NETWORK_SUBSET_PUK = 9,
+    SIM_CORPORATE_PUK = 10,
+    SIM_SERVICE_PROVIDER_PUK = 11,
+    SIM_SIM_PUK = 12,
+    RUIM_NETWORK1 = 13,
+    RUIM_NETWORK2 = 14,
+    RUIM_HRPD = 15,
+    RUIM_CORPORATE = 16,
+    RUIM_SERVICE_PROVIDER = 17,
+    RUIM_RUIM = 18,
+    RUIM_NETWORK1_PUK = 19,
+    /* The corresponding perso lock is blocked */
+    RUIM_NETWORK2_PUK = 20,
+    RUIM_HRPD_PUK = 21,
+    RUIM_CORPORATE_PUK = 22,
+    RUIM_SERVICE_PROVIDER_PUK = 23,
+    RUIM_RUIM_PUK = 24,
+};
+
+enum RadioState : int32_t  {
+  OFF = 0,
+  /* Radio explictly powered off (eg CFUN=0) */
+  UNAVAILABLE = 1,
+  /* States 2-9 below are deprecated. Just leaving them here for backward compatibility. */
+  SIM_NOT_READY = 2,
+  /* Radio is on, but the SIM interface is not ready */
+  SIM_LOCKED_OR_ABSENT = 3,
+  /* SIM PIN locked, PUK required, network
+   personalization locked, or SIM absent */
+  SIM_READY = 4,
+  /* Radio is on and SIM interface is available */
+  RUIM_NOT_READY = 5,
+  /* Radio is on, but the RUIM interface is not ready */
+  RUIM_READY = 6,
+  /* Radio is on and the RUIM interface is available */
+  RUIM_LOCKED_OR_ABSENT = 7,
+  /* RUIM PIN locked, PUK required, network
+   personalization locked, or RUIM absent */
+  NV_NOT_READY = 8,
+  /* Radio is on, but the NV interface is not available */
+  NV_READY = 9,
+  /* Radio is on */
+  ON = 10,
+};
+
+struct RadioAppStatus {
+    RadioAppType appType;
+    RadioAppState appState;
+    RadioPersoSubstate persoSubstate;
+    /* applicable only if app_state == SUBSCRIPTION_PERSO */
+    string aidPtr;
+    /* null terminated string, e.g., from 0xA0, 0x00 -> 0x41, 0x30, 0x30, 0x30 */
+    string appLabelPtr;
+    /* null terminated string */
+    int32_t pin1Replaced;
+    /* applicable to USIM, CSIM & ISIM */
+    RadioPinState pin1;
+    RadioPinState pin2;
+};
+
+struct RadioCardStatus {
+    RadioCardState cardState;
+    RadioPinState universalPinState;
+    /* applicable to USIM and CSIM */
+    int32_t gsmUmtsSubscriptionAppIndex;
+    /* value < RADIO_CARD_MAX_APPS, -1 if none */
+    int32_t cdmaSubscriptionAppIndex;
+    /* value < RADIO_CARD_MAX_APPS, -1 if none */
+    int32_t imsSubscriptionAppIndex;
+    /* value < RADIO_CARD_MAX_APPS, -1 if none */
+    int32_t numApplications;
+    /* value <= RADIO_CARD_MAX_APPS */
+    RadioAppStatus[RadioConst:RADIO_CARD_MAX_APPS] applications;
+};
