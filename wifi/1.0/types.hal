@@ -17,41 +17,28 @@
 package android.hardware.wifi@1.0;
 
 /**
- * Enum values indicating whether the command processing was successfully
- * initiated or not.
+ * Enum values indicating the status of operation.
  */
-enum StatusCode : uint32_t {
-  /** No errors. Command processing successfully initiated. */
+enum WifiStatusCode : uint32_t {
+  /** No errors. */
   SUCCESS,
   /** Method invoked on an invalid |IWifiChip| object. */
   ERROR_WIFI_CHIP_INVALID,
   /** Method invoked on an invalid |IWifiIface| object. */
   ERROR_WIFI_IFACE_INVALID,
   /** Method invoked on an invalid |IWifiRttController| object. */
-  ERROR_WIFI_RTT_CONTROLLER_INVALID
+  ERROR_WIFI_RTT_CONTROLLER_INVALID,
+  ERROR_NOT_SUPPORTED,
+  ERROR_NOT_AVAILABLE,
+  ERROR_INVALID_ARGS,
+  ERROR_UNKNOWN
 };
 
 /**
- * List of failure reasons returned in |FailureReason|.
+ * Generic structure to return the status of an operation.
  */
-enum FailureReasonCode : uint32_t {
-  UNKNOWN,
-  DUPLICATE_COMMAND_ID,
-  NOT_SUPPORTED,
-  NOT_AVAILABLE,
-  INVALID_ARGS,
-  DRIVER_ERROR_OTHER,
-  FIRMWARE_ERROR_OTHER,
-  SCAN_INVALID_CHANNEL
-};
-
-/**
- * Generic structure to return information about a failure.
- * The failure reason will be returned in the corresponding |onFailure|
- * callback.
- */
-struct FailureReason {
-  FailureReasonCode reason;
+struct WifiStatus {
+  WifiStatusCode code;
   /**
    * A vendor specific error message from the vendor to provide more
    * information beyond the reason code.
