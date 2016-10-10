@@ -17,6 +17,8 @@
 package android.hardware.tests.foo@1.0;
 
 import IFooCallback;
+import IMyTypes.SomeStruct;
+import ITheirTypes.FloatArray;
 
 interface IFoo {
 
@@ -70,6 +72,11 @@ interface IFoo {
 
     struct StringMatrix5x3 {
         ThreeStrings[5] s;
+    };
+
+    struct MyStruct {
+        SomeStruct innerStruct;
+        FloatArray myFloatArray;
     };
 
     doThis(float param);
