@@ -14,23 +14,15 @@
  * limitations under the License.
  */
 
-package android.hardware.tests.foo@1.0;
+package android.hardware.tests.bar@1.0;
 
-struct Abc {
-    string x;
-    float y;
-    handle z;
-};
+import android.hardware.tests.foo@1.0::types;
 
-struct Outer {
-    struct Inner {
-        struct Deep {
-            int32_t data;
-        };
-        int32_t data;
+interface IImportTypes {
+    typedef Unrelated Related;
+    struct GoodStruct {
+        Outer outer;
+        android.hardware.tests.foo@1.0::Outer.Inner inner;
+        @1.0::Outer.Inner.Deep deep;
     };
-};
-
-struct Unrelated {
-    Outer.Inner great;
 };
