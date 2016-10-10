@@ -21,6 +21,11 @@
 #include "failure_reason_util.h"
 #include "wifi_chip.h"
 
+namespace {
+// Chip ID to use for the only supported chip.
+static constexpr android::hardware::wifi::V1_0::ChipId kChipId = 0;
+}  // namespace
+
 namespace android {
 namespace hardware {
 namespace wifi {
@@ -33,7 +38,7 @@ Wifi::Wifi()
 Return<void> Wifi::registerEventCallback(
     const sp<IWifiEventCallback>& callback) {
   // TODO(b/31632518): remove the callback when the client is destroyed
-  callbacks_.insert(callback);
+  callbacks_.emplace_back(callback);
   return Void();
 }
 
@@ -67,7 +72,7 @@ Return<void> Wifi::start() {
   }
 
   // Create the chip instance once the HAL is started.
-  chip_ = new WifiChip(legacy_hal_);
+  chip_ = new WifiChip(kChipId, legacy_hal_);
   run_state_ = RunState::STARTED;
   for (const auto& callback : callbacks_) {
     callback->onStart();
@@ -108,8 +113,23 @@ Return<void> Wifi::stop() {
   return Void();
 }
 
-Return<void> Wifi::getChip(getChip_cb cb) {
-  cb(chip_);
+Return<void> Wifi::getChipIds(getChipIds_cb cb) {
+  std::vector<ChipId> chip_ids;
+  if (chip_.get()) {
+    chip_ids.emplace_back(kChipId);
+  }
+  hidl_vec<ChipId> hidl_data;
+  hidl_data.setToExternal(chip_ids.data(), chip_ids.size());
+  cb(hidl_data);
+  return Void();
+}
+
+Return<void> Wifi::getChip(ChipId chip_id, getChip_cb cb) {
+  if (chip_.get() && chip_id == kChipId) {
+    cb(chip_);
+  } else {
+    cb(nullptr);
+  }
   return Void();
 }
 

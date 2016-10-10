@@ -18,7 +18,6 @@
 #define WIFI_H_
 
 #include <functional>
-#include <set>
 
 #include <android-base/macros.h>
 #include <android/hardware/wifi/1.0/IWifi.h>
@@ -46,7 +45,8 @@ class Wifi : public IWifi {
   Return<bool> isStarted() override;
   Return<void> start() override;
   Return<void> stop() override;
-  Return<void> getChip(getChip_cb cb) override;
+  Return<void> getChipIds(getChipIds_cb cb) override;
+  Return<void> getChip(ChipId chip_id, getChip_cb cb) override;
 
  private:
   enum class RunState { STOPPED, STARTED, STOPPING };
@@ -55,7 +55,7 @@ class Wifi : public IWifi {
   // and shared with all the child HIDL interface objects.
   std::shared_ptr<WifiLegacyHal> legacy_hal_;
   RunState run_state_;
-  std::set<sp<IWifiEventCallback>> callbacks_;
+  std::vector<sp<IWifiEventCallback>> callbacks_;
   sp<WifiChip> chip_;
 
   DISALLOW_COPY_AND_ASSIGN(Wifi);
