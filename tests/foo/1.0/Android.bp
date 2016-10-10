@@ -8,11 +8,15 @@ genrule {
         "types.hal",
         "IFoo.hal",
         "IFooCallback.hal",
+        "IMyTypes.hal",
+        "ITheirTypes.hal",
     ],
     out: [
         "android/hardware/tests/foo/1.0/types.cpp",
         "android/hardware/tests/foo/1.0/FooAll.cpp",
         "android/hardware/tests/foo/1.0/FooCallbackAll.cpp",
+        "android/hardware/tests/foo/1.0/MyTypesAll.cpp",
+        "android/hardware/tests/foo/1.0/TheirTypesAll.cpp",
     ],
 }
 
@@ -24,6 +28,8 @@ genrule {
         "types.hal",
         "IFoo.hal",
         "IFooCallback.hal",
+        "IMyTypes.hal",
+        "ITheirTypes.hal",
     ],
     out: [
         "android/hardware/tests/foo/1.0/types.h",
@@ -37,6 +43,16 @@ genrule {
         "android/hardware/tests/foo/1.0/BnFooCallback.h",
         "android/hardware/tests/foo/1.0/BpFooCallback.h",
         "android/hardware/tests/foo/1.0/BsFooCallback.h",
+        "android/hardware/tests/foo/1.0/IMyTypes.h",
+        "android/hardware/tests/foo/1.0/IHwMyTypes.h",
+        "android/hardware/tests/foo/1.0/BnMyTypes.h",
+        "android/hardware/tests/foo/1.0/BpMyTypes.h",
+        "android/hardware/tests/foo/1.0/BsMyTypes.h",
+        "android/hardware/tests/foo/1.0/ITheirTypes.h",
+        "android/hardware/tests/foo/1.0/IHwTheirTypes.h",
+        "android/hardware/tests/foo/1.0/BnTheirTypes.h",
+        "android/hardware/tests/foo/1.0/BpTheirTypes.h",
+        "android/hardware/tests/foo/1.0/BsTheirTypes.h",
     ],
 }
 

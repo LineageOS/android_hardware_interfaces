@@ -17,10 +17,16 @@
 package android.hardware.tests.bar@1.0;
 
 import android.hardware.tests.foo@1.0::IFoo;
+import android.hardware.tests.foo@1.0::Unrelated;
 
 interface IBar extends android.hardware.tests.foo@1.0::IFoo {
 
     typedef android.hardware.tests.foo@1.0::IFoo FunkyAlias;
+    typedef Unrelated Related;
+
+    struct SomethingRelated {
+        Related myRelated;
+    };
 
     thisIsNew();
 };
