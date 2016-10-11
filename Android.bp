@@ -3,6 +3,8 @@ subdirs = [
     "audio/common/2.0",
     "audio/effect/2.0",
     "benchmarks/msgq/1.0",
+    "memtrack/1.0",
+    "memtrack/1.0/default",
     "nfc/1.0",
     "nfc/1.0/default",
     "radio/1.0",
