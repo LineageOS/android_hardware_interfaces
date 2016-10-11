@@ -37,11 +37,12 @@ namespace implementation {
  */
 class WifiChip : public IWifiChip {
  public:
-  WifiChip(std::weak_ptr<WifiLegacyHal> legacy_hal);
+  WifiChip(ChipId chip_id, const std::weak_ptr<WifiLegacyHal> legacy_hal);
   // Invalidate this instance once the HAL is stopped.
   void invalidate();
 
   // HIDL methods exposed.
+  Return<ChipId> getId() override;
   Return<void> registerEventCallback(
       const sp<IWifiChipEventCallback>& callback) override;
   Return<void> getAvailableModes(getAvailableModes_cb cb) override;
@@ -52,6 +53,7 @@ class WifiChip : public IWifiChip {
   Return<void> requestFirmwareDebugDump() override;
 
  private:
+  ChipId chip_id_;
   std::weak_ptr<WifiLegacyHal> legacy_hal_;
   std::set<sp<IWifiChipEventCallback>> callbacks_;
 
