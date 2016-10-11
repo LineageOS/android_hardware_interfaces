@@ -16,6 +16,9 @@
 
 package android.hardware.wifi@1.0;
 
+/**
+ * List of failure reasons returned.
+ */
 enum CommandFailureReason : uint32_t {
   UNKNOWN,
   DUPLICATE_COMMAND_ID,
@@ -39,6 +42,25 @@ struct FailureReason {
    */
   string description;
 };
+
+/**
+ * List of Iface types supported.
+ */
+enum IfaceType : uint32_t {
+  STA,
+  AP,
+  P2P,
+  /**
+   * NAN control interface. Datapath support may be queried and created
+   * through this interface.
+   */
+  NAN,
+};
+
+/**
+ * An identifier assigned to every chip on the device.
+ */
+typedef uint32_t ChipId;
 
 /**
  * An identifier for a mode that the chip can be put in.
