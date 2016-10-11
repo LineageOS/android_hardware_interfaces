@@ -25,6 +25,7 @@ LOCAL_SRC_FILES := \
     wifi_legacy_hal.cpp \
     wifi_nan_iface.cpp \
     wifi_p2p_iface.cpp \
+    wifi_rtt_controller.cpp \
     wifi_sta_iface.cpp
 LOCAL_SHARED_LIBRARIES := \
     android.hardware.wifi@1.0 \
