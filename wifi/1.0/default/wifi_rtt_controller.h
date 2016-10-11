@@ -40,7 +40,7 @@ class WifiRttController : public IWifiRttController {
   void invalidate();
 
   // HIDL methods exposed.
-  Return<void> getBoundIface(getBoundIface_cb cb) override;
+  Return<void> getBoundIface(getBoundIface_cb hidl_status_cb) override;
 
  private:
   sp<IWifiIface> bound_iface_;
