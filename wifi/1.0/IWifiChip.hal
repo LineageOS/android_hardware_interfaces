@@ -17,6 +17,10 @@
 package android.hardware.wifi@1.0;
 
 import IWifiChipEventCallback;
+import IWifiApIface;
+import IWifiNanIface;
+import IWifiP2pIface;
+import IWifiStaIface;
 
 /**
  * Interface that represents a chip that must be configured as a single unit.
@@ -24,15 +28,6 @@ import IWifiChipEventCallback;
  * to perform operations like NAN, RTT, etc.
  */
 interface IWifiChip {
-  enum IfaceType : uint32_t {
-    STA, AP, P2P,
-    /**
-     * NAN control interface. Datapath support may be queried and created
-     * through this interface.
-     */
-    NAN,
-  };
-
   /**
    * Set of interface types with the maximum number of interfaces that can have
    * one of the specified type for a given ChipIfaceCombination. See
@@ -122,6 +117,13 @@ interface IWifiChip {
   };
 
   /**
+   * Get the id assigned to this chip.
+   *
+   * @return id Assigned chip Id.
+   */
+  getId() generates (ChipId id);
+
+  /**
    * Requests notifications of significant events on this chip. Multiple calls
    * to this will register multiple callbacks each of which will receive all
    * events.
@@ -176,4 +178,128 @@ interface IWifiChip {
    * success, or |IWifiChipEventCallback.onFirmwareDebugDumpFailure| on failure.
    */
   oneway requestFirmwareDebugDump();
+
+  /**
+   * Create an AP iface on the chip.
+   *
+   * Depending on the mode the chip is configured in, the interface creation
+   * may fail if we've already reached the maximum allowed
+   * (specified in |ChipIfaceCombination|) number of ifaces of the AP type.
+   *
+   * @return iface HIDL interface object representing the iface if
+   *         successful, null otherwise.
+   */
+  createApIface() generates (IWifiApIface iface);
+
+  /**
+   * List all the AP iface names configured on the chip.
+   * The corresponding |IWifiApIface| object for any iface are
+   * retrieved using |getApIface| method.
+   *
+   * @return ifnames List of all AP iface names on the chip.
+   */
+  getApIfaceNames() generates (vec<string> ifnames);
+
+  /**
+   * Gets a HIDL interface object for the AP Iface corresponding
+   * to the provided ifname.
+   *
+   * @param ifname Name of the iface.
+   * @return iface HIDL interface object representing the iface if
+   *         it exists, null otherwise.
+   */
+  getApIface(string ifname) generates (IWifiApIface iface);
+
+  /**
+   * Create a NAN iface on the chip.
+   *
+   * Depending on the mode the chip is configured in, the interface creation
+   * may fail if we've already reached the maximum allowed
+   * (specified in |ChipIfaceCombination|) number of ifaces of the NAN type.
+   *
+   * @return iface HIDL interface object representing the iface if
+   *         successful, null otherwise.
+   */
+  createNanIface() generates (IWifiNanIface iface);
+
+  /**
+   * List all the NAN iface names configured on the chip.
+   * The corresponding |IWifiNanIface| object for any iface are
+   * retrieved using |getNanIface| method.
+   *
+   * @return ifnames List of all NAN iface names on the chip.
+   */
+  getNanIfaceNames() generates (vec<string> ifnames);
+
+  /**
+   * Gets a HIDL interface object for the NAN Iface corresponding
+   * to the provided ifname.
+   *
+   * @param ifname Name of the iface.
+   * @return iface HIDL interface object representing the iface if
+   *         it exists, null otherwise.
+   */
+  getNanIface(string ifname) generates (IWifiNanIface iface);
+
+  /**
+   * Create a P2P iface on the chip.
+   *
+   * Depending on the mode the chip is configured in, the interface creation
+   * may fail if we've already reached the maximum allowed
+   * (specified in |ChipIfaceCombination|) number of ifaces of the P2P type.
+   *
+   * @return iface HIDL interface object representing the iface if
+   *         successful, null otherwise.
+   */
+  createP2pIface() generates (IWifiP2pIface iface);
+
+  /**
+   * List all the P2P iface names configured on the chip.
+   * The corresponding |IWifiP2pIface| object for any iface are
+   * retrieved using |getP2pIface| method.
+   *
+   * @return ifnames List of all P2P iface names on the chip.
+   */
+  getP2pIfaceNames() generates (vec<string> ifnames);
+
+  /**
+   * Gets a HIDL interface object for the P2P Iface corresponding
+   * to the provided ifname.
+   *
+   * @param ifname Name of the iface.
+   * @return iface HIDL interface object representing the iface if
+   *         it exists, null otherwise.
+   */
+  getP2pIface(string ifname) generates (IWifiP2pIface iface);
+
+  /**
+   * Create an STA iface on the chip.
+   *
+   * Depending on the mode the chip is configured in, the interface creation
+   * may fail if we've already reached the maximum allowed
+   * (specified in |ChipIfaceCombination|) number of ifaces of the STA type.
+   *
+   * @return iface HIDL interface object representing the iface if
+   *         successful, null otherwise.
+   */
+  createStaIface() generates (IWifiStaIface iface);
+
+  /**
+   * List all the STA iface names configured on the chip.
+   * The corresponding |IWifiStaIface| object for any iface are
+   * retrieved using |getStaIface| method.
+   *
+   * @return ifnames List of all STA iface names on the chip.
+   */
+  getStaIfaceNames() generates (vec<string> ifnames);
+
+  /**
+   * Gets a HIDL interface object for the STA Iface corresponding
+   * to the provided ifname.
+   *
+   * @param ifname Name of the iface.
+   * @return iface HIDL interface object representing the iface if
+   *         it exists, null otherwise.
+   */
+  getStaIface(string ifname) generates (IWifiStaIface iface);
 };
