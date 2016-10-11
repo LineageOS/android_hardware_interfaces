@@ -35,15 +35,21 @@ namespace implementation {
 class WifiLegacyHal {
  public:
   WifiLegacyHal();
+  // Names to use for the different types of iface.
+  std::string getApIfaceName();
+  std::string getNanIfaceName();
+  std::string getP2pIfaceName();
+  std::string getStaIfaceName();
+
   // Initialize the legacy HAL and start the event looper thread.
   wifi_error start();
   // Deinitialize the legacy HAL and stop the event looper thread.
   wifi_error stop(const std::function<void()>& on_complete_callback);
   // Wrappers for all the functions in the legacy HAL function table.
-  std::pair<wifi_error, std::string> getWlanDriverVersion();
-  std::pair<wifi_error, std::string> getWlanFirmwareVersion();
-  std::pair<wifi_error, std::vector<char>> requestWlanDriverMemoryDump();
-  std::pair<wifi_error, std::vector<char>> requestWlanFirmwareMemoryDump();
+  std::pair<wifi_error, std::string> getDriverVersion();
+  std::pair<wifi_error, std::string> getFirmwareVersion();
+  std::pair<wifi_error, std::vector<char>> requestDriverMemoryDump();
+  std::pair<wifi_error, std::vector<char>> requestFirmwareMemoryDump();
 
  private:
   static const uint32_t kMaxVersionStringLength;

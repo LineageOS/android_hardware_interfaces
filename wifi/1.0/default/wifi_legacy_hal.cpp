@@ -25,12 +25,6 @@
 #include <wifi_system/interface_tool.h>
 
 namespace {
-std::string getWlanInterfaceName() {
-  char buffer[PROPERTY_VALUE_MAX];
-  property_get("wifi.interface", buffer, "wlan0");
-  return buffer;
-}
-
 // Legacy HAL functions accept "C" style function pointers, so use global
 // functions to pass to the legacy HAL function and store the corresponding
 // std::function methods to be invoked.
@@ -120,7 +114,31 @@ wifi_error WifiLegacyHal::stop(
   return WIFI_SUCCESS;
 }
 
-std::pair<wifi_error, std::string> WifiLegacyHal::getWlanDriverVersion() {
+std::string WifiLegacyHal::getApIfaceName() {
+  // Fake name. This interface does not exist in legacy HAL
+  // API's.
+  return "ap0";
+}
+
+std::string WifiLegacyHal::getNanIfaceName() {
+  // Fake name. This interface does not exist in legacy HAL
+  // API's.
+  return "nan0";
+}
+
+std::string WifiLegacyHal::getP2pIfaceName() {
+  std::array<char, PROPERTY_VALUE_MAX> buffer;
+  property_get("wifi.direct.interface", buffer.data(), "p2p0");
+  return buffer.data();
+}
+
+std::string WifiLegacyHal::getStaIfaceName() {
+  std::array<char, PROPERTY_VALUE_MAX> buffer;
+  property_get("wifi.interface", buffer.data(), "wlan0");
+  return buffer.data();
+}
+
+std::pair<wifi_error, std::string> WifiLegacyHal::getDriverVersion() {
   std::array<char, kMaxVersionStringLength> buffer;
   buffer.fill(0);
   wifi_error status = global_func_table_.wifi_get_driver_version(
@@ -128,7 +146,7 @@ std::pair<wifi_error, std::string> WifiLegacyHal::getWlanDriverVersion() {
   return std::make_pair(status, buffer.data());
 }
 
-std::pair<wifi_error, std::string> WifiLegacyHal::getWlanFirmwareVersion() {
+std::pair<wifi_error, std::string> WifiLegacyHal::getFirmwareVersion() {
   std::array<char, kMaxVersionStringLength> buffer;
   buffer.fill(0);
   wifi_error status = global_func_table_.wifi_get_firmware_version(
@@ -137,7 +155,7 @@ std::pair<wifi_error, std::string> WifiLegacyHal::getWlanFirmwareVersion() {
 }
 
 std::pair<wifi_error, std::vector<char>>
-WifiLegacyHal::requestWlanDriverMemoryDump() {
+WifiLegacyHal::requestDriverMemoryDump() {
   std::vector<char> driver_dump;
   on_driver_memory_dump_internal_callback = [&driver_dump](char* buffer,
                                                            int buffer_size) {
@@ -150,7 +168,7 @@ WifiLegacyHal::requestWlanDriverMemoryDump() {
 }
 
 std::pair<wifi_error, std::vector<char>>
-WifiLegacyHal::requestWlanFirmwareMemoryDump() {
+WifiLegacyHal::requestFirmwareMemoryDump() {
   std::vector<char> firmware_dump;
   on_firmware_memory_dump_internal_callback = [&firmware_dump](
       char* buffer, int buffer_size) {
@@ -163,8 +181,7 @@ WifiLegacyHal::requestWlanFirmwareMemoryDump() {
 }
 
 wifi_error WifiLegacyHal::retrieveWlanInterfaceHandle() {
-  const std::string& ifname_to_find = getWlanInterfaceName();
-
+  const std::string& ifname_to_find = getStaIfaceName();
   wifi_interface_handle* iface_handles = nullptr;
   int num_iface_handles = 0;
   wifi_error status = global_func_table_.wifi_get_ifaces(
