@@ -17,10 +17,12 @@
 package android.hardware.wifi@1.0;
 
 import IWifiChipEventCallback;
+import IWifiIface;
 import IWifiApIface;
 import IWifiNanIface;
 import IWifiP2pIface;
 import IWifiStaIface;
+import IWifiRttController;
 
 /**
  * Interface that represents a chip that must be configured as a single unit.
@@ -302,4 +304,18 @@ interface IWifiChip {
    *         it exists, null otherwise.
    */
   getStaIface(string ifname) generates (IWifiStaIface iface);
+
+  /**
+   * Create a RTTController instance.
+   *
+   * RTT controller can be either:
+   * a) Bound to a specific iface by passing in the corresponding |IWifiIface|
+   * object in |iface| param, OR
+   * b) Let the implementation decide the iface to use for RTT operations by
+   * passing null in |iface| param.
+   *
+   * @param boundIface HIDL interface object representing the iface if
+   *        the responder must be bound to a specific iface, null otherwise.
+   */
+  createRttController(IWifiIface boundIface) generates (IWifiRttController rtt);
 };
