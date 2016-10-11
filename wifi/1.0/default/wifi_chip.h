@@ -17,12 +17,16 @@
 #ifndef WIFI_CHIP_H_
 #define WIFI_CHIP_H_
 
-#include <set>
+#include <map>
 
 #include <android-base/macros.h>
 #include <android/hardware/wifi/1.0/IWifiChip.h>
 
+#include "wifi_ap_iface.h"
 #include "wifi_legacy_hal.h"
+#include "wifi_nan_iface.h"
+#include "wifi_p2p_iface.h"
+#include "wifi_sta_iface.h"
 
 namespace android {
 namespace hardware {
@@ -63,11 +67,33 @@ class WifiChip : public IWifiChip {
   Return<void> requestChipDebugInfo() override;
   Return<void> requestDriverDebugDump() override;
   Return<void> requestFirmwareDebugDump() override;
+  Return<void> createApIface(createApIface_cb cb) override;
+  Return<void> getApIfaceNames(getApIfaceNames_cb cb) override;
+  Return<void> getApIface(const hidl_string& ifname, getApIface_cb cb) override;
+  Return<void> createNanIface(createNanIface_cb cb) override;
+  Return<void> getNanIfaceNames(getNanIfaceNames_cb cb) override;
+  Return<void> getNanIface(const hidl_string& ifname,
+                           getNanIface_cb cb) override;
+  Return<void> createP2pIface(createP2pIface_cb cb) override;
+  Return<void> getP2pIfaceNames(getP2pIfaceNames_cb cb) override;
+  Return<void> getP2pIface(const hidl_string& ifname,
+                           getP2pIface_cb cb) override;
+  Return<void> createStaIface(createStaIface_cb cb) override;
+  Return<void> getStaIfaceNames(getStaIfaceNames_cb cb) override;
+  Return<void> getStaIface(const hidl_string& ifname,
+                           getStaIface_cb cb) override;
 
  private:
+  void invalidateAndRemoveAllIfaces();
+
   ChipId chip_id_;
   std::weak_ptr<WifiLegacyHal> legacy_hal_;
-  std::set<sp<IWifiChipEventCallback>> callbacks_;
+  std::vector<sp<IWifiChipEventCallback>> callbacks_;
+  sp<WifiApIface> ap_iface_;
+  sp<WifiNanIface> nan_iface_;
+  sp<WifiP2pIface> p2p_iface_;
+  sp<WifiStaIface> sta_iface_;
+  bool is_valid_;
 
   DISALLOW_COPY_AND_ASSIGN(WifiChip);
 };
