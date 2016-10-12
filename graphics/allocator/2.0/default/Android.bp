@@ -1,0 +1,24 @@
+cc_library_shared {
+    name: "android.hardware.graphics.allocator@2.0-impl",
+    relative_install_path: "hw",
+    srcs: ["Gralloc.cpp"],
+    cppflags: ["-Wall", "-Wextra"],
+    shared_libs: [
+        "android.hardware.graphics.allocator@2.0",
+        "libbase",
+        "libcutils",
+        "libhardware",
+        "libhidl",
+        "libhwbinder",
+        "liblog",
+        "libutils",
+    ],
+}
+
+cc_library_static {
+    name: "libgralloc1-adapter",
+    srcs: ["gralloc1-adapter.c"],
+    include_dirs: ["system/core/libsync/include"],
+    cflags: ["-Wall", "-Wextra", "-Wno-unused-parameter"],
+    export_include_dirs: ["."],
+}

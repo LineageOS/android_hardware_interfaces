@@ -1,0 +1,15 @@
+genrule {
+    name: "android.hardware.graphics.mapper@2.0_genc++_headers",
+    cmd: "cp $in $genDir/android/hardware/graphics/mapper/2.0",
+    srcs: ["IMapper.h", "types.h"],
+    out: [
+        "android/hardware/graphics/mapper/2.0/IMapper.h",
+        "android/hardware/graphics/mapper/2.0/types.h",
+    ],
+}
+
+cc_library_static {
+    name: "android.hardware.graphics.mapper@2.0",
+    generated_headers: ["android.hardware.graphics.mapper@2.0_genc++_headers"],
+    export_generated_headers: ["android.hardware.graphics.mapper@2.0_genc++_headers"],
+}
