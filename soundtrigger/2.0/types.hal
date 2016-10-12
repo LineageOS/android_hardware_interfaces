@@ -73,3 +73,9 @@ struct PhraseRecognitionExtra {
      * RecognitionMode.USER_AUTHENTICATION */
     vec<ConfidenceLevel> levels;
 };
+
+/* TODO(elaurent) remove when Java build problem is fixed */
+union Dummy {
+  uint32_t dummy1;
+  int32_t dummy2;
+};
