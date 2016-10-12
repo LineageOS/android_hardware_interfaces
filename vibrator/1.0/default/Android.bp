@@ -24,3 +24,4 @@ cc_library_shared {
         "libhardware",
         "android.hardware.vibrator@1.0",
     ],
+}
