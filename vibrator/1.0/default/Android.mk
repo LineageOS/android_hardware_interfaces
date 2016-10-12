@@ -17,10 +17,11 @@
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := android.hardware.vibrator@1.0-impl
+LOCAL_MODULE := android.hardware.vibrator@1.0-service
+LOCAL_INIT_RC := android.hardware.vibrator@1.0-service.rc
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_SRC_FILES := \
-  Vibrator.cpp \
+  service.cpp \
 
 LOCAL_SHARED_LIBRARIES := \
   libhidl \
@@ -30,4 +31,4 @@ LOCAL_SHARED_LIBRARIES := \
   libhardware \
   android.hardware.vibrator@1.0
 
-include $(BUILD_SHARED_LIBRARY)
+include $(BUILD_EXECUTABLE)
