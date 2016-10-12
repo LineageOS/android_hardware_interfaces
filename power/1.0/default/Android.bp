@@ -31,6 +31,7 @@ cc_library_shared {
 cc_binary {
     relative_install_path: "hw",
     name: "android.hardware.power@1.0-service",
+    init_rc: ["android.hardware.power@1.0-service.rc"],
     srcs: ["service.cpp"],
 
     shared_libs: [
