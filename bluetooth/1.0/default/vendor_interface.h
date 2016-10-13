@@ -29,7 +29,8 @@ namespace V1_0 {
 namespace implementation {
 
 using ::android::hardware::hidl_vec;
-using PacketReadCallback = std::function<void(HciPacketType, const hidl_vec<uint8_t>&)>;
+using PacketReadCallback =
+    std::function<void(HciPacketType, const hidl_vec<uint8_t> &)>;
 
 class VendorInterface {
  public:

@@ -18,9 +18,13 @@
 
 #define LOG_TAG "android.hardware.bluetooth@1.0-impl"
 #include <android-base/logging.h>
+#include <cutils/properties.h>
 #include <utils/Log.h>
 
 #include <dlfcn.h>
+#include <fcntl.h>
+
+#include "bluetooth_address.h"
 
 static const char* VENDOR_LIBRARY_NAME = "libbt-vendor.so";
 static const char* VENDOR_LIBRARY_SYMBOL_NAME =
@@ -59,7 +63,7 @@ HC_BT_HDR* WrapPacketAndCopy(uint16_t event,
   packet->len = data.size();
   packet->layer_specific = 0;
   packet->event = event;
-  // TODO(eisenbach): Avoid copy here; if BT_HDR->data can be enusred to
+  // TODO(eisenbach): Avoid copy here; if BT_HDR->data can be ensured to
   // be the only way the data is accessed, a pointer could be passed here...
   memcpy(packet->data, data.data(), data.size());
   return packet;
@@ -143,9 +147,6 @@ void VendorInterface::Shutdown() {
 VendorInterface* VendorInterface::get() { return g_vendor_interface; }
 
 bool VendorInterface::Open(PacketReadCallback packet_read_cb) {
-  // TODO(eisenbach): P0 - get local BD address somehow
-  uint8_t local_bda[] = {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
-
   firmware_configured_ = false;
   packet_read_cb_ = packet_read_cb;
 
@@ -166,6 +167,10 @@ bool VendorInterface::Open(PacketReadCallback packet_read_cb) {
     return false;
   }
 
+  // Get the local BD address
+
+  uint8_t local_bda[BluetoothAddress::kBytes];
+  CHECK(BluetoothAddress::get_local_address(local_bda));
   int status = lib_interface_->init(&lib_callbacks, (unsigned char*)local_bda);
   if (status) {
     ALOGE("%s unable to initialize vendor library: %d", __func__, status);
