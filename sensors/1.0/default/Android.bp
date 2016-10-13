@@ -1,0 +1,38 @@
+cc_library_shared {
+    name: "android.hardware.sensors@1.0-impl",
+    relative_install_path: "hw",
+    srcs: ["Sensors.cpp"],
+    shared_libs: [
+        "liblog",
+        "libcutils",
+        "libhardware",
+        "libhwbinder",
+        "libbase",
+        "libcutils",
+        "libutils",
+        "libhidl",
+        "android.hardware.sensors@1.0",
+    ],
+    static_libs: [
+        "android.hardware.sensors@1.0-convert",
+    ],
+}
+
+cc_library_static {
+    name: "android.hardware.sensors@1.0-convert",
+    srcs: ["convert.cpp"],
+    export_include_dirs: ["include"],
+    shared_libs: [
+        "liblog",
+        "libcutils",
+        "libhardware",
+        "libhwbinder",
+        "libbase",
+        "libcutils",
+        "libutils",
+        "libhidl",
+        "android.hardware.sensors@1.0",
+    ],
+}
+
+
