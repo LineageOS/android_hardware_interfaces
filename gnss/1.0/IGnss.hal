@@ -18,9 +18,10 @@ package android.hardware.gnss@1.0;
 
 import IAGnss;
 import IAGnssRil;
+import IGnssCallback;
+import IGnssDebug;
 import IGnssMeasurement;
 import IGnssNavigationMessage;
-import IGnssCallback;
 import IGnssGeofencing;
 import IGnssNi;
 import IGnssXtra;
@@ -200,4 +201,10 @@ interface IGnss {
      */
     getExtensionXtra() generates (IGnssXtra infc);
 
+    /*
+     * This method returns the IGnssDebug interface.
+     *
+     * @return infc Handle to the IGnssDebug interface.
+     */
+    getExtensionGnssDebug() generates (IGnssDebug infc);
 };

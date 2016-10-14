@@ -1,0 +1,122 @@
+package android.hardware.gnss@1.0;
+
+/* Extended interface for DEBUG support. */
+interface IGnssDebug {
+    enum SatelliteEphemerisType : uint32_t {
+        /* no information is known to the gnss hardware, about this satellite */
+        UNKNOWN,
+        /*  this satellite is known to exist */
+        KNOWN,
+        /*  this satellite is not known to exist */
+        NONEXISTENT,
+        /* Only Almanac (approximate) location known for this satellite */
+        ALMANAC_ONLY,
+        /* Ephemeris is known from demodulating the signal on device */
+        DEMODULATED,
+        /* Ephemeris has been provided by SUPL */
+        SUPL_PROVIDED,
+        /* Ephemeris has been provided by another server */
+        OTHER_SERVER_PROVIDED,
+        /*
+         * Predicted ephemeris has been provided by a server
+         * (e.g. Xtra, Extended Ephemeris, etc...)
+         */
+        SERVER_PREDICTED,
+        /*
+         * Predicted ephemeris in use, generated locally on the device (e.g. from prior
+         * ephemeris)
+         */
+        LOCALLY_PREDICTED
+    };
+
+    /*
+     * Provides the current best known position from any
+     * source (GNSS or injected assistance).
+     */
+    struct PositionDebug {
+        /*
+         * Validity of the data in this struct. False only if no
+         * latitude/longitude information is known.
+         * /
+        bool valid;
+        /* Latitude expressed in degrees */
+        double latitudeDegrees;
+        /* Longitude expressed in degrees */
+        double longitudeDegrees;
+        /* Altitude above ellipsoid expressed in meters */
+        float altitudeDegrees;
+        /*
+         * estimated horizontal accuracy of position expressed in meters, radial,
+         * 68% confidence.
+         */
+        double accuracyMeters;
+        /*
+         * Time duration before this report that this position information was
+         * valid.
+         */
+        float ageSeconds;
+    };
+
+    /*
+     * Provides the current best known UTC time estimate.
+     */
+    struct TimeDebug {
+        /*
+         * Validity of the data in the struct.
+         * False if current time is unknown.
+         */
+        bool valid;
+        /*
+         * UTC time estimate.
+         */
+        GnssUtcTime timeEstimate;
+        /* 68% error estimate in time. */
+        float timeUncertaintyNs;
+    };
+
+    /*
+     * Provides a single satellite info that has decoded navigation data.
+     */
+    struct SatelliteData {
+        /* Satellite vehicle ID number */
+        int16_t svid;
+        /* Defines the constellation type of the given SV. */
+        GnssConstellationType constellation;
+        /* Defines the ephemeris type of the satellite. */
+        SatelliteEphemerisType ephemerisType;
+        /*
+         * Time duration before this report, that the ephemeris source was last
+         * updated, e.g. latest demodulation, or latest server download.
+         * Set to 0 when ephemerisType is UNKNOWN.
+         */
+        float ephemerisAgeSeconds;
+    };
+
+    /*
+     * Provides a set of debug information that is filled by the GNSS chipset
+     * when the method getDebugData() is invoked.
+     */
+    struct DebugData {
+        /* Current best known position. */
+        PositionDebug position;
+        /* Current best know time estimate */
+        TimeDebug time;
+        /*
+         * Provides a list of the decoded satellite ephemeris.
+         * Should provide a complete list for all constellations device can track,
+         * including GnssConstellationType UNKNOWN.
+         */
+        vec<SatelliteData> satelliteDataArray;
+
+    };
+
+    /*
+     * This methods requests position, time and satellite ephemeris debug information
+     * from the HAL.
+     *
+     * @return ret debugData information from GNSS Hal that contains the current best
+     * known position, best known time estimate and a complete list of
+     * constellations that the device can track.
+     */
+    getDebugData() generates (DebugData debugData);
+};
