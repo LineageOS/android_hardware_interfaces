@@ -21,9 +21,36 @@ package android.hardware.wifi@1.0;
  */
 interface IWifiNanIfaceEventCallback {
   /**
-   * NotifyResponse invoked to notify the status of the Request.
+   * Callback invoked to notify the status of the Publish Request.
+   *
+   * @param cmdId command Id corresponding to the original request.
+   * @param rspData Message Data.
    */
-  oneway notifyResponse(CommandId id, NanResponseMsg rspData);
+  oneway notifyPublishResponse(CommandId id, NanPublishResponseMsg rspData);
+
+  /**
+   * Callback invoked to notify the status of the Subscribe Request.
+   *
+   * @param cmdId command Id corresponding to the original request.
+   * @param rspData Message Data.
+   */
+  oneway notifySubscribeResponse(CommandId id, NanSubscribeResponseMsg rspData);
+
+  /**
+   * Callback invoked to notify the status of the Data Path Request.
+   *
+   * @param cmdId command Id corresponding to the original request.
+   * @param rspData Message Data.
+   */
+  oneway notifyDataPathResponse(CommandId id, NanDataPathResponseMsg rspData);
+
+  /**
+   * Callback invoked to notify the status of the Capability Request.
+   *
+   * @param cmdId command Id corresponding to the original request.
+   * @param rspData Message Data.
+   */
+  oneway notifyCapabilitiesResponse(CommandId id, NanCapabilitiesResponseMsg rspData);
 
   /**
    * Callbacks for the various asynchornous NAN Events.
