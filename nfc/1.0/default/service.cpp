@@ -26,7 +26,7 @@ int main() {
     const char instance[] = "nfc_nci";
     ALOGI("Retrieving default implementation of instance %s.",
           instance);
-    android::sp<INfc> service = INfc::getService(instance, true);
+    android::sp<INfc> service = INfc::getService(instance, true /* getStub */);
     if (service.get() == nullptr) {
         ALOGE("INfc::getService returned NULL, exiting");
         return -1;
@@ -35,7 +35,7 @@ int main() {
           instance, (service->isRemote() ? "REMOTE" : "LOCAL"));
     LOG_FATAL_IF(service->isRemote(), "Implementation is REMOTE!");
     ALOGI("Registering instance %s.", instance);
-    service->registerAsService("nfc_nci");
+    service->registerAsService(instance);
     ALOGI("Ready.");
 
     ProcessState::self()->setThreadPoolMaxThreadCount(0);
