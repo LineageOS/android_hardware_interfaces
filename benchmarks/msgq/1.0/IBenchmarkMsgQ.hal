@@ -20,36 +20,37 @@ interface IBenchmarkMsgQ {
     /*
      * This method requests the service to set up Synchronous read/write
      * wait-free FMQ with the client as reader.
-     * @return ret Will be 0 if the setup is successful.
+     * @return ret Will be true if the setup was successful, false otherwise.
      * @return mqDescIn This structure describes the FMQ that was set up
      * by the service. Client can use it to set up the FMQ at its end.
      */
     configureClientInboxSyncReadWrite()
-        generates(int32_t ret, MQDescriptorSync mqDescIn);
+        generates(bool ret, MQDescriptorSync mqDescIn);
 
     /*
      * This method requests the service to set up Synchronous read/write
      * wait-free FMQ with the client as writer.
-     * @return Will be 0 if the setup is successful.
+     * @return ret Will be true if the setup was successful, false otherwise.
      * @return mqDescOut This structure describes the FMQ that was set up
      * by the service. Client can use it to set up the FMQ at its end.
      */
     configureClientOutboxSyncReadWrite()
-        generates(int32_t ret, MQDescriptorSync mqDescOut);
+        generates(bool ret, MQDescriptorSync mqDescOut);
 
     /*
      * This method request the service to write into the FMQ.
      * @param count Number to messages to write.
-     * @ret Number of messages succesfully written.
+     * @return ret Will be true if the write operation was successful,
+     * false otherwise.
      */
-    requestWrite(int32_t count) generates (int32_t ret);
+    requestWrite(int32_t count) generates (bool ret);
 
     /*
      * This method request the service to read from the FMQ.
      * @param count Number to messages to read.
-     * @ret Number of messages succesfully read.
+     * @ret Will be true if the read operation was successful, false otherwise.
      */
-    requestRead(int32_t count) generates (int32_t ret);
+    requestRead(int32_t count) generates (bool ret);
 
     /*
      * This method kicks off a benchmarking experiment where
