@@ -1,0 +1,16 @@
+cc_library_shared {
+    name: "android.hardware.vr@1.0-impl",
+    relative_install_path: "hw",
+    srcs: ["Vr.cpp"],
+    shared_libs: [
+        "liblog",
+        "libcutils",
+        "libhardware",
+        "libhwbinder",
+        "libbase",
+        "libcutils",
+        "libutils",
+        "libhidl",
+        "android.hardware.vr@1.0",
+    ],
+}
