@@ -20,24 +20,26 @@ interface ITestMsgQ {
     /*
      * This method requests the service to set up Synchronous read/write
      * wait-free FMQ with the client as reader.
-     * @return ret Will be 0 if the setup is successful.
+     * @return ret Will be true if the setup is successful, false otherwise.
      * @return mqDesc This structure describes the FMQ that was
      * set up by the service. Client can use it to set up the FMQ at its end.
      */
     configureFmqSyncReadWrite()
-        generates(int32_t ret, MQDescriptorSync mqDesc);
+        generates(bool ret, MQDescriptorSync mqDesc);
 
     /*
      * This method request the service to write into the FMQ.
      * @param count Number to messages to write.
-     * @ret Number of messages succesfully written.
+     * @return ret Will be true if the write operation was successful,
+     * false otherwise.
      */
-    requestWrite(int32_t count) generates(int32_t ret);
+    requestWrite(int32_t count) generates(bool ret);
 
     /*
      * This method request the service to read from the FMQ.
      * @param count Number to messages to read.
-     * @ret Number of messages succesfully read.
+     * @return ret Will be true if the read operation was successful, false
+     * otherwise.
      */
-    requestRead(int32_t count) generates(int32_t ret);
+    requestRead(int32_t count) generates(bool ret);
 };
