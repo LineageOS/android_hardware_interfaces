@@ -27,11 +27,11 @@ int main() {
     ALOGI("Retrieving default implementation of instance %s.",
           instance);
 
-    android::sp<ILight> service = ILight::getService(instance, true);
+    android::sp<ILight> service = ILight::getService(instance, true /* getStub */);
 
     if (service.get() == nullptr) {
         ALOGE("ILight::getService returned NULL, exiting");
-        return -1;
+        return EXIT_FAILURE;
     }
 
     LOG_FATAL_IF(service->isRemote(), "Implementation is REMOTE!");
