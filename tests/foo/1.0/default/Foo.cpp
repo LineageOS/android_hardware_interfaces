@@ -4,6 +4,7 @@
 #include "Foo.h"
 #include "FooCallback.h"
 #include <android-base/logging.h>
+#include <hidl-test/FooHelper.h>
 #include <inttypes.h>
 #include <utils/Timers.h>
 
@@ -113,7 +114,7 @@ Return<void> Foo::callMe(
 
         ALOGI("SERVER(Foo) callMe %p calling IFooCallback::heyItsYouIsntIt, " \
               "should block for %" PRId64 " seconds", cb.get(),
-              FooCallback::DELAY_S);
+              DELAY_S);
         c[1] = systemTime();
         bool answer = cb->heyItsYouIsntIt(cb);
         c[1] = systemTime() - c[1];
@@ -206,74 +207,6 @@ Return<void> Foo::haveAStringVec(
     return Void();
 }
 
-// NOTE: duplicated code in hidl_test
-using std::to_string;
-
-static std::string to_string(const IFoo::StringMatrix5x3 &M);
-static std::string to_string(const IFoo::StringMatrix3x5 &M);
-static std::string to_string(const hidl_string &s);
-
-template<typename T>
-static std::string to_string(const T *elems, size_t n) {
-    std::string out;
-    out = "[";
-    for (size_t i = 0; i < n; ++i) {
-        if (i > 0) {
-            out += ", ";
-        }
-        out += to_string(elems[i]);
-    }
-    out += "]";
-
-    return out;
-}
-
-template<typename T, size_t SIZE>
-static std::string to_string(const hidl_array<T, SIZE> &array) {
-    return to_string(&array[0], SIZE);
-}
-
-template<typename T, size_t SIZE1, size_t SIZE2>
-static std::string to_string(const hidl_array<T, SIZE1, SIZE2> &array) {
-    std::string out;
-    out = "[";
-    for (size_t i = 0; i < SIZE1; ++i) {
-        if (i > 0) {
-            out += ", ";
-        }
-
-        out += "[";
-        for (size_t j = 0; j < SIZE2; ++j) {
-            if (j > 0) {
-                out += ", ";
-            }
-
-            out += to_string(array[i][j]);
-        }
-        out += "]";
-    }
-    out += "]";
-
-    return out;
-}
-
-template<typename T>
-static std::string to_string(const hidl_vec<T> &vec) {
-    return to_string(&vec[0], vec.size());
-}
-
-static std::string to_string(const IFoo::StringMatrix5x3 &M) {
-    return to_string(M.s);
-}
-
-static std::string to_string(const IFoo::StringMatrix3x5 &M) {
-    return to_string(M.s);
-}
-
-static std::string to_string(const hidl_string &s) {
-    return std::string("'") + s.c_str() + "'";
-}
-
 Return<void> Foo::transposeMe(
         const hidl_array<float, 3, 5> &in, transposeMe_cb _cb) {
     ALOGI("SERVER(Foo) transposeMe(%s)", to_string(in).c_str());
@@ -290,48 +223,6 @@ Return<void> Foo::transposeMe(
     _cb(out);
 
     return Void();
-}
-// end duplicated code
-
-static std::string QuuxToString(const IFoo::Quux &val) {
-    std::string s;
-
-    s = "Quux(first='";
-    s += val.first.c_str();
-    s += "', last='";
-    s += val.last.c_str();
-    s += "')";
-
-    return s;
-}
-
-static std::string MultiDimensionalToString(const IFoo::MultiDimensional &val) {
-    std::string s;
-
-    s += "MultiDimensional(";
-
-    s += "quuxMatrix=[";
-
-    size_t k = 0;
-    for (size_t i = 0; i < 5; ++i) {
-        if (i > 0) {
-            s += ", ";
-        }
-
-        s += "[";
-        for (size_t j = 0; j < 3; ++j, ++k) {
-            if (j > 0) {
-                s += ", ";
-            }
-
-            s += QuuxToString(val.quuxMatrix[i][j]);
-        }
-    }
-    s += "]";
-
-    s += ")";
-
-    return s;
 }
 
 Return<void> Foo::callingDrWho(

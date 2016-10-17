@@ -1,21 +1,17 @@
-
-
 cc_library_shared {
-    name: "android.hardware.tests.pointer@1.0-impl",
-    relative_install_path: "hw",
+    name: "libpointertest",
     srcs: [
-        "Graph.cpp",
-        "Pointer.cpp",
+        "PointerHelper.cpp"
     ],
 
     shared_libs: [
         "libbase",
         "libhidl",
-        "libpointertest",
         "libhwbinder",
         "liblog",
-        "libutils",
         "android.hardware.tests.pointer@1.0",
     ],
+    local_include_dirs: ["include/hidl-test"],
+    export_include_dirs: ["include"],
 
 }
