@@ -19,19 +19,19 @@ Nfc::Nfc(nfc_nci_device_t* device) : mDevice(device) {
 // Methods from ::android::hardware::nfc::V1_0::INfc follow.
 ::android::hardware::Return<int32_t> Nfc::open(const sp<INfcClientCallback>& clientCallback)  {
     mCallback = clientCallback;
-    return mDevice->open(mDevice, event_callback, data_callback);
+    return mDevice->open(mDevice, eventCallback, dataCallback);
 }
 
-::android::hardware::Return<int32_t> Nfc::write(const nfc_data_t& data)  {
-    return mDevice->write(mDevice, data.data.size(), &data.data[0]);
+::android::hardware::Return<int32_t> Nfc::write(const hidl_vec<uint8_t>& data)  {
+    return mDevice->write(mDevice, data.size(), &data[0]);
 }
 
-::android::hardware::Return<int32_t> Nfc::core_initialized(const hidl_vec<uint8_t>& data)  {
+::android::hardware::Return<int32_t> Nfc::coreInitialized(const hidl_vec<uint8_t>& data)  {
     hidl_vec<uint8_t> copy = data;
     return mDevice->core_initialized(mDevice, &copy[0]);
 }
 
-::android::hardware::Return<int32_t> Nfc::pre_discover()  {
+::android::hardware::Return<int32_t> Nfc::prediscover()  {
     return mDevice->pre_discover(mDevice);
 }
 
@@ -39,11 +39,11 @@ Nfc::Nfc(nfc_nci_device_t* device) : mDevice(device) {
     return mDevice->close(mDevice);
 }
 
-::android::hardware::Return<int32_t> Nfc::control_granted()  {
+::android::hardware::Return<int32_t> Nfc::controlGranted()  {
     return mDevice->control_granted(mDevice);
 }
 
-::android::hardware::Return<int32_t> Nfc::power_cycle()  {
+::android::hardware::Return<int32_t> Nfc::powerCycle()  {
     return mDevice->power_cycle(mDevice);
 }
 
