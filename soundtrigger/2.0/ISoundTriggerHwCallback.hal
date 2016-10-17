@@ -92,6 +92,17 @@ interface ISoundTriggerHwCallback {
      *               started (see ISoundtriggerHw.startRecognition()
      */
     recognitionCallback(RecognitionEvent event, CallbackCookie cookie);
+
+    /*
+     * Callback method called by the HAL when the sound recognition triggers
+     * for a key phrase sound model.
+     * @param event A RecognitionEvent structure containing detailed results
+     *              of the recognition triggered
+     * @param cookie The cookie passed by the framework when recognition was
+     *               started (see ISoundtriggerHw.startRecognition()
+     */
+    phraseRecognitionCallback(PhraseRecognitionEvent event,
+                              CallbackCookie cookie);
     /*
      * Callback method called by the HAL when the sound model loading completes
      * @param event A ModelEvent structure containing detailed results of the
