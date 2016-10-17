@@ -1,0 +1,24 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "types"
+
+package: "android.hardware.vibrator"
+
+
+attribute: {
+    name: "Status"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "uint32_t"
+
+        enumerator: "OK"
+        scalar_value: {
+            uint32_t: 0
+        }
+        enumerator: "ERR"
+        scalar_value: {
+            uint32_t: 1
+        }
+    }
+}
+
