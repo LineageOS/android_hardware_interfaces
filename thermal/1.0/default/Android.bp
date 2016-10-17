@@ -1,0 +1,16 @@
+cc_library_shared {
+    name: "android.hardware.thermal@1.0-impl",
+    relative_install_path: "hw",
+    srcs: ["Thermal.cpp"],
+    shared_libs: [
+        "liblog",
+        "libcutils",
+        "libhardware",
+        "libhwbinder",
+        "libbase",
+        "libcutils",
+        "libutils",
+        "libhidl",
+        "android.hardware.thermal@1.0",
+    ],
+}
