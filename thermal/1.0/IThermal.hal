@@ -56,11 +56,11 @@ interface IThermal {
      *         the status.debugMessage must be populated with the human-readable
      *         error message.
      * @return devices If status code is SUCCESS, it's filled with the current
-     *         cooling device information. The order of built-in coolling
+     *         cooling device information. The order of built-in cooling
      *         devices in the list must be kept the same regardless the number
      *         of calls to this method even if they go offline, if these devices
      *         exist on boot. The method always returns and never removes from
-     *         the list such coolling devices.
+     *         the list such cooling devices.
      *
      */
     getCoolingDevices()
