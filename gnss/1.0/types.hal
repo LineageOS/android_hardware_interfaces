@@ -1,0 +1,71 @@
+/*
+ * Copyright (C) 2016 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.gnss@1.0;
+
+enum ConstS32 : int32_t {
+/** Maximum number of SVs for gnssSvStatusCb(). */
+    GNSS_MAX_SVS = 64,
+
+/* Maximum number of Measurements in gnssMeasurementCb(). */
+    GNSS_MAX_MEASUREMENT = 64,
+};
+
+/* Milliseconds since January 1, 1970 */
+typedef int64_t GnssUtcTime;
+
+/*
+ * Constellation type of GnssSvInfo
+ */
+enum GnssConstellationType : uint8_t {
+    UNKNOWN = 0,
+    GNSS     = 1,
+    SBAS    = 2,
+    GLONASS = 3,
+    QZSS    = 4,
+    BEIDOU  = 5,
+    GALILEO = 6,
+};
+
+/* Represents a location. */
+struct GnssLocation {
+    /* Contains GnssLocationFlags bits. */
+    uint16_t gnssLocationFlags;
+
+    /* Represents latitude in degrees. */
+    double latitude;
+
+    /* Represents longitude in degrees. */
+    double longitude;
+
+    /*
+     * Represents altitude in meters above the WGS 84 reference ellipsoid.
+     */
+    double altitude;
+
+    /* Represents speed in meters per second. */
+    float speedMetersperSec;
+
+    /* Represents heading in degrees. */
+    float bearingDegrees;
+
+    /* Represents expected accuracy in meters. */
+    float accuracyMeters;
+
+    /* Timestamp for the location fix. */
+    GnssUtcTime timestamp;
+
+};
