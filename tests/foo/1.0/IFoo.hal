@@ -80,7 +80,6 @@ interface IFoo {
     };
 
     doThis(float param);
-    doThis(uint32_t param);
     doThatAndReturnSomething(int64_t param) generates (int32_t result);
     doQuiteABit(int32_t a, int64_t b, float c, double d) generates (double something);
     doSomethingElse(int32_t[15] param) generates (int32_t[32] something);
