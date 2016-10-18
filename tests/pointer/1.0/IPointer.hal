@@ -17,6 +17,8 @@
 package android.hardware.tests.pointer@1.0;
 
 interface IPointer {
+  struct S { int32_t data; };
+  struct A { S s; };
   // type declarations
   struct Sam { int32_t data; };
   struct Ada { ref<Sam> s_ptr; };
