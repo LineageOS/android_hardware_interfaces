@@ -698,6 +698,14 @@ Return<void> HwcHal::createLayer(Display display, createLayer_cb hidl_cb)
 Return<Error> HwcHal::destroyLayer(Display display, Layer layer)
 {
     auto error = mDispatch.destroyLayer(mDevice, display, layer);
+    if (error == HWC2_ERROR_NONE) {
+        std::lock_guard<std::mutex> lock(mDisplayMutex);
+
+        auto dpy = mDisplays.find(display);
+        dpy->second.LayerBuffers.erase(layer);
+        dpy->second.LayerSidebandStreams.erase(layer);
+    }
+
     return static_cast<Error>(error);
 }
 
