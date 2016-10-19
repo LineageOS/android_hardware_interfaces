@@ -1,0 +1,21 @@
+
+
+cc_library_shared {
+    name: "android.hardware.tests.bar@1.0-impl",
+    relative_install_path: "hw",
+    srcs: [
+        "Bar.cpp",
+        "ImportTypes.cpp",
+    ],
+
+    shared_libs: [
+        "libbase",
+        "libhidl",
+        "libhwbinder",
+        "liblog",
+        "libutils",
+        "android.hardware.tests.foo@1.0",
+        "android.hardware.tests.bar@1.0",
+    ],
+
+}
