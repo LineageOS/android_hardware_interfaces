@@ -76,6 +76,9 @@ interface IBase {
 
     someMethodWithVectorOfArray(VectorOfArray in) generates (VectorOfArray out);
 
+    someMethodTakingAVectorOfArray(vec<MacAddress> in)
+        generates (vec<MacAddress> out);
+
     transpose(StringMatrix5x3 in) generates (StringMatrix3x5 out);
     transpose2(ThreeStrings[5] in) generates (FiveStrings[3] out);
 };
