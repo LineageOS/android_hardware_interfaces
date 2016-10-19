@@ -18,6 +18,7 @@ package android.hardware.tests.foo@1.0;
 
 import IFooCallback;
 import IMyTypes.SomeStruct;
+import ISimple;
 import ITheirTypes.FloatArray;
 
 interface IFoo {
@@ -107,4 +108,9 @@ interface IFoo {
     sendVec(vec<uint8_t> data) generates (vec<uint8_t> data);
 
     sendVecVec() generates (vec<vec<uint8_t>> vecvec);
+
+    haveAVectorOfInterfaces(vec<ISimple> in) generates (vec<ISimple> out);
+
+    haveAVectorOfGenericInterfaces(vec<interface> in)
+        generates (vec<interface> out);
 };

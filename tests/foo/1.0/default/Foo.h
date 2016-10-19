@@ -15,6 +15,7 @@ namespace implementation {
 using ::android::hardware::tests::foo::V1_0::Abc;
 using ::android::hardware::tests::foo::V1_0::IFoo;
 using ::android::hardware::tests::foo::V1_0::IFooCallback;
+using ::android::hardware::tests::foo::V1_0::ISimple;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::hidl_vec;
@@ -45,6 +46,13 @@ struct Foo : public IFoo {
     virtual Return<void> sendVec(const hidl_vec<uint8_t>& data, sendVec_cb _hidl_cb)  override;
     virtual Return<void> sendVecVec(sendVecVec_cb _hidl_cb)  override;
 
+    Return<void> haveAVectorOfInterfaces(
+            const hidl_vec<sp<ISimple> > &in,
+            haveAVectorOfInterfaces_cb _hidl_cb) override;
+
+    Return<void> haveAVectorOfGenericInterfaces(
+            const hidl_vec<sp<android::hardware::IBinder> > &in,
+            haveAVectorOfGenericInterfaces_cb _hidl_cb) override;
 };
 
 extern "C" IFoo* HIDL_FETCH_IFoo(const char* name);
