@@ -1,0 +1,30 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "IVibrator"
+
+package: "android.hardware.vibrator"
+
+import: "android.hardware.vibrator@1.0::types"
+
+interface: {
+    api: {
+        name: "on"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "Status"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    api: {
+        name: "off"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "Status"
+        }
+    }
+
+}
