@@ -1,7 +1,6 @@
 component_class: HAL_HIDL
 component_type_version: 1.0
 component_name: "INfcClientCallback"
-component_type: NFC
 
 package: "android.hardware.nfc"
 
