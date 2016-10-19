@@ -22,7 +22,7 @@ using ::android::hardware::hidl_string;
 using ::android::sp;
 
 struct FooCallback : public IFooCallback {
-    FooCallback() : mLock{}, mCond{} {}
+    FooCallback();
     // Methods from ::android::hardware::tests::foo::V1_0::IFooCallback follow.
     Return<void> heyItsYou(const sp<IFooCallback>& cb)  override;
     Return<bool> heyItsYouIsntIt(const sp<IFooCallback>& cb)  override;
