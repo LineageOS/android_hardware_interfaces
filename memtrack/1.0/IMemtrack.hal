@@ -57,7 +57,7 @@ interface IMemtrack {
      * GRAPHICS is requested and not when GL
      * is requested.
      *
-     * @param pid process for which memory infromation is requested
+     * @param pid process for which memory information is requested
      * @param type memory type that information is being requested about
      * @return records vector of MemtrackRecord containing memory information
      * @return retval SUCCESS on success, TYPE_NOT_FOUND if the type is not
