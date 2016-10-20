@@ -1,0 +1,5 @@
+service gralloc-2-0 /system/bin/hw/android.hardware.graphics.allocator@2.0-service
+    class hal
+    user system
+    group graphics drmrpc readproc
+    onrestart restart surfaceflinger

@@ -1,0 +1,5 @@
+service hwcomposer-2-1 /system/bin/hw/android.hardware.graphics.composer@2.1-service
+    class hal
+    user system
+    group graphics drmrpc readproc
+    onrestart restart surfaceflinger
