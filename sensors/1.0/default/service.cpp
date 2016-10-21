@@ -14,38 +14,14 @@
  * limitations under the License.
  */
 
-#include <android-base/logging.h>
+#define LOG_TAG "android.hardware.nfc@1.0-service"
+
 #include <android/hardware/sensors/1.0/ISensors.h>
-#include <hwbinder/IPCThreadState.h>
-#include <hwbinder/ProcessState.h>
+#include <hidl/LegacySupport.h>
+
+using android::hardware::sensors::V1_0::ISensors;
+using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
-    using android::hardware::sensors::V1_0::ISensors;
-    using android::sp;
-    using android::OK;
-    using namespace android::hardware;
-
-    LOG(INFO) << "Service is starting.";
-    sp<ISensors> sensors = ISensors::getService("sensors", true /* getStub */);
-
-    if (sensors.get() == nullptr) {
-        LOG(ERROR) << "ISensors::getService returned nullptr, exiting.";
-        return 1;
-    }
-
-    LOG(INFO) << "Default implementation using sensors is "
-              << (sensors->isRemote() ? "REMOTE" : "LOCAL");
-
-    CHECK(!sensors->isRemote());
-
-    LOG(INFO) << "Registering instance sensors.";
-    sensors->registerAsService("sensors");
-    LOG(INFO) << "Ready.";
-
-    ProcessState::self()->setThreadPoolMaxThreadCount(0);
-    ProcessState::self()->startThreadPool();
-    IPCThreadState::self()->joinThreadPool();
-
-    return 0;
+    return defaultPassthroughServiceImplementation<ISensors>("sensors");
 }
-

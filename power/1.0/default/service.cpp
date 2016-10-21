@@ -15,37 +15,13 @@
  */
 
 #define LOG_TAG "android.hardware.power@1.0-service"
-#include <utils/Log.h>
-
-#include <iostream>
-#include <unistd.h>
 
 #include <android/hardware/power/1.0/IPower.h>
-
-#include <hidl/IServiceManager.h>
-#include <hwbinder/IPCThreadState.h>
-#include <hwbinder/ProcessState.h>
-#include <utils/Errors.h>
-#include <utils/StrongPointer.h>
-
-using android::sp;
-
-using android::hardware::IPCThreadState;
-using android::hardware::ProcessState;
+#include <hidl/LegacySupport.h>
 
 using android::hardware::power::V1_0::IPower;
+using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
-    const char instance[] = "power";
-    android::sp<IPower> service = IPower::getService(instance, true);
-    if (service.get() == nullptr) {
-        ALOGE("IPower::getService returned NULL, exiting");
-        return -1;
-    }
-    LOG_FATAL_IF(service->isRemote(), "Implementation is REMOTE!");
-    service->registerAsService(instance);
-
-    ProcessState::self()->setThreadPoolMaxThreadCount(0);
-    ProcessState::self()->startThreadPool();
-    IPCThreadState::self()->joinThreadPool();
+    return defaultPassthroughServiceImplementation<IPower>("power");
 }

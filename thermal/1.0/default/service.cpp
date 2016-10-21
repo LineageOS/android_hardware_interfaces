@@ -14,40 +14,14 @@
  * limitations under the License.
  */
 
-#include <iostream>
-#include <unistd.h>
+#define LOG_TAG "android.hardware.thermal@1.0-service"
 
 #include <android/hardware/thermal/1.0/IThermal.h>
+#include <hidl/LegacySupport.h>
 
-#include <hidl/IServiceManager.h>
-#include <hwbinder/IPCThreadState.h>
-#include <hwbinder/ProcessState.h>
-#include <utils/Errors.h>
-
-#define LOG_TAG "android.hardware.thermal@1.0-service"
-#include <utils/Log.h>
-#include <utils/StrongPointer.h>
-
-using android::sp;
-
-// libhwbinder:
-using android::hardware::IPCThreadState;
-using android::hardware::ProcessState;
-
-// Generated HIDL files
 using android::hardware::thermal::V1_0::IThermal;
+using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
-    const char instance[] = "thermal";
-    sp<IThermal> service = IThermal::getService(instance, true /* getStub */);
-    if (service.get() == nullptr) {
-        ALOGE("IThermal::getService returned NULL, exiting");
-        return EXIT_FAILURE;
-    }
-    LOG_FATAL_IF(service->isRemote(), "Implementation is REMOTE!");
-    service->registerAsService(instance);
-
-    ProcessState::self()->setThreadPoolMaxThreadCount(0);
-    ProcessState::self()->startThreadPool();
-    IPCThreadState::self()->joinThreadPool();
+    return defaultPassthroughServiceImplementation<IThermal>("thermal");
 }

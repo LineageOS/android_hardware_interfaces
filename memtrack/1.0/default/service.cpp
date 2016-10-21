@@ -15,37 +15,13 @@
  */
 
 #define LOG_TAG "android.hardware.memtrack@1.0-service"
-#include <utils/Log.h>
-
-#include <iostream>
-#include <unistd.h>
 
 #include <android/hardware/memtrack/1.0/IMemtrack.h>
-
-#include <hidl/IServiceManager.h>
-#include <hwbinder/IPCThreadState.h>
-#include <hwbinder/ProcessState.h>
-#include <utils/Errors.h>
-#include <utils/StrongPointer.h>
-
-using android::sp;
-
-using android::hardware::IPCThreadState;
-using android::hardware::ProcessState;
+#include <hidl/LegacySupport.h>
 
 using android::hardware::memtrack::V1_0::IMemtrack;
+using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
-    const char instance[] = "memtrack";
-    android::sp<IMemtrack> service = IMemtrack::getService(instance, true);
-    if (service.get() == nullptr) {
-        ALOGE("IMemtrack::getService returned NULL, exiting");
-        return -1;
-    }
-    LOG_FATAL_IF(service->isRemote(), "Implementation is REMOTE!");
-    service->registerAsService(instance);
-
-    ProcessState::self()->setThreadPoolMaxThreadCount(0);
-    ProcessState::self()->startThreadPool();
-    IPCThreadState::self()->joinThreadPool();
+    return defaultPassthroughServiceImplementation<IMemtrack>("memtrack");
 }
