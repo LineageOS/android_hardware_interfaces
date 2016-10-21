@@ -1,0 +1,4 @@
+service fingerprint@2.1 /system/bin/hw/android.hardware.biometrics.fingerprint@2.1-service
+    class hal
+    user system
+    group system
