@@ -396,6 +396,21 @@ Return<void> Foo::sendVecVec(sendVecVec_cb _hidl_cb) {
     return Void();
 }
 
+Return<void> Foo::haveAVectorOfInterfaces(
+        const hidl_vec<sp<ISimple> > &in,
+        haveAVectorOfInterfaces_cb _hidl_cb) {
+    _hidl_cb(in);
+
+    return Void();
+}
+
+Return<void> Foo::haveAVectorOfGenericInterfaces(
+        const hidl_vec<sp<android::hardware::IBinder> > &in,
+        haveAVectorOfGenericInterfaces_cb _hidl_cb) {
+    _hidl_cb(in);
+
+    return Void();
+}
 
 IFoo* HIDL_FETCH_IFoo(const char* /* name */) {
     return new Foo();

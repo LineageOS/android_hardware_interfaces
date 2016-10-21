@@ -118,6 +118,22 @@ Return<void> Bar::sendVecVec(sendVecVec_cb _hidl_cb) {
     return mFoo->sendVecVec(_hidl_cb);
 }
 
+Return<void> Bar::haveAVectorOfInterfaces(
+        const hidl_vec<sp<ISimple> > &in,
+        haveAVectorOfInterfaces_cb _hidl_cb) {
+    _hidl_cb(in);
+
+    return Void();
+}
+
+Return<void> Bar::haveAVectorOfGenericInterfaces(
+        const hidl_vec<sp<android::hardware::IBinder> > &in,
+        haveAVectorOfGenericInterfaces_cb _hidl_cb) {
+    _hidl_cb(in);
+
+    return Void();
+}
+
 // Methods from ::android::hardware::tests::bar::V1_0::IBar follow.
 Return<void> Bar::thisIsNew()  {
     ALOGI("SERVER(Bar) thisIsNew");
