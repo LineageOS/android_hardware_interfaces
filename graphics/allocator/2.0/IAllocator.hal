@@ -26,11 +26,16 @@ interface IAllocator {
          * is supported.
          */
         TEST_ALLOCATE = 1,
+
+        /*
+         * layerCount must be 1 unless this capability is supported.
+         */
+        LAYERED_BUFFERS = 2,
     };
 
     struct BufferDescriptorInfo {
         /*
-         * The width specifies how many columns of pixels should be in the
+         * The width specifies how many columns of pixels must be in the
          * allocated buffer, but does not necessarily represent the offset in
          * columns between the same column in adjacent rows. The rows may be
          * padded.
@@ -38,10 +43,15 @@ interface IAllocator {
         uint32_t width;
 
        /*
-        * The height specifies how many rows of pixels should be in the
+        * The height specifies how many rows of pixels must be in the
         * allocated buffer.
         */
         uint32_t height;
+
+       /*
+        * The number of image layers that must be in the allocated buffer.
+        */
+        uint32_t layerCount;
 
         /* Buffer pixel format. */
         PixelFormat format;

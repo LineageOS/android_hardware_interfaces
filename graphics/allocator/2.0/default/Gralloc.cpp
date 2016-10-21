@@ -74,6 +74,7 @@ private:
         GRALLOC1_PFN_DESTROY_DESCRIPTOR destroyDescriptor;
         GRALLOC1_PFN_SET_DIMENSIONS setDimensions;
         GRALLOC1_PFN_SET_FORMAT setFormat;
+        GRALLOC1_PFN_SET_LAYER_COUNT setLayerCount;
         GRALLOC1_PFN_SET_CONSUMER_USAGE setConsumerUsage;
         GRALLOC1_PFN_SET_PRODUCER_USAGE setProducerUsage;
         GRALLOC1_PFN_ALLOCATE allocate;
@@ -135,6 +136,10 @@ void GrallocHal::initDispatch()
             GRALLOC1_FUNCTION_DESTROY_DESCRIPTOR);
     initDispatch(mDispatch.setDimensions, GRALLOC1_FUNCTION_SET_DIMENSIONS);
     initDispatch(mDispatch.setFormat, GRALLOC1_FUNCTION_SET_FORMAT);
+    if (hasCapability(Capability::LAYERED_BUFFERS)) {
+        initDispatch(
+                mDispatch.setLayerCount, GRALLOC1_FUNCTION_SET_LAYER_COUNT);
+    }
     initDispatch(mDispatch.setConsumerUsage,
             GRALLOC1_FUNCTION_SET_CONSUMER_USAGE);
     initDispatch(mDispatch.setProducerUsage,
@@ -190,6 +195,11 @@ Return<void> GrallocHal::createDescriptor(
     if (err == GRALLOC1_ERROR_NONE) {
         err = mDispatch.setFormat(mDevice, descriptor,
                 static_cast<int32_t>(descriptorInfo.format));
+    }
+    if (err == GRALLOC1_ERROR_NONE &&
+            hasCapability(Capability::LAYERED_BUFFERS)) {
+        err = mDispatch.setLayerCount(mDevice, descriptor,
+                descriptorInfo.layerCount);
     }
     if (err == GRALLOC1_ERROR_NONE) {
         uint64_t producerUsageMask = descriptorInfo.producerUsageMask;
