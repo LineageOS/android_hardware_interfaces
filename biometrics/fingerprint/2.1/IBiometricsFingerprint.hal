@@ -143,7 +143,7 @@ interface IBiometricsFingerprint {
       generates (bool isOk, int32_t debugErrno);
 
   /*
-   * Authenticates an operation identifed by operationId
+   * Authenticates an operation identified by operationId
    *
    * @param operationId operation id.
    * @param gid fingerprint group id.

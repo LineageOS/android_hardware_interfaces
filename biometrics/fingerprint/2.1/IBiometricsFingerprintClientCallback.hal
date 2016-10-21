@@ -17,7 +17,7 @@
 package android.hardware.biometrics.fingerprint@2.1;
 
 interface IBiometricsFingerprintClientCallback {
-    /* This function is the response chanel for all messages
+    /* This function is the response channel for all messages
      * coming from the fingerprint HAL to the framework
      *
      * @param msg a union of message structures identified by
