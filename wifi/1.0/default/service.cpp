@@ -15,7 +15,6 @@
  */
 
 #include <android-base/logging.h>
-#include <hidl/IServiceManager.h>
 #include <hwbinder/IPCThreadState.h>
 #include <hwbinder/ProcessState.h>
 #include <utils/Looper.h>
