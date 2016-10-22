@@ -21,10 +21,6 @@ Return<void> Bar::doThis(float param) {
     return mFoo->doThis(param);
 }
 
-Return<void> Bar::doThis(uint32_t param) {
-    return mFoo->doThis(param);
-}
-
 Return<int32_t> Bar::doThatAndReturnSomething(
         int64_t param) {
     return mFoo->doThatAndReturnSomething(param);
