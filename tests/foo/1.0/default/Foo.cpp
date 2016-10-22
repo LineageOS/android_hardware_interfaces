@@ -21,11 +21,6 @@ Return<void> Foo::doThis(float param) {
     return Void();
 }
 
-Return<void> Foo::doThis(uint32_t param) {
-    ALOGI("SERVER(Foo) doThis (int) (%d)", param);
-    return Void();
-}
-
 Return<int32_t> Foo::doThatAndReturnSomething(
         int64_t param) {
     LOG(INFO) << "SERVER(Foo) doThatAndReturnSomething(" << param << ")";
