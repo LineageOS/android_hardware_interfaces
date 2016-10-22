@@ -44,6 +44,8 @@ subdirs = [
     "vehicle/2.0",
     "vibrator/1.0",
     "vibrator/1.0/default",
+    "vr/1.0",
+    "vr/1.0/default",
     "wifi/1.0",
     "wifi/supplicant/1.0",
 ]
