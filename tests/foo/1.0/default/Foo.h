@@ -25,7 +25,6 @@ using ::android::sp;
 struct Foo : public IFoo {
     // Methods from ::android::hardware::tests::foo::V1_0::IFoo follow.
     virtual Return<void> doThis(float param)  override;
-    virtual Return<void> doThis(uint32_t param)  override;
     virtual Return<int32_t> doThatAndReturnSomething(int64_t param)  override;
     virtual Return<double> doQuiteABit(int32_t a, int64_t b, float c, double d)  override;
     virtual Return<void> doSomethingElse(const hidl_array<int32_t, 15 /* 15 */>& param, doSomethingElse_cb _hidl_cb)  override;

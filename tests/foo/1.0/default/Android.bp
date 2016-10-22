@@ -6,8 +6,6 @@ cc_library_shared {
     srcs: [
         "Foo.cpp",
         "FooCallback.cpp",
-        "MyTypes.cpp",
-        "TheirTypes.cpp",
     ],
 
     shared_libs: [
