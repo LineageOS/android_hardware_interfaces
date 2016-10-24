@@ -14,6 +14,7 @@ subdirs = [
     "tests/foo/1.0",
     "tests/foo/1.0/default",
     "tests/libhwbinder/1.0",
+    "tests/libhwbinder/1.0/default",
     "tests/msgq/1.0",
     "tests/pointer/1.0",
     "tests/pointer/1.0/default",
