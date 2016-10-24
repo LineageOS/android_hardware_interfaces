@@ -1,0 +1,15 @@
+cc_library_shared {
+    name: "libfootest",
+    srcs: [
+        "FooHelper.cpp"
+    ],
+
+    shared_libs: [
+        "libhidl",
+        "libhwbinder",
+        "android.hardware.tests.foo@1.0",
+    ],
+    local_include_dirs: ["include/hidl-test"],
+    export_include_dirs: ["include"],
+
+}
