@@ -17,6 +17,7 @@
 package android.hardware.thermal@1.0;
 
 /** Device temperature types */
+@export
 enum TemperatureType : int32_t {
     UNKNOWN = -1,
     CPU = 0,
