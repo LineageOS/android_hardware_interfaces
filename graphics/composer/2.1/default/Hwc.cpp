@@ -16,19 +16,12 @@
 
 #define LOG_TAG "HwcPassthrough"
 
-#include <mutex>
 #include <type_traits>
-#include <unordered_map>
-#include <unordered_set>
-#include <utility>
-#include <vector>
 
-#include <hardware/gralloc.h>
-#include <hardware/gralloc1.h>
-#include <hardware/hwcomposer2.h>
 #include <log/log.h>
 
 #include "Hwc.h"
+#include "HwcClient.h"
 
 namespace android {
 namespace hardware {
@@ -37,419 +30,9 @@ namespace composer {
 namespace V2_1 {
 namespace implementation {
 
-using android::hardware::graphics::common::V1_0::PixelFormat;
-using android::hardware::graphics::common::V1_0::Transform;
-using android::hardware::graphics::common::V1_0::Dataspace;
-using android::hardware::graphics::common::V1_0::ColorMode;
-using android::hardware::graphics::common::V1_0::ColorTransform;
-using android::hardware::graphics::common::V1_0::Hdr;
-
-namespace {
-
-class HandleImporter {
-public:
-    HandleImporter() : mInitialized(false) {}
-
-    bool initialize()
-    {
-        // allow only one client
-        if (mInitialized) {
-            return false;
-        }
-
-        if (!openGralloc()) {
-            return false;
-        }
-
-        mInitialized = true;
-        return true;
-    }
-
-    void cleanup()
-    {
-        if (!mInitialized) {
-            return;
-        }
-
-        closeGralloc();
-        mInitialized = false;
-    }
-
-    // In IComposer, any buffer_handle_t is owned by the caller and we need to
-    // make a clone for hwcomposer2.  We also need to translate empty handle
-    // to nullptr.  This function does that, in-place.
-    bool importBuffer(buffer_handle_t& handle)
-    {
-        if (!handle->numFds && !handle->numInts) {
-            handle = nullptr;
-            return true;
-        }
-
-        buffer_handle_t clone = cloneBuffer(handle);
-        if (!clone) {
-            return false;
-        }
-
-        handle = clone;
-        return true;
-    }
-
-    void freeBuffer(buffer_handle_t handle)
-    {
-        if (!handle) {
-            return;
-        }
-
-        releaseBuffer(handle);
-    }
-
-    bool importFence(const native_handle_t* handle, int& fd)
-    {
-        if (handle->numFds == 0) {
-            fd = -1;
-        } else if (handle->numFds == 1) {
-            fd = dup(handle->data[0]);
-            if (fd < 0) {
-                ALOGE("failed to dup fence fd %d", handle->data[0]);
-                return false;
-            }
-        } else {
-            ALOGE("invalid fence handle with %d file descriptors",
-                    handle->numFds);
-            return false;
-        }
-
-        return true;
-    }
-
-    void closeFence(int fd)
-    {
-        if (fd >= 0) {
-            close(fd);
-        }
-    }
-
-private:
-    bool mInitialized;
-
-    // Some existing gralloc drivers do not support retaining more than once,
-    // when we are in passthrough mode.
-#ifdef BINDERIZED
-    bool openGralloc()
-    {
-        const hw_module_t* module;
-        int err = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, &module);
-        if (err) {
-            ALOGE("failed to get gralloc module");
-            return false;
-        }
-
-        uint8_t major = (module->module_api_version >> 8) & 0xff;
-        if (major > 1) {
-            ALOGE("unknown gralloc module major version %d", major);
-            return false;
-        }
-
-        if (major == 1) {
-            err = gralloc1_open(module, &mDevice);
-            if (err) {
-                ALOGE("failed to open gralloc1 device");
-                return false;
-            }
-
-            mRetain = reinterpret_cast<GRALLOC1_PFN_RETAIN>(
-                    mDevice->getFunction(mDevice, GRALLOC1_FUNCTION_RETAIN));
-            mRelease = reinterpret_cast<GRALLOC1_PFN_RELEASE>(
-                    mDevice->getFunction(mDevice, GRALLOC1_FUNCTION_RELEASE));
-            if (!mRetain || !mRelease) {
-                ALOGE("invalid gralloc1 device");
-                gralloc1_close(mDevice);
-                return false;
-            }
-        } else {
-            mModule = reinterpret_cast<const gralloc_module_t*>(module);
-        }
-
-        return true;
-    }
-
-    void closeGralloc()
-    {
-        if (mDevice) {
-            gralloc1_close(mDevice);
-        }
-    }
-
-    buffer_handle_t cloneBuffer(buffer_handle_t handle)
-    {
-        native_handle_t* clone = native_handle_clone(handle);
-        if (!clone) {
-            ALOGE("failed to clone buffer %p", handle);
-            return nullptr;
-        }
-
-        bool err;
-        if (mDevice) {
-            err = (mRetain(mDevice, clone) != GRALLOC1_ERROR_NONE);
-        } else {
-            err = (mModule->registerBuffer(mModule, clone) != 0);
-        }
-
-        if (err) {
-            ALOGE("failed to retain/register buffer %p", clone);
-            native_handle_close(clone);
-            native_handle_delete(clone);
-            return nullptr;
-        }
-
-        return clone;
-    }
-
-    void releaseBuffer(buffer_handle_t handle)
-    {
-        if (mDevice) {
-            mRelease(mDevice, handle);
-        } else {
-            mModule->unregisterBuffer(mModule, handle);
-            native_handle_close(handle);
-            native_handle_delete(const_cast<native_handle_t*>(handle));
-        }
-    }
-
-    // gralloc1
-    gralloc1_device_t* mDevice;
-    GRALLOC1_PFN_RETAIN mRetain;
-    GRALLOC1_PFN_RELEASE mRelease;
-
-    // gralloc0
-    const gralloc_module_t* mModule;
-#else
-    bool openGralloc() { return true; }
-    void closeGralloc() {}
-    buffer_handle_t cloneBuffer(buffer_handle_t handle) { return handle; }
-    void releaseBuffer(buffer_handle_t) {}
-#endif
-};
-
-HandleImporter sHandleImporter;
-
-class BufferClone {
-public:
-    BufferClone() : mHandle(nullptr) {}
-
-    BufferClone(BufferClone&& other)
-    {
-        mHandle = other.mHandle;
-        other.mHandle = nullptr;
-    }
-
-    BufferClone(const BufferClone& other) = delete;
-    BufferClone& operator=(const BufferClone& other) = delete;
-
-    BufferClone& operator=(buffer_handle_t handle)
-    {
-        clear();
-        mHandle = handle;
-        return *this;
-    }
-
-    ~BufferClone()
-    {
-        clear();
-    }
-
-private:
-    void clear()
-    {
-        if (mHandle) {
-            sHandleImporter.freeBuffer(mHandle);
-        }
-    }
-
-    buffer_handle_t mHandle;
-};
-
-} // anonymous namespace
-
-class HwcHal : public IComposer {
-public:
-    HwcHal(const hw_module_t* module);
-    virtual ~HwcHal();
-
-    // IComposer interface
-    Return<void> getCapabilities(getCapabilities_cb hidl_cb) override;
-    Return<void> dumpDebugInfo(dumpDebugInfo_cb hidl_cb) override;
-    Return<void> registerCallback(const sp<IComposerCallback>& callback) override;
-    Return<uint32_t> getMaxVirtualDisplayCount() override;
-    Return<void> createVirtualDisplay(uint32_t width, uint32_t height,
-            PixelFormat formatHint, createVirtualDisplay_cb hidl_cb) override;
-    Return<Error> destroyVirtualDisplay(Display display) override;
-    Return<Error> acceptDisplayChanges(Display display) override;
-    Return<void> createLayer(Display display,
-            createLayer_cb hidl_cb) override;
-    Return<Error> destroyLayer(Display display, Layer layer) override;
-    Return<void> getActiveConfig(Display display,
-            getActiveConfig_cb hidl_cb) override;
-    Return<void> getChangedCompositionTypes(Display display,
-            getChangedCompositionTypes_cb hidl_cb) override;
-    Return<Error> getClientTargetSupport(Display display,
-            uint32_t width, uint32_t height,
-            PixelFormat format, Dataspace dataspace) override;
-    Return<void> getColorModes(Display display,
-            getColorModes_cb hidl_cb) override;
-    Return<void> getDisplayAttribute(Display display,
-            Config config, Attribute attribute,
-            getDisplayAttribute_cb hidl_cb) override;
-    Return<void> getDisplayConfigs(Display display,
-            getDisplayConfigs_cb hidl_cb) override;
-    Return<void> getDisplayName(Display display,
-            getDisplayName_cb hidl_cb) override;
-    Return<void> getDisplayRequests(Display display,
-            getDisplayRequests_cb hidl_cb) override;
-    Return<void> getDisplayType(Display display,
-            getDisplayType_cb hidl_cb) override;
-    Return<void> getDozeSupport(Display display,
-            getDozeSupport_cb hidl_cb) override;
-    Return<void> getHdrCapabilities(Display display,
-            getHdrCapabilities_cb hidl_cb) override;
-    Return<void> getReleaseFences(Display display,
-            getReleaseFences_cb hidl_cb) override;
-    Return<void> presentDisplay(Display display,
-            presentDisplay_cb hidl_cb) override;
-    Return<Error> setActiveConfig(Display display, Config config) override;
-    Return<Error> setClientTarget(Display display,
-            const hidl_handle& target,
-            const hidl_handle& acquireFence,
-            Dataspace dataspace, const hidl_vec<Rect>& damage) override;
-    Return<Error> setColorMode(Display display, ColorMode mode) override;
-    Return<Error> setColorTransform(Display display,
-            const hidl_vec<float>& matrix, ColorTransform hint) override;
-    Return<Error> setOutputBuffer(Display display,
-            const hidl_handle& buffer,
-            const hidl_handle& releaseFence) override;
-    Return<Error> setPowerMode(Display display, PowerMode mode) override;
-    Return<Error> setVsyncEnabled(Display display, Vsync enabled) override;
-    Return<void> validateDisplay(Display display,
-            validateDisplay_cb hidl_cb) override;
-    Return<Error> setCursorPosition(Display display,
-            Layer layer, int32_t x, int32_t y) override;
-    Return<Error> setLayerBuffer(Display display,
-            Layer layer, const hidl_handle& buffer,
-            const hidl_handle& acquireFence) override;
-    Return<Error> setLayerSurfaceDamage(Display display,
-            Layer layer, const hidl_vec<Rect>& damage) override;
-    Return<Error> setLayerBlendMode(Display display,
-            Layer layer, BlendMode mode) override;
-    Return<Error> setLayerColor(Display display,
-            Layer layer, const Color& color) override;
-    Return<Error> setLayerCompositionType(Display display,
-            Layer layer, Composition type) override;
-    Return<Error> setLayerDataspace(Display display,
-            Layer layer, Dataspace dataspace) override;
-    Return<Error> setLayerDisplayFrame(Display display,
-            Layer layer, const Rect& frame) override;
-    Return<Error> setLayerPlaneAlpha(Display display,
-            Layer layer, float alpha) override;
-    Return<Error> setLayerSidebandStream(Display display,
-            Layer layer, const hidl_handle& stream) override;
-    Return<Error> setLayerSourceCrop(Display display,
-            Layer layer, const FRect& crop) override;
-    Return<Error> setLayerTransform(Display display,
-            Layer layer, Transform transform) override;
-    Return<Error> setLayerVisibleRegion(Display display,
-            Layer layer, const hidl_vec<Rect>& visible) override;
-    Return<Error> setLayerZOrder(Display display,
-            Layer layer, uint32_t z) override;
-
-private:
-    void initCapabilities();
-
-    template<typename T>
-    void initDispatch(T& func, hwc2_function_descriptor_t desc);
-    void initDispatch();
-
-    bool hasCapability(Capability capability) const;
-
-    static void hotplugHook(hwc2_callback_data_t callbackData,
-        hwc2_display_t display, int32_t connected);
-    static void refreshHook(hwc2_callback_data_t callbackData,
-        hwc2_display_t display);
-    static void vsyncHook(hwc2_callback_data_t callbackData,
-        hwc2_display_t display, int64_t timestamp);
-
-    hwc2_device_t* mDevice;
-
-    std::unordered_set<Capability> mCapabilities;
-
-    struct {
-        HWC2_PFN_ACCEPT_DISPLAY_CHANGES acceptDisplayChanges;
-        HWC2_PFN_CREATE_LAYER createLayer;
-        HWC2_PFN_CREATE_VIRTUAL_DISPLAY createVirtualDisplay;
-        HWC2_PFN_DESTROY_LAYER destroyLayer;
-        HWC2_PFN_DESTROY_VIRTUAL_DISPLAY destroyVirtualDisplay;
-        HWC2_PFN_DUMP dump;
-        HWC2_PFN_GET_ACTIVE_CONFIG getActiveConfig;
-        HWC2_PFN_GET_CHANGED_COMPOSITION_TYPES getChangedCompositionTypes;
-        HWC2_PFN_GET_CLIENT_TARGET_SUPPORT getClientTargetSupport;
-        HWC2_PFN_GET_COLOR_MODES getColorModes;
-        HWC2_PFN_GET_DISPLAY_ATTRIBUTE getDisplayAttribute;
-        HWC2_PFN_GET_DISPLAY_CONFIGS getDisplayConfigs;
-        HWC2_PFN_GET_DISPLAY_NAME getDisplayName;
-        HWC2_PFN_GET_DISPLAY_REQUESTS getDisplayRequests;
-        HWC2_PFN_GET_DISPLAY_TYPE getDisplayType;
-        HWC2_PFN_GET_DOZE_SUPPORT getDozeSupport;
-        HWC2_PFN_GET_HDR_CAPABILITIES getHdrCapabilities;
-        HWC2_PFN_GET_MAX_VIRTUAL_DISPLAY_COUNT getMaxVirtualDisplayCount;
-        HWC2_PFN_GET_RELEASE_FENCES getReleaseFences;
-        HWC2_PFN_PRESENT_DISPLAY presentDisplay;
-        HWC2_PFN_REGISTER_CALLBACK registerCallback;
-        HWC2_PFN_SET_ACTIVE_CONFIG setActiveConfig;
-        HWC2_PFN_SET_CLIENT_TARGET setClientTarget;
-        HWC2_PFN_SET_COLOR_MODE setColorMode;
-        HWC2_PFN_SET_COLOR_TRANSFORM setColorTransform;
-        HWC2_PFN_SET_CURSOR_POSITION setCursorPosition;
-        HWC2_PFN_SET_LAYER_BLEND_MODE setLayerBlendMode;
-        HWC2_PFN_SET_LAYER_BUFFER setLayerBuffer;
-        HWC2_PFN_SET_LAYER_COLOR setLayerColor;
-        HWC2_PFN_SET_LAYER_COMPOSITION_TYPE setLayerCompositionType;
-        HWC2_PFN_SET_LAYER_DATASPACE setLayerDataspace;
-        HWC2_PFN_SET_LAYER_DISPLAY_FRAME setLayerDisplayFrame;
-        HWC2_PFN_SET_LAYER_PLANE_ALPHA setLayerPlaneAlpha;
-        HWC2_PFN_SET_LAYER_SIDEBAND_STREAM setLayerSidebandStream;
-        HWC2_PFN_SET_LAYER_SOURCE_CROP setLayerSourceCrop;
-        HWC2_PFN_SET_LAYER_SURFACE_DAMAGE setLayerSurfaceDamage;
-        HWC2_PFN_SET_LAYER_TRANSFORM setLayerTransform;
-        HWC2_PFN_SET_LAYER_VISIBLE_REGION setLayerVisibleRegion;
-        HWC2_PFN_SET_LAYER_Z_ORDER setLayerZOrder;
-        HWC2_PFN_SET_OUTPUT_BUFFER setOutputBuffer;
-        HWC2_PFN_SET_POWER_MODE setPowerMode;
-        HWC2_PFN_SET_VSYNC_ENABLED setVsyncEnabled;
-        HWC2_PFN_VALIDATE_DISPLAY validateDisplay;
-    } mDispatch;
-
-    // cloned buffers for a display
-    struct DisplayBuffers {
-        BufferClone ClientTarget;
-        BufferClone OutputBuffer;
-
-        std::unordered_map<Layer, BufferClone> LayerBuffers;
-        std::unordered_map<Layer, BufferClone> LayerSidebandStreams;
-    };
-
-    std::mutex mCallbackMutex;
-    sp<IComposerCallback> mCallback;
-
-    std::mutex mDisplayMutex;
-    std::unordered_map<Display, DisplayBuffers> mDisplays;
-};
-
 HwcHal::HwcHal(const hw_module_t* module)
     : mDevice(nullptr), mDispatch()
 {
-    if (!sHandleImporter.initialize()) {
-        LOG_ALWAYS_FATAL("failed to initialize handle importer");
-    }
-
     int status = hwc2_open(module, &mDevice);
     if (status) {
         LOG_ALWAYS_FATAL("failed to open hwcomposer2 device: %s",
@@ -463,8 +46,6 @@ HwcHal::HwcHal(const hw_module_t* module)
 HwcHal::~HwcHal()
 {
     hwc2_close(mDevice);
-    mDisplays.clear();
-    sHandleImporter.cleanup();
 }
 
 void HwcHal::initCapabilities()
@@ -599,694 +180,509 @@ Return<void> HwcHal::dumpDebugInfo(dumpDebugInfo_cb hidl_cb)
     return Void();
 }
 
+Return<void> HwcHal::createClient(createClient_cb hidl_cb)
+{
+    Error err = Error::NONE;
+    sp<HwcClient> client;
+
+    {
+        std::lock_guard<std::mutex> lock(mClientMutex);
+
+        // only one client is allowed
+        if (mClient == nullptr) {
+            client = new HwcClient(*this);
+            mClient = client;
+        } else {
+            err = Error::NO_RESOURCES;
+        }
+    }
+
+    hidl_cb(err, client);
+
+    return Void();
+}
+
+sp<HwcClient> HwcHal::getClient()
+{
+    std::lock_guard<std::mutex> lock(mClientMutex);
+    return (mClient != nullptr) ? mClient.promote() : nullptr;
+}
+
+void HwcHal::removeClient()
+{
+    std::lock_guard<std::mutex> lock(mClientMutex);
+    mClient = nullptr;
+}
+
 void HwcHal::hotplugHook(hwc2_callback_data_t callbackData,
         hwc2_display_t display, int32_t connected)
 {
     auto hal = reinterpret_cast<HwcHal*>(callbackData);
-
-    {
-        std::lock_guard<std::mutex> lock(hal->mDisplayMutex);
-
-        if (connected == HWC2_CONNECTION_CONNECTED) {
-            hal->mDisplays.emplace(display, DisplayBuffers());
-        } else if (connected == HWC2_CONNECTION_DISCONNECTED) {
-            hal->mDisplays.erase(display);
-        }
+    auto client = hal->getClient();
+    if (client != nullptr) {
+        client->onHotplug(display,
+                static_cast<IComposerCallback::Connection>(connected));
     }
-
-    hal->mCallback->onHotplug(display,
-            static_cast<IComposerCallback::Connection>(connected));
 }
 
 void HwcHal::refreshHook(hwc2_callback_data_t callbackData,
         hwc2_display_t display)
 {
     auto hal = reinterpret_cast<HwcHal*>(callbackData);
-    hal->mCallback->onRefresh(display);
+    auto client = hal->getClient();
+    if (client != nullptr) {
+        client->onRefresh(display);
+    }
 }
 
 void HwcHal::vsyncHook(hwc2_callback_data_t callbackData,
         hwc2_display_t display, int64_t timestamp)
 {
     auto hal = reinterpret_cast<HwcHal*>(callbackData);
-    hal->mCallback->onVsync(display, timestamp);
+    auto client = hal->getClient();
+    if (client != nullptr) {
+        client->onVsync(display, timestamp);
+    }
 }
 
-Return<void> HwcHal::registerCallback(const sp<IComposerCallback>& callback)
+void HwcHal::enableCallback(bool enable)
 {
-    std::lock_guard<std::mutex> lock(mCallbackMutex);
-
-    mCallback = callback;
-
-    mDispatch.registerCallback(mDevice, HWC2_CALLBACK_HOTPLUG, this,
-            reinterpret_cast<hwc2_function_pointer_t>(hotplugHook));
-    mDispatch.registerCallback(mDevice, HWC2_CALLBACK_REFRESH, this,
-            reinterpret_cast<hwc2_function_pointer_t>(refreshHook));
-    mDispatch.registerCallback(mDevice, HWC2_CALLBACK_VSYNC, this,
-            reinterpret_cast<hwc2_function_pointer_t>(vsyncHook));
-
-    return Void();
+    if (enable) {
+        mDispatch.registerCallback(mDevice, HWC2_CALLBACK_HOTPLUG, this,
+                reinterpret_cast<hwc2_function_pointer_t>(hotplugHook));
+        mDispatch.registerCallback(mDevice, HWC2_CALLBACK_REFRESH, this,
+                reinterpret_cast<hwc2_function_pointer_t>(refreshHook));
+        mDispatch.registerCallback(mDevice, HWC2_CALLBACK_VSYNC, this,
+                reinterpret_cast<hwc2_function_pointer_t>(vsyncHook));
+    } else {
+        mDispatch.registerCallback(mDevice, HWC2_CALLBACK_HOTPLUG, this,
+                nullptr);
+        mDispatch.registerCallback(mDevice, HWC2_CALLBACK_REFRESH, this,
+                nullptr);
+        mDispatch.registerCallback(mDevice, HWC2_CALLBACK_VSYNC, this,
+                nullptr);
+    }
 }
 
-Return<uint32_t> HwcHal::getMaxVirtualDisplayCount()
+uint32_t HwcHal::getMaxVirtualDisplayCount()
 {
     return mDispatch.getMaxVirtualDisplayCount(mDevice);
 }
 
-Return<void> HwcHal::createVirtualDisplay(uint32_t width, uint32_t height,
-        PixelFormat formatHint, createVirtualDisplay_cb hidl_cb)
+Error HwcHal::createVirtualDisplay(uint32_t width, uint32_t height,
+    PixelFormat& format, Display& display)
 {
-    int32_t format = static_cast<int32_t>(formatHint);
-    hwc2_display_t display;
-    auto error = mDispatch.createVirtualDisplay(mDevice, width, height,
-            &format, &display);
-    if (error == HWC2_ERROR_NONE) {
-        std::lock_guard<std::mutex> lock(mDisplayMutex);
+    int32_t hwc_format = static_cast<int32_t>(format);
+    int32_t err = mDispatch.createVirtualDisplay(mDevice, width, height,
+            &hwc_format, &display);
+    format = static_cast<PixelFormat>(hwc_format);
 
-        mDisplays.emplace(display, DisplayBuffers());
-    }
-
-    hidl_cb(static_cast<Error>(error), display,
-            static_cast<PixelFormat>(format));
-
-    return Void();
+    return static_cast<Error>(err);
 }
 
-Return<Error> HwcHal::destroyVirtualDisplay(Display display)
+Error HwcHal::destroyVirtualDisplay(Display display)
 {
-    auto error = mDispatch.destroyVirtualDisplay(mDevice, display);
-    if (error == HWC2_ERROR_NONE) {
-        std::lock_guard<std::mutex> lock(mDisplayMutex);
-
-        mDisplays.erase(display);
-    }
-
-    return static_cast<Error>(error);
+    int32_t err = mDispatch.destroyVirtualDisplay(mDevice, display);
+    return static_cast<Error>(err);
 }
 
-Return<Error> HwcHal::acceptDisplayChanges(Display display)
+Error HwcHal::createLayer(Display display, Layer& layer)
 {
-    auto error = mDispatch.acceptDisplayChanges(mDevice, display);
-    return static_cast<Error>(error);
+    int32_t err = mDispatch.createLayer(mDevice, display, &layer);
+    return static_cast<Error>(err);
 }
 
-Return<void> HwcHal::createLayer(Display display, createLayer_cb hidl_cb)
+Error HwcHal::destroyLayer(Display display, Layer layer)
 {
-    hwc2_layer_t layer;
-    auto error = mDispatch.createLayer(mDevice, display, &layer);
-
-    hidl_cb(static_cast<Error>(error), layer);
-
-    return Void();
+    int32_t err = mDispatch.destroyLayer(mDevice, display, layer);
+    return static_cast<Error>(err);
 }
 
-Return<Error> HwcHal::destroyLayer(Display display, Layer layer)
+Error HwcHal::getActiveConfig(Display display, Config& config)
 {
-    auto error = mDispatch.destroyLayer(mDevice, display, layer);
-    if (error == HWC2_ERROR_NONE) {
-        std::lock_guard<std::mutex> lock(mDisplayMutex);
-
-        auto dpy = mDisplays.find(display);
-        dpy->second.LayerBuffers.erase(layer);
-        dpy->second.LayerSidebandStreams.erase(layer);
-    }
-
-    return static_cast<Error>(error);
+    int32_t err = mDispatch.getActiveConfig(mDevice, display, &config);
+    return static_cast<Error>(err);
 }
 
-Return<void> HwcHal::getActiveConfig(Display display,
-        getActiveConfig_cb hidl_cb)
-{
-    hwc2_config_t config;
-    auto error = mDispatch.getActiveConfig(mDevice, display, &config);
-
-    hidl_cb(static_cast<Error>(error), config);
-
-    return Void();
-}
-
-Return<void> HwcHal::getChangedCompositionTypes(Display display,
-        getChangedCompositionTypes_cb hidl_cb)
-{
-    uint32_t count = 0;
-    auto error = mDispatch.getChangedCompositionTypes(mDevice, display,
-            &count, nullptr, nullptr);
-    if (error != HWC2_ERROR_NONE) {
-        count = 0;
-    }
-
-    std::vector<hwc2_layer_t> layers(count);
-    std::vector<Composition> types(count);
-    error = mDispatch.getChangedCompositionTypes(mDevice, display,
-            &count, layers.data(),
-            reinterpret_cast<std::underlying_type<Composition>::type*>(
-                types.data()));
-    if (error != HWC2_ERROR_NONE) {
-        count = 0;
-    }
-    layers.resize(count);
-    types.resize(count);
-
-    hidl_vec<Layer> layers_reply;
-    layers_reply.setToExternal(layers.data(), layers.size());
-
-    hidl_vec<Composition> types_reply;
-    types_reply.setToExternal(types.data(), types.size());
-
-    hidl_cb(static_cast<Error>(error), layers_reply, types_reply);
-
-    return Void();
-}
-
-Return<Error> HwcHal::getClientTargetSupport(Display display,
+Error HwcHal::getClientTargetSupport(Display display,
         uint32_t width, uint32_t height,
         PixelFormat format, Dataspace dataspace)
 {
-    auto error = mDispatch.getClientTargetSupport(mDevice, display,
+    int32_t err = mDispatch.getClientTargetSupport(mDevice, display,
             width, height, static_cast<int32_t>(format),
             static_cast<int32_t>(dataspace));
-    return static_cast<Error>(error);
+    return static_cast<Error>(err);
 }
 
-Return<void> HwcHal::getColorModes(Display display, getColorModes_cb hidl_cb)
+Error HwcHal::getColorModes(Display display, hidl_vec<ColorMode>& modes)
 {
     uint32_t count = 0;
-    auto error = mDispatch.getColorModes(mDevice, display, &count, nullptr);
-    if (error != HWC2_ERROR_NONE) {
-        count = 0;
+    int32_t err = mDispatch.getColorModes(mDevice, display, &count, nullptr);
+    if (err != HWC2_ERROR_NONE) {
+        return static_cast<Error>(err);
     }
 
-    std::vector<ColorMode> modes(count);
-    error = mDispatch.getColorModes(mDevice, display, &count,
+    modes.resize(count);
+    err = mDispatch.getColorModes(mDevice, display, &count,
             reinterpret_cast<std::underlying_type<ColorMode>::type*>(
                 modes.data()));
-    if (error != HWC2_ERROR_NONE) {
-        count = 0;
+    if (err != HWC2_ERROR_NONE) {
+        modes = hidl_vec<ColorMode>();
+        return static_cast<Error>(err);
     }
-    modes.resize(count);
 
-    hidl_vec<ColorMode> modes_reply;
-    modes_reply.setToExternal(modes.data(), modes.size());
-    hidl_cb(static_cast<Error>(error), modes_reply);
-
-    return Void();
+    return Error::NONE;
 }
 
-Return<void> HwcHal::getDisplayAttribute(Display display,
-        Config config, Attribute attribute,
-        getDisplayAttribute_cb hidl_cb)
+Error HwcHal::getDisplayAttribute(Display display, Config config,
+        IComposerClient::Attribute attribute, int32_t& value)
 {
-    int32_t value;
-    auto error = mDispatch.getDisplayAttribute(mDevice, display, config,
+    int32_t err = mDispatch.getDisplayAttribute(mDevice, display, config,
             static_cast<int32_t>(attribute), &value);
-
-    hidl_cb(static_cast<Error>(error), value);
-
-    return Void();
+    return static_cast<Error>(err);
 }
 
-Return<void> HwcHal::getDisplayConfigs(Display display,
-        getDisplayConfigs_cb hidl_cb)
+Error HwcHal::getDisplayConfigs(Display display, hidl_vec<Config>& configs)
 {
     uint32_t count = 0;
-    auto error = mDispatch.getDisplayConfigs(mDevice, display,
+    int32_t err = mDispatch.getDisplayConfigs(mDevice, display,
             &count, nullptr);
-    if (error != HWC2_ERROR_NONE) {
-        count = 0;
+    if (err != HWC2_ERROR_NONE) {
+        return static_cast<Error>(err);
     }
 
-    std::vector<hwc2_config_t> configs(count);
-    error = mDispatch.getDisplayConfigs(mDevice, display,
-            &count, configs.data());
-    if (error != HWC2_ERROR_NONE) {
-        count = 0;
-    }
     configs.resize(count);
+    err = mDispatch.getDisplayConfigs(mDevice, display,
+            &count, configs.data());
+    if (err != HWC2_ERROR_NONE) {
+        configs = hidl_vec<Config>();
+        return static_cast<Error>(err);
+    }
 
-    hidl_vec<Config> configs_reply;
-    configs_reply.setToExternal(configs.data(), configs.size());
-    hidl_cb(static_cast<Error>(error), configs_reply);
-
-    return Void();
+    return Error::NONE;
 }
 
-Return<void> HwcHal::getDisplayName(Display display,
-        getDisplayName_cb hidl_cb)
+Error HwcHal::getDisplayName(Display display, hidl_string& name)
 {
     uint32_t count = 0;
-    auto error = mDispatch.getDisplayName(mDevice, display, &count, nullptr);
-    if (error != HWC2_ERROR_NONE) {
-        count = 0;
+    int32_t err = mDispatch.getDisplayName(mDevice, display, &count, nullptr);
+    if (err != HWC2_ERROR_NONE) {
+        return static_cast<Error>(err);
     }
 
-    std::vector<char> name(count + 1);
-    error = mDispatch.getDisplayName(mDevice, display, &count, name.data());
-    if (error != HWC2_ERROR_NONE) {
-        count = 0;
+    std::vector<char> buf(count + 1);
+    err = mDispatch.getDisplayName(mDevice, display, &count, buf.data());
+    if (err != HWC2_ERROR_NONE) {
+        return static_cast<Error>(err);
     }
-    name.resize(count + 1);
-    name[count] = '\0';
+    buf.resize(count + 1);
+    buf[count] = '\0';
 
-    hidl_string name_reply;
-    name_reply.setToExternal(name.data(), count);
-    hidl_cb(static_cast<Error>(error), name_reply);
+    name = buf.data();
 
-    return Void();
+    return Error::NONE;
 }
 
-Return<void> HwcHal::getDisplayRequests(Display display,
-        getDisplayRequests_cb hidl_cb)
+Error HwcHal::getDisplayType(Display display, IComposerClient::DisplayType& type)
 {
-    int32_t display_reqs;
+    int32_t hwc_type = HWC2_DISPLAY_TYPE_INVALID;
+    int32_t err = mDispatch.getDisplayType(mDevice, display, &hwc_type);
+    type = static_cast<IComposerClient::DisplayType>(hwc_type);
+
+    return static_cast<Error>(err);
+}
+
+Error HwcHal::getDozeSupport(Display display, bool& support)
+{
+    int32_t hwc_support = 0;
+    int32_t err = mDispatch.getDozeSupport(mDevice, display, &hwc_support);
+    support = hwc_support;
+
+    return static_cast<Error>(err);
+}
+
+Error HwcHal::getHdrCapabilities(Display display, hidl_vec<Hdr>& types,
+        float& maxLuminance, float& maxAverageLuminance, float& minLuminance)
+{
     uint32_t count = 0;
-    auto error = mDispatch.getDisplayRequests(mDevice, display,
-            &display_reqs, &count, nullptr, nullptr);
-    if (error != HWC2_ERROR_NONE) {
-        count = 0;
+    int32_t err = mDispatch.getHdrCapabilities(mDevice, display, &count,
+            nullptr, &maxLuminance, &maxAverageLuminance, &minLuminance);
+    if (err != HWC2_ERROR_NONE) {
+        return static_cast<Error>(err);
     }
 
-    std::vector<hwc2_layer_t> layers(count);
-    std::vector<int32_t> layer_reqs(count);
-    error = mDispatch.getDisplayRequests(mDevice, display,
-            &display_reqs, &count, layers.data(), layer_reqs.data());
-    if (error != HWC2_ERROR_NONE) {
-        count = 0;
-    }
-    layers.resize(count);
-    layer_reqs.resize(count);
-
-    hidl_vec<Layer> layers_reply;
-    layers_reply.setToExternal(layers.data(), layers.size());
-
-    hidl_vec<uint32_t> layer_reqs_reply;
-    layer_reqs_reply.setToExternal(
-            reinterpret_cast<uint32_t*>(layer_reqs.data()),
-            layer_reqs.size());
-
-    hidl_cb(static_cast<Error>(error), display_reqs,
-            layers_reply, layer_reqs_reply);
-
-    return Void();
-}
-
-Return<void> HwcHal::getDisplayType(Display display,
-        getDisplayType_cb hidl_cb)
-{
-    int32_t type;
-    auto error = mDispatch.getDisplayType(mDevice, display, &type);
-
-    hidl_cb(static_cast<Error>(error), static_cast<DisplayType>(type));
-
-    return Void();
-}
-
-Return<void> HwcHal::getDozeSupport(Display display,
-        getDozeSupport_cb hidl_cb)
-{
-    int32_t support;
-    auto error = mDispatch.getDozeSupport(mDevice, display, &support);
-
-    hidl_cb(static_cast<Error>(error), support);
-
-    return Void();
-}
-
-Return<void> HwcHal::getHdrCapabilities(Display display,
-        getHdrCapabilities_cb hidl_cb)
-{
-    float max_lumi, max_avg_lumi, min_lumi;
-    uint32_t count = 0;
-    auto error = mDispatch.getHdrCapabilities(mDevice, display,
-            &count, nullptr, &max_lumi, &max_avg_lumi, &min_lumi);
-    if (error != HWC2_ERROR_NONE) {
-        count = 0;
-    }
-
-    std::vector<Hdr> types(count);
-    error = mDispatch.getHdrCapabilities(mDevice, display, &count,
-            reinterpret_cast<std::underlying_type<Hdr>::type*>(types.data()),
-            &max_lumi, &max_avg_lumi, &min_lumi);
-    if (error != HWC2_ERROR_NONE) {
-        count = 0;
-    }
     types.resize(count);
+    err = mDispatch.getHdrCapabilities(mDevice, display, &count,
+            reinterpret_cast<std::underlying_type<Hdr>::type*>(types.data()),
+            &maxLuminance, &maxAverageLuminance, &minLuminance);
+    if (err != HWC2_ERROR_NONE) {
+        return static_cast<Error>(err);
+    }
 
-    hidl_vec<Hdr> types_reply;
-    types_reply.setToExternal(types.data(), types.size());
-    hidl_cb(static_cast<Error>(error), types_reply,
-            max_lumi, max_avg_lumi, min_lumi);
-
-    return Void();
+    return Error::NONE;
 }
 
-Return<void> HwcHal::getReleaseFences(Display display,
-        getReleaseFences_cb hidl_cb)
+Error HwcHal::setActiveConfig(Display display, Config config)
 {
-    uint32_t count = 0;
-    auto error = mDispatch.getReleaseFences(mDevice, display,
-            &count, nullptr, nullptr);
-    if (error != HWC2_ERROR_NONE) {
-        count = 0;
-    }
-
-    std::vector<hwc2_layer_t> layers(count);
-    std::vector<int32_t> fences(count);
-    error = mDispatch.getReleaseFences(mDevice, display,
-            &count, layers.data(), fences.data());
-    if (error != HWC2_ERROR_NONE) {
-        count = 0;
-    }
-    layers.resize(count);
-    fences.resize(count);
-
-    // filter out layers with release fence -1
-    std::vector<hwc2_layer_t> filtered_layers;
-    std::vector<int> filtered_fences;
-    for (size_t i = 0; i < layers.size(); i++) {
-        if (fences[i] >= 0) {
-            filtered_layers.push_back(layers[i]);
-            filtered_fences.push_back(fences[i]);
-        }
-    }
-
-    hidl_vec<Layer> layers_reply;
-    native_handle_t* fences_reply =
-        native_handle_create(filtered_fences.size(), 0);
-    if (fences_reply) {
-        layers_reply.setToExternal(filtered_layers.data(),
-                filtered_layers.size());
-        memcpy(fences_reply->data, filtered_fences.data(),
-                sizeof(int) * filtered_fences.size());
-
-        hidl_cb(static_cast<Error>(error), layers_reply, fences_reply);
-
-        native_handle_close(fences_reply);
-        native_handle_delete(fences_reply);
-    } else {
-        NATIVE_HANDLE_DECLARE_STORAGE(fences_storage, 0, 0);
-        fences_reply = native_handle_init(fences_storage, 0, 0);
-
-        hidl_cb(Error::NO_RESOURCES, layers_reply, fences_reply);
-
-        for (auto fence : filtered_fences) {
-            close(fence);
-        }
-    }
-
-    return Void();
+    int32_t err = mDispatch.setActiveConfig(mDevice, display, config);
+    return static_cast<Error>(err);
 }
 
-Return<void> HwcHal::presentDisplay(Display display,
-        presentDisplay_cb hidl_cb)
+Error HwcHal::setColorMode(Display display, ColorMode mode)
 {
-    int32_t fence = -1;
-    auto error = mDispatch.presentDisplay(mDevice, display, &fence);
-
-    NATIVE_HANDLE_DECLARE_STORAGE(fence_storage, 1, 0);
-    native_handle_t* fence_reply;
-    if (fence >= 0) {
-        fence_reply = native_handle_init(fence_storage, 1, 0);
-        fence_reply->data[0] = fence;
-    } else {
-        fence_reply = native_handle_init(fence_storage, 0, 0);
-    }
-
-    hidl_cb(static_cast<Error>(error), fence_reply);
-
-    if (fence >= 0) {
-        close(fence);
-    }
-
-    return Void();
-}
-
-Return<Error> HwcHal::setActiveConfig(Display display, Config config)
-{
-    auto error = mDispatch.setActiveConfig(mDevice, display, config);
-    return static_cast<Error>(error);
-}
-
-Return<Error> HwcHal::setClientTarget(Display display,
-        const hidl_handle& target,
-        const hidl_handle& acquireFence,
-        Dataspace dataspace, const hidl_vec<Rect>& damage)
-{
-    const native_handle_t* targetHandle = target.getNativeHandle();
-    if (!sHandleImporter.importBuffer(targetHandle)) {
-        return Error::NO_RESOURCES;
-    }
-
-    int32_t fence;
-    if (!sHandleImporter.importFence(acquireFence, fence)) {
-        sHandleImporter.freeBuffer(targetHandle);
-        return Error::NO_RESOURCES;
-    }
-
-    hwc_region_t damage_region = { damage.size(),
-        reinterpret_cast<const hwc_rect_t*>(&damage[0]) };
-
-    int32_t error = mDispatch.setClientTarget(mDevice, display,
-            targetHandle, fence, static_cast<int32_t>(dataspace),
-            damage_region);
-    if (error == HWC2_ERROR_NONE) {
-        std::lock_guard<std::mutex> lock(mDisplayMutex);
-
-        auto dpy = mDisplays.find(display);
-        dpy->second.ClientTarget = targetHandle;
-    } else {
-        sHandleImporter.freeBuffer(target);
-        sHandleImporter.closeFence(fence);
-    }
-
-    return static_cast<Error>(error);
-}
-
-Return<Error> HwcHal::setColorMode(Display display, ColorMode mode)
-{
-    auto error = mDispatch.setColorMode(mDevice, display,
+    int32_t err = mDispatch.setColorMode(mDevice, display,
             static_cast<int32_t>(mode));
-    return static_cast<Error>(error);
+    return static_cast<Error>(err);
 }
 
-Return<Error> HwcHal::setColorTransform(Display display,
-        const hidl_vec<float>& matrix, ColorTransform hint)
+Error HwcHal::setPowerMode(Display display, IComposerClient::PowerMode mode)
 {
-    auto error = mDispatch.setColorTransform(mDevice, display,
-            &matrix[0], static_cast<int32_t>(hint));
-    return static_cast<Error>(error);
-}
-
-Return<Error> HwcHal::setOutputBuffer(Display display,
-        const hidl_handle& buffer,
-        const hidl_handle& releaseFence)
-{
-    const native_handle_t* bufferHandle = buffer.getNativeHandle();
-    if (!sHandleImporter.importBuffer(bufferHandle)) {
-        return Error::NO_RESOURCES;
-    }
-
-    int32_t fence;
-    if (!sHandleImporter.importFence(releaseFence, fence)) {
-        sHandleImporter.freeBuffer(bufferHandle);
-        return Error::NO_RESOURCES;
-    }
-
-    int32_t error = mDispatch.setOutputBuffer(mDevice,
-            display, bufferHandle, fence);
-    if (error == HWC2_ERROR_NONE) {
-        std::lock_guard<std::mutex> lock(mDisplayMutex);
-
-        auto dpy = mDisplays.find(display);
-        dpy->second.OutputBuffer = bufferHandle;
-    } else {
-        sHandleImporter.freeBuffer(bufferHandle);
-    }
-
-    // unlike in setClientTarget, fence is owned by us and is always closed
-    sHandleImporter.closeFence(fence);
-
-    return static_cast<Error>(error);
-}
-
-Return<Error> HwcHal::setPowerMode(Display display, PowerMode mode)
-{
-    auto error = mDispatch.setPowerMode(mDevice, display,
+    int32_t err = mDispatch.setPowerMode(mDevice, display,
             static_cast<int32_t>(mode));
-    return static_cast<Error>(error);
+    return static_cast<Error>(err);
 }
 
-Return<Error> HwcHal::setVsyncEnabled(Display display,
-        Vsync enabled)
+Error HwcHal::setVsyncEnabled(Display display, IComposerClient::Vsync enabled)
 {
-    auto error = mDispatch.setVsyncEnabled(mDevice, display,
+    int32_t err = mDispatch.setVsyncEnabled(mDevice, display,
             static_cast<int32_t>(enabled));
-    return static_cast<Error>(error);
+    return static_cast<Error>(err);
 }
 
-Return<void> HwcHal::validateDisplay(Display display,
-        validateDisplay_cb hidl_cb)
+Error HwcHal::setColorTransform(Display display, const float* matrix,
+        int32_t hint)
+{
+    int32_t err = mDispatch.setColorTransform(mDevice, display, matrix, hint);
+    return static_cast<Error>(err);
+}
+
+Error HwcHal::setClientTarget(Display display, buffer_handle_t target,
+        int32_t acquireFence, int32_t dataspace,
+        const std::vector<hwc_rect_t>& damage)
+{
+    hwc_region region = { damage.size(), damage.data() };
+    int32_t err = mDispatch.setClientTarget(mDevice, display, target,
+            acquireFence, dataspace, region);
+    return static_cast<Error>(err);
+}
+
+Error HwcHal::setOutputBuffer(Display display, buffer_handle_t buffer,
+        int32_t releaseFence)
+{
+    int32_t err = mDispatch.setOutputBuffer(mDevice, display, buffer,
+            releaseFence);
+    // unlike in setClientTarget, releaseFence is owned by us
+    if (err == HWC2_ERROR_NONE && releaseFence >= 0) {
+        close(releaseFence);
+    }
+
+    return static_cast<Error>(err);
+}
+
+Error HwcHal::validateDisplay(Display display,
+        std::vector<Layer>& changedLayers,
+        std::vector<IComposerClient::Composition>& compositionTypes,
+        uint32_t& displayRequestMask,
+        std::vector<Layer>& requestedLayers,
+        std::vector<uint32_t>& requestMasks)
 {
     uint32_t types_count = 0;
     uint32_t reqs_count = 0;
-    auto error = mDispatch.validateDisplay(mDevice, display,
+    int32_t err = mDispatch.validateDisplay(mDevice, display,
             &types_count, &reqs_count);
-
-    hidl_cb(static_cast<Error>(error), types_count, reqs_count);
-
-    return Void();
-}
-
-Return<Error> HwcHal::setCursorPosition(Display display,
-        Layer layer, int32_t x, int32_t y)
-{
-    auto error = mDispatch.setCursorPosition(mDevice, display, layer, x, y);
-    return static_cast<Error>(error);
-}
-
-Return<Error> HwcHal::setLayerBuffer(Display display,
-        Layer layer, const hidl_handle& buffer,
-        const hidl_handle& acquireFence)
-{
-    const native_handle_t* bufferHandle = buffer.getNativeHandle();
-    if (!sHandleImporter.importBuffer(bufferHandle)) {
-        return Error::NO_RESOURCES;
+    if (err != HWC2_ERROR_NONE && err != HWC2_ERROR_HAS_CHANGES) {
+        return static_cast<Error>(err);
     }
 
-    int32_t fence;
-    if (!sHandleImporter.importFence(acquireFence, fence)) {
-        sHandleImporter.freeBuffer(bufferHandle);
-        return Error::NO_RESOURCES;
+    err = mDispatch.getChangedCompositionTypes(mDevice, display,
+            &types_count, nullptr, nullptr);
+    if (err != HWC2_ERROR_NONE) {
+        return static_cast<Error>(err);
     }
 
-    int32_t error = mDispatch.setLayerBuffer(mDevice,
-            display, layer, bufferHandle, fence);
-    if (error == HWC2_ERROR_NONE) {
-        std::lock_guard<std::mutex> lock(mDisplayMutex);
-
-        auto dpy = mDisplays.find(display);
-        dpy->second.LayerBuffers[layer] = bufferHandle;
-    } else {
-        sHandleImporter.freeBuffer(bufferHandle);
-        sHandleImporter.closeFence(fence);
+    changedLayers.resize(types_count);
+    compositionTypes.resize(types_count);
+    err = mDispatch.getChangedCompositionTypes(mDevice, display,
+            &types_count, changedLayers.data(),
+            reinterpret_cast<
+            std::underlying_type<IComposerClient::Composition>::type*>(
+                compositionTypes.data()));
+    if (err != HWC2_ERROR_NONE) {
+        changedLayers.clear();
+        compositionTypes.clear();
+        return static_cast<Error>(err);
     }
 
-    return static_cast<Error>(error);
+    int32_t display_reqs = 0;
+    err = mDispatch.getDisplayRequests(mDevice, display, &display_reqs,
+            &reqs_count, nullptr, nullptr);
+    if (err != HWC2_ERROR_NONE) {
+        changedLayers.clear();
+        compositionTypes.clear();
+        return static_cast<Error>(err);
+    }
+
+    requestedLayers.resize(reqs_count);
+    requestMasks.resize(reqs_count);
+    err = mDispatch.getDisplayRequests(mDevice, display, &display_reqs,
+            &reqs_count, requestedLayers.data(),
+            reinterpret_cast<int32_t*>(requestMasks.data()));
+    if (err != HWC2_ERROR_NONE) {
+        changedLayers.clear();
+        compositionTypes.clear();
+
+        requestedLayers.clear();
+        requestMasks.clear();
+        return static_cast<Error>(err);
+    }
+
+    displayRequestMask = display_reqs;
+
+    return static_cast<Error>(err);
 }
 
-Return<Error> HwcHal::setLayerSurfaceDamage(Display display,
-        Layer layer, const hidl_vec<Rect>& damage)
+Error HwcHal::acceptDisplayChanges(Display display)
 {
-    hwc_region_t damage_region = { damage.size(),
-        reinterpret_cast<const hwc_rect_t*>(&damage[0]) };
-
-    auto error = mDispatch.setLayerSurfaceDamage(mDevice, display, layer,
-            damage_region);
-    return static_cast<Error>(error);
+    int32_t err = mDispatch.acceptDisplayChanges(mDevice, display);
+    return static_cast<Error>(err);
 }
 
-Return<Error> HwcHal::setLayerBlendMode(Display display,
-        Layer layer, BlendMode mode)
+Error HwcHal::presentDisplay(Display display, int32_t& presentFence,
+        std::vector<Layer>& layers, std::vector<int32_t>& releaseFences)
 {
-    auto error = mDispatch.setLayerBlendMode(mDevice, display, layer,
-            static_cast<int32_t>(mode));
-    return static_cast<Error>(error);
+    presentFence = -1;
+    int32_t err = mDispatch.presentDisplay(mDevice, display, &presentFence);
+    if (err != HWC2_ERROR_NONE) {
+        return static_cast<Error>(err);
+    }
+
+    uint32_t count = 0;
+    err = mDispatch.getReleaseFences(mDevice, display, &count,
+            nullptr, nullptr);
+    if (err != HWC2_ERROR_NONE) {
+        ALOGW("failed to get release fences");
+        return Error::NONE;
+    }
+
+    layers.resize(count);
+    releaseFences.resize(count);
+    err = mDispatch.getReleaseFences(mDevice, display, &count,
+            layers.data(), releaseFences.data());
+    if (err != HWC2_ERROR_NONE) {
+        ALOGW("failed to get release fences");
+        layers.clear();
+        releaseFences.clear();
+        return Error::NONE;
+    }
+
+    return static_cast<Error>(err);
 }
 
-Return<Error> HwcHal::setLayerColor(Display display,
-        Layer layer, const Color& color)
+Error HwcHal::setLayerCursorPosition(Display display, Layer layer,
+        int32_t x, int32_t y)
+{
+    int32_t err = mDispatch.setCursorPosition(mDevice, display, layer, x, y);
+    return static_cast<Error>(err);
+}
+
+Error HwcHal::setLayerBuffer(Display display, Layer layer,
+        buffer_handle_t buffer, int32_t acquireFence)
+{
+    int32_t err = mDispatch.setLayerBuffer(mDevice, display, layer,
+            buffer, acquireFence);
+    return static_cast<Error>(err);
+}
+
+Error HwcHal::setLayerSurfaceDamage(Display display, Layer layer,
+        const std::vector<hwc_rect_t>& damage)
+{
+    hwc_region region = { damage.size(), damage.data() };
+    int32_t err = mDispatch.setLayerSurfaceDamage(mDevice, display, layer,
+            region);
+    return static_cast<Error>(err);
+}
+
+Error HwcHal::setLayerBlendMode(Display display, Layer layer, int32_t mode)
+{
+    int32_t err = mDispatch.setLayerBlendMode(mDevice, display, layer, mode);
+    return static_cast<Error>(err);
+}
+
+Error HwcHal::setLayerColor(Display display, Layer layer,
+        IComposerClient::Color color)
 {
     hwc_color_t hwc_color{color.r, color.g, color.b, color.a};
-    auto error = mDispatch.setLayerColor(mDevice, display, layer, hwc_color);
-    return static_cast<Error>(error);
+    int32_t err = mDispatch.setLayerColor(mDevice, display, layer, hwc_color);
+    return static_cast<Error>(err);
 }
 
-Return<Error> HwcHal::setLayerCompositionType(Display display,
-        Layer layer, Composition type)
+Error HwcHal::setLayerCompositionType(Display display, Layer layer,
+        int32_t type)
 {
-    auto error = mDispatch.setLayerCompositionType(mDevice, display, layer,
-            static_cast<int32_t>(type));
-    return static_cast<Error>(error);
+    int32_t err = mDispatch.setLayerCompositionType(mDevice, display, layer,
+            type);
+    return static_cast<Error>(err);
 }
 
-Return<Error> HwcHal::setLayerDataspace(Display display,
-        Layer layer, Dataspace dataspace)
+Error HwcHal::setLayerDataspace(Display display, Layer layer,
+        int32_t dataspace)
 {
-    auto error = mDispatch.setLayerDataspace(mDevice, display, layer,
-            static_cast<int32_t>(dataspace));
-    return static_cast<Error>(error);
+    int32_t err = mDispatch.setLayerDataspace(mDevice, display, layer,
+            dataspace);
+    return static_cast<Error>(err);
 }
 
-Return<Error> HwcHal::setLayerDisplayFrame(Display display,
-        Layer layer, const Rect& frame)
+Error HwcHal::setLayerDisplayFrame(Display display, Layer layer,
+        const hwc_rect_t& frame)
 {
-    hwc_rect_t hwc_frame{frame.left, frame.top, frame.right, frame.bottom};
-    auto error = mDispatch.setLayerDisplayFrame(mDevice, display, layer,
-            hwc_frame);
-    return static_cast<Error>(error);
+    int32_t err = mDispatch.setLayerDisplayFrame(mDevice, display, layer,
+            frame);
+    return static_cast<Error>(err);
 }
 
-Return<Error> HwcHal::setLayerPlaneAlpha(Display display,
-        Layer layer, float alpha)
+Error HwcHal::setLayerPlaneAlpha(Display display, Layer layer, float alpha)
 {
-    auto error = mDispatch.setLayerPlaneAlpha(mDevice, display, layer, alpha);
-    return static_cast<Error>(error);
+    int32_t err = mDispatch.setLayerPlaneAlpha(mDevice, display, layer,
+            alpha);
+    return static_cast<Error>(err);
 }
 
-Return<Error> HwcHal::setLayerSidebandStream(Display display,
-        Layer layer, const hidl_handle& stream)
+Error HwcHal::setLayerSidebandStream(Display display, Layer layer,
+        buffer_handle_t stream)
 {
-    const native_handle_t* streamHandle = stream.getNativeHandle();
-    if (!sHandleImporter.importBuffer(streamHandle)) {
-        return Error::NO_RESOURCES;
-    }
-
-    int32_t error = mDispatch.setLayerSidebandStream(mDevice,
-            display, layer, streamHandle);
-    if (error == HWC2_ERROR_NONE) {
-        std::lock_guard<std::mutex> lock(mDisplayMutex);
-
-        auto dpy = mDisplays.find(display);
-        dpy->second.LayerSidebandStreams[layer] = streamHandle;
-    } else {
-        sHandleImporter.freeBuffer(streamHandle);
-    }
-
-    return static_cast<Error>(error);
+    int32_t err = mDispatch.setLayerSidebandStream(mDevice, display, layer,
+            stream);
+    return static_cast<Error>(err);
 }
 
-Return<Error> HwcHal::setLayerSourceCrop(Display display,
-        Layer layer, const FRect& crop)
+Error HwcHal::setLayerSourceCrop(Display display, Layer layer,
+        const hwc_frect_t& crop)
 {
-    hwc_frect_t hwc_crop{crop.left, crop.top, crop.right, crop.bottom};
-    auto error = mDispatch.setLayerSourceCrop(mDevice, display, layer,
-            hwc_crop);
-    return static_cast<Error>(error);
+    int32_t err = mDispatch.setLayerSourceCrop(mDevice, display, layer, crop);
+    return static_cast<Error>(err);
 }
 
-Return<Error> HwcHal::setLayerTransform(Display display,
-        Layer layer, Transform transform)
+Error HwcHal::setLayerTransform(Display display, Layer layer,
+        int32_t transform)
 {
-    auto error = mDispatch.setLayerTransform(mDevice, display, layer,
-            static_cast<int32_t>(transform));
-    return static_cast<Error>(error);
+    int32_t err = mDispatch.setLayerTransform(mDevice, display, layer,
+            transform);
+    return static_cast<Error>(err);
 }
 
-Return<Error> HwcHal::setLayerVisibleRegion(Display display,
-        Layer layer, const hidl_vec<Rect>& visible)
+Error HwcHal::setLayerVisibleRegion(Display display, Layer layer,
+        const std::vector<hwc_rect_t>& visible)
 {
-    hwc_region_t visible_region = { visible.size(),
-        reinterpret_cast<const hwc_rect_t*>(&visible[0]) };
-
-    auto error = mDispatch.setLayerVisibleRegion(mDevice, display, layer,
-            visible_region);
-    return static_cast<Error>(error);
+    hwc_region_t region = { visible.size(), visible.data() };
+    int32_t err = mDispatch.setLayerVisibleRegion(mDevice, display, layer,
+            region);
+    return static_cast<Error>(err);
 }
 
-Return<Error> HwcHal::setLayerZOrder(Display display,
-        Layer layer, uint32_t z)
+Error HwcHal::setLayerZOrder(Display display, Layer layer, uint32_t z)
 {
-    auto error = mDispatch.setLayerZOrder(mDevice, display, layer, z);
-    return static_cast<Error>(error);
+    int32_t err = mDispatch.setLayerZOrder(mDevice, display, layer, z);
+    return static_cast<Error>(err);
 }
 
 IComposer* HIDL_FETCH_IComposer(const char*)
