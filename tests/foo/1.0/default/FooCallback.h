@@ -6,7 +6,6 @@
 #include <hidl/MQDescriptor.h>
 
 #include <utils/Condition.h>
-#include <utils/Timers.h>
 namespace android {
 namespace hardware {
 namespace tests {
@@ -29,11 +28,6 @@ struct FooCallback : public IFooCallback {
     Return<void> heyItsTheMeaningOfLife(uint8_t tmol)  override;
     Return<void> reportResults(int64_t ns, reportResults_cb _hidl_cb)  override;
     Return<void> youBlockedMeFor(const hidl_array<int64_t, 3 /* 3 */>& callerBlockedInfo)  override;
-
-    static constexpr nsecs_t DELAY_S = 1;
-    static constexpr nsecs_t DELAY_NS = seconds_to_nanoseconds(DELAY_S);
-    static constexpr nsecs_t TOLERANCE_NS = milliseconds_to_nanoseconds(10);
-    static constexpr nsecs_t ONEWAY_TOLERANCE_NS = milliseconds_to_nanoseconds(1);
 
     hidl_array<InvokeInfo, 3> invokeInfo;
     Mutex mLock;

@@ -3,7 +3,9 @@
 
 #include "FooCallback.h"
 #include <android-base/logging.h>
+#include <hidl-test/FooHelper.h>
 #include <inttypes.h>
+#include <utils/Timers.h>
 
 namespace android {
 namespace hardware {
