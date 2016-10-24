@@ -14,38 +14,15 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "GrallocService"
+#define LOG_TAG "android.hardware.graphics.allocator@2.0-service"
 
 #include <android/hardware/graphics/allocator/2.0/IAllocator.h>
-#include <hwbinder/IPCThreadState.h>
-#include <hwbinder/ProcessState.h>
-#include <utils/StrongPointer.h>
 
-using android::sp;
-using android::hardware::IPCThreadState;
-using android::hardware::ProcessState;
+#include <hidl/LegacySupport.h>
+
 using android::hardware::graphics::allocator::V2_0::IAllocator;
+using android::hardware::defaultPassthroughServiceImplementation;
 
-int main()
-{
-    const char instance[] = "gralloc";
-
-    ALOGI("Service is starting.");
-
-    sp<IAllocator> service = IAllocator::getService(instance,
-            true /* getStub */);
-    if (service == nullptr) {
-        ALOGI("getService returned NULL");
-        return -1;
-    }
-
-    LOG_FATAL_IF(service->isRemote(), "Service is REMOTE!");
-
-    service->registerAsService(instance);
-
-    ProcessState::self()->setThreadPoolMaxThreadCount(0);
-    ProcessState::self()->startThreadPool();
-    IPCThreadState::self()->joinThreadPool();
-
-    return 0;
+int main() {
+    return defaultPassthroughServiceImplementation<IAllocator>("gralloc");
 }
