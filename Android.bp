@@ -8,6 +8,7 @@ subdirs = [
     "biometrics/fingerprint/2.1",
     "bluetooth/1.0",
     "boot/1.0",
+    "broadcastradio/1.0",
     "example/extension/light/2.0",
     "gnss/1.0",
     "graphics/allocator/2.0",
