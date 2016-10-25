@@ -29,7 +29,7 @@ interface IVehicleCallback {
      *
      * @param values that has been updated.
      */
-    onPropertyEvent(vec<VehiclePropValue> propValues);
+    oneway onPropertyEvent(vec<VehiclePropValue> propValues);
 
     /*
      * This method gets called if the client was susbscribed to a property using
@@ -40,7 +40,7 @@ interface IVehicleCallback {
      *
      * @param value Value that was set by a client.
      */
-    onPropertySet(VehiclePropValue propValue);
+    oneway onPropertySet(VehiclePropValue propValue);
 
     /*
      * Called by HAL server when error condition has occurred.
@@ -50,7 +50,7 @@ interface IVehicleCallback {
      * a generic error, this value should be VehicleProperty::INVALID.
      * @param operation Represent the operation where the error has happened.
      */
-    onError(StatusCode errorCode,
-            VehicleProperty propId,
-            VehiclePropertyOperation operation);
+    oneway onError(StatusCode errorCode,
+                   VehicleProperty propId,
+                   VehiclePropertyOperation operation);
 };

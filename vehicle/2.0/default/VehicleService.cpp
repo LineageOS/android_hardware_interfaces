@@ -21,22 +21,18 @@
 
 #include <hwbinder/IPCThreadState.h>
 
-#include <android/hardware/vehicle/2.0/IVehicle.h>
+#include <vehicle_hal_manager/VehicleHalManager.h>
+#include <impl/DefaultVehicleHal.h>
 
 using namespace android;
 using namespace android::hardware;
 using namespace android::hardware::vehicle::V2_0;
 
 int main(int /* argc */, char* /* argv */ []) {
-    ALOGI("Service is starting");
-    android::sp<IVehicle> service = IVehicle::getService("Vehicle");
-    if (service.get() == NULL) {
-        ALOGE("IVehicle::getService returned NULL, exiting");
-        return 1;
-    }
+    auto hal = std::make_unique<impl::DefaultVehicleHal>();
+    auto service = std::make_unique<VehicleHalManager>(hal.get());
 
-    ALOGI("Registering as service");
-    // will register the -impl as a binderized service in this process
+    ALOGI("Registering as service...");
     service->registerAsService("Vehicle");
 
     ALOGI("Ready");
