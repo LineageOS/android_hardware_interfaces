@@ -43,4 +43,9 @@ cc_library_shared {
         "libutils",
         "libcutils",
     ],
+export_shared_lib_headers: [
+    "libhidl",
+    "libhwbinder",
+    "libutils",
+    ],
 }
