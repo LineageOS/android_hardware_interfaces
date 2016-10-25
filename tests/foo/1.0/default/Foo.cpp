@@ -68,10 +68,7 @@ Return<void> Foo::doStuffAndReturnAString(
         doStuffAndReturnAString_cb _cb) {
     ALOGI("SERVER(Foo) doStuffAndReturnAString");
 
-    hidl_string s;
-    s = "Hello, world";
-
-    _cb(s);
+    _cb("Hello, world");
 
     return Void();
 }
