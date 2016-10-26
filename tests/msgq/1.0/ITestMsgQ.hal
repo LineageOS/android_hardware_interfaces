@@ -18,9 +18,10 @@ package android.hardware.tests.msgq@1.0;
 
 interface ITestMsgQ {
     /*
-     * This method requests the service to set up Synchronous read/write
+     * This method requests the service to set up a synchronous read/write
      * wait-free FMQ with the client as reader.
-     * @return ret Will be true if the setup is successful, false otherwise.
+     *
+     * @return ret True if the setup is successful.
      * @return mqDesc This structure describes the FMQ that was
      * set up by the service. Client can use it to set up the FMQ at its end.
      */
@@ -28,18 +29,54 @@ interface ITestMsgQ {
         generates(bool ret, MQDescriptorSync mqDesc);
 
     /*
-     * This method request the service to write into the FMQ.
-     * @param count Number to messages to write.
-     * @return ret Will be true if the write operation was successful,
-     * false otherwise.
+     * This method requests the service to set up an unsynchronized write
+     * wait-free FMQ with the client as reader.
+     *
+     * @return ret True if the setup is successful.
+     * @return mqDesc This structure describes the FMQ that was
+     * set up by the service. Client can use it to set up the FMQ at its end.
      */
-    requestWrite(int32_t count) generates(bool ret);
+    configureFmqUnsyncWrite()
+        generates(bool ret, MQDescriptorUnsync mqDesc);
 
     /*
-     * This method request the service to read from the FMQ.
-     * @param count Number to messages to read.
-     * @return ret Will be true if the read operation was successful, false
-     * otherwise.
+     * This method request the service to write into the synchronized read/write
+     * flavor of the FMQ.
+     *
+     * @param count Number to messages to write.
+     *
+     * @return ret True if the write operation was successful.
      */
-    requestRead(int32_t count) generates(bool ret);
+    requestWriteFmqSync(int32_t count) generates(bool ret);
+
+    /*
+     * This method request the service to read from the synchronized read/write
+     * FMQ.
+     *
+     * @param count Number to messages to read.
+     *
+     * @return ret True if the read operation was successful.
+     */
+    requestReadFmqSync(int32_t count) generates(bool ret);
+
+    /*
+     * This method request the service to write into the unsynchronized flavor
+     * of FMQ.
+     *
+     * @param count Number to messages to write.
+     *
+     * @return ret True if the write operation was successful.
+     */
+    requestWriteFmqUnsync(int32_t count) generates(bool ret);
+
+    /*
+     * This method request the service to read from the unsynchronized flavor of
+     * FMQ.
+     *
+     * @param count Number to messages to read.
+     *
+     * @return ret Will be True if the read operation was successful.
+     */
+    requestReadFmqUnsync(int32_t count) generates(bool ret);
+
 };
