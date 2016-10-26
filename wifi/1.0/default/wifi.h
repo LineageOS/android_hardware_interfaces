@@ -39,9 +39,12 @@ class Wifi : public IWifi {
  public:
   Wifi();
 
+  bool isValid();
+
   // HIDL methods exposed.
   Return<void> registerEventCallback(
-      const sp<IWifiEventCallback>& event_callback) override;
+      const sp<IWifiEventCallback>& event_callback,
+      registerEventCallback_cb hidl_status_cb) override;
   Return<bool> isStarted() override;
   Return<void> start(start_cb hidl_status_cb) override;
   Return<void> stop(stop_cb hidl_status_cb) override;
@@ -50,6 +53,14 @@ class Wifi : public IWifi {
 
  private:
   enum class RunState { STOPPED, STARTED, STOPPING };
+
+  // Corresponding worker functions for the HIDL methods.
+  WifiStatus registerEventCallbackInternal(
+      const sp<IWifiEventCallback>& event_callback);
+  WifiStatus startInternal();
+  WifiStatus stopInternal();
+  std::pair<WifiStatus, std::vector<ChipId>> getChipIdsInternal();
+  std::pair<WifiStatus, sp<IWifiChip>> getChipInternal(ChipId chip_id);
 
   // Instance is created in this root level |IWifi| HIDL interface object
   // and shared with all the child HIDL interface objects.
