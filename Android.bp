@@ -43,6 +43,7 @@ subdirs = [
     "tests/pointer/1.0/default/lib",
     "thermal/1.0",
     "thermal/1.0/default",
+    "tv/input/1.0",
     "vehicle/2.0",
     "vibrator/1.0",
     "vibrator/1.0/default",
