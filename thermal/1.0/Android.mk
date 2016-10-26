@@ -302,5 +302,37 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
 
+################################################################################
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := android.hardware.thermal@1.0-java-constants
+LOCAL_MODULE_CLASS := JAVA_LIBRARIES
+
+intermediates := $(local-generated-sources-dir)
+
+HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
+#
+GEN := $(intermediates)/android/hardware/thermal/1.0/Constants.java
+$(GEN): $(HIDL)
+$(GEN): $(LOCAL_PATH)/types.hal
+$(GEN): $(LOCAL_PATH)/IThermal.hal
+
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava-constants -randroid.hardware:hardware/interfaces \
+        android.hardware.thermal@1.0
+
+$(GEN):
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+# Avoid dependency cycle of framework.jar -> this-library -> framework.jar
+LOCAL_NO_STANDARD_LIBRARIES := true
+LOCAL_JAVA_LIBRARIES := core-oj
+
+include $(BUILD_STATIC_JAVA_LIBRARY)
+
+
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
