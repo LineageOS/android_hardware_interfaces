@@ -22,6 +22,7 @@ subdirs = [
     "memtrack/1.0/default",
     "nfc/1.0",
     "nfc/1.0/default",
+    "nfc/1.0/vts/functional",
     "power/1.0",
     "power/1.0/default",
     "radio/1.0",
