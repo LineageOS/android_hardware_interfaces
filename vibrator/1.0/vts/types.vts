@@ -6,7 +6,7 @@ package: "android.hardware.vibrator"
 
 
 attribute: {
-    name: "Status"
+    name: "::android::hardware::vibrator::V1_0::Status"
     type: TYPE_ENUM
     enum_value: {
         scalar_type: "uint32_t"
