@@ -17,6 +17,7 @@
 package android.hardware.tests.bar@1.0;
 
 import android.hardware.tests.foo@1.0::IFoo;
+import android.hardware.tests.foo@1.0::Abc;
 import android.hardware.tests.foo@1.0::Unrelated;
 
 interface IBar extends android.hardware.tests.foo@1.0::IFoo {
@@ -29,4 +30,5 @@ interface IBar extends android.hardware.tests.foo@1.0::IFoo {
     };
 
     thisIsNew();
+    expectNullHandle(handle h, Abc xyz) generates (bool hIsNull, bool xyzHasNull);
 };
