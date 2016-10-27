@@ -23,12 +23,13 @@ namespace V2_0 {
 
 namespace impl {
 
-VehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(VehicleProperty property,
-                                                       int32_t areaId,
-                                                       status_t* outStatus) {
-    *outStatus = OK;
+VehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(
+        const VehiclePropValue& requestedPropValue, StatusCode* outStatus) {
+    *outStatus = StatusCode::OK;
 
     VehiclePropValuePtr v;
+    VehicleProperty property = requestedPropValue.prop;
+    int32_t areaId = requestedPropValue.areaId;
 
     switch (property) {
         case VehicleProperty::INFO_MAKE:
@@ -36,7 +37,8 @@ VehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(VehicleProperty property,
             break;
         case VehicleProperty::HVAC_FAN_SPEED:
             int32_t value;
-            if ((*outStatus = getHvacFanSpeed(areaId, &value)) == OK) {
+            *outStatus = getHvacFanSpeed(areaId, &value);
+            if (StatusCode::OK == *outStatus) {
                 v = getValuePool()->obtainInt32(value);
             }
             break;
@@ -47,10 +49,10 @@ VehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(VehicleProperty property,
             v = getValuePool()->obtainInt32(brightness);
             break;
         default:
-            *outStatus = BAD_VALUE;
+            *outStatus = StatusCode::INVALID_ARG;
     }
 
-    if (*outStatus == OK && v.get() != nullptr) {
+    if (StatusCode::OK == *outStatus && v.get() != nullptr) {
         v->prop = property;
         v->areaId = areaId;
         v->timestamp = elapsedRealtimeNano();
@@ -59,10 +61,10 @@ VehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(VehicleProperty property,
     return v;
 }
 
-status_t DefaultVehicleHal::set(const VehiclePropValue& propValue) {
+StatusCode DefaultVehicleHal::set(const VehiclePropValue& propValue) {
     auto property = propValue.prop;
 
-    status_t status = OK;
+    StatusCode status = StatusCode::OK;
 
     switch (property) {
         case VehicleProperty::HVAC_FAN_SPEED:
@@ -73,33 +75,33 @@ status_t DefaultVehicleHal::set(const VehiclePropValue& propValue) {
             brightness = propValue.value.int32Values[0];
             break;
         default:
-            status = BAD_VALUE;
+            status = StatusCode::INVALID_ARG;
     }
 
     return status;
 }
 
-status_t DefaultVehicleHal::getHvacFanSpeed(int32_t areaId,
+StatusCode DefaultVehicleHal::getHvacFanSpeed(int32_t areaId,
                                             int32_t* outValue)  {
-    if (areaId == val(VehicleAreaZone::ROW_1_LEFT)) {
+    if (areaId == toInt(VehicleAreaZone::ROW_1_LEFT)) {
         *outValue = fanSpeedRow1Left;
-    } else if (areaId == val(VehicleAreaZone::ROW_2_RIGHT)) {
+    } else if (areaId == toInt(VehicleAreaZone::ROW_2_RIGHT)) {
         *outValue = fanSpeedRow1Right;
     } else {
-        return BAD_VALUE;
+        return StatusCode::INVALID_ARG;
     }
-    return OK;
+    return StatusCode::OK;
 }
 
-status_t DefaultVehicleHal::setHvacFanSpeed(int32_t areaId, int32_t value) {
-    if (areaId == val(VehicleAreaZone::ROW_1_LEFT)) {
+StatusCode DefaultVehicleHal::setHvacFanSpeed(int32_t areaId, int32_t value) {
+    if (areaId == toInt(VehicleAreaZone::ROW_1_LEFT)) {
         fanSpeedRow1Left = value;
-    } else if (areaId == val(VehicleAreaZone::ROW_2_RIGHT)) {
+    } else if (areaId == toInt(VehicleAreaZone::ROW_2_RIGHT)) {
         fanSpeedRow1Right = value;
     } else {
-        return BAD_VALUE;
+        return StatusCode::INVALID_ARG;
     }
-    return OK;
+    return StatusCode::OK;
 }
 
 }  // impl

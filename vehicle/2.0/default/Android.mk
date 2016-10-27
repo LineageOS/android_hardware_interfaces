@@ -24,7 +24,6 @@ LOCAL_MODULE := $(module_prefix)-manager-lib
 LOCAL_SRC_FILES := \
     vehicle_hal_manager/SubscriptionManager.cpp \
     vehicle_hal_manager/VehicleHalManager.cpp \
-    vehicle_hal_manager/VehicleCallback.cpp \
 
 LOCAL_SHARED_LIBRARIES := \
     liblog \

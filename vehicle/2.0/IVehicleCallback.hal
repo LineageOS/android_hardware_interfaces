@@ -43,14 +43,17 @@ interface IVehicleCallback {
     oneway onPropertySet(VehiclePropValue propValue);
 
     /*
-     * Called by HAL server when error condition has occurred.
+     * Set property value is usually asynchronous operation. Thus even if
+     * client received StatusCode::OK from the IVehicle::set(...) this
+     * doesn't guarantee that the value was successfully propagated to the
+     * vehicle network. If such rare event occurs this method must be called.
      *
      * @param errorCode - any value from StatusCode enum.
-     * @parm property - a property where error has happened. If this is
-     * a generic error, this value should be VehicleProperty::INVALID.
-     * @param operation Represent the operation where the error has happened.
+     * @param property - a property where error has happened.
+     * @param areaId - bitmask that specifies in which areas the problem has
+     *                 occurred, must be 0 for global properties
      */
-    oneway onError(StatusCode errorCode,
-                   VehicleProperty propId,
-                   VehiclePropertyOperation operation);
+    oneway onPropertySetError(StatusCode errorCode,
+                              VehicleProperty propId,
+                              int32_t areaId);
 };

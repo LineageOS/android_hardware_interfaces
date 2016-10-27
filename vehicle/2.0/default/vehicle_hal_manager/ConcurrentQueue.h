@@ -113,14 +113,15 @@ public:
 
     void requestStop() {
         if (mState.exchange(State::STOP_REQUESTED) != State::RUNNING) {
-              mState = State::STOPPED;
-          }
+            mState = State::STOPPED;
+            mCondStopped.notify_one();
+        }
     }
 
     void waitStopped() {
         std::unique_lock<std::mutex> g(mLock);
         while (State::STOPPED != mState) {
-            mCondStopped.wait_for(g, std::chrono::seconds(1));
+            mCondStopped.wait(g);
         }
     }
 

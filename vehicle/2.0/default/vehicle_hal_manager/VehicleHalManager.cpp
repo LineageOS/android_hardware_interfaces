@@ -20,6 +20,8 @@
 #include <utils/Errors.h>
 #include <utils/Log.h>
 #include <hidl/Status.h>
+#include <future>
+#include <bitset>
 
 #include "VehicleHalManager.h"
 
@@ -32,6 +34,8 @@ using namespace std::placeholders;
 
 constexpr std::chrono::milliseconds kHalEventBatchingTimeWindow(10);
 
+const VehiclePropValue kEmptyValue{};
+
 /**
  * Indicates what's the maximum size of hidl_vec<VehiclePropValue> we want
  * to store in reusable object pool.
@@ -40,6 +44,7 @@ constexpr auto kMaxHidlVecOfVehiclPropValuePoolSize = 20;
 
 Return<void> VehicleHalManager::getAllPropConfigs(
         getAllPropConfigs_cb _hidl_cb) {
+    ALOGI("getAllPropConfigs called");
     hidl_vec<VehiclePropConfig> hidlConfigs;
     auto& halConfig = mConfigIndex->getAllConfigs();
 
@@ -47,45 +52,72 @@ Return<void> VehicleHalManager::getAllPropConfigs(
             const_cast<VehiclePropConfig *>(halConfig.data()),
             halConfig.size());
 
+    ALOGI("getAllPropConfigs calling callback");
     _hidl_cb(hidlConfigs);
 
-    return hardware::Return<void>();
+    ALOGI("getAllPropConfigs done");
+    return Void();
 }
 
 Return<void> VehicleHalManager::getPropConfigs(
         const hidl_vec<VehicleProperty> &properties,
         getPropConfigs_cb _hidl_cb) {
-    Vector<VehiclePropConfig> configs;
+    std::vector<VehiclePropConfig> configs;
     for (size_t i = 0; i < properties.size(); i++) {
         VehicleProperty prop = properties[i];
         if (mConfigIndex->hasConfig(prop)) {
-            configs.add(mConfigIndex->getConfig(prop));
+            configs.push_back(mConfigIndex->getConfig(prop));
         } else {
-            // TODO: return error
+            ALOGW("Requested config for undefined property: 0x%x", prop);
+            _hidl_cb(StatusCode::INVALID_ARG, hidl_vec<VehiclePropConfig>());
         }
     }
 
-    hidl_vec<VehiclePropConfig> hidlConfigs;
-    hidlConfigs.setToExternal(
-            const_cast<VehiclePropConfig*>(configs.array()),
-            configs.size());
+    _hidl_cb(StatusCode::OK, configs);
 
-    _hidl_cb(hidlConfigs);
-
-    return hardware::Return<void>();
+    return Void();
 }
 
 Return<void> VehicleHalManager::get(
-        VehicleProperty propId, int32_t areaId, get_cb _hidl_cb) {
+        const VehiclePropValue& requestedPropValue, get_cb _hidl_cb) {
+    const auto* config = getPropConfigOrNull(requestedPropValue.prop);
+    if (config == nullptr) {
+        ALOGE("Failed to get value: config not found, property: 0x%x",
+              requestedPropValue.prop);
+        _hidl_cb(StatusCode::INVALID_ARG, kEmptyValue);
+        return Void();
+    }
 
-    return hardware::Return<void>();
+    if (!checkReadPermission(*config, getCallee())) {
+        _hidl_cb(StatusCode::INVALID_ARG, kEmptyValue);
+        return Void();
+    }
+
+    StatusCode status;
+    auto value = mHal->get(requestedPropValue, &status);
+    _hidl_cb(status, value.get() ? *value : kEmptyValue);
+
+
+    return Void();
 }
 
 Return<StatusCode> VehicleHalManager::set(const VehiclePropValue &value) {
-    // TODO(pavelm): check permission, etc
-    // TODO(pavelm): check SET subscription
-    // TODO(pavelm): propagate SET call to VehicleHal
-    return hardware::Return<StatusCode>(StatusCode::OK);
+    auto prop = value.prop;
+    const auto* config = getPropConfigOrNull(prop);
+    if (config == nullptr) {
+        ALOGE("Failed to set value: config not found, property: 0x%x", prop);
+        return StatusCode::INVALID_ARG;
+    }
+
+    if (!checkWritePermission(*config, getCallee())) {
+        return StatusCode::INVALID_ARG;
+    }
+
+    handlePropertySetEvent(value);
+
+    auto status = mHal->set(value);
+
+    return Return<StatusCode>(status);
 }
 
 Return<StatusCode> VehicleHalManager::subscribe(
@@ -96,45 +128,40 @@ Return<StatusCode> VehicleHalManager::subscribe(
         SubscribeOptions& ops = verifiedOptions[i];
         VehicleProperty prop = ops.propId;
 
-        if (!mConfigIndex->hasConfig(prop)) {
-            ALOGE("Failed to subscribe: config not found for property: 0x%x",
+        const auto* config = getPropConfigOrNull(prop);
+        if (config == nullptr) {
+            ALOGE("Failed to subscribe: config not found, property: 0x%x",
                   prop);
-            return invalidArg();
-        }
-        const VehiclePropConfig& config = mConfigIndex->getConfig(prop);
-
-        if (!isSubscribable(config)) {
-            ALOGE("Failed to subscribe: property is not subscribable: 0x%x",
-                  prop);
-            return invalidArg();
+            return StatusCode::INVALID_ARG;
         }
 
+        if (!isSubscribable(*config, ops.flags)) {
+            ALOGE("Failed to subscribe: property 0x%x is not subscribable",
+                  prop);
+            return StatusCode::INVALID_ARG;
+        }
 
         int32_t areas = isGlobalProp(prop) ? 0 : ops.vehicleAreas;
-        if (areas != 0 && ((areas & config.supportedAreas) != areas)) {
+        if (areas != 0 && ((areas & config->supportedAreas) != areas)) {
             ALOGE("Failed to subscribe property 0x%x. Requested areas 0x%x are "
                   "out of supported range of 0x%x", prop, ops.vehicleAreas,
-                  config.supportedAreas);
-            return invalidArg();
+                  config->supportedAreas);
+            return StatusCode::INVALID_ARG;
         }
 
         ops.vehicleAreas = areas;
-        ops.sampleRate = checkSampleRate(config, ops.sampleRate);
+        ops.sampleRate = checkSampleRate(*config, ops.sampleRate);
     }
 
-     std::list<SubscribeOptions> updatedOptions =
-         mSubscriptionManager.addOrUpdateSubscription(callback,
-                                                      verifiedOptions);
+    std::list<SubscribeOptions> updatedOptions =
+        mSubscriptionManager.addOrUpdateSubscription(callback, verifiedOptions);
 
     for (auto opt : updatedOptions) {
         mHal->subscribe(opt.propId, opt.vehicleAreas, opt.sampleRate);
     }
-
-    // TODO(pavelm): call immediately onHalEvent method during subscription
-    // when appropriate
     // TODO(pavelm): link to death callback (not implemented yet in HIDL)
 
-    return ok();
+    return StatusCode::OK;
 }
 
 Return<StatusCode> VehicleHalManager::unsubscribe(
@@ -142,18 +169,19 @@ Return<StatusCode> VehicleHalManager::unsubscribe(
     if (mSubscriptionManager.unsubscribe(callback, propId)) {
         mHal->unsubscribe(propId);
     }
-    return ok();
+    return StatusCode::OK;
 }
 
 Return<void> VehicleHalManager::debugDump(IVehicle::debugDump_cb _hidl_cb) {
     _hidl_cb("");
-    return hardware::Return<void>();
+    return Void();
 }
 
 void VehicleHalManager::init() {
     ALOGI("VehicleHalManager::init");
 
     mHidlVecOfVehiclePropValuePool.resize(kMaxHidlVecOfVehiclPropValuePoolSize);
+
 
     mBatchingConsumer.run(&mEventQueue,
                           kHalEventBatchingTimeWindow,
@@ -162,7 +190,8 @@ void VehicleHalManager::init() {
 
     mHal->init(&mValueObjectPool,
                std::bind(&VehicleHalManager::onHalEvent, this, _1),
-               std::bind(&VehicleHalManager::onHalError, this, _1, _2, _3));
+               std::bind(&VehicleHalManager::onHalPropertySetError, this,
+                         _1, _2, _3));
 
     // Initialize index with vehicle configurations received from VehicleHal.
     mConfigIndex.reset(new VehiclePropConfigIndex(mHal->listProperties()));
@@ -181,9 +210,15 @@ void VehicleHalManager::onHalEvent(VehiclePropValuePtr v) {
     mEventQueue.push(std::move(v));
 }
 
-void VehicleHalManager::onHalError(VehicleProperty property, status_t errorCode,
-                                   VehiclePropertyOperation operation) {
-    // TODO(pavelm): find subscribed clients and propagate error
+void VehicleHalManager::onHalPropertySetError(StatusCode errorCode,
+                                              VehicleProperty property,
+                                              int32_t areaId) {
+    const auto& clients = mSubscriptionManager.getSubscribedClients(
+            property, 0, SubscribeFlags::HAL_EVENT);
+
+    for (auto client : clients) {
+        client->getCallback()->onPropertySetError(errorCode, property, areaId);
+    }
 }
 
 void VehicleHalManager::onBatchHalEvent(
@@ -192,7 +227,7 @@ void VehicleHalManager::onBatchHalEvent(
             values, SubscribeFlags::HAL_EVENT);
 
     for (const HalClientValues& cv : clientValues) {
-        int vecSize = cv.values.size();
+        auto vecSize = cv.values.size();
         hidl_vec<VehiclePropValue> vec;
         if (vecSize < kMaxHidlVecOfVehiclPropValuePoolSize) {
             vec.setToExternal(&mHidlVecOfVehiclePropValuePool[0], vecSize);
@@ -236,9 +271,12 @@ float VehicleHalManager::checkSampleRate(const VehiclePropConfig &config,
     return sampleRate;  // Provided sample rate was good, no changes.
 }
 
-bool VehicleHalManager::isSubscribable(const VehiclePropConfig& config) {
-    if (!(config.access & VehiclePropertyAccess::READ)) {
-        ALOGW("Cannot subscribe, property 0x%x is write only", config.prop);
+bool VehicleHalManager::isSubscribable(const VehiclePropConfig& config,
+                                       SubscribeFlags flags) {
+    bool isReadable = config.access & VehiclePropertyAccess::READ;
+
+    if (!isReadable && (SubscribeFlags::HAL_EVENT & flags)) {
+        ALOGW("Cannot subscribe, property 0x%x is not readable", config.prop);
         return false;
     }
     if (config.changeMode == VehiclePropertyChangeMode::STATIC) {
@@ -252,6 +290,49 @@ bool VehicleHalManager::isSubscribable(const VehiclePropConfig& config) {
         return false;
     }
     return true;
+}
+
+bool VehicleHalManager::checkWritePermission(const VehiclePropConfig &config,
+                                             const Callee& callee) {
+    if (!(config.access & VehiclePropertyAccess::WRITE)) {
+        ALOGW("Property 0%x has no write access", config.prop);
+        return false;
+    }
+    //TODO(pavelm): check pid/uid has write access
+    return true;
+}
+
+bool VehicleHalManager::checkReadPermission(const VehiclePropConfig &config,
+                                            const Callee& callee) {
+    if (!(config.access & VehiclePropertyAccess::READ)) {
+        ALOGW("Property 0%x has no read access", config.prop);
+        return false;
+    }
+    //TODO(pavelm): check pid/uid has read access
+    return true;
+}
+
+void VehicleHalManager::handlePropertySetEvent(const VehiclePropValue& value) {
+    auto clients = mSubscriptionManager.getSubscribedClients(
+            value.prop, value.areaId, SubscribeFlags::SET_CALL);
+    for (auto client : clients) {
+        client->getCallback()->onPropertySet(value);
+    }
+}
+
+const VehiclePropConfig* VehicleHalManager::getPropConfigOrNull(
+        VehicleProperty prop) const {
+    return mConfigIndex->hasConfig(prop)
+           ? &mConfigIndex->getConfig(prop) : nullptr;
+}
+
+Callee VehicleHalManager::getCallee() {
+    Callee callee;
+    IPCThreadState* self = IPCThreadState::self();
+    callee.pid = self->getCallingPid();
+    callee.uid = self->getCallingUid();
+
+    return callee;
 }
 
 }  // namespace V2_0

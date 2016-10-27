@@ -36,18 +36,15 @@ public:
 
     using HalEventFunction = std::function<void(VehiclePropValuePtr)>;
     using HalErrorFunction = std::function<void(
-            VehicleProperty property,
-            status_t errorCode,
-            VehiclePropertyOperation operation)>;
+            StatusCode errorCode, VehicleProperty property, int32_t areaId)>;
 
     virtual ~VehicleHal() {}
 
     virtual std::vector<VehiclePropConfig> listProperties() = 0;
-    virtual VehiclePropValuePtr get(VehicleProperty property,
-                                    int32_t areaId,
-                                    status_t* outStatus) = 0;
+    virtual VehiclePropValuePtr get(const VehiclePropValue& requestedPropValue,
+                                    StatusCode* outStatus) = 0;
 
-    virtual status_t set(const VehiclePropValue& propValue) = 0;
+    virtual StatusCode set(const VehiclePropValue& propValue) = 0;
 
     /**
      * Subscribe to HAL property events. This method might be called multiple
@@ -60,7 +57,7 @@ public:
      *                   rate, e.g. for properties with
      *                   VehiclePropertyChangeMode::CONTINUOUS
      */
-    virtual status_t subscribe(VehicleProperty property,
+    virtual StatusCode subscribe(VehicleProperty property,
                                int32_t areas,
                                float sampleRate) = 0;
 
@@ -69,7 +66,7 @@ public:
      *
      * @param property vehicle property to unsubscribe
      */
-    virtual status_t unsubscribe(VehicleProperty property) = 0;
+    virtual StatusCode unsubscribe(VehicleProperty property) = 0;
 
     /**
      * Override this method if you need to do one-time initialization.
@@ -82,7 +79,7 @@ public:
         const HalErrorFunction& onHalError) {
         mValuePool = valueObjectPool;
         mOnHalEvent = onHalEvent;
-        mOnHalError = onHalError;
+        mOnHalPropertySetError = onHalError;
 
         onCreate();
     }
@@ -91,19 +88,20 @@ public:
         return mValuePool;
     }
 protected:
+    /* Propagates property change events to vehicle HAL clients. */
     void doHalEvent(VehiclePropValuePtr v) {
         mOnHalEvent(std::move(v));
     }
 
-    void doHalError(VehicleProperty property,
-                    status_t errorCode,
-                    VehiclePropertyOperation operation) {
-        mOnHalError(property, errorCode, operation);
+    /* Propagates error during set operation to the vehicle HAL clients. */
+    void doHalPropertySetError(StatusCode errorCode,
+                               VehicleProperty propId, int32_t areaId) {
+        mOnHalPropertySetError(errorCode, propId, areaId);
     }
 
 private:
     HalEventFunction mOnHalEvent;
-    HalErrorFunction mOnHalError;
+    HalErrorFunction mOnHalPropertySetError;
     VehiclePropValuePool* mValuePool;
 };
 
