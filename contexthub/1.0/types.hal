@@ -1,0 +1,151 @@
+/*
+ * Copyright (C) 2016 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.contexthub@1.0;
+
+enum Result : uint32_t {
+    OK,                  // Success
+    BAD_PARAMS,          // Parameters not sane
+    NOT_INIT,            // not initialized
+    TRANSACTION_FAILED,  // transaction failed
+    TRANSACTION_PENDING, // Pending transaction, cannot accept a new request
+};
+
+
+enum NanoAppFlags : uint32_t {
+    SIGNED = (1<<0),   // Signed nanoapp
+    ENCRYPTED = (1<<1),// Encrypted nanoapp
+};
+
+struct NanoAppBinary {
+    uint32_t headerVersion;    // 0x1 for this version
+    uint32_t magic;            // "NANO"
+    uint64_t appId;            // App Id contains vendor id
+    uint32_t appVersion;       // Version of the app
+    uint32_t flags;            // mask of NanoAppFlags
+    uint64_t hwHubType;        // which hub type is this compiled for
+                               // a unique UUID for each h/w + toolchain
+                               // combination.
+    vec<uint8_t> customBinary; // start of custom binary data
+};
+
+enum SensorType : uint32_t {
+    RESERVED,
+    ACCELEROMETER,
+    GYROSCOPE,
+    MAGNETOMETER,
+    BAROMETER,
+    PROXIMITY_SENSOR,
+    AMBIENT_LIGHT_SENSOR,
+
+    GPS = 0x100,
+    // Reserving this space for variants on GPS
+
+    WIFI = 0x200,
+    // Reserving this space for variants on WIFI
+
+    AUDIO = 0x300,
+    // Reserving this space for variants on Audio
+
+    CAMERA = 0x400,
+    // Reserving this space for variants on Camera
+
+    BLE = 0x500,
+
+    PRIVATE_SENSOR_BASE = 0x10000,
+    // Sensor types beyond PRIVATE_SENSOR_BASE are custom types
+};
+
+struct PhysicalSensor{
+    SensorType sensorType;       // From the definitions above eg: 100
+    string type;                 // Type as a string. eg: "GPS"
+    string name;                 // Identifier eg: "Bosch BMI160"
+    string vendor;               // Vendor : eg "STM"
+    uint32_t version;            // Version : eg 0x1001
+    uint32_t fifoReservedCount;  // Batching possible in hardware. Please
+                                 // note that here hardware does not include
+                                 // the context hub itself. Thus, this
+                                 // definition may be different from say the
+                                 // number advertised in the sensors HAL
+                                 // which allows for batching in a hub.
+    uint32_t fifoMaxCount;       // maximum number of batchable events.
+    uint64_t minDelayMs;         // in milliseconds, corresponding to highest
+                                 // sampling freq.
+    uint64_t maxDelayMs;         // in milliseconds, corresponds to minimum
+                                 // sampling frequency
+    float peakPowerMw;           // At max frequency & no batching, power
+                                 // in milliwatts
+};
+
+struct ContextHub {
+    string name;                // descriptive name eg: "Awesome Hub #1"
+    string vendor;              // hub hardware vendor eg: "Qualcomm"
+    string toolchain;           // toolchain to make binaries eg: "gcc ARM"
+    uint32_t platformVersion;   // Version of the hardware : eg 0x20
+    uint32_t toolchainVersion;  // Version of the toolchain : eg: 0x484
+    uint32_t hubId;             // a device unique id for this hub
+
+    float peakMips;             // Peak MIPS platform can deliver
+    float stoppedPowerDrawMw;   // if stopped, retention power, milliwatts
+    float sleepPowerDrawMw;     // if sleeping, retention power, milliwatts
+    float peakPowerDrawMw;      // for a busy CPUm power in milliwatts
+
+    vec<PhysicalSensor> connectedSensors; // array of connected sensors
+
+    uint32_t maxSupportedMsgLen;// This is the maximum size of the message that can
+                                // be sent to the hub in one chunk (in bytes)
+};
+
+struct ContextHubMsg {
+    uint64_t appName; // intended recipient
+    uint32_t msgType; // identifier for message
+    vec<uint8_t> msg; // message body
+};
+
+enum HubMemoryType : uint32_t {
+    MAIN      = 0, // Main memory
+    SECONDARY = 1, // Secondary memory
+    TCM       = 2, // Tightly coupled memory
+};
+
+enum HubMemoryFlag : uint32_t {
+    READ  = (1<<0), // Readable
+    WRITE = (1<<1), // Writable
+    EXEC  = (1<<2), // Executable
+};
+
+struct MemRange {
+    uint32_t totalBytes; // total capacity in bytes
+    uint32_t freeBytes;  // free capacity in bytes
+    HubMemoryType type;  // type of memory, see HubMemoryType
+    uint32_t flags;      // mask of HubMemoryFlag
+};
+
+enum AsyncEventType : uint32_t {
+    RESTARTED = 1, // Hub restarted unexpectedly
+};
+
+enum TransactionResult {
+    SUCCESS,      // successful completion of transaction
+    FAILURE,      // failed transaction
+};
+
+struct HubAppInfo {
+    uint64_t appId;         // Identifier of the app
+    uint32_t version;       // version of the app
+    vec<MemRange> memUsage; // Memory used by this app
+};
+
