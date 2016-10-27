@@ -73,6 +73,13 @@ Return<void> WifiChip::registerEventCallback(
                          event_callback);
 }
 
+Return<void> WifiChip::getCapabilities(getCapabilities_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                         &WifiChip::getCapabilitiesInternal,
+                         hidl_status_cb);
+}
+
 Return<void> WifiChip::getAvailableModes(getAvailableModes_cb hidl_status_cb) {
   return validateAndCall(this,
                          WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
@@ -221,6 +228,48 @@ Return<void> WifiChip::createRttController(
                          bound_iface);
 }
 
+Return<void> WifiChip::getDebugRingBuffersStatus(
+    getDebugRingBuffersStatus_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                         &WifiChip::getDebugRingBuffersStatusInternal,
+                         hidl_status_cb);
+}
+
+Return<void> WifiChip::startLoggingToDebugRingBuffer(
+    const hidl_string& ring_name,
+    WifiDebugRingBufferVerboseLevel verbose_level,
+    uint32_t max_interval_in_sec,
+    uint32_t min_data_size_in_bytes,
+    startLoggingToDebugRingBuffer_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                         &WifiChip::startLoggingToDebugRingBufferInternal,
+                         hidl_status_cb,
+                         ring_name,
+                         verbose_level,
+                         max_interval_in_sec,
+                         min_data_size_in_bytes);
+}
+
+Return<void> WifiChip::forceDumpToDebugRingBuffer(
+    const hidl_string& ring_name,
+    forceDumpToDebugRingBuffer_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                         &WifiChip::forceDumpToDebugRingBufferInternal,
+                         hidl_status_cb,
+                         ring_name);
+}
+
+Return<void> WifiChip::getDebugHostWakeReasonStats(
+    getDebugHostWakeReasonStats_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                         &WifiChip::getDebugHostWakeReasonStatsInternal,
+                         hidl_status_cb);
+}
+
 void WifiChip::invalidateAndRemoveAllIfaces() {
   invalidateAndClear(ap_iface_);
   invalidateAndClear(nan_iface_);
@@ -245,11 +294,15 @@ WifiStatus WifiChip::registerEventCallbackInternal(
   return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 
+std::pair<WifiStatus, uint32_t> WifiChip::getCapabilitiesInternal() {
+  // TODO add implementation
+  return {createWifiStatus(WifiStatusCode::SUCCESS), 0};
+}
+
 std::pair<WifiStatus, std::vector<IWifiChip::ChipMode>>
 WifiChip::getAvailableModesInternal() {
   // TODO add implementation
-  return {createWifiStatus(WifiStatusCode::SUCCESS),
-          std::vector<IWifiChip::ChipMode>()};
+  return {createWifiStatus(WifiStatusCode::SUCCESS), {}};
 }
 
 WifiStatus WifiChip::configureChipInternal(uint32_t /* mode_id */) {
@@ -317,8 +370,7 @@ WifiChip::requestFirmwareDebugDumpInternal() {
   if (legacy_status != WIFI_SUCCESS) {
     LOG(ERROR) << "Failed to get firmware debug dump: "
                << legacyErrorToString(legacy_status);
-    return {createWifiStatusFromLegacyError(legacy_status),
-            std::vector<uint8_t>()};
+    return {createWifiStatusFromLegacyError(legacy_status), {}};
   }
   return {createWifiStatus(WifiStatusCode::SUCCESS), firmware_dump};
 }
@@ -429,6 +481,34 @@ WifiChip::createRttControllerInternal(const sp<IWifiIface>& bound_iface) {
   rtt_controllers_.emplace_back(rtt);
   return {createWifiStatus(WifiStatusCode::SUCCESS), rtt};
 }
+
+std::pair<WifiStatus, std::vector<WifiDebugRingBufferStatus>>
+WifiChip::getDebugRingBuffersStatusInternal() {
+  // TODO implement
+  return {createWifiStatus(WifiStatusCode::SUCCESS), {}};
+}
+
+WifiStatus WifiChip::startLoggingToDebugRingBufferInternal(
+    const hidl_string& /* ring_name */,
+    WifiDebugRingBufferVerboseLevel /* verbose_level */,
+    uint32_t /* max_interval_in_sec */,
+    uint32_t /* min_data_size_in_bytes */) {
+  // TODO implement
+  return createWifiStatus(WifiStatusCode::SUCCESS);
+}
+
+WifiStatus WifiChip::forceDumpToDebugRingBufferInternal(
+    const hidl_string& /* ring_name */) {
+  // TODO implement
+  return createWifiStatus(WifiStatusCode::SUCCESS);
+}
+
+std::pair<WifiStatus, WifiDebugHostWakeReasonStats>
+WifiChip::getDebugHostWakeReasonStatsInternal() {
+  // TODO implement
+  return {createWifiStatus(WifiStatusCode::SUCCESS), {}};
+}
+
 }  // namespace implementation
 }  // namespace V1_0
 }  // namespace wifi
