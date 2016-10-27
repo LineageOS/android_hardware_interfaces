@@ -117,6 +117,9 @@ interface IFoo {
 
     haveAVectorOfGenericInterfaces(vec<interface> in)
         generates (vec<interface> out);
+
+    echoNullInterface(IFooCallback cb) generates (bool receivedNull, IFooCallback cb);
+
     createMyHandle() generates (MyHandle h);
     createHandles(uint32_t size) generates (vec<handle> handles);
     closeHandles();

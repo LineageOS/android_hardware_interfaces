@@ -56,6 +56,8 @@ struct Foo : public IFoo {
     Return<void> haveAVectorOfGenericInterfaces(
             const hidl_vec<sp<android::hardware::IBinder> > &in,
             haveAVectorOfGenericInterfaces_cb _hidl_cb) override;
+
+    Return<void> echoNullInterface(const sp<IFooCallback> &cb, echoNullInterface_cb _hidl_cb) override;
 private:
     std::vector<::native_handle_t *> mHandles;
 };
