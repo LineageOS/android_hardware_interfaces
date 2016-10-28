@@ -21,13 +21,17 @@
 #include <thread>
 #include <vector>
 
-#include <hardware_legacy/wifi_hal.h>
-
 namespace android {
 namespace hardware {
 namespace wifi {
 namespace V1_0 {
 namespace implementation {
+// This is in a separate namespace to prevent typename conflicts between
+// the legacy HAL types and the HIDL interface types.
+namespace legacy_hal {
+// Wrap all the types defined inside the legacy HAL header files inside this
+// namespace.
+#include <hardware_legacy/wifi_hal.h>
 
 /**
  * Class that encapsulates all legacy HAL interactions.
@@ -71,6 +75,7 @@ class WifiLegacyHal {
   bool awaiting_event_loop_termination_;
 };
 
+}  // namespace legacy_hal
 }  // namespace implementation
 }  // namespace V1_0
 }  // namespace wifi
