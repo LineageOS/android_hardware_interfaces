@@ -16,20 +16,14 @@
 
 package android.hardware.radio@1.0;
 
-interface IRadioCallback {
-    /**
-     * Response callback for IRadio.requestGetSimStatus()
-     *
-     * @param serial Serial number of request
-     * @param cardStatus ICC card status
-     */
-    responseGetSimStatus(int32_t serial, RadioCardStatus cardStatus);
-
-    // ONLY UNSOLICITED CALLBACKS BELOW
-    /**
+/*
+ * Interface declaring unsolicited radio indications.
+ */
+interface IRadioIndication {
+    /*
      * Called when radio state changes.
      *
      * @param radioState Current radio state
      */
-    oneway unsolRadioStateChanged(RadioState radioState);
+    oneway radioStateChanged(RadioState radioState);
 };

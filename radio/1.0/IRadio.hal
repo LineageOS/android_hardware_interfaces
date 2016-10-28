@@ -16,27 +16,901 @@
 
 package android.hardware.radio@1.0;
 
-import IRadioCallback;
+import IRadioResponse;
+import IRadioIndication;
 
+/*
+ * This interface is used by telephony & telecom to talk to cellular radio.
+ * All the functions have minimum two parameters:
+ * slotId: which corresponds to sim slot id.
+ * serial: which corresponds to serial no. of request. Serial numbers must only be memorized for the
+ * duration of a method call. If clients provide colliding serials (including passing the same
+ * serial to different methods), multiple responses (one for each method call) must still be served.
+ */
 interface IRadio {
-    /**
-     * Set callback that has response functions for requests
+    /*
+     * Set response functions for radio requests & radio indications.
      *
      * @param slotId SIM slot id for which the function is called; needed for multi-sim
-     * @param radioCallback Object containing response callbacks
+     * @param radioResponse Object containing response functions
+     * @param radioIndication Object containing radio indications
      */
-    setCallback(int32_t slotId, IRadioCallback radioCallback);
+    setResponseFunctions(int32_t slotId, IRadioResponse radioResponse,
+            IRadioIndication radioIndication);
 
-    /**
+    /*
      * Requests status of the ICC card
      *
-     * Response callback is IRadioCallback.responseGetSimStatus()
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
      *
-     * Valid errors:
-     * Must never fail for a valid slot id
+     * Response function is IRadioResponse.getIccCardStatusResponse()
+     *
+     */
+    oneway getIccCardStatus(int32_t slotId, int32_t serial);
+
+    /*
+     * Supplies ICC PIN. Only called if CardStatus has AppState.PIN state
      *
      * @param slotId SIM slot id for which the function is called; needed for multi-sim
-     * @param serial Serial number of request
+     * @param serial Serial number of request.
+     * @param pin PIN value
+     * @param aid AID value, See ETSI 102.221 8.1 and 101.220 4, empty string if no value.
+     *
+     * Response function is IRadioResponse.supplyIccPinForAppResponse()
+     *
      */
-    oneway requestGetSimStatus(int32_t slotId, int32_t serial);
+    oneway supplyIccPinForApp(int32_t slotId, int32_t serial, string pin, string aid);
+
+    /*
+     * Supplies ICC PUK and new PIN.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param puk PUK value
+     * @param pin New PIN value
+     * @param aid AID value, See ETSI 102.221 8.1 and 101.220 4, empty string if no value.
+     *
+     * Response function is IRadioResponse.supplyIccPukForAppResponse()
+     *
+     */
+    oneway supplyIccPukForApp(int32_t slotId, int32_t serial, string puk, string pin, string aid);
+
+    /*
+     * Supplies ICC PIN2. Only called following operation where SIM_PIN2 was
+     * returned as a a failure from a previous operation.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param pin2 PIN2 value
+     * @param aid AID value, See ETSI 102.221 8.1 and 101.220 4, empty string if no value.
+     *
+     * Response function is IRadioResponse.supplyIccPin2ForAppResponse()
+     *
+     */
+    oneway supplyIccPin2ForApp(int32_t slotId, int32_t serial, string pin2, string aid);
+
+    /*
+     * Supplies ICC PUK2 and new PIN2.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param puk2 PUK2 value
+     * @param pin2 New PIN2 value
+     * @param aid AID value, See ETSI 102.221 8.1 and 101.220 4, empty string if no value.
+     *
+     * Response function is IRadioResponse.supplyIccPuk2ForAppResponse()
+     *
+     */
+    oneway supplyIccPuk2ForApp(int32_t slotId, int32_t serial, string puk2, string pin2,
+            string aid);
+
+    /*
+     * Supplies old ICC PIN and new PIN.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param oldPin Old pin value
+     * @param newPin New pin value
+     * @param aid AID value, See ETSI 102.221 8.1 and 101.220 4, empty string if no value.
+     *
+     * Response function is IRadioResponse.changeIccPinForAppResponse()
+     *
+     */
+    oneway changeIccPinForApp(int32_t slotId, int32_t serial, string oldPin, string newPin,
+            string aid);
+
+    /*
+     * Supplies old ICC PIN2 and new PIN2.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param oldPin2 Old pin2 value
+     * @param newPin2 New pin2 value
+     * @param aid AID value, See ETSI 102.221 8.1 and 101.220 4, empty string if no value.
+     *
+     * Response function is IRadioResponse.changeIccPin2ForAppResponse()
+     *
+     */
+    oneway changeIccPin2ForApp(int32_t slotId, int32_t serial, string oldPin2, string newPin2,
+            string aid);
+
+    /*
+     * Requests that network personalization be deactivated
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param netPin Network depersonlization code
+     *
+     * Response function is IRadioResponse.supplyNetworkDepersonalizationResponse()
+     *
+     */
+    oneway supplyNetworkDepersonalization(int32_t slotId, int32_t serial, string netPin);
+
+    /*
+     * Requests current call list
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.getCurrentCallsResponse()
+     *
+     */
+    oneway getCurrentCalls(int32_t slotId, int32_t serial);
+
+    /*
+     * Initiate voice call.
+     * This method is never used for supplementary service codes
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param dialInfo Dial struct
+     *
+     * Response function is IRadioResponse.dialResponse()
+     *
+     */
+    oneway dial(int32_t slotId, int32_t serial, Dial dialInfo);
+
+    /*
+     * Get the SIM IMSI
+     * Only valid when radio state is "RADIO_STATE_ON"
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param aid AID value, See ETSI 102.221 8.1 and 101.220 4, empty string if no value.
+     *
+     * Response function is IRadioResponse.getImsiForAppResponse()
+     *
+     */
+    oneway getImsiForApp(int32_t slotId, int32_t serial, string aid);
+
+    /*
+     * Hang up a specific line (like AT+CHLD=1x)
+     * After this HANGUP request returns, Radio must show the connection is NOT
+     * active anymore in next requestGetCurrentCalls query.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param gsmIndex Connection index (value of 'x' in CHLD above)
+     *
+     * Response function is IRadioResponse.hangupResponse()
+     *
+     */
+    oneway hangup(int32_t slotId, int32_t serial, int32_t gsmIndex);
+
+    /*
+     * Hang up waiting or held (like AT+CHLD=0)
+     * After this HANGUP request returns, Radio must show the connection is NOT
+     * active anymore in next getCurrentCalls() query.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.hangupWaitingOrBackgroundResponse()
+     *
+     */
+    oneway hangupWaitingOrBackground(int32_t slotId, int32_t serial);
+
+    /*
+     * Hang up waiting or held (like AT+CHLD=1)
+     * After this HANGUP request returns, Radio must show the connection is NOT
+     * active anymore in next getCurrentCalls query.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.hangupForegroundResumeBackgroundResponse()
+     *
+     */
+    oneway hangupForegroundResumeBackground(int32_t slotId, int32_t serial);
+
+    /*
+     * Switch waiting or holding call and active call (like AT+CHLD=2)
+     * State transitions must be as follows:
+     *
+     * Call transitions must happen as shown below.
+     *
+     *   BEFORE                               AFTER
+     * Call 1   Call 2                 Call 1       Call 2
+     * ACTIVE   HOLDING                HOLDING     ACTIVE
+     * ACTIVE   WAITING                HOLDING     ACTIVE
+     * HOLDING  WAITING                HOLDING     ACTIVE
+     * ACTIVE   IDLE                   HOLDING     IDLE
+     * IDLE     IDLE                   IDLE        IDLE
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.switchWaitingOrHoldingAndActiveResponse()
+     *
+     */
+    oneway switchWaitingOrHoldingAndActive(int32_t slotId, int32_t serial);
+
+    /*
+     * Conference holding and active (like AT+CHLD=3)
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.conferenceResponse()
+     *
+     */
+    oneway conference(int32_t slotId, int32_t serial);
+
+    /*
+     * Send UDUB (user determined user busy) to ringing or
+     * waiting call answer)
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.rejectCallResponse()
+     *
+     */
+    oneway rejectCall(int32_t slotId, int32_t serial);
+
+    /*
+     * Requests the failure cause code for the most recently terminated call.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.getLastCallFailCauseResponse()
+     *
+     */
+    oneway getLastCallFailCause(int32_t slotId, int32_t serial);
+
+    /*
+     * Requests current signal strength and associated information.
+     * Must succeed if radio is on.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.getSignalStrengthResponse()
+     */
+    oneway getSignalStrength(int32_t slotId, int32_t serial);
+
+    /*
+     * Request current voice registration state
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.getVoiceRegistrationStateResponse()
+     */
+    oneway getVoiceRegistrationState(int32_t slotId, int32_t serial);
+
+    /*
+     * Request current data registration state
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.getDataRegistrationStateResponse()
+     */
+    oneway getDataRegistrationState(int32_t slotId, int32_t serial);
+
+    /*
+     * Request current operator ONS or EONS
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.getOperatorResponse()
+     */
+    oneway getOperator(int32_t slotId, int32_t serial);
+
+    /*
+     * Toggle radio on and off (for "airplane" mode)
+     * If the radio is turned off/on the radio modem subsystem
+     * is expected return to an initialized state. For instance,
+     * any voice and data calls must be terminated and all associated
+     * lists emptied.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param on To turn on radio -> on = true, to turn off radio -> on = false.
+     *
+     * Response function is IRadioResponse.setRadioPowerResponse()
+     */
+    oneway setRadioPower(int32_t slotId, int32_t serial, bool on);
+
+    /*
+     * Send a DTMF tone
+     *
+     * If the implementation is currently playing a tone requested via
+     * startDtmf(), that tone must be cancelled and the new tone
+     * must be played instead
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param s string with single char having one of 12 values: 0-9, *, #
+     *
+     * Response function is IRadioResponse.sendDtmfResponse()
+     */
+    oneway sendDtmf(int32_t slotId, int32_t serial, string s);
+
+    /*
+     * Send an SMS message
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param smscPDU is SMSC address in GSM BCD format prefixed by a length byte
+     *        (as expected by TS 27.005) or empty string for default SMSC
+     * @param pdu is SMS in PDU format as an ASCII hex string less the SMSC address
+     *        TP-Layer-Length is be "strlen(pdu)/2"
+     *
+     * Response function is IRadioResponse.sendSmsResponse()
+     *
+     * Based on the return error, caller decides to resend if sending sms
+     * fails. RadioError:SMS_SEND_FAIL_RETRY means retry (i.e. error cause is 332)
+     * and RadioError:GENERIC_FAILURE means no retry (i.e. error cause is 500)
+     */
+    oneway sendSms(int32_t slotId, int32_t serial, string smscPDU, string pdu);
+
+    /*
+     * Send an SMS message. Identical to sendSms,
+     * except that more messages are expected to be sent soon. If possible,
+     * keep SMS relay protocol link open (eg TS 27.005 AT+CMMS command)
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param smscPDU is SMSC address in GSM BCD format prefixed by a length byte
+     *        (as expected by TS 27.005) or empty string for default SMSC
+     * @param pdu is SMS in PDU format as an ASCII hex string less the SMSC address
+     *        TP-Layer-Length is be "strlen(pdu)/2"
+     *
+     * Response function is IRadioResponse.sendSMSExpectMoreResponse()
+     *
+     * Based on the return error, caller decides to resend if sending sms
+     * fails. RadioError:SMS_SEND_FAIL_RETRY means retry (i.e. error cause is 332)
+     * and RadioError:GENERIC_FAILURE means no retry (i.e. error cause is 500)
+     */
+    oneway sendSMSExpectMore(int32_t slotId, int32_t serial, string smscPDU, string pdu);
+
+    /*
+     * Setup a packet data connection. If DataCallResponse.status
+     * return DataCallFailCause:NONE it is added to the list of data calls and a
+     * unsolDataCallListChanged() is sent. The call remains in the
+     * list until deactivateDataCall() is issued or the
+     * radio is powered off/on. This list is returned by getDataCallList()
+     * and dataCallListChanged().
+     *
+     * The RIL is expected to:
+     *  - Create one data call context.
+     *  - Create and configure a dedicated interface for the context
+     *  - The interface must be point to point.
+     *  - The interface is configured with one or more addresses and
+     *    is capable of sending and receiving packets. The prefix length
+     *    of the addresses must be /32 for IPv4 and /128 for IPv6.
+     *  - Must NOT change the linux routing table.
+     *  - Support up to getDataRegistrationState response[5]
+     *    number of simultaneous data call contexts.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param radioTechnology Radio technology to use: 0-CDMA, 1-GSM/UMTS, 2...
+     *        for values above 2 this is RadioTechnology + 2.
+     * @param profile is a RadioDataProfile (support is optional)
+     * @param apn is the APN to connect to if radio technology is GSM/UMTS. This APN must
+     *        override the one in the profile. empty string indicates no APN overrride.
+     * @param user is the username for APN, or empty string
+     * @param password is the password for APN, or empty string
+     * @param authType is the PAP / CHAP auth type. Values:
+     *        0 => PAP and CHAP is never performed.
+     *        1 => PAP may be performed; CHAP is never performed.
+     *        2 => CHAP may be performed; PAP is never performed.
+     *        3 => PAP / CHAP may be performed - baseband dependent.
+     * @param protocol is the connection type to request must be one of the
+     *        PDP_type values in TS 27.007 section 10.1.1.
+     *        For example, "IP", "IPV6", "IPV4V6", or "PPP".
+     *
+     * Response function is IRadioResponse.setupDataCallResponse()
+     */
+    oneway setupDataCall(int32_t slotId, int32_t serial, int32_t radioTechnology,
+            int32_t profile, string apn, string user, string password, int32_t authType,
+            string protocol);
+
+    /*
+     * Request ICC I/O operation.
+     * This is similar to the TS 27.007 "restricted SIM" operation
+     * where it assumes all of the EF selection must be done by the
+     * callee
+     *
+     * Arguments and responses that are unused for certain
+     * values of "command" must be ignored or set to empty string
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param iccIo IccIo
+     *
+     * Please note that IccIo has a "PIN2" field which may be empty string,
+     * or may specify a PIN2 for operations that require a PIN2 (eg
+     * updating FDN records)
+     *
+     * Response function is IRadioResponse.iccIOForAppResponse()
+     */
+    oneway iccIOForApp(int32_t slotId, int32_t serial, IccIo iccIo);
+
+    /*
+     * Send a USSD message.
+     *
+     * If a USSD session already exists, the message must be sent in the
+     * context of that session. Otherwise, a new session must be created.
+     *
+     * The network reply must be reported via unsolOnUssd
+     *
+     * Only one USSD session must exist at a time, and the session is assumed
+     * to exist until:
+     * a) The android system invokes cancelUssd()
+     * b) The implementation sends a unsolOnUssd() with a type code
+     * of "0" (USSD-Notify/no further action) or "2" (session terminated)
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param ussd string containing the USSD request in UTF-8 format
+     *
+     * Response function is IRadioResponse.sendUssdResponse()
+     *
+     * See also requestCancelUssd, unsolOnUssd
+     */
+    oneway sendUssd(int32_t slotId, int32_t serial, string ussd);
+
+    /*
+     * Cancel the current USSD session if one exists.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.cancelPendingUssdResponse()
+     */
+    oneway cancelPendingUssd(int32_t slotId, int32_t serial);
+
+    /*
+     * Gets current CLIR status
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.getClirResponse()
+     */
+    oneway getClir(int32_t slotId, int32_t serial);
+
+    /*
+     * Set current CLIR status
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param status "n" parameter from TS 27.007 7.7
+     *
+     * Response function is IRadioResponse.setClirResponse()
+     */
+    oneway setClir(int32_t slotId, int32_t serial, int32_t status);
+
+    /*
+     * Request call forward status.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param callInfo CallForwardInfo
+     *
+     * Response function is IRadioResponse.getCallForwardStatusResponse()
+     */
+    oneway getCallForwardStatus(int32_t slotId, int32_t serial,
+            CallForwardInfo callInfo);
+
+    /*
+     * Configure call forward rule
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param callInfo CallForwardInfo
+     *
+     * Response function is IRadioResponse.setCallForwardResponse()
+     */
+    oneway setCallForward(int32_t slotId, int32_t serial, CallForwardInfo callInfo);
+
+    /*
+     * Query current call waiting state
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param serviceClass Service class is the TS 27.007 service class to query
+     *
+     * Response function is IRadioResponse.getCallWaitingResponse()
+     */
+    oneway getCallWaiting(int32_t slotId, int32_t serial, int32_t serviceClass);
+
+    /*
+     * Configure current call waiting state
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param enable is false for "disabled" and true for "enabled"
+     * @param serviceClass is the TS 27.007 service class bit vector of services to modify
+     *
+     * Response function is IRadioResponse.setCallWaitingResponse()
+     */
+    oneway setCallWaiting(int32_t slotId, int32_t serial, bool enable,
+            int32_t serviceClass);
+
+    /*
+     * Acknowledge successful or failed receipt of SMS previously indicated
+     * via unsolResponseNewSms
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param success is true on successful receipt
+     *        (basically, AT+CNMA=1 from TS 27.005 is 0 on failed receipt
+     *        (basically, AT+CNMA=2 from TS 27.005)
+     * @param cause: if success is false, this contains the failure cause as defined
+     *        in TS 23.040, 9.2.3.22.
+     *
+     * Response function is IRadioResponse.acknowledgeLastIncomingGsmSmsResponse()
+     */
+    oneway acknowledgeLastIncomingGsmSms(int32_t slotId, int32_t serial, bool success,
+            SmsAcknowledgeFailCause cause);
+
+    /*
+     * Answer incoming call
+     * Must not be called for WAITING calls.
+     * switchWaitingOrHoldingAndActive() must be used in this case
+     * instead
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.acceptCallResponse()
+     */
+    oneway acceptCall(int32_t slotId, int32_t serial);
+
+    /*
+     * Deactivate packet data connection and remove from the
+     * data call list if RadioError:NONE is returned. Any other return
+     * values must also try to remove the call from the list. An
+     * unsolDataCallListChanged must be
+     * issued because of an deactivateDataCall.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param cid Indicates CID
+     * @param reasonRadioShutDown Indicates Disconnect Reason
+     *        false => No specific reason specified
+     *        true => Radio shutdown requested
+     *
+     * Response function is IRadioResponse.deactivateDataCallResponse()
+     */
+    oneway deactivateDataCall(int32_t slotId, int32_t serial, int32_t cid,
+            bool reasonRadioShutDown);
+
+    /*
+     * Query the status of a facility lock state
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param facility is the facility string code from TS 27.007 7.4
+     *        (eg "AO" for BAOC, "SC" for SIM lock)
+     * @param password is the password, or "" if not required
+     * @param serviceClass is the TS 27.007 service class bit vector of services to query
+     * @param appId is AID value, See ETSI 102.221 8.1 and 101.220 4, empty string if no value.
+     *        This is only applicable in the case of Fixed Dialing Numbers (FDN) requests.
+     *
+     * Response function is IRadioResponse.getFacilityLockForAppResponse()
+     */
+    oneway getFacilityLockForApp(int32_t slotId, int32_t serial, string facility,
+            string password, int32_t serviceClass, string appId);
+
+    /*
+     * Enable/disable one facility lock
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param facility is the facility string code from TS 27.007 7.4 (eg "AO" for BAOC)
+     * @param lockState false for "unlock" and true for "lock"
+     * @param password is the password
+     * @param serviceClass is string representation of decimal TS 27.007
+     *        service class bit vector. Eg, the string
+     *        "1" means "set this facility for voice services"
+     * @param appId is AID value, See ETSI 102.221 8.1 and 101.220 4, empty string if no value.
+     *        This is only applicable in the case of Fixed Dialing Numbers (FDN) requests.
+     *
+     * Response function is IRadioResponse.setFacilityLockForAppResponse()
+     */
+    oneway setFacilityLockForApp(int32_t slotId, int32_t serial, string facility, bool lockState,
+            string password, int32_t serviceClass, string appId);
+
+    /*
+     * Change call barring facility password
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param facility facility string code from TS 27.007 7.4 (eg "AO" for BAOC)
+     * @param oldPassword old password
+     * @param newPassword new password
+     *
+     * Response function is IRadioResponse.setBarringPasswordResponse()
+     */
+    oneway setBarringPassword(int32_t slotId, int32_t serial, string facility,
+            string oldPassword, string newPassword);
+
+    /*
+     * Query current network selection mode
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.getNetworkSelectionModeResponse()
+     */
+    oneway getNetworkSelectionMode(int32_t slotId, int32_t serial);
+
+    /*
+     * Specify that the network must be selected automatically.
+     * This request must not respond until the new operator is selected and registered.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.setNetworkSelectionModeAutomaticResponse()
+     */
+    oneway setNetworkSelectionModeAutomatic(int32_t slotId, int32_t serial);
+
+    /*
+     * Manually select a specified network.
+     * This request must not respond until the new operator is selected and registered.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param operatorNumeric string specifying MCCMNC of network to select (eg "310170")
+     *
+     * Response function is IRadioResponse.setNetworkSelectionModeManualResponse()
+     */
+    oneway setNetworkSelectionModeManual(int32_t slotId, int32_t serial, string operatorNumeric);
+
+    /*
+     * Scans for available networks
+     * This request must not respond until the new operator is selected and registered.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.getAvailableNetworksResponse()
+     */
+    oneway getAvailableNetworks(int32_t slotId, int32_t serial);
+
+    /*
+     * Start playing a DTMF tone. Continue playing DTMF tone until
+     * stopDtmf is received.
+     * If a startDtmf() is received while a tone is currently playing,
+     * it must cancel the previous tone and play the new one.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param s string having a single character with one of 12 values: 0-9,*,#
+     *
+     * Response function is IRadioResponse.startDtmfResponse()
+     */
+    oneway startDtmf(int32_t slotId, int32_t serial, string s);
+
+    /*
+     * Stop playing a currently playing DTMF tone.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.stopDtmfResponse()
+     */
+    oneway stopDtmf(int32_t slotId, int32_t serial);
+
+    /*
+     * Return string value indicating baseband version, eg response from AT+CGMR
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.getBasebandVersionResponse()
+     */
+    oneway getBasebandVersion(int32_t slotId, int32_t serial);
+
+    /*
+     * Separate a party from a multiparty call placing the multiparty call
+     * (less the specified party) on hold and leaving the specified party
+     * as the only other member of the current (active) call
+     *
+     * Like AT+CHLD=2x
+     *
+     * See TS 22.084 1.3.8.2 (iii)
+     * TS 22.030 6.5.5 "Entering "2X followed by send"
+     * TS 27.007 "AT+CHLD=2x"
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param gsmIndex contains Connection index (value of 'x' in CHLD above)
+     *
+     * Response function is IRadioResponse.separateConnectionResponse()
+     */
+    oneway separateConnection(int32_t slotId, int32_t serial, int32_t gsmIndex);
+
+    /*
+     * Turn on or off uplink (microphone) mute.
+     * Must only be sent while voice call is active.
+     * Must always be reset to "disable mute" when a new voice call is initiated
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param enable true for "enable mute" and false for "disable mute"
+     *
+     * Response function is IRadioResponse.setMuteResponse()
+     */
+    oneway setMute(int32_t slotId, int32_t serial, bool enable);
+
+    /*
+     * Queries the current state of the uplink mute setting
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.getMuteResponse()
+     */
+    oneway getMute(int32_t slotId, int32_t serial);
+
+    /*
+     * Queries the status of the CLIP supplementary service
+     * (for MMI code "*#30#")
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.getClipResponse()
+     */
+    oneway getClip(int32_t slotId, int32_t serial);
+
+    /*
+     * Returns the data call list. An entry is added when a
+     * setupDataCall() is issued and removed on a
+     * deactivateDataCall(). The list is emptied when
+     * setRadioPower() off/on is issued.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.getDataCallListResponse()
+     */
+    oneway getDataCallList(int32_t slotId, int32_t serial);
+
+    /*
+     * This request is reserved for OEM-specific uses. It passes raw byte arrays back and forth.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param data data passed as raw bytes to oem
+     *
+     * Response function is IRadioResponse.sendOemRilRequestRawResponse()
+     */
+    oneway sendOemRilRequestRaw(int32_t slotId, int32_t serial, vec<uint8_t> data);
+
+    /*
+     * This request is reserved for OEM-specific uses. It passes strings back and forth.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param data data passed as strings to oem
+     *
+     * Response function is IRadioResponse.sendOemRilRequestStringsResponse()
+     */
+    oneway sendOemRilRequestStrings(int32_t slotId, int32_t serial, vec<string> data);
+
+    /*
+     * Indicates the current state of the screen. When the screen is off, the
+     * Radio must notify the baseband to suppress certain notifications (eg,
+     * signal strength and changes in LAC/CID or BID/SID/NID/latitude/longitude)
+     * in an effort to conserve power. These notifications must resume when the
+     * screen is on.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param enable true = screen on, false = screen off.
+     *
+     * Response function is IRadioResponse.sendScreenStateResponse()
+     */
+    oneway sendScreenState(int32_t slotId, int32_t serial, bool enable);
+
+    /*
+     * Enables/disables supplementary service related notifications from the network.
+     * Notifications are reported via unsolSuppSvcNotification().
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param enable true = notifications enabled, false = notifications disabled.
+     *
+     * Response function is IRadioResponse.setSuppServiceNotificationsResponse()
+     */
+    oneway setSuppServiceNotifications(int32_t slotId, int32_t serial, bool enable);
+
+    /*
+     * Stores a SMS message to SIM memory.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param smsWriteArgs SmsWriteArgs defined in types.hal
+     *
+     * Response function is IRadioResponse.writeSmsToSimResponse()
+     */
+    oneway writeSmsToSim(int32_t slotId, int32_t serial, SmsWriteArgs smsWriteArgs);
+
+    /*
+     * Deletes a SMS message from SIM memory.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param index Record index of the message to delete.
+     *
+     * Response function is IRadioResponse.deleteSmsOnSimResponse()
+     */
+    oneway deleteSmsOnSim(int32_t slotId, int32_t serial, int32_t index);
+
+    /*
+     * Assign a specified band for RF configuration.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param mode RadioBandMode defined in types.hal
+     *
+     * Response function is IRadioResponse.setBandModeResponse()
+     */
+    oneway setBandMode(int32_t slotId, int32_t serial, RadioBandMode mode);
+
+    /*
+     * Get the list of band modes supported by RF.
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.getAvailableBandModesResponse()
+     */
+    oneway getAvailableBandModes(int32_t slotId, int32_t serial);
+
+    /*
+     * Requests to send a SAT/USAT envelope command to SIM.
+     * The SAT/USAT envelope command refers to 3GPP TS 11.14 and 3GPP TS 31.111
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param command SAT/USAT command in hexadecimal format string starting with command tag
+     *
+     * Response function is IRadioResponse.sendEnvelopeResponse()
+     */
+    oneway sendEnvelope(int32_t slotId, int32_t serial, string command);
+
+    /*
+     * Requests to send a terminal response to SIM for a received proactive command
+     *
+     * @param slotId SIM slot id for which the function is called; needed for multi-sim
+     * @param serial Serial number of request.
+     * @param commandResponse SAT/USAT response in hexadecimal format string starting with
+     *        first byte of response data
+     *
+     * Response function is IRadioResponse.sendTerminalResponseResponseToSim()
+     */
+    oneway sendTerminalResponseToSim(int32_t slotId, int32_t serial, string commandResponse);
 };
