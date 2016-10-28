@@ -36,7 +36,7 @@ namespace implementation {
 class WifiRttController : public IWifiRttController {
  public:
   WifiRttController(const sp<IWifiIface>& bound_iface,
-                    const std::weak_ptr<WifiLegacyHal> legacy_hal);
+                    const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal);
   // Refer to |WifiChip::invalidate()|.
   void invalidate();
   bool isValid();
@@ -103,7 +103,7 @@ class WifiRttController : public IWifiRttController {
   WifiStatus disableResponderInternal(uint32_t cmd_id);
 
   sp<IWifiIface> bound_iface_;
-  std::weak_ptr<WifiLegacyHal> legacy_hal_;
+  std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
   std::vector<sp<IWifiRttControllerEventCallback>> event_callbacks_;
   bool is_valid_;
 
