@@ -23,7 +23,8 @@ enum Result {
     NOT_INITIALIZED,
     INVALID_ARGUMENTS,
     INVALID_STATE,
-    NOT_SUPPORTED
+    NOT_SUPPORTED,
+    RESULT_TOO_BIG
 };
 
 /*
@@ -207,8 +208,8 @@ struct EffectDescriptor {
                            // as estimated on an ARM9E core (ARMv5TE) with 0 WS
     uint16_t memoryUsage;  // data memory usage expressed in KB and includes
                            // only dynamically allocated memory
-    string name;           // human readable effect name
-    string implementor;    // human readable effect implementor name
+    uint8_t[64] name;      // human readable effect name
+    uint8_t[64] implementor;  // human readable effect implementor name
 };
 
 /*
@@ -272,9 +273,9 @@ enum EffectFeature {
     CNT
 };
 
-struct EffectFeatureConfig {
-    EffectFeature feature;
-    EffectConfig config;
+struct EffectAuxChannelsConfig {
+    AudioChannelMask mainChannels;  // channel mask for main channels
+    AudioChannelMask auxChannels;   // channel mask for auxiliary channels
 };
 
 struct EffectOffloadParameter {

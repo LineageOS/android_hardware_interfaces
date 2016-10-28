@@ -124,6 +124,16 @@ interface IEnvironmentalReverbEffect extends IEffect {
     getReverbLevel() generates (Result retval, int16_t reverbLevel);
 
     /*
+     * Sets the reverb delay of the room.
+     */
+    setReverbDelay(uint32_t reverDelay) generates (Result retval);
+
+    /*
+     * Gets the reverb delay of the room.
+     */
+    getReverbDelay() generates (Result retval, uint32_t reverbDelay);
+
+    /*
      * Sets room diffusion.
      */
     setDiffusion(int16_t diffusion) generates (Result retval);
