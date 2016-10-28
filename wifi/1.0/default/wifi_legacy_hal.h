@@ -53,12 +53,11 @@ class WifiLegacyHal {
   std::pair<wifi_error, std::vector<uint8_t>> requestFirmwareMemoryDump();
 
  private:
-  static const uint32_t kMaxVersionStringLength;
-
   // Retrieve the interface handle to be used for the "wlan" interface.
   wifi_error retrieveWlanInterfaceHandle();
   // Run the legacy HAL event loop thread.
   void runEventLoop();
+  void invalidate();
 
   // Event loop thread used by legacy HAL.
   std::thread event_loop_thread_;
