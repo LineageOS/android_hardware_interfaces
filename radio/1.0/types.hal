@@ -54,7 +54,111 @@ enum RadioCdmaSmsConst : int32_t {
     IP_ADDRESS_SIZE = 4,
 };
 
-enum RadioRestrictedState : int32_t {
+enum RadioError : int32_t {
+    NONE = 0,                             // Success
+    RADIO_NOT_AVAILABLE = 1,              // If radio did not start or is resetting
+    GENERIC_FAILURE = 2,
+    PASSWORD_INCORRECT = 3,               // for PIN/PIN2 methods only
+    SIM_PIN2 = 4,                         // Operation requires SIM PIN2 to be entered
+    SIM_PUK2 = 5,                         // Operation requires SIM PIN2 to be entered
+    REQUEST_NOT_SUPPORTED = 6,
+    CANCELLED = 7,
+    OP_NOT_ALLOWED_DURING_VOICE_CALL = 8, // data ops are not allowed during voice
+                                          // call on a Class C GPRS device
+    OP_NOT_ALLOWED_BEFORE_REG_TO_NW = 9,  // data ops are not allowed before device
+                                          // registers in network
+    SMS_SEND_FAIL_RETRY = 10,             // fail to send sms and need retry
+    SIM_ABSENT = 11,                      // fail to set the location where CDMA subscription
+                                          // shall be retrieved because of SIM or RUIM
+                                          // card absent
+    SUBSCRIPTION_NOT_AVAILABLE = 12,      // fail to find CDMA subscription from specified
+                                          // location
+    MODE_NOT_SUPPORTED = 13,              // HW does not support preferred network type
+    FDN_CHECK_FAILURE = 14,               // command failed because recipient is not on FDN list
+    ILLEGAL_SIM_OR_ME = 15,               // network selection failed due to illegal SIM or ME
+    MISSING_RESOURCE = 16,                // no logical channel available
+    NO_SUCH_ELEMENT = 17,                 // application not found on SIM
+    DIAL_MODIFIED_TO_USSD = 18,           // DIAL request modified to USSD
+    DIAL_MODIFIED_TO_SS = 19,             // DIAL request modified to SS
+    DIAL_MODIFIED_TO_DIAL = 20,           // DIAL request modified to DIAL with different data
+    USSD_MODIFIED_TO_DIAL = 21,           // USSD request modified to DIAL
+    USSD_MODIFIED_TO_SS = 22,             // USSD request modified to SS
+    USSD_MODIFIED_TO_USSD = 23,           // USSD request modified to different USSD request
+    SS_MODIFIED_TO_DIAL = 24,             // SS request modified to DIAL
+    SS_MODIFIED_TO_USSD = 25,             // SS request modified to USSD
+    SUBSCRIPTION_NOT_SUPPORTED = 26,      // Subscription not supported by RIL
+    SS_MODIFIED_TO_SS = 27,               // SS request modified to different SS request
+    LCE_NOT_SUPPORTED = 36,               // LCE service not supported(36 in RILConstants.java)
+    NO_MEMORY = 37,                       // Not sufficient memory to process the request
+    INTERNAL_ERR = 38,                    // Hit unexpected vendor internal error scenario
+    SYSTEM_ERR = 39,                      // Hit platform or system error
+    MODEM_ERR = 40,                       // Hit unexpected modem error
+    INVALID_STATE = 41,                   // Unexpected request for the current state
+    NO_RESOURCES = 42,                    // Not sufficient resource to process the request
+    SIM_ERR = 43,                         // Received error from SIM card
+    INVALID_ARGUMENTS = 44,               // Received invalid arguments in request
+    INVALID_SIM_STATE = 45,               // Cannot process the request in current SIM state
+    INVALID_MODEM_STATE = 46,             // Cannot process the request in current Modem state
+    INVALID_CALL_ID = 47,                 // Received invalid call id in request
+    NO_SMS_TO_ACK = 48,                   // ACK received when there is no SMS to ack
+    NETWORK_ERR = 49,                     // Received error from network
+    REQUEST_RATE_LIMITED = 50,            // Operation denied due to overly-frequent requests
+    SIM_BUSY = 51,                        // SIM is busy
+    SIM_FULL = 52,                        // The target EF is full
+    NETWORK_REJECT = 53,                  // Request is rejected by network
+    OPERATION_NOT_ALLOWED = 54,           // Not allowed the request now
+    EMPTY_RECORD = 55,                    // The request record is empty
+    INVALID_SMS_FORMAT = 56,              // Invalid sms format
+    ENCODING_ERR = 57,                    // Message not encoded properly
+    INVALID_SMSC_ADDRESS = 58,            // SMSC address specified is invalid
+    NO_SUCH_ENTRY = 59,                   // No such entry present to perform the request
+    NETWORK_NOT_READY = 60,               // Network is not ready to perform the request
+    NOT_PROVISIONED = 61,                 // Device doesnot have this value provisioned
+    NO_SUBSCRIPTION = 62,                 // Device doesnot have subscription
+    NO_NETWORK_FOUND = 63,                // Network cannot be found
+    DEVICE_IN_USE = 64,                   // Operation cannot be performed because the device
+                                          // is currently in use
+    RIL_E_ABORTED = 65,                   // Operation aborted
+
+    // TODO(May be moved to vendor HAL extension)
+    // OEM specific error codes. To be used by OEM when they don't want to reveal
+    // specific error codes which would be replaced by Generic failure.
+    OEM_ERROR_1 = 501,
+    OEM_ERROR_2 = 502,
+    OEM_ERROR_3 = 503,
+    OEM_ERROR_4 = 504,
+    OEM_ERROR_5 = 505,
+    OEM_ERROR_6 = 506,
+    OEM_ERROR_7 = 507,
+    OEM_ERROR_8 = 508,
+    OEM_ERROR_9 = 509,
+    OEM_ERROR_10 = 510,
+    OEM_ERROR_11 = 511,
+    OEM_ERROR_12 = 512,
+    OEM_ERROR_13 = 513,
+    OEM_ERROR_14 = 514,
+    OEM_ERROR_15 = 515,
+    OEM_ERROR_16 = 516,
+    OEM_ERROR_17 = 517,
+    OEM_ERROR_18 = 518,
+    OEM_ERROR_19 = 519,
+    OEM_ERROR_20 = 520,
+    OEM_ERROR_21 = 521,
+    OEM_ERROR_22 = 522,
+    OEM_ERROR_23 = 523,
+    OEM_ERROR_24 = 524,
+    OEM_ERROR_25 = 525,
+};
+
+enum RadioResponseType : int32_t {
+    RESPONSE_SOLICITED,
+    RESPONSE_UNSOLICITED,
+    RESPONSE_SOLICITED_ACK,
+    RESPONSE_SOLICITED_ACK_EXP,
+    RESPONSE_UNSOLICITED_ACK_EXP,
+};
+
+enum RestrictedState : int32_t {
     NONE = 0x00,
     CS_EMERGENCY = 0x01,
     CS_NORMAL = 0x02,
@@ -62,130 +166,771 @@ enum RadioRestrictedState : int32_t {
     PS_ALL = 0x10,
 };
 
-enum RadioCardState : int32_t {
-    ABSENT = 0,
-    PRESENT = 1,
-    ERROR = 2,
-    /* card is present but not usable due to carrier restrictions.*/
-    RESTRICTED = 3,
+enum CardState : int32_t {
+    ABSENT,
+    PRESENT,
+    ERROR,
+    RESTRICTED,                           // card is present but not usable due to carrier
+                                          // restrictions
 };
 
-enum RadioPinState : int32_t {
-    UNKNOWN = 0,
-    ENABLED_NOT_VERIFIED = 1,
-    ENABLED_VERIFIED = 2,
-    DISABLED = 3,
-    ENABLED_BLOCKED = 4,
-    ENABLED_PERM_BLOCKED = 5,
+enum PinState : int32_t {
+    UNKNOWN,
+    ENABLED_NOT_VERIFIED,
+    ENABLED_VERIFIED,
+    DISABLED,
+    ENABLED_BLOCKED,
+    ENABLED_PERM_BLOCKED,
 };
 
-enum RadioAppType : int32_t {
-    UNKNOWN = 0,
-    SIM = 1,
-    USIM = 2,
-    RUIM = 3,
-    CSIM = 4,
-    ISIM = 5,
+enum AppType : int32_t {
+    UNKNOWN,
+    SIM,
+    USIM,
+    RUIM,
+    CSIM,
+    ISIM,
 };
 
-enum RadioAppState : int32_t {
-    UNKNOWN = 0,
-    DETECTED = 1,
-    PIN = 2,
-    /* If PIN1 or UPin is required */
-    PUK = 3,
-    /* If PUK1 or Puk for UPin is required */
-    SUBSCRIPTION_PERSO = 4,
-    /* perso_substate should be look at when app_state is assigned to this value */
-    READY = 5,
+enum AppState : int32_t {
+    UNKNOWN,
+    DETECTED,
+    PIN,                                  // If PIN1 or UPin is required
+    PUK,                                  // If PUK1 or Puk for UPin is required
+    SUBSCRIPTION_PERSO,                   // perso_substate must be look at when app_state is
+                                          // assigned to this value
+    READY,
 };
 
-enum RadioPersoSubstate : int32_t {
-    UNKNOWN = 0,
-    /* initial state */
-    IN_PROGRESS = 1,
-    /* in between each lock transition */
-    READY = 2,
-    /* when either SIM or RUIM Perso is finished since each app can only have 1 active perso
-    involved */
-    SIM_NETWORK = 3,
-    SIM_NETWORK_SUBSET = 4,
-    SIM_CORPORATE = 5,
-    SIM_SERVICE_PROVIDER = 6,
-    SIM_SIM = 7,
-    SIM_NETWORK_PUK = 8,
-    /* The corresponding perso lock is blocked */
-    SIM_NETWORK_SUBSET_PUK = 9,
-    SIM_CORPORATE_PUK = 10,
-    SIM_SERVICE_PROVIDER_PUK = 11,
-    SIM_SIM_PUK = 12,
-    RUIM_NETWORK1 = 13,
-    RUIM_NETWORK2 = 14,
-    RUIM_HRPD = 15,
-    RUIM_CORPORATE = 16,
-    RUIM_SERVICE_PROVIDER = 17,
-    RUIM_RUIM = 18,
-    RUIM_NETWORK1_PUK = 19,
-    /* The corresponding perso lock is blocked */
-    RUIM_NETWORK2_PUK = 20,
-    RUIM_HRPD_PUK = 21,
-    RUIM_CORPORATE_PUK = 22,
-    RUIM_SERVICE_PROVIDER_PUK = 23,
-    RUIM_RUIM_PUK = 24,
+enum PersoSubstate : int32_t {
+    UNKNOWN,                              // initial state
+    IN_PROGRESS,                          // in between each lock transition
+    READY,                                // when either SIM or RUIM Perso is finished since each
+                                          // app must only have 1 active perso involved
+    SIM_NETWORK,
+    SIM_NETWORK_SUBSET,
+    SIM_CORPORATE,
+    SIM_SERVICE_PROVIDER,
+    SIM_SIM,
+    SIM_NETWORK_PUK,                      // The corresponding perso lock is blocked
+    SIM_NETWORK_SUBSET_PUK,
+    SIM_CORPORATE_PUK,
+    SIM_SERVICE_PROVIDER_PUK,
+    SIM_SIM_PUK,
+    RUIM_NETWORK1,
+    RUIM_NETWORK2,
+    RUIM_HRPD,
+    RUIM_CORPORATE,
+    RUIM_SERVICE_PROVIDER,
+    RUIM_RUIM,
+    RUIM_NETWORK1_PUK,                   // The corresponding perso lock is blocked
+    RUIM_NETWORK2_PUK,
+    RUIM_HRPD_PUK,
+    RUIM_CORPORATE_PUK,
+    RUIM_SERVICE_PROVIDER_PUK,
+    RUIM_RUIM_PUK,
 };
 
-enum RadioState : int32_t  {
-  OFF = 0,
-  /* Radio explictly powered off (eg CFUN=0) */
-  UNAVAILABLE = 1,
-  /* States 2-9 below are deprecated. Just leaving them here for backward compatibility. */
-  SIM_NOT_READY = 2,
-  /* Radio is on, but the SIM interface is not ready */
-  SIM_LOCKED_OR_ABSENT = 3,
-  /* SIM PIN locked, PUK required, network
-   personalization locked, or SIM absent */
-  SIM_READY = 4,
-  /* Radio is on and SIM interface is available */
-  RUIM_NOT_READY = 5,
-  /* Radio is on, but the RUIM interface is not ready */
-  RUIM_READY = 6,
-  /* Radio is on and the RUIM interface is available */
-  RUIM_LOCKED_OR_ABSENT = 7,
-  /* RUIM PIN locked, PUK required, network
-   personalization locked, or RUIM absent */
-  NV_NOT_READY = 8,
-  /* Radio is on, but the NV interface is not available */
-  NV_READY = 9,
-  /* Radio is on */
-  ON = 10,
+enum RadioState : int32_t {
+    OFF,                                  // Radio explictly powered off (eg CFUN=0)
+    UNAVAILABLE,                          // Radio unavailable (eg, resetting or not booted)
 };
 
-struct RadioAppStatus {
-    RadioAppType appType;
-    RadioAppState appState;
-    RadioPersoSubstate persoSubstate;
-    /* applicable only if app_state == SUBSCRIPTION_PERSO */
-    string aidPtr;
-    /* null terminated string, e.g., from 0xA0, 0x00 -> 0x41, 0x30, 0x30, 0x30 */
+enum CallState : int32_t {
+    ACTIVE,
+    HOLDING,
+    DIALING,                             // MO call only
+    ALERTING,                            // MO call only
+    INCOMING,                            // MT call only
+    WAITING,                             // MT call only
+};
+
+/*
+ * User-to-User signaling Info activation types derived from 3GPP 23.087 v8.0
+ */
+enum UusType : int32_t {
+    TYPE1_IMPLICIT,
+    TYPE1_REQUIRED,
+    TYPE1_NOT_REQUIRED,
+    TYPE2_REQUIRED,
+    TYPE2_NOT_REQUIRED,
+    TYPE3_REQUIRED,
+    TYPE3_NOT_REQUIRED,
+};
+
+/*
+ * User-to-User Signaling Information data coding schemes. Possible values for
+ * Octet 3 (Protocol Discriminator field) in the UUIE. The values have been
+ * specified in section 10.5.4.25 of 3GPP TS 24.008
+ */
+enum UusDcs : int32_t {
+    USP,                                  // User specified protocol
+    OSIHLP,                               // OSI higher layer protocol
+    X244,                                 // X.244
+    RMCF,                                 // Reserved for system mangement convergence function
+    IA5C,                                 // IA5 characters
+};
+
+enum CallPresentation : int32_t {
+    ALLOWED,
+    RESTRICTED,
+    UNKNOWN,
+    PAYPHONE,
+};
+
+enum Clir : int32_t {
+    DEFAULT,                               // "use subscription default value"
+    INVOCATION,                            // restrict CLI presentation
+    SUPPRESSION,                           // allow CLI presentation
+};
+
+enum LastCallFailCause : int32_t {
+    UNOBTAINABLE_NUMBER = 1,
+    NO_ROUTE_TO_DESTINATION = 3,
+    CHANNEL_UNACCEPTABLE = 6,
+    OPERATOR_DETERMINED_BARRING = 8,
+    NORMAL = 16,
+    BUSY = 17,
+    NO_USER_RESPONDING = 18,
+    NO_ANSWER_FROM_USER = 19,
+    CALL_REJECTED = 21,
+    NUMBER_CHANGED = 22,
+    PREEMPTION = 25,
+    DESTINATION_OUT_OF_ORDER = 27,
+    INVALID_NUMBER_FORMAT = 28,
+    FACILITY_REJECTED = 29,
+    RESP_TO_STATUS_ENQUIRY = 30,
+    NORMAL_UNSPECIFIED = 31,
+    CONGESTION = 34,
+    NETWORK_OUT_OF_ORDER = 38,
+    TEMPORARY_FAILURE = 41,
+    SWITCHING_EQUIPMENT_CONGESTION = 42,
+    ACCESS_INFORMATION_DISCARDED = 43,
+    REQUESTED_CIRCUIT_OR_CHANNEL_NOT_AVAILABLE = 44,
+    RESOURCES_UNAVAILABLE_OR_UNSPECIFIED = 47,
+    QOS_UNAVAILABLE = 49,
+    REQUESTED_FACILITY_NOT_SUBSCRIBED = 50,
+    INCOMING_CALLS_BARRED_WITHIN_CUG = 55,
+    BEARER_CAPABILITY_NOT_AUTHORIZED = 57,
+    BEARER_CAPABILITY_UNAVAILABLE = 58,
+    SERVICE_OPTION_NOT_AVAILABLE = 63,
+    BEARER_SERVICE_NOT_IMPLEMENTED = 65,
+    ACM_LIMIT_EXCEEDED = 68,
+    REQUESTED_FACILITY_NOT_IMPLEMENTED = 69,
+    ONLY_DIGITAL_INFORMATION_BEARER_AVAILABLE = 70,
+    SERVICE_OR_OPTION_NOT_IMPLEMENTED = 79,
+    INVALID_TRANSACTION_IDENTIFIER = 81,
+    USER_NOT_MEMBER_OF_CUG = 87,
+    INCOMPATIBLE_DESTINATION = 88,
+    INVALID_TRANSIT_NW_SELECTION = 91,
+    SEMANTICALLY_INCORRECT_MESSAGE = 95,
+    INVALID_MANDATORY_INFORMATION = 96,
+    MESSAGE_TYPE_NON_IMPLEMENTED = 97,
+    MESSAGE_TYPE_NOT_COMPATIBLE_WITH_PROTOCOL_STATE = 98,
+    INFORMATION_ELEMENT_NON_EXISTENT = 99,
+    CONDITIONAL_IE_ERROR = 100,
+    MESSAGE_NOT_COMPATIBLE_WITH_PROTOCOL_STATE = 101,
+    RECOVERY_ON_TIMER_EXPIRED = 102,
+    PROTOCOL_ERROR_UNSPECIFIED = 111,
+    INTERWORKING_UNSPECIFIED = 127,
+    CALL_BARRED = 240,
+    FDN_BLOCKED = 241,
+    IMSI_UNKNOWN_IN_VLR = 242,
+    IMEI_NOT_ACCEPTED = 243,
+    DIAL_MODIFIED_TO_USSD = 244,          // STK Call Control
+    DIAL_MODIFIED_TO_SS = 245,
+    DIAL_MODIFIED_TO_DIAL = 246,
+    CDMA_LOCKED_UNTIL_POWER_CYCLE = 1000,
+    CDMA_DROP = 1001,
+    CDMA_INTERCEPT = 1002,
+    CDMA_REORDER = 1003,
+    CDMA_SO_REJECT = 1004,
+    CDMA_RETRY_ORDER = 1005,
+    CDMA_ACCESS_FAILURE = 1006,
+    CDMA_PREEMPTED = 1007,
+    CDMA_NOT_EMERGENCY = 1008,            // For non-emergency number dialed during emergency
+                                          // callback mode
+    CDMA_ACCESS_BLOCKED = 1009,           // This error will be deprecated soon,
+                                          // vendor code must make sure to map error
+                                          // code to specific error
+    ERROR_UNSPECIFIED = 0xffff,
+};
+
+enum DataCallFailCause : int32_t {
+    NONE = 0,                             // an integer cause code defined in TS 24.008
+                                          // section 6.1.3.1.3 or TS 24.301 Release 8+ Annex B.
+                                          // If the implementation does not have access to the exact
+                                          // cause codes, then it must return one of the
+                                          // following values, as the UI layer needs to distinguish
+                                          // these cases for error notification and potential
+                                          // retries.
+    OPERATOR_BARRED = 0x08,               // no retry
+    NAS_SIGNALLING = 0x0E,                // PDP_FAIL_LLC_SNDCP = 0x19,
+    INSUFFICIENT_RESOURCES = 0x1A,
+    MISSING_UKNOWN_APN = 0x1B,            // no retry
+    UNKNOWN_PDP_ADDRESS_TYPE = 0x1C,      // no retry
+    USER_AUTHENTICATION = 0x1D,           // no retry
+    ACTIVATION_REJECT_GGSN = 0x1E,        // no retry
+    ACTIVATION_REJECT_UNSPECIFIED = 0x1F,
+    SERVICE_OPTION_NOT_SUPPORTED = 0x20,  // no retry
+    SERVICE_OPTION_NOT_SUBSCRIBED = 0x21, // no retry
+    SERVICE_OPTION_OUT_OF_ORDER = 0x22,
+    NSAPI_IN_USE = 0x23,                  // no retry
+    REGULAR_DEACTIVATION = 0x24,          // possibly restart radio,
+                                          // based on framework config
+    QOS_NOT_ACCEPTED = 0x25,
+    NETWORK_FAILURE = 0x26,
+    UMTS_REACTIVATION_REQ = 0x27,
+    FEATURE_NOT_SUPP = 0x28,
+    TFT_SEMANTIC_ERROR = 0x29,
+    TFT_SYTAX_ERROR = 0x2A,
+    UNKNOWN_PDP_CONTEXT = 0x2B,
+    FILTER_SEMANTIC_ERROR = 0x2C,
+    FILTER_SYTAX_ERROR = 0x2D,
+    PDP_WITHOUT_ACTIVE_TFT = 0x2E,
+    ONLY_IPV4_ALLOWED = 0x32,             // no retry
+    ONLY_IPV6_ALLOWED = 0x33,             // no retry
+    ONLY_SINGLE_BEARER_ALLOWED = 0x34,
+    ESM_INFO_NOT_RECEIVED = 0x35,
+    PDN_CONN_DOES_NOT_EXIST = 0x36,
+    MULTI_CONN_TO_SAME_PDN_NOT_ALLOWED = 0x37,
+    MAX_ACTIVE_PDP_CONTEXT_REACHED = 0x41,
+    UNSUPPORTED_APN_IN_CURRENT_PLMN = 0x42,
+    INVALID_TRANSACTION_ID = 0x51,
+    MESSAGE_INCORRECT_SEMANTIC = 0x5F,
+    INVALID_MANDATORY_INFO = 0x60,
+    MESSAGE_TYPE_UNSUPPORTED = 0x61,
+    MSG_TYPE_NONCOMPATIBLE_STATE = 0x62,
+    UNKNOWN_INFO_ELEMENT = 0x63,
+    CONDITIONAL_IE_ERROR = 0x64,
+    MSG_AND_PROTOCOL_STATE_UNCOMPATIBLE = 0x65,
+    PROTOCOL_ERRORS = 0x6F,               // no retry
+    APN_TYPE_CONFLICT = 0x70,
+    INVALID_PCSCF_ADDR = 0x71,
+    INTERNAL_CALL_PREEMPT_BY_HIGH_PRIO_APN = 0x72,
+    EMM_ACCESS_BARRED = 0x73,
+    EMERGENCY_IFACE_ONLY = 0x74,
+    IFACE_MISMATCH = 0x75,
+    COMPANION_IFACE_IN_USE = 0x76,
+    IP_ADDRESS_MISMATCH = 0x77,
+    IFACE_AND_POL_FAMILY_MISMATCH = 0x78,
+    EMM_ACCESS_BARRED_INFINITE_RETRY = 0x79,
+    AUTH_FAILURE_ON_EMERGENCY_CALL = 0x7A,
+    OEM_DCFAILCAUSE_1 = 0x1001,
+
+    // OEM specific error codes. To be used by OEMs when they don't want to
+    // reveal error code which would be replaced by PDP_FAIL_ERROR_UNSPECIFIED
+    // TODO(May be moved to vendor HAL extension)
+    OEM_DCFAILCAUSE_2 = 0x1002,
+    OEM_DCFAILCAUSE_3 = 0x1003,
+    OEM_DCFAILCAUSE_4 = 0x1004,
+    OEM_DCFAILCAUSE_5 = 0x1005,
+    OEM_DCFAILCAUSE_6 = 0x1006,
+    OEM_DCFAILCAUSE_7 = 0x1007,
+    OEM_DCFAILCAUSE_8 = 0x1008,
+    OEM_DCFAILCAUSE_9 = 0x1009,
+    OEM_DCFAILCAUSE_10 = 0x100A,
+    OEM_DCFAILCAUSE_11 = 0x100B,
+    OEM_DCFAILCAUSE_12 = 0x100C,
+    OEM_DCFAILCAUSE_13 = 0x100D,
+    OEM_DCFAILCAUSE_14 = 0x100E,
+    OEM_DCFAILCAUSE_15 = 0x100F,
+
+    // Not mentioned in the specification
+    VOICE_REGISTRATION_FAIL = -1,
+    DATA_REGISTRATION_FAIL = -2,
+
+    // reasons for data call drop - network/modem disconnect
+    SIGNAL_LOST = -3,
+    PREF_RADIO_TECH_CHANGED = -4,         // preferred technology has changed, must retry
+                                          // with parameters appropriate for new technology
+    RADIO_POWER_OFF = -5,                 // data call was disconnected because radio was resetting,
+                                          // powered off - no retry
+    TETHERED_CALL_ACTIVE = -6,            // data call was disconnected by modem because tethered
+                                          // mode was up on same APN/data profile - no retry until
+                                          // tethered call is off
+    ERROR_UNSPECIFIED = 0xffff,
+};
+
+/*
+ * Please note that registration state UNKNOWN is
+ * treated as "out of service" in the Android telephony.
+ * Registration state REG_DENIED must be returned if Location Update
+ * Reject (with cause 17 - Network Failure) is received
+ * repeatedly from the network, to facilitate
+ * "managed roaming"
+ */
+enum RegState : int32_t {
+    NOT_REG_MT_NOT_SEARCHING_OP,          // Not registered, MT is not currently searching
+                                          // a new operator to register
+    REG_HOME,                             // Registered, home network
+    NOT_REG_MT_SEARCHING_OP,              // Not registered, but MT is currently searching
+                                          // a new operator to register
+    REG_DENIED,                           // Registration denied
+    UNKNOWN,                              // Unknown
+    REG_ROAMING,                          // Registered, roaming
+    NOT_REG_MT_NOT_SEARCHING_OP_EM,       // Same as NOT_REG_MT_NOT_SEARCHING_OP but indicates that
+                                          // emergency calls are enabled.
+    NOT_REG_MT_SEARCHING_OP_EM,           // Same as NOT_REG_MT_SEARCHING_OP but indicates that
+                                          // emergency calls are enabled.
+    REG_DENIED_EM,                        // Same as REG_DENIED but indicates that
+                                          // emergency calls are enabled.
+    UNKNOWN_EM                            // Same as UNKNOWN but indicates that
+                                          // emergency calls are enabled.
+};
+
+enum RadioTechnology : int32_t {
+    UNKNOWN,
+    GPRS,
+    EDGE,
+    UMTS,
+    IS95A,
+    IS95B,
+    ONE_X_RTT,
+    EVDO_0,
+    EVDO_A,
+    HSDPA,
+    HSUPA,
+    HSPA,
+    EVDO_B,
+    EHRPD,
+    LTE,
+    HSPAP,                                // HSPA+
+    GSM,                                  // Only supports voice
+    TD_SCDMA,
+    IWLAN,
+    LTE_CA,
+};
+
+enum DataProfile : int32_t {
+    DEFAULT = 0,
+    TETHERED = 1,
+    IMS = 2,
+    FOTA = 3,
+    CBS = 4,
+    OEM_BASE = 1000,                      // Start of OEM-specific profiles
+    INVALID = 0xFFFFFFFF,
+};
+
+enum SmsAcknowledgeFailCause : int32_t {
+    MEMORY_CAPAPCITY_EXCEEDED = 0xD3,
+    UNSPECIFIED_ERROR = 0XFF,
+};
+
+enum CallForwardInfoStatus : int32_t {
+    ACTIVE,
+    INACTIVE,
+    DISABLE,
+    ENABLE,
+    INTERROGATE,
+    REGISTRATION,
+    ERASURE,
+};
+
+enum ClipStatus : int32_t {
+    CLIP_PROVISIONED,                     // CLIP provisioned
+    CLIP_UNPROVISIONED,                   // CLIP not provisioned
+    UNKOWN,                               // unknown, e.g. no network etc
+};
+
+enum SmsWriteArgsStatus : int32_t {
+    REC_UNREAD,
+    REC_READ,
+    STO_UNSENT,
+    STO_SENT,
+};
+
+enum RadioBandMode : int32_t  {
+    BAND_MODE_UNSPECIFIED,                // "unspecified" (selected by baseband automatically)
+    BAND_MODE_EURO,                       // "EURO band" (GSM-900 / DCS-1800 / WCDMA-IMT-2000)
+    BAND_MODE_USA,                        // "US band"
+                                          // (GSM-850 / PCS-1900 / WCDMA-850 / WCDMA-PCS-1900)
+    BAND_MODE_JPN,                        // "JPN band" (WCDMA-800 / WCDMA-IMT-2000)
+    BAND_MODE_AUS,                        // "AUS band"
+                                          // (GSM-900 / DCS-1800 / WCDMA-850 / WCDMA-IMT-2000)
+    BAND_MODE_AUS_2,                      // "AUS band 2" (GSM-900 / DCS-1800 / WCDMA-850)
+    BAND_MODE_CELL_800,                   // "Cellular" (800-MHz Band)
+    BAND_MODE_PCS,                        // "PCS" (1900-MHz Band)
+    BAND_MODE_JTACS,                      // "Band Class 3" (JTACS Band)
+    BAND_MODE_KOREA_PCS,                  // "Band Class 4" (Korean PCS Band)
+    BAND_MODE_5_450M,                     // "Band Class 5" (450-MHz Band)
+    BAND_MODE_IMT2000,                    // "Band Class 6" (2-GMHz IMT2000 Band)
+    BAND_MODE_7_700M_2,                   // "Band Class 7" (Upper 700-MHz Band)
+    BAND_MODE_8_1800M,                    // "Band Class 8" (1800-MHz Band)
+    BAND_MODE_9_900M,                     // "Band Class 9" (900-MHz Band)
+    BAND_MODE_10_800M_2,                  // "Band Class 10" (Secondary 800-MHz Band)
+    BAND_MODE_EURO_PAMR_400M,             // "Band Class 11" (400-MHz European PAMR Band)
+    BAND_MODE_AWS,                        // "Band Class 15" (AWS Band)
+    BAND_MODE_USA_2500M,                  // "Band Class 16" (US 2.5-GHz Band)
+};
+
+enum OperatorStatus : int32_t {
+    UNKNOWN,
+    AVAILABLE,
+    CURRENT,
+    FORBIDDEN,
+};
+
+struct RadioResponseInfo {
+    RadioResponseType type;               // Response type
+    int32_t serial;                       // Serial number of the request
+    RadioError error;                     // Response error
+};
+
+struct AppStatus {
+    AppType appType;
+    AppState appState;
+    PersoSubstate persoSubstate;          // applicable only if app_state == SUBSCRIPTION_PERSO
+    string aidPtr;                        // e.g., from 0xA0, 0x00 -> 0x41,
+                                          // 0x30, 0x30, 0x30
     string appLabelPtr;
-    /* null terminated string */
-    int32_t pin1Replaced;
-    /* applicable to USIM, CSIM & ISIM */
-    RadioPinState pin1;
-    RadioPinState pin2;
+    int32_t pin1Replaced;                 // applicable to USIM, CSIM & ISIM
+    PinState pin1;
+    PinState pin2;
 };
 
-struct RadioCardStatus {
-    RadioCardState cardState;
-    RadioPinState universalPinState;
-    /* applicable to USIM and CSIM */
-    int32_t gsmUmtsSubscriptionAppIndex;
-    /* value < RADIO_CARD_MAX_APPS, -1 if none */
-    int32_t cdmaSubscriptionAppIndex;
-    /* value < RADIO_CARD_MAX_APPS, -1 if none */
-    int32_t imsSubscriptionAppIndex;
-    /* value < RADIO_CARD_MAX_APPS, -1 if none */
-    int32_t numApplications;
-    /* value <= RADIO_CARD_MAX_APPS */
-    RadioAppStatus[RadioConst:RADIO_CARD_MAX_APPS] applications;
+struct CardStatus {
+    CardState cardState;
+    PinState universalPinState;           // applicable to USIM and CSIM
+    int32_t gsmUmtsSubscriptionAppIndex;  // value < RADIO_CARD_MAX_APPS, -1 if none
+    int32_t cdmaSubscriptionAppIndex;     // value < RADIO_CARD_MAX_APPS, -1 if none
+    int32_t imsSubscriptionAppIndex;      // value < RADIO_CARD_MAX_APPS, -1 if none
+    int32_t numApplications;              // value <= RADIO_CARD_MAX_APPS
+    AppStatus[RadioConst:RADIO_CARD_MAX_APPS] applications;
+};
+
+/*
+ * User-to-User Signaling Information defined in 3GPP 23.087 v8.0
+ * This data is passed in RADIO_ExtensionRecord and rec contains this
+ * structure when type is RADIO_UUS_INFO_EXT_REC
+ */
+struct UusInfo {
+    UusType uusType;                      // UUS Type
+    UusDcs uusDcs;                        // UUS Data Coding Scheme
+    int32_t uusLength;                    // Length of UUS Data
+    string uusData;                       // UUS data
+};
+
+struct Call {
+    CallState state;
+    int32_t index;                        // Connection Index for use with, eg, AT+CHLD
+    int32_t toa;                          // type of address, eg 145 = intl
+    bool isMpty;                          // true if is mpty call
+    bool isMT;                            // true if call is mobile terminated
+    uint8_t als;                          // ALS line indicator if available (0 = line 1)
+    bool isVoice;                         // true if this is is a voice call
+    bool isVoicePrivacy;                  // true if CDMA voice privacy mode is active
+    string number;                        // Remote party number
+    CallPresentation numberPresentation;
+    string name;                          // Remote party name
+    CallPresentation namePresentation;
+    vec<UusInfo> uusInfo;                 // Vector of User-User Signaling Information
+};
+
+struct Dial {
+    string address;
+    Clir clir;
+    vec<UusInfo> uusInfo;                 // Vector of User-User Signaling Information
+};
+
+struct GwSignalStrength {
+    uint32_t signalStrength;              // Valid values are (0-31, 99) as defined in
+                                          // TS 27.007 8.5
+    uint32_t bitErrorRate;                // bit error rate (0-7, 99) as defined in TS 27.007 8.5
+};
+
+struct CdmaSignalStrength {
+    uint32_t dbm;                         // This value is the actual RSSI
+                                          // value multiplied by -1. Example: If the
+                                          // actual RSSI is -75, then this response value will
+                                          // be 75.
+    uint32_t ecio;                        // This value is the actual
+                                          // Ec/Io multiplied by -10. Example: If the
+                                          // actual Ec/Io is -12.5 dB, then this response value
+                                          // will be 125.
+};
+
+struct EvdoSignalStrength {
+    uint32_t dbm;                         // This value is the actual
+                                          // RSSI value multiplied by -1.
+                                          // Example: If the actual RSSI is -75,
+                                          // then this response value will be 75.
+    uint32_t ecio;                        // This value is the actual
+                                          // Ec/Io multiplied by -10. Example: If the
+                                          // actual Ec/Io is -12.5 dB, then this response value
+                                          // will be 125.
+    uint32_t signalNoiseRatio;            // Valid values are 0-8. 8 is the highest signal to
+                                          // noise ratio.
+};
+
+struct LteSignalStrength {
+    uint32_t signalStrength;              // Valid values are (0-31, 99) as defined in
+                                          // TS 27.007 8.5
+    uint32_t rsrp;                        // The current Reference Signal Receive Power in dBm
+                                          // multipled by -1.
+                                          // Range: 44 to 140 dBm
+                                          // INT_MAX: 0x7FFFFFFF denotes invalid value.
+                                          // Reference: 3GPP TS 36.133 9.1.4
+    uint32_t rsrq;                        // The current Reference Signal Receive Quality in dB
+                                          // multiplied by -1.
+                                          // Range: 20 to 3 dB.
+                                          // INT_MAX: 0x7FFFFFFF denotes invalid value.
+                                          // Reference: 3GPP TS 36.133 9.1.7
+    int32_t rssnr;                        // The current reference signal signal-to-noise ratio in
+                                          // 0.1 dB units.
+                                          // Range: -200 to +300 (-200 = -20.0 dB, +300 = 30dB).
+                                          // INT_MAX : 0x7FFFFFFF denotes invalid value.
+                                          // Reference: 3GPP TS 36.101 8.1.1
+    uint32_t cqi;                         // The current Channel Quality Indicator.
+                                          // Range: 0 to 15.
+                                          // INT_MAX : 0x7FFFFFFF denotes invalid value.
+                                          // Reference: 3GPP TS 36.101 9.2, 9.3, A.4
+    uint32_t timingAdvance;               // timing advance in micro seconds for a one way trip
+                                          // from cell to device.
+                                          // Approximate distance is calculated using
+                                          // 300m/us * timingAdvance.
+                                          // Range: 0 to 0x7FFFFFFE
+                                          // INT_MAX : 0x7FFFFFFF denotes invalid value.
+                                          // Reference: 3GPP 36.321 section 6.1.3.5
+                                          // also: http://www.cellular-planningoptimization.com/2010/02/timing-advance-with-calculation.html
+};
+
+struct TdScdmaSignalStrength {
+    uint32_t rscp;                        // The Received Signal Code Power in dBm multipled by -1.
+                                          // Range : 25 to 120
+                                          // INT_MAX: 0x7FFFFFFF denotes invalid value.
+                                          // Reference: 3GPP TS 25.123, section 9.1.1.1
+};
+
+struct SignalStrength {
+    GwSignalStrength gw;
+    CdmaSignalStrength cdma;
+    EvdoSignalStrength evdo;
+    LteSignalStrength lte;
+    TdScdmaSignalStrength tdScdma;
+};
+
+struct SendSmsResult {
+    int32_t messageRef;                   // TP-Message-Reference for GSM, and BearerData MessageId
+                                          // for CDMA (See 3GPP2 C.S0015-B, v2.0, table 4.5-1)
+    string ackPDU;                        // or empty string if n/a
+    int32_t errorCode;                    // See 3GPP 27.005, 3.2.5 for GSM/UMTS,
+                                          // 3GPP2 N.S0005 (IS-41C) Table 171 for CDMA,
+                                          // -1 if unknown or not applicable
+};
+
+struct SetupDataCallResult {
+    int32_t status;                       // A RadioDataCallFailCause, 0 which is
+                                          // RadioDataCallFailCause:NONE if no error
+    int32_t suggestedRetryTime;           // If status != 0, this fields indicates the suggested
+                                          // retry back-off timer value RIL wants to override the
+                                          // one pre-configured in FW.
+                                          // The unit is miliseconds.
+                                          // The value < 0 means no value is suggested.
+                                          // The value 0 means retry must be done ASAP.
+                                          // The value of INT_MAX(0x7fffffff) means no retry.
+    int32_t cid;                          // Context ID, uniquely identifies this call
+    int32_t active;                       // 0=inactive, 1=active/physical link down,
+                                          // 2=active/physical link up */
+    string type;                          // One of the PDP_type values in TS 27.007 section 10.1.1.
+                                          // For example, "IP", "IPV6", "IPV4V6", or "PPP". If
+                                          // status is
+                                          // RadioDataCallFailCause:ONLY_SINGLE_BEARER_ALLOWED this
+                                          // is the type supported such as "IP" or "IPV6"
+    string ifname;                        // The network interface name
+    string addresses;                     // A space-delimited list of addresses with optional "/"
+                                          // prefix length, e.g., "192.0.1.3" or
+                                          // "192.0.1.11/16 2001:db8::1/64".
+                                          // Typically 1 IPv4 or 1 IPv6 or
+                                          // one of each. If the prefix length is absent the
+                                          // addresses are assumed to be point to point with IPv4
+                                          // having a prefix length of 32 and IPv6 128.
+    string dnses;                         // A space-delimited list of DNS server addresses,
+                                          // e.g., "192.0.1.3" or "192.0.1.11 2001:db8::1".
+                                          // Empty if no dns server addresses returned.
+    string gateways;                      // A space-delimited list of default gateway addresses,
+                                          // e.g., "192.0.1.3" or "192.0.1.11 2001:db8::1".
+                                          // When empty, the addresses represent
+                                          // point to point connections.
+    string pcscf;                         // the Proxy Call State Control Function address
+                                          // via PCO(Protocol Configuration Option) for IMS client.
+    int32_t mtu;                          // MTU received from network
+                                          // Value <= 0 means network has either not sent a
+                                          // value or sent an invalid value
+};
+
+struct IccIo {
+    int32_t command;                      // one of the commands listed for TS 27.007 +CRSM
+    int32_t fileid;                       // EF id
+    string path;                          // "pathid" from TS 27.007 +CRSM command.
+                                          // Path is in hex asciii format eg "7f205f70"
+                                          // Path must always be provided.
+    int32_t p1;                           // Values of p1, p2 & p3 defined as per 3GPP TS 51.011
+    int32_t p2;
+    int32_t p3;
+    string data;                          // information to be written to the SIM
+    string pin2;
+    string aidPtr;                        // AID value, See ETSI 102.221 8.1 and 101.220 4, empty
+                                          // string if no value.
+};
+
+struct IccIoResult {
+    int32_t sw1;
+    int32_t sw2;
+    string simResponse;                   // In hex string format ([a-fA-F0-9]*), except for
+                                          // SIM_AUTHENTICATION response for which it is in
+                                          // Base64 format, see 3GPP TS 31.102 7.1.2
+};
+
+struct VoiceRegStateResult {
+    RegState regState;
+    int32_t lac;                          // LAC if registered on a GSM/WCDMA system or
+                                          // -1 if not.Valid LAC are 0x0000 - 0xffff
+    int32_t cid;                          // CID. if registered on a * GSM/WCDMA or -1 if not
+                                          // Valid CID are 0x00000000 - 0xffffffff
+                                          // In GSM, CID is Cell ID (see TS 27.007) in 16 bits
+                                          // In UMTS, CID is UMTS Cell Identity (see TS 25.331)
+                                          // in 28 bits
+    int32_t rat;                          // indicates the available voice radio technology,
+                                          // valid values as defined by RIL_RadioTechnology.
+    int32_t baseStationId;                // Base Station ID. if registered on a CDMA
+                                          // system or -1 if not. Base Station ID in decimal format
+    int32_t baseStationLatitude;          // Base Station latitude. if registered on a
+                                          // CDMA system or -1 if not. Base Station latitude is a
+                                          // decimal number as specified in 3GPP2 C.S0005-A v6.0.
+                                          // It is represented in units of 0.25 seconds and ranges
+                                          // from -1296000 to 1296000, both values inclusive
+                                          // (corresponding to a range of -90 to +90 degrees).
+    int32_t baseStationLongitude;         // Base Station longitude. if registered on a
+                                          // CDMA system or -1 if not. Base Station
+                                          // longitude is a decimal number as specified in
+                                          // 3GPP2 C.S0005-A v6.0. It is represented in
+                                          // units of 0.25 seconds and ranges from -2592000
+                                          // to 2592000, both values inclusive (corresponding
+                                          // to a range of -180 to +180 degrees).
+    bool cssSupported;                    // concurrent services support indicator. if
+                                          // registered on a CDMA system.
+                                          // false - Concurrent services not supported,
+                                          // true - Concurrent services supported
+    int32_t systemId;                     // System ID. if registered on a CDMA system or
+                                          // -1 if not. Valid System ID are 0 - 32767
+    int32_t networkId;                    // Network ID. if registered on a CDMA system or
+                                          // -1 if not. Valid System ID are 0 - 65535
+    int32_t roamingIndicator;             // TSB-58 Roaming Indicator if registered
+                                          // on a CDMA or EVDO system or -1 if not.
+                                          // Valid values are 0-255.
+    int32_t systemIsInPrl;                // indicates whether the current system is in the
+                                          // PRL if registered on a CDMA or EVDO system or -1 if
+                                          // not. 0=not in the PRL, 1=in the PRL
+    int32_t defaultRoamingIndicator;      // default Roaming Indicator from the PRL,
+                                          // if registered on a CDMA or EVDO system or -1 if not.
+                                          // Valid values are 0-255.
+    int32_t reasonForDenial;              // reasonForDenial if registration state is 3
+                                          // (Registration denied) this is an enumerated reason why
+                                          // registration was denied. See 3GPP TS 24.008,
+                                          // 10.5.3.6 and Annex G.
+                                          // 0 - General
+                                          // 1 - Authentication Failure
+                                          // 2 - IMSI unknown in HLR
+                                          // 3 - Illegal MS
+                                          // 4 - Illegal ME
+                                          // 5 - PLMN not allowed
+                                          // 6 - Location area not allowed
+                                          // 7 - Roaming not allowed
+                                          // 8 - No Suitable Cells in this Location Area
+                                          // 9 - Network failure
+                                          // 10 - Persistent location update reject
+                                          // 11 - PLMN not allowed
+                                          // 12 - Location area not allowed
+                                          // 13 - Roaming not allowed in this Location Area
+                                          // 15 - No Suitable Cells in this Location Area
+                                          // 17 - Network Failure
+                                          // 20 - MAC Failure
+                                          // 21 - Sync Failure
+                                          // 22 - Congestion
+                                          // 23 - GSM Authentication unacceptable
+                                          // 25 - Not Authorized for this CSG
+                                          // 32 - Service option not supported
+                                          // 33 - Requested service option not subscribed
+                                          // 34 - Service option temporarily out of order
+                                          // 38 - Call cannot be identified
+                                          // 48-63 - Retry upon entry into a new cell
+                                          // 95 - Semantically incorrect message
+                                          // 96 - Invalid mandatory information
+                                          // 97 - Message type non-existent or not implemented
+                                          // 98 - Message type not compatible with protocol state
+                                          // 99 - Information element non-existent or not implemented
+                                          // 100 - Conditional IE error
+                                          // 101 - Message not compatible with protocol state
+                                          // 111 - Protocol error, unspecified
+    int32_t psc;                          // Primary Scrambling Code of the current
+                                          // cell as described in TS 25.331, in hexadecimal
+                                          // format, or -1 if unknown or not registered
+                                          // to a UMTS network.
+};
+
+struct DataRegStateResult {
+    RegState regState;                    // Valid reg states are NOT_REG_MT_NOT_SEARCHING_OP,
+                                          // REG_HOME, NOT_REG_MT_SEARCHING_OP, REG_DENIED,
+                                          // UNKNOWN, REG_ROAMING defined in RegState
+    int32_t lac;                          // LAC if registered or -1 if not
+                                          // valid LAC are 0x0000 - 0xffff
+    int32_t cid;                          // CID if registered or -1 if not
+                                          // valid CID are 0x00000000 - 0x0fffffff
+    int32_t rat;                          // indicates the available data radio technology,
+                                          // valid values as defined by RIL_RadioTechnology.
+    int32_t reasonDataDenied;             // if registration state is 3 (Registration
+                                          // denied) this is an enumerated reason why
+                                          // registration was denied. See 3GPP TS 24.008,
+                                          // Annex G.6 "Additonal cause codes for GMM".
+                                          // 7 == GPRS services not allowed
+                                          // 8 == GPRS services and non-GPRS services not allowed
+                                          // 9 == MS identity cannot be derived by the network
+                                          // 10 == Implicitly detached
+                                          // 14 == GPRS services not allowed in this PLMN
+                                          // 16 == MSC temporarily not reachable
+                                          // 40 == No PDP context activated
+    int32_t maxDataCalls;                 // The maximum number of simultaneous Data Calls that
+                                          // must be established using requestSetupDataCall().
+    // The values below are optional LTE location information in decimal.
+    // If a value is unknown that value must be -1.
+    int32_t tac;                          // a 16-bit Tracking Area Code.
+    int32_t phyCid;                       // a 0-503 Physical Cell Identifier.
+    int32_t eci;                          // a 28-bit E-UTRAN Cell Identifier.
+    int32_t csgid;                        // a 27-bit Closed Subscriber Group Identity.
+    int32_t tadv;                         // a 6-bit timing advance value.
+};
+
+// See also com.android.internal.telephony.gsm.CallForwardInfo
+struct CallForwardInfo {
+    CallForwardInfoStatus status;         // For queryCallForwardStatus()
+                                          // status must be ACTIVE, INACTIVE
+                                          // For setCallForward():
+                                          // status must be
+                                          // DISABLE, ENABLE, INTERROGATE, REGISTRATION, ERASURE
+    int32_t reason;                       // from TS 27.007 7.11 "reason"
+    int32_t serviceClass;                 // From 27.007 +CCFC/+CLCK "class"
+                                          // See table for Android mapping from
+                                          // MMI service code
+                                          // 0 means user doesnt input class
+    int32_t toa;                          // "type" from TS 27.007 7.11
+    string number;                        // "number" from TS 27.007 7.11.
+    int32_t timeSeconds;
+};
+
+// Response struct used in responseQueryAvailableNetworks
+struct OperatorInfo {
+    string alphaLong;                     // long alpha ONS or EONS
+    string alphaShort;                    // short alpha ONS or EONS
+    string operatorNumeric;               // 5 or 6 digit numeric code (MCC + MNC)
+    OperatorStatus status;
+};
+
+struct SmsWriteArgs {
+    SmsWriteArgsStatus status;            // Status of message. See TS 27.005 3.1
+    string pdu;                           // PDU of message to write, as an ASCII hex string less
+                                          // the SMSC address, the TP-layer length is strlen(pdu)/2.
+    string smsc;                          // SMSC address in GSM BCD format prefixed by a length
+                                          // byte (as expected by TS 27.005) or NULL for default
+                                          // SMSC
 };
