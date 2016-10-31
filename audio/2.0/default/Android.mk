@@ -17,20 +17,53 @@
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
+LOCAL_MODULE := android.hardware.audio@2.0-impl
+LOCAL_MODULE_RELATIVE_PATH := hw
+LOCAL_SRC_FILES := \
+    Conversions.cpp \
+    Device.cpp \
+    DevicesFactory.cpp \
+    ParametersUtil.cpp \
+    PrimaryDevice.cpp \
+    Stream.cpp \
+    StreamIn.cpp \
+    StreamOut.cpp \
+
+LOCAL_SHARED_LIBRARIES := \
+    libhidl \
+    libhwbinder \
+    libutils \
+    libhardware \
+    liblog \
+    android.hardware.audio@2.0 \
+    android.hardware.audio.common@2.0 \
+    android.hardware.audio.common@2.0-util \
+
+LOCAL_WHOLE_STATIC_LIBRARIES := libmedia_helper
+
+include $(BUILD_SHARED_LIBRARY)
+
+#
+# Service
+#
+
+include $(CLEAR_VARS)
 LOCAL_MODULE := android.hardware.audio@2.0-service
 LOCAL_INIT_RC := android.hardware.audio@2.0-service.rc
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_SRC_FILES := \
-  service.cpp
+    service.cpp
 
 LOCAL_SHARED_LIBRARIES := \
-  libhidl \
-  liblog \
-  libhwbinder \
-  libutils \
-  libhardware \
-  android.hardware.soundtrigger@2.0 \
-  android.hardware.audio.common@2.0
+    libhidl \
+    liblog \
+    libhwbinder \
+    libutils \
+    libhardware \
+    android.hardware.audio@2.0 \
+    android.hardware.audio.common@2.0 \
+    android.hardware.audio.effect@2.0 \
+    android.hardware.soundtrigger@2.0 \
 
 ifeq ($(strip $(AUDIOSERVER_MULTILIB)),)
 LOCAL_MULTILIB := 32

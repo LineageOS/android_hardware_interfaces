@@ -36,6 +36,7 @@
 #include "EffectsFactory.h"
 #include "DownmixEffect.h"
 #include "Effect.h"
+#include "EffectMap.h"
 #include "EnvironmentalReverbEffect.h"
 #include "EqualizerEffect.h"
 #include "LoudnessEnhancerEffect.h"
@@ -157,12 +158,16 @@ Return<void> EffectsFactory::createEffect(
     Result retval(Result::OK);
     status_t status = EffectCreate(&halUuid, session, ioHandle, &handle);
     sp<IEffect> effect;
+    uint64_t effectId = EffectMap::INVALID_ID;
     if (status == OK) {
         effect_descriptor_t halDescriptor;
         memset(&halDescriptor, 0, sizeof(effect_descriptor_t));
         status = (*handle)->get_descriptor(handle, &halDescriptor);
         if (status == OK) {
             effect = dispatchEffectInstanceCreation(halDescriptor, handle);
+            effectId = EffectMap::getInstance().add(handle);
+        } else {
+            EffectRelease(handle);
         }
     }
     if (status != OK) {
@@ -173,7 +178,7 @@ Return<void> EffectsFactory::createEffect(
             retval = Result::NOT_INITIALIZED;
         }
     }
-    _hidl_cb(retval, effect);
+    _hidl_cb(retval, effect, effectId);
     return Void();
 }
 

@@ -14,28 +14,23 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "soundtriggerhal"
+#define LOG_TAG "audiohalservice"
 
-#include <hwbinder/IInterface.h>
-#include <hwbinder/IPCThreadState.h>
-#include <hwbinder/ProcessState.h>
-#include <utils/Errors.h>
-#include <utils/Log.h>
-#include <utils/Looper.h>
-#include <utils/StrongPointer.h>
+#include <hidl/LegacySupport.h>
+#include <android/hardware/audio/2.0/IDevicesFactory.h>
+#include <android/hardware/audio/effect/2.0/IEffectsFactory.h>
 #include <android/hardware/soundtrigger/2.0/ISoundTriggerHw.h>
 
 using android::hardware::IPCThreadState;
 using android::hardware::ProcessState;
+using android::hardware::audio::effect::V2_0::IEffectsFactory;
+using android::hardware::audio::V2_0::IDevicesFactory;
 using android::hardware::soundtrigger::V2_0::ISoundTriggerHw;
+using android::hardware::registerPassthroughServiceImplementation;
 
 int main(int /* argc */, char* /* argv */ []) {
-    android::sp<ISoundTriggerHw> service =
-            ISoundTriggerHw::getService("sound_trigger.primary", true /* getStub */);
-
-    service->registerAsService("sound_trigger.primary");
-
-    ProcessState::self()->setThreadPoolMaxThreadCount(0);
-    ProcessState::self()->startThreadPool();
-    IPCThreadState::self()->joinThreadPool();
+    registerPassthroughServiceImplementation<IDevicesFactory>("audio_devices_factory");
+    registerPassthroughServiceImplementation<IEffectsFactory>("audio_effects_factory");
+    registerPassthroughServiceImplementation<ISoundTriggerHw>("sound_trigger.primary");
+    return android::hardware::launchRpcServer(16);
 }

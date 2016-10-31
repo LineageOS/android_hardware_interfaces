@@ -134,18 +134,20 @@ interface IStream {
     /*
      * Applies audio effect to the stream.
      *
-     * @param effect the effect to apply.
+     * @param effectId effect ID (obtained from IEffectsFactory.createEffect) of
+     *                 the effect to apply.
      * @return retval operation completion status.
      */
-    addEffect(IEffect effect) generates (Result retval);
+    addEffect(uint64_t effectId) generates (Result retval);
 
     /*
      * Stops application of the effect to the stream.
      *
-     * @param effect the effect to apply.
+     * @param effectId effect ID (obtained from IEffectsFactory.createEffect) of
+     *                 the effect to remove.
      * @return retval operation completion status.
      */
-    removeEffect(IEffect effect) generates (Result retval);
+    removeEffect(uint64_t effectId) generates (Result retval);
 
     /*
      * Put the audio hardware input/output into standby mode.
@@ -158,10 +160,9 @@ interface IStream {
     /*
      * Return the set of device(s) which this stream is connected to.
      *
-     * @return retval operation completion status.
      * @return device set of device(s) which this stream is connected to.
      */
-    getDevice() generates (Result retval, AudioDevice device);
+    getDevice() generates (AudioDevice device);
 
     /*
      * Connects the stream to the device.

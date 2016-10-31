@@ -26,6 +26,7 @@ LOCAL_SHARED_LIBRARIES := \
     libeffects \
     liblog \
     android.hardware.audio.common@2.0 \
+    android.hardware.audio.common@2.0-util \
     android.hardware.audio.effect@2.0 \
 
 include $(BUILD_SHARED_LIBRARY)

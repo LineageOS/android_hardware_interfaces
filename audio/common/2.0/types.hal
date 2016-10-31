@@ -555,8 +555,7 @@ enum AudioDevice : uint32_t {
     IN_IP                    = BIT_IN | 0x80000,
     /* audio bus implemented by the audio system (e.g an MOST stereo channel) */
     IN_BUS                   = BIT_IN | 0x100000,
-    IN_DEFAULT               = BIT_IN |
-                                            BIT_DEFAULT,
+    IN_DEFAULT               = BIT_IN | BIT_DEFAULT,
 
     IN_ALL     = (IN_COMMUNICATION |
             IN_AMBIENT |
@@ -798,10 +797,10 @@ struct AudioPortConfig {
             union UseCase {
                 AudioStreamType stream;
                 AudioSource source;
-            };
+            } useCase;
         } mix;
         AudioPortConfigSessionExt session;
-    };
+    } ext;
 };
 
 /*
@@ -849,16 +848,5 @@ struct AudioPort {
         AudioPortDeviceExt device;
         AudioPortMixExt mix;
         AudioPortSessionExt session;
-    };
-};
-
-/*
- * An audio patch represents a connection between one or more source ports and
- * one or more sink ports. Patches are connected and disconnected by audio
- * policy manager or by applications via framework APIs.
- */
-struct AudioPatch {
-    AudioPatchHandle id;
-    vec<AudioPortConfig> sources;
-    vec<AudioPortConfig> sinks;
+    } ext;
 };

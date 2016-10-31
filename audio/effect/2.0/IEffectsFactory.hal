@@ -50,9 +50,11 @@ interface IEffectsFactory {
      *                 directed to in audio HAL.
      * @return retval operation completion status.
      * @return result the interface for the created effect.
+     * @return effectId the unique ID of the effect to be used with
+     *                  IStream::addEffect and IStream::removeEffect methods.
      */
     createEffect(Uuid uid, AudioSession session, AudioIoHandle ioHandle)
-            generates (Result retval, IEffect result);
+        generates (Result retval, IEffect result, uint64_t effectId);
 
     /*
      * Dumps information about effects into the provided file descriptor.
