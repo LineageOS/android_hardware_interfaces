@@ -5,6 +5,7 @@
 #include <hidl/Status.h>
 
 #include <hidl/MQDescriptor.h>
+#include <vector>
 namespace android {
 namespace hardware {
 namespace tests {
@@ -44,6 +45,9 @@ struct Foo : public IFoo {
     virtual Return<void> transpose2(const hidl_array<hidl_string, 5 /* 5 */, 3 /* 3 */>& in, transpose2_cb _hidl_cb)  override;
     virtual Return<void> sendVec(const hidl_vec<uint8_t>& data, sendVec_cb _hidl_cb)  override;
     virtual Return<void> sendVecVec(sendVecVec_cb _hidl_cb)  override;
+    virtual Return<void> createMyHandle(createMyHandle_cb _hidl_cb)  override;
+    virtual Return<void> createHandles(uint32_t size, createHandles_cb _hidl_cb)  override;
+    virtual Return<void> closeHandles()  override;
 
     Return<void> haveAVectorOfInterfaces(
             const hidl_vec<sp<ISimple> > &in,
@@ -52,6 +56,8 @@ struct Foo : public IFoo {
     Return<void> haveAVectorOfGenericInterfaces(
             const hidl_vec<sp<android::hardware::IBinder> > &in,
             haveAVectorOfGenericInterfaces_cb _hidl_cb) override;
+private:
+    std::vector<::native_handle_t *> mHandles;
 };
 
 extern "C" IFoo* HIDL_FETCH_IFoo(const char* name);

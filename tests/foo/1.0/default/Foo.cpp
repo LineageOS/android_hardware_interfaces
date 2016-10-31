@@ -291,7 +291,40 @@ Return<void> Foo::haveAVectorOfGenericInterfaces(
         const hidl_vec<sp<android::hardware::IBinder> > &in,
         haveAVectorOfGenericInterfaces_cb _hidl_cb) {
     _hidl_cb(in);
+    return Void();
+}
 
+Return<void> Foo::createMyHandle(createMyHandle_cb _hidl_cb) {
+    native_handle_t* nh = native_handle_create(0, 10);
+    int data[] = {2,3,5,7,11,13,17,19,21,23};
+    CHECK(sizeof(data) == 10 * sizeof(int));
+    memcpy(nh->data, data, sizeof(data));
+    mHandles.push_back(nh);
+
+    MyHandle h;
+    h.guard = 666;
+    h.h = nh;
+    _hidl_cb(h);
+    return Void();
+}
+
+Return<void> Foo::createHandles(uint32_t size, createHandles_cb _hidl_cb) {
+    hidl_vec<const native_handle_t*> handles;
+    handles.resize(size);
+    for(uint32_t i = 0; i < size; ++i) {
+        createMyHandle([&](const MyHandle& h) {
+            handles[i] = h.h;
+        });
+    }
+    _hidl_cb(handles);
+    return Void();
+}
+
+Return<void> Foo::closeHandles() {
+    for(native_handle_t* h : mHandles) {
+        native_handle_delete(h);
+    }
+    mHandles.clear();
     return Void();
 }
 
