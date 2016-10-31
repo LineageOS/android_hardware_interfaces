@@ -80,6 +80,11 @@ interface IFoo {
         FloatArray myFloatArray;
     };
 
+    struct MyHandle {
+        handle h;
+        int32_t guard;
+    };
+
     doThis(float param);
     doThatAndReturnSomething(int64_t param) generates (int32_t result);
     doQuiteABit(int32_t a, int64_t b, float c, double d) generates (double something);
@@ -112,4 +117,7 @@ interface IFoo {
 
     haveAVectorOfGenericInterfaces(vec<interface> in)
         generates (vec<interface> out);
+    createMyHandle() generates (MyHandle h);
+    createHandles(uint32_t size) generates (vec<handle> handles);
+    closeHandles();
 };
