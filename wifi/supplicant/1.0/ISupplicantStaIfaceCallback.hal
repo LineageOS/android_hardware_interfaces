@@ -18,13 +18,13 @@ package android.hardware.wifi.supplicant@1.0;
 
 /**
  * Callback Interface exposed by the wpa_supplicant service
- * for each interface (ISupplicantIface).
+ * for each station mode interface (ISupplicantStaIface).
  *
  * Clients need to host an instance of this HIDL interface object and
  * pass a reference of the object to wpa_supplicant via the
- * corresponding |ISupplicantIface.registerCallback| method.
+ * corresponding |ISupplicantStaIface.registerCallback| method.
  */
-interface ISupplicantIfaceCallback {
+interface ISupplicantStaIfaceCallback {
   /** Various states of the interface reported by |onStateChanged|.*/
   enum State : uint32_t {
     /**
@@ -38,7 +38,7 @@ interface ISupplicantIfaceCallback {
      * due to rfkill. wpa_supplicant refuses any new operations that would
      * use the radio until the interface has been enabled.
      */
-    INTERFACE_DISABLED = 1,
+    IFACE_DISABLED = 1,
     /**
      * This state is entered if there are no enabled networks in the
      * configuration. wpa_supplicant is not trying to associate with a new
