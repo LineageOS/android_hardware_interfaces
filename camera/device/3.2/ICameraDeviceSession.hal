@@ -48,6 +48,8 @@ interface ICameraDeviceSession {
      *     INTERNAL_ERROR:
      *         An unexpected internal error occurred, and the default settings
      *         are not available.
+     *     ILLEGAL_ARGUMENT:
+     *         The camera HAL does not support the input template type
      *     CAMERA_DISCONNECTED:
      *         An external camera device has been disconnected, and is no longer
      *         available. This camera device interface is now stale, and a new
