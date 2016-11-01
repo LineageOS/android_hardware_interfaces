@@ -64,11 +64,11 @@ interface IVehicle {
    * Clients must be able to subscribe to multiple properties at a time
    * depending on data provided in options argument.
    *
-   * @param listener This client must be called on aproperiate event.
+   * @param listener This client must be called on appropriate event.
    * @param options List of options to subscribe. SubscribeOption contains
-   *                information such as propery Id, area Id, sample rate, etc.
+   *                information such as property Id, area Id, sample rate, etc.
    */
-  subscribe(IVehicleCallback listener, vec<SubscribeOptions> options)
+  subscribe(IVehicleCallback callback, vec<SubscribeOptions> options)
           generates (StatusCode status);
 
   /**
@@ -77,7 +77,8 @@ interface IVehicle {
    * If this client wasn't subscribed to the given property, this method
    * must return StatusCode::INVALID_ARGUMENT.
    */
-  unsubscribe(VehicleProperty propId) generates (StatusCode status);
+  unsubscribe(IVehicleCallback callback, VehicleProperty propId)
+          generates (StatusCode status);
 
   /**
    * Print out debugging state for the vehicle hal.
@@ -91,7 +92,7 @@ interface IVehicle {
    * primitives used (such as mutex locks or semaphores) must be acquired
    * with a timeout.
    *
-   * TODO(pavelm): we cannot use handle here due to Java compatability, it's
+   * TODO(pavelm): we cannot use handle here due to Java compatibility, it's
    * better to pass file descriptor and write debug data directly in vehicle HAL
    * rather than passing back a string.
    */
