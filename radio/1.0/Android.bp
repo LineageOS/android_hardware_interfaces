@@ -9,12 +9,16 @@ genrule {
         "IRadio.hal",
         "IRadioIndication.hal",
         "IRadioResponse.hal",
+        "ISap.hal",
+        "ISapCallback.hal",
     ],
     out: [
         "android/hardware/radio/1.0/types.cpp",
         "android/hardware/radio/1.0/RadioAll.cpp",
         "android/hardware/radio/1.0/RadioIndicationAll.cpp",
         "android/hardware/radio/1.0/RadioResponseAll.cpp",
+        "android/hardware/radio/1.0/SapAll.cpp",
+        "android/hardware/radio/1.0/SapCallbackAll.cpp",
     ],
 }
 
@@ -27,6 +31,8 @@ genrule {
         "IRadio.hal",
         "IRadioIndication.hal",
         "IRadioResponse.hal",
+        "ISap.hal",
+        "ISapCallback.hal",
     ],
     out: [
         "android/hardware/radio/1.0/types.h",
@@ -45,6 +51,16 @@ genrule {
         "android/hardware/radio/1.0/BnRadioResponse.h",
         "android/hardware/radio/1.0/BpRadioResponse.h",
         "android/hardware/radio/1.0/BsRadioResponse.h",
+        "android/hardware/radio/1.0/ISap.h",
+        "android/hardware/radio/1.0/IHwSap.h",
+        "android/hardware/radio/1.0/BnSap.h",
+        "android/hardware/radio/1.0/BpSap.h",
+        "android/hardware/radio/1.0/BsSap.h",
+        "android/hardware/radio/1.0/ISapCallback.h",
+        "android/hardware/radio/1.0/IHwSapCallback.h",
+        "android/hardware/radio/1.0/BnSapCallback.h",
+        "android/hardware/radio/1.0/BpSapCallback.h",
+        "android/hardware/radio/1.0/BsSapCallback.h",
     ],
 }
 
