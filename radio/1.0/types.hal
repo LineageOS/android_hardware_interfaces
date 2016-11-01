@@ -236,6 +236,49 @@ enum RadioState : int32_t {
     UNAVAILABLE,                          // Radio unavailable (eg, resetting or not booted)
 };
 
+enum SapConnectRsp : int32_t {
+    SUCCESS,
+    CONNECT_FAILURE,
+    MSG_SIZE_TOO_LARGE,
+    MSG_SIZE_TOO_SMALL,
+    CONNECT_OK_CALL_ONGOING
+};
+
+enum SapDisconnectType : int32_t {
+    GRACEFUL,
+    IMMEDIATE
+};
+
+enum SapApduType : int32_t {
+    APDU,
+    APDU7816
+};
+
+enum SapResultCode : int32_t {
+    SUCCESS,
+    GENERIC_FAILURE,
+    CARD_NOT_ACCESSSIBLE,
+    CARD_ALREADY_POWERED_OFF,
+    CARD_REMOVED,
+    CARD_ALREADY_POWERED_ON,
+    DATA_NOT_AVAILABLE,
+    NOT_SUPPORTED
+};
+
+enum SapStatus : int32_t {
+    UNKNOWN_ERROR,
+    CARD_RESET,
+    CARD_NOT_ACCESSIBLE,
+    CARD_REMOVED,
+    CARD_INSERTED,
+    RECOVERED
+};
+
+enum SapTransferProtocol : int32_t {
+    T0,
+    T1
+};
+
 enum CallState : int32_t {
     ACTIVE,
     HOLDING,
