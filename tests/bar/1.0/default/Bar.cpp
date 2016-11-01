@@ -142,6 +142,10 @@ Return<void> Bar::closeHandles() {
     return mFoo->closeHandles();
 }
 
+Return<void> Bar::echoNullInterface(const sp<IFooCallback> &cb, echoNullInterface_cb _hidl_cb) {
+    return mFoo->echoNullInterface(cb, _hidl_cb);
+}
+
 // Methods from ::android::hardware::tests::bar::V1_0::IBar follow.
 Return<void> Bar::thisIsNew()  {
     ALOGI("SERVER(Bar) thisIsNew");
