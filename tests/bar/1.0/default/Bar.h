@@ -60,6 +60,8 @@ struct Bar : public IBar {
             const hidl_vec<sp<android::hardware::IBinder> > &in,
             haveAVectorOfGenericInterfaces_cb _hidl_cb) override;
 
+    Return<void> echoNullInterface(const sp<IFooCallback> &cb, echoNullInterface_cb _hidl_cb) override;
+
     // Methods from ::android::hardware::tests::bar::V1_0::IBar follow.
     Return<void> thisIsNew()  override;
 
