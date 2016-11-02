@@ -153,6 +153,12 @@ Return<void> Bar::thisIsNew()  {
     return Void();
 }
 
+Return<void> Bar::expectNullHandle(const native_handle_t* h, const Abc& xyz, expectNullHandle_cb _hidl_cb) {
+    ALOGI("SERVER(Bar) h = %p, xyz.z = %p", h, xyz.z);
+    _hidl_cb(h == nullptr, xyz.z == nullptr);
+    return Void();
+}
+
 IBar* HIDL_FETCH_IBar(const char* /* name */) {
     return new Bar();
 }
