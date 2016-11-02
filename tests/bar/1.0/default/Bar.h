@@ -64,6 +64,7 @@ struct Bar : public IBar {
 
     // Methods from ::android::hardware::tests::bar::V1_0::IBar follow.
     Return<void> thisIsNew()  override;
+    Return<void> expectNullHandle(const native_handle_t* h, const Abc& xyz, expectNullHandle_cb _hidl_cb)  override;
 
 private:
     sp<IFoo> mFoo;
