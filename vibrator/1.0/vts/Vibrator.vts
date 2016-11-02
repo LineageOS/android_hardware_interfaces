@@ -11,7 +11,7 @@ interface: {
         name: "on"
         return_type_hidl: {
             type: TYPE_ENUM
-            predefined_type: "Status"
+            predefined_type: "::android::hardware::vibrator::V1_0::Status"
         }
         arg: {
             type: TYPE_SCALAR
@@ -23,7 +23,7 @@ interface: {
         name: "off"
         return_type_hidl: {
             type: TYPE_ENUM
-            predefined_type: "Status"
+            predefined_type: "::android::hardware::vibrator::V1_0::Status"
         }
     }
 

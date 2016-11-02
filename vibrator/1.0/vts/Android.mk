@@ -53,3 +53,34 @@ LOCAL_PROTOC_OPTIMIZE_TYPE := full
 LOCAL_MULTILIB := both
 
 include $(BUILD_SHARED_LIBRARY)
+
+# build profiler for vibrator.
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := libvts_profiler_hidl_vibrator@1.0
+
+LOCAL_SRC_FILES := \
+   Vibrator.vts \
+   types.vts \
+
+LOCAL_C_INCLUDES += \
+  test/vts/drivers/libprofiling \
+
+LOCAL_VTS_MODE := PROFILER
+
+LOCAL_SHARED_LIBRARIES := \
+   android.hardware.vibrator@1.0 \
+   libbase \
+   libcutils \
+   liblog \
+   libhidl \
+   libhwbinder \
+   libprotobuf-cpp-full \
+   libvts_common \
+   libvts_multidevice_proto \
+   libvts_profiling \
+   libutils \
+
+LOCAL_PROTOC_OPTIMIZE_TYPE := full
+
+include $(BUILD_SHARED_LIBRARY)

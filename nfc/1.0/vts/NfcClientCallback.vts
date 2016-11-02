@@ -11,11 +11,11 @@ interface: {
         name: "sendEvent"
         arg: {
             type: TYPE_ENUM
-            predefined_type: "NfcEvent"
+            predefined_type: "::android::hardware::nfc::V1_0::NfcEvent"
         }
         arg: {
             type: TYPE_ENUM
-            predefined_type: "NfcStatus"
+            predefined_type: "::android::hardware::nfc::V1_0::NfcStatus"
         }
     }
 
