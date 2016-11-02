@@ -19,6 +19,7 @@ package android.hardware.gnss@1.0;
 import IAGnss;
 import IAGnssRil;
 import IGnssCallback;
+import IGnssConfiguration;
 import IGnssDebug;
 import IGnssMeasurement;
 import IGnssNavigationMessage;
@@ -203,6 +204,13 @@ interface IGnss {
      * @return xtraIface Handle to the IGnssXtra interface.
      */
     getExtensionXtra() generates (IGnssXtra xtraIface);
+
+    /*
+     * This method returns the IGnssConfiguration interface.
+     *
+     * @return gnssConfigIface Handle to the IGnssConfiguration interface.
+     */
+    getExtensionGnssConfiguration() generates (IGnssConfiguration gnssConfigIface);
 
     /*
      * This method returns the IGnssDebug interface.
