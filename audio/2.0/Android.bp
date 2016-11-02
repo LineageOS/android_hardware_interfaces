@@ -93,9 +93,9 @@ cc_library_shared {
         "android.hardware.audio.common@2.0",
         "android.hardware.audio.effect@2.0",
     ],
-export_shared_lib_headers: [
-    "libhidl",
-    "libhwbinder",
-    "libutils",
+    export_shared_lib_headers: [
+        "libhidl",
+        "libhwbinder",
+        "libutils",
     ],
 }
