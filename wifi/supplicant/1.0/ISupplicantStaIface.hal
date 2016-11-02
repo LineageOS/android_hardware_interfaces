@@ -1,0 +1,136 @@
+/*
+ * Copyright 2016 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi.supplicant@1.0;
+
+import ISupplicantIface;
+import ISupplicantStaIfaceCallback;
+
+/**
+ * Interface exposed by wpa_supplicant for each station mode network
+ * interface (e.g wlan0) it controls.
+ */
+interface ISupplicantStaIface extends ISupplicantIface {
+  /**
+   * Register for callbacks from this interface.
+   *
+   * These callbacks are invoked for events that are specific to this interface.
+   * Registration of multiple callback objects is supported. These objects must
+   * be automatically deleted when the corresponding client process is dead or
+   * if this interface is removed.
+   *
+   * @param callback An instance of the |ISupplicantStaIfaceCallback| HIDL
+   *        interface object.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+   */
+  registerCallback(ISupplicantStaIfaceCallback callback)
+      generates (SupplicantStatus status);
+
+  /**
+   * Reconnect to the currently active network, even if we are already
+   * connected.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_DISABLED|
+   */
+  reassociate() generates (SupplicantStatus status);
+
+  /**
+   * Reconnect to the currently active network, if we are currently
+   * disconnected.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_DISABLED|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_NOT_DISCONNECTED|
+   */
+  reconnect() generates (SupplicantStatus status);
+
+  /**
+   * Disconnect from the current active network.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_DISABLED|
+   */
+  disconnect() generates (SupplicantStatus status);
+
+  /**
+   * Turn on/off power save mode for the interface.
+   *
+   * @param enable Indicate if power save is to be turned on/off.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_DISABLED|
+   */
+  setPowerSave(bool enable) generates (SupplicantStatus status);
+
+  /**
+   * Initiate TDLS discover with the provided peer mac address.
+   *
+   * @param macAddress MAC address of the peer.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+   */
+  initiateTdlsDiscover(MacAddress macAddress)
+      generates (SupplicantStatus status);
+
+  /**
+   * Initiate TDLS setup with the provided peer mac address.
+   *
+   * @param macAddress MAC address of the peer.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+   */
+  initiateTdlsSetup(MacAddress macAddress)
+      generates (SupplicantStatus status);
+
+  /**
+   * Initiate TDLS teardown with the provided peer mac address.
+   *
+   * @param macAddress MAC address of the peer.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+   */
+  initiateTdlsTeardown(MacAddress macAddress)
+      generates (SupplicantStatus status);
+};
