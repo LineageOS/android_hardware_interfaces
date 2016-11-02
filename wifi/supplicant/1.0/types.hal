@@ -65,3 +65,11 @@ typedef MacAddress Bssid;
 
 /** Supplicant network ID type. */
 typedef uint32_t SupplicantNetworkId;
+
+/**
+ * List of Iface types supported.
+ */
+enum IfaceType : uint32_t {
+  STA,
+  P2P
+};
