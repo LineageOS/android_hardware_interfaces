@@ -43,7 +43,7 @@ interface IGnssMeasurement {
      * Returns ERROR_GENERIC for any other error. The HAL must
      * not generate any other updates upon returning this error code.
      */
-    setCallback(IGnssMeasurementCallback callback) generates (int32_t initRet);
+    setCallback(IGnssMeasurementCallback callback) generates (GnssMeasurementStatus initRet);
 
     /*
      * Stops updates from the HAL, and unregisters the callback routines.

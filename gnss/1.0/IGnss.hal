@@ -29,7 +29,7 @@ import IGnssXtra;
 /* Represents the standard GNSS interface. */
 interface IGnss {
     /* Requested operational mode for GNSS operation. */
-    enum GnssPositionMode : uint32_t {
+    enum GnssPositionMode : uint8_t {
         /** Mode for running GNSS standalone (no assistance). */
         STANDALONE  = 0,
         /** AGNSS MS-Based mode. */
@@ -110,7 +110,7 @@ interface IGnss {
      * time. Represented in milliseconds.
      *
      * @return success Returns true if the operation is successful.
-     *
+     */
     injectTime(GnssUtcTime timeMs, int64_t timeReferenceMs, int32_t uncertaintyMs)
         generates (bool success);
 
@@ -137,6 +137,9 @@ interface IGnss {
     deleteAidingData(GnssAidingData aidingDataFlags);
 
     /*
+     * Sets the GnssPositionMode parameter,its associated recurrence value,
+     * the time between fixes,requested fix accuracy and time to first fix.
+     *
      * @param mode  Parameter must be one of MS_BASED or STANDALONE.
      * It is allowed by the platform (and it is recommended) to fallback to
      * MS_BASED if MS_ASSISTED is passed in, and MS_BASED is supported.
@@ -155,56 +158,56 @@ interface IGnss {
     /*
      * This method returns the IAGnssRil Interface.
      *
-     * @return infc Handle to the IAGnssRil interface.
+     * @return aGnssRilIface Handle to the IAGnssRil interface.
      */
-    getExtensionAGnssRil() generates (IAGnssRil infc);
+    getExtensionAGnssRil() generates (IAGnssRil aGnssRilIface);
 
     /*
      * This method returns the IGnssGeofencing Interface.
      *
-     * @return infc Handle to the IGnssGeofencing interface.
+     * @return gnssGeofencingIface Handle to the IGnssGeofencing interface.
      */
-    getExtensionGnssGeofencing() generates(IGnssGeofencing infc);
+    getExtensionGnssGeofencing() generates(IGnssGeofencing gnssGeofencingIface);
 
     /*
      * This method returns the IAGnss Interface.
      *
-     * @return infc Handle to the IAGnss interface.
+     * @return aGnssIface Handle to the IAGnss interface.
      */
-    getExtensionAGnss() generates (IAGnss infc);
+    getExtensionAGnss() generates (IAGnss aGnssIface);
 
     /*
      * This method returns the IGnssNi interface.
      *
-     * @return infc Handle to the IGnssNi interface.
+     * @return gnssNiIface Handle to the IGnssNi interface.
      */
-    getExtensionGnssNi() generates (IGnssNi infc);
+    getExtensionGnssNi() generates (IGnssNi gnssNiIface);
 
     /*
      * This method returns the IGnssMeasurement interface.
      *
-     * @return infc Handle to the IGnssMeasurement interface.
+     * @return gnssMeasurementIface Handle to the IGnssMeasurement interface.
      */
-    getExtensionGnssMeasurement() generates (IGnssMeasurement infc);
+    getExtensionGnssMeasurement() generates (IGnssMeasurement gnssMeasurementIface);
 
     /*
      * This method returns the IGnssNavigationMessage interface.
      *
-     * @return infc Handle to the IGnssNavigationMessage interface.
+     * @return gnssNavigationIface gnssNavigationIface to the IGnssNavigationMessage interface.
      */
-    getExtensionGnssNavigationMessage() generates (IGnssNavigationMessage infc);
+    getExtensionGnssNavigationMessage() generates (IGnssNavigationMessage gnssNavigationIface);
 
     /*
      * This method returns the IGnssXtra interface.
      *
-     * @return infc Handle to the IGnssXtra interface.
+     * @return xtraIface Handle to the IGnssXtra interface.
      */
-    getExtensionXtra() generates (IGnssXtra infc);
+    getExtensionXtra() generates (IGnssXtra xtraIface);
 
     /*
      * This method returns the IGnssDebug interface.
      *
-     * @return infc Handle to the IGnssDebug interface.
+     * @return debugIface Handle to the IGnssDebug interface.
      */
-    getExtensionGnssDebug() generates (IGnssDebug infc);
+    getExtensionGnssDebug() generates (IGnssDebug debugIface);
 };

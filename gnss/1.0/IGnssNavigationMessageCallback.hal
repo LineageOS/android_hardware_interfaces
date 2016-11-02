@@ -26,7 +26,7 @@ interface IGnssNavigationMessageCallback {
      * is typically transmitted.
      */
     enum GnssNavigationMessageType : int16_t {
-        TYPE_UNKNOWN    = 0,
+        UNKNOWN    = 0,
         /** GNSS L1 C/A message contained in the structure.  */
         GNSS_L1CA       = 0x0101,
         /** GNSS L2-CNAV message contained in the structure. */
@@ -59,7 +59,7 @@ interface IGnssNavigationMessageCallback {
     enum NavigationMessageStatus : uint16_t {
         PARITY_PASSED  = (1 << 0),
         PARITY_REBUILT = (1 << 1),
-        STATUS_UNKOWN  = 0
+        UNKNOWN  = 0
     };
 
     struct GnssNavigationMessage {

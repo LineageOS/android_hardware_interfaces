@@ -21,7 +21,7 @@ interface IGnssNiCallback {
     /*
      * GnssNiType constants
      */
-    enum GnssNiType : uint32_t {
+    enum GnssNiType : uint8_t {
         VOICE           = 1,
         UMTS_SUPL       = 2,
         UMTS_CTRL_PLANE = 3
@@ -43,7 +43,7 @@ interface IGnssNiCallback {
      * GNSS NI responses, used to define the response in
      * NI structures
      */
-    enum GnssUserResponseType : int32_t {
+    enum GnssUserResponseType : uint8_t {
         RESPONSE_ACCEPT  = 1,
         RESPONSE_DENY    = 2,
         RESPONSE_NORESP  = 3,

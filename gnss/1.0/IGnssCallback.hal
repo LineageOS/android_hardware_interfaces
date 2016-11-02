@@ -47,9 +47,9 @@ interface IGnssCallback {
     };
 
     /* GNSS status event values. */
-    enum GnssStatusValue : uint16_t {
+    enum GnssStatusValue : uint8_t {
         /** GNSS status unknown. */
-        STATUS_NONE    = 0,
+        NONE           = 0,
         /** GNSS has begun navigating. */
         SESSION_BEGIN  = 1,
         /** GNSS has stopped navigating. */
@@ -64,7 +64,7 @@ interface IGnssCallback {
      * Flags that indicate information about the satellite
      */
     enum GnssSvFlags : uint8_t {
-        FLAGS_NONE          = 0,
+        NONE                = 0,
         HAS_EPHEMERIS_DATA  = 1 << 0,
         HAS_ALMANAC_DATA    = 1 << 1,
         USED_IN_FIX         = 1 << 2
@@ -121,13 +121,13 @@ interface IGnssCallback {
         /*
          * Number of GNSS SVs currently visible, refers to the SVs stored in sv_list
          */
-        int32_t numSvs;
+        uint32_t numSvs;
 
         /*
          * Pointer to an array of SVs information for all GNSS constellations,
          * except GNSS, which is reported using svList
          */
-        GnssSvInfo[ConstS32:GNSS_MAX_SVS] gnssSvList;
+        GnssSvInfo[GnssMax:SVS_COUNT] gnssSvList;
 
     };
 

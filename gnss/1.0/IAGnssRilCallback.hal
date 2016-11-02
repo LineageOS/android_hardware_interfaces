@@ -27,12 +27,6 @@ interface IAGnssRilCallback {
         MSISDN  = 1 << 1L,
     };
 
-    /* Kinds of reference location that can be requested. */
-    enum RefLoc : uint32_t {
-        CELLID = 1 << 0L,
-        MAC    = 1 << 1L
-    };
-
     /*
      * The Hal uses this API to request a SET ID.
      *
@@ -43,9 +37,7 @@ interface IAGnssRilCallback {
     /*
      * The Hal uses this API to request a reference location.
      *
-     * @param refLocflag Specifies the kind of reference location that is required
-     * by the HAL.
      */
-    requestRefLocCb(RefLoc refLocflag);
+    requestRefLocCb();
 
 };

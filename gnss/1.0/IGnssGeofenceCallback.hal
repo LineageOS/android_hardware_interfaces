@@ -69,7 +69,7 @@ package android.hardware.gnss@1.0;
  * addGeofenceArea method.
  *
  * Even though the diagram and explanation talks about states and transitions,
- * the callee is only interested in the transistions. The states are mentioned
+ * the callee is only interested in the transitions. The states are mentioned
  * here for illustrative purposes.
  *
  * Startup Scenario: When the device boots up, if an application adds geofences,

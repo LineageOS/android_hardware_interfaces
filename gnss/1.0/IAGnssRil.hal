@@ -25,13 +25,13 @@ import IAGnssRilCallback;
  * location, unique subscriber ID, phone number string and network availability changes.
  */
 interface IAGnssRil {
-    enum SetIDType : uint16_t {
+    enum SetIDType : uint8_t {
         NONE    = 0,
         IMSI    = 1,
         MSISDM  = 2
     };
 
-    enum NetworkType : int32_t {
+    enum NetworkType : uint8_t {
         MOBILE  = 0,
         WIFI    = 1,
         MMS     = 2,
@@ -41,10 +41,9 @@ interface IAGnssRil {
         WIMAX   = 6,
     };
 
-    enum AGnssRefLocationType : int32_t {
+    enum AGnssRefLocationType : uint8_t {
         GSM_CELLID   = 1,
         UMTS_CELLID  = 2,
-        MAC          = 3,
         LTE_CELLID   = 4,
     };
 
@@ -75,20 +74,11 @@ interface IAGnssRil {
         uint16_t pcid;
     };
 
-    struct AGnssRefLocationMac {
-        uint8_t[6] mac;
-    };
-
     /* Represents ref locations */
     struct AGnssRefLocation {
         AGnssRefLocationType type;
 
-        union RefLoc {
-            AGnssRefLocationCellID cellID;
-            AGnssRefLocationMac mac;
-        };
-
-        RefLoc refLocVal;
+        AGnssRefLocationCellID cellID;
     };
 
     /*
@@ -102,7 +92,7 @@ interface IAGnssRil {
     /*
      * Sets the reference location.
      *
-     * @param agnssReflocation AGNSS reference location CellID/MAC.
+     * @param agnssReflocation AGNSS reference location CellID.
      */
     setRefLocation(AGnssRefLocation agnssReflocation);
 
