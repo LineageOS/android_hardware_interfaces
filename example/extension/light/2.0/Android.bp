@@ -44,9 +44,9 @@ cc_library_shared {
         "libcutils",
         "android.hardware.light@2.0",
     ],
-export_shared_lib_headers: [
-    "libhidl",
-    "libhwbinder",
-    "libutils",
+    export_shared_lib_headers: [
+        "libhidl",
+        "libhwbinder",
+        "libutils",
     ],
 }
