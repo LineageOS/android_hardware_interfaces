@@ -40,37 +40,26 @@ interface ISupplicant {
   };
 
   /**
-   * Registers a wireless interface in wpa_supplicant.
-   *
-   * @param ifName Name of the network interface, e.g., wlan0
-   * @return status Status of the operation.
-   *         Possible status codes:
-   *         |SupplicantStatusCode.SUCCESS|,
-   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
-   *         |SupplicantStatusCode.FAILURE_IFACE_EXISTS|
-   * @return iface HIDL interface object representing the interface if
-   *         successful, null otherwise.
+   * Structure describing the type and name of an iface
+   * controlled by wpa_supplicant.
    */
-  createInterface(string ifName)
-      generates (SupplicantStatus status, ISupplicantIface iface);
+  struct IfaceInfo {
+      /**
+       * Type of the network interface.
+       */
+      IfaceType type;
+      /**
+       * Name of the network interface, e.g., wlan0
+       */
+      string name;
+  };
 
   /**
-   * Deregisters a wireless interface from wpa_supplicant.
+   * Gets a HIDL interface object for the interface corresponding to iface
+   * name which wpa_supplicant already controls.
    *
-   * @param ifName Name of the network interface, e.g., wlan0
-   * @return status Status of the operation.
-   *         Possible status codes:
-   *         |SupplicantStatusCode.SUCCESS|,
-   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
-   *         |SupplicantStatusCode.FAILURE_IFACE_UNKOWN|
-   */
-  removeInterface(string ifName) generates (SupplicantStatus status);
-
-  /**
-   * Gets a HIDL interface object for the interface corresponding to ifName
-   * which wpa_supplicant already controls.
-   *
-   * @param ifName Name of the network interface, e.g., wlan0
+   * @param ifaceInfo Combination of the iface type and name retrieved
+   *        using |listInterfaces|.
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
@@ -79,11 +68,11 @@ interface ISupplicant {
    * @return iface HIDL interface object representing the interface if
    *         successful, null otherwise.
    */
-  getInterface(string ifName)
+  getInterface(IfaceInfo ifaceInfo)
       generates (SupplicantStatus status, ISupplicantIface iface);
 
   /**
-   * Retrieve a list of all the interface names controlled by wpa_supplicant.
+   * Retrieve a list of all the interfaces controlled by wpa_supplicant.
    *
    * The corresponding |ISupplicantIface| object for any interface can be
    * retrieved using |getInterface| method.
@@ -92,9 +81,9 @@ interface ISupplicant {
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|
-   * @return ifNames List of all interface names controlled by wpa_supplicant.
+   * @return ifaces List of all interfaces controlled by wpa_supplicant.
    */
-  listInterfaces() generates (SupplicantStatus status, vec<string> ifNames);
+  listInterfaces() generates (SupplicantStatus status, vec<IfaceInfo> ifaces);
 
   /**
    * Register for callbacks from the wpa_supplicant service.
