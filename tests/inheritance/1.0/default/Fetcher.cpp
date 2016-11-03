@@ -23,7 +23,7 @@ Return<void> selectService(bool sendRemote, CB &_hidl_cb, sp<IChild> &local) {
     if (sendRemote) {
         toSend = IChild::getService("child");
         if (!toSend->isRemote()) {
-            return Status::fromExceptionCode(Status::EX_ILLEGAL_STATE);
+            toSend = nullptr;
         }
     } else {
         toSend = local;
