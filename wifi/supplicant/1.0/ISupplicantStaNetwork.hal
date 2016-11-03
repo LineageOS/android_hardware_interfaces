@@ -20,7 +20,7 @@ import ISupplicantNetwork;
 import ISupplicantStaNetworkCallback;
 
 /**
- * Interface exposed by wpa_supplicant for each station mode network
+ * Interface exposed by the supplicant for each station mode network
  * configuration it controls.
  */
 interface ISupplicantStaNetwork extends ISupplicantNetwork {
@@ -140,7 +140,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
   /**
    * Setters for the various network params.
    * These correspond to elements of |wpa_sssid| struct used internally by
-   * wpa_supplicant to represent each network.
+   * the supplicant to represent each network.
    */
   /**
    * Set SSID for this network.

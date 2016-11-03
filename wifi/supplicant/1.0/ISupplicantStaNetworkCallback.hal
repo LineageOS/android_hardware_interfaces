@@ -17,11 +17,11 @@
 package android.hardware.wifi.supplicant@1.0;
 
 /**
- * Callback Interface exposed by the wpa_supplicant service
+ * Callback Interface exposed by the supplicant service
  * for each network (ISupplicantStaNetwork).
  *
  * Clients need to host an instance of this HIDL interface object and
- * pass a reference of the object to wpa_supplicant via the
+ * pass a reference of the object to the supplicant via the
  * corresponding |ISupplicantStaNetwork.registerCallback| method.
  */
 interface ISupplicantStaNetworkCallback {

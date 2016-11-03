@@ -17,19 +17,19 @@
 package android.hardware.wifi.supplicant@1.0;
 
 /**
- * Interface exposed by wpa_supplicant for each network configuration it
+ * Interface exposed by the supplicant for each network configuration it
  * controls.
- * A network is wpa_supplicant's way of representing the configuration
+ * A network is the supplicant's way of representing the configuration
  * parameters of a Wifi service set. Service sets are identified by their
  * service set identitifier (SSID). The parameters for a network includes the
  * credentials, bssid, etc.
  */
 interface ISupplicantNetwork {
   /**
-   * Retrieves the ID allocated to this network by wpa_supplicant.
+   * Retrieves the ID allocated to this network by the supplicant.
    *
    * This is not the |SSID| of the network, but an internal identifier for
-   * this network used by wpa_supplicant.
+   * this network used by the supplicant.
    *
    * @return status Status of the operation.
    *         Possible status codes:

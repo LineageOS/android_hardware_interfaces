@@ -20,7 +20,7 @@ import ISupplicantIface;
 import ISupplicantStaIfaceCallback;
 
 /**
- * Interface exposed by wpa_supplicant for each station mode network
+ * Interface exposed by the supplicant for each station mode network
  * interface (e.g wlan0) it controls.
  */
 interface ISupplicantStaIface extends ISupplicantIface {
