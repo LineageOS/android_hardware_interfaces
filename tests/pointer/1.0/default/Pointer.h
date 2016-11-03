@@ -156,20 +156,20 @@ public:
     Return<void> foo20(const hidl_vec<IPointer::Sam const*>&) override {
         return Void();
     }
-    Return<void> foo21(hidl_array<IPointer::Ada, 3, 2, 1> const* a_array_ptr) override {
-        const hidl_array<IPointer::Ada, 3, 2, 1>& a_array = *a_array_ptr;
+    Return<void> foo21(hidl_array<IPointer::Ada, 1, 2, 3> const* a_array_ptr) override {
+        const hidl_array<IPointer::Ada, 1, 2, 3>& a_array = *a_array_ptr;
         PUSH_ERROR_IF(a_array[0][0][0].s_ptr->data != 500);
-        for(size_t i = 0; i < 3; i++)
+        for(size_t i = 0; i < 1; i++)
             for(size_t j = 0; j < 2; j++)
-                for(size_t k = 0; k < 1; k++)
+                for(size_t k = 0; k < 3; k++)
                     PUSH_ERROR_IF(a_array[i][j][k].s_ptr != a_array[0][0][0].s_ptr);
         return Void();
     }
-    Return<void> foo22(const hidl_array<IPointer::Ada const*, 3, 2, 1>& a_ptr_array) override {
+    Return<void> foo22(const hidl_array<IPointer::Ada const*, 1, 2, 3>& a_ptr_array) override {
         PUSH_ERROR_IF(a_ptr_array[0][0][0]->s_ptr->data != 500);
-        for(size_t i = 0; i < 3; i++)
+        for(size_t i = 0; i < 1; i++)
             for(size_t j = 0; j < 2; j++)
-                for(size_t k = 0; k < 1; k++)
+                for(size_t k = 0; k < 3; k++)
                     PUSH_ERROR_IF(a_ptr_array[i][j][k] != a_ptr_array[0][0][0]);
         return Void();
     }
@@ -315,19 +315,19 @@ public:
         return Void();
     }
     Return<void> bar21(bar21_cb _cb) override {
-        hidl_array<IPointer::Ada, 3, 2, 1> a_array;
-        for(size_t i = 0; i < 3; i++)
+        hidl_array<IPointer::Ada, 1, 2, 3> a_array;
+        for(size_t i = 0; i < 1; i++)
             for(size_t j = 0; j < 2; j++)
-                for(size_t k = 0; k < 1; k++)
+                for(size_t k = 0; k < 3; k++)
                     a_array[i][j][k] = *a;
         _cb(&a_array);
         return Void();
     }
     Return<void> bar22(bar22_cb _cb) override {
-        hidl_array<const IPointer::Ada *, 3, 2, 1> a_ptr_array;
-        for(size_t i = 0; i < 3; i++)
+        hidl_array<const IPointer::Ada *, 1, 2, 3> a_ptr_array;
+        for(size_t i = 0; i < 1; i++)
             for(size_t j = 0; j < 2; j++)
-                for(size_t k = 0; k < 1; k++)
+                for(size_t k = 0; k < 3; k++)
                     a_ptr_array[i][j][k] = a;
         _cb(a_ptr_array);
         return Void();
