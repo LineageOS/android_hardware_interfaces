@@ -34,6 +34,7 @@ namespace implementation {
 
 using ::android::hardware::tv::cec::V1_0::CecLogicalAddress;
 using ::android::hardware::tv::cec::V1_0::CecMessage;
+using ::android::hardware::tv::cec::V1_0::MaxLength;
 using ::android::hardware::tv::cec::V1_0::HdmiPortInfo;
 using ::android::hardware::tv::cec::V1_0::IHdmiCec;
 using ::android::hardware::tv::cec::V1_0::IHdmiCecCallback;
@@ -65,7 +66,8 @@ struct HdmiCec : public IHdmiCec {
     static void eventCallback(const hdmi_event_t* event, void* arg) {
         if (mCallback != nullptr && event != nullptr) {
             if (event->type == HDMI_EVENT_CEC_MESSAGE) {
-                size_t length = std::min(event->cec.length, static_cast<size_t>(15));
+                size_t length = std::min(event->cec.length,
+                        static_cast<size_t>(MaxLength::MESSAGE_BODY));
                 CecMessage cecMessage {
                     .initiator = static_cast<CecLogicalAddress>(event->cec.initiator),
                     .destination = static_cast<CecLogicalAddress>(event->cec.destination),
