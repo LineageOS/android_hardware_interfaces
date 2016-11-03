@@ -19,7 +19,6 @@
 #include <hwbinder/IInterface.h>
 #include <hwbinder/IPCThreadState.h>
 #include <hwbinder/ProcessState.h>
-#include <hidl/IServiceManager.h>
 #include <utils/Errors.h>
 #include <utils/Log.h>
 #include <utils/Looper.h>
