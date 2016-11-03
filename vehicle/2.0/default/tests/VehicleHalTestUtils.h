@@ -44,18 +44,37 @@ const VehiclePropConfig kVehicleProperties[] = {
         .supportedAreas = static_cast<int32_t>(
             VehicleAreaZone::ROW_1_LEFT | VehicleAreaZone::ROW_1_RIGHT),
         .areaConfigs = init_hidl_vec({
-                                         VehicleAreaConfig {
-                                             .areaId = val(
-                                                 VehicleAreaZone::ROW_2_LEFT),
-                                             .minInt32Value = 1,
-                                             .maxInt32Value = 7},
-                                         VehicleAreaConfig {
-                                             .areaId = val(
-                                                 VehicleAreaZone::ROW_1_RIGHT),
-                                             .minInt32Value = 1,
-                                             .maxInt32Value = 5,
-                                         }
-                                     }),
+             VehicleAreaConfig {
+                 .areaId = toInt(VehicleAreaZone::ROW_1_LEFT),
+                 .minInt32Value = 1,
+                 .maxInt32Value = 7},
+             VehicleAreaConfig {
+                 .areaId = toInt(VehicleAreaZone::ROW_1_RIGHT),
+                 .minInt32Value = 1,
+                 .maxInt32Value = 5,
+             }
+         }),
+    },
+
+    // Write-only property
+    {
+        .prop = VehicleProperty::HVAC_SEAT_TEMPERATURE,
+        .access = VehiclePropertyAccess::WRITE,
+        .changeMode = VehiclePropertyChangeMode::ON_SET,
+        .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
+        .supportedAreas = static_cast<int32_t>(
+            VehicleAreaZone::ROW_1_LEFT | VehicleAreaZone::ROW_1_RIGHT),
+        .areaConfigs = init_hidl_vec({
+             VehicleAreaConfig {
+                 .areaId = toInt(VehicleAreaZone::ROW_1_LEFT),
+                 .minInt32Value = 64,
+                 .maxInt32Value = 80},
+             VehicleAreaConfig {
+                 .areaId = toInt(VehicleAreaZone::ROW_1_RIGHT),
+                 .minInt32Value = 64,
+                 .maxInt32Value = 80,
+             }
+         }),
     },
 
     {
@@ -82,12 +101,23 @@ const VehiclePropConfig kVehicleProperties[] = {
                                              .maxInt32Value = 10
                                          }
                                      })
+    },
+
+    {
+        .prop = VehicleProperty::MIRROR_FOLD,
+        .access = VehiclePropertyAccess::READ_WRITE,
+        .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+        .permissionModel = VehiclePermissionModel::OEM_ONLY,
+
     }
 };
 
 constexpr auto kTimeout = std::chrono::milliseconds(500);
 
 class MockedVehicleCallback : public IVehicleCallback {
+private:
+    using MuxGuard = std::lock_guard<std::mutex>;
+    using HidlVecOfValues = hidl_vec<VehiclePropValue>;
 public:
     // Methods from ::android::hardware::vehicle::V2_0::IVehicleCallback follow.
     Return<void> onPropertyEvent(
@@ -102,9 +132,9 @@ public:
     Return<void> onPropertySet(const VehiclePropValue& value) override {
         return Return<void>();
     }
-    Return<void> onError(StatusCode errorCode,
-                         VehicleProperty propId,
-                         VehiclePropertyOperation operation) override {
+    Return<void> onPropertySetError(StatusCode errorCode,
+                                    VehicleProperty propId,
+                                    int32_t areaId) override {
         return Return<void>();
     }
 
@@ -129,16 +159,14 @@ public:
         mReceivedEvents.clear();
     }
 
-    const std::vector<hidl_vec<VehiclePropValue>>& getReceivedEvents() {
+    const std::vector<HidlVecOfValues>& getReceivedEvents() {
         return mReceivedEvents;
     }
 
 private:
-    using MuxGuard = std::lock_guard<std::mutex>;
-
     std::mutex mLock;
     std::condition_variable mEventCond;
-    std::vector<hidl_vec<VehiclePropValue>> mReceivedEvents;
+    std::vector<HidlVecOfValues> mReceivedEvents;
 };
 
 template<typename T>
@@ -172,7 +200,7 @@ inline void assertAllExistsAnyOrder(
 
 template<typename T>
 inline std::string enumToHexString(T value) {
-    return hexString(val(value));
+    return hexString(toInt(value));
 }
 
 template <typename T>

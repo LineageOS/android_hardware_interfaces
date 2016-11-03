@@ -54,7 +54,7 @@ inline typename std::underlying_type<ENUM>::type operator &(ENUM v1, ENUM v2) {
 
 /** Returns underlying (integer) value for given enum. */
 template <typename ENUM>
-inline typename std::underlying_type<ENUM>::type val(ENUM const value) {
+inline typename std::underlying_type<ENUM>::type toInt(ENUM const value) {
     return static_cast<typename std::underlying_type<ENUM>::type>(value);
 }
 

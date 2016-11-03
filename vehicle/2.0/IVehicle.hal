@@ -27,9 +27,13 @@ interface IVehicle {
 
   /*
    * Returns a list of property configurations for given properties.
+   *
+   * If requested VehicleProperty wasn't found it must return
+   * StatusCode::INVALID_ARG, otherwise a list of vehicle property
+   * configurations with StatusCode::OK
    */
   getPropConfigs(vec<VehicleProperty> props)
-          generates (vec<VehiclePropConfig> propConfigs);
+          generates (StatusCode status, vec<VehiclePropConfig> propConfigs);
 
   /**
    * Get a vehicle property value.
@@ -39,11 +43,14 @@ interface IVehicle {
    * For VehiclePropertyChangeMode::ON_CHANGE properties, it must return the
    * latest available value.
    *
+   * Some properties like AUDIO_VOLUME requires to pass additional data in
+   * GET request in VehiclePropValue object.
+   *
    * If there is no data available yet, which can happen during initial stage,
    * this call must return immediately with an error code of
    * StatusCode::TRY_AGAIN.
    */
-  get(VehicleProperty propId, int32_t areaId)
+  get(VehiclePropValue requestedPropValue)
           generates (StatusCode status, VehiclePropValue propValue);
 
   /**
@@ -75,7 +82,7 @@ interface IVehicle {
    * Unsubscribes from property events.
    *
    * If this client wasn't subscribed to the given property, this method
-   * must return StatusCode::INVALID_ARGUMENT.
+   * must return StatusCode::INVALID_ARG.
    */
   unsubscribe(IVehicleCallback callback, VehicleProperty propId)
           generates (StatusCode status);

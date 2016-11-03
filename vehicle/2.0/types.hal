@@ -611,20 +611,24 @@ enum VehicleProperty: int32_t {
      * Property to control audio volume of each audio context.
      *
      * VehiclePropConfig
-     *   configArray[0] : bit flags of all supported audio contexts. If this
-     *                     is 0, audio volume is controlled per physical stream
+     *   configArray[0] : bit flags of all supported audio contexts from
+     *                    VehicleAudioContextFlag. If this is 0, audio volume is
+     *                    controlled per physical stream.
      *   configArray[1] : flags defined in VehicleAudioVolumeCapabilityFlag to
-     *                     represent audio module's capability.
+     *                    represent audio module's capability.
+     *   configArray[2..3] : reserved
+     *   configArray[4..N+3] : maximum values for each audio context, where N is
+     *                         the number of audio contexts provided in
+     *                         configArray[0], minimum value is always 0 which
+     *                         indicates mute state.
      *
      * Data type looks like:
      *   int32Values[0] : stream context as defined in VehicleAudioContextFlag.
      *                    If only physical stream is supported
      *                    (configArray[0] == 0), this must represent physical
-                          stream number.
-     *   int32Values[1] : volume level, valid range is 0 to int32MaxValue
-     *                    defined in config.
-     *                    0 must be mute state. int32MinValue config must be
-     *                    always 0.
+     *                    stream number.
+     *   int32Values[1] : volume level, valid range is 0 (mute) to max level
+     *                    defined in the config.
      *   int32Values[2] : One of VehicleAudioVolumeState.
      *
      * This property requires per stream based get. HAL implementation must
@@ -765,7 +769,7 @@ enum VehicleProperty: int32_t {
      * will be set to 0x2|0x4.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:WRITE|VehiclePropertyAccess:READ_WRITE
+     * @access VehiclePropertyAccess:READ_WRITE
      * @config_string List of all avaiable external source in the system.
      */
     AUDIO_EXT_ROUTING_HINT = (
@@ -790,7 +794,7 @@ enum VehicleProperty: int32_t {
    * to other displays.
    *
    * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-   * @access VehiclePropertyAccess:READ|VehiclePropertyAccess:READ_WRITE
+   * @access VehiclePropertyAccess:READ_WRITE
    */
     DISPLAY_BRIGHTNESS = (
         0x0A01
@@ -909,7 +913,7 @@ enum VehicleProperty: int32_t {
      * ability to write this property.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ|VehiclePropertyAccess:WRITE
+     * @access VehiclePropertyAccess:READ_WRITE
      */
     DOOR_POS = (
         0x0B00
@@ -921,7 +925,7 @@ enum VehicleProperty: int32_t {
      * Door move
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE|VehiclePropertyAccess:WRITE
+     * @access VehiclePropertyAccess:READ_WRITE
      */
     DOOR_MOVE = (
         0x0B01
@@ -963,7 +967,7 @@ enum VehicleProperty: int32_t {
      * Positive value indicates tilt upwards, negative value is downwards
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE|VehiclePropertyAccess:WRITE
+     * @access VehiclePropertyAccess:READ_WRITE
      */
     MIRROR_Z_MOVE = (
         0x0B41
@@ -991,7 +995,7 @@ enum VehicleProperty: int32_t {
      * Positive value indicate tilt right, negative value is left
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE|VehiclePropertyAccess:WRITE
+     * @access VehiclePropertyAccess:READ_WRITE
      */
     MIRROR_Y_MOVE = (
         0x0B43
@@ -1042,11 +1046,15 @@ enum VehicleProperty: int32_t {
         | VehicleArea:GLOBAL),
 
     /*
-     * Seat memory set
+     * Seat memory select
      *
-     * This setting allows the user to save the current seat position settings
-     * into the selected preset slot.  The maxValue for each seat position shall
-     * match the maxValue for SEAT_MEMORY_SELECT.
+     * This parameter selects the memory preset to use to select the seat
+     * position. The minValue is always 0, and the maxValue determines the
+     * number of seat positions available.
+     *
+     * For instance, if the driver's seat has 3 memory presets, the maxValue
+     * will be 3. When the user wants to select a preset, the desired preset
+     * number (1, 2, or 3) is set.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:WRITE
@@ -1082,7 +1090,7 @@ enum VehicleProperty: int32_t {
      * no known cars at this time, but you never know...
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ|VehiclePropertyAccess:WRITE
+     * @access VehiclePropertyAccess:READ_WRITE
      */
     SEAT_BELT_BUCKLED = (
         0x0B82
@@ -1110,7 +1118,7 @@ enum VehicleProperty: int32_t {
      * Seatbelt height move
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE|VehiclePropertyAccess:WRITE
+     * @access VehiclePropertyAccess:READ_WRITE
      */
     SEAT_BELT_HEIGHT_MOVE = (
         0x0B84
@@ -1140,7 +1148,7 @@ enum VehicleProperty: int32_t {
      * Moves the seat position forward and aft.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE|VehiclePropertyAccess:WRITE
+     * @access VehiclePropertyAccess:READ_WRITE
      */
     SEAT_FORE_AFT_MOVE = (
         0x0B86
@@ -1170,7 +1178,7 @@ enum VehicleProperty: int32_t {
      * Moves the backrest forward or recline.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE|VehiclePropertyAccess:WRITE
+     * @access VehiclePropertyAccess:READ_WRITE
      */
     SEAT_BACKREST_ANGLE_1_MOVE = (
         0x0B88
@@ -1200,7 +1208,7 @@ enum VehicleProperty: int32_t {
      * Moves the backrest forward or recline.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE|VehiclePropertyAccess:WRITE
+     * @access VehiclePropertyAccess:READ_WRITE
      */
     SEAT_BACKREST_ANGLE_2_MOVE = (
         0x0B8A
@@ -1230,7 +1238,7 @@ enum VehicleProperty: int32_t {
      * Moves the seat height.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE|VehiclePropertyAccess:WRITE
+     * @access VehiclePropertyAccess:READ_WRITE
      */
     SEAT_HEIGHT_MOVE = (
         0x0B8C
@@ -1260,7 +1268,7 @@ enum VehicleProperty: int32_t {
      * Adjusts the seat depth.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE|VehiclePropertyAccess:WRITE
+     * @access VehiclePropertyAccess:READ_WRITE
      */
     SEAT_DEPTH_MOVE = (
         0x0B8E
@@ -1290,7 +1298,7 @@ enum VehicleProperty: int32_t {
      * Tilts the seat.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE|VehiclePropertyAccess:WRITE
+     * @access VehiclePropertyAccess:READ_WRITE
      */
     SEAT_TILT_MOVE = (
         0x0B90
@@ -1320,7 +1328,7 @@ enum VehicleProperty: int32_t {
      * Adjusts the lumbar support.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE|VehiclePropertyAccess:WRITE
+     * @access VehiclePropertyAccess:READ_WRITE
      */
     SEAT_LUMBAR_FORE_AFT_MOVE = (
         0x0B92
@@ -1350,7 +1358,7 @@ enum VehicleProperty: int32_t {
      * Adjusts the amount of lateral lumbar support.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE|VehiclePropertyAccess:WRITE
+     * @access VehiclePropertyAccess:READ_WRITE
      */
     SEAT_LUMBAR_SIDE_SUPPORT_MOVE = (
         0x0B94
@@ -1380,7 +1388,7 @@ enum VehicleProperty: int32_t {
      * Moves the headrest up and down.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE|VehiclePropertyAccess:WRITE
+     * @access VehiclePropertyAccess:READ_WRITE
      */
     SEAT_HEADREST_HEIGHT_MOVE = (
         0x0B96
@@ -1410,7 +1418,7 @@ enum VehicleProperty: int32_t {
      * Adjusts the angle of the headrest
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE|VehiclePropertyAccess:WRITE
+     * @access VehiclePropertyAccess:READ_WRITE
      */
     SEAT_HEADREST_ANGLE_MOVE = (
         0x0B98
@@ -1432,7 +1440,7 @@ enum VehicleProperty: int32_t {
     /*
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE|VehiclePropertyAccess:WRITE
+     * @access VehiclePropertyAccess:READ_WRITE
      */
     SEAT_HEADREST_FORE_AFT_MOVE = (
         0x0B9A
@@ -1464,7 +1472,7 @@ enum VehicleProperty: int32_t {
      * the window.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE|VehiclePropertyAccess:WRITE
+     * @access VehiclePropertyAccess:READ_WRITE
      */
     WINDOW_MOVE = (
         0x0BC1
@@ -1498,7 +1506,7 @@ enum VehicleProperty: int32_t {
      * Min = vent closed
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE|VehiclePropertyAccess:WRITE
+     * @access VehiclePropertyAccess:READ_WRITE
      */
     WINDOW_VENT_MOVE = (
         0x0BC3
@@ -1716,8 +1724,8 @@ enum VehicleAudioVolumeCapabilityFlag : int32_t {
   /*
    * External audio module or vehicle hal has persistent storage
    * to keep the volume level. This must be set only when per context
-   * volume level is supproted. When this is set, audio volume level per
-   * each context will be retrieved from the property when systen starts up.
+   * volume level is supported. When this is set, audio volume level per
+   * each context will be retrieved from the property when system starts up.
    * And external audio module is also expected to adjust volume automatically
    * whenever there is an audio context change.
    * When this flag is not set, android side will assume that there is no
@@ -1755,7 +1763,7 @@ enum VehicleAudioVolumeState : int32_t {
 enum VehicleAudioVolumeIndex : int32_t {
   INDEX_STREAM = 0,
   INDEX_VOLUME = 1,
-  NDEX_STATE = 2,
+  INDEX_STATE = 2,
 };
 
 /*
@@ -2336,12 +2344,15 @@ enum VehiclePropertyOperation : int32_t {
 enum SubscribeFlags {
   UNDEFINED = 0x0,
 
-  /* Subscribe to event that was originated in vehicle HAL (most luckly this
+  /*
+   * Subscribe to event that was originated in vehicle HAL (most luckly this
    * event came from vehicle itself). */
   HAL_EVENT = 0x1,
 
-  /* Use this flag to subscribe on events when IVehicle#set(...) was called by
-   * vehicle HAL's client (e.g. Car Service). */
+  /*
+   * Use this flag to subscribe on events when IVehicle#set(...) was called by
+   * vehicle HAL's client (e.g. Car Service).
+   */
   SET_CALL = 0x2,
 
   DEFAULT = HAL_EVENT,
@@ -2352,10 +2363,12 @@ enum SubscribeFlags {
  */
 struct SubscribeOptions {
   /* Property to subscribe */
-
   VehicleProperty propId;
 
-  /* Area ids - this must be a bit mask of areas to subscribe or 0 to subscribe to all areas. */
+  /*
+   * Area ids - this must be a bit mask of areas to subscribe or 0 to subscribe
+   * to all areas.
+   */
   int32_t vehicleAreas;
 
   /*
@@ -2380,15 +2393,21 @@ enum StatusCode {
   OK = 0,
 
   /* Try again. */
-  TRY_AGAIN = -11,
+  TRY_AGAIN = 1,
 
   /* Invalid argument provided. */
-  INVALID_ARG = -22,
+  INVALID_ARG = 2,
 
   /*
    * This code must be returned when device that associated with the vehicle
    * property is not available. For example, when client tries to set HVAC
    * temperature when the whole HVAC unit is turned OFF.
    */
-  NOT_AVAILABLE = -108,
+  NOT_AVAILABLE = 3,
+
+  /* Access denied */
+  ACCESS_DENIED = 4,
+
+  /* Something unexpected has happened in Vehicle HAL */
+  INTERNAL_ERROR = 5,
 };

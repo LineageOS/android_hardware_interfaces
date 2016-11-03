@@ -35,27 +35,26 @@ public:
                                               std::end(kVehicleProperties));
     }
 
-    VehiclePropValuePtr get(VehicleProperty property,
-                            int32_t areaId,
-                            status_t* outStatus) override;
+    VehiclePropValuePtr get(const VehiclePropValue& requestedPropValue,
+                            StatusCode* outStatus) override;
 
-    status_t set(const VehiclePropValue& propValue) override;
+    StatusCode set(const VehiclePropValue& propValue) override;
 
-    status_t subscribe(VehicleProperty property,
+    StatusCode subscribe(VehicleProperty property,
                        int32_t areas,
                        float sampleRate) {
         // TODO(pavelm): implement
-        return OK;
+        return StatusCode::OK;
     }
 
-    status_t unsubscribe(VehicleProperty property) {
+    StatusCode unsubscribe(VehicleProperty property) {
         // TODO(pavelm): implement
-        return OK;
+        return StatusCode::OK;
     }
 
 private:
-    status_t getHvacFanSpeed(int32_t areaId, int32_t* outValue);
-    status_t setHvacFanSpeed(int32_t areaId, int32_t value);
+    StatusCode getHvacFanSpeed(int32_t areaId, int32_t* outValue);
+    StatusCode setHvacFanSpeed(int32_t areaId, int32_t value);
 private:
     int32_t fanSpeedRow1Left = 3;
     int32_t fanSpeedRow1Right = 5;

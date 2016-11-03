@@ -43,11 +43,11 @@ const VehiclePropConfig kVehicleProperties[] = {
             VehicleAreaZone::ROW_1_LEFT | VehicleAreaZone::ROW_1_RIGHT),
         .areaConfigs = init_hidl_vec({
                  VehicleAreaConfig {
-                     .areaId = val(VehicleAreaZone::ROW_2_LEFT),
+                     .areaId = toInt(VehicleAreaZone::ROW_2_LEFT),
                      .minInt32Value = 1,
                      .maxInt32Value = 7},
                  VehicleAreaConfig {
-                     .areaId = val(VehicleAreaZone::ROW_1_RIGHT),
+                     .areaId = toInt(VehicleAreaZone::ROW_1_RIGHT),
                      .minInt32Value = 1,
                      .maxInt32Value = 5,
                  }

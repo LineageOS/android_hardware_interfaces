@@ -50,7 +50,7 @@ public:
         {
             SubscribeOptions {
                 .propId = PROP1,
-                .vehicleAreas = val(VehicleAreaZone::ROW_1_LEFT),
+                .vehicleAreas = toInt(VehicleAreaZone::ROW_1_LEFT),
                 .flags = SubscribeFlags::HAL_EVENT
             },
         });
@@ -67,7 +67,7 @@ public:
         {
             SubscribeOptions {
                 .propId = PROP1,
-                .vehicleAreas = val(VehicleAreaZone::ROW_1_LEFT),
+                .vehicleAreas = toInt(VehicleAreaZone::ROW_1_LEFT),
                 .flags = SubscribeFlags::HAL_EVENT
             },
             SubscribeOptions {
@@ -87,7 +87,7 @@ public:
 
     std::list<sp<HalClient>> clientsToProp1() {
         return manager.getSubscribedClients(PROP1,
-                                            val(VehicleAreaZone::ROW_1_LEFT),
+                                            toInt(VehicleAreaZone::ROW_1_LEFT),
                                             SubscribeFlags::DEFAULT);
     }
 
@@ -104,7 +104,7 @@ TEST_F(SubscriptionManagerTest, multipleClients) {
 
     auto clients = manager.getSubscribedClients(
             PROP1,
-            val(VehicleAreaZone::ROW_1_LEFT),
+            toInt(VehicleAreaZone::ROW_1_LEFT),
             SubscribeFlags::HAL_EVENT);
 
     ASSERT_ALL_EXISTS({cb1, cb2}, extractCallbacks(clients));
@@ -116,21 +116,21 @@ TEST_F(SubscriptionManagerTest, negativeCases) {
     // Wrong zone
     auto clients = manager.getSubscribedClients(
             PROP1,
-            val(VehicleAreaZone::ROW_2_LEFT),
+            toInt(VehicleAreaZone::ROW_2_LEFT),
             SubscribeFlags::HAL_EVENT);
     ASSERT_TRUE(clients.empty());
 
     // Wrong prop
     clients = manager.getSubscribedClients(
             VehicleProperty::AP_POWER_BOOTUP_REASON,
-            val(VehicleAreaZone::ROW_1_LEFT),
+            toInt(VehicleAreaZone::ROW_1_LEFT),
             SubscribeFlags::HAL_EVENT);
     ASSERT_TRUE(clients.empty());
 
     // Wrong flag
     clients = manager.getSubscribedClients(
             PROP1,
-            val(VehicleAreaZone::ROW_1_LEFT),
+            toInt(VehicleAreaZone::ROW_1_LEFT),
             SubscribeFlags::SET_CALL);
     ASSERT_TRUE(clients.empty());
 }
@@ -140,7 +140,7 @@ TEST_F(SubscriptionManagerTest, mulipleSubscriptions) {
 
     auto clients = manager.getSubscribedClients(
             PROP1,
-            val(VehicleAreaZone::ROW_1_LEFT),
+            toInt(VehicleAreaZone::ROW_1_LEFT),
             SubscribeFlags::DEFAULT);
     ASSERT_EQ((size_t) 1, clients.size());
     ASSERT_EQ(cb1, clients.front()->getCallback());
@@ -151,18 +151,18 @@ TEST_F(SubscriptionManagerTest, mulipleSubscriptions) {
         {
             SubscribeOptions {
                 .propId = PROP1,
-                .vehicleAreas = val(VehicleAreaZone::ROW_2),
+                .vehicleAreas = toInt(VehicleAreaZone::ROW_2),
                 .flags = SubscribeFlags::DEFAULT
             }
         }));
 
     clients = manager.getSubscribedClients(PROP1,
-                                           val(VehicleAreaZone::ROW_1_LEFT),
+                                           toInt(VehicleAreaZone::ROW_1_LEFT),
                                            SubscribeFlags::DEFAULT);
     ASSERT_ALL_EXISTS({cb1}, extractCallbacks(clients));
 
     clients = manager.getSubscribedClients(PROP1,
-                                           val(VehicleAreaZone::ROW_2),
+                                           toInt(VehicleAreaZone::ROW_2),
                                            SubscribeFlags::DEFAULT);
     ASSERT_ALL_EXISTS({cb1}, extractCallbacks(clients));
 }

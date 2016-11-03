@@ -40,6 +40,11 @@ namespace hardware {
 namespace vehicle {
 namespace V2_0 {
 
+struct Callee {
+    pid_t pid;
+    uid_t uid;
+};
+
 /**
  * This class is a thick proxy between IVehicle HIDL interface and vendor's implementation.
  *
@@ -62,7 +67,8 @@ public:
     Return<void> getAllPropConfigs(getAllPropConfigs_cb _hidl_cb)  override;
     Return<void> getPropConfigs(const hidl_vec<VehicleProperty>& properties,
                                 getPropConfigs_cb _hidl_cb)  override;
-    Return<void> get(VehicleProperty propId, int32_t areaId, get_cb _hidl_cb)  override;
+    Return<void> get(const VehiclePropValue& requestedPropValue,
+                     get_cb _hidl_cb)  override;
     Return<StatusCode> set(const VehiclePropValue& value)  override;
     Return<StatusCode> subscribe(const sp<IVehicleCallback>& callback,
                                 const hidl_vec<SubscribeOptions>& options)  override;
@@ -72,29 +78,34 @@ public:
 
 private:
     using VehiclePropValuePtr = VehicleHal::VehiclePropValuePtr;
+    // Returns true if needs to call again shortly.
+    using RetriableAction = std::function<bool()>;
 
     // ---------------------------------------------------------------------------------------------
     // Events received from VehicleHal
     void onHalEvent(VehiclePropValuePtr  v);
-    void onHalError(VehicleProperty property,
-                    status_t errorCode,
-                    VehiclePropertyOperation operation);
+    void onHalPropertySetError(StatusCode errorCode, VehicleProperty property,
+                               int32_t areaId);
 
     // ---------------------------------------------------------------------------------------------
     // This method will be called from BatchingConsumer thread
     void onBatchHalEvent(const std::vector<VehiclePropValuePtr >& values);
 
-    static bool isSubscribable(const VehiclePropConfig& config);
+    void handlePropertySetEvent(const VehiclePropValue& value);
+
+    const VehiclePropConfig* getPropConfigOrNull(VehicleProperty prop) const;
+
+    static bool isSubscribable(const VehiclePropConfig& config,
+                               SubscribeFlags flags);
     static bool isSampleRateFixed(VehiclePropertyChangeMode mode);
     static float checkSampleRate(const VehiclePropConfig& config,
                                  float sampleRate);
+    static bool checkWritePermission(const VehiclePropConfig &config,
+                                     const Callee& callee);
+    static bool checkReadPermission(const VehiclePropConfig &config,
+                                    const Callee& callee);
 
-    static Return<StatusCode> ok() {
-        return Return<StatusCode>(StatusCode::OK);
-    }
-    static Return<StatusCode> invalidArg() {
-        return Return<StatusCode>(StatusCode::INVALID_ARG);
-    }
+    static Callee getCallee();
 
 private:
     VehicleHal* mHal;

@@ -194,6 +194,10 @@ public:
     }
 
     RecyclableType obtain(const VehiclePropValue& src) {
+        if (src.prop == VehicleProperty::INVALID) {
+            ALOGE("Unable to obtain an object from pool for unknown property");
+            return RecyclableType();
+        }
         VehiclePropertyType type = getPropType(src.prop);
         size_t vecSize = getVehicleRawValueVectorSize(src.value, type);;
         auto dest = obtain(type, vecSize);
@@ -204,6 +208,10 @@ public:
         copyVehicleRawValue(&dest->value, src.value);
 
         return dest;
+    }
+
+    RecyclableType obtainBoolean(bool value) {
+        return obtainInt32(value);
     }
 
     RecyclableType obtainInt32(int32_t value) {
