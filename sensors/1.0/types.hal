@@ -674,6 +674,29 @@ enum SensorType : int32_t {
     SENSOR_TYPE_ADDITIONAL_INFO                 = 33,
 
     /*
+     * SENSOR_TYPE_LOW_LATENCY_OFFBODY_DETECT
+     * trigger-mode: on-change
+     * wake-up sensor: yes
+     *
+     * A sensor of this type is defined for devices that are supposed to be worn
+     * by the user in the normal use case (such as a watch, wristband, etc) and
+     * is not yet defined for other device.
+     *
+     * A sensor of this type triggers an event each time the wearable device
+     * is removed from the body and each time it's put back onto the body.
+     * It must be low-latency and be able to detect the on-body to off-body
+     * transition within one second (event delivery time included),
+     * and 3-second latency to determine the off-body to on-body transition
+     * (event delivery time included).
+     *
+     * There are only two valid event values for the sensor to return :
+     *    0.0 for off-body
+     *    1.0 for on-body
+     *
+     */
+    SENSOR_TYPE_LOW_LATENCY_OFFBODY_DETECT      = 34,
+
+    /*
      * Base for device manufacturers private sensor types.
      * These sensor types can't be exposed in the SDK.
      */
