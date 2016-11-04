@@ -17,11 +17,11 @@
 package android.hardware.wifi.supplicant@1.0;
 
 /**
- * Callback Interface exposed by the wpa_supplicant service
+ * Callback Interface exposed by the supplicant service
  * for each station mode interface (ISupplicantStaIface).
  *
  * Clients need to host an instance of this HIDL interface object and
- * pass a reference of the object to wpa_supplicant via the
+ * pass a reference of the object to the supplicant via the
  * corresponding |ISupplicantStaIface.registerCallback| method.
  */
 interface ISupplicantStaIfaceCallback {
@@ -35,31 +35,31 @@ interface ISupplicantStaIfaceCallback {
     DISCONNECTED = 0,
     /**
      * This state is entered if the network interface is disabled, e.g.,
-     * due to rfkill. wpa_supplicant refuses any new operations that would
+     * due to rfkill. the supplicant refuses any new operations that would
      * use the radio until the interface has been enabled.
      */
     IFACE_DISABLED = 1,
     /**
      * This state is entered if there are no enabled networks in the
-     * configuration. wpa_supplicant is not trying to associate with a new
+     * configuration. the supplicant is not trying to associate with a new
      * network and external interaction (e.g., ctrl_iface call to add or
      * enable a network) is needed to start association.
      */
     INACTIVE = 2,
     /**
-     * This state is entered when wpa_supplicant starts scanning for a
+     * This state is entered when the supplicant starts scanning for a
      * network.
      */
     SCANNING = 3,
     /**
-     * This state is entered when wpa_supplicant has found a suitable BSS
+     * This state is entered when the supplicant has found a suitable BSS
      * to authenticate with and the driver is configured to try to
      * authenticate with this BSS. This state is used only with drivers
-     * that use wpa_supplicant as the SME.
+     * that use the supplicant as the SME.
      */
     AUTHENTICATING = 4,
     /**
-     * This state is entered when wpa_supplicant has found a suitable BSS
+     * This state is entered when the supplicant has found a suitable BSS
      * to associate with and the driver is configured to try to associate
      * with this BSS in ap_scan=1 mode. When using ap_scan=2 mode, this
      * state is entered when the driver is configured to try to associate
@@ -69,7 +69,7 @@ interface ISupplicantStaIfaceCallback {
     /**
      * This state is entered when the driver reports that association has
      * been successfully completed with an AP. If IEEE 802.1X is used
-     * (with or without WPA/WPA2), wpa_supplicant remains in this state
+     * (with or without WPA/WPA2), the supplicant remains in this state
      * until the IEEE 802.1X/EAPOL authentication has been completed.
      */
     ASSOCIATED = 6,
