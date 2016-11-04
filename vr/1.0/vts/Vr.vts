@@ -1,0 +1,36 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "IVr"
+
+package: "android.hardware.vr"
+
+
+interface: {
+    api: {
+        name: "init"
+        callflow: {
+            next: "*"
+        }
+        callflow: {
+            entry: true
+        }
+        callflow: {
+            exit: true
+        }
+    }
+
+    api: {
+        name: "setVrMode"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+        callflow: {
+            next: "*"
+        }
+        callflow: {
+            exit: true
+        }
+    }
+
+}
