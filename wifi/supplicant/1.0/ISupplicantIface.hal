@@ -19,7 +19,7 @@ package android.hardware.wifi.supplicant@1.0;
 import ISupplicantNetwork;
 
 /**
- * Interface exposed by wpa_supplicant for each network interface (e.g wlan0)
+ * Interface exposed by the supplicant for each network interface (e.g wlan0)
  * it controls.
  */
 interface ISupplicantIface {
@@ -97,7 +97,7 @@ interface ISupplicantIface {
       generates (SupplicantStatus status, ISupplicantNetwork network);
 
   /**
-   * Retrieve a list of all the network Id's controlled by wpa_supplicant.
+   * Retrieve a list of all the network Id's controlled by the supplicant.
    *
    * The corresponding |ISupplicantNetwork| object for any network can be
    * retrieved using |getNetwork| method.
@@ -106,7 +106,7 @@ interface ISupplicantIface {
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|
-   * @return networkIds List of all network Id's controlled by wpa_supplicant.
+   * @return networkIds List of all network Id's controlled by the supplicant.
    */
   listNetworks()
       generates (SupplicantStatus status, vec<SupplicantNetworkId> networkIds);
