@@ -2,8 +2,8 @@
 
 genrule {
     name: "android.hardware.tests.foo@1.0_genc++",
-    tool: "hidl-gen",
-    cmd: "$tool -o $genDir -Lc++ -randroid.hardware:hardware/interfaces android.hardware.tests.foo@1.0",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces android.hardware.tests.foo@1.0",
     srcs: [
         "types.hal",
         "IFoo.hal",
@@ -24,8 +24,8 @@ genrule {
 
 genrule {
     name: "android.hardware.tests.foo@1.0_genc++_headers",
-    tool: "hidl-gen",
-    cmd: "$tool -o $genDir -Lc++ -randroid.hardware:hardware/interfaces android.hardware.tests.foo@1.0",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces android.hardware.tests.foo@1.0",
     srcs: [
         "types.hal",
         "IFoo.hal",
