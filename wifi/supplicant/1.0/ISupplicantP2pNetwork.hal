@@ -20,7 +20,7 @@ import ISupplicantNetwork;
 import ISupplicantP2pNetworkCallback;
 
 /**
- * Interface exposed by wpa_supplicant for each P2P mode network
+ * Interface exposed by the supplicant for each P2P mode network
  * configuration it controls.
  */
 interface ISupplicantP2pNetwork extends ISupplicantNetwork {
