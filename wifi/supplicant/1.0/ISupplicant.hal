@@ -20,13 +20,13 @@ import ISupplicantCallback;
 import ISupplicantIface;
 
 /**
- * Interface exposed by the wpa_supplicant HIDL service registered
+ * Interface exposed by the supplicant HIDL service registered
  * with the hardware service manager.
- * This is the root level object for any wpa_supplicant interactions.
+ * This is the root level object for any the supplicant interactions.
  */
 interface ISupplicant {
   /**
-   * Debug levels for wpa_supplicant.
+   * Debug levels for the supplicant.
    * Only log messages with a level greater than the set level
    * (via |setDebugParams|) will be logged.
    */
@@ -41,7 +41,7 @@ interface ISupplicant {
 
   /**
    * Structure describing the type and name of an iface
-   * controlled by wpa_supplicant.
+   * controlled by the supplicant.
    */
   struct IfaceInfo {
       /**
@@ -56,7 +56,7 @@ interface ISupplicant {
 
   /**
    * Gets a HIDL interface object for the interface corresponding to iface
-   * name which wpa_supplicant already controls.
+   * name which the supplicant already controls.
    *
    * @param ifaceInfo Combination of the iface type and name retrieved
    *        using |listInterfaces|.
@@ -72,7 +72,7 @@ interface ISupplicant {
       generates (SupplicantStatus status, ISupplicantIface iface);
 
   /**
-   * Retrieve a list of all the interfaces controlled by wpa_supplicant.
+   * Retrieve a list of all the interfaces controlled by the supplicant.
    *
    * The corresponding |ISupplicantIface| object for any interface can be
    * retrieved using |getInterface| method.
@@ -81,12 +81,12 @@ interface ISupplicant {
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|
-   * @return ifaces List of all interfaces controlled by wpa_supplicant.
+   * @return ifaces List of all interfaces controlled by the supplicant.
    */
   listInterfaces() generates (SupplicantStatus status, vec<IfaceInfo> ifaces);
 
   /**
-   * Register for callbacks from the wpa_supplicant service.
+   * Register for callbacks from the supplicant service.
    *
    * These callbacks are invoked for global events that are not specific
    * to any interface or network. Registration of multiple callback
@@ -104,9 +104,9 @@ interface ISupplicant {
       generates (SupplicantStatus status);
 
   /**
-   * Set debug parameters for wpa_supplicant.
+   * Set debug parameters for the supplicant.
    *
-   * @param level Debug logging level for wpa_supplicant.
+   * @param level Debug logging level for the supplicant.
    *        (one of |DebugLevel| values).
    * @param timestamp Determines whether to show timestamps in logs or
    *        not.

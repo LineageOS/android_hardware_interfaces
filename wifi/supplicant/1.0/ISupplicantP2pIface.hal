@@ -20,7 +20,7 @@ import ISupplicantIface;
 import ISupplicantP2pIfaceCallback;
 
 /**
- * Interface exposed by wpa_supplicant for each P2P mode network
+ * Interface exposed by the supplicant for each P2P mode network
  * interface (e.g p2p0) it controls.
  */
 interface ISupplicantP2pIface extends ISupplicantIface {
