@@ -445,13 +445,94 @@ enum VehicleProperty: int32_t {
      * direction.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:WRITE
+     * @access VehiclePropertyAccess:READ_WRITE
      */
     HVAC_SEAT_TEMPERATURE = (
         0x050B
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
+
+    /**
+     * Side Mirror Heat
+     *
+     * Increase values denote higher heating levels for side mirrors.
+     * 0 indicates heating is turned off.
+     *
+     * @change_mode VEHICLE_PROP_CHANGE_MODE_ON_CHANGE
+     * @access VEHICLE_PROP_ACCESS_READ_WRITE
+     */
+    HVAC_SIDE_MIRROR_HEAT = (
+        0x050C
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32
+        | VehicleArea:MIRROR),
+
+    /**
+     * Steering Wheel Temperature
+     *
+     * Sets the temperature for the steering wheel
+     * Positive value indicates heating.
+     * Negative value indicates cooling.
+     * 0 indicates temperature control is off.
+     *
+     * @change_mode VEHICLE_PROP_CHANGE_MODE_ON_CHANGE
+     * @access VEHICLE_PROP_ACCESS_READ_WRITE
+     */
+    HVAC_STEERING_WHEEL_TEMP = (
+        0x050D
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Temperature units
+     *
+     * Indicates whether the temperature is in Celsius, Fahrenheit, or a
+     * different unit from VehicleUnit enum.
+     * This parameter affects all HVAC temperatures in the system.
+     *
+     * @change_mode VEHICLE_PROP_CHANGE_MODE_ON_CHANGE
+     * @access VEHICLE_PROP_ACCESS_READ
+     */
+    HVAC_TEMPERATURE_UNITS = (
+        0x050E
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32
+        | VehicleArea:ZONE),
+
+    /**
+     * Actual fan speed
+     *
+     * @change_mode VEHICLE_PROP_CHANGE_MODE_ON_CHANGE
+     * @access VEHICLE_PROP_ACCESS_READ
+     * @allow_out_of_range_value : OFF
+     */
+    HVAC_ACTUAL_FAN_SPEED_RPM = (
+        0x050F
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32
+        | VehicleArea:ZONE),
+
+    /**
+     * Fan Positions Available
+     *
+     * This is a bit mask of fan positions available for the zone.  Each entry in
+     * vehicle_hvac_fan_direction is selected by bit position.  For instance, if
+     * only the FAN_DIRECTION_FACE (0x1) and FAN_DIRECTION_DEFROST (0x4) are available,
+     * then this value shall be set to 0x12.
+     *
+     * 0x12 = (1 << 1) | (1 << 4)
+     *
+     * @change_mode VEHICLE_PROP_CHANGE_MODE_STATIC
+     * @access VEHICLE_PROP_ACCESS_READ
+     * @allow_out_of_range_value : OFF
+     */
+    HVAC_FAN_DIRECTION_AVAILABLE = (
+        0x0511
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32
+        | VehicleArea:ZONE),
 
     /*
      * Represents power state for HVAC. Some HVAC properties must require
@@ -516,7 +597,7 @@ enum VehicleProperty: int32_t {
      * @config_flags Number of presets supported
      */
     RADIO_PRESET = (
-        0x801
+        0x0801
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:INT32_VEC
         | VehicleArea:GLOBAL),
@@ -1018,20 +1099,6 @@ enum VehicleProperty: int32_t {
         | VehicleArea:GLOBAL),
 
     /*
-     * Mirror Heat
-     *
-     * Increase values denote higher heating levels.
-     *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
-     */
-    MIRROR_HEAT = (
-        0x0B45
-        | VehiclePropertyGroup:SYSTEM
-        | VehiclePropertyType:INT32
-        | VehicleArea:GLOBAL),
-
-    /*
      * Mirror Fold
      *
      * True indicates mirrors are folded
@@ -1040,7 +1107,7 @@ enum VehicleProperty: int32_t {
      * @access VehiclePropertyAccess:READ_WRITE
      */
     MIRROR_FOLD = (
-        0x0B46
+        0x0B45
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:BOOLEAN
         | VehicleArea:GLOBAL),
@@ -1383,7 +1450,7 @@ enum VehicleProperty: int32_t {
         | VehicleArea:GLOBAL),
 
     /*
-     * Headrest heigh move
+     * Headrest height move
      *
      * Moves the headrest up and down.
      *
@@ -1427,6 +1494,11 @@ enum VehicleProperty: int32_t {
         | VehicleArea:SEAT),
 
     /*
+     * Headrest fore/aft position
+     *
+     * Adjusts the headrest forwards and backwards.
+     * Max value indicates position closest to front of car.
+     * Min value indicates position closest to rear of car.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
@@ -1438,6 +1510,7 @@ enum VehicleProperty: int32_t {
         | VehicleArea:SEAT),
 
     /*
+     * Headrest fore/aft move
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
@@ -1991,7 +2064,9 @@ enum VehicleUnit : int32_t {
     MILLIMETER     = 0x20,
     METER          = 0x21,
     KILOMETER      = 0x23,
-    CELCIUS        = 0x30,
+    CELSIUS        = 0x30,
+    FAHRENHEIT     = 0x31,
+    KELVIN         = 0x32,
     MILLILITER     = 0x40,
     NANO_SECS      = 0x50,
     SECS           = 0x53,
@@ -2140,15 +2215,15 @@ enum VehicleAreaZone : int32_t {
  * Various Seats in the car.
  */
 enum VehicleAreaSeat : int32_t {
-    ROW_1_PASSENGER_LEFT = 0x0001,
-    ROW_1_PASSENGER_CENTER = 0x0002,
-    ROW_1_PASSENGER_RIGHT = 0x0004,
-    ROW_2_PASSENGER_LEFT = 0x0010,
-    ROW_2_PASSENGER_CENTER = 0x0020,
-    ROW_2_PASSENGER_RIGHT = 0x0040,
-    ROW_3_PASSENGER_LEFT = 0x0100,
-    ROW_3_PASSENGER_CENTER = 0x0200,
-    ROW_3_PASSENGER_RIGHT = 0x0400,
+    ROW_1_LEFT   = 0x0001,
+    ROW_1_CENTER = 0x0002,
+    ROW_1_RIGHT  = 0x0004,
+    ROW_2_LEFT   = 0x0010,
+    ROW_2_CENTER = 0x0020,
+    ROW_2_RIGHT  = 0x0040,
+    ROW_3_LEFT   = 0x0100,
+    ROW_3_CENTER = 0x0200,
+    ROW_3_RIGHT  = 0x0400
 };
 
 /*
