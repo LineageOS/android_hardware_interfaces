@@ -1,0 +1,93 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "IBootControl"
+
+package: "android.hardware.boot"
+
+import: "android.hardware.boot@1.0::types"
+
+interface: {
+    api: {
+        name: "getNumberSlots"
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    api: {
+        name: "getCurrentSlot"
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    api: {
+        name: "markBootSuccessful"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::boot::V1_0::CommandResult"
+        }
+    }
+
+    api: {
+        name: "setActiveBootSlot"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::boot::V1_0::CommandResult"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    api: {
+        name: "setSlotAsUnbootable"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::boot::V1_0::CommandResult"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    api: {
+        name: "isSlotBootable"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::boot::V1_0::BoolResult"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    api: {
+        name: "isSlotMarkedSuccessful"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::boot::V1_0::BoolResult"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    api: {
+        name: "getSuffix"
+        return_type_hidl: {
+            type: TYPE_STRING
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+}
