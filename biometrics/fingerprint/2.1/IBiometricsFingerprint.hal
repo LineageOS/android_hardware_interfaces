@@ -16,7 +16,23 @@
 
 package android.hardware.biometrics.fingerprint@2.1;
 
+import IBiometricsFingerprintClientCallback;
+
 interface IBiometricsFingerprint {
+  /*
+   * Set notification callback:
+   * Registers a user function that must receive notifications from the HAL
+   * This call must block if the HAL state machine is in busy state until HAL
+   * leaves the busy state.
+   *
+   * @return isOk indicates if the request is accepted.
+   * @return debugErrno is a value the framework logs in case isOk == false.
+   */
+  @callflow(next={"setActiveGroup"})
+  @entry
+  setNotify(IBiometricsFingerprintClientCallback clientCallback)
+      generates (bool isOk, int32_t debugErrno);
+
   /*
    * Fingerprint pre-enroll enroll request:
    * Generates a unique token to upper layers to indicate the start of
@@ -138,7 +154,6 @@ interface IBiometricsFingerprint {
    * @return debugErrno is a value the framework logs in case isOk == false.
    */
   @callflow(next={"authenticate", "preEnroll", "enumerate", "remove"})
-  @entry
   setActiveGroup(uint32_t gid, string storePath)
       generates (bool isOk, int32_t debugErrno);
 
