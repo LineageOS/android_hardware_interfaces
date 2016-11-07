@@ -2,8 +2,8 @@
 
 genrule {
     name: "android.hardware.graphics.composer@2.1_genc++",
-    tool: "hidl-gen",
-    cmd: "$tool -o $genDir -Lc++ -randroid.hardware:hardware/interfaces android.hardware.graphics.composer@2.1",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces android.hardware.graphics.composer@2.1",
     srcs: [
         "types.hal",
         "IComposer.hal",
@@ -18,8 +18,8 @@ genrule {
 
 genrule {
     name: "android.hardware.graphics.composer@2.1_genc++_headers",
-    tool: "hidl-gen",
-    cmd: "$tool -o $genDir -Lc++ -randroid.hardware:hardware/interfaces android.hardware.graphics.composer@2.1",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces android.hardware.graphics.composer@2.1",
     srcs: [
         "types.hal",
         "IComposer.hal",
