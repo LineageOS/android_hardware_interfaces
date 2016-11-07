@@ -48,5 +48,6 @@ cc_library_shared {
         "libhidl",
         "libhwbinder",
         "libutils",
+        "android.hardware.light@2.0",
     ],
 }

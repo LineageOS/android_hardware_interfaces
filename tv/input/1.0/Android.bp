@@ -56,5 +56,6 @@ cc_library_shared {
         "libhidl",
         "libhwbinder",
         "libutils",
+        "android.hardware.audio.common@2.0",
     ],
 }
