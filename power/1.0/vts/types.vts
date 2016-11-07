@@ -1,0 +1,133 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "types"
+
+package: "android.hardware.power"
+
+
+attribute: {
+    name: "::android::hardware::power::V1_0::PowerHint"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "uint32_t"
+
+        enumerator: "VSYNC"
+        scalar_value: {
+            uint32_t: 1
+        }
+        enumerator: "INTERACTION"
+        scalar_value: {
+            uint32_t: 2
+        }
+        enumerator: "VIDEO_ENCODE"
+        scalar_value: {
+            uint32_t: 3
+        }
+        enumerator: "VIDEO_DECODE"
+        scalar_value: {
+            uint32_t: 4
+        }
+        enumerator: "LOW_POWER"
+        scalar_value: {
+            uint32_t: 5
+        }
+        enumerator: "SUSTAINED_PERFORMANCE"
+        scalar_value: {
+            uint32_t: 6
+        }
+        enumerator: "VR_MODE"
+        scalar_value: {
+            uint32_t: 7
+        }
+        enumerator: "LAUNCH"
+        scalar_value: {
+            uint32_t: 8
+        }
+        enumerator: "DISABLE_TOUCH"
+        scalar_value: {
+            uint32_t: 9
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::power::V1_0::Feature"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "uint32_t"
+
+        enumerator: "POWER_FEATURE_DOUBLE_TAP_TO_WAKE"
+        scalar_value: {
+            uint32_t: 1
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::power::V1_0::Status"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "uint32_t"
+
+        enumerator: "SUCCESS"
+        scalar_value: {
+            uint32_t: 0
+        }
+        enumerator: "FILESYSTEM_ERROR"
+        scalar_value: {
+            uint32_t: 1
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::power::V1_0::PowerStateVoter"
+    type: TYPE_STRUCT
+    struct_value: {
+        name: "name"
+        type: TYPE_STRING
+    }
+    struct_value: {
+        name: "totalTimeInMsecVotedForSinceBoot"
+        type: TYPE_SCALAR
+        scalar_type: "uint64_t"
+    }
+    struct_value: {
+        name: "totalNumberOfTimesVotedSinceBoot"
+        type: TYPE_SCALAR
+        scalar_type: "uint64_t"
+    }
+}
+
+attribute: {
+    name: "::android::hardware::power::V1_0::PowerStatePlatformSleepState"
+    type: TYPE_STRUCT
+    struct_value: {
+        name: "name"
+        type: TYPE_STRING
+    }
+    struct_value: {
+        name: "residencyInMsecSinceBoot"
+        type: TYPE_SCALAR
+        scalar_type: "uint64_t"
+    }
+    struct_value: {
+        name: "totalTransitions"
+        type: TYPE_SCALAR
+        scalar_type: "uint64_t"
+    }
+    struct_value: {
+        name: "supportedOnlyInSuspend"
+        type: TYPE_SCALAR
+        scalar_type: "bool_t"
+    }
+    struct_value: {
+        name: "voters"
+        type: TYPE_VECTOR
+        vector_value: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::power::V1_0::PowerStateVoter"
+        }
+    }
+}
+
