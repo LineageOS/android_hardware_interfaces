@@ -1,0 +1,121 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "types"
+
+package: "android.hardware.memtrack"
+
+
+attribute: {
+    name: "::android::hardware::memtrack::V1_0::MemtrackFlag"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "uint32_t"
+
+        enumerator: "SMAPS_ACCOUNTED"
+        scalar_value: {
+            uint32_t: 2
+        }
+        enumerator: "SMAPS_UNACCOUNTED"
+        scalar_value: {
+            uint32_t: 4
+        }
+        enumerator: "SHARED"
+        scalar_value: {
+            uint32_t: 8
+        }
+        enumerator: "SHARED_PSS"
+        scalar_value: {
+            uint32_t: 16
+        }
+        enumerator: "PRIVATE"
+        scalar_value: {
+            uint32_t: 32
+        }
+        enumerator: "SYSTEM"
+        scalar_value: {
+            uint32_t: 64
+        }
+        enumerator: "DEDICATED"
+        scalar_value: {
+            uint32_t: 128
+        }
+        enumerator: "NONSECURE"
+        scalar_value: {
+            uint32_t: 256
+        }
+        enumerator: "SECURE"
+        scalar_value: {
+            uint32_t: 512
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::memtrack::V1_0::MemtrackType"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "uint32_t"
+
+        enumerator: "OTHER"
+        scalar_value: {
+            uint32_t: 0
+        }
+        enumerator: "GL"
+        scalar_value: {
+            uint32_t: 1
+        }
+        enumerator: "GRAPHICS"
+        scalar_value: {
+            uint32_t: 2
+        }
+        enumerator: "MULTIMEDIA"
+        scalar_value: {
+            uint32_t: 3
+        }
+        enumerator: "CAMERA"
+        scalar_value: {
+            uint32_t: 4
+        }
+        enumerator: "NUM_TYPES"
+        scalar_value: {
+            uint32_t: 5
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::memtrack::V1_0::MemtrackStatus"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "uint32_t"
+
+        enumerator: "SUCCESS"
+        scalar_value: {
+            uint32_t: 0
+        }
+        enumerator: "MEMORY_TRACKING_NOT_SUPPORTED"
+        scalar_value: {
+            uint32_t: 1
+        }
+        enumerator: "TYPE_NOT_SUPPORTED"
+        scalar_value: {
+            uint32_t: 2
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::memtrack::V1_0::MemtrackRecord"
+    type: TYPE_STRUCT
+    struct_value: {
+        name: "sizeInBytes"
+        type: TYPE_SCALAR
+        scalar_type: "uint64_t"
+    }
+    struct_value: {
+        name: "flags"
+        type: TYPE_SCALAR
+        scalar_type: "uint32_t"
+    }
+}
+
