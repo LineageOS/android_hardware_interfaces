@@ -16,6 +16,10 @@
 
 package android.hardware.tv.cec@1.0;
 
+enum MaxLength : int32_t {
+    MESSAGE_BODY = 15,
+};
+
 enum CecDeviceType : int32_t {
     INACTIVE = -1,
     TV = 0,
@@ -196,8 +200,8 @@ struct CecMessage {
     /* logical address of receiver */
     CecLogicalAddress destination;
 
-    /* The maximum size of body is 15 as specified in the section 6 of the CEC
-     * Spec 1.4b. Overflowed data must be ignored. */
+    /* The maximum size of body is 15 (MaxLength::MESSAGE_BODY) as specified in
+     * the section 6 of the CEC Spec 1.4b. Overflowed data must be ignored. */
     vec<uint8_t> body;
 };
 

@@ -389,7 +389,7 @@ IHdmiCec* HIDL_FETCH_IHdmiCec(const char* hal) {
     int ret = 0;
     const hw_module_t* hw_module = nullptr;
 
-    ret = hw_get_module (hal, &hw_module);
+    ret = hw_get_module (HDMI_CEC_HARDWARE_MODULE_ID, &hw_module);
     if (ret == 0) {
         ret = hdmi_cec_open (hw_module, &hdmi_cec_device);
         if (ret != 0) {
