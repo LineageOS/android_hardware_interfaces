@@ -89,8 +89,8 @@ include $(BUILD_NATIVE_TEST)
 ###############################################################################
 include $(CLEAR_VARS)
 LOCAL_MODULE := $(module_prefix)-service
+LOCAL_INIT_RC := $(module_prefix)-service.rc
 LOCAL_MODULE_RELATIVE_PATH := hw
-# TODO(pavelm): add LOCAL_INIT_RC
 
 LOCAL_SRC_FILES := \
     VehicleService.cpp
