@@ -296,6 +296,20 @@ enum VehicleProperty: int32_t {
         | VehicleArea:GLOBAL),
 
     /*
+     * State of the vehicles turn signals
+     *
+     * Values from VehicleTurnSignal
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     */
+    TURN_SIGNAL_STATE = (
+        0x0408
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32
+        | VehicleArea:GLOBAL),
+
+    /*
      * Fan speed setting
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
@@ -2420,8 +2434,9 @@ enum SubscribeFlags {
   UNDEFINED = 0x0,
 
   /*
-   * Subscribe to event that was originated in vehicle HAL (most luckly this
-   * event came from vehicle itself). */
+   * Subscribe to event that was originated in vehicle HAL
+   * (most likely this event came from the vehicle itself).
+   */
   HAL_EVENT = 0x1,
 
   /*
@@ -2457,9 +2472,7 @@ struct SubscribeOptions {
    */
   float sampleRate;
 
-  /*
-   * Flags that indicates what kind of events listen to.
-   */
+  /* Flags that indicate what kind of events listen to. */
   SubscribeFlags flags;
 };
 
