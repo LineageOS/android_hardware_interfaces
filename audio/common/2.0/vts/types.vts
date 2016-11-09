@@ -193,6 +193,7 @@ attribute: {
         }
         enumerator: "CNT"
         scalar_value: {
+            int32_t: 10
         }
         enumerator: "MAX"
         scalar_value: {
@@ -688,39 +689,39 @@ attribute: {
         }
         enumerator: "INDEX_HDR"
         scalar_value: {
-            uint32_t: -2147483648
+            uint32_t: 2147483648
         }
         enumerator: "INDEX_MASK_1"
         scalar_value: {
-            uint32_t: -2147483647
+            uint32_t: 2147483649
         }
         enumerator: "INDEX_MASK_2"
         scalar_value: {
-            uint32_t: -2147483645
+            uint32_t: 2147483651
         }
         enumerator: "INDEX_MASK_3"
         scalar_value: {
-            uint32_t: -2147483641
+            uint32_t: 2147483655
         }
         enumerator: "INDEX_MASK_4"
         scalar_value: {
-            uint32_t: -2147483633
+            uint32_t: 2147483663
         }
         enumerator: "INDEX_MASK_5"
         scalar_value: {
-            uint32_t: -2147483617
+            uint32_t: 2147483679
         }
         enumerator: "INDEX_MASK_6"
         scalar_value: {
-            uint32_t: -2147483585
+            uint32_t: 2147483711
         }
         enumerator: "INDEX_MASK_7"
         scalar_value: {
-            uint32_t: -2147483521
+            uint32_t: 2147483775
         }
         enumerator: "INDEX_MASK_8"
         scalar_value: {
-            uint32_t: -2147483393
+            uint32_t: 2147483903
         }
     }
 }
@@ -774,6 +775,7 @@ attribute: {
         }
         enumerator: "CNT"
         scalar_value: {
+            int32_t: 4
         }
         enumerator: "MAX"
         scalar_value: {
@@ -1304,12 +1306,15 @@ attribute: {
 
         enumerator: "NONE"
         scalar_value: {
+            int32_t: 0
         }
         enumerator: "SOURCE"
         scalar_value: {
+            int32_t: 1
         }
         enumerator: "SINK"
         scalar_value: {
+            int32_t: 2
         }
     }
 }
@@ -1322,15 +1327,19 @@ attribute: {
 
         enumerator: "NONE"
         scalar_value: {
+            int32_t: 0
         }
         enumerator: "DEVICE"
         scalar_value: {
+            int32_t: 1
         }
         enumerator: "MIX"
         scalar_value: {
+            int32_t: 2
         }
         enumerator: "SESSION"
         scalar_value: {
+            int32_t: 3
         }
     }
 }
@@ -1522,9 +1531,11 @@ attribute: {
 
         enumerator: "LOW"
         scalar_value: {
+            int32_t: 0
         }
         enumerator: "NORMAL"
         scalar_value: {
+            int32_t: 1
         }
     }
 }
