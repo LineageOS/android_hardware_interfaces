@@ -52,5 +52,6 @@ cc_library_shared {
         "libhidl",
         "libhwbinder",
         "libutils",
+        "android.hardware.tests.foo@1.0",
     ],
 }
