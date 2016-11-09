@@ -141,4 +141,19 @@ interface ISupplicant {
    * @return enabled true if set, false otherwise.
    */
   isDebugShowKeysEnabled() generates (bool enabled);
+
+  /**
+   * Set concurrency priority.
+   *
+   * When both P2P and STA mode ifaces are active, this must be used
+   * to prioritize either STA or P2P connection to resolve conflicts
+   * arising during single channel concurrency.
+   *
+   * @param type The type of iface to prioritize.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   */
+  setConcurrencyPriority(IfaceType type) generates (SupplicantStatus status);
 };
