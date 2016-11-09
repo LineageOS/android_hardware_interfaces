@@ -150,6 +150,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
@@ -162,6 +163,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
@@ -187,6 +189,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
@@ -200,6 +203,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
@@ -213,6 +217,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
@@ -226,6 +231,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
@@ -240,6 +246,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
@@ -255,6 +262,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    *        |ParamSizeLimits.PSK_PASSPHRASE_MAX_LEN_IN_BYTES|.
    * @return status Status of the operation.
    *         Possible status codes:
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
    *         |SupplicantStatusCode.SUCCESS|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
@@ -273,6 +281,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
@@ -287,6 +296,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
@@ -313,6 +323,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
@@ -327,6 +338,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
@@ -340,6 +352,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
@@ -353,6 +366,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
@@ -366,6 +380,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
@@ -379,6 +394,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
@@ -391,6 +407,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
@@ -403,6 +420,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
@@ -415,6 +433,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
@@ -427,6 +446,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
@@ -439,6 +459,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
@@ -464,6 +485,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
@@ -476,6 +498,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
