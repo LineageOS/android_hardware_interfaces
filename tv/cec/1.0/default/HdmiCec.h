@@ -63,7 +63,7 @@ struct HdmiCec : public IHdmiCec {
     Return<void> enableAudioReturnChannel(int32_t portId, bool enable)  override;
     Return<bool> isConnected(int32_t portId)  override;
 
-    static void eventCallback(const hdmi_event_t* event, void* arg) {
+    static void eventCallback(const hdmi_event_t* event, void* /* arg */) {
         if (mCallback != nullptr && event != nullptr) {
             if (event->type == HDMI_EVENT_CEC_MESSAGE) {
                 size_t length = std::min(event->cec.length,
