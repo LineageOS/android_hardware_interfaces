@@ -5,7 +5,6 @@ cc_library_shared {
     relative_install_path: "hw",
     srcs: [
         "Foo.cpp",
-        "FooCallback.cpp",
     ],
 
     shared_libs: [
