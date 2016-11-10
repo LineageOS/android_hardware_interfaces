@@ -1,4 +1,4 @@
 service boot-hal-1-0 /system/bin/hw/android.hardware.boot@1.0-service
     class hal
-    user system
-    group system readproc
+    user root
+    group root
