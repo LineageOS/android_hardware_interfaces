@@ -25,13 +25,12 @@ interface IBiometricsFingerprint {
    * This call must block if the HAL state machine is in busy state until HAL
    * leaves the busy state.
    *
-   * @return isOk indicates if the request is accepted.
-   * @return debugErrno is a value the framework logs in case isOk == false.
+   * @return debugErrno is a value the framework logs in case it is not 0.
    */
   @callflow(next={"setActiveGroup"})
   @entry
   setNotify(IBiometricsFingerprintClientCallback clientCallback)
-      generates (bool isOk, int32_t debugErrno);
+      generates (RequestStatus debugErrno);
 
   /*
    * Fingerprint pre-enroll enroll request:
@@ -62,25 +61,23 @@ interface IBiometricsFingerprint {
    * @param gid a framework defined fingerprint set (group) id.
    * @param timeoutSec a timeout in seconds.
    *
-   * @return isOk indicates if the request is accepted.
-   * @return debugErrno is a value the framework logs in case isOk == false.
+   * @return debugErrno is a value the framework logs in case it is not 0.
    *
    * A notify() function may be called with a more detailed error structure.
    */
   @callflow(next={"cancel", "enroll", "postEnroll", "remove"})
-  enroll(HwAuthToken hat, uint32_t gid, uint32_t timeoutSec)
-      generates (bool isOk, int32_t debugErrno);
+  enroll(uint8_t[69] hat, uint32_t gid, uint32_t timeoutSec)
+      generates (RequestStatus debugErrno);
 
   /*
    * Finishes the enroll operation and invalidates the preEnroll() generated
    * challenge. This must be called at the end of a multi-finger enrollment
    * session to indicate that no more fingers may be added.
    *
-   * @return isOk indicates if the request is accepted.
-   * @return debugErrno is a value the framework logs in case isOk == false.
+   * @return debugErrno is a value the framework logs in case it is not 0.
    */
   @callflow(next={"authenticate", "setActiveGroup", "enumerate", "remove"})
-  postEnroll() generates (bool isOk, int32_t debugErrno);
+  postEnroll() generates (RequestStatus debugErrno);
 
   /*
    * getAuthenticatorId:
@@ -99,12 +96,11 @@ interface IBiometricsFingerprint {
    * to all running clients. Switches the HAL state machine back to the idle
    * state. Unlike enrollDone() doesn't invalidate the preEnroll() challenge.
    *
-   * @return isOk indicates if the request is accepted.
-   * @return debugErrno is a value the framework logs in case isOk == false.
+   * @return debugErrno is a value the framework logs in case it is not 0.
    */
   @callflow(next={"authenticate", "enroll", "enumerate", "remove",
     "setActiveGroup"})
-  cancel() generates (bool isOk, int32_t debugErrno);
+  cancel() generates (RequestStatus debugErrno);
 
   /*
    * Enumerate all the fingerprint templates found in the directory set by
@@ -115,11 +111,10 @@ interface IBiometricsFingerprint {
    * fingerprintMsg.data.enumerated.remainingTemplates indicating how many more
    * enumeration messages to expect.
    *
-   * @return isOk indicates if the request is accepted.
-   * @return debugErrno is a value the framework logs in case isOk == false.
+   * @return debugErrno is a value the framework logs in case it is not 0.
    */
   @callflow(next={"remove", "enroll", "authenticate", "setActiveGroup"})
-  enumerate() generates (bool isOk, int32_t debugErrno);
+  enumerate() generates (RequestStatus debugErrno);
 
   /*
    * Fingerprint remove request:
@@ -135,12 +130,11 @@ interface IBiometricsFingerprint {
    * @param fid template id to delete or 0 to delete all templates within the
    * current group.
    *
-   * @return isOk indicates if the request is accepted.
-   * @return debugErrno is a value the framework logs in case isOk == false.
+   * @return debugErrno is a value the framework logs in case it is not 0.
    */
   @callflow(next={"enumerate", "authenticate", "cancel", "getAuthenticatorId",
     "setActiveGroup"})
-  remove(uint32_t gid, uint32_t fid) generates (bool isOk, int32_t debugErrno);
+  remove(uint32_t gid, uint32_t fid) generates (RequestStatus debugErrno);
 
   /*
    * Restricts the HAL operation to a set of fingerprints belonging to a group
@@ -150,12 +144,11 @@ interface IBiometricsFingerprint {
    * @param gid the fingerprint group (set) id.
    * @param storePath filesystem path to the template storage directory.
    *
-   * @return isOk indicates if the request is accepted.
-   * @return debugErrno is a value the framework logs in case isOk == false.
+   * @return debugErrno is a value the framework logs in case it is not 0.
    */
   @callflow(next={"authenticate", "preEnroll", "enumerate", "remove"})
   setActiveGroup(uint32_t gid, string storePath)
-      generates (bool isOk, int32_t debugErrno);
+      generates (RequestStatus debugErrno);
 
   /*
    * Authenticates an operation identified by operationId
@@ -163,10 +156,9 @@ interface IBiometricsFingerprint {
    * @param operationId operation id.
    * @param gid fingerprint group id.
    *
-   * @return isOk indicates if the request is accepted.
-   * @return debugErrno is a value the framework logs in case isOk == false.
+   * @return debugErrno is a value the framework logs in case it is not 0.
    */
   @callflow(next={"cancel", "preEnroll", "remove"})
   authenticate(uint64_t operationId, uint32_t gid)
-      generates (bool isOk, int32_t debugErrno);
+      generates (RequestStatus debugErrno);
 };
