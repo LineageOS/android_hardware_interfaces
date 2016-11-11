@@ -40,7 +40,7 @@ bool mergeSubscribeOptions(const SubscribeOptions &oldOpts,
     }
 
     float updatedRate = std::max(oldOpts.sampleRate, newOpts.sampleRate);
-    SubscribeFlags updatedFlags = oldOpts.flags | newOpts.flags;
+    SubscribeFlags updatedFlags = SubscribeFlags(oldOpts.flags | newOpts.flags);
 
     bool updated = updatedRate > oldOpts.sampleRate
                    || updatedAreas != oldOpts.vehicleAreas
