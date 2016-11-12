@@ -3,4 +3,5 @@ subdirs = [
     "2.0",
     "common/2.0",
     "effect/2.0",
+    "effect/2.0/vts/functional",
 ]
