@@ -53,12 +53,22 @@ public:
     }
 
 private:
-    StatusCode getHvacFanSpeed(int32_t areaId, int32_t* outValue);
-    StatusCode setHvacFanSpeed(int32_t areaId, int32_t value);
+    StatusCode getHvacTemperature(int32_t areaId, float* outValue);
+    StatusCode setHvacTemperature(int32_t areaId, float value);
+    StatusCode getHvacDefroster(int32_t areaId, bool* outValue);
+    StatusCode setHvacDefroster(int32_t areaId, bool value);
 private:
-    int32_t fanSpeedRow1Left = 3;
-    int32_t fanSpeedRow1Right = 5;
-    int32_t brightness = 7;
+    int32_t mFanSpeed = 3;
+    int32_t mBrightness = 7;
+    float mRow1LeftHvacTemperatureSet = 16;
+    float mRow1RightHvacTemperatureSet = 22;
+    bool mFrontDefroster = false;
+    bool mRearDefroster = false;
+    bool mHvacPowerOn = true;
+    bool mHvacRecircOn = true;
+    bool mHvacAcOn = true;
+    bool mHvacAutoOn = true;
+    VehicleHvacFanDirection mFanDirection = VehicleHvacFanDirection::FACE;
 };
 
 }  // impl

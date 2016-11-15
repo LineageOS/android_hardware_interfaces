@@ -32,7 +32,7 @@ interface IVehicleCallback {
     oneway onPropertyEvent(vec<VehiclePropValue> propValues);
 
     /*
-     * This method gets called if the client was susbscribed to a property using
+     * This method gets called if the client was subscribed to a property using
      * SubscribeFlags::SET_CALL flag and IVehicle#set(...) method was called.
      *
      * These events must be delivered to subscriber immediately without any

@@ -30,23 +30,56 @@ VehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(
     VehiclePropValuePtr v;
     VehicleProperty property = requestedPropValue.prop;
     int32_t areaId = requestedPropValue.areaId;
+    auto& pool = *getValuePool();
 
     switch (property) {
         case VehicleProperty::INFO_MAKE:
-            v = getValuePool()->obtainString("Default Car");
+            v = pool.obtainString("Default Car");
             break;
         case VehicleProperty::HVAC_FAN_SPEED:
-            int32_t value;
-            *outStatus = getHvacFanSpeed(areaId, &value);
+            v = pool.obtainInt32(mFanSpeed);
+            break;
+        case VehicleProperty::HVAC_POWER_ON:
+            v = pool.obtainBoolean(mHvacPowerOn);
+            break;
+        case VehicleProperty::HVAC_RECIRC_ON:
+            v = pool.obtainBoolean(mHvacRecircOn);
+            break;
+        case VehicleProperty::HVAC_AC_ON:
+            v = pool.obtainBoolean(mHvacAcOn);
+            break;
+        case VehicleProperty::HVAC_AUTO_ON:
+            v = pool.obtainBoolean(mHvacAutoOn);
+            break;
+        case VehicleProperty::HVAC_FAN_DIRECTION:
+            v = pool.obtainInt32(toInt(mFanDirection));
+            break;
+        case VehicleProperty::HVAC_DEFROSTER:
+            bool defroster;
+            *outStatus = getHvacDefroster(areaId, &defroster);
             if (StatusCode::OK == *outStatus) {
-                v = getValuePool()->obtainInt32(value);
+                v = pool.obtainBoolean(defroster);
+            }
+            break;
+        case VehicleProperty::HVAC_TEMPERATURE_SET:
+            float value;
+            *outStatus = getHvacTemperature(requestedPropValue.areaId,
+                                            &value);
+            if (StatusCode::OK == *outStatus) {
+                v = pool.obtainFloat(value);
             }
             break;
         case VehicleProperty::INFO_FUEL_CAPACITY:
-            v = getValuePool()->obtainFloat(0.75f);
+            v = pool.obtainFloat(0.75f);
             break;
         case VehicleProperty::DISPLAY_BRIGHTNESS:
-            v = getValuePool()->obtainInt32(brightness);
+            v = pool.obtainInt32(mBrightness);
+            break;
+        case VehicleProperty::NIGHT_MODE:
+            v = pool.obtainBoolean(false);
+            break;
+        case VehicleProperty::GEAR_SELECTION:
+            v = pool.obtainInt32(toInt(VehicleGear::GEAR_PARK));
             break;
         default:
             *outStatus = StatusCode::INVALID_ARG;
@@ -63,16 +96,38 @@ VehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(
 
 StatusCode DefaultVehicleHal::set(const VehiclePropValue& propValue) {
     auto property = propValue.prop;
+    const auto& v = propValue.value;
 
     StatusCode status = StatusCode::OK;
 
     switch (property) {
+        case VehicleProperty::HVAC_POWER_ON:
+            mHvacPowerOn = v.int32Values[0] == 1;
+            break;
+        case VehicleProperty::HVAC_RECIRC_ON:
+            mHvacRecircOn = v.int32Values[0] == 1;
+            break;
+        case VehicleProperty::HVAC_AC_ON:
+            mHvacAcOn = v.int32Values[0] == 1;
+            break;
+        case VehicleProperty::HVAC_AUTO_ON:
+            mHvacAutoOn = v.int32Values[0] == 1;
+            break;
+        case VehicleProperty::HVAC_DEFROSTER:
+            status = setHvacDefroster(propValue.areaId, v.int32Values[0] == 1);
+            break;
+        case VehicleProperty::HVAC_FAN_DIRECTION:
+            mFanDirection =
+                    static_cast<VehicleHvacFanDirection>(v.int32Values[0]);
+            break;
         case VehicleProperty::HVAC_FAN_SPEED:
-            status = setHvacFanSpeed(propValue.areaId,
-                                     propValue.value.int32Values[0]);
+            mFanSpeed = v.int32Values[0];
+            break;
+        case VehicleProperty::HVAC_TEMPERATURE_SET:
+            status = setHvacTemperature(propValue.areaId, v.floatValues[0]);
             break;
         case VehicleProperty::DISPLAY_BRIGHTNESS:
-            brightness = propValue.value.int32Values[0];
+            mBrightness = v.int32Values[0];
             break;
         default:
             status = StatusCode::INVALID_ARG;
@@ -81,23 +136,52 @@ StatusCode DefaultVehicleHal::set(const VehiclePropValue& propValue) {
     return status;
 }
 
-StatusCode DefaultVehicleHal::getHvacFanSpeed(int32_t areaId,
-                                            int32_t* outValue)  {
+StatusCode DefaultVehicleHal::getHvacTemperature(int32_t areaId,
+                                                 float* outValue)  {
     if (areaId == toInt(VehicleAreaZone::ROW_1_LEFT)) {
-        *outValue = fanSpeedRow1Left;
-    } else if (areaId == toInt(VehicleAreaZone::ROW_2_RIGHT)) {
-        *outValue = fanSpeedRow1Right;
+        *outValue = mRow1LeftHvacTemperatureSet;
+    } else if (areaId == toInt(VehicleAreaZone::ROW_1_RIGHT)) {
+        *outValue = mRow1RightHvacTemperatureSet;
     } else {
         return StatusCode::INVALID_ARG;
     }
     return StatusCode::OK;
 }
 
-StatusCode DefaultVehicleHal::setHvacFanSpeed(int32_t areaId, int32_t value) {
+StatusCode DefaultVehicleHal::setHvacTemperature(
+    int32_t areaId, float value) {
     if (areaId == toInt(VehicleAreaZone::ROW_1_LEFT)) {
-        fanSpeedRow1Left = value;
-    } else if (areaId == toInt(VehicleAreaZone::ROW_2_RIGHT)) {
-        fanSpeedRow1Right = value;
+        mRow1LeftHvacTemperatureSet = value;
+    } else if (areaId == toInt(VehicleAreaZone::ROW_1_RIGHT)) {
+        mRow1RightHvacTemperatureSet = value;
+    } else {
+        return StatusCode::INVALID_ARG;
+    }
+    return StatusCode::OK;
+}
+
+StatusCode DefaultVehicleHal::getHvacDefroster(int32_t areaId,
+                                               bool* outValue) {
+    ALOGI("Getting Hvac defroster for area: 0x%x", areaId);
+
+    if (areaId == toInt(VehicleAreaWindow::FRONT_WINDSHIELD)) {
+        *outValue = mFrontDefroster;
+    } else if (areaId == toInt(VehicleAreaWindow::REAR_WINDSHIELD)) {
+        *outValue = mRearDefroster;
+    } else {
+        ALOGE("Unable to get hvac defroster for area: 0x%x", areaId);
+        return StatusCode::INVALID_ARG;
+    }
+
+    ALOGI("Getting Hvac defroster for area: 0x%x, OK", areaId);
+    return StatusCode::OK;
+}
+
+StatusCode DefaultVehicleHal::setHvacDefroster(int32_t areaId, bool value) {
+    if (areaId == toInt(VehicleAreaWindow::FRONT_WINDSHIELD)) {
+        mFrontDefroster = value;
+    } else if (areaId == toInt(VehicleAreaWindow::REAR_WINDSHIELD)) {
+        mRearDefroster = value;
     } else {
         return StatusCode::INVALID_ARG;
     }
