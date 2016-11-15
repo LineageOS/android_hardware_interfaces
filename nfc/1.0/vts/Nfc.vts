@@ -19,6 +19,16 @@ interface: {
             predefined_type: "INfcClientCallback"
             is_callback: true
         }
+        callflow: {
+            entry: true
+        }
+        callflow: {
+            next: "write"
+            next: "coreInitialized"
+            next: "prediscover"
+            next: "powerCycle"
+            next: "controlGranted"
+        }
     }
 
     api: {
@@ -33,6 +43,14 @@ interface: {
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
+        }
+        callflow: {
+            next: "write"
+            next: "prediscover"
+            next: "coreInitialized"
+            next: "close"
+            next: "powerCycle"
+            next: "controlGranted"
         }
     }
 
@@ -49,6 +67,11 @@ interface: {
                 scalar_type: "uint8_t"
             }
         }
+        callflow: {
+            next: "write"
+            next: "prediscover"
+            next: "close"
+        }
     }
 
     api: {
@@ -56,6 +79,13 @@ interface: {
         return_type_hidl: {
             type: TYPE_SCALAR
             scalar_type: "int32_t"
+        }
+        callflow: {
+            next: "write"
+            next: "close"
+            next: "coreInitialized"
+            next: "powerCycle"
+            next: "controlGranted"
         }
     }
 
@@ -65,6 +95,9 @@ interface: {
             type: TYPE_SCALAR
             scalar_type: "int32_t"
         }
+        callflow: {
+            exit: true
+        }
     }
 
     api: {
@@ -73,6 +106,13 @@ interface: {
             type: TYPE_SCALAR
             scalar_type: "int32_t"
         }
+        callflow: {
+            next: "write"
+            next: "close"
+            next: "prediscover"
+            next: "coreInitialized"
+            next: "powerCycle"
+        }
     }
 
     api: {
@@ -80,6 +120,13 @@ interface: {
         return_type_hidl: {
             type: TYPE_SCALAR
             scalar_type: "int32_t"
+        }
+        callflow: {
+            next: "write"
+            next: "coreInitialized"
+            next: "prediscover"
+            next: "controlGranted"
+            next: "close"
         }
     }
 
