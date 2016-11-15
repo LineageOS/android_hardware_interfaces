@@ -128,6 +128,21 @@ struct Device {
                                PixelFormat* outFormat);
 
     /*
+     * Gets the number of layers of the buffer.
+     *
+     * See IAllocator::BufferDescriptorInfo for more information.
+     *
+     * @param device is the mapper device.
+     * @param bufferHandle is the buffer from which to get format.
+     * @return error is NONE upon success. Otherwise,
+     *                  BAD_BUFFER when the buffer handle is invalid.
+     * @return layerCount is the number of layers of the buffer.
+     */
+    typedef Error (*getLayerCount)(Device* device,
+                               const native_handle_t* bufferHandle,
+                               uint32_t* outLayerCount);
+
+    /*
      * Gets the producer usage flags which were used to allocate this buffer.
      *
      * See IAllocator::BufferDescriptorInfo for more information.
@@ -364,6 +379,7 @@ struct IMapper {
     Device::release release;
     Device::getDimensions getDimensions;
     Device::getFormat getFormat;
+    Device::getLayerCount getLayerCount;
     Device::getProducerUsageMask getProducerUsageMask;
     Device::getConsumerUsageMask getConsumerUsageMask;
     Device::getBackingStore getBackingStore;

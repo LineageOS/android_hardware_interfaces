@@ -15,9 +15,12 @@
 
 #define LOG_TAG "GrallocMapperPassthrough"
 
+#include <android/hardware/graphics/allocator/2.0/IAllocator.h>
 #include <android/hardware/graphics/mapper/2.0/IMapper.h>
 #include <hardware/gralloc1.h>
 #include <log/log.h>
+
+#include <unordered_set>
 
 namespace android {
 namespace hardware {
@@ -25,6 +28,8 @@ namespace graphics {
 namespace mapper {
 namespace V2_0 {
 namespace implementation {
+
+using Capability = allocator::V2_0::IAllocator::Capability;
 
 class GrallocDevice : public Device {
 public:
@@ -38,6 +43,8 @@ public:
             uint32_t* outWidth, uint32_t* outHeight);
     Error getFormat(const native_handle_t* bufferHandle,
             PixelFormat* outFormat);
+    Error getLayerCount(const native_handle_t* bufferHandle,
+            uint32_t* outLayerCount);
     Error getProducerUsageMask(const native_handle_t* bufferHandle,
             uint64_t* outUsageMask);
     Error getConsumerUsageMask(const native_handle_t* bufferHandle,
@@ -58,15 +65,21 @@ public:
             int32_t* outReleaseFence);
 
 private:
+    void initCapabilities();
+
     void initDispatch();
+    bool hasCapability(Capability capability) const;
 
     gralloc1_device_t* mDevice;
+
+    std::unordered_set<Capability> mCapabilities;
 
     struct {
         GRALLOC1_PFN_RETAIN retain;
         GRALLOC1_PFN_RELEASE release;
         GRALLOC1_PFN_GET_DIMENSIONS getDimensions;
         GRALLOC1_PFN_GET_FORMAT getFormat;
+        GRALLOC1_PFN_GET_LAYER_COUNT getLayerCount;
         GRALLOC1_PFN_GET_PRODUCER_USAGE getProducerUsage;
         GRALLOC1_PFN_GET_CONSUMER_USAGE getConsumerUsage;
         GRALLOC1_PFN_GET_BACKING_STORE getBackingStore;
@@ -96,12 +109,26 @@ GrallocDevice::GrallocDevice()
         LOG_ALWAYS_FATAL("failed to open gralloc1 device");
     }
 
+    initCapabilities();
     initDispatch();
 }
 
 GrallocDevice::~GrallocDevice()
 {
     gralloc1_close(mDevice);
+}
+
+void GrallocDevice::initCapabilities()
+{
+    uint32_t count;
+    mDevice->getCapabilities(mDevice, &count, nullptr);
+
+    std::vector<Capability> caps(count);
+    mDevice->getCapabilities(mDevice, &count, reinterpret_cast<
+              std::underlying_type<Capability>::type*>(caps.data()));
+    caps.resize(count);
+
+    mCapabilities.insert(caps.cbegin(), caps.cend());
 }
 
 void GrallocDevice::initDispatch()
@@ -118,6 +145,9 @@ void GrallocDevice::initDispatch()
     CHECK_FUNC(release, GRALLOC1_FUNCTION_RELEASE);
     CHECK_FUNC(getDimensions, GRALLOC1_FUNCTION_GET_DIMENSIONS);
     CHECK_FUNC(getFormat, GRALLOC1_FUNCTION_GET_FORMAT);
+    if (hasCapability(Capability::LAYERED_BUFFERS)) {
+        CHECK_FUNC(getLayerCount, GRALLOC1_FUNCTION_GET_LAYER_COUNT);
+    }
     CHECK_FUNC(getProducerUsage, GRALLOC1_FUNCTION_GET_PRODUCER_USAGE);
     CHECK_FUNC(getConsumerUsage, GRALLOC1_FUNCTION_GET_CONSUMER_USAGE);
     CHECK_FUNC(getBackingStore, GRALLOC1_FUNCTION_GET_BACKING_STORE);
@@ -128,6 +158,11 @@ void GrallocDevice::initDispatch()
     CHECK_FUNC(unlock, GRALLOC1_FUNCTION_UNLOCK);
 
 #undef CHECK_FUNC
+}
+
+bool GrallocDevice::hasCapability(Capability capability) const
+{
+    return (mCapabilities.count(capability) > 0);
 }
 
 Error GrallocDevice::retain(const native_handle_t* bufferHandle)
@@ -156,6 +191,19 @@ Error GrallocDevice::getFormat(const native_handle_t* bufferHandle,
     int32_t error = mDispatch.getFormat(mDevice, bufferHandle,
             reinterpret_cast<int32_t*>(outFormat));
     return static_cast<Error>(error);
+}
+
+Error GrallocDevice::getLayerCount(const native_handle_t* bufferHandle,
+        uint32_t* outLayerCount)
+{
+    if (hasCapability(Capability::LAYERED_BUFFERS)) {
+        int32_t error = mDispatch.getLayerCount(mDevice, bufferHandle,
+                outLayerCount);
+        return static_cast<Error>(error);
+    } else {
+        *outLayerCount = 1;
+        return Error::NONE;
+    }
 }
 
 Error GrallocDevice::getProducerUsageMask(const native_handle_t* bufferHandle,
@@ -238,6 +286,7 @@ public:
         .release = release,
         .getDimensions = getDimensions,
         .getFormat = getFormat,
+        .getLayerCount = getLayerCount,
         .getProducerUsageMask = getProducerUsageMask,
         .getConsumerUsageMask = getConsumerUsageMask,
         .getBackingStore = getBackingStore,
@@ -294,6 +343,12 @@ private:
             const native_handle_t* bufferHandle, PixelFormat* outFormat)
     {
         return cast(device)->getFormat(bufferHandle, outFormat);
+    }
+
+    static Error getLayerCount(Device* device,
+            const native_handle_t* bufferHandle, uint32_t* outLayerCount)
+    {
+        return cast(device)->getLayerCount(bufferHandle, outLayerCount);
     }
 
     static Error getProducerUsageMask(Device* device,
