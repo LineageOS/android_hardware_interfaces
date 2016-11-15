@@ -23,6 +23,7 @@
 
 #include "Conversions.h"
 #include "Effect.h"
+#include "EffectMap.h"
 
 namespace android {
 namespace hardware {
@@ -45,6 +46,7 @@ Effect::Effect(effect_handle_t handle) : mHandle(handle) {
 Effect::~Effect() {
     int status = EffectRelease(mHandle);
     ALOGW_IF(status, "Error releasing effect %p: %s", mHandle, strerror(-status));
+    EffectMap::getInstance().remove(mHandle);
     mHandle = 0;
 }
 

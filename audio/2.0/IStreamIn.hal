@@ -61,10 +61,9 @@ interface IStreamIn extends IStream {
      * typically occurs when the user space process is blocked longer than the
      * capacity of audio driver buffers.
      *
-     * @return retval operation completion status.
      * @return framesLost the number of input audio frames lost.
      */
-    getInputFramesLost() generates (Result retval, uint32_t framesLost);
+    getInputFramesLost() generates (uint32_t framesLost);
 
     /**
      * Return a recent count of the number of audio frames received and the

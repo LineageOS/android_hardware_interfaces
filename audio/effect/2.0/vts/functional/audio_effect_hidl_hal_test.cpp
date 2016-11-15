@@ -84,13 +84,14 @@ TEST_F(AudioEffectHidlTest, CreateEffect) {
   ASSERT_TRUE(gotEffect);
   Result retval = Result::NOT_INITIALIZED;
   sp<IEffect> effect;
-  ret = effectsFactory->createEffect(effectUuid, 1, 1,
-                                     [&](Result r, const sp<IEffect>& result) {
-                                       retval = r;
-                                       if (r == Result::OK) {
-                                         effect = result;
-                                       }
-                                     });
+  ret = effectsFactory->createEffect(
+      effectUuid, 1 /* session */, 1 /* ioHandle */,
+      [&](Result r, const sp<IEffect>& result, uint64_t /*effectId*/) {
+        retval = r;
+        if (r == Result::OK) {
+          effect = result;
+        }
+      });
   EXPECT_EQ(ret.getStatus().exceptionCode(), Status::EX_NONE);
   EXPECT_EQ(retval, Result::OK);
   EXPECT_NE(effect, nullptr);

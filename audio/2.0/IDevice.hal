@@ -180,19 +180,20 @@ interface IDevice {
 
     /*
      * Gets the HW synchronization source of the device. Calling this method is
-     * equivalent to getting AUDIO_PARAMETER_STREAM_HW_AV_SYNC on the legacy
-     * HAL.
+     * equivalent to getting AUDIO_PARAMETER_HW_AV_SYNC on the legacy HAL.
      *
-     * @return retval operation completion status.
      * @return hwAvSync HW synchronization source
      */
-    getHwAvSync() generates (Result retval, AudioHwSync hwAvSync);
+    getHwAvSync() generates (AudioHwSync hwAvSync);
 
     /*
      * Sets whether the screen is on. Calling this method is equivalent to
      * setting AUDIO_PARAMETER_KEY_SCREEN_STATE on the legacy HAL.
+     *
+     * @param turnedOn whether the screen is turned on.
+     * @return retval operation completion status.
      */
-    setScreenState(bool turnedOn);
+    setScreenState(bool turnedOn) generates (Result retval);
 
     /*
      * Generic method for retrieving vendor-specific parameter values.

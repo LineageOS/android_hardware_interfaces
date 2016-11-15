@@ -66,7 +66,7 @@ struct DeviceAddress {
             int32_t card;
             int32_t device;
         } alsa;             // used for USB_*
-        int32_t busId;      // used for BUS
     } address;
+    string busAddress;      // used for BUS
     string rSubmixAddress;  // used for REMOTE_SUBMIX
 };

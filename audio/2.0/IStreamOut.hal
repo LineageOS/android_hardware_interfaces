@@ -142,12 +142,12 @@ interface IStreamOut extends IStream {
      * 'setCallback' has not been called, then 'drain' must block until
      * completion.
      *
-     * If 'type' is 'AUDIO_DRAIN_ALL', the drain completes when all previously
-     * written data has been played.
+     * If 'type' is 'ALL', the drain completes when all previously written data
+     * has been played.
      *
-     * If 'type' is 'AUDIO_DRAIN_EARLY_NOTIFY', the drain completes shortly
-     * before all data for the current track has played to allow time for the
-     * framework to perform a gapless track switch.
+     * If 'type' is 'EARLY_NOTIFY', the drain completes shortly before all data
+     * for the current track has played to allow time for the framework to
+     * perform a gapless track switch.
      *
      * Drain must return immediately on 'stop' and 'flush' calls.
      *
