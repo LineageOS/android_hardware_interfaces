@@ -209,12 +209,12 @@ interface ISupplicantStaIfaceCallback {
 
   /**
    * Used to indicate a Hotspot 2.0 imminent deauth notice.
-   * @param code Code to indicate the deauth reason.
+   * @param reasonCode Code to indicate the deauth reason.
    *        Refer to section 3.2.1.2 of the Hotspot 2.0 spec.
    * @param reAuthDelayInSec Delay before reauthenticating.
    * @param url URL of the server.
    */
-  oneway onHs20DeauthImminentNotice(uint32_t code,
+  oneway onHs20DeauthImminentNotice(uint32_t reasonCode,
                                     uint32_t reAuthDelayInSec,
                                     string url);
 };
