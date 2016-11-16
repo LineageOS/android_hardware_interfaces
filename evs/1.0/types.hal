@@ -1,0 +1,99 @@
+/*
+ * Copyright (C) 2016 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.evs@1.0;
+
+
+/*
+ * Bit flags indicating suggested uses for a given EVS camera
+ *
+ * The values in the UsageHint bit field provide a generic expression of how a
+ * given camera is intended to be used. The values for these flags support
+ * existing use cases, and are used by the default EVS application to select
+ * appropriate cameras for display based on observed vehicle state (such as
+ * turn signal activation or selection of reverse gear). When implementing
+ * their own specialized EVS Applications, OEMs are free to use these flags
+ * and/or the opaque vendor_flags to drive their own vehicle specific logic.
+ */
+enum UsageHint : uint32_t {
+    USAGE_HINT_REVERSE      = 0x00000001,
+    USAGE_HINT_LEFT_TURN    = 0x00000002,
+    USAGE_HINT_RIGHT_TURN   = 0x00000004,
+    // remaining bits are reserved for future use
+};
+
+
+/*
+ * Structure describing the basic properties of an EVS camera
+ *
+ * The HAL is responsible for filling out this structure for each
+ * EVS camera in the system. Attention should be given to the field
+ * of view, direction of view, and location parameters as these may
+ * be used to (if available) to project overlay graphics into the
+ * scene by an EVS application.
+ * Any of these values for which the HAL does not have reasonable values
+ * should be set to ZERO.
+ */
+struct CameraDesc {
+    string      cameraId;
+    UsageHint   hints;                  // Bit flags (legal to | values together) (TODO: b/31702236)
+    uint32_t    vendorFlags;            // Opaque value from driver
+    uint32_t    defaultHorResolution;   // Units of pixels
+    uint32_t    defaultVerResolution;   // Units of pixels
+};
+
+
+/*
+ * Structure describing the basic properties of an EVS display
+ *
+ * The HAL is responsible for filling out this structure to describe
+ * the EVS display. As an implementation detail, this may be a physical
+ * display or a virtual display that is overlaid or mixed with another
+ * presentation device.
+ */
+struct DisplayDesc {
+    string      displayId;
+    uint32_t    vendorFlags;                // Opaque value from driver
+    uint32_t    defaultHorResolution;       // Units of pixels
+    uint32_t    defaultVerResolution;       // Units of pixels
+};
+
+
+/*
+ * States for control of the EVS display
+ *
+ * The DisplayInfo structure describes the basic properties of an EVS display. Any EVS
+ * implementation is required to have one. The HAL is responsible for filling out this
+ * structure to describe the EVS display. As an implementation detail, this may be a
+ * physical display or a virtual display that is overlaid or mixed with another
+ * presentation device.
+ */
+enum DisplayState : uint32_t {
+    NOT_VISIBLE = 0,        // Display is inhibited
+    VISIBLE_ON_NEXT_FRAME,  // Will become visible with next frame
+    VISIBLE,                // Display is currently active
+    NUM_STATES              // Must be last
+};
+
+
+/* Error codes used in EVS HAL interface. */
+/* TODO:  Adopt a common set of function return codes */
+enum EvsResult : uint32_t {
+    OK = 0,
+    INVALID_ARG,
+    STREAM_ALREADY_RUNNING,
+    BUFFER_NOT_AVAILABLE,
+};
