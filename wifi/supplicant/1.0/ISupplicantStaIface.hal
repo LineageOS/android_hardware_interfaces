@@ -25,6 +25,30 @@ import ISupplicantStaIfaceCallback;
  */
 interface ISupplicantStaIface extends ISupplicantIface {
   /**
+   * Access Network Query Protocol info ID elements
+   * for IEEE Std 802.11u-2011.
+   */
+  enum AnqpInfoId : uint32_t {
+    VENUE_NAME = 258,
+    ROAMING_CONSORTIUM = 261,
+    IP_ADDR_TYPE_AVAILABILITY = 262,
+    NAI_REALM = 263,
+    ANQP_3GPP_CELLULAR_NETWORK = 264,
+    DOMAIN_NAME = 268
+  };
+
+  /**
+   * Access Network Query Protocol subtype elements
+   * for Hotspot 2.0.
+   */
+  enum Hs20AnqpSubtypes : uint32_t {
+    OPERATOR_FRIENDLY_NAME = 2,
+    WAN_METRICS = 4,
+    CONNECTION_CAPABILITY = 5,
+    OSU_PROVIDERS_LIST = 8,
+  };
+
+  /**
    * Register for callbacks from this interface.
    *
    * These callbacks are invoked for events that are specific to this interface.
@@ -132,5 +156,41 @@ interface ISupplicantStaIface extends ISupplicantIface {
    *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
   initiateTdlsTeardown(MacAddress macAddress)
+      generates (SupplicantStatus status);
+
+  /**
+   * Initiate ANQP (for IEEE 802.11u Interworking/Hotspot 2.0) queries with the
+   * specified access point.
+   * The ANQP data fetched must be returned in the
+   * |ISupplicantStaIfaceCallback.onAnqpQueryDone| callback.
+   *
+   * @param macAddress MAC address of the access point.
+   * @param infoElements List of information elements to query for.
+   * @param subtypes List of HS20 subtypes to query for.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+   */
+  initiateAnqpQuery(MacAddress macAddress,
+                    vec<AnqpInfoId> infoElements,
+                    vec<Hs20AnqpSubtypes> subTypes)
+      generates (SupplicantStatus status);
+
+  /**
+   * Initiate the Hotspot 2.0 icon query with the specified accesss point.
+   * The icon data fetched must be returned in the
+   * |ISupplicantStaIfaceCallback.onHs20IconQueryDone| callback.
+   *
+   * @param macAddress MAC address of the access point.
+   * @param fileName Name of the file to request from the access point.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+   */
+  initiateHs20IconQuery(MacAddress macAddress, string fileName)
       generates (SupplicantStatus status);
 };
