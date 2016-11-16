@@ -7,7 +7,8 @@ LOCAL_SRC_FILES := \
     Light.cpp \
 
 LOCAL_SHARED_LIBRARIES := \
-    libhidl \
+    libhidlbase \
+    libhidltransport \
     libhwbinder \
     libutils \
     liblog \
@@ -37,7 +38,8 @@ LOCAL_SHARED_LIBRARIES := \
 
 LOCAL_SHARED_LIBRARIES += \
     libhwbinder \
-    libhidl \
+    libhidlbase \
+    libhidltransport \
     android.hardware.light@2.0 \
 
 include $(BUILD_EXECUTABLE)

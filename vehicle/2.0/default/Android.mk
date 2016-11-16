@@ -28,7 +28,8 @@ LOCAL_SRC_FILES := \
 LOCAL_SHARED_LIBRARIES := \
     liblog \
     libbinder \
-    libhidl \
+    libhidlbase \
+    libhidltransport \
     libhwbinder \
     libutils \
     $(module_prefix) \
@@ -47,7 +48,8 @@ LOCAL_SRC_FILES:= \
 LOCAL_SHARED_LIBRARIES := \
     liblog \
     libbinder \
-    libhidl \
+    libhidlbase \
+    libhidltransport \
     libhwbinder \
     libutils \
     $(module_prefix) \
@@ -73,7 +75,8 @@ LOCAL_SRC_FILES:= \
 LOCAL_SHARED_LIBRARIES := \
     liblog \
     libbinder \
-    libhidl \
+    libhidlbase \
+    libhidltransport \
     libhwbinder \
     libutils \
     $(module_prefix) \
@@ -102,7 +105,8 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
 LOCAL_SHARED_LIBRARIES := \
     liblog \
     libbinder \
-    libhidl \
+    libhidlbase \
+    libhidltransport \
     libhwbinder \
     libutils \
     android.hardware.vehicle@2.0

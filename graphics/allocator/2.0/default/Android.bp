@@ -8,7 +8,8 @@ cc_library_shared {
         "libbase",
         "libcutils",
         "libhardware",
-        "libhidl",
+        "libhidlbase",
+        "libhidltransport",
         "libhwbinder",
         "liblog",
         "libutils",
@@ -23,7 +24,8 @@ cc_binary {
 
     shared_libs: [
         "android.hardware.graphics.allocator@2.0",
-        "libhidl",
+        "libhidlbase",
+        "libhidltransport",
         "libhwbinder",
         "liblog",
         "libutils",

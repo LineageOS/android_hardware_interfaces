@@ -10,7 +10,8 @@ LOCAL_SHARED_LIBRARIES := \
     libbase \
     liblog \
     libhardware \
-    libhidl \
+    libhidlbase \
+    libhidltransport \
     libhwbinder \
     libutils \
     android.hardware.audio.common@2.0 \
@@ -36,7 +37,8 @@ LOCAL_SHARED_LIBRARIES := \
 
 LOCAL_SHARED_LIBRARIES += \
     libhwbinder \
-    libhidl \
+    libhidlbase \
+    libhidltransport \
     android.hardware.audio.common@2.0 \
     android.hardware.tv.input@1.0 \
 

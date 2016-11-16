@@ -20,7 +20,8 @@ LOCAL_SRC_FILES := \
     VisualizerEffect.cpp \
 
 LOCAL_SHARED_LIBRARIES := \
-    libhidl \
+    libhidlbase \
+    libhidltransport \
     libhwbinder \
     libutils \
     libeffects \

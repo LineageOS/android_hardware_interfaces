@@ -38,14 +38,16 @@ cc_library_shared {
     generated_headers: ["android.hardware.example.extension.light@2.0_genc++_headers"],
     export_generated_headers: ["android.hardware.example.extension.light@2.0_genc++_headers"],
     shared_libs: [
-        "libhidl",
+        "libhidlbase",
+        "libhidltransport",
         "libhwbinder",
         "libutils",
         "libcutils",
         "android.hardware.light@2.0",
     ],
     export_shared_lib_headers: [
-        "libhidl",
+        "libhidlbase",
+        "libhidltransport",
         "libhwbinder",
         "libutils",
         "android.hardware.light@2.0",

@@ -8,7 +8,8 @@ LOCAL_SRC_FILES := \
     Light.cpp \
 
 LOCAL_SHARED_LIBRARIES := \
-    libhidl \
+    libhidlbase \
+    libhidltransport \
     libhwbinder \
     libutils \
     android.hardware.light@2.0 \

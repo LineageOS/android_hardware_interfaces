@@ -17,7 +17,8 @@ cc_library_shared {
     relative_install_path: "hw",
     srcs: ["Vibrator.cpp"],
     shared_libs: [
-        "libhidl",
+        "libhidlbase",
+        "libhidltransport",
         "liblog",
         "libhwbinder",
         "libutils",

@@ -10,7 +10,8 @@ cc_library_shared {
         "libbase",
         "libcutils",
         "libutils",
-        "libhidl",
+        "libhidlbase",
+        "libhidltransport",
         "android.hardware.vr@1.0",
     ],
 }

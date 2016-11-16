@@ -23,7 +23,8 @@ LOCAL_SRC_FILES := \
     SoundTriggerHalImpl.cpp
 
 LOCAL_SHARED_LIBRARIES := \
-        libhidl \
+        libhidlbase \
+        libhidltransport \
         liblog \
         libhwbinder \
         libutils \

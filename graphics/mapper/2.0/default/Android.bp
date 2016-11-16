@@ -21,7 +21,8 @@ cc_library_shared {
     shared_libs: [
         "android.hardware.graphics.allocator@2.0",
         "libhardware",
-        "libhidl",
+        "libhidlbase",
+        "libhidltransport",
         "libhwbinder",
         "liblog",
     ],

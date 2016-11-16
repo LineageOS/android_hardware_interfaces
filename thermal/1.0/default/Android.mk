@@ -33,7 +33,8 @@ LOCAL_SHARED_LIBRARIES := \
 
 LOCAL_SHARED_LIBRARIES += \
         libhwbinder \
-        libhidl \
+        libhidlbase \
+        libhidltransport \
         android.hardware.thermal@1.0 \
 
 include $(BUILD_EXECUTABLE)

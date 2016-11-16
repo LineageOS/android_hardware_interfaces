@@ -7,7 +7,8 @@ LOCAL_SRC_FILES := \
     HdmiCec.cpp
 
 LOCAL_SHARED_LIBRARIES := \
-    libhidl \
+    libhidlbase \
+    libhidltransport \
     libhwbinder \
     liblog \
     libbase \
@@ -36,7 +37,8 @@ LOCAL_SHARED_LIBRARIES := \
 
 LOCAL_SHARED_LIBRARIES += \
     libhwbinder \
-    libhidl \
+    libhidlbase \
+    libhidltransport \
     android.hardware.tv.cec@1.0 \
 
 include $(BUILD_EXECUTABLE)
