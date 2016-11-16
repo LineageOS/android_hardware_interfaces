@@ -1,0 +1,149 @@
+component_class: HAL_HIDL
+component_type_version: 2.0
+component_name: "types"
+
+package: "android.hardware.light"
+
+
+attribute: {
+    name: "::android::hardware::light::V2_0::Status"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "SUCCESS"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "LIGHT_NOT_SUPPORTED"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "BRIGHTNESS_NOT_SUPPORTED"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "UNKNOWN"
+        scalar_value: {
+            int32_t: 3
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::light::V2_0::Flash"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "NONE"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "TIMED"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "HARDWARE"
+        scalar_value: {
+            int32_t: 2
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::light::V2_0::Brightness"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "USER"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "SENSOR"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "LOW_PERSISTENCE"
+        scalar_value: {
+            int32_t: 2
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::light::V2_0::Type"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "BACKLIGHT"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "KEYBOARD"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "BUTTONS"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "BATTERY"
+        scalar_value: {
+            int32_t: 3
+        }
+        enumerator: "NOTIFICATIONS"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "ATTENTION"
+        scalar_value: {
+            int32_t: 5
+        }
+        enumerator: "BLUETOOTH"
+        scalar_value: {
+            int32_t: 6
+        }
+        enumerator: "WIFI"
+        scalar_value: {
+            int32_t: 7
+        }
+        enumerator: "COUNT"
+        scalar_value: {
+            int32_t: 8
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::light::V2_0::LightState"
+    type: TYPE_STRUCT
+    struct_value: {
+        name: "color"
+        type: TYPE_SCALAR
+        scalar_type: "uint32_t"
+    }
+    struct_value: {
+        name: "flashMode"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::light::V2_0::Flash"
+    }
+    struct_value: {
+        name: "flashOnMs"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
+    }
+    struct_value: {
+        name: "flashOffMs"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
+    }
+    struct_value: {
+        name: "brightnessMode"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::light::V2_0::Brightness"
+    }
+}
+

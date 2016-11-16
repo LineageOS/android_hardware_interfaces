@@ -1,0 +1,37 @@
+component_class: HAL_HIDL
+component_type_version: 2.0
+component_name: "ILight"
+
+package: "android.hardware.light"
+
+import: "android.hardware.light@2.0::types"
+
+interface: {
+    api: {
+        name: "setLight"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::light::V2_0::Status"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::light::V2_0::Type"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::light::V2_0::LightState"
+        }
+    }
+
+    api: {
+        name: "getSupportedTypes"
+        return_type_hidl: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_ENUM
+                predefined_type: "::android::hardware::light::V2_0::Type"
+            }
+        }
+    }
+
+}
