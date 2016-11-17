@@ -43,263 +43,7 @@ interface IWifiStaIface extends IWifiIface {
     /**
      * If set indicates that the link layer stats APIs are supported.
      */
-    LINK_LAYER_STATS = 1 << 2
-  };
-
-  /**
-   * Parameters to specify the APF capability of this iface.
-   */
-  struct ApfPacketFilterCapabilities {
-    /**
-     * Version of the packet filter interpreter supported
-     */
-    uint32_t version;
-    /**
-     * Maximum size of the filter bytecodes in bytes for an iface.
-     */
-    uint32_t maxLength;
-  };
-
-  /**
-   * Parameters to specify the Background Scan capability of this iface.
-   */
-  struct BackgroundScanCapabilities {
-    /**
-     * Maximum number of bytes available for cached scan results
-     */
-    uint32_t maxCacheSize;
-    /**
-     * Maximum number of buckets that can be supplied for a scan
-     */
-    uint32_t maxBuckets;
-    /**
-     * Maximum number of APs that must be stored for each scan.
-     */
-    uint32_t maxApCachePerScan;
-    /**
-     * Max reporting number of scans threshold that can be specified in the scan
-     * parameters.
-     */
-    int32_t maxReportingThreshold;
-  };
-
-  /**
-   * Bands that can be specified in Background scan requests.
-   */
-  enum BackgroundScanBand : uint32_t {
-    BAND_UNSPECIFIED,
-    /**
-     * 2.4 GHz.
-     */
-    BAND_24GHZ = 1,
-    /**
-     * 5 GHz without DFS.
-     */
-    BAND_5GHZ = 2,
-    /**
-     * 5 GHz DFS only.
-     */
-    BAND_5GHZ_DFS = 4,
-    /**
-     * 5 GHz with DFS.
-     */
-    BAND_5GHZ_WITH_DFS = 6,
-    /**
-     * 2.4 GHz + 5 GHz; no DFS.
-     */
-    BAND_24GHZ_5GHZ = 3,
-    /**
-     * 2.4 GHz + 5 GHz with DFS
-     */
-    BAND_24GHZ_5GHZ_WITH_DFS = 7
-  };
-
-  /**
-   * Mask of event reporting schemes that can be specified in background scan
-   * requests.
-   */
-  enum BackgroundScanBucketEventReportSchemeMask : uint32_t {
-    /**
-     * Report a scan completion event after scan. If this is not set then scan
-     * completion events must be reported if report_threshold_percent or
-     * report_threshold_num_scans is reached.
-     */
-    EACH_SCAN = 1 << 0,
-    /**
-     * Forward scan results (beacons/probe responses + IEs) in real time to HAL,
-     * in addition to completion events.
-     * Note: To keep backward compatibility, fire completion events regardless
-     * of REPORT_EVENTS_EACH_SCAN.
-     */
-    FULL_RESULTS = 1 << 1,
-    /**
-     * Controls if scans for this bucket must be placed in the results buffer.
-     */
-    NO_BATCH = 1 << 2,
-  };
-
-  /**
-   * Background Scan parameters per bucket that can be specified in background
-   * scan requests.
-   */
-  struct BackgroundScanBucketParameters {
-    /**
-     * Bands to scan or 0 if frequencies list must be used instead.
-     */
-    BackgroundScanBand band;
-    /**
-     * Channel frequencies (in Mhz) to scan if |band| is set to
-     * |UNSPECIFIED|.
-     */
-    vec<WifiChannelInMhz> frequencies;
-    /**
-     * Period at which this bucket must be scanned (in milliseconds). Must be an integer
-     * multiple of the |basePeriodInMs| specified in the BackgroundScanParameters.
-     */
-    uint32_t periodInMs;
-    /**
-     * Bitset of |BackgroundScanBucketEventReportSchemeMask| values controlling
-     * when events for this bucket must be reported.
-     */
-    uint32_t eventReportScheme;
-    /**
-     * For exponential back off. If |exponentialMaxPeriodInMs| is non zero or
-     * different than period, then this bucket is an exponential backoff bucket
-     * and the scan period must grow exponentially as per formula:
-     *   actual_period(N) = period * (base ^ (N/step_count))
-     * to this maximum period (in milliseconds).
-     */
-    uint32_t exponentialMaxPeriodInMs;
-    /**
-     * For exponential back off. multiplier: new_period=old_period * base
-     */
-    uint32_t exponentialBase;
-    /**
-     * For exponential back off. Number of scans to perform for a given
-     * period.
-     */
-    uint32_t exponentialStepCount;
-  };
-
-  /**
-   * Background Scan parameters that can be specified in background scan
-   * requests.
-   */
-  struct BackgroundScanParameters {
-    /**
-     * GCD of all bucket periods (in milliseconds).
-     */
-    uint32_t basePeriodInMs;
-    /**
-     * Maximum number of APs that must be stored for each scan. If the maximum
-     * is reached the highest RSSI results must be returned.
-     */
-    uint32_t maxApPerScan;
-    /**
-     * % cache buffer filled threshold at which the host must be notified of
-     * batched scan results.
-     */
-    uint32_t reportThresholdPercent;
-    /**
-     * Threshold at which the AP must be woken up, in number of scans.
-     */
-    uint32_t reportThresholdNumScans;
-    /**
-     * List of buckets to be scheduled.
-     */
-    vec<BackgroundScanBucketParameters> buckets;
-  };
-
-  /**
-   * Packet stats for different traffic categories.
-   */
-  struct LinkLayerIfacePacketStats {
-    /**
-     * Number of received unicast data packets.
-     */
-    uint64_t rxMpdu;
-    /**
-     * Number of successfully transmitted unicast data pkts (ACK rcvd).
-     */
-    uint64_t txMpdu;
-    /**
-     * Number of transmitted unicast data pkt losses (no ACK).
-     */
-    uint64_t lostMpdu;
-    /**
-     * Number of transmitted unicast data retry pkts.
-     */
-    uint64_t retries;
-  };
-
-  /**
-   * Iface statistics for the current connection.
-   */
-  struct LinkLayerIfaceStats {
-    /**
-     * Number beacons received from the connected AP.
-     */
-    uint32_t beaconRx;
-    /**
-     * Access Point Beacon and Management frames RSSI (averaged).
-     */
-    int32_t avgRssiMgmt;
-    /**
-     * WME Best Effort Access Category packet counters.
-     */
-     LinkLayerIfacePacketStats wmeBePktStats;
-    /**
-     * WME Background Access Category packet counters.
-     */
-    LinkLayerIfacePacketStats wmeBkPktStats;
-    /**
-     * WME Video Access Category packet counters.
-     */
-    LinkLayerIfacePacketStats wmeViPktStats;
-    /**
-     * WME Voice Access Category packet counters.
-     */
-    LinkLayerIfacePacketStats wmeVoPktStats;
-  };
-
-  /**
-   * Cumulative radio statistics since collection was enabled.
-   */
-  struct LinkLayerRadioStats {
-    /**
-     * Time for which the radio is awake.
-     */
-    uint32_t onTimeInMs;
-    /**
-     * Total time for which the radio is in active transmission.
-     */
-    uint32_t txTimeInMs;
-    /**
-     * Time for which the radio is in active tranmission per tx level.
-     */
-    vec<uint32_t> txTimeInMsPerLevel;
-    /**
-     * Time for which the radio is in active receive.
-     */
-    uint32_t rxTimeInMs;
-    /**
-     *  Total time for which the radio is awake due to scan.
-     */
-    uint32_t onTimeInMsForScan;
-  };
-
-  /**
-   * Link layer stats retrieved via |getLinkLayerStats|.
-   */
-  struct LinkLayerStats {
-    LinkLayerIfaceStats iface;
-    LinkLayerRadioStats radio;
-    /**
-     * TimeStamp for each stats sample.
-     * This is the absolute milliseconds from boot when these stats were
-     * sampled.
-     */
-    TimeStampInMs timeStampInMs;
+    LINK_LAYER_STATS = 1 << 2,
   };
 
   /**
@@ -328,7 +72,7 @@ interface IWifiStaIface extends IWifiIface {
    *         |WifiStatusCode.ERROR_UNKNOWN|
    * @return capabilities Bitset of |StaIfaceCapabilityMask| values.
    */
-  getCapabilities() generates (WifiStatus status, uint64_t capabilities);
+  getCapabilities() generates (WifiStatus status, uint32_t capabilities);
 
   /**
    * Used to query additional information about the chip's APF capabilities.
@@ -341,10 +85,10 @@ interface IWifiStaIface extends IWifiIface {
    *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
    *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
    *         |WifiStatusCode.ERROR_UNKNOWN|
-   * @return capabilities Instance of |ApfPacketFilterCapabilities|.
+   * @return capabilities Instance of |StaApfPacketFilterCapabilities|.
    */
   getApfPacketFilterCapabilities()
-      generates (WifiStatus status, ApfPacketFilterCapabilities capabilities);
+      generates (WifiStatus status, StaApfPacketFilterCapabilities capabilities);
 
   /**
    * Installs an APF program on this iface, replacing an existing
@@ -376,10 +120,10 @@ interface IWifiStaIface extends IWifiIface {
    *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
    *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
    *         |WifiStatusCode.ERROR_UNKNOWN|
-   * @return capabilities Instance of |BackgroundScanCapabilities|.
+   * @return capabilities Instance of |StaBackgroundScanCapabilities|.
    */
   getBackgroundScanCapabilities()
-      generates (WifiStatus status, BackgroundScanCapabilities capabilities);
+      generates (WifiStatus status, StaBackgroundScanCapabilities capabilities);
 
   /**
    * Used to query the list of valid frequencies (depending on country code set)
@@ -388,6 +132,7 @@ interface IWifiStaIface extends IWifiIface {
    * request.
    * Must fail if |StaIfaceCapabilityMask.BACKGROUND_SCAN| is not set.
    *
+   * @param band Band for which the frequency list is being generated.
    * @return status WifiStatus of the operation.
    *         Possible status codes:
    *         |WifiStatusCode.SUCCESS|,
@@ -397,7 +142,7 @@ interface IWifiStaIface extends IWifiIface {
    *         |WifiStatusCode.ERROR_UNKNOWN|
    * @return frequencies vector of valid frequencies for the provided band.
    */
-  getValidFrequenciesForBackgroundScan(BackgroundScanBand band)
+  getValidFrequenciesForBackgroundScan(StaBackgroundScanBand band)
       generates (WifiStatus status, vec<WifiChannelInMhz> frequencies);
 
   /**
@@ -437,7 +182,7 @@ interface IWifiStaIface extends IWifiIface {
    *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
    *         |WifiStatusCode.ERROR_UNKNOWN|
    */
-  startBackgroundScan(CommandId cmdId, BackgroundScanParameters params)
+  startBackgroundScan(CommandId cmdId, StaBackgroundScanParameters params)
       generates (WifiStatus status);
 
   /**
@@ -504,5 +249,5 @@ interface IWifiStaIface extends IWifiIface {
    *         |WifiStatusCode.ERROR_UNKNOWN|
    * @return stats Instance of |LinkLayerStats|.
    */
-  getLinkLayerStats() generates (WifiStatus status, LinkLayerStats stats);
+  getLinkLayerStats() generates (WifiStatus status, StaLinkLayerStats stats);
 };
