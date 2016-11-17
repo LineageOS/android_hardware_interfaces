@@ -1179,11 +1179,39 @@ enum NanStatusType : uint32_t {
 };
 
 /**
+ * NAN Response message header
+ */
+struct NanResponseMsgHeader {
+  /**
+   * Contains the result code.
+   */
+  NanStatusType status;
+  /**
+   * For error returns the value is returned which was in error.
+   * TODO(b/32207606): Find all the error values.
+   */
+  uint32_t value;
+  /**
+   * ResponseType Definitions.
+   */
+  NanResponseType responseType;
+};
+
+/**
  * Publish Response Message structure.
  */
 struct NanPublishResponse {
   uint16_t publishId;
 };
+
+/**
+ * NAN Publish Response Messages.
+ */
+struct NanPublishResponseMsg {
+  NanResponseMsgHeader header;
+  NanPublishResponse body;
+};
+
 
 /**
  * Subscribe Response Message structure.
@@ -1193,9 +1221,17 @@ struct NanSubscribeResponse {
 };
 
 /**
+ * NAN Subscribe Response Messages.
+ */
+struct NanSubscribeResponseMsg {
+  NanResponseMsgHeader header;
+  NanSubscribeResponse body;
+};
+
+/**
  * Response returned for Initiators Data request.
  */
-struct NanDataPathRequestResponse {
+struct NanDataPathResponse {
   /**
    * Unique token Id generated on the initiator
    * side used for a NDP session between two NAN devices
@@ -1204,9 +1240,17 @@ struct NanDataPathRequestResponse {
 };
 
 /**
- * NDP Capabilites info.
+ * NAN Data Path Response Messages.
  */
-struct NanCapabilities {
+struct NanDataPathResponseMsg {
+  NanResponseMsgHeader header;
+  NanDataPathResponse body;
+};
+
+/**
+ * NDP Capabilites response.
+ */
+struct NanCapabilitiesResponse {
   uint32_t maxConcurrentClusters;
   uint32_t maxPublishes;
   uint32_t maxSubscribes;
@@ -1223,32 +1267,11 @@ struct NanCapabilities {
 };
 
 /**
- * NAN Response Message body.
+ * NAN Capabilities Response Messages.
  */
-union NanResponseMsgBody {
-    NanPublishResponse publishResponse;
-    NanSubscribeResponse subscribeResponse;
-    NanDataPathRequestResponse dataRequestResponse;
-    NanCapabilities nanCapabilities;
-};
-
-/**
- * NAN Response Messages.
- */
-struct NanResponseMsg {
-  /**
-   * Contains the result code.
-   */
-  NanStatusType status;
-  /**
-   * For error returns the value is returned which was in error.
-   */
-  uint32_t value;
-  /**
-   * ResponseType Definitions.
-   */
-  NanResponseType responseType;
-  NanResponseMsgBody body;
+struct NanCapabilitiesResponseMsg {
+  NanResponseMsgHeader header;
+  NanCapabilitiesResponse body;
 };
 
 /**
@@ -1572,21 +1595,6 @@ struct NanTransmitFollowupInd {
  * TODO(b/32159498): Move to a separate rtt_types.hal.
  */
 /**
- * Constants used in the RTT interface.
- */
-enum RttConstants : uint32_t {
-  PREAMBLE_LEGACY = 0x1,
-  PREAMBLE_HT = 0x2,
-  PREAMBLE_VHT = 0x4,
-  BW_5_SUPPORT = 0x1,
-  BW_10_SUPPORT = 0x2,
-  BW_20_SUPPORT = 0x4,
-  BW_40_SUPPORT = 0x8,
-  BW_80_SUPPORT = 0x10,
-  BW_160_SUPPORT = 0x20,
-};
-
-/**
  * Ranging status.
  */
 enum RttStatus : uint32_t {
@@ -1896,11 +1904,13 @@ struct RttCapabilities {
    */
   bool responderSupported;
   /**
-   * bit mask indicates what preamble is supported by initiator.
+   * Bit mask indicates what preamble is supported by initiator.
+   * Combination of |RttPreamble| values.
    */
   uint8_t preambleSupport;
   /**
-   * bit mask indicates what BW is supported by initiator.
+   * Bit mask indicates what BW is supported by initiator.
+   * Combination of |RttBw| values.
    */
   uint8_t bwSupport;
   /**
