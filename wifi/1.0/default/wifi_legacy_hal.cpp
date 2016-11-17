@@ -17,7 +17,6 @@
 #include <array>
 
 #include "wifi_legacy_hal.h"
-#include "wifi_status_util.h"
 
 #include <android-base/logging.h>
 #include <cutils/properties.h>
@@ -25,6 +24,8 @@
 #include <wifi_system/interface_tool.h>
 
 namespace {
+static constexpr uint32_t kMaxVersionStringLength = 256;
+
 // Legacy HAL functions accept "C" style function pointers, so use global
 // functions to pass to the legacy HAL function and store the corresponding
 // std::function methods to be invoked.
@@ -58,9 +59,6 @@ namespace hardware {
 namespace wifi {
 namespace V1_0 {
 namespace implementation {
-
-const uint32_t WifiLegacyHal::kMaxVersionStringLength = 256;
-
 WifiLegacyHal::WifiLegacyHal()
     : global_handle_(nullptr),
       wlan_interface_handle_(nullptr),
@@ -104,9 +102,9 @@ wifi_error WifiLegacyHal::stop(
   on_stop_complete_internal_callback = [&](wifi_handle handle) {
     CHECK_EQ(global_handle_, handle) << "Handle mismatch";
     on_stop_complete_user_callback();
-    global_handle_ = nullptr;
-    wlan_interface_handle_ = nullptr;
-    on_stop_complete_internal_callback = nullptr;
+    // Invalidate all the internal pointers now that the HAL is
+    // stopped.
+    invalidate();
   };
   awaiting_event_loop_termination_ = true;
   global_func_table_.wifi_cleanup(global_handle_, onStopComplete);
@@ -191,8 +189,7 @@ wifi_error WifiLegacyHal::retrieveWlanInterfaceHandle() {
   wifi_error status = global_func_table_.wifi_get_ifaces(
       global_handle_, &num_iface_handles, &iface_handles);
   if (status != WIFI_SUCCESS) {
-    LOG(ERROR) << "Failed to enumerate interface handles: "
-               << legacyErrorToString(status);
+    LOG(ERROR) << "Failed to enumerate interface handles";
     return status;
   }
   for (int i = 0; i < num_iface_handles; ++i) {
@@ -201,8 +198,7 @@ wifi_error WifiLegacyHal::retrieveWlanInterfaceHandle() {
     status = global_func_table_.wifi_get_iface_name(
         iface_handles[i], current_ifname.data(), current_ifname.size());
     if (status != WIFI_SUCCESS) {
-      LOG(WARNING) << "Failed to get interface handle name: "
-                   << legacyErrorToString(status);
+      LOG(WARNING) << "Failed to get interface handle name";
       continue;
     }
     if (ifname_to_find == current_ifname.data()) {
@@ -225,6 +221,13 @@ void WifiLegacyHal::runEventLoop() {
   if_tool.SetWifiUpState(false);
 }
 
+void WifiLegacyHal::invalidate() {
+  global_handle_ = nullptr;
+  wlan_interface_handle_ = nullptr;
+  on_stop_complete_internal_callback = nullptr;
+  on_driver_memory_dump_internal_callback = nullptr;
+  on_firmware_memory_dump_internal_callback = nullptr;
+}
 }  // namespace implementation
 }  // namespace V1_0
 }  // namespace wifi
