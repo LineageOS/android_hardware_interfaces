@@ -174,7 +174,7 @@ interface IWifiChip {
    * Must trigger |IWifiChipEventCallback.onChipReconfigured| on success.
    * Must trigger |IWifiEventCallback.onFailure| on failure.
    *
-   * @param modeId The mode that the chip should switch to, corresponding to the
+   * @param modeId The mode that the chip must switch to, corresponding to the
    *        id property of the target ChipMode.
    * @return status WifiStatus of the operation.
    *         Possible status codes:
