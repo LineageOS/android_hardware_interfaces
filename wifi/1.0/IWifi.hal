@@ -34,10 +34,15 @@ interface IWifi {
    *
    * @param callback An instance of the |IWifiEventCallback| HIDL interface
    *        object.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.UNKNOWN|
    */
   @entry
   @callflow(next={"*"})
-  oneway registerEventCallback(IWifiEventCallback callback);
+  registerEventCallback(IWifiEventCallback callback)
+      generates (WifiStatus status);
 
   /**
    * Get the current state of the HAL.
@@ -75,7 +80,7 @@ interface IWifi {
    * @return status WifiStatus of the operation.
    *         Possible status codes:
    *         |WifiStatusCode.SUCCESS|,
-   *         |WifiStatusCode.NOT_AVAILABLE|,
+   *         |WifiStatusCode.NOT_STARTED|,
    *         |WifiStatusCode.UNKNOWN|
    */
   @exit
@@ -87,17 +92,27 @@ interface IWifi {
    * The corresponding |IWifiChip| object for any chip can be
    * retrieved using |getChip| method.
    *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.NOT_STARTED|,
+   *         |WifiStatusCode.UNKNOWN|
    * @return chipIds List of all chip Id's on the device.
    */
   @callflow(next={"*"})
-  getChipIds() generates (vec<ChipId> chipIds);
+  getChipIds() generates (WifiStatus status, vec<ChipId> chipIds);
 
   /**
    * Gets a HIDL interface object for the chip corresponding to the
    * provided chipId.
    *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.NOT_STARTED|,
+   *         |WifiStatusCode.UNKNOWN|
    * @return chip HIDL interface object representing the chip.
    */
   @callflow(next={"*"})
-  getChip(ChipId chipId) generates (IWifiChip chip);
+  getChip(ChipId chipId) generates (WifiStatus status, IWifiChip chip);
 };
