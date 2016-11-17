@@ -64,6 +64,7 @@ class WifiChip : public IWifiChip {
   Return<void> registerEventCallback(
       const sp<IWifiChipEventCallback>& event_callback,
       registerEventCallback_cb hidl_status_cb) override;
+  Return<void> getCapabilities(getCapabilities_cb hidl_status_cb) override;
   Return<void> getAvailableModes(getAvailableModes_cb hidl_status_cb) override;
   Return<void> configureChip(uint32_t mode_id,
                              configureChip_cb hidl_status_cb) override;
@@ -93,6 +94,19 @@ class WifiChip : public IWifiChip {
   Return<void> createRttController(
       const sp<IWifiIface>& bound_iface,
       createRttController_cb hidl_status_cb) override;
+  Return<void> getDebugRingBuffersStatus(
+      getDebugRingBuffersStatus_cb hidl_status_cb) override;
+  Return<void> startLoggingToDebugRingBuffer(
+      const hidl_string& ring_name,
+      WifiDebugRingBufferVerboseLevel verbose_level,
+      uint32_t max_interval_in_sec,
+      uint32_t min_data_size_in_bytes,
+      startLoggingToDebugRingBuffer_cb hidl_status_cb) override;
+  Return<void> forceDumpToDebugRingBuffer(
+      const hidl_string& ring_name,
+      forceDumpToDebugRingBuffer_cb hidl_status_cb) override;
+  Return<void> getDebugHostWakeReasonStats(
+      getDebugHostWakeReasonStats_cb hidl_status_cb) override;
 
  private:
   void invalidateAndRemoveAllIfaces();
@@ -101,6 +115,7 @@ class WifiChip : public IWifiChip {
   std::pair<WifiStatus, ChipId> getIdInternal();
   WifiStatus registerEventCallbackInternal(
       const sp<IWifiChipEventCallback>& event_callback);
+  std::pair<WifiStatus, uint32_t> getCapabilitiesInternal();
   std::pair<WifiStatus, std::vector<ChipMode>> getAvailableModesInternal();
   WifiStatus configureChipInternal(uint32_t mode_id);
   std::pair<WifiStatus, uint32_t> getModeInternal();
@@ -127,6 +142,16 @@ class WifiChip : public IWifiChip {
       const hidl_string& ifname);
   std::pair<WifiStatus, sp<IWifiRttController>> createRttControllerInternal(
       const sp<IWifiIface>& bound_iface);
+  std::pair<WifiStatus, std::vector<WifiDebugRingBufferStatus>>
+  getDebugRingBuffersStatusInternal();
+  WifiStatus startLoggingToDebugRingBufferInternal(
+      const hidl_string& ring_name,
+      WifiDebugRingBufferVerboseLevel verbose_level,
+      uint32_t max_interval_in_sec,
+      uint32_t min_data_size_in_bytes);
+  WifiStatus forceDumpToDebugRingBufferInternal(const hidl_string& ring_name);
+  std::pair<WifiStatus, WifiDebugHostWakeReasonStats>
+  getDebugHostWakeReasonStatsInternal();
 
   ChipId chip_id_;
   std::weak_ptr<WifiLegacyHal> legacy_hal_;
