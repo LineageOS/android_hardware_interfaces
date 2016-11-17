@@ -18,7 +18,7 @@
 
 #include <android-base/logging.h>
 
-#include "failure_reason_util.h"
+#include "wifi_status_util.h"
 
 namespace android {
 namespace hardware {
@@ -35,15 +35,24 @@ void WifiP2pIface::invalidate() {
   is_valid_ = false;
 }
 
-Return<void> WifiP2pIface::getName(getName_cb cb) {
-  hidl_string hidl_ifname;
-  hidl_ifname.setToExternal(ifname_.c_str(), ifname_.size());
-  cb(hidl_ifname);
+Return<void> WifiP2pIface::getName(getName_cb hidl_status_cb) {
+  if (!is_valid_) {
+    hidl_status_cb(createWifiStatus(WifiStatusCode::ERROR_WIFI_IFACE_INVALID),
+                   hidl_string());
+    return Void();
+  }
+  hidl_status_cb(createWifiStatus(WifiStatusCode::SUCCESS), ifname_);
   return Void();
 }
 
-Return<IfaceType> WifiP2pIface::getType() {
-  return IfaceType::P2P;
+Return<void> WifiP2pIface::getType(getType_cb hidl_status_cb) {
+  if (!is_valid_) {
+    hidl_status_cb(createWifiStatus(WifiStatusCode::ERROR_WIFI_IFACE_INVALID),
+                   IfaceType::P2P);
+    return Void();
+  }
+  hidl_status_cb(createWifiStatus(WifiStatusCode::SUCCESS), IfaceType::P2P);
+  return Void();
 }
 
 }  // namespace implementation
