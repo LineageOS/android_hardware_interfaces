@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef HIDL_GENERATED_android_hardware_biometrics_fingerprint_V2_1_BiometricsFingerprint_H_
-#define HIDL_GENERATED_android_hardware_biometrics_fingerprint_V2_1_BiometricsFingerprint_H_
+#ifndef ANDROID_HARDWARE_BIOMETRICS_FINGERPRINT_V2_1_BIOMETRICSFINGERPRINT_H
+#define ANDROID_HARDWARE_BIOMETRICS_FINGERPRINT_V2_1_BIOMETRICSFINGERPRINT_H
 
 #include <utils/Log.h>
+#include <hidl/MQDescriptor.h>
 #include <android/hardware/biometrics/fingerprint/2.1/IBiometricsFingerprint.h>
 #include <hidl/Status.h>
 
-#include <hidl/MQDescriptor.h>
 namespace android {
 namespace hardware {
 namespace biometrics {
@@ -29,9 +29,9 @@ namespace fingerprint {
 namespace V2_1 {
 namespace implementation {
 
-using ::android::hardware::biometrics::fingerprint::V2_1::HwAuthToken;
 using ::android::hardware::biometrics::fingerprint::V2_1::IBiometricsFingerprint;
 using ::android::hardware::biometrics::fingerprint::V2_1::IBiometricsFingerprintClientCallback;
+using ::android::hardware::biometrics::fingerprint::V2_1::RequestStatus;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::hidl_vec;
@@ -43,16 +43,16 @@ public:
     BiometricsFingerprint(fingerprint_device_t *device);
     ~BiometricsFingerprint();
     // Methods from ::android::hardware::biometrics::fingerprint::V2_1::IBiometricsFingerprint follow.
-    Return<void> setNotify(const sp<IBiometricsFingerprintClientCallback>& clientCallback, setNotify_cb _hidl_cb)  override;
-    Return<uint64_t> preEnroll()  override;
-    Return<void> enroll(const HwAuthToken& hat, uint32_t gid, uint32_t timeoutSec, enroll_cb _hidl_cb)  override;
-    Return<void> postEnroll(postEnroll_cb _hidl_cb)  override;
-    Return<uint64_t> getAuthenticatorId()  override;
-    Return<void> cancel(cancel_cb _hidl_cb)  override;
-    Return<void> enumerate(enumerate_cb _hidl_cb)  override;
-    Return<void> remove(uint32_t gid, uint32_t fid, remove_cb _hidl_cb)  override;
-    Return<void> setActiveGroup(uint32_t gid, const hidl_string& storePath, setActiveGroup_cb _hidl_cb)  override;
-    Return<void> authenticate(uint64_t operationId, uint32_t gid, authenticate_cb _hidl_cb)  override;
+    Return<RequestStatus> setNotify(const sp<IBiometricsFingerprintClientCallback>& clientCallback) override;
+    Return<uint64_t> preEnroll() override;
+    Return<RequestStatus> enroll(const hidl_array<uint8_t, 69>& hat, uint32_t gid, uint32_t timeoutSec) override;
+    Return<RequestStatus> postEnroll() override;
+    Return<uint64_t> getAuthenticatorId() override;
+    Return<RequestStatus> cancel() override;
+    Return<RequestStatus> enumerate() override;
+    Return<RequestStatus> remove(uint32_t gid, uint32_t fid) override;
+    Return<RequestStatus> setActiveGroup(uint32_t gid, const hidl_string& storePath) override;
+    Return<RequestStatus> authenticate(uint64_t operationId, uint32_t gid) override;
     static void notify(const fingerprint_msg_t *notify_msg) {
         if (mClientCallback == nullptr) {
             ALOGE("Receiving callbacks before the client callback is registered.");
@@ -63,6 +63,7 @@ public:
         mClientCallback->notify(msg);
     }
 private:
+    Return<RequestStatus> ErrorFilter(int32_t error);
     static sp<IBiometricsFingerprintClientCallback> mClientCallback;
     fingerprint_device_t *mDevice;
 };
@@ -76,4 +77,4 @@ extern "C" IBiometricsFingerprint* HIDL_FETCH_IBiometricsFingerprint(const char*
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_biometrics_fingerprint_V2_1_BiometricsFingerprint_H_
+#endif  // ANDROID_HARDWARE_BIOMETRICS_FINGERPRINT_V2_1_BIOMETRICSFINGERPRINT_H
