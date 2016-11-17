@@ -20,6 +20,7 @@
 #include <android-base/macros.h>
 #include <android/hardware/wifi/1.0/IWifiIface.h>
 #include <android/hardware/wifi/1.0/IWifiRttController.h>
+#include <android/hardware/wifi/1.0/IWifiRttControllerEventCallback.h>
 
 #include "wifi_legacy_hal.h"
 
@@ -42,13 +43,68 @@ class WifiRttController : public IWifiRttController {
 
   // HIDL methods exposed.
   Return<void> getBoundIface(getBoundIface_cb hidl_status_cb) override;
+  Return<void> registerEventCallback(
+      const sp<IWifiRttControllerEventCallback>& callback,
+      registerEventCallback_cb hidl_status_cb) override;
+  Return<void> rangeRequest(uint32_t cmd_id,
+                            const hidl_vec<RttConfig>& rtt_configs,
+                            rangeRequest_cb hidl_status_cb) override;
+  Return<void> rangeCancel(uint32_t cmd_id,
+                           const hidl_vec<hidl_array<uint8_t, 6>>& addrs,
+                           rangeCancel_cb hidl_status_cb) override;
+  Return<void> setChannelMap(uint32_t cmd_id,
+                             const RttChannelMap& params,
+                             uint32_t num_dw,
+                             setChannelMap_cb hidl_status_cb) override;
+  Return<void> clearChannelMap(uint32_t cmd_id,
+                               clearChannelMap_cb hidl_status_cb) override;
+  Return<void> getCapabilities(getCapabilities_cb hidl_status_cb) override;
+  Return<void> setDebugCfg(RttDebugType type,
+                           setDebugCfg_cb hidl_status_cb) override;
+  Return<void> getDebugInfo(getDebugInfo_cb hidl_status_cb) override;
+  Return<void> setLci(uint32_t cmd_id,
+                      const RttLciInformation& lci,
+                      setLci_cb hidl_status_cb) override;
+  Return<void> setLcr(uint32_t cmd_id,
+                      const RttLcrInformation& lcr,
+                      setLcr_cb hidl_status_cb) override;
+  Return<void> getResponderInfo(getResponderInfo_cb hidl_status_cb) override;
+  Return<void> enableResponder(uint32_t cmd_id,
+                               const WifiChannelInfo& channel_hint,
+                               uint32_t maxDurationSeconds,
+                               const RttResponder& info,
+                               enableResponder_cb hidl_status_cb) override;
+  Return<void> disableResponder(uint32_t cmd_id,
+                                disableResponder_cb hidl_status_cb) override;
 
  private:
   // Corresponding worker functions for the HIDL methods.
   std::pair<WifiStatus, sp<IWifiIface>> getBoundIfaceInternal();
+  WifiStatus registerEventCallbackInternal(
+      const sp<IWifiRttControllerEventCallback>& callback);
+  WifiStatus rangeRequestInternal(uint32_t cmd_id,
+                                  const std::vector<RttConfig>& rtt_configs);
+  WifiStatus rangeCancelInternal(
+      uint32_t cmd_id, const std::vector<hidl_array<uint8_t, 6>>& addrs);
+  WifiStatus setChannelMapInternal(uint32_t cmd_id,
+                                   const RttChannelMap& params,
+                                   uint32_t num_dw);
+  WifiStatus clearChannelMapInternal(uint32_t cmd_id);
+  std::pair<WifiStatus, RttCapabilities> getCapabilitiesInternal();
+  WifiStatus setDebugCfgInternal(RttDebugType type);
+  std::pair<WifiStatus, RttDebugInfo> getDebugInfoInternal();
+  WifiStatus setLciInternal(uint32_t cmd_id, const RttLciInformation& lci);
+  WifiStatus setLcrInternal(uint32_t cmd_id, const RttLcrInformation& lcr);
+  std::pair<WifiStatus, RttResponder> getResponderInfoInternal();
+  WifiStatus enableResponderInternal(uint32_t cmd_id,
+                                     const WifiChannelInfo& channel_hint,
+                                     uint32_t maxDurationSeconds,
+                                     const RttResponder& info);
+  WifiStatus disableResponderInternal(uint32_t cmd_id);
 
   sp<IWifiIface> bound_iface_;
   std::weak_ptr<WifiLegacyHal> legacy_hal_;
+  std::vector<sp<IWifiRttControllerEventCallback>> event_callbacks_;
   bool is_valid_;
 
   DISALLOW_COPY_AND_ASSIGN(WifiRttController);
