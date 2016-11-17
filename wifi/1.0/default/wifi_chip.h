@@ -59,39 +59,46 @@ class WifiChip : public IWifiChip {
   void invalidate();
 
   // HIDL methods exposed.
-  Return<ChipId> getId() override;
+  Return<void> getId(getId_cb hidl_status_cb) override;
   Return<void> registerEventCallback(
-      const sp<IWifiChipEventCallback>& callback) override;
-  Return<void> getAvailableModes(getAvailableModes_cb cb) override;
-  Return<void> configureChip(uint32_t mode_id) override;
-  Return<uint32_t> getMode() override;
-  Return<void> requestChipDebugInfo() override;
-  Return<void> requestDriverDebugDump() override;
-  Return<void> requestFirmwareDebugDump() override;
-  Return<void> createApIface(createApIface_cb cb) override;
-  Return<void> getApIfaceNames(getApIfaceNames_cb cb) override;
-  Return<void> getApIface(const hidl_string& ifname, getApIface_cb cb) override;
-  Return<void> createNanIface(createNanIface_cb cb) override;
-  Return<void> getNanIfaceNames(getNanIfaceNames_cb cb) override;
+      const sp<IWifiChipEventCallback>& event_callback,
+      registerEventCallback_cb hidl_status_cb) override;
+  Return<void> getAvailableModes(getAvailableModes_cb hidl_status_cb) override;
+  Return<void> configureChip(uint32_t mode_id,
+                             configureChip_cb hidl_status_cb) override;
+  Return<void> getMode(getMode_cb hidl_status_cb) override;
+  Return<void> requestChipDebugInfo(
+      requestChipDebugInfo_cb hidl_status_cb) override;
+  Return<void> requestDriverDebugDump(
+      requestDriverDebugDump_cb hidl_status_cb) override;
+  Return<void> requestFirmwareDebugDump(
+      requestFirmwareDebugDump_cb hidl_status_cb) override;
+  Return<void> createApIface(createApIface_cb hidl_status_cb) override;
+  Return<void> getApIfaceNames(getApIfaceNames_cb hidl_status_cb) override;
+  Return<void> getApIface(const hidl_string& ifname,
+                          getApIface_cb hidl_status_cb) override;
+  Return<void> createNanIface(createNanIface_cb hidl_status_cb) override;
+  Return<void> getNanIfaceNames(getNanIfaceNames_cb hidl_status_cb) override;
   Return<void> getNanIface(const hidl_string& ifname,
-                           getNanIface_cb cb) override;
-  Return<void> createP2pIface(createP2pIface_cb cb) override;
-  Return<void> getP2pIfaceNames(getP2pIfaceNames_cb cb) override;
+                           getNanIface_cb hidl_status_cb) override;
+  Return<void> createP2pIface(createP2pIface_cb hidl_status_cb) override;
+  Return<void> getP2pIfaceNames(getP2pIfaceNames_cb hidl_status_cb) override;
   Return<void> getP2pIface(const hidl_string& ifname,
-                           getP2pIface_cb cb) override;
-  Return<void> createStaIface(createStaIface_cb cb) override;
-  Return<void> getStaIfaceNames(getStaIfaceNames_cb cb) override;
+                           getP2pIface_cb hidl_status_cb) override;
+  Return<void> createStaIface(createStaIface_cb hidl_status_cb) override;
+  Return<void> getStaIfaceNames(getStaIfaceNames_cb hidl_status_cb) override;
   Return<void> getStaIface(const hidl_string& ifname,
-                           getStaIface_cb cb) override;
-  Return<void> createRttController(const sp<IWifiIface>& bound_iface,
-                                   createRttController_cb cb) override;
+                           getStaIface_cb hidl_status_cb) override;
+  Return<void> createRttController(
+      const sp<IWifiIface>& bound_iface,
+      createRttController_cb hidl_status_cb) override;
 
  private:
   void invalidateAndRemoveAllIfaces();
 
   ChipId chip_id_;
   std::weak_ptr<WifiLegacyHal> legacy_hal_;
-  std::vector<sp<IWifiChipEventCallback>> callbacks_;
+  std::vector<sp<IWifiChipEventCallback>> event_callbacks_;
   sp<WifiApIface> ap_iface_;
   sp<WifiNanIface> nan_iface_;
   sp<WifiP2pIface> p2p_iface_;
