@@ -18,8 +18,8 @@
 
 #include <android-base/logging.h>
 
-#include "failure_reason_util.h"
 #include "wifi_chip.h"
+#include "wifi_status_util.h"
 
 namespace {
 // Chip ID to use for the only supported chip.
@@ -36,9 +36,9 @@ Wifi::Wifi()
     : legacy_hal_(new WifiLegacyHal()), run_state_(RunState::STOPPED) {}
 
 Return<void> Wifi::registerEventCallback(
-    const sp<IWifiEventCallback>& callback) {
+    const sp<IWifiEventCallback>& event_callback) {
   // TODO(b/31632518): remove the callback when the client is destroyed
-  callbacks_.emplace_back(callback);
+  event_callbacks_.emplace_back(event_callback);
   return Void();
 }
 
@@ -46,47 +46,44 @@ Return<bool> Wifi::isStarted() {
   return run_state_ != RunState::STOPPED;
 }
 
-Return<void> Wifi::start() {
+Return<void> Wifi::start(start_cb hidl_status_cb) {
   if (run_state_ == RunState::STARTED) {
-    for (const auto& callback : callbacks_) {
-      callback->onStart();
-    }
+    hidl_status_cb(createWifiStatus(WifiStatusCode::SUCCESS));
     return Void();
   } else if (run_state_ == RunState::STOPPING) {
-    for (const auto& callback : callbacks_) {
-      callback->onStartFailure(CreateFailureReason(
-          CommandFailureReason::NOT_AVAILABLE, "HAL is stopping"));
-    }
+    hidl_status_cb(createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE,
+                                    "HAL is stopping"));
     return Void();
   }
 
   LOG(INFO) << "Starting HAL";
-  wifi_error status = legacy_hal_->start();
-  if (status != WIFI_SUCCESS) {
+  wifi_error legacy_status = legacy_hal_->start();
+  if (legacy_status != WIFI_SUCCESS) {
     LOG(ERROR) << "Failed to start Wifi HAL";
-    for (auto& callback : callbacks_) {
-      callback->onStartFailure(
-          CreateFailureReasonLegacyError(status, "Failed to start HAL"));
-    }
+    hidl_status_cb(
+        createWifiStatusFromLegacyError(legacy_status, "Failed to start HAL"));
     return Void();
   }
 
   // Create the chip instance once the HAL is started.
   chip_ = new WifiChip(kChipId, legacy_hal_);
   run_state_ = RunState::STARTED;
-  for (const auto& callback : callbacks_) {
-    callback->onStart();
+  for (const auto& callback : event_callbacks_) {
+    if (!callback->onStart().getStatus().isOk()) {
+      LOG(ERROR) << "Failed to invoke onStart callback";
+    };
   }
+  hidl_status_cb(createWifiStatus(WifiStatusCode::SUCCESS));
   return Void();
 }
 
-Return<void> Wifi::stop() {
+Return<void> Wifi::stop(stop_cb hidl_status_cb) {
   if (run_state_ == RunState::STOPPED) {
-    for (const auto& callback : callbacks_) {
-      callback->onStop();
-    }
+    hidl_status_cb(createWifiStatus(WifiStatusCode::SUCCESS));
     return Void();
   } else if (run_state_ == RunState::STOPPING) {
+    hidl_status_cb(createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE,
+                                    "HAL is stopping"));
     return Void();
   }
 
@@ -98,37 +95,43 @@ Return<void> Wifi::stop() {
     }
     chip_.clear();
     run_state_ = RunState::STOPPED;
-    for (const auto& callback : callbacks_) {
-      callback->onStop();
+    for (const auto& callback : event_callbacks_) {
+      if (!callback->onStop().getStatus().isOk()) {
+        LOG(ERROR) << "Failed to invoke onStop callback";
+      };
     }
   };
-  wifi_error status = legacy_hal_->stop(on_complete_callback_);
-  if (status != WIFI_SUCCESS) {
+  wifi_error legacy_status = legacy_hal_->stop(on_complete_callback_);
+  if (legacy_status != WIFI_SUCCESS) {
     LOG(ERROR) << "Failed to stop Wifi HAL";
-    for (const auto& callback : callbacks_) {
-      callback->onFailure(
-          CreateFailureReasonLegacyError(status, "Failed to stop HAL"));
+    WifiStatus wifi_status =
+        createWifiStatusFromLegacyError(legacy_status, "Failed to stop HAL");
+    for (const auto& callback : event_callbacks_) {
+      callback->onFailure(wifi_status);
     }
+    hidl_status_cb(wifi_status);
+    return Void();
   }
+  hidl_status_cb(createWifiStatus(WifiStatusCode::SUCCESS));
   return Void();
 }
 
-Return<void> Wifi::getChipIds(getChipIds_cb cb) {
+Return<void> Wifi::getChipIds(getChipIds_cb hidl_status_cb) {
   std::vector<ChipId> chip_ids;
   if (chip_.get()) {
     chip_ids.emplace_back(kChipId);
   }
   hidl_vec<ChipId> hidl_data;
   hidl_data.setToExternal(chip_ids.data(), chip_ids.size());
-  cb(hidl_data);
+  hidl_status_cb(hidl_data);
   return Void();
 }
 
-Return<void> Wifi::getChip(ChipId chip_id, getChip_cb cb) {
+Return<void> Wifi::getChip(ChipId chip_id, getChip_cb hidl_status_cb) {
   if (chip_.get() && chip_id == kChipId) {
-    cb(chip_);
+    hidl_status_cb(chip_);
   } else {
-    cb(nullptr);
+    hidl_status_cb(nullptr);
   }
   return Void();
 }

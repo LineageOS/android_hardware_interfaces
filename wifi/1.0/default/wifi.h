@@ -41,12 +41,12 @@ class Wifi : public IWifi {
 
   // HIDL methods exposed.
   Return<void> registerEventCallback(
-      const sp<IWifiEventCallback>& callback) override;
+      const sp<IWifiEventCallback>& event_callback) override;
   Return<bool> isStarted() override;
-  Return<void> start() override;
-  Return<void> stop() override;
-  Return<void> getChipIds(getChipIds_cb cb) override;
-  Return<void> getChip(ChipId chip_id, getChip_cb cb) override;
+  Return<void> start(start_cb hidl_status_cb) override;
+  Return<void> stop(stop_cb hidl_status_cb) override;
+  Return<void> getChipIds(getChipIds_cb hidl_status_cb) override;
+  Return<void> getChip(ChipId chip_id, getChip_cb hidl_status_cb) override;
 
  private:
   enum class RunState { STOPPED, STARTED, STOPPING };
@@ -55,7 +55,7 @@ class Wifi : public IWifi {
   // and shared with all the child HIDL interface objects.
   std::shared_ptr<WifiLegacyHal> legacy_hal_;
   RunState run_state_;
-  std::vector<sp<IWifiEventCallback>> callbacks_;
+  std::vector<sp<IWifiEventCallback>> event_callbacks_;
   sp<WifiChip> chip_;
 
   DISALLOW_COPY_AND_ASSIGN(Wifi);
