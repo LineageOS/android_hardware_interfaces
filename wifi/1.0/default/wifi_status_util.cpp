@@ -50,10 +50,7 @@ std::string legacyErrorToString(wifi_error error) {
 
 WifiStatus createWifiStatus(WifiStatusCode code,
                             const std::string& description) {
-  WifiStatus result;
-  result.code = code;
-  result.description = description.data();
-  return result;
+  return {code, description};
 }
 
 WifiStatus createWifiStatus(WifiStatusCode code) {
