@@ -18,52 +18,6 @@ package android.hardware.wifi@1.0;
 
 interface IWifiStaIfaceEventCallback {
   /**
-   * Structure describing all the information about a single access point seen
-   * during the scan.
-   */
-  struct ScanResult {
-    TimeStampInUs timeStampInUs;
-    vec<uint8_t> ssid;
-    Bssid bssid;
-    Rssi rssi;
-    WifiChannelInMhz frequency;
-    uint16_t beaconPeriodInMs;
-    uint16_t capability;
-    vec<WifiInformationElement> informationElements;
-  };
-
-  /**
-   * Mask of flags set in the |ScanData| instance.
-   */
-  enum ScanDataFlagMask {
-    /**
-     * Indicates that a scan was interrupted/did not occur so results may be
-     * incomplete.
-     */
-    WIFI_SCAN_FLAG_INTERRUPTED = 1 << 0,
-  };
-
-  /**
-   * Structure describing all the information about all the access points seen during
-   * the scan.
-   */
-  struct ScanData {
-    /**
-     * Bitset containing |ScanDataFlagMask| values.
-     */
-    uint32_t flags;
-    /**
-     * Bitset where each bit indicates if the bucket with that index was
-     * scanned.
-     */
-    uint32_t bucketsScanned;
-    /**
-     * List of scan results.
-     */
-    vec<ScanResult> results;
-  };
-
-  /**
    * Callback indicating that an ongoing background scan request has failed.
    * The background scan needs to be restarted to continue scanning.
    */
@@ -72,15 +26,15 @@ interface IWifiStaIfaceEventCallback {
   /**
    * Called for each received beacon/probe response for a scan with the
    * |REPORT_EVENTS_FULL_RESULTS| flag set in
-   * |BackgroundScanBucketParameters.eventReportScheme|.
+   * |StaBackgroundScanBucketParameters.eventReportScheme|.
    *
    * @param cmdId command Id corresponding to the request.
    * @parm result Full scan result for an AP.
    */
-  oneway onBackgroundFullScanResult(CommandId cmdId, ScanResult result);
+  oneway onBackgroundFullScanResult(CommandId cmdId, StaScanResult result);
 
   /**
-   * Called when the |BackgroundScanBucketParameters.eventReportScheme| flags
+   * Called when the |StaBackgroundScanBucketParameters.eventReportScheme| flags
    * for at least one bucket that was just scanned was
    * |REPORT_EVENTS_EACH_SCAN| or one of the configured thresholds was
    * breached.
@@ -88,5 +42,5 @@ interface IWifiStaIfaceEventCallback {
    * @param cmdId command Id corresponding to the request.
    * @parm scanDatas List of scan result for all AP's seen since last callback.
    */
-  oneway onBackgroundScanResults(CommandId cmdId, vec<ScanData> scanDatas);
+  oneway onBackgroundScanResults(CommandId cmdId, vec<StaScanData> scanDatas);
 };
