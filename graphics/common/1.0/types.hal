@@ -38,6 +38,12 @@ enum PixelFormat : int32_t {
     BGRA_8888          = 5,
 
     /*
+     * The following formats use a 16bit float per color component.
+     */
+    RGBA_FP16          = 0x10,
+    RGBX_FP16          = 0x11,
+
+    /*
      * 0x100 - 0x1FF
      *
      * This range is reserved for pixel formats that are specific to the HAL
@@ -658,6 +664,28 @@ enum Dataspace : int32_t {
      */
     STANDARD_FILM = 9 << STANDARD_SHIFT,
 
+    /*
+     * SMPTE EG 432-1 and SMPTE RP 431-2. (DCI-P3)
+     * Primaries:       x       y
+     *  green           0.265   0.690
+     *  blue            0.150   0.060
+     *  red             0.680   0.320
+     *  white (D65)     0.3127  0.3290
+     */
+    STANDARD_DCI_P3 = 10 << STANDARD_SHIFT,
+
+    /*
+     * Adobe RGB
+     * Primaries:       x       y
+     *  green           0.210   0.710
+     *  blue            0.150   0.060
+     *  red             0.640   0.330
+     *  white (D65)     0.3127  0.3290
+     */
+    STANDARD_ADOBE_RGB = 11 << STANDARD_SHIFT,
+
+
+
     TRANSFER_SHIFT = 22,
 
     /*
@@ -730,6 +758,16 @@ enum Dataspace : int32_t {
     TRANSFER_GAMMA2_2 = 4 << TRANSFER_SHIFT,
 
     /*
+     *  display gamma 2.6.
+     *
+     * Transfer characteristic curve:
+     *  E = L ^ (1/2.6)
+     *      L - luminance of image 0 <= L <= 1 for conventional colorimetry
+     *      E - corresponding electrical signal
+     */
+    TRANSFER_GAMMA2_6 = 5 << TRANSFER_SHIFT,
+
+    /*
      *  display gamma 2.8.
      *
      * Transfer characteristic curve:
@@ -737,7 +775,7 @@ enum Dataspace : int32_t {
      *      L - luminance of image 0 <= L <= 1 for conventional colorimetry
      *      E - corresponding electrical signal
      */
-    TRANSFER_GAMMA2_8 = 5 << TRANSFER_SHIFT,
+    TRANSFER_GAMMA2_8 = 6 << TRANSFER_SHIFT,
 
     /*
      * SMPTE ST 2084
@@ -753,7 +791,7 @@ enum Dataspace : int32_t {
      *          L = 1 corresponds to 10000 cd/m2
      *      E - corresponding electrical signal
      */
-    TRANSFER_ST2084 = 6 << TRANSFER_SHIFT,
+    TRANSFER_ST2084 = 7 << TRANSFER_SHIFT,
 
     /*
      * ARIB STD-B67 Hybrid Log Gamma
@@ -769,7 +807,7 @@ enum Dataspace : int32_t {
      *          to reference white level of 100 cd/m2
      *      E - corresponding electrical signal
      */
-    TRANSFER_HLG = 7 << TRANSFER_SHIFT,
+    TRANSFER_HLG = 8 << TRANSFER_SHIFT,
 
     RANGE_SHIFT = 27,
 
@@ -816,6 +854,15 @@ enum Dataspace : int32_t {
     RANGE_LIMITED = 2 << RANGE_SHIFT,
 
     /*
+     * Extended range is used for scRGB. Intended for use with
+     * floating point pixel formats. [0.0 - 1.0] is the standard
+     * sRGB space. Values outside the range 0.0 - 1.0 can encode
+     * color outside the sRGB gamut.
+     * Used to blend / merge multiple dataspaces on a single display.
+     */
+    RANGE_EXTENDED = 3 << RANGE_SHIFT,
+
+    /*
      * Legacy dataspaces
      */
 
@@ -835,6 +882,21 @@ enum Dataspace : int32_t {
 
 
     /*
+     * scRGB linear encoding:
+     *
+     * The red, green, and blue components are stored in extended sRGB space,
+     * but are linear, not gamma-encoded.
+     * The RGB primaries and the white point are the same as BT.709.
+     *
+     * The values are floating point.
+     * A pixel value of 1.0, 1.0, 1.0 corresponds to sRGB white (D65) at 80 nits.
+     * Values beyond the range [0.0 - 1.0] would correspond to other colors
+     * spaces and/or HDR content.
+     */
+    V0_SCRGB_LINEAR = STANDARD_BT709 | TRANSFER_LINEAR | RANGE_EXTENDED,
+
+
+    /*
      * sRGB gamma encoding:
      *
      * The red, green and blue components are stored in sRGB space, and
@@ -851,6 +913,24 @@ enum Dataspace : int32_t {
 
     V0_SRGB = STANDARD_BT709 | TRANSFER_SRGB | RANGE_FULL,
 
+
+    /*
+     * scRGB:
+     *
+     * The red, green, and blue components are stored in extended sRGB space,
+     * but are linear, not gamma-encoded.
+     * The RGB primaries and the white point are the same as BT.709.
+     *
+     * The values are floating point.
+     * A pixel value of 1.0, 1.0, 1.0 corresponds to sRGB white (D65) at 80 nits.
+     * Values beyond the range [0.0 - 1.0] would correspond to other colors
+     * spaces and/or HDR content.
+     *
+     * TODO (courtneygo): Will we actually use this? We intend to use FP16
+     * storage for data using scRGB so we can do all work in linear space
+     * and don't have to worry as much about limited precision.
+     */
+    V0_SCRGB = STANDARD_BT709 | TRANSFER_SRGB | RANGE_EXTENDED,
 
     /*
      * YCbCr Colorspaces
@@ -907,6 +987,59 @@ enum Dataspace : int32_t {
     BT709 = 0x104, // deprecated, use V0_BT709
 
     V0_BT709 = STANDARD_BT709 | TRANSFER_SMPTE_170M | RANGE_LIMITED,
+
+
+    /*
+     * SMPTE EG 432-1 and SMPTE RP 431-2.
+     *
+     * Digital Cinema DCI-P3
+     *
+     * Use full range, linear transfer and D65 DCI-P3 standard
+     */
+    DCI_P3_LINEAR = STANDARD_DCI_P3 | TRANSFER_LINEAR | RANGE_FULL,
+
+
+    /*
+     * SMPTE EG 432-1 and SMPTE RP 431-2.
+     *
+     * Digital Cinema DCI-P3
+     *
+     * Use full range, gamma 2.6 transfer and D65 DCI-P3 standard
+     * Note: Application is responsible for gamma encoding the data as
+     * a 2.6 gamma encoding is not supported in HW.
+     */
+    DCI_P3 = STANDARD_DCI_P3 | TRANSFER_GAMMA2_6 | RANGE_FULL,
+
+
+    /*
+     * Adobe RGB
+     *
+     * Use full range, gamma 2.2 transfer and Adobe RGB primaries
+     * Note: Application is responsible for gamma encoding the data as
+     * a 2.2 gamma encoding is not supported in HW.
+     */
+    ADOBE_RGB = STANDARD_ADOBE_RGB | TRANSFER_GAMMA2_2 | RANGE_FULL,
+
+
+    /*
+     * ITU-R Recommendation 2020 (BT.2020)
+     *
+     * Ultra High-definition television
+     *
+     * Use full range, linear transfer and BT2020 standard
+     */
+    BT2020_LINEAR = STANDARD_BT2020 | TRANSFER_LINEAR | RANGE_FULL,
+
+
+    /*
+     * ITU-R Recommendation 2020 (BT.2020)
+     *
+     * Ultra High-definition television
+     *
+     * Use full range, BT.709 transfer and BT2020 standard
+     */
+    BT2020 = STANDARD_BT2020 | TRANSFER_SMPTE_170M | RANGE_FULL,
+
 
     /*
      * Data spaces for non-color formats
