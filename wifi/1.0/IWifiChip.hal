@@ -131,6 +131,37 @@ interface IWifiChip {
   };
 
   /**
+   * Capabilities exposed by this chip.
+   */
+  enum ChipCapabilityMask : uint32_t {
+    /**
+     * Memory dump of Firmware.
+     */
+    DEBUG_MEMORY_FIRMWARE_DUMP_SUPPORTED = 1 << 0,
+    /**
+     * Memory dump of Driver.
+     */
+    DEBUG_MEMORY_DRIVER_DUMP_SUPPORTED = 1 << 1,
+    /**
+     * Connectivity events reported via debug ring buffer.
+     */
+    DEBUG_RING_BUFFER_CONNECT_EVENT_SUPPORTED = 1 << 2,
+    /**
+     * Power events reported via debug ring buffer.
+     */
+    DEBUG_RING_BUFFER_POWER_EVENT_SUPPORTED = 1 << 3,
+    /**
+     * Wakelock events reported via debug ring buffer.
+     */
+    DEBUG_RING_BUFFER_WAKELOCK_EVENT_SUPPORTED = 1 << 4,
+    /**
+     * Vendor data reported via debug ring buffer.
+     * This mostly contains firmware event logs.
+     */
+    DEBUG_RING_BUFFER_VENDOR_DATA_SUPPORTED = 1 << 5,
+  };
+
+  /**
    * Get the id assigned to this chip.
    *
    * @return status WifiStatus of the operation.
@@ -154,6 +185,19 @@ interface IWifiChip {
    *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|
    */
   registerEventCallback(IWifiChipEventCallback callback) generates (WifiStatus status);
+
+  /**
+   * Get the capabilities supported by this chip.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   * @return capabilities Bitset of |ChipCapabilityMask| values.
+   */
+  getCapabilities() generates (WifiStatus status, uint32_t capabilities);
 
   /**
    * Get the set of operation modes that the chip supports.
@@ -464,6 +508,7 @@ interface IWifiChip {
    *         Possible status codes:
    *         |WifiStatusCode.SUCCESS|,
    *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
    *         |WifiStatusCode.NOT_AVAILABLE|,
    *         |WifiStatusCode.UNKNOWN|
    * @return ringBuffers Vector of |WifiDebugRingBufferStatus| corresponding to the
@@ -486,6 +531,7 @@ interface IWifiChip {
    *         Possible status codes:
    *         |WifiStatusCode.SUCCESS|,
    *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
    *         |WifiStatusCode.NOT_AVAILABLE|,
    *         |WifiStatusCode.UNKNOWN|
    */
@@ -506,6 +552,8 @@ interface IWifiChip {
    *         Possible status codes:
    *         |WifiStatusCode.SUCCESS|,
    *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_STARTED|,
    *         |WifiStatusCode.NOT_AVAILABLE|,
    *         |WifiStatusCode.UNKNOWN|
    */
