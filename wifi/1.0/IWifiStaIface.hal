@@ -44,6 +44,10 @@ interface IWifiStaIface extends IWifiIface {
      * If set indicates that the link layer stats APIs are supported.
      */
     LINK_LAYER_STATS = 1 << 2,
+    /**
+     * Tracks connection packets' fate.
+     */
+    DEBUG_PACKET_FATE_SUPPORTED = 1 << 3
   };
 
   /**
@@ -195,6 +199,7 @@ interface IWifiStaIface extends IWifiIface {
    *         |WifiStatusCode.SUCCESS|,
    *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
    *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_STARTED|,
    *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
    *         |WifiStatusCode.ERROR_UNKNOWN|
    */
@@ -230,6 +235,7 @@ interface IWifiStaIface extends IWifiIface {
    *         |WifiStatusCode.SUCCESS|,
    *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
    *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_STARTED|,
    *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
    *         |WifiStatusCode.ERROR_UNKNOWN|
    */
@@ -245,9 +251,97 @@ interface IWifiStaIface extends IWifiIface {
    *         |WifiStatusCode.SUCCESS|,
    *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
    *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_STARTED|,
    *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
    *         |WifiStatusCode.ERROR_UNKNOWN|
    * @return stats Instance of |LinkLayerStats|.
    */
   getLinkLayerStats() generates (WifiStatus status, StaLinkLayerStats stats);
+
+  /**
+   * API to start packet fate monitoring.
+   * - Once stared, monitoring must remain active until HAL is unloaded.
+   * - When HAL is unloaded, all packet fate buffers must be cleared.
+   * - The packet fates are used to monitor the state of packets transmitted/
+   *   received during association.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   */
+  startDebugPacketFateMonitoring() generates (WifiStatus status);
+
+  /**
+   * API to stop packet fate monitoring.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_STARTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   */
+  stopDebugPacketFateMonitoring() generates (WifiStatus status);
+
+  /**
+   * API to retrieve fates of outbound packets.
+   * - HAL implementation must return the fates of
+   *   all the frames transmitted for the most recent association.
+   *   The fate reports must follow the same order as their respective
+   *   packets.
+   * - HAL implementation may choose (but is not required) to include
+   *   reports for management frames.
+   * - Packets reported by firmware, but not recognized by driver,
+   *   must be included. However, the ordering of the corresponding
+   *   reports is at the discretion of HAL implementation.
+   * - Framework must be able to call this API multiple times for the same
+   *   association.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_STARTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   * @return fates Vector of |WifiDebugTxPacketFateReport| instances corresponding
+   *         to the packet fates.
+   */
+  getDebugTxPacketFates()
+      generates (WifiStatus status, vec<WifiDebugTxPacketFateReport> fates);
+
+  /**
+   * API to retrieve fates of inbound packets.
+   * - HAL implementation must return the fates of
+   *   all the frames received for the most recent association.
+   *   The fate reports must follow the same order as their respective
+   *   packets.
+   * - HAL implementation may choose (but is not required) to include
+   *   reports for management frames.
+   * - Packets reported by firmware, but not recognized by driver,
+   *   must be included. However, the ordering of the corresponding
+   *   reports is at the discretion of HAL implementation.
+   * - Framework must be able to call this API multiple times for the same
+   *   association.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_STARTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   * @return fates Vector of |WifiDebugRxPacketFateReport| instances corresponding
+   *         to the packet fates.
+   */
+  getDebugRxPacketFates()
+      generates (WifiStatus status, vec<WifiDebugRxPacketFateReport> fates);
 };
