@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "failure_reason_util.h"
+#include "wifi_status_util.h"
 
 namespace android {
 namespace hardware {
@@ -22,7 +22,7 @@ namespace wifi {
 namespace V1_0 {
 namespace implementation {
 
-std::string LegacyErrorToString(wifi_error error) {
+std::string legacyErrorToString(wifi_error error) {
   switch (error) {
     case WIFI_SUCCESS:
       return "SUCCESS";
@@ -48,45 +48,55 @@ std::string LegacyErrorToString(wifi_error error) {
   }
 }
 
-FailureReason CreateFailureReason(CommandFailureReason reason,
-                                  const std::string& description) {
-  FailureReason result;
-  result.reason = reason;
+WifiStatus createWifiStatus(WifiStatusCode code,
+                            const std::string& description) {
+  WifiStatus result;
+  result.code = code;
   result.description = description.data();
   return result;
 }
 
-FailureReason CreateFailureReasonLegacyError(wifi_error error,
-                                             const std::string& desc) {
+WifiStatus createWifiStatus(WifiStatusCode code) {
+  return createWifiStatus(code, "");
+}
+
+WifiStatus createWifiStatusFromLegacyError(wifi_error error,
+                                           const std::string& desc) {
   switch (error) {
     case WIFI_ERROR_UNINITIALIZED:
     case WIFI_ERROR_NOT_AVAILABLE:
-      return CreateFailureReason(CommandFailureReason::NOT_AVAILABLE, desc);
+      return createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE, desc);
 
     case WIFI_ERROR_NOT_SUPPORTED:
-      return CreateFailureReason(CommandFailureReason::NOT_SUPPORTED, desc);
+      return createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED, desc);
 
     case WIFI_ERROR_INVALID_ARGS:
     case WIFI_ERROR_INVALID_REQUEST_ID:
-      return CreateFailureReason(CommandFailureReason::INVALID_ARGS, desc);
+      return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS, desc);
 
     case WIFI_ERROR_TIMED_OUT:
-      return CreateFailureReason(CommandFailureReason::UNKNOWN,
-                                 desc + ", timed out");
+      return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN,
+                              desc + ", timed out");
 
     case WIFI_ERROR_TOO_MANY_REQUESTS:
-      return CreateFailureReason(CommandFailureReason::UNKNOWN,
-                                 desc + ", too many requests");
+      return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN,
+                              desc + ", too many requests");
 
     case WIFI_ERROR_OUT_OF_MEMORY:
-      return CreateFailureReason(CommandFailureReason::UNKNOWN,
-                                 desc + ", out of memory");
+      return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN,
+                              desc + ", out of memory");
 
     case WIFI_ERROR_NONE:
+      return createWifiStatus(WifiStatusCode::SUCCESS, desc);
+
     case WIFI_ERROR_UNKNOWN:
     default:
-      return CreateFailureReason(CommandFailureReason::UNKNOWN, "unknown");
+      return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN, "unknown");
   }
+}
+
+WifiStatus createWifiStatusFromLegacyError(wifi_error error) {
+  return createWifiStatusFromLegacyError(error, "");
 }
 
 }  // namespace implementation
