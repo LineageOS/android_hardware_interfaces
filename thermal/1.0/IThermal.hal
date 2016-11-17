@@ -32,6 +32,9 @@ interface IThermal {
      *         always returns and never removes such temperatures.
      *
      */
+    @callflow(next={"*"})
+    @entry
+    @exit
     getTemperatures()
         generates (ThermalStatus status, vec<Temperature> temperatures);
 
@@ -47,6 +50,9 @@ interface IThermal {
      *         the same regardless the number of calls to this method.
      *
      */
+    @callflow(next={"*"})
+    @entry
+    @exit
     getCpuUsages() generates (ThermalStatus status, vec<CpuUsage> cpuUsages);
 
     /*
@@ -63,6 +69,9 @@ interface IThermal {
      *         the list such cooling devices.
      *
      */
+    @callflow(next={"*"})
+    @entry
+    @exit
     getCoolingDevices()
         generates (ThermalStatus status, vec<CoolingDevice> devices);
 
