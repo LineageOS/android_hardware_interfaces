@@ -39,8 +39,6 @@ LOCAL_SHARED_LIBRARIES += \
     libvts_measurement \
     libvts_multidevice_proto
 
-LOCAL_CFLAGS += -DENABLE_TREBLE
-
 LOCAL_PROTOC_OPTIMIZE_TYPE := full
 
 LOCAL_MULTILIB := both
