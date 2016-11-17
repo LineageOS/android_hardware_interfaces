@@ -3063,3 +3063,110 @@ struct WifiDebugRxPacketFateReport {
   WifiDebugRxPacketFate fate;
   WifiDebugPacketFateFrameInfo frameInfo;
 };
+
+/**
+ * Struct capturing the count of all rx packets that caused
+ * host wakeup.
+ */
+struct WifiDebugHostWakeReasonRxPacketDetails {
+  /**
+   * Total rx unicast packet which woke up host.
+   */
+  uint32_t rxUnicastCnt;
+  /**
+   * Total rx multicast packet which woke up host.
+   */
+  uint32_t rxMulticastCnt;
+  /**
+   * Total rx broadcast packet which woke up host.
+   */
+  uint32_t rxBroadcastCnt;
+};
+
+/**
+ * Struct capturing the count of all rx multicast packets that caused
+ * host wakeup.
+ */
+struct WifiDebugHostWakeReasonRxMulticastPacketDetails {
+  /**
+   * Rx wake packet was ipv4 multicast.
+   */
+  uint32_t ipv4RxMulticastAddrCnt;
+  /**
+   * Rx wake packet was ipv6 multicast.
+   */
+  uint32_t ipv6RxMulticastAddrCnt;
+  /**
+   * Rx wake packet was non-ipv4 and non-ipv6.
+   */
+  uint32_t otherRxMulticastAddrCnt;
+};
+
+/**
+ * Struct capturing the count of all rx ICMP packets that caused
+ * host wakeup.
+ */
+struct WifiDebugHostWakeReasonRxIcmpPacketDetails {
+  /**
+   * Wake icmp packet count.
+   */
+  uint32_t icmpPkt;
+  /**
+   * Wake icmp6 packet count.
+   */
+  uint32_t icmp6Pkt;
+  /**
+   * Wake icmp6 RA packet count.
+   */
+  uint32_t icmp6Ra;
+  /**
+   * Wake icmp6 NA packet count.
+   */
+  uint32_t icmp6Na;
+  /**
+   * Wake icmp6 NS packet count.
+   */
+  uint32_t icmp6Ns;
+};
+
+/**
+ * Structure capturing the count of all the wireless related host wakeup.
+ * This is used to capture all the reasons why the host processor
+ * (WLAN driver) was woken up by the WLAN firmware.
+ * These stats may be used to debug any power issues caused due to frequent
+ * wakeup of the host processor by the WLAN firmware.
+ */
+struct WifiDebugHostWakeReasonStats {
+  /**
+   * Total count of cmd/event wakes.
+   * These must account for all wakeups due to WLAN management
+   * commands/events received over the air.
+   */
+  uint32_t totalCmdEventWakeCnt;
+  /**
+   * Vector of wake counts per cmd/event type.
+   * The number of command types and their meaning is only understood by the
+   * vendor.
+   */
+  vec<uint32_t> cmdEventWakeCntPerType;
+  /**
+   * Total count of drive/fw wakes.
+   * These must account for all wakeups due to local driver/firmware
+   * interactions. These include all vendor implementation specific
+   * interactions like any heart-beat monitoring, Bus management, etc.
+   */
+  uint32_t totalDriverFwLocalWakeCnt;
+  /**
+   * Vector of wake counts per driver/firmware interaction type.
+   * The number of command types and their meaning is only understood by the
+   * vendor.
+   */
+  vec<uint32_t> driverFwLocalWakeCntPerType;
+  /**
+   * Total data rx packets, that woke up host.
+   */
+  uint32_t totalRxPacketWakeCnt;
+  WifiDebugHostWakeReasonRxPacketDetails rxPktWakeDetails;
+  WifiDebugHostWakeReasonRxMulticastPacketDetails rxMulticastPkWakeDetails;
+  WifiDebugHostWakeReasonRxIcmpPacketDetails rxIcmpPkWakeDetails;
+};

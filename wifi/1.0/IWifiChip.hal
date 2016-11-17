@@ -159,6 +159,10 @@ interface IWifiChip {
      * This mostly contains firmware event logs.
      */
     DEBUG_RING_BUFFER_VENDOR_DATA_SUPPORTED = 1 << 5,
+    /**
+     * Host wake reasons stats collection.
+     */
+    DEBUG_HOST_WAKE_REASON_STATS = 1 << 6,
   };
 
   /**
@@ -558,4 +562,22 @@ interface IWifiChip {
    *         |WifiStatusCode.UNKNOWN|
    */
   forceDumpToDebugRingBuffer(string ringName) generates (WifiStatus status);
+
+  /**
+   * API to retrieve the wifi wake up reason stats for debugging.
+   * The driver is expected to start maintaining these stats once the chip
+   * is configured using |configureChip|. These stats must be reset whenever
+   * the chip is reconfigured or the HAL is stopped.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.NOT_AVAILABLE|,
+   *         |WifiStatusCode.UNKNOWN|
+   * @return stats Instance of |WifiDebugHostWakeReasonStats|.
+   */
+  getDebugHostWakeReasonStats()
+      generates (WifiStatus status, WifiDebugHostWakeReasonStats stats);
 };
