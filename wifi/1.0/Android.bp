@@ -16,6 +16,7 @@ genrule {
         "IWifiP2pIface.hal",
         "IWifiRttController.hal",
         "IWifiStaIface.hal",
+        "IWifiStaIfaceEventCallback.hal",
     ],
     out: [
         "android/hardware/wifi/1.0/types.cpp",
@@ -29,6 +30,7 @@ genrule {
         "android/hardware/wifi/1.0/WifiP2pIfaceAll.cpp",
         "android/hardware/wifi/1.0/WifiRttControllerAll.cpp",
         "android/hardware/wifi/1.0/WifiStaIfaceAll.cpp",
+        "android/hardware/wifi/1.0/WifiStaIfaceEventCallbackAll.cpp",
     ],
 }
 
@@ -48,6 +50,7 @@ genrule {
         "IWifiP2pIface.hal",
         "IWifiRttController.hal",
         "IWifiStaIface.hal",
+        "IWifiStaIfaceEventCallback.hal",
     ],
     out: [
         "android/hardware/wifi/1.0/types.h",
@@ -101,6 +104,11 @@ genrule {
         "android/hardware/wifi/1.0/BnWifiStaIface.h",
         "android/hardware/wifi/1.0/BpWifiStaIface.h",
         "android/hardware/wifi/1.0/BsWifiStaIface.h",
+        "android/hardware/wifi/1.0/IWifiStaIfaceEventCallback.h",
+        "android/hardware/wifi/1.0/IHwWifiStaIfaceEventCallback.h",
+        "android/hardware/wifi/1.0/BnWifiStaIfaceEventCallback.h",
+        "android/hardware/wifi/1.0/BpWifiStaIfaceEventCallback.h",
+        "android/hardware/wifi/1.0/BsWifiStaIfaceEventCallback.h",
     ],
 }
 
