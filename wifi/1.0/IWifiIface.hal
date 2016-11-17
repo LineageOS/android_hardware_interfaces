@@ -23,14 +23,22 @@ interface IWifiIface {
   /**
    * Get the type of this iface.
    *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |StatusCode.SUCCESS|,
+   *         |StatusCode.ERROR_WIFI_IFACE_INVALID|
    * @return type One of the supported iface types.
    */
-  getType() generates (IfaceType type);
+  getType() generates (StatusCode status, IfaceType type);
 
   /**
    * Get the name of this iface.
    *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |StatusCode.SUCCESS|,
+   *         |StatusCode.ERROR_WIFI_IFACE_INVALID|
    * @return name Name of the iface.
    */
-  getName() generates (string name);
+  getName() generates (StatusCode status, string name);
 };
