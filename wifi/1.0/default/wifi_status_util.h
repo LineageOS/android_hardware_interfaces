@@ -27,7 +27,6 @@ namespace V1_0 {
 namespace implementation {
 
 std::string legacyErrorToString(wifi_error error);
-
 WifiStatus createWifiStatus(WifiStatusCode code,
                             const std::string& description);
 WifiStatus createWifiStatus(WifiStatusCode code);

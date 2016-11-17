@@ -39,8 +39,8 @@ class WifiApIface : public IWifiApIface {
   void invalidate();
 
   // HIDL methods exposed.
-  Return<void> getName(getName_cb cb) override;
-  Return<IfaceType> getType() override;
+  Return<void> getName(getName_cb hidl_status_cb) override;
+  Return<void> getType(getType_cb hidl_status_cb) override;
 
  private:
   std::string ifname_;
