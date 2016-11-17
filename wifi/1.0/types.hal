@@ -129,6 +129,11 @@ typedef int32_t Rssi;
 typedef uint8_t[6] MacAddress;
 
 /**
+ * SSID type. 32 octets representing the network.
+ */
+typedef uint8_t[32] Ssid;
+
+/**
  * BSSID type. 6 octets representing the physical address of an AP.
  */
 typedef MacAddress Bssid;
@@ -536,7 +541,6 @@ enum NanMaxSize : uint32_t {
  */
 typedef int32_t NanVersion;
 
-/** NAN Iface specific types */
 /**
  * NAN data path identifiers.
  */
@@ -732,7 +736,7 @@ enum NanDataPathChannelCfg : uint32_t {
  * Host can send Vendor specific attributes which the Discovery Engine can
  * enclose in Beacons and/or Service Discovery frames transmitted.
  * Below structure is used to populate that.
- * TODO(b/32207606): This can be moved to vendor extension to the HIDL.
+ * TODO(b/32207606): This can be moved to vendor extension.
  */
 struct NanTransmitVendorSpecificAttribute {
   /**
@@ -812,7 +816,6 @@ struct NanEnableRequest {
    * Optional configuration of Enable request.
    * Each of the optional parameters have configure flag which
    * determine whether configuration is to be passed or not.
-   * TODO(b/32207606): Check if these config variables needed or not.
    */
   bool validSupport5gVal;
   uint8_t support5gVal;
@@ -2347,4 +2350,540 @@ struct RttLcrInformation {
 struct RttResponder {
   WifiChannelInfo channel;
   RttPreamble preamble;
+};
+
+/**
+ * Debug data specific types.
+ * TODO(b/32159498): Move to a separate debug_types.hal.
+ */
+typedef uint32_t WifiRingBufferId;
+
+/**
+ * Mask of flags present in |WifiDebugRingEntryHeader.flags| field.
+ */
+enum WifiDebugRingEntryFlags : uint8_t {
+  /**
+   * Set for binary entries
+   */
+  HAS_BINARY = 1 << 0,
+  /**
+   * Set if 64 bits timestamp is present
+   */
+  HAS_TIMESTAMP = 1 << 1,
+};
+
+/**
+ * This structure represent an entry within a debug ring buffer.
+ * Wifi driver are responsible to manage the debug ring buffer and write the
+ * debug information into those buffer.
+ *
+ * In general, the debug entries can be used to store meaningful 802.11
+ * information (SME, MLME, connection and packet statistics) as well as vendor
+ * proprietary data that is specific to a specific driver or chipset.
+ * Binary entries can be used so as to store packet data or vendor specific
+ * information and will be treated as blobs of data by android framework.
+ *
+ * A user land process will be started by framework so as to periodically
+ * retrieve the data logged by drivers into their debug ring buffer, store the
+ * data into log files and include the logs into android bugreports.
+ */
+struct WifiDebugRingEntryHeader {
+  /**
+   * The size of |payload| excluding the header.
+   */
+  uint16_t sizeInBytes;
+  /**
+   * Combination of |WifiDebugRingEntryFlags| values.
+   */
+  uint8_t flags;
+  /**
+   * Present if |HAS_TIMESTAMP| bit is set.
+   */
+  TimeStampInUs timestamp;
+};
+
+/**
+ * Below event types are used for both the connect and power event
+ * ring entries.
+ */
+enum WifiDebugRingEntryEventType : uint16_t {
+  /**
+   * Driver receives association command from kernel.
+   */
+  ASSOCIATION_REQUESTED = 0,
+  AUTH_COMPLETE = 1,
+  ASSOC_COMPLETE = 2,
+  /**
+   * Firmware event indicating auth frames are sent.
+   */
+  FW_AUTH_STARTED = 3,
+  /**
+   * Firmware event indicating assoc frames are sent.
+   */
+  FW_ASSOC_STARTED = 4,
+  /**
+   * Firmware event indicating reassoc frames are sent.
+   */
+  FW_RE_ASSOC_STARTED = 5,
+  DRIVER_SCAN_REQUESTED = 6,
+  DRIVER_SCAN_RESULT_FOUND = 7,
+  DRIVER_SCAN_COMPLETE = 8,
+  BACKGROUND_SCAN_STARTED = 9,
+  BACKGROUND_SCAN_COMPLETE = 10,
+  DISASSOCIATION_REQUESTED = 11,
+  RE_ASSOCIATION_REQUESTED = 12,
+  ROAM_REQUESTED = 13,
+  /**
+   * Received beacon from AP (event enabled  only in verbose mode).
+   */
+  BEACON_RECEIVED = 14,
+  /**
+   * Firmware has triggered a roam scan (not g-scan).
+   */
+  ROAM_SCAN_STARTED = 15,
+  /**
+   * Firmware has completed a roam scan (not g-scan).
+   */
+  ROAM_SCAN_COMPLETE = 16,
+  /**
+   * Firmware has started searching for roam candidates (with reason =xx).
+   */
+  ROAM_SEARCH_STARTED = 17,
+  /**
+   * Firmware has stopped searching for roam candidates (with reason =xx).
+   */
+  ROAM_SEARCH_STOPPED = 18,
+  /**
+   * Received channel switch anouncement from AP.
+   */
+  CHANNEL_SWITCH_ANOUNCEMENT = 20,
+  /**
+   * Firmware start transmit eapol frame, with  EAPOL index 1-4.
+   */
+  FW_EAPOL_FRAME_TRANSMIT_START = 21,
+  /**
+   * Firmware gives up eapol frame, with rate, success/failure and number
+   * retries.
+   */
+  FW_EAPOL_FRAME_TRANSMIT_STOP = 22,
+  /**
+   * Kernel queue EAPOL for transmission  in driver with EAPOL index 1-4.
+   */
+  DRIVER_EAPOL_FRAME_TRANSMIT_REQUESTED = 23,
+  /**
+   * With rate, regardless of the fact that EAPOL frame is accepted or
+   * rejected by firmware.
+   */
+  FW_EAPOL_FRAME_RECEIVED = 24,
+  /**
+   * With rate, and eapol index, driver has received EAPOL frame and will
+   * queue it up to wpa_supplicant.
+   */
+  DRIVER_EAPOL_FRAME_RECEIVED = 26,
+  /**
+   * With success/failure, parameters
+   */
+  BLOCK_ACK_NEGOTIATION_COMPLETE = 27,
+  BT_COEX_BT_SCO_START = 28,
+  BT_COEX_BT_SCO_STOP = 29,
+  /**
+   * For paging/scan etc., when BT starts transmiting twice per BT slot.
+   */
+  BT_COEX_BT_SCAN_START = 30,
+  BT_COEX_BT_SCAN_STOP = 31,
+  BT_COEX_BT_HID_START = 32,
+  BT_COEX_BT_HID_STOP = 33,
+  /**
+   * Firmware sends auth frame in roaming to next candidate.
+   */
+  ROAM_AUTH_STARTED = 34,
+  /**
+   * Firmware receive auth confirm from ap
+   */
+  ROAM_AUTH_COMPLETE = 35,
+  /**
+   * Firmware sends assoc/reassoc frame in roaming to next candidate.
+   */
+  ROAM_ASSOC_STARTED = 36,
+  /**
+   * Firmware receive assoc/reassoc confirm from ap.
+   */
+  ROAM_ASSOC_COMPLETE = 37,
+  /**
+   * Firmware sends stop BACKGROUND_SCAN
+   */
+  BACKGROUND_SCAN_STOP = 38,
+  /**
+   * Firmware indicates BACKGROUND_SCAN scan cycle started.
+   */
+  BACKGROUND_SCAN_CYCLE_STARTED = 39,
+  /**
+   * Firmware indicates BACKGROUND_SCAN scan cycle completed.
+   */
+  BACKGROUND_SCAN_CYCLE_COMPLETED = 40,
+  /**
+   * Firmware indicates BACKGROUND_SCAN scan start for a particular bucket.
+   */
+  BACKGROUND_SCAN_BUCKET_STARTED = 41,
+  /**
+   * Firmware indicates BACKGROUND_SCAN scan completed for for a particular bucket.
+   */
+  BACKGROUND_SCAN_BUCKET_COMPLETED = 42,
+  /**
+   * Event received from firmware about BACKGROUND_SCAN scan results being available.
+   */
+  BACKGROUND_SCAN_RESULTS_AVAILABLE = 43,
+  /**
+   * Event received from firmware with BACKGROUND_SCAN capabilities.
+   */
+  BACKGROUND_SCAN_CAPABILITIES = 44,
+  /**
+   * Event received from firmware when eligible candidate is found.
+   */
+  ROAM_CANDIDATE_FOUND = 45,
+  /**
+   * Event received from firmware when roam scan configuration gets
+   * enabled or disabled.
+   */
+  ROAM_SCAN_CONFIG = 46,
+  /**
+   * Firmware/driver timed out authentication.
+   */
+  AUTH_TIMEOUT = 47,
+  /**
+   * Firmware/driver timed out association.
+   */
+  ASSOC_TIMEOUT = 48,
+  /**
+   * Firmware/driver encountered allocation failure.
+   */
+  MEM_ALLOC_FAILURE = 49,
+  /**
+   * Driver added a PNO network in firmware.
+   */
+  DRIVER_PNO_ADD = 50,
+  /**
+   * Driver removed a PNO network in firmware.
+   */
+  DRIVER_PNO_REMOVE = 51,
+  /**
+   * Driver received PNO networks found indication from firmware.
+   */
+  DRIVER_PNO_NETWORK_FOUND = 52,
+  /**
+   * Driver triggered a scan for PNO networks.
+   */
+  DRIVER_PNO_SCAN_REQUESTED = 53,
+  /**
+   * Driver received scan results  of PNO networks.
+   */
+  DRIVER_PNO_SCAN_RESULT_FOUND = 54,
+  /**
+   * Driver updated scan results from  PNO networks to cfg80211.
+   */
+  DRIVER_PNO_SCAN_COMPLETE = 55,
+};
+
+/**
+ * Parameters of the various events are a sequence of TLVs
+ * (type, length, value). The types for different TLV's are defined below.
+ */
+enum WifiDebugRingEntryEventTlvType : uint16_t {
+  /**
+   * Take a byte stream as parameter.
+   */
+  VENDOR_SPECIFIC = 0,
+  /**
+   * Takes a MAC address as parameter.
+   */
+  BSSID = 1,
+  /**
+   * Takes a MAC address as parameter.
+   */
+  ADDR = 2,
+  /**
+   * Takes an SSID as parameter.
+   */
+  SSID = 3,
+  /**
+   * Takes an integer as parameter.
+   */
+  STATUS = 4,
+  /**
+   * Takes a |WifiChannelInfo| struct as parameter.
+   */
+  CHANNEL_SPEC = 5,
+  /**
+   * Takes a MAC address as parameter.
+   */
+  ADDR_1 = 6,
+  /**
+   * Takes a MAC address as parameter.
+   */
+  ADDR_2 = 7,
+  /**
+   * Takes a MAC address as parameter.
+   */
+  ADDR_3 = 8,
+  /**
+   * Takes a MAC address as parameter.
+   */
+  ADDR_4 = 9,
+  /**
+   * Takes a TSF value as parameter.
+   */
+  TSF = 10,
+  /**
+   * Takes one or more specific 802.11 IEs parameter IEs are in turn
+   * indicated in TLV format as per 802.11, spec.
+   */
+  IE = 11,
+  /**
+   * Takes a string interface name as parameter.
+   */
+  IFACE_NAME = 12,
+  /**
+   * Takes a integer reason code as per 802.11 as parameter.
+   */
+  REASON_CODE = 13,
+  /**
+   * Takes an integer representing wifi rate in 1 mbps as parameter.
+   */
+  RATE_MBPS = 14,
+  /**
+   * Takes an integer as parameter.
+   */
+  REQUEST_ID = 15,
+  /**
+   * Takes an integer as parameter.
+   */
+  BUCKET_ID = 16,
+  /**
+   * Takes a |BackgroundScanParameters| struct as parameter.
+   */
+  BACKGROUND_SCAN_PARAMS = 17,
+  /**
+   * Takes a |BackgroundScanCapabilities| struct as parameter.
+   */
+  BACKGROUND_SCAN_CAPABILITIES = 18,
+  /**
+   * Takes an integer as parameter.
+   */
+  SCAN_ID = 19,
+  /**
+   * Takes an integer as parameter.
+   */
+  RSSI = 20,
+  /**
+   * Takes a |WifiChannelInMhz| as parameter.
+   */
+  CHANNEL = 21,
+  /**
+   * Takes an integer as parameter.
+   */
+  LINK_ID = 22,
+  /**
+   * Takes an integer as parameter.
+   */
+  LINK_ROLE = 23,
+  /**
+   * Takes an integer as parameter.
+   */
+  LINK_STATE = 24,
+  /**
+   * Takes an integer as parameter.
+   */
+  LINK_TYPE = 25,
+  /**
+   * Takes an integer as parameter.
+   */
+  TSCO = 26,
+  /**
+   * Takes an integer as parameter.
+   */
+  RSCO = 27,
+  /**
+   * Takes an integer as parameter.
+   * M1=1, M2=2, M3=3, M=4,
+   */
+  EAPOL_MESSAGE_TYPE = 28,
+};
+
+/**
+ * Used to describe a specific TLV in an event entry.
+ */
+struct WifiDebugRingEntryEventTlv {
+  WifiDebugRingEntryEventTlvType type;
+  /**
+   * All possible types of values that can be held in the TLV.
+   * Note: This should ideally be a union. But, since this HIDL package
+   * is going to be used by a java client, we cannot have unions in this
+   * package.
+   */
+  /* TODO(b/32207606): This can be moved to vendor extension. */
+  vec<uint8_t> vendorSpecific;
+  Bssid bssid;
+  MacAddress addr;
+  Ssid ssid;
+  WifiChannelInfo channelSpec;
+  uint64_t tsf;
+  vec<WifiInformationElement> ie;
+  string ifaceName;
+  StaBackgroundScanParameters bgScanParams;
+  StaBackgroundScanCapabilities bgScanCapabilities;
+  Rssi rssi;
+  WifiChannelInMhz channel;
+  uint32_t integerVal;
+};
+
+/**
+ * Used to describe a connect event ring entry.
+ */
+struct WifiDebugRingEntryConnectivityEvent {
+  /**
+   * Ring entry header.
+   */
+  WifiDebugRingEntryHeader header;
+  /**
+   * Type of connection event.
+   */
+  WifiDebugRingEntryEventType event;
+  /**
+   * Separate parameter structure per event to be provided and optional data.
+   * The event data is expected to include an official android part, with some
+   * parameter as transmit rate, num retries, num scan result found, etc.
+   * event data can include a vendor proprietary part which is understood by
+   * the vendor only.
+   */
+  vec<WifiDebugRingEntryEventTlv> tlvs;
+};
+
+/**
+ * Used to describe a power event ring entry.
+ */
+struct WifiDebugRingEntryPowerEvent {
+  /**
+   * Ring entry header.
+   */
+  WifiDebugRingEntryHeader header;
+  /**
+   * Type of power event.
+   */
+  WifiDebugRingEntryEventType event;
+  /**
+   * Separate parameter structure per event to be provided and optional data.
+   * The event data is expected to include an official android part, with some
+   * parameter as transmit rate, num retries, num scan result found, etc.
+   * event data can include a vendor proprietary part which is understood by
+   * the vendor only.
+   */
+  vec<WifiDebugRingEntryEventTlv> tlvs;
+};
+
+/**
+ * Used to describe a wakelock event ring entry.
+ */
+struct WifiDebugRingEntryWakelockEvent {
+  /**
+   * Ring entry header.
+   */
+  WifiDebugRingEntryHeader header;
+  /**
+   * true = wake lock acquired.
+   * false = wake lock released.
+   */
+  bool wasAcquired;
+  /**
+   * Reason why this wake lock is taken.
+   * This is a vendor defined reason and can only be understood by the
+   * vendor.
+   */
+  uint32_t vendorSpecificReason;
+  /**
+   * Wake lock name.
+   */
+  string wakelockName;
+};
+
+/**
+ * Used to describe a vendor specific data ring entry.
+ */
+struct WifiDebugRingEntryVendorData {
+  /**
+   * Ring entry header.
+   */
+  WifiDebugRingEntryHeader header;
+  /**
+   * This is a blob that will only be understood by the
+   * vendor.
+   */
+  vec<uint8_t> vendorData;
+};
+
+/**
+ * Flags describing each debug ring buffer.
+ */
+enum WifiDebugRingBufferFlags : uint32_t {
+  HAS_BINARY_ENTRIES = 1 << 0,
+  HAS_ASCII_ENTRIES = 1 << 1,
+  HAS_PER_PACKET_ENTRIES = 1 << 2,
+};
+
+/**
+ * Struct describing each debug ring buffer supported by
+ * the device.
+ */
+struct WifiDebugRingBufferStatus {
+  /**
+   * Name of this debug ring buffer.
+   */
+  string ringName;
+  /**
+   * Combination of |WifiDebugRingBufferFlags| values.
+   */
+  uint32_t flags;
+  /**
+   * Unique integer representing the ring.
+   */
+  WifiRingBufferId ringId;
+  /**
+   * Total memory size allocated for the buffer.
+   */
+  uint32_t sizeInBytes;
+  /**
+   * Amount of free space in the buffer.
+   */
+  uint32_t freeSizeInBytes;
+  /**
+   * Verbose level for ring buffer.
+   */
+  uint32_t verboseLevel;
+};
+
+/**
+ * Verbose logging level to set for each debug ring buffer supported
+ * by the device.
+ */
+enum WifiDebugRingBufferVerboseLevel : uint32_t {
+  /**
+   * Level 0 corresponds to no collection, and it makes log handler
+   * stop by no more events from driver.
+   */
+  NONE = 0,
+  /**
+   * Level 1 correspond to normal log level, with minimal user impact.
+   * This is the default value.
+   */
+  DEFAULT = 1,
+  /**
+   * Level 2 is enabled when user is lazily trying to reproduce a problem,
+   * wifi performances and power can be impacted but device should not
+   * otherwise be significantly impacted.
+   */
+  VERBOSE = 2,
+  /**
+   * Level 3 is used when trying to actively debug a problem.
+   * This will cause sever performance degradation.
+   */
+  EXCESSIVE = 3
 };
