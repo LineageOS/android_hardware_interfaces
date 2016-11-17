@@ -15,16 +15,28 @@
  */
 
 #include "Sensors.h"
-
 #include "convert.h"
+#include "multihal.h"
 
 #include <android-base/logging.h>
+
+#include <sys/stat.h>
 
 namespace android {
 namespace hardware {
 namespace sensors {
 namespace V1_0 {
 namespace implementation {
+
+/*
+ * If a multi-hal configuration file exists in the proper location,
+ * return true indicating we need to use multi-hal functionality.
+ */
+static bool UseMultiHal() {
+    const std::string& name = MULTI_HAL_CONFIG_FILE_PATH;
+    struct stat buffer;
+    return (stat (name.c_str(), &buffer) == 0);
+}
 
 static Result ResultFromStatus(status_t err) {
     switch (err) {
@@ -43,10 +55,14 @@ Sensors::Sensors()
     : mInitCheck(NO_INIT),
       mSensorModule(nullptr),
       mSensorDevice(nullptr) {
-    status_t err = hw_get_module(
+    status_t err = OK;
+    if (UseMultiHal()) {
+        mSensorModule = ::get_multi_hal_module_info();
+    } else {
+        err = hw_get_module(
             SENSORS_HARDWARE_MODULE_ID,
             (hw_module_t const **)&mSensorModule);
-
+    }
     if (mSensorModule == NULL) {
         err = UNKNOWN_ERROR;
     }

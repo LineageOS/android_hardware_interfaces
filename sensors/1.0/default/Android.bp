@@ -8,7 +8,6 @@ cc_library_shared {
         "libhardware",
         "libhwbinder",
         "libbase",
-        "libcutils",
         "libutils",
         "libhidlbase",
         "libhidltransport",
@@ -16,6 +15,7 @@ cc_library_shared {
     ],
     static_libs: [
         "android.hardware.sensors@1.0-convert",
+        "multihal",
     ],
     local_include_dirs: ["include/sensors"],
 }
@@ -30,7 +30,6 @@ cc_library_static {
         "libhardware",
         "libhwbinder",
         "libbase",
-        "libcutils",
         "libutils",
         "libhidlbase",
         "libhidltransport",
