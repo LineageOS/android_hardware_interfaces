@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include <memory.h>
 
 #define LOG_TAG "EffectHAL"
@@ -56,10 +55,15 @@ template<typename T> size_t Effect::alignedSizeIn(size_t s) {
 }
 
 // static
-template<typename T> void Effect::hidlVecToHal(
-        const hidl_vec<T>& vec, uint32_t* halDataSize, void** halData) {
-    *halDataSize = static_cast<T>(vec.size() * sizeof(T));
-    *halData = static_cast<void*>(const_cast<T*>(&vec[0]));
+template<typename T> std::unique_ptr<uint8_t[]> Effect::hidlVecToHal(
+        const hidl_vec<T>& vec, uint32_t* halDataSize) {
+    // Due to bugs in HAL, they may attempt to write into the provided
+    // input buffer. The original binder buffer is r/o, thus it is needed
+    // to create a r/w version.
+    *halDataSize = vec.size() * sizeof(T);
+    std::unique_ptr<uint8_t[]> halData(new uint8_t[*halDataSize]);
+    memcpy(&halData[0], &vec[0], *halDataSize);
+    return halData;
 }
 
 // static
@@ -393,12 +397,13 @@ Return<Result> Effect::setDevice(AudioDevice device)  {
 Return<void> Effect::setAndGetVolume(
         const hidl_vec<uint32_t>& volumes, setAndGetVolume_cb _hidl_cb)  {
     uint32_t halDataSize;
-    void *halData;
-    hidlVecToHal(volumes, &halDataSize, &halData);
+    std::unique_ptr<uint8_t[]> halData = hidlVecToHal(volumes, &halDataSize);
     uint32_t halResultSize = halDataSize;
     uint32_t halResult[volumes.size()];
     Result retval = sendCommandReturningData(
-            EFFECT_CMD_SET_VOLUME, "SET_VOLUME", halDataSize, halData, &halResultSize, halResult);
+            EFFECT_CMD_SET_VOLUME, "SET_VOLUME",
+            halDataSize, &halData[0],
+            &halResultSize, halResult);
     hidl_vec<uint32_t> result;
     if (retval == Result::OK) {
         result.setToExternal(&halResult[0], halResultSize);
@@ -528,13 +533,12 @@ Return<void> Effect::command(
         uint32_t resultMaxSize,
         command_cb _hidl_cb)  {
     uint32_t halDataSize;
-    void *halData;
-    hidlVecToHal(data, &halDataSize, &halData);
+    std::unique_ptr<uint8_t[]> halData = hidlVecToHal(data, &halDataSize);
     uint32_t halResultSize = resultMaxSize;
     std::unique_ptr<uint8_t[]> halResult(new uint8_t[halResultSize]);
     memset(&halResult[0], 0, halResultSize);
     status_t status = (*mHandle)->command(
-            mHandle, commandId, halDataSize, halData, &halResultSize, &halResult[0]);
+            mHandle, commandId, halDataSize, &halData[0], &halResultSize, &halResult[0]);
     hidl_vec<uint8_t> result;
     if (status == OK) {
         result.setToExternal(&halResult[0], halResultSize);

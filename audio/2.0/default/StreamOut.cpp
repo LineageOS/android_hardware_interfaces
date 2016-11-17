@@ -191,23 +191,27 @@ Return<Result> StreamOut::setCallback(const sp<IStreamOutCallback>& callback)  {
     return mStreamCommon->analyzeStatus("set_callback", result);
 }
 
+Return<Result> StreamOut::clearCallback()  {
+    if (mStream->set_callback == NULL) return Result::NOT_SUPPORTED;
+    mCallback.clear();
+    return Result::OK;
+}
+
 // static
 int StreamOut::asyncCallback(stream_callback_event_t event, void*, void *cookie) {
     wp<StreamOut> weakSelf(reinterpret_cast<StreamOut*>(cookie));
     sp<StreamOut> self = weakSelf.promote();
-    if (self == 0) return 0;
-    sp<IStreamOutCallback> callback = self->mCallback.promote();
-    if (callback == 0) return 0;
+    if (self == nullptr || self->mCallback == nullptr) return 0;
     ALOGV("asyncCallback() event %d", event);
     switch (event) {
         case STREAM_CBK_EVENT_WRITE_READY:
-            callback->onWriteReady();
+            self->mCallback->onWriteReady();
             break;
         case STREAM_CBK_EVENT_DRAIN_READY:
-            callback->onDrainReady();
+            self->mCallback->onDrainReady();
             break;
         case STREAM_CBK_EVENT_ERROR:
-            callback->onError();
+            self->mCallback->onError();
             break;
         default:
             ALOGW("asyncCallback() unknown event %d", event);

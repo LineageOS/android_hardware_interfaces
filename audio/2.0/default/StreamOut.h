@@ -83,6 +83,7 @@ struct StreamOut : public IStreamOut {
     Return<void> getRenderPosition(getRenderPosition_cb _hidl_cb)  override;
     Return<void> getNextWriteTimestamp(getNextWriteTimestamp_cb _hidl_cb)  override;
     Return<Result> setCallback(const sp<IStreamOutCallback>& callback)  override;
+    Return<Result> clearCallback()  override;
     Return<void> supportsPauseAndResume(supportsPauseAndResume_cb _hidl_cb)  override;
     Return<Result> pause()  override;
     Return<Result> resume()  override;
@@ -95,9 +96,7 @@ struct StreamOut : public IStreamOut {
     audio_hw_device_t *mDevice;
     audio_stream_out_t *mStream;
     sp<Stream> mStreamCommon;
-    // Do not store sp<> to avoid creating a reference loop if the entity that holds
-    // onto the output stream owns or implements the callback.
-    wp<IStreamOutCallback> mCallback;
+    sp<IStreamOutCallback> mCallback;
 
     virtual ~StreamOut();
 

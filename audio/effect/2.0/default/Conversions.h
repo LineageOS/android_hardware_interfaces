@@ -29,13 +29,10 @@ namespace effect {
 namespace V2_0 {
 namespace implementation {
 
-using ::android::hardware::audio::common::V2_0::Uuid;
 using ::android::hardware::audio::effect::V2_0::EffectDescriptor;
 
 void effectDescriptorFromHal(
         const effect_descriptor_t& halDescriptor, EffectDescriptor* descriptor);
-void uuidFromHal(const effect_uuid_t& halUuid, Uuid* uuid);
-void uuidToHal(const Uuid& uuid, effect_uuid_t* halUuid);
 std::string uuidToString(const effect_uuid_t& halUuid);
 
 } // namespace implementation

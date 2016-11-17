@@ -102,6 +102,8 @@ interface IDevice {
 
     /*
      * This method creates and opens the audio hardware output stream.
+     * If the stream can not be opened with the proposed audio config,
+     * HAL must provide suggested values for the audio config.
      *
      * @param ioHandle handle assigned by AudioFlinger.
      * @param device device type and (if needed) address.
@@ -109,15 +111,21 @@ interface IDevice {
      * @param flags additional flags.
      * @return retval operation completion status.
      * @return outStream created output stream.
+     * @return suggestedConfig in case of invalid parameters, suggested config.
      */
     openOutputStream(
             AudioIoHandle ioHandle,
             DeviceAddress device,
             AudioConfig config,
-            AudioOutputFlag flags) generates (Result retval, IStreamOut outStream);
+            AudioOutputFlag flags) generates (
+                    Result retval,
+                    IStreamOut outStream,
+                    AudioConfig suggestedConfig);
 
     /*
      * This method creates and opens the audio hardware input stream.
+     * If the stream can not be opened with the proposed audio config,
+     * HAL must provide suggested values for the audio config.
      *
      * @param ioHandle handle assigned by AudioFlinger.
      * @param device device type and (if needed) address.
@@ -125,14 +133,25 @@ interface IDevice {
      * @param flags additional flags.
      * @param source source specification.
      * @return retval operation completion status.
-     * @return inStream created input stream.
+     * @return inStream in case of success, created input stream.
+     * @return suggestedConfig in case of invalid parameters, suggested config.
      */
     openInputStream(
             AudioIoHandle ioHandle,
             DeviceAddress device,
             AudioConfig config,
             AudioInputFlag flags,
-            AudioSource source) generates (Result retval, IStreamIn inStream);
+            AudioSource source) generates (
+                    Result retval,
+                    IStreamIn inStream,
+                    AudioConfig suggestedConfig);
+
+    /*
+     * Returns whether HAL supports audio patches.
+     *
+     * @return supports true if audio patches are supported.
+     */
+    supportsAudioPatches() generates (bool supports);
 
     /*
      * Creates an audio patch between several source and sink ports.  The handle

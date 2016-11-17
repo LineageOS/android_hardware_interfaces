@@ -76,6 +76,7 @@ struct PrimaryDevice : public IPrimaryDevice {
             AudioInputFlag flags,
             AudioSource source,
             openInputStream_cb _hidl_cb)  override;
+    Return<bool> supportsAudioPatches()  override;
     Return<void> createAudioPatch(
             const hidl_vec<AudioPortConfig>& sources,
             const hidl_vec<AudioPortConfig>& sinks,

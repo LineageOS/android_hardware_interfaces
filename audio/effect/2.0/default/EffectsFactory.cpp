@@ -33,8 +33,9 @@
 #include "AutomaticGainControlEffect.h"
 #include "BassBoostEffect.h"
 #include "Conversions.h"
-#include "EffectsFactory.h"
 #include "DownmixEffect.h"
+#include "EffectsFactory.h"
+#include "HidlUtils.h"
 #include "Effect.h"
 #include "EffectMap.h"
 #include "EnvironmentalReverbEffect.h"
@@ -131,7 +132,7 @@ exit:
 
 Return<void> EffectsFactory::getDescriptor(const Uuid& uid, getDescriptor_cb _hidl_cb)  {
     effect_uuid_t halUuid;
-    uuidToHal(uid, &halUuid);
+    HidlUtils::uuidToHal(uid, &halUuid);
     effect_descriptor_t halDescriptor;
     status_t status = EffectGetDescriptor(&halUuid, &halDescriptor);
     EffectDescriptor descriptor;
@@ -153,7 +154,7 @@ Return<void> EffectsFactory::getDescriptor(const Uuid& uid, getDescriptor_cb _hi
 Return<void> EffectsFactory::createEffect(
         const Uuid& uid, int32_t session, int32_t ioHandle, createEffect_cb _hidl_cb)  {
     effect_uuid_t halUuid;
-    uuidToHal(uid, &halUuid);
+    HidlUtils::uuidToHal(uid, &halUuid);
     effect_handle_t handle;
     Result retval(Result::OK);
     status_t status = EffectCreate(&halUuid, session, ioHandle, &handle);
