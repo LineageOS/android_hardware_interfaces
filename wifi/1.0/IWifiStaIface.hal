@@ -40,6 +40,10 @@ interface IWifiStaIface extends IWifiIface {
      * parameters about how and when to report results.
      */
     BACKGROUND_SCAN = 1 << 1,
+    /**
+     * If set indicates that the link layer stats APIs are supported.
+     */
+    LINK_LAYER_STATS = 1 << 2
   };
 
   /**
@@ -207,6 +211,98 @@ interface IWifiStaIface extends IWifiIface {
   };
 
   /**
+   * Packet stats for different traffic categories.
+   */
+  struct LinkLayerIfacePacketStats {
+    /**
+     * Number of received unicast data packets.
+     */
+    uint64_t rxMpdu;
+    /**
+     * Number of successfully transmitted unicast data pkts (ACK rcvd).
+     */
+    uint64_t txMpdu;
+    /**
+     * Number of transmitted unicast data pkt losses (no ACK).
+     */
+    uint64_t lostMpdu;
+    /**
+     * Number of transmitted unicast data retry pkts.
+     */
+    uint64_t retries;
+  };
+
+  /**
+   * Iface statistics for the current connection.
+   */
+  struct LinkLayerIfaceStats {
+    /**
+     * Number beacons received from the connected AP.
+     */
+    uint32_t beaconRx;
+    /**
+     * Access Point Beacon and Management frames RSSI (averaged).
+     */
+    int32_t avgRssiMgmt;
+    /**
+     * WME Best Effort Access Category packet counters.
+     */
+     LinkLayerIfacePacketStats wmeBePktStats;
+    /**
+     * WME Background Access Category packet counters.
+     */
+    LinkLayerIfacePacketStats wmeBkPktStats;
+    /**
+     * WME Video Access Category packet counters.
+     */
+    LinkLayerIfacePacketStats wmeViPktStats;
+    /**
+     * WME Voice Access Category packet counters.
+     */
+    LinkLayerIfacePacketStats wmeVoPktStats;
+  };
+
+  /**
+   * Cumulative radio statistics since collection was enabled.
+   */
+  struct LinkLayerRadioStats {
+    /**
+     * Time for which the radio is awake.
+     */
+    uint32_t onTimeInMs;
+    /**
+     * Total time for which the radio is in active transmission.
+     */
+    uint32_t txTimeInMs;
+    /**
+     * Time for which the radio is in active tranmission per tx level.
+     */
+    vec<uint32_t> txTimeInMsPerLevel;
+    /**
+     * Time for which the radio is in active receive.
+     */
+    uint32_t rxTimeInMs;
+    /**
+     *  Total time for which the radio is awake due to scan.
+     */
+    uint32_t onTimeInMsForScan;
+  };
+
+  /**
+   * Link layer stats retrieved via |getLinkLayerStats|.
+   */
+  struct LinkLayerStats {
+    LinkLayerIfaceStats iface;
+    LinkLayerRadioStats radio;
+    /**
+     * Timestamp for each stats sample.
+     * This is the absolute milliseconds from boot when these stats were
+     * sampled.
+     */
+    uint32_t timeStampInMs;
+  };
+
+  /**
    * Requests notifications of significant events on this iface. Multiple calls
    * to this must register multiple callbacks each of which must receive all
    * events.
@@ -236,7 +332,7 @@ interface IWifiStaIface extends IWifiIface {
 
   /**
    * Used to query additional information about the chip's APF capabilities.
-   * Will fail if |StaIfaceCapabilityMask.APF| is not set.
+   * Must fail if |StaIfaceCapabilityMask.APF| is not set.
    *
    * @return status WifiStatus of the operation.
    *         Possible status codes:
@@ -253,7 +349,7 @@ interface IWifiStaIface extends IWifiIface {
   /**
    * Installs an APF program on this iface, replacing an existing
    * program if present.
-   * Will fail if |StaIfaceCapabilityMask.APF| is not set.
+   * Must fail if |StaIfaceCapabilityMask.APF| is not set.
    *
    * @param cmdId command Id to use for this invocation.
    * @param APF Program to be set.
@@ -270,8 +366,8 @@ interface IWifiStaIface extends IWifiIface {
       generates (WifiStatus status);
 
   /**
-   * Used to query additional information about the chip's APF capabilities.
-   * Will fail if |StaIfaceCapabilityMask.BACKGROUND_SCAN| is not set.
+   * Used to query additional information about the chip's Background Scan capabilities.
+   * Must fail if |StaIfaceCapabilityMask.BACKGROUND_SCAN| is not set.
    *
    * @return status WifiStatus of the operation.
    *         Possible status codes:
@@ -286,8 +382,28 @@ interface IWifiStaIface extends IWifiIface {
       generates (WifiStatus status, BackgroundScanCapabilities capabilities);
 
   /**
+   * Used to query the list of valid frequencies (depending on country code set)
+   * for the provided band. These channels may be specifed in the
+   * |BackgroundScanBucketParameters.frequenciesInMhz| for a background scan
+   * request.
+   * Must fail if |StaIfaceCapabilityMask.BACKGROUND_SCAN| is not set.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   * @return frequenciesInMhz vector of valid frequencies for the provided band.
+   */
+  getValidFrequenciesForBackgroundScan(BackgroundScanBand band)
+      generates (WifiStatus status, vec<uint32_t> frequenciesInMhz);
+
+  /**
    * Start a background scan using the given cmdId as an identifier. Only one
    * active background scan need be supported.
+   * Must fail if |StaIfaceCapabilityMask.BACKGROUND_SCAN| is not set.
    *
    * When this is called all requested buckets must be scanned, starting the
    * beginning of the cycle.
@@ -326,6 +442,7 @@ interface IWifiStaIface extends IWifiIface {
 
   /**
    * Stop the background scan started.
+   * Must fail if |StaIfaceCapabilityMask.BACKGROUND_SCAN| is not set.
    *
    * @param cmdId command Id corresponding to the request.
    * @return status WifiStatus of the operation.
@@ -337,4 +454,55 @@ interface IWifiStaIface extends IWifiIface {
    *         |WifiStatusCode.ERROR_UNKNOWN|
    */
   stopBackgroundScan(CommandId cmdId) generates (WifiStatus status);
+
+  /**
+   * Enable link layer stats collection.
+   * Must fail if |StaIfaceCapabilityMask.LINK_LAYER_STATS| is not set.
+   *
+   * Radio statistics (once started) must not stop until disabled.
+   * Iface statistics (once started) reset and start afresh after each
+   * connection until disabled.
+   *
+   * @param debug Set for field debug mode. Driver must collect all
+   *        statistics regardless of performance impact.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   */
+  enableLinkLayerStatsCollection(bool debug)
+      generates (WifiStatus status);
+
+  /**
+   * Disable link layer stats collection.
+   * Must fail if |StaIfaceCapabilityMask.LINK_LAYER_STATS| is not set.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   */
+  disableLinkLayerStatsCollection() generates (WifiStatus status);
+
+  /**
+   * Retrieve the latest link layer stats.
+   * Must fail if |StaIfaceCapabilityMask.LINK_LAYER_STATS| is not set or if
+   * link layer stats collection hasn't been explicitly enabled.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   * @return stats Instance of |LinkLayerStats|.
+   */
+  getLinkLayerStats() generates (WifiStatus status, LinkLayerStats stats);
 };
