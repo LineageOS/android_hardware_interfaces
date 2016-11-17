@@ -1,0 +1,178 @@
+/*
+ * Copyright (C) 2016 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.media.omx@1.0;
+
+import android.hardware.media@1.0::types;
+
+// Aliases
+typedef uint32_t BufferId;
+
+/**
+ * Ref: frameworks/av/include/media/IOMX.h: omx_message
+ *
+ * Data structure for an OMX message. This is essentially a union of different
+ * message types.
+ */
+struct Message {
+
+    /**
+     * There are four main types of messages.
+     */
+    enum Type : uint32_t {
+        EVENT,
+        EMPTY_BUFFER_DONE,
+        FILL_BUFFER_DONE,
+        FRAME_RENDERED,
+    };
+
+    /**
+     * @see OMX_EVENTTYPE in the OpenMax IL standard.
+     */
+    struct EventData {
+        uint32_t event; // TODO: if there are common core events, convert to an enum or point to std
+        uint32_t data1;
+        uint32_t data2;
+        uint32_t data3;
+        uint32_t data4;
+    };
+
+    struct BufferData {
+        BufferId buffer;
+    };
+
+    struct ExtendedBufferData {
+        BufferId buffer;
+        uint32_t rangeOffset;
+        uint32_t rangeLength;
+        uint32_t flags; // TODO: if common flags exist, define an enum of point to std
+        uint64_t timestampUs;
+    };
+
+    struct RenderData {
+        uint64_t timestampUs;
+        int64_t systemTimeNs;
+    };
+
+    union Data {
+        // if type == EVENT
+        EventData eventData;
+
+        // if type == EMPTY_BUFFER_DONE
+        BufferData bufferData;
+
+        // if type == FILL_BUFFER_DONE
+        ExtendedBufferData extendedBufferData;
+
+        // if type == FRAME_RENDERED
+        RenderData renderData;
+    };
+
+    /**
+     * The type of the message.
+     */
+    Type type;
+
+    /**
+     * The fence associated with the message.
+     */
+    Fence fence;
+
+    /**
+     * The union of data, discriminated by type.
+     */
+    Data data;
+};
+
+/**
+ * Ref: frameworks/native/include/ui/GraphicBuffer.h
+ * Ref: system/core/include/system/window.h
+ * Ref: frameworks/native/include/binder/IMemory.h
+ * Ref: frameworks/native/libs/binder/IMemory.cpp
+ * Ref: frameworks/av/include/media/OMXBuffer.h
+ *
+ * Data structure for buffer information. This is essentially a union of
+ * different buffer types.
+ */
+struct CodecBuffer {
+
+    /**
+     * There are four main types of buffers.
+     */
+    enum Type {
+        INVALID = 0,
+        PRESET,
+        SHARED_MEM,
+        ANW_BUFFER,
+        NATIVE_HANDLE
+    };
+
+    struct PresetAttributes {
+        uint32_t rangeLength;
+    };
+
+    union Attributes {
+        // if bufferType == PRESET
+        PresetAttributes preset;
+
+        // if bufferType == SHARED_MEM
+        SharedMemoryAttributes sharedMem;
+
+        // if bufferType == ANW_BUFFER
+        GraphicBufferAttributes anwBuffer;
+
+        // if bufferType == NATIVE_HANDLE
+        // No additional attributes.
+    };
+
+    /**
+     * Type of the buffer.
+     */
+    Type type;
+
+    /**
+     * Attributes that can be put into a union.
+     */
+    Attributes attr;
+
+    /**
+     * \p nativeHandle is used only for types SHARED_MEM, ANW_BUFFER and
+     * NATIVE_HANDLE.
+     *
+     * (A native handle cannot be put into a union as HIDL currently does not
+     * support discriminated unions.)
+     */
+    handle nativeHandle;
+
+};
+
+/**
+ * Ref: frameworks/av/include/media/IOMX.h
+ *
+ * Enumeration of port modes.
+ */
+enum PortMode {
+    PRESET_START = 0,
+    PRESET_BYTE_BUFFER,
+    PRESET_ANW_BUFFER,
+    PRESET_SECURE_BUFFER,
+    PRESET_END,
+    DYNAMIC_START = 100,
+    DYNAMIC_ANW_BUFFER,
+    DYNAMIC_NATIVE_HANDLE,
+    DYNAMIC_END
+};
+
