@@ -25,12 +25,12 @@ interface IWifiRttController {
   /**
    * Get the iface on which the RTT operations will be performed.
    *
-   * @return status Status of the operation.
+   * @return status WifiStatus of the operation.
    *         Possible status codes:
-   *         |StatusCode.SUCCESS|,
-   *         |StatusCode.ERROR_WIFI_RTT_CONTROLLER_INVALID|
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_RTT_CONTROLLER_INVALID|
    * @return boundIface HIDL interface object representing the iface if bound
    *         to a specific iface, null otherwise
    */
-  getBoundIface() generates (StatusCode status, IWifiIface boundIface);
+  getBoundIface() generates (WifiStatus status, IWifiIface boundIface);
 };

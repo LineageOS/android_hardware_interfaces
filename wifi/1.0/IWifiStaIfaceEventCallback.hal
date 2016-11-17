@@ -17,32 +17,6 @@
 package android.hardware.wifi@1.0;
 
 interface IWifiStaIfaceEventCallback {
-  /**
-   * Callback indicating that the requested packet filter was successfully
-   * installed.
-   */
-  oneway onInstallPacketFilterSuccess();
-
-  /**
-   * Callback indicating that installing a packet filter failed.
-   */
-  oneway onInstallPacketFilterFailure(FailureReason reason);
-
-  /**
-   * Callback indicating that a requested background scan was started.
-   */
-  oneway onBackgroundScanStarted();
-
-  /**
-   * Callback indicating that a requested background scan failed to start.
-   */
-  oneway onBackgroundScanStartFailure(FailureReason reason);
-
-  /**
-   * Callback indicating that a scan was stopped
-   */
-  oneway onBackgroundScanStopped();
-
  /**
   * Information elements contained within the |ScanResult| structure.
   * These elements correspond to the IEEE_802.11 standard.
@@ -102,6 +76,12 @@ interface IWifiStaIfaceEventCallback {
      */
     vec<ScanResult> results;
   };
+
+  /**
+   * Callback indicating that an ongoing background scan request has failed.
+   * The background scan needs to be restarted to continue scanning.
+   */
+  oneway onBackgroundScanFailure(CommandId cmdId);
 
   /**
    * Called for each received beacon/probe response for a scan with the
