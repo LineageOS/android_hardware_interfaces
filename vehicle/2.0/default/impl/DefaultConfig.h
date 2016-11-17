@@ -18,6 +18,7 @@
 #define android_hardware_vehicle_V2_0_impl_DefaultConfig_H_
 
 #include <android/hardware/vehicle/2.0/IVehicle.h>
+#include <vehicle_hal_manager/VehicleUtils.h>
 
 namespace android {
 namespace hardware {
@@ -35,23 +36,102 @@ const VehiclePropConfig kVehicleProperties[] = {
     },
 
     {
+        .prop = VehicleProperty::HVAC_POWER_ON,
+        .access = VehiclePropertyAccess::READ_WRITE,
+        .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+        .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
+        .supportedAreas = toInt(VehicleAreaZone::ROW_1)
+    },
+
+    {
+        .prop = VehicleProperty::HVAC_DEFROSTER,
+        .access = VehiclePropertyAccess::READ_WRITE,
+        .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+        .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
+        .supportedAreas =
+                VehicleAreaWindow::FRONT_WINDSHIELD
+                | VehicleAreaWindow::REAR_WINDSHIELD
+    },
+
+    {
+        .prop = VehicleProperty::HVAC_RECIRC_ON,
+        .access = VehiclePropertyAccess::READ_WRITE,
+        .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+        .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
+        .supportedAreas = toInt(VehicleAreaZone::ROW_1)
+    },
+
+    {
+        .prop = VehicleProperty::HVAC_AC_ON,
+        .access = VehiclePropertyAccess::READ_WRITE,
+        .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+        .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
+        .supportedAreas = toInt(VehicleAreaZone::ROW_1)
+    },
+
+    {
+        .prop = VehicleProperty::HVAC_AUTO_ON,
+        .access = VehiclePropertyAccess::READ_WRITE,
+        .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+        .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
+        .supportedAreas = toInt(VehicleAreaZone::ROW_1)
+    },
+
+    {
         .prop = VehicleProperty::HVAC_FAN_SPEED,
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
-        .supportedAreas = static_cast<int32_t>(
-            VehicleAreaZone::ROW_1_LEFT | VehicleAreaZone::ROW_1_RIGHT),
+        .supportedAreas = toInt(VehicleAreaZone::ROW_1),
         .areaConfigs = init_hidl_vec({
-                 VehicleAreaConfig {
-                     .areaId = toInt(VehicleAreaZone::ROW_2_LEFT),
-                     .minInt32Value = 1,
-                     .maxInt32Value = 7},
-                 VehicleAreaConfig {
-                     .areaId = toInt(VehicleAreaZone::ROW_1_RIGHT),
-                     .minInt32Value = 1,
-                     .maxInt32Value = 5,
-                 }
-             }),
+                VehicleAreaConfig {
+                    .areaId = toInt(VehicleAreaZone::ROW_1),
+                    .minInt32Value = 1,
+                    .maxInt32Value = 7
+                }})
+    },
+
+    {
+        .prop = VehicleProperty::HVAC_FAN_DIRECTION,
+        .access = VehiclePropertyAccess::READ_WRITE,
+        .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+        .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
+        .supportedAreas = toInt(VehicleAreaZone::ROW_1),
+    },
+
+    {
+        .prop = VehicleProperty::HVAC_TEMPERATURE_SET,
+        .access = VehiclePropertyAccess::READ_WRITE,
+        .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+        .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
+        .supportedAreas =
+                VehicleAreaZone::ROW_1_LEFT
+                | VehicleAreaZone::ROW_1_RIGHT,
+        .areaConfigs = init_hidl_vec({
+            VehicleAreaConfig {
+                .areaId = toInt(VehicleAreaZone::ROW_1_LEFT),
+                .minFloatValue = 16,
+                .maxFloatValue = 32,
+            },
+            VehicleAreaConfig {
+                .areaId = toInt(VehicleAreaZone::ROW_1_RIGHT),
+                .minFloatValue = 16,
+                .maxFloatValue = 32,
+            }})
+    },
+
+    {
+        .prop = VehicleProperty::NIGHT_MODE,
+        .access = VehiclePropertyAccess::READ,
+        .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+        .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
+    },
+
+    {
+        .prop = VehicleProperty::GEAR_SELECTION,
+        .access = VehiclePropertyAccess::READ,
+        .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+        .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
     },
 
     {
