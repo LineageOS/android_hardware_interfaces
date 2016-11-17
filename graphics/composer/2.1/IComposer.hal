@@ -16,7 +16,7 @@
 
 package android.hardware.graphics.composer@2.1;
 
-import android.hardware.graphics.allocator@2.0::PixelFormat;
+import android.hardware.graphics.common@1.0;
 import IComposerCallback;
 
 interface IComposer {
@@ -845,7 +845,7 @@ interface IComposer {
      */
 
     /*
-     * Asynchonously sets the position of a cursor layer.
+     * Asynchronously sets the position of a cursor layer.
      *
      * Prior to validateDisplay, a layer may be marked as Composition::CURSOR.
      * If validation succeeds (i.e., the device does not request a composition

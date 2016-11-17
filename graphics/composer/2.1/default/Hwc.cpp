@@ -37,7 +37,12 @@ namespace composer {
 namespace V2_1 {
 namespace implementation {
 
-using android::hardware::graphics::allocator::V2_0::PixelFormat;
+using android::hardware::graphics::common::V1_0::PixelFormat;
+using android::hardware::graphics::common::V1_0::Transform;
+using android::hardware::graphics::common::V1_0::Dataspace;
+using android::hardware::graphics::common::V1_0::ColorMode;
+using android::hardware::graphics::common::V1_0::ColorTransform;
+using android::hardware::graphics::common::V1_0::Hdr;
 
 namespace {
 

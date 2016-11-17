@@ -50,12 +50,12 @@ cc_library_shared {
         "libhwbinder",
         "libutils",
         "libcutils",
-        "android.hardware.graphics.allocator@2.0",
+        "android.hardware.graphics.common@1.0",
     ],
     export_shared_lib_headers: [
         "libhidl",
         "libhwbinder",
         "libutils",
-        "android.hardware.graphics.allocator@2.0",
+        "android.hardware.graphics.common@1.0",
     ],
 }
