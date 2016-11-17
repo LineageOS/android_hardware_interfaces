@@ -213,37 +213,42 @@ interface IWifiStaIface extends IWifiIface {
    *
    * @param callback An instance of the |IWifiStaIfaceEventCallback| HIDL interface
    *        object.
-   * @return status Status of the operation.
+   * @return status WifiStatus of the operation.
    *         Possible status codes:
-   *         |StatusCode.SUCCESS|,
-   *         |StatusCode.ERROR_WIFI_IFACE_INVALID|
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|
    */
   registerEventCallback(IWifiStaIfaceEventCallback callback)
-      generates (StatusCode status);
+      generates (WifiStatus status);
 
   /**
    * Get the capabilities supported by this STA iface.
    *
-   * @return status Status of the operation.
+   * @return status WifiStatus of the operation.
    *         Possible status codes:
-   *         |StatusCode.SUCCESS|,
-   *         |StatusCode.ERROR_WIFI_IFACE_INVALID|
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
    * @return capabilities Bitset of |StaIfaceCapabilityMask| values.
    */
-  getCapabilities() generates (StatusCode status, uint64_t capabilities);
+  getCapabilities() generates (WifiStatus status, uint64_t capabilities);
 
   /**
    * Used to query additional information about the chip's APF capabilities.
    * Will fail if |StaIfaceCapabilityMask.APF| is not set.
    *
-   * @return status Status of the operation.
+   * @return status WifiStatus of the operation.
    *         Possible status codes:
-   *         |StatusCode.SUCCESS|,
-   *         |StatusCode.ERROR_WIFI_IFACE_INVALID|
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
    * @return capabilities Instance of |ApfPacketFilterCapabilities|.
    */
   getApfPacketFilterCapabilities()
-      generates (StatusCode status, ApfPacketFilterCapabilities capabilities);
+      generates (WifiStatus status, ApfPacketFilterCapabilities capabilities);
 
   /**
    * Installs an APF program on this iface, replacing an existing
@@ -252,26 +257,33 @@ interface IWifiStaIface extends IWifiIface {
    *
    * @param cmdId command Id to use for this invocation.
    * @param APF Program to be set.
-   * @return status Status of the operation.
+   * @return status WifiStatus of the operation.
    *         Possible status codes:
-   *         |StatusCode.SUCCESS|,
-   *         |StatusCode.ERROR_WIFI_IFACE_INVALID|
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_INVALID_ARGS|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
    */
   installApfPacketFilter(CommandId cmdId, vec<uint8_t> program)
-      generates (StatusCode status);
+      generates (WifiStatus status);
 
   /**
    * Used to query additional information about the chip's APF capabilities.
    * Will fail if |StaIfaceCapabilityMask.BACKGROUND_SCAN| is not set.
    *
-   * @return status Status of the operation.
+   * @return status WifiStatus of the operation.
    *         Possible status codes:
-   *         |StatusCode.SUCCESS|,
-   *         |StatusCode.ERROR_WIFI_IFACE_INVALID|
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
    * @return capabilities Instance of |BackgroundScanCapabilities|.
    */
   getBackgroundScanCapabilities()
-      generates (StatusCode status, BackgroundScanCapabilities capabilities);
+      generates (WifiStatus status, BackgroundScanCapabilities capabilities);
 
   /**
    * Start a background scan using the given cmdId as an identifier. Only one
@@ -301,22 +313,28 @@ interface IWifiStaIface extends IWifiIface {
    *
    * @param cmdId command Id to use for this invocation.
    * @params Background scan parameters.
-   * @return status Status of the operation.
+   * @return status WifiStatus of the operation.
    *         Possible status codes:
-   *         |StatusCode.SUCCESS|,
-   *         |StatusCode.ERROR_WIFI_IFACE_INVALID|
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_INVALID_ARGS|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
    */
   startBackgroundScan(CommandId cmdId, BackgroundScanParameters params)
-      generates (StatusCode status);
+      generates (WifiStatus status);
 
   /**
    * Stop the background scan started.
    *
    * @param cmdId command Id corresponding to the request.
-   * @return status Status of the operation.
+   * @return status WifiStatus of the operation.
    *         Possible status codes:
-   *         |StatusCode.SUCCESS|,
-   *         |StatusCode.ERROR_WIFI_IFACE_INVALID|
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
    */
-  stopBackgroundScan(CommandId cmdId) generates (StatusCode status);
+  stopBackgroundScan(CommandId cmdId) generates (WifiStatus status);
 };
