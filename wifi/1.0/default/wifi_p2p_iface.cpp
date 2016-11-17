@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "wifi_p2p_iface.h"
-
 #include <android-base/logging.h>
 
+#include "hidl_return_util.h"
+#include "wifi_p2p_iface.h"
 #include "wifi_status_util.h"
 
 namespace android {
@@ -25,6 +25,7 @@ namespace hardware {
 namespace wifi {
 namespace V1_0 {
 namespace implementation {
+using hidl_return_util::validateAndCall;
 
 WifiP2pIface::WifiP2pIface(const std::string& ifname,
                            const std::weak_ptr<WifiLegacyHal> legacy_hal)
@@ -35,24 +36,30 @@ void WifiP2pIface::invalidate() {
   is_valid_ = false;
 }
 
+bool WifiP2pIface::isValid() {
+  return is_valid_;
+}
+
 Return<void> WifiP2pIface::getName(getName_cb hidl_status_cb) {
-  if (!is_valid_) {
-    hidl_status_cb(createWifiStatus(WifiStatusCode::ERROR_WIFI_IFACE_INVALID),
-                   hidl_string());
-    return Void();
-  }
-  hidl_status_cb(createWifiStatus(WifiStatusCode::SUCCESS), ifname_);
-  return Void();
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                         &WifiP2pIface::getNameInternal,
+                         hidl_status_cb);
 }
 
 Return<void> WifiP2pIface::getType(getType_cb hidl_status_cb) {
-  if (!is_valid_) {
-    hidl_status_cb(createWifiStatus(WifiStatusCode::ERROR_WIFI_IFACE_INVALID),
-                   IfaceType::P2P);
-    return Void();
-  }
-  hidl_status_cb(createWifiStatus(WifiStatusCode::SUCCESS), IfaceType::P2P);
-  return Void();
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                         &WifiP2pIface::getTypeInternal,
+                         hidl_status_cb);
+}
+
+std::pair<WifiStatus, std::string> WifiP2pIface::getNameInternal() {
+  return {createWifiStatus(WifiStatusCode::SUCCESS), ifname_};
+}
+
+std::pair<WifiStatus, IfaceType> WifiP2pIface::getTypeInternal() {
+  return {createWifiStatus(WifiStatusCode::SUCCESS), IfaceType::P2P};
 }
 
 }  // namespace implementation
