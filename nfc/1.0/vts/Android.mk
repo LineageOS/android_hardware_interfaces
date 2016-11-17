@@ -26,11 +26,6 @@ LOCAL_SRC_FILES := \
   NfcClientCallback.vts \
   types.vts \
 
-LOCAL_C_INCLUDES := \
-  android.hardware.nfc@1.0 \
-  system/core/base/include \
-  system/core/include \
-
 LOCAL_SHARED_LIBRARIES += \
   android.hardware.nfc@1.0 \
   libbase \
@@ -45,10 +40,6 @@ LOCAL_SHARED_LIBRARIES += \
   libvts_datatype \
   libvts_measurement \
   libvts_multidevice_proto \
-
-LOCAL_CFLAGS += -DENABLE_TREBLE
-
-LOCAL_STATIC_LIBRARIES := \
 
 LOCAL_PROTOC_OPTIMIZE_TYPE := full
 
