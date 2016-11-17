@@ -30,6 +30,7 @@ enum WifiStatusCode : uint32_t {
   ERROR_WIFI_RTT_CONTROLLER_INVALID,
   ERROR_NOT_SUPPORTED,
   ERROR_NOT_AVAILABLE,
+  ERROR_NOT_STARTED,
   ERROR_INVALID_ARGS,
   ERROR_UNKNOWN
 };
@@ -2886,4 +2887,179 @@ enum WifiDebugRingBufferVerboseLevel : uint32_t {
    * This will cause sever performance degradation.
    */
   EXCESSIVE = 3
+};
+
+/**
+ * Enum describing the fate of the TX packets.
+ */
+enum WifiDebugTxPacketFate : uint32_t {
+  /**
+   * Sent over air and ACKed.
+   */
+  ACKED,
+  /**
+   * Sent over air but not ACKed. (Normal for broadcast/multicast.)
+   */
+  SENT,
+  /**
+   * Queued within firmware, but not yet sent over air.
+   */
+  FW_QUEUED,
+  /**
+   * Dropped by firmware as invalid. E.g. bad source address, bad checksum,
+   * or invalid for current state.
+   */
+  FW_DROP_INVALID,
+  /**
+   * Dropped by firmware due to lack of buffer space.
+   */
+  FW_DROP_NOBUFS,
+  /**
+   * Dropped by firmware for any other reason. Includes frames that  were sent
+   * by driver to firmware, but unaccounted for by  firmware.
+   */
+  FW_DROP_OTHER,
+  /**
+   * Queued within driver, not yet sent to firmware.
+   */
+  DRV_QUEUED,
+  /**
+   * Dropped by driver as invalid. E.g. bad source address, or invalid for
+   * current state.
+   */
+  DRV_DROP_INVALID,
+  /**
+   * Dropped by driver due to lack of buffer space.
+   */
+  DRV_DROP_NOBUFS,
+  /**
+   * Dropped by driver for any other reason.
+   */
+  DRV_DROP_OTHER,
+};
+
+/**
+ * Enum describing the fate of the TX packets.
+ */
+enum WifiDebugRxPacketFate : uint32_t {
+  /**
+   * Valid and delivered to network stack (e.g., netif_rx()).
+   */
+  SUCCESS,
+  /**
+   * Queued within firmware, but not yet sent to driver.
+   */
+  FW_QUEUED,
+  /**
+   * Dropped by firmware due to host-programmable filters.
+   */
+  FW_DROP_FILTER,
+  /**
+   * Dropped by firmware as invalid. E.g. bad checksum, decrypt failed,
+   * or invalid for current state.
+   */
+  FW_DROP_INVALID,
+  /**
+   * Dropped by firmware due to lack of buffer space.
+   */
+  FW_DROP_NOBUFS,
+  /**
+   * Dropped by firmware for any other reason.
+   */
+  FW_DROP_OTHER,
+  /**
+   * Queued within driver, not yet delivered to network stack.
+   */
+  DRV_QUEUED,
+  /**
+   * Dropped by driver due to filter rules.
+   */
+  DRV_DROP_FILTER,
+  /**
+   * Dropped by driver as invalid. E.g. not permitted in current state.
+   */
+  DRV_DROP_INVALID,
+  /**
+   * Dropped by driver due to lack of buffer space.
+   */
+  DRV_DROP_NOBUFS,
+  /**
+   * Dropped by driver for any other reason.
+   */
+  DRV_DROP_OTHER,
+};
+
+/**
+ * Type of frame transmitted/received.
+ */
+enum WifiDebugPacketFateFrameType : uint32_t {
+  UNKNOWN,
+  ETHERNET_II,
+  MGMT_80211,
+};
+
+/**
+ * Information regarding the frame transmitted/received.
+ */
+struct WifiDebugPacketFateFrameInfo {
+  /**
+   * The type of MAC-layer frame that this frame_info holds.
+   * - For data frames, use FRAME_TYPE_ETHERNET_II.
+   * - For management frames, use FRAME_TYPE_80211_MGMT.
+   * - If the type of the frame is unknown, use FRAME_TYPE_UNKNOWN.
+   */
+  WifiDebugPacketFateFrameType frameType;
+  /**
+   * The number of bytes included in |frameContent|.
+   * If the frame  contents are missing (e.g. RX frame dropped in firmware),
+   * |frameLen| must be set to 0.
+   */
+  uint64_t frameLen;
+  /**
+   * Host clock when this frame was received by the driver (either  outbound
+   * from the host network stack, or inbound from the firmware).
+   * - The timestamp must be taken from a clock which includes time the host
+   *   spent suspended (e.g. ktime_get_boottime()).
+   * - If no host timestamp is available (e.g. RX frame was dropped in firmware),
+   *   this field must be set to 0.
+   */
+  TimeStampInUs driverTimestampUsec;
+  /**
+   * Firmware clock when this frame was received by the firmware
+   * (either outbound from the host, or inbound from a remote  station).
+   * - The timestamp must be taken from a clock which includes time firmware
+   *   spent suspended (if applicable).
+   * - If no firmware timestamp is available (e.g. TX frame was dropped by
+   *   driver), this field must be set to 0.
+   * - Consumers of |frameInfo| must not assume any synchronization between
+   *   driver and firmware clocks.
+   */
+  TimeStampInUs firmwareTimestampUsec;
+  /**
+   * Actual frame content. This is the raw bytes of the corresponding packet.
+   * - Should be provided for TX frames originated by the host.
+   * - Should be provided for RX frames received by the driver.
+   * - Optionally provided for TX frames originated by firmware.
+   *   (At discretion of HAL implementation.)
+   * - Optionally provided for RX frames dropped in firmware.
+   *   (At discretion of HAL implementation.)
+   * - If frame content is not provided, |frameLen| must be set to 0.
+   */
+  vec<uint8_t> frameContent;
+};
+
+/**
+ * Struct describing packet fate report for each Rx frame.
+ */
+struct WifiDebugTxPacketFateReport {
+  WifiDebugTxPacketFate fate;
+  WifiDebugPacketFateFrameInfo frameInf;
+};
+
+/**
+ * Struct describing packet fate report for each Rx frame.
+ */
+struct WifiDebugRxPacketFateReport {
+  WifiDebugRxPacketFate fate;
+  WifiDebugPacketFateFrameInfo frameInfo;
 };
