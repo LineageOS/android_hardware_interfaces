@@ -17,28 +17,19 @@
 package android.hardware.wifi@1.0;
 
 interface IWifiStaIfaceEventCallback {
- /**
-  * Information elements contained within the |ScanResult| structure.
-  * These elements correspond to the IEEE_802.11 standard.
-  */
-  struct InformationElement {
-    uint8_t id;
-    vec<uint8_t> data;
-  };
-
   /**
    * Structure describing all the information about a single access point seen
    * during the scan.
    */
   struct ScanResult {
-    int64_t timeStampInUs;
+    TimeStampInUs timeStampInUs;
     vec<uint8_t> ssid;
     Bssid bssid;
-    int8_t rssi;
+    Rssi rssi;
     WifiChannelInMhz frequency;
     uint16_t beaconPeriodInMs;
     uint16_t capability;
-    vec<InformationElement> informationElements;
+    vec<WifiInformationElement> informationElements;
   };
 
   /**

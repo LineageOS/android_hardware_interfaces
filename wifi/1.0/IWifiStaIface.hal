@@ -295,11 +295,11 @@ interface IWifiStaIface extends IWifiIface {
     LinkLayerIfaceStats iface;
     LinkLayerRadioStats radio;
     /**
-     * Timestamp for each stats sample.
+     * TimeStamp for each stats sample.
      * This is the absolute milliseconds from boot when these stats were
      * sampled.
      */
-    uint32_t timeStampInMs;
+    TimeStampInMs timeStampInMs;
   };
 
   /**
