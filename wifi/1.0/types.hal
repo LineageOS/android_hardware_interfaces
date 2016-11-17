@@ -51,7 +51,7 @@ enum IfaceType : uint32_t {
   AP,
   P2P,
   /**
-   * NAN control interface. Datapath support may be queried and created
+   * NAN control interface. Datapath support must be queried and created
    * through this interface.
    */
   NAN,
@@ -66,3 +66,10 @@ typedef uint32_t ChipId;
  * An identifier for a mode that the chip can be put in.
  */
 typedef uint32_t ChipModeId;
+
+/**
+ * A unique handle provided by the client to identify individual invocations of
+ * certain API's like |IWifiStaIface.startBackgroundScan|,
+ * |IWifiStaIface.installApfPacketFilter|, etc.
+ */
+typedef uint32_t CommandId;

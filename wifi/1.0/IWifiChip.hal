@@ -36,7 +36,7 @@ interface IWifiChip {
    * ChipIfaceCombination for examples.
    */
   struct ChipIfaceCombinationLimit {
-    vec<IfaceType> types; // Each IfaceType may occur at most once
+    vec<IfaceType> types; // Each IfaceType must occur at most once.
     uint32_t maxIfaces;
   };
 
@@ -89,7 +89,7 @@ interface IWifiChip {
    * the target combination is also satisfied. At that point new interfaces
    * satisfying only the target combination can be added (meaning the initial
    * combination limits will no longer satisfied). The addition of these new
-   * interfaces should not impact the existence of interfaces that satisfy both
+   * interfaces must not impact the existence of interfaces that satisfy both
    * combinations.
    *
    * For example, a chip with available combinations:
@@ -98,10 +98,10 @@ interface IWifiChip {
    * AP interface in place of one of the STAs then first one of the STA
    * interfaces must be removed and then the AP interface can be created after
    * the STA had been torn down. During this process the remaining STA and NAN
-   * interfaces should not be removed/recreated.
+   * interfaces must not be removed/recreated.
    *
    * If a chip does not support this kind of reconfiguration in this mode then
-   * the combinations should be separated into two separate modes. Before
+   * the combinations must be separated into two separate modes. Before
    * switching modes all interfaces will be torn down, the mode switch will be
    * enacted and when it completes the new interfaces will be brought up.
    */
