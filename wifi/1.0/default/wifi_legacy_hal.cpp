@@ -16,8 +16,8 @@
 
 #include <array>
 
-#include "failure_reason_util.h"
 #include "wifi_legacy_hal.h"
+#include "wifi_status_util.h"
 
 #include <android-base/logging.h>
 #include <cutils/properties.h>
@@ -188,7 +188,7 @@ wifi_error WifiLegacyHal::retrieveWlanInterfaceHandle() {
       global_handle_, &num_iface_handles, &iface_handles);
   if (status != WIFI_SUCCESS) {
     LOG(ERROR) << "Failed to enumerate interface handles: "
-               << LegacyErrorToString(status);
+               << legacyErrorToString(status);
     return status;
   }
   for (int i = 0; i < num_iface_handles; ++i) {
@@ -198,7 +198,7 @@ wifi_error WifiLegacyHal::retrieveWlanInterfaceHandle() {
         iface_handles[i], current_ifname.data(), current_ifname.size());
     if (status != WIFI_SUCCESS) {
       LOG(WARNING) << "Failed to get interface handle name: "
-                   << LegacyErrorToString(status);
+                   << legacyErrorToString(status);
       continue;
     }
     if (ifname_to_find == current_ifname.data()) {
