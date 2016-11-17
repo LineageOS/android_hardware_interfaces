@@ -57,6 +57,7 @@ class WifiChip : public IWifiChip {
   // All HIDL method implementations should check if the object is still marked
   // valid before processing them.
   void invalidate();
+  bool isValid();
 
   // HIDL methods exposed.
   Return<void> getId(getId_cb hidl_status_cb) override;
@@ -95,6 +96,37 @@ class WifiChip : public IWifiChip {
 
  private:
   void invalidateAndRemoveAllIfaces();
+
+  // Corresponding worker functions for the HIDL methods.
+  std::pair<WifiStatus, ChipId> getIdInternal();
+  WifiStatus registerEventCallbackInternal(
+      const sp<IWifiChipEventCallback>& event_callback);
+  std::pair<WifiStatus, std::vector<ChipMode>> getAvailableModesInternal();
+  WifiStatus configureChipInternal(uint32_t mode_id);
+  std::pair<WifiStatus, uint32_t> getModeInternal();
+  std::pair<WifiStatus, IWifiChip::ChipDebugInfo>
+  requestChipDebugInfoInternal();
+  std::pair<WifiStatus, std::vector<uint8_t>> requestDriverDebugDumpInternal();
+  std::pair<WifiStatus, std::vector<uint8_t>>
+  requestFirmwareDebugDumpInternal();
+  std::pair<WifiStatus, sp<IWifiApIface>> createApIfaceInternal();
+  std::pair<WifiStatus, std::vector<hidl_string>> getApIfaceNamesInternal();
+  std::pair<WifiStatus, sp<IWifiApIface>> getApIfaceInternal(
+      const hidl_string& ifname);
+  std::pair<WifiStatus, sp<IWifiNanIface>> createNanIfaceInternal();
+  std::pair<WifiStatus, std::vector<hidl_string>> getNanIfaceNamesInternal();
+  std::pair<WifiStatus, sp<IWifiNanIface>> getNanIfaceInternal(
+      const hidl_string& ifname);
+  std::pair<WifiStatus, sp<IWifiP2pIface>> createP2pIfaceInternal();
+  std::pair<WifiStatus, std::vector<hidl_string>> getP2pIfaceNamesInternal();
+  std::pair<WifiStatus, sp<IWifiP2pIface>> getP2pIfaceInternal(
+      const hidl_string& ifname);
+  std::pair<WifiStatus, sp<IWifiStaIface>> createStaIfaceInternal();
+  std::pair<WifiStatus, std::vector<hidl_string>> getStaIfaceNamesInternal();
+  std::pair<WifiStatus, sp<IWifiStaIface>> getStaIfaceInternal(
+      const hidl_string& ifname);
+  std::pair<WifiStatus, sp<IWifiRttController>> createRttControllerInternal(
+      const sp<IWifiIface>& bound_iface);
 
   ChipId chip_id_;
   std::weak_ptr<WifiLegacyHal> legacy_hal_;
