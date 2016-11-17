@@ -19,6 +19,7 @@
 
 #include <functional>
 #include <thread>
+#include <vector>
 
 #include <hardware_legacy/wifi_hal.h>
 
@@ -48,8 +49,8 @@ class WifiLegacyHal {
   // Wrappers for all the functions in the legacy HAL function table.
   std::pair<wifi_error, std::string> getDriverVersion();
   std::pair<wifi_error, std::string> getFirmwareVersion();
-  std::pair<wifi_error, std::vector<char>> requestDriverMemoryDump();
-  std::pair<wifi_error, std::vector<char>> requestFirmwareMemoryDump();
+  std::pair<wifi_error, std::vector<uint8_t>> requestDriverMemoryDump();
+  std::pair<wifi_error, std::vector<uint8_t>> requestFirmwareMemoryDump();
 
  private:
   static const uint32_t kMaxVersionStringLength;

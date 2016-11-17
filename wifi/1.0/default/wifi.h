@@ -39,23 +39,34 @@ class Wifi : public IWifi {
  public:
   Wifi();
 
+  bool isValid();
+
   // HIDL methods exposed.
   Return<void> registerEventCallback(
-      const sp<IWifiEventCallback>& callback) override;
+      const sp<IWifiEventCallback>& event_callback,
+      registerEventCallback_cb hidl_status_cb) override;
   Return<bool> isStarted() override;
-  Return<void> start() override;
-  Return<void> stop() override;
-  Return<void> getChipIds(getChipIds_cb cb) override;
-  Return<void> getChip(ChipId chip_id, getChip_cb cb) override;
+  Return<void> start(start_cb hidl_status_cb) override;
+  Return<void> stop(stop_cb hidl_status_cb) override;
+  Return<void> getChipIds(getChipIds_cb hidl_status_cb) override;
+  Return<void> getChip(ChipId chip_id, getChip_cb hidl_status_cb) override;
 
  private:
   enum class RunState { STOPPED, STARTED, STOPPING };
+
+  // Corresponding worker functions for the HIDL methods.
+  WifiStatus registerEventCallbackInternal(
+      const sp<IWifiEventCallback>& event_callback);
+  WifiStatus startInternal();
+  WifiStatus stopInternal();
+  std::pair<WifiStatus, std::vector<ChipId>> getChipIdsInternal();
+  std::pair<WifiStatus, sp<IWifiChip>> getChipInternal(ChipId chip_id);
 
   // Instance is created in this root level |IWifi| HIDL interface object
   // and shared with all the child HIDL interface objects.
   std::shared_ptr<WifiLegacyHal> legacy_hal_;
   RunState run_state_;
-  std::vector<sp<IWifiEventCallback>> callbacks_;
+  std::vector<sp<IWifiEventCallback>> event_callbacks_;
   sp<WifiChip> chip_;
 
   DISALLOW_COPY_AND_ASSIGN(Wifi);

@@ -36,7 +36,7 @@ interface IWifiChip {
    * ChipIfaceCombination for examples.
    */
   struct ChipIfaceCombinationLimit {
-    vec<IfaceType> types; // Each IfaceType may occur at most once
+    vec<IfaceType> types; // Each IfaceType must occur at most once.
     uint32_t maxIfaces;
   };
 
@@ -85,11 +85,11 @@ interface IWifiChip {
    * [{STA} <=1, {AP} <= 1].
    *
    * When switching between two available combinations it is expected that
-   * interfaces only supported by the initial combination will be removed until
+   * interfaces only supported by the initial combination must be removed until
    * the target combination is also satisfied. At that point new interfaces
    * satisfying only the target combination can be added (meaning the initial
    * combination limits will no longer satisfied). The addition of these new
-   * interfaces should not impact the existence of interfaces that satisfy both
+   * interfaces must not impact the existence of interfaces that satisfy both
    * combinations.
    *
    * For example, a chip with available combinations:
@@ -98,12 +98,12 @@ interface IWifiChip {
    * AP interface in place of one of the STAs then first one of the STA
    * interfaces must be removed and then the AP interface can be created after
    * the STA had been torn down. During this process the remaining STA and NAN
-   * interfaces should not be removed/recreated.
+   * interfaces must not be removed/recreated.
    *
    * If a chip does not support this kind of reconfiguration in this mode then
-   * the combinations should be separated into two separate modes. Before
-   * switching modes all interfaces will be torn down, the mode switch will be
-   * enacted and when it completes the new interfaces will be brought up.
+   * the combinations must be separated into two separate modes. Before
+   * switching modes all interfaces must be torn down, the mode switch must be
+   * enacted and when it completes the new interfaces must be brought up.
    */
   struct ChipMode {
     /**
@@ -119,191 +119,350 @@ interface IWifiChip {
   };
 
   /**
+   * Information about the version of the driver and firmware running this chip.
+   *
+   * The information in these ASCII strings are vendor specific and does not
+   * need to follow any particular format. It may be dumped as part of the bug
+   * report.
+   */
+  struct ChipDebugInfo {
+    string driverDescription;
+    string firmwareDescription;
+  };
+
+  /**
+   * Capabilities exposed by this chip.
+   */
+  enum ChipCapabilityMask : uint32_t {
+    /**
+     * Memory dump of Firmware.
+     */
+    DEBUG_MEMORY_FIRMWARE_DUMP_SUPPORTED = 1 << 0,
+    /**
+     * Memory dump of Driver.
+     */
+    DEBUG_MEMORY_DRIVER_DUMP_SUPPORTED = 1 << 1,
+    /**
+     * Connectivity events reported via debug ring buffer.
+     */
+    DEBUG_RING_BUFFER_CONNECT_EVENT_SUPPORTED = 1 << 2,
+    /**
+     * Power events reported via debug ring buffer.
+     */
+    DEBUG_RING_BUFFER_POWER_EVENT_SUPPORTED = 1 << 3,
+    /**
+     * Wakelock events reported via debug ring buffer.
+     */
+    DEBUG_RING_BUFFER_WAKELOCK_EVENT_SUPPORTED = 1 << 4,
+    /**
+     * Vendor data reported via debug ring buffer.
+     * This mostly contains firmware event logs.
+     */
+    DEBUG_RING_BUFFER_VENDOR_DATA_SUPPORTED = 1 << 5,
+    /**
+     * Host wake reasons stats collection.
+     */
+    DEBUG_HOST_WAKE_REASON_STATS = 1 << 6,
+  };
+
+  /**
    * Get the id assigned to this chip.
    *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|
    * @return id Assigned chip Id.
    */
-  getId() generates (ChipId id);
+  getId() generates (WifiStatus status, ChipId id);
 
   /**
    * Requests notifications of significant events on this chip. Multiple calls
-   * to this will register multiple callbacks each of which will receive all
+   * to this must register multiple callbacks each of which must receive all
    * events.
    *
    * @param callback An instance of the |IWifiChipEventCallback| HIDL interface
    *        object.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|
    */
-  oneway registerEventCallback(IWifiChipEventCallback callback);
+  registerEventCallback(IWifiChipEventCallback callback) generates (WifiStatus status);
+
+  /**
+   * Get the capabilities supported by this chip.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   * @return capabilities Bitset of |ChipCapabilityMask| values.
+   */
+  getCapabilities() generates (WifiStatus status, uint32_t capabilities);
 
   /**
    * Get the set of operation modes that the chip supports.
    *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|
    * @return modes List of modes supported by the device.
    */
-  getAvailableModes() generates (vec<ChipMode> modes);
+  getAvailableModes() generates (WifiStatus status, vec<ChipMode> modes);
 
   /**
    * Reconfigure the Chip.
-   * Must trigger |IWifiChipEventCallback.onChipReconfigured| on sucess,
-   * or |IWifiChipEventCallback.onChipReconfigureFailure| on failure.
+   * Any existing |IWifiIface| objects must be marked invalid after this call.
+   * If this fails then the chips is now in an undefined state and
+   * configureChip must be called again.
+   * Must trigger |IWifiChipEventCallback.onChipReconfigured| on success.
+   * Must trigger |IWifiEventCallback.onFailure| on failure.
    *
-   * @param modeId The mode that the chip should switch to, corresponding to the
+   * @param modeId The mode that the chip must switch to, corresponding to the
    *        id property of the target ChipMode.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
    */
-  oneway configureChip(ChipModeId modeId);
+  configureChip(ChipModeId modeId) generates (WifiStatus status);
 
   /**
    * Get the current mode that the chip is in.
    *
    * @return modeId The mode that the chip is currently configured to,
    *         corresponding to the id property of the target ChipMode.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|
    */
-  getMode() generates (ChipModeId modeId);
+  getMode() generates (WifiStatus status, ChipModeId modeId);
 
   /**
    * Request information about the chip.
-   * Must trigger |IWifiChipEventCallback.onChipDebugInfoAvailable| on sucess,
-   * or |IWifiChipEventCallback.onChipDebugInfoFailure| on failure.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   * @return chipDebugInfo Instance of |ChipDebugInfo|.
    */
-  oneway requestChipDebugInfo();
+  requestChipDebugInfo() generates (WifiStatus status, ChipDebugInfo chipDebugInfo);
 
   /**
    * Request vendor debug info from the driver.
-   * Must trigger |IWifiChipEventCallback.onDriverDebugDumpAvailable| on success,
-   * or |IWifiChipEventCallback.onDriverDebugDumpFailure| on failure.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   * @param blob Vector of bytes retrieved from the driver.
    */
-  oneway requestDriverDebugDump();
+  requestDriverDebugDump() generates (WifiStatus status, vec<uint8_t> blob);
 
   /**
    * Request vendor debug info from the firmware.
-   * Must trigger |IWifiChipEventCallback.onFirmwareDebugDumpAvailable| on
-   * success, or |IWifiChipEventCallback.onFirmwareDebugDumpFailure| on failure.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   * @param blob Vector of bytes retrieved from the driver.
    */
-  oneway requestFirmwareDebugDump();
+  requestFirmwareDebugDump() generates (WifiStatus status, vec<uint8_t> blob);
 
   /**
    * Create an AP iface on the chip.
    *
    * Depending on the mode the chip is configured in, the interface creation
-   * may fail if we've already reached the maximum allowed
-   * (specified in |ChipIfaceCombination|) number of ifaces of the AP type.
+   * may fail (code: |ERROR_NOT_SUPPORTED|) if we've already reached the maximum
+   * allowed (specified in |ChipIfaceCombination|) number of ifaces of the AP
+   * type.
    *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|
    * @return iface HIDL interface object representing the iface if
    *         successful, null otherwise.
    */
-  createApIface() generates (IWifiApIface iface);
+  createApIface() generates (WifiStatus status, IWifiApIface iface);
 
   /**
    * List all the AP iface names configured on the chip.
    * The corresponding |IWifiApIface| object for any iface are
    * retrieved using |getApIface| method.
    *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|
    * @return ifnames List of all AP iface names on the chip.
    */
-  getApIfaceNames() generates (vec<string> ifnames);
+  getApIfaceNames() generates (WifiStatus status, vec<string> ifnames);
 
   /**
    * Gets a HIDL interface object for the AP Iface corresponding
    * to the provided ifname.
    *
    * @param ifname Name of the iface.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|
    * @return iface HIDL interface object representing the iface if
    *         it exists, null otherwise.
    */
-  getApIface(string ifname) generates (IWifiApIface iface);
+  getApIface(string ifname) generates (WifiStatus status, IWifiApIface iface);
 
   /**
    * Create a NAN iface on the chip.
    *
    * Depending on the mode the chip is configured in, the interface creation
-   * may fail if we've already reached the maximum allowed
-   * (specified in |ChipIfaceCombination|) number of ifaces of the NAN type.
+   * may fail (code: |ERROR_NOT_SUPPORTED|) if we've already reached the maximum
+   * allowed (specified in |ChipIfaceCombination|) number of ifaces of the NAN
+   * type.
    *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|
    * @return iface HIDL interface object representing the iface if
    *         successful, null otherwise.
    */
-  createNanIface() generates (IWifiNanIface iface);
+  createNanIface() generates (WifiStatus status, IWifiNanIface iface);
 
   /**
    * List all the NAN iface names configured on the chip.
    * The corresponding |IWifiNanIface| object for any iface are
    * retrieved using |getNanIface| method.
    *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|
    * @return ifnames List of all NAN iface names on the chip.
    */
-  getNanIfaceNames() generates (vec<string> ifnames);
+  getNanIfaceNames() generates (WifiStatus status, vec<string> ifnames);
 
   /**
    * Gets a HIDL interface object for the NAN Iface corresponding
    * to the provided ifname.
    *
    * @param ifname Name of the iface.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|
    * @return iface HIDL interface object representing the iface if
    *         it exists, null otherwise.
    */
-  getNanIface(string ifname) generates (IWifiNanIface iface);
+  getNanIface(string ifname) generates (WifiStatus status, IWifiNanIface iface);
 
   /**
    * Create a P2P iface on the chip.
    *
    * Depending on the mode the chip is configured in, the interface creation
-   * may fail if we've already reached the maximum allowed
-   * (specified in |ChipIfaceCombination|) number of ifaces of the P2P type.
+   * may fail (code: |ERROR_NOT_SUPPORTED|) if we've already reached the maximum
+   * allowed (specified in |ChipIfaceCombination|) number of ifaces of the P2P
+   * type.
    *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|
    * @return iface HIDL interface object representing the iface if
    *         successful, null otherwise.
    */
-  createP2pIface() generates (IWifiP2pIface iface);
+  createP2pIface() generates (WifiStatus status, IWifiP2pIface iface);
 
   /**
    * List all the P2P iface names configured on the chip.
    * The corresponding |IWifiP2pIface| object for any iface are
    * retrieved using |getP2pIface| method.
    *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|
    * @return ifnames List of all P2P iface names on the chip.
    */
-  getP2pIfaceNames() generates (vec<string> ifnames);
+  getP2pIfaceNames() generates (WifiStatus status, vec<string> ifnames);
 
   /**
    * Gets a HIDL interface object for the P2P Iface corresponding
    * to the provided ifname.
    *
    * @param ifname Name of the iface.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|
    * @return iface HIDL interface object representing the iface if
    *         it exists, null otherwise.
    */
-  getP2pIface(string ifname) generates (IWifiP2pIface iface);
+  getP2pIface(string ifname) generates (WifiStatus status, IWifiP2pIface iface);
 
   /**
    * Create an STA iface on the chip.
    *
    * Depending on the mode the chip is configured in, the interface creation
-   * may fail if we've already reached the maximum allowed
-   * (specified in |ChipIfaceCombination|) number of ifaces of the STA type.
+   * may fail (code: |ERROR_NOT_SUPPORTED|) if we've already reached the maximum
+   * allowed (specified in |ChipIfaceCombination|) number of ifaces of the STA
+   * type.
    *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|
    * @return iface HIDL interface object representing the iface if
    *         successful, null otherwise.
    */
-  createStaIface() generates (IWifiStaIface iface);
+  createStaIface() generates (WifiStatus status, IWifiStaIface iface);
 
   /**
    * List all the STA iface names configured on the chip.
    * The corresponding |IWifiStaIface| object for any iface are
    * retrieved using |getStaIface| method.
    *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|
    * @return ifnames List of all STA iface names on the chip.
    */
-  getStaIfaceNames() generates (vec<string> ifnames);
+  getStaIfaceNames() generates (WifiStatus status, vec<string> ifnames);
 
   /**
    * Gets a HIDL interface object for the STA Iface corresponding
    * to the provided ifname.
    *
    * @param ifname Name of the iface.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|
    * @return iface HIDL interface object representing the iface if
    *         it exists, null otherwise.
    */
-  getStaIface(string ifname) generates (IWifiStaIface iface);
+  getStaIface(string ifname) generates (WifiStatus status, IWifiStaIface iface);
 
   /**
    * Create a RTTController instance.
@@ -316,6 +475,109 @@ interface IWifiChip {
    *
    * @param boundIface HIDL interface object representing the iface if
    *        the responder must be bound to a specific iface, null otherwise.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|
    */
-  createRttController(IWifiIface boundIface) generates (IWifiRttController rtt);
+  createRttController(IWifiIface boundIface)
+      generates (WifiStatus status, IWifiRttController rtt);
+
+  /**
+   * WiFi debug ring buffer life cycle is as follow:
+   * - At initialization time, framework must call |getDebugRingBuffersStatus|.
+   *   to obtain the names and list of supported ring buffers.
+   *   The driver may expose several different rings each holding a different
+   *   type of data (connection events, power events, etc).
+   * - When WiFi operations start framework must call
+   *   |startLoggingToDebugRingBuffer| to trigger log collection for a specific
+   *   ring. The vebose level for each ring buffer can be specified in this API.
+   * - During wifi operations, driver must periodically report per ring data to
+   *   framework by invoking the
+   *   |IWifiChipEventCallback.onDebugRingBuffer<Type>EntriesAvailable| callback.
+   * - When capturing a bug report, framework must indicate to driver that all
+   *   the data has to be uploaded urgently by calling
+   *   |forceDumpToDebugRingBuffer|.
+   *
+   * The data uploaded by driver must be stored by framework in separate files,
+   * with one stream of file per ring. Framework must store the files in pcapng
+   * format, allowing for easy merging and parsing with network analyzer tools.
+   * TODO: Since we're not longer dumping out the raw data, storing in separate
+   * pcapng files for parsing later must not work anymore.
+   */
+  /**
+   * API to get the status of all ring buffers supported by driver.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.NOT_AVAILABLE|,
+   *         |WifiStatusCode.UNKNOWN|
+   * @return ringBuffers Vector of |WifiDebugRingBufferStatus| corresponding to the
+   *         status of each ring bufffer on the device.
+   */
+  getDebugRingBuffersStatus() generates (WifiStatus status,
+                                         vec<WifiDebugRingBufferStatus> ringBuffers);
+
+  /**
+   * API to trigger the debug data collection.
+   *
+   * @param ringName represent the name of the ring for which data collection
+   *        shall start. This can be retrieved via the corresponding
+   *        |WifiDebugRingBufferStatus|.
+   * @parm maxIntervalInSec Maximum interval in seconds for driver to invoke
+   *       |onDebugRingBufferData|, ignore if zero.
+   * @parm minDataSizeInBytes: Minimum data size in buffer for driver to invoke
+   *       |onDebugRingBufferData|, ignore if zero.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.NOT_AVAILABLE|,
+   *         |WifiStatusCode.UNKNOWN|
+   */
+  startLoggingToDebugRingBuffer(string ringName,
+                                WifiDebugRingBufferVerboseLevel verboseLevel,
+                                uint32_t maxIntervalInSec,
+                                uint32_t minDataSizeInBytes)
+      generates (WifiStatus status);
+
+  /**
+   * API to force dump data into the corresponding ring buffer.
+   * This is to be invoked during bugreport collection.
+   *
+   * @param ringName represent the name of the ring for which data collection
+   *        shall be forced. This can be retrieved via the corresponding
+   *        |WifiDebugRingBufferStatus|.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_STARTED|,
+   *         |WifiStatusCode.NOT_AVAILABLE|,
+   *         |WifiStatusCode.UNKNOWN|
+   */
+  forceDumpToDebugRingBuffer(string ringName) generates (WifiStatus status);
+
+  /**
+   * API to retrieve the wifi wake up reason stats for debugging.
+   * The driver is expected to start maintaining these stats once the chip
+   * is configured using |configureChip|. These stats must be reset whenever
+   * the chip is reconfigured or the HAL is stopped.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.NOT_AVAILABLE|,
+   *         |WifiStatusCode.UNKNOWN|
+   * @return stats Instance of |WifiDebugHostWakeReasonStats|.
+   */
+  getDebugHostWakeReasonStats()
+      generates (WifiStatus status, WifiDebugHostWakeReasonStats stats);
 };

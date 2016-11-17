@@ -13,40 +13,6 @@ intermediates := $(local-generated-sources-dir)
 HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
 
 #
-# Build types.hal (CommandFailureReason)
-#
-GEN := $(intermediates)/android/hardware/wifi/1.0/CommandFailureReason.java
-$(GEN): $(HIDL)
-$(GEN): PRIVATE_HIDL := $(HIDL)
-$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
-$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
-$(GEN): PRIVATE_CUSTOM_TOOL = \
-        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
-        android.hardware.wifi@1.0::types.CommandFailureReason
-
-$(GEN): $(LOCAL_PATH)/types.hal
-	$(transform-generated-source)
-LOCAL_GENERATED_SOURCES += $(GEN)
-
-#
-# Build types.hal (FailureReason)
-#
-GEN := $(intermediates)/android/hardware/wifi/1.0/FailureReason.java
-$(GEN): $(HIDL)
-$(GEN): PRIVATE_HIDL := $(HIDL)
-$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
-$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
-$(GEN): PRIVATE_CUSTOM_TOOL = \
-        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
-        android.hardware.wifi@1.0::types.FailureReason
-
-$(GEN): $(LOCAL_PATH)/types.hal
-	$(transform-generated-source)
-LOCAL_GENERATED_SOURCES += $(GEN)
-
-#
 # Build types.hal (IfaceType)
 #
 GEN := $(intermediates)/android/hardware/wifi/1.0/IfaceType.java
@@ -58,6 +24,1995 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
         -Ljava -randroid.hardware:hardware/interfaces \
         android.hardware.wifi@1.0::types.IfaceType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanAvailDuration)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanAvailDuration.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanAvailDuration
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanBeaconSdfPayloadInd)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanBeaconSdfPayloadInd.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanBeaconSdfPayloadInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanBeaconSdfPayloadReceive)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanBeaconSdfPayloadReceive.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanBeaconSdfPayloadReceive
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanBeaconSdfPayloadRequest)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanBeaconSdfPayloadRequest.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanBeaconSdfPayloadRequest
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanCapabilitiesResponse)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanCapabilitiesResponse.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanCapabilitiesResponse
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanCapabilitiesResponseMsg)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanCapabilitiesResponseMsg.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanCapabilitiesResponseMsg
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanChannelIndex)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanChannelIndex.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanChannelIndex
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanConfigRequest)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanConfigRequest.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanConfigRequest
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanConnectionType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanConnectionType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanConnectionType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathAppInfo)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDataPathAppInfo.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDataPathAppInfo
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathCfg)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDataPathCfg.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDataPathCfg
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathChannelCfg)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDataPathChannelCfg.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDataPathChannelCfg
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathConfirmInd)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDataPathConfirmInd.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDataPathConfirmInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathEndInd)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDataPathEndInd.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDataPathEndInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathEndRequest)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDataPathEndRequest.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDataPathEndRequest
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathIndicationResponse)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDataPathIndicationResponse.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDataPathIndicationResponse
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathInitiatorRequest)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDataPathInitiatorRequest.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDataPathInitiatorRequest
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathRequestInd)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDataPathRequestInd.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDataPathRequestInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathResponse)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDataPathResponse.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDataPathResponse
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathResponseCode)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDataPathResponseCode.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDataPathResponseCode
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathResponseMsg)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDataPathResponseMsg.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDataPathResponseMsg
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDeviceRole)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDeviceRole.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDeviceRole
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDisabledInd)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDisabledInd.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDisabledInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDiscEngEventInd)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDiscEngEventInd.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDiscEngEventInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDiscEngEventType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDiscEngEventType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDiscEngEventType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanEnableRequest)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanEnableRequest.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanEnableRequest
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanFollowupInd)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanFollowupInd.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanFollowupInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanFurtherAvailabilityChannel)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanFurtherAvailabilityChannel.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanFurtherAvailabilityChannel
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanMatchAlg)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanMatchAlg.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanMatchAlg
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanMatchExpiredInd)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanMatchExpiredInd.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanMatchExpiredInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanMatchInd)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanMatchInd.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanMatchInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanMaxSize)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanMaxSize.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanMaxSize
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanPublishCancelRequest)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanPublishCancelRequest.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanPublishCancelRequest
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanPublishRequest)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanPublishRequest.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanPublishRequest
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanPublishResponse)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanPublishResponse.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanPublishResponse
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanPublishResponseMsg)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanPublishResponseMsg.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanPublishResponseMsg
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanPublishTerminatedInd)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanPublishTerminatedInd.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanPublishTerminatedInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanPublishType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanPublishType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanPublishType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanReceiveVendorSpecificAttribute)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanReceiveVendorSpecificAttribute.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanReceiveVendorSpecificAttribute
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanResponseMsgHeader)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanResponseMsgHeader.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanResponseMsgHeader
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanResponseType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanResponseType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanResponseType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanSocialChannelScanParams)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanSocialChannelScanParams.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanSocialChannelScanParams
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanSrfIncludeType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanSrfIncludeType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanSrfIncludeType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanSrfType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanSrfType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanSrfType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanStatusType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanStatusType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanStatusType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanSubscribeCancelRequest)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanSubscribeCancelRequest.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanSubscribeCancelRequest
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanSubscribeRequest)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanSubscribeRequest.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanSubscribeRequest
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanSubscribeResponse)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanSubscribeResponse.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanSubscribeResponse
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanSubscribeResponseMsg)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanSubscribeResponseMsg.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanSubscribeResponseMsg
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanSubscribeTerminatedInd)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanSubscribeTerminatedInd.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanSubscribeTerminatedInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanSubscribeType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanSubscribeType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanSubscribeType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanTransmitFollowupInd)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanTransmitFollowupInd.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanTransmitFollowupInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanTransmitFollowupRequest)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanTransmitFollowupRequest.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanTransmitFollowupRequest
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanTransmitVendorSpecificAttribute)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanTransmitVendorSpecificAttribute.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanTransmitVendorSpecificAttribute
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanTransmitWindowType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanTransmitWindowType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanTransmitWindowType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanTxPriority)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanTxPriority.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanTxPriority
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanTxType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanTxType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanTxType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanVsaRxFrameMask)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanVsaRxFrameMask.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanVsaRxFrameMask
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttBw)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttBw.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttBw
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttCapabilities)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttCapabilities.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttCapabilities
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttChannelMap)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttChannelMap.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttChannelMap
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttConfig)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttConfig.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttConfig
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttDebugFormat)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttDebugFormat.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttDebugFormat
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttDebugInfo)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttDebugInfo.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttDebugInfo
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttDebugType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttDebugType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttDebugType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttLciInformation)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttLciInformation.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttLciInformation
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttLcrInformation)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttLcrInformation.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttLcrInformation
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttMotionPattern)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttMotionPattern.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttMotionPattern
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttPeerType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttPeerType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttPeerType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttPreamble)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttPreamble.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttPreamble
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttResponder)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttResponder.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttResponder
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttResult)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttResult.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttResult
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttStatus)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttStatus.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttStatus
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaApfPacketFilterCapabilities)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaApfPacketFilterCapabilities.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaApfPacketFilterCapabilities
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaBackgroundScanBand)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaBackgroundScanBand.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaBackgroundScanBand
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaBackgroundScanBucketEventReportSchemeMask)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaBackgroundScanBucketEventReportSchemeMask.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaBackgroundScanBucketEventReportSchemeMask
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaBackgroundScanBucketParameters)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaBackgroundScanBucketParameters.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaBackgroundScanBucketParameters
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaBackgroundScanCapabilities)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaBackgroundScanCapabilities.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaBackgroundScanCapabilities
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaBackgroundScanParameters)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaBackgroundScanParameters.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaBackgroundScanParameters
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaLinkLayerIfacePacketStats)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaLinkLayerIfacePacketStats.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaLinkLayerIfacePacketStats
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaLinkLayerIfaceStats)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaLinkLayerIfaceStats.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaLinkLayerIfaceStats
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaLinkLayerRadioStats)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaLinkLayerRadioStats.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaLinkLayerRadioStats
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaLinkLayerStats)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaLinkLayerStats.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaLinkLayerStats
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaScanData)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaScanData.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaScanData
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaScanDataFlagMask)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaScanDataFlagMask.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaScanDataFlagMask
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaScanResult)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaScanResult.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaScanResult
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiChannelInfo)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiChannelInfo.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiChannelInfo
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiChannelWidthInMhz)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiChannelWidthInMhz.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiChannelWidthInMhz
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugHostWakeReasonRxIcmpPacketDetails)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugHostWakeReasonRxIcmpPacketDetails.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugHostWakeReasonRxIcmpPacketDetails
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugHostWakeReasonRxMulticastPacketDetails)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugHostWakeReasonRxMulticastPacketDetails.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugHostWakeReasonRxMulticastPacketDetails
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugHostWakeReasonRxPacketDetails)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugHostWakeReasonRxPacketDetails.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugHostWakeReasonRxPacketDetails
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugHostWakeReasonStats)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugHostWakeReasonStats.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugHostWakeReasonStats
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugPacketFateFrameInfo)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugPacketFateFrameInfo.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugPacketFateFrameInfo
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugPacketFateFrameType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugPacketFateFrameType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugPacketFateFrameType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRingBufferFlags)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRingBufferFlags.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRingBufferFlags
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRingBufferStatus)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRingBufferStatus.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRingBufferStatus
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRingBufferVerboseLevel)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRingBufferVerboseLevel.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRingBufferVerboseLevel
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRingEntryConnectivityEvent)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRingEntryConnectivityEvent.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRingEntryConnectivityEvent
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRingEntryEventTlv)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRingEntryEventTlv.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRingEntryEventTlv
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRingEntryEventTlvType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRingEntryEventTlvType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRingEntryEventTlvType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRingEntryEventType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRingEntryEventType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRingEntryEventType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRingEntryFlags)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRingEntryFlags.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRingEntryFlags
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRingEntryHeader)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRingEntryHeader.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRingEntryHeader
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRingEntryPowerEvent)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRingEntryPowerEvent.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRingEntryPowerEvent
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRingEntryVendorData)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRingEntryVendorData.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRingEntryVendorData
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRingEntryWakelockEvent)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRingEntryWakelockEvent.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRingEntryWakelockEvent
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRxPacketFate)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRxPacketFate.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRxPacketFate
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRxPacketFateReport)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRxPacketFateReport.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRxPacketFateReport
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugTxPacketFate)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugTxPacketFate.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugTxPacketFate
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugTxPacketFateReport)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugTxPacketFateReport.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugTxPacketFateReport
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiInformationElement)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiInformationElement.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiInformationElement
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiRateInfo)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiRateInfo.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiRateInfo
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiRateNss)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiRateNss.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiRateNss
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiRatePreamble)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiRatePreamble.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiRatePreamble
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiStatus)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiStatus.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiStatus
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiStatusCode)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiStatusCode.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiStatusCode
 
 $(GEN): $(LOCAL_PATH)/types.hal
 	$(transform-generated-source)
@@ -204,6 +2159,10 @@ $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IWifiNanIface.hal
 $(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/IWifiIface.hal
 $(GEN): $(LOCAL_PATH)/IWifiIface.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/IWifiNanIfaceEventCallback.hal
+$(GEN): $(LOCAL_PATH)/IWifiNanIfaceEventCallback.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/types.hal
+$(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
@@ -211,6 +2170,25 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         android.hardware.wifi@1.0::IWifiNanIface
 
 $(GEN): $(LOCAL_PATH)/IWifiNanIface.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build IWifiNanIfaceEventCallback.hal
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/IWifiNanIfaceEventCallback.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IWifiNanIfaceEventCallback.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/types.hal
+$(GEN): $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::IWifiNanIfaceEventCallback
+
+$(GEN): $(LOCAL_PATH)/IWifiNanIfaceEventCallback.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
 
@@ -242,6 +2220,10 @@ $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IWifiRttController.hal
 $(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/IWifiIface.hal
 $(GEN): $(LOCAL_PATH)/IWifiIface.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/IWifiRttControllerEventCallback.hal
+$(GEN): $(LOCAL_PATH)/IWifiRttControllerEventCallback.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/types.hal
+$(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
@@ -249,6 +2231,25 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         android.hardware.wifi@1.0::IWifiRttController
 
 $(GEN): $(LOCAL_PATH)/IWifiRttController.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build IWifiRttControllerEventCallback.hal
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/IWifiRttControllerEventCallback.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IWifiRttControllerEventCallback.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/types.hal
+$(GEN): $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::IWifiRttControllerEventCallback
+
+$(GEN): $(LOCAL_PATH)/IWifiRttControllerEventCallback.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
 
@@ -261,6 +2262,10 @@ $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IWifiStaIface.hal
 $(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/IWifiIface.hal
 $(GEN): $(LOCAL_PATH)/IWifiIface.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/IWifiStaIfaceEventCallback.hal
+$(GEN): $(LOCAL_PATH)/IWifiStaIfaceEventCallback.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/types.hal
+$(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
@@ -268,6 +2273,25 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         android.hardware.wifi@1.0::IWifiStaIface
 
 $(GEN): $(LOCAL_PATH)/IWifiStaIface.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build IWifiStaIfaceEventCallback.hal
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/IWifiStaIfaceEventCallback.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IWifiStaIfaceEventCallback.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/types.hal
+$(GEN): $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::IWifiStaIfaceEventCallback
+
+$(GEN): $(LOCAL_PATH)/IWifiStaIfaceEventCallback.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
 include $(BUILD_JAVA_LIBRARY)
@@ -284,40 +2308,6 @@ intermediates := $(local-generated-sources-dir)
 HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
 
 #
-# Build types.hal (CommandFailureReason)
-#
-GEN := $(intermediates)/android/hardware/wifi/1.0/CommandFailureReason.java
-$(GEN): $(HIDL)
-$(GEN): PRIVATE_HIDL := $(HIDL)
-$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
-$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
-$(GEN): PRIVATE_CUSTOM_TOOL = \
-        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
-        android.hardware.wifi@1.0::types.CommandFailureReason
-
-$(GEN): $(LOCAL_PATH)/types.hal
-	$(transform-generated-source)
-LOCAL_GENERATED_SOURCES += $(GEN)
-
-#
-# Build types.hal (FailureReason)
-#
-GEN := $(intermediates)/android/hardware/wifi/1.0/FailureReason.java
-$(GEN): $(HIDL)
-$(GEN): PRIVATE_HIDL := $(HIDL)
-$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
-$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
-$(GEN): PRIVATE_CUSTOM_TOOL = \
-        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
-        android.hardware.wifi@1.0::types.FailureReason
-
-$(GEN): $(LOCAL_PATH)/types.hal
-	$(transform-generated-source)
-LOCAL_GENERATED_SOURCES += $(GEN)
-
-#
 # Build types.hal (IfaceType)
 #
 GEN := $(intermediates)/android/hardware/wifi/1.0/IfaceType.java
@@ -329,6 +2319,1995 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
         -Ljava -randroid.hardware:hardware/interfaces \
         android.hardware.wifi@1.0::types.IfaceType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanAvailDuration)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanAvailDuration.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanAvailDuration
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanBeaconSdfPayloadInd)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanBeaconSdfPayloadInd.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanBeaconSdfPayloadInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanBeaconSdfPayloadReceive)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanBeaconSdfPayloadReceive.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanBeaconSdfPayloadReceive
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanBeaconSdfPayloadRequest)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanBeaconSdfPayloadRequest.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanBeaconSdfPayloadRequest
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanCapabilitiesResponse)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanCapabilitiesResponse.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanCapabilitiesResponse
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanCapabilitiesResponseMsg)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanCapabilitiesResponseMsg.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanCapabilitiesResponseMsg
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanChannelIndex)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanChannelIndex.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanChannelIndex
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanConfigRequest)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanConfigRequest.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanConfigRequest
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanConnectionType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanConnectionType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanConnectionType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathAppInfo)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDataPathAppInfo.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDataPathAppInfo
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathCfg)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDataPathCfg.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDataPathCfg
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathChannelCfg)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDataPathChannelCfg.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDataPathChannelCfg
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathConfirmInd)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDataPathConfirmInd.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDataPathConfirmInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathEndInd)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDataPathEndInd.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDataPathEndInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathEndRequest)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDataPathEndRequest.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDataPathEndRequest
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathIndicationResponse)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDataPathIndicationResponse.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDataPathIndicationResponse
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathInitiatorRequest)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDataPathInitiatorRequest.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDataPathInitiatorRequest
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathRequestInd)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDataPathRequestInd.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDataPathRequestInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathResponse)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDataPathResponse.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDataPathResponse
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathResponseCode)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDataPathResponseCode.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDataPathResponseCode
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathResponseMsg)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDataPathResponseMsg.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDataPathResponseMsg
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDeviceRole)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDeviceRole.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDeviceRole
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDisabledInd)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDisabledInd.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDisabledInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDiscEngEventInd)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDiscEngEventInd.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDiscEngEventInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDiscEngEventType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanDiscEngEventType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanDiscEngEventType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanEnableRequest)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanEnableRequest.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanEnableRequest
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanFollowupInd)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanFollowupInd.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanFollowupInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanFurtherAvailabilityChannel)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanFurtherAvailabilityChannel.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanFurtherAvailabilityChannel
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanMatchAlg)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanMatchAlg.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanMatchAlg
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanMatchExpiredInd)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanMatchExpiredInd.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanMatchExpiredInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanMatchInd)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanMatchInd.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanMatchInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanMaxSize)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanMaxSize.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanMaxSize
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanPublishCancelRequest)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanPublishCancelRequest.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanPublishCancelRequest
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanPublishRequest)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanPublishRequest.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanPublishRequest
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanPublishResponse)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanPublishResponse.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanPublishResponse
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanPublishResponseMsg)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanPublishResponseMsg.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanPublishResponseMsg
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanPublishTerminatedInd)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanPublishTerminatedInd.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanPublishTerminatedInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanPublishType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanPublishType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanPublishType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanReceiveVendorSpecificAttribute)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanReceiveVendorSpecificAttribute.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanReceiveVendorSpecificAttribute
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanResponseMsgHeader)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanResponseMsgHeader.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanResponseMsgHeader
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanResponseType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanResponseType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanResponseType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanSocialChannelScanParams)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanSocialChannelScanParams.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanSocialChannelScanParams
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanSrfIncludeType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanSrfIncludeType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanSrfIncludeType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanSrfType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanSrfType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanSrfType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanStatusType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanStatusType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanStatusType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanSubscribeCancelRequest)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanSubscribeCancelRequest.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanSubscribeCancelRequest
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanSubscribeRequest)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanSubscribeRequest.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanSubscribeRequest
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanSubscribeResponse)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanSubscribeResponse.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanSubscribeResponse
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanSubscribeResponseMsg)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanSubscribeResponseMsg.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanSubscribeResponseMsg
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanSubscribeTerminatedInd)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanSubscribeTerminatedInd.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanSubscribeTerminatedInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanSubscribeType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanSubscribeType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanSubscribeType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanTransmitFollowupInd)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanTransmitFollowupInd.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanTransmitFollowupInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanTransmitFollowupRequest)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanTransmitFollowupRequest.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanTransmitFollowupRequest
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanTransmitVendorSpecificAttribute)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanTransmitVendorSpecificAttribute.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanTransmitVendorSpecificAttribute
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanTransmitWindowType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanTransmitWindowType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanTransmitWindowType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanTxPriority)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanTxPriority.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanTxPriority
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanTxType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanTxType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanTxType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanVsaRxFrameMask)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/NanVsaRxFrameMask.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.NanVsaRxFrameMask
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttBw)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttBw.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttBw
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttCapabilities)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttCapabilities.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttCapabilities
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttChannelMap)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttChannelMap.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttChannelMap
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttConfig)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttConfig.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttConfig
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttDebugFormat)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttDebugFormat.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttDebugFormat
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttDebugInfo)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttDebugInfo.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttDebugInfo
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttDebugType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttDebugType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttDebugType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttLciInformation)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttLciInformation.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttLciInformation
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttLcrInformation)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttLcrInformation.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttLcrInformation
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttMotionPattern)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttMotionPattern.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttMotionPattern
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttPeerType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttPeerType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttPeerType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttPreamble)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttPreamble.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttPreamble
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttResponder)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttResponder.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttResponder
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttResult)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttResult.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttResult
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttStatus)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttStatus.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttStatus
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (RttType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/RttType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.RttType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaApfPacketFilterCapabilities)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaApfPacketFilterCapabilities.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaApfPacketFilterCapabilities
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaBackgroundScanBand)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaBackgroundScanBand.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaBackgroundScanBand
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaBackgroundScanBucketEventReportSchemeMask)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaBackgroundScanBucketEventReportSchemeMask.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaBackgroundScanBucketEventReportSchemeMask
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaBackgroundScanBucketParameters)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaBackgroundScanBucketParameters.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaBackgroundScanBucketParameters
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaBackgroundScanCapabilities)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaBackgroundScanCapabilities.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaBackgroundScanCapabilities
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaBackgroundScanParameters)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaBackgroundScanParameters.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaBackgroundScanParameters
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaLinkLayerIfacePacketStats)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaLinkLayerIfacePacketStats.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaLinkLayerIfacePacketStats
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaLinkLayerIfaceStats)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaLinkLayerIfaceStats.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaLinkLayerIfaceStats
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaLinkLayerRadioStats)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaLinkLayerRadioStats.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaLinkLayerRadioStats
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaLinkLayerStats)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaLinkLayerStats.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaLinkLayerStats
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaScanData)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaScanData.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaScanData
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaScanDataFlagMask)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaScanDataFlagMask.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaScanDataFlagMask
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (StaScanResult)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/StaScanResult.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.StaScanResult
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiChannelInfo)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiChannelInfo.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiChannelInfo
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiChannelWidthInMhz)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiChannelWidthInMhz.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiChannelWidthInMhz
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugHostWakeReasonRxIcmpPacketDetails)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugHostWakeReasonRxIcmpPacketDetails.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugHostWakeReasonRxIcmpPacketDetails
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugHostWakeReasonRxMulticastPacketDetails)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugHostWakeReasonRxMulticastPacketDetails.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugHostWakeReasonRxMulticastPacketDetails
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugHostWakeReasonRxPacketDetails)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugHostWakeReasonRxPacketDetails.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugHostWakeReasonRxPacketDetails
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugHostWakeReasonStats)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugHostWakeReasonStats.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugHostWakeReasonStats
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugPacketFateFrameInfo)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugPacketFateFrameInfo.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugPacketFateFrameInfo
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugPacketFateFrameType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugPacketFateFrameType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugPacketFateFrameType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRingBufferFlags)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRingBufferFlags.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRingBufferFlags
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRingBufferStatus)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRingBufferStatus.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRingBufferStatus
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRingBufferVerboseLevel)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRingBufferVerboseLevel.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRingBufferVerboseLevel
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRingEntryConnectivityEvent)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRingEntryConnectivityEvent.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRingEntryConnectivityEvent
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRingEntryEventTlv)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRingEntryEventTlv.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRingEntryEventTlv
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRingEntryEventTlvType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRingEntryEventTlvType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRingEntryEventTlvType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRingEntryEventType)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRingEntryEventType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRingEntryEventType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRingEntryFlags)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRingEntryFlags.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRingEntryFlags
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRingEntryHeader)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRingEntryHeader.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRingEntryHeader
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRingEntryPowerEvent)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRingEntryPowerEvent.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRingEntryPowerEvent
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRingEntryVendorData)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRingEntryVendorData.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRingEntryVendorData
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRingEntryWakelockEvent)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRingEntryWakelockEvent.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRingEntryWakelockEvent
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRxPacketFate)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRxPacketFate.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRxPacketFate
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugRxPacketFateReport)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugRxPacketFateReport.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugRxPacketFateReport
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugTxPacketFate)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugTxPacketFate.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugTxPacketFate
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiDebugTxPacketFateReport)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiDebugTxPacketFateReport.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiDebugTxPacketFateReport
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiInformationElement)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiInformationElement.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiInformationElement
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiRateInfo)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiRateInfo.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiRateInfo
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiRateNss)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiRateNss.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiRateNss
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiRatePreamble)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiRatePreamble.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiRatePreamble
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiStatus)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiStatus.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiStatus
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (WifiStatusCode)
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/WifiStatusCode.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::types.WifiStatusCode
 
 $(GEN): $(LOCAL_PATH)/types.hal
 	$(transform-generated-source)
@@ -475,6 +4454,10 @@ $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IWifiNanIface.hal
 $(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/IWifiIface.hal
 $(GEN): $(LOCAL_PATH)/IWifiIface.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/IWifiNanIfaceEventCallback.hal
+$(GEN): $(LOCAL_PATH)/IWifiNanIfaceEventCallback.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/types.hal
+$(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
@@ -482,6 +4465,25 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         android.hardware.wifi@1.0::IWifiNanIface
 
 $(GEN): $(LOCAL_PATH)/IWifiNanIface.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build IWifiNanIfaceEventCallback.hal
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/IWifiNanIfaceEventCallback.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IWifiNanIfaceEventCallback.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/types.hal
+$(GEN): $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::IWifiNanIfaceEventCallback
+
+$(GEN): $(LOCAL_PATH)/IWifiNanIfaceEventCallback.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
 
@@ -513,6 +4515,10 @@ $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IWifiRttController.hal
 $(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/IWifiIface.hal
 $(GEN): $(LOCAL_PATH)/IWifiIface.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/IWifiRttControllerEventCallback.hal
+$(GEN): $(LOCAL_PATH)/IWifiRttControllerEventCallback.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/types.hal
+$(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
@@ -520,6 +4526,25 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         android.hardware.wifi@1.0::IWifiRttController
 
 $(GEN): $(LOCAL_PATH)/IWifiRttController.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build IWifiRttControllerEventCallback.hal
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/IWifiRttControllerEventCallback.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IWifiRttControllerEventCallback.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/types.hal
+$(GEN): $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::IWifiRttControllerEventCallback
+
+$(GEN): $(LOCAL_PATH)/IWifiRttControllerEventCallback.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
 
@@ -532,6 +4557,10 @@ $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IWifiStaIface.hal
 $(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/IWifiIface.hal
 $(GEN): $(LOCAL_PATH)/IWifiIface.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/IWifiStaIfaceEventCallback.hal
+$(GEN): $(LOCAL_PATH)/IWifiStaIfaceEventCallback.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/types.hal
+$(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
@@ -539,6 +4568,25 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         android.hardware.wifi@1.0::IWifiStaIface
 
 $(GEN): $(LOCAL_PATH)/IWifiStaIface.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build IWifiStaIfaceEventCallback.hal
+#
+GEN := $(intermediates)/android/hardware/wifi/1.0/IWifiStaIfaceEventCallback.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IWifiStaIfaceEventCallback.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/types.hal
+$(GEN): $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava -randroid.hardware:hardware/interfaces \
+        android.hardware.wifi@1.0::IWifiStaIfaceEventCallback
+
+$(GEN): $(LOCAL_PATH)/IWifiStaIfaceEventCallback.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
 include $(BUILD_STATIC_JAVA_LIBRARY)

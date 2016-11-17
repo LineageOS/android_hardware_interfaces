@@ -29,68 +29,45 @@ interface IWifiChipEventCallback {
   oneway onChipReconfigured(ChipModeId modeId);
 
   /**
-   * If this happens then the chips is now in an undefined state and
-   * configureChip must be called again. Any interface indexes will be
-   * assumed to be invalid.
+   * Callbacks for reporting debug ring buffer data.
    *
-   * @param modeId The mode that the chip failed switched to, corresponding to
-   *        the id property of the target ChipMode.
-   * @param reason Failure reason code.
+   * The ring buffer data collection is event based:
+   * - Driver calls this callback when new records are available, the
+   *   |WifiDebugRingBufferStatus| passed up to framework in the callback
+   *   indicates to framework if more data is available in the ring buffer.
+   *   It is not expected that driver will necessarily always empty the ring
+   *   immediately as data is available, instead driver will report data
+   *   every X seconds or if N bytes are available based on the parameters
+   *   set via |startLoggingToDebugRingBuffer|.
+   * - In the case where a bug report has to be captured, framework will
+   *   require driver to upload all data immediately. This is indicated to
+   *   driver when framework calls |forceDumpToDebugRingBuffer|.  The driver
+   *   will start sending all available data in the indicated ring by repeatedly
+   *   invoking this callback.
+   *
+   * @return status Status of the corresponding ring buffer. This should
+   *         contain the name of the ring buffer on which the data is
+   *         available.
+   * @return entries Vector of debug ring buffer data entries. These
+   *         should be parsed based on the type of entry.
    */
-  oneway onChipReconfigureFailure(ChipModeId modeId, FailureReason reason);
+  /** Connectivity event data callback */
+  oneway onDebugRingBufferConnectivityEventEntriesAvailable(
+      WifiDebugRingBufferStatus status,
+      vec<WifiDebugRingEntryConnectivityEvent> entries);
 
-  /**
-   * Information about the version of the driver and firmware running this chip.
-   *
-   * This information is vendor specific and does not need to take any
-   * particular format. It will be dumped as part of the bug report.
-   */
-  struct ChipDebugInfo {
-    string driverDescription;
-    string firmwareDescription;
-  };
+  /** Power event data callback */
+  oneway onDebugRingBufferPowerEventEntriesAvailable(
+      WifiDebugRingBufferStatus status,
+      vec<WifiDebugRingEntryPowerEvent> entries);
 
-  /**
-   * Callback with debug information about this chip
-   *
-   * @param info Instance of |ChipDebugInfo|.
-   */
-  oneway onChipDebugInfoAvailable(ChipDebugInfo info);
+  /** Wakelock event data callback */
+  oneway onDebugRingBufferWakelockEventEntriesAvailable(
+      WifiDebugRingBufferStatus status,
+      vec<WifiDebugRingEntryWakelockEvent> entries);
 
-  /**
-   * Callback to be invoked on failure to fetch debug info about this chip.
-   *
-   * @param reason Failure reason code.
-   */
-  oneway onChipDebugInfoFailure(FailureReason reason);
-
-  /**
-   * Callback with a vendor specific debug blob from the driver.
-   * This blob will be dumped as part of the bug report.
-   *
-   * @param blob Vector of bytes retrieved from the driver.
-   */
-  oneway onDriverDebugDumpAvailable(vec<uint8_t> blob);
-
-  /**
-   * Callback to be invoked on failure to fetch debug blob from driver.
-   *
-   * @param reason Failure reason code.
-   */
-  oneway onDriverDebugDumpFailure(FailureReason reason);
-
-  /**
-   * Callback with a vendor specific debug blob from the driver.
-   * This blob will be dumped as part of the bug report.
-   *
-   * @param blob Vector of bytes retrieved from the driver.
-   */
-  oneway onFirmwareDebugDumpAvailable(vec<uint8_t> blob);
-
-  /**
-   * Callback to be invoked on failure to fetch debug blob from driver.
-   *
-   * @param reason Failure reason code.
-   */
-  oneway onFirmwareDebugDumpFailure(FailureReason reason);
+  /** Vendor data event data callback */
+  oneway onDebugRingBufferVendorDataEntriesAvailable(
+      WifiDebugRingBufferStatus status,
+      vec<WifiDebugRingEntryVendorData> entries);
 };

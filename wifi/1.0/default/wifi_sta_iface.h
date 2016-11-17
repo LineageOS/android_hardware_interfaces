@@ -19,6 +19,7 @@
 
 #include <android-base/macros.h>
 #include <android/hardware/wifi/1.0/IWifiStaIface.h>
+#include <android/hardware/wifi/1.0/IWifiStaIfaceEventCallback.h>
 
 #include "wifi_legacy_hal.h"
 
@@ -37,14 +38,77 @@ class WifiStaIface : public IWifiStaIface {
                const std::weak_ptr<WifiLegacyHal> legacy_hal);
   // Refer to |WifiChip::invalidate()|.
   void invalidate();
+  bool isValid();
 
   // HIDL methods exposed.
-  Return<void> getName(getName_cb cb) override;
-  Return<IfaceType> getType() override;
+  Return<void> getName(getName_cb hidl_status_cb) override;
+  Return<void> getType(getType_cb hidl_status_cb) override;
+  Return<void> registerEventCallback(
+      const sp<IWifiStaIfaceEventCallback>& callback,
+      registerEventCallback_cb hidl_status_cb) override;
+  Return<void> getCapabilities(getCapabilities_cb hidl_status_cb) override;
+  Return<void> getApfPacketFilterCapabilities(
+      getApfPacketFilterCapabilities_cb hidl_status_cb) override;
+  Return<void> installApfPacketFilter(
+      uint32_t cmd_id,
+      const hidl_vec<uint8_t>& program,
+      installApfPacketFilter_cb hidl_status_cb) override;
+  Return<void> getBackgroundScanCapabilities(
+      getBackgroundScanCapabilities_cb hidl_status_cb) override;
+  Return<void> getValidFrequenciesForBackgroundScan(
+      StaBackgroundScanBand band,
+      getValidFrequenciesForBackgroundScan_cb hidl_status_cb) override;
+  Return<void> startBackgroundScan(
+      uint32_t cmd_id,
+      const StaBackgroundScanParameters& params,
+      startBackgroundScan_cb hidl_status_cb) override;
+  Return<void> stopBackgroundScan(
+      uint32_t cmd_id, stopBackgroundScan_cb hidl_status_cb) override;
+  Return<void> enableLinkLayerStatsCollection(
+      bool debug, enableLinkLayerStatsCollection_cb hidl_status_cb) override;
+  Return<void> disableLinkLayerStatsCollection(
+      disableLinkLayerStatsCollection_cb hidl_status_cb) override;
+  Return<void> getLinkLayerStats(getLinkLayerStats_cb hidl_status_cb) override;
+  Return<void> startDebugPacketFateMonitoring(
+      startDebugPacketFateMonitoring_cb hidl_status_cb) override;
+  Return<void> stopDebugPacketFateMonitoring(
+      stopDebugPacketFateMonitoring_cb hidl_status_cb) override;
+  Return<void> getDebugTxPacketFates(
+      getDebugTxPacketFates_cb hidl_status_cb) override;
+  Return<void> getDebugRxPacketFates(
+      getDebugRxPacketFates_cb hidl_status_cb) override;
 
  private:
+  // Corresponding worker functions for the HIDL methods.
+  std::pair<WifiStatus, std::string> getNameInternal();
+  std::pair<WifiStatus, IfaceType> getTypeInternal();
+  WifiStatus registerEventCallbackInternal(
+      const sp<IWifiStaIfaceEventCallback>& callback);
+  std::pair<WifiStatus, uint32_t> getCapabilitiesInternal();
+  std::pair<WifiStatus, StaApfPacketFilterCapabilities>
+  getApfPacketFilterCapabilitiesInternal();
+  WifiStatus installApfPacketFilterInternal(
+      uint32_t cmd_id, const std::vector<uint8_t>& program);
+  std::pair<WifiStatus, StaBackgroundScanCapabilities>
+  getBackgroundScanCapabilitiesInternal();
+  std::pair<WifiStatus, std::vector<WifiChannelInMhz>>
+  getValidFrequenciesForBackgroundScanInternal(StaBackgroundScanBand band);
+  WifiStatus startBackgroundScanInternal(
+      uint32_t cmd_id, const StaBackgroundScanParameters& params);
+  WifiStatus stopBackgroundScanInternal(uint32_t cmd_id);
+  WifiStatus enableLinkLayerStatsCollectionInternal(bool debug);
+  WifiStatus disableLinkLayerStatsCollectionInternal();
+  std::pair<WifiStatus, StaLinkLayerStats> getLinkLayerStatsInternal();
+  WifiStatus startDebugPacketFateMonitoringInternal();
+  WifiStatus stopDebugPacketFateMonitoringInternal();
+  std::pair<WifiStatus, std::vector<WifiDebugTxPacketFateReport>>
+  getDebugTxPacketFatesInternal();
+  std::pair<WifiStatus, std::vector<WifiDebugRxPacketFateReport>>
+  getDebugRxPacketFatesInternal();
+
   std::string ifname_;
   std::weak_ptr<WifiLegacyHal> legacy_hal_;
+  std::vector<sp<IWifiStaIfaceEventCallback>> event_callbacks_;
   bool is_valid_;
 
   DISALLOW_COPY_AND_ASSIGN(WifiStaIface);

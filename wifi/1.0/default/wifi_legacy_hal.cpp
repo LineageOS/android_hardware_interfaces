@@ -16,8 +16,8 @@
 
 #include <array>
 
-#include "failure_reason_util.h"
 #include "wifi_legacy_hal.h"
+#include "wifi_status_util.h"
 
 #include <android-base/logging.h>
 #include <cutils/properties.h>
@@ -154,12 +154,14 @@ std::pair<wifi_error, std::string> WifiLegacyHal::getFirmwareVersion() {
   return std::make_pair(status, buffer.data());
 }
 
-std::pair<wifi_error, std::vector<char>>
+std::pair<wifi_error, std::vector<uint8_t>>
 WifiLegacyHal::requestDriverMemoryDump() {
-  std::vector<char> driver_dump;
+  std::vector<uint8_t> driver_dump;
   on_driver_memory_dump_internal_callback = [&driver_dump](char* buffer,
                                                            int buffer_size) {
-    driver_dump.insert(driver_dump.end(), buffer, buffer + buffer_size);
+    driver_dump.insert(driver_dump.end(),
+                       reinterpret_cast<uint8_t*>(buffer),
+                       reinterpret_cast<uint8_t*>(buffer) + buffer_size);
   };
   wifi_error status = global_func_table_.wifi_get_driver_memory_dump(
       wlan_interface_handle_, {onDriverMemoryDump});
@@ -167,12 +169,14 @@ WifiLegacyHal::requestDriverMemoryDump() {
   return std::make_pair(status, std::move(driver_dump));
 }
 
-std::pair<wifi_error, std::vector<char>>
+std::pair<wifi_error, std::vector<uint8_t>>
 WifiLegacyHal::requestFirmwareMemoryDump() {
-  std::vector<char> firmware_dump;
+  std::vector<uint8_t> firmware_dump;
   on_firmware_memory_dump_internal_callback = [&firmware_dump](
       char* buffer, int buffer_size) {
-    firmware_dump.insert(firmware_dump.end(), buffer, buffer + buffer_size);
+    firmware_dump.insert(firmware_dump.end(),
+                         reinterpret_cast<uint8_t*>(buffer),
+                         reinterpret_cast<uint8_t*>(buffer) + buffer_size);
   };
   wifi_error status = global_func_table_.wifi_get_firmware_memory_dump(
       wlan_interface_handle_, {onFirmwareMemoryDump});
@@ -188,7 +192,7 @@ wifi_error WifiLegacyHal::retrieveWlanInterfaceHandle() {
       global_handle_, &num_iface_handles, &iface_handles);
   if (status != WIFI_SUCCESS) {
     LOG(ERROR) << "Failed to enumerate interface handles: "
-               << LegacyErrorToString(status);
+               << legacyErrorToString(status);
     return status;
   }
   for (int i = 0; i < num_iface_handles; ++i) {
@@ -198,7 +202,7 @@ wifi_error WifiLegacyHal::retrieveWlanInterfaceHandle() {
         iface_handles[i], current_ifname.data(), current_ifname.size());
     if (status != WIFI_SUCCESS) {
       LOG(WARNING) << "Failed to get interface handle name: "
-                   << LegacyErrorToString(status);
+                   << legacyErrorToString(status);
       continue;
     }
     if (ifname_to_find == current_ifname.data()) {

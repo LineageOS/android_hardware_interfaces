@@ -17,10 +17,331 @@
 package android.hardware.wifi@1.0;
 
 import IWifiIface;
+import IWifiStaIfaceEventCallback;
 
 /**
  * Interface used to represent a single STA iface.
  */
 interface IWifiStaIface extends IWifiIface {
-  /** TODO(rpius): Add methods to the interface. */
+  /**
+   * Mask of capabilities suported by this Iface.
+   */
+  enum StaIfaceCapabilityMask : uint32_t {
+    /**
+     * If set indicates that the APF APIs are supported.
+     * APF (Android Packet Filter) is a BPF like packet filtering
+     * bytecode executed by the firmware.
+     */
+    APF = 1 << 0,
+    /**
+     * If set indicates that the Background Scan APIs are supported.
+     * Background scan allow the host to send a number of buckets down to the
+     * firmware. Each bucket contains a set of channels, a period, and some
+     * parameters about how and when to report results.
+     */
+    BACKGROUND_SCAN = 1 << 1,
+    /**
+     * If set indicates that the link layer stats APIs are supported.
+     */
+    LINK_LAYER_STATS = 1 << 2,
+    /**
+     * Tracks connection packets' fate.
+     */
+    DEBUG_PACKET_FATE_SUPPORTED = 1 << 3
+  };
+
+  /**
+   * Requests notifications of significant events on this iface. Multiple calls
+   * to this must register multiple callbacks each of which must receive all
+   * events.
+   *
+   * @param callback An instance of the |IWifiStaIfaceEventCallback| HIDL interface
+   *        object.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|
+   */
+  registerEventCallback(IWifiStaIfaceEventCallback callback)
+      generates (WifiStatus status);
+
+  /**
+   * Get the capabilities supported by this STA iface.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   * @return capabilities Bitset of |StaIfaceCapabilityMask| values.
+   */
+  getCapabilities() generates (WifiStatus status, uint32_t capabilities);
+
+  /**
+   * Used to query additional information about the chip's APF capabilities.
+   * Must fail if |StaIfaceCapabilityMask.APF| is not set.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   * @return capabilities Instance of |StaApfPacketFilterCapabilities|.
+   */
+  getApfPacketFilterCapabilities()
+      generates (WifiStatus status, StaApfPacketFilterCapabilities capabilities);
+
+  /**
+   * Installs an APF program on this iface, replacing an existing
+   * program if present.
+   * Must fail if |StaIfaceCapabilityMask.APF| is not set.
+   *
+   * @param cmdId command Id to use for this invocation.
+   * @param APF Program to be set.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_INVALID_ARGS|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   */
+  installApfPacketFilter(CommandId cmdId, vec<uint8_t> program)
+      generates (WifiStatus status);
+
+  /**
+   * Used to query additional information about the chip's Background Scan capabilities.
+   * Must fail if |StaIfaceCapabilityMask.BACKGROUND_SCAN| is not set.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   * @return capabilities Instance of |StaBackgroundScanCapabilities|.
+   */
+  getBackgroundScanCapabilities()
+      generates (WifiStatus status, StaBackgroundScanCapabilities capabilities);
+
+  /**
+   * Used to query the list of valid frequencies (depending on country code set)
+   * for the provided band. These channels may be specifed in the
+   * |BackgroundScanBucketParameters.frequenciesInMhz| for a background scan
+   * request.
+   * Must fail if |StaIfaceCapabilityMask.BACKGROUND_SCAN| is not set.
+   *
+   * @param band Band for which the frequency list is being generated.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   * @return frequencies vector of valid frequencies for the provided band.
+   */
+  getValidFrequenciesForBackgroundScan(StaBackgroundScanBand band)
+      generates (WifiStatus status, vec<WifiChannelInMhz> frequencies);
+
+  /**
+   * Start a background scan using the given cmdId as an identifier. Only one
+   * active background scan need be supported.
+   * Must fail if |StaIfaceCapabilityMask.BACKGROUND_SCAN| is not set.
+   *
+   * When this is called all requested buckets must be scanned, starting the
+   * beginning of the cycle.
+   *
+   * For example:
+   * If there are two buckets specified
+   *  - Bucket 1: period=10s
+   *  - Bucket 2: period=20s
+   *  - Bucket 3: period=30s
+   * Then the following scans must occur
+   *  - t=0  buckets 1, 2, and 3 are scanned
+   *  - t=10 bucket 1 is scanned
+   *  - t=20 bucket 1 and 2 are scanned
+   *  - t=30 bucket 1 and 3 are scanned
+   *  - t=40 bucket 1 and 2 are scanned
+   *  - t=50 bucket 1 is scanned
+   *  - t=60 buckets 1, 2, and 3 are scanned
+   *  - and the patter repeats
+   *
+   * If any scan does not occur or is incomplete (error, interrupted, etc) then
+   * a cached scan result must still be recorded with the
+   * WIFI_SCAN_FLAG_INTERRUPTED flag set.
+   *
+   * @param cmdId command Id to use for this invocation.
+   * @params Background scan parameters.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_INVALID_ARGS|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   */
+  startBackgroundScan(CommandId cmdId, StaBackgroundScanParameters params)
+      generates (WifiStatus status);
+
+  /**
+   * Stop the background scan started.
+   * Must fail if |StaIfaceCapabilityMask.BACKGROUND_SCAN| is not set.
+   *
+   * @param cmdId command Id corresponding to the request.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_STARTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   */
+  stopBackgroundScan(CommandId cmdId) generates (WifiStatus status);
+
+  /**
+   * Enable link layer stats collection.
+   * Must fail if |StaIfaceCapabilityMask.LINK_LAYER_STATS| is not set.
+   *
+   * Radio statistics (once started) must not stop until disabled.
+   * Iface statistics (once started) reset and start afresh after each
+   * connection until disabled.
+   *
+   * @param debug Set for field debug mode. Driver must collect all
+   *        statistics regardless of performance impact.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   */
+  enableLinkLayerStatsCollection(bool debug)
+      generates (WifiStatus status);
+
+  /**
+   * Disable link layer stats collection.
+   * Must fail if |StaIfaceCapabilityMask.LINK_LAYER_STATS| is not set.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_STARTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   */
+  disableLinkLayerStatsCollection() generates (WifiStatus status);
+
+  /**
+   * Retrieve the latest link layer stats.
+   * Must fail if |StaIfaceCapabilityMask.LINK_LAYER_STATS| is not set or if
+   * link layer stats collection hasn't been explicitly enabled.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_STARTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   * @return stats Instance of |LinkLayerStats|.
+   */
+  getLinkLayerStats() generates (WifiStatus status, StaLinkLayerStats stats);
+
+  /**
+   * API to start packet fate monitoring.
+   * - Once stared, monitoring must remain active until HAL is unloaded.
+   * - When HAL is unloaded, all packet fate buffers must be cleared.
+   * - The packet fates are used to monitor the state of packets transmitted/
+   *   received during association.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   */
+  startDebugPacketFateMonitoring() generates (WifiStatus status);
+
+  /**
+   * API to stop packet fate monitoring.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_STARTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   */
+  stopDebugPacketFateMonitoring() generates (WifiStatus status);
+
+  /**
+   * API to retrieve fates of outbound packets.
+   * - HAL implementation must return the fates of
+   *   all the frames transmitted for the most recent association.
+   *   The fate reports must follow the same order as their respective
+   *   packets.
+   * - HAL implementation may choose (but is not required) to include
+   *   reports for management frames.
+   * - Packets reported by firmware, but not recognized by driver,
+   *   must be included. However, the ordering of the corresponding
+   *   reports is at the discretion of HAL implementation.
+   * - Framework must be able to call this API multiple times for the same
+   *   association.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_STARTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   * @return fates Vector of |WifiDebugTxPacketFateReport| instances corresponding
+   *         to the packet fates.
+   */
+  getDebugTxPacketFates()
+      generates (WifiStatus status, vec<WifiDebugTxPacketFateReport> fates);
+
+  /**
+   * API to retrieve fates of inbound packets.
+   * - HAL implementation must return the fates of
+   *   all the frames received for the most recent association.
+   *   The fate reports must follow the same order as their respective
+   *   packets.
+   * - HAL implementation may choose (but is not required) to include
+   *   reports for management frames.
+   * - Packets reported by firmware, but not recognized by driver,
+   *   must be included. However, the ordering of the corresponding
+   *   reports is at the discretion of HAL implementation.
+   * - Framework must be able to call this API multiple times for the same
+   *   association.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_STARTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   * @return fates Vector of |WifiDebugRxPacketFateReport| instances corresponding
+   *         to the packet fates.
+   */
+  getDebugRxPacketFates()
+      generates (WifiStatus status, vec<WifiDebugRxPacketFateReport> fates);
 };

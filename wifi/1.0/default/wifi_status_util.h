@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FAILURE_REASON_UTIL_H_
-#define FAILURE_REASON_UTIL_H_
+#ifndef WIFI_STATUS_UTIL_H_
+#define WIFI_STATUS_UTIL_H_
 
 #include <android/hardware/wifi/1.0/IWifi.h>
 #include <hardware_legacy/wifi_hal.h>
@@ -26,12 +26,13 @@ namespace wifi {
 namespace V1_0 {
 namespace implementation {
 
-std::string LegacyErrorToString(wifi_error error);
-
-FailureReason CreateFailureReason(CommandFailureReason reason,
-                                  const std::string& description);
-FailureReason CreateFailureReasonLegacyError(wifi_error error,
-                                             const std::string& description);
+std::string legacyErrorToString(wifi_error error);
+WifiStatus createWifiStatus(WifiStatusCode code,
+                            const std::string& description);
+WifiStatus createWifiStatus(WifiStatusCode code);
+WifiStatus createWifiStatusFromLegacyError(wifi_error error,
+                                           const std::string& description);
+WifiStatus createWifiStatusFromLegacyError(wifi_error error);
 
 }  // namespace implementation
 }  // namespace V1_0
@@ -39,4 +40,4 @@ FailureReason CreateFailureReasonLegacyError(wifi_error error,
 }  // namespace hardware
 }  // namespace android
 
-#endif  // FAILURE_REASON_UTIL_H_
+#endif  // WIFI_STATUS_UTIL_H_
