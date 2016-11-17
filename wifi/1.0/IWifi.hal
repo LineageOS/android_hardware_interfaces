@@ -48,27 +48,39 @@ interface IWifi {
 
   /**
    * Perform any setup that is required to make use of the module. If the module
-   * is already started then this must be a noop. The onStart callback must be
-   * called when the setup completes or if the HAL is already started. If the
-   * setup fails then onStartFailure must be called.
+   * is already started then this must be a noop.
+   * Must trigger |IWifiEventCallback.onStart| on success.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.NOT_AVAILABLE|,
+   *         |WifiStatusCode.UNKNOWN|
    */
   @entry
   @callflow(next={"registerEventCallback", "start", "stop", "getChip"})
-  oneway start();
+  start() generates (WifiStatus status);
 
   /**
    * Tear down any state, ongoing commands, etc. If the module is already
    * stopped then this must be a noop. If the HAL is already stopped or it
-   * succeeds then onStop must be called. If the teardown fails onFailure must
-   * be called. After calling this all IWifiChip objects will be considered
-   * invalid.
+   * succeeds then onStop must be called. After calling this all IWifiChip
+   * objects will be considered invalid.
+   * Must trigger |IWifiEventCallback.onStop| on success.
+   * Must trigger |IWifiEventCallback.onFailure| on failure.
    *
    * Calling stop then start is a valid way of resetting state in the HAL,
    * driver, firmware.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.NOT_AVAILABLE|,
+   *         |WifiStatusCode.UNKNOWN|
    */
   @exit
   @callflow(next={"registerEventCallback", "start", "stop"})
-  oneway stop();
+  stop() generates (WifiStatus status);
 
   /**
    * Retrieve the list of all chip Id's on the device.

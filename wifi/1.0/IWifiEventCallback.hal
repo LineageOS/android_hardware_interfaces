@@ -24,16 +24,6 @@ interface IWifiEventCallback {
   oneway onStart();
 
   /**
-   * Called in response to a call to start indicating that the operation
-   * failed. After this callback the HAL will be considered stopped. Another
-   * call to start will attempt to reinitialize the HAL; however, there is a
-   * chance it may fail again.
-   *
-   * @param reason Failure reason code.
-   */
-  oneway onStartFailure(FailureReason reason);
-
-  /**
    * Called in response to a call to stop indicating that the operation
    * completed. When this event is received all IWifiChip objects retrieved
    * after the last call to start will be considered invalid.
@@ -43,10 +33,10 @@ interface IWifiEventCallback {
   /**
    * Called when the Wi-Fi system failed in a way that caused it be disabled.
    * Calling start again must restart Wi-Fi as if stop then start was called
-   * (full state reset). When this event is received all IWifiChip objects
-   * retrieved after the last call to start will be considered invalid.
+   * (full state reset). When this event is received all IWifiChip & IWifiIface
+   * objects retrieved after the last call to start will be considered invalid.
    *
-   * @param reason Failure reason code.
+   * @param status Failure reason code.
    */
-  oneway onFailure(FailureReason reason);
+  oneway onFailure(WifiStatus status);
 };
