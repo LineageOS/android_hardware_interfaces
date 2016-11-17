@@ -151,7 +151,7 @@ interface IWifiStaIface extends IWifiIface {
      * Channel frequencies (in Mhz) to scan if |band| is set to
      * |UNSPECIFIED|.
      */
-    vec<uint32_t> frequenciesInMhz;
+    vec<WifiChannelInMhz> frequencies;
     /**
      * Period at which this bucket must be scanned (in milliseconds). Must be an integer
      * multiple of the |basePeriodInMs| specified in the BackgroundScanParameters.
@@ -395,10 +395,10 @@ interface IWifiStaIface extends IWifiIface {
    *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
    *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
    *         |WifiStatusCode.ERROR_UNKNOWN|
-   * @return frequenciesInMhz vector of valid frequencies for the provided band.
+   * @return frequencies vector of valid frequencies for the provided band.
    */
   getValidFrequenciesForBackgroundScan(BackgroundScanBand band)
-      generates (WifiStatus status, vec<uint32_t> frequenciesInMhz);
+      generates (WifiStatus status, vec<WifiChannelInMhz> frequencies);
 
   /**
    * Start a background scan using the given cmdId as an identifier. Only one

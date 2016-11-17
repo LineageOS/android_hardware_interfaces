@@ -76,3 +76,1384 @@ typedef uint32_t ChipModeId;
  * |IWifiStaIface.installApfPacketFilter|, etc.
  */
 typedef uint32_t CommandId;
+
+/**
+ * Channel frequency in Mhz.
+ */
+typedef uint32_t WifiChannelInMhz;
+
+/**
+ * Mac Address type. 6 octets representing physical address of a device.
+ */
+typedef uint8_t[6] MacAddress;
+
+/**
+ * BSSID type. 6 octets representing the physical address of an AP.
+ */
+typedef MacAddress Bssid;
+
+/**
+ * NAN specific types.
+ * TODO(b/32159498): Move to a separate nan_types.hal.
+ */
+/**
+ * Various max sizes used in the NAN interface.
+ */
+enum NanMaxSize : uint32_t {
+  SOCIAL_CHANNELS = 3,
+  SERVICE_NAME_LEN = 255,
+  MATCH_FILTER_LEN = 255,
+  SERVICE_SPECIFIC_INFO_LEN = 1024,
+  VSA_DATA_LEN = 1024,
+  MESH_DATA_LEN = 32,
+  INFRA_DATA_LEN = 32,
+  CLUSTER_ATTRIBUTE_LEN = 255,
+  SUBSCRIBE_MAX_ADDRESS = 42,
+  FAM_CHANNELS = 32,
+  POSTDISCOVERY_LEN = 5,
+  FRAME_DATA_LEN = 504,
+  DP_APP_INFO_LEN = 512,
+};
+
+/**
+ * NAN protocol Version info.
+ */
+typedef int32_t NanVersion;
+
+/** NAN Iface specific types */
+/**
+ * NAN data path identifiers.
+ */
+typedef uint32_t NanDataPathId;
+
+/**
+ * Data request Initiator/Responder app/service related info.
+ */
+struct NanDataPathAppInfo {
+  /**
+   * Max length: |MAX_DP_APP_INFO_LEN|.
+   */
+  vec<uint8_t> ndpAppInfo;
+};
+
+/**
+ * Configuration params of Data request Initiator/Responder.
+ */
+struct NanDataPathCfg {
+  /**
+   * Indicates whether to use Security/No Security.
+   */
+  bool useSecurity;
+  /**
+   * Indicating whether to use QOS/No QOS.
+   */
+  bool useQos;
+};
+
+/**
+ * Indicates the availability interval duration associated with the
+ * Availability Intervals Bitmap field
+ */
+enum NanAvailDuration : uint32_t {
+  DURATION_16MS = 0,
+  DURATION_32MS = 1,
+  DURATION_64MS = 2,
+};
+
+/**
+ * Possible connection types in Post NAN Discovery attributes.
+ */
+enum NanConnectionType : uint32_t {
+  WLAN_INFRA = 0,
+  P2P_OPER = 1,
+  WLAN_IBSS = 2,
+  WLAN_MESH = 3,
+  FURTHER_SERVICE_AVAILABILITY = 4,
+  WLAN_RANGING = 5,
+};
+
+/**
+ * Possible device roles in Post NAN Discovery attributes.
+ */
+enum NanDeviceRole : uint32_t {
+  WLAN_INFRA_AP = 0,
+  WLAN_INFRA_STA = 1,
+  P2P_OPER_GO = 2,
+  P2P_OPER_DEV = 3,
+  P2P_OPER_CLI = 4,
+};
+
+/**
+ * Data request Responder's response.
+ */
+enum NanDataPathResponseCode : uint32_t {
+  ACCEPT = 0,
+  REJECT,
+};
+
+/**
+ * Further availability per channel information.
+ */
+struct NanFurtherAvailabilityChannel {
+  /**
+   * Defined above.
+   */
+  NanAvailDuration entryControl;
+  /**
+   * 1 byte field indicating the frequency band the NAN Device
+   * must be available as defined in IEEE Std. 802.11-2012
+   * Annex E Table E-4 Global Operating Classes
+   */
+  uint8_t classVal;
+  /**
+   * 1 byte field indicating the channel the NAN Device
+   * must be available.
+   */
+  uint8_t channel;
+  /**
+   * Map Id - 4 bit field which identifies the Further
+   * availability map attribute.
+   */
+  uint8_t mapid;
+  /**
+   * Divides the time between the beginnings of consecutive "Discovery
+   * Windows" of a given NAN cluster into consecutive time intervals
+   * of equal durations. The time interval duration is specified by
+   * the |entryControl| field.
+   * A  device that sets the i-th bit of the Availability
+   * Intervals Bitmap to 1 shall be present during the corresponding
+   * i-th time interval in the operation channel indicated by the
+   * Operating Class and Channel Number fields in the same Availability Entry.
+   * A  device that sets the i-th bit of the Availability Intervals Bitmap to
+   * 0 may be present during the corresponding i-th time interval in the operation
+   * channel indicated by the Operating Class and Channel Number fields in the same
+   * Availability Entry.
+   * The size of the Bitmap is dependent upon the Availability Interval Duration
+   * Chosen in the Entry Control Field.  The size can be either 1, 2 or 4 bytes long
+   * - Duration field is equal to 0, only AIB[0] is valid
+   * - Duration field is equal to 1, only AIB [0] and AIB [1] is valid
+   * - Duration field is equal to 2, AIB [0], AIB [1], AIB [2] and AIB [3] are valid
+   */
+  uint32_t availIntervalBitmap;
+};
+
+/**
+ * NAN Publish Types.
+ */
+enum NanPublishType : uint32_t {
+  UNSOLICITED = 0,
+  SOLICITED,
+  UNSOLICITED_SOLICITED,
+};
+
+/**
+ * NAN Transmit Priorities.
+ */
+enum NanTxPriority : uint32_t {
+  NORMAL = 0,
+  HIGH,
+};
+
+/**
+ * NAN Transmit Types.
+ */
+enum NanTxType : uint32_t {
+  BROADCAST = 0,
+  UNICAST,
+};
+
+/**
+ * NAN Subscribe Type.
+ */
+enum NanSubscribeType : uint32_t {
+  PASSIVE = 0,
+  ACTIVE,
+};
+
+/**
+ * NAN Service Response Filter Attribute Bit.
+ */
+enum NanSrfType : uint32_t {
+  BLOOM_FILTER = 0,
+  PARTIAL_MAC_ADDR,
+};
+
+/**
+ * NAN Service Response Filter Include Bit.
+ */
+enum NanSrfIncludeType : uint32_t {
+  DO_NOT_RESPOND = 0,
+  RESPOND,
+};
+
+/**
+ * NAN Match indication type.
+ */
+enum NanMatchAlg : uint32_t {
+  MATCH_ONCE = 0,
+  MATCH_CONTINUOUS,
+  MATCH_NEVER,
+};
+
+/**
+ * NAN Transmit Window Type.
+ */
+enum NanTransmitWindowType : uint32_t {
+  DW = 0,
+  FAW,
+};
+
+/**
+ * NAN DP channel config options.
+ */
+enum NanDataPathChannelCfg : uint32_t {
+  CHANNEL_NOT_REQUESTED = 0,
+  REQUEST_CHANNEL_SETUP,
+  FORCE_CHANNEL_SETUP,
+};
+
+/**
+ * Host can send Vendor specific attributes which the Discovery Engine can
+ * enclose in Beacons and/or Service Discovery frames transmitted.
+ * Below structure is used to populate that.
+ * TODO(b/32207606): This can be moved to vendor extension to the HIDL.
+ */
+struct NanTransmitVendorSpecificAttribute {
+  /**
+   * 0 = transmit only in the next discovery window
+   * 1 = transmit in next 16 discovery window
+   */
+  uint8_t payloadTransmitFlag;
+  /**
+   * Below flags must determine in which all frames
+   * the vendor specific attributes must be included
+   */
+  uint8_t txInDiscoveryBeacon;
+  uint8_t txInSyncBeacon;
+  uint8_t txInServiceDiscovery;
+  /**
+   * Organizationally Unique Identifier.
+   */
+  uint32_t vendorOui;
+  /**
+   * Vendor specific attribute to be transmitted.
+   * Max length: |MAX_VSA_DATA_LEN|.
+   */
+  vec<uint8_t> vsa;
+};
+
+/**
+ * Host can set the Periodic scan parameters for each of the
+ * 3(6, 44, 149) Social channels. Only these channels are allowed
+ * any other channels are rejected
+ */
+ enum NanChannelIndex : uint32_t {
+  CHANNEL_24G_BAND = 0,
+  CHANNEL_5G_BAND_LOW,
+  CHANNEL_5G_BAND_HIGH,
+};
+
+/**
+ * Structure to set the Social Channel Scan parameters
+ * passed as part of EnableRequest/ConfigRequest.
+ */
+struct NanSocialChannelScanParams {
+  /**
+   * Dwell time of each social channel in milliseconds
+   * ChannelIndex corresponds to the respective channel
+   * If time set to 0 then the FW default time must be used.
+   * Max length: |MAX_SOCIAL_CHANNELS|.
+   * dwellTime[i] refers to the dwell time of the i'th social channel.
+   */
+  vec<uint8_t> dwellTime;
+  /**
+   * Scan period of each social channel in seconds
+   * ChannelIndex corresponds to the respective channel
+   * If time set to 0 then the FW default time must be used.
+   * Max length: |MAX_SOCIAL_CHANNELS|.
+   * scanPeriod[i] refers to the scan period of the i'th social channel.
+   */
+  vec<uint16_t> scanPeriod;
+};
+
+/**
+ * Enable Request Message Structure
+ * The EnableReq message in  structs the Discovery Engine to enter an operational state
+ */
+struct NanEnableRequest {
+  /**
+   * Mandatory parameters below.
+   */
+  uint8_t masterPref;
+  /**
+   * A cluster_low value matching cluster_high indicates a request to join
+   * a cluster with that value. If the requested cluster is not found the
+   * device must start its own cluster.
+   */
+  uint16_t clusterLow;
+  uint16_t clusterHigh;
+  /**
+   * Optional configuration of Enable request.
+   * Each of the optional parameters have configure flag which
+   * determine whether configuration is to be passed or not.
+   * TODO(b/32207606): Check if these config variables needed or not.
+   */
+  bool validSupport5gVal;
+  uint8_t support5gVal;
+  /**
+   * BIT 0 is used to specify to include Service IDs in Sync/Discovery beacons
+   * 0 - Do not include SIDs in any beacons
+   * 1 - Include SIDs in all beacons.
+   * Rest 7 bits are count field which allows control over the number of SIDs
+   * included in the Beacon.  0 means to include as many SIDs that fit into
+   * the maximum allow Beacon frame size
+   */
+  bool validSidBeaconVal;
+  uint8_t sidBeaconVal;
+  /**
+   * The rssi values below must be specified without sign.
+   * For eg: -70dBm must be specified as 70.
+   */
+  bool valid2dot4gRssiCloseVal;
+  uint8_t rssiClose2dot4gVal;
+  bool valid2dot4gRssiMiddleVal;
+  uint8_t rssiMiddle2dot4gVal;
+  bool valid2dot4gRssiProximityVal;
+  uint8_t rssiProximity2dot4gVal;
+  bool validHopCountLimitVal;
+  uint8_t hopCountLimitVal;
+  /**
+   * Defines 2.4G channel access support
+   */
+  bool valid2dot4gSupportVal;
+  bool support2dot4gVal;
+  /**
+   * Defines 2.4G channels must be used for sync/discovery beacons
+   */
+  bool valid2dot4gBeaconsVal;
+  bool beacon2dot4gVal;
+  /**
+   * Defines 2.4G channels must be used for Service Discovery frames
+   */
+  bool valid2dot4gSdfVal;
+  bool sdf2dot4gVal;
+  /**
+   * Defines 5G channels must be used for sync/discovery beacons
+   */
+  bool valid5gBeaconsVal;
+  bool beacon5gVal;
+  /**
+   * Defines 5G channels must be used for Service Discovery frames
+   */
+  bool valid5gSdfVal;
+  bool sdf5gVal;
+  /**
+   * 1 byte value which defines the RSSI in
+   * dBm for a close by Peer in 5 Ghz channels.
+   * The rssi values must be specified without sign.
+   * For eg: -70dBm must be specified as 70.
+   */
+  bool valid5gRssiCloseVal;
+  uint8_t rssiClose5gVal;
+  /**
+   * 1 byte value which defines the RSSI value in
+   * dBm for a close by Peer in 5 Ghz channels.
+   * The rssi values must be specified without sign.
+   * For eg: -70dBm must be specified as 70.
+   */
+  bool valid5gRssiMiddleVal;
+  uint8_t rssiMiddle5gVal;
+  /**
+   * 1 byte value which defines the RSSI filter
+   * threshold.  Any Service Descriptors received above this
+   * value that are configured for RSSI filtering must be dropped.
+   * The rssi values must be specified without sign.
+   * For eg: -70dBm must be specified as 70.
+   */
+  bool valid5gRssiCloseProximityVal;
+  uint8_t rssiCloseProximity5gVal;
+  /**
+   * 1 byte quantity which defines the window size over
+   * which the “average RSSI” must be calculated over.
+   */
+  bool validRssiWindowSizeVal;
+  uint8_t rssiWindowSizeVal;
+  /**
+   * The 24 bit Organizationally Unique ID + the 8 bit Network Id.
+   */
+  uint8_t validOuiVal;
+  uint32_t ouiVal;
+  /**
+   * NAN Interface Address, If not configured the Discovery Engine
+   * must generate a 6 byte Random MAC.
+   */
+  bool validIntfAddrVal;
+  MacAddress intfAddrVal;
+  /**
+   * If set to true, the Discovery Engine must enclose the Cluster
+   * Attribute only sent in Beacons in a Vendor Specific Attribute
+   * and transmit in a Service Descriptor Frame.
+   */
+  bool configClusterAttributeVal;
+  /**
+   * The periodicity in seconds between full scan’s to find any new
+   * clusters available in the area. A Full scan must not be done
+   * more than every 10 seconds and must not be done less than every
+   * 30 seconds.
+   */
+  bool validScanParamsVal;
+  NanSocialChannelScanParams scanParamsVal;
+  /**
+   * 1 byte quantity which forces the Random Factor to a particular
+   * value for all transmitted Sync/Discovery beacons
+   */
+  bool validRandomFactorForceVal;
+  uint8_t randomFactorForceVal;
+  /**
+   * 1 byte quantity which forces the HC for all transmitted Sync and
+   * Discovery Beacon NO matter the real HC being received over the
+   * air.
+   */
+  bool validHopCountForceVal;
+  uint8_t hopCountForceVal;
+  /**
+   * Channel frequency in MHz to enable  on.
+   */
+  bool valid24gChannelVal;
+  WifiChannelInMhz channel24gVal;
+  bool valid5gChannelVal;
+  WifiChannelInMhz channel5gVal;
+};
+
+
+/**
+ * Publish Msg Structure
+ * Message is used to request the DE to publish the Service Name
+ * using the parameters passed into the "Discovery Window".
+ */
+struct NanPublishRequest {
+  /**
+   * Id  0 means new publish, any other id is existing publish.
+   */
+  uint16_t publishId;
+  /**
+   * How many seconds to run for. 0 means forever until canceled.
+   */
+  uint16_t ttl;
+  /**
+   * Periodicity of OTA unsolicited publish. Specified in increments of 500 ms.
+   */
+  uint16_t period;
+  /**
+   * 0= unsolicited, solicited = 1, 2= both.
+   */
+  NanPublishType publishType;
+  /**
+   * 0 = broadcast, 1= unicast  if solicited publish.
+   */
+  NanTxType txType;
+  /**
+   * Number of OTA Publish, 0 means forever until canceled.
+   */
+  uint8_t publishCount;
+  /**
+   * UTF-8 encoded string identifying the service.
+   * Max length: |MAX_SERVICE_NAME_LEN|.
+   */
+  string serviceName;
+  /**
+   * Field which specifies how the matching indication to host is controlled.
+   * 0 - Match and Indicate Once
+   * 1 - Match and Indicate continuous
+   * 2 - Match and Indicate never. This means don't indicate the match to
+   *     the host.
+   * 3 - Reserved
+   */
+  NanMatchAlg publishMatchIndicator;
+  /**
+   * Sequence of values NAN Device that has invoked a Subscribe method
+   * corresponding to this Publish method.
+   * Max length: |MAX_SERVICE_SPECIFIC_INFO_LEN|.
+   */
+  vec<uint8_t> serviceSpecificInfo;
+  /**
+   * Ordered sequence of <length, value> pairs which specify further response conditions
+   * beyond the service name used to filter subscribe messages to respond to.
+   * This is only needed when the PT is set to SOLICITED or SOLICITED_UNSOLICITED.
+   * Max length: |MAX_MATCH_FILTER_LEN|.
+   */
+  vec<uint8_t> rxMatchFilter;
+  /**
+   * Ordered sequence of <length, value> pairs to be included in the Discovery Frame.
+   * If present it is always sent in a Discovery Frame
+   * Max length: |MAX_MATCH_FILTER_LEN|.
+   */
+  vec<uint8_t> txMatchFilter;
+  /**
+   * Flag which specifies that the Publish must use the configured RSSI
+   * threshold and the received RSSI in order to filter requests
+   * false – ignore the configured RSSI threshold when running a Service
+   * Descriptor attribute or Service ID List Attribute through the DE matching logic.
+   * true – use the configured RSSI threshold when running a Service
+   * Descriptor attribute or Service ID List Attribute through the DE matching logic.
+   */
+  bool useRssiThreshold;
+  /**
+   * 8-bit bitmap which allows the Host to associate this publish
+   * with a particular Post-NAN Connectivity attribute
+   * which has been sent down in a ConfigureRequest/EnableRequest
+   * message.  If the DE fails to find a configured Post-NAN
+   * connectivity attributes referenced by the bitmap,
+   * the DE must return an error code to the Host.
+   * If the Publish is configured to use a Post-NAN Connectivity
+   * attribute and the Host does not refresh the Post-NAN Connectivity
+   * attribute the Publish must be canceled and the Host must be sent
+   * a PublishTerminatedIndication message.
+   */
+  uint8_t connmap;
+  /**
+   * Set/Enable corresponding bits to disable any indications that follow a publish.
+   * BIT0 - Disable publish termination indication.
+   * BIT1 - Disable match expired indication.
+   * BIT2 - Disable followUp indication received (OTA).
+   */
+  uint8_t recvIndicationCfg;
+};
+
+/**
+ * Publish Cancel Msg Structure.
+ * The PublishServiceCancelReq Message is used to request the DE to stop publishing
+ * the Service Name identified by the Publish Id in the message.
+ */
+struct NanPublishCancelRequest {
+  uint16_t publishId;
+};
+
+/**
+ * NAN Subscribe Structure.
+ * The SubscribeServiceReq message is sent to the Discovery Engine
+ * whenever the Upper layers would like to listen for a Service Name
+ */
+struct NanSubscribeRequest {
+  /**
+   * Id 0 means new subscribe, non zero is existing subscribe.
+   */
+  uint16_t subscribeId;
+  /**
+   * How many seconds to run for. 0 means forever until canceled.
+   */
+  uint16_t ttl;
+  /**
+   * Periodicity of OTA Active Subscribe. Units in increments of 500 ms,
+   * 0 = attempt every DW.
+   */
+  uint16_t period;
+  /**
+   * Flag which specifies how the Subscribe request shall be processed.
+   * 0 - PASSIVE , 1- ACTIVE.
+   */
+  NanSubscribeType subscribeType;
+  /**
+   * Flag which specifies on Active Subscribes how the Service Response Filter
+   * attribute is populated.
+   * 0 - Bloom Filter, 1 - MAC Addr.
+   */
+  NanSrfType serviceResponseFilter;
+  /**
+   * Flag which specifies how the Service Response Filter Include bit is
+   * populated.
+   * 0=Do not respond if in the Address Set, 1= Respond.
+   */
+  NanSrfIncludeType serviceResponseInclude;
+  /**
+   * Flag which specifies if the Service Response Filter must be used when
+   * creating Subscribes.
+   * 0=Do not send the Service Response Filter,1= send.
+   */
+  bool shouldUseServiceResponseFilter;
+  /**
+   * Flag which specifies if the Service Specific Info is needed in
+   * the Publish message before creating the MatchIndication.
+   * 0=Not needed, 1= Required.
+   */
+  bool isSsiRequiredForMatchIndication;
+  /**
+   * Field which specifies how the matching indication to host is controlled.
+   * 0 - Match and Indicate Once
+   * 1 - Match and Indicate continuous
+   * 2 - Match and Indicate never. This means don't indicate the match to the
+   *     host.
+   * 3 - Reserved
+   */
+  NanMatchAlg subscribeMatchIndicator;
+  /**
+   * The number of Subscribe Matches which must occur
+   * before the Subscribe request is automatically terminated.
+   * If this value is 0 this field is not used by the DE.
+   */
+  uint8_t subscribeCount;
+  /**
+   * UTF-8 encoded string identifying the service.
+   * Max length: |MAX_SERVICE_NAME_LEN|.
+   */
+  string serviceName;
+  /**
+   * Sequence of values which further specify the published service beyond the
+   * service name.
+   * Max length: |MAX_SERVICE_SPECIFIC_INFO_LEN|.
+   */
+  vec<uint8_t> serviceSpecificInfo;
+  /**
+   * Ordered sequence of <length, value> pairs used to filter out received
+   * publish discovery messages.
+   * This can be sent both for a Passive or an Active Subscribe
+   * Max length: |MAX_MATCH_FILTER_LEN|.
+   */
+  vec<uint8_t> rxMatchFilter;
+  /**
+   * Ordered sequence of <length, value> pairs  included in the
+   * Discovery Frame when an Active Subscribe is used.
+   * Max length: |MAX_MATCH_FILTER_LEN|.
+   */
+  vec<uint8_t> txMatchFilter;
+  /**
+   * Flag which specifies that the Publish must use the configured RSSI
+   * threshold and the received RSSI in order to filter requests
+   * false – ignore the configured RSSI threshold when running a Service
+   * Descriptor attribute or Service ID List Attribute through the DE matching logic.
+   * true – use the configured RSSI threshold when running a Service
+   * Descriptor attribute or Service ID List Attribute through the DE matching logic.
+   */
+  bool useRssiThreshold;
+  /**
+   * 8-bit bitmap which allows the Host to associate this Active
+   * Subscribe with a particular Post-NAN Connectivity attribute
+   * which has been sent down in a ConfigureRequest/EnableRequest
+   * message.  If the DE fails to find a configured Post-NAN
+   * connectivity attributes referenced by the bitmap,
+   * the DE must return an error code to the Host.
+   * If the Subscribe is configured to use a Post-NAN Connectivity
+   * attribute and the Host does not refresh the Post-NAN Connectivity
+   * attribute the Subscribe must be canceled and the Host must be sent
+   * a SubscribeTerminatedIndication message.
+   */
+  uint8_t connmap;
+  /**
+   * NAN Interface Address, conforming to the format as described in
+   * 8.2.4.3.2 of IEEE Std. 802.11-2012.
+   * Max length: |MAX_SUBSCRIBE_MAX_ADDRESS|.
+   */
+  vec<MacAddress> intfAddr;
+  /**
+   * Set/Enable corresponding bits to disable indications that follow a
+   * subscribe.
+   * BIT0 - Disable subscribe termination indication.
+   * BIT1 - Disable match expired indication.
+   * BIT2 - Disable followUp indication received (OTA).
+   */
+  uint8_t recvIndicationCfg;
+};
+
+/**
+ * NAN Subscribe Cancel Structure
+ * The SubscribeCancelReq Message is used to request the DE to stop looking
+ * for the Service Name.
+ */
+struct NanSubscribeCancelRequest {
+  uint16_t subscribeId;
+};
+
+/**
+ * Transmit follow up Structure.
+ * The TransmitFollowupReq message is sent to the DE to allow the sending of
+ * the Service_Specific_Info to a particular MAC address.
+ */
+struct NanTransmitFollowupRequest {
+  /**
+   * Publish or Subscribe Id of an earlier Publish/Subscribe.
+   */
+  uint16_t publishSubscribeId;
+  /**
+   * This Id is the Requestor Instance that is passed as
+   * part of earlier MatchInd/FollowupInd message.
+   */
+  uint32_t requestorInstanceId;
+  /**
+   * Unicast address.
+   */
+  MacAddress addr;
+  /**
+   * Priority of the request 2=high.
+   */
+  NanTxPriority priority;
+  /**
+   * Flag which the DE uses to decide if received in a DW or a FAW
+   * 0= send in a DW, 1=send in FAW.
+   */
+  NanTransmitWindowType dwOrFaw;
+  /**
+   * Sequence of values which further specify the published service beyond
+   * the service name.
+   * Max length: |MAX_SERVICE_SPECIFIC_INFO_LEN|.
+   */
+  vec<uint8_t> serviceSpecificInfo;
+  /**
+   * Set/Enable corresponding bits to disable responses after followUp.
+   * BIT0 - Disable followUp response from FW.
+   */
+  uint8_t recvIndicationCfg;
+};
+
+/**
+ * Config Structure.
+ * The ConfigurationReq message is sent by the Host to the
+ * Discovery Engine in order to configure the Discovery Engine during runtime.
+ */
+struct NanConfigRequest {
+  bool validSidBeaconVal;
+  uint8_t sidBeacon;
+  bool validRssiProximityVal;
+  uint8_t rssiProximity;
+  bool validMasterPrefVal;
+  uint8_t masterPref;
+  /**
+   * 1 byte value which defines the RSSI filter threshold.
+   * Any Service Descriptors received above this value
+   * that are configured for RSSI filtering must be dropped.
+   * The rssi values must be specified without sign.
+   * For eg: -70dBm must be specified as 70.
+   */
+  bool valid5gRssiCloseProximityVal;
+  uint8_t rssiCloseProximity5gVal;
+  /**
+   * 2 byte quantity which defines the window size over
+   * which the “average RSSI” must be calculated over.
+   */
+  bool validRssiWindowSizeVal;
+  uint16_t rssiWindowSizeVal;
+  /**
+   * If set to 1, the Discovery Engine must enclose the Cluster
+   * Attribute only sent in Beacons in a Vendor Specific Attribute
+   * and transmit in a Service Descriptor Frame.
+   */
+  bool configClusterAttributeVal;
+  /**
+   * The periodicity in seconds between full scan’s to find any new
+   * clusters available in the area.  A Full scan must not be done
+   * more than every 10 seconds and must not be done less than every
+   * 30 seconds.
+   */
+  bool validScanParamsVal;
+  NanSocialChannelScanParams scanParamsVal;
+  /**
+   * 1 byte quantity which forces the Random Factor to a particular
+   * value for all transmitted Sync/Discovery beacons
+   */
+  bool validRandomFactorForceVal;
+  uint8_t randomFactorForceVal;
+  /**
+   * 1 byte quantity which forces the HC for all transmitted Sync and
+   * Discovery Beacon NO matter the real HC being received over the
+   * air.
+   */
+  bool validHopCountForceVal;
+  uint8_t hopCountForceVal;
+};
+
+/**
+ * Beacon Sdf Payload Structure
+ * The Discovery Engine can be configured to publish vendor specific attributes as part of
+ * beacon or service discovery frame transmitted as part of this request..
+ */
+struct NanBeaconSdfPayloadRequest {
+  /**
+   * VendorAttribute must have the Vendor Specific Attribute which the
+   * vendor wants to publish as part of Discovery or Sync or Service discovery frame
+   */
+  NanTransmitVendorSpecificAttribute vsa;
+};
+
+/**
+ *  Data Path Initiator requesting a data session.
+ */
+struct NanDataPathInitiatorRequest {
+  /**
+   * Unique Instance Id identifying the Responder's service.
+   * This is same as publish_id notified on the subscribe side
+   * in a publish/subscribe scenario
+   */
+  uint32_t serviceInstanceId;
+  /**
+   * Config flag for channel request.
+   */
+  NanDataPathChannelCfg channelRequestType;
+  /**
+   * Channel frequency in MHz to start data-path.
+   */
+  WifiChannelInMhz channel;
+  /**
+   * Discovery MAC addr of the publisher/peer.
+   */
+  MacAddress peerDiscMacAddr;
+  /**
+   * Interface name on which this NDP session is to be started.
+   * This must be the same interface name provided during interface
+   * create.
+   */
+  string ndpIface;
+  /**
+   * Initiator/Responder Security/QoS configuration.
+   */
+  NanDataPathCfg ndpCfg;
+  /**
+   * App/Service information of the Initiator.
+   */
+  NanDataPathAppInfo appInfo;
+};
+
+/**
+ * Data struct Nanto initiate a data response on the responder side
+ * for an indication received with a data request.
+ */
+struct NanDataPathIndicationResponse {
+  /**
+   * Unique token Id generated on the initiator/responder
+   * side used for a NDP session between two NAN devices.
+   */
+  NanDataPathId ndpInstanceId;
+  /**
+   * Interface name on which this NDP session is to be started.
+   * This must be the same interface name provided during interface
+   * create.
+   */
+  string ndpIface;
+  /**
+   * Initiator/Responder Security/QoS configuration.
+   */
+  NanDataPathCfg ndpCfg;
+  /**
+   * App/Service information of the responder.
+   */
+  NanDataPathAppInfo appInfo;
+  /**
+   * Response Code indicating ACCEPT/REJECT/DEFER
+   */
+  NanDataPathResponseCode rspCode;
+};
+
+/**
+ * NDP termination info.
+ */
+struct NanDataPathEndRequest {
+  uint8_t numNdpInstances;
+  /**
+   * Unique token Id generated on the initiator/responder side
+   * used for a NDP session between two NAN devices
+   */
+  vec<NanDataPathId> ndpInstanceIds;
+};
+
+/**
+ * Definition of various ResponseType
+ */
+enum NanResponseType : uint32_t  {
+  ENABLED = 0,
+  DISABLED = 1,
+  PUBLISH = 2,
+  PUBLISH_CANCEL = 3,
+  TRANSMIT_FOLLOWUP = 4,
+  SUBSCRIBE = 5,
+  SUBSCRIBE_CANCEL = 6,
+  CONFIG = 8,
+  ERROR = 10,
+  BEACON_SDF_PAYLOAD = 11,
+  GET_CAPABILITIES = 12,
+  DP_INTERFACE_CREATE = 13,
+  DP_INTERFACE_DELETE = 14,
+  DP_INITIATOR_RESPONSE = 15,
+  DP_RESPONDER_RESPONSE = 16,
+  DP_END = 17,
+};
+
+/**
+ * Various NAN Protocol Response code
+ */
+enum NanStatusType : uint32_t {
+  /* NAN Protocol Response Codes */
+  SUCCESS = 0,
+  TIMEOUT = 1,
+  DE_FAILURE = 2,
+  INVALID_MSG_VERSION = 3,
+  INVALID_MSG_LEN = 4,
+  INVALID_MSG_ID = 5,
+  INVALID_HANDLE = 6,
+  NO_SPACE_AVAILABLE = 7,
+  INVALID_PUBLISH_TYPE = 8,
+  INVALID_TX_TYPE = 9,
+  INVALID_MATCH_ALGORITHM = 10,
+  DISABLE_IN_PROGRESS = 11,
+  INVALID_TLV_LEN = 12,
+  INVALID_TLV_TYPE = 13,
+  MISSING_TLV_TYPE = 14,
+  INVALID_TOTAL_TLVS_LEN = 15,
+  INVALID_MATCH_HANDLE = 16,
+  INVALID_TLV_VALUE = 17,
+  INVALID_TX_PRIORITY = 18,
+  INVALID_CONNECTION_MAP = 19,
+  NOT_ALLOWED = 22,
+  NO_OTA_ACK = 23,
+  TX_FAIL = 24,
+  ALREADY_ENABLED = 25,
+  FOLLOWUP_QUEUE_FULL = 26,
+
+  /* NAN Configuration Response codes */
+  INVALID_RSSI_CLOSE_VALUE = 4096,
+  INVALID_RSSI_MIDDLE_VALUE = 4097,
+  INVALID_HOP_COUNT_LIMIT = 4098,
+  INVALID_MASTER_PREFERENCE_VALUE = 4099,
+  INVALID_LOW_CLUSTER_ID_VALUE = 4100,
+  INVALID_HIGH_CLUSTER_ID_VALUE = 4101,
+  INVALID_BACKGROUND_SCAN_PERIOD = 4102,
+  INVALID_RSSI_PROXIMITY_VALUE = 4103,
+  INVALID_SCAN_CHANNEL = 4104,
+  INVALID_POST_CONNECTIVITY_CAPABILITIES_BITMAP = 4105,
+  INVALID_FURTHER_AVAILABILITY_MAP_NUMCHAN_VALUE = 4106,
+  INVALID_FURTHER_AVAILABILITY_MAP_DURATION_VALUE = 4107,
+  INVALID_FURTHER_AVAILABILITY_MAP_CLASS_VALUE = 4108,
+  INVALID_FURTHER_AVAILABILITY_MAP_CHANNEL_VALUE = 4109,
+  INVALID_FURTHER_AVAILABILITY_MAP_AVAILABILITY_INTERVAL_BITMAP_VALUE = 4110,
+  INVALID_FURTHER_AVAILABILITY_MAP_MAP_ID = 4111,
+  INVALID_POST_DISCOVERY_CONN_TYPE_VALUE = 4112,
+  INVALID_POST_DISCOVERY_DEVICE_ROLE_VALUE = 4113,
+  INVALID_POST_DISCOVERY_DURATION_VALUE = 4114,
+  INVALID_POST_DISCOVERY_BITMAP_VALUE = 4115,
+  MISSING_FUTHER_AVAILABILITY_MAP = 4116,
+  INVALID_BAND_CONFIG_FLAGS = 4117,
+  INVALID_RANDOM_FACTOR_UPDATE_TIME_VALUE = 4118,
+  INVALID_ONGOING_SCAN_PERIOD = 4119,
+  INVALID_DW_INTERVAL_VALUE = 4120,
+  INVALID_DB_INTERVAL_VALUE = 4121,
+
+  /* 4122-8191 RESERVED */
+  TERMINATED_REASON_INVALID = 8192,
+  TERMINATED_REASON_TIMEOUT = 8193,
+  TERMINATED_REASON_USER_REQUEST = 8194,
+  TERMINATED_REASON_FAILURE = 8195,
+  TERMINATED_REASON_COUNT_REACHED = 8196,
+  TERMINATED_REASON_DE_SHUTDOWN = 8197,
+  TERMINATED_REASON_DISABLE_IN_PROGRESS = 8198,
+  TERMINATED_REASON_POST_DISC_ATTR_EXPIRED = 8199,
+  TERMINATED_REASON_POST_DISC_LEN_EXCEEDED = 8200,
+  TERMINATED_REASON_FURTHER_AVAIL_MAP_EMPTY = 8201,
+
+  /* 9000-9500 NDP Status type */
+  NDP_UNSUPPORTED_CONCURRENCY = 9000,
+  NDP_DATA_IFACE_CREATE_FAILED = 9001,
+  NDP_DATA_IFACE_DELETE_FAILED = 9002,
+  NDP_DATA_INITIATOR_REQUEST_FAILED = 9003,
+  NDP_DATA_RESPONDER_REQUEST_FAILED = 9004,
+  NDP_INVALID_SERVICE_INSTANCE_ID = 9005,
+  NDP_INVALID_NDP_INSTANCE_ID = 9006,
+  NDP_INVALID_RESPONSE_CODE = 9007,
+  NDP_INVALID_APP_INFO_LEN = 9008,
+
+  /* OTA failures and timeouts during negotiation */
+  NDP_MGMT_FRAME_REQUEST_FAILED = 9009,
+  NDP_MGMT_FRAME_RESPONSE_FAILED = 9010,
+  NDP_MGMT_FRAME_CONFIRM_FAILED = 9011,
+  NDP_END_FAILED = 9012,
+  NDP_MGMT_FRAME_END_REQUEST_FAILED = 9013,
+
+  /* 9500 onwards vendor specific error codes */
+  NDP_VENDOR_SPECIFIC_ERROR = 9500,
+};
+
+/**
+ * Publish Response Message structure.
+ */
+struct NanPublishResponse {
+  uint16_t publishId;
+};
+
+/**
+ * Subscribe Response Message structure.
+ */
+struct NanSubscribeResponse {
+  uint16_t subscribeId;
+};
+
+/**
+ * Response returned for Initiators Data request.
+ */
+struct NanDataPathRequestResponse {
+  /**
+   * Unique token Id generated on the initiator
+   * side used for a NDP session between two NAN devices
+   */
+  NanDataPathId ndpInstanceId;
+};
+
+/**
+ * NDP Capabilites info.
+ */
+struct NanCapabilities {
+  uint32_t maxConcurrentClusters;
+  uint32_t maxPublishes;
+  uint32_t maxSubscribes;
+  uint32_t maxServiceNameLen;
+  uint32_t maxMatchFilterLen;
+  uint32_t maxTotalMatchFilterLen;
+  uint32_t maxServiceSpecificInfoLen;
+  uint32_t maxVsaDataLen;
+  uint32_t maxMeshDataLen;
+  uint32_t maxNdiInterfaces;
+  uint32_t maxNdpSessions;
+  uint32_t maxAppInfoLen;
+  uint32_t maxQueuedTransmitFollowupMsgs;
+};
+
+/**
+ * NAN Response Message body.
+ */
+union NanResponseMsgBody {
+    NanPublishResponse publishResponse;
+    NanSubscribeResponse subscribeResponse;
+    NanDataPathRequestResponse dataRequestResponse;
+    NanCapabilities nanCapabilities;
+};
+
+/**
+ * NAN Response Messages.
+ */
+struct NanResponseMsg {
+  /**
+   * Contains the result code.
+   */
+  NanStatusType status;
+  /**
+   * For error returns the value is returned which was in error.
+   */
+  uint32_t value;
+  /**
+   * ResponseType Definitions.
+   */
+  NanResponseType responseType;
+  NanResponseMsgBody body;
+};
+
+/**
+ * Publish Terminated Message structure.
+ * The PublishTerminatedInd message is sent by the DE whenever a Publish
+ * terminates from a user-specified timeout or a unrecoverable error in the DE.
+ */
+struct NanPublishTerminatedInd {
+  /**
+   * Id returned during the initial Publish.
+   */
+  uint16_t publishId;
+  NanStatusType reason;
+};
+
+/**
+ * Match Indication Message structure.
+ * The MatchInd message is sent once per responding MAC address whenever
+ * the Discovery Engine detects a match for a previous SubscribeServiceReq
+ * or PublishServiceReq.
+ */
+struct NanMatchInd {
+  /**
+   * Publish or Subscribe Id of an earlier Publish/Subscribe.
+   */
+  uint16_t publishSubscribeId;
+  /**
+   * A 32 bit Requestor Instance Id which is sent to the Application.
+   * This Id must be sent in any subsequent UnmatchInd/FollowupInd
+   * messages.
+   */
+  uint32_t requestorInstanceId;
+  MacAddress addr;
+  /**
+   * Sequence of octets which were received in a Discovery Frame matching the
+   * Subscribe Request.
+   * Max length: |MAX_SERVICE_SPECIFIC_INFO_LEN|.
+   */
+  vec<uint8_t> serviceSpecificInfo;
+  /**
+   * Ordered sequence of <length, value> pairs received in the Discovery Frame
+   * matching the Subscribe Request.
+   * Max length: |MAX_MATCH_FILTER_LEN|.
+   */
+  vec<uint8_t> sdfMatchFilter;
+  /**
+   * Flag to indicate if the Match occurred in a Beacon Frame or in a
+   * Service Discovery Frame.
+   */
+  bool matchOccuredFlag;
+  /**
+   * Flag to indicate FW is out of resource and that it can no longer
+   * track this Service Name. The Host still need to send the received
+   * Match_Handle but duplicate MatchInd messages may be received on
+   * this Handle until the resource frees up.
+   */
+  bool outOfResourceFlag;
+  /**
+   * If RSSI filtering was configured in SubscribeRequest then this
+   * field must contain the received RSSI value. 0 if not.
+   * All rssi values must be specified without sign.
+   * For eg: -70dBm must be specified as 70.
+   */
+  uint8_t rssiValue;
+};
+
+/**
+ * MatchExpired Indication Message structure.
+ * The MatchExpiredInd message is sent whenever the Discovery Engine detects that
+ * a previously Matched Service has been gone for too long. If the previous
+ * MatchInd message for this Publish/Subscribe Id had the out_of_resource_flag
+ * set then this message must not be received
+ */
+struct NanMatchExpiredInd {
+  /**
+   * Publish or Subscribe Id of an earlier Publish/Subscribe.
+   */
+  uint16_t publishSubscribeId;
+  /**
+   * 32 bit value sent by the DE in a previous
+   * MatchInd/FollowupInd to the application.
+   */
+  uint32_t requestorInstanceId;
+};
+
+/**
+ * Subscribe Terminated Message structure.
+ * The SubscribeTerminatedInd message is sent by the DE whenever a
+ * Subscribe terminates from a user-specified timeout or a unrecoverable error in the DE.
+ */
+struct NanSubscribeTerminatedInd {
+  /**
+   * Id returned during initial Subscribe.
+   */
+  uint16_t subscribeId;
+  NanStatusType reason;
+};
+
+/**
+ * Followup Indication Message structure.
+ * The FollowupInd message is sent by the DE to the Host whenever it receives a
+ * Followup message from another peer.
+ */
+struct NanFollowupInd {
+  /**
+   * Publish or Subscribe Id of an earlier Publish/Subscribe.
+   */
+  uint16_t publishSubscribeId;
+  /**
+   * A 32 bit Requestor instance Id which is sent to the Application.
+   * This Id must be used in subsequent UnmatchInd/FollowupInd messages.
+   */
+  uint32_t requestorInstanceId;
+  MacAddress addr;
+  /**
+   * Flag which the DE uses to decide if received in a DW or a FAW
+   * 0= send in a DW, 1=send in FAW.
+   */
+  NanTransmitWindowType dwOrFaw;
+  /**
+   * Sequence of values which further specify the published service beyond
+   * the service name
+   * Max length: |MAX_SERVICE_SPECIFIC_INFO_LEN|.
+   */
+  vec<uint8_t> serviceSpecificInfo;
+};
+
+/**
+ * NAN Protocol Event ID Codes.
+ */
+enum NanDiscEngEventType : uint32_t {
+  /**
+   * Event data notifying the Mac address of the Discovery engine.
+   * which is reported as one of the Discovery engine event
+   */
+  DISC_MAC_ADDR = 0,
+  /**
+   * Event data notifying the Cluster address of the cluster
+   * which is reported as one of the Discovery engine events.
+   */
+  STARTED_CLUSTER,
+  JOINED_CLUSTER,
+};
+
+/**
+ * Discovery Engine Event Indication Message structure.
+ * The Discovery Engine can inform the Host when significant events occur
+ * The data following the EventId is dependent upon the EventId type.
+ * In other words, each new event defined must carry a different
+ * structure of information back to the host.
+ */
+struct NanDiscEngEventInd {
+  /**
+   * NAN Protocol Event Codes.
+   */
+  NanDiscEngEventType eventType;
+  /**
+   * Mac Address associated with the corresponding event.
+   */
+  MacAddress addr;
+};
+
+/**
+ * NAN Disabled Indication Message structure.
+ * The DisableInd message indicates to the upper layers that the Discovery
+ * Engine has flushed all state and has been shutdown.  When this message is
+ * received the DE is guaranteed to have left the NAN cluster it was part of
+ * and must have terminated any in progress Publishes or Subscribes.
+ */
+struct NanDisabledInd {
+  NanStatusType reason;
+};
+
+/**
+ * Mask to determine on which frames attribute was received.
+ */
+enum NanVsaRxFrameMask: uint32_t {
+  DISCOVERY_BEACON_MASK = 1 << 0,
+  SYNC_BEACON_MASK = 1 << 1,
+  SERVICE_DISCOVERY_MASK = 1 << 2
+};
+
+struct NanReceiveVendorSpecificAttribute {
+  /**
+   * Frames on which this vendor specific attribute
+   * was received. Mask |NanVsaRxFrameMask| defined above.
+   */
+  uint8_t vsaReceivedOn;
+  /**
+   * Organizationally Unique Identifier.
+   */
+  uint32_t vendorOui;
+  /**
+   * Vendor specific attribute.
+   * Max length: |MAX_VSA_DATA_LEN|.
+   */
+  vec<uint8_t> vsa;
+};
+
+/**
+ * NAN Beacon SDF Payload Received Message structure.
+ * Discovery engine sends the details of received Beacon or
+ * Service Discovery Frames as part of this structure.
+ */
+struct NanBeaconSdfPayloadReceive {
+  /**
+   * Frame data.
+   * Max length: |MAX_FRAME_DATA_LEN|.
+   */
+  vec<uint8_t> frameData;
+};
+
+/**
+ * NAN Beacon or SDF Payload Indication Message structure.
+ * The BeaconSdfPayloadInd message indicates to the upper layers that information
+ * elements were received either in a Beacon or SDF which needs to be delivered
+ * outside of a Publish/Subscribe Handle.
+ */
+struct NanBeaconSdfPayloadInd {
+  /**
+   * The MAC address of the peer which sent the attributes.
+   */
+  MacAddress addr;
+  /**
+   * NAN Receive Vendor Specific Attribute.
+   */
+  bool isVsaReceived;
+  NanReceiveVendorSpecificAttribute vsa;
+  /**
+   * NAN Beacon or SDF Payload Received.
+   */
+  bool isBeaconSdfPayloadReceived;
+  NanBeaconSdfPayloadReceive data;
+};
+
+/**
+ * NAN Data path request Indication Message structure.
+ * Event indication received on the responder side when a Nan Data request or
+ * NDP session is initiated on the Initiator side.
+ */
+struct NanDataPathRequestInd {
+  /**
+   * Unique Instance Id corresponding to a service/session.
+   * This is similar to the publish_id generated on the
+   * publisher side.
+   */
+  uint16_t serviceInstanceId;
+  /**
+   * Discovery MAC addr of the peer/initiator.
+   */
+  MacAddress peerDiscMacAddr;
+  /**
+   * Unique token Id generated on the initiator/responder side
+   * used for a NDP session between two NAN devices.
+   */
+  NanDataPathId ndpInstanceId;
+  /**
+   * Initiator/Responder Security/QoS configuration.
+   */
+  NanDataPathCfg ndpCfg;
+  /**
+   * App/Service information of the initiator.
+   */
+  NanDataPathAppInfo appInfo;
+};
+
+/**
+ * NAN Data path confirmation Indication Message structure.
+ * Event indication of data confirm is received on both
+ * initiator and responder side confirming a NDP session.
+ */
+struct NanDataPathConfirmInd {
+  /**
+   * Unique token Id generated on the initiator/responder side
+   * used for a NDP session between two NAN devices
+   */
+  NanDataPathId ndpInstanceId;
+  /**
+   * NDI mac address of the peer.
+   * (required to derive target ipv6 address)
+   */
+  MacAddress peerNdiMacAddr;
+  /**
+   * App/Service information of Initiator/Responder.
+   */
+  NanDataPathAppInfo appInfo;
+  /**
+   * Response code indicating ACCEPT/REJECT/DEFER.
+   */
+  NanDataPathResponseCode rspCode;
+  /**
+   * Reason code indicating the cause for REJECT.
+   */
+  NanStatusType reasonCode;
+};
+
+/**
+ * NAN Data path end Indication Message structure.
+ * Event indication received on the initiator/responder side terminating
+ * a NDP session
+ */
+struct NanDataPathEndInd {
+  /**
+   * Unique token Id generated on the initiator/responder side
+   * used for a NDP session between two NAN devices
+   */
+  vec<NanDataPathId> ndpInstanceIds;
+};
+
+/**
+ * NAN Transmit followup Indication Message structure.
+ * Event Indication notifying the transmit followup in progress.
+ */
+struct NanTransmitFollowupInd {
+  CommandId cmdId;
+  NanStatusType reason;
+};
+
