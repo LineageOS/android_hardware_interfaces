@@ -38,11 +38,15 @@ class WifiRttController : public IWifiRttController {
                     const std::weak_ptr<WifiLegacyHal> legacy_hal);
   // Refer to |WifiChip::invalidate()|.
   void invalidate();
+  bool isValid();
 
   // HIDL methods exposed.
   Return<void> getBoundIface(getBoundIface_cb hidl_status_cb) override;
 
  private:
+  // Corresponding worker functions for the HIDL methods.
+  std::pair<WifiStatus, sp<IWifiIface>> getBoundIfaceInternal();
+
   sp<IWifiIface> bound_iface_;
   std::weak_ptr<WifiLegacyHal> legacy_hal_;
   bool is_valid_;
