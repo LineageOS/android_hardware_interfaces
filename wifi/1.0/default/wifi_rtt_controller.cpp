@@ -18,7 +18,7 @@
 
 #include <android-base/logging.h>
 
-#include "failure_reason_util.h"
+#include "wifi_status_util.h"
 
 namespace android {
 namespace hardware {
@@ -36,8 +36,14 @@ void WifiRttController::invalidate() {
   is_valid_ = false;
 }
 
-Return<void> WifiRttController::getBoundIface(getBoundIface_cb cb) {
-  cb(bound_iface_);
+Return<void> WifiRttController::getBoundIface(getBoundIface_cb hidl_status_cb) {
+  if (!is_valid_) {
+    hidl_status_cb(
+        createWifiStatus(WifiStatusCode::ERROR_WIFI_RTT_CONTROLLER_INVALID),
+        nullptr);
+    return Void();
+  }
+  hidl_status_cb(createWifiStatus(WifiStatusCode::SUCCESS), bound_iface_);
   return Void();
 }
 

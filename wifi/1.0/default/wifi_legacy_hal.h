@@ -19,6 +19,7 @@
 
 #include <functional>
 #include <thread>
+#include <vector>
 
 #include <hardware_legacy/wifi_hal.h>
 
