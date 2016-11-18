@@ -8,7 +8,8 @@ LOCAL_SRC_FILES := \
 
 LOCAL_SHARED_LIBRARIES := \
     liblog \
-    libhidl \
+    libhidlbase \
+    libhidltransport \
     libhwbinder \
     libhardware \
     libutils \
@@ -27,7 +28,8 @@ LOCAL_SHARED_LIBRARIES := \
     liblog \
     libhwbinder \
     libhardware \
-    libhidl \
+    libhidlbase \
+    libhidltransport \
     libutils \
     android.hardware.boot@1.0 \
 

@@ -11,7 +11,8 @@ cc_library_shared {
 
     shared_libs: [
         "libbase",
-        "libhidl",
+        "libhidlbase",
+        "libhidltransport",
         "libhwbinder",
         "liblog",
         "libutils",

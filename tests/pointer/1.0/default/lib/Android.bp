@@ -6,7 +6,8 @@ cc_library_shared {
 
     shared_libs: [
         "libbase",
-        "libhidl",
+        "libhidlbase",
+        "libhidltransport",
         "libhwbinder",
         "liblog",
         "android.hardware.tests.pointer@1.0",

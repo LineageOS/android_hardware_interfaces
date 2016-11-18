@@ -5,7 +5,8 @@ cc_library_shared {
     ],
 
     shared_libs: [
-        "libhidl",
+        "libhidlbase",
+        "libhidltransport",
         "libhwbinder",
         "android.hardware.tests.foo@1.0",
     ],
