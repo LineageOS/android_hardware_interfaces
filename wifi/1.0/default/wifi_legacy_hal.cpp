@@ -16,14 +16,19 @@
 
 #include <array>
 
-#include "wifi_legacy_hal.h"
-
 #include <android-base/logging.h>
 #include <cutils/properties.h>
-#include <wifi_system/hal_tool.h>
 #include <wifi_system/interface_tool.h>
 
-namespace {
+#include "wifi_legacy_hal.h"
+
+namespace android {
+namespace hardware {
+namespace wifi {
+namespace V1_0 {
+namespace implementation {
+namespace legacy_hal {
+// Constants used in the class.
 static constexpr uint32_t kMaxVersionStringLength = 256;
 
 // Legacy HAL functions accept "C" style function pointers, so use global
@@ -52,13 +57,8 @@ void onFirmwareMemoryDump(char* buffer, int buffer_size) {
     on_firmware_memory_dump_internal_callback(buffer, buffer_size);
   }
 }
-}
+// End of the free-standing "C" style callbacks.
 
-namespace android {
-namespace hardware {
-namespace wifi {
-namespace V1_0 {
-namespace implementation {
 WifiLegacyHal::WifiLegacyHal()
     : global_handle_(nullptr),
       wlan_interface_handle_(nullptr),
@@ -69,9 +69,11 @@ wifi_error WifiLegacyHal::start() {
   CHECK(!global_handle_ && !wlan_interface_handle_ &&
         !awaiting_event_loop_termination_);
 
-  android::wifi_system::HalTool hal_tool;
   android::wifi_system::InterfaceTool if_tool;
-  if (!hal_tool.InitFunctionTable(&global_func_table_)) {
+  // TODO: Add back the HAL Tool if we need to. All we need from the HAL tool
+  // for now is this function call which we can directly call.
+  wifi_error status = init_wifi_vendor_hal_func_table(&global_func_table_);
+  if (status != WIFI_SUCCESS) {
     LOG(ERROR) << "Failed to initialize legacy hal function table";
     return WIFI_ERROR_UNKNOWN;
   }
@@ -81,7 +83,7 @@ wifi_error WifiLegacyHal::start() {
   }
 
   LOG(INFO) << "Starting legacy HAL";
-  wifi_error status = global_func_table_.wifi_initialize(&global_handle_);
+  status = global_func_table_.wifi_initialize(&global_handle_);
   if (status != WIFI_SUCCESS || !global_handle_) {
     LOG(ERROR) << "Failed to retrieve global handle";
     return status;
@@ -228,6 +230,8 @@ void WifiLegacyHal::invalidate() {
   on_driver_memory_dump_internal_callback = nullptr;
   on_firmware_memory_dump_internal_callback = nullptr;
 }
+
+}  // namespace legacy_hal
 }  // namespace implementation
 }  // namespace V1_0
 }  // namespace wifi
