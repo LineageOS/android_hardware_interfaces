@@ -35,7 +35,7 @@ namespace implementation {
 class WifiNanIface : public IWifiNanIface {
  public:
   WifiNanIface(const std::string& ifname,
-               const std::weak_ptr<WifiLegacyHal> legacy_hal);
+               const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal);
   // Refer to |WifiChip::invalidate()|.
   void invalidate();
   bool isValid();
@@ -135,7 +135,7 @@ class WifiNanIface : public IWifiNanIface {
   WifiStatus dataEndInternal(uint32_t cmd_id, const NanDataPathEndRequest& msg);
 
   std::string ifname_;
-  std::weak_ptr<WifiLegacyHal> legacy_hal_;
+  std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
   std::vector<sp<IWifiNanIfaceEventCallback>> event_callbacks_;
   bool is_valid_;
 
