@@ -29,7 +29,7 @@ using hidl_return_util::validateAndCall;
 
 WifiRttController::WifiRttController(
     const sp<IWifiIface>& bound_iface,
-    const std::weak_ptr<WifiLegacyHal> legacy_hal)
+    const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal)
     : bound_iface_(bound_iface), legacy_hal_(legacy_hal), is_valid_(true) {}
 
 void WifiRttController::invalidate() {
