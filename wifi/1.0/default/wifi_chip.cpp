@@ -42,7 +42,7 @@ namespace implementation {
 using hidl_return_util::validateAndCall;
 
 WifiChip::WifiChip(ChipId chip_id,
-                   const std::weak_ptr<WifiLegacyHal> legacy_hal)
+                   const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal)
     : chip_id_(chip_id), legacy_hal_(legacy_hal), is_valid_(true) {}
 
 void WifiChip::invalidate() {

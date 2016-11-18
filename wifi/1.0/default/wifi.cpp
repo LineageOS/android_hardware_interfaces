@@ -33,7 +33,8 @@ namespace implementation {
 using hidl_return_util::validateAndCall;
 
 Wifi::Wifi()
-    : legacy_hal_(new WifiLegacyHal()), run_state_(RunState::STOPPED) {}
+    : legacy_hal_(new legacy_hal::WifiLegacyHal()),
+      run_state_(RunState::STOPPED) {}
 
 bool Wifi::isValid() {
   // This object is always valid.

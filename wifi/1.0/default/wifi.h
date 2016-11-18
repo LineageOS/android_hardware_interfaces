@@ -64,7 +64,7 @@ class Wifi : public IWifi {
 
   // Instance is created in this root level |IWifi| HIDL interface object
   // and shared with all the child HIDL interface objects.
-  std::shared_ptr<WifiLegacyHal> legacy_hal_;
+  std::shared_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
   RunState run_state_;
   std::vector<sp<IWifiEventCallback>> event_callbacks_;
   sp<WifiChip> chip_;
