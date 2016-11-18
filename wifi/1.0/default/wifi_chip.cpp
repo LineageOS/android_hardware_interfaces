@@ -24,6 +24,12 @@ namespace {
 using android::sp;
 using android::hardware::hidl_vec;
 using android::hardware::hidl_string;
+using android::hardware::wifi::V1_0::IWifiChip;
+using android::hardware::wifi::V1_0::IfaceType;
+
+constexpr uint32_t kStaChipModeId = 0;
+constexpr uint32_t kApChipModeId = 1;
+constexpr uint32_t kInvalidModeId = UINT32_MAX;
 
 template <typename Iface>
 void invalidateAndClear(sp<Iface>& iface) {
@@ -41,9 +47,15 @@ namespace V1_0 {
 namespace implementation {
 using hidl_return_util::validateAndCall;
 
-WifiChip::WifiChip(ChipId chip_id,
-                   const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal)
-    : chip_id_(chip_id), legacy_hal_(legacy_hal), is_valid_(true) {}
+WifiChip::WifiChip(
+    ChipId chip_id,
+    const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
+    const std::weak_ptr<mode_controller::WifiModeController> mode_controller)
+    : chip_id_(chip_id),
+      legacy_hal_(legacy_hal),
+      mode_controller_(mode_controller),
+      is_valid_(true),
+      current_mode_id_(kInvalidModeId) {}
 
 void WifiChip::invalidate() {
   invalidateAndRemoveAllIfaces();
@@ -301,19 +313,84 @@ std::pair<WifiStatus, uint32_t> WifiChip::getCapabilitiesInternal() {
 
 std::pair<WifiStatus, std::vector<IWifiChip::ChipMode>>
 WifiChip::getAvailableModesInternal() {
-  // TODO add implementation
-  return {createWifiStatus(WifiStatusCode::SUCCESS), {}};
+  // The chip combination supported for current devices is fixed for now with
+  // 2 separate modes of operation:
+  // Mode 1 (STA mode): Will support 1 STA and 1 P2P or NAN iface operations
+  // concurrently.
+  // Mode 2 (AP mode): Will support 1 AP iface operations.
+  // TODO (b/32997844): Read this from some device specific flags in the
+  // makefile.
+  // STA mode iface combinations.
+  const IWifiChip::ChipIfaceCombinationLimit
+      sta_chip_iface_combination_limit_1 = {{IfaceType::STA}, 1};
+  const IWifiChip::ChipIfaceCombinationLimit
+      sta_chip_iface_combination_limit_2 = {{IfaceType::P2P, IfaceType::NAN},
+                                            1};
+  const IWifiChip::ChipIfaceCombination sta_chip_iface_combination = {
+      {sta_chip_iface_combination_limit_1, sta_chip_iface_combination_limit_2}};
+  const IWifiChip::ChipMode sta_chip_mode = {kStaChipModeId,
+                                             {sta_chip_iface_combination}};
+  // AP mode iface combinations.
+  const IWifiChip::ChipIfaceCombinationLimit ap_chip_iface_combination_limit = {
+      {IfaceType::AP}, 1};
+  const IWifiChip::ChipIfaceCombination ap_chip_iface_combination = {
+      {ap_chip_iface_combination_limit}};
+  const IWifiChip::ChipMode ap_chip_mode = {kApChipModeId,
+                                            {ap_chip_iface_combination}};
+  return {createWifiStatus(WifiStatusCode::SUCCESS),
+          {sta_chip_mode, ap_chip_mode}};
 }
 
-WifiStatus WifiChip::configureChipInternal(uint32_t /* mode_id */) {
-  invalidateAndRemoveAllIfaces();
-  // TODO add implementation
+WifiStatus WifiChip::configureChipInternal(uint32_t mode_id) {
+  if (mode_id != kStaChipModeId && mode_id != kApChipModeId) {
+    return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
+  }
+  if (mode_id == current_mode_id_) {
+    LOG(DEBUG) << "Already in the specified mode " << mode_id;
+    return createWifiStatus(WifiStatusCode::SUCCESS);
+  }
+  // If the chip is already configured in a different mode, stop
+  // the legacy HAL and then start it after firmware mode change.
+  if (current_mode_id_ != kInvalidModeId) {
+    invalidateAndRemoveAllIfaces();
+    legacy_hal::wifi_error legacy_status = legacy_hal_.lock()->stop([]() {});
+    if (legacy_status != legacy_hal::WIFI_SUCCESS) {
+      LOG(ERROR) << "Failed to stop legacy HAL: "
+                 << legacyErrorToString(legacy_status);
+      // TODO(b/33038823): Need to invoke onChipReconfigureFailure()
+      return createWifiStatusFromLegacyError(legacy_status);
+    }
+  }
+  bool success;
+  if (mode_id == kStaChipModeId) {
+    success = mode_controller_.lock()->changeFirmwareMode(IfaceType::STA);
+  } else {
+    success = mode_controller_.lock()->changeFirmwareMode(IfaceType::AP);
+  }
+  if (!success) {
+    // TODO(b/33038823): Need to invoke onChipReconfigureFailure()
+    return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
+  }
+  legacy_hal::wifi_error legacy_status = legacy_hal_.lock()->start();
+  if (legacy_status != legacy_hal::WIFI_SUCCESS) {
+    LOG(ERROR) << "Failed to start legacy HAL: "
+               << legacyErrorToString(legacy_status);
+    // TODO(b/33038823): Need to invoke onChipReconfigureFailure()
+    return createWifiStatusFromLegacyError(legacy_status);
+  }
+  for (const auto& callback : event_callbacks_) {
+    callback->onChipReconfigured(mode_id);
+  }
+  current_mode_id_ = mode_id;
   return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 
 std::pair<WifiStatus, uint32_t> WifiChip::getModeInternal() {
-  // TODO add implementation
-  return {createWifiStatus(WifiStatusCode::SUCCESS), 0};
+  if (current_mode_id_ == kInvalidModeId) {
+    return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE),
+            current_mode_id_};
+  }
+  return {createWifiStatus(WifiStatusCode::SUCCESS), current_mode_id_};
 }
 
 std::pair<WifiStatus, IWifiChip::ChipDebugInfo>

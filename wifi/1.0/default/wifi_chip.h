@@ -24,6 +24,7 @@
 
 #include "wifi_ap_iface.h"
 #include "wifi_legacy_hal.h"
+#include "wifi_mode_controller.h"
 #include "wifi_nan_iface.h"
 #include "wifi_p2p_iface.h"
 #include "wifi_rtt_controller.h"
@@ -42,8 +43,10 @@ namespace implementation {
  */
 class WifiChip : public IWifiChip {
  public:
-  WifiChip(ChipId chip_id,
-           const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal);
+  WifiChip(
+      ChipId chip_id,
+      const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
+      const std::weak_ptr<mode_controller::WifiModeController> mode_controller);
   // HIDL does not provide a built-in mechanism to let the server invalidate
   // a HIDL interface object after creation. If any client process holds onto
   // a reference to the object in their context, any method calls on that
@@ -156,6 +159,7 @@ class WifiChip : public IWifiChip {
 
   ChipId chip_id_;
   std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
+  std::weak_ptr<mode_controller::WifiModeController> mode_controller_;
   std::vector<sp<IWifiChipEventCallback>> event_callbacks_;
   sp<WifiApIface> ap_iface_;
   sp<WifiNanIface> nan_iface_;
@@ -163,6 +167,7 @@ class WifiChip : public IWifiChip {
   sp<WifiStaIface> sta_iface_;
   std::vector<sp<WifiRttController>> rtt_controllers_;
   bool is_valid_;
+  uint32_t current_mode_id_;
 
   DISALLOW_COPY_AND_ASSIGN(WifiChip);
 };
