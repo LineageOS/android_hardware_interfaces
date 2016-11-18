@@ -42,7 +42,8 @@ namespace implementation {
  */
 class WifiChip : public IWifiChip {
  public:
-  WifiChip(ChipId chip_id, const std::weak_ptr<WifiLegacyHal> legacy_hal);
+  WifiChip(ChipId chip_id,
+           const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal);
   // HIDL does not provide a built-in mechanism to let the server invalidate
   // a HIDL interface object after creation. If any client process holds onto
   // a reference to the object in their context, any method calls on that
@@ -154,7 +155,7 @@ class WifiChip : public IWifiChip {
   getDebugHostWakeReasonStatsInternal();
 
   ChipId chip_id_;
-  std::weak_ptr<WifiLegacyHal> legacy_hal_;
+  std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
   std::vector<sp<IWifiChipEventCallback>> event_callbacks_;
   sp<WifiApIface> ap_iface_;
   sp<WifiNanIface> nan_iface_;
