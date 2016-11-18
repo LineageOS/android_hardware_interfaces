@@ -86,18 +86,18 @@ cc_library_shared {
     generated_headers: ["android.hardware.audio@2.0_genc++_headers"],
     export_generated_headers: ["android.hardware.audio@2.0_genc++_headers"],
     shared_libs: [
-        "libhidl",
+        "libhidlbase",
+        "libhidltransport",
         "libhwbinder",
         "libutils",
         "libcutils",
         "android.hardware.audio.common@2.0",
-        "android.hardware.audio.effect@2.0",
     ],
     export_shared_lib_headers: [
-        "libhidl",
+        "libhidlbase",
+        "libhidltransport",
         "libhwbinder",
         "libutils",
         "android.hardware.audio.common@2.0",
-        "android.hardware.audio.effect@2.0",
     ],
 }

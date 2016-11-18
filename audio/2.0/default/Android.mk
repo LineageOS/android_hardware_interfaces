@@ -30,7 +30,8 @@ LOCAL_SRC_FILES := \
     StreamOut.cpp \
 
 LOCAL_SHARED_LIBRARIES := \
-    libhidl \
+    libhidlbase \
+    libhidltransport \
     libhwbinder \
     libutils \
     libhardware \
@@ -55,7 +56,8 @@ LOCAL_SRC_FILES := \
     service.cpp
 
 LOCAL_SHARED_LIBRARIES := \
-    libhidl \
+    libhidlbase \
+    libhidltransport \
     liblog \
     libhwbinder \
     libutils \

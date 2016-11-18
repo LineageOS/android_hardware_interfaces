@@ -9,7 +9,8 @@ LOCAL_SRC_FILES := \
 
 LOCAL_SHARED_LIBRARIES := \
     libcutils \
-    libhidl \
+    libhidlbase \
+    libhidltransport \
     libhwbinder \
     liblog \
     libutils \
@@ -28,7 +29,8 @@ LOCAL_C_INCLUDES := system/core/healthd/include system/core/base/include
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_SHARED_LIBRARIES := \
     libcutils \
-    libhidl \
+    libhidlbase \
+    libhidltransport \
     libutils \
     android.hardware.health@1.0 \
 
@@ -48,7 +50,8 @@ LOCAL_SHARED_LIBRARIES := \
     libbase \
     libutils \
     libhwbinder \
-    libhidl \
+    libhidlbase \
+    libhidltransport \
     android.hardware.health@1.0 \
 
 include $(BUILD_EXECUTABLE)

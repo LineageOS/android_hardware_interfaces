@@ -10,7 +10,8 @@ cc_library_shared {
 
     shared_libs: [
         "libbase",
-        "libhidl",
+        "libhidlbase",
+        "libhidltransport",
         "libpointertest",
         "libhwbinder",
         "liblog",

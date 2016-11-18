@@ -24,7 +24,8 @@ LOCAL_SRC_FILES := \
   service.cpp \
 
 LOCAL_SHARED_LIBRARIES := \
-  libhidl \
+  libhidlbase \
+  libhidltransport \
   liblog \
   libhwbinder \
   libutils \

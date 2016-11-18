@@ -35,7 +35,8 @@ LOCAL_SHARED_LIBRARIES += \
   libutils \
   libcutils \
   liblog \
-  libhidl \
+  libhidlbase \
+  libhidltransport \
   libhwbinder \
   libprotobuf-cpp-full \
   libvts_common \
@@ -71,7 +72,8 @@ LOCAL_SHARED_LIBRARIES := \
    libbase \
    libcutils \
    liblog \
-   libhidl \
+   libhidlbase \
+   libhidltransport \
    libhwbinder \
    libprotobuf-cpp-full \
    libvts_common \
