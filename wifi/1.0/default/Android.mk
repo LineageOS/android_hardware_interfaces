@@ -32,7 +32,8 @@ LOCAL_SHARED_LIBRARIES := \
     android.hardware.wifi@1.0 \
     libbase \
     libcutils \
-    libhidl \
+    libhidlbase \
+    libhidltransport \
     libhwbinder \
     liblog \
     libnl \
