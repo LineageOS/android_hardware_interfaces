@@ -21,13 +21,13 @@ using ::android::sp;
 
 struct Nfc : public INfc {
   Nfc(nfc_nci_device_t* device);
-  ::android::hardware::Return<int32_t> open(const sp<INfcClientCallback>& clientCallback)  override;
-  ::android::hardware::Return<int32_t> write(const hidl_vec<uint8_t>& data)  override;
-  ::android::hardware::Return<int32_t> coreInitialized(const hidl_vec<uint8_t>& data)  override;
-  ::android::hardware::Return<int32_t> prediscover()  override;
-  ::android::hardware::Return<int32_t> close()  override;
-  ::android::hardware::Return<int32_t> controlGranted()  override;
-  ::android::hardware::Return<int32_t> powerCycle()  override;
+  ::android::hardware::Return<NfcStatus> open(const sp<INfcClientCallback>& clientCallback)  override;
+  ::android::hardware::Return<uint32_t> write(const hidl_vec<uint8_t>& data)  override;
+  ::android::hardware::Return<NfcStatus> coreInitialized(const hidl_vec<uint8_t>& data)  override;
+  ::android::hardware::Return<NfcStatus> prediscover()  override;
+  ::android::hardware::Return<NfcStatus> close()  override;
+  ::android::hardware::Return<NfcStatus> controlGranted()  override;
+  ::android::hardware::Return<NfcStatus> powerCycle()  override;
 
   static void eventCallback(uint8_t event, uint8_t status) {
       if (mCallback != nullptr) {
