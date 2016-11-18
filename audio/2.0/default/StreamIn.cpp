@@ -126,7 +126,7 @@ Return<Result> StreamIn::setParameters(const hidl_vec<ParameterValue>& parameter
     return mStreamCommon->setParameters(parameters);
 }
 
-Return<void> StreamIn::debugDump(const native_handle_t* fd)  {
+Return<void> StreamIn::debugDump(const hidl_handle& fd)  {
     return mStreamCommon->debugDump(fd);
 }
 

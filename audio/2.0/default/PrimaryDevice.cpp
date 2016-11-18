@@ -119,7 +119,7 @@ Return<Result> PrimaryDevice::setParameters(const hidl_vec<ParameterValue>& para
     return mDevice->setParameters(parameters);
 }
 
-Return<void> PrimaryDevice::debugDump(const native_handle_t* fd)  {
+Return<void> PrimaryDevice::debugDump(const hidl_handle& fd)  {
     return mDevice->debugDump(fd);
 }
 

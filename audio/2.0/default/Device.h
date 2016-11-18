@@ -102,7 +102,7 @@ struct Device : public IDevice, public ParametersUtil {
     Return<void> getParameters(
             const hidl_vec<hidl_string>& keys, getParameters_cb _hidl_cb)  override;
     Return<Result> setParameters(const hidl_vec<ParameterValue>& parameters)  override;
-    Return<void> debugDump(const native_handle_t* fd)  override;
+    Return<void> debugDump(const hidl_handle& fd)  override;
 
     // Utility methods for extending interfaces.
     Result analyzeStatus(const char* funcName, int status);

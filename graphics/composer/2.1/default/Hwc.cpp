@@ -318,15 +318,15 @@ public:
             presentDisplay_cb hidl_cb) override;
     Return<Error> setActiveConfig(Display display, Config config) override;
     Return<Error> setClientTarget(Display display,
-            const native_handle_t* target,
-            const native_handle_t* acquireFence,
+            const hidl_handle& target,
+            const hidl_handle& acquireFence,
             Dataspace dataspace, const hidl_vec<Rect>& damage) override;
     Return<Error> setColorMode(Display display, ColorMode mode) override;
     Return<Error> setColorTransform(Display display,
             const hidl_vec<float>& matrix, ColorTransform hint) override;
     Return<Error> setOutputBuffer(Display display,
-            const native_handle_t* buffer,
-            const native_handle_t* releaseFence) override;
+            const hidl_handle& buffer,
+            const hidl_handle& releaseFence) override;
     Return<Error> setPowerMode(Display display, PowerMode mode) override;
     Return<Error> setVsyncEnabled(Display display, Vsync enabled) override;
     Return<void> validateDisplay(Display display,
@@ -334,8 +334,8 @@ public:
     Return<Error> setCursorPosition(Display display,
             Layer layer, int32_t x, int32_t y) override;
     Return<Error> setLayerBuffer(Display display,
-            Layer layer, const native_handle_t* buffer,
-            const native_handle_t* acquireFence) override;
+            Layer layer, const hidl_handle& buffer,
+            const hidl_handle& acquireFence) override;
     Return<Error> setLayerSurfaceDamage(Display display,
             Layer layer, const hidl_vec<Rect>& damage) override;
     Return<Error> setLayerBlendMode(Display display,
@@ -351,7 +351,7 @@ public:
     Return<Error> setLayerPlaneAlpha(Display display,
             Layer layer, float alpha) override;
     Return<Error> setLayerSidebandStream(Display display,
-            Layer layer, const native_handle_t* stream) override;
+            Layer layer, const hidl_handle& stream) override;
     Return<Error> setLayerSourceCrop(Display display,
             Layer layer, const FRect& crop) override;
     Return<Error> setLayerTransform(Display display,
@@ -1027,17 +1027,18 @@ Return<Error> HwcHal::setActiveConfig(Display display, Config config)
 }
 
 Return<Error> HwcHal::setClientTarget(Display display,
-        const native_handle_t* target,
-        const native_handle_t* acquireFence,
+        const hidl_handle& target,
+        const hidl_handle& acquireFence,
         Dataspace dataspace, const hidl_vec<Rect>& damage)
 {
-    if (!sHandleImporter.importBuffer(target)) {
+    const native_handle_t* targetHandle = target.getNativeHandle();
+    if (!sHandleImporter.importBuffer(targetHandle)) {
         return Error::NO_RESOURCES;
     }
 
     int32_t fence;
     if (!sHandleImporter.importFence(acquireFence, fence)) {
-        sHandleImporter.freeBuffer(target);
+        sHandleImporter.freeBuffer(targetHandle);
         return Error::NO_RESOURCES;
     }
 
@@ -1045,13 +1046,13 @@ Return<Error> HwcHal::setClientTarget(Display display,
         reinterpret_cast<const hwc_rect_t*>(&damage[0]) };
 
     int32_t error = mDispatch.setClientTarget(mDevice, display,
-            target, fence, static_cast<int32_t>(dataspace),
+            targetHandle, fence, static_cast<int32_t>(dataspace),
             damage_region);
     if (error == HWC2_ERROR_NONE) {
         std::lock_guard<std::mutex> lock(mDisplayMutex);
 
         auto dpy = mDisplays.find(display);
-        dpy->second.ClientTarget = target;
+        dpy->second.ClientTarget = targetHandle;
     } else {
         sHandleImporter.freeBuffer(target);
         sHandleImporter.closeFence(fence);
@@ -1076,28 +1077,29 @@ Return<Error> HwcHal::setColorTransform(Display display,
 }
 
 Return<Error> HwcHal::setOutputBuffer(Display display,
-        const native_handle_t* buffer,
-        const native_handle_t* releaseFence)
+        const hidl_handle& buffer,
+        const hidl_handle& releaseFence)
 {
-    if (!sHandleImporter.importBuffer(buffer)) {
+    const native_handle_t* bufferHandle = buffer.getNativeHandle();
+    if (!sHandleImporter.importBuffer(bufferHandle)) {
         return Error::NO_RESOURCES;
     }
 
     int32_t fence;
     if (!sHandleImporter.importFence(releaseFence, fence)) {
-        sHandleImporter.freeBuffer(buffer);
+        sHandleImporter.freeBuffer(bufferHandle);
         return Error::NO_RESOURCES;
     }
 
     int32_t error = mDispatch.setOutputBuffer(mDevice,
-            display, buffer, fence);
+            display, bufferHandle, fence);
     if (error == HWC2_ERROR_NONE) {
         std::lock_guard<std::mutex> lock(mDisplayMutex);
 
         auto dpy = mDisplays.find(display);
-        dpy->second.OutputBuffer = buffer;
+        dpy->second.OutputBuffer = bufferHandle;
     } else {
-        sHandleImporter.freeBuffer(buffer);
+        sHandleImporter.freeBuffer(bufferHandle);
     }
 
     // unlike in setClientTarget, fence is owned by us and is always closed
@@ -1142,28 +1144,29 @@ Return<Error> HwcHal::setCursorPosition(Display display,
 }
 
 Return<Error> HwcHal::setLayerBuffer(Display display,
-        Layer layer, const native_handle_t* buffer,
-        const native_handle_t* acquireFence)
+        Layer layer, const hidl_handle& buffer,
+        const hidl_handle& acquireFence)
 {
-    if (!sHandleImporter.importBuffer(buffer)) {
+    const native_handle_t* bufferHandle = buffer.getNativeHandle();
+    if (!sHandleImporter.importBuffer(bufferHandle)) {
         return Error::NO_RESOURCES;
     }
 
     int32_t fence;
     if (!sHandleImporter.importFence(acquireFence, fence)) {
-        sHandleImporter.freeBuffer(buffer);
+        sHandleImporter.freeBuffer(bufferHandle);
         return Error::NO_RESOURCES;
     }
 
     int32_t error = mDispatch.setLayerBuffer(mDevice,
-            display, layer, buffer, fence);
+            display, layer, bufferHandle, fence);
     if (error == HWC2_ERROR_NONE) {
         std::lock_guard<std::mutex> lock(mDisplayMutex);
 
         auto dpy = mDisplays.find(display);
-        dpy->second.LayerBuffers[layer] = buffer;
+        dpy->second.LayerBuffers[layer] = bufferHandle;
     } else {
-        sHandleImporter.freeBuffer(buffer);
+        sHandleImporter.freeBuffer(bufferHandle);
         sHandleImporter.closeFence(fence);
     }
 
@@ -1230,21 +1233,22 @@ Return<Error> HwcHal::setLayerPlaneAlpha(Display display,
 }
 
 Return<Error> HwcHal::setLayerSidebandStream(Display display,
-        Layer layer, const native_handle_t* stream)
+        Layer layer, const hidl_handle& stream)
 {
-    if (!sHandleImporter.importBuffer(stream)) {
+    const native_handle_t* streamHandle = stream.getNativeHandle();
+    if (!sHandleImporter.importBuffer(streamHandle)) {
         return Error::NO_RESOURCES;
     }
 
     int32_t error = mDispatch.setLayerSidebandStream(mDevice,
-            display, layer, stream);
+            display, layer, streamHandle);
     if (error == HWC2_ERROR_NONE) {
         std::lock_guard<std::mutex> lock(mDisplayMutex);
 
         auto dpy = mDisplays.find(display);
-        dpy->second.LayerSidebandStreams[layer] = stream;
+        dpy->second.LayerSidebandStreams[layer] = streamHandle;
     } else {
-        sHandleImporter.freeBuffer(stream);
+        sHandleImporter.freeBuffer(streamHandle);
     }
 
     return static_cast<Error>(error);

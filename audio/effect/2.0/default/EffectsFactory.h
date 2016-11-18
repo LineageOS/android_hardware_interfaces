@@ -47,7 +47,7 @@ struct EffectsFactory : public IEffectsFactory {
     Return<void> getDescriptor(const Uuid& uid, getDescriptor_cb _hidl_cb)  override;
     Return<void> createEffect(
             const Uuid& uid, int32_t session, int32_t ioHandle, createEffect_cb _hidl_cb)  override;
-    Return<void> debugDump(const native_handle_t* fd)  override;
+    Return<void> debugDump(const hidl_handle& fd)  override;
 
   private:
     static sp<IEffect> dispatchEffectInstanceCreation(

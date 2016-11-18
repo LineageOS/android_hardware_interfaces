@@ -153,8 +153,8 @@ Return<void> Bar::thisIsNew()  {
     return Void();
 }
 
-Return<void> Bar::expectNullHandle(const native_handle_t* h, const Abc& xyz, expectNullHandle_cb _hidl_cb) {
-    ALOGI("SERVER(Bar) h = %p, xyz.z = %p", h, static_cast<void*>(xyz.z));
+Return<void> Bar::expectNullHandle(const hidl_handle& h, const Abc& xyz, expectNullHandle_cb _hidl_cb) {
+    ALOGI("SERVER(Bar) h = %p, xyz.z = %p", h.getNativeHandle(), xyz.z.getNativeHandle());
     _hidl_cb(h == nullptr, xyz.z == nullptr);
     return Void();
 }

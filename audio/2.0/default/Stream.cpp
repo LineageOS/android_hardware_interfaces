@@ -222,7 +222,7 @@ Return<Result> Stream::setParameters(const hidl_vec<ParameterValue>& parameters)
     return setParametersImpl(parameters);
 }
 
-Return<void> Stream::debugDump(const native_handle_t* fd)  {
+Return<void> Stream::debugDump(const hidl_handle& fd)  {
     if (fd->numFds == 1) {
         analyzeStatus("dump", mStream->dump(mStream, fd->data[0]));
     }

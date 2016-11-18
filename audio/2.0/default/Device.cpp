@@ -520,7 +520,7 @@ Return<Result> Device::setParameters(const hidl_vec<ParameterValue>& parameters)
     return setParametersImpl(parameters);
 }
 
-Return<void> Device::debugDump(const native_handle_t* fd)  {
+Return<void> Device::debugDump(const hidl_handle& fd)  {
     if (fd->numFds == 1) {
         analyzeStatus("dump", mDevice->dump(mDevice, fd->data[0]));
     }

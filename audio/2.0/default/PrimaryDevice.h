@@ -88,7 +88,7 @@ struct PrimaryDevice : public IPrimaryDevice {
     Return<void> getParameters(
             const hidl_vec<hidl_string>& keys, getParameters_cb _hidl_cb)  override;
     Return<Result> setParameters(const hidl_vec<ParameterValue>& parameters)  override;
-    Return<void> debugDump(const native_handle_t* fd)  override;
+    Return<void> debugDump(const hidl_handle& fd)  override;
 
     // Methods from ::android::hardware::audio::V2_0::IPrimaryDevice follow.
     Return<Result> setVoiceVolume(float volume)  override;

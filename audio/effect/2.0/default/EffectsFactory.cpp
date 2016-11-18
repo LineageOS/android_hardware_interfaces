@@ -182,7 +182,7 @@ Return<void> EffectsFactory::createEffect(
     return Void();
 }
 
-Return<void> EffectsFactory::debugDump(const native_handle_t* fd)  {
+Return<void> EffectsFactory::debugDump(const hidl_handle& fd)  {
     if (fd->numFds == 1) {
         EffectDumpEffects(fd->data[0]);
     }
