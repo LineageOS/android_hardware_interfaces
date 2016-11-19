@@ -54,7 +54,7 @@ enum Band : uint32_t {
 enum Rds : uint32_t {
     NONE   = 0,
     WORLD  = (1<<0),
-    US = (1<<1),
+    RDS_US = (1<<1),
 };
 
 
@@ -111,7 +111,7 @@ struct BandConfig {
     union Ext {
         FmBandConfig fm;
         AmBandConfig am;
-    } ext;
+    };
 };
 
 /* Exposes properties of a given hardware radio module.
