@@ -72,7 +72,9 @@ interface ITunerCallback {
     /*
      * Method called by the HAL when metadata for current station
      * are updated.
-     * @param metadatas A list of all updated metada.
+     * @param channel The channel the metadata is associated with.
+     * @param subChannel The sub channel the metadata is associated with.
+     * @param metadata A list of all updated metada.
      */
-    oneway newMetadata(vec<MetaData>  metadatas);
+    oneway newMetadata(uint32_t channel, uint32_t subChannel, vec<MetaData>  metadata);
 };
