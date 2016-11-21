@@ -10,7 +10,8 @@ LOCAL_SRC_FILES := \
     Utils.cpp
 
 LOCAL_SHARED_LIBRARIES := \
-    libhidl \
+    libhidlbase \
+    libhidltransport \
     libhwbinder \
     libutils \
     liblog \
