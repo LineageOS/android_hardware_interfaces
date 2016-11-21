@@ -20,6 +20,7 @@
 #include <type_traits>
 
 #include <android/hardware/graphics/allocator/2.0/types.h>
+#include <android/hardware/graphics/common/1.0/types.h>
 
 namespace android {
 namespace hardware {
@@ -28,9 +29,9 @@ namespace mapper {
 namespace V2_0 {
 
 using android::hardware::graphics::allocator::V2_0::Error;
-using android::hardware::graphics::allocator::V2_0::PixelFormat;
 using android::hardware::graphics::allocator::V2_0::ProducerUsage;
 using android::hardware::graphics::allocator::V2_0::ConsumerUsage;
+using android::hardware::graphics::common::V1_0::PixelFormat;
 
 /*
  * Structures for describing flexible YUVA/RGBA formats for consumption by

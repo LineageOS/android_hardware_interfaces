@@ -16,6 +16,8 @@
 
 package android.hardware.graphics.allocator@2.0;
 
+import android.hardware.graphics.common@1.0::PixelFormat;
+
 interface IAllocator {
     enum Capability : int32_t {
         /* reserved */
