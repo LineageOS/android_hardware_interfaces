@@ -11,8 +11,8 @@ interface: {
     api: {
         name: "open"
         return_type_hidl: {
-            type: TYPE_SCALAR
-            scalar_type: "int32_t"
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::nfc::V1_0::NfcStatus"
         }
         arg: {
             type: TYPE_HIDL_CALLBACK
@@ -35,7 +35,7 @@ interface: {
         name: "write"
         return_type_hidl: {
             type: TYPE_SCALAR
-            scalar_type: "int32_t"
+            scalar_type: "uint32_t"
         }
         arg: {
             type: TYPE_VECTOR
@@ -57,8 +57,8 @@ interface: {
     api: {
         name: "coreInitialized"
         return_type_hidl: {
-            type: TYPE_SCALAR
-            scalar_type: "int32_t"
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::nfc::V1_0::NfcStatus"
         }
         arg: {
             type: TYPE_VECTOR
@@ -77,8 +77,8 @@ interface: {
     api: {
         name: "prediscover"
         return_type_hidl: {
-            type: TYPE_SCALAR
-            scalar_type: "int32_t"
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::nfc::V1_0::NfcStatus"
         }
         callflow: {
             next: "write"
@@ -92,8 +92,8 @@ interface: {
     api: {
         name: "close"
         return_type_hidl: {
-            type: TYPE_SCALAR
-            scalar_type: "int32_t"
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::nfc::V1_0::NfcStatus"
         }
         callflow: {
             exit: true
@@ -103,8 +103,8 @@ interface: {
     api: {
         name: "controlGranted"
         return_type_hidl: {
-            type: TYPE_SCALAR
-            scalar_type: "int32_t"
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::nfc::V1_0::NfcStatus"
         }
         callflow: {
             next: "write"
@@ -118,8 +118,8 @@ interface: {
     api: {
         name: "powerCycle"
         return_type_hidl: {
-            type: TYPE_SCALAR
-            scalar_type: "int32_t"
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::nfc::V1_0::NfcStatus"
         }
         callflow: {
             next: "write"
