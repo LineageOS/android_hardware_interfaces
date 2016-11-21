@@ -78,6 +78,9 @@ interface IAllocator {
      *
      * @return capabilities is a list of supported capabilities.
      */
+    @entry
+    @exit
+    @callflow(next="*")
     getCapabilities() generates (vec<Capability> capabilities);
 
     /*
@@ -86,6 +89,9 @@ interface IAllocator {
      *
      * @return debugInfo is a string of debug information.
      */
+    @entry
+    @exit
+    @callflow(next="*")
     dumpDebugInfo() generates (string debugInfo);
 
     /*
@@ -98,6 +104,8 @@ interface IAllocator {
      *         NO_RESOURCES when no more descriptors can currently be created.
      * @return descriptor is the newly created buffer descriptor.
      */
+    @entry
+    @callflow(next="*")
     createDescriptor(BufferDescriptorInfo descriptorInfo)
           generates (Error error,
                      BufferDescriptor descriptor);
@@ -108,6 +116,8 @@ interface IAllocator {
      * @param descriptor is the descriptor to destroy.
      * @return error is either NONE or BAD_DESCRIPTOR.
      */
+    @exit
+    @callflow(next="*")
     destroyDescriptor(BufferDescriptor descriptor) generates (Error error);
 
     /*
@@ -124,6 +134,7 @@ interface IAllocator {
      *         UNSUPPORTED when any of the descriptors can never be satisfied.
      *         UNDEFINED when TEST_ALLOCATE is not listed in getCapabilities.
      */
+    @callflow(next="allocate")
     testAllocate(vec<BufferDescriptor> descriptors) generates (Error error);
 
     /*
@@ -147,6 +158,7 @@ interface IAllocator {
      *                      time.
      * @return buffers is the allocated buffers.
      */
+    @callflow(next="exportHandle")
     allocate(vec<BufferDescriptor> descriptors)
         generates (Error error,
                    vec<Buffer> buffers);
@@ -158,6 +170,8 @@ interface IAllocator {
      * @return error is NONE upon success. Otherwise,
      *         BAD_BUFFER when the buffer is invalid.
      */
+    @exit
+    @callflow(next="*")
     free(Buffer buffer) generates (Error error);
 
     /*
@@ -182,6 +196,7 @@ interface IAllocator {
      *         NO_RESOURCES when the buffer cannot be exported at this time.
      * @return bufferHandle is the exported handle.
      */
+    @callflow(next="free")
     exportHandle(BufferDescriptor descriptor,
                  Buffer buffer)
       generates (Error error,
