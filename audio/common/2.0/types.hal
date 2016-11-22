@@ -107,7 +107,7 @@ enum AudioStreamType : int32_t {
     ACCESSIBILITY    = 10, // For accessibility talk back prompts
     REROUTING        = 11, // For dynamic policy output mixes
     PATCH            = 12, // For internal audio flinger tracks.  Fixed volume
-    PUBLIC_CNT       = TTS + 1,
+    PUBLIC_CNT       = ACCESSIBILITY + 1,
     // Number of streams considered by audio policy for volume and routing
     FOR_POLICY_CNT   = PATCH,
     CNT              = PATCH + 1
@@ -215,6 +215,25 @@ enum AudioFormat : uint32_t {
     // IEC61937 is encoded audio wrapped in 16-bit PCM.
     IEC61937            = 0x0D000000UL,
     DOLBY_TRUEHD        = 0x0E000000UL,
+    EVRC                = 0x10000000UL,
+    EVRCB               = 0x11000000UL,
+    EVRCWB              = 0x12000000UL,
+    EVRCNW              = 0x13000000UL,
+    AAC_ADIF            = 0x14000000UL,
+    WMA                 = 0x15000000UL,
+    WMA_PRO             = 0x16000000UL,
+    AMR_WB_PLUS         = 0x17000000UL,
+    MP2                 = 0x18000000UL,
+    QCELP               = 0x19000000UL,
+    DSD                 = 0x1A000000UL,
+    FLAC                = 0x1B000000UL,
+    ALAC                = 0x1C000000UL,
+    APE                 = 0x1D000000UL,
+    AAC_ADTS            = 0x1E000000UL,
+    SBC                 = 0x1F000000UL,
+    APTX                = 0x20000000UL,
+    APTX_HD             = 0x21000000UL,
+    LDAC                = 0x22000000UL,
     MAIN_MASK           = 0xFF000000UL, /* Deprecated */
     SUB_MASK            = 0x00FFFFFFUL,
 
@@ -261,7 +280,17 @@ enum AudioFormat : uint32_t {
     AAC_ERLC            = (AAC | AAC_SUB_ERLC),
     AAC_LD              = (AAC | AAC_SUB_LD),
     AAC_HE_V2           = (AAC | AAC_SUB_HE_V2),
-    AAC_ELD             = (AAC | AAC_SUB_ELD)
+    AAC_ELD             = (AAC | AAC_SUB_ELD),
+    AAC_ADTS_MAIN       = (AAC_ADTS | AAC_SUB_MAIN),
+    AAC_ADTS_LC         = (AAC_ADTS | AAC_SUB_LC),
+    AAC_ADTS_SSR        = (AAC_ADTS | AAC_SUB_SSR),
+    AAC_ADTS_LTP        = (AAC_ADTS | AAC_SUB_LTP),
+    AAC_ADTS_HE_V1      = (AAC_ADTS | AAC_SUB_HE_V1),
+    AAC_ADTS_SCALABLE   = (AAC_ADTS | AAC_SUB_SCALABLE),
+    AAC_ADTS_ERLC       = (AAC_ADTS | AAC_SUB_ERLC),
+    AAC_ADTS_LD         = (AAC_ADTS | AAC_SUB_LD),
+    AAC_ADTS_HE_V2      = (AAC_ADTS | AAC_SUB_HE_V2),
+    AAC_ADTS_ELD        = (AAC_ADTS | AAC_SUB_ELD)
 };
 
 /*
@@ -344,13 +373,17 @@ enum AudioChannelMask : uint32_t {
 
     OUT_MONO     = OUT_FRONT_LEFT,
     OUT_STEREO   = (OUT_FRONT_LEFT | OUT_FRONT_RIGHT),
+    OUT_2POINT1  = (OUT_FRONT_LEFT | OUT_FRONT_RIGHT | OUT_LOW_FREQUENCY),
     OUT_QUAD     = (OUT_FRONT_LEFT | OUT_FRONT_RIGHT |
             OUT_BACK_LEFT | OUT_BACK_RIGHT),
     OUT_QUAD_BACK = OUT_QUAD,
     /* like OUT_QUAD_BACK with *_SIDE_* instead of *_BACK_* */
     OUT_QUAD_SIDE = (OUT_FRONT_LEFT | OUT_FRONT_RIGHT |
             OUT_SIDE_LEFT | OUT_SIDE_RIGHT),
-    OUT_5POINT1  = (OUT_FRONT_LEFT | OUT_FRONT_RIGHT |
+    OUT_SURROUND = (OUT_FRONT_LEFT | OUT_FRONT_RIGHT |
+            OUT_FRONT_CENTER | OUT_BACK_CENTER),
+    OUT_PENTA = (OUT_QUAD | OUT_FRONT_CENTER),
+    OUT_5POINT1   = (OUT_FRONT_LEFT | OUT_FRONT_RIGHT |
             OUT_FRONT_CENTER | OUT_LOW_FREQUENCY |
             OUT_BACK_LEFT | OUT_BACK_RIGHT),
     OUT_5POINT1_BACK = OUT_5POINT1,
@@ -358,6 +391,10 @@ enum AudioChannelMask : uint32_t {
     OUT_5POINT1_SIDE = (OUT_FRONT_LEFT | OUT_FRONT_RIGHT |
             OUT_FRONT_CENTER | OUT_LOW_FREQUENCY |
             OUT_SIDE_LEFT | OUT_SIDE_RIGHT),
+    OUT_6POINT1 = (OUT_FRONT_LEFT | OUT_FRONT_RIGHT |
+            OUT_FRONT_CENTER | OUT_LOW_FREQUENCY |
+            OUT_BACK_LEFT | OUT_BACK_RIGHT |
+            OUT_BACK_CENTER),
     /* matches the correct AudioFormat.CHANNEL_OUT_7POINT1_SURROUND */
     OUT_7POINT1  = (OUT_FRONT_LEFT | OUT_FRONT_RIGHT |
             OUT_FRONT_CENTER | OUT_LOW_FREQUENCY |
@@ -394,6 +431,10 @@ enum AudioChannelMask : uint32_t {
     IN_MONO   = IN_FRONT,
     IN_STEREO = (IN_LEFT | IN_RIGHT),
     IN_FRONT_BACK = (IN_FRONT | IN_BACK),
+    IN_VOICE_UPLINK_MONO = (IN_VOICE_UPLINK | IN_MONO),
+    IN_VOICE_DNLINK_MONO = (IN_VOICE_DNLINK | IN_MONO),
+    IN_VOICE_CALL_MONO   = (IN_VOICE_UPLINK_MONO |
+            IN_VOICE_DNLINK_MONO),
     IN_ALL    = (IN_LEFT | IN_RIGHT | IN_FRONT | IN_BACK|
             IN_LEFT_PROCESSED | IN_RIGHT_PROCESSED |
             IN_FRONT_PROCESSED | IN_BACK_PROCESSED|
@@ -491,6 +532,7 @@ enum AudioDevice : uint32_t {
     OUT_IP                        = 0x800000,
     /* audio bus implemented by the audio system (e.g an MOST stereo channel) */
     OUT_BUS                       = 0x1000000,
+    OUT_PROXY                     = 0x2000000,
     OUT_DEFAULT                   = BIT_DEFAULT,
     OUT_ALL      = (OUT_EARPIECE |
             OUT_SPEAKER |
@@ -517,6 +559,7 @@ enum AudioDevice : uint32_t {
             OUT_SPEAKER_SAFE |
             OUT_IP |
             OUT_BUS |
+            OUT_PROXY |
             OUT_DEFAULT),
     OUT_ALL_A2DP = (OUT_BLUETOOTH_A2DP |
             OUT_BLUETOOTH_A2DP_HEADPHONES |
@@ -555,6 +598,7 @@ enum AudioDevice : uint32_t {
     IN_IP                    = BIT_IN | 0x80000,
     /* audio bus implemented by the audio system (e.g an MOST stereo channel) */
     IN_BUS                   = BIT_IN | 0x100000,
+    IN_PROXY                 = BIT_IN | 0x1000000,
     IN_DEFAULT               = BIT_IN | BIT_DEFAULT,
 
     IN_ALL     = (IN_COMMUNICATION |
@@ -578,6 +622,7 @@ enum AudioDevice : uint32_t {
             IN_LOOPBACK |
             IN_IP |
             IN_BUS |
+            IN_PROXY |
             IN_DEFAULT),
     IN_ALL_SCO = IN_BLUETOOTH_SCO_HEADSET,
     IN_ALL_USB  = (IN_USB_ACCESSORY | IN_USB_DEVICE),
@@ -618,6 +663,8 @@ enum AudioOutputFlag : int32_t {
     SYNC       = 0x200,  // synchronize I/O streams
     IEC958_NONAUDIO = 0x400, // Audio stream contains compressed audio in SPDIF
                              // data bursts, not PCM.
+    DIRECT_PCM = 0x2000,     // Audio stream containing PCM data that needs
+                             // to pass through compress path for DSP post proc.
 };
 
 /*
@@ -635,6 +682,32 @@ enum AudioInputFlag : int32_t {
     SYNC       = 0x8,  // synchronize I/O streams
 };
 
+@export(name="audio_usage_t", value_prefix="AUDIO_USAGE_")
+enum AudioUsage : int32_t {
+    // These values must kept in sync with
+    //  frameworks/base/media/java/android/media/AudioAttributes.java
+    // TODO: Synchronization should be done automatically by tools
+    UNKNOWN                            = 0,
+    MEDIA                              = 1,
+    VOICE_COMMUNICATION                = 2,
+    VOICE_COMMUNICATION_SIGNALLING     = 3,
+    ALARM                              = 4,
+    NOTIFICATION                       = 5,
+    NOTIFICATION_TELEPHONY_RINGTONE    = 6,
+    NOTIFICATION_COMMUNICATION_REQUEST = 7,
+    NOTIFICATION_COMMUNICATION_INSTANT = 8,
+    NOTIFICATION_COMMUNICATION_DELAYED = 9,
+    NOTIFICATION_EVENT                 = 10,
+    ASSISTANCE_ACCESSIBILITY           = 11,
+    ASSISTANCE_NAVIGATION_GUIDANCE     = 12,
+    ASSISTANCE_SONIFICATION            = 13,
+    GAME                               = 14,
+    VIRTUAL_SOURCE                     = 15,
+
+    CNT,
+    MAX                                = CNT - 1,
+};
+
 /*
  * Additional information about the stream passed to hardware decoders.
  */
@@ -647,6 +720,9 @@ struct AudioOffloadInfo {
     int64_t durationMicroseconds;  // -1 if unknown
     bool hasVideo;
     bool isStreaming;
+    uint32_t bitWidth;
+    uint32_t bufferSize;
+    AudioUsage usage;
 };
 
 /*
