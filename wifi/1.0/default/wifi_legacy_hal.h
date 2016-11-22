@@ -39,6 +39,16 @@ struct PacketFilterCapabilities {
   uint32_t max_len;
 };
 
+// Full scan results contain IE info and are hence passed by reference, to
+// preserve the variable length array member |ie_data|. Callee must not retain
+// the pointer.
+using on_gscan_full_result_callback =
+    std::function<void(wifi_request_id, const wifi_scan_result*, uint32_t)>;
+// These scan results don't contain any IE info, so no need to pass by
+// reference.
+using on_gscan_results_callback = std::function<void(
+    wifi_request_id, const std::vector<wifi_cached_scan_results>&)>;
+
 /**
  * Class that encapsulates all legacy HAL interactions.
  * This class manages the lifetime of the event loop thread used by legacy HAL.
@@ -65,12 +75,37 @@ class WifiLegacyHal {
   // APF functions.
   std::pair<wifi_error, PacketFilterCapabilities> getPacketFilterCapabilities();
   wifi_error setPacketFilter(const std::vector<uint8_t>& program);
+  // Gscan functions.
+  std::pair<wifi_error, wifi_gscan_capabilities> getGscanCapabilities();
+  // These API's provides a simplified interface over the legacy Gscan API's:
+  // a) All scan events from the legacy HAL API other than the
+  //    |WIFI_SCAN_FAILED| are treated as notification of results.
+  //    This method then retrieves the cached scan results from the legacy
+  //    HAL API and triggers the externally provided |on_results_user_callback|
+  //    on success.
+  // b) |WIFI_SCAN_FAILED| scan event or failure to retrieve cached scan results
+  //    triggers the externally provided |on_failure_user_callback|.
+  // c) Full scan result event triggers the externally provided
+  //    |on_full_result_user_callback|.
+  wifi_error startGscan(
+      wifi_request_id id,
+      const wifi_scan_cmd_params& params,
+      const std::function<void(wifi_request_id)>& on_failure_callback,
+      const on_gscan_results_callback& on_results_callback,
+      const on_gscan_full_result_callback& on_full_result_callback);
+  wifi_error stopGscan(wifi_request_id id);
+  std::pair<wifi_error, std::vector<uint32_t>> getValidFrequenciesForGscan(
+      wifi_band band);
 
  private:
   // Retrieve the interface handle to be used for the "wlan" interface.
   wifi_error retrieveWlanInterfaceHandle();
   // Run the legacy HAL event loop thread.
   void runEventLoop();
+  // Retrieve the cached gscan results to pass the results back to the external
+  // callbacks.
+  std::pair<wifi_error, std::vector<wifi_cached_scan_results>>
+  getGscanCachedResults();
   void invalidate();
 
   // Event loop thread used by legacy HAL.
