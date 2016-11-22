@@ -7,10 +7,12 @@ genrule {
     srcs: [
         "types.hal",
         "IAllocator.hal",
+        "IAllocatorClient.hal",
     ],
     out: [
         "android/hardware/graphics/allocator/2.0/types.cpp",
         "android/hardware/graphics/allocator/2.0/AllocatorAll.cpp",
+        "android/hardware/graphics/allocator/2.0/AllocatorClientAll.cpp",
     ],
 }
 
@@ -21,6 +23,7 @@ genrule {
     srcs: [
         "types.hal",
         "IAllocator.hal",
+        "IAllocatorClient.hal",
     ],
     out: [
         "android/hardware/graphics/allocator/2.0/types.h",
@@ -29,6 +32,11 @@ genrule {
         "android/hardware/graphics/allocator/2.0/BnAllocator.h",
         "android/hardware/graphics/allocator/2.0/BpAllocator.h",
         "android/hardware/graphics/allocator/2.0/BsAllocator.h",
+        "android/hardware/graphics/allocator/2.0/IAllocatorClient.h",
+        "android/hardware/graphics/allocator/2.0/IHwAllocatorClient.h",
+        "android/hardware/graphics/allocator/2.0/BnAllocatorClient.h",
+        "android/hardware/graphics/allocator/2.0/BpAllocatorClient.h",
+        "android/hardware/graphics/allocator/2.0/BsAllocatorClient.h",
     ],
 }
 
