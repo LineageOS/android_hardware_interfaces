@@ -49,6 +49,7 @@ cc_library_shared {
         "libhidlbase",
         "libhidltransport",
         "libhwbinder",
+        "liblog",
         "libutils",
         "libcutils",
         "android.hardware.graphics.allocator@2.0",

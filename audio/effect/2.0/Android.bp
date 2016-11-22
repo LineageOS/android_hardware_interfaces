@@ -145,6 +145,7 @@ cc_library_shared {
         "libhidlbase",
         "libhidltransport",
         "libhwbinder",
+        "liblog",
         "libutils",
         "libcutils",
         "android.hardware.audio.common@2.0",
