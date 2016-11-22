@@ -39,6 +39,21 @@ struct PacketFilterCapabilities {
   uint32_t max_len;
 };
 
+// WARNING: We don't care about the variable sized members of either
+// |wifi_iface_stat|, |wifi_radio_stat| structures. So, using the pragma
+// to escape the compiler warnings regarding this.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wgnu-variable-sized-type-not-at-end"
+// The |wifi_radio_stat.tx_time_per_levels| stats is provided as a pointer in
+// |wifi_radio_stat| structure in the legacy HAL API. Separate that out
+// into a separate return element to avoid passing pointers around.
+struct LinkLayerStats {
+  wifi_iface_stat iface;
+  wifi_radio_stat radio;
+  std::vector<uint32_t> radio_tx_time_per_levels;
+};
+#pragma GCC diagnostic pop
+
 // Full scan results contain IE info and are hence passed by reference, to
 // preserve the variable length array member |ie_data|. Callee must not retain
 // the pointer.
@@ -96,6 +111,10 @@ class WifiLegacyHal {
   wifi_error stopGscan(wifi_request_id id);
   std::pair<wifi_error, std::vector<uint32_t>> getValidFrequenciesForGscan(
       wifi_band band);
+  // Link layer stats functions.
+  wifi_error enableLinkLayerStats(bool debug);
+  wifi_error disableLinkLayerStats();
+  std::pair<wifi_error, LinkLayerStats> getLinkLayerStats();
 
  private:
   // Retrieve the interface handle to be used for the "wlan" interface.

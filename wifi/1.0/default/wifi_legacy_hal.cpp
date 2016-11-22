@@ -35,6 +35,7 @@ namespace legacy_hal {
 static constexpr uint32_t kMaxVersionStringLength = 256;
 static constexpr uint32_t kMaxCachedGscanResults = 64;
 static constexpr uint32_t kMaxGscanFrequenciesForBand = 64;
+static constexpr uint32_t kLinkLayerStatsDataMpduSizeThreshold = 128;
 
 // Legacy HAL functions accept "C" style function pointers, so use global
 // functions to pass to the legacy HAL function and store the corresponding
@@ -80,6 +81,19 @@ void onGscanFullResult(wifi_request_id id,
                        uint32_t buckets_scanned) {
   if (on_gscan_full_result_internal_callback) {
     on_gscan_full_result_internal_callback(id, result, buckets_scanned);
+  }
+}
+
+// Callback to be invoked for link layer stats results.
+std::function<void((wifi_request_id, wifi_iface_stat*, int, wifi_radio_stat*))>
+    on_link_layer_stats_result_internal_callback;
+void onLinkLayerStatsDataResult(wifi_request_id id,
+                                wifi_iface_stat* iface_stat,
+                                int num_radios,
+                                wifi_radio_stat* radio_stat) {
+  if (on_link_layer_stats_result_internal_callback) {
+    on_link_layer_stats_result_internal_callback(
+        id, iface_stat, num_radios, radio_stat);
   }
 }
 
@@ -335,6 +349,59 @@ WifiLegacyHal::getValidFrequenciesForGscan(wifi_band band) {
   return {status, std::move(freqs)};
 }
 
+wifi_error WifiLegacyHal::enableLinkLayerStats(bool debug) {
+  wifi_link_layer_params params;
+  params.mpdu_size_threshold = kLinkLayerStatsDataMpduSizeThreshold;
+  params.aggressive_statistics_gathering = debug;
+  return global_func_table_.wifi_set_link_stats(wlan_interface_handle_, params);
+}
+
+wifi_error WifiLegacyHal::disableLinkLayerStats() {
+  // TODO: Do we care about these responses?
+  uint32_t clear_mask_rsp;
+  uint8_t stop_rsp;
+  return global_func_table_.wifi_clear_link_stats(
+      wlan_interface_handle_, 0xFFFFFFFF, &clear_mask_rsp, 1, &stop_rsp);
+}
+
+std::pair<wifi_error, LinkLayerStats> WifiLegacyHal::getLinkLayerStats() {
+  LinkLayerStats link_stats{};
+  LinkLayerStats* link_stats_ptr = &link_stats;
+
+  on_link_layer_stats_result_internal_callback = [&link_stats_ptr](
+      wifi_request_id /* id */,
+      wifi_iface_stat* iface_stats_ptr,
+      int num_radios,
+      wifi_radio_stat* radio_stats_ptr) {
+    if (iface_stats_ptr != nullptr) {
+      link_stats_ptr->iface = *iface_stats_ptr;
+      link_stats_ptr->iface.num_peers = 0;
+    } else {
+      LOG(ERROR) << "Invalid iface stats in link layer stats";
+    }
+    if (num_radios == 1 && radio_stats_ptr != nullptr) {
+      link_stats_ptr->radio = *radio_stats_ptr;
+      // Copy over the tx level array to the separate vector.
+      if (radio_stats_ptr->num_tx_levels > 0 &&
+          radio_stats_ptr->tx_time_per_levels != nullptr) {
+        link_stats_ptr->radio_tx_time_per_levels.assign(
+            radio_stats_ptr->tx_time_per_levels,
+            radio_stats_ptr->tx_time_per_levels +
+                radio_stats_ptr->num_tx_levels);
+      }
+      link_stats_ptr->radio.num_tx_levels = 0;
+      link_stats_ptr->radio.tx_time_per_levels = nullptr;
+    } else {
+      LOG(ERROR) << "Invalid radio stats in link layer stats";
+    }
+  };
+
+  wifi_error status = global_func_table_.wifi_get_link_stats(
+      0, wlan_interface_handle_, {onLinkLayerStatsDataResult});
+  on_link_layer_stats_result_internal_callback = nullptr;
+  return {status, link_stats};
+}
+
 wifi_error WifiLegacyHal::retrieveWlanInterfaceHandle() {
   const std::string& ifname_to_find = getStaIfaceName();
   wifi_interface_handle* iface_handles = nullptr;
@@ -411,6 +478,7 @@ void WifiLegacyHal::invalidate() {
   on_firmware_memory_dump_internal_callback = nullptr;
   on_gscan_event_internal_callback = nullptr;
   on_gscan_full_result_internal_callback = nullptr;
+  on_link_layer_stats_result_internal_callback = nullptr;
 }
 
 }  // namespace legacy_hal
