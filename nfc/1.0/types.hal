@@ -16,6 +16,7 @@
 
 package android.hardware.nfc@1.0;
 
+@export(name="", value_prefix="HAL_NFC_", value_suffix="_EVT")
 enum NfcEvent : uint32_t {
     OPEN_CPLT           = 0,
     CLOSE_CPLT          = 1,
@@ -26,6 +27,7 @@ enum NfcEvent : uint32_t {
     ERROR               = 6
 };
 
+@export(name="", value_prefix="HAL_NFC_STATUS_")
 enum NfcStatus : uint32_t {
     OK               = 0,
     FAILED           = 1,
