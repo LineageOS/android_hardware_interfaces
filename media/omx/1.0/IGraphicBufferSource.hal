@@ -47,7 +47,7 @@ interface IGraphicBufferSource {
     setStartTimeUs(int64_t startTimeUs)
         generates (Status status);
 
-    setColorAspects(uint32_t aspects) // TODO: Maybe break down aspects.
+    setColorAspects(ColorAspects aspects)
         generates (Status status);
 
     setTimeOffsetUs(int64_t timeOffsetUs)
