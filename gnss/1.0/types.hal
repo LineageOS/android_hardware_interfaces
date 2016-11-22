@@ -16,6 +16,7 @@
 
 package android.hardware.gnss@1.0;
 
+@export(name="", value_prefix="GNSS_MAX_")
 enum GnssMax : uint32_t {
 /** Maximum number of SVs for gnssSvStatusCb(). */
     SVS_COUNT = 64,
@@ -27,6 +28,8 @@ typedef int64_t GnssUtcTime;
 /*
  * Constellation type of GnssSvInfo
  */
+
+@export(name="", value_prefix="GNSS_CONSTELLATION_")
 enum GnssConstellationType : uint8_t {
     UNKNOWN = 0,
     GPS     = 1,
@@ -38,6 +41,7 @@ enum GnssConstellationType : uint8_t {
 };
 
 /** Bit mask to indicate which values are valid in a GnssLocation object. */
+@export(name="", value_prefix="GPS_LOCATION_")
 enum GnssLocationFlags : uint16_t {
     /** GnssLocation has valid latitude and longitude. */
     HAS_LAT_LONG              = 0x0001,

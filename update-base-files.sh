@@ -25,6 +25,9 @@ hidl-gen $options \
 hidl-gen $options \
          -o hardware/libhardware/include/hardware/nfc-base.h \
          android.hardware.nfc@1.0
+hidl-gen $options \
+         -o hardware/libhardware/include/hardware/gnss-base.h \
+         android.hardware.gnss@1.0
 
 # system/core
 hidl-gen $options \

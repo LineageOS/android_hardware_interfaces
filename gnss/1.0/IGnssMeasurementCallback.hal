@@ -21,6 +21,7 @@ interface IGnssMeasurementCallback {
     /*
      * Flags to indicate what fields in GnssClock are valid.
      */
+    @export(name="", value_prefix="GNSS_CLOCK_")
     enum GnssClockFlags : uint16_t {
         /** A valid 'leap second' is stored in the data structure. */
         HAS_LEAP_SECOND        = 1 << 0,
@@ -41,6 +42,7 @@ interface IGnssMeasurementCallback {
     /*
      * Flags to indicate what fields in GnssMeasurement are valid.
      */
+    @export(name="", value_prefix="GNSS_MEASUREMENT_")
     enum GnssMeasurementFlags : uint32_t {
         /** A valid 'snr' is stored in the data structure. */
         HAS_SNR                        = 1 << 0,
@@ -60,6 +62,7 @@ interface IGnssMeasurementCallback {
      * Enumeration of available values for the GNSS Measurement's multipath
      * indicator.
      */
+    @export(name="", value_prefix="GNSS_MULTIPATH_")
     enum GnssMultipathIndicator : uint8_t {
         /** The indicator is not available or unknown. */
         INDICATOR_UNKNOWN      = 0,
@@ -82,6 +85,7 @@ interface IGnssMeasurementCallback {
      * If GNSS is still searching for a satellite, the corresponding state must be
      * set to STATE_UNKNOWN(0).
      */
+    @export(name="", value_prefix="GNSS_MEASUREMENT_")
     enum GnssMeasurementState : uint32_t {
         STATE_UNKNOWN                = 0,
         STATE_CODE_LOCK              = 1 << 0,
@@ -105,6 +109,7 @@ interface IGnssMeasurementCallback {
     /*
      * Flags indicating the Accumulated Delta Range's states.
      */
+    @export(name="", value_prefix="GNSS_")
     enum GnssAccumulatedDeltaRangeState : uint16_t {
         ADR_STATE_UNKNOWN    = 0,
         ADR_STATE_VALID      = 1 << 0,

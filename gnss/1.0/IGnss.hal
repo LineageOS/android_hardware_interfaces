@@ -28,9 +28,10 @@ import IGnssGeofencing;
 import IGnssNi;
 import IGnssXtra;
 
-/* Represents the standard GNSS interface. */
+/* Represents the standard GNSS (Global Navigation Satellite System) interface. */
 interface IGnss {
     /* Requested operational mode for GNSS operation. */
+    @export(name="", value_prefix="GPS_POSITION_MODE_")
     enum GnssPositionMode : uint8_t {
         /** Mode for running GNSS standalone (no assistance). */
         STANDALONE  = 0,
@@ -44,6 +45,7 @@ interface IGnss {
     };
 
     /* Requested recurrence mode for GNSS operation. */
+    @export(name="", value_prefix="GPS_POSITION_")
     enum GnssPositionRecurrence : uint32_t {
         /** Receive GNSS fixes on a recurring basis at a specified period. */
         RECURRENCE_PERIODIC  = 0,
@@ -55,6 +57,7 @@ interface IGnss {
      * Flags used to specify which aiding data to delete when calling
      * deleteAidingData().
      */
+    @export(name="", value_prefix="GPS_")
     enum GnssAidingData : uint16_t {
         DELETE_EPHEMERIS    = 0x0001,
         DELETE_ALMANAC      = 0x0002,

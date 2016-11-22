@@ -22,6 +22,7 @@ import IGnssNavigationMessageCallback;
  * Extended interface for GNSS navigation message reporting support.
  */
 interface IGnssNavigationMessage {
+    @export(name="", value_prefix="GPS_NAVIGATION_MESSAGE_")
     enum GnssNavigationMessageStatus : int32_t {
         SUCCESS = 0,
         ERROR_ALREADY_INIT = -100,

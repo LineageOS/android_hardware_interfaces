@@ -42,6 +42,7 @@ interface IGnssBatching {
     /*
      * Enum which holds the bit masks for batching control.
      */
+    @export(name="", value_prefix="FLP_BATCH_")
     enum Flag : uint8_t {
         /*
          * If this flag is set, the hardware implementation

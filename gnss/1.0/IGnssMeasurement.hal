@@ -22,6 +22,7 @@ import IGnssMeasurementCallback;
  * Extended interface for GNSS Measurements support.
  */
 interface IGnssMeasurement {
+    @export(name="", value_prefix="GPS_MEASUREMENT_")
     enum GnssMeasurementStatus : int32_t {
         SUCCESS = 0,
         ERROR_ALREADY_INIT = -100,

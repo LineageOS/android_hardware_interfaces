@@ -21,6 +21,7 @@ interface IGnssNiCallback {
     /*
      * GnssNiType constants
      */
+    @export(name="", value_prefix="GPS_NI_TYPE_")
     enum GnssNiType : uint8_t {
         VOICE           = 1,
         UMTS_SUPL       = 2,
@@ -30,6 +31,7 @@ interface IGnssNiCallback {
     /*
      * GnssNiNotifyFlags constants
      */
+    @export(name="", value_prefix="GPS_NI_")
     enum GnssNiNotifyFlags : uint32_t {
         /** NI requires notification */
         NEED_NOTIFY      = 0x0001,
@@ -43,6 +45,7 @@ interface IGnssNiCallback {
      * GNSS NI responses, used to define the response in
      * NI structures
      */
+    @export(name="", value_prefix="GPS_NI_")
     enum GnssUserResponseType : uint8_t {
         RESPONSE_ACCEPT  = 1,
         RESPONSE_DENY    = 2,
@@ -52,6 +55,7 @@ interface IGnssNiCallback {
     /*
      * NI data encoding scheme
      */
+    @export(name="", value_prefix="GPS_")
     enum GnssNiEncodingType : int32_t {
         ENC_NONE              = 0,
         ENC_SUPL_GSM_DEFAULT  = 1,

@@ -22,6 +22,7 @@ package android.hardware.gnss@1.0;
  */
 interface IAGnssRilCallback {
     /* Kinds of SET ID that can be requested */
+    @export(name="", value_prefix="AGPS_RIL_REQUEST_SETID_")
     enum ID : uint32_t {
         IMSI    = 1 << 0L,
         MSISDN  = 1 << 1L,

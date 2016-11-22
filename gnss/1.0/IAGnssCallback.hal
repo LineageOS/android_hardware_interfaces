@@ -19,11 +19,13 @@ package android.hardware.gnss@1.0;
 /** Callback structure for the AGNSS interface. */
 interface IAGnssCallback {
     /** AGNSS type **/
+    @export(name="", value_prefix="AGPS_")
     enum AGnssType : uint8_t {
         TYPE_SUPL         = 1,
         TYPE_C2K          = 2
     };
 
+    @export(name="", value_prefix="GNSS_")
     enum AGnssStatusValue : uint8_t {
         /** GNSS requests data connection for AGNSS. */
         REQUEST_AGNSS_DATA_CONN  = 1,
@@ -40,6 +42,7 @@ interface IAGnssCallback {
     /*
      * Represents the status of AGNSS augmented to support IPv4.
      */
+    @export(name="", value_prefix="GPS_")
     struct AGnssStatusIpV4 {
         AGnssType type;
         AGnssStatusValue status;

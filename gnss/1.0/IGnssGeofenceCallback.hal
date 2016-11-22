@@ -91,17 +91,20 @@ package android.hardware.gnss@1.0;
  */
 
 interface IGnssGeofenceCallback {
+    @export(name="", value_prefix="GPS_GEOFENCE_")
     enum GeofenceTransition : int32_t {
         ENTERED   = (1 << 0L),
         EXITED    = (1 << 1L),
         UNCERTAIN = (1 << 2L),
     };
 
+    @export(name="", value_prefix="GPS_GEOFENCE_")
     enum GeofenceAvailability : int32_t {
         UNAVAILABLE = (1 << 0L),
         AVAILABLE   = (1 << 1L),
     };
 
+    @export(name="", value_prefix="GPS_GEOFENCE_")
     enum GeofenceStatus : int32_t {
         OPERATION_SUCCESS        = 0,
         ERROR_TOO_MANY_GEOFENCES = -100,
