@@ -84,3 +84,5 @@ LOCAL_SHARED_LIBRARIES := \
 LOCAL_PROTOC_OPTIMIZE_TYPE := full
 
 include $(BUILD_SHARED_LIBRARY)
+
+include $(call all-makefiles-under,$(LOCAL_PATH))
