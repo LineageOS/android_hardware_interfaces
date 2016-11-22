@@ -28,8 +28,14 @@ namespace wifi {
 namespace V1_0 {
 namespace implementation {
 namespace legacy_hal {
-// Constants used in the class.
+// Constants ported over from the legacy HAL calling code
+// (com_android_server_wifi_WifiNative.cpp). This will all be thrown
+// away when this shim layer is replaced by the real vendor
+// implementation.
 static constexpr uint32_t kMaxVersionStringLength = 256;
+static constexpr uint32_t kMaxCachedGscanResults = 64;
+static constexpr uint32_t kMaxGscanFrequenciesForBand = 64;
+static constexpr uint32_t kLinkLayerStatsDataMpduSizeThreshold = 128;
 
 // Legacy HAL functions accept "C" style function pointers, so use global
 // functions to pass to the legacy HAL function and store the corresponding
@@ -57,6 +63,40 @@ void onFirmwareMemoryDump(char* buffer, int buffer_size) {
     on_firmware_memory_dump_internal_callback(buffer, buffer_size);
   }
 }
+
+// Callback to be invoked for Gscan events.
+std::function<void(wifi_request_id, wifi_scan_event)>
+    on_gscan_event_internal_callback;
+void onGscanEvent(wifi_request_id id, wifi_scan_event event) {
+  if (on_gscan_event_internal_callback) {
+    on_gscan_event_internal_callback(id, event);
+  }
+}
+
+// Callback to be invoked for Gscan full results.
+std::function<void(wifi_request_id, wifi_scan_result*, uint32_t)>
+    on_gscan_full_result_internal_callback;
+void onGscanFullResult(wifi_request_id id,
+                       wifi_scan_result* result,
+                       uint32_t buckets_scanned) {
+  if (on_gscan_full_result_internal_callback) {
+    on_gscan_full_result_internal_callback(id, result, buckets_scanned);
+  }
+}
+
+// Callback to be invoked for link layer stats results.
+std::function<void((wifi_request_id, wifi_iface_stat*, int, wifi_radio_stat*))>
+    on_link_layer_stats_result_internal_callback;
+void onLinkLayerStatsDataResult(wifi_request_id id,
+                                wifi_iface_stat* iface_stat,
+                                int num_radios,
+                                wifi_radio_stat* radio_stat) {
+  if (on_link_layer_stats_result_internal_callback) {
+    on_link_layer_stats_result_internal_callback(
+        id, iface_stat, num_radios, radio_stat);
+  }
+}
+
 // End of the free-standing "C" style callbacks.
 
 WifiLegacyHal::WifiLegacyHal()
@@ -206,6 +246,162 @@ wifi_error WifiLegacyHal::setPacketFilter(const std::vector<uint8_t>& program) {
       wlan_interface_handle_, program.data(), program.size());
 }
 
+std::pair<wifi_error, wifi_gscan_capabilities>
+WifiLegacyHal::getGscanCapabilities() {
+  wifi_gscan_capabilities caps;
+  wifi_error status = global_func_table_.wifi_get_gscan_capabilities(
+      wlan_interface_handle_, &caps);
+  return {status, caps};
+}
+
+wifi_error WifiLegacyHal::startGscan(
+    wifi_request_id id,
+    const wifi_scan_cmd_params& params,
+    const std::function<void(wifi_request_id)>& on_failure_user_callback,
+    const on_gscan_results_callback& on_results_user_callback,
+    const on_gscan_full_result_callback& on_full_result_user_callback) {
+  // If there is already an ongoing background scan, reject new scan requests.
+  if (on_gscan_event_internal_callback ||
+      on_gscan_full_result_internal_callback) {
+    return WIFI_ERROR_NOT_AVAILABLE;
+  }
+
+  // This callback will be used to either trigger |on_results_user_callback| or
+  // |on_failure_user_callback|.
+  on_gscan_event_internal_callback =
+      [on_failure_user_callback, on_results_user_callback, this](
+          wifi_request_id id, wifi_scan_event event) {
+        switch (event) {
+          case WIFI_SCAN_RESULTS_AVAILABLE:
+          case WIFI_SCAN_THRESHOLD_NUM_SCANS:
+          case WIFI_SCAN_THRESHOLD_PERCENT: {
+            wifi_error status;
+            std::vector<wifi_cached_scan_results> cached_scan_results;
+            std::tie(status, cached_scan_results) = getGscanCachedResults();
+            if (status == WIFI_SUCCESS) {
+              on_results_user_callback(id, cached_scan_results);
+              return;
+            }
+          }
+          // Fall through if failed. Failure to retrieve cached scan results
+          // should trigger a background scan failure.
+          case WIFI_SCAN_FAILED:
+            on_failure_user_callback(id);
+            on_gscan_event_internal_callback = nullptr;
+            on_gscan_full_result_internal_callback = nullptr;
+            return;
+        }
+        LOG(FATAL) << "Unexpected gscan event received: " << event;
+      };
+
+  on_gscan_full_result_internal_callback = [on_full_result_user_callback](
+      wifi_request_id id, wifi_scan_result* result, uint32_t buckets_scanned) {
+    if (result) {
+      on_full_result_user_callback(id, result, buckets_scanned);
+    }
+  };
+
+  wifi_scan_result_handler handler = {onGscanFullResult, onGscanEvent};
+  wifi_error status = global_func_table_.wifi_start_gscan(
+      id, wlan_interface_handle_, params, handler);
+  if (status != WIFI_SUCCESS) {
+    on_gscan_event_internal_callback = nullptr;
+    on_gscan_full_result_internal_callback = nullptr;
+  }
+  return status;
+}
+
+wifi_error WifiLegacyHal::stopGscan(wifi_request_id id) {
+  // If there is no an ongoing background scan, reject stop requests.
+  // TODO(b/32337212): This needs to be handled by the HIDL object because we
+  // need to return the NOT_STARTED error code.
+  if (!on_gscan_event_internal_callback &&
+      !on_gscan_full_result_internal_callback) {
+    return WIFI_ERROR_NOT_AVAILABLE;
+  }
+  wifi_error status =
+      global_func_table_.wifi_stop_gscan(id, wlan_interface_handle_);
+  // If the request Id is wrong, don't stop the ongoing background scan. Any
+  // other error should be treated as the end of background scan.
+  if (status != WIFI_ERROR_INVALID_REQUEST_ID) {
+    on_gscan_event_internal_callback = nullptr;
+    on_gscan_full_result_internal_callback = nullptr;
+  }
+  return status;
+}
+
+std::pair<wifi_error, std::vector<uint32_t>>
+WifiLegacyHal::getValidFrequenciesForGscan(wifi_band band) {
+  static_assert(sizeof(uint32_t) >= sizeof(wifi_channel),
+                "Wifi Channel cannot be represented in output");
+  std::vector<uint32_t> freqs;
+  freqs.resize(kMaxGscanFrequenciesForBand);
+  int32_t num_freqs = 0;
+  wifi_error status = global_func_table_.wifi_get_valid_channels(
+      wlan_interface_handle_,
+      band,
+      freqs.size(),
+      reinterpret_cast<wifi_channel*>(freqs.data()),
+      &num_freqs);
+  CHECK(num_freqs >= 0 &&
+        static_cast<uint32_t>(num_freqs) <= kMaxGscanFrequenciesForBand);
+  freqs.resize(num_freqs);
+  return {status, std::move(freqs)};
+}
+
+wifi_error WifiLegacyHal::enableLinkLayerStats(bool debug) {
+  wifi_link_layer_params params;
+  params.mpdu_size_threshold = kLinkLayerStatsDataMpduSizeThreshold;
+  params.aggressive_statistics_gathering = debug;
+  return global_func_table_.wifi_set_link_stats(wlan_interface_handle_, params);
+}
+
+wifi_error WifiLegacyHal::disableLinkLayerStats() {
+  // TODO: Do we care about these responses?
+  uint32_t clear_mask_rsp;
+  uint8_t stop_rsp;
+  return global_func_table_.wifi_clear_link_stats(
+      wlan_interface_handle_, 0xFFFFFFFF, &clear_mask_rsp, 1, &stop_rsp);
+}
+
+std::pair<wifi_error, LinkLayerStats> WifiLegacyHal::getLinkLayerStats() {
+  LinkLayerStats link_stats{};
+  LinkLayerStats* link_stats_ptr = &link_stats;
+
+  on_link_layer_stats_result_internal_callback = [&link_stats_ptr](
+      wifi_request_id /* id */,
+      wifi_iface_stat* iface_stats_ptr,
+      int num_radios,
+      wifi_radio_stat* radio_stats_ptr) {
+    if (iface_stats_ptr != nullptr) {
+      link_stats_ptr->iface = *iface_stats_ptr;
+      link_stats_ptr->iface.num_peers = 0;
+    } else {
+      LOG(ERROR) << "Invalid iface stats in link layer stats";
+    }
+    if (num_radios == 1 && radio_stats_ptr != nullptr) {
+      link_stats_ptr->radio = *radio_stats_ptr;
+      // Copy over the tx level array to the separate vector.
+      if (radio_stats_ptr->num_tx_levels > 0 &&
+          radio_stats_ptr->tx_time_per_levels != nullptr) {
+        link_stats_ptr->radio_tx_time_per_levels.assign(
+            radio_stats_ptr->tx_time_per_levels,
+            radio_stats_ptr->tx_time_per_levels +
+                radio_stats_ptr->num_tx_levels);
+      }
+      link_stats_ptr->radio.num_tx_levels = 0;
+      link_stats_ptr->radio.tx_time_per_levels = nullptr;
+    } else {
+      LOG(ERROR) << "Invalid radio stats in link layer stats";
+    }
+  };
+
+  wifi_error status = global_func_table_.wifi_get_link_stats(
+      0, wlan_interface_handle_, {onLinkLayerStatsDataResult});
+  on_link_layer_stats_result_internal_callback = nullptr;
+  return {status, link_stats};
+}
+
 wifi_error WifiLegacyHal::retrieveWlanInterfaceHandle() {
   const std::string& ifname_to_find = getStaIfaceName();
   wifi_interface_handle* iface_handles = nullptr;
@@ -245,12 +441,44 @@ void WifiLegacyHal::runEventLoop() {
   if_tool.SetWifiUpState(false);
 }
 
+std::pair<wifi_error, std::vector<wifi_cached_scan_results>>
+WifiLegacyHal::getGscanCachedResults() {
+  std::vector<wifi_cached_scan_results> cached_scan_results;
+  cached_scan_results.resize(kMaxCachedGscanResults);
+  int32_t num_results = 0;
+  wifi_error status = global_func_table_.wifi_get_cached_gscan_results(
+      wlan_interface_handle_,
+      true /* always flush */,
+      cached_scan_results.size(),
+      cached_scan_results.data(),
+      &num_results);
+  CHECK(num_results >= 0 &&
+        static_cast<uint32_t>(num_results) <= kMaxCachedGscanResults);
+  cached_scan_results.resize(num_results);
+  // Check for invalid IE lengths in these cached scan results and correct it.
+  for (auto& cached_scan_result : cached_scan_results) {
+    int num_scan_results = cached_scan_result.num_results;
+    for (int i = 0; i < num_scan_results; i++) {
+      auto& scan_result = cached_scan_result.results[i];
+      if (scan_result.ie_length > 0) {
+        LOG(ERROR) << "Cached scan result has non-zero IE length "
+                   << scan_result.ie_length;
+        scan_result.ie_length = 0;
+      }
+    }
+  }
+  return {status, std::move(cached_scan_results)};
+}
+
 void WifiLegacyHal::invalidate() {
   global_handle_ = nullptr;
   wlan_interface_handle_ = nullptr;
   on_stop_complete_internal_callback = nullptr;
   on_driver_memory_dump_internal_callback = nullptr;
   on_firmware_memory_dump_internal_callback = nullptr;
+  on_gscan_event_internal_callback = nullptr;
+  on_gscan_full_result_internal_callback = nullptr;
+  on_link_layer_stats_result_internal_callback = nullptr;
 }
 
 }  // namespace legacy_hal

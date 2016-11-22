@@ -39,6 +39,31 @@ struct PacketFilterCapabilities {
   uint32_t max_len;
 };
 
+// WARNING: We don't care about the variable sized members of either
+// |wifi_iface_stat|, |wifi_radio_stat| structures. So, using the pragma
+// to escape the compiler warnings regarding this.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wgnu-variable-sized-type-not-at-end"
+// The |wifi_radio_stat.tx_time_per_levels| stats is provided as a pointer in
+// |wifi_radio_stat| structure in the legacy HAL API. Separate that out
+// into a separate return element to avoid passing pointers around.
+struct LinkLayerStats {
+  wifi_iface_stat iface;
+  wifi_radio_stat radio;
+  std::vector<uint32_t> radio_tx_time_per_levels;
+};
+#pragma GCC diagnostic pop
+
+// Full scan results contain IE info and are hence passed by reference, to
+// preserve the variable length array member |ie_data|. Callee must not retain
+// the pointer.
+using on_gscan_full_result_callback =
+    std::function<void(wifi_request_id, const wifi_scan_result*, uint32_t)>;
+// These scan results don't contain any IE info, so no need to pass by
+// reference.
+using on_gscan_results_callback = std::function<void(
+    wifi_request_id, const std::vector<wifi_cached_scan_results>&)>;
+
 /**
  * Class that encapsulates all legacy HAL interactions.
  * This class manages the lifetime of the event loop thread used by legacy HAL.
@@ -65,12 +90,41 @@ class WifiLegacyHal {
   // APF functions.
   std::pair<wifi_error, PacketFilterCapabilities> getPacketFilterCapabilities();
   wifi_error setPacketFilter(const std::vector<uint8_t>& program);
+  // Gscan functions.
+  std::pair<wifi_error, wifi_gscan_capabilities> getGscanCapabilities();
+  // These API's provides a simplified interface over the legacy Gscan API's:
+  // a) All scan events from the legacy HAL API other than the
+  //    |WIFI_SCAN_FAILED| are treated as notification of results.
+  //    This method then retrieves the cached scan results from the legacy
+  //    HAL API and triggers the externally provided |on_results_user_callback|
+  //    on success.
+  // b) |WIFI_SCAN_FAILED| scan event or failure to retrieve cached scan results
+  //    triggers the externally provided |on_failure_user_callback|.
+  // c) Full scan result event triggers the externally provided
+  //    |on_full_result_user_callback|.
+  wifi_error startGscan(
+      wifi_request_id id,
+      const wifi_scan_cmd_params& params,
+      const std::function<void(wifi_request_id)>& on_failure_callback,
+      const on_gscan_results_callback& on_results_callback,
+      const on_gscan_full_result_callback& on_full_result_callback);
+  wifi_error stopGscan(wifi_request_id id);
+  std::pair<wifi_error, std::vector<uint32_t>> getValidFrequenciesForGscan(
+      wifi_band band);
+  // Link layer stats functions.
+  wifi_error enableLinkLayerStats(bool debug);
+  wifi_error disableLinkLayerStats();
+  std::pair<wifi_error, LinkLayerStats> getLinkLayerStats();
 
  private:
   // Retrieve the interface handle to be used for the "wlan" interface.
   wifi_error retrieveWlanInterfaceHandle();
   // Run the legacy HAL event loop thread.
   void runEventLoop();
+  // Retrieve the cached gscan results to pass the results back to the external
+  // callbacks.
+  std::pair<wifi_error, std::vector<wifi_cached_scan_results>>
+  getGscanCachedResults();
   void invalidate();
 
   // Event loop thread used by legacy HAL.
