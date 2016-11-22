@@ -1,5 +1,5 @@
-#ifndef HIDL_GENERATED_android_hardware_nfc_V1_0_Nfc_H_
-#define HIDL_GENERATED_android_hardware_nfc_V1_0_Nfc_H_
+#ifndef ANDROID_HARDWARE_NFC_V1_0_NFC_H
+#define ANDROID_HARDWARE_NFC_V1_0_NFC_H
 
 #include <android/hardware/nfc/1.0/INfc.h>
 #include <hidl/Status.h>
@@ -56,4 +56,4 @@ extern "C" INfc* HIDL_FETCH_INfc(const char* name);
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_nfc_V1_0_Nfc_H_
+#endif  // ANDROID_HARDWARE_NFC_V1_0_NFC_H

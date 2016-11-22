@@ -1,5 +1,5 @@
-#ifndef HIDL_GENERATED_android_hardware_tests_pointer_V1_0_Pointer_H_
-#define HIDL_GENERATED_android_hardware_tests_pointer_V1_0_Pointer_H_
+#ifndef ANDROID_HARDWARE_TESTS_POINTER_V1_0_POINTER_H
+#define ANDROID_HARDWARE_TESTS_POINTER_V1_0_POINTER_H
 
 #include <android/hardware/tests/pointer/1.0/IPointer.h>
 #include <android-base/logging.h>
@@ -345,4 +345,4 @@ extern "C" IPointer* HIDL_FETCH_IPointer(const char* name);
 
 #undef PUSH_ERROR_IF
 
-#endif  // HIDL_GENERATED_android_hardware_tests_pointer_V1_0_Pointer_H_
+#endif  // ANDROID_HARDWARE_TESTS_POINTER_V1_0_POINTER_H

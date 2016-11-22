@@ -1,5 +1,5 @@
-#ifndef HIDL_GENERATED_android_hardware_tests_bar_V1_0_Bar_H_
-#define HIDL_GENERATED_android_hardware_tests_bar_V1_0_Bar_H_
+#ifndef ANDROID_HARDWARE_TESTS_BAR_V1_0_BAR_H
+#define ANDROID_HARDWARE_TESTS_BAR_V1_0_BAR_H
 
 #include <android/hardware/tests/bar/1.0/IBar.h>
 #include <hidl/Status.h>
@@ -79,4 +79,4 @@ extern "C" IBar* HIDL_FETCH_IBar(const char* name);
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_tests_bar_V1_0_Bar_H_
+#endif  // ANDROID_HARDWARE_TESTS_BAR_V1_0_BAR_H

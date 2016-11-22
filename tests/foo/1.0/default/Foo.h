@@ -1,5 +1,5 @@
-#ifndef HIDL_GENERATED_android_hardware_tests_foo_V1_0_Foo_H_
-#define HIDL_GENERATED_android_hardware_tests_foo_V1_0_Foo_H_
+#ifndef ANDROID_HARDWARE_TESTS_FOO_V1_0_FOO_H
+#define ANDROID_HARDWARE_TESTS_FOO_V1_0_FOO_H
 
 #include <android/hardware/tests/foo/1.0/IFoo.h>
 #include <hidl/Status.h>
@@ -71,4 +71,4 @@ extern "C" IFoo* HIDL_FETCH_IFoo(const char* name);
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_tests_foo_V1_0_Foo_H_
+#endif  // ANDROID_HARDWARE_TESTS_FOO_V1_0_FOO_H
