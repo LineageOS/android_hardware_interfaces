@@ -309,7 +309,7 @@ Return<void> Foo::createMyHandle(createMyHandle_cb _hidl_cb) {
 }
 
 Return<void> Foo::createHandles(uint32_t size, createHandles_cb _hidl_cb) {
-    hidl_vec<const native_handle_t*> handles;
+    hidl_vec<hidl_handle> handles;
     handles.resize(size);
     for(uint32_t i = 0; i < size; ++i) {
         createMyHandle([&](const MyHandle& h) {
