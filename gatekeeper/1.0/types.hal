@@ -1,0 +1,27 @@
+package android.hardware.gatekeeper@1.0;
+
+/**
+ * Gatekeeper response codes; success >= 0; error < 0
+ */
+enum GatekeeperStatusCode : int32_t {
+  STATUS_REENROLL       =  1,  // success, but upper layers should re-enroll
+                               // the verified password due to a version change
+  STATUS_OK             =  0,  // operation is successful
+  ERROR_GENERAL_FAILURE = -1,  // operation failed
+  ERROR_RETRY_TIMEOUT   = -2,  // operation should be retried after timeout
+  ERROR_NOT_IMPLEMENTED = -3,  // operation is not implemented
+};
+
+/**
+ * Gatekeeper response to any/all requests has this structure as mandatory part
+ */
+struct GatekeeperResponse {
+    /* request completion status */
+    GatekeeperStatusCode code;
+    /* retry timeout in ms, if code == ERROR_RETRY_TIMEOUT
+     * otherwise unused (0)
+     */
+    uint32_t timeout;
+    /* optional crypto blob */
+    vec<uint8_t> data;
+};
