@@ -13,6 +13,7 @@ namespace implementation {
 
 using ::android::hardware::dumpstate::V1_0::IDumpstateDevice;
 using ::android::hardware::hidl_array;
+using ::android::hardware::hidl_handle;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
@@ -21,7 +22,7 @@ using ::android::sp;
 
 struct DumpstateDevice : public IDumpstateDevice {
     // Methods from ::android::hardware::dumpstate::V1_0::IDumpstateDevice follow.
-    Return<void> dumpstateBoard(const native_handle_t* fd) override;
+    Return<void> dumpstateBoard(const hidl_handle& h) override;
 
 };
 
