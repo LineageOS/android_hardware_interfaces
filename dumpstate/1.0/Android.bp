@@ -37,6 +37,7 @@ cc_library_shared {
         "libhidlbase",
         "libhidltransport",
         "libhwbinder",
+        "liblog",
         "libutils",
         "libcutils",
     ],
