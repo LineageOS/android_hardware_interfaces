@@ -1,5 +1,5 @@
-#ifndef HIDL_GENERATED_android_hardware_tests_bar_V1_0_ImportTypes_H_
-#define HIDL_GENERATED_android_hardware_tests_bar_V1_0_ImportTypes_H_
+#ifndef ANDROID_HARDWARE_TESTS_BAR_V1_0_IMPORTTYPES_H
+#define ANDROID_HARDWARE_TESTS_BAR_V1_0_IMPORTTYPES_H
 
 #include <android/hardware/tests/bar/1.0/IImportTypes.h>
 #include <hidl/Status.h>
@@ -33,4 +33,4 @@ extern "C" IImportTypes* HIDL_FETCH_IImportTypes(const char* name);
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_tests_bar_V1_0_ImportTypes_H_
+#endif  // ANDROID_HARDWARE_TESTS_BAR_V1_0_IMPORTTYPES_H

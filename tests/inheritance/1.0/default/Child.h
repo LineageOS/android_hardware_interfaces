@@ -1,5 +1,5 @@
-#ifndef HIDL_GENERATED_android_hardware_tests_inheritance_V1_0_Child_H_
-#define HIDL_GENERATED_android_hardware_tests_inheritance_V1_0_Child_H_
+#ifndef ANDROID_HARDWARE_TESTS_INHERITANCE_V1_0_CHILD_H
+#define ANDROID_HARDWARE_TESTS_INHERITANCE_V1_0_CHILD_H
 
 #include <android/hardware/tests/inheritance/1.0/IChild.h>
 #include <hidl/Status.h>
@@ -41,4 +41,4 @@ extern "C" IChild* HIDL_FETCH_IChild(const char* name);
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_tests_inheritance_V1_0_Child_H_
+#endif  // ANDROID_HARDWARE_TESTS_INHERITANCE_V1_0_CHILD_H

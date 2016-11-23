@@ -1,5 +1,5 @@
-#ifndef HIDL_GENERATED_android_hardware_tests_inheritance_V1_0_Fetcher_H_
-#define HIDL_GENERATED_android_hardware_tests_inheritance_V1_0_Fetcher_H_
+#ifndef ANDROID_HARDWARE_TESTS_INHERITANCE_V1_0_FETCHER_H
+#define ANDROID_HARDWARE_TESTS_INHERITANCE_V1_0_FETCHER_H
 
 #include "Child.h"
 #include <android/hardware/tests/inheritance/1.0/IFetcher.h>
@@ -42,4 +42,4 @@ extern "C" IFetcher* HIDL_FETCH_IFetcher(const char* name);
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_tests_inheritance_V1_0_Fetcher_H_
+#endif  // ANDROID_HARDWARE_TESTS_INHERITANCE_V1_0_FETCHER_H
