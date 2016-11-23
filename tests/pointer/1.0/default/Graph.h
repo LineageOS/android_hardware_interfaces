@@ -1,5 +1,5 @@
-#ifndef HIDL_GENERATED_android_hardware_tests_pointer_V1_0_Graph_H_
-#define HIDL_GENERATED_android_hardware_tests_pointer_V1_0_Graph_H_
+#ifndef ANDROID_HARDWARE_TESTS_POINTER_V1_0_GRAPH_H
+#define ANDROID_HARDWARE_TESTS_POINTER_V1_0_GRAPH_H
 
 #include <android/hardware/tests/pointer/1.0/IGraph.h>
 #include <hidl/Status.h>
@@ -44,4 +44,4 @@ extern "C" IGraph* HIDL_FETCH_IGraph(const char* name);
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_tests_pointer_V1_0_Graph_H_
+#endif  // ANDROID_HARDWARE_TESTS_POINTER_V1_0_GRAPH_H

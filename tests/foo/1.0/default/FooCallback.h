@@ -1,5 +1,5 @@
-#ifndef HIDL_GENERATED_android_hardware_tests_foo_V1_0_FooCallback_H_
-#define HIDL_GENERATED_android_hardware_tests_foo_V1_0_FooCallback_H_
+#ifndef ANDROID_HARDWARE_TESTS_FOO_V1_0_FOOCALLBACK_H
+#define ANDROID_HARDWARE_TESTS_FOO_V1_0_FOOCALLBACK_H
 
 #include <android/hardware/tests/foo/1.0/IFooCallback.h>
 #include <hidl/Status.h>
@@ -43,4 +43,4 @@ extern "C" IFooCallback* HIDL_FETCH_IFooCallback(const char* name);
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_tests_foo_V1_0_FooCallback_H_
+#endif  // ANDROID_HARDWARE_TESTS_FOO_V1_0_FOOCALLBACK_H

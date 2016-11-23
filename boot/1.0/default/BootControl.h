@@ -1,5 +1,5 @@
-#ifndef HIDL_GENERATED_android_hardware_boot_V1_0_BootControl_H_
-#define HIDL_GENERATED_android_hardware_boot_V1_0_BootControl_H_
+#ifndef ANDROID_HARDWARE_BOOT_V1_0_BOOTCONTROL_H
+#define ANDROID_HARDWARE_BOOT_V1_0_BOOTCONTROL_H
 
 #include <android/hardware/boot/1.0/IBootControl.h>
 #include <hidl/Status.h>
@@ -43,4 +43,4 @@ extern "C" IBootControl* HIDL_FETCH_IBootControl(const char* name);
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_boot_V1_0_BootControl_H_
+#endif  // ANDROID_HARDWARE_BOOT_V1_0_BOOTCONTROL_H

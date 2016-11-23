@@ -1,5 +1,5 @@
-#ifndef HIDL_GENERATED_android_hardware_tests_inheritance_V1_0_Grandparent_H_
-#define HIDL_GENERATED_android_hardware_tests_inheritance_V1_0_Grandparent_H_
+#ifndef ANDROID_HARDWARE_TESTS_INHERITANCE_V1_0_GRANDPARENT_H
+#define ANDROID_HARDWARE_TESTS_INHERITANCE_V1_0_GRANDPARENT_H
 
 #include <android/hardware/tests/inheritance/1.0/IGrandparent.h>
 #include <hidl/Status.h>
@@ -34,4 +34,4 @@ extern "C" IGrandparent* HIDL_FETCH_IGrandparent(const char* name);
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_tests_inheritance_V1_0_Grandparent_H_
+#endif  // ANDROID_HARDWARE_TESTS_INHERITANCE_V1_0_GRANDPARENT_H

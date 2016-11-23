@@ -1,5 +1,5 @@
-#ifndef HIDL_GENERATED_android_hardware_tests_inheritance_V1_0_Parent_H_
-#define HIDL_GENERATED_android_hardware_tests_inheritance_V1_0_Parent_H_
+#ifndef ANDROID_HARDWARE_TESTS_INHERITANCE_V1_0_PARENT_H
+#define ANDROID_HARDWARE_TESTS_INHERITANCE_V1_0_PARENT_H
 
 #include <android/hardware/tests/inheritance/1.0/IParent.h>
 #include <hidl/Status.h>
@@ -37,4 +37,4 @@ extern "C" IParent* HIDL_FETCH_IParent(const char* name);
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_tests_inheritance_V1_0_Parent_H_
+#endif  // ANDROID_HARDWARE_TESTS_INHERITANCE_V1_0_PARENT_H
