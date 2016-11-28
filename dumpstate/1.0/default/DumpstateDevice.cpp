@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2016 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #define LOG_TAG "dumpstate"
 
 #include "DumpstateDevice.h"
@@ -28,11 +44,9 @@ Return<void> DumpstateDevice::dumpstateBoard(const hidl_handle& handle) {
     ALOGI("Dumpstate HIDL not provided by device\n");
     dprintf(fd, "Dumpstate HIDL not provided by device; providing bogus data.\n");
 
-    // Shows some examples on how to use the libdumpstateutils API.
-    dprintf(fd, "Time now is: ");
-    RunCommandToFd(fd, {"/system/bin/date"});
-    dprintf(fd, "Contents of a small file (/system/etc/hosts):\n");
-    DumpFileToFd(fd, "/system/etc/hosts");
+    // Shows some examples on how to use the libdumpstateutil API.
+    RunCommandToFd(fd, "DATE", {"/system/bin/date"});
+    DumpFileToFd(fd, "HOSTS", "/system/etc/hosts");
 
     return Void();
 }
