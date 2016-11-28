@@ -16,6 +16,7 @@
 
 #define LOG_TAG "GrallocPassthrough"
 
+#include <mutex>
 #include <type_traits>
 #include <unordered_set>
 #include <vector>
@@ -42,18 +43,19 @@ public:
     // IAllocator interface
     Return<void> getCapabilities(getCapabilities_cb hidl_cb) override;
     Return<void> dumpDebugInfo(dumpDebugInfo_cb hidl_cb) override;
-    Return<void> createDescriptor(const BufferDescriptorInfo& descriptorInfo,
-            createDescriptor_cb hidl_cb) override;
-    Return<Error> destroyDescriptor(BufferDescriptor descriptor) override;
+    Return<void> createClient(createClient_cb hidl_cb) override;
 
-    Return<Error> testAllocate(
-            const hidl_vec<BufferDescriptor>& descriptors) override;
-    Return<void> allocate(const hidl_vec<BufferDescriptor>& descriptors,
-            allocate_cb hidl_cb) override;
-    Return<Error> free(Buffer buffer) override;
+    Error createDescriptor(
+            const IAllocatorClient::BufferDescriptorInfo& descriptorInfo,
+            BufferDescriptor& outDescriptor);
+    Error destroyDescriptor(BufferDescriptor descriptor);
 
-    Return<void> exportHandle(BufferDescriptor descriptor,
-            Buffer buffer, exportHandle_cb hidl_cb) override;
+    Error testAllocate(const hidl_vec<BufferDescriptor>& descriptors);
+    Error allocate(const hidl_vec<BufferDescriptor>& descriptors,
+            hidl_vec<Buffer>& outBuffers);
+    Error free(Buffer buffer);
+
+    Error exportHandle(Buffer buffer, const native_handle_t*& outHandle);
 
 private:
     void initCapabilities();
@@ -79,10 +81,34 @@ private:
         GRALLOC1_PFN_SET_PRODUCER_USAGE setProducerUsage;
         GRALLOC1_PFN_ALLOCATE allocate;
         GRALLOC1_PFN_RELEASE release;
-        GRALLOC1_PFN_GET_BACKING_STORE getBackingStore;
-        GRALLOC1_PFN_GET_STRIDE getStride;
-        GRALLOC1_PFN_GET_NUM_FLEX_PLANES getNumFlexPlanes;
     } mDispatch;
+};
+
+class GrallocClient : public IAllocatorClient {
+public:
+    GrallocClient(GrallocHal& hal);
+    virtual ~GrallocClient();
+
+    // IAllocatorClient interface
+    Return<void> createDescriptor(const BufferDescriptorInfo& descriptorInfo,
+            createDescriptor_cb hidl_cb) override;
+    Return<Error> destroyDescriptor(BufferDescriptor descriptor) override;
+
+    Return<Error> testAllocate(
+            const hidl_vec<BufferDescriptor>& descriptors) override;
+    Return<void> allocate(const hidl_vec<BufferDescriptor>& descriptors,
+            allocate_cb hidl_cb) override;
+    Return<Error> free(Buffer buffer) override;
+
+    Return<void> exportHandle(BufferDescriptor descriptor,
+            Buffer buffer, exportHandle_cb hidl_cb) override;
+
+private:
+    GrallocHal& mHal;
+
+    std::mutex mMutex;
+    std::unordered_set<BufferDescriptor> mDescriptors;
+    std::unordered_set<Buffer> mBuffers;
 };
 
 GrallocHal::GrallocHal(const hw_module_t* module)
@@ -182,24 +208,37 @@ Return<void> GrallocHal::dumpDebugInfo(dumpDebugInfo_cb hidl_cb)
     return Void();
 }
 
-Return<void> GrallocHal::createDescriptor(
-        const BufferDescriptorInfo& descriptorInfo,
-        createDescriptor_cb hidl_cb)
+Return<void> GrallocHal::createClient(createClient_cb hidl_cb)
 {
-    BufferDescriptor descriptor;
+    sp<IAllocatorClient> client = new GrallocClient(*this);
+    hidl_cb(Error::NONE, client);
+
+    return Void();
+}
+
+Error GrallocHal::createDescriptor(
+        const IAllocatorClient::BufferDescriptorInfo& descriptorInfo,
+        BufferDescriptor& outDescriptor)
+{
+    gralloc1_buffer_descriptor_t descriptor;
     int32_t err = mDispatch.createDescriptor(mDevice, &descriptor);
-    if (err == GRALLOC1_ERROR_NONE) {
-        err = mDispatch.setDimensions(mDevice, descriptor,
-                descriptorInfo.width, descriptorInfo.height);
+    if (err != GRALLOC1_ERROR_NONE) {
+        return static_cast<Error>(err);
     }
+
+    err = mDispatch.setDimensions(mDevice, descriptor,
+            descriptorInfo.width, descriptorInfo.height);
     if (err == GRALLOC1_ERROR_NONE) {
         err = mDispatch.setFormat(mDevice, descriptor,
                 static_cast<int32_t>(descriptorInfo.format));
     }
-    if (err == GRALLOC1_ERROR_NONE &&
-            hasCapability(Capability::LAYERED_BUFFERS)) {
-        err = mDispatch.setLayerCount(mDevice, descriptor,
-                descriptorInfo.layerCount);
+    if (err == GRALLOC1_ERROR_NONE) {
+        if (hasCapability(Capability::LAYERED_BUFFERS)) {
+            err = mDispatch.setLayerCount(mDevice, descriptor,
+                    descriptorInfo.layerCount);
+        } else if (descriptorInfo.layerCount != 1) {
+            err = GRALLOC1_ERROR_BAD_VALUE;
+        }
     }
     if (err == GRALLOC1_ERROR_NONE) {
         uint64_t producerUsageMask = descriptorInfo.producerUsageMask;
@@ -221,64 +260,189 @@ Return<void> GrallocHal::createDescriptor(
                 consumerUsageMask);
     }
 
-    hidl_cb(static_cast<Error>(err), descriptor);
+    if (err == GRALLOC1_ERROR_NONE) {
+        outDescriptor = descriptor;
+    } else {
+        mDispatch.destroyDescriptor(mDevice, descriptor);
+    }
 
-    return Void();
+    return static_cast<Error>(err);
 }
 
-Return<Error> GrallocHal::destroyDescriptor(
-        BufferDescriptor descriptor)
+Error GrallocHal::destroyDescriptor(BufferDescriptor descriptor)
 {
     int32_t err = mDispatch.destroyDescriptor(mDevice, descriptor);
     return static_cast<Error>(err);
 }
 
-Return<Error> GrallocHal::testAllocate(
-        const hidl_vec<BufferDescriptor>& descriptors)
+Error GrallocHal::testAllocate(const hidl_vec<BufferDescriptor>& descriptors)
 {
     if (!hasCapability(Capability::TEST_ALLOCATE)) {
         return Error::UNDEFINED;
     }
 
     int32_t err = mDispatch.allocate(mDevice, descriptors.size(),
-            &descriptors[0], nullptr);
+            descriptors.data(), nullptr);
     return static_cast<Error>(err);
 }
 
-Return<void> GrallocHal::allocate(
-        const hidl_vec<BufferDescriptor>& descriptors,
-        allocate_cb hidl_cb) {
+Error GrallocHal::allocate(const hidl_vec<BufferDescriptor>& descriptors,
+        hidl_vec<Buffer>& outBuffers)
+{
     std::vector<buffer_handle_t> buffers(descriptors.size());
     int32_t err = mDispatch.allocate(mDevice, descriptors.size(),
-            &descriptors[0], buffers.data());
-    if (err != GRALLOC1_ERROR_NONE && err != GRALLOC1_ERROR_NOT_SHARED) {
-        buffers.clear();
+            descriptors.data(), buffers.data());
+    if (err == GRALLOC1_ERROR_NONE || err == GRALLOC1_ERROR_NOT_SHARED) {
+        outBuffers.resize(buffers.size());
+        for (size_t i = 0; i < outBuffers.size(); i++) {
+            outBuffers[i] = static_cast<Buffer>(
+                    reinterpret_cast<uintptr_t>(buffers[i]));
+        }
     }
 
-    hidl_vec<Buffer> reply;
-    reply.setToExternal(
-            reinterpret_cast<Buffer*>(buffers.data()),
-            buffers.size());
-    hidl_cb(static_cast<Error>(err), reply);
-
-    return Void();
+    return static_cast<Error>(err);
 }
 
-Return<Error> GrallocHal::free(Buffer buffer)
+Error GrallocHal::free(Buffer buffer)
 {
-    buffer_handle_t handle = reinterpret_cast<buffer_handle_t>(buffer);
+    buffer_handle_t handle = reinterpret_cast<buffer_handle_t>(
+            static_cast<uintptr_t>(buffer));
+
     int32_t err = mDispatch.release(mDevice, handle);
     return static_cast<Error>(err);
 }
 
-Return<void> GrallocHal::exportHandle(BufferDescriptor /*descriptor*/,
+Error GrallocHal::exportHandle(Buffer buffer,
+        const native_handle_t*& outHandle)
+{
+    // we rely on the caller to validate buffer here
+    outHandle = reinterpret_cast<buffer_handle_t>(
+            static_cast<uintptr_t>(buffer));
+    return Error::NONE;
+}
+
+GrallocClient::GrallocClient(GrallocHal& hal)
+    : mHal(hal)
+{
+}
+
+GrallocClient::~GrallocClient()
+{
+    if (!mBuffers.empty()) {
+        ALOGW("client destroyed with valid buffers");
+        for (auto buf : mBuffers) {
+            mHal.free(buf);
+        }
+    }
+
+    if (!mDescriptors.empty()) {
+        ALOGW("client destroyed with valid buffer descriptors");
+        for (auto desc : mDescriptors) {
+            mHal.destroyDescriptor(desc);
+        }
+    }
+}
+
+Return<void> GrallocClient::createDescriptor(
+        const BufferDescriptorInfo& descriptorInfo,
+        createDescriptor_cb hidl_cb)
+{
+    BufferDescriptor descriptor;
+    Error err = mHal.createDescriptor(descriptorInfo, descriptor);
+
+    if (err == Error::NONE) {
+        std::lock_guard<std::mutex> lock(mMutex);
+
+        auto result = mDescriptors.insert(descriptor);
+        if (!result.second) {
+            ALOGW("duplicated buffer descriptor id returned");
+            mHal.destroyDescriptor(descriptor);
+            err = Error::NO_RESOURCES;
+        }
+    }
+
+    hidl_cb(err, descriptor);
+    return Void();
+}
+
+Return<Error> GrallocClient::destroyDescriptor(BufferDescriptor descriptor)
+{
+    {
+        std::lock_guard<std::mutex> lock(mMutex);
+        if (!mDescriptors.erase(descriptor)) {
+            return Error::BAD_DESCRIPTOR;
+        }
+    }
+
+    return mHal.destroyDescriptor(descriptor);
+}
+
+Return<Error> GrallocClient::testAllocate(
+        const hidl_vec<BufferDescriptor>& descriptors)
+{
+    return mHal.testAllocate(descriptors);
+}
+
+Return<void> GrallocClient::allocate(
+        const hidl_vec<BufferDescriptor>& descriptors,
+        allocate_cb hidl_cb) {
+    hidl_vec<Buffer> buffers;
+    Error err = mHal.allocate(descriptors, buffers);
+
+    if (err == Error::NONE || err == Error::NOT_SHARED) {
+        std::lock_guard<std::mutex> lock(mMutex);
+
+        for (size_t i = 0; i < buffers.size(); i++) {
+            auto result = mBuffers.insert(buffers[i]);
+            if (!result.second) {
+                ALOGW("duplicated buffer id returned");
+
+                for (size_t j = 0; j < buffers.size(); j++) {
+                    if (j < i) {
+                        mBuffers.erase(buffers[i]);
+                    }
+                    mHal.free(buffers[i]);
+                }
+
+                buffers = hidl_vec<Buffer>();
+                err = Error::NO_RESOURCES;
+                break;
+            }
+        }
+    }
+
+    hidl_cb(err, buffers);
+    return Void();
+}
+
+Return<Error> GrallocClient::free(Buffer buffer)
+{
+    {
+        std::lock_guard<std::mutex> lock(mMutex);
+        if (!mBuffers.erase(buffer)) {
+            return Error::BAD_BUFFER;
+        }
+    }
+
+    return mHal.free(buffer);
+}
+
+Return<void> GrallocClient::exportHandle(BufferDescriptor /*descriptor*/,
         Buffer buffer, exportHandle_cb hidl_cb)
 {
-    // do we want to validate?
-    buffer_handle_t handle = reinterpret_cast<buffer_handle_t>(buffer);
+    const native_handle_t* handle = nullptr;
 
-    hidl_cb(Error::NONE, handle);
+    {
+        std::lock_guard<std::mutex> lock(mMutex);
+        if (mBuffers.count(buffer) == 0) {
+            hidl_cb(Error::BAD_BUFFER, handle);
+            return Void();
+        }
+    }
 
+    Error err = mHal.exportHandle(buffer, handle);
+
+    hidl_cb(err, handle);
     return Void();
 }
 
