@@ -108,7 +108,13 @@ Return<void> Foo::callMe(
               "should block for %" PRId64 " seconds", cb.get(),
               DELAY_S);
         c[1] = systemTime();
-        bool answer = cb->heyItsYouIsntIt(cb);
+        Return<bool> ret = cb->heyItsYouIsntIt(cb);
+        if (!ret.isOk()) {
+            ALOGE("SERVER(Foo) callMe %p encountered transport error (%d).",
+                  cb.get(), ret.getStatus().exceptionCode());
+            return Void();
+        }
+        bool answer = ret.get();
         c[1] = systemTime() - c[1];
         ALOGI("SERVER(Foo) callMe %p IFooCallback::heyItsYouIsntIt " \
               "responded with %d after %" PRId64 "ns", cb.get(), answer, c[1]);
