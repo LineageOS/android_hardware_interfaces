@@ -2073,7 +2073,7 @@ enum VehicleUnit : int32_t {
 
     METER_PER_SEC  = 0x01,
     RPM            = 0x02,
-    HZ             = 0x03,
+    HERTZ          = 0x03,
     PERCENTILE     = 0x10,
     MILLIMETER     = 0x20,
     METER          = 0x21,
