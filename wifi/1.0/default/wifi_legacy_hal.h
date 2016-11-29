@@ -54,6 +54,17 @@ struct LinkLayerStats {
 };
 #pragma GCC diagnostic pop
 
+// The |WLAN_DRIVER_WAKE_REASON_CNT.cmd_event_wake_cnt| and
+// |WLAN_DRIVER_WAKE_REASON_CNT.driver_fw_local_wake_cnt| stats is provided
+// as a pointer in |WLAN_DRIVER_WAKE_REASON_CNT| structure in the legacy HAL
+// API. Separate that out into a separate return elements to avoid passing
+// pointers around.
+struct WakeReasonStats {
+  WLAN_DRIVER_WAKE_REASON_CNT wake_reason_cnt;
+  std::vector<uint32_t> cmd_event_wake_cnt;
+  std::vector<uint32_t> driver_fw_local_wake_cnt;
+};
+
 // Full scan results contain IE info and are hence passed by reference, to
 // preserve the variable length array member |ie_data|. Callee must not retain
 // the pointer.
@@ -63,6 +74,12 @@ using on_gscan_full_result_callback =
 // reference.
 using on_gscan_results_callback = std::function<void(
     wifi_request_id, const std::vector<wifi_cached_scan_results>&)>;
+
+// Callback for ring buffer data.
+using on_ring_buffer_data_callback =
+    std::function<void(const std::string&,
+                       const std::vector<uint8_t>&,
+                       const wifi_ring_buffer_status&)>;
 
 /**
  * Class that encapsulates all legacy HAL interactions.
@@ -115,6 +132,21 @@ class WifiLegacyHal {
   wifi_error enableLinkLayerStats(bool debug);
   wifi_error disableLinkLayerStats();
   std::pair<wifi_error, LinkLayerStats> getLinkLayerStats();
+  // Logger/debug functions.
+  std::pair<wifi_error, uint32_t> getLoggerSupportedFeatureSet();
+  wifi_error startPktFateMonitoring();
+  std::pair<wifi_error, std::vector<wifi_tx_report>> getTxPktFates();
+  std::pair<wifi_error, std::vector<wifi_rx_report>> getRxPktFates();
+  std::pair<wifi_error, WakeReasonStats> getWakeReasonStats();
+  wifi_error registerRingBufferCallbackHandler(
+      const on_ring_buffer_data_callback& on_data_callback);
+  std::pair<wifi_error, std::vector<wifi_ring_buffer_status>>
+  getRingBuffersStatus();
+  wifi_error startRingBufferLogging(const std::string& ring_name,
+                                    uint32_t verbose_level,
+                                    uint32_t max_interval_sec,
+                                    uint32_t min_data_size);
+  wifi_error getRingBufferData(const std::string& ring_name);
 
  private:
   // Retrieve the interface handle to be used for the "wlan" interface.
