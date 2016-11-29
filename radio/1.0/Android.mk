@@ -12,6 +12,10 @@ intermediates := $(local-generated-sources-dir)
 
 HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
 
+LOCAL_JAVA_LIBRARIES := \
+    android.hidl.base@1.0-java \
+
+
 #
 # Build types.hal (ActivityStatsInfo)
 #
@@ -22,7 +26,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.ActivityStatsInfo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -39,7 +45,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.ApnAuthType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -56,7 +64,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.AppState
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -73,7 +83,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.AppStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -90,7 +102,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.AppType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -107,7 +121,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.Call
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -124,7 +140,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CallForwardInfo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -141,7 +159,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CallForwardInfoStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -158,7 +178,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CallPresentation
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -175,7 +197,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CallState
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -192,7 +216,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CardState
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -209,7 +235,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CardStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -226,7 +254,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.Carrier
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -243,7 +273,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CarrierMatchType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -260,7 +292,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CarrierRestrictions
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -277,7 +311,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaBroadcastSmsConfigInfo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -294,7 +330,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaCallWaiting
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -311,7 +349,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaCallWaitingNumberPlan
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -328,7 +368,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaCallWaitingNumberPresentation
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -345,7 +387,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaCallWaitingNumberType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -362,7 +406,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaDisplayInfoRecord
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -379,7 +425,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaInfoRecName
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -396,7 +444,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaInformationRecord
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -413,7 +463,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaInformationRecords
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -430,7 +482,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaLineControlInfoRecord
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -447,7 +501,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaNumberInfoRecord
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -464,7 +520,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaOtaProvisionStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -481,7 +539,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaRedirectingNumberInfoRecord
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -498,7 +558,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaRedirectingReason
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -515,7 +577,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaRoamingType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -532,7 +596,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSignalInfoRecord
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -549,7 +615,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSignalStrength
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -566,7 +634,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSmsAck
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -583,7 +653,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSmsAddress
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -600,7 +672,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSmsDigitMode
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -617,7 +691,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSmsErrorClass
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -634,7 +710,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSmsMessage
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -651,7 +729,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSmsNumberMode
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -668,7 +748,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSmsNumberPlan
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -685,7 +767,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSmsNumberType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -702,7 +786,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSmsSubaddress
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -719,7 +805,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSmsSubaddressType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -736,7 +824,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSmsWriteArgs
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -753,7 +843,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSmsWriteArgsStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -770,7 +862,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSubscriptionSource
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -787,7 +881,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaT53AudioControlInfoRecord
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -804,7 +900,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaT53ClirInfoRecord
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -821,7 +919,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CellIdentityCdma
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -838,7 +938,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CellIdentityGsm
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -855,7 +957,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CellIdentityLte
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -872,7 +976,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CellIdentityTdscdma
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -889,7 +995,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CellIdentityWcdma
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -906,7 +1014,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CellInfo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -923,7 +1033,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CellInfoCdma
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -940,7 +1052,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CellInfoGsm
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -957,7 +1071,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CellInfoLte
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -974,7 +1090,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CellInfoTdscdma
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -991,7 +1109,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CellInfoType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1008,7 +1128,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CellInfoWcdma
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1025,7 +1147,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CfData
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1042,7 +1166,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.ClipStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1059,7 +1185,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.Clir
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1076,7 +1204,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.DataCallFailCause
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1093,7 +1223,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.DataProfile
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1110,7 +1242,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.DataProfileInfo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1127,7 +1261,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.DataProfileInfoType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1144,7 +1280,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.DataRegStateResult
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1161,7 +1299,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.Dial
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1178,7 +1318,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.EvdoSignalStrength
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1195,7 +1337,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.GsmBroadcastSmsConfigInfo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1212,7 +1356,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.GsmSignalStrength
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1229,7 +1375,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.GsmSmsMessage
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1246,7 +1394,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.HardwareConfig
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1263,7 +1413,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.HardwareConfigModem
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1280,7 +1432,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.HardwareConfigSim
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1297,7 +1451,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.HardwareConfigState
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1314,7 +1470,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.HardwareConfigType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1331,7 +1489,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.IccIo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1348,7 +1508,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.IccIoResult
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1365,7 +1527,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.ImsSmsMessage
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1382,7 +1546,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.LastCallFailCause
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1399,7 +1565,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.LceDataInfo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1416,7 +1584,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.LceStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1433,7 +1603,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.LceStatusInfo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1450,7 +1622,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.LteSignalStrength
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1467,7 +1641,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.NeighboringCell
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1484,7 +1660,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.NvItem
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1501,7 +1679,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.NvWriteItem
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1518,7 +1698,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.OperatorInfo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1535,7 +1717,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.OperatorStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1552,7 +1736,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.PcoDataInfo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1569,7 +1755,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.PersoSubstate
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1586,7 +1774,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.PhoneRestrictedState
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1603,7 +1793,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.PinState
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1620,7 +1812,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.PreferredNetworkType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1637,7 +1831,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioAccessFamily
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1654,7 +1850,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioBandMode
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1671,7 +1869,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioCapability
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1688,7 +1888,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioCapabilityPhase
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1705,7 +1907,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioCapabilityStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1722,7 +1926,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioCdmaSmsConst
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1739,7 +1945,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioConst
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1756,7 +1964,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioError
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1773,7 +1983,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioIndicationType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1790,7 +2002,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioResponseInfo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1807,7 +2021,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioResponseType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1824,7 +2040,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioState
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1841,7 +2059,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioTechnology
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1858,7 +2078,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioTechnologyFamily
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1875,7 +2097,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RegState
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1892,7 +2116,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.ResetNvType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1909,7 +2135,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RestrictedState
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1926,7 +2154,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SapApduType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1943,7 +2173,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SapConnectRsp
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1960,7 +2192,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SapDisconnectType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1977,7 +2211,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SapResultCode
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -1994,7 +2230,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SapStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2011,7 +2249,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SapTransferProtocol
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2028,7 +2268,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SelectUiccSub
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2045,7 +2287,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SendSmsResult
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2062,7 +2306,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SetupDataCallResult
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2079,7 +2325,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SignalStrength
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2096,7 +2344,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SimApdu
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2113,7 +2363,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SimRefreshResult
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2130,7 +2382,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SimRefreshType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2147,7 +2401,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SmsAcknowledgeFailCause
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2164,7 +2420,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SmsWriteArgs
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2181,7 +2439,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SmsWriteArgsStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2198,7 +2458,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SrvccState
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2215,7 +2477,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SsInfoData
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2232,7 +2496,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SsRequestType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2249,7 +2515,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SsServiceType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2266,7 +2534,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SsTeleserviceType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2283,7 +2553,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.StkCcUnsolSsResult
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2300,7 +2572,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SubscriptionType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2317,7 +2591,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SuppServiceClass
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2334,7 +2610,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SuppSvcNotification
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2351,7 +2629,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.TdScdmaSignalStrength
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2368,7 +2648,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.TimeStampType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2385,7 +2667,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.TtyMode
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2402,7 +2686,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.UiccSubActStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2419,7 +2705,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.UssdModeType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2436,7 +2724,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.UusDcs
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2453,7 +2743,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.UusInfo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2470,7 +2762,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.UusType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2487,7 +2781,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.VoiceRegStateResult
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2504,7 +2800,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.WcdmaSignalStrength
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2527,7 +2825,9 @@ $(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::IRadio
 
 $(GEN): $(LOCAL_PATH)/IRadio.hal
@@ -2546,7 +2846,9 @@ $(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::IRadioIndication
 
 $(GEN): $(LOCAL_PATH)/IRadioIndication.hal
@@ -2565,7 +2867,9 @@ $(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::IRadioResponse
 
 $(GEN): $(LOCAL_PATH)/IRadioResponse.hal
@@ -2586,7 +2890,9 @@ $(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::ISap
 
 $(GEN): $(LOCAL_PATH)/ISap.hal
@@ -2605,7 +2911,9 @@ $(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::ISapCallback
 
 $(GEN): $(LOCAL_PATH)/ISapCallback.hal
@@ -2624,6 +2932,10 @@ intermediates := $(local-generated-sources-dir)
 
 HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
 
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    android.hidl.base@1.0-java-static \
+
+
 #
 # Build types.hal (ActivityStatsInfo)
 #
@@ -2634,7 +2946,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.ActivityStatsInfo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2651,7 +2965,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.ApnAuthType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2668,7 +2984,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.AppState
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2685,7 +3003,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.AppStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2702,7 +3022,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.AppType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2719,7 +3041,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.Call
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2736,7 +3060,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CallForwardInfo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2753,7 +3079,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CallForwardInfoStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2770,7 +3098,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CallPresentation
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2787,7 +3117,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CallState
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2804,7 +3136,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CardState
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2821,7 +3155,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CardStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2838,7 +3174,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.Carrier
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2855,7 +3193,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CarrierMatchType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2872,7 +3212,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CarrierRestrictions
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2889,7 +3231,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaBroadcastSmsConfigInfo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2906,7 +3250,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaCallWaiting
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2923,7 +3269,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaCallWaitingNumberPlan
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2940,7 +3288,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaCallWaitingNumberPresentation
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2957,7 +3307,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaCallWaitingNumberType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2974,7 +3326,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaDisplayInfoRecord
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -2991,7 +3345,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaInfoRecName
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3008,7 +3364,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaInformationRecord
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3025,7 +3383,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaInformationRecords
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3042,7 +3402,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaLineControlInfoRecord
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3059,7 +3421,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaNumberInfoRecord
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3076,7 +3440,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaOtaProvisionStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3093,7 +3459,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaRedirectingNumberInfoRecord
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3110,7 +3478,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaRedirectingReason
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3127,7 +3497,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaRoamingType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3144,7 +3516,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSignalInfoRecord
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3161,7 +3535,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSignalStrength
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3178,7 +3554,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSmsAck
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3195,7 +3573,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSmsAddress
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3212,7 +3592,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSmsDigitMode
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3229,7 +3611,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSmsErrorClass
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3246,7 +3630,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSmsMessage
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3263,7 +3649,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSmsNumberMode
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3280,7 +3668,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSmsNumberPlan
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3297,7 +3687,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSmsNumberType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3314,7 +3706,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSmsSubaddress
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3331,7 +3725,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSmsSubaddressType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3348,7 +3744,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSmsWriteArgs
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3365,7 +3763,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSmsWriteArgsStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3382,7 +3782,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaSubscriptionSource
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3399,7 +3801,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaT53AudioControlInfoRecord
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3416,7 +3820,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CdmaT53ClirInfoRecord
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3433,7 +3839,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CellIdentityCdma
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3450,7 +3858,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CellIdentityGsm
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3467,7 +3877,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CellIdentityLte
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3484,7 +3896,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CellIdentityTdscdma
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3501,7 +3915,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CellIdentityWcdma
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3518,7 +3934,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CellInfo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3535,7 +3953,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CellInfoCdma
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3552,7 +3972,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CellInfoGsm
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3569,7 +3991,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CellInfoLte
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3586,7 +4010,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CellInfoTdscdma
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3603,7 +4029,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CellInfoType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3620,7 +4048,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CellInfoWcdma
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3637,7 +4067,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.CfData
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3654,7 +4086,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.ClipStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3671,7 +4105,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.Clir
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3688,7 +4124,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.DataCallFailCause
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3705,7 +4143,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.DataProfile
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3722,7 +4162,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.DataProfileInfo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3739,7 +4181,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.DataProfileInfoType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3756,7 +4200,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.DataRegStateResult
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3773,7 +4219,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.Dial
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3790,7 +4238,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.EvdoSignalStrength
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3807,7 +4257,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.GsmBroadcastSmsConfigInfo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3824,7 +4276,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.GsmSignalStrength
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3841,7 +4295,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.GsmSmsMessage
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3858,7 +4314,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.HardwareConfig
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3875,7 +4333,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.HardwareConfigModem
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3892,7 +4352,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.HardwareConfigSim
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3909,7 +4371,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.HardwareConfigState
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3926,7 +4390,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.HardwareConfigType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3943,7 +4409,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.IccIo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3960,7 +4428,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.IccIoResult
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3977,7 +4447,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.ImsSmsMessage
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -3994,7 +4466,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.LastCallFailCause
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4011,7 +4485,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.LceDataInfo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4028,7 +4504,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.LceStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4045,7 +4523,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.LceStatusInfo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4062,7 +4542,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.LteSignalStrength
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4079,7 +4561,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.NeighboringCell
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4096,7 +4580,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.NvItem
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4113,7 +4599,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.NvWriteItem
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4130,7 +4618,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.OperatorInfo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4147,7 +4637,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.OperatorStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4164,7 +4656,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.PcoDataInfo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4181,7 +4675,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.PersoSubstate
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4198,7 +4694,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.PhoneRestrictedState
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4215,7 +4713,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.PinState
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4232,7 +4732,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.PreferredNetworkType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4249,7 +4751,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioAccessFamily
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4266,7 +4770,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioBandMode
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4283,7 +4789,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioCapability
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4300,7 +4808,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioCapabilityPhase
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4317,7 +4827,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioCapabilityStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4334,7 +4846,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioCdmaSmsConst
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4351,7 +4865,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioConst
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4368,7 +4884,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioError
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4385,7 +4903,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioIndicationType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4402,7 +4922,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioResponseInfo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4419,7 +4941,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioResponseType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4436,7 +4960,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioState
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4453,7 +4979,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioTechnology
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4470,7 +4998,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RadioTechnologyFamily
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4487,7 +5017,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RegState
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4504,7 +5036,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.ResetNvType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4521,7 +5055,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.RestrictedState
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4538,7 +5074,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SapApduType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4555,7 +5093,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SapConnectRsp
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4572,7 +5112,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SapDisconnectType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4589,7 +5131,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SapResultCode
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4606,7 +5150,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SapStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4623,7 +5169,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SapTransferProtocol
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4640,7 +5188,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SelectUiccSub
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4657,7 +5207,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SendSmsResult
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4674,7 +5226,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SetupDataCallResult
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4691,7 +5245,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SignalStrength
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4708,7 +5264,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SimApdu
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4725,7 +5283,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SimRefreshResult
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4742,7 +5302,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SimRefreshType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4759,7 +5321,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SmsAcknowledgeFailCause
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4776,7 +5340,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SmsWriteArgs
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4793,7 +5359,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SmsWriteArgsStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4810,7 +5378,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SrvccState
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4827,7 +5397,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SsInfoData
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4844,7 +5416,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SsRequestType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4861,7 +5435,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SsServiceType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4878,7 +5454,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SsTeleserviceType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4895,7 +5473,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.StkCcUnsolSsResult
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4912,7 +5492,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SubscriptionType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4929,7 +5511,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SuppServiceClass
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4946,7 +5530,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.SuppSvcNotification
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4963,7 +5549,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.TdScdmaSignalStrength
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4980,7 +5568,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.TimeStampType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -4997,7 +5587,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.TtyMode
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -5014,7 +5606,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.UiccSubActStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -5031,7 +5625,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.UssdModeType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -5048,7 +5644,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.UusDcs
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -5065,7 +5663,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.UusInfo
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -5082,7 +5682,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.UusType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -5099,7 +5701,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.VoiceRegStateResult
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -5116,7 +5720,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::types.WcdmaSignalStrength
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -5139,7 +5745,9 @@ $(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::IRadio
 
 $(GEN): $(LOCAL_PATH)/IRadio.hal
@@ -5158,7 +5766,9 @@ $(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::IRadioIndication
 
 $(GEN): $(LOCAL_PATH)/IRadioIndication.hal
@@ -5177,7 +5787,9 @@ $(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::IRadioResponse
 
 $(GEN): $(LOCAL_PATH)/IRadioResponse.hal
@@ -5198,7 +5810,9 @@ $(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::ISap
 
 $(GEN): $(LOCAL_PATH)/ISap.hal
@@ -5217,7 +5831,9 @@ $(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.radio@1.0::ISapCallback
 
 $(GEN): $(LOCAL_PATH)/ISapCallback.hal

@@ -12,6 +12,10 @@ intermediates := $(local-generated-sources-dir)
 
 HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
 
+LOCAL_JAVA_LIBRARIES := \
+    android.hidl.base@1.0-java \
+
+
 #
 # Build types.hal (Brightness)
 #
@@ -22,7 +26,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.light@2.0::types.Brightness
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -39,7 +45,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.light@2.0::types.Flash
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -56,7 +64,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.light@2.0::types.LightState
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -73,7 +83,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.light@2.0::types.Status
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -90,7 +102,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.light@2.0::types.Type
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -109,7 +123,9 @@ $(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.light@2.0::ILight
 
 $(GEN): $(LOCAL_PATH)/ILight.hal
@@ -128,6 +144,10 @@ intermediates := $(local-generated-sources-dir)
 
 HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
 
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    android.hidl.base@1.0-java-static \
+
+
 #
 # Build types.hal (Brightness)
 #
@@ -138,7 +158,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.light@2.0::types.Brightness
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -155,7 +177,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.light@2.0::types.Flash
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -172,7 +196,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.light@2.0::types.LightState
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -189,7 +215,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.light@2.0::types.Status
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -206,7 +234,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.light@2.0::types.Type
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -225,7 +255,9 @@ $(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.light@2.0::ILight
 
 $(GEN): $(LOCAL_PATH)/ILight.hal

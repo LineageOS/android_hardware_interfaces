@@ -3,7 +3,7 @@
 genrule {
     name: "android.hardware.audio.effect@2.0_genc++",
     tools: ["hidl-gen"],
-    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces android.hardware.audio.effect@2.0",
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.audio.effect@2.0",
     srcs: [
         "types.hal",
         "IAcousticEchoCancelerEffect.hal",
@@ -43,7 +43,7 @@ genrule {
 genrule {
     name: "android.hardware.audio.effect@2.0_genc++_headers",
     tools: ["hidl-gen"],
-    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces android.hardware.audio.effect@2.0",
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.audio.effect@2.0",
     srcs: [
         "types.hal",
         "IAcousticEchoCancelerEffect.hal",
@@ -149,6 +149,7 @@ cc_library_shared {
         "libutils",
         "libcutils",
         "android.hardware.audio.common@2.0",
+        "android.hidl.base@1.0",
     ],
     export_shared_lib_headers: [
         "libhidlbase",
@@ -156,5 +157,6 @@ cc_library_shared {
         "libhwbinder",
         "libutils",
         "android.hardware.audio.common@2.0",
+        "android.hidl.base@1.0",
     ],
 }

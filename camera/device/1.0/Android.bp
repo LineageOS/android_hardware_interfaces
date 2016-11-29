@@ -3,7 +3,7 @@
 genrule {
     name: "android.hardware.camera.device@1.0_genc++",
     tools: ["hidl-gen"],
-    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces android.hardware.camera.device@1.0",
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.camera.device@1.0",
     srcs: [
         "types.hal",
         "ICameraDevice.hal",
@@ -21,7 +21,7 @@ genrule {
 genrule {
     name: "android.hardware.camera.device@1.0_genc++_headers",
     tools: ["hidl-gen"],
-    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces android.hardware.camera.device@1.0",
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.camera.device@1.0",
     srcs: [
         "types.hal",
         "ICameraDevice.hal",
@@ -63,6 +63,7 @@ cc_library_shared {
         "android.hardware.camera.common@1.0",
         "android.hardware.graphics.allocator@2.0",
         "android.hardware.graphics.common@1.0",
+        "android.hidl.base@1.0",
     ],
     export_shared_lib_headers: [
         "libhidlbase",
@@ -72,5 +73,6 @@ cc_library_shared {
         "android.hardware.camera.common@1.0",
         "android.hardware.graphics.allocator@2.0",
         "android.hardware.graphics.common@1.0",
+        "android.hidl.base@1.0",
     ],
 }

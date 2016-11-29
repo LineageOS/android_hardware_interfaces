@@ -22,7 +22,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.camera.common@1.0::types.CameraDeviceStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -39,7 +41,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.camera.common@1.0::types.CameraMetadataType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -56,7 +60,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.camera.common@1.0::types.CameraResourceCost
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -73,7 +79,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.camera.common@1.0::types.Status
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -90,7 +98,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.camera.common@1.0::types.TagBoundaryId
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -107,7 +117,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.camera.common@1.0::types.TorchMode
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -124,7 +136,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.camera.common@1.0::types.TorchModeStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -141,7 +155,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.camera.common@1.0::types.VendorTag
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -158,7 +174,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.camera.common@1.0::types.VendorTagSection
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -187,7 +205,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.camera.common@1.0::types.CameraDeviceStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -204,7 +224,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.camera.common@1.0::types.CameraMetadataType
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -221,7 +243,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.camera.common@1.0::types.CameraResourceCost
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -238,7 +262,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.camera.common@1.0::types.Status
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -255,7 +281,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.camera.common@1.0::types.TagBoundaryId
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -272,7 +300,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.camera.common@1.0::types.TorchMode
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -289,7 +319,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.camera.common@1.0::types.TorchModeStatus
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -306,7 +338,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.camera.common@1.0::types.VendorTag
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -323,7 +357,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.camera.common@1.0::types.VendorTagSection
 
 $(GEN): $(LOCAL_PATH)/types.hal

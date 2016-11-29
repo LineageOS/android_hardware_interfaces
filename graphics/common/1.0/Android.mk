@@ -22,7 +22,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.graphics.common@1.0::types.ColorMode
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -39,7 +41,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.graphics.common@1.0::types.ColorTransform
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -56,7 +60,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.graphics.common@1.0::types.Dataspace
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -73,7 +79,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.graphics.common@1.0::types.Hdr
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -90,7 +98,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.graphics.common@1.0::types.PixelFormat
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -107,7 +117,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.graphics.common@1.0::types.Transform
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -136,7 +148,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.graphics.common@1.0::types.ColorMode
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -153,7 +167,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.graphics.common@1.0::types.ColorTransform
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -170,7 +186,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.graphics.common@1.0::types.Dataspace
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -187,7 +205,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.graphics.common@1.0::types.Hdr
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -204,7 +224,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.graphics.common@1.0::types.PixelFormat
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -221,7 +243,9 @@ $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava -randroid.hardware:hardware/interfaces \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.graphics.common@1.0::types.Transform
 
 $(GEN): $(LOCAL_PATH)/types.hal
@@ -248,7 +272,9 @@ $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava-constants -randroid.hardware:hardware/interfaces \
+        -Ljava-constants \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
         android.hardware.graphics.common@1.0
 
 $(GEN):

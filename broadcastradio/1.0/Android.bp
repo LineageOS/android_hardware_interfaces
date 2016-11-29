@@ -3,7 +3,7 @@
 genrule {
     name: "android.hardware.broadcastradio@1.0_genc++",
     tools: ["hidl-gen"],
-    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces android.hardware.broadcastradio@1.0",
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.broadcastradio@1.0",
     srcs: [
         "types.hal",
         "IBroadcastRadio.hal",
@@ -23,7 +23,7 @@ genrule {
 genrule {
     name: "android.hardware.broadcastradio@1.0_genc++_headers",
     tools: ["hidl-gen"],
-    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces android.hardware.broadcastradio@1.0",
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.broadcastradio@1.0",
     srcs: [
         "types.hal",
         "IBroadcastRadio.hal",
@@ -68,11 +68,13 @@ cc_library_shared {
         "liblog",
         "libutils",
         "libcutils",
+        "android.hidl.base@1.0",
     ],
     export_shared_lib_headers: [
         "libhidlbase",
         "libhidltransport",
         "libhwbinder",
         "libutils",
+        "android.hidl.base@1.0",
     ],
 }

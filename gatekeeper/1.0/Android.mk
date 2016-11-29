@@ -5,7 +5,7 @@ LOCAL_PATH := $(call my-dir)
 ################################################################################
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := android.hardware.vibrator@1.0-java
+LOCAL_MODULE := android.hardware.gatekeeper@1.0-java
 LOCAL_MODULE_CLASS := JAVA_LIBRARIES
 
 intermediates := $(local-generated-sources-dir)
@@ -17,9 +17,9 @@ LOCAL_JAVA_LIBRARIES := \
 
 
 #
-# Build types.hal (Status)
+# Build types.hal (GatekeeperResponse)
 #
-GEN := $(intermediates)/android/hardware/vibrator/1.0/Status.java
+GEN := $(intermediates)/android/hardware/gatekeeper/1.0/GatekeeperResponse.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -29,19 +29,38 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         -Ljava \
         -randroid.hardware:hardware/interfaces \
         -randroid.hidl:system/libhidl/transport \
-        android.hardware.vibrator@1.0::types.Status
+        android.hardware.gatekeeper@1.0::types.GatekeeperResponse
 
 $(GEN): $(LOCAL_PATH)/types.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
 
 #
-# Build IVibrator.hal
+# Build types.hal (GatekeeperStatusCode)
 #
-GEN := $(intermediates)/android/hardware/vibrator/1.0/IVibrator.java
+GEN := $(intermediates)/android/hardware/gatekeeper/1.0/GatekeeperStatusCode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
-$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IVibrator.hal
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.gatekeeper@1.0::types.GatekeeperStatusCode
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build IGatekeeper.hal
+#
+GEN := $(intermediates)/android/hardware/gatekeeper/1.0/IGatekeeper.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGatekeeper.hal
 $(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/types.hal
 $(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
@@ -50,9 +69,9 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         -Ljava \
         -randroid.hardware:hardware/interfaces \
         -randroid.hidl:system/libhidl/transport \
-        android.hardware.vibrator@1.0::IVibrator
+        android.hardware.gatekeeper@1.0::IGatekeeper
 
-$(GEN): $(LOCAL_PATH)/IVibrator.hal
+$(GEN): $(LOCAL_PATH)/IGatekeeper.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
 include $(BUILD_JAVA_LIBRARY)
@@ -61,7 +80,7 @@ include $(BUILD_JAVA_LIBRARY)
 ################################################################################
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := android.hardware.vibrator@1.0-java-static
+LOCAL_MODULE := android.hardware.gatekeeper@1.0-java-static
 LOCAL_MODULE_CLASS := JAVA_LIBRARIES
 
 intermediates := $(local-generated-sources-dir)
@@ -73,9 +92,9 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 
 
 #
-# Build types.hal (Status)
+# Build types.hal (GatekeeperResponse)
 #
-GEN := $(intermediates)/android/hardware/vibrator/1.0/Status.java
+GEN := $(intermediates)/android/hardware/gatekeeper/1.0/GatekeeperResponse.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -85,19 +104,38 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         -Ljava \
         -randroid.hardware:hardware/interfaces \
         -randroid.hidl:system/libhidl/transport \
-        android.hardware.vibrator@1.0::types.Status
+        android.hardware.gatekeeper@1.0::types.GatekeeperResponse
 
 $(GEN): $(LOCAL_PATH)/types.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
 
 #
-# Build IVibrator.hal
+# Build types.hal (GatekeeperStatusCode)
 #
-GEN := $(intermediates)/android/hardware/vibrator/1.0/IVibrator.java
+GEN := $(intermediates)/android/hardware/gatekeeper/1.0/GatekeeperStatusCode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
-$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IVibrator.hal
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.gatekeeper@1.0::types.GatekeeperStatusCode
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build IGatekeeper.hal
+#
+GEN := $(intermediates)/android/hardware/gatekeeper/1.0/IGatekeeper.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGatekeeper.hal
 $(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/types.hal
 $(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
@@ -106,9 +144,9 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         -Ljava \
         -randroid.hardware:hardware/interfaces \
         -randroid.hidl:system/libhidl/transport \
-        android.hardware.vibrator@1.0::IVibrator
+        android.hardware.gatekeeper@1.0::IGatekeeper
 
-$(GEN): $(LOCAL_PATH)/IVibrator.hal
+$(GEN): $(LOCAL_PATH)/IGatekeeper.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
 include $(BUILD_STATIC_JAVA_LIBRARY)
