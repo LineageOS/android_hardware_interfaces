@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef HIDL_GENERATED_android_hardware_audio_effect_V2_0_BassBoostEffect_H_
-#define HIDL_GENERATED_android_hardware_audio_effect_V2_0_BassBoostEffect_H_
+#ifndef ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_BASSBOOSTEFFECT_H
+#define ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_BASSBOOSTEFFECT_H
 
 #include <android/hardware/audio/effect/2.0/IBassBoostEffect.h>
 #include <hidl/Status.h>
@@ -116,4 +116,4 @@ struct BassBoostEffect : public IBassBoostEffect {
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_audio_effect_V2_0_BassBoostEffect_H_
+#endif  // ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_BASSBOOSTEFFECT_H

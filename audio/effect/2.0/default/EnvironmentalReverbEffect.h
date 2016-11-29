@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef HIDL_GENERATED_android_hardware_audio_effect_V2_0_EnvironmentalReverbEffect_H_
-#define HIDL_GENERATED_android_hardware_audio_effect_V2_0_EnvironmentalReverbEffect_H_
+#ifndef ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_ENVIRONMENTALREVERBEFFECT_H
+#define ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_ENVIRONMENTALREVERBEFFECT_H
 
 #include <system/audio_effects/effect_environmentalreverb.h>
 
@@ -157,4 +157,4 @@ struct EnvironmentalReverbEffect : public IEnvironmentalReverbEffect {
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_audio_effect_V2_0_EnvironmentalReverbEffect_H_
+#endif  // ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_ENVIRONMENTALREVERBEFFECT_H

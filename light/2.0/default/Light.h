@@ -1,5 +1,5 @@
-#ifndef HIDL_GENERATED_android_hardware_light_V2_0_Light_H_
-#define HIDL_GENERATED_android_hardware_light_V2_0_Light_H_
+#ifndef ANDROID_HARDWARE_LIGHT_V2_0_LIGHT_H
+#define ANDROID_HARDWARE_LIGHT_V2_0_LIGHT_H
 
 #include <android/hardware/light/2.0/ILight.h>
 #include <hardware/hardware.h>
@@ -43,4 +43,4 @@ extern "C" ILight* HIDL_FETCH_ILight(const char* name);
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_light_V2_0_Light_H_
+#endif  // ANDROID_HARDWARE_LIGHT_V2_0_LIGHT_H

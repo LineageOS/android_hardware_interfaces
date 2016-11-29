@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef HIDL_GENERATED_android_hardware_audio_V2_0_StreamOut_H_
-#define HIDL_GENERATED_android_hardware_audio_V2_0_StreamOut_H_
+#ifndef ANDROID_HARDWARE_AUDIO_V2_0_STREAMOUT_H
+#define ANDROID_HARDWARE_AUDIO_V2_0_STREAMOUT_H
 
 #include <android/hardware/audio/2.0/IStreamOut.h>
 #include <hidl/Status.h>
@@ -110,4 +110,4 @@ struct StreamOut : public IStreamOut {
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_audio_V2_0_StreamOut_H_
+#endif  // ANDROID_HARDWARE_AUDIO_V2_0_STREAMOUT_H

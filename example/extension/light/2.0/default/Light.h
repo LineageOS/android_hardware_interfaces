@@ -1,5 +1,5 @@
-#ifndef HIDL_GENERATED_android_hardware_example_extension_light_V2_0_Light_H_
-#define HIDL_GENERATED_android_hardware_example_extension_light_V2_0_Light_H_
+#ifndef ANDROID_HARDWARE_EXAMPLE_EXTENSION_LIGHT_V2_0_LIGHT_H
+#define ANDROID_HARDWARE_EXAMPLE_EXTENSION_LIGHT_V2_0_LIGHT_H
 
 #include <android/hardware/example/extension/light/2.0/IExtLight.h>
 #include <hidl/Status.h>
@@ -43,4 +43,4 @@ struct Light : public IExtLight {
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_example_extension_light_V2_0_Light_H_
+#endif  // ANDROID_HARDWARE_EXAMPLE_EXTENSION_LIGHT_V2_0_LIGHT_H

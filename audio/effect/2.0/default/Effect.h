@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef HIDL_GENERATED_android_hardware_audio_effect_V2_0_Effect_H_
-#define HIDL_GENERATED_android_hardware_audio_effect_V2_0_Effect_H_
+#ifndef ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_EFFECT_H
+#define ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_EFFECT_H
 
 #include <vector>
 
@@ -256,4 +256,4 @@ struct Effect : public IEffect {
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_audio_effect_V2_0_Effect_H_
+#endif  // ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_EFFECT_H

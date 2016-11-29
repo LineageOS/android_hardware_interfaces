@@ -1,5 +1,5 @@
-#ifndef HIDL_GENERATED_android_hardware_thermal_V1_0_Thermal_H_
-#define HIDL_GENERATED_android_hardware_thermal_V1_0_Thermal_H_
+#ifndef ANDROID_HARDWARE_THERMAL_V1_0_THERMAL_H
+#define ANDROID_HARDWARE_THERMAL_V1_0_THERMAL_H
 
 #include <android/hardware/thermal/1.0/IThermal.h>
 #include <hidl/Status.h>
@@ -42,4 +42,4 @@ extern "C" IThermal* HIDL_FETCH_IThermal(const char* name);
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_thermal_V1_0_Thermal_H_
+#endif  // ANDROID_HARDWARE_THERMAL_V1_0_THERMAL_H

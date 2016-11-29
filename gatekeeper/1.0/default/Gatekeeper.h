@@ -1,5 +1,5 @@
-#ifndef HIDL_GENERATED_android_hardware_gatekeeper_V1_0_Gatekeeper_H_
-#define HIDL_GENERATED_android_hardware_gatekeeper_V1_0_Gatekeeper_H_
+#ifndef ANDROID_HARDWARE_GATEKEEPER_V1_0_GATEKEEPER_H
+#define ANDROID_HARDWARE_GATEKEEPER_V1_0_GATEKEEPER_H
 
 #include <android/hardware/gatekeeper/1.0/IGatekeeper.h>
 #include <hidl/Status.h>
@@ -54,4 +54,4 @@ extern "C" IGatekeeper* HIDL_FETCH_IGatekeeper(const char* name);
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_gatekeeper_V1_0_Gatekeeper_H_
+#endif  // ANDROID_HARDWARE_GATEKEEPER_V1_0_GATEKEEPER_H

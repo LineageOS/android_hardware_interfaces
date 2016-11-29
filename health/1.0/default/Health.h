@@ -1,5 +1,5 @@
-#ifndef HIDL_GENERATED_android_hardware_health_V1_0_Health_H_
-#define HIDL_GENERATED_android_hardware_health_V1_0_Health_H_
+#ifndef ANDROID_HARDWARE_HEALTH_V1_0_HEALTH_H
+#define ANDROID_HARDWARE_HEALTH_V1_0_HEALTH_H
 
 #include <android/hardware/health/1.0/IHealth.h>
 #include <hidl/Status.h>
@@ -39,4 +39,4 @@ extern "C" IHealth* HIDL_FETCH_IHealth(const char* name);
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_health_V1_0_Health_H_
+#endif  // ANDROID_HARDWARE_HEALTH_V1_0_HEALTH_H

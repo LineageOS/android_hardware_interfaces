@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef HIDL_GENERATED_android_hardware_vibrator_V1_0_Vibrator_H_
-#define HIDL_GENERATED_android_hardware_vibrator_V1_0_Vibrator_H_
+#ifndef ANDROID_HARDWARE_VIBRATOR_V1_0_VIBRATOR_H
+#define ANDROID_HARDWARE_VIBRATOR_V1_0_VIBRATOR_H
 
 #include <android/hardware/vibrator/1.0/IVibrator.h>
 #include <hidl/Status.h>
@@ -53,4 +53,4 @@ extern "C" IVibrator* HIDL_FETCH_IVibrator(const char* name);
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_vibrator_V1_0_Vibrator_H_
+#endif  // ANDROID_HARDWARE_VIBRATOR_V1_0_VIBRATOR_H

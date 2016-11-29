@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef HIDL_GENERATED_android_hardware_audio_effect_V2_0_EqualizerEffect_H_
-#define HIDL_GENERATED_android_hardware_audio_effect_V2_0_EqualizerEffect_H_
+#ifndef ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_EQUALIZEREFFECT_H
+#define ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_EQUALIZEREFFECT_H
 
 #include <vector>
 
@@ -147,4 +147,4 @@ struct EqualizerEffect : public IEqualizerEffect {
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_audio_effect_V2_0_EqualizerEffect_H_
+#endif  // ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_EQUALIZEREFFECT_H

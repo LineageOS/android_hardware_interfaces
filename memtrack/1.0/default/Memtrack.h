@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef HIDL_GENERATED_android_hardware_memtrack_V1_0_Memtrack_H_
-#define HIDL_GENERATED_android_hardware_memtrack_V1_0_Memtrack_H_
+#ifndef ANDROID_HARDWARE_MEMTRACK_V1_0_MEMTRACK_H
+#define ANDROID_HARDWARE_MEMTRACK_V1_0_MEMTRACK_H
 
 #include <android/hardware/memtrack/1.0/IMemtrack.h>
 #include <hidl/Status.h>
@@ -54,4 +54,4 @@ extern "C" IMemtrack* HIDL_FETCH_IMemtrack(const char* name);
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_memtrack_V1_0_Memtrack_H_
+#endif  // ANDROID_HARDWARE_MEMTRACK_V1_0_MEMTRACK_H

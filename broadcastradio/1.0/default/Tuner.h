@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef HIDL_GENERATED_android_hardware_broadcastradio_V1_0_Tuner_H_
-#define HIDL_GENERATED_android_hardware_broadcastradio_V1_0_Tuner_H_
+#ifndef ANDROID_HARDWARE_BROADCASTRADIO_V1_0_TUNER_H
+#define ANDROID_HARDWARE_BROADCASTRADIO_V1_0_TUNER_H
 
 #include <android/hardware/broadcastradio/1.0/ITuner.h>
 #include <android/hardware/broadcastradio/1.0/ITunerCallback.h>
@@ -64,4 +64,4 @@ struct Tuner : public ITuner {
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_broadcastradio_V1_0_Tuner_H_
+#endif  // ANDROID_HARDWARE_BROADCASTRADIO_V1_0_TUNER_H

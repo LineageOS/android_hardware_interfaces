@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef HIDL_GENERATED_android_hardware_audio_V2_0_DevicesFactory_H_
-#define HIDL_GENERATED_android_hardware_audio_V2_0_DevicesFactory_H_
+#ifndef ANDROID_HARDWARE_AUDIO_V2_0_DEVICESFACTORY_H
+#define ANDROID_HARDWARE_AUDIO_V2_0_DEVICESFACTORY_H
 
 #include <hardware/audio.h>
 
@@ -56,4 +56,4 @@ extern "C" IDevicesFactory* HIDL_FETCH_IDevicesFactory(const char* name);
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_audio_V2_0_DevicesFactory_H_
+#endif  // ANDROID_HARDWARE_AUDIO_V2_0_DEVICESFACTORY_H

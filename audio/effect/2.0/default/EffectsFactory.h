@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef HIDL_GENERATED_android_hardware_audio_effect_V2_0_EffectsFactory_H_
-#define HIDL_GENERATED_android_hardware_audio_effect_V2_0_EffectsFactory_H_
+#ifndef ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_EFFECTSFACTORY_H
+#define ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_EFFECTSFACTORY_H
 
 #include <system/audio_effect.h>
 
@@ -63,4 +63,4 @@ extern "C" IEffectsFactory* HIDL_FETCH_IEffectsFactory(const char* name);
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_audio_effect_V2_0_EffectsFactory_H_
+#endif  // ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_EFFECTSFACTORY_H

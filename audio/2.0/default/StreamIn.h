@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef HIDL_GENERATED_android_hardware_audio_V2_0_StreamIn_H_
-#define HIDL_GENERATED_android_hardware_audio_V2_0_StreamIn_H_
+#ifndef ANDROID_HARDWARE_AUDIO_V2_0_STREAMIN_H
+#define ANDROID_HARDWARE_AUDIO_V2_0_STREAMIN_H
 
 #include <android/hardware/audio/2.0/IStreamIn.h>
 #include <hidl/Status.h>
@@ -95,4 +95,4 @@ struct StreamIn : public IStreamIn {
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_audio_V2_0_StreamIn_H_
+#endif  // ANDROID_HARDWARE_AUDIO_V2_0_STREAMIN_H
