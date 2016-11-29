@@ -123,7 +123,7 @@ Return<void> Bar::haveAVectorOfInterfaces(
 }
 
 Return<void> Bar::haveAVectorOfGenericInterfaces(
-        const hidl_vec<sp<android::hardware::IBinder> > &in,
+        const hidl_vec<sp<android::hidl::base::V1_0::IBase> > &in,
         haveAVectorOfGenericInterfaces_cb _hidl_cb) {
     _hidl_cb(in);
 
