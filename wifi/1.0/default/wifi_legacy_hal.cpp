@@ -124,6 +124,116 @@ void onRttResults(wifi_request_id id,
   }
 }
 
+// Callbacks for the various NAN operations.
+// NOTE: These have very little conversions to perform before invoking the user
+// callbacks.
+// So, handle all of them here directly to avoid adding an unnecessary layer.
+std::function<void(transaction_id, const NanResponseMsg&)>
+    on_nan_notify_response_user_callback;
+void onNanNotifyResponse(transaction_id id, NanResponseMsg* msg) {
+  if (on_nan_notify_response_user_callback && msg) {
+    on_nan_notify_response_user_callback(id, *msg);
+  }
+}
+
+std::function<void(const NanPublishTerminatedInd&)>
+    on_nan_event_publish_terminated_user_callback;
+void onNanEventPublishTerminated(NanPublishTerminatedInd* event) {
+  if (on_nan_event_publish_terminated_user_callback && event) {
+    on_nan_event_publish_terminated_user_callback(*event);
+  }
+}
+
+std::function<void(const NanMatchInd&)> on_nan_event_match_user_callback;
+void onNanEventMatch(NanMatchInd* event) {
+  if (on_nan_event_match_user_callback && event) {
+    on_nan_event_match_user_callback(*event);
+  }
+}
+
+std::function<void(const NanMatchExpiredInd&)>
+    on_nan_event_match_expired_user_callback;
+void onNanEventMatchExpired(NanMatchExpiredInd* event) {
+  if (on_nan_event_match_expired_user_callback && event) {
+    on_nan_event_match_expired_user_callback(*event);
+  }
+}
+
+std::function<void(const NanSubscribeTerminatedInd&)>
+    on_nan_event_subscribe_terminated_user_callback;
+void onNanEventSubscribeTerminated(NanSubscribeTerminatedInd* event) {
+  if (on_nan_event_subscribe_terminated_user_callback && event) {
+    on_nan_event_subscribe_terminated_user_callback(*event);
+  }
+}
+
+std::function<void(const NanFollowupInd&)> on_nan_event_followup_user_callback;
+void onNanEventFollowup(NanFollowupInd* event) {
+  if (on_nan_event_followup_user_callback && event) {
+    on_nan_event_followup_user_callback(*event);
+  }
+}
+
+std::function<void(const NanDiscEngEventInd&)>
+    on_nan_event_disc_eng_event_user_callback;
+void onNanEventDiscEngEvent(NanDiscEngEventInd* event) {
+  if (on_nan_event_disc_eng_event_user_callback && event) {
+    on_nan_event_disc_eng_event_user_callback(*event);
+  }
+}
+
+std::function<void(const NanDisabledInd&)> on_nan_event_disabled_user_callback;
+void onNanEventDisabled(NanDisabledInd* event) {
+  if (on_nan_event_disabled_user_callback && event) {
+    on_nan_event_disabled_user_callback(*event);
+  }
+}
+
+std::function<void(const NanTCAInd&)> on_nan_event_tca_user_callback;
+void onNanEventTca(NanTCAInd* event) {
+  if (on_nan_event_tca_user_callback && event) {
+    on_nan_event_tca_user_callback(*event);
+  }
+}
+
+std::function<void(const NanBeaconSdfPayloadInd&)>
+    on_nan_event_beacon_sdf_payload_user_callback;
+void onNanEventBeaconSdfPayload(NanBeaconSdfPayloadInd* event) {
+  if (on_nan_event_beacon_sdf_payload_user_callback && event) {
+    on_nan_event_beacon_sdf_payload_user_callback(*event);
+  }
+}
+
+std::function<void(const NanDataPathRequestInd&)>
+    on_nan_event_data_path_request_user_callback;
+void onNanEventDataPathRequest(NanDataPathRequestInd* event) {
+  if (on_nan_event_data_path_request_user_callback && event) {
+    on_nan_event_data_path_request_user_callback(*event);
+  }
+}
+std::function<void(const NanDataPathConfirmInd&)>
+    on_nan_event_data_path_confirm_user_callback;
+void onNanEventDataPathConfirm(NanDataPathConfirmInd* event) {
+  if (on_nan_event_data_path_confirm_user_callback && event) {
+    on_nan_event_data_path_confirm_user_callback(*event);
+  }
+}
+
+std::function<void(const NanDataPathEndInd&)>
+    on_nan_event_data_path_end_user_callback;
+void onNanEventDataPathEnd(NanDataPathEndInd* event) {
+  if (on_nan_event_data_path_end_user_callback && event) {
+    on_nan_event_data_path_end_user_callback(*event);
+  }
+}
+
+std::function<void(const NanTransmitFollowupInd&)>
+    on_nan_event_transmit_follow_up_user_callback;
+void onNanEventTransmitFollowUp(NanTransmitFollowupInd* event) {
+  if (on_nan_event_transmit_follow_up_user_callback && event) {
+    on_nan_event_transmit_follow_up_user_callback(*event);
+  }
+}
 // End of the free-standing "C" style callbacks.
 
 WifiLegacyHal::WifiLegacyHal()
@@ -663,6 +773,172 @@ wifi_error WifiLegacyHal::setRttLcr(wifi_request_id id,
       id, wlan_interface_handle_, &info_internal);
 }
 
+wifi_error WifiLegacyHal::nanRegisterCallbackHandlers(
+    const NanCallbackHandlers& user_callbacks) {
+  on_nan_notify_response_user_callback = user_callbacks.on_notify_response;
+  on_nan_event_publish_terminated_user_callback =
+      user_callbacks.on_event_publish_terminated;
+  on_nan_event_match_user_callback = user_callbacks.on_event_match;
+  on_nan_event_match_expired_user_callback =
+      user_callbacks.on_event_match_expired;
+  on_nan_event_subscribe_terminated_user_callback =
+      user_callbacks.on_event_subscribe_terminated;
+  on_nan_event_followup_user_callback = user_callbacks.on_event_followup;
+  on_nan_event_disc_eng_event_user_callback =
+      user_callbacks.on_event_disc_eng_event;
+  on_nan_event_disabled_user_callback = user_callbacks.on_event_disabled;
+  on_nan_event_tca_user_callback = user_callbacks.on_event_tca;
+  on_nan_event_beacon_sdf_payload_user_callback =
+      user_callbacks.on_event_beacon_sdf_payload;
+  on_nan_event_data_path_request_user_callback =
+      user_callbacks.on_event_data_path_request;
+  on_nan_event_data_path_confirm_user_callback =
+      user_callbacks.on_event_data_path_confirm;
+  on_nan_event_data_path_end_user_callback =
+      user_callbacks.on_event_data_path_end;
+  on_nan_event_transmit_follow_up_user_callback =
+      user_callbacks.on_event_transmit_follow_up;
+
+  return global_func_table_.wifi_nan_register_handler(
+      wlan_interface_handle_,
+      {onNanNotifyResponse,
+       onNanEventPublishTerminated,
+       onNanEventMatch,
+       onNanEventMatchExpired,
+       onNanEventSubscribeTerminated,
+       onNanEventFollowup,
+       onNanEventDiscEngEvent,
+       onNanEventDisabled,
+       onNanEventTca,
+       onNanEventBeaconSdfPayload,
+       onNanEventDataPathRequest,
+       onNanEventDataPathConfirm,
+       onNanEventDataPathEnd,
+       onNanEventTransmitFollowUp});
+}
+
+wifi_error WifiLegacyHal::nanEnableRequest(transaction_id id,
+                                           const NanEnableRequest& msg) {
+  NanEnableRequest msg_internal(msg);
+  return global_func_table_.wifi_nan_enable_request(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanDisableRequest(transaction_id id) {
+  return global_func_table_.wifi_nan_disable_request(id,
+                                                     wlan_interface_handle_);
+}
+
+wifi_error WifiLegacyHal::nanPublishRequest(transaction_id id,
+                                            const NanPublishRequest& msg) {
+  NanPublishRequest msg_internal(msg);
+  return global_func_table_.wifi_nan_publish_request(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanPublishCancelRequest(
+    transaction_id id, const NanPublishCancelRequest& msg) {
+  NanPublishCancelRequest msg_internal(msg);
+  return global_func_table_.wifi_nan_publish_cancel_request(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanSubscribeRequest(transaction_id id,
+                                              const NanSubscribeRequest& msg) {
+  NanSubscribeRequest msg_internal(msg);
+  return global_func_table_.wifi_nan_subscribe_request(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanSubscribeCancelRequest(
+    transaction_id id, const NanSubscribeCancelRequest& msg) {
+  NanSubscribeCancelRequest msg_internal(msg);
+  return global_func_table_.wifi_nan_subscribe_cancel_request(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanTransmitFollowupRequest(
+    transaction_id id, const NanTransmitFollowupRequest& msg) {
+  NanTransmitFollowupRequest msg_internal(msg);
+  return global_func_table_.wifi_nan_transmit_followup_request(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanStatsRequest(transaction_id id,
+                                          const NanStatsRequest& msg) {
+  NanStatsRequest msg_internal(msg);
+  return global_func_table_.wifi_nan_stats_request(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanConfigRequest(transaction_id id,
+                                           const NanConfigRequest& msg) {
+  NanConfigRequest msg_internal(msg);
+  return global_func_table_.wifi_nan_config_request(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanTcaRequest(transaction_id id,
+                                        const NanTCARequest& msg) {
+  NanTCARequest msg_internal(msg);
+  return global_func_table_.wifi_nan_tca_request(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanBeaconSdfPayloadRequest(
+    transaction_id id, const NanBeaconSdfPayloadRequest& msg) {
+  NanBeaconSdfPayloadRequest msg_internal(msg);
+  return global_func_table_.wifi_nan_beacon_sdf_payload_request(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
+std::pair<wifi_error, NanVersion> WifiLegacyHal::nanGetVersion() {
+  NanVersion version;
+  wifi_error status =
+      global_func_table_.wifi_nan_get_version(global_handle_, &version);
+  return {status, version};
+}
+
+wifi_error WifiLegacyHal::nanGetCapabilities(transaction_id id) {
+  return global_func_table_.wifi_nan_get_capabilities(id,
+                                                      wlan_interface_handle_);
+}
+
+wifi_error WifiLegacyHal::nanDataInterfaceCreate(
+    transaction_id id, const std::string& iface_name) {
+  std::vector<char> iface_name_internal(iface_name.begin(), iface_name.end());
+  return global_func_table_.wifi_nan_data_interface_create(
+      id, wlan_interface_handle_, iface_name_internal.data());
+}
+
+wifi_error WifiLegacyHal::nanDataInterfaceDelete(
+    transaction_id id, const std::string& iface_name) {
+  std::vector<char> iface_name_internal(iface_name.begin(), iface_name.end());
+  return global_func_table_.wifi_nan_data_interface_delete(
+      id, wlan_interface_handle_, iface_name_internal.data());
+}
+
+wifi_error WifiLegacyHal::nanDataRequestInitiator(
+    transaction_id id, const NanDataPathInitiatorRequest& msg) {
+  NanDataPathInitiatorRequest msg_internal(msg);
+  return global_func_table_.wifi_nan_data_request_initiator(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanDataIndicationResponse(
+    transaction_id id, const NanDataPathIndicationResponse& msg) {
+  NanDataPathIndicationResponse msg_internal(msg);
+  return global_func_table_.wifi_nan_data_indication_response(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanDataEnd(transaction_id id,
+                                     const NanDataPathEndRequest& msg) {
+  NanDataPathEndRequest msg_internal(msg);
+  return global_func_table_.wifi_nan_data_end(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
 wifi_error WifiLegacyHal::retrieveWlanInterfaceHandle() {
   const std::string& ifname_to_find = getStaIfaceName();
   wifi_interface_handle* iface_handles = nullptr;
@@ -742,6 +1018,20 @@ void WifiLegacyHal::invalidate() {
   on_link_layer_stats_result_internal_callback = nullptr;
   on_ring_buffer_data_internal_callback = nullptr;
   on_rtt_results_internal_callback = nullptr;
+  on_nan_notify_response_user_callback = nullptr;
+  on_nan_event_publish_terminated_user_callback = nullptr;
+  on_nan_event_match_user_callback = nullptr;
+  on_nan_event_match_expired_user_callback = nullptr;
+  on_nan_event_subscribe_terminated_user_callback = nullptr;
+  on_nan_event_followup_user_callback = nullptr;
+  on_nan_event_disc_eng_event_user_callback = nullptr;
+  on_nan_event_disabled_user_callback = nullptr;
+  on_nan_event_tca_user_callback = nullptr;
+  on_nan_event_beacon_sdf_payload_user_callback = nullptr;
+  on_nan_event_data_path_request_user_callback = nullptr;
+  on_nan_event_data_path_confirm_user_callback = nullptr;
+  on_nan_event_data_path_end_user_callback = nullptr;
+  on_nan_event_transmit_follow_up_user_callback = nullptr;
 }
 
 }  // namespace legacy_hal
