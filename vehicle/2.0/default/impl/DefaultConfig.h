@@ -128,6 +128,13 @@ const VehiclePropConfig kVehicleProperties[] = {
     },
 
     {
+        .prop = VehicleProperty::DRIVING_STATUS,
+        .access = VehiclePropertyAccess::READ,
+        .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+        .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
+    },
+
+    {
         .prop = VehicleProperty::GEAR_SELECTION,
         .access = VehiclePropertyAccess::READ,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,

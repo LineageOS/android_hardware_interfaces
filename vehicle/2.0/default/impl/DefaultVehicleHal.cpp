@@ -81,6 +81,9 @@ VehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(
         case VehicleProperty::GEAR_SELECTION:
             v = pool.obtainInt32(toInt(VehicleGear::GEAR_PARK));
             break;
+        case VehicleProperty::DRIVING_STATUS:
+            v = pool.obtainInt32(toInt(VehicleDrivingStatus::UNRESTRICTED));
+            break;
         default:
             *outStatus = StatusCode::INVALID_ARG;
     }
