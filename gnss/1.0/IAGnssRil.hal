@@ -41,7 +41,7 @@ interface IAGnssRil {
         WIMAX   = 6,
     };
 
-    enum AGnssRefLocationType {
+    enum AGnssRefLocationType : int32_t {
         GSM_CELLID   = 1,
         UMTS_CELLID  = 2,
         MAC          = 3,

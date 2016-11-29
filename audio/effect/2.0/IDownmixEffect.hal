@@ -20,7 +20,7 @@ import android.hardware.audio.common@2.0;
 import IEffect;
 
 interface IDownmixEffect extends IEffect {
-    enum Type {
+    enum Type : int32_t {
         STRIP, // throw away the extra channels
         FOLD   // mix the extra channels with FL/FR
     };

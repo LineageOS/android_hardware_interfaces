@@ -20,7 +20,7 @@ import android.hardware.audio.common@2.0;
 import IEffect;
 
 interface IPresetReverbEffect extends IEffect {
-    enum Preset {
+    enum Preset : int32_t {
         NONE,        // no reverb or reflections
         SMALLROOM,   // a small room less than five meters in length
         MEDIUMROOM,  // a medium room with a length of ten meters or less

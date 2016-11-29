@@ -56,7 +56,7 @@ typedef uint32_t AudioHwSync;
  * Each port has a unique ID or handle allocated by policy manager.
  */
 @export(name="")
-enum AudioHandleConsts {
+enum AudioHandleConsts : int32_t {
     AUDIO_IO_HANDLE_NONE = 0,
     AUDIO_MODULE_HANDLE_NONE = 0,
     AUDIO_PORT_HANDLE_NONE = 0,
@@ -114,7 +114,7 @@ enum AudioStreamType : int32_t {
 };
 
 @export(name="audio_source_t", value_prefix="AUDIO_SOURCE_")
-enum AudioSource {
+enum AudioSource : int32_t {
     // These values must kept in sync with
     //  frameworks/base/media/java/android/media/MediaRecorder.java,
     //  frameworks/av/services/audiopolicy/AudioPolicyService.cpp,
@@ -269,7 +269,7 @@ enum AudioFormat : uint32_t {
  * assumptions.
  */
 @export(name="")
-enum FixedChannelCount {
+enum FixedChannelCount : int32_t {
     FCC_2 = 2, // This is typically due to legacy implementation of stereo I/O
     FCC_8 = 8  // This is typically due to audio mixer and resampler limitations
 };
@@ -425,7 +425,7 @@ enum AudioChannelMask : uint32_t {
  * to this convention will be noted at the appropriate API.
  */
 @export(name="", value_prefix="AUDIO_INTERLEAVE_")
-enum AudioInterleave {
+enum AudioInterleave : int32_t {
     LEFT   = 0,
     RIGHT  = 1,
 };
@@ -435,7 +435,7 @@ enum AudioInterleave {
  * routing.
  */
 @export(name="audio_mode_t", value_prefix="AUDIO_MODE_")
-enum AudioMode {
+enum AudioMode : int32_t {
     INVALID          = -2,
     CURRENT          = -1,
     NORMAL           = 0,
@@ -597,7 +597,7 @@ enum AudioDevice : uint32_t {
  * (when getOuput() is called) to an available output stream.
  */
 @export(name="audio_output_flags_t", value_prefix="AUDIO_OUTPUT_FLAG_")
-enum AudioOutputFlag {
+enum AudioOutputFlag : int32_t {
     NONE    = 0x0, // no attributes
     DIRECT  = 0x1, // this output directly connects a track
                    // to one output stream: no software mixer
@@ -627,7 +627,7 @@ enum AudioOutputFlag {
  * attributes corresponding to the specified flags.
  */
 @export(name="audio_input_flags_t", value_prefix="AUDIO_INPUT_FLAG_")
-enum AudioInputFlag {
+enum AudioInputFlag : int32_t {
     NONE       = 0x0,  // no attributes
     FAST       = 0x1,  // prefer an input that supports "fast tracks"
     HW_HOTWORD = 0x2,  // prefer an input that captures from hw hotword source
@@ -728,7 +728,7 @@ struct AudioGainConfig {
 
 /* Audio port role: either source or sink */
 @export(name="audio_port_role_t", value_prefix="AUDIO_PORT_ROLE_")
-enum AudioPortRole {
+enum AudioPortRole : int32_t {
     NONE,
     SOURCE,
     SINK,
@@ -739,7 +739,7 @@ enum AudioPortRole {
  * PlaybackThread output) or a physical device (e.g OUT_SPEAKER)
  */
 @export(name="audio_port_type_t", value_prefix="AUDIO_PORT_TYPE_")
-enum AudioPortType {
+enum AudioPortType : int32_t {
     NONE,
     DEVICE,
     MIX,
@@ -816,7 +816,7 @@ struct AudioPortDeviceExt {
  * Latency class of the audio mix.
  */
 @export(name="audio_mix_latency_class_t", value_prefix="AUDIO_LATENCY_")
-enum AudioMixLatencyClass {
+enum AudioMixLatencyClass : int32_t {
     LOW,
     NORMAL
 } ;

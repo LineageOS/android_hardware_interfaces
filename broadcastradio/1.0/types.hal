@@ -16,7 +16,7 @@
 
 package android.hardware.broadcastradio@1.0;
 
-enum Result {
+enum Result : int32_t {
     OK,
     NOT_INITIALIZED,
     INVALID_ARGUMENTS,
@@ -139,7 +139,7 @@ struct Properties {
     vec<BandConfig> bands; /* band descriptors */
 };
 
-enum MetadataType {
+enum MetadataType : int32_t {
     INVALID    = -1,
     /* Signed 32 bit integer  */
     INT        = 0,
@@ -152,7 +152,7 @@ enum MetadataType {
     CLOCK      = 3,
 };
 
-enum MetadataKey {
+enum MetadataKey : int32_t {
     INVALID      = -1,
     /* RDS PI                 - string  */
     RDS_PI       = 0,

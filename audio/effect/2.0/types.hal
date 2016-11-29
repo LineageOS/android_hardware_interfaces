@@ -18,7 +18,7 @@ package android.hardware.audio.effect@2.0;
 
 import android.hardware.audio.common@2.0;
 
-enum Result {
+enum Result : int32_t {
     OK,
     NOT_INITIALIZED,
     INVALID_ARGUMENTS,
@@ -110,7 +110,7 @@ enum Result {
  * +----------------+--------+--------------------------------------------------
  */
 @export(name="", value_prefix="EFFECT_FLAG_")
-enum EffectFlags {
+enum EffectFlags : int32_t {
     // Insert mode
     TYPE_SHIFT = 0,
     TYPE_SIZE = 3,
@@ -229,7 +229,7 @@ struct AudioBuffer {
 };
 
 @export(name="effect_buffer_access_e", value_prefix="EFFECT_BUFFER_")
-enum EffectBufferAccess {
+enum EffectBufferAccess : int32_t {
     ACCESS_WRITE,
     ACCESS_READ,
     ACCESS_ACCUMULATE
@@ -239,7 +239,7 @@ enum EffectBufferAccess {
  * Determines what fields of EffectBufferConfig need to be considered.
  */
 @export(name="", value_prefix="EFFECT_CONFIG_")
-enum EffectConfigParameters {
+enum EffectConfigParameters : int32_t {
     BUFFER = 0x0001,    // buffer field
     SMP_RATE = 0x0002,  // samplingRate
     CHANNELS = 0x0004,  // channels
@@ -267,7 +267,7 @@ struct EffectConfig {
 };
 
 @export(name="effect_feature_e", value_prefix="EFFECT_FEATURE_")
-enum EffectFeature {
+enum EffectFeature : int32_t {
     AUX_CHANNELS, // supports auxiliary channels
                   // (e.g. dual mic noise suppressor)
     CNT

@@ -18,7 +18,7 @@ package android.hardware.tv.input@1.0;
 
 import android.hardware.audio.common@2.0;
 
-enum Result {
+enum Result : int32_t {
     OK,
     UNKNOWN,
     NO_RESOURCE,
@@ -27,7 +27,7 @@ enum Result {
 };
 
 /* Type of physical TV input. */
-enum TvInputType {
+enum TvInputType : int32_t {
     OTHER = 1,         // Generic hardware.
     TUNER = 2,         // Tuner. e.g. built-in terrestrial tuner
     COMPOSITE = 3,
@@ -50,7 +50,7 @@ struct TvInputDeviceInfo {
                               // must be filled with 0s.
 };
 
-enum TvInputEventType {
+enum TvInputEventType : int32_t {
     /*
      * Hardware notifies the framework that a device is available.
      *

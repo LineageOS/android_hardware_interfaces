@@ -22,7 +22,7 @@ import IDevice;
 interface IDevicesFactory {
     typedef android.hardware.audio@2.0::Result Result;
 
-    enum Device {
+    enum Device : int32_t {
         PRIMARY,
         A2DP,
         USB,

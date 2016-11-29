@@ -20,7 +20,7 @@ import android.hardware.audio.common@2.0;
 import IEffect;
 
 interface INoiseSuppressionEffect extends IEffect {
-    enum Level {
+    enum Level : int32_t {
         LOW,
         MEDIUM,
         HIGH
@@ -36,7 +36,7 @@ interface INoiseSuppressionEffect extends IEffect {
      */
     getSuppressionLevel() generates (Result retval, Level level);
 
-    enum Type {
+    enum Type : int32_t {
         SINGLE_CHANNEL,
         MULTI_CHANNEL
     };
