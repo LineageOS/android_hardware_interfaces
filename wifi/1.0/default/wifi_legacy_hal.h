@@ -54,6 +54,41 @@ struct LinkLayerStats {
 };
 #pragma GCC diagnostic pop
 
+// The |WLAN_DRIVER_WAKE_REASON_CNT.cmd_event_wake_cnt| and
+// |WLAN_DRIVER_WAKE_REASON_CNT.driver_fw_local_wake_cnt| stats is provided
+// as a pointer in |WLAN_DRIVER_WAKE_REASON_CNT| structure in the legacy HAL
+// API. Separate that out into a separate return elements to avoid passing
+// pointers around.
+struct WakeReasonStats {
+  WLAN_DRIVER_WAKE_REASON_CNT wake_reason_cnt;
+  std::vector<uint32_t> cmd_event_wake_cnt;
+  std::vector<uint32_t> driver_fw_local_wake_cnt;
+};
+
+// NAN response and event callbacks struct.
+struct NanCallbackHandlers {
+  // NotifyResponse invoked to notify the status of the Request.
+  std::function<void(transaction_id, const NanResponseMsg&)> on_notify_response;
+  // Various event callbacks.
+  std::function<void(const NanPublishTerminatedInd&)>
+      on_event_publish_terminated;
+  std::function<void(const NanMatchInd&)> on_event_match;
+  std::function<void(const NanMatchExpiredInd&)> on_event_match_expired;
+  std::function<void(const NanSubscribeTerminatedInd&)>
+      on_event_subscribe_terminated;
+  std::function<void(const NanFollowupInd&)> on_event_followup;
+  std::function<void(const NanDiscEngEventInd&)> on_event_disc_eng_event;
+  std::function<void(const NanDisabledInd&)> on_event_disabled;
+  std::function<void(const NanTCAInd&)> on_event_tca;
+  std::function<void(const NanBeaconSdfPayloadInd&)>
+      on_event_beacon_sdf_payload;
+  std::function<void(const NanDataPathRequestInd&)> on_event_data_path_request;
+  std::function<void(const NanDataPathConfirmInd&)> on_event_data_path_confirm;
+  std::function<void(const NanDataPathEndInd&)> on_event_data_path_end;
+  std::function<void(const NanTransmitFollowupInd&)>
+      on_event_transmit_follow_up;
+};
+
 // Full scan results contain IE info and are hence passed by reference, to
 // preserve the variable length array member |ie_data|. Callee must not retain
 // the pointer.
@@ -63,6 +98,19 @@ using on_gscan_full_result_callback =
 // reference.
 using on_gscan_results_callback = std::function<void(
     wifi_request_id, const std::vector<wifi_cached_scan_results>&)>;
+
+// Callback for RTT range request results.
+// Rtt results contain IE info and are hence passed by reference, to
+// preserve the |LCI| and |LCR| pointers. Callee must not retain
+// the pointer.
+using on_rtt_results_callback = std::function<void(
+    wifi_request_id, const std::vector<const wifi_rtt_result*>&)>;
+
+// Callback for ring buffer data.
+using on_ring_buffer_data_callback =
+    std::function<void(const std::string&,
+                       const std::vector<uint8_t>&,
+                       const wifi_ring_buffer_status&)>;
 
 /**
  * Class that encapsulates all legacy HAL interactions.
@@ -115,6 +163,66 @@ class WifiLegacyHal {
   wifi_error enableLinkLayerStats(bool debug);
   wifi_error disableLinkLayerStats();
   std::pair<wifi_error, LinkLayerStats> getLinkLayerStats();
+  // Logger/debug functions.
+  std::pair<wifi_error, uint32_t> getLoggerSupportedFeatureSet();
+  wifi_error startPktFateMonitoring();
+  std::pair<wifi_error, std::vector<wifi_tx_report>> getTxPktFates();
+  std::pair<wifi_error, std::vector<wifi_rx_report>> getRxPktFates();
+  std::pair<wifi_error, WakeReasonStats> getWakeReasonStats();
+  wifi_error registerRingBufferCallbackHandler(
+      const on_ring_buffer_data_callback& on_data_callback);
+  std::pair<wifi_error, std::vector<wifi_ring_buffer_status>>
+  getRingBuffersStatus();
+  wifi_error startRingBufferLogging(const std::string& ring_name,
+                                    uint32_t verbose_level,
+                                    uint32_t max_interval_sec,
+                                    uint32_t min_data_size);
+  wifi_error getRingBufferData(const std::string& ring_name);
+  // RTT functions.
+  wifi_error startRttRangeRequest(
+      wifi_request_id id,
+      const std::vector<wifi_rtt_config>& rtt_configs,
+      const on_rtt_results_callback& on_results_callback);
+  wifi_error cancelRttRangeRequest(
+      wifi_request_id id, const std::vector<std::array<uint8_t, 6>>& mac_addrs);
+  std::pair<wifi_error, wifi_rtt_capabilities> getRttCapabilities();
+  std::pair<wifi_error, wifi_rtt_responder> getRttResponderInfo();
+  wifi_error enableRttResponder(wifi_request_id id,
+                                const wifi_channel_info& channel_hint,
+                                uint32_t max_duration_secs,
+                                const wifi_rtt_responder& info);
+  wifi_error disableRttResponder(wifi_request_id id);
+  wifi_error setRttLci(wifi_request_id id, const wifi_lci_information& info);
+  wifi_error setRttLcr(wifi_request_id id, const wifi_lcr_information& info);
+  // NAN functions.
+  wifi_error nanRegisterCallbackHandlers(const NanCallbackHandlers& callbacks);
+  wifi_error nanEnableRequest(transaction_id id, const NanEnableRequest& msg);
+  wifi_error nanDisableRequest(transaction_id id);
+  wifi_error nanPublishRequest(transaction_id id, const NanPublishRequest& msg);
+  wifi_error nanPublishCancelRequest(transaction_id id,
+                                     const NanPublishCancelRequest& msg);
+  wifi_error nanSubscribeRequest(transaction_id id,
+                                 const NanSubscribeRequest& msg);
+  wifi_error nanSubscribeCancelRequest(transaction_id id,
+                                       const NanSubscribeCancelRequest& msg);
+  wifi_error nanTransmitFollowupRequest(transaction_id id,
+                                        const NanTransmitFollowupRequest& msg);
+  wifi_error nanStatsRequest(transaction_id id, const NanStatsRequest& msg);
+  wifi_error nanConfigRequest(transaction_id id, const NanConfigRequest& msg);
+  wifi_error nanTcaRequest(transaction_id id, const NanTCARequest& msg);
+  wifi_error nanBeaconSdfPayloadRequest(transaction_id id,
+                                        const NanBeaconSdfPayloadRequest& msg);
+  std::pair<wifi_error, NanVersion> nanGetVersion();
+  wifi_error nanGetCapabilities(transaction_id id);
+  wifi_error nanDataInterfaceCreate(transaction_id id,
+                                    const std::string& iface_name);
+  wifi_error nanDataInterfaceDelete(transaction_id id,
+                                    const std::string& iface_name);
+  wifi_error nanDataRequestInitiator(transaction_id id,
+                                     const NanDataPathInitiatorRequest& msg);
+  wifi_error nanDataIndicationResponse(
+      transaction_id id, const NanDataPathIndicationResponse& msg);
+  wifi_error nanDataEnd(transaction_id id, const NanDataPathEndRequest& msg);
 
  private:
   // Retrieve the interface handle to be used for the "wlan" interface.

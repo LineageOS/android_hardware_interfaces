@@ -36,6 +36,8 @@ static constexpr uint32_t kMaxVersionStringLength = 256;
 static constexpr uint32_t kMaxCachedGscanResults = 64;
 static constexpr uint32_t kMaxGscanFrequenciesForBand = 64;
 static constexpr uint32_t kLinkLayerStatsDataMpduSizeThreshold = 128;
+static constexpr uint32_t kMaxWakeReasonStatsArraySize = 32;
+static constexpr uint32_t kMaxRingBuffers = 10;
 
 // Legacy HAL functions accept "C" style function pointers, so use global
 // functions to pass to the legacy HAL function and store the corresponding
@@ -97,6 +99,141 @@ void onLinkLayerStatsDataResult(wifi_request_id id,
   }
 }
 
+// Callback to be invoked for ring buffer data indication.
+std::function<void(char*, char*, int, wifi_ring_buffer_status*)>
+    on_ring_buffer_data_internal_callback;
+void onRingBufferData(char* ring_name,
+                      char* buffer,
+                      int buffer_size,
+                      wifi_ring_buffer_status* status) {
+  if (on_ring_buffer_data_internal_callback) {
+    on_ring_buffer_data_internal_callback(
+        ring_name, buffer, buffer_size, status);
+  }
+}
+
+// Callback to be invoked for rtt results results.
+std::function<void(
+    wifi_request_id, unsigned num_results, wifi_rtt_result* rtt_results[])>
+    on_rtt_results_internal_callback;
+void onRttResults(wifi_request_id id,
+                  unsigned num_results,
+                  wifi_rtt_result* rtt_results[]) {
+  if (on_rtt_results_internal_callback) {
+    on_rtt_results_internal_callback(id, num_results, rtt_results);
+  }
+}
+
+// Callbacks for the various NAN operations.
+// NOTE: These have very little conversions to perform before invoking the user
+// callbacks.
+// So, handle all of them here directly to avoid adding an unnecessary layer.
+std::function<void(transaction_id, const NanResponseMsg&)>
+    on_nan_notify_response_user_callback;
+void onNanNotifyResponse(transaction_id id, NanResponseMsg* msg) {
+  if (on_nan_notify_response_user_callback && msg) {
+    on_nan_notify_response_user_callback(id, *msg);
+  }
+}
+
+std::function<void(const NanPublishTerminatedInd&)>
+    on_nan_event_publish_terminated_user_callback;
+void onNanEventPublishTerminated(NanPublishTerminatedInd* event) {
+  if (on_nan_event_publish_terminated_user_callback && event) {
+    on_nan_event_publish_terminated_user_callback(*event);
+  }
+}
+
+std::function<void(const NanMatchInd&)> on_nan_event_match_user_callback;
+void onNanEventMatch(NanMatchInd* event) {
+  if (on_nan_event_match_user_callback && event) {
+    on_nan_event_match_user_callback(*event);
+  }
+}
+
+std::function<void(const NanMatchExpiredInd&)>
+    on_nan_event_match_expired_user_callback;
+void onNanEventMatchExpired(NanMatchExpiredInd* event) {
+  if (on_nan_event_match_expired_user_callback && event) {
+    on_nan_event_match_expired_user_callback(*event);
+  }
+}
+
+std::function<void(const NanSubscribeTerminatedInd&)>
+    on_nan_event_subscribe_terminated_user_callback;
+void onNanEventSubscribeTerminated(NanSubscribeTerminatedInd* event) {
+  if (on_nan_event_subscribe_terminated_user_callback && event) {
+    on_nan_event_subscribe_terminated_user_callback(*event);
+  }
+}
+
+std::function<void(const NanFollowupInd&)> on_nan_event_followup_user_callback;
+void onNanEventFollowup(NanFollowupInd* event) {
+  if (on_nan_event_followup_user_callback && event) {
+    on_nan_event_followup_user_callback(*event);
+  }
+}
+
+std::function<void(const NanDiscEngEventInd&)>
+    on_nan_event_disc_eng_event_user_callback;
+void onNanEventDiscEngEvent(NanDiscEngEventInd* event) {
+  if (on_nan_event_disc_eng_event_user_callback && event) {
+    on_nan_event_disc_eng_event_user_callback(*event);
+  }
+}
+
+std::function<void(const NanDisabledInd&)> on_nan_event_disabled_user_callback;
+void onNanEventDisabled(NanDisabledInd* event) {
+  if (on_nan_event_disabled_user_callback && event) {
+    on_nan_event_disabled_user_callback(*event);
+  }
+}
+
+std::function<void(const NanTCAInd&)> on_nan_event_tca_user_callback;
+void onNanEventTca(NanTCAInd* event) {
+  if (on_nan_event_tca_user_callback && event) {
+    on_nan_event_tca_user_callback(*event);
+  }
+}
+
+std::function<void(const NanBeaconSdfPayloadInd&)>
+    on_nan_event_beacon_sdf_payload_user_callback;
+void onNanEventBeaconSdfPayload(NanBeaconSdfPayloadInd* event) {
+  if (on_nan_event_beacon_sdf_payload_user_callback && event) {
+    on_nan_event_beacon_sdf_payload_user_callback(*event);
+  }
+}
+
+std::function<void(const NanDataPathRequestInd&)>
+    on_nan_event_data_path_request_user_callback;
+void onNanEventDataPathRequest(NanDataPathRequestInd* event) {
+  if (on_nan_event_data_path_request_user_callback && event) {
+    on_nan_event_data_path_request_user_callback(*event);
+  }
+}
+std::function<void(const NanDataPathConfirmInd&)>
+    on_nan_event_data_path_confirm_user_callback;
+void onNanEventDataPathConfirm(NanDataPathConfirmInd* event) {
+  if (on_nan_event_data_path_confirm_user_callback && event) {
+    on_nan_event_data_path_confirm_user_callback(*event);
+  }
+}
+
+std::function<void(const NanDataPathEndInd&)>
+    on_nan_event_data_path_end_user_callback;
+void onNanEventDataPathEnd(NanDataPathEndInd* event) {
+  if (on_nan_event_data_path_end_user_callback && event) {
+    on_nan_event_data_path_end_user_callback(*event);
+  }
+}
+
+std::function<void(const NanTransmitFollowupInd&)>
+    on_nan_event_transmit_follow_up_user_callback;
+void onNanEventTransmitFollowUp(NanTransmitFollowupInd* event) {
+  if (on_nan_event_transmit_follow_up_user_callback && event) {
+    on_nan_event_transmit_follow_up_user_callback(*event);
+  }
+}
 // End of the free-standing "C" style callbacks.
 
 WifiLegacyHal::WifiLegacyHal()
@@ -402,6 +539,406 @@ std::pair<wifi_error, LinkLayerStats> WifiLegacyHal::getLinkLayerStats() {
   return {status, link_stats};
 }
 
+std::pair<wifi_error, uint32_t> WifiLegacyHal::getLoggerSupportedFeatureSet() {
+  uint32_t supported_features;
+  wifi_error status = global_func_table_.wifi_get_logger_supported_feature_set(
+      wlan_interface_handle_, &supported_features);
+  return {status, supported_features};
+}
+
+wifi_error WifiLegacyHal::startPktFateMonitoring() {
+  return global_func_table_.wifi_start_pkt_fate_monitoring(
+      wlan_interface_handle_);
+}
+
+std::pair<wifi_error, std::vector<wifi_tx_report>>
+WifiLegacyHal::getTxPktFates() {
+  std::vector<wifi_tx_report> tx_pkt_fates;
+  tx_pkt_fates.resize(MAX_FATE_LOG_LEN);
+  size_t num_fates = 0;
+  wifi_error status =
+      global_func_table_.wifi_get_tx_pkt_fates(wlan_interface_handle_,
+                                               tx_pkt_fates.data(),
+                                               tx_pkt_fates.size(),
+                                               &num_fates);
+  CHECK(num_fates <= MAX_FATE_LOG_LEN);
+  tx_pkt_fates.resize(num_fates);
+  return {status, std::move(tx_pkt_fates)};
+}
+
+std::pair<wifi_error, std::vector<wifi_rx_report>>
+WifiLegacyHal::getRxPktFates() {
+  std::vector<wifi_rx_report> rx_pkt_fates;
+  rx_pkt_fates.resize(MAX_FATE_LOG_LEN);
+  size_t num_fates = 0;
+  wifi_error status =
+      global_func_table_.wifi_get_rx_pkt_fates(wlan_interface_handle_,
+                                               rx_pkt_fates.data(),
+                                               rx_pkt_fates.size(),
+                                               &num_fates);
+  CHECK(num_fates <= MAX_FATE_LOG_LEN);
+  rx_pkt_fates.resize(num_fates);
+  return {status, std::move(rx_pkt_fates)};
+}
+
+std::pair<wifi_error, WakeReasonStats> WifiLegacyHal::getWakeReasonStats() {
+  WakeReasonStats stats;
+  stats.cmd_event_wake_cnt.resize(kMaxWakeReasonStatsArraySize);
+  stats.driver_fw_local_wake_cnt.resize(kMaxWakeReasonStatsArraySize);
+
+  // This legacy struct needs separate memory to store the variable sized wake
+  // reason types.
+  stats.wake_reason_cnt.cmd_event_wake_cnt =
+      reinterpret_cast<int32_t*>(stats.cmd_event_wake_cnt.data());
+  stats.wake_reason_cnt.cmd_event_wake_cnt_sz = stats.cmd_event_wake_cnt.size();
+  stats.wake_reason_cnt.cmd_event_wake_cnt_used = 0;
+  stats.wake_reason_cnt.driver_fw_local_wake_cnt =
+      reinterpret_cast<int32_t*>(stats.driver_fw_local_wake_cnt.data());
+  stats.wake_reason_cnt.driver_fw_local_wake_cnt_sz =
+      stats.driver_fw_local_wake_cnt.size();
+  stats.wake_reason_cnt.driver_fw_local_wake_cnt_used = 0;
+
+  wifi_error status = global_func_table_.wifi_get_wake_reason_stats(
+      wlan_interface_handle_, &stats.wake_reason_cnt);
+
+  CHECK(stats.wake_reason_cnt.cmd_event_wake_cnt_used >= 0 &&
+        static_cast<uint32_t>(stats.wake_reason_cnt.cmd_event_wake_cnt_used) <=
+            kMaxWakeReasonStatsArraySize);
+  stats.cmd_event_wake_cnt.resize(
+      stats.wake_reason_cnt.cmd_event_wake_cnt_used);
+  stats.wake_reason_cnt.cmd_event_wake_cnt = nullptr;
+
+  CHECK(stats.wake_reason_cnt.driver_fw_local_wake_cnt_used >= 0 &&
+        static_cast<uint32_t>(
+            stats.wake_reason_cnt.driver_fw_local_wake_cnt_used) <=
+            kMaxWakeReasonStatsArraySize);
+  stats.driver_fw_local_wake_cnt.resize(
+      stats.wake_reason_cnt.driver_fw_local_wake_cnt_used);
+  stats.wake_reason_cnt.driver_fw_local_wake_cnt = nullptr;
+
+  return {status, stats};
+}
+
+wifi_error WifiLegacyHal::registerRingBufferCallbackHandler(
+    const on_ring_buffer_data_callback& on_user_data_callback) {
+  if (on_ring_buffer_data_internal_callback) {
+    return WIFI_ERROR_NOT_AVAILABLE;
+  }
+  on_ring_buffer_data_internal_callback = [on_user_data_callback](
+      char* ring_name,
+      char* buffer,
+      int buffer_size,
+      wifi_ring_buffer_status* status) {
+    if (status && buffer) {
+      std::vector<uint8_t> buffer_vector(
+          reinterpret_cast<uint8_t*>(buffer),
+          reinterpret_cast<uint8_t*>(buffer) + buffer_size);
+      on_user_data_callback(ring_name, buffer_vector, *status);
+    }
+  };
+  return global_func_table_.wifi_set_log_handler(
+      0, wlan_interface_handle_, {onRingBufferData});
+}
+
+std::pair<wifi_error, std::vector<wifi_ring_buffer_status>>
+WifiLegacyHal::getRingBuffersStatus() {
+  std::vector<wifi_ring_buffer_status> ring_buffers_status;
+  ring_buffers_status.resize(kMaxRingBuffers);
+  uint32_t num_rings = 0;
+  wifi_error status = global_func_table_.wifi_get_ring_buffers_status(
+      wlan_interface_handle_, &num_rings, ring_buffers_status.data());
+  CHECK(num_rings <= kMaxRingBuffers);
+  ring_buffers_status.resize(num_rings);
+  return {status, std::move(ring_buffers_status)};
+}
+
+wifi_error WifiLegacyHal::startRingBufferLogging(const std::string& ring_name,
+                                                 uint32_t verbose_level,
+                                                 uint32_t max_interval_sec,
+                                                 uint32_t min_data_size) {
+  std::vector<char> ring_name_internal(ring_name.begin(), ring_name.end());
+  return global_func_table_.wifi_start_logging(wlan_interface_handle_,
+                                               verbose_level,
+                                               0,
+                                               max_interval_sec,
+                                               min_data_size,
+                                               ring_name_internal.data());
+}
+
+wifi_error WifiLegacyHal::getRingBufferData(const std::string& ring_name) {
+  std::vector<char> ring_name_internal(ring_name.begin(), ring_name.end());
+  return global_func_table_.wifi_get_ring_data(wlan_interface_handle_,
+                                               ring_name_internal.data());
+}
+
+wifi_error WifiLegacyHal::startRttRangeRequest(
+    wifi_request_id id,
+    const std::vector<wifi_rtt_config>& rtt_configs,
+    const on_rtt_results_callback& on_results_user_callback) {
+  if (on_rtt_results_internal_callback) {
+    return WIFI_ERROR_NOT_AVAILABLE;
+  }
+
+  on_rtt_results_internal_callback = [on_results_user_callback](
+      wifi_request_id id,
+      unsigned num_results,
+      wifi_rtt_result* rtt_results[]) {
+    if (num_results > 0 && !rtt_results) {
+      LOG(ERROR) << "Unexpected nullptr in RTT results";
+      return;
+    }
+    std::vector<const wifi_rtt_result*> rtt_results_vec;
+    std::copy_if(
+        rtt_results,
+        rtt_results + num_results,
+        back_inserter(rtt_results_vec),
+        [](wifi_rtt_result* rtt_result) { return rtt_result != nullptr; });
+    on_results_user_callback(id, rtt_results_vec);
+  };
+
+  std::vector<wifi_rtt_config> rtt_configs_internal(rtt_configs);
+  return global_func_table_.wifi_rtt_range_request(id,
+                                                   wlan_interface_handle_,
+                                                   rtt_configs.size(),
+                                                   rtt_configs_internal.data(),
+                                                   {onRttResults});
+}
+
+wifi_error WifiLegacyHal::cancelRttRangeRequest(
+    wifi_request_id id, const std::vector<std::array<uint8_t, 6>>& mac_addrs) {
+  if (!on_rtt_results_internal_callback) {
+    return WIFI_ERROR_NOT_AVAILABLE;
+  }
+  static_assert(sizeof(mac_addr) == sizeof(std::array<uint8_t, 6>),
+                "MAC address size mismatch");
+  // TODO: How do we handle partial cancels (i.e only a subset of enabled mac
+  // addressed are cancelled).
+  std::vector<std::array<uint8_t, 6>> mac_addrs_internal(mac_addrs);
+  wifi_error status = global_func_table_.wifi_rtt_range_cancel(
+      id,
+      wlan_interface_handle_,
+      mac_addrs.size(),
+      reinterpret_cast<mac_addr*>(mac_addrs_internal.data()));
+  // If the request Id is wrong, don't stop the ongoing range request. Any
+  // other error should be treated as the end of rtt ranging.
+  if (status != WIFI_ERROR_INVALID_REQUEST_ID) {
+    on_rtt_results_internal_callback = nullptr;
+  }
+  return status;
+}
+
+std::pair<wifi_error, wifi_rtt_capabilities>
+WifiLegacyHal::getRttCapabilities() {
+  wifi_rtt_capabilities rtt_caps;
+  wifi_error status = global_func_table_.wifi_get_rtt_capabilities(
+      wlan_interface_handle_, &rtt_caps);
+  return {status, rtt_caps};
+}
+
+std::pair<wifi_error, wifi_rtt_responder> WifiLegacyHal::getRttResponderInfo() {
+  wifi_rtt_responder rtt_responder;
+  wifi_error status = global_func_table_.wifi_rtt_get_responder_info(
+      wlan_interface_handle_, &rtt_responder);
+  return {status, rtt_responder};
+}
+
+wifi_error WifiLegacyHal::enableRttResponder(
+    wifi_request_id id,
+    const wifi_channel_info& channel_hint,
+    uint32_t max_duration_secs,
+    const wifi_rtt_responder& info) {
+  wifi_rtt_responder info_internal(info);
+  return global_func_table_.wifi_enable_responder(id,
+                                                  wlan_interface_handle_,
+                                                  channel_hint,
+                                                  max_duration_secs,
+                                                  &info_internal);
+}
+
+wifi_error WifiLegacyHal::disableRttResponder(wifi_request_id id) {
+  return global_func_table_.wifi_disable_responder(id, wlan_interface_handle_);
+}
+
+wifi_error WifiLegacyHal::setRttLci(wifi_request_id id,
+                                    const wifi_lci_information& info) {
+  wifi_lci_information info_internal(info);
+  return global_func_table_.wifi_set_lci(
+      id, wlan_interface_handle_, &info_internal);
+}
+
+wifi_error WifiLegacyHal::setRttLcr(wifi_request_id id,
+                                    const wifi_lcr_information& info) {
+  wifi_lcr_information info_internal(info);
+  return global_func_table_.wifi_set_lcr(
+      id, wlan_interface_handle_, &info_internal);
+}
+
+wifi_error WifiLegacyHal::nanRegisterCallbackHandlers(
+    const NanCallbackHandlers& user_callbacks) {
+  on_nan_notify_response_user_callback = user_callbacks.on_notify_response;
+  on_nan_event_publish_terminated_user_callback =
+      user_callbacks.on_event_publish_terminated;
+  on_nan_event_match_user_callback = user_callbacks.on_event_match;
+  on_nan_event_match_expired_user_callback =
+      user_callbacks.on_event_match_expired;
+  on_nan_event_subscribe_terminated_user_callback =
+      user_callbacks.on_event_subscribe_terminated;
+  on_nan_event_followup_user_callback = user_callbacks.on_event_followup;
+  on_nan_event_disc_eng_event_user_callback =
+      user_callbacks.on_event_disc_eng_event;
+  on_nan_event_disabled_user_callback = user_callbacks.on_event_disabled;
+  on_nan_event_tca_user_callback = user_callbacks.on_event_tca;
+  on_nan_event_beacon_sdf_payload_user_callback =
+      user_callbacks.on_event_beacon_sdf_payload;
+  on_nan_event_data_path_request_user_callback =
+      user_callbacks.on_event_data_path_request;
+  on_nan_event_data_path_confirm_user_callback =
+      user_callbacks.on_event_data_path_confirm;
+  on_nan_event_data_path_end_user_callback =
+      user_callbacks.on_event_data_path_end;
+  on_nan_event_transmit_follow_up_user_callback =
+      user_callbacks.on_event_transmit_follow_up;
+
+  return global_func_table_.wifi_nan_register_handler(
+      wlan_interface_handle_,
+      {onNanNotifyResponse,
+       onNanEventPublishTerminated,
+       onNanEventMatch,
+       onNanEventMatchExpired,
+       onNanEventSubscribeTerminated,
+       onNanEventFollowup,
+       onNanEventDiscEngEvent,
+       onNanEventDisabled,
+       onNanEventTca,
+       onNanEventBeaconSdfPayload,
+       onNanEventDataPathRequest,
+       onNanEventDataPathConfirm,
+       onNanEventDataPathEnd,
+       onNanEventTransmitFollowUp});
+}
+
+wifi_error WifiLegacyHal::nanEnableRequest(transaction_id id,
+                                           const NanEnableRequest& msg) {
+  NanEnableRequest msg_internal(msg);
+  return global_func_table_.wifi_nan_enable_request(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanDisableRequest(transaction_id id) {
+  return global_func_table_.wifi_nan_disable_request(id,
+                                                     wlan_interface_handle_);
+}
+
+wifi_error WifiLegacyHal::nanPublishRequest(transaction_id id,
+                                            const NanPublishRequest& msg) {
+  NanPublishRequest msg_internal(msg);
+  return global_func_table_.wifi_nan_publish_request(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanPublishCancelRequest(
+    transaction_id id, const NanPublishCancelRequest& msg) {
+  NanPublishCancelRequest msg_internal(msg);
+  return global_func_table_.wifi_nan_publish_cancel_request(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanSubscribeRequest(transaction_id id,
+                                              const NanSubscribeRequest& msg) {
+  NanSubscribeRequest msg_internal(msg);
+  return global_func_table_.wifi_nan_subscribe_request(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanSubscribeCancelRequest(
+    transaction_id id, const NanSubscribeCancelRequest& msg) {
+  NanSubscribeCancelRequest msg_internal(msg);
+  return global_func_table_.wifi_nan_subscribe_cancel_request(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanTransmitFollowupRequest(
+    transaction_id id, const NanTransmitFollowupRequest& msg) {
+  NanTransmitFollowupRequest msg_internal(msg);
+  return global_func_table_.wifi_nan_transmit_followup_request(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanStatsRequest(transaction_id id,
+                                          const NanStatsRequest& msg) {
+  NanStatsRequest msg_internal(msg);
+  return global_func_table_.wifi_nan_stats_request(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanConfigRequest(transaction_id id,
+                                           const NanConfigRequest& msg) {
+  NanConfigRequest msg_internal(msg);
+  return global_func_table_.wifi_nan_config_request(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanTcaRequest(transaction_id id,
+                                        const NanTCARequest& msg) {
+  NanTCARequest msg_internal(msg);
+  return global_func_table_.wifi_nan_tca_request(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanBeaconSdfPayloadRequest(
+    transaction_id id, const NanBeaconSdfPayloadRequest& msg) {
+  NanBeaconSdfPayloadRequest msg_internal(msg);
+  return global_func_table_.wifi_nan_beacon_sdf_payload_request(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
+std::pair<wifi_error, NanVersion> WifiLegacyHal::nanGetVersion() {
+  NanVersion version;
+  wifi_error status =
+      global_func_table_.wifi_nan_get_version(global_handle_, &version);
+  return {status, version};
+}
+
+wifi_error WifiLegacyHal::nanGetCapabilities(transaction_id id) {
+  return global_func_table_.wifi_nan_get_capabilities(id,
+                                                      wlan_interface_handle_);
+}
+
+wifi_error WifiLegacyHal::nanDataInterfaceCreate(
+    transaction_id id, const std::string& iface_name) {
+  std::vector<char> iface_name_internal(iface_name.begin(), iface_name.end());
+  return global_func_table_.wifi_nan_data_interface_create(
+      id, wlan_interface_handle_, iface_name_internal.data());
+}
+
+wifi_error WifiLegacyHal::nanDataInterfaceDelete(
+    transaction_id id, const std::string& iface_name) {
+  std::vector<char> iface_name_internal(iface_name.begin(), iface_name.end());
+  return global_func_table_.wifi_nan_data_interface_delete(
+      id, wlan_interface_handle_, iface_name_internal.data());
+}
+
+wifi_error WifiLegacyHal::nanDataRequestInitiator(
+    transaction_id id, const NanDataPathInitiatorRequest& msg) {
+  NanDataPathInitiatorRequest msg_internal(msg);
+  return global_func_table_.wifi_nan_data_request_initiator(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanDataIndicationResponse(
+    transaction_id id, const NanDataPathIndicationResponse& msg) {
+  NanDataPathIndicationResponse msg_internal(msg);
+  return global_func_table_.wifi_nan_data_indication_response(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanDataEnd(transaction_id id,
+                                     const NanDataPathEndRequest& msg) {
+  NanDataPathEndRequest msg_internal(msg);
+  return global_func_table_.wifi_nan_data_end(
+      id, wlan_interface_handle_, &msg_internal);
+}
+
 wifi_error WifiLegacyHal::retrieveWlanInterfaceHandle() {
   const std::string& ifname_to_find = getStaIfaceName();
   wifi_interface_handle* iface_handles = nullptr;
@@ -479,6 +1016,22 @@ void WifiLegacyHal::invalidate() {
   on_gscan_event_internal_callback = nullptr;
   on_gscan_full_result_internal_callback = nullptr;
   on_link_layer_stats_result_internal_callback = nullptr;
+  on_ring_buffer_data_internal_callback = nullptr;
+  on_rtt_results_internal_callback = nullptr;
+  on_nan_notify_response_user_callback = nullptr;
+  on_nan_event_publish_terminated_user_callback = nullptr;
+  on_nan_event_match_user_callback = nullptr;
+  on_nan_event_match_expired_user_callback = nullptr;
+  on_nan_event_subscribe_terminated_user_callback = nullptr;
+  on_nan_event_followup_user_callback = nullptr;
+  on_nan_event_disc_eng_event_user_callback = nullptr;
+  on_nan_event_disabled_user_callback = nullptr;
+  on_nan_event_tca_user_callback = nullptr;
+  on_nan_event_beacon_sdf_payload_user_callback = nullptr;
+  on_nan_event_data_path_request_user_callback = nullptr;
+  on_nan_event_data_path_confirm_user_callback = nullptr;
+  on_nan_event_data_path_end_user_callback = nullptr;
+  on_nan_event_transmit_follow_up_user_callback = nullptr;
 }
 
 }  // namespace legacy_hal
