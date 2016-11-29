@@ -65,6 +65,30 @@ struct WakeReasonStats {
   std::vector<uint32_t> driver_fw_local_wake_cnt;
 };
 
+// NAN response and event callbacks struct.
+struct NanCallbackHandlers {
+  // NotifyResponse invoked to notify the status of the Request.
+  std::function<void(transaction_id, const NanResponseMsg&)> on_notify_response;
+  // Various event callbacks.
+  std::function<void(const NanPublishTerminatedInd&)>
+      on_event_publish_terminated;
+  std::function<void(const NanMatchInd&)> on_event_match;
+  std::function<void(const NanMatchExpiredInd&)> on_event_match_expired;
+  std::function<void(const NanSubscribeTerminatedInd&)>
+      on_event_subscribe_terminated;
+  std::function<void(const NanFollowupInd&)> on_event_followup;
+  std::function<void(const NanDiscEngEventInd&)> on_event_disc_eng_event;
+  std::function<void(const NanDisabledInd&)> on_event_disabled;
+  std::function<void(const NanTCAInd&)> on_event_tca;
+  std::function<void(const NanBeaconSdfPayloadInd&)>
+      on_event_beacon_sdf_payload;
+  std::function<void(const NanDataPathRequestInd&)> on_event_data_path_request;
+  std::function<void(const NanDataPathConfirmInd&)> on_event_data_path_confirm;
+  std::function<void(const NanDataPathEndInd&)> on_event_data_path_end;
+  std::function<void(const NanTransmitFollowupInd&)>
+      on_event_transmit_follow_up;
+};
+
 // Full scan results contain IE info and are hence passed by reference, to
 // preserve the variable length array member |ie_data|. Callee must not retain
 // the pointer.
@@ -170,6 +194,35 @@ class WifiLegacyHal {
   wifi_error disableRttResponder(wifi_request_id id);
   wifi_error setRttLci(wifi_request_id id, const wifi_lci_information& info);
   wifi_error setRttLcr(wifi_request_id id, const wifi_lcr_information& info);
+  // NAN functions.
+  wifi_error nanRegisterCallbackHandlers(const NanCallbackHandlers& callbacks);
+  wifi_error nanEnableRequest(transaction_id id, const NanEnableRequest& msg);
+  wifi_error nanDisableRequest(transaction_id id);
+  wifi_error nanPublishRequest(transaction_id id, const NanPublishRequest& msg);
+  wifi_error nanPublishCancelRequest(transaction_id id,
+                                     const NanPublishCancelRequest& msg);
+  wifi_error nanSubscribeRequest(transaction_id id,
+                                 const NanSubscribeRequest& msg);
+  wifi_error nanSubscribeCancelRequest(transaction_id id,
+                                       const NanSubscribeCancelRequest& msg);
+  wifi_error nanTransmitFollowupRequest(transaction_id id,
+                                        const NanTransmitFollowupRequest& msg);
+  wifi_error nanStatsRequest(transaction_id id, const NanStatsRequest& msg);
+  wifi_error nanConfigRequest(transaction_id id, const NanConfigRequest& msg);
+  wifi_error nanTcaRequest(transaction_id id, const NanTCARequest& msg);
+  wifi_error nanBeaconSdfPayloadRequest(transaction_id id,
+                                        const NanBeaconSdfPayloadRequest& msg);
+  std::pair<wifi_error, NanVersion> nanGetVersion();
+  wifi_error nanGetCapabilities(transaction_id id);
+  wifi_error nanDataInterfaceCreate(transaction_id id,
+                                    const std::string& iface_name);
+  wifi_error nanDataInterfaceDelete(transaction_id id,
+                                    const std::string& iface_name);
+  wifi_error nanDataRequestInitiator(transaction_id id,
+                                     const NanDataPathInitiatorRequest& msg);
+  wifi_error nanDataIndicationResponse(
+      transaction_id id, const NanDataPathIndicationResponse& msg);
+  wifi_error nanDataEnd(transaction_id id, const NanDataPathEndRequest& msg);
 
  private:
   // Retrieve the interface handle to be used for the "wlan" interface.
