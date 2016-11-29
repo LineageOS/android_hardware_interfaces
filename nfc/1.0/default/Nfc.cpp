@@ -17,34 +17,36 @@ Nfc::Nfc(nfc_nci_device_t* device) : mDevice(device) {
 }
 
 // Methods from ::android::hardware::nfc::V1_0::INfc follow.
-::android::hardware::Return<int32_t> Nfc::open(const sp<INfcClientCallback>& clientCallback)  {
+::android::hardware::Return<NfcStatus> Nfc::open(const sp<INfcClientCallback>& clientCallback)  {
     mCallback = clientCallback;
-    return mDevice->open(mDevice, eventCallback, dataCallback);
+    int ret = mDevice->open(mDevice, eventCallback, dataCallback);
+    return ret == 0 ? NfcStatus::OK : NfcStatus::FAILED;
 }
 
-::android::hardware::Return<int32_t> Nfc::write(const hidl_vec<uint8_t>& data)  {
+::android::hardware::Return<uint32_t> Nfc::write(const hidl_vec<uint8_t>& data)  {
     return mDevice->write(mDevice, data.size(), &data[0]);
 }
 
-::android::hardware::Return<int32_t> Nfc::coreInitialized(const hidl_vec<uint8_t>& data)  {
+::android::hardware::Return<NfcStatus> Nfc::coreInitialized(const hidl_vec<uint8_t>& data)  {
     hidl_vec<uint8_t> copy = data;
-    return mDevice->core_initialized(mDevice, &copy[0]);
+    int ret = mDevice->core_initialized(mDevice, &copy[0]);
+    return ret == 0 ? NfcStatus::OK : NfcStatus::FAILED;
 }
 
-::android::hardware::Return<int32_t> Nfc::prediscover()  {
-    return mDevice->pre_discover(mDevice);
+::android::hardware::Return<NfcStatus> Nfc::prediscover()  {
+    return mDevice->pre_discover(mDevice) ? NfcStatus::FAILED : NfcStatus::OK;
 }
 
-::android::hardware::Return<int32_t> Nfc::close()  {
-    return mDevice->close(mDevice);
+::android::hardware::Return<NfcStatus> Nfc::close()  {
+    return mDevice->close(mDevice) ? NfcStatus::FAILED : NfcStatus::OK;
 }
 
-::android::hardware::Return<int32_t> Nfc::controlGranted()  {
-    return mDevice->control_granted(mDevice);
+::android::hardware::Return<NfcStatus> Nfc::controlGranted()  {
+    return mDevice->control_granted(mDevice) ? NfcStatus::FAILED : NfcStatus::OK;
 }
 
-::android::hardware::Return<int32_t> Nfc::powerCycle()  {
-    return mDevice->power_cycle(mDevice);
+::android::hardware::Return<NfcStatus> Nfc::powerCycle()  {
+    return mDevice->power_cycle(mDevice) ? NfcStatus::FAILED : NfcStatus::OK;
 }
 
 
