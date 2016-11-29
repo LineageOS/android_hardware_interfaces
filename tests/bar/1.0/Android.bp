@@ -3,7 +3,7 @@
 genrule {
     name: "android.hardware.tests.bar@1.0_genc++",
     tools: ["hidl-gen"],
-    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces android.hardware.tests.bar@1.0",
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.tests.bar@1.0",
     srcs: [
         "IBar.hal",
         "IImportTypes.hal",
@@ -17,7 +17,7 @@ genrule {
 genrule {
     name: "android.hardware.tests.bar@1.0_genc++_headers",
     tools: ["hidl-gen"],
-    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces android.hardware.tests.bar@1.0",
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.tests.bar@1.0",
     srcs: [
         "IBar.hal",
         "IImportTypes.hal",
@@ -49,6 +49,7 @@ cc_library_shared {
         "libutils",
         "libcutils",
         "android.hardware.tests.foo@1.0",
+        "android.hidl.base@1.0",
     ],
     export_shared_lib_headers: [
         "libhidlbase",
@@ -56,5 +57,6 @@ cc_library_shared {
         "libhwbinder",
         "libutils",
         "android.hardware.tests.foo@1.0",
+        "android.hidl.base@1.0",
     ],
 }
