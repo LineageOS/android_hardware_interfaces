@@ -16,7 +16,7 @@
 
 #define LOG_TAG "Visualizer_HAL"
 #include <system/audio_effects/effect_visualizer.h>
-#include <utils/Log.h>
+#include <android/log.h>
 
 #include "VisualizerEffect.h"
 

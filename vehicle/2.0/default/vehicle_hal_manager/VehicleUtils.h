@@ -17,6 +17,11 @@
 #ifndef android_hardware_vehicle_V2_0_VehicleUtils_H_
 #define android_hardware_vehicle_V2_0_VehicleUtils_H_
 
+#ifndef LOG_TAG
+#define LOG_TAG "android.hardware.vehicle@2.0-impl"
+#endif
+#include <android/log.h>
+
 #include <memory>
 
 #include <hidl/HidlSupport.h>

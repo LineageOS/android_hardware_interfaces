@@ -26,7 +26,7 @@
 
 #include <hardware/hw_auth_token.h>
 
-#include <android-base/logging.h>
+#include <android/log.h>
 #include <android/hardware/gatekeeper/1.0/IGatekeeper.h>
 #include <android/hardware/gatekeeper/1.0/types.h>
 

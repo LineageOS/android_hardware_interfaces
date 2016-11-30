@@ -16,7 +16,7 @@
 
 #define LOG_TAG "Downmix_HAL"
 #include <system/audio_effects/effect_downmix.h>
-#include <utils/Log.h>
+#include <android/log.h>
 
 #include "DownmixEffect.h"
 

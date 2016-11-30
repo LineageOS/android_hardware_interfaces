@@ -16,6 +16,9 @@
 
 #include "DefaultVehicleHal.h"
 
+#define LOG_TAG "default_vehicle"
+#include <android/log.h>
+
 namespace android {
 namespace hardware {
 namespace vehicle {

@@ -44,7 +44,7 @@ public:
         light = ILight::getService(LIGHT_SERVICE_NAME);
 
         ASSERT_NE(light, nullptr);
-        ALOGI("Test is remote: %d", light->isRemote());
+        LOG(INFO) << "Test is remote " << light->isRemote();
     }
 
     virtual void TearDown() override {}
@@ -98,6 +98,6 @@ int main(int argc, char **argv) {
     ::testing::AddGlobalTestEnvironment(new LightHidlEnvironment);
     ::testing::InitGoogleTest(&argc, argv);
     int status = RUN_ALL_TESTS();
-    ALOGI("Test result = %d", status);
+    LOG(INFO) << "Test result = " << status;
     return status;
 }

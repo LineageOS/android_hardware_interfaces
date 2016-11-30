@@ -17,7 +17,7 @@
 #include <memory.h>
 
 #define LOG_TAG "Equalizer_HAL"
-#include <utils/Log.h>
+#include <android/log.h>
 
 #include "EqualizerEffect.h"
 

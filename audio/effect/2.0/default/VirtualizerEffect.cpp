@@ -18,7 +18,7 @@
 
 #define LOG_TAG "Virtualizer_HAL"
 #include <system/audio_effects/effect_virtualizer.h>
-#include <utils/Log.h>
+#include <android/log.h>
 
 #include "VirtualizerEffect.h"
 

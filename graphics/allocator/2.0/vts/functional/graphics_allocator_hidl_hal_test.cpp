@@ -307,7 +307,7 @@ int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
 
   int status = RUN_ALL_TESTS();
-  ALOGI("Test result = %d", status);
+  LOG(INFO) << "Test result = " << status;
 
   return status;
 }

@@ -18,7 +18,7 @@
 #include <cmath>
 
 #include <utils/Errors.h>
-#include <utils/Log.h>
+#include <android/log.h>
 #include <hidl/Status.h>
 #include <future>
 #include <bitset>

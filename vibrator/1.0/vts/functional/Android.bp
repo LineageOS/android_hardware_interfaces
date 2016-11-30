@@ -19,6 +19,7 @@ cc_test {
     gtest: true,
     srcs: ["vibrator_hidl_hal_test.cpp"],
     shared_libs: [
+        "libbase",
         "liblog",
         "libutils",
         "android.hardware.vibrator@1.0",

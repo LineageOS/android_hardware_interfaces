@@ -15,7 +15,7 @@
  */
 
 #define LOG_TAG "android.hardware.thermal@1.0-impl"
-#include <utils/Log.h>
+#include <android/log.h>
 
 #include <errno.h>
 #include <hardware/hardware.h>

@@ -15,7 +15,7 @@
  */
 #define LOG_TAG "android.hardware.light@2.0-service"
 
-#include <utils/Log.h>
+#include <android/log.h>
 
 #include "Light.h"
 

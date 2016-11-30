@@ -15,7 +15,7 @@
  */
 
 #define LOG_TAG "NS_Effect_HAL"
-#include <utils/Log.h>
+#include <android/log.h>
 
 #include "NoiseSuppressionEffect.h"
 

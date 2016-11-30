@@ -20,7 +20,7 @@
 #include <memory.h>
 #include <string.h>
 
-#include <utils/Log.h>
+#include <android/log.h>
 
 #include "Conversions.h"
 #include "Device.h"

@@ -15,7 +15,7 @@
  */
 
 #define LOG_TAG "EnvReverb_HAL"
-#include <utils/Log.h>
+#include <android/log.h>
 
 #include "EnvironmentalReverbEffect.h"
 

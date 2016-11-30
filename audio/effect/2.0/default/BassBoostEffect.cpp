@@ -16,7 +16,7 @@
 
 #define LOG_TAG "BassBoost_HAL"
 #include <system/audio_effects/effect_bassboost.h>
-#include <utils/Log.h>
+#include <android/log.h>
 
 #include "BassBoostEffect.h"
 

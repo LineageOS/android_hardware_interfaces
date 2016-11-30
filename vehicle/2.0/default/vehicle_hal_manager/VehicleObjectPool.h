@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
+
 #ifndef android_hardware_vehicle_V2_0_VehicleObjectPool_H_
 #define android_hardware_vehicle_V2_0_VehicleObjectPool_H_
+
+#include "VehicleUtils.h" // defines LOG_TAG and includes <android/log.h>
 
 #include <iostream>
 #include <memory>
@@ -24,9 +27,11 @@
 #include <map>
 #include <mutex>
 
+#ifndef LOG_TAG
+#define LOG_TAG "android.hardware.vehicle@2.0-impl"
+#endif
+#include <android/log.h>
 #include <android/hardware/vehicle/2.0/types.h>
-
-#include "VehicleUtils.h"
 
 namespace android {
 namespace hardware {

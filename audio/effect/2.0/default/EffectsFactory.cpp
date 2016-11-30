@@ -27,7 +27,7 @@
 #include <system/audio_effects/effect_presetreverb.h>
 #include <system/audio_effects/effect_virtualizer.h>
 #include <system/audio_effects/effect_visualizer.h>
-#include <utils/Log.h>
+#include <android/log.h>
 
 #include "AcousticEchoCancelerEffect.h"
 #include "AutomaticGainControlEffect.h"

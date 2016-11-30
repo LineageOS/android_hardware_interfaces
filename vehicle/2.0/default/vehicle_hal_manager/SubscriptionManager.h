@@ -22,7 +22,7 @@
 #include <set>
 #include <list>
 
-#include <utils/Log.h>
+#include <android/log.h>
 #include <hwbinder/IPCThreadState.h>
 
 #include <android/hardware/vehicle/2.0/IVehicle.h>

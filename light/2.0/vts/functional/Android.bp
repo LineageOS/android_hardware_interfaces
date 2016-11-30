@@ -19,6 +19,7 @@ cc_test {
     gtest: true,
     srcs: ["light_hidl_hal_test.cpp"],
     shared_libs: [
+        "libbase",
         "liblog",
         "libutils",
         "android.hardware.light@2.0",

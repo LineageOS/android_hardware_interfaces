@@ -356,7 +356,7 @@ int main(int argc, char** argv) {
   sleep(5);
 
   int status = RUN_ALL_TESTS();
-  ALOGI("Test result = %d", status);
+  LOG(INFO) << "Test result = " << status;
 
   std::system("svc nfc enable"); /* Turn on NFC */
   sleep(5);
