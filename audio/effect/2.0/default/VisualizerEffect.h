@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef HIDL_GENERATED_android_hardware_audio_effect_V2_0_VisualizerEffect_H_
-#define HIDL_GENERATED_android_hardware_audio_effect_V2_0_VisualizerEffect_H_
+#ifndef ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_VISUALIZEREFFECT_H
+#define ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_VISUALIZEREFFECT_H
 
 #include <android/hardware/audio/effect/2.0/IVisualizerEffect.h>
 #include <hidl/Status.h>
@@ -135,4 +135,4 @@ struct VisualizerEffect : public IVisualizerEffect {
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_audio_effect_V2_0_VisualizerEffect_H_
+#endif  // ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_VISUALIZEREFFECT_H

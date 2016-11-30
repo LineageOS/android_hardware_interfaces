@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef HIDL_GENERATED_android_hardware_broadcastradio_V1_0_BroadcastRadioFactory_H_
-#define HIDL_GENERATED_android_hardware_broadcastradio_V1_0_BroadcastRadioFactory_H_
+#ifndef ANDROID_HARDWARE_BROADCASTRADIO_V1_0_BROADCASTRADIOFACTORY_H
+#define ANDROID_HARDWARE_BROADCASTRADIO_V1_0_BROADCASTRADIOFACTORY_H
 
 #include <android/hardware/broadcastradio/1.0/IBroadcastRadioFactory.h>
 #include <hidl/Status.h>
@@ -40,4 +40,4 @@ extern "C" IBroadcastRadioFactory* HIDL_FETCH_IBroadcastRadioFactory(const char*
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_broadcastradio_V1_0_BroadcastRadioFactory_H_
+#endif  // ANDROID_HARDWARE_BROADCASTRADIO_V1_0_BROADCASTRADIOFACTORY_H

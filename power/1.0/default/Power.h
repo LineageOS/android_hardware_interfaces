@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef HIDL_GENERATED_android_hardware_power_V1_0_Power_H_
-#define HIDL_GENERATED_android_hardware_power_V1_0_Power_H_
+#ifndef ANDROID_HARDWARE_POWER_V1_0_POWER_H
+#define ANDROID_HARDWARE_POWER_V1_0_POWER_H
 
 #include <android/hardware/power/1.0/IPower.h>
 #include <hidl/Status.h>
@@ -58,4 +58,4 @@ extern "C" IPower* HIDL_FETCH_IPower(const char* name);
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_power_V1_0_Power_H_
+#endif  // ANDROID_HARDWARE_POWER_V1_0_POWER_H

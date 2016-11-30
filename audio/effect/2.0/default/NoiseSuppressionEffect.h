@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef HIDL_GENERATED_android_hardware_audio_effect_V2_0_NoiseSuppressionEffect_H_
-#define HIDL_GENERATED_android_hardware_audio_effect_V2_0_NoiseSuppressionEffect_H_
+#ifndef ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_NOISESUPPRESSIONEFFECT_H
+#define ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_NOISESUPPRESSIONEFFECT_H
 
 #include <system/audio_effects/effect_ns.h>
 
@@ -139,4 +139,4 @@ struct NoiseSuppressionEffect : public INoiseSuppressionEffect {
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_audio_effect_V2_0_NoiseSuppressionEffect_H_
+#endif  // ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_NOISESUPPRESSIONEFFECT_H

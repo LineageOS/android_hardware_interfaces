@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef HIDL_GENERATED_android_hardware_audio_effect_V2_0_PresetReverbEffect_H_
-#define HIDL_GENERATED_android_hardware_audio_effect_V2_0_PresetReverbEffect_H_
+#ifndef ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_PRESETREVERBEFFECT_H
+#define ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_PRESETREVERBEFFECT_H
 
 #include <android/hardware/audio/effect/2.0/IPresetReverbEffect.h>
 #include <hidl/Status.h>
@@ -125,4 +125,4 @@ struct PresetReverbEffect : public IPresetReverbEffect {
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_audio_effect_V2_0_PresetReverbEffect_H_
+#endif  // ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_PRESETREVERBEFFECT_H

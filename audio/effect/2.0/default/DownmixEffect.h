@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef HIDL_GENERATED_android_hardware_audio_effect_V2_0_DownmixEffect_H_
-#define HIDL_GENERATED_android_hardware_audio_effect_V2_0_DownmixEffect_H_
+#ifndef ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_DOWNMIXEFFECT_H
+#define ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_DOWNMIXEFFECT_H
 
 #include <android/hardware/audio/effect/2.0/IDownmixEffect.h>
 #include <hidl/Status.h>
@@ -115,4 +115,4 @@ struct DownmixEffect : public IDownmixEffect {
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_audio_effect_V2_0_DownmixEffect_H_
+#endif  // ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_DOWNMIXEFFECT_H

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef HIDL_GENERATED_android_hardware_audio_V2_0_Stream_H_
-#define HIDL_GENERATED_android_hardware_audio_V2_0_Stream_H_
+#ifndef ANDROID_HARDWARE_AUDIO_V2_0_STREAM_H
+#define ANDROID_HARDWARE_AUDIO_V2_0_STREAM_H
 
 #include <android/hardware/audio/2.0/IStream.h>
 #include <hidl/Status.h>
@@ -91,4 +91,4 @@ struct Stream : public IStream, public ParametersUtil {
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_audio_V2_0_Stream_H_
+#endif  // ANDROID_HARDWARE_AUDIO_V2_0_STREAM_H

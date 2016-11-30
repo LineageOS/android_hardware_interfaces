@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef HIDL_GENERATED_android_hardware_tv_cec_V1_0_HdmiCec_H_
-#define HIDL_GENERATED_android_hardware_tv_cec_V1_0_HdmiCec_H_
+#ifndef ANDROID_HARDWARE_TV_CEC_V1_0_HDMICEC_H
+#define ANDROID_HARDWARE_TV_CEC_V1_0_HDMICEC_H
 
 #include <algorithm>
 
@@ -101,4 +101,4 @@ extern "C" IHdmiCec* HIDL_FETCH_IHdmiCec(const char* name);
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_tv_cec_V1_0_HdmiCec_H_
+#endif  // ANDROID_HARDWARE_TV_CEC_V1_0_HDMICEC_H

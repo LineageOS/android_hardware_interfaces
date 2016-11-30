@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef HIDL_GENERATED_android_hardware_vr_V1_0_Vr_H_
-#define HIDL_GENERATED_android_hardware_vr_V1_0_Vr_H_
+#ifndef ANDROID_HARDWARE_VR_V1_0_VR_H
+#define ANDROID_HARDWARE_VR_V1_0_VR_H
 
 #include <android/hardware/vr/1.0/IVr.h>
 #include <hardware/vr.h>
@@ -48,4 +48,4 @@ extern "C" IVr* HIDL_FETCH_IVr(const char* name);
 }  // namespace hardware
 }  // namespace android
 
-#endif  // HIDL_GENERATED_android_hardware_vr_V1_0_Vr_H_
+#endif  // ANDROID_HARDWARE_VR_V1_0_VR_H
