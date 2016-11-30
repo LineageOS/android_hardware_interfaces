@@ -2430,7 +2430,7 @@ enum VehiclePropertyOperation : int32_t {
 };
 
 
-enum SubscribeFlags {
+enum SubscribeFlags : int32_t {
   UNDEFINED = 0x0,
 
   /*
@@ -2477,7 +2477,7 @@ struct SubscribeOptions {
 };
 
 /* Error codes used in vehicle HAL interface. */
-enum StatusCode {
+enum StatusCode : int32_t {
   OK = 0,
 
   /* Try again. */

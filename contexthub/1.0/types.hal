@@ -138,7 +138,7 @@ enum AsyncEventType : uint32_t {
     RESTARTED = 1, // Hub restarted unexpectedly
 };
 
-enum TransactionResult {
+enum TransactionResult : int32_t {
     SUCCESS,      // successful completion of transaction
     FAILURE,      // failed transaction
 };

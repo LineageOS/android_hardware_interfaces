@@ -76,7 +76,7 @@ interface IPrimaryDevice extends IDevice {
      */
     setBtScoWidebandEnabled(bool enabled) generates (Result retval);
 
-    enum TtyMode {
+    enum TtyMode : int32_t {
         OFF,
         VCO,
         HCO,

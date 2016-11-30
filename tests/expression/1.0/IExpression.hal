@@ -178,7 +178,7 @@ interface IExpression {
     MAX_PLUS_2 // 1
   };
 
-  enum Constants {
+  enum Constants : int32_t {
     CONST_FOO,
     CONST_BAR = 70,
     MAX_ARRAY_SIZE = 20,

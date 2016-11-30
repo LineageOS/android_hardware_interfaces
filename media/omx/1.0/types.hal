@@ -112,7 +112,7 @@ struct CodecBuffer {
     /**
      * There are four main types of buffers.
      */
-    enum Type {
+    enum Type : int32_t {
         INVALID = 0,
         PRESET,
         SHARED_MEM,
@@ -164,7 +164,7 @@ struct CodecBuffer {
  *
  * Enumeration of port modes.
  */
-enum PortMode {
+enum PortMode : int32_t {
     PRESET_START = 0,
     PRESET_BYTE_BUFFER,
     PRESET_ANW_BUFFER,

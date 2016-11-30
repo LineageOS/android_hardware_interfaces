@@ -18,7 +18,7 @@ package android.hardware.audio@2.0;
 
 import android.hardware.audio.common@2.0;
 
-enum Result {
+enum Result : int32_t {
     OK,
     NOT_INITIALIZED,
     INVALID_ARGUMENTS,
@@ -27,7 +27,7 @@ enum Result {
 };
 
 @export(name="audio_drain_type_t", value_prefix="AUDIO_DRAIN_")
-enum AudioDrain {
+enum AudioDrain : int32_t {
     /* drain() returns when all data has been played. */
     ALL,
     /* drain() returns a short time before all data from the current track has
