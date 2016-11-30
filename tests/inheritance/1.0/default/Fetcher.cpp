@@ -28,7 +28,7 @@ Return<void> selectService(bool sendRemote, CB &_hidl_cb, sp<IChild> &local) {
     } else {
         toSend = local;
     }
-    ALOGI("SERVER(Fetcher) selectService returning %p", toSend.get());
+    LOG(INFO) << "SERVER(Fetcher) selectService returning " << toSend.get();
     _hidl_cb(toSend);
     return Void();
 }
