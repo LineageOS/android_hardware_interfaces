@@ -2,7 +2,6 @@
 #define ANDROID_HARDWARE_TESTS_POINTER_V1_0_POINTER_H
 
 #include <android/hardware/tests/pointer/1.0/IPointer.h>
-#include <android-base/logging.h>
 #include <hidl/Status.h>
 
 #include <hidl/MQDescriptor.h>
@@ -28,13 +27,7 @@ struct Pointer : public IPointer {
 private:
     std::vector<std::string> errors;
 public:
-    Return<int32_t> getErrors() {
-        if(!errors.empty()) {
-            for(const auto& e : errors)
-                ALOGW("SERVER(Pointer) error: %s", e.c_str());
-        }
-        return errors.size();
-    }
+    Return<int32_t> getErrors() override;
     Return<void> foo1(const IPointer::Sam& s, IPointer::Sam const* s_ptr) override {
         PUSH_ERROR_IF(!(&s == s_ptr));
         return Void();
@@ -71,9 +64,6 @@ public:
         return Void();
     }
     Return<void> foo9(::android::hardware::hidl_string const* str_ref) override {
-        ALOGI("SERVER(Pointer) foo9 got string @ %p (size = %ld) \"%s\"",
-            str_ref->c_str(),
-            (unsigned long) str_ref->size(), str_ref->c_str());
         PUSH_ERROR_IF(!(strcmp(str_ref->c_str(), "meowmeowmeow") == 0));
         return Void();
     }
