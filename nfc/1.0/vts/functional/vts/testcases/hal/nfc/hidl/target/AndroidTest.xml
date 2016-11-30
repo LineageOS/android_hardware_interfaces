@@ -26,6 +26,6 @@
             "/>
         <option name="test-config-path" value="vts/testcases/hal/nfc/hidl/target/HalNfcHidlTargetBasicTest.config" />
         <option name="binary-test-type" value="gtest" />
-        <option name="test-timeout" value="1m" />
+        <option name="test-timeout" value="10m" />
     </test>
 </configuration>
