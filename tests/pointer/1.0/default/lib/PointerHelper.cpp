@@ -1,5 +1,5 @@
 #define LOG_TAG "hidl_test"
-#include <android-base/logging.h>
+#include <android/log.h>
 #include "PointerHelper.h"
 namespace android {
 
