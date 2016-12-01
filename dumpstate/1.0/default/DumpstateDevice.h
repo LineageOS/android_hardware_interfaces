@@ -41,8 +41,6 @@ struct DumpstateDevice : public IDumpstateDevice {
 
 };
 
-extern "C" IDumpstateDevice* HIDL_FETCH_IDumpstateDevice(const char* name);
-
 }  // namespace implementation
 }  // namespace V1_0
 }  // namespace dumpstate

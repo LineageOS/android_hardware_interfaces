@@ -22,6 +22,9 @@
 
 #include "DumpstateUtil.h"
 
+using android::os::dumpstate::DumpFileToFd;
+using android::os::dumpstate::RunCommandToFd;
+
 namespace android {
 namespace hardware {
 namespace dumpstate {
@@ -30,6 +33,10 @@ namespace implementation {
 
 // Methods from ::android::hardware::dumpstate::V1_0::IDumpstateDevice follow.
 Return<void> DumpstateDevice::dumpstateBoard(const hidl_handle& handle) {
+    // NOTE: this is just an example on how to use the DumpstateUtil.h functions to implement
+    // this interface - since HIDL_FETCH_IDumpstateDevice() is not defined, this function will never
+    // be called by dumpstate.
+
     if (handle->numFds < 1) {
         ALOGE("no FDs\n");
         return Void();
@@ -49,13 +56,6 @@ Return<void> DumpstateDevice::dumpstateBoard(const hidl_handle& handle) {
     DumpFileToFd(fd, "HOSTS", "/system/etc/hosts");
 
     return Void();
-}
-
-
-IDumpstateDevice* HIDL_FETCH_IDumpstateDevice(const char* /* name */) {
-    // TODO: temporary returning nullptr until it's implemented on master devices
-    return nullptr;
-//    return new DumpstateDevice();
 }
 
 }  // namespace implementation
