@@ -1,0 +1,18 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "ITvInputCallback"
+
+package: "android.hardware.tv.input"
+
+import: "android.hardware.tv.input@1.0::types"
+
+interface: {
+    api: {
+        name: "notify"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::tv::input::V1_0::TvInputEvent"
+        }
+    }
+
+}
