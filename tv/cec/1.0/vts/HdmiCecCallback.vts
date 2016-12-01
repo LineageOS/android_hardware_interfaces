@@ -1,0 +1,26 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "IHdmiCecCallback"
+
+package: "android.hardware.tv.cec"
+
+import: "android.hardware.tv.cec@1.0::types"
+
+interface: {
+    api: {
+        name: "onCecMessage"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::tv::cec::V1_0::CecMessage"
+        }
+    }
+
+    api: {
+        name: "onHotplugEvent"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::tv::cec::V1_0::HotplugEvent"
+        }
+    }
+
+}
