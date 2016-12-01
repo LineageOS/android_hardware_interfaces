@@ -112,16 +112,7 @@ Return<void> Foo::callMe(
                   << DELAY_S
                   << " seconds";
         c[1] = systemTime();
-        Return<bool> ret = cb->heyItsYouIsntIt(cb);
-        if (!ret.isOk()) {
-            LOG(ERROR) << "SERVER(Foo) callMe "
-                      << cb.get()
-                      << " encountered transport error ("
-                      << ret.getStatus().exceptionCode()
-                      << ").";
-            return Void();
-        }
-        bool answer = ret.get();
+        bool answer = cb->heyItsYouIsntIt(cb);
         c[1] = systemTime() - c[1];
 
         LOG(INFO) << "SERVER(Foo) callMe "
