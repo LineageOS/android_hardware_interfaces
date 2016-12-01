@@ -1,0 +1,1836 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "types"
+
+package: "android.hardware.tv.input"
+
+import: "android.hardware.audio.common@2.0::types"
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioHandleConsts"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "AUDIO_IO_HANDLE_NONE"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "AUDIO_MODULE_HANDLE_NONE"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "AUDIO_PORT_HANDLE_NONE"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "AUDIO_PATCH_HANDLE_NONE"
+        scalar_value: {
+            int32_t: 0
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::Uuid"
+    type: TYPE_STRUCT
+    struct_value: {
+        name: "timeLow"
+        type: TYPE_SCALAR
+        scalar_type: "uint32_t"
+    }
+    struct_value: {
+        name: "timeMid"
+        type: TYPE_SCALAR
+        scalar_type: "uint16_t"
+    }
+    struct_value: {
+        name: "versionAndTimeHigh"
+        type: TYPE_SCALAR
+        scalar_type: "uint16_t"
+    }
+    struct_value: {
+        name: "variantAndClockSeqHigh"
+        type: TYPE_SCALAR
+        scalar_type: "uint16_t"
+    }
+    struct_value: {
+        name: "node"
+        type: TYPE_ARRAY
+        vector_value: {
+            vector_size: 6
+            type: TYPE_SCALAR
+            scalar_type: "uint8_t"
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioStreamType"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "DEFAULT"
+        scalar_value: {
+            int32_t: -1
+        }
+        enumerator: "MIN"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "VOICE_CALL"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "SYSTEM"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "RING"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "MUSIC"
+        scalar_value: {
+            int32_t: 3
+        }
+        enumerator: "ALARM"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "NOTIFICATION"
+        scalar_value: {
+            int32_t: 5
+        }
+        enumerator: "BLUETOOTH_SCO"
+        scalar_value: {
+            int32_t: 6
+        }
+        enumerator: "ENFORCED_AUDIBLE"
+        scalar_value: {
+            int32_t: 7
+        }
+        enumerator: "DTMF"
+        scalar_value: {
+            int32_t: 8
+        }
+        enumerator: "TTS"
+        scalar_value: {
+            int32_t: 9
+        }
+        enumerator: "ACCESSIBILITY"
+        scalar_value: {
+            int32_t: 10
+        }
+        enumerator: "REROUTING"
+        scalar_value: {
+            int32_t: 11
+        }
+        enumerator: "PATCH"
+        scalar_value: {
+            int32_t: 12
+        }
+        enumerator: "PUBLIC_CNT"
+        scalar_value: {
+            int32_t: 10
+        }
+        enumerator: "FOR_POLICY_CNT"
+        scalar_value: {
+            int32_t: 12
+        }
+        enumerator: "CNT"
+        scalar_value: {
+            int32_t: 13
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioSource"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "DEFAULT"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "MIC"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "VOICE_UPLINK"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "VOICE_DOWNLINK"
+        scalar_value: {
+            int32_t: 3
+        }
+        enumerator: "VOICE_CALL"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "CAMCORDER"
+        scalar_value: {
+            int32_t: 5
+        }
+        enumerator: "VOICE_RECOGNITION"
+        scalar_value: {
+            int32_t: 6
+        }
+        enumerator: "VOICE_COMMUNICATION"
+        scalar_value: {
+            int32_t: 7
+        }
+        enumerator: "REMOTE_SUBMIX"
+        scalar_value: {
+            int32_t: 8
+        }
+        enumerator: "UNPROCESSED"
+        scalar_value: {
+            int32_t: 9
+        }
+        enumerator: "CNT"
+        scalar_value: {
+            int32_t: 10
+        }
+        enumerator: "MAX"
+        scalar_value: {
+            int32_t: 9
+        }
+        enumerator: "FM_TUNER"
+        scalar_value: {
+            int32_t: 1998
+        }
+        enumerator: "HOTWORD"
+        scalar_value: {
+            int32_t: 1999
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioSessionConsts"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "OUTPUT_STAGE"
+        scalar_value: {
+            int32_t: -1
+        }
+        enumerator: "OUTPUT_MIX"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "ALLOCATE"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "NONE"
+        scalar_value: {
+            int32_t: 0
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioFormat"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "uint32_t"
+
+        enumerator: "INVALID"
+        scalar_value: {
+            uint32_t: 4294967295
+        }
+        enumerator: "DEFAULT"
+        scalar_value: {
+            uint32_t: 0
+        }
+        enumerator: "PCM"
+        scalar_value: {
+            uint32_t: 0
+        }
+        enumerator: "MP3"
+        scalar_value: {
+            uint32_t: 16777216
+        }
+        enumerator: "AMR_NB"
+        scalar_value: {
+            uint32_t: 33554432
+        }
+        enumerator: "AMR_WB"
+        scalar_value: {
+            uint32_t: 50331648
+        }
+        enumerator: "AAC"
+        scalar_value: {
+            uint32_t: 67108864
+        }
+        enumerator: "HE_AAC_V1"
+        scalar_value: {
+            uint32_t: 83886080
+        }
+        enumerator: "HE_AAC_V2"
+        scalar_value: {
+            uint32_t: 100663296
+        }
+        enumerator: "VORBIS"
+        scalar_value: {
+            uint32_t: 117440512
+        }
+        enumerator: "OPUS"
+        scalar_value: {
+            uint32_t: 134217728
+        }
+        enumerator: "AC3"
+        scalar_value: {
+            uint32_t: 150994944
+        }
+        enumerator: "E_AC3"
+        scalar_value: {
+            uint32_t: 167772160
+        }
+        enumerator: "DTS"
+        scalar_value: {
+            uint32_t: 184549376
+        }
+        enumerator: "DTS_HD"
+        scalar_value: {
+            uint32_t: 201326592
+        }
+        enumerator: "IEC61937"
+        scalar_value: {
+            uint32_t: 218103808
+        }
+        enumerator: "DOLBY_TRUEHD"
+        scalar_value: {
+            uint32_t: 234881024
+        }
+        enumerator: "MAIN_MASK"
+        scalar_value: {
+            uint32_t: 4278190080
+        }
+        enumerator: "SUB_MASK"
+        scalar_value: {
+            uint32_t: 16777215
+        }
+        enumerator: "PCM_SUB_16_BIT"
+        scalar_value: {
+            uint32_t: 1
+        }
+        enumerator: "PCM_SUB_8_BIT"
+        scalar_value: {
+            uint32_t: 2
+        }
+        enumerator: "PCM_SUB_32_BIT"
+        scalar_value: {
+            uint32_t: 3
+        }
+        enumerator: "PCM_SUB_8_24_BIT"
+        scalar_value: {
+            uint32_t: 4
+        }
+        enumerator: "PCM_SUB_FLOAT"
+        scalar_value: {
+            uint32_t: 5
+        }
+        enumerator: "PCM_SUB_24_BIT_PACKED"
+        scalar_value: {
+            uint32_t: 6
+        }
+        enumerator: "MP3_SUB_NONE"
+        scalar_value: {
+            uint32_t: 0
+        }
+        enumerator: "AMR_SUB_NONE"
+        scalar_value: {
+            uint32_t: 0
+        }
+        enumerator: "AAC_SUB_MAIN"
+        scalar_value: {
+            uint32_t: 1
+        }
+        enumerator: "AAC_SUB_LC"
+        scalar_value: {
+            uint32_t: 2
+        }
+        enumerator: "AAC_SUB_SSR"
+        scalar_value: {
+            uint32_t: 4
+        }
+        enumerator: "AAC_SUB_LTP"
+        scalar_value: {
+            uint32_t: 8
+        }
+        enumerator: "AAC_SUB_HE_V1"
+        scalar_value: {
+            uint32_t: 16
+        }
+        enumerator: "AAC_SUB_SCALABLE"
+        scalar_value: {
+            uint32_t: 32
+        }
+        enumerator: "AAC_SUB_ERLC"
+        scalar_value: {
+            uint32_t: 64
+        }
+        enumerator: "AAC_SUB_LD"
+        scalar_value: {
+            uint32_t: 128
+        }
+        enumerator: "AAC_SUB_HE_V2"
+        scalar_value: {
+            uint32_t: 256
+        }
+        enumerator: "AAC_SUB_ELD"
+        scalar_value: {
+            uint32_t: 512
+        }
+        enumerator: "VORBIS_SUB_NONE"
+        scalar_value: {
+            uint32_t: 0
+        }
+        enumerator: "PCM_16_BIT"
+        scalar_value: {
+            uint32_t: 1
+        }
+        enumerator: "PCM_8_BIT"
+        scalar_value: {
+            uint32_t: 2
+        }
+        enumerator: "PCM_32_BIT"
+        scalar_value: {
+            uint32_t: 3
+        }
+        enumerator: "PCM_8_24_BIT"
+        scalar_value: {
+            uint32_t: 4
+        }
+        enumerator: "PCM_FLOAT"
+        scalar_value: {
+            uint32_t: 5
+        }
+        enumerator: "PCM_24_BIT_PACKED"
+        scalar_value: {
+            uint32_t: 6
+        }
+        enumerator: "AAC_MAIN"
+        scalar_value: {
+            uint32_t: 67108865
+        }
+        enumerator: "AAC_LC"
+        scalar_value: {
+            uint32_t: 67108866
+        }
+        enumerator: "AAC_SSR"
+        scalar_value: {
+            uint32_t: 67108868
+        }
+        enumerator: "AAC_LTP"
+        scalar_value: {
+            uint32_t: 67108872
+        }
+        enumerator: "AAC_HE_V1"
+        scalar_value: {
+            uint32_t: 67108880
+        }
+        enumerator: "AAC_SCALABLE"
+        scalar_value: {
+            uint32_t: 67108896
+        }
+        enumerator: "AAC_ERLC"
+        scalar_value: {
+            uint32_t: 67108928
+        }
+        enumerator: "AAC_LD"
+        scalar_value: {
+            uint32_t: 67108992
+        }
+        enumerator: "AAC_HE_V2"
+        scalar_value: {
+            uint32_t: 67109120
+        }
+        enumerator: "AAC_ELD"
+        scalar_value: {
+            uint32_t: 67109376
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::FixedChannelCount"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "FCC_2"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "FCC_8"
+        scalar_value: {
+            int32_t: 8
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioChannelMask"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "uint32_t"
+
+        enumerator: "REPRESENTATION_POSITION"
+        scalar_value: {
+            uint32_t: 0
+        }
+        enumerator: "REPRESENTATION_INDEX"
+        scalar_value: {
+            uint32_t: 2
+        }
+        enumerator: "NONE"
+        scalar_value: {
+            uint32_t: 0
+        }
+        enumerator: "INVALID"
+        scalar_value: {
+            uint32_t: 3221225472
+        }
+        enumerator: "OUT_FRONT_LEFT"
+        scalar_value: {
+            uint32_t: 1
+        }
+        enumerator: "OUT_FRONT_RIGHT"
+        scalar_value: {
+            uint32_t: 2
+        }
+        enumerator: "OUT_FRONT_CENTER"
+        scalar_value: {
+            uint32_t: 4
+        }
+        enumerator: "OUT_LOW_FREQUENCY"
+        scalar_value: {
+            uint32_t: 8
+        }
+        enumerator: "OUT_BACK_LEFT"
+        scalar_value: {
+            uint32_t: 16
+        }
+        enumerator: "OUT_BACK_RIGHT"
+        scalar_value: {
+            uint32_t: 32
+        }
+        enumerator: "OUT_FRONT_LEFT_OF_CENTER"
+        scalar_value: {
+            uint32_t: 64
+        }
+        enumerator: "OUT_FRONT_RIGHT_OF_CENTER"
+        scalar_value: {
+            uint32_t: 128
+        }
+        enumerator: "OUT_BACK_CENTER"
+        scalar_value: {
+            uint32_t: 256
+        }
+        enumerator: "OUT_SIDE_LEFT"
+        scalar_value: {
+            uint32_t: 512
+        }
+        enumerator: "OUT_SIDE_RIGHT"
+        scalar_value: {
+            uint32_t: 1024
+        }
+        enumerator: "OUT_TOP_CENTER"
+        scalar_value: {
+            uint32_t: 2048
+        }
+        enumerator: "OUT_TOP_FRONT_LEFT"
+        scalar_value: {
+            uint32_t: 4096
+        }
+        enumerator: "OUT_TOP_FRONT_CENTER"
+        scalar_value: {
+            uint32_t: 8192
+        }
+        enumerator: "OUT_TOP_FRONT_RIGHT"
+        scalar_value: {
+            uint32_t: 16384
+        }
+        enumerator: "OUT_TOP_BACK_LEFT"
+        scalar_value: {
+            uint32_t: 32768
+        }
+        enumerator: "OUT_TOP_BACK_CENTER"
+        scalar_value: {
+            uint32_t: 65536
+        }
+        enumerator: "OUT_TOP_BACK_RIGHT"
+        scalar_value: {
+            uint32_t: 131072
+        }
+        enumerator: "OUT_MONO"
+        scalar_value: {
+            uint32_t: 1
+        }
+        enumerator: "OUT_STEREO"
+        scalar_value: {
+            uint32_t: 3
+        }
+        enumerator: "OUT_QUAD"
+        scalar_value: {
+            uint32_t: 51
+        }
+        enumerator: "OUT_QUAD_BACK"
+        scalar_value: {
+            uint32_t: 51
+        }
+        enumerator: "OUT_QUAD_SIDE"
+        scalar_value: {
+            uint32_t: 1539
+        }
+        enumerator: "OUT_5POINT1"
+        scalar_value: {
+            uint32_t: 63
+        }
+        enumerator: "OUT_5POINT1_BACK"
+        scalar_value: {
+            uint32_t: 63
+        }
+        enumerator: "OUT_5POINT1_SIDE"
+        scalar_value: {
+            uint32_t: 1551
+        }
+        enumerator: "OUT_7POINT1"
+        scalar_value: {
+            uint32_t: 1599
+        }
+        enumerator: "OUT_ALL"
+        scalar_value: {
+            uint32_t: 262143
+        }
+        enumerator: "IN_LEFT"
+        scalar_value: {
+            uint32_t: 4
+        }
+        enumerator: "IN_RIGHT"
+        scalar_value: {
+            uint32_t: 8
+        }
+        enumerator: "IN_FRONT"
+        scalar_value: {
+            uint32_t: 16
+        }
+        enumerator: "IN_BACK"
+        scalar_value: {
+            uint32_t: 32
+        }
+        enumerator: "IN_LEFT_PROCESSED"
+        scalar_value: {
+            uint32_t: 64
+        }
+        enumerator: "IN_RIGHT_PROCESSED"
+        scalar_value: {
+            uint32_t: 128
+        }
+        enumerator: "IN_FRONT_PROCESSED"
+        scalar_value: {
+            uint32_t: 256
+        }
+        enumerator: "IN_BACK_PROCESSED"
+        scalar_value: {
+            uint32_t: 512
+        }
+        enumerator: "IN_PRESSURE"
+        scalar_value: {
+            uint32_t: 1024
+        }
+        enumerator: "IN_X_AXIS"
+        scalar_value: {
+            uint32_t: 2048
+        }
+        enumerator: "IN_Y_AXIS"
+        scalar_value: {
+            uint32_t: 4096
+        }
+        enumerator: "IN_Z_AXIS"
+        scalar_value: {
+            uint32_t: 8192
+        }
+        enumerator: "IN_VOICE_UPLINK"
+        scalar_value: {
+            uint32_t: 16384
+        }
+        enumerator: "IN_VOICE_DNLINK"
+        scalar_value: {
+            uint32_t: 32768
+        }
+        enumerator: "IN_MONO"
+        scalar_value: {
+            uint32_t: 16
+        }
+        enumerator: "IN_STEREO"
+        scalar_value: {
+            uint32_t: 12
+        }
+        enumerator: "IN_FRONT_BACK"
+        scalar_value: {
+            uint32_t: 48
+        }
+        enumerator: "IN_ALL"
+        scalar_value: {
+            uint32_t: 65532
+        }
+        enumerator: "COUNT_MAX"
+        scalar_value: {
+            uint32_t: 30
+        }
+        enumerator: "INDEX_HDR"
+        scalar_value: {
+            uint32_t: 2147483648
+        }
+        enumerator: "INDEX_MASK_1"
+        scalar_value: {
+            uint32_t: 2147483649
+        }
+        enumerator: "INDEX_MASK_2"
+        scalar_value: {
+            uint32_t: 2147483651
+        }
+        enumerator: "INDEX_MASK_3"
+        scalar_value: {
+            uint32_t: 2147483655
+        }
+        enumerator: "INDEX_MASK_4"
+        scalar_value: {
+            uint32_t: 2147483663
+        }
+        enumerator: "INDEX_MASK_5"
+        scalar_value: {
+            uint32_t: 2147483679
+        }
+        enumerator: "INDEX_MASK_6"
+        scalar_value: {
+            uint32_t: 2147483711
+        }
+        enumerator: "INDEX_MASK_7"
+        scalar_value: {
+            uint32_t: 2147483775
+        }
+        enumerator: "INDEX_MASK_8"
+        scalar_value: {
+            uint32_t: 2147483903
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioInterleave"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "LEFT"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "RIGHT"
+        scalar_value: {
+            int32_t: 1
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioMode"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "INVALID"
+        scalar_value: {
+            int32_t: -2
+        }
+        enumerator: "CURRENT"
+        scalar_value: {
+            int32_t: -1
+        }
+        enumerator: "NORMAL"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "RINGTONE"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "IN_CALL"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "IN_COMMUNICATION"
+        scalar_value: {
+            int32_t: 3
+        }
+        enumerator: "CNT"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "MAX"
+        scalar_value: {
+            int32_t: 3
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioDevice"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "uint32_t"
+
+        enumerator: "NONE"
+        scalar_value: {
+            uint32_t: 0
+        }
+        enumerator: "BIT_IN"
+        scalar_value: {
+            uint32_t: 2147483648
+        }
+        enumerator: "BIT_DEFAULT"
+        scalar_value: {
+            uint32_t: 1073741824
+        }
+        enumerator: "OUT_EARPIECE"
+        scalar_value: {
+            uint32_t: 1
+        }
+        enumerator: "OUT_SPEAKER"
+        scalar_value: {
+            uint32_t: 2
+        }
+        enumerator: "OUT_WIRED_HEADSET"
+        scalar_value: {
+            uint32_t: 4
+        }
+        enumerator: "OUT_WIRED_HEADPHONE"
+        scalar_value: {
+            uint32_t: 8
+        }
+        enumerator: "OUT_BLUETOOTH_SCO"
+        scalar_value: {
+            uint32_t: 16
+        }
+        enumerator: "OUT_BLUETOOTH_SCO_HEADSET"
+        scalar_value: {
+            uint32_t: 32
+        }
+        enumerator: "OUT_BLUETOOTH_SCO_CARKIT"
+        scalar_value: {
+            uint32_t: 64
+        }
+        enumerator: "OUT_BLUETOOTH_A2DP"
+        scalar_value: {
+            uint32_t: 128
+        }
+        enumerator: "OUT_BLUETOOTH_A2DP_HEADPHONES"
+        scalar_value: {
+            uint32_t: 256
+        }
+        enumerator: "OUT_BLUETOOTH_A2DP_SPEAKER"
+        scalar_value: {
+            uint32_t: 512
+        }
+        enumerator: "OUT_AUX_DIGITAL"
+        scalar_value: {
+            uint32_t: 1024
+        }
+        enumerator: "OUT_HDMI"
+        scalar_value: {
+            uint32_t: 1024
+        }
+        enumerator: "OUT_ANLG_DOCK_HEADSET"
+        scalar_value: {
+            uint32_t: 2048
+        }
+        enumerator: "OUT_DGTL_DOCK_HEADSET"
+        scalar_value: {
+            uint32_t: 4096
+        }
+        enumerator: "OUT_USB_ACCESSORY"
+        scalar_value: {
+            uint32_t: 8192
+        }
+        enumerator: "OUT_USB_DEVICE"
+        scalar_value: {
+            uint32_t: 16384
+        }
+        enumerator: "OUT_REMOTE_SUBMIX"
+        scalar_value: {
+            uint32_t: 32768
+        }
+        enumerator: "OUT_TELEPHONY_TX"
+        scalar_value: {
+            uint32_t: 65536
+        }
+        enumerator: "OUT_LINE"
+        scalar_value: {
+            uint32_t: 131072
+        }
+        enumerator: "OUT_HDMI_ARC"
+        scalar_value: {
+            uint32_t: 262144
+        }
+        enumerator: "OUT_SPDIF"
+        scalar_value: {
+            uint32_t: 524288
+        }
+        enumerator: "OUT_FM"
+        scalar_value: {
+            uint32_t: 1048576
+        }
+        enumerator: "OUT_AUX_LINE"
+        scalar_value: {
+            uint32_t: 2097152
+        }
+        enumerator: "OUT_SPEAKER_SAFE"
+        scalar_value: {
+            uint32_t: 4194304
+        }
+        enumerator: "OUT_IP"
+        scalar_value: {
+            uint32_t: 8388608
+        }
+        enumerator: "OUT_BUS"
+        scalar_value: {
+            uint32_t: 16777216
+        }
+        enumerator: "OUT_DEFAULT"
+        scalar_value: {
+            uint32_t: 1073741824
+        }
+        enumerator: "OUT_ALL"
+        scalar_value: {
+            uint32_t: 1107296255
+        }
+        enumerator: "OUT_ALL_A2DP"
+        scalar_value: {
+            uint32_t: 896
+        }
+        enumerator: "OUT_ALL_SCO"
+        scalar_value: {
+            uint32_t: 112
+        }
+        enumerator: "OUT_ALL_USB"
+        scalar_value: {
+            uint32_t: 24576
+        }
+        enumerator: "IN_COMMUNICATION"
+        scalar_value: {
+            uint32_t: 2147483649
+        }
+        enumerator: "IN_AMBIENT"
+        scalar_value: {
+            uint32_t: 2147483650
+        }
+        enumerator: "IN_BUILTIN_MIC"
+        scalar_value: {
+            uint32_t: 2147483652
+        }
+        enumerator: "IN_BLUETOOTH_SCO_HEADSET"
+        scalar_value: {
+            uint32_t: 2147483656
+        }
+        enumerator: "IN_WIRED_HEADSET"
+        scalar_value: {
+            uint32_t: 2147483664
+        }
+        enumerator: "IN_AUX_DIGITAL"
+        scalar_value: {
+            uint32_t: 2147483680
+        }
+        enumerator: "IN_HDMI"
+        scalar_value: {
+            uint32_t: 2147483680
+        }
+        enumerator: "IN_VOICE_CALL"
+        scalar_value: {
+            uint32_t: 2147483712
+        }
+        enumerator: "IN_TELEPHONY_RX"
+        scalar_value: {
+            uint32_t: 2147483712
+        }
+        enumerator: "IN_BACK_MIC"
+        scalar_value: {
+            uint32_t: 2147483776
+        }
+        enumerator: "IN_REMOTE_SUBMIX"
+        scalar_value: {
+            uint32_t: 2147483904
+        }
+        enumerator: "IN_ANLG_DOCK_HEADSET"
+        scalar_value: {
+            uint32_t: 2147484160
+        }
+        enumerator: "IN_DGTL_DOCK_HEADSET"
+        scalar_value: {
+            uint32_t: 2147484672
+        }
+        enumerator: "IN_USB_ACCESSORY"
+        scalar_value: {
+            uint32_t: 2147485696
+        }
+        enumerator: "IN_USB_DEVICE"
+        scalar_value: {
+            uint32_t: 2147487744
+        }
+        enumerator: "IN_FM_TUNER"
+        scalar_value: {
+            uint32_t: 2147491840
+        }
+        enumerator: "IN_TV_TUNER"
+        scalar_value: {
+            uint32_t: 2147500032
+        }
+        enumerator: "IN_LINE"
+        scalar_value: {
+            uint32_t: 2147516416
+        }
+        enumerator: "IN_SPDIF"
+        scalar_value: {
+            uint32_t: 2147549184
+        }
+        enumerator: "IN_BLUETOOTH_A2DP"
+        scalar_value: {
+            uint32_t: 2147614720
+        }
+        enumerator: "IN_LOOPBACK"
+        scalar_value: {
+            uint32_t: 2147745792
+        }
+        enumerator: "IN_IP"
+        scalar_value: {
+            uint32_t: 2148007936
+        }
+        enumerator: "IN_BUS"
+        scalar_value: {
+            uint32_t: 2148532224
+        }
+        enumerator: "IN_DEFAULT"
+        scalar_value: {
+            uint32_t: 3221225472
+        }
+        enumerator: "IN_ALL"
+        scalar_value: {
+            uint32_t: 3223322623
+        }
+        enumerator: "IN_ALL_SCO"
+        scalar_value: {
+            uint32_t: 2147483656
+        }
+        enumerator: "IN_ALL_USB"
+        scalar_value: {
+            uint32_t: 2147489792
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioOutputFlag"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "NONE"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "DIRECT"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "PRIMARY"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "FAST"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "DEEP_BUFFER"
+        scalar_value: {
+            int32_t: 8
+        }
+        enumerator: "COMPRESS_OFFLOAD"
+        scalar_value: {
+            int32_t: 16
+        }
+        enumerator: "NON_BLOCKING"
+        scalar_value: {
+            int32_t: 32
+        }
+        enumerator: "HW_AV_SYNC"
+        scalar_value: {
+            int32_t: 64
+        }
+        enumerator: "TTS"
+        scalar_value: {
+            int32_t: 128
+        }
+        enumerator: "RAW"
+        scalar_value: {
+            int32_t: 256
+        }
+        enumerator: "SYNC"
+        scalar_value: {
+            int32_t: 512
+        }
+        enumerator: "IEC958_NONAUDIO"
+        scalar_value: {
+            int32_t: 1024
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioInputFlag"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "NONE"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "FAST"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "HW_HOTWORD"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "RAW"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "SYNC"
+        scalar_value: {
+            int32_t: 8
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioOffloadInfo"
+    type: TYPE_STRUCT
+    struct_value: {
+        name: "sampleRateHz"
+        type: TYPE_SCALAR
+        scalar_type: "uint32_t"
+    }
+    struct_value: {
+        name: "channelMask"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioChannelMask"
+    }
+    struct_value: {
+        name: "format"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioFormat"
+    }
+    struct_value: {
+        name: "streamType"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioStreamType"
+    }
+    struct_value: {
+        name: "bitRatePerSecond"
+        type: TYPE_SCALAR
+        scalar_type: "uint32_t"
+    }
+    struct_value: {
+        name: "durationMicroseconds"
+        type: TYPE_SCALAR
+        scalar_type: "int64_t"
+    }
+    struct_value: {
+        name: "hasVideo"
+        type: TYPE_SCALAR
+        scalar_type: "bool_t"
+    }
+    struct_value: {
+        name: "isStreaming"
+        type: TYPE_SCALAR
+        scalar_type: "bool_t"
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioConfig"
+    type: TYPE_STRUCT
+    struct_value: {
+        name: "sampleRateHz"
+        type: TYPE_SCALAR
+        scalar_type: "uint32_t"
+    }
+    struct_value: {
+        name: "channelMask"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioChannelMask"
+    }
+    struct_value: {
+        name: "format"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioFormat"
+    }
+    struct_value: {
+        name: "offloadInfo"
+        type: TYPE_STRUCT
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioOffloadInfo"
+    }
+    struct_value: {
+        name: "frameCount"
+        type: TYPE_SCALAR
+        scalar_type: "uint64_t"
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioGainMode"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "uint32_t"
+
+        enumerator: "JOINT"
+        scalar_value: {
+            uint32_t: 1
+        }
+        enumerator: "CHANNELS"
+        scalar_value: {
+            uint32_t: 2
+        }
+        enumerator: "RAMP"
+        scalar_value: {
+            uint32_t: 4
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioGain"
+    type: TYPE_STRUCT
+    struct_value: {
+        name: "mode"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioGainMode"
+    }
+    struct_value: {
+        name: "channelMask"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioChannelMask"
+    }
+    struct_value: {
+        name: "minValue"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
+    }
+    struct_value: {
+        name: "maxValue"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
+    }
+    struct_value: {
+        name: "defaultValue"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
+    }
+    struct_value: {
+        name: "stepValue"
+        type: TYPE_SCALAR
+        scalar_type: "uint32_t"
+    }
+    struct_value: {
+        name: "minRampMs"
+        type: TYPE_SCALAR
+        scalar_type: "uint32_t"
+    }
+    struct_value: {
+        name: "maxRampMs"
+        type: TYPE_SCALAR
+        scalar_type: "uint32_t"
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioGainConfig"
+    type: TYPE_STRUCT
+    struct_value: {
+        name: "index"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
+    }
+    struct_value: {
+        name: "mode"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioGainMode"
+    }
+    struct_value: {
+        name: "channelMask"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioChannelMask"
+    }
+    struct_value: {
+        name: "values"
+        type: TYPE_ARRAY
+        vector_value: {
+            vector_size: 32
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+    struct_value: {
+        name: "rampDurationMs"
+        type: TYPE_SCALAR
+        scalar_type: "uint32_t"
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioPortRole"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "NONE"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "SOURCE"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "SINK"
+        scalar_value: {
+            int32_t: 2
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioPortType"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "NONE"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "DEVICE"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "MIX"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "SESSION"
+        scalar_value: {
+            int32_t: 3
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioPortConfigDeviceExt"
+    type: TYPE_STRUCT
+    struct_value: {
+        name: "hwModule"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
+    }
+    struct_value: {
+        name: "type"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioDevice"
+    }
+    struct_value: {
+        name: "address"
+        type: TYPE_ARRAY
+        vector_value: {
+            vector_size: 32
+            type: TYPE_SCALAR
+            scalar_type: "uint8_t"
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioPortConfigSessionExt"
+    type: TYPE_STRUCT
+    struct_value: {
+        name: "session"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioPortConfigMask"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "uint32_t"
+
+        enumerator: "SAMPLE_RATE"
+        scalar_value: {
+            uint32_t: 1
+        }
+        enumerator: "CHANNEL_MASK"
+        scalar_value: {
+            uint32_t: 2
+        }
+        enumerator: "FORMAT"
+        scalar_value: {
+            uint32_t: 4
+        }
+        enumerator: "GAIN"
+        scalar_value: {
+            uint32_t: 8
+        }
+        enumerator: "ALL"
+        scalar_value: {
+            uint32_t: 15
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioPortConfig"
+    type: TYPE_STRUCT
+    sub_struct: {
+        name: "::android::hardware::audio::common::V2_0::AudioPortConfig::Ext"
+        type: TYPE_UNION
+        sub_union: {
+            name: "::android::hardware::audio::common::V2_0::AudioPortConfig::Ext::AudioPortConfigMixExt"
+            type: TYPE_STRUCT
+            sub_struct: {
+                name: "::android::hardware::audio::common::V2_0::AudioPortConfig::Ext::AudioPortConfigMixExt::UseCase"
+                type: TYPE_UNION
+                union_value: {
+                    name: "stream"
+                    type: TYPE_ENUM
+                    predefined_type: "::android::hardware::audio::common::V2_0::AudioStreamType"
+                }
+                union_value: {
+                    name: "source"
+                    type: TYPE_ENUM
+                    predefined_type: "::android::hardware::audio::common::V2_0::AudioSource"
+                }
+            }
+            struct_value: {
+                name: "hwModule"
+                type: TYPE_SCALAR
+                scalar_type: "int32_t"
+            }
+            struct_value: {
+                name: "ioHandle"
+                type: TYPE_SCALAR
+                scalar_type: "int32_t"
+            }
+            struct_value: {
+                name: "useCase"
+                type: TYPE_UNION
+                predefined_type: "::android::hardware::audio::common::V2_0::AudioPortConfig::Ext::AudioPortConfigMixExt::UseCase"
+            }
+        }
+        union_value: {
+            name: "device"
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::audio::common::V2_0::AudioPortConfigDeviceExt"
+        }
+        union_value: {
+            name: "mix"
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::audio::common::V2_0::AudioPortConfig::Ext::AudioPortConfigMixExt"
+        }
+        union_value: {
+            name: "session"
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::audio::common::V2_0::AudioPortConfigSessionExt"
+        }
+    }
+    struct_value: {
+        name: "id"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
+    }
+    struct_value: {
+        name: "configMask"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioPortConfigMask"
+    }
+    struct_value: {
+        name: "sampleRateHz"
+        type: TYPE_SCALAR
+        scalar_type: "uint32_t"
+    }
+    struct_value: {
+        name: "channelMask"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioChannelMask"
+    }
+    struct_value: {
+        name: "format"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioFormat"
+    }
+    struct_value: {
+        name: "gain"
+        type: TYPE_STRUCT
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioGainConfig"
+    }
+    struct_value: {
+        name: "type"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioPortType"
+    }
+    struct_value: {
+        name: "role"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioPortRole"
+    }
+    struct_value: {
+        name: "ext"
+        type: TYPE_UNION
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioPortConfig::Ext"
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioPortDeviceExt"
+    type: TYPE_STRUCT
+    struct_value: {
+        name: "hwModule"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
+    }
+    struct_value: {
+        name: "type"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioDevice"
+    }
+    struct_value: {
+        name: "address"
+        type: TYPE_ARRAY
+        vector_value: {
+            vector_size: 32
+            type: TYPE_SCALAR
+            scalar_type: "uint8_t"
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioMixLatencyClass"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "LOW"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "NORMAL"
+        scalar_value: {
+            int32_t: 1
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioPortMixExt"
+    type: TYPE_STRUCT
+    struct_value: {
+        name: "hwModule"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
+    }
+    struct_value: {
+        name: "ioHandle"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
+    }
+    struct_value: {
+        name: "latencyClass"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioMixLatencyClass"
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioPortSessionExt"
+    type: TYPE_STRUCT
+    struct_value: {
+        name: "session"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioPort"
+    type: TYPE_STRUCT
+    sub_struct: {
+        name: "::android::hardware::audio::common::V2_0::AudioPort::Ext"
+        type: TYPE_UNION
+        union_value: {
+            name: "device"
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::audio::common::V2_0::AudioPortDeviceExt"
+        }
+        union_value: {
+            name: "mix"
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::audio::common::V2_0::AudioPortMixExt"
+        }
+        union_value: {
+            name: "session"
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::audio::common::V2_0::AudioPortSessionExt"
+        }
+    }
+    struct_value: {
+        name: "id"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
+    }
+    struct_value: {
+        name: "role"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioPortRole"
+    }
+    struct_value: {
+        name: "name"
+        type: TYPE_STRING
+    }
+    struct_value: {
+        name: "sampleRates"
+        type: TYPE_VECTOR
+        vector_value: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+    struct_value: {
+        name: "channelMasks"
+        type: TYPE_VECTOR
+        vector_value: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::audio::common::V2_0::AudioChannelMask"
+        }
+    }
+    struct_value: {
+        name: "formats"
+        type: TYPE_VECTOR
+        vector_value: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::audio::common::V2_0::AudioFormat"
+        }
+    }
+    struct_value: {
+        name: "gains"
+        type: TYPE_VECTOR
+        vector_value: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::audio::common::V2_0::AudioGain"
+        }
+    }
+    struct_value: {
+        name: "activeConfig"
+        type: TYPE_STRUCT
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioPortConfig"
+    }
+    struct_value: {
+        name: "type"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioPortType"
+    }
+    struct_value: {
+        name: "ext"
+        type: TYPE_UNION
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioPort::Ext"
+    }
+}
+
+attribute: {
+    name: "::android::hardware::tv::input::V1_0::Result"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "OK"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "UNKNOWN"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "NO_RESOURCE"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "INVALID_ARGUMENTS"
+        scalar_value: {
+            int32_t: 3
+        }
+        enumerator: "INVALID_STATE"
+        scalar_value: {
+            int32_t: 4
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::tv::input::V1_0::TvInputType"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "OTHER"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "TUNER"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "COMPOSITE"
+        scalar_value: {
+            int32_t: 3
+        }
+        enumerator: "SVIDEO"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "SCART"
+        scalar_value: {
+            int32_t: 5
+        }
+        enumerator: "COMPONENT"
+        scalar_value: {
+            int32_t: 6
+        }
+        enumerator: "VGA"
+        scalar_value: {
+            int32_t: 7
+        }
+        enumerator: "DVI"
+        scalar_value: {
+            int32_t: 8
+        }
+        enumerator: "HDMI"
+        scalar_value: {
+            int32_t: 9
+        }
+        enumerator: "DISPLAY_PORT"
+        scalar_value: {
+            int32_t: 10
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::tv::input::V1_0::TvInputDeviceInfo"
+    type: TYPE_STRUCT
+    struct_value: {
+        name: "deviceId"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
+    }
+    struct_value: {
+        name: "type"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::tv::input::V1_0::TvInputType"
+    }
+    struct_value: {
+        name: "portId"
+        type: TYPE_SCALAR
+        scalar_type: "uint32_t"
+    }
+    struct_value: {
+        name: "audioType"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioDevice"
+    }
+    struct_value: {
+        name: "audioAddress"
+        type: TYPE_ARRAY
+        vector_value: {
+            vector_size: 32
+            type: TYPE_SCALAR
+            scalar_type: "uint8_t"
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::tv::input::V1_0::TvInputEventType"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "DEVICE_AVAILABLE"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "DEVICE_UNAVAILABLE"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "STREAM_CONFIGURATIONS_CHANGED"
+        scalar_value: {
+            int32_t: 3
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::tv::input::V1_0::TvInputEvent"
+    type: TYPE_STRUCT
+    struct_value: {
+        name: "type"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::tv::input::V1_0::TvInputEventType"
+    }
+    struct_value: {
+        name: "deviceInfo"
+        type: TYPE_STRUCT
+        predefined_type: "::android::hardware::tv::input::V1_0::TvInputDeviceInfo"
+    }
+}
+
+attribute: {
+    name: "::android::hardware::tv::input::V1_0::TvStreamConfig"
+    type: TYPE_STRUCT
+    struct_value: {
+        name: "streamId"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
+    }
+    struct_value: {
+        name: "maxVideoWidth"
+        type: TYPE_SCALAR
+        scalar_type: "uint32_t"
+    }
+    struct_value: {
+        name: "maxVideoHeight"
+        type: TYPE_SCALAR
+        scalar_type: "uint32_t"
+    }
+}
+
