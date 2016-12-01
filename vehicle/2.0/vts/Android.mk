@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#      http://www.apache.org/licenses/LICENSE-2.0
+#       http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,18 +16,33 @@
 
 LOCAL_PATH := $(call my-dir)
 
-include $(call all-subdir-makefiles)
-
+# build VTS driver for Vehicle v2.0.
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := VibratorHidlTargetTest
-VTS_CONFIG_SRC_DIR := testcases/hal/vibrator/hidl/target
-LOCAL_MODULE_CLASS := FAKE
-LOCAL_IS_HOST_MODULE := true
-LOCAL_COMPATIBILITY_SUITE := vts
+LOCAL_MODULE := libvts_driver_hidl_vehicle@2.0
 
-include $(BUILD_SYSTEM)/base_rules.mk
+LOCAL_SRC_FILES := \
+  Vehicle.vts \
+  VehicleCallback.vts \
+  types.vts \
 
-$(LOCAL_BUILT_MODULE):
-  @echo "VTS host-driven test target: $(LOCAL_MODULE)"
-  $(hide) touch $@
+LOCAL_SHARED_LIBRARIES += \
+  android.hardware.vehicle@2.0 \
+  libbase \
+  libutils \
+  libcutils \
+  liblog \
+  libhidlbase \
+  libhidltransport \
+  libhwbinder \
+  libprotobuf-cpp-full \
+  libvts_common \
+  libvts_datatype \
+  libvts_measurement \
+  libvts_multidevice_proto \
+
+LOCAL_PROTOC_OPTIMIZE_TYPE := full
+
+LOCAL_MULTILIB := both
+
+include $(BUILD_SHARED_LIBRARY)

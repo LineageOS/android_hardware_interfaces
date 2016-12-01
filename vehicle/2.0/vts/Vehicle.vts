@@ -1,0 +1,116 @@
+component_class: HAL_HIDL
+component_type_version: 2.0
+component_name: "IVehicle"
+
+package: "android.hardware.vehicle"
+
+import: "android.hardware.vehicle@2.0::IVehicleCallback"
+import: "android.hardware.vehicle@2.0::types"
+
+interface: {
+    api: {
+        name: "getAllPropConfigs"
+        return_type_hidl: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRUCT
+                predefined_type: "::android::hardware::vehicle::V2_0::VehiclePropConfig"
+            }
+        }
+    }
+
+    api: {
+        name: "getPropConfigs"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::vehicle::V2_0::StatusCode"
+        }
+        return_type_hidl: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRUCT
+                predefined_type: "::android::hardware::vehicle::V2_0::VehiclePropConfig"
+            }
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_ENUM
+                predefined_type: "::android::hardware::vehicle::V2_0::VehicleProperty"
+            }
+        }
+    }
+
+    api: {
+        name: "get"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::vehicle::V2_0::StatusCode"
+        }
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::vehicle::V2_0::VehiclePropValue"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::vehicle::V2_0::VehiclePropValue"
+        }
+    }
+
+    api: {
+        name: "set"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::vehicle::V2_0::StatusCode"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::vehicle::V2_0::VehiclePropValue"
+        }
+    }
+
+    api: {
+        name: "subscribe"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::vehicle::V2_0::StatusCode"
+        }
+        arg: {
+            type: TYPE_HIDL_CALLBACK
+            predefined_type: "IVehicleCallback"
+            is_callback: true
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRUCT
+                predefined_type: "::android::hardware::vehicle::V2_0::SubscribeOptions"
+            }
+        }
+    }
+
+    api: {
+        name: "unsubscribe"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::vehicle::V2_0::StatusCode"
+        }
+        arg: {
+            type: TYPE_HIDL_CALLBACK
+            predefined_type: "IVehicleCallback"
+            is_callback: true
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::vehicle::V2_0::VehicleProperty"
+        }
+    }
+
+    api: {
+        name: "debugDump"
+        return_type_hidl: {
+            type: TYPE_STRING
+        }
+    }
+
+}
