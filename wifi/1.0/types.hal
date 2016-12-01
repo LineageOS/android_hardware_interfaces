@@ -486,7 +486,7 @@ struct StaScanResult {
 /**
  * Mask of flags set in the |ScanData| instance.
  */
-enum StaScanDataFlagMask {
+enum StaScanDataFlagMask : int32_t {
   /**
    * Indicates that a scan was interrupted/did not occur so results may be
    * incomplete.
