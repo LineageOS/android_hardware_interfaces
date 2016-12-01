@@ -1,0 +1,172 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "IHdmiCec"
+
+package: "android.hardware.tv.cec"
+
+import: "android.hardware.tv.cec@1.0::IHdmiCecCallback"
+import: "android.hardware.tv.cec@1.0::types"
+
+interface: {
+    api: {
+        name: "addLogicalAddress"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::tv::cec::V1_0::Result"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::tv::cec::V1_0::CecLogicalAddress"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "clearLogicalAddress"
+        callflow: {
+            next: "addLogicalAddress"
+        }
+        callflow: {
+            exit: true
+        }
+    }
+
+    api: {
+        name: "getPhysicalAddress"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::tv::cec::V1_0::Result"
+        }
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "uint16_t"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "sendMessage"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::tv::cec::V1_0::SendMessageResult"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::tv::cec::V1_0::CecMessage"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "setCallback"
+        arg: {
+            type: TYPE_HIDL_CALLBACK
+            predefined_type: "IHdmiCecCallback"
+            is_callback: true
+        }
+        callflow: {
+            next: "addLogicalAddress"
+        }
+        callflow: {
+            entry: true
+        }
+    }
+
+    api: {
+        name: "getCecVersion"
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "getVendorId"
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "getPortInfo"
+        return_type_hidl: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRUCT
+                predefined_type: "::android::hardware::tv::cec::V1_0::HdmiPortInfo"
+            }
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "setOption"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::tv::cec::V1_0::OptionKey"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "setLanguage"
+        arg: {
+            type: TYPE_STRING
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "enableAudioReturnChannel"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "isConnected"
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+}
