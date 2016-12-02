@@ -23,7 +23,6 @@ import android.hardware.graphics.common@1.0::PixelFormat;
  */
 typedef handle FileDescriptor; // This must have no more than one fd.
 typedef FileDescriptor Fence;
-typedef int32_t Status; // TODO: convert to an enum
 typedef vec<uint8_t> Bytes;
 
 /**

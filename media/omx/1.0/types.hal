@@ -22,6 +22,23 @@ import android.hardware.media@1.0::types;
 typedef uint32_t BufferId;
 
 /**
+ * Ref: system/core/include/utils/Errors.h
+ * Ref: bionic/libc/kernel/uapi/asm-generic/errno-base.h
+ * Ref: bionic/libc/kernel/uapi/asm-generic/errno.h
+ * Ref: frameworks/av/include/media/stagefright/MediaError.h
+ * Ref: frameworks/av/media/libstagefright/omx/OMXUtils.cpp: StatusFromOMXError
+ */
+enum Status : int32_t {
+    OK                      = 0,
+    NO_ERROR                = 0,
+
+    NAME_NOT_FOUND          = -2,
+    NO_MEMORY               = -12,
+    ERROR_UNSUPPORTED       = -1010,
+    UNKNOWN_ERROR           = -2147483648,
+};
+
+/**
  * Ref: frameworks/av/include/media/IOMX.h: omx_message
  *
  * Data structure for an OMX message. This is essentially a union of different
