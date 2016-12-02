@@ -15,6 +15,7 @@
  */
 
 #define LOG_TAG "GnssHAL_GnssConfigurationInterface"
+#include <android/log.h>
 
 #include "GnssConfiguration.h"
 
