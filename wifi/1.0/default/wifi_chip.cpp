@@ -319,10 +319,10 @@ std::pair<WifiStatus, uint32_t> WifiChip::getModeInternal() {
 std::pair<WifiStatus, IWifiChip::ChipDebugInfo>
 WifiChip::requestChipDebugInfoInternal() {
   IWifiChip::ChipDebugInfo result;
-  wifi_error legacy_status;
+  legacy_hal::wifi_error legacy_status;
   std::string driver_desc;
   std::tie(legacy_status, driver_desc) = legacy_hal_.lock()->getDriverVersion();
-  if (legacy_status != WIFI_SUCCESS) {
+  if (legacy_status != legacy_hal::WIFI_SUCCESS) {
     LOG(ERROR) << "Failed to get driver version: "
                << legacyErrorToString(legacy_status);
     WifiStatus status = createWifiStatusFromLegacyError(
@@ -334,7 +334,7 @@ WifiChip::requestChipDebugInfoInternal() {
   std::string firmware_desc;
   std::tie(legacy_status, firmware_desc) =
       legacy_hal_.lock()->getFirmwareVersion();
-  if (legacy_status != WIFI_SUCCESS) {
+  if (legacy_status != legacy_hal::WIFI_SUCCESS) {
     LOG(ERROR) << "Failed to get firmware version: "
                << legacyErrorToString(legacy_status);
     WifiStatus status = createWifiStatusFromLegacyError(
@@ -348,11 +348,11 @@ WifiChip::requestChipDebugInfoInternal() {
 
 std::pair<WifiStatus, std::vector<uint8_t>>
 WifiChip::requestDriverDebugDumpInternal() {
-  wifi_error legacy_status;
+  legacy_hal::wifi_error legacy_status;
   std::vector<uint8_t> driver_dump;
   std::tie(legacy_status, driver_dump) =
       legacy_hal_.lock()->requestDriverMemoryDump();
-  if (legacy_status != WIFI_SUCCESS) {
+  if (legacy_status != legacy_hal::WIFI_SUCCESS) {
     LOG(ERROR) << "Failed to get driver debug dump: "
                << legacyErrorToString(legacy_status);
     return {createWifiStatusFromLegacyError(legacy_status),
@@ -363,11 +363,11 @@ WifiChip::requestDriverDebugDumpInternal() {
 
 std::pair<WifiStatus, std::vector<uint8_t>>
 WifiChip::requestFirmwareDebugDumpInternal() {
-  wifi_error legacy_status;
+  legacy_hal::wifi_error legacy_status;
   std::vector<uint8_t> firmware_dump;
   std::tie(legacy_status, firmware_dump) =
       legacy_hal_.lock()->requestFirmwareMemoryDump();
-  if (legacy_status != WIFI_SUCCESS) {
+  if (legacy_status != legacy_hal::WIFI_SUCCESS) {
     LOG(ERROR) << "Failed to get firmware debug dump: "
                << legacyErrorToString(legacy_status);
     return {createWifiStatusFromLegacyError(legacy_status), {}};
