@@ -2183,13 +2183,6 @@ struct RttResult {
 };
 
 /**
- * NBD ranging channel map.
- */
-struct RttChannelMap {
-  WifiChannelInMhz[32] availablity;
-};
-
-/**
  * RTT Capabilities.
  */
 struct RttCapabilities {
@@ -2228,45 +2221,6 @@ struct RttCapabilities {
    * For instance, version 4.0 must be 40 and version 4.3 must be 43 etc.
    */
   uint8_t mcVersion;
-};
-
-/**
- * Debugging definitions.
- */
-enum RttDebugType : uint32_t {
-  DISABLE,
-  LOG,
-  PROTO,
-  BURST,
-  ACCURACY,
-  LOGDETAIL,
-};
-
-enum RttDebugFormat : uint32_t {
-  TXT,
-  BINARY,
-};
-
-/**
- * Debug info.
- */
-struct RttDebugInfo {
-  /**
-   * Version info.
-   */
-  uint32_t version;
-  /**
-   * Debug data type.
-   */
-  RttDebugType type;
-  /**
-   * Debug data format.
-   */
-  RttDebugFormat format;
-  /**
-   * Debug data content.
-   */
-  vec<uint8_t> data;
 };
 
 /**
