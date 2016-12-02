@@ -16,7 +16,7 @@
 
 #define LOG_TAG "PresetReverb_HAL"
 #include <system/audio_effects/effect_presetreverb.h>
-#include <utils/Log.h>
+#include <android/log.h>
 
 #include "PresetReverbEffect.h"
 

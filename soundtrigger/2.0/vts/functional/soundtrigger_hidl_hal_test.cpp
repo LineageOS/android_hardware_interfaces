@@ -15,7 +15,7 @@
  */
 
 #define LOG_TAG "SoundTriggerHidlHalTest"
-#include <android-base/logging.h>
+#include <android/log.h>
 #include <cutils/native_handle.h>
 
 #include <android/hardware/audio/common/2.0/types.h>

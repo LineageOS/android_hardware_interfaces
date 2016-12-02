@@ -21,7 +21,7 @@
 #include <hardware/audio.h>
 #include <hardware/audio_effect.h>
 #include <media/TypeConverter.h>
-#include <utils/Log.h>
+#include <android/log.h>
 #include <utils/SortedVector.h>
 #include <utils/Vector.h>
 

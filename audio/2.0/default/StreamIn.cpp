@@ -17,7 +17,7 @@
 #define LOG_TAG "StreamInHAL"
 
 #include <hardware/audio.h>
-#include <utils/Log.h>
+#include <android/log.h>
 
 #include "StreamIn.h"
 

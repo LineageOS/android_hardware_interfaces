@@ -18,7 +18,7 @@
 
 #define LOG_TAG "EffectHAL"
 #include <media/EffectsFactoryApi.h>
-#include <utils/Log.h>
+#include <android/log.h>
 
 #include "Conversions.h"
 #include "Effect.h"

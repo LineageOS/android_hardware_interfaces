@@ -15,7 +15,7 @@
  */
 
 #define LOG_TAG "android.hardware.vehicle@2.0-service"
-#include <utils/Log.h>
+#include <android/log.h>
 
 #include <iostream>
 

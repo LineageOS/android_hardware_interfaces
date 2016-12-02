@@ -17,7 +17,7 @@
 #define LOG_TAG "Tuner"
 //#define LOG_NDEBUG 0
 
-#include <utils/Log.h>
+#include <android/log.h>
 
 #include "BroadcastRadio.h"
 #include "Tuner.h"

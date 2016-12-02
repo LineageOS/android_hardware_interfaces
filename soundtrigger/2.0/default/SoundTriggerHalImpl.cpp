@@ -17,7 +17,7 @@
 #define LOG_TAG "SoundTriggerHalImpl"
 //#define LOG_NDEBUG 0
 
-#include <utils/Log.h>
+#include <android/log.h>
 #include "SoundTriggerHalImpl.h"
 
 

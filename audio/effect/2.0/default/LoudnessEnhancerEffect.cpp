@@ -18,7 +18,7 @@
 
 #define LOG_TAG "LoudnessEnhancer_HAL"
 #include <system/audio_effects/effect_aec.h>
-#include <utils/Log.h>
+#include <android/log.h>
 
 #include "LoudnessEnhancerEffect.h"
 

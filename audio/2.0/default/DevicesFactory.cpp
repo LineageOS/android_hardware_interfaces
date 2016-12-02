@@ -18,7 +18,7 @@
 
 #include <string.h>
 
-#include <utils/Log.h>
+#include <android/log.h>
 
 #include "Device.h"
 #include "DevicesFactory.h"
