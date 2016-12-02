@@ -20,10 +20,13 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := android.hardware.audio.common@2.0-util
 LOCAL_SRC_FILES := \
     EffectMap.cpp \
+    HidlUtils.cpp \
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)
 
 LOCAL_SHARED_LIBRARIES := \
     libutils \
+    libhidlbase \
+    android.hardware.audio.common@2.0 \
 
 include $(BUILD_SHARED_LIBRARY)

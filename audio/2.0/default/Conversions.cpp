@@ -29,27 +29,31 @@ std::string deviceAddressToHal(const DeviceAddress& address) {
     char halAddress[AUDIO_DEVICE_MAX_ADDRESS_LEN];
     memset(halAddress, 0, sizeof(halAddress));
     uint32_t halDevice = static_cast<uint32_t>(address.device);
-    if ((halDevice & AUDIO_DEVICE_OUT_ALL_A2DP) != 0
-            || (halDevice & AUDIO_DEVICE_IN_BLUETOOTH_A2DP) != 0) {
+    const bool isInput = (halDevice & AUDIO_DEVICE_BIT_IN) != 0;
+    if (isInput) halDevice &= ~AUDIO_DEVICE_BIT_IN;
+    if ((!isInput && (halDevice & AUDIO_DEVICE_OUT_ALL_A2DP) != 0)
+            || (isInput && (halDevice & AUDIO_DEVICE_IN_BLUETOOTH_A2DP) != 0)) {
         snprintf(halAddress, sizeof(halAddress),
                 "%02X:%02X:%02X:%02X:%02X:%02X",
                 address.address.mac[0], address.address.mac[1], address.address.mac[2],
                 address.address.mac[3], address.address.mac[4], address.address.mac[5]);
-    } else if ((halDevice & AUDIO_DEVICE_OUT_IP) != 0 || (halDevice & AUDIO_DEVICE_IN_IP) != 0) {
+    } else if ((!isInput && (halDevice & AUDIO_DEVICE_OUT_IP) != 0)
+            || (isInput && (halDevice & AUDIO_DEVICE_IN_IP) != 0)) {
         snprintf(halAddress, sizeof(halAddress),
                 "%d.%d.%d.%d",
                 address.address.ipv4[0], address.address.ipv4[1],
                 address.address.ipv4[2], address.address.ipv4[3]);
-    } else if ((halDevice & AUDIO_DEVICE_OUT_ALL_USB) != 0
-            || (halDevice & AUDIO_DEVICE_IN_ALL_USB) != 0) {
+    } else if ((!isInput && (halDevice & AUDIO_DEVICE_OUT_ALL_USB) != 0)
+            || (isInput && (halDevice & AUDIO_DEVICE_IN_ALL_USB) != 0)) {
         snprintf(halAddress, sizeof(halAddress),
                 "card=%d;device=%d",
                 address.address.alsa.card, address.address.alsa.device);
-    } else if ((halDevice & AUDIO_DEVICE_OUT_BUS) != 0 || (halDevice & AUDIO_DEVICE_IN_BUS) != 0) {
+    } else if ((!isInput && (halDevice & AUDIO_DEVICE_OUT_BUS) != 0)
+            || (isInput && (halDevice & AUDIO_DEVICE_IN_BUS) != 0)) {
         snprintf(halAddress, sizeof(halAddress),
                 "%s", address.busAddress.c_str());
-    } else if ((halDevice & AUDIO_DEVICE_OUT_REMOTE_SUBMIX) != 0
-            || (halDevice & AUDIO_DEVICE_IN_REMOTE_SUBMIX) != 0) {
+    } else if ((!isInput && (halDevice & AUDIO_DEVICE_OUT_REMOTE_SUBMIX)) != 0
+            || (isInput && (halDevice & AUDIO_DEVICE_IN_REMOTE_SUBMIX) != 0)) {
         snprintf(halAddress, sizeof(halAddress),
                 "%s", address.rSubmixAddress.c_str());
     }

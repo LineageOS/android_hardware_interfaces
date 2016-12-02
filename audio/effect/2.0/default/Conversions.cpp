@@ -18,6 +18,7 @@
 #include <stdio.h>
 
 #include "Conversions.h"
+#include "HidlUtils.h"
 
 namespace android {
 namespace hardware {
@@ -28,30 +29,14 @@ namespace implementation {
 
 void effectDescriptorFromHal(
         const effect_descriptor_t& halDescriptor, EffectDescriptor* descriptor) {
-    uuidFromHal(halDescriptor.type, &descriptor->type);
-    uuidFromHal(halDescriptor.uuid, &descriptor->uuid);
+    HidlUtils::uuidFromHal(halDescriptor.type, &descriptor->type);
+    HidlUtils::uuidFromHal(halDescriptor.uuid, &descriptor->uuid);
     descriptor->flags = EffectFlags(halDescriptor.flags);
     descriptor->cpuLoad = halDescriptor.cpuLoad;
     descriptor->memoryUsage = halDescriptor.memoryUsage;
     memcpy(descriptor->name.data(), halDescriptor.name, descriptor->name.size());
     memcpy(descriptor->implementor.data(),
             halDescriptor.implementor, descriptor->implementor.size());
-}
-
-void uuidFromHal(const effect_uuid_t& halUuid, Uuid* uuid) {
-    uuid->timeLow = halUuid.timeLow;
-    uuid->timeMid = halUuid.timeMid;
-    uuid->versionAndTimeHigh = halUuid.timeHiAndVersion;
-    uuid->variantAndClockSeqHigh = halUuid.clockSeq;
-    memcpy(uuid->node.data(), halUuid.node, uuid->node.size());
-}
-
-void uuidToHal(const Uuid& uuid, effect_uuid_t* halUuid) {
-    halUuid->timeLow = uuid.timeLow;
-    halUuid->timeMid = uuid.timeMid;
-    halUuid->timeHiAndVersion = uuid.versionAndTimeHigh;
-    halUuid->clockSeq = uuid.variantAndClockSeqHigh;
-    memcpy(halUuid->node, uuid.node.data(), uuid.node.size());
 }
 
 std::string uuidToString(const effect_uuid_t& halUuid) {

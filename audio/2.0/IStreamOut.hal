@@ -90,9 +90,23 @@ interface IStreamOut extends IStream {
      * Calling this function implies that all future 'write' and 'drain'
      * must be non-blocking and use the callback to signal completion.
      *
+     * 'clearCallback' method needs to be called in order to release the local
+     * callback proxy on the server side and thus dereference the callback
+     * implementation on the client side.
+     *
      * @return retval operation completion status.
      */
     setCallback(IStreamOutCallback callback) generates (Result retval);
+
+    /*
+     * Clears the callback previously set via 'setCallback' method.
+     *
+     * Warning: failure to call this method results in callback implementation
+     * on the client side being held until the HAL server termination.
+     *
+     * @return retval operation completion status: OK or NOT_SUPPORTED.
+     */
+    clearCallback() generates (Result retval);
 
     /*
      * Returns whether HAL supports pausing and resuming of streams.

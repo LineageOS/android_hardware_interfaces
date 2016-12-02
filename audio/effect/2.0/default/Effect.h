@@ -17,6 +17,7 @@
 #ifndef ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_EFFECT_H
 #define ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_EFFECT_H
 
+#include <memory>
 #include <vector>
 
 #include <android/hardware/audio/effect/2.0/IEffect.h>
@@ -180,8 +181,8 @@ struct Effect : public IEffect {
     virtual ~Effect();
 
     template<typename T> static size_t alignedSizeIn(size_t s);
-    template<typename T> static void hidlVecToHal(
-            const hidl_vec<T>& vec, uint32_t* halDataSize, void** halData);
+    template<typename T> std::unique_ptr<uint8_t[]> hidlVecToHal(
+            const hidl_vec<T>& vec, uint32_t* halDataSize);
     static void effectAuxChannelsConfigFromHal(
             const channel_config_t& halConfig, EffectAuxChannelsConfig* config);
     static void effectAuxChannelsConfigToHal(

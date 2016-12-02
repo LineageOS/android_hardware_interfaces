@@ -83,6 +83,10 @@ Return<void> PrimaryDevice::openInputStream(
     return mDevice->openInputStream(ioHandle, device, config, flags, source, _hidl_cb);
 }
 
+Return<bool> PrimaryDevice::supportsAudioPatches() {
+    return mDevice->supportsAudioPatches();
+}
+
 Return<void> PrimaryDevice::createAudioPatch(
         const hidl_vec<AudioPortConfig>& sources,
         const hidl_vec<AudioPortConfig>& sinks,
