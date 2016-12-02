@@ -1,5 +1,5 @@
 #define LOG_TAG "android.hardware.nfc@1.0-impl"
-#include <utils/Log.h>
+#include <android/log.h>
 
 #include <hardware/hardware.h>
 #include <hardware/nfc.h>
