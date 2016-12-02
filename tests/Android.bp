@@ -11,6 +11,8 @@ subdirs = [
     "inheritance/1.0/default",
     "libhwbinder/1.0",
     "libhwbinder/1.0/default",
+    "memory/1.0",
+    "memory/1.0/default",
     "msgq/1.0",
     "pointer/1.0",
     "pointer/1.0/default",
