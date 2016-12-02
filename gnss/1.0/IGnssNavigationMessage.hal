@@ -42,7 +42,7 @@ interface IGnssNavigationMessage {
      * expected that the HAL will not generate any updates upon returning
      * this error code.
      */
-     setCallback(IGnssNavigationMessageCallback callback) generates (int32_t initRet);
+     setCallback(IGnssNavigationMessageCallback callback) generates (GnssNavigationMessageStatus initRet);
 
     /*
      * Stops updates from the HAL, and unregisters the callback routines.

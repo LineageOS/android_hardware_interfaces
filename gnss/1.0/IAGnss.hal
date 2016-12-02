@@ -22,7 +22,7 @@ import IAGnssCallback;
  * Extended interface for AGNSS support.
  */
 interface IAGnss {
-    enum ApnIpType : uint16_t {
+    enum ApnIpType : uint8_t {
         INVALID  = 0,
         IPV4     = 1,
         IPV6     = 2,
@@ -72,6 +72,6 @@ interface IAGnss {
      *
      * @return success True if the operation is successful.
      */
-    dataConnOpenWithApnIpType(string apn, ApnIpType apnIpType)
+    dataConnOpen(string apn, ApnIpType apnIpType)
         generates (bool success);
 };

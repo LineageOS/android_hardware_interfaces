@@ -19,12 +19,12 @@ package android.hardware.gnss@1.0;
 /** Callback structure for the AGNSS interface. */
 interface IAGnssCallback {
     /** AGNSS type **/
-    enum AGnssType : uint16_t {
+    enum AGnssType : uint8_t {
         TYPE_SUPL         = 1,
         TYPE_C2K          = 2
     };
 
-    enum AGnssStatusValue : uint16_t {
+    enum AGnssStatusValue : uint8_t {
         /** GNSS requests data connection for AGNSS. */
         REQUEST_AGNSS_DATA_CONN  = 1,
         /** GNSS releases the AGNSS data connection. */

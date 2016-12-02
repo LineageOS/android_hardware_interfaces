@@ -539,7 +539,7 @@ interface IGnssMeasurementCallback {
         uint32_t measurementCount;
 
         /* The array of measurements. */
-        GnssMeasurement[ConstS32:GNSS_MAX_MEASUREMENT] measurements;
+        GnssMeasurement[GnssMax:SVS_COUNT] measurements;
 
         /** The GNSS clock time reading. */
         GnssClock clock;

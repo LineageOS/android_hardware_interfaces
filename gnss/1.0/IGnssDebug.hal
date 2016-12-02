@@ -2,7 +2,7 @@ package android.hardware.gnss@1.0;
 
 /* Extended interface for DEBUG support. */
 interface IGnssDebug {
-    enum SatelliteEphemerisType : uint32_t {
+    enum SatelliteEphemerisType : uint8_t {
         /* no information is known to the gnss hardware, about this satellite */
         UNKNOWN,
         /*  this satellite is known to exist */
@@ -37,14 +37,14 @@ interface IGnssDebug {
         /*
          * Validity of the data in this struct. False only if no
          * latitude/longitude information is known.
-         * /
+         */
         bool valid;
         /* Latitude expressed in degrees */
         double latitudeDegrees;
         /* Longitude expressed in degrees */
         double longitudeDegrees;
         /* Altitude above ellipsoid expressed in meters */
-        float altitudeDegrees;
+        float altitudeMeters;
         /*
          * estimated horizontal accuracy of position expressed in meters, radial,
          * 68% confidence.

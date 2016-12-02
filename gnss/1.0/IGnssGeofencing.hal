@@ -53,7 +53,7 @@ interface IGnssGeofencing {
      * @param unknownTimerMs - The time limit after which the UNCERTAIN transition
      * must be triggered. This parameter is defined in milliseconds.
      */
-    addGeofenceArea(int32_t geofenceId, double latitudeDegrees, double longitudeDegrees,
+    addGeofence(int32_t geofenceId, double latitudeDegrees, double longitudeDegrees,
         double radiusMeters, GeofenceTransition lastTransition,
         int32_t monitorTransitions, uint32_t notificationResponsivenessMs,
         uint32_t unknownTimerMs);
@@ -82,5 +82,5 @@ interface IGnssGeofencing {
      *
      * @param geofenceId The id of the geofence.
      */
-    removeGeofenceArea(int32_t geofenceId);
+    removeGeofence(int32_t geofenceId);
 };

@@ -16,12 +16,9 @@
 
 package android.hardware.gnss@1.0;
 
-enum ConstS32 : int32_t {
+enum GnssMax : uint32_t {
 /** Maximum number of SVs for gnssSvStatusCb(). */
-    GNSS_MAX_SVS = 64,
-
-/* Maximum number of Measurements in gnssMeasurementCb(). */
-    GNSS_MAX_MEASUREMENT = 64,
+    SVS_COUNT = 64,
 };
 
 /* Milliseconds since January 1, 1970 */
@@ -32,7 +29,7 @@ typedef int64_t GnssUtcTime;
  */
 enum GnssConstellationType : uint8_t {
     UNKNOWN = 0,
-    GNSS     = 1,
+    GPS     = 1,
     SBAS    = 2,
     GLONASS = 3,
     QZSS    = 4,
@@ -46,18 +43,18 @@ struct GnssLocation {
     uint16_t gnssLocationFlags;
 
     /* Represents latitude in degrees. */
-    double latitude;
+    double latitudeDegrees;
 
     /* Represents longitude in degrees. */
-    double longitude;
+    double longitudeDegrees;
 
     /*
      * Represents altitude in meters above the WGS 84 reference ellipsoid.
      */
-    double altitude;
+    double altitudeMeters;
 
     /* Represents speed in meters per second. */
-    float speedMetersperSec;
+    float speedMetersPerSec;
 
     /* Represents heading in degrees. */
     float bearingDegrees;

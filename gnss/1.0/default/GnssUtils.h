@@ -13,31 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef android_hardware_gnss_V1_0_GnssUtil_H_
+#define android_hardware_gnss_V1_0_GnssUtil_H_
 
-package android.hardware.gnss@1.0;
+#include <hardware/gps.h>
+#include <android/hardware/gnss/1.0/types.h>
+
+namespace android {
+namespace hardware {
+namespace gnss {
+namespace V1_0 {
+namespace implementation {
 
 /*
- * Callback for IAGnssRil interface. Used to request SET ID and
- * Reference Location.
+ * This method converts a GpsLocation struct to a GnssLocation
+ * struct.
  */
-interface IAGnssRilCallback {
-    /* Kinds of SET ID that can be requested */
-    enum ID : uint32_t {
-        IMSI    = 1 << 0L,
-        MSISDN  = 1 << 1L,
-    };
+GnssLocation convertToGnssLocation(GpsLocation* location);
 
-    /*
-     * The Hal uses this API to request a SET ID.
-     *
-     * @param setIdflag Specifies the kind of SET ID that is required by the HAL.
-     */
-    requestSetIdCb(ID setIdflag);
+}  // namespace implementation
+}  // namespace V1_0
+}  // namespace gnss
+}  // namespace hardware
+}  // namespace android
 
-    /*
-     * The Hal uses this API to request a reference location.
-     *
-     */
-    requestRefLocCb();
-
-};
+#endif
