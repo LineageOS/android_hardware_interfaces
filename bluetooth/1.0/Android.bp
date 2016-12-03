@@ -3,7 +3,7 @@
 genrule {
     name: "android.hardware.bluetooth@1.0_genc++",
     tools: ["hidl-gen"],
-    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces android.hardware.bluetooth@1.0",
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.bluetooth@1.0",
     srcs: [
         "types.hal",
         "IBluetoothHci.hal",
@@ -19,7 +19,7 @@ genrule {
 genrule {
     name: "android.hardware.bluetooth@1.0_genc++_headers",
     tools: ["hidl-gen"],
-    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces android.hardware.bluetooth@1.0",
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.bluetooth@1.0",
     srcs: [
         "types.hal",
         "IBluetoothHci.hal",
@@ -52,11 +52,13 @@ cc_library_shared {
         "liblog",
         "libutils",
         "libcutils",
+        "android.hidl.base@1.0",
     ],
     export_shared_lib_headers: [
         "libhidlbase",
         "libhidltransport",
         "libhwbinder",
         "libutils",
+        "android.hidl.base@1.0",
     ],
 }

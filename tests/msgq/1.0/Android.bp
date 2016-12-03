@@ -3,7 +3,7 @@
 genrule {
     name: "android.hardware.tests.msgq@1.0_genc++",
     tools: ["hidl-gen"],
-    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces android.hardware.tests.msgq@1.0",
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.tests.msgq@1.0",
     srcs: [
         "ITestMsgQ.hal",
     ],
@@ -15,7 +15,7 @@ genrule {
 genrule {
     name: "android.hardware.tests.msgq@1.0_genc++_headers",
     tools: ["hidl-gen"],
-    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces android.hardware.tests.msgq@1.0",
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.tests.msgq@1.0",
     srcs: [
         "ITestMsgQ.hal",
     ],
@@ -40,11 +40,13 @@ cc_library_shared {
         "liblog",
         "libutils",
         "libcutils",
+        "android.hidl.base@1.0",
     ],
     export_shared_lib_headers: [
         "libhidlbase",
         "libhidltransport",
         "libhwbinder",
         "libutils",
+        "android.hidl.base@1.0",
     ],
 }
