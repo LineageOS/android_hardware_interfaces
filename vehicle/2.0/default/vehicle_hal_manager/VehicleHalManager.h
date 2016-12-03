@@ -29,10 +29,11 @@
 
 #include <android/hardware/vehicle/2.0/IVehicle.h>
 
-#include "VehicleHal.h"
-#include "VehiclePropConfigIndex.h"
+#include "AccessControlConfigParser.h"
 #include "ConcurrentQueue.h"
 #include "SubscriptionManager.h"
+#include "VehicleHal.h"
+#include "VehiclePropConfigIndex.h"
 #include "VehicleObjectPool.h"
 
 namespace android {
@@ -40,7 +41,7 @@ namespace hardware {
 namespace vehicle {
 namespace V2_0 {
 
-struct Callee {
+struct Caller {
     pid_t pid;
     uid_t uid;
 };
@@ -95,17 +96,21 @@ private:
 
     const VehiclePropConfig* getPropConfigOrNull(VehicleProperty prop) const;
 
+    bool checkWritePermission(const VehiclePropConfig &config,
+                              const Caller& callee) const;
+    bool checkReadPermission(const VehiclePropConfig &config,
+                             const Caller& caller) const;
+
     static bool isSubscribable(const VehiclePropConfig& config,
                                SubscribeFlags flags);
     static bool isSampleRateFixed(VehiclePropertyChangeMode mode);
     static float checkSampleRate(const VehiclePropConfig& config,
                                  float sampleRate);
-    static bool checkWritePermission(const VehiclePropConfig &config,
-                                     const Callee& callee);
-    static bool checkReadPermission(const VehiclePropConfig &config,
-                                    const Callee& callee);
+    static void readAndParseAclConfig(const char* filename,
+                                      AccessControlConfigParser* parser,
+                                      PropertyAclMap* outAclMap);
 
-    static Callee getCallee();
+    static Caller getCaller();
 
 private:
     VehicleHal* mHal;
@@ -117,6 +122,7 @@ private:
     ConcurrentQueue<VehiclePropValuePtr> mEventQueue;
     BatchingConsumer<VehiclePropValuePtr> mBatchingConsumer;
     VehiclePropValuePool mValueObjectPool;
+    PropertyAclMap mPropertyAclMap;
 };
 
 }  // namespace V2_0

@@ -2136,6 +2136,8 @@ enum VehiclePropertyChangeMode : int32_t {
  * the expected output.
  */
 enum VehiclePropertyAccess : int32_t {
+  NONE = 0x00,
+
   READ = 0x01,
   WRITE = 0x02,
   READ_WRITE = 0x03,
