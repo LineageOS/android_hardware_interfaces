@@ -39,7 +39,7 @@ class VibratorHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
         self.dut.shell.one.Execute(
             "setprop vts.hal.vts.hidl.get_stub true")
 
-        if getattr(self, self.ENABLE_PROFILING, False):
+        if self.enable_profiling:
             profiling_utils.EnableVTSProfiling(self.dut.shell.one)
 
         self.dut.hal.InitHidlHal(
@@ -54,7 +54,7 @@ class VibratorHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
         """ If profiling is enabled for the test, collect the profiling data
             and disable profiling after the test is done.
         """
-        if getattr(self, self.ENABLE_PROFILING, False):
+        if self.enable_profiling:
             profiling_trace_path = getattr(
                 self, self.VTS_PROFILING_TRACING_PATH, "")
             self.ProcessAndUploadTraceData(self.dut, profiling_trace_path)
