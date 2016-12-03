@@ -19,9 +19,6 @@
 
 #include <gtest/gtest.h>
 
-#include <vehicle_hal_manager/VehiclePropConfigIndex.h>
-#include <VehicleHal.h>
-#include <vehicle_hal_manager/VehicleHalManager.h>
 #include "vehicle_hal_manager/SubscriptionManager.h"
 
 #include "VehicleHalTestUtils.h"

@@ -18,8 +18,9 @@
 
 #include <gtest/gtest.h>
 
-#include <vehicle_hal_manager/VehicleObjectPool.h>
 #include <utils/SystemClock.h>
+
+#include "vehicle_hal_manager/VehicleObjectPool.h"
 
 namespace android {
 namespace hardware {
