@@ -47,7 +47,227 @@ StaScanDataFlagMask convertLegacyScanDataFlagToHidl(uint8_t legacy_flag) {
   CHECK(false) << "Unknown legacy flag: " << legacy_flag;
   // To silence the compiler warning about reaching the end of non-void
   // function.
-  return StaScanDataFlagMask::INTERRUPTED;
+  return {};
+}
+
+IWifiChip::ChipCapabilityMask convertLegacyLoggerFeatureToHidlChipCapability(
+    uint32_t feature) {
+  using HidlChipCaps = IWifiChip::ChipCapabilityMask;
+  switch (feature) {
+    case legacy_hal::WIFI_LOGGER_MEMORY_DUMP_SUPPORTED:
+      return HidlChipCaps::DEBUG_MEMORY_FIRMWARE_DUMP_SUPPORTED;
+    case legacy_hal::WIFI_LOGGER_DRIVER_DUMP_SUPPORTED:
+      return HidlChipCaps::DEBUG_MEMORY_DRIVER_DUMP_SUPPORTED;
+    case legacy_hal::WIFI_LOGGER_CONNECT_EVENT_SUPPORTED:
+      return HidlChipCaps::DEBUG_RING_BUFFER_CONNECT_EVENT_SUPPORTED;
+    case legacy_hal::WIFI_LOGGER_POWER_EVENT_SUPPORTED:
+      return HidlChipCaps::DEBUG_RING_BUFFER_POWER_EVENT_SUPPORTED;
+    case legacy_hal::WIFI_LOGGER_WAKE_LOCK_SUPPORTED:
+      return HidlChipCaps::DEBUG_RING_BUFFER_WAKELOCK_EVENT_SUPPORTED;
+  };
+  CHECK(false) << "Unknown legacy feature: " << feature;
+  return {};
+}
+
+IWifiStaIface::StaIfaceCapabilityMask
+convertLegacyLoggerFeatureToHidlStaIfaceCapability(uint32_t feature) {
+  using HidlStaIfaceCaps = IWifiStaIface::StaIfaceCapabilityMask;
+  switch (feature) {
+    case legacy_hal::WIFI_LOGGER_PACKET_FATE_SUPPORTED:
+      return HidlStaIfaceCaps::DEBUG_PACKET_FATE_SUPPORTED;
+  };
+  CHECK(false) << "Unknown legacy feature: " << feature;
+  return {};
+}
+
+IWifiStaIface::StaIfaceCapabilityMask
+convertLegacyFeatureToHidlStaIfaceCapability(uint32_t feature) {
+  using HidlStaIfaceCaps = IWifiStaIface::StaIfaceCapabilityMask;
+  switch (feature) {
+    case WIFI_FEATURE_GSCAN:
+      return HidlStaIfaceCaps::BACKGROUND_SCAN;
+    case WIFI_FEATURE_LINK_LAYER_STATS:
+      return HidlStaIfaceCaps::LINK_LAYER_STATS;
+  };
+  CHECK(false) << "Unknown legacy feature: " << feature;
+  return {};
+}
+
+bool convertLegacyFeaturesToHidlChipCapabilities(
+    uint32_t legacy_logger_feature_set, uint32_t* hidl_caps) {
+  if (!hidl_caps) {
+    return false;
+  }
+  *hidl_caps = 0;
+  using HidlChipCaps = IWifiChip::ChipCapabilityMask;
+  for (const auto feature : {legacy_hal::WIFI_LOGGER_MEMORY_DUMP_SUPPORTED,
+                             legacy_hal::WIFI_LOGGER_DRIVER_DUMP_SUPPORTED,
+                             legacy_hal::WIFI_LOGGER_CONNECT_EVENT_SUPPORTED,
+                             legacy_hal::WIFI_LOGGER_POWER_EVENT_SUPPORTED,
+                             legacy_hal::WIFI_LOGGER_WAKE_LOCK_SUPPORTED}) {
+    if (feature & legacy_logger_feature_set) {
+      *hidl_caps |= convertLegacyLoggerFeatureToHidlChipCapability(feature);
+    }
+  }
+  // There is no flags for these 2 in the legacy feature set. Adding it to the
+  // set because all the current devices support it.
+  *hidl_caps |= HidlChipCaps::DEBUG_RING_BUFFER_VENDOR_DATA_SUPPORTED;
+  *hidl_caps |= HidlChipCaps::DEBUG_HOST_WAKE_REASON_STATS;
+  return true;
+}
+
+WifiDebugRingBufferFlags convertLegacyDebugRingBufferFlagsToHidl(
+    uint32_t flag) {
+  switch (flag) {
+    case WIFI_RING_BUFFER_FLAG_HAS_BINARY_ENTRIES:
+      return WifiDebugRingBufferFlags::HAS_BINARY_ENTRIES;
+    case WIFI_RING_BUFFER_FLAG_HAS_ASCII_ENTRIES:
+      return WifiDebugRingBufferFlags::HAS_ASCII_ENTRIES;
+  };
+  CHECK(false) << "Unknown legacy flag: " << flag;
+  return {};
+}
+
+bool convertLegacyDebugRingBufferStatusToHidl(
+    const legacy_hal::wifi_ring_buffer_status& legacy_status,
+    WifiDebugRingBufferStatus* hidl_status) {
+  if (!hidl_status) {
+    return false;
+  }
+  hidl_status->ringName = reinterpret_cast<const char*>(legacy_status.name);
+  for (const auto flag : {WIFI_RING_BUFFER_FLAG_HAS_BINARY_ENTRIES,
+                          WIFI_RING_BUFFER_FLAG_HAS_ASCII_ENTRIES}) {
+    if (flag & legacy_status.flags) {
+      hidl_status->flags |=
+          static_cast<std::underlying_type<WifiDebugRingBufferFlags>::type>(
+              convertLegacyDebugRingBufferFlagsToHidl(flag));
+    }
+  }
+  hidl_status->ringId = legacy_status.ring_id;
+  hidl_status->sizeInBytes = legacy_status.ring_buffer_byte_size;
+  // Calculate free size of the ring the buffer. We don't need to send the
+  // exact read/write pointers that were there in the legacy HAL interface.
+  if (legacy_status.written_bytes >= legacy_status.read_bytes) {
+    hidl_status->freeSizeInBytes =
+        legacy_status.ring_buffer_byte_size -
+        (legacy_status.written_bytes - legacy_status.read_bytes);
+  } else {
+    hidl_status->freeSizeInBytes =
+        legacy_status.read_bytes - legacy_status.written_bytes;
+  }
+  hidl_status->verboseLevel = legacy_status.verbose_level;
+  return true;
+}
+
+bool convertLegacyVectorOfDebugRingBufferStatusToHidl(
+    const std::vector<legacy_hal::wifi_ring_buffer_status>& legacy_status_vec,
+    std::vector<WifiDebugRingBufferStatus>* hidl_status_vec) {
+  if (!hidl_status_vec) {
+    return false;
+  }
+  hidl_status_vec->clear();
+  for (const auto& legacy_status : legacy_status_vec) {
+    WifiDebugRingBufferStatus hidl_status;
+    if (!convertLegacyDebugRingBufferStatusToHidl(legacy_status,
+                                                  &hidl_status)) {
+      return false;
+    }
+    hidl_status_vec->push_back(hidl_status);
+  }
+  return true;
+}
+
+bool convertLegacyWakeReasonStatsToHidl(
+    const legacy_hal::WakeReasonStats& legacy_stats,
+    WifiDebugHostWakeReasonStats* hidl_stats) {
+  if (!hidl_stats) {
+    return false;
+  }
+  hidl_stats->totalCmdEventWakeCnt =
+      legacy_stats.wake_reason_cnt.total_cmd_event_wake;
+  hidl_stats->cmdEventWakeCntPerType = legacy_stats.cmd_event_wake_cnt;
+  hidl_stats->totalDriverFwLocalWakeCnt =
+      legacy_stats.wake_reason_cnt.total_driver_fw_local_wake;
+  hidl_stats->driverFwLocalWakeCntPerType =
+      legacy_stats.driver_fw_local_wake_cnt;
+  hidl_stats->totalRxPacketWakeCnt =
+      legacy_stats.wake_reason_cnt.total_rx_data_wake;
+  hidl_stats->rxPktWakeDetails.rxUnicastCnt =
+      legacy_stats.wake_reason_cnt.rx_wake_details.rx_unicast_cnt;
+  hidl_stats->rxPktWakeDetails.rxMulticastCnt =
+      legacy_stats.wake_reason_cnt.rx_wake_details.rx_multicast_cnt;
+  hidl_stats->rxPktWakeDetails.rxBroadcastCnt =
+      legacy_stats.wake_reason_cnt.rx_wake_details.rx_broadcast_cnt;
+  hidl_stats->rxMulticastPkWakeDetails.ipv4RxMulticastAddrCnt =
+      legacy_stats.wake_reason_cnt.rx_multicast_wake_pkt_info
+          .ipv4_rx_multicast_addr_cnt;
+  hidl_stats->rxMulticastPkWakeDetails.ipv6RxMulticastAddrCnt =
+      legacy_stats.wake_reason_cnt.rx_multicast_wake_pkt_info
+          .ipv6_rx_multicast_addr_cnt;
+  hidl_stats->rxMulticastPkWakeDetails.otherRxMulticastAddrCnt =
+      legacy_stats.wake_reason_cnt.rx_multicast_wake_pkt_info
+          .other_rx_multicast_addr_cnt;
+  hidl_stats->rxIcmpPkWakeDetails.icmpPkt =
+      legacy_stats.wake_reason_cnt.rx_wake_pkt_classification_info.icmp_pkt;
+  hidl_stats->rxIcmpPkWakeDetails.icmp6Pkt =
+      legacy_stats.wake_reason_cnt.rx_wake_pkt_classification_info.icmp6_pkt;
+  hidl_stats->rxIcmpPkWakeDetails.icmp6Ra =
+      legacy_stats.wake_reason_cnt.rx_wake_pkt_classification_info.icmp6_ra;
+  hidl_stats->rxIcmpPkWakeDetails.icmp6Na =
+      legacy_stats.wake_reason_cnt.rx_wake_pkt_classification_info.icmp6_na;
+  hidl_stats->rxIcmpPkWakeDetails.icmp6Ns =
+      legacy_stats.wake_reason_cnt.rx_wake_pkt_classification_info.icmp6_ns;
+  return true;
+}
+
+bool convertLegacyFeaturesToHidlStaCapabilities(
+    uint32_t legacy_feature_set,
+    uint32_t legacy_logger_feature_set,
+    uint32_t* hidl_caps) {
+  if (!hidl_caps) {
+    return false;
+  }
+  *hidl_caps = 0;
+  using HidlStaIfaceCaps = IWifiStaIface::StaIfaceCapabilityMask;
+  for (const auto feature : {legacy_hal::WIFI_LOGGER_PACKET_FATE_SUPPORTED}) {
+    if (feature & legacy_logger_feature_set) {
+      *hidl_caps |= convertLegacyLoggerFeatureToHidlStaIfaceCapability(feature);
+    }
+  }
+  for (const auto feature :
+       {WIFI_FEATURE_GSCAN, WIFI_FEATURE_LINK_LAYER_STATS}) {
+    if (feature & legacy_feature_set) {
+      *hidl_caps |= convertLegacyFeatureToHidlStaIfaceCapability(feature);
+    }
+  }
+  // There is no flag for this one in the legacy feature set. Adding it to the
+  // set because all the current devices support it.
+  *hidl_caps |= HidlStaIfaceCaps::APF;
+  return true;
+}
+
+bool convertLegacyApfCapabilitiesToHidl(
+    const legacy_hal::PacketFilterCapabilities& legacy_caps,
+    StaApfPacketFilterCapabilities* hidl_caps) {
+  if (!hidl_caps) {
+    return false;
+  }
+  hidl_caps->version = legacy_caps.version;
+  hidl_caps->maxLength = legacy_caps.max_len;
+  return true;
+}
+
+bool convertLegacyScanCapabilitiesToHidl(
+    const legacy_hal::wifi_gscan_capabilities& legacy_caps,
+    StaBackgroundScanCapabilities* hidl_caps) {
+  if (!hidl_caps) {
+    return false;
+  }
+  hidl_caps->maxCacheSize = legacy_caps.max_scan_cache_size;
+  hidl_caps->maxBuckets = legacy_caps.max_scan_buckets;
+  hidl_caps->maxApCachePerScan = legacy_caps.max_ap_cache_per_scan;
+  hidl_caps->maxReportingThreshold = legacy_caps.max_scan_reporting_threshold;
+  return true;
 }
 
 bool convertHidlScanParamsToLegacy(
@@ -326,6 +546,23 @@ bool convertLegacyDebugTxPacketFateToHidl(
                                                  &hidl_fate->frameInfo);
 }
 
+bool convertLegacyVectorOfDebugTxPacketFateToHidl(
+    const std::vector<legacy_hal::wifi_tx_report>& legacy_fates,
+    std::vector<WifiDebugTxPacketFateReport>* hidl_fates) {
+  if (!hidl_fates) {
+    return false;
+  }
+  hidl_fates->clear();
+  for (const auto& legacy_fate : legacy_fates) {
+    WifiDebugTxPacketFateReport hidl_fate;
+    if (!convertLegacyDebugTxPacketFateToHidl(legacy_fate, &hidl_fate)) {
+      return false;
+    }
+    hidl_fates->push_back(hidl_fate);
+  }
+  return true;
+}
+
 bool convertLegacyDebugRxPacketFateToHidl(
     const legacy_hal::wifi_rx_report& legacy_fate,
     WifiDebugRxPacketFateReport* hidl_fate) {
@@ -335,6 +572,23 @@ bool convertLegacyDebugRxPacketFateToHidl(
   hidl_fate->fate = convertLegacyDebugRxPacketFateToHidl(legacy_fate.fate);
   return convertLegacyDebugPacketFateFrameToHidl(legacy_fate.frame_inf,
                                                  &hidl_fate->frameInfo);
+}
+
+bool convertLegacyVectorOfDebugRxPacketFateToHidl(
+    const std::vector<legacy_hal::wifi_rx_report>& legacy_fates,
+    std::vector<WifiDebugRxPacketFateReport>* hidl_fates) {
+  if (!hidl_fates) {
+    return false;
+  }
+  hidl_fates->clear();
+  for (const auto& legacy_fate : legacy_fates) {
+    WifiDebugRxPacketFateReport hidl_fate;
+    if (!convertLegacyDebugRxPacketFateToHidl(legacy_fate, &hidl_fate)) {
+      return false;
+    }
+    hidl_fates->push_back(hidl_fate);
+  }
+  return true;
 }
 
 bool convertLegacyLinkLayerStatsToHidl(
