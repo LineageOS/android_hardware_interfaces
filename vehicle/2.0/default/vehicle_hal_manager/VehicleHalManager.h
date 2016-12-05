@@ -17,24 +17,24 @@
 #ifndef android_hardware_vehicle_V2_0_VehicleHalManager_H_
 #define android_hardware_vehicle_V2_0_VehicleHalManager_H_
 
-#include <stdint.h>
 #include <inttypes.h>
+#include <stdint.h>
 #include <sys/types.h>
-#include <memory>
-#include <map>
-#include <set>
-#include <list>
 
-#include <hwbinder/IPCThreadState.h>
+#include <list>
+#include <map>
+#include <memory>
+#include <set>
 
 #include <android/hardware/vehicle/2.0/IVehicle.h>
+#include <hwbinder/IPCThreadState.h>
 
 #include "AccessControlConfigParser.h"
 #include "ConcurrentQueue.h"
 #include "SubscriptionManager.h"
 #include "VehicleHal.h"
-#include "VehiclePropConfigIndex.h"
 #include "VehicleObjectPool.h"
+#include "VehiclePropConfigIndex.h"
 
 namespace android {
 namespace hardware {

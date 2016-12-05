@@ -16,12 +16,13 @@
 
 #define LOG_TAG "android.hardware.vehicle@2.0-impl"
 
+#include "SubscriptionManager.h"
+
 #include <cmath>
 
-#include <utils/Errors.h>
+#include <android/log.h>
 
 #include "VehicleUtils.h"
-#include "SubscriptionManager.h"
 
 namespace android {
 namespace hardware {

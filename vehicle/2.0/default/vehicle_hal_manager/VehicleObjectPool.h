@@ -18,27 +18,16 @@
 #ifndef android_hardware_vehicle_V2_0_VehicleObjectPool_H_
 #define android_hardware_vehicle_V2_0_VehicleObjectPool_H_
 
-#include "VehicleUtils.h" // defines LOG_TAG and includes <android/log.h>
-
-#include <iostream>
-#include <memory>
 #include <deque>
-#include <string>
 #include <map>
 #include <mutex>
 
-#ifndef LOG_TAG
-#define LOG_TAG "android.hardware.vehicle@2.0-impl"
-#endif
-#include <android/log.h>
 #include <android/hardware/vehicle/2.0/types.h>
 
 namespace android {
 namespace hardware {
 namespace vehicle {
 namespace V2_0 {
-
-using android::hardware::hidl_vec;
 
 // Handy metric mostly for unit tests and debug.
 #define INC_METRIC_IF_DEBUG(val) PoolStats::instance()->val++;
@@ -52,6 +41,29 @@ struct PoolStats {
         return &inst;
     }
 };
+
+template<typename T>
+struct Deleter  {
+    using OnDeleteFunc = std::function<void(T*)>;
+
+    Deleter(const OnDeleteFunc& f) : mOnDelete(f) {};
+
+    Deleter() = default;
+    Deleter(const Deleter&) = default;
+
+    void operator()(T* o) {
+        mOnDelete(o);
+    }
+private:
+    OnDeleteFunc mOnDelete;
+};
+
+/**
+ * This is std::unique_ptr<> with custom delete operation that typically moves
+ * the pointer it holds back to ObjectPool.
+ */
+template <typename T>
+using recyclable_ptr = typename std::unique_ptr<T, Deleter<T>>;
 
 /**
  * Generic abstract object pool class. Users of this class must implement
@@ -68,24 +80,7 @@ public:
     ObjectPool() = default;
     virtual ~ObjectPool() = default;
 
-    struct Deleter  {
-        using OnDeleteFunc = std::function<void(T*)>;
-
-        Deleter(const OnDeleteFunc& f) : mOnDelete(f) {};
-
-        Deleter() = default;
-        Deleter(const Deleter&) = default;
-
-        void operator()(T* o) {
-            mOnDelete(o);
-        }
-    private:
-        OnDeleteFunc mOnDelete;
-    };
-
-    using RecyclableType = std::unique_ptr<T, Deleter>;
-
-    virtual RecyclableType obtain() {
+    virtual recyclable_ptr<T> obtain() {
         std::lock_guard<std::mutex> g(mLock);
         INC_METRIC_IF_DEBUG(Obtained)
         if (mObjects.empty()) {
@@ -112,32 +107,24 @@ protected:
     }
 
 private:
-    const Deleter& getDeleter() {
+    const Deleter<T>& getDeleter() {
         if (!mDeleter.get()) {
-            Deleter *d = new Deleter(std::bind(&ObjectPool::recycle,
-                                               this,
-                                               std::placeholders::_1));
+            Deleter<T> *d = new Deleter<T>(std::bind(
+                &ObjectPool::recycle, this, std::placeholders::_1));
             mDeleter.reset(d);
         }
         return *mDeleter.get();
     }
 
-    RecyclableType wrap(T* raw) {
-        return RecyclableType { raw, getDeleter() };
+    recyclable_ptr<T> wrap(T* raw) {
+        return recyclable_ptr<T> { raw, getDeleter() };
     }
 
 private:
     mutable std::mutex mLock;
     std::deque<std::unique_ptr<T>> mObjects;
-    std::unique_ptr<Deleter> mDeleter;
+    std::unique_ptr<Deleter<T>> mDeleter;
 };
-
-/**
- * This is std::unique_ptr<> with custom delete operation that typically moves
- * the pointer it holds back to ObectPool.
- */
-template <typename T>
-using recyclable_ptr = typename ObjectPool<T>::RecyclableType;
 
 /**
  * This class provides a pool of recycable VehiclePropertyValue objects.
@@ -186,66 +173,20 @@ public:
      *
      */
     VehiclePropValuePool(size_t maxRecyclableVectorSize = 4) :
-        mMaxRecyclableVectorSize(maxRecyclableVectorSize) { };
+        mMaxRecyclableVectorSize(maxRecyclableVectorSize) {};
 
-    RecyclableType obtain(VehiclePropertyType type) {
-        return obtain(type, 1);
-    }
+    RecyclableType obtain(VehiclePropertyType type);
 
-    RecyclableType obtain(VehiclePropertyType type, size_t vecSize) {
-        return isDisposable(type, vecSize)
-                ? obtainDisposable(type, vecSize)
-                : obtainRecylable(type, vecSize);
-    }
-
-    RecyclableType obtain(const VehiclePropValue& src) {
-        if (src.prop == VehicleProperty::INVALID) {
-            ALOGE("Unable to obtain an object from pool for unknown property");
-            return RecyclableType();
-        }
-        VehiclePropertyType type = getPropType(src.prop);
-        size_t vecSize = getVehicleRawValueVectorSize(src.value, type);;
-        auto dest = obtain(type, vecSize);
-
-        dest->prop = src.prop;
-        dest->areaId = src.areaId;
-        dest->timestamp = src.timestamp;
-        copyVehicleRawValue(&dest->value, src.value);
-
-        return dest;
-    }
-
-    RecyclableType obtainBoolean(bool value) {
-        return obtainInt32(value);
-    }
-
-    RecyclableType obtainInt32(int32_t value) {
-        auto val = obtain(VehiclePropertyType::INT32);
-        val->value.int32Values[0] = value;
-        return val;
-    }
-
-    RecyclableType obtainInt64(int64_t value) {
-        auto val = obtain(VehiclePropertyType::INT64);
-        val->value.int64Values[0] = value;
-        return val;
-    }
-
-    RecyclableType obtainFloat(float value) {
-        auto val = obtain(VehiclePropertyType::FLOAT);
-        val->value.floatValues[0] = value;
-        return val;
-    }
-
-    RecyclableType obtainString(const char* cstr) {
-        auto val = obtain(VehiclePropertyType::STRING);
-        val->value.stringValue = cstr;
-        return val;
-    }
+    RecyclableType obtain(VehiclePropertyType type, size_t vecSize);
+    RecyclableType obtain(const VehiclePropValue& src);
+    RecyclableType obtainBoolean(bool value);
+    RecyclableType obtainInt32(int32_t value);
+    RecyclableType obtainInt64(int64_t value);
+    RecyclableType obtainFloat(float value);
+    RecyclableType obtainString(const char* cstr);
 
     VehiclePropValuePool(VehiclePropValuePool& ) = delete;
     VehiclePropValuePool& operator=(VehiclePropValuePool&) = delete;
-
 private:
     bool isDisposable(VehiclePropertyType type, size_t vecSize) const {
         return vecSize > mMaxRecyclableVectorSize ||
@@ -253,70 +194,23 @@ private:
     }
 
     RecyclableType obtainDisposable(VehiclePropertyType valueType,
-                                    size_t vectorSize) const {
-        return RecyclableType {
-            createVehiclePropValue(valueType, vectorSize).release(),
-            mDisposableDeleter
-        };
-    }
-
-    RecyclableType obtainRecylable(VehiclePropertyType type, size_t vecSize) {
-        // VehiclePropertyType is not overlapping with vectorSize.
-        int32_t key = static_cast<int32_t>(type)
-                      | static_cast<int32_t>(vecSize);
-
-        std::lock_guard<std::mutex> g(mLock);
-        auto it = mValueTypePools.find(key);
-
-        if (it == mValueTypePools.end()) {
-            auto newPool(std::make_unique<InternalPool>(type, vecSize));
-            it = mValueTypePools.emplace(key, std::move(newPool)).first;
-        }
-        return it->second->obtain();
-    }
+                                    size_t vectorSize) const;
+    RecyclableType obtainRecylable(VehiclePropertyType type,
+                                   size_t vecSize);
 
     class InternalPool: public ObjectPool<VehiclePropValue> {
     public:
         InternalPool(VehiclePropertyType type, size_t vectorSize)
-            : mPropType(type), mVectorSize(vectorSize) {
-        }
+            : mPropType(type), mVectorSize(vectorSize) {}
 
         RecyclableType obtain() {
             return ObjectPool<VehiclePropValue>::obtain();
         }
     protected:
-        VehiclePropValue* createObject() override {
-            return createVehiclePropValue(mPropType, mVectorSize).release();
-        }
-
-        void recycle(VehiclePropValue* o) override {
-            ALOGE_IF(o == nullptr, "Attempt to recycle nullptr");
-
-            if (!check(&o->value)) {
-                ALOGE("Discarding value for prop 0x%x because it contains "
-                          "data that is not consistent with this pool. "
-                          "Expected type: %d, vector size: %d",
-                      o->prop, mPropType, mVectorSize);
-                delete o;
-            }
-            ObjectPool<VehiclePropValue>::recycle(o);
-        }
-
+        VehiclePropValue* createObject() override;
+        void recycle(VehiclePropValue* o) override;
     private:
-        bool check(VehiclePropValue::RawValue* v) {
-            return check(&v->int32Values,
-                         (VehiclePropertyType::INT32 == mPropType
-                             || VehiclePropertyType::INT32_VEC == mPropType
-                             || VehiclePropertyType::BOOLEAN == mPropType))
-                    && check(&v->floatValues,
-                             (VehiclePropertyType::FLOAT == mPropType
-                              || VehiclePropertyType::FLOAT_VEC == mPropType))
-                    && check(&v->int64Values,
-                             VehiclePropertyType::INT64 == mPropType)
-                    && check(&v->bytes,
-                             VehiclePropertyType::BYTES == mPropType)
-                    && v->stringValue.size() == 0;
-        }
+        bool check(VehiclePropValue::RawValue* v);
 
         template <typename VecType>
         bool check(hidl_vec<VecType>* vec, bool expected) {
@@ -328,7 +222,7 @@ private:
     };
 
 private:
-    const ObjectPool<VehiclePropValue>::Deleter mDisposableDeleter {
+    const Deleter<VehiclePropValue> mDisposableDeleter {
         [] (VehiclePropValue* v) {
             delete v;
         }

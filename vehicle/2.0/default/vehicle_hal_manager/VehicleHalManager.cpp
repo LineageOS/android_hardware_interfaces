@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #define LOG_TAG "android.hardware.vehicle@2.0-impl"
 
-#include <cmath>
+#include "VehicleHalManager.h"
 
-#include <utils/Errors.h>
-#include <android/log.h>
-#include <hidl/Status.h>
-#include <future>
-#include <bitset>
 #include <fstream>
+
+#include <android/log.h>
 #include <private/android_filesystem_config.h>
 
-#include "VehicleHalManager.h"
+#include "VehicleUtils.h"
 
 namespace android {
 namespace hardware {

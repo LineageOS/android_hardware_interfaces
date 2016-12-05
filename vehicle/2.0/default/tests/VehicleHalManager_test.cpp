@@ -182,8 +182,8 @@ public:
 };
 
 TEST_F(VehicleHalManagerTest, getPropConfigs) {
-    hidl_vec<VehicleProperty> properties = init_hidl_vec(
-        { VehicleProperty::HVAC_FAN_SPEED,VehicleProperty::INFO_MAKE} );
+    hidl_vec<VehicleProperty> properties =
+        { VehicleProperty::HVAC_FAN_SPEED, VehicleProperty::INFO_MAKE };
     bool called = false;
 
     manager->getPropConfigs(properties,
@@ -197,7 +197,7 @@ TEST_F(VehicleHalManagerTest, getPropConfigs) {
     ASSERT_TRUE(called);  // Verify callback received.
 
     called = false;
-    manager->getPropConfigs(init_hidl_vec({VehicleProperty::HVAC_FAN_SPEED}),
+    manager->getPropConfigs({ VehicleProperty::HVAC_FAN_SPEED },
             [&called] (StatusCode status,
                        const hidl_vec<VehiclePropConfig>& c) {
         ASSERT_EQ(StatusCode::OK, status);
@@ -230,13 +230,12 @@ TEST_F(VehicleHalManagerTest, halErrorEvent) {
 
     sp<MockedVehicleCallback> cb = new MockedVehicleCallback();
 
-    hidl_vec<SubscribeOptions> options = init_hidl_vec(
-        {
-            SubscribeOptions {
-                .propId = PROP,
-                .flags = SubscribeFlags::DEFAULT
-            },
-        });
+    hidl_vec<SubscribeOptions> options = {
+        SubscribeOptions {
+            .propId = PROP,
+            .flags = SubscribeFlags::DEFAULT
+        },
+    };
 
     StatusCode res = manager->subscribe(cb, options);
     ASSERT_EQ(StatusCode::OK, res);
@@ -249,13 +248,12 @@ TEST_F(VehicleHalManagerTest, subscribe) {
 
     sp<MockedVehicleCallback> cb = new MockedVehicleCallback();
 
-    hidl_vec<SubscribeOptions> options = init_hidl_vec(
-        {
-            SubscribeOptions {
-                .propId = PROP,
-                .flags = SubscribeFlags::DEFAULT
-            },
-        });
+    hidl_vec<SubscribeOptions> options = {
+        SubscribeOptions {
+            .propId = PROP,
+            .flags = SubscribeFlags::DEFAULT
+        }
+    };
 
     StatusCode res = manager->subscribe(cb, options);
     ASSERT_EQ(StatusCode::OK, res);
@@ -291,13 +289,12 @@ TEST_F(VehicleHalManagerTest, subscribe_WriteOnly) {
 
     sp<MockedVehicleCallback> cb = new MockedVehicleCallback();
 
-    hidl_vec<SubscribeOptions> options = init_hidl_vec(
-        {
-            SubscribeOptions {
-                .propId = PROP,
-                .flags = SubscribeFlags::HAL_EVENT
-            },
-        });
+    hidl_vec<SubscribeOptions> options = {
+        SubscribeOptions {
+            .propId = PROP,
+            .flags = SubscribeFlags::HAL_EVENT
+        },
+    };
 
     StatusCode res = manager->subscribe(cb, options);
     // Unable to subscribe on Hal Events for write-only properties.

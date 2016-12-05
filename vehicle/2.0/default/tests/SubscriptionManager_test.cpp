@@ -43,35 +43,32 @@ public:
     sp<IVehicleCallback> cb2 = new MockedVehicleCallback();
     sp<IVehicleCallback> cb3 = new MockedVehicleCallback();
 
-    hidl_vec<SubscribeOptions> subscrToProp1 = init_hidl_vec(
-        {
-            SubscribeOptions {
-                .propId = PROP1,
-                .vehicleAreas = toInt(VehicleAreaZone::ROW_1_LEFT),
-                .flags = SubscribeFlags::HAL_EVENT
-            },
-        });
+    hidl_vec<SubscribeOptions> subscrToProp1 = {
+        SubscribeOptions {
+            .propId = PROP1,
+            .vehicleAreas = toInt(VehicleAreaZone::ROW_1_LEFT),
+            .flags = SubscribeFlags::HAL_EVENT
+        },
+    };
 
-    hidl_vec<SubscribeOptions> subscrToProp2 = init_hidl_vec(
-        {
-            SubscribeOptions {
-                .propId = PROP2,
-                .flags = SubscribeFlags::HAL_EVENT
-            },
-        });
+    hidl_vec<SubscribeOptions> subscrToProp2 = {
+        SubscribeOptions {
+            .propId = PROP2,
+            .flags = SubscribeFlags::HAL_EVENT
+        },
+    };
 
-    hidl_vec<SubscribeOptions> subscrToProp1and2 = init_hidl_vec(
-        {
-            SubscribeOptions {
-                .propId = PROP1,
-                .vehicleAreas = toInt(VehicleAreaZone::ROW_1_LEFT),
-                .flags = SubscribeFlags::HAL_EVENT
-            },
-            SubscribeOptions {
-                .propId = PROP2,
-                .flags = SubscribeFlags::HAL_EVENT
-            },
-        });
+    hidl_vec<SubscribeOptions> subscrToProp1and2 = {
+        SubscribeOptions {
+            .propId = PROP1,
+            .vehicleAreas = toInt(VehicleAreaZone::ROW_1_LEFT),
+            .flags = SubscribeFlags::HAL_EVENT
+        },
+        SubscribeOptions {
+            .propId = PROP2,
+            .flags = SubscribeFlags::HAL_EVENT
+        },
+    };
 
     static std::list<sp<IVehicleCallback>> extractCallbacks(
             const std::list<sp<HalClient>>& clients) {
@@ -144,14 +141,13 @@ TEST_F(SubscriptionManagerTest, mulipleSubscriptions) {
 
     // Same property, but different zone, to make sure we didn't unsubscribe
     // from previous zone.
-    manager.addOrUpdateSubscription(cb1, init_hidl_vec(
-        {
-            SubscribeOptions {
+    manager.addOrUpdateSubscription(cb1, {
+        SubscribeOptions {
                 .propId = PROP1,
                 .vehicleAreas = toInt(VehicleAreaZone::ROW_2),
                 .flags = SubscribeFlags::DEFAULT
             }
-        }));
+        });
 
     clients = manager.getSubscribedClients(PROP1,
                                            toInt(VehicleAreaZone::ROW_1_LEFT),
