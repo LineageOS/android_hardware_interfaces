@@ -121,7 +121,7 @@ void Gnss::gnssSvStatusCb(GnssSvStatus* status) {
             .cN0Dbhz = svInfo.c_n0_dbhz,
             .elevationDegrees = svInfo.elevation,
             .azimuthDegrees = svInfo.azimuth,
-            .svFlag = static_cast<IGnssCallback::GnssSvFlags>(svInfo.flags)
+            .svFlag = svInfo.flags
         };
         svStatus.gnssSvList[i] = gnssSvInfo;
     }
@@ -205,7 +205,8 @@ void Gnss::gpsSvStatusCb(GpsSvStatus* svInfo) {
         info.cN0Dbhz = svInfo->sv_list[i].snr;
         info.elevationDegrees = svInfo->sv_list[i].elevation;
         info.azimuthDegrees = svInfo->sv_list[i].azimuth;
-        info.svFlag = IGnssCallback::GnssSvFlags::NONE;
+        // TODO: b/31702236
+        info.svFlag = static_cast<uint8_t>(IGnssCallback::GnssSvFlags::NONE);
 
         /*
          * Only GPS info is valid for these fields, as these masks are just 32

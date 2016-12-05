@@ -111,7 +111,7 @@ interface IGnssCallback {
         /*
          * Contains additional data about the given SV.
          */
-        GnssSvFlags svFlag;
+        bitfield<GnssSvFlags> svFlag;
     };
 
     /*
