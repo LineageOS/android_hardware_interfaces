@@ -17,6 +17,7 @@
 #include <android-base/logging.h>
 
 #include "hidl_return_util.h"
+#include "hidl_struct_util.h"
 #include "wifi_chip.h"
 #include "wifi_status_util.h"
 
@@ -307,8 +308,19 @@ WifiStatus WifiChip::registerEventCallbackInternal(
 }
 
 std::pair<WifiStatus, uint32_t> WifiChip::getCapabilitiesInternal() {
-  // TODO add implementation
-  return {createWifiStatus(WifiStatusCode::SUCCESS), 0};
+  legacy_hal::wifi_error legacy_status;
+  uint32_t legacy_logger_feature_set;
+  std::tie(legacy_status, legacy_logger_feature_set) =
+      legacy_hal_.lock()->getLoggerSupportedFeatureSet();
+  if (legacy_status != legacy_hal::WIFI_SUCCESS) {
+    return {createWifiStatusFromLegacyError(legacy_status), 0};
+  }
+  uint32_t hidl_caps;
+  if (!hidl_struct_util::convertLegacyFeaturesToHidlChipCapabilities(
+          legacy_logger_feature_set, &hidl_caps)) {
+    return {createWifiStatus(WifiStatusCode::ERROR_UNKNOWN), 0};
+  }
+  return {createWifiStatus(WifiStatusCode::SUCCESS), hidl_caps};
 }
 
 std::pair<WifiStatus, std::vector<IWifiChip::ChipMode>>
@@ -561,29 +573,61 @@ WifiChip::createRttControllerInternal(const sp<IWifiIface>& bound_iface) {
 
 std::pair<WifiStatus, std::vector<WifiDebugRingBufferStatus>>
 WifiChip::getDebugRingBuffersStatusInternal() {
-  // TODO implement
-  return {createWifiStatus(WifiStatusCode::SUCCESS), {}};
+  legacy_hal::wifi_error legacy_status;
+  std::vector<legacy_hal::wifi_ring_buffer_status>
+      legacy_ring_buffer_status_vec;
+  std::tie(legacy_status, legacy_ring_buffer_status_vec) =
+      legacy_hal_.lock()->getRingBuffersStatus();
+  if (legacy_status != legacy_hal::WIFI_SUCCESS) {
+    return {createWifiStatusFromLegacyError(legacy_status), {}};
+  }
+  std::vector<WifiDebugRingBufferStatus> hidl_ring_buffer_status_vec;
+  if (!hidl_struct_util::convertLegacyVectorOfDebugRingBufferStatusToHidl(
+          legacy_ring_buffer_status_vec, &hidl_ring_buffer_status_vec)) {
+    return {createWifiStatus(WifiStatusCode::ERROR_UNKNOWN), {}};
+  }
+  return {createWifiStatus(WifiStatusCode::SUCCESS),
+          hidl_ring_buffer_status_vec};
 }
 
 WifiStatus WifiChip::startLoggingToDebugRingBufferInternal(
-    const hidl_string& /* ring_name */,
-    WifiDebugRingBufferVerboseLevel /* verbose_level */,
-    uint32_t /* max_interval_in_sec */,
-    uint32_t /* min_data_size_in_bytes */) {
-  // TODO implement
-  return createWifiStatus(WifiStatusCode::SUCCESS);
+    const hidl_string& ring_name,
+    WifiDebugRingBufferVerboseLevel verbose_level,
+    uint32_t max_interval_in_sec,
+    uint32_t min_data_size_in_bytes) {
+  legacy_hal::wifi_error legacy_status =
+      legacy_hal_.lock()->startRingBufferLogging(
+          ring_name,
+          static_cast<
+              std::underlying_type<WifiDebugRingBufferVerboseLevel>::type>(
+              verbose_level),
+          max_interval_in_sec,
+          min_data_size_in_bytes);
+  return createWifiStatusFromLegacyError(legacy_status);
 }
 
 WifiStatus WifiChip::forceDumpToDebugRingBufferInternal(
-    const hidl_string& /* ring_name */) {
-  // TODO implement
-  return createWifiStatus(WifiStatusCode::SUCCESS);
+    const hidl_string& ring_name) {
+  legacy_hal::wifi_error legacy_status =
+      legacy_hal_.lock()->getRingBufferData(ring_name);
+  return createWifiStatusFromLegacyError(legacy_status);
 }
 
 std::pair<WifiStatus, WifiDebugHostWakeReasonStats>
 WifiChip::getDebugHostWakeReasonStatsInternal() {
-  // TODO implement
-  return {createWifiStatus(WifiStatusCode::SUCCESS), {}};
+  legacy_hal::wifi_error legacy_status;
+  legacy_hal::WakeReasonStats legacy_stats;
+  std::tie(legacy_status, legacy_stats) =
+      legacy_hal_.lock()->getWakeReasonStats();
+  if (legacy_status != legacy_hal::WIFI_SUCCESS) {
+    return {createWifiStatusFromLegacyError(legacy_status), {}};
+  }
+  WifiDebugHostWakeReasonStats hidl_stats;
+  if (!hidl_struct_util::convertLegacyWakeReasonStatsToHidl(legacy_stats,
+                                                            &hidl_stats)) {
+    return {createWifiStatus(WifiStatusCode::ERROR_UNKNOWN), {}};
+  }
+  return {createWifiStatus(WifiStatusCode::SUCCESS), hidl_stats};
 }
 
 }  // namespace implementation
