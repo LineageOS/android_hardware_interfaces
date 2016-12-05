@@ -45,3 +45,5 @@ LOCAL_PROTOC_OPTIMIZE_TYPE := full
 LOCAL_MULTILIB := both
 
 include $(BUILD_SHARED_LIBRARY)
+
+include $(call all-makefiles-under,$(LOCAL_PATH))
