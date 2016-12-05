@@ -23,6 +23,9 @@ using ::android::hardware::hidl_vec;
 using ::android::hardware::hidl_string;
 using ::android::sp;
 
+using BitField = ::android::hardware::tests::foo::V1_0::IFoo::BitField;
+using MyMask = ::android::hardware::tests::foo::V1_0::IFoo::MyMask;
+
 struct Bar : public IBar {
 
     Bar();
@@ -65,6 +68,9 @@ struct Bar : public IBar {
     // Methods from ::android::hardware::tests::bar::V1_0::IBar follow.
     Return<void> thisIsNew()  override;
     Return<void> expectNullHandle(const hidl_handle& h, const Abc& xyz, expectNullHandle_cb _hidl_cb)  override;
+
+    Return<void> takeAMask(BitField bf, uint8_t first, const MyMask& second, uint8_t third,
+            takeAMask_cb _hidl_cb) override;
 
 private:
     sp<IFoo> mFoo;
