@@ -33,6 +33,13 @@ interface IFoo {
         blah = goober
     };
 
+    enum BitField : uint8_t {
+        V0 = 1 << 0,
+        V1 = 1 << 1,
+        V2 = 1 << 2,
+        V3 = 1 << 3,
+    };
+
     struct Fumble {
         Outer.Inner data;
     };
@@ -84,6 +91,12 @@ interface IFoo {
         handle h;
         int32_t guard;
     };
+
+    struct MyMask {
+        bitfield<BitField> value;
+    };
+
+    typedef bitfield<BitField> Mask;
 
     doThis(float param);
     doThatAndReturnSomething(int64_t param) generates (int32_t result);
