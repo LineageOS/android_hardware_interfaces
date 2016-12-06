@@ -89,7 +89,7 @@ struct CameraInfo {
  * 4. 0x07 is enabling a callback with frame copied out only once. A typical
  *    use case is the Barcode scanner application.
  */
-enum FrameCallbackFlags : uint32_t {
+enum FrameCallbackFlag : uint32_t {
     ENABLE_MASK = 0x01,
     ONE_SHOT_MASK = 0x02,
     COPY_OUT_MASK = 0x04,
@@ -99,6 +99,8 @@ enum FrameCallbackFlags : uint32_t {
     CAMERA = 0x05,
     BARCODE_SCANNER = 0x07
 };
+
+typedef bitfield<FrameCallbackFlag> FrameCallbackFlags;
 
 /**
  * Subset of commands in /system/core/include/system/camera.h relevant for
