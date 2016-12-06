@@ -108,20 +108,17 @@ public:
         mQueue = queue;
         mBatchInterval = batchInterval;
 
-        std::thread(&BatchingConsumer<T>::runInternal, this, func).detach();
+        mWorkerThread = std::thread(
+            &BatchingConsumer<T>::runInternal, this, func);
     }
 
     void requestStop() {
-        if (mState.exchange(State::STOP_REQUESTED) != State::RUNNING) {
-            mState = State::STOPPED;
-            mCondStopped.notify_one();
-        }
+        mState = State::STOP_REQUESTED;
     }
 
     void waitStopped() {
-        std::unique_lock<std::mutex> g(mLock);
-        while (State::STOPPED != mState) {
-            mCondStopped.wait(g);
+        if (mWorkerThread.joinable()) {
+            mWorkerThread.join();
         }
     }
 
@@ -144,12 +141,10 @@ private:
         }
 
         mState = State::STOPPED;
-        mCondStopped.notify_one();
     }
 
 private:
-    std::mutex mLock;
-    std::condition_variable mCondStopped;
+    std::thread mWorkerThread;
 
     std::atomic<State> mState;
     std::chrono::nanoseconds mBatchInterval;

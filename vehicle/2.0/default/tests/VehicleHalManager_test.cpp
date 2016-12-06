@@ -17,13 +17,11 @@
 #include <unordered_map>
 #include <iostream>
 
+#include <utils/SystemClock.h>
+
 #include <gtest/gtest.h>
 
-#include <vehicle_hal_manager/VehiclePropConfigIndex.h>
-#include <VehicleHal.h>
-#include <vehicle_hal_manager/VehicleHalManager.h>
-#include <utils/SystemClock.h>
-#include "vehicle_hal_manager/SubscriptionManager.h"
+#include "vehicle_hal_manager/VehicleHalManager.h"
 
 #include "VehicleHalTestUtils.h"
 
@@ -429,11 +427,11 @@ TEST(HalClientVectorTest, basic) {
     clients.addOrUpdate(c2);
     ASSERT_EQ(2u, clients.size());
     ASSERT_FALSE(clients.isEmpty());
-    ASSERT_GE(0, clients.indexOf(c1));
-    ASSERT_GE(0, clients.remove(c1));
-    ASSERT_GE(0, clients.indexOf(c1));
-    ASSERT_GE(0, clients.remove(c1));
-    ASSERT_GE(0, clients.remove(c2));
+    ASSERT_LE(0, clients.indexOf(c1));
+    ASSERT_LE(0, clients.remove(c1));
+    ASSERT_GT(0, clients.indexOf(c1));  // c1 was already removed
+    ASSERT_GT(0, clients.remove(c1));   // attempt to remove c1 again
+    ASSERT_LE(0, clients.remove(c2));
 
     ASSERT_TRUE(clients.isEmpty());
 }
