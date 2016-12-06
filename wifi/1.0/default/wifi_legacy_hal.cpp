@@ -90,13 +90,22 @@ void onGscanFullResult(wifi_request_id id,
 // Callback to be invoked for link layer stats results.
 std::function<void((wifi_request_id, wifi_iface_stat*, int, wifi_radio_stat*))>
     on_link_layer_stats_result_internal_callback;
-void onLinkLayerStatsDataResult(wifi_request_id id,
-                                wifi_iface_stat* iface_stat,
-                                int num_radios,
-                                wifi_radio_stat* radio_stat) {
+void onLinkLayerStatsResult(wifi_request_id id,
+                            wifi_iface_stat* iface_stat,
+                            int num_radios,
+                            wifi_radio_stat* radio_stat) {
   if (on_link_layer_stats_result_internal_callback) {
     on_link_layer_stats_result_internal_callback(
         id, iface_stat, num_radios, radio_stat);
+  }
+}
+
+// Callback to be invoked for rssi threshold breach.
+std::function<void((wifi_request_id, uint8_t*, int8_t))>
+    on_rssi_threshold_breached_internal_callback;
+void onRssiThresholdBreached(wifi_request_id id, uint8_t* bssid, int8_t rssi) {
+  if (on_rssi_threshold_breached_internal_callback) {
+    on_rssi_threshold_breached_internal_callback(id, bssid, rssi);
   }
 }
 
@@ -537,9 +546,51 @@ std::pair<wifi_error, LinkLayerStats> WifiLegacyHal::getLinkLayerStats() {
   };
 
   wifi_error status = global_func_table_.wifi_get_link_stats(
-      0, wlan_interface_handle_, {onLinkLayerStatsDataResult});
+      0, wlan_interface_handle_, {onLinkLayerStatsResult});
   on_link_layer_stats_result_internal_callback = nullptr;
   return {status, link_stats};
+}
+
+wifi_error WifiLegacyHal::startRssiMonitoring(
+    wifi_request_id id,
+    int8_t max_rssi,
+    int8_t min_rssi,
+    const on_rssi_threshold_breached_callback&
+        on_threshold_breached_user_callback) {
+  if (on_rssi_threshold_breached_internal_callback) {
+    return WIFI_ERROR_NOT_AVAILABLE;
+  }
+  on_rssi_threshold_breached_internal_callback =
+      [on_threshold_breached_user_callback](
+          wifi_request_id id, uint8_t* bssid_ptr, int8_t rssi) {
+        if (!bssid_ptr) {
+          return;
+        }
+        std::array<uint8_t, 6> bssid_arr;
+        // |bssid_ptr| pointer is assumed to have 6 bytes for the mac address.
+        std::copy(bssid_ptr, bssid_ptr + 6, std::begin(bssid_arr));
+        on_threshold_breached_user_callback(id, bssid_arr, rssi);
+      };
+  return global_func_table_.wifi_start_rssi_monitoring(
+      id,
+      wlan_interface_handle_,
+      max_rssi,
+      min_rssi,
+      {onRssiThresholdBreached});
+}
+
+wifi_error WifiLegacyHal::stopRssiMonitoring(wifi_request_id id) {
+  if (!on_rssi_threshold_breached_internal_callback) {
+    return WIFI_ERROR_NOT_AVAILABLE;
+  }
+  wifi_error status =
+      global_func_table_.wifi_stop_rssi_monitoring(id, wlan_interface_handle_);
+  // If the request Id is wrong, don't stop the ongoing rssi monitoring. Any
+  // other error should be treated as the end of background scan.
+  if (status != WIFI_ERROR_INVALID_REQUEST_ID) {
+    on_rssi_threshold_breached_internal_callback = nullptr;
+  }
+  return status;
 }
 
 std::pair<wifi_error, uint32_t> WifiLegacyHal::getLoggerSupportedFeatureSet() {
@@ -1017,6 +1068,7 @@ void WifiLegacyHal::invalidate() {
   on_gscan_event_internal_callback = nullptr;
   on_gscan_full_result_internal_callback = nullptr;
   on_link_layer_stats_result_internal_callback = nullptr;
+  on_rssi_threshold_breached_internal_callback = nullptr;
   on_ring_buffer_data_internal_callback = nullptr;
   on_rtt_results_internal_callback = nullptr;
   on_nan_notify_response_user_callback = nullptr;
