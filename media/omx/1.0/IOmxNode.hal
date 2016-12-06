@@ -46,14 +46,14 @@ interface IOmxNode {
      * Invoke a command on the node.
      *
      * @param[in] cmd indicates the type of the command.
-     * @param[in] info holds information about the command.
+     * @param[in] param is a parameter for the command.
      * @param[out] status will be the status of the call.
      *
      * @see OMX_SendCommand() in the OpenMax IL standard.
      */
     sendCommand(
             uint32_t cmd,
-            Bytes info // TODO: describe structure better or point at standard
+            int32_t param
         ) generates (
             Status status
         );
