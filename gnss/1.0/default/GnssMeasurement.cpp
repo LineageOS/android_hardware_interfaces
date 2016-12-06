@@ -52,18 +52,17 @@ void GnssMeasurement::gnssMeasurementCb(LegacyGnssData* legacyGnssData) {
     for (size_t i = 0; i < gnssData.measurementCount; i++) {
         auto entry = legacyGnssData->measurements[i];
         gnssData.measurements[i] = {
-            .flags = static_cast<IGnssMeasurementCallback::GnssMeasurementFlags>(entry.flags),
+            .flags = entry.flags,
             .svid = entry.svid,
             .constellation = static_cast<GnssConstellationType>(entry.constellation),
             .timeOffsetNs = entry.time_offset_ns,
-            .state = static_cast<IGnssMeasurementCallback::GnssMeasurementState>(entry.state),
+            .state = entry.state,
             .receivedSvTimeInNs = entry.received_sv_time_in_ns,
             .receivedSvTimeUncertaintyInNs = entry.received_sv_time_uncertainty_in_ns,
             .cN0DbHz = entry.c_n0_dbhz,
             .pseudorangeRateMps = entry.pseudorange_rate_mps,
             .pseudorangeRateUncertaintyMps = entry.pseudorange_rate_uncertainty_mps,
-            .accumulatedDeltaRangeState = static_cast<IGnssMeasurementCallback::GnssAccumulatedDeltaRangeState>(
-                    entry.accumulated_delta_range_state),
+            .accumulatedDeltaRangeState = entry.accumulated_delta_range_state,
             .accumulatedDeltaRangeM = entry.accumulated_delta_range_m,
             .accumulatedDeltaRangeUncertaintyM = entry.accumulated_delta_range_uncertainty_m,
             .carrierFrequencyHz = entry.carrier_frequency_hz,
@@ -78,7 +77,7 @@ void GnssMeasurement::gnssMeasurementCb(LegacyGnssData* legacyGnssData) {
 
     auto clockVal = legacyGnssData->clock;
     gnssData.clock = {
-        .gnssClockFlags = static_cast<IGnssMeasurementCallback::GnssClockFlags>(clockVal.flags),
+        .gnssClockFlags = clockVal.flags,
         .leapSecond = clockVal.leap_second,
         .timeNs = clockVal.time_ns,
         .timeUncertaintyNs = clockVal.time_uncertainty_ns,
@@ -117,9 +116,7 @@ void GnssMeasurement::gpsMeasurementCb(GpsData* gpsData) {
 
     for (size_t i = 0; i < gnssData.measurementCount; i++) {
         auto entry = gpsData->measurements[i];
-        gnssData.measurements[i].flags =
-                static_cast<IGnssMeasurementCallback::GnssMeasurementFlags>(
-                        entry.flags);
+        gnssData.measurements[i].flags = entry.flags;
         gnssData.measurements[i].svid = static_cast<int32_t>(entry.prn);
         if (entry.prn >= 1 && entry.prn <= 32) {
             gnssData.measurements[i].constellation = GnssConstellationType::GPS;
@@ -129,9 +126,7 @@ void GnssMeasurement::gpsMeasurementCb(GpsData* gpsData) {
         }
 
         gnssData.measurements[i].timeOffsetNs = entry.time_offset_ns;
-        gnssData.measurements[i].state =
-            static_cast<IGnssMeasurementCallback::GnssMeasurementState>(
-                entry.state);
+        gnssData.measurements[i].state = entry.state;
         gnssData.measurements[i].receivedSvTimeInNs = entry.received_gps_tow_ns;
         gnssData.measurements[i].receivedSvTimeUncertaintyInNs =
             entry.received_gps_tow_uncertainty_ns;
@@ -140,8 +135,7 @@ void GnssMeasurement::gpsMeasurementCb(GpsData* gpsData) {
         gnssData.measurements[i].pseudorangeRateUncertaintyMps =
                 entry.pseudorange_rate_uncertainty_mps;
         gnssData.measurements[i].accumulatedDeltaRangeState =
-                static_cast<IGnssMeasurementCallback::GnssAccumulatedDeltaRangeState>(
-                entry.accumulated_delta_range_state);
+                entry.accumulated_delta_range_state;
         gnssData.measurements[i].accumulatedDeltaRangeM =
                 entry.accumulated_delta_range_m;
         gnssData.measurements[i].accumulatedDeltaRangeUncertaintyM =
@@ -220,8 +214,7 @@ void GnssMeasurement::gpsMeasurementCb(GpsData* gpsData) {
     gnssData.clock.biasUncertaintyNs = clockVal.bias_uncertainty_ns;
     gnssData.clock.driftNsps = clockVal.drift_nsps;
     gnssData.clock.driftUncertaintyNsps = clockVal.drift_uncertainty_nsps;
-    gnssData.clock.gnssClockFlags =
-      static_cast<IGnssMeasurementCallback::GnssClockFlags>(clockVal.flags);
+    gnssData.clock.gnssClockFlags = clockVal.flags;
 
     sGnssMeasureCbIface->GnssMeasurementCb(gnssData);
 }

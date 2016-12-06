@@ -116,7 +116,7 @@ interface IGnssMeasurementCallback {
          * A set of flags indicating the validity of the fields in this data
          * structure.
          */
-        GnssClockFlags gnssClockFlags;
+        bitfield<GnssClockFlags> gnssClockFlags;
 
         /*
          * Leap second data.
@@ -272,7 +272,7 @@ interface IGnssMeasurementCallback {
          * A set of flags indicating the validity of the fields in this data
          * structure.
          */
-        GnssMeasurementFlags flags;
+        bitfield<GnssMeasurementFlags> flags;
 
         /*
          * Satellite vehicle ID number, as defined in GnssSvInfo::svid
@@ -306,7 +306,7 @@ interface IGnssMeasurementCallback {
          *
          * This is a mandatory value.
          */
-        GnssMeasurementState state;
+        bitfield<GnssMeasurementState> state;
 
         /*
          * The received GNSS Time-of-Week at the measurement time, in nanoseconds.
@@ -430,7 +430,7 @@ interface IGnssMeasurementCallback {
          *
          * This is a mandatory value.
          */
-        GnssAccumulatedDeltaRangeState accumulatedDeltaRangeState;
+        bitfield<GnssAccumulatedDeltaRangeState> accumulatedDeltaRangeState;
 
         /*
          * Accumulated delta range since the last channel reset in meters.

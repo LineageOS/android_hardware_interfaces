@@ -32,7 +32,7 @@ interface IAGnssRilCallback {
      *
      * @param setIdflag Specifies the kind of SET ID that is required by the HAL.
      */
-    requestSetIdCb(ID setIdflag);
+    requestSetIdCb(bitfield<ID> setIdflag);
 
     /*
      * The Hal uses this API to request a reference location.

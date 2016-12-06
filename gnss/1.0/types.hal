@@ -40,6 +40,7 @@ enum GnssConstellationType : uint8_t {
 /* Represents a location. */
 struct GnssLocation {
     /* Contains GnssLocationFlags bits. */
+    // TODO bitfield?
     uint16_t gnssLocationFlags;
 
     /* Represents latitude in degrees. */

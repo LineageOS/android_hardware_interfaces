@@ -106,7 +106,7 @@ interface IGnssConfiguration {
       *
       * @return success True if operation was successful.
       */
-     setSuplMode(uint8_t mode) generates (bool success);
+     setSuplMode(bitfield<SuplMode> mode) generates (bool success);
 
      /*
       * This setting configures how GPS functionalities should be locked when
@@ -117,7 +117,7 @@ interface IGnssConfiguration {
       *
       * @return success True if operation was successful.
       */
-     setGpsLock(uint8_t lock) generates (bool success);
+     setGpsLock(bitfield<GpsLock> lock) generates (bool success);
 
      /*
       * This method sets the LTE Positioning Profile configuration.
@@ -127,17 +127,17 @@ interface IGnssConfiguration {
       *
       * @return success True if operation was successful.
       */
-     setLppProfile(uint8_t lppProfile) generates (bool success);
+     setLppProfile(bitfield<LppProfile> lppProfile) generates (bool success);
 
      /*
       * This method selects positioning protocol on A-Glonass system.
       *
       * @param protocol Bitmask that specifies the positioning protocol to be
-      * set as per GlonassPositioningProtocol enum.
+      * set as per GlonassPosProtocol enum.
       *
       * @return success True if operation was successful.
       */
-     setGlonassPositioningProtocol(uint8_t protocol) generates (bool success);
+     setGlonassPositioningProtocol(bitfield<GlonassPosProtocol> protocol) generates (bool success);
 
      /*
       * This method configures which PDN to use.

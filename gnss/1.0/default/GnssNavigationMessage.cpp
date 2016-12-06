@@ -53,8 +53,7 @@ void GnssNavigationMessage::gnssNavigationMessageCb(LegacyGnssNavigationMessage*
     navigationMsg.svid = message->svid;
     navigationMsg.type =
             static_cast<IGnssNavigationMessageCallback::GnssNavigationMessageType>(message->type);
-    navigationMsg.status =
-            static_cast<IGnssNavigationMessageCallback::NavigationMessageStatus>(message->status);
+    navigationMsg.status = message->status;
     navigationMsg.messageId = message->message_id;
     navigationMsg.submessageId = message->submessage_id;
     navigationMsg.data.setToExternal(message->data, message->data_length);
