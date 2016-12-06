@@ -185,6 +185,12 @@ Return<void> Bar::expectNullHandle(const hidl_handle& h, const Abc& xyz, expectN
     return Void();
 }
 
+Return<void> Bar::takeAMask(BitField bf, uint8_t first, const MyMask& second, uint8_t third,
+            takeAMask_cb _hidl_cb) {
+    _hidl_cb(bf, bf | first, second.value & bf, (bf | bf) & third);
+    return Void();
+}
+
 IBar* HIDL_FETCH_IBar(const char* /* name */) {
     return new Bar();
 }
