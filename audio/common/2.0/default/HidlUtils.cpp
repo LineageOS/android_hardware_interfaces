@@ -114,6 +114,9 @@ void HidlUtils::audioOffloadInfoToHal(
     halOffload->duration_us = offload.durationMicroseconds;
     halOffload->has_video = offload.hasVideo;
     halOffload->is_streaming = offload.isStreaming;
+    halOffload->bit_width = offload.bitWidth;
+    halOffload->offload_buffer_size = offload.bufferSize;
+    halOffload->usage = static_cast<audio_usage_t>(offload.usage);
 }
 
 void HidlUtils::audioPortConfigFromHal(
