@@ -1934,4 +1934,13 @@ interface IRadioResponse {
      */
     oneway getAllowedCarriersResponse(RadioResponseInfo info, bool allAllowed,
             CarrierRestrictions carriers);
+
+    /*
+     * Acknowldege the receipt of radio request sent to the vendor. This must be sent only for
+     * radio request which take long time to respond.
+     * For more details, refer https://source.android.com/devices/tech/connect/ril.html
+     *
+     * @param serial Serial no. of the request whose acknowledgement is sent.
+     */
+    oneway requestAcknowledgement(int32_t serial);
 };
