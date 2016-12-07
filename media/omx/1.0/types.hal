@@ -150,7 +150,7 @@ struct CodecBuffer {
         SharedMemoryAttributes sharedMem;
 
         // if bufferType == ANW_BUFFER
-        GraphicBufferAttributes anwBuffer;
+        AnwBufferAttributes anwBuffer;
 
         // if bufferType == NATIVE_HANDLE
         // No additional attributes.
