@@ -41,17 +41,10 @@ interface IDrmFactory {
      *
      * @param uuid uniquely identifies the drm scheme. See
      * http://dashif.org/identifiers/protection for uuid assignments
-     * @param initData scheme-specific init data.
-     * @return status the status of the call. If the plugin can't
-     * be created, the HAL implementation must return ERROR_DRM_CANNOT_HANDLE.
-     * @return the created IDrmPlugin
+     * @return status the status of the call. If the plugin can't be created,
+     * the HAL implementation must return ERROR_DRM_CANNOT_HANDLE.
+     * @return drmPlugin the created IDrmPlugin
      */
-    createPlugin(uint8_t[16] uuid, vec<uint8_t> initData)
-        generates (Status status, IDrmPlugin drmPlugin);
-
-    /**
-     * Destroy a previously created drm plugin
-     * @return status the status of the call
-     */
-    destroyPlugin() generates(Status status);
+    createPlugin(uint8_t[16] uuid) generates (Status status,
+            IDrmPlugin drmPlugin);
 };

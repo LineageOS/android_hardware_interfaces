@@ -36,7 +36,8 @@ interface IDrmPluginListener {
      * @param sessionId identifies the session the event originated from
      * @param data event-specific data blob
      */
-    sendEvent(EventType eventType, SessionId sessionId, vec<uint8_t> data);
+    oneway sendEvent(EventType eventType, SessionId sessionId,
+            vec<uint8_t> data);
 
     /**
      * Send a license expiration update to the listener. The expiration
@@ -48,7 +49,7 @@ interface IDrmPluginListener {
      * The time is in milliseconds, relative to the Unix epoch. A time
      * of 0 indicates that the keys never expire.
      */
-    sendExpirationUpdate(SessionId sessionId, int64_t expiryTimeInMS);
+    oneway sendExpirationUpdate(SessionId sessionId, int64_t expiryTimeInMS);
 
     /**
      * Send a keys change event to the listener. The keys change event
@@ -61,6 +62,6 @@ interface IDrmPluginListener {
      * @param hasNewUsableKey indicates if the event includes at least one
      * key that has become usable.
      */
-    sendKeysChange(SessionId sessionId, vec<KeyStatus> keyStatusList,
+    oneway sendKeysChange(SessionId sessionId, vec<KeyStatus> keyStatusList,
             bool hasNewUsableKey);
 };
