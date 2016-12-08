@@ -262,7 +262,10 @@ Return<void> StreamOut::getPresentationPosition(getPresentationPosition_cb _hidl
         struct timespec halTimeStamp;
         retval = mStreamCommon->analyzeStatus(
                 "get_presentation_position",
-                mStream->get_presentation_position(mStream, &frames, &halTimeStamp));
+                mStream->get_presentation_position(mStream, &frames, &halTimeStamp),
+                // Don't logspam on EINVAL--it's normal for get_presentation_position
+                // to return it sometimes.
+                EINVAL);
         if (retval == Result::OK) {
             timeStamp.tvSec = halTimeStamp.tv_sec;
             timeStamp.tvNSec = halTimeStamp.tv_nsec;

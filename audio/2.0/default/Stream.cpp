@@ -43,8 +43,8 @@ Stream::~Stream() {
     mStream = nullptr;
 }
 
-Result Stream::analyzeStatus(const char* funcName, int status) {
-    if (status != 0) {
+Result Stream::analyzeStatus(const char* funcName, int status, int ignoreError) {
+    if (status != 0 && status != -ignoreError) {
         ALOGW("Stream %p %s: %s", mStream, funcName, strerror(-status));
     }
     switch (status) {

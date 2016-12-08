@@ -73,7 +73,7 @@ struct Stream : public IStream, public ParametersUtil {
     Return<void> debugDump(const hidl_handle& fd)  override;
 
     // Utility methods for extending interfaces.
-    Result analyzeStatus(const char* funcName, int status);
+    Result analyzeStatus(const char* funcName, int status, int ignoreError = OK);
 
   private:
     audio_stream_t *mStream;
