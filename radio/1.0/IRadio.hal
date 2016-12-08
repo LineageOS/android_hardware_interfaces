@@ -382,7 +382,7 @@ interface IRadio {
      *        override the one in the profile. empty string indicates no APN overrride.
      * @param user is the username for APN, or empty string
      * @param password is the password for APN, or empty string
-     * @param authType is the PAP / CHAP auth type. Values:
+     * @param authType is the PAP / CHAP auth type.
      * @param protocol is the connection type to request must be one of the
      *        PDP_type values in TS 27.007 section 10.1.1.
      *        For example, "IP", "IPV6", "IPV4V6", or "PPP".
@@ -1272,7 +1272,7 @@ interface IRadio {
      * @param protocol is the connection type to request must be one of the
      *        PDP_type values in TS 27.007 section 10.1.1.
      *        For example, "IP", "IPV6", "IPV4V6", or "PPP".
-     * @param authType is the PAP / CHAP auth type. Values:
+     * @param authType is the PAP / CHAP auth type.
      * @param user is the username for APN, or empty string
      * @param password is the password for APN, or empty string
      *
