@@ -21,6 +21,8 @@
 #include <thread>
 #include <vector>
 
+#include <wifi_system/interface_tool.h>
+
 namespace android {
 namespace hardware {
 namespace wifi {
@@ -125,7 +127,9 @@ class WifiLegacyHal {
   std::string getP2pIfaceName();
   std::string getStaIfaceName();
 
-  // Initialize the legacy HAL and start the event looper thread.
+  // Initialize the legacy HAL function table.
+  wifi_error initialize();
+  // Start the legacy HAL and the event looper thread.
   wifi_error start();
   // Deinitialize the legacy HAL and stop the event looper thread.
   wifi_error stop(const std::function<void()>& on_complete_callback);
@@ -245,6 +249,7 @@ class WifiLegacyHal {
   wifi_interface_handle wlan_interface_handle_;
   // Flag to indicate if we have initiated the cleanup of legacy HAL.
   bool awaiting_event_loop_termination_;
+  wifi_system::InterfaceTool iface_tool_;
 };
 
 }  // namespace legacy_hal
