@@ -22,6 +22,8 @@
 #include <hidl/Status.h>
 #include <future>
 #include <bitset>
+#include <fstream>
+#include <private/android_filesystem_config.h>
 
 #include "VehicleHalManager.h"
 
@@ -52,10 +54,8 @@ Return<void> VehicleHalManager::getAllPropConfigs(
             const_cast<VehiclePropConfig *>(halConfig.data()),
             halConfig.size());
 
-    ALOGI("getAllPropConfigs calling callback");
     _hidl_cb(hidlConfigs);
 
-    ALOGI("getAllPropConfigs done");
     return Void();
 }
 
@@ -88,7 +88,7 @@ Return<void> VehicleHalManager::get(
         return Void();
     }
 
-    if (!checkReadPermission(*config, getCallee())) {
+    if (!checkReadPermission(*config, getCaller())) {
         _hidl_cb(StatusCode::INVALID_ARG, kEmptyValue);
         return Void();
     }
@@ -109,7 +109,7 @@ Return<StatusCode> VehicleHalManager::set(const VehiclePropValue &value) {
         return StatusCode::INVALID_ARG;
     }
 
-    if (!checkWritePermission(*config, getCallee())) {
+    if (!checkWritePermission(*config, getCaller())) {
         return StatusCode::INVALID_ARG;
     }
 
@@ -194,7 +194,21 @@ void VehicleHalManager::init() {
                          _1, _2, _3));
 
     // Initialize index with vehicle configurations received from VehicleHal.
-    mConfigIndex.reset(new VehiclePropConfigIndex(mHal->listProperties()));
+    auto supportedPropConfigs = mHal->listProperties();
+    mConfigIndex.reset(new VehiclePropConfigIndex(supportedPropConfigs));
+
+    std::vector<VehicleProperty> supportedProperties(
+        supportedPropConfigs.size());
+    for (const auto& config : supportedPropConfigs) {
+        supportedProperties.push_back(config.prop);
+    }
+
+    AccessControlConfigParser aclParser(supportedProperties);
+    const char* configs[] = { "/system/etc/vehicle_access.conf",
+                              "/vendor/etc/vehicle_access.conf" };
+    for (const char* filename : configs) {
+        readAndParseAclConfig(filename, &aclParser, &mPropertyAclMap);
+    }
 }
 
 VehicleHalManager::~VehicleHalManager() {
@@ -292,24 +306,43 @@ bool VehicleHalManager::isSubscribable(const VehiclePropConfig& config,
     return true;
 }
 
+bool checkAcl(const PropertyAclMap& aclMap,
+              uid_t callerUid,
+              VehicleProperty propertyId,
+              VehiclePropertyAccess requiredAccess) {
+    if (callerUid == AID_SYSTEM && isSystemProperty(propertyId)) {
+        return true;
+    }
+
+    auto range = aclMap.equal_range(propertyId);
+    for (auto it = range.first; it != range.second; ++it) {
+        auto& acl = it->second;
+        if (acl.uid == callerUid && (acl.access & requiredAccess)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool VehicleHalManager::checkWritePermission(const VehiclePropConfig &config,
-                                             const Callee& callee) {
+                                             const Caller& caller) const {
     if (!(config.access & VehiclePropertyAccess::WRITE)) {
         ALOGW("Property 0%x has no write access", config.prop);
         return false;
     }
-    //TODO(pavelm): check pid/uid has write access
-    return true;
+    return checkAcl(mPropertyAclMap, caller.uid, config.prop,
+                    VehiclePropertyAccess::WRITE);
 }
 
 bool VehicleHalManager::checkReadPermission(const VehiclePropConfig &config,
-                                            const Callee& callee) {
+                                            const Caller& caller) const {
     if (!(config.access & VehiclePropertyAccess::READ)) {
         ALOGW("Property 0%x has no read access", config.prop);
         return false;
     }
-    //TODO(pavelm): check pid/uid has read access
-    return true;
+
+    return checkAcl(mPropertyAclMap, caller.uid, config.prop,
+                    VehiclePropertyAccess::READ);
 }
 
 void VehicleHalManager::handlePropertySetEvent(const VehiclePropValue& value) {
@@ -326,13 +359,24 @@ const VehiclePropConfig* VehicleHalManager::getPropConfigOrNull(
            ? &mConfigIndex->getConfig(prop) : nullptr;
 }
 
-Callee VehicleHalManager::getCallee() {
-    Callee callee;
+Caller VehicleHalManager::getCaller() {
+    Caller caller;
     IPCThreadState* self = IPCThreadState::self();
-    callee.pid = self->getCallingPid();
-    callee.uid = self->getCallingUid();
+    caller.pid = self->getCallingPid();
+    caller.uid = self->getCallingUid();
 
-    return callee;
+    return caller;
+}
+
+void VehicleHalManager::readAndParseAclConfig(const char* filename,
+                                              AccessControlConfigParser* parser,
+                                              PropertyAclMap* outAclMap) {
+    std::ifstream file(filename);
+    if (file.is_open()) {
+        ALOGI("Parsing file: %s", filename);
+        parser->parseFromStream(&file, outAclMap);
+        file.close();
+    }
 }
 
 }  // namespace V2_0
