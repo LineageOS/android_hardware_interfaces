@@ -18,9 +18,10 @@
 
 #include <android-base/logging.h>
 #include <cutils/properties.h>
-#include <wifi_system/interface_tool.h>
 
 #include "wifi_legacy_hal.h"
+
+using android::wifi_system::InterfaceTool;
 
 namespace android {
 namespace hardware {
@@ -241,12 +242,7 @@ WifiLegacyHal::WifiLegacyHal()
       wlan_interface_handle_(nullptr),
       awaiting_event_loop_termination_(false) {}
 
-wifi_error WifiLegacyHal::start() {
-  // Ensure that we're starting in a good state.
-  CHECK(!global_handle_ && !wlan_interface_handle_ &&
-        !awaiting_event_loop_termination_);
-
-  android::wifi_system::InterfaceTool if_tool;
+wifi_error WifiLegacyHal::initialize() {
   // TODO: Add back the HAL Tool if we need to. All we need from the HAL tool
   // for now is this function call which we can directly call.
   wifi_error status = init_wifi_vendor_hal_func_table(&global_func_table_);
@@ -254,13 +250,19 @@ wifi_error WifiLegacyHal::start() {
     LOG(ERROR) << "Failed to initialize legacy hal function table";
     return WIFI_ERROR_UNKNOWN;
   }
-  if (!if_tool.SetWifiUpState(true)) {
+  return WIFI_SUCCESS;
+}
+
+wifi_error WifiLegacyHal::start() {
+  // Ensure that we're starting in a good state.
+  CHECK(global_func_table_.wifi_initialize && !global_handle_ &&
+        !wlan_interface_handle_ && !awaiting_event_loop_termination_);
+  if (!iface_tool_.SetWifiUpState(true)) {
     LOG(ERROR) << "Failed to set WiFi interface up";
     return WIFI_ERROR_UNKNOWN;
   }
-
   LOG(INFO) << "Starting legacy HAL";
-  status = global_func_table_.wifi_initialize(&global_handle_);
+  wifi_error status = global_func_table_.wifi_initialize(&global_handle_);
   if (status != WIFI_SUCCESS || !global_handle_) {
     LOG(ERROR) << "Failed to retrieve global handle";
     return status;
@@ -280,10 +282,11 @@ wifi_error WifiLegacyHal::stop(
   LOG(INFO) << "Stopping legacy HAL";
   on_stop_complete_internal_callback = [&](wifi_handle handle) {
     CHECK_EQ(global_handle_, handle) << "Handle mismatch";
-    on_stop_complete_user_callback();
     // Invalidate all the internal pointers now that the HAL is
     // stopped.
     invalidate();
+    iface_tool_.SetWifiUpState(false);
+    on_stop_complete_user_callback();
   };
   awaiting_event_loop_termination_ = true;
   global_func_table_.wifi_cleanup(global_handle_, onStopComplete);
@@ -974,8 +977,6 @@ void WifiLegacyHal::runEventLoop() {
   }
   LOG(VERBOSE) << "Legacy HAL event loop terminated";
   awaiting_event_loop_termination_ = false;
-  android::wifi_system::InterfaceTool if_tool;
-  if_tool.SetWifiUpState(false);
 }
 
 std::pair<wifi_error, std::vector<wifi_cached_scan_results>>
