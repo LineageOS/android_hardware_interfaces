@@ -10,6 +10,4 @@ LOCAL_SHARED_LIBRARIES := \
   libbinder \
   libutils \
 
-LOCAL_STATIC_LIBRARIES := libtestUtil
-
 include $(BUILD_SHARED_LIBRARY)
