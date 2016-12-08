@@ -34,6 +34,7 @@ enum Status : int32_t {
 
     NAME_NOT_FOUND          = -2,
     NO_MEMORY               = -12,
+    BAD_VALUE               = -22,
     ERROR_UNSUPPORTED       = -1010,
     UNKNOWN_ERROR           = -2147483648,
 };
