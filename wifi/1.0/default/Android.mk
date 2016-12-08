@@ -24,6 +24,7 @@ LOCAL_SRC_FILES := \
     wifi_ap_iface.cpp \
     wifi_chip.cpp \
     wifi_legacy_hal.cpp \
+    wifi_mode_controller.cpp \
     wifi_nan_iface.cpp \
     wifi_p2p_iface.cpp \
     wifi_rtt_controller.cpp \
@@ -39,6 +40,7 @@ LOCAL_SHARED_LIBRARIES := \
     liblog \
     libnl \
     libutils \
+    libwifi-hal \
     libwifi-system
 LOCAL_WHOLE_STATIC_LIBRARIES := $(LIB_WIFI_HAL)
 LOCAL_INIT_RC := android.hardware.wifi@1.0-service.rc
