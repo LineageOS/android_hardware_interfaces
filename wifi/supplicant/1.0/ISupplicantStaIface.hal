@@ -28,7 +28,7 @@ interface ISupplicantStaIface extends ISupplicantIface {
    * Access Network Query Protocol info ID elements
    * for IEEE Std 802.11u-2011.
    */
-  enum AnqpInfoId : uint32_t {
+  enum AnqpInfoId : uint16_t {
     VENUE_NAME = 258,
     ROAMING_CONSORTIUM = 261,
     IP_ADDR_TYPE_AVAILABILITY = 262,
@@ -42,7 +42,7 @@ interface ISupplicantStaIface extends ISupplicantIface {
    * for Hotspot 2.0.
    */
   enum Hs20AnqpSubtypes : uint32_t {
-    OPERATOR_FRIENDLY_NAME = 2,
+    OPERATOR_FRIENDLY_NAME = 3,
     WAN_METRICS = 4,
     CONNECTION_CAPABILITY = 5,
     OSU_PROVIDERS_LIST = 8,
