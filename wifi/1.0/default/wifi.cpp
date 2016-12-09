@@ -165,7 +165,6 @@ std::pair<WifiStatus, sp<IWifiChip>> Wifi::getChipInternal(ChipId chip_id) {
 }
 
 WifiStatus Wifi::initializeLegacyHal() {
-  LOG(INFO) << "Initializing legacy HAL";
   legacy_hal::wifi_error legacy_status = legacy_hal_->initialize();
   if (legacy_status != legacy_hal::WIFI_SUCCESS) {
     LOG(ERROR) << "Failed to initialize legacy HAL: "
@@ -176,7 +175,6 @@ WifiStatus Wifi::initializeLegacyHal() {
 }
 
 WifiStatus Wifi::stopLegacyHalAndDeinitializeModeController() {
-  LOG(INFO) << "Stopping legacy HAL";
   run_state_ = RunState::STOPPING;
   const auto on_complete_callback_ = [&]() {
     if (chip_.get()) {
