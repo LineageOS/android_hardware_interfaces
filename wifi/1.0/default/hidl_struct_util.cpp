@@ -1155,18 +1155,6 @@ bool convertHidlRttConfigToLegacy(const RttConfig& hidl_config,
   return true;
 }
 
-bool convertHidlRttChannelMapToLegacy(
-    const RttChannelMap& hidl_map, legacy_hal::wifi_channel_map* legacy_map) {
-  if (!legacy_map) {
-    return false;
-  }
-  CHECK(hidl_map.availablity.size() == sizeof(legacy_map->availablity));
-  memcpy(legacy_map->availablity,
-         hidl_map.availablity.data(),
-         hidl_map.availablity.size());
-  return true;
-}
-
 bool convertHidlRttLciInformationToLegacy(
     const RttLciInformation& hidl_info,
     legacy_hal::wifi_lci_information* legacy_info) {

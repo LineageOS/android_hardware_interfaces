@@ -83,49 +83,11 @@ Return<void> WifiRttController::rangeCancel(
                          addrs);
 }
 
-Return<void> WifiRttController::setChannelMap(uint32_t cmd_id,
-                                              const RttChannelMap& params,
-                                              uint32_t num_dw,
-                                              setChannelMap_cb hidl_status_cb) {
-  return validateAndCall(this,
-                         WifiStatusCode::ERROR_WIFI_RTT_CONTROLLER_INVALID,
-                         &WifiRttController::setChannelMapInternal,
-                         hidl_status_cb,
-                         cmd_id,
-                         params,
-                         num_dw);
-}
-
-Return<void> WifiRttController::clearChannelMap(
-    uint32_t cmd_id, clearChannelMap_cb hidl_status_cb) {
-  return validateAndCall(this,
-                         WifiStatusCode::ERROR_WIFI_RTT_CONTROLLER_INVALID,
-                         &WifiRttController::clearChannelMapInternal,
-                         hidl_status_cb,
-                         cmd_id);
-}
-
 Return<void> WifiRttController::getCapabilities(
     getCapabilities_cb hidl_status_cb) {
   return validateAndCall(this,
                          WifiStatusCode::ERROR_WIFI_RTT_CONTROLLER_INVALID,
                          &WifiRttController::getCapabilitiesInternal,
-                         hidl_status_cb);
-}
-
-Return<void> WifiRttController::setDebugCfg(RttDebugType type,
-                                            setDebugCfg_cb hidl_status_cb) {
-  return validateAndCall(this,
-                         WifiStatusCode::ERROR_WIFI_RTT_CONTROLLER_INVALID,
-                         &WifiRttController::setDebugCfgInternal,
-                         hidl_status_cb,
-                         type);
-}
-
-Return<void> WifiRttController::getDebugInfo(getDebugInfo_cb hidl_status_cb) {
-  return validateAndCall(this,
-                         WifiStatusCode::ERROR_WIFI_RTT_CONTROLLER_INVALID,
-                         &WifiRttController::getDebugInfoInternal,
                          hidl_status_cb);
 }
 
@@ -209,31 +171,8 @@ WifiStatus WifiRttController::rangeCancelInternal(
   return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 
-WifiStatus WifiRttController::setChannelMapInternal(
-    uint32_t /* cmd_id */,
-    const RttChannelMap& /* params */,
-    uint32_t /* num_dw */) {
-  // TODO implement
-  return createWifiStatus(WifiStatusCode::SUCCESS);
-}
-
-WifiStatus WifiRttController::clearChannelMapInternal(uint32_t /* cmd_id */) {
-  // TODO implement
-  return createWifiStatus(WifiStatusCode::SUCCESS);
-}
-
 std::pair<WifiStatus, RttCapabilities>
 WifiRttController::getCapabilitiesInternal() {
-  // TODO implement
-  return {createWifiStatus(WifiStatusCode::SUCCESS), {}};
-}
-
-WifiStatus WifiRttController::setDebugCfgInternal(RttDebugType /* type */) {
-  // TODO implement
-  return createWifiStatus(WifiStatusCode::SUCCESS);
-}
-
-std::pair<WifiStatus, RttDebugInfo> WifiRttController::getDebugInfoInternal() {
   // TODO implement
   return {createWifiStatus(WifiStatusCode::SUCCESS), {}};
 }
