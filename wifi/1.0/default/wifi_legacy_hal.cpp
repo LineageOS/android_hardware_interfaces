@@ -571,12 +571,16 @@ wifi_error WifiLegacyHal::startRssiMonitoring(
         std::copy(bssid_ptr, bssid_ptr + 6, std::begin(bssid_arr));
         on_threshold_breached_user_callback(id, bssid_arr, rssi);
       };
-  return global_func_table_.wifi_start_rssi_monitoring(
-      id,
-      wlan_interface_handle_,
-      max_rssi,
-      min_rssi,
-      {onRssiThresholdBreached});
+  wifi_error status =
+      global_func_table_.wifi_start_rssi_monitoring(id,
+                                                    wlan_interface_handle_,
+                                                    max_rssi,
+                                                    min_rssi,
+                                                    {onRssiThresholdBreached});
+  if (status != WIFI_SUCCESS) {
+    on_rssi_threshold_breached_internal_callback = nullptr;
+  }
+  return status;
 }
 
 wifi_error WifiLegacyHal::stopRssiMonitoring(wifi_request_id id) {
@@ -751,11 +755,16 @@ wifi_error WifiLegacyHal::startRttRangeRequest(
   };
 
   std::vector<wifi_rtt_config> rtt_configs_internal(rtt_configs);
-  return global_func_table_.wifi_rtt_range_request(id,
-                                                   wlan_interface_handle_,
-                                                   rtt_configs.size(),
-                                                   rtt_configs_internal.data(),
-                                                   {onRttResults});
+  wifi_error status =
+      global_func_table_.wifi_rtt_range_request(id,
+                                                wlan_interface_handle_,
+                                                rtt_configs.size(),
+                                                rtt_configs_internal.data(),
+                                                {onRttResults});
+  if (status != WIFI_SUCCESS) {
+    on_rtt_results_internal_callback = nullptr;
+  }
+  return status;
 }
 
 wifi_error WifiLegacyHal::cancelRttRangeRequest(
