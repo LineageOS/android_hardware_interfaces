@@ -40,11 +40,6 @@ namespace hidl_struct_util {
 bool convertHidlScanParamsToLegacy(
     const StaBackgroundScanParameters& hidl_scan_params,
     legacy_hal::wifi_scan_cmd_params* legacy_scan_params);
-// Convert the blob of packed IE elements to vector of
-// |WifiInformationElement| structures.
-bool convertLegacyIeBlobToHidl(const uint8_t* ie_blob,
-                               uint32_t ie_blob_len,
-                               std::vector<WifiInformationElement>* hidl_ies);
 // |has_ie_data| indicates whether or not the wifi_scan_result includes 802.11
 // Information Elements (IEs)
 bool convertLegacyScanResultToHidl(
@@ -148,6 +143,29 @@ bool convertLegacyNanDataPathEndIndToHidl(
 bool convertLegacyNanTransmitFollowupIndToHidl(
     const legacy_hal::NanTransmitFollowupInd& legacy_ind,
     NanTransmitFollowupInd* hidl_ind);
+
+// RTT controller conversion methods.
+bool convertHidlRttConfigToLegacy(const RttConfig& hidl_config,
+                                  legacy_hal::wifi_rtt_config* legacy_config);
+bool convertHidlRttChannelMapToLegacy(const RttChannelMap& hidl_map,
+                                      legacy_hal::wifi_channel_map* legacy_map);
+bool convertHidlRttLciInformationToLegacy(
+    const RttLciInformation& hidl_info,
+    legacy_hal::wifi_lci_information* legacy_info);
+bool convertHidlRttLcrInformationToLegacy(
+    const RttLcrInformation& hidl_info,
+    legacy_hal::wifi_lcr_information* legacy_info);
+bool convertHidlRttResponderToLegacy(
+    const RttResponder& hidl_responder,
+    legacy_hal::wifi_rtt_responder* legacy_responder);
+bool convertLegacyRttResponderToHidl(
+    const legacy_hal::wifi_rtt_responder& legacy_responder,
+    RttResponder* hidl_responder);
+bool convertLegacyRttCapabilitiesToHidl(
+    const legacy_hal::wifi_rtt_capabilities& legacy_capabilities,
+    RttCapabilities* hidl_capabilities);
+bool convertLegacyRttResultToHidl(
+    const legacy_hal::wifi_rtt_result& legacy_result, RttResult* hidl_result);
 }  // namespace hidl_struct_util
 }  // namespace implementation
 }  // namespace V1_0
