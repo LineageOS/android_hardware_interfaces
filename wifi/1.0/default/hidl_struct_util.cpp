@@ -26,7 +26,7 @@ namespace V1_0 {
 namespace implementation {
 namespace hidl_struct_util {
 
-uint8_t ConvertHidlReportEventFlagToLegacy(
+uint8_t convertHidlScanReportEventFlagToLegacy(
     StaBackgroundScanBucketEventReportSchemeMask hidl_flag) {
   using HidlFlag = StaBackgroundScanBucketEventReportSchemeMask;
   switch (hidl_flag) {
@@ -37,6 +37,17 @@ uint8_t ConvertHidlReportEventFlagToLegacy(
     case HidlFlag::NO_BATCH:
       return REPORT_EVENTS_NO_BATCH;
   };
+}
+
+StaScanDataFlagMask convertLegacyScanDataFlagToHidl(uint8_t legacy_flag) {
+  switch (legacy_flag) {
+    case legacy_hal::WIFI_SCAN_FLAG_INTERRUPTED:
+      return StaScanDataFlagMask::INTERRUPTED;
+  };
+  CHECK(false) << "Unknown legacy flag: " << legacy_flag;
+  // To silence the compiler warning about reaching the end of non-void
+  // function.
+  return StaScanDataFlagMask::INTERRUPTED;
 }
 
 bool convertHidlScanParamsToLegacy(
@@ -76,7 +87,7 @@ bool convertHidlScanParamsToLegacy(
       if (hidl_bucket_spec.eventReportScheme &
           static_cast<std::underlying_type<HidlFlag>::type>(flag)) {
         legacy_bucket_spec.report_events |=
-            ConvertHidlReportEventFlagToLegacy(flag);
+            convertHidlScanReportEventFlagToLegacy(flag);
       }
     }
     // TODO(b/33194311): Expose these max limits in the HIDL interface.
@@ -159,7 +170,13 @@ bool convertLegacyCachedScanResultsToHidl(
   if (!hidl_scan_data) {
     return false;
   }
-  hidl_scan_data->flags = legacy_cached_scan_result.flags;
+  for (const auto flag : {legacy_hal::WIFI_SCAN_FLAG_INTERRUPTED}) {
+    if (legacy_cached_scan_result.flags & flag) {
+      hidl_scan_data->flags |=
+          static_cast<std::underlying_type<StaScanDataFlagMask>::type>(
+              convertLegacyScanDataFlagToHidl(flag));
+    }
+  }
   hidl_scan_data->bucketsScanned = legacy_cached_scan_result.buckets_scanned;
 
   CHECK(legacy_cached_scan_result.num_results >= 0 &&
@@ -197,6 +214,112 @@ bool convertLegacyVectorOfCachedScanResultsToHidl(
     hidl_scan_datas->push_back(hidl_scan_data);
   }
   return true;
+}
+
+WifiDebugTxPacketFate convertLegacyDebugTxPacketFateToHidl(
+    legacy_hal::wifi_tx_packet_fate fate) {
+  switch (fate) {
+    case legacy_hal::TX_PKT_FATE_ACKED:
+      return WifiDebugTxPacketFate::ACKED;
+    case legacy_hal::TX_PKT_FATE_SENT:
+      return WifiDebugTxPacketFate::SENT;
+    case legacy_hal::TX_PKT_FATE_FW_QUEUED:
+      return WifiDebugTxPacketFate::FW_QUEUED;
+    case legacy_hal::TX_PKT_FATE_FW_DROP_INVALID:
+      return WifiDebugTxPacketFate::FW_DROP_INVALID;
+    case legacy_hal::TX_PKT_FATE_FW_DROP_NOBUFS:
+      return WifiDebugTxPacketFate::FW_DROP_NOBUFS;
+    case legacy_hal::TX_PKT_FATE_FW_DROP_OTHER:
+      return WifiDebugTxPacketFate::FW_DROP_OTHER;
+    case legacy_hal::TX_PKT_FATE_DRV_QUEUED:
+      return WifiDebugTxPacketFate::DRV_QUEUED;
+    case legacy_hal::TX_PKT_FATE_DRV_DROP_INVALID:
+      return WifiDebugTxPacketFate::DRV_DROP_INVALID;
+    case legacy_hal::TX_PKT_FATE_DRV_DROP_NOBUFS:
+      return WifiDebugTxPacketFate::DRV_DROP_NOBUFS;
+    case legacy_hal::TX_PKT_FATE_DRV_DROP_OTHER:
+      return WifiDebugTxPacketFate::DRV_DROP_OTHER;
+  };
+}
+
+WifiDebugRxPacketFate convertLegacyDebugRxPacketFateToHidl(
+    legacy_hal::wifi_rx_packet_fate fate) {
+  switch (fate) {
+    case legacy_hal::RX_PKT_FATE_SUCCESS:
+      return WifiDebugRxPacketFate::SUCCESS;
+    case legacy_hal::RX_PKT_FATE_FW_QUEUED:
+      return WifiDebugRxPacketFate::FW_QUEUED;
+    case legacy_hal::RX_PKT_FATE_FW_DROP_FILTER:
+      return WifiDebugRxPacketFate::FW_DROP_FILTER;
+    case legacy_hal::RX_PKT_FATE_FW_DROP_INVALID:
+      return WifiDebugRxPacketFate::FW_DROP_INVALID;
+    case legacy_hal::RX_PKT_FATE_FW_DROP_NOBUFS:
+      return WifiDebugRxPacketFate::FW_DROP_NOBUFS;
+    case legacy_hal::RX_PKT_FATE_FW_DROP_OTHER:
+      return WifiDebugRxPacketFate::FW_DROP_OTHER;
+    case legacy_hal::RX_PKT_FATE_DRV_QUEUED:
+      return WifiDebugRxPacketFate::DRV_QUEUED;
+    case legacy_hal::RX_PKT_FATE_DRV_DROP_FILTER:
+      return WifiDebugRxPacketFate::DRV_DROP_FILTER;
+    case legacy_hal::RX_PKT_FATE_DRV_DROP_INVALID:
+      return WifiDebugRxPacketFate::DRV_DROP_INVALID;
+    case legacy_hal::RX_PKT_FATE_DRV_DROP_NOBUFS:
+      return WifiDebugRxPacketFate::DRV_DROP_NOBUFS;
+    case legacy_hal::RX_PKT_FATE_DRV_DROP_OTHER:
+      return WifiDebugRxPacketFate::DRV_DROP_OTHER;
+  };
+}
+
+WifiDebugPacketFateFrameType convertLegacyDebugPacketFateFrameTypeToHidl(
+    legacy_hal::frame_type type) {
+  switch (type) {
+    case legacy_hal::FRAME_TYPE_UNKNOWN:
+      return WifiDebugPacketFateFrameType::UNKNOWN;
+    case legacy_hal::FRAME_TYPE_ETHERNET_II:
+      return WifiDebugPacketFateFrameType::ETHERNET_II;
+    case legacy_hal::FRAME_TYPE_80211_MGMT:
+      return WifiDebugPacketFateFrameType::MGMT_80211;
+  };
+}
+
+bool convertLegacyDebugPacketFateFrameToHidl(
+    const legacy_hal::frame_info& legacy_frame,
+    WifiDebugPacketFateFrameInfo* hidl_frame) {
+  if (!hidl_frame) {
+    return false;
+  }
+  hidl_frame->frameType =
+      convertLegacyDebugPacketFateFrameTypeToHidl(legacy_frame.payload_type);
+  hidl_frame->frameLen = legacy_frame.frame_len;
+  hidl_frame->driverTimestampUsec = legacy_frame.driver_timestamp_usec;
+  hidl_frame->firmwareTimestampUsec = legacy_frame.firmware_timestamp_usec;
+  const uint8_t* frame_begin = reinterpret_cast<const uint8_t*>(
+      legacy_frame.frame_content.ethernet_ii_bytes);
+  hidl_frame->frameContent =
+      std::vector<uint8_t>(frame_begin, frame_begin + legacy_frame.frame_len);
+  return true;
+}
+
+bool convertLegacyDebugTxPacketFateToHidl(
+    const legacy_hal::wifi_tx_report& legacy_fate,
+    WifiDebugTxPacketFateReport* hidl_fate) {
+  if (!hidl_fate) {
+    return false;
+  }
+  hidl_fate->fate = convertLegacyDebugTxPacketFateToHidl(legacy_fate.fate);
+  return convertLegacyDebugPacketFateFrameToHidl(legacy_fate.frame_inf,
+                                                 &hidl_fate->frameInfo);
+}
+
+bool convertLegacyDebugRxPacketFateToHidl(
+    const legacy_hal::wifi_rx_report& legacy_fate,
+    WifiDebugRxPacketFateReport* hidl_fate) {
+  if (!hidl_fate) {
+    return false;
+  }
+  hidl_fate->fate = convertLegacyDebugRxPacketFateToHidl(legacy_fate.fate);
+  return convertLegacyDebugPacketFateFrameToHidl(legacy_fate.frame_inf,
+                                                 &hidl_fate->frameInfo);
 }
 
 bool convertLegacyLinkLayerStatsToHidl(
