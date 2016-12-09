@@ -26,30 +26,6 @@ namespace V1_0 {
 namespace implementation {
 namespace hidl_struct_util {
 
-uint8_t convertHidlScanReportEventFlagToLegacy(
-    StaBackgroundScanBucketEventReportSchemeMask hidl_flag) {
-  using HidlFlag = StaBackgroundScanBucketEventReportSchemeMask;
-  switch (hidl_flag) {
-    case HidlFlag::EACH_SCAN:
-      return REPORT_EVENTS_EACH_SCAN;
-    case HidlFlag::FULL_RESULTS:
-      return REPORT_EVENTS_FULL_RESULTS;
-    case HidlFlag::NO_BATCH:
-      return REPORT_EVENTS_NO_BATCH;
-  };
-}
-
-StaScanDataFlagMask convertLegacyScanDataFlagToHidl(uint8_t legacy_flag) {
-  switch (legacy_flag) {
-    case legacy_hal::WIFI_SCAN_FLAG_INTERRUPTED:
-      return StaScanDataFlagMask::INTERRUPTED;
-  };
-  CHECK(false) << "Unknown legacy flag: " << legacy_flag;
-  // To silence the compiler warning about reaching the end of non-void
-  // function.
-  return {};
-}
-
 IWifiChip::ChipCapabilityMask convertLegacyLoggerFeatureToHidlChipCapability(
     uint32_t feature) {
   using HidlChipCaps = IWifiChip::ChipCapabilityMask;
@@ -257,7 +233,32 @@ bool convertLegacyApfCapabilitiesToHidl(
   return true;
 }
 
-bool convertLegacyScanCapabilitiesToHidl(
+uint8_t convertHidlGscanReportEventFlagToLegacy(
+    StaBackgroundScanBucketEventReportSchemeMask hidl_flag) {
+  using HidlFlag = StaBackgroundScanBucketEventReportSchemeMask;
+  switch (hidl_flag) {
+    case HidlFlag::EACH_SCAN:
+      return REPORT_EVENTS_EACH_SCAN;
+    case HidlFlag::FULL_RESULTS:
+      return REPORT_EVENTS_FULL_RESULTS;
+    case HidlFlag::NO_BATCH:
+      return REPORT_EVENTS_NO_BATCH;
+  };
+  CHECK(false);
+}
+
+StaScanDataFlagMask convertLegacyGscanDataFlagToHidl(uint8_t legacy_flag) {
+  switch (legacy_flag) {
+    case legacy_hal::WIFI_SCAN_FLAG_INTERRUPTED:
+      return StaScanDataFlagMask::INTERRUPTED;
+  };
+  CHECK(false) << "Unknown legacy flag: " << legacy_flag;
+  // To silence the compiler warning about reaching the end of non-void
+  // function.
+  return {};
+}
+
+bool convertLegacyGscanCapabilitiesToHidl(
     const legacy_hal::wifi_gscan_capabilities& legacy_caps,
     StaBackgroundScanCapabilities* hidl_caps) {
   if (!hidl_caps) {
@@ -270,7 +271,27 @@ bool convertLegacyScanCapabilitiesToHidl(
   return true;
 }
 
-bool convertHidlScanParamsToLegacy(
+legacy_hal::wifi_band convertHidlGscanBandToLegacy(StaBackgroundScanBand band) {
+  switch (band) {
+    case StaBackgroundScanBand::BAND_UNSPECIFIED:
+      return legacy_hal::WIFI_BAND_UNSPECIFIED;
+    case StaBackgroundScanBand::BAND_24GHZ:
+      return legacy_hal::WIFI_BAND_BG;
+    case StaBackgroundScanBand::BAND_5GHZ:
+      return legacy_hal::WIFI_BAND_A;
+    case StaBackgroundScanBand::BAND_5GHZ_DFS:
+      return legacy_hal::WIFI_BAND_A_DFS;
+    case StaBackgroundScanBand::BAND_5GHZ_WITH_DFS:
+      return legacy_hal::WIFI_BAND_A_WITH_DFS;
+    case StaBackgroundScanBand::BAND_24GHZ_5GHZ:
+      return legacy_hal::WIFI_BAND_ABG;
+    case StaBackgroundScanBand::BAND_24GHZ_5GHZ_WITH_DFS:
+      return legacy_hal::WIFI_BAND_ABG_WITH_DFS;
+  };
+  CHECK(false);
+}
+
+bool convertHidlGscanParamsToLegacy(
     const StaBackgroundScanParameters& hidl_scan_params,
     legacy_hal::wifi_scan_cmd_params* legacy_scan_params) {
   if (!legacy_scan_params) {
@@ -307,7 +328,7 @@ bool convertHidlScanParamsToLegacy(
       if (hidl_bucket_spec.eventReportScheme &
           static_cast<std::underlying_type<HidlFlag>::type>(flag)) {
         legacy_bucket_spec.report_events |=
-            convertHidlScanReportEventFlagToLegacy(flag);
+            convertHidlGscanReportEventFlagToLegacy(flag);
       }
     }
     // TODO(b/33194311): Expose these max limits in the HIDL interface.
@@ -365,7 +386,7 @@ bool convertLegacyIeBlobToHidl(const uint8_t* ie_blob,
   return (next_ie == ies_end);
 }
 
-bool convertLegacyScanResultToHidl(
+bool convertLegacyGscanResultToHidl(
     const legacy_hal::wifi_scan_result& legacy_scan_result,
     bool has_ie_data,
     StaScanResult* hidl_scan_result) {
@@ -396,7 +417,7 @@ bool convertLegacyScanResultToHidl(
   return true;
 }
 
-bool convertLegacyCachedScanResultsToHidl(
+bool convertLegacyCachedGscanResultsToHidl(
     const legacy_hal::wifi_cached_scan_results& legacy_cached_scan_result,
     StaScanData* hidl_scan_data) {
   if (!hidl_scan_data) {
@@ -406,7 +427,7 @@ bool convertLegacyCachedScanResultsToHidl(
     if (legacy_cached_scan_result.flags & flag) {
       hidl_scan_data->flags |=
           static_cast<std::underlying_type<StaScanDataFlagMask>::type>(
-              convertLegacyScanDataFlagToHidl(flag));
+              convertLegacyGscanDataFlagToHidl(flag));
     }
   }
   hidl_scan_data->bucketsScanned = legacy_cached_scan_result.buckets_scanned;
@@ -418,7 +439,7 @@ bool convertLegacyCachedScanResultsToHidl(
        result_idx < legacy_cached_scan_result.num_results;
        result_idx++) {
     StaScanResult hidl_scan_result;
-    if (!convertLegacyScanResultToHidl(
+    if (!convertLegacyGscanResultToHidl(
             legacy_cached_scan_result.results[result_idx],
             false,
             &hidl_scan_result)) {
@@ -430,17 +451,18 @@ bool convertLegacyCachedScanResultsToHidl(
   return true;
 }
 
-bool convertLegacyVectorOfCachedScanResultsToHidl(
+bool convertLegacyVectorOfCachedGscanResultsToHidl(
     const std::vector<legacy_hal::wifi_cached_scan_results>&
         legacy_cached_scan_results,
     std::vector<StaScanData>* hidl_scan_datas) {
   if (!hidl_scan_datas) {
     return false;
   }
+  hidl_scan_datas->clear();
   for (const auto& legacy_cached_scan_result : legacy_cached_scan_results) {
     StaScanData hidl_scan_data;
-    if (!convertLegacyCachedScanResultsToHidl(legacy_cached_scan_result,
-                                              &hidl_scan_data)) {
+    if (!convertLegacyCachedGscanResultsToHidl(legacy_cached_scan_result,
+                                               &hidl_scan_data)) {
       return false;
     }
     hidl_scan_datas->push_back(hidl_scan_data);
