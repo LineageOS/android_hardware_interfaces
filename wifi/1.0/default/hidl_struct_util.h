@@ -59,6 +59,12 @@ bool convertLegacyVectorOfCachedScanResultsToHidl(
 bool convertLegacyLinkLayerStatsToHidl(
     const legacy_hal::LinkLayerStats& legacy_stats,
     StaLinkLayerStats* hidl_stats);
+bool convertLegacyDebugTxPacketFateToHidl(
+    const legacy_hal::wifi_tx_report& legacy_fate,
+    WifiDebugTxPacketFateReport* hidl_fate);
+bool convertLegacyDebugRxPacketFateToHidl(
+    const legacy_hal::wifi_rx_report& legacy_fate,
+    WifiDebugRxPacketFateReport* hidl_fate);
 
 // NAN iface conversion methods.
 bool convertHidlNanEnableRequestToLegacy(
