@@ -20,6 +20,8 @@ interface IWifiStaIfaceEventCallback {
   /**
    * Callback indicating that an ongoing background scan request has failed.
    * The background scan needs to be restarted to continue scanning.
+   *
+   * @param cmdId command ID corresponding to the request.
    */
   oneway onBackgroundScanFailure(CommandId cmdId);
 
@@ -28,7 +30,7 @@ interface IWifiStaIfaceEventCallback {
    * |REPORT_EVENTS_FULL_RESULTS| flag set in
    * |StaBackgroundScanBucketParameters.eventReportScheme|.
    *
-   * @param cmdId command Id corresponding to the request.
+   * @param cmdId command ID corresponding to the request.
    * @parm result Full scan result for an AP.
    */
   oneway onBackgroundFullScanResult(CommandId cmdId, StaScanResult result);
@@ -39,8 +41,18 @@ interface IWifiStaIfaceEventCallback {
    * |REPORT_EVENTS_EACH_SCAN| or one of the configured thresholds was
    * breached.
    *
-   * @param cmdId command Id corresponding to the request.
+   * @param cmdId command ID corresponding to the request.
    * @parm scanDatas List of scan result for all AP's seen since last callback.
    */
   oneway onBackgroundScanResults(CommandId cmdId, vec<StaScanData> scanDatas);
+
+  /**
+   * Called when the RSSI of the currently connected access point goes beyond the
+   * thresholds set via |IWifiStaIface.startRssiMonitoring|.
+   *
+   * @param cmdId command ID corresponding to the request.
+   * @param currBssid BSSID of the currently connected access point.
+   * @param currRssi RSSI of the currently connected access point.
+   */
+  oneway onRssiThresholdBreached(CommandId cmdId, Bssid currBssid, Rssi currRssi);
 };

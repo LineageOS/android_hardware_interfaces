@@ -70,6 +70,13 @@ class WifiStaIface : public IWifiStaIface {
   Return<void> disableLinkLayerStatsCollection(
       disableLinkLayerStatsCollection_cb hidl_status_cb) override;
   Return<void> getLinkLayerStats(getLinkLayerStats_cb hidl_status_cb) override;
+  Return<void> startRssiMonitoring(
+      uint32_t cmd_id,
+      int32_t max_rssi,
+      int32_t min_rssi,
+      startRssiMonitoring_cb hidl_status_cb) override;
+  Return<void> stopRssiMonitoring(
+      uint32_t cmd_id, stopRssiMonitoring_cb hidl_status_cb) override;
   Return<void> startDebugPacketFateMonitoring(
       startDebugPacketFateMonitoring_cb hidl_status_cb) override;
   Return<void> stopDebugPacketFateMonitoring(
@@ -100,6 +107,10 @@ class WifiStaIface : public IWifiStaIface {
   WifiStatus enableLinkLayerStatsCollectionInternal(bool debug);
   WifiStatus disableLinkLayerStatsCollectionInternal();
   std::pair<WifiStatus, StaLinkLayerStats> getLinkLayerStatsInternal();
+  WifiStatus startRssiMonitoringInternal(uint32_t cmd_id,
+                                         int32_t max_rssi,
+                                         int32_t min_rssi);
+  WifiStatus stopRssiMonitoringInternal(uint32_t cmd_id);
   WifiStatus startDebugPacketFateMonitoringInternal();
   WifiStatus stopDebugPacketFateMonitoringInternal();
   std::pair<WifiStatus, std::vector<WifiDebugTxPacketFateReport>>
