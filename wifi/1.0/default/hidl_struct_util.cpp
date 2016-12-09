@@ -64,6 +64,8 @@ convertLegacyFeatureToHidlStaIfaceCapability(uint32_t feature) {
       return HidlStaIfaceCaps::BACKGROUND_SCAN;
     case WIFI_FEATURE_LINK_LAYER_STATS:
       return HidlStaIfaceCaps::LINK_LAYER_STATS;
+    case WIFI_FEATURE_RSSI_MONITOR:
+      return HidlStaIfaceCaps::RSSI_MONITOR;
   };
   CHECK(false) << "Unknown legacy feature: " << feature;
   return {};
@@ -210,8 +212,9 @@ bool convertLegacyFeaturesToHidlStaCapabilities(
       *hidl_caps |= convertLegacyLoggerFeatureToHidlStaIfaceCapability(feature);
     }
   }
-  for (const auto feature :
-       {WIFI_FEATURE_GSCAN, WIFI_FEATURE_LINK_LAYER_STATS}) {
+  for (const auto feature : {WIFI_FEATURE_GSCAN,
+                             WIFI_FEATURE_LINK_LAYER_STATS,
+                             WIFI_FEATURE_RSSI_MONITOR}) {
     if (feature & legacy_feature_set) {
       *hidl_caps |= convertLegacyFeatureToHidlStaIfaceCapability(feature);
     }

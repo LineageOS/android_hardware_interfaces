@@ -101,6 +101,10 @@ using on_gscan_full_result_callback =
 using on_gscan_results_callback = std::function<void(
     wifi_request_id, const std::vector<wifi_cached_scan_results>&)>;
 
+// Invoked when the rssi value breaches the thresholds set.
+using on_rssi_threshold_breached_callback =
+    std::function<void(wifi_request_id, std::array<uint8_t, 6>, int8_t)>;
+
 // Callback for RTT range request results.
 // Rtt results contain IE info and are hence passed by reference, to
 // preserve the |LCI| and |LCR| pointers. Callee must not retain
@@ -167,6 +171,13 @@ class WifiLegacyHal {
   wifi_error enableLinkLayerStats(bool debug);
   wifi_error disableLinkLayerStats();
   std::pair<wifi_error, LinkLayerStats> getLinkLayerStats();
+  // RSSI monitor functions.
+  wifi_error startRssiMonitoring(wifi_request_id id,
+                                 int8_t max_rssi,
+                                 int8_t min_rssi,
+                                 const on_rssi_threshold_breached_callback&
+                                     on_threshold_breached_callback);
+  wifi_error stopRssiMonitoring(wifi_request_id id);
   // Logger/debug functions.
   std::pair<wifi_error, uint32_t> getLoggerSupportedFeatureSet();
   wifi_error startPktFateMonitoring();
