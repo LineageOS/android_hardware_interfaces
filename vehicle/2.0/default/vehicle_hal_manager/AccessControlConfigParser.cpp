@@ -15,13 +15,14 @@
  */
 
 #define LOG_TAG "android.hardware.vehicle@2.0-impl"
-#include <android/log.h>
+
+#include "AccessControlConfigParser.h"
 
 #include <fstream>
 #include <sstream>
 #include <iostream>
 
-#include "AccessControlConfigParser.h"
+#include <android/log.h>
 
 namespace android {
 namespace hardware {

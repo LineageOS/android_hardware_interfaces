@@ -43,17 +43,17 @@ const VehiclePropConfig kVehicleProperties[] = {
         .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
         .supportedAreas = static_cast<int32_t>(
             VehicleAreaZone::ROW_1_LEFT | VehicleAreaZone::ROW_1_RIGHT),
-        .areaConfigs = init_hidl_vec({
-             VehicleAreaConfig {
-                 .areaId = toInt(VehicleAreaZone::ROW_1_LEFT),
-                 .minInt32Value = 1,
-                 .maxInt32Value = 7},
-             VehicleAreaConfig {
-                 .areaId = toInt(VehicleAreaZone::ROW_1_RIGHT),
-                 .minInt32Value = 1,
-                 .maxInt32Value = 5,
-             }
-         }),
+        .areaConfigs = {
+            VehicleAreaConfig {
+                .areaId = toInt(VehicleAreaZone::ROW_1_LEFT),
+                .minInt32Value = 1,
+                .maxInt32Value = 7},
+            VehicleAreaConfig {
+                .areaId = toInt(VehicleAreaZone::ROW_1_RIGHT),
+                .minInt32Value = 1,
+                .maxInt32Value = 5,
+            }
+        }
     },
 
     // Write-only property
@@ -64,17 +64,17 @@ const VehiclePropConfig kVehicleProperties[] = {
         .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
         .supportedAreas = static_cast<int32_t>(
             VehicleAreaZone::ROW_1_LEFT | VehicleAreaZone::ROW_1_RIGHT),
-        .areaConfigs = init_hidl_vec({
-             VehicleAreaConfig {
-                 .areaId = toInt(VehicleAreaZone::ROW_1_LEFT),
-                 .minInt32Value = 64,
-                 .maxInt32Value = 80},
-             VehicleAreaConfig {
-                 .areaId = toInt(VehicleAreaZone::ROW_1_RIGHT),
-                 .minInt32Value = 64,
-                 .maxInt32Value = 80,
-             }
-         }),
+        .areaConfigs = {
+            VehicleAreaConfig {
+                .areaId = toInt(VehicleAreaZone::ROW_1_LEFT),
+                .minInt32Value = 64,
+                .maxInt32Value = 80},
+            VehicleAreaConfig {
+                .areaId = toInt(VehicleAreaZone::ROW_1_RIGHT),
+                .minInt32Value = 64,
+                .maxInt32Value = 80,
+            }
+        }
     },
 
     {
@@ -82,12 +82,12 @@ const VehiclePropConfig kVehicleProperties[] = {
         .access = VehiclePropertyAccess::READ,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         .permissionModel = VehiclePermissionModel::OEM_ONLY,
-        .areaConfigs = init_hidl_vec({
-                                         VehicleAreaConfig {
-                                             .minFloatValue = 0,
-                                             .maxFloatValue = 1.0
-                                         }
-                                     })
+        .areaConfigs = {
+            VehicleAreaConfig {
+                .minFloatValue = 0,
+                .maxFloatValue = 1.0
+            }
+        }
     },
 
     {
@@ -95,12 +95,12 @@ const VehiclePropConfig kVehicleProperties[] = {
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         .permissionModel = VehiclePermissionModel::OEM_ONLY,
-        .areaConfigs = init_hidl_vec({
-                                         VehicleAreaConfig {
-                                             .minInt32Value = 0,
-                                             .maxInt32Value = 10
-                                         }
-                                     })
+        .areaConfigs = {
+            VehicleAreaConfig {
+                .minInt32Value = 0,
+                .maxInt32Value = 10
+            }
+        }
     },
 
     {

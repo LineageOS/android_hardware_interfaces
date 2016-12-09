@@ -83,12 +83,13 @@ const VehiclePropConfig kVehicleProperties[] = {
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
         .supportedAreas = toInt(VehicleAreaZone::ROW_1),
-        .areaConfigs = init_hidl_vec({
-                VehicleAreaConfig {
-                    .areaId = toInt(VehicleAreaZone::ROW_1),
-                    .minInt32Value = 1,
-                    .maxInt32Value = 7
-                }})
+        .areaConfigs = {
+            VehicleAreaConfig {
+                .areaId = toInt(VehicleAreaZone::ROW_1),
+                .minInt32Value = 1,
+                .maxInt32Value = 7
+            }
+        }
     },
 
     {
@@ -107,7 +108,7 @@ const VehiclePropConfig kVehicleProperties[] = {
         .supportedAreas =
                 VehicleAreaZone::ROW_1_LEFT
                 | VehicleAreaZone::ROW_1_RIGHT,
-        .areaConfigs = init_hidl_vec({
+        .areaConfigs = {
             VehicleAreaConfig {
                 .areaId = toInt(VehicleAreaZone::ROW_1_LEFT),
                 .minFloatValue = 16,
@@ -117,7 +118,8 @@ const VehiclePropConfig kVehicleProperties[] = {
                 .areaId = toInt(VehicleAreaZone::ROW_1_RIGHT),
                 .minFloatValue = 16,
                 .maxFloatValue = 32,
-            }})
+            }
+        }
     },
 
     {
@@ -146,12 +148,12 @@ const VehiclePropConfig kVehicleProperties[] = {
         .access = VehiclePropertyAccess::READ,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         .permissionModel = VehiclePermissionModel::OEM_ONLY,
-        .areaConfigs = init_hidl_vec({
-                                         VehicleAreaConfig {
-                                             .minFloatValue = 0,
-                                             .maxFloatValue = 1.0
-                                         }
-                                     })
+        .areaConfigs = {
+            VehicleAreaConfig {
+                .minFloatValue = 0,
+                .maxFloatValue = 1.0
+            }
+        }
     },
 
     {
@@ -159,12 +161,12 @@ const VehiclePropConfig kVehicleProperties[] = {
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         .permissionModel = VehiclePermissionModel::OEM_ONLY,
-        .areaConfigs = init_hidl_vec({
-                                         VehicleAreaConfig {
-                                             .minInt32Value = 0,
-                                             .maxInt32Value = 10
-                                         }
-                                     })
+        .areaConfigs = {
+            VehicleAreaConfig {
+                .minInt32Value = 0,
+                .maxInt32Value = 10
+            }
+        }
     }
 };
 
