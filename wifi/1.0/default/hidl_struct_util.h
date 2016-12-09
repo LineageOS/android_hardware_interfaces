@@ -54,20 +54,21 @@ bool convertLegacyFeaturesToHidlStaCapabilities(
 bool convertLegacyApfCapabilitiesToHidl(
     const legacy_hal::PacketFilterCapabilities& legacy_caps,
     StaApfPacketFilterCapabilities* hidl_caps);
-bool convertLegacyScanCapabilitiesToHidl(
+bool convertLegacyGscanCapabilitiesToHidl(
     const legacy_hal::wifi_gscan_capabilities& legacy_caps,
     StaBackgroundScanCapabilities* hidl_caps);
-bool convertHidlScanParamsToLegacy(
+legacy_hal::wifi_band convertHidlGscanBandToLegacy(StaBackgroundScanBand band);
+bool convertHidlGscanParamsToLegacy(
     const StaBackgroundScanParameters& hidl_scan_params,
     legacy_hal::wifi_scan_cmd_params* legacy_scan_params);
 // |has_ie_data| indicates whether or not the wifi_scan_result includes 802.11
 // Information Elements (IEs)
-bool convertLegacyScanResultToHidl(
+bool convertLegacyGscanResultToHidl(
     const legacy_hal::wifi_scan_result& legacy_scan_result,
     bool has_ie_data,
     StaScanResult* hidl_scan_result);
 // |cached_results| is assumed to not include IEs.
-bool convertLegacyVectorOfCachedScanResultsToHidl(
+bool convertLegacyVectorOfCachedGscanResultsToHidl(
     const std::vector<legacy_hal::wifi_cached_scan_results>&
         legacy_cached_scan_results,
     std::vector<StaScanData>* hidl_scan_datas);
