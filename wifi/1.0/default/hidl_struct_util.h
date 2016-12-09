@@ -147,8 +147,6 @@ bool convertLegacyNanTransmitFollowupIndToHidl(
 // RTT controller conversion methods.
 bool convertHidlRttConfigToLegacy(const RttConfig& hidl_config,
                                   legacy_hal::wifi_rtt_config* legacy_config);
-bool convertHidlRttChannelMapToLegacy(const RttChannelMap& hidl_map,
-                                      legacy_hal::wifi_channel_map* legacy_map);
 bool convertHidlRttLciInformationToLegacy(
     const RttLciInformation& hidl_info,
     legacy_hal::wifi_lci_information* legacy_info);
