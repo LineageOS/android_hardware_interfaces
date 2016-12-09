@@ -83,45 +83,6 @@ interface IWifiRttController {
       generates (WifiStatus status);
 
   /**
-   * API to start publishing the channel map on responder device in an NBD
-   * cluster.
-   * Responder device must take this request and schedule broadcasting the
-   * channel map in a NBD ranging attribute in a Service Discovery Frame.
-   * DE must automatically remove the ranging attribute from the OTA queue
-   * after number of Discovery Window specified by numDw where each
-   * Discovery Window is 512 TUs apart.
-   *
-   * @param cmdId command Id to use for this invocation.
-   * @param params Instance of |RttChannelMap|.
-   * @return status WifiStatus of the operation.
-   *         Possible status codes:
-   *         |WifiStatusCode.SUCCESS|,
-   *         |WifiStatusCode.ERROR_WIFI_RTT_CONTROLLER_INVALID|,
-   *         |WifiStatusCode.ERROR_INVALID_ARGS|,
-   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
-   *         |WifiStatusCode.ERROR_UNKNOWN|
-   */
-  setChannelMap(CommandId cmdId, RttChannelMap params, uint32_t numDw)
-      generates (WifiStatus status);
-
-  /**
-   * API to clear the channel map on the responder device in an NBD cluster.
-   * Responder device must cancel future ranging channel request, starting from
-   * next Discovery Window interval and must also stop broadcasting NBD
-   * ranging attribute in Service Discovery Frame.
-   *
-   * @param cmdId command Id corresponding to the original request.
-   * @return status WifiStatus of the operation.
-   *         Possible status codes:
-   *         |WifiStatusCode.SUCCESS|,
-   *         |WifiStatusCode.ERROR_WIFI_RTT_CONTROLLER_INVALID|,
-   *         |WifiStatusCode.ERROR_INVALID_ARGS|,
-   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
-   *         |WifiStatusCode.ERROR_UNKNOWN|
-   */
-  clearChannelMap(CommandId cmdId) generates (WifiStatus status);
-
-  /**
    * RTT capabilities of the device.
    *
    * @return status WifiStatus of the operation.
@@ -132,32 +93,6 @@ interface IWifiRttController {
    * @return capabilities Instance of |RttCapabilities|.
    */
   getCapabilities() generates (WifiStatus status, RttCapabilities capabilities);
-
-  /**
-   * Set configuration for debug.
-   *
-   * @param type debug level to be set.
-   * @return status WifiStatus of the operation.
-   *         Possible status codes:
-   *         |WifiStatusCode.SUCCESS|,
-   *         |WifiStatusCode.ERROR_WIFI_RTT_CONTROLLER_INVALID|,
-   *         |WifiStatusCode.ERROR_INVALID_ARGS|,
-   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
-   *         |WifiStatusCode.ERROR_UNKNOWN|
-   */
-  setDebugCfg(RttDebugType Type) generates (WifiStatus status);
-
-  /**
-   * Get the debug information.
-   *
-   * @return status WifiStatus of the operation.
-   *         Possible status codes:
-   *         |WifiStatusCode.ERROR_WIFI_RTT_CONTROLLER_INVALID|,
-   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
-   *         |WifiStatusCode.ERROR_UNKNOWN|
-   * @return info Instance of |RttDebugInfo|.
-   */
-  getDebugInfo() generates (WifiStatus status, RttDebugInfo info);
 
   /**
    * API to configure the LCI(Location civic information).
