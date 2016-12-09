@@ -83,18 +83,26 @@ class WifiChip : public IWifiChip {
   Return<void> getApIfaceNames(getApIfaceNames_cb hidl_status_cb) override;
   Return<void> getApIface(const hidl_string& ifname,
                           getApIface_cb hidl_status_cb) override;
+  Return<void> removeApIface(const hidl_string& ifname,
+                             removeApIface_cb hidl_status_cb) override;
   Return<void> createNanIface(createNanIface_cb hidl_status_cb) override;
   Return<void> getNanIfaceNames(getNanIfaceNames_cb hidl_status_cb) override;
   Return<void> getNanIface(const hidl_string& ifname,
                            getNanIface_cb hidl_status_cb) override;
+  Return<void> removeNanIface(const hidl_string& ifname,
+                              removeNanIface_cb hidl_status_cb) override;
   Return<void> createP2pIface(createP2pIface_cb hidl_status_cb) override;
   Return<void> getP2pIfaceNames(getP2pIfaceNames_cb hidl_status_cb) override;
   Return<void> getP2pIface(const hidl_string& ifname,
                            getP2pIface_cb hidl_status_cb) override;
+  Return<void> removeP2pIface(const hidl_string& ifname,
+                              removeP2pIface_cb hidl_status_cb) override;
   Return<void> createStaIface(createStaIface_cb hidl_status_cb) override;
   Return<void> getStaIfaceNames(getStaIfaceNames_cb hidl_status_cb) override;
   Return<void> getStaIface(const hidl_string& ifname,
                            getStaIface_cb hidl_status_cb) override;
+  Return<void> removeStaIface(const hidl_string& ifname,
+                              removeStaIface_cb hidl_status_cb) override;
   Return<void> createRttController(
       const sp<IWifiIface>& bound_iface,
       createRttController_cb hidl_status_cb) override;
@@ -131,19 +139,23 @@ class WifiChip : public IWifiChip {
   std::pair<WifiStatus, sp<IWifiApIface>> createApIfaceInternal();
   std::pair<WifiStatus, std::vector<hidl_string>> getApIfaceNamesInternal();
   std::pair<WifiStatus, sp<IWifiApIface>> getApIfaceInternal(
-      const hidl_string& ifname);
+      const std::string& ifname);
+  WifiStatus removeApIfaceInternal(const std::string& ifname);
   std::pair<WifiStatus, sp<IWifiNanIface>> createNanIfaceInternal();
   std::pair<WifiStatus, std::vector<hidl_string>> getNanIfaceNamesInternal();
   std::pair<WifiStatus, sp<IWifiNanIface>> getNanIfaceInternal(
-      const hidl_string& ifname);
+      const std::string& ifname);
+  WifiStatus removeNanIfaceInternal(const std::string& ifname);
   std::pair<WifiStatus, sp<IWifiP2pIface>> createP2pIfaceInternal();
   std::pair<WifiStatus, std::vector<hidl_string>> getP2pIfaceNamesInternal();
   std::pair<WifiStatus, sp<IWifiP2pIface>> getP2pIfaceInternal(
-      const hidl_string& ifname);
+      const std::string& ifname);
+  WifiStatus removeP2pIfaceInternal(const std::string& ifname);
   std::pair<WifiStatus, sp<IWifiStaIface>> createStaIfaceInternal();
   std::pair<WifiStatus, std::vector<hidl_string>> getStaIfaceNamesInternal();
   std::pair<WifiStatus, sp<IWifiStaIface>> getStaIfaceInternal(
-      const hidl_string& ifname);
+      const std::string& ifname);
+  WifiStatus removeStaIfaceInternal(const std::string& ifname);
   std::pair<WifiStatus, sp<IWifiRttController>> createRttControllerInternal(
       const sp<IWifiIface>& bound_iface);
   std::pair<WifiStatus, std::vector<WifiDebugRingBufferStatus>>
