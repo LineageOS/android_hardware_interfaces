@@ -104,6 +104,18 @@ bool convertHidlScanParamsToLegacy(
   return true;
 }
 
+bool convertLegacyIeToHidl(
+    const legacy_hal::wifi_information_element& legacy_ie,
+    WifiInformationElement* hidl_ie) {
+  if (!hidl_ie) {
+    return false;
+  }
+  hidl_ie->id = legacy_ie.id;
+  hidl_ie->data =
+      std::vector<uint8_t>(legacy_ie.data, legacy_ie.data + legacy_ie.len);
+  return true;
+}
+
 bool convertLegacyIeBlobToHidl(const uint8_t* ie_blob,
                                uint32_t ie_blob_len,
                                std::vector<WifiInformationElement>* hidl_ies) {
@@ -123,9 +135,9 @@ bool convertLegacyIeBlobToHidl(const uint8_t* ie_blob,
       return false;
     }
     WifiInformationElement hidl_ie;
-    hidl_ie.id = legacy_ie.id;
-    hidl_ie.data =
-        std::vector<uint8_t>(legacy_ie.data, legacy_ie.data + legacy_ie.len);
+    if (!convertLegacyIeToHidl(legacy_ie, &hidl_ie)) {
+      return false;
+    }
     hidl_ies->push_back(std::move(hidl_ie));
     next_ie += curr_ie_len;
   }
@@ -240,6 +252,7 @@ WifiDebugTxPacketFate convertLegacyDebugTxPacketFateToHidl(
     case legacy_hal::TX_PKT_FATE_DRV_DROP_OTHER:
       return WifiDebugTxPacketFate::DRV_DROP_OTHER;
   };
+  CHECK(false) << "Unknown legacy fate type: " << fate;
 }
 
 WifiDebugRxPacketFate convertLegacyDebugRxPacketFateToHidl(
@@ -268,6 +281,7 @@ WifiDebugRxPacketFate convertLegacyDebugRxPacketFateToHidl(
     case legacy_hal::RX_PKT_FATE_DRV_DROP_OTHER:
       return WifiDebugRxPacketFate::DRV_DROP_OTHER;
   };
+  CHECK(false) << "Unknown legacy fate type: " << fate;
 }
 
 WifiDebugPacketFateFrameType convertLegacyDebugPacketFateFrameTypeToHidl(
@@ -280,6 +294,7 @@ WifiDebugPacketFateFrameType convertLegacyDebugPacketFateFrameTypeToHidl(
     case legacy_hal::FRAME_TYPE_80211_MGMT:
       return WifiDebugPacketFateFrameType::MGMT_80211;
   };
+  CHECK(false) << "Unknown legacy frame type: " << type;
 }
 
 bool convertLegacyDebugPacketFateFrameToHidl(
@@ -385,6 +400,7 @@ legacy_hal::NanPublishType convertHidlNanPublishTypeToLegacy(
     case NanPublishType::UNSOLICITED_SOLICITED:
       return legacy_hal::NAN_PUBLISH_TYPE_UNSOLICITED_SOLICITED;
   };
+  CHECK(false);
 }
 
 legacy_hal::NanTxType convertHidlNanTxTypeToLegacy(NanTxType type) {
@@ -394,6 +410,7 @@ legacy_hal::NanTxType convertHidlNanTxTypeToLegacy(NanTxType type) {
     case NanTxType::UNICAST:
       return legacy_hal::NAN_TX_TYPE_UNICAST;
   };
+  CHECK(false);
 }
 
 legacy_hal::NanMatchAlg convertHidlNanMatchAlgToLegacy(NanMatchAlg type) {
@@ -405,6 +422,7 @@ legacy_hal::NanMatchAlg convertHidlNanMatchAlgToLegacy(NanMatchAlg type) {
     case NanMatchAlg::MATCH_NEVER:
       return legacy_hal::NAN_MATCH_ALG_MATCH_NEVER;
   };
+  CHECK(false);
 }
 
 legacy_hal::NanSubscribeType convertHidlNanSubscribeTypeToLegacy(
@@ -415,6 +433,7 @@ legacy_hal::NanSubscribeType convertHidlNanSubscribeTypeToLegacy(
     case NanSubscribeType::PASSIVE:
       return legacy_hal::NAN_SUBSCRIBE_TYPE_PASSIVE;
   };
+  CHECK(false);
 }
 
 legacy_hal::NanSRFType convertHidlNanSrfTypeToLegacy(NanSrfType type) {
@@ -424,6 +443,7 @@ legacy_hal::NanSRFType convertHidlNanSrfTypeToLegacy(NanSrfType type) {
     case NanSrfType::PARTIAL_MAC_ADDR:
       return legacy_hal::NAN_SRF_ATTR_PARTIAL_MAC_ADDR;
   };
+  CHECK(false);
 }
 
 legacy_hal::NanSRFIncludeType convertHidlNanSrfIncludeTypeToLegacy(
@@ -434,6 +454,7 @@ legacy_hal::NanSRFIncludeType convertHidlNanSrfIncludeTypeToLegacy(
     case NanSrfIncludeType::RESPOND:
       return legacy_hal::NAN_SRF_INCLUDE_RESPOND;
   };
+  CHECK(false);
 }
 
 NanStatusType convertLegacyNanStatusTypeToHidl(
@@ -485,6 +506,7 @@ NanResponseType convertLegacyNanResponseTypeToHidl(
     case legacy_hal::NAN_DP_END:
       return NanResponseType::DP_END;
   };
+  CHECK(false) << "Unknown legacy type: " << type;
 }
 
 bool convertHidlNanEnableRequestToLegacy(
@@ -854,6 +876,461 @@ bool convertLegacyNanTransmitFollowupIndToHidl(
     const legacy_hal::NanTransmitFollowupInd& /* legacy_ind */,
     NanTransmitFollowupInd* /* hidl_ind */) {
   return false;
+}
+
+legacy_hal::wifi_rtt_type convertHidlRttTypeToLegacy(RttType type) {
+  switch (type) {
+    case RttType::ONE_SIDED:
+      return legacy_hal::RTT_TYPE_1_SIDED;
+    case RttType::TWO_SIDED:
+      return legacy_hal::RTT_TYPE_2_SIDED;
+  };
+  CHECK(false);
+}
+
+RttType convertLegacyRttTypeToHidl(legacy_hal::wifi_rtt_type type) {
+  switch (type) {
+    case legacy_hal::RTT_TYPE_1_SIDED:
+      return RttType::ONE_SIDED;
+    case legacy_hal::RTT_TYPE_2_SIDED:
+      return RttType::TWO_SIDED;
+  };
+  CHECK(false) << "Unknown legacy type: " << type;
+}
+
+legacy_hal::rtt_peer_type convertHidlRttPeerTypeToLegacy(RttPeerType type) {
+  switch (type) {
+    case RttPeerType::AP:
+      return legacy_hal::RTT_PEER_AP;
+    case RttPeerType::STA:
+      return legacy_hal::RTT_PEER_STA;
+    case RttPeerType::P2P_GO:
+      return legacy_hal::RTT_PEER_P2P_GO;
+    case RttPeerType::P2P_CLIENT:
+      return legacy_hal::RTT_PEER_P2P_CLIENT;
+    case RttPeerType::NAN:
+      return legacy_hal::RTT_PEER_NAN;
+  };
+  CHECK(false);
+}
+
+legacy_hal::wifi_channel_width convertHidlWifiChannelWidthToLegacy(
+    WifiChannelWidthInMhz type) {
+  switch (type) {
+    case WifiChannelWidthInMhz::WIDTH_20:
+      return legacy_hal::WIFI_CHAN_WIDTH_20;
+    case WifiChannelWidthInMhz::WIDTH_40:
+      return legacy_hal::WIFI_CHAN_WIDTH_40;
+    case WifiChannelWidthInMhz::WIDTH_80:
+      return legacy_hal::WIFI_CHAN_WIDTH_80;
+    case WifiChannelWidthInMhz::WIDTH_160:
+      return legacy_hal::WIFI_CHAN_WIDTH_160;
+    case WifiChannelWidthInMhz::WIDTH_80P80:
+      return legacy_hal::WIFI_CHAN_WIDTH_80P80;
+    case WifiChannelWidthInMhz::WIDTH_5:
+      return legacy_hal::WIFI_CHAN_WIDTH_5;
+    case WifiChannelWidthInMhz::WIDTH_10:
+      return legacy_hal::WIFI_CHAN_WIDTH_10;
+    case WifiChannelWidthInMhz::WIDTH_INVALID:
+      return legacy_hal::WIFI_CHAN_WIDTH_INVALID;
+  };
+  CHECK(false);
+}
+
+WifiChannelWidthInMhz convertLegacyWifiChannelWidthToHidl(
+    legacy_hal::wifi_channel_width type) {
+  switch (type) {
+    case legacy_hal::WIFI_CHAN_WIDTH_20:
+      return WifiChannelWidthInMhz::WIDTH_20;
+    case legacy_hal::WIFI_CHAN_WIDTH_40:
+      return WifiChannelWidthInMhz::WIDTH_40;
+    case legacy_hal::WIFI_CHAN_WIDTH_80:
+      return WifiChannelWidthInMhz::WIDTH_80;
+    case legacy_hal::WIFI_CHAN_WIDTH_160:
+      return WifiChannelWidthInMhz::WIDTH_160;
+    case legacy_hal::WIFI_CHAN_WIDTH_80P80:
+      return WifiChannelWidthInMhz::WIDTH_80P80;
+    case legacy_hal::WIFI_CHAN_WIDTH_5:
+      return WifiChannelWidthInMhz::WIDTH_5;
+    case legacy_hal::WIFI_CHAN_WIDTH_10:
+      return WifiChannelWidthInMhz::WIDTH_10;
+    case legacy_hal::WIFI_CHAN_WIDTH_INVALID:
+      return WifiChannelWidthInMhz::WIDTH_INVALID;
+  };
+  CHECK(false) << "Unknown legacy type: " << type;
+}
+
+legacy_hal::wifi_rtt_preamble convertHidlRttPreambleToLegacy(RttPreamble type) {
+  switch (type) {
+    case RttPreamble::LEGACY:
+      return legacy_hal::WIFI_RTT_PREAMBLE_LEGACY;
+    case RttPreamble::HT:
+      return legacy_hal::WIFI_RTT_PREAMBLE_HT;
+    case RttPreamble::VHT:
+      return legacy_hal::WIFI_RTT_PREAMBLE_VHT;
+  };
+  CHECK(false);
+}
+
+RttPreamble convertLegacyRttPreambleToHidl(legacy_hal::wifi_rtt_preamble type) {
+  switch (type) {
+    case legacy_hal::WIFI_RTT_PREAMBLE_LEGACY:
+      return RttPreamble::LEGACY;
+    case legacy_hal::WIFI_RTT_PREAMBLE_HT:
+      return RttPreamble::HT;
+    case legacy_hal::WIFI_RTT_PREAMBLE_VHT:
+      return RttPreamble::VHT;
+  };
+  CHECK(false) << "Unknown legacy type: " << type;
+}
+
+legacy_hal::wifi_rtt_bw convertHidlRttBwToLegacy(RttBw type) {
+  switch (type) {
+    case RttBw::BW_5MHZ:
+      return legacy_hal::WIFI_RTT_BW_5;
+    case RttBw::BW_10MHZ:
+      return legacy_hal::WIFI_RTT_BW_10;
+    case RttBw::BW_20MHZ:
+      return legacy_hal::WIFI_RTT_BW_20;
+    case RttBw::BW_40MHZ:
+      return legacy_hal::WIFI_RTT_BW_40;
+    case RttBw::BW_80MHZ:
+      return legacy_hal::WIFI_RTT_BW_80;
+    case RttBw::BW_160MHZ:
+      return legacy_hal::WIFI_RTT_BW_160;
+  };
+  CHECK(false);
+}
+
+RttBw convertLegacyRttBwToHidl(legacy_hal::wifi_rtt_bw type) {
+  switch (type) {
+    case legacy_hal::WIFI_RTT_BW_5:
+      return RttBw::BW_5MHZ;
+    case legacy_hal::WIFI_RTT_BW_10:
+      return RttBw::BW_10MHZ;
+    case legacy_hal::WIFI_RTT_BW_20:
+      return RttBw::BW_20MHZ;
+    case legacy_hal::WIFI_RTT_BW_40:
+      return RttBw::BW_40MHZ;
+    case legacy_hal::WIFI_RTT_BW_80:
+      return RttBw::BW_80MHZ;
+    case legacy_hal::WIFI_RTT_BW_160:
+      return RttBw::BW_160MHZ;
+  };
+  CHECK(false) << "Unknown legacy type: " << type;
+}
+
+legacy_hal::wifi_motion_pattern convertHidlRttMotionPatternToLegacy(
+    RttMotionPattern type) {
+  switch (type) {
+    case RttMotionPattern::NOT_EXPECTED:
+      return legacy_hal::WIFI_MOTION_NOT_EXPECTED;
+    case RttMotionPattern::EXPECTED:
+      return legacy_hal::WIFI_MOTION_EXPECTED;
+    case RttMotionPattern::UNKNOWN:
+      return legacy_hal::WIFI_MOTION_UNKNOWN;
+  };
+  CHECK(false);
+}
+
+WifiRatePreamble convertLegacyWifiRatePreambleToHidl(uint8_t preamble) {
+  switch (preamble) {
+    case 0:
+      return WifiRatePreamble::OFDM;
+    case 1:
+      return WifiRatePreamble::CCK;
+    case 2:
+      return WifiRatePreamble::HT;
+    case 3:
+      return WifiRatePreamble::VHT;
+    default:
+      return WifiRatePreamble::RESERVED;
+  };
+  CHECK(false) << "Unknown legacy preamble: " << preamble;
+}
+
+WifiRateNss convertLegacyWifiRateNssToHidl(uint8_t nss) {
+  switch (nss) {
+    case 0:
+      return WifiRateNss::NSS_1x1;
+    case 1:
+      return WifiRateNss::NSS_2x2;
+    case 2:
+      return WifiRateNss::NSS_3x3;
+    case 3:
+      return WifiRateNss::NSS_4x4;
+  };
+  CHECK(false) << "Unknown legacy nss: " << nss;
+  return {};
+}
+
+RttStatus convertLegacyRttStatusToHidl(legacy_hal::wifi_rtt_status status) {
+  switch (status) {
+    case legacy_hal::RTT_STATUS_SUCCESS:
+      return RttStatus::SUCCESS;
+    case legacy_hal::RTT_STATUS_FAILURE:
+      return RttStatus::FAILURE;
+    case legacy_hal::RTT_STATUS_FAIL_NO_RSP:
+      return RttStatus::FAIL_NO_RSP;
+    case legacy_hal::RTT_STATUS_FAIL_REJECTED:
+      return RttStatus::FAIL_REJECTED;
+    case legacy_hal::RTT_STATUS_FAIL_NOT_SCHEDULED_YET:
+      return RttStatus::FAIL_NOT_SCHEDULED_YET;
+    case legacy_hal::RTT_STATUS_FAIL_TM_TIMEOUT:
+      return RttStatus::FAIL_TM_TIMEOUT;
+    case legacy_hal::RTT_STATUS_FAIL_AP_ON_DIFF_CHANNEL:
+      return RttStatus::FAIL_AP_ON_DIFF_CHANNEL;
+    case legacy_hal::RTT_STATUS_FAIL_NO_CAPABILITY:
+      return RttStatus::FAIL_NO_CAPABILITY;
+    case legacy_hal::RTT_STATUS_ABORTED:
+      return RttStatus::ABORTED;
+    case legacy_hal::RTT_STATUS_FAIL_INVALID_TS:
+      return RttStatus::FAIL_INVALID_TS;
+    case legacy_hal::RTT_STATUS_FAIL_PROTOCOL:
+      return RttStatus::FAIL_PROTOCOL;
+    case legacy_hal::RTT_STATUS_FAIL_SCHEDULE:
+      return RttStatus::FAIL_SCHEDULE;
+    case legacy_hal::RTT_STATUS_FAIL_BUSY_TRY_LATER:
+      return RttStatus::FAIL_BUSY_TRY_LATER;
+    case legacy_hal::RTT_STATUS_INVALID_REQ:
+      return RttStatus::INVALID_REQ;
+    case legacy_hal::RTT_STATUS_NO_WIFI:
+      return RttStatus::NO_WIFI;
+    case legacy_hal::RTT_STATUS_FAIL_FTM_PARAM_OVERRIDE:
+      return RttStatus::FAIL_FTM_PARAM_OVERRIDE;
+  };
+  CHECK(false) << "Unknown legacy status: " << status;
+}
+
+bool convertHidlWifiChannelInfoToLegacy(
+    const WifiChannelInfo& hidl_info,
+    legacy_hal::wifi_channel_info* legacy_info) {
+  if (!legacy_info) {
+    return false;
+  }
+  legacy_info->width = convertHidlWifiChannelWidthToLegacy(hidl_info.width);
+  legacy_info->center_freq = hidl_info.centerFreq;
+  legacy_info->center_freq0 = hidl_info.centerFreq0;
+  legacy_info->center_freq1 = hidl_info.centerFreq1;
+  return true;
+}
+
+bool convertLegacyWifiChannelInfoToHidl(
+    const legacy_hal::wifi_channel_info& legacy_info,
+    WifiChannelInfo* hidl_info) {
+  if (!hidl_info) {
+    return false;
+  }
+  hidl_info->width = convertLegacyWifiChannelWidthToHidl(legacy_info.width);
+  hidl_info->centerFreq = legacy_info.center_freq;
+  hidl_info->centerFreq0 = legacy_info.center_freq0;
+  hidl_info->centerFreq1 = legacy_info.center_freq1;
+  return true;
+}
+
+bool convertHidlRttConfigToLegacy(const RttConfig& hidl_config,
+                                  legacy_hal::wifi_rtt_config* legacy_config) {
+  if (!legacy_config) {
+    return false;
+  }
+  CHECK(hidl_config.addr.size() == sizeof(legacy_config->addr));
+  memcpy(legacy_config->addr, hidl_config.addr.data(), hidl_config.addr.size());
+  legacy_config->type = convertHidlRttTypeToLegacy(hidl_config.type);
+  legacy_config->peer = convertHidlRttPeerTypeToLegacy(hidl_config.peer);
+  if (!convertHidlWifiChannelInfoToLegacy(hidl_config.channel,
+                                          &legacy_config->channel)) {
+    return false;
+  }
+  legacy_config->burst_period = hidl_config.burstPeriod;
+  legacy_config->num_burst = hidl_config.numBurst;
+  legacy_config->num_frames_per_burst = hidl_config.numFramesPerBurst;
+  legacy_config->num_retries_per_rtt_frame = hidl_config.numRetriesPerRttFrame;
+  legacy_config->num_retries_per_ftmr = hidl_config.numRetriesPerFtmr;
+  legacy_config->LCI_request = hidl_config.mustRequestLci;
+  legacy_config->LCR_request = hidl_config.mustRequestLcr;
+  legacy_config->burst_duration = hidl_config.burstDuration;
+  legacy_config->preamble =
+      convertHidlRttPreambleToLegacy(hidl_config.preamble);
+  legacy_config->bw = convertHidlRttBwToLegacy(hidl_config.bw);
+  return true;
+}
+
+bool convertHidlRttChannelMapToLegacy(
+    const RttChannelMap& hidl_map, legacy_hal::wifi_channel_map* legacy_map) {
+  if (!legacy_map) {
+    return false;
+  }
+  CHECK(hidl_map.availablity.size() == sizeof(legacy_map->availablity));
+  memcpy(legacy_map->availablity,
+         hidl_map.availablity.data(),
+         hidl_map.availablity.size());
+  return true;
+}
+
+bool convertHidlRttLciInformationToLegacy(
+    const RttLciInformation& hidl_info,
+    legacy_hal::wifi_lci_information* legacy_info) {
+  if (!legacy_info) {
+    return false;
+  }
+  legacy_info->latitude = hidl_info.latitude;
+  legacy_info->longitude = hidl_info.longitude;
+  legacy_info->altitude = hidl_info.altitude;
+  legacy_info->latitude_unc = hidl_info.latitudeUnc;
+  legacy_info->longitude_unc = hidl_info.longitudeUnc;
+  legacy_info->altitude_unc = hidl_info.altitudeUnc;
+  legacy_info->motion_pattern =
+      convertHidlRttMotionPatternToLegacy(hidl_info.motionPattern);
+  legacy_info->floor = hidl_info.floor;
+  legacy_info->height_above_floor = hidl_info.heightAboveFloor;
+  legacy_info->height_unc = hidl_info.heightUnc;
+  return true;
+}
+
+bool convertHidlRttLcrInformationToLegacy(
+    const RttLcrInformation& hidl_info,
+    legacy_hal::wifi_lcr_information* legacy_info) {
+  if (!legacy_info) {
+    return false;
+  }
+  CHECK(hidl_info.countryCode.size() == sizeof(legacy_info->country_code));
+  memcpy(legacy_info->country_code,
+         hidl_info.countryCode.data(),
+         hidl_info.countryCode.size());
+  if (hidl_info.civicInfo.size() > sizeof(legacy_info->civic_info)) {
+    return false;
+  }
+  legacy_info->length = hidl_info.civicInfo.size();
+  memcpy(legacy_info->civic_info,
+         hidl_info.civicInfo.c_str(),
+         hidl_info.civicInfo.size());
+  return true;
+}
+
+bool convertHidlRttResponderToLegacy(
+    const RttResponder& hidl_responder,
+    legacy_hal::wifi_rtt_responder* legacy_responder) {
+  if (!legacy_responder) {
+    return false;
+  }
+  if (!convertHidlWifiChannelInfoToLegacy(hidl_responder.channel,
+                                          &legacy_responder->channel)) {
+    return false;
+  }
+  legacy_responder->preamble =
+      convertHidlRttPreambleToLegacy(hidl_responder.preamble);
+  return true;
+}
+
+bool convertLegacyRttResponderToHidl(
+    const legacy_hal::wifi_rtt_responder& legacy_responder,
+    RttResponder* hidl_responder) {
+  if (!hidl_responder) {
+    return false;
+  }
+  if (!convertLegacyWifiChannelInfoToHidl(legacy_responder.channel,
+                                          &hidl_responder->channel)) {
+    return false;
+  }
+  hidl_responder->preamble =
+      convertLegacyRttPreambleToHidl(legacy_responder.preamble);
+  return true;
+}
+
+bool convertLegacyRttCapabilitiesToHidl(
+    const legacy_hal::wifi_rtt_capabilities& legacy_capabilities,
+    RttCapabilities* hidl_capabilities) {
+  if (!hidl_capabilities) {
+    return false;
+  }
+  hidl_capabilities->rttOneSidedSupported =
+      legacy_capabilities.rtt_one_sided_supported;
+  hidl_capabilities->rttFtmSupported = legacy_capabilities.rtt_ftm_supported;
+  hidl_capabilities->lciSupported = legacy_capabilities.lci_support;
+  hidl_capabilities->lcrSupported = legacy_capabilities.lcr_support;
+  hidl_capabilities->responderSupported =
+      legacy_capabilities.responder_supported;
+  for (const auto flag : {legacy_hal::WIFI_RTT_PREAMBLE_LEGACY,
+                          legacy_hal::WIFI_RTT_PREAMBLE_HT,
+                          legacy_hal::WIFI_RTT_PREAMBLE_VHT}) {
+    if (legacy_capabilities.preamble_support & flag) {
+      hidl_capabilities->preambleSupport |=
+          static_cast<std::underlying_type<RttPreamble>::type>(
+              convertLegacyRttPreambleToHidl(flag));
+    }
+  }
+  for (const auto flag : {legacy_hal::WIFI_RTT_BW_5,
+                          legacy_hal::WIFI_RTT_BW_10,
+                          legacy_hal::WIFI_RTT_BW_20,
+                          legacy_hal::WIFI_RTT_BW_40,
+                          legacy_hal::WIFI_RTT_BW_80,
+                          legacy_hal::WIFI_RTT_BW_160}) {
+    if (legacy_capabilities.bw_support & flag) {
+      hidl_capabilities->bwSupport |=
+          static_cast<std::underlying_type<RttBw>::type>(
+              convertLegacyRttBwToHidl(flag));
+    }
+  }
+  hidl_capabilities->mcVersion = legacy_capabilities.mc_version;
+  return true;
+}
+
+bool convertLegacyWifiRateInfoToHidl(const legacy_hal::wifi_rate& legacy_rate,
+                                     WifiRateInfo* hidl_rate) {
+  if (!hidl_rate) {
+    return false;
+  }
+  hidl_rate->preamble =
+      convertLegacyWifiRatePreambleToHidl(legacy_rate.preamble);
+  hidl_rate->nss = convertLegacyWifiRateNssToHidl(legacy_rate.nss);
+  hidl_rate->bw = convertLegacyWifiChannelWidthToHidl(
+      static_cast<legacy_hal::wifi_channel_width>(legacy_rate.bw));
+  hidl_rate->rateMcsIdx = legacy_rate.rateMcsIdx;
+  hidl_rate->bitRateInKbps = legacy_rate.bitrate;
+  return true;
+}
+
+bool convertLegacyRttResultToHidl(
+    const legacy_hal::wifi_rtt_result& legacy_result, RttResult* hidl_result) {
+  if (!hidl_result) {
+    return false;
+  }
+  CHECK(sizeof(legacy_result.addr) == hidl_result->addr.size());
+  memcpy(
+      hidl_result->addr.data(), legacy_result.addr, sizeof(legacy_result.addr));
+  hidl_result->burstNum = legacy_result.burst_num;
+  hidl_result->measurementNumber = legacy_result.measurement_number;
+  hidl_result->successNumber = legacy_result.success_number;
+  hidl_result->numberPerBurstPeer = legacy_result.number_per_burst_peer;
+  hidl_result->status = convertLegacyRttStatusToHidl(legacy_result.status);
+  hidl_result->retryAfterDuration = legacy_result.retry_after_duration;
+  hidl_result->type = convertLegacyRttTypeToHidl(legacy_result.type);
+  hidl_result->rssi = legacy_result.rssi;
+  hidl_result->rssiSpread = legacy_result.rssi_spread;
+  if (!convertLegacyWifiRateInfoToHidl(legacy_result.tx_rate,
+                                       &hidl_result->txRate)) {
+    return false;
+  }
+  if (!convertLegacyWifiRateInfoToHidl(legacy_result.rx_rate,
+                                       &hidl_result->rxRate)) {
+    return false;
+  }
+  hidl_result->rtt = legacy_result.rtt;
+  hidl_result->rttSd = legacy_result.rtt_sd;
+  hidl_result->rttSpread = legacy_result.rtt_spread;
+  hidl_result->distanceInMm = legacy_result.distance_mm;
+  hidl_result->distanceSdInMm = legacy_result.distance_sd_mm;
+  hidl_result->distanceSpreadInMm = legacy_result.distance_spread_mm;
+  hidl_result->timeStampInUs = legacy_result.ts;
+  hidl_result->burstDurationInMs = legacy_result.burst_duration;
+  hidl_result->negotiatedBurstNum = legacy_result.negotiated_burst_num;
+  if (!convertLegacyIeToHidl(*legacy_result.LCI, &hidl_result->lci)) {
+    return false;
+  }
+  if (!convertLegacyIeToHidl(*legacy_result.LCR, &hidl_result->lcr)) {
+    return false;
+  }
+  return true;
 }
 }  // namespace hidl_struct_util
 }  // namespace implementation
