@@ -491,7 +491,7 @@ enum StaScanDataFlagMask : int32_t {
    * Indicates that a scan was interrupted/did not occur so results may be
    * incomplete.
    */
-  WIFI_SCAN_FLAG_INTERRUPTED = 1 << 0,
+  INTERRUPTED = 1 << 0,
 };
 
 /**
@@ -3053,7 +3053,7 @@ struct WifiDebugPacketFateFrameInfo {
  */
 struct WifiDebugTxPacketFateReport {
   WifiDebugTxPacketFate fate;
-  WifiDebugPacketFateFrameInfo frameInf;
+  WifiDebugPacketFateFrameInfo frameInfo;
 };
 
 /**
