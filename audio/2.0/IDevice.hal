@@ -179,15 +179,15 @@ interface IDevice {
      * As input, 'port' contains the information (type, role, address etc...)
      * needed by the HAL to identify the port.
      *
-     * As output, 'port' contains possible attributes (sampling rates, formats,
-     * channel masks, gain controllers...) for this port.
+     * As output, 'resultPort' contains possible attributes (sampling rates,
+     * formats, channel masks, gain controllers...) for this port.
      *
      * @param port port identifier.
      * @return retval operation completion status.
-     * @return port port descriptor with all parameters filled up.
+     * @return resultPort port descriptor with all parameters filled up.
      */
     getAudioPort(AudioPort port)
-            generates (Result retval, AudioPort port);
+            generates (Result retval, AudioPort resultPort);
 
     /*
      * Set audio port configuration.
