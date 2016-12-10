@@ -1,0 +1,135 @@
+/*
+ * Copyright (C) 2016 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.drm.crypto@1.0;
+
+enum Status : uint32_t {
+    /**
+     * The Crypto Plugin must return ERROR_DRM_NO_LICENSE if decryption is
+     * attempted when the license keys have not been loaded into the crypto
+     * session.
+     */
+    ERROR_DRM_NO_LICENSE,
+
+    /**
+     * The Crypto Plugin must return ERROR_DRM_LICENSE_EXPIRED if decryption
+     * is attempted when the license keys have expired and are no longer usable.
+     */
+    ERROR_DRM_LICENSE_EXPIRED,
+
+    /**
+     * The Crypto Plugin must return ERROR_DRM_RESOURCE_BUSY when a required
+     * crypto resource cannot be allocated while attempting decryption.
+     */
+    ERROR_DRM_RESOURCE_BUSY,
+
+    /**
+     * The Crypto Plugin must return ERROR_DRM_INSUFFICIENT_OUTPUT_PROTECTION
+     * when the output protection level enabled on the device is not
+     * sufficient to meet the requirements in the license policy.  HDCP is an
+     * example of a form of output protection.
+     */
+    ERROR_DRM_INSUFFICIENT_OUTPUT_PROTECTION,
+
+    /**
+     * The Crypto Plugin must return ERROR_DRM_SESSION_NOT_OPENED when
+     * decryption is attempted on a session that is not opened.
+     */
+    ERROR_DRM_SESSION_NOT_OPENED,
+
+    /**
+     * The Crypto Plugin must return ERROR_DRM_CANNOT_HANDLE when an operation
+     * is attempted that cannot be supported by the crypto system of the device.
+     */
+    ERROR_DRM_CANNOT_HANDLE,
+
+    /**
+     * The Crypto Plugin must return ERROR_UNKNOWN_CRYPTO_EXCEPTION in any
+     * fatal condition that is not covered by the other error messages.
+     */
+    ERROR_UNKNOWN_CRYPTO_EXCEPTION,
+};
+
+/**
+ * Enumerate the supported crypto modes
+ */
+enum Mode : uint32_t {
+    UNENCRYPTED = 0, // Samples are unencrypted
+    AES_CTR     = 1, // Samples are encrypted with AES CTR mode
+    AES_CBC_CTS = 2, // Samples are encrypted with AES CBC CTS mode
+    AES_CBC     = 3, // Samples are encrypted with AES CBC mode
+};
+
+/**
+ * A subsample consists of some number of bytes of clear (unencrypted)
+ * data followed by a number of bytes of encrypted data.
+ */
+struct SubSample {
+    uint32_t numBytesOfClearData;
+    uint32_t numBytesOfEncryptedData;
+};
+
+/**
+ * A crypto Pattern is a repeating sequence of encrypted and clear blocks
+ * occuring within the bytes indicated by mNumBytesOfEncryptedDatad bytes
+ * of a subsample. Patterns are used to reduce the CPU overhead of
+ * decrypting samples. As an example, HLS uses 1:9 patterns where every
+ * 10th block is encrypted.
+ */
+struct Pattern {
+    /**
+     * The number of blocks to be encrypted in the pattern. If zero,
+     * pattern encryption is inoperative.
+     */
+    uint32_t encryptBlocks;
+
+    /**
+     * The number of blocks to be skipped (left clear) in the pattern. If
+     * zero, pattern encryption is inoperative.
+     */
+    uint32_t skipBlocks;
+};
+
+enum BufferType : uint32_t {
+    SHARED_MEMORY = 0,
+    NATIVE_HANDLE = 1,
+};
+
+
+/**
+ * A decrypt destination buffer can be either normal user-space shared
+ * memory for the non-secure decrypt case, or it can be a secure buffer
+ * which is referenced by a native-handle. The native handle is allocated
+ * by the vendor's buffer allocator.
+ */
+struct DestinationBuffer {
+    /**
+     * The type of the buffer
+     */
+    BufferType type;
+
+    /**
+     * If type == SHARED_MEMORY, the decrypted data must be written
+     * to user-space non-secure shared memory.
+     */
+    memory nonsecureMemory;
+
+    /**
+     * If type == NATIVE_HANDLE, the decrypted data must be written
+     * to secure memory referenced by the vendor's buffer allocator.
+     */
+    handle secureMemory;
+};
