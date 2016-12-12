@@ -33,6 +33,7 @@ class VehicleHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
         self.dut = self.registerController(android_device)[0]
 
         self.dut.shell.InvokeTerminal("one")
+        self.dut.shell.one.Execute("setenforce 0")  # SELinux permissive mode
 
         if self.enable_profiling:
             profiling_utils.EnableVTSProfiling(self.dut.shell.one)
@@ -55,25 +56,13 @@ class VehicleHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
             self.ProcessAndUploadTraceData(self.dut, profiling_trace_path)
             profiling_utils.DisableVTSProfiling(self.dut.shell.one)
 
-    def testEcho1(self):
-        """A simple testcase which sends a command."""
-        self.dut.shell.InvokeTerminal("my_shell1")  # creates a remote shell instance.
-        results = self.dut.shell.my_shell1.Execute("echo hello_world")  # runs a shell command.
-        logging.info(str(results[const.STDOUT]))  # prints the stdout
-        asserts.assertEqual(results[const.STDOUT][0].strip(), "hello_world")  # checks the stdout
-        asserts.assertEqual(results[const.EXIT_CODE][0], 0)  # checks the exit code
+    def testListProperties(self):
+        logging.info("vehicle_types")
+        vehicle_types = self.dut.hal.vehicle.GetHidlTypeInterface("types")
+        logging.info("vehicle_types: %s", vehicle_types)
 
-    def testEcho2(self):
-        """A simple testcase which sends two commands."""
-        self.dut.shell.InvokeTerminal("my_shell2")
-        my_shell = getattr(self.dut.shell, "my_shell2")
-        results = my_shell.Execute(["echo hello", "echo world"])
-        logging.info(str(results[const.STDOUT]))
-        asserts.assertEqual(len(results[const.STDOUT]), 2)  # check the number of processed commands
-        asserts.assertEqual(results[const.STDOUT][0].strip(), "hello")
-        asserts.assertEqual(results[const.STDOUT][1].strip(), "world")
-        asserts.assertEqual(results[const.EXIT_CODE][0], 0)
-        asserts.assertEqual(results[const.EXIT_CODE][1], 0)
+        allConfigs = self.dut.hal.vehicle.getAllPropConfigs()
+        logging.info("all supported properties: %s", allConfigs)
 
 if __name__ == "__main__":
     test_runner.main()
