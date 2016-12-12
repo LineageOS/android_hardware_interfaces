@@ -37,11 +37,7 @@ interface ISupplicantP2pIface extends ISupplicantIface {
     /**
      * Keypad pin method configuration - pin is entered on device.
      */
-    KEYPAD,
-    /**
-     * Label pin method configuration - pin is labelled on device.
-     */
-    LABEL
+    KEYPAD
   };
 
   enum GroupCapabilityMask : uint32_t {
@@ -52,6 +48,15 @@ interface ISupplicantP2pIface extends ISupplicantIface {
     CROSS_CONN = 1 << 4,
     PERSISTENT_RECONN = 1 << 5,
     GROUP_FORMATION = 1 << 6
+  };
+
+  /**
+   * Use to specify a range of frequencies.
+   * For example: 2412-2432,2462,5000-6000, etc.
+   */
+  struct FreqRange {
+      uint32_t min;
+      uint32_t max;
   };
 
   /**
@@ -97,7 +102,7 @@ interface ISupplicantP2pIface extends ISupplicantIface {
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
-  setSsidPostfix(string postfix) generates (SupplicantStatus status);
+  setSsidPostfix(vec<uint8_t> postfix) generates (SupplicantStatus status);
 
   /**
    * Set the Maximum idle time in seconds for P2P groups.
@@ -106,6 +111,7 @@ interface ISupplicantP2pIface extends ISupplicantIface {
    * associated stations in the group. As a P2P client, this means no
    * group owner seen in scan results.
    *
+   * @param groupIfName Group interface name to use.
    * @param timeoutInSec Timeout value in seconds.
    * @return status Status of the operation.
    *         Possible status codes:
@@ -113,11 +119,13 @@ interface ISupplicantP2pIface extends ISupplicantIface {
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
-  setGroupIdle(uint32_t timeoutInSec) generates (SupplicantStatus status);
+  setGroupIdle(string groupIfName, uint32_t timeoutInSec)
+      generates (SupplicantStatus status);
 
   /**
    * Turn on/off power save mode for the interface.
    *
+   * @param groupIfName Group interface name to use.
    * @param enable Indicate if power save is to be turned on/off.
    * @return status Status of the operation.
    *         Possible status codes:
@@ -126,7 +134,8 @@ interface ISupplicantP2pIface extends ISupplicantIface {
    *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
    *         |SupplicantStatusCode.FAILURE_IFACE_DISABLED|
    */
-  setPowerSave(bool enable) generates (SupplicantStatus status);
+  setPowerSave(string groupIfName, bool enable)
+      generates (SupplicantStatus status);
 
   /**
    * Initiate a P2P service discovery with an optional timeout.
@@ -192,11 +201,11 @@ interface ISupplicantP2pIface extends ISupplicantIface {
    */
   connect(MacAddress peerAddress,
           WpsProvisionMethod provisionMethod,
-          vec<uint8_t> preSelectedPin,
+          string preSelectedPin,
           bool joinExistingGroup,
           bool persistent,
           uint32_t goIntent)
-      generates (SupplicantStatus status, vec<uint8_t> generatedPin);
+      generates (SupplicantStatus status, string generatedPin);
 
   /**
    * Cancel an ongoing P2P group formation and joining-a-group related
@@ -355,6 +364,21 @@ interface ISupplicantP2pIface extends ISupplicantIface {
    *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
   setListenChannel(uint32_t channel, uint32_t operatingClass)
+      generates (SupplicantStatus status);
+
+  /**
+   * Set P2P disallowed frequency ranges.
+   *
+   * Specify ranges of frequencies that are disallowed for any p2p operations.
+
+   * @param ranges List of ranges which needs to be disallowed.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+   */
+  setDisallowedFrequencies(vec<FreqRange> ranges)
       generates (SupplicantStatus status);
 
   /**
