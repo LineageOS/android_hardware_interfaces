@@ -465,7 +465,9 @@ WifiChip::requestFirmwareDebugDumpInternal() {
 }
 
 std::pair<WifiStatus, sp<IWifiApIface>> WifiChip::createApIfaceInternal() {
-  // TODO(b/31997422): Disallow this based on the chip combination.
+  if (current_mode_id_ != kApChipModeId || ap_iface_.get()) {
+    return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
+  }
   std::string ifname = legacy_hal_.lock()->getApIfaceName();
   ap_iface_ = new WifiApIface(ifname, legacy_hal_);
   return {createWifiStatus(WifiStatusCode::SUCCESS), ap_iface_};
@@ -490,7 +492,11 @@ std::pair<WifiStatus, sp<IWifiApIface>> WifiChip::getApIfaceInternal(
 }
 
 std::pair<WifiStatus, sp<IWifiNanIface>> WifiChip::createNanIfaceInternal() {
-  // TODO(b/31997422): Disallow this based on the chip combination.
+  // Only 1 of NAN or P2P iface can be active at a time.
+  if (current_mode_id_ != kStaChipModeId || nan_iface_.get() ||
+      p2p_iface_.get()) {
+    return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
+  }
   std::string ifname = legacy_hal_.lock()->getNanIfaceName();
   nan_iface_ = new WifiNanIface(ifname, legacy_hal_);
   return {createWifiStatus(WifiStatusCode::SUCCESS), nan_iface_};
@@ -515,7 +521,11 @@ std::pair<WifiStatus, sp<IWifiNanIface>> WifiChip::getNanIfaceInternal(
 }
 
 std::pair<WifiStatus, sp<IWifiP2pIface>> WifiChip::createP2pIfaceInternal() {
-  // TODO(b/31997422): Disallow this based on the chip combination.
+  // Only 1 of NAN or P2P iface can be active at a time.
+  if (current_mode_id_ != kStaChipModeId || p2p_iface_.get() ||
+      nan_iface_.get()) {
+    return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
+  }
   std::string ifname = legacy_hal_.lock()->getP2pIfaceName();
   p2p_iface_ = new WifiP2pIface(ifname, legacy_hal_);
   return {createWifiStatus(WifiStatusCode::SUCCESS), p2p_iface_};
@@ -540,7 +550,9 @@ std::pair<WifiStatus, sp<IWifiP2pIface>> WifiChip::getP2pIfaceInternal(
 }
 
 std::pair<WifiStatus, sp<IWifiStaIface>> WifiChip::createStaIfaceInternal() {
-  // TODO(b/31997422): Disallow this based on the chip combination.
+  if (current_mode_id_ != kStaChipModeId || sta_iface_.get()) {
+    return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
+  }
   std::string ifname = legacy_hal_.lock()->getStaIfaceName();
   sta_iface_ = new WifiStaIface(ifname, legacy_hal_);
   return {createWifiStatus(WifiStatusCode::SUCCESS), sta_iface_};
