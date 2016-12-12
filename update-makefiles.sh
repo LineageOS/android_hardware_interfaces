@@ -5,6 +5,11 @@ if [ ! -d hardware/interfaces ] ; then
   exit 1;
 fi
 
+if [ ! -d system/libhidl/transport ] ; then
+  echo "Where is system/libhidl/transport?";
+  exit 1;
+fi
+
 packages=$(pushd hardware/interfaces > /dev/null; \
            find . -type f -name \*.hal -exec dirname {} \; | sort -u | \
            cut -c3- | \
