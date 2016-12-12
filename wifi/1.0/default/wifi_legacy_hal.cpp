@@ -20,8 +20,7 @@
 #include <cutils/properties.h>
 
 #include "wifi_legacy_hal.h"
-
-using android::wifi_system::InterfaceTool;
+#include "wifi_legacy_hal_stubs.h"
 
 namespace android {
 namespace hardware {
@@ -256,6 +255,10 @@ wifi_error WifiLegacyHal::initialize() {
   LOG(DEBUG) << "Initialize legacy HAL";
   // TODO: Add back the HAL Tool if we need to. All we need from the HAL tool
   // for now is this function call which we can directly call.
+  if (!initHalFuncTableWithStubs(&global_func_table_)) {
+    LOG(ERROR) << "Failed to initialize legacy hal function table with stubs";
+    return WIFI_ERROR_UNKNOWN;
+  }
   wifi_error status = init_wifi_vendor_hal_func_table(&global_func_table_);
   if (status != WIFI_SUCCESS) {
     LOG(ERROR) << "Failed to initialize legacy hal function table";
