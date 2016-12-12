@@ -209,6 +209,7 @@ interface ISupplicantStaIfaceCallback {
 
   /**
    * Used to indicate a Hotspot 2.0 imminent deauth notice.
+   *
    * @param reasonCode Code to indicate the deauth reason.
    *        Refer to section 3.2.1.2 of the Hotspot 2.0 spec.
    * @param reAuthDelayInSec Delay before reauthenticating.
@@ -217,4 +218,28 @@ interface ISupplicantStaIfaceCallback {
   oneway onHs20DeauthImminentNotice(uint32_t reasonCode,
                                     uint32_t reAuthDelayInSec,
                                     string url);
+
+  /**
+   * Used to indicate a disconnect from the currently connected
+   * network on this iface,.
+   *
+   * @param bssid BSSID of the AP from which we disconnected.
+   * @param locallyGenerated If the disconnect was triggered by
+   *        wpa_supplicant.
+   * @param reasonCode 802.11 code to indicate the disconnect reason
+   *        from access point. Refer to section 8.4.1.7 of IEEE802.11 spec.
+   */
+  oneway onDisconnected(
+          Bssid bssid, bool locallyGenerated, uint32_t reasonCode);
+
+  /**
+   * Used to indicate an association rejection recieved from the AP
+   * to which the connection is being attempted.
+   *
+   * @param bssid BSSID of the corresponding AP which sent this
+   *        reject.
+   * @param statusCode 802.11 code to indicate the reject reason.
+   *        Refer to section 8.4.1.9 of IEEE 802.11 spec.
+   */
+  oneway onAssociationRejected(Bssid bssid, uint32_t statusCode);
 };
