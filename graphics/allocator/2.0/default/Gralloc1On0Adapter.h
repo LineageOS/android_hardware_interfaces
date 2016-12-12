@@ -14,49 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_UI_GRALLOC_1_ON_0_ADAPTER_H
-#define ANDROID_UI_GRALLOC_1_ON_0_ADAPTER_H
-
-#include <ui/Fence.h>
-#include <ui/GraphicBuffer.h>
+#ifndef ANDROID_HARDWARE_GRALLOC_1_ON_0_ADAPTER_H
+#define ANDROID_HARDWARE_GRALLOC_1_ON_0_ADAPTER_H
 
 #include <hardware/gralloc1.h>
+#include <log/log.h>
 
+#include <atomic>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_map>
-#include <vector>
+#include <utility>
 
 struct gralloc_module_t;
-
-// This is not an "official" capability (i.e., it is not found in gralloc1.h),
-// but we will use it to detect that we are running through the adapter, which
-// is capable of collaborating with GraphicBuffer such that queries on a
-// buffer_handle_t succeed
-static const auto GRALLOC1_CAPABILITY_ON_ADAPTER =
-        static_cast<gralloc1_capability_t>(GRALLOC1_LAST_CAPABILITY + 1);
-
-static const auto GRALLOC1_FUNCTION_RETAIN_GRAPHIC_BUFFER =
-        static_cast<gralloc1_function_descriptor_t>(GRALLOC1_LAST_FUNCTION + 1);
-static const auto GRALLOC1_FUNCTION_ALLOCATE_WITH_ID =
-        static_cast<gralloc1_function_descriptor_t>(GRALLOC1_LAST_FUNCTION + 2);
-static const auto GRALLOC1_FUNCTION_LOCK_YCBCR =
-        static_cast<gralloc1_function_descriptor_t>(GRALLOC1_LAST_FUNCTION + 3);
-static const auto GRALLOC1_LAST_ADAPTER_FUNCTION = GRALLOC1_FUNCTION_LOCK_YCBCR;
-
-typedef gralloc1_error_t (*GRALLOC1_PFN_RETAIN_GRAPHIC_BUFFER)(
-        gralloc1_device_t* device, const android::GraphicBuffer* buffer);
-typedef gralloc1_error_t (*GRALLOC1_PFN_ALLOCATE_WITH_ID)(
-        gralloc1_device_t* device, gralloc1_buffer_descriptor_t descriptor,
-        gralloc1_backing_store_t id, buffer_handle_t* outBuffer);
-typedef int32_t /*gralloc1_error_t*/ (*GRALLOC1_PFN_LOCK_YCBCR)(
-        gralloc1_device_t* device, buffer_handle_t buffer,
-        uint64_t /*gralloc1_producer_usage_t*/ producerUsage,
-        uint64_t /*gralloc1_consumer_usage_t*/ consumerUsage,
-        const gralloc1_rect_t* accessRegion, struct android_ycbcr* outYCbCr,
-        int32_t acquireFence);
+struct alloc_device_t;
 
 namespace android {
+namespace hardware {
 
 class Gralloc1On0Adapter : public gralloc1_device_t
 {
@@ -71,6 +46,11 @@ public:
 private:
     static inline Gralloc1On0Adapter* getAdapter(gralloc1_device_t* device) {
         return static_cast<Gralloc1On0Adapter*>(device);
+    }
+
+    static int closeHook(struct hw_device_t* device) {
+        delete getAdapter(reinterpret_cast<gralloc1_device_t*>(device));
+        return 0;
     }
 
     // getCapabilities
@@ -124,11 +104,8 @@ private:
     // Buffer descriptor modification functions
 
     struct Descriptor : public std::enable_shared_from_this<Descriptor> {
-        Descriptor(Gralloc1On0Adapter* _adapter,
-                gralloc1_buffer_descriptor_t _id)
-          : adapter(_adapter),
-            id(_id),
-            width(0),
+        Descriptor()
+          : width(0),
             height(0),
             format(HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED),
             layerCount(1),
@@ -160,9 +137,6 @@ private:
             consumerUsage = usage;
             return GRALLOC1_ERROR_NONE;
         }
-
-        Gralloc1On0Adapter* const adapter;
-        const gralloc1_buffer_descriptor_t id;
 
         uint32_t width;
         uint32_t height;
@@ -223,7 +197,7 @@ private:
     public:
         Buffer(buffer_handle_t handle, gralloc1_backing_store_t store,
                 const Descriptor& descriptor, uint32_t stride,
-                bool wasAllocated);
+                uint32_t numFlexPlanes, bool wasAllocated);
 
         buffer_handle_t getHandle() const { return mHandle; }
 
@@ -265,9 +239,7 @@ private:
         }
 
         gralloc1_error_t getNumFlexPlanes(uint32_t* outNumPlanes) const {
-            // TODO: This is conservative, and we could do better by examining
-            // the format, but it won't hurt anything for now
-            *outNumPlanes = 4;
+            *outNumPlanes = mNumFlexPlanes;
             return GRALLOC1_ERROR_NONE;
         }
 
@@ -287,13 +259,10 @@ private:
         const buffer_handle_t mHandle;
         size_t mReferenceCount;
 
-        // Since we're adapting to gralloc0, there will always be a 1:1
-        // correspondence between buffer handles and backing stores, and the
-        // backing store ID will be the same as the GraphicBuffer unique ID
         const gralloc1_backing_store_t mStore;
-
         const Descriptor mDescriptor;
         const uint32_t mStride;
+        const uint32_t mNumFlexPlanes;
 
         // Whether this buffer allocated in this process (as opposed to just
         // being retained here), which determines whether to free or unregister
@@ -325,7 +294,7 @@ private:
         auto usage = GRALLOC1_CONSUMER_USAGE_NONE;
         auto error = callBufferFunction(device, bufferHandle,
                 &Buffer::getConsumerUsage, &usage);
-        if (error != GRALLOC1_ERROR_NONE) {
+        if (error == GRALLOC1_ERROR_NONE) {
             *outUsage = static_cast<uint64_t>(usage);
         }
         return error;
@@ -336,7 +305,7 @@ private:
         auto usage = GRALLOC1_PRODUCER_USAGE_NONE;
         auto error = callBufferFunction(device, bufferHandle,
                 &Buffer::getProducerUsage, &usage);
-        if (error != GRALLOC1_ERROR_NONE) {
+        if (error == GRALLOC1_ERROR_NONE) {
             *outUsage = static_cast<uint64_t>(usage);
         }
         return error;
@@ -344,23 +313,26 @@ private:
 
     // Buffer management functions
 
-    // We don't provide GRALLOC1_FUNCTION_ALLOCATE, since this should always be
-    // called through GRALLOC1_FUNCTION_ALLOCATE_WITH_ID
     gralloc1_error_t allocate(
+            gralloc1_buffer_descriptor_t id,
             const std::shared_ptr<Descriptor>& descriptor,
-            gralloc1_backing_store_t id,
             buffer_handle_t* outBufferHandle);
-    static gralloc1_error_t allocateWithIdHook(gralloc1_device_t* device,
-            gralloc1_buffer_descriptor_t descriptors,
-            gralloc1_backing_store_t id, buffer_handle_t* outBuffer);
+    static int32_t allocateHook(gralloc1_device* device,
+            uint32_t numDescriptors,
+            const gralloc1_buffer_descriptor_t* descriptors,
+            buffer_handle_t* outBuffers);
 
     gralloc1_error_t retain(const std::shared_ptr<Buffer>& buffer);
-    gralloc1_error_t release(const std::shared_ptr<Buffer>& buffer);
+    gralloc1_error_t retain(buffer_handle_t bufferHandle);
+    static int32_t retainHook(gralloc1_device_t* device,
+            buffer_handle_t bufferHandle)
+    {
+        auto adapter = getAdapter(device);
+        return adapter->retain(bufferHandle);
+    }
 
-    // Member function pointer 'member' will either be retain or release
-    template <gralloc1_error_t (Gralloc1On0Adapter::*member)(
-            const std::shared_ptr<Buffer>& buffer)>
-    static int32_t managementHook(gralloc1_device_t* device,
+    gralloc1_error_t release(const std::shared_ptr<Buffer>& buffer);
+    static int32_t releaseHook(gralloc1_device_t* device,
             buffer_handle_t bufferHandle) {
         auto adapter = getAdapter(device);
 
@@ -369,15 +341,8 @@ private:
             return static_cast<int32_t>(GRALLOC1_ERROR_BAD_HANDLE);
         }
 
-        auto error = ((*adapter).*member)(buffer);
+        auto error = adapter->release(buffer);
         return static_cast<int32_t>(error);
-    }
-
-    gralloc1_error_t retain(const GraphicBuffer* buffer);
-    static gralloc1_error_t retainGraphicBufferHook(gralloc1_device_t* device,
-            const GraphicBuffer* buffer) {
-        auto adapter = getAdapter(device);
-        return adapter->retain(buffer);
     }
 
     // Buffer access functions
@@ -386,24 +351,18 @@ private:
             gralloc1_producer_usage_t producerUsage,
             gralloc1_consumer_usage_t consumerUsage,
             const gralloc1_rect_t& accessRegion, void** outData,
-            const sp<Fence>& acquireFence);
+            int acquireFence);
     gralloc1_error_t lockFlex(const std::shared_ptr<Buffer>& buffer,
             gralloc1_producer_usage_t producerUsage,
             gralloc1_consumer_usage_t consumerUsage,
             const gralloc1_rect_t& accessRegion,
             struct android_flex_layout* outFlex,
-            const sp<Fence>& acquireFence);
-    gralloc1_error_t lockYCbCr(const std::shared_ptr<Buffer>& buffer,
-            gralloc1_producer_usage_t producerUsage,
-            gralloc1_consumer_usage_t consumerUsage,
-            const gralloc1_rect_t& accessRegion,
-            struct android_ycbcr* outFlex,
-            const sp<Fence>& acquireFence);
+            int acquireFence);
 
     template <typename OUT, gralloc1_error_t (Gralloc1On0Adapter::*member)(
             const std::shared_ptr<Buffer>&, gralloc1_producer_usage_t,
             gralloc1_consumer_usage_t, const gralloc1_rect_t&, OUT*,
-            const sp<Fence>&)>
+            int)>
     static int32_t lockHook(gralloc1_device_t* device,
             buffer_handle_t bufferHandle,
             uint64_t /*gralloc1_producer_usage_t*/ uintProducerUsage,
@@ -452,14 +411,13 @@ private:
             return static_cast<int32_t>(GRALLOC1_ERROR_BAD_VALUE);
         }
 
-        sp<Fence> acquireFence{new Fence(acquireFenceFd)};
         auto error = ((*adapter).*member)(buffer, producerUsage, consumerUsage,
-                *accessRegion, outData, acquireFence);
+                *accessRegion, outData, acquireFenceFd);
         return static_cast<int32_t>(error);
     }
 
     gralloc1_error_t unlock(const std::shared_ptr<Buffer>& buffer,
-            sp<Fence>* outReleaseFence);
+            int* outReleaseFence);
     static int32_t unlockHook(gralloc1_device_t* device,
             buffer_handle_t bufferHandle, int32_t* outReleaseFenceFd) {
         auto adapter = getAdapter(device);
@@ -469,10 +427,10 @@ private:
             return static_cast<int32_t>(GRALLOC1_ERROR_BAD_HANDLE);
         }
 
-        sp<Fence> releaseFence = Fence::NO_FENCE;
+        int releaseFence = -1;
         auto error = adapter->unlock(buffer, &releaseFence);
         if (error == GRALLOC1_ERROR_NONE) {
-            *outReleaseFenceFd = releaseFence->dup();
+            *outReleaseFenceFd = releaseFence;
         }
         return static_cast<int32_t>(error);
     }
@@ -494,6 +452,7 @@ private:
     std::unordered_map<buffer_handle_t, std::shared_ptr<Buffer>> mBuffers;
 };
 
+} // namespace hardware
 } // namespace android
 
-#endif
+#endif // ANDROID_HARDWARE_GRALLOC_1_ON_0_ADAPTER_H

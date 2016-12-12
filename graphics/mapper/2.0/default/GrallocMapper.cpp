@@ -17,7 +17,9 @@
 
 #include "GrallocMapper.h"
 
+#include <mutex>
 #include <vector>
+#include <unordered_map>
 
 #include <string.h>
 
@@ -100,6 +102,9 @@ private:
         GRALLOC1_PFN_LOCK_FLEX lockFlex;
         GRALLOC1_PFN_UNLOCK unlock;
     } mDispatch;
+
+    std::mutex mMutex;
+    std::unordered_map<buffer_handle_t, size_t> mBufferReferenceCounts;
 };
 
 GrallocMapperHal::GrallocMapperHal(const hw_module_t* module)
@@ -201,12 +206,34 @@ bool GrallocMapperHal::dupFence(const hidl_handle& fenceHandle, int* outFd)
 Return<Error> GrallocMapperHal::retain(const hidl_handle& bufferHandle)
 {
     int32_t err = mDispatch.retain(mDevice, bufferHandle);
+    if (err == GRALLOC1_ERROR_NONE) {
+        auto nativeHandle = bufferHandle.getNativeHandle();
+        std::lock_guard<std::mutex> lock(mMutex);
+
+        ++mBufferReferenceCounts[nativeHandle];
+    }
     return static_cast<Error>(err);
 }
 
 Return<Error> GrallocMapperHal::release(const hidl_handle& bufferHandle)
 {
     int32_t err = mDispatch.release(mDevice, bufferHandle);
+    if (err == GRALLOC1_ERROR_NONE) {
+        auto nativeHandle = bufferHandle.getNativeHandle();
+        std::lock_guard<std::mutex> lock(mMutex);
+
+        auto iter = mBufferReferenceCounts.find(bufferHandle);
+        if (iter == mBufferReferenceCounts.end()) {
+            // this should never happen
+            err = GRALLOC1_ERROR_BAD_HANDLE;
+        } else if (--iter->second == 0) {
+            native_handle_close(nativeHandle);
+            native_handle_delete(const_cast<native_handle_t*>(nativeHandle));
+
+            mBufferReferenceCounts.erase(iter);
+        }
+    }
+
     return static_cast<Error>(err);
 }
 

@@ -34,7 +34,7 @@ cc_binary {
 
 cc_library_static {
     name: "libgralloc1-adapter",
-    srcs: ["gralloc1-adapter.c"],
+    srcs: ["gralloc1-adapter.cpp", "Gralloc1On0Adapter.cpp"],
     include_dirs: ["system/core/libsync/include"],
     cflags: ["-Wall", "-Wextra", "-Wno-unused-parameter"],
     export_include_dirs: ["."],
