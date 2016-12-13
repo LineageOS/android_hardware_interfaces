@@ -19,7 +19,7 @@ LOCAL_JAVA_LIBRARIES := \
 #
 # Build types.hal (BoolResult)
 #
-GEN := $(intermediates)/android/hardware/boot/V1_0/BoolResult.java
+GEN := $(intermediates)/android/hardware/boot/1.0/BoolResult.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -38,7 +38,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CommandResult)
 #
-GEN := $(intermediates)/android/hardware/boot/V1_0/CommandResult.java
+GEN := $(intermediates)/android/hardware/boot/1.0/CommandResult.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -57,7 +57,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IBootControl.hal
 #
-GEN := $(intermediates)/android/hardware/boot/V1_0/IBootControl.java
+GEN := $(intermediates)/android/hardware/boot/1.0/IBootControl.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBootControl.hal
@@ -94,7 +94,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 #
 # Build types.hal (BoolResult)
 #
-GEN := $(intermediates)/android/hardware/boot/V1_0/BoolResult.java
+GEN := $(intermediates)/android/hardware/boot/1.0/BoolResult.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -113,7 +113,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CommandResult)
 #
-GEN := $(intermediates)/android/hardware/boot/V1_0/CommandResult.java
+GEN := $(intermediates)/android/hardware/boot/1.0/CommandResult.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -132,7 +132,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IBootControl.hal
 #
-GEN := $(intermediates)/android/hardware/boot/V1_0/IBootControl.java
+GEN := $(intermediates)/android/hardware/boot/1.0/IBootControl.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBootControl.hal

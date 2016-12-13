@@ -19,7 +19,7 @@ LOCAL_JAVA_LIBRARIES := \
 #
 # Build types.hal (Status)
 #
-GEN := $(intermediates)/android/hardware/bluetooth/V1_0/Status.java
+GEN := $(intermediates)/android/hardware/bluetooth/1.0/Status.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -38,7 +38,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IBluetoothHci.hal
 #
-GEN := $(intermediates)/android/hardware/bluetooth/V1_0/IBluetoothHci.java
+GEN := $(intermediates)/android/hardware/bluetooth/1.0/IBluetoothHci.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBluetoothHci.hal
@@ -61,7 +61,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IBluetoothHciCallbacks.hal
 #
-GEN := $(intermediates)/android/hardware/bluetooth/V1_0/IBluetoothHciCallbacks.java
+GEN := $(intermediates)/android/hardware/bluetooth/1.0/IBluetoothHciCallbacks.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBluetoothHciCallbacks.hal
@@ -98,7 +98,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 #
 # Build types.hal (Status)
 #
-GEN := $(intermediates)/android/hardware/bluetooth/V1_0/Status.java
+GEN := $(intermediates)/android/hardware/bluetooth/1.0/Status.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -117,7 +117,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IBluetoothHci.hal
 #
-GEN := $(intermediates)/android/hardware/bluetooth/V1_0/IBluetoothHci.java
+GEN := $(intermediates)/android/hardware/bluetooth/1.0/IBluetoothHci.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBluetoothHci.hal
@@ -140,7 +140,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IBluetoothHciCallbacks.hal
 #
-GEN := $(intermediates)/android/hardware/bluetooth/V1_0/IBluetoothHciCallbacks.java
+GEN := $(intermediates)/android/hardware/bluetooth/1.0/IBluetoothHciCallbacks.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBluetoothHciCallbacks.hal

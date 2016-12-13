@@ -15,7 +15,7 @@ HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
 #
 # Build types.hal (ColorMode)
 #
-GEN := $(intermediates)/android/hardware/graphics/common/V1_0/ColorMode.java
+GEN := $(intermediates)/android/hardware/graphics/common/1.0/ColorMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -34,7 +34,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (ColorTransform)
 #
-GEN := $(intermediates)/android/hardware/graphics/common/V1_0/ColorTransform.java
+GEN := $(intermediates)/android/hardware/graphics/common/1.0/ColorTransform.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -53,7 +53,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Dataspace)
 #
-GEN := $(intermediates)/android/hardware/graphics/common/V1_0/Dataspace.java
+GEN := $(intermediates)/android/hardware/graphics/common/1.0/Dataspace.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -72,7 +72,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Hdr)
 #
-GEN := $(intermediates)/android/hardware/graphics/common/V1_0/Hdr.java
+GEN := $(intermediates)/android/hardware/graphics/common/1.0/Hdr.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -91,7 +91,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (PixelFormat)
 #
-GEN := $(intermediates)/android/hardware/graphics/common/V1_0/PixelFormat.java
+GEN := $(intermediates)/android/hardware/graphics/common/1.0/PixelFormat.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -110,7 +110,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Transform)
 #
-GEN := $(intermediates)/android/hardware/graphics/common/V1_0/Transform.java
+GEN := $(intermediates)/android/hardware/graphics/common/1.0/Transform.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -141,7 +141,7 @@ HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
 #
 # Build types.hal (ColorMode)
 #
-GEN := $(intermediates)/android/hardware/graphics/common/V1_0/ColorMode.java
+GEN := $(intermediates)/android/hardware/graphics/common/1.0/ColorMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -160,7 +160,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (ColorTransform)
 #
-GEN := $(intermediates)/android/hardware/graphics/common/V1_0/ColorTransform.java
+GEN := $(intermediates)/android/hardware/graphics/common/1.0/ColorTransform.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -179,7 +179,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Dataspace)
 #
-GEN := $(intermediates)/android/hardware/graphics/common/V1_0/Dataspace.java
+GEN := $(intermediates)/android/hardware/graphics/common/1.0/Dataspace.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -198,7 +198,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Hdr)
 #
-GEN := $(intermediates)/android/hardware/graphics/common/V1_0/Hdr.java
+GEN := $(intermediates)/android/hardware/graphics/common/1.0/Hdr.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -217,7 +217,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (PixelFormat)
 #
-GEN := $(intermediates)/android/hardware/graphics/common/V1_0/PixelFormat.java
+GEN := $(intermediates)/android/hardware/graphics/common/1.0/PixelFormat.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -236,7 +236,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Transform)
 #
-GEN := $(intermediates)/android/hardware/graphics/common/V1_0/Transform.java
+GEN := $(intermediates)/android/hardware/graphics/common/1.0/Transform.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -264,7 +264,7 @@ intermediates := $(local-generated-sources-dir)
 
 HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
 #
-GEN := $(intermediates)/android/hardware/graphics/common/V1_0/Constants.java
+GEN := $(intermediates)/android/hardware/graphics/common/1.0/Constants.java
 $(GEN): $(HIDL)
 $(GEN): $(LOCAL_PATH)/types.hal
 

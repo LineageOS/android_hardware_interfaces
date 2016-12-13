@@ -19,7 +19,7 @@ LOCAL_JAVA_LIBRARIES := \
 #
 # Build types.hal (Status)
 #
-GEN := $(intermediates)/android/hardware/vibrator/V1_0/Status.java
+GEN := $(intermediates)/android/hardware/vibrator/1.0/Status.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -38,7 +38,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IVibrator.hal
 #
-GEN := $(intermediates)/android/hardware/vibrator/V1_0/IVibrator.java
+GEN := $(intermediates)/android/hardware/vibrator/1.0/IVibrator.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IVibrator.hal
@@ -75,7 +75,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 #
 # Build types.hal (Status)
 #
-GEN := $(intermediates)/android/hardware/vibrator/V1_0/Status.java
+GEN := $(intermediates)/android/hardware/vibrator/1.0/Status.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -94,7 +94,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IVibrator.hal
 #
-GEN := $(intermediates)/android/hardware/vibrator/V1_0/IVibrator.java
+GEN := $(intermediates)/android/hardware/vibrator/1.0/IVibrator.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IVibrator.hal

@@ -19,7 +19,7 @@ LOCAL_JAVA_LIBRARIES := \
 #
 # Build types.hal (BatteryHealth)
 #
-GEN := $(intermediates)/android/hardware/health/V1_0/BatteryHealth.java
+GEN := $(intermediates)/android/hardware/health/1.0/BatteryHealth.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -38,7 +38,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (BatteryStatus)
 #
-GEN := $(intermediates)/android/hardware/health/V1_0/BatteryStatus.java
+GEN := $(intermediates)/android/hardware/health/1.0/BatteryStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -57,7 +57,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HealthConfig)
 #
-GEN := $(intermediates)/android/hardware/health/V1_0/HealthConfig.java
+GEN := $(intermediates)/android/hardware/health/1.0/HealthConfig.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -76,7 +76,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HealthInfo)
 #
-GEN := $(intermediates)/android/hardware/health/V1_0/HealthInfo.java
+GEN := $(intermediates)/android/hardware/health/1.0/HealthInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -95,7 +95,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Result)
 #
-GEN := $(intermediates)/android/hardware/health/V1_0/Result.java
+GEN := $(intermediates)/android/hardware/health/1.0/Result.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -114,7 +114,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IHealth.hal
 #
-GEN := $(intermediates)/android/hardware/health/V1_0/IHealth.java
+GEN := $(intermediates)/android/hardware/health/1.0/IHealth.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IHealth.hal
@@ -151,7 +151,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 #
 # Build types.hal (BatteryHealth)
 #
-GEN := $(intermediates)/android/hardware/health/V1_0/BatteryHealth.java
+GEN := $(intermediates)/android/hardware/health/1.0/BatteryHealth.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -170,7 +170,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (BatteryStatus)
 #
-GEN := $(intermediates)/android/hardware/health/V1_0/BatteryStatus.java
+GEN := $(intermediates)/android/hardware/health/1.0/BatteryStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -189,7 +189,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HealthConfig)
 #
-GEN := $(intermediates)/android/hardware/health/V1_0/HealthConfig.java
+GEN := $(intermediates)/android/hardware/health/1.0/HealthConfig.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -208,7 +208,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HealthInfo)
 #
-GEN := $(intermediates)/android/hardware/health/V1_0/HealthInfo.java
+GEN := $(intermediates)/android/hardware/health/1.0/HealthInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -227,7 +227,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Result)
 #
-GEN := $(intermediates)/android/hardware/health/V1_0/Result.java
+GEN := $(intermediates)/android/hardware/health/1.0/Result.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -246,7 +246,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IHealth.hal
 #
-GEN := $(intermediates)/android/hardware/health/V1_0/IHealth.java
+GEN := $(intermediates)/android/hardware/health/1.0/IHealth.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IHealth.hal
@@ -276,7 +276,7 @@ intermediates := $(local-generated-sources-dir)
 
 HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
 #
-GEN := $(intermediates)/android/hardware/health/V1_0/Constants.java
+GEN := $(intermediates)/android/hardware/health/1.0/Constants.java
 $(GEN): $(HIDL)
 $(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): $(LOCAL_PATH)/IHealth.hal

@@ -19,7 +19,7 @@ LOCAL_JAVA_LIBRARIES := \
 #
 # Build IBenchmark.hal
 #
-GEN := $(intermediates)/android/hardware/tests/libhwbinder/V1_0/IBenchmark.java
+GEN := $(intermediates)/android/hardware/tests/libhwbinder/1.0/IBenchmark.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBenchmark.hal
@@ -54,7 +54,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 #
 # Build IBenchmark.hal
 #
-GEN := $(intermediates)/android/hardware/tests/libhwbinder/V1_0/IBenchmark.java
+GEN := $(intermediates)/android/hardware/tests/libhwbinder/1.0/IBenchmark.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBenchmark.hal

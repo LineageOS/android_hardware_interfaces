@@ -19,7 +19,7 @@ LOCAL_JAVA_LIBRARIES := \
 #
 # Build types.hal (EventType)
 #
-GEN := $(intermediates)/android/hardware/drm/drm/V1_0/EventType.java
+GEN := $(intermediates)/android/hardware/drm/drm/1.0/EventType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -38,7 +38,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (KeyRequestType)
 #
-GEN := $(intermediates)/android/hardware/drm/drm/V1_0/KeyRequestType.java
+GEN := $(intermediates)/android/hardware/drm/drm/1.0/KeyRequestType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -57,7 +57,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (KeyStatus)
 #
-GEN := $(intermediates)/android/hardware/drm/drm/V1_0/KeyStatus.java
+GEN := $(intermediates)/android/hardware/drm/drm/1.0/KeyStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -76,7 +76,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (KeyStatusType)
 #
-GEN := $(intermediates)/android/hardware/drm/drm/V1_0/KeyStatusType.java
+GEN := $(intermediates)/android/hardware/drm/drm/1.0/KeyStatusType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -95,7 +95,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (KeyType)
 #
-GEN := $(intermediates)/android/hardware/drm/drm/V1_0/KeyType.java
+GEN := $(intermediates)/android/hardware/drm/drm/1.0/KeyType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -114,7 +114,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (KeyValue)
 #
-GEN := $(intermediates)/android/hardware/drm/drm/V1_0/KeyValue.java
+GEN := $(intermediates)/android/hardware/drm/drm/1.0/KeyValue.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -133,7 +133,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SecureStop)
 #
-GEN := $(intermediates)/android/hardware/drm/drm/V1_0/SecureStop.java
+GEN := $(intermediates)/android/hardware/drm/drm/1.0/SecureStop.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -150,28 +150,9 @@ $(GEN): $(LOCAL_PATH)/types.hal
 LOCAL_GENERATED_SOURCES += $(GEN)
 
 #
-# Build types.hal (Status)
-#
-GEN := $(intermediates)/android/hardware/drm/drm/V1_0/Status.java
-$(GEN): $(HIDL)
-$(GEN): PRIVATE_HIDL := $(HIDL)
-$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
-$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
-$(GEN): PRIVATE_CUSTOM_TOOL = \
-        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava \
-        -randroid.hardware:hardware/interfaces \
-        -randroid.hidl:system/libhidl/transport \
-        android.hardware.drm.drm@1.0::types.Status
-
-$(GEN): $(LOCAL_PATH)/types.hal
-	$(transform-generated-source)
-LOCAL_GENERATED_SOURCES += $(GEN)
-
-#
 # Build IDrmFactory.hal
 #
-GEN := $(intermediates)/android/hardware/drm/drm/V1_0/IDrmFactory.java
+GEN := $(intermediates)/android/hardware/drm/drm/1.0/IDrmFactory.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IDrmFactory.hal
@@ -194,7 +175,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IDrmPlugin.hal
 #
-GEN := $(intermediates)/android/hardware/drm/drm/V1_0/IDrmPlugin.java
+GEN := $(intermediates)/android/hardware/drm/drm/1.0/IDrmPlugin.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IDrmPlugin.hal
@@ -217,7 +198,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IDrmPluginListener.hal
 #
-GEN := $(intermediates)/android/hardware/drm/drm/V1_0/IDrmPluginListener.java
+GEN := $(intermediates)/android/hardware/drm/drm/1.0/IDrmPluginListener.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IDrmPluginListener.hal
@@ -254,7 +235,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 #
 # Build types.hal (EventType)
 #
-GEN := $(intermediates)/android/hardware/drm/drm/V1_0/EventType.java
+GEN := $(intermediates)/android/hardware/drm/drm/1.0/EventType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -273,7 +254,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (KeyRequestType)
 #
-GEN := $(intermediates)/android/hardware/drm/drm/V1_0/KeyRequestType.java
+GEN := $(intermediates)/android/hardware/drm/drm/1.0/KeyRequestType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -292,7 +273,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (KeyStatus)
 #
-GEN := $(intermediates)/android/hardware/drm/drm/V1_0/KeyStatus.java
+GEN := $(intermediates)/android/hardware/drm/drm/1.0/KeyStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -311,7 +292,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (KeyStatusType)
 #
-GEN := $(intermediates)/android/hardware/drm/drm/V1_0/KeyStatusType.java
+GEN := $(intermediates)/android/hardware/drm/drm/1.0/KeyStatusType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -330,7 +311,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (KeyType)
 #
-GEN := $(intermediates)/android/hardware/drm/drm/V1_0/KeyType.java
+GEN := $(intermediates)/android/hardware/drm/drm/1.0/KeyType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -349,7 +330,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (KeyValue)
 #
-GEN := $(intermediates)/android/hardware/drm/drm/V1_0/KeyValue.java
+GEN := $(intermediates)/android/hardware/drm/drm/1.0/KeyValue.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -368,7 +349,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SecureStop)
 #
-GEN := $(intermediates)/android/hardware/drm/drm/V1_0/SecureStop.java
+GEN := $(intermediates)/android/hardware/drm/drm/1.0/SecureStop.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -385,28 +366,9 @@ $(GEN): $(LOCAL_PATH)/types.hal
 LOCAL_GENERATED_SOURCES += $(GEN)
 
 #
-# Build types.hal (Status)
-#
-GEN := $(intermediates)/android/hardware/drm/drm/V1_0/Status.java
-$(GEN): $(HIDL)
-$(GEN): PRIVATE_HIDL := $(HIDL)
-$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
-$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
-$(GEN): PRIVATE_CUSTOM_TOOL = \
-        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava \
-        -randroid.hardware:hardware/interfaces \
-        -randroid.hidl:system/libhidl/transport \
-        android.hardware.drm.drm@1.0::types.Status
-
-$(GEN): $(LOCAL_PATH)/types.hal
-	$(transform-generated-source)
-LOCAL_GENERATED_SOURCES += $(GEN)
-
-#
 # Build IDrmFactory.hal
 #
-GEN := $(intermediates)/android/hardware/drm/drm/V1_0/IDrmFactory.java
+GEN := $(intermediates)/android/hardware/drm/drm/1.0/IDrmFactory.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IDrmFactory.hal
@@ -429,7 +391,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IDrmPlugin.hal
 #
-GEN := $(intermediates)/android/hardware/drm/drm/V1_0/IDrmPlugin.java
+GEN := $(intermediates)/android/hardware/drm/drm/1.0/IDrmPlugin.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IDrmPlugin.hal
@@ -452,7 +414,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IDrmPluginListener.hal
 #
-GEN := $(intermediates)/android/hardware/drm/drm/V1_0/IDrmPluginListener.java
+GEN := $(intermediates)/android/hardware/drm/drm/1.0/IDrmPluginListener.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IDrmPluginListener.hal

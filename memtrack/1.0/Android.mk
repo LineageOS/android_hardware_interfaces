@@ -19,7 +19,7 @@ LOCAL_JAVA_LIBRARIES := \
 #
 # Build types.hal (MemtrackFlag)
 #
-GEN := $(intermediates)/android/hardware/memtrack/V1_0/MemtrackFlag.java
+GEN := $(intermediates)/android/hardware/memtrack/1.0/MemtrackFlag.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -38,7 +38,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (MemtrackRecord)
 #
-GEN := $(intermediates)/android/hardware/memtrack/V1_0/MemtrackRecord.java
+GEN := $(intermediates)/android/hardware/memtrack/1.0/MemtrackRecord.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -57,7 +57,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (MemtrackStatus)
 #
-GEN := $(intermediates)/android/hardware/memtrack/V1_0/MemtrackStatus.java
+GEN := $(intermediates)/android/hardware/memtrack/1.0/MemtrackStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -76,7 +76,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (MemtrackType)
 #
-GEN := $(intermediates)/android/hardware/memtrack/V1_0/MemtrackType.java
+GEN := $(intermediates)/android/hardware/memtrack/1.0/MemtrackType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -95,7 +95,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IMemtrack.hal
 #
-GEN := $(intermediates)/android/hardware/memtrack/V1_0/IMemtrack.java
+GEN := $(intermediates)/android/hardware/memtrack/1.0/IMemtrack.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IMemtrack.hal
@@ -132,7 +132,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 #
 # Build types.hal (MemtrackFlag)
 #
-GEN := $(intermediates)/android/hardware/memtrack/V1_0/MemtrackFlag.java
+GEN := $(intermediates)/android/hardware/memtrack/1.0/MemtrackFlag.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -151,7 +151,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (MemtrackRecord)
 #
-GEN := $(intermediates)/android/hardware/memtrack/V1_0/MemtrackRecord.java
+GEN := $(intermediates)/android/hardware/memtrack/1.0/MemtrackRecord.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -170,7 +170,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (MemtrackStatus)
 #
-GEN := $(intermediates)/android/hardware/memtrack/V1_0/MemtrackStatus.java
+GEN := $(intermediates)/android/hardware/memtrack/1.0/MemtrackStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -189,7 +189,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (MemtrackType)
 #
-GEN := $(intermediates)/android/hardware/memtrack/V1_0/MemtrackType.java
+GEN := $(intermediates)/android/hardware/memtrack/1.0/MemtrackType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -208,7 +208,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IMemtrack.hal
 #
-GEN := $(intermediates)/android/hardware/memtrack/V1_0/IMemtrack.java
+GEN := $(intermediates)/android/hardware/memtrack/1.0/IMemtrack.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IMemtrack.hal

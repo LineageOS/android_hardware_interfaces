@@ -19,7 +19,7 @@ LOCAL_JAVA_LIBRARIES := \
 #
 # Build types.hal (GatekeeperResponse)
 #
-GEN := $(intermediates)/android/hardware/gatekeeper/V1_0/GatekeeperResponse.java
+GEN := $(intermediates)/android/hardware/gatekeeper/1.0/GatekeeperResponse.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -38,7 +38,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (GatekeeperStatusCode)
 #
-GEN := $(intermediates)/android/hardware/gatekeeper/V1_0/GatekeeperStatusCode.java
+GEN := $(intermediates)/android/hardware/gatekeeper/1.0/GatekeeperStatusCode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -57,7 +57,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGatekeeper.hal
 #
-GEN := $(intermediates)/android/hardware/gatekeeper/V1_0/IGatekeeper.java
+GEN := $(intermediates)/android/hardware/gatekeeper/1.0/IGatekeeper.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGatekeeper.hal
@@ -94,7 +94,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 #
 # Build types.hal (GatekeeperResponse)
 #
-GEN := $(intermediates)/android/hardware/gatekeeper/V1_0/GatekeeperResponse.java
+GEN := $(intermediates)/android/hardware/gatekeeper/1.0/GatekeeperResponse.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -113,7 +113,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (GatekeeperStatusCode)
 #
-GEN := $(intermediates)/android/hardware/gatekeeper/V1_0/GatekeeperStatusCode.java
+GEN := $(intermediates)/android/hardware/gatekeeper/1.0/GatekeeperStatusCode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -132,7 +132,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGatekeeper.hal
 #
-GEN := $(intermediates)/android/hardware/gatekeeper/V1_0/IGatekeeper.java
+GEN := $(intermediates)/android/hardware/gatekeeper/1.0/IGatekeeper.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGatekeeper.hal

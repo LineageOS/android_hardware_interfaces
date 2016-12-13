@@ -19,7 +19,7 @@ LOCAL_JAVA_LIBRARIES := \
 #
 # Build types.hal (AsyncEventType)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/AsyncEventType.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/AsyncEventType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -38,7 +38,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (ContextHub)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/ContextHub.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/ContextHub.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -57,7 +57,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (ContextHubMsg)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/ContextHubMsg.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/ContextHubMsg.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -76,7 +76,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HubAppInfo)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/HubAppInfo.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/HubAppInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -95,7 +95,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HubMemoryFlag)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/HubMemoryFlag.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/HubMemoryFlag.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -114,7 +114,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HubMemoryType)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/HubMemoryType.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/HubMemoryType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -133,7 +133,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (MemRange)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/MemRange.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/MemRange.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -152,7 +152,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (NanoAppBinary)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/NanoAppBinary.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/NanoAppBinary.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -171,7 +171,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (NanoAppFlags)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/NanoAppFlags.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/NanoAppFlags.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -190,7 +190,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (PhysicalSensor)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/PhysicalSensor.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/PhysicalSensor.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -209,7 +209,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Result)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/Result.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/Result.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -228,7 +228,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SensorType)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/SensorType.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/SensorType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -247,7 +247,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (TransactionResult)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/TransactionResult.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/TransactionResult.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -266,7 +266,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IContexthub.hal
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/IContexthub.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/IContexthub.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IContexthub.hal
@@ -289,7 +289,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IContexthubCallback.hal
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/IContexthubCallback.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/IContexthubCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IContexthubCallback.hal
@@ -326,7 +326,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 #
 # Build types.hal (AsyncEventType)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/AsyncEventType.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/AsyncEventType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -345,7 +345,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (ContextHub)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/ContextHub.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/ContextHub.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -364,7 +364,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (ContextHubMsg)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/ContextHubMsg.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/ContextHubMsg.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -383,7 +383,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HubAppInfo)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/HubAppInfo.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/HubAppInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -402,7 +402,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HubMemoryFlag)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/HubMemoryFlag.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/HubMemoryFlag.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -421,7 +421,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HubMemoryType)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/HubMemoryType.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/HubMemoryType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -440,7 +440,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (MemRange)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/MemRange.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/MemRange.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -459,7 +459,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (NanoAppBinary)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/NanoAppBinary.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/NanoAppBinary.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -478,7 +478,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (NanoAppFlags)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/NanoAppFlags.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/NanoAppFlags.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -497,7 +497,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (PhysicalSensor)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/PhysicalSensor.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/PhysicalSensor.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -516,7 +516,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Result)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/Result.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/Result.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -535,7 +535,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SensorType)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/SensorType.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/SensorType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -554,7 +554,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (TransactionResult)
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/TransactionResult.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/TransactionResult.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -573,7 +573,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IContexthub.hal
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/IContexthub.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/IContexthub.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IContexthub.hal
@@ -596,7 +596,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IContexthubCallback.hal
 #
-GEN := $(intermediates)/android/hardware/contexthub/V1_0/IContexthubCallback.java
+GEN := $(intermediates)/android/hardware/contexthub/1.0/IContexthubCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IContexthubCallback.hal
