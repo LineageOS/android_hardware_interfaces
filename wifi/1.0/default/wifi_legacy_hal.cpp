@@ -613,6 +613,25 @@ wifi_error WifiLegacyHal::stopRssiMonitoring(wifi_request_id id) {
   return status;
 }
 
+std::pair<wifi_error, wifi_roaming_capabilities>
+WifiLegacyHal::getRoamingCapabilities() {
+  wifi_roaming_capabilities caps;
+  wifi_error status = global_func_table_.wifi_get_roaming_capabilities(
+      wlan_interface_handle_, &caps);
+  return {status, caps};
+}
+
+wifi_error WifiLegacyHal::enableFirmwareRoaming(fw_roaming_state_t state) {
+  return global_func_table_.wifi_enable_firmware_roaming(wlan_interface_handle_,
+                                                         state);
+}
+
+wifi_error WifiLegacyHal::configureRoaming(const wifi_roaming_config& config) {
+  wifi_roaming_config config_internal = config;
+  return global_func_table_.wifi_configure_roaming(wlan_interface_handle_,
+                                                   &config_internal);
+}
+
 std::pair<wifi_error, uint32_t> WifiLegacyHal::getLoggerSupportedFeatureSet() {
   uint32_t supported_features;
   wifi_error status = global_func_table_.wifi_get_logger_supported_feature_set(

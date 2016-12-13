@@ -75,6 +75,14 @@ bool convertLegacyVectorOfCachedGscanResultsToHidl(
 bool convertLegacyLinkLayerStatsToHidl(
     const legacy_hal::LinkLayerStats& legacy_stats,
     StaLinkLayerStats* hidl_stats);
+bool convertLegacyRoamingCapabilitiesToHidl(
+    const legacy_hal::wifi_roaming_capabilities& legacy_caps,
+    StaRoamingCapabilities* hidl_caps);
+bool convertHidlRoamingConfigToLegacy(
+    const StaRoamingConfig& hidl_config,
+    legacy_hal::wifi_roaming_config* legacy_config);
+legacy_hal::fw_roaming_state_t convertHidlRoamingStateToLegacy(
+    StaRoamingState state);
 bool convertLegacyVectorOfDebugTxPacketFateToHidl(
     const std::vector<legacy_hal::wifi_tx_report>& legacy_fates,
     std::vector<WifiDebugTxPacketFateReport>* hidl_fates);
