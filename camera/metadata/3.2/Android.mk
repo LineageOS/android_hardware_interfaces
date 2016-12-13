@@ -15,7 +15,7 @@ HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
 #
 # Build types.hal (CameraMetadataEnumAndroidBlackLevelLock)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidBlackLevelLock.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidBlackLevelLock.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -34,7 +34,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidColorCorrectionAberrationMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidColorCorrectionAberrationMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidColorCorrectionAberrationMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -53,7 +53,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidColorCorrectionMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidColorCorrectionMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidColorCorrectionMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -72,7 +72,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAeAntibandingMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAeAntibandingMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAeAntibandingMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -91,7 +91,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAeLock)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAeLock.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAeLock.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -110,7 +110,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAeLockAvailable)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAeLockAvailable.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAeLockAvailable.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -129,7 +129,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAeMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAeMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAeMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -148,7 +148,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAePrecaptureTrigger)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAePrecaptureTrigger.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAePrecaptureTrigger.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -167,7 +167,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAeState)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAeState.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAeState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -186,7 +186,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAfMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAfMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAfMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -205,7 +205,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAfState)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAfState.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAfState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -224,7 +224,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAfTrigger)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAfTrigger.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAfTrigger.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -243,7 +243,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAwbLock)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAwbLock.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAwbLock.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -262,7 +262,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAwbLockAvailable)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAwbLockAvailable.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAwbLockAvailable.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -281,7 +281,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAwbMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAwbMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAwbMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -300,7 +300,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAwbState)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAwbState.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAwbState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -319,7 +319,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlCaptureIntent)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlCaptureIntent.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlCaptureIntent.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -338,7 +338,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlEffectMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlEffectMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlEffectMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -357,7 +357,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -376,7 +376,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlSceneMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlSceneMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlSceneMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -395,7 +395,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlVideoStabilizationMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlVideoStabilizationMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlVideoStabilizationMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -414,7 +414,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidDemosaicMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidDemosaicMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidDemosaicMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -433,7 +433,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidDepthAvailableDepthStreamConfigurations)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidDepthAvailableDepthStreamConfigurations.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidDepthAvailableDepthStreamConfigurations.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -452,7 +452,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidDepthDepthIsExclusive)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidDepthDepthIsExclusive.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidDepthDepthIsExclusive.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -471,7 +471,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidEdgeMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidEdgeMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidEdgeMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -490,7 +490,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidFlashInfoAvailable)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidFlashInfoAvailable.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidFlashInfoAvailable.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -509,7 +509,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidFlashMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidFlashMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidFlashMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -528,7 +528,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidFlashState)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidFlashState.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidFlashState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -547,7 +547,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidHotPixelMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidHotPixelMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidHotPixelMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -566,7 +566,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidInfoSupportedHardwareLevel)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidInfoSupportedHardwareLevel.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidInfoSupportedHardwareLevel.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -585,7 +585,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidLedAvailableLeds)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidLedAvailableLeds.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidLedAvailableLeds.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -604,7 +604,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidLedTransmit)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidLedTransmit.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidLedTransmit.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -623,7 +623,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidLensFacing)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidLensFacing.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidLensFacing.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -642,7 +642,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidLensInfoFocusDistanceCalibration)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidLensInfoFocusDistanceCalibration.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidLensInfoFocusDistanceCalibration.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -661,7 +661,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidLensOpticalStabilizationMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidLensOpticalStabilizationMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidLensOpticalStabilizationMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -680,7 +680,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidLensState)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidLensState.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidLensState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -699,7 +699,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidNoiseReductionMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidNoiseReductionMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidNoiseReductionMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -718,7 +718,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidQuirksPartialResult)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidQuirksPartialResult.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidQuirksPartialResult.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -737,7 +737,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidRequestAvailableCapabilities)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidRequestAvailableCapabilities.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidRequestAvailableCapabilities.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -756,7 +756,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidRequestMetadataMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidRequestMetadataMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidRequestMetadataMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -775,7 +775,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidRequestType)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidRequestType.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidRequestType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -794,7 +794,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidScalerAvailableFormats)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidScalerAvailableFormats.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidScalerAvailableFormats.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -813,7 +813,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidScalerAvailableStreamConfigurations)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidScalerAvailableStreamConfigurations.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidScalerAvailableStreamConfigurations.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -832,7 +832,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidScalerCroppingType)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidScalerCroppingType.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidScalerCroppingType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -851,7 +851,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidSensorInfoColorFilterArrangement)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidSensorInfoColorFilterArrangement.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidSensorInfoColorFilterArrangement.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -870,7 +870,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidSensorInfoLensShadingApplied)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidSensorInfoLensShadingApplied.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidSensorInfoLensShadingApplied.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -889,7 +889,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidSensorInfoTimestampSource)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidSensorInfoTimestampSource.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidSensorInfoTimestampSource.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -908,7 +908,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidSensorReferenceIlluminant1)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidSensorReferenceIlluminant1.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidSensorReferenceIlluminant1.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -927,7 +927,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidSensorTestPatternMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidSensorTestPatternMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidSensorTestPatternMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -946,7 +946,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidShadingMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidShadingMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidShadingMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -965,7 +965,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidStatisticsFaceDetectMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidStatisticsFaceDetectMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidStatisticsFaceDetectMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -984,7 +984,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidStatisticsHistogramMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidStatisticsHistogramMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidStatisticsHistogramMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1003,7 +1003,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidStatisticsHotPixelMapMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidStatisticsHotPixelMapMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidStatisticsHotPixelMapMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1022,7 +1022,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidStatisticsLensShadingMapMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidStatisticsLensShadingMapMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidStatisticsLensShadingMapMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1041,7 +1041,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidStatisticsSceneFlicker)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidStatisticsSceneFlicker.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidStatisticsSceneFlicker.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1060,7 +1060,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidStatisticsSharpnessMapMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidStatisticsSharpnessMapMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidStatisticsSharpnessMapMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1079,7 +1079,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidSyncFrameNumber)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidSyncFrameNumber.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidSyncFrameNumber.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1098,7 +1098,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidSyncMaxLatency)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidSyncMaxLatency.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidSyncMaxLatency.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1117,7 +1117,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidTonemapMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidTonemapMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidTonemapMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1136,7 +1136,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidTonemapPresetCurve)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidTonemapPresetCurve.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidTonemapPresetCurve.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1155,7 +1155,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataSection)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataSection.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataSection.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1174,7 +1174,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataSectionStart)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataSectionStart.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataSectionStart.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1193,7 +1193,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataTag)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataTag.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataTag.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1224,7 +1224,7 @@ HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
 #
 # Build types.hal (CameraMetadataEnumAndroidBlackLevelLock)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidBlackLevelLock.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidBlackLevelLock.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1243,7 +1243,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidColorCorrectionAberrationMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidColorCorrectionAberrationMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidColorCorrectionAberrationMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1262,7 +1262,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidColorCorrectionMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidColorCorrectionMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidColorCorrectionMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1281,7 +1281,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAeAntibandingMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAeAntibandingMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAeAntibandingMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1300,7 +1300,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAeLock)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAeLock.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAeLock.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1319,7 +1319,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAeLockAvailable)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAeLockAvailable.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAeLockAvailable.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1338,7 +1338,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAeMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAeMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAeMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1357,7 +1357,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAePrecaptureTrigger)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAePrecaptureTrigger.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAePrecaptureTrigger.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1376,7 +1376,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAeState)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAeState.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAeState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1395,7 +1395,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAfMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAfMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAfMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1414,7 +1414,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAfState)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAfState.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAfState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1433,7 +1433,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAfTrigger)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAfTrigger.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAfTrigger.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1452,7 +1452,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAwbLock)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAwbLock.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAwbLock.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1471,7 +1471,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAwbLockAvailable)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAwbLockAvailable.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAwbLockAvailable.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1490,7 +1490,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAwbMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAwbMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAwbMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1509,7 +1509,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlAwbState)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlAwbState.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlAwbState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1528,7 +1528,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlCaptureIntent)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlCaptureIntent.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlCaptureIntent.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1547,7 +1547,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlEffectMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlEffectMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlEffectMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1566,7 +1566,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1585,7 +1585,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlSceneMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlSceneMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlSceneMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1604,7 +1604,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidControlVideoStabilizationMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidControlVideoStabilizationMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidControlVideoStabilizationMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1623,7 +1623,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidDemosaicMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidDemosaicMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidDemosaicMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1642,7 +1642,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidDepthAvailableDepthStreamConfigurations)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidDepthAvailableDepthStreamConfigurations.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidDepthAvailableDepthStreamConfigurations.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1661,7 +1661,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidDepthDepthIsExclusive)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidDepthDepthIsExclusive.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidDepthDepthIsExclusive.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1680,7 +1680,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidEdgeMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidEdgeMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidEdgeMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1699,7 +1699,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidFlashInfoAvailable)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidFlashInfoAvailable.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidFlashInfoAvailable.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1718,7 +1718,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidFlashMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidFlashMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidFlashMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1737,7 +1737,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidFlashState)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidFlashState.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidFlashState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1756,7 +1756,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidHotPixelMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidHotPixelMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidHotPixelMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1775,7 +1775,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidInfoSupportedHardwareLevel)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidInfoSupportedHardwareLevel.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidInfoSupportedHardwareLevel.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1794,7 +1794,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidLedAvailableLeds)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidLedAvailableLeds.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidLedAvailableLeds.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1813,7 +1813,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidLedTransmit)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidLedTransmit.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidLedTransmit.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1832,7 +1832,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidLensFacing)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidLensFacing.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidLensFacing.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1851,7 +1851,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidLensInfoFocusDistanceCalibration)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidLensInfoFocusDistanceCalibration.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidLensInfoFocusDistanceCalibration.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1870,7 +1870,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidLensOpticalStabilizationMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidLensOpticalStabilizationMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidLensOpticalStabilizationMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1889,7 +1889,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidLensState)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidLensState.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidLensState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1908,7 +1908,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidNoiseReductionMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidNoiseReductionMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidNoiseReductionMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1927,7 +1927,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidQuirksPartialResult)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidQuirksPartialResult.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidQuirksPartialResult.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1946,7 +1946,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidRequestAvailableCapabilities)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidRequestAvailableCapabilities.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidRequestAvailableCapabilities.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1965,7 +1965,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidRequestMetadataMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidRequestMetadataMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidRequestMetadataMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1984,7 +1984,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidRequestType)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidRequestType.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidRequestType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2003,7 +2003,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidScalerAvailableFormats)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidScalerAvailableFormats.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidScalerAvailableFormats.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2022,7 +2022,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidScalerAvailableStreamConfigurations)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidScalerAvailableStreamConfigurations.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidScalerAvailableStreamConfigurations.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2041,7 +2041,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidScalerCroppingType)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidScalerCroppingType.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidScalerCroppingType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2060,7 +2060,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidSensorInfoColorFilterArrangement)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidSensorInfoColorFilterArrangement.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidSensorInfoColorFilterArrangement.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2079,7 +2079,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidSensorInfoLensShadingApplied)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidSensorInfoLensShadingApplied.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidSensorInfoLensShadingApplied.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2098,7 +2098,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidSensorInfoTimestampSource)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidSensorInfoTimestampSource.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidSensorInfoTimestampSource.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2117,7 +2117,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidSensorReferenceIlluminant1)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidSensorReferenceIlluminant1.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidSensorReferenceIlluminant1.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2136,7 +2136,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidSensorTestPatternMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidSensorTestPatternMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidSensorTestPatternMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2155,7 +2155,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidShadingMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidShadingMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidShadingMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2174,7 +2174,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidStatisticsFaceDetectMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidStatisticsFaceDetectMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidStatisticsFaceDetectMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2193,7 +2193,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidStatisticsHistogramMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidStatisticsHistogramMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidStatisticsHistogramMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2212,7 +2212,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidStatisticsHotPixelMapMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidStatisticsHotPixelMapMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidStatisticsHotPixelMapMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2231,7 +2231,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidStatisticsLensShadingMapMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidStatisticsLensShadingMapMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidStatisticsLensShadingMapMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2250,7 +2250,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidStatisticsSceneFlicker)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidStatisticsSceneFlicker.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidStatisticsSceneFlicker.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2269,7 +2269,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidStatisticsSharpnessMapMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidStatisticsSharpnessMapMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidStatisticsSharpnessMapMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2288,7 +2288,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidSyncFrameNumber)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidSyncFrameNumber.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidSyncFrameNumber.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2307,7 +2307,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidSyncMaxLatency)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidSyncMaxLatency.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidSyncMaxLatency.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2326,7 +2326,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidTonemapMode)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidTonemapMode.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidTonemapMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2345,7 +2345,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataEnumAndroidTonemapPresetCurve)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataEnumAndroidTonemapPresetCurve.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataEnumAndroidTonemapPresetCurve.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2364,7 +2364,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataSection)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataSection.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataSection.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2383,7 +2383,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataSectionStart)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataSectionStart.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataSectionStart.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2402,7 +2402,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataTag)
 #
-GEN := $(intermediates)/android/hardware/camera/metadata/3.2/CameraMetadataTag.java
+GEN := $(intermediates)/android/hardware/camera/metadata/V3_2/CameraMetadataTag.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal

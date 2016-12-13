@@ -20,7 +20,7 @@ LOCAL_JAVA_LIBRARIES := \
 #
 # Build types.hal (Default)
 #
-GEN := $(intermediates)/android/hardware/example/extension/light/2.0/Default.java
+GEN := $(intermediates)/android/hardware/example/extension/light/V2_0/Default.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -39,7 +39,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (ExtBrightness)
 #
-GEN := $(intermediates)/android/hardware/example/extension/light/2.0/ExtBrightness.java
+GEN := $(intermediates)/android/hardware/example/extension/light/V2_0/ExtBrightness.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -58,7 +58,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (ExtLightState)
 #
-GEN := $(intermediates)/android/hardware/example/extension/light/2.0/ExtLightState.java
+GEN := $(intermediates)/android/hardware/example/extension/light/V2_0/ExtLightState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -77,7 +77,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IExtLight.hal
 #
-GEN := $(intermediates)/android/hardware/example/extension/light/2.0/IExtLight.java
+GEN := $(intermediates)/android/hardware/example/extension/light/V2_0/IExtLight.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IExtLight.hal
@@ -115,7 +115,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 #
 # Build types.hal (Default)
 #
-GEN := $(intermediates)/android/hardware/example/extension/light/2.0/Default.java
+GEN := $(intermediates)/android/hardware/example/extension/light/V2_0/Default.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -134,7 +134,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (ExtBrightness)
 #
-GEN := $(intermediates)/android/hardware/example/extension/light/2.0/ExtBrightness.java
+GEN := $(intermediates)/android/hardware/example/extension/light/V2_0/ExtBrightness.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -153,7 +153,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (ExtLightState)
 #
-GEN := $(intermediates)/android/hardware/example/extension/light/2.0/ExtLightState.java
+GEN := $(intermediates)/android/hardware/example/extension/light/V2_0/ExtLightState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -172,7 +172,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IExtLight.hal
 #
-GEN := $(intermediates)/android/hardware/example/extension/light/2.0/IExtLight.java
+GEN := $(intermediates)/android/hardware/example/extension/light/V2_0/IExtLight.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IExtLight.hal

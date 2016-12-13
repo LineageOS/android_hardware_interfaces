@@ -19,7 +19,7 @@ LOCAL_JAVA_LIBRARIES := \
 #
 # Build types.hal (Brightness)
 #
-GEN := $(intermediates)/android/hardware/light/2.0/Brightness.java
+GEN := $(intermediates)/android/hardware/light/V2_0/Brightness.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -38,7 +38,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Flash)
 #
-GEN := $(intermediates)/android/hardware/light/2.0/Flash.java
+GEN := $(intermediates)/android/hardware/light/V2_0/Flash.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -57,7 +57,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (LightState)
 #
-GEN := $(intermediates)/android/hardware/light/2.0/LightState.java
+GEN := $(intermediates)/android/hardware/light/V2_0/LightState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -76,7 +76,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Status)
 #
-GEN := $(intermediates)/android/hardware/light/2.0/Status.java
+GEN := $(intermediates)/android/hardware/light/V2_0/Status.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -95,7 +95,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Type)
 #
-GEN := $(intermediates)/android/hardware/light/2.0/Type.java
+GEN := $(intermediates)/android/hardware/light/V2_0/Type.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -114,7 +114,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ILight.hal
 #
-GEN := $(intermediates)/android/hardware/light/2.0/ILight.java
+GEN := $(intermediates)/android/hardware/light/V2_0/ILight.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ILight.hal
@@ -151,7 +151,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 #
 # Build types.hal (Brightness)
 #
-GEN := $(intermediates)/android/hardware/light/2.0/Brightness.java
+GEN := $(intermediates)/android/hardware/light/V2_0/Brightness.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -170,7 +170,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Flash)
 #
-GEN := $(intermediates)/android/hardware/light/2.0/Flash.java
+GEN := $(intermediates)/android/hardware/light/V2_0/Flash.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -189,7 +189,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (LightState)
 #
-GEN := $(intermediates)/android/hardware/light/2.0/LightState.java
+GEN := $(intermediates)/android/hardware/light/V2_0/LightState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -208,7 +208,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Status)
 #
-GEN := $(intermediates)/android/hardware/light/2.0/Status.java
+GEN := $(intermediates)/android/hardware/light/V2_0/Status.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -227,7 +227,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Type)
 #
-GEN := $(intermediates)/android/hardware/light/2.0/Type.java
+GEN := $(intermediates)/android/hardware/light/V2_0/Type.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -246,7 +246,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ILight.hal
 #
-GEN := $(intermediates)/android/hardware/light/2.0/ILight.java
+GEN := $(intermediates)/android/hardware/light/V2_0/ILight.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ILight.hal
