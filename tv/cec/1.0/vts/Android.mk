@@ -19,7 +19,7 @@ LOCAL_PATH := $(call my-dir)
 # build VTS driver for TvCec v1.0.
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := libvts_driver_hidl_tv_hdmi_cec@1.0
+LOCAL_MODULE := libvts_driver_hidl_tv_cec@1.0
 
 LOCAL_SRC_FILES := \
   HdmiCec.vts \
@@ -51,7 +51,7 @@ include $(BUILD_SHARED_LIBRARY)
 # build VTS profiler for HdmiCec
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := libvts_profiler_hidl_tv_hdmi_cec@1.0
+LOCAL_MODULE := libvts_profiler_hidl_tv_cec@1.0
 
 LOCAL_SRC_FILES := \
   HdmiCec.vts \
@@ -86,7 +86,7 @@ include $(BUILD_SHARED_LIBRARY)
 # build VTS profiler for HdmiCecCallback
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := libvts_profiler_hidl_tv_hdmi_cec_callback_@1.0
+LOCAL_MODULE := libvts_profiler_hidl_tv_cec_callback_@1.0
 
 LOCAL_SRC_FILES := \
   HdmiCecCallback.vts \
@@ -116,3 +116,5 @@ LOCAL_PROTOC_OPTIMIZE_TYPE := full
 LOCAL_MULTILIB := both
 
 include $(BUILD_SHARED_LIBRARY)
+
+include $(call all-makefiles-under,$(LOCAL_PATH))
