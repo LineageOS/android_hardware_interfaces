@@ -453,7 +453,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
   setEapSubjectMatch(string match) generates (SupplicantStatus status);
 
   /**
-   * Set EAP Altsubject match for this network.
+   * Set EAP Alt subject match for this network.
    *
    * @param match value to set.
    * @return status Status of the operation.
@@ -647,6 +647,184 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return enabled true if set, false otherwise.
    */
   getRequirePmf() generates (SupplicantStatus status, bool enabled);
+
+  /**
+   * Get EAP Method set for this network.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   * @return method value set.
+   *        Must be one of |EapMethod| values.
+   */
+  getEapMethod()
+      generates (SupplicantStatus status, EapMethod method);
+
+  /**
+   * Get EAP Phase2 Method set for this network.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   * @return method value set.
+   *        Must be one of |EapPhase2Method| values.
+   */
+  getEapPhase2Method()
+      generates (SupplicantStatus status, EapPhase2Method method);
+
+  /**
+   * Get EAP Identity set for this network.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   * @return identity value set.
+   */
+  getEapIdentity()
+      generates (SupplicantStatus status, vec<uint8_t> identity);
+
+  /**
+   * Get EAP Anonymous Identity set for this network.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   * @return identity value set.
+   */
+  getEapAnonymousIdentity()
+      generates (SupplicantStatus status, vec<uint8_t> identity);
+
+  /**
+   * Get EAP Password set for this network.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   * @return password value set.
+   */
+  getEapPassword()
+      generates (SupplicantStatus status, vec<uint8_t> password);
+
+  /**
+   * Get EAP CA certificate file path set for this network.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   * @return path value set.
+   */
+  getEapCACert() generates (SupplicantStatus status, string path);
+
+  /**
+   * Get EAP CA certificate directory path set for this network.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   * @return path value set.
+   */
+  getEapCAPath() generates (SupplicantStatus status, string path);
+
+  /**
+   * Get EAP Client certificate file path set for this network.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   * @return path value set.
+   */
+  getEapClientCert() generates (SupplicantStatus status, string path);
+
+  /**
+   * Get EAP private key file path set for this network.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   * @return path value set.
+   */
+  getEapPrivateKey() generates (SupplicantStatus status, string path);
+
+  /**
+   * Get EAP subject match set for this network.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   * @return match value set.
+   */
+  getEapSubjectMatch() generates (SupplicantStatus status, string match);
+
+  /**
+   * Get EAP Alt subject match set for this network.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   * @return match value set.
+   */
+  getEapAltSubjectMatch()
+      generates (SupplicantStatus status, string match);
+
+  /**
+   * Get if EAP Open SSL Engine is enabled for this network.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   * @return enabled true if set, false otherwise.
+   */
+  getEapEngine() generates (SupplicantStatus status, bool enabled);
+
+  /**
+   * Get EAP Open SSL Engine ID set for this network.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   * @return id value set.
+   */
+  getEapEngineID() generates (SupplicantStatus status, string id);
+
+  /**
+   * Get EAP Domain suffix match set for this network.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   * @return match value set.
+   */
+  getEapDomainSuffixMatch()
+      generates (SupplicantStatus status, string match);
 
   /**
    * Enable the network for connection purposes.
