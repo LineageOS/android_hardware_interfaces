@@ -19,7 +19,7 @@ LOCAL_JAVA_LIBRARIES := \
 #
 # Build types.hal (ActivityStatsInfo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/ActivityStatsInfo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/ActivityStatsInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -38,7 +38,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (ApnAuthType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/ApnAuthType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/ApnAuthType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -57,7 +57,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (AppState)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/AppState.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/AppState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -76,7 +76,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (AppStatus)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/AppStatus.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/AppStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -95,7 +95,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (AppType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/AppType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/AppType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -114,7 +114,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Call)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/Call.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/Call.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -133,7 +133,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CallForwardInfo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CallForwardInfo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CallForwardInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -152,7 +152,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CallForwardInfoStatus)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CallForwardInfoStatus.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CallForwardInfoStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -171,7 +171,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CallPresentation)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CallPresentation.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CallPresentation.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -190,7 +190,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CallState)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CallState.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CallState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -209,7 +209,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CardState)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CardState.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CardState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -228,7 +228,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CardStatus)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CardStatus.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CardStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -247,7 +247,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Carrier)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/Carrier.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/Carrier.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -266,7 +266,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CarrierMatchType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CarrierMatchType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CarrierMatchType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -285,7 +285,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CarrierRestrictions)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CarrierRestrictions.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CarrierRestrictions.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -304,7 +304,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaBroadcastSmsConfigInfo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaBroadcastSmsConfigInfo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaBroadcastSmsConfigInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -323,7 +323,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaCallWaiting)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaCallWaiting.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaCallWaiting.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -342,7 +342,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaCallWaitingNumberPlan)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaCallWaitingNumberPlan.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaCallWaitingNumberPlan.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -361,7 +361,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaCallWaitingNumberPresentation)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaCallWaitingNumberPresentation.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaCallWaitingNumberPresentation.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -380,7 +380,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaCallWaitingNumberType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaCallWaitingNumberType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaCallWaitingNumberType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -399,7 +399,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaDisplayInfoRecord)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaDisplayInfoRecord.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaDisplayInfoRecord.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -418,7 +418,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaInfoRecName)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaInfoRecName.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaInfoRecName.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -437,7 +437,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaInformationRecord)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaInformationRecord.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaInformationRecord.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -456,7 +456,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaInformationRecords)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaInformationRecords.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaInformationRecords.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -475,7 +475,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaLineControlInfoRecord)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaLineControlInfoRecord.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaLineControlInfoRecord.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -494,7 +494,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaNumberInfoRecord)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaNumberInfoRecord.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaNumberInfoRecord.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -513,7 +513,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaOtaProvisionStatus)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaOtaProvisionStatus.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaOtaProvisionStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -532,7 +532,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaRedirectingNumberInfoRecord)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaRedirectingNumberInfoRecord.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaRedirectingNumberInfoRecord.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -551,7 +551,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaRedirectingReason)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaRedirectingReason.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaRedirectingReason.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -570,7 +570,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaRoamingType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaRoamingType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaRoamingType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -589,7 +589,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSignalInfoRecord)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSignalInfoRecord.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSignalInfoRecord.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -608,7 +608,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSignalStrength)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSignalStrength.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSignalStrength.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -627,7 +627,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSmsAck)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSmsAck.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSmsAck.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -646,7 +646,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSmsAddress)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSmsAddress.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSmsAddress.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -665,7 +665,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSmsDigitMode)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSmsDigitMode.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSmsDigitMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -684,7 +684,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSmsErrorClass)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSmsErrorClass.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSmsErrorClass.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -703,7 +703,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSmsMessage)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSmsMessage.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSmsMessage.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -722,7 +722,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSmsNumberMode)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSmsNumberMode.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSmsNumberMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -741,7 +741,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSmsNumberPlan)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSmsNumberPlan.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSmsNumberPlan.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -760,7 +760,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSmsNumberType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSmsNumberType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSmsNumberType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -779,7 +779,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSmsSubaddress)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSmsSubaddress.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSmsSubaddress.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -798,7 +798,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSmsSubaddressType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSmsSubaddressType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSmsSubaddressType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -817,7 +817,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSmsWriteArgs)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSmsWriteArgs.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSmsWriteArgs.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -836,7 +836,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSmsWriteArgsStatus)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSmsWriteArgsStatus.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSmsWriteArgsStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -855,7 +855,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSubscriptionSource)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSubscriptionSource.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSubscriptionSource.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -874,7 +874,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaT53AudioControlInfoRecord)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaT53AudioControlInfoRecord.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaT53AudioControlInfoRecord.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -893,7 +893,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaT53ClirInfoRecord)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaT53ClirInfoRecord.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaT53ClirInfoRecord.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -912,7 +912,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CellIdentityCdma)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CellIdentityCdma.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CellIdentityCdma.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -931,7 +931,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CellIdentityGsm)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CellIdentityGsm.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CellIdentityGsm.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -950,7 +950,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CellIdentityLte)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CellIdentityLte.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CellIdentityLte.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -969,7 +969,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CellIdentityTdscdma)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CellIdentityTdscdma.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CellIdentityTdscdma.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -988,7 +988,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CellIdentityWcdma)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CellIdentityWcdma.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CellIdentityWcdma.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1007,7 +1007,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CellInfo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CellInfo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CellInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1026,7 +1026,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CellInfoCdma)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CellInfoCdma.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CellInfoCdma.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1045,7 +1045,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CellInfoGsm)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CellInfoGsm.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CellInfoGsm.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1064,7 +1064,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CellInfoLte)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CellInfoLte.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CellInfoLte.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1083,7 +1083,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CellInfoTdscdma)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CellInfoTdscdma.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CellInfoTdscdma.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1102,7 +1102,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CellInfoType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CellInfoType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CellInfoType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1121,7 +1121,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CellInfoWcdma)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CellInfoWcdma.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CellInfoWcdma.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1140,7 +1140,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CfData)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CfData.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CfData.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1159,7 +1159,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (ClipStatus)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/ClipStatus.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/ClipStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1178,7 +1178,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Clir)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/Clir.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/Clir.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1197,7 +1197,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (DataCallFailCause)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/DataCallFailCause.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/DataCallFailCause.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1216,7 +1216,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (DataProfile)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/DataProfile.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/DataProfile.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1235,7 +1235,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (DataProfileInfo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/DataProfileInfo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/DataProfileInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1254,7 +1254,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (DataProfileInfoType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/DataProfileInfoType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/DataProfileInfoType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1273,7 +1273,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (DataRegStateResult)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/DataRegStateResult.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/DataRegStateResult.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1292,7 +1292,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Dial)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/Dial.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/Dial.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1311,7 +1311,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (EvdoSignalStrength)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/EvdoSignalStrength.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/EvdoSignalStrength.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1330,7 +1330,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (GsmBroadcastSmsConfigInfo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/GsmBroadcastSmsConfigInfo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/GsmBroadcastSmsConfigInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1349,7 +1349,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (GsmSignalStrength)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/GsmSignalStrength.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/GsmSignalStrength.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1368,7 +1368,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (GsmSmsMessage)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/GsmSmsMessage.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/GsmSmsMessage.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1387,7 +1387,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HardwareConfig)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/HardwareConfig.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/HardwareConfig.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1406,7 +1406,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HardwareConfigModem)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/HardwareConfigModem.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/HardwareConfigModem.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1425,7 +1425,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HardwareConfigSim)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/HardwareConfigSim.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/HardwareConfigSim.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1444,7 +1444,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HardwareConfigState)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/HardwareConfigState.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/HardwareConfigState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1463,7 +1463,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HardwareConfigType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/HardwareConfigType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/HardwareConfigType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1482,7 +1482,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (IccIo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/IccIo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/IccIo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1501,7 +1501,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (IccIoResult)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/IccIoResult.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/IccIoResult.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1520,7 +1520,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (ImsSmsMessage)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/ImsSmsMessage.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/ImsSmsMessage.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1539,7 +1539,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (LastCallFailCause)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/LastCallFailCause.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/LastCallFailCause.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1558,7 +1558,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (LceDataInfo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/LceDataInfo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/LceDataInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1577,7 +1577,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (LceStatus)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/LceStatus.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/LceStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1596,7 +1596,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (LceStatusInfo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/LceStatusInfo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/LceStatusInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1615,7 +1615,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (LteSignalStrength)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/LteSignalStrength.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/LteSignalStrength.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1634,7 +1634,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (NeighboringCell)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/NeighboringCell.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/NeighboringCell.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1653,7 +1653,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (NvItem)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/NvItem.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/NvItem.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1672,7 +1672,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (NvWriteItem)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/NvWriteItem.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/NvWriteItem.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1691,7 +1691,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (OperatorInfo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/OperatorInfo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/OperatorInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1710,7 +1710,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (OperatorStatus)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/OperatorStatus.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/OperatorStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1729,7 +1729,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (PcoDataInfo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/PcoDataInfo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/PcoDataInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1748,7 +1748,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (PersoSubstate)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/PersoSubstate.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/PersoSubstate.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1767,7 +1767,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (PhoneRestrictedState)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/PhoneRestrictedState.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/PhoneRestrictedState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1786,7 +1786,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (PinState)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/PinState.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/PinState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1805,7 +1805,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (PreferredNetworkType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/PreferredNetworkType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/PreferredNetworkType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1824,7 +1824,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioAccessFamily)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioAccessFamily.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioAccessFamily.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1843,7 +1843,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioBandMode)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioBandMode.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioBandMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1862,7 +1862,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioCapability)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioCapability.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioCapability.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1881,7 +1881,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioCapabilityPhase)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioCapabilityPhase.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioCapabilityPhase.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1900,7 +1900,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioCapabilityStatus)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioCapabilityStatus.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioCapabilityStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1919,7 +1919,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioCdmaSmsConst)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioCdmaSmsConst.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioCdmaSmsConst.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1938,7 +1938,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioConst)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioConst.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioConst.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1957,7 +1957,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioError)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioError.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioError.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1976,7 +1976,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioIndicationType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioIndicationType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioIndicationType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -1995,7 +1995,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioResponseInfo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioResponseInfo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioResponseInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2014,7 +2014,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioResponseType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioResponseType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioResponseType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2033,7 +2033,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioState)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioState.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2052,7 +2052,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioTechnology)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioTechnology.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioTechnology.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2071,7 +2071,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioTechnologyFamily)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioTechnologyFamily.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioTechnologyFamily.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2090,7 +2090,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RegState)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RegState.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RegState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2109,7 +2109,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (ResetNvType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/ResetNvType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/ResetNvType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2128,7 +2128,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RestrictedState)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RestrictedState.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RestrictedState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2147,7 +2147,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SapApduType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SapApduType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SapApduType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2166,7 +2166,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SapConnectRsp)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SapConnectRsp.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SapConnectRsp.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2185,7 +2185,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SapDisconnectType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SapDisconnectType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SapDisconnectType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2204,7 +2204,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SapResultCode)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SapResultCode.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SapResultCode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2223,7 +2223,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SapStatus)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SapStatus.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SapStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2242,7 +2242,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SapTransferProtocol)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SapTransferProtocol.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SapTransferProtocol.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2261,7 +2261,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SelectUiccSub)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SelectUiccSub.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SelectUiccSub.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2280,7 +2280,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SendSmsResult)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SendSmsResult.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SendSmsResult.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2299,7 +2299,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SetupDataCallResult)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SetupDataCallResult.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SetupDataCallResult.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2318,7 +2318,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SignalStrength)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SignalStrength.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SignalStrength.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2337,7 +2337,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SimApdu)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SimApdu.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SimApdu.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2356,7 +2356,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SimRefreshResult)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SimRefreshResult.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SimRefreshResult.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2375,7 +2375,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SimRefreshType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SimRefreshType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SimRefreshType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2394,7 +2394,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SmsAcknowledgeFailCause)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SmsAcknowledgeFailCause.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SmsAcknowledgeFailCause.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2413,7 +2413,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SmsWriteArgs)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SmsWriteArgs.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SmsWriteArgs.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2432,7 +2432,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SmsWriteArgsStatus)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SmsWriteArgsStatus.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SmsWriteArgsStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2451,7 +2451,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SrvccState)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SrvccState.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SrvccState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2470,7 +2470,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SsInfoData)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SsInfoData.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SsInfoData.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2489,7 +2489,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SsRequestType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SsRequestType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SsRequestType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2508,7 +2508,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SsServiceType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SsServiceType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SsServiceType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2527,7 +2527,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SsTeleserviceType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SsTeleserviceType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SsTeleserviceType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2546,7 +2546,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (StkCcUnsolSsResult)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/StkCcUnsolSsResult.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/StkCcUnsolSsResult.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2565,7 +2565,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SubscriptionType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SubscriptionType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SubscriptionType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2584,7 +2584,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SuppServiceClass)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SuppServiceClass.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SuppServiceClass.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2603,7 +2603,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SuppSvcNotification)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SuppSvcNotification.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SuppSvcNotification.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2622,7 +2622,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (TdScdmaSignalStrength)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/TdScdmaSignalStrength.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/TdScdmaSignalStrength.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2641,7 +2641,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (TimeStampType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/TimeStampType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/TimeStampType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2660,7 +2660,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (TtyMode)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/TtyMode.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/TtyMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2679,7 +2679,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (UiccSubActStatus)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/UiccSubActStatus.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/UiccSubActStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2698,7 +2698,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (UssdModeType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/UssdModeType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/UssdModeType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2717,7 +2717,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (UusDcs)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/UusDcs.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/UusDcs.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2736,7 +2736,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (UusInfo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/UusInfo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/UusInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2755,7 +2755,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (UusType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/UusType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/UusType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2774,7 +2774,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (VoiceRegStateResult)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/VoiceRegStateResult.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/VoiceRegStateResult.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2793,7 +2793,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (WcdmaSignalStrength)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/WcdmaSignalStrength.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/WcdmaSignalStrength.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2812,7 +2812,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IRadio.hal
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/IRadio.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/IRadio.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IRadio.hal
@@ -2837,7 +2837,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IRadioIndication.hal
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/IRadioIndication.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/IRadioIndication.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IRadioIndication.hal
@@ -2858,7 +2858,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IRadioResponse.hal
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/IRadioResponse.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/IRadioResponse.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IRadioResponse.hal
@@ -2879,7 +2879,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISap.hal
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/ISap.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/ISap.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISap.hal
@@ -2902,7 +2902,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISapCallback.hal
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/ISapCallback.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/ISapCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISapCallback.hal
@@ -2939,7 +2939,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 #
 # Build types.hal (ActivityStatsInfo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/ActivityStatsInfo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/ActivityStatsInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2958,7 +2958,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (ApnAuthType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/ApnAuthType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/ApnAuthType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2977,7 +2977,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (AppState)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/AppState.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/AppState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -2996,7 +2996,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (AppStatus)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/AppStatus.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/AppStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3015,7 +3015,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (AppType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/AppType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/AppType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3034,7 +3034,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Call)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/Call.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/Call.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3053,7 +3053,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CallForwardInfo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CallForwardInfo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CallForwardInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3072,7 +3072,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CallForwardInfoStatus)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CallForwardInfoStatus.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CallForwardInfoStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3091,7 +3091,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CallPresentation)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CallPresentation.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CallPresentation.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3110,7 +3110,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CallState)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CallState.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CallState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3129,7 +3129,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CardState)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CardState.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CardState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3148,7 +3148,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CardStatus)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CardStatus.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CardStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3167,7 +3167,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Carrier)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/Carrier.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/Carrier.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3186,7 +3186,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CarrierMatchType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CarrierMatchType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CarrierMatchType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3205,7 +3205,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CarrierRestrictions)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CarrierRestrictions.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CarrierRestrictions.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3224,7 +3224,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaBroadcastSmsConfigInfo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaBroadcastSmsConfigInfo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaBroadcastSmsConfigInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3243,7 +3243,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaCallWaiting)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaCallWaiting.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaCallWaiting.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3262,7 +3262,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaCallWaitingNumberPlan)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaCallWaitingNumberPlan.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaCallWaitingNumberPlan.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3281,7 +3281,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaCallWaitingNumberPresentation)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaCallWaitingNumberPresentation.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaCallWaitingNumberPresentation.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3300,7 +3300,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaCallWaitingNumberType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaCallWaitingNumberType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaCallWaitingNumberType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3319,7 +3319,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaDisplayInfoRecord)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaDisplayInfoRecord.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaDisplayInfoRecord.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3338,7 +3338,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaInfoRecName)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaInfoRecName.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaInfoRecName.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3357,7 +3357,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaInformationRecord)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaInformationRecord.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaInformationRecord.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3376,7 +3376,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaInformationRecords)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaInformationRecords.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaInformationRecords.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3395,7 +3395,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaLineControlInfoRecord)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaLineControlInfoRecord.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaLineControlInfoRecord.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3414,7 +3414,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaNumberInfoRecord)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaNumberInfoRecord.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaNumberInfoRecord.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3433,7 +3433,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaOtaProvisionStatus)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaOtaProvisionStatus.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaOtaProvisionStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3452,7 +3452,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaRedirectingNumberInfoRecord)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaRedirectingNumberInfoRecord.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaRedirectingNumberInfoRecord.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3471,7 +3471,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaRedirectingReason)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaRedirectingReason.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaRedirectingReason.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3490,7 +3490,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaRoamingType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaRoamingType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaRoamingType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3509,7 +3509,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSignalInfoRecord)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSignalInfoRecord.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSignalInfoRecord.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3528,7 +3528,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSignalStrength)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSignalStrength.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSignalStrength.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3547,7 +3547,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSmsAck)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSmsAck.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSmsAck.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3566,7 +3566,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSmsAddress)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSmsAddress.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSmsAddress.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3585,7 +3585,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSmsDigitMode)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSmsDigitMode.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSmsDigitMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3604,7 +3604,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSmsErrorClass)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSmsErrorClass.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSmsErrorClass.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3623,7 +3623,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSmsMessage)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSmsMessage.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSmsMessage.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3642,7 +3642,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSmsNumberMode)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSmsNumberMode.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSmsNumberMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3661,7 +3661,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSmsNumberPlan)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSmsNumberPlan.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSmsNumberPlan.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3680,7 +3680,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSmsNumberType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSmsNumberType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSmsNumberType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3699,7 +3699,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSmsSubaddress)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSmsSubaddress.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSmsSubaddress.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3718,7 +3718,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSmsSubaddressType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSmsSubaddressType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSmsSubaddressType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3737,7 +3737,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSmsWriteArgs)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSmsWriteArgs.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSmsWriteArgs.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3756,7 +3756,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSmsWriteArgsStatus)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSmsWriteArgsStatus.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSmsWriteArgsStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3775,7 +3775,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaSubscriptionSource)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaSubscriptionSource.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaSubscriptionSource.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3794,7 +3794,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaT53AudioControlInfoRecord)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaT53AudioControlInfoRecord.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaT53AudioControlInfoRecord.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3813,7 +3813,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CdmaT53ClirInfoRecord)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CdmaT53ClirInfoRecord.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CdmaT53ClirInfoRecord.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3832,7 +3832,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CellIdentityCdma)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CellIdentityCdma.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CellIdentityCdma.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3851,7 +3851,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CellIdentityGsm)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CellIdentityGsm.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CellIdentityGsm.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3870,7 +3870,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CellIdentityLte)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CellIdentityLte.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CellIdentityLte.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3889,7 +3889,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CellIdentityTdscdma)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CellIdentityTdscdma.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CellIdentityTdscdma.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3908,7 +3908,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CellIdentityWcdma)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CellIdentityWcdma.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CellIdentityWcdma.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3927,7 +3927,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CellInfo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CellInfo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CellInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3946,7 +3946,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CellInfoCdma)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CellInfoCdma.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CellInfoCdma.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3965,7 +3965,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CellInfoGsm)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CellInfoGsm.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CellInfoGsm.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -3984,7 +3984,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CellInfoLte)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CellInfoLte.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CellInfoLte.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4003,7 +4003,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CellInfoTdscdma)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CellInfoTdscdma.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CellInfoTdscdma.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4022,7 +4022,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CellInfoType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CellInfoType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CellInfoType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4041,7 +4041,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CellInfoWcdma)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CellInfoWcdma.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CellInfoWcdma.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4060,7 +4060,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CfData)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/CfData.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/CfData.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4079,7 +4079,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (ClipStatus)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/ClipStatus.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/ClipStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4098,7 +4098,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Clir)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/Clir.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/Clir.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4117,7 +4117,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (DataCallFailCause)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/DataCallFailCause.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/DataCallFailCause.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4136,7 +4136,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (DataProfile)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/DataProfile.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/DataProfile.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4155,7 +4155,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (DataProfileInfo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/DataProfileInfo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/DataProfileInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4174,7 +4174,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (DataProfileInfoType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/DataProfileInfoType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/DataProfileInfoType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4193,7 +4193,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (DataRegStateResult)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/DataRegStateResult.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/DataRegStateResult.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4212,7 +4212,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Dial)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/Dial.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/Dial.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4231,7 +4231,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (EvdoSignalStrength)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/EvdoSignalStrength.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/EvdoSignalStrength.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4250,7 +4250,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (GsmBroadcastSmsConfigInfo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/GsmBroadcastSmsConfigInfo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/GsmBroadcastSmsConfigInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4269,7 +4269,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (GsmSignalStrength)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/GsmSignalStrength.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/GsmSignalStrength.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4288,7 +4288,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (GsmSmsMessage)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/GsmSmsMessage.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/GsmSmsMessage.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4307,7 +4307,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HardwareConfig)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/HardwareConfig.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/HardwareConfig.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4326,7 +4326,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HardwareConfigModem)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/HardwareConfigModem.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/HardwareConfigModem.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4345,7 +4345,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HardwareConfigSim)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/HardwareConfigSim.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/HardwareConfigSim.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4364,7 +4364,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HardwareConfigState)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/HardwareConfigState.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/HardwareConfigState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4383,7 +4383,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HardwareConfigType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/HardwareConfigType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/HardwareConfigType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4402,7 +4402,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (IccIo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/IccIo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/IccIo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4421,7 +4421,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (IccIoResult)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/IccIoResult.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/IccIoResult.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4440,7 +4440,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (ImsSmsMessage)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/ImsSmsMessage.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/ImsSmsMessage.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4459,7 +4459,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (LastCallFailCause)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/LastCallFailCause.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/LastCallFailCause.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4478,7 +4478,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (LceDataInfo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/LceDataInfo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/LceDataInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4497,7 +4497,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (LceStatus)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/LceStatus.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/LceStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4516,7 +4516,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (LceStatusInfo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/LceStatusInfo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/LceStatusInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4535,7 +4535,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (LteSignalStrength)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/LteSignalStrength.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/LteSignalStrength.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4554,7 +4554,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (NeighboringCell)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/NeighboringCell.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/NeighboringCell.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4573,7 +4573,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (NvItem)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/NvItem.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/NvItem.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4592,7 +4592,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (NvWriteItem)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/NvWriteItem.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/NvWriteItem.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4611,7 +4611,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (OperatorInfo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/OperatorInfo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/OperatorInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4630,7 +4630,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (OperatorStatus)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/OperatorStatus.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/OperatorStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4649,7 +4649,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (PcoDataInfo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/PcoDataInfo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/PcoDataInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4668,7 +4668,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (PersoSubstate)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/PersoSubstate.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/PersoSubstate.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4687,7 +4687,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (PhoneRestrictedState)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/PhoneRestrictedState.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/PhoneRestrictedState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4706,7 +4706,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (PinState)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/PinState.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/PinState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4725,7 +4725,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (PreferredNetworkType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/PreferredNetworkType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/PreferredNetworkType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4744,7 +4744,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioAccessFamily)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioAccessFamily.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioAccessFamily.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4763,7 +4763,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioBandMode)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioBandMode.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioBandMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4782,7 +4782,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioCapability)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioCapability.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioCapability.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4801,7 +4801,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioCapabilityPhase)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioCapabilityPhase.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioCapabilityPhase.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4820,7 +4820,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioCapabilityStatus)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioCapabilityStatus.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioCapabilityStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4839,7 +4839,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioCdmaSmsConst)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioCdmaSmsConst.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioCdmaSmsConst.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4858,7 +4858,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioConst)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioConst.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioConst.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4877,7 +4877,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioError)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioError.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioError.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4896,7 +4896,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioIndicationType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioIndicationType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioIndicationType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4915,7 +4915,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioResponseInfo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioResponseInfo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioResponseInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4934,7 +4934,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioResponseType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioResponseType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioResponseType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4953,7 +4953,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioState)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioState.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4972,7 +4972,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioTechnology)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioTechnology.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioTechnology.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -4991,7 +4991,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RadioTechnologyFamily)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RadioTechnologyFamily.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RadioTechnologyFamily.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5010,7 +5010,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RegState)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RegState.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RegState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5029,7 +5029,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (ResetNvType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/ResetNvType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/ResetNvType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5048,7 +5048,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (RestrictedState)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/RestrictedState.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/RestrictedState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5067,7 +5067,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SapApduType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SapApduType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SapApduType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5086,7 +5086,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SapConnectRsp)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SapConnectRsp.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SapConnectRsp.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5105,7 +5105,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SapDisconnectType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SapDisconnectType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SapDisconnectType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5124,7 +5124,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SapResultCode)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SapResultCode.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SapResultCode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5143,7 +5143,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SapStatus)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SapStatus.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SapStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5162,7 +5162,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SapTransferProtocol)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SapTransferProtocol.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SapTransferProtocol.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5181,7 +5181,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SelectUiccSub)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SelectUiccSub.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SelectUiccSub.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5200,7 +5200,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SendSmsResult)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SendSmsResult.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SendSmsResult.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5219,7 +5219,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SetupDataCallResult)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SetupDataCallResult.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SetupDataCallResult.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5238,7 +5238,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SignalStrength)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SignalStrength.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SignalStrength.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5257,7 +5257,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SimApdu)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SimApdu.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SimApdu.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5276,7 +5276,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SimRefreshResult)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SimRefreshResult.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SimRefreshResult.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5295,7 +5295,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SimRefreshType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SimRefreshType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SimRefreshType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5314,7 +5314,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SmsAcknowledgeFailCause)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SmsAcknowledgeFailCause.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SmsAcknowledgeFailCause.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5333,7 +5333,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SmsWriteArgs)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SmsWriteArgs.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SmsWriteArgs.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5352,7 +5352,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SmsWriteArgsStatus)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SmsWriteArgsStatus.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SmsWriteArgsStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5371,7 +5371,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SrvccState)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SrvccState.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SrvccState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5390,7 +5390,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SsInfoData)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SsInfoData.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SsInfoData.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5409,7 +5409,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SsRequestType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SsRequestType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SsRequestType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5428,7 +5428,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SsServiceType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SsServiceType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SsServiceType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5447,7 +5447,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SsTeleserviceType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SsTeleserviceType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SsTeleserviceType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5466,7 +5466,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (StkCcUnsolSsResult)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/StkCcUnsolSsResult.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/StkCcUnsolSsResult.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5485,7 +5485,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SubscriptionType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SubscriptionType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SubscriptionType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5504,7 +5504,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SuppServiceClass)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SuppServiceClass.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SuppServiceClass.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5523,7 +5523,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SuppSvcNotification)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/SuppSvcNotification.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/SuppSvcNotification.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5542,7 +5542,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (TdScdmaSignalStrength)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/TdScdmaSignalStrength.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/TdScdmaSignalStrength.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5561,7 +5561,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (TimeStampType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/TimeStampType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/TimeStampType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5580,7 +5580,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (TtyMode)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/TtyMode.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/TtyMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5599,7 +5599,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (UiccSubActStatus)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/UiccSubActStatus.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/UiccSubActStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5618,7 +5618,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (UssdModeType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/UssdModeType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/UssdModeType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5637,7 +5637,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (UusDcs)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/UusDcs.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/UusDcs.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5656,7 +5656,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (UusInfo)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/UusInfo.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/UusInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5675,7 +5675,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (UusType)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/UusType.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/UusType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5694,7 +5694,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (VoiceRegStateResult)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/VoiceRegStateResult.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/VoiceRegStateResult.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5713,7 +5713,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (WcdmaSignalStrength)
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/WcdmaSignalStrength.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/WcdmaSignalStrength.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -5732,7 +5732,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IRadio.hal
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/IRadio.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/IRadio.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IRadio.hal
@@ -5757,7 +5757,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IRadioIndication.hal
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/IRadioIndication.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/IRadioIndication.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IRadioIndication.hal
@@ -5778,7 +5778,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IRadioResponse.hal
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/IRadioResponse.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/IRadioResponse.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IRadioResponse.hal
@@ -5799,7 +5799,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISap.hal
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/ISap.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/ISap.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISap.hal
@@ -5822,7 +5822,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISapCallback.hal
 #
-GEN := $(intermediates)/android/hardware/radio/1.0/ISapCallback.java
+GEN := $(intermediates)/android/hardware/radio/V1_0/ISapCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISapCallback.hal

@@ -19,7 +19,7 @@ LOCAL_JAVA_LIBRARIES := \
 #
 # Build IBase.hal
 #
-GEN := $(intermediates)/android/hardware/tests/baz/1.0/IBase.java
+GEN := $(intermediates)/android/hardware/tests/baz/V1_0/IBase.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBase.hal
@@ -38,7 +38,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IBaz.hal
 #
-GEN := $(intermediates)/android/hardware/tests/baz/1.0/IBaz.java
+GEN := $(intermediates)/android/hardware/tests/baz/V1_0/IBaz.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBaz.hal
@@ -61,7 +61,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IBazCallback.hal
 #
-GEN := $(intermediates)/android/hardware/tests/baz/1.0/IBazCallback.java
+GEN := $(intermediates)/android/hardware/tests/baz/V1_0/IBazCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBazCallback.hal
@@ -96,7 +96,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 #
 # Build IBase.hal
 #
-GEN := $(intermediates)/android/hardware/tests/baz/1.0/IBase.java
+GEN := $(intermediates)/android/hardware/tests/baz/V1_0/IBase.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBase.hal
@@ -115,7 +115,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IBaz.hal
 #
-GEN := $(intermediates)/android/hardware/tests/baz/1.0/IBaz.java
+GEN := $(intermediates)/android/hardware/tests/baz/V1_0/IBaz.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBaz.hal
@@ -138,7 +138,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IBazCallback.hal
 #
-GEN := $(intermediates)/android/hardware/tests/baz/1.0/IBazCallback.java
+GEN := $(intermediates)/android/hardware/tests/baz/V1_0/IBazCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBazCallback.hal
