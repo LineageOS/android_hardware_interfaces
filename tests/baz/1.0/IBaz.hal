@@ -57,4 +57,6 @@ interface IBaz extends IBase {
     returnABunchOfStrings() generates (string a, string b, string c);
 
     returnABitField() generates (bitfield<BitField> good);
+
+    size(uint32_t size) generates (uint32_t size);
 };
