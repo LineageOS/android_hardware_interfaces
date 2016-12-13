@@ -55,4 +55,6 @@ interface IBaz extends IBase {
     haveAStringVec(vec<string> vector) generates (vec<string> result);
 
     returnABunchOfStrings() generates (string a, string b, string c);
+
+    returnABitField() generates (bitfield<BitField> good);
 };
