@@ -19,7 +19,7 @@ LOCAL_JAVA_LIBRARIES := \
 #
 # Build IChild.hal
 #
-GEN := $(intermediates)/android/hardware/tests/inheritance/V1_0/IChild.java
+GEN := $(intermediates)/android/hardware/tests/inheritance/1.0/IChild.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IChild.hal
@@ -40,7 +40,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IFetcher.hal
 #
-GEN := $(intermediates)/android/hardware/tests/inheritance/V1_0/IFetcher.java
+GEN := $(intermediates)/android/hardware/tests/inheritance/1.0/IFetcher.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IFetcher.hal
@@ -65,7 +65,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGrandparent.hal
 #
-GEN := $(intermediates)/android/hardware/tests/inheritance/V1_0/IGrandparent.java
+GEN := $(intermediates)/android/hardware/tests/inheritance/1.0/IGrandparent.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGrandparent.hal
@@ -84,7 +84,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IParent.hal
 #
-GEN := $(intermediates)/android/hardware/tests/inheritance/V1_0/IParent.java
+GEN := $(intermediates)/android/hardware/tests/inheritance/1.0/IParent.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IParent.hal
@@ -121,7 +121,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 #
 # Build IChild.hal
 #
-GEN := $(intermediates)/android/hardware/tests/inheritance/V1_0/IChild.java
+GEN := $(intermediates)/android/hardware/tests/inheritance/1.0/IChild.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IChild.hal
@@ -142,7 +142,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IFetcher.hal
 #
-GEN := $(intermediates)/android/hardware/tests/inheritance/V1_0/IFetcher.java
+GEN := $(intermediates)/android/hardware/tests/inheritance/1.0/IFetcher.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IFetcher.hal
@@ -167,7 +167,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGrandparent.hal
 #
-GEN := $(intermediates)/android/hardware/tests/inheritance/V1_0/IGrandparent.java
+GEN := $(intermediates)/android/hardware/tests/inheritance/1.0/IGrandparent.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGrandparent.hal
@@ -186,7 +186,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IParent.hal
 #
-GEN := $(intermediates)/android/hardware/tests/inheritance/V1_0/IParent.java
+GEN := $(intermediates)/android/hardware/tests/inheritance/1.0/IParent.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IParent.hal

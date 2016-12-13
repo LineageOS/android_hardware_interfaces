@@ -19,7 +19,7 @@ LOCAL_JAVA_LIBRARIES := \
 #
 # Build IVr.hal
 #
-GEN := $(intermediates)/android/hardware/vr/V1_0/IVr.java
+GEN := $(intermediates)/android/hardware/vr/1.0/IVr.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IVr.hal
@@ -54,7 +54,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 #
 # Build IVr.hal
 #
-GEN := $(intermediates)/android/hardware/vr/V1_0/IVr.java
+GEN := $(intermediates)/android/hardware/vr/1.0/IVr.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IVr.hal

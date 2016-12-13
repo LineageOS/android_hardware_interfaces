@@ -19,7 +19,7 @@ LOCAL_JAVA_LIBRARIES := \
 #
 # Build types.hal (AbortReason)
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/AbortReason.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/AbortReason.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -38,7 +38,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CecDeviceType)
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/CecDeviceType.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/CecDeviceType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -57,7 +57,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CecLogicalAddress)
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/CecLogicalAddress.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/CecLogicalAddress.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -76,7 +76,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CecMessage)
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/CecMessage.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/CecMessage.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -95,7 +95,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CecMessageType)
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/CecMessageType.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/CecMessageType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -114,7 +114,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HdmiPortInfo)
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/HdmiPortInfo.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/HdmiPortInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -133,7 +133,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HdmiPortType)
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/HdmiPortType.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/HdmiPortType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -152,7 +152,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HotplugEvent)
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/HotplugEvent.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/HotplugEvent.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -171,7 +171,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (MaxLength)
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/MaxLength.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/MaxLength.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -190,7 +190,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (OptionKey)
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/OptionKey.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/OptionKey.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -209,7 +209,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Result)
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/Result.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/Result.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -228,7 +228,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SendMessageResult)
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/SendMessageResult.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/SendMessageResult.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -247,7 +247,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IHdmiCec.hal
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/IHdmiCec.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/IHdmiCec.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IHdmiCec.hal
@@ -270,7 +270,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IHdmiCecCallback.hal
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/IHdmiCecCallback.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/IHdmiCecCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IHdmiCecCallback.hal
@@ -307,7 +307,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 #
 # Build types.hal (AbortReason)
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/AbortReason.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/AbortReason.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -326,7 +326,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CecDeviceType)
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/CecDeviceType.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/CecDeviceType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -345,7 +345,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CecLogicalAddress)
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/CecLogicalAddress.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/CecLogicalAddress.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -364,7 +364,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CecMessage)
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/CecMessage.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/CecMessage.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -383,7 +383,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CecMessageType)
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/CecMessageType.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/CecMessageType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -402,7 +402,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HdmiPortInfo)
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/HdmiPortInfo.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/HdmiPortInfo.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -421,7 +421,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HdmiPortType)
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/HdmiPortType.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/HdmiPortType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -440,7 +440,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (HotplugEvent)
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/HotplugEvent.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/HotplugEvent.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -459,7 +459,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (MaxLength)
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/MaxLength.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/MaxLength.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -478,7 +478,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (OptionKey)
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/OptionKey.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/OptionKey.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -497,7 +497,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Result)
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/Result.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/Result.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -516,7 +516,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SendMessageResult)
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/SendMessageResult.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/SendMessageResult.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -535,7 +535,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IHdmiCec.hal
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/IHdmiCec.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/IHdmiCec.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IHdmiCec.hal
@@ -558,7 +558,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IHdmiCecCallback.hal
 #
-GEN := $(intermediates)/android/hardware/tv/cec/V1_0/IHdmiCecCallback.java
+GEN := $(intermediates)/android/hardware/tv/cec/1.0/IHdmiCecCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IHdmiCecCallback.hal

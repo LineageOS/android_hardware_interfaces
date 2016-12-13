@@ -12,7 +12,7 @@ intermediates := $(local-generated-sources-dir)
 
 HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
 #
-GEN := $(intermediates)/android/hardware/sensors/V1_0/Constants.java
+GEN := $(intermediates)/android/hardware/sensors/1.0/Constants.java
 $(GEN): $(HIDL)
 $(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): $(LOCAL_PATH)/ISensors.hal

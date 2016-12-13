@@ -19,7 +19,7 @@ LOCAL_JAVA_LIBRARIES := \
 #
 # Build types.hal (Feature)
 #
-GEN := $(intermediates)/android/hardware/power/V1_0/Feature.java
+GEN := $(intermediates)/android/hardware/power/1.0/Feature.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -38,7 +38,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (PowerHint)
 #
-GEN := $(intermediates)/android/hardware/power/V1_0/PowerHint.java
+GEN := $(intermediates)/android/hardware/power/1.0/PowerHint.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -57,7 +57,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (PowerStatePlatformSleepState)
 #
-GEN := $(intermediates)/android/hardware/power/V1_0/PowerStatePlatformSleepState.java
+GEN := $(intermediates)/android/hardware/power/1.0/PowerStatePlatformSleepState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -76,7 +76,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (PowerStateVoter)
 #
-GEN := $(intermediates)/android/hardware/power/V1_0/PowerStateVoter.java
+GEN := $(intermediates)/android/hardware/power/1.0/PowerStateVoter.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -95,7 +95,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Status)
 #
-GEN := $(intermediates)/android/hardware/power/V1_0/Status.java
+GEN := $(intermediates)/android/hardware/power/1.0/Status.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -114,7 +114,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IPower.hal
 #
-GEN := $(intermediates)/android/hardware/power/V1_0/IPower.java
+GEN := $(intermediates)/android/hardware/power/1.0/IPower.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IPower.hal
@@ -151,7 +151,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 #
 # Build types.hal (Feature)
 #
-GEN := $(intermediates)/android/hardware/power/V1_0/Feature.java
+GEN := $(intermediates)/android/hardware/power/1.0/Feature.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -170,7 +170,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (PowerHint)
 #
-GEN := $(intermediates)/android/hardware/power/V1_0/PowerHint.java
+GEN := $(intermediates)/android/hardware/power/1.0/PowerHint.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -189,7 +189,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (PowerStatePlatformSleepState)
 #
-GEN := $(intermediates)/android/hardware/power/V1_0/PowerStatePlatformSleepState.java
+GEN := $(intermediates)/android/hardware/power/1.0/PowerStatePlatformSleepState.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -208,7 +208,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (PowerStateVoter)
 #
-GEN := $(intermediates)/android/hardware/power/V1_0/PowerStateVoter.java
+GEN := $(intermediates)/android/hardware/power/1.0/PowerStateVoter.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -227,7 +227,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Status)
 #
-GEN := $(intermediates)/android/hardware/power/V1_0/Status.java
+GEN := $(intermediates)/android/hardware/power/1.0/Status.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -246,7 +246,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IPower.hal
 #
-GEN := $(intermediates)/android/hardware/power/V1_0/IPower.java
+GEN := $(intermediates)/android/hardware/power/1.0/IPower.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IPower.hal
