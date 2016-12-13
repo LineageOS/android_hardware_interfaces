@@ -19,7 +19,7 @@ LOCAL_JAVA_LIBRARIES := \
 #
 # Build types.hal (GnssConstellationType)
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/GnssConstellationType.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/GnssConstellationType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -38,7 +38,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (GnssLocation)
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/GnssLocation.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/GnssLocation.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -57,7 +57,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (GnssMax)
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/GnssMax.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/GnssMax.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -76,7 +76,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IAGnss.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IAGnss.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IAGnss.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IAGnss.hal
@@ -97,7 +97,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IAGnssCallback.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IAGnssCallback.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IAGnssCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IAGnssCallback.hal
@@ -116,7 +116,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IAGnssRil.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IAGnssRil.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IAGnssRil.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IAGnssRil.hal
@@ -137,7 +137,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IAGnssRilCallback.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IAGnssRilCallback.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IAGnssRilCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IAGnssRilCallback.hal
@@ -156,7 +156,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnss.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnss.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnss.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnss.hal
@@ -197,7 +197,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssCallback.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssCallback.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssCallback.hal
@@ -218,7 +218,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssConfiguration.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssConfiguration.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssConfiguration.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssConfiguration.hal
@@ -237,7 +237,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssDebug.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssDebug.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssDebug.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssDebug.hal
@@ -258,7 +258,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssGeofenceCallback.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssGeofenceCallback.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssGeofenceCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssGeofenceCallback.hal
@@ -279,7 +279,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssGeofencing.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssGeofencing.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssGeofencing.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssGeofencing.hal
@@ -300,7 +300,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssMeasurement.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssMeasurement.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssMeasurement.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssMeasurement.hal
@@ -321,7 +321,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssMeasurementCallback.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssMeasurementCallback.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssMeasurementCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssMeasurementCallback.hal
@@ -342,7 +342,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssNavigationMessage.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssNavigationMessage.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssNavigationMessage.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssNavigationMessage.hal
@@ -363,7 +363,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssNavigationMessageCallback.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssNavigationMessageCallback.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssNavigationMessageCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssNavigationMessageCallback.hal
@@ -382,7 +382,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssNi.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssNi.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssNi.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssNi.hal
@@ -403,7 +403,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssNiCallback.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssNiCallback.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssNiCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssNiCallback.hal
@@ -422,7 +422,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssXtra.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssXtra.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssXtra.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssXtra.hal
@@ -443,7 +443,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssXtraCallback.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssXtraCallback.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssXtraCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssXtraCallback.hal
@@ -478,7 +478,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 #
 # Build types.hal (GnssConstellationType)
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/GnssConstellationType.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/GnssConstellationType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -497,7 +497,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (GnssLocation)
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/GnssLocation.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/GnssLocation.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -516,7 +516,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (GnssMax)
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/GnssMax.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/GnssMax.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -535,7 +535,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IAGnss.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IAGnss.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IAGnss.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IAGnss.hal
@@ -556,7 +556,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IAGnssCallback.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IAGnssCallback.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IAGnssCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IAGnssCallback.hal
@@ -575,7 +575,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IAGnssRil.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IAGnssRil.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IAGnssRil.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IAGnssRil.hal
@@ -596,7 +596,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IAGnssRilCallback.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IAGnssRilCallback.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IAGnssRilCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IAGnssRilCallback.hal
@@ -615,7 +615,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnss.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnss.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnss.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnss.hal
@@ -656,7 +656,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssCallback.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssCallback.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssCallback.hal
@@ -677,7 +677,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssConfiguration.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssConfiguration.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssConfiguration.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssConfiguration.hal
@@ -696,7 +696,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssDebug.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssDebug.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssDebug.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssDebug.hal
@@ -717,7 +717,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssGeofenceCallback.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssGeofenceCallback.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssGeofenceCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssGeofenceCallback.hal
@@ -738,7 +738,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssGeofencing.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssGeofencing.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssGeofencing.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssGeofencing.hal
@@ -759,7 +759,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssMeasurement.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssMeasurement.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssMeasurement.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssMeasurement.hal
@@ -780,7 +780,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssMeasurementCallback.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssMeasurementCallback.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssMeasurementCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssMeasurementCallback.hal
@@ -801,7 +801,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssNavigationMessage.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssNavigationMessage.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssNavigationMessage.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssNavigationMessage.hal
@@ -822,7 +822,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssNavigationMessageCallback.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssNavigationMessageCallback.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssNavigationMessageCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssNavigationMessageCallback.hal
@@ -841,7 +841,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssNi.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssNi.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssNi.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssNi.hal
@@ -862,7 +862,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssNiCallback.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssNiCallback.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssNiCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssNiCallback.hal
@@ -881,7 +881,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssXtra.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssXtra.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssXtra.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssXtra.hal
@@ -902,7 +902,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IGnssXtraCallback.hal
 #
-GEN := $(intermediates)/android/hardware/gnss/1.0/IGnssXtraCallback.java
+GEN := $(intermediates)/android/hardware/gnss/V1_0/IGnssXtraCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IGnssXtraCallback.hal

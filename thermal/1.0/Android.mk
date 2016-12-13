@@ -19,7 +19,7 @@ LOCAL_JAVA_LIBRARIES := \
 #
 # Build types.hal (CoolingDevice)
 #
-GEN := $(intermediates)/android/hardware/thermal/1.0/CoolingDevice.java
+GEN := $(intermediates)/android/hardware/thermal/V1_0/CoolingDevice.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -38,7 +38,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CoolingType)
 #
-GEN := $(intermediates)/android/hardware/thermal/1.0/CoolingType.java
+GEN := $(intermediates)/android/hardware/thermal/V1_0/CoolingType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -57,7 +57,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CpuUsage)
 #
-GEN := $(intermediates)/android/hardware/thermal/1.0/CpuUsage.java
+GEN := $(intermediates)/android/hardware/thermal/V1_0/CpuUsage.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -76,7 +76,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Temperature)
 #
-GEN := $(intermediates)/android/hardware/thermal/1.0/Temperature.java
+GEN := $(intermediates)/android/hardware/thermal/V1_0/Temperature.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -95,7 +95,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (TemperatureType)
 #
-GEN := $(intermediates)/android/hardware/thermal/1.0/TemperatureType.java
+GEN := $(intermediates)/android/hardware/thermal/V1_0/TemperatureType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -114,7 +114,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (ThermalStatus)
 #
-GEN := $(intermediates)/android/hardware/thermal/1.0/ThermalStatus.java
+GEN := $(intermediates)/android/hardware/thermal/V1_0/ThermalStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -133,7 +133,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (ThermalStatusCode)
 #
-GEN := $(intermediates)/android/hardware/thermal/1.0/ThermalStatusCode.java
+GEN := $(intermediates)/android/hardware/thermal/V1_0/ThermalStatusCode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -152,7 +152,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IThermal.hal
 #
-GEN := $(intermediates)/android/hardware/thermal/1.0/IThermal.java
+GEN := $(intermediates)/android/hardware/thermal/V1_0/IThermal.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IThermal.hal
@@ -189,7 +189,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 #
 # Build types.hal (CoolingDevice)
 #
-GEN := $(intermediates)/android/hardware/thermal/1.0/CoolingDevice.java
+GEN := $(intermediates)/android/hardware/thermal/V1_0/CoolingDevice.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -208,7 +208,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CoolingType)
 #
-GEN := $(intermediates)/android/hardware/thermal/1.0/CoolingType.java
+GEN := $(intermediates)/android/hardware/thermal/V1_0/CoolingType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -227,7 +227,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CpuUsage)
 #
-GEN := $(intermediates)/android/hardware/thermal/1.0/CpuUsage.java
+GEN := $(intermediates)/android/hardware/thermal/V1_0/CpuUsage.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -246,7 +246,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Temperature)
 #
-GEN := $(intermediates)/android/hardware/thermal/1.0/Temperature.java
+GEN := $(intermediates)/android/hardware/thermal/V1_0/Temperature.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -265,7 +265,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (TemperatureType)
 #
-GEN := $(intermediates)/android/hardware/thermal/1.0/TemperatureType.java
+GEN := $(intermediates)/android/hardware/thermal/V1_0/TemperatureType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -284,7 +284,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (ThermalStatus)
 #
-GEN := $(intermediates)/android/hardware/thermal/1.0/ThermalStatus.java
+GEN := $(intermediates)/android/hardware/thermal/V1_0/ThermalStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -303,7 +303,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (ThermalStatusCode)
 #
-GEN := $(intermediates)/android/hardware/thermal/1.0/ThermalStatusCode.java
+GEN := $(intermediates)/android/hardware/thermal/V1_0/ThermalStatusCode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -322,7 +322,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IThermal.hal
 #
-GEN := $(intermediates)/android/hardware/thermal/1.0/IThermal.java
+GEN := $(intermediates)/android/hardware/thermal/V1_0/IThermal.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IThermal.hal
@@ -352,7 +352,7 @@ intermediates := $(local-generated-sources-dir)
 
 HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
 #
-GEN := $(intermediates)/android/hardware/thermal/1.0/Constants.java
+GEN := $(intermediates)/android/hardware/thermal/V1_0/Constants.java
 $(GEN): $(HIDL)
 $(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): $(LOCAL_PATH)/IThermal.hal
