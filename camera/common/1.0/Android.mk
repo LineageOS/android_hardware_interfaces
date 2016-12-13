@@ -15,7 +15,7 @@ HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
 #
 # Build types.hal (CameraDeviceStatus)
 #
-GEN := $(intermediates)/android/hardware/camera/common/1.0/CameraDeviceStatus.java
+GEN := $(intermediates)/android/hardware/camera/common/V1_0/CameraDeviceStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -34,7 +34,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataType)
 #
-GEN := $(intermediates)/android/hardware/camera/common/1.0/CameraMetadataType.java
+GEN := $(intermediates)/android/hardware/camera/common/V1_0/CameraMetadataType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -53,7 +53,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraResourceCost)
 #
-GEN := $(intermediates)/android/hardware/camera/common/1.0/CameraResourceCost.java
+GEN := $(intermediates)/android/hardware/camera/common/V1_0/CameraResourceCost.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -72,7 +72,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Status)
 #
-GEN := $(intermediates)/android/hardware/camera/common/1.0/Status.java
+GEN := $(intermediates)/android/hardware/camera/common/V1_0/Status.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -91,7 +91,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (TagBoundaryId)
 #
-GEN := $(intermediates)/android/hardware/camera/common/1.0/TagBoundaryId.java
+GEN := $(intermediates)/android/hardware/camera/common/V1_0/TagBoundaryId.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -110,7 +110,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (TorchMode)
 #
-GEN := $(intermediates)/android/hardware/camera/common/1.0/TorchMode.java
+GEN := $(intermediates)/android/hardware/camera/common/V1_0/TorchMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -129,7 +129,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (TorchModeStatus)
 #
-GEN := $(intermediates)/android/hardware/camera/common/1.0/TorchModeStatus.java
+GEN := $(intermediates)/android/hardware/camera/common/V1_0/TorchModeStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -148,7 +148,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (VendorTag)
 #
-GEN := $(intermediates)/android/hardware/camera/common/1.0/VendorTag.java
+GEN := $(intermediates)/android/hardware/camera/common/V1_0/VendorTag.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -167,7 +167,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (VendorTagSection)
 #
-GEN := $(intermediates)/android/hardware/camera/common/1.0/VendorTagSection.java
+GEN := $(intermediates)/android/hardware/camera/common/V1_0/VendorTagSection.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -198,7 +198,7 @@ HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
 #
 # Build types.hal (CameraDeviceStatus)
 #
-GEN := $(intermediates)/android/hardware/camera/common/1.0/CameraDeviceStatus.java
+GEN := $(intermediates)/android/hardware/camera/common/V1_0/CameraDeviceStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -217,7 +217,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraMetadataType)
 #
-GEN := $(intermediates)/android/hardware/camera/common/1.0/CameraMetadataType.java
+GEN := $(intermediates)/android/hardware/camera/common/V1_0/CameraMetadataType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -236,7 +236,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (CameraResourceCost)
 #
-GEN := $(intermediates)/android/hardware/camera/common/1.0/CameraResourceCost.java
+GEN := $(intermediates)/android/hardware/camera/common/V1_0/CameraResourceCost.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -255,7 +255,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Status)
 #
-GEN := $(intermediates)/android/hardware/camera/common/1.0/Status.java
+GEN := $(intermediates)/android/hardware/camera/common/V1_0/Status.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -274,7 +274,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (TagBoundaryId)
 #
-GEN := $(intermediates)/android/hardware/camera/common/1.0/TagBoundaryId.java
+GEN := $(intermediates)/android/hardware/camera/common/V1_0/TagBoundaryId.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -293,7 +293,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (TorchMode)
 #
-GEN := $(intermediates)/android/hardware/camera/common/1.0/TorchMode.java
+GEN := $(intermediates)/android/hardware/camera/common/V1_0/TorchMode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -312,7 +312,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (TorchModeStatus)
 #
-GEN := $(intermediates)/android/hardware/camera/common/1.0/TorchModeStatus.java
+GEN := $(intermediates)/android/hardware/camera/common/V1_0/TorchModeStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -331,7 +331,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (VendorTag)
 #
-GEN := $(intermediates)/android/hardware/camera/common/1.0/VendorTag.java
+GEN := $(intermediates)/android/hardware/camera/common/V1_0/VendorTag.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -350,7 +350,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (VendorTagSection)
 #
-GEN := $(intermediates)/android/hardware/camera/common/1.0/VendorTagSection.java
+GEN := $(intermediates)/android/hardware/camera/common/V1_0/VendorTagSection.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
