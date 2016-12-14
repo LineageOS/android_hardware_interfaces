@@ -49,6 +49,25 @@ interface ISupplicantStaIface extends ISupplicantIface {
   };
 
   /**
+   * Enum describing the types of RX filter supported
+   * via driver commands.
+   */
+  enum RxFilterType : uint8_t {
+    V4_MULTICAST = 0,
+    V6_MULTICAST = 1
+  };
+
+  /**
+   * Enum describing the modes of BT coexistence supported
+   * via driver commands.
+   */
+  enum BtCoexistenceMode : uint8_t {
+    ENABLED = 0,
+    DISABLED = 1,
+    SENSE = 2
+  };
+
+  /**
    * Register for callbacks from this interface.
    *
    * These callbacks are invoked for events that are specific to this interface.
@@ -120,7 +139,7 @@ interface ISupplicantStaIface extends ISupplicantIface {
   setPowerSave(bool enable) generates (SupplicantStatus status);
 
   /**
-   * Initiate TDLS discover with the provided peer mac address.
+   * Initiate TDLS discover with the provided peer MAC address.
    *
    * @param macAddress MAC address of the peer.
    * @return status Status of the operation.
@@ -133,7 +152,7 @@ interface ISupplicantStaIface extends ISupplicantIface {
       generates (SupplicantStatus status);
 
   /**
-   * Initiate TDLS setup with the provided peer mac address.
+   * Initiate TDLS setup with the provided peer MAC address.
    *
    * @param macAddress MAC address of the peer.
    * @return status Status of the operation.
@@ -146,7 +165,7 @@ interface ISupplicantStaIface extends ISupplicantIface {
       generates (SupplicantStatus status);
 
   /**
-   * Initiate TDLS teardown with the provided peer mac address.
+   * Initiate TDLS teardown with the provided peer MAC address.
    *
    * @param macAddress MAC address of the peer.
    * @return status Status of the operation.
@@ -192,5 +211,112 @@ interface ISupplicantStaIface extends ISupplicantIface {
    *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
   initiateHs20IconQuery(MacAddress macAddress, string fileName)
+      generates (SupplicantStatus status);
+
+  /**
+   * Send driver command to get MAC address of the device.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   * @return macAddr MAC address of the device.
+   */
+  getMacAddress()
+      generates (SupplicantStatus status, MacAddress macAddr);
+
+  /**
+   * Send driver command to start RX filter.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   */
+  startRxFilter() generates (SupplicantStatus status);
+
+  /**
+   * Send driver command to stop RX filter.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   */
+  stopRxFilter() generates (SupplicantStatus status);
+
+  /**
+   * Send driver command to add the specified RX filter.
+   *
+   * @param type Type of filter.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   */
+  addRxFilter(RxFilterType type)
+      generates (SupplicantStatus status);
+
+  /**
+   * Send driver command to remove the specified RX filter.
+   *
+   * @param type Type of filter.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   */
+  removeRxFilter(RxFilterType type)
+      generates (SupplicantStatus status);
+
+  /**
+   * Send driver command to set Bluetooth coexistence mode.
+   *
+   * @param mode Mode of Bluetooth coexistence.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   */
+  setBtCoexistenceMode(BtCoexistenceMode mode)
+      generates (SupplicantStatus status);
+
+  /**
+   * Send driver command to set Bluetooth coexistence scan mode.
+   * When this mode is on, some of the low-level scan parameters
+   * used by the driver are changed to reduce interference
+   * with A2DP streaming.
+   *
+   * @param enable true to enable, false to disable.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   */
+  setBtCoexistenceScanModeEnabled(bool enable)
+      generates (SupplicantStatus status);
+
+  /**
+   * Send driver command to set suspend optimizations for power save.
+   *
+   * @param enable true to enable, false to disable.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   */
+  setSuspendModeEnabled(bool enable)
+      generates (SupplicantStatus status);
+
+  /**
+   * Send driver command to set country code.
+   *
+   * @param code 2 byte country code (as defined in ISO 3166) to set.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   */
+  setCountryCode(int8_t[2] code)
       generates (SupplicantStatus status);
 };
