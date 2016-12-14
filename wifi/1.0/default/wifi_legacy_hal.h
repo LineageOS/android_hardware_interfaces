@@ -250,8 +250,6 @@ class WifiLegacyHal {
   getGscanCachedResults();
   void invalidate();
 
-  // Event loop thread used by legacy HAL.
-  std::thread event_loop_thread_;
   // Global function table of legacy HAL.
   wifi_hal_fn global_func_table_;
   // Opaque handle to be used for all global operations.
@@ -260,6 +258,8 @@ class WifiLegacyHal {
   wifi_interface_handle wlan_interface_handle_;
   // Flag to indicate if we have initiated the cleanup of legacy HAL.
   bool awaiting_event_loop_termination_;
+  // Flag to indicate if the legacy HAL has been started.
+  bool is_started_;
   wifi_system::InterfaceTool iface_tool_;
 };
 
