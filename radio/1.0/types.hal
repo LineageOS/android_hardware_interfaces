@@ -51,6 +51,7 @@ enum RadioCdmaSmsConst : int32_t {
 };
 
 enum RadioError : int32_t {
+    INVALID_RESPONSE = -1,                // Response from vendor had invalid data
     NONE = 0,                             // Success
     RADIO_NOT_AVAILABLE = 1,              // If radio did not start or is resetting
     GENERIC_FAILURE = 2,
