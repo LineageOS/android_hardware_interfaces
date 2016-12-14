@@ -25,7 +25,7 @@ import android.hardware.drm.crypto@1.0::types;
  * load crypto keys for a codec to decrypt protected video content.
  */
 interface ICryptoPlugin {
-    /*
+    /**
      * Check if the specified mime-type requires a secure decoder
      * component.
      *
@@ -36,7 +36,7 @@ interface ICryptoPlugin {
     requiresSecureDecoderComponent(string mime)
         generates(bool secureRequired);
 
-    /*
+    /**
      * Notify a plugin of the currently configured resolution
      *
      * @param width - the display resolutions's width
@@ -44,16 +44,19 @@ interface ICryptoPlugin {
      */
     notifyResolution(uint32_t width, uint32_t height);
 
-    /*
+    /**
      * Associate a mediadrm session with this crypto session
      *
      * @param sessionId the MediaDrm session ID to associate with this crypto
      * session
-     * @return the status of the call
+     * @return the status of the call, status must be
+     * ERROR_DRM_SESSION_NOT_OPENED if the session is not opened, or
+     * ERROR_DRM_CANNOT_HANDLE if the operation is not supported by the drm
+     * scheme.
      */
     setMediaDrmSession(vec<uint8_t> sessionId) generates(Status status);
 
-    /*
+    /**
      * Decrypt an array of subsamples from the source memory buffer to the
      * destination memory buffer.
      *
@@ -71,7 +74,14 @@ interface ICryptoPlugin {
      * call to operate on a range of subsamples in a single call
      * @param source the input buffer for the decryption
      * @param destination the output buffer for the decryption
-     * @return status the status of the call
+     * @return status the status of the call. The status must be one of
+     * the following: ERROR_DRM_NO_LICENSE if no license keys have been
+     * loaded, ERROR_DRM_LICENSE_EXPIRED if the license keys have expired,
+     * ERROR_DRM_RESOURCE_BUSY if the resources required to perform the
+     * decryption are not available, ERROR_DRM_INSUFFICIENT_OUTPUT_PROTECTION
+     * if required output protections are not active,
+     * ERROR_DRM_SESSION_NOT_OPENED if the decrypt session is not opened, or
+     * ERROR_DRM_CANNOT_HANDLE in other failure cases.
      * @return bytesWritten the number of bytes output from the decryption
      * @return detailedError if the error is a vendor-specific error, the
      * vendor's crypto HAL may provide a detailed error string to help
