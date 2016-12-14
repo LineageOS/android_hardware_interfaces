@@ -163,6 +163,15 @@ Return<void> WifiChip::getApIface(const hidl_string& ifname,
                          ifname);
 }
 
+Return<void> WifiChip::removeApIface(const hidl_string& ifname,
+                                     removeApIface_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                         &WifiChip::removeApIfaceInternal,
+                         hidl_status_cb,
+                         ifname);
+}
+
 Return<void> WifiChip::createNanIface(createNanIface_cb hidl_status_cb) {
   return validateAndCall(this,
                          WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
@@ -182,6 +191,15 @@ Return<void> WifiChip::getNanIface(const hidl_string& ifname,
   return validateAndCall(this,
                          WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
                          &WifiChip::getNanIfaceInternal,
+                         hidl_status_cb,
+                         ifname);
+}
+
+Return<void> WifiChip::removeNanIface(const hidl_string& ifname,
+                                      removeNanIface_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                         &WifiChip::removeNanIfaceInternal,
                          hidl_status_cb,
                          ifname);
 }
@@ -209,6 +227,15 @@ Return<void> WifiChip::getP2pIface(const hidl_string& ifname,
                          ifname);
 }
 
+Return<void> WifiChip::removeP2pIface(const hidl_string& ifname,
+                                      removeP2pIface_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                         &WifiChip::removeP2pIfaceInternal,
+                         hidl_status_cb,
+                         ifname);
+}
+
 Return<void> WifiChip::createStaIface(createStaIface_cb hidl_status_cb) {
   return validateAndCall(this,
                          WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
@@ -228,6 +255,15 @@ Return<void> WifiChip::getStaIface(const hidl_string& ifname,
   return validateAndCall(this,
                          WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
                          &WifiChip::getStaIfaceInternal,
+                         hidl_status_cb,
+                         ifname);
+}
+
+Return<void> WifiChip::removeStaIface(const hidl_string& ifname,
+                                      removeStaIface_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                         &WifiChip::removeStaIfaceInternal,
                          hidl_status_cb,
                          ifname);
 }
@@ -483,12 +519,19 @@ WifiChip::getApIfaceNamesInternal() {
 }
 
 std::pair<WifiStatus, sp<IWifiApIface>> WifiChip::getApIfaceInternal(
-    const hidl_string& ifname) {
-  if (!ap_iface_.get() ||
-      (ifname.c_str() != legacy_hal_.lock()->getApIfaceName())) {
+    const std::string& ifname) {
+  if (!ap_iface_.get() || (ifname != legacy_hal_.lock()->getApIfaceName())) {
     return {createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS), nullptr};
   }
   return {createWifiStatus(WifiStatusCode::SUCCESS), ap_iface_};
+}
+
+WifiStatus WifiChip::removeApIfaceInternal(const std::string& ifname) {
+  if (!ap_iface_.get() || (ifname != legacy_hal_.lock()->getApIfaceName())) {
+    return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
+  }
+  invalidateAndClear(ap_iface_);
+  return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 
 std::pair<WifiStatus, sp<IWifiNanIface>> WifiChip::createNanIfaceInternal() {
@@ -512,12 +555,19 @@ WifiChip::getNanIfaceNamesInternal() {
 }
 
 std::pair<WifiStatus, sp<IWifiNanIface>> WifiChip::getNanIfaceInternal(
-    const hidl_string& ifname) {
-  if (!nan_iface_.get() ||
-      (ifname.c_str() != legacy_hal_.lock()->getNanIfaceName())) {
+    const std::string& ifname) {
+  if (!nan_iface_.get() || (ifname != legacy_hal_.lock()->getNanIfaceName())) {
     return {createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS), nullptr};
   }
   return {createWifiStatus(WifiStatusCode::SUCCESS), nan_iface_};
+}
+
+WifiStatus WifiChip::removeNanIfaceInternal(const std::string& ifname) {
+  if (!nan_iface_.get() || (ifname != legacy_hal_.lock()->getNanIfaceName())) {
+    return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
+  }
+  invalidateAndClear(nan_iface_);
+  return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 
 std::pair<WifiStatus, sp<IWifiP2pIface>> WifiChip::createP2pIfaceInternal() {
@@ -541,12 +591,19 @@ WifiChip::getP2pIfaceNamesInternal() {
 }
 
 std::pair<WifiStatus, sp<IWifiP2pIface>> WifiChip::getP2pIfaceInternal(
-    const hidl_string& ifname) {
-  if (!p2p_iface_.get() ||
-      (ifname.c_str() != legacy_hal_.lock()->getP2pIfaceName())) {
+    const std::string& ifname) {
+  if (!p2p_iface_.get() || (ifname != legacy_hal_.lock()->getP2pIfaceName())) {
     return {createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS), nullptr};
   }
   return {createWifiStatus(WifiStatusCode::SUCCESS), p2p_iface_};
+}
+
+WifiStatus WifiChip::removeP2pIfaceInternal(const std::string& ifname) {
+  if (!p2p_iface_.get() || (ifname != legacy_hal_.lock()->getP2pIfaceName())) {
+    return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
+  }
+  invalidateAndClear(p2p_iface_);
+  return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 
 std::pair<WifiStatus, sp<IWifiStaIface>> WifiChip::createStaIfaceInternal() {
@@ -568,12 +625,19 @@ WifiChip::getStaIfaceNamesInternal() {
 }
 
 std::pair<WifiStatus, sp<IWifiStaIface>> WifiChip::getStaIfaceInternal(
-    const hidl_string& ifname) {
-  if (!sta_iface_.get() ||
-      (ifname.c_str() != legacy_hal_.lock()->getStaIfaceName())) {
+    const std::string& ifname) {
+  if (!sta_iface_.get() || (ifname != legacy_hal_.lock()->getStaIfaceName())) {
     return {createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS), nullptr};
   }
   return {createWifiStatus(WifiStatusCode::SUCCESS), sta_iface_};
+}
+
+WifiStatus WifiChip::removeStaIfaceInternal(const std::string& ifname) {
+  if (!sta_iface_.get() || (ifname != legacy_hal_.lock()->getStaIfaceName())) {
+    return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
+  }
+  invalidateAndClear(sta_iface_);
+  return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 
 std::pair<WifiStatus, sp<IWifiRttController>>

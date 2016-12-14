@@ -323,11 +323,26 @@ interface IWifiChip {
    * @return status WifiStatus of the operation.
    *         Possible status codes:
    *         |WifiStatusCode.SUCCESS|,
-   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_INVALID_ARGS|
    * @return iface HIDL interface object representing the iface if
    *         it exists, null otherwise.
    */
   getApIface(string ifname) generates (WifiStatus status, IWifiApIface iface);
+
+  /**
+   * Removes the AP Iface with the provided ifname.
+   * Any further calls on the corresponding |IWifiApIface| HIDL interface
+   * object must fail.
+   *
+   * @param ifname Name of the iface.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_INVALID_ARGS|
+   */
+  removeApIface(string ifname) generates (WifiStatus status);
 
   /**
    * Create a NAN iface on the chip.
@@ -368,11 +383,26 @@ interface IWifiChip {
    * @return status WifiStatus of the operation.
    *         Possible status codes:
    *         |WifiStatusCode.SUCCESS|,
-   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_INVALID_ARGS|
    * @return iface HIDL interface object representing the iface if
    *         it exists, null otherwise.
    */
   getNanIface(string ifname) generates (WifiStatus status, IWifiNanIface iface);
+
+  /**
+   * Removes the NAN Iface with the provided ifname.
+   * Any further calls on the corresponding |IWifiNanIface| HIDL interface
+   * object must fail.
+   *
+   * @param ifname Name of the iface.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_INVALID_ARGS|
+   */
+  removeNanIface(string ifname) generates (WifiStatus status);
 
   /**
    * Create a P2P iface on the chip.
@@ -413,11 +443,26 @@ interface IWifiChip {
    * @return status WifiStatus of the operation.
    *         Possible status codes:
    *         |WifiStatusCode.SUCCESS|,
-   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_INVALID_ARGS|
    * @return iface HIDL interface object representing the iface if
    *         it exists, null otherwise.
    */
   getP2pIface(string ifname) generates (WifiStatus status, IWifiP2pIface iface);
+
+  /**
+   * Removes the P2P Iface with the provided ifname.
+   * Any further calls on the corresponding |IWifiP2pIface| HIDL interface
+   * object must fail.
+   *
+   * @param ifname Name of the iface.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_INVALID_ARGS|
+   */
+  removeP2pIface(string ifname) generates (WifiStatus status);
 
   /**
    * Create an STA iface on the chip.
@@ -458,11 +503,26 @@ interface IWifiChip {
    * @return status WifiStatus of the operation.
    *         Possible status codes:
    *         |WifiStatusCode.SUCCESS|,
-   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_INVALID_ARGS|
    * @return iface HIDL interface object representing the iface if
    *         it exists, null otherwise.
    */
   getStaIface(string ifname) generates (WifiStatus status, IWifiStaIface iface);
+
+  /**
+   * Removes the STA Iface with the provided ifname.
+   * Any further calls on the corresponding |IWifiStaIface| HIDL interface
+   * object must fail.
+   *
+   * @param ifname Name of the iface.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_INVALID_ARGS|
+   */
+  removeStaIface(string ifname) generates (WifiStatus status);
 
   /**
    * Create a RTTController instance.
