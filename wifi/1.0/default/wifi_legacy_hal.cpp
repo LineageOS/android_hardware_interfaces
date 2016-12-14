@@ -249,9 +249,11 @@ void onNanEventTransmitFollowUp(NanTransmitFollowupInd* event) {
 WifiLegacyHal::WifiLegacyHal()
     : global_handle_(nullptr),
       wlan_interface_handle_(nullptr),
-      awaiting_event_loop_termination_(false) {}
+      awaiting_event_loop_termination_(false),
+      is_started_(false) {}
 
 wifi_error WifiLegacyHal::initialize() {
+  LOG(DEBUG) << "Initialize legacy HAL";
   // TODO: Add back the HAL Tool if we need to. All we need from the HAL tool
   // for now is this function call which we can directly call.
   wifi_error status = init_wifi_vendor_hal_func_table(&global_func_table_);
@@ -266,29 +268,39 @@ wifi_error WifiLegacyHal::start() {
   // Ensure that we're starting in a good state.
   CHECK(global_func_table_.wifi_initialize && !global_handle_ &&
         !wlan_interface_handle_ && !awaiting_event_loop_termination_);
+  if (is_started_) {
+    LOG(DEBUG) << "Legacy HAL already started";
+    return WIFI_SUCCESS;
+  }
+  LOG(DEBUG) << "Starting legacy HAL";
   if (!iface_tool_.SetWifiUpState(true)) {
     LOG(ERROR) << "Failed to set WiFi interface up";
     return WIFI_ERROR_UNKNOWN;
   }
-  LOG(INFO) << "Starting legacy HAL";
   wifi_error status = global_func_table_.wifi_initialize(&global_handle_);
   if (status != WIFI_SUCCESS || !global_handle_) {
     LOG(ERROR) << "Failed to retrieve global handle";
     return status;
   }
-  event_loop_thread_ = std::thread(&WifiLegacyHal::runEventLoop, this);
+  std::thread(&WifiLegacyHal::runEventLoop, this).detach();
   status = retrieveWlanInterfaceHandle();
   if (status != WIFI_SUCCESS || !wlan_interface_handle_) {
     LOG(ERROR) << "Failed to retrieve wlan interface handle";
     return status;
   }
-  LOG(VERBOSE) << "Legacy HAL start complete";
+  LOG(DEBUG) << "Legacy HAL start complete";
+  is_started_ = true;
   return WIFI_SUCCESS;
 }
 
 wifi_error WifiLegacyHal::stop(
     const std::function<void()>& on_stop_complete_user_callback) {
-  LOG(INFO) << "Stopping legacy HAL";
+  if (!is_started_) {
+    LOG(DEBUG) << "Legacy HAL already stopped";
+    on_stop_complete_user_callback();
+    return WIFI_SUCCESS;
+  }
+  LOG(DEBUG) << "Stopping legacy HAL";
   on_stop_complete_internal_callback = [&](wifi_handle handle) {
     CHECK_EQ(global_handle_, handle) << "Handle mismatch";
     // Invalidate all the internal pointers now that the HAL is
@@ -299,7 +311,8 @@ wifi_error WifiLegacyHal::stop(
   };
   awaiting_event_loop_termination_ = true;
   global_func_table_.wifi_cleanup(global_handle_, onStopComplete);
-  LOG(VERBOSE) << "Legacy HAL stop initiated";
+  LOG(DEBUG) << "Legacy HAL stop complete";
+  is_started_ = false;
   return WIFI_SUCCESS;
 }
 
@@ -1030,12 +1043,12 @@ wifi_error WifiLegacyHal::retrieveWlanInterfaceHandle() {
 }
 
 void WifiLegacyHal::runEventLoop() {
-  LOG(VERBOSE) << "Starting legacy HAL event loop";
+  LOG(DEBUG) << "Starting legacy HAL event loop";
   global_func_table_.wifi_event_loop(global_handle_);
   if (!awaiting_event_loop_termination_) {
     LOG(FATAL) << "Legacy HAL event loop terminated, but HAL was not stopping";
   }
-  LOG(VERBOSE) << "Legacy HAL event loop terminated";
+  LOG(DEBUG) << "Legacy HAL event loop terminated";
   awaiting_event_loop_termination_ = false;
 }
 
