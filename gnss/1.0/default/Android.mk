@@ -8,6 +8,7 @@ LOCAL_SRC_FILES := \
     AGnss.cpp \
     AGnssRil.cpp \
     Gnss.cpp \
+    GnssBatching.cpp \
     GnssDebug.cpp \
     GnssGeofencing.cpp \
     GnssMeasurement.cpp \

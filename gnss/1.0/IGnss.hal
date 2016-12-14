@@ -18,6 +18,7 @@ package android.hardware.gnss@1.0;
 
 import IAGnss;
 import IAGnssRil;
+import IGnssBatching;
 import IGnssCallback;
 import IGnssConfiguration;
 import IGnssDebug;
@@ -81,14 +82,19 @@ interface IGnss {
     setCallback(IGnssCallback callback) generates (bool success);
 
     /*
-     * Starts navigating.
+     * Starts a location output stream using the IGnssCallback
+     * gnssLocationCb(), following the settings from the most recent call to
+     * setPositionMode().
+     *
+     * This output must operate independently of any GNSS location batching
+     * operations, see the IGnssBatching.hal for details.
      *
      * @return success Returns true on success.
      */
     start() generates (bool success);
 
     /*
-     * Stops navigating.
+     * Stops the location output stream.
      *
      * @return success Returns true on success.
      */
@@ -218,4 +224,11 @@ interface IGnss {
      * @return debugIface Handle to the IGnssDebug interface.
      */
     getExtensionGnssDebug() generates (IGnssDebug debugIface);
+
+    /*
+     * This method returns the IGnssBatching interface.
+     *
+     * @return batchingIface Handle to the IGnssBatching interface.
+     */
+    getExtensionGnssBatching() generates (IGnssBatching batchingIface);
 };
