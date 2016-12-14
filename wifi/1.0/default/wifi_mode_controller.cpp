@@ -64,8 +64,7 @@ bool WifiModeController::changeFirmwareMode(IfaceType type) {
     LOG(ERROR) << "Failed to load WiFi driver";
     return false;
   }
-  if (!driver_tool_->IsFirmwareModeChangeNeeded(
-          convertIfaceTypeToFirmwareMode(type))) {
+  if (!driver_tool_->ChangeFirmwareMode(convertIfaceTypeToFirmwareMode(type))) {
     LOG(ERROR) << "Failed to change firmware mode";
     return false;
   }
