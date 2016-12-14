@@ -19,7 +19,7 @@ LOCAL_JAVA_LIBRARIES := \
 #
 # Build IExpression.hal
 #
-GEN := $(intermediates)/android/hardware/tests/expression/1.0/IExpression.java
+GEN := $(intermediates)/android/hardware/tests/expression/V1_0/IExpression.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IExpression.hal
@@ -38,7 +38,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IExpressionExt.hal
 #
-GEN := $(intermediates)/android/hardware/tests/expression/1.0/IExpressionExt.java
+GEN := $(intermediates)/android/hardware/tests/expression/V1_0/IExpressionExt.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IExpressionExt.hal
@@ -75,7 +75,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 #
 # Build IExpression.hal
 #
-GEN := $(intermediates)/android/hardware/tests/expression/1.0/IExpression.java
+GEN := $(intermediates)/android/hardware/tests/expression/V1_0/IExpression.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IExpression.hal
@@ -94,7 +94,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IExpressionExt.hal
 #
-GEN := $(intermediates)/android/hardware/tests/expression/1.0/IExpressionExt.java
+GEN := $(intermediates)/android/hardware/tests/expression/V1_0/IExpressionExt.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IExpressionExt.hal
