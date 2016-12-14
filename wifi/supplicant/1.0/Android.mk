@@ -19,7 +19,7 @@ LOCAL_JAVA_LIBRARIES := \
 #
 # Build types.hal (IfaceType)
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/IfaceType.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/IfaceType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -38,7 +38,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SupplicantStatus)
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/SupplicantStatus.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/SupplicantStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -57,7 +57,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SupplicantStatusCode)
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/SupplicantStatusCode.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/SupplicantStatusCode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -76,7 +76,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISupplicant.hal
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/ISupplicant.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/ISupplicant.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISupplicant.hal
@@ -101,7 +101,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISupplicantCallback.hal
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/ISupplicantCallback.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/ISupplicantCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISupplicantCallback.hal
@@ -120,7 +120,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISupplicantIface.hal
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/ISupplicantIface.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/ISupplicantIface.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISupplicantIface.hal
@@ -143,7 +143,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISupplicantNetwork.hal
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/ISupplicantNetwork.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/ISupplicantNetwork.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISupplicantNetwork.hal
@@ -164,7 +164,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISupplicantP2pIface.hal
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/ISupplicantP2pIface.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/ISupplicantP2pIface.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISupplicantP2pIface.hal
@@ -189,7 +189,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISupplicantP2pIfaceCallback.hal
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/ISupplicantP2pIfaceCallback.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/ISupplicantP2pIfaceCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISupplicantP2pIfaceCallback.hal
@@ -210,7 +210,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISupplicantP2pNetwork.hal
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/ISupplicantP2pNetwork.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/ISupplicantP2pNetwork.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISupplicantP2pNetwork.hal
@@ -235,7 +235,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISupplicantP2pNetworkCallback.hal
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/ISupplicantP2pNetworkCallback.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/ISupplicantP2pNetworkCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISupplicantP2pNetworkCallback.hal
@@ -254,7 +254,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISupplicantStaIface.hal
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/ISupplicantStaIface.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/ISupplicantStaIface.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISupplicantStaIface.hal
@@ -279,7 +279,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISupplicantStaIfaceCallback.hal
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/ISupplicantStaIfaceCallback.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/ISupplicantStaIfaceCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISupplicantStaIfaceCallback.hal
@@ -300,7 +300,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISupplicantStaNetwork.hal
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/ISupplicantStaNetwork.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/ISupplicantStaNetwork.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISupplicantStaNetwork.hal
@@ -325,7 +325,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISupplicantStaNetworkCallback.hal
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/ISupplicantStaNetworkCallback.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/ISupplicantStaNetworkCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISupplicantStaNetworkCallback.hal
@@ -360,7 +360,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 #
 # Build types.hal (IfaceType)
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/IfaceType.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/IfaceType.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -379,7 +379,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SupplicantStatus)
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/SupplicantStatus.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/SupplicantStatus.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -398,7 +398,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (SupplicantStatusCode)
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/SupplicantStatusCode.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/SupplicantStatusCode.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -417,7 +417,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISupplicant.hal
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/ISupplicant.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/ISupplicant.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISupplicant.hal
@@ -442,7 +442,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISupplicantCallback.hal
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/ISupplicantCallback.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/ISupplicantCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISupplicantCallback.hal
@@ -461,7 +461,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISupplicantIface.hal
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/ISupplicantIface.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/ISupplicantIface.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISupplicantIface.hal
@@ -484,7 +484,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISupplicantNetwork.hal
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/ISupplicantNetwork.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/ISupplicantNetwork.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISupplicantNetwork.hal
@@ -505,7 +505,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISupplicantP2pIface.hal
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/ISupplicantP2pIface.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/ISupplicantP2pIface.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISupplicantP2pIface.hal
@@ -530,7 +530,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISupplicantP2pIfaceCallback.hal
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/ISupplicantP2pIfaceCallback.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/ISupplicantP2pIfaceCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISupplicantP2pIfaceCallback.hal
@@ -551,7 +551,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISupplicantP2pNetwork.hal
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/ISupplicantP2pNetwork.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/ISupplicantP2pNetwork.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISupplicantP2pNetwork.hal
@@ -576,7 +576,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISupplicantP2pNetworkCallback.hal
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/ISupplicantP2pNetworkCallback.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/ISupplicantP2pNetworkCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISupplicantP2pNetworkCallback.hal
@@ -595,7 +595,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISupplicantStaIface.hal
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/ISupplicantStaIface.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/ISupplicantStaIface.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISupplicantStaIface.hal
@@ -620,7 +620,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISupplicantStaIfaceCallback.hal
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/ISupplicantStaIfaceCallback.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/ISupplicantStaIfaceCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISupplicantStaIfaceCallback.hal
@@ -641,7 +641,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISupplicantStaNetwork.hal
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/ISupplicantStaNetwork.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/ISupplicantStaNetwork.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISupplicantStaNetwork.hal
@@ -666,7 +666,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build ISupplicantStaNetworkCallback.hal
 #
-GEN := $(intermediates)/android/hardware/wifi/supplicant/1.0/ISupplicantStaNetworkCallback.java
+GEN := $(intermediates)/android/hardware/wifi/supplicant/V1_0/ISupplicantStaNetworkCallback.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISupplicantStaNetworkCallback.hal

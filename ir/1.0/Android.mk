@@ -19,7 +19,7 @@ LOCAL_JAVA_LIBRARIES := \
 #
 # Build types.hal (ConsumerIrFreqRange)
 #
-GEN := $(intermediates)/android/hardware/ir/1.0/ConsumerIrFreqRange.java
+GEN := $(intermediates)/android/hardware/ir/V1_0/ConsumerIrFreqRange.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -38,7 +38,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IConsumerIr.hal
 #
-GEN := $(intermediates)/android/hardware/ir/1.0/IConsumerIr.java
+GEN := $(intermediates)/android/hardware/ir/V1_0/IConsumerIr.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IConsumerIr.hal
@@ -75,7 +75,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 #
 # Build types.hal (ConsumerIrFreqRange)
 #
-GEN := $(intermediates)/android/hardware/ir/1.0/ConsumerIrFreqRange.java
+GEN := $(intermediates)/android/hardware/ir/V1_0/ConsumerIrFreqRange.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -94,7 +94,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build IConsumerIr.hal
 #
-GEN := $(intermediates)/android/hardware/ir/1.0/IConsumerIr.java
+GEN := $(intermediates)/android/hardware/ir/V1_0/IConsumerIr.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IConsumerIr.hal
