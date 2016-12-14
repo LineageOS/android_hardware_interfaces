@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef WIFI_LEGACY_WIFI_HAL_H_
-#define WIFI_LEGACY_WIFI_HAL_H_
+#ifndef WIFI_LEGACY_HAL_H_
+#define WIFI_LEGACY_HAL_H_
 
 #include <functional>
 #include <thread>
@@ -270,4 +270,4 @@ class WifiLegacyHal {
 }  // namespace hardware
 }  // namespace android
 
-#endif  // WIFI_LEGACY_WIFI_HAL_H_
+#endif  // WIFI_LEGACY_HAL_H_
