@@ -26,6 +26,8 @@
             "/>
         <option name="binary-test-type" value="gtest" />
         <option name="test-timeout" value="5m" />
+        <option name="test-cobfig-path"
+            value="vts/testcases/hal/thermal/hidl/target/ThermalHidlBasicTest.config" />
     </test>
 </configuration>
 
