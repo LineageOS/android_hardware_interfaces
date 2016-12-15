@@ -741,8 +741,20 @@ wifi_error WifiLegacyHal::registerRingBufferCallbackHandler(
       on_user_data_callback(ring_name, buffer_vector, *status);
     }
   };
-  return global_func_table_.wifi_set_log_handler(
+  wifi_error status = global_func_table_.wifi_set_log_handler(
       0, wlan_interface_handle_, {onRingBufferData});
+  if (status != WIFI_SUCCESS) {
+    on_ring_buffer_data_internal_callback = nullptr;
+  }
+  return status;
+}
+
+wifi_error WifiLegacyHal::deregisterRingBufferCallbackHandler() {
+  if (!on_ring_buffer_data_internal_callback) {
+    return WIFI_ERROR_NOT_AVAILABLE;
+  }
+  on_ring_buffer_data_internal_callback = nullptr;
+  return global_func_table_.wifi_reset_log_handler(0, wlan_interface_handle_);
 }
 
 std::pair<wifi_error, std::vector<wifi_ring_buffer_status>>
