@@ -227,4 +227,56 @@ interface IStream {
      * @param fd dump file descriptor.
      */
     debugDump(handle fd);
+
+    /*
+     * Called by the framework to start a stream operating in mmap mode.
+     * createMmapBuffer() must be called before calling start().
+     * Function only implemented by streams operating in mmap mode.
+     *
+     * @return retval OK in case the success.
+     *                NOT_SUPPORTED on non mmap mode streams
+     *                INVALID_STATE if called out of sequence
+     */
+    start() generates (Result retval);
+
+    /**
+     * Called by the framework to stop a stream operating in mmap mode.
+     * Function only implemented by streams operating in mmap mode.
+     *
+     * @return retval OK in case the succes.
+     *                NOT_SUPPORTED on non mmap mode streams
+     *                INVALID_STATE if called out of sequence
+     */
+    stop() generates (Result retval) ;
+
+    /*
+     * Called by the framework to retrieve information on the mmap buffer used for audio
+     * samples transfer.
+     * Function only implemented by streams operating in mmap mode.
+     *
+     * @param minSizeFrames minimum buffer size requested. The actual buffer
+     *                     size returned in struct MmapBufferInfo can be larger.
+     * @return retval OK in case the success.
+     *                NOT_SUPPORTED on non mmap mode streams
+     *                NOT_INITIALIZED in case of memory allocation error
+     *                INVALID_ARGUMENTS if the requested buffer size is too large
+     *                INVALID_STATE if called out of sequence
+     * @return info    a MmapBufferInfo struct containing information on the MMMAP buffer created.
+     */
+    createMmapBuffer(int32_t minSizeFrames)
+            generates (Result retval, MmapBufferInfo info);
+
+    /*
+     * Called by the framework to read current read/write position in the mmap buffer
+     * with associated time stamp.
+     * Function only implemented by streams operating in mmap mode.
+     *
+     * @return retval OK in case the success.
+     *                NOT_SUPPORTED on non mmap mode streams
+     *                INVALID_STATE if called out of sequence
+     * @return position a MmapPosition struct containing current HW read/write position in frames
+     *                  with associated time stamp.
+     */
+    getMmapPosition()
+            generates (Result retval, MmapPosition position);
 };
