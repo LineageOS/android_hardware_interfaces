@@ -122,36 +122,10 @@ Return<void> Bar::haveAVectorOfInterfaces(
     return Void();
 }
 
-// TODO: remove after b/33173166 is fixed.
-struct Simple : public ISimple {
-    Simple(int32_t cookie)
-        : mCookie(cookie) {
-    }
-
-    Return<int32_t> getCookie() override {
-        return mCookie;
-    }
-
-private:
-    int32_t mCookie;
-};
-
-// TODO: use _hidl_cb(in) after b/33173166 is fixed.
 Return<void> Bar::haveAVectorOfGenericInterfaces(
         const hidl_vec<sp<android::hidl::base::V1_0::IBase> > &in,
         haveAVectorOfGenericInterfaces_cb _hidl_cb) {
-    // _hidl_cb(in);
-    hidl_vec<sp<android::hidl::base::V1_0::IBase> > out;
-    out.resize(in.size());
-    for (size_t i = 0; i < in.size(); ++i) {
-        sp<ISimple> s = ISimple::castFrom(in[i]);
-        if (s.get() == nullptr) {
-            out[i] = new Simple(-1);
-        } else {
-            out[i] = new Simple(s->getCookie());
-        }
-    }
-    _hidl_cb(out);
+    _hidl_cb(in);
 
     return Void();
 }
