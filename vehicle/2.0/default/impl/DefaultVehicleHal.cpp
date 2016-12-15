@@ -87,6 +87,9 @@ VehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(
         case VehicleProperty::DRIVING_STATUS:
             v = pool.obtainInt32(toInt(VehicleDrivingStatus::UNRESTRICTED));
             break;
+        case VehicleProperty::IGNITION_STATE:
+            v = pool.obtainInt32(toInt(VehicleIgnitionState::ACC));
+            break;
         default:
             *outStatus = StatusCode::INVALID_ARG;
     }

@@ -310,6 +310,18 @@ enum VehicleProperty: int32_t {
         | VehicleArea:GLOBAL),
 
     /*
+     * Represents ignition state
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     */
+    IGNITION_STATE = (
+        0x0409
+            | VehiclePropertyGroup:SYSTEM
+            | VehiclePropertyType:INT32
+            | VehicleArea:GLOBAL),
+
+    /*
      * Fan speed setting
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
@@ -2403,6 +2415,35 @@ struct VehiclePropValue {
     };
 
     RawValue value;
+};
+
+enum VehicleIgnitionState : int32_t {
+    UNDEFINED = 0,
+
+    /* Steering wheel is locked */
+    LOCK = 1,
+
+     /*
+      * Steering wheel is not locked, engine and all accessories are OFF. If
+      * car can be in LOCK and OFF state at the same time than HAL must report
+      * LOCK state.
+      */
+    OFF,
+
+    /*
+     * Typically in this state accessories become available (e.g. radio).
+     * Instrument cluster and engine are turned off
+     */
+    ACC,
+
+    /*
+     * Ignition is in state ON. Accessories and instrument cluster available,
+     * engine might be running or ready to be started.
+     */
+    ON,
+
+    /* Typically in this state engine is starting (cranking). */
+    START
 };
 
 

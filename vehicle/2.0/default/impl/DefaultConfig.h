@@ -167,6 +167,12 @@ const VehiclePropConfig kVehicleProperties[] = {
                 .maxInt32Value = 10
             }
         }
+    },
+
+    {
+        .prop = VehicleProperty::IGNITION_STATE,
+        .access = VehiclePropertyAccess::READ,
+        .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
     }
 };
 
