@@ -49,16 +49,17 @@ public:
     int getDeviceVersion(int cameraId);
     int getNumberOfCameras(void);
     int open(const char* id, struct hw_device_t** device);
-    bool isOpenLegacyDefined();
+    bool isOpenLegacyDefined() const;
     int openLegacy(const char* id, uint32_t halVersion, struct hw_device_t** device);
     int setCallbacks(const camera_module_callbacks_t *callbacks);
-    bool isVendorTagDefined();
+    bool isVendorTagDefined() const;
     void getVendorTagOps(vendor_tag_ops_t* ops);
+    bool isSetTorchModeSupported() const;
     int setTorchMode(const char* camera_id, bool enable);
-    uint16_t getModuleApiVersion();
-    const char* getModuleName();
-    uint16_t getHalApiVersion();
-    const char* getModuleAuthor();
+    uint16_t getModuleApiVersion() const;
+    const char* getModuleName() const;
+    uint16_t getHalApiVersion() const;
+    const char* getModuleAuthor() const;
     // Only used by CameraModuleFixture native test. Do NOT use elsewhere.
     void *getDso();
 

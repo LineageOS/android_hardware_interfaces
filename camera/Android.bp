@@ -7,4 +7,5 @@ subdirs = [
     "device/3.2/default",
     "metadata/3.2",
     "provider/2.4",
+    "provider/2.4/default",
 ]

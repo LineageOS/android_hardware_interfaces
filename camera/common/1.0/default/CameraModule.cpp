@@ -344,7 +344,7 @@ int CameraModule::open(const char* id, struct hw_device_t** device) {
     return res;
 }
 
-bool CameraModule::isOpenLegacyDefined() {
+bool CameraModule::isOpenLegacyDefined() const {
     if (getModuleApiVersion() < CAMERA_MODULE_API_VERSION_2_3) {
         return false;
     }
@@ -376,7 +376,7 @@ int CameraModule::setCallbacks(const camera_module_callbacks_t *callbacks) {
     return res;
 }
 
-bool CameraModule::isVendorTagDefined() {
+bool CameraModule::isVendorTagDefined() const {
     return mModule->get_vendor_tag_ops != NULL;
 }
 
@@ -388,11 +388,25 @@ void CameraModule::getVendorTagOps(vendor_tag_ops_t* ops) {
     }
 }
 
+bool CameraModule::isSetTorchModeSupported() const {
+    if (getModuleApiVersion() >= CAMERA_MODULE_API_VERSION_2_4) {
+        if (mModule->set_torch_mode == NULL) {
+            ALOGE("%s: Module 2.4 device must support set torch API!",
+                    __FUNCTION__);
+            return false;
+        }
+        return true;
+    }
+    return false;
+}
+
 int CameraModule::setTorchMode(const char* camera_id, bool enable) {
-    int res;
-    ATRACE_BEGIN("camera_module->set_torch_mode");
-    res = mModule->set_torch_mode(camera_id, enable);
-    ATRACE_END();
+    int res = INVALID_OPERATION;
+    if (mModule->set_torch_mode != NULL) {
+        ATRACE_BEGIN("camera_module->set_torch_mode");
+        res = mModule->set_torch_mode(camera_id, enable);
+        ATRACE_END();
+    }
     return res;
 }
 
@@ -409,19 +423,19 @@ status_t CameraModule::filterOpenErrorCode(status_t err) {
     return -ENODEV;
 }
 
-uint16_t CameraModule::getModuleApiVersion() {
+uint16_t CameraModule::getModuleApiVersion() const {
     return mModule->common.module_api_version;
 }
 
-const char* CameraModule::getModuleName() {
+const char* CameraModule::getModuleName() const {
     return mModule->common.name;
 }
 
-uint16_t CameraModule::getHalApiVersion() {
+uint16_t CameraModule::getHalApiVersion() const {
     return mModule->common.hal_api_version;
 }
 
-const char* CameraModule::getModuleAuthor() {
+const char* CameraModule::getModuleAuthor() const {
     return mModule->common.author;
 }
 

@@ -78,11 +78,6 @@ interface ICameraDevice {
      */
     getCameraInfo() generates (Status status, CameraInfo info);
 
-    // TODO: add query setTorch mode support so camera service can tell whether
-    //       it needs to simulate torch or not (without calling setTorchMode
-    //       which is visible to end user)
-    //       Should this be put to device hal or provider hal?
-
     /**
      * setTorchMode:
      *

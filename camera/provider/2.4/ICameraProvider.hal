@@ -120,6 +120,30 @@ interface ICameraProvider {
             generates (Status status, vec<string> cameraDeviceNames);
 
     /**
+     * isSetTorchModeSupported:
+     *
+     * Returns if the camera devices known to this camera provider support
+     * setTorchMode API or not. If the provider does not support setTorchMode
+     * API, calling to setTorchMode will return METHOD_NOT_SUPPORTED.
+     *
+     * Note that not every camera device has a flash unit, so even this API
+     * returns true, setTorchMode call might still fail due to the camera device
+     * does not have a flash unit. In such case, the returned status will be
+     * OPERATION_NOT_SUPPORTED.
+     *
+     * @return status Status code for the operation, one of:
+     *     OK:
+     *         On a succesful call
+     *     INTERNAL_ERROR:
+     *         Torch API support cannot be queried. This may be due to
+     *         a failure to initialize the camera subsystem, for example.
+     * @return support Whether the camera devices known to this provider
+     *     supports setTorchMode API or not.
+     *
+     */
+    isSetTorchModeSupported() generates (Status status, bool support);
+
+    /**
      * getCameraDeviceInterface_VN_x:
      *
      * Return a android.hardware.camera.device@N.x/ICameraDevice interface for
