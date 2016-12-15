@@ -665,6 +665,7 @@ enum AudioOutputFlag : int32_t {
                              // data bursts, not PCM.
     DIRECT_PCM = 0x2000,     // Audio stream containing PCM data that needs
                              // to pass through compress path for DSP post proc.
+    MMAP_NOIRQ = 0x4000, // output operates in MMAP no IRQ mode.
 };
 
 /*
@@ -680,6 +681,7 @@ enum AudioInputFlag : int32_t {
     HW_HOTWORD = 0x2,  // prefer an input that captures from hw hotword source
     RAW        = 0x4,  // minimize signal processing
     SYNC       = 0x8,  // synchronize I/O streams
+    MMAP_NOIRQ = 0x10, // input operates in MMAP no IRQ mode.
 };
 
 @export(name="audio_usage_t", value_prefix="AUDIO_USAGE_")
