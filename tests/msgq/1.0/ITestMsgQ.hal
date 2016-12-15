@@ -17,6 +17,11 @@
 package android.hardware.tests.msgq@1.0;
 
 interface ITestMsgQ {
+    enum EventFlagBits : uint32_t {
+        FMQ_NOT_EMPTY = 1 << 0,
+        FMQ_NOT_FULL  = 1 << 1,
+    };
+
     /*
      * This method requests the service to set up a synchronous read/write
      * wait-free FMQ with the client as reader.
@@ -79,4 +84,11 @@ interface ITestMsgQ {
      */
     requestReadFmqUnsync(int32_t count) generates(bool ret);
 
+    /*
+     * This method requests the service to trigger a blocking read.
+     *
+     * @param count Number of messages to read.
+     *
+     */
+    oneway requestBlockingRead(int32_t count);
 };
