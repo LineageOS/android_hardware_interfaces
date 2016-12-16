@@ -83,6 +83,9 @@ WifiStatus createWifiStatusFromLegacyError(legacy_hal::wifi_error error,
       return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN,
                               desc + ", out of memory");
 
+    case legacy_hal::WIFI_ERROR_BUSY:
+      return createWifiStatus(WifiStatusCode::ERROR_BUSY);
+
     case legacy_hal::WIFI_ERROR_NONE:
       return createWifiStatus(WifiStatusCode::SUCCESS, desc);
 
