@@ -118,6 +118,9 @@ using on_ring_buffer_data_callback =
                        const std::vector<uint8_t>&,
                        const wifi_ring_buffer_status&)>;
 
+// Callback for alerts.
+using on_error_alert_callback =
+    std::function<void(int32_t, const std::vector<uint8_t>&)>;
 /**
  * Class that encapsulates all legacy HAL interactions.
  * This class manages the lifetime of the event loop thread used by legacy HAL.
@@ -196,6 +199,9 @@ class WifiLegacyHal {
                                     uint32_t max_interval_sec,
                                     uint32_t min_data_size);
   wifi_error getRingBufferData(const std::string& ring_name);
+  wifi_error registerErrorAlertCallbackHandler(
+      const on_error_alert_callback& on_alert_callback);
+  wifi_error deregisterErrorAlertCallbackHandler();
   // RTT functions.
   wifi_error startRttRangeRequest(
       wifi_request_id id,
