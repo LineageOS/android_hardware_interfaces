@@ -20,13 +20,39 @@ interface IWifiChipEventCallback {
   /**
    * Callback indicating that the chip has been reconfigured successfully. At
    * this point the interfaces available in the mode must be able to be
-   * configured. When this is called any previous interface indexes will be
+   * configured. When this is called any previous iface objects must be
    * considered invalid.
    *
    * @param modeId The mode that the chip switched to, corresponding to the id
    *        property of the target ChipMode.
    */
   oneway onChipReconfigured(ChipModeId modeId);
+
+  /**
+   * Callback indicating that a chip reconfiguration failed. This is a fatal
+   * error and any iface objects available previously must be considered
+   * invalid. The client can attempt to recover by trying to reconfigure the
+   * chip again using |IWifiChip.configureChip|.
+   *
+   * @param status Failure reason code.
+   */
+  oneway onChipReconfigureFailure(WifiStatus status);
+
+  /**
+   * Callback indicating that a new iface has been added to the chip.
+   *
+   * @param type Type of iface added.
+   * @param name Name of iface added.
+   */
+  oneway onIfaceAdded(IfaceType type, string name);
+
+  /**
+   * Callback indicating that an existing iface has been removed from the chip.
+   *
+   * @param type Type of iface removed.
+   * @param name Name of iface removed.
+   */
+  oneway onIfaceRemoved(IfaceType type, string name);
 
   /**
    * Callbacks for reporting debug ring buffer data.
