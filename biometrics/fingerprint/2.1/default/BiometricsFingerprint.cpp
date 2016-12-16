@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "android.hardware.biometrics.fingerprint@2.1-impl"
+#define LOG_TAG "android.hardware.biometrics.fingerprint@2.1-service"
 
 #include <hardware/hardware.h>
 #include <hardware/fingerprint.h>
@@ -26,14 +26,25 @@ namespace fingerprint {
 namespace V2_1 {
 namespace implementation {
 
+// Supported fingerprint HAL version
+static const uint16_t kVersion = HARDWARE_MODULE_API_VERSION(2, 1);
+
 using RequestStatus =
         android::hardware::biometrics::fingerprint::V2_1::RequestStatus;
 
 sp<IBiometricsFingerprintClientCallback>
     BiometricsFingerprint::mClientCallback = nullptr;
 
+// TODO: This is here because HAL 2.1 doesn't have a way to propagate a
+// unique token for its driver. Subsequent versions should send a unique
+// token for each call to notify(). This is fine as long as there's only
+// one fingerprint device on the platform.
+fingerprint_device_t *BiometricsFingerprint::sDevice = nullptr;
+
 BiometricsFingerprint::BiometricsFingerprint(fingerprint_device_t *device)
-    : mDevice(device) {}
+    : mDevice(device) {
+    sDevice = mDevice; // keep track of the most recent instance
+}
 
 BiometricsFingerprint::~BiometricsFingerprint() {
     ALOG(LOG_VERBOSE, LOG_TAG, "nativeCloseHal()\n");
@@ -70,10 +81,68 @@ Return<RequestStatus> BiometricsFingerprint::ErrorFilter(int32_t error) {
     }
 }
 
-Return<RequestStatus> BiometricsFingerprint::setNotify(
+// Translate from errors returned by traditional HAL (see fingerprint.h) to
+// HIDL-compliant FingerprintError.
+FingerprintError BiometricsFingerprint::VendorErrorFilter(int32_t error,
+            int32_t* vendorCode) {
+    *vendorCode = 0;
+    switch(error) {
+        case FINGERPRINT_ERROR_HW_UNAVAILABLE:
+            return FingerprintError::ERROR_HW_UNAVAILABLE;
+        case FINGERPRINT_ERROR_UNABLE_TO_PROCESS:
+            return FingerprintError::ERROR_UNABLE_TO_PROCESS;
+        case FINGERPRINT_ERROR_TIMEOUT:
+            return FingerprintError::ERROR_TIMEOUT;
+        case FINGERPRINT_ERROR_NO_SPACE:
+            return FingerprintError::ERROR_NO_SPACE;
+        case FINGERPRINT_ERROR_CANCELED:
+            return FingerprintError::ERROR_CANCELED;
+        case FINGERPRINT_ERROR_UNABLE_TO_REMOVE:
+            return FingerprintError::ERROR_UNABLE_TO_REMOVE;
+        default:
+            if (error >= FINGERPRINT_ERROR_VENDOR_BASE) {
+                // vendor specific code.
+                *vendorCode = error - FINGERPRINT_ERROR_VENDOR_BASE;
+                return FingerprintError::ERROR_VENDOR;
+            }
+    }
+    ALOGE("Unknown error from fingerprint vendor library");
+    return FingerprintError::ERROR_UNABLE_TO_PROCESS;
+}
+
+// Translate acquired messages returned by traditional HAL (see fingerprint.h)
+// to HIDL-compliant FingerprintAcquiredInfo.
+FingerprintAcquiredInfo BiometricsFingerprint::VendorAcquiredFilter(
+        int32_t info, int32_t* vendorCode) {
+    *vendorCode = 0;
+    switch(info) {
+        case FINGERPRINT_ACQUIRED_GOOD:
+            return FingerprintAcquiredInfo::ACQUIRED_GOOD;
+        case FINGERPRINT_ACQUIRED_PARTIAL:
+            return FingerprintAcquiredInfo::ACQUIRED_PARTIAL;
+        case FINGERPRINT_ACQUIRED_INSUFFICIENT:
+            return FingerprintAcquiredInfo::ACQUIRED_INSUFFICIENT;
+        case FINGERPRINT_ACQUIRED_IMAGER_DIRTY:
+            return FingerprintAcquiredInfo::ACQUIRED_IMAGER_DIRTY;
+        case FINGERPRINT_ACQUIRED_TOO_SLOW:
+            return FingerprintAcquiredInfo::ACQUIRED_TOO_SLOW;
+        case FINGERPRINT_ACQUIRED_TOO_FAST:
+            return FingerprintAcquiredInfo::ACQUIRED_TOO_FAST;
+        default:
+            if (info >= FINGERPRINT_ACQUIRED_VENDOR_BASE) {
+                // vendor specific code.
+                *vendorCode = info - FINGERPRINT_ACQUIRED_VENDOR_BASE;
+                return FingerprintAcquiredInfo::ACQUIRED_VENDOR;
+            }
+    }
+    ALOGE("Unknown acquiredmsg from fingerprint vendor library");
+    return FingerprintAcquiredInfo::ACQUIRED_INSUFFICIENT;
+}
+
+Return<uint64_t> BiometricsFingerprint::setNotify(
         const sp<IBiometricsFingerprintClientCallback>& clientCallback) {
     mClientCallback = clientCallback;
-    return RequestStatus::SYS_OK;
+    return reinterpret_cast<uint64_t>(mDevice);
 }
 
 Return<uint64_t> BiometricsFingerprint::preEnroll()  {
@@ -121,7 +190,7 @@ Return<RequestStatus> BiometricsFingerprint::authenticate(uint64_t operationId,
     return ErrorFilter(mDevice->authenticate(mDevice, operationId, gid));
 }
 
-IBiometricsFingerprint* HIDL_FETCH_IBiometricsFingerprint(const char*) {
+IBiometricsFingerprint* BiometricsFingerprint::getInstance() {
     int err;
     const hw_module_t *hw_mdl = NULL;
     ALOGE("Opening fingerprint hal library...");
@@ -129,6 +198,7 @@ IBiometricsFingerprint* HIDL_FETCH_IBiometricsFingerprint(const char*) {
         ALOGE("Can't open fingerprint HW Module, error: %d", err);
         return nullptr;
     }
+
     if (hw_mdl == NULL) {
         ALOGE("No valid fingerprint module");
         return nullptr;
@@ -146,6 +216,11 @@ IBiometricsFingerprint* HIDL_FETCH_IBiometricsFingerprint(const char*) {
     if (0 != (err = module->common.methods->open(hw_mdl, NULL, &device))) {
         ALOGE("Can't open fingerprint methods, error: %d", err);
         return nullptr;
+    }
+
+    if (kVersion != device->version) {
+        ALOGE("Wrong fp version. Expected %d, got %d", kVersion, device->version);
+        return 0; // enforce this on new devices because of HIDL translation layer
     }
 
     fingerprint_device_t* fp_device =

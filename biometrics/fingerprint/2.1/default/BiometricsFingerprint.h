@@ -18,10 +18,12 @@
 #define ANDROID_HARDWARE_BIOMETRICS_FINGERPRINT_V2_1_BIOMETRICSFINGERPRINT_H
 
 #include <log/log.h>
-
+#include <android/log.h>
+#include <hardware/hardware.h>
+#include <hardware/fingerprint.h>
 #include <hidl/MQDescriptor.h>
-#include <android/hardware/biometrics/fingerprint/2.1/IBiometricsFingerprint.h>
 #include <hidl/Status.h>
+#include <android/hardware/biometrics/fingerprint/2.1/IBiometricsFingerprint.h>
 
 namespace android {
 namespace hardware {
@@ -43,8 +45,12 @@ struct BiometricsFingerprint : public IBiometricsFingerprint {
 public:
     BiometricsFingerprint(fingerprint_device_t *device);
     ~BiometricsFingerprint();
+
+    // Method to wrap legacy HAL with BiometricsFingerprint class
+    static IBiometricsFingerprint* getInstance();
+
     // Methods from ::android::hardware::biometrics::fingerprint::V2_1::IBiometricsFingerprint follow.
-    Return<RequestStatus> setNotify(const sp<IBiometricsFingerprintClientCallback>& clientCallback) override;
+    Return<uint64_t> setNotify(const sp<IBiometricsFingerprintClientCallback>& clientCallback) override;
     Return<uint64_t> preEnroll() override;
     Return<RequestStatus> enroll(const hidl_array<uint8_t, 69>& hat, uint32_t gid, uint32_t timeoutSec) override;
     Return<RequestStatus> postEnroll() override;
@@ -54,22 +60,63 @@ public:
     Return<RequestStatus> remove(uint32_t gid, uint32_t fid) override;
     Return<RequestStatus> setActiveGroup(uint32_t gid, const hidl_string& storePath) override;
     Return<RequestStatus> authenticate(uint64_t operationId, uint32_t gid) override;
-    static void notify(const fingerprint_msg_t *notify_msg) {
+    static void notify(const fingerprint_msg_t *msg) {
         if (mClientCallback == nullptr) {
             ALOGE("Receiving callbacks before the client callback is registered.");
             return;
         }
-        FingerprintMsg msg = {};
-        memcpy(&msg, notify_msg, sizeof(msg));
-        mClientCallback->notify(msg);
+        const uint64_t devId = reinterpret_cast<uint64_t>(sDevice);
+        switch (msg->type) {
+            case FINGERPRINT_ERROR: {
+                int32_t vendorCode = 0;
+                FingerprintError result =
+                    VendorErrorFilter(msg->data.error, &vendorCode);
+                mClientCallback->onError(devId, result, vendorCode);
+                }
+                break;
+            case FINGERPRINT_ACQUIRED: {
+                int32_t vendorCode = 0;
+                FingerprintAcquiredInfo result =
+                    VendorAcquiredFilter(msg->data.acquired.acquired_info,
+                                         &vendorCode);
+                mClientCallback->onAcquired(devId, result, vendorCode);
+                }
+                break;
+            case FINGERPRINT_TEMPLATE_ENROLLING:
+                mClientCallback->onEnrollResult(devId,
+                    msg->data.enroll.finger.fid,
+                    msg->data.enroll.finger.gid,
+                    msg->data.enroll.samples_remaining);
+                break;
+            case FINGERPRINT_TEMPLATE_REMOVED:
+                mClientCallback->onRemoved(devId,
+                    msg->data.removed.finger.fid,
+                    msg->data.removed.finger.gid,
+                    msg->data.removed.remaining_templates);
+                break;
+            case FINGERPRINT_AUTHENTICATED:
+                mClientCallback->onAuthenticated(devId,
+                    msg->data.authenticated.finger.fid,
+                    msg->data.authenticated.finger.gid);
+                break;
+            case FINGERPRINT_TEMPLATE_ENUMERATING:
+                mClientCallback->onEnumerate(devId,
+                    msg->data.enumerated.finger.fid,
+                    msg->data.enumerated.finger.gid,
+                    msg->data.enumerated.remaining_templates);
+                break;
+        }
     }
 private:
     Return<RequestStatus> ErrorFilter(int32_t error);
+    static FingerprintError VendorErrorFilter(int32_t error,
+            int32_t* vendorCode);
+    static FingerprintAcquiredInfo VendorAcquiredFilter(int32_t error,
+            int32_t* vendorCode);
     static sp<IBiometricsFingerprintClientCallback> mClientCallback;
     fingerprint_device_t *mDevice;
+    static fingerprint_device_t *sDevice; // TODO: allow multiple drivers
 };
-
-extern "C" IBiometricsFingerprint* HIDL_FETCH_IBiometricsFingerprint(const char* name);
 
 }  // namespace implementation
 }  // namespace V2_1

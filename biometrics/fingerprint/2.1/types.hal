@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,10 @@ enum FingerprintError : int32_t {
   ERROR_CANCELED = 5,
   /* Unable to remove a template */
   ERROR_UNABLE_TO_REMOVE = 6,
+  /* The hardware is in lockout due to too many attempts */
+  ERROR_LOCKOUT = 7,
+  /* Vendor-specific error message */
+  ERROR_VENDOR = 8
 };
 
 /*
@@ -84,7 +88,8 @@ enum FingerprintAcquiredInfo : int32_t {
   ACQUIRED_TOO_SLOW = 4,
   /* vendor-specific acquisition messages start here */
   ACQUIRED_TOO_FAST = 5,
-  ACQUIRED_VENDOR_BASE = 1000,
+  /* vendor-specific acquisition messages */
+  ACQUIRED_VENDOR = 6
 };
 
 struct FingerprintFingerId {
@@ -136,15 +141,3 @@ enum FingerprintMsgType : int32_t {
   TEMPLATE_ENUMERATING = 6,
 };
 
-struct FingerprintMsg {
-  /* Selects the payload below */
-  FingerprintMsgType type;
-  union Data {
-    FingerprintError error;
-    FingerprintEnroll enroll;
-    FingerprintEnumerated enumerated;
-    FingerprintRemoved removed;
-    FingerprintAcquired acquired;
-    FingerprintAuthenticated authenticated;
-  } data;
-};
