@@ -39,9 +39,11 @@ enum PixelFormat : int32_t {
 
     /*
      * The following formats use a 16bit float per color component.
+     *
+     * When used with ANativeWindow, the dataSpace field describes the color
+     * space of the buffer.
      */
     RGBA_FP16          = 0x16,
-    RGBX_FP16          = 0x17,
 
     /*
      * 0x101 - 0x1FF
