@@ -2144,30 +2144,6 @@ enum VehiclePropertyAccess : int32_t {
 };
 
 /*
- * These permissions define how the OEMs want to distribute their information
- * and security they want to apply. On top of these restrictions, android will
- * have additional 'app-level' permissions that the apps will need to ask the
- * user before the apps have the information.
- * This information must be kept in VehiclePropConfig#permissionModel.
- */
-enum VehiclePermissionModel : int32_t {
-  /*
-   * No special restriction, but each property can still require specific
-   * android app-level permission.
-   */
-  NO_RESTRICTION = 0,
-
-  /* Signature only. Only APKs signed with OEM keys are allowed. */
-  OEM_ONLY = 0x1,
-
-  /* System only. APKs built-in to system  can access the property. */
-  SYSTEM_APP_ONLY = 0x2,
-
-  /* Equivalent to “system|signature” */
-  OEM_OR_SYSTEM_APP = 0x3,
-};
-
-/*
  * Car states.
  *
  * The driving states determine what features of the UI will be accessible.
@@ -2309,11 +2285,6 @@ struct VehiclePropConfig {
      * Defines the change mode of the property.
      */
     VehiclePropertyChangeMode changeMode;
-
-    /*
-     * Defines permission model to access the data.
-     */
-    VehiclePermissionModel permissionModel;
 
     /*
      * Some of the properties may have associated areas (for example, some hvac
