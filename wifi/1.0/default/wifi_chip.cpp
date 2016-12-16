@@ -57,7 +57,8 @@ WifiChip::WifiChip(
       legacy_hal_(legacy_hal),
       mode_controller_(mode_controller),
       is_valid_(true),
-      current_mode_id_(kInvalidModeId) {}
+      current_mode_id_(kInvalidModeId),
+      debug_ring_buffer_cb_registered_(false) {}
 
 void WifiChip::invalidate() {
   invalidateAndRemoveAllIfaces();
@@ -687,6 +688,10 @@ WifiStatus WifiChip::startLoggingToDebugRingBufferInternal(
     WifiDebugRingBufferVerboseLevel verbose_level,
     uint32_t max_interval_in_sec,
     uint32_t min_data_size_in_bytes) {
+  WifiStatus status = registerDebugRingBufferCallback();
+  if (status.code != WifiStatusCode::SUCCESS) {
+    return status;
+  }
   legacy_hal::wifi_error legacy_status =
       legacy_hal_.lock()->startRingBufferLogging(
           ring_name,
@@ -700,6 +705,10 @@ WifiStatus WifiChip::startLoggingToDebugRingBufferInternal(
 
 WifiStatus WifiChip::forceDumpToDebugRingBufferInternal(
     const hidl_string& ring_name) {
+  WifiStatus status = registerDebugRingBufferCallback();
+  if (status.code != WifiStatusCode::SUCCESS) {
+    return status;
+  }
   legacy_hal::wifi_error legacy_status =
       legacy_hal_.lock()->getRingBufferData(ring_name);
   return createWifiStatusFromLegacyError(legacy_status);
@@ -774,6 +783,42 @@ WifiStatus WifiChip::handleChipConfiguration(ChipModeId mode_id) {
   }
   return createWifiStatus(WifiStatusCode::SUCCESS);
 }
+
+WifiStatus WifiChip::registerDebugRingBufferCallback() {
+  if (debug_ring_buffer_cb_registered_) {
+    return createWifiStatus(WifiStatusCode::SUCCESS);
+  }
+
+  android::wp<WifiChip> weak_ptr_this(this);
+  const auto& on_ring_buffer_data_callback = [weak_ptr_this](
+      const std::string& /* name */,
+      const std::vector<uint8_t>& data,
+      const legacy_hal::wifi_ring_buffer_status& status) {
+    const auto shared_ptr_this = weak_ptr_this.promote();
+    if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+      LOG(ERROR) << "Callback invoked on an invalid object";
+      return;
+    }
+    WifiDebugRingBufferStatus hidl_status;
+    if (!hidl_struct_util::convertLegacyDebugRingBufferStatusToHidl(
+            status, &hidl_status)) {
+      LOG(ERROR) << "Error converting ring buffer status";
+      return;
+    }
+    for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+      callback->onDebugRingBufferDataAvailable(hidl_status, data);
+    }
+  };
+  legacy_hal::wifi_error legacy_status =
+      legacy_hal_.lock()->registerRingBufferCallbackHandler(
+          on_ring_buffer_data_callback);
+
+  if (legacy_status == legacy_hal::WIFI_SUCCESS) {
+    debug_ring_buffer_cb_registered_ = true;
+  }
+  return createWifiStatusFromLegacyError(legacy_status);
+}
+
 }  // namespace implementation
 }  // namespace V1_0
 }  // namespace wifi
