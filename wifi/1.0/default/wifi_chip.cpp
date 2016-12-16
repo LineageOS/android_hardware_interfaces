@@ -69,6 +69,10 @@ bool WifiChip::isValid() {
   return is_valid_;
 }
 
+std::vector<sp<IWifiChipEventCallback>> WifiChip::getEventCallbacks() {
+  return event_callbacks_;
+}
+
 Return<void> WifiChip::getId(getId_cb hidl_status_cb) {
   return validateAndCall(this,
                          WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
@@ -317,6 +321,15 @@ Return<void> WifiChip::getDebugHostWakeReasonStats(
                          WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
                          &WifiChip::getDebugHostWakeReasonStatsInternal,
                          hidl_status_cb);
+}
+
+Return<void> WifiChip::enableDebugErrorAlerts(
+    bool enable, enableDebugErrorAlerts_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                         &WifiChip::enableDebugErrorAlertsInternal,
+                         hidl_status_cb,
+                         enable);
 }
 
 void WifiChip::invalidateAndRemoveAllIfaces() {
@@ -706,6 +719,28 @@ WifiChip::getDebugHostWakeReasonStatsInternal() {
   return {createWifiStatus(WifiStatusCode::SUCCESS), hidl_stats};
 }
 
+WifiStatus WifiChip::enableDebugErrorAlertsInternal(bool enable) {
+  legacy_hal::wifi_error legacy_status;
+  if (enable) {
+    android::wp<WifiChip> weak_ptr_this(this);
+    const auto& on_alert_callback = [weak_ptr_this](
+        int32_t error_code, std::vector<uint8_t> debug_data) {
+      const auto shared_ptr_this = weak_ptr_this.promote();
+      if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+        LOG(ERROR) << "Callback invoked on an invalid object";
+        return;
+      }
+      for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+        callback->onDebugErrorAlert(error_code, debug_data);
+      }
+    };
+    legacy_status = legacy_hal_.lock()->registerErrorAlertCallbackHandler(
+        on_alert_callback);
+  } else {
+    legacy_status = legacy_hal_.lock()->deregisterErrorAlertCallbackHandler();
+  }
+  return createWifiStatusFromLegacyError(legacy_status);
+}
 }  // namespace implementation
 }  // namespace V1_0
 }  // namespace wifi
