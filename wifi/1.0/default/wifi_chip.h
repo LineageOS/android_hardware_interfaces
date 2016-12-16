@@ -62,6 +62,7 @@ class WifiChip : public IWifiChip {
   // valid before processing them.
   void invalidate();
   bool isValid();
+  std::vector<sp<IWifiChipEventCallback>> getEventCallbacks();
 
   // HIDL methods exposed.
   Return<void> getId(getId_cb hidl_status_cb) override;
@@ -119,6 +120,8 @@ class WifiChip : public IWifiChip {
       forceDumpToDebugRingBuffer_cb hidl_status_cb) override;
   Return<void> getDebugHostWakeReasonStats(
       getDebugHostWakeReasonStats_cb hidl_status_cb) override;
+  Return<void> enableDebugErrorAlerts(
+      bool enable, enableDebugErrorAlerts_cb hidl_status_cb) override;
 
  private:
   void invalidateAndRemoveAllIfaces();
@@ -168,6 +171,7 @@ class WifiChip : public IWifiChip {
   WifiStatus forceDumpToDebugRingBufferInternal(const hidl_string& ring_name);
   std::pair<WifiStatus, WifiDebugHostWakeReasonStats>
   getDebugHostWakeReasonStatsInternal();
+  WifiStatus enableDebugErrorAlertsInternal(bool enable);
 
   ChipId chip_id_;
   std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;

@@ -70,4 +70,14 @@ interface IWifiChipEventCallback {
   oneway onDebugRingBufferVendorDataEntriesAvailable(
       WifiDebugRingBufferStatus status,
       vec<WifiDebugRingEntryVendorData> entries);
+
+  /**
+   * Callback indicating that the chip has encountered a fatal error.
+   * Client must not attempt to parse either the errorCode or debugData.
+   * Must only be captured in a bugreport.
+   *
+   * @param errorCode Vendor defined error code.
+   * @param debugData Vendor defined data used for debugging.
+   */
+  oneway onDebugErrorAlert(int32_t errorCode, vec<uint8_t> debugData);
 };
