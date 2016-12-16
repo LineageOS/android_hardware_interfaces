@@ -192,6 +192,7 @@ class WifiLegacyHal {
   std::pair<wifi_error, WakeReasonStats> getWakeReasonStats();
   wifi_error registerRingBufferCallbackHandler(
       const on_ring_buffer_data_callback& on_data_callback);
+  wifi_error deregisterRingBufferCallbackHandler();
   std::pair<wifi_error, std::vector<wifi_ring_buffer_status>>
   getRingBuffersStatus();
   wifi_error startRingBufferLogging(const std::string& ring_name,
