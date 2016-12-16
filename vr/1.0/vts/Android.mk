@@ -76,3 +76,5 @@ LOCAL_PROTOC_OPTIMIZE_TYPE := full
 
 include $(BUILD_SHARED_LIBRARY)
 
+# include hidl test makefiles
+include $(LOCAL_PATH)/functional/vts/testcases/hal/vr/hidl/Android.mk
