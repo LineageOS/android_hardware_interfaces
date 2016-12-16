@@ -16,38 +16,6 @@
 
 LOCAL_PATH := $(call my-dir)
 
-# build VTS driver for Vehicle v2.0.
-include $(CLEAR_VARS)
-
-LOCAL_MODULE := libvts_driver_hidl_vehicle@2.0
-
-LOCAL_SRC_FILES := \
-  Vehicle.vts \
-  VehicleCallback.vts \
-  types.vts \
-
-LOCAL_SHARED_LIBRARIES += \
-  android.hardware.vehicle@2.0 \
-  libbase \
-  libutils \
-  libcutils \
-  liblog \
-  libhidlbase \
-  libhidltransport \
-  libhwbinder \
-  libprotobuf-cpp-full \
-  libvts_common \
-  libvts_datatype \
-  libvts_measurement \
-  libvts_multidevice_proto \
-
-LOCAL_PROTOC_OPTIMIZE_TYPE := full
-
-LOCAL_MULTILIB := both
-
-include $(BUILD_SHARED_LIBRARY)
-
-
 # build profiler for Vehicle.
 include $(CLEAR_VARS)
 

@@ -50,3 +50,57 @@ cc_library_shared {
         "android.hidl.base@1.0",
     ],
 }
+
+genrule {
+    name: "android.hardware.vr.vts.driver@1.0_genc++",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.vr@1.0 && $(location vtsc) -mDRIVER -tSOURCE -b$(genDir) android/hardware/vr/1.0/ $(genDir)/android/hardware/vr/1.0/",
+    srcs: [
+        "IVr.hal",
+    ],
+    out: [
+        "android/hardware/vr/1.0/Vr.vts.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.vr.vts.driver@1.0_genc++_headers",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.vr@1.0 && $(location vtsc) -mDRIVER -tHEADER -b$(genDir) android/hardware/vr/1.0/ $(genDir)/android/hardware/vr/1.0/",
+    srcs: [
+        "IVr.hal",
+    ],
+    out: [
+        "android/hardware/vr/1.0/Vr.vts.h",
+    ],
+}
+
+cc_library_shared {
+    name: "android.hardware.vr.vts.driver@1.0",
+    generated_sources: ["android.hardware.vr.vts.driver@1.0_genc++"],
+    generated_headers: ["android.hardware.vr.vts.driver@1.0_genc++_headers"],
+    export_generated_headers: ["android.hardware.vr.vts.driver@1.0_genc++_headers"],
+    shared_libs: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "liblog",
+        "libutils",
+        "libcutils",
+        "libvts_common",
+        "libvts_datatype",
+        "libvts_measurement",
+        "libvts_multidevice_proto",
+        "libcamera_metadata",
+        "libprotobuf-cpp-full",
+        "android.hidl.base@1.0",
+        "android.hardware.vr@1.0",
+    ],
+    export_shared_lib_headers: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "libutils",
+        "android.hidl.base@1.0",
+    ],
+}
