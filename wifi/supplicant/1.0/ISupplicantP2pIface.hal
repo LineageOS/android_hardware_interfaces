@@ -60,6 +60,22 @@ interface ISupplicantP2pIface extends ISupplicantIface {
   };
 
   /**
+   * Enum describing the modes of Miracast supported
+   * via driver commands.
+   */
+  enum MiracastMode : uint8_t {
+    DISABLED = 0,
+    /**
+     * Operating as source.
+     */
+    SOURCE = 1,
+    /**
+     * Operating as sink.
+     */
+    SINK = 2
+  };
+
+  /**
    * Register for callbacks from this interface.
    *
    * These callbacks are invoked for events that are specific to this interface.
@@ -510,5 +526,17 @@ interface ISupplicantP2pIface extends ISupplicantIface {
    *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
   cancelServiceDiscovery(uint64_t identifier)
+      generates (SupplicantStatus status);
+
+  /**
+   * Send driver command to set Miracast mode.
+   *
+   * @param mode Mode of Miracast.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   */
+  setMiracastMode(MiracastMode mode)
       generates (SupplicantStatus status);
 };
