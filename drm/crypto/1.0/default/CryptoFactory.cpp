@@ -27,7 +27,8 @@ namespace V1_0 {
 namespace implementation {
 
     CryptoFactory::CryptoFactory() :
-        loader("/vendor/lib/mediadrm", "createCryptoFactory") {}
+        loader("/vendor/lib/mediadrm", "createCryptoFactory") {
+    }
 
     // Methods from ::android::hardware::drm::crypto::V1_0::ICryptoFactory follow.
     Return<bool> CryptoFactory::isCryptoSchemeSupported(
@@ -42,7 +43,6 @@ namespace implementation {
 
     Return<void> CryptoFactory::createPlugin(const hidl_array<uint8_t, 16>& uuid,
             const hidl_vec<uint8_t>& initData, createPlugin_cb _hidl_cb) {
-
         for (size_t i = 0; i < loader.factoryCount(); i++) {
             if (loader.getFactory(i)->isCryptoSchemeSupported(uuid.data())) {
                 android::CryptoPlugin *legacyPlugin = NULL;
@@ -62,7 +62,7 @@ namespace implementation {
         return Void();
     }
 
-    ICryptoFactory* HIDL_FETCH_ICryptoFactory(const char /* *name */) {
+    ICryptoFactory* HIDL_FETCH_ICryptoFactory(const char* /* name */) {
         return new CryptoFactory();
     }
 

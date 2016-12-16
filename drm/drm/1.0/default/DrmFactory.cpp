@@ -27,7 +27,8 @@ namespace V1_0 {
 namespace implementation {
 
     DrmFactory::DrmFactory() :
-        loader("/vendor/lib/mediadrm", "createDrmFactory") {}
+        loader("/vendor/lib/mediadrm", "createDrmFactory") {
+    }
 
     // Methods from ::android::hardware::drm::drm::V1_0::IDrmFactory follow.
     Return<bool> DrmFactory::isCryptoSchemeSupported (
