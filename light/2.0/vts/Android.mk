@@ -16,34 +16,4 @@
 
 LOCAL_PATH := $(call my-dir)
 
-# build VTS driver for Light v2.0.
-include $(CLEAR_VARS)
-
-LOCAL_MODULE := libvts_driver_hidl_light@2.0
-
-LOCAL_SRC_FILES := \
-    Light.vts \
-    types.vts \
-
-LOCAL_SHARED_LIBRARIES += \
-    android.hardware.light@2.0 \
-    libbase \
-    libutils \
-    libcutils \
-    liblog \
-    libhidlbase \
-    libhidltransport \
-    libhwbinder \
-    libprotobuf-cpp-full \
-    libvts_common \
-    libvts_datatype \
-    libvts_measurement \
-    libvts_multidevice_proto
-
-LOCAL_PROTOC_OPTIMIZE_TYPE := full
-
-LOCAL_MULTILIB := both
-
-include $(BUILD_SHARED_LIBRARY)
-
 include $(call all-makefiles-under,$(LOCAL_PATH))

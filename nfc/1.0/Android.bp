@@ -66,7 +66,7 @@ cc_library_shared {
 genrule {
     name: "android.hardware.nfc.vts.driver@1.0_genc++",
     tools: ["hidl-gen", "vtsc"],
-    cmd: "$(location hidl-gen) -o $(genDir) -L vts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.nfc@1.0 && $(location vtsc) -mDRIVER -tSOURCE -b$(genDir) android/hardware/nfc/1.0/ $(genDir)/android/hardware/nfc/1.0/",
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.nfc@1.0 && $(location vtsc) -mDRIVER -tSOURCE -b$(genDir) android/hardware/nfc/1.0/ $(genDir)/android/hardware/nfc/1.0/",
     srcs: [
         "types.hal",
         "INfc.hal",
@@ -82,7 +82,7 @@ genrule {
 genrule {
     name: "android.hardware.nfc.vts.driver@1.0_genc++_headers",
     tools: ["hidl-gen", "vtsc"],
-    cmd: "$(location hidl-gen) -o $(genDir) -L vts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.nfc@1.0 && $(location vtsc) -mDRIVER -tHEADER -b$(genDir) android/hardware/nfc/1.0/ $(genDir)/android/hardware/nfc/1.0/",
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.nfc@1.0 && $(location vtsc) -mDRIVER -tHEADER -b$(genDir) android/hardware/nfc/1.0/ $(genDir)/android/hardware/nfc/1.0/",
     srcs: [
         "types.hal",
         "INfc.hal",

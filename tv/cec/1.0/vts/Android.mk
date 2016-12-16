@@ -16,38 +16,6 @@
 
 LOCAL_PATH := $(call my-dir)
 
-# build VTS driver for TvCec v1.0.
-include $(CLEAR_VARS)
-
-LOCAL_MODULE := libvts_driver_hidl_tv_cec@1.0
-
-LOCAL_SRC_FILES := \
-  HdmiCec.vts \
-  HdmiCecCallback.vts \
-  types.vts \
-
-LOCAL_SHARED_LIBRARIES += \
-  android.hardware.tv.cec@1.0 \
-  libbase \
-  libutils \
-  libcutils \
-  liblog \
-  libhidlbase \
-  libhidltransport \
-  libhwbinder \
-  libprotobuf-cpp-full \
-  libvts_common \
-  libvts_datatype \
-  libvts_measurement \
-  libvts_multidevice_proto \
-
-LOCAL_PROTOC_OPTIMIZE_TYPE := full
-
-LOCAL_MULTILIB := both
-
-include $(BUILD_SHARED_LIBRARY)
-
-
 # build VTS profiler for HdmiCec
 include $(CLEAR_VARS)
 
