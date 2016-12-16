@@ -18,6 +18,7 @@
 #define ANDROID_HARDWARE_AUDIO_V2_0_STREAM_H
 
 #include <android/hardware/audio/2.0/IStream.h>
+#include <hardware/audio.h>
 #include <hidl/Status.h>
 
 #include <hidl/MQDescriptor.h>
@@ -71,9 +72,13 @@ struct Stream : public IStream, public ParametersUtil {
             const hidl_vec<hidl_string>& keys, getParameters_cb _hidl_cb)  override;
     Return<Result> setParameters(const hidl_vec<ParameterValue>& parameters)  override;
     Return<void> debugDump(const hidl_handle& fd)  override;
+    Return<Result> start() override;
+    Return<Result> stop() override;
+    Return<void> createMmapBuffer(int32_t minSizeFrames, createMmapBuffer_cb _hidl_cb) override;
+    Return<void> getMmapPosition(getMmapPosition_cb _hidl_cb) override;
 
     // Utility methods for extending interfaces.
-    Result analyzeStatus(const char* funcName, int status, int ignoreError = OK);
+    static Result analyzeStatus(const char* funcName, int status, int ignoreError = OK);
 
   private:
     audio_stream_t *mStream;
@@ -84,6 +89,80 @@ struct Stream : public IStream, public ParametersUtil {
     char* halGetParameters(const char* keys) override;
     int halSetParameters(const char* keysAndValues) override;
 };
+
+
+template <typename T>
+struct StreamMmap : public RefBase {
+    explicit StreamMmap(T* stream) : mStream(stream) {}
+
+    Return<Result> start();
+    Return<Result> stop();
+    Return<void> createMmapBuffer(
+            int32_t minSizeFrames, size_t frameSize, IStream::createMmapBuffer_cb _hidl_cb);
+    Return<void> getMmapPosition(IStream::getMmapPosition_cb _hidl_cb);
+
+ private:
+   StreamMmap() {}
+
+   T *mStream;
+};
+
+template <typename T>
+Return<Result> StreamMmap<T>::start() {
+    if (mStream->start == NULL) return Result::NOT_SUPPORTED;
+    int result = mStream->start(mStream);
+    return Stream::analyzeStatus("start", result);
+}
+
+template <typename T>
+Return<Result> StreamMmap<T>::stop() {
+    if (mStream->stop == NULL) return Result::NOT_SUPPORTED;
+    int result = mStream->stop(mStream);
+    return Stream::analyzeStatus("stop", result);
+}
+
+template <typename T>
+Return<void> StreamMmap<T>::createMmapBuffer(int32_t minSizeFrames, size_t frameSize,
+                                             IStream::createMmapBuffer_cb _hidl_cb) {
+    Result retval(Result::NOT_SUPPORTED);
+    MmapBufferInfo info;
+
+    if (mStream->create_mmap_buffer != NULL) {
+        struct audio_mmap_buffer_info halInfo;
+        retval = Stream::analyzeStatus(
+                "create_mmap_buffer",
+                mStream->create_mmap_buffer(mStream, minSizeFrames, &halInfo));
+        if (retval == Result::OK) {
+            native_handle_t* hidlHandle = native_handle_create(1, 0);
+            hidlHandle->data[0] = halInfo.shared_memory_fd;
+            info.sharedMemory = hidl_memory("audio_buffer", hidlHandle,
+                                            frameSize *halInfo.buffer_size_frames);
+            info.bufferSizeFrames = halInfo.buffer_size_frames;
+            info.burstSizeFrames = halInfo.burst_size_frames;
+        }
+    }
+    _hidl_cb(retval, info);
+    return Void();
+}
+
+template <typename T>
+Return<void> StreamMmap<T>::getMmapPosition(IStream::getMmapPosition_cb _hidl_cb) {
+    Result retval(Result::NOT_SUPPORTED);
+    MmapPosition position;
+
+    if (mStream->get_mmap_position != NULL) {
+        struct audio_mmap_position halPosition;
+        retval = Stream::analyzeStatus(
+                "get_mmap_position",
+                mStream->get_mmap_position(mStream, &halPosition));
+        if (retval == Result::OK) {
+            position.timeNanoseconds = halPosition.time_nanoseconds;
+            position.positionFrames = halPosition.position_frames;
+        }
+    }
+    _hidl_cb(retval, position);
+    return Void();
+}
 
 }  // namespace implementation
 }  // namespace V2_0

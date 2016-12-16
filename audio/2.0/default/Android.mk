@@ -33,6 +33,7 @@ LOCAL_SHARED_LIBRARIES := \
     libhidlbase \
     libhidltransport \
     libhwbinder \
+    libcutils \
     libutils \
     libhardware \
     liblog \
