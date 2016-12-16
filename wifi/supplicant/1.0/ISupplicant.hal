@@ -44,14 +44,14 @@ interface ISupplicant {
    * controlled by the supplicant.
    */
   struct IfaceInfo {
-      /**
-       * Type of the network interface.
-       */
-      IfaceType type;
-      /**
-       * Name of the network interface, e.g., wlan0
-       */
-      string name;
+    /**
+     * Type of the network interface.
+     */
+    IfaceType type;
+    /**
+     * Name of the network interface, e.g., wlan0
+     */
+    string name;
   };
 
   /**
