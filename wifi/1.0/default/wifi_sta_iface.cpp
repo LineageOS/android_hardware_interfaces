@@ -186,6 +186,32 @@ Return<void> WifiStaIface::stopRssiMonitoring(
                          cmd_id);
 }
 
+Return<void> WifiStaIface::getRoamingCapabilities(
+    getRoamingCapabilities_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                         &WifiStaIface::getRoamingCapabilitiesInternal,
+                         hidl_status_cb);
+}
+
+Return<void> WifiStaIface::configureRoaming(
+    const StaRoamingConfig& config, configureRoaming_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                         &WifiStaIface::configureRoamingInternal,
+                         hidl_status_cb,
+                         config);
+}
+
+Return<void> WifiStaIface::setRoamingState(StaRoamingState state,
+                                           setRoamingState_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                         &WifiStaIface::setRoamingStateInternal,
+                         hidl_status_cb,
+                         state);
+}
+
 Return<void> WifiStaIface::startDebugPacketFateMonitoring(
     startDebugPacketFateMonitoring_cb hidl_status_cb) {
   return validateAndCall(this,
@@ -433,6 +459,42 @@ WifiStatus WifiStaIface::startRssiMonitoringInternal(uint32_t cmd_id,
 WifiStatus WifiStaIface::stopRssiMonitoringInternal(uint32_t cmd_id) {
   legacy_hal::wifi_error legacy_status =
       legacy_hal_.lock()->stopRssiMonitoring(cmd_id);
+  return createWifiStatusFromLegacyError(legacy_status);
+}
+
+std::pair<WifiStatus, StaRoamingCapabilities>
+WifiStaIface::getRoamingCapabilitiesInternal() {
+  legacy_hal::wifi_error legacy_status;
+  legacy_hal::wifi_roaming_capabilities legacy_caps;
+  std::tie(legacy_status, legacy_caps) =
+      legacy_hal_.lock()->getRoamingCapabilities();
+  if (legacy_status != legacy_hal::WIFI_SUCCESS) {
+    return {createWifiStatusFromLegacyError(legacy_status), {}};
+  }
+  StaRoamingCapabilities hidl_caps;
+  if (!hidl_struct_util::convertLegacyRoamingCapabilitiesToHidl(legacy_caps,
+                                                                &hidl_caps)) {
+    return {createWifiStatus(WifiStatusCode::ERROR_UNKNOWN), {}};
+  }
+  return {createWifiStatus(WifiStatusCode::SUCCESS), hidl_caps};
+}
+
+WifiStatus WifiStaIface::configureRoamingInternal(
+    const StaRoamingConfig& config) {
+  legacy_hal::wifi_roaming_config legacy_config;
+  if (!hidl_struct_util::convertHidlRoamingConfigToLegacy(config,
+                                                          &legacy_config)) {
+    return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
+  }
+  legacy_hal::wifi_error legacy_status =
+      legacy_hal_.lock()->configureRoaming(legacy_config);
+  return createWifiStatusFromLegacyError(legacy_status);
+}
+
+WifiStatus WifiStaIface::setRoamingStateInternal(StaRoamingState state) {
+  legacy_hal::wifi_error legacy_status =
+      legacy_hal_.lock()->enableFirmwareRoaming(
+          hidl_struct_util::convertHidlRoamingStateToLegacy(state));
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
