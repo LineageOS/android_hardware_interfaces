@@ -71,7 +71,7 @@ class WifiChip : public IWifiChip {
       registerEventCallback_cb hidl_status_cb) override;
   Return<void> getCapabilities(getCapabilities_cb hidl_status_cb) override;
   Return<void> getAvailableModes(getAvailableModes_cb hidl_status_cb) override;
-  Return<void> configureChip(uint32_t mode_id,
+  Return<void> configureChip(ChipModeId mode_id,
                              configureChip_cb hidl_status_cb) override;
   Return<void> getMode(getMode_cb hidl_status_cb) override;
   Return<void> requestChipDebugInfo(
@@ -132,7 +132,7 @@ class WifiChip : public IWifiChip {
       const sp<IWifiChipEventCallback>& event_callback);
   std::pair<WifiStatus, uint32_t> getCapabilitiesInternal();
   std::pair<WifiStatus, std::vector<ChipMode>> getAvailableModesInternal();
-  WifiStatus configureChipInternal(uint32_t mode_id);
+  WifiStatus configureChipInternal(ChipModeId mode_id);
   std::pair<WifiStatus, uint32_t> getModeInternal();
   std::pair<WifiStatus, IWifiChip::ChipDebugInfo>
   requestChipDebugInfoInternal();
@@ -172,6 +172,8 @@ class WifiChip : public IWifiChip {
   std::pair<WifiStatus, WifiDebugHostWakeReasonStats>
   getDebugHostWakeReasonStatsInternal();
   WifiStatus enableDebugErrorAlertsInternal(bool enable);
+
+  WifiStatus handleChipConfiguration(ChipModeId mode_id);
 
   ChipId chip_id_;
   std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
