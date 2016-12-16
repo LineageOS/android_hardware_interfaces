@@ -77,6 +77,12 @@ class WifiStaIface : public IWifiStaIface {
       startRssiMonitoring_cb hidl_status_cb) override;
   Return<void> stopRssiMonitoring(
       uint32_t cmd_id, stopRssiMonitoring_cb hidl_status_cb) override;
+  Return<void> getRoamingCapabilities(
+      getRoamingCapabilities_cb hidl_status_cb) override;
+  Return<void> configureRoaming(const StaRoamingConfig& config,
+                                configureRoaming_cb hidl_status_cb) override;
+  Return<void> setRoamingState(StaRoamingState state,
+                               setRoamingState_cb hidl_status_cb) override;
   Return<void> startDebugPacketFateMonitoring(
       startDebugPacketFateMonitoring_cb hidl_status_cb) override;
   Return<void> stopDebugPacketFateMonitoring(
@@ -111,6 +117,10 @@ class WifiStaIface : public IWifiStaIface {
                                          int32_t max_rssi,
                                          int32_t min_rssi);
   WifiStatus stopRssiMonitoringInternal(uint32_t cmd_id);
+  std::pair<WifiStatus, StaRoamingCapabilities>
+  getRoamingCapabilitiesInternal();
+  WifiStatus configureRoamingInternal(const StaRoamingConfig& config);
+  WifiStatus setRoamingStateInternal(StaRoamingState state);
   WifiStatus startDebugPacketFateMonitoringInternal();
   WifiStatus stopDebugPacketFateMonitoringInternal();
   std::pair<WifiStatus, std::vector<WifiDebugTxPacketFateReport>>
