@@ -357,8 +357,7 @@ interface ISupplicantP2pIface extends ISupplicantIface {
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
-  configureExtListen(bool enable,
-                     uint32_t periodInMillis,
+  configureExtListen(uint32_t periodInMillis,
                      uint32_t intervalInMillis)
       generates (SupplicantStatus status);
 
@@ -492,8 +491,7 @@ interface ISupplicantP2pIface extends ISupplicantIface {
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
-  flushServices(uint32_t version, string serviceName)
-      generates (SupplicantStatus status);
+  flushServices() generates (SupplicantStatus status);
 
   /**
    * Schedule a P2P service discovery request. The parameters for this command
