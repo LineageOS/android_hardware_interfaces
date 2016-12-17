@@ -48,6 +48,7 @@ class VibratorHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
             target_version=1.0,
             target_package="android.hardware.vibrator",
             target_component_name="IVibrator",
+            hw_binder_service_name="vibrator",
             bits=64)
 
     def tearDownClass(self):
