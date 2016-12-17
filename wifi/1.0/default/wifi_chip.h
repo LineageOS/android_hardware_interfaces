@@ -174,6 +174,7 @@ class WifiChip : public IWifiChip {
   WifiStatus enableDebugErrorAlertsInternal(bool enable);
 
   WifiStatus handleChipConfiguration(ChipModeId mode_id);
+  WifiStatus registerDebugRingBufferCallback();
 
   ChipId chip_id_;
   std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
@@ -186,6 +187,10 @@ class WifiChip : public IWifiChip {
   std::vector<sp<WifiRttController>> rtt_controllers_;
   bool is_valid_;
   uint32_t current_mode_id_;
+  // The legacy ring buffer callback API has only a global callback
+  // registration mechanism. Use this to check if we have already
+  // registered a callback.
+  bool debug_ring_buffer_cb_registered_;
 
   DISALLOW_COPY_AND_ASSIGN(WifiChip);
 };

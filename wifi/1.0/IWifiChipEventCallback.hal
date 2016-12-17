@@ -74,28 +74,11 @@ interface IWifiChipEventCallback {
    * @return status Status of the corresponding ring buffer. This should
    *         contain the name of the ring buffer on which the data is
    *         available.
-   * @return entries Vector of debug ring buffer data entries. These
-   *         should be parsed based on the type of entry.
+   * @return data Raw bytes of data sent by the driver. Must be dumped
+   *         out to a bugreport and post processed.
    */
-  /** Connectivity event data callback */
-  oneway onDebugRingBufferConnectivityEventEntriesAvailable(
-      WifiDebugRingBufferStatus status,
-      vec<WifiDebugRingEntryConnectivityEvent> entries);
-
-  /** Power event data callback */
-  oneway onDebugRingBufferPowerEventEntriesAvailable(
-      WifiDebugRingBufferStatus status,
-      vec<WifiDebugRingEntryPowerEvent> entries);
-
-  /** Wakelock event data callback */
-  oneway onDebugRingBufferWakelockEventEntriesAvailable(
-      WifiDebugRingBufferStatus status,
-      vec<WifiDebugRingEntryWakelockEvent> entries);
-
-  /** Vendor data event data callback */
-  oneway onDebugRingBufferVendorDataEntriesAvailable(
-      WifiDebugRingBufferStatus status,
-      vec<WifiDebugRingEntryVendorData> entries);
+  oneway onDebugRingBufferDataAvailable(
+      WifiDebugRingBufferStatus status, vec<uint8_t> data);
 
   /**
    * Callback indicating that the chip has encountered a fatal error.
