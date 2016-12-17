@@ -558,7 +558,7 @@ interface IWifiChip {
    *   ring. The vebose level for each ring buffer can be specified in this API.
    * - During wifi operations, driver must periodically report per ring data to
    *   framework by invoking the
-   *   |IWifiChipEventCallback.onDebugRingBuffer<Type>EntriesAvailable| callback.
+   *   |IWifiChipEventCallback.onDebugRingBufferDataAvailable| callback.
    * - When capturing a bug report, framework must indicate to driver that all
    *   the data has to be uploaded urgently by calling
    *   |forceDumpToDebugRingBuffer|.

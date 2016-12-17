@@ -39,6 +39,9 @@ namespace hidl_struct_util {
 // Chip conversion methods.
 bool convertLegacyFeaturesToHidlChipCapabilities(
     uint32_t legacy_logger_feature_set, uint32_t* hidl_caps);
+bool convertLegacyDebugRingBufferStatusToHidl(
+    const legacy_hal::wifi_ring_buffer_status& legacy_status,
+    WifiDebugRingBufferStatus* hidl_status);
 bool convertLegacyVectorOfDebugRingBufferStatusToHidl(
     const std::vector<legacy_hal::wifi_ring_buffer_status>& legacy_status_vec,
     std::vector<WifiDebugRingBufferStatus>* hidl_status_vec);
