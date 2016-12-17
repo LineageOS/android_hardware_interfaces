@@ -23,7 +23,7 @@ enum Error : int32_t {
     BAD_DISPLAY     = 2, /* invalid Display */
     BAD_LAYER       = 3, /* invalid Layer */
     BAD_PARAMETER   = 4, /* invalid width, height, etc. */
-    HAS_CHANGES     = 5,
+    /* 5 is reserved */
     NO_RESOURCES    = 6, /* temporary failure due to resource contention */
     NOT_VALIDATED   = 7, /* validateDisplay has not been called */
     UNSUPPORTED     = 8, /* permanent failure */

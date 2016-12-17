@@ -8,11 +8,13 @@ genrule {
         "types.hal",
         "IComposer.hal",
         "IComposerCallback.hal",
+        "IComposerClient.hal",
     ],
     out: [
         "android/hardware/graphics/composer/2.1/types.cpp",
         "android/hardware/graphics/composer/2.1/ComposerAll.cpp",
         "android/hardware/graphics/composer/2.1/ComposerCallbackAll.cpp",
+        "android/hardware/graphics/composer/2.1/ComposerClientAll.cpp",
     ],
 }
 
@@ -24,6 +26,7 @@ genrule {
         "types.hal",
         "IComposer.hal",
         "IComposerCallback.hal",
+        "IComposerClient.hal",
     ],
     out: [
         "android/hardware/graphics/composer/2.1/types.h",
@@ -37,6 +40,11 @@ genrule {
         "android/hardware/graphics/composer/2.1/BnComposerCallback.h",
         "android/hardware/graphics/composer/2.1/BpComposerCallback.h",
         "android/hardware/graphics/composer/2.1/BsComposerCallback.h",
+        "android/hardware/graphics/composer/2.1/IComposerClient.h",
+        "android/hardware/graphics/composer/2.1/IHwComposerClient.h",
+        "android/hardware/graphics/composer/2.1/BnComposerClient.h",
+        "android/hardware/graphics/composer/2.1/BpComposerClient.h",
+        "android/hardware/graphics/composer/2.1/BsComposerClient.h",
     ],
 }
 
