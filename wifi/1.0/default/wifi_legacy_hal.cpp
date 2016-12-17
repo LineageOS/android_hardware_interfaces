@@ -761,7 +761,7 @@ std::pair<wifi_error, std::vector<wifi_ring_buffer_status>>
 WifiLegacyHal::getRingBuffersStatus() {
   std::vector<wifi_ring_buffer_status> ring_buffers_status;
   ring_buffers_status.resize(kMaxRingBuffers);
-  uint32_t num_rings = 0;
+  uint32_t num_rings = kMaxRingBuffers;
   wifi_error status = global_func_table_.wifi_get_ring_buffers_status(
       wlan_interface_handle_, &num_rings, ring_buffers_status.data());
   CHECK(num_rings <= kMaxRingBuffers);
