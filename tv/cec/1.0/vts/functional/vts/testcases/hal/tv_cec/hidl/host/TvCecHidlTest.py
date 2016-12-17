@@ -34,11 +34,15 @@ class TvCecHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
         self.dut.shell.InvokeTerminal("one")
         self.dut.shell.one.Execute("setenforce 0")  # SELinux permissive mode
 
+        self.dut.shell.one.Execute(
+            "setprop vts.hal.vts.hidl.get_stub true")
+
         self.dut.hal.InitHidlHal(target_type="tv_cec",
                                  target_basepaths=["/system/lib64"],
                                  target_version=1.0,
                                  target_package="android.hardware.tv.cec",
                                  target_component_name="IHdmiCec",
+                                 hw_binder_service_name="tv.cec",
                                  bits=64)
 
     def testGetCecVersion1(self):
