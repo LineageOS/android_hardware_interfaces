@@ -52,6 +52,7 @@ class NfcHidlBasicTest(base_test_with_webdb.BaseTestWithWebDbClass):
                                  target_version=1.0,
                                  target_package="android.hardware.nfc",
                                  target_component_name="INfc",
+                                 hw_binder_service_name="nfc_nci",
                                  bits=64)
 
     def tearDownClass(self):
