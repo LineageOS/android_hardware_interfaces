@@ -28,7 +28,7 @@ interface IConsumerIr {
      *
      * returns: true on success, false on error.
      */
-    transmit(int32_t carrierFreq, vec<int32_t> pattern, int32_t patternLen) generates (bool success);
+    transmit(int32_t carrierFreq, vec<int32_t> pattern) generates (bool success);
 
     /*
      * getCarrierFreqs() enumerates which frequencies the IR transmitter supports.
