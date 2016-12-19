@@ -23,15 +23,15 @@ interface IStreamOutCallback {
     /*
      * Non blocking write completed.
      */
-    onWriteReady();
+    oneway onWriteReady();
 
     /*
      * Drain completed.
      */
-    onDrainReady();
+    oneway onDrainReady();
 
     /*
      * Stream hit an error.
      */
-    onError();
+    oneway onError();
 };

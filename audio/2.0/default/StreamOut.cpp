@@ -15,6 +15,7 @@
  */
 
 #define LOG_TAG "StreamOutHAL"
+//#define LOG_NDEBUG 0
 
 #include <hardware/audio.h>
 #include <android/log.h>

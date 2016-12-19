@@ -97,6 +97,7 @@ void HidlUtils::audioOffloadInfoFromHal(
         const audio_offload_info_t& halOffload, AudioOffloadInfo* offload) {
     offload->sampleRateHz = halOffload.sample_rate;
     offload->channelMask = AudioChannelMask(halOffload.channel_mask);
+    offload->format = AudioFormat(halOffload.format);
     offload->streamType = AudioStreamType(halOffload.stream_type);
     offload->bitRatePerSecond = halOffload.bit_rate;
     offload->durationMicroseconds = halOffload.duration_us;
@@ -109,6 +110,7 @@ void HidlUtils::audioOffloadInfoToHal(
     *halOffload = AUDIO_INFO_INITIALIZER;
     halOffload->sample_rate = offload.sampleRateHz;
     halOffload->channel_mask = static_cast<audio_channel_mask_t>(offload.channelMask);
+    halOffload->format = static_cast<audio_format_t>(offload.format);
     halOffload->stream_type = static_cast<audio_stream_type_t>(offload.streamType);
     halOffload->bit_rate = offload.bitRatePerSecond;
     halOffload->duration_us = offload.durationMicroseconds;
