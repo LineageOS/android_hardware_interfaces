@@ -934,7 +934,7 @@ bool HwcClient::CommandReader::parseSetLayerPlaneAlpha(uint16_t length)
         return false;
     }
 
-    auto err = mHal.setLayerPlaneAlpha(mDisplay, mLayer, read());
+    auto err = mHal.setLayerPlaneAlpha(mDisplay, mLayer, readFloat());
     if (err != Error::NONE) {
         mWriter.setError(getCommandLoc(), err);
     }
