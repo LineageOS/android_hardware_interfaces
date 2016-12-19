@@ -165,6 +165,13 @@ Return<void> Bar::takeAMask(BitField bf, uint8_t first, const MyMask& second, ui
     return Void();
 }
 
+Return<void> Bar::haveAInterface(const sp<ISimple> &in,
+            haveAInterface_cb _hidl_cb) {
+    _hidl_cb(in);
+    return Void();
+}
+
+
 IBar* HIDL_FETCH_IBar(const char* /* name */) {
     return new Bar();
 }
