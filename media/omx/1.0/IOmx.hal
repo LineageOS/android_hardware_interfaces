@@ -20,6 +20,8 @@ import android.hardware.media@1.0::types;
 
 import IOmxNode;
 import IOmxObserver;
+import IOmxBufferProducer;
+import IGraphicBufferSource;
 
 /**
  * Ref: frameworks/av/include/media/IOMX.h: IOMX
@@ -32,15 +34,15 @@ interface IOmx {
      * Information for an IOmxNode component.
      */
     struct ComponentInfo {
-        string mName;       //< Name of the component.
-        vec<string> mRoles; //< Roles of the component.
+        string mName;
+        vec<string> mRoles;
     };
 
     /**
      * List available components.
      *
-     * @param[out] status will be the status of the call.
-     * @param[out] nodeList will be a list of ComponentInfo.
+     * @param[out] status The status of the call.
+     * @param[out] nodeList The list of ComponentInfo.
      */
     listNodes(
         ) generates (
@@ -51,11 +53,11 @@ interface IOmx {
     /**
      * Allocate an IOmxNode instance with the specified component name.
      *
-     * @param[in] name is the name of the component to create.
-     * @param[in] observer is an observer object that will receive messages from
+     * @param[in] name The name of the component to create.
+     * @param[in] observer An observer object that will receive messages from
      * the created instance.
-     * @param[out] status will be the status of the call.
-     * @param[out] omxNode will be the allocated instance of IOmxNode.
+     * @param[out] status The status of the call.
+     * @param[out] omxNode The allocated instance of IOmxNode.
      */
     allocateNode(
             string name,
@@ -65,5 +67,17 @@ interface IOmx {
             IOmxNode omxNode
         );
 
+    /**
+     * Create an input surface for recording.
+     *
+     * @param[out] producer The associated producer end of the buffer queue.
+     * @param[out] source The associated `IGraphicBufferSource`.
+     */
+    createInputSurface(
+        ) generates (
+            Status status,
+            IOmxBufferProducer producer,
+            IGraphicBufferSource source
+        );
 };
 
