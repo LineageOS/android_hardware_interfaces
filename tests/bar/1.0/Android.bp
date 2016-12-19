@@ -6,10 +6,12 @@ genrule {
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.tests.bar@1.0",
     srcs: [
         "IBar.hal",
+        "IComplicated.hal",
         "IImportTypes.hal",
     ],
     out: [
         "android/hardware/tests/bar/1.0/BarAll.cpp",
+        "android/hardware/tests/bar/1.0/ComplicatedAll.cpp",
         "android/hardware/tests/bar/1.0/ImportTypesAll.cpp",
     ],
 }
@@ -20,6 +22,7 @@ genrule {
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.tests.bar@1.0",
     srcs: [
         "IBar.hal",
+        "IComplicated.hal",
         "IImportTypes.hal",
     ],
     out: [
@@ -28,6 +31,11 @@ genrule {
         "android/hardware/tests/bar/1.0/BnBar.h",
         "android/hardware/tests/bar/1.0/BpBar.h",
         "android/hardware/tests/bar/1.0/BsBar.h",
+        "android/hardware/tests/bar/1.0/IComplicated.h",
+        "android/hardware/tests/bar/1.0/IHwComplicated.h",
+        "android/hardware/tests/bar/1.0/BnComplicated.h",
+        "android/hardware/tests/bar/1.0/BpComplicated.h",
+        "android/hardware/tests/bar/1.0/BsComplicated.h",
         "android/hardware/tests/bar/1.0/IImportTypes.h",
         "android/hardware/tests/bar/1.0/IHwImportTypes.h",
         "android/hardware/tests/bar/1.0/BnImportTypes.h",
