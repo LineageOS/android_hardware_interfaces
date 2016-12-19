@@ -102,7 +102,7 @@ private:
 #ifdef BINDERIZED
     bool openGralloc()
     {
-        const hw_module_t* module;
+        const hw_module_t* module = nullptr;
         int err = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, &module);
         if (err) {
             ALOGE("failed to get gralloc module");
@@ -308,8 +308,9 @@ Return<void> HwcClient::createVirtualDisplay(uint32_t width, uint32_t height,
         PixelFormat formatHint, uint32_t outputBufferSlotCount,
         createVirtualDisplay_cb hidl_cb)
 {
-    Display display;
-    Error err = mHal.createVirtualDisplay(width, height, formatHint, display);
+    Display display = 0;
+    Error err = mHal.createVirtualDisplay(width, height,
+            &formatHint, &display);
     if (err == Error::NONE) {
         std::lock_guard<std::mutex> lock(mDisplayDataMutex);
 
@@ -336,8 +337,8 @@ Return<Error> HwcClient::destroyVirtualDisplay(Display display)
 Return<void> HwcClient::createLayer(Display display, uint32_t bufferSlotCount,
         createLayer_cb hidl_cb)
 {
-    Layer layer;
-    Error err = mHal.createLayer(display, layer);
+    Layer layer = 0;
+    Error err = mHal.createLayer(display, &layer);
     if (err == Error::NONE) {
         std::lock_guard<std::mutex> lock(mDisplayDataMutex);
 
@@ -366,8 +367,8 @@ Return<Error> HwcClient::destroyLayer(Display display, Layer layer)
 Return<void> HwcClient::getActiveConfig(Display display,
         getActiveConfig_cb hidl_cb)
 {
-    Config config;
-    Error err = mHal.getActiveConfig(display, config);
+    Config config = 0;
+    Error err = mHal.getActiveConfig(display, &config);
 
     hidl_cb(err, config);
     return Void();
@@ -385,7 +386,7 @@ Return<Error> HwcClient::getClientTargetSupport(Display display,
 Return<void> HwcClient::getColorModes(Display display, getColorModes_cb hidl_cb)
 {
     hidl_vec<ColorMode> modes;
-    Error err = mHal.getColorModes(display, modes);
+    Error err = mHal.getColorModes(display, &modes);
 
     hidl_cb(err, modes);
     return Void();
@@ -395,8 +396,8 @@ Return<void> HwcClient::getDisplayAttribute(Display display,
         Config config, Attribute attribute,
         getDisplayAttribute_cb hidl_cb)
 {
-    int32_t value;
-    Error err = mHal.getDisplayAttribute(display, config, attribute, value);
+    int32_t value = 0;
+    Error err = mHal.getDisplayAttribute(display, config, attribute, &value);
 
     hidl_cb(err, value);
     return Void();
@@ -406,7 +407,7 @@ Return<void> HwcClient::getDisplayConfigs(Display display,
         getDisplayConfigs_cb hidl_cb)
 {
     hidl_vec<Config> configs;
-    Error err = mHal.getDisplayConfigs(display, configs);
+    Error err = mHal.getDisplayConfigs(display, &configs);
 
     hidl_cb(err, configs);
     return Void();
@@ -416,7 +417,7 @@ Return<void> HwcClient::getDisplayName(Display display,
         getDisplayName_cb hidl_cb)
 {
     hidl_string name;
-    Error err = mHal.getDisplayName(display, name);
+    Error err = mHal.getDisplayName(display, &name);
 
     hidl_cb(err, name);
     return Void();
@@ -425,8 +426,8 @@ Return<void> HwcClient::getDisplayName(Display display,
 Return<void> HwcClient::getDisplayType(Display display,
         getDisplayType_cb hidl_cb)
 {
-    DisplayType type;
-    Error err = mHal.getDisplayType(display, type);
+    DisplayType type = DisplayType::INVALID;
+    Error err = mHal.getDisplayType(display, &type);
 
     hidl_cb(err, type);
     return Void();
@@ -435,8 +436,8 @@ Return<void> HwcClient::getDisplayType(Display display,
 Return<void> HwcClient::getDozeSupport(Display display,
         getDozeSupport_cb hidl_cb)
 {
-    bool support;
-    Error err = mHal.getDozeSupport(display, support);
+    bool support = false;
+    Error err = mHal.getDozeSupport(display, &support);
 
     hidl_cb(err, support);
     return Void();
@@ -449,8 +450,8 @@ Return<void> HwcClient::getHdrCapabilities(Display display,
     float max_lumi = 0.0f;
     float max_avg_lumi = 0.0f;
     float min_lumi = 0.0f;
-    Error err = mHal.getHdrCapabilities(display, types,
-            max_lumi, max_avg_lumi, min_lumi);
+    Error err = mHal.getHdrCapabilities(display, &types,
+            &max_lumi, &max_avg_lumi, &min_lumi);
 
     hidl_cb(err, types, max_lumi, max_avg_lumi, min_lumi);
     return Void();
@@ -536,7 +537,7 @@ Return<void> HwcClient::executeCommands(uint32_t inLength,
 
     Error err = mReader.parse();
     if (err == Error::NONE &&
-            !mWriter.writeQueue(outChanged, outLength, outHandles)) {
+            !mWriter.writeQueue(&outChanged, &outLength, &outHandles)) {
         err = Error::NO_RESOURCES;
     }
 
@@ -556,10 +557,10 @@ HwcClient::CommandReader::CommandReader(HwcClient& client)
 Error HwcClient::CommandReader::parse()
 {
     IComposerClient::Command command;
-    uint16_t length;
+    uint16_t length = 0;
 
     while (!isEmpty()) {
-        if (!beginCommand(command, length)) {
+        if (!beginCommand(&command, &length)) {
             break;
         }
 
@@ -698,9 +699,9 @@ bool HwcClient::CommandReader::parseSetClientTarget(uint16_t length)
         return false;
     }
 
-    bool useCache;
+    bool useCache = false;
     auto slot = read();
-    auto clientTarget = readHandle(useCache);
+    auto clientTarget = readHandle(&useCache);
     auto fence = readFence();
     auto dataspace = readSigned();
     auto damage = readRegion((length - 4) / 4);
@@ -725,9 +726,9 @@ bool HwcClient::CommandReader::parseSetOutputBuffer(uint16_t length)
         return false;
     }
 
-    bool useCache;
+    bool useCache = false;
     auto slot = read();
-    auto outputBuffer = readHandle(useCache);
+    auto outputBuffer = readHandle(&useCache);
     auto fence = readFence();
 
     auto err = lookupBuffer(BufferCache::OUTPUT_BUFFERS,
@@ -751,12 +752,13 @@ bool HwcClient::CommandReader::parseValidateDisplay(uint16_t length)
 
     std::vector<Layer> changedLayers;
     std::vector<IComposerClient::Composition> compositionTypes;
-    uint32_t displayRequestMask;
+    uint32_t displayRequestMask = 0x0;
     std::vector<Layer> requestedLayers;
     std::vector<uint32_t> requestMasks;
 
-    auto err = mHal.validateDisplay(mDisplay, changedLayers, compositionTypes,
-            displayRequestMask, requestedLayers, requestMasks);
+    auto err = mHal.validateDisplay(mDisplay, &changedLayers,
+            &compositionTypes, &displayRequestMask,
+            &requestedLayers, &requestMasks);
     if (err == Error::NONE) {
         mWriter.setChangedCompositionTypes(changedLayers,
                 compositionTypes);
@@ -789,10 +791,10 @@ bool HwcClient::CommandReader::parsePresentDisplay(uint16_t length)
         return false;
     }
 
-    int presentFence;
+    int presentFence = -1;
     std::vector<Layer> layers;
     std::vector<int> fences;
-    auto err = mHal.presentDisplay(mDisplay, presentFence, layers, fences);
+    auto err = mHal.presentDisplay(mDisplay, &presentFence, &layers, &fences);
     if (err == Error::NONE) {
         mWriter.setPresentFence(presentFence);
         mWriter.setReleaseFences(layers, fences);
@@ -824,9 +826,9 @@ bool HwcClient::CommandReader::parseSetLayerBuffer(uint16_t length)
         return false;
     }
 
-    bool useCache;
+    bool useCache = false;
     auto slot = read();
-    auto buffer = readHandle(useCache);
+    auto buffer = readHandle(&useCache);
     auto fence = readFence();
 
     auto err = lookupBuffer(BufferCache::LAYER_BUFFERS,

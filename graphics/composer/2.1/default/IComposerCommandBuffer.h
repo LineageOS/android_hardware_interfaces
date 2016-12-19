@@ -89,8 +89,8 @@ public:
                 static_cast<uint32_t>(IComposerClient::Command::OPCODE_MASK));
     }
 
-    bool writeQueue(bool& queueChanged, uint32_t& commandLength,
-            hidl_vec<hidl_handle>& commandHandles)
+    bool writeQueue(bool* outQueueChanged, uint32_t* outCommandLength,
+            hidl_vec<hidl_handle>* outCommandHandles)
     {
         // write data to queue, optionally resizing it
         if (mQueue && (mDataMaxSize <= mQueue->getQuantumCount())) {
@@ -99,7 +99,7 @@ public:
                 return false;
             }
 
-            queueChanged = false;
+            *outQueueChanged = false;
         } else {
             auto newQueue = std::make_unique<CommandQueueType>(mDataMaxSize);
             if (!newQueue->isValid() ||
@@ -109,11 +109,11 @@ public:
             }
 
             mQueue = std::move(newQueue);
-            queueChanged = true;
+            *outQueueChanged = true;
         }
 
-        commandLength = mDataWritten;
-        commandHandles.setToExternal(
+        *outCommandLength = mDataWritten;
+        outCommandHandles->setToExternal(
                 const_cast<hidl_handle*>(mDataHandles.data()),
                 mDataHandles.size());
 
@@ -682,7 +682,8 @@ protected:
         return (mDataRead >= mDataSize);
     }
 
-    bool beginCommand(IComposerClient::Command& command, uint16_t& length)
+    bool beginCommand(IComposerClient::Command* outCommand,
+            uint16_t* outLength)
     {
         if (mCommandEnd) {
             LOG_FATAL("endCommand was not called before command 0x%x",
@@ -695,18 +696,19 @@ protected:
             static_cast<uint32_t>(IComposerClient::Command::LENGTH_MASK);
 
         uint32_t val = read();
-        command = static_cast<IComposerClient::Command>(val & opcode_mask);
-        length = static_cast<uint16_t>(val & length_mask);
+        *outCommand = static_cast<IComposerClient::Command>(
+                val & opcode_mask);
+        *outLength = static_cast<uint16_t>(val & length_mask);
 
-        if (mDataRead + length > mDataSize) {
+        if (mDataRead + *outLength > mDataSize) {
             ALOGE("command 0x%x has invalid command length %" PRIu16,
-                    command, length);
+                    *outCommand, *outLength);
             // undo the read() above
             mDataRead--;
             return false;
         }
 
-        mCommandEnd = mDataRead + length;
+        mCommandEnd = mDataRead + *outLength;
 
         return true;
     }
@@ -770,17 +772,17 @@ protected:
     }
 
     // ownership of handle is not transferred
-    const native_handle_t* readHandle(bool& useCache)
+    const native_handle_t* readHandle(bool* outUseCache)
     {
         const native_handle_t* handle = nullptr;
 
         int32_t index = readSigned();
         switch (index) {
         case static_cast<int32_t>(IComposerClient::HandleIndex::EMPTY):
-            useCache = false;
+            *outUseCache = false;
             break;
         case static_cast<int32_t>(IComposerClient::HandleIndex::CACHED):
-            useCache = true;
+            *outUseCache = true;
             break;
         default:
             if (static_cast<size_t>(index) < mDataHandles.size()) {
@@ -788,7 +790,7 @@ protected:
             } else {
                 ALOGE("invalid handle index %zu", static_cast<size_t>(index));
             }
-            useCache = false;
+            *outUseCache = false;
             break;
         }
 
@@ -798,7 +800,7 @@ protected:
     const native_handle_t* readHandle()
     {
         bool useCache;
-        return readHandle(useCache);
+        return readHandle(&useCache);
     }
 
     // ownership of fence is transferred
