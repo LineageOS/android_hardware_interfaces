@@ -17,8 +17,11 @@
 package android.hardware.tests.bar@1.0;
 
 import android.hardware.tests.foo@1.0::IFoo;
+import android.hardware.tests.foo@1.0::ISimple;
 import android.hardware.tests.foo@1.0::Abc;
 import android.hardware.tests.foo@1.0::Unrelated;
+
+import IComplicated;
 
 interface IBar extends android.hardware.tests.foo@1.0::IFoo {
 
@@ -33,4 +36,6 @@ interface IBar extends android.hardware.tests.foo@1.0::IFoo {
     expectNullHandle(handle h, Abc xyz) generates (bool hIsNull, bool xyzHasNull);
     takeAMask(BitField bf, bitfield<BitField> first, MyMask second, Mask third)
             generates (BitField bf, uint8_t first, uint8_t second, uint8_t third);
+
+    haveAInterface(ISimple i) generates (ISimple i);
 };
