@@ -32,8 +32,8 @@ ConsumerIr::ConsumerIr(consumerir_device_t *device) {
 }
 
 // Methods from ::android::hardware::consumerir::V1_0::IConsumerIr follow.
-Return<bool> ConsumerIr::transmit(int32_t carrierFreq, const hidl_vec<int32_t>& pattern, int32_t patternLen) {
-    return mDevice->transmit(mDevice, carrierFreq, pattern.data(), patternLen) == 0;
+Return<bool> ConsumerIr::transmit(int32_t carrierFreq, const hidl_vec<int32_t>& pattern) {
+    return mDevice->transmit(mDevice, carrierFreq, pattern.data(), pattern.size()) == 0;
 }
 
 Return<void> ConsumerIr::getCarrierFreqs(getCarrierFreqs_cb _hidl_cb) {
