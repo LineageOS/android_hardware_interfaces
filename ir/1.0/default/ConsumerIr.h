@@ -40,7 +40,7 @@ using ::android::sp;
 struct ConsumerIr : public IConsumerIr {
     ConsumerIr(consumerir_device_t *device);
     // Methods from ::android::hardware::ir::V1_0::IConsumerIr follow.
-    Return<bool> transmit(int32_t carrierFreq, const hidl_vec<int32_t>& pattern, int32_t patternLen) override;
+    Return<bool> transmit(int32_t carrierFreq, const hidl_vec<int32_t>& pattern) override;
     Return<void> getCarrierFreqs(getCarrierFreqs_cb _hidl_cb) override;
 private:
     consumerir_device_t *mDevice;
