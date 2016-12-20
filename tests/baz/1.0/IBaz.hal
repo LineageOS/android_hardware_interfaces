@@ -49,6 +49,10 @@ interface IBaz extends IBase {
     doStuffAndReturnAString() generates (string something);
     mapThisVector(vec<int32_t> param) generates (vec<int32_t> something);
     callMe(IBazCallback cb);
+
+    callMeLater(IBazCallback cb);
+    iAmFreeNow();
+
     useAnEnum(SomeEnum zzz) generates (SomeEnum kkk);
 
     haveSomeStrings(string[3] array) generates (string[2] result);
