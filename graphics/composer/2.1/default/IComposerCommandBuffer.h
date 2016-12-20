@@ -35,7 +35,7 @@
 #include <android/hardware/graphics/composer/2.1/IComposer.h>
 #include <log/log.h>
 #include <sync/sync.h>
-#include <MessageQueue.h>
+#include <fmq/MessageQueue.h>
 
 namespace android {
 namespace hardware {
