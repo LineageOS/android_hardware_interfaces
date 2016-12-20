@@ -60,9 +60,11 @@ interface IContexthub {
      * After the init method for nanoApp returns success, this must be indicated
      * to the service by an asynchronous call to handleTxnResult.
      *
+     * Loading a nanoapp must not take more than 30 seconds.
+     *
      * @param hubId identifer of the contextHub
-     *        appBinary binary for the nanoApp
-     *        msg   message to be sent
+     *        appBinary serialized NanoApppBinary for the nanoApp
+     *        transactionId transactionId for this call
      *
      * @return result OK if transation started
      *                BAD_VALUE if parameters are not sane
@@ -71,13 +73,17 @@ interface IContexthub {
      *                TRANSACTION_FAILED if load failed synchronously
      *
      */
-    loadNanoApp(uint32_t hubId, NanoAppBinary appBinary, uint32_t transactionId)
+    loadNanoApp(uint32_t hubId,
+                vec<uint8_t> appBinary,
+                uint32_t transactionId)
             generates (Result result);
 
     /**
      * Unloads a nanoApp. Before the unload, the apps deinit method is called.
      * After this, success must be indicated to the service through an
      * asynchronous call to handleTxnResult.
+     *
+     * Unloading a nanoapp must not take more than 5 seconds.
      *
      * @param hubId identifer of the contextHub
      *        appId appIdentifier returned by the HAL
@@ -98,6 +104,8 @@ interface IContexthub {
      * After this, success must be indicated to the service through an
      * asynchronous message.
      *
+     * Enabling a nanoapp must not take more than 5 seconds.
+     *
      * @param hubId identifer of the contextHub
      *        appId appIdentifier returned by the HAL
      *        msg   message to be sent
@@ -116,6 +124,8 @@ interface IContexthub {
      * Disables a nanoApp. The app's deinit method is called.
      * After this, success must be indicated to the service through an
      * asynchronous message.
+     *
+     * Disabling a nanoapp must not take more than 5 seconds.
      *
      * @param hubId identifer of the contextHub
      *        appId appIdentifier returned by the HAL
@@ -136,7 +146,11 @@ interface IContexthub {
      *
      * @param hubId identifer of the contextHub
      *
-     * @return apps all nanoApps on the hub
+     * @return apps all nanoApps on the hub.
+     *              All nanoApps that can be modified by the service must
+     *              be returned. A non-modifiable nanoapps must not be
+     *              returned. A modifiable nanoApp is one that can be
+     *              unloaded/disabled/enabled by the service.
      *
      */
     queryApps(uint32_t hubId) generates (Result result);
