@@ -635,7 +635,7 @@ struct NotifyMsg {
          * Shutter message contents. Valid if type is MsgType::SHUTTER
          */
         ShutterMsg shutter;
-    };
+    } msg;
 
 };
 
