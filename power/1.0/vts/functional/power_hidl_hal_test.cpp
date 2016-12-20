@@ -35,18 +35,8 @@ using ::android::sp;
 class PowerHidlTest : public ::testing::Test {
  public:
   virtual void SetUp() override {
-    // TODO(b/33385836) Delete copied code
-    bool getStub = false;
-    char getSubProperty[PROPERTY_VALUE_MAX];
-    if (property_get("vts.hidl.get_stub", getSubProperty, "") > 0) {
-        if (!strcmp(getSubProperty, "true") || !strcmp(getSubProperty, "True") ||
-            !strcmp(getSubProperty, "1")) {
-            getStub = true;
-        }
-    }
-    power = IPower::getService("power", getStub);
+    power = IPower::getService("power");
     ASSERT_NE(power, nullptr);
-    ASSERT_EQ(!getStub, power->isRemote());
   }
 
   virtual void TearDown() override {}
