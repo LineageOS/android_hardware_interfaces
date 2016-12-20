@@ -24,6 +24,7 @@
             _32bit::DATA/nativetest/power_hidl_hal_test/power_hidl_hal_test,
             _64bit::DATA/nativetest64/power_hidl_hal_test/power_hidl_hal_test,
             "/>
+        <option name="test-config-path" value="vts/testcases/hal/power/hidl/target/HalPowerHidlTargetTest.config" />
         <option name="binary-test-type" value="gtest" />
         <option name="test-timeout" value="1m" />
     </test>
