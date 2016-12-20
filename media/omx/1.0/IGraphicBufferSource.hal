@@ -29,32 +29,23 @@ import IOmxNode;
  */
 interface IGraphicBufferSource {
 
-    configure(IOmxNode omxNode, Dataspace dataspace)
-        generates (Status status);
+    configure(IOmxNode omxNode, Dataspace dataspace);
 
-    setSuspend(bool suspend)
-        generates (Status status);
+    setSuspend(bool suspend);
 
-    setRepeatPreviousFrameDelayUs(int64_t repeatAfterUs)
-        generates (Status status);
+    setRepeatPreviousFrameDelayUs(int64_t repeatAfterUs);
 
-    setMaxFps(float maxFps)
-        generates (Status status);
+    setMaxFps(float maxFps);
 
-    setTimeLapseConfig(int64_t timePerFrameUs, int64_t timePerCaptureUs)
-        generates (Status status);
+    setTimeLapseConfig(int64_t timePerFrameUs, int64_t timePerCaptureUs);
 
-    setStartTimeUs(int64_t startTimeUs)
-        generates (Status status);
+    setStartTimeUs(int64_t startTimeUs);
 
-    setColorAspects(ColorAspects aspects)
-        generates (Status status);
+    setColorAspects(ColorAspects aspects);
 
-    setTimeOffsetUs(int64_t timeOffsetUs)
-        generates (Status status);
+    setTimeOffsetUs(int64_t timeOffsetUs);
 
-    signalEndOfInputStream()
-        generates (Status status);
+    signalEndOfInputStream();
 
 };
 

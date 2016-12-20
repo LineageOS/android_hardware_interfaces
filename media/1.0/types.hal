@@ -27,28 +27,28 @@ typedef vec<uint8_t> Bytes;
 
 /**
  * Ref: frameworks/native/include/ui/GraphicBuffer.h
- * Ref: system/core/include/system/window.h
+ * Ref: system/core/include/system/window.h: ANativeWindowBuffer
  */
 
 /**
  * This struct contains attributes for a gralloc buffer that can be put into a
  * union.
  */
-struct GraphicBufferAttributes {
+struct AnwBufferAttributes {
     uint32_t width;
     uint32_t height;
     uint32_t stride;
     PixelFormat format;
     uint32_t usage; // TODO: convert to an enum
-    uint32_t generationNumber;
+    uint64_t layerCount;
 };
 
 /**
- * A GraphicBuffer is simply GraphicBufferAttributes plus a native handle.
+ * An AnwBuffer is simply AnwBufferAttributes plus a native handle.
  */
-struct GraphicBuffer {
+struct AnwBuffer {
     handle nativeHandle;
-    GraphicBufferAttributes attr;
+    AnwBufferAttributes attr;
 };
 
 /**
