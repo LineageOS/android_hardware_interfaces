@@ -32,7 +32,6 @@ const VehiclePropConfig kVehicleProperties[] = {
         .prop = VehicleProperty::INFO_MAKE,
         .access = VehiclePropertyAccess::READ,
         .changeMode = VehiclePropertyChangeMode::STATIC,
-        .permissionModel = VehiclePermissionModel::OEM_ONLY,
         .configString = "Some=config,options=if,you=have_any",
     },
 
@@ -40,7 +39,6 @@ const VehiclePropConfig kVehicleProperties[] = {
         .prop = VehicleProperty::HVAC_FAN_SPEED,
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-        .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
         .supportedAreas = static_cast<int32_t>(
             VehicleAreaZone::ROW_1_LEFT | VehicleAreaZone::ROW_1_RIGHT),
         .areaConfigs = {
@@ -61,7 +59,6 @@ const VehiclePropConfig kVehicleProperties[] = {
         .prop = VehicleProperty::HVAC_SEAT_TEMPERATURE,
         .access = VehiclePropertyAccess::WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_SET,
-        .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
         .supportedAreas = static_cast<int32_t>(
             VehicleAreaZone::ROW_1_LEFT | VehicleAreaZone::ROW_1_RIGHT),
         .areaConfigs = {
@@ -81,7 +78,6 @@ const VehiclePropConfig kVehicleProperties[] = {
         .prop = VehicleProperty::INFO_FUEL_CAPACITY,
         .access = VehiclePropertyAccess::READ,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-        .permissionModel = VehiclePermissionModel::OEM_ONLY,
         .areaConfigs = {
             VehicleAreaConfig {
                 .minFloatValue = 0,
@@ -94,7 +90,6 @@ const VehiclePropConfig kVehicleProperties[] = {
         .prop = VehicleProperty::DISPLAY_BRIGHTNESS,
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-        .permissionModel = VehiclePermissionModel::OEM_ONLY,
         .areaConfigs = {
             VehicleAreaConfig {
                 .minInt32Value = 0,
@@ -107,7 +102,6 @@ const VehiclePropConfig kVehicleProperties[] = {
         .prop = VehicleProperty::MIRROR_FOLD,
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-        .permissionModel = VehiclePermissionModel::OEM_ONLY,
 
     }
 };
@@ -238,7 +232,6 @@ inline std::string toString(const VehiclePropConfig &config) {
        << "  prop: " << enumToHexString(config.prop) << ",\n"
        << "  supportedAreas: " << hexString(config.supportedAreas) << ",\n"
        << "  access: " << enumToHexString(config.access) << ",\n"
-       << "  permissionModel: " << enumToHexString(config.permissionModel) << ",\n"
        << "  changeMode: " << enumToHexString(config.changeMode) << ",\n"
        << "  configFlags: " << hexString(config.configFlags) << ",\n"
        << "  minSampleRate: " << config.minSampleRate << ",\n"

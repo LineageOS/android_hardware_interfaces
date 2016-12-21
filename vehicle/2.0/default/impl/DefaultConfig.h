@@ -32,14 +32,12 @@ const VehiclePropConfig kVehicleProperties[] = {
         .prop = VehicleProperty::INFO_MAKE,
         .access = VehiclePropertyAccess::READ,
         .changeMode = VehiclePropertyChangeMode::STATIC,
-        .permissionModel = VehiclePermissionModel::OEM_ONLY,
     },
 
     {
         .prop = VehicleProperty::HVAC_POWER_ON,
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-        .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
         .supportedAreas = toInt(VehicleAreaZone::ROW_1)
     },
 
@@ -47,7 +45,6 @@ const VehiclePropConfig kVehicleProperties[] = {
         .prop = VehicleProperty::HVAC_DEFROSTER,
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-        .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
         .supportedAreas =
                 VehicleAreaWindow::FRONT_WINDSHIELD
                 | VehicleAreaWindow::REAR_WINDSHIELD
@@ -57,7 +54,6 @@ const VehiclePropConfig kVehicleProperties[] = {
         .prop = VehicleProperty::HVAC_RECIRC_ON,
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-        .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
         .supportedAreas = toInt(VehicleAreaZone::ROW_1)
     },
 
@@ -65,7 +61,6 @@ const VehiclePropConfig kVehicleProperties[] = {
         .prop = VehicleProperty::HVAC_AC_ON,
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-        .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
         .supportedAreas = toInt(VehicleAreaZone::ROW_1)
     },
 
@@ -73,7 +68,6 @@ const VehiclePropConfig kVehicleProperties[] = {
         .prop = VehicleProperty::HVAC_AUTO_ON,
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-        .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
         .supportedAreas = toInt(VehicleAreaZone::ROW_1)
     },
 
@@ -81,7 +75,6 @@ const VehiclePropConfig kVehicleProperties[] = {
         .prop = VehicleProperty::HVAC_FAN_SPEED,
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-        .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
         .supportedAreas = toInt(VehicleAreaZone::ROW_1),
         .areaConfigs = {
             VehicleAreaConfig {
@@ -96,7 +89,6 @@ const VehiclePropConfig kVehicleProperties[] = {
         .prop = VehicleProperty::HVAC_FAN_DIRECTION,
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-        .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
         .supportedAreas = toInt(VehicleAreaZone::ROW_1),
     },
 
@@ -104,7 +96,6 @@ const VehiclePropConfig kVehicleProperties[] = {
         .prop = VehicleProperty::HVAC_TEMPERATURE_SET,
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-        .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
         .supportedAreas =
                 VehicleAreaZone::ROW_1_LEFT
                 | VehicleAreaZone::ROW_1_RIGHT,
@@ -126,28 +117,24 @@ const VehiclePropConfig kVehicleProperties[] = {
         .prop = VehicleProperty::NIGHT_MODE,
         .access = VehiclePropertyAccess::READ,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-        .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
     },
 
     {
         .prop = VehicleProperty::DRIVING_STATUS,
         .access = VehiclePropertyAccess::READ,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-        .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
     },
 
     {
         .prop = VehicleProperty::GEAR_SELECTION,
         .access = VehiclePropertyAccess::READ,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-        .permissionModel = VehiclePermissionModel::NO_RESTRICTION,
     },
 
     {
         .prop = VehicleProperty::INFO_FUEL_CAPACITY,
         .access = VehiclePropertyAccess::READ,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-        .permissionModel = VehiclePermissionModel::OEM_ONLY,
         .areaConfigs = {
             VehicleAreaConfig {
                 .minFloatValue = 0,
@@ -160,7 +147,6 @@ const VehiclePropConfig kVehicleProperties[] = {
         .prop = VehicleProperty::DISPLAY_BRIGHTNESS,
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-        .permissionModel = VehiclePermissionModel::OEM_ONLY,
         .areaConfigs = {
             VehicleAreaConfig {
                 .minInt32Value = 0,

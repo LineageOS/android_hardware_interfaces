@@ -1169,31 +1169,6 @@ attribute: {
 }
 
 attribute: {
-    name: "::android::hardware::vehicle::V2_0::VehiclePermissionModel"
-    type: TYPE_ENUM
-    enum_value: {
-        scalar_type: "int32_t"
-
-        enumerator: "NO_RESTRICTION"
-        scalar_value: {
-            int32_t: 0
-        }
-        enumerator: "OEM_ONLY"
-        scalar_value: {
-            int32_t: 1
-        }
-        enumerator: "SYSTEM_APP_ONLY"
-        scalar_value: {
-            int32_t: 2
-        }
-        enumerator: "OEM_OR_SYSTEM_APP"
-        scalar_value: {
-            int32_t: 3
-        }
-    }
-}
-
-attribute: {
     name: "::android::hardware::vehicle::V2_0::VehicleDrivingStatus"
     type: TYPE_ENUM
     enum_value: {
@@ -1602,11 +1577,6 @@ attribute: {
         name: "changeMode"
         type: TYPE_ENUM
         predefined_type: "::android::hardware::vehicle::V2_0::VehiclePropertyChangeMode"
-    }
-    struct_value: {
-        name: "permissionModel"
-        type: TYPE_ENUM
-        predefined_type: "::android::hardware::vehicle::V2_0::VehiclePermissionModel"
     }
     struct_value: {
         name: "supportedAreas"
