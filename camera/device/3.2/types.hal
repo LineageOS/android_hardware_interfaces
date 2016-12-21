@@ -20,6 +20,9 @@ import android.hardware.graphics.allocator@2.0::types;
 import android.hardware.graphics.common@1.0::types;
 
 typedef vec<uint8_t> CameraMetadata;
+typedef bitfield<ProducerUsage> ProducerUsageFlags;
+typedef bitfield<ConsumerUsage> ConsumerUsageFlags;
+typedef bitfield<Dataspace> DataspaceFlags;
 
 /**
  * StreamType:
@@ -221,24 +224,12 @@ struct Stream {
      * together and then passed to the platform gralloc HAL module for
      * allocating the gralloc buffers for each stream.
      *
-     * For streamType OUTPUT, when passed via
-     * configureStreams(), the initial value of this is the consumer's usage
-     * flags. The HAL may use these consumer flags to decide stream
-     * configuration. For streamType INPUT, when passed via
-     * configureStreams(), the initial value of this is 0. For all streams
-     * passed via configureStreams(), the HAL must set its desired producer
-     * usage flags in the final stream configuration.
+     * The HAL may use these consumer flags to decide stream configuration. For
+     * streamType INPUT, the value of this field is always 0. For all streams
+     * passed via configureStreams(), the HAL must set its own
+     * additional usage flags in its output HalStreamConfiguration.
      */
-    ConsumerUsage usage;
-
-    /**
-     * The maximum number of buffers the HAL device may need to have dequeued at
-     * the same time. The HAL device may not have more buffers in-flight from
-     * this stream than this value. For all streams passed via
-     * configureStreams(), the HAL must set its desired max buffer count in the
-     * final stream configuration.
-     */
-    uint32_t maxBuffers;
+    ConsumerUsageFlags usage;
 
     /**
      * A field that describes the contents of the buffer. The format and buffer
@@ -256,7 +247,7 @@ struct Stream {
      * supported. The dataspace values are set using the V0 dataspace
      * definitions.
      */
-    Dataspace dataSpace;
+    DataspaceFlags dataSpace;
 
     /**
      * The required output rotation of the stream.
@@ -328,18 +319,18 @@ struct HalStream {
     int32_t id;
 
     /**
-     * The pixel format for the buffers in this stream.
-     *
-     * If HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED is used, then the platform
-     * gralloc module must select a format based on the usage flags provided by
-     * the camera device and the other endpoint of the stream.
+     * An override pixel format for the buffers in this stream.
      *
      * The HAL must respect the requested format in Stream unless it is
      * IMPLEMENTATION_DEFINED, in which case the override format here must be
-     * used instead. This allows cross-platform HALs to use a standard format
-     * since IMPLEMENTATION_DEFINED formats often require device-specific
-     * information. In all other cases, the overrideFormat must match the
-     * requested format.
+     * used by the client instead, for this stream. This allows cross-platform
+     * HALs to use a standard format since IMPLEMENTATION_DEFINED formats often
+     * require device-specific information. In all other cases, the
+     * overrideFormat must match the requested format.
+     *
+     * When HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED is used, then the platform
+     * gralloc module must select a format based on the usage flags provided by
+     * the camera device and the other endpoint of the stream.
      */
     android.hardware.graphics.common@1.0::PixelFormat overrideFormat;
 
@@ -356,8 +347,8 @@ struct HalStream {
      * consumerUsage must be set. For other types, producerUsage must be set,
      * and consumerUsage must be 0.
      */
-    ProducerUsage producerUsage;
-    ConsumerUsage consumerUsage;
+    ProducerUsageFlags producerUsage;
+    ConsumerUsageFlags consumerUsage;
 
     /**
      * The maximum number of buffers the HAL device may need to have dequeued at
