@@ -1149,6 +1149,10 @@ attribute: {
     enum_value: {
         scalar_type: "int32_t"
 
+        enumerator: "NONE"
+        scalar_value: {
+            int32_t: 0
+        }
         enumerator: "READ"
         scalar_value: {
             int32_t: 1
