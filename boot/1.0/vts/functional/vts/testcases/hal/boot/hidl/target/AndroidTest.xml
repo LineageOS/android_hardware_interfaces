@@ -24,6 +24,7 @@
             _32bit::DATA/nativetest/boot_hidl_hal_test/boot_hidl_hal_test,
             _64bit::DATA/nativetest64/boot_hidl_hal_test/boot_hidl_hal_test,
             "/>
+        <option name="test-config-path" value="vts/testcases/hal/boot/hidl/target/HalBootHidlTargetTest.config" />
         <option name="binary-test-type" value="gtest" />
         <option name="test-timeout" value="1m" />
     </test>
