@@ -70,3 +70,22 @@ struct DeviceAddress {
     string busAddress;      // used for BUS
     string rSubmixAddress;  // used for REMOTE_SUBMIX
 };
+
+/*
+ * Mmap buffer descriptor returned by IStream.createMmapBuffer().
+ * Used by streams opened in mmap mode.
+ */
+struct MmapBufferInfo {
+    memory  sharedMemory;         // mmap memory buffer
+    int32_t bufferSizeFrames;     // total buffer size in frames
+    int32_t burstSizeFrames;      // transfer size granularity in frames
+};
+
+/*
+ * Mmap buffer read/write position returned by IStream.getMmapPosition().
+ * Used by streams opened in mmap mode.
+ */
+struct MmapPosition {
+    int64_t  timeNanoseconds; // time stamp in ns, CLOCK_MONOTONIC
+    int32_t  positionFrames;  // increasing 32 bit frame count reset when IStream.stop() is called
+};

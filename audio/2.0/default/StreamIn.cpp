@@ -28,7 +28,9 @@ namespace V2_0 {
 namespace implementation {
 
 StreamIn::StreamIn(audio_hw_device_t* device, audio_stream_in_t* stream)
-        : mDevice(device), mStream(stream), mStreamCommon(new Stream(&stream->common)) {
+        : mDevice(device), mStream(stream),
+          mStreamCommon(new Stream(&stream->common)),
+          mStreamMmap(new StreamMmap<audio_stream_in_t>(stream)) {
 }
 
 StreamIn::~StreamIn() {
@@ -130,6 +132,22 @@ Return<void> StreamIn::debugDump(const hidl_handle& fd)  {
     return mStreamCommon->debugDump(fd);
 }
 
+Return<Result> StreamIn::start() {
+    return mStreamMmap->start();
+}
+
+Return<Result> StreamIn::stop() {
+    return mStreamMmap->stop();
+}
+
+Return<void> StreamIn::createMmapBuffer(int32_t minSizeFrames, createMmapBuffer_cb _hidl_cb) {
+    return mStreamMmap->createMmapBuffer(
+            minSizeFrames, audio_stream_in_frame_size(mStream), _hidl_cb);
+}
+
+Return<void> StreamIn::getMmapPosition(getMmapPosition_cb _hidl_cb) {
+    return mStreamMmap->getMmapPosition(_hidl_cb);
+}
 
 // Methods from ::android::hardware::audio::V2_0::IStreamIn follow.
 Return<void> StreamIn::getAudioSource(getAudioSource_cb _hidl_cb)  {
@@ -144,7 +162,7 @@ Return<void> StreamIn::getAudioSource(getAudioSource_cb _hidl_cb)  {
 }
 
 Return<Result> StreamIn::setGain(float gain)  {
-    return mStreamCommon->analyzeStatus("set_gain", mStream->set_gain(mStream, gain));
+    return Stream::analyzeStatus("set_gain", mStream->set_gain(mStream, gain));
 }
 
 Return<void> StreamIn::read(uint64_t size, read_cb _hidl_cb)  {
@@ -157,7 +175,7 @@ Return<void> StreamIn::read(uint64_t size, read_cb _hidl_cb)  {
         data.resize(readResult);
     } else if (readResult < 0) {
         data.resize(0);
-        retval = mStreamCommon->analyzeStatus("read", readResult);
+        retval = Stream::analyzeStatus("read", readResult);
     }
     _hidl_cb(retval, data);
     return Void();
@@ -172,7 +190,7 @@ Return<void> StreamIn::getCapturePosition(getCapturePosition_cb _hidl_cb)  {
     uint64_t frames = 0, time = 0;
     if (mStream->get_capture_position != NULL) {
         int64_t halFrames, halTime;
-        retval = mStreamCommon->analyzeStatus(
+        retval = Stream::analyzeStatus(
                 "get_capture_position",
                 mStream->get_capture_position(mStream, &halFrames, &halTime));
         if (retval == Result::OK) {

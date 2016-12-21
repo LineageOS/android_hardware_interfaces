@@ -91,11 +91,16 @@ struct StreamOut : public IStreamOut {
     Return<Result> drain(AudioDrain type)  override;
     Return<Result> flush()  override;
     Return<void> getPresentationPosition(getPresentationPosition_cb _hidl_cb)  override;
+    Return<Result> start() override;
+    Return<Result> stop() override;
+    Return<void> createMmapBuffer(int32_t minSizeFrames, createMmapBuffer_cb _hidl_cb) override;
+    Return<void> getMmapPosition(getMmapPosition_cb _hidl_cb) override;
 
   private:
     audio_hw_device_t *mDevice;
     audio_stream_out_t *mStream;
     sp<Stream> mStreamCommon;
+    sp<StreamMmap<audio_stream_out_t>> mStreamMmap;
     sp<IStreamOutCallback> mCallback;
 
     virtual ~StreamOut();

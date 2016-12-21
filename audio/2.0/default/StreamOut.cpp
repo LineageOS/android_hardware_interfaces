@@ -29,7 +29,9 @@ namespace V2_0 {
 namespace implementation {
 
 StreamOut::StreamOut(audio_hw_device_t* device, audio_stream_out_t* stream)
-        : mDevice(device), mStream(stream), mStreamCommon(new Stream(&stream->common)) {
+        : mDevice(device), mStream(stream),
+          mStreamCommon(new Stream(&stream->common)),
+          mStreamMmap(new StreamMmap<audio_stream_out_t>(stream)) {
 }
 
 StreamOut::~StreamOut() {
@@ -133,7 +135,6 @@ Return<void> StreamOut::debugDump(const hidl_handle& fd)  {
     return mStreamCommon->debugDump(fd);
 }
 
-
 // Methods from ::android::hardware::audio::V2_0::IStreamOut follow.
 Return<uint32_t> StreamOut::getLatency()  {
     return mStream->get_latency(mStream);
@@ -142,7 +143,7 @@ Return<uint32_t> StreamOut::getLatency()  {
 Return<Result> StreamOut::setVolume(float left, float right)  {
     Result retval(Result::NOT_SUPPORTED);
     if (mStream->set_volume != NULL) {
-        retval = mStreamCommon->analyzeStatus(
+        retval = Stream::analyzeStatus(
                 "set_volume", mStream->set_volume(mStream, left, right));
     }
     return retval;
@@ -156,7 +157,7 @@ Return<void> StreamOut::write(const hidl_vec<uint8_t>& data, write_cb _hidl_cb) 
     if (writeResult >= 0) {
         written = writeResult;
     } else {
-        retval = mStreamCommon->analyzeStatus("write", writeResult);
+        retval = Stream::analyzeStatus("write", writeResult);
         written = 0;
     }
     _hidl_cb(retval, written);
@@ -165,7 +166,7 @@ Return<void> StreamOut::write(const hidl_vec<uint8_t>& data, write_cb _hidl_cb) 
 
 Return<void> StreamOut::getRenderPosition(getRenderPosition_cb _hidl_cb)  {
     uint32_t halDspFrames;
-    Result retval = mStreamCommon->analyzeStatus(
+    Result retval = Stream::analyzeStatus(
             "get_render_position", mStream->get_render_position(mStream, &halDspFrames));
     _hidl_cb(retval, halDspFrames);
     return Void();
@@ -175,7 +176,7 @@ Return<void> StreamOut::getNextWriteTimestamp(getNextWriteTimestamp_cb _hidl_cb)
     Result retval(Result::NOT_SUPPORTED);
     int64_t timestampUs = 0;
     if (mStream->get_next_write_timestamp != NULL) {
-        retval = mStreamCommon->analyzeStatus(
+        retval = Stream::analyzeStatus(
                 "get_next_write_timestamp",
                 mStream->get_next_write_timestamp(mStream, &timestampUs));
     }
@@ -189,7 +190,7 @@ Return<Result> StreamOut::setCallback(const sp<IStreamOutCallback>& callback)  {
     if (result == 0) {
         mCallback = callback;
     }
-    return mStreamCommon->analyzeStatus("set_callback", result);
+    return Stream::analyzeStatus("set_callback", result);
 }
 
 Return<Result> StreamOut::clearCallback()  {
@@ -228,13 +229,13 @@ Return<void> StreamOut::supportsPauseAndResume(supportsPauseAndResume_cb _hidl_c
 
 Return<Result> StreamOut::pause()  {
     return mStream->pause != NULL ?
-            mStreamCommon->analyzeStatus("pause", mStream->pause(mStream)) :
+            Stream::analyzeStatus("pause", mStream->pause(mStream)) :
             Result::NOT_SUPPORTED;
 }
 
 Return<Result> StreamOut::resume()  {
     return mStream->resume != NULL ?
-            mStreamCommon->analyzeStatus("resume", mStream->resume(mStream)) :
+            Stream::analyzeStatus("resume", mStream->resume(mStream)) :
             Result::NOT_SUPPORTED;
 }
 
@@ -244,14 +245,14 @@ Return<bool> StreamOut::supportsDrain()  {
 
 Return<Result> StreamOut::drain(AudioDrain type)  {
     return mStream->drain != NULL ?
-            mStreamCommon->analyzeStatus(
+            Stream::analyzeStatus(
                     "drain", mStream->drain(mStream, static_cast<audio_drain_type_t>(type))) :
             Result::NOT_SUPPORTED;
 }
 
 Return<Result> StreamOut::flush()  {
     return mStream->flush != NULL ?
-            mStreamCommon->analyzeStatus("flush", mStream->flush(mStream)) :
+            Stream::analyzeStatus("flush", mStream->flush(mStream)) :
             Result::NOT_SUPPORTED;
 }
 
@@ -261,7 +262,7 @@ Return<void> StreamOut::getPresentationPosition(getPresentationPosition_cb _hidl
     TimeSpec timeStamp = { 0, 0 };
     if (mStream->get_presentation_position != NULL) {
         struct timespec halTimeStamp;
-        retval = mStreamCommon->analyzeStatus(
+        retval = Stream::analyzeStatus(
                 "get_presentation_position",
                 mStream->get_presentation_position(mStream, &frames, &halTimeStamp),
                 // Don't logspam on EINVAL--it's normal for get_presentation_position
@@ -274,6 +275,23 @@ Return<void> StreamOut::getPresentationPosition(getPresentationPosition_cb _hidl
     }
     _hidl_cb(retval, frames, timeStamp);
     return Void();
+}
+
+Return<Result> StreamOut::start() {
+    return mStreamMmap->start();
+}
+
+Return<Result> StreamOut::stop() {
+    return mStreamMmap->stop();
+}
+
+Return<void> StreamOut::createMmapBuffer(int32_t minSizeFrames, createMmapBuffer_cb _hidl_cb) {
+    return mStreamMmap->createMmapBuffer(
+            minSizeFrames, audio_stream_out_frame_size(mStream), _hidl_cb);
+}
+
+Return<void> StreamOut::getMmapPosition(getMmapPosition_cb _hidl_cb) {
+    return mStreamMmap->getMmapPosition(_hidl_cb);
 }
 
 }  // namespace implementation
