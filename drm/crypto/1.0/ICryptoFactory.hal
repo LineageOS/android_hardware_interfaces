@@ -25,7 +25,7 @@ import ICryptoPlugin;
  * which are used by a codec to decrypt protected video content.
  */
 interface ICryptoFactory {
-    /*
+    /**
      * Determine if a crypto scheme is supported by this HAL
      *
      * @param uuid identifies the crypto scheme in question
@@ -33,20 +33,21 @@ interface ICryptoFactory {
      */
     isCryptoSchemeSupported(uint8_t[16] uuid) generates(bool isSupported);
 
-    /*
+    /**
      * Create a crypto plugin for the specified uuid and scheme-specific
      * initialization data.
      *
      * @param uuid uniquely identifies the drm scheme. See
      * http://dashif.org/identifiers/protection for uuid assignments
      * @param initData scheme-specific init data.
-     * @return the status of the call
-     * @return the created ICryptoPlugin
-    */
+     * @return status the status of the call. If the plugin can't
+     * be created, the HAL implementation must return ERROR_DRM_CANNOT_HANDLE.
+     * @return cryptoPlugin the created ICryptoPlugin
+     */
     createPlugin(uint8_t[16] uuid, vec<uint8_t> initData)
         generates (Status status, ICryptoPlugin cryptoPlugin);
 
-    /*
+    /**
      * Destroy a previously created crypto plugin
      *
      * @return status the status of the call

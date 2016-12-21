@@ -27,7 +27,7 @@ import IDrmPlugin;
  */
 
 interface IDrmFactory {
-    /*
+    /**
      * Determine if a crypto scheme is supported by this HAL
      *
      * @param uuid identifies the crypto scheme in question
@@ -35,20 +35,21 @@ interface IDrmFactory {
      */
     isCryptoSchemeSupported(uint8_t[16] uuid) generates(bool isSupported);
 
-    /*
+    /**
      * Create a drm plugin instance for the specified uuid and scheme-specific
      * initialization data.
      *
      * @param uuid uniquely identifies the drm scheme. See
      * http://dashif.org/identifiers/protection for uuid assignments
      * @param initData scheme-specific init data.
-     * @return the status of the call
+     * @return status the status of the call. If the plugin can't
+     * be created, the HAL implementation must return ERROR_DRM_CANNOT_HANDLE.
      * @return the created IDrmPlugin
      */
     createPlugin(uint8_t[16] uuid, vec<uint8_t> initData)
         generates (Status status, IDrmPlugin drmPlugin);
 
-    /*
+    /**
      * Destroy a previously created drm plugin
      * @return status the status of the call
      */
