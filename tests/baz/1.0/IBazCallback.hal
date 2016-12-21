@@ -18,4 +18,5 @@ package android.hardware.tests.baz@1.0;
 
 interface IBazCallback {
     heyItsMe(IBazCallback cb);
+    hey();
 };
