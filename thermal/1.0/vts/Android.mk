@@ -16,43 +16,6 @@
 
 LOCAL_PATH := $(call my-dir)
 
-# build VTS driver for Thermal v1.0.
-include $(CLEAR_VARS)
-
-LOCAL_MODULE := libvts_driver_hidl_thermal@1.0
-
-LOCAL_SRC_FILES := \
-  Thermal.vts \
-  types.vts \
-
-LOCAL_C_INCLUDES := \
-  android.hardware.thermal@1.0 \
-  system/core/base/include \
-  system/core/include \
-
-LOCAL_SHARED_LIBRARIES += \
-  android.hardware.thermal@1.0 \
-  libbase \
-  libutils \
-  libcutils \
-  liblog \
-  libhidlbase \
-  libhidltransport \
-  libhwbinder \
-  libprotobuf-cpp-full \
-  libvts_common \
-  libvts_datatype \
-  libvts_measurement \
-  libvts_multidevice_proto \
-
-LOCAL_STATIC_LIBRARIES := \
-
-LOCAL_PROTOC_OPTIMIZE_TYPE := full
-
-LOCAL_MULTILIB := both
-
-include $(BUILD_SHARED_LIBRARY)
-
 # build profiler for thermal.
 include $(CLEAR_VARS)
 

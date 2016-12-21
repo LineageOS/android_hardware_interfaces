@@ -54,3 +54,61 @@ cc_library_shared {
         "android.hidl.base@1.0",
     ],
 }
+
+genrule {
+    name: "android.hardware.sensors.vts.driver@1.0_genc++",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.sensors@1.0 && $(location vtsc) -mDRIVER -tSOURCE -b$(genDir) android/hardware/sensors/1.0/ $(genDir)/android/hardware/sensors/1.0/",
+    srcs: [
+        "types.hal",
+        "ISensors.hal",
+    ],
+    out: [
+        "android/hardware/sensors/1.0/types.vts.cpp",
+        "android/hardware/sensors/1.0/Sensors.vts.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.sensors.vts.driver@1.0_genc++_headers",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.sensors@1.0 && $(location vtsc) -mDRIVER -tHEADER -b$(genDir) android/hardware/sensors/1.0/ $(genDir)/android/hardware/sensors/1.0/",
+    srcs: [
+        "types.hal",
+        "ISensors.hal",
+    ],
+    out: [
+        "android/hardware/sensors/1.0/types.vts.h",
+        "android/hardware/sensors/1.0/Sensors.vts.h",
+    ],
+}
+
+cc_library_shared {
+    name: "android.hardware.sensors.vts.driver@1.0",
+    generated_sources: ["android.hardware.sensors.vts.driver@1.0_genc++"],
+    generated_headers: ["android.hardware.sensors.vts.driver@1.0_genc++_headers"],
+    export_generated_headers: ["android.hardware.sensors.vts.driver@1.0_genc++_headers"],
+    shared_libs: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "liblog",
+        "libutils",
+        "libcutils",
+        "libvts_common",
+        "libvts_datatype",
+        "libvts_measurement",
+        "libvts_multidevice_proto",
+        "libcamera_metadata",
+        "libprotobuf-cpp-full",
+        "android.hidl.base@1.0",
+        "android.hardware.sensors@1.0",
+    ],
+    export_shared_lib_headers: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "libutils",
+        "android.hidl.base@1.0",
+    ],
+}
