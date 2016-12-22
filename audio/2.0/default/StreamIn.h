@@ -17,10 +17,15 @@
 #ifndef ANDROID_HARDWARE_AUDIO_V2_0_STREAMIN_H
 #define ANDROID_HARDWARE_AUDIO_V2_0_STREAMIN_H
 
-#include <android/hardware/audio/2.0/IStreamIn.h>
-#include <hidl/Status.h>
+#include <atomic>
+#include <memory>
 
+#include <android/hardware/audio/2.0/IStreamIn.h>
 #include <hidl/MQDescriptor.h>
+#include <fmq/EventFlag.h>
+#include <fmq/MessageQueue.h>
+#include <hidl/Status.h>
+#include <utils/Thread.h>
 
 #include "Stream.h"
 
@@ -39,6 +44,7 @@ using ::android::hardware::audio::V2_0::IStream;
 using ::android::hardware::audio::V2_0::IStreamIn;
 using ::android::hardware::audio::V2_0::ParameterValue;
 using ::android::hardware::audio::V2_0::Result;
+using ::android::hardware::audio::V2_0::ThreadPriority;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::hidl_vec;
@@ -46,6 +52,9 @@ using ::android::hardware::hidl_string;
 using ::android::sp;
 
 struct StreamIn : public IStreamIn {
+    typedef MessageQueue<uint8_t, kSynchronizedReadWrite> DataMQ;
+    typedef MessageQueue<ReadStatus, kSynchronizedReadWrite> StatusMQ;
+
     StreamIn(audio_hw_device_t* device, audio_stream_in_t* stream);
 
     // Methods from ::android::hardware::audio::V2_0::IStream follow.
@@ -73,11 +82,14 @@ struct StreamIn : public IStreamIn {
             const hidl_vec<hidl_string>& keys, getParameters_cb _hidl_cb)  override;
     Return<Result> setParameters(const hidl_vec<ParameterValue>& parameters)  override;
     Return<void> debugDump(const hidl_handle& fd)  override;
+    Return<Result> close()  override;
 
     // Methods from ::android::hardware::audio::V2_0::IStreamIn follow.
     Return<void> getAudioSource(getAudioSource_cb _hidl_cb)  override;
     Return<Result> setGain(float gain)  override;
-    Return<void> read(uint64_t size, read_cb _hidl_cb)  override;
+    Return<void> prepareForReading(
+            uint32_t frameSize, uint32_t framesCount, ThreadPriority threadPriority,
+            prepareForReading_cb _hidl_cb)  override;
     Return<uint32_t> getInputFramesLost()  override;
     Return<void> getCapturePosition(getCapturePosition_cb _hidl_cb)  override;
     Return<Result> start() override;
@@ -86,11 +98,16 @@ struct StreamIn : public IStreamIn {
     Return<void> getMmapPosition(getMmapPosition_cb _hidl_cb) override;
 
   private:
+    bool mIsClosed;
     audio_hw_device_t *mDevice;
     audio_stream_in_t *mStream;
     sp<Stream> mStreamCommon;
     sp<StreamMmap<audio_stream_in_t>> mStreamMmap;
-
+    std::unique_ptr<DataMQ> mDataMQ;
+    std::unique_ptr<StatusMQ> mStatusMQ;
+    EventFlag* mEfGroup;
+    std::atomic<bool> mStopReadThread;
+    sp<Thread> mReadThread;
 
     virtual ~StreamIn();
 };

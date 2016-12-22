@@ -30,13 +30,16 @@ LOCAL_SRC_FILES := \
     StreamOut.cpp \
 
 LOCAL_SHARED_LIBRARIES := \
+    libbase \
+    libcutils \
+    libfmq \
+    libhardware \
     libhidlbase \
     libhidltransport \
     libhwbinder \
-    libcutils \
-    libutils \
-    libhardware \
     liblog \
+    libmediautils \
+    libutils \
     android.hardware.audio@2.0 \
     android.hardware.audio.common@2.0 \
     android.hardware.audio.common@2.0-util \

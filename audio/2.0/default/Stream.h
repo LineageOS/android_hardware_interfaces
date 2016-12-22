@@ -76,6 +76,7 @@ struct Stream : public IStream, public ParametersUtil {
     Return<Result> stop() override;
     Return<void> createMmapBuffer(int32_t minSizeFrames, createMmapBuffer_cb _hidl_cb) override;
     Return<void> getMmapPosition(getMmapPosition_cb _hidl_cb) override;
+    Return<Result> close()  override;
 
     // Utility methods for extending interfaces.
     static Result analyzeStatus(const char* funcName, int status, int ignoreError = OK);

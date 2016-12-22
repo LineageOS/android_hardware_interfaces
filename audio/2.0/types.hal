@@ -89,3 +89,21 @@ struct MmapPosition {
     int64_t  timeNanoseconds; // time stamp in ns, CLOCK_MONOTONIC
     int32_t  positionFrames;  // increasing 32 bit frame count reset when IStream.stop() is called
 };
+
+/*
+ * The message queue flags used to synchronize reads and writes from
+ * message queues used by StreamIn and StreamOut.
+ */
+enum MessageQueueFlagBits : uint32_t {
+    NOT_EMPTY = 1 << 0,
+    NOT_FULL = 1 << 1
+};
+
+/*
+ * The priority of threads executing reads and writes of audio data.
+ */
+enum ThreadPriority : int32_t {
+    NORMAL = 0,
+    FAST_CAPTURE = 3,
+    FAST_MIXER = 3
+};

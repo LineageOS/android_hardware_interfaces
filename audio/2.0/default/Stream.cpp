@@ -253,6 +253,10 @@ Return<void>  Stream::getMmapPosition(getMmapPosition_cb _hidl_cb) {
     return Void();
 }
 
+Return<Result> Stream::close()  {
+    return Result::NOT_SUPPORTED;
+}
+
 } // namespace implementation
 }  // namespace V2_0
 }  // namespace audio
