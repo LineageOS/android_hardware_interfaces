@@ -101,7 +101,7 @@ void CameraProvider::sTorchModeStatusChange(
         std::string cameraIdStr(camera_id);
         TorchModeStatus status = (TorchModeStatus) new_status;
         for (auto const& deviceNamePair : cp->mCameraDeviceNames) {
-            if (cameraIdStr.compare(getLegacyCameraId(deviceNamePair.first)) == 0) {
+            if (cameraIdStr.compare(deviceNamePair.first) == 0) {
                 cp->mCallbacks->torchModeStatusChange(
                         deviceNamePair.second, status);
             }
@@ -142,7 +142,7 @@ int CameraProvider::getCameraDeviceVersion(const hidl_string& deviceName) {
         return -1;
     }
     if (sm[1].compare(kHAL3_2) == 0) {
-        // maybe switched to 3.4 or define the hidl version enumlater
+        // maybe switched to 3.4 or define the hidl version enum later
         return CAMERA_DEVICE_API_VERSION_3_2;
     } else if (sm[1].compare(kHAL1_0) == 0) {
         return CAMERA_DEVICE_API_VERSION_1_0;
@@ -229,8 +229,8 @@ bool CameraProvider::initialize() {
 
     // Setup vendor tags here so HAL can setup vendor keys in camera characteristics
     VendorTagDescriptor::clearGlobalVendorTagDescriptor();
-    setUpVendorTags();
-    return false;
+    bool setupSucceed = setUpVendorTags();
+    return !setupSucceed; // return flag here is mInitFailed
 }
 
 bool CameraProvider::setUpVendorTags() {
@@ -311,7 +311,7 @@ Return<void> CameraProvider::getCameraIdList(getCameraIdList_cb _hidl_cb)  {
         }
     }
     hidl_vec<hidl_string> hidlDeviceNameList(deviceNameList);
-    _hidl_cb (Status::OK, hidlDeviceNameList);
+    _hidl_cb(Status::OK, hidlDeviceNameList);
     return Void();
 }
 
@@ -321,12 +321,14 @@ Return<void> CameraProvider::isSetTorchModeSupported(isSetTorchModeSupported_cb 
     return Void();
 }
 
-Return<void> CameraProvider::getCameraDeviceInterface_V1_x(const hidl_string& /*cameraDeviceName*/, getCameraDeviceInterface_V1_x_cb /*_hidl_cb*/)  {
+Return<void> CameraProvider::getCameraDeviceInterface_V1_x(
+        const hidl_string& /*cameraDeviceName*/, getCameraDeviceInterface_V1_x_cb /*_hidl_cb*/)  {
     // TODO implement after device 1.0 is implemented
     return Void();
 }
 
-Return<void> CameraProvider::getCameraDeviceInterface_V3_x(const hidl_string& cameraDeviceName, getCameraDeviceInterface_V3_x_cb _hidl_cb)  {
+Return<void> CameraProvider::getCameraDeviceInterface_V3_x(
+        const hidl_string& cameraDeviceName, getCameraDeviceInterface_V3_x_cb _hidl_cb)  {
     std::smatch sm;
     bool match = matchDeviceName(cameraDeviceName, sm);
     if (!match) {
@@ -335,14 +337,18 @@ Return<void> CameraProvider::getCameraDeviceInterface_V3_x(const hidl_string& ca
     }
 
     std::string cameraId = sm[2];
+    std::string deviceVersion = sm[1];
     std::string deviceName(cameraDeviceName.c_str());
     ssize_t index = mCameraDeviceNames.indexOf(std::make_pair(cameraId, deviceName));
     if (index == NAME_NOT_FOUND) { // Either an illegal name or a device version mismatch
         Status status = Status::OK;
         ssize_t idx = mCameraIds.indexOf(cameraId);
         if (idx == NAME_NOT_FOUND) {
+            ALOGE("%s: cannot find camera %s!", __FUNCTION__, cameraId.c_str());
             status = Status::ILLEGAL_ARGUMENT;
         } else { // invalid version
+            ALOGE("%s: camera device %s does not support version %s!",
+                    __FUNCTION__, cameraId.c_str(), deviceVersion.c_str());
             status = Status::OPERATION_NOT_SUPPORTED;
         }
         _hidl_cb(status, nullptr);
@@ -364,13 +370,13 @@ Return<void> CameraProvider::getCameraDeviceInterface_V3_x(const hidl_string& ca
                     mModule, cameraId, mCameraDeviceNames);
 
     if (device == nullptr) {
-        ALOGE("%s: cannot allocate camera device!", __FUNCTION__);
+        ALOGE("%s: cannot allocate camera device for id %s", __FUNCTION__, cameraId.c_str());
         _hidl_cb(Status::INTERNAL_ERROR, nullptr);
         return Void();
     }
 
     if (device->isInitFailed()) {
-        ALOGE("%s: camera device init failed!", __FUNCTION__);
+        ALOGE("%s: camera device %s init failed!", __FUNCTION__, cameraId.c_str());
         device = nullptr;
         _hidl_cb(Status::INTERNAL_ERROR, nullptr);
         return Void();

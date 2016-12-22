@@ -17,6 +17,7 @@
 #ifndef ANDROID_HARDWARE_CAMERA_DEVICE_V3_2_CAMERADEVICE3SESSION_H
 #define ANDROID_HARDWARE_CAMERA_DEVICE_V3_2_CAMERADEVICE3SESSION_H
 
+#include <unordered_map>
 #include "hardware/camera_common.h"
 #include "hardware/camera3.h"
 #include "utils/Mutex.h"
@@ -91,11 +92,54 @@ private:
     bool mDisconnected = false;
 
     camera3_device_t* mDevice;
-    const sp<ICameraDeviceCallback>& mCallback;
+    const sp<ICameraDeviceCallback> mCallback;
     // Stream ID -> Camera3Stream cache
     std::map<int, Camera3Stream> mStreamMap;
+
+    mutable Mutex mInflightLock; // protecting mInflightBuffers and mCirculatingBuffers
     // (streamID, frameNumber) -> inflight buffer cache
-    std::map<std::pair<int, uint32_t>, StreamBufferCache>  mInflightBuffers;
+    std::map<std::pair<int, uint32_t>, camera3_stream_buffer_t>  mInflightBuffers;
+
+    struct BufferHasher {
+        size_t operator()(const buffer_handle_t& buf) const {
+            if (buf == nullptr)
+                return 0;
+
+            size_t result = 1;
+            result = 31 * result + buf->numFds;
+            result = 31 * result + buf->numInts;
+            int length = buf->numFds + buf->numInts;
+            for (int i = 0; i < length; i++) {
+                result = 31 * result + buf->data[i];
+            }
+            return result;
+        }
+    };
+
+    struct BufferComparator {
+        bool operator()(const buffer_handle_t& buf1, const buffer_handle_t& buf2) const {
+            if (buf1->numFds == buf2->numFds && buf1->numInts == buf2->numInts) {
+                int length = buf1->numFds + buf1->numInts;
+                for (int i = 0; i < length; i++) {
+                    if (buf1->data[i] != buf2->data[i]) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+    };
+
+    // buffers currently ciculating between HAL and camera service
+    // key: buffer_handle_t sent via HIDL interface
+    // value: imported buffer_handle_t
+    // Buffer will be imported during process_capture_request and will be freed
+    // when the its stream is deleted or camera device session is closed
+    typedef std::unordered_map<buffer_handle_t, buffer_handle_t,
+            BufferHasher, BufferComparator> CirculatingBuffers;
+    // Stream ID -> circulating buffers map
+    std::map<int, CirculatingBuffers> mCirculatingBuffers;
 
     bool mInitFail;
     bool initialize();
@@ -103,13 +147,12 @@ private:
     Status initStatus() const;
 
     // Validate and import request's input buffer and acquire fence
-    static Status importRequest(
+    Status importRequest(
             const CaptureRequest& request,
-            hidl_vec<buffer_handle_t>& allBufs,
+            hidl_vec<buffer_handle_t*>& allBufPtrs,
             hidl_vec<int>& allFences);
 
-    static void cleanupInflightBufferFences(
-            hidl_vec<buffer_handle_t>& allBufs, size_t numBufs,
+    static void cleanupInflightFences(
             hidl_vec<int>& allFences, size_t numFences);
 
     /**

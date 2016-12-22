@@ -94,7 +94,12 @@ public:
         if (handle == nullptr || handle->numFds == 0) {
             fd = -1;
         } else if (handle->numFds == 1) {
+//TODO(b/34110242): make this hidl transport agnostic
+#ifdef BINDERIZED
             fd = dup(handle->data[0]);
+#else
+            fd = handle->data[0];
+#endif
             if (fd < 0) {
                 ALOGE("failed to dup fence fd %d", handle->data[0]);
                 return false;
@@ -110,9 +115,13 @@ public:
 
     void closeFence(int fd)
     {
+#ifdef BINDERIZED
         if (fd >= 0) {
             close(fd);
         }
+#else
+        (void) fd;
+#endif
     }
 
 private:
@@ -226,7 +235,6 @@ CameraDeviceSession::CameraDeviceSession(
         camera3_callback_ops({&sProcessCaptureResult, &sNotify}),
         mDevice(device),
         mCallback(callback) {
-
     // For now, we init sHandleImporter but do not cleanup (keep it alive until
     // HAL process ends)
     sHandleImporter.initialize();
@@ -293,31 +301,45 @@ void CameraDeviceSession::dumpState(const native_handle_t* fd) {
 
 Status CameraDeviceSession::importRequest(
         const CaptureRequest& request,
-        hidl_vec<buffer_handle_t>& allBufs,
+        hidl_vec<buffer_handle_t*>& allBufPtrs,
         hidl_vec<int>& allFences) {
     bool hasInputBuf = (request.inputBuffer.streamId != -1 &&
-            request.inputBuffer.buffer.getNativeHandle() == nullptr);
+            request.inputBuffer.buffer.getNativeHandle() != nullptr);
     size_t numOutputBufs = request.outputBuffers.size();
     size_t numBufs = numOutputBufs + (hasInputBuf ? 1 : 0);
     // Validate all I/O buffers
+    hidl_vec<buffer_handle_t> allBufs;
     allBufs.resize(numBufs);
+    allBufPtrs.resize(numBufs);
     allFences.resize(numBufs);
+    std::vector<int32_t> streamIds(numBufs);
+
     for (size_t i = 0; i < numOutputBufs; i++) {
         allBufs[i] = request.outputBuffers[i].buffer.getNativeHandle();
+        allBufPtrs[i] = &allBufs[i];
+        streamIds[i] = request.outputBuffers[i].streamId;
     }
     if (hasInputBuf) {
         allBufs[numOutputBufs] = request.inputBuffer.buffer.getNativeHandle();
+        allBufPtrs[numOutputBufs] = &allBufs[numOutputBufs];
+        streamIds[numOutputBufs] = request.inputBuffer.streamId;
     }
+
     for (size_t i = 0; i < numBufs; i++) {
         buffer_handle_t buf = allBufs[i];
-        sHandleImporter.importBuffer(buf);
-        if (buf == nullptr) {
-            ALOGE("%s: output buffer %zu is invalid!", __FUNCTION__, i);
-            cleanupInflightBufferFences(allBufs, i, allFences, 0);
-            return Status::INTERNAL_ERROR;
-        } else {
-            allBufs[i] = buf;
+        CirculatingBuffers& cbs = mCirculatingBuffers[streamIds[i]];
+        if (cbs.count(buf) == 0) {
+            // Register a newly seen buffer
+            buffer_handle_t importedBuf = buf;
+            sHandleImporter.importBuffer(importedBuf);
+            if (importedBuf == nullptr) {
+                ALOGE("%s: output buffer %zu is invalid!", __FUNCTION__, i);
+                return Status::INTERNAL_ERROR;
+            } else {
+                cbs[buf] = importedBuf;
+            }
         }
+        allBufPtrs[i] = &cbs[buf];
     }
 
     // All buffers are imported. Now validate output buffer acquire fences
@@ -325,7 +347,7 @@ Status CameraDeviceSession::importRequest(
         if (!sHandleImporter.importFence(
                 request.outputBuffers[i].acquireFence, allFences[i])) {
             ALOGE("%s: output buffer %zu acquire fence is invalid", __FUNCTION__, i);
-            cleanupInflightBufferFences(allBufs, numBufs, allFences, i);
+            cleanupInflightFences(allFences, i);
             return Status::INTERNAL_ERROR;
         }
     }
@@ -335,19 +357,15 @@ Status CameraDeviceSession::importRequest(
         if (!sHandleImporter.importFence(
                 request.inputBuffer.acquireFence, allFences[numOutputBufs])) {
             ALOGE("%s: input buffer acquire fence is invalid", __FUNCTION__);
-            cleanupInflightBufferFences(allBufs, numBufs, allFences, numOutputBufs);
+            cleanupInflightFences(allFences, numOutputBufs);
             return Status::INTERNAL_ERROR;
         }
     }
     return Status::OK;
 }
 
-void CameraDeviceSession::cleanupInflightBufferFences(
-        hidl_vec<buffer_handle_t>& allBufs, size_t numBufs,
+void CameraDeviceSession::cleanupInflightFences(
         hidl_vec<int>& allFences, size_t numFences) {
-    for (size_t j = 0; j < numBufs; j++) {
-        sHandleImporter.freeBuffer(allBufs[j]);
-    }
     for (size_t j = 0; j < numFences; j++) {
         sHandleImporter.closeFence(allFences[j]);
     }
@@ -378,13 +396,20 @@ Return<void> CameraDeviceSession::constructDefaultRequestSettings(
 Return<void> CameraDeviceSession::configureStreams(
         const StreamConfiguration& requestedConfiguration, configureStreams_cb _hidl_cb)  {
     Status status = initStatus();
+    HalStreamConfiguration outStreams;
+
+    // hold the inflight lock for entire configureStreams scope since there must not be any
+    // inflight request/results during stream configuration.
+    Mutex::Autolock _l(mInflightLock);
     if (!mInflightBuffers.empty()) {
         ALOGE("%s: trying to configureStreams while there are still %zu inflight buffers!",
                 __FUNCTION__, mInflightBuffers.size());
-        status = Status::INTERNAL_ERROR;
+        _hidl_cb(Status::INTERNAL_ERROR, outStreams);
+        return Void();
     }
 
-    HalStreamConfiguration outStreams;
+
+
     if (status == Status::OK) {
         camera3_stream_configuration_t stream_list;
         hidl_vec<camera3_stream_t*> streams;
@@ -394,17 +419,61 @@ Return<void> CameraDeviceSession::configureStreams(
         streams.resize(stream_list.num_streams);
         stream_list.streams = streams.data();
 
-        mStreamMap.clear();
         for (uint32_t i = 0; i < stream_list.num_streams; i++) {
-            Camera3Stream stream;
-            convertFromHidl(requestedConfiguration.streams[i], &stream);
-            mStreamMap[stream.mId] = stream;
-            streams[i] = &mStreamMap[stream.mId];
+            int id = requestedConfiguration.streams[i].id;
+
+            if (mStreamMap.count(id) == 0) {
+                Camera3Stream stream;
+                convertFromHidl(requestedConfiguration.streams[i], &stream);
+                mStreamMap[id] = stream;
+                mCirculatingBuffers.emplace(stream.mId, CirculatingBuffers{});
+            } else {
+                // width/height/format must not change, but usage/rotation might need to change
+                if (mStreamMap[id].stream_type !=
+                        (int) requestedConfiguration.streams[i].streamType ||
+                        mStreamMap[id].width != requestedConfiguration.streams[i].width ||
+                        mStreamMap[id].height != requestedConfiguration.streams[i].height ||
+                        mStreamMap[id].format != (int) requestedConfiguration.streams[i].format ||
+                        mStreamMap[id].data_space != (android_dataspace_t)
+                                requestedConfiguration.streams[i].dataSpace) {
+                    ALOGE("%s: stream %d configuration changed!", __FUNCTION__, id);
+                    _hidl_cb(Status::INTERNAL_ERROR, outStreams);
+                    return Void();
+                }
+                mStreamMap[id].rotation = (int) requestedConfiguration.streams[i].rotation;
+                mStreamMap[id].usage = (uint32_t) requestedConfiguration.streams[i].usage;
+            }
+            streams[i] = &mStreamMap[id];
         }
 
         ATRACE_BEGIN("camera3->configure_streams");
         status_t ret = mDevice->ops->configure_streams(mDevice, &stream_list);
         ATRACE_END();
+
+        // delete unused streams, note we do this after adding new streams to ensure new stream
+        // will not have the same address as deleted stream, and HAL has a chance to reference
+        // the to be deleted stream in configure_streams call
+        for(auto it = mStreamMap.begin(); it != mStreamMap.end();) {
+            int id = it->first;
+            bool found = false;
+            for (const auto& stream : requestedConfiguration.streams) {
+                if (id == stream.id) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                // Unmap all buffers of deleted stream
+                for (auto& pair : mCirculatingBuffers.at(id)) {
+                    sHandleImporter.freeBuffer(pair.second);
+                }
+                mCirculatingBuffers[id].clear();
+                mCirculatingBuffers.erase(id);
+                it = mStreamMap.erase(it);
+            } else {
+                ++it;
+            }
+        }
 
         if (ret == -EINVAL) {
             status = Status::ILLEGAL_ARGUMENT;
@@ -434,57 +503,55 @@ Return<Status> CameraDeviceSession::processCaptureRequest(const CaptureRequest& 
         return Status::INTERNAL_ERROR;
     }
 
-    hidl_vec<buffer_handle_t> allBufs;
+    hidl_vec<buffer_handle_t*> allBufPtrs;
     hidl_vec<int> allFences;
     bool hasInputBuf = (request.inputBuffer.streamId != -1 &&
-            request.inputBuffer.buffer.getNativeHandle() == nullptr);
+            request.inputBuffer.buffer.getNativeHandle() != nullptr);
     size_t numOutputBufs = request.outputBuffers.size();
     size_t numBufs = numOutputBufs + (hasInputBuf ? 1 : 0);
-    status = importRequest(request, allBufs, allFences);
+    status = importRequest(request, allBufPtrs, allFences);
     if (status != Status::OK) {
         return status;
     }
 
-    if (hasInputBuf) {
-        auto key = std::make_pair(request.inputBuffer.streamId, request.frameNumber);
-        auto& bufCache = mInflightBuffers[key] = StreamBufferCache{};
-        // The last parameter (&bufCache) must be in heap, or we will
-        // send a pointer pointing to stack memory to HAL and later HAL will break
-        // when trying to accessing it after this call returned.
-        convertFromHidl(
-                allBufs[numOutputBufs], request.inputBuffer.status,
-                &mStreamMap[request.inputBuffer.streamId], allFences[numOutputBufs],
-                &bufCache);
-        halRequest.input_buffer = &(bufCache.mStreamBuffer);
-    } else {
-        halRequest.input_buffer = nullptr;
-    }
-
-    halRequest.num_output_buffers = numOutputBufs;
     hidl_vec<camera3_stream_buffer_t> outHalBufs;
     outHalBufs.resize(numOutputBufs);
-    for (size_t i = 0; i < numOutputBufs; i++) {
-        auto key = std::make_pair(request.outputBuffers[i].streamId, request.frameNumber);
-        auto& bufCache = mInflightBuffers[key] = StreamBufferCache{};
-        // The last parameter (&bufCache) must be in heap, or we will
-        // send a pointer pointing to stack memory to HAL and later HAL will break
-        // when trying to accessing it after this call returned.
-        convertFromHidl(
-                allBufs[i], request.outputBuffers[i].status,
-                &mStreamMap[request.outputBuffers[i].streamId], allFences[i],
-                &bufCache);
-        outHalBufs[i] = bufCache.mStreamBuffer;
+    {
+        Mutex::Autolock _l(mInflightLock);
+        if (hasInputBuf) {
+            auto key = std::make_pair(request.inputBuffer.streamId, request.frameNumber);
+            auto& bufCache = mInflightBuffers[key] = camera3_stream_buffer_t{};
+            convertFromHidl(
+                    allBufPtrs[numOutputBufs], request.inputBuffer.status,
+                    &mStreamMap[request.inputBuffer.streamId], allFences[numOutputBufs],
+                    &bufCache);
+            halRequest.input_buffer = &bufCache;
+        } else {
+            halRequest.input_buffer = nullptr;
+        }
+
+        halRequest.num_output_buffers = numOutputBufs;
+        for (size_t i = 0; i < numOutputBufs; i++) {
+            auto key = std::make_pair(request.outputBuffers[i].streamId, request.frameNumber);
+            auto& bufCache = mInflightBuffers[key] = camera3_stream_buffer_t{};
+            convertFromHidl(
+                    allBufPtrs[i], request.outputBuffers[i].status,
+                    &mStreamMap[request.outputBuffers[i].streamId], allFences[i],
+                    &bufCache);
+            outHalBufs[i] = bufCache;
+        }
+        halRequest.output_buffers = outHalBufs.data();
     }
-    halRequest.output_buffers = outHalBufs.data();
 
     ATRACE_ASYNC_BEGIN("frame capture", request.frameNumber);
     ATRACE_BEGIN("camera3->process_capture_request");
     status_t ret = mDevice->ops->process_capture_request(mDevice, &halRequest);
     ATRACE_END();
     if (ret != OK) {
+        Mutex::Autolock _l(mInflightLock);
         ALOGE("%s: HAL process_capture_request call failed!", __FUNCTION__);
 
-        cleanupInflightBufferFences(allBufs, numBufs, allFences, numBufs);
+        cleanupInflightFences(allFences, numBufs);
         if (hasInputBuf) {
             auto key = std::make_pair(request.inputBuffer.streamId, request.frameNumber);
             mInflightBuffers.erase(key);
@@ -514,9 +581,26 @@ Return<Status> CameraDeviceSession::flush()  {
 Return<void> CameraDeviceSession::close()  {
     Mutex::Autolock _l(mStateLock);
     if (!mClosed) {
+        {
+            Mutex::Autolock _l(mInflightLock);
+            if (!mInflightBuffers.empty()) {
+                ALOGE("%s: trying to close while there are still %zu inflight buffers!",
+                        __FUNCTION__, mInflightBuffers.size());
+            }
+        }
+
         ATRACE_BEGIN("camera3->close");
         mDevice->common.close(&mDevice->common);
         ATRACE_END();
+
+        // free all imported buffers
+        for(auto& pair : mCirculatingBuffers) {
+            CirculatingBuffers& buffers = pair.second;
+            for (auto& p2 : buffers) {
+                sHandleImporter.freeBuffer(p2.second);
+            }
+        }
+
         mClosed = true;
     }
     return Void();
@@ -536,25 +620,28 @@ void CameraDeviceSession::sProcessCaptureResult(
     size_t numOutputBufs = hal_result->num_output_buffers;
     size_t numBufs = numOutputBufs + (hasInputBuf ? 1 : 0);
     Status status = Status::OK;
-    if (hasInputBuf) {
-        int streamId = static_cast<Camera3Stream*>(hal_result->input_buffer->stream)->mId;
-        // validate if buffer is inflight
-        auto key = std::make_pair(streamId, frameNumber);
-        if (d->mInflightBuffers.count(key) != 1) {
-            ALOGE("%s: input buffer for stream %d frame %d is not inflight!",
-                    __FUNCTION__, streamId, frameNumber);
-            return;
+    {
+        Mutex::Autolock _l(d->mInflightLock);
+        if (hasInputBuf) {
+            int streamId = static_cast<Camera3Stream*>(hal_result->input_buffer->stream)->mId;
+            // validate if buffer is inflight
+            auto key = std::make_pair(streamId, frameNumber);
+            if (d->mInflightBuffers.count(key) != 1) {
+                ALOGE("%s: input buffer for stream %d frame %d is not inflight!",
+                        __FUNCTION__, streamId, frameNumber);
+                return;
+            }
         }
-    }
 
-    for (size_t i = 0; i < numOutputBufs; i++) {
-        int streamId = static_cast<Camera3Stream*>(hal_result->output_buffers[i].stream)->mId;
-        // validate if buffer is inflight
-        auto key = std::make_pair(streamId, frameNumber);
-        if (d->mInflightBuffers.count(key) != 1) {
-            ALOGE("%s: output buffer for stream %d frame %d is not inflight!",
-                    __FUNCTION__, streamId, frameNumber);
-            return;
+        for (size_t i = 0; i < numOutputBufs; i++) {
+            int streamId = static_cast<Camera3Stream*>(hal_result->output_buffers[i].stream)->mId;
+            // validate if buffer is inflight
+            auto key = std::make_pair(streamId, frameNumber);
+            if (d->mInflightBuffers.count(key) != 1) {
+                ALOGE("%s: output buffer for stream %d frame %d is not inflight!",
+                        __FUNCTION__, streamId, frameNumber);
+                return;
+            }
         }
     }
     // We don't need to validate/import fences here since we will be passing them to camera service
@@ -576,6 +663,8 @@ void CameraDeviceSession::sProcessCaptureResult(
             releaseFences[numOutputBufs] = native_handle_create(/*numFds*/1, /*numInts*/0);
             releaseFences[numOutputBufs]->data[0] = hal_result->input_buffer->release_fence;
             result.inputBuffer.releaseFence = releaseFences[numOutputBufs];
+        } else {
+            releaseFences[numOutputBufs] = nullptr;
         }
     } else {
         result.inputBuffer.streamId = -1;
@@ -592,33 +681,42 @@ void CameraDeviceSession::sProcessCaptureResult(
             releaseFences[i] = native_handle_create(/*numFds*/1, /*numInts*/0);
             releaseFences[i]->data[0] = hal_result->output_buffers[i].release_fence;
             result.outputBuffers[i].releaseFence = releaseFences[i];
+        } else {
+            releaseFences[i] = nullptr;
+        }
+    }
+
+    // Free inflight record/fences.
+    // Do this before call back to camera service because camera service might jump to
+    // configure_streams right after the processCaptureResult call so we need to finish
+    // updating inflight queues first
+    {
+        Mutex::Autolock _l(d->mInflightLock);
+        if (hasInputBuf) {
+            int streamId = static_cast<Camera3Stream*>(hal_result->input_buffer->stream)->mId;
+            auto key = std::make_pair(streamId, frameNumber);
+            sHandleImporter.closeFence(d->mInflightBuffers[key].acquire_fence);
+            d->mInflightBuffers.erase(key);
+        }
+
+        for (size_t i = 0; i < numOutputBufs; i++) {
+            int streamId = static_cast<Camera3Stream*>(hal_result->output_buffers[i].stream)->mId;
+            auto key = std::make_pair(streamId, frameNumber);
+            sHandleImporter.closeFence(d->mInflightBuffers[key].acquire_fence);
+            d->mInflightBuffers.erase(key);
+        }
+
+        if (d->mInflightBuffers.empty()) {
+            ALOGV("%s: inflight buffer queue is now empty!", __FUNCTION__);
         }
     }
 
     d->mCallback->processCaptureResult(result);
 
-    // Free cached buffer/fences.
-    if (hasInputBuf) {
-        int streamId = static_cast<Camera3Stream*>(hal_result->input_buffer->stream)->mId;
-        auto key = std::make_pair(streamId, frameNumber);
-        sHandleImporter.closeFence(d->mInflightBuffers[key].mStreamBuffer.acquire_fence);
-        sHandleImporter.freeBuffer(d->mInflightBuffers[key].mBuffer);
-        d->mInflightBuffers.erase(key);
-    }
-
-    for (size_t i = 0; i < numOutputBufs; i++) {
-        int streamId = static_cast<Camera3Stream*>(hal_result->output_buffers[i].stream)->mId;
-        auto key = std::make_pair(streamId, frameNumber);
-        sHandleImporter.closeFence(d->mInflightBuffers[key].mStreamBuffer.acquire_fence);
-        sHandleImporter.freeBuffer(d->mInflightBuffers[key].mBuffer);
-        d->mInflightBuffers.erase(key);
-    }
-
     for (size_t i = 0; i < releaseFences.size(); i++) {
         // We don't close the FD here as HAL needs to signal it later.
         native_handle_delete(releaseFences[i]);
     }
-
 }
 
 void CameraDeviceSession::sNotify(
@@ -628,7 +726,8 @@ void CameraDeviceSession::sNotify(
             const_cast<CameraDeviceSession*>(static_cast<const CameraDeviceSession*>(cb));
     NotifyMsg hidlMsg;
     convertToHidl(msg, &hidlMsg);
-    if (hidlMsg.type == (MsgType) CAMERA3_MSG_ERROR) {
+    if (hidlMsg.type == (MsgType) CAMERA3_MSG_ERROR &&
+            hidlMsg.msg.error.errorStreamId != -1) {
         if (d->mStreamMap.count(hidlMsg.msg.error.errorStreamId) != 1) {
             ALOGE("%s: unknown stream ID %d reports an error!",
                     __FUNCTION__, hidlMsg.msg.error.errorStreamId);

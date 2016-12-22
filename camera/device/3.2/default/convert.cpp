@@ -50,6 +50,9 @@ bool convertFromHidl(const CameraMetadata &src, const camera_metadata_t** dst) {
 
 // Note: existing data in dst will be gone. Caller still owns the memory of src
 void convertToHidl(const camera_metadata_t *src, CameraMetadata* dst) {
+    if (src == nullptr) {
+        return;
+    }
     size_t size = get_camera_metadata_size(src);
     dst->setToExternal((uint8_t *) src, size);
     return;
@@ -97,27 +100,29 @@ void convertToHidl(const camera3_stream_configuration_t& src, HalStreamConfigura
 }
 
 void convertFromHidl(
-        buffer_handle_t bufIn, BufferStatus status, camera3_stream_t* stream, int acquireFence,
-        StreamBufferCache* dst) {
-    dst->mBuffer = bufIn;
-    dst->mStreamBuffer.stream = stream;
-    dst->mStreamBuffer.buffer = &dst->mBuffer;
-    dst->mStreamBuffer.status = (int) status;
-    dst->mStreamBuffer.acquire_fence = acquireFence;
-    dst->mStreamBuffer.release_fence = -1; // meant for HAL to fill in
+        buffer_handle_t* bufPtr, BufferStatus status, camera3_stream_t* stream, int acquireFence,
+        camera3_stream_buffer_t* dst) {
+    dst->stream = stream;
+    dst->buffer = bufPtr;
+    dst->status = (int) status;
+    dst->acquire_fence = acquireFence;
+    dst->release_fence = -1; // meant for HAL to fill in
 }
 
 void convertToHidl(const camera3_notify_msg* src, NotifyMsg* dst) {
     dst->type = (MsgType) src->type;
     switch (src->type) {
         case CAMERA3_MSG_ERROR:
-            dst->msg.error.frameNumber = src->message.error.frame_number;
-            // The camera3_stream_t* must be the same as what wrapper HAL passed to conventional
-            // HAL, or the ID lookup will return garbage. Caller should validate the ID here is
-            // indeed one of active stream IDs
-            dst->msg.error.errorStreamId =
-                    static_cast<Camera3Stream*>(src->message.error.error_stream)->mId;
-            dst->msg.error.errorCode = (ErrorCode) src->message.error.error_code;
+            {
+                // The camera3_stream_t* must be the same as what wrapper HAL passed to conventional
+                // HAL, or the ID lookup will return garbage. Caller should validate the ID here is
+                // indeed one of active stream IDs
+                Camera3Stream* stream = static_cast<Camera3Stream*>(
+                        src->message.error.error_stream);
+                dst->msg.error.frameNumber = src->message.error.frame_number;
+                dst->msg.error.errorStreamId = (stream != nullptr) ? stream->mId : -1;
+                dst->msg.error.errorCode = (ErrorCode) src->message.error.error_code;
+            }
             break;
         case CAMERA3_MSG_SHUTTER:
             dst->msg.shutter.frameNumber = src->message.shutter.frame_number;

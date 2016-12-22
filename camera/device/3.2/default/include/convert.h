@@ -32,16 +32,6 @@ namespace device {
 namespace V3_2 {
 namespace implementation {
 
-// Cacheing the buffer/fence from camera service so HAL can reference the pointer after the
-// processCaptureRequest call has returned.
-// Remove the cache when:
-//     1. HAL API call failed, or
-//     2. HAL returns the buffer and the callback to camera service has returned
-struct StreamBufferCache {
-    buffer_handle_t mBuffer;
-    camera3_stream_buffer_t mStreamBuffer;
-};
-
 // The camera3_stream_t sent to conventional HAL. Added mId fields to enable stream ID lookup
 // fromt a downcasted camera3_stream
 struct Camera3Stream : public camera3_stream {
@@ -55,14 +45,9 @@ void convertToHidl(const camera_metadata_t* src, CameraMetadata* dst);
 void convertFromHidl(const Stream &src, Camera3Stream* dst);
 void convertToHidl(const Camera3Stream* src, HalStream* dst);
 
-// dst->mStreamBuffer.buffer will be pointing to dst->mBuffer.
-// Most likely dst will be passed to HAL and HAL will try to access mStreamBuffer.buffer
-// after the API call returns. In that case caller must not use a local variable
-// within the scope of the API call to hold dst, because then dst->mStreamBuffer.buffer will be
-// invalid after the API call returns.
 void convertFromHidl(
-        buffer_handle_t, BufferStatus, camera3_stream_t*, int acquireFence, // inputs
-        StreamBufferCache* dst);
+        buffer_handle_t*, BufferStatus, camera3_stream_t*, int acquireFence, // inputs
+        camera3_stream_buffer_t* dst);
 
 void convertToHidl(const camera3_stream_configuration_t& src, HalStreamConfiguration* dst);
 

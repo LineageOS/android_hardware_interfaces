@@ -78,8 +78,8 @@ class CameraHidlEnvironment : public ::testing::Environment {
 public:
     // get the test environment singleton
     static CameraHidlEnvironment* Instance() {
-      static CameraHidlEnvironment* instance = new CameraHidlEnvironment;
-      return instance;
+        static CameraHidlEnvironment* instance = new CameraHidlEnvironment;
+        return instance;
     }
 
     virtual void SetUp() override;

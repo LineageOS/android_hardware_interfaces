@@ -61,8 +61,12 @@ struct CameraProvider : public ICameraProvider, public camera_module_callbacks_t
     Return<void> getVendorTags(getVendorTags_cb _hidl_cb) override;
     Return<void> getCameraIdList(getCameraIdList_cb _hidl_cb) override;
     Return<void> isSetTorchModeSupported(isSetTorchModeSupported_cb _hidl_cb) override;
-    Return<void> getCameraDeviceInterface_V1_x(const hidl_string& cameraDeviceName, getCameraDeviceInterface_V1_x_cb _hidl_cb) override;
-    Return<void> getCameraDeviceInterface_V3_x(const hidl_string& cameraDeviceName, getCameraDeviceInterface_V3_x_cb _hidl_cb) override;
+    Return<void> getCameraDeviceInterface_V1_x(
+            const hidl_string& cameraDeviceName,
+            getCameraDeviceInterface_V1_x_cb _hidl_cb) override;
+    Return<void> getCameraDeviceInterface_V3_x(
+            const hidl_string& cameraDeviceName,
+            getCameraDeviceInterface_V3_x_cb _hidl_cb) override;
 
 private:
     Mutex mCbLock;

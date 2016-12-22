@@ -212,7 +212,7 @@ Return<void> CameraDevice::open(const sp<ICameraDeviceCallback>& callback, open_
         if (res != OK) {
             ALOGE("%s: cannot open camera %s!", __FUNCTION__, mCameraId.c_str());
             mLock.unlock();
-            _hidl_cb(Status::INTERNAL_ERROR, nullptr);
+            _hidl_cb(getHidlStatus(res), nullptr);
             return Void();
         }
 
