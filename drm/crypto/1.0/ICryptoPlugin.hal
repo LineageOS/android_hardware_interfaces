@@ -49,7 +49,7 @@ interface ICryptoPlugin {
      *
      * @param sessionId the MediaDrm session ID to associate with this crypto
      * session
-     * @return the status of the call, status must be
+     * @return status the status of the call, status must be
      * ERROR_DRM_SESSION_NOT_OPENED if the session is not opened, or
      * ERROR_DRM_CANNOT_HANDLE if the operation is not supported by the drm
      * scheme.

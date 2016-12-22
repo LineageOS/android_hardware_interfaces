@@ -46,11 +46,4 @@ interface ICryptoFactory {
      */
     createPlugin(uint8_t[16] uuid, vec<uint8_t> initData)
         generates (Status status, ICryptoPlugin cryptoPlugin);
-
-    /**
-     * Destroy a previously created crypto plugin
-     *
-     * @return status the status of the call
-     */
-    destroyPlugin() generates(Status status);
 };

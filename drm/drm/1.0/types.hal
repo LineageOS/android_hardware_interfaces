@@ -161,6 +161,11 @@ enum KeyRequestType : uint32_t {
      * to become available for streaming.
      */
     RELEASE,
+
+    /**
+     * Key request type is unknown due to some error condition.
+     */
+    UNKNOWN,
 };
 
 /**
