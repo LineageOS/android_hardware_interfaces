@@ -25,6 +25,7 @@
             _64bit::DATA/nativetest64/sensors_hidl_hal_test/sensors_hidl_hal_test,
             "/>
         <option name="binary-test-type" value="gtest" />
+        <option name="binary-test-disable-framework" value="true" />
         <option name="test-timeout" value="10m" />
     </test>
 </configuration>
