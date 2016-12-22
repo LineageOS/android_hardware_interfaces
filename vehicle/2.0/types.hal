@@ -1614,6 +1614,20 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:BOOLEAN
         | VehicleArea:GLOBAL),
+
+    /*
+     * Vehicle Maps Data Service
+     *
+     * A VMDS message.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    VEHICLE_MAPS_DATA_SERVICE = (
+        0x0C00
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:BYTES
+        | VehicleArea:GLOBAL),
 };
 
 /*
