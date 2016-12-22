@@ -16,38 +16,4 @@
 
 LOCAL_PATH := $(call my-dir)
 
-# build profiler for sensors.
-include $(CLEAR_VARS)
-
-LOCAL_MODULE := libvts_profiler_hidl_sensors@1.0
-
-LOCAL_SRC_FILES := \
-  Sensors.vts \
-  types.vts \
-
-LOCAL_C_INCLUDES += \
-  test/vts/drivers/libprofiling \
-
-LOCAL_VTS_MODE := PROFILER
-
-LOCAL_SHARED_LIBRARIES := \
-   android.hardware.sensors@1.0 \
-   libbase \
-   libutils \
-   libcutils \
-   liblog \
-   libhidlbase \
-   libhidltransport \
-   libhwbinder \
-   libprotobuf-cpp-full \
-   libvts_common \
-   libvts_multidevice_proto \
-   libvts_profiling \
-
-LOCAL_PROTOC_OPTIMIZE_TYPE := full
-
-include $(BUILD_SHARED_LIBRARY)
-
-# include hidl test makefiles
-include $(LOCAL_PATH)/functional/vts/testcases/hal/sensors/hidl/Android.mk
-
+include $(call all-subdir-makefiles)

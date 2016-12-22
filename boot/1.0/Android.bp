@@ -112,3 +112,48 @@ cc_library_shared {
         "android.hidl.base@1.0",
     ],
 }
+
+genrule {
+    name: "android.hardware.boot@1.0-IBootControl-vts.profiler_genc++",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.boot@1.0 && $(location vtsc) -mPROFILER -tSOURCE -b$(genDir) android/hardware/boot/1.0/ $(genDir)/android/hardware/boot/1.0/",
+    srcs: [
+        "IBootControl.hal",
+        "types.hal",
+    ],
+    out: [
+        "android/hardware/boot/1.0/BootControl.vts.cpp",
+        "android/hardware/boot/1.0/types.vts.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.boot@1.0-IBootControl-vts.profiler_genc++_headers",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.boot@1.0 && $(location vtsc) -mPROFILER -tHEADER -b$(genDir) android/hardware/boot/1.0/ $(genDir)/android/hardware/boot/1.0/",
+    srcs: [
+        "IBootControl.hal",
+        "types.hal",
+    ],
+    out: [
+        "android/hardware/boot/1.0/BootControl.vts.h",
+        "android/hardware/boot/1.0/types.vts.h",
+    ],
+}
+
+cc_library_shared {
+    name: "android.hardware.boot@1.0-IBootControl-vts.profiler",
+    generated_sources: ["android.hardware.boot@1.0-IBootControl-vts.profiler_genc++"],
+    generated_headers: ["android.hardware.boot@1.0-IBootControl-vts.profiler_genc++_headers"],
+    export_generated_headers: ["android.hardware.boot@1.0-IBootControl-vts.profiler_genc++_headers"],
+    shared_libs: [
+        "libbase",
+        "libhidlbase",
+        "libhidltransport",
+        "libvts_profiling",
+        "libvts_multidevice_proto",
+        "libprotobuf-cpp-full",
+        "android.hidl.base@1.0",
+        "android.hardware.boot@1.0",
+    ],
+}

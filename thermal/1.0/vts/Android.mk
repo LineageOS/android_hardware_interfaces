@@ -16,36 +16,4 @@
 
 LOCAL_PATH := $(call my-dir)
 
-# build profiler for thermal.
-include $(CLEAR_VARS)
-
-LOCAL_MODULE := libvts_profiler_hidl_thermal@1.0
-
-LOCAL_SRC_FILES := \
-   Thermal.vts \
-   types.vts \
-
-LOCAL_C_INCLUDES += \
-  test/vts/drivers/libprofiling \
-
-LOCAL_VTS_MODE := PROFILER
-
-LOCAL_SHARED_LIBRARIES := \
-   android.hardware.thermal@1.0 \
-   libbase \
-   libcutils \
-   liblog \
-   libhidlbase \
-   libhidltransport \
-   libhwbinder \
-   libprotobuf-cpp-full \
-   libvts_common \
-   libvts_multidevice_proto \
-   libvts_profiling \
-   libutils \
-
-LOCAL_PROTOC_OPTIMIZE_TYPE := full
-
-include $(BUILD_SHARED_LIBRARY)
-
-include $(call all-makefiles-under,$(LOCAL_PATH))
+include $(call all-subdir-makefiles)
