@@ -67,6 +67,14 @@ public:
                     pValue = getValuePool()->obtainFloat(42.42);
                 }
                 break;
+            case VehicleProperty::VEHICLE_MAPS_DATA_SERVICE:
+                pValue = getValuePool()->obtainComplex();
+                pValue->value.int32Values = hidl_vec<int32_t> { 10, 20 };
+                pValue->value.int64Values = hidl_vec<int64_t> { 30, 40 };
+                pValue->value.floatValues = hidl_vec<float_t> { 1.1, 2.2 };
+                pValue->value.bytes = hidl_vec<uint8_t> { 1, 2, 3 };
+                pValue->value.stringValue = kCarMake;
+                break;
             default:
                 auto key = makeKey(property, areaId);
                 if (mValues.count(key) == 0) {
@@ -306,6 +314,32 @@ TEST_F(VehicleHalManagerTest, subscribe_WriteOnly) {
     res = manager->subscribe(cb, options);
     // OK to subscribe on SET method call for write-only properties.
     ASSERT_EQ(StatusCode::OK, res);
+}
+
+TEST_F(VehicleHalManagerTest, get_Complex) {
+    invokeGet(VehicleProperty::VEHICLE_MAPS_DATA_SERVICE, 0);
+
+    ASSERT_EQ(StatusCode::OK, actualStatusCode);
+    ASSERT_EQ(VehicleProperty::VEHICLE_MAPS_DATA_SERVICE, actualValue.prop);
+
+    ASSERT_EQ(3, actualValue.value.bytes.size());
+    ASSERT_EQ(1, actualValue.value.bytes[0]);
+    ASSERT_EQ(2, actualValue.value.bytes[1]);
+    ASSERT_EQ(3, actualValue.value.bytes[2]);
+
+    ASSERT_EQ(2, actualValue.value.int32Values.size());
+    ASSERT_EQ(10, actualValue.value.int32Values[0]);
+    ASSERT_EQ(20, actualValue.value.int32Values[1]);
+
+    ASSERT_EQ(2, actualValue.value.floatValues.size());
+    ASSERT_FLOAT_EQ(1.1, actualValue.value.floatValues[0]);
+    ASSERT_FLOAT_EQ(2.2, actualValue.value.floatValues[1]);
+
+    ASSERT_EQ(2, actualValue.value.int64Values.size());
+    ASSERT_FLOAT_EQ(30, actualValue.value.int64Values[0]);
+    ASSERT_FLOAT_EQ(40, actualValue.value.int64Values[1]);
+
+    ASSERT_STREQ(kCarMake, actualValue.value.stringValue.c_str());
 }
 
 TEST_F(VehicleHalManagerTest, get_StaticString) {
