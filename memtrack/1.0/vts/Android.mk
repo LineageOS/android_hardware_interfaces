@@ -48,3 +48,4 @@ LOCAL_PROTOC_OPTIMIZE_TYPE := full
 
 include $(BUILD_SHARED_LIBRARY)
 
+include $(LOCAL_PATH)/functional/vts/testcases/hal/memtrack/hidl/target/Android.mk
