@@ -305,6 +305,40 @@ TEST_F(BroadcastRadioHidlTest, OpenTuner) {
 }
 
 /**
+ * Test IBroadcastRadio::openTuner() after ITuner disposal.
+ *
+ * Verifies that:
+ *  - ITuner destruction gets propagated through HAL
+ *  - the openTuner method works well when called for the second time
+ */
+TEST_F(BroadcastRadioHidlTest, ReopenTuner) {
+    EXPECT_TRUE(openTuner());
+    mTuner.clear();
+    EXPECT_TRUE(openTuner());
+}
+
+/**
+ * Test IBroadcastRadio::openTuner() method called twice.
+ *
+ * Verifies that:
+ *  - the openTuner method fails when called for the second time without deleting previous
+ *    ITuner instance
+ */
+TEST_F(BroadcastRadioHidlTest, OpenTunerTwice) {
+    EXPECT_TRUE(openTuner());
+
+    Result halResult = Result::NOT_INITIALIZED;
+    Return<void> hidlReturn =
+            mRadio->openTuner(mHalProperties.bands[0], true, mTunerCallback,
+                              [&](Result result, const sp<ITuner>&) {
+                    halResult = result;
+                });
+    EXPECT_TRUE(hidlReturn.isOk());
+    EXPECT_EQ(Result::INVALID_STATE, halResult);
+    EXPECT_TRUE(waitForCallback(kConfigCallbacktimeoutNs));
+}
+
+/**
  * Test ITuner::setConfiguration() and getConfiguration methods
  *
  * Verifies that:
