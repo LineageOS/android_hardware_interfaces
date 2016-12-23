@@ -47,6 +47,7 @@ std::unique_ptr<VehiclePropValue> createVehiclePropValue(
             val->value.bytes.resize(vecSize);
             break;
         case VehiclePropertyType::STRING:
+        case VehiclePropertyType::COMPLEX:
             break; // Valid, but nothing to do.
         default:
             ALOGE("createVehiclePropValue: unknown type: %d", type);

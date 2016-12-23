@@ -31,6 +31,12 @@ enum VehiclePropertyType : int32_t {
     FLOAT_VEC      = 0x00610000,
     BYTES          = 0x00700000,
 
+    /*
+     * Any combination of scalar or vector types. The exact format must be
+     * provided in the description of the property.
+     */
+    COMPLEX        = 0x00e00000,
+
     MASK           = 0x00ff0000
 };
 
@@ -1628,9 +1634,7 @@ enum VehicleProperty: int32_t {
         | VehicleArea:GLOBAL),
 
     /*
-     * Vehicle Maps Data Service
-     *
-     * A VMDS message.
+     * Vehicle Maps Data Service (VMDS) message
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
@@ -1638,7 +1642,7 @@ enum VehicleProperty: int32_t {
     VEHICLE_MAPS_DATA_SERVICE = (
         0x0C00
         | VehiclePropertyGroup:SYSTEM
-        | VehiclePropertyType:BYTES
+        | VehiclePropertyType:COMPLEX
         | VehicleArea:GLOBAL),
 };
 

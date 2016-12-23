@@ -80,6 +80,10 @@ VehiclePropValuePool::RecyclableType VehiclePropValuePool::obtainString(
     return val;
 }
 
+VehiclePropValuePool::RecyclableType VehiclePropValuePool::obtainComplex() {
+    return obtain(VehiclePropertyType::COMPLEX);
+}
+
 VehiclePropValuePool::RecyclableType VehiclePropValuePool::obtainRecylable(
         VehiclePropertyType type, size_t vecSize) {
     // VehiclePropertyType is not overlapping with vectorSize.

@@ -184,13 +184,15 @@ public:
     RecyclableType obtainInt64(int64_t value);
     RecyclableType obtainFloat(float value);
     RecyclableType obtainString(const char* cstr);
+    RecyclableType obtainComplex();
 
     VehiclePropValuePool(VehiclePropValuePool& ) = delete;
     VehiclePropValuePool& operator=(VehiclePropValuePool&) = delete;
 private:
     bool isDisposable(VehiclePropertyType type, size_t vecSize) const {
         return vecSize > mMaxRecyclableVectorSize ||
-               VehiclePropertyType::STRING == type;
+               VehiclePropertyType::STRING == type ||
+               VehiclePropertyType::COMPLEX == type;
     }
 
     RecyclableType obtainDisposable(VehiclePropertyType valueType,
