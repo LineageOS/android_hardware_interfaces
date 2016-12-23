@@ -112,3 +112,48 @@ cc_library_shared {
         "android.hidl.base@1.0",
     ],
 }
+
+genrule {
+    name: "android.hardware.power@1.0-IPower-vts.profiler_genc++",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.power@1.0 && $(location vtsc) -mPROFILER -tSOURCE -b$(genDir) android/hardware/power/1.0/ $(genDir)/android/hardware/power/1.0/",
+    srcs: [
+        "IPower.hal",
+        "types.hal",
+    ],
+    out: [
+        "android/hardware/power/1.0/Power.vts.cpp",
+        "android/hardware/power/1.0/types.vts.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.power@1.0-IPower-vts.profiler_genc++_headers",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.power@1.0 && $(location vtsc) -mPROFILER -tHEADER -b$(genDir) android/hardware/power/1.0/ $(genDir)/android/hardware/power/1.0/",
+    srcs: [
+        "IPower.hal",
+        "types.hal",
+    ],
+    out: [
+        "android/hardware/power/1.0/Power.vts.h",
+        "android/hardware/power/1.0/types.vts.h",
+    ],
+}
+
+cc_library_shared {
+    name: "android.hardware.power@1.0-IPower-vts.profiler",
+    generated_sources: ["android.hardware.power@1.0-IPower-vts.profiler_genc++"],
+    generated_headers: ["android.hardware.power@1.0-IPower-vts.profiler_genc++_headers"],
+    export_generated_headers: ["android.hardware.power@1.0-IPower-vts.profiler_genc++_headers"],
+    shared_libs: [
+        "libbase",
+        "libhidlbase",
+        "libhidltransport",
+        "libvts_profiling",
+        "libvts_multidevice_proto",
+        "libprotobuf-cpp-full",
+        "android.hidl.base@1.0",
+        "android.hardware.power@1.0",
+    ],
+}
