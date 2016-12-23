@@ -47,21 +47,21 @@ public:
 
     Error createDescriptor(
             const IAllocatorClient::BufferDescriptorInfo& descriptorInfo,
-            BufferDescriptor& outDescriptor);
+            BufferDescriptor* outDescriptor);
     Error destroyDescriptor(BufferDescriptor descriptor);
 
     Error testAllocate(const hidl_vec<BufferDescriptor>& descriptors);
     Error allocate(const hidl_vec<BufferDescriptor>& descriptors,
-            hidl_vec<Buffer>& outBuffers);
+            hidl_vec<Buffer>* outBuffers);
     Error free(Buffer buffer);
 
-    Error exportHandle(Buffer buffer, const native_handle_t*& outHandle);
+    Error exportHandle(Buffer buffer, const native_handle_t** outHandle);
 
 private:
     void initCapabilities();
 
     template<typename T>
-    void initDispatch(T& func, gralloc1_function_descriptor_t desc);
+    void initDispatch(gralloc1_function_descriptor_t desc, T* outPfn);
     void initDispatch();
 
     bool hasCapability(Capability capability) const;
@@ -143,35 +143,35 @@ void GrallocHal::initCapabilities()
 }
 
 template<typename T>
-void GrallocHal::initDispatch(T& func, gralloc1_function_descriptor_t desc)
+void GrallocHal::initDispatch(gralloc1_function_descriptor_t desc, T* outPfn)
 {
     auto pfn = mDevice->getFunction(mDevice, desc);
     if (!pfn) {
         LOG_ALWAYS_FATAL("failed to get gralloc1 function %d", desc);
     }
 
-    func = reinterpret_cast<T>(pfn);
+    *outPfn = reinterpret_cast<T>(pfn);
 }
 
 void GrallocHal::initDispatch()
 {
-    initDispatch(mDispatch.dump, GRALLOC1_FUNCTION_DUMP);
-    initDispatch(mDispatch.createDescriptor,
-            GRALLOC1_FUNCTION_CREATE_DESCRIPTOR);
-    initDispatch(mDispatch.destroyDescriptor,
-            GRALLOC1_FUNCTION_DESTROY_DESCRIPTOR);
-    initDispatch(mDispatch.setDimensions, GRALLOC1_FUNCTION_SET_DIMENSIONS);
-    initDispatch(mDispatch.setFormat, GRALLOC1_FUNCTION_SET_FORMAT);
+    initDispatch(GRALLOC1_FUNCTION_DUMP, &mDispatch.dump);
+    initDispatch(GRALLOC1_FUNCTION_CREATE_DESCRIPTOR,
+            &mDispatch.createDescriptor);
+    initDispatch(GRALLOC1_FUNCTION_DESTROY_DESCRIPTOR,
+            &mDispatch.destroyDescriptor);
+    initDispatch(GRALLOC1_FUNCTION_SET_DIMENSIONS, &mDispatch.setDimensions);
+    initDispatch(GRALLOC1_FUNCTION_SET_FORMAT, &mDispatch.setFormat);
     if (hasCapability(Capability::LAYERED_BUFFERS)) {
-        initDispatch(
-                mDispatch.setLayerCount, GRALLOC1_FUNCTION_SET_LAYER_COUNT);
+        initDispatch(GRALLOC1_FUNCTION_SET_LAYER_COUNT,
+                &mDispatch.setLayerCount);
     }
-    initDispatch(mDispatch.setConsumerUsage,
-            GRALLOC1_FUNCTION_SET_CONSUMER_USAGE);
-    initDispatch(mDispatch.setProducerUsage,
-            GRALLOC1_FUNCTION_SET_PRODUCER_USAGE);
-    initDispatch(mDispatch.allocate, GRALLOC1_FUNCTION_ALLOCATE);
-    initDispatch(mDispatch.release, GRALLOC1_FUNCTION_RELEASE);
+    initDispatch(GRALLOC1_FUNCTION_SET_CONSUMER_USAGE,
+            &mDispatch.setConsumerUsage);
+    initDispatch(GRALLOC1_FUNCTION_SET_PRODUCER_USAGE,
+            &mDispatch.setProducerUsage);
+    initDispatch(GRALLOC1_FUNCTION_ALLOCATE, &mDispatch.allocate);
+    initDispatch(GRALLOC1_FUNCTION_RELEASE, &mDispatch.release);
 }
 
 bool GrallocHal::hasCapability(Capability capability) const
@@ -218,7 +218,7 @@ Return<void> GrallocHal::createClient(createClient_cb hidl_cb)
 
 Error GrallocHal::createDescriptor(
         const IAllocatorClient::BufferDescriptorInfo& descriptorInfo,
-        BufferDescriptor& outDescriptor)
+        BufferDescriptor* outDescriptor)
 {
     gralloc1_buffer_descriptor_t descriptor;
     int32_t err = mDispatch.createDescriptor(mDevice, &descriptor);
@@ -261,7 +261,7 @@ Error GrallocHal::createDescriptor(
     }
 
     if (err == GRALLOC1_ERROR_NONE) {
-        outDescriptor = descriptor;
+        *outDescriptor = descriptor;
     } else {
         mDispatch.destroyDescriptor(mDevice, descriptor);
     }
@@ -287,15 +287,15 @@ Error GrallocHal::testAllocate(const hidl_vec<BufferDescriptor>& descriptors)
 }
 
 Error GrallocHal::allocate(const hidl_vec<BufferDescriptor>& descriptors,
-        hidl_vec<Buffer>& outBuffers)
+        hidl_vec<Buffer>* outBuffers)
 {
     std::vector<buffer_handle_t> buffers(descriptors.size());
     int32_t err = mDispatch.allocate(mDevice, descriptors.size(),
             descriptors.data(), buffers.data());
     if (err == GRALLOC1_ERROR_NONE || err == GRALLOC1_ERROR_NOT_SHARED) {
-        outBuffers.resize(buffers.size());
-        for (size_t i = 0; i < outBuffers.size(); i++) {
-            outBuffers[i] = static_cast<Buffer>(
+        outBuffers->resize(buffers.size());
+        for (size_t i = 0; i < outBuffers->size(); i++) {
+            (*outBuffers)[i] = static_cast<Buffer>(
                     reinterpret_cast<uintptr_t>(buffers[i]));
         }
     }
@@ -313,10 +313,10 @@ Error GrallocHal::free(Buffer buffer)
 }
 
 Error GrallocHal::exportHandle(Buffer buffer,
-        const native_handle_t*& outHandle)
+        const native_handle_t** outHandle)
 {
     // we rely on the caller to validate buffer here
-    outHandle = reinterpret_cast<buffer_handle_t>(
+    *outHandle = reinterpret_cast<buffer_handle_t>(
             static_cast<uintptr_t>(buffer));
     return Error::NONE;
 }
@@ -347,8 +347,8 @@ Return<void> GrallocClient::createDescriptor(
         const BufferDescriptorInfo& descriptorInfo,
         createDescriptor_cb hidl_cb)
 {
-    BufferDescriptor descriptor;
-    Error err = mHal.createDescriptor(descriptorInfo, descriptor);
+    BufferDescriptor descriptor = 0;
+    Error err = mHal.createDescriptor(descriptorInfo, &descriptor);
 
     if (err == Error::NONE) {
         std::lock_guard<std::mutex> lock(mMutex);
@@ -387,7 +387,7 @@ Return<void> GrallocClient::allocate(
         const hidl_vec<BufferDescriptor>& descriptors,
         allocate_cb hidl_cb) {
     hidl_vec<Buffer> buffers;
-    Error err = mHal.allocate(descriptors, buffers);
+    Error err = mHal.allocate(descriptors, &buffers);
 
     if (err == Error::NONE || err == Error::NOT_SHARED) {
         std::lock_guard<std::mutex> lock(mMutex);
@@ -440,14 +440,14 @@ Return<void> GrallocClient::exportHandle(BufferDescriptor /*descriptor*/,
         }
     }
 
-    Error err = mHal.exportHandle(buffer, handle);
+    Error err = mHal.exportHandle(buffer, &handle);
 
     hidl_cb(err, handle);
     return Void();
 }
 
 IAllocator* HIDL_FETCH_IAllocator(const char* /* name */) {
-    const hw_module_t* module;
+    const hw_module_t* module = nullptr;
     int err = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, &module);
     if (err) {
         ALOGE("failed to get gralloc module");

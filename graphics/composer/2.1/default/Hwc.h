@@ -58,26 +58,27 @@ public:
 
     uint32_t getMaxVirtualDisplayCount();
     Error createVirtualDisplay(uint32_t width, uint32_t height,
-        PixelFormat& format, Display& display);
+        PixelFormat* format, Display* outDisplay);
     Error destroyVirtualDisplay(Display display);
 
-    Error createLayer(Display display, Layer& layer);
+    Error createLayer(Display display, Layer* outLayer);
     Error destroyLayer(Display display, Layer layer);
 
-    Error getActiveConfig(Display display, Config& config);
+    Error getActiveConfig(Display display, Config* outConfig);
     Error getClientTargetSupport(Display display,
             uint32_t width, uint32_t height,
             PixelFormat format, Dataspace dataspace);
-    Error getColorModes(Display display, hidl_vec<ColorMode>& modes);
+    Error getColorModes(Display display, hidl_vec<ColorMode>* outModes);
     Error getDisplayAttribute(Display display, Config config,
-            IComposerClient::Attribute attribute, int32_t& value);
-    Error getDisplayConfigs(Display display, hidl_vec<Config>& configs);
-    Error getDisplayName(Display display, hidl_string& name);
-    Error getDisplayType(Display display, IComposerClient::DisplayType& type);
-    Error getDozeSupport(Display display, bool& support);
-    Error getHdrCapabilities(Display display, hidl_vec<Hdr>& types,
-            float& maxLuminance, float& maxAverageLuminance,
-            float& minLuminance);
+            IComposerClient::Attribute attribute, int32_t* outValue);
+    Error getDisplayConfigs(Display display, hidl_vec<Config>* outConfigs);
+    Error getDisplayName(Display display, hidl_string* outName);
+    Error getDisplayType(Display display,
+            IComposerClient::DisplayType* outType);
+    Error getDozeSupport(Display display, bool* outSupport);
+    Error getHdrCapabilities(Display display, hidl_vec<Hdr>* outTypes,
+            float* outMaxLuminance, float* outMaxAverageLuminance,
+            float* outMinLuminance);
 
     Error setActiveConfig(Display display, Config config);
     Error setColorMode(Display display, ColorMode mode);
@@ -92,14 +93,15 @@ public:
     Error setOutputBuffer(Display display, buffer_handle_t buffer,
             int32_t releaseFence);
     Error validateDisplay(Display display,
-            std::vector<Layer>& changedLayers,
-            std::vector<IComposerClient::Composition>& compositionTypes,
-            uint32_t& displayRequestMask,
-            std::vector<Layer>& requestedLayers,
-            std::vector<uint32_t>& requestMasks);
+            std::vector<Layer>* outChangedLayers,
+            std::vector<IComposerClient::Composition>* outCompositionTypes,
+            uint32_t* outDisplayRequestMask,
+            std::vector<Layer>* outRequestedLayers,
+            std::vector<uint32_t>* outRequestMasks);
     Error acceptDisplayChanges(Display display);
-    Error presentDisplay(Display display, int32_t& presentFence,
-            std::vector<Layer>& layers, std::vector<int32_t>& releaseFences);
+    Error presentDisplay(Display display, int32_t* outPresentFence,
+            std::vector<Layer>* outLayers,
+            std::vector<int32_t>* outReleaseFences);
 
     Error setLayerCursorPosition(Display display, Layer layer,
             int32_t x, int32_t y);
@@ -131,7 +133,7 @@ private:
     void initCapabilities();
 
     template<typename T>
-    void initDispatch(T& func, hwc2_function_descriptor_t desc);
+    void initDispatch(hwc2_function_descriptor_t desc, T* outPfn);
     void initDispatch();
 
     sp<HwcClient> getClient();
