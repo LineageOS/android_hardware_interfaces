@@ -94,87 +94,50 @@ bool convertLegacyVectorOfDebugRxPacketFateToHidl(
     std::vector<WifiDebugRxPacketFateReport>* hidl_fates);
 
 // NAN iface conversion methods.
+NanStatusType convertLegacyNanStatusTypeToHidl(legacy_hal::NanStatusType type);
 bool convertHidlNanEnableRequestToLegacy(
     const NanEnableRequest& hidl_request,
     legacy_hal::NanEnableRequest* legacy_request);
-bool convertHidlNanPublishRequestToLegacy(
-    const NanPublishRequest& hidl_request,
-    legacy_hal::NanPublishRequest* legacy_request);
-bool convertHidlNanPublishCancelRequestToLegacy(
-    const NanPublishCancelRequest& hidl_request,
-    legacy_hal::NanPublishCancelRequest* legacy_request);
-bool convertHidlNanSubscribeRequestToLegacy(
-    const NanSubscribeRequest& hidl_request,
-    legacy_hal::NanSubscribeRequest* legacy_request);
-bool convertHidlNanSubscribeCancelRequestToLegacy(
-    const NanSubscribeCancelRequest& hidl_request,
-    legacy_hal::NanSubscribeCancelRequest* legacy_request);
-bool convertHidlNanTransmitFollowupRequestToLegacy(
-    const NanTransmitFollowupRequest& hidl_request,
-    legacy_hal::NanTransmitFollowupRequest* legacy_request);
 bool convertHidlNanConfigRequestToLegacy(
     const NanConfigRequest& hidl_request,
     legacy_hal::NanConfigRequest* legacy_request);
+bool convertHidlNanPublishRequestToLegacy(
+    const NanPublishRequest& hidl_request,
+    legacy_hal::NanPublishRequest* legacy_request);
+bool convertHidlNanSubscribeRequestToLegacy(
+    const NanSubscribeRequest& hidl_request,
+    legacy_hal::NanSubscribeRequest* legacy_request);
+bool convertHidlNanTransmitFollowupRequestToLegacy(
+    const NanTransmitFollowupRequest& hidl_request,
+    legacy_hal::NanTransmitFollowupRequest* legacy_request);
 bool convertHidlNanBeaconSdfPayloadRequestToLegacy(
     const NanBeaconSdfPayloadRequest& hidl_request,
     legacy_hal::NanBeaconSdfPayloadRequest* legacy_request);
 bool convertHidlNanDataPathInitiatorRequestToLegacy(
-    const NanDataPathInitiatorRequest& hidl_request,
+    const NanInitiateDataPathRequest& hidl_request,
     legacy_hal::NanDataPathInitiatorRequest* legacy_request);
 bool convertHidlNanDataPathIndicationResponseToLegacy(
-    const NanDataPathIndicationResponse& hidl_response,
+    const NanRespondToDataPathIndicationRequest& hidl_response,
     legacy_hal::NanDataPathIndicationResponse* legacy_response);
-bool convertHidlNanDataPathEndRequestToLegacy(
-    const NanDataPathEndRequest& hidl_request,
-    legacy_hal::NanDataPathEndRequest* legacy_request);
 bool convertLegacyNanResponseHeaderToHidl(
     const legacy_hal::NanResponseMsg& legacy_response,
-    NanResponseMsgHeader* hidl_response);
-bool convertLegacyNanPublishResponseToHidl(
-    const legacy_hal::NanPublishResponse& legacy_response,
-    NanPublishResponse* hidl_response);
-bool convertLegacyNanSubscribeResponseToHidl(
-    const legacy_hal::NanSubscribeResponse& legacy_response,
-    NanSubscribeResponse* hidl_response);
-bool convertLegacyNanDataPathResponseToHidl(
-    const legacy_hal::NanDataPathRequestResponse& legacy_response,
-    NanDataPathResponse* hidl_response);
+    WifiNanStatus* wifiNanStatus);
 bool convertLegacyNanCapabilitiesResponseToHidl(
     const legacy_hal::NanCapabilities& legacy_response,
-    NanCapabilitiesResponse* hidl_response);
-bool convertLegacyNanPublishTerminatedIndToHidl(
-    const legacy_hal::NanPublishTerminatedInd& legacy_ind,
-    NanPublishTerminatedInd* hidl_ind);
+    NanCapabilities* hidl_response);
 bool convertLegacyNanMatchIndToHidl(const legacy_hal::NanMatchInd& legacy_ind,
                                     NanMatchInd* hidl_ind);
-bool convertLegacyNanMatchExpiredIndToHidl(
-    const legacy_hal::NanMatchExpiredInd& legacy_ind,
-    NanMatchExpiredInd* hidl_ind);
-bool convertLegacyNanSubscribeTerminatedIndToHidl(
-    const legacy_hal::NanSubscribeTerminatedInd& legacy_ind,
-    NanSubscribeTerminatedInd* hidl_ind);
 bool convertLegacyNanFollowupIndToHidl(
-    const legacy_hal::NanFollowupInd& legacy_ind, NanFollowupInd* hidl_ind);
-bool convertLegacyNanDiscEngEventIndToHidl(
-    const legacy_hal::NanDiscEngEventInd& legacy_ind,
-    NanDiscEngEventInd* hidl_ind);
-bool convertLegacyNanDisabledIndToHidl(
-    const legacy_hal::NanDisabledInd& legacy_ind, NanDisabledInd* hidl_ind);
-bool convertLegacyNanBeaconSdfPayloadIndToHidl(
-    const legacy_hal::NanBeaconSdfPayloadInd& legacy_ind,
-    NanBeaconSdfPayloadInd* hidl_ind);
+    const legacy_hal::NanFollowupInd& legacy_ind, NanFollowupReceivedInd* hidl_ind);
 bool convertLegacyNanDataPathRequestIndToHidl(
     const legacy_hal::NanDataPathRequestInd& legacy_ind,
     NanDataPathRequestInd* hidl_ind);
 bool convertLegacyNanDataPathConfirmIndToHidl(
     const legacy_hal::NanDataPathConfirmInd& legacy_ind,
     NanDataPathConfirmInd* hidl_ind);
-bool convertLegacyNanDataPathEndIndToHidl(
-    const legacy_hal::NanDataPathEndInd& legacy_ind,
-    NanDataPathEndInd* hidl_ind);
-bool convertLegacyNanTransmitFollowupIndToHidl(
-    const legacy_hal::NanTransmitFollowupInd& legacy_ind,
-    NanTransmitFollowupInd* hidl_ind);
+bool convertLegacyNanBeaconSdfPayloadIndToHidl(
+    const legacy_hal::NanBeaconSdfPayloadInd& legacy_ind,
+    NanBeaconSdfPayloadInd* hidl_ind);
 
 // RTT controller conversion methods.
 bool convertHidlVectorOfRttConfigToLegacy(
