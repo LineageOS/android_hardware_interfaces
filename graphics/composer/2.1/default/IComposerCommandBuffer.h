@@ -120,7 +120,7 @@ public:
         return true;
     }
 
-    const MQDescriptorSync* getMQDescriptor() const
+    const MQDescriptorSync<uint32_t>* getMQDescriptor() const
     {
         return (mQueue) ? mQueue->getDesc() : nullptr;
     }
@@ -626,7 +626,7 @@ public:
         reset();
     }
 
-    bool setMQDescriptor(const MQDescriptorSync& descriptor)
+    bool setMQDescriptor(const MQDescriptorSync<uint32_t>& descriptor)
     {
         mQueue = std::make_unique<CommandQueueType>(descriptor, false);
         if (mQueue->isValid()) {

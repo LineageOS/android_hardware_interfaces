@@ -497,7 +497,7 @@ Return<Error> HwcClient::setVsyncEnabled(Display display, Vsync enabled)
 }
 
 Return<Error> HwcClient::setInputCommandQueue(
-        const MQDescriptorSync& descriptor)
+        const MQDescriptorSync<uint32_t>& descriptor)
 {
     std::lock_guard<std::mutex> lock(mCommandMutex);
     return mReader.setMQDescriptor(descriptor) ?
@@ -514,7 +514,7 @@ Return<void> HwcClient::getOutputCommandQueue(
     if (outDescriptor) {
         hidl_cb(Error::NONE, *outDescriptor);
     } else {
-        hidl_cb(Error::NO_RESOURCES, MQDescriptorSync(0, nullptr, 0));
+        hidl_cb(Error::NO_RESOURCES, MQDescriptorSync<uint32_t>());
     }
 
     return Void();
