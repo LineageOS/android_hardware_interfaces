@@ -57,7 +57,7 @@ enum Brightness : int32_t {
      * When set, the device driver must switch to a mode optimized for low display
      * persistence that is intended to be used when the device is being treated as a
      * head mounted display (HMD). The actual display brightness in this mode is
-     * implementation dependent, and any value set for color in light_state may be
+     * implementation dependent, and any value set for color in LightState may be
      * overridden by the HAL implementation.
      *
      * For an optimal HMD viewing experience, the display must meet the following

@@ -20,6 +20,7 @@
 #include <android/hardware/light/2.0/ILight.h>
 #include <android/hardware/light/2.0/types.h>
 #include <gtest/gtest.h>
+#include <set>
 #include <unistd.h>
 
 using ::android::hardware::light::V2_0::Brightness;
@@ -35,9 +36,9 @@ using ::android::sp;
 
 #define LIGHT_SERVICE_NAME "light"
 
+#define ASSERT_OK(ret) ASSERT_TRUE(ret.getStatus().isOk())
 #define EXPECT_OK(ret) EXPECT_TRUE(ret.getStatus().isOk())
 
-// The main test class for VIBRATOR HIDL HAL.
 class LightHidlTest : public ::testing::Test {
 public:
     virtual void SetUp() override {
@@ -45,20 +46,22 @@ public:
 
         ASSERT_NE(light, nullptr);
         LOG(INFO) << "Test is remote " << light->isRemote();
+
+        ASSERT_OK(light->getSupportedTypes([this](const hidl_vec<Type> &types) {
+            supportedTypes = types;
+        }));
     }
 
     virtual void TearDown() override {}
 
     sp<ILight> light;
+    std::vector<Type> supportedTypes;
 };
 
-// A class for test environment setup (kept since this file is a template).
 class LightHidlEnvironment : public ::testing::Environment {
 public:
     virtual void SetUp() {}
     virtual void TearDown() {}
-
-private:
 };
 
 const static LightState kWhite = {
@@ -69,6 +72,14 @@ const static LightState kWhite = {
     .brightnessMode = Brightness::USER,
 };
 
+const static LightState kLowPersistance = {
+    .color = 0xFF123456,
+    .flashMode = Flash::TIMED,
+    .flashOnMs = 100,
+    .flashOffMs = 50,
+    .brightnessMode = Brightness::LOW_PERSISTENCE,
+};
+
 const static LightState kOff = {
     .color = 0x00000000,
     .flashMode = Flash::NONE,
@@ -77,21 +88,68 @@ const static LightState kOff = {
     .brightnessMode = Brightness::USER,
 };
 
+const static std::set<Type> kAllTypes = {
+    Type::BACKLIGHT,
+    Type::KEYBOARD,
+    Type::BUTTONS,
+    Type::BATTERY,
+    Type::NOTIFICATIONS,
+    Type::ATTENTION,
+    Type::BLUETOOTH,
+    Type::WIFI
+};
+
 /**
  * Ensure all lights which are reported as supported work.
  */
 TEST_F(LightHidlTest, TestSupported) {
-    EXPECT_OK(light->getSupportedTypes([this](const hidl_vec<Type> &supportedTypes) {
-        for (size_t i = 0; i < supportedTypes.size(); i++) {
-            EXPECT_OK(light->setLight(supportedTypes[i], kWhite));
-        }
+    for (const Type& type: supportedTypes) {
+        Return<Status> ret = light->setLight(type, kWhite);
+        EXPECT_OK(ret);
+        EXPECT_EQ(Status::SUCCESS, static_cast<Status>(ret));
+    }
 
-        usleep(500000);
+    for (const Type& type: supportedTypes) {
+        Return<Status> ret = light->setLight(type, kOff);
+        EXPECT_OK(ret);
+        EXPECT_EQ(Status::SUCCESS, static_cast<Status>(ret));
+    }
+}
 
-        for (size_t i = 0; i < supportedTypes.size(); i++) {
-            EXPECT_OK(light->setLight(supportedTypes[i], kOff));
-        }
-    }));
+/**
+ * Ensure BRIGHTNESS_NOT_SUPPORTED is returned if LOW_PERSISTANCE is not supported.
+ */
+TEST_F(LightHidlTest, TestLowPersistance) {
+    for (const Type& type: supportedTypes) {
+        Return<Status> ret = light->setLight(type, kLowPersistance);
+        EXPECT_OK(ret);
+
+        Status status = ret;
+        EXPECT_TRUE(Status::SUCCESS == status ||
+                    Status::BRIGHTNESS_NOT_SUPPORTED == status);
+    }
+
+    for (const Type& type: supportedTypes) {
+        Return<Status> ret = light->setLight(type, kOff);
+        EXPECT_OK(ret);
+        EXPECT_EQ(Status::SUCCESS, static_cast<Status>(ret));
+    }
+}
+
+/**
+ * Ensure lights which are not supported return LIGHT_NOT_SUPPORTED
+ */
+TEST_F(LightHidlTest, TestUnsupported) {
+    std::set<Type> unsupportedTypes = kAllTypes;
+    for (const Type& type: supportedTypes) {
+        unsupportedTypes.erase(type);
+    }
+
+    for (const Type& type: unsupportedTypes) {
+        Return<Status> ret = light->setLight(type, kWhite);
+        EXPECT_OK(ret);
+        EXPECT_EQ(Status::LIGHT_NOT_SUPPORTED, static_cast<Status>(ret));
+    }
 }
 
 int main(int argc, char **argv) {
