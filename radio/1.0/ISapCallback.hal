@@ -46,7 +46,6 @@ interface ISapCallback {
      * TRANSFER_APDU_RESP from SAP 1.1 spec 5.1.7
      *
      * @param token Id to match req-resp. Value must match the one in req.
-     * @param type APDU command type
      * @param resultCode ResultCode to indicate if command was processed correctly
      *        Possible values:
      *        SapResultCode:SUCCESS,
@@ -58,7 +57,6 @@ interface ISapCallback {
      *        occurred.
      */
     oneway apduResponse(int32_t token,
-                        SapApduType type,
                         SapResultCode resultCode,
                         vec<uint8_t> apduRsp);
 
@@ -123,7 +121,7 @@ interface ISapCallback {
      *        Possible values:
      *        SapResultCode:SUCCESS,
      *        SapResultCode:GENERIC_FAILURE
-     *        SapResultCode:CARD_ALREADY_POWERED_ON
+     *        SapResultCode:DATA_NOT_AVAILABLE
      * @param cardReaderStatus Card Reader Status coded as described in 3GPP TS 11.14 Section 12.33
      *        and TS 31.111 Section 8.33
      */
