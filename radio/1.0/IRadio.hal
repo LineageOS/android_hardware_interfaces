@@ -1037,7 +1037,7 @@ interface IRadio {
      *
      * Response callback is IRadioCallback.setGsmBroadcastConfigResponse()
      */
-    oneway setGsmBroadcastConfig(int32_t serial, GsmBroadcastSmsConfigInfo configInfo);
+    oneway setGsmBroadcastConfig(int32_t serial, vec<GsmBroadcastSmsConfigInfo> configInfo);
 
     /*
      * Enable or disable the reception of GSM/WCDMA Cell Broadcast SMS
@@ -1067,7 +1067,7 @@ interface IRadio {
      *
      * Response callback is IRadioCallback.setCdmaBroadcastConfigResponse()
      */
-    oneway setCdmaBroadcastConfig(int32_t serial, CdmaBroadcastSmsConfigInfo configInfo);
+    oneway setCdmaBroadcastConfig(int32_t serial, vec<CdmaBroadcastSmsConfigInfo> configInfo);
 
     /*
      * Enable or disable the reception of CDMA Cell Broadcast SMS
