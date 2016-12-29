@@ -27,7 +27,7 @@ namespace V1_0 {
 namespace implementation {
 
     CryptoFactory::CryptoFactory() :
-        loader("/vendor/lib/mediadrm", "createCryptoFactory", "crypto") {}
+        loader("/vendor/lib/mediadrm", "createCryptoFactory") {}
 
     // Methods from ::android::hardware::drm::crypto::V1_0::ICryptoFactory follow.
     Return<bool> CryptoFactory::isCryptoSchemeSupported(

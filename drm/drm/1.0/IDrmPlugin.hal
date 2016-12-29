@@ -78,7 +78,7 @@ interface IDrmPlugin {
      * @return status the status of the call.  The status must be one of
      * ERROR_DRM_SESSION_NOT_OPENED if the session is not opened,
      * ERROR_DRM_NOT_PROVISIONED if the device requires provisioning before
-     * it can generate a key request, ERROR_DRM_CANNOT_HANDLE if keyKeyRequest
+     * it can generate a key request, ERROR_DRM_CANNOT_HANDLE if getKeyRequest
      * is not supported at the time of the call, BAD_VALUE if any parameters
      * are invalid or ERROR_DRM_INVALID_STATE if the HAL is in a state where
      * a key request cannot be generated.
