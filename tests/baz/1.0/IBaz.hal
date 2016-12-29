@@ -52,6 +52,7 @@ interface IBaz extends IBase {
 
     callMeLater(IBazCallback cb);
     iAmFreeNow();
+    dieNow();
 
     useAnEnum(SomeEnum zzz) generates (SomeEnum kkk);
 
