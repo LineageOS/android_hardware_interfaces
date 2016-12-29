@@ -705,6 +705,7 @@ enum AudioUsage : int32_t {
     ASSISTANCE_SONIFICATION            = 13,
     GAME                               = 14,
     VIRTUAL_SOURCE                     = 15,
+    ASSISTANT                          = 16,
 
     CNT,
     MAX                                = CNT - 1,
