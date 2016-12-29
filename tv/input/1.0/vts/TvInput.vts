@@ -57,6 +57,7 @@ interface: {
             predefined_type: "::android::hardware::tv::input::V1_0::Result"
         }
         return_type_hidl: {
+            type: TYPE_HANDLE
         }
         arg: {
             type: TYPE_SCALAR
