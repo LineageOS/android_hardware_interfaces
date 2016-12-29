@@ -18,8 +18,7 @@
 
 #include <unistd.h>
 
-#include <hwbinder/IPCThreadState.h>
-#include <hwbinder/ProcessState.h>
+#include <hidl/HidlTransportSupport.h>
 #include <utils/Errors.h>
 #include <utils/StrongPointer.h>
 #include <utils/Log.h>
@@ -29,9 +28,9 @@
 #include "EvsDisplay.h"
 
 
-// libhwbinder:
-using android::hardware::IPCThreadState;
-using android::hardware::ProcessState;
+// libhidl:
+using android::hardware::configureRpcThreadpool;
+using android::hardware::joinRpcThreadpool;
 
 // Generated HIDL files
 using android::hardware::evs::V1_0::IEvsEnumerator;
@@ -46,25 +45,14 @@ int main() {
     ALOGI("EVS Hardware Enumerator service is starting");
     android::sp<IEvsEnumerator> service = new EvsEnumerator();
 
+    configureRpcThreadpool(1, true /* callerWillJoin */);
+
     // Register our service -- if somebody is already registered by our name,
     // they will be killed (their thread pool will throw an exception).
     status_t status = service->registerAsService(kEnumeratorServiceName);
     if (status == OK) {
         ALOGD("%s is ready.", kEnumeratorServiceName);
-
-        // Set thread pool size to ensure the API is not called in parallel.
-        // By setting the size to zero, the main thread will be the only one
-        // serving requests once we "joinThreadPool".
-        ProcessState::self()->setThreadPoolMaxThreadCount(0);
-
-        // Note:  We don't start the thread pool because it'll add at least one (default)
-        //        thread to it, which we don't want.  See b/31226656
-        // ProcessState::self()->startThreadPool();
-
-        // Send this main thread to become a permanent part of the thread pool.
-        // This bumps up the thread count by 1 (from zero in this case).
-        // This is not expected to return.
-        IPCThreadState::self()->joinThreadPool();
+        joinRpcThreadpool();
     } else {
         ALOGE("Could not register service %s (%d).", kEnumeratorServiceName, status);
     }

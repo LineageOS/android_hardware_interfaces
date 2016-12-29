@@ -16,10 +16,10 @@
 
 #define LOG_TAG "android.hardware.vehicle@2.0-service"
 #include <android/log.h>
+#include <hidl/HidlTransportSupport.h>
 
 #include <iostream>
 
-#include <hwbinder/IPCThreadState.h>
 
 #include <vehicle_hal_manager/VehicleHalManager.h>
 #include <impl/DefaultVehicleHal.h>
@@ -32,11 +32,11 @@ int main(int /* argc */, char* /* argv */ []) {
     auto hal = std::make_unique<impl::DefaultVehicleHal>();
     auto service = std::make_unique<VehicleHalManager>(hal.get());
 
+    configureRpcThreadpool(1, true /* callerWillJoin */);
+
     ALOGI("Registering as service...");
     service->registerAsService("Vehicle");
 
     ALOGI("Ready");
-    ProcessState::self()->setThreadPoolMaxThreadCount(0);
-    ProcessState::self()->startThreadPool();
-    IPCThreadState::self()->joinThreadPool();
+    joinRpcThreadpool();
 }

@@ -17,14 +17,13 @@
 #define LOG_TAG "HWComposerService"
 
 #include <binder/ProcessState.h>
-#include <hwbinder/IPCThreadState.h>
-#include <hwbinder/ProcessState.h>
+#include <hidl/HidlTransportSupport.h>
 #include <utils/StrongPointer.h>
 #include "Hwc.h"
 
+using android::hardware::configureRpcThreadpool;
+using android::hardware::joinRpcThreadpool;
 using android::sp;
-using android::hardware::IPCThreadState;
-using android::hardware::ProcessState;
 using android::hardware::graphics::composer::V2_1::IComposer;
 using android::hardware::graphics::composer::V2_1::implementation::HIDL_FETCH_IComposer;
 
@@ -34,6 +33,7 @@ int main()
 
     ALOGI("Service is starting.");
 
+    configureRpcThreadpool(1, true /* callerWillJoin */);
     sp<IComposer> service = HIDL_FETCH_IComposer(instance);
     if (service == nullptr) {
         ALOGI("getService returned NULL");
@@ -48,9 +48,7 @@ int main()
     android::ProcessState::self()->setThreadPoolMaxThreadCount(4);
     android::ProcessState::self()->startThreadPool();
 
-    ProcessState::self()->setThreadPoolMaxThreadCount(0);
-    ProcessState::self()->startThreadPool();
-    IPCThreadState::self()->joinThreadPool();
+    joinRpcThreadpool();
 
     return 0;
 }

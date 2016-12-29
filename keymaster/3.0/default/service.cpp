@@ -19,15 +19,17 @@
 
 #include <android/hardware/keymaster/3.0/IKeymasterDevice.h>
 
+#include <hidl/HidlTransportSupport.h>
 #include <hidl/LegacySupport.h>
 
-using android::sp;
+using android::hardware::configureRpcThreadpool;
+using android::hardware::joinRpcThreadpool;
 
 using android::hardware::keymaster::V3_0::IKeymasterDevice;
 using android::hardware::registerPassthroughServiceImplementation;
-using android::hardware::launchRpcServer;
 
 int main() {
+    configureRpcThreadpool(1, true /*callerWillJoin*/);
     registerPassthroughServiceImplementation<IKeymasterDevice>("keymaster");
-    return launchRpcServer(1);
+    joinRpcThreadpool();
 }

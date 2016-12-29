@@ -16,14 +16,17 @@
 
 #define LOG_TAG "audiohalservice"
 
+#include <hidl/HidlTransportSupport.h>
 #include <hidl/LegacySupport.h>
 #include <android/hardware/audio/2.0/IDevicesFactory.h>
 #include <android/hardware/audio/effect/2.0/IEffectsFactory.h>
 #include <android/hardware/soundtrigger/2.0/ISoundTriggerHw.h>
 #include <android/hardware/broadcastradio/1.0/IBroadcastRadioFactory.h>
 
-using android::hardware::IPCThreadState;
-using android::hardware::ProcessState;
+using android::hardware::configureRpcThreadpool;
+using android::hardware::joinRpcThreadpool;
+using android::hardware::registerPassthroughServiceImplementation;
+
 using android::hardware::audio::effect::V2_0::IEffectsFactory;
 using android::hardware::audio::V2_0::IDevicesFactory;
 using android::hardware::soundtrigger::V2_0::ISoundTriggerHw;
@@ -31,9 +34,10 @@ using android::hardware::registerPassthroughServiceImplementation;
 using android::hardware::broadcastradio::V1_0::IBroadcastRadioFactory;
 
 int main(int /* argc */, char* /* argv */ []) {
+    configureRpcThreadpool(16, true /*callerWillJoin*/);
     registerPassthroughServiceImplementation<IDevicesFactory>("audio_devices_factory");
     registerPassthroughServiceImplementation<IEffectsFactory>("audio_effects_factory");
     registerPassthroughServiceImplementation<ISoundTriggerHw>("sound_trigger.primary");
     registerPassthroughServiceImplementation<IBroadcastRadioFactory>("broadcastradio");
-    return android::hardware::launchRpcServer(16);
+    joinRpcThreadpool();
 }

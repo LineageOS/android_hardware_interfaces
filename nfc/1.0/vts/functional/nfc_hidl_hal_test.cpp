@@ -21,14 +21,12 @@
 #include <android/hardware/nfc/1.0/INfcClientCallback.h>
 #include <android/hardware/nfc/1.0/types.h>
 #include <hardware/nfc.h>
-#include <hwbinder/ProcessState.h>
 
 #include <gtest/gtest.h>
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
 
-using ::android::hardware::ProcessState;
 using ::android::hardware::nfc::V1_0::INfc;
 using ::android::hardware::nfc::V1_0::INfcClientCallback;
 using ::android::hardware::nfc::V1_0::NfcEvent;
@@ -65,12 +63,6 @@ class NfcHidlTest : public ::testing::Test {
   virtual void SetUp() override {
     nfc_ = INfc::getService(NFC_NCI_SERVICE_NAME, passthrough);
     ASSERT_NE(nfc_, nullptr);
-
-    // TODO:b/31748996
-    if (nfc_->isRemote()) {
-      ProcessState::self()->setThreadPoolMaxThreadCount(1);
-      ProcessState::self()->startThreadPool();
-    }
 
     nfc_cb_ = new NfcClientCallback(*this);
     ASSERT_NE(nfc_cb_, nullptr);

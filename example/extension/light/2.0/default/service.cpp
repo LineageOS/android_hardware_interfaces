@@ -16,14 +16,13 @@
 #define LOG_TAG "android.hardware.light@2.0-service"
 
 #include <android/log.h>
+#include <hidl/HidlTransportSupport.h>
 
 #include "Light.h"
 
+using android::hardware::configureRpcThreadpool;
+using android::hardware::joinRpcThreadpool;
 using android::sp;
-
-// libhwbinder:
-using android::hardware::IPCThreadState;
-using android::hardware::ProcessState;
 
 // Generated HIDL files
 using android::hardware::light::V2_0::ILight;
@@ -32,10 +31,7 @@ int main() {
     const char instance[] = "light";
 
     android::sp<ILight> service = new Light();
-
+    configureRpcThreadpool(1, true /*callerWillJoin*/);
     service->registerAsService(instance);
-
-    ProcessState::self()->setThreadPoolMaxThreadCount(0);
-    ProcessState::self()->startThreadPool();
-    IPCThreadState::self()->joinThreadPool();
+    joinRpcThreadpool();
 }

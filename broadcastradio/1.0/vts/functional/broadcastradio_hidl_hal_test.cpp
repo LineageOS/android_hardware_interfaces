@@ -19,9 +19,8 @@
 #include <android-base/logging.h>
 #include <cutils/native_handle.h>
 #include <cutils/properties.h>
+#include <hidl/HidlTransportSupport.h>
 #include <utils/threads.h>
-#include <hwbinder/IPCThreadState.h>
-#include <hwbinder/ProcessState.h>
 
 #include <android/hardware/broadcastradio/1.0/IBroadcastRadioFactory.h>
 #include <android/hardware/broadcastradio/1.0/IBroadcastRadio.h>
@@ -33,7 +32,6 @@
 using ::android::sp;
 using ::android::Mutex;
 using ::android::Condition;
-using ::android::hardware::ProcessState;
 using ::android::hardware::Return;
 using ::android::hardware::Status;
 using ::android::hardware::Void;
@@ -461,8 +459,6 @@ TEST_F(BroadcastRadioHidlTest, TuneAndGetProgramInformationAndCancel) {
 
 
 int main(int argc, char** argv) {
-  sp<ProcessState> proc(ProcessState::self());
-  ProcessState::self()->startThreadPool();
   ::testing::AddGlobalTestEnvironment(new BroadcastRadioHidlEnvironment);
   ::testing::InitGoogleTest(&argc, argv);
   int status = RUN_ALL_TESTS();
