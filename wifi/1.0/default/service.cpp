@@ -15,42 +15,21 @@
  */
 
 #include <android-base/logging.h>
-#include <hwbinder/IPCThreadState.h>
-#include <hwbinder/ProcessState.h>
+#include <hidl/HidlTransportSupport.h>
 #include <utils/Looper.h>
 #include <utils/StrongPointer.h>
 
 #include "wifi.h"
 
-using android::hardware::hidl_version;
-using android::hardware::IPCThreadState;
-using android::hardware::ProcessState;
-using android::Looper;
-
-namespace {
-int OnBinderReadReady(int /*fd*/, int /*events*/, void* /*data*/) {
-  IPCThreadState::self()->handlePolledCommands();
-  return 1;  // continue receiving events
-}
-}
+using android::hardware::configureRpcThreadpool;
+using android::hardware::joinRpcThreadpool;
 
 int main(int /*argc*/, char** argv) {
   android::base::InitLogging(argv,
                              android::base::LogdLogger(android::base::SYSTEM));
   LOG(INFO) << "wifi_hal_legacy is starting up...";
 
-  // Setup binder
-  int binder_fd = -1;
-  ProcessState::self()->setThreadPoolMaxThreadCount(0);
-  CHECK_EQ(IPCThreadState::self()->setupPolling(&binder_fd), android::NO_ERROR)
-      << "Failed to initialize binder polling";
-  CHECK_GE(binder_fd, 0) << "Invalid binder FD: " << binder_fd;
-
-  // Setup looper
-  android::sp<Looper> looper = Looper::prepare(0 /* no options */);
-  CHECK(looper->addFd(
-      binder_fd, 0, Looper::EVENT_INPUT, OnBinderReadReady, nullptr))
-      << "Failed to watch binder FD";
+  configureRpcThreadpool(1, true /* callerWillJoin */);
 
   // Setup hwbinder service
   android::sp<android::hardware::wifi::V1_0::IWifi> service =
@@ -58,10 +37,7 @@ int main(int /*argc*/, char** argv) {
   CHECK_EQ(service->registerAsService("wifi"), android::NO_ERROR)
       << "Failed to register wifi HAL";
 
-  // Loop
-  while (looper->pollAll(-1) != Looper::POLL_ERROR) {
-    // Keep polling until failure.
-  }
+  joinRpcThreadpool();
 
   LOG(INFO) << "wifi_hal_legacy is terminating...";
   return 0;
