@@ -19,18 +19,34 @@ cc_library_shared {
     srcs: [
         "async_fd_watcher.cc",
         "bluetooth_hci.cc",
+        "bluetooth_address.cc",
         "vendor_interface.cc",
     ],
     shared_libs: [
-        "liblog",
+        "android.hardware.bluetooth@1.0",
+        "libbase",
         "libcutils",
         "libhardware",
         "libhwbinder",
-        "libbase",
-        "libcutils",
-        "libutils",
         "libhidlbase",
         "libhidltransport",
-        "android.hardware.bluetooth@1.0",
+        "liblog",
+        "libutils",
+    ],
+}
+
+cc_test_host {
+    name: "bluetooth-vendor-interface-unit-tests",
+    srcs: [
+        "bluetooth_address.cc",
+        "test/bluetooth_address_test.cc",
+        "test/properties.cc",
+    ],
+    local_include_dirs: [
+        "test",
+    ],
+    shared_libs: [
+        "libbase",
+        "liblog",
     ],
 }
