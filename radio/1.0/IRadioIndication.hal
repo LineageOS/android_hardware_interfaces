@@ -81,8 +81,9 @@ interface IRadioIndication {
      * Indicates when new SMS has been stored on SIM card
      *
      * @param type Type of radio indication
+     * @param recordNumber Record number on the sim
      */
-    oneway newSmsOnSim(RadioIndicationType type);
+    oneway newSmsOnSim(RadioIndicationType type, int32_t recordNumber);
 
     /*
      * Indicates when a new USSD message is received.
@@ -91,8 +92,9 @@ interface IRadioIndication {
      *
      * @param type Type of radio indication
      * @param modeType USSD type code
+     * @param msg Message string in UTF-8, if applicable
      */
-    oneway onUssd(RadioIndicationType type, UssdModeType modeType);
+    oneway onUssd(RadioIndicationType type, UssdModeType modeType, string msg);
 
     /*
      * Indicates when radio has received a NITZ time message.
@@ -146,7 +148,7 @@ interface IRadioIndication {
      * @param cmd SAT/USAT proactive represented as byte array starting with command tag.
      *        Refer ETSI TS 102.223 section 9.4 for command types
      */
-    oneway stkProactiveCommand(RadioIndicationType type, vec<uint8_t> cmd);
+    oneway stkProactiveCommand(RadioIndicationType type, string cmd);
 
     /*
      * Indicates when SIM notifies applcations some event happens.
@@ -157,7 +159,7 @@ interface IRadioIndication {
      *        starting with first byte of response data for command tag. Refer
      *        ETSI TS 102.223 section 9.4 for command types
      */
-    oneway stkEventNotify(RadioIndicationType type, vec<uint8_t> cmd);
+    oneway stkEventNotify(RadioIndicationType type, string cmd);
 
     /*
      * Indicates when SIM wants application to setup a voice call.

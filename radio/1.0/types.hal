@@ -1789,9 +1789,7 @@ struct SuppSvcNotification {
     bool isMT;                             // notification type
                                            // false = MO intermediate result code
                                            // true = MT unsolicited result code
-    bool isCode1;                          // See 27.007 7.17
-                                           // true = "code1" for MO
-                                           // false = "code2" for MT
+    int32_t code;                          // result code. See 27.007 7.17.
     int32_t index;                         // CUG index. See 27.007 7.17.
     int32_t type;                          // "type" from 27.007 7.17 (MT only).
     string number;                         // "number" from 27.007 7.17
