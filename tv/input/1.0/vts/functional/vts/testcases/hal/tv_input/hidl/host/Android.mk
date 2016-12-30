@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#       http://www.apache.org/licenses/LICENSE-2.0
+#      http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,4 +16,10 @@
 
 LOCAL_PATH := $(call my-dir)
 
-include $(LOCAL_PATH)/functional/vts/testcases/hal/tv_input/hidl/host/Android.mk
+include $(call all-subdir-makefiles)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := TvInputHidlTest
+VTS_CONFIG_SRC_DIR := testcases/hal/tv_input/hidl/host
+include test/vts/tools/build/Android.host_config.mk

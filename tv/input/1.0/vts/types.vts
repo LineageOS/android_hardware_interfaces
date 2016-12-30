@@ -133,7 +133,7 @@ attribute: {
         }
         enumerator: "PUBLIC_CNT"
         scalar_value: {
-            int32_t: 10
+            int32_t: 11
         }
         enumerator: "FOR_POLICY_CNT"
         scalar_value: {
@@ -310,6 +310,82 @@ attribute: {
         scalar_value: {
             uint32_t: 234881024
         }
+        enumerator: "EVRC"
+        scalar_value: {
+            uint32_t: 268435456
+        }
+        enumerator: "EVRCB"
+        scalar_value: {
+            uint32_t: 285212672
+        }
+        enumerator: "EVRCWB"
+        scalar_value: {
+            uint32_t: 301989888
+        }
+        enumerator: "EVRCNW"
+        scalar_value: {
+            uint32_t: 318767104
+        }
+        enumerator: "AAC_ADIF"
+        scalar_value: {
+            uint32_t: 335544320
+        }
+        enumerator: "WMA"
+        scalar_value: {
+            uint32_t: 352321536
+        }
+        enumerator: "WMA_PRO"
+        scalar_value: {
+            uint32_t: 369098752
+        }
+        enumerator: "AMR_WB_PLUS"
+        scalar_value: {
+            uint32_t: 385875968
+        }
+        enumerator: "MP2"
+        scalar_value: {
+            uint32_t: 402653184
+        }
+        enumerator: "QCELP"
+        scalar_value: {
+            uint32_t: 419430400
+        }
+        enumerator: "DSD"
+        scalar_value: {
+            uint32_t: 436207616
+        }
+        enumerator: "FLAC"
+        scalar_value: {
+            uint32_t: 452984832
+        }
+        enumerator: "ALAC"
+        scalar_value: {
+            uint32_t: 469762048
+        }
+        enumerator: "APE"
+        scalar_value: {
+            uint32_t: 486539264
+        }
+        enumerator: "AAC_ADTS"
+        scalar_value: {
+            uint32_t: 503316480
+        }
+        enumerator: "SBC"
+        scalar_value: {
+            uint32_t: 520093696
+        }
+        enumerator: "APTX"
+        scalar_value: {
+            uint32_t: 536870912
+        }
+        enumerator: "APTX_HD"
+        scalar_value: {
+            uint32_t: 553648128
+        }
+        enumerator: "LDAC"
+        scalar_value: {
+            uint32_t: 570425344
+        }
         enumerator: "MAIN_MASK"
         scalar_value: {
             uint32_t: 4278190080
@@ -458,6 +534,46 @@ attribute: {
         scalar_value: {
             uint32_t: 67109376
         }
+        enumerator: "AAC_ADTS_MAIN"
+        scalar_value: {
+            uint32_t: 503316481
+        }
+        enumerator: "AAC_ADTS_LC"
+        scalar_value: {
+            uint32_t: 503316482
+        }
+        enumerator: "AAC_ADTS_SSR"
+        scalar_value: {
+            uint32_t: 503316484
+        }
+        enumerator: "AAC_ADTS_LTP"
+        scalar_value: {
+            uint32_t: 503316488
+        }
+        enumerator: "AAC_ADTS_HE_V1"
+        scalar_value: {
+            uint32_t: 503316496
+        }
+        enumerator: "AAC_ADTS_SCALABLE"
+        scalar_value: {
+            uint32_t: 503316512
+        }
+        enumerator: "AAC_ADTS_ERLC"
+        scalar_value: {
+            uint32_t: 503316544
+        }
+        enumerator: "AAC_ADTS_LD"
+        scalar_value: {
+            uint32_t: 503316608
+        }
+        enumerator: "AAC_ADTS_HE_V2"
+        scalar_value: {
+            uint32_t: 503316736
+        }
+        enumerator: "AAC_ADTS_ELD"
+        scalar_value: {
+            uint32_t: 503316992
+        }
     }
 }
 
@@ -580,6 +696,10 @@ attribute: {
         scalar_value: {
             uint32_t: 3
         }
+        enumerator: "OUT_2POINT1"
+        scalar_value: {
+            uint32_t: 11
+        }
         enumerator: "OUT_QUAD"
         scalar_value: {
             uint32_t: 51
@@ -592,6 +712,14 @@ attribute: {
         scalar_value: {
             uint32_t: 1539
         }
+        enumerator: "OUT_SURROUND"
+        scalar_value: {
+            uint32_t: 263
+        }
+        enumerator: "OUT_PENTA"
+        scalar_value: {
+            uint32_t: 55
+        }
         enumerator: "OUT_5POINT1"
         scalar_value: {
             uint32_t: 63
@@ -603,6 +731,10 @@ attribute: {
         enumerator: "OUT_5POINT1_SIDE"
         scalar_value: {
             uint32_t: 1551
+        }
+        enumerator: "OUT_6POINT1"
+        scalar_value: {
+            uint32_t: 319
         }
         enumerator: "OUT_7POINT1"
         scalar_value: {
@@ -679,6 +811,18 @@ attribute: {
         enumerator: "IN_FRONT_BACK"
         scalar_value: {
             uint32_t: 48
+        }
+        enumerator: "IN_VOICE_UPLINK_MONO"
+        scalar_value: {
+            uint32_t: 16400
+        }
+        enumerator: "IN_VOICE_DNLINK_MONO"
+        scalar_value: {
+            uint32_t: 32784
+        }
+        enumerator: "IN_VOICE_CALL_MONO"
+        scalar_value: {
+            uint32_t: 49168
         }
         enumerator: "IN_ALL"
         scalar_value: {
@@ -907,13 +1051,17 @@ attribute: {
         scalar_value: {
             uint32_t: 16777216
         }
+        enumerator: "OUT_PROXY"
+        scalar_value: {
+            uint32_t: 33554432
+        }
         enumerator: "OUT_DEFAULT"
         scalar_value: {
             uint32_t: 1073741824
         }
         enumerator: "OUT_ALL"
         scalar_value: {
-            uint32_t: 1107296255
+            uint32_t: 1140850687
         }
         enumerator: "OUT_ALL_A2DP"
         scalar_value: {
@@ -1019,13 +1167,17 @@ attribute: {
         scalar_value: {
             uint32_t: 2148532224
         }
+        enumerator: "IN_PROXY"
+        scalar_value: {
+            uint32_t: 2164260864
+        }
         enumerator: "IN_DEFAULT"
         scalar_value: {
             uint32_t: 3221225472
         }
         enumerator: "IN_ALL"
         scalar_value: {
-            uint32_t: 3223322623
+            uint32_t: 3240099839
         }
         enumerator: "IN_ALL_SCO"
         scalar_value: {
@@ -1092,6 +1244,14 @@ attribute: {
         scalar_value: {
             int32_t: 1024
         }
+        enumerator: "DIRECT_PCM"
+        scalar_value: {
+            int32_t: 8192
+        }
+        enumerator: "MMAP_NOIRQ"
+        scalar_value: {
+            int32_t: 16384
+        }
     }
 }
 
@@ -1120,6 +1280,91 @@ attribute: {
         enumerator: "SYNC"
         scalar_value: {
             int32_t: 8
+        }
+        enumerator: "MMAP_NOIRQ"
+        scalar_value: {
+            int32_t: 16
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::AudioUsage"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "UNKNOWN"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "MEDIA"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "VOICE_COMMUNICATION"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "VOICE_COMMUNICATION_SIGNALLING"
+        scalar_value: {
+            int32_t: 3
+        }
+        enumerator: "ALARM"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "NOTIFICATION"
+        scalar_value: {
+            int32_t: 5
+        }
+        enumerator: "NOTIFICATION_TELEPHONY_RINGTONE"
+        scalar_value: {
+            int32_t: 6
+        }
+        enumerator: "NOTIFICATION_COMMUNICATION_REQUEST"
+        scalar_value: {
+            int32_t: 7
+        }
+        enumerator: "NOTIFICATION_COMMUNICATION_INSTANT"
+        scalar_value: {
+            int32_t: 8
+        }
+        enumerator: "NOTIFICATION_COMMUNICATION_DELAYED"
+        scalar_value: {
+            int32_t: 9
+        }
+        enumerator: "NOTIFICATION_EVENT"
+        scalar_value: {
+            int32_t: 10
+        }
+        enumerator: "ASSISTANCE_ACCESSIBILITY"
+        scalar_value: {
+            int32_t: 11
+        }
+        enumerator: "ASSISTANCE_NAVIGATION_GUIDANCE"
+        scalar_value: {
+            int32_t: 12
+        }
+        enumerator: "ASSISTANCE_SONIFICATION"
+        scalar_value: {
+            int32_t: 13
+        }
+        enumerator: "GAME"
+        scalar_value: {
+            int32_t: 14
+        }
+        enumerator: "VIRTUAL_SOURCE"
+        scalar_value: {
+            int32_t: 15
+        }
+        enumerator: "CNT"
+        scalar_value: {
+            int32_t: 16
+        }
+        enumerator: "MAX"
+        scalar_value: {
+            int32_t: 15
         }
     }
 }
@@ -1166,6 +1411,21 @@ attribute: {
         name: "isStreaming"
         type: TYPE_SCALAR
         scalar_type: "bool_t"
+    }
+    struct_value: {
+        name: "bitWidth"
+        type: TYPE_SCALAR
+        scalar_type: "uint32_t"
+    }
+    struct_value: {
+        name: "bufferSize"
+        type: TYPE_SCALAR
+        scalar_type: "uint32_t"
+    }
+    struct_value: {
+        name: "usage"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::audio::common::V2_0::AudioUsage"
     }
 }
 
