@@ -21,7 +21,6 @@
 #include <android/hardware/bluetooth/1.0/IBluetoothHciCallbacks.h>
 #include <android/hardware/bluetooth/1.0/types.h>
 #include <hardware/bluetooth.h>
-#include <hwbinder/ProcessState.h>
 #include <utils/Log.h>
 
 #include <gtest/gtest.h>
@@ -127,14 +126,6 @@ class BluetoothHidlTest : public ::testing::Test {
     ALOGW("%s: getService(%s) is %s", __func__, Bluetooth_HCI_SERVICE_NAME,
           bluetooth->isRemote() ? "remote" : "local");
     ASSERT_NE(bluetooth, nullptr);
-
-    // TODO(b/31748996) A client must be completely unaware of the
-    // implementation details of its HAL: whether the HAL is passthrough, or
-    // whether it uses HWbinder or some other transport.
-    if (bluetooth->isRemote()) {
-      ::android::hardware::ProcessState::self()->setThreadPoolMaxThreadCount(1);
-      ::android::hardware::ProcessState::self()->startThreadPool();
-    }
 
     bluetooth_cb = new BluetoothHciCallbacks(*this);
     ASSERT_NE(bluetooth_cb, nullptr);
