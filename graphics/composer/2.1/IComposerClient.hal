@@ -554,7 +554,7 @@ interface IComposerClient {
      * @return error is NONE upon success. Otherwise,
      *         NO_RESOURCES when failed to set the queue temporarily.
      */
-    setInputCommandQueue(MQDescriptorSync descriptor)
+    setInputCommandQueue(fmq_sync<uint32_t> descriptor)
               generates (Error error);
 
     /*
@@ -568,7 +568,7 @@ interface IComposerClient {
      */
     getOutputCommandQueue()
               generates (Error error,
-                         MQDescriptorSync descriptor);
+                         fmq_sync<uint32_t> descriptor);
 
     /*
      * Executes commands from the input command message queue. Return values

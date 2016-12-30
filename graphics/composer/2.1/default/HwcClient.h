@@ -97,7 +97,7 @@ public:
     Return<Error> setClientTargetSlotCount(Display display,
             uint32_t clientTargetSlotCount) override;
     Return<Error> setInputCommandQueue(
-            const MQDescriptorSync& descriptor) override;
+            const MQDescriptorSync<uint32_t>& descriptor) override;
     Return<void> getOutputCommandQueue(
             getOutputCommandQueue_cb hidl_cb) override;
     Return<void> executeCommands(uint32_t inLength,
