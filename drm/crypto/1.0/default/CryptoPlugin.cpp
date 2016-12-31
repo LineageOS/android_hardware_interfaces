@@ -119,7 +119,7 @@ namespace implementation {
             bytesWritten = 0;
         }
 
-        _hidl_cb(toStatus(status), bytesWritten, detailMessage.c_str());
+        _hidl_cb(toStatus(status), bytesWritten);
         return Void();
     }
 

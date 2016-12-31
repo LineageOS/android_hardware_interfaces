@@ -47,6 +47,9 @@ struct DrmFactory : public IDrmFactory {
     Return<bool> isCryptoSchemeSupported(const hidl_array<uint8_t, 16>& uuid)
             override;
 
+    Return<bool> isContentTypeSupported(const hidl_string &mimeType)
+            override;
+
     Return<void> createPlugin(const hidl_array<uint8_t, 16>& uuid,
             createPlugin_cb _hidl_cb) override;
 

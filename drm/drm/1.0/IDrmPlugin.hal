@@ -30,13 +30,13 @@ interface IDrmPlugin {
     /**
      * Open a new session with the DrmPlugin object. A session ID is returned
      * in the sessionId parameter.
-     * @return status the status of the call. The status must be one of
-     * ERROR_DRM_NOT_PROVISIONED if the device requires provisioning before
-     * it can open a session, ERROR_DRM_RESOURCE_BUSY if there are insufficent
-     * resources available to open a session, ERROR_DRM_CANNOT_HANDLE,
-     * if openSession is not supported at the time of the call or
-     * ERROR_DRM_INVALID_STATE if the HAL is in a state where a session cannot
-     * be opened.
+     * @return status the status of the call. The status must be OK or one of
+     * the following errors: ERROR_DRM_NOT_PROVISIONED if the device requires
+     * provisioning before it can open a session, ERROR_DRM_RESOURCE_BUSY if
+     * there are insufficent resources available to open a session,
+     * ERROR_DRM_CANNOT_HANDLE, if openSession is not supported at the time of
+     * the call or ERROR_DRM_INVALID_STATE if the HAL is in a state where a
+     * session cannot be opened.
      * @return sessionId the session ID for the newly opened session
      */
     openSession() generates (Status status, SessionId sessionId);
@@ -45,9 +45,9 @@ interface IDrmPlugin {
      * Close a session on the DrmPlugin object
      *
      * @param sessionId the session id the call applies to
-     * @return status the status of the call.  The status must be one of
-     * ERROR_DRM_SESSION_NOT_OPENED if the session is not opened,
-     * BAD_VALUE if the sessionId is invalid or ERROR_DRM_INVALID_STATE
+     * @return status the status of the call.  The status must be OK or one of
+     * the following errors: ERROR_DRM_SESSION_NOT_OPENED if the session is not
+     * opened, BAD_VALUE if the sessionId is invalid or ERROR_DRM_INVALID_STATE
      * if the HAL is in a state where the session cannot be closed.
      */
     closeSession(SessionId sessionId) generates (Status status);
@@ -75,13 +75,13 @@ interface IDrmPlugin {
      * allow a client application to provide additional message parameters to
      * the server.
      *
-     * @return status the status of the call.  The status must be one of
-     * ERROR_DRM_SESSION_NOT_OPENED if the session is not opened,
-     * ERROR_DRM_NOT_PROVISIONED if the device requires provisioning before
-     * it can generate a key request, ERROR_DRM_CANNOT_HANDLE if getKeyRequest
-     * is not supported at the time of the call, BAD_VALUE if any parameters
-     * are invalid or ERROR_DRM_INVALID_STATE if the HAL is in a state where
-     * a key request cannot be generated.
+     * @return status the status of the call.  The status must be OK or one of
+     * the following errors: ERROR_DRM_SESSION_NOT_OPENED if the session is not
+     * opened, ERROR_DRM_NOT_PROVISIONED if the device requires provisioning
+     * before it can generate a key request, ERROR_DRM_CANNOT_HANDLE if
+     * getKeyRequest is not supported at the time of the call, BAD_VALUE if any
+     * parameters are invalid or ERROR_DRM_INVALID_STATE if the HAL is in a state
+     * where a key request cannot be generated.
      * @return request if successful, the opaque key request blob is returned
      * @return requestType indicates type information about the returned
      * request. The type may be one of INITIAL, RENEWAL or RELEASE. An
@@ -109,12 +109,12 @@ interface IDrmPlugin {
      * @param response the response from the key server that is being
      * provided to the drm HAL.
      *
-     * @return status the status of the call.  The status must be one of
-     * ERROR_DRM_SESSION_NOT_OPENED if the session is not opened,
-     * ERROR_DRM_NOT_PROVISIONED if the device requires provisioning before
-     * it can handle the key response, ERROR_DRM_DEVICE_REVOKED if the device
-     * has been disabled by the license policy, ERROR_DRM_CANNOT_HANDLE if
-     * provideKeyResponse is not supported at the time of the call, BAD_VALUE
+     * @return status the status of the call.  The status must be OK or one of
+     * the following errors: ERROR_DRM_SESSION_NOT_OPENED if the session is not
+     * opened, ERROR_DRM_NOT_PROVISIONED if the device requires provisioning
+     * before it can handle the key response, ERROR_DRM_DEVICE_REVOKED if the
+     * device has been disabled by the license policy, ERROR_DRM_CANNOT_HANDLE
+     * if provideKeyResponse is not supported at the time of the call, BAD_VALUE
      * if any parameters are invalid or ERROR_DRM_INVALID_STATE if the HAL is
      * in a state where a key response cannot be handled.
      * @return keySetId when the response is for an offline key request, a
@@ -130,9 +130,9 @@ interface IDrmPlugin {
      * Remove the current keys from a session
      *
      * @param sessionId the session id the call applies to
-     * @return status the status of the call.  The status must be one of
-     * ERROR_DRM_SESSION_NOT_OPENED if the session is not opened,
-     * BAD_VALUE if the sessionId is invalid or ERROR_DRM_INVALID_STATE
+     * @return status the status of the call.  The status must be OK or one of
+     * the following errors: ERROR_DRM_SESSION_NOT_OPENED if the session is not
+     * opened, BAD_VALUE if the sessionId is invalid or ERROR_DRM_INVALID_STATE
      * if the HAL is in a state where the keys cannot be removed.
      */
     removeKeys(SessionId sessionId) generates (Status status);
@@ -143,9 +143,9 @@ interface IDrmPlugin {
      * @param sessionId the session id the call applies to
      * @param keySetId identifies the keys to load, obtained from a prior
      * call to provideKeyResponse().
-     * @return status the status of the call. The status must be one of
-     * ERROR_DRM_SESSION_NOT_OPENED if the session is not opened,
-     * BAD_VALUE if any parameters are invalid or ERROR_DRM_INVALID_STATE
+     * @return status the status of the call. The status must be OK or one of
+     * the following errors: ERROR_DRM_SESSION_NOT_OPENED if the session is not
+     * opened, BAD_VALUE if any parameters are invalid or ERROR_DRM_INVALID_STATE
      * if the HAL is in a state where keys cannot be restored.
      */
     restoreKeys(SessionId sessionId,
@@ -159,9 +159,9 @@ interface IDrmPlugin {
      * the field names for a particular drm scheme.
      *
      * @param sessionId the session id the call applies to
-     * @return status the status of the call. The status must be one of
-     * ERROR_DRM_SESSION_NOT_OPENED if the session is not opened,
-     * BAD_VALUE if the sessionId is invalid or ERROR_DRM_INVALID_STATE
+     * @return status the status of the call. The status must be OK or one of
+     * the following errors: ERROR_DRM_SESSION_NOT_OPENED if the session is not
+     * opened, BAD_VALUE if the sessionId is invalid or ERROR_DRM_INVALID_STATE
      * if the HAL is in a state where key status cannot be queried.
      * @return infoList a list of name value pairs describing the license
      */
@@ -178,10 +178,10 @@ interface IDrmPlugin {
      * @param certificateAuthority identifies the certificate authority. A
      * certificate authority (CA) is an entity which issues digital certificates
      * for use by other parties. It is an example of a trusted third party.
-     * @return status the status of the call. The status must be one of
-     * BAD_VALUE if the sessionId is invalid or ERROR_DRM_INVALID_STATE
-     * if the HAL is in a state where the provision request cannot be
-     * generated.
+     * @return status the status of the call. The status must be OK or one of
+     * the following errors: BAD_VALUE if the sessionId is invalid or
+     * ERROR_DRM_INVALID_STATE if the HAL is in a state where the provision
+     * request cannot be generated.
      * @return request if successful the opaque certificate request blob
      * is returned
      * @return defaultUrl URL that the provisioning request should be
@@ -200,11 +200,11 @@ interface IDrmPlugin {
      * @param response the opaque provisioning response received by the
      * app from a provisioning server.
 
-     * @return status the status of the call. The status must be one of
-     * ERROR_DRM_DEVICE_REVOKED if the device has been disabled by the license
-     * policy, BAD_VALUE if any parameters are invalid or ERROR_DRM_INVALID_STATE
-     * if the HAL is in a state where the provision response cannot be
-     * handled.
+     * @return status the status of the call. The status must be OK or one of
+     * the following errors: ERROR_DRM_DEVICE_REVOKED if the device has been
+     * disabled by the license policy, BAD_VALUE if any parameters are invalid
+     * or ERROR_DRM_INVALID_STATE if the HAL is in a state where the provision
+     * response cannot be handled.
      * @return certificate the public certificate resulting from the provisioning
      * operation, if any. An empty vector indicates that no certificate was
      * returned.
@@ -237,7 +237,7 @@ interface IDrmPlugin {
     /**
      * Get all secure stops on the device
      *
-     * @return status the status of the call. The status must be
+     * @return status the status of the call. The status must be OK or
      * ERROR_DRM_INVALID_STATE if the HAL is in a state where the secure stops
      * cannot be returned.
      * @return secureStops a list of the secure stop opaque objects
@@ -252,9 +252,10 @@ interface IDrmPlugin {
      * secure stop ID is delivered by the key server as part of the key
      * response and must also be known by the app.
      *
-     * @return status the status of the call. The status must be one of
-     * BAD_VALUE if the secureStopId is invalid or ERROR_DRM_INVALID_STATE
-     * if the HAL is in a state where the secure stop cannot be returned.
+     * @return status the status of the call. The status must be OK or one of
+     * the following errors: BAD_VALUE if the secureStopId is invalid or
+     * ERROR_DRM_INVALID_STATE if the HAL is in a state where the secure stop
+     * cannot be returned.
      * @return secureStop the secure stop opaque object
      */
 
@@ -264,7 +265,7 @@ interface IDrmPlugin {
     /**
      * Release all secure stops on the device
      *
-     * @return status the status of the call. The status must be one of
+     * @return status the status of the call. The status must be OK or
      * ERROR_DRM_INVALID_STATE if the HAL is in a state where the secure
      * stops cannot be released.
      */
@@ -277,9 +278,10 @@ interface IDrmPlugin {
      * secure stop ID is delivered by the key server as part of the key
      * response and must also be known by the app.
      *
-     * @return status the status of the call. The status must be one of
-     * BAD_VALUE if the secureStopId is invalid or ERROR_DRM_INVALID_STATE
-     * if the HAL is in a state where the secure stop cannot be released.
+     * @return status the status of the call. The status must be OK or one of
+     * the following errors: BAD_VALUE if the secureStopId is invalid or
+     * ERROR_DRM_INVALID_STATE if the HAL is in a state where the secure stop
+     * cannot be released.
      */
     releaseSecureStop(vec<uint8_t> secureStopId) generates (Status status);
 
@@ -305,10 +307,11 @@ interface IDrmPlugin {
      * Read a string property value given the property name.
      *
      * @param propertyName the name of the property
-     * @return status the status of the call. The status must be one of
-     * BAD_VALUE if the property name is invalid, ERROR_DRM_CANNOT_HANDLE
-     * if the property is not supported, or ERROR_DRM_INVALID_STATE if the
-     * HAL is in a state where the property cannot be obtained.
+     * @return status the status of the call. The status must be OK or one of
+     * the following errors: BAD_VALUE if the property name is invalid,
+     * ERROR_DRM_CANNOT_HANDLE if the property is not supported, or
+     * ERROR_DRM_INVALID_STATE if the HAL is in a state where the property
+     * cannot be obtained.
      * @return value the property value string
      */
     getPropertyString(string propertyName)
@@ -318,10 +321,11 @@ interface IDrmPlugin {
      * Read a byte array property value given the property name.
      *
      * @param propertyName the name of the property
-     * @return status the status of the call. The status must be one of
-     * BAD_VALUE if the property name is invalid, ERROR_DRM_CANNOT_HANDLE
-     * if the property is not supported, or ERROR_DRM_INVALID_STATE if the
-     * HAL is in a state where the property cannot be obtained.
+     * @return status the status of the call. The status must be OK or one of
+     * the following errors: BAD_VALUE if the property name is invalid,
+     * ERROR_DRM_CANNOT_HANDLE if the property is not supported, or
+     * ERROR_DRM_INVALID_STATE if the HAL is in a state where the property
+     * cannot be obtained.
      * @return value the property value byte array
      */
     getPropertyByteArray(string propertyName)
@@ -332,10 +336,11 @@ interface IDrmPlugin {
      *
      * @param propertyName the name of the property
      * @param value the value to write
-     * @return status the status of the call. The status must be one of
-     * BAD_VALUE if the property name is invalid, ERROR_DRM_CANNOT_HANDLE
-     * if the property is not supported, or ERROR_DRM_INVALID_STATE if the
-     * HAL is in a state where the property cannot be set.
+     * @return status the status of the call. The status must be OK or one of
+     * the following errors: BAD_VALUE if the property name is invalid,
+     * ERROR_DRM_CANNOT_HANDLE if the property is not supported, or
+     * ERROR_DRM_INVALID_STATE if the HAL is in a state where the property
+     * cannot be set.
      */
     setPropertyString(string propertyName, string value)
         generates (Status status);
@@ -345,10 +350,11 @@ interface IDrmPlugin {
      *
      * @param propertyName the name of the property
      * @param value the value to write
-     * @return status the status of the call. The status must be one of
-     * BAD_VALUE if the property name is invalid, ERROR_DRM_CANNOT_HANDLE
-     * if the property is not supported, or ERROR_DRM_INVALID_STATE if the
-     * HAL is in a state where the property cannot be set.
+     * @return status the status of the call. The status must be OK or one of
+     * the following errors: BAD_VALUE if the property name is invalid,
+     * ERROR_DRM_CANNOT_HANDLE if the property is not supported, or
+     * ERROR_DRM_INVALID_STATE if the HAL is in a state where the property
+     * cannot be set.
      */
     setPropertyByteArray(string propertyName, vec<uint8_t> value )
         generates (Status status);
@@ -366,9 +372,9 @@ interface IDrmPlugin {
      * @param algorithm the algorithm to use. The string conforms to JCA
      * Standard Names for Cipher Transforms and is case insensitive. An
      * example algorithm is "AES/CBC/PKCS5Padding".
-     * @return status the status of the call. The status must be one of
-     * ERROR_DRM_SESSION_NOT_OPENED if the session is not opened,
-     * BAD_VALUE if any parameters are invalid or ERROR_DRM_INVALID_STATE
+     * @return status the status of the call. The status must be OK or one of
+     * the following errors: ERROR_DRM_SESSION_NOT_OPENED if the session is not
+     * opened, BAD_VALUE if any parameters are invalid or ERROR_DRM_INVALID_STATE
      * if the HAL is in a state where the algorithm cannot be set.
      */
     setCipherAlgorithm(SessionId sessionId, string algorithm)
@@ -381,9 +387,9 @@ interface IDrmPlugin {
      * @param algorithm the algorithm to use. The string conforms to JCA
      * Standard Names for Mac Algorithms and is case insensitive. An example MAC
      * algorithm string is "HmacSHA256".
-     * @return status the status of the call. The status must be one of
-     * ERROR_DRM_SESSION_NOT_OPENED if the session is not opened,
-     * BAD_VALUE if any parameters are invalid or ERROR_DRM_INVALID_STATE
+     * @return status the status of the call. The status must be OK or one of the
+     * following errors: ERROR_DRM_SESSION_NOT_OPENED if the session is not
+     * opened, BAD_VALUE if any parameters are invalid or ERROR_DRM_INVALID_STATE
      * if the HAL is in a state where the algorithm cannot be set.
      */
     setMacAlgorithm(SessionId sessionId, string algorithm)
@@ -398,11 +404,10 @@ interface IDrmPlugin {
      * @param keyId the ID of the key to use for encryption
      * @param input the input data to encrypt
      * @param iv the initialization vector to use for encryption
-     * @return status the status of the call. The status must be one of
-     * ERROR_DRM_SESSION_NOT_OPENED if the session is not opened,
+     * @return status the status of the call. The status must be OK or one of the
+     * following errors: ERROR_DRM_SESSION_NOT_OPENED if the session is not opened,
      * BAD_VALUE if any parameters are invalid or ERROR_DRM_INVALID_STATE
-     * if the HAL is in a state where the encrypt operation cannot be
-     * performed.
+     * if the HAL is in a state where the encrypt operation cannot be performed.
      * @return output the decrypted data
      */
     encrypt(SessionId sessionId, vec<uint8_t> keyId, vec<uint8_t> input,
@@ -417,9 +422,9 @@ interface IDrmPlugin {
      * @param keyId the ID of the key to use for decryption
      * @param input the input data to decrypt
      * @param iv the initialization vector to use for decryption
-     * @return status the status of the call. The status must be one of
-     * ERROR_DRM_SESSION_NOT_OPENED if the session is not opened,
-     * BAD_VALUE if any parameters are invalid or ERROR_DRM_INVALID_STATE
+     * @return status the status of the call. The status must be OK or one of
+     * the following errors: ERROR_DRM_SESSION_NOT_OPENED if the session is not
+     * opened, BAD_VALUE if any parameters are invalid or ERROR_DRM_INVALID_STATE
      * if the HAL is in a state where the decrypt operation cannot be
      * performed.
      * @return output the decrypted data
@@ -435,9 +440,9 @@ interface IDrmPlugin {
      * @param sessionId the session id the call applies to
      * @param keyId the ID of the key to use for decryption
      * @param message the message to compute a signature over
-     * @return status the status of the call. The status must be one of
-     * ERROR_DRM_SESSION_NOT_OPENED if the session is not opened,
-     * BAD_VALUE if any parameters are invalid or ERROR_DRM_INVALID_STATE
+     * @return status the status of the call. The status must be OK or one of
+     * the following errors: ERROR_DRM_SESSION_NOT_OPENED if the session is not
+     * opened, BAD_VALUE if any parameters are invalid or ERROR_DRM_INVALID_STATE
      * if the HAL is in a state where the sign operation cannot be
      * performed.
      * @return signature the computed signature
@@ -454,9 +459,9 @@ interface IDrmPlugin {
      * @param keyId the ID of the key to use for decryption
      * @param message the message to compute a hash of
      * @param signature the signature to verify
-     * @return status the status of the call. The status must be one of
-     * ERROR_DRM_SESSION_NOT_OPENED if the session is not opened,
-     * BAD_VALUE if any parameters are invalid or ERROR_DRM_INVALID_STATE
+     * @return status the status of the call. The status must be OK or one of
+     * the following errors: ERROR_DRM_SESSION_NOT_OPENED if the session is not
+     * opened, BAD_VALUE if any parameters are invalid or ERROR_DRM_INVALID_STATE
      * if the HAL is in a state where the verify operation cannot be
      * performed.
      * @return match true if the signature is verified positively,
@@ -475,11 +480,11 @@ interface IDrmPlugin {
      * @param message the message to compute the signature on
      * @param wrappedKey the private key returned during provisioning as
      * returned by provideProvisionResponse.
-     * @return status the status of the call. The status must be one of
-     * ERROR_DRM_SESSION_NOT_OPENED if the session is not opened,
-     * BAD_VALUE if any parameters are invalid or ERROR_DRM_INVALID_STATE
-     * if the HAL is in a state where the signRSA operation cannot be
-     * performed.
+     * @return status the status of the call. The status must be OK or one of
+     * the following errors: ERROR_DRM_SESSION_NOT_OPENED if the session is
+     * not opened, BAD_VALUE if any parameters are invalid or
+     * ERROR_DRM_INVALID_STATE if the HAL is in a state where the signRSA
+     * operation cannot be performed.
      * @return signature the RSA signature computed over the message
      */
     signRSA(SessionId sessionId, string algorithm, vec<uint8_t> message,
