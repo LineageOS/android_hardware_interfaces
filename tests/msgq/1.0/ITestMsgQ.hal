@@ -31,7 +31,7 @@ interface ITestMsgQ {
      * set up by the service. Client can use it to set up the FMQ at its end.
      */
     configureFmqSyncReadWrite()
-        generates(bool ret, MQDescriptorSync mqDesc);
+        generates(bool ret, fmq_sync<uint16_t> mqDesc);
 
     /*
      * This method requests the service to set up an unsynchronized write
@@ -42,7 +42,7 @@ interface ITestMsgQ {
      * set up by the service. Client can use it to set up the FMQ at its end.
      */
     configureFmqUnsyncWrite()
-        generates(bool ret, MQDescriptorUnsync mqDesc);
+        generates(bool ret, fmq_unsync<uint16_t> mqDesc);
 
     /*
      * This method request the service to write into the synchronized read/write
