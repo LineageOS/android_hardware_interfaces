@@ -25,7 +25,7 @@ interface IBenchmarkMsgQ {
      * by the service. Client can use it to set up the FMQ at its end.
      */
     configureClientInboxSyncReadWrite()
-        generates(bool ret, MQDescriptorSync mqDescIn);
+        generates(bool ret, fmq_sync<uint8_t> mqDescIn);
 
     /*
      * This method requests the service to set up Synchronous read/write
@@ -35,7 +35,7 @@ interface IBenchmarkMsgQ {
      * by the service. Client can use it to set up the FMQ at its end.
      */
     configureClientOutboxSyncReadWrite()
-        generates(bool ret, MQDescriptorSync mqDescOut);
+        generates(bool ret, fmq_sync<uint8_t> mqDescOut);
 
     /*
      * This method request the service to write into the FMQ.
