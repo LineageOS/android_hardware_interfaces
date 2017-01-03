@@ -51,7 +51,6 @@ enum RadioCdmaSmsConst : int32_t {
 };
 
 enum RadioError : int32_t {
-    INVALID_RESPONSE = -1,                // Response from vendor had invalid data
     NONE = 0,                             // Success
     RADIO_NOT_AVAILABLE = 1,              // If radio did not start or is resetting
     GENERIC_FAILURE = 2,
@@ -115,7 +114,8 @@ enum RadioError : int32_t {
     NO_NETWORK_FOUND = 63,                // Network cannot be found
     DEVICE_IN_USE = 64,                   // Operation cannot be performed because the device
                                           // is currently in use
-    RIL_E_ABORTED = 65,                   // Operation aborted
+    ABORTED = 65,                         // Operation aborted
+    INVALID_RESPONSE = 66,                // Response from vendor had invalid data
 
     // TODO(May be moved to vendor HAL extension)
     // OEM specific error codes. To be used by OEM when they don't want to reveal
