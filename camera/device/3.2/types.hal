@@ -408,7 +408,16 @@ struct StreamBuffer {
     int32_t streamId;
 
     /**
-     * The graphics buffer handle to the buffer
+     * The graphics buffer handle to the buffer.
+     *
+     * For StreamBuffers sent to the HAL in a CaptureRequest, this must be a
+     * valid handle to a graphics buffer, with dimensions and format matching
+     * that of the stream.
+     *
+     * For StreamBuffers returned in a CaptureResult, this must be null, since
+     * the handle to the buffer is already known to the client (since the client
+     * sent it in the matching CaptureRequest), and the handle can be identified
+     * by the combination of frame number and stream ID.
      */
     handle buffer;
 
@@ -424,44 +433,34 @@ struct StreamBuffer {
      * The acquire sync fence for this buffer. The HAL must wait on this fence
      * fd before attempting to read from or write to this buffer.
      *
-     * The framework may be set to -1 to indicate that no waiting is necessary
-     * for this buffer.
+     * In a buffer included in a CaptureRequest, the client may set this to null
+     * to indicate that no waiting is necessary for this buffer.
      *
-     * When the HAL returns an output buffer to the framework with
-     * processCaptureResult(), the acquireFence must be set to -1. If the HAL
-     * never waits on the acquireFence due to an error in filling a buffer,
-     * when calling processCaptureResult() the HAL must set the releaseFence
-     * of the buffer to be the acquireFence passed to it by the framework. This
-     * allows the framework to wait on the fence before reusing the buffer.
-     *
-     * For input buffers, the HAL must not change the acquireFence field during
-     * the processCaptureRequest() call.
-     *
-     * When the HAL returns an input buffer to the framework with
-     * processCaptureResult(), the acquireFence must be set to -1. If the HAL
-     * never waits on input buffer acquire fence due to an error, the sync
-     * fences must be handled similarly to the way they are handled for output
-     * buffers.
+     * When the HAL returns an input or output buffer to the framework with
+     * processCaptureResult(), the acquireFence must be set to null. If the HAL
+     * never waits on the acquireFence due to an error in filling or reading a
+     * buffer, when calling processCaptureResult() the HAL must set the
+     * releaseFence of the buffer to be the acquireFence passed to it by the
+     * client. This allows the client to wait on the fence before reusing the
+     * buffer.
      */
     handle acquireFence;
 
     /**
-     * The release sync fence for this buffer. The HAL must set this fence when
-     * returning buffers to the framework, or write -1 to indicate that no
-     * waiting is required for this buffer.
+     * The release sync fence for this buffer. The HAL must set this to a valid
+     * fence fd when returning the input buffer or output buffers to the client
+     * in a CaptureResult, or set it to null to indicate that no waiting is
+     * required for this buffer.
      *
-     * For the output buffers, the fences must be set in the outputBuffers
-     * array passed to processCaptureResult().
-     *
-     * For the input buffer, the fences must be set in the inputBuffer
-     * passed to processCaptureResult().
+     * The client must set this to be null for all buffers included in a
+     * processCaptureRequest call.
      *
      * After signaling the releaseFence for this buffer, the HAL
      * must not make any further attempts to access this buffer as the
-     * ownership has been fully transferred back to the framework.
+     * ownership has been fully transferred back to the client.
      *
-     * If a fence of -1 was specified then the ownership of this buffer
-     * is transferred back immediately upon the call of processCaptureResult.
+     * If this is null, then the ownership of this buffer is transferred back
+     * immediately upon the call of processCaptureResult.
      */
     handle releaseFence;
 
@@ -722,13 +721,13 @@ struct CaptureRequest {
     /**
      * The input stream buffer to use for this request, if any.
      *
+     * An invalid inputBuffer is signified by a null inputBuffer::buffer, in
+     * which case the value of all other members of inputBuffer must be ignored.
+     *
      * If inputBuffer is invalid, then the request is for a new capture from the
      * imager. If inputBuffer is valid, the request is for reprocessing the
-     * image contained in inputBuffer.
-     *
-     * In the latter case, the HAL must set the releaseFence of the
-     * inputBuffer to a valid sync fence, or to -1 if the HAL does not support
-     * sync, before processCaptureRequest() returns.
+     * image contained in inputBuffer, and the HAL must release the inputBuffer
+     * back to the client in a subsequent processCaptureResult call.
      *
      * The HAL is required to wait on the acquire sync fence of the input buffer
      * before accessing it.
@@ -741,9 +740,8 @@ struct CaptureRequest {
      * data from this capture/reprocess. The HAL must wait on the acquire fences
      * of each stream buffer before writing to them.
      *
-     * The HAL takes ownership of the actual buffer_handle_t entries in
-     * outputBuffers; the framework must not access them until they are
-     * returned in a CaptureResult.
+     * The HAL takes ownership of the handles in outputBuffers; the client
+     * must not access them until they are returned in a CaptureResult.
      *
      * Any or all of the buffers included here may be brand new in this
      * request (having never before seen by the HAL).
@@ -823,10 +821,15 @@ struct CaptureResult {
     CameraMetadata result;
 
     /**
-     * The handles for the output stream buffers for this capture. They may not
-     * yet be filled at the time the HAL calls processCaptureResult(); the
-     * framework must wait on the release sync fences provided by the HAL before
-     * reading the buffers.
+     * The completed output stream buffers for this capture.
+     *
+     * They may not yet be filled at the time the HAL calls
+     * processCaptureResult(); the framework must wait on the release sync
+     * fences provided by the HAL before reading the buffers.
+     *
+     * The StreamBuffer::buffer handle must be null for all returned buffers;
+     * the client must cache the handle and look it up via the combination of
+     * frame number and stream ID.
      *
      * The number of output buffers returned must be less than or equal to the
      * matching capture request's count. If this is less than the buffer count
@@ -836,7 +839,7 @@ struct CaptureResult {
      * valid result metadata or an input buffer is returned in this result.
      *
      * The HAL must set the stream buffer's release sync fence to a valid sync
-     * fd, or to -1 if the buffer has already been filled.
+     * fd, or to null if the buffer has already been filled.
      *
      * If the HAL encounters an error while processing the buffer, and the
      * buffer is not filled, the buffer's status field must be set to ERROR. If
@@ -844,7 +847,7 @@ struct CaptureResult {
      * the acquire fence must be copied into the release fence, to allow the
      * framework to wait on the fence before reusing the buffer.
      *
-     * The acquire fence must be set to -1 for all output buffers.
+     * The acquire fence must be set to null for all output buffers.
      *
      * This vector may be empty; if so, at least one other processCaptureResult
      * call must be made (or have been made) by the HAL to provide the filled
@@ -854,8 +857,8 @@ struct CaptureResult {
      * all previous frames' buffers for that corresponding stream must have been
      * already delivered (the fences need not have yet been signaled).
      *
-     * Gralloc buffers for a frame may be sent to framework before the
-     * corresponding SHUTTER-notify.
+     * Buffers for a frame may be sent to framework before the corresponding
+     * SHUTTER-notify call is made by the HAL.
      *
      * Performance considerations:
      *
@@ -867,10 +870,11 @@ struct CaptureResult {
     vec<StreamBuffer> outputBuffers;
 
     /**
-     * The handle for the input stream buffer for this capture. It may not
-     * yet be consumed at the time the HAL calls processCaptureResult(); the
-     * framework must wait on the release sync fence provided by the HAL before
-     * reusing the buffer.
+     * The handle for the input stream buffer for this capture, if any.
+     *
+     * It may not yet be consumed at the time the HAL calls
+     * processCaptureResult(); the framework must wait on the release sync fence
+     * provided by the HAL before reusing the buffer.
      *
      * The HAL must handle the sync fences the same way they are done for
      * outputBuffers.
