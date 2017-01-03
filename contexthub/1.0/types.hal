@@ -108,6 +108,22 @@ struct ContextHub {
 
     uint32_t maxSupportedMsgLen;// This is the maximum size of the message that can
                                 // be sent to the hub in one chunk (in bytes)
+
+    // Machine-readable CHRE platform ID, returned to nanoapps in the CHRE API
+    // function call chreGetPlatformId(). The most significant 5 bytes of this
+    // value identify the vendor, while the remaining bytes are set by the
+    // vendor to uniquely identify each different CHRE implementation/hardware
+    // that the vendor supplies. This field pairs with the patch version part of
+    // chreVersion to fully specify the CHRE implementation version. See also
+    // the CHRE API header file chre/version.h.
+    uint64_t chrePlatformId;
+
+    // CHRE implementation version, returned to nanoApps in the CHRE API
+    // function call chreGetVersion(). This value consists of the implemented
+    // CHRE API version (major version in most significant byte, followed by
+    // minor version), and the platform-specific implementation patch version
+    // in the lower two bytes. See also the CHRE API header file chre/version.h.
+    uint32_t chreVersion;
 };
 
 struct ContextHubMsg {

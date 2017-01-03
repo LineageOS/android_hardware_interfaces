@@ -18,6 +18,13 @@ package android.hardware.contexthub@1.0;
 
 import IContexthubCallback;
 
+/*
+ * The Context Hub HAL provides an interface to a separate low-power processing
+ * domain that has direct access to contextual information, such as sensors.
+ * Native applications that run within a context hub are known as nanoapps, and
+ * they execute within the Context Hub Runtime Environment (CHRE), which is
+ * standardized via the CHRE API, defined elsewhere.
+ */
 interface IContexthub {
     /*
      * Enumerate all available context hubs on the system.
