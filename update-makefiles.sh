@@ -20,7 +20,9 @@ packages=$(pushd hardware/interfaces > /dev/null; \
 for p in $packages; do
   echo "Updating $p";
   hidl-gen -Lmakefile -r android.hardware:hardware/interfaces -r android.hidl:system/libhidl/transport $p;
+  rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
   hidl-gen -Landroidbp -r android.hardware:hardware/interfaces -r android.hidl:system/libhidl/transport $p;
+  rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
 done
 
 # subdirectories of hardware/interfaces which contain an Android.bp file
