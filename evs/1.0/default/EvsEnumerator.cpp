@@ -62,8 +62,7 @@ Return<void> EvsEnumerator::getCameraList(getCameraList_cb _hidl_cb)  {
     return Void();
 }
 
-Return<void> EvsEnumerator::openCamera(const hidl_string& cameraId,
-                                             openCamera_cb callback) {
+Return<sp<IEvsCamera>> EvsEnumerator::openCamera(const hidl_string& cameraId) {
     ALOGD("openCamera");
 
     // Find the named camera
@@ -78,20 +77,18 @@ Return<void> EvsEnumerator::openCamera(const hidl_string& cameraId,
 
     if (!pRecord) {
         ALOGE("Requested camera %s not found", cameraId.c_str());
-        callback(nullptr);
+        return nullptr;
     }
     else if (pRecord->inUse) {
         ALOGE("Cannot open camera %s which is already in use", cameraId.c_str());
-        callback(nullptr);
+        return nullptr;
     }
     else {
         /* TODO(b/33492405):  Do this, When HIDL can give us back a recognizable pointer
         pRecord->inUse = true;
          */
-        callback(pRecord->pCamera);
+        return(pRecord->pCamera);
     }
-
-    return Void();
 }
 
 Return<void> EvsEnumerator::closeCamera(const ::android::sp<IEvsCamera>& camera) {
@@ -112,22 +109,20 @@ Return<void> EvsEnumerator::closeCamera(const ::android::sp<IEvsCamera>& camera)
     return Void();
 }
 
-Return<void> EvsEnumerator::openDisplay(openDisplay_cb callback) {
+Return<sp<IEvsDisplay>> EvsEnumerator::openDisplay() {
     ALOGD("openDisplay");
 
     // If we already have a display active, then this request must be denied
     if (mActiveDisplay != nullptr) {
         ALOGW("Rejecting openDisplay request the display is already in use.");
-        callback(nullptr);
+        return nullptr;
     }
     else {
         // Create a new display interface and return it
         mActiveDisplay = new EvsDisplay();
         ALOGD("Returning new EvsDisplay object %p", mActiveDisplay.get());
-        callback(mActiveDisplay);
+        return mActiveDisplay;
     }
-
-    return Void();
 }
 
 Return<void> EvsEnumerator::closeDisplay(const ::android::sp<IEvsDisplay>& display) {

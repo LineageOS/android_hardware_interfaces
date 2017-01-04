@@ -385,7 +385,7 @@ Return<bool> Gnss::setPositionMode(IGnss::GnssPositionMode mode,
                                           preferredTimeMs) == 0);
 }
 
-Return<void> Gnss::getExtensionAGnssRil(getExtensionAGnssRil_cb _hidl_cb)  {
+Return<sp<IAGnssRil>> Gnss::getExtensionAGnssRil()  {
     if (mGnssIface == nullptr) {
         ALOGE("%s: Gnss interface is unavailable", __func__);
     } else {
@@ -397,11 +397,10 @@ Return<void> Gnss::getExtensionAGnssRil(getExtensionAGnssRil_cb _hidl_cb)  {
             mGnssRil = new AGnssRil(agpsRilIface);
         }
     }
-    _hidl_cb(mGnssRil);
-    return Void();
+    return mGnssRil;
 }
 
-Return<void> Gnss::getExtensionGnssConfiguration(getExtensionGnssConfiguration_cb _hidl_cb)  {
+Return<sp<IGnssConfiguration>> Gnss::getExtensionGnssConfiguration()  {
     if (mGnssIface == nullptr) {
         ALOGE("%s: Gnss interface is unavailable", __func__);
     } else {
@@ -415,10 +414,9 @@ Return<void> Gnss::getExtensionGnssConfiguration(getExtensionGnssConfiguration_c
             mGnssConfig = new GnssConfiguration(gnssConfigIface);
         }
     }
-    _hidl_cb(mGnssConfig);
-    return Void();
+    return mGnssConfig;
 }
-Return<void> Gnss::getExtensionGnssGeofencing(getExtensionGnssGeofencing_cb _hidl_cb)  {
+Return<sp<IGnssGeofencing>> Gnss::getExtensionGnssGeofencing()  {
     if (mGnssIface == nullptr) {
         ALOGE("%s: Gnss interface is unavailable", __func__);
     } else {
@@ -433,11 +431,10 @@ Return<void> Gnss::getExtensionGnssGeofencing(getExtensionGnssGeofencing_cb _hid
         }
     }
 
-    _hidl_cb(mGnssGeofencingIface);
-    return Void();
+    return mGnssGeofencingIface;
 }
 
-Return<void> Gnss::getExtensionAGnss(getExtensionAGnss_cb _hidl_cb)  {
+Return<sp<IAGnss>> Gnss::getExtensionAGnss()  {
     if (mGnssIface == nullptr) {
         ALOGE("%s: Gnss interface is unavailable", __func__);
     } else {
@@ -449,11 +446,10 @@ Return<void> Gnss::getExtensionAGnss(getExtensionAGnss_cb _hidl_cb)  {
             mAGnssIface = new AGnss(agpsIface);
         }
     }
-    _hidl_cb(mAGnssIface);
-    return Void();
+    return mAGnssIface;
 }
 
-Return<void> Gnss::getExtensionGnssNi(getExtensionGnssNi_cb _hidl_cb)  {
+Return<sp<IGnssNi>> Gnss::getExtensionGnssNi()  {
     if (mGnssIface == nullptr) {
         ALOGE("%s: Gnss interface is unavailable", __func__);
     } else {
@@ -465,11 +461,10 @@ Return<void> Gnss::getExtensionGnssNi(getExtensionGnssNi_cb _hidl_cb)  {
             mGnssNi = new GnssNi(gpsNiIface);
         }
     }
-    _hidl_cb(mGnssNi);
-    return Void();
+    return mGnssNi;
 }
 
-Return<void> Gnss::getExtensionGnssMeasurement(getExtensionGnssMeasurement_cb _hidl_cb) {
+Return<sp<IGnssMeasurement>> Gnss::getExtensionGnssMeasurement() {
     if (mGnssIface == nullptr) {
         ALOGE("%s: Gnss interface is unavailable", __func__);
     } else {
@@ -483,12 +478,10 @@ Return<void> Gnss::getExtensionGnssMeasurement(getExtensionGnssMeasurement_cb _h
             mGnssMeasurement = new GnssMeasurement(gpsMeasurementIface);
         }
     }
-    _hidl_cb(mGnssMeasurement);
-    return Void();
+    return mGnssMeasurement;
 }
 
-Return<void> Gnss::getExtensionGnssNavigationMessage(
-        getExtensionGnssNavigationMessage_cb _hidl_cb) {
+Return<sp<IGnssNavigationMessage>> Gnss::getExtensionGnssNavigationMessage() {
     if (mGnssIface == nullptr) {
         ALOGE("%s: Gnss interface is unavailable", __func__);
     } else {
@@ -504,11 +497,10 @@ Return<void> Gnss::getExtensionGnssNavigationMessage(
         }
     }
 
-    _hidl_cb(mGnssNavigationMessage);
-    return Void();
+    return mGnssNavigationMessage;
 }
 
-Return<void> Gnss::getExtensionXtra(getExtensionXtra_cb _hidl_cb)  {
+Return<sp<IGnssXtra>> Gnss::getExtensionXtra()  {
     if (mGnssIface == nullptr) {
         ALOGE("%s: Gnss interface is unavailable", __func__);
     } else {
@@ -522,11 +514,10 @@ Return<void> Gnss::getExtensionXtra(getExtensionXtra_cb _hidl_cb)  {
         }
     }
 
-    _hidl_cb(mGnssXtraIface);
-    return Void();
+    return mGnssXtraIface;
 }
 
-Return<void> Gnss::getExtensionGnssDebug(getExtensionGnssDebug_cb _hidl_cb)  {
+Return<sp<IGnssDebug>> Gnss::getExtensionGnssDebug()  {
     if (mGnssIface == nullptr) {
         ALOGE("%s: Gnss interface is unavailable", __func__);
     } else {
@@ -540,8 +531,7 @@ Return<void> Gnss::getExtensionGnssDebug(getExtensionGnssDebug_cb _hidl_cb)  {
         }
     }
 
-    _hidl_cb(mGnssDebug);
-    return Void();
+    return mGnssDebug;
 }
 
 IGnss* HIDL_FETCH_IGnss(const char* hal) {

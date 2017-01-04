@@ -34,9 +34,9 @@ class EvsEnumerator : public IEvsEnumerator {
 public:
     // Methods from ::android::hardware::evs::V1_0::IEvsEnumerator follow.
     Return<void> getCameraList(getCameraList_cb _hidl_cb)  override;
-    Return<void> openCamera(const hidl_string& cameraId, openCamera_cb callback)  override;
+    Return<sp<IEvsCamera>> openCamera(const hidl_string& cameraId) override;
     Return<void> closeCamera(const ::android::sp<IEvsCamera>& carCamera)  override;
-    Return<void> openDisplay(openDisplay_cb callback)  override;
+    Return<sp<IEvsDisplay>> openDisplay()  override;
     Return<void> closeDisplay(const ::android::sp<IEvsDisplay>& display)  override;
 
     // Implementation details

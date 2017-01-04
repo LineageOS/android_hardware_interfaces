@@ -74,16 +74,15 @@ struct Gnss : public IGnss {
                                  uint32_t minIntervalMs,
                                  uint32_t preferredAccuracyMeters,
                                  uint32_t preferredTimeMs)  override;
-    Return<void> getExtensionAGnssRil(getExtensionAGnssRil_cb _hidl_cb) override;
-    Return<void> getExtensionGnssGeofencing(getExtensionGnssGeofencing_cb _hidl_cb)  override;
-    Return<void> getExtensionAGnss(getExtensionAGnss_cb _hidl_cb)  override;
-    Return<void> getExtensionGnssNi(getExtensionGnssNi_cb _hidl_cb)  override;
-    Return<void> getExtensionGnssMeasurement(getExtensionGnssMeasurement_cb _hidl_cb)  override;
-    Return<void> getExtensionGnssNavigationMessage(
-        getExtensionGnssNavigationMessage_cb _hidl_cb)  override;
-    Return<void> getExtensionXtra(getExtensionXtra_cb _hidl_cb)  override;
-    Return<void> getExtensionGnssDebug(getExtensionGnssDebug_cb _hidl_cb)  override;
-    Return<void> getExtensionGnssConfiguration(getExtensionGnssConfiguration_cb _hidl_cb) override;
+    Return<sp<IAGnssRil>> getExtensionAGnssRil() override;
+    Return<sp<IGnssGeofencing>> getExtensionGnssGeofencing() override;
+    Return<sp<IAGnss>> getExtensionAGnss() override;
+    Return<sp<IGnssNi>> getExtensionGnssNi() override;
+    Return<sp<IGnssMeasurement>> getExtensionGnssMeasurement() override;
+    Return<sp<IGnssNavigationMessage>> getExtensionGnssNavigationMessage() override;
+    Return<sp<IGnssXtra>> getExtensionXtra() override;
+    Return<sp<IGnssConfiguration>> getExtensionGnssConfiguration() override;
+    Return<sp<IGnssDebug>> getExtensionGnssDebug() override;
 
     /*
      * Callback methods to be passed into the conventional GNSS HAL by the default
