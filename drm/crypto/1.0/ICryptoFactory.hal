@@ -40,8 +40,9 @@ interface ICryptoFactory {
      * @param uuid uniquely identifies the drm scheme. See
      * http://dashif.org/identifiers/protection for uuid assignments
      * @param initData scheme-specific init data.
-     * @return status the status of the call. If the plugin can't
-     * be created, the HAL implementation must return ERROR_DRM_CANNOT_HANDLE.
+     * @return status the status of the call. The HAL implementation must return
+     * OK if the plugin is created and ERROR_DRM_CANNOT_HANDLE if the plugin
+     * cannot be created.
      * @return cryptoPlugin the created ICryptoPlugin
      */
     createPlugin(uint8_t[16] uuid, vec<uint8_t> initData)

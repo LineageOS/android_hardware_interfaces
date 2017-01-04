@@ -18,6 +18,12 @@ package android.hardware.drm.drm@1.0;
 
 enum Status : uint32_t {
     /**
+     * The DRM plugin must return OK when an operation completes without any
+     * errors.
+     */
+    OK,
+
+    /**
      * The DRM plugin must return ERROR_DRM_NO_LICENSE, when decryption is
      * attempted and no license keys have been provided.
      */
@@ -122,7 +128,7 @@ enum EventType : uint32_t {
 enum KeyType : uint32_t {
     /**
      * Drm keys can be for offline content or for online streaming.
-
+     * Offline keys are persisted on the device and may be used when the device
      * is disconnected from the network.
      */
     OFFLINE,

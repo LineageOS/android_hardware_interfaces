@@ -26,6 +26,9 @@ namespace implementation {
 Status toStatus(status_t legacyStatus) {
     Status status;
     switch(legacyStatus) {
+    case android::OK:
+        status = Status::OK;
+        break;
     case android::ERROR_DRM_NO_LICENSE:
         status = Status::ERROR_DRM_NO_LICENSE;
         break;

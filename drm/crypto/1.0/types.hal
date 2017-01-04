@@ -18,6 +18,12 @@ package android.hardware.drm.crypto@1.0;
 
 enum Status : uint32_t {
     /**
+     * The Crypto plugin must return OK when an operation completes without any
+     * errors.
+     */
+    OK,
+
+    /**
      * The Crypto Plugin must return ERROR_DRM_NO_LICENSE if decryption is
      * attempted when the license keys have not been loaded into the crypto
      * session.

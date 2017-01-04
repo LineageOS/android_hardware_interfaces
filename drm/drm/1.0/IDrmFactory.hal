@@ -36,14 +36,23 @@ interface IDrmFactory {
     isCryptoSchemeSupported(uint8_t[16] uuid) generates(bool isSupported);
 
     /**
+     * Determine if the HAL factory is able to construct plugins that support a
+     * given media container format specified by mimeType
+     *
+     * @param mimeType identifies the mime type in question
+     * @return isSupported must be true only if the scheme is supported
+     */
+    isContentTypeSupported(string mimeType) generates(bool isSupported);
+
+    /**
      * Create a drm plugin instance for the specified uuid and scheme-specific
      * initialization data.
      *
      * @param uuid uniquely identifies the drm scheme. See
      * http://dashif.org/identifiers/protection for uuid assignments
-     * @return status the status of the call. If the plugin can't be created,
-     * the HAL implementation must return ERROR_DRM_CANNOT_HANDLE.
-     * @return drmPlugin the created IDrmPlugin
+     * @return status the status of the call. The HAL implementation must return
+     * OK if the plugin is created and ERROR_DRM_CANNOT_HANDLE if the plugin
+     * cannot be created.
      */
     createPlugin(uint8_t[16] uuid) generates (Status status,
             IDrmPlugin drmPlugin);

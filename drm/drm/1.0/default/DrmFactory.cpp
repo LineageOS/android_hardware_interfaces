@@ -40,6 +40,16 @@ namespace implementation {
         return false;
     }
 
+    Return<bool> DrmFactory::isContentTypeSupported (
+            const hidl_string& mimeType) {
+        for (size_t i = 0; i < loader.factoryCount(); i++) {
+            if (loader.getFactory(i)->isContentTypeSupported(String8(mimeType.c_str()))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     Return<void> DrmFactory::createPlugin(const hidl_array<uint8_t, 16>& uuid,
             createPlugin_cb _hidl_cb) {
 
