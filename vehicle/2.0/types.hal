@@ -1644,6 +1644,59 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:COMPLEX
         | VehicleArea:GLOBAL),
+
+    /*
+     * OBD2 Live Sensor Data
+     *
+     * This property uses COMPLEX data to send a snapshot of the current (live)
+     * values of the OBD2 sensors provided by the vehicle.
+     *
+     * Its contents are to be interpreted as follows:
+     * the indices defined in Obd2IntegerSensorIndex are to be used to
+     * read from int32Values;
+     * the indices defined in Obd2FloatSensorIndex are to be used to
+     * read from floatValues.
+     *
+     * For example, int32Values[0] corresponds to FUEL_SYSTEM_STATUS, and
+     * floatValues[0] corresponds to CALCULATED_ENGINE_LOAD.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     */
+    OBD2_LIVE_FRAME = (
+        0x0D00
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:COMPLEX
+        | VehicleArea:GLOBAL),
+
+    /*
+     * OBD2 Freeze Frame Sensor Data
+     *
+     * This property uses COMPLEX data to send a snapshot of the values of the
+     * OBD2 sensors provided by the vehicle at the time that a diagnostic
+     * troubleshooting code (DTC) was recorded by the vehicle.
+     *
+     * Its contents are to be interpreted as follows:
+     * the indices defined in Obd2IntegerSensorIndex are to be used to
+     * read from int32Values;
+     * the indices defined in Obd2FloatSensorIndex are to be used to
+     * read from floatValues;
+     * stringValue is the DTC that caused this freeze frame to be recorded.
+     *
+     * For example, int32Values[0] corresponds to FUEL_SYSTEM_STATUS, and
+     * floatValues[0] corresponds to CALCULATED_ENGINE_LOAD, and a possible
+     * valid stringValue is "P0176" to indicate a malfunction of the fuel
+     * composition sensor circuit.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     */
+    OBD2_FREEZE_FRAME = (
+        0x0D01
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:COMPLEX
+        | VehicleArea:GLOBAL),
+
 };
 
 /*
