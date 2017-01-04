@@ -26,6 +26,7 @@
             "/>
         <option name="binary-test-type" value="gtest" />
         <option name="test-timeout" value="1m" />
-    </test>
+        <option name="test-config-path" value="vts/testcases/hal/vr/hidl/target/VrHidlTargetTest.config" />
+</test>
 </configuration>
 
