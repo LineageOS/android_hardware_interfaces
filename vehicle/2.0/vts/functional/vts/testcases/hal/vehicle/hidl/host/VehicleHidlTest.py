@@ -44,6 +44,7 @@ class VehicleHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
             target_version=2.0,
             target_package="android.hardware.vehicle",
             target_component_name="IVehicle",
+            hw_binder_service_name="Vehicle",
             bits=64)
 
     def tearDownClass(self):
