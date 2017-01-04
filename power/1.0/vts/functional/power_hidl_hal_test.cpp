@@ -49,10 +49,10 @@ TEST_F(PowerHidlTest, SetInteractive) {
   Return<void> ret;
 
   ret = power->setInteractive(true);
-  ASSERT_TRUE(ret.getStatus().isOk());
+  ASSERT_TRUE(ret.isOk());
 
   ret = power->setInteractive(false);
-  ASSERT_TRUE(ret.getStatus().isOk());
+  ASSERT_TRUE(ret.isOk());
 }
 
 // Sanity check Power::powerHint on good and bad inputs.
@@ -66,10 +66,10 @@ TEST_F(PowerHidlTest, PowerHint) {
   Return<void> ret;
   for (auto hint : hints) {
     ret = power->powerHint(hint, 1);
-    ASSERT_TRUE(ret.getStatus().isOk());
+    ASSERT_TRUE(ret.isOk());
 
     ret = power->powerHint(hint, 0);
-    ASSERT_TRUE(ret.getStatus().isOk());
+    ASSERT_TRUE(ret.isOk());
   }
 }
 
@@ -77,15 +77,15 @@ TEST_F(PowerHidlTest, PowerHint) {
 TEST_F(PowerHidlTest, SetFeature) {
   Return<void> ret;
   ret = power->setFeature(Feature::POWER_FEATURE_DOUBLE_TAP_TO_WAKE, true);
-  ASSERT_TRUE(ret.getStatus().isOk());
+  ASSERT_TRUE(ret.isOk());
   ret = power->setFeature(Feature::POWER_FEATURE_DOUBLE_TAP_TO_WAKE, false);
-  ASSERT_TRUE(ret.getStatus().isOk());
+  ASSERT_TRUE(ret.isOk());
 
   Feature badFeature = static_cast<Feature>(0x2);
   ret = power->setFeature(badFeature, true);
-  ASSERT_TRUE(ret.getStatus().isOk());
+  ASSERT_TRUE(ret.isOk());
   ret = power->setFeature(badFeature, false);
-  ASSERT_TRUE(ret.getStatus().isOk());
+  ASSERT_TRUE(ret.isOk());
 }
 
 // Sanity check Power::getPlatformLowPowerStats().
@@ -98,7 +98,7 @@ TEST_F(PowerHidlTest, GetPlatformLowPowerStats) {
     s = status;
   };
   Return<void> ret = power->getPlatformLowPowerStats(cb);
-  ASSERT_TRUE(ret.getStatus().isOk());
+  ASSERT_TRUE(ret.isOk());
   ASSERT_TRUE(s == Status::SUCCESS || s == Status::FILESYSTEM_ERROR);
 }
 

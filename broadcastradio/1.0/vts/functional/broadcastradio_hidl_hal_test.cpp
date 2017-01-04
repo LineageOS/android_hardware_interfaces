@@ -241,7 +241,7 @@ bool BroadcastRadioHidlTest::getProperties()
                         }
                     });
 
-        EXPECT_EQ(Status::EX_NONE, hidlReturn.getStatus().exceptionCode());
+        EXPECT_TRUE(hidlReturn.isOk());
         EXPECT_EQ(Result::OK, halResult);
         EXPECT_EQ(Class::AM_FM, mHalProperties.classId);
         EXPECT_GT(mHalProperties.numTuners, 0u);
@@ -265,7 +265,7 @@ bool BroadcastRadioHidlTest::openTuner()
                             mTuner = tuner;
                         }
                     });
-        EXPECT_EQ(Status::EX_NONE, hidlReturn.getStatus().exceptionCode());
+        EXPECT_TRUE(hidlReturn.isOk());
         EXPECT_EQ(Result::OK, halResult);
         EXPECT_EQ(true, waitForCallback(kConfigCallbacktimeoutNs));
     }
@@ -328,7 +328,7 @@ TEST_F(BroadcastRadioHidlTest, SetAndGetConfiguration) {
     // test setConfiguration
     mCallbackCalled = false;
     Return<Result> hidlResult = mTuner->setConfiguration(mHalProperties.bands[0]);
-    EXPECT_EQ(Status::EX_NONE, hidlResult.getStatus().exceptionCode());
+    EXPECT_TRUE(hidlResult.isOk());
     EXPECT_EQ(Result::OK, hidlResult);
     EXPECT_EQ(true, waitForCallback(kConfigCallbacktimeoutNs));
     EXPECT_EQ(Result::OK, mResultCallbackData);
@@ -343,7 +343,7 @@ TEST_F(BroadcastRadioHidlTest, SetAndGetConfiguration) {
                     halConfig = config;
                 }
             });
-    EXPECT_EQ(Status::EX_NONE, hidlReturn.getStatus().exceptionCode());
+    EXPECT_TRUE(hidlReturn.isOk());
     EXPECT_EQ(Result::OK, halResult);
     EXPECT_EQ(mHalProperties.bands[0].type, halConfig.type);
 }
@@ -362,14 +362,14 @@ TEST_F(BroadcastRadioHidlTest, Scan) {
     // test scan UP
     mCallbackCalled = false;
     Return<Result> hidlResult = mTuner->scan(Direction::UP, true);
-    EXPECT_EQ(Status::EX_NONE, hidlResult.getStatus().exceptionCode());
+    EXPECT_TRUE(hidlResult.isOk());
     EXPECT_EQ(Result::OK, hidlResult);
     EXPECT_EQ(true, waitForCallback(kTuneCallbacktimeoutNs));
 
     // test scan DOWN
     mCallbackCalled = false;
     hidlResult = mTuner->scan(Direction::DOWN, true);
-    EXPECT_EQ(Status::EX_NONE, hidlResult.getStatus().exceptionCode());
+    EXPECT_TRUE(hidlResult.isOk());
     EXPECT_EQ(Result::OK, hidlResult);
     EXPECT_EQ(true, waitForCallback(kTuneCallbacktimeoutNs));
 }
@@ -388,14 +388,14 @@ TEST_F(BroadcastRadioHidlTest, Step) {
     // test step UP
     mCallbackCalled = false;
     Return<Result> hidlResult = mTuner->step(Direction::UP, true);
-    EXPECT_EQ(Status::EX_NONE, hidlResult.getStatus().exceptionCode());
+    EXPECT_TRUE(hidlResult.isOk());
     EXPECT_EQ(Result::OK, hidlResult);
     EXPECT_EQ(true, waitForCallback(kTuneCallbacktimeoutNs));
 
     // test step DOWN
     mCallbackCalled = false;
     hidlResult = mTuner->step(Direction::DOWN, true);
-    EXPECT_EQ(Status::EX_NONE, hidlResult.getStatus().exceptionCode());
+    EXPECT_TRUE(hidlResult.isOk());
     EXPECT_EQ(Result::OK, hidlResult);
     EXPECT_EQ(true, waitForCallback(kTuneCallbacktimeoutNs));
 }
@@ -426,7 +426,7 @@ TEST_F(BroadcastRadioHidlTest, TuneAndGetProgramInformationAndCancel) {
     mCallbackCalled = false;
     mResultCallbackData = Result::NOT_INITIALIZED;
     Return<Result> hidlResult = mTuner->tune(channel, 0);
-    EXPECT_EQ(Status::EX_NONE, hidlResult.getStatus().exceptionCode());
+    EXPECT_TRUE(hidlResult.isOk());
     EXPECT_EQ(Result::OK, hidlResult);
     EXPECT_EQ(true, waitForCallback(kTuneCallbacktimeoutNs));
 
@@ -440,7 +440,7 @@ TEST_F(BroadcastRadioHidlTest, TuneAndGetProgramInformationAndCancel) {
                                     halInfo = info;
                                 }
         });
-    EXPECT_EQ(Status::EX_NONE, hidlReturn.getStatus().exceptionCode());
+    EXPECT_TRUE(hidlReturn.isOk());
     EXPECT_EQ(Result::OK, halResult);
     if (mResultCallbackData == Result::OK) {
         EXPECT_EQ(true, halInfo.tuned);
@@ -453,7 +453,7 @@ TEST_F(BroadcastRadioHidlTest, TuneAndGetProgramInformationAndCancel) {
     // test cancel
     mTuner->tune(lowerLimit, 0);
     hidlResult = mTuner->cancel();
-    EXPECT_EQ(Status::EX_NONE, hidlResult.getStatus().exceptionCode());
+    EXPECT_TRUE(hidlResult.isOk());
     EXPECT_EQ(Result::OK, hidlResult);
 }
 

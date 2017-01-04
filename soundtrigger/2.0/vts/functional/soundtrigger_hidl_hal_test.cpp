@@ -104,7 +104,7 @@ TEST_F(SoundTriggerHidlTest, GetProperties) {
       halProperties = res;
   });
 
-  EXPECT_EQ(Status::EX_NONE, hidlReturn.getStatus().exceptionCode());
+  EXPECT_TRUE(hidlReturn.isOk());
   EXPECT_EQ(0, ret);
   EXPECT_GT(halProperties.maxSoundModels, 0u);
   EXPECT_GT(halProperties.maxKeyPhrases, 0u);
@@ -136,7 +136,7 @@ TEST_F(SoundTriggerHidlTest, LoadInvalidModelFail) {
       handle = res;
   });
 
-  EXPECT_EQ(Status::EX_NONE, hidlReturn.getStatus().exceptionCode());
+  EXPECT_TRUE(hidlReturn.isOk());
   EXPECT_NE(0, ret);
 }
 
@@ -154,7 +154,7 @@ TEST_F(SoundTriggerHidlTest, UnloadModelNoModelFail) {
 
   hidlReturn = mSoundTriggerHal->unloadSoundModel(halHandle);
 
-  EXPECT_EQ(Status::EX_NONE, hidlReturn.getStatus().exceptionCode());
+  EXPECT_TRUE(hidlReturn.isOk());
   EXPECT_NE(0, hidlReturn);
 }
 
@@ -184,7 +184,7 @@ TEST_F(SoundTriggerHidlTest, StartRecognitionNoModelFail) {
 
     hidlReturn = mSoundTriggerHal->startRecognition(handle, config, mCallback, 0);
 
-    EXPECT_EQ(Status::EX_NONE, hidlReturn.getStatus().exceptionCode());
+    EXPECT_TRUE(hidlReturn.isOk());
     EXPECT_NE(0, hidlReturn);
 }
 
@@ -202,7 +202,7 @@ TEST_F(SoundTriggerHidlTest, StopRecognitionNoAStartFail) {
 
     hidlReturn = mSoundTriggerHal->stopRecognition(handle);
 
-    EXPECT_EQ(Status::EX_NONE, hidlReturn.getStatus().exceptionCode());
+    EXPECT_TRUE(hidlReturn.isOk());
     EXPECT_NE(0, hidlReturn);
 }
 
@@ -219,7 +219,7 @@ TEST_F(SoundTriggerHidlTest, stopAllRecognitions) {
 
     hidlReturn = mSoundTriggerHal->stopAllRecognitions();
 
-    EXPECT_EQ(Status::EX_NONE, hidlReturn.getStatus().exceptionCode());
+    EXPECT_TRUE(hidlReturn.isOk());
     EXPECT_TRUE(hidlReturn == 0 || hidlReturn == -ENOSYS);
 }
 

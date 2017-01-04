@@ -85,7 +85,7 @@ class GatekeeperHidlTest : public ::testing::Test {
       auto ret = gatekeeper_->enroll(
           uid_, req.curPwdHandle, req.curPwd, req.newPwd,
           [&rsp](const GatekeeperResponse &cbRsp) { rsp = cbRsp; });
-      ASSERT_TRUE(ret.getStatus().isOk());
+      ASSERT_TRUE(ret.isOk());
       if (rsp.code != GatekeeperStatusCode::ERROR_RETRY_TIMEOUT) break;
       ALOGI("%s: got retry code; retrying in 1 sec", __func__);
       sleep(1);
@@ -97,7 +97,7 @@ class GatekeeperHidlTest : public ::testing::Test {
       auto ret = gatekeeper_->verify(
           uid_, req.challenge, req.curPwdHandle, req.newPwd,
           [&rsp](const GatekeeperResponse &cb_rsp) { rsp = cb_rsp; });
-      ASSERT_TRUE(ret.getStatus().isOk());
+      ASSERT_TRUE(ret.isOk());
       if (rsp.code != GatekeeperStatusCode::ERROR_RETRY_TIMEOUT) break;
       ALOGI("%s: got retry code; retrying in 1 sec", __func__);
       sleep(1);
@@ -108,7 +108,7 @@ class GatekeeperHidlTest : public ::testing::Test {
     while (true) {
       auto ret = gatekeeper_->deleteUser(
           uid_, [&rsp](const GatekeeperResponse &cb_rsp) { rsp = cb_rsp; });
-      ASSERT_TRUE(ret.getStatus().isOk());
+      ASSERT_TRUE(ret.isOk());
       if (rsp.code != GatekeeperStatusCode::ERROR_RETRY_TIMEOUT) break;
       ALOGI("%s: got retry code; retrying in 1 sec", __func__);
       sleep(1);
@@ -119,7 +119,7 @@ class GatekeeperHidlTest : public ::testing::Test {
     while (true) {
       auto ret = gatekeeper_->deleteAllUsers(
           [&rsp](const GatekeeperResponse &cb_rsp) { rsp = cb_rsp; });
-      ASSERT_TRUE(ret.getStatus().isOk());
+      ASSERT_TRUE(ret.isOk());
       if (rsp.code != GatekeeperStatusCode::ERROR_RETRY_TIMEOUT) break;
       ALOGI("%s: got retry code; retrying in 1 sec", __func__);
       sleep(1);

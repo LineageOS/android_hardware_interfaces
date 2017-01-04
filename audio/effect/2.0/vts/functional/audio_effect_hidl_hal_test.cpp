@@ -65,7 +65,7 @@ TEST_F(AudioEffectHidlTest, EnumerateEffects) {
         retval = r;
         effectCount = result.size();
       });
-  EXPECT_EQ(ret.getStatus().exceptionCode(), Status::EX_NONE);
+  EXPECT_TRUE(ret.isOk());
   EXPECT_EQ(retval, Result::OK);
   EXPECT_GT(effectCount, 0u);
 }
@@ -80,7 +80,7 @@ TEST_F(AudioEffectHidlTest, CreateEffect) {
           effectUuid = result[0].uuid;
         }
       });
-  ASSERT_EQ(ret.getStatus().exceptionCode(), Status::EX_NONE);
+  ASSERT_TRUE(ret.isOk());
   ASSERT_TRUE(gotEffect);
   Result retval = Result::NOT_INITIALIZED;
   sp<IEffect> effect;
@@ -92,7 +92,7 @@ TEST_F(AudioEffectHidlTest, CreateEffect) {
           effect = result;
         }
       });
-  EXPECT_EQ(ret.getStatus().exceptionCode(), Status::EX_NONE);
+  EXPECT_TRUE(ret.isOk());
   EXPECT_EQ(retval, Result::OK);
   EXPECT_NE(effect, nullptr);
 }
@@ -105,7 +105,7 @@ TEST_F(AudioEffectHidlTest, GetDescriptor) {
           allDescriptors = result;
         }
       });
-  ASSERT_EQ(ret.getStatus().exceptionCode(), Status::EX_NONE);
+  ASSERT_TRUE(ret.isOk());
   ASSERT_GT(allDescriptors.size(), 0u);
   for (size_t i = 0; i < allDescriptors.size(); ++i) {
     ret = effectsFactory->getDescriptor(
@@ -114,7 +114,7 @@ TEST_F(AudioEffectHidlTest, GetDescriptor) {
           EXPECT_EQ(result, allDescriptors[i]);
         });
   }
-  EXPECT_EQ(ret.getStatus().exceptionCode(), Status::EX_NONE);
+  EXPECT_TRUE(ret.isOk());
 }
 
 int main(int argc, char** argv) {

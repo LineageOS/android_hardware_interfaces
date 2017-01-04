@@ -103,18 +103,18 @@ WifiStatus Wifi::startInternal() {
     chip_ = new WifiChip(kChipId, legacy_hal_, mode_controller_);
     run_state_ = RunState::STARTED;
     for (const auto& callback : event_callbacks_) {
-      if (!callback->onStart().getStatus().isOk()) {
+      if (!callback->onStart().isOk()) {
         LOG(ERROR) << "Failed to invoke onStart callback";
       };
     }
     for (const auto& callback : event_callbacks_) {
-      if (!callback->onFailure(wifi_status).getStatus().isOk()) {
+      if (!callback->onFailure(wifi_status).isOk()) {
         LOG(ERROR) << "Failed to invoke onFailure callback";
       }
     }
   } else {
     for (const auto& callback : event_callbacks_) {
-      if (!callback->onFailure(wifi_status).getStatus().isOk()) {
+      if (!callback->onFailure(wifi_status).isOk()) {
         LOG(ERROR) << "Failed to invoke onFailure callback";
       }
     }
@@ -132,13 +132,13 @@ WifiStatus Wifi::stopInternal() {
   WifiStatus wifi_status = stopLegacyHalAndDeinitializeModeController();
   if (wifi_status.code == WifiStatusCode::SUCCESS) {
     for (const auto& callback : event_callbacks_) {
-      if (!callback->onStop().getStatus().isOk()) {
+      if (!callback->onStop().isOk()) {
         LOG(ERROR) << "Failed to invoke onStop callback";
       };
     }
   } else {
     for (const auto& callback : event_callbacks_) {
-      if (!callback->onFailure(wifi_status).getStatus().isOk()) {
+      if (!callback->onFailure(wifi_status).isOk()) {
         LOG(ERROR) << "Failed to invoke onFailure callback";
       }
     }
