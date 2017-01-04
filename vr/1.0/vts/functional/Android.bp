@@ -26,7 +26,11 @@ cc_test {
     ],
     static_libs: ["libgtest"],
     cflags: [
-        "-O0",
+       "--coverage",
+       "-O0",
         "-g",
     ],
+    ldflags: [
+        "--coverage"
+    ]
 }
