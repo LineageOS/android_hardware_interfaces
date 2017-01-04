@@ -20,11 +20,10 @@ enum Result : uint32_t {
     OK,                  // Success
     UNKNOWN_FAILURE,     // Failure, unknown reason
     BAD_PARAMS,          // Parameters not sane
-    NOT_INIT,            // not initialized
-    TRANSACTION_FAILED,  // transaction failed
+    NOT_INIT,            // Not initialized
+    TRANSACTION_FAILED,  // Transaction failed
     TRANSACTION_PENDING, // Pending transaction, cannot accept a new request
 };
-
 
 enum NanoAppFlags : uint32_t {
     SIGNED = (1<<0),   // Signed nanoapp
@@ -34,11 +33,12 @@ enum NanoAppFlags : uint32_t {
 struct NanoAppBinary {
     uint32_t headerVersion;    // 0x1 for this version
     uint32_t magic;            // "NANO"
-    uint64_t appId;            // App Id contains vendor id
+    uint64_t appId;            // App ID (contains vendor ID in most significant
+                               // 5 bytes)
     uint32_t appVersion;       // Version of the app
-    uint32_t flags;            // mask of NanoAppFlags
-    uint64_t hwHubType;        // which hub type is this compiled for
-                               // a unique UUID for each h/w + toolchain
+    uint32_t flags;            // Mask of NanoAppFlags
+    uint64_t hwHubType;        // Which hub type is this app is compiled for. A
+                               // unique ID for each h/w + toolchain
                                // combination.
     vec<uint8_t> customBinary; // start of custom binary data
 };
@@ -82,38 +82,38 @@ struct PhysicalSensor{
                                  // definition may be different from say the
                                  // number advertised in the sensors HAL
                                  // which allows for batching in a hub.
-    uint32_t fifoMaxCount;       // maximum number of batchable events.
-    uint64_t minDelayMs;         // in milliseconds, corresponding to highest
+    uint32_t fifoMaxCount;       // Maximum number of batchable events.
+    uint64_t minDelayMs;         // In milliseconds, corresponding to highest
                                  // sampling freq.
-    uint64_t maxDelayMs;         // in milliseconds, corresponds to minimum
+    uint64_t maxDelayMs;         // In milliseconds, corresponds to minimum
                                  // sampling frequency
     float peakPowerMw;           // At max frequency & no batching, power
                                  // in milliwatts
 };
 
 struct ContextHub {
-    string name;                // descriptive name eg: "Awesome Hub #1"
-    string vendor;              // hub hardware vendor eg: "Qualcomm"
-    string toolchain;           // toolchain to make binaries eg: "gcc ARM"
+    string name;                // Descriptive name eg: "Awesome Hub #1"
+    string vendor;              // Hub hardware vendor eg: "Qualcomm"
+    string toolchain;           // Toolchain to make binaries eg: "gcc ARM"
     uint32_t platformVersion;   // Version of the hardware : eg 0x20
     uint32_t toolchainVersion;  // Version of the toolchain : eg: 0x484
-    uint32_t hubId;             // a device unique id for this hub
+    uint32_t hubId;             // A device unique ID for this hub
 
     float peakMips;             // Peak MIPS platform can deliver
-    float stoppedPowerDrawMw;   // if stopped, retention power, milliwatts
-    float sleepPowerDrawMw;     // if sleeping, retention power, milliwatts
-    float peakPowerDrawMw;      // for a busy CPUm power in milliwatts
+    float stoppedPowerDrawMw;   // If stopped, retention power, milliwatts
+    float sleepPowerDrawMw;     // If sleeping, retention power, milliwatts
+    float peakPowerDrawMw;      // For a busy CPU, power in milliwatts
 
-    vec<PhysicalSensor> connectedSensors; // array of connected sensors
+    vec<PhysicalSensor> connectedSensors; // Array of connected sensors
 
     uint32_t maxSupportedMsgLen;// This is the maximum size of the message that can
                                 // be sent to the hub in one chunk (in bytes)
 };
 
 struct ContextHubMsg {
-    uint64_t appName; // intended recipient
-    uint32_t msgType; // identifier for message
-    vec<uint8_t> msg; // message body
+    uint64_t appName; // Intended recipient (appId)
+    uint32_t msgType; // Identifier for message
+    vec<uint8_t> msg; // Message body
 };
 
 enum HubMemoryType : uint32_t {
@@ -129,24 +129,26 @@ enum HubMemoryFlag : uint32_t {
 };
 
 struct MemRange {
-    uint32_t totalBytes; // total capacity in bytes
-    uint32_t freeBytes;  // free capacity in bytes
-    HubMemoryType type;  // type of memory, see HubMemoryType
-    uint32_t flags;      // mask of HubMemoryFlag
+    uint32_t totalBytes; // Total capacity in bytes
+    uint32_t freeBytes;  // Free capacity in bytes
+    HubMemoryType type;  // Type of memory, see HubMemoryType
+    uint32_t flags;      // Mask of HubMemoryFlag
 };
 
 enum AsyncEventType : uint32_t {
-    RESTARTED = 1, // Hub restarted unexpectedly
+    RESTARTED = 1,   // Hub restarted unexpectedly
 };
 
 enum TransactionResult : int32_t {
-    SUCCESS,      // successful completion of transaction
-    FAILURE,      // failed transaction
+    SUCCESS,      // Successful completion of transaction
+    FAILURE,      // Failed transaction
 };
 
 struct HubAppInfo {
     uint64_t appId;         // Identifier of the app
-    uint32_t version;       // version of the app
+    uint32_t version;       // Version of the app
     vec<MemRange> memUsage; // Memory used by this app
+    bool enabled;           // true if the app is currently enabled and running,
+                            // or false if in the loaded but disabled state
 };
 
