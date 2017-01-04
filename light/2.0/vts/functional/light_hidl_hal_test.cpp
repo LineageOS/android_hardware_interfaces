@@ -36,8 +36,8 @@ using ::android::sp;
 
 #define LIGHT_SERVICE_NAME "light"
 
-#define ASSERT_OK(ret) ASSERT_TRUE(ret.getStatus().isOk())
-#define EXPECT_OK(ret) EXPECT_TRUE(ret.getStatus().isOk())
+#define ASSERT_OK(ret) ASSERT_TRUE(ret.isOk())
+#define EXPECT_OK(ret) EXPECT_TRUE(ret.isOk())
 
 class LightHidlTest : public ::testing::Test {
 public:

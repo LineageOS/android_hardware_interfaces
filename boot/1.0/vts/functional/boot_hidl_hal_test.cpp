@@ -75,7 +75,7 @@ TEST_F(BootHidlTest, GetCurrentSlot) {
 TEST_F(BootHidlTest, MarkBootSuccessful) {
   CommandResult cr;
   Return<void> result = boot->markBootSuccessful(generate_callback(&cr));
-  ASSERT_TRUE(result.getStatus().isOk());
+  ASSERT_TRUE(result.isOk());
   if (cr.success) {
     Slot curSlot = boot->getCurrentSlot();
     BoolResult ret = boot->isSlotMarkedSuccessful(curSlot);
@@ -88,14 +88,14 @@ TEST_F(BootHidlTest, SetActiveBootSlot) {
   for (Slot s = 0; s < 2; s++) {
     CommandResult cr;
     Return<void> result = boot->setActiveBootSlot(s, generate_callback(&cr));
-    EXPECT_TRUE(result.getStatus().isOk());
+    EXPECT_TRUE(result.isOk());
   }
   {
     CommandResult cr;
     uint32_t slots = boot->getNumberSlots();
     Return<void> result =
         boot->setActiveBootSlot(slots, generate_callback(&cr));
-    ASSERT_TRUE(result.getStatus().isOk());
+    ASSERT_TRUE(result.isOk());
     EXPECT_EQ(false, cr.success);
   }
 }
@@ -108,7 +108,7 @@ TEST_F(BootHidlTest, SetSlotAsUnbootable) {
     Slot otherSlot = curSlot ? 0 : 1;
     Return<void> result =
         boot->setSlotAsUnbootable(otherSlot, generate_callback(&cr));
-    EXPECT_TRUE(result.getStatus().isOk());
+    EXPECT_TRUE(result.isOk());
     if (cr.success) {
       EXPECT_EQ(BoolResult::FALSE, boot->isSlotBootable(otherSlot));
       boot->setActiveBootSlot(otherSlot, generate_callback(&cr));
@@ -120,7 +120,7 @@ TEST_F(BootHidlTest, SetSlotAsUnbootable) {
     uint32_t slots = boot->getNumberSlots();
     Return<void> result =
         boot->setSlotAsUnbootable(slots, generate_callback(&cr));
-    EXPECT_TRUE(result.getStatus().isOk());
+    EXPECT_TRUE(result.isOk());
     EXPECT_EQ(false, cr.success);
   }
 }
@@ -150,7 +150,7 @@ TEST_F(BootHidlTest, GetSuffix) {
   for (Slot i = 0; i < 2; i++) {
     CommandResult cr;
     Return<void> result = boot->getSuffix(i, cb);
-    EXPECT_TRUE(result.getStatus().isOk());
+    EXPECT_TRUE(result.isOk());
     char correctSuffix[3];
     snprintf(correctSuffix, sizeof(correctSuffix), "_%c", 'a' + i);
     ASSERT_EQ(0, strcmp(suffixPtr, correctSuffix));
@@ -158,7 +158,7 @@ TEST_F(BootHidlTest, GetSuffix) {
   {
     char emptySuffix[] = "";
     Return<void> result = boot->getSuffix(boot->getNumberSlots(), cb);
-    EXPECT_TRUE(result.getStatus().isOk());
+    EXPECT_TRUE(result.isOk());
     ASSERT_EQ(0, strcmp(emptySuffix, suffixPtr));
   }
 }

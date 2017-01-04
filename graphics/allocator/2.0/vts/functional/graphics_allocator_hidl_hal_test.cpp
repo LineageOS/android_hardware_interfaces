@@ -129,7 +129,7 @@ TEST_F(GraphicsAllocatorHidlTest, GetCapabilities) {
     }
   });
 
-  ASSERT_TRUE(ret.getStatus().isOk());
+  ASSERT_TRUE(ret.isOk());
 }
 
 TEST_F(GraphicsAllocatorHidlTest, DumpDebugInfo) {
@@ -137,7 +137,7 @@ TEST_F(GraphicsAllocatorHidlTest, DumpDebugInfo) {
     // nothing to do
   });
 
-  ASSERT_TRUE(ret.getStatus().isOk());
+  ASSERT_TRUE(ret.isOk());
 }
 
 TEST_F(GraphicsAllocatorHidlTest, CreateDestroyDescriptor) {
@@ -150,11 +150,11 @@ TEST_F(GraphicsAllocatorHidlTest, CreateDestroyDescriptor) {
         descriptor = tmpDescriptor;
       });
 
-  ASSERT_TRUE(ret.getStatus().isOk());
+  ASSERT_TRUE(ret.isOk());
   ASSERT_EQ(Error::NONE, error);
 
   auto err_ret = mClient->destroyDescriptor(descriptor);
-  ASSERT_TRUE(err_ret.getStatus().isOk());
+  ASSERT_TRUE(err_ret.isOk());
   ASSERT_EQ(Error::NONE, static_cast<Error>(err_ret));
 }
 
@@ -172,7 +172,7 @@ TEST_F(GraphicsAllocatorHidlTest, TestAllocateBasic) {
   descriptors[0] = descriptor;
 
   auto ret = mClient->testAllocate(descriptors);
-  ASSERT_TRUE(ret.getStatus().isOk());
+  ASSERT_TRUE(ret.isOk());
 
   auto error = static_cast<Error>(ret);
   ASSERT_TRUE(error == Error::NONE || error == Error::NOT_SHARED);
@@ -193,7 +193,7 @@ TEST_F(GraphicsAllocatorHidlTest, TestAllocateArray) {
   descriptors[1] = descriptor;
 
   auto ret = mClient->testAllocate(descriptors);
-  ASSERT_TRUE(ret.getStatus().isOk());
+  ASSERT_TRUE(ret.isOk());
 
   auto error = static_cast<Error>(ret);
   ASSERT_TRUE(error == Error::NONE || error == Error::NOT_SHARED);
@@ -218,13 +218,13 @@ TEST_F(GraphicsAllocatorHidlTest, AllocateFreeBasic) {
         buffers = tmpBuffers;
       });
 
-  ASSERT_TRUE(ret.getStatus().isOk());
+  ASSERT_TRUE(ret.isOk());
   ASSERT_TRUE(error == Error::NONE || error == Error::NOT_SHARED);
   EXPECT_EQ(1u, buffers.size());
 
   if (!buffers.empty()) {
     auto err_ret = mClient->free(buffers[0]);
-    EXPECT_TRUE(err_ret.getStatus().isOk());
+    EXPECT_TRUE(err_ret.isOk());
     EXPECT_EQ(Error::NONE, static_cast<Error>(err_ret));
   }
 }
@@ -253,13 +253,13 @@ TEST_F(GraphicsAllocatorHidlTest, AllocateFreeArray) {
         buffers = tmpBuffers;
       });
 
-  ASSERT_TRUE(ret.getStatus().isOk());
+  ASSERT_TRUE(ret.isOk());
   ASSERT_TRUE(error == Error::NONE || error == Error::NOT_SHARED);
   EXPECT_EQ(descriptors.size(), buffers.size());
 
   for (auto buf : buffers) {
     auto err_ret = mClient->free(buf);
-    EXPECT_TRUE(err_ret.getStatus().isOk());
+    EXPECT_TRUE(err_ret.isOk());
     EXPECT_EQ(Error::NONE, static_cast<Error>(err_ret));
   }
 }
@@ -280,18 +280,18 @@ TEST_F(GraphicsAllocatorHidlTest, ExportHandle) {
         buffers = tmpBuffers;
       });
 
-  ASSERT_TRUE(ret.getStatus().isOk());
+  ASSERT_TRUE(ret.isOk());
   ASSERT_TRUE(error == Error::NONE || error == Error::NOT_SHARED);
   ASSERT_EQ(1u, buffers.size());
 
   ret = mClient->exportHandle(
       descriptors[0], buffers[0],
       [&](const auto& tmpError, const auto&) { error = tmpError; });
-  EXPECT_TRUE(ret.getStatus().isOk());
+  EXPECT_TRUE(ret.isOk());
   EXPECT_EQ(Error::NONE, error);
 
   auto err_ret = mClient->free(buffers[0]);
-  EXPECT_TRUE(err_ret.getStatus().isOk());
+  EXPECT_TRUE(err_ret.isOk());
   EXPECT_EQ(Error::NONE, static_cast<Error>(err_ret));
 }
 
