@@ -71,12 +71,9 @@ struct AutomaticGainControlEffect : public IAutomaticGainControlEffect {
     Return<Result> setAudioSource(AudioSource source)  override;
     Return<Result> offload(const EffectOffloadParameter& param)  override;
     Return<void> getDescriptor(getDescriptor_cb _hidl_cb)  override;
-    Return<void> process(
-            const AudioBuffer& inBuffer, uint32_t outFrameSize, process_cb _hidl_cb)  override;
-    Return<void> processReverse(
-            const AudioBuffer& inBuffer,
-            uint32_t outFrameSize,
-            processReverse_cb _hidl_cb)  override;
+    Return<void> prepareForProcessing(prepareForProcessing_cb _hidl_cb)  override;
+    Return<Result> setProcessBuffers(
+            const AudioBuffer& inBuffer, const AudioBuffer& outBuffer)  override;
     Return<void> command(
             uint32_t commandId,
             const hidl_vec<uint8_t>& data,
@@ -99,6 +96,7 @@ struct AutomaticGainControlEffect : public IAutomaticGainControlEffect {
             getCurrentConfigForFeature_cb _hidl_cb)  override;
     Return<Result> setCurrentConfigForFeature(
             uint32_t featureId, const hidl_vec<uint8_t>& configData)  override;
+    Return<Result> close()  override;
 
     // Methods from ::android::hardware::audio::effect::V2_0::IAutomaticGainControlEffect follow.
     Return<Result> setTargetLevel(int16_t targetLevelMb)  override;

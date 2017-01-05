@@ -115,16 +115,14 @@ Return<void> DownmixEffect::getDescriptor(getDescriptor_cb _hidl_cb) {
     return mEffect->getDescriptor(_hidl_cb);
 }
 
-Return<void> DownmixEffect::process(
-        const AudioBuffer& inBuffer, uint32_t outFrameSize, process_cb _hidl_cb) {
-    return mEffect->process(inBuffer, outFrameSize, _hidl_cb);
+Return<void> DownmixEffect::prepareForProcessing(
+        prepareForProcessing_cb _hidl_cb) {
+    return mEffect->prepareForProcessing(_hidl_cb);
 }
 
-Return<void> DownmixEffect::processReverse(
-        const AudioBuffer& inBuffer,
-        uint32_t outFrameSize,
-        processReverse_cb _hidl_cb) {
-    return mEffect->processReverse(inBuffer, outFrameSize, _hidl_cb);
+Return<Result> DownmixEffect::setProcessBuffers(
+        const AudioBuffer& inBuffer, const AudioBuffer& outBuffer) {
+    return mEffect->setProcessBuffers(inBuffer, outBuffer);
 }
 
 Return<void> DownmixEffect::command(
@@ -165,6 +163,10 @@ Return<void> DownmixEffect::getCurrentConfigForFeature(
 Return<Result> DownmixEffect::setCurrentConfigForFeature(
         uint32_t featureId, const hidl_vec<uint8_t>& configData) {
     return mEffect->setCurrentConfigForFeature(featureId, configData);
+}
+
+Return<Result> DownmixEffect::close() {
+    return mEffect->close();
 }
 
 // Methods from ::android::hardware::audio::effect::V2_0::IDownmixEffect follow.
