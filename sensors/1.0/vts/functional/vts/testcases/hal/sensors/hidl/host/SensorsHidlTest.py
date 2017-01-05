@@ -48,11 +48,11 @@ class SensorsHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
 
         self.dut.hal.InitHidlHal(
             target_type="sensors",
-            target_basepaths=["/system/lib64"],
+            target_basepaths=self.dut.libPaths,
             target_version=1.0,
             target_package="android.hardware.sensors",
             target_component_name="ISensors",
-            bits=64)
+            bits=64 if self.dut.is64Bit else 32)
 
     def tearDownClass(self):
         """ If profiling is enabled for the test, collect the profiling data
