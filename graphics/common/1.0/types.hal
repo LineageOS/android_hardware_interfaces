@@ -928,10 +928,6 @@ enum Dataspace : int32_t {
      * A pixel value of 1.0, 1.0, 1.0 corresponds to sRGB white (D65) at 80 nits.
      * Values beyond the range [0.0 - 1.0] would correspond to other colors
      * spaces and/or HDR content.
-     *
-     * TODO (courtneygo): Will we actually use this? We intend to use FP16
-     * storage for data using scRGB so we can do all work in linear space
-     * and don't have to worry as much about limited precision.
      */
     V0_SCRGB = STANDARD_BT709 | TRANSFER_SRGB | RANGE_EXTENDED,
 
