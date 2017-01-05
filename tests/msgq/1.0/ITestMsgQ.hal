@@ -91,4 +91,14 @@ interface ITestMsgQ {
      *
      */
     oneway requestBlockingRead(int32_t count);
+
+    /*
+     * This method requests the service to repeatedly trigger blocking reads.
+     *
+     * @param count Number of messages to read in a single blocking read.
+     * @param numIter Number of blocking reads to trigger.
+     *
+     */
+    oneway requestBlockingReadRepeat(int32_t count, int32_t numIter);
+
 };
