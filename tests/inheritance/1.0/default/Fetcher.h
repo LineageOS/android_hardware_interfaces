@@ -25,9 +25,9 @@ struct Fetcher : public IFetcher {
     Fetcher();
 
     // Methods from ::android::hardware::tests::inheritance::V1_0::IFetcher follow.
-    Return<void> getGrandparent(bool sendRemote, getGrandparent_cb _hidl_cb)  override;
-    Return<void> getParent(bool sendRemote, getParent_cb _hidl_cb)  override;
-    Return<void> getChild(bool sendRemote, getChild_cb _hidl_cb)  override;
+    Return<sp<IGrandparent>> getGrandparent(bool sendRemote)  override;
+    Return<sp<IParent>> getParent(bool sendRemote)  override;
+    Return<sp<IChild>> getChild(bool sendRemote)  override;
 
 private:
     sp<IChild> mPrecious;

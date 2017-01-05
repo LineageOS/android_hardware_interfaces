@@ -71,8 +71,7 @@ struct Bar : public IBar {
 
     Return<void> takeAMask(BitField bf, uint8_t first, const MyMask& second, uint8_t third,
             takeAMask_cb _hidl_cb) override;
-    Return<void> haveAInterface(const sp<ISimple> &in,
-            haveAInterface_cb _hidl_cb) override;
+    Return<sp<ISimple>> haveAInterface(const sp<ISimple> &in);
 
 private:
     sp<IFoo> mFoo;
