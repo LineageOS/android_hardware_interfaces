@@ -59,7 +59,7 @@ WifiNanIface::WifiNanIface(
     hidl_msg.header = hidl_header;
     hidl_msg.body = hidl_body;
     for (const auto& callback : event_callbacks_) {
-      if (!callback->notifyPublishResponse(id, hidl_msg).getStatus().isOk()) {
+      if (!callback->notifyPublishResponse(id, hidl_msg).isOk()) {
         LOG(ERROR) << "Failed to invoke the callback";
       }
     }
