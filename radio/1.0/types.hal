@@ -1089,8 +1089,7 @@ struct CardStatus {
     int32_t gsmUmtsSubscriptionAppIndex;  // value < RadioConst:CARD_MAX_APPS, -1 if none
     int32_t cdmaSubscriptionAppIndex;     // value < RadioConst:CARD_MAX_APPS, -1 if none
     int32_t imsSubscriptionAppIndex;      // value < RadioConst:CARD_MAX_APPS, -1 if none
-    int32_t numApplications;              // value <= RadioConst:CARD_MAX_APPS
-    AppStatus[RadioConst:CARD_MAX_APPS] applications;
+    vec<AppStatus> applications;          // size <= RadioConst:CARD_MAX_APPS
 };
 
 /*
