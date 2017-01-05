@@ -1011,6 +1011,24 @@ enum Dataspace : int32_t {
 
 
     /*
+     * Display P3
+     *
+     * Display P3 uses same primaries and white-point as DCI-P3
+     * linear transfer function makes this the same as DCI_P3_LINEAR.
+     */
+    DISPLAY_P3_LINEAR = STANDARD_DCI_P3 | TRANSFER_LINEAR | RANGE_FULL,
+
+
+    /*
+     * Display P3
+     *
+     * Use same primaries and white-point as DCI-P3
+     * but sRGB transfer function.
+     */
+    DISPLAY_P3 = STANDARD_DCI_P3 | TRANSFER_SRGB | RANGE_FULL,
+
+
+    /*
      * Adobe RGB
      *
      * Use full range, gamma 2.2 transfer and Adobe RGB primaries
