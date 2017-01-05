@@ -32,7 +32,6 @@ enum UsageHint : uint32_t {
     USAGE_HINT_REVERSE      = 0x00000001,
     USAGE_HINT_LEFT_TURN    = 0x00000002,
     USAGE_HINT_RIGHT_TURN   = 0x00000004,
-    // remaining bits are reserved for future use
 };
 
 
@@ -48,11 +47,11 @@ enum UsageHint : uint32_t {
  * should be set to ZERO.
  */
 struct CameraDesc {
-    string      cameraId;
-    UsageHint   hints;                  // Bit flags (legal to | values together) (TODO: b/31702236)
-    uint32_t    vendorFlags;            // Opaque value from driver
-    uint32_t    defaultHorResolution;   // Units of pixels
-    uint32_t    defaultVerResolution;   // Units of pixels
+    string              cameraId;
+    bitfield<UsageHint> hints;                  // Mask of usage hints
+    uint32_t            vendorFlags;            // Opaque value from driver
+    uint32_t            defaultHorResolution;   // Units of pixels
+    uint32_t            defaultVerResolution;   // Units of pixels
 };
 
 
@@ -90,7 +89,6 @@ enum DisplayState : uint32_t {
 
 
 /* Error codes used in EVS HAL interface. */
-/* TODO:  Adopt a common set of function return codes */
 enum EvsResult : uint32_t {
     OK = 0,
     INVALID_ARG,
