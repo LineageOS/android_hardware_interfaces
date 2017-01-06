@@ -332,7 +332,6 @@ enum VehicleProperty: int32_t {
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
-     * @data_enum TODO
      * @allow_out_of_range_value : OFF
      */
     HVAC_FAN_SPEED = (
@@ -346,7 +345,7 @@ enum VehicleProperty: int32_t {
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
-     * @data_enum TODO
+     * @data_enum VehicleHvacFanDirection
      * @allow_out_of_range_value : OFF
      */
     HVAC_FAN_DIRECTION = (
