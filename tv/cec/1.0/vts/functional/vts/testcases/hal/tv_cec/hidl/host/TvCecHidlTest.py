@@ -43,7 +43,7 @@ class TvCecHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
             target_version=1.0,
             target_package="android.hardware.tv.cec",
             target_component_name="IHdmiCec",
-            hw_binder_service_name="tv.cec",
+            hw_binder_service_name="cec-hal-1-0",
             bits=64 if self.dut.is64Bit else 32)
 
     def testGetCecVersion1(self):
