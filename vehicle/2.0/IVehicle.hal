@@ -99,9 +99,6 @@ interface IVehicle {
    * primitives used (such as mutex locks or semaphores) must be acquired
    * with a timeout.
    *
-   * TODO(pavelm): we cannot use handle here due to Java compatibility, it's
-   * better to pass file descriptor and write debug data directly in vehicle HAL
-   * rather than passing back a string.
    */
   debugDump() generates (string s);
 };
