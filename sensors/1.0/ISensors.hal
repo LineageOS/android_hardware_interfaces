@@ -121,4 +121,60 @@ interface ISensors {
      *         BAD_VALUE if sensor event cannot be injected
      */
     injectSensorData(Event event) generates (Result result);
+
+    /*
+     * Register direct report channel.
+     *
+     * Register a direct channel with supplied shared memory information. Upon
+     * return, the sensor hardware is responsible for resetting the memory
+     * content to initial value (depending on memory format settings).
+     *
+     * @param   mem shared memory info data structure.
+     * @return  result OK on success; BAD_VALUE if shared memory information is
+     *          not consistent; NO_MEMORY if shared memory cannot be used by
+     *          sensor system; INVALID_OPERATION if functionality is not
+     *          supported.
+     * @return  channelHandle a positive integer used for referencing registered
+     *          direct channel (>0) in configureDirectReport and
+     *          unregisterDirectChannel if result is OK, -1 otherwise.
+     */
+    registerDirectChannel(SharedMemInfo mem)
+            generates (Result result, int32_t channelHandle);
+
+    /*
+     * Unregister direct report channel.
+     *
+     * Unregister a direct channel previously registered using
+     * registerDirectChannel. If there is still active sensor report configured
+     * in the direct channel, HAL should remove them.
+     *
+     * @param   channelHandle handle of direct channel to be unregistered.
+     * @return  result OK if direct report is supported; INVALID_OPERATION
+     *          otherwise.
+     */
+    unregisterDirectChannel(int32_t channelHandle) generates (Result result);
+
+    /*
+     * Configure direct sensor event report in direct channel.
+     *
+     * This function start, modify rate or stop direct report of a sensor in a
+     * certain direct channel.
+     *
+     * @param   sensorHandle handle of sensor to be configured. When combined
+     *          with STOP rate, sensorHandle can be -1 to denote all active
+     *          sensors in the direct channel specified by channel Handle.
+     * @param   channelHandle handle of direct channel to be configured.
+     * @param   rate rate level, see RateLevel enum.
+     *
+     * @return  result OK on success; BAD_VALUE if parameter is invalid (such as
+     *          rate level is not supported by sensor, channelHandle does not
+     *          exist, etc); INVALID_OPERATION if functionality is not
+     *          supported.
+     * @return  reportToken positive integer to identify multiple sensors of
+     *          the same type in a single direct channel. Ignored if rate is
+     *          STOP. See SharedMemFormat.
+     */
+    configDirectReport(
+            int32_t sensorHandle, int32_t channelHandle, RateLevel rate)
+            generates (Result result, int32_t reportToken);
 };
