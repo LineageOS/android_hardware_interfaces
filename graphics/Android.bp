@@ -8,4 +8,5 @@ subdirs = [
     "composer/2.1/default",
     "mapper/2.0",
     "mapper/2.0/default",
+    "mapper/2.0/vts/functional",
 ]

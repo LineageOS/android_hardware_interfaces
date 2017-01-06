@@ -15,9 +15,9 @@
 //
 
 cc_test {
-    name: "graphics_allocator_hidl_hal_test",
+    name: "graphics_mapper_hidl_hal_test",
     gtest: true,
-    srcs: ["graphics_allocator_hidl_hal_test.cpp"],
+    srcs: ["graphics_mapper_hidl_hal_test.cpp"],
     shared_libs: [
         "libbase",
         "liblog",
@@ -26,8 +26,10 @@ cc_test {
         "libhidltransport",
         "libhwbinder",
         "libnativehelper",
+        "libsync",
         "libutils",
         "android.hardware.graphics.allocator@2.0",
+        "android.hardware.graphics.mapper@2.0",
     ],
     static_libs: ["libgtest"],
     cflags: [
