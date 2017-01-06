@@ -279,4 +279,16 @@ interface IStream {
      */
     getMmapPosition()
             generates (Result retval, MmapPosition position);
+
+    /*
+     * Called by the framework to deinitialize the stream and free up
+     * all the currently allocated resources. It is recommended to close
+     * the stream on the client side as soon as it is becomes unused.
+     *
+     * @return retval OK in case the success.
+     *                NOT_SUPPORTED if called on IStream instead of input or
+     *                              output stream interface.
+     *                INVALID_STATE if the stream was already closed.
+     */
+    close() generates (Result retval);
 };

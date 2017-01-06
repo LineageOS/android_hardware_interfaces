@@ -41,16 +41,45 @@ interface IStreamIn extends IStream {
     setGain(float gain) generates (Result retval);
 
     /*
-     * Read audio buffer in from driver. If at least one frame was read prior to
-     * the error, 'read' must return that byte count and then return an error
-     * in the subsequent call.
+     * Data structure passed back to the client via status message queue
+     * of 'read' operation.
      *
-     * @param size maximum amount of bytes to read.
-     * @return retval operation completion status.
-     * @return data audio data.
+     * Possible values of 'retval' field:
+     *  - OK, read operation was successful;
+     *  - INVALID_ARGUMENTS, stream was not configured properly;
+     *  - INVALID_STATE, stream is in a state that doesn't allow reads.
      */
-    // TODO(mnaganov): Replace with FMQ version.
-    read(uint64_t size) generates (Result retval, vec<uint8_t> data);
+    struct ReadStatus {
+        Result retval;
+        uint64_t read;
+    };
+
+    /*
+     * Set up required transports for receiving audio buffers from the driver.
+     *
+     * The transport consists of two message queues: one is used for passing
+     * audio data from the driver to the client, another is used for reporting
+     * read operation status (amount of bytes actually read or error code),
+     * see ReadStatus structure definition.
+     *
+     * @param frameSize the size of a single frame, in bytes.
+     * @param framesCount the number of frames in a buffer.
+     * @param threadPriority priority of the thread that performs reads.
+     * @return retval OK if both message queues were created successfully.
+     *                INVALID_STATE if the method was already called.
+     *                INVALID_ARGUMENTS if there was a problem setting up
+     *                                  the queues.
+     * @return dataMQ a message queue used for passing audio data in the format
+     *                specified at the stream opening.
+     * @return statusMQ a message queue used for passing status from the driver
+     *                  using ReadStatus structures.
+     */
+    prepareForReading(
+            uint32_t frameSize, uint32_t framesCount,
+            ThreadPriority threadPriority)
+    generates (
+            Result retval,
+            fmq_sync<uint8_t> dataMQ, fmq_sync<ReadStatus> statusMQ);
 
     /*
      * Return the amount of input frames lost in the audio driver since the last

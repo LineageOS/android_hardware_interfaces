@@ -44,25 +44,48 @@ interface IStreamOut extends IStream {
     setVolume(float left, float right) generates (Result retval);
 
     /*
-     * Write audio buffer to driver. On success, sets 'retval' to 'OK', and
-     * returns number of bytes written. If at least one frame was written
-     * successfully prior to the error, it is suggested that the driver return
-     * that successful (short) byte count and then return an error in the
-     * subsequent call.
+     * Data structure passed back to the client via status message queue
+     * of 'write' operation.
      *
-     * If 'setCallback' has previously been called to enable non-blocking mode
-     * then 'write' is not allowed to block. It must write only the number of
-     * bytes that currently fit in the driver/hardware buffer and then return
-     * this byte count. If this is less than the requested write size the
-     * callback function must be called when more space is available in the
-     * driver/hardware buffer.
-     *
-     * @param data audio data.
-     * @return retval operation completion status.
-     * @return written number of bytes written.
+     * Possible values of 'retval' field:
+     *  - OK, write operation was successful;
+     *  - INVALID_ARGUMENTS, stream was not configured properly;
+     *  - INVALID_STATE, stream is in a state that doesn't allow writes.
      */
-    // TODO(mnaganov): Replace with FMQ version.
-    write(vec<uint8_t> data) generates (Result retval, uint64_t written);
+    struct WriteStatus {
+        Result retval;
+        uint64_t written;
+        uint64_t frames;    // presentation position
+        TimeSpec timeStamp; // presentation position
+    };
+
+    /*
+     * Set up required transports for passing audio buffers to the driver.
+     *
+     * The transport consists of two message queues: one is used for passing
+     * audio data from the client to the driver, another is used for reporting
+     * write operation status (amount of bytes actually written or error code),
+     * and the presentation position immediately after the write, see
+     * WriteStatus structure definition.
+     *
+     * @param frameSize the size of a single frame, in bytes.
+     * @param framesCount the number of frames in a buffer.
+     * @param threadPriority priority of the thread that performs writes.
+     * @return retval OK if both message queues were created successfully.
+     *                INVALID_STATE if the method was already called.
+     *                INVALID_ARGUMENTS if there was a problem setting up
+     *                                  the queues.
+     * @return dataMQ a message queue used for passing audio data in the format
+     *                specified at the stream opening.
+     * @return statusMQ a message queue used for passing status from the driver
+     *                  using WriteStatus structures.
+     */
+    prepareForWriting(
+            uint32_t frameSize, uint32_t framesCount,
+            ThreadPriority threadPriority)
+    generates (
+            Result retval,
+            fmq_sync<uint8_t> dataMQ, fmq_sync<WriteStatus> statusMQ);
 
     /*
      * Return the number of audio frames written by the audio DSP to DAC since
