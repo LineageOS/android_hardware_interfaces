@@ -403,7 +403,9 @@ enum BufferStatus : uint32_t {
  */
 struct StreamBuffer {
     /**
-     * The ID of the stream this buffer is associated with
+     * The ID of the stream this buffer is associated with. -1 indicates an
+     * invalid (empty) StreamBuffer, in which case buffer must also point to
+     * null.
      */
     int32_t streamId;
 
@@ -605,7 +607,7 @@ struct ShutterMsg {
 };
 
 /**
- * MotifyMsg:
+ * NotifyMsg:
  *
  * The message structure sent to ICameraDevice3Callback::notify()
  */
