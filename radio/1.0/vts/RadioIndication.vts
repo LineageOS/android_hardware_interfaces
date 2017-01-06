@@ -1,0 +1,545 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "IRadioIndication"
+
+package: "android.hardware.radio"
+
+import: "android.hardware.radio@1.0::types"
+
+interface: {
+    api: {
+        name: "radioStateChanged"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioState"
+        }
+    }
+
+    api: {
+        name: "callStateChanged"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+    }
+
+    api: {
+        name: "voiceNetworkStateChanged"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+    }
+
+    api: {
+        name: "newSms"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "newSmsStatusReport"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "newSmsOnSim"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+
+    api: {
+        name: "onUssd"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::UssdModeType"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "nitzTimeReceived"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint64_t"
+        }
+    }
+
+    api: {
+        name: "currentSignalStrength"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::SignalStrength"
+        }
+    }
+
+    api: {
+        name: "dataCallListChanged"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRUCT
+                predefined_type: "::android::hardware::radio::V1_0::SetupDataCallResult"
+            }
+        }
+    }
+
+    api: {
+        name: "suppSvcNotify"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::SuppSvcNotification"
+        }
+    }
+
+    api: {
+        name: "stkSessionEnd"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+    }
+
+    api: {
+        name: "stkProactiveCommand"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "stkEventNotify"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "stkCallSetup"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int64_t"
+        }
+    }
+
+    api: {
+        name: "simSmsStorageFull"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+    }
+
+    api: {
+        name: "simRefresh"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::SimRefreshResult"
+        }
+    }
+
+    api: {
+        name: "callRing"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::CdmaSignalInfoRecord"
+        }
+    }
+
+    api: {
+        name: "simStatusChanged"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+    }
+
+    api: {
+        name: "cdmaNewSms"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::CdmaSmsMessage"
+        }
+    }
+
+    api: {
+        name: "newBroadcastSms"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "cdmaRuimSmsStorageFull"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+    }
+
+    api: {
+        name: "restrictedStateChanged"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::PhoneRestrictedState"
+        }
+    }
+
+    api: {
+        name: "enterEmergencyCallbackMode"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+    }
+
+    api: {
+        name: "cdmaCallWaiting"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::CdmaCallWaiting"
+        }
+    }
+
+    api: {
+        name: "cdmaOtaProvisionStatus"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::CdmaOtaProvisionStatus"
+        }
+    }
+
+    api: {
+        name: "cdmaInfoRec"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::CdmaInformationRecords"
+        }
+    }
+
+    api: {
+        name: "oemHookRaw"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "indicateRingbackTone"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+    }
+
+    api: {
+        name: "resendIncallMute"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+    }
+
+    api: {
+        name: "cdmaSubscriptionSourceChanged"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::CdmaSubscriptionSource"
+        }
+    }
+
+    api: {
+        name: "cdmaPrlChanged"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+
+    api: {
+        name: "exitEmergencyCallbackMode"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+    }
+
+    api: {
+        name: "rilConnected"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+    }
+
+    api: {
+        name: "voiceRadioTechChanged"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioTechnology"
+        }
+    }
+
+    api: {
+        name: "cellInfoList"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRUCT
+                predefined_type: "::android::hardware::radio::V1_0::CellInfo"
+            }
+        }
+    }
+
+    api: {
+        name: "imsNetworkStateChanged"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+    }
+
+    api: {
+        name: "subscriptionStatusChanged"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+    }
+
+    api: {
+        name: "srvccStateNotify"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::SrvccState"
+        }
+    }
+
+    api: {
+        name: "hardwareConfigChanged"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRUCT
+                predefined_type: "::android::hardware::radio::V1_0::HardwareConfig"
+            }
+        }
+    }
+
+    api: {
+        name: "radioCapabilityIndication"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioCapability"
+        }
+    }
+
+    api: {
+        name: "onSupplementaryServiceIndication"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::StkCcUnsolSsResult"
+        }
+    }
+
+    api: {
+        name: "stkCallControlAlphaNotify"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "lceData"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::LceDataInfo"
+        }
+    }
+
+    api: {
+        name: "pcoData"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::PcoDataInfo"
+        }
+    }
+
+    api: {
+        name: "modemReset"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+}

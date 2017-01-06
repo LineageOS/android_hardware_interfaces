@@ -1,0 +1,107 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "ISap"
+
+package: "android.hardware.radio"
+
+import: "android.hardware.radio@1.0::ISapCallback"
+import: "android.hardware.radio@1.0::types"
+
+interface: {
+    api: {
+        name: "setCallback"
+        arg: {
+            type: TYPE_HIDL_CALLBACK
+            predefined_type: "ISapCallback"
+            is_callback: true
+        }
+    }
+
+    api: {
+        name: "connectReq"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+
+    api: {
+        name: "disconnectReq"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+
+    api: {
+        name: "apduReq"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::SapApduType"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "transferAtrReq"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+
+    api: {
+        name: "powerReq"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+    }
+
+    api: {
+        name: "resetSimReq"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+
+    api: {
+        name: "transferCardReaderStatusReq"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+
+    api: {
+        name: "setTransferProtocolReq"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::SapTransferProtocol"
+        }
+    }
+
+}
