@@ -47,9 +47,15 @@ class VehicleHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
             hw_binder_service_name="Vehicle",
             bits=64 if self.dut.is64Bit else 32)
 
+        self.vehicle = self.dut.hal.vehicle  # shortcut
+        self.vtypes = self.dut.hal.vehicle.GetHidlTypeInterface("types")
+        logging.info("vehicle types: %s", self.vtypes)
+
     def tearDownClass(self):
-        """ If profiling is enabled for the test, collect the profiling data
-            and disable profiling after the test is done.
+        """Disables the profiling.
+
+        If profiling is enabled for the test, collect the profiling data
+        and disable profiling after the test is done.
         """
         if self.enable_profiling:
             profiling_trace_path = getattr(
@@ -58,12 +64,26 @@ class VehicleHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
             profiling_utils.DisableVTSProfiling(self.dut.shell.one)
 
     def testListProperties(self):
-        logging.info("vehicle_types")
-        vehicle_types = self.dut.hal.vehicle.GetHidlTypeInterface("types")
-        logging.info("vehicle_types: %s", vehicle_types)
+        """Checks whether some PropConfigs are returned.
 
-        allConfigs = self.dut.hal.vehicle.getAllPropConfigs()
+        Verifies that call to getAllPropConfigs is not failing and
+        it returns at least 1 vehicle property config.
+        """
+        allConfigs = self.vehicle.getAllPropConfigs()
         logging.info("all supported properties: %s", allConfigs)
+        asserts.assertLess(0, len(allConfigs))
+
+    def testMandatoryProperties(self):
+        """Verifies that all mandatory properties are supported."""
+        mandatoryProps = set([self.vtypes.DRIVING_STATUS])  # 1 property so far
+        logging.info(self.vtypes.DRIVING_STATUS)
+        allConfigs = self.dut.hal.vehicle.getAllPropConfigs()
+
+        for config in allConfigs:
+            mandatoryProps.discard(config['prop'])
+
+        asserts.assertEqual(0, len(mandatoryProps))
+
 
 if __name__ == "__main__":
     test_runner.main()
