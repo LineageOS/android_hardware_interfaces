@@ -127,12 +127,26 @@ interface ISensors {
     flush(int32_t sensorHandle) generates (Result result);
 
     /*
-     * Inject a single sensor sample to this device.
-     * data points to the sensor event to be injected
-     * Returns OK on success
-     *         PERMISSION_DENIED if operation is not allowed
-     *         INVALID_OPERATION, if this functionality is unsupported
-     *         BAD_VALUE if sensor event cannot be injected
+     * Inject a single sensor event or push operation environment parameters to
+     * device.
+     *
+     * When device is in NORMAL mode, this function is called to push operation
+     * environment data to device. In this operation, Event is always of
+     * SensorType::AdditionalInfo type. See operation evironment parameters
+     * section in AdditionalInfoType.
+     *
+     * When device is in DATA_INJECTION mode, this function is also used for
+     * injecting sensor events.
+     *
+     * Regardless of OperationMode, injected SensorType::ADDITIONAL_INFO
+     * type events should not be routed back to poll() function.
+     *
+     * @see AdditionalInfoType
+     * @see OperationMode
+     * @param   event sensor event to be injected
+     * @return  result OK on success; PERMISSION_DENIED if operation is not
+     *          allowed; INVALID_OPERATION, if this functionality is
+     *          unsupported; BAD_VALUE if sensor event cannot be injected.
      */
     injectSensorData(Event event) generates (Result result);
 
