@@ -98,6 +98,29 @@ interface IFoo {
 
     typedef bitfield<BitField> Mask;
 
+    struct Everything {
+        union U {
+            int8_t number;
+            int8_t[1][2] multidimArray;
+            pointer p;
+            Fumble anotherStruct;
+            bitfield<BitField> bf;
+        } u;
+
+        int8_t number;
+        handle h;
+        fmq_sync<uint8_t> descSync;
+        fmq_unsync<uint8_t> descUnsync;
+        memory mem;
+        pointer p;
+        string s;
+        vec<string> vs;
+        string[2][2] multidimArray;
+        string[3] sArray;
+        Quux anotherStruct;
+        bitfield<BitField> bf;
+    };
+
     doThis(float param);
     doThatAndReturnSomething(int64_t param) generates (int32_t result);
     doQuiteABit(int32_t a, int64_t b, float c, double d) generates (double something);
