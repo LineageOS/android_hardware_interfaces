@@ -48,14 +48,14 @@ EvsCamera::EvsCamera(const char *id) {
 
     // Set up dummy data for testing
     if (mDescription.cameraId == kCameraName_Backup) {
-        mDescription.hints                  = UsageHint::USAGE_HINT_REVERSE;
+        mDescription.hints                  = static_cast<uint32_t>(UsageHint::USAGE_HINT_REVERSE);
         mDescription.vendorFlags            = 0xFFFFFFFF;   // Arbitrary value
         mDescription.defaultHorResolution   = 320;          // 1/2 NTSC/VGA
         mDescription.defaultVerResolution   = 240;          // 1/2 NTSC/VGA
     }
     else if (mDescription.cameraId == kCameraName_RightTurn) {
         // Nothing but the name and the usage hint
-        mDescription.hints                  = UsageHint::USAGE_HINT_RIGHT_TURN;
+        mDescription.hints                  = static_cast<uint32_t>(UsageHint::USAGE_HINT_RIGHT_TURN);
     }
     else {
         // Leave empty for a minimalist camera description without even a hint
@@ -149,7 +149,7 @@ Return<EvsResult> EvsCamera::startVideoStream(const ::android::sp<IEvsCameraStre
     return EvsResult::OK;
 }
 
-Return<EvsResult> EvsCamera::doneWithFrame(uint32_t frameId, const hidl_handle& bufferHandle)  {
+Return<EvsResult> EvsCamera::doneWithFrame(uint32_t /* frameId */, const hidl_handle& bufferHandle)  {
     ALOGD("doneWithFrame");
     std::lock_guard<std::mutex> lock(mAccessLock);
 
