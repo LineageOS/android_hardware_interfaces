@@ -46,7 +46,7 @@ void Tuner::onCallback(radio_hal_event_t *halEvent)
             mCallback->antennaStateChange(halEvent->on);
             break;
         case RADIO_EVENT_TUNED:
-            Utils::convertProgramInfoFromHal(&info, &halEvent->info, true);
+            Utils::convertProgramInfoFromHal(&info, &halEvent->info);
             mCallback->tuneComplete(Utils::convertHalResult(halEvent->status), info);
             break;
         case RADIO_EVENT_METADATA: {
@@ -61,7 +61,7 @@ void Tuner::onCallback(radio_hal_event_t *halEvent)
             mCallback->trafficAnnouncement(halEvent->on);
             break;
         case RADIO_EVENT_AF_SWITCH:
-            Utils::convertProgramInfoFromHal(&info, &halEvent->info, true);
+            Utils::convertProgramInfoFromHal(&info, &halEvent->info);
             mCallback->afSwitch(info);
             break;
         case RADIO_EVENT_EA:
@@ -164,7 +164,7 @@ Return<Result> Tuner::cancel()  {
     return Utils::convertHalResult(rc);
 }
 
-Return<void> Tuner::getProgramInformation(bool withMetadata, getProgramInformation_cb _hidl_cb)  {
+Return<void> Tuner::getProgramInformation(getProgramInformation_cb _hidl_cb)  {
     int rc;
     radio_program_info_t halInfo;
     ProgramInfo info;
@@ -174,18 +174,13 @@ Return<void> Tuner::getProgramInformation(bool withMetadata, getProgramInformati
         rc = -ENODEV;
         goto exit;
     }
-    if (withMetadata) {
-        radio_metadata_allocate(&halInfo.metadata, 0, 0);
-    } else {
-        halInfo.metadata = NULL;
-    }
+
+    radio_metadata_allocate(&halInfo.metadata, 0, 0);
     rc = mHalTuner->get_program_information(mHalTuner, &halInfo);
     if (rc == 0) {
-        Utils::convertProgramInfoFromHal(&info, &halInfo, withMetadata);
+        Utils::convertProgramInfoFromHal(&info, &halInfo);
     }
-    if (withMetadata) {
-        radio_metadata_deallocate(halInfo.metadata);
-    }
+    radio_metadata_deallocate(halInfo.metadata);
 
 exit:
     _hidl_cb(Utils::convertHalResult(rc), info);

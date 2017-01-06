@@ -40,8 +40,7 @@ struct Tuner : public ITuner {
     Return<Result> step(Direction direction, bool skipSubChannel)  override;
     Return<Result> tune(uint32_t channel, uint32_t subChannel)  override;
     Return<Result> cancel()  override;
-    Return<void> getProgramInformation(bool withMetadata,
-                                       getProgramInformation_cb _hidl_cb)  override;
+    Return<void> getProgramInformation(getProgramInformation_cb _hidl_cb)  override;
 
     static void callback(radio_hal_event_t *halEvent, void *cookie);
            void onCallback(radio_hal_event_t *halEvent);

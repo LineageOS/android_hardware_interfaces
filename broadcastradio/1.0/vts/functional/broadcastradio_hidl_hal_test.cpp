@@ -434,11 +434,11 @@ TEST_F(BroadcastRadioHidlTest, TuneAndGetProgramInformationAndCancel) {
     ProgramInfo halInfo;
     Result halResult = Result::NOT_INITIALIZED;
     Return<void> hidlReturn = mTuner->getProgramInformation(
-                    false, [&](Result result, const ProgramInfo& info) {
-                                halResult = result;
-                                if (result == Result::OK) {
-                                    halInfo = info;
-                                }
+        [&](Result result, const ProgramInfo& info) {
+            halResult = result;
+            if (result == Result::OK) {
+                halInfo = info;
+            }
         });
     EXPECT_TRUE(hidlReturn.isOk());
     EXPECT_EQ(Result::OK, halResult);
