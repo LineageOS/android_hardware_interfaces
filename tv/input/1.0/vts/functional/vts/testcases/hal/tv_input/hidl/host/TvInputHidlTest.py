@@ -39,13 +39,14 @@ class TvInputHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
                                  target_version=1.0,
                                  target_package="android.hardware.tv.input",
                                  target_component_name="ITvInput",
-                                 bits=64)
+                                 hw_binder_service_name="tv-input-1-0",
+                                 bits=64 if self.dut.is64Bit else 32)
 
         self.dut.shell.InvokeTerminal("one")
 
     def testGetStreamConfigurations(self):
         configs = self.dut.hal.tv_input.getStreamConfigurations(0)
-        logging.info('tv input configs: %s', configs)
+        logging.info('return value of getStreamConfigurations(0): %s', configs)
 
 
 if __name__ == "__main__":
