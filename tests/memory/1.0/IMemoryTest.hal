@@ -17,5 +17,6 @@
 package android.hardware.tests.memory@1.0;
 
 interface IMemoryTest {
+    haveSomeMemory(memory mem) generates(memory mem);
     fillMemory(memory memory_in, uint8_t filler);
 };
