@@ -103,11 +103,9 @@ interface ITuner {
 
     /*
      * Retrieve current station information.
-     * @param withMetadata True if Metadata should be returned, false otherwise.
      * @return result OK if scan successfully started
      *                NOT_INITIALIZED if another error occurs
      * @return info Current program information.
      */
-    getProgramInformation(bool withMetadata)
-            generates(Result result, ProgramInfo info);
+    getProgramInformation() generates(Result result, ProgramInfo info);
 };

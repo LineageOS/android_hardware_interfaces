@@ -222,8 +222,7 @@ void Utils::convertBandConfigToHal(
 
 //static
 void Utils::convertProgramInfoFromHal(ProgramInfo *info,
-                                      radio_program_info_t *halInfo,
-                                      bool withMetadata)
+                                      radio_program_info_t *halInfo)
 {
     info->channel = halInfo->channel;
     info->subChannel = halInfo->sub_channel;
@@ -231,9 +230,7 @@ void Utils::convertProgramInfoFromHal(ProgramInfo *info,
     info->stereo = halInfo->stereo;
     info->digital = halInfo->digital;
     info->signalStrength = halInfo->signal_strength;
-    if (withMetadata && halInfo->metadata != NULL) {
-        convertMetaDataFromHal(info->metadata, halInfo->metadata);
-    }
+    convertMetaDataFromHal(info->metadata, halInfo->metadata);
 }
 
 //static
@@ -241,6 +238,7 @@ int Utils::convertMetaDataFromHal(hidl_vec<MetaData>& metadata,
                                    radio_metadata_t *halMetadata)
 {
     if (halMetadata == NULL) {
+        ALOGE("Invalid argument: halMetadata is NULL");
         return 0;
     }
 

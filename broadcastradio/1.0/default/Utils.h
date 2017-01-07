@@ -36,8 +36,7 @@ public:
     static void convertBandConfigToHal(radio_hal_band_config_t *halConfig,
             const BandConfig *config);
     static void convertProgramInfoFromHal(ProgramInfo *info,
-                                          radio_program_info_t *halInfo,
-                                          bool withMetadata);
+                                          radio_program_info_t *halInfo);
     static int convertMetaDataFromHal(hidl_vec<MetaData>& metadata,
                                        radio_metadata_t *halMetadata);
 private:
