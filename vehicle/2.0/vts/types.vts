@@ -43,6 +43,10 @@ attribute: {
         scalar_value: {
             int32_t: 7340032
         }
+        enumerator: "COMPLEX"
+        scalar_value: {
+            int32_t: 14680064
+        }
         enumerator: "MASK"
         scalar_value: {
             int32_t: 16711680
@@ -185,6 +189,10 @@ attribute: {
         enumerator: "TURN_SIGNAL_STATE"
         scalar_value: {
             int32_t: 289408008
+        }
+        enumerator: "IGNITION_STATE"
+        scalar_value: {
+            int32_t: 289408009
         }
         enumerator: "HVAC_FAN_SPEED"
         scalar_value: {
@@ -485,6 +493,18 @@ attribute: {
         enumerator: "WINDOW_LOCK"
         scalar_value: {
             int32_t: 287312836
+        }
+        enumerator: "VEHICLE_MAPS_DATA_SERVICE"
+        scalar_value: {
+            int32_t: 299895808
+        }
+        enumerator: "OBD2_LIVE_FRAME"
+        scalar_value: {
+            int32_t: 299896064
+        }
+        enumerator: "OBD2_FREEZE_FRAME"
+        scalar_value: {
+            int32_t: 299896065
         }
     }
 }
@@ -1686,6 +1706,39 @@ attribute: {
 }
 
 attribute: {
+    name: "::android::hardware::vehicle::V2_0::VehicleIgnitionState"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "UNDEFINED"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "LOCK"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "OFF"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "ACC"
+        scalar_value: {
+            int32_t: 3
+        }
+        enumerator: "ON"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "START"
+        scalar_value: {
+            int32_t: 5
+        }
+    }
+}
+
+attribute: {
     name: "::android::hardware::vehicle::V2_0::VehiclePropertyOperation"
     type: TYPE_ENUM
     enum_value: {
@@ -1789,6 +1842,831 @@ attribute: {
         enumerator: "INTERNAL_ERROR"
         scalar_value: {
             int32_t: 5
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::vehicle::V2_0::FuelSystemStatus"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "OPEN_INSUFFICIENT_ENGINE_TEMPERATURE"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "CLOSED_LOOP"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "OPEN_ENGINE_LOAD_OR_DECELERATION"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "OPEN_SYSTEM_FAILURE"
+        scalar_value: {
+            int32_t: 8
+        }
+        enumerator: "CLOSED_LOOP_BUT_FEEDBACK_FAULT"
+        scalar_value: {
+            int32_t: 16
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::vehicle::V2_0::IgnitionMonitorKind"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "SPARK"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "COMPRESSION"
+        scalar_value: {
+            int32_t: 1
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::vehicle::V2_0::CommonIgnitionMonitors"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "COMPONENTS_AVAILABLE"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "COMPONENTS_INCOMPLETE"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "FUEL_SYSTEM_AVAILABLE"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "FUEL_SYSTEM_INCOMPLETE"
+        scalar_value: {
+            int32_t: 8
+        }
+        enumerator: "MISFIRE_AVAILABLE"
+        scalar_value: {
+            int32_t: 16
+        }
+        enumerator: "MISFIRE_INCOMPLETE"
+        scalar_value: {
+            int32_t: 32
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::vehicle::V2_0::SparkIgnitionMonitors"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "COMPONENTS_AVAILABLE"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "COMPONENTS_INCOMPLETE"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "FUEL_SYSTEM_AVAILABLE"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "FUEL_SYSTEM_INCOMPLETE"
+        scalar_value: {
+            int32_t: 8
+        }
+        enumerator: "MISFIRE_AVAILABLE"
+        scalar_value: {
+            int32_t: 16
+        }
+        enumerator: "MISFIRE_INCOMPLETE"
+        scalar_value: {
+            int32_t: 32
+        }
+        enumerator: "EGR_AVAILABLE"
+        scalar_value: {
+            int32_t: 64
+        }
+        enumerator: "EGR_INCOMPLETE"
+        scalar_value: {
+            int32_t: 128
+        }
+        enumerator: "OXYGEN_SENSOR_HEATER_AVAILABLE"
+        scalar_value: {
+            int32_t: 256
+        }
+        enumerator: "OXYGEN_SENSOR_HEATER_INCOMPLETE"
+        scalar_value: {
+            int32_t: 512
+        }
+        enumerator: "OXYGEN_SENSOR_AVAILABLE"
+        scalar_value: {
+            int32_t: 1024
+        }
+        enumerator: "OXYGEN_SENSOR_INCOMPLETE"
+        scalar_value: {
+            int32_t: 2048
+        }
+        enumerator: "AC_REFRIGERANT_AVAILABLE"
+        scalar_value: {
+            int32_t: 4096
+        }
+        enumerator: "AC_REFRIGERANT_INCOMPLETE"
+        scalar_value: {
+            int32_t: 8192
+        }
+        enumerator: "SECONDARY_AIR_SYSTEM_AVAILABLE"
+        scalar_value: {
+            int32_t: 16384
+        }
+        enumerator: "SECONDARY_AIR_SYSTEM_INCOMPLETE"
+        scalar_value: {
+            int32_t: 32768
+        }
+        enumerator: "EVAPORATIVE_SYSTEM_AVAILABLE"
+        scalar_value: {
+            int32_t: 65536
+        }
+        enumerator: "EVAPORATIVE_SYSTEM_INCOMPLETE"
+        scalar_value: {
+            int32_t: 131072
+        }
+        enumerator: "HEATED_CATALYST_AVAILABLE"
+        scalar_value: {
+            int32_t: 262144
+        }
+        enumerator: "HEATED_CATALYST_INCOMPLETE"
+        scalar_value: {
+            int32_t: 524288
+        }
+        enumerator: "CATALYST_AVAILABLE"
+        scalar_value: {
+            int32_t: 1048576
+        }
+        enumerator: "CATALYST_INCOMPLETE"
+        scalar_value: {
+            int32_t: 2097152
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::vehicle::V2_0::CompressionIgnitionMonitors"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "COMPONENTS_AVAILABLE"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "COMPONENTS_INCOMPLETE"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "FUEL_SYSTEM_AVAILABLE"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "FUEL_SYSTEM_INCOMPLETE"
+        scalar_value: {
+            int32_t: 8
+        }
+        enumerator: "MISFIRE_AVAILABLE"
+        scalar_value: {
+            int32_t: 16
+        }
+        enumerator: "MISFIRE_INCOMPLETE"
+        scalar_value: {
+            int32_t: 32
+        }
+        enumerator: "EGR_OR_VVT_AVAILABLE"
+        scalar_value: {
+            int32_t: 64
+        }
+        enumerator: "EGR_OR_VVT_INCOMPLETE"
+        scalar_value: {
+            int32_t: 128
+        }
+        enumerator: "PM_FILTER_AVAILABLE"
+        scalar_value: {
+            int32_t: 256
+        }
+        enumerator: "PM_FILTER_INCOMPLETE"
+        scalar_value: {
+            int32_t: 512
+        }
+        enumerator: "EXHAUST_GAS_SENSOR_AVAILABLE"
+        scalar_value: {
+            int32_t: 1024
+        }
+        enumerator: "EXHAUST_GAS_SENSOR_INCOMPLETE"
+        scalar_value: {
+            int32_t: 2048
+        }
+        enumerator: "BOOST_PRESSURE_AVAILABLE"
+        scalar_value: {
+            int32_t: 4096
+        }
+        enumerator: "BOOST_PRESSURE_INCOMPLETE"
+        scalar_value: {
+            int32_t: 8192
+        }
+        enumerator: "NOx_SCR__AVAILABLE"
+        scalar_value: {
+            int32_t: 16384
+        }
+        enumerator: "NOx_SCR_INCOMPLETE"
+        scalar_value: {
+            int32_t: 32768
+        }
+        enumerator: "NMHC_CATALYST_AVAILABLE"
+        scalar_value: {
+            int32_t: 65536
+        }
+        enumerator: "NMHC_CATALYST_INCOMPLETE"
+        scalar_value: {
+            int32_t: 131072
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::vehicle::V2_0::SecondaryAirStatus"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "UPSTREAM"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "DOWNSTREAM_OF_CATALYCIC_CONVERTER"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "FROM_OUTSIDE_OR_OFF"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "PUMP_ON_FOR_DIAGNOSTICS"
+        scalar_value: {
+            int32_t: 8
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::vehicle::V2_0::FuelType"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "NOT_AVAILABLE"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "GASOLINE"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "METHANOL"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "ETHANOL"
+        scalar_value: {
+            int32_t: 3
+        }
+        enumerator: "DIESEL"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "LPG"
+        scalar_value: {
+            int32_t: 5
+        }
+        enumerator: "CNG"
+        scalar_value: {
+            int32_t: 6
+        }
+        enumerator: "PROPANE"
+        scalar_value: {
+            int32_t: 7
+        }
+        enumerator: "ELECTRIC"
+        scalar_value: {
+            int32_t: 8
+        }
+        enumerator: "BIFUEL_RUNNING_GASOLINE"
+        scalar_value: {
+            int32_t: 9
+        }
+        enumerator: "BIFUEL_RUNNING_METHANOL"
+        scalar_value: {
+            int32_t: 10
+        }
+        enumerator: "BIFUEL_RUNNING_ETHANOL"
+        scalar_value: {
+            int32_t: 11
+        }
+        enumerator: "BIFUEL_RUNNING_LPG"
+        scalar_value: {
+            int32_t: 12
+        }
+        enumerator: "BIFUEL_RUNNING_CNG"
+        scalar_value: {
+            int32_t: 13
+        }
+        enumerator: "BIFUEL_RUNNING_PROPANE"
+        scalar_value: {
+            int32_t: 14
+        }
+        enumerator: "BIFUEL_RUNNING_ELECTRIC"
+        scalar_value: {
+            int32_t: 15
+        }
+        enumerator: "BIFUEL_RUNNING_ELECTRIC_AND_COMBUSTION"
+        scalar_value: {
+            int32_t: 16
+        }
+        enumerator: "HYBRID_GASOLINE"
+        scalar_value: {
+            int32_t: 17
+        }
+        enumerator: "HYBRID_ETHANOL"
+        scalar_value: {
+            int32_t: 18
+        }
+        enumerator: "HYBRID_DIESEL"
+        scalar_value: {
+            int32_t: 19
+        }
+        enumerator: "HYBRID_ELECTRIC"
+        scalar_value: {
+            int32_t: 20
+        }
+        enumerator: "HYBRID_RUNNING_ELECTRIC_AND_COMBUSTION"
+        scalar_value: {
+            int32_t: 21
+        }
+        enumerator: "HYBRID_REGENERATIVE"
+        scalar_value: {
+            int32_t: 22
+        }
+        enumerator: "BIFUEL_RUNNING_DIESEL"
+        scalar_value: {
+            int32_t: 23
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::vehicle::V2_0::Obd2IntegerSensorIndex"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "FUEL_SYSTEM_STATUS"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "MALFUNCTION_INDICATOR_LIGHT_ON"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "IGNITION_MONITORS_SUPPORTED"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "COMMANDED_SECONDARY_AIR_STATUS"
+        scalar_value: {
+            int32_t: 5
+        }
+        enumerator: "NUM_OXYGEN_SENSORS_PRESENT"
+        scalar_value: {
+            int32_t: 6
+        }
+        enumerator: "RUNTIME_SINCE_ENGINE_START"
+        scalar_value: {
+            int32_t: 7
+        }
+        enumerator: "DISTANCE_TRAVELED_WITH_MALFUNCTION_INDICATOR_LIGHT_ON"
+        scalar_value: {
+            int32_t: 8
+        }
+        enumerator: "WARMUPS_SINCE_CODES_CLEARED"
+        scalar_value: {
+            int32_t: 9
+        }
+        enumerator: "DISTANCE_TRAVELED_SINCE_CODES_CLEARED"
+        scalar_value: {
+            int32_t: 10
+        }
+        enumerator: "ABSOLUTE_BAROMETRIC_PRESSURE"
+        scalar_value: {
+            int32_t: 11
+        }
+        enumerator: "CONTROL_MODULE_VOLTAGE"
+        scalar_value: {
+            int32_t: 12
+        }
+        enumerator: "AMBIENT_AIR_TEMPERATURE"
+        scalar_value: {
+            int32_t: 13
+        }
+        enumerator: "TIME_WITH_MALFUNCTION_LIGHT_ON"
+        scalar_value: {
+            int32_t: 14
+        }
+        enumerator: "TIME_SINCE_TROUBLE_CODES_CLEARED"
+        scalar_value: {
+            int32_t: 15
+        }
+        enumerator: "MAX_FUEL_AIR_EQUIVALENCE_RATIO"
+        scalar_value: {
+            int32_t: 16
+        }
+        enumerator: "MAX_OXYGEN_SENSOR_VOLTAGE"
+        scalar_value: {
+            int32_t: 17
+        }
+        enumerator: "MAX_OXYGEN_SENSOR_CURRENT"
+        scalar_value: {
+            int32_t: 18
+        }
+        enumerator: "MAX_INTAKE_MANIFOLD_ABSOLUTE_PRESSURE"
+        scalar_value: {
+            int32_t: 19
+        }
+        enumerator: "MAX_AIR_FLOW_RATE_FROM_MASS_AIR_FLOW_SENSOR"
+        scalar_value: {
+            int32_t: 20
+        }
+        enumerator: "FUEL_TYPE"
+        scalar_value: {
+            int32_t: 21
+        }
+        enumerator: "FUEL_RAIL_ABSOLUTE_PRESSURE"
+        scalar_value: {
+            int32_t: 22
+        }
+        enumerator: "ENGINE_OIL_TEMPERATURE"
+        scalar_value: {
+            int32_t: 23
+        }
+        enumerator: "DRIVER_DEMAND_PERCENT_TORQUE"
+        scalar_value: {
+            int32_t: 24
+        }
+        enumerator: "ENGINE_ACTUAL_PERCENT_TORQUE"
+        scalar_value: {
+            int32_t: 25
+        }
+        enumerator: "ENGINE_REFERENCE_PERCENT_TORQUE"
+        scalar_value: {
+            int32_t: 26
+        }
+        enumerator: "ENGINE_PERCENT_TORQUE_DATA_IDLE"
+        scalar_value: {
+            int32_t: 27
+        }
+        enumerator: "ENGINE_PERCENT_TORQUE_DATA_POINT1"
+        scalar_value: {
+            int32_t: 28
+        }
+        enumerator: "ENGINE_PERCENT_TORQUE_DATA_POINT2"
+        scalar_value: {
+            int32_t: 29
+        }
+        enumerator: "ENGINE_PERCENT_TORQUE_DATA_POINT3"
+        scalar_value: {
+            int32_t: 30
+        }
+        enumerator: "ENGINE_PERCENT_TORQUE_DATA_POINT4"
+        scalar_value: {
+            int32_t: 31
+        }
+        enumerator: "LAST_SYSTEM_INDEX"
+        scalar_value: {
+            int32_t: 31
+        }
+        enumerator: "VENDOR_START_INDEX"
+        scalar_value: {
+            int32_t: 32
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::vehicle::V2_0::Obd2FloatSensorIndex"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "CALCULATED_ENGINE_LOAD"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "ENGINE_COOLANT_TEMPERATURE"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "SHORT_TERM_FUEL_TRIM_BANK1"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "LONG_TERM_FUEL_TRIM_BANK1"
+        scalar_value: {
+            int32_t: 3
+        }
+        enumerator: "SHORT_TERM_FUEL_TRIM_BANK2"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "LONG_TERM_FUEL_TRIM_BANK2"
+        scalar_value: {
+            int32_t: 5
+        }
+        enumerator: "FUEL_PRESSURE"
+        scalar_value: {
+            int32_t: 6
+        }
+        enumerator: "INTAKE_MANIFOLD_ABSOLUTE_PRESSURE"
+        scalar_value: {
+            int32_t: 7
+        }
+        enumerator: "ENGINE_RPM"
+        scalar_value: {
+            int32_t: 8
+        }
+        enumerator: "VEHICLE_SPEED"
+        scalar_value: {
+            int32_t: 9
+        }
+        enumerator: "TIMING_ADVANCE"
+        scalar_value: {
+            int32_t: 10
+        }
+        enumerator: "MAF_AIR_FLOW_RATE"
+        scalar_value: {
+            int32_t: 11
+        }
+        enumerator: "THROTTLE_POSITION"
+        scalar_value: {
+            int32_t: 12
+        }
+        enumerator: "OXYGEN_SENSOR1_VOLTAGE"
+        scalar_value: {
+            int32_t: 13
+        }
+        enumerator: "OXYGEN_SENSOR1_SHORT_TERM_FUEL_TRIM"
+        scalar_value: {
+            int32_t: 14
+        }
+        enumerator: "OXYGEN_SENSOR1_FUEL_AIR_EQUIVALENCE_RATIO"
+        scalar_value: {
+            int32_t: 15
+        }
+        enumerator: "OXYGEN_SENSOR2_VOLTAGE"
+        scalar_value: {
+            int32_t: 16
+        }
+        enumerator: "OXYGEN_SENSOR2_SHORT_TERM_FUEL_TRIM"
+        scalar_value: {
+            int32_t: 17
+        }
+        enumerator: "OXYGEN_SENSOR2_FUEL_AIR_EQUIVALENCE_RATIO"
+        scalar_value: {
+            int32_t: 18
+        }
+        enumerator: "OXYGEN_SENSOR3_VOLTAGE"
+        scalar_value: {
+            int32_t: 19
+        }
+        enumerator: "OXYGEN_SENSOR3_SHORT_TERM_FUEL_TRIM"
+        scalar_value: {
+            int32_t: 20
+        }
+        enumerator: "OXYGEN_SENSOR3_FUEL_AIR_EQUIVALENCE_RATIO"
+        scalar_value: {
+            int32_t: 21
+        }
+        enumerator: "OXYGEN_SENSOR4_VOLTAGE"
+        scalar_value: {
+            int32_t: 22
+        }
+        enumerator: "OXYGEN_SENSOR4_SHORT_TERM_FUEL_TRIM"
+        scalar_value: {
+            int32_t: 23
+        }
+        enumerator: "OXYGEN_SENSOR4_FUEL_AIR_EQUIVALENCE_RATIO"
+        scalar_value: {
+            int32_t: 24
+        }
+        enumerator: "OXYGEN_SENSOR5_VOLTAGE"
+        scalar_value: {
+            int32_t: 25
+        }
+        enumerator: "OXYGEN_SENSOR5_SHORT_TERM_FUEL_TRIM"
+        scalar_value: {
+            int32_t: 26
+        }
+        enumerator: "OXYGEN_SENSOR5_FUEL_AIR_EQUIVALENCE_RATIO"
+        scalar_value: {
+            int32_t: 27
+        }
+        enumerator: "OXYGEN_SENSOR6_VOLTAGE"
+        scalar_value: {
+            int32_t: 28
+        }
+        enumerator: "OXYGEN_SENSOR6_SHORT_TERM_FUEL_TRIM"
+        scalar_value: {
+            int32_t: 29
+        }
+        enumerator: "OXYGEN_SENSOR6_FUEL_AIR_EQUIVALENCE_RATIO"
+        scalar_value: {
+            int32_t: 30
+        }
+        enumerator: "OXYGEN_SENSOR7_VOLTAGE"
+        scalar_value: {
+            int32_t: 31
+        }
+        enumerator: "OXYGEN_SENSOR7_SHORT_TERM_FUEL_TRIM"
+        scalar_value: {
+            int32_t: 32
+        }
+        enumerator: "OXYGEN_SENSOR7_FUEL_AIR_EQUIVALENCE_RATIO"
+        scalar_value: {
+            int32_t: 33
+        }
+        enumerator: "OXYGEN_SENSOR8_VOLTAGE"
+        scalar_value: {
+            int32_t: 34
+        }
+        enumerator: "OXYGEN_SENSOR8_SHORT_TERM_FUEL_TRIM"
+        scalar_value: {
+            int32_t: 35
+        }
+        enumerator: "OXYGEN_SENSOR8_FUEL_AIR_EQUIVALENCE_RATIO"
+        scalar_value: {
+            int32_t: 36
+        }
+        enumerator: "FUEL_RAIL_PRESSURE"
+        scalar_value: {
+            int32_t: 37
+        }
+        enumerator: "FUEL_RAIL_GAUGE_PRESSURE"
+        scalar_value: {
+            int32_t: 38
+        }
+        enumerator: "COMMANDED_EXHAUST_GAS_RECIRCULATION"
+        scalar_value: {
+            int32_t: 39
+        }
+        enumerator: "EXHAUST_GAS_RECIRCULATION_ERROR"
+        scalar_value: {
+            int32_t: 40
+        }
+        enumerator: "COMMANDED_EVAPORATIVE_PURGE"
+        scalar_value: {
+            int32_t: 41
+        }
+        enumerator: "FUEL_TANK_LEVEL_INPUT"
+        scalar_value: {
+            int32_t: 42
+        }
+        enumerator: "EVAPORATION_SYSTEM_VAPOR_PRESSURE"
+        scalar_value: {
+            int32_t: 43
+        }
+        enumerator: "CATALYST_TEMPERATURE_BANK1_SENSOR1"
+        scalar_value: {
+            int32_t: 44
+        }
+        enumerator: "CATALYST_TEMPERATURE_BANK2_SENSOR1"
+        scalar_value: {
+            int32_t: 45
+        }
+        enumerator: "CATALYST_TEMPERATURE_BANK1_SENSOR2"
+        scalar_value: {
+            int32_t: 46
+        }
+        enumerator: "CATALYST_TEMPERATURE_BANK2_SENSOR2"
+        scalar_value: {
+            int32_t: 47
+        }
+        enumerator: "ABSOLUTE_LOAD_VALUE"
+        scalar_value: {
+            int32_t: 48
+        }
+        enumerator: "FUEL_AIR_COMMANDED_EQUIVALENCE_RATIO"
+        scalar_value: {
+            int32_t: 49
+        }
+        enumerator: "RELATIVE_THROTTLE_POSITION"
+        scalar_value: {
+            int32_t: 50
+        }
+        enumerator: "ABSOLUTE_THROTTLE_POSITION_B"
+        scalar_value: {
+            int32_t: 51
+        }
+        enumerator: "ABSOLUTE_THROTTLE_POSITION_C"
+        scalar_value: {
+            int32_t: 52
+        }
+        enumerator: "ACCELERATOR_PEDAL_POSITION_D"
+        scalar_value: {
+            int32_t: 53
+        }
+        enumerator: "ACCELERATOR_PEDAL_POSITION_E"
+        scalar_value: {
+            int32_t: 54
+        }
+        enumerator: "ACCELERATOR_PEDAL_POSITION_F"
+        scalar_value: {
+            int32_t: 55
+        }
+        enumerator: "COMMANDED_THROTTLE_ACTUATOR"
+        scalar_value: {
+            int32_t: 56
+        }
+        enumerator: "ETHANOL_FUEL_PERCENTAGE"
+        scalar_value: {
+            int32_t: 57
+        }
+        enumerator: "ABSOLUTE_EVAPORATION_SYSTEM_VAPOR_PRESSURE"
+        scalar_value: {
+            int32_t: 58
+        }
+        enumerator: "SHORT_TERM_SECONDARY_OXYGEN_SENSOR_TRIM_BANK1"
+        scalar_value: {
+            int32_t: 59
+        }
+        enumerator: "SHORT_TERM_SECONDARY_OXYGEN_SENSOR_TRIM_BANK2"
+        scalar_value: {
+            int32_t: 60
+        }
+        enumerator: "SHORT_TERM_SECONDARY_OXYGEN_SENSOR_TRIM_BANK3"
+        scalar_value: {
+            int32_t: 61
+        }
+        enumerator: "SHORT_TERM_SECONDARY_OXYGEN_SENSOR_TRIM_BANK4"
+        scalar_value: {
+            int32_t: 62
+        }
+        enumerator: "LONG_TERM_SECONDARY_OXYGEN_SENSOR_TRIM_BANK1"
+        scalar_value: {
+            int32_t: 63
+        }
+        enumerator: "LONG_TERM_SECONDARY_OXYGEN_SENSOR_TRIM_BANK2"
+        scalar_value: {
+            int32_t: 64
+        }
+        enumerator: "LONG_TERM_SECONDARY_OXYGEN_SENSOR_TRIM_BANK3"
+        scalar_value: {
+            int32_t: 65
+        }
+        enumerator: "LONG_TERM_SECONDARY_OXYGEN_SENSOR_TRIM_BANK4"
+        scalar_value: {
+            int32_t: 66
+        }
+        enumerator: "RELATIVE_ACCELERATOR_PEDAL_POSITION"
+        scalar_value: {
+            int32_t: 67
+        }
+        enumerator: "HYBRID_BATTERY_PACK_REMAINING_LIFE"
+        scalar_value: {
+            int32_t: 68
+        }
+        enumerator: "FUEL_INJECTION_TIMING"
+        scalar_value: {
+            int32_t: 69
+        }
+        enumerator: "ENGINE_FUEL_RATE"
+        scalar_value: {
+            int32_t: 70
+        }
+        enumerator: "LAST_SYSTEM_INDEX"
+        scalar_value: {
+            int32_t: 70
+        }
+        enumerator: "VENDOR_START_INDEX"
+        scalar_value: {
+            int32_t: 71
         }
     }
 }
