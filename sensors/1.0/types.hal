@@ -99,7 +99,7 @@ enum OperationMode : int32_t {
  * different rates independently of each other.
  *
  * Note: Proximity sensor and significant motion sensor which were defined in
- * previous releases are also wake-up sensors and should be treated as such.
+ * previous releases are also wake-up sensors and must be treated as such.
  * Wake-up one-shot sensors like SIGNIFICANT_MOTION cannot be batched, hence
  * the text about batch above doesn't apply to them. See the definitions of
  * SENSOR_TYPE_PROXIMITY and SENSOR_TYPE_SIGNIFICANT_MOTION for more info.
@@ -364,7 +364,7 @@ enum SensorType : int32_t {
      *  when heart_rate.bpm or heart_rate.status have changed since the last
      *  event. In particular, upon the first activation, unless the device is
      *  known to not be on the body, the status field of the first event must be
-     *  set to SENSOR_STATUS_UNRELIABLE. The event should be generated no faster
+     *  set to SENSOR_STATUS_UNRELIABLE. The event must not be generated faster
      *  than every period_ns passed to setDelay() or to batch().
      *  See the definition of the on-change reporting mode for more information.
      *
@@ -380,7 +380,7 @@ enum SensorType : int32_t {
      * reporting-mode: special (setDelay has no impact)
      *
      * A sensor of this type generates an event each time a tilt event is
-     * detected. A tilt event should be generated if the direction of the
+     * detected. A tilt event must be generated if the direction of the
      * 2-seconds window average gravity changed by at least 35 degrees since the
      * activation or the last trigger of the sensor.
      *
@@ -395,16 +395,16 @@ enum SensorType : int32_t {
      *     angle(reference_estimated_gravity, current_estimated_gravity)
      *       > 35 degrees
      *
-     * Large accelerations without a change in phone orientation should not
+     * Large accelerations without a change in phone orientation must not
      * trigger a tilt event.
      * For example, a sharp turn or strong acceleration while driving a car
-     * should not trigger a tilt event, even though the angle of the average
+     * must not trigger a tilt event, even though the angle of the average
      * acceleration might vary by more than 35 degrees.
      *
      * Typically, this sensor is implemented with the help of only an
      * accelerometer. Other sensors can be used as well if they do not increase
      * the power consumption significantly. This is a low power sensor that
-     * should allow the AP to go into suspend mode. Do not emulate this sensor
+     * must allow the AP to go into suspend mode. Do not emulate this sensor
      * in the HAL.
      * Like other wake up sensors, the driver is expected to a hold a wake_lock
      * with a timeout of 200 ms while reporting this event. The only allowed
@@ -440,7 +440,7 @@ enum SensorType : int32_t {
      * reporting-mode: one-shot
      *
      * A sensor enabling briefly turning the screen on to enable the user to
-     * glance content on screen based on a specific motion.  The device should
+     * glance content on screen based on a specific motion.  The device must
      * turn the screen off after a few moments.
      *
      * When this sensor triggers, the device turns the screen on momentarily
@@ -491,7 +491,7 @@ enum SensorType : int32_t {
      * SENSOR_TYPE_DEVICE_ORIENTATION
      * reporting-mode: on-change
      *
-     * The current orientation of the device. The value should be reported in
+     * The current orientation of the device. The value is reported in
      * the "scalar" element of the EventPayload in Event. The
      * only values that can be reported are (please refer to Android Sensor
      * Coordinate System to understand the X and Y axis direction with respect
@@ -505,17 +505,17 @@ enum SensorType : int32_t {
      *       (X axis is vertical and points down)
      *
      * Moving the device to an orientation where the Z axis is vertical (either
-     * up or down) should not cause a new event to be reported.
+     * up or down) must not cause a new event to be reported.
      *
      * To improve the user experience of this sensor, it is recommended to
      * implement some physical (i.e., rotation angle) and temporal (i.e., delay)
-     * hysteresis.
-     * In other words, minor or transient rotations should not cause a new event
-     * to be reported.
+     * hysteresis. In other words, minor or transient rotations must not cause
+     * a new event to be reported.
      *
-     * This sensor should only be implemented with the help of an accelerometer.
-     * This is a low power sensor that should reduce the number of interrupts of
-     * the AP. Do not emulate this sensor in the HAL.
+     * This is a low power sensor that intended to reduce interrupts of
+     * application processor and thus allow it to go sleep. Use hardware
+     * implementation based on low power consumption sensors, such as
+     * accelerometer. Device must not emulate this sensor in the HAL.
      *
      * Both wake-up and non wake-up versions are useful.
      */
@@ -544,8 +544,8 @@ enum SensorType : int32_t {
      * trigger mode: one shot
      *
      * A sensor of this type returns an event if the device is still/stationary
-     * for a while. The period of time to monitor for statinarity should be
-     * greater than 5 seconds, and less than 10 seconds.
+     * for a while. The period of time to monitor for stationarity must be
+     * greater than 5 seconds. The latency must be less than 10 seconds.
      *
      * Stationarity here refers to absolute stationarity. eg: device on desk.
      *
@@ -558,8 +558,8 @@ enum SensorType : int32_t {
      * trigger mode: one shot
      *
      * A sensor of this type returns an event if the device is not still for
-     * a while. The period of time to monitor for statinarity should be greater
-     * than 5 seconds, and less than 10 seconds.
+     * for a while. The period of time to monitor for stationarity must be
+     * greater than 5 seconds. The latency must be less than 10 seconds.
      *
      * Motion here refers to any mechanism in which the device is causes to be
      * moved in its inertial frame. eg: Pickin up the device and walking with it
@@ -582,9 +582,8 @@ enum SensorType : int32_t {
      * and ECG signal.
      *
      * The sensor is not expected to be optimized for latency. As a guide, a
-     * latency of up to 10 seconds is acceptable. However the timestamp attached
-     * to the event should be accurate and should correspond to the time the
-     * peak occured.
+     * latency of up to 10 seconds is acceptable. However, the timestamp attached
+     * to the event must be accuratly correspond to the time the peak occured.
      *
      * The sensor event contains a parameter for the confidence in the detection
      * of the peak where 0.0 represent no information at all, and 1.0 represents
@@ -601,30 +600,30 @@ enum SensorType : int32_t {
      * present in one sensor HAL implementation and presence of a sensor of this
      * type in sensor HAL implementation indicates that this sensor HAL supports
      * dynamic sensor feature. Operations, such as batch, activate and setDelay,
-     * to this special purpose sensor should be treated as no-op and return
+     * to this special purpose sensor must be treated as no-op and return
      * successful; flush() also has to generate flush complete event as if this
      * is a sensor that does not support batching.
      *
      * A dynamic sensor connection indicates connection of a physical device or
      * instantiation of a virtual sensor backed by algorithm; and a dynamic
      * sensor disconnection indicates the the opposite. A sensor event of
-     * SENSOR_TYPE_DYNAMIC_SENSOR_META type should be delivered regardless of
+     * SENSOR_TYPE_DYNAMIC_SENSOR_META type must be delivered regardless of
      * the activation status of the sensor in the event of dynamic sensor
      * connection and disconnection. In the sensor event, besides the common
      * data entries, "dynamic_sensor_meta", which includes fields for connection
      * status, handle of the sensor involved, pointer to sensor_t structure and
-     * a uuid field, should be populated.
+     * a uuid field, must be populated.
      *
      * At a dynamic sensor connection event, fields of sensor_t structure
-     * referenced by a pointer in dynamic_sensor_meta should be filled as if it
+     * referenced by a pointer in dynamic_sensor_meta must be filled as if it
      * was regular sensors. Sensor HAL is responsible for recovery of memory if
      * the corresponding data is dynamicially allocated. However, the the
      * pointer must be valid until the first activate call to the sensor
      * reported in this connection event. At a dynamic sensor disconnection,
-     * the sensor_t pointer should be NULL.
+     * the sensor_t pointer must be NULL.
      *
-     * The sensor handle assigned to dynamic sensors should never be the same as
-     * that of any regular static sensors, and should be unique until next boot.
+     * The sensor handle assigned to dynamic sensors must never be the same as
+     * that of any regular static sensors, and must be unique until next boot.
      * In another word, if a handle h is used for a dynamic sensor A, that same
      * number cannot be used for the same dynamic sensor A or another dynamic
      * sensor B even after disconnection of A until reboot.
@@ -632,7 +631,7 @@ enum SensorType : int32_t {
      * The UUID field will be used for identifying the sensor in addition to
      * name, vendor and version and type. For physical sensors of the same
      * model, all sensors will have the same values in sensor_t, but the UUID
-     * should be unique and persistent for each individual unit. An all zero
+     * must be unique and persistent for each individual unit. An all zero
      * UUID indicates it is not possible to differentiate individual sensor
      * unit.
      *
@@ -650,7 +649,7 @@ enum SensorType : int32_t {
      * etc.
      *
      * This type will never bind to a sensor. In other words, no sensor in the
-     * sensor list should be of the type SENSOR_TYPE_ADDITIONAL_INFO. If a
+     * sensor list can have the type SENSOR_TYPE_ADDITIONAL_INFO. If a
      * sensor HAL supports sensor additional information feature, it reports
      * sensor_event_t with "sensor" field set to handle of the reporting sensor
      * and "type" field set to SENSOR_TYPE_ADDITIONAL_INFO. Delivery of
@@ -909,16 +908,12 @@ struct Uncal {
 };
 
 struct HeartRate {
-    /* Heart rate in beats per minute.
-     * Set to 0 when status is SENSOR_STATUS_UNRELIABLE or ..._NO_CONTACT
+    /* Heart rate in beats per minute. Set to 0 when status is
+     * SENSOR_STATUS_UNRELIABLE or SENSOR_STATUS_NO_CONTACT.
      */
     float bpm;
 
-    /* Status of the sensor for this reading. Set to one SENSOR_STATUS_...
-     * Note that this value should only be set for sensors that explicitly
-     * define the meaning of this field. This field is not piped through the
-     * framework for other sensors.
-     */
+    /* Status of the heart rate sensor for this reading. */
     SensorStatus status;
 };
 
@@ -936,7 +931,7 @@ struct DynamicSensorInfo {
     int32_t sensorHandle;
 
     /* UUID of a dynamic sensor (using RFC 4122 byte order)
-     * For UUID 12345678-90AB-CDEF-1122-334455667788 the uuid field should be
+     * For UUID 12345678-90AB-CDEF-1122-334455667788 the uuid field is
      * initialized as:
      *   {0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF, 0x11, ...}
      */
@@ -1035,9 +1030,6 @@ struct AdditionalInfo {
     int32_t serial;
 
     union Payload {
-        /* for each frame, a single data type, either int32_t or float,
-         * should be used.
-         */
         int32_t[14] data_int32;
         float[14] data_float;
     } u;
@@ -1119,9 +1111,14 @@ struct Event {
 /**
  * Direct report rate level definition. Except for SENSOR_DIRECT_RATE_STOP, each
  * rate level covers the range (55%, 220%] * nominal report rate. For example,
- * if config direct report specify a rate level SENSOR_DIRECT_RATE_FAST, sensor
- * hardware should report event at a rate greater than 110Hz, and less or equal
- * to 440Hz.
+ * if config direct report specify a rate level SENSOR_DIRECT_RATE_FAST, it is
+ * legal for sensor hardware to report event at a rate greater than 110Hz, and
+ * less or equal to 440Hz. Note that rate has to remain steady without variation
+ * before new rate level is configured, i.e. if a sensor is configured to
+ * SENSOR_DIRECT_RATE_FAST and starts to report event at 256Hz, it cannot
+ * change rate to 128Hz after a few seconds of running even if 128Hz is also in
+ * the legal range of SENSOR_DIRECT_RATE_FAST. Thus, it is recommended to
+ * associate report rate with RateLvel statically for single sensor.
  */
 @export(name="direct_rate_level_t", value_prefix="SENSOR_DIRECT_RATE_")
 enum RateLevel : int32_t {
@@ -1144,9 +1141,10 @@ enum SharedMemType : int32_t {
 
 
 /**
- * Direct channel lock-free queue format, this defines how the shared memory
- * should be interpreted by both sensor hardware and application. See struct
- * SharedMemInfo.
+ * Direct channel lock-free queue format, this defines how the shared memory is
+ * interpreted by both sensor hardware and application.
+ *
+ * @see SharedMemInfo.
  */
 @export(name="direct_format_t", value_prefix="SENSOR_DIRECT_FMT_")
 enum SharedMemFormat : int32_t {

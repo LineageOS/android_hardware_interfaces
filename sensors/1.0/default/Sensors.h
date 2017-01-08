@@ -32,7 +32,7 @@ struct Sensors : public ::android::hardware::sensors::V1_0::ISensors {
 
     status_t initCheck() const;
 
-    Return<void> getSensorsList(getSensorsList_cb _aidl_cb) override;
+    Return<void> getSensorsList(getSensorsList_cb _hidl_cb) override;
 
     Return<Result> setOperationMode(OperationMode mode) override;
 
@@ -55,7 +55,7 @@ struct Sensors : public ::android::hardware::sensors::V1_0::ISensors {
     Return<Result> injectSensorData(const Event& event) override;
 
     Return<void> registerDirectChannel(
-            const SharedMemInfo& mem, registerDirectChannel_cb _aidl_cb) override;
+            const SharedMemInfo& mem, registerDirectChannel_cb _hidl_cb) override;
 
     Return<Result> unregisterDirectChannel(int32_t channelHandle) override;
 

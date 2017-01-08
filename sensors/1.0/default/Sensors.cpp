@@ -102,7 +102,7 @@ status_t Sensors::initCheck() const {
     return mInitCheck;
 }
 
-Return<void> Sensors::getSensorsList(getSensorsList_cb _aidl_cb) {
+Return<void> Sensors::getSensorsList(getSensorsList_cb _hidl_cb) {
     sensor_t const *list;
     size_t count = mSensorModule->get_sensors_list(mSensorModule, &list);
 
@@ -116,7 +116,7 @@ Return<void> Sensors::getSensorsList(getSensorsList_cb _aidl_cb) {
         convertFromSensor(*src, dst);
     }
 
-    _aidl_cb(out);
+    _hidl_cb(out);
 
     return Void();
 }
@@ -151,12 +151,12 @@ Return<Result> Sensors::setDelay(
                 sampling_period_ns));
 }
 
-Return<void> Sensors::poll(int32_t maxCount, poll_cb _aidl_cb) {
+Return<void> Sensors::poll(int32_t maxCount, poll_cb _hidl_cb) {
     hidl_vec<Event> out;
     hidl_vec<SensorInfo> dynamicSensorsAdded;
 
     if (maxCount <= 0) {
-        _aidl_cb(Result::BAD_VALUE, out, dynamicSensorsAdded);
+        _hidl_cb(Result::BAD_VALUE, out, dynamicSensorsAdded);
         return Void();
     }
 
@@ -168,7 +168,7 @@ Return<void> Sensors::poll(int32_t maxCount, poll_cb _aidl_cb) {
             maxCount);
 
     if (err < 0) {
-        _aidl_cb(ResultFromStatus(err), out, dynamicSensorsAdded);
+        _hidl_cb(ResultFromStatus(err), out, dynamicSensorsAdded);
         return Void();
     }
 
@@ -199,7 +199,7 @@ Return<void> Sensors::poll(int32_t maxCount, poll_cb _aidl_cb) {
     out.resize(count);
     convertFromSensorEvents(err, data.get(), &out);
 
-    _aidl_cb(Result::OK, out, dynamicSensorsAdded);
+    _hidl_cb(Result::OK, out, dynamicSensorsAdded);
 
     return Void();
 }
@@ -235,10 +235,10 @@ Return<Result> Sensors::injectSensorData(const Event& event) {
 }
 
 Return<void> Sensors::registerDirectChannel(
-        const SharedMemInfo& mem, registerDirectChannel_cb _aidl_cb) {
+        const SharedMemInfo& mem, registerDirectChannel_cb _hidl_cb) {
     //TODO(b/30985702): finish implementation
     (void) mem;
-    _aidl_cb(Result::INVALID_OPERATION, -1);
+    _hidl_cb(Result::INVALID_OPERATION, -1);
     return Void();
 }
 
