@@ -84,6 +84,10 @@ void SensorsHidlEnvironment::SetUp() {
 
   collectionEnabled = false;
   startPollingThread();
+
+  // In case framework just stopped for test and there is sensor events in the pipe,
+  // wait some time for those events to be cleared to avoid them messing up the test.
+  std::this_thread::sleep_for(std::chrono::seconds(3));
 }
 
 void SensorsHidlEnvironment::TearDown() {
