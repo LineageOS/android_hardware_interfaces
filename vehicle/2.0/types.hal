@@ -2745,7 +2745,7 @@ enum Obd2IntegerSensorIndex : int32_t {
    * tests are available and whether they are complete. The semantics of the individual
    * bits in this value are given by, respectively, SparkIgnitionMonitors and
    * CompressionIgnitionMonitors depending on the value of IGNITION_MONITORS_SUPPORTED.
-  /*
+   */
   IGNITION_SPECIFIC_MONITORS = 3,
 
   INTAKE_AIR_TEMPERATURE = 4,
