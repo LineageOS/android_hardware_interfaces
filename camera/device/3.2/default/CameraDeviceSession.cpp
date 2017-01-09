@@ -97,6 +97,9 @@ public:
 //TODO(b/34110242): make this hidl transport agnostic
 #ifdef BINDERIZED
             fd = dup(handle->data[0]);
+            // TODO(b/34169301)
+            // Camera service expect FD be closed by HAL process (in passthrough mode)
+            // close(handle->data[0]);
 #else
             fd = handle->data[0];
 #endif
@@ -695,14 +698,16 @@ void CameraDeviceSession::sProcessCaptureResult(
         if (hasInputBuf) {
             int streamId = static_cast<Camera3Stream*>(hal_result->input_buffer->stream)->mId;
             auto key = std::make_pair(streamId, frameNumber);
-            sHandleImporter.closeFence(d->mInflightBuffers[key].acquire_fence);
+            // TODO (b/34169301): currently HAL closed the fence
+            //sHandleImporter.closeFence(d->mInflightBuffers[key].acquire_fence);
             d->mInflightBuffers.erase(key);
         }
 
         for (size_t i = 0; i < numOutputBufs; i++) {
             int streamId = static_cast<Camera3Stream*>(hal_result->output_buffers[i].stream)->mId;
             auto key = std::make_pair(streamId, frameNumber);
-            sHandleImporter.closeFence(d->mInflightBuffers[key].acquire_fence);
+            // TODO (b/34169301): currently HAL closed the fence
+            //sHandleImporter.closeFence(d->mInflightBuffers[key].acquire_fence);
             d->mInflightBuffers.erase(key);
         }
 
