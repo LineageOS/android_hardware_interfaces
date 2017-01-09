@@ -20,8 +20,8 @@
 #include <hardware/gralloc1.h>
 #include <log/log.h>
 
+#include "ComposerClient.h"
 #include "Hwc.h"
-#include "HwcClient.h"
 #include "IComposerCommandBuffer.h"
 
 namespace android {
@@ -230,15 +230,12 @@ void BufferClone::clear()
     }
 }
 
-HwcClient::HwcClient(HwcHal& hal)
-    : mHal(hal), mReader(*this), mWriter(kWriterInitialSize)
+ComposerClient::ComposerClient(ComposerBase& hal)
+    : mHal(hal), mWriter(kWriterInitialSize)
 {
-    if (!sHandleImporter.initialize()) {
-        LOG_ALWAYS_FATAL("failed to initialize handle importer");
-    }
 }
 
-HwcClient::~HwcClient()
+ComposerClient::~ComposerClient()
 {
     mHal.enableCallback(false);
     mHal.removeClient();
@@ -264,7 +261,15 @@ HwcClient::~HwcClient()
     sHandleImporter.cleanup();
 }
 
-void HwcClient::onHotplug(Display display,
+void ComposerClient::initialize()
+{
+    mReader = createCommandReader();
+    if (!sHandleImporter.initialize()) {
+        LOG_ALWAYS_FATAL("failed to initialize handle importer");
+    }
+}
+
+void ComposerClient::onHotplug(Display display,
         IComposerCallback::Connection connected)
 {
     {
@@ -280,17 +285,18 @@ void HwcClient::onHotplug(Display display,
     mCallback->onHotplug(display, connected);
 }
 
-void HwcClient::onRefresh(Display display)
+void ComposerClient::onRefresh(Display display)
 {
     mCallback->onRefresh(display);
 }
 
-void HwcClient::onVsync(Display display, int64_t timestamp)
+void ComposerClient::onVsync(Display display, int64_t timestamp)
 {
     mCallback->onVsync(display, timestamp);
 }
 
-Return<void> HwcClient::registerCallback(const sp<IComposerCallback>& callback)
+Return<void> ComposerClient::registerCallback(
+        const sp<IComposerCallback>& callback)
 {
     // no locking as we require this function to be called only once
     mCallback = callback;
@@ -299,13 +305,13 @@ Return<void> HwcClient::registerCallback(const sp<IComposerCallback>& callback)
     return Void();
 }
 
-Return<uint32_t> HwcClient::getMaxVirtualDisplayCount()
+Return<uint32_t> ComposerClient::getMaxVirtualDisplayCount()
 {
     return mHal.getMaxVirtualDisplayCount();
 }
 
-Return<void> HwcClient::createVirtualDisplay(uint32_t width, uint32_t height,
-        PixelFormat formatHint, uint32_t outputBufferSlotCount,
+Return<void> ComposerClient::createVirtualDisplay(uint32_t width,
+        uint32_t height, PixelFormat formatHint, uint32_t outputBufferSlotCount,
         createVirtualDisplay_cb hidl_cb)
 {
     Display display = 0;
@@ -322,7 +328,7 @@ Return<void> HwcClient::createVirtualDisplay(uint32_t width, uint32_t height,
     return Void();
 }
 
-Return<Error> HwcClient::destroyVirtualDisplay(Display display)
+Return<Error> ComposerClient::destroyVirtualDisplay(Display display)
 {
     Error err = mHal.destroyVirtualDisplay(display);
     if (err == Error::NONE) {
@@ -334,8 +340,8 @@ Return<Error> HwcClient::destroyVirtualDisplay(Display display)
     return err;
 }
 
-Return<void> HwcClient::createLayer(Display display, uint32_t bufferSlotCount,
-        createLayer_cb hidl_cb)
+Return<void> ComposerClient::createLayer(Display display,
+        uint32_t bufferSlotCount, createLayer_cb hidl_cb)
 {
     Layer layer = 0;
     Error err = mHal.createLayer(display, &layer);
@@ -351,7 +357,7 @@ Return<void> HwcClient::createLayer(Display display, uint32_t bufferSlotCount,
     return Void();
 }
 
-Return<Error> HwcClient::destroyLayer(Display display, Layer layer)
+Return<Error> ComposerClient::destroyLayer(Display display, Layer layer)
 {
     Error err = mHal.destroyLayer(display, layer);
     if (err == Error::NONE) {
@@ -364,7 +370,7 @@ Return<Error> HwcClient::destroyLayer(Display display, Layer layer)
     return err;
 }
 
-Return<void> HwcClient::getActiveConfig(Display display,
+Return<void> ComposerClient::getActiveConfig(Display display,
         getActiveConfig_cb hidl_cb)
 {
     Config config = 0;
@@ -374,7 +380,7 @@ Return<void> HwcClient::getActiveConfig(Display display,
     return Void();
 }
 
-Return<Error> HwcClient::getClientTargetSupport(Display display,
+Return<Error> ComposerClient::getClientTargetSupport(Display display,
         uint32_t width, uint32_t height,
         PixelFormat format, Dataspace dataspace)
 {
@@ -383,7 +389,8 @@ Return<Error> HwcClient::getClientTargetSupport(Display display,
     return err;
 }
 
-Return<void> HwcClient::getColorModes(Display display, getColorModes_cb hidl_cb)
+Return<void> ComposerClient::getColorModes(Display display,
+          getColorModes_cb hidl_cb)
 {
     hidl_vec<ColorMode> modes;
     Error err = mHal.getColorModes(display, &modes);
@@ -392,7 +399,7 @@ Return<void> HwcClient::getColorModes(Display display, getColorModes_cb hidl_cb)
     return Void();
 }
 
-Return<void> HwcClient::getDisplayAttribute(Display display,
+Return<void> ComposerClient::getDisplayAttribute(Display display,
         Config config, Attribute attribute,
         getDisplayAttribute_cb hidl_cb)
 {
@@ -403,7 +410,7 @@ Return<void> HwcClient::getDisplayAttribute(Display display,
     return Void();
 }
 
-Return<void> HwcClient::getDisplayConfigs(Display display,
+Return<void> ComposerClient::getDisplayConfigs(Display display,
         getDisplayConfigs_cb hidl_cb)
 {
     hidl_vec<Config> configs;
@@ -413,7 +420,7 @@ Return<void> HwcClient::getDisplayConfigs(Display display,
     return Void();
 }
 
-Return<void> HwcClient::getDisplayName(Display display,
+Return<void> ComposerClient::getDisplayName(Display display,
         getDisplayName_cb hidl_cb)
 {
     hidl_string name;
@@ -423,7 +430,7 @@ Return<void> HwcClient::getDisplayName(Display display,
     return Void();
 }
 
-Return<void> HwcClient::getDisplayType(Display display,
+Return<void> ComposerClient::getDisplayType(Display display,
         getDisplayType_cb hidl_cb)
 {
     DisplayType type = DisplayType::INVALID;
@@ -433,7 +440,7 @@ Return<void> HwcClient::getDisplayType(Display display,
     return Void();
 }
 
-Return<void> HwcClient::getDozeSupport(Display display,
+Return<void> ComposerClient::getDozeSupport(Display display,
         getDozeSupport_cb hidl_cb)
 {
     bool support = false;
@@ -443,7 +450,7 @@ Return<void> HwcClient::getDozeSupport(Display display,
     return Void();
 }
 
-Return<void> HwcClient::getHdrCapabilities(Display display,
+Return<void> ComposerClient::getHdrCapabilities(Display display,
         getHdrCapabilities_cb hidl_cb)
 {
     hidl_vec<Hdr> types;
@@ -457,7 +464,7 @@ Return<void> HwcClient::getHdrCapabilities(Display display,
     return Void();
 }
 
-Return<Error> HwcClient::setClientTargetSlotCount(Display display,
+Return<Error> ComposerClient::setClientTargetSlotCount(Display display,
         uint32_t clientTargetSlotCount)
 {
     std::lock_guard<std::mutex> lock(mDisplayDataMutex);
@@ -472,39 +479,39 @@ Return<Error> HwcClient::setClientTargetSlotCount(Display display,
     return Error::NONE;
 }
 
-Return<Error> HwcClient::setActiveConfig(Display display, Config config)
+Return<Error> ComposerClient::setActiveConfig(Display display, Config config)
 {
     Error err = mHal.setActiveConfig(display, config);
     return err;
 }
 
-Return<Error> HwcClient::setColorMode(Display display, ColorMode mode)
+Return<Error> ComposerClient::setColorMode(Display display, ColorMode mode)
 {
     Error err = mHal.setColorMode(display, mode);
     return err;
 }
 
-Return<Error> HwcClient::setPowerMode(Display display, PowerMode mode)
+Return<Error> ComposerClient::setPowerMode(Display display, PowerMode mode)
 {
     Error err = mHal.setPowerMode(display, mode);
     return err;
 }
 
-Return<Error> HwcClient::setVsyncEnabled(Display display, Vsync enabled)
+Return<Error> ComposerClient::setVsyncEnabled(Display display, Vsync enabled)
 {
     Error err = mHal.setVsyncEnabled(display, enabled);
     return err;
 }
 
-Return<Error> HwcClient::setInputCommandQueue(
+Return<Error> ComposerClient::setInputCommandQueue(
         const MQDescriptorSync<uint32_t>& descriptor)
 {
     std::lock_guard<std::mutex> lock(mCommandMutex);
-    return mReader.setMQDescriptor(descriptor) ?
+    return mReader->setMQDescriptor(descriptor) ?
         Error::NONE : Error::NO_RESOURCES;
 }
 
-Return<void> HwcClient::getOutputCommandQueue(
+Return<void> ComposerClient::getOutputCommandQueue(
         getOutputCommandQueue_cb hidl_cb)
 {
     // no locking as we require this function to be called inside
@@ -520,7 +527,7 @@ Return<void> HwcClient::getOutputCommandQueue(
     return Void();
 }
 
-Return<void> HwcClient::executeCommands(uint32_t inLength,
+Return<void> ComposerClient::executeCommands(uint32_t inLength,
         const hidl_vec<hidl_handle>& inHandles,
         executeCommands_cb hidl_cb)
 {
@@ -530,12 +537,12 @@ Return<void> HwcClient::executeCommands(uint32_t inLength,
     uint32_t outLength = 0;
     hidl_vec<hidl_handle> outHandles;
 
-    if (!mReader.readQueue(inLength, inHandles)) {
+    if (!mReader->readQueue(inLength, inHandles)) {
         hidl_cb(Error::BAD_PARAMETER, outChanged, outLength, outHandles);
         return Void();
     }
 
-    Error err = mReader.parse();
+    Error err = mReader->parse();
     if (err == Error::NONE &&
             !mWriter.writeQueue(&outChanged, &outLength, &outHandles)) {
         err = Error::NO_RESOURCES;
@@ -543,18 +550,29 @@ Return<void> HwcClient::executeCommands(uint32_t inLength,
 
     hidl_cb(err, outChanged, outLength, outHandles);
 
-    mReader.reset();
+    mReader->reset();
     mWriter.reset();
 
     return Void();
 }
 
-HwcClient::CommandReader::CommandReader(HwcClient& client)
+std::unique_ptr<ComposerClient::CommandReader>
+ComposerClient::createCommandReader()
+{
+    return std::unique_ptr<ComposerClient::CommandReader>(
+        new CommandReader(*this));
+}
+
+ComposerClient::CommandReader::CommandReader(ComposerClient& client)
     : mClient(client), mHal(client.mHal), mWriter(client.mWriter)
 {
 }
 
-Error HwcClient::CommandReader::parse()
+ComposerClient::CommandReader::~CommandReader()
+{
+}
+
+Error ComposerClient::CommandReader::parse()
 {
     IComposerClient::Command command;
     uint16_t length = 0;
@@ -564,79 +582,7 @@ Error HwcClient::CommandReader::parse()
             break;
         }
 
-        bool parsed = false;
-        switch (command) {
-        case IComposerClient::Command::SELECT_DISPLAY:
-            parsed = parseSelectDisplay(length);
-            break;
-        case IComposerClient::Command::SELECT_LAYER:
-            parsed = parseSelectLayer(length);
-            break;
-        case IComposerClient::Command::SET_COLOR_TRANSFORM:
-            parsed = parseSetColorTransform(length);
-            break;
-        case IComposerClient::Command::SET_CLIENT_TARGET:
-            parsed = parseSetClientTarget(length);
-            break;
-        case IComposerClient::Command::SET_OUTPUT_BUFFER:
-            parsed = parseSetOutputBuffer(length);
-            break;
-        case IComposerClient::Command::VALIDATE_DISPLAY:
-            parsed = parseValidateDisplay(length);
-            break;
-        case IComposerClient::Command::ACCEPT_DISPLAY_CHANGES:
-            parsed = parseAcceptDisplayChanges(length);
-            break;
-        case IComposerClient::Command::PRESENT_DISPLAY:
-            parsed = parsePresentDisplay(length);
-            break;
-        case IComposerClient::Command::SET_LAYER_CURSOR_POSITION:
-            parsed = parseSetLayerCursorPosition(length);
-            break;
-        case IComposerClient::Command::SET_LAYER_BUFFER:
-            parsed = parseSetLayerBuffer(length);
-            break;
-        case IComposerClient::Command::SET_LAYER_SURFACE_DAMAGE:
-            parsed = parseSetLayerSurfaceDamage(length);
-            break;
-        case IComposerClient::Command::SET_LAYER_BLEND_MODE:
-            parsed = parseSetLayerBlendMode(length);
-            break;
-        case IComposerClient::Command::SET_LAYER_COLOR:
-            parsed = parseSetLayerColor(length);
-            break;
-        case IComposerClient::Command::SET_LAYER_COMPOSITION_TYPE:
-            parsed = parseSetLayerCompositionType(length);
-            break;
-        case IComposerClient::Command::SET_LAYER_DATASPACE:
-            parsed = parseSetLayerDataspace(length);
-            break;
-        case IComposerClient::Command::SET_LAYER_DISPLAY_FRAME:
-            parsed = parseSetLayerDisplayFrame(length);
-            break;
-        case IComposerClient::Command::SET_LAYER_PLANE_ALPHA:
-            parsed = parseSetLayerPlaneAlpha(length);
-            break;
-        case IComposerClient::Command::SET_LAYER_SIDEBAND_STREAM:
-            parsed = parseSetLayerSidebandStream(length);
-            break;
-        case IComposerClient::Command::SET_LAYER_SOURCE_CROP:
-            parsed = parseSetLayerSourceCrop(length);
-            break;
-        case IComposerClient::Command::SET_LAYER_TRANSFORM:
-            parsed = parseSetLayerTransform(length);
-            break;
-        case IComposerClient::Command::SET_LAYER_VISIBLE_REGION:
-            parsed = parseSetLayerVisibleRegion(length);
-            break;
-        case IComposerClient::Command::SET_LAYER_Z_ORDER:
-            parsed = parseSetLayerZOrder(length);
-            break;
-        default:
-            parsed = false;
-            break;
-        }
-
+        bool parsed = parseCommand(command, length);
         endCommand();
 
         if (!parsed) {
@@ -649,7 +595,59 @@ Error HwcClient::CommandReader::parse()
     return (isEmpty()) ? Error::NONE : Error::BAD_PARAMETER;
 }
 
-bool HwcClient::CommandReader::parseSelectDisplay(uint16_t length)
+bool ComposerClient::CommandReader::parseCommand(
+        IComposerClient::Command command, uint16_t length) {
+    switch (command) {
+    case IComposerClient::Command::SELECT_DISPLAY:
+        return parseSelectDisplay(length);
+    case IComposerClient::Command::SELECT_LAYER:
+        return parseSelectLayer(length);
+    case IComposerClient::Command::SET_COLOR_TRANSFORM:
+        return parseSetColorTransform(length);
+    case IComposerClient::Command::SET_CLIENT_TARGET:
+        return parseSetClientTarget(length);
+    case IComposerClient::Command::SET_OUTPUT_BUFFER:
+        return parseSetOutputBuffer(length);
+    case IComposerClient::Command::VALIDATE_DISPLAY:
+        return parseValidateDisplay(length);
+    case IComposerClient::Command::ACCEPT_DISPLAY_CHANGES:
+        return parseAcceptDisplayChanges(length);
+    case IComposerClient::Command::PRESENT_DISPLAY:
+        return parsePresentDisplay(length);
+    case IComposerClient::Command::SET_LAYER_CURSOR_POSITION:
+        return parseSetLayerCursorPosition(length);
+    case IComposerClient::Command::SET_LAYER_BUFFER:
+        return parseSetLayerBuffer(length);
+    case IComposerClient::Command::SET_LAYER_SURFACE_DAMAGE:
+        return parseSetLayerSurfaceDamage(length);
+    case IComposerClient::Command::SET_LAYER_BLEND_MODE:
+        return parseSetLayerBlendMode(length);
+    case IComposerClient::Command::SET_LAYER_COLOR:
+        return parseSetLayerColor(length);
+    case IComposerClient::Command::SET_LAYER_COMPOSITION_TYPE:
+        return parseSetLayerCompositionType(length);
+    case IComposerClient::Command::SET_LAYER_DATASPACE:
+        return parseSetLayerDataspace(length);
+    case IComposerClient::Command::SET_LAYER_DISPLAY_FRAME:
+        return parseSetLayerDisplayFrame(length);
+    case IComposerClient::Command::SET_LAYER_PLANE_ALPHA:
+        return parseSetLayerPlaneAlpha(length);
+    case IComposerClient::Command::SET_LAYER_SIDEBAND_STREAM:
+        return parseSetLayerSidebandStream(length);
+    case IComposerClient::Command::SET_LAYER_SOURCE_CROP:
+        return parseSetLayerSourceCrop(length);
+    case IComposerClient::Command::SET_LAYER_TRANSFORM:
+        return parseSetLayerTransform(length);
+    case IComposerClient::Command::SET_LAYER_VISIBLE_REGION:
+        return parseSetLayerVisibleRegion(length);
+    case IComposerClient::Command::SET_LAYER_Z_ORDER:
+        return parseSetLayerZOrder(length);
+    default:
+        return false;
+    }
+}
+
+bool ComposerClient::CommandReader::parseSelectDisplay(uint16_t length)
 {
     if (length != CommandWriterBase::kSelectDisplayLength) {
         return false;
@@ -661,7 +659,7 @@ bool HwcClient::CommandReader::parseSelectDisplay(uint16_t length)
     return true;
 }
 
-bool HwcClient::CommandReader::parseSelectLayer(uint16_t length)
+bool ComposerClient::CommandReader::parseSelectLayer(uint16_t length)
 {
     if (length != CommandWriterBase::kSelectLayerLength) {
         return false;
@@ -672,7 +670,7 @@ bool HwcClient::CommandReader::parseSelectLayer(uint16_t length)
     return true;
 }
 
-bool HwcClient::CommandReader::parseSetColorTransform(uint16_t length)
+bool ComposerClient::CommandReader::parseSetColorTransform(uint16_t length)
 {
     if (length != CommandWriterBase::kSetColorTransformLength) {
         return false;
@@ -692,7 +690,7 @@ bool HwcClient::CommandReader::parseSetColorTransform(uint16_t length)
     return true;
 }
 
-bool HwcClient::CommandReader::parseSetClientTarget(uint16_t length)
+bool ComposerClient::CommandReader::parseSetClientTarget(uint16_t length)
 {
     // 4 parameters followed by N rectangles
     if ((length - 4) % 4 != 0) {
@@ -720,7 +718,7 @@ bool HwcClient::CommandReader::parseSetClientTarget(uint16_t length)
     return true;
 }
 
-bool HwcClient::CommandReader::parseSetOutputBuffer(uint16_t length)
+bool ComposerClient::CommandReader::parseSetOutputBuffer(uint16_t length)
 {
     if (length != CommandWriterBase::kSetOutputBufferLength) {
         return false;
@@ -744,7 +742,7 @@ bool HwcClient::CommandReader::parseSetOutputBuffer(uint16_t length)
     return true;
 }
 
-bool HwcClient::CommandReader::parseValidateDisplay(uint16_t length)
+bool ComposerClient::CommandReader::parseValidateDisplay(uint16_t length)
 {
     if (length != CommandWriterBase::kValidateDisplayLength) {
         return false;
@@ -771,7 +769,7 @@ bool HwcClient::CommandReader::parseValidateDisplay(uint16_t length)
     return true;
 }
 
-bool HwcClient::CommandReader::parseAcceptDisplayChanges(uint16_t length)
+bool ComposerClient::CommandReader::parseAcceptDisplayChanges(uint16_t length)
 {
     if (length != CommandWriterBase::kAcceptDisplayChangesLength) {
         return false;
@@ -785,7 +783,7 @@ bool HwcClient::CommandReader::parseAcceptDisplayChanges(uint16_t length)
     return true;
 }
 
-bool HwcClient::CommandReader::parsePresentDisplay(uint16_t length)
+bool ComposerClient::CommandReader::parsePresentDisplay(uint16_t length)
 {
     if (length != CommandWriterBase::kPresentDisplayLength) {
         return false;
@@ -805,7 +803,7 @@ bool HwcClient::CommandReader::parsePresentDisplay(uint16_t length)
     return true;
 }
 
-bool HwcClient::CommandReader::parseSetLayerCursorPosition(uint16_t length)
+bool ComposerClient::CommandReader::parseSetLayerCursorPosition(uint16_t length)
 {
     if (length != CommandWriterBase::kSetLayerCursorPositionLength) {
         return false;
@@ -820,7 +818,7 @@ bool HwcClient::CommandReader::parseSetLayerCursorPosition(uint16_t length)
     return true;
 }
 
-bool HwcClient::CommandReader::parseSetLayerBuffer(uint16_t length)
+bool ComposerClient::CommandReader::parseSetLayerBuffer(uint16_t length)
 {
     if (length != CommandWriterBase::kSetLayerBufferLength) {
         return false;
@@ -844,7 +842,7 @@ bool HwcClient::CommandReader::parseSetLayerBuffer(uint16_t length)
     return true;
 }
 
-bool HwcClient::CommandReader::parseSetLayerSurfaceDamage(uint16_t length)
+bool ComposerClient::CommandReader::parseSetLayerSurfaceDamage(uint16_t length)
 {
     // N rectangles
     if (length % 4 != 0) {
@@ -860,7 +858,7 @@ bool HwcClient::CommandReader::parseSetLayerSurfaceDamage(uint16_t length)
     return true;
 }
 
-bool HwcClient::CommandReader::parseSetLayerBlendMode(uint16_t length)
+bool ComposerClient::CommandReader::parseSetLayerBlendMode(uint16_t length)
 {
     if (length != CommandWriterBase::kSetLayerBlendModeLength) {
         return false;
@@ -874,7 +872,7 @@ bool HwcClient::CommandReader::parseSetLayerBlendMode(uint16_t length)
     return true;
 }
 
-bool HwcClient::CommandReader::parseSetLayerColor(uint16_t length)
+bool ComposerClient::CommandReader::parseSetLayerColor(uint16_t length)
 {
     if (length != CommandWriterBase::kSetLayerColorLength) {
         return false;
@@ -888,7 +886,8 @@ bool HwcClient::CommandReader::parseSetLayerColor(uint16_t length)
     return true;
 }
 
-bool HwcClient::CommandReader::parseSetLayerCompositionType(uint16_t length)
+bool ComposerClient::CommandReader::parseSetLayerCompositionType(
+        uint16_t length)
 {
     if (length != CommandWriterBase::kSetLayerCompositionTypeLength) {
         return false;
@@ -902,7 +901,7 @@ bool HwcClient::CommandReader::parseSetLayerCompositionType(uint16_t length)
     return true;
 }
 
-bool HwcClient::CommandReader::parseSetLayerDataspace(uint16_t length)
+bool ComposerClient::CommandReader::parseSetLayerDataspace(uint16_t length)
 {
     if (length != CommandWriterBase::kSetLayerDataspaceLength) {
         return false;
@@ -916,7 +915,7 @@ bool HwcClient::CommandReader::parseSetLayerDataspace(uint16_t length)
     return true;
 }
 
-bool HwcClient::CommandReader::parseSetLayerDisplayFrame(uint16_t length)
+bool ComposerClient::CommandReader::parseSetLayerDisplayFrame(uint16_t length)
 {
     if (length != CommandWriterBase::kSetLayerDisplayFrameLength) {
         return false;
@@ -930,7 +929,7 @@ bool HwcClient::CommandReader::parseSetLayerDisplayFrame(uint16_t length)
     return true;
 }
 
-bool HwcClient::CommandReader::parseSetLayerPlaneAlpha(uint16_t length)
+bool ComposerClient::CommandReader::parseSetLayerPlaneAlpha(uint16_t length)
 {
     if (length != CommandWriterBase::kSetLayerPlaneAlphaLength) {
         return false;
@@ -944,7 +943,7 @@ bool HwcClient::CommandReader::parseSetLayerPlaneAlpha(uint16_t length)
     return true;
 }
 
-bool HwcClient::CommandReader::parseSetLayerSidebandStream(uint16_t length)
+bool ComposerClient::CommandReader::parseSetLayerSidebandStream(uint16_t length)
 {
     if (length != CommandWriterBase::kSetLayerSidebandStreamLength) {
         return false;
@@ -963,7 +962,7 @@ bool HwcClient::CommandReader::parseSetLayerSidebandStream(uint16_t length)
     return true;
 }
 
-bool HwcClient::CommandReader::parseSetLayerSourceCrop(uint16_t length)
+bool ComposerClient::CommandReader::parseSetLayerSourceCrop(uint16_t length)
 {
     if (length != CommandWriterBase::kSetLayerSourceCropLength) {
         return false;
@@ -977,7 +976,7 @@ bool HwcClient::CommandReader::parseSetLayerSourceCrop(uint16_t length)
     return true;
 }
 
-bool HwcClient::CommandReader::parseSetLayerTransform(uint16_t length)
+bool ComposerClient::CommandReader::parseSetLayerTransform(uint16_t length)
 {
     if (length != CommandWriterBase::kSetLayerTransformLength) {
         return false;
@@ -991,7 +990,7 @@ bool HwcClient::CommandReader::parseSetLayerTransform(uint16_t length)
     return true;
 }
 
-bool HwcClient::CommandReader::parseSetLayerVisibleRegion(uint16_t length)
+bool ComposerClient::CommandReader::parseSetLayerVisibleRegion(uint16_t length)
 {
     // N rectangles
     if (length % 4 != 0) {
@@ -1007,7 +1006,7 @@ bool HwcClient::CommandReader::parseSetLayerVisibleRegion(uint16_t length)
     return true;
 }
 
-bool HwcClient::CommandReader::parseSetLayerZOrder(uint16_t length)
+bool ComposerClient::CommandReader::parseSetLayerZOrder(uint16_t length)
 {
     if (length != CommandWriterBase::kSetLayerZOrderLength) {
         return false;
@@ -1021,7 +1020,7 @@ bool HwcClient::CommandReader::parseSetLayerZOrder(uint16_t length)
     return true;
 }
 
-hwc_rect_t HwcClient::CommandReader::readRect()
+hwc_rect_t ComposerClient::CommandReader::readRect()
 {
     return hwc_rect_t{
         readSigned(),
@@ -1031,7 +1030,7 @@ hwc_rect_t HwcClient::CommandReader::readRect()
     };
 }
 
-std::vector<hwc_rect_t> HwcClient::CommandReader::readRegion(size_t count)
+std::vector<hwc_rect_t> ComposerClient::CommandReader::readRegion(size_t count)
 {
     std::vector<hwc_rect_t> region;
     region.reserve(count);
@@ -1043,7 +1042,7 @@ std::vector<hwc_rect_t> HwcClient::CommandReader::readRegion(size_t count)
     return region;
 }
 
-hwc_frect_t HwcClient::CommandReader::readFRect()
+hwc_frect_t ComposerClient::CommandReader::readFRect()
 {
     return hwc_frect_t{
         readFloat(),
@@ -1053,8 +1052,8 @@ hwc_frect_t HwcClient::CommandReader::readFRect()
     };
 }
 
-Error HwcClient::CommandReader::lookupBuffer(BufferCache cache, uint32_t slot,
-        bool useCache, buffer_handle_t& handle)
+Error ComposerClient::CommandReader::lookupBuffer(BufferCache cache,
+        uint32_t slot, bool useCache, buffer_handle_t& handle)
 {
     std::lock_guard<std::mutex> lock(mClient.mDisplayDataMutex);
 

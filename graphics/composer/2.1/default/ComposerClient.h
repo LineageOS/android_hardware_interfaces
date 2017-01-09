@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_GRAPHICS_COMPOSER_V2_1_HWC_CLIENT_H
-#define ANDROID_HARDWARE_GRAPHICS_COMPOSER_V2_1_HWC_CLIENT_H
+#ifndef ANDROID_HARDWARE_GRAPHICS_COMPOSER_V2_1_COMPOSER_CLIENT_H
+#define ANDROID_HARDWARE_GRAPHICS_COMPOSER_V2_1_COMPOSER_CLIENT_H
 
 #include <mutex>
 #include <unordered_map>
@@ -50,10 +50,12 @@ private:
     buffer_handle_t mHandle;
 };
 
-class HwcClient : public IComposerClient {
+class ComposerClient : public IComposerClient {
 public:
-    HwcClient(HwcHal& hal);
-    virtual ~HwcClient();
+    ComposerClient(ComposerBase& hal);
+    virtual ~ComposerClient();
+
+    void initialize();
 
     void onHotplug(Display display, IComposerCallback::Connection connected);
     void onRefresh(Display display);
@@ -104,7 +106,7 @@ public:
             const hidl_vec<hidl_handle>& inHandles,
             executeCommands_cb hidl_cb) override;
 
-private:
+protected:
     struct LayerBuffers {
         std::vector<BufferClone> Buffers;
         BufferClone SidebandStream;
@@ -123,10 +125,15 @@ private:
 
     class CommandReader : public CommandReaderBase {
     public:
-        CommandReader(HwcClient& client);
+        CommandReader(ComposerClient& client);
+        virtual ~CommandReader();
+
         Error parse();
 
-    private:
+    protected:
+        virtual bool parseCommand(IComposerClient::Command command,
+                uint16_t length);
+
         bool parseSelectDisplay(uint16_t length);
         bool parseSelectLayer(uint16_t length);
         bool parseSetColorTransform(uint16_t length);
@@ -169,21 +176,23 @@ private:
                     0, false, handle);
         }
 
-        HwcClient& mClient;
-        HwcHal& mHal;
+        ComposerClient& mClient;
+        ComposerBase& mHal;
         CommandWriterBase& mWriter;
 
         Display mDisplay;
         Layer mLayer;
     };
 
-    HwcHal& mHal;
+    virtual std::unique_ptr<CommandReader> createCommandReader();
+
+    ComposerBase& mHal;
 
     // 64KiB minus a small space for metadata such as read/write pointers
     static constexpr size_t kWriterInitialSize =
         64 * 1024 / sizeof(uint32_t) - 16;
     std::mutex mCommandMutex;
-    CommandReader mReader;
+    std::unique_ptr<CommandReader> mReader;
     CommandWriterBase mWriter;
 
     sp<IComposerCallback> mCallback;
@@ -199,4 +208,4 @@ private:
 } // namespace hardware
 } // namespace android
 
-#endif  // ANDROID_HARDWARE_GRAPHICS_COMPOSER_V2_1_HWC_CLIENT_H
+#endif  // ANDROID_HARDWARE_GRAPHICS_COMPOSER_V2_1_COMPOSER_CLIENT_H

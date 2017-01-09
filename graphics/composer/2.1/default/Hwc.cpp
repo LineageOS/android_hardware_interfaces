@@ -20,8 +20,8 @@
 
 #include <log/log.h>
 
+#include "ComposerClient.h"
 #include "Hwc.h"
-#include "HwcClient.h"
 
 namespace android {
 namespace hardware {
@@ -184,14 +184,15 @@ Return<void> HwcHal::dumpDebugInfo(dumpDebugInfo_cb hidl_cb)
 Return<void> HwcHal::createClient(createClient_cb hidl_cb)
 {
     Error err = Error::NONE;
-    sp<HwcClient> client;
+    sp<ComposerClient> client;
 
     {
         std::lock_guard<std::mutex> lock(mClientMutex);
 
         // only one client is allowed
         if (mClient == nullptr) {
-            client = new HwcClient(*this);
+            client = new ComposerClient(*this);
+            client->initialize();
             mClient = client;
         } else {
             err = Error::NO_RESOURCES;
@@ -203,7 +204,7 @@ Return<void> HwcHal::createClient(createClient_cb hidl_cb)
     return Void();
 }
 
-sp<HwcClient> HwcHal::getClient()
+sp<ComposerClient> HwcHal::getClient()
 {
     std::lock_guard<std::mutex> lock(mClientMutex);
     return (mClient != nullptr) ? mClient.promote() : nullptr;

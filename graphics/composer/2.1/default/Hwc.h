@@ -24,6 +24,8 @@
 #include <android/hardware/graphics/composer/2.1/IComposer.h>
 #include <hardware/hwcomposer2.h>
 
+#include "ComposerBase.h"
+
 namespace android {
 namespace hardware {
 namespace graphics {
@@ -38,96 +40,101 @@ using android::hardware::graphics::common::V1_0::ColorMode;
 using android::hardware::graphics::common::V1_0::ColorTransform;
 using android::hardware::graphics::common::V1_0::Hdr;
 
-class HwcClient;
+class ComposerClient;
 
-class HwcHal : public IComposer {
+class HwcHal : public IComposer, public ComposerBase {
 public:
     HwcHal(const hw_module_t* module);
     virtual ~HwcHal();
+
+    bool hasCapability(Capability capability) const;
 
     // IComposer interface
     Return<void> getCapabilities(getCapabilities_cb hidl_cb) override;
     Return<void> dumpDebugInfo(dumpDebugInfo_cb hidl_cb) override;
     Return<void> createClient(createClient_cb hidl_cb) override;
 
-    bool hasCapability(Capability capability) const;
-
-    void removeClient();
-
-    void enableCallback(bool enable);
-
-    uint32_t getMaxVirtualDisplayCount();
+    // ComposerBase interface
+    void removeClient() override;
+    void enableCallback(bool enable) override;
+    uint32_t getMaxVirtualDisplayCount() override;
     Error createVirtualDisplay(uint32_t width, uint32_t height,
-        PixelFormat* format, Display* outDisplay);
-    Error destroyVirtualDisplay(Display display);
+        PixelFormat* format, Display* outDisplay) override;
+    Error destroyVirtualDisplay(Display display) override;
 
-    Error createLayer(Display display, Layer* outLayer);
-    Error destroyLayer(Display display, Layer layer);
+    Error createLayer(Display display, Layer* outLayer) override;
+    Error destroyLayer(Display display, Layer layer) override;
 
-    Error getActiveConfig(Display display, Config* outConfig);
+    Error getActiveConfig(Display display, Config* outConfig) override;
     Error getClientTargetSupport(Display display,
             uint32_t width, uint32_t height,
-            PixelFormat format, Dataspace dataspace);
-    Error getColorModes(Display display, hidl_vec<ColorMode>* outModes);
+            PixelFormat format, Dataspace dataspace) override;
+    Error getColorModes(Display display,
+            hidl_vec<ColorMode>* outModes) override;
     Error getDisplayAttribute(Display display, Config config,
-            IComposerClient::Attribute attribute, int32_t* outValue);
-    Error getDisplayConfigs(Display display, hidl_vec<Config>* outConfigs);
-    Error getDisplayName(Display display, hidl_string* outName);
+            IComposerClient::Attribute attribute, int32_t* outValue) override;
+    Error getDisplayConfigs(Display display,
+            hidl_vec<Config>* outConfigs) override;
+    Error getDisplayName(Display display, hidl_string* outName) override;
     Error getDisplayType(Display display,
-            IComposerClient::DisplayType* outType);
-    Error getDozeSupport(Display display, bool* outSupport);
+            IComposerClient::DisplayType* outType) override;
+    Error getDozeSupport(Display display, bool* outSupport) override;
     Error getHdrCapabilities(Display display, hidl_vec<Hdr>* outTypes,
             float* outMaxLuminance, float* outMaxAverageLuminance,
-            float* outMinLuminance);
+            float* outMinLuminance) override;
 
-    Error setActiveConfig(Display display, Config config);
-    Error setColorMode(Display display, ColorMode mode);
-    Error setPowerMode(Display display, IComposerClient::PowerMode mode);
-    Error setVsyncEnabled(Display display, IComposerClient::Vsync enabled);
+    Error setActiveConfig(Display display, Config config) override;
+    Error setColorMode(Display display, ColorMode mode) override;
+    Error setPowerMode(Display display,
+            IComposerClient::PowerMode mode) override;
+    Error setVsyncEnabled(Display display,
+            IComposerClient::Vsync enabled) override;
 
     Error setColorTransform(Display display, const float* matrix,
-            int32_t hint);
+            int32_t hint) override;
     Error setClientTarget(Display display, buffer_handle_t target,
             int32_t acquireFence, int32_t dataspace,
-            const std::vector<hwc_rect_t>& damage);
+            const std::vector<hwc_rect_t>& damage) override;
     Error setOutputBuffer(Display display, buffer_handle_t buffer,
-            int32_t releaseFence);
+            int32_t releaseFence) override;
     Error validateDisplay(Display display,
             std::vector<Layer>* outChangedLayers,
             std::vector<IComposerClient::Composition>* outCompositionTypes,
             uint32_t* outDisplayRequestMask,
             std::vector<Layer>* outRequestedLayers,
-            std::vector<uint32_t>* outRequestMasks);
-    Error acceptDisplayChanges(Display display);
+            std::vector<uint32_t>* outRequestMasks) override;
+    Error acceptDisplayChanges(Display display) override;
     Error presentDisplay(Display display, int32_t* outPresentFence,
             std::vector<Layer>* outLayers,
-            std::vector<int32_t>* outReleaseFences);
+            std::vector<int32_t>* outReleaseFences) override;
 
     Error setLayerCursorPosition(Display display, Layer layer,
-            int32_t x, int32_t y);
+            int32_t x, int32_t y) override;
     Error setLayerBuffer(Display display, Layer layer,
-            buffer_handle_t buffer, int32_t acquireFence);
+            buffer_handle_t buffer, int32_t acquireFence) override;
     Error setLayerSurfaceDamage(Display display, Layer layer,
-            const std::vector<hwc_rect_t>& damage);
-    Error setLayerBlendMode(Display display, Layer layer, int32_t mode);
+            const std::vector<hwc_rect_t>& damage) override;
+    Error setLayerBlendMode(Display display, Layer layer,
+            int32_t mode) override;
     Error setLayerColor(Display display, Layer layer,
-            IComposerClient::Color color);
+            IComposerClient::Color color) override;
     Error setLayerCompositionType(Display display, Layer layer,
-            int32_t type);
+            int32_t type) override;
     Error setLayerDataspace(Display display, Layer layer,
-            int32_t dataspace);
+            int32_t dataspace) override;
     Error setLayerDisplayFrame(Display display, Layer layer,
-            const hwc_rect_t& frame);
-    Error setLayerPlaneAlpha(Display display, Layer layer, float alpha);
+            const hwc_rect_t& frame) override;
+    Error setLayerPlaneAlpha(Display display, Layer layer,
+            float alpha) override;
     Error setLayerSidebandStream(Display display, Layer layer,
-            buffer_handle_t stream);
+            buffer_handle_t stream) override;
     Error setLayerSourceCrop(Display display, Layer layer,
-            const hwc_frect_t& crop);
+            const hwc_frect_t& crop) override;
     Error setLayerTransform(Display display, Layer layer,
-            int32_t transform);
+            int32_t transform) override;
     Error setLayerVisibleRegion(Display display, Layer layer,
-            const std::vector<hwc_rect_t>& visible);
-    Error setLayerZOrder(Display display, Layer layer, uint32_t z);
+            const std::vector<hwc_rect_t>& visible) override;
+    Error setLayerZOrder(Display display, Layer layer, uint32_t z) override;
 
 private:
     void initCapabilities();
@@ -136,7 +143,7 @@ private:
     void initDispatch(hwc2_function_descriptor_t desc, T* outPfn);
     void initDispatch();
 
-    sp<HwcClient> getClient();
+    sp<ComposerClient> getClient();
 
     static void hotplugHook(hwc2_callback_data_t callbackData,
         hwc2_display_t display, int32_t connected);
@@ -196,7 +203,7 @@ private:
     } mDispatch;
 
     std::mutex mClientMutex;
-    wp<HwcClient> mClient;
+    wp<ComposerClient> mClient;
 };
 
 extern "C" IComposer* HIDL_FETCH_IComposer(const char* name);
