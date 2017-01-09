@@ -17,6 +17,7 @@
 
 import logging
 
+from vts.proto import ComponentSpecificationMessage_pb2 as CompSpecMsg
 from vts.runners.host import asserts
 from vts.runners.host import base_test_with_webdb
 from vts.runners.host import const
@@ -52,6 +53,40 @@ class TvCecHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
         version = self.dut.hal.tv_cec.getCecVersion()
         logging.info('Cec version: %s', version)
 
+    def testSendRandomMessage(self):
+        """A test case which sends a random message."""
+        self.vtypes = self.dut.hal.tv_cec.GetHidlTypeInterface("types")
+        logging.info("tv_cec types: %s", self.vtypes)
+
+        message = CompSpecMsg.VariableSpecificationMessage()
+        message.name = "CecMessage"
+        message.type = CompSpecMsg.TYPE_STRUCT
+        initiator = message.struct_value.add()
+        initiator.name = "initiator"
+        initiator.type = CompSpecMsg.TYPE_ENUM
+        initiator.scalar_value.int32_t = self.vtypes.TV
+        destination = message.struct_value.add()
+        destination.name = "destination"
+        destination.type = CompSpecMsg.TYPE_ENUM
+        destination.scalar_value.int32_t = self.vtypes.PLAYBACK_1
+        body = message.struct_value.add()
+        body.name = "body"
+        body.type = CompSpecMsg.TYPE_VECTOR
+        vector1 = body.vector_value.add()
+        vector1.type = CompSpecMsg.TYPE_SCALAR
+        vector1.scalar_type = "uint8_t"
+        vector1.scalar_value.uint8_t = 1
+        vector2 = body.vector_value.add()
+        vector2.type = CompSpecMsg.TYPE_SCALAR
+        vector2.scalar_type = "uint8_t"
+        vector2.scalar_value.uint8_t = 2
+        vector3 = body.vector_value.add()
+        vector3.type = CompSpecMsg.TYPE_SCALAR
+        vector3.scalar_type = "uint8_t"
+        vector3.scalar_value.uint8_t = 3
+        logging.info("message: %s", message)
+        result = self.dut.hal.tv_cec.sendMessage(message)
+        logging.info('sendMessage result: %s', result)
 
 if __name__ == "__main__":
     test_runner.main()
