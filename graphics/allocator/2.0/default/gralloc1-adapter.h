@@ -16,52 +16,69 @@
 #ifndef ANDROID_HARDWARE_GRALLOC1_ADAPTER_H
 #define ANDROID_HARDWARE_GRALLOC1_ADAPTER_H
 
-#include <stdbool.h>
-#include <hardware/gralloc.h>
+#include <hardware/hardware.h>
 
 __BEGIN_DECLS
 
-struct gralloc1_adapter_buffer_info {
-    int width;
-    int height;
-    int format;
-    int usage;
+#define GRALLOC1_ADAPTER_MODULE_API_VERSION_1_0 \
+    HARDWARE_MODULE_API_VERSION(1, 0)
 
-    int stride;
-    uint32_t num_flex_planes;
-};
+enum {
+    GRALLOC1_ADAPTER_PERFORM_FIRST = 10000,
 
-/* This struct must be embedded in the HAL's HAL_MODULE_INFO_SYM and must
- * follow gralloc_module_t immediately. */
-struct gralloc1_adapter {
-    uint16_t real_module_api_version;
+    // void getRealModuleApiVersionMinor(..., int* outMinorVersion);
+    GRALLOC1_ADAPTER_PERFORM_GET_REAL_MODULE_API_VERSION_MINOR =
+        GRALLOC1_ADAPTER_PERFORM_FIRST,
 
-    /* Return true if the buffer is registered.  A locally allocated buffer is
-     * always registered.
-     *
-     * This function is called frequently.  It must be thread safe just like
-     * other functions are.
-     */
-    bool (*is_registered)(const struct gralloc_module_t* mod,
-            buffer_handle_t buffer);
+    // void setUsages(..., buffer_handle_t buffer,
+    //                     int producerUsage,
+    //                     int consumerUsage);
+    GRALLOC1_ADAPTER_PERFORM_SET_USAGES =
+        GRALLOC1_ADAPTER_PERFORM_FIRST + 1,
 
-    /* Set the adapter data for a registered buffer. */
-    void (*set_data)(const struct gralloc_module_t* mod,
-            buffer_handle_t buffer, void* data);
+    // void getDimensions(..., buffer_handle_t buffer,
+    //                         int* outWidth,
+    //                         int* outHeight);
+    GRALLOC1_ADAPTER_PERFORM_GET_DIMENSIONS =
+        GRALLOC1_ADAPTER_PERFORM_FIRST + 2,
 
-    /* Get the adapter data for a registered buffer. */
-    void* (*get_data)(const struct gralloc_module_t* mod,
-            buffer_handle_t buffer);
+    // void getFormat(..., buffer_handle_t buffer, int* outFormat);
+    GRALLOC1_ADAPTER_PERFORM_GET_FORMAT =
+        GRALLOC1_ADAPTER_PERFORM_FIRST + 3,
 
-    /* Get the buffer info, such as width, height, etc. */
-    void (*get_info)(const struct gralloc_module_t* mod,
-            buffer_handle_t buffer,
-            struct gralloc1_adapter_buffer_info* info);
+    // void getProducerUsage(..., buffer_handle_t buffer, int* outUsage);
+    GRALLOC1_ADAPTER_PERFORM_GET_PRODUCER_USAGE =
+        GRALLOC1_ADAPTER_PERFORM_FIRST + 4,
 
-    /* Get the flexilble layout matching ycbcr. */
-    void (*get_flexible_layout)(const struct gralloc_module_t* mod,
-            buffer_handle_t buffer, const struct android_ycbcr* ycbcr,
-            struct android_flex_layout* layout);
+    // void getConsumerUsage(..., buffer_handle_t buffer, int* outUsage);
+    GRALLOC1_ADAPTER_PERFORM_GET_CONSUMER_USAGE =
+        GRALLOC1_ADAPTER_PERFORM_FIRST + 5,
+
+    // void getBackingStore(..., buffer_handle_t buffer,
+    //                           uint64_t* outBackingStore);
+    GRALLOC1_ADAPTER_PERFORM_GET_BACKING_STORE =
+        GRALLOC1_ADAPTER_PERFORM_FIRST + 6,
+
+    // void getNumFlexPlanes(..., buffer_handle_t buffer,
+    //                            int* outNumFlexPlanes);
+    GRALLOC1_ADAPTER_PERFORM_GET_NUM_FLEX_PLANES =
+        GRALLOC1_ADAPTER_PERFORM_FIRST + 7,
+
+    // void getStride(..., buffer_handle_t buffer, int* outStride);
+    GRALLOC1_ADAPTER_PERFORM_GET_STRIDE =
+        GRALLOC1_ADAPTER_PERFORM_FIRST + 8,
+
+    // void lockFlex(..., buffer_handle_t buffer,
+    //                    int producerUsage,
+    //                    int consumerUsage,
+    //                    int left,
+    //                    int top,
+    //                    int width,
+    //                    int height,
+    //                    android_flex_layout* outLayout,
+    //                    int acquireFence);
+    GRALLOC1_ADAPTER_PERFORM_LOCK_FLEX =
+        GRALLOC1_ADAPTER_PERFORM_FIRST + 9,
 };
 
 int gralloc1_adapter_device_open(const struct hw_module_t* module,

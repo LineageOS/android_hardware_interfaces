@@ -176,9 +176,9 @@ private:
             mRelease(mDevice, handle);
         } else {
             mModule->unregisterBuffer(mModule, handle);
-            native_handle_close(handle);
-            native_handle_delete(const_cast<native_handle_t*>(handle));
         }
+        native_handle_close(handle);
+        native_handle_delete(const_cast<native_handle_t*>(handle));
     }
 
     // gralloc1
