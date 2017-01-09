@@ -6,6 +6,7 @@ subdirs = [
     "common/1.0",
     "composer/2.1",
     "composer/2.1/default",
+    "composer/2.1/vts/functional",
     "mapper/2.0",
     "mapper/2.0/default",
     "mapper/2.0/vts/functional",
