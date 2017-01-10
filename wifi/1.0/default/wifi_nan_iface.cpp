@@ -36,35 +36,378 @@ WifiNanIface::WifiNanIface(
   // of the object. Whenever the mode changes legacy HAL will remove
   // all of these callbacks.
   legacy_hal::NanCallbackHandlers callback_handlers;
+  android::wp<WifiNanIface> weak_ptr_this(this);
 
   // Callback for response.
-  callback_handlers.on_notify_response = [&](
+  callback_handlers.on_notify_response = [weak_ptr_this](
       legacy_hal::transaction_id id, const legacy_hal::NanResponseMsg& msg) {
-    NanResponseMsgHeader hidl_header;
+    const auto shared_ptr_this = weak_ptr_this.promote();
+    if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+      LOG(ERROR) << "Callback invoked on an invalid object";
+      return;
+    }
+    WifiNanStatus wifiNanStatus;
     if (!hidl_struct_util::convertLegacyNanResponseHeaderToHidl(msg,
-                                                                &hidl_header)) {
+                                                                &wifiNanStatus)) {
       LOG(ERROR) << "Failed to convert nan response header";
       return;
     }
-    // TODO: This is a union in the legacy HAL. Need to convert to appropriate
-    // callback based on type.
-    // Assuming |NanPublishResponseMsg| type here.
-    NanPublishResponse hidl_body;
-    if (!hidl_struct_util::convertLegacyNanPublishResponseToHidl(
-            msg.body.publish_response, &hidl_body)) {
-      LOG(ERROR) << "Failed to convert nan publish response";
-      return;
+
+    switch (msg.response_type) {
+    case legacy_hal::NAN_RESPONSE_ENABLED: {
+        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+          if (!callback->notifyEnableResponse(id, wifiNanStatus).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+          }
+        }
     }
-    NanPublishResponseMsg hidl_msg;
-    hidl_msg.header = hidl_header;
-    hidl_msg.body = hidl_body;
-    for (const auto& callback : event_callbacks_) {
-      if (!callback->notifyPublishResponse(id, hidl_msg).isOk()) {
-        LOG(ERROR) << "Failed to invoke the callback";
-      }
+    case legacy_hal::NAN_RESPONSE_DISABLED: {
+        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+          if (!callback->notifyDisableResponse(id, wifiNanStatus).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+          }
+        }
+    }
+    case legacy_hal::NAN_RESPONSE_PUBLISH: {
+        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+          if (!callback->notifyStartPublishResponse(id, wifiNanStatus,
+                        msg.body.publish_response.publish_id).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+          }
+        }
+    }
+    case legacy_hal::NAN_RESPONSE_PUBLISH_CANCEL: {
+        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+          if (!callback->notifyStopPublishResponse(id, wifiNanStatus).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+          }
+        }
+    }
+    case legacy_hal::NAN_RESPONSE_TRANSMIT_FOLLOWUP: {
+        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+          if (!callback->notifyTransmitFollowupResponse(id, wifiNanStatus).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+          }
+        }
+    }
+    case legacy_hal::NAN_RESPONSE_SUBSCRIBE: {
+        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+          if (!callback->notifyStartSubscribeResponse(id, wifiNanStatus,
+                        msg.body.subscribe_response.subscribe_id).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+          }
+        }
+    }
+    case legacy_hal::NAN_RESPONSE_SUBSCRIBE_CANCEL: {
+        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+          if (!callback->notifyStopSubscribeResponse(id, wifiNanStatus).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+          }
+        }
+    }
+    case legacy_hal::NAN_RESPONSE_CONFIG: {
+        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+          if (!callback->notifyConfigResponse(id, wifiNanStatus).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+          }
+        }
+     }
+    case legacy_hal::NAN_RESPONSE_BEACON_SDF_PAYLOAD: {
+        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+          if (!callback->notifyBeaconSdfPayloadResponse(id, wifiNanStatus).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+          }
+        }
+     }
+    case legacy_hal::NAN_GET_CAPABILITIES: {
+        NanCapabilities hidl_struct;
+        if (!hidl_struct_util::convertLegacyNanCapabilitiesResponseToHidl(
+                msg.body.nan_capabilities, &hidl_struct)) {
+            LOG(ERROR) << "Failed to convert nan capabilities response";
+            return;
+        }
+        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+          if (!callback->notifyCapabilitiesResponse(id, wifiNanStatus,
+                                                    hidl_struct).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+          }
+        }
+    }
+    case legacy_hal::NAN_DP_INTERFACE_CREATE: {
+        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+          if (!callback->notifyCreateDataInterfaceResponse(id, wifiNanStatus).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+          }
+        }
+    }
+    case legacy_hal::NAN_DP_INTERFACE_DELETE: {
+        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+          if (!callback->notifyDeleteDataInterfaceResponse(id, wifiNanStatus).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+          }
+        }
+    }
+    case legacy_hal::NAN_DP_INITIATOR_RESPONSE: {
+        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+          if (!callback->notifyInitiateDataPathResponse(id, wifiNanStatus).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+          }
+        }
+    }
+    case legacy_hal::NAN_DP_RESPONDER_RESPONSE: {
+        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+          if (!callback->notifyRespondToDataPathIndicationResponse(id, wifiNanStatus,
+                    msg.body.data_request_response.ndp_instance_id).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+          }
+        }
+    }
+    case legacy_hal::NAN_DP_END: {
+        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+          if (!callback->notifyTerminateDataPathResponse(id, wifiNanStatus).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+          }
+        }
+    }
+    case legacy_hal::NAN_RESPONSE_TCA:
+        /* fall through */
+    case legacy_hal::NAN_RESPONSE_STATS:
+        /* fall through */
+    case legacy_hal::NAN_RESPONSE_ERROR:
+        /* fall through */
+    default:
+        LOG(ERROR) << "Unknown or unhandled response type: " << msg.response_type;
+        return;
     }
   };
-  // TODO: Register the remaining callbacks.
+
+  callback_handlers.on_event_disc_eng_event = [weak_ptr_this](
+        const legacy_hal::NanDiscEngEventInd& msg) {
+      const auto shared_ptr_this = weak_ptr_this.promote();
+      if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+        LOG(ERROR) << "Callback invoked on an invalid object";
+        return;
+      }
+      NanClusterEventInd hidl_struct;
+      // event types defined identically - hence can be cast
+      hidl_struct.eventType = (NanClusterEventType) msg.event_type;
+      hidl_struct.addr = msg.data.mac_addr.addr;
+
+      for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        if (!callback->eventClusterEvent(hidl_struct).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+        }
+      }
+  };
+
+  callback_handlers.on_event_disabled = [weak_ptr_this](
+        const legacy_hal::NanDisabledInd& msg) {
+      const auto shared_ptr_this = weak_ptr_this.promote();
+      if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+        LOG(ERROR) << "Callback invoked on an invalid object";
+        return;
+      }
+      WifiNanStatus status;
+      status.status = hidl_struct_util::convertLegacyNanStatusTypeToHidl(msg.reason);
+      status.description = msg.nan_reason;
+
+      for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        if (!callback->eventDisabled(status).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+        }
+      }
+  };
+
+  callback_handlers.on_event_publish_terminated = [weak_ptr_this](
+        const legacy_hal::NanPublishTerminatedInd& msg) {
+      const auto shared_ptr_this = weak_ptr_this.promote();
+      if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+        LOG(ERROR) << "Callback invoked on an invalid object";
+        return;
+      }
+      WifiNanStatus status;
+      status.status = hidl_struct_util::convertLegacyNanStatusTypeToHidl(msg.reason);
+      status.description = msg.nan_reason;
+
+      for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        if (!callback->eventPublishTerminated(msg.publish_id, status).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+        }
+      }
+  };
+
+  callback_handlers.on_event_subscribe_terminated = [weak_ptr_this](
+        const legacy_hal::NanSubscribeTerminatedInd& msg) {
+      const auto shared_ptr_this = weak_ptr_this.promote();
+      if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+        LOG(ERROR) << "Callback invoked on an invalid object";
+        return;
+      }
+      WifiNanStatus status;
+      status.status = hidl_struct_util::convertLegacyNanStatusTypeToHidl(msg.reason);
+      status.description = msg.nan_reason;
+
+      for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        if (!callback->eventSubscribeTerminated(msg.subscribe_id, status).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+        }
+      }
+  };
+
+  callback_handlers.on_event_match = [weak_ptr_this](
+        const legacy_hal::NanMatchInd& msg) {
+      const auto shared_ptr_this = weak_ptr_this.promote();
+      if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+        LOG(ERROR) << "Callback invoked on an invalid object";
+        return;
+      }
+      NanMatchInd hidl_struct;
+      if (!hidl_struct_util::convertLegacyNanMatchIndToHidl(
+            msg, &hidl_struct)) {
+          LOG(ERROR) << "Failed to convert nan capabilities response";
+          return;
+      }
+
+      for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        if (!callback->eventMatch(hidl_struct).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+        }
+      }
+  };
+
+  callback_handlers.on_event_match_expired = [weak_ptr_this](
+        const legacy_hal::NanMatchExpiredInd& msg) {
+      const auto shared_ptr_this = weak_ptr_this.promote();
+      if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+        LOG(ERROR) << "Callback invoked on an invalid object";
+        return;
+      }
+      for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        if (!callback->eventMatchExpired(msg.publish_subscribe_id,
+                msg.requestor_instance_id).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+        }
+      }
+  };
+
+  callback_handlers.on_event_followup = [weak_ptr_this](
+        const legacy_hal::NanFollowupInd& msg) {
+      const auto shared_ptr_this = weak_ptr_this.promote();
+      if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+        LOG(ERROR) << "Callback invoked on an invalid object";
+        return;
+      }
+      NanFollowupReceivedInd hidl_struct;
+      if (!hidl_struct_util::convertLegacyNanFollowupIndToHidl(
+            msg, &hidl_struct)) {
+          LOG(ERROR) << "Failed to convert nan capabilities response";
+          return;
+      }
+
+      for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        if (!callback->eventFollowupReceived(hidl_struct).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+        }
+      }
+  };
+
+  callback_handlers.on_event_transmit_follow_up = [weak_ptr_this](
+        const legacy_hal::NanTransmitFollowupInd& msg) {
+      const auto shared_ptr_this = weak_ptr_this.promote();
+      if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+        LOG(ERROR) << "Callback invoked on an invalid object";
+        return;
+      }
+      WifiNanStatus status;
+      status.status = hidl_struct_util::convertLegacyNanStatusTypeToHidl(msg.reason);
+      status.description = msg.nan_reason;
+
+      for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        if (!callback->eventTransmitFollowup(msg.id, status).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+        }
+      }
+  };
+
+  callback_handlers.on_event_data_path_request = [weak_ptr_this](
+        const legacy_hal::NanDataPathRequestInd& msg) {
+      const auto shared_ptr_this = weak_ptr_this.promote();
+      if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+        LOG(ERROR) << "Callback invoked on an invalid object";
+        return;
+      }
+      NanDataPathRequestInd hidl_struct;
+      if (!hidl_struct_util::convertLegacyNanDataPathRequestIndToHidl(
+            msg, &hidl_struct)) {
+          LOG(ERROR) << "Failed to convert nan capabilities response";
+          return;
+      }
+
+      for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        if (!callback->eventDataPathRequest(hidl_struct).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+        }
+      }
+  };
+
+  callback_handlers.on_event_data_path_confirm = [weak_ptr_this](
+        const legacy_hal::NanDataPathConfirmInd& msg) {
+      const auto shared_ptr_this = weak_ptr_this.promote();
+      if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+        LOG(ERROR) << "Callback invoked on an invalid object";
+        return;
+      }
+      NanDataPathConfirmInd hidl_struct;
+      if (!hidl_struct_util::convertLegacyNanDataPathConfirmIndToHidl(
+            msg, &hidl_struct)) {
+          LOG(ERROR) << "Failed to convert nan capabilities response";
+          return;
+      }
+
+      for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        if (!callback->eventDataPathConfirm(hidl_struct).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+        }
+      }
+  };
+
+  callback_handlers.on_event_data_path_end = [weak_ptr_this](
+        const legacy_hal::NanDataPathEndInd& msg) {
+      const auto shared_ptr_this = weak_ptr_this.promote();
+      if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+        LOG(ERROR) << "Callback invoked on an invalid object";
+        return;
+      }
+      for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        for (int i = 0; i < msg.num_ndp_instances; ++i) {
+            if (!callback->eventDataPathTerminated(msg.ndp_instance_id[i]).isOk()) {
+                LOG(ERROR) << "Failed to invoke the callback";
+            }
+        }
+      }
+  };
+
+  callback_handlers.on_event_beacon_sdf_payload = [weak_ptr_this](
+        const legacy_hal::NanBeaconSdfPayloadInd& msg) {
+      const auto shared_ptr_this = weak_ptr_this.promote();
+      if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+        LOG(ERROR) << "Callback invoked on an invalid object";
+        return;
+      }
+      NanBeaconSdfPayloadInd hidl_struct;
+      if (!hidl_struct_util::convertLegacyNanBeaconSdfPayloadIndToHidl(
+            msg, &hidl_struct)) {
+          LOG(ERROR) << "Failed to convert nan capabilities response";
+          return;
+      }
+
+      for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        if (!callback->eventBeaconSdfPayload(hidl_struct).isOk()) {
+            LOG(ERROR) << "Failed to invoke the callback";
+        }
+      }
+  };
+
   legacy_hal::wifi_error legacy_status =
       legacy_hal_.lock()->nanRegisterCallbackHandlers(callback_handlers);
   if (legacy_status != legacy_hal::WIFI_SUCCESS) {
@@ -90,6 +433,13 @@ Return<void> WifiNanIface::getName(getName_cb hidl_status_cb) {
                          hidl_status_cb);
 }
 
+Return<void> WifiNanIface::getType(getType_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                         &WifiNanIface::getTypeInternal,
+                         hidl_status_cb);
+}
+
 Return<void> WifiNanIface::registerEventCallback(
     const sp<IWifiNanIfaceEventCallback>& callback,
     registerEventCallback_cb hidl_status_cb) {
@@ -100,7 +450,16 @@ Return<void> WifiNanIface::registerEventCallback(
                          callback);
 }
 
-Return<void> WifiNanIface::enableRequest(uint32_t cmd_id,
+Return<void> WifiNanIface::getCapabilitiesRequest(uint16_t cmd_id,
+                                                  getCapabilitiesRequest_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                         &WifiNanIface::getCapabilitiesRequestInternal,
+                         hidl_status_cb,
+                         cmd_id);
+}
+
+Return<void> WifiNanIface::enableRequest(uint16_t cmd_id,
                                          const NanEnableRequest& msg,
                                          enableRequest_cb hidl_status_cb) {
   return validateAndCall(this,
@@ -111,75 +470,7 @@ Return<void> WifiNanIface::enableRequest(uint32_t cmd_id,
                          msg);
 }
 
-Return<void> WifiNanIface::disableRequest(uint32_t cmd_id,
-                                          disableRequest_cb hidl_status_cb) {
-  return validateAndCall(this,
-                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
-                         &WifiNanIface::disableRequestInternal,
-                         hidl_status_cb,
-                         cmd_id);
-}
-
-Return<void> WifiNanIface::publishRequest(uint32_t cmd_id,
-                                          const NanPublishRequest& msg,
-                                          publishRequest_cb hidl_status_cb) {
-  return validateAndCall(this,
-                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
-                         &WifiNanIface::publishRequestInternal,
-                         hidl_status_cb,
-                         cmd_id,
-                         msg);
-}
-
-Return<void> WifiNanIface::publishCancelRequest(
-    uint32_t cmd_id,
-    const NanPublishCancelRequest& msg,
-    publishCancelRequest_cb hidl_status_cb) {
-  return validateAndCall(this,
-                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
-                         &WifiNanIface::publishCancelRequestInternal,
-                         hidl_status_cb,
-                         cmd_id,
-                         msg);
-}
-
-Return<void> WifiNanIface::subscribeRequest(
-    uint32_t cmd_id,
-    const NanSubscribeRequest& msg,
-    subscribeRequest_cb hidl_status_cb) {
-  return validateAndCall(this,
-                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
-                         &WifiNanIface::subscribeRequestInternal,
-                         hidl_status_cb,
-                         cmd_id,
-                         msg);
-}
-
-Return<void> WifiNanIface::subscribeCancelRequest(
-    uint32_t cmd_id,
-    const NanSubscribeCancelRequest& msg,
-    subscribeCancelRequest_cb hidl_status_cb) {
-  return validateAndCall(this,
-                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
-                         &WifiNanIface::subscribeCancelRequestInternal,
-                         hidl_status_cb,
-                         cmd_id,
-                         msg);
-}
-
-Return<void> WifiNanIface::transmitFollowupRequest(
-    uint32_t cmd_id,
-    const NanTransmitFollowupRequest& msg,
-    transmitFollowupRequest_cb hidl_status_cb) {
-  return validateAndCall(this,
-                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
-                         &WifiNanIface::transmitFollowupRequestInternal,
-                         hidl_status_cb,
-                         cmd_id,
-                         msg);
-}
-
-Return<void> WifiNanIface::configRequest(uint32_t cmd_id,
+Return<void> WifiNanIface::configRequest(uint16_t cmd_id,
                                          const NanConfigRequest& msg,
                                          configRequest_cb hidl_status_cb) {
   return validateAndCall(this,
@@ -190,8 +481,134 @@ Return<void> WifiNanIface::configRequest(uint32_t cmd_id,
                          msg);
 }
 
+Return<void> WifiNanIface::disableRequest(uint16_t cmd_id,
+                                          disableRequest_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                         &WifiNanIface::disableRequestInternal,
+                         hidl_status_cb,
+                         cmd_id);
+}
+
+Return<void> WifiNanIface::startPublishRequest(uint16_t cmd_id,
+                                               const NanPublishRequest& msg,
+                                               startPublishRequest_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                         &WifiNanIface::startPublishRequestInternal,
+                         hidl_status_cb,
+                         cmd_id,
+                         msg);
+}
+
+Return<void> WifiNanIface::stopPublishRequest(
+    uint16_t cmd_id,
+    uint16_t sessionId,
+    stopPublishRequest_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                         &WifiNanIface::stopPublishRequestInternal,
+                         hidl_status_cb,
+                         cmd_id,
+                         sessionId);
+}
+
+Return<void> WifiNanIface::startSubscribeRequest(
+    uint16_t cmd_id,
+    const NanSubscribeRequest& msg,
+    startSubscribeRequest_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                         &WifiNanIface::startSubscribeRequestInternal,
+                         hidl_status_cb,
+                         cmd_id,
+                         msg);
+}
+
+Return<void> WifiNanIface::stopSubscribeRequest(
+    uint16_t cmd_id,
+    uint16_t sessionId,
+    stopSubscribeRequest_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                         &WifiNanIface::stopSubscribeRequestInternal,
+                         hidl_status_cb,
+                         cmd_id,
+                         sessionId);
+}
+
+Return<void> WifiNanIface::transmitFollowupRequest(
+    uint16_t cmd_id,
+    const NanTransmitFollowupRequest& msg,
+    transmitFollowupRequest_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                         &WifiNanIface::transmitFollowupRequestInternal,
+                         hidl_status_cb,
+                         cmd_id,
+                         msg);
+}
+
+Return<void> WifiNanIface::createDataInterfaceRequest(
+    uint16_t cmd_id,
+    const hidl_string& iface_name,
+    createDataInterfaceRequest_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                         &WifiNanIface::createDataInterfaceRequestInternal,
+                         hidl_status_cb,
+                         cmd_id,
+                         iface_name);
+}
+
+Return<void> WifiNanIface::deleteDataInterfaceRequest(
+    uint16_t cmd_id,
+    const hidl_string& iface_name,
+    deleteDataInterfaceRequest_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                         &WifiNanIface::deleteDataInterfaceRequestInternal,
+                         hidl_status_cb,
+                         cmd_id,
+                         iface_name);
+}
+
+Return<void> WifiNanIface::initiateDataPathRequest(
+    uint16_t cmd_id,
+    const NanInitiateDataPathRequest& msg,
+    initiateDataPathRequest_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                         &WifiNanIface::initiateDataPathRequestInternal,
+                         hidl_status_cb,
+                         cmd_id,
+                         msg);
+}
+
+Return<void> WifiNanIface::respondToDataPathIndicationRequest(
+    uint16_t cmd_id,
+    const NanRespondToDataPathIndicationRequest& msg,
+    respondToDataPathIndicationRequest_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                         &WifiNanIface::respondToDataPathIndicationRequestInternal,
+                         hidl_status_cb,
+                         cmd_id,
+                         msg);
+}
+
+Return<void> WifiNanIface::terminateDataPathRequest(uint16_t cmd_id, uint32_t ndpInstanceId,
+    terminateDataPathRequest_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                         &WifiNanIface::terminateDataPathRequestInternal,
+                         hidl_status_cb,
+                         cmd_id,
+                         ndpInstanceId);
+}
+
 Return<void> WifiNanIface::beaconSdfPayloadRequest(
-    uint32_t cmd_id,
+    uint16_t cmd_id,
     const NanBeaconSdfPayloadRequest& msg,
     beaconSdfPayloadRequest_cb hidl_status_cb) {
   return validateAndCall(this,
@@ -200,88 +617,6 @@ Return<void> WifiNanIface::beaconSdfPayloadRequest(
                          hidl_status_cb,
                          cmd_id,
                          msg);
-}
-
-Return<void> WifiNanIface::getVersion(getVersion_cb hidl_status_cb) {
-  return validateAndCall(this,
-                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
-                         &WifiNanIface::getVersionInternal,
-                         hidl_status_cb);
-}
-
-Return<void> WifiNanIface::getCapabilities(uint32_t cmd_id,
-                                           getCapabilities_cb hidl_status_cb) {
-  return validateAndCall(this,
-                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
-                         &WifiNanIface::getCapabilitiesInternal,
-                         hidl_status_cb,
-                         cmd_id);
-}
-
-Return<void> WifiNanIface::dataInterfaceCreate(
-    uint32_t cmd_id,
-    const hidl_string& iface_name,
-    dataInterfaceCreate_cb hidl_status_cb) {
-  return validateAndCall(this,
-                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
-                         &WifiNanIface::dataInterfaceCreateInternal,
-                         hidl_status_cb,
-                         cmd_id,
-                         iface_name);
-}
-
-Return<void> WifiNanIface::dataInterfaceDelete(
-    uint32_t cmd_id,
-    const hidl_string& iface_name,
-    dataInterfaceDelete_cb hidl_status_cb) {
-  return validateAndCall(this,
-                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
-                         &WifiNanIface::dataInterfaceDeleteInternal,
-                         hidl_status_cb,
-                         cmd_id,
-                         iface_name);
-}
-
-Return<void> WifiNanIface::dataRequestInitiator(
-    uint32_t cmd_id,
-    const NanDataPathInitiatorRequest& msg,
-    dataRequestInitiator_cb hidl_status_cb) {
-  return validateAndCall(this,
-                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
-                         &WifiNanIface::dataRequestInitiatorInternal,
-                         hidl_status_cb,
-                         cmd_id,
-                         msg);
-}
-
-Return<void> WifiNanIface::dataIndicationResponse(
-    uint32_t cmd_id,
-    const NanDataPathIndicationResponse& msg,
-    dataIndicationResponse_cb hidl_status_cb) {
-  return validateAndCall(this,
-                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
-                         &WifiNanIface::dataIndicationResponseInternal,
-                         hidl_status_cb,
-                         cmd_id,
-                         msg);
-}
-
-Return<void> WifiNanIface::dataEnd(uint32_t cmd_id,
-                                   const NanDataPathEndRequest& msg,
-                                   dataEnd_cb hidl_status_cb) {
-  return validateAndCall(this,
-                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
-                         &WifiNanIface::dataEndInternal,
-                         hidl_status_cb,
-                         cmd_id,
-                         msg);
-}
-
-Return<void> WifiNanIface::getType(getType_cb hidl_status_cb) {
-  return validateAndCall(this,
-                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
-                         &WifiNanIface::getTypeInternal,
-                         hidl_status_cb);
 }
 
 std::pair<WifiStatus, std::string> WifiNanIface::getNameInternal() {
@@ -294,16 +629,24 @@ std::pair<WifiStatus, IfaceType> WifiNanIface::getTypeInternal() {
 
 WifiStatus WifiNanIface::registerEventCallbackInternal(
     const sp<IWifiNanIfaceEventCallback>& callback) {
-  // TODO(b/31632518): remove the callback when the client is destroyed
+  // TODO(b/31632518): remove the callback when the client is destroyed and/or
+  // make sure that the same callback is only registered once (i.e. detect duplicates)
+  // OR: consider having a single listener - not clear why multiple listeners (managers) are
+  // necessary, nor how they would coordinate (at least command IDs).
   event_callbacks_.emplace_back(callback);
   return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 
-WifiStatus WifiNanIface::enableRequestInternal(uint32_t cmd_id,
+WifiStatus WifiNanIface::getCapabilitiesRequestInternal(uint16_t cmd_id) {
+  legacy_hal::wifi_error legacy_status =
+        legacy_hal_.lock()->nanGetCapabilities(cmd_id);
+  return createWifiStatusFromLegacyError(legacy_status);
+}
+
+WifiStatus WifiNanIface::enableRequestInternal(uint16_t cmd_id,
                                                const NanEnableRequest& msg) {
   legacy_hal::NanEnableRequest legacy_msg;
-  if (!hidl_struct_util::convertHidlNanEnableRequestToLegacy(msg,
-                                                             &legacy_msg)) {
+  if (!hidl_struct_util::convertHidlNanEnableRequestToLegacy(msg, &legacy_msg)) {
     return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
   }
   legacy_hal::wifi_error legacy_status =
@@ -311,14 +654,26 @@ WifiStatus WifiNanIface::enableRequestInternal(uint32_t cmd_id,
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
-WifiStatus WifiNanIface::disableRequestInternal(uint32_t cmd_id) {
+WifiStatus WifiNanIface::configRequestInternal(
+    uint16_t cmd_id, const NanConfigRequest& msg) {
+  legacy_hal::NanConfigRequest legacy_msg;
+  if (!hidl_struct_util::convertHidlNanConfigRequestToLegacy(msg,
+                                                             &legacy_msg)) {
+    return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
+  }
+  legacy_hal::wifi_error legacy_status =
+      legacy_hal_.lock()->nanConfigRequest(cmd_id, legacy_msg);
+  return createWifiStatusFromLegacyError(legacy_status);
+}
+
+WifiStatus WifiNanIface::disableRequestInternal(uint16_t cmd_id) {
   legacy_hal::wifi_error legacy_status =
       legacy_hal_.lock()->nanDisableRequest(cmd_id);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
-WifiStatus WifiNanIface::publishRequestInternal(uint32_t cmd_id,
-                                                const NanPublishRequest& msg) {
+WifiStatus WifiNanIface::startPublishRequestInternal(uint16_t cmd_id,
+                                                     const NanPublishRequest& msg) {
   legacy_hal::NanPublishRequest legacy_msg;
   if (!hidl_struct_util::convertHidlNanPublishRequestToLegacy(msg,
                                                               &legacy_msg)) {
@@ -329,20 +684,17 @@ WifiStatus WifiNanIface::publishRequestInternal(uint32_t cmd_id,
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
-WifiStatus WifiNanIface::publishCancelRequestInternal(
-    uint32_t cmd_id, const NanPublishCancelRequest& msg) {
+WifiStatus WifiNanIface::stopPublishRequestInternal(
+    uint16_t cmd_id, uint16_t sessionId) {
   legacy_hal::NanPublishCancelRequest legacy_msg;
-  if (!hidl_struct_util::convertHidlNanPublishCancelRequestToLegacy(
-          msg, &legacy_msg)) {
-    return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
-  }
+  legacy_msg.publish_id = sessionId;
   legacy_hal::wifi_error legacy_status =
       legacy_hal_.lock()->nanPublishCancelRequest(cmd_id, legacy_msg);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
-WifiStatus WifiNanIface::subscribeRequestInternal(
-    uint32_t cmd_id, const NanSubscribeRequest& msg) {
+WifiStatus WifiNanIface::startSubscribeRequestInternal(
+    uint16_t cmd_id, const NanSubscribeRequest& msg) {
   legacy_hal::NanSubscribeRequest legacy_msg;
   if (!hidl_struct_util::convertHidlNanSubscribeRequestToLegacy(msg,
                                                                 &legacy_msg)) {
@@ -353,59 +705,81 @@ WifiStatus WifiNanIface::subscribeRequestInternal(
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
-WifiStatus WifiNanIface::subscribeCancelRequestInternal(
-    uint32_t /* cmd_id */, const NanSubscribeCancelRequest& /* msg */) {
-  // TODO implement
-  return createWifiStatus(WifiStatusCode::SUCCESS);
+WifiStatus WifiNanIface::stopSubscribeRequestInternal(
+    uint16_t cmd_id, uint16_t sessionId) {
+  legacy_hal::NanSubscribeCancelRequest legacy_msg;
+  legacy_msg.subscribe_id = sessionId;
+  legacy_hal::wifi_error legacy_status =
+      legacy_hal_.lock()->nanSubscribeCancelRequest(cmd_id, legacy_msg);
+  return createWifiStatusFromLegacyError(legacy_status);
 }
+
 WifiStatus WifiNanIface::transmitFollowupRequestInternal(
-    uint32_t /* cmd_id */, const NanTransmitFollowupRequest& /* msg */) {
-  // TODO implement
-  return createWifiStatus(WifiStatusCode::SUCCESS);
+    uint16_t cmd_id, const NanTransmitFollowupRequest& msg) {
+  legacy_hal::NanTransmitFollowupRequest legacy_msg;
+  if (!hidl_struct_util::convertHidlNanTransmitFollowupRequestToLegacy(msg, &legacy_msg)) {
+    return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
+  }
+  legacy_hal::wifi_error legacy_status =
+      legacy_hal_.lock()->nanTransmitFollowupRequest(cmd_id, legacy_msg);
+  return createWifiStatusFromLegacyError(legacy_status);
 }
-WifiStatus WifiNanIface::configRequestInternal(
-    uint32_t /* cmd_id */, const NanConfigRequest& /* msg */) {
-  // TODO implement
-  return createWifiStatus(WifiStatusCode::SUCCESS);
+
+WifiStatus WifiNanIface::createDataInterfaceRequestInternal(
+    uint16_t cmd_id, const std::string& iface_name) {
+  legacy_hal::wifi_error legacy_status =
+      legacy_hal_.lock()->nanDataInterfaceCreate(cmd_id, iface_name);
+  return createWifiStatusFromLegacyError(legacy_status);
+}
+WifiStatus WifiNanIface::deleteDataInterfaceRequestInternal(
+    uint16_t cmd_id, const std::string& iface_name) {
+  legacy_hal::wifi_error legacy_status =
+      legacy_hal_.lock()->nanDataInterfaceDelete(cmd_id, iface_name);
+  return createWifiStatusFromLegacyError(legacy_status);
+}
+WifiStatus WifiNanIface::initiateDataPathRequestInternal(
+    uint16_t cmd_id, const NanInitiateDataPathRequest& msg) {
+  legacy_hal::NanDataPathInitiatorRequest legacy_msg;
+  if (!hidl_struct_util::convertHidlNanDataPathInitiatorRequestToLegacy(msg, &legacy_msg)) {
+    return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
+  }
+  legacy_hal::wifi_error legacy_status =
+      legacy_hal_.lock()->nanDataRequestInitiator(cmd_id, legacy_msg);
+  return createWifiStatusFromLegacyError(legacy_status);
+}
+WifiStatus WifiNanIface::respondToDataPathIndicationRequestInternal(
+    uint16_t cmd_id, const NanRespondToDataPathIndicationRequest& msg) {
+  legacy_hal::NanDataPathIndicationResponse legacy_msg;
+  if (!hidl_struct_util::convertHidlNanDataPathIndicationResponseToLegacy(msg, &legacy_msg)) {
+    return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
+  }
+  legacy_hal::wifi_error legacy_status =
+      legacy_hal_.lock()->nanDataIndicationResponse(cmd_id, legacy_msg);
+  return createWifiStatusFromLegacyError(legacy_status);
+}
+WifiStatus WifiNanIface::terminateDataPathRequestInternal(
+    uint16_t cmd_id, uint32_t ndpInstanceId) {
+  legacy_hal::NanDataPathEndRequest* legacy_msg = (legacy_hal::NanDataPathEndRequest*)malloc(
+      sizeof(legacy_hal::NanDataPathEndRequest) + sizeof(uint32_t));
+  legacy_msg->num_ndp_instances = 1;
+  legacy_msg->ndp_instance_id[0] = ndpInstanceId;
+
+  legacy_hal::wifi_error legacy_status =
+      legacy_hal_.lock()->nanDataEnd(cmd_id, *legacy_msg);
+  free(legacy_msg);
+  return createWifiStatusFromLegacyError(legacy_status);
 }
 WifiStatus WifiNanIface::beaconSdfPayloadRequestInternal(
-    uint32_t /* cmd_id */, const NanBeaconSdfPayloadRequest& /* msg */) {
-  // TODO implement
-  return createWifiStatus(WifiStatusCode::SUCCESS);
+    uint16_t cmd_id, const NanBeaconSdfPayloadRequest& msg) {
+  legacy_hal::NanBeaconSdfPayloadRequest legacy_msg;
+  if (!hidl_struct_util::convertHidlNanBeaconSdfPayloadRequestToLegacy(msg, &legacy_msg)) {
+    return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
+  }
+  legacy_hal::wifi_error legacy_status =
+      legacy_hal_.lock()->nanBeaconSdfPayloadRequest(cmd_id, legacy_msg);
+  return createWifiStatusFromLegacyError(legacy_status);
 }
-std::pair<WifiStatus, NanVersion> WifiNanIface::getVersionInternal() {
-  // TODO implement
-  return {createWifiStatus(WifiStatusCode::SUCCESS), 0};
-}
-WifiStatus WifiNanIface::getCapabilitiesInternal(uint32_t /* cmd_id */) {
-  // TODO implement
-  return createWifiStatus(WifiStatusCode::SUCCESS);
-}
-WifiStatus WifiNanIface::dataInterfaceCreateInternal(
-    uint32_t /* cmd_id */, const std::string& /* iface_name */) {
-  // TODO implement
-  return createWifiStatus(WifiStatusCode::SUCCESS);
-}
-WifiStatus WifiNanIface::dataInterfaceDeleteInternal(
-    uint32_t /* cmd_id */, const std::string& /* iface_name */) {
-  // TODO implement
-  return createWifiStatus(WifiStatusCode::SUCCESS);
-}
-WifiStatus WifiNanIface::dataRequestInitiatorInternal(
-    uint32_t /* cmd_id */, const NanDataPathInitiatorRequest& /* msg */) {
-  // TODO implement
-  return createWifiStatus(WifiStatusCode::SUCCESS);
-}
-WifiStatus WifiNanIface::dataIndicationResponseInternal(
-    uint32_t /* cmd_id */, const NanDataPathIndicationResponse& /* msg */) {
-  // TODO implement
-  return createWifiStatus(WifiStatusCode::SUCCESS);
-}
-WifiStatus WifiNanIface::dataEndInternal(
-    uint32_t /* cmd_id */, const NanDataPathEndRequest& /* msg */) {
-  // TODO implement
-  return createWifiStatus(WifiStatusCode::SUCCESS);
-}
+
 }  // namespace implementation
 }  // namespace V1_0
 }  // namespace wifi
