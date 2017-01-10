@@ -94,15 +94,7 @@ public:
         if (handle == nullptr || handle->numFds == 0) {
             fd = -1;
         } else if (handle->numFds == 1) {
-//TODO(b/34110242): make this hidl transport agnostic
-#ifdef BINDERIZED
             fd = dup(handle->data[0]);
-            // TODO(b/34169301)
-            // Camera service expect FD be closed by HAL process (in passthrough mode)
-            // close(handle->data[0]);
-#else
-            fd = handle->data[0];
-#endif
             if (fd < 0) {
                 ALOGE("failed to dup fence fd %d", handle->data[0]);
                 return false;
@@ -118,13 +110,9 @@ public:
 
     void closeFence(int fd)
     {
-#ifdef BINDERIZED
         if (fd >= 0) {
             close(fd);
         }
-#else
-        (void) fd;
-#endif
     }
 
 private:
