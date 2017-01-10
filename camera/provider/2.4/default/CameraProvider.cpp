@@ -17,8 +17,6 @@
 #define LOG_TAG "CamProvider@2.4-impl"
 #include <android/log.h>
 
-#include <regex>
-
 #include "CameraProvider.h"
 #include "CameraDevice.h"
 #include <string.h>

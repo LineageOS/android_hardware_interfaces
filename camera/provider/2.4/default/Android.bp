@@ -21,3 +21,29 @@ cc_library_shared {
         "android.hardware.camera.common@1.0-helper"
     ]
 }
+
+cc_binary {
+    name: "android.hardware.camera.provider@2.4-service",
+    relative_install_path: "hw",
+    srcs: ["service.cpp", "CameraProvider.cpp"],
+    compile_multilib: "32",
+    init_rc: ["android.hardware.camera.provider@2.4-service.rc"],
+    shared_libs: [
+        "libhidlbase",
+        "libhidltransport",
+        "liblog",
+        "libhwbinder",
+        "libutils",
+        "libhardware",
+        "android.hardware.camera.device@1.0",
+        "android.hardware.camera.device@3.2",
+        "android.hardware.camera.provider@2.4",
+        "android.hardware.camera.common@1.0",
+        "libcutils",
+        "android.hardware.camera.device@3.2-impl-binderized",
+        "libcamera_metadata"
+    ],
+    static_libs: [
+        "android.hardware.camera.common@1.0-helper"
+    ]
+}
