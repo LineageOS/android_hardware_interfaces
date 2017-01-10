@@ -928,10 +928,6 @@ enum Dataspace : int32_t {
      * A pixel value of 1.0, 1.0, 1.0 corresponds to sRGB white (D65) at 80 nits.
      * Values beyond the range [0.0 - 1.0] would correspond to other colors
      * spaces and/or HDR content.
-     *
-     * TODO (courtneygo): Will we actually use this? We intend to use FP16
-     * storage for data using scRGB so we can do all work in linear space
-     * and don't have to worry as much about limited precision.
      */
     V0_SCRGB = STANDARD_BT709 | TRANSFER_SRGB | RANGE_EXTENDED,
 
@@ -1012,6 +1008,24 @@ enum Dataspace : int32_t {
      * a 2.6 gamma encoding is not supported in HW.
      */
     DCI_P3 = STANDARD_DCI_P3 | TRANSFER_GAMMA2_6 | RANGE_FULL,
+
+
+    /*
+     * Display P3
+     *
+     * Display P3 uses same primaries and white-point as DCI-P3
+     * linear transfer function makes this the same as DCI_P3_LINEAR.
+     */
+    DISPLAY_P3_LINEAR = STANDARD_DCI_P3 | TRANSFER_LINEAR | RANGE_FULL,
+
+
+    /*
+     * Display P3
+     *
+     * Use same primaries and white-point as DCI-P3
+     * but sRGB transfer function.
+     */
+    DISPLAY_P3 = STANDARD_DCI_P3 | TRANSFER_SRGB | RANGE_FULL,
 
 
     /*
