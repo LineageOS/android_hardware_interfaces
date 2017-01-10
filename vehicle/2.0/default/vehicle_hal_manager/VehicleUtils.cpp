@@ -18,7 +18,7 @@
 
 #include "VehicleUtils.h"
 
-#include <android/log.h>
+#include <log/log.h>
 
 namespace android {
 namespace hardware {

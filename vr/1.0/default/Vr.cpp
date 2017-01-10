@@ -16,9 +16,11 @@
 
 #define LOG_TAG "VrService"
 
+#include <log/log.h>
+
 #include <hardware/hardware.h>
 #include <hardware/vr.h>
-#include <android/log.h>
+
 #include "Vr.h"
 
 namespace android {

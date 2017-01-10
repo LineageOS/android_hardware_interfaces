@@ -15,7 +15,8 @@
  */
 
 #define LOG_TAG "light"
-#include <android/log.h>
+
+#include <log/log.h>
 
 #include "Light.h"
 

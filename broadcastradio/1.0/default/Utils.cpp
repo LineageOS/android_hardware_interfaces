@@ -16,7 +16,7 @@
 #define LOG_TAG "BroadcastRadioHalUtils"
 //#define LOG_NDEBUG 0
 
-#include <android/log.h>
+#include <log/log.h>
 #include <utils/misc.h>
 #include <system/radio_metadata.h>
 

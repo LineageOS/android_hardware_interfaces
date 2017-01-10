@@ -15,8 +15,9 @@
  */
 #define LOG_TAG "android.hardware.gatekeeper@1.0-service"
 
-#include <android/log.h>
 #include <dlfcn.h>
+
+#include <log/log.h>
 
 #include "Gatekeeper.h"
 

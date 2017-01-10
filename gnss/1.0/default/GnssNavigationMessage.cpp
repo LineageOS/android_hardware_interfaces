@@ -15,7 +15,8 @@
  */
 
 #define LOG_TAG "GnssHAL_GnssNavigationMessageInterface"
-#include <android/log.h>
+
+#include <log/log.h>
 
 #include "GnssNavigationMessage.h"
 

@@ -15,9 +15,12 @@
  */
 
 #define LOG_TAG "VibratorService"
+
+#include <log/log.h>
+
 #include <hardware/hardware.h>
 #include <hardware/vibrator.h>
-#include <android/log.h>
+
 #include "Vibrator.h"
 
 namespace android {
