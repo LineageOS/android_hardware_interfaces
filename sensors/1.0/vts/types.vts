@@ -374,10 +374,7 @@ attribute: {
     struct_value: {
         name: "flags"
         type: TYPE_MASK
-        enum_value: {
-            type: TYPE_ENUM
-            predefined_type: "::android::hardware::sensors::V1_0::SensorFlagBits"
-        }
+        predefined_type: "::android::hardware::sensors::V1_0::SensorFlagBits"
     }
 }
 
@@ -615,6 +612,26 @@ attribute: {
         scalar_value: {
             uint32_t: 131077
         }
+        enumerator: "AINFO_LOCAL_GEOMAGNETIC_FIELD"
+        scalar_value: {
+            uint32_t: 196608
+        }
+        enumerator: "AINFO_LOCAL_GRAVITY"
+        scalar_value: {
+            uint32_t: 196609
+        }
+        enumerator: "AINFO_DOCK_STATE"
+        scalar_value: {
+            uint32_t: 196610
+        }
+        enumerator: "AINFO_HIGH_PERFORMANCE_MODE"
+        scalar_value: {
+            uint32_t: 196611
+        }
+        enumerator: "AINFO_MAGNETIC_FIELD_CALIBRATION"
+        scalar_value: {
+            uint32_t: 196612
+        }
         enumerator: "AINFO_CUSTOM_START"
         scalar_value: {
             uint32_t: 268435456
@@ -812,6 +829,47 @@ attribute: {
         enumerator: "SENSORS_EVENT"
         scalar_value: {
             int32_t: 1
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::sensors::V1_0::SensorsEventFormatOffset"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "uint16_t"
+
+        enumerator: "SIZE_FIELD"
+        scalar_value: {
+            uint16_t: 0
+        }
+        enumerator: "REPORT_TOKEN"
+        scalar_value: {
+            uint16_t: 4
+        }
+        enumerator: "SENSOR_TYPE"
+        scalar_value: {
+            uint16_t: 8
+        }
+        enumerator: "ATOMIC_COUNTER"
+        scalar_value: {
+            uint16_t: 12
+        }
+        enumerator: "TIMESTAMP"
+        scalar_value: {
+            uint16_t: 16
+        }
+        enumerator: "DATA"
+        scalar_value: {
+            uint16_t: 24
+        }
+        enumerator: "RESERVED"
+        scalar_value: {
+            uint16_t: 88
+        }
+        enumerator: "TOTAL_LENGTH"
+        scalar_value: {
+            uint16_t: 104
         }
     }
 }

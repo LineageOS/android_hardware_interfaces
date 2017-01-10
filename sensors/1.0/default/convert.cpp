@@ -340,6 +340,50 @@ void convertToSensorEvent(const Event &src, sensors_event_t *dst) {
     }
 }
 
+bool convertFromSharedMemInfo(const SharedMemInfo& memIn, sensors_direct_mem_t *memOut) {
+    if (memOut == nullptr) {
+        return false;
+    }
+
+    switch(memIn.type) {
+        case SharedMemType::ASHMEM:
+            memOut->type = SENSOR_DIRECT_MEM_TYPE_ASHMEM;
+            break;
+        case SharedMemType::GRALLOC:
+            memOut->type = SENSOR_DIRECT_MEM_TYPE_GRALLOC;
+            break;
+        default:
+            return false;
+    }
+
+    switch(memIn.format) {
+        case SharedMemFormat::SENSORS_EVENT:
+            memOut->format = SENSOR_DIRECT_FMT_SENSORS_EVENT;
+            break;
+        default:
+            return false;
+    }
+
+    memOut->size = memIn.size;
+    memOut->handle = memIn.memoryHandle;
+    return true;
+}
+
+int convertFromRateLevel(RateLevel rate) {
+    switch(rate) {
+        case RateLevel::STOP:
+            return SENSOR_DIRECT_RATE_STOP;
+        case RateLevel::NORMAL:
+            return SENSOR_DIRECT_RATE_NORMAL;
+        case RateLevel::FAST:
+            return SENSOR_DIRECT_RATE_FAST;
+        case RateLevel::VERY_FAST:
+            return SENSOR_DIRECT_RATE_VERY_FAST;
+        default:
+            return -1;
+    }
+}
+
 }  // namespace implementation
 }  // namespace V1_0
 }  // namespace sensors

@@ -19,16 +19,20 @@
 #include <android/hardware/sensors/1.0/ISensors.h>
 #include <android/hardware/sensors/1.0/types.h>
 #include <android/log.h>
+#include <cutils/ashmem.h>
 #include <gtest/gtest.h>
 #include <hardware/sensors.h>       // for sensor type strings
 
 #include <algorithm>
 #include <cinttypes>
 #include <cmath>
+#include <memory>
 #include <mutex>
 #include <thread>
+#include <unordered_set>
 #include <vector>
 
+#include <sys/mman.h>
 #include <unistd.h>
 
 using ::android::hardware::Return;
@@ -148,6 +152,164 @@ void SensorsHidlEnvironment::pollingThread(
   ALOGD("polling thread end");
 }
 
+class SensorsTestSharedMemory {
+ public:
+  static SensorsTestSharedMemory* create(SharedMemType type, size_t size);
+  SharedMemInfo getSharedMemInfo() const;
+  char * getBuffer() const;
+  std::vector<Event> parseEvents(int64_t lastCounter = -1, size_t offset = 0) const;
+  virtual ~SensorsTestSharedMemory();
+ private:
+  SensorsTestSharedMemory(SharedMemType type, size_t size);
+
+  SharedMemType mType;
+  native_handle_t* mNativeHandle;
+  size_t mSize;
+  char* mBuffer;
+
+  DISALLOW_COPY_AND_ASSIGN(SensorsTestSharedMemory);
+};
+
+SharedMemInfo SensorsTestSharedMemory::getSharedMemInfo() const {
+  SharedMemInfo mem = {
+    .type = mType,
+    .format = SharedMemFormat::SENSORS_EVENT,
+    .size = static_cast<uint32_t>(mSize),
+    .memoryHandle = mNativeHandle
+  };
+  return mem;
+}
+
+char * SensorsTestSharedMemory::getBuffer() const {
+  return mBuffer;
+}
+
+std::vector<Event> SensorsTestSharedMemory::parseEvents(int64_t lastCounter, size_t offset) const {
+
+  constexpr size_t kEventSize = static_cast<size_t>(SensorsEventFormatOffset::TOTAL_LENGTH);
+  constexpr size_t kOffsetSize = static_cast<size_t>(SensorsEventFormatOffset::SIZE_FIELD);
+  constexpr size_t kOffsetToken = static_cast<size_t>(SensorsEventFormatOffset::REPORT_TOKEN);
+  constexpr size_t kOffsetType = static_cast<size_t>(SensorsEventFormatOffset::SENSOR_TYPE);
+  constexpr size_t kOffsetAtomicCounter =
+      static_cast<size_t>(SensorsEventFormatOffset::ATOMIC_COUNTER);
+  constexpr size_t kOffsetTimestamp = static_cast<size_t>(SensorsEventFormatOffset::TIMESTAMP);
+  constexpr size_t kOffsetData = static_cast<size_t>(SensorsEventFormatOffset::DATA);
+
+  std::vector<Event> events;
+  std::vector<float> data(16);
+
+  while (offset + kEventSize <= mSize) {
+    int64_t atomicCounter = *reinterpret_cast<uint32_t *>(mBuffer + offset + kOffsetAtomicCounter);
+    if (atomicCounter <= lastCounter) {
+      break;
+    }
+
+    int32_t size = *reinterpret_cast<int32_t *>(mBuffer + offset + kOffsetSize);
+    if (size != kEventSize) {
+      // unknown error, events parsed may be wrong, remove all
+      events.clear();
+      break;
+    }
+
+    int32_t token = *reinterpret_cast<int32_t *>(mBuffer + offset + kOffsetToken);
+    int32_t type = *reinterpret_cast<int32_t *>(mBuffer + offset + kOffsetType);
+    int64_t timestamp = *reinterpret_cast<int64_t *>(mBuffer + offset + kOffsetTimestamp);
+
+    ALOGV("offset = %zu, cnt %" PRId32 ", token %" PRId32 ", type %" PRId32 ", timestamp %" PRId64,
+        offset, atomicCounter, token, type, timestamp);
+
+    Event event = {
+      .timestamp = timestamp,
+      .sensorHandle = token,
+      .sensorType = static_cast<SensorType>(type),
+    };
+    event.u.data = android::hardware::hidl_array<float, 16>
+        (reinterpret_cast<float*>(mBuffer + offset + kOffsetData));
+
+    events.push_back(event);
+
+    lastCounter = atomicCounter;
+    offset += kEventSize;
+  }
+
+  return events;
+}
+
+SensorsTestSharedMemory::SensorsTestSharedMemory(SharedMemType type, size_t size)
+    : mType(type), mSize(0), mBuffer(nullptr) {
+  native_handle_t *handle = nullptr;
+  char *buffer = nullptr;
+  switch(type) {
+    case SharedMemType::ASHMEM: {
+      int fd;
+      handle = ::native_handle_create(1 /*nFds*/, 0/*nInts*/);
+      if (handle != nullptr) {
+        handle->data[0] = fd = ::ashmem_create_region("SensorsTestSharedMemory", size);
+        if (handle->data[0] > 0) {
+          // memory is pinned by default
+          buffer = static_cast<char *>
+              (::mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
+          if (buffer != reinterpret_cast<char*>(MAP_FAILED)) {
+            break;
+          }
+          ::native_handle_close(handle);
+        }
+        ::native_handle_delete(handle);
+        handle = nullptr;
+      }
+      break;
+    }
+    default:
+      break;
+  }
+
+  if (buffer != nullptr) {
+    mNativeHandle = handle;
+    mSize = size;
+    mBuffer = buffer;
+  }
+}
+
+SensorsTestSharedMemory::~SensorsTestSharedMemory() {
+  switch(mType) {
+    case SharedMemType::ASHMEM: {
+      if (mSize != 0) {
+        ::munmap(mBuffer, mSize);
+        mBuffer = nullptr;
+
+        ::native_handle_close(mNativeHandle);
+        ::native_handle_delete(mNativeHandle);
+
+        mNativeHandle = nullptr;
+        mSize = 0;
+      }
+      break;
+    }
+    default: {
+      if (mNativeHandle != nullptr || mSize != 0 || mBuffer != nullptr) {
+        ALOGE("SensorsTestSharedMemory %p not properly destructed: "
+            "type %d, native handle %p, size %zu, buffer %p",
+            this, static_cast<int>(mType), mNativeHandle, mSize, mBuffer);
+      }
+      break;
+    }
+  }
+}
+
+SensorsTestSharedMemory* SensorsTestSharedMemory::create(SharedMemType type, size_t size) {
+  constexpr size_t kMaxSize = 128*1024*1024; // sensor test should not need more than 128M
+  if (size == 0 || size >= kMaxSize) {
+    return nullptr;
+  }
+
+  auto m = new SensorsTestSharedMemory(type, size);
+  if (m->mSize != size || m->mBuffer == nullptr) {
+    delete m;
+    m = nullptr;
+  }
+  return m;
+}
+
 // The main test class for SENSORS HIDL HAL.
 class SensorsHidlTest : public ::testing::Test {
  public:
@@ -155,51 +317,65 @@ class SensorsHidlTest : public ::testing::Test {
   }
 
   virtual void TearDown() override {
+    // stop all sensors
+    for (auto s : mSensorHandles) {
+      S()->activate(s, false);
+    }
+    mSensorHandles.clear();
+
+    // stop all direct report and channels
+    for (auto c : mDirectChannelHandles) {
+      // disable all reports
+      S()->configDirectReport(-1, c, RateLevel::STOP, [] (auto, auto){});
+      S()->unregisterDirectChannel(c);
+    }
+    mDirectChannelHandles.clear();
   }
 
  protected:
+  SensorInfo defaultSensorByType(SensorType type);
+  std::vector<Event> collectEvents(useconds_t timeLimitUs, size_t nEventLimit,
+        bool clearBeforeStart = true, bool changeCollection = true);
+
+  // implementation wrapper
+  Return<void> getSensorsList(ISensors::getSensorsList_cb _hidl_cb) {
+    return S()->getSensorsList(_hidl_cb);
+  }
+
+  Return<Result> activate(
+          int32_t sensorHandle, bool enabled);
+
+  Return<Result> batch(
+          int32_t sensorHandle,
+          int64_t samplingPeriodNs,
+          int64_t maxReportLatencyNs) {
+    return S()->batch(sensorHandle, samplingPeriodNs, maxReportLatencyNs);
+  }
+
+  Return<Result> flush(int32_t sensorHandle) {
+    return S()->flush(sensorHandle);
+  }
+
+  Return<Result> injectSensorData(const Event& event) {
+    return S()->injectSensorData(event);
+  }
+
+  Return<void> registerDirectChannel(
+          const SharedMemInfo& mem, ISensors::registerDirectChannel_cb _hidl_cb);
+
+  Return<Result> unregisterDirectChannel(int32_t channelHandle) {
+    return S()->unregisterDirectChannel(channelHandle);
+  }
+
+  Return<void> configDirectReport(
+          int32_t sensorHandle, int32_t channelHandle, RateLevel rate,
+          ISensors::configDirectReport_cb _hidl_cb) {
+    return S()->configDirectReport(sensorHandle, channelHandle, rate, _hidl_cb);
+  }
+
   inline sp<ISensors>& S() {
     return SensorsHidlEnvironment::Instance()->sensors;
   }
-
-  std::vector<Event> collectEvents(useconds_t timeLimitUs, size_t nEventLimit,
-                                   bool clearBeforeStart = true,
-                                   bool changeCollection = true) {
-    std::vector<Event> events;
-    constexpr useconds_t SLEEP_GRANULARITY = 100*1000; //gradularity 100 ms
-
-    ALOGI("collect max of %zu events for %d us, clearBeforeStart %d",
-          nEventLimit, timeLimitUs, clearBeforeStart);
-
-    if (changeCollection) {
-      SensorsHidlEnvironment::Instance()->setCollection(true);
-    }
-    if (clearBeforeStart) {
-      SensorsHidlEnvironment::Instance()->catEvents(nullptr);
-    }
-
-    while (timeLimitUs > 0) {
-      useconds_t duration = std::min(SLEEP_GRANULARITY, timeLimitUs);
-      usleep(duration);
-      timeLimitUs -= duration;
-
-      SensorsHidlEnvironment::Instance()->catEvents(&events);
-      if (events.size() >= nEventLimit) {
-        break;
-      }
-      ALOGV("time to go = %d, events to go = %d",
-            (int)timeLimitUs, (int)(nEventLimit - events.size()));
-    }
-
-    if (changeCollection) {
-      SensorsHidlEnvironment::Instance()->setCollection(false);
-    }
-    return events;
-  }
-
-  static bool typeMatchStringType(SensorType type, const hidl_string& stringType);
-  static bool typeMatchReportMode(SensorType type, SensorFlagBits reportMode);
-  static bool delayMatchReportMode(int32_t minDelay, int32_t maxDelay, SensorFlagBits reportMode);
 
   inline static SensorFlagBits extractReportMode(uint64_t flag) {
     return (SensorFlagBits) (flag
@@ -219,9 +395,76 @@ class SensorsHidlTest : public ::testing::Test {
     return (int32_t) type > 0;
   }
 
+  static bool typeMatchStringType(SensorType type, const hidl_string& stringType);
+  static bool typeMatchReportMode(SensorType type, SensorFlagBits reportMode);
+  static bool delayMatchReportMode(int32_t minDelay, int32_t maxDelay, SensorFlagBits reportMode);
   static SensorFlagBits expectedReportModeForType(SensorType type);
-  SensorInfo defaultSensorByType(SensorType type);
+
+  // all sensors and direct channnels used
+  std::unordered_set<int32_t> mSensorHandles;
+  std::unordered_set<int32_t> mDirectChannelHandles;
 };
+
+
+Return<Result> SensorsHidlTest::activate(int32_t sensorHandle, bool enabled) {
+  // If activating a sensor, add the handle in a set so that when test fails it can be turned off.
+  // The handle is not removed when it is deactivating on purpose so that it is not necessary to
+  // check the return value of deactivation. Deactivating a sensor more than once does not have
+  // negative effect.
+  if (enabled) {
+    mSensorHandles.insert(sensorHandle);
+  }
+  return S()->activate(sensorHandle, enabled);
+}
+
+Return<void> SensorsHidlTest::registerDirectChannel(
+    const SharedMemInfo& mem, ISensors::registerDirectChannel_cb cb) {
+  // If registeration of a channel succeeds, add the handle of channel to a set so that it can be
+  // unregistered when test fails. Unregister a channel does not remove the handle on purpose.
+  // Unregistering a channel more than once should not have negative effect.
+  S()->registerDirectChannel(mem,
+      [&] (auto result, auto channelHandle) {
+        if (result == Result::OK) {
+          mDirectChannelHandles.insert(channelHandle);
+        }
+        cb(result, channelHandle);
+      });
+  return Void();
+}
+
+std::vector<Event> SensorsHidlTest::collectEvents(useconds_t timeLimitUs, size_t nEventLimit,
+      bool clearBeforeStart, bool changeCollection) {
+  std::vector<Event> events;
+  constexpr useconds_t SLEEP_GRANULARITY = 100*1000; //gradularity 100 ms
+
+  ALOGI("collect max of %zu events for %d us, clearBeforeStart %d",
+        nEventLimit, timeLimitUs, clearBeforeStart);
+
+  if (changeCollection) {
+    SensorsHidlEnvironment::Instance()->setCollection(true);
+  }
+  if (clearBeforeStart) {
+    SensorsHidlEnvironment::Instance()->catEvents(nullptr);
+  }
+
+  while (timeLimitUs > 0) {
+    useconds_t duration = std::min(SLEEP_GRANULARITY, timeLimitUs);
+    usleep(duration);
+    timeLimitUs -= duration;
+
+    SensorsHidlEnvironment::Instance()->catEvents(&events);
+    if (events.size() >= nEventLimit) {
+      break;
+    }
+    ALOGV("time to go = %d, events to go = %d",
+          (int)timeLimitUs, (int)(nEventLimit - events.size()));
+  }
+
+  if (changeCollection) {
+    SensorsHidlEnvironment::Instance()->setCollection(false);
+  }
+  return events;
+}
 
 bool SensorsHidlTest::typeMatchStringType(SensorType type, const hidl_string& stringType) {
 
@@ -303,6 +546,7 @@ bool SensorsHidlTest::delayMatchReportMode(
       break;
     case SensorFlagBits::SPECIAL_REPORTING_MODE:
       res = (minDelay == 0) && (maxDelay == 0);
+      break;
     default:
       res = false;
   }
@@ -439,10 +683,10 @@ TEST_F(SensorsHidlTest, NormalAccelerometerStreamingOperation) {
 
   int32_t handle = sensor.sensorHandle;
 
-  S()->batch(handle, samplingPeriodInNs, batchingPeriodInNs);
-  S()->activate(handle, 1);
+  ASSERT_EQ(batch(handle, samplingPeriodInNs, batchingPeriodInNs), Result::OK);
+  ASSERT_EQ(activate(handle, 1), Result::OK);
   events = collectEvents(minTimeUs, minNEvent, true /*clearBeforeStart*/);
-  S()->activate(handle, 0);
+  ASSERT_EQ(activate(handle, 0), Result::OK);
 
   ALOGI("Collected %zu samples", events.size());
 
@@ -475,7 +719,6 @@ TEST_F(SensorsHidlTest, NormalAccelerometerStreamingOperation) {
 
 // Test if sensor hal can do gyroscope streaming properly
 TEST_F(SensorsHidlTest, NormalGyroscopeStreamingOperation) {
-
   std::vector<Event> events;
 
   constexpr int64_t samplingPeriodInNs = 10ull*1000*1000; // 10ms
@@ -493,10 +736,10 @@ TEST_F(SensorsHidlTest, NormalGyroscopeStreamingOperation) {
 
   int32_t handle = sensor.sensorHandle;
 
-  S()->batch(handle, samplingPeriodInNs, batchingPeriodInNs);
-  S()->activate(handle, 1);
+  ASSERT_EQ(batch(handle, samplingPeriodInNs, batchingPeriodInNs), Result::OK);
+  ASSERT_EQ(activate(handle, 1), Result::OK);
   events = collectEvents(minTimeUs, minNEvent, true /*clearBeforeStart*/);
-  S()->activate(handle, 0);
+  ASSERT_EQ(activate(handle, 0), Result::OK);
 
   ALOGI("Collected %zu samples", events.size());
 
@@ -529,7 +772,6 @@ TEST_F(SensorsHidlTest, NormalGyroscopeStreamingOperation) {
 
 // Test if sensor hal can do accelerometer sampling rate switch properly when sensor is active
 TEST_F(SensorsHidlTest, AccelerometerSamplingPeriodHotSwitchOperation) {
-
   std::vector<Event> events1, events2;
 
   constexpr int64_t batchingPeriodInNs = 0; // no batching
@@ -553,18 +795,18 @@ TEST_F(SensorsHidlTest, AccelerometerSamplingPeriodHotSwitchOperation) {
     return;
   }
 
-  S()->batch(handle, minSamplingPeriodInNs, batchingPeriodInNs);
-  S()->activate(handle, 1);
+  ASSERT_EQ(batch(handle, minSamplingPeriodInNs, batchingPeriodInNs), Result::OK);
+  ASSERT_EQ(activate(handle, 1), Result::OK);
 
   usleep(500000); // sleep 0.5 sec to wait for change rate to happen
   events1 = collectEvents(sensor.minDelay * minNEvent, minNEvent, true /*clearBeforeStart*/);
 
-  S()->batch(handle, maxSamplingPeriodInNs, batchingPeriodInNs);
+  ASSERT_EQ(batch(handle, maxSamplingPeriodInNs, batchingPeriodInNs), Result::OK);
 
   usleep(500000); // sleep 0.5 sec to wait for change rate to happen
   events2 = collectEvents(sensor.maxDelay * minNEvent, minNEvent, true /*clearBeforeStart*/);
 
-  S()->activate(handle, 0);
+  ASSERT_EQ(activate(handle, 0), Result::OK);
 
   ALOGI("Collected %zu fast samples and %zu slow samples", events1.size(), events2.size());
 
@@ -616,7 +858,6 @@ TEST_F(SensorsHidlTest, AccelerometerSamplingPeriodHotSwitchOperation) {
 
 // Test if sensor hal can do normal accelerometer batching properly
 TEST_F(SensorsHidlTest, AccelerometerBatchingOperation) {
-
   std::vector<Event> events;
 
   constexpr int64_t oneSecondInNs = 1ull * 1000 * 1000 * 1000;
@@ -649,17 +890,16 @@ TEST_F(SensorsHidlTest, AccelerometerBatchingOperation) {
   int64_t allowedBatchDeliverTimeNs =
       std::max(oneSecondInNs, batchingPeriodInNs / 10);
 
-  S()->batch(handle, minSamplingPeriodInNs, INT64_MAX);
-  S()->activate(handle, 1);
+  ASSERT_EQ(batch(handle, minSamplingPeriodInNs, INT64_MAX), Result::OK);
+  ASSERT_EQ(activate(handle, 1), Result::OK);
 
   usleep(500000); // sleep 0.5 sec to wait for initialization
-  S()->flush(handle);
+  ASSERT_EQ(flush(handle), Result::OK);
 
   // wait for 80% of the reserved batching period
   // there should not be any significant amount of events
   // since collection is not enabled all events will go down the drain
   usleep(batchingPeriodInNs / 1000 * 8 / 10);
-
 
   SensorsHidlEnvironment::Instance()->setCollection(true);
   // 0.8 + 0.3 times the batching period
@@ -668,13 +908,13 @@ TEST_F(SensorsHidlTest, AccelerometerBatchingOperation) {
       batchingPeriodInNs / 1000 * 3 / 10,
         minFifoCount, true /*clearBeforeStart*/, false /*change collection*/);
 
-  S()->flush(handle);
+  ASSERT_EQ(flush(handle), Result::OK);
 
   events = collectEvents(allowedBatchDeliverTimeNs / 1000,
         minFifoCount, true /*clearBeforeStart*/, false /*change collection*/);
 
   SensorsHidlEnvironment::Instance()->setCollection(false);
-  S()->activate(handle, 0);
+  ASSERT_EQ(activate(handle, 0), Result::OK);
 
   size_t nEvent = 0;
   for (auto & e : events) {
@@ -687,6 +927,79 @@ TEST_F(SensorsHidlTest, AccelerometerBatchingOperation) {
   ASSERT_GT(nEvent, (size_t)(batchingPeriodInNs / minSamplingPeriodInNs * 9 / 10));
 }
 
+// Test sensor event direct report with ashmem for gyro sensor
+TEST_F(SensorsHidlTest, GyroscopeAshmemDirectReport) {
+
+  constexpr SensorType type = SensorType::GYROSCOPE;
+  constexpr size_t kEventSize = 104;
+  constexpr size_t kNEvent = 500;
+  constexpr size_t kMemSize = kEventSize * kNEvent;
+
+  SensorInfo sensor = defaultSensorByType(type);
+
+  if (!(sensor.flags | SensorFlagBits::MASK_DIRECT_REPORT)
+      || !(sensor.flags | SensorFlagBits::DIRECT_CHANNEL_ASHMEM)) {
+    // does not declare support
+    return;
+  }
+
+  std::unique_ptr<SensorsTestSharedMemory>
+      mem(SensorsTestSharedMemory::create(SharedMemType::ASHMEM, kMemSize));
+  ASSERT_NE(mem, nullptr);
+
+  char* buffer = mem->getBuffer();
+  // fill memory with data
+  for (size_t i = 0; i < kMemSize; ++i) {
+    buffer[i] = '\xcc';
+  }
+
+  int32_t channelHandle;
+  registerDirectChannel(mem->getSharedMemInfo(),
+      [&channelHandle] (auto result, auto channelHandle_) {
+          ASSERT_EQ(result, Result::OK);
+          channelHandle = channelHandle_;
+      });
+
+  // check memory is zeroed
+  for (size_t i = 0; i < kMemSize; ++i) {
+    ASSERT_EQ(buffer[i], '\0');
+  }
+
+  int32_t eventToken;
+  configDirectReport(sensor.sensorHandle, channelHandle, RateLevel::NORMAL,
+      [&eventToken] (auto result, auto token) {
+          ASSERT_EQ(result, Result::OK);
+          eventToken = token;
+      });
+
+  usleep(1500000); // sleep 1 sec for data, plus 0.5 sec for initialization
+  auto events = mem->parseEvents();
+
+  // allowed to be 55% of nominal freq (50Hz)
+  ASSERT_GT(events.size(), 50 / 2);
+  ASSERT_LT(events.size(), static_cast<size_t>(110*1.5));
+
+  int64_t lastTimestamp = 0;
+  for (auto &e : events) {
+    ASSERT_EQ(e.sensorType, type);
+    ASSERT_EQ(e.sensorHandle, eventToken);
+    ASSERT_GT(e.timestamp, lastTimestamp);
+
+    Vec3 gyro = e.u.vec3;
+    double gyroNorm = std::sqrt(gyro.x * gyro.x + gyro.y * gyro.y + gyro.z * gyro.z);
+    // assert not drifting
+    ASSERT_TRUE(gyroNorm < 0.1);  // < ~5 degree/sa
+
+    lastTimestamp = e.timestamp;
+  }
+
+  // stop sensor and unregister channel
+  configDirectReport(sensor.sensorHandle, channelHandle, RateLevel::STOP,
+        [&eventToken] (auto result, auto) {
+            ASSERT_EQ(result, Result::OK);
+        });
+  ASSERT_EQ(unregisterDirectChannel(channelHandle), Result::OK);
+}
 
 int main(int argc, char **argv) {
   ::testing::AddGlobalTestEnvironment(SensorsHidlEnvironment::Instance());
@@ -695,4 +1008,4 @@ int main(int argc, char **argv) {
   ALOGI("Test result = %d", status);
   return status;
 }
-
+// vim: set ts=2 sw=2

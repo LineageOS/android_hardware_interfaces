@@ -1224,21 +1224,30 @@ enum SharedMemType : int32_t {
 @export(name="direct_format_t", value_prefix="SENSOR_DIRECT_FMT_")
 enum SharedMemFormat : int32_t {
     SENSORS_EVENT = 1,  // shared memory is formated as an array of data
-                        // elements, each sized 104 bytes. Details of fields:
-                        //
-                        // offset   type        name
-                        //-----------------------------------
-                        // 0x0000   int32_t     size (always 104)
-                        // 0x0004   int32_t     sensor report token
-                        // 0x0008   int32_t     type (see SensorType)
-                        // 0x000C   int32_t     atomic counter
-                        // 0x0010   int64_t     timestamp (see Event)
-                        // 0x0014   float[16]/  data
-                        //          int64_t[8]
-                        // 0x0058   int32_t[4]  reserved
-                        //
+                        // elements. See SensorsEventFormatOffset for details.
                         // Upon return of channel registration call, the
                         // shared memory space must be formated to all 0 by HAL.
+};
+
+enum SensorsEventFormatOffset : uint16_t {
+    // offset   type        name
+    //-----------------------------------
+    // 0x0000   int32_t     size (always 104)
+    // 0x0004   int32_t     sensor report token
+    // 0x0008   int32_t     type (see SensorType)
+    // 0x000C   uint32_t    atomic counter
+    // 0x0010   int64_t     timestamp (see Event)
+    // 0x0018   float[16]/  data
+    //          int64_t[8]
+    // 0x0058   int32_t[4]  reserved (set to zero)
+    SIZE_FIELD      = 0x0,
+    REPORT_TOKEN    = 0x4,
+    SENSOR_TYPE     = 0x8,
+    ATOMIC_COUNTER  = 0xC,
+    TIMESTAMP       = 0x10,
+    DATA            = 0x18,
+    RESERVED        = 0x58,
+    TOTAL_LENGTH    = 0x68
 };
 
 /**
