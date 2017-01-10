@@ -22,8 +22,8 @@ genrule {
     out: [
         "android/hardware/tests/msgq/1.0/ITestMsgQ.h",
         "android/hardware/tests/msgq/1.0/IHwTestMsgQ.h",
-        "android/hardware/tests/msgq/1.0/BnTestMsgQ.h",
-        "android/hardware/tests/msgq/1.0/BpTestMsgQ.h",
+        "android/hardware/tests/msgq/1.0/BnHwTestMsgQ.h",
+        "android/hardware/tests/msgq/1.0/BpHwTestMsgQ.h",
         "android/hardware/tests/msgq/1.0/BsTestMsgQ.h",
     ],
 }
