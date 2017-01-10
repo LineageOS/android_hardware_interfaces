@@ -686,8 +686,7 @@ protected:
             uint16_t* outLength)
     {
         if (mCommandEnd) {
-            LOG_FATAL("endCommand was not called before command 0x%x",
-                    command);
+            LOG_FATAL("endCommand was not called for last command");
         }
 
         constexpr uint32_t opcode_mask =
