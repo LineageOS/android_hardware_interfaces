@@ -51,6 +51,8 @@ enum SensorType : uint32_t {
     BAROMETER,
     PROXIMITY_SENSOR,
     AMBIENT_LIGHT_SENSOR,
+    STATIONARY_DETECT,
+    INSTANT_MOTION_DETECT,
 
     GPS = 0x100,
     // Reserving this space for variants on GPS
@@ -65,6 +67,10 @@ enum SensorType : uint32_t {
     // Reserving this space for variants on Camera
 
     BLE = 0x500,
+    // Reserving this space for variants on Bluetooth Low Energy
+
+    WWAN = 0x600,
+    // Reserving this space for variants on WWAN
 
     PRIVATE_SENSOR_BASE = 0x10000,
     // Sensor types beyond PRIVATE_SENSOR_BASE are custom types
