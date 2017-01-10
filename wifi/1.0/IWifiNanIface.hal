@@ -39,7 +39,22 @@ interface IWifiNanIface extends IWifiIface {
       generates (WifiStatus status);
 
   /**
-   * Enable NAN functionality.
+   * Get NAN capabilities.
+   *
+   * @param cmdId command Id to use for this invocation.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   */
+  getCapabilitiesRequest(CommandIdShort cmdId) generates (WifiStatus status);
+
+  /**
+   * Enable NAN: configures and activates NAN clustering (does not start
+   * a discovery session or set up data-interfaces or data-paths). Use the
+   * |configureRequest| method to change the configuration of an already enabled
+   * NAN interface.
    *
    * @param cmdId command Id to use for this invocation.
    * @param msg Instance of |NanEnableRequest|.
@@ -50,7 +65,23 @@ interface IWifiNanIface extends IWifiIface {
    *         |WifiStatusCode.ERROR_INVALID_ARGS|,
    *         |WifiStatusCode.ERROR_UNKNOWN|
    */
-  enableRequest(CommandId cmdId, NanEnableRequest msg)
+  enableRequest(CommandIdShort cmdId, NanEnableRequest msg)
+      generates (WifiStatus status);
+
+  /**
+   * Configure NAN: configures an existing NAN functionality (i.e. assumes
+   * |enableRequest| already submitted and succeeded).
+   *
+   * @param cmdId command Id to use for this invocation.
+   * @param msg Instance of |NanConfigRequest|.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_INVALID_ARGS|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   */
+  configRequest(CommandIdShort cmdId, NanConfigRequest msg)
       generates (WifiStatus status);
 
   /**
@@ -63,10 +94,10 @@ interface IWifiNanIface extends IWifiIface {
    *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
    *         |WifiStatusCode.ERROR_UNKNOWN|
    */
-  disableRequest(CommandId cmdId) generates (WifiStatus status);
+  disableRequest(CommandIdShort cmdId) generates (WifiStatus status);
 
   /**
-   * Publish request to advertize a service.
+   * Publish request to start advertising a discovery service.
    *
    * @param cmdId command Id to use for this invocation.
    * @param msg Instance of |NanPublishRequest|.
@@ -77,26 +108,25 @@ interface IWifiNanIface extends IWifiIface {
    *         |WifiStatusCode.ERROR_INVALID_ARGS|,
    *         |WifiStatusCode.ERROR_UNKNOWN|
    */
-  publishRequest(CommandId cmdId, NanPublishRequest msg)
+  startPublishRequest(CommandIdShort cmdId, NanPublishRequest msg)
       generates (WifiStatus status);
 
   /**
-   * Cancel previous publish requests.
+   * Stop publishing a discovery service.
    *
    * @param cmdId command Id to use for this invocation.
-   * @param msg Instance of |NanPublishCancelRequest|.
+   * @param sessionId ID of the publish discovery session to be stopped.
    * @return status WifiStatus of the operation.
    *         Possible status codes:
    *         |WifiStatusCode.SUCCESS|,
    *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
-   *         |WifiStatusCode.ERROR_INVALID_ARGS|,
    *         |WifiStatusCode.ERROR_UNKNOWN|
    */
-  publishCancelRequest(CommandId cmdId, NanPublishCancelRequest msg)
+  stopPublishRequest(CommandIdShort cmdId, uint16_t sessionId)
       generates (WifiStatus status);
 
   /**
-   * Subscribe request to search for a service.
+   * Subscribe request to start searching for a discovery service.
    *
    * @param cmdId command Id to use for this invocation.
    * @param msg Instance of |NanSubscribeRequest|.
@@ -107,26 +137,25 @@ interface IWifiNanIface extends IWifiIface {
    *         |WifiStatusCode.ERROR_INVALID_ARGS|,
    *         |WifiStatusCode.ERROR_UNKNOWN|
    */
-  subscribeRequest(CommandId cmdId, NanSubscribeRequest msg)
+  startSubscribeRequest(CommandIdShort cmdId, NanSubscribeRequest msg)
       generates (WifiStatus status);
 
   /**
-   * Cancel previous subscribe requests.
+   * Stop subscribing to a discovery service.
    *
    * @param cmdId command Id to use for this invocation.
-   * @param msg Instance of |NanSubscribeCancelRequest|.
+   * @param sessionId ID of the subscribe discovery session to be stopped.
    * @return status WifiStatus of the operation.
    *         Possible status codes:
    *         |WifiStatusCode.SUCCESS|,
    *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
-   *         |WifiStatusCode.ERROR_INVALID_ARGS|,
    *         |WifiStatusCode.ERROR_UNKNOWN|
    */
-  subscribeCancelRequest(CommandId cmdId, NanSubscribeCancelRequest msg)
+  stopSubscribeRequest(CommandIdShort cmdId, uint16_t sessionId)
       generates (WifiStatus status);
 
   /**
-   * NAN transmit follow up request.
+   * NAN transmit follow up message request.
    *
    * @param cmdId command Id to use for this invocation.
    * @param msg Instance of |NanTransmitFollowupRequest|.
@@ -137,14 +166,40 @@ interface IWifiNanIface extends IWifiIface {
    *         |WifiStatusCode.ERROR_INVALID_ARGS|,
    *         |WifiStatusCode.ERROR_UNKNOWN|
    */
-  transmitFollowupRequest(CommandId cmdId, NanTransmitFollowupRequest msg)
+  transmitFollowupRequest(CommandIdShort cmdId, NanTransmitFollowupRequest msg)
       generates (WifiStatus status);
 
   /**
-   * NAN configuration request.
+   * Create a NAN Data Interface.
    *
    * @param cmdId command Id to use for this invocation.
-   * @param msg Instance of |NanConfigRequest|.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   */
+  createDataInterfaceRequest(CommandIdShort cmdId, string ifaceName)
+      generates (WifiStatus status);
+
+  /**
+   * Delete a NAN Data Interface.
+   *
+   * @param cmdId command Id to use for this invocation.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   */
+  deleteDataInterfaceRequest(CommandIdShort cmdId, string ifaceName)
+      generates (WifiStatus status);
+
+  /**
+   * Initiate a data-path (NDP) setup operation: Initiator.
+   *
+   * @param cmdId command Id to use for this invocation.
+   * @param msg Instance of |NanInitiateDataPathRequest|.
    * @return status WifiStatus of the operation.
    *         Possible status codes:
    *         |WifiStatusCode.SUCCESS|,
@@ -152,13 +207,42 @@ interface IWifiNanIface extends IWifiIface {
    *         |WifiStatusCode.ERROR_INVALID_ARGS|,
    *         |WifiStatusCode.ERROR_UNKNOWN|
    */
-  configRequest(CommandId cmdId, NanConfigRequest msg)
+  initiateDataPathRequest(CommandIdShort cmdId, NanInitiateDataPathRequest msg)
       generates (WifiStatus status);
 
   /**
-   * Set NAN Beacon or sdf payload to discovery engine.
-   * This instructs the Discovery Engine to begin publishing the
-   * received payload in any Beacon or Service Discovery Frame transmitted
+   * Respond to a received data indication as part of a data-path (NDP) setup operation. An
+   * indication is received by the Responder from the Initiator.
+   *
+   * @param cmdId command Id to use for this invocation.
+   * @param msg Instance of |NanRespondToDataPathIndicationRequest|.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_INVALID_ARGS|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   */
+  respondToDataPathIndicationRequest(CommandIdShort cmdId,
+                                     NanRespondToDataPathIndicationRequest msg)
+      generates (WifiStatus status);
+
+  /**
+   * Data-path (NDP) termination request: executed by either Initiator or Responder.
+   *
+   * @param cmdId command Id to use for this invocation.
+   * @param ndpInstanceId Data-path instance ID to be terminated.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   */
+  terminateDataPathRequest(CommandIdShort cmdId, uint32_t ndpInstanceId)
+      generates (WifiStatus status);
+
+  /**
+   * Configure NAN Beacon or SDF payload to include vendor-specific payload.
    *
    * @param cmdId command Id to use for this invocation.
    * @param msg Instance of |NanBeaconSdfPayloadRequest|.
@@ -169,107 +253,6 @@ interface IWifiNanIface extends IWifiIface {
    *         |WifiStatusCode.ERROR_INVALID_ARGS|,
    *         |WifiStatusCode.ERROR_UNKNOWN|
    */
-  beaconSdfPayloadRequest(CommandId cmdId, NanBeaconSdfPayloadRequest msg)
-      generates (WifiStatus status);
-
-  /**
-   * Get NAN HAL version.
-   *
-   * @param cmdId command Id to use for this invocation.
-   * @return version Instance of |NanVersion|.
-   * @return status WifiStatus of the operation.
-   *         Possible status codes:
-   *         |WifiStatusCode.SUCCESS|,
-   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
-   *         |WifiStatusCode.ERROR_INVALID_ARGS|,
-   *         |WifiStatusCode.ERROR_UNKNOWN|
-   */
-  getVersion() generates (WifiStatus status, NanVersion version);
-
-  /**
-   * Get NAN capabilities.
-   *
-   * @param cmdId command Id to use for this invocation.
-   * @return status WifiStatus of the operation.
-   *         Possible status codes:
-   *         |WifiStatusCode.SUCCESS|,
-   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
-   *         |WifiStatusCode.ERROR_INVALID_ARGS|,
-   *         |WifiStatusCode.ERROR_UNKNOWN|
-   */
-  getCapabilities(CommandId cmdId) generates (WifiStatus status);
-
-  /**
-   * Create NAN Data Interface
-   *
-   * @param cmdId command Id to use for this invocation.
-   * @return status WifiStatus of the operation.
-   *         Possible status codes:
-   *         |WifiStatusCode.SUCCESS|,
-   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
-   *         |WifiStatusCode.ERROR_INVALID_ARGS|,
-   *         |WifiStatusCode.ERROR_UNKNOWN|
-   */
-  dataInterfaceCreate(CommandId cmdId, string ifaceName)
-      generates (WifiStatus status);
-
-  /**
-   * Delete NAN Data Interface.
-   *
-   * @param cmdId command Id to use for this invocation.
-   * @return status WifiStatus of the operation.
-   *         Possible status codes:
-   *         |WifiStatusCode.SUCCESS|,
-   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
-   *         |WifiStatusCode.ERROR_INVALID_ARGS|,
-   *         |WifiStatusCode.ERROR_UNKNOWN|
-   */
-  dataInterfaceDelete(CommandId cmdId, string ifaceName)
-      generates (WifiStatus status);
-
-  /**
-   * Initiate a NDP session: Initiator
-   *
-   * @param cmdId command Id to use for this invocation.
-   * @param msg Instance of |NanDataPathInitiatorRequest|.
-   * @return status WifiStatus of the operation.
-   *         Possible status codes:
-   *         |WifiStatusCode.SUCCESS|,
-   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
-   *         |WifiStatusCode.ERROR_INVALID_ARGS|,
-   *         |WifiStatusCode.ERROR_UNKNOWN|
-   */
-  dataRequestInitiator(CommandId cmdId, NanDataPathInitiatorRequest msg)
-      generates (WifiStatus status);
-
-  /**
-   * Response to a data indication received corresponding to a NDP session. An indication
-   * is received with a data request and the responder will send a data response.
-   *
-   * @param cmdId command Id to use for this invocation.
-   * @param msg Instance of |NanDataPathIndicationResponse|.
-   * @return status WifiStatus of the operation.
-   *         Possible status codes:
-   *         |WifiStatusCode.SUCCESS|,
-   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
-   *         |WifiStatusCode.ERROR_INVALID_ARGS|,
-   *         |WifiStatusCode.ERROR_UNKNOWN|
-   */
-  dataIndicationResponse(CommandId cmdId, NanDataPathIndicationResponse msg)
-      generates (WifiStatus status);
-
-  /**
-   * NDL termination request: from either Initiator/Responder.
-   *
-   * @param cmdId command Id to use for this invocation.
-   * @param msg Instance of |NanDataPathEndRequest|.
-   * @return status WifiStatus of the operation.
-   *         Possible status codes:
-   *         |WifiStatusCode.SUCCESS|,
-   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
-   *         |WifiStatusCode.ERROR_INVALID_ARGS|,
-   *         |WifiStatusCode.ERROR_UNKNOWN|
-   */
-  dataEnd(CommandId cmdId, NanDataPathEndRequest msg)
+  beaconSdfPayloadRequest(CommandIdShort cmdId, NanBeaconSdfPayloadRequest msg)
       generates (WifiStatus status);
 };

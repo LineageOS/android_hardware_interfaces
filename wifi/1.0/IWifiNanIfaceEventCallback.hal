@@ -17,65 +17,297 @@
 package android.hardware.wifi@1.0;
 
 /**
- * NAN Response and Event Callbacks.
+ * NAN Response and Asynchronous Event Callbacks.
  */
 interface IWifiNanIfaceEventCallback {
   /**
-   * Callback invoked to notify the status of the Publish Request.
+   * Callback invoked in response to a capability request |getCapabilitiesRequest|.
    *
    * @param cmdId command Id corresponding to the original request.
-   * @param rspData Message Data.
+   * @param status WifiNanStatus of the operation. Possible status codes are:
+   *        |NanStatusType.SUCCESS|
+   * @param capabilities Capability data.
    */
-  oneway notifyPublishResponse(CommandId id, NanPublishResponseMsg rspData);
+  oneway notifyCapabilitiesResponse(CommandIdShort id, WifiNanStatus status,
+                                    NanCapabilities capabilities);
 
   /**
-   * Callback invoked to notify the status of the Subscribe Request.
+   * Callback invoked in response to an enable request |enableRequest|.
    *
    * @param cmdId command Id corresponding to the original request.
-   * @param rspData Message Data.
+   * @param status WifiNanStatus of the operation. Possible status codes are:
+   *        |NanStatusType.SUCCESS|
+   *        |NanStatusType.ALREADY_ENABLED|
+   *        |NanStatusType.INVALID_ARGS|
+   *        |NanStatusType.INTERNAL_FAILURE|
+   *        |NanStatusType.PROTOCOL_FAILURE|
+   *        |NanStatusType.NAN_NOT_ALLOWED|
    */
-  oneway notifySubscribeResponse(CommandId id, NanSubscribeResponseMsg rspData);
+  oneway notifyEnableResponse(CommandIdShort id, WifiNanStatus status);
 
   /**
-   * Callback invoked to notify the status of the Data Path Request.
+   * Callback invoked in response to a config request |configRequest|.
    *
    * @param cmdId command Id corresponding to the original request.
-   * @param rspData Message Data.
+   * @param status WifiNanStatus of the operation. Possible status codes are:
+   *        |NanStatusType.SUCCESS|
+   *        |NanStatusType.INVALID_ARGS|
+   *        |NanStatusType.INTERNAL_FAILURE|
+   *        |NanStatusType.PROTOCOL_FAILURE|
    */
-  oneway notifyDataPathResponse(CommandId id, NanDataPathResponseMsg rspData);
+  oneway notifyConfigResponse(CommandIdShort id, WifiNanStatus status);
 
   /**
-   * Callback invoked to notify the status of the Capability Request.
+   * Callback invoked in response to a disable request |disableRequest|.
    *
    * @param cmdId command Id corresponding to the original request.
-   * @param rspData Message Data.
+   * @param status WifiNanStatus of the operation. Possible status codes are:
+   *        |NanStatusType.SUCCESS|
+   *        |NanStatusType.PROTOCOL_FAILURE|
    */
-  oneway notifyCapabilitiesResponse(CommandId id, NanCapabilitiesResponseMsg rspData);
+  oneway notifyDisableResponse(CommandIdShort id, WifiNanStatus status);
+
+  /**
+   * Callback invoked to notify the status of the start publish request |startPublishRequest|.
+   *
+   * @param cmdId command Id corresponding to the original request.
+   * @param status WifiNanStatus of the operation. Possible status codes are:
+   *        |NanStatusType.SUCCESS|
+   *        |NanStatusType.INVALID_ARGS|
+   *        |NanStatusType.PROTOCOL_FAILURE|
+   *        |NanStatusType.NO_RESOURCES_AVAILABLE|
+   *        |NanStatusType.INVALID_SESSION_ID|
+   * @param sessionId ID of the new publish session (if successfully created).
+   */
+  oneway notifyStartPublishResponse(CommandIdShort id, WifiNanStatus status, uint16_t sessionId);
+
+  /**
+   * Callback invoked in response to a stop publish request |stopPublishRequest|.
+   *
+   * @param cmdId command Id corresponding to the original request.
+   * @param status WifiNanStatus of the operation. Possible status codes are:
+   *        |NanStatusType.SUCCESS|
+   *        |NanStatusType.INVALID_SESSION_ID|
+   *        |NanStatusType.INTERNAL_FAILURE|
+   */
+  oneway notifyStopPublishResponse(CommandIdShort id, WifiNanStatus status);
+
+  /**
+   * Callback invoked to notify the status of the start subscribe request |startSubscribeRequest|.
+   *
+   * @param cmdId command Id corresponding to the original request.
+   * @param status WifiNanStatus of the operation. Possible status codes are:
+   *        |NanStatusType.SUCCESS|
+   *        |NanStatusType.INVALID_ARGS|
+   *        |NanStatusType.PROTOCOL_FAILURE|
+   *        |NanStatusType.NO_RESOURCES_AVAILABLE|
+   *        |NanStatusType.INVALID_SESSION_ID|
+   * @param sessionId ID of the new subscribe session (if successfully created).
+   */
+  oneway notifyStartSubscribeResponse(CommandIdShort id, WifiNanStatus status, uint16_t sessionId);
+
+  /**
+   * Callback invoked in response to a stop subscribe request |stopSubscribeRequest|.
+   *
+   * @param cmdId command Id corresponding to the original request.
+   * @param status WifiNanStatus of the operation. Possible status codes are:
+   *        |NanStatusType.SUCCESS|
+   *        |NanStatusType.INVALID_SESSION_ID|
+   *        |NanStatusType.INTERNAL_FAILURE|
+   */
+  oneway notifyStopSubscribeResponse(CommandIdShort id, WifiNanStatus status);
+
+  /**
+   * Callback invoked in response to a transmit followup request |transmitFollowupRequest|.
+   *
+   * @param cmdId command Id corresponding to the original request.
+   * @param status WifiNanStatus of the operation. Possible status codes are:
+   *        |NanStatusType.SUCCESS|
+   *        |NanStatusType.INVALID_ARGS|
+   *        |NanStatusType.INTERNAL_FAILURE|
+   *        |NanStatusType.INVALID_SESSION_ID|
+   *        |NanStatusType.INVALID_PEER_ID|
+   */
+  oneway notifyTransmitFollowupResponse(CommandIdShort id, WifiNanStatus status);
+
+  /**
+   * Callback invoked in response to a create data interface request |createDataInterfaceRequest|.
+   *
+   * @param cmdId command Id corresponding to the original request.
+   * @param status WifiNanStatus of the operation. Possible status codes are:
+   *        |NanStatusType.SUCCESS|
+   *        |NanStatusType.INVALID_ARGS|
+   *        |NanStatusType.INTERNAL_FAILURE|
+   */
+  oneway notifyCreateDataInterfaceResponse(CommandIdShort id, WifiNanStatus status);
+
+  /**
+   * Callback invoked in response to a delete data interface request |deleteDataInterfaceRequest|.
+   *
+   * @param cmdId command Id corresponding to the original request.
+   * @param status WifiNanStatus of the operation. Possible status codes are:
+   *        |NanStatusType.SUCCESS|
+   *        |NanStatusType.INVALID_ARGS|
+   *        |NanStatusType.INTERNAL_FAILURE|
+   */
+  oneway notifyDeleteDataInterfaceResponse(CommandIdShort id, WifiNanStatus status);
+
+  /**
+   * Callback invoked in response to an initiate data path request |initiateDataPathRequest|.
+   *
+   * @param cmdId command Id corresponding to the original request.
+   * @param status WifiNanStatus of the operation. Possible status codes are:
+   *        |NanStatusType.SUCCESS|
+   *        |NanStatusType.INVALID_ARGS|
+   *        |NanStatusType.INTERNAL_FAILURE|
+   *        |NanStatusType.PROTOCOL_FAILURE|
+   *        |NanStatusType.INVALID_PEER_ID|
+   */
+  oneway notifyInitiateDataPathResponse(CommandIdShort id, WifiNanStatus status);
+
+  /**
+   * Callback invoked in response to a respond to data path indication request
+   * |respondToDataPathIndicationRequest|.
+   *
+   * @param cmdId command Id corresponding to the original request.
+   * @param status WifiNanStatus of the operation. Possible status codes are:
+   *        |NanStatusType.SUCCESS|
+   *        |NanStatusType.INVALID_ARGS|
+   *        |NanStatusType.INTERNAL_FAILURE|
+   *        |NanStatusType.PROTOCOL_FAILURE|
+   *        |NanStatusType.INVALID_NDP_ID|
+   * @param ndpInstanceId ID of the new data path being negotiated (on successful status).
+   */
+  oneway notifyRespondToDataPathIndicationResponse(CommandIdShort id, WifiNanStatus status,
+                                                   uint32_t ndpInstanceId);
+
+  /**
+   * Callback invoked in response to a terminate data path request |terminateDataPathRequest|.
+   *
+   * @param cmdId command Id corresponding to the original request.
+   * @param status WifiNanStatus of the operation. Possible status codes are:
+   *        |NanStatusType.SUCCESS|
+   *        |NanStatusType.INVALID_ARGS|
+   *        |NanStatusType.INTERNAL_FAILURE|
+   *        |NanStatusType.PROTOCOL_FAILURE|
+   *        |NanStatusType.INVALID_NDP_ID|
+   */
+  oneway notifyTerminateDataPathResponse(CommandIdShort id, WifiNanStatus status);
+
+  /**
+   * Callback invoked in response to a request to include vendor-specific payload in beacon or SDF
+   * frames |beaconSdfPayloadRequest|.
+   *
+   * @param cmdId command Id corresponding to the original request.
+   * @param status WifiNanStatus of the operation. Possible status codes are:
+   *        |NanStatusType.SUCCESS|
+   *        |NanStatusType.INVALID_ARGS|
+   *        |NanStatusType.INTERNAL_FAILURE|
+   */
+  oneway notifyBeaconSdfPayloadResponse(CommandIdShort id, WifiNanStatus status);
 
   /**
    * Callbacks for the various asynchornous NAN Events.
    */
-  oneway eventPublishTerminated(NanPublishTerminatedInd event);
 
+  /**
+   * Asynchronous callback indicating that a cluster event has been received.
+   *
+   * @param event: NanClusterEventInd containing event details.
+   */
+  oneway eventClusterEvent(NanClusterEventInd event);
+
+  /**
+   * Asynchronous callback indicating that a NAN has been disabled.
+   *
+   * @param status: WifiNanStatus describing the reason for the disable event.
+   *                Possible status codes are:
+   *                |NanStatusType.SUCCESS|
+   *                |NanStatusType.UNSUPPORTED_CONCURRENCY_NAN_DISABLED|
+   */
+  oneway eventDisabled(WifiNanStatus status);
+
+  /**
+   * Asynchronous callback indicating that an active publish session has terminated.
+   *
+   * @param sessionId: The discovery session ID of the terminated session.
+   * @param status: WifiNanStatus describing the reason for the session termination.
+   *                Possible status codes are:
+   *                |NanStatusType.SUCCESS|
+   */
+  oneway eventPublishTerminated(uint16_t sessionId, WifiNanStatus status);
+
+  /**
+   * Asynchronous callback indicating that an active subscribe session has terminated.
+   *
+   * @param sessionId: The discovery session ID of the terminated session.
+   * @param status: WifiNanStatus describing the reason for the session termination.
+   *                 Possible status codes are:
+   *                |NanStatusType.SUCCESS|
+   */
+  oneway eventSubscribeTerminated(uint16_t sessionId, WifiNanStatus status);
+
+  /**
+   * Asynchronous callback indicating that a match has occurred: i.e. a service has been
+   * discovered.
+   *
+   * @param event: NanMatchInd containing event details.
+   */
   oneway eventMatch(NanMatchInd event);
 
-  oneway eventMatchExpired(NanMatchExpiredInd event);
+  /**
+   * Asynchronous callback indicating that a previously discovered match (service) has expired.
+   *
+   * @param discoverySessionId: The discovery session ID of the expired match.
+   * @param peerId: The peer ID of the expired match.
+   */
+  oneway eventMatchExpired(uint16_t discoverySessionId, uint32_t peerId);
 
-  oneway eventSubscribeTerminated(NanSubscribeTerminatedInd event);
+  /**
+   * Asynchronous callback indicating that a followup message has been received from a peer.
+   *
+   * @param event: NanFollowupReceivedInd containing event details.
+   */
+  oneway eventFollowupReceived(NanFollowupReceivedInd event);
 
-  oneway eventFollowup(NanFollowupInd event);
+  /**
+   * Asynchronous callback providing status on a completed followup message transmit operation.
+   *
+   * @param cmdId command Id corresponding to the original |transmitFollowupRequest| request.
+   * @param status WifiNanStatus of the operation.  Possible status codes are:
+   *               |NanStatusType.NO_OTA_ACK|
+   *               |NanStatusType.FOLLOWUP_TX_QUEUE_FULL|
+   */
+  oneway eventTransmitFollowup(CommandIdShort id, WifiNanStatus status);
 
-  oneway eventDiscEngEvent(NanDiscEngEventInd event);
+  /**
+   * Asynchronous callback indicating a data-path (NDP) setup has been requested by an Initiator
+   * peer (received by the intended Respodner).
+   *
+   * @param event: NanDataPathRequestInd containing event details.
+   */
+  oneway eventDataPathRequest(NanDataPathRequestInd event);
 
-  oneway eventDisabled(NanDisabledInd event);
+  /**
+   * Asynchronous callback indicating a data-path (NDP) setup has been completed: received by
+   * both Initiator and Responder.
+   *
+   * @param event: NanDataPathConfirmInd containing event details.
+   */
+  oneway eventDataPathConfirm(NanDataPathConfirmInd event);
 
+  /**
+   * Asynchronous callback indicating a list of data-paths (NDP) have been terminated: received by
+   * both Initiator and Responder.
+   *
+   * @param ndpInstanceId: data-path ID of the terminated data-path.
+   */
+  oneway eventDataPathTerminated(uint32_t ndpInstanceId);
+
+  /**
+   * Asynchronous callback indicating vendor-specific payload received in NAN beacon or SDF frame.
+   *
+   * @param event: NanBeaconSdfPayloadInd containing event details.
+   */
   oneway eventBeaconSdfPayload(NanBeaconSdfPayloadInd event);
-
-  oneway eventDataRequest(NanDataPathRequestInd event);
-
-  oneway eventDataConfirm(NanDataPathConfirmInd event);
-
-  oneway eventDataEnd(NanDataPathEndInd event);
-
-  oneway eventTransmitFollowup(NanTransmitFollowupInd event);
 };
