@@ -127,16 +127,14 @@ Return<void> VirtualizerEffect::getDescriptor(getDescriptor_cb _hidl_cb) {
     return mEffect->getDescriptor(_hidl_cb);
 }
 
-Return<void> VirtualizerEffect::process(
-        const AudioBuffer& inBuffer, uint32_t outFrameSize, process_cb _hidl_cb) {
-    return mEffect->process(inBuffer, outFrameSize, _hidl_cb);
+Return<void> VirtualizerEffect::prepareForProcessing(
+        prepareForProcessing_cb _hidl_cb) {
+    return mEffect->prepareForProcessing(_hidl_cb);
 }
 
-Return<void> VirtualizerEffect::processReverse(
-        const AudioBuffer& inBuffer,
-        uint32_t outFrameSize,
-        processReverse_cb _hidl_cb) {
-    return mEffect->processReverse(inBuffer, outFrameSize, _hidl_cb);
+Return<Result> VirtualizerEffect::setProcessBuffers(
+        const AudioBuffer& inBuffer, const AudioBuffer& outBuffer) {
+    return mEffect->setProcessBuffers(inBuffer, outBuffer);
 }
 
 Return<void> VirtualizerEffect::command(
@@ -179,6 +177,9 @@ Return<Result> VirtualizerEffect::setCurrentConfigForFeature(
     return mEffect->setCurrentConfigForFeature(featureId, configData);
 }
 
+Return<Result> VirtualizerEffect::close() {
+    return mEffect->close();
+}
 
 // Methods from ::android::hardware::audio::effect::V2_0::IVirtualizerEffect follow.
 Return<bool> VirtualizerEffect::isStrengthSupported()  {

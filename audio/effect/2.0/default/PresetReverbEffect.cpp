@@ -115,16 +115,14 @@ Return<void> PresetReverbEffect::getDescriptor(getDescriptor_cb _hidl_cb) {
     return mEffect->getDescriptor(_hidl_cb);
 }
 
-Return<void> PresetReverbEffect::process(
-        const AudioBuffer& inBuffer, uint32_t outFrameSize, process_cb _hidl_cb) {
-    return mEffect->process(inBuffer, outFrameSize, _hidl_cb);
+Return<void> PresetReverbEffect::prepareForProcessing(
+        prepareForProcessing_cb _hidl_cb) {
+    return mEffect->prepareForProcessing(_hidl_cb);
 }
 
-Return<void> PresetReverbEffect::processReverse(
-        const AudioBuffer& inBuffer,
-        uint32_t outFrameSize,
-        processReverse_cb _hidl_cb) {
-    return mEffect->processReverse(inBuffer, outFrameSize, _hidl_cb);
+Return<Result> PresetReverbEffect::setProcessBuffers(
+        const AudioBuffer& inBuffer, const AudioBuffer& outBuffer) {
+    return mEffect->setProcessBuffers(inBuffer, outBuffer);
 }
 
 Return<void> PresetReverbEffect::command(
@@ -167,6 +165,9 @@ Return<Result> PresetReverbEffect::setCurrentConfigForFeature(
     return mEffect->setCurrentConfigForFeature(featureId, configData);
 }
 
+Return<Result> PresetReverbEffect::close() {
+    return mEffect->close();
+}
 
 // Methods from ::android::hardware::audio::effect::V2_0::IPresetReverbEffect follow.
 Return<Result> PresetReverbEffect::setPreset(IPresetReverbEffect::Preset preset)  {

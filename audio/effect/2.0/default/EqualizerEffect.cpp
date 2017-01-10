@@ -135,16 +135,14 @@ Return<void> EqualizerEffect::getDescriptor(getDescriptor_cb _hidl_cb) {
     return mEffect->getDescriptor(_hidl_cb);
 }
 
-Return<void> EqualizerEffect::process(
-        const AudioBuffer& inBuffer, uint32_t outFrameSize, process_cb _hidl_cb) {
-    return mEffect->process(inBuffer, outFrameSize, _hidl_cb);
+Return<void> EqualizerEffect::prepareForProcessing(
+        prepareForProcessing_cb _hidl_cb) {
+    return mEffect->prepareForProcessing(_hidl_cb);
 }
 
-Return<void> EqualizerEffect::processReverse(
-        const AudioBuffer& inBuffer,
-        uint32_t outFrameSize,
-        processReverse_cb _hidl_cb) {
-    return mEffect->processReverse(inBuffer, outFrameSize, _hidl_cb);
+Return<Result> EqualizerEffect::setProcessBuffers(
+        const AudioBuffer& inBuffer, const AudioBuffer& outBuffer) {
+    return mEffect->setProcessBuffers(inBuffer, outBuffer);
 }
 
 Return<void> EqualizerEffect::command(
@@ -187,6 +185,9 @@ Return<Result> EqualizerEffect::setCurrentConfigForFeature(
     return mEffect->setCurrentConfigForFeature(featureId, configData);
 }
 
+Return<Result> EqualizerEffect::close() {
+    return mEffect->close();
+}
 
 // Methods from ::android::hardware::audio::effect::V2_0::IEqualizerEffect follow.
 Return<void> EqualizerEffect::getNumBands(getNumBands_cb _hidl_cb)  {

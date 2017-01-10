@@ -222,10 +222,10 @@ struct EffectDescriptor {
  * samples for all channels at a given time. Frame size for unspecified format
  * (AUDIO_FORMAT_OTHER) is 8 bit by definition.
  */
-// TODO(mnaganov): replace with FMQ version.
 struct AudioBuffer {
+    uint64_t id;
     uint32_t frameCount;
-    vec<uint8_t> data;
+    memory data;
 };
 
 @export(name="effect_buffer_access_e", value_prefix="EFFECT_BUFFER_")
@@ -283,4 +283,15 @@ struct EffectOffloadParameter {
                              // is attached to is offloaded
     AudioIoHandle ioHandle;  // io handle of the playback thread
                              // the effect is attached to
+};
+
+/*
+ * The message queue flags used to synchronize reads and writes from
+ * the status message queue used by effects.
+ */
+enum MessageQueueFlagBits : uint32_t {
+    DONE_PROCESSING = 1 << 0,
+    REQUEST_PROCESS = 1 << 1,
+    REQUEST_PROCESS_REVERSE = 1 << 2,
+    REQUEST_PROCESS_ALL = REQUEST_PROCESS | REQUEST_PROCESS_REVERSE
 };

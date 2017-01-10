@@ -17,15 +17,20 @@
 #ifndef ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_EFFECT_H
 #define ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_EFFECT_H
 
+#include <atomic>
 #include <memory>
 #include <vector>
 
 #include <android/hardware/audio/effect/2.0/IEffect.h>
-#include <hidl/Status.h>
-
+#include <fmq/EventFlag.h>
+#include <fmq/MessageQueue.h>
 #include <hidl/MQDescriptor.h>
+#include <hidl/Status.h>
+#include <utils/Thread.h>
 
 #include <hardware/audio_effect.h>
+
+#include "AudioBufferManager.h"
 
 namespace android {
 namespace hardware {
@@ -54,6 +59,8 @@ using ::android::hardware::hidl_string;
 using ::android::sp;
 
 struct Effect : public IEffect {
+    typedef MessageQueue<Result, kSynchronizedReadWrite> StatusMQ;
+
     explicit Effect(effect_handle_t handle);
 
     // Methods from ::android::hardware::audio::effect::V2_0::IEffect follow.
@@ -83,12 +90,9 @@ struct Effect : public IEffect {
     Return<Result> setAudioSource(AudioSource source)  override;
     Return<Result> offload(const EffectOffloadParameter& param)  override;
     Return<void> getDescriptor(getDescriptor_cb _hidl_cb)  override;
-    Return<void> process(
-            const AudioBuffer& inBuffer, uint32_t outFrameSize, process_cb _hidl_cb)  override;
-    Return<void> processReverse(
-            const AudioBuffer& inBuffer,
-            uint32_t outFrameSize,
-            processReverse_cb _hidl_cb)  override;
+    Return<void> prepareForProcessing(prepareForProcessing_cb _hidl_cb)  override;
+    Return<Result> setProcessBuffers(
+            const AudioBuffer& inBuffer, const AudioBuffer& outBuffer)  override;
     Return<void> command(
             uint32_t commandId,
             const hidl_vec<uint8_t>& data,
@@ -111,6 +115,7 @@ struct Effect : public IEffect {
             getCurrentConfigForFeature_cb _hidl_cb)  override;
     Return<Result> setCurrentConfigForFeature(
             uint32_t featureId, const hidl_vec<uint8_t>& configData)  override;
+    Return<Result> close()  override;
 
     // Utility methods for extending interfaces.
     template<typename T> Return<void> getIntegerParam(
@@ -161,8 +166,6 @@ struct Effect : public IEffect {
     friend struct VirtualizerEffect;  // for getParameterImpl
     friend struct VisualizerEffect;   // to allow executing commands
 
-    typedef int32_t (*ProcessFunction)(
-            effect_handle_t self, audio_buffer_t* inBuffer, audio_buffer_t* outBuffer);
     using CommandSuccessCallback = std::function<void()>;
     using GetConfigCallback = std::function<void(Result retval, const EffectConfig& config)>;
     using GetCurrentConfigSuccessCallback = std::function<void(void* configData)>;
@@ -170,13 +173,21 @@ struct Effect : public IEffect {
             std::function<void(uint32_t valueSize, const void* valueData)>;
     using GetSupportedConfigsSuccessCallback =
             std::function<void(uint32_t supportedConfigs, void* configsData)>;
-    using ProcessCallback = std::function<void(Result retval, const AudioBuffer& outBuffer)>;
 
     static const char *sContextResultOfCommand;
     static const char *sContextCallToCommand;
     static const char *sContextCallFunction;
 
+    bool mIsClosed;
     effect_handle_t mHandle;
+    sp<AudioBufferWrapper> mInBuffer;
+    sp<AudioBufferWrapper> mOutBuffer;
+    std::atomic<audio_buffer_t*> mHalInBufferPtr;
+    std::atomic<audio_buffer_t*> mHalOutBufferPtr;
+    std::unique_ptr<StatusMQ> mStatusMQ;
+    EventFlag* mEfGroup;
+    std::atomic<bool> mStopProcessThread;
+    sp<Thread> mProcessThread;
 
     virtual ~Effect();
 
@@ -218,12 +229,6 @@ struct Effect : public IEffect {
             uint32_t maxConfigs,
             uint32_t configSize,
             GetSupportedConfigsSuccessCallback onSuccess);
-    void processImpl(
-            ProcessFunction process,
-            const char* funcName,
-            const AudioBuffer& inBuffer,
-            uint32_t outFrameSize,
-            ProcessCallback cb);
     Result sendCommand(int commandCode, const char* commandName);
     Result sendCommand(int commandCode, const char* commandName, uint32_t size, void* data);
     Result sendCommandReturningData(

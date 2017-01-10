@@ -115,16 +115,14 @@ Return<void> VisualizerEffect::getDescriptor(getDescriptor_cb _hidl_cb) {
     return mEffect->getDescriptor(_hidl_cb);
 }
 
-Return<void> VisualizerEffect::process(
-        const AudioBuffer& inBuffer, uint32_t outFrameSize, process_cb _hidl_cb) {
-    return mEffect->process(inBuffer, outFrameSize, _hidl_cb);
+Return<void> VisualizerEffect::prepareForProcessing(
+        prepareForProcessing_cb _hidl_cb) {
+    return mEffect->prepareForProcessing(_hidl_cb);
 }
 
-Return<void> VisualizerEffect::processReverse(
-        const AudioBuffer& inBuffer,
-        uint32_t outFrameSize,
-        processReverse_cb _hidl_cb) {
-    return mEffect->processReverse(inBuffer, outFrameSize, _hidl_cb);
+Return<Result> VisualizerEffect::setProcessBuffers(
+        const AudioBuffer& inBuffer, const AudioBuffer& outBuffer) {
+    return mEffect->setProcessBuffers(inBuffer, outBuffer);
 }
 
 Return<void> VisualizerEffect::command(
@@ -167,6 +165,9 @@ Return<Result> VisualizerEffect::setCurrentConfigForFeature(
     return mEffect->setCurrentConfigForFeature(featureId, configData);
 }
 
+Return<Result> VisualizerEffect::close() {
+    return mEffect->close();
+}
 
 // Methods from ::android::hardware::audio::effect::V2_0::IVisualizerEffect follow.
 Return<Result> VisualizerEffect::setCaptureSize(uint16_t captureSize)  {

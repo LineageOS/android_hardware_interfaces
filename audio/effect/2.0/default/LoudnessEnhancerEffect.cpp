@@ -117,16 +117,14 @@ Return<void> LoudnessEnhancerEffect::getDescriptor(getDescriptor_cb _hidl_cb) {
     return mEffect->getDescriptor(_hidl_cb);
 }
 
-Return<void> LoudnessEnhancerEffect::process(
-        const AudioBuffer& inBuffer, uint32_t outFrameSize, process_cb _hidl_cb) {
-    return mEffect->process(inBuffer, outFrameSize, _hidl_cb);
+Return<void> LoudnessEnhancerEffect::prepareForProcessing(
+        prepareForProcessing_cb _hidl_cb) {
+    return mEffect->prepareForProcessing(_hidl_cb);
 }
 
-Return<void> LoudnessEnhancerEffect::processReverse(
-        const AudioBuffer& inBuffer,
-        uint32_t outFrameSize,
-        processReverse_cb _hidl_cb) {
-    return mEffect->processReverse(inBuffer, outFrameSize, _hidl_cb);
+Return<Result> LoudnessEnhancerEffect::setProcessBuffers(
+        const AudioBuffer& inBuffer, const AudioBuffer& outBuffer) {
+    return mEffect->setProcessBuffers(inBuffer, outBuffer);
 }
 
 Return<void> LoudnessEnhancerEffect::command(
@@ -169,6 +167,9 @@ Return<Result> LoudnessEnhancerEffect::setCurrentConfigForFeature(
     return mEffect->setCurrentConfigForFeature(featureId, configData);
 }
 
+Return<Result> LoudnessEnhancerEffect::close() {
+    return mEffect->close();
+}
 
 // Methods from ::android::hardware::audio::effect::V2_0::ILoudnessEnhancerEffect follow.
 Return<Result> LoudnessEnhancerEffect::setTargetGain(int32_t targetGainMb)  {

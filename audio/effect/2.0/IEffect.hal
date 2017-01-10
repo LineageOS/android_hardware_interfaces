@@ -226,49 +226,47 @@ interface IEffect {
     getDescriptor() generates (Result retval, EffectDescriptor descriptor);
 
     /*
-     * Effect process function. Takes input samples as specified (count and
-     * location) in input buffer and returns processed samples as specified in
-     * output buffer. If the buffer descriptor is empty the function must use
-     * either the buffer or the buffer provider callback installed by the
-     * setConfig command.  The effect framework must call the 'process' function
-     * after the 'enable' command is received and until the 'disable' is
-     * received. When the engine receives the 'disable' command it should turn
-     * off the effect gracefully and when done indicate that it is OK to stop
-     * calling the 'process' function by returning the INVALID_STATE status.
+     * Set up required transports for passing audio buffers to the effect.
      *
-     * Output audio buffer must contain no more frames than the input audio
-     * buffer. Since the effect may transform input channels into a different
-     * amount of channels, the caller provides the output frame size.
+     * The transport consists of shared memory and a message queue for reporting
+     * effect processing operation status. The shared memory is set up
+     * separately using 'setProcessBuffers' method.
      *
-     * @param inBuffer input audio buffer.
-     * @param outFrameSize output frame size in bytes.
-     * @return retval operation completion status.
-     * @return outBuffer output audio buffer.
+     * Processing is requested by setting 'REQUEST_PROCESS' or
+     * 'REQUEST_PROCESS_REVERSE' EventFlags associated with the status message
+     * queue. The result of processing may be one of the following:
+     *   OK if there were no errors during processing;
+     *   INVALID_ARGUMENTS if audio buffers are invalid;
+     *   INVALID_STATE if the engine has finished the disable phase;
+     *   NOT_INITIALIZED if the audio buffers were not set;
+     *   NOT_SUPPORTED if the requested processing type is not supported by
+     *                 the effect.
+     *
+     * @return retval OK if both message queues were created successfully.
+     *                INVALID_STATE if the method was already called.
+     *                INVALID_ARGUMENTS if there was a problem setting up
+     *                                  the queue.
+     * @return statusMQ a message queue used for passing status from the effect.
      */
-    // TODO(mnaganov): replace with FMQ version.
-    @callflow(next={"*"})
-    process(AudioBuffer inBuffer, uint32_t outFrameSize)
-            generates (Result retval, AudioBuffer outBuffer);
+    prepareForProcessing() generates (Result retval, fmq_sync<Result> statusMQ);
 
     /*
-     * Process reverse stream function. This function is used to pass a
-     * reference stream to the effect engine. If the engine does not need a
-     * reference stream, this function MUST return NOT_SUPPORTED. For example,
-     * this function would typically implemented by an Echo Canceler.
+     * Set up input and output buffers for processing audio data. The effect
+     * may modify both the input and the output buffer during the operation.
+     * Buffers may be set multiple times during effect lifetime.
      *
-     * Output audio buffer must contain no more frames than the input audio
-     * buffer. Since the effect may transform input channels into a different
-     * amount of channels, the caller provides the output frame size.
+     * The input and the output buffer may be reused between different effects,
+     * and the input buffer may be used as an output buffer. Buffers are
+     * distinguished using 'AudioBuffer.id' field.
      *
      * @param inBuffer input audio buffer.
-     * @param outFrameSize output frame size in bytes.
-     * @return retval operation completion status.
-     * @return outBuffer output audio buffer.
+     * @param outBuffer output audio buffer.
+     * @return retval OK if both buffers were mapped successfully.
+     *                INVALID_ARGUMENTS if there was a problem with mapping
+     *                                  any of the buffers.
      */
-    // TODO(mnaganov): replace with FMQ version.
-    @callflow(next={"*"})
-    processReverse(AudioBuffer inBuffer, uint32_t outFrameSize)
-            generates (Result retval, AudioBuffer outBuffer);
+    setProcessBuffers(AudioBuffer inBuffer, AudioBuffer outBuffer) generates (
+            Result retval);
 
     /*
      * Execute a vendor specific command on the effect. The command code
@@ -406,4 +404,14 @@ interface IEffect {
      */
     setCurrentConfigForFeature(uint32_t featureId, vec<uint8_t> configData)
             generates (Result retval);
+
+    /*
+     * Called by the framework to deinitialize the effect and free up
+     * all the currently allocated resources. It is recommended to close
+     * the effect on the client side as soon as it is becomes unused.
+     *
+     * @return retval OK in case the success.
+     *                INVALID_STATE if the effect was already closed.
+     */
+    close() generates (Result retval);
 };
