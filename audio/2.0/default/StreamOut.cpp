@@ -263,7 +263,7 @@ Return<void> StreamOut::prepareForWriting(
     if (mDataMQ) {
         ALOGE("the client attempts to call prepareForWriting twice");
         _hidl_cb(Result::INVALID_STATE,
-                MQDescriptorSync<uint8_t>(), MQDescriptorSync<WriteStatus>());
+                DataMQ::Descriptor(), StatusMQ::Descriptor());
         return Void();
     }
     std::unique_ptr<DataMQ> tempDataMQ(
@@ -273,7 +273,7 @@ Return<void> StreamOut::prepareForWriting(
         ALOGE_IF(!tempDataMQ->isValid(), "data MQ is invalid");
         ALOGE_IF(!tempStatusMQ->isValid(), "status MQ is invalid");
         _hidl_cb(Result::INVALID_ARGUMENTS,
-                MQDescriptorSync<uint8_t>(), MQDescriptorSync<WriteStatus>());
+                DataMQ::Descriptor(), StatusMQ::Descriptor());
         return Void();
     }
     // TODO: Remove event flag management once blocking MQ is implemented. b/33815422
@@ -281,7 +281,7 @@ Return<void> StreamOut::prepareForWriting(
     if (status != OK || !mEfGroup) {
         ALOGE("failed creating event flag for data MQ: %s", strerror(-status));
         _hidl_cb(Result::INVALID_ARGUMENTS,
-                MQDescriptorSync<uint8_t>(), MQDescriptorSync<WriteStatus>());
+                DataMQ::Descriptor(), StatusMQ::Descriptor());
         return Void();
     }
 
@@ -297,7 +297,7 @@ Return<void> StreamOut::prepareForWriting(
     if (status != OK) {
         ALOGW("failed to start writer thread: %s", strerror(-status));
         _hidl_cb(Result::INVALID_ARGUMENTS,
-                MQDescriptorSync<uint8_t>(), MQDescriptorSync<WriteStatus>());
+                DataMQ::Descriptor(), StatusMQ::Descriptor());
         return Void();
     }
 

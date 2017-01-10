@@ -514,7 +514,7 @@ Return<void> HwcClient::getOutputCommandQueue(
     if (outDescriptor) {
         hidl_cb(Error::NONE, *outDescriptor);
     } else {
-        hidl_cb(Error::NO_RESOURCES, MQDescriptorSync<uint32_t>());
+        hidl_cb(Error::NO_RESOURCES, CommandQueueType::Descriptor());
     }
 
     return Void();
