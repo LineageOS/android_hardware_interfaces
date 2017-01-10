@@ -154,18 +154,4 @@ interface IContexthub {
      *
      */
     queryApps(uint32_t hubId) generates (Result result);
-
-    /**
-     * Reboots context hub OS, restarts all the nanoApps.
-     * No reboot notification is sent to nanoApps; reboot happens immediately
-     * and unconditionally; all volatile contexthub state and any data is lost
-     * as a result.
-     *
-     * @param hubId identifer of the contextHub
-     *
-     * @return result OK on success
-     *                BAD_VALUE if parameters are not sane
-     *
-     */
-    reboot(uint32_t hubId) generates (Result result);
 };
