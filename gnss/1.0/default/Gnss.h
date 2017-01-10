@@ -19,6 +19,7 @@
 
 #include <AGnss.h>
 #include <AGnssRil.h>
+#include <GnssBatching.h>
 #include <GnssConfiguration.h>
 #include <GnssDebug.h>
 #include <GnssGeofencing.h>
@@ -29,6 +30,7 @@
 
 #include <ThreadCreationWrapper.h>
 #include <android/hardware/gnss/1.0/IGnss.h>
+#include <hardware/fused_location.h>
 #include <hardware/gps.h>
 #include <hidl/Status.h>
 
@@ -51,6 +53,7 @@ using LegacyGnssSystemInfo = ::GnssSystemInfo;
  * IGnssCallback interface to be passed into the conventional implementation of the GNSS HAL.
  */
 struct Gnss : public IGnss {
+    // TODO: Add flp_device_t, either in ctor, or later attach?
     Gnss(gps_device_t* gnss_device);
     ~Gnss();
 
@@ -83,6 +86,7 @@ struct Gnss : public IGnss {
     Return<sp<IGnssXtra>> getExtensionXtra() override;
     Return<sp<IGnssConfiguration>> getExtensionGnssConfiguration() override;
     Return<sp<IGnssDebug>> getExtensionGnssDebug() override;
+    Return<sp<IGnssBatching>> getExtensionGnssBatching() override;
 
     /*
      * Callback methods to be passed into the conventional GNSS HAL by the default
@@ -119,6 +123,7 @@ struct Gnss : public IGnss {
     sp<GnssNavigationMessage> mGnssNavigationMessage = nullptr;
     sp<GnssDebug> mGnssDebug = nullptr;
     sp<GnssConfiguration> mGnssConfig = nullptr;
+    sp<GnssBatching> mGnssBatching = nullptr;
     const GpsInterface* mGnssIface = nullptr;
     static sp<IGnssCallback> sGnssCbIface;
     static std::vector<std::unique_ptr<ThreadFuncArgs>> sThreadFuncArgsList;
