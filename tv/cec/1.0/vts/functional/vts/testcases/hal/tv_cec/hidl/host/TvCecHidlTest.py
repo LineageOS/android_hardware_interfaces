@@ -58,32 +58,12 @@ class TvCecHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
         self.vtypes = self.dut.hal.tv_cec.GetHidlTypeInterface("types")
         logging.info("tv_cec types: %s", self.vtypes)
 
-        message = CompSpecMsg.VariableSpecificationMessage()
-        message.name = "CecMessage"
-        message.type = CompSpecMsg.TYPE_STRUCT
-        initiator = message.struct_value.add()
-        initiator.name = "initiator"
-        initiator.type = CompSpecMsg.TYPE_ENUM
-        initiator.scalar_value.int32_t = self.vtypes.TV
-        destination = message.struct_value.add()
-        destination.name = "destination"
-        destination.type = CompSpecMsg.TYPE_ENUM
-        destination.scalar_value.int32_t = self.vtypes.PLAYBACK_1
-        body = message.struct_value.add()
-        body.name = "body"
-        body.type = CompSpecMsg.TYPE_VECTOR
-        vector1 = body.vector_value.add()
-        vector1.type = CompSpecMsg.TYPE_SCALAR
-        vector1.scalar_type = "uint8_t"
-        vector1.scalar_value.uint8_t = 1
-        vector2 = body.vector_value.add()
-        vector2.type = CompSpecMsg.TYPE_SCALAR
-        vector2.scalar_type = "uint8_t"
-        vector2.scalar_value.uint8_t = 2
-        vector3 = body.vector_value.add()
-        vector3.type = CompSpecMsg.TYPE_SCALAR
-        vector3.scalar_type = "uint8_t"
-        vector3.scalar_value.uint8_t = 3
+        cec_message = {
+            "initiator": self.vtypes.TV,
+            "destination": self.vtypes.PLAYBACK_1,
+            "body": [1, 2, 3]
+        }
+        message = self.vtypes.Py2Pb("CecMessage", cec_message)
         logging.info("message: %s", message)
         result = self.dut.hal.tv_cec.sendMessage(message)
         logging.info('sendMessage result: %s', result)
