@@ -1,7 +1,9 @@
 #define LOG_TAG "hidl_test"
 
 #include "Graph.h"
-#include <android/log.h>
+
+#include <log/log.h>
+
 #include <hidl-test/PointerHelper.h>
 
 #define PUSH_ERROR_IF(__cond__) if(__cond__) { errors.push_back(std::to_string(__LINE__) + ": " + #__cond__); }
