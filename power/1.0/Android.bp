@@ -26,8 +26,8 @@ genrule {
         "android/hardware/power/1.0/types.h",
         "android/hardware/power/1.0/IPower.h",
         "android/hardware/power/1.0/IHwPower.h",
-        "android/hardware/power/1.0/BnPower.h",
-        "android/hardware/power/1.0/BpPower.h",
+        "android/hardware/power/1.0/BnHwPower.h",
+        "android/hardware/power/1.0/BpHwPower.h",
         "android/hardware/power/1.0/BsPower.h",
     ],
 }

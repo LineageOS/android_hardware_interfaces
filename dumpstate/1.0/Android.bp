@@ -22,8 +22,8 @@ genrule {
     out: [
         "android/hardware/dumpstate/1.0/IDumpstateDevice.h",
         "android/hardware/dumpstate/1.0/IHwDumpstateDevice.h",
-        "android/hardware/dumpstate/1.0/BnDumpstateDevice.h",
-        "android/hardware/dumpstate/1.0/BpDumpstateDevice.h",
+        "android/hardware/dumpstate/1.0/BnHwDumpstateDevice.h",
+        "android/hardware/dumpstate/1.0/BpHwDumpstateDevice.h",
         "android/hardware/dumpstate/1.0/BsDumpstateDevice.h",
     ],
 }

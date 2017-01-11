@@ -26,8 +26,8 @@ genrule {
         "android/hardware/example/extension/light/2.0/types.h",
         "android/hardware/example/extension/light/2.0/IExtLight.h",
         "android/hardware/example/extension/light/2.0/IHwExtLight.h",
-        "android/hardware/example/extension/light/2.0/BnExtLight.h",
-        "android/hardware/example/extension/light/2.0/BpExtLight.h",
+        "android/hardware/example/extension/light/2.0/BnHwExtLight.h",
+        "android/hardware/example/extension/light/2.0/BpHwExtLight.h",
         "android/hardware/example/extension/light/2.0/BsExtLight.h",
     ],
 }

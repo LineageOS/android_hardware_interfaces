@@ -26,8 +26,8 @@ genrule {
         "android/hardware/sensors/1.0/types.h",
         "android/hardware/sensors/1.0/ISensors.h",
         "android/hardware/sensors/1.0/IHwSensors.h",
-        "android/hardware/sensors/1.0/BnSensors.h",
-        "android/hardware/sensors/1.0/BpSensors.h",
+        "android/hardware/sensors/1.0/BnHwSensors.h",
+        "android/hardware/sensors/1.0/BpHwSensors.h",
         "android/hardware/sensors/1.0/BsSensors.h",
     ],
 }

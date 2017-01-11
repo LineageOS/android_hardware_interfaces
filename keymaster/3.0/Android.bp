@@ -26,8 +26,8 @@ genrule {
         "android/hardware/keymaster/3.0/types.h",
         "android/hardware/keymaster/3.0/IKeymasterDevice.h",
         "android/hardware/keymaster/3.0/IHwKeymasterDevice.h",
-        "android/hardware/keymaster/3.0/BnKeymasterDevice.h",
-        "android/hardware/keymaster/3.0/BpKeymasterDevice.h",
+        "android/hardware/keymaster/3.0/BnHwKeymasterDevice.h",
+        "android/hardware/keymaster/3.0/BpHwKeymasterDevice.h",
         "android/hardware/keymaster/3.0/BsKeymasterDevice.h",
     ],
 }

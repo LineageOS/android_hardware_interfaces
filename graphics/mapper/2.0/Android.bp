@@ -26,8 +26,8 @@ genrule {
         "android/hardware/graphics/mapper/2.0/types.h",
         "android/hardware/graphics/mapper/2.0/IMapper.h",
         "android/hardware/graphics/mapper/2.0/IHwMapper.h",
-        "android/hardware/graphics/mapper/2.0/BnMapper.h",
-        "android/hardware/graphics/mapper/2.0/BpMapper.h",
+        "android/hardware/graphics/mapper/2.0/BnHwMapper.h",
+        "android/hardware/graphics/mapper/2.0/BpHwMapper.h",
         "android/hardware/graphics/mapper/2.0/BsMapper.h",
     ],
 }

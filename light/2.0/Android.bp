@@ -26,8 +26,8 @@ genrule {
         "android/hardware/light/2.0/types.h",
         "android/hardware/light/2.0/ILight.h",
         "android/hardware/light/2.0/IHwLight.h",
-        "android/hardware/light/2.0/BnLight.h",
-        "android/hardware/light/2.0/BpLight.h",
+        "android/hardware/light/2.0/BnHwLight.h",
+        "android/hardware/light/2.0/BpHwLight.h",
         "android/hardware/light/2.0/BsLight.h",
     ],
 }
