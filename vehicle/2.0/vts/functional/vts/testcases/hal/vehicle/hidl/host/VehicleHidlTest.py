@@ -84,6 +84,40 @@ class VehicleHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
 
         asserts.assertEqual(0, len(mandatoryProps))
 
+    def getSupportInfo(self):
+        """Check whether OBD2_{LIVE|FREEZE}_FRAME is supported."""
+        isLiveSupported, isFreezeSupported = False, False
+        allConfigs = self.vehicle.getAllPropConfigs()
+        for config in allConfigs:
+            if config['prop'] == self.vtypes.OBD2_LIVE_FRAME:
+                isLiveSupported = True
+            elif config['prop'] == self.vtypes.OBD2_FREEZE_FRAME:
+                isFreezeSupported = True
+            if isLiveSupported and isFreezeSupported:
+                break
+        return isLiveSupported, isFreezeSupported
+
+    def testObd2SensorProperties(self):
+        """Test reading the live and freeze OBD2 frame properties.
+
+        OBD2 (On-Board Diagnostics 2) is the industry standard protocol
+        for retrieving diagnostic sensor information from vehicles.
+        """
+        def checkLiveFrameRead():
+            """Validates reading the OBD2_LIVE_FRAME (if available)."""
+            logging.info("checkLiveFrameRead no-op pass")
+
+        def checkFreezeFrameRead():
+            """Validates reading the OBD2_FREEZE_FRAME (if available)."""
+            logging.info("checkLiveFrameRead no-op pass")
+
+        isLiveSupported, isFreezeSupported = self.getSupportInfo()
+        logging.info("isLiveSupported = %s, isFreezeSupported = %s",
+                     isLiveSupported, isFreezeSupported)
+        if isLiveSupported:
+            checkLiveFrameRead()
+        if isFreezeSupported:
+            checkFreezeFrameRead()
 
 if __name__ == "__main__":
     test_runner.main()
