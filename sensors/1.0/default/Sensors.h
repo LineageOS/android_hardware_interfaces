@@ -39,14 +39,10 @@ struct Sensors : public ::android::hardware::sensors::V1_0::ISensors {
     Return<Result> activate(
             int32_t sensor_handle, bool enabled) override;
 
-    Return<Result> setDelay(
-            int32_t sensor_handle, int64_t sampling_period_ns) override;
-
     Return<void> poll(int32_t maxCount, poll_cb _hidl_cb) override;
 
     Return<Result> batch(
             int32_t sensor_handle,
-            int32_t flags,
             int64_t sampling_period_ns,
             int64_t max_report_latency_ns) override;
 

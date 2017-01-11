@@ -52,20 +52,6 @@ interface ISensors {
     activate(int32_t sensorHandle, bool enabled) generates (Result result);
 
     /**
-     * Set the sampling period in nanoseconds for a given sensor.
-     *
-     * If samplingPeriodNs > maxDelay it will be truncated to
-     * maxDelay and if samplingPeriodNs < minDelay it will be
-     * replaced by minDelay.
-     *
-     * @param  sensorHandle handle of sensor to be changed.
-     * @param  samplngPeriodNs specified sampling period in nanoseconds.
-     * @return result OK on success, BAD_VALUE if sensorHandle is invalid.
-     */
-    setDelay(int32_t sensorHandle, int64_t samplingPeriodNs)
-        generates (Result result);
-
-    /**
      * Generate a vector of sensor events containing at most "maxCount"
      * entries.
      *
@@ -105,7 +91,6 @@ interface ISensors {
      * @return result OK on success, BAD_VALUE if any parameters are invalid.
      */
     batch(int32_t sensorHandle,
-          int32_t flags,
           int64_t samplingPeriodNs,
           int64_t maxReportLatencyNs) generates (Result result);
 

@@ -72,18 +72,18 @@ void convertFromSensorEvent(const sensors_event_t &src, Event *dst) {
     dst->timestamp = src.timestamp;
 
     switch (dst->sensorType) {
-        case SensorType::SENSOR_TYPE_META_DATA:
+        case SensorType::META_DATA:
         {
             dst->u.meta.what = (MetaDataEventType)src.meta_data.what;
             break;
         }
 
-        case SensorType::SENSOR_TYPE_ACCELEROMETER:
-        case SensorType::SENSOR_TYPE_GEOMAGNETIC_FIELD:
-        case SensorType::SENSOR_TYPE_ORIENTATION:
-        case SensorType::SENSOR_TYPE_GYROSCOPE:
-        case SensorType::SENSOR_TYPE_GRAVITY:
-        case SensorType::SENSOR_TYPE_LINEAR_ACCELERATION:
+        case SensorType::ACCELEROMETER:
+        case SensorType::MAGNETIC_FIELD:
+        case SensorType::ORIENTATION:
+        case SensorType::GYROSCOPE:
+        case SensorType::GRAVITY:
+        case SensorType::LINEAR_ACCELERATION:
         {
             dst->u.vec3.x = src.acceleration.x;
             dst->u.vec3.y = src.acceleration.y;
@@ -92,9 +92,9 @@ void convertFromSensorEvent(const sensors_event_t &src, Event *dst) {
             break;
         }
 
-        case SensorType::SENSOR_TYPE_ROTATION_VECTOR:
-        case SensorType::SENSOR_TYPE_GAME_ROTATION_VECTOR:
-        case SensorType::SENSOR_TYPE_GEOMAGNETIC_ROTATION_VECTOR:
+        case SensorType::ROTATION_VECTOR:
+        case SensorType::GAME_ROTATION_VECTOR:
+        case SensorType::GEOMAGNETIC_ROTATION_VECTOR:
         {
             dst->u.vec4.x = src.data[0];
             dst->u.vec4.y = src.data[1];
@@ -103,148 +103,148 @@ void convertFromSensorEvent(const sensors_event_t &src, Event *dst) {
             break;
         }
 
-        case SensorType::SENSOR_TYPE_MAGNETIC_FIELD_UNCALIBRATED:
-        case SensorType::SENSOR_TYPE_GYROSCOPE_UNCALIBRATED:
-        case SensorType::SENSOR_TYPE_ACCELEROMETER_UNCALIBRATED:
-        {
-            dst->u.uncal.x = src.uncalibrated_gyro.x_uncalib;
-            dst->u.uncal.y = src.uncalibrated_gyro.y_uncalib;
-            dst->u.uncal.z = src.uncalibrated_gyro.z_uncalib;
-            dst->u.uncal.x_bias = src.uncalibrated_gyro.x_bias;
-            dst->u.uncal.y_bias = src.uncalibrated_gyro.y_bias;
-            dst->u.uncal.z_bias = src.uncalibrated_gyro.z_bias;
-            break;
-        }
+      case SensorType::MAGNETIC_FIELD_UNCALIBRATED:
+      case SensorType::GYROSCOPE_UNCALIBRATED:
+      case SensorType::ACCELEROMETER_UNCALIBRATED:
+      {
+          dst->u.uncal.x = src.uncalibrated_gyro.x_uncalib;
+          dst->u.uncal.y = src.uncalibrated_gyro.y_uncalib;
+          dst->u.uncal.z = src.uncalibrated_gyro.z_uncalib;
+          dst->u.uncal.x_bias = src.uncalibrated_gyro.x_bias;
+          dst->u.uncal.y_bias = src.uncalibrated_gyro.y_bias;
+          dst->u.uncal.z_bias = src.uncalibrated_gyro.z_bias;
+          break;
+      }
 
-        case SensorType::SENSOR_TYPE_DEVICE_ORIENTATION:
-        case SensorType::SENSOR_TYPE_LIGHT:
-        case SensorType::SENSOR_TYPE_PRESSURE:
-        case SensorType::SENSOR_TYPE_TEMPERATURE:
-        case SensorType::SENSOR_TYPE_PROXIMITY:
-        case SensorType::SENSOR_TYPE_RELATIVE_HUMIDITY:
-        case SensorType::SENSOR_TYPE_AMBIENT_TEMPERATURE:
-        case SensorType::SENSOR_TYPE_SIGNIFICANT_MOTION:
-        case SensorType::SENSOR_TYPE_STEP_DETECTOR:
-        case SensorType::SENSOR_TYPE_TILT_DETECTOR:
-        case SensorType::SENSOR_TYPE_WAKE_GESTURE:
-        case SensorType::SENSOR_TYPE_GLANCE_GESTURE:
-        case SensorType::SENSOR_TYPE_PICK_UP_GESTURE:
-        case SensorType::SENSOR_TYPE_WRIST_TILT_GESTURE:
-        case SensorType::SENSOR_TYPE_STATIONARY_DETECT:
-        case SensorType::SENSOR_TYPE_MOTION_DETECT:
-        case SensorType::SENSOR_TYPE_HEART_BEAT:
-        {
-            dst->u.scalar = src.data[0];
-            break;
-        }
+      case SensorType::DEVICE_ORIENTATION:
+      case SensorType::LIGHT:
+      case SensorType::PRESSURE:
+      case SensorType::TEMPERATURE:
+      case SensorType::PROXIMITY:
+      case SensorType::RELATIVE_HUMIDITY:
+      case SensorType::AMBIENT_TEMPERATURE:
+      case SensorType::SIGNIFICANT_MOTION:
+      case SensorType::STEP_DETECTOR:
+      case SensorType::TILT_DETECTOR:
+      case SensorType::WAKE_GESTURE:
+      case SensorType::GLANCE_GESTURE:
+      case SensorType::PICK_UP_GESTURE:
+      case SensorType::WRIST_TILT_GESTURE:
+      case SensorType::STATIONARY_DETECT:
+      case SensorType::MOTION_DETECT:
+      case SensorType::HEART_BEAT:
+      {
+          dst->u.scalar = src.data[0];
+          break;
+      }
 
-        case SensorType::SENSOR_TYPE_STEP_COUNTER:
-        {
-            dst->u.stepCount = src.u64.step_counter;
-            break;
-        }
+      case SensorType::STEP_COUNTER:
+      {
+          dst->u.stepCount = src.u64.step_counter;
+          break;
+      }
 
-        case SensorType::SENSOR_TYPE_HEART_RATE:
-        {
-            dst->u.heartRate.bpm = src.heart_rate.bpm;
-            dst->u.heartRate.status = (SensorStatus)src.heart_rate.status;
-            break;
-        }
+      case SensorType::HEART_RATE:
+      {
+          dst->u.heartRate.bpm = src.heart_rate.bpm;
+          dst->u.heartRate.status = (SensorStatus)src.heart_rate.status;
+          break;
+      }
 
-        case SensorType::SENSOR_TYPE_POSE_6DOF:  // 15 floats
-        {
-            for (size_t i = 0; i < 15; ++i) {
-                dst->u.pose6DOF[i] = src.data[i];
-            }
-            break;
-        }
+      case SensorType::POSE_6DOF:  // 15 floats
+      {
+          for (size_t i = 0; i < 15; ++i) {
+              dst->u.pose6DOF[i] = src.data[i];
+          }
+          break;
+      }
 
-        case SensorType::SENSOR_TYPE_DYNAMIC_SENSOR_META:
-        {
-            dst->u.dynamic.connected = src.dynamic_sensor_meta.connected;
-            dst->u.dynamic.sensorHandle = src.dynamic_sensor_meta.handle;
+      case SensorType::DYNAMIC_SENSOR_META:
+      {
+          dst->u.dynamic.connected = src.dynamic_sensor_meta.connected;
+          dst->u.dynamic.sensorHandle = src.dynamic_sensor_meta.handle;
 
-            memcpy(dst->u.dynamic.uuid.data(),
-                   src.dynamic_sensor_meta.uuid,
-                   16);
+          memcpy(dst->u.dynamic.uuid.data(),
+                 src.dynamic_sensor_meta.uuid,
+                 16);
 
-            break;
-        }
+          break;
+      }
 
-        case SensorType::SENSOR_TYPE_ADDITIONAL_INFO:
-        {
-            ::android::hardware::sensors::V1_0::AdditionalInfo *dstInfo =
-                &dst->u.additional;
+      case SensorType::ADDITIONAL_INFO:
+      {
+          ::android::hardware::sensors::V1_0::AdditionalInfo *dstInfo =
+              &dst->u.additional;
 
-            const additional_info_event_t &srcInfo = src.additional_info;
+          const additional_info_event_t &srcInfo = src.additional_info;
 
-            dstInfo->type =
-                (::android::hardware::sensors::V1_0::AdditionalInfoType)
-                    srcInfo.type;
+          dstInfo->type =
+              (::android::hardware::sensors::V1_0::AdditionalInfoType)
+                  srcInfo.type;
 
-            dstInfo->serial = srcInfo.serial;
+          dstInfo->serial = srcInfo.serial;
 
-            CHECK_EQ(sizeof(dstInfo->u), sizeof(srcInfo.data_int32));
-            memcpy(&dstInfo->u, srcInfo.data_int32, sizeof(srcInfo.data_int32));
-            break;
-        }
+          CHECK_EQ(sizeof(dstInfo->u), sizeof(srcInfo.data_int32));
+          memcpy(&dstInfo->u, srcInfo.data_int32, sizeof(srcInfo.data_int32));
+          break;
+      }
 
-        default:
-        {
-            CHECK_GE((int32_t)dst->sensorType,
-                     (int32_t)SensorType::SENSOR_TYPE_DEVICE_PRIVATE_BASE);
+      default:
+      {
+          CHECK_GE((int32_t)dst->sensorType,
+                   (int32_t)SensorType::DEVICE_PRIVATE_BASE);
 
-            memcpy(dst->u.data.data(), src.data, 16 * sizeof(float));
-            break;
-        }
-    }
+          memcpy(dst->u.data.data(), src.data, 16 * sizeof(float));
+          break;
+      }
+  }
 }
 
 void convertToSensorEvent(const Event &src, sensors_event_t *dst) {
-    dst->version = sizeof(sensors_event_t);
-    dst->sensor = src.sensorHandle;
-    dst->type = (int32_t)src.sensorType;
-    dst->reserved0 = 0;
-    dst->timestamp = src.timestamp;
-    dst->flags = 0;
-    dst->reserved1[0] = dst->reserved1[1] = dst->reserved1[2] = 0;
+  dst->version = sizeof(sensors_event_t);
+  dst->sensor = src.sensorHandle;
+  dst->type = (int32_t)src.sensorType;
+  dst->reserved0 = 0;
+  dst->timestamp = src.timestamp;
+  dst->flags = 0;
+  dst->reserved1[0] = dst->reserved1[1] = dst->reserved1[2] = 0;
 
-    switch (src.sensorType) {
-        case SensorType::SENSOR_TYPE_META_DATA:
-        {
-            dst->meta_data.what = (int32_t)src.u.meta.what;
-            dst->meta_data.sensor = dst->sensor;
-            break;
-        }
+  switch (src.sensorType) {
+      case SensorType::META_DATA:
+      {
+          dst->meta_data.what = (int32_t)src.u.meta.what;
+          dst->meta_data.sensor = dst->sensor;
+          break;
+      }
 
-        case SensorType::SENSOR_TYPE_ACCELEROMETER:
-        case SensorType::SENSOR_TYPE_GEOMAGNETIC_FIELD:
-        case SensorType::SENSOR_TYPE_ORIENTATION:
-        case SensorType::SENSOR_TYPE_GYROSCOPE:
-        case SensorType::SENSOR_TYPE_GRAVITY:
-        case SensorType::SENSOR_TYPE_LINEAR_ACCELERATION:
-        {
-            dst->acceleration.x = src.u.vec3.x;
-            dst->acceleration.y = src.u.vec3.y;
-            dst->acceleration.z = src.u.vec3.z;
-            dst->acceleration.status = (int8_t)src.u.vec3.status;
-            break;
-        }
+      case SensorType::ACCELEROMETER:
+      case SensorType::MAGNETIC_FIELD:
+      case SensorType::ORIENTATION:
+      case SensorType::GYROSCOPE:
+      case SensorType::GRAVITY:
+      case SensorType::LINEAR_ACCELERATION:
+      {
+          dst->acceleration.x = src.u.vec3.x;
+          dst->acceleration.y = src.u.vec3.y;
+          dst->acceleration.z = src.u.vec3.z;
+          dst->acceleration.status = (int8_t)src.u.vec3.status;
+          break;
+      }
 
-        case SensorType::SENSOR_TYPE_ROTATION_VECTOR:
-        case SensorType::SENSOR_TYPE_GAME_ROTATION_VECTOR:
-        case SensorType::SENSOR_TYPE_GEOMAGNETIC_ROTATION_VECTOR:
-        {
-            dst->data[0] = src.u.vec4.x;
-            dst->data[1] = src.u.vec4.y;
-            dst->data[2] = src.u.vec4.z;
-            dst->data[3] = src.u.vec4.w;
-            break;
-        }
+      case SensorType::ROTATION_VECTOR:
+      case SensorType::GAME_ROTATION_VECTOR:
+      case SensorType::GEOMAGNETIC_ROTATION_VECTOR:
+      {
+          dst->data[0] = src.u.vec4.x;
+          dst->data[1] = src.u.vec4.y;
+          dst->data[2] = src.u.vec4.z;
+          dst->data[3] = src.u.vec4.w;
+          break;
+      }
 
-        case SensorType::SENSOR_TYPE_MAGNETIC_FIELD_UNCALIBRATED:
-        case SensorType::SENSOR_TYPE_GYROSCOPE_UNCALIBRATED:
-        case SensorType::SENSOR_TYPE_ACCELEROMETER_UNCALIBRATED:
+      case SensorType::MAGNETIC_FIELD_UNCALIBRATED:
+        case SensorType::GYROSCOPE_UNCALIBRATED:
+        case SensorType::ACCELEROMETER_UNCALIBRATED:
         {
             dst->uncalibrated_gyro.x_uncalib = src.u.uncal.x;
             dst->uncalibrated_gyro.y_uncalib = src.u.uncal.y;
@@ -255,42 +255,42 @@ void convertToSensorEvent(const Event &src, sensors_event_t *dst) {
             break;
         }
 
-        case SensorType::SENSOR_TYPE_DEVICE_ORIENTATION:
-        case SensorType::SENSOR_TYPE_LIGHT:
-        case SensorType::SENSOR_TYPE_PRESSURE:
-        case SensorType::SENSOR_TYPE_TEMPERATURE:
-        case SensorType::SENSOR_TYPE_PROXIMITY:
-        case SensorType::SENSOR_TYPE_RELATIVE_HUMIDITY:
-        case SensorType::SENSOR_TYPE_AMBIENT_TEMPERATURE:
-        case SensorType::SENSOR_TYPE_SIGNIFICANT_MOTION:
-        case SensorType::SENSOR_TYPE_STEP_DETECTOR:
-        case SensorType::SENSOR_TYPE_TILT_DETECTOR:
-        case SensorType::SENSOR_TYPE_WAKE_GESTURE:
-        case SensorType::SENSOR_TYPE_GLANCE_GESTURE:
-        case SensorType::SENSOR_TYPE_PICK_UP_GESTURE:
-        case SensorType::SENSOR_TYPE_WRIST_TILT_GESTURE:
-        case SensorType::SENSOR_TYPE_STATIONARY_DETECT:
-        case SensorType::SENSOR_TYPE_MOTION_DETECT:
-        case SensorType::SENSOR_TYPE_HEART_BEAT:
+        case SensorType::DEVICE_ORIENTATION:
+        case SensorType::LIGHT:
+        case SensorType::PRESSURE:
+        case SensorType::TEMPERATURE:
+        case SensorType::PROXIMITY:
+        case SensorType::RELATIVE_HUMIDITY:
+        case SensorType::AMBIENT_TEMPERATURE:
+        case SensorType::SIGNIFICANT_MOTION:
+        case SensorType::STEP_DETECTOR:
+        case SensorType::TILT_DETECTOR:
+        case SensorType::WAKE_GESTURE:
+        case SensorType::GLANCE_GESTURE:
+        case SensorType::PICK_UP_GESTURE:
+        case SensorType::WRIST_TILT_GESTURE:
+        case SensorType::STATIONARY_DETECT:
+        case SensorType::MOTION_DETECT:
+        case SensorType::HEART_BEAT:
         {
             dst->data[0] = src.u.scalar;
             break;
         }
 
-        case SensorType::SENSOR_TYPE_STEP_COUNTER:
+        case SensorType::STEP_COUNTER:
         {
             dst->u64.step_counter = src.u.stepCount;
             break;
         }
 
-        case SensorType::SENSOR_TYPE_HEART_RATE:
+        case SensorType::HEART_RATE:
         {
             dst->heart_rate.bpm = src.u.heartRate.bpm;
             dst->heart_rate.status = (int8_t)src.u.heartRate.status;
             break;
         }
 
-        case SensorType::SENSOR_TYPE_POSE_6DOF:  // 15 floats
+        case SensorType::POSE_6DOF:  // 15 floats
         {
             for (size_t i = 0; i < 15; ++i) {
                 dst->data[i] = src.u.pose6DOF[i];
@@ -298,7 +298,7 @@ void convertToSensorEvent(const Event &src, sensors_event_t *dst) {
             break;
         }
 
-        case SensorType::SENSOR_TYPE_DYNAMIC_SENSOR_META:
+        case SensorType::DYNAMIC_SENSOR_META:
         {
             dst->dynamic_sensor_meta.connected = src.u.dynamic.connected;
             dst->dynamic_sensor_meta.handle = src.u.dynamic.sensorHandle;
@@ -311,7 +311,7 @@ void convertToSensorEvent(const Event &src, sensors_event_t *dst) {
             break;
         }
 
-        case SensorType::SENSOR_TYPE_ADDITIONAL_INFO:
+        case SensorType::ADDITIONAL_INFO:
         {
             const ::android::hardware::sensors::V1_0::AdditionalInfo &srcInfo =
                 src.u.additional;
@@ -332,7 +332,7 @@ void convertToSensorEvent(const Event &src, sensors_event_t *dst) {
         default:
         {
             CHECK_GE((int32_t)src.sensorType,
-                     (int32_t)SensorType::SENSOR_TYPE_DEVICE_PRIVATE_BASE);
+                     (int32_t)SensorType::DEVICE_PRIVATE_BASE);
 
             memcpy(dst->data, src.u.data.data(), 16 * sizeof(float));
             break;
