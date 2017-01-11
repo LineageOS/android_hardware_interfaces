@@ -25,9 +25,10 @@ package android.hardware.sensors@1.0;
 /* Type enumerating various result codes returned from ISensors methods */
 enum Result : int32_t {
     OK,
-    BAD_VALUE,
-    PERMISSION_DENIED,
-    INVALID_OPERATION,
+    PERMISSION_DENIED                   = -1,
+    NO_MEMORY                           = -12,
+    BAD_VALUE                           = -22,
+    INVALID_OPERATION                   = -38,
 };
 
 /*
@@ -748,6 +749,35 @@ enum SensorFlagBits : uint64_t {
      * See ADDITIONAL_INFO and AdditionalInfo for details.
      */
     SENSOR_FLAG_ADDITIONAL_INFO             = 0x40,
+
+    /*
+     * Set this flag if sensor suppor direct channel backed by ashmem.
+     * See SharedMemType and registerDirectChannel for more details.
+     */
+    SENSOR_FLAG_DIRECT_CHANNEL_ASHMEM       = 0x400,
+
+    /*
+     * Set this flag if sensor suppor direct channel backed by gralloc HAL memory.
+     * See SharedMemType and registerDirectChannel for more details.
+     */
+    SENSOR_FLAG_DIRECT_CHANNEL_GRALLOC      = 0x800,
+
+    /*
+     * Flags mask for reporting mode of sensor.
+     */
+    SENSOR_FLAG_MASK_REPORTING_MODE         = 0xE,
+
+    /*
+     * Flags mask for direct report maximum rate level support.
+     * See RateLevel.
+     */
+    SENSOR_FLAG_MASK_DIRECT_REPORT          = 0x380,
+
+    /*
+     * Flags mask for all direct channel support bits.
+     * See SharedMemType.
+     */
+    SENSOR_FLAG_MASK_DIRECT_CHANNEL         = 0xC00,
 };
 
 struct SensorInfo {
@@ -1084,4 +1114,67 @@ struct Event {
 
     /* Union discriminated on sensorType */
     EventPayload u;
+};
+
+/**
+ * Direct report rate level definition. Except for SENSOR_DIRECT_RATE_STOP, each
+ * rate level covers the range (55%, 220%] * nominal report rate. For example,
+ * if config direct report specify a rate level SENSOR_DIRECT_RATE_FAST, sensor
+ * hardware should report event at a rate greater than 110Hz, and less or equal
+ * to 440Hz.
+ */
+@export(name="direct_rate_level_t", value_prefix="SENSOR_DIRECT_RATE_")
+enum RateLevel : int32_t {
+    STOP,            // stop
+    NORMAL,          // nominal 50Hz
+    FAST,            // nominal 200Hz
+    VERY_FAST,       // nominal 800Hz
+};
+
+/**
+ * Direct channel shared memory types. See struct SharedMemInfo.
+ */
+@export(name="direct_mem_type_t", value_prefix="SENSOR_DIRECT_MEM_TYPE_")
+enum SharedMemType : int32_t {
+    // handle contains 1 fd (ashmem handle) and 0 int.
+    ASHMEM = 1,
+    // handle definition matches gralloc HAL.
+    GRALLOC
+};
+
+
+/**
+ * Direct channel lock-free queue format, this defines how the shared memory
+ * should be interpreted by both sensor hardware and application. See struct
+ * SharedMemInfo.
+ */
+@export(name="direct_format_t", value_prefix="SENSOR_DIRECT_FMT_")
+enum SharedMemFormat : int32_t {
+    SENSORS_EVENT = 1,  // shared memory is formated as an array of data
+                        // elements, each sized 104 bytes. Details of fields:
+                        //
+                        // offset   type        name
+                        //-----------------------------------
+                        // 0x0000   int32_t     size (always 104)
+                        // 0x0004   int32_t     sensor report token
+                        // 0x0008   int32_t     type (see SensorType)
+                        // 0x000C   int32_t     atomic counter
+                        // 0x0010   int64_t     timestamp (see Event)
+                        // 0x0014   float[16]/  data
+                        //          int64_t[8]
+                        // 0x0058   int32_t[4]  reserved
+                        //
+                        // Upon return of channel registration call, the
+                        // shared memory space must be formated to all 0 by HAL.
+};
+
+/**
+ * Shared memory information for a direct channel
+ */
+struct SharedMemInfo {
+    SharedMemType type;         // shared memory type
+    SharedMemFormat format;
+    uint32_t size;              // size of the memory region, in bytes
+    handle memoryHandle;        // shared memory handle, it is interpreted
+                                // depending on type field, see SharedMemType.
 };

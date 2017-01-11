@@ -234,6 +234,32 @@ Return<Result> Sensors::injectSensorData(const Event& event) {
             mSensorDevice->inject_sensor_data(mSensorDevice, &out));
 }
 
+Return<void> Sensors::registerDirectChannel(
+        const SharedMemInfo& mem, registerDirectChannel_cb _aidl_cb) {
+    //TODO(b/30985702): finish implementation
+    (void) mem;
+    _aidl_cb(Result::INVALID_OPERATION, -1);
+    return Void();
+}
+
+Return<Result> Sensors::unregisterDirectChannel(int32_t channelHandle) {
+    //TODO(b/30985702): finish implementation
+    (void) channelHandle;
+    return Result::INVALID_OPERATION;
+}
+
+Return<void> Sensors::configDirectReport(
+        int32_t sensorHandle, int32_t channelHandle, RateLevel rate,
+        configDirectReport_cb _hidl_cb) {
+    //TODO(b/30985702): finish implementation
+    (void) sensorHandle;
+    (void) channelHandle;
+    (void) rate;
+
+    _hidl_cb(Result::INVALID_OPERATION, -1);
+    return Void();
+}
+
 // static
 void Sensors::convertFromSensorEvents(
         size_t count,

@@ -54,6 +54,15 @@ struct Sensors : public ::android::hardware::sensors::V1_0::ISensors {
 
     Return<Result> injectSensorData(const Event& event) override;
 
+    Return<void> registerDirectChannel(
+            const SharedMemInfo& mem, registerDirectChannel_cb _aidl_cb) override;
+
+    Return<Result> unregisterDirectChannel(int32_t channelHandle) override;
+
+    Return<void> configDirectReport(
+            int32_t sensorHandle, int32_t channelHandle, RateLevel rate,
+            configDirectReport_cb _hidl_cb) override;
+
 private:
     status_t mInitCheck;
     sensors_module_t *mSensorModule;
