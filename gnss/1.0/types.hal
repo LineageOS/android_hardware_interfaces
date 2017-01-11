@@ -40,15 +40,21 @@ enum GnssConstellationType : uint8_t {
 /** Bit mask to indicate which values are valid in a GnssLocation object. */
 enum GnssLocationFlags : uint16_t {
     /** GnssLocation has valid latitude and longitude. */
-    HAS_LAT_LONG = 0x0001,
+    HAS_LAT_LONG              = 0x0001,
     /** GnssLocation has valid altitude. */
-    HAS_ALTITUDE = 0x0002,
+    HAS_ALTITUDE              = 0x0002,
     /** GnssLocation has valid speed. */
-    HAS_SPEED    = 0x0004,
+    HAS_SPEED                 = 0x0004,
     /** GnssLocation has valid bearing. */
-    HAS_BEARING  = 0x0008,
-    /** GnssLocation has valid accuracy. */
-    HAS_ACCURACY = 0x0010
+    HAS_BEARING               = 0x0008,
+    /** GpsLocation has valid horizontal accuracy. */
+    HAS_HORIZONTAL_ACCURACY   = 0x0010,
+    /** GpsLocation has valid vertical accuracy. */
+    HAS_VERTICAL_ACCURACY     = 0x0020,
+    /** GpsLocation has valid speed accuracy. */
+    HAS_SPEED_ACCURACY        = 0x0040,
+    /** GpsLocation has valid bearing accuracy. */
+    HAS_BEARING_ACCURACY      = 0x0080
 };
 
 /* Represents a location. */
@@ -73,8 +79,29 @@ struct GnssLocation {
     /* Represents heading in degrees. */
     float bearingDegrees;
 
-    /* Represents expected accuracy in meters. */
-    float accuracyMeters;
+    /*
+    * Represents expected horizontal position accuracy, radial, in meters
+    * (68% confidence).
+    */
+    float horizontalAccuracyMeters;
+
+    /*
+    * Represents expected vertical position accuracy in meters
+    * (68% confidence).
+    */
+    float verticalAccuracyMeters;
+
+    /*
+    * Represents expected speed accuracy in meter per seconds
+    * (68% confidence).
+    */
+    float speedAccuracyMetersPerSecond;
+
+    /*
+    * Represents expected bearing accuracy in degrees
+    * (68% confidence).
+    */
+    float bearingAccuracyDegrees;
 
     /* Timestamp for the location fix. */
     GnssUtcTime timestamp;

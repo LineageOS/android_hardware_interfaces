@@ -29,21 +29,21 @@ interface IGnssCallback {
          * If this is not set, then the framework will use 1000ms for
          * minInterval and will call start() and stop() to schedule the GNSS.
          */
-        SCHEDULING     = 1 << 0,
+        SCHEDULING                      = 1 << 0,
         /** GNSS supports MS-Based AGNSS mode */
-        MSB            = 1 << 1,
+        MSB                             = 1 << 1,
         /** GNSS supports MS-Assisted AGNSS mode */
-        MSA            = 1 << 2,
+        MSA                             = 1 << 2,
         /** GNSS supports single-shot fixes */
-        SINGLE_SHOT    = 1 << 3,
+        SINGLE_SHOT                     = 1 << 3,
         /** GNSS supports on demand time injection */
-        ON_DEMAND_TIME = 1 << 4,
+        ON_DEMAND_TIME                  = 1 << 4,
         /** GNSS supports Geofencing  */
-        GEOFENCING     = 1 << 5,
-        /** GNSS supports Measurements. */
-        MEASUREMENTS   = 1 << 6,
+        GEOFENCING                      = 1 << 5,
+        /** GNSS supports Measurements for at least GPS. */
+        MEASUREMENTS                    = 1 << 6,
         /** GNSS supports Navigation Messages */
-        NAV_MESSAGES   = 1 << 7,
+        NAV_MESSAGES                    = 1 << 7
     };
 
     /* GNSS status event values. */
@@ -64,10 +64,11 @@ interface IGnssCallback {
      * Flags that indicate information about the satellite
      */
     enum GnssSvFlags : uint8_t {
-        NONE                = 0,
-        HAS_EPHEMERIS_DATA  = 1 << 0,
-        HAS_ALMANAC_DATA    = 1 << 1,
-        USED_IN_FIX         = 1 << 2
+        NONE                  = 0,
+        HAS_EPHEMERIS_DATA    = 1 << 0,
+        HAS_ALMANAC_DATA      = 1 << 1,
+        USED_IN_FIX           = 1 << 2,
+        HAS_CARRIER_FREQUENCY = 1 << 3
     };
 
     struct GnssSvInfo {
@@ -107,6 +108,17 @@ interface IGnssCallback {
 
         /** Azimuth of SV in degrees. */
         float azimuthDegrees;
+
+        /*
+         * Carrier frequency of the signal tracked, for example it can be the
+         * GPS L1 = 1.57542e9 Hz, or L2, L5, varying GLO channels, etc. If
+         * the field is not set, it is the primary common use frequency,
+         * e.g. L1 for GPS.
+         *
+         * If the data is available, gnssClockFlags must contain
+         * HAS_CARRIER_FREQUENCY.
+         */
+        float carrierFrequencyHz;
 
         /*
          * Contains additional data about the given SV.

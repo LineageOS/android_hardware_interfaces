@@ -121,7 +121,10 @@ void Gnss::gnssSvStatusCb(GnssSvStatus* status) {
             .cN0Dbhz = svInfo.c_n0_dbhz,
             .elevationDegrees = svInfo.elevation,
             .azimuthDegrees = svInfo.azimuth,
-            .svFlag = svInfo.flags
+            .svFlag = svInfo.flags,
+            // Older chipsets do not provide carrier frequency, hence HAS_CARRIER_FREQUENCY flag
+            // is not set and the carrierFrequencyHz field is set to zero
+            .carrierFrequencyHz = 0
         };
         svStatus.gnssSvList[i] = gnssSvInfo;
     }

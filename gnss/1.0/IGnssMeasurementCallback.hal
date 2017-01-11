@@ -51,7 +51,9 @@ interface IGnssMeasurementCallback {
         /** A valid 'carrier phase' is stored in the data structure. */
         HAS_CARRIER_PHASE              = 1 << 11,
         /** A valid 'carrier phase uncertainty' is stored in the data structure. */
-        HAS_CARRIER_PHASE_UNCERTAINTY  = 1 << 12
+        HAS_CARRIER_PHASE_UNCERTAINTY  = 1 << 12,
+        /** A valid automatic gain control is stored in the data structure. */
+        HAS_AUTOMATIC_GAIN_CONTROL     = 1 << 13
     };
 
     /*
@@ -95,7 +97,9 @@ interface IGnssMeasurementCallback {
         STATE_GAL_E1BC_CODE_LOCK     = 1 << 10,
         STATE_GAL_E1C_2ND_CODE_LOCK  = 1 << 11,
         STATE_GAL_E1B_PAGE_SYNC      = 1 << 12,
-        STATE_SBAS_SYNC              = 1 << 13
+        STATE_SBAS_SYNC              = 1 << 13,
+        STATE_TOW_KNOWN              = 1 << 14,
+        STATE_GLO_TOD_KNOWN          = 1 << 15,
     };
 
     /*
@@ -321,6 +325,11 @@ interface IGnssMeasurementCallback {
          * Bit sync        : [ 0 20ms  ] : STATE_BIT_SYNC set
          * Subframe sync   : [ 0  6s   ] : STATE_SUBFRAME_SYNC set
          * TOW decoded     : [ 0 1week ] : STATE_TOW_DECODED set
+         * TOW Known       : [ 0 1week ] : STATE_TOW_KNOWN set
+         *
+         * Note: TOW Known refers to the case where TOW is possibly not decoded
+         * over the air but has been determined from other sources. If TOW
+         * decoded is set then TOW Known must also be set.
          *
          * Note: If there is any ambiguity in integer millisecond,
          * GNSS_MEASUREMENT_STATE_MSEC_AMBIGUOUS must be set accordingly, in the
@@ -333,33 +342,48 @@ interface IGnssMeasurementCallback {
          *
          * Given the highest sync state that can be achieved, per each satellite,
          * valid range for this field can be:
-         * Searching       : [ 0       ] : STATE_UNKNOWN set
-         * C/A code lock   : [ 0   1ms ] : STATE_CODE_LOCK set
-         * Symbol sync     : [ 0  10ms ] : STATE_SYMBOL_SYNC set
-         * Bit sync        : [ 0  20ms ] : STATE_BIT_SYNC set
-         * String sync     : [ 0    2s ] : STATE_GLO_STRING_SYNC set
-         * Time of day     : [ 0  1day ] : STATE_GLO_TOW_DECODED set
+         * Searching           : [ 0       ] : STATE_UNKNOWN set
+         * C/A code lock       : [ 0   1ms ] : STATE_CODE_LOCK set
+         * Symbol sync         : [ 0  10ms ] : STATE_SYMBOL_SYNC set
+         * Bit sync            : [ 0  20ms ] : STATE_BIT_SYNC set
+         * String sync         : [ 0    2s ] : STATE_GLO_STRING_SYNC set
+         * Time of day decoded : [ 0  1day ] : STATE_GLO_TOD_DECODED set
+         * Time of day known   : [ 0  1day ] : STATE_GLO_TOD_KNOWN set
+         *
+         * Note: Time of day known refers to the case where it is possibly not
+         * decoded over the air but has been determined from other sources. If
+         * Time of day decoded is set then Time of day known must also be set.
          *
          * For Beidou, this is the received Beidou time of week,
          * at the measurement time in nanoseconds.
          *
          * Given the highest sync state that can be achieved, per each satellite,
          * valid range for this field can be:
-         * Searching    : [ 0       ] : STATE_UNKNOWN set.
-         * C/A code lock: [ 0   1ms ] : STATE_CODE_LOCK set.
-         * Bit sync (D2): [ 0   2ms ] : STATE_BDS_D2_BIT_SYNC set.
-         * Bit sync (D1): [ 0  20ms ] : STATE_BIT_SYNC set.
-         * Subframe (D2): [ 0  0.6s ] : STATE_BDS_D2_SUBFRAME_SYNC set.
-         * Subframe (D1): [ 0    6s ] : STATE_SUBFRAME_SYNC set.
-         * Time of week : [ 0 1week ] : STATE_TOW_DECODED set.
+         * Searching            : [ 0       ] : STATE_UNKNOWN set.
+         * C/A code lock        : [ 0   1ms ] : STATE_CODE_LOCK set.
+         * Bit sync (D2)        : [ 0   2ms ] : STATE_BDS_D2_BIT_SYNC set.
+         * Bit sync (D1)        : [ 0  20ms ] : STATE_BIT_SYNC set.
+         * Subframe (D2)        : [ 0  0.6s ] : STATE_BDS_D2_SUBFRAME_SYNC set.
+         * Subframe (D1)        : [ 0    6s ] : STATE_SUBFRAME_SYNC set.
+         * Time of week decoded : [ 0 1week ] : STATE_TOW_DECODED set.
+         * Time of week known   : [ 0 1week ] : STATE_TOW_KNOWN set
+         *
+         * Note: TOW Known refers to the case where TOW is possibly not decoded
+         * over the air but has been determined from other sources. If TOW
+         * decoded is set then TOW Known must also be set.
          *
          * For Galileo, this is the received Galileo time of week,
          * at the measurement time in nanoseconds.
          *
-         * E1BC code lock   : [ 0  4ms ] : STATE_GAL_E1BC_CODE_LOCK set.
-         * E1C 2nd code lock: [ 0 100ms] : STATE_GAL_E1C_2ND_CODE_LOCK set.
-         * E1B page         : [ 0   2s ] : STATE_GAL_E1B_PAGE_SYNC set.
-         * Time of week     : [ 0 1week] : STATE_TOW_DECODED is set.
+         * E1BC code lock       : [ 0  4ms ] : STATE_GAL_E1BC_CODE_LOCK set.
+         * E1C 2nd code lock    : [ 0 100ms] : STATE_GAL_E1C_2ND_CODE_LOCK set.
+         * E1B page             : [ 0   2s ] : STATE_GAL_E1B_PAGE_SYNC set.
+         * Time of week decoded : [ 0 1week] : STATE_TOW_DECODED is set.
+         * Time of week known   : [ 0 1week] : STATE_TOW_KNOWN set
+         *
+         * Note: TOW Known refers to the case where TOW is possibly not decoded
+         * over the air but has been determined from other sources. If TOW
+         * decoded is set then TOW Known must also be set.
          *
          * For SBAS, this is received SBAS time, at the measurement time in
          * nanoseconds.
@@ -455,9 +479,10 @@ interface IGnssMeasurementCallback {
         double accumulatedDeltaRangeUncertaintyM;
 
         /*
-         * Carrier frequency at which codes and messages are modulated, it can
-         * be L1 or L2. If the field is not set, the carrier frequency is
-         * assumed to be L1.
+         * Carrier frequency of the signal tracked, for example it can be the
+         * GPS L1 = 1.57542e9 Hz, or L2, L5, varying GLO channels, etc. If the
+         * field is not set, it is the primary common use frequency,
+         * e.g. L1 for GPS.
          *
          * If the data is available, gnssClockFlags must contain
          * HAS_CARRIER_FREQUENCY.
@@ -524,6 +549,24 @@ interface IGnssMeasurementCallback {
          * observed noise floor" to "the noise RMS".
          */
         double snrDb;
+
+        /*
+         * Automatic gain control (AGC) level. AGC acts as a variable gain
+         * amplifier adjusting the power of the incoming signal to minimize the
+         * quantization losses. The AGC level may be used to indicate potential
+         * interference. When AGC is at a nominal level, this value
+         * must be set as 0. Higher gain (and/or lower input power) must be
+         * output as a positive number. Hence in cases of strong jamming, in the
+         * band of this signal, this value must go more negative.
+         *
+         * Note: Different hardware designs (e.g. antenna, pre-amplification, or
+         * other RF HW components) may also affect the typical output of of this
+         * value on any given hardware design in an open sky test - the
+         * important aspect of this output is that changes in this value are
+         * indicative of changes on input signal power in the frequency band for
+         * this measurement.
+         */
+        double agcLevelDb;
     };
 
     /*
