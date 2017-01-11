@@ -37,11 +37,24 @@ enum GnssConstellationType : uint8_t {
     GALILEO = 6,
 };
 
+/** Bit mask to indicate which values are valid in a GnssLocation object. */
+enum GnssLocationFlags : uint16_t {
+    /** GnssLocation has valid latitude and longitude. */
+    HAS_LAT_LONG = 0x0001,
+    /** GnssLocation has valid altitude. */
+    HAS_ALTITUDE = 0x0002,
+    /** GnssLocation has valid speed. */
+    HAS_SPEED    = 0x0004,
+    /** GnssLocation has valid bearing. */
+    HAS_BEARING  = 0x0008,
+    /** GnssLocation has valid accuracy. */
+    HAS_ACCURACY = 0x0010
+};
+
 /* Represents a location. */
 struct GnssLocation {
     /* Contains GnssLocationFlags bits. */
-    // TODO bitfield?
-    uint16_t gnssLocationFlags;
+    bitfield<GnssLocationFlags> gnssLocationFlags;
 
     /* Represents latitude in degrees. */
     double latitudeDegrees;
@@ -65,5 +78,4 @@ struct GnssLocation {
 
     /* Timestamp for the location fix. */
     GnssUtcTime timestamp;
-
 };
