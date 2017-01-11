@@ -2,8 +2,10 @@
 #define LOG_TAG "hidl_test"
 
 #include "Bar.h"
-#include <android/log.h>
+
 #include <inttypes.h>
+
+#include <log/log.h>
 
 namespace android {
 namespace hardware {

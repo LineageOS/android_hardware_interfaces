@@ -18,11 +18,11 @@
 
 #include "MemoryTest.h"
 
+#include <log/log.h>
+
 #include <hidlmemory/mapping.h>
 
 #include <android/hidl/memory/1.0/IMemory.h>
-
-#include <android/log.h>
 
 using android::hidl::memory::V1_0::IMemory;
 
