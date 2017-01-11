@@ -73,3 +73,13 @@ enum IfaceType : uint32_t {
   STA,
   P2P
 };
+
+enum P2pGroupCapabilityMask : uint32_t {
+  GROUP_OWNER = 1 << 0,
+  PERSISTENT_GROUP = 1 << 1,
+  GROUP_LIMIT = 1 << 2,
+  INTRA_BSS_DIST = 1 << 3,
+  CROSS_CONN = 1 << 4,
+  PERSISTENT_RECONN = 1 << 5,
+  GROUP_FORMATION = 1 << 6
+};
