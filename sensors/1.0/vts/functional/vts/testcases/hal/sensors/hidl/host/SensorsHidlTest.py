@@ -52,6 +52,7 @@ class SensorsHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
             target_version=1.0,
             target_package="android.hardware.sensors",
             target_component_name="ISensors",
+            hw_binder_service_name=None,
             bits=64 if self.dut.is64Bit else 32)
 
     def tearDownClass(self):
