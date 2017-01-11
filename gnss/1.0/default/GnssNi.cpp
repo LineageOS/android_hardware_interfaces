@@ -61,8 +61,7 @@ void GnssNi::niNotifyCb(GpsNiNotification* notification) {
     IGnssNiCallback::GnssNiNotification notificationGnss = {
         .notificationId =  notification->notification_id,
         .niType = static_cast<IGnssNiCallback::GnssNiType>(notification->ni_type),
-        .notifyFlags =
-                static_cast<IGnssNiCallback::GnssNiNotifyFlags>(notification->notify_flags),
+        .notifyFlags = notification->notify_flags,
         .timeoutSec = static_cast<uint32_t>(notification->timeout),
         .defaultResponse =
                 static_cast<IGnssNiCallback::GnssUserResponseType>(notification->default_response),

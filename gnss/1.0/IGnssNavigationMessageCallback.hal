@@ -80,7 +80,7 @@ interface IGnssNavigationMessageCallback {
          * No need to send any navigation message that contains words with parity
          * error and cannot be corrected.
          */
-        NavigationMessageStatus status;
+        bitfield<NavigationMessageStatus> status;
 
         /*
          * Message identifier. It provides an index so the complete Navigation

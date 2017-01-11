@@ -78,7 +78,7 @@ interface IGnssNiCallback {
          * Notification/verification options, combinations of GnssNiNotifyFlags
          * constants.
          */
-        GnssNiNotifyFlags notifyFlags;
+        bitfield<GnssNiNotifyFlags> notifyFlags;
 
         /*
          * Timeout period to wait for user response.

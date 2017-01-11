@@ -179,7 +179,7 @@ interface IGnssCallback {
      * @param capabilities Capability parameter is a bit field of
      * the Capabilities enum.
      */
-    gnssSetCapabilitesCb(uint32_t capabilities);
+    gnssSetCapabilitesCb(bitfield<Capabilities> capabilities);
 
     /*
      * Callback utility for acquiring the GNSS wakelock. This can be used to prevent

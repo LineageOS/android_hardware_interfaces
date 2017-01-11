@@ -50,7 +50,7 @@ void AGnssRil::requestSetId(uint32_t flags) {
         return;
     }
 
-    sAGnssRilCbIface->requestSetIdCb(static_cast<IAGnssRilCallback::ID>(flags));
+    sAGnssRilCbIface->requestSetIdCb(flags);
 }
 
 void AGnssRil::requestRefLoc(uint32_t /*flags*/) {

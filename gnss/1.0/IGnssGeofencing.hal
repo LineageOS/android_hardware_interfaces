@@ -54,9 +54,10 @@ interface IGnssGeofencing {
      * must be triggered. This parameter is defined in milliseconds.
      */
     addGeofence(int32_t geofenceId, double latitudeDegrees, double longitudeDegrees,
-        double radiusMeters, GeofenceTransition lastTransition,
-        int32_t monitorTransitions, uint32_t notificationResponsivenessMs,
-        uint32_t unknownTimerMs);
+            double radiusMeters, GeofenceTransition lastTransition,
+            bitfield<IGnssGeofenceCallback.GeofenceTransition> monitorTransitions,
+            uint32_t notificationResponsivenessMs,
+            uint32_t unknownTimerMs);
 
     /*
      * Pause monitoring a particular geofence.
@@ -74,7 +75,8 @@ interface IGnssGeofencing {
      * UNCERTAIN. This supersedes the value associated
      * provided in the addGeofenceArea call.
      */
-    resumeGeofence(int32_t geofenceId, int32_t monitorTransitions);
+    resumeGeofence(int32_t geofenceId,
+            bitfield<IGnssGeofenceCallback.GeofenceTransition> monitorTransitions);
 
     /*
      * Remove a geofence area. After the function returns, no notifications
