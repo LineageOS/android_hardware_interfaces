@@ -821,11 +821,11 @@ enum CdmaSmsWriteArgsStatus : int32_t {
 };
 
 enum CellInfoType : int32_t {
-    GSM,
-    CDMA,
-    LTE,
-    WCDMA,
-    TD_SCDMA
+    GSM = 1,
+    CDMA = 2,
+    LTE = 3,
+    WCDMA = 4,
+    TD_SCDMA = 5
 };
 
 enum TimeStampType : int32_t {
