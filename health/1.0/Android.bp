@@ -26,8 +26,8 @@ genrule {
         "android/hardware/health/1.0/types.h",
         "android/hardware/health/1.0/IHealth.h",
         "android/hardware/health/1.0/IHwHealth.h",
-        "android/hardware/health/1.0/BnHealth.h",
-        "android/hardware/health/1.0/BpHealth.h",
+        "android/hardware/health/1.0/BnHwHealth.h",
+        "android/hardware/health/1.0/BpHwHealth.h",
         "android/hardware/health/1.0/BsHealth.h",
     ],
 }

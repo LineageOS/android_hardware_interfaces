@@ -26,8 +26,8 @@ genrule {
         "android/hardware/gatekeeper/1.0/types.h",
         "android/hardware/gatekeeper/1.0/IGatekeeper.h",
         "android/hardware/gatekeeper/1.0/IHwGatekeeper.h",
-        "android/hardware/gatekeeper/1.0/BnGatekeeper.h",
-        "android/hardware/gatekeeper/1.0/BpGatekeeper.h",
+        "android/hardware/gatekeeper/1.0/BnHwGatekeeper.h",
+        "android/hardware/gatekeeper/1.0/BpHwGatekeeper.h",
         "android/hardware/gatekeeper/1.0/BsGatekeeper.h",
     ],
 }

@@ -22,8 +22,8 @@ genrule {
     out: [
         "android/hardware/tests/libhwbinder/1.0/IBenchmark.h",
         "android/hardware/tests/libhwbinder/1.0/IHwBenchmark.h",
-        "android/hardware/tests/libhwbinder/1.0/BnBenchmark.h",
-        "android/hardware/tests/libhwbinder/1.0/BpBenchmark.h",
+        "android/hardware/tests/libhwbinder/1.0/BnHwBenchmark.h",
+        "android/hardware/tests/libhwbinder/1.0/BpHwBenchmark.h",
         "android/hardware/tests/libhwbinder/1.0/BsBenchmark.h",
     ],
 }

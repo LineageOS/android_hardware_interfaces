@@ -26,8 +26,8 @@ genrule {
         "android/hardware/boot/1.0/types.h",
         "android/hardware/boot/1.0/IBootControl.h",
         "android/hardware/boot/1.0/IHwBootControl.h",
-        "android/hardware/boot/1.0/BnBootControl.h",
-        "android/hardware/boot/1.0/BpBootControl.h",
+        "android/hardware/boot/1.0/BnHwBootControl.h",
+        "android/hardware/boot/1.0/BpHwBootControl.h",
         "android/hardware/boot/1.0/BsBootControl.h",
     ],
 }

@@ -26,8 +26,8 @@ genrule {
         "android/hardware/thermal/1.0/types.h",
         "android/hardware/thermal/1.0/IThermal.h",
         "android/hardware/thermal/1.0/IHwThermal.h",
-        "android/hardware/thermal/1.0/BnThermal.h",
-        "android/hardware/thermal/1.0/BpThermal.h",
+        "android/hardware/thermal/1.0/BnHwThermal.h",
+        "android/hardware/thermal/1.0/BpHwThermal.h",
         "android/hardware/thermal/1.0/BsThermal.h",
     ],
 }

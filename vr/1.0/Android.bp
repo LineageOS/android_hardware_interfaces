@@ -22,8 +22,8 @@ genrule {
     out: [
         "android/hardware/vr/1.0/IVr.h",
         "android/hardware/vr/1.0/IHwVr.h",
-        "android/hardware/vr/1.0/BnVr.h",
-        "android/hardware/vr/1.0/BpVr.h",
+        "android/hardware/vr/1.0/BnHwVr.h",
+        "android/hardware/vr/1.0/BpHwVr.h",
         "android/hardware/vr/1.0/BsVr.h",
     ],
 }

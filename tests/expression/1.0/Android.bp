@@ -25,13 +25,13 @@ genrule {
     out: [
         "android/hardware/tests/expression/1.0/IExpression.h",
         "android/hardware/tests/expression/1.0/IHwExpression.h",
-        "android/hardware/tests/expression/1.0/BnExpression.h",
-        "android/hardware/tests/expression/1.0/BpExpression.h",
+        "android/hardware/tests/expression/1.0/BnHwExpression.h",
+        "android/hardware/tests/expression/1.0/BpHwExpression.h",
         "android/hardware/tests/expression/1.0/BsExpression.h",
         "android/hardware/tests/expression/1.0/IExpressionExt.h",
         "android/hardware/tests/expression/1.0/IHwExpressionExt.h",
-        "android/hardware/tests/expression/1.0/BnExpressionExt.h",
-        "android/hardware/tests/expression/1.0/BpExpressionExt.h",
+        "android/hardware/tests/expression/1.0/BnHwExpressionExt.h",
+        "android/hardware/tests/expression/1.0/BpHwExpressionExt.h",
         "android/hardware/tests/expression/1.0/BsExpressionExt.h",
     ],
 }
