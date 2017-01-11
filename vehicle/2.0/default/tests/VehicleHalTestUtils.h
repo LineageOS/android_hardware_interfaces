@@ -205,7 +205,7 @@ inline std::string enumToHexString(T value) {
 }
 
 template <typename T>
-inline std::string toString(const hidl_vec<T>& vec) {
+inline std::string vecToString(const hidl_vec<T>& vec) {
     std::stringstream ss("[");
     for (size_t i = 0; i < vec.size(); i++) {
         if (i != 0) ss << ",";
@@ -222,10 +222,10 @@ inline std::string toString(const VehiclePropValue &v) {
        << "  areaId: " << hexString(v.areaId) << ",\n"
        << "  timestamp: " << v.timestamp << ",\n"
        << "  value {\n"
-       << "    int32Values: " << toString(v.value.int32Values) << ",\n"
-       << "    floatValues: " << toString(v.value.floatValues) << ",\n"
-       << "    int64Values: " << toString(v.value.int64Values) << ",\n"
-       << "    bytes: " << toString(v.value.bytes) << ",\n"
+       << "    int32Values: " << vecToString(v.value.int32Values) << ",\n"
+       << "    floatValues: " << vecToString(v.value.floatValues) << ",\n"
+       << "    int64Values: " << vecToString(v.value.int64Values) << ",\n"
+       << "    bytes: " << vecToString(v.value.bytes) << ",\n"
        << "    string: " << v.value.stringValue.c_str() << ",\n"
        << "  }\n"
        << "}\n";
