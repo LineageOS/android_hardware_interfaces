@@ -15,10 +15,12 @@
  */
 
 #define LOG_TAG "ConsumerIrService"
-#include <android/log.h>
+
+#include <log/log.h>
 
 #include <hardware/hardware.h>
 #include <hardware/consumerir.h>
+
 #include "ConsumerIr.h"
 
 namespace android {

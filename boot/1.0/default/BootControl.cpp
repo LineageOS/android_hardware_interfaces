@@ -1,5 +1,6 @@
 #define LOG_TAG "android.hardware.boot@1.0-impl"
-#include <android/log.h>
+
+#include <log/log.h>
 
 #include <hardware/hardware.h>
 #include <hardware/boot_control.h>
