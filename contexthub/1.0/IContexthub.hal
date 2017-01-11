@@ -62,6 +62,13 @@ interface IContexthub {
      *
      * Loading a nanoapp must not take more than 30 seconds.
      *
+     * Depending on the implementation, nanoApps loaded via this API may or may
+     * not persist across reboots of the hub. If they do persist, the
+     * implementation must initially place nanoApps in the disabled state upon a
+     * reboot, and not start them until a call is made to enableNanoApp(). In
+     * this case, the app must also be unloaded upon a factory reset of the
+     * device.
+     *
      * @param hubId identifer of the contextHub
      *        appBinary serialized NanoApppBinary for the nanoApp
      *        transactionId transactionId for this call
