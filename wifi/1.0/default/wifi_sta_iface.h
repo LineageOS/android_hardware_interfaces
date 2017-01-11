@@ -83,6 +83,8 @@ class WifiStaIface : public IWifiStaIface {
                                 configureRoaming_cb hidl_status_cb) override;
   Return<void> setRoamingState(StaRoamingState state,
                                setRoamingState_cb hidl_status_cb) override;
+  Return<void> enableNdOffload(bool enable,
+                               enableNdOffload_cb hidl_status_cb) override;
   Return<void> startDebugPacketFateMonitoring(
       startDebugPacketFateMonitoring_cb hidl_status_cb) override;
   Return<void> stopDebugPacketFateMonitoring(
@@ -121,6 +123,7 @@ class WifiStaIface : public IWifiStaIface {
   getRoamingCapabilitiesInternal();
   WifiStatus configureRoamingInternal(const StaRoamingConfig& config);
   WifiStatus setRoamingStateInternal(StaRoamingState state);
+  WifiStatus enableNdOffloadInternal(bool enable);
   WifiStatus startDebugPacketFateMonitoringInternal();
   WifiStatus stopDebugPacketFateMonitoringInternal();
   std::pair<WifiStatus, std::vector<WifiDebugTxPacketFateReport>>
