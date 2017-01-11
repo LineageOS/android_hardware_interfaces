@@ -1,6 +1,9 @@
 #define LOG_TAG "hidl_test"
-#include <android/log.h>
+
+#include <log/log.h>
+
 #include "PointerHelper.h"
+
 namespace android {
 
 void simpleGraph(IGraph::Graph& g) {
