@@ -39,6 +39,8 @@ using ::android::sp;
 
 struct Memory : public IMemoryTest {
     // Methods from ::android::hardware::tests::memory::V1_0::IMemoryTest follow.
+    Return<void> haveSomeMemory(const hidl_memory& mem, haveSomeMemory_cb _hidl_cb) override;
+
     Return<void> fillMemory(const hidl_memory& memory_in, uint8_t filler) override;
 
 };
