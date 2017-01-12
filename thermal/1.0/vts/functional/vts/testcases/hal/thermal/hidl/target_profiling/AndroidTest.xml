@@ -24,9 +24,9 @@
             _32bit::DATA/nativetest/thermal_hidl_hal_test/thermal_hidl_hal_test,
             _64bit::DATA/nativetest64/thermal_hidl_hal_test/thermal_hidl_hal_test,
             "/>
-        <option name="test-config-path" value="vts/testcases/hal/thermal/hidl/target_profiling/ThermalHidlTargetProfilingTest.config" />
         <option name="binary-test-type" value="gtest" />
         <option name="test-timeout" value="1m" />
+        <option name="enable-profiling" value="true" />
     </test>
 </configuration>
 
