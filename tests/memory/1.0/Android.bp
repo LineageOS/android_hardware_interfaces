@@ -22,8 +22,8 @@ genrule {
     out: [
         "android/hardware/tests/memory/1.0/IMemoryTest.h",
         "android/hardware/tests/memory/1.0/IHwMemoryTest.h",
-        "android/hardware/tests/memory/1.0/BnMemoryTest.h",
-        "android/hardware/tests/memory/1.0/BpMemoryTest.h",
+        "android/hardware/tests/memory/1.0/BnHwMemoryTest.h",
+        "android/hardware/tests/memory/1.0/BpHwMemoryTest.h",
         "android/hardware/tests/memory/1.0/BsMemoryTest.h",
     ],
 }
