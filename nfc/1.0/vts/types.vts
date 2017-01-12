@@ -1,0 +1,72 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "types"
+
+package: "android.hardware.nfc"
+
+attribute: {
+    name: "NfcEvent"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "uint32_t"
+
+        enumerator: "OPEN_CPLT"
+        scalar_value: {
+            uint32_t: 0
+        }
+        enumerator: "CLOSE_CPLT"
+        scalar_value: {
+            uint32_t: 1
+        }
+        enumerator: "POST_INIT_CPLT"
+        scalar_value: {
+            uint32_t: 2
+        }
+        enumerator: "PRE_DISCOVER_CPLT"
+        scalar_value: {
+            uint32_t: 3
+        }
+        enumerator: "REQUEST_CONTROL"
+        scalar_value: {
+            uint32_t: 4
+        }
+        enumerator: "RELEASE_CONTROL"
+        scalar_value: {
+            uint32_t: 5
+        }
+        enumerator: "ERROR"
+        scalar_value: {
+            uint32_t: 6
+        }
+    }
+}
+
+attribute: {
+    name: "NfcStatus"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "uint32_t"
+
+        enumerator: "OK"
+        scalar_value: {
+            uint32_t: 0
+        }
+        enumerator: "FAILED"
+        scalar_value: {
+            uint32_t: 1
+        }
+        enumerator: "ERR_TRANSPORT"
+        scalar_value: {
+            uint32_t: 2
+        }
+        enumerator: "ERR_CMD_TIMEOUT"
+        scalar_value: {
+            uint32_t: 3
+        }
+        enumerator: "REFUSED"
+        scalar_value: {
+            uint32_t: 4
+        }
+    }
+}
+
