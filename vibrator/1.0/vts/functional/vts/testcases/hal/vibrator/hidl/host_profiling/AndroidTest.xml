@@ -24,6 +24,6 @@
     <test class="com.android.tradefed.testtype.VtsMultiDeviceTest">
         <option name="test-module-name" value="VibratorHidlProfilingTest" />
         <option name="test-case-path" value="vts/testcases/hal/vibrator/hidl/host/VibratorHidlTest" />
-        <option name="test-config-path" value="vts/testcases/hal/vibrator/hidl/host_profiling/VibratorHidlProfilingTest.config" />
+        <option name="enable-profiling" value="true" />
     </test>
 </configuration>
