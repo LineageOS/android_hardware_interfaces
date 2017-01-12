@@ -30,6 +30,20 @@ enum NanoAppFlags : uint32_t {
     ENCRYPTED = (1<<1),// Encrypted nanoapp
 };
 
+enum HostEndPoint : uint16_t {
+    BROADCAST = 0xFFFF, // The message endpoint is a broadcast end point.
+                        // This value must never be used for a message from
+                        // the host to the hub.
+                        // If BROADCAST is specified as a destination for a
+                        // message from the context hub to the ContextHub
+                        // service, the message must be broadcast to all
+                        // registered clients by the Context Hub service.
+    UNSPECIFIED = 0xFFFE, // The message endpoint is unspecified. This value
+                          // must not be used for messages from the hub to host.
+                          // This value may be used for messages from the host
+                          // to the hub.
+};
+
 struct NanoAppBinary {
     uint32_t headerVersion;    // 0x1 for this version
     uint32_t magic;            // "NANO"
@@ -117,9 +131,10 @@ struct ContextHub {
 };
 
 struct ContextHubMsg {
-    uint64_t appName; // Intended recipient (appId)
-    uint32_t msgType; // Identifier for message
-    vec<uint8_t> msg; // Message body
+    uint64_t appName;      // Intended recipient (appId)
+    uint16_t hostEndPoint; // identifier for the endpoint. (also see enum HostEndPoint)
+    uint32_t msgType;      // Identifier for message
+    vec<uint8_t> msg;      // Message body
 };
 
 enum HubMemoryType : uint32_t {
