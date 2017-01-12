@@ -49,6 +49,20 @@ interface IContexthubCallback {
      */
      handleHubEvent(AsyncEventType evt);
 
+    /*
+     * This callback is passed by the Contexthub service to the HAL
+     * implementation to allow the HAL to send a notification to the service
+     * that a nanp-app has aborted.
+     * This method must be called when a nanoapp invokes chreAbort(...)).
+     *
+     * @params appId : app identifier
+     *               : abortCode code passed by the nanoApp.
+     *
+     * Also see chreAbort(...)
+     *
+     */
+     handleAppAbort(uint64_t appId, uint32_t abortCode);
+
      /*
       * This callback is passed by the Contexthub service to the HAL
       * implementation to allow the HAL to send information about the
