@@ -73,6 +73,8 @@ interface ICryptoPlugin {
      * of clear and encrypted bytes to process. This allows the decrypt
      * call to operate on a range of subsamples in a single call
      * @param source the input buffer for the decryption
+     * @param offset the offset of the first byte of encrypted data from
+     * the base of the source buffer
      * @param destination the output buffer for the decryption
      * @return status the status of the call. The status must be OK or one of
      * the following errors: ERROR_DRM_NO_LICENSE if no license keys have been
@@ -89,6 +91,6 @@ interface ICryptoPlugin {
      */
     decrypt(bool secure, uint8_t[16] keyId, uint8_t[16] iv, Mode mode,
         Pattern pattern, vec<SubSample> subSamples,
-            memory source, DestinationBuffer destination)
+            memory source, uint32_t offset, DestinationBuffer destination)
         generates(Status status, uint32_t bytesWritten, string detailedError);
 };

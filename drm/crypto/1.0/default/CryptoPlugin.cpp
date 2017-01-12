@@ -54,7 +54,8 @@ namespace implementation {
             const hidl_array<uint8_t, 16>& keyId,
             const hidl_array<uint8_t, 16>& iv, Mode mode,
             const Pattern& pattern, const hidl_vec<SubSample>& subSamples,
-            const hidl_memory& source, const DestinationBuffer& destination,
+            const hidl_memory& source, uint32_t offset,
+            const DestinationBuffer& destination,
             decrypt_cb _hidl_cb) {
 
         android::CryptoPlugin::Mode legacyMode;
@@ -88,9 +89,14 @@ namespace implementation {
 
         AString detailMessage;
 
-        void *destPtr = NULL;
         sp<IMemory> sharedSourceMemory = mapMemory(source);
+
+        void *srcPtr = static_cast<void *>(sharedSourceMemory->getPointer());
+        uint8_t *offsetSrc = static_cast<uint8_t *>(srcPtr) + offset;
+        srcPtr = static_cast<void *>(offsetSrc);
+
         sp<IMemory> sharedDestinationMemory;
+        void *destPtr = NULL;
 
         if (destination.type == BufferType::SHARED_MEMORY) {
             sharedDestinationMemory = mapMemory(destination.nonsecureMemory);
@@ -102,8 +108,8 @@ namespace implementation {
             destPtr = static_cast<void *>(handle);
         }
         ssize_t result = mLegacyPlugin->decrypt(secure, keyId.data(), iv.data(),
-                legacyMode, legacyPattern, sharedSourceMemory->getPointer(),
-                legacySubSamples, subSamples.size(), destPtr, &detailMessage);
+                legacyMode, legacyPattern, srcPtr, legacySubSamples,
+                subSamples.size(), destPtr, &detailMessage);
 
         if (destination.type == BufferType::SHARED_MEMORY) {
             sharedDestinationMemory->commit();
