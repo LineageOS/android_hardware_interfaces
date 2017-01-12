@@ -19,10 +19,10 @@
 #include "AccessControlConfigParser.h"
 
 #include <fstream>
-#include <sstream>
 #include <iostream>
+#include <sstream>
 
-#include <android/log.h>
+#include <log/log.h>
 
 namespace android {
 namespace hardware {

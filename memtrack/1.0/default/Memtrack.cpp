@@ -15,11 +15,14 @@
  */
 
 #define LOG_TAG "android.hardware.memtrack@1.0-impl"
+
+#include <log/log.h>
+
 #include <hardware/hardware.h>
 #include <hardware/memtrack.h>
-#include <android/log.h>
 
 #include "Memtrack.h"
+
 namespace android {
 namespace hardware {
 namespace memtrack {

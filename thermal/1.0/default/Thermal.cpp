@@ -15,12 +15,15 @@
  */
 
 #define LOG_TAG "android.hardware.thermal@1.0-impl"
-#include <android/log.h>
 
 #include <errno.h>
+
+#include <vector>
+
+#include <log/log.h>
+
 #include <hardware/hardware.h>
 #include <hardware/thermal.h>
-#include <vector>
 
 #include "Thermal.h"
 

@@ -16,7 +16,8 @@
 #define LOG_TAG "BroadcastRadio"
 //#define LOG_NDEBUG 0
 
-#include <android/log.h>
+#include <log/log.h>
+
 #include <hardware/radio.h>
 
 #include "BroadcastRadio.h"
