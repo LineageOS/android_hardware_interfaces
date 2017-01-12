@@ -24,9 +24,9 @@
             _32bit::DATA/nativetest/vibrator_hidl_hal_test/vibrator_hidl_hal_test,
             _64bit::DATA/nativetest64/vibrator_hidl_hal_test/vibrator_hidl_hal_test,
             "/>
-        <option name="test-config-path" value="vts/testcases/hal/vibrator/hidl/target_profiling/VibratorHidlTargetProfilingTest.config" />
         <option name="binary-test-type" value="gtest" />
         <option name="test-timeout" value="1m" />
+        <option name="enable-profiling" value="true" />
     </test>
 </configuration>
 
