@@ -75,4 +75,19 @@ interface IThermal {
     getCoolingDevices()
         generates (ThermalStatus status, vec<CoolingDevice> devices);
 
+    /* Retrieves an undefined temperature value.
+     *
+     * @return status Status of the operation. If status code is FAILURE,
+     *         the status.debugMessage must be populated with the human-readable
+     *         error message.
+     * @return undefinedTemperature returns an undefined temperature value if
+     *         status code is SUCCESS. Undefined temperature value is an
+     *         unreachable constant device temperature value for HAL.
+     *
+     */
+    @callflow(next={"*"})
+    @entry
+    @exit
+    getUndefinedTemperature()
+        generates (ThermalStatus status, float undefinedTemperature);
 };
