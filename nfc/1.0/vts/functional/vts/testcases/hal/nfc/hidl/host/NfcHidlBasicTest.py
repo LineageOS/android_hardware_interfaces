@@ -37,8 +37,8 @@ class NfcHidlBasicTest(base_test_with_webdb.BaseTestWithWebDbClass):
 
         self.dut.shell.InvokeTerminal("one")
         self.dut.shell.one.Execute("setenforce 0")  # SELinux permissive mode
-        self.dut.shell.one.Execute("service call nfc 6")  # Turn off
-        time.sleep(2)
+        self.dut.shell.one.Execute("svc nfc disable")  # Turn off
+        time.sleep(5)
 
         if getattr(self, PASSTHROUGH_MODE_KEY, True):
             self.dut.shell.one.Execute(
@@ -56,7 +56,9 @@ class NfcHidlBasicTest(base_test_with_webdb.BaseTestWithWebDbClass):
 
     def tearDownClass(self):
         """Turns off the framework-layer NFC service."""
-        self.dut.shell.one.Execute("service call nfc 6")  # make sure it's off
+        # Ideally, we would want to store the nfc service's state before
+        # turning that off in setUpClass and restore the original state.
+        self.dut.shell.one.Execute("svc nfc disable")  # make sure it's off
 
     def testBase(self):
         """A simple test case which just calls each registered function."""
