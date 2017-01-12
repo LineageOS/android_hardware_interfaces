@@ -35,18 +35,8 @@ using ::android::sp;
 class BootHidlTest : public ::testing::Test {
  public:
   virtual void SetUp() override {
-    // TODO(b/33385836) Delete copied code
-    bool getStub = false;
-    char getsubProperty[PROPERTY_VALUE_MAX];
-    if (property_get("vts.hidl.get_stub", getsubProperty, "") > 0) {
-      if (!strcmp(getsubProperty, "true") || !strcmp(getsubProperty, "True") ||
-          !strcmp(getsubProperty, "1")) {
-        getStub = true;
-      }
-    }
-    boot = IBootControl::getService("bootctrl", getStub);
+    boot = IBootControl::getService("bootctrl");
     ASSERT_NE(boot, nullptr);
-    ASSERT_EQ(!getStub, boot->isRemote());
   }
 
   virtual void TearDown() override {}
@@ -91,6 +81,13 @@ TEST_F(BootHidlTest, SetActiveBootSlot) {
     EXPECT_TRUE(result.isOk());
   }
   {
+    // Restore original flags to avoid problems on reboot
+    CommandResult cr;
+    Return <void> result = boot->markBootSuccessful(generate_callback(&cr));
+    EXPECT_TRUE(result.isOk());
+    EXPECT_TRUE(cr.success);
+  }
+  {
     CommandResult cr;
     uint32_t slots = boot->getNumberSlots();
     Return<void> result =
@@ -111,7 +108,16 @@ TEST_F(BootHidlTest, SetSlotAsUnbootable) {
     EXPECT_TRUE(result.isOk());
     if (cr.success) {
       EXPECT_EQ(BoolResult::FALSE, boot->isSlotBootable(otherSlot));
-      boot->setActiveBootSlot(otherSlot, generate_callback(&cr));
+
+      // Restore original flags to avoid problems on reboot
+      result = boot->setActiveBootSlot(otherSlot, generate_callback(&cr));
+      EXPECT_TRUE(result.isOk());
+      EXPECT_TRUE(cr.success);
+      result = boot->setActiveBootSlot(curSlot, generate_callback(&cr));
+      EXPECT_TRUE(result.isOk());
+      EXPECT_TRUE(cr.success);
+      result = boot->markBootSuccessful(generate_callback(&cr));
+      EXPECT_TRUE(result.isOk());
       EXPECT_TRUE(cr.success);
     }
   }
