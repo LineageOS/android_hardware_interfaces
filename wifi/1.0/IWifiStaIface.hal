@@ -81,9 +81,13 @@ interface IWifiStaIface extends IWifiIface {
      */
     TDLS_OFFCHANNEL = 1 << 11,
     /**
+     * Support for keep alive packet offload.
+     */
+    KEEP_ALIVE = 1 << 12,
+    /**
      * Support for tracking connection packets' fate.
      */
-    DEBUG_PACKET_FATE = 1 << 12
+    DEBUG_PACKET_FATE = 1 << 13
   };
 
   /**
@@ -389,6 +393,43 @@ interface IWifiStaIface extends IWifiIface {
    *         |WifiStatusCode.ERROR_UNKNOWN|
    */
   enableNdOffload(bool enable) generates (WifiStatus status);
+
+  /**
+   * Start sending the specified keep alive packets periodically.
+   *
+   * @param cmdId command Id to use for this invocation.
+   * @param ipPacketData IP packet contents to be transmitted.
+   * @param etherType 16 bit ether type to be set in the ethernet frame
+   *        transmitted.
+   * @param srcAddress Source MAC address of the packet.
+   * @param dstAddress Destination MAC address of the packet.
+   * @param periodInMs Interval at which this packet must be transmitted.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   */
+  startSendingKeepAlivePackets(
+      CommandId cmdId, vec<uint8_t> ipPacketData, uint16_t etherType,
+      MacAddress srcAddress, MacAddress dstAddress, uint32_t periodInMs)
+      generates (WifiStatus status);
+
+  /**
+   * Stop sending the specified keep alive packets.
+   *
+   * @param cmdId command Id corresponding to the request.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   */
+  stopSendingKeepAlivePackets(CommandId cmdId) generates (WifiStatus status);
 
   /**
    * API to start packet fate monitoring.

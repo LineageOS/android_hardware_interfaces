@@ -82,6 +82,8 @@ convertLegacyFeatureToHidlStaIfaceCapability(uint32_t feature) {
       return HidlStaIfaceCaps::TDLS;
     case WIFI_FEATURE_TDLS_OFFCHANNEL:
       return HidlStaIfaceCaps::TDLS_OFFCHANNEL;
+    case WIFI_FEATURE_MKEEP_ALIVE:
+      return HidlStaIfaceCaps::KEEP_ALIVE;
   };
   CHECK(false) << "Unknown legacy feature: " << feature;
   return {};
@@ -239,7 +241,8 @@ bool convertLegacyFeaturesToHidlStaCapabilities(
                              WIFI_FEATURE_HOTSPOT,
                              WIFI_FEATURE_PNO,
                              WIFI_FEATURE_TDLS,
-                             WIFI_FEATURE_TDLS_OFFCHANNEL}) {
+                             WIFI_FEATURE_TDLS_OFFCHANNEL,
+                             WIFI_FEATURE_MKEEP_ALIVE}) {
     if (feature & legacy_feature_set) {
       *hidl_caps |= convertLegacyFeatureToHidlStaIfaceCapability(feature);
     }
