@@ -83,9 +83,12 @@ interface ICryptoPlugin {
      * ERROR_DRM_SESSION_NOT_OPENED if the decrypt session is not opened, or
      * ERROR_DRM_CANNOT_HANDLE in other failure cases.
      * @return bytesWritten the number of bytes output from the decryption
+     * @return detailedError if the error is a vendor-specific error, the
+     * vendor's crypto HAL may provide a detailed error string to help
+     * describe the error.
      */
     decrypt(bool secure, uint8_t[16] keyId, uint8_t[16] iv, Mode mode,
         Pattern pattern, vec<SubSample> subSamples,
             memory source, DestinationBuffer destination)
-        generates(Status status, uint32_t bytesWritten);
+        generates(Status status, uint32_t bytesWritten, string detailedError);
 };
