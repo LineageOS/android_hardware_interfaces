@@ -25,7 +25,7 @@
             _64bit::DATA/nativetest64/nfc_hidl_hal_test/nfc_hidl_hal_test,
             "/>
         <option name="binary-test-type" value="gtest" />
-        <option name="test-timeout" value="1m" />
+        <option name="test-timeout" value="10m" />
     <option name="enable-profiling" value="true" />
     </test>
 </configuration>
