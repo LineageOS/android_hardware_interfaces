@@ -26,35 +26,26 @@ enum Result : uint32_t {
 };
 
 enum NanoAppFlags : uint32_t {
-    SIGNED = (1<<0),   // Signed nanoapp
-    ENCRYPTED = (1<<1),// Encrypted nanoapp
-};
-
-enum HostEndPoint : uint16_t {
-    BROADCAST = 0xFFFF, // The message endpoint is a broadcast end point.
-                        // This value must never be used for a message from
-                        // the host to the hub.
-                        // If BROADCAST is specified as a destination for a
-                        // message from the context hub to the ContextHub
-                        // service, the message must be broadcast to all
-                        // registered clients by the Context Hub service.
-    UNSPECIFIED = 0xFFFE, // The message endpoint is unspecified. This value
-                          // must not be used for messages from the hub to host.
-                          // This value may be used for messages from the host
-                          // to the hub.
+    SIGNED    = 1 << 0,
+    ENCRYPTED = 1 << 1,
 };
 
 struct NanoAppBinary {
-    uint32_t headerVersion;    // 0x1 for this version
-    uint32_t magic;            // "NANO"
-    uint64_t appId;            // App ID (contains vendor ID in most significant
-                               // 5 bytes)
-    uint32_t appVersion;       // Version of the app
-    uint32_t flags;            // Mask of NanoAppFlags
-    uint64_t hwHubType;        // Which hub type is this app is compiled for. A
-                               // unique ID for each h/w + toolchain
-                               // combination.
-    vec<uint8_t> customBinary; // start of custom binary data
+    uint64_t appId;            // Nanoapp identifier
+    uint32_t appVersion;       // Version of the app (semantics defined by app)
+    bitfield<NanoAppFlags> flags;
+
+    // The version of the CHRE API that this nanoApp was compiled against. See
+    // the CHRE API header file chre/version.h for more information. The hub
+    // implementation must use this to confirm compatibility before loading
+    // this nanoApp.
+    uint8_t targetChreApiMajorVersion;
+    uint8_t targetChreApiMinorVersion;
+
+    // Implementation-specific binary nanoapp data. This does not include the
+    // common nanoapp header that contains the app ID, etc., as this data is
+    // explicitly passed through the other fields in this struct.
+    vec<uint8_t> customBinary;
 };
 
 enum SensorType : uint32_t {
@@ -130,20 +121,34 @@ struct ContextHub {
                                 // be sent to the hub in one chunk (in bytes)
 
     // Machine-readable CHRE platform ID, returned to nanoapps in the CHRE API
-    // function call chreGetPlatformId(). The most significant 5 bytes of this
-    // value identify the vendor, while the remaining bytes are set by the
-    // vendor to uniquely identify each different CHRE implementation/hardware
-    // that the vendor supplies. This field pairs with the patch version part of
-    // chreVersion to fully specify the CHRE implementation version. See also
-    // the CHRE API header file chre/version.h.
+    // function call chreGetPlatformId(). This field pairs with
+    // chreApiMajorVersion, chreApiMinorVersion, and chrePatchVersion to fully
+    // specify the CHRE implementation version. See also the CHRE API header
+    // file chre/version.h.
     uint64_t chrePlatformId;
 
-    // CHRE implementation version, returned to nanoApps in the CHRE API
-    // function call chreGetVersion(). This value consists of the implemented
-    // CHRE API version (major version in most significant byte, followed by
-    // minor version), and the platform-specific implementation patch version
-    // in the lower two bytes. See also the CHRE API header file chre/version.h.
-    uint32_t chreVersion;
+    // The version of the CHRE implementation returned to nanoApps in the CHRE
+    // API function call chreGetVersion(). The major and minor version specify
+    // the implemented version of the CHRE API, while the patch version
+    // describes the implementation version within the scope of the platform
+    // ID. See also the CHRE API header file chre/version.h.
+    uint8_t chreApiMajorVersion;
+    uint8_t chreApiMinorVersion;
+    uint16_t chrePatchVersion;
+};
+
+enum HostEndPoint : uint16_t {
+    BROADCAST = 0xFFFF, // The message endpoint is a broadcast end point.
+                        // This value must never be used for a message from
+                        // the host to the hub.
+                        // If BROADCAST is specified as a destination for a
+                        // message from the context hub to the ContextHub
+                        // service, the message must be broadcast to all
+                        // registered clients by the Context Hub service.
+    UNSPECIFIED = 0xFFFE, // The message endpoint is unspecified. This value
+                          // must not be used for messages from the hub to host.
+                          // This value may be used for messages from the host
+                          // to the hub.
 };
 
 struct ContextHubMsg {
@@ -160,16 +165,16 @@ enum HubMemoryType : uint32_t {
 };
 
 enum HubMemoryFlag : uint32_t {
-    READ  = (1<<0), // Readable
-    WRITE = (1<<1), // Writable
-    EXEC  = (1<<2), // Executable
+    READ  = 1 << 0, // Readable
+    WRITE = 1 << 1, // Writable
+    EXEC  = 1 << 2, // Executable
 };
 
 struct MemRange {
     uint32_t totalBytes; // Total capacity in bytes
     uint32_t freeBytes;  // Free capacity in bytes
     HubMemoryType type;  // Type of memory, see HubMemoryType
-    uint32_t flags;      // Mask of HubMemoryFlag
+    bitfield<HubMemoryFlag> flags;
 };
 
 enum AsyncEventType : uint32_t {
