@@ -108,6 +108,9 @@ struct StreamOut : public IStreamOut {
     Return<void> createMmapBuffer(int32_t minSizeFrames, createMmapBuffer_cb _hidl_cb) override;
     Return<void> getMmapPosition(getMmapPosition_cb _hidl_cb) override;
 
+    static Result getPresentationPositionImpl(
+            audio_stream_out_t *stream, uint64_t *frames, TimeSpec *timeStamp);
+
   private:
     bool mIsClosed;
     audio_hw_device_t *mDevice;

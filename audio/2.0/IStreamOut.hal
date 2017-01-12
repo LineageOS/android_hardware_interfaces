@@ -47,14 +47,21 @@ interface IStreamOut extends IStream {
      * Data structure passed back to the client via status message queue
      * of 'write' operation.
      *
-     * Possible values of 'retval' field:
+     * Possible values of 'writeRetval' field:
      *  - OK, write operation was successful;
      *  - INVALID_ARGUMENTS, stream was not configured properly;
      *  - INVALID_STATE, stream is in a state that doesn't allow writes.
+     *
+     * Possible values of 'presentationPositionRetval' field (must only
+     * be considered if 'writeRetval' field is set to 'OK'):
+     *  - OK, presentation position retrieved successfully;
+     *  - INVALID_ARGUMENTS, indicates that the position can't be retrieved;
+     *  - INVALID_OPERATION, retrieving presentation position isn't supported;
      */
     struct WriteStatus {
-        Result retval;
+        Result writeRetval;
         uint64_t written;
+        Result presentationPositionRetval;
         uint64_t frames;    // presentation position
         TimeSpec timeStamp; // presentation position
     };
