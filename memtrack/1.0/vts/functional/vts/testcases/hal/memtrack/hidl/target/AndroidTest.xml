@@ -24,7 +24,6 @@
             _32bit::DATA/nativetest/memtrack_hidl_hal_test/memtrack_hidl_hal_test,
             _64bit::DATA/nativetest64/memtrack_hidl_hal_test/memtrack_hidl_hal_test,
             "/>
-        <option name="test-config-path" value="vts/testcases/hal/memtrack/hidl/target/HalMemtrackHidlTargetTest.config" />
         <option name="binary-test-type" value="gtest" />
         <option name="test-timeout" value="5m" />
     </test>
