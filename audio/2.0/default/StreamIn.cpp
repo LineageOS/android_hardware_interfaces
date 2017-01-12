@@ -330,7 +330,10 @@ Return<void> StreamIn::getCapturePosition(getCapturePosition_cb _hidl_cb)  {
         int64_t halFrames, halTime;
         retval = Stream::analyzeStatus(
                 "get_capture_position",
-                mStream->get_capture_position(mStream, &halFrames, &halTime));
+                mStream->get_capture_position(mStream, &halFrames, &halTime),
+                // HAL may have a stub function, always returning ENOSYS, don't
+                // spam the log in this case.
+                ENOSYS);
         if (retval == Result::OK) {
             frames = halFrames;
             time = halTime;

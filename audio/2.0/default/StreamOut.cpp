@@ -88,24 +88,20 @@ bool WriteThread::threadLoop() {
         }
 
         const size_t availToRead = mDataMQ->availableToRead();
-        Result retval = Result::OK;
-        uint64_t written = 0;
+        IStreamOut::WriteStatus status;
+        status.writeRetval = Result::OK;
+        status.written = 0;
         if (mDataMQ->read(&mBuffer[0], availToRead)) {
             ssize_t writeResult = mStream->write(mStream, &mBuffer[0], availToRead);
             if (writeResult >= 0) {
-                written = writeResult;
+                status.written = writeResult;
             } else {
-                retval = Stream::analyzeStatus("write", writeResult);
+                status.writeRetval = Stream::analyzeStatus("write", writeResult);
             }
         }
-        uint64_t frames = 0;
-        struct timespec halTimeStamp = { 0, 0 };
-        if (retval == Result::OK && mStream->get_presentation_position != NULL) {
-            mStream->get_presentation_position(mStream, &frames, &halTimeStamp);
-        }
-        IStreamOut::WriteStatus status = { retval, written, frames,
-                                           { static_cast<uint64_t>(halTimeStamp.tv_sec),
-                                             static_cast<uint64_t>(halTimeStamp.tv_nsec) } };
+        status.presentationPositionRetval = status.writeRetval == Result::OK ?
+                StreamOut::getPresentationPositionImpl(mStream, &status.frames, &status.timeStamp) :
+                Result::OK;
         if (!mStatusMQ->write(&status)) {
             ALOGW("status message queue write failed");
         }
@@ -399,23 +395,29 @@ Return<Result> StreamOut::flush()  {
             Result::NOT_SUPPORTED;
 }
 
-Return<void> StreamOut::getPresentationPosition(getPresentationPosition_cb _hidl_cb)  {
+// static
+Result StreamOut::getPresentationPositionImpl(
+        audio_stream_out_t *stream, uint64_t *frames, TimeSpec *timeStamp) {
     Result retval(Result::NOT_SUPPORTED);
+    if (stream->get_presentation_position == NULL) return retval;
+    struct timespec halTimeStamp;
+    retval = Stream::analyzeStatus(
+            "get_presentation_position",
+            stream->get_presentation_position(stream, frames, &halTimeStamp),
+            // Don't logspam on EINVAL--it's normal for get_presentation_position
+            // to return it sometimes.
+            EINVAL);
+    if (retval == Result::OK) {
+        timeStamp->tvSec = halTimeStamp.tv_sec;
+        timeStamp->tvNSec = halTimeStamp.tv_nsec;
+    }
+    return retval;
+}
+
+Return<void> StreamOut::getPresentationPosition(getPresentationPosition_cb _hidl_cb)  {
     uint64_t frames = 0;
     TimeSpec timeStamp = { 0, 0 };
-    if (mStream->get_presentation_position != NULL) {
-        struct timespec halTimeStamp;
-        retval = Stream::analyzeStatus(
-                "get_presentation_position",
-                mStream->get_presentation_position(mStream, &frames, &halTimeStamp),
-                // Don't logspam on EINVAL--it's normal for get_presentation_position
-                // to return it sometimes.
-                EINVAL);
-        if (retval == Result::OK) {
-            timeStamp.tvSec = halTimeStamp.tv_sec;
-            timeStamp.tvNSec = halTimeStamp.tv_nsec;
-        }
-    }
+    Result retval = getPresentationPositionImpl(mStream, &frames, &timeStamp);
     _hidl_cb(retval, frames, timeStamp);
     return Void();
 }
