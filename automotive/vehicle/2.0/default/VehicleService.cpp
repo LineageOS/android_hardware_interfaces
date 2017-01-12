@@ -34,7 +34,7 @@ int main(int /* argc */, char* /* argv */ []) {
     configureRpcThreadpool(1, true /* callerWillJoin */);
 
     ALOGI("Registering as service...");
-    service->registerAsService("Vehicle");
+    service->registerAsService();
 
     ALOGI("Ready");
     joinRpcThreadpool();
