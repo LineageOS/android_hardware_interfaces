@@ -26,8 +26,8 @@ genrule {
         "android/hardware/ir/1.0/types.h",
         "android/hardware/ir/1.0/IConsumerIr.h",
         "android/hardware/ir/1.0/IHwConsumerIr.h",
-        "android/hardware/ir/1.0/BnConsumerIr.h",
-        "android/hardware/ir/1.0/BpConsumerIr.h",
+        "android/hardware/ir/1.0/BnHwConsumerIr.h",
+        "android/hardware/ir/1.0/BpHwConsumerIr.h",
         "android/hardware/ir/1.0/BsConsumerIr.h",
     ],
 }
