@@ -1,0 +1,31 @@
+component_class: HAL_HIDL
+component_type: NFC
+component_type_version: 1.0
+component_name: "INfcClientCallback"
+
+package: "android.hardware.nfc"
+
+import: "android.hardware.nfc@1.0::types"
+
+interface: {
+  api: {
+    name: "sendEvent"
+    arg: {
+      type: TYPE_ENUM
+      predefined_type: "nfc_event_t"
+    }
+    arg: {
+      type: TYPE_ENUM
+      predefined_type: "nfc_status_t"
+    }
+  }
+
+  api: {
+    name: "sendData"
+    arg: {
+      type: TYPE_STRUCT
+      predefined_type: "nfc_data_t"
+      is_const: true
+    }
+  }
+}
