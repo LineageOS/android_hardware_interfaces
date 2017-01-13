@@ -40,9 +40,8 @@ using ::android::sp;
 class SoundTriggerHidlTest : public ::testing::Test {
  public:
   virtual void SetUp() override {
-    mSoundTriggerHal = ISoundTriggerHw::getService("sound_trigger.primary", false);
+    mSoundTriggerHal = ISoundTriggerHw::getService("sound_trigger.primary");
     ASSERT_NE(nullptr, mSoundTriggerHal.get());
-    ASSERT_TRUE(mSoundTriggerHal->isRemote());
     mCallback = new MyCallback();
     ASSERT_NE(nullptr, mCallback.get());
   }
