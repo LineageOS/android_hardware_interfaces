@@ -649,6 +649,32 @@ wifi_error WifiLegacyHal::configureNdOffload(bool enable) {
                                                       enable);
 }
 
+wifi_error WifiLegacyHal::startSendingOffloadedPacket(
+    uint32_t cmd_id,
+    const std::vector<uint8_t>& ip_packet_data,
+    const std::array<uint8_t, 6>& src_address,
+    const std::array<uint8_t, 6>& dst_address,
+    uint32_t period_in_ms) {
+  std::vector<uint8_t> ip_packet_data_internal(ip_packet_data);
+  std::vector<uint8_t> src_address_internal(
+      src_address.data(), src_address.data() + src_address.size());
+  std::vector<uint8_t> dst_address_internal(
+      dst_address.data(), dst_address.data() + dst_address.size());
+  return global_func_table_.wifi_start_sending_offloaded_packet(
+      cmd_id,
+      wlan_interface_handle_,
+      ip_packet_data_internal.data(),
+      ip_packet_data_internal.size(),
+      src_address_internal.data(),
+      dst_address_internal.data(),
+      period_in_ms);
+}
+
+wifi_error WifiLegacyHal::stopSendingOffloadedPacket(uint32_t cmd_id) {
+  return global_func_table_.wifi_stop_sending_offloaded_packet(
+      cmd_id, wlan_interface_handle_);
+}
+
 std::pair<wifi_error, uint32_t> WifiLegacyHal::getLoggerSupportedFeatureSet() {
   uint32_t supported_features;
   wifi_error status = global_func_table_.wifi_get_logger_supported_feature_set(
