@@ -212,6 +212,15 @@ Return<void> WifiStaIface::setRoamingState(StaRoamingState state,
                          state);
 }
 
+Return<void> WifiStaIface::enableNdOffload(bool enable,
+                                           enableNdOffload_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                         &WifiStaIface::enableNdOffloadInternal,
+                         hidl_status_cb,
+                         enable);
+}
+
 Return<void> WifiStaIface::startDebugPacketFateMonitoring(
     startDebugPacketFateMonitoring_cb hidl_status_cb) {
   return validateAndCall(this,
@@ -495,6 +504,12 @@ WifiStatus WifiStaIface::setRoamingStateInternal(StaRoamingState state) {
   legacy_hal::wifi_error legacy_status =
       legacy_hal_.lock()->enableFirmwareRoaming(
           hidl_struct_util::convertHidlRoamingStateToLegacy(state));
+  return createWifiStatusFromLegacyError(legacy_status);
+}
+
+WifiStatus WifiStaIface::enableNdOffloadInternal(bool enable) {
+  legacy_hal::wifi_error legacy_status =
+      legacy_hal_.lock()->configureNdOffload(enable);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 

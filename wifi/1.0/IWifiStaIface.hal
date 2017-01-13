@@ -379,6 +379,18 @@ interface IWifiStaIface extends IWifiIface {
   setRoamingState(StaRoamingState state) generates (WifiStatus status);
 
   /**
+   * Enable/Disable Neighbour discovery offload functionality in the firmware.
+   *
+   * @param enable true to enable, false to disable.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   */
+  enableNdOffload(bool enable) generates (WifiStatus status);
+
+  /**
    * API to start packet fate monitoring.
    * - Once stared, monitoring must remain active until HAL is unloaded.
    * - When HAL is unloaded, all packet fate buffers must be cleared.
