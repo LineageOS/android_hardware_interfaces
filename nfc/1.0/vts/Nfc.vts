@@ -87,6 +87,13 @@ interface: {
             next: "powerCycle"
             next: "controlGranted"
         }
+        callflow: {
+            next: "write"
+            next: "close"
+            next: "coreInitialized"
+            next: "powerCycle"
+            next: "controlGranted"
+        }
     }
 
     api: {
@@ -94,6 +101,9 @@ interface: {
         return_type_hidl: {
             type: TYPE_ENUM
             predefined_type: "::android::hardware::nfc::V1_0::NfcStatus"
+        }
+        callflow: {
+            exit: true
         }
         callflow: {
             exit: true
@@ -113,6 +123,13 @@ interface: {
             next: "coreInitialized"
             next: "powerCycle"
         }
+        callflow: {
+            next: "write"
+            next: "close"
+            next: "prediscover"
+            next: "coreInitialized"
+            next: "powerCycle"
+        }
     }
 
     api: {
@@ -120,6 +137,13 @@ interface: {
         return_type_hidl: {
             type: TYPE_ENUM
             predefined_type: "::android::hardware::nfc::V1_0::NfcStatus"
+        }
+        callflow: {
+            next: "write"
+            next: "coreInitialized"
+            next: "prediscover"
+            next: "controlGranted"
+            next: "close"
         }
         callflow: {
             next: "write"
