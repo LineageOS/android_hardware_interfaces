@@ -182,8 +182,16 @@ class WifiLegacyHal {
                                      on_threshold_breached_callback);
   wifi_error stopRssiMonitoring(wifi_request_id id);
   std::pair<wifi_error, wifi_roaming_capabilities> getRoamingCapabilities();
-  wifi_error enableFirmwareRoaming(fw_roaming_state_t state);
   wifi_error configureRoaming(const wifi_roaming_config& config);
+  wifi_error enableFirmwareRoaming(fw_roaming_state_t state);
+  wifi_error configureNdOffload(bool enable);
+  wifi_error startSendingOffloadedPacket(
+      uint32_t cmd_id,
+      const std::vector<uint8_t>& ip_packet_data,
+      const std::array<uint8_t, 6>& src_address,
+      const std::array<uint8_t, 6>& dst_address,
+      uint32_t period_in_ms);
+  wifi_error stopSendingOffloadedPacket(uint32_t cmd_id);
   // Logger/debug functions.
   std::pair<wifi_error, uint32_t> getLoggerSupportedFeatureSet();
   wifi_error startPktFateMonitoring();
