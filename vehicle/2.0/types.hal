@@ -720,6 +720,23 @@ enum VehicleProperty: int32_t {
         | VehicleArea:GLOBAL),
 
     /*
+     * A property to allow external component to control audio focus. Depending on
+     * H/W architecture, audio HAL may need to control audio focus while vehicle
+     * HAL is still interacting with upper layer. In such case, audio HAL may set
+     * this property and vehicle HAL may use this property value to decide
+     * response sent through AUDIO_FOCUS property.
+     * Data format is the same as AUDIO_FOCUS property.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    AUDIO_FOCUS_EXT_SYNC = (
+        0x0910
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32_VEC
+        | VehicleArea:GLOBAL),
+
+    /*
      * Property to control audio volume of each audio context.
      *
      * VehiclePropConfig
@@ -752,6 +769,22 @@ enum VehicleProperty: int32_t {
      */
     AUDIO_VOLUME = (
         0x0901
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32_VEC
+        | VehicleArea:GLOBAL),
+
+    /*
+     * Property to allow audio volume sync from external components like audio HAL.
+     * Some vehicle HAL implementation may get volume control from audio HAL and in such
+     * case, setting AUDIO_VOLUME_EXT_SYNC property may trigger event in AUDIO_VOLUME property.
+     * Data format for this property is the same as AUDIO_VOLUME property.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     * @config_flags all audio contexts supported.
+     */
+    AUDIO_VOLUME_EXT_SYNC = (
+        0x0911
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:INT32_VEC
         | VehicleArea:GLOBAL),
@@ -888,6 +921,53 @@ enum VehicleProperty: int32_t {
         0x0905
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:INT32_VEC
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Represents state of audio stream. Audio HAL should set this when a stream is starting or
+     * ending. Car service can request focus for audio played without focus. If such feature
+     * is not required, this property does not need to be implemented.
+     * Car service only monitors setting of this property. It is up to each vehicle HAL
+     * implementation to add necessary action but default implementation will be doing nothing on
+     * this propery's set from audio HAL.
+     * Actual streaming of data should be done only after getting focus for the given stream from
+     * car audio module. Focus can be already granted when stream is started. Focus state can be
+     * monitored by monitoring AUDIO_FOCUS property. If car does not support
+     * AUDIO_FOCUS property, there is no need to monitor focus as focus is assumed to be
+     * granted always.
+     * Data has the following format:
+     *   int32_array[0] : vehicle_audio_stream_state, 0: stopped, 1: started
+     *   int32_array[1] : stream number like 0, 1, 2, ...
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    AUDIO_STREAM_STATE  = (
+        0x0906
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32_VEC
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Property to control car specific audio parameters. Each parameter is defined as string key-
+     * value pair.
+     * set and event notification can pass multiple parameters using the
+     * following format:
+     *   key1=value1;key2=value2;...
+     * get call can request multiple parameters using the following format:
+     *   key1;key2;...
+     * Response for get call has the same format as set.
+     *
+     * VehiclePropConfig
+     *   configString: give list of all supported keys with ; as separator. For example:
+     *     key1;key2;...
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+    AUDIO_PARAMETERS = (
+        0x907
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:STRING
         | VehicleArea:GLOBAL),
 
     /*
