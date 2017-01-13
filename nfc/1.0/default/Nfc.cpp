@@ -51,21 +51,21 @@ Nfc::Nfc(nfc_nci_device_t* device) : mDevice(device) {
 }
 
 
-INfc* HIDL_FETCH_INfc(const char *hal) {
+INfc* HIDL_FETCH_INfc(const char * /*name*/) {
     nfc_nci_device_t* nfc_device;
     int ret = 0;
     const hw_module_t* hw_module = NULL;
 
-    ret = hw_get_module (hal, &hw_module);
+    ret = hw_get_module (NFC_NCI_HARDWARE_MODULE_ID, &hw_module);
     if (ret == 0)
     {
         ret = nfc_nci_open (hw_module, &nfc_device);
         if (ret != 0) {
-            ALOGE ("nfc_nci_open %s failed: %d", hal, ret);
+            ALOGE ("nfc_nci_open failed: %d", ret);
         }
     }
     else
-        ALOGE ("hw_get_module %s failed: %d", hal, ret);
+        ALOGE ("hw_get_module failed: %d", ret);
 
     if (ret == 0) {
         return new Nfc(nfc_device);
