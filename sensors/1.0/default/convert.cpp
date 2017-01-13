@@ -105,6 +105,7 @@ void convertFromSensorEvent(const sensors_event_t &src, Event *dst) {
 
         case SensorType::SENSOR_TYPE_MAGNETIC_FIELD_UNCALIBRATED:
         case SensorType::SENSOR_TYPE_GYROSCOPE_UNCALIBRATED:
+        case SensorType::SENSOR_TYPE_ACCELEROMETER_UNCALIBRATED:
         {
             dst->u.uncal.x = src.uncalibrated_gyro.x_uncalib;
             dst->u.uncal.y = src.uncalibrated_gyro.y_uncalib;
@@ -243,6 +244,7 @@ void convertToSensorEvent(const Event &src, sensors_event_t *dst) {
 
         case SensorType::SENSOR_TYPE_MAGNETIC_FIELD_UNCALIBRATED:
         case SensorType::SENSOR_TYPE_GYROSCOPE_UNCALIBRATED:
+        case SensorType::SENSOR_TYPE_ACCELEROMETER_UNCALIBRATED:
         {
             dst->uncalibrated_gyro.x_uncalib = src.u.uncal.x;
             dst->uncalibrated_gyro.y_uncalib = src.u.uncal.y;
