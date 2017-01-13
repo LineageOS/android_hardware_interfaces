@@ -261,12 +261,12 @@ interface ISupplicantP2pIface extends ISupplicantIface {
   /**
    * Set up a P2P group owner manually (i.e., without group owner
    * negotiation with a specific peer). This is also known as autonomous
-   * group owner. Optional |persistent| may be used to specify restart of a
-   * persistent group.
+   * group owner. Optional |persistentNetworkId| may be used to specify
+   * restart of a persistent group.
    *
    * @param persistent Used to request a persistent group to be formed.
    * @param persistentNetworkId Used to specify the restart of a persistent
-   *        group.
+   *        group. Set to UINT32_MAX for a non-persistent group.
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
