@@ -85,6 +85,16 @@ class WifiStaIface : public IWifiStaIface {
                                setRoamingState_cb hidl_status_cb) override;
   Return<void> enableNdOffload(bool enable,
                                enableNdOffload_cb hidl_status_cb) override;
+  Return<void> startSendingKeepAlivePackets(
+      uint32_t cmd_id,
+      const hidl_vec<uint8_t>& ip_packet_data,
+      uint16_t ether_type,
+      const hidl_array<uint8_t, 6>& src_address,
+      const hidl_array<uint8_t, 6>& dst_address,
+      uint32_t period_in_ms,
+      startSendingKeepAlivePackets_cb hidl_status_cb) override;
+  Return<void> stopSendingKeepAlivePackets(
+      uint32_t cmd_id, stopSendingKeepAlivePackets_cb hidl_status_cb) override;
   Return<void> startDebugPacketFateMonitoring(
       startDebugPacketFateMonitoring_cb hidl_status_cb) override;
   Return<void> stopDebugPacketFateMonitoring(
@@ -124,6 +134,14 @@ class WifiStaIface : public IWifiStaIface {
   WifiStatus configureRoamingInternal(const StaRoamingConfig& config);
   WifiStatus setRoamingStateInternal(StaRoamingState state);
   WifiStatus enableNdOffloadInternal(bool enable);
+  WifiStatus startSendingKeepAlivePacketsInternal(
+      uint32_t cmd_id,
+      const std::vector<uint8_t>& ip_packet_data,
+      uint16_t ether_type,
+      const std::array<uint8_t, 6>& src_address,
+      const std::array<uint8_t, 6>& dst_address,
+      uint32_t period_in_ms);
+  WifiStatus stopSendingKeepAlivePacketsInternal(uint32_t cmd_id);
   WifiStatus startDebugPacketFateMonitoringInternal();
   WifiStatus stopDebugPacketFateMonitoringInternal();
   std::pair<WifiStatus, std::vector<WifiDebugTxPacketFateReport>>
