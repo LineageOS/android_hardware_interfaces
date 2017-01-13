@@ -53,6 +53,9 @@ interface IComposer {
      *
      * @return capabilities is a list of supported capabilities.
      */
+    @entry
+    @exit
+    @callflow(next="*")
     getCapabilities() generates (vec<Capability> capabilities);
 
     /*
@@ -61,6 +64,9 @@ interface IComposer {
      *
      * @return debugInfo is a string of debug information.
      */
+    @entry
+    @exit
+    @callflow(next="*")
     dumpDebugInfo() generates (string debugInfo);
 
     /*
@@ -73,5 +79,7 @@ interface IComposer {
      *         NO_RESOURCES when no more client can be created currently.
      * @return client is the newly created client.
      */
+    @entry
+    @callflow(next="*")
     createClient() generates (Error error, IComposerClient client);
 };

@@ -1,0 +1,87 @@
+component_class: HAL_HIDL
+component_type_version: 2.1
+component_name: "IComposer"
+
+package: "android.hardware.graphics.composer"
+
+import: "android.hardware.graphics.composer@2.1::IComposerClient"
+import: "android.hardware.graphics.composer@2.1::types"
+
+interface: {
+    attribute: {
+        name: "::android::hardware::graphics::composer::V2_1::IComposer::Capability"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "int32_t"
+
+            enumerator: "INVALID"
+            scalar_value: {
+                int32_t: 0
+            }
+            enumerator: "SIDEBAND_STREAM"
+            scalar_value: {
+                int32_t: 1
+            }
+            enumerator: "SKIP_CLIENT_COLOR_TRANSFORM"
+            scalar_value: {
+                int32_t: 2
+            }
+        }
+    }
+
+    api: {
+        name: "getCapabilities"
+        return_type_hidl: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_ENUM
+                predefined_type: "::android::hardware::graphics::composer::V2_1::IComposer::Capability"
+            }
+        }
+        callflow: {
+            entry: true
+        }
+        callflow: {
+            exit: true
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "dumpDebugInfo"
+        return_type_hidl: {
+            type: TYPE_STRING
+        }
+        callflow: {
+            entry: true
+        }
+        callflow: {
+            exit: true
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "createClient"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::Error"
+        }
+        return_type_hidl: {
+            type: TYPE_HIDL_INTERFACE
+            predefined_type: "IComposerClient"
+            is_callback: false
+        }
+        callflow: {
+            entry: true
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+}
