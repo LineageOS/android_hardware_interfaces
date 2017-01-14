@@ -15,17 +15,21 @@ attribute: {
         scalar_value: {
             int32_t: 0
         }
-        enumerator: "BAD_VALUE"
-        scalar_value: {
-            int32_t: 1
-        }
         enumerator: "PERMISSION_DENIED"
         scalar_value: {
-            int32_t: 2
+            int32_t: -1
+        }
+        enumerator: "NO_MEMORY"
+        scalar_value: {
+            int32_t: -12
+        }
+        enumerator: "BAD_VALUE"
+        scalar_value: {
+            int32_t: -22
         }
         enumerator: "INVALID_OPERATION"
         scalar_value: {
-            int32_t: 3
+            int32_t: -38
         }
     }
 }
@@ -36,11 +40,11 @@ attribute: {
     enum_value: {
         scalar_type: "int32_t"
 
-        enumerator: "SENSOR_HAL_NORMAL_MODE"
+        enumerator: "NORMAL"
         scalar_value: {
             int32_t: 0
         }
-        enumerator: "SENSOR_HAL_DATA_INJECTION_MODE"
+        enumerator: "DATA_INJECTION"
         scalar_value: {
             int32_t: 1
         }
@@ -53,147 +57,151 @@ attribute: {
     enum_value: {
         scalar_type: "int32_t"
 
-        enumerator: "SENSOR_TYPE_META_DATA"
+        enumerator: "META_DATA"
         scalar_value: {
             int32_t: 0
         }
-        enumerator: "SENSOR_TYPE_ACCELEROMETER"
+        enumerator: "ACCELEROMETER"
         scalar_value: {
             int32_t: 1
         }
-        enumerator: "SENSOR_TYPE_GEOMAGNETIC_FIELD"
+        enumerator: "MAGNETIC_FIELD"
         scalar_value: {
             int32_t: 2
         }
-        enumerator: "SENSOR_TYPE_ORIENTATION"
+        enumerator: "ORIENTATION"
         scalar_value: {
             int32_t: 3
         }
-        enumerator: "SENSOR_TYPE_GYROSCOPE"
+        enumerator: "GYROSCOPE"
         scalar_value: {
             int32_t: 4
         }
-        enumerator: "SENSOR_TYPE_LIGHT"
+        enumerator: "LIGHT"
         scalar_value: {
             int32_t: 5
         }
-        enumerator: "SENSOR_TYPE_PRESSURE"
+        enumerator: "PRESSURE"
         scalar_value: {
             int32_t: 6
         }
-        enumerator: "SENSOR_TYPE_TEMPERATURE"
+        enumerator: "TEMPERATURE"
         scalar_value: {
             int32_t: 7
         }
-        enumerator: "SENSOR_TYPE_PROXIMITY"
+        enumerator: "PROXIMITY"
         scalar_value: {
             int32_t: 8
         }
-        enumerator: "SENSOR_TYPE_GRAVITY"
+        enumerator: "GRAVITY"
         scalar_value: {
             int32_t: 9
         }
-        enumerator: "SENSOR_TYPE_LINEAR_ACCELERATION"
+        enumerator: "LINEAR_ACCELERATION"
         scalar_value: {
             int32_t: 10
         }
-        enumerator: "SENSOR_TYPE_ROTATION_VECTOR"
+        enumerator: "ROTATION_VECTOR"
         scalar_value: {
             int32_t: 11
         }
-        enumerator: "SENSOR_TYPE_RELATIVE_HUMIDITY"
+        enumerator: "RELATIVE_HUMIDITY"
         scalar_value: {
             int32_t: 12
         }
-        enumerator: "SENSOR_TYPE_AMBIENT_TEMPERATURE"
+        enumerator: "AMBIENT_TEMPERATURE"
         scalar_value: {
             int32_t: 13
         }
-        enumerator: "SENSOR_TYPE_MAGNETIC_FIELD_UNCALIBRATED"
+        enumerator: "MAGNETIC_FIELD_UNCALIBRATED"
         scalar_value: {
             int32_t: 14
         }
-        enumerator: "SENSOR_TYPE_GAME_ROTATION_VECTOR"
+        enumerator: "GAME_ROTATION_VECTOR"
         scalar_value: {
             int32_t: 15
         }
-        enumerator: "SENSOR_TYPE_GYROSCOPE_UNCALIBRATED"
+        enumerator: "GYROSCOPE_UNCALIBRATED"
         scalar_value: {
             int32_t: 16
         }
-        enumerator: "SENSOR_TYPE_SIGNIFICANT_MOTION"
+        enumerator: "SIGNIFICANT_MOTION"
         scalar_value: {
             int32_t: 17
         }
-        enumerator: "SENSOR_TYPE_STEP_DETECTOR"
+        enumerator: "STEP_DETECTOR"
         scalar_value: {
             int32_t: 18
         }
-        enumerator: "SENSOR_TYPE_STEP_COUNTER"
+        enumerator: "STEP_COUNTER"
         scalar_value: {
             int32_t: 19
         }
-        enumerator: "SENSOR_TYPE_GEOMAGNETIC_ROTATION_VECTOR"
+        enumerator: "GEOMAGNETIC_ROTATION_VECTOR"
         scalar_value: {
             int32_t: 20
         }
-        enumerator: "SENSOR_TYPE_HEART_RATE"
+        enumerator: "HEART_RATE"
         scalar_value: {
             int32_t: 21
         }
-        enumerator: "SENSOR_TYPE_TILT_DETECTOR"
+        enumerator: "TILT_DETECTOR"
         scalar_value: {
             int32_t: 22
         }
-        enumerator: "SENSOR_TYPE_WAKE_GESTURE"
+        enumerator: "WAKE_GESTURE"
         scalar_value: {
             int32_t: 23
         }
-        enumerator: "SENSOR_TYPE_GLANCE_GESTURE"
+        enumerator: "GLANCE_GESTURE"
         scalar_value: {
             int32_t: 24
         }
-        enumerator: "SENSOR_TYPE_PICK_UP_GESTURE"
+        enumerator: "PICK_UP_GESTURE"
         scalar_value: {
             int32_t: 25
         }
-        enumerator: "SENSOR_TYPE_WRIST_TILT_GESTURE"
+        enumerator: "WRIST_TILT_GESTURE"
         scalar_value: {
             int32_t: 26
         }
-        enumerator: "SENSOR_TYPE_DEVICE_ORIENTATION"
+        enumerator: "DEVICE_ORIENTATION"
         scalar_value: {
             int32_t: 27
         }
-        enumerator: "SENSOR_TYPE_POSE_6DOF"
+        enumerator: "POSE_6DOF"
         scalar_value: {
             int32_t: 28
         }
-        enumerator: "SENSOR_TYPE_STATIONARY_DETECT"
+        enumerator: "STATIONARY_DETECT"
         scalar_value: {
             int32_t: 29
         }
-        enumerator: "SENSOR_TYPE_MOTION_DETECT"
+        enumerator: "MOTION_DETECT"
         scalar_value: {
             int32_t: 30
         }
-        enumerator: "SENSOR_TYPE_HEART_BEAT"
+        enumerator: "HEART_BEAT"
         scalar_value: {
             int32_t: 31
         }
-        enumerator: "SENSOR_TYPE_DYNAMIC_SENSOR_META"
+        enumerator: "DYNAMIC_SENSOR_META"
         scalar_value: {
             int32_t: 32
         }
-        enumerator: "SENSOR_TYPE_ADDITIONAL_INFO"
+        enumerator: "ADDITIONAL_INFO"
         scalar_value: {
             int32_t: 33
         }
-        enumerator: "SENSOR_TYPE_LOW_LATENCY_OFFBODY_DETECT"
+        enumerator: "LOW_LATENCY_OFFBODY_DETECT"
         scalar_value: {
             int32_t: 34
         }
-        enumerator: "SENSOR_TYPE_DEVICE_PRIVATE_BASE"
+        enumerator: "ACCELEROMETER_UNCALIBRATED"
+        scalar_value: {
+            int32_t: 35
+        }
+        enumerator: "DEVICE_PRIVATE_BASE"
         scalar_value: {
             int32_t: 65536
         }
@@ -204,39 +212,92 @@ attribute: {
     name: "::android::hardware::sensors::V1_0::SensorFlagBits"
     type: TYPE_ENUM
     enum_value: {
-        scalar_type: "uint64_t"
+        scalar_type: "uint32_t"
 
-        enumerator: "SENSOR_FLAG_WAKE_UP"
+        enumerator: "WAKE_UP"
         scalar_value: {
-            uint64_t: 1
+            uint32_t: 1
         }
-        enumerator: "SENSOR_FLAG_CONTINUOUS_MODE"
+        enumerator: "CONTINUOUS_MODE"
         scalar_value: {
-            uint64_t: 0
+            uint32_t: 0
         }
-        enumerator: "SENSOR_FLAG_ON_CHANGE_MODE"
+        enumerator: "ON_CHANGE_MODE"
         scalar_value: {
-            uint64_t: 2
+            uint32_t: 2
         }
-        enumerator: "SENSOR_FLAG_ONE_SHOT_MODE"
+        enumerator: "ONE_SHOT_MODE"
         scalar_value: {
-            uint64_t: 4
+            uint32_t: 4
         }
-        enumerator: "SENSOR_FLAG_SPECIAL_REPORTING_MODE"
+        enumerator: "SPECIAL_REPORTING_MODE"
         scalar_value: {
-            uint64_t: 6
+            uint32_t: 6
         }
-        enumerator: "SENSOR_FLAG_SUPPORTS_DATA_INJECTION"
+        enumerator: "DATA_INJECTION"
         scalar_value: {
-            uint64_t: 16
+            uint32_t: 16
         }
-        enumerator: "SENSOR_FLAG_DYNAMIC_SENSOR"
+        enumerator: "DYNAMIC_SENSOR"
         scalar_value: {
-            uint64_t: 32
+            uint32_t: 32
         }
-        enumerator: "SENSOR_FLAG_ADDITIONAL_INFO"
+        enumerator: "ADDITIONAL_INFO"
         scalar_value: {
-            uint64_t: 64
+            uint32_t: 64
+        }
+        enumerator: "DIRECT_CHANNEL_ASHMEM"
+        scalar_value: {
+            uint32_t: 1024
+        }
+        enumerator: "DIRECT_CHANNEL_GRALLOC"
+        scalar_value: {
+            uint32_t: 2048
+        }
+        enumerator: "MASK_REPORTING_MODE"
+        scalar_value: {
+            uint32_t: 14
+        }
+        enumerator: "MASK_DIRECT_REPORT"
+        scalar_value: {
+            uint32_t: 896
+        }
+        enumerator: "MASK_DIRECT_CHANNEL"
+        scalar_value: {
+            uint32_t: 3072
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::sensors::V1_0::SensorFlagShift"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "uint8_t"
+
+        enumerator: "REPORTING_MODE"
+        scalar_value: {
+            uint8_t: 1
+        }
+        enumerator: "DATA_INJECTION"
+        scalar_value: {
+            uint8_t: 4
+        }
+        enumerator: "DYNAMIC_SENSOR"
+        scalar_value: {
+            uint8_t: 5
+        }
+        enumerator: "ADDITIONAL_INFO"
+        scalar_value: {
+            uint8_t: 6
+        }
+        enumerator: "DIRECT_REPORT"
+        scalar_value: {
+            uint8_t: 7
+        }
+        enumerator: "DIRECT_CHANNEL"
+        scalar_value: {
+            uint8_t: 10
         }
     }
 }
@@ -312,8 +373,11 @@ attribute: {
     }
     struct_value: {
         name: "flags"
-        type: TYPE_SCALAR
-        scalar_type: "uint64_t"
+        type: TYPE_MASK
+        enum_value: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::sensors::V1_0::SensorFlagBits"
+        }
     }
 }
 
@@ -323,23 +387,23 @@ attribute: {
     enum_value: {
         scalar_type: "int8_t"
 
-        enumerator: "SENSOR_STATUS_NO_CONTACT"
+        enumerator: "NO_CONTACT"
         scalar_value: {
             int8_t: -1
         }
-        enumerator: "SENSOR_STATUS_UNRELIABLE"
+        enumerator: "UNRELIABLE"
         scalar_value: {
             int8_t: 0
         }
-        enumerator: "SENSOR_STATUS_ACCURACY_LOW"
+        enumerator: "ACCURACY_LOW"
         scalar_value: {
             int8_t: 1
         }
-        enumerator: "SENSOR_STATUS_ACCURACY_MEDIUM"
+        enumerator: "ACCURACY_MEDIUM"
         scalar_value: {
             int8_t: 2
         }
-        enumerator: "SENSOR_STATUS_ACCURACY_HIGH"
+        enumerator: "ACCURACY_HIGH"
         scalar_value: {
             int8_t: 3
         }
@@ -694,6 +758,85 @@ attribute: {
         name: "u"
         type: TYPE_UNION
         predefined_type: "::android::hardware::sensors::V1_0::EventPayload"
+    }
+}
+
+attribute: {
+    name: "::android::hardware::sensors::V1_0::RateLevel"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "STOP"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "NORMAL"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "FAST"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "VERY_FAST"
+        scalar_value: {
+            int32_t: 3
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::sensors::V1_0::SharedMemType"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "ASHMEM"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "GRALLOC"
+        scalar_value: {
+            int32_t: 2
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::sensors::V1_0::SharedMemFormat"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "SENSORS_EVENT"
+        scalar_value: {
+            int32_t: 1
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::sensors::V1_0::SharedMemInfo"
+    type: TYPE_STRUCT
+    struct_value: {
+        name: "type"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::sensors::V1_0::SharedMemType"
+    }
+    struct_value: {
+        name: "format"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::sensors::V1_0::SharedMemFormat"
+    }
+    struct_value: {
+        name: "size"
+        type: TYPE_SCALAR
+        scalar_type: "uint32_t"
+    }
+    struct_value: {
+        name: "memoryHandle"
+        type: TYPE_HANDLE
     }
 }
 

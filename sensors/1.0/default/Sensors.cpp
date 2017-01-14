@@ -142,15 +142,6 @@ Return<Result> Sensors::activate(
                 enabled));
 }
 
-Return<Result> Sensors::setDelay(
-        int32_t sensor_handle, int64_t sampling_period_ns) {
-    return ResultFromStatus(
-            mSensorDevice->setDelay(
-                reinterpret_cast<sensors_poll_device_t *>(mSensorDevice),
-                sensor_handle,
-                sampling_period_ns));
-}
-
 Return<void> Sensors::poll(int32_t maxCount, poll_cb _hidl_cb) {
     hidl_vec<Event> out;
     hidl_vec<SensorInfo> dynamicSensorsAdded;
@@ -206,14 +197,13 @@ Return<void> Sensors::poll(int32_t maxCount, poll_cb _hidl_cb) {
 
 Return<Result> Sensors::batch(
         int32_t sensor_handle,
-        int32_t flags,
         int64_t sampling_period_ns,
         int64_t max_report_latency_ns) {
     return ResultFromStatus(
             mSensorDevice->batch(
                 mSensorDevice,
                 sensor_handle,
-                flags,
+                0, /*flags*/
                 sampling_period_ns,
                 max_report_latency_ns));
 }

@@ -47,22 +47,6 @@ interface: {
     }
 
     api: {
-        name: "setDelay"
-        return_type_hidl: {
-            type: TYPE_ENUM
-            predefined_type: "::android::hardware::sensors::V1_0::Result"
-        }
-        arg: {
-            type: TYPE_SCALAR
-            scalar_type: "int32_t"
-        }
-        arg: {
-            type: TYPE_SCALAR
-            scalar_type: "int64_t"
-        }
-    }
-
-    api: {
         name: "poll"
         return_type_hidl: {
             type: TYPE_ENUM
@@ -100,10 +84,6 @@ interface: {
         }
         arg: {
             type: TYPE_SCALAR
-            scalar_type: "int32_t"
-        }
-        arg: {
-            type: TYPE_SCALAR
             scalar_type: "int64_t"
         }
         arg: {
@@ -133,6 +113,58 @@ interface: {
         arg: {
             type: TYPE_STRUCT
             predefined_type: "::android::hardware::sensors::V1_0::Event"
+        }
+    }
+
+    api: {
+        name: "registerDirectChannel"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::sensors::V1_0::Result"
+        }
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::sensors::V1_0::SharedMemInfo"
+        }
+    }
+
+    api: {
+        name: "unregisterDirectChannel"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::sensors::V1_0::Result"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+
+    api: {
+        name: "configDirectReport"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::sensors::V1_0::Result"
+        }
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::sensors::V1_0::RateLevel"
         }
     }
 

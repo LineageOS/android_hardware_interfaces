@@ -203,16 +203,16 @@ class SensorsHidlTest : public ::testing::Test {
 
   inline static SensorFlagBits extractReportMode(uint64_t flag) {
     return (SensorFlagBits) (flag
-        & ((uint64_t) SensorFlagBits::SENSOR_FLAG_CONTINUOUS_MODE
-          | (uint64_t) SensorFlagBits::SENSOR_FLAG_ON_CHANGE_MODE
-          | (uint64_t) SensorFlagBits::SENSOR_FLAG_ONE_SHOT_MODE
-          | (uint64_t) SensorFlagBits::SENSOR_FLAG_SPECIAL_REPORTING_MODE));
+        & ((uint64_t) SensorFlagBits::CONTINUOUS_MODE
+          | (uint64_t) SensorFlagBits::ON_CHANGE_MODE
+          | (uint64_t) SensorFlagBits::ONE_SHOT_MODE
+          | (uint64_t) SensorFlagBits::SPECIAL_REPORTING_MODE));
   }
 
   inline static bool isMetaSensorType(SensorType type) {
-    return (type == SensorType::SENSOR_TYPE_META_DATA
-            || type == SensorType::SENSOR_TYPE_DYNAMIC_SENSOR_META
-            || type == SensorType::SENSOR_TYPE_ADDITIONAL_INFO);
+    return (type == SensorType::META_DATA
+            || type == SensorType::DYNAMIC_SENSOR_META
+            || type == SensorType::ADDITIONAL_INFO);
   }
 
   inline static bool isValidType(SensorType type) {
@@ -225,14 +225,14 @@ class SensorsHidlTest : public ::testing::Test {
 
 bool SensorsHidlTest::typeMatchStringType(SensorType type, const hidl_string& stringType) {
 
-  if (type >= SensorType::SENSOR_TYPE_DEVICE_PRIVATE_BASE) {
+  if (type >= SensorType::DEVICE_PRIVATE_BASE) {
     return true;
   }
 
   bool res = true;
   switch (type) {
 #define CHECK_TYPE_STRING_FOR_SENSOR_TYPE(type) \
-    case SensorType::SENSOR_TYPE_ ## type: res = stringType == SENSOR_STRING_TYPE_ ## type;\
+    case SensorType::type: res = stringType == SENSOR_STRING_TYPE_ ## type;\
       break;\
 
     CHECK_TYPE_STRING_FOR_SENSOR_TYPE(ACCELEROMETER);
@@ -277,7 +277,7 @@ bool SensorsHidlTest::typeMatchStringType(SensorType type, const hidl_string& st
 }
 
 bool SensorsHidlTest::typeMatchReportMode(SensorType type, SensorFlagBits reportMode) {
-  if (type >= SensorType::SENSOR_TYPE_DEVICE_PRIVATE_BASE) {
+  if (type >= SensorType::DEVICE_PRIVATE_BASE) {
     return true;
   }
 
@@ -290,19 +290,21 @@ bool SensorsHidlTest::delayMatchReportMode(
     int32_t minDelay, int32_t maxDelay, SensorFlagBits reportMode) {
   bool res = true;
   switch(reportMode) {
-    case SensorFlagBits::SENSOR_FLAG_CONTINUOUS_MODE:
+    case SensorFlagBits::CONTINUOUS_MODE:
       res = (minDelay > 0) && (maxDelay >= 0);
       break;
-    case SensorFlagBits::SENSOR_FLAG_ON_CHANGE_MODE:
+    case SensorFlagBits::ON_CHANGE_MODE:
       //TODO: current implementation does not satisfy minDelay == 0 on Proximity
       res = (minDelay >= 0) && (maxDelay >= 0);
       //res = (minDelay == 0) && (maxDelay >= 0);
       break;
-    case SensorFlagBits::SENSOR_FLAG_ONE_SHOT_MODE:
+    case SensorFlagBits::ONE_SHOT_MODE:
       res = (minDelay == -1) && (maxDelay == 0);
       break;
-    case SensorFlagBits::SENSOR_FLAG_SPECIAL_REPORTING_MODE:
+    case SensorFlagBits::SPECIAL_REPORTING_MODE:
       res = (minDelay == 0) && (maxDelay == 0);
+    default:
+      res = false;
   }
 
   return res;
@@ -310,44 +312,44 @@ bool SensorsHidlTest::delayMatchReportMode(
 
 SensorFlagBits SensorsHidlTest::expectedReportModeForType(SensorType type) {
   switch (type) {
-    case SensorType::SENSOR_TYPE_ACCELEROMETER:
-    case SensorType::SENSOR_TYPE_GYROSCOPE:
-    case SensorType::SENSOR_TYPE_GEOMAGNETIC_FIELD:
-    case SensorType::SENSOR_TYPE_ORIENTATION:
-    case SensorType::SENSOR_TYPE_PRESSURE:
-    case SensorType::SENSOR_TYPE_TEMPERATURE:
-    case SensorType::SENSOR_TYPE_GRAVITY:
-    case SensorType::SENSOR_TYPE_LINEAR_ACCELERATION:
-    case SensorType::SENSOR_TYPE_ROTATION_VECTOR:
-    case SensorType::SENSOR_TYPE_MAGNETIC_FIELD_UNCALIBRATED:
-    case SensorType::SENSOR_TYPE_GAME_ROTATION_VECTOR:
-    case SensorType::SENSOR_TYPE_GYROSCOPE_UNCALIBRATED:
-    case SensorType::SENSOR_TYPE_GEOMAGNETIC_ROTATION_VECTOR:
-    case SensorType::SENSOR_TYPE_POSE_6DOF:
-    case SensorType::SENSOR_TYPE_HEART_BEAT:
-      return SensorFlagBits::SENSOR_FLAG_CONTINUOUS_MODE;
+    case SensorType::ACCELEROMETER:
+    case SensorType::GYROSCOPE:
+    case SensorType::MAGNETIC_FIELD:
+    case SensorType::ORIENTATION:
+    case SensorType::PRESSURE:
+    case SensorType::TEMPERATURE:
+    case SensorType::GRAVITY:
+    case SensorType::LINEAR_ACCELERATION:
+    case SensorType::ROTATION_VECTOR:
+    case SensorType::MAGNETIC_FIELD_UNCALIBRATED:
+    case SensorType::GAME_ROTATION_VECTOR:
+    case SensorType::GYROSCOPE_UNCALIBRATED:
+    case SensorType::GEOMAGNETIC_ROTATION_VECTOR:
+    case SensorType::POSE_6DOF:
+    case SensorType::HEART_BEAT:
+      return SensorFlagBits::CONTINUOUS_MODE;
 
-    case SensorType::SENSOR_TYPE_LIGHT:
-    case SensorType::SENSOR_TYPE_PROXIMITY:
-    case SensorType::SENSOR_TYPE_RELATIVE_HUMIDITY:
-    case SensorType::SENSOR_TYPE_AMBIENT_TEMPERATURE:
-    case SensorType::SENSOR_TYPE_HEART_RATE:
-    case SensorType::SENSOR_TYPE_DEVICE_ORIENTATION:
-    case SensorType::SENSOR_TYPE_MOTION_DETECT:
-    case SensorType::SENSOR_TYPE_STEP_COUNTER:
-      return SensorFlagBits::SENSOR_FLAG_ON_CHANGE_MODE;
+    case SensorType::LIGHT:
+    case SensorType::PROXIMITY:
+    case SensorType::RELATIVE_HUMIDITY:
+    case SensorType::AMBIENT_TEMPERATURE:
+    case SensorType::HEART_RATE:
+    case SensorType::DEVICE_ORIENTATION:
+    case SensorType::MOTION_DETECT:
+    case SensorType::STEP_COUNTER:
+      return SensorFlagBits::ON_CHANGE_MODE;
 
-    case SensorType::SENSOR_TYPE_SIGNIFICANT_MOTION:
-    case SensorType::SENSOR_TYPE_WAKE_GESTURE:
-    case SensorType::SENSOR_TYPE_GLANCE_GESTURE:
-    case SensorType::SENSOR_TYPE_PICK_UP_GESTURE:
-      return SensorFlagBits::SENSOR_FLAG_ONE_SHOT_MODE;
+    case SensorType::SIGNIFICANT_MOTION:
+    case SensorType::WAKE_GESTURE:
+    case SensorType::GLANCE_GESTURE:
+    case SensorType::PICK_UP_GESTURE:
+      return SensorFlagBits::ONE_SHOT_MODE;
 
-    case SensorType::SENSOR_TYPE_STEP_DETECTOR:
-    case SensorType::SENSOR_TYPE_TILT_DETECTOR:
-    case SensorType::SENSOR_TYPE_WRIST_TILT_GESTURE:
-    case SensorType::SENSOR_TYPE_DYNAMIC_SENSOR_META:
-      return SensorFlagBits::SENSOR_FLAG_SPECIAL_REPORTING_MODE;
+    case SensorType::STEP_DETECTOR:
+    case SensorType::TILT_DETECTOR:
+    case SensorType::WRIST_TILT_GESTURE:
+    case SensorType::DYNAMIC_SENSOR_META:
+      return SensorFlagBits::SPECIAL_REPORTING_MODE;
 
     default:
       ALOGW("Type %d is not implemented in expectedReportModeForType", (int)type);
@@ -399,8 +401,8 @@ TEST_F(SensorsHidlTest, SensorListValid) {
 
           // Info type, should have no sensor
           ASSERT_FALSE(
-              s.type == SensorType::SENSOR_TYPE_ADDITIONAL_INFO
-              || s.type == SensorType::SENSOR_TYPE_META_DATA);
+              s.type == SensorType::ADDITIONAL_INFO
+              || s.type == SensorType::META_DATA);
 
           // Test fifoMax >= fifoReserved
           ALOGV("max reserve = %d, %d", s.fifoMaxEventCount, s.fifoReservedEventCount);
@@ -426,7 +428,7 @@ TEST_F(SensorsHidlTest, NormalAccelerometerStreamingOperation) {
   constexpr int64_t batchingPeriodInNs = 0; // no batching
   constexpr useconds_t minTimeUs = 5*1000*1000;  // 5 s
   constexpr size_t minNEvent = 100;  // at lease 100 events
-  constexpr SensorType type = SensorType::SENSOR_TYPE_ACCELEROMETER;
+  constexpr SensorType type = SensorType::ACCELEROMETER;
 
   SensorInfo sensor = defaultSensorByType(type);
 
@@ -437,7 +439,7 @@ TEST_F(SensorsHidlTest, NormalAccelerometerStreamingOperation) {
 
   int32_t handle = sensor.sensorHandle;
 
-  S()->batch(handle, 0, samplingPeriodInNs, batchingPeriodInNs);
+  S()->batch(handle, samplingPeriodInNs, batchingPeriodInNs);
   S()->activate(handle, 1);
   events = collectEvents(minTimeUs, minNEvent, true /*clearBeforeStart*/);
   S()->activate(handle, 0);
@@ -480,7 +482,7 @@ TEST_F(SensorsHidlTest, NormalGyroscopeStreamingOperation) {
   constexpr int64_t batchingPeriodInNs = 0; // no batching
   constexpr useconds_t minTimeUs = 5*1000*1000;  // 5 s
   constexpr size_t minNEvent = 200;
-  constexpr SensorType type = SensorType::SENSOR_TYPE_GYROSCOPE;
+  constexpr SensorType type = SensorType::GYROSCOPE;
 
   SensorInfo sensor = defaultSensorByType(type);
 
@@ -491,7 +493,7 @@ TEST_F(SensorsHidlTest, NormalGyroscopeStreamingOperation) {
 
   int32_t handle = sensor.sensorHandle;
 
-  S()->batch(handle, 0, samplingPeriodInNs, batchingPeriodInNs);
+  S()->batch(handle, samplingPeriodInNs, batchingPeriodInNs);
   S()->activate(handle, 1);
   events = collectEvents(minTimeUs, minNEvent, true /*clearBeforeStart*/);
   S()->activate(handle, 0);
@@ -533,7 +535,7 @@ TEST_F(SensorsHidlTest, AccelerometerSamplingPeriodHotSwitchOperation) {
   constexpr int64_t batchingPeriodInNs = 0; // no batching
   constexpr useconds_t minTimeUs = 5*1000*1000;  // 5 s
   constexpr size_t minNEvent = 50;
-  constexpr SensorType type = SensorType::SENSOR_TYPE_ACCELEROMETER;
+  constexpr SensorType type = SensorType::ACCELEROMETER;
 
   SensorInfo sensor = defaultSensorByType(type);
 
@@ -551,13 +553,13 @@ TEST_F(SensorsHidlTest, AccelerometerSamplingPeriodHotSwitchOperation) {
     return;
   }
 
-  S()->batch(handle, 0, minSamplingPeriodInNs, batchingPeriodInNs);
+  S()->batch(handle, minSamplingPeriodInNs, batchingPeriodInNs);
   S()->activate(handle, 1);
 
   usleep(500000); // sleep 0.5 sec to wait for change rate to happen
   events1 = collectEvents(sensor.minDelay * minNEvent, minNEvent, true /*clearBeforeStart*/);
 
-  S()->batch(handle, 0, maxSamplingPeriodInNs, batchingPeriodInNs);
+  S()->batch(handle, maxSamplingPeriodInNs, batchingPeriodInNs);
 
   usleep(500000); // sleep 0.5 sec to wait for change rate to happen
   events2 = collectEvents(sensor.maxDelay * minNEvent, minNEvent, true /*clearBeforeStart*/);
@@ -620,7 +622,7 @@ TEST_F(SensorsHidlTest, AccelerometerBatchingOperation) {
   constexpr int64_t oneSecondInNs = 1ull * 1000 * 1000 * 1000;
   constexpr useconds_t minTimeUs = 5*1000*1000;  // 5 s
   constexpr size_t minNEvent = 50;
-  constexpr SensorType type = SensorType::SENSOR_TYPE_ACCELEROMETER;
+  constexpr SensorType type = SensorType::ACCELEROMETER;
   constexpr int64_t maxBatchingTestTimeNs = 30ull * 1000 * 1000 * 1000;
 
   SensorInfo sensor = defaultSensorByType(type);
@@ -647,7 +649,7 @@ TEST_F(SensorsHidlTest, AccelerometerBatchingOperation) {
   int64_t allowedBatchDeliverTimeNs =
       std::max(oneSecondInNs, batchingPeriodInNs / 10);
 
-  S()->batch(handle, 0, minSamplingPeriodInNs, INT64_MAX);
+  S()->batch(handle, minSamplingPeriodInNs, INT64_MAX);
   S()->activate(handle, 1);
 
   usleep(500000); // sleep 0.5 sec to wait for initialization
