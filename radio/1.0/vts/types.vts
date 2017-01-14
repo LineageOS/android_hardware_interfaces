@@ -2730,23 +2730,23 @@ attribute: {
 
         enumerator: "GSM"
         scalar_value: {
-            int32_t: 0
+            int32_t: 1
         }
         enumerator: "CDMA"
         scalar_value: {
-            int32_t: 1
+            int32_t: 2
         }
         enumerator: "LTE"
         scalar_value: {
-            int32_t: 2
+            int32_t: 3
         }
         enumerator: "WCDMA"
         scalar_value: {
-            int32_t: 3
+            int32_t: 4
         }
         enumerator: "TD_SCDMA"
         scalar_value: {
-            int32_t: 4
+            int32_t: 5
         }
     }
 }

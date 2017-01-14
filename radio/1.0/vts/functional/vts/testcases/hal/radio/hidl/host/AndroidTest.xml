@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2017 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<configuration description="Config for VTS HAL Radio test cases">
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.VtsFilePusher">
+        <option name="push-group" value="HidlHalTest.push" />
+        <option name="cleanup" value="true" />
+        <option name="push" value="spec/hardware/interfaces/radio/1.0/vts/Radio.vts->/data/local/tmp/spec/Radio.vts" />
+        <option name="push" value="spec/hardware/interfaces/radio/1.0/vts/RadioIndication.vts->/data/local/tmp/spec/RadioIndication.vts" />
+        <option name="push" value="spec/hardware/interfaces/radio/1.0/vts/RadioResponse.vts->/data/local/tmp/spec/RadioResponse.vts" />
+        <option name="push" value="spec/hardware/interfaces/radio/1.0/vts/Sap.vts->/data/local/tmp/spec/Sap.vts" />
+        <option name="push" value="spec/hardware/interfaces/radio/1.0/vts/SapCallback.vts->/data/local/tmp/spec/SapCallback.vts" />
+        <option name="push" value="spec/hardware/interfaces/radio/1.0/vts/types.vts->/data/local/tmp/spec/types.vts" />
+    </target_preparer>
+    <target_preparer class="com.android.tradefed.targetprep.VtsPythonVirtualenvPreparer" />
+    <test class="com.android.tradefed.testtype.VtsMultiDeviceTest">
+        <option name="test-module-name" value="RadioHidlTest" />
+        <option name="test-case-path" value="vts/testcases/hal/radio/hidl/host/RadioHidlTest" />
+    </test>
+</configuration>
