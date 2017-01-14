@@ -655,6 +655,10 @@ enum SensorType : int32_t {
      * and "type" field set to SENSOR_TYPE_ADDITIONAL_INFO. Delivery of
      * additional information events is triggered under two conditions: an
      * enable activate() call or a flush() call to the corresponding sensor.
+     * Besides, time varying parameters can update infrequently without being
+     * triggered. Device is responsible to control update rate. The recommend
+     * update rate is less than 1/1000 of sensor event rate or less than once
+     * per minute in average.
      *
      * A single additional information report consists of multiple frames.
      * Sequences of these frames are ordered using timestamps, which means the
@@ -668,8 +672,8 @@ enum SensorType : int32_t {
      * spans multiple frames. The first frame of the entire report is always of
      * type AINFO_BEGIN, and the last frame is always AINFO_END.
      *
-     * All additional information frames have to be delivered after flush
-     * complete event if flush() was triggering the report.
+     * If flush() was triggering the report, all additional information frames
+     * must be delivered after flush complete event.
      */
     SENSOR_TYPE_ADDITIONAL_INFO                 = 33,
 
@@ -986,8 +990,9 @@ enum AdditionalInfoType : uint32_t {
      */
     AINFO_SAMPLING,
 
-    /* Sampling channel modeling information
-     * int32_t: noise type
+    // Sampling channel modeling information section
+
+    /* int32_t: noise type
      * float[n]: parameters
      */
     AINFO_CHANNEL_NOISE               = 0x20000,
@@ -1017,7 +1022,7 @@ enum AdditionalInfoType : uint32_t {
     AINFO_CHANNEL_LINEAR_TRANSFORM,
 
     /* int32_t[2]: extrapolate method, interpolate method
-     * float[n]: mapping key points in paris, (in, out)...
+     * float[n]: mapping key points in pairs, (in, out)...
      *           (may be used to model saturation).
      */
     AINFO_CHANNEL_NONLINEAR_MAP,
@@ -1026,6 +1031,49 @@ enum AdditionalInfoType : uint32_t {
      * float[1]: resample ratio (upsampling if < 1.0, downsampling if > 1.0).
      */
     AINFO_CHANNEL_RESAMPLER,
+
+    /* Operation environment parameters section
+     * Types in the following section is sent down (instead of reported from)
+     * device as additional information to aid sensor operation. Data is sent
+     * via injectSensorData() function to sensor handle -1 denoting all sensors
+     * in device.
+     */
+
+    /* Local geomagnetic field information based on device geo location. This
+     * type is primarily for for magnetic field calibration and rotation vector
+     * sensor fusion.
+     * float[3]: strength (uT), declination and inclination angle (rad).
+     */
+    AINFO_LOCAL_GEOMAGNETIC_FIELD     = 0x30000,
+
+    /* Local gravitational acceleration strength at device geo location.
+     * float: gravitational acceleration norm in m/s^2.
+     */
+    AINFO_LOCAL_GRAVITY,
+
+    /* Device dock state.
+     * int32_t: dock state following Android API Intent.EXTRA_DOCK_STATE
+     * definition, undefined value is ignored.
+     */
+    AINFO_DOCK_STATE,
+
+    /* High performance mode hint. Device is able to use up more power and take
+     * more reources to improve throughput and latency in high performance mode.
+     * One possible use case is virtual reality, when sensor latency need to be
+     * carefully controlled.
+     * int32_t: 1 or 0, denote if device is in/out of high performance mode,
+     *          other values is ignored.
+     */
+    AINFO_HIGH_PERFORMANCE_MODE,
+
+    /* Magnetic field calibration hint. Device is notified when manually
+     * triggered magnetic field calibration procedure is started or stopped. The
+     * calibration procedure is assumed timed out after 1 minute from start,
+     * even if an explicit stop is not received.
+     *
+     * int32_t: 1 for start, 0 for stop, other value is ignored.
+     */
+    AINFO_MAGNETIC_FIELD_CALIBRATION,
 
     /* Custom information */
     AINFO_CUSTOM_START                = 0x10000000,
