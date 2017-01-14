@@ -16,4 +16,4 @@
 
 LOCAL_PATH := $(call my-dir)
 
-include $(LOCAL_PATH)/functional/vts/testcases/hal/tv_input/hidl/host/Android.mk
+include $(LOCAL_PATH)/functional/vts/testcases/hal/tv_input/hidl/Android.mk

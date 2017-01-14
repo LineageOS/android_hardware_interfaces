@@ -16,4 +16,4 @@
 
 LOCAL_PATH := $(call my-dir)
 
-include $(call all-subdir-makefiles)
+include $(LOCAL_PATH)/functional/vts/testcases/hal/vehicle/hidl/Android.mk
