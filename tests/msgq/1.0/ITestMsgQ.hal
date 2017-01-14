@@ -93,6 +93,15 @@ interface ITestMsgQ {
     oneway requestBlockingRead(int32_t count);
 
     /*
+     * This method requests the service to trigger a blocking read using
+     * default Event Flag notification bits defined by the MessageQueue class.
+     *
+     * @param count Number of messages to read.
+     *
+     */
+    oneway requestBlockingReadDefaultEventFlagBits(int32_t count);
+
+    /*
      * This method requests the service to repeatedly trigger blocking reads.
      *
      * @param count Number of messages to read in a single blocking read.
