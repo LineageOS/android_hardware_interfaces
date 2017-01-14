@@ -30,23 +30,23 @@ enum Error : int32_t {
 enum ProducerUsage : uint64_t {
     /* bit 0 is reserved */
 
-    /* buffer will be read by CPU occasionally */
+    /* buffer is read by CPU occasionally */
     CPU_READ        = 1ULL << 1,
-    /* buffer will be read by CPU frequently */
+    /* buffer is read by CPU frequently */
     CPU_READ_OFTEN  = 1ULL << 2,
 
     /* bit 3 is reserved */
     /* bit 4 is reserved */
 
-    /* buffer will be written by CPU occasionally */
+    /* buffer is written by CPU occasionally */
     CPU_WRITE       = 1ULL << 5,
-    /* buffer will be written by CPU frequently */
+    /* buffer is written by CPU frequently */
     CPU_WRITE_OFTEN = 1ULL << 6,
 
     /* bit 7 is reserved */
     /* bit 8 is reserved */
 
-    /* buffer will be used as a GPU render target */
+    /* buffer is used as a GPU render target */
     GPU_RENDER_TARGET = 1ULL << 9,
 
     /* bit 10 is reserved */
@@ -64,7 +64,7 @@ enum ProducerUsage : uint64_t {
     /* bit 15 is reserved */
     /* bit 16 is reserved */
 
-    /* buffer will be used as a camera HAL output */
+    /* buffer is used as a camera HAL output */
     CAMERA            = 1ULL << 17,
 
     /* bit 18 is reserved */
@@ -72,10 +72,13 @@ enum ProducerUsage : uint64_t {
     /* bit 20 is reserved */
     /* bit 21 is reserved */
 
-    /* buffer will be used as a video decoder output */
+    /* buffer is used as a video decoder output */
     VIDEO_DECODER     = 1ULL << 22,
 
-    /* bits 23-27 are reserved for future versions */
+    /* buffer is used as a sensor direct report output */
+    SENSOR_DIRECT_DATA = 1ULL << 23,
+
+    /* bits 24-27 are reserved for future versions */
     /* bits 28-31 are reserved for vendor extensions */
 
     /* bits 32-47 are reserved for future versions */
@@ -85,9 +88,9 @@ enum ProducerUsage : uint64_t {
 enum ConsumerUsage : uint64_t {
     /* bit 0 is reserved */
 
-    /* buffer will be read by CPU occasionally */
+    /* buffer is read by CPU occasionally */
     CPU_READ          = 1ULL << 1,
-    /* buffer will be read by CPU frequently */
+    /* buffer is read by CPU frequently */
     CPU_READ_OFTEN    = 1ULL << 2,
 
     /* bit 3 is reserved */
@@ -96,40 +99,44 @@ enum ConsumerUsage : uint64_t {
     /* bit 6 is reserved */
     /* bit 7 is reserved */
 
-    /* buffer will be used as a GPU texture */
+    /* buffer is used as a GPU texture */
     GPU_TEXTURE       = 1ULL << 8,
 
     /* bit 9 is reserved */
     /* bit 10 is reserved */
 
-    /* buffer will be used by hwcomposer HAL */
+    /* buffer is used by hwcomposer HAL */
     HWCOMPOSER        = 1ULL << 11,
-    /* buffer will be as a hwcomposer HAL client target */
+    /* buffer is a hwcomposer HAL client target */
     CLIENT_TARGET     = 1ULL << 12,
 
     /* bit 13 is reserved */
     /* bit 14 is reserved */
 
-    /* buffer will be used as a hwcomposer HAL cursor */
+    /* buffer is used as a hwcomposer HAL cursor */
     CURSOR            = 1ULL << 15,
 
-    /* buffer will be used as a video encoder input */
+    /* buffer is used as a video encoder input */
     VIDEO_ENCODER     = 1ULL << 16,
 
     /* bit 17 is reserved */
 
-    /* buffer will be used as a camera HAL input */
+    /* buffer is used as a camera HAL input */
     CAMERA            = 1ULL << 18,
 
     /* bit 19 is reserved */
 
-    /* buffer will be used as a renderscript allocation */
+    /* buffer is used as a renderscript allocation */
     RENDERSCRIPT      = 1ULL << 20,
 
     /* bit 21 is reserved */
     /* bit 22 is reserved */
 
-    /* bits 23-27 are reserved for future versions */
+    /* buffer is used as as an OpenGL shader storage or uniform
+       buffer object */
+    GPU_DATA_BUFFER    = 1ULL << 23,
+
+    /* bits 24-27 are reserved for future versions */
     /* bits 28-31 are reserved for vendor extensions */
 
     /* bits 32-47 are reserved for future versions */
