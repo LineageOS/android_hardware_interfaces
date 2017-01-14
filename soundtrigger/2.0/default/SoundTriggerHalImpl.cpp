@@ -295,7 +295,7 @@ exit:
 }
 
 SoundTriggerHalImpl::SoundTriggerHalImpl(const char *moduleName)
-    : mModuleName(moduleName), mNextModelId(1)
+    : mModuleName(moduleName), mHwDevice(NULL), mNextModelId(1)
 {
 }
 
