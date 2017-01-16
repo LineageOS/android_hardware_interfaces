@@ -34,7 +34,13 @@ GnssLocation convertToGnssLocation(GpsLocation* location) {
             .altitudeMeters = location->altitude,
             .speedMetersPerSec = location->speed,
             .bearingDegrees = location->bearing,
-            .accuracyMeters = location->accuracy,
+            .horizontalAccuracyMeters = location->accuracy,
+            // Older chipsets do not provide the following 3 fields, hence the flags
+            // HAS_VERTICAL_ACCURACY, HAS_SPEED_ACCURACY and HAS_BEARING_ACCURACY are
+            // not set and the field are set to zeros.
+            .verticalAccuracyMeters = 0,
+            .speedAccuracyMetersPerSecond = 0,
+            .bearingAccuracyDegrees = 0,
             .timestamp = location->timestamp
         };
     }

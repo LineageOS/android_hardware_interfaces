@@ -45,11 +45,28 @@ interface IGnssDebug {
         double longitudeDegrees;
         /* Altitude above ellipsoid expressed in meters */
         float altitudeMeters;
+        /* Represents speed in meters per second. */
+        float speedMetersPerSec;
+        /* Represents heading in degrees. */
+        float bearingDegrees;
         /*
          * estimated horizontal accuracy of position expressed in meters, radial,
          * 68% confidence.
          */
-        double accuracyMeters;
+        double horizontalAccuracyMeters;
+        /*
+         * estimated vertical accuracy of position expressed in meters, with
+         * 68% confidence.
+         */
+        double verticalAccuracyMeters;
+        /*
+         * estimated speed accuracy in meters per second with 68% confidence.
+         */
+        double speedAccuracyMetersPerSecond;
+        /*
+         * estimated bearing accuracy degrees with 68% confidence.
+         */
+        double bearingAccuracyDegrees;
         /*
          * Time duration before this report that this position information was
          * valid.
@@ -103,7 +120,7 @@ interface IGnssDebug {
         TimeDebug time;
         /*
          * Provides a list of the decoded satellite ephemeris.
-         * Should provide a complete list for all constellations device can track,
+         * Must provide a complete list for all constellations device can track,
          * including GnssConstellationType UNKNOWN.
          */
         vec<SatelliteData> satelliteDataArray;

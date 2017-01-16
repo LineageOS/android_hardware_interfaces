@@ -51,12 +51,19 @@ void GnssMeasurement::gnssMeasurementCb(LegacyGnssData* legacyGnssData) {
 
     for (size_t i = 0; i < gnssData.measurementCount; i++) {
         auto entry = legacyGnssData->measurements[i];
+        auto state = static_cast<GnssMeasurementState>(entry.state);
+        if (state & IGnssMeasurementCallback::GnssMeasurementState::STATE_TOW_DECODED) {
+          state |= IGnssMeasurementCallback::GnssMeasurementState::STATE_TOW_KNOWN;
+        }
+        if (state & IGnssMeasurementCallback::GnssMeasurementState::STATE_GLO_TOD_DECODED) {
+          state |= IGnssMeasurementCallback::GnssMeasurementState::STATE_GLO_TOD_KNOWN;
+        }
         gnssData.measurements[i] = {
             .flags = entry.flags,
             .svid = entry.svid,
             .constellation = static_cast<GnssConstellationType>(entry.constellation),
             .timeOffsetNs = entry.time_offset_ns,
-            .state = entry.state,
+            .state = state,
             .receivedSvTimeInNs = entry.received_sv_time_in_ns,
             .receivedSvTimeUncertaintyInNs = entry.received_sv_time_uncertainty_in_ns,
             .cN0DbHz = entry.c_n0_dbhz,
