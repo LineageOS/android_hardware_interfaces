@@ -151,12 +151,13 @@ Return<void> Sensors::poll(int32_t maxCount, poll_cb _hidl_cb) {
         return Void();
     }
 
-    std::unique_ptr<sensors_event_t[]> data(new sensors_event_t[maxCount]);
+    int bufferSize = maxCount <= kPollMaxBufferSize ? maxCount : kPollMaxBufferSize;
+
+    std::unique_ptr<sensors_event_t[]> data(new sensors_event_t[bufferSize]);
 
     int err = mSensorDevice->poll(
             reinterpret_cast<sensors_poll_device_t *>(mSensorDevice),
-            data.get(),
-            maxCount);
+            data.get(), bufferSize);
 
     if (err < 0) {
         _hidl_cb(ResultFromStatus(err), out, dynamicSensorsAdded);
