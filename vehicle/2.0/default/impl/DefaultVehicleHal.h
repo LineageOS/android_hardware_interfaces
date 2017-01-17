@@ -57,6 +57,8 @@ private:
     StatusCode setHvacTemperature(int32_t areaId, float value);
     StatusCode getHvacDefroster(int32_t areaId, bool* outValue);
     StatusCode setHvacDefroster(int32_t areaId, bool value);
+    StatusCode fillObd2LiveFrame (VehiclePropValuePtr* v);
+    StatusCode fillObd2FreezeFrame (VehiclePropValuePtr* v);
 private:
     int32_t mFanSpeed = 3;
     int32_t mBrightness = 7;

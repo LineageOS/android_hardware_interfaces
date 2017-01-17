@@ -90,6 +90,14 @@ VehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(
         case VehicleProperty::IGNITION_STATE:
             v = pool.obtainInt32(toInt(VehicleIgnitionState::ACC));
             break;
+        case VehicleProperty::OBD2_LIVE_FRAME:
+            v = pool.obtainComplex();
+            *outStatus = fillObd2LiveFrame(&v);
+            break;
+        case VehicleProperty::OBD2_FREEZE_FRAME:
+            v = pool.obtainComplex();
+            *outStatus = fillObd2FreezeFrame(&v);
+            break;
         default:
             *outStatus = StatusCode::INVALID_ARG;
     }
@@ -196,6 +204,78 @@ StatusCode DefaultVehicleHal::setHvacDefroster(int32_t areaId, bool value) {
     }
     return StatusCode::OK;
 }
+
+static std::vector<int32_t> fillObd2IntValues() {
+    std::vector<int32_t> intValues(toInt(Obd2IntegerSensorIndex::LAST_SYSTEM_INDEX));
+#define SENSOR(name) toInt(Obd2IntegerSensorIndex:: name)
+    intValues[SENSOR(FUEL_SYSTEM_STATUS)] = toInt(FuelSystemStatus::CLOSED_LOOP);
+    intValues[SENSOR(MALFUNCTION_INDICATOR_LIGHT_ON)] = 0;
+    intValues[SENSOR(IGNITION_MONITORS_SUPPORTED)] = toInt(IgnitionMonitorKind::SPARK);
+    intValues[SENSOR(IGNITION_SPECIFIC_MONITORS)] =
+        CommonIgnitionMonitors::COMPONENTS_AVAILABLE |
+        CommonIgnitionMonitors::MISFIRE_AVAILABLE |
+        SparkIgnitionMonitors::AC_REFRIGERANT_AVAILABLE |
+        SparkIgnitionMonitors::EVAPORATIVE_SYSTEM_AVAILABLE;
+    intValues[SENSOR(INTAKE_AIR_TEMPERATURE)] = 35;
+    intValues[SENSOR(COMMANDED_SECONDARY_AIR_STATUS)] =
+        toInt(SecondaryAirStatus::FROM_OUTSIDE_OR_OFF);
+    intValues[SENSOR(NUM_OXYGEN_SENSORS_PRESENT)] = 1;
+    intValues[SENSOR(RUNTIME_SINCE_ENGINE_START)] = 500;
+    intValues[SENSOR(DISTANCE_TRAVELED_WITH_MALFUNCTION_INDICATOR_LIGHT_ON)] = 0;
+    intValues[SENSOR(WARMUPS_SINCE_CODES_CLEARED)] = 51;
+    intValues[SENSOR(DISTANCE_TRAVELED_SINCE_CODES_CLEARED)] = 365;
+    intValues[SENSOR(ABSOLUTE_BAROMETRIC_PRESSURE)] = 30;
+    intValues[SENSOR(CONTROL_MODULE_VOLTAGE)] = 12;
+    intValues[SENSOR(AMBIENT_AIR_TEMPERATURE)] = 18;
+    intValues[SENSOR(MAX_FUEL_AIR_EQUIVALENCE_RATIO)] = 1;
+    intValues[SENSOR(FUEL_TYPE)] = toInt(FuelType::GASOLINE);
+#undef SENSOR
+    return intValues;
+}
+
+static std::vector<float> fillObd2FloatValues() {
+    std::vector<float> floatValues(toInt(Obd2FloatSensorIndex::LAST_SYSTEM_INDEX));
+#define SENSOR(name) toInt(Obd2FloatSensorIndex:: name)
+    floatValues[SENSOR(CALCULATED_ENGINE_LOAD)] = 0.153;
+    floatValues[SENSOR(SHORT_TERM_FUEL_TRIM_BANK1)] = -0.16;
+    floatValues[SENSOR(LONG_TERM_FUEL_TRIM_BANK1)] = -0.16;
+    floatValues[SENSOR(SHORT_TERM_FUEL_TRIM_BANK2)] = -0.16;
+    floatValues[SENSOR(LONG_TERM_FUEL_TRIM_BANK2)] = -0.16;
+    floatValues[SENSOR(INTAKE_MANIFOLD_ABSOLUTE_PRESSURE)] = 7.5;
+    floatValues[SENSOR(ENGINE_RPM)] = 1250.;
+    floatValues[SENSOR(VEHICLE_SPEED)] = 40.;
+    floatValues[SENSOR(TIMING_ADVANCE)] = 2.5;
+    floatValues[SENSOR(THROTTLE_POSITION)] = 19.75;
+    floatValues[SENSOR(OXYGEN_SENSOR1_VOLTAGE)] = 0.265;
+    floatValues[SENSOR(FUEL_TANK_LEVEL_INPUT)] = 0.824;
+    floatValues[SENSOR(EVAPORATION_SYSTEM_VAPOR_PRESSURE)] = -0.373;
+    floatValues[SENSOR(CATALYST_TEMPERATURE_BANK1_SENSOR1)] = 190.;
+    floatValues[SENSOR(RELATIVE_THROTTLE_POSITION)] = 3.;
+    floatValues[SENSOR(ABSOLUTE_THROTTLE_POSITION_B)] = 0.306;
+    floatValues[SENSOR(ACCELERATOR_PEDAL_POSITION_D)] = 0.188;
+    floatValues[SENSOR(ACCELERATOR_PEDAL_POSITION_E)] = 0.094;
+    floatValues[SENSOR(COMMANDED_THROTTLE_ACTUATOR)] = 0.024;
+#undef SENSOR
+    return floatValues;
+}
+
+StatusCode DefaultVehicleHal::fillObd2LiveFrame(VehiclePropValuePtr* v) {
+    static std::vector<int32_t> intValues(fillObd2IntValues());
+    static std::vector<float> floatValues(fillObd2FloatValues());
+    (*v)->value.int32Values = intValues;
+    (*v)->value.floatValues = floatValues;
+    return StatusCode::OK;
+}
+
+StatusCode DefaultVehicleHal::fillObd2FreezeFrame(VehiclePropValuePtr* v) {
+    static std::vector<int32_t> intValues(fillObd2IntValues());
+    static std::vector<float> floatValues(fillObd2FloatValues());
+    (*v)->value.int32Values = intValues;
+    (*v)->value.floatValues = floatValues;
+    (*v)->value.stringValue = "P0010";
+    return StatusCode::OK;
+}
+
 
 }  // impl
 
