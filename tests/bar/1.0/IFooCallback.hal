@@ -14,27 +14,7 @@
  * limitations under the License.
  */
 
-package android.hardware.tests.foo@1.0;
+package android.hardware.tests.bar@1.0;
 
-struct Abc {
-    string x;
-    float y;
-    handle z;
-};
-
-struct Def {
-    string g;
-};
-
-struct Outer {
-    struct Inner {
-        struct Deep {
-            int32_t data;
-        };
-        int32_t data;
-    };
-};
-
-struct Unrelated {
-    Outer.Inner great;
+interface IFooCallback {
 };
