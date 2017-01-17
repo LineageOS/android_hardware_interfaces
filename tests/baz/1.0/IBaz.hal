@@ -40,6 +40,11 @@ interface IBaz extends IBase {
         int32_t[3][5] matrix3x5;
     };
 
+    struct NestedStruct {
+        int32_t a;
+        vec<T> matrices;
+    };
+
     @Fragile @NoReally(very="yes", array={"a","b","c"})
     oneway doThis(float param);
 
@@ -64,4 +69,6 @@ interface IBaz extends IBase {
     returnABitField() generates (bitfield<BitField> good);
 
     size(uint32_t size) generates (uint32_t size);
+
+    getNestedStructs() generates(vec<NestedStruct> data);
 };
