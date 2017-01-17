@@ -171,7 +171,7 @@ private:
 
         HwcClient& mClient;
         HwcHal& mHal;
-        CommandWriter& mWriter;
+        CommandWriterBase& mWriter;
 
         Display mDisplay;
         Layer mLayer;
@@ -184,7 +184,7 @@ private:
         64 * 1024 / sizeof(uint32_t) - 16;
     std::mutex mCommandMutex;
     CommandReader mReader;
-    CommandWriter mWriter;
+    CommandWriterBase mWriter;
 
     sp<IComposerCallback> mCallback;
 

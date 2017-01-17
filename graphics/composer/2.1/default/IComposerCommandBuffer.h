@@ -52,16 +52,16 @@ using CommandQueueType = MessageQueue<uint32_t, kSynchronizedReadWrite>;
 
 // This class helps build a command queue.  Note that all sizes/lengths are in
 // units of uint32_t's.
-class CommandWriter {
+class CommandWriterBase {
 public:
-    CommandWriter(uint32_t initialMaxSize)
+    CommandWriterBase(uint32_t initialMaxSize)
         : mDataMaxSize(initialMaxSize)
     {
         mData = std::make_unique<uint32_t[]>(mDataMaxSize);
         reset();
     }
 
-    ~CommandWriter()
+    virtual ~CommandWriterBase()
     {
         reset();
     }

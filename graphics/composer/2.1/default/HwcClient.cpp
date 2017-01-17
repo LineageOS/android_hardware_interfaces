@@ -651,7 +651,7 @@ Error HwcClient::CommandReader::parse()
 
 bool HwcClient::CommandReader::parseSelectDisplay(uint16_t length)
 {
-    if (length != CommandWriter::kSelectDisplayLength) {
+    if (length != CommandWriterBase::kSelectDisplayLength) {
         return false;
     }
 
@@ -663,7 +663,7 @@ bool HwcClient::CommandReader::parseSelectDisplay(uint16_t length)
 
 bool HwcClient::CommandReader::parseSelectLayer(uint16_t length)
 {
-    if (length != CommandWriter::kSelectLayerLength) {
+    if (length != CommandWriterBase::kSelectLayerLength) {
         return false;
     }
 
@@ -674,7 +674,7 @@ bool HwcClient::CommandReader::parseSelectLayer(uint16_t length)
 
 bool HwcClient::CommandReader::parseSetColorTransform(uint16_t length)
 {
-    if (length != CommandWriter::kSetColorTransformLength) {
+    if (length != CommandWriterBase::kSetColorTransformLength) {
         return false;
     }
 
@@ -722,7 +722,7 @@ bool HwcClient::CommandReader::parseSetClientTarget(uint16_t length)
 
 bool HwcClient::CommandReader::parseSetOutputBuffer(uint16_t length)
 {
-    if (length != CommandWriter::kSetOutputBufferLength) {
+    if (length != CommandWriterBase::kSetOutputBufferLength) {
         return false;
     }
 
@@ -746,7 +746,7 @@ bool HwcClient::CommandReader::parseSetOutputBuffer(uint16_t length)
 
 bool HwcClient::CommandReader::parseValidateDisplay(uint16_t length)
 {
-    if (length != CommandWriter::kValidateDisplayLength) {
+    if (length != CommandWriterBase::kValidateDisplayLength) {
         return false;
     }
 
@@ -773,7 +773,7 @@ bool HwcClient::CommandReader::parseValidateDisplay(uint16_t length)
 
 bool HwcClient::CommandReader::parseAcceptDisplayChanges(uint16_t length)
 {
-    if (length != CommandWriter::kAcceptDisplayChangesLength) {
+    if (length != CommandWriterBase::kAcceptDisplayChangesLength) {
         return false;
     }
 
@@ -787,7 +787,7 @@ bool HwcClient::CommandReader::parseAcceptDisplayChanges(uint16_t length)
 
 bool HwcClient::CommandReader::parsePresentDisplay(uint16_t length)
 {
-    if (length != CommandWriter::kPresentDisplayLength) {
+    if (length != CommandWriterBase::kPresentDisplayLength) {
         return false;
     }
 
@@ -807,7 +807,7 @@ bool HwcClient::CommandReader::parsePresentDisplay(uint16_t length)
 
 bool HwcClient::CommandReader::parseSetLayerCursorPosition(uint16_t length)
 {
-    if (length != CommandWriter::kSetLayerCursorPositionLength) {
+    if (length != CommandWriterBase::kSetLayerCursorPositionLength) {
         return false;
     }
 
@@ -822,7 +822,7 @@ bool HwcClient::CommandReader::parseSetLayerCursorPosition(uint16_t length)
 
 bool HwcClient::CommandReader::parseSetLayerBuffer(uint16_t length)
 {
-    if (length != CommandWriter::kSetLayerBufferLength) {
+    if (length != CommandWriterBase::kSetLayerBufferLength) {
         return false;
     }
 
@@ -862,7 +862,7 @@ bool HwcClient::CommandReader::parseSetLayerSurfaceDamage(uint16_t length)
 
 bool HwcClient::CommandReader::parseSetLayerBlendMode(uint16_t length)
 {
-    if (length != CommandWriter::kSetLayerBlendModeLength) {
+    if (length != CommandWriterBase::kSetLayerBlendModeLength) {
         return false;
     }
 
@@ -876,7 +876,7 @@ bool HwcClient::CommandReader::parseSetLayerBlendMode(uint16_t length)
 
 bool HwcClient::CommandReader::parseSetLayerColor(uint16_t length)
 {
-    if (length != CommandWriter::kSetLayerColorLength) {
+    if (length != CommandWriterBase::kSetLayerColorLength) {
         return false;
     }
 
@@ -890,7 +890,7 @@ bool HwcClient::CommandReader::parseSetLayerColor(uint16_t length)
 
 bool HwcClient::CommandReader::parseSetLayerCompositionType(uint16_t length)
 {
-    if (length != CommandWriter::kSetLayerCompositionTypeLength) {
+    if (length != CommandWriterBase::kSetLayerCompositionTypeLength) {
         return false;
     }
 
@@ -904,7 +904,7 @@ bool HwcClient::CommandReader::parseSetLayerCompositionType(uint16_t length)
 
 bool HwcClient::CommandReader::parseSetLayerDataspace(uint16_t length)
 {
-    if (length != CommandWriter::kSetLayerDataspaceLength) {
+    if (length != CommandWriterBase::kSetLayerDataspaceLength) {
         return false;
     }
 
@@ -918,7 +918,7 @@ bool HwcClient::CommandReader::parseSetLayerDataspace(uint16_t length)
 
 bool HwcClient::CommandReader::parseSetLayerDisplayFrame(uint16_t length)
 {
-    if (length != CommandWriter::kSetLayerDisplayFrameLength) {
+    if (length != CommandWriterBase::kSetLayerDisplayFrameLength) {
         return false;
     }
 
@@ -932,7 +932,7 @@ bool HwcClient::CommandReader::parseSetLayerDisplayFrame(uint16_t length)
 
 bool HwcClient::CommandReader::parseSetLayerPlaneAlpha(uint16_t length)
 {
-    if (length != CommandWriter::kSetLayerPlaneAlphaLength) {
+    if (length != CommandWriterBase::kSetLayerPlaneAlphaLength) {
         return false;
     }
 
@@ -946,7 +946,7 @@ bool HwcClient::CommandReader::parseSetLayerPlaneAlpha(uint16_t length)
 
 bool HwcClient::CommandReader::parseSetLayerSidebandStream(uint16_t length)
 {
-    if (length != CommandWriter::kSetLayerSidebandStreamLength) {
+    if (length != CommandWriterBase::kSetLayerSidebandStreamLength) {
         return false;
     }
 
@@ -965,7 +965,7 @@ bool HwcClient::CommandReader::parseSetLayerSidebandStream(uint16_t length)
 
 bool HwcClient::CommandReader::parseSetLayerSourceCrop(uint16_t length)
 {
-    if (length != CommandWriter::kSetLayerSourceCropLength) {
+    if (length != CommandWriterBase::kSetLayerSourceCropLength) {
         return false;
     }
 
@@ -979,7 +979,7 @@ bool HwcClient::CommandReader::parseSetLayerSourceCrop(uint16_t length)
 
 bool HwcClient::CommandReader::parseSetLayerTransform(uint16_t length)
 {
-    if (length != CommandWriter::kSetLayerTransformLength) {
+    if (length != CommandWriterBase::kSetLayerTransformLength) {
         return false;
     }
 
@@ -1009,7 +1009,7 @@ bool HwcClient::CommandReader::parseSetLayerVisibleRegion(uint16_t length)
 
 bool HwcClient::CommandReader::parseSetLayerZOrder(uint16_t length)
 {
-    if (length != CommandWriter::kSetLayerZOrderLength) {
+    if (length != CommandWriterBase::kSetLayerZOrderLength) {
         return false;
     }
 
