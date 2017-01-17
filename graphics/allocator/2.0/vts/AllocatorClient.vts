@@ -9,6 +9,472 @@ import: "android.hardware.graphics.common@1.0::types"
 
 interface: {
     attribute: {
+        name: "::android::hardware::graphics::common::V1_0::PixelFormat"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "int32_t"
+
+            enumerator: "RGBA_8888"
+            scalar_value: {
+                int32_t: 1
+            }
+            enumerator: "RGBX_8888"
+            scalar_value: {
+                int32_t: 2
+            }
+            enumerator: "RGB_888"
+            scalar_value: {
+                int32_t: 3
+            }
+            enumerator: "RGB_565"
+            scalar_value: {
+                int32_t: 4
+            }
+            enumerator: "BGRA_8888"
+            scalar_value: {
+                int32_t: 5
+            }
+            enumerator: "RGBA_FP16"
+            scalar_value: {
+                int32_t: 22
+            }
+            enumerator: "YV12"
+            scalar_value: {
+                int32_t: 842094169
+            }
+            enumerator: "Y8"
+            scalar_value: {
+                int32_t: 538982489
+            }
+            enumerator: "Y16"
+            scalar_value: {
+                int32_t: 540422489
+            }
+            enumerator: "RAW16"
+            scalar_value: {
+                int32_t: 32
+            }
+            enumerator: "RAW10"
+            scalar_value: {
+                int32_t: 37
+            }
+            enumerator: "RAW12"
+            scalar_value: {
+                int32_t: 38
+            }
+            enumerator: "RAW_OPAQUE"
+            scalar_value: {
+                int32_t: 36
+            }
+            enumerator: "BLOB"
+            scalar_value: {
+                int32_t: 33
+            }
+            enumerator: "IMPLEMENTATION_DEFINED"
+            scalar_value: {
+                int32_t: 34
+            }
+            enumerator: "YCBCR_420_888"
+            scalar_value: {
+                int32_t: 35
+            }
+            enumerator: "YCBCR_422_888"
+            scalar_value: {
+                int32_t: 39
+            }
+            enumerator: "YCBCR_444_888"
+            scalar_value: {
+                int32_t: 40
+            }
+            enumerator: "FLEX_RGB_888"
+            scalar_value: {
+                int32_t: 41
+            }
+            enumerator: "FLEX_RGBA_8888"
+            scalar_value: {
+                int32_t: 42
+            }
+            enumerator: "YCBCR_422_SP"
+            scalar_value: {
+                int32_t: 16
+            }
+            enumerator: "YCRCB_420_SP"
+            scalar_value: {
+                int32_t: 17
+            }
+            enumerator: "YCBCR_422_I"
+            scalar_value: {
+                int32_t: 20
+            }
+            enumerator: "JPEG"
+            scalar_value: {
+                int32_t: 256
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::graphics::common::V1_0::Transform"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "int32_t"
+
+            enumerator: "FLIP_H"
+            scalar_value: {
+                int32_t: 1
+            }
+            enumerator: "FLIP_V"
+            scalar_value: {
+                int32_t: 2
+            }
+            enumerator: "ROT_90"
+            scalar_value: {
+                int32_t: 4
+            }
+            enumerator: "ROT_180"
+            scalar_value: {
+                int32_t: 3
+            }
+            enumerator: "ROT_270"
+            scalar_value: {
+                int32_t: 7
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::graphics::common::V1_0::Dataspace"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "int32_t"
+
+            enumerator: "UNKNOWN"
+            scalar_value: {
+                int32_t: 0
+            }
+            enumerator: "ARBITRARY"
+            scalar_value: {
+                int32_t: 1
+            }
+            enumerator: "STANDARD_SHIFT"
+            scalar_value: {
+                int32_t: 16
+            }
+            enumerator: "STANDARD_MASK"
+            scalar_value: {
+                int32_t: 4128768
+            }
+            enumerator: "STANDARD_UNSPECIFIED"
+            scalar_value: {
+                int32_t: 0
+            }
+            enumerator: "STANDARD_BT709"
+            scalar_value: {
+                int32_t: 65536
+            }
+            enumerator: "STANDARD_BT601_625"
+            scalar_value: {
+                int32_t: 131072
+            }
+            enumerator: "STANDARD_BT601_625_UNADJUSTED"
+            scalar_value: {
+                int32_t: 196608
+            }
+            enumerator: "STANDARD_BT601_525"
+            scalar_value: {
+                int32_t: 262144
+            }
+            enumerator: "STANDARD_BT601_525_UNADJUSTED"
+            scalar_value: {
+                int32_t: 327680
+            }
+            enumerator: "STANDARD_BT2020"
+            scalar_value: {
+                int32_t: 393216
+            }
+            enumerator: "STANDARD_BT2020_CONSTANT_LUMINANCE"
+            scalar_value: {
+                int32_t: 458752
+            }
+            enumerator: "STANDARD_BT470M"
+            scalar_value: {
+                int32_t: 524288
+            }
+            enumerator: "STANDARD_FILM"
+            scalar_value: {
+                int32_t: 589824
+            }
+            enumerator: "STANDARD_DCI_P3"
+            scalar_value: {
+                int32_t: 655360
+            }
+            enumerator: "STANDARD_ADOBE_RGB"
+            scalar_value: {
+                int32_t: 720896
+            }
+            enumerator: "TRANSFER_SHIFT"
+            scalar_value: {
+                int32_t: 22
+            }
+            enumerator: "TRANSFER_MASK"
+            scalar_value: {
+                int32_t: 130023424
+            }
+            enumerator: "TRANSFER_UNSPECIFIED"
+            scalar_value: {
+                int32_t: 0
+            }
+            enumerator: "TRANSFER_LINEAR"
+            scalar_value: {
+                int32_t: 4194304
+            }
+            enumerator: "TRANSFER_SRGB"
+            scalar_value: {
+                int32_t: 8388608
+            }
+            enumerator: "TRANSFER_SMPTE_170M"
+            scalar_value: {
+                int32_t: 12582912
+            }
+            enumerator: "TRANSFER_GAMMA2_2"
+            scalar_value: {
+                int32_t: 16777216
+            }
+            enumerator: "TRANSFER_GAMMA2_6"
+            scalar_value: {
+                int32_t: 20971520
+            }
+            enumerator: "TRANSFER_GAMMA2_8"
+            scalar_value: {
+                int32_t: 25165824
+            }
+            enumerator: "TRANSFER_ST2084"
+            scalar_value: {
+                int32_t: 29360128
+            }
+            enumerator: "TRANSFER_HLG"
+            scalar_value: {
+                int32_t: 33554432
+            }
+            enumerator: "RANGE_SHIFT"
+            scalar_value: {
+                int32_t: 27
+            }
+            enumerator: "RANGE_MASK"
+            scalar_value: {
+                int32_t: 939524096
+            }
+            enumerator: "RANGE_UNSPECIFIED"
+            scalar_value: {
+                int32_t: 0
+            }
+            enumerator: "RANGE_FULL"
+            scalar_value: {
+                int32_t: 134217728
+            }
+            enumerator: "RANGE_LIMITED"
+            scalar_value: {
+                int32_t: 268435456
+            }
+            enumerator: "RANGE_EXTENDED"
+            scalar_value: {
+                int32_t: 402653184
+            }
+            enumerator: "SRGB_LINEAR"
+            scalar_value: {
+                int32_t: 512
+            }
+            enumerator: "V0_SRGB_LINEAR"
+            scalar_value: {
+                int32_t: 138477568
+            }
+            enumerator: "V0_SCRGB_LINEAR"
+            scalar_value: {
+                int32_t: 406913024
+            }
+            enumerator: "SRGB"
+            scalar_value: {
+                int32_t: 513
+            }
+            enumerator: "V0_SRGB"
+            scalar_value: {
+                int32_t: 142671872
+            }
+            enumerator: "V0_SCRGB"
+            scalar_value: {
+                int32_t: 411107328
+            }
+            enumerator: "JFIF"
+            scalar_value: {
+                int32_t: 257
+            }
+            enumerator: "V0_JFIF"
+            scalar_value: {
+                int32_t: 146931712
+            }
+            enumerator: "BT601_625"
+            scalar_value: {
+                int32_t: 258
+            }
+            enumerator: "V0_BT601_625"
+            scalar_value: {
+                int32_t: 281149440
+            }
+            enumerator: "BT601_525"
+            scalar_value: {
+                int32_t: 259
+            }
+            enumerator: "V0_BT601_525"
+            scalar_value: {
+                int32_t: 281280512
+            }
+            enumerator: "BT709"
+            scalar_value: {
+                int32_t: 260
+            }
+            enumerator: "V0_BT709"
+            scalar_value: {
+                int32_t: 281083904
+            }
+            enumerator: "DCI_P3_LINEAR"
+            scalar_value: {
+                int32_t: 139067392
+            }
+            enumerator: "DCI_P3"
+            scalar_value: {
+                int32_t: 155844608
+            }
+            enumerator: "DISPLAY_P3_LINEAR"
+            scalar_value: {
+                int32_t: 139067392
+            }
+            enumerator: "DISPLAY_P3"
+            scalar_value: {
+                int32_t: 143261696
+            }
+            enumerator: "ADOBE_RGB"
+            scalar_value: {
+                int32_t: 151715840
+            }
+            enumerator: "BT2020_LINEAR"
+            scalar_value: {
+                int32_t: 138805248
+            }
+            enumerator: "BT2020"
+            scalar_value: {
+                int32_t: 147193856
+            }
+            enumerator: "DEPTH"
+            scalar_value: {
+                int32_t: 4096
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::graphics::common::V1_0::ColorMode"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "int32_t"
+
+            enumerator: "NATIVE"
+            scalar_value: {
+                int32_t: 0
+            }
+            enumerator: "STANDARD_BT601_625"
+            scalar_value: {
+                int32_t: 1
+            }
+            enumerator: "STANDARD_BT601_625_UNADJUSTED"
+            scalar_value: {
+                int32_t: 2
+            }
+            enumerator: "STANDARD_BT601_525"
+            scalar_value: {
+                int32_t: 3
+            }
+            enumerator: "STANDARD_BT601_525_UNADJUSTED"
+            scalar_value: {
+                int32_t: 4
+            }
+            enumerator: "STANDARD_BT709"
+            scalar_value: {
+                int32_t: 5
+            }
+            enumerator: "DCI_P3"
+            scalar_value: {
+                int32_t: 6
+            }
+            enumerator: "SRGB"
+            scalar_value: {
+                int32_t: 7
+            }
+            enumerator: "ADOBE_RGB"
+            scalar_value: {
+                int32_t: 8
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::graphics::common::V1_0::ColorTransform"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "int32_t"
+
+            enumerator: "IDENTITY"
+            scalar_value: {
+                int32_t: 0
+            }
+            enumerator: "ARBITRARY_MATRIX"
+            scalar_value: {
+                int32_t: 1
+            }
+            enumerator: "VALUE_INVERSE"
+            scalar_value: {
+                int32_t: 2
+            }
+            enumerator: "GRAYSCALE"
+            scalar_value: {
+                int32_t: 3
+            }
+            enumerator: "CORRECT_PROTANOPIA"
+            scalar_value: {
+                int32_t: 4
+            }
+            enumerator: "CORRECT_DEUTERANOPIA"
+            scalar_value: {
+                int32_t: 5
+            }
+            enumerator: "CORRECT_TRITANOPIA"
+            scalar_value: {
+                int32_t: 6
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::graphics::common::V1_0::Hdr"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "int32_t"
+
+            enumerator: "DOLBY_VISION"
+            scalar_value: {
+                int32_t: 1
+            }
+            enumerator: "HDR10"
+            scalar_value: {
+                int32_t: 2
+            }
+            enumerator: "HLG"
+            scalar_value: {
+                int32_t: 3
+            }
+        }
+    }
+
+    attribute: {
         name: "::android::hardware::graphics::allocator::V2_0::IAllocatorClient::BufferDescriptorInfo"
         type: TYPE_STRUCT
         struct_value: {
