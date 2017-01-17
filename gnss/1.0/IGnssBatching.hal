@@ -136,7 +136,8 @@ interface IGnssBatching {
 
     /**
      * Closes the interface. If any batch operations are in progress,
-     * they should be stopped.
+     * they must be stopped.  If any locations are in the hardware batch, they
+     * must be deleted (and not sent via callback.)
      *
      * init() may be called again, after this, if the interface is to be restored
      */

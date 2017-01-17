@@ -16,6 +16,7 @@
 #ifndef android_hardware_gnss_V1_0_GnssUtil_H_
 #define android_hardware_gnss_V1_0_GnssUtil_H_
 
+#include <hardware/fused_location.h>
 #include <hardware/gps.h>
 #include <android/hardware/gnss/1.0/types.h>
 
@@ -30,6 +31,12 @@ namespace implementation {
  * struct.
  */
 GnssLocation convertToGnssLocation(GpsLocation* location);
+
+/*
+ * This method converts an FlpLocation struct to a GnssLocation
+ * struct.
+ */
+GnssLocation convertToGnssLocation(FlpLocation* location);
 
 }  // namespace implementation
 }  // namespace V1_0

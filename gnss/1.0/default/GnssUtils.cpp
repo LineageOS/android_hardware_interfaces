@@ -51,6 +51,28 @@ GnssLocation convertToGnssLocation(GpsLocation* location) {
     return gnssLocation;
 }
 
+GnssLocation convertToGnssLocation(FlpLocation* location) {
+    GnssLocation gnssLocation = {};
+    if (location != nullptr) {
+        gnssLocation = {
+            // Bit mask applied (and 0's below) for same reason as above with GpsLocation
+            .gnssLocationFlags = static_cast<uint16_t>(location->flags & 0x1f),
+            .latitudeDegrees = location->latitude,
+            .longitudeDegrees = location->longitude,
+            .altitudeMeters = location->altitude,
+            .speedMetersPerSec = location->speed,
+            .bearingDegrees = location->bearing,
+            .horizontalAccuracyMeters = location->accuracy,
+            .verticalAccuracyMeters = 0,
+            .speedAccuracyMetersPerSecond = 0,
+            .bearingAccuracyDegrees = 0,
+            .timestamp = location->timestamp
+        };
+    }
+
+    return gnssLocation;
+}
+
 }  // namespace implementation
 }  // namespace V1_0
 }  // namespace gnss
