@@ -81,13 +81,17 @@ interface IWifiStaIface extends IWifiIface {
      */
     TDLS_OFFCHANNEL = 1 << 11,
     /**
+     * Support for neighbour discovery offload.
+     */
+    ND_OFFLOAD = 1 << 12,
+    /**
      * Support for keep alive packet offload.
      */
-    KEEP_ALIVE = 1 << 12,
+    KEEP_ALIVE = 1 << 13,
     /**
      * Support for tracking connection packets' fate.
      */
-    DEBUG_PACKET_FATE = 1 << 13
+    DEBUG_PACKET_FATE = 1 << 14
   };
 
   /**
