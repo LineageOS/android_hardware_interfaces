@@ -25,5 +25,5 @@ using android::hardware::bluetooth::V1_0::IBluetoothHci;
 using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
-  return defaultPassthroughServiceImplementation<IBluetoothHci>("bluetooth");
+  return defaultPassthroughServiceImplementation<IBluetoothHci>();
 }
