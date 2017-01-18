@@ -35,12 +35,18 @@ interface IBluetoothHci {
      * required to communicate with the Bluetooth hardware in the
      * device.
      *
+     * The |oninitializationComplete| callback must be invoked in response
+     * to this function to indicate success before any other function
+     * (sendHciCommand, sendAclData, * sendScoData) is invoked on this
+     * interface.
+     *
      * @param callback implements IBluetoothHciCallbacks which will
      *    receive callbacks when incoming HCI packets are received
      *    from the controller to be sent to the host.
-     * @return status result of the initialization
      */
-    initialize(IBluetoothHciCallbacks callback) generates (Status status);
+    @entry
+    @callflow(next={"sendHciCommand", "sendAclData", "sendScoData", "close"})
+    initialize(IBluetoothHciCallbacks callback);
 
     /**
      * Send an HCI command (as specified in the Bluetooth Specification
@@ -49,6 +55,7 @@ interface IBluetoothHci {
      *
      * @param command is the HCI command to be sent
      */
+    @callflow(next={"sendHciCommand", "sendAclData", "sendScoData", "close"})
     sendHciCommand(HciPacket command);
 
     /**
@@ -57,6 +64,7 @@ interface IBluetoothHci {
      * Packets must be processed in order.
      * @param data HCI data packet to be sent
      */
+    @callflow(next={"sendHciCommand", "sendAclData", "sendScoData", "close"})
     sendAclData(HciPacket data);
 
     /**
@@ -65,10 +73,12 @@ interface IBluetoothHci {
      * Packets must be processed in order.
      * @param data HCI data packet to be sent
      */
+    @callflow(next={"sendHciCommand", "sendAclData", "sendScoData", "close"})
     sendScoData(HciPacket data);
 
     /**
      * Close the HCI interface
      */
+    @exit
     close();
 };
