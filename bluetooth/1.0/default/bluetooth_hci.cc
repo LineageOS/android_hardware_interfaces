@@ -30,12 +30,16 @@ static const uint8_t HCI_DATA_TYPE_COMMAND = 1;
 static const uint8_t HCI_DATA_TYPE_ACL = 2;
 static const uint8_t HCI_DATA_TYPE_SCO = 3;
 
-Return<Status> BluetoothHci::initialize(
+Return<void> BluetoothHci::initialize(
     const ::android::sp<IBluetoothHciCallbacks>& cb) {
   ALOGW("BluetoothHci::initialize()");
   event_cb_ = cb;
 
   bool rc = VendorInterface::Initialize(
+      [this](bool status) {
+        event_cb_->initializationComplete(
+            status ? Status::SUCCESS : Status::INITIALIZATION_ERROR);
+      },
       [this](HciPacketType type, const hidl_vec<uint8_t>& packet) {
         switch (type) {
           case HCI_PACKET_TYPE_EVENT:
@@ -52,9 +56,8 @@ Return<Status> BluetoothHci::initialize(
             break;
         }
       });
-  if (!rc) return Status::INITIALIZATION_ERROR;
-
-  return Status::SUCCESS;
+  if (!rc) event_cb_->initializationComplete(Status::INITIALIZATION_ERROR);
+  return Void();
 }
 
 Return<void> BluetoothHci::close() {

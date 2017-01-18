@@ -19,21 +19,27 @@ package android.hardware.bluetooth@1.0;
 /* The interface from the Bluetooth Controller to the stack. */
 interface IBluetoothHciCallbacks {
     /**
+     * Invoked when the Bluetooth controller initialization has been
+     * completed.
+     */
+    initializationComplete(Status status);
+
+    /**
      * This function is invoked when an HCI event is received from the
      * Bluetooth controller to be forwarded to the Bluetooth stack.
      * @param event is the HCI event to be sent to the Bluetooth stack.
      */
-    oneway hciEventReceived(HciPacket event);
+    hciEventReceived(HciPacket event);
 
     /**
      * Send an ACL data packet form the controller to the host.
      * @param data the ACL HCI packet to be passed to the host stack
      */
-    oneway aclDataReceived(HciPacket data);
+    aclDataReceived(HciPacket data);
 
     /**
      * Send a SCO data packet form the controller to the host.
      * @param data the SCO HCI packet to be passed to the host stack
      */
-    oneway scoDataReceived(HciPacket data);
+    scoDataReceived(HciPacket data);
 };

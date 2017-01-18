@@ -29,55 +29,50 @@ namespace V1_0 {
 namespace implementation {
 
 using ::android::hardware::hidl_vec;
+using InitializeCompleteCallback = std::function<void(bool success)>;
 using PacketReadCallback =
     std::function<void(HciPacketType, const hidl_vec<uint8_t> &)>;
 
+class FirmwareStartupTimer;
+
 class VendorInterface {
  public:
-  static bool Initialize(PacketReadCallback packet_read_cb);
+  static bool Initialize(InitializeCompleteCallback initialize_complete_cb,
+                         PacketReadCallback packet_read_cb);
   static void Shutdown();
-  static VendorInterface* get();
+  static VendorInterface *get();
 
   size_t Send(const uint8_t *data, size_t length);
 
   void OnFirmwareConfigured(uint8_t result);
 
-  // Actually send the data.
-  size_t SendPrivate(const uint8_t *data, size_t length);
-
  private:
-  VendorInterface() { queued_data_.resize(0); }
   virtual ~VendorInterface() = default;
 
-  bool Open(PacketReadCallback packet_read_cb);
+  bool Open(InitializeCompleteCallback initialize_complete_cb, PacketReadCallback packet_read_cb);
   void Close();
 
   void OnDataReady(int fd);
-
-  // Queue data from Send() until the interface is ready.
-  hidl_vec<uint8_t> queued_data_;
 
   void *lib_handle_;
   bt_vendor_interface_t *lib_interface_;
   AsyncFdWatcher fd_watcher_;
   int uart_fd_;
   PacketReadCallback packet_read_cb_;
-  bool firmware_configured_;
+  InitializeCompleteCallback initialize_complete_cb_;
 
-  enum HciParserState {
-    HCI_IDLE,
-    HCI_TYPE_READY,
-    HCI_PAYLOAD
-  };
+  enum HciParserState { HCI_IDLE, HCI_TYPE_READY, HCI_PAYLOAD };
   HciParserState hci_parser_state_{HCI_IDLE};
   HciPacketType hci_packet_type_{HCI_PACKET_TYPE_UNKNOWN};
   hidl_vec<uint8_t> hci_packet_;
   size_t hci_packet_bytes_remaining_;
   size_t hci_packet_bytes_read_;
+
+  FirmwareStartupTimer *firmware_startup_timer_;
 };
 
-} // namespace implementation
-} // namespace V1_0
-} // namespace bluetooth
-} // namespace hardware
-} // namespace android
+}  // namespace implementation
+}  // namespace V1_0
+}  // namespace bluetooth
+}  // namespace hardware
+}  // namespace android
