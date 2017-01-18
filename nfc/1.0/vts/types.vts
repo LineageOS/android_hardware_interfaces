@@ -4,8 +4,9 @@ component_name: "types"
 
 package: "android.hardware.nfc"
 
+
 attribute: {
-    name: "NfcEvent"
+    name: "::android::hardware::nfc::V1_0::NfcEvent"
     type: TYPE_ENUM
     enum_value: {
         scalar_type: "uint32_t"
@@ -42,7 +43,7 @@ attribute: {
 }
 
 attribute: {
-    name: "NfcStatus"
+    name: "::android::hardware::nfc::V1_0::NfcStatus"
     type: TYPE_ENUM
     enum_value: {
         scalar_type: "uint32_t"
