@@ -65,7 +65,7 @@ INfc* HIDL_FETCH_INfc(const char * /*name*/) {
         }
     }
     else
-        ALOGE ("hw_get_module failed: %d", ret);
+        ALOGE ("hw_get_module %s failed: %d", NFC_NCI_HARDWARE_MODULE_ID, ret);
 
     if (ret == 0) {
         return new Nfc(nfc_device);

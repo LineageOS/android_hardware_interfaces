@@ -37,8 +37,6 @@ using ::android::hardware::Void;
 using ::android::hardware::hidl_vec;
 using ::android::sp;
 
-#define NFC_NCI_SERVICE_NAME "nfc_nci"
-
 /* NCI Commands */
 #define CORE_RESET_CMD \
   { 0x20, 0x00, 0x01, 0x00 }
@@ -61,7 +59,7 @@ static bool passthrough = true;
 class NfcHidlTest : public ::testing::Test {
  public:
   virtual void SetUp() override {
-    nfc_ = INfc::getService(NFC_NCI_SERVICE_NAME, passthrough);
+    nfc_ = INfc::getService(passthrough);
     ASSERT_NE(nfc_, nullptr);
 
     nfc_cb_ = new NfcClientCallback(*this);
