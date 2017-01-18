@@ -76,15 +76,6 @@ enum PowerHint : uint32_t {
     * it has been launched.
     */
     LAUNCH = 0x00000008,
-
-   /*
-    * When device enters some special modes, e.g. theater mode in Android
-    * Wear, there is no touch interaction expected between device and user.
-    * Touch controller could be disabled in those modes to save power.
-    * The data parameter is non-zero when touch could be disabled, and zero
-    * when touch needs to be re-enabled.
-    */
-    DISABLE_TOUCH = 0x00000009
 };
 
 enum Feature : uint32_t {
