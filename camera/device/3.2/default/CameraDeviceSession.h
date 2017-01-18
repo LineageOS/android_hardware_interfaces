@@ -100,44 +100,12 @@ private:
     // (streamID, frameNumber) -> inflight buffer cache
     std::map<std::pair<int, uint32_t>, camera3_stream_buffer_t>  mInflightBuffers;
 
-    struct BufferHasher {
-        size_t operator()(const buffer_handle_t& buf) const {
-            if (buf == nullptr)
-                return 0;
-
-            size_t result = 1;
-            result = 31 * result + buf->numFds;
-            result = 31 * result + buf->numInts;
-            int length = buf->numFds + buf->numInts;
-            for (int i = 0; i < length; i++) {
-                result = 31 * result + buf->data[i];
-            }
-            return result;
-        }
-    };
-
-    struct BufferComparator {
-        bool operator()(const buffer_handle_t& buf1, const buffer_handle_t& buf2) const {
-            if (buf1->numFds == buf2->numFds && buf1->numInts == buf2->numInts) {
-                int length = buf1->numFds + buf1->numInts;
-                for (int i = 0; i < length; i++) {
-                    if (buf1->data[i] != buf2->data[i]) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-            return false;
-        }
-    };
-
     // buffers currently ciculating between HAL and camera service
-    // key: buffer_handle_t sent via HIDL interface
+    // key: bufferId sent via HIDL interface
     // value: imported buffer_handle_t
     // Buffer will be imported during process_capture_request and will be freed
     // when the its stream is deleted or camera device session is closed
-    typedef std::unordered_map<buffer_handle_t, buffer_handle_t,
-            BufferHasher, BufferComparator> CirculatingBuffers;
+    typedef std::unordered_map<uint64_t, buffer_handle_t> CirculatingBuffers;
     // Stream ID -> circulating buffers map
     std::map<int, CirculatingBuffers> mCirculatingBuffers;
 
