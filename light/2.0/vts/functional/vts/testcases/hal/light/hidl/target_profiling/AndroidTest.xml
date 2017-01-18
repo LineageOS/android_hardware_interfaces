@@ -24,7 +24,6 @@
             _32bit::DATA/nativetest/light_hidl_hal_test/light_hidl_hal_test,
             _64bit::DATA/nativetest64/light_hidl_hal_test/light_hidl_hal_test,
             "/>
-        <option name="test-config-path" value="vts/testcases/hal/light/hidl/target/HalLightHidlTargetBasicTest.config" />
         <option name="binary-test-type" value="gtest" />
         <option name="test-timeout" value="1m" />
         <option name="enable-profiling" value="true" />
