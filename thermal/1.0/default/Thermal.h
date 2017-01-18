@@ -45,6 +45,7 @@ struct Thermal : public IThermal {
     Return<void> getTemperatures(getTemperatures_cb _hidl_cb)  override;
     Return<void> getCpuUsages(getCpuUsages_cb _hidl_cb)  override;
     Return<void> getCoolingDevices(getCoolingDevices_cb _hidl_cb)  override;
+    Return<void> getUndefinedTemperature(getUndefinedTemperature_cb _hidl_cb) override;
     private:
         thermal_module_t* mModule;
 };
