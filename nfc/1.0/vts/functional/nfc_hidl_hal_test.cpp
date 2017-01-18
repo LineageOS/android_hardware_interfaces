@@ -53,13 +53,11 @@ using ::android::sp;
 #define VERSION 0x11
 #define TIMEOUT_PERIOD 5
 
-static bool passthrough = true;
-
 // The main test class for NFC HIDL HAL.
 class NfcHidlTest : public ::testing::Test {
  public:
   virtual void SetUp() override {
-    nfc_ = INfc::getService(passthrough);
+    nfc_ = INfc::getService();
     ASSERT_NE(nfc_, nullptr);
 
     nfc_cb_ = new NfcClientCallback(*this);
@@ -336,12 +334,6 @@ int main(int argc, char** argv) {
   ::testing::AddGlobalTestEnvironment(new NfcHidlEnvironment);
   ::testing::InitGoogleTest(&argc, argv);
 
-  for (int i = 0; i < argc; i++) {
-    if (strstr(argv[i], "passthrough=false") != nullptr) {
-      passthrough = false;
-      break;
-    }
-  }
   std::system("svc nfc disable"); /* Turn off NFC */
   sleep(5);
 
