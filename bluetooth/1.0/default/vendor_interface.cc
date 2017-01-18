@@ -35,6 +35,7 @@ static const int INVALID_FD = -1;
 namespace {
 
 using android::hardware::bluetooth::V1_0::implementation::VendorInterface;
+using android::hardware::hidl_vec;
 
 tINT_CMD_CBACK internal_command_cb;
 VendorInterface* g_vendor_interface = nullptr;
@@ -46,17 +47,14 @@ const size_t packet_length_offset_for_type[] = {
     0, HCI_LENGTH_OFFSET_CMD, HCI_LENGTH_OFFSET_ACL, HCI_LENGTH_OFFSET_SCO,
     HCI_LENGTH_OFFSET_EVT};
 
-size_t HciGetPacketLengthForType(
-    HciPacketType type, const android::hardware::hidl_vec<uint8_t>& packet) {
+size_t HciGetPacketLengthForType(HciPacketType type,
+                                 const hidl_vec<uint8_t>& packet) {
   size_t offset = packet_length_offset_for_type[type];
-  if (type == HCI_PACKET_TYPE_ACL_DATA) {
-    return (((packet[offset + 1]) << 8) | packet[offset]);
-  }
-  return packet[offset];
+  if (type != HCI_PACKET_TYPE_ACL_DATA) return packet[offset];
+  return (((packet[offset + 1]) << 8) | packet[offset]);
 }
 
-HC_BT_HDR* WrapPacketAndCopy(uint16_t event,
-                             const android::hardware::hidl_vec<uint8_t>& data) {
+HC_BT_HDR* WrapPacketAndCopy(uint16_t event, const hidl_vec<uint8_t>& data) {
   size_t packet_size = data.size() + sizeof(HC_BT_HDR);
   HC_BT_HDR* packet = reinterpret_cast<HC_BT_HDR*>(new uint8_t[packet_size]);
   packet->offset = 0;
@@ -71,17 +69,16 @@ HC_BT_HDR* WrapPacketAndCopy(uint16_t event,
 
 uint8_t transmit_cb(uint16_t opcode, void* buffer, tINT_CMD_CBACK callback) {
   ALOGV("%s opcode: 0x%04x, ptr: %p", __func__, opcode, buffer);
-  HC_BT_HDR* bt_hdr = reinterpret_cast<HC_BT_HDR*>(buffer);
-
   internal_command_cb = callback;
   uint8_t type = HCI_PACKET_TYPE_COMMAND;
-  VendorInterface::get()->SendPrivate(&type, 1);
-  VendorInterface::get()->SendPrivate(bt_hdr->data, bt_hdr->len);
+  VendorInterface::get()->Send(&type, 1);
+  HC_BT_HDR* bt_hdr = reinterpret_cast<HC_BT_HDR*>(buffer);
+  VendorInterface::get()->Send(bt_hdr->data, bt_hdr->len);
   return true;
 }
 
 void firmware_config_cb(bt_vendor_op_result_t result) {
-  ALOGD("%s result: %d", __func__, result);
+  ALOGV("%s result: %d", __func__, result);
   VendorInterface::get()->OnFirmwareConfigured(result);
 }
 
@@ -131,10 +128,28 @@ namespace bluetooth {
 namespace V1_0 {
 namespace implementation {
 
-bool VendorInterface::Initialize(PacketReadCallback packet_read_cb) {
+class FirmwareStartupTimer {
+ public:
+  FirmwareStartupTimer() : start_time_(std::chrono::steady_clock::now()) {}
+
+  ~FirmwareStartupTimer() {
+    std::chrono::duration<double> duration =
+        std::chrono::steady_clock::now() - start_time_;
+    double s = duration.count();
+    if (s == 0) return;
+    ALOGD("Firmware configured in %.3fs", s);
+  }
+
+ private:
+  std::chrono::steady_clock::time_point start_time_;
+};
+
+bool VendorInterface::Initialize(
+    InitializeCompleteCallback initialize_complete_cb,
+    PacketReadCallback packet_read_cb) {
   assert(!g_vendor_interface);
   g_vendor_interface = new VendorInterface();
-  return g_vendor_interface->Open(packet_read_cb);
+  return g_vendor_interface->Open(initialize_complete_cb, packet_read_cb);
 }
 
 void VendorInterface::Shutdown() {
@@ -146,8 +161,9 @@ void VendorInterface::Shutdown() {
 
 VendorInterface* VendorInterface::get() { return g_vendor_interface; }
 
-bool VendorInterface::Open(PacketReadCallback packet_read_cb) {
-  firmware_configured_ = false;
+bool VendorInterface::Open(InitializeCompleteCallback initialize_complete_cb,
+                           PacketReadCallback packet_read_cb) {
+  initialize_complete_cb_ = initialize_complete_cb;
   packet_read_cb_ = packet_read_cb;
 
   // Initialize vendor interface
@@ -209,6 +225,7 @@ bool VendorInterface::Open(PacketReadCallback packet_read_cb) {
                                          [this](int fd) { OnDataReady(fd); });
 
   // Start configuring the firmware
+  firmware_startup_timer_ = new FirmwareStartupTimer();
   lib_interface_->op(BT_VND_OP_FW_CFG, nullptr);
 
   return true;
@@ -229,31 +246,13 @@ void VendorInterface::Close() {
     lib_handle_ = nullptr;
   }
 
-  firmware_configured_ = false;
+  if (firmware_startup_timer_ != nullptr) {
+    delete firmware_startup_timer_;
+    firmware_startup_timer_ = nullptr;
+  }
 }
 
 size_t VendorInterface::Send(const uint8_t* data, size_t length) {
-  if (firmware_configured_ && queued_data_.size() == 0)
-    return SendPrivate(data, length);
-
-  if (!firmware_configured_) {
-    ALOGI("%s queueing command", __func__);
-    queued_data_.resize(queued_data_.size() + length);
-    uint8_t* append_ptr = &queued_data_[queued_data_.size() - length];
-    memcpy(append_ptr, data, length);
-    return length;
-  }
-
-  ALOGI("%s sending queued command", __func__);
-  SendPrivate(queued_data_.data(), queued_data_.size());
-  queued_data_.resize(0);
-
-  ALOGI("%s done sending queued command", __func__);
-
-  return SendPrivate(data, length);
-}
-
-size_t VendorInterface::SendPrivate(const uint8_t* data, size_t length) {
   if (uart_fd_ == INVALID_FD) return 0;
 
   size_t transmitted_length = 0;
@@ -280,9 +279,18 @@ size_t VendorInterface::SendPrivate(const uint8_t* data, size_t length) {
 }
 
 void VendorInterface::OnFirmwareConfigured(uint8_t result) {
-  ALOGI("%s: result = %d", __func__, result);
-  firmware_configured_ = true;
-  VendorInterface::get()->Send(NULL, 0);
+  ALOGD("%s result: %d", __func__, result);
+  internal_command_cb = nullptr;
+
+  if (firmware_startup_timer_ != nullptr) {
+    delete firmware_startup_timer_;
+    firmware_startup_timer_ = nullptr;
+  }
+
+  if (initialize_complete_cb_ != nullptr) {
+    initialize_complete_cb_(result == 0);
+    initialize_complete_cb_ = nullptr;
+  }
 }
 
 void VendorInterface::OnDataReady(int fd) {
@@ -331,16 +339,17 @@ void VendorInterface::OnDataReady(int fd) {
       hci_packet_bytes_remaining_ -= bytes_read;
       hci_packet_bytes_read_ += bytes_read;
       if (hci_packet_bytes_remaining_ == 0) {
-        if (firmware_configured_) {
-          if (packet_read_cb_ != nullptr) {
-            packet_read_cb_(hci_packet_type_, hci_packet_);
-          }
+        if (internal_command_cb != nullptr) {
+          HC_BT_HDR* bt_hdr =
+              WrapPacketAndCopy(HCI_PACKET_TYPE_EVENT, hci_packet_);
+          internal_command_cb(bt_hdr);
+        } else if (packet_read_cb_ != nullptr &&
+                   initialize_complete_cb_ == nullptr) {
+          packet_read_cb_(hci_packet_type_, hci_packet_);
         } else {
-          if (internal_command_cb != nullptr) {
-            HC_BT_HDR* bt_hdr =
-                WrapPacketAndCopy(HCI_PACKET_TYPE_EVENT, hci_packet_);
-            internal_command_cb(bt_hdr);
-          }
+          ALOGE(
+              "%s HCI_PAYLOAD received without packet_read_cb or pending init.",
+              __func__);
         }
         hci_parser_state_ = HCI_IDLE;
       }
