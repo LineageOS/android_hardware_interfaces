@@ -114,6 +114,23 @@ enum BufferType : uint32_t {
     NATIVE_HANDLE = 1,
 };
 
+/**
+ * A SharedBuffer describes a decrypt buffer which is defined by an offset and
+ * a size.  The offset is relative to the shared memory base which is established
+ * using setSharedMemoryBase().
+ */
+struct SharedBuffer {
+    /**
+     * The offset from the shared memory base
+     */
+    uint64_t offset;
+
+    /**
+     * The size of the shared buffer in bytes
+     */
+    uint64_t size;
+};
+
 
 /**
  * A decrypt destination buffer can be either normal user-space shared
@@ -131,7 +148,7 @@ struct DestinationBuffer {
      * If type == SHARED_MEMORY, the decrypted data must be written
      * to user-space non-secure shared memory.
      */
-    memory nonsecureMemory;
+    SharedBuffer nonsecureMemory;
 
     /**
      * If type == NATIVE_HANDLE, the decrypted data must be written

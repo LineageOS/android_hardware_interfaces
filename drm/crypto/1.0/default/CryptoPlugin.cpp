@@ -17,14 +17,13 @@
 #include "CryptoPlugin.h"
 #include "TypeConvert.h"
 
-#include <media/stagefright/foundation/AString.h>
-
-#include <hidlmemory/mapping.h>
 #include <android/hidl/memory/1.0/IMemory.h>
+#include <hidlmemory/mapping.h>
+#include <media/stagefright/foundation/AString.h>
 #include <utils/Log.h>
 
+using android::hardware::hidl_memory;
 using android::hidl::memory::V1_0::IMemory;
-
 
 namespace android {
 namespace hardware {
@@ -50,11 +49,16 @@ namespace implementation {
         return toStatus(mLegacyPlugin->setMediaDrmSession(toVector(sessionId)));
     }
 
+    Return<void> CryptoPlugin::setSharedBufferBase(const hidl_memory& base) {
+        mSharedBufferBase = mapMemory(base);
+        return Void();
+    }
+
     Return<void> CryptoPlugin::decrypt(bool secure,
             const hidl_array<uint8_t, 16>& keyId,
             const hidl_array<uint8_t, 16>& iv, Mode mode,
             const Pattern& pattern, const hidl_vec<SubSample>& subSamples,
-            const hidl_memory& source, uint32_t offset,
+            const SharedBuffer& source, uint32_t offset,
             const DestinationBuffer& destination,
             decrypt_cb _hidl_cb) {
 
@@ -89,19 +93,23 @@ namespace implementation {
 
         AString detailMessage;
 
-        sp<IMemory> sharedSourceMemory = mapMemory(source);
+        if (source.offset + offset + source.size > mSharedBufferBase->getSize()) {
+            _hidl_cb(Status::ERROR_DRM_CANNOT_HANDLE, 0, "invalid buffer size");
+            return Void();
+        }
 
-        void *srcPtr = static_cast<void *>(sharedSourceMemory->getPointer());
-        uint8_t *offsetSrc = static_cast<uint8_t *>(srcPtr) + offset;
-        srcPtr = static_cast<void *>(offsetSrc);
+        uint8_t *base = static_cast<uint8_t *>
+                (static_cast<void *>(mSharedBufferBase->getPointer()));
+        void *srcPtr = static_cast<void *>(base + source.offset + offset);
 
-        sp<IMemory> sharedDestinationMemory;
         void *destPtr = NULL;
-
         if (destination.type == BufferType::SHARED_MEMORY) {
-            sharedDestinationMemory = mapMemory(destination.nonsecureMemory);
-            sharedDestinationMemory->update();
-            destPtr = sharedDestinationMemory->getPointer();
+            const SharedBuffer& destBuffer = destination.nonsecureMemory;
+            if (destBuffer.offset + destBuffer.size > mSharedBufferBase->getSize()) {
+                _hidl_cb(Status::ERROR_DRM_CANNOT_HANDLE, 0, "invalid buffer size");
+                return Void();
+            }
+            destPtr = static_cast<void *>(base + destination.nonsecureMemory.offset);
         } else if (destination.type == BufferType::NATIVE_HANDLE) {
             native_handle_t *handle = const_cast<native_handle_t *>(
                     destination.secureMemory.getNativeHandle());
@@ -110,10 +118,6 @@ namespace implementation {
         ssize_t result = mLegacyPlugin->decrypt(secure, keyId.data(), iv.data(),
                 legacyMode, legacyPattern, srcPtr, legacySubSamples,
                 subSamples.size(), destPtr, &detailMessage);
-
-        if (destination.type == BufferType::SHARED_MEMORY) {
-            sharedDestinationMemory->commit();
-        }
 
         delete[] legacySubSamples;
 

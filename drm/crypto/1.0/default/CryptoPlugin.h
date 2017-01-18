@@ -18,6 +18,7 @@
 #define ANDROID_HARDWARE_DRM_CRYPTO_V1_0__CRYPTOPLUGIN_H
 
 #include <media/hardware/CryptoAPI.h>
+#include <android/hidl/memory/1.0/IMemory.h>
 #include <android/hardware/drm/crypto/1.0/ICryptoPlugin.h>
 #include <hidl/Status.h>
 
@@ -38,6 +39,7 @@ using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
+using ::android::hidl::memory::V1_0::IMemory;
 using ::android::sp;
 
 struct CryptoPlugin : public ICryptoPlugin {
@@ -56,14 +58,18 @@ struct CryptoPlugin : public ICryptoPlugin {
     Return<Status> setMediaDrmSession(const hidl_vec<uint8_t>& sessionId)
             override;
 
+    Return<void> setSharedBufferBase(const ::android::hardware::hidl_memory& base)
+            override;
+
     Return<void> decrypt(bool secure, const hidl_array<uint8_t, 16>& keyId,
             const hidl_array<uint8_t, 16>& iv, Mode mode, const Pattern& pattern,
-            const hidl_vec<SubSample>& subSamples, const hidl_memory& source,
+            const hidl_vec<SubSample>& subSamples, const SharedBuffer& source,
             uint32_t offset, const DestinationBuffer& destination,
             decrypt_cb _hidl_cb) override;
 
 private:
     android::CryptoPlugin *mLegacyPlugin;
+    sp<IMemory> mSharedBufferBase;
 
     CryptoPlugin() = delete;
     CryptoPlugin(const CryptoPlugin &) = delete;

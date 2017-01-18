@@ -57,6 +57,15 @@ interface ICryptoPlugin {
     setMediaDrmSession(vec<uint8_t> sessionId) generates(Status status);
 
     /**
+     * Set a shared memory base for subsequent decrypt operations. The buffer
+     * base is a hidl_memory which maps shared memory in the HAL module.
+     * After the shared buffer base is established, the decrypt() method
+     * receives SharedBuffer instances which specify the buffer address range
+     * for decrypt source and destination addresses.
+     */
+    setSharedBufferBase(memory base);
+
+    /**
      * Decrypt an array of subsamples from the source memory buffer to the
      * destination memory buffer.
      *
@@ -91,6 +100,6 @@ interface ICryptoPlugin {
      */
     decrypt(bool secure, uint8_t[16] keyId, uint8_t[16] iv, Mode mode,
         Pattern pattern, vec<SubSample> subSamples,
-            memory source, uint32_t offset, DestinationBuffer destination)
+            SharedBuffer source, uint64_t offset, DestinationBuffer destination)
         generates(Status status, uint32_t bytesWritten, string detailedError);
 };
