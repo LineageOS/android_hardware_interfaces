@@ -40,7 +40,7 @@ struct Contexthub : public ::android::hardware::contexthub::V1_0::IContexthub {
                                     const ContextHubMsg &msg) override;
 
     Return<Result> loadNanoApp(uint32_t hubId,
-                               const ::android::hardware::hidl_vec<uint8_t>& appBinary,
+                               const NanoAppBinary& appBinary,
                                uint32_t transactionId) override;
 
     Return<Result> unloadNanoApp(uint32_t hubId,

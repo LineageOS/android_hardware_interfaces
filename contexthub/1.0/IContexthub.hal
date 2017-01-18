@@ -77,7 +77,8 @@ interface IContexthub {
      * device.
      *
      * @param hubId identifer of the contextHub
-     *        appBinary serialized NanoApppBinary for the nanoApp
+     *        appBinary contains the binary representation of the nanoApp, plus
+     *                  metadata
      *        transactionId transactionId for this call
      *
      * @return result OK if transation started
@@ -88,7 +89,7 @@ interface IContexthub {
      *
      */
     loadNanoApp(uint32_t hubId,
-                vec<uint8_t> appBinary,
+                NanoAppBinary appBinary,
                 uint32_t transactionId)
             generates (Result result);
 

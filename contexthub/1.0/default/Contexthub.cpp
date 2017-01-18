@@ -22,6 +22,7 @@
 
 #include <android/hardware/contexthub/1.0/IContexthub.h>
 #include <hardware/context_hub.h>
+#include <sys/endian.h>
 
 #undef LOG_TAG
 #define LOG_TAG "ContextHubHalAdapter"
@@ -385,7 +386,7 @@ Return<Result> Contexthub::unloadNanoApp(uint32_t hubId,
 }
 
 Return<Result> Contexthub::loadNanoApp(uint32_t hubId,
-                                       const ::android::hardware::hidl_vec<uint8_t>& appBinary,
+                                       const NanoAppBinary& appBinary,
                                        uint32_t transactionId) {
     if (!isInitialized()) {
       return Result::NOT_INIT;
@@ -401,11 +402,34 @@ Return<Result> Contexthub::loadNanoApp(uint32_t hubId,
         return Result::BAD_PARAMS;
     }
 
-    hubMsg.message_type = CONTEXT_HUB_LOAD_APP;
-    hubMsg.message_len = appBinary.size();
-    hubMsg.message = appBinary.data();
+    // Data from the nanoapp header is passed through HIDL as explicit fields,
+    // but the legacy HAL expects it prepended to the binary, therefore we must
+    // reconstruct it here prior to passing to the legacy HAL.
+    uint32_t targetChreApiVersion =
+        (appBinary.targetChreApiMajorVersion << 24) |
+        (appBinary.targetChreApiMinorVersion << 16);
+    const struct nano_app_binary_t header = {
+        .header_version = htole32(1),
+        .magic          = htole32(NANOAPP_MAGIC),
+        .app_id.id      = htole64(appBinary.appId),
+        .app_version    = htole32(appBinary.appVersion),
+        .flags          = htole32(appBinary.flags),
+        .hw_hub_type    = htole64(0),
+        .reserved[0]    = htole32(targetChreApiVersion),
+        .reserved[1]    = 0,
+    };
+    const uint8_t *headerBytes = reinterpret_cast<const uint8_t *>(&header);
 
-    if(mContextHubModule->send_message(hubId, &hubMsg) != 0) {
+    std::vector<uint8_t> binaryWithHeader(appBinary.customBinary);
+    binaryWithHeader.insert(binaryWithHeader.begin(),
+                            headerBytes,
+                            headerBytes + sizeof(header));
+
+    hubMsg.message_type = CONTEXT_HUB_LOAD_APP;
+    hubMsg.message_len = binaryWithHeader.size();
+    hubMsg.message = binaryWithHeader.data();
+
+    if (mContextHubModule->send_message(hubId, &hubMsg) != 0) {
         return Result::TRANSACTION_FAILED;
     } else {
         mTransactionId = transactionId;
