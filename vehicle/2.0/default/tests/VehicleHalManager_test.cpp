@@ -353,7 +353,7 @@ TEST_F(VehicleHalManagerTest, get_StaticString) {
 TEST_F(VehicleHalManagerTest, get_NegativeCases) {
     // Write-only property must fail.
     invokeGet(VehicleProperty::HVAC_SEAT_TEMPERATURE, 0);
-    ASSERT_EQ(StatusCode::INVALID_ARG, actualStatusCode);
+    ASSERT_EQ(StatusCode::ACCESS_DENIED, actualStatusCode);
 
     // Unknown property must fail.
     invokeGet(VehicleProperty::MIRROR_Z_MOVE, 0);
