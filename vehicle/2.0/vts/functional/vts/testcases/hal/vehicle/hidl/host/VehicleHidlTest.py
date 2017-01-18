@@ -130,5 +130,39 @@ class VehicleHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
         if isFreezeSupported:
             checkFreezeFrameRead()
 
+    def createVehiclePropValue(self, propId):
+        value = {
+            "int32Values" : [],
+            "floatValues" : [],
+            "int64Values" : [],
+            "bytes": [],
+            "stringValue": ""
+        }
+        propValue = {
+            "prop": propId,
+            "timestamp": 0,
+            "areaId": 0,
+            "value": value
+        }
+        return self.vtypes.Py2Pb("VehiclePropValue", propValue)
+
+    def testDrivingStatus(self):
+        """Checks that DRIVING_STATUS property returns correct result."""
+        request = self.createVehiclePropValue(self.vtypes.DRIVING_STATUS)
+        logging.info("Driving status request: %s", request)
+        response = self.vehicle.get(request)
+        logging.info("Driving status response: %s", response)
+        status = response[0]
+        asserts.assertEqual(self.vtypes.OK, status)
+        propValue = response[1]
+        assertEqual(1, len(propValue.value.int32Values))
+        drivingStatus = propValue.value.int32Values[0]
+
+        allStatuses = self.vtypes.UNRESTRICTED or self.vtypes.NO_VIDEO or
+            self.vtypes.NO_KEYBOARD_INPUT or self.vtypes.NO_VOICE_INPUT or
+            self.vtypes.NO_CONFIG or self.vtypes.LIMIT_MESSAGE_LEN
+
+        assertEqual(allStatuses, allStatuses or drivingStatus)
+
 if __name__ == "__main__":
     test_runner.main()
