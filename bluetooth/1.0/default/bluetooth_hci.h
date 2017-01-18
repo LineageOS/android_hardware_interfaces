@@ -32,7 +32,7 @@ using ::android::hardware::hidl_vec;
 
 class BluetoothHci : public IBluetoothHci {
  public:
-  Return<Status> initialize(
+  Return<void> initialize(
       const ::android::sp<IBluetoothHciCallbacks>& cb) override;
   Return<void> sendHciCommand(const hidl_vec<uint8_t>& packet) override;
   Return<void> sendAclData(const hidl_vec<uint8_t>& data) override;
