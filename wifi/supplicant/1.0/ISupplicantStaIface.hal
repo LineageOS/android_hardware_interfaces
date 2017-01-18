@@ -319,4 +319,64 @@ interface ISupplicantStaIface extends ISupplicantIface {
    */
   setCountryCode(int8_t[2] code)
       generates (SupplicantStatus status);
+
+  /**
+   * Initiate WPS setup in registrar role to learn the current AP configuration.
+   *
+   * @param bssid BSSID of the AP.
+   * @param pin Pin of the AP.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   */
+  startWpsRegistrar(Bssid bssid, string pin)
+      generates (SupplicantStatus status);
+
+  /**
+   * Initiate WPS Push Button setup.
+   * The PBC operation requires that a button is also pressed at the
+   * AP/Registrar at about the same time (2 minute window).
+   *
+   * @param bssid BSSID of the AP. Use zero'ed bssid to indicate wildcard.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   */
+  startWpsPbc(Bssid bssid) generates (SupplicantStatus status);
+
+  /**
+   * Initiate WPS Pin Keypad setup.
+   *
+   * @param pin 8 digit pin to be used.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   */
+  startWpsPinKeypad(string pin) generates (SupplicantStatus status);
+
+  /**
+   * Initiate WPS Pin Display setup.
+   *
+   * @param bssid BSSID of the AP. Use zero'ed bssid to indicate wildcard.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   * @return generatedPin 8 digit pin generated.
+   */
+  startWpsPinDisplay(Bssid bssid)
+      generates (SupplicantStatus status, string generatedPin);
+
+  /**
+   * Cancel any ongoing WPS operations.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   */
+  cancelWps() generates (SupplicantStatus status);
 };

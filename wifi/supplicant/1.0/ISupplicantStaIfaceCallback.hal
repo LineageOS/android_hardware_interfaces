@@ -139,6 +139,43 @@ interface ISupplicantStaIfaceCallback {
   };
 
   /**
+   * WPS Configuration Error.
+   */
+  enum WpsConfigError : uint16_t {
+    NO_ERROR = 0,
+    OOB_IFACE_READ_ERROR = 1,
+    DECRYPTION_CRC_FAILURE = 2,
+    CHAN_24_NOT_SUPPORTED = 3,
+    CHAN_50_NOT_SUPPORTED = 4,
+    SIGNAL_TOO_WEAK = 5,
+    NETWORK_AUTH_FAILURE = 6,
+    NETWORK_ASSOC_FAILURE = 7,
+    NO_DHCP_RESPONSE = 8,
+    FAILED_DHCP_CONFIG = 9,
+    IP_ADDR_CONFLICT = 10,
+    NO_CONN_TO_REGISTRAR = 11,
+    MULTIPLE_PBC_DETECTED = 12,
+    ROGUE_SUSPECTED = 13,
+    DEVICE_BUSY = 14,
+    SETUP_LOCKED = 15,
+    MSG_TIMEOUT = 16,
+    REG_SESS_TIMEOUT = 17,
+    DEV_PASSWORD_AUTH_FAILURE = 18,
+    CHAN_60G_NOT_SUPPORTED = 19,
+    PUBLIC_KEY_HASH_MISMATCH = 20
+  };
+
+  /**
+   * Vendor specific Error Indication for WPS event messages.
+   */
+  enum WpsErrorIndication : uint16_t {
+    NO_ERROR = 0,
+    SECURITY_TKIP_ONLY_PROHIBITED = 1,
+    SECURITY_WEP_PROHIBITED = 2,
+    AUTH_FAILURE = 3
+  };
+
+  /**
    * Used to indicate that a new network has been added.
    *
    * @param id Network ID allocated to the corresponding network.
@@ -242,4 +279,25 @@ interface ISupplicantStaIfaceCallback {
    *        Refer to section 8.4.1.9 of IEEE 802.11 spec.
    */
   oneway onAssociationRejected(Bssid bssid, uint32_t statusCode);
+
+  /**
+   * Used to indicate the success of a WPS connection attempt.
+   */
+  oneway onWpsEventSuccess();
+
+  /**
+   * Used to indicate the failure of a WPS connection attempt.
+   *
+   * @param bssid BSSID of the AP to which we initiated WPS
+   *        connection.
+   * @param configError Configuration error code.
+   * @param errorInd Error indication code.
+   */
+  oneway onWpsEventFail(
+      Bssid bssid, WpsConfigError configError, WpsErrorIndication errorInd);
+
+  /**
+   * Used to indicate the overlap of a WPS PBC connection attempt.
+   */
+  oneway onWpsEventPbcOverlap();
 };
