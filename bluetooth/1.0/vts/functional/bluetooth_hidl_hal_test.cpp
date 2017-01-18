@@ -36,8 +36,6 @@ using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::sp;
 
-#define Bluetooth_HCI_SERVICE_NAME "bluetooth"
-
 #define HCI_MINIMUM_HCI_VERSION 5  // Bluetooth Core Specification 3.0 + HS
 #define HCI_MINIMUM_LMP_VERSION 5  // Bluetooth Core Specification 3.0 + HS
 #define NUM_HCI_COMMANDS_BANDWIDTH 1000
@@ -123,8 +121,8 @@ class BluetoothHidlTest : public ::testing::Test {
  public:
   virtual void SetUp() override {
     // currently test passthrough mode only
-    bluetooth = IBluetoothHci::getService(Bluetooth_HCI_SERVICE_NAME);
-    ALOGW("%s: getService(%s) is %s", __func__, Bluetooth_HCI_SERVICE_NAME,
+    bluetooth = IBluetoothHci::getService();
+    ALOGW("%s: getService() for bluetooth is %s", __func__,
           bluetooth->isRemote() ? "remote" : "local");
     ASSERT_NE(bluetooth, nullptr);
 
