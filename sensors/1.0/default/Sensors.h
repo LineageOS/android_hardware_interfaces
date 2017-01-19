@@ -27,6 +27,7 @@ namespace sensors {
 namespace V1_0 {
 namespace implementation {
 
+
 struct Sensors : public ::android::hardware::sensors::V1_0::ISensors {
     Sensors();
 
@@ -60,6 +61,7 @@ struct Sensors : public ::android::hardware::sensors::V1_0::ISensors {
             configDirectReport_cb _hidl_cb) override;
 
 private:
+    static constexpr int32_t kPollMaxBufferSize = 128;
     status_t mInitCheck;
     sensors_module_t *mSensorModule;
     sensors_poll_device_1_t *mSensorDevice;

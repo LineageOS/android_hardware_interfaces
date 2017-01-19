@@ -61,7 +61,9 @@ interface ISensors {
      * If there is no sensor event when this function is being called, block
      * until there are sensor events available.
      *
-     * @param  maxCount max number of samples can be returned.
+     * @param  maxCount max number of samples can be returned, must be > 0.
+     *         Actual number of events returned in data must be <= maxCount
+     *         and > 0.
      * @return result OK on success or BAD_VALUE if maxCount <= 0.
      * @return data vector of Event contains sensor events.
      * @return dynamicSensorsAdded vector of SensorInfo contains dynamic sensor
