@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.hardware.drm.drm@1.0;
+package android.hardware.drm@1.0;
 
 enum Status : uint32_t {
     /**
@@ -54,7 +54,7 @@ enum Status : uint32_t {
     ERROR_DRM_INVALID_STATE,
 
     /**
-     * The Drm plugin must return BAD_VALUE whenever an illegal parameter is
+     * The DRM plugin must return BAD_VALUE whenever an illegal parameter is
      * passed to one of the interface functions.
      */
     BAD_VALUE,
@@ -74,7 +74,15 @@ enum Status : uint32_t {
     ERROR_DRM_RESOURCE_BUSY,
 
     /**
-     * The Drm Plugin must return ERROR_DRM_DEVICE_REVOKED from
+     * The DRM Plugin must return ERROR_DRM_INSUFFICIENT_OUTPUT_PROTECTION
+     * when the output protection level enabled on the device is not
+     * sufficient to meet the requirements in the license policy.  HDCP is an
+     * example of a form of output protection.
+     */
+    ERROR_DRM_INSUFFICIENT_OUTPUT_PROTECTION,
+
+    /**
+     * The DRM Plugin must return ERROR_DRM_DEVICE_REVOKED from
      * provideProvisionResponse and provideKeyResponse if the response indicates
      * that the device has been revoked. Device revocation means that the device
      * is no longer permitted to play content.
@@ -237,3 +245,92 @@ struct SecureStop {
 };
 
 typedef vec<uint8_t> SecureStopId;
+
+
+/**
+ * Enumerate the supported crypto modes
+ */
+enum Mode : uint32_t {
+    UNENCRYPTED = 0, // Samples are unencrypted
+    AES_CTR     = 1, // Samples are encrypted with AES CTR mode
+    AES_CBC_CTS = 2, // Samples are encrypted with AES CBC CTS mode
+    AES_CBC     = 3, // Samples are encrypted with AES CBC mode
+};
+
+/**
+ * A subsample consists of some number of bytes of clear (unencrypted)
+ * data followed by a number of bytes of encrypted data.
+ */
+struct SubSample {
+    uint32_t numBytesOfClearData;
+    uint32_t numBytesOfEncryptedData;
+};
+
+/**
+ * A crypto Pattern is a repeating sequence of encrypted and clear blocks
+ * occuring within the bytes indicated by mNumBytesOfEncryptedDatad bytes
+ * of a subsample. Patterns are used to reduce the CPU overhead of
+ * decrypting samples. As an example, HLS uses 1:9 patterns where every
+ * 10th block is encrypted.
+ */
+struct Pattern {
+    /**
+     * The number of blocks to be encrypted in the pattern. If zero,
+     * pattern encryption is inoperative.
+     */
+    uint32_t encryptBlocks;
+
+    /**
+     * The number of blocks to be skipped (left clear) in the pattern. If
+     * zero, pattern encryption is inoperative.
+     */
+    uint32_t skipBlocks;
+};
+
+enum BufferType : uint32_t {
+    SHARED_MEMORY = 0,
+    NATIVE_HANDLE = 1,
+};
+
+/**
+ * A SharedBuffer describes a decrypt buffer which is defined by an offset and
+ * a size.  The offset is relative to the shared memory base which is established
+ * using setSharedMemoryBase().
+ */
+struct SharedBuffer {
+    /**
+     * The offset from the shared memory base
+     */
+    uint64_t offset;
+
+    /**
+     * The size of the shared buffer in bytes
+     */
+    uint64_t size;
+};
+
+
+/**
+ * A decrypt destination buffer can be either normal user-space shared
+ * memory for the non-secure decrypt case, or it can be a secure buffer
+ * which is referenced by a native-handle. The native handle is allocated
+ * by the vendor's buffer allocator.
+ */
+struct DestinationBuffer {
+    /**
+     * The type of the buffer
+     */
+    BufferType type;
+
+    /**
+     * If type == SHARED_MEMORY, the decrypted data must be written
+     * to user-space non-secure shared memory.
+     */
+    SharedBuffer nonsecureMemory;
+
+    /**
+     * If type == NATIVE_HANDLE, the decrypted data must be written
+     * to secure memory referenced by the vendor's buffer allocator.
+     */
+    handle secureMemory;
+};

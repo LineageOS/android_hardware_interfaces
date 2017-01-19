@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ANDROID_HARDWARE_DRM_CRYPTO_V1_0__CRYPTOFACTORY_H
-#define ANDROID_HARDWARE_DRM_CRYPTO_V1_0__CRYPTOFACTORY_H
+#ifndef ANDROID_HARDWARE_DRM_V1_0__CRYPTOFACTORY_H
+#define ANDROID_HARDWARE_DRM_V1_0__CRYPTOFACTORY_H
 
-#include <android/hardware/drm/crypto/1.0/ICryptoFactory.h>
+#include <android/hardware/drm/1.0/ICryptoFactory.h>
 #include <hidl/Status.h>
 #include <media/hardware/CryptoAPI.h>
 #include <media/PluginLoader.h>
@@ -25,12 +25,11 @@
 namespace android {
 namespace hardware {
 namespace drm {
-namespace crypto {
 namespace V1_0 {
 namespace implementation {
 
-using ::android::hardware::drm::crypto::V1_0::ICryptoFactory;
-using ::android::hardware::drm::crypto::V1_0::ICryptoPlugin;
+using ::android::hardware::drm::V1_0::ICryptoFactory;
+using ::android::hardware::drm::V1_0::ICryptoPlugin;
 using ::android::hardware::hidl_array;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
@@ -42,7 +41,7 @@ struct CryptoFactory : public ICryptoFactory {
     CryptoFactory();
     virtual ~CryptoFactory() {}
 
-    // Methods from ::android::hardware::drm::crypto::V1_0::ICryptoFactory follow.
+    // Methods from ::android::hardware::drm::V1_0::ICryptoFactory follow.
 
     Return<bool> isCryptoSchemeSupported(const hidl_array<uint8_t, 16>& uuid)
             override;
@@ -62,9 +61,8 @@ extern "C" ICryptoFactory* HIDL_FETCH_ICryptoFactory(const char* name);
 
 }  // namespace implementation
 }  // namespace V1_0
-}  // namespace crypto
 }  // namespace drm
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_DRM_CRYPTO_V1_0__CRYPTOFACTORY_H
+#endif  // ANDROID_HARDWARE_DRM_V1_0__CRYPTOFACTORY_H

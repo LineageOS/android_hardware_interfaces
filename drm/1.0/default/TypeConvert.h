@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_DRM_CRYPTO_V1_0_TYPECONVERT
-#define ANDROID_HARDWARE_DRM_CRYPTO_V1_0_TYPECONVERT
+#ifndef ANDROID_HARDWARE_DRM_V1_0_TYPECONVERT
+#define ANDROID_HARDWARE_DRM_V1_0_TYPECONVERT
 
-#include <utils/Vector.h>
+#include <android/hardware/drm/1.0/types.h>
 #include <media/stagefright/MediaErrors.h>
-#include <media/hardware/CryptoAPI.h>
-
-#include <hidl/MQDescriptor.h>
-#include <android/hardware/drm/crypto/1.0/types.h>
+#include <utils/Vector.h>
 
 namespace android {
 namespace hardware {
 namespace drm {
-namespace crypto {
 namespace V1_0 {
 namespace implementation {
 
@@ -75,9 +71,8 @@ Status toStatus(status_t legacyStatus);
 
 }  // namespace implementation
 }  // namespace V1_0
-}  // namespace crypto
 }  // namespace drm
 }  // namespace hardware
 }  // namespace android
 
-#endif // ANDROID_HARDWARE_DRM_CRYPTO_V1_0_TYPECONVERT
+#endif // ANDROID_HARDWARE_DRM_V1_0_TYPECONVERT

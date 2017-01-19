@@ -14,26 +14,25 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_DRM_CRYPTO_V1_0__CRYPTOPLUGIN_H
-#define ANDROID_HARDWARE_DRM_CRYPTO_V1_0__CRYPTOPLUGIN_H
+#ifndef ANDROID_HARDWARE_DRM_V1_0__CRYPTOPLUGIN_H
+#define ANDROID_HARDWARE_DRM_V1_0__CRYPTOPLUGIN_H
 
-#include <media/hardware/CryptoAPI.h>
 #include <android/hidl/memory/1.0/IMemory.h>
-#include <android/hardware/drm/crypto/1.0/ICryptoPlugin.h>
+#include <android/hardware/drm/1.0/ICryptoPlugin.h>
 #include <hidl/Status.h>
+#include <media/hardware/CryptoAPI.h>
 
 namespace android {
 namespace hardware {
 namespace drm {
-namespace crypto {
 namespace V1_0 {
 namespace implementation {
 
-using ::android::hardware::drm::crypto::V1_0::DestinationBuffer;
-using ::android::hardware::drm::crypto::V1_0::ICryptoPlugin;
-using ::android::hardware::drm::crypto::V1_0::Mode;
-using ::android::hardware::drm::crypto::V1_0::Pattern;
-using ::android::hardware::drm::crypto::V1_0::SubSample;
+using ::android::hardware::drm::V1_0::DestinationBuffer;
+using ::android::hardware::drm::V1_0::ICryptoPlugin;
+using ::android::hardware::drm::V1_0::Mode;
+using ::android::hardware::drm::V1_0::Pattern;
+using ::android::hardware::drm::V1_0::SubSample;
 using ::android::hardware::hidl_array;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
@@ -47,7 +46,7 @@ struct CryptoPlugin : public ICryptoPlugin {
 
     ~CryptoPlugin() {delete mLegacyPlugin;}
 
-    // Methods from ::android::hardware::drm::crypto::V1_0::ICryptoPlugin
+    // Methods from ::android::hardware::drm::V1_0::ICryptoPlugin
     // follow.
 
     Return<bool> requiresSecureDecoderComponent(const hidl_string& mime)
@@ -64,7 +63,7 @@ struct CryptoPlugin : public ICryptoPlugin {
     Return<void> decrypt(bool secure, const hidl_array<uint8_t, 16>& keyId,
             const hidl_array<uint8_t, 16>& iv, Mode mode, const Pattern& pattern,
             const hidl_vec<SubSample>& subSamples, const SharedBuffer& source,
-            uint32_t offset, const DestinationBuffer& destination,
+            uint64_t offset, const DestinationBuffer& destination,
             decrypt_cb _hidl_cb) override;
 
 private:
@@ -78,9 +77,8 @@ private:
 
 }  // namespace implementation
 }  // namespace V1_0
-}  // namespace crypto
 }  // namespace drm
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_DRM_CRYPTO_V1_0__CRYPTOPLUGIN_H
+#endif  // ANDROID_HARDWARE_DRM_V1_0__CRYPTOPLUGIN_H

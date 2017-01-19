@@ -14,30 +14,28 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_DRM_DRM_V1_0__DRMPLUGIN_H
-#define ANDROID_HARDWARE_DRM_DRM_V1_0__DRMPLUGIN_H
+#ifndef ANDROID_HARDWARE_DRM_V1_0__DRMPLUGIN_H
+#define ANDROID_HARDWARE_DRM_V1_0__DRMPLUGIN_H
 
-#include <media/drm/DrmAPI.h>
-#include <android/hardware/drm/drm/1.0/IDrmPlugin.h>
-#include <android/hardware/drm/drm/1.0/IDrmPluginListener.h>
-#include <hidl/MQDescriptor.h>
+#include <android/hardware/drm/1.0/IDrmPlugin.h>
+#include <android/hardware/drm/1.0/IDrmPluginListener.h>
 #include <hidl/Status.h>
+#include <media/drm/DrmAPI.h>
 
 namespace android {
 namespace hardware {
 namespace drm {
-namespace drm {
 namespace V1_0 {
 namespace implementation {
 
-using ::android::hardware::drm::drm::V1_0::EventType;
-using ::android::hardware::drm::drm::V1_0::IDrmPlugin;
-using ::android::hardware::drm::drm::V1_0::IDrmPluginListener;
-using ::android::hardware::drm::drm::V1_0::KeyRequestType;
-using ::android::hardware::drm::drm::V1_0::KeyStatus;
-using ::android::hardware::drm::drm::V1_0::KeyType;
-using ::android::hardware::drm::drm::V1_0::KeyValue;
-using ::android::hardware::drm::drm::V1_0::SecureStop;
+using ::android::hardware::drm::V1_0::EventType;
+using ::android::hardware::drm::V1_0::IDrmPlugin;
+using ::android::hardware::drm::V1_0::IDrmPluginListener;
+using ::android::hardware::drm::V1_0::KeyRequestType;
+using ::android::hardware::drm::V1_0::KeyStatus;
+using ::android::hardware::drm::V1_0::KeyType;
+using ::android::hardware::drm::V1_0::KeyValue;
+using ::android::hardware::drm::V1_0::SecureStop;
 using ::android::hardware::hidl_array;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
@@ -50,7 +48,7 @@ struct DrmPlugin : public IDrmPlugin, android::DrmPluginListener {
     DrmPlugin(android::DrmPlugin *plugin) : mLegacyPlugin(plugin) {}
     ~DrmPlugin() {delete mLegacyPlugin;}
 
-    // Methods from ::android::hardware::drm::drm::V1_0::IDrmPlugin follow.
+    // Methods from ::android::hardware::drm::V1_0::IDrmPlugin follow.
 
     Return<void> openSession(openSession_cb _hidl_cb) override;
 
@@ -165,8 +163,7 @@ private:
 }  // namespace implementation
 }  // namespace V1_0
 }  // namespace drm
-}  // namespace drm
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_DRM_DRM_V1_0__DRMPLUGIN_H
+#endif  // ANDROID_HARDWARE_DRM_V1_0__DRMPLUGIN_H
