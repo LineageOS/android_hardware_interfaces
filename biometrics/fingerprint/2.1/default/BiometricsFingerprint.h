@@ -95,6 +95,11 @@ public:
                     msg->data.removed.remaining_templates);
                 break;
             case FINGERPRINT_AUTHENTICATED:
+                if (msg->data.authenticated.finger.fid != 0) {
+                    const uint8_t* hat =
+                            reinterpret_cast<const uint8_t *>(&msg->data.authenticated.hat);
+                    notifyKeystore(hat, sizeof(msg->data.authenticated.hat));
+                }
                 mClientCallback->onAuthenticated(devId,
                     msg->data.authenticated.finger.fid,
                     msg->data.authenticated.finger.gid);
@@ -109,6 +114,7 @@ public:
     }
 private:
     Return<RequestStatus> ErrorFilter(int32_t error);
+    static void notifyKeystore(const uint8_t *auth_token, const size_t auth_token_length);
     static FingerprintError VendorErrorFilter(int32_t error,
             int32_t* vendorCode);
     static FingerprintAcquiredInfo VendorAcquiredFilter(int32_t error,
