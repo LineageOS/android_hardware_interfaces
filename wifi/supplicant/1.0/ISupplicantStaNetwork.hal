@@ -197,7 +197,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
-  setKeyMgmt(uint32_t keyMgmtMask) generates (SupplicantStatus status);
+  setKeyMgmt(bitfield<KeyMgmtMask> keyMgmtMask) generates (SupplicantStatus status);
 
   /**
    * Set proto mask for the network.
@@ -211,7 +211,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
-  setProto(uint32_t protoMask) generates (SupplicantStatus status);
+  setProto(bitfield<ProtoMask> protoMask) generates (SupplicantStatus status);
 
   /**
    * Set auth alg mask for the network.
@@ -225,7 +225,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
-  setAuthAlg(uint32_t authAlgMask) generates (SupplicantStatus status);
+  setAuthAlg(bitfield<AuthAlgMask> authAlgMask) generates (SupplicantStatus status);
 
   /**
    * Set group cipher mask for the network.
@@ -239,7 +239,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
-  setGroupCipher(uint32_t groupCipherMask)
+  setGroupCipher(bitfield<GroupCipherMask> groupCipherMask)
       generates (SupplicantStatus status);
 
   /**
@@ -254,7 +254,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
-  setPairwiseCipher(uint32_t pairwiseCipherMask)
+  setPairwiseCipher(bitfield<PairwiseCipherMask> pairwiseCipherMask)
       generates (SupplicantStatus status);
 
   /**
@@ -568,7 +568,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return keyMgmtMask Combination of |KeyMgmtMask| values.
    */
   getKeyMgmt()
-      generates (SupplicantStatus status, uint32_t keyMgmtMask);
+      generates (SupplicantStatus status, bitfield<KeyMgmtMask> keyMgmtMask);
 
   /**
    * Get the proto mask set for the network.
@@ -579,7 +579,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    * @return protoMask Combination of |ProtoMask| values.
    */
-  getProto() generates (SupplicantStatus status, uint32_t protoMask);
+  getProto() generates (SupplicantStatus status, bitfield<ProtoMask> protoMask);
 
   /**
    * Get the auth alg mask set for the network.
@@ -591,7 +591,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return authAlgMask Combination of |AuthAlgMask| values.
    */
   getAuthAlg()
-      generates (SupplicantStatus status, uint32_t authAlgMask);
+      generates (SupplicantStatus status, bitfield<AuthAlgMask> authAlgMask);
 
   /**
    * Get the group cipher mask set for the network.
@@ -603,7 +603,8 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return groupCipherMask Combination of |GroupCipherMask| values.
    */
   getGroupCipher()
-      generates (SupplicantStatus status, uint32_t groupCipherMask);
+      generates (SupplicantStatus status,
+                 bitfield<GroupCipherMask> groupCipherMask);
 
   /**
    * Get the pairwise cipher mask set for the network.
@@ -615,7 +616,8 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return pairwiseCipherMask Combination of |PairwiseCipherMask| values.
    */
   getPairwiseCipher()
-      generates (SupplicantStatus status, uint32_t pairwiseCipherMask);
+      generates (SupplicantStatus status,
+                 bitfield<PairwiseCipherMask> pairwiseCipherMask);
 
   /**
    * Get passphrase for WPA_PSK network.

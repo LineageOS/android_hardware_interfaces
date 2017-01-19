@@ -254,7 +254,7 @@ struct StaBackgroundScanCapabilities {
  * Bands that can be specified in Background scan requests.
  */
 enum StaBackgroundScanBand : uint32_t {
-  BAND_UNSPECIFIED,
+  BAND_UNSPECIFIED = 0,
   /**
    * 2.4 GHz.
    */
@@ -325,10 +325,10 @@ struct StaBackgroundScanBucketParameters {
    */
   uint32_t periodInMs;
   /**
-   * Bitset of |BackgroundScanBucketEventReportSchemeMask| values controlling
+   * Bitset of |StaBackgroundScanBucketEventReportSchemeMask| values controlling
    * when events for this bucket must be reported.
    */
-  uint32_t eventReportScheme;
+  bitfield<StaBackgroundScanBucketEventReportSchemeMask> eventReportScheme;
   /**
    * For exponential back off. If |exponentialMaxPeriodInMs| is non zero or
    * different than period, then this bucket is an exponential backoff bucket
@@ -503,7 +503,7 @@ struct StaScanData {
   /**
    * Bitset containing |ScanDataFlagMask| values.
    */
-  uint32_t flags;
+  bitfield<StaScanDataFlagMask> flags;
   /**
    * Bitset where each bit indicates if the bucket with that index was
    * scanned.
@@ -843,6 +843,23 @@ struct NanEnableRequest {
 };
 
 /**
+ * Cipher suite flags - to be used as a bitmask.
+ */
+enum NanCipherSuiteType : uint32_t {
+  SHARED_KEY_128_MASK = 1 << 0,
+  SHARED_KEY_256_MASK = 1 << 1
+};
+
+/**
+ * Ranging in the context of discovery sessions indication controls - to be used as a bitmask.
+ */
+enum NanRangingIndication : uint32_t {
+  CONTINUOUS_INDICATION_MASK = 1 << 0,
+  INGRESS_MET_MASK = 1 << 1,
+  EGRESS_MET_MASK = 1 << 2
+};
+
+/**
  * Configurations of NAN discovery sessions: common to publish and subscribe discovery.
  */
 struct NanDiscoveryCommonConfig {
@@ -921,7 +938,7 @@ struct NanDiscoveryCommonConfig {
    * Cipher types supported in data-paths constructed in the context of this discovery session. The
    * |NanCipherSuiteType| bit fields are used to set this value.
    */
-  uint32_t supportedCipherTypes;
+  bitfield<NanCipherSuiteType> supportedCipherTypes;
   /**
    * Optional PMK for data-paths constructed in the context of this discovery session. A PMK could
    * also be provided during the actual construction of the data-path (which allows unique PMKs for
@@ -949,7 +966,7 @@ struct NanDiscoveryCommonConfig {
    * The type of ranging indication feedback to be provided by discovery session matches. Use
    * bit-fields from |NanRangingIndication|.
    */
-   uint32_t configRangingIndications;
+   bitfield<NanRangingIndication> configRangingIndications;
    /**
     * The ingress and egress distance in cm. If ranging is eanbled (|rangingEnabled| is true) then
     * \configRangingIndications\ is used to determine whether ingress and/or egress (or neither)
@@ -957,23 +974,6 @@ struct NanDiscoveryCommonConfig {
     */
    uint32_t distanceIngressCm;
    uint32_t distanceEgressCm;
-};
-
-/**
- * Cipher suite flags - to be used as a bitmask.
- */
-enum NanCipherSuiteType : uint32_t {
-  SHARED_KEY_128_MASK = 1 << 0,
-  SHARED_KEY_256_MASK = 1 << 1
-};
-
-/**
- * Ranging in the context of discovery sessions indication controls - to be used as a bitmask.
- */
-enum NanRangingIndication : uint32_t {
-  CONTINUOUS_INDICATION_MASK = 1 << 0,
-  INGRESS_MET_MASK = 1 << 1,
-  EGRESS_MET_MASK = 1 << 2
 };
 
 /**
@@ -1111,7 +1111,7 @@ struct NanInitiateDataPathRequest {
    * Cipher types supported in data-paths constructed in the context of this discovery session. The
    * |NanCipherSuiteType| bit fields are used to set this value.
    */
-  uint32_t supportedCipherTypes;
+  bitfield<NanCipherSuiteType> supportedCipherTypes;
   /**
    * PMK of the data-path being requested (if |securityRequired| is true).
    * Max length: 32
@@ -1150,7 +1150,7 @@ struct NanRespondToDataPathIndicationRequest {
    * Cipher types supported in data-paths constructed in the context of this discovery session. The
    * |NanCipherSuiteType| bit fields are used to set this value.
    */
-  uint32_t supportedCipherTypes;
+  bitfield<NanCipherSuiteType> supportedCipherTypes;
   /**
    * PMK of the data-path being requested (if |securityRequired| is true).
    * Max length: 32
@@ -1243,7 +1243,7 @@ struct NanCapabilities {
   /**
    * The set of supported Cipher suites. The |NanCipherSuiteType| bit fields are used.
    */
-  uint32_t supportedCipherSuites;
+  bitfield<NanCipherSuiteType> supportedCipherSuites;
 };
 
 /**
@@ -1294,7 +1294,7 @@ struct NanMatchInd {
    * Cipher types supported by the peer for data-paths constructed in the context of this discovery
    * session. The |NanCipherSuiteType| bit fields are used to set this value.
    */
-  uint32_t peerSupportedCipherTypes;
+  bitfield<NanCipherSuiteType> peerSupportedCipherTypes;
   /**
    * Indicates whether or not the peer requires security enabled in any data-path (NDP) constructed
    * in the context of this discovery session.
@@ -1327,7 +1327,7 @@ struct NanMatchInd {
    * The ranging event(s) which triggered the ranging. Uses bit-fields from |NanRangingIndication|.
    * E.g. can indicate that continuous ranging is required, or else that an ingress event occurred.
    */
-   uint32_t rangingIndicationType;
+   bitfield<NanRangingIndication> rangingIndicationType;
 };
 
 /**
@@ -1421,7 +1421,7 @@ struct NanBeaconSdfPayloadInd {
    * Frames on which this vendor specific attribute was received.
    * Mask |NanVsaRxFrameMask| defined above.
    */
-  uint8_t vsaReceivedOnFrames;
+  bitfield<NanVsaRxFrameMask> vsaReceivedOnFrames;
   /**
    * Organizationally Unique Identifier (OUI) of the vendor-specific attribute.
    */
@@ -1811,12 +1811,12 @@ struct RttCapabilities {
    * Bit mask indicates what preamble is supported by initiator.
    * Combination of |RttPreamble| values.
    */
-  uint8_t preambleSupport;
+  bitfield<RttPreamble> preambleSupport;
   /**
    * Bit mask indicates what BW is supported by initiator.
    * Combination of |RttBw| values.
    */
-  uint8_t bwSupport;
+  bitfield<RttBw> bwSupport;
   /**
    * Draft 11mc spec version supported by chip.
    * For instance, version 4.0 must be 40 and version 4.3 must be 43 etc.
