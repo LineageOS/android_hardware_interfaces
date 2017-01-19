@@ -49,7 +49,7 @@ using ::android::wifi_system::InterfaceTool;
 using ::android::wifi_system::SupplicantManager;
 
 namespace {
-const char kSupplicantServiceName[] = "wpa_supplicant";
+const char kSupplicantServiceName[] = "default";
 
 // Helper function to initialize the driver and firmware to STA mode.
 void initilializeDriverAndFirmware() {
