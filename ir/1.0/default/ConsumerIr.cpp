@@ -63,13 +63,13 @@ Return<void> ConsumerIr::getCarrierFreqs(getCarrierFreqs_cb _hidl_cb) {
 }
 
 
-IConsumerIr* HIDL_FETCH_IConsumerIr(const char *name) {
+IConsumerIr* HIDL_FETCH_IConsumerIr(const char * /*name*/) {
     consumerir_device_t *dev;
     const hw_module_t *hw_module = NULL;
 
-    int ret = hw_get_module(name, &hw_module);
+    int ret = hw_get_module(CONSUMERIR_HARDWARE_MODULE_ID, &hw_module);
     if (ret != 0) {
-        ALOGE("hw_get_module %s failed: %d", name, ret);
+        ALOGE("hw_get_module %s failed: %d", CONSUMERIR_HARDWARE_MODULE_ID, ret);
         return nullptr;
     }
     ret = hw_module->methods->open(hw_module, CONSUMERIR_TRANSMITTER, (hw_device_t **) &dev);
