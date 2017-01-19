@@ -37,6 +37,7 @@ const char* DevicesFactory::deviceToString(IDevicesFactory::Device device) {
         case IDevicesFactory::Device::A2DP: return AUDIO_HARDWARE_MODULE_ID_A2DP;
         case IDevicesFactory::Device::USB: return AUDIO_HARDWARE_MODULE_ID_USB;
         case IDevicesFactory::Device::R_SUBMIX: return AUDIO_HARDWARE_MODULE_ID_REMOTE_SUBMIX;
+        case IDevicesFactory::Device::STUB: return AUDIO_HARDWARE_MODULE_ID_STUB;
     }
 }
 
