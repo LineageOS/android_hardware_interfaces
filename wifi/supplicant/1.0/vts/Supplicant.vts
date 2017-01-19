@@ -1,0 +1,160 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "ISupplicant"
+
+package: "android.hardware.wifi.supplicant"
+
+import: "android.hardware.wifi.supplicant@1.0::ISupplicantCallback"
+import: "android.hardware.wifi.supplicant@1.0::ISupplicantIface"
+import: "android.hardware.wifi.supplicant@1.0::types"
+
+interface: {
+    attribute: {
+        name: "::android::hardware::wifi::supplicant::V1_0::ISupplicant::DebugLevel"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "uint32_t"
+
+            enumerator: "EXCESSIVE"
+            scalar_value: {
+                uint32_t: 0
+            }
+            enumerator: "MSGDUMP"
+            scalar_value: {
+                uint32_t: 1
+            }
+            enumerator: "DEBUG"
+            scalar_value: {
+                uint32_t: 2
+            }
+            enumerator: "INFO"
+            scalar_value: {
+                uint32_t: 3
+            }
+            enumerator: "WARNING"
+            scalar_value: {
+                uint32_t: 4
+            }
+            enumerator: "ERROR"
+            scalar_value: {
+                uint32_t: 5
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::wifi::supplicant::V1_0::ISupplicant::IfaceInfo"
+        type: TYPE_STRUCT
+        struct_value: {
+            name: "type"
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::IfaceType"
+        }
+        struct_value: {
+            name: "name"
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "getInterface"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_HIDL_INTERFACE
+            predefined_type: "ISupplicantIface"
+            is_callback: false
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicant::IfaceInfo"
+        }
+    }
+
+    api: {
+        name: "listInterfaces"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRUCT
+                predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicant::IfaceInfo"
+            }
+        }
+    }
+
+    api: {
+        name: "registerCallback"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_HIDL_CALLBACK
+            predefined_type: "ISupplicantCallback"
+            is_callback: true
+        }
+    }
+
+    api: {
+        name: "setDebugParams"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicant::DebugLevel"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+    }
+
+    api: {
+        name: "getDebugLevel"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicant::DebugLevel"
+        }
+    }
+
+    api: {
+        name: "isDebugShowTimestampEnabled"
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+    }
+
+    api: {
+        name: "isDebugShowKeysEnabled"
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+    }
+
+    api: {
+        name: "setConcurrencyPriority"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::IfaceType"
+        }
+    }
+
+}

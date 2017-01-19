@@ -205,7 +205,8 @@ interface IWifiChip {
    *         |WifiStatusCode.ERROR_UNKNOWN|
    * @return capabilities Bitset of |ChipCapabilityMask| values.
    */
-  getCapabilities() generates (WifiStatus status, uint32_t capabilities);
+  getCapabilities()
+      generates (WifiStatus status, bitfield<ChipCapabilityMask> capabilities);
 
   /**
    * Get the set of operation modes that the chip supports.

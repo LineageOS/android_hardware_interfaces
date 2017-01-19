@@ -73,3 +73,38 @@ enum IfaceType : uint32_t {
   STA,
   P2P
 };
+
+/**
+ * P2P group capability.
+ */
+enum P2pGroupCapabilityMask : uint32_t {
+  GROUP_OWNER = 1 << 0,
+  PERSISTENT_GROUP = 1 << 1,
+  GROUP_LIMIT = 1 << 2,
+  INTRA_BSS_DIST = 1 << 3,
+  CROSS_CONN = 1 << 4,
+  PERSISTENT_RECONN = 1 << 5,
+  GROUP_FORMATION = 1 << 6
+};
+
+/**
+ * WPS config methods.
+ * Refer to section 3 of IBSS with Wi-Fi Protected Setup
+ * Technical Specification Version 1.0.0.
+ */
+enum WpsConfigMethods : uint16_t {
+  USBA = 0x0001,
+  ETHERNET = 0x0002,
+  LABEL = 0x0004,
+  DISPLAY = 0x0008,
+  EXT_NFC_TOKEN = 0x0010,
+  INT_NFC_TOKEN = 0x0020,
+  NFC_INTERFACE = 0x0040,
+  PUSHBUTTON = 0x0080,
+  KEYPAD = 0x0100,
+  VIRT_PUSHBUTTON = 0x0280,
+  PHY_PUSHBUTTON = 0x0480,
+  P2PS = 0x1000,
+  VIRT_DISPLAY = 0x2008,
+  PHY_DISPLAY = 0x4008
+};

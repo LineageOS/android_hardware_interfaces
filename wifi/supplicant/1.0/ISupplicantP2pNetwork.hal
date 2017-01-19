@@ -42,4 +42,62 @@ interface ISupplicantP2pNetwork extends ISupplicantNetwork {
    */
   registerCallback(ISupplicantP2pNetworkCallback callback)
       generates (SupplicantStatus status);
+
+  /**
+   * Getters for the various network params.
+   */
+  /**
+   * Get SSID for this network.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   * @return ssid value set.
+   */
+  getSsid() generates (SupplicantStatus status, Ssid ssid);
+
+  /**
+   * Get the BSSID set for this network.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   * @return bssid value set.
+   */
+  getBssid() generates (SupplicantStatus status, Bssid bssid);
+
+  /**
+   * Check if the network is currently active one.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   * @return isCurrent true if current, false otherwise.
+   */
+  isCurrent() generates (SupplicantStatus status, bool isCurrent);
+
+  /**
+   * Check if the network is marked persistent.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   * @return isPersistent true if persistent, false otherwise.
+   */
+  isPersistent() generates (SupplicantStatus status, bool isPersistent);
+
+  /**
+   * Check if the device is the group owner of the network.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   * @return isGo true if group owner, false otherwise.
+   */
+  isGo() generates (SupplicantStatus status, bool isGo);
 };

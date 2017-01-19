@@ -1,0 +1,69 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "ISupplicantStaNetworkCallback"
+
+package: "android.hardware.wifi.supplicant"
+
+
+interface: {
+    attribute: {
+        name: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaNetworkCallback::NetworkRequestEapSimGsmAuthParams"
+        type: TYPE_STRUCT
+        struct_value: {
+            name: "rands"
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_ARRAY
+                vector_value: {
+                    vector_size: 16
+                    type: TYPE_SCALAR
+                    scalar_type: "uint8_t"
+                }
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaNetworkCallback::NetworkRequestEapSimUmtsAuthParams"
+        type: TYPE_STRUCT
+        struct_value: {
+            name: "rand"
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 16
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        struct_value: {
+            name: "autn"
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 16
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "onNetworkEapSimGsmAuthRequest"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaNetworkCallback::NetworkRequestEapSimGsmAuthParams"
+        }
+    }
+
+    api: {
+        name: "onNetworkEapSimUmtsAuthRequest"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaNetworkCallback::NetworkRequestEapSimUmtsAuthParams"
+        }
+    }
+
+    api: {
+        name: "onNetworkEapIdentityRequest"
+    }
+
+}

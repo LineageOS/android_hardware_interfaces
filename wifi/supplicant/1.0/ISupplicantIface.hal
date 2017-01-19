@@ -24,6 +24,17 @@ import ISupplicantNetwork;
  */
 interface ISupplicantIface {
   /**
+   * Size limits for some of the params used in this interface.
+   */
+  enum ParamSizeLimits : uint32_t {
+      WPS_DEVICE_NAME_MAX_LEN = 32,
+      WPS_MANUFACTURER_MAX_LEN = 64,
+      WPS_MODEL_NAME_MAX_LEN = 32,
+      WPS_MODEL_NUMBER_MAX_LEN = 32,
+      WPS_SERIAL_NUMBER_MAX_LEN = 32
+  };
+
+  /**
    * Retrieves the name of the network interface.
    *
    * @return status Status of the operation.
@@ -105,9 +116,92 @@ interface ISupplicantIface {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|
    * @return networkIds List of all network Id's controlled by the supplicant.
    */
   listNetworks()
       generates (SupplicantStatus status, vec<SupplicantNetworkId> networkIds);
+
+  /**
+   * Set the device name for WPS operations.
+   * User-friendly description of device (up to |WPS_DEVICE_NAME_MAX_LEN|
+   * octets encoded in UTF-8).
+   *
+   * @parm name Name to be set.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   */
+  setWpsDeviceName(string name) generates (SupplicantStatus status);
+
+  /**
+   * Set the manufacturer for WPS operations.
+   * The manufacturer of the device (up to |WPS_MANUFACTURER_MAX_LEN| ASCII
+   * characters).
+   *
+   * @parm manufacturer Manufacture to be set.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   */
+  setWpsManufacturer(string manufacturer) generates (SupplicantStatus status);
+
+  /**
+   * Set the model name for WPS operations.
+   * Model of the device (up to |WPS_MODEL_NAME_MAX_LEN| ASCII characters).
+   *
+   * @parm modelName Model name to be set.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   */
+  setWpsModelName(string modelName) generates (SupplicantStatus status);
+
+  /**
+   * Set the model number for WPS operations.
+   * Additional device description (up to |WPS_MODEL_NUMBER_MAX_LEN| ASCII
+   * characters).
+   *
+   * @parm modelNumber Model number to be set.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   */
+  setWpsModelNumber(string modelNumber) generates (SupplicantStatus status);
+
+  /**
+   * Set the serial number for WPS operations.
+   * Serial number of the device (up to |WPS_SERIAL_NUMBER_MAX_LEN| characters)
+   *
+   * @parm serialNumber Serial number to be set.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   */
+  setWpsSerialNumber(string serialNumber) generates (SupplicantStatus status);
+
+  /**
+   * Set the list of supported config methods for WPS operations.
+   *
+   * @param configMethods Mask of WPS configuration methods supported by the
+   *        device.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   */
+  setWpsConfigMethods(bitfield<WpsConfigMethods> configMethods)
+      generates (SupplicantStatus status);
 };
