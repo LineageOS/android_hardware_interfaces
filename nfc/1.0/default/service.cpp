@@ -9,5 +9,5 @@ using android::hardware::nfc::V1_0::INfc;
 using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
-    return defaultPassthroughServiceImplementation<INfc>("nfc_nci");
+    return defaultPassthroughServiceImplementation<INfc>();
 }
