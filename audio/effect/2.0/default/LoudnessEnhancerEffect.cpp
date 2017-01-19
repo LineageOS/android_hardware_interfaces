@@ -68,6 +68,11 @@ Return<void> LoudnessEnhancerEffect::setAndGetVolume(
     return mEffect->setAndGetVolume(volumes, _hidl_cb);
 }
 
+Return<Result> LoudnessEnhancerEffect::volumeChangeNotification(
+        const hidl_vec<uint32_t>& volumes) {
+    return mEffect->volumeChangeNotification(volumes);
+}
+
 Return<Result> LoudnessEnhancerEffect::setAudioMode(AudioMode mode) {
     return mEffect->setAudioMode(mode);
 }

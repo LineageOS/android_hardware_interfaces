@@ -533,6 +533,14 @@ Return<void> Effect::setAndGetVolume(
     return Void();
 }
 
+Return<Result> Effect::volumeChangeNotification(const hidl_vec<uint32_t>& volumes)  {
+    uint32_t halDataSize;
+    std::unique_ptr<uint8_t[]> halData = hidlVecToHal(volumes, &halDataSize);
+    return sendCommand(
+            EFFECT_CMD_SET_VOLUME, "SET_VOLUME",
+            halDataSize, &halData[0]);
+}
+
 Return<Result> Effect::setAudioMode(AudioMode mode)  {
     uint32_t halMode = static_cast<uint32_t>(mode);
     return sendCommand(
@@ -641,10 +649,13 @@ Return<void> Effect::command(
     uint32_t halResultSize = resultMaxSize;
     std::unique_ptr<uint8_t[]> halResult(new uint8_t[halResultSize]);
     memset(&halResult[0], 0, halResultSize);
+
+    void* dataPtr = halDataSize > 0 ? &halData[0] : NULL;
+    void* resultPtr = halResultSize > 0 ? &halResult[0] : NULL;
     status_t status = (*mHandle)->command(
-            mHandle, commandId, halDataSize, &halData[0], &halResultSize, &halResult[0]);
+            mHandle, commandId, halDataSize, dataPtr, &halResultSize, resultPtr);
     hidl_vec<uint8_t> result;
-    if (status == OK) {
+    if (status == OK && resultPtr != NULL) {
         result.setToExternal(&halResult[0], halResultSize);
     }
     _hidl_cb(status, result);

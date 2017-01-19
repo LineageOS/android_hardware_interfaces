@@ -56,6 +56,7 @@ struct AutomaticGainControlEffect : public IAutomaticGainControlEffect {
     Return<Result> setDevice(AudioDevice device)  override;
     Return<void> setAndGetVolume(
             const hidl_vec<uint32_t>& volumes, setAndGetVolume_cb _hidl_cb)  override;
+    Return<Result> volumeChangeNotification(const hidl_vec<uint32_t>& volumes)  override;
     Return<Result> setAudioMode(AudioMode mode)  override;
     Return<Result> setConfigReverse(
             const EffectConfig& config,

@@ -86,6 +86,11 @@ Return<void> EqualizerEffect::setAndGetVolume(
     return mEffect->setAndGetVolume(volumes, _hidl_cb);
 }
 
+Return<Result> EqualizerEffect::volumeChangeNotification(
+        const hidl_vec<uint32_t>& volumes) {
+    return mEffect->volumeChangeNotification(volumes);
+}
+
 Return<Result> EqualizerEffect::setAudioMode(AudioMode mode) {
     return mEffect->setAudioMode(mode);
 }

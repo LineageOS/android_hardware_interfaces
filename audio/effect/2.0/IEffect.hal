@@ -83,25 +83,35 @@ interface IEffect {
 
     /*
      * Set and get volume. Used by audio framework to delegate volume control to
-     * effect engine.  The effect implementation must set EFFECT_FLAG_VOLUME_IND
-     * or EFFECT_FLAG_VOLUME_CTRL flag in its descriptor to receive this command
-     * before every call to 'process' function If EFFECT_FLAG_VOLUME_CTRL flag
-     * is set in the effect descriptor, the effect engine must return the volume
-     * that should be applied before the effect is processed. The overall volume
-     * (the volume actually applied by the effect engine multiplied by the
-     * returned value) should match the value indicated in the command.
+     * effect engine. The effect implementation must set EFFECT_FLAG_VOLUME_CTRL
+     * flag in its descriptor to receive this command. The effect engine must
+     * return the volume that should be applied before the effect is
+     * processed. The overall volume (the volume actually applied by the effect
+     * engine multiplied by the returned value) should match the value indicated
+     * in the command.
      *
      * @param volumes vector containing volume for each channel defined in
      *                EffectConfig for output buffer expressed in 8.24 fixed
      *                point format.
-     * @return result updated volume values. It is OK to receive an empty vector
-     *                as a result in which case the effect framework has
-     *                delegated volume control to another effect.
+     * @return result updated volume values.
      * @return retval operation completion status.
      */
     @callflow(next={"*"})
     setAndGetVolume(vec<uint32_t> volumes)
             generates (Result retval, vec<uint32_t> result);
+
+    /*
+     * Notify the effect of the volume change. The effect implementation must
+     * set EFFECT_FLAG_VOLUME_IND flag in its descriptor to receive this
+     * command.
+     *
+     * @param volumes vector containing volume for each channel defined in
+     *                EffectConfig for output buffer expressed in 8.24 fixed
+     *                point format.
+     * @return retval operation completion status.
+     */
+    volumeChangeNotification(vec<uint32_t> volumes)
+            generates (Result retval);
 
     /*
      * Set the audio mode. The effect implementation must set

@@ -81,6 +81,11 @@ Return<void> AutomaticGainControlEffect::setAndGetVolume(
     return mEffect->setAndGetVolume(volumes, _hidl_cb);
 }
 
+Return<Result> AutomaticGainControlEffect::volumeChangeNotification(
+        const hidl_vec<uint32_t>& volumes) {
+    return mEffect->volumeChangeNotification(volumes);
+}
+
 Return<Result> AutomaticGainControlEffect::setAudioMode(AudioMode mode) {
     return mEffect->setAudioMode(mode);
 }
