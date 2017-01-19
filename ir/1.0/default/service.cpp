@@ -23,5 +23,5 @@ using android::hardware::ir::V1_0::IConsumerIr;
 using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
-    return defaultPassthroughServiceImplementation<IConsumerIr>("consumerir");
+    return defaultPassthroughServiceImplementation<IConsumerIr>();
 }
