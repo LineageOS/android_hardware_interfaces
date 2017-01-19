@@ -108,19 +108,89 @@ class VehicleHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
                 break
         return isLiveSupported, isFreezeSupported
 
+    def readVhalProperty(self, propertyId, areaId=0):
+        """Reads a specified property from Vehicle HAL.
+
+        Args:
+            propertyId: the numeric identifier of the property to be read.
+            areaId: the numeric identifier of the vehicle area to retrieve the
+                    property for. 0, or omitted, for global.
+
+        Returns:
+            the value of the property as read from Vehicle HAL, or None
+            if it could not read successfully.
+        """
+        vp_dict = {
+            'prop' : propertyId,
+            'timestamp' : 0,
+            'areaId' : areaId,
+            'value' : {
+                'int32Values' : [],
+                'floatValues' : [],
+                'int64Values' : [],
+                'bytes' : [],
+                'stringValue' : ""
+            }
+        }
+        vp = self.vtypes.Py2Pb("VehiclePropValue", vp_dict)
+        status, value = self.vehicle.get(vp)
+        if self.vtypes.OK == status:
+            return value
+        else:
+            logging.warning("attempt to read property %s returned error %d",
+                            propertyId, status)
+
     def testObd2SensorProperties(self):
         """Test reading the live and freeze OBD2 frame properties.
 
         OBD2 (On-Board Diagnostics 2) is the industry standard protocol
         for retrieving diagnostic sensor information from vehicles.
         """
+        class CheckRead(object):
+            """This class wraps the logic of an actual property read.
+
+            Attributes:
+                testobject: the test case this object is used on behalf of.
+                propertyId: the identifier of the Vehiche HAL property to read.
+                name: the engineer-readable name of this test operation.
+            """
+
+            def __init__(self, testobject, propertyId, name):
+                self.testobject = testobject
+                self.propertyId = propertyId
+                self.name = name
+
+            def onReadSuccess(self, propValue):
+                """Override this to perform any post-read validation.
+
+                Args:
+                    propValue: the property value obtained from Vehicle HAL.
+                """
+                pass
+
+            def __call__(self):
+                """Reads the specified property and validates the result."""
+                propValue = self.testobject.readVhalProperty(self.propertyId)
+                asserts.assertNotEqual(propValue, None,
+                                       msg="reading %s should not return None" %
+                                       self.name)
+                logging.info("%s = %s", self.name, propValue)
+                self.onReadSuccess(propValue)
+                logging.info("%s pass" % self.name)
+
         def checkLiveFrameRead():
             """Validates reading the OBD2_LIVE_FRAME (if available)."""
-            logging.info("checkLiveFrameRead no-op pass")
+            checker = CheckRead(self,
+                                self.vtypes.OBD2_LIVE_FRAME,
+                                "OBD2_LIVE_FRAME")
+            checker()
 
         def checkFreezeFrameRead():
             """Validates reading the OBD2_FREEZE_FRAME (if available)."""
-            logging.info("checkLiveFrameRead no-op pass")
+            checker = CheckRead(self,
+                                self.vtypes.OBD2_FREEZE_FRAME,
+                                "OBD2_FREEZE_FRAME")
+            checker()
 
         isLiveSupported, isFreezeSupported = self.getSupportInfo()
         logging.info("isLiveSupported = %s, isFreezeSupported = %s",
