@@ -79,6 +79,11 @@ Return<void> NoiseSuppressionEffect::setAndGetVolume(
     return mEffect->setAndGetVolume(volumes, _hidl_cb);
 }
 
+Return<Result> NoiseSuppressionEffect::volumeChangeNotification(
+        const hidl_vec<uint32_t>& volumes) {
+    return mEffect->volumeChangeNotification(volumes);
+}
+
 Return<Result> NoiseSuppressionEffect::setAudioMode(AudioMode mode) {
     return mEffect->setAudioMode(mode);
 }
