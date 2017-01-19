@@ -26,26 +26,6 @@ package android.hardware.wifi.supplicant@1.0;
  */
 interface ISupplicantP2pIfaceCallback {
   /**
-   * WPS config methods.
-   */
-  enum WpsConfigMethods : uint16_t {
-    USBA = 0x0001,
-    ETHERNET = 0x0002,
-    LABEL = 0x0004,
-    DISPLAY = 0x0008,
-    EXT_NFC_TOKEN = 0x0010,
-    INT_NFC_TOKEN = 0x0020,
-    NFC_INTERFACE = 0x0040,
-    PUSHBUTTON = 0x0080,
-    KEYPAD = 0x0100,
-    VIRT_PUSHBUTTON = 0x0280,
-    PHY_PUSHBUTTON = 0x0480,
-    P2PS = 0x1000,
-    VIRT_DISPLAY = 0x2008,
-    PHY_DISPLAY = 0x4008
-  };
-
-  /**
    * WPS Device Password ID
    */
   enum WpsDevPasswordId : uint16_t {
