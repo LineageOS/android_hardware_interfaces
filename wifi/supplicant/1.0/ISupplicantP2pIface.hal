@@ -40,16 +40,6 @@ interface ISupplicantP2pIface extends ISupplicantIface {
     KEYPAD
   };
 
-  enum GroupCapabilityMask : uint32_t {
-    GROUP_OWNER = 1 << 0,
-    PERSISTENT_GROUP = 1 << 1,
-    GROUP_LIMIT = 1 << 2,
-    INTRA_BSS_DIST = 1 << 3,
-    CROSS_CONN = 1 << 4,
-    PERSISTENT_RECONN = 1 << 5,
-    GROUP_FORMATION = 1 << 6
-  };
-
   /**
    * Use to specify a range of frequencies.
    * For example: 2412-2432,2462,5000-6000, etc.
@@ -533,7 +523,8 @@ interface ISupplicantP2pIface extends ISupplicantIface {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
-   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
   setMiracastMode(MiracastMode mode)
       generates (SupplicantStatus status);
@@ -548,7 +539,8 @@ interface ISupplicantP2pIface extends ISupplicantIface {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
-   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
   startWpsPbc(string groupIfName, Bssid bssid)
       generates (SupplicantStatus status);
@@ -561,7 +553,8 @@ interface ISupplicantP2pIface extends ISupplicantIface {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
-   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
   startWpsPinKeypad(string groupIfName, string pin)
       generates (SupplicantStatus status);
@@ -574,7 +567,8 @@ interface ISupplicantP2pIface extends ISupplicantIface {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
-   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    * @return generatedPin 8 digit pin generated.
    */
   startWpsPinDisplay(string groupIfName, Bssid bssid)
@@ -587,7 +581,34 @@ interface ISupplicantP2pIface extends ISupplicantIface {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
-   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+
    */
   cancelWps(string groupIfName) generates (SupplicantStatus status);
+
+  /**
+   * Enable/Disable Wifi Display.
+   *
+   * @param enable true to enable, false to disable.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+   */
+  enableWfd(bool enable) generates (SupplicantStatus status);
+
+  /**
+   * Set Wifi Display device info.
+   *
+   * @param info WFD device info as described in section 5.1.2 of WFD technical
+   *        specification v1.0.0.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+   */
+  setWfdDeviceInfo(uint8_t[8] info) generates (SupplicantStatus status);
 };
