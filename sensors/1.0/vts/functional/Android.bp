@@ -19,10 +19,11 @@ cc_test {
     gtest: true,
     srcs: ["sensors_hidl_hal_test.cpp"],
     shared_libs: [
-        "liblog",
-        "libhidlbase",
-        "libutils",
         "android.hardware.sensors@1.0",
+        "libcutils",
+        "libhidlbase",
+        "liblog",
+        "libutils",
     ],
     static_libs: ["libgtest"],
     cflags: [
