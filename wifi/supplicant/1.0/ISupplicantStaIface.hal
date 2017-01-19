@@ -219,7 +219,8 @@ interface ISupplicantStaIface extends ISupplicantIface {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
-   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    * @return macAddr MAC address of the device.
    */
   getMacAddress()
@@ -231,7 +232,8 @@ interface ISupplicantStaIface extends ISupplicantIface {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
-   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
   startRxFilter() generates (SupplicantStatus status);
 
@@ -241,7 +243,8 @@ interface ISupplicantStaIface extends ISupplicantIface {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
-   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
   stopRxFilter() generates (SupplicantStatus status);
 
@@ -252,7 +255,8 @@ interface ISupplicantStaIface extends ISupplicantIface {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
-   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
   addRxFilter(RxFilterType type)
       generates (SupplicantStatus status);
@@ -264,7 +268,8 @@ interface ISupplicantStaIface extends ISupplicantIface {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
-   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
   removeRxFilter(RxFilterType type)
       generates (SupplicantStatus status);
@@ -276,7 +281,8 @@ interface ISupplicantStaIface extends ISupplicantIface {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
-   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
   setBtCoexistenceMode(BtCoexistenceMode mode)
       generates (SupplicantStatus status);
@@ -291,7 +297,8 @@ interface ISupplicantStaIface extends ISupplicantIface {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
-   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
   setBtCoexistenceScanModeEnabled(bool enable)
       generates (SupplicantStatus status);
@@ -303,7 +310,8 @@ interface ISupplicantStaIface extends ISupplicantIface {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
-   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
   setSuspendModeEnabled(bool enable)
       generates (SupplicantStatus status);
@@ -315,7 +323,8 @@ interface ISupplicantStaIface extends ISupplicantIface {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
-   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
   setCountryCode(int8_t[2] code)
       generates (SupplicantStatus status);
@@ -328,7 +337,8 @@ interface ISupplicantStaIface extends ISupplicantIface {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
-   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
   startWpsRegistrar(Bssid bssid, string pin)
       generates (SupplicantStatus status);
@@ -342,7 +352,8 @@ interface ISupplicantStaIface extends ISupplicantIface {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
-   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
   startWpsPbc(Bssid bssid) generates (SupplicantStatus status);
 
@@ -353,7 +364,8 @@ interface ISupplicantStaIface extends ISupplicantIface {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
-   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
   startWpsPinKeypad(string pin) generates (SupplicantStatus status);
 
@@ -364,7 +376,8 @@ interface ISupplicantStaIface extends ISupplicantIface {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
-   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    * @return generatedPin 8 digit pin generated.
    */
   startWpsPinDisplay(Bssid bssid)
@@ -376,7 +389,20 @@ interface ISupplicantStaIface extends ISupplicantIface {
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
-   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
   cancelWps() generates (SupplicantStatus status);
+
+  /**
+   * Use external processing for SIM/USIM operations
+   *
+   * @param useExternalSim true to use external, false otherwise.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+   */
+  setExternalSim(bool useExternalSim) generates (SupplicantStatus status);
 };
