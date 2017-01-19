@@ -15,6 +15,12 @@
  */
 #define LOG_TAG "android.hardware.biometrics.fingerprint@2.1-service"
 
+// For communication with Keystore binder interface
+#include <binder/IServiceManager.h>
+#include <keystore/IKeystoreService.h>
+#include <keystore/keystore.h> // for error codes
+#include <hardware/hw_auth_token.h>
+
 #include <hardware/hardware.h>
 #include <hardware/fingerprint.h>
 #include "BiometricsFingerprint.h"
@@ -233,6 +239,23 @@ IBiometricsFingerprint* BiometricsFingerprint::getInstance() {
     }
 
     return new BiometricsFingerprint(fp_device);
+}
+
+void BiometricsFingerprint::notifyKeystore(const uint8_t *auth_token, const size_t auth_token_length) {
+    if (auth_token != nullptr && auth_token_length > 0) {
+        // TODO: cache service?
+        sp<IServiceManager> sm = android::defaultServiceManager();
+        sp<IBinder> binder = sm->getService(String16("android.security.keystore"));
+        sp<IKeystoreService> service = interface_cast<IKeystoreService>(binder);
+        if (service != nullptr) {
+            status_t ret = service->addAuthToken(auth_token, auth_token_length);
+            if (ret != ResponseCode::NO_ERROR) {
+                ALOGE("Falure sending auth token to KeyStore: %d", ret);
+            }
+        } else {
+            ALOGE("Unable to communicate with KeyStore");
+        }
+    }
 }
 
 } // namespace implementation
