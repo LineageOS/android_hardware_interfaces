@@ -37,4 +37,9 @@ interface ISupplicantCallback {
    * @param ifName Name of the network interface, e.g., wlan0
    */
   oneway onInterfaceRemoved(string ifName);
+
+  /**
+   * Used to indicate that the supplicant daemon is terminating.
+   */
+  oneway onTerminating();
 };
