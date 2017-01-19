@@ -43,8 +43,6 @@ using ::android::sp;
 #define THERMAL_SERVICE_NAME "thermal"
 #define MONITORING_OPERATION_NUMBER 10
 
-#define UNDEFINED_TEMPERATURE (-FLT_MAX)
-
 #define MAX_DEVICE_TEMPERATURE 200
 #define MAX_FAN_SPEED 20000
 
@@ -127,21 +125,18 @@ class ThermalHidlTest : public ::testing::Test {
     // .currentValue of known type is in Celsius and must be reasonable.
     EXPECT_TRUE(temperature.type == TemperatureType::UNKNOWN ||
                 std::abs(temperature.currentValue) < MAX_DEVICE_TEMPERATURE ||
-                temperature.currentValue == UNDEFINED_TEMPERATURE);
+                isnan(temperature.currentValue));
 
     // .name must not be empty.
     EXPECT_LT(0u, temperature.name.size());
 
     // .currentValue must not exceed .shutdwonThreshold if defined.
     EXPECT_TRUE(temperature.currentValue < temperature.shutdownThreshold ||
-                temperature.currentValue == UNDEFINED_TEMPERATURE ||
-                temperature.shutdownThreshold == UNDEFINED_TEMPERATURE);
+                isnan(temperature.currentValue) || isnan(temperature.shutdownThreshold));
 
     // .throttlingThreshold must not exceed .shutdownThreshold if defined.
-    EXPECT_TRUE(temperature.throttlingThreshold <
-                    temperature.shutdownThreshold ||
-                temperature.throttlingThreshold == UNDEFINED_TEMPERATURE ||
-                temperature.shutdownThreshold == UNDEFINED_TEMPERATURE);
+    EXPECT_TRUE(temperature.throttlingThreshold < temperature.shutdownThreshold ||
+                isnan(temperature.throttlingThreshold) || isnan(temperature.shutdownThreshold));
   }
 
   // Check validity of CPU usage returned by Thermal HAL.
