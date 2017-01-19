@@ -1,0 +1,127 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "ISupplicantP2pNetwork"
+
+package: "android.hardware.wifi.supplicant"
+
+import: "android.hardware.wifi.supplicant@1.0::ISupplicantNetwork"
+import: "android.hardware.wifi.supplicant@1.0::ISupplicantP2pNetworkCallback"
+import: "android.hardware.wifi.supplicant@1.0::types"
+
+interface: {
+    api: {
+        name: "getId"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    api: {
+        name: "getInterfaceName"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "getType"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::IfaceType"
+        }
+    }
+
+    api: {
+        name: "registerCallback"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_HIDL_CALLBACK
+            predefined_type: "ISupplicantP2pNetworkCallback"
+            is_callback: true
+        }
+    }
+
+    api: {
+        name: "getSsid"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "getBssid"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "isCurrent"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+    }
+
+    api: {
+        name: "isPersistent"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+    }
+
+    api: {
+        name: "isGo"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+    }
+
+}

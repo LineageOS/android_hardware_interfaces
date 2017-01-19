@@ -1,0 +1,172 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "IWifiRttController"
+
+package: "android.hardware.wifi"
+
+import: "android.hardware.wifi@1.0::IWifiIface"
+import: "android.hardware.wifi@1.0::IWifiRttControllerEventCallback"
+import: "android.hardware.wifi@1.0::types"
+
+interface: {
+    api: {
+        name: "getBoundIface"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_HIDL_INTERFACE
+            predefined_type: "IWifiIface"
+            is_callback: false
+        }
+    }
+
+    api: {
+        name: "registerEventCallback"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_HIDL_CALLBACK
+            predefined_type: "IWifiRttControllerEventCallback"
+            is_callback: true
+        }
+    }
+
+    api: {
+        name: "rangeRequest"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRUCT
+                predefined_type: "::android::hardware::wifi::V1_0::RttConfig"
+            }
+        }
+    }
+
+    api: {
+        name: "rangeCancel"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_ARRAY
+                vector_value: {
+                    vector_size: 6
+                    type: TYPE_SCALAR
+                    scalar_type: "uint8_t"
+                }
+            }
+        }
+    }
+
+    api: {
+        name: "getCapabilities"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::RttCapabilities"
+        }
+    }
+
+    api: {
+        name: "setLci"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::RttLciInformation"
+        }
+    }
+
+    api: {
+        name: "setLcr"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::RttLcrInformation"
+        }
+    }
+
+    api: {
+        name: "getResponderInfo"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::RttResponder"
+        }
+    }
+
+    api: {
+        name: "enableResponder"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiChannelInfo"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::RttResponder"
+        }
+    }
+
+    api: {
+        name: "disableResponder"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+}
