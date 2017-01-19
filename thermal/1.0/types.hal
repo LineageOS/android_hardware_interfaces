@@ -46,27 +46,27 @@ struct Temperature {
 
     /**
      * Current temperature in Celsius. If not available set by HAL to
-     * undefined temperature value.
+     * UNKNOWN_TEMPERATURE.
      * Current temperature can be in any units if type=UNKNOWN.
      */
     float currentValue;
 
     /**
      * Throttling temperature constant for this temperature.
-     * If not available, set by HAL to undefined temperature value.
+     * If not available, set by HAL to UNKNOWN_TEMPERATURE.
      */
     float throttlingThreshold;
 
     /**
      * Shutdown temperature constant for this temperature.
-     * If not available, set by HAL to undefined temperature value.
+     * If not available, set by HAL to UNKNOWN_TEMPERATURE.
      */
     float shutdownThreshold;
 
     /**
      * Threshold temperature above which the VR mode clockrate minimums cannot
      * be maintained for this device.
-     * If not available, set by HAL to undefined temperature value.
+     * If not available, set by HAL to UNKNOWN_TEMPERATURE.
      */
     float vrThrottlingThreshold;
 
@@ -135,3 +135,7 @@ struct ThermalStatus {
      */
     string debugMessage;
 };
+
+/**
+ * TODO(pbond): add float constant UNDEFINED_TEMPERATURE.
+ */

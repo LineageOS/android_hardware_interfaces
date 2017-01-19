@@ -169,13 +169,6 @@ Return<void> Thermal::getCoolingDevices(getCoolingDevices_cb _hidl_cb) {
   return Void();
 }
 
-Return<void> Thermal::getUndefinedTemperature(getUndefinedTemperature_cb _hidl_cb) {
-  ThermalStatus status;
-  status.code = ThermalStatusCode::SUCCESS;
-  _hidl_cb(status, UNKNOWN_TEMPERATURE);
-  return Void();
-}
-
 IThermal* HIDL_FETCH_IThermal(const char* /* name */) {
   thermal_module_t* module;
   status_t err = hw_get_module(THERMAL_HARDWARE_MODULE_ID,

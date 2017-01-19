@@ -43,6 +43,8 @@ using ::android::sp;
 #define THERMAL_SERVICE_NAME "thermal"
 #define MONITORING_OPERATION_NUMBER 10
 
+#define UNDEFINED_TEMPERATURE (-FLT_MAX)
+
 #define MAX_DEVICE_TEMPERATURE 200
 #define MAX_FAN_SPEED 20000
 
@@ -54,17 +56,6 @@ class ThermalHidlTest : public ::testing::Test {
     ASSERT_NE(thermal_, nullptr);
     baseSize_ = 0;
     names_.clear();
-
-    {
-      float undefined_temperature;
-      thermal_->getUndefinedTemperature(
-          [&undefined_temperature](ThermalStatus status, float temperature) {
-            EXPECT_EQ(ThermalStatusCode::SUCCESS, status.code);
-            EXPECT_LT(MAX_DEVICE_TEMPERATURE, std::abs(undefined_temperature));
-            undefined_temperature = temperature;
-          });
-      undefined_temperature_ = undefined_temperature;
-    }
   }
 
   virtual void TearDown() override {}
@@ -136,20 +127,21 @@ class ThermalHidlTest : public ::testing::Test {
     // .currentValue of known type is in Celsius and must be reasonable.
     EXPECT_TRUE(temperature.type == TemperatureType::UNKNOWN ||
                 std::abs(temperature.currentValue) < MAX_DEVICE_TEMPERATURE ||
-                temperature.currentValue == undefined_temperature_);
+                temperature.currentValue == UNDEFINED_TEMPERATURE);
 
     // .name must not be empty.
     EXPECT_LT(0u, temperature.name.size());
 
     // .currentValue must not exceed .shutdwonThreshold if defined.
     EXPECT_TRUE(temperature.currentValue < temperature.shutdownThreshold ||
-                temperature.currentValue == undefined_temperature_ ||
-                temperature.shutdownThreshold == undefined_temperature_);
+                temperature.currentValue == UNDEFINED_TEMPERATURE ||
+                temperature.shutdownThreshold == UNDEFINED_TEMPERATURE);
 
     // .throttlingThreshold must not exceed .shutdownThreshold if defined.
-    EXPECT_TRUE(temperature.throttlingThreshold < temperature.shutdownThreshold ||
-                temperature.throttlingThreshold == undefined_temperature_ ||
-                temperature.shutdownThreshold == undefined_temperature_);
+    EXPECT_TRUE(temperature.throttlingThreshold <
+                    temperature.shutdownThreshold ||
+                temperature.throttlingThreshold == UNDEFINED_TEMPERATURE ||
+                temperature.shutdownThreshold == UNDEFINED_TEMPERATURE);
   }
 
   // Check validity of CPU usage returned by Thermal HAL.
@@ -172,7 +164,6 @@ class ThermalHidlTest : public ::testing::Test {
 
   size_t baseSize_;
   std::vector<hidl_string> names_;
-  float undefined_temperature_;
 };
 
 // Sanity test for Thermal::getTemperatures().
