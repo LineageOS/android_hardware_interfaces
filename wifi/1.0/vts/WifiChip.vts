@@ -1,0 +1,545 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "IWifiChip"
+
+package: "android.hardware.wifi"
+
+import: "android.hardware.wifi@1.0::IWifiApIface"
+import: "android.hardware.wifi@1.0::IWifiChipEventCallback"
+import: "android.hardware.wifi@1.0::IWifiIface"
+import: "android.hardware.wifi@1.0::IWifiNanIface"
+import: "android.hardware.wifi@1.0::IWifiP2pIface"
+import: "android.hardware.wifi@1.0::IWifiRttController"
+import: "android.hardware.wifi@1.0::IWifiStaIface"
+import: "android.hardware.wifi@1.0::types"
+
+interface: {
+    attribute: {
+        name: "::android::hardware::wifi::V1_0::IWifiChip::ChipIfaceCombinationLimit"
+        type: TYPE_STRUCT
+        struct_value: {
+            name: "types"
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_ENUM
+                predefined_type: "::android::hardware::wifi::V1_0::IfaceType"
+            }
+        }
+        struct_value: {
+            name: "maxIfaces"
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::wifi::V1_0::IWifiChip::ChipIfaceCombination"
+        type: TYPE_STRUCT
+        struct_value: {
+            name: "limits"
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRUCT
+                predefined_type: "::android::hardware::wifi::V1_0::IWifiChip::ChipIfaceCombinationLimit"
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::wifi::V1_0::IWifiChip::ChipMode"
+        type: TYPE_STRUCT
+        struct_value: {
+            name: "id"
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        struct_value: {
+            name: "availableCombinations"
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRUCT
+                predefined_type: "::android::hardware::wifi::V1_0::IWifiChip::ChipIfaceCombination"
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::wifi::V1_0::IWifiChip::ChipDebugInfo"
+        type: TYPE_STRUCT
+        struct_value: {
+            name: "driverDescription"
+            type: TYPE_STRING
+        }
+        struct_value: {
+            name: "firmwareDescription"
+            type: TYPE_STRING
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::wifi::V1_0::IWifiChip::ChipCapabilityMask"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "uint32_t"
+
+            enumerator: "DEBUG_MEMORY_FIRMWARE_DUMP"
+            scalar_value: {
+                uint32_t: 1
+            }
+            enumerator: "DEBUG_MEMORY_DRIVER_DUMP"
+            scalar_value: {
+                uint32_t: 2
+            }
+            enumerator: "DEBUG_RING_BUFFER_CONNECT_EVENT"
+            scalar_value: {
+                uint32_t: 4
+            }
+            enumerator: "DEBUG_RING_BUFFER_POWER_EVENT"
+            scalar_value: {
+                uint32_t: 8
+            }
+            enumerator: "DEBUG_RING_BUFFER_WAKELOCK_EVENT"
+            scalar_value: {
+                uint32_t: 16
+            }
+            enumerator: "DEBUG_RING_BUFFER_VENDOR_DATA"
+            scalar_value: {
+                uint32_t: 32
+            }
+            enumerator: "DEBUG_HOST_WAKE_REASON_STATS"
+            scalar_value: {
+                uint32_t: 64
+            }
+            enumerator: "DEBUG_ERROR_ALERTS"
+            scalar_value: {
+                uint32_t: 128
+            }
+        }
+    }
+
+    api: {
+        name: "getId"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    api: {
+        name: "registerEventCallback"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_HIDL_CALLBACK
+            predefined_type: "IWifiChipEventCallback"
+            is_callback: true
+        }
+    }
+
+    api: {
+        name: "getCapabilities"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_MASK
+            predefined_type: "::android::hardware::wifi::V1_0::IWifiChip::ChipCapabilityMask"
+        }
+    }
+
+    api: {
+        name: "getAvailableModes"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRUCT
+                predefined_type: "::android::hardware::wifi::V1_0::IWifiChip::ChipMode"
+            }
+        }
+    }
+
+    api: {
+        name: "configureChip"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    api: {
+        name: "getMode"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    api: {
+        name: "requestChipDebugInfo"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::IWifiChip::ChipDebugInfo"
+        }
+    }
+
+    api: {
+        name: "requestDriverDebugDump"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "requestFirmwareDebugDump"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "createApIface"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_HIDL_INTERFACE
+            predefined_type: "IWifiApIface"
+            is_callback: false
+        }
+    }
+
+    api: {
+        name: "getApIfaceNames"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRING
+            }
+        }
+    }
+
+    api: {
+        name: "getApIface"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_HIDL_INTERFACE
+            predefined_type: "IWifiApIface"
+            is_callback: false
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "removeApIface"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "createNanIface"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_HIDL_INTERFACE
+            predefined_type: "IWifiNanIface"
+            is_callback: false
+        }
+    }
+
+    api: {
+        name: "getNanIfaceNames"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRING
+            }
+        }
+    }
+
+    api: {
+        name: "getNanIface"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_HIDL_INTERFACE
+            predefined_type: "IWifiNanIface"
+            is_callback: false
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "removeNanIface"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "createP2pIface"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_HIDL_INTERFACE
+            predefined_type: "IWifiP2pIface"
+            is_callback: false
+        }
+    }
+
+    api: {
+        name: "getP2pIfaceNames"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRING
+            }
+        }
+    }
+
+    api: {
+        name: "getP2pIface"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_HIDL_INTERFACE
+            predefined_type: "IWifiP2pIface"
+            is_callback: false
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "removeP2pIface"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "createStaIface"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_HIDL_INTERFACE
+            predefined_type: "IWifiStaIface"
+            is_callback: false
+        }
+    }
+
+    api: {
+        name: "getStaIfaceNames"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRING
+            }
+        }
+    }
+
+    api: {
+        name: "getStaIface"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_HIDL_INTERFACE
+            predefined_type: "IWifiStaIface"
+            is_callback: false
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "removeStaIface"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "createRttController"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_HIDL_INTERFACE
+            predefined_type: "IWifiRttController"
+            is_callback: false
+        }
+        arg: {
+            type: TYPE_HIDL_INTERFACE
+            predefined_type: "IWifiIface"
+            is_callback: false
+        }
+    }
+
+    api: {
+        name: "getDebugRingBuffersStatus"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRUCT
+                predefined_type: "::android::hardware::wifi::V1_0::WifiDebugRingBufferStatus"
+            }
+        }
+    }
+
+    api: {
+        name: "startLoggingToDebugRingBuffer"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::wifi::V1_0::WifiDebugRingBufferVerboseLevel"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    api: {
+        name: "forceDumpToDebugRingBuffer"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "getDebugHostWakeReasonStats"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiDebugHostWakeReasonStats"
+        }
+    }
+
+    api: {
+        name: "enableDebugErrorAlerts"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+    }
+
+}

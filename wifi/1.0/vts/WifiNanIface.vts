@@ -1,0 +1,278 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "IWifiNanIface"
+
+package: "android.hardware.wifi"
+
+import: "android.hardware.wifi@1.0::IWifiIface"
+import: "android.hardware.wifi@1.0::IWifiNanIfaceEventCallback"
+import: "android.hardware.wifi@1.0::types"
+
+interface: {
+    api: {
+        name: "getType"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::wifi::V1_0::IfaceType"
+        }
+    }
+
+    api: {
+        name: "getName"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "registerEventCallback"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_HIDL_CALLBACK
+            predefined_type: "IWifiNanIfaceEventCallback"
+            is_callback: true
+        }
+    }
+
+    api: {
+        name: "getCapabilitiesRequest"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint16_t"
+        }
+    }
+
+    api: {
+        name: "enableRequest"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint16_t"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::NanEnableRequest"
+        }
+    }
+
+    api: {
+        name: "configRequest"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint16_t"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::NanConfigRequest"
+        }
+    }
+
+    api: {
+        name: "disableRequest"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint16_t"
+        }
+    }
+
+    api: {
+        name: "startPublishRequest"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint16_t"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::NanPublishRequest"
+        }
+    }
+
+    api: {
+        name: "stopPublishRequest"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint16_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint16_t"
+        }
+    }
+
+    api: {
+        name: "startSubscribeRequest"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint16_t"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::NanSubscribeRequest"
+        }
+    }
+
+    api: {
+        name: "stopSubscribeRequest"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint16_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint16_t"
+        }
+    }
+
+    api: {
+        name: "transmitFollowupRequest"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint16_t"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::NanTransmitFollowupRequest"
+        }
+    }
+
+    api: {
+        name: "createDataInterfaceRequest"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint16_t"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "deleteDataInterfaceRequest"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint16_t"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "initiateDataPathRequest"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint16_t"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::NanInitiateDataPathRequest"
+        }
+    }
+
+    api: {
+        name: "respondToDataPathIndicationRequest"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint16_t"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::NanRespondToDataPathIndicationRequest"
+        }
+    }
+
+    api: {
+        name: "terminateDataPathRequest"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint16_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    api: {
+        name: "beaconSdfPayloadRequest"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint16_t"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::NanBeaconSdfPayloadRequest"
+        }
+    }
+
+}

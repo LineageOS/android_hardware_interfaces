@@ -1,0 +1,623 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "ISupplicantStaIface"
+
+package: "android.hardware.wifi.supplicant"
+
+import: "android.hardware.wifi.supplicant@1.0::ISupplicantIface"
+import: "android.hardware.wifi.supplicant@1.0::ISupplicantStaIfaceCallback"
+import: "android.hardware.wifi.supplicant@1.0::types"
+
+interface: {
+    attribute: {
+        name: "::android::hardware::wifi::supplicant::V1_0::ISupplicantIface::ParamSizeLimits"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "uint32_t"
+
+            enumerator: "WPS_DEVICE_NAME_MAX_LEN"
+            scalar_value: {
+                uint32_t: 32
+            }
+            enumerator: "WPS_MANUFACTURER_MAX_LEN"
+            scalar_value: {
+                uint32_t: 64
+            }
+            enumerator: "WPS_MODEL_NAME_MAX_LEN"
+            scalar_value: {
+                uint32_t: 32
+            }
+            enumerator: "WPS_MODEL_NUMBER_MAX_LEN"
+            scalar_value: {
+                uint32_t: 32
+            }
+            enumerator: "WPS_SERIAL_NUMBER_MAX_LEN"
+            scalar_value: {
+                uint32_t: 32
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaIface::AnqpInfoId"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "uint16_t"
+
+            enumerator: "VENUE_NAME"
+            scalar_value: {
+                uint16_t: 258
+            }
+            enumerator: "ROAMING_CONSORTIUM"
+            scalar_value: {
+                uint16_t: 261
+            }
+            enumerator: "IP_ADDR_TYPE_AVAILABILITY"
+            scalar_value: {
+                uint16_t: 262
+            }
+            enumerator: "NAI_REALM"
+            scalar_value: {
+                uint16_t: 263
+            }
+            enumerator: "ANQP_3GPP_CELLULAR_NETWORK"
+            scalar_value: {
+                uint16_t: 264
+            }
+            enumerator: "DOMAIN_NAME"
+            scalar_value: {
+                uint16_t: 268
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaIface::Hs20AnqpSubtypes"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "uint32_t"
+
+            enumerator: "OPERATOR_FRIENDLY_NAME"
+            scalar_value: {
+                uint32_t: 3
+            }
+            enumerator: "WAN_METRICS"
+            scalar_value: {
+                uint32_t: 4
+            }
+            enumerator: "CONNECTION_CAPABILITY"
+            scalar_value: {
+                uint32_t: 5
+            }
+            enumerator: "OSU_PROVIDERS_LIST"
+            scalar_value: {
+                uint32_t: 8
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaIface::RxFilterType"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "uint8_t"
+
+            enumerator: "V4_MULTICAST"
+            scalar_value: {
+                uint8_t: 0
+            }
+            enumerator: "V6_MULTICAST"
+            scalar_value: {
+                uint8_t: 1
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaIface::BtCoexistenceMode"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "uint8_t"
+
+            enumerator: "ENABLED"
+            scalar_value: {
+                uint8_t: 0
+            }
+            enumerator: "DISABLED"
+            scalar_value: {
+                uint8_t: 1
+            }
+            enumerator: "SENSE"
+            scalar_value: {
+                uint8_t: 2
+            }
+        }
+    }
+
+    api: {
+        name: "getName"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "getType"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::IfaceType"
+        }
+    }
+
+    api: {
+        name: "addNetwork"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_HIDL_INTERFACE
+            predefined_type: "ISupplicantNetwork"
+            is_callback: false
+        }
+    }
+
+    api: {
+        name: "removeNetwork"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    api: {
+        name: "getNetwork"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_HIDL_INTERFACE
+            predefined_type: "ISupplicantNetwork"
+            is_callback: false
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    api: {
+        name: "listNetworks"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint32_t"
+            }
+        }
+    }
+
+    api: {
+        name: "setWpsDeviceName"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "setWpsManufacturer"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "setWpsModelName"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "setWpsModelNumber"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "setWpsSerialNumber"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "setWpsConfigMethods"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_MASK
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::WpsConfigMethods"
+        }
+    }
+
+    api: {
+        name: "registerCallback"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_HIDL_CALLBACK
+            predefined_type: "ISupplicantStaIfaceCallback"
+            is_callback: true
+        }
+    }
+
+    api: {
+        name: "reassociate"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+    }
+
+    api: {
+        name: "reconnect"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+    }
+
+    api: {
+        name: "disconnect"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+    }
+
+    api: {
+        name: "setPowerSave"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+    }
+
+    api: {
+        name: "initiateTdlsDiscover"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "initiateTdlsSetup"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "initiateTdlsTeardown"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "initiateAnqpQuery"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_ENUM
+                predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaIface::AnqpInfoId"
+            }
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_ENUM
+                predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaIface::Hs20AnqpSubtypes"
+            }
+        }
+    }
+
+    api: {
+        name: "initiateHs20IconQuery"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "getMacAddress"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "startRxFilter"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+    }
+
+    api: {
+        name: "stopRxFilter"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+    }
+
+    api: {
+        name: "addRxFilter"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaIface::RxFilterType"
+        }
+    }
+
+    api: {
+        name: "removeRxFilter"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaIface::RxFilterType"
+        }
+    }
+
+    api: {
+        name: "setBtCoexistenceMode"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaIface::BtCoexistenceMode"
+        }
+    }
+
+    api: {
+        name: "setBtCoexistenceScanModeEnabled"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+    }
+
+    api: {
+        name: "setSuspendModeEnabled"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+    }
+
+    api: {
+        name: "setCountryCode"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 2
+                type: TYPE_SCALAR
+                scalar_type: "int8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "startWpsRegistrar"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "startWpsPbc"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "startWpsPinKeypad"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "startWpsPinDisplay"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_STRING
+        }
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "cancelWps"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+    }
+
+    api: {
+        name: "setExternalSim"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+    }
+
+}
