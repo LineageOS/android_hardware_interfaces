@@ -1,0 +1,33 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "IWifiP2pIface"
+
+package: "android.hardware.wifi"
+
+import: "android.hardware.wifi@1.0::IWifiIface"
+
+interface: {
+    api: {
+        name: "getType"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::wifi::V1_0::IfaceType"
+        }
+    }
+
+    api: {
+        name: "getName"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::V1_0::WifiStatus"
+        }
+        return_type_hidl: {
+            type: TYPE_STRING
+        }
+    }
+
+}
