@@ -28,13 +28,11 @@ using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::sp;
 
-#define VIBRATOR_SERVICE_NAME "vibrator"
-
 // The main test class for VIBRATOR HIDL HAL.
 class VibratorHidlTest : public ::testing::Test {
  public:
   virtual void SetUp() override {
-    vibrator = IVibrator::getService(VIBRATOR_SERVICE_NAME, false);
+    vibrator = IVibrator::getService(false);
     ASSERT_NE(vibrator, nullptr);
   }
 
