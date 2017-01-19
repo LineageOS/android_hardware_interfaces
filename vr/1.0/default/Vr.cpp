@@ -42,16 +42,16 @@ Return<void> Vr::setVrMode(bool enabled)  {
     return Void();
 }
 
-IVr* HIDL_FETCH_IVr(const char *name) {
+IVr* HIDL_FETCH_IVr(const char * /*name*/) {
     vr_module_t *vr_module;
     const hw_module_t *hw_module = NULL;
 
-    int ret = hw_get_module(name, &hw_module);
+    int ret = hw_get_module(VR_HARDWARE_MODULE_ID, &hw_module);
     if (ret == 0) {
         return new Vr(reinterpret_cast<vr_module_t*>(
                 const_cast<hw_module_t*>(hw_module)));
     } else {
-        ALOGE("hw_get_module %s failed: %d", name, ret);
+        ALOGE("hw_get_module %s failed: %d", VR_HARDWARE_MODULE_ID, ret);
         return nullptr;
     }
 }

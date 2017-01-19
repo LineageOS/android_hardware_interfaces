@@ -26,13 +26,11 @@ using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::sp;
 
-#define VR_SERVICE_NAME "vr"
-
 // The main test class for VR HIDL HAL.
 class VrHidlTest : public ::testing::Test {
  public:
   void SetUp() override {
-    vr = IVr::getService(VR_SERVICE_NAME);
+    vr = IVr::getService();
     ASSERT_NE(vr, nullptr);
   }
 
