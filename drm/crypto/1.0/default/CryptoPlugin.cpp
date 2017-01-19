@@ -21,6 +21,7 @@
 
 #include <hidlmemory/mapping.h>
 #include <android/hidl/memory/1.0/IMemory.h>
+#include <utils/Log.h>
 
 using android::hidl::memory::V1_0::IMemory;
 
@@ -53,7 +54,7 @@ namespace implementation {
             const hidl_array<uint8_t, 16>& keyId,
             const hidl_array<uint8_t, 16>& iv, Mode mode,
             const Pattern& pattern, const hidl_vec<SubSample>& subSamples,
-            const hidl_memory &source, const DestinationBuffer& destination,
+            const hidl_memory& source, const DestinationBuffer& destination,
             decrypt_cb _hidl_cb) {
 
         android::CryptoPlugin::Mode legacyMode;
@@ -88,24 +89,26 @@ namespace implementation {
         AString detailMessage;
 
         void *destPtr = NULL;
-        sp<IMemory> sharedMemory;
+        sp<IMemory> sharedSourceMemory = mapMemory(source);
+        sp<IMemory> sharedDestinationMemory;
 
         if (destination.type == BufferType::SHARED_MEMORY) {
-            sharedMemory = mapMemory(source);
-            destPtr = sharedMemory->getPointer();
-            sharedMemory->update();
+            sharedDestinationMemory = mapMemory(destination.nonsecureMemory);
+            sharedDestinationMemory->update();
+            destPtr = sharedDestinationMemory->getPointer();
         } else if (destination.type == BufferType::NATIVE_HANDLE) {
             native_handle_t *handle = const_cast<native_handle_t *>(
                     destination.secureMemory.getNativeHandle());
             destPtr = static_cast<void *>(handle);
         }
         ssize_t result = mLegacyPlugin->decrypt(secure, keyId.data(), iv.data(),
-                legacyMode, legacyPattern, sharedMemory->getPointer(),
+                legacyMode, legacyPattern, sharedSourceMemory->getPointer(),
                 legacySubSamples, subSamples.size(), destPtr, &detailMessage);
 
         if (destination.type == BufferType::SHARED_MEMORY) {
-            sharedMemory->commit();
+            sharedDestinationMemory->commit();
         }
+
         delete[] legacySubSamples;
 
         uint32_t status;

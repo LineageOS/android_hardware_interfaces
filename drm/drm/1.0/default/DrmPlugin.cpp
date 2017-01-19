@@ -30,7 +30,6 @@ namespace implementation {
     // Methods from ::android::hardware::drm::drm::V1_0::IDrmPlugin follow.
 
     Return<void> DrmPlugin::openSession(openSession_cb _hidl_cb) {
-
         Vector<uint8_t> legacySessionId;
         status_t status = mLegacyPlugin->openSession(legacySessionId);
         _hidl_cb(toStatus(status), toHidlVec(legacySessionId));

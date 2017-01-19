@@ -36,4 +36,8 @@ LOCAL_C_INCLUDES := \
     frameworks/native/include \
     frameworks/av/include
 
+# TODO: The legacy DRM plugins only support 32-bit. They need
+# to be migrated to 64-bit (b/18948909)
+LOCAL_32_BIT_ONLY := true
+
 include $(BUILD_SHARED_LIBRARY)
