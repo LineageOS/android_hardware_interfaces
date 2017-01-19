@@ -1,0 +1,499 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "ISupplicantStaIfaceCallback"
+
+package: "android.hardware.wifi.supplicant"
+
+import: "android.hardware.wifi.supplicant@1.0::types"
+
+interface: {
+    attribute: {
+        name: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaIfaceCallback::State"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "uint32_t"
+
+            enumerator: "DISCONNECTED"
+            scalar_value: {
+                uint32_t: 0
+            }
+            enumerator: "IFACE_DISABLED"
+            scalar_value: {
+                uint32_t: 1
+            }
+            enumerator: "INACTIVE"
+            scalar_value: {
+                uint32_t: 2
+            }
+            enumerator: "SCANNING"
+            scalar_value: {
+                uint32_t: 3
+            }
+            enumerator: "AUTHENTICATING"
+            scalar_value: {
+                uint32_t: 4
+            }
+            enumerator: "ASSOCIATING"
+            scalar_value: {
+                uint32_t: 5
+            }
+            enumerator: "ASSOCIATED"
+            scalar_value: {
+                uint32_t: 6
+            }
+            enumerator: "FOURWAY_HANDSHAKE"
+            scalar_value: {
+                uint32_t: 7
+            }
+            enumerator: "GROUP_HANDSHAKE"
+            scalar_value: {
+                uint32_t: 8
+            }
+            enumerator: "COMPLETED"
+            scalar_value: {
+                uint32_t: 9
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaIfaceCallback::OsuMethod"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "uint8_t"
+
+            enumerator: "OMA_DM"
+            scalar_value: {
+                uint8_t: 0
+            }
+            enumerator: "SOAP_XML_SPP"
+            scalar_value: {
+                uint8_t: 1
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaIfaceCallback::AnqpData"
+        type: TYPE_STRUCT
+        struct_value: {
+            name: "venueName"
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        struct_value: {
+            name: "roamingConsortium"
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        struct_value: {
+            name: "ipAddrTypeAvailability"
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        struct_value: {
+            name: "naiRealm"
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        struct_value: {
+            name: "anqp3gppCellularNetwork"
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        struct_value: {
+            name: "domainName"
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaIfaceCallback::Hs20AnqpData"
+        type: TYPE_STRUCT
+        struct_value: {
+            name: "operatorFriendlyName"
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        struct_value: {
+            name: "wanMetrics"
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        struct_value: {
+            name: "connectionCapability"
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        struct_value: {
+            name: "osuProvidersList"
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaIfaceCallback::WpsConfigError"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "uint16_t"
+
+            enumerator: "NO_ERROR"
+            scalar_value: {
+                uint16_t: 0
+            }
+            enumerator: "OOB_IFACE_READ_ERROR"
+            scalar_value: {
+                uint16_t: 1
+            }
+            enumerator: "DECRYPTION_CRC_FAILURE"
+            scalar_value: {
+                uint16_t: 2
+            }
+            enumerator: "CHAN_24_NOT_SUPPORTED"
+            scalar_value: {
+                uint16_t: 3
+            }
+            enumerator: "CHAN_50_NOT_SUPPORTED"
+            scalar_value: {
+                uint16_t: 4
+            }
+            enumerator: "SIGNAL_TOO_WEAK"
+            scalar_value: {
+                uint16_t: 5
+            }
+            enumerator: "NETWORK_AUTH_FAILURE"
+            scalar_value: {
+                uint16_t: 6
+            }
+            enumerator: "NETWORK_ASSOC_FAILURE"
+            scalar_value: {
+                uint16_t: 7
+            }
+            enumerator: "NO_DHCP_RESPONSE"
+            scalar_value: {
+                uint16_t: 8
+            }
+            enumerator: "FAILED_DHCP_CONFIG"
+            scalar_value: {
+                uint16_t: 9
+            }
+            enumerator: "IP_ADDR_CONFLICT"
+            scalar_value: {
+                uint16_t: 10
+            }
+            enumerator: "NO_CONN_TO_REGISTRAR"
+            scalar_value: {
+                uint16_t: 11
+            }
+            enumerator: "MULTIPLE_PBC_DETECTED"
+            scalar_value: {
+                uint16_t: 12
+            }
+            enumerator: "ROGUE_SUSPECTED"
+            scalar_value: {
+                uint16_t: 13
+            }
+            enumerator: "DEVICE_BUSY"
+            scalar_value: {
+                uint16_t: 14
+            }
+            enumerator: "SETUP_LOCKED"
+            scalar_value: {
+                uint16_t: 15
+            }
+            enumerator: "MSG_TIMEOUT"
+            scalar_value: {
+                uint16_t: 16
+            }
+            enumerator: "REG_SESS_TIMEOUT"
+            scalar_value: {
+                uint16_t: 17
+            }
+            enumerator: "DEV_PASSWORD_AUTH_FAILURE"
+            scalar_value: {
+                uint16_t: 18
+            }
+            enumerator: "CHAN_60G_NOT_SUPPORTED"
+            scalar_value: {
+                uint16_t: 19
+            }
+            enumerator: "PUBLIC_KEY_HASH_MISMATCH"
+            scalar_value: {
+                uint16_t: 20
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaIfaceCallback::WpsErrorIndication"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "uint16_t"
+
+            enumerator: "NO_ERROR"
+            scalar_value: {
+                uint16_t: 0
+            }
+            enumerator: "SECURITY_TKIP_ONLY_PROHIBITED"
+            scalar_value: {
+                uint16_t: 1
+            }
+            enumerator: "SECURITY_WEP_PROHIBITED"
+            scalar_value: {
+                uint16_t: 2
+            }
+            enumerator: "AUTH_FAILURE"
+            scalar_value: {
+                uint16_t: 3
+            }
+        }
+    }
+
+    api: {
+        name: "onNetworkAdded"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    api: {
+        name: "onNetworkRemoved"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    api: {
+        name: "onStateChanged"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaIfaceCallback::State"
+        }
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "onAnqpQueryDone"
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaIfaceCallback::AnqpData"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaIfaceCallback::Hs20AnqpData"
+        }
+    }
+
+    api: {
+        name: "onHs20IconQueryDone"
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "onHs20SubscriptionRemediation"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaIfaceCallback::OsuMethod"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "onHs20DeauthImminentNotice"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "onConnected"
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "onDisconnected"
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    api: {
+        name: "onAssociationCompleted"
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "onAssociationRejected"
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    api: {
+        name: "onAuthenticationTimeout"
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "onEapFailure"
+    }
+
+    api: {
+        name: "onWpsEventSuccess"
+    }
+
+    api: {
+        name: "onWpsEventFail"
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaIfaceCallback::WpsConfigError"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaIfaceCallback::WpsErrorIndication"
+        }
+    }
+
+    api: {
+        name: "onWpsEventPbcOverlap"
+    }
+
+}

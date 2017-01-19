@@ -1,0 +1,520 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "ISupplicantP2pIfaceCallback"
+
+package: "android.hardware.wifi.supplicant"
+
+import: "android.hardware.wifi.supplicant@1.0::types"
+
+interface: {
+    attribute: {
+        name: "::android::hardware::wifi::supplicant::V1_0::ISupplicantP2pIfaceCallback::WpsDevPasswordId"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "uint16_t"
+
+            enumerator: "DEFAULT"
+            scalar_value: {
+                uint16_t: 0
+            }
+            enumerator: "USER_SPECIFIED"
+            scalar_value: {
+                uint16_t: 1
+            }
+            enumerator: "MACHINE_SPECIFIED"
+            scalar_value: {
+                uint16_t: 2
+            }
+            enumerator: "REKEY"
+            scalar_value: {
+                uint16_t: 3
+            }
+            enumerator: "PUSHBUTTON"
+            scalar_value: {
+                uint16_t: 4
+            }
+            enumerator: "REGISTRAR_SPECIFIED"
+            scalar_value: {
+                uint16_t: 5
+            }
+            enumerator: "NFC_CONNECTION_HANDOVER"
+            scalar_value: {
+                uint16_t: 7
+            }
+            enumerator: "P2PS_DEFAULT"
+            scalar_value: {
+                uint16_t: 8
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::wifi::supplicant::V1_0::ISupplicantP2pIfaceCallback::P2pStatusCode"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "uint32_t"
+
+            enumerator: "SUCCESS"
+            scalar_value: {
+                uint32_t: 0
+            }
+            enumerator: "FAIL_INFO_CURRENTLY_UNAVAILABLE"
+            scalar_value: {
+                uint32_t: 1
+            }
+            enumerator: "FAIL_INCOMPATIBLE_PARAMS"
+            scalar_value: {
+                uint32_t: 2
+            }
+            enumerator: "FAIL_LIMIT_REACHED"
+            scalar_value: {
+                uint32_t: 3
+            }
+            enumerator: "FAIL_INVALID_PARAMS"
+            scalar_value: {
+                uint32_t: 4
+            }
+            enumerator: "FAIL_UNABLE_TO_ACCOMMODATE"
+            scalar_value: {
+                uint32_t: 5
+            }
+            enumerator: "FAIL_PREV_PROTOCOL_ERROR"
+            scalar_value: {
+                uint32_t: 6
+            }
+            enumerator: "FAIL_NO_COMMON_CHANNELS"
+            scalar_value: {
+                uint32_t: 7
+            }
+            enumerator: "FAIL_UNKNOWN_GROUP"
+            scalar_value: {
+                uint32_t: 8
+            }
+            enumerator: "FAIL_BOTH_GO_INTENT_15"
+            scalar_value: {
+                uint32_t: 9
+            }
+            enumerator: "FAIL_INCOMPATIBLE_PROV_METHOD"
+            scalar_value: {
+                uint32_t: 10
+            }
+            enumerator: "FAIL_REJECTED_BY_USER"
+            scalar_value: {
+                uint32_t: 11
+            }
+            enumerator: "SUCCESS_DEFERRED"
+            scalar_value: {
+                uint32_t: 12
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::wifi::supplicant::V1_0::ISupplicantP2pIfaceCallback::P2pProvDiscStatusCode"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "uint8_t"
+
+            enumerator: "SUCCESS"
+            scalar_value: {
+                uint8_t: 0
+            }
+            enumerator: "TIMEOUT"
+            scalar_value: {
+                uint8_t: 1
+            }
+            enumerator: "REJECTED"
+            scalar_value: {
+                uint8_t: 2
+            }
+            enumerator: "TIMEOUT_JOIN"
+            scalar_value: {
+                uint8_t: 3
+            }
+            enumerator: "INFO_UNAVAILABLE"
+            scalar_value: {
+                uint8_t: 4
+            }
+        }
+    }
+
+    api: {
+        name: "onNetworkAdded"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    api: {
+        name: "onNetworkRemoved"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    api: {
+        name: "onDeviceFound"
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 8
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+        arg: {
+            type: TYPE_MASK
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::WpsConfigMethods"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint8_t"
+        }
+        arg: {
+            type: TYPE_MASK
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::P2pGroupCapabilityMask"
+        }
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 8
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "onDeviceLost"
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "onFindStopped"
+    }
+
+    api: {
+        name: "onGoNegotiationRequest"
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantP2pIfaceCallback::WpsDevPasswordId"
+        }
+    }
+
+    api: {
+        name: "onGoNegotiationCompleted"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantP2pIfaceCallback::P2pStatusCode"
+        }
+    }
+
+    api: {
+        name: "onGroupFormationSuccess"
+    }
+
+    api: {
+        name: "onGroupFormationFailure"
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "onGroupStarted"
+        arg: {
+            type: TYPE_STRING
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 32
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+    }
+
+    api: {
+        name: "onGroupRemoved"
+        arg: {
+            type: TYPE_STRING
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+    }
+
+    api: {
+        name: "onInvitationReceived"
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    api: {
+        name: "onInvitationResult"
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantP2pIfaceCallback::P2pStatusCode"
+        }
+    }
+
+    api: {
+        name: "onProvisionDiscoveryPbcRequest"
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "onProvisionDiscoveryPbcResponse"
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "onProvisionDiscoveryShowPin"
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "onProvisionDiscoveryEnterPin"
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "onProvisionDiscoveryFailure"
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "onProvisionDiscoveryCompleted"
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantP2pIfaceCallback::P2pProvDiscStatusCode"
+        }
+        arg: {
+            type: TYPE_MASK
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::WpsConfigMethods"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "onServiceDiscoveryResponse"
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint16_t"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "onStaAuthorized"
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "onStaDeauthorized"
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        arg: {
+            type: TYPE_ARRAY
+            vector_value: {
+                vector_size: 6
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+}

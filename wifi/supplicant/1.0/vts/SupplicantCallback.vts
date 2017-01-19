@@ -1,0 +1,27 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "ISupplicantCallback"
+
+package: "android.hardware.wifi.supplicant"
+
+
+interface: {
+    api: {
+        name: "onInterfaceCreated"
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "onInterfaceRemoved"
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "onTerminating"
+    }
+
+}
