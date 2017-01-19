@@ -79,25 +79,4 @@ interface: {
         }
     }
 
-    api: {
-        name: "getUndefinedTemperature"
-        return_type_hidl: {
-            type: TYPE_STRUCT
-            predefined_type: "::android::hardware::thermal::V1_0::ThermalStatus"
-        }
-        return_type_hidl: {
-            type: TYPE_SCALAR
-            scalar_type: "float_t"
-        }
-        callflow: {
-            next: "*"
-        }
-        callflow: {
-            entry: true
-        }
-        callflow: {
-            exit: true
-        }
-    }
-
 }
