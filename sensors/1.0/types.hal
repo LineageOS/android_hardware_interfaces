@@ -596,6 +596,7 @@ enum SensorType : int32_t {
     /**
      * DYNAMIC_SENSOR_META
      * trigger-mode: special
+     * wake-up sensor: yes
      *
      * A sensor event of this type is received when a dynamic sensor is added to
      * or removed from the system. At most one sensor of this type can be
