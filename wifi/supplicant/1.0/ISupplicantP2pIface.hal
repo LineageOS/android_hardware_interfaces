@@ -410,10 +410,11 @@ interface ISupplicantP2pIface extends ISupplicantIface {
    *         |SupplicantStatusCode.SUCCESS|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
-   * @return capabilityMask Combination of |GroupCapabilityMask| values.
+   * @return capabilityMask Combination of |P2pGroupCapabilityMask| values.
    */
   getGroupCapability(MacAddress peerAddress)
-      generates (SupplicantStatus status, uint32_t capabilities);
+      generates (SupplicantStatus status,
+                 bitfield<P2pGroupCapabilityMask> capabilities);
 
   /**
    * This command can be used to add a bonjour service.

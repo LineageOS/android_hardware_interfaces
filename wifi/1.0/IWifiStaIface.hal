@@ -120,7 +120,9 @@ interface IWifiStaIface extends IWifiIface {
    *         |WifiStatusCode.ERROR_UNKNOWN|
    * @return capabilities Bitset of |StaIfaceCapabilityMask| values.
    */
-  getCapabilities() generates (WifiStatus status, uint32_t capabilities);
+  getCapabilities()
+      generates (WifiStatus status,
+                 bitfield<StaIfaceCapabilityMask> capabilities);
 
   /**
    * Used to query additional information about the chip's APF capabilities.
