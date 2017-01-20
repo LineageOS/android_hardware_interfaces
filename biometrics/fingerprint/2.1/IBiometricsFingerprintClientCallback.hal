@@ -43,8 +43,9 @@ interface IBiometricsFingerprintClientCallback {
      * @param deviceId the instance of this fingerprint device
      * @param fingerId the fingerprint templetate that was authenticated
      * @param groupId the groupid for the template that was authenticated
+     * @param token the hardware authentication token to pass to Keystore.addAuthToken()
      */
-    oneway onAuthenticated(uint64_t deviceId, uint32_t fingerId, uint32_t groupId);
+    oneway onAuthenticated(uint64_t deviceId, uint32_t fingerId, uint32_t groupId, vec<uint8_t> token);
 
     /**
      * Sent when a fingerprint error occurs
