@@ -34,7 +34,7 @@ int main(int /*argc*/, char** argv) {
   // Setup hwbinder service
   android::sp<android::hardware::wifi::V1_0::IWifi> service =
       new android::hardware::wifi::V1_0::implementation::Wifi();
-  CHECK_EQ(service->registerAsService("wifi"), android::NO_ERROR)
+  CHECK_EQ(service->registerAsService(), android::NO_ERROR)
       << "Failed to register wifi HAL";
 
   joinRpcThreadpool();
