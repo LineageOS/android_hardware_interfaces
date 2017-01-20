@@ -17,6 +17,7 @@
 #ifndef ANDROID_HARDWARE_CAMERA_PROVIDER_V2_4_CAMERAPROVIDER_H
 #define ANDROID_HARDWARE_CAMERA_PROVIDER_V2_4_CAMERAPROVIDER_H
 
+#include <regex>
 #include "hardware/camera_common.h"
 #include "utils/Mutex.h"
 #include "utils/SortedVector.h"
