@@ -241,6 +241,7 @@ enum KeyPurpose : uint32_t {
     SIGN = 2,       /* Usable with RSA, EC and HMAC keys. */
     VERIFY = 3,     /* Usable with RSA, EC and HMAC keys. */
     DERIVE_KEY = 4, /* Usable with EC keys. */
+    WRAP_KEY = 5,   /* Usable with wrapping keys. */
 };
 
 /**
