@@ -34,8 +34,6 @@ using ::android::sp;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 
-const char kWifiServiceName[] = "wifi";
-
 void stopFramework() {
     ASSERT_EQ(std::system("svc wifi disable"), 0);
     sleep(5);
@@ -44,7 +42,7 @@ void stopFramework() {
 void startFramework() { ASSERT_EQ(std::system("svc wifi enable"), 0); }
 
 sp<IWifi> getWifi() {
-    sp<IWifi> wifi = IWifi::getService(kWifiServiceName);
+    sp<IWifi> wifi = IWifi::getService();
     return wifi;
 }
 
