@@ -93,14 +93,14 @@ Return<void> BootControl::getSuffix(uint32_t slot, getSuffix_cb _hidl_cb)  {
 }
 
 
-IBootControl* HIDL_FETCH_IBootControl(const char* hal) {
+IBootControl* HIDL_FETCH_IBootControl(const char* /* hal */) {
     int ret = 0;
     boot_control_module_t* module = NULL;
     hw_module_t **hwm = reinterpret_cast<hw_module_t**>(&module);
-    ret = hw_get_module(hal, const_cast<const hw_module_t**>(hwm));
+    ret = hw_get_module(BOOT_CONTROL_HARDWARE_MODULE_ID, const_cast<const hw_module_t**>(hwm));
     if (ret)
     {
-        ALOGE("hw_get_module %s failed: %d", hal, ret);
+        ALOGE("hw_get_module %s failed: %d", BOOT_CONTROL_HARDWARE_MODULE_ID, ret);
         return nullptr;
     }
     module->init(module);
