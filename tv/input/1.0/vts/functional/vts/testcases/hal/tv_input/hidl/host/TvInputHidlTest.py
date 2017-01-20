@@ -39,7 +39,6 @@ class TvInputHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
                                  target_version=1.0,
                                  target_package="android.hardware.tv.input",
                                  target_component_name="ITvInput",
-                                 hw_binder_service_name="tv-input-1-0",
                                  bits=64 if self.dut.is64Bit else 32)
 
         self.dut.shell.InvokeTerminal("one")

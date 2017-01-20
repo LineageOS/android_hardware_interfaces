@@ -196,7 +196,7 @@ bool TvInput::isSupportedStreamType(int type) {
     return type != TV_STREAM_TYPE_BUFFER_PRODUCER;
 }
 
-ITvInput* HIDL_FETCH_ITvInput(const char* name) {
+ITvInput* HIDL_FETCH_ITvInput(const char* /* name */) {
     int ret = 0;
     const hw_module_t* hw_module = nullptr;
     tv_input_device_t* input_device;
@@ -213,7 +213,8 @@ ITvInput* HIDL_FETCH_ITvInput(const char* name) {
         }
     }
     else {
-        LOG(ERROR) << "hw_get_module " << name << " failed: " << ret;
+        LOG(ERROR) << "hw_get_module " << TV_INPUT_HARDWARE_MODULE_ID
+                   << " failed: " << ret;
         return nullptr;
     }
 }
