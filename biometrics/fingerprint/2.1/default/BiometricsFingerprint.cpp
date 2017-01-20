@@ -25,6 +25,8 @@
 #include <hardware/fingerprint.h>
 #include "BiometricsFingerprint.h"
 
+#include <inttypes.h>
+
 namespace android {
 namespace hardware {
 namespace biometrics {
@@ -245,12 +247,12 @@ void BiometricsFingerprint::notifyKeystore(const uint8_t *auth_token, const size
     if (auth_token != nullptr && auth_token_length > 0) {
         // TODO: cache service?
         sp<IServiceManager> sm = android::defaultServiceManager();
-        sp<IBinder> binder = sm->getService(String16("android.security.keystore"));
+        sp<::android::IBinder> binder = sm->getService(String16("android.security.keystore"));
         sp<IKeystoreService> service = interface_cast<IKeystoreService>(binder);
         if (service != nullptr) {
-            status_t ret = service->addAuthToken(auth_token, auth_token_length);
-            if (ret != ResponseCode::NO_ERROR) {
-                ALOGE("Falure sending auth token to KeyStore: %d", ret);
+            auto ret = service->addAuthToken(auth_token, auth_token_length);
+            if (!ret.isOk()) {
+                ALOGE("Failure sending auth token to KeyStore: %" PRId32, int32_t(ret));
             }
         } else {
             ALOGE("Unable to communicate with KeyStore");
