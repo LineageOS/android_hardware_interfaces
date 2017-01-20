@@ -67,6 +67,10 @@ interface ISupplicantStaIface extends ISupplicantIface {
     SENSE = 2
   };
 
+  enum ExtRadioWorkDefaults : uint32_t {
+    TIMEOUT_IN_SECS = 10
+  };
+
   /**
    * Register for callbacks from this interface.
    *
@@ -405,4 +409,55 @@ interface ISupplicantStaIface extends ISupplicantIface {
    *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
   setExternalSim(bool useExternalSim) generates (SupplicantStatus status);
+
+  /**
+   * External programs can request supplicant to not start offchannel
+   * operations during other tasks that may need exclusive control of the
+   * radio.
+   *
+   * This method can be used to reserve a slot for radio access. If freq is
+   * specified, other radio work items on the same channel can be completed in
+   * parallel. Otherwise, all other radio work items are blocked during
+   * execution. Timeout must be set to |ExtRadioWorkDefaults.TIMEOUT_IN_SECS|
+   * seconds by default to avoid blocking supplicant operations on the iface
+   * for excessive time. If a longer (or shorter) safety timeout is needed,
+   * that may be specified with the optional timeout parameter. This command
+   * returns an identifier for the radio work item.
+   *
+   * Once the radio work item has been started,
+   * |ISupplicant.onExtRadioWorkStart| callback is indicated that the external
+   * processing can start.
+   *
+   * @param name Name for the radio work being added.
+   * @param freqInMhz Frequency to specify. Set to 0 for all channels.
+   * @param timeoutInSec Timeout tospecify. Set to 0 for default timeout.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   * @return id Identifier for this radio work.
+   */
+  addExtRadioWork(string name, uint32_t freqInMhz, uint32_t timeoutInSec)
+      generates (SupplicantStatus status, uint32_t id);
+
+  /**
+   * Indicates to supplicant that the external radio work has completed.
+   * This allows other radio works to be performed. If this method is not
+   * invoked (e.g., due to the external program terminating), supplicant
+   * must time out the radio work item on the iface and send
+   * |ISupplicantCallback.onExtRadioWorkTimeout| event to indicate
+   * that this has happened.
+   *
+   * This method may also be used to cancel items that have been scheduled
+   * via |addExtRadioWork|, but have not yet been started (notified via
+   * |ISupplicantCallback.onExtRadioWorkStart|).
+   *
+   * @return id Identifier generated for the radio work addition
+   *         (using |addExtRadioWork|).
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   */
+  removeExtRadioWork(uint32_t id) generates (SupplicantStatus status);
 };

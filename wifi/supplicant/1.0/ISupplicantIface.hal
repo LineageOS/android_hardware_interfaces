@@ -138,6 +138,19 @@ interface ISupplicantIface {
   setWpsDeviceName(string name) generates (SupplicantStatus status);
 
   /**
+   * Set the device type for WPS operations.
+   *
+   * @parm type Type of device. Refer to section B.1 of Wifi P2P
+   *       Technical specification v1.2.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+   */
+  setWpsDeviceType(uint8_t[8] type) generates (SupplicantStatus status);
+
+  /**
    * Set the manufacturer for WPS operations.
    * The manufacturer of the device (up to |WPS_MANUFACTURER_MAX_LEN| ASCII
    * characters).
