@@ -887,7 +887,7 @@ bool convertHidlNanPublishRequestToLegacy(
   if (!legacy_request) {
     return false;
   }
-  memset(&legacy_request, 0, sizeof(legacy_hal::NanPublishRequest));
+  memset(legacy_request, 0, sizeof(legacy_hal::NanPublishRequest));
 
   legacy_request->publish_id = hidl_request.baseConfigs.sessionId;
   legacy_request->ttl = hidl_request.baseConfigs.ttlSec;
@@ -959,7 +959,7 @@ bool convertHidlNanSubscribeRequestToLegacy(
   if (!legacy_request) {
     return false;
   }
-  memset(&legacy_request, 0, sizeof(legacy_hal::NanSubscribeRequest));
+  memset(legacy_request, 0, sizeof(legacy_hal::NanSubscribeRequest));
 
   legacy_request->subscribe_id = hidl_request.baseConfigs.sessionId;
   legacy_request->ttl = hidl_request.baseConfigs.ttlSec;
@@ -1044,7 +1044,7 @@ bool convertHidlNanTransmitFollowupRequestToLegacy(
   if (!legacy_request) {
     return false;
   }
-  memset(&legacy_request, 0, sizeof(legacy_hal::NanTransmitFollowupRequest));
+  memset(legacy_request, 0, sizeof(legacy_hal::NanTransmitFollowupRequest));
 
   legacy_request->publish_subscribe_id = hidl_request.discoverySessionId;
   legacy_request->requestor_instance_id = hidl_request.peerId;
@@ -1071,7 +1071,7 @@ bool convertHidlNanConfigRequestToLegacy(
   if (!legacy_request) {
     return false;
   }
-  memset(&legacy_request, 0, sizeof(legacy_hal::NanConfigRequest));
+  memset(legacy_request, 0, sizeof(legacy_hal::NanConfigRequest));
 
   // TODO: b/34059183 tracks missing configurations in legacy HAL or uknown defaults
   legacy_request->master_pref = hidl_request.masterPref;
@@ -1161,7 +1161,7 @@ bool convertHidlNanBeaconSdfPayloadRequestToLegacy(
   if (!legacy_request) {
     return false;
   }
-  memset(&legacy_request, 0, sizeof(legacy_hal::NanBeaconSdfPayloadRequest));
+  memset(legacy_request, 0, sizeof(legacy_hal::NanBeaconSdfPayloadRequest));
 
   legacy_request->vsa.payload_transmit_flag = hidl_request.transmitInNext16dws ? 1 : 0;
   legacy_request->vsa.tx_in_discovery_beacon = hidl_request.transmitInDiscoveryBeacon;
@@ -1183,7 +1183,7 @@ bool convertHidlNanDataPathInitiatorRequestToLegacy(
   if (!legacy_request) {
     return false;
   }
-  memset(&legacy_request, 0, sizeof(legacy_hal::NanDataPathInitiatorRequest));
+  memset(legacy_request, 0, sizeof(legacy_hal::NanDataPathInitiatorRequest));
 
   legacy_request->requestor_instance_id = hidl_request.peerId;
   memcpy(legacy_request->peer_disc_mac_addr, hidl_request.peerDiscMacAddr.data(), 6);
@@ -1215,7 +1215,7 @@ bool convertHidlNanDataPathIndicationResponseToLegacy(
   if (!legacy_request) {
     return false;
   }
-  memset(&legacy_request, 0, sizeof(legacy_hal::NanDataPathIndicationResponse));
+  memset(legacy_request, 0, sizeof(legacy_hal::NanDataPathIndicationResponse));
 
   legacy_request->rsp_code = hidl_request.acceptRequest ?
         legacy_hal::NAN_DP_REQUEST_ACCEPT : legacy_hal::NAN_DP_REQUEST_REJECT;
