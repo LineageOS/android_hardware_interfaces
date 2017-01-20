@@ -100,6 +100,9 @@ private:
                               const Caller& callee) const;
     bool checkReadPermission(const VehiclePropConfig &config,
                              const Caller& caller) const;
+    bool checkAcl(uid_t callerUid,
+                  VehicleProperty propertyId,
+                  VehiclePropertyAccess requiredAccess) const;
 
     static bool isSubscribable(const VehiclePropConfig& config,
                                SubscribeFlags flags);

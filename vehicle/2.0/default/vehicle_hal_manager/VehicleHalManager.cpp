@@ -87,7 +87,7 @@ Return<void> VehicleHalManager::get(
     }
 
     if (!checkReadPermission(*config, getCaller())) {
-        _hidl_cb(StatusCode::INVALID_ARG, kEmptyValue);
+        _hidl_cb(StatusCode::ACCESS_DENIED, kEmptyValue);
         return Void();
     }
 
@@ -108,7 +108,7 @@ Return<StatusCode> VehicleHalManager::set(const VehiclePropValue &value) {
     }
 
     if (!checkWritePermission(*config, getCaller())) {
-        return StatusCode::INVALID_ARG;
+        return StatusCode::ACCESS_DENIED;
     }
 
     handlePropertySetEvent(value);
@@ -122,6 +122,7 @@ Return<StatusCode> VehicleHalManager::subscribe(
         const sp<IVehicleCallback> &callback,
         const hidl_vec<SubscribeOptions> &options) {
     hidl_vec<SubscribeOptions> verifiedOptions(options);
+    auto caller = getCaller();
     for (size_t i = 0; i < verifiedOptions.size(); i++) {
         SubscribeOptions& ops = verifiedOptions[i];
         VehicleProperty prop = ops.propId;
@@ -131,6 +132,10 @@ Return<StatusCode> VehicleHalManager::subscribe(
             ALOGE("Failed to subscribe: config not found, property: 0x%x",
                   prop);
             return StatusCode::INVALID_ARG;
+        }
+
+        if (!checkAcl(caller.uid, config->prop, VehiclePropertyAccess::READ)) {
+            return StatusCode::ACCESS_DENIED;
         }
 
         if (!isSubscribable(*config, ops.flags)) {
@@ -304,15 +309,13 @@ bool VehicleHalManager::isSubscribable(const VehiclePropConfig& config,
     return true;
 }
 
-bool checkAcl(const PropertyAclMap& aclMap,
-              uid_t callerUid,
-              VehicleProperty propertyId,
-              VehiclePropertyAccess requiredAccess) {
+bool VehicleHalManager::checkAcl(uid_t callerUid, VehicleProperty propertyId,
+                                 VehiclePropertyAccess requiredAccess) const {
     if (callerUid == AID_SYSTEM && isSystemProperty(propertyId)) {
         return true;
     }
 
-    auto range = aclMap.equal_range(propertyId);
+    auto range = mPropertyAclMap.equal_range(propertyId);
     for (auto it = range.first; it != range.second; ++it) {
         auto& acl = it->second;
         if (acl.uid == callerUid && (acl.access & requiredAccess)) {
@@ -328,8 +331,7 @@ bool VehicleHalManager::checkWritePermission(const VehiclePropConfig &config,
         ALOGW("Property 0%x has no write access", config.prop);
         return false;
     }
-    return checkAcl(mPropertyAclMap, caller.uid, config.prop,
-                    VehiclePropertyAccess::WRITE);
+    return checkAcl(caller.uid, config.prop, VehiclePropertyAccess::WRITE);
 }
 
 bool VehicleHalManager::checkReadPermission(const VehiclePropConfig &config,
@@ -339,8 +341,7 @@ bool VehicleHalManager::checkReadPermission(const VehiclePropConfig &config,
         return false;
     }
 
-    return checkAcl(mPropertyAclMap, caller.uid, config.prop,
-                    VehiclePropertyAccess::READ);
+    return checkAcl(caller.uid, config.prop, VehiclePropertyAccess::READ);
 }
 
 void VehicleHalManager::handlePropertySetEvent(const VehiclePropValue& value) {
