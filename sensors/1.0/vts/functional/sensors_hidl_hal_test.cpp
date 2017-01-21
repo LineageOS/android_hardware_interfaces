@@ -41,8 +41,6 @@ using ::android::hardware::hidl_string;
 using ::android::sp;
 using namespace ::android::hardware::sensors::V1_0;
 
-#define SENSORS_SERVICE_NAME "sensors"
-
 // Test environment for sensors
 class SensorsHidlEnvironment : public ::testing::Environment {
  public:
@@ -82,7 +80,7 @@ class SensorsHidlEnvironment : public ::testing::Environment {
 };
 
 void SensorsHidlEnvironment::SetUp() {
-  sensors = ISensors::getService(SENSORS_SERVICE_NAME, false);
+  sensors = ISensors::getService(false);
   ALOGI_IF(sensors, "sensors is not nullptr, %p", sensors.get());
   ASSERT_NE(sensors, nullptr);
 

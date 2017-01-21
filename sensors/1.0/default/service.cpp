@@ -23,5 +23,5 @@ using android::hardware::sensors::V1_0::ISensors;
 using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
-    return defaultPassthroughServiceImplementation<ISensors>("sensors");
+    return defaultPassthroughServiceImplementation<ISensors>();
 }
