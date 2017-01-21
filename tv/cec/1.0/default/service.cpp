@@ -23,5 +23,5 @@ using android::hardware::tv::cec::V1_0::IHdmiCec;
 using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
-    return defaultPassthroughServiceImplementation<IHdmiCec>("tv.cec");
+    return defaultPassthroughServiceImplementation<IHdmiCec>();
 }
