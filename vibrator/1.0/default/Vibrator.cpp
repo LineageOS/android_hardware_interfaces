@@ -50,18 +50,18 @@ Return<Status> Vibrator::off()  {
     return Status::OK;
 }
 
-IVibrator* HIDL_FETCH_IVibrator(const char *hal) {
+IVibrator* HIDL_FETCH_IVibrator(const char * /*hal*/) {
     vibrator_device_t *vib_device;
     const hw_module_t *hw_module = nullptr;
 
-    int ret = hw_get_module(hal, &hw_module);
+    int ret = hw_get_module(VIBRATOR_HARDWARE_MODULE_ID, &hw_module);
     if (ret == 0) {
         ret = vibrator_open(hw_module, &vib_device);
         if (ret != 0) {
-            ALOGE("vibrator_open %s failed: %d", hal, ret);
+            ALOGE("vibrator_open failed: %d", ret);
         }
     } else {
-        ALOGE("hw_get_module %s failed: %d", hal, ret);
+        ALOGE("hw_get_module %s failed: %d", VIBRATOR_HARDWARE_MODULE_ID, ret);
     }
 
     if (ret == 0) {
