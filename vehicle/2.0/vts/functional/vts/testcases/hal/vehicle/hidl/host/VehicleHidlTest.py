@@ -20,6 +20,7 @@ import time
 
 from vts.runners.host import asserts
 from vts.runners.host import base_test_with_webdb
+from vts.runners.host import const
 from vts.runners.host import test_runner
 from vts.utils.python.controllers import android_device
 from vts.utils.python.profiling import profiling_utils
@@ -35,6 +36,10 @@ class VehicleHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
         self.dut.shell.InvokeTerminal("one")
         self.dut.shell.one.Execute("setenforce 0")  # SELinux permissive mode
 
+        results = self.dut.shell.one.Execute("id -u system")
+        system_uid = results[const.STDOUT][0].strip()
+        logging.info("system_uid: %s", system_uid)
+
         self.dut.hal.InitHidlHal(
             target_type="vehicle",
             target_basepaths=self.dut.libPaths,
@@ -45,6 +50,7 @@ class VehicleHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
             bits=64 if self.dut.is64Bit else 32)
 
         self.vehicle = self.dut.hal.vehicle  # shortcut
+        self.vehicle.SetCallerUid(system_uid)
         self.vtypes = self.dut.hal.vehicle.GetHidlTypeInterface("types")
         logging.info("vehicle types: %s", self.vtypes)
 
