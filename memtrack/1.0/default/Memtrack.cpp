@@ -29,7 +29,7 @@ namespace memtrack {
 namespace V1_0 {
 namespace implementation {
 
-Memtrack::Memtrack(memtrack_module_t *module) : mModule(module) {
+Memtrack::Memtrack(const memtrack_module_t *module) : mModule(module) {
     if (mModule)
         mModule->init(mModule);
 }
@@ -74,25 +74,25 @@ Return<void> Memtrack::getMemory(int32_t pid, MemtrackType type,
 
 
 IMemtrack* HIDL_FETCH_IMemtrack(const char* name) {
-    int ret = 0;
-    const hw_module_t* hw_module = NULL;
-    memtrack_module_t *memtrack_module = NULL;
+    const hw_module_t* hw_module = nullptr;
+    const memtrack_module_t* memtrack_module = nullptr;
+    int err = hw_get_module(name, &hw_module);
+    if (err) {
+        ALOGE ("hw_get_module %s failed: %d", name, err);
+        return nullptr;
+    }
 
-    ret = hw_get_module(name, &hw_module);
-    if (ret == 0 && hw_module->methods->open)
-    {
-        ret = hw_module->methods->open(hw_module, name,
-                reinterpret_cast<hw_device_t**>(&memtrack_module));
-        if (ret == 0)
-                return new Memtrack(memtrack_module);
-        else {
+    if (!hw_module->methods || !hw_module->methods->open) {
+        memtrack_module = reinterpret_cast<const memtrack_module_t*>(hw_module);
+    } else {
+        err = hw_module->methods->open(hw_module, name,
+                reinterpret_cast<hw_device_t**>(const_cast<memtrack_module_t**>(&memtrack_module)));
+        if (err) {
             ALOGE("Passthrough failed to load legacy HAL.");
+            return nullptr;
         }
     }
-    else {
-        ALOGE ("hw_get_module %s failed: %d", name, ret);
-    }
-    return nullptr;
+    return new Memtrack(memtrack_module);
 }
 
 } // namespace implementation
