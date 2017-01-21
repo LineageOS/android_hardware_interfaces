@@ -1,0 +1,43 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "IBluetoothHciCallbacks"
+
+package: "android.hardware.bluetooth"
+
+import: "android.hardware.bluetooth@1.0::types"
+
+interface: {
+    api: {
+        name: "hciEventReceived"
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "aclDataReceived"
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "scoDataReceived"
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+}
