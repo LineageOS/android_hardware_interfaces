@@ -19,7 +19,6 @@
 namespace android {
 namespace hardware {
 namespace drm {
-namespace drm {
 namespace V1_0 {
 namespace implementation {
 
@@ -53,6 +52,9 @@ Status toStatus(status_t legacyStatus) {
     case android::ERROR_DRM_RESOURCE_BUSY:
         status = Status::ERROR_DRM_RESOURCE_BUSY;
         break;
+    case android::ERROR_DRM_INSUFFICIENT_OUTPUT_PROTECTION:
+        status = Status::ERROR_DRM_INSUFFICIENT_OUTPUT_PROTECTION;
+        break;
     case android::ERROR_DRM_DEVICE_REVOKED:
         status = Status::ERROR_DRM_DEVICE_REVOKED;
         break;
@@ -67,7 +69,6 @@ Status toStatus(status_t legacyStatus) {
 
 }  // namespace implementation
 }  // namespace V1_0
-}  // namespace drm
 }  // namespace drm
 }  // namespace hardware
 }  // namespace android

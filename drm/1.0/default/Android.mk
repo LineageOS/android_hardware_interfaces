@@ -14,6 +14,8 @@
 # limitations under the License.
 
 
+############# Build legacy drm service ############
+
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
@@ -24,16 +26,14 @@ LOCAL_SRC_FILES := \
   service.cpp \
 
 LOCAL_SHARED_LIBRARIES := \
+  android.hardware.drm@1.0 \
+  android.hidl.memory@1.0 \
   libhidlbase \
   libhidltransport \
-  liblog \
-  libhwbinder \
-  libutils \
   libhardware \
-  android.hardware.drm.drm@1.0 \
-  android.hardware.drm.crypto@1.0 \
-  android.hidl.memory@1.0 \
-
+  libhwbinder \
+  liblog \
+  libutils \
 
 LOCAL_C_INCLUDES := \
   hardware/interfaces/drm
@@ -43,3 +43,37 @@ LOCAL_C_INCLUDES := \
 LOCAL_32_BIT_ONLY := true
 
 include $(BUILD_EXECUTABLE)
+
+############# Build legacy drm impl library ############
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := android.hardware.drm@1.0-impl
+LOCAL_MODULE_RELATIVE_PATH := hw
+LOCAL_SRC_FILES := \
+    DrmFactory.cpp \
+    DrmPlugin.cpp \
+    CryptoFactory.cpp \
+    CryptoPlugin.cpp \
+    TypeConvert.cpp \
+
+LOCAL_SHARED_LIBRARIES := \
+    android.hardware.drm@1.0 \
+    android.hidl.memory@1.0 \
+    libhidlbase \
+    libhidlmemory \
+    libhidltransport \
+    libhwbinder \
+    liblog \
+    libmediadrm \
+    libstagefright_foundation \
+    libutils \
+
+LOCAL_C_INCLUDES := \
+    frameworks/native/include \
+    frameworks/av/include
+
+# TODO: The legacy DRM plugins only support 32-bit. They need
+# to be migrated to 64-bit (b/18948909)
+LOCAL_32_BIT_ONLY := true
+
+include $(BUILD_SHARED_LIBRARY)

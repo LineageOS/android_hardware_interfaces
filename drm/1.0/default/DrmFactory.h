@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ANDROID_HARDWARE_DRM_DRM_V1_0__DRMFACTORY_H
-#define ANDROID_HARDWARE_DRM_DRM_V1_0__DRMFACTORY_H
+#ifndef ANDROID_HARDWARE_DRM_V1_0__DRMFACTORY_H
+#define ANDROID_HARDWARE_DRM_V1_0__DRMFACTORY_H
 
-#include <android/hardware/drm/drm/1.0/IDrmFactory.h>
+#include <android/hardware/drm/1.0/IDrmFactory.h>
 #include <hidl/Status.h>
 #include <media/drm/DrmAPI.h>
 #include <media/PluginLoader.h>
@@ -25,12 +25,11 @@
 namespace android {
 namespace hardware {
 namespace drm {
-namespace drm {
 namespace V1_0 {
 namespace implementation {
 
-using ::android::hardware::drm::drm::V1_0::IDrmFactory;
-using ::android::hardware::drm::drm::V1_0::IDrmPlugin;
+using ::android::hardware::drm::V1_0::IDrmFactory;
+using ::android::hardware::drm::V1_0::IDrmPlugin;
 using ::android::hardware::hidl_array;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
@@ -42,7 +41,7 @@ struct DrmFactory : public IDrmFactory {
     DrmFactory();
     virtual ~DrmFactory() {}
 
-    // Methods from ::android::hardware::drm::drm::V1_0::IDrmFactory follow.
+    // Methods from ::android::hardware::drm::V1_0::IDrmFactory follow.
 
     Return<bool> isCryptoSchemeSupported(const hidl_array<uint8_t, 16>& uuid)
             override;
@@ -65,8 +64,7 @@ extern "C" IDrmFactory* HIDL_FETCH_IDrmFactory(const char* name);
 }  // namespace implementation
 }  // namespace V1_0
 }  // namespace drm
-}  // namespace drm
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_DRM_DRM_V1_0__DRMFACTORY_H
+#endif  // ANDROID_HARDWARE_DRM_V1_0__DRMFACTORY_H

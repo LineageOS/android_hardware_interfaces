@@ -23,11 +23,10 @@
 namespace android {
 namespace hardware {
 namespace drm {
-namespace drm {
 namespace V1_0 {
 namespace implementation {
 
-    // Methods from ::android::hardware::drm::drm::V1_0::IDrmPlugin follow.
+    // Methods from ::android::hardware::drm::V1_0::IDrmPlugin follow.
 
     Return<void> DrmPlugin::openSession(openSession_cb _hidl_cb) {
         Vector<uint8_t> legacySessionId;
@@ -421,7 +420,6 @@ namespace implementation {
 
 }  // namespace implementation
 }  // namespace V1_0
-}  // namespace drm
 }  // namespace drm
 }  // namespace hardware
 }  // namespace android

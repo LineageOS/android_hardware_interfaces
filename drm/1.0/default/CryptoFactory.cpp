@@ -22,7 +22,6 @@
 namespace android {
 namespace hardware {
 namespace drm {
-namespace crypto {
 namespace V1_0 {
 namespace implementation {
 
@@ -30,7 +29,7 @@ namespace implementation {
         loader("/vendor/lib/mediadrm", "createCryptoFactory") {
     }
 
-    // Methods from ::android::hardware::drm::crypto::V1_0::ICryptoFactory follow.
+    // Methods from ::android::hardware::drm::V1_0::ICryptoFactory follow.
     Return<bool> CryptoFactory::isCryptoSchemeSupported(
             const hidl_array<uint8_t, 16>& uuid) {
         for (size_t i = 0; i < loader.factoryCount(); i++) {
@@ -68,7 +67,6 @@ namespace implementation {
 
 }  // namespace implementation
 }  // namespace V1_0
-}  // namespace crypto
 }  // namespace drm
 }  // namespace hardware
 }  // namespace android

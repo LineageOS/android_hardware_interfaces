@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package android.hardware.drm.drm@1.0;
+package android.hardware.drm@1.0;
 
-import android.hardware.drm.drm@1.0::types;
+import android.hardware.drm@1.0::types;
 
 /**
  * Ref: frameworks/native/include/media/drm/DrmAPI.h:DrmPluginListener
