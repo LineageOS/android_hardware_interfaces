@@ -35,7 +35,7 @@ using ::android::sp;
 class BootHidlTest : public ::testing::Test {
  public:
   virtual void SetUp() override {
-    boot = IBootControl::getService("bootctrl");
+    boot = IBootControl::getService();
     ASSERT_NE(boot, nullptr);
   }
 
