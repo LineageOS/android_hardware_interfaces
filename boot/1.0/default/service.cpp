@@ -7,5 +7,5 @@ using ::android::hardware::boot::V1_0::IBootControl;
 using android::hardware::defaultPassthroughServiceImplementation;
 
 int main (int /* argc */, char * /* argv */ []) {
-    return defaultPassthroughServiceImplementation<IBootControl>("bootctrl");
+    return defaultPassthroughServiceImplementation<IBootControl>();
 }
