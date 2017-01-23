@@ -19,6 +19,15 @@ Return<void> SurfaceFlingerConfigs::vsyncEventPhaseOffsetNs(vsyncEventPhaseOffse
     return Void();
 }
 
+Return<void> SurfaceFlingerConfigs::useTripleFramebuffer(useTripleFramebuffer_cb _hidl_cb) {
+    bool value = false;
+#ifdef USE_TRIPLE_FRAMEBUFFER
+    value = true;
+#endif
+    _hidl_cb({true, value});
+    LOG(INFO) << "SurfaceFlinger FrameBuffer: " << (value ? "triple" : "double");
+    return Void();
+}
 
 // Methods from ::android::hidl::base::V1_0::IBase follow.
 
