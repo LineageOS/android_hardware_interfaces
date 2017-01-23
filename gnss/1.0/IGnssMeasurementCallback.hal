@@ -480,9 +480,16 @@ interface IGnssMeasurementCallback {
 
         /*
          * Carrier frequency of the signal tracked, for example it can be the
-         * GPS L1 = 1.57542e9 Hz, or L2, L5, varying GLO channels, etc. If the
-         * field is not set, it is the primary common use frequency,
-         * e.g. L1 for GPS.
+         * GPS central frequency for L1 = 1575.45 MHz, or L2 = 1227.60 MHz, L5 =
+         * 1176.45 MHz, varying GLO channels, etc. If the field is not set, it
+         * is the primary common use central frequency, e.g. L1 = 1575.45 MHz
+         * for GPS.
+         *
+         * For an L1, L5 receiver tracking a satellite on L1 and L5 at the same
+         * time, two raw measurement structs must be reported for this same
+         * satellite, in one of the measurement structs, all the values related
+         * to L1 must be filled, and in the other all of the values related to
+         * L5 must be filled.
          *
          * If the data is available, gnssClockFlags must contain
          * HAS_CARRIER_FREQUENCY.
@@ -552,12 +559,12 @@ interface IGnssMeasurementCallback {
 
         /*
          * Automatic gain control (AGC) level. AGC acts as a variable gain
-         * amplifier adjusting the power of the incoming signal to minimize the
-         * quantization losses. The AGC level may be used to indicate potential
-         * interference. When AGC is at a nominal level, this value
-         * must be set as 0. Higher gain (and/or lower input power) must be
-         * output as a positive number. Hence in cases of strong jamming, in the
-         * band of this signal, this value must go more negative.
+         * amplifier adjusting the power of the incoming signal. The AGC level
+         * may be used to indicate potential interference. When AGC is at a
+         * nominal level, this value must be set as 0. Higher gain (and/or lower
+         * input power) must be output as a positive number. Hence in cases of
+         * strong jamming, in the band of this signal, this value must go more
+         * negative.
          *
          * Note: Different hardware designs (e.g. antenna, pre-amplification, or
          * other RF HW components) may also affect the typical output of of this
