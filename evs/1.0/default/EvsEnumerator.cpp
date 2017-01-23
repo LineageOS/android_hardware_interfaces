@@ -27,6 +27,11 @@ namespace V1_0 {
 namespace implementation {
 
 
+// TODO(b/31632518):  Need to get notification when our client dies so we can close the camera.
+// As it stands, if the client dies suddenly, the camera will be stuck "open".
+// NOTE:  Display should already be safe by virtue of holding only a weak pointer.
+
+
 EvsEnumerator::EvsEnumerator() {
     ALOGD("EvsEnumerator created");
 
@@ -78,15 +83,11 @@ Return<sp<IEvsCamera>> EvsEnumerator::openCamera(const hidl_string& cameraId) {
     if (!pRecord) {
         ALOGE("Requested camera %s not found", cameraId.c_str());
         return nullptr;
-    }
-    else if (pRecord->inUse) {
+    } else if (pRecord->inUse) {
         ALOGE("Cannot open camera %s which is already in use", cameraId.c_str());
         return nullptr;
-    }
-    else {
-        /* TODO(b/33492405):  Do this, When HIDL can give us back a recognizable pointer
+    } else {
         pRecord->inUse = true;
-         */
         return(pRecord->pCamera);
     }
 }
@@ -96,14 +97,21 @@ Return<void> EvsEnumerator::closeCamera(const ::android::sp<IEvsCamera>& camera)
 
     if (camera == nullptr) {
         ALOGE("Ignoring call to closeCamera with null camera pointer");
-    }
-    else {
-        // Make sure the camera has stopped streaming
-        camera->stopVideoStream();
+    } else {
+        // Find this camera in our list
+        auto it = std::find_if(mCameraList.begin(),
+                               mCameraList.end(),
+                               [camera](const CameraRecord& rec) {
+                                   return (rec.pCamera == camera);
+                               });
+        if (it == mCameraList.end()) {
+            ALOGE("Ignoring close on unrecognized camera");
+        } else {
+            // Make sure the camera has stopped streaming
+            camera->stopVideoStream();
 
-        /* TODO(b/33492405):  Do this, When HIDL can give us back a recognizable pointer
-        pRecord->inUse = false;
-         */
+            it->inUse = false;
+        }
     }
 
     return Void();
@@ -113,41 +121,49 @@ Return<sp<IEvsDisplay>> EvsEnumerator::openDisplay() {
     ALOGD("openDisplay");
 
     // If we already have a display active, then this request must be denied
-    if (mActiveDisplay != nullptr) {
+    sp<IEvsDisplay> pActiveDisplay = mActiveDisplay.promote();
+    if (pActiveDisplay != nullptr) {
         ALOGW("Rejecting openDisplay request the display is already in use.");
         return nullptr;
-    }
-    else {
+    } else {
         // Create a new display interface and return it
-        mActiveDisplay = new EvsDisplay();
-        ALOGD("Returning new EvsDisplay object %p", mActiveDisplay.get());
-        return mActiveDisplay;
+        pActiveDisplay = new EvsDisplay();
+        mActiveDisplay = pActiveDisplay;
+        ALOGD("Returning new EvsDisplay object %p", pActiveDisplay.get());
+        return pActiveDisplay;
     }
 }
 
 Return<void> EvsEnumerator::closeDisplay(const ::android::sp<IEvsDisplay>& display) {
     ALOGD("closeDisplay");
 
-    if (mActiveDisplay == nullptr) {
-        ALOGE("Ignoring closeDisplay when display is not active");
-    }
-    else if (display == nullptr) {
-        ALOGE("Ignoring closeDisplay with null display pointer");
-    }
-    else {
+    // Do we still have a display object we think should be active?
+    sp<IEvsDisplay> pActiveDisplay = mActiveDisplay.promote();
+
+    if (pActiveDisplay == nullptr) {
+        ALOGE("Ignoring closeDisplay when there is no active display.");
+    } else if (display != pActiveDisplay) {
+        ALOGE("Ignoring closeDisplay on a display we didn't issue");
+        ALOGI("Got %p while active display is %p.", display.get(), pActiveDisplay.get());
+    } else {
         // Drop the active display
-        // TODO(b/33492405):  When HIDL provides recognizable pointers, add validation here.
         mActiveDisplay = nullptr;
     }
 
     return Void();
 }
 
+Return<DisplayState> EvsEnumerator::getDisplayState()  {
+    ALOGD("getDisplayState");
 
-// TODO(b/31632518):  Need to get notification when our client dies so we can close the camera.
-// As possible work around would be to give the client a HIDL object to exclusively hold
-// and use it's destructor to perform some work in the server side.
-
+    // Do we still have a display object we think should be active?
+    sp<IEvsDisplay> pActiveDisplay = mActiveDisplay.promote();
+    if (pActiveDisplay != nullptr) {
+        return pActiveDisplay->getDisplayState();
+    } else {
+        return DisplayState::NOT_OPEN;
+    }
+}
 
 } // namespace implementation
 } // namespace V1_0

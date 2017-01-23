@@ -32,5 +32,5 @@ interface IEvsCameraStream {
      * must be delivered, signifying the end of the stream. No further frame
      * deliveries may happen thereafter.
      */
-    oneway deliverFrame(uint32_t frameId, handle bufferHandle);
+    oneway deliverFrame(BufferDesc buffer);
 };

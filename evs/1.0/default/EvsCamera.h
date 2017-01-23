@@ -23,11 +23,13 @@
 
 #include <thread>
 
+
 namespace android {
 namespace hardware {
 namespace evs {
 namespace V1_0 {
 namespace implementation {
+
 
 class EvsCamera : public IEvsCamera {
 public:
@@ -35,7 +37,7 @@ public:
     Return<void> getId(getId_cb id_cb)  override;
     Return<EvsResult> setMaxFramesInFlight(uint32_t bufferCount)  override;
     Return<EvsResult> startVideoStream(const ::android::sp<IEvsCameraStream>& stream) override;
-    Return<EvsResult> doneWithFrame(uint32_t frameId, const hidl_handle& bufferHandle)  override;
+    Return<void> doneWithFrame(const BufferDesc& buffer)  override;
     Return<void> stopVideoStream()  override;
     Return<int32_t> getExtendedInfo(uint32_t opaqueIdentifier)  override;
     Return<EvsResult> setExtendedInfo(uint32_t opaqueIdentifier, int32_t opaqueValue)  override;
@@ -45,34 +47,49 @@ public:
     virtual ~EvsCamera() override;
 
     const CameraDesc& getDesc() { return mDescription; };
-    void GenerateFrames();
 
     static const char kCameraName_Backup[];
     static const char kCameraName_RightTurn[];
 
 private:
-    CameraDesc              mDescription = {};  // The properties of this camera
+    // These three functions are expected to be called while mAccessLock is held
+    bool     setAvailableFrames_Locked(unsigned bufferCount);
+    unsigned increaseAvailableFrames_Locked(unsigned numToAdd);
+    unsigned decreaseAvailableFrames_Locked(unsigned numToRemove);
 
-    buffer_handle_t         mBuffer = nullptr;  // A graphics buffer into which we'll store images
-    uint32_t                mWidth  = 0;        // number of pixels across the buffer
-    uint32_t                mHeight = 0;        // number of pixels vertically in the buffer
-    uint32_t                mStride = 0;        // Bytes per line in the buffer
+    void generateFrames();
+    void fillTestFrame(BufferDesc buff);
 
-    sp<IEvsCameraStream>    mStream = nullptr;  // The callback the user expects when a frame is ready
+    CameraDesc                  mDescription = {};  // The properties of this camera
 
-    std::thread             mCaptureThread;     // The thread we'll use to synthesize frames
+    std::thread                 mCaptureThread;     // The thread we'll use to synthesize frames
 
-    uint32_t                mFrameId;           // A frame counter used to identify specific frames
+    uint32_t                    mWidth  = 0;        // Horizontal pixel count in the buffers
+    uint32_t                    mHeight = 0;        // Vertical pixel count in the buffers
+    uint32_t                    mFormat = 0;        // Values from android_pixel_format_t [TODO: YUV?  Leave opaque?]
+    uint32_t                    mUsage  = 0;        // Values from from Gralloc.h
+    uint32_t                    mStride = 0;        // Bytes per line in the buffers
+
+    sp<IEvsCameraStream>        mStream = nullptr;  // The callback used to deliver each frame
+
+    struct BufferRecord {
+        buffer_handle_t     handle;
+        bool                inUse;
+        explicit BufferRecord(buffer_handle_t h) : handle(h), inUse(false) {};
+    };
+    std::vector<BufferRecord>   mBuffers;           // Graphics buffers to transfer images
+    unsigned                    mFramesAllowed;     // How many buffers are we currently using
+    unsigned                    mFramesInUse;       // How many buffers are currently outstanding
 
     enum StreamStateValues {
         STOPPED,
         RUNNING,
         STOPPING,
     };
-    StreamStateValues       mStreamState;
-    bool                    mFrameBusy;         // A flag telling us our one buffer is in use
+    StreamStateValues           mStreamState;
 
-    std::mutex              mAccessLock;
+    // Syncrhonization necessary to deconflict mCaptureThread from the main service thread
+    std::mutex                  mAccessLock;
 };
 
 } // namespace implementation

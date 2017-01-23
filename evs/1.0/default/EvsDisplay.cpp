@@ -39,6 +39,7 @@ EvsDisplay::EvsDisplay() {
     ALOGD("EvsDisplay instantiated");
 
     // Set up our self description
+    // NOTE:  These are arbitrary values chosen for testing
     mInfo.displayId             = "Mock Display";
     mInfo.vendorFlags           = 3870;
     mInfo.defaultHorResolution  = 320;
@@ -50,16 +51,17 @@ EvsDisplay::~EvsDisplay() {
     ALOGD("EvsDisplay being destroyed");
     std::lock_guard<std::mutex> lock(mAccessLock);
 
-    // Report if we're going away while a buffer is outstanding.  This could be bad.
+    // Report if we're going away while a buffer is outstanding
     if (mFrameBusy) {
-        ALOGE("EvsDisplay going down while client is holding a buffer\n");
+        ALOGE("EvsDisplay going down while client is holding a buffer");
     }
 
     // Make sure we release our frame buffer
-    if (mBuffer) {
+    if (mBuffer.memHandle) {
         // Drop the graphics buffer we've been using
         GraphicBufferAllocator& alloc(GraphicBufferAllocator::get());
-        alloc.free(mBuffer);
+        alloc.free(mBuffer.memHandle);
+        mBuffer.memHandle = nullptr;
     }
     ALOGD("EvsDisplay destroyed");
 }
@@ -135,36 +137,60 @@ Return<void> EvsDisplay::getTargetBuffer(getTargetBuffer_cb _hidl_cb)  {
     std::lock_guard<std::mutex> lock(mAccessLock);
 
     // If we don't already have a buffer, allocate one now
-    if (!mBuffer) {
+    if (!mBuffer.memHandle) {
+        // Assemble the buffer description we'll use for our render target
+        mBuffer.width       = mInfo.defaultHorResolution;
+        mBuffer.height      = mInfo.defaultVerResolution;
+        mBuffer.format      = HAL_PIXEL_FORMAT_RGBA_8888;
+        mBuffer.usage       = GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_COMPOSER;
+        mBuffer.bufferId    = 0x3870;  // Arbitrary magic number for self recognition
+
+        buffer_handle_t handle = nullptr;
         GraphicBufferAllocator& alloc(GraphicBufferAllocator::get());
-        status_t result = alloc.allocate(mInfo.defaultHorResolution, mInfo.defaultVerResolution,
-                                         HAL_PIXEL_FORMAT_RGBA_8888, 1,
-                                         GRALLOC_USAGE_HW_FB | GRALLOC_USAGE_HW_COMPOSER,
-                                         &mBuffer, &mStride, 0, "EvsDisplay");
+        status_t result = alloc.allocate(mBuffer.width, mBuffer.height,
+                                         mBuffer.format, 1, mBuffer.usage,
+                                         &handle, &mBuffer.stride,
+                                         0, "EvsDisplay");
+        if (result != NO_ERROR) {
+            ALOGE("Error %d allocating %d x %d graphics buffer",
+                  result, mBuffer.width, mBuffer.height);
+            BufferDesc nullBuff = {};
+            _hidl_cb(nullBuff);
+            return Void();
+        }
+        if (!handle) {
+            ALOGE("We didn't get a buffer handle back from the allocator");
+            BufferDesc nullBuff = {};
+            _hidl_cb(nullBuff);
+            return Void();
+        }
+
+        mBuffer.memHandle = handle;
         mFrameBusy = false;
-        ALOGD("Allocated new buffer %p with stride %u", mBuffer, mStride);
+        ALOGD("Allocated new buffer %p with stride %u",
+              mBuffer.memHandle.getNativeHandle(), mStride);
     }
 
     // Do we have a frame available?
     if (mFrameBusy) {
         // This means either we have a 2nd client trying to compete for buffers
         // (an unsupported mode of operation) or else the client hasn't returned
-        // a previously issues buffer yet (they're behaving badly).
-        // NOTE:  We have to make callback even if we have nothing to provide
+        // a previously issued buffer yet (they're behaving badly).
+        // NOTE:  We have to make the callback even if we have nothing to provide
         ALOGE("getTargetBuffer called while no buffers available.");
-        _hidl_cb(nullptr);
-    }
-    else {
+        BufferDesc nullBuff = {};
+        _hidl_cb(nullBuff);
+        return Void();
+    } else {
         // Mark our buffer as busy
         mFrameBusy = true;
 
         // Send the buffer to the client
-        ALOGD("Providing display buffer %p", mBuffer);
+        ALOGD("Providing display buffer handle %p as id %d",
+              mBuffer.memHandle.getNativeHandle(), mBuffer.bufferId);
         _hidl_cb(mBuffer);
+        return Void();
     }
-
-    // All done
-    return Void();
 }
 
 
@@ -172,22 +198,19 @@ Return<void> EvsDisplay::getTargetBuffer(getTargetBuffer_cb _hidl_cb)  {
  * This call tells the display that the buffer is ready for display.
  * The buffer is no longer valid for use by the client after this call.
  */
-Return<EvsResult> EvsDisplay::returnTargetBufferForDisplay(const hidl_handle& bufferHandle)  {
-    ALOGD("returnTargetBufferForDisplay %p", bufferHandle.getNativeHandle());
+Return<EvsResult> EvsDisplay::returnTargetBufferForDisplay(const BufferDesc& buffer)  {
+    ALOGD("returnTargetBufferForDisplay %p", buffer.memHandle.getNativeHandle());
     std::lock_guard<std::mutex> lock(mAccessLock);
 
-    // This shouldn't happen if we haven't issued the buffer!
-    if (!bufferHandle) {
+    // Nobody should call us with a null handle
+    if (!buffer.memHandle.getNativeHandle()) {
         ALOGE ("returnTargetBufferForDisplay called without a valid buffer handle.\n");
         return EvsResult::INVALID_ARG;
     }
-    /* TODO(b/33492405): It would be nice to validate we got back the buffer we expect,
-     * but HIDL doesn't support that (yet?)
-    if (bufferHandle != mBuffer) {
+    if (buffer.bufferId != mBuffer.bufferId) {
         ALOGE ("Got an unrecognized frame returned.\n");
         return EvsResult::INVALID_ARG;
     }
-    */
     if (!mFrameBusy) {
         ALOGE ("A frame was returned with no outstanding frames.\n");
         return EvsResult::BUFFER_NOT_AVAILABLE;
@@ -204,10 +227,71 @@ Return<EvsResult> EvsDisplay::returnTargetBufferForDisplay(const hidl_handle& bu
     if (mRequestedState != DisplayState::VISIBLE) {
         // We shouldn't get frames back when we're not visible.
         ALOGE ("Got an unexpected frame returned while not visible - ignoring.\n");
-    }
-    else {
-        // Make this buffer visible
-        // TODO:  Add code to put this image on the screen (or validate it somehow?)
+    } else {
+        // This is where the buffer would be made visible.
+        // For now we simply validate it has the data we expect in it by reading it back
+
+        // Lock our display buffer for reading
+        uint32_t* pixels = nullptr;
+        GraphicBufferMapper &mapper = GraphicBufferMapper::get();
+        mapper.lock(mBuffer.memHandle,
+                    GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_NEVER,
+                    android::Rect(mBuffer.width, mBuffer.height),
+                    (void **)&pixels);
+
+        // If we failed to lock the pixel buffer, we're about to crash, but log it first
+        if (!pixels) {
+            ALOGE("Camera failed to gain access to image buffer for reading");
+        }
+
+        // Check the test pixels
+        bool frameLooksGood = true;
+        for (unsigned row = 0; row < mInfo.defaultVerResolution; row++) {
+            for (unsigned col = 0; col < mInfo.defaultHorResolution; col++) {
+                // Index into the row to check the pixel at this column.
+                // We expect 0xFF in the LSB channel, a vertical gradient in the
+                // second channel, a horitzontal gradient in the third channel, and
+                // 0xFF in the MSB.
+                // The exception is the very first 32 bits which is used for the
+                // time varying frame signature to avoid getting fooled by a static image.
+                uint32_t expectedPixel = 0xFF0000FF           | // MSB and LSB
+                                         ((row & 0xFF) <<  8) | // vertical gradient
+                                         ((col & 0xFF) << 16);  // horizontal gradient
+                if ((row | col) == 0) {
+                    // we'll check the "uniqueness" of the frame signature below
+                    continue;
+                }
+                // Walk across this row (we'll step rows below)
+                if (pixels[col] != expectedPixel) {
+                    ALOGE("Pixel check mismatch in frame buffer");
+                    frameLooksGood = false;
+                    break;
+                }
+            }
+
+            if (!frameLooksGood) {
+                break;
+            }
+
+            // Point to the next row
+            pixels = pixels + (mStride / sizeof(*pixels));
+        }
+
+        // Ensure we don't see the same buffer twice without it being rewritten
+        static uint32_t prevSignature = ~0;
+        uint32_t signature = pixels[0] & 0xFF;
+        if (prevSignature == signature) {
+            frameLooksGood = false;
+            ALOGE("Duplicate, likely stale frame buffer detected");
+        }
+
+
+        // Release our output buffer
+        mapper.unlock(mBuffer.memHandle);
+
+        if (!frameLooksGood) {
+            return EvsResult::UNDERLYING_SERVICE_ERROR;
+        }
     }
 
     return EvsResult::OK;

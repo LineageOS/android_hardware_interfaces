@@ -33,7 +33,7 @@ public:
     Return<EvsResult> setDisplayState(DisplayState state)  override;
     Return<DisplayState> getDisplayState()  override;
     Return<void> getTargetBuffer(getTargetBuffer_cb _hidl_cb)  override;
-    Return<EvsResult> returnTargetBufferForDisplay(const hidl_handle& bufferHandle)  override;
+    Return<EvsResult> returnTargetBufferForDisplay(const BufferDesc& buffer)  override;
 
     // Implementation details
     EvsDisplay();
@@ -41,10 +41,10 @@ public:
 
 private:
     DisplayDesc     mInfo           = {};
-    buffer_handle_t mBuffer         = nullptr;      // A graphics buffer into which we'll store images
-    uint32_t        mStride         = 0;            // Bytes per line in the buffer
+    BufferDesc      mBuffer         = {};       // A graphics buffer into which we'll store images
+    uint32_t        mStride         = 0;        // Bytes per line in the buffer
 
-    bool            mFrameBusy      = false;        // A flag telling us our buffer is in use
+    bool            mFrameBusy      = false;    // A flag telling us our buffer is in use
     DisplayState    mRequestedState = DisplayState::NOT_VISIBLE;
 
     std::mutex      mAccessLock;
