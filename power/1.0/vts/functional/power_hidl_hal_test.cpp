@@ -35,7 +35,7 @@ using ::android::sp;
 class PowerHidlTest : public ::testing::Test {
  public:
   virtual void SetUp() override {
-    power = IPower::getService("power");
+    power = IPower::getService();
     ASSERT_NE(power, nullptr);
   }
 
