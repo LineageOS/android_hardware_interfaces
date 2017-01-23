@@ -80,7 +80,7 @@ class SensorsHidlEnvironment : public ::testing::Environment {
 };
 
 void SensorsHidlEnvironment::SetUp() {
-  sensors = ISensors::getService(false);
+  sensors = ISensors::getService();
   ALOGI_IF(sensors, "sensors is not nullptr, %p", sensors.get());
   ASSERT_NE(sensors, nullptr);
 
