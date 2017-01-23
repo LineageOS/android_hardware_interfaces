@@ -1264,7 +1264,7 @@ enum ColorMode : int32_t {
    *  red             0.680   0.320
    *  white (D65)     0.3127  0.3290
    *
-   * Gamma: 2.2
+   * Gamma: 2.6
    */
   DCI_P3 = 6,
 
@@ -1309,7 +1309,27 @@ enum ColorMode : int32_t {
    *
    * Gamma: 2.2
    */
-  ADOBE_RGB = 8
+  ADOBE_RGB = 8,
+
+  /*
+   * DISPLAY_P3 is a color space that uses the DCI_P3 primaries,
+   * the D65 white point and the SRGB transfer functions.
+   * Rendering Intent: Colorimetric
+   * Primaries:
+   *                  x       y
+   *  green           0.265   0.690
+   *  blue            0.150   0.060
+   *  red             0.680   0.320
+   *  white (D65)     0.3127  0.3290
+   *
+   * PC/Internet (sRGB) Gamma Correction (GC):
+   *
+   *  if Vlinear ≤ 0.0031308
+   *    Vnonlinear = 12.92 * Vlinear
+   *  else
+   *    Vnonlinear = 1.055 * (Vlinear)^(1/2.4) – 0.055
+   */
+  DISPLAY_P3 = 9
 };
 
 /*
