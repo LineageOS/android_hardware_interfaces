@@ -23,5 +23,5 @@ using android::hardware::light::V2_0::ILight;
 using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
-    return defaultPassthroughServiceImplementation<ILight>("light");
+    return defaultPassthroughServiceImplementation<ILight>();
 }

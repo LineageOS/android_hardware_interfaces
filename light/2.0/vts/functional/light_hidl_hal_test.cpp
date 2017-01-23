@@ -34,15 +34,13 @@ using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::sp;
 
-#define LIGHT_SERVICE_NAME "light"
-
 #define ASSERT_OK(ret) ASSERT_TRUE(ret.isOk())
 #define EXPECT_OK(ret) EXPECT_TRUE(ret.isOk())
 
 class LightHidlTest : public ::testing::Test {
 public:
     virtual void SetUp() override {
-        light = ILight::getService(LIGHT_SERVICE_NAME);
+        light = ILight::getService();
 
         ASSERT_NE(light, nullptr);
         LOG(INFO) << "Test is remote " << light->isRemote();
