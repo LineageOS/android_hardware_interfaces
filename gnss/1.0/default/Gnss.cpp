@@ -676,7 +676,7 @@ Return<sp<IGnssBatching>> Gnss::getExtensionGnssBatching()  {
     return mGnssBatching;
 }
 
-IGnss* HIDL_FETCH_IGnss(const char* hal) {
+IGnss* HIDL_FETCH_IGnss(const char* /* hal */) {
     hw_module_t* module;
     IGnss* iface = nullptr;
     int err = hw_get_module(GPS_HARDWARE_MODULE_ID, (hw_module_t const**)&module);
@@ -687,10 +687,10 @@ IGnss* HIDL_FETCH_IGnss(const char* hal) {
         if (err == 0) {
             iface = new Gnss(reinterpret_cast<gps_device_t*>(device));
         } else {
-            ALOGE("gnssDevice open %s failed: %d", hal, err);
+            ALOGE("gnssDevice open %s failed: %d", GPS_HARDWARE_MODULE_ID, err);
         }
     } else {
-      ALOGE("gnss hw_get_module %s failed: %d", hal, err);
+      ALOGE("gnss hw_get_module %s failed: %d", GPS_HARDWARE_MODULE_ID, err);
     }
     return iface;
 }

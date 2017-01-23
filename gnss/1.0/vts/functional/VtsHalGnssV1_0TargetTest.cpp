@@ -45,7 +45,7 @@ class GnssHalTest : public ::testing::Test {
      * callbacks trigger.
      */
 
-    gnss_hal_ = IGnss::getService("gnss");
+    gnss_hal_ = IGnss::getService();
     ASSERT_NE(gnss_hal_, nullptr);
 
     gnss_cb_ = new GnssCallback(*this);
