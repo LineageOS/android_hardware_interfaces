@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #define LOG_TAG "android.hardware.drm@1.0-service"
 
 #include <1.0/default/CryptoFactory.h>
