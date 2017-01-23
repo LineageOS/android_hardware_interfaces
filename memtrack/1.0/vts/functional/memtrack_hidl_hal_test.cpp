@@ -37,7 +37,7 @@ using std::count_if;
 class MemtrackHidlTest : public ::testing::Test {
  public:
   virtual void SetUp() override {
-    memtrack = IMemtrack::getService("memtrack");
+    memtrack = IMemtrack::getService();
     ASSERT_NE(memtrack, nullptr);
   }
 

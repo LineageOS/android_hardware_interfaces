@@ -73,19 +73,19 @@ Return<void> Memtrack::getMemory(int32_t pid, MemtrackType type,
 }
 
 
-IMemtrack* HIDL_FETCH_IMemtrack(const char* name) {
+IMemtrack* HIDL_FETCH_IMemtrack(const char* /* name */) {
     const hw_module_t* hw_module = nullptr;
     const memtrack_module_t* memtrack_module = nullptr;
-    int err = hw_get_module(name, &hw_module);
+    int err = hw_get_module(MEMTRACK_HARDWARE_MODULE_ID, &hw_module);
     if (err) {
-        ALOGE ("hw_get_module %s failed: %d", name, err);
+        ALOGE ("hw_get_module %s failed: %d", MEMTRACK_HARDWARE_MODULE_ID, err);
         return nullptr;
     }
 
     if (!hw_module->methods || !hw_module->methods->open) {
         memtrack_module = reinterpret_cast<const memtrack_module_t*>(hw_module);
     } else {
-        err = hw_module->methods->open(hw_module, name,
+        err = hw_module->methods->open(hw_module, MEMTRACK_HARDWARE_MODULE_ID,
                 reinterpret_cast<hw_device_t**>(const_cast<memtrack_module_t**>(&memtrack_module)));
         if (err) {
             ALOGE("Passthrough failed to load legacy HAL.");

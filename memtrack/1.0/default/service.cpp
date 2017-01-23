@@ -23,5 +23,5 @@ using android::hardware::memtrack::V1_0::IMemtrack;
 using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
-    return defaultPassthroughServiceImplementation<IMemtrack>("memtrack");
+    return defaultPassthroughServiceImplementation<IMemtrack>();
 }
