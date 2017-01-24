@@ -79,7 +79,7 @@ IMemtrack* HIDL_FETCH_IMemtrack(const char* name) {
     memtrack_module_t *memtrack_module = NULL;
 
     ret = hw_get_module(name, &hw_module);
-    if (ret == 0 && hw_module->methods->open > 0)
+    if (ret == 0 && hw_module->methods->open)
     {
         ret = hw_module->methods->open(hw_module, name,
                 reinterpret_cast<hw_device_t**>(&memtrack_module));

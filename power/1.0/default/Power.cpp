@@ -40,14 +40,14 @@ Power::~Power() {
 
 // Methods from ::android::hardware::power::V1_0::IPower follow.
 Return<void> Power::setInteractive(bool interactive)  {
-    if (mModule->setInteractive > 0)
+    if (mModule->setInteractive)
         mModule->setInteractive(mModule, interactive ? 1 : 0);
     return Void();
 }
 
 Return<void> Power::powerHint(PowerHint hint, int32_t data)  {
     int32_t param = data;
-    if (mModule->powerHint > 0) {
+    if (mModule->powerHint) {
         if (data)
             mModule->powerHint(mModule, static_cast<power_hint_t>(hint), &param);
         else
@@ -57,7 +57,7 @@ Return<void> Power::powerHint(PowerHint hint, int32_t data)  {
 }
 
 Return<void> Power::setFeature(Feature feature, bool activate)  {
-    if (mModule->setFeature > 0)
+    if (mModule->setFeature)
         mModule->setFeature(mModule, static_cast<feature_t>(feature),
                 activate ? 1 : 0);
     return Void();
@@ -79,7 +79,7 @@ Return<void> Power::getPlatformLowPowerStats(getPlatformLowPowerStats_cb _hidl_c
     }
 
     number_platform_modes = mModule->get_number_of_platform_modes(mModule);
-    if (number_platform_modes > 0)
+    if (number_platform_modes)
     {
        if (SIZE_MAX / sizeof(size_t) <= number_platform_modes)  // overflow
            goto done;
@@ -149,7 +149,7 @@ IPower* HIDL_FETCH_IPower(const char* name) {
     const hw_module_t* hw_module = NULL;
     power_module_t *power_module;
     ret = hw_get_module(name, &hw_module);
-    if (ret == 0 && hw_module->methods->open > 0) {
+    if (ret == 0 && hw_module->methods->open) {
         ret = hw_module->methods->open(hw_module, name,
                 reinterpret_cast<hw_device_t**>(&power_module));
         if (ret == 0) {
