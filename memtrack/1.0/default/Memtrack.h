@@ -38,12 +38,12 @@ using ::android::hardware::hidl_string;
 using ::android::sp;
 
 struct Memtrack : public IMemtrack {
-    Memtrack(memtrack_module_t* module);
+    Memtrack(const memtrack_module_t* module);
     ~Memtrack();
     Return<void> getMemory(int32_t pid, MemtrackType type, getMemory_cb _hidl_cb)  override;
 
   private:
-    memtrack_module_t* mModule;
+    const memtrack_module_t* mModule;
 };
 
 extern "C" IMemtrack* HIDL_FETCH_IMemtrack(const char* name);
