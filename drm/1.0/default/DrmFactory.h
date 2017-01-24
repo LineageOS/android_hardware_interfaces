@@ -42,18 +42,43 @@ struct DrmFactory : public IDrmFactory {
     virtual ~DrmFactory() {}
 
     // Methods from ::android::hardware::drm::V1_0::IDrmFactory follow.
-
     Return<bool> isCryptoSchemeSupported(const hidl_array<uint8_t, 16>& uuid)
             override;
 
-    Return<bool> isContentTypeSupported(const hidl_string &mimeType)
+    Return<bool> isContentTypeSupported(const hidl_string& mimeType)
             override;
 
     Return<void> createPlugin(const hidl_array<uint8_t, 16>& uuid,
-            createPlugin_cb _hidl_cb) override;
-
+             createPlugin_cb _hidl_cb) override;
 private:
-    android::PluginLoader<android::DrmFactory> loader;
+    template <typename L> Return<bool> isCryptoSchemeSupported(
+            const L& loader, const hidl_array<uint8_t, 16>& uuid) {
+        for (size_t i = 0; i < loader.factoryCount(); i++) {
+            if (loader.getFactory(i)->isCryptoSchemeSupported(uuid.data())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    template <typename L, typename S> Return<bool> isContentTypeSupported(
+            const L& loader, const hidl_string& mimeType) {
+        for (size_t i = 0; i < loader.factoryCount(); i++) {
+            if (loader.getFactory(i)->isContentTypeSupported(S(mimeType))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    sp<IDrmPlugin> createTreblePlugin(const hidl_array<uint8_t, 16>& uuid);
+    sp<IDrmPlugin> createLegacyPlugin(const hidl_array<uint8_t, 16>& uuid);
+
+    typedef android::PluginLoader<IDrmFactory> PluginLoader;
+    PluginLoader trebleLoader;
+
+    typedef android::PluginLoader<android::DrmFactory> LegacyLoader;
+    LegacyLoader legacyLoader;
 
     DrmFactory(const DrmFactory &) = delete;
     void operator=(const DrmFactory &) = delete;
