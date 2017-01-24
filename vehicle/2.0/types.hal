@@ -1718,7 +1718,7 @@ enum VehicleProperty: int32_t {
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
      */
-    VEHICLE_MAPS_DATA_SERVICE = (
+    VEHICLE_MAP_SERVICE = (
         0x0C00
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:COMPLEX

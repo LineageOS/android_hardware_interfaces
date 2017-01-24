@@ -107,7 +107,7 @@ const VehiclePropConfig kVehicleProperties[] = {
 
     // Complex data type.
     {
-        .prop = VehicleProperty::VEHICLE_MAPS_DATA_SERVICE,
+        .prop = VehicleProperty::VEHICLE_MAP_SERVICE,
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE
     }
