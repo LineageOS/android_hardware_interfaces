@@ -25,7 +25,7 @@
             _64bit::DATA/nativetest64/ir_hidl_hal_test/ir_hidl_hal_test,
             "/>
         <option name="binary-test-type" value="hal_hidl_gtest" />
-        <option name="hwbinder-service" value="android.hardware.ir" />
+        <option name="precondition-hwbinder-service" value="android.hardware.ir" />
         <option name="test-timeout" value="1m" />
     </test>
 </configuration>
