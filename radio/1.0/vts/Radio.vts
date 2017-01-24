@@ -315,28 +315,20 @@ interface: {
             scalar_type: "int32_t"
         }
         arg: {
-            type: TYPE_SCALAR
-            scalar_type: "int32_t"
-        }
-        arg: {
-            type: TYPE_SCALAR
-            scalar_type: "int32_t"
-        }
-        arg: {
-            type: TYPE_STRING
-        }
-        arg: {
-            type: TYPE_STRING
-        }
-        arg: {
-            type: TYPE_STRING
-        }
-        arg: {
             type: TYPE_ENUM
-            predefined_type: "::android::hardware::radio::V1_0::ApnAuthType"
+            predefined_type: "::android::hardware::radio::V1_0::RadioTechnology"
         }
         arg: {
-            type: TYPE_STRING
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::DataProfileInfo"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
         }
     }
 
@@ -1198,20 +1190,12 @@ interface: {
             scalar_type: "int32_t"
         }
         arg: {
-            type: TYPE_STRING
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::DataProfileInfo"
         }
         arg: {
-            type: TYPE_STRING
-        }
-        arg: {
-            type: TYPE_ENUM
-            predefined_type: "::android::hardware::radio::V1_0::ApnAuthType"
-        }
-        arg: {
-            type: TYPE_STRING
-        }
-        arg: {
-            type: TYPE_STRING
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
         }
     }
 
@@ -1487,6 +1471,35 @@ interface: {
         arg: {
             type: TYPE_SCALAR
             scalar_type: "int32_t"
+        }
+    }
+
+    api: {
+        name: "sendDeviceState"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::DeviceStateType"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+    }
+
+    api: {
+        name: "setIndicationFilter"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+        arg: {
+            type: TYPE_MASK
+            scalar_type: "int32_t"
+            predefined_type: "::android::hardware::radio::V1_0::IndicationFilter"
         }
     }
 

@@ -1372,6 +1372,22 @@ interface: {
     }
 
     api: {
+        name: "sendDeviceStateResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "setIndicationFilterResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
         name: "acknowledgeRequest"
         arg: {
             type: TYPE_SCALAR
