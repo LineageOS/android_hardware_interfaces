@@ -42,8 +42,10 @@ interface ICameraDeviceCallback {
      * @param bufferCount The number of contiguous buffers that the descriptor
      *     contains.
      *
-     * @return memId A integer identifier for this memory buffer, for use with
-     *     data callbacks and unregistering memory.
+     * @return memId A positive integer identifier for this memory buffer, for
+     *     use with data callbacks and unregistering memory. 0 must be returned
+     *     in case of error, such as if the descriptor does not contain exactly
+     *     one FD.
      */
     registerMemory(handle descriptor, uint32_t bufferSize, uint32_t bufferCount)
             generates (MemoryId memId);
@@ -62,7 +64,8 @@ interface ICameraDeviceCallback {
      *     starts.
      *
      */
-    dataCallback(DataCallbackMsg msgType, MemoryId data, uint32_t bufferIndex);
+    dataCallback(DataCallbackMsg msgType, MemoryId data, uint32_t bufferIndex,
+            CameraFrameMetadata metadata);
 
     /**
      * Send a buffer of image data to the camera service, with a timestamp
@@ -77,5 +80,22 @@ interface ICameraDeviceCallback {
      */
     dataCallbackTimestamp(DataCallbackMsg msgType, MemoryId data, uint32_t bufferIndex,
             int64_t timestamp);
+
+    /**
+     * Send a buffer of image data to the camera service, with a timestamp
+     *
+     * @param msgType The kind of image buffer data this call represents.
+     * @param handle The handle of image buffer data this call represents.
+     * @param data A memory handle to the buffer containing the data.
+     * @param bufferIndex The offset into the memory handle where the buffer
+     *     starts.
+     * @param timestamp The time this buffer was captured by the camera, in
+     *     nanoseconds.
+     *
+     * @return frameId a frame ID to be used with releaseRecordingFrameId later
+     *
+     */
+    handleCallbackTimestamp(DataCallbackMsg msgType, handle frameData, MemoryId data,
+            uint32_t bufferIndex, int64_t timestamp);
 
 };

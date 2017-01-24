@@ -30,28 +30,31 @@ interface ICameraDevicePreviewCallback {
      *
      * @return status The status code for this operation. If not OK, then
      *     buffer and stride must not be used.
-     * @return buffer A handle to the buffer to write into.
+     * @return bufferId A unique ID for the returned buffer.
+     * @return buffer A handle to the buffer to write into. Must be non-null if the bufferId has not
+     *     been seen by HAL before. Must be null if the bufferId is seen before. HAL must keep track
+     *     of the bufferId to actual buffer handle mapping.
      * @return stride The stride between two rows of pixels in this buffer.
      */
-    dequeueBuffer() generates (Status status, handle buffer, uint32_t stride);
+    dequeueBuffer() generates (Status status, uint64_t bufferId, handle buffer, uint32_t stride);
 
     /**
      * Send a filled preview buffer to its consumer.
      *
-     * @param buffer The handle to the preview buffer that's been filled.
+     * @param bufferId The bufferId of the preview buffer
      * @return status The status code for this operation.
      */
-    enqueueBuffer(handle buffer) generates (Status status);
+    enqueueBuffer(uint64_t bufferId) generates (Status status);
 
     /**
      * Return a preview buffer unfilled. This buffer must not be sent on to the
      * preview consumer as a valid buffer, but may be reused as if it were
      * empty.
      *
-     * @param buffer The handle to the preview buffer to return.
+     * @param bufferId The bufferId of the preview buffer
      * @return status The status code for this operation.
      */
-    cancelBuffer(handle buffer) generates (Status status);
+    cancelBuffer(uint64_t bufferId) generates (Status status);
 
     /**
      * Set the number of preview buffers needed by the HAL.

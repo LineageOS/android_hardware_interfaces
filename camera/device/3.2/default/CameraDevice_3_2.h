@@ -55,7 +55,7 @@ struct CameraDevice : public ICameraDevice {
     // Called by provider HAL. Provider HAL must ensure the uniqueness of
     // CameraDevice object per cameraId, or there could be multiple CameraDevice
     // trying to access the same physical camera.
-    // Also, provider will have to keep track of all CameraDevice object in
+    // Also, provider will have to keep track of all CameraDevice objects in
     // order to notify CameraDevice when the underlying camera is detached
     CameraDevice(sp<CameraModule> module,
                  const std::string& cameraId,
@@ -81,8 +81,7 @@ struct CameraDevice : public ICameraDevice {
     /* End of Methods from ::android::hardware::camera::device::V3_2::ICameraDevice */
 
 private:
-    // Passed from provider HAL. Should not change.
-    sp<CameraModule> mModule;
+    const sp<CameraModule> mModule;
     const std::string mCameraId;
     // const after ctor
     int   mCameraIdInt;
