@@ -23,6 +23,7 @@ package android.hardware.gnss@1.0;
  */
 interface IGnssCallback {
     /* Flags for the gnssSetCapabilities callback. */
+    @export(name="", value_prefix="GPS_CAPABILITY_")
     enum Capabilities : uint32_t {
         /*
          * GNSS HAL schedules fixes for RECURRENCE_PERIODIC mode.
@@ -47,6 +48,7 @@ interface IGnssCallback {
     };
 
     /* GNSS status event values. */
+    @export(name="", value_prefix="GPS_STATUS_")
     enum GnssStatusValue : uint8_t {
         /** GNSS status unknown. */
         NONE           = 0,
@@ -63,6 +65,7 @@ interface IGnssCallback {
     /*
      * Flags that indicate information about the satellite
      */
+    @export(name="", value_prefix="GNSS_SV_FLAGS_")
     enum GnssSvFlags : uint8_t {
         NONE                  = 0,
         HAS_EPHEMERIS_DATA    = 1 << 0,

@@ -25,6 +25,7 @@ interface IGnssNavigationMessageCallback {
      * For convenience, first byte is the GnssConstellationType on which that signal
      * is typically transmitted.
      */
+    @export(name="", value_prefix="GNSS_NAVIGATION_MESSAGE_TYPE_")
     enum GnssNavigationMessageType : int16_t {
         UNKNOWN    = 0,
         /** GNSS L1 C/A message contained in the structure.  */
@@ -56,6 +57,7 @@ interface IGnssNavigationMessageCallback {
      * No need to send any navigation message that contains words with parity error
      * and cannot be corrected.
      */
+    @export(name="navigation_message_status", value_prefix="NAV_MESSAGE_STATUS_")
     enum NavigationMessageStatus : uint16_t {
         PARITY_PASSED  = (1 << 0),
         PARITY_REBUILT = (1 << 1),

@@ -25,12 +25,14 @@ import IAGnssRilCallback;
  * location, unique subscriber ID, phone number string and network availability changes.
  */
 interface IAGnssRil {
+    @export(name="", value_prefix="AGPS_SETID_TYPE_")
     enum SetIDType : uint8_t {
         NONE    = 0,
         IMSI    = 1,
         MSISDM  = 2
     };
 
+    @export(name="", value_prefix="AGPS_RIL_NETWORK_TYPE_")
     enum NetworkType : uint8_t {
         MOBILE  = 0,
         WIFI    = 1,
@@ -41,6 +43,7 @@ interface IAGnssRil {
         WIMAX   = 6,
     };
 
+    @export(name="", value_prefix="AGPS_REF_LOCATION_TYPE_")
     enum AGnssRefLocationType : uint8_t {
         GSM_CELLID   = 1,
         UMTS_CELLID  = 2,

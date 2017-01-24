@@ -22,6 +22,7 @@ import IAGnssCallback;
  * Extended interface for AGNSS support.
  */
 interface IAGnss {
+    @export(name="", value_prefix="APN_IP_")
     enum ApnIpType : uint8_t {
         INVALID  = 0,
         IPV4     = 1,
