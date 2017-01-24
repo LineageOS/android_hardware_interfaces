@@ -25,9 +25,11 @@
             _64bit::DATA/nativetest64/vr_hidl_hal_test/vr_hidl_hal_test,
             "/>
         <option name="binary-test-type" value="hal_hidl_gtest" />
-        <option name="hwbinder-service" value="android.hardware.vr" />
+        <!-- Uncomment this and comment 'precondition-feature' to run this test
+             only on devices using binderized VR HALs.
+        <option name="precondition-hwbinder-service" value="android.hardware.vr" /> -->
+        <option name="precondition-feature" value="android.hardware.vr.high_performance" />
         <option name="test-timeout" value="1m" />
         <option name="test-config-path" value="vts/testcases/hal/vr/hidl/target/VrHidlTargetTest.config" />
 </test>
 </configuration>
-
