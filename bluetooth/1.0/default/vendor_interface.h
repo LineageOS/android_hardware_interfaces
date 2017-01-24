@@ -64,6 +64,7 @@ class VendorInterface {
   enum HciParserState { HCI_IDLE, HCI_TYPE_READY, HCI_PAYLOAD };
   HciParserState hci_parser_state_{HCI_IDLE};
   HciPacketType hci_packet_type_{HCI_PACKET_TYPE_UNKNOWN};
+  uint8_t hci_packet_preamble_[HCI_PREAMBLE_SIZE_MAX];
   hidl_vec<uint8_t> hci_packet_;
   size_t hci_packet_bytes_remaining_;
   size_t hci_packet_bytes_read_;
