@@ -24,5 +24,5 @@ using android::hardware::gatekeeper::V1_0::IGatekeeper;
 using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
-    return defaultPassthroughServiceImplementation<IGatekeeper>("gatekeeper");
+    return defaultPassthroughServiceImplementation<IGatekeeper>();
 }
