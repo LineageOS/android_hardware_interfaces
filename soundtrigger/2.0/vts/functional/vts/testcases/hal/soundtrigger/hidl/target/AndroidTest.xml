@@ -25,7 +25,8 @@
             _64bit::DATA/nativetest64/soundtrigger_hidl_hal_test/soundtrigger_hidl_hal_test,
             "/>
         <option name="test-config-path" value="vts/testcases/hal/soundtrigger/hidl/target/HalSoundTriggerHidlTargetBasicTest.config" />
-        <option name="binary-test-type" value="gtest" />
+        <option name="binary-test-type" value="hal_hidl_gtest" />
+        <option name="precondition-file-path-prefix" value="*/lib/hw/sound_trigger.primary." />
         <option name="test-timeout" value="1m" />
     </test>
 </configuration>
