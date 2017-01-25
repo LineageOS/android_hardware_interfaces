@@ -84,7 +84,7 @@ class SensorsHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
         logging.info("PERMISSION_DENIED: %s", sensors_types.PERMISSION_DENIED)
         logging.info("INVALID_OPERATION: %s", sensors_types.INVALID_OPERATION)
         asserts.assertEqual(sensors_types.OK, 0);
-        asserts.assertEqual(sensors_types.BAD_VALUE, 1);
+        asserts.assertEqual(sensors_types.BAD_VALUE, -22);
 
         logging.info("sensor types:")
         logging.info("SENSOR_TYPE_ACCELEROMETER: %s", sensors_types.SENSOR_TYPE_ACCELEROMETER)
