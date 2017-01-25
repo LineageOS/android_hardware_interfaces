@@ -50,10 +50,12 @@ interface IDrmFactory {
      *
      * @param uuid uniquely identifies the drm scheme. See
      * http://dashif.org/identifiers/protection for uuid assignments
+     * @param appPackageName identifies the package name of the calling
+     * application.
      * @return status the status of the call. The HAL implementation must return
      * OK if the plugin is created and ERROR_DRM_CANNOT_HANDLE if the plugin
      * cannot be created.
      */
-    createPlugin(uint8_t[16] uuid) generates (Status status,
-            IDrmPlugin drmPlugin);
+    createPlugin(uint8_t[16] uuid, string appPackageName)
+            generates (Status status, IDrmPlugin drmPlugin);
 };

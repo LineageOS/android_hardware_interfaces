@@ -45,9 +45,9 @@ Return<bool> DrmFactory::isContentTypeSupported (
             isContentTypeSupported<LegacyLoader, String8>(legacyLoader, mimeType);
 }
 
-Return<void> DrmFactory::createPlugin(const hidl_array<uint8_t, 16>& uuid,
-        createPlugin_cb _hidl_cb) {
-    sp<IDrmPlugin> plugin = createTreblePlugin(uuid);
+    Return<void> DrmFactory::createPlugin(const hidl_array<uint8_t, 16>& uuid,
+            const hidl_string& appPackageName, createPlugin_cb _hidl_cb) {
+        sp<IDrmPlugin> plugin = createTreblePlugin(uuid, appPackageName);
     if (plugin == nullptr) {
         plugin = createLegacyPlugin(uuid);
     }
@@ -55,11 +55,12 @@ Return<void> DrmFactory::createPlugin(const hidl_array<uint8_t, 16>& uuid,
     return Void();
 }
 
-sp<IDrmPlugin> DrmFactory::createTreblePlugin(const hidl_array<uint8_t, 16>& uuid) {
+sp<IDrmPlugin> DrmFactory::createTreblePlugin(const hidl_array<uint8_t, 16>& uuid,
+        const hidl_string& appPackageName) {
     sp<IDrmPlugin> plugin;
     for (size_t i = 0; i < trebleLoader.factoryCount(); i++) {
         Return<void> hResult = trebleLoader.getFactory(i)->createPlugin(uuid,
-                [&](Status status, const sp<IDrmPlugin>& hPlugin) {
+                appPackageName, [&](Status status, const sp<IDrmPlugin>& hPlugin) {
                     if (status == Status::OK) {
                         plugin = hPlugin;
                     }
