@@ -1042,7 +1042,7 @@ enum VehicleProperty: int32_t {
      * Property to report bootup reason for the current power on. This is a
      * static property that will not change for the whole duration until power
      * off. For example, even if user presses power on button after automatic
-     * power on with door unlock, bootup reason must stay with 
+     * power on with door unlock, bootup reason must stay with
      * VehicleApPowerBootupReason#USER_UNLOCK.
      *
      * int32Values[0] must be VehicleApPowerBootupReason.
@@ -1782,14 +1782,30 @@ enum VehicleProperty: int32_t {
      * This property uses COMPLEX data to send a snapshot of the current (live)
      * values of the OBD2 sensors provided by the vehicle.
      *
-     * Its contents are to be interpreted as follows:
+     * VehiclePropConfig
+     *   configArray[0] : number of vendor-specific integer-valued sensors
+     *                    that can be returned in a frame.
+     *   configArray[1] : number of vendor-specific float-valued sensors
+     *                    that can be returned in a frame.
+     *
+     * The values are to be interpreted as follows:
      * the indices defined in Obd2IntegerSensorIndex are to be used to
      * read from int32Values;
      * the indices defined in Obd2FloatSensorIndex are to be used to
      * read from floatValues.
+     * the elements of bytes are to be interpreted as a bitmask, such that
+     * the bits 0 thru the integer value of
+     * Obd2IntegerSensorIndex.LAST_SYSTEM_INDEX + the value of configArray[0]
+     * are 1 if the corresponding index is a valid sensor index whose value can
+     * be read in the returned int32Values vector, 0 otherwise.
+     * the bits Obd2IntegerSensorIndex.LAST_SYSTEM_INDEX+1 thru
+     * Obd2FloatingSensorIndex.LAST_SYSTEM_INDEX + the value of configArray[1]
+     * are 1 if the corresponding index is a valid sensor index whose value
+     * can be read in the returned floatValues vector, 0 otherwise.
      *
      * For example, int32Values[0] corresponds to FUEL_SYSTEM_STATUS, and
-     * floatValues[0] corresponds to CALCULATED_ENGINE_LOAD.
+     * floatValues[0] corresponds to CALCULATED_ENGINE_LOAD, but that mapping
+     * is only valid if the corresponding bits in the bytes vector are set to 1.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ
@@ -1807,17 +1823,33 @@ enum VehicleProperty: int32_t {
      * OBD2 sensors provided by the vehicle at the time that a diagnostic
      * troubleshooting code (DTC) was recorded by the vehicle.
      *
-     * Its contents are to be interpreted as follows:
+     * VehiclePropConfig
+     *   configArray[0] : number of vendor-specific integer-valued sensors
+     *                    that can be returned in a frame.
+     *   configArray[1] : number of vendor-specific float-valued sensors
+     *                    that can be returned in a frame.
+     *
+     * The values are to be interpreted as follows:
      * the indices defined in Obd2IntegerSensorIndex are to be used to
      * read from int32Values;
      * the indices defined in Obd2FloatSensorIndex are to be used to
      * read from floatValues;
+     * the elements of bytes are to be interpreted as a bitmask, such that
+     * the bits 0 thru the integer value of
+     * Obd2IntegerSensorIndex.LAST_SYSTEM_INDEX + the value of configArray[0]
+     * are 1 if the corresponding index is a valid sensor index whose value can
+     * be read in the returned int32Values vector, 0 otherwise.
+     * the bits Obd2IntegerSensorIndex.LAST_SYSTEM_INDEX+1 thru
+     * Obd2FloatingSensorIndex.LAST_SYSTEM_INDEX + the value of configArray[1]
+     * are 1 if the corresponding index is a valid sensor index whose value
+     * can be read in the returned floatValues vector, 0 otherwise.
      * stringValue is the DTC that caused this freeze frame to be recorded.
      *
      * For example, int32Values[0] corresponds to FUEL_SYSTEM_STATUS, and
-     * floatValues[0] corresponds to CALCULATED_ENGINE_LOAD, and a possible
-     * valid stringValue is "P0176" to indicate a malfunction of the fuel
-     * composition sensor circuit.
+     * floatValues[0] corresponds to CALCULATED_ENGINE_LOAD, but that mapping
+     * is only valid if the corresponding bits in the bytes vector are set to 1,
+     * and a possible valid stringValue is "P0176" to indicate a malfunction
+     * of the fuel composition sensor circuit.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ
