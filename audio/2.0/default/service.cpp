@@ -45,7 +45,7 @@ int main(int /* argc */, char* /* argv */ []) {
     // Soundtrigger and FM radio might be not present.
     status = registerPassthroughServiceImplementation<ISoundTriggerHw>("sound_trigger.primary");
     ALOGE_IF(status != OK, "Error while registering soundtrigger service: %d", status);
-    status = registerPassthroughServiceImplementation<IBroadcastRadioFactory>("broadcastradio");
+    status = registerPassthroughServiceImplementation<IBroadcastRadioFactory>();
     ALOGE_IF(status != OK, "Error while registering fm radio service: %d", status);
     joinRpcThreadpool();
     return status;

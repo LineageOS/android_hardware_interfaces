@@ -63,7 +63,7 @@ class BroadcastRadioHidlTest : public ::testing::Test {
             }
         }
         sp<IBroadcastRadioFactory> factory =
-              IBroadcastRadioFactory::getService("broadcastradio", getStub);
+              IBroadcastRadioFactory::getService(getStub);
         if (factory != 0) {
             factory->connectModule(Class::AM_FM,
                              [&](Result retval, const ::android::sp<IBroadcastRadio>& result) {
