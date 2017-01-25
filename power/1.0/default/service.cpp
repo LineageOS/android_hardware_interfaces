@@ -23,5 +23,5 @@ using android::hardware::power::V1_0::IPower;
 using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
-    return defaultPassthroughServiceImplementation<IPower>("power");
+    return defaultPassthroughServiceImplementation<IPower>();
 }

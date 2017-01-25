@@ -144,24 +144,24 @@ done:
     return Void();
 }
 
-IPower* HIDL_FETCH_IPower(const char* name) {
+IPower* HIDL_FETCH_IPower(const char* /* name */) {
     int ret = 0;
     const hw_module_t* hw_module = NULL;
     power_module_t *power_module;
-    ret = hw_get_module(name, &hw_module);
+    ret = hw_get_module(POWER_HARDWARE_MODULE_ID, &hw_module);
     if (ret == 0 && hw_module->methods->open) {
-        ret = hw_module->methods->open(hw_module, name,
+        ret = hw_module->methods->open(hw_module, POWER_HARDWARE_MODULE_ID,
                 reinterpret_cast<hw_device_t**>(&power_module));
         if (ret == 0) {
             return new Power(power_module);
         }
         else {
-            ALOGE("Passthrough failed to load legacy HAL.");
+            ALOGE("Passthrough failed to load legacy power HAL.");
             return nullptr;
         }
     }
     else {
-        ALOGE ("hw_get_module %s failed: %d", name, ret);
+        ALOGE ("hw_get_module %s failed: %d", POWER_HARDWARE_MODULE_ID, ret);
         return nullptr;
     }
 }
