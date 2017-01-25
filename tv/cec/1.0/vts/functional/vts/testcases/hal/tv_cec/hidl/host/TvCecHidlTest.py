@@ -21,8 +21,10 @@ from vts.proto import ComponentSpecificationMessage_pb2 as CompSpecMsg
 from vts.runners.host import asserts
 from vts.runners.host import base_test_with_webdb
 from vts.runners.host import const
+from vts.runners.host import keys
 from vts.runners.host import test_runner
 from vts.utils.python.controllers import android_device
+from vts.utils.python.coverage import coverage_utils
 
 
 class TvCecHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
@@ -38,6 +40,9 @@ class TvCecHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
         self.dut.shell.one.Execute(
             "setprop vts.hal.vts.hidl.get_stub true")
 
+        if getattr(self, keys.ConfigKeys.IKEY_ENABLE_COVERAGE, False):
+            coverage_utils.InitializeDeviceCoverage(self.dut)
+
         self.dut.hal.InitHidlHal(
             target_type="tv_cec",
             target_basepaths=self.dut.libPaths,
@@ -46,6 +51,11 @@ class TvCecHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
             target_component_name="IHdmiCec",
             hw_binder_service_name="cec-hal-1-0",
             bits=64 if self.dut.is64Bit else 32)
+
+    def tearDownClass(self):
+        """To be executed when all test cases are finished."""
+        if getattr(self, keys.ConfigKeys.IKEY_ENABLE_COVERAGE, False):
+            self.SetCoverageData(coverage_utils.GetGcdaDict(self.dut))
 
     def testGetCecVersion1(self):
         """A simple test case which queries the cec version."""
