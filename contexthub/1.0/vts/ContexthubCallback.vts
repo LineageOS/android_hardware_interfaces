@@ -1,0 +1,61 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "IContexthubCallback"
+
+package: "android.hardware.contexthub"
+
+import: "android.hardware.contexthub@1.0::types"
+
+interface: {
+    api: {
+        name: "handleClientMsg"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::contexthub::V1_0::ContextHubMsg"
+        }
+    }
+
+    api: {
+        name: "handleTxnResult"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::contexthub::V1_0::TransactionResult"
+        }
+    }
+
+    api: {
+        name: "handleHubEvent"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::contexthub::V1_0::AsyncEventType"
+        }
+    }
+
+    api: {
+        name: "handleAppAbort"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint64_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    api: {
+        name: "handleAppsInfo"
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRUCT
+                predefined_type: "::android::hardware::contexthub::V1_0::HubAppInfo"
+            }
+        }
+    }
+
+}
