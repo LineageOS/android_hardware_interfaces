@@ -508,8 +508,30 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    */
   setEapDomainSuffixMatch(string match)
       generates (SupplicantStatus status);
+
   /**
-   * Get ID string set for this network.
+   * This field can be used to enable proactive key caching which is also
+   * known as opportunistic PMKSA caching for WPA2. This is disabled (0)
+   * by default unless default value is changed with the global okc=1
+   * parameter.
+   *
+   * Proactive key caching is used to make supplicant assume that the APs
+   * are using the same PMK and generate PMKSA cache entries without
+   * doing RSN pre-authentication. This requires support from the AP side
+   * and is normally used with wireless switches that co-locate the
+   * authenticator.
+   *
+   * @param enable true to set, false otherwise.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   */
+  setProactiveKeyCaching(bool enable) generates (SupplicantStatus status);
+
+  /**
+   * Set ID string for this network.
    * Network identifier string for external scripts.
    *
    * @return idStr ID string value to set.
@@ -521,6 +543,20 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
   setIdStr(string idStr) generates (SupplicantStatus status);
+
+  /**
+   * Set PPS MO ID for this network.
+   * (Hotspot 2.0 PerProviderSubscription/UpdateIdentifier)
+   *
+   * @return id ID value to set.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   */
+  setUpdateIdentifier(uint32_t id) generates (SupplicantStatus status);
 
   /**
    * Getters for the various network params.
@@ -912,8 +948,20 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
-  sendNetworkEapSimGsmAuthResponse(NetworkResponseEapSimGsmAuthParams params)
+  sendNetworkEapSimGsmAuthResponse(vec<NetworkResponseEapSimGsmAuthParams> params)
       generates (SupplicantStatus status);
+
+  /**
+   * Used to send a response to the
+   * |ISupplicantNetworkCallback.onNetworkEapSimGsmAuthRequest| request.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   */
+  sendNetworkEapSimGsmAuthFailure() generates (SupplicantStatus status);
 
   /**
    * Used to send a response to the
@@ -928,6 +976,32 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    */
   sendNetworkEapSimUmtsAuthResponse(NetworkResponseEapSimUmtsAuthParams params)
       generates (SupplicantStatus status);
+
+  /**
+   * Used to send a response to the
+   * |ISupplicantNetworkCallback.onNetworkEapSimUmtsAuthRequest| request.
+   *
+   * @param auts Params to be used for EAP UMTS authentication.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   */
+  sendNetworkEapSimUmtsAutsResponse(uint8_t[14] auts)
+      generates (SupplicantStatus status);
+
+  /**
+   * Used to send a response to the
+   * |ISupplicantNetworkCallback.onNetworkEapSimUmtsAuthRequest| request.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   */
+  sendNetworkEapSimUmtsAuthFailure() generates (SupplicantStatus status);
 
   /**
    * Used to send a response to the

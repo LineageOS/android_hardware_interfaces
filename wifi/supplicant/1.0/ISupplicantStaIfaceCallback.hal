@@ -326,4 +326,18 @@ interface ISupplicantStaIfaceCallback {
    * Used to indicate the overlap of a WPS PBC connection attempt.
    */
   oneway onWpsEventPbcOverlap();
+
+  /**
+   * Used to indicate that the external radio work can start now.
+   *
+   * @return id Identifier generated for the radio work request.
+   */
+  oneway onExtRadioWorkStart(uint32_t id);
+
+  /**
+   * Used to indicate that the external radio work request has timed out.
+   *
+   * @return id Identifier generated for the radio work request.
+   */
+  oneway onExtRadioWorkTimeout(uint32_t id);
 };
