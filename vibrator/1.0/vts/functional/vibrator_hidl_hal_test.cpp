@@ -32,7 +32,7 @@ using ::android::sp;
 class VibratorHidlTest : public ::testing::Test {
  public:
   virtual void SetUp() override {
-    vibrator = IVibrator::getService(false);
+    vibrator = IVibrator::getService();
     ASSERT_NE(vibrator, nullptr);
   }
 

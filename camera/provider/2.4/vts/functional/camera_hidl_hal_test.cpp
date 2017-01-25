@@ -95,7 +95,7 @@ private:
 
 void CameraHidlEnvironment::SetUp() {
     // TODO: test the binderized mode
-    mProvider = ICameraProvider::getService(CAMERA_PASSTHROUGH_SERVICE_NAME, true);
+    mProvider = ICameraProvider::getService(CAMERA_PASSTHROUGH_SERVICE_NAME);
     // TODO: handle the device doesn't have any camera case
     ALOGI_IF(mProvider, "provider is not nullptr, %p", mProvider.get());
     ASSERT_NE(mProvider, nullptr);

@@ -50,7 +50,7 @@ using ::android::sp;
 class ThermalHidlTest : public ::testing::Test {
  public:
   virtual void SetUp() override {
-    thermal_ = IThermal::getService(THERMAL_SERVICE_NAME, false);
+    thermal_ = IThermal::getService(THERMAL_SERVICE_NAME);
     ASSERT_NE(thermal_, nullptr);
     baseSize_ = 0;
     names_.clear();

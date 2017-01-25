@@ -187,7 +187,7 @@ class GatekeeperHidlTest : public ::testing::Test {
   GatekeeperHidlTest() : uid_(0) {}
   virtual void SetUp() override {
     GatekeeperResponse rsp;
-    gatekeeper_ = IGatekeeper::getService("gatekeeper", false);
+    gatekeeper_ = IGatekeeper::getService("gatekeeper");
     ASSERT_NE(nullptr, gatekeeper_.get());
     doDeleteAllUsers(rsp);
   }
