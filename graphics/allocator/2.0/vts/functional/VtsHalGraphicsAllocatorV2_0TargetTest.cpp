@@ -72,7 +72,7 @@ class TempDescriptor {
 class GraphicsAllocatorHidlTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    mAllocator = IAllocator::getService("gralloc");
+    mAllocator = IAllocator::getService();
     ASSERT_NE(mAllocator, nullptr);
 
     mAllocator->createClient([this](const auto& error, const auto& client) {

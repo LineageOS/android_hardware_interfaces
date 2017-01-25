@@ -36,7 +36,7 @@ using namespace android::hardware::graphics::common::V1_0;
 class GraphicsMapperHidlTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    mAllocator = IAllocator::getService("gralloc");
+    mAllocator = IAllocator::getService();
     ASSERT_NE(mAllocator, nullptr);
 
     mAllocator->createClient([this](const auto& error, const auto& client) {
@@ -46,7 +46,7 @@ class GraphicsMapperHidlTest : public ::testing::Test {
     });
     ASSERT_NE(mAllocatorClient, nullptr);
 
-    mMapper = IMapper::getService("gralloc-mapper");
+    mMapper = IMapper::getService();
     ASSERT_NE(nullptr, mMapper.get());
     ASSERT_FALSE(mMapper->isRemote());
 
