@@ -41,6 +41,28 @@ LOCAL_SHARED_LIBRARIES := \
 include $(BUILD_STATIC_LIBRARY)
 
 ###############################################################################
+# Vehicle HAL Protobuf library
+###############################################################################
+include $(CLEAR_VARS)
+LOCAL_SRC_FILES := $(call all-proto-files-under, impl/proto)
+
+LOCAL_PROTOC_OPTIMIZE_TYPE := nano
+
+LOCAL_MODULE := $(module_prefix)-libproto-native
+LOCAL_MODULE_CLASS := STATIC_LIBRARIES
+
+LOCAL_MODULE_TAGS := optional
+
+LOCAL_STRIP_MODULE := keep_symbols
+
+generated_sources_dir := $(call local-generated-sources-dir)
+LOCAL_EXPORT_C_INCLUDE_DIRS := \
+    $(generated_sources_dir)/proto/$(LOCAL_PATH)/impl/proto
+
+include $(BUILD_STATIC_LIBRARY)
+
+
+###############################################################################
 # Vehicle default VehicleHAL implementation
 ###############################################################################
 include $(CLEAR_VARS)
@@ -55,8 +77,12 @@ LOCAL_SHARED_LIBRARIES := \
     libhidltransport \
     libhwbinder \
     liblog \
+    libprotobuf-cpp-lite \
     libutils \
     $(module_prefix) \
+
+LOCAL_STATIC_LIBRARIES := \
+    $(module_prefix)-libproto-native
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -114,7 +140,11 @@ LOCAL_SHARED_LIBRARIES := \
     libhidltransport \
     libhwbinder \
     liblog \
+    libprotobuf-cpp-lite \
     libutils \
     $(module_prefix) \
+
+LOCAL_STATIC_LIBRARIES := \
+    $(module_prefix)-libproto-native
 
 include $(BUILD_EXECUTABLE)

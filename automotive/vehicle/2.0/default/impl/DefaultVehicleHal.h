@@ -21,8 +21,12 @@
 
 #include <VehicleHal.h>
 #include <impl/DefaultConfig.h>
-#include <vehicle_hal_manager/Obd2SensorStore.h>
+#include <sys/socket.h>
+#include <thread>
 #include <utils/SystemClock.h>
+#include <vehicle_hal_manager/Obd2SensorStore.h>
+#include "VehicleHalProto.pb.h"
+
 
 namespace android {
 namespace hardware {
@@ -34,6 +38,23 @@ namespace impl {
 
 class DefaultVehicleHal : public VehicleHal {
 public:
+    DefaultVehicleHal() : mThread() {}
+    ~DefaultVehicleHal() override {
+        // Notify thread to finish and wait for it to terminate
+        mExit = 1;
+
+        // Close emulator socket if it is open
+        {
+            std::lock_guard<std::mutex> lock(mTxMutex);
+            if (mCurSocket != -1) {
+                close(mCurSocket);
+                mCurSocket = -1;
+            }
+        }
+
+        mThread.join();
+    }
+
     std::vector<VehiclePropConfig> listProperties() override {
         return std::vector<VehiclePropConfig>(std::begin(kVehicleProperties),
                                               std::end(kVehicleProperties));
@@ -46,38 +67,47 @@ public:
 
     StatusCode set(const VehiclePropValue& propValue) override;
 
-    StatusCode subscribe(int32_t /*property*/,
-                         int32_t /*areas*/,
-                         float /*sampleRate*/) override {
-        // TODO(pavelm): implement
+    StatusCode subscribe(int32_t property, int32_t areas, float sampleRate) {
+        ALOGD("%s: not implemented: prop=0x%x, areas=0x%x, rate=%f", __FUNCTION__, property,
+              areas, sampleRate);
         return StatusCode::OK;
     }
 
-    StatusCode unsubscribe(int32_t /*property*/) override {
-        // TODO(pavelm): implement
+    StatusCode unsubscribe(int32_t property) {
+        ALOGD("%s: not implemented: prop=0x%x", __FUNCTION__, property);
         return StatusCode::OK;
     }
 
 private:
-    StatusCode getHvacTemperature(int32_t areaId, float* outValue);
-    StatusCode setHvacTemperature(int32_t areaId, float value);
-    StatusCode getHvacDefroster(int32_t areaId, bool* outValue);
-    StatusCode setHvacDefroster(int32_t areaId, bool value);
+    void doGetConfig(emulator::EmulatorMessage& rxMsg, emulator::EmulatorMessage& respMsg);
+    void doGetConfigAll(emulator::EmulatorMessage& rxMsg, emulator::EmulatorMessage& respMsg);
+    void doGetProperty(emulator::EmulatorMessage& rxMsg, emulator::EmulatorMessage& respMsg);
+    void doGetPropertyAll(emulator::EmulatorMessage& rxMsg, emulator::EmulatorMessage& respMsg);
+    void doSetProperty(emulator::EmulatorMessage& rxMsg, emulator::EmulatorMessage& respMsg);
+    VehiclePropValue* getVehiclePropValueLocked(int32_t propId, int32_t areaId);
+    void initObd2LiveFrame(VehiclePropConfig& obd2LiveFramePropConfig);
+    void parseRxProtoBuf(std::vector<uint8_t>& msg);
+    void populateProtoVehicleConfig(emulator::VehiclePropConfig* protoCfg,
+                                    const VehiclePropConfig& cfg);
+    void populateProtoVehiclePropValue(emulator::VehiclePropValue* protoVal,
+                                       const VehiclePropValue* val);
+    void setDefaultValue(VehiclePropValue* prop);
+    void rxMsg(void);
+    void rxThread(void);
+    void txMsg(emulator::EmulatorMessage& txMsg);
+    StatusCode updateProperty(const VehiclePropValue& propValue);
     StatusCode fillObd2LiveFrame(VehiclePropValuePtr* v);
     StatusCode fillObd2FreezeFrame(VehiclePropValuePtr* v);
 private:
-    int32_t mFanSpeed = 3;
-    int32_t mBrightness = 7;
-    float mRow1LeftHvacTemperatureSet = 16;
-    float mRow1RightHvacTemperatureSet = 22;
-    bool mFrontDefroster = false;
-    bool mRearDefroster = false;
-    bool mHvacPowerOn = true;
-    bool mHvacRecircOn = true;
-    bool mHvacAcOn = true;
-    bool mHvacAutoOn = true;
-    VehicleHvacFanDirection mFanDirection = VehicleHvacFanDirection::FACE;
+    // TODO:  Use a hashtable to support indexing props
+    std::vector<std::unique_ptr<VehiclePropValue>> mProps;
+    std::atomic<int> mCurSocket;
+    std::atomic<int> mExit;
     std::unique_ptr<Obd2SensorStore> mObd2SensorStore{nullptr};
+    std::mutex mPropsMutex;
+    int mSocket;
+    std::mutex mTxMutex;
+    std::thread mThread;
 };
 
 }  // impl
