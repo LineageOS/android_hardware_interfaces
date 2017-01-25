@@ -40,6 +40,8 @@ using ::android::sp;
 /* NCI Commands */
 #define CORE_RESET_CMD \
   { 0x20, 0x00, 0x01, 0x00 }
+#define CORE_RESET_CMD_CONFIG_RESET \
+  { 0x20, 0x00, 0x01, 0x01 }
 #define CORE_CONN_CREATE_CMD \
   { 0x20, 0x04, 0x02, 0x01, 0x00 }
 #define INVALID_COMMAND \
@@ -166,7 +168,7 @@ TEST_F(NfcHidlTest, OpenAndClose) {}
  * WriteCoreReset:
  * Sends CORE_RESET_CMD
  * Waits for CORE_RESET_RSP
- * Checks the status and the version number
+ * Checks the status, version number and configuration status
  */
 TEST_F(NfcHidlTest, WriteCoreReset) {
   std::vector<uint8_t> cmd = CORE_RESET_CMD;
@@ -178,6 +180,26 @@ TEST_F(NfcHidlTest, WriteCoreReset) {
   EXPECT_EQ(6ul, last_data_[0].size());
   EXPECT_EQ((int)NfcStatus::OK, last_data_[0][3]);
   EXPECT_GE(VERSION, last_data_[0][4]);
+  EXPECT_EQ(0ul, last_data_[0][5]);
+}
+
+/*
+ * WriteCoreResetConfigReset:
+ * Sends CORE_RESET_CMD_CONFIG_RESET
+ * Waits for CORE_RESET_RSP
+ * Checks the status, version number and configuration status
+ */
+TEST_F(NfcHidlTest, WriteCoreResetConfigReset) {
+  std::vector<uint8_t> cmd = CORE_RESET_CMD_CONFIG_RESET;
+  NfcData data = cmd;
+  EXPECT_EQ(data.size(), nfc_->write(data));
+  // Wait for CORE_RESET_RSP
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(1ul, last_data_.size());
+  EXPECT_EQ(6ul, last_data_[0].size());
+  EXPECT_EQ((int)NfcStatus::OK, last_data_[0][3]);
+  EXPECT_GE(VERSION, last_data_[0][4]);
+  EXPECT_EQ(1ul, last_data_[0][5]);
 }
 
 /*
@@ -273,14 +295,18 @@ TEST_F(NfcHidlTest, Bandwidth) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     // Check if the same data was recieved back
     EXPECT_EQ(2ul, last_data_.size());
-    EXPECT_EQ(data.size(), last_data_[0].size());
+
+    /* It is possible that CORE_CONN_CREDITS_NTF is received before data,
+     * Find the order and do further checks depending on that */
+    uint8_t data_index = last_data_[0].size() == data.size() ? 0 : 1;
+    EXPECT_EQ(data.size(), last_data_[data_index].size());
     for (size_t i = 0; i < data.size(); i++) {
-      EXPECT_EQ(data[i], last_data_[0][i]);
+      EXPECT_EQ(data[i], last_data_[data_index][i]);
     }
 
-    EXPECT_EQ(6ul, last_data_[1].size());
+    EXPECT_EQ(6ul, last_data_[!data_index].size());
     // Check if the credit is refilled to 1
-    EXPECT_EQ(1, last_data_[1][5]);
+    EXPECT_EQ(1, last_data_[!data_index][5]);
   }
 }
 
