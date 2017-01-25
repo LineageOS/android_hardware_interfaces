@@ -34,7 +34,7 @@ using ::android::sp;
 class ConsumerIrHidlTest : public ::testing::Test {
  public:
   virtual void SetUp() override {
-    ir = IConsumerIr::getService(false);
+    ir = IConsumerIr::getService();
     ASSERT_NE(ir, nullptr);
   }
 
