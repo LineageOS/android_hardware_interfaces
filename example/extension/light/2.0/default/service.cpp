@@ -28,10 +28,8 @@ using android::sp;
 using android::hardware::light::V2_0::ILight;
 
 int main() {
-    const char instance[] = "light";
-
     android::sp<ILight> service = new Light();
     configureRpcThreadpool(1, true /*callerWillJoin*/);
-    service->registerAsService(instance);
+    service->registerAsService();
     joinRpcThreadpool();
 }
