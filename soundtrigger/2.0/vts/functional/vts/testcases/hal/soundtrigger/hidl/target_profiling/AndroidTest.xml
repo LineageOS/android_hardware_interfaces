@@ -19,12 +19,13 @@
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.VtsPythonVirtualenvPreparer" />
     <test class="com.android.tradefed.testtype.VtsMultiDeviceTest">
-        <option name="test-module-name" value="HalSoundTriggerHidlTargetBasicTest" />
+        <option name="test-module-name" value="HalSoundTriggerHidlTargetBasicProfilingTest" />
         <option name="binary-test-sources" value="
             _32bit::DATA/nativetest/soundtrigger_hidl_hal_test/soundtrigger_hidl_hal_test,
             _64bit::DATA/nativetest64/soundtrigger_hidl_hal_test/soundtrigger_hidl_hal_test,
             "/>
-        <option name="binary-test-type" value="gtest" />
+        <option name="binary-test-type" value="hal_hidl_gtest" />
+        <option name="precondition-file-path-prefix" value="*/lib/hw/sound_trigger.primary." />
         <option name="test-timeout" value="1m" />
         <option name="enable-profiling" value="true" />
     </test>
