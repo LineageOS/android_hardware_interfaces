@@ -38,7 +38,9 @@ cc_library_shared {
 cc_test_host {
     name: "bluetooth-vendor-interface-unit-tests",
     srcs: [
+        "async_fd_watcher.cc",
         "bluetooth_address.cc",
+        "test/async_fd_watcher_unittest.cc",
         "test/bluetooth_address_test.cc",
         "test/properties.cc",
     ],
