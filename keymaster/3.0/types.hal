@@ -123,6 +123,19 @@ enum Tag : uint32_t {
     ATTESTATION_APPLICATION_ID = TagType:BYTES | 709, /* Used to identify the set of possible
                                                        * applications of which one has initiated a
                                                        * key attestation */
+    ATTESTATION_ID_BRAND = TagType:BYTES | 710,  /* Used to provide the device's brand name to be
+                                                    included in attestation */
+    ATTESTATION_ID_DEVICE = TagType:BYTES | 711, /* Used to provide the device's device name to be
+                                                    included in attestation */
+    ATTESTATION_ID_PRODUCT = TagType:BYTES | 712, /* Used to provide the device's product name to be
+                                                     included in attestation */
+    ATTESTATION_ID_SERIAL = TagType:BYTES | 713, /* Used to provide the device's serial number to be
+                                                    included in attestation */
+    ATTESTATION_ID_IMEI = TagType:BYTES | 714,   /* Used to provide the device's IMEI to be included
+                                                    in attestation */
+    ATTESTATION_ID_MEID = TagType:BYTES | 715,   /* Used to provide the device's MEID to be included
+                                                    in attestation */
+
 
     /* Tags used only to provide data to or receive data from operations */
     ASSOCIATED_DATA = TagType:BYTES | 1000, /* Used to provide associated data for AEAD modes. */
@@ -312,6 +325,7 @@ enum ErrorCode : uint32_t {
     ATTESTATION_CHALLENGE_MISSING = -63,
     KEYMASTER_NOT_CONFIGURED = -64,
     ATTESTATION_APPLICATION_ID_MISSING = -65,
+    CANNOT_ATTEST_IDS = -66,
 
     UNIMPLEMENTED = -100,
     VERSION_MISMATCH = -101,

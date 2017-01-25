@@ -209,6 +209,21 @@ interface IKeymasterDevice {
     deleteAllKeys() generates(ErrorCode error);
 
     /**
+     * Destroys knowledge of the device's ids. This prevents all device id attestation in the
+     * future. The destruction must be permanent so that not even a factory reset will restore the
+     * device ids.
+     *
+     * Device id attestation may be provided only if this method is fully implemented, allowing the
+     * user to permanently disable device id attestation. If this cannot be guaranteed, the device
+     * must never attest any device ids.
+     *
+     * This is a NOP if device id attestation is not supported.
+     *
+     * @return error See the ErrorCode enum.
+     */
+    destroyAttestationIds() generates(ErrorCode error);
+
+    /**
      * Begins a cryptographic operation using the specified key. If all is well, begin() will return
      * ErrorCode::OK and create an operation handle which must be passed to subsequent calls to
      * update(), finish() or abort().
