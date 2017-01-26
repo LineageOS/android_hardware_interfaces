@@ -72,6 +72,29 @@ struct DisplayDesc {
 
 
 /*
+ * Structure representing an image buffer through our APIs
+ *
+ * In addition to the handle to the graphics memory, we need to retain
+ * the properties of the buffer for easy reference and reconstruction of
+ * an ANativeWindowBuffer object on the remote side of API calls.
+ * (Not least because OpenGL expect an ANativeWindowBuffer* for us as a
+ * texture via eglCreateImageKHR().
+ * See also related types from android.hardware.graphics.common
+ * TODO:  b/34722508  Review details of interaction of this structure with gralloc and OpenGL.
+ *        Specifically consider if format and/or usage should become enumerated types.
+ */
+struct BufferDesc {
+    uint32_t    width;      // Units of pixels
+    uint32_t    height;     // Units of pixels
+    uint32_t    stride;     // Units of bytes
+    uint32_t    format;     // May contain values from android_pixel_format_t
+    uint32_t    usage;      // May contain values from from Gralloc.h
+    uint32_t    bufferId;   // Opaque value from driver
+    handle      memHandle;  // gralloc memory buffer handle
+};
+
+
+/*
  * States for control of the EVS display
  *
  * The DisplayInfo structure describes the basic properties of an EVS display. Any EVS
@@ -81,7 +104,8 @@ struct DisplayDesc {
  * presentation device.
  */
 enum DisplayState : uint32_t {
-    NOT_VISIBLE = 0,        // Display is inhibited
+    NOT_OPEN = 0,           // Display has not been requested by any application
+    NOT_VISIBLE,            // Display is inhibited
     VISIBLE_ON_NEXT_FRAME,  // Will become visible with next frame
     VISIBLE,                // Display is currently active
     NUM_STATES              // Must be last
@@ -94,4 +118,5 @@ enum EvsResult : uint32_t {
     INVALID_ARG,
     STREAM_ALREADY_RUNNING,
     BUFFER_NOT_AVAILABLE,
+    UNDERLYING_SERVICE_ERROR,
 };

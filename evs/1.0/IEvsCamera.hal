@@ -65,7 +65,7 @@ interface IEvsCamera {
      * as one), and if the supply is exhausted, no further frames may be
      * delivered until a buffer is returned.
      */
-    doneWithFrame(uint32_t frameId, handle bufferHandle) generates (EvsResult result);
+    oneway doneWithFrame(BufferDesc buffer);
 
     /**
      * Stop the delivery of EVS camera frames.

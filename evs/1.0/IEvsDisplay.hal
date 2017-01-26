@@ -65,7 +65,7 @@ interface IEvsDisplay {
      * must be returned via a call to returnTargetBufferForDisplay() even if the
      * display is no longer visible.
      */
-     getTargetBuffer() generates (handle bufferHandle);
+     getTargetBuffer() generates (BufferDesc buffer);
 
 
     /**
@@ -76,5 +76,5 @@ interface IEvsDisplay {
      * call. The buffer may be returned at any time and in any DisplayState, but all
      * buffers are expected to be returned before the IEvsDisplay interface is destroyed.
      */
-    returnTargetBufferForDisplay(handle bufferHandle) generates (EvsResult result);
+    returnTargetBufferForDisplay(BufferDesc buffer) generates (EvsResult result);
 };

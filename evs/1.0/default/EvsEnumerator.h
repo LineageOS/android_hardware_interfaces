@@ -38,6 +38,7 @@ public:
     Return<void> closeCamera(const ::android::sp<IEvsCamera>& carCamera)  override;
     Return<sp<IEvsDisplay>> openDisplay()  override;
     Return<void> closeDisplay(const ::android::sp<IEvsDisplay>& display)  override;
+    Return<DisplayState> getDisplayState()  override;
 
     // Implementation details
     EvsEnumerator();
@@ -50,7 +51,7 @@ private:
     };
     std::list<CameraRecord> mCameraList;
 
-    sp<IEvsDisplay>         mActiveDisplay;
+    wp<IEvsDisplay>         mActiveDisplay; // Weak pointer -> object destructs if client dies
 };
 
 } // namespace implementation
