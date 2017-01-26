@@ -62,6 +62,11 @@ namespace implementation {
             const DestinationBuffer& destination,
             decrypt_cb _hidl_cb) {
 
+        if (mSharedBufferBase == NULL) {
+            _hidl_cb(Status::BAD_VALUE, 0, "decrypt buffer base not set");
+            return Void();
+        }
+
         android::CryptoPlugin::Mode legacyMode;
         switch(mode) {
         case Mode::UNENCRYPTED:
