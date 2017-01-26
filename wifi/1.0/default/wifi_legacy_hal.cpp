@@ -22,12 +22,7 @@
 #include "wifi_legacy_hal.h"
 #include "wifi_legacy_hal_stubs.h"
 
-namespace android {
-namespace hardware {
-namespace wifi {
-namespace V1_0 {
-namespace implementation {
-namespace legacy_hal {
+namespace {
 // Constants ported over from the legacy HAL calling code
 // (com_android_server_wifi_WifiNative.cpp). This will all be thrown
 // away when this shim layer is replaced by the real vendor
@@ -39,6 +34,21 @@ static constexpr uint32_t kLinkLayerStatsDataMpduSizeThreshold = 128;
 static constexpr uint32_t kMaxWakeReasonStatsArraySize = 32;
 static constexpr uint32_t kMaxRingBuffers = 10;
 
+// Helper function to create a non-const char* for legacy Hal API's.
+std::vector<char> makeCharVec(const std::string& str) {
+  std::vector<char> vec(str.size() + 1);
+  vec.assign(str.begin(), str.end());
+  vec.push_back('\0');
+  return vec;
+}
+}  // namespace
+
+namespace android {
+namespace hardware {
+namespace wifi {
+namespace V1_0 {
+namespace implementation {
+namespace legacy_hal {
 // Legacy HAL functions accept "C" style function pointers, so use global
 // functions to pass to the legacy HAL function and store the corresponding
 // std::function methods to be invoked.
@@ -804,19 +814,17 @@ wifi_error WifiLegacyHal::startRingBufferLogging(const std::string& ring_name,
                                                  uint32_t verbose_level,
                                                  uint32_t max_interval_sec,
                                                  uint32_t min_data_size) {
-  std::vector<char> ring_name_internal(ring_name.begin(), ring_name.end());
   return global_func_table_.wifi_start_logging(wlan_interface_handle_,
                                                verbose_level,
                                                0,
                                                max_interval_sec,
                                                min_data_size,
-                                               ring_name_internal.data());
+                                               makeCharVec(ring_name).data());
 }
 
 wifi_error WifiLegacyHal::getRingBufferData(const std::string& ring_name) {
-  std::vector<char> ring_name_internal(ring_name.begin(), ring_name.end());
   return global_func_table_.wifi_get_ring_data(wlan_interface_handle_,
-                                               ring_name_internal.data());
+                                               makeCharVec(ring_name).data());
 }
 
 wifi_error WifiLegacyHal::registerErrorAlertCallbackHandler(
@@ -1091,16 +1099,14 @@ wifi_error WifiLegacyHal::nanGetCapabilities(transaction_id id) {
 
 wifi_error WifiLegacyHal::nanDataInterfaceCreate(
     transaction_id id, const std::string& iface_name) {
-  std::vector<char> iface_name_internal(iface_name.begin(), iface_name.end());
   return global_func_table_.wifi_nan_data_interface_create(
-      id, wlan_interface_handle_, iface_name_internal.data());
+      id, wlan_interface_handle_, makeCharVec(iface_name).data());
 }
 
 wifi_error WifiLegacyHal::nanDataInterfaceDelete(
     transaction_id id, const std::string& iface_name) {
-  std::vector<char> iface_name_internal(iface_name.begin(), iface_name.end());
   return global_func_table_.wifi_nan_data_interface_delete(
-      id, wlan_interface_handle_, iface_name_internal.data());
+      id, wlan_interface_handle_, makeCharVec(iface_name).data());
 }
 
 wifi_error WifiLegacyHal::nanDataRequestInitiator(
@@ -1122,6 +1128,12 @@ wifi_error WifiLegacyHal::nanDataEnd(transaction_id id,
   NanDataPathEndRequest msg_internal(msg);
   return global_func_table_.wifi_nan_data_end(
       id, wlan_interface_handle_, &msg_internal);
+}
+
+wifi_error WifiLegacyHal::setCountryCode(std::array<int8_t, 2> code) {
+  std::string code_str(code.data(), code.data() + code.size());
+  return global_func_table_.wifi_set_country_code(wlan_interface_handle_,
+                                                  code_str.c_str());
 }
 
 wifi_error WifiLegacyHal::retrieveWlanInterfaceHandle() {

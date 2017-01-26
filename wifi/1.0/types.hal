@@ -549,14 +549,14 @@ struct StaRoamingConfig {
  */
 enum StaRoamingState : uint8_t {
   /**
+   * Driver/Firmware must not perform any roaming.
+   */
+  DISABLED = 0,
+  /**
    * Driver/Firmware is allowed to perform roaming respecting
    * the |StaRoamingConfig| parameters set using |configureRoaming|.
    */
-  ENABLED = 0,
-  /**
-   * Driver/Firmware must not perform any roaming.
-   */
-  DISABLED = 1
+  ENABLED = 1
 };
 
 /**
@@ -2142,7 +2142,7 @@ struct WifiDebugPacketFateFrameInfo {
 };
 
 /**
- * Struct describing packet fate report for each Rx frame.
+ * Struct describing packet fate report for each Tx frame.
  */
 struct WifiDebugTxPacketFateReport {
   WifiDebugTxPacketFate fate;
