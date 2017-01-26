@@ -38,8 +38,7 @@ using ::android::sp;
 class AudioEffectHidlTest : public ::testing::Test {
  public:
   virtual void SetUp() override {
-    // currently test passthrough mode only
-    effectsFactory = IEffectsFactory::getService("audio_effects_factory", true);
+    effectsFactory = IEffectsFactory::getService("audio_effects_factory");
     ASSERT_NE(effectsFactory, nullptr);
   }
 

@@ -32,8 +32,7 @@ using ::android::sp;
 class VrHidlTest : public ::testing::Test {
  public:
   void SetUp() override {
-    // currently test passthrough mode only
-    vr = IVr::getService(VR_SERVICE_NAME, true);
+    vr = IVr::getService(VR_SERVICE_NAME);
     ASSERT_NE(vr, nullptr);
     ASSERT_TRUE(!vr->isRemote());
   }
