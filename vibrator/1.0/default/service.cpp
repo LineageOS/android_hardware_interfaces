@@ -22,5 +22,5 @@ using android::hardware::vibrator::V1_0::IVibrator;
 using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
-    return defaultPassthroughServiceImplementation<IVibrator>("vibrator");
+    return defaultPassthroughServiceImplementation<IVibrator>();
 }
