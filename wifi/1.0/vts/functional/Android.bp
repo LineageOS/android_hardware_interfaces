@@ -21,6 +21,7 @@ cc_test {
         "main.cpp",
         "wifi_ap_iface_hidl_test.cpp",
         "wifi_chip_hidl_test.cpp",
+        "wifi_hidl_call_util_selftest.cpp",
         "wifi_hidl_test.cpp",
         "wifi_hidl_test_utils.cpp",
         "wifi_nan_iface_hidl_test.cpp",
