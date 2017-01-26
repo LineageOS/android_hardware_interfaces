@@ -964,6 +964,7 @@ enum VehicleProperty: int32_t {
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
+     */
     AUDIO_PARAMETERS = (
         0x907
         | VehiclePropertyGroup:SYSTEM
