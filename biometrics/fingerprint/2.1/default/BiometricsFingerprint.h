@@ -43,7 +43,7 @@ using ::android::sp;
 
 struct BiometricsFingerprint : public IBiometricsFingerprint {
 public:
-    BiometricsFingerprint(fingerprint_device_t *device);
+    BiometricsFingerprint();
     ~BiometricsFingerprint();
 
     // Method to wrap legacy HAL with BiometricsFingerprint class
@@ -60,68 +60,17 @@ public:
     Return<RequestStatus> remove(uint32_t gid, uint32_t fid) override;
     Return<RequestStatus> setActiveGroup(uint32_t gid, const hidl_string& storePath) override;
     Return<RequestStatus> authenticate(uint64_t operationId, uint32_t gid) override;
-    static void notify(const fingerprint_msg_t *msg) {
-        if (mClientCallback == nullptr) {
-            ALOGE("Receiving callbacks before the client callback is registered.");
-            return;
-        }
-        const uint64_t devId = reinterpret_cast<uint64_t>(sDevice);
-        switch (msg->type) {
-            case FINGERPRINT_ERROR: {
-                int32_t vendorCode = 0;
-                FingerprintError result =
-                    VendorErrorFilter(msg->data.error, &vendorCode);
-                mClientCallback->onError(devId, result, vendorCode);
-                }
-                break;
-            case FINGERPRINT_ACQUIRED: {
-                int32_t vendorCode = 0;
-                FingerprintAcquiredInfo result =
-                    VendorAcquiredFilter(msg->data.acquired.acquired_info,
-                                         &vendorCode);
-                mClientCallback->onAcquired(devId, result, vendorCode);
-                }
-                break;
-            case FINGERPRINT_TEMPLATE_ENROLLING:
-                mClientCallback->onEnrollResult(devId,
-                    msg->data.enroll.finger.fid,
-                    msg->data.enroll.finger.gid,
-                    msg->data.enroll.samples_remaining);
-                break;
-            case FINGERPRINT_TEMPLATE_REMOVED:
-                mClientCallback->onRemoved(devId,
-                    msg->data.removed.finger.fid,
-                    msg->data.removed.finger.gid,
-                    msg->data.removed.remaining_templates);
-                break;
-            case FINGERPRINT_AUTHENTICATED:
-                if (msg->data.authenticated.finger.fid != 0) {
-                    const uint8_t* hat =
-                            reinterpret_cast<const uint8_t *>(&msg->data.authenticated.hat);
-                    notifyKeystore(hat, sizeof(msg->data.authenticated.hat));
-                }
-                mClientCallback->onAuthenticated(devId,
-                    msg->data.authenticated.finger.fid,
-                    msg->data.authenticated.finger.gid);
-                break;
-            case FINGERPRINT_TEMPLATE_ENUMERATING:
-                mClientCallback->onEnumerate(devId,
-                    msg->data.enumerated.finger.fid,
-                    msg->data.enumerated.finger.gid,
-                    msg->data.enumerated.remaining_templates);
-                break;
-        }
-    }
+
 private:
-    Return<RequestStatus> ErrorFilter(int32_t error);
-    static void notifyKeystore(const uint8_t *auth_token, const size_t auth_token_length);
-    static FingerprintError VendorErrorFilter(int32_t error,
-            int32_t* vendorCode);
-    static FingerprintAcquiredInfo VendorAcquiredFilter(int32_t error,
-            int32_t* vendorCode);
-    static sp<IBiometricsFingerprintClientCallback> mClientCallback;
+    static fingerprint_device_t* openHal();
+    static void notify(const fingerprint_msg_t *msg); /* Static callback for legacy HAL implementation */
+    static Return<RequestStatus> ErrorFilter(int32_t error);
+    static FingerprintError VendorErrorFilter(int32_t error, int32_t* vendorCode);
+    static FingerprintAcquiredInfo VendorAcquiredFilter(int32_t error, int32_t* vendorCode);
+    static BiometricsFingerprint* sInstance;
+
+    sp<IBiometricsFingerprintClientCallback> mClientCallback;
     fingerprint_device_t *mDevice;
-    static fingerprint_device_t *sDevice; // TODO: allow multiple drivers
 };
 
 }  // namespace implementation
