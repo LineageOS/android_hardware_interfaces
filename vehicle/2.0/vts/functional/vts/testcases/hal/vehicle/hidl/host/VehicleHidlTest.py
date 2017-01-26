@@ -158,11 +158,11 @@ class VehicleHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
         assertEqual(1, len(propValue.value.int32Values))
         drivingStatus = propValue.value.int32Values[0]
 
-        allStatuses = self.vtypes.UNRESTRICTED or self.vtypes.NO_VIDEO or
-            self.vtypes.NO_KEYBOARD_INPUT or self.vtypes.NO_VOICE_INPUT or
-            self.vtypes.NO_CONFIG or self.vtypes.LIMIT_MESSAGE_LEN
+        allStatuses = (self.vtypes.UNRESTRICTED | self.vtypes.NO_VIDEO
+               | self.vtypes.NO_KEYBOARD_INPUT | self.vtypes.NO_VOICE_INPUT
+               | self.vtypes.NO_CONFIG | self.vtypes.LIMIT_MESSAGE_LEN)
 
-        assertEqual(allStatuses, allStatuses or drivingStatus)
+        assertEqual(allStatuses, allStatuses | drivingStatus)
 
 if __name__ == "__main__":
     test_runner.main()
