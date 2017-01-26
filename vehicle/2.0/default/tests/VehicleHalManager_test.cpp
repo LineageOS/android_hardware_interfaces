@@ -67,7 +67,7 @@ public:
                     pValue = getValuePool()->obtainFloat(42.42);
                 }
                 break;
-            case VehicleProperty::VEHICLE_MAPS_DATA_SERVICE:
+            case VehicleProperty::VEHICLE_MAP_SERVICE:
                 pValue = getValuePool()->obtainComplex();
                 pValue->value.int32Values = hidl_vec<int32_t> { 10, 20 };
                 pValue->value.int64Values = hidl_vec<int64_t> { 30, 40 };
@@ -317,10 +317,10 @@ TEST_F(VehicleHalManagerTest, subscribe_WriteOnly) {
 }
 
 TEST_F(VehicleHalManagerTest, get_Complex) {
-    invokeGet(VehicleProperty::VEHICLE_MAPS_DATA_SERVICE, 0);
+    invokeGet(VehicleProperty::VEHICLE_MAP_SERVICE, 0);
 
     ASSERT_EQ(StatusCode::OK, actualStatusCode);
-    ASSERT_EQ(VehicleProperty::VEHICLE_MAPS_DATA_SERVICE, actualValue.prop);
+    ASSERT_EQ(VehicleProperty::VEHICLE_MAP_SERVICE, actualValue.prop);
 
     ASSERT_EQ(3, actualValue.value.bytes.size());
     ASSERT_EQ(1, actualValue.value.bytes[0]);

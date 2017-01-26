@@ -494,7 +494,7 @@ attribute: {
         scalar_value: {
             int32_t: 287312836
         }
-        enumerator: "VEHICLE_MAPS_DATA_SERVICE"
+        enumerator: "VEHICLE_MAP_SERVICE"
         scalar_value: {
             int32_t: 299895808
         }
