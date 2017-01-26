@@ -62,3 +62,155 @@ cc_library_shared {
         "android.hidl.base@1.0",
     ],
 }
+
+genrule {
+    name: "android.hardware.biometrics.fingerprint.vts.driver@2.1_genc++",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.biometrics.fingerprint@2.1 && $(location vtsc) -mDRIVER -tSOURCE -b$(genDir) android/hardware/biometrics/fingerprint/2.1/ $(genDir)/android/hardware/biometrics/fingerprint/2.1/",
+    srcs: [
+        "types.hal",
+        "IBiometricsFingerprint.hal",
+        "IBiometricsFingerprintClientCallback.hal",
+    ],
+    out: [
+        "android/hardware/biometrics/fingerprint/2.1/types.vts.cpp",
+        "android/hardware/biometrics/fingerprint/2.1/BiometricsFingerprint.vts.cpp",
+        "android/hardware/biometrics/fingerprint/2.1/BiometricsFingerprintClientCallback.vts.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.biometrics.fingerprint.vts.driver@2.1_genc++_headers",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.biometrics.fingerprint@2.1 && $(location vtsc) -mDRIVER -tHEADER -b$(genDir) android/hardware/biometrics/fingerprint/2.1/ $(genDir)/android/hardware/biometrics/fingerprint/2.1/",
+    srcs: [
+        "types.hal",
+        "IBiometricsFingerprint.hal",
+        "IBiometricsFingerprintClientCallback.hal",
+    ],
+    out: [
+        "android/hardware/biometrics/fingerprint/2.1/types.vts.h",
+        "android/hardware/biometrics/fingerprint/2.1/BiometricsFingerprint.vts.h",
+        "android/hardware/biometrics/fingerprint/2.1/BiometricsFingerprintClientCallback.vts.h",
+    ],
+}
+
+cc_library_shared {
+    name: "android.hardware.biometrics.fingerprint.vts.driver@2.1",
+    generated_sources: ["android.hardware.biometrics.fingerprint.vts.driver@2.1_genc++"],
+    generated_headers: ["android.hardware.biometrics.fingerprint.vts.driver@2.1_genc++_headers"],
+    export_generated_headers: ["android.hardware.biometrics.fingerprint.vts.driver@2.1_genc++_headers"],
+    shared_libs: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "liblog",
+        "libutils",
+        "libcutils",
+        "libvts_common",
+        "libvts_datatype",
+        "libvts_measurement",
+        "libvts_multidevice_proto",
+        "libcamera_metadata",
+        "libprotobuf-cpp-full",
+        "android.hidl.base@1.0",
+        "android.hardware.biometrics.fingerprint@2.1",
+    ],
+    export_shared_lib_headers: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "libutils",
+        "android.hidl.base@1.0",
+    ],
+}
+
+genrule {
+    name: "android.hardware.biometrics.fingerprint@2.1-IBiometricsFingerprint-vts.profiler_genc++",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.biometrics.fingerprint@2.1 && $(location vtsc) -mPROFILER -tSOURCE -b$(genDir) android/hardware/biometrics/fingerprint/2.1/ $(genDir)/android/hardware/biometrics/fingerprint/2.1/",
+    srcs: [
+        "IBiometricsFingerprint.hal",
+        "types.hal",
+    ],
+    out: [
+        "android/hardware/biometrics/fingerprint/2.1/BiometricsFingerprint.vts.cpp",
+        "android/hardware/biometrics/fingerprint/2.1/types.vts.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.biometrics.fingerprint@2.1-IBiometricsFingerprint-vts.profiler_genc++_headers",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.biometrics.fingerprint@2.1 && $(location vtsc) -mPROFILER -tHEADER -b$(genDir) android/hardware/biometrics/fingerprint/2.1/ $(genDir)/android/hardware/biometrics/fingerprint/2.1/",
+    srcs: [
+        "IBiometricsFingerprint.hal",
+        "types.hal",
+    ],
+    out: [
+        "android/hardware/biometrics/fingerprint/2.1/BiometricsFingerprint.vts.h",
+        "android/hardware/biometrics/fingerprint/2.1/types.vts.h",
+    ],
+}
+
+cc_library_shared {
+    name: "android.hardware.biometrics.fingerprint@2.1-IBiometricsFingerprint-vts.profiler",
+    generated_sources: ["android.hardware.biometrics.fingerprint@2.1-IBiometricsFingerprint-vts.profiler_genc++"],
+    generated_headers: ["android.hardware.biometrics.fingerprint@2.1-IBiometricsFingerprint-vts.profiler_genc++_headers"],
+    export_generated_headers: ["android.hardware.biometrics.fingerprint@2.1-IBiometricsFingerprint-vts.profiler_genc++_headers"],
+    shared_libs: [
+        "libbase",
+        "libhidlbase",
+        "libhidltransport",
+        "libvts_profiling",
+        "libvts_multidevice_proto",
+        "libprotobuf-cpp-full",
+        "android.hidl.base@1.0",
+        "android.hardware.biometrics.fingerprint@2.1",
+    ],
+}
+
+genrule {
+    name: "android.hardware.biometrics.fingerprint@2.1-IBiometricsFingerprintClientCallback-vts.profiler_genc++",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.biometrics.fingerprint@2.1 && $(location vtsc) -mPROFILER -tSOURCE -b$(genDir) android/hardware/biometrics/fingerprint/2.1/ $(genDir)/android/hardware/biometrics/fingerprint/2.1/",
+    srcs: [
+        "IBiometricsFingerprintClientCallback.hal",
+        "types.hal",
+    ],
+    out: [
+        "android/hardware/biometrics/fingerprint/2.1/BiometricsFingerprintClientCallback.vts.cpp",
+        "android/hardware/biometrics/fingerprint/2.1/types.vts.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.biometrics.fingerprint@2.1-IBiometricsFingerprintClientCallback-vts.profiler_genc++_headers",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.biometrics.fingerprint@2.1 && $(location vtsc) -mPROFILER -tHEADER -b$(genDir) android/hardware/biometrics/fingerprint/2.1/ $(genDir)/android/hardware/biometrics/fingerprint/2.1/",
+    srcs: [
+        "IBiometricsFingerprintClientCallback.hal",
+        "types.hal",
+    ],
+    out: [
+        "android/hardware/biometrics/fingerprint/2.1/BiometricsFingerprintClientCallback.vts.h",
+        "android/hardware/biometrics/fingerprint/2.1/types.vts.h",
+    ],
+}
+
+cc_library_shared {
+    name: "android.hardware.biometrics.fingerprint@2.1-IBiometricsFingerprintClientCallback-vts.profiler",
+    generated_sources: ["android.hardware.biometrics.fingerprint@2.1-IBiometricsFingerprintClientCallback-vts.profiler_genc++"],
+    generated_headers: ["android.hardware.biometrics.fingerprint@2.1-IBiometricsFingerprintClientCallback-vts.profiler_genc++_headers"],
+    export_generated_headers: ["android.hardware.biometrics.fingerprint@2.1-IBiometricsFingerprintClientCallback-vts.profiler_genc++_headers"],
+    shared_libs: [
+        "libbase",
+        "libhidlbase",
+        "libhidltransport",
+        "libvts_profiling",
+        "libvts_multidevice_proto",
+        "libprotobuf-cpp-full",
+        "android.hidl.base@1.0",
+        "android.hardware.biometrics.fingerprint@2.1",
+    ],
+}
