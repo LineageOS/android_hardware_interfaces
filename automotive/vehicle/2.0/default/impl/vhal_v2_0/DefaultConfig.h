@@ -201,6 +201,14 @@ const VehiclePropConfig kVehicleProperties[] = {
         .prop = toInt(VehicleProperty::IGNITION_STATE),
         .access = VehiclePropertyAccess::READ,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+    },
+
+    {
+        .prop = toInt(VehicleProperty::ENGINE_OIL_TEMP),
+        .access = VehiclePropertyAccess::READ,
+        .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
+        .minSampleRate = 0.1, // 0.1 Hz, every 10 seconds
+        .maxSampleRate = 10,  // 10 Hz, every 100 ms
     }
 };
 

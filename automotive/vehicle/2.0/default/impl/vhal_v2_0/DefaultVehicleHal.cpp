@@ -176,7 +176,7 @@ VehiclePropValue* DefaultVehicleHal::getVehiclePropValueLocked(int32_t propId, i
     if (prop != mProps.end()) {
         return prop->second.get();
     }
-    ALOGW("%s: Property not found:  propId = 0x%x, areaId = 0x%x", __FUNCTION__, propId, areaId);
+    ALOGW("%s: Property not found:  propId = 0x%x, areaId = 0x%x", __func__, propId, areaId);
     return nullptr;
 }
 
@@ -202,7 +202,7 @@ void DefaultVehicleHal::parseRxProtoBuf(std::vector<uint8_t>& msg) {
             doSetProperty(rxMsg, respMsg);
             break;
         default:
-            ALOGW("%s: Unknown message received, type = %d", __FUNCTION__, rxMsg.msg_type());
+            ALOGW("%s: Unknown message received, type = %d", __func__, rxMsg.msg_type());
             respMsg.set_status(emulator::ERROR_UNIMPLEMENTED_CMD);
             break;
         }
@@ -210,7 +210,7 @@ void DefaultVehicleHal::parseRxProtoBuf(std::vector<uint8_t>& msg) {
         // Send the reply
         txMsg(respMsg);
     } else {
-        ALOGE("%s: ParseFromString() failed. msgSize=%d", __FUNCTION__, static_cast<int>(msg.size()));
+        ALOGE("%s: ParseFromString() failed. msgSize=%d", __func__, static_cast<int>(msg.size()));
     }
 }
 
@@ -266,7 +266,7 @@ void DefaultVehicleHal::populateProtoVehicleConfig(emulator::VehiclePropConfig* 
         }
         break;
     default:
-        ALOGW("%s: Unknown property type:  0x%x", __FUNCTION__, toInt(getPropType(cfg.prop)));
+        ALOGW("%s: Unknown property type:  0x%x", __func__, toInt(getPropType(cfg.prop)));
         break;
     }
 
@@ -317,7 +317,7 @@ void DefaultVehicleHal::rxMsg() {
             parseRxProtoBuf(msg);
         } else {
             // This happens when connection is closed
-            ALOGD("%s: numBytes=%d, msgSize=%d", __FUNCTION__, numBytes,
+            ALOGD("%s: numBytes=%d, msgSize=%d", __func__, numBytes,
                   static_cast<int32_t>(msg.size()));
             break;
         }
@@ -411,6 +411,9 @@ void DefaultVehicleHal::setDefaultValue(VehiclePropValue* prop) {
     case toInt(VehicleProperty::INFO_FUEL_CAPACITY):
         prop->value.floatValues[0] = 0.75f;
         break;
+    case toInt(VehicleProperty::ENGINE_OIL_TEMP):
+        prop->value.floatValues[0] = 101;
+        break;
     case toInt(VehicleProperty::DISPLAY_BRIGHTNESS):
         prop->value.int32Values[0] = 7;
         break;
@@ -418,7 +421,7 @@ void DefaultVehicleHal::setDefaultValue(VehiclePropValue* prop) {
         prop->value.int32Values[0] = toInt(VehicleIgnitionState::ON);
         break;
     default:
-        ALOGW("%s: propId=0x%x not found", __FUNCTION__, prop->prop);
+        ALOGW("%s: propId=0x%x not found", __func__, prop->prop);
         break;
     }
 }
@@ -437,10 +440,10 @@ void DefaultVehicleHal::txMsg(emulator::EmulatorMessage& txMsg) {
         }
 
         if (retVal < 0) {
-            ALOGE("%s: Failed to tx message: retval=%d, errno=%d", __FUNCTION__, retVal, errno);
+            ALOGE("%s: Failed to tx message: retval=%d, errno=%d", __func__, retVal, errno);
         }
     } else {
-        ALOGE("%s: SerializeToString failed!", __FUNCTION__);
+        ALOGE("%s: SerializeToString failed!", __func__);
     }
 }
 
@@ -569,10 +572,8 @@ void DefaultVehicleHal::onCreate() {
                 break;
             }
             continue;
-            break;
-        case VehiclePropertyType::MASK:
         default:
-            ALOGW("%s: propType=0x%x not found", __FUNCTION__, propType);
+            ALOGE("%s: propType=0x%x not found", __func__, propType);
             vecSize = 0;
             break;
         }
@@ -603,6 +604,69 @@ void DefaultVehicleHal::onCreate() {
 
     // Start rx thread
     mThread = std::thread(&DefaultVehicleHal::rxThread, this);
+}
+
+void DefaultVehicleHal::onContinuousPropertyTimer(const std::vector<int32_t>& properties) {
+    VehiclePropValuePtr v;
+
+    auto& pool = *getValuePool();
+
+    for (int32_t property : properties) {
+        if (isContinuousProperty(property)) {
+            // In real implementation this value should be read from sensor, random
+            // value used for testing purpose only.
+            std::lock_guard<std::mutex> lock(mPropsMutex);
+
+            VehiclePropValue *internalPropValue = getVehiclePropValueLocked(property);
+            if (internalPropValue != nullptr) {
+                v = pool.obtain(*internalPropValue);
+            }
+            if (VehiclePropertyType::FLOAT == getPropType(property)) {
+                // Just get some randomness to continuous properties to see slightly differnt values
+                // on the other end.
+                v->value.floatValues[0] = v->value.floatValues[0] + std::rand() % 5;
+            }
+        } else {
+            ALOGE("Unexpected onContinuousPropertyTimer for property: 0x%x", property);
+        }
+
+        if (v.get()) {
+            v->timestamp = elapsedRealtimeNano();
+            doHalEvent(std::move(v));
+        }
+    }
+}
+
+StatusCode DefaultVehicleHal::subscribe(int32_t property, int32_t,
+                                        float sampleRate) {
+    ALOGI("subscribe called for property: 0x%x, sampleRate: %f", property, sampleRate);
+
+    if (isContinuousProperty(property)) {
+        mRecurrentTimer.registerRecurrentEvent(hertzToNanoseconds(sampleRate), property);
+    }
+    return StatusCode::OK;
+}
+
+StatusCode DefaultVehicleHal::unsubscribe(int32_t property) {
+    ALOGI("%s propId: 0x%x", __func__, property);
+    if (isContinuousProperty(property)) {
+        mRecurrentTimer.unregisterRecurrentEvent(property);
+    }
+    return StatusCode::OK;
+}
+
+const VehiclePropConfig* DefaultVehicleHal::getPropConfig(int32_t propId) const {
+    auto it = mPropConfigMap.find(propId);
+    return it == mPropConfigMap.end() ? nullptr : it->second;
+}
+
+bool DefaultVehicleHal::isContinuousProperty(int32_t propId) const {
+    const VehiclePropConfig* config = getPropConfig(propId);
+    if (config == nullptr) {
+        ALOGW("Config not found for property: 0x%x", propId);
+        return false;
+    }
+    return config->changeMode == VehiclePropertyChangeMode::CONTINUOUS;
 }
 
 }  // impl

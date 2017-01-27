@@ -118,6 +118,7 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
 
 LOCAL_SRC_FILES:= \
     tests/AccessControlConfigParser_test.cpp \
+    tests/RecurrentTimer_test.cpp \
     tests/SubscriptionManager_test.cpp \
     tests/VehicleHalManager_test.cpp \
     tests/VehicleObjectPool_test.cpp \

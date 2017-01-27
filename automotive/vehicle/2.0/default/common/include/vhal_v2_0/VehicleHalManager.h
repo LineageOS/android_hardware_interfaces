@@ -56,7 +56,9 @@ struct Caller {
 class VehicleHalManager : public IVehicle {
 public:
     VehicleHalManager(VehicleHal* vehicleHal)
-        : mHal(vehicleHal) {
+        : mHal(vehicleHal),
+          mSubscriptionManager(std::bind(&VehicleHalManager::onAllClientsUnsubscribed,
+                                         this, std::placeholders::_1)) {
         init();
     }
 
@@ -104,6 +106,8 @@ private:
     bool checkAcl(uid_t callerUid,
                   int32_t propertyId,
                   VehiclePropertyAccess requiredAccess) const;
+
+    void onAllClientsUnsubscribed(int32_t propertyId);
 
     static bool isSubscribable(const VehiclePropConfig& config,
                                SubscribeFlags flags);
