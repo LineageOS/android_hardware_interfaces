@@ -257,13 +257,6 @@ interface ISupplicantStaIfaceCallback {
                                     string url);
 
   /**
-   * Used to indicate the connection to a new network on this iface.
-   *
-   * @param bssid BSSID of the AP to which we connected.
-   */
-  oneway onConnected(Bssid bssid);
-
-  /**
    * Used to indicate the disconnection from the currently connected
    * network on this iface.
    *
@@ -275,13 +268,6 @@ interface ISupplicantStaIfaceCallback {
    */
   oneway onDisconnected(
           Bssid bssid, bool locallyGenerated, uint32_t reasonCode);
-
-  /**
-   * Used to indicate the completion of association to an AP.
-   *
-   * @param bssid BSSID of the corresponding AP.
-   */
-  oneway onAssociationCompleted(Bssid bssid);
 
   /**
    * Used to indicate an association rejection recieved from the AP
