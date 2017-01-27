@@ -40,7 +40,9 @@ struct AnwBufferAttributes {
     uint32_t stride;
     PixelFormat format;
     uint32_t usage; // TODO: convert to an enum
+    uint32_t generationNumber;
     uint64_t layerCount;
+    uint64_t id;
 };
 
 /**
@@ -52,25 +54,18 @@ struct AnwBuffer {
 };
 
 /**
- * Ref: frameworks/native/include/binder/IMemory.h
- * Ref: frameworks/native/libs/binder/IMemory.cpp
+ * Ref: frameworks/native/include/android/rect.h
+ * Ref: frameworks/native/include/ui/Rect.h
  */
-
-/**
- * This struct contains attributes for a shared memory buffer that can be put
- * into a union.
- */
-struct SharedMemoryAttributes {
-    uint32_t size;
-    uint32_t flags; // TODO: convert to an enum
-    uint32_t offset;
+struct Rect {
+    int32_t left;
+    int32_t top;
+    int32_t right;
+    int32_t bottom;
 };
 
 /**
- * A SharedMemory is simply SharedMemoryAttributes plus a native handle.
+ * Ref: frameworks/native/include/ui/Region.h
  */
-struct SharedMemory {
-    handle nativeHandle;
-    SharedMemoryAttributes attr;
-};
+typedef vec<Rect> Region;
 

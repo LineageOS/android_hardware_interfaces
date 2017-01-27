@@ -33,10 +33,18 @@ enum Status : int32_t {
     NO_ERROR                = 0,
 
     NAME_NOT_FOUND          = -2,
+    WOULD_BLOCK             = -11,
     NO_MEMORY               = -12,
+    NO_INIT                 = -19,
     BAD_VALUE               = -22,
+    DEAD_OBJECT             = -32,
+    INVALID_OPERATION       = -38,
+    TIMED_OUT               = -110,
     ERROR_UNSUPPORTED       = -1010,
     UNKNOWN_ERROR           = -2147483648,
+
+    BUFFER_NEEDS_REALLOCATION = 0x1,
+    RELEASE_ALL_BUFFERS       = 0x2,
 };
 
 /**
@@ -135,10 +143,11 @@ struct CodecBuffer {
         PRESET,
         SHARED_MEM,
         ANW_BUFFER,
-        NATIVE_HANDLE
+        NATIVE_HANDLE,
     };
 
     struct PresetAttributes {
+        uint32_t rangeOffset;
         uint32_t rangeLength;
     };
 
@@ -147,7 +156,7 @@ struct CodecBuffer {
         PresetAttributes preset;
 
         // if bufferType == SHARED_MEM
-        SharedMemoryAttributes sharedMem;
+        // No additional attributes.
 
         // if bufferType == ANW_BUFFER
         AnwBufferAttributes anwBuffer;
@@ -167,13 +176,17 @@ struct CodecBuffer {
     Attributes attr;
 
     /**
-     * \p nativeHandle is used only for types SHARED_MEM, ANW_BUFFER and
-     * NATIVE_HANDLE.
+     * Used only for types ANW_BUFFER and NATIVE_HANDLE.
      *
      * (A native handle cannot be put into a union as HIDL currently does not
      * support discriminated unions.)
      */
     handle nativeHandle;
+
+    /**
+     * Used only for type SHARED_MEM.
+     */
+    memory sharedMemory;
 
 };
 
