@@ -322,6 +322,7 @@ enum PixelFormat : int32_t {
      * -------------------------------+-----------------------------------------
      *  HAL_DATASPACE_JFIF            | An encoded JPEG image
      *  HAL_DATASPACE_DEPTH           | An android_depth_points buffer
+     *  HAL_DATASPACE_SENSOR          | Sensor event data.
      *  Other                         | Unsupported
      *
      */
@@ -1080,7 +1081,17 @@ enum Dataspace : int32_t {
      *       The point cloud will be represented with the android_depth_points
      *       structure.
      */
-    DEPTH = 0x1000
+    DEPTH = 0x1000,
+
+
+    /*
+     * The buffer contains sensor events from sensor direct report.
+     * This value is valid with formats:
+     *    HAL_PIXEL_FORMAT_BLOB: an array of sensor event structure that forms
+     *       a lock free queue. Format of sensor event structure is specified
+     *       in Sensors HAL.
+     */
+    SENSOR = 0x1001
 };
 
 /*
