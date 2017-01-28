@@ -342,10 +342,6 @@ interface IRadioIndication {
    oneway exitEmergencyCallbackMode(RadioIndicationType type);
 
    /*
-    * TODO(Consider moving this to separate interface. Client will receive this function with an
-    * IRadioResponse interface so that all requests in that IRadioResponse will fail before
-    * rilConnected() is received)
-    *
     * Indicates the ril connects and returns the version
     *
     * @param type Type of radio indication
