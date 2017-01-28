@@ -994,23 +994,44 @@ enum VehicleProperty: int32_t {
         | VehicleArea:GLOBAL),
 
     /*
-     * Index in int32Values for AP_POWER_STATE property.
+     * Property to control power state of application processor
+     *
+     * It is assumed that AP's power state is controller by separate power
+     * controller.
+     *
+     * For configuration information, VehiclePropConfig.configFlags can
+     * have bit flag combining values in VehicleApPowerStateConfigFlag.
+     *
+     * Value format for IVehicle#get / IVehicle#subscribe:
+     *   int32Values[0] : vehicle_ap_power_state_type
+     *   int32Values[1] : additional parameter relevant for each state,
+     *                    0 if not used.
+     * Value format for IVehicle#set:
+     *   int32Values[0] : vehicle_ap_power_state_set_type
+     *   int32Values[1] : additional parameter relevant for each request. should be 0 if not used.
+     *
+     * @change_mode VEHICLE_PROP_CHANGE_MODE_ON_CHANGE
+     * @access VEHICLE_PROP_ACCESS_READ_WRITE
      */
-    AP_POWER_STATE = (0x00000A00),
+    AP_POWER_STATE = (
+        0x0A00
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32_VEC
+        | VehicleArea:GLOBAL),
 
-  /*
-   * Property to represent brightness of the display. Some cars have single
-   * control for the brightness of all displays and this property is to share
-   * change in that control.
-   *
-   * If this is writable, android side can set this value when user changes
-   * display brightness from Settings. If this is read only, user may still
-   * change display brightness from Settings, but that will not be reflected
-   * to other displays.
-   *
-   * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-   * @access VehiclePropertyAccess:READ_WRITE
-   */
+    /*
+     * Property to represent brightness of the display. Some cars have single
+     * control for the brightness of all displays and this property is to share
+     * change in that control.
+     *
+     * If this is writable, android side can set this value when user changes
+     * display brightness from Settings. If this is read only, user may still
+     * change display brightness from Settings, but that will not be reflected
+     * to other displays.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
     DISPLAY_BRIGHTNESS = (
         0x0A01
         | VehiclePropertyGroup:SYSTEM
