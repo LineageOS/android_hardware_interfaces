@@ -117,9 +117,6 @@ enum RadioError : int32_t {
     ABORTED = 65,                         // Operation aborted
     INVALID_RESPONSE = 66,                // Response from vendor had invalid data
 
-    // TODO(May be moved to vendor HAL extension)
-    // OEM specific error codes. To be used by OEM when they don't want to reveal
-    // specific error codes which would be replaced by Generic failure.
     OEM_ERROR_1 = 501,
     OEM_ERROR_2 = 502,
     OEM_ERROR_3 = 503,
@@ -462,9 +459,6 @@ enum DataCallFailCause : int32_t {
     AUTH_FAILURE_ON_EMERGENCY_CALL = 0x7A,
     OEM_DCFAILCAUSE_1 = 0x1001,
 
-    // OEM specific error codes. To be used by OEMs when they don't want to
-    // reveal error code which would be replaced by PDP_FAIL_ERROR_UNSPECIFIED
-    // TODO(May be moved to vendor HAL extension)
     OEM_DCFAILCAUSE_2 = 0x1002,
     OEM_DCFAILCAUSE_3 = 0x1003,
     OEM_DCFAILCAUSE_4 = 0x1004,
