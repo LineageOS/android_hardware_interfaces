@@ -1736,7 +1736,15 @@ enum VehicleProperty: int32_t {
         | VehicleArea:GLOBAL),
 
     /*
-     * Vehicle Maps Data Service (VMDS) message
+     * Vehicle Maps Service (VMS) message
+     *
+     * This property uses COMPLEX data to communicate vms messages.
+     *
+     * Its contents are to be interpreted as follows:
+     * the indices defined in VmsMessageIntegerValuesIndex are to be used to
+     * read from int32Values;
+     * stringValue is a serialized VMS message as defined in the vms protocol
+     * which is opaque to the framework;
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
@@ -3074,4 +3082,33 @@ enum Obd2FloatSensorIndex : int32_t {
   LAST_SYSTEM_INDEX = ENGINE_FUEL_RATE,
 
   VENDOR_START_INDEX = LAST_SYSTEM_INDEX + 1,
+};
+
+/*
+ * This enum lists the types of supported VMS messages.
+ */
+enum VmsMessageType : int32_t {
+  /* A client subscribes to a layer. */
+  SUBSCRIBE = 1,
+
+  /* A client unsubscribes from a layer. */
+  UNSUBSCRIBE = 2,
+
+  /* A client publishes a data packet. */
+  DATA = 3,
+};
+
+/*
+ * This enum provides the canonical mapping for VMS properties that have an
+ * integer value.
+ */
+enum VmsMessageIntegerValuesIndex : int32_t {
+  /* The message type as enumerated by VmsMessageType enum. */
+  VMS_MESSAGE_TYPE = 1,
+
+  /* The layer ID as defined in the vms protocol. */
+  VMS_LAYER_ID = 2,
+
+  /* The version of the VMS layer. */
+  VMS_LAYER_VERSION = 3,
 };
