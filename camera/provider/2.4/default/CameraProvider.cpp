@@ -320,8 +320,9 @@ Return<void> CameraProvider::isSetTorchModeSupported(isSetTorchModeSupported_cb 
 }
 
 Return<void> CameraProvider::getCameraDeviceInterface_V1_x(
-        const hidl_string& /*cameraDeviceName*/, getCameraDeviceInterface_V1_x_cb /*_hidl_cb*/)  {
+        const hidl_string& /*cameraDeviceName*/, getCameraDeviceInterface_V1_x_cb _hidl_cb)  {
     // TODO implement after device 1.0 is implemented
+    _hidl_cb(Status::INTERNAL_ERROR, nullptr);
     return Void();
 }
 
