@@ -98,6 +98,8 @@ Return<void> TvInput::getStreamConfigurations(int32_t deviceId, getStreamConfigu
                 ++pos;
             }
         }
+    } else if (ret == -EINVAL) {
+        res = Result::INVALID_ARGUMENTS;
     }
     cb(res, tvStreamConfigs);
     return Void();
