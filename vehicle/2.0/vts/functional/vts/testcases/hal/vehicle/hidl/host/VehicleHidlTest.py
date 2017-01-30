@@ -21,9 +21,11 @@ import time
 from vts.runners.host import asserts
 from vts.runners.host import base_test_with_webdb
 from vts.runners.host import const
+from vts.runners.host import keys
 from vts.runners.host import test_runner
 from vts.utils.python.controllers import android_device
 from vts.utils.python.profiling import profiling_utils
+from vts.utils.python.coverage import coverage_utils
 
 
 class VehicleHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
@@ -39,6 +41,9 @@ class VehicleHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
         results = self.dut.shell.one.Execute("id -u system")
         system_uid = results[const.STDOUT][0].strip()
         logging.info("system_uid: %s", system_uid)
+
+        if getattr(self, keys.ConfigKeys.IKEY_ENABLE_COVERAGE, False):
+            coverage_utils.InitializeDeviceCoverage(self.dut)
 
         self.dut.hal.InitHidlHal(
             target_type="vehicle",
@@ -62,6 +67,9 @@ class VehicleHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
         """
         if self.enable_profiling:
             self.ProcessAndUploadTraceData()
+
+        if getattr(self, keys.ConfigKeys.IKEY_ENABLE_COVERAGE, False):
+            self.SetCoverageData(coverage_utils.GetGcdaDict(self.dut))
 
     def setUpTest(self):
         if self.enable_profiling:

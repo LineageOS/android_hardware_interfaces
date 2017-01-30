@@ -20,8 +20,10 @@ import logging
 from vts.runners.host import asserts
 from vts.runners.host import base_test_with_webdb
 from vts.runners.host import const
+from vts.runners.host import keys
 from vts.runners.host import test_runner
 from vts.utils.python.controllers import android_device
+from vts.utils.python.coverage import coverage_utils
 
 
 class TvInputHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
@@ -34,6 +36,9 @@ class TvInputHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
         self.dut.shell.InvokeTerminal("one")
         self.dut.shell.one.Execute("setenforce 0")  # SELinux permissive mode
 
+        if getattr(self, keys.ConfigKeys.IKEY_ENABLE_COVERAGE, False):
+            coverage_utils.InitializeDeviceCoverage(self.dut)
+
         self.dut.hal.InitHidlHal(target_type="tv_input",
                                  target_basepaths=["/system/lib64"],
                                  target_version=1.0,
@@ -42,6 +47,11 @@ class TvInputHidlTest(base_test_with_webdb.BaseTestWithWebDbClass):
                                  bits=64 if self.dut.is64Bit else 32)
 
         self.dut.shell.InvokeTerminal("one")
+
+    def tearDownClass(self):
+        """To be executed when all test cases are finished."""
+        if getattr(self, keys.ConfigKeys.IKEY_ENABLE_COVERAGE, False):
+            self.SetCoverageData(coverage_utils.GetGcdaDict(self.dut))
 
     def testGetStreamConfigurations(self):
         configs = self.dut.hal.tv_input.getStreamConfigurations(0)
