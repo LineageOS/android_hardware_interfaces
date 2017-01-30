@@ -38,6 +38,16 @@ enum PixelFormat : int32_t {
     BGRA_8888          = 5,
 
     /*
+     * The following formats use 10bit integers for R, G, and B and
+     * 2 bits for alpha. This is used to improve color precision on
+     * wide-color devices, e.g. Display-P3 or scRGB.
+     *
+     * When used with ANativeWindow, the dataSpace field describes the color
+     * space of the buffer.
+     */
+    RGBA_1010102       = 0x2B,
+
+    /*
      * The following formats use a 16bit float per color component.
      *
      * When used with ANativeWindow, the dataSpace field describes the color
