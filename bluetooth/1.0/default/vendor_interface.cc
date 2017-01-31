@@ -40,6 +40,8 @@ using android::hardware::bluetooth::V1_0::implementation::VendorInterface;
 using android::hardware::hidl_vec;
 
 tINT_CMD_CBACK internal_command_cb;
+uint16_t internal_command_opcode;
+
 VendorInterface* g_vendor_interface = nullptr;
 
 const size_t preamble_size_for_type[] = {
@@ -68,9 +70,27 @@ HC_BT_HDR* WrapPacketAndCopy(uint16_t event, const hidl_vec<uint8_t>& data) {
   return packet;
 }
 
+bool internal_command_event_match(const hidl_vec<uint8_t>& packet) {
+  uint8_t event_code = packet[0];
+  if (event_code != HCI_COMMAND_COMPLETE_EVENT) {
+    ALOGE("%s: Unhandled event type %02X", __func__, event_code);
+    return false;
+  }
+
+  size_t opcode_offset = HCI_EVENT_PREAMBLE_SIZE + 1;  // Skip num packets.
+
+  uint16_t opcode = packet[opcode_offset] | (packet[opcode_offset + 1] << 8);
+
+  ALOGV("%s internal_command_opcode = %04X opcode = %04x", __func__,
+        internal_command_opcode, opcode);
+  return opcode == internal_command_opcode;
+}
+
 uint8_t transmit_cb(uint16_t opcode, void* buffer, tINT_CMD_CBACK callback) {
-  ALOGV("%s opcode: 0x%04x, ptr: %p", __func__, opcode, buffer);
+  ALOGV("%s opcode: 0x%04x, ptr: %p, cb: %p", __func__, opcode, buffer,
+        callback);
   internal_command_cb = callback;
+  internal_command_opcode = opcode;
   uint8_t type = HCI_PACKET_TYPE_COMMAND;
   VendorInterface::get()->Send(&type, 1);
   HC_BT_HDR* bt_hdr = reinterpret_cast<HC_BT_HDR*>(buffer);
@@ -281,7 +301,6 @@ size_t VendorInterface::Send(const uint8_t* data, size_t length) {
 
 void VendorInterface::OnFirmwareConfigured(uint8_t result) {
   ALOGD("%s result: %d", __func__, result);
-  internal_command_cb = nullptr;
 
   if (firmware_startup_timer_ != nullptr) {
     delete firmware_startup_timer_;
@@ -341,17 +360,18 @@ void VendorInterface::OnDataReady(int fd) {
       hci_packet_bytes_remaining_ -= bytes_read;
       hci_packet_bytes_read_ += bytes_read;
       if (hci_packet_bytes_remaining_ == 0) {
-        if (internal_command_cb != nullptr) {
+        if (internal_command_cb != nullptr &&
+            hci_packet_type_ == HCI_PACKET_TYPE_EVENT &&
+            internal_command_event_match(hci_packet_)) {
           HC_BT_HDR* bt_hdr =
               WrapPacketAndCopy(HCI_PACKET_TYPE_EVENT, hci_packet_);
-          internal_command_cb(bt_hdr);
-        } else if (packet_read_cb_ != nullptr &&
-                   initialize_complete_cb_ == nullptr) {
-          packet_read_cb_(hci_packet_type_, hci_packet_);
+
+          // The callbacks can send new commands, so don't zero after calling.
+          tINT_CMD_CBACK saved_cb = internal_command_cb;
+          internal_command_cb = nullptr;
+          saved_cb(bt_hdr);
         } else {
-          ALOGE(
-              "%s HCI_PAYLOAD received without packet_read_cb or pending init.",
-              __func__);
+          packet_read_cb_(hci_packet_type_, hci_packet_);
         }
         hci_parser_state_ = HCI_IDLE;
       }

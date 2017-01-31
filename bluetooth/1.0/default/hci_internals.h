@@ -42,3 +42,6 @@ const size_t HCI_EVENT_PREAMBLE_SIZE = 2;
 const size_t HCI_LENGTH_OFFSET_EVT = 1;
 
 const size_t HCI_PREAMBLE_SIZE_MAX = HCI_ACL_PREAMBLE_SIZE;
+
+// Event codes (Volume 2, Part E, 7.7.14)
+const uint8_t HCI_COMMAND_COMPLETE_EVENT = 0x0E;
