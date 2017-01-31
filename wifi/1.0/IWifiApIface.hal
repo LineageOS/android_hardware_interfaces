@@ -22,5 +22,15 @@ import IWifiIface;
  * Interface used to represent a single AP iface.
  */
 interface IWifiApIface extends IWifiIface {
-  /** TODO(rpius): Add methods to the interface. */
+  /**
+   * Set country code for this iface.
+   *
+   * @param code 2 byte country code (as defined in ISO 3166) to set.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.FAILURE_UNKNOWN|,
+   *         |WifiStatusCode.FAILURE_IFACE_INVALID|
+   */
+  setCountryCode(int8_t[2] code) generates (WifiStatus status);
 };
