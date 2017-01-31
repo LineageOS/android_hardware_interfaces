@@ -49,7 +49,8 @@ class VendorInterface {
  private:
   virtual ~VendorInterface() = default;
 
-  bool Open(InitializeCompleteCallback initialize_complete_cb, PacketReadCallback packet_read_cb);
+  bool Open(InitializeCompleteCallback initialize_complete_cb,
+            PacketReadCallback packet_read_cb);
   void Close();
 
   void OnDataReady(int fd);
