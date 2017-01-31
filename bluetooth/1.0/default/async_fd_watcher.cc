@@ -50,6 +50,20 @@ int AsyncFdWatcher::WatchFdForNonBlockingReads(
   return 0;
 }
 
+int AsyncFdWatcher::ConfigureTimeout(
+    const std::chrono::milliseconds timeout,
+    const TimeoutCallback& on_timeout_callback) {
+  // Add timeout and callback
+  {
+    std::unique_lock<std::mutex> guard(timeout_mutex_);
+    timeout_cb_ = on_timeout_callback;
+    timeout_ms_ = timeout;
+  }
+
+  notifyThread();
+  return 0;
+}
+
 void AsyncFdWatcher::StopWatchingFileDescriptor() { stopThread(); }
 
 AsyncFdWatcher::~AsyncFdWatcher() {}
@@ -86,6 +100,11 @@ int AsyncFdWatcher::stopThread() {
     read_fd_ = -1;
   }
 
+  {
+    std::unique_lock<std::mutex> guard(timeout_mutex_);
+    timeout_cb_ = nullptr;
+  }
+
   return 0;
 }
 
@@ -104,21 +123,37 @@ void AsyncFdWatcher::ThreadRoutine() {
     FD_SET(notification_listen_fd_, &read_fds);
     FD_SET(read_fd_, &read_fds);
 
-    // Wait until there is data available to read on some FD
-    int nfds = std::max(notification_listen_fd_, read_fd_);
-    int retval = select(nfds + 1, &read_fds, NULL, NULL, NULL);
-    if (retval <= 0) continue;  // there was some error or a timeout
+    struct timeval timeout;
+    struct timeval* timeout_ptr = NULL;
+    if (timeout_ms_ > std::chrono::milliseconds(0)) {
+      timeout.tv_sec = timeout_ms_.count() / 1000;
+      timeout.tv_usec = (timeout_ms_.count() % 1000) * 1000;
+      timeout_ptr = &timeout;
+    }
 
-    // Read data from the notification FD
+    // Wait until there is data available to read on some FD.
+    int nfds = std::max(notification_listen_fd_, read_fd_);
+    int retval = select(nfds + 1, &read_fds, NULL, NULL, timeout_ptr);
+
+    // There was some error.
+    if (retval < 0) continue;
+
+    // Timeout.
+    if (retval == 0) {
+      std::unique_lock<std::mutex> guard(timeout_mutex_);
+      if (timeout_ms_ > std::chrono::milliseconds(0) && timeout_cb_)
+        timeout_cb_();
+      continue;
+    }
+
+    // Read data from the notification FD.
     if (FD_ISSET(notification_listen_fd_, &read_fds)) {
       char buffer[] = {0};
       TEMP_FAILURE_RETRY(read(notification_listen_fd_, buffer, 1));
+      continue;
     }
 
-    // Make sure we're still running
-    if (!running_) break;
-
-    // Invoke the data ready callback if appropriate
+    // Invoke the data ready callback if appropriate.
     if (FD_ISSET(read_fd_, &read_fds)) {
       std::unique_lock<std::mutex> guard(internal_mutex_);
       if (cb_) cb_(read_fd_);
