@@ -70,6 +70,30 @@ HC_BT_HDR* WrapPacketAndCopy(uint16_t event, const hidl_vec<uint8_t>& data) {
   return packet;
 }
 
+size_t write_safely(int fd, const uint8_t* data, size_t length) {
+  size_t transmitted_length = 0;
+  while (length > 0) {
+    ssize_t ret =
+        TEMP_FAILURE_RETRY(write(fd, data + transmitted_length, length));
+
+    if (ret == -1) {
+      if (errno == EAGAIN) continue;
+      ALOGE("%s error writing to UART (%s)", __func__, strerror(errno));
+      break;
+
+    } else if (ret == 0) {
+      // Nothing written :(
+      ALOGE("%s zero bytes written - something went wrong...", __func__);
+      break;
+    }
+
+    transmitted_length += ret;
+    length -= ret;
+  }
+
+  return transmitted_length;
+}
+
 bool internal_command_event_match(const hidl_vec<uint8_t>& packet) {
   uint8_t event_code = packet[0];
   if (event_code != HCI_COMMAND_COMPLETE_EVENT) {
@@ -92,9 +116,8 @@ uint8_t transmit_cb(uint16_t opcode, void* buffer, tINT_CMD_CBACK callback) {
   internal_command_cb = callback;
   internal_command_opcode = opcode;
   uint8_t type = HCI_PACKET_TYPE_COMMAND;
-  VendorInterface::get()->Send(&type, 1);
   HC_BT_HDR* bt_hdr = reinterpret_cast<HC_BT_HDR*>(buffer);
-  VendorInterface::get()->Send(bt_hdr->data, bt_hdr->len);
+  VendorInterface::get()->Send(type, bt_hdr->data, bt_hdr->len);
   return true;
 }
 
@@ -273,30 +296,14 @@ void VendorInterface::Close() {
   }
 }
 
-size_t VendorInterface::Send(const uint8_t* data, size_t length) {
+size_t VendorInterface::Send(uint8_t type, const uint8_t* data, size_t length) {
   if (uart_fd_ == INVALID_FD) return 0;
 
-  size_t transmitted_length = 0;
-  while (length > 0) {
-    ssize_t ret =
-        TEMP_FAILURE_RETRY(write(uart_fd_, data + transmitted_length, length));
+  int rv = write_safely(uart_fd_, &type, sizeof(type));
+  if (rv == sizeof(type))
+    rv = write_safely(uart_fd_, data, length);
 
-    if (ret == -1) {
-      if (errno == EAGAIN) continue;
-      ALOGE("%s error writing to UART (%s)", __func__, strerror(errno));
-      break;
-
-    } else if (ret == 0) {
-      // Nothing written :(
-      ALOGE("%s zero bytes written - something went wrong...", __func__);
-      break;
-    }
-
-    transmitted_length += ret;
-    length -= ret;
-  }
-
-  return transmitted_length;
+  return rv;
 }
 
 void VendorInterface::OnFirmwareConfigured(uint8_t result) {

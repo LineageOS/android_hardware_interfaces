@@ -83,8 +83,7 @@ Return<void> BluetoothHci::sendScoData(const hidl_vec<uint8_t>& data) {
 
 void BluetoothHci::sendDataToController(const uint8_t type,
                                         const hidl_vec<uint8_t>& data) {
-  VendorInterface::get()->Send(&type, 1);
-  VendorInterface::get()->Send(data.data(), data.size());
+  VendorInterface::get()->Send(type, data.data(), data.size());
 }
 
 IBluetoothHci* HIDL_FETCH_IBluetoothHci(const char* /* name */) {
