@@ -233,7 +233,8 @@ enum AudioFormat : uint32_t {
     SBC                 = 0x1F000000UL,
     APTX                = 0x20000000UL,
     APTX_HD             = 0x21000000UL,
-    LDAC                = 0x22000000UL,
+    AC4                 = 0x22000000UL,
+    LDAC                = 0x23000000UL,
     MAIN_MASK           = 0xFF000000UL, /* Deprecated */
     SUB_MASK            = 0x00FFFFFFUL,
 
@@ -431,6 +432,9 @@ enum AudioChannelMask : uint32_t {
     IN_MONO   = IN_FRONT,
     IN_STEREO = (IN_LEFT | IN_RIGHT),
     IN_FRONT_BACK = (IN_FRONT | IN_BACK),
+    IN_6 = (IN_LEFT | IN_RIGHT |
+            IN_FRONT | IN_BACK |
+            IN_LEFT_PROCESSED | IN_RIGHT_PROCESSED),
     IN_VOICE_UPLINK_MONO = (IN_VOICE_UPLINK | IN_MONO),
     IN_VOICE_DNLINK_MONO = (IN_VOICE_DNLINK | IN_MONO),
     IN_VOICE_CALL_MONO   = (IN_VOICE_UPLINK_MONO |
