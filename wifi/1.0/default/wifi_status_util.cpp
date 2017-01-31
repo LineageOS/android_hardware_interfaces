@@ -42,8 +42,9 @@ std::string legacyErrorToString(legacy_hal::wifi_error error) {
       return "TOO_MANY_REQUESTS";
     case legacy_hal::WIFI_ERROR_OUT_OF_MEMORY:
       return "OUT_OF_MEMORY";
+    case legacy_hal::WIFI_ERROR_BUSY:
+      return "BUSY";
     case legacy_hal::WIFI_ERROR_UNKNOWN:
-    default:
       return "UNKNOWN";
   }
 }
@@ -90,7 +91,6 @@ WifiStatus createWifiStatusFromLegacyError(legacy_hal::wifi_error error,
       return createWifiStatus(WifiStatusCode::SUCCESS, desc);
 
     case legacy_hal::WIFI_ERROR_UNKNOWN:
-    default:
       return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN, "unknown");
   }
 }

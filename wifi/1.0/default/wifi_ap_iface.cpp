@@ -55,12 +55,28 @@ Return<void> WifiApIface::getType(getType_cb hidl_status_cb) {
                          hidl_status_cb);
 }
 
+Return<void> WifiApIface::setCountryCode(const hidl_array<int8_t, 2>& code,
+                                         setCountryCode_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                         &WifiApIface::setCountryCodeInternal,
+                         hidl_status_cb,
+                         code);
+}
+
 std::pair<WifiStatus, std::string> WifiApIface::getNameInternal() {
   return {createWifiStatus(WifiStatusCode::SUCCESS), ifname_};
 }
 
 std::pair<WifiStatus, IfaceType> WifiApIface::getTypeInternal() {
   return {createWifiStatus(WifiStatusCode::SUCCESS), IfaceType::AP};
+}
+
+WifiStatus WifiApIface::setCountryCodeInternal(
+    const std::array<int8_t, 2>& code) {
+  legacy_hal::wifi_error legacy_status =
+      legacy_hal_.lock()->setCountryCode(code);
+  return createWifiStatusFromLegacyError(legacy_status);
 }
 
 }  // namespace implementation

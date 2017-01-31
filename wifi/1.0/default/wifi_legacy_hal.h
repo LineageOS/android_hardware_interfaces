@@ -256,6 +256,8 @@ class WifiLegacyHal {
   wifi_error nanDataIndicationResponse(
       transaction_id id, const NanDataPathIndicationResponse& msg);
   wifi_error nanDataEnd(transaction_id id, const NanDataPathEndRequest& msg);
+  // AP functions.
+  wifi_error setCountryCode(std::array<int8_t, 2> code);
 
  private:
   // Retrieve the interface handle to be used for the "wlan" interface.

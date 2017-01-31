@@ -16,7 +16,7 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_MODULE := android.hardware.wifi@1.0-service
 LOCAL_MODULE_RELATIVE_PATH := hw
-LOCAL_CPPFLAGS := -Wall -Wno-unused-parameter -Werror -Wextra
+LOCAL_CPPFLAGS := -Wall -Werror -Wextra
 LOCAL_SRC_FILES := \
     hidl_struct_util.cpp \
     service.cpp \

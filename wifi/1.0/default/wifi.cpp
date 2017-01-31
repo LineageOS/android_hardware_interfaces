@@ -107,11 +107,6 @@ WifiStatus Wifi::startInternal() {
         LOG(ERROR) << "Failed to invoke onStart callback";
       };
     }
-    for (const auto& callback : event_callbacks_) {
-      if (!callback->onFailure(wifi_status).isOk()) {
-        LOG(ERROR) << "Failed to invoke onFailure callback";
-      }
-    }
   } else {
     for (const auto& callback : event_callbacks_) {
       if (!callback->onFailure(wifi_status).isOk()) {
