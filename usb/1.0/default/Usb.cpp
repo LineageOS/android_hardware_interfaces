@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <assert.h>
 #include <dirent.h>
 #include <iostream>
 #include <fstream>
@@ -33,6 +34,9 @@ namespace hardware {
 namespace usb {
 namespace V1_0 {
 namespace implementation {
+
+// Set by the signal handler to destroy the thread
+volatile bool destroyThread;
 
 int32_t readFile(std::string filename, std::string& contents) {
     std::ifstream file(filename);
@@ -374,7 +378,7 @@ void* work(void* param) {
         goto error;
     }
 
-    while (1) {
+    while (!destroyThread) {
         struct epoll_event events[64];
 
         nevents = epoll_wait(epoll_fd, events, 64, -1);
@@ -392,6 +396,7 @@ void* work(void* param) {
         }
     }
 
+    ALOGI("exiting worker thread");
 error:
     close(uevent_fd);
 
@@ -401,24 +406,59 @@ error:
     return NULL;
 }
 
+void sighandler(int sig)
+{
+    if (sig == SIGUSR1) {
+        destroyThread = true;
+        ALOGI("destroy set");
+        return;
+    }
+    signal(SIGUSR1, sighandler);
+}
 
 Return<void> Usb::setCallback(const sp<IUsbCallback>& callback) {
 
-    if (mCallback != NULL) {
-        ALOGE("Callback already registered");
+    pthread_mutex_lock(&mLock);
+    if ((mCallback == NULL && callback == NULL) ||
+            (mCallback != NULL && callback != NULL)) {
+        mCallback = callback;
+        pthread_mutex_unlock(&mLock);
         return Void();
     }
 
     mCallback = callback;
     ALOGI("registering callback");
 
-    if (pthread_create(&mPoll, NULL, work, this)) {
-        ALOGE("pthread creation failed %d", errno);
-        mCallback = NULL;
+    if (mCallback == NULL) {
+        if  (!pthread_kill(mPoll, SIGUSR1)) {
+            pthread_join(mPoll, NULL);
+            ALOGI("pthread destroyed");
+        }
+        pthread_mutex_unlock(&mLock);
         return Void();
     }
 
+    destroyThread = false;
+    signal(SIGUSR1, sighandler);
+
+    if (pthread_create(&mPoll, NULL, work, this)) {
+        ALOGE("pthread creation failed %d", errno);
+        mCallback = NULL;
+    }
+    pthread_mutex_unlock(&mLock);
     return Void();
+}
+
+// Protects *usb assignment
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+Usb *usb;
+
+Usb::Usb() {
+    pthread_mutex_lock(&lock);
+    // Make this a singleton class
+    assert(usb == NULL);
+    usb = this;
+    pthread_mutex_unlock(&lock);
 }
 
 }  // namespace implementation
