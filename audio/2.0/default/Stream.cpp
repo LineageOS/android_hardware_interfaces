@@ -44,8 +44,8 @@ Stream::~Stream() {
 }
 
 // static
-Result Stream::analyzeStatus(const char* funcName, int status, int ignoreError) {
-    if (status != 0 && status != -ignoreError) {
+Result Stream::analyzeStatus(const char* funcName, int status, int ignoreError, int ignoreError2) {
+    if (status != 0 && status != -ignoreError && status != -ignoreError2) {
         ALOGW("Error from HAL stream in function %s: %s", funcName, strerror(-status));
     }
     switch (status) {

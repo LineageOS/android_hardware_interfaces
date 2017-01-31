@@ -405,8 +405,9 @@ Result StreamOut::getPresentationPositionImpl(
             "get_presentation_position",
             stream->get_presentation_position(stream, frames, &halTimeStamp),
             // Don't logspam on EINVAL--it's normal for get_presentation_position
-            // to return it sometimes.
-            EINVAL);
+            // to return it sometimes. EAGAIN may be returned by A2DP audio HAL
+            // implementation.
+            EINVAL, EAGAIN);
     if (retval == Result::OK) {
         timeStamp->tvSec = halTimeStamp.tv_sec;
         timeStamp->tvNSec = halTimeStamp.tv_nsec;
