@@ -55,7 +55,7 @@ WifiNanIface::WifiNanIface(
 
     switch (msg.response_type) {
     case legacy_hal::NAN_RESPONSE_ENABLED: {
-        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
           if (!callback->notifyEnableResponse(id, wifiNanStatus).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
           }
@@ -63,7 +63,7 @@ WifiNanIface::WifiNanIface(
         break;
     }
     case legacy_hal::NAN_RESPONSE_DISABLED: {
-        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
           if (!callback->notifyDisableResponse(id, wifiNanStatus).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
           }
@@ -71,7 +71,7 @@ WifiNanIface::WifiNanIface(
         break;
     }
     case legacy_hal::NAN_RESPONSE_PUBLISH: {
-        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
           if (!callback->notifyStartPublishResponse(id, wifiNanStatus,
                         msg.body.publish_response.publish_id).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
@@ -80,7 +80,7 @@ WifiNanIface::WifiNanIface(
         break;
     }
     case legacy_hal::NAN_RESPONSE_PUBLISH_CANCEL: {
-        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
           if (!callback->notifyStopPublishResponse(id, wifiNanStatus).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
           }
@@ -88,7 +88,7 @@ WifiNanIface::WifiNanIface(
         break;
     }
     case legacy_hal::NAN_RESPONSE_TRANSMIT_FOLLOWUP: {
-        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
           if (!callback->notifyTransmitFollowupResponse(id, wifiNanStatus).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
           }
@@ -96,7 +96,7 @@ WifiNanIface::WifiNanIface(
         break;
     }
     case legacy_hal::NAN_RESPONSE_SUBSCRIBE: {
-        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
           if (!callback->notifyStartSubscribeResponse(id, wifiNanStatus,
                         msg.body.subscribe_response.subscribe_id).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
@@ -105,7 +105,7 @@ WifiNanIface::WifiNanIface(
         break;
     }
     case legacy_hal::NAN_RESPONSE_SUBSCRIBE_CANCEL: {
-        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
           if (!callback->notifyStopSubscribeResponse(id, wifiNanStatus).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
           }
@@ -113,7 +113,7 @@ WifiNanIface::WifiNanIface(
         break;
     }
     case legacy_hal::NAN_RESPONSE_CONFIG: {
-        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
           if (!callback->notifyConfigResponse(id, wifiNanStatus).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
           }
@@ -127,7 +127,7 @@ WifiNanIface::WifiNanIface(
             LOG(ERROR) << "Failed to convert nan capabilities response";
             return;
         }
-        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
           if (!callback->notifyCapabilitiesResponse(id, wifiNanStatus,
                                                     hidl_struct).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
@@ -136,7 +136,7 @@ WifiNanIface::WifiNanIface(
         break;
     }
     case legacy_hal::NAN_DP_INTERFACE_CREATE: {
-        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
           if (!callback->notifyCreateDataInterfaceResponse(id, wifiNanStatus).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
           }
@@ -144,7 +144,7 @@ WifiNanIface::WifiNanIface(
         break;
     }
     case legacy_hal::NAN_DP_INTERFACE_DELETE: {
-        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
           if (!callback->notifyDeleteDataInterfaceResponse(id, wifiNanStatus).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
           }
@@ -152,7 +152,7 @@ WifiNanIface::WifiNanIface(
         break;
     }
     case legacy_hal::NAN_DP_INITIATOR_RESPONSE: {
-        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
           if (!callback->notifyInitiateDataPathResponse(id, wifiNanStatus,
                 msg.body.data_request_response.ndp_instance_id).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
@@ -161,14 +161,14 @@ WifiNanIface::WifiNanIface(
         break;
     }
     case legacy_hal::NAN_DP_RESPONDER_RESPONSE: {
-        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
           if (!callback->notifyRespondToDataPathIndicationResponse(id, wifiNanStatus).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
           }
         }
     }
     case legacy_hal::NAN_DP_END: {
-        for (const auto& callback : shared_ptr_this->event_callbacks_) {
+        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
           if (!callback->notifyTerminateDataPathResponse(id, wifiNanStatus).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
           }
@@ -201,7 +201,7 @@ WifiNanIface::WifiNanIface(
       hidl_struct.eventType = (NanClusterEventType) msg.event_type;
       hidl_struct.addr = msg.data.mac_addr.addr;
 
-      for (const auto& callback : shared_ptr_this->event_callbacks_) {
+      for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
         if (!callback->eventClusterEvent(hidl_struct).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
         }
@@ -219,7 +219,7 @@ WifiNanIface::WifiNanIface(
       status.status = hidl_struct_util::convertLegacyNanStatusTypeToHidl(msg.reason);
       status.description = msg.nan_reason;
 
-      for (const auto& callback : shared_ptr_this->event_callbacks_) {
+      for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
         if (!callback->eventDisabled(status).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
         }
@@ -237,7 +237,7 @@ WifiNanIface::WifiNanIface(
       status.status = hidl_struct_util::convertLegacyNanStatusTypeToHidl(msg.reason);
       status.description = msg.nan_reason;
 
-      for (const auto& callback : shared_ptr_this->event_callbacks_) {
+      for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
         if (!callback->eventPublishTerminated(msg.publish_id, status).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
         }
@@ -255,7 +255,7 @@ WifiNanIface::WifiNanIface(
       status.status = hidl_struct_util::convertLegacyNanStatusTypeToHidl(msg.reason);
       status.description = msg.nan_reason;
 
-      for (const auto& callback : shared_ptr_this->event_callbacks_) {
+      for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
         if (!callback->eventSubscribeTerminated(msg.subscribe_id, status).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
         }
@@ -276,7 +276,7 @@ WifiNanIface::WifiNanIface(
           return;
       }
 
-      for (const auto& callback : shared_ptr_this->event_callbacks_) {
+      for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
         if (!callback->eventMatch(hidl_struct).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
         }
@@ -290,7 +290,7 @@ WifiNanIface::WifiNanIface(
         LOG(ERROR) << "Callback invoked on an invalid object";
         return;
       }
-      for (const auto& callback : shared_ptr_this->event_callbacks_) {
+      for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
         if (!callback->eventMatchExpired(msg.publish_subscribe_id,
                 msg.requestor_instance_id).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
@@ -312,7 +312,7 @@ WifiNanIface::WifiNanIface(
           return;
       }
 
-      for (const auto& callback : shared_ptr_this->event_callbacks_) {
+      for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
         if (!callback->eventFollowupReceived(hidl_struct).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
         }
@@ -330,7 +330,7 @@ WifiNanIface::WifiNanIface(
       status.status = hidl_struct_util::convertLegacyNanStatusTypeToHidl(msg.reason);
       status.description = msg.nan_reason;
 
-      for (const auto& callback : shared_ptr_this->event_callbacks_) {
+      for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
         if (!callback->eventTransmitFollowup(msg.id, status).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
         }
@@ -351,7 +351,7 @@ WifiNanIface::WifiNanIface(
           return;
       }
 
-      for (const auto& callback : shared_ptr_this->event_callbacks_) {
+      for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
         if (!callback->eventDataPathRequest(hidl_struct).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
         }
@@ -372,7 +372,7 @@ WifiNanIface::WifiNanIface(
           return;
       }
 
-      for (const auto& callback : shared_ptr_this->event_callbacks_) {
+      for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
         if (!callback->eventDataPathConfirm(hidl_struct).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
         }
@@ -386,7 +386,7 @@ WifiNanIface::WifiNanIface(
         LOG(ERROR) << "Callback invoked on an invalid object";
         return;
       }
-      for (const auto& callback : shared_ptr_this->event_callbacks_) {
+      for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
         for (int i = 0; i < msg.num_ndp_instances; ++i) {
             if (!callback->eventDataPathTerminated(msg.ndp_instance_id[i]).isOk()) {
                 LOG(ERROR) << "Failed to invoke the callback";
@@ -410,12 +410,16 @@ WifiNanIface::WifiNanIface(
 
 void WifiNanIface::invalidate() {
   legacy_hal_.reset();
-  event_callbacks_.clear();
+  event_cb_handler_.invalidate();
   is_valid_ = false;
 }
 
 bool WifiNanIface::isValid() {
   return is_valid_;
+}
+
+std::set<sp<IWifiNanIfaceEventCallback>> WifiNanIface::getEventCallbacks() {
+  return event_cb_handler_.getCallbacks();
 }
 
 Return<void> WifiNanIface::getName(getName_cb hidl_status_cb) {
@@ -609,11 +613,9 @@ std::pair<WifiStatus, IfaceType> WifiNanIface::getTypeInternal() {
 
 WifiStatus WifiNanIface::registerEventCallbackInternal(
     const sp<IWifiNanIfaceEventCallback>& callback) {
-  // TODO(b/31632518): remove the callback when the client is destroyed and/or
-  // make sure that the same callback is only registered once (i.e. detect duplicates)
-  // OR: consider having a single listener - not clear why multiple listeners (managers) are
-  // necessary, nor how they would coordinate (at least command IDs).
-  event_callbacks_.emplace_back(callback);
+  if (!event_cb_handler_.addCallback(callback)) {
+    return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
+  }
   return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 

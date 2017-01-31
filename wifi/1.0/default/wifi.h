@@ -23,6 +23,7 @@
 #include <android/hardware/wifi/1.0/IWifi.h>
 #include <utils/Looper.h>
 
+#include "hidl_callback_util.h"
 #include "wifi_chip.h"
 #include "wifi_legacy_hal.h"
 #include "wifi_mode_controller.h"
@@ -71,8 +72,8 @@ class Wifi : public IWifi {
   std::shared_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
   std::shared_ptr<mode_controller::WifiModeController> mode_controller_;
   RunState run_state_;
-  std::vector<sp<IWifiEventCallback>> event_callbacks_;
   sp<WifiChip> chip_;
+  hidl_callback_util::HidlCallbackHandler<IWifiEventCallback> event_cb_handler_;
 
   DISALLOW_COPY_AND_ASSIGN(Wifi);
 };

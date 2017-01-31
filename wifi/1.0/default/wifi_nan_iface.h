@@ -21,6 +21,7 @@
 #include <android/hardware/wifi/1.0/IWifiNanIface.h>
 #include <android/hardware/wifi/1.0/IWifiNanIfaceEventCallback.h>
 
+#include "hidl_callback_util.h"
 #include "wifi_legacy_hal.h"
 
 namespace android {
@@ -119,10 +120,13 @@ class WifiNanIface : public IWifiNanIface {
   WifiStatus terminateDataPathRequestInternal(
       uint16_t cmd_id, uint32_t ndpInstanceId);
 
+  std::set<sp<IWifiNanIfaceEventCallback>> getEventCallbacks();
+
   std::string ifname_;
   std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
-  std::vector<sp<IWifiNanIfaceEventCallback>> event_callbacks_;
   bool is_valid_;
+  hidl_callback_util::HidlCallbackHandler<IWifiNanIfaceEventCallback>
+      event_cb_handler_;
 
   DISALLOW_COPY_AND_ASSIGN(WifiNanIface);
 };
