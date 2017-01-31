@@ -42,7 +42,7 @@ class VendorInterface {
   static void Shutdown();
   static VendorInterface *get();
 
-  size_t Send(const uint8_t *data, size_t length);
+  size_t Send(uint8_t type, const uint8_t *data, size_t length);
 
   void OnFirmwareConfigured(uint8_t result);
 
