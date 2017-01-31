@@ -16,6 +16,8 @@
 
 #define LOG_TAG "VibratorService"
 
+#include <inttypes.h>
+
 #include <log/log.h>
 
 #include <hardware/hardware.h>
@@ -36,7 +38,7 @@ Return<Status> Vibrator::on(uint32_t timeout_ms) {
     int32_t ret = mDevice->vibrator_on(mDevice, timeout_ms);
     if (ret != 0) {
         ALOGE("on command failed : %s", strerror(-ret));
-        return Status::ERR;
+        return Status::UNKNOWN_ERROR;
     }
     return Status::OK;
 }
@@ -45,9 +47,22 @@ Return<Status> Vibrator::off()  {
     int32_t ret = mDevice->vibrator_off(mDevice);
     if (ret != 0) {
         ALOGE("off command failed : %s", strerror(-ret));
-        return Status::ERR;
+        return Status::UNKNOWN_ERROR;
     }
     return Status::OK;
+}
+
+Return<bool> Vibrator::supportsAmplitudeControl()  {
+    return false;
+}
+
+Return<Status> Vibrator::setAmplitude(uint8_t) {
+    return Status::UNSUPPORTED_OPERATION;
+}
+
+Return<void> Vibrator::perform(Effect, EffectStrength, perform_cb _hidl_cb) {
+    _hidl_cb(Status::UNSUPPORTED_OPERATION, 0);
+    return Void();
 }
 
 IVibrator* HIDL_FETCH_IVibrator(const char * /*hal*/) {
