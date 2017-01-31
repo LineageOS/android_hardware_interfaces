@@ -139,7 +139,7 @@ class FirmwareStartupTimer {
         std::chrono::steady_clock::now() - start_time_;
     double s = duration.count();
     if (s == 0) return;
-    ALOGD("Firmware configured in %.3fs", s);
+    ALOGI("Firmware configured in %.3fs", s);
   }
 
  private:
@@ -221,7 +221,7 @@ bool VendorInterface::Open(InitializeCompleteCallback initialize_complete_cb,
     return false;
   }
 
-  ALOGD("%s UART fd: %d", __func__, uart_fd_);
+  ALOGI("%s UART fd: %d", __func__, uart_fd_);
 
   fd_watcher_.WatchFdForNonBlockingReads(uart_fd_,
                                          [this](int fd) { OnDataReady(fd); });
@@ -305,7 +305,7 @@ void VendorInterface::OnDataReady(int fd) {
       // TODO(eisenbach): Check for workaround(s)
       CHECK(hci_packet_type_ >= HCI_PACKET_TYPE_ACL_DATA &&
             hci_packet_type_ <= HCI_PACKET_TYPE_EVENT)
-          << "buffer[0] = " << buffer[0];
+          << "buffer[0] = " << static_cast<unsigned int>(buffer[0]);
       hci_parser_state_ = HCI_TYPE_READY;
       hci_packet_.resize(HCI_PREAMBLE_SIZE_MAX);
       hci_packet_bytes_remaining_ = preamble_size_for_type[hci_packet_type_];
