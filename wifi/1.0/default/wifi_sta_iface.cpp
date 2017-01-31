@@ -258,14 +258,6 @@ Return<void> WifiStaIface::startDebugPacketFateMonitoring(
                          hidl_status_cb);
 }
 
-Return<void> WifiStaIface::stopDebugPacketFateMonitoring(
-    stopDebugPacketFateMonitoring_cb hidl_status_cb) {
-  return validateAndCall(this,
-                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
-                         &WifiStaIface::stopDebugPacketFateMonitoringInternal,
-                         hidl_status_cb);
-}
-
 Return<void> WifiStaIface::getDebugTxPacketFates(
     getDebugTxPacketFates_cb hidl_status_cb) {
   return validateAndCall(this,
@@ -565,11 +557,6 @@ WifiStatus WifiStaIface::startDebugPacketFateMonitoringInternal() {
   legacy_hal::wifi_error legacy_status =
       legacy_hal_.lock()->startPktFateMonitoring();
   return createWifiStatusFromLegacyError(legacy_status);
-}
-
-WifiStatus WifiStaIface::stopDebugPacketFateMonitoringInternal() {
-  // There is no stop in legacy HAL implementation.
-  return createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED);
 }
 
 std::pair<WifiStatus, std::vector<WifiDebugTxPacketFateReport>>

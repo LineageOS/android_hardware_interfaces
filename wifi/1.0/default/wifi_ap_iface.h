@@ -42,11 +42,14 @@ class WifiApIface : public IWifiApIface {
   // HIDL methods exposed.
   Return<void> getName(getName_cb hidl_status_cb) override;
   Return<void> getType(getType_cb hidl_status_cb) override;
+  Return<void> setCountryCode(const hidl_array<int8_t, 2>& code,
+                              setCountryCode_cb hidl_status_cb) override;
 
  private:
   // Corresponding worker functions for the HIDL methods.
   std::pair<WifiStatus, std::string> getNameInternal();
   std::pair<WifiStatus, IfaceType> getTypeInternal();
+  WifiStatus setCountryCodeInternal(const std::array<int8_t, 2>& code);
 
   std::string ifname_;
   std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
