@@ -52,6 +52,7 @@ using ::android::hardware::hidl_string;
 using ::android::sp;
 
 struct StreamIn : public IStreamIn {
+    typedef MessageQueue<ReadParameters, kSynchronizedReadWrite> CommandMQ;
     typedef MessageQueue<uint8_t, kSynchronizedReadWrite> DataMQ;
     typedef MessageQueue<ReadStatus, kSynchronizedReadWrite> StatusMQ;
 
@@ -97,12 +98,16 @@ struct StreamIn : public IStreamIn {
     Return<void> createMmapBuffer(int32_t minSizeFrames, createMmapBuffer_cb _hidl_cb) override;
     Return<void> getMmapPosition(getMmapPosition_cb _hidl_cb) override;
 
+    static Result getCapturePositionImpl(
+            audio_stream_in_t *stream, uint64_t *frames, uint64_t *time);
+
   private:
     bool mIsClosed;
     audio_hw_device_t *mDevice;
     audio_stream_in_t *mStream;
     sp<Stream> mStreamCommon;
     sp<StreamMmap<audio_stream_in_t>> mStreamMmap;
+    std::unique_ptr<CommandMQ> mCommandMQ;
     std::unique_ptr<DataMQ> mDataMQ;
     std::unique_ptr<StatusMQ> mStatusMQ;
     EventFlag* mEfGroup;

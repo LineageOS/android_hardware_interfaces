@@ -54,6 +54,7 @@ using ::android::hardware::hidl_string;
 using ::android::sp;
 
 struct StreamOut : public IStreamOut {
+    typedef MessageQueue<WriteCommand, kSynchronizedReadWrite> CommandMQ;
     typedef MessageQueue<uint8_t, kSynchronizedReadWrite> DataMQ;
     typedef MessageQueue<WriteStatus, kSynchronizedReadWrite> StatusMQ;
 
@@ -118,6 +119,7 @@ struct StreamOut : public IStreamOut {
     sp<Stream> mStreamCommon;
     sp<StreamMmap<audio_stream_out_t>> mStreamMmap;
     sp<IStreamOutCallback> mCallback;
+    std::unique_ptr<CommandMQ> mCommandMQ;
     std::unique_ptr<DataMQ> mDataMQ;
     std::unique_ptr<StatusMQ> mStatusMQ;
     EventFlag* mEfGroup;
