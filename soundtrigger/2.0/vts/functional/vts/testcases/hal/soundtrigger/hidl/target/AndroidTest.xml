@@ -26,7 +26,8 @@
             "/>
         <option name="test-config-path" value="vts/testcases/hal/soundtrigger/hidl/target/HalSoundTriggerHidlTargetBasicTest.config" />
         <option name="binary-test-type" value="hal_hidl_gtest" />
-        <option name="precondition-file-path-prefix" value="*/lib/hw/sound_trigger.primary." />
+        <option name="precondition-file-path-prefix" value="/*/lib/hw/sound_trigger.primary." />
+        <option name="skip-on-64bit-abi" value="true" />
         <option name="test-timeout" value="1m" />
     </test>
 </configuration>
