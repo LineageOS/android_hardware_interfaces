@@ -49,11 +49,10 @@ const size_t packet_length_offset_for_type[] = {
     0, HCI_LENGTH_OFFSET_CMD, HCI_LENGTH_OFFSET_ACL, HCI_LENGTH_OFFSET_SCO,
     HCI_LENGTH_OFFSET_EVT};
 
-size_t HciGetPacketLengthForType(HciPacketType type,
-                                 const hidl_vec<uint8_t>& packet) {
+size_t HciGetPacketLengthForType(HciPacketType type, const uint8_t* preamble) {
   size_t offset = packet_length_offset_for_type[type];
-  if (type != HCI_PACKET_TYPE_ACL_DATA) return packet[offset];
-  return (((packet[offset + 1]) << 8) | packet[offset]);
+  if (type != HCI_PACKET_TYPE_ACL_DATA) return preamble[offset];
+  return (((preamble[offset + 1]) << 8) | preamble[offset]);
 }
 
 HC_BT_HDR* WrapPacketAndCopy(uint16_t event, const hidl_vec<uint8_t>& data) {
@@ -307,7 +306,6 @@ void VendorInterface::OnDataReady(int fd) {
             hci_packet_type_ <= HCI_PACKET_TYPE_EVENT)
           << "buffer[0] = " << static_cast<unsigned int>(buffer[0]);
       hci_parser_state_ = HCI_TYPE_READY;
-      hci_packet_.resize(HCI_PREAMBLE_SIZE_MAX);
       hci_packet_bytes_remaining_ = preamble_size_for_type[hci_packet_type_];
       hci_packet_bytes_read_ = 0;
       break;
@@ -315,16 +313,18 @@ void VendorInterface::OnDataReady(int fd) {
 
     case HCI_TYPE_READY: {
       size_t bytes_read = TEMP_FAILURE_RETRY(
-          read(fd, hci_packet_.data() + hci_packet_bytes_read_,
+          read(fd, hci_packet_preamble_ + hci_packet_bytes_read_,
                hci_packet_bytes_remaining_));
       CHECK(bytes_read > 0);
       hci_packet_bytes_remaining_ -= bytes_read;
       hci_packet_bytes_read_ += bytes_read;
       if (hci_packet_bytes_remaining_ == 0) {
         size_t packet_length =
-            HciGetPacketLengthForType(hci_packet_type_, hci_packet_);
+            HciGetPacketLengthForType(hci_packet_type_, hci_packet_preamble_);
         hci_packet_.resize(preamble_size_for_type[hci_packet_type_] +
                            packet_length);
+        memcpy(hci_packet_.data(), hci_packet_preamble_,
+               preamble_size_for_type[hci_packet_type_]);
         hci_packet_bytes_remaining_ = packet_length;
         hci_parser_state_ = HCI_PAYLOAD;
         hci_packet_bytes_read_ = 0;
