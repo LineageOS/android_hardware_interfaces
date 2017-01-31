@@ -50,7 +50,7 @@ BiometricsFingerprint::BiometricsFingerprint() : mClientCallback(nullptr), mDevi
 }
 
 BiometricsFingerprint::~BiometricsFingerprint() {
-    ALOGV(LOG_VERBOSE, LOG_TAG, "~BiometricsFingerprint()\n");
+    ALOGV("~BiometricsFingerprint()");
     if (mDevice == nullptr) {
         ALOGE("No valid device");
         return;
