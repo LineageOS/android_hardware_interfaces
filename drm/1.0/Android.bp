@@ -86,3 +86,302 @@ cc_library_shared {
         "android.hidl.base@1.0",
     ],
 }
+
+genrule {
+    name: "android.hardware.drm.vts.driver@1.0_genc++",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.drm@1.0 && $(location vtsc) -mDRIVER -tSOURCE -b$(genDir) android/hardware/drm/1.0/ $(genDir)/android/hardware/drm/1.0/",
+    srcs: [
+        "types.hal",
+        "ICryptoFactory.hal",
+        "ICryptoPlugin.hal",
+        "IDrmFactory.hal",
+        "IDrmPlugin.hal",
+        "IDrmPluginListener.hal",
+    ],
+    out: [
+        "android/hardware/drm/1.0/types.vts.cpp",
+        "android/hardware/drm/1.0/CryptoFactory.vts.cpp",
+        "android/hardware/drm/1.0/CryptoPlugin.vts.cpp",
+        "android/hardware/drm/1.0/DrmFactory.vts.cpp",
+        "android/hardware/drm/1.0/DrmPlugin.vts.cpp",
+        "android/hardware/drm/1.0/DrmPluginListener.vts.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.drm.vts.driver@1.0_genc++_headers",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.drm@1.0 && $(location vtsc) -mDRIVER -tHEADER -b$(genDir) android/hardware/drm/1.0/ $(genDir)/android/hardware/drm/1.0/",
+    srcs: [
+        "types.hal",
+        "ICryptoFactory.hal",
+        "ICryptoPlugin.hal",
+        "IDrmFactory.hal",
+        "IDrmPlugin.hal",
+        "IDrmPluginListener.hal",
+    ],
+    out: [
+        "android/hardware/drm/1.0/types.vts.h",
+        "android/hardware/drm/1.0/CryptoFactory.vts.h",
+        "android/hardware/drm/1.0/CryptoPlugin.vts.h",
+        "android/hardware/drm/1.0/DrmFactory.vts.h",
+        "android/hardware/drm/1.0/DrmPlugin.vts.h",
+        "android/hardware/drm/1.0/DrmPluginListener.vts.h",
+    ],
+}
+
+cc_library_shared {
+    name: "android.hardware.drm.vts.driver@1.0",
+    generated_sources: ["android.hardware.drm.vts.driver@1.0_genc++"],
+    generated_headers: ["android.hardware.drm.vts.driver@1.0_genc++_headers"],
+    export_generated_headers: ["android.hardware.drm.vts.driver@1.0_genc++_headers"],
+    shared_libs: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "liblog",
+        "libutils",
+        "libcutils",
+        "libvts_common",
+        "libvts_datatype",
+        "libvts_measurement",
+        "libvts_multidevice_proto",
+        "libcamera_metadata",
+        "libprotobuf-cpp-full",
+        "android.hidl.base@1.0",
+        "android.hardware.drm@1.0",
+    ],
+    export_shared_lib_headers: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "libutils",
+        "android.hidl.base@1.0",
+    ],
+}
+
+genrule {
+    name: "android.hardware.drm@1.0-ICryptoFactory-vts.profiler_genc++",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.drm@1.0 && $(location vtsc) -mPROFILER -tSOURCE -b$(genDir) android/hardware/drm/1.0/ $(genDir)/android/hardware/drm/1.0/",
+    srcs: [
+        "ICryptoFactory.hal",
+        "types.hal",
+    ],
+    out: [
+        "android/hardware/drm/1.0/CryptoFactory.vts.cpp",
+        "android/hardware/drm/1.0/types.vts.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.drm@1.0-ICryptoFactory-vts.profiler_genc++_headers",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.drm@1.0 && $(location vtsc) -mPROFILER -tHEADER -b$(genDir) android/hardware/drm/1.0/ $(genDir)/android/hardware/drm/1.0/",
+    srcs: [
+        "ICryptoFactory.hal",
+        "types.hal",
+    ],
+    out: [
+        "android/hardware/drm/1.0/CryptoFactory.vts.h",
+        "android/hardware/drm/1.0/types.vts.h",
+    ],
+}
+
+cc_library_shared {
+    name: "android.hardware.drm@1.0-ICryptoFactory-vts.profiler",
+    generated_sources: ["android.hardware.drm@1.0-ICryptoFactory-vts.profiler_genc++"],
+    generated_headers: ["android.hardware.drm@1.0-ICryptoFactory-vts.profiler_genc++_headers"],
+    export_generated_headers: ["android.hardware.drm@1.0-ICryptoFactory-vts.profiler_genc++_headers"],
+    shared_libs: [
+        "libbase",
+        "libhidlbase",
+        "libhidltransport",
+        "libvts_profiling",
+        "libvts_multidevice_proto",
+        "libprotobuf-cpp-full",
+        "android.hidl.base@1.0",
+        "android.hardware.drm@1.0",
+    ],
+}
+
+genrule {
+    name: "android.hardware.drm@1.0-ICryptoPlugin-vts.profiler_genc++",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.drm@1.0 && $(location vtsc) -mPROFILER -tSOURCE -b$(genDir) android/hardware/drm/1.0/ $(genDir)/android/hardware/drm/1.0/",
+    srcs: [
+        "ICryptoPlugin.hal",
+        "types.hal",
+    ],
+    out: [
+        "android/hardware/drm/1.0/CryptoPlugin.vts.cpp",
+        "android/hardware/drm/1.0/types.vts.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.drm@1.0-ICryptoPlugin-vts.profiler_genc++_headers",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.drm@1.0 && $(location vtsc) -mPROFILER -tHEADER -b$(genDir) android/hardware/drm/1.0/ $(genDir)/android/hardware/drm/1.0/",
+    srcs: [
+        "ICryptoPlugin.hal",
+        "types.hal",
+    ],
+    out: [
+        "android/hardware/drm/1.0/CryptoPlugin.vts.h",
+        "android/hardware/drm/1.0/types.vts.h",
+    ],
+}
+
+cc_library_shared {
+    name: "android.hardware.drm@1.0-ICryptoPlugin-vts.profiler",
+    generated_sources: ["android.hardware.drm@1.0-ICryptoPlugin-vts.profiler_genc++"],
+    generated_headers: ["android.hardware.drm@1.0-ICryptoPlugin-vts.profiler_genc++_headers"],
+    export_generated_headers: ["android.hardware.drm@1.0-ICryptoPlugin-vts.profiler_genc++_headers"],
+    shared_libs: [
+        "libbase",
+        "libhidlbase",
+        "libhidltransport",
+        "libvts_profiling",
+        "libvts_multidevice_proto",
+        "libprotobuf-cpp-full",
+        "android.hidl.base@1.0",
+        "android.hardware.drm@1.0",
+    ],
+}
+
+genrule {
+    name: "android.hardware.drm@1.0-IDrmFactory-vts.profiler_genc++",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.drm@1.0 && $(location vtsc) -mPROFILER -tSOURCE -b$(genDir) android/hardware/drm/1.0/ $(genDir)/android/hardware/drm/1.0/",
+    srcs: [
+        "IDrmFactory.hal",
+        "types.hal",
+    ],
+    out: [
+        "android/hardware/drm/1.0/DrmFactory.vts.cpp",
+        "android/hardware/drm/1.0/types.vts.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.drm@1.0-IDrmFactory-vts.profiler_genc++_headers",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.drm@1.0 && $(location vtsc) -mPROFILER -tHEADER -b$(genDir) android/hardware/drm/1.0/ $(genDir)/android/hardware/drm/1.0/",
+    srcs: [
+        "IDrmFactory.hal",
+        "types.hal",
+    ],
+    out: [
+        "android/hardware/drm/1.0/DrmFactory.vts.h",
+        "android/hardware/drm/1.0/types.vts.h",
+    ],
+}
+
+cc_library_shared {
+    name: "android.hardware.drm@1.0-IDrmFactory-vts.profiler",
+    generated_sources: ["android.hardware.drm@1.0-IDrmFactory-vts.profiler_genc++"],
+    generated_headers: ["android.hardware.drm@1.0-IDrmFactory-vts.profiler_genc++_headers"],
+    export_generated_headers: ["android.hardware.drm@1.0-IDrmFactory-vts.profiler_genc++_headers"],
+    shared_libs: [
+        "libbase",
+        "libhidlbase",
+        "libhidltransport",
+        "libvts_profiling",
+        "libvts_multidevice_proto",
+        "libprotobuf-cpp-full",
+        "android.hidl.base@1.0",
+        "android.hardware.drm@1.0",
+    ],
+}
+
+genrule {
+    name: "android.hardware.drm@1.0-IDrmPlugin-vts.profiler_genc++",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.drm@1.0 && $(location vtsc) -mPROFILER -tSOURCE -b$(genDir) android/hardware/drm/1.0/ $(genDir)/android/hardware/drm/1.0/",
+    srcs: [
+        "IDrmPlugin.hal",
+        "types.hal",
+    ],
+    out: [
+        "android/hardware/drm/1.0/DrmPlugin.vts.cpp",
+        "android/hardware/drm/1.0/types.vts.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.drm@1.0-IDrmPlugin-vts.profiler_genc++_headers",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.drm@1.0 && $(location vtsc) -mPROFILER -tHEADER -b$(genDir) android/hardware/drm/1.0/ $(genDir)/android/hardware/drm/1.0/",
+    srcs: [
+        "IDrmPlugin.hal",
+        "types.hal",
+    ],
+    out: [
+        "android/hardware/drm/1.0/DrmPlugin.vts.h",
+        "android/hardware/drm/1.0/types.vts.h",
+    ],
+}
+
+cc_library_shared {
+    name: "android.hardware.drm@1.0-IDrmPlugin-vts.profiler",
+    generated_sources: ["android.hardware.drm@1.0-IDrmPlugin-vts.profiler_genc++"],
+    generated_headers: ["android.hardware.drm@1.0-IDrmPlugin-vts.profiler_genc++_headers"],
+    export_generated_headers: ["android.hardware.drm@1.0-IDrmPlugin-vts.profiler_genc++_headers"],
+    shared_libs: [
+        "libbase",
+        "libhidlbase",
+        "libhidltransport",
+        "libvts_profiling",
+        "libvts_multidevice_proto",
+        "libprotobuf-cpp-full",
+        "android.hidl.base@1.0",
+        "android.hardware.drm@1.0",
+    ],
+}
+
+genrule {
+    name: "android.hardware.drm@1.0-IDrmPluginListener-vts.profiler_genc++",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.drm@1.0 && $(location vtsc) -mPROFILER -tSOURCE -b$(genDir) android/hardware/drm/1.0/ $(genDir)/android/hardware/drm/1.0/",
+    srcs: [
+        "IDrmPluginListener.hal",
+        "types.hal",
+    ],
+    out: [
+        "android/hardware/drm/1.0/DrmPluginListener.vts.cpp",
+        "android/hardware/drm/1.0/types.vts.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.drm@1.0-IDrmPluginListener-vts.profiler_genc++_headers",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.drm@1.0 && $(location vtsc) -mPROFILER -tHEADER -b$(genDir) android/hardware/drm/1.0/ $(genDir)/android/hardware/drm/1.0/",
+    srcs: [
+        "IDrmPluginListener.hal",
+        "types.hal",
+    ],
+    out: [
+        "android/hardware/drm/1.0/DrmPluginListener.vts.h",
+        "android/hardware/drm/1.0/types.vts.h",
+    ],
+}
+
+cc_library_shared {
+    name: "android.hardware.drm@1.0-IDrmPluginListener-vts.profiler",
+    generated_sources: ["android.hardware.drm@1.0-IDrmPluginListener-vts.profiler_genc++"],
+    generated_headers: ["android.hardware.drm@1.0-IDrmPluginListener-vts.profiler_genc++_headers"],
+    export_generated_headers: ["android.hardware.drm@1.0-IDrmPluginListener-vts.profiler_genc++_headers"],
+    shared_libs: [
+        "libbase",
+        "libhidlbase",
+        "libhidltransport",
+        "libvts_profiling",
+        "libvts_multidevice_proto",
+        "libprotobuf-cpp-full",
+        "android.hidl.base@1.0",
+        "android.hardware.drm@1.0",
+    ],
+}
