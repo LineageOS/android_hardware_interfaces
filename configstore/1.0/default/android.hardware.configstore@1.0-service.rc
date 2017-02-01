@@ -1,0 +1,4 @@
+service configstore-hal-1-0 /system/bin/hw/android.hardware.configstore@1.0-service
+    class hal
+    user system
+    group system
