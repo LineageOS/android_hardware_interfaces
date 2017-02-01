@@ -162,8 +162,10 @@ interface IWifiNanIfaceEventCallback {
    *        |NanStatusType.INTERNAL_FAILURE|
    *        |NanStatusType.PROTOCOL_FAILURE|
    *        |NanStatusType.INVALID_PEER_ID|
+   * @param ndpInstanceId ID of the new data path being negotiated (on successful status).
    */
-  oneway notifyInitiateDataPathResponse(CommandIdShort id, WifiNanStatus status);
+  oneway notifyInitiateDataPathResponse(CommandIdShort id, WifiNanStatus status,
+        uint32_t ndpInstanceId );
 
   /**
    * Callback invoked in response to a respond to data path indication request
@@ -176,10 +178,8 @@ interface IWifiNanIfaceEventCallback {
    *        |NanStatusType.INTERNAL_FAILURE|
    *        |NanStatusType.PROTOCOL_FAILURE|
    *        |NanStatusType.INVALID_NDP_ID|
-   * @param ndpInstanceId ID of the new data path being negotiated (on successful status).
    */
-  oneway notifyRespondToDataPathIndicationResponse(CommandIdShort id, WifiNanStatus status,
-                                                   uint32_t ndpInstanceId);
+  oneway notifyRespondToDataPathIndicationResponse(CommandIdShort id, WifiNanStatus status);
 
   /**
    * Callback invoked in response to a terminate data path request |terminateDataPathRequest|.
