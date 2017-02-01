@@ -184,12 +184,19 @@ bool CameraProvider::initialize() {
     mModule = new CameraModule(rawModule);
     err = mModule->init();
     if (err != OK) {
-        ALOGE("Could not initialize camera HAL module: %d (%s)", err,
-            strerror(-err));
+        ALOGE("Could not initialize camera HAL module: %d (%s)", err, strerror(-err));
         mModule.clear();
         return true;
     }
     ALOGI("Loaded \"%s\" camera module", mModule->getModuleName());
+
+    // Setup callback now because we are going to try openLegacy next
+    err = mModule->setCallbacks(this);
+    if (err != OK) {
+        ALOGE("Could not set camera module callback: %d (%s)", err, strerror(-err));
+        mModule.clear();
+        return true;
+    }
 
     mNumberOfLegacyCameras = mModule->getNumberOfCameras();
     for (int i = 0; i < mNumberOfLegacyCameras; i++) {
@@ -289,11 +296,9 @@ bool CameraProvider::setUpVendorTags() {
 
 // Methods from ::android::hardware::camera::provider::V2_4::ICameraProvider follow.
 Return<Status> CameraProvider::setCallback(const sp<ICameraProviderCallback>& callback)  {
-    {
-        Mutex::Autolock _l(mCbLock);
-        mCallbacks = callback;
-    } // release lock here because HAL might send callbacks in setCallbacks call
-    return getHidlStatus(mModule->setCallbacks(this));
+    Mutex::Autolock _l(mCbLock);
+    mCallbacks = callback;
+    return Status::OK;
 }
 
 Return<void> CameraProvider::getVendorTags(getVendorTags_cb _hidl_cb)  {
