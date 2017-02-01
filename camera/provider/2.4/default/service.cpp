@@ -20,6 +20,7 @@
 #include <CameraProvider.h>
 
 #include <hidl/HidlTransportSupport.h>
+#include <hidl/LegacySupport.h>
 #include <utils/StrongPointer.h>
 
 using android::hardware::configureRpcThreadpool;
@@ -31,6 +32,11 @@ using android::hardware::camera::provider::V2_4::implementation::HIDL_FETCH_ICam
 int main()
 {
     const char instance[] = "legacy/0";
+
+    // TODO(b/34817742): use defaultServicePassthroughImplementation
+    // so that the toggle is implemented correctly
+    using ::android::hardware::details::blockIfBinderizationDisabled;
+    blockIfBinderizationDisabled(ICameraProvider::descriptor, instance);
 
     ALOGI("Camera provider Service is starting.");
 
