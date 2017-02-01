@@ -43,10 +43,6 @@ attribute: {
         scalar_value: {
             uint32_t: 8
         }
-        enumerator: "DISABLE_TOUCH"
-        scalar_value: {
-            uint32_t: 9
-        }
     }
 }
 

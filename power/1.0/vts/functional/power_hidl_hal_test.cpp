@@ -62,7 +62,7 @@ TEST_F(PowerHidlTest, PowerHint) {
                 PowerHint::VIDEO_ENCODE,  PowerHint::VIDEO_DECODE,
                 PowerHint::LOW_POWER,     PowerHint::SUSTAINED_PERFORMANCE,
                 PowerHint::VR_MODE,       PowerHint::LAUNCH,
-                PowerHint::DISABLE_TOUCH, badHint};
+                badHint};
   Return<void> ret;
   for (auto hint : hints) {
     ret = power->powerHint(hint, 1);
