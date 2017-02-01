@@ -60,6 +60,7 @@ WifiNanIface::WifiNanIface(
             LOG(ERROR) << "Failed to invoke the callback";
           }
         }
+        break;
     }
     case legacy_hal::NAN_RESPONSE_DISABLED: {
         for (const auto& callback : shared_ptr_this->event_callbacks_) {
@@ -67,6 +68,7 @@ WifiNanIface::WifiNanIface(
             LOG(ERROR) << "Failed to invoke the callback";
           }
         }
+        break;
     }
     case legacy_hal::NAN_RESPONSE_PUBLISH: {
         for (const auto& callback : shared_ptr_this->event_callbacks_) {
@@ -75,6 +77,7 @@ WifiNanIface::WifiNanIface(
             LOG(ERROR) << "Failed to invoke the callback";
           }
         }
+        break;
     }
     case legacy_hal::NAN_RESPONSE_PUBLISH_CANCEL: {
         for (const auto& callback : shared_ptr_this->event_callbacks_) {
@@ -82,6 +85,7 @@ WifiNanIface::WifiNanIface(
             LOG(ERROR) << "Failed to invoke the callback";
           }
         }
+        break;
     }
     case legacy_hal::NAN_RESPONSE_TRANSMIT_FOLLOWUP: {
         for (const auto& callback : shared_ptr_this->event_callbacks_) {
@@ -89,6 +93,7 @@ WifiNanIface::WifiNanIface(
             LOG(ERROR) << "Failed to invoke the callback";
           }
         }
+        break;
     }
     case legacy_hal::NAN_RESPONSE_SUBSCRIBE: {
         for (const auto& callback : shared_ptr_this->event_callbacks_) {
@@ -97,6 +102,7 @@ WifiNanIface::WifiNanIface(
             LOG(ERROR) << "Failed to invoke the callback";
           }
         }
+        break;
     }
     case legacy_hal::NAN_RESPONSE_SUBSCRIBE_CANCEL: {
         for (const auto& callback : shared_ptr_this->event_callbacks_) {
@@ -104,6 +110,7 @@ WifiNanIface::WifiNanIface(
             LOG(ERROR) << "Failed to invoke the callback";
           }
         }
+        break;
     }
     case legacy_hal::NAN_RESPONSE_CONFIG: {
         for (const auto& callback : shared_ptr_this->event_callbacks_) {
@@ -111,6 +118,7 @@ WifiNanIface::WifiNanIface(
             LOG(ERROR) << "Failed to invoke the callback";
           }
         }
+        break;
      }
     case legacy_hal::NAN_RESPONSE_BEACON_SDF_PAYLOAD: {
         for (const auto& callback : shared_ptr_this->event_callbacks_) {
@@ -118,6 +126,7 @@ WifiNanIface::WifiNanIface(
             LOG(ERROR) << "Failed to invoke the callback";
           }
         }
+        break;
      }
     case legacy_hal::NAN_GET_CAPABILITIES: {
         NanCapabilities hidl_struct;
@@ -132,6 +141,7 @@ WifiNanIface::WifiNanIface(
             LOG(ERROR) << "Failed to invoke the callback";
           }
         }
+        break;
     }
     case legacy_hal::NAN_DP_INTERFACE_CREATE: {
         for (const auto& callback : shared_ptr_this->event_callbacks_) {
@@ -139,6 +149,7 @@ WifiNanIface::WifiNanIface(
             LOG(ERROR) << "Failed to invoke the callback";
           }
         }
+        break;
     }
     case legacy_hal::NAN_DP_INTERFACE_DELETE: {
         for (const auto& callback : shared_ptr_this->event_callbacks_) {
@@ -146,18 +157,20 @@ WifiNanIface::WifiNanIface(
             LOG(ERROR) << "Failed to invoke the callback";
           }
         }
+        break;
     }
     case legacy_hal::NAN_DP_INITIATOR_RESPONSE: {
         for (const auto& callback : shared_ptr_this->event_callbacks_) {
-          if (!callback->notifyInitiateDataPathResponse(id, wifiNanStatus).isOk()) {
+          if (!callback->notifyInitiateDataPathResponse(id, wifiNanStatus,
+                msg.body.data_request_response.ndp_instance_id).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
           }
         }
+        break;
     }
     case legacy_hal::NAN_DP_RESPONDER_RESPONSE: {
         for (const auto& callback : shared_ptr_this->event_callbacks_) {
-          if (!callback->notifyRespondToDataPathIndicationResponse(id, wifiNanStatus,
-                    msg.body.data_request_response.ndp_instance_id).isOk()) {
+          if (!callback->notifyRespondToDataPathIndicationResponse(id, wifiNanStatus).isOk()) {
             LOG(ERROR) << "Failed to invoke the callback";
           }
         }
@@ -168,6 +181,7 @@ WifiNanIface::WifiNanIface(
             LOG(ERROR) << "Failed to invoke the callback";
           }
         }
+        break;
     }
     case legacy_hal::NAN_RESPONSE_TCA:
         /* fall through */
