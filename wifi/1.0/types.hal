@@ -750,19 +750,19 @@ struct NanDebugConfig {
    * Frequency in MHz to of the discovery channel in the specified band. Indexed by |NanBandIndex|.
    */
   bool validDiscoveryChannelVal;
-  vec<WifiChannelInMhz> discoveryChannelMhzVal;
+  WifiChannelInMhz[2] discoveryChannelMhzVal;
   /**
    * Specifies whether sync/discovery beacons are transmitted in the specified band. Indexed by
    * |NanBandIndex|.
    */
   bool validUseBeaconsInBandVal;
-  vec<bool> useBeaconsInBandVal;
+  bool[2] useBeaconsInBandVal;
   /**
    * Specified whether SDF (service discovery frames) are transmitted in the specified band. Indexed
    * by |NanBandIndex|.
    */
   bool validUseSdfInBandVal;
-  vec<bool> useSdfInBandVal;
+  bool[2] useSdfInBandVal;
 };
 
 /**
@@ -816,7 +816,7 @@ struct NanConfigRequest {
   /**
    * Additional configuration provided per band: indexed by |NanBandIndex|.
    */
-  vec<NanBandSpecificConfig> bandSpecificConfig;
+  NanBandSpecificConfig[2] bandSpecificConfig;
 };
 
 /**
@@ -826,7 +826,7 @@ struct NanEnableRequest {
   /**
    * Enable operation in a specific band: indexed by |NanBandIndex|.
    */
-  vec<bool> operateInBand;
+  bool[2] operateInBand;
   /**
    * Specify extent of cluster by specifying the max hop count.
    */
@@ -888,7 +888,7 @@ struct NanDiscoveryCommonConfig {
    * UTF-8 encoded string identifying the service.
    * Max length: |NanCapabilities.maxServiceNameLen|.
    */
-  string serviceName;
+  vec<uint8_t> serviceName;
   /**
    * Specifies the matching indication to host: once, continuous, or never.
    */
