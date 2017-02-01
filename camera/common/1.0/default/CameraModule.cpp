@@ -369,9 +369,11 @@ int CameraModule::getNumberOfCameras() {
 }
 
 int CameraModule::setCallbacks(const camera_module_callbacks_t *callbacks) {
-    int res;
+    int res = OK;
     ATRACE_BEGIN("camera_module->set_callbacks");
-    res = mModule->set_callbacks(callbacks);
+    if (getModuleApiVersion() >= CAMERA_MODULE_API_VERSION_2_1) {
+        res = mModule->set_callbacks(callbacks);
+    }
     ATRACE_END();
     return res;
 }
