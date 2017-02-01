@@ -16,10 +16,12 @@
 
 #define LOG_TAG "StreamOutHAL"
 //#define LOG_NDEBUG 0
+#define ATRACE_TAG ATRACE_TAG_AUDIO
 
 #include <android/log.h>
 #include <hardware/audio.h>
 #include <mediautils/SchedulingPolicyService.h>
+#include <utils/Trace.h>
 
 #include "StreamOut.h"
 
@@ -121,7 +123,19 @@ StreamOut::StreamOut(audio_hw_device_t* device, audio_stream_out_t* stream)
 }
 
 StreamOut::~StreamOut() {
+    ATRACE_CALL();
     close();
+    if (mWriteThread.get()) {
+        ATRACE_NAME("mWriteThread->join");
+        status_t status = mWriteThread->join();
+        ALOGE_IF(status, "write thread exit error: %s", strerror(-status));
+    }
+    if (mEfGroup) {
+        status_t status = EventFlag::deleteEventFlag(&mEfGroup);
+        ALOGE_IF(status, "write MQ event flag deletion error: %s", strerror(-status));
+    }
+    mCallback.clear();
+    mDevice->close_output_stream(mDevice, mStream);
     mStream = nullptr;
     mDevice = nullptr;
 }
@@ -225,15 +239,10 @@ Return<Result> StreamOut::close()  {
     mIsClosed = true;
     if (mWriteThread.get()) {
         mStopWriteThread.store(true, std::memory_order_release);
-        status_t status = mWriteThread->requestExitAndWait();
-        ALOGE_IF(status, "write thread exit error: %s", strerror(-status));
     }
     if (mEfGroup) {
-        status_t status = EventFlag::deleteEventFlag(&mEfGroup);
-        ALOGE_IF(status, "write MQ event flag deletion error: %s", strerror(-status));
+        mEfGroup->wake(static_cast<uint32_t>(MessageQueueFlagBits::NOT_EMPTY));
     }
-    mCallback.clear();
-    mDevice->close_output_stream(mDevice, mStream);
     return Result::OK;
 }
 

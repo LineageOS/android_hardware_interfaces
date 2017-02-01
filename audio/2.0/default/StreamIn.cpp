@@ -16,10 +16,12 @@
 
 #define LOG_TAG "StreamInHAL"
 //#define LOG_NDEBUG 0
+#define ATRACE_TAG ATRACE_TAG_AUDIO
 
 #include <android/log.h>
 #include <hardware/audio.h>
 #include <mediautils/SchedulingPolicyService.h>
+#include <utils/Trace.h>
 
 #include "StreamIn.h"
 
@@ -120,7 +122,18 @@ StreamIn::StreamIn(audio_hw_device_t* device, audio_stream_in_t* stream)
 }
 
 StreamIn::~StreamIn() {
+    ATRACE_CALL();
     close();
+    if (mReadThread.get()) {
+        ATRACE_NAME("mReadThread->join");
+        status_t status = mReadThread->join();
+        ALOGE_IF(status, "read thread exit error: %s", strerror(-status));
+    }
+    if (mEfGroup) {
+        status_t status = EventFlag::deleteEventFlag(&mEfGroup);
+        ALOGE_IF(status, "read MQ event flag deletion error: %s", strerror(-status));
+    }
+    mDevice->close_input_stream(mDevice, mStream);
     mStream = nullptr;
     mDevice = nullptr;
 }
@@ -240,14 +253,10 @@ Return<Result> StreamIn::close()  {
     mIsClosed = true;
     if (mReadThread.get()) {
         mStopReadThread.store(true, std::memory_order_release);
-        status_t status = mReadThread->requestExitAndWait();
-        ALOGE_IF(status, "read thread exit error: %s", strerror(-status));
     }
     if (mEfGroup) {
-        status_t status = EventFlag::deleteEventFlag(&mEfGroup);
-        ALOGE_IF(status, "read MQ event flag deletion error: %s", strerror(-status));
+        mEfGroup->wake(static_cast<uint32_t>(MessageQueueFlagBits::NOT_FULL));
     }
-    mDevice->close_input_stream(mDevice, mStream);
     return Result::OK;
 }
 

@@ -17,8 +17,11 @@
 #include <memory.h>
 
 #define LOG_TAG "EffectHAL"
+#define ATRACE_TAG ATRACE_TAG_AUDIO
+
 #include <android/log.h>
 #include <media/EffectsFactoryApi.h>
+#include <utils/Trace.h>
 
 #include "Conversions.h"
 #include "Effect.h"
@@ -78,8 +81,9 @@ bool ProcessThread::threadLoop() {
                 static_cast<uint32_t>(MessageQueueFlagBits::REQUEST_PROCESS_ALL),
                 &efState,
                 NS_PER_SEC);
-        if (!(efState & static_cast<uint32_t>(MessageQueueFlagBits::REQUEST_PROCESS_ALL))) {
-            continue;  // Nothing to do.
+        if (!(efState & static_cast<uint32_t>(MessageQueueFlagBits::REQUEST_PROCESS_ALL))
+                || (efState & static_cast<uint32_t>(MessageQueueFlagBits::REQUEST_QUIT))) {
+            continue;  // Nothing to do or time to quit.
         }
         Result retval = Result::OK;
         if (efState & static_cast<uint32_t>(MessageQueueFlagBits::REQUEST_PROCESS_REVERSE)
@@ -134,7 +138,23 @@ Effect::Effect(effect_handle_t handle)
 }
 
 Effect::~Effect() {
+    ATRACE_CALL();
     close();
+    if (mProcessThread.get()) {
+        ATRACE_NAME("mProcessThread->join");
+        status_t status = mProcessThread->join();
+        ALOGE_IF(status, "processing thread exit error: %s", strerror(-status));
+    }
+    if (mEfGroup) {
+        status_t status = EventFlag::deleteEventFlag(&mEfGroup);
+        ALOGE_IF(status, "processing MQ event flag deletion error: %s", strerror(-status));
+    }
+    mInBuffer.clear();
+    mOutBuffer.clear();
+    int status = EffectRelease(mHandle);
+    ALOGW_IF(status, "Error releasing effect %p: %s", mHandle, strerror(-status));
+    EffectMap::getInstance().remove(mHandle);
+    mHandle = 0;
 }
 
 // static
@@ -731,19 +751,10 @@ Return<Result> Effect::close() {
     mIsClosed = true;
     if (mProcessThread.get()) {
         mStopProcessThread.store(true, std::memory_order_release);
-        status_t status = mProcessThread->requestExitAndWait();
-        ALOGE_IF(status, "processing thread exit error: %s", strerror(-status));
     }
     if (mEfGroup) {
-        status_t status = EventFlag::deleteEventFlag(&mEfGroup);
-        ALOGE_IF(status, "processing MQ event flag deletion error: %s", strerror(-status));
+        mEfGroup->wake(static_cast<uint32_t>(MessageQueueFlagBits::REQUEST_QUIT));
     }
-    mInBuffer.clear();
-    mOutBuffer.clear();
-    int status = EffectRelease(mHandle);
-    ALOGW_IF(status, "Error releasing effect %p: %s", mHandle, strerror(-status));
-    EffectMap::getInstance().remove(mHandle);
-    mHandle = 0;
     return Result::OK;
 }
 
