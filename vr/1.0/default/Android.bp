@@ -15,3 +15,20 @@ cc_library_shared {
         "android.hardware.vr@1.0",
     ],
 }
+
+cc_binary {
+    relative_install_path: "hw",
+    name: "android.hardware.vr@1.0-service",
+    init_rc: ["android.hardware.vr@1.0-service.rc"],
+    srcs: ["service.cpp"],
+    shared_libs: [
+        "liblog",
+        "libdl",
+        "libutils",
+        "libhardware",
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "android.hardware.vr@1.0",
+    ],
+}
