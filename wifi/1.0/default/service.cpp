@@ -27,7 +27,7 @@ using android::hardware::joinRpcThreadpool;
 int main(int /*argc*/, char** argv) {
   android::base::InitLogging(argv,
                              android::base::LogdLogger(android::base::SYSTEM));
-  LOG(INFO) << "wifi_hal_legacy is starting up...";
+  LOG(INFO) << "Wifi Hal is starting up...";
 
   configureRpcThreadpool(1, true /* callerWillJoin */);
 
@@ -39,6 +39,6 @@ int main(int /*argc*/, char** argv) {
 
   joinRpcThreadpool();
 
-  LOG(INFO) << "wifi_hal_legacy is terminating...";
+  LOG(INFO) << "Wifi Hal is terminating...";
   return 0;
 }

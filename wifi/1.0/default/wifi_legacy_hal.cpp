@@ -350,7 +350,8 @@ wifi_error WifiLegacyHal::stop(
     return WIFI_SUCCESS;
   }
   LOG(DEBUG) << "Stopping legacy HAL";
-  on_stop_complete_internal_callback = [&](wifi_handle handle) {
+  on_stop_complete_internal_callback = [on_stop_complete_user_callback,
+                                        this](wifi_handle handle) {
     CHECK_EQ(global_handle_, handle) << "Handle mismatch";
     // Invalidate all the internal pointers now that the HAL is
     // stopped.
