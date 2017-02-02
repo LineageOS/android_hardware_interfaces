@@ -1,0 +1,1382 @@
+component_class: HAL_HIDL
+component_type_version: 1.0
+component_name: "IRadioResponse"
+
+package: "android.hardware.radio"
+
+import: "android.hardware.radio@1.0::types"
+
+interface: {
+    api: {
+        name: "getIccCardStatusResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::CardStatus"
+        }
+    }
+
+    api: {
+        name: "supplyIccPinForAppResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+
+    api: {
+        name: "supplyIccPukForAppResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+
+    api: {
+        name: "supplyIccPin2ForAppResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+
+    api: {
+        name: "supplyIccPuk2ForAppResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+
+    api: {
+        name: "changeIccPinForAppResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+
+    api: {
+        name: "changeIccPin2ForAppResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+
+    api: {
+        name: "supplyNetworkDepersonalizationResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+
+    api: {
+        name: "getCurrentCallsResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRUCT
+                predefined_type: "::android::hardware::radio::V1_0::Call"
+            }
+        }
+    }
+
+    api: {
+        name: "dialResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "getIMSIForAppResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "hangupConnectionResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "hangupWaitingOrBackgroundResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "hangupForegroundResumeBackgroundResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "switchWaitingOrHoldingAndActiveResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "conferenceResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "rejectCallResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "getLastCallFailCauseResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::LastCallFailCauseInfo"
+        }
+    }
+
+    api: {
+        name: "getSignalStrengthResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::SignalStrength"
+        }
+    }
+
+    api: {
+        name: "getVoiceRegistrationStateResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::VoiceRegStateResult"
+        }
+    }
+
+    api: {
+        name: "getDataRegistrationStateResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::DataRegStateResult"
+        }
+    }
+
+    api: {
+        name: "getOperatorResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "setRadioPowerResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "sendDtmfResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "sendSmsResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::SendSmsResult"
+        }
+    }
+
+    api: {
+        name: "sendSMSExpectMoreResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::SendSmsResult"
+        }
+    }
+
+    api: {
+        name: "setupDataCallResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::SetupDataCallResult"
+        }
+    }
+
+    api: {
+        name: "iccIOForAppResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::IccIoResult"
+        }
+    }
+
+    api: {
+        name: "sendUssdResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "cancelPendingUssdResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "getClirResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+
+    api: {
+        name: "setClirResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "getCallForwardStatusResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRUCT
+                predefined_type: "::android::hardware::radio::V1_0::CallForwardInfo"
+            }
+        }
+    }
+
+    api: {
+        name: "setCallForwardResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "getCallWaitingResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+
+    api: {
+        name: "setCallWaitingResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "acknowledgeLastIncomingGsmSmsResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "acceptCallResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "deactivateDataCallResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "getFacilityLockForAppResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+
+    api: {
+        name: "setFacilityLockForAppResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+
+    api: {
+        name: "setBarringPasswordResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "getNetworkSelectionModeResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+    }
+
+    api: {
+        name: "setNetworkSelectionModeAutomaticResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "setNetworkSelectionModeManualResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "getAvailableNetworksResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRUCT
+                predefined_type: "::android::hardware::radio::V1_0::OperatorInfo"
+            }
+        }
+    }
+
+    api: {
+        name: "startDtmfResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "stopDtmfResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "getBasebandVersionResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "separateConnectionResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "setMuteResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "getMuteResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+    }
+
+    api: {
+        name: "getClipResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::ClipStatus"
+        }
+    }
+
+    api: {
+        name: "getDataCallListResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRUCT
+                predefined_type: "::android::hardware::radio::V1_0::SetupDataCallResult"
+            }
+        }
+    }
+
+    api: {
+        name: "sendOemRilRequestRawResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "sendOemRilRequestStringsResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRING
+            }
+        }
+    }
+
+    api: {
+        name: "sendScreenStateResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "setSuppServiceNotificationsResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "writeSmsToSimResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+
+    api: {
+        name: "deleteSmsOnSimResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "setBandModeResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "getAvailableBandModesResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_ENUM
+                predefined_type: "::android::hardware::radio::V1_0::RadioBandMode"
+            }
+        }
+    }
+
+    api: {
+        name: "sendEnvelopeResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "sendTerminalResponseToSimResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "handleStkCallSetupRequestFromSimResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "explicitCallTransferResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "setPreferredNetworkTypeResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "getPreferredNetworkTypeResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::PreferredNetworkType"
+        }
+    }
+
+    api: {
+        name: "getNeighboringCidsResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRUCT
+                predefined_type: "::android::hardware::radio::V1_0::NeighboringCell"
+            }
+        }
+    }
+
+    api: {
+        name: "setLocationUpdatesResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "setCdmaSubscriptionSourceResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "setCdmaRoamingPreferenceResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "getCdmaRoamingPreferenceResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::CdmaRoamingType"
+        }
+    }
+
+    api: {
+        name: "setTTYModeResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "getTTYModeResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::TtyMode"
+        }
+    }
+
+    api: {
+        name: "setPreferredVoicePrivacyResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "getPreferredVoicePrivacyResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+    }
+
+    api: {
+        name: "sendCDMAFeatureCodeResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "sendBurstDtmfResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "sendCdmaSmsResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::SendSmsResult"
+        }
+    }
+
+    api: {
+        name: "acknowledgeLastIncomingCdmaSmsResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "getGsmBroadcastConfigResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRUCT
+                predefined_type: "::android::hardware::radio::V1_0::GsmBroadcastSmsConfigInfo"
+            }
+        }
+    }
+
+    api: {
+        name: "setGsmBroadcastConfigResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "setGsmBroadcastActivationResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "getCdmaBroadcastConfigResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRUCT
+                predefined_type: "::android::hardware::radio::V1_0::CdmaBroadcastSmsConfigInfo"
+            }
+        }
+    }
+
+    api: {
+        name: "setCdmaBroadcastConfigResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "setCdmaBroadcastActivationResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "getCDMASubscriptionResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "writeSmsToRuimResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    api: {
+        name: "deleteSmsOnRuimResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "getDeviceIdentityResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "exitEmergencyCallbackModeResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "getSmscAddressResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "setSmscAddressResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "reportSmsMemoryStatusResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "getCdmaSubscriptionSourceResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::CdmaSubscriptionSource"
+        }
+    }
+
+    api: {
+        name: "requestIsimAuthenticationResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "acknowledgeIncomingGsmSmsWithPduResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "sendEnvelopeWithStatusResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::IccIoResult"
+        }
+    }
+
+    api: {
+        name: "getVoiceRadioTechnologyResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioTechnology"
+        }
+    }
+
+    api: {
+        name: "getCellInfoListResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRUCT
+                predefined_type: "::android::hardware::radio::V1_0::CellInfo"
+            }
+        }
+    }
+
+    api: {
+        name: "setCellInfoListRateResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "setInitialAttachApnResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "getImsRegistrationStateResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::RadioTechnologyFamily"
+        }
+    }
+
+    api: {
+        name: "sendImsSmsResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::SendSmsResult"
+        }
+    }
+
+    api: {
+        name: "iccTransmitApduBasicChannelResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::IccIoResult"
+        }
+    }
+
+    api: {
+        name: "iccOpenLogicalChannelResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "int8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "iccCloseLogicalChannelResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "iccTransmitApduLogicalChannelResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::IccIoResult"
+        }
+    }
+
+    api: {
+        name: "nvReadItemResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "nvWriteItemResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "nvWriteCdmaPrlResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "nvResetConfigResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "setUiccSubscriptionResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "setDataAllowedResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "getHardwareConfigResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRUCT
+                predefined_type: "::android::hardware::radio::V1_0::HardwareConfig"
+            }
+        }
+    }
+
+    api: {
+        name: "requestIccSimAuthenticationResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::IccIoResult"
+        }
+    }
+
+    api: {
+        name: "setDataProfileResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "requestShutdownResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "getRadioCapabilityResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioCapability"
+        }
+    }
+
+    api: {
+        name: "setRadioCapabilityResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioCapability"
+        }
+    }
+
+    api: {
+        name: "startLceServiceResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::LceStatusInfo"
+        }
+    }
+
+    api: {
+        name: "stopLceServiceResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::LceStatusInfo"
+        }
+    }
+
+    api: {
+        name: "pullLceDataResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::LceDataInfo"
+        }
+    }
+
+    api: {
+        name: "getModemActivityInfoResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::ActivityStatsInfo"
+        }
+    }
+
+    api: {
+        name: "setAllowedCarriersResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+
+    api: {
+        name: "getAllowedCarriersResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::CarrierRestrictions"
+        }
+    }
+
+    api: {
+        name: "acknowledgeRequest"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+
+}
