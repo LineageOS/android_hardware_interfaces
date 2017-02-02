@@ -685,6 +685,12 @@ wifi_error WifiLegacyHal::stopSendingOffloadedPacket(uint32_t cmd_id) {
       cmd_id, wlan_interface_handle_);
 }
 
+wifi_error WifiLegacyHal::setScanningMacOui(const std::array<uint8_t, 3>& oui) {
+  std::vector<uint8_t> oui_internal(oui.data(), oui.data() + oui.size());
+  return global_func_table_.wifi_set_scanning_mac_oui(wlan_interface_handle_,
+                                                      oui_internal.data());
+}
+
 std::pair<wifi_error, uint32_t> WifiLegacyHal::getLoggerSupportedFeatureSet() {
   uint32_t supported_features;
   wifi_error status = global_func_table_.wifi_get_logger_supported_feature_set(
