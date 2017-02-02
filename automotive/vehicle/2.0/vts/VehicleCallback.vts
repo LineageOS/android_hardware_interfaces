@@ -1,0 +1,45 @@
+component_class: HAL_HIDL
+component_type_version: 2.0
+component_name: "IVehicleCallback"
+
+package: "android.hardware.automotive.vehicle"
+
+import: "android.hardware.automotive.vehicle@2.0::types"
+
+interface: {
+    api: {
+        name: "onPropertyEvent"
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRUCT
+                predefined_type: "::android::hardware::automotive::vehicle::V2_0::VehiclePropValue"
+            }
+        }
+    }
+
+    api: {
+        name: "onPropertySet"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::automotive::vehicle::V2_0::VehiclePropValue"
+        }
+    }
+
+    api: {
+        name: "onPropertySetError"
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::automotive::vehicle::V2_0::StatusCode"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::automotive::vehicle::V2_0::VehicleProperty"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+
+}
