@@ -34,7 +34,6 @@ class VrHidlTest : public ::testing::Test {
   void SetUp() override {
     vr = IVr::getService(VR_SERVICE_NAME);
     ASSERT_NE(vr, nullptr);
-    ASSERT_TRUE(!vr->isRemote());
   }
 
   void TearDown() override {}
