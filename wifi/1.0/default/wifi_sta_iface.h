@@ -95,6 +95,8 @@ class WifiStaIface : public IWifiStaIface {
       startSendingKeepAlivePackets_cb hidl_status_cb) override;
   Return<void> stopSendingKeepAlivePackets(
       uint32_t cmd_id, stopSendingKeepAlivePackets_cb hidl_status_cb) override;
+  Return<void> setScanningMacOui(const hidl_array<uint8_t, 3>& oui,
+                                 setScanningMacOui_cb hidl_status_cb) override;
   Return<void> startDebugPacketFateMonitoring(
       startDebugPacketFateMonitoring_cb hidl_status_cb) override;
   Return<void> getDebugTxPacketFates(
@@ -140,6 +142,7 @@ class WifiStaIface : public IWifiStaIface {
       const std::array<uint8_t, 6>& dst_address,
       uint32_t period_in_ms);
   WifiStatus stopSendingKeepAlivePacketsInternal(uint32_t cmd_id);
+  WifiStatus setScanningMacOuiInternal(const std::array<uint8_t, 3>& oui);
   WifiStatus startDebugPacketFateMonitoringInternal();
   std::pair<WifiStatus, std::vector<WifiDebugTxPacketFateReport>>
   getDebugTxPacketFatesInternal();
