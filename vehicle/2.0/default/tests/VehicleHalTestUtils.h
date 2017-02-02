@@ -29,14 +29,14 @@ namespace V2_0 {
 
 const VehiclePropConfig kVehicleProperties[] = {
     {
-        .prop = VehicleProperty::INFO_MAKE,
+        .prop = toInt(VehicleProperty::INFO_MAKE),
         .access = VehiclePropertyAccess::READ,
         .changeMode = VehiclePropertyChangeMode::STATIC,
         .configString = "Some=config,options=if,you=have_any",
     },
 
     {
-        .prop = VehicleProperty::HVAC_FAN_SPEED,
+        .prop = toInt(VehicleProperty::HVAC_FAN_SPEED),
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         .supportedAreas = static_cast<int32_t>(
@@ -56,7 +56,7 @@ const VehiclePropConfig kVehicleProperties[] = {
 
     // Write-only property
     {
-        .prop = VehicleProperty::HVAC_SEAT_TEMPERATURE,
+        .prop = toInt(VehicleProperty::HVAC_SEAT_TEMPERATURE),
         .access = VehiclePropertyAccess::WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_SET,
         .supportedAreas = static_cast<int32_t>(
@@ -75,7 +75,7 @@ const VehiclePropConfig kVehicleProperties[] = {
     },
 
     {
-        .prop = VehicleProperty::INFO_FUEL_CAPACITY,
+        .prop = toInt(VehicleProperty::INFO_FUEL_CAPACITY),
         .access = VehiclePropertyAccess::READ,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         .areaConfigs = {
@@ -87,7 +87,7 @@ const VehiclePropConfig kVehicleProperties[] = {
     },
 
     {
-        .prop = VehicleProperty::DISPLAY_BRIGHTNESS,
+        .prop = toInt(VehicleProperty::DISPLAY_BRIGHTNESS),
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         .areaConfigs = {
@@ -99,7 +99,7 @@ const VehiclePropConfig kVehicleProperties[] = {
     },
 
     {
-        .prop = VehicleProperty::MIRROR_FOLD,
+        .prop = toInt(VehicleProperty::MIRROR_FOLD),
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
 
@@ -107,7 +107,7 @@ const VehiclePropConfig kVehicleProperties[] = {
 
     // Complex data type.
     {
-        .prop = VehicleProperty::VEHICLE_MAP_SERVICE,
+        .prop = toInt(VehicleProperty::VEHICLE_MAP_SERVICE),
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE
     }
@@ -134,7 +134,7 @@ public:
         return Return<void>();
     }
     Return<void> onPropertySetError(StatusCode errorCode,
-                                    VehicleProperty propId,
+                                    int32_t propId,
                                     int32_t areaId) override {
         return Return<void>();
     }
@@ -218,7 +218,7 @@ inline std::string vecToString(const hidl_vec<T>& vec) {
 inline std::string toString(const VehiclePropValue &v) {
     std::stringstream ss;
     ss << "VehiclePropValue {n"
-       << "  prop: " << enumToHexString(v.prop) << ",\n"
+       << "  prop: " << hexString(v.prop) << ",\n"
        << "  areaId: " << hexString(v.areaId) << ",\n"
        << "  timestamp: " << v.timestamp << ",\n"
        << "  value {\n"
@@ -236,7 +236,7 @@ inline std::string toString(const VehiclePropValue &v) {
 inline std::string toString(const VehiclePropConfig &config) {
     std::stringstream ss;
     ss << "VehiclePropConfig {\n"
-       << "  prop: " << enumToHexString(config.prop) << ",\n"
+       << "  prop: " << hexString(config.prop) << ",\n"
        << "  supportedAreas: " << hexString(config.supportedAreas) << ",\n"
        << "  access: " << enumToHexString(config.access) << ",\n"
        << "  changeMode: " << enumToHexString(config.changeMode) << ",\n"

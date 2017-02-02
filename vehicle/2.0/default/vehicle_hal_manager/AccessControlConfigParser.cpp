@@ -17,6 +17,7 @@
 #define LOG_TAG "android.hardware.vehicle@2.0-impl"
 
 #include "AccessControlConfigParser.h"
+#include "VehicleUtils.h"
 
 #include <fstream>
 #include <iostream>
@@ -30,17 +31,17 @@ namespace vehicle {
 namespace V2_0 {
 
 AccessControlConfigParser::AccessControlConfigParser(
-        const std::vector<VehicleProperty>& properties) {
+        const std::vector<int32_t>& properties) {
     // Property Id in the config file doesn't include information about
     // type and area. So we want to create a map from these kind of
     // *stripped* properties to the whole VehicleProperty.
     // We also want to filter out ACL to the properties that supported
     // by concrete Vehicle HAL implementation.
-    for (VehicleProperty vehicleProperty : properties) {
-        auto numProp = static_cast<int>(vehicleProperty);
-        numProp &= ~static_cast<int>(VehiclePropertyType::MASK)
-                & ~static_cast<int>(VehicleArea::MASK);
-        mStrippedToVehiclePropertyMap.emplace(numProp, vehicleProperty);
+    for (auto prop : properties) {
+        auto strippedProp = prop
+                            & ~toInt(VehiclePropertyType::MASK)
+                            & ~toInt(VehicleArea::MASK);
+        mStrippedToVehiclePropertyMap.emplace(strippedProp, prop);
     }
 }
 
@@ -130,8 +131,8 @@ bool AccessControlConfigParser::parsePropertyGroup(
 bool AccessControlConfigParser::parsePropertyId(
         const std::string& strPropId,
         VehiclePropertyGroup propertyGroup,
-        VehicleProperty* outVehicleProperty) const {
-    int propId;
+        int32_t* outVehicleProperty) const {
+    int32_t propId;
     if (!parseInt(strPropId.c_str(), &propId)) {
         ALOGW("Failed to convert property id to integer: %s",
               strPropId.c_str());

@@ -58,11 +58,11 @@ Return<void> VehicleHalManager::getAllPropConfigs(
 }
 
 Return<void> VehicleHalManager::getPropConfigs(
-        const hidl_vec<VehicleProperty> &properties,
+        const hidl_vec<int32_t> &properties,
         getPropConfigs_cb _hidl_cb) {
     std::vector<VehiclePropConfig> configs;
     for (size_t i = 0; i < properties.size(); i++) {
-        VehicleProperty prop = properties[i];
+        auto prop = properties[i];
         if (mConfigIndex->hasConfig(prop)) {
             configs.push_back(mConfigIndex->getConfig(prop));
         } else {
@@ -125,7 +125,7 @@ Return<StatusCode> VehicleHalManager::subscribe(
     auto caller = getCaller();
     for (size_t i = 0; i < verifiedOptions.size(); i++) {
         SubscribeOptions& ops = verifiedOptions[i];
-        VehicleProperty prop = ops.propId;
+        auto prop = ops.propId;
 
         const auto* config = getPropConfigOrNull(prop);
         if (config == nullptr) {
@@ -168,7 +168,7 @@ Return<StatusCode> VehicleHalManager::subscribe(
 }
 
 Return<StatusCode> VehicleHalManager::unsubscribe(
-        const sp<IVehicleCallback>& callback, VehicleProperty propId) {
+        const sp<IVehicleCallback>& callback, int32_t propId) {
     if (mSubscriptionManager.unsubscribe(callback, propId)) {
         mHal->unsubscribe(propId);
     }
@@ -200,7 +200,7 @@ void VehicleHalManager::init() {
     auto supportedPropConfigs = mHal->listProperties();
     mConfigIndex.reset(new VehiclePropConfigIndex(supportedPropConfigs));
 
-    std::vector<VehicleProperty> supportedProperties(
+    std::vector<int32_t> supportedProperties(
         supportedPropConfigs.size());
     for (const auto& config : supportedPropConfigs) {
         supportedProperties.push_back(config.prop);
@@ -228,7 +228,7 @@ void VehicleHalManager::onHalEvent(VehiclePropValuePtr v) {
 }
 
 void VehicleHalManager::onHalPropertySetError(StatusCode errorCode,
-                                              VehicleProperty property,
+                                              int32_t property,
                                               int32_t areaId) {
     const auto& clients = mSubscriptionManager.getSubscribedClients(
             property, 0, SubscribeFlags::HAL_EVENT);
@@ -309,7 +309,7 @@ bool VehicleHalManager::isSubscribable(const VehiclePropConfig& config,
     return true;
 }
 
-bool VehicleHalManager::checkAcl(uid_t callerUid, VehicleProperty propertyId,
+bool VehicleHalManager::checkAcl(uid_t callerUid, int32_t propertyId,
                                  VehiclePropertyAccess requiredAccess) const {
     if (callerUid == AID_SYSTEM && isSystemProperty(propertyId)) {
         return true;
@@ -353,7 +353,7 @@ void VehicleHalManager::handlePropertySetEvent(const VehiclePropValue& value) {
 }
 
 const VehiclePropConfig* VehicleHalManager::getPropConfigOrNull(
-        VehicleProperty prop) const {
+        int32_t prop) const {
     return mConfigIndex->hasConfig(prop)
            ? &mConfigIndex->getConfig(prop) : nullptr;
 }

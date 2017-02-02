@@ -20,6 +20,7 @@
 #include <unordered_set>
 
 #include "vehicle_hal_manager/AccessControlConfigParser.h"
+#include <vehicle_hal_manager/VehicleUtils.h>
 
 namespace android {
 namespace hardware {
@@ -31,9 +32,9 @@ namespace {
 class AccessControlConfigParserTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        std::vector<VehicleProperty> supportedProperties {
-            VehicleProperty::HVAC_FAN_SPEED,
-            VehicleProperty::HVAC_FAN_DIRECTION,
+        std::vector<int32_t> supportedProperties {
+            toInt(VehicleProperty::HVAC_FAN_SPEED),
+            toInt(VehicleProperty::HVAC_FAN_DIRECTION),
         };
         parser.reset(new AccessControlConfigParser(supportedProperties));
     }
@@ -49,10 +50,10 @@ TEST_F(AccessControlConfigParserTest, basicParsing) {
     ASSERT_TRUE(parser->parseFromStream(&file, &aclMap));
 
     ASSERT_EQ(1, aclMap.size());
-    auto it = aclMap.find(VehicleProperty::HVAC_FAN_SPEED);
+    auto it = aclMap.find(toInt(VehicleProperty::HVAC_FAN_SPEED));
     ASSERT_NE(aclMap.end(), it);
     ASSERT_EQ(VehiclePropertyAccess::READ_WRITE, it->second.access);
-    ASSERT_EQ(VehicleProperty::HVAC_FAN_SPEED, it->second.propId);
+    ASSERT_EQ(toInt(VehicleProperty::HVAC_FAN_SPEED), it->second.propId);
     ASSERT_EQ(1000u, it->second.uid);
 }
 
@@ -68,7 +69,7 @@ TEST_F(AccessControlConfigParserTest, multipleUids) {
 
     ASSERT_TRUE(parser->parseFromStream(&file, &aclMap));
 
-    auto range = aclMap.equal_range(VehicleProperty::HVAC_FAN_SPEED);
+    auto range = aclMap.equal_range(toInt(VehicleProperty::HVAC_FAN_SPEED));
     for (auto it = range.first; it != range.second; ++it) {
         auto& acl = it->second;
 
@@ -92,10 +93,10 @@ TEST_F(AccessControlConfigParserTest, fileContainsJunk) {
     ASSERT_FALSE(parser->parseFromStream(&file, &aclMap));
 
     ASSERT_EQ(1, aclMap.size());
-    auto it = aclMap.find(VehicleProperty::HVAC_FAN_SPEED);
+    auto it = aclMap.find(toInt(VehicleProperty::HVAC_FAN_SPEED));
     ASSERT_NE(aclMap.end(), it);
     ASSERT_EQ(VehiclePropertyAccess::READ, it->second.access);
-    ASSERT_EQ(VehicleProperty::HVAC_FAN_SPEED, it->second.propId);
+    ASSERT_EQ(toInt(VehicleProperty::HVAC_FAN_SPEED), it->second.propId);
     ASSERT_EQ(0xbeef, it->second.uid);
 }
 
@@ -127,16 +128,16 @@ TEST_F(AccessControlConfigParserTest, multipleCalls) {
     ASSERT_TRUE(parser->parseFromStream(&configFile2, &aclMap));
     ASSERT_EQ(2, aclMap.size());
 
-    auto it = aclMap.find(VehicleProperty::HVAC_FAN_SPEED);
+    auto it = aclMap.find(toInt(VehicleProperty::HVAC_FAN_SPEED));
     ASSERT_NE(aclMap.end(), it);
     ASSERT_EQ(VehiclePropertyAccess::READ_WRITE, it->second.access);
-    ASSERT_EQ(VehicleProperty::HVAC_FAN_SPEED, it->second.propId);
+    ASSERT_EQ(toInt(VehicleProperty::HVAC_FAN_SPEED), it->second.propId);
     ASSERT_EQ(1000u, it->second.uid);
 
-    it = aclMap.find(VehicleProperty::HVAC_FAN_DIRECTION);
+    it = aclMap.find(toInt(VehicleProperty::HVAC_FAN_DIRECTION));
     ASSERT_NE(aclMap.end(), it);
     ASSERT_EQ(VehiclePropertyAccess::READ_WRITE, it->second.access);
-    ASSERT_EQ(VehicleProperty::HVAC_FAN_DIRECTION, it->second.propId);
+    ASSERT_EQ(toInt(VehicleProperty::HVAC_FAN_DIRECTION), it->second.propId);
     ASSERT_EQ(1004u, it->second.uid);
 }
 

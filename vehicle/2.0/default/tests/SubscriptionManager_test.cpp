@@ -36,8 +36,8 @@ class SubscriptionManagerTest : public ::testing::Test {
 public:
     SubscriptionManager manager;
 
-    const VehicleProperty PROP1 = VehicleProperty::HVAC_FAN_SPEED;
-    const VehicleProperty PROP2 = VehicleProperty::DISPLAY_BRIGHTNESS;
+    static constexpr int32_t PROP1 = toInt(VehicleProperty::HVAC_FAN_SPEED);
+    static constexpr int32_t PROP2 = toInt(VehicleProperty::DISPLAY_BRIGHTNESS);
 
     sp<IVehicleCallback> cb1 = new MockedVehicleCallback();
     sp<IVehicleCallback> cb2 = new MockedVehicleCallback();
@@ -116,7 +116,7 @@ TEST_F(SubscriptionManagerTest, negativeCases) {
 
     // Wrong prop
     clients = manager.getSubscribedClients(
-            VehicleProperty::AP_POWER_BOOTUP_REASON,
+            toInt(VehicleProperty::AP_POWER_BOOTUP_REASON),
             toInt(VehicleAreaZone::ROW_1_LEFT),
             SubscribeFlags::HAL_EVENT);
     ASSERT_TRUE(clients.empty());
