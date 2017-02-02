@@ -31,7 +31,7 @@ interface IGraphicBufferSource {
 
     configure(IOmxNode omxNode, Dataspace dataspace);
 
-    setSuspend(bool suspend);
+    setSuspend(bool suspend, int64_t timeUs);
 
     setRepeatPreviousFrameDelayUs(int64_t repeatAfterUs);
 
@@ -40,6 +40,8 @@ interface IGraphicBufferSource {
     setTimeLapseConfig(int64_t timePerFrameUs, int64_t timePerCaptureUs);
 
     setStartTimeUs(int64_t startTimeUs);
+
+    setStopTimeUs(int64_t stopTimeUs);
 
     setColorAspects(ColorAspects aspects);
 
