@@ -240,6 +240,8 @@ interface IComposerClient {
      *
      * @param callback is the IComposerCallback object.
      */
+    @entry
+    @callflow(next="*")
     registerCallback(IComposerCallback callback);
 
     /*
@@ -250,6 +252,7 @@ interface IComposerClient {
      *
      * @return count is the maximum number of virtual displays supported.
      */
+    @callflow(next="*")
     getMaxVirtualDisplayCount() generates (uint32_t count);
 
     /*
@@ -274,6 +277,7 @@ interface IComposerClient {
      * @return display is the newly-created virtual display.
      * @return format is the format of the buffer the device will produce.
      */
+    @callflow(next="*")
     createVirtualDisplay(uint32_t width,
                          uint32_t height,
                          PixelFormat formatHint,
@@ -293,6 +297,7 @@ interface IComposerClient {
      *         BAD_PARAMETER when the display handle which was passed in does
      *                       not refer to a virtual display.
      */
+    @callflow(next="*")
     destroyVirtualDisplay(Display display) generates (Error error);
 
     /*
@@ -306,6 +311,7 @@ interface IComposerClient {
      *                      time.
      * @return layer is the handle of the new layer.
      */
+    @callflow(next="*")
     createLayer(Display display,
                 uint32_t bufferSlotCount)
      generates (Error error,
@@ -320,6 +326,7 @@ interface IComposerClient {
      *         BAD_DISPLAY when an invalid display handle was passed in.
      *         BAD_LAYER when an invalid layer handle was passed in.
      */
+    @callflow(next="*")
     destroyLayer(Display display, Layer layer) generates (Error error);
 
     /*
@@ -336,6 +343,7 @@ interface IComposerClient {
      *         BAD_CONFIG when no configuration is currently active.
      * @return config is the currently active display configuration.
      */
+    @callflow(next="*")
     getActiveConfig(Display display) generates (Error error, Config config);
 
     /*
@@ -357,6 +365,7 @@ interface IComposerClient {
      *         BAD_DISPLAY when an invalid display handle was passed in.
      *         UNSUPPORTED when the given configuration is not supported.
      */
+    @callflow(next="*")
     getClientTargetSupport(Display display,
                            uint32_t width,
                            uint32_t height,
@@ -374,6 +383,7 @@ interface IComposerClient {
      *         BAD_DISPLAY when an invalid display handle was passed in.
      * @return modes is an array of color modes.
      */
+    @callflow(next="*")
     getColorModes(Display display)
        generates (Error error,
                   vec<ColorMode> modes);
@@ -393,6 +403,7 @@ interface IComposerClient {
      *         UNSUPPORTED when attribute cannot be queried for the config.
      * @return value is the value of the attribute.
      */
+    @callflow(next="*")
     getDisplayAttribute(Display display,
                         Config config,
                         Attribute attribute)
@@ -408,6 +419,7 @@ interface IComposerClient {
      *         BAD_DISPLAY when an invalid display handle was passed in.
      * @return configs is an array of configuration handles.
      */
+    @callflow(next="*")
     getDisplayConfigs(Display display)
            generates (Error error,
                       vec<Config> configs);
@@ -419,6 +431,7 @@ interface IComposerClient {
      *         BAD_DISPLAY when an invalid display handle was passed in.
      * @return name is the name of the display.
      */
+    @callflow(next="*")
     getDisplayName(Display display) generates (Error error, string name);
 
     /*
@@ -429,6 +442,7 @@ interface IComposerClient {
      *         BAD_DISPLAY when an invalid display handle was passed in.
      * @return type is the type of the display.
      */
+    @callflow(next="*")
     getDisplayType(Display display) generates (Error error, DisplayType type);
 
     /*
@@ -443,6 +457,7 @@ interface IComposerClient {
      *         BAD_DISPLAY when an invalid display handle was passed in.
      * @return support is true only when the display supports doze modes.
      */
+    @callflow(next="*")
     getDozeSupport(Display display) generates (Error error, bool support);
 
     /*
@@ -463,6 +478,7 @@ interface IComposerClient {
      * @return minLuminance is the desired content minimum luminance for this
      *         display in cd/m^2.
      */
+    @callflow(next="*")
     getHdrCapabilities(Display display)
             generates (Error error,
                        vec<Hdr> types,
@@ -479,6 +495,7 @@ interface IComposerClient {
      *         BAD_DISPLAY when an invalid display handle was passed in.
      *         NO_RESOURCES when unable to reserve the slots.
      */
+    @callflow(next="*")
     setClientTargetSlotCount(Display display,
                              uint32_t clientTargetSlotCount)
                   generates (Error error);
@@ -495,6 +512,7 @@ interface IComposerClient {
      *         BAD_CONFIG when the configuration handle passed in is not valid
      *                    for this display.
      */
+    @callflow(next="*")
     setActiveConfig(Display display, Config config) generates (Error error);
 
     /*
@@ -513,6 +531,7 @@ interface IComposerClient {
      *         BAD_PARAMETER when mode is not a valid color mode.
      *         UNSUPPORTED when mode is not supported on this display.
      */
+    @callflow(next="*")
     setColorMode(Display display, ColorMode mode) generates (Error error);
 
     /*
@@ -531,6 +550,7 @@ interface IComposerClient {
      *         BAD_PARAMETER when mode was not a valid power mode.
      *         UNSUPPORTED when mode is not supported on this display.
      */
+    @callflow(next="*")
     setPowerMode(Display display, PowerMode mode) generates (Error error);
 
     /*
@@ -545,6 +565,7 @@ interface IComposerClient {
      *         BAD_DISPLAY when an invalid display handle was passed in.
      *         BAD_PARAMETER when enabled was an invalid value.
      */
+    @callflow(next="*")
     setVsyncEnabled(Display display, Vsync enabled) generates (Error error);
 
     /*
@@ -554,6 +575,7 @@ interface IComposerClient {
      * @return error is NONE upon success. Otherwise,
      *         NO_RESOURCES when failed to set the queue temporarily.
      */
+    @callflow(next="*")
     setInputCommandQueue(fmq_sync<uint32_t> descriptor)
               generates (Error error);
 
@@ -566,6 +588,7 @@ interface IComposerClient {
      *         NO_RESOURCES when failed to get the queue temporarily.
      * @return descriptor is the descriptor of the output command queue.
      */
+    @callflow(next="*")
     getOutputCommandQueue()
               generates (Error error,
                          fmq_sync<uint32_t> descriptor);
@@ -589,6 +612,7 @@ interface IComposerClient {
      * @param outHandles is an array of handles referenced by the output
      *        commands.
      */
+    @callflow(next="*")
     executeCommands(uint32_t inLength,
                     vec<handle> inHandles)
          generates (Error error,

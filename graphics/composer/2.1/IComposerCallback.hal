@@ -44,6 +44,7 @@ interface IComposerCallback {
      * @param connected indicates whether the display is connected or
      *        disconnected.
      */
+    @callflow(next="*")
     onHotplug(Display display, Connection connected);
 
     /*
@@ -57,6 +58,7 @@ interface IComposerCallback {
      *
      * @param display is the display to refresh.
      */
+    @callflow(next="*")
     oneway onRefresh(Display display);
 
     /*
@@ -68,5 +70,6 @@ interface IComposerCallback {
      * @param timestamp is the CLOCK_MONOTONIC time at which the vsync event
      *        occurred, in nanoseconds.
      */
+    @callflow(next="*")
     oneway onVsync(Display display, int64_t timestamp);
 };

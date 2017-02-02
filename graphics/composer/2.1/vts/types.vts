@@ -1,0 +1,48 @@
+component_class: HAL_HIDL
+component_type_version: 2.1
+component_name: "types"
+
+package: "android.hardware.graphics.composer"
+
+
+attribute: {
+    name: "::android::hardware::graphics::composer::V2_1::Error"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "NONE"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "BAD_CONFIG"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "BAD_DISPLAY"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "BAD_LAYER"
+        scalar_value: {
+            int32_t: 3
+        }
+        enumerator: "BAD_PARAMETER"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "NO_RESOURCES"
+        scalar_value: {
+            int32_t: 6
+        }
+        enumerator: "NOT_VALIDATED"
+        scalar_value: {
+            int32_t: 7
+        }
+        enumerator: "UNSUPPORTED"
+        scalar_value: {
+            int32_t: 8
+        }
+    }
+}
+

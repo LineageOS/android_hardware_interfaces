@@ -1,0 +1,906 @@
+component_class: HAL_HIDL
+component_type_version: 2.1
+component_name: "IComposerClient"
+
+package: "android.hardware.graphics.composer"
+
+import: "android.hardware.graphics.common@1.0::types"
+import: "android.hardware.graphics.composer@2.1::IComposerCallback"
+import: "android.hardware.graphics.composer@2.1::types"
+
+interface: {
+    attribute: {
+        name: "::android::hardware::graphics::composer::V2_1::IComposerClient::Attribute"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "int32_t"
+
+            enumerator: "INVALID"
+            scalar_value: {
+                int32_t: 0
+            }
+            enumerator: "WIDTH"
+            scalar_value: {
+                int32_t: 1
+            }
+            enumerator: "HEIGHT"
+            scalar_value: {
+                int32_t: 2
+            }
+            enumerator: "VSYNC_PERIOD"
+            scalar_value: {
+                int32_t: 3
+            }
+            enumerator: "DPI_X"
+            scalar_value: {
+                int32_t: 4
+            }
+            enumerator: "DPI_Y"
+            scalar_value: {
+                int32_t: 5
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::graphics::composer::V2_1::IComposerClient::DisplayRequest"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "uint32_t"
+
+            enumerator: "FLIP_CLIENT_TARGET"
+            scalar_value: {
+                uint32_t: 1
+            }
+            enumerator: "WRITE_CLIENT_TARGET_TO_OUTPUT"
+            scalar_value: {
+                uint32_t: 2
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::graphics::composer::V2_1::IComposerClient::LayerRequest"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "uint32_t"
+
+            enumerator: "CLEAR_CLIENT_TARGET"
+            scalar_value: {
+                uint32_t: 1
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::graphics::composer::V2_1::IComposerClient::PowerMode"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "int32_t"
+
+            enumerator: "OFF"
+            scalar_value: {
+                int32_t: 0
+            }
+            enumerator: "DOZE"
+            scalar_value: {
+                int32_t: 1
+            }
+            enumerator: "DOZE_SUSPEND"
+            scalar_value: {
+                int32_t: 3
+            }
+            enumerator: "ON"
+            scalar_value: {
+                int32_t: 2
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::graphics::composer::V2_1::IComposerClient::Vsync"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "int32_t"
+
+            enumerator: "INVALID"
+            scalar_value: {
+                int32_t: 0
+            }
+            enumerator: "ENABLE"
+            scalar_value: {
+                int32_t: 1
+            }
+            enumerator: "DISABLE"
+            scalar_value: {
+                int32_t: 2
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::graphics::composer::V2_1::IComposerClient::BlendMode"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "int32_t"
+
+            enumerator: "INVALID"
+            scalar_value: {
+                int32_t: 0
+            }
+            enumerator: "NONE"
+            scalar_value: {
+                int32_t: 1
+            }
+            enumerator: "PREMULTIPLIED"
+            scalar_value: {
+                int32_t: 2
+            }
+            enumerator: "COVERAGE"
+            scalar_value: {
+                int32_t: 3
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::graphics::composer::V2_1::IComposerClient::Composition"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "int32_t"
+
+            enumerator: "INVALID"
+            scalar_value: {
+                int32_t: 0
+            }
+            enumerator: "CLIENT"
+            scalar_value: {
+                int32_t: 1
+            }
+            enumerator: "DEVICE"
+            scalar_value: {
+                int32_t: 2
+            }
+            enumerator: "SOLID_COLOR"
+            scalar_value: {
+                int32_t: 3
+            }
+            enumerator: "CURSOR"
+            scalar_value: {
+                int32_t: 4
+            }
+            enumerator: "SIDEBAND"
+            scalar_value: {
+                int32_t: 5
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::graphics::composer::V2_1::IComposerClient::DisplayType"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "int32_t"
+
+            enumerator: "INVALID"
+            scalar_value: {
+                int32_t: 0
+            }
+            enumerator: "PHYSICAL"
+            scalar_value: {
+                int32_t: 1
+            }
+            enumerator: "VIRTUAL"
+            scalar_value: {
+                int32_t: 2
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::graphics::composer::V2_1::IComposerClient::HandleIndex"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "int32_t"
+
+            enumerator: "EMPTY"
+            scalar_value: {
+                int32_t: -1
+            }
+            enumerator: "CACHED"
+            scalar_value: {
+                int32_t: -2
+            }
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::graphics::composer::V2_1::IComposerClient::Rect"
+        type: TYPE_STRUCT
+        struct_value: {
+            name: "left"
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+        struct_value: {
+            name: "top"
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+        struct_value: {
+            name: "right"
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+        struct_value: {
+            name: "bottom"
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::graphics::composer::V2_1::IComposerClient::FRect"
+        type: TYPE_STRUCT
+        struct_value: {
+            name: "left"
+            type: TYPE_SCALAR
+            scalar_type: "float_t"
+        }
+        struct_value: {
+            name: "top"
+            type: TYPE_SCALAR
+            scalar_type: "float_t"
+        }
+        struct_value: {
+            name: "right"
+            type: TYPE_SCALAR
+            scalar_type: "float_t"
+        }
+        struct_value: {
+            name: "bottom"
+            type: TYPE_SCALAR
+            scalar_type: "float_t"
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::graphics::composer::V2_1::IComposerClient::Color"
+        type: TYPE_STRUCT
+        struct_value: {
+            name: "r"
+            type: TYPE_SCALAR
+            scalar_type: "uint8_t"
+        }
+        struct_value: {
+            name: "g"
+            type: TYPE_SCALAR
+            scalar_type: "uint8_t"
+        }
+        struct_value: {
+            name: "b"
+            type: TYPE_SCALAR
+            scalar_type: "uint8_t"
+        }
+        struct_value: {
+            name: "a"
+            type: TYPE_SCALAR
+            scalar_type: "uint8_t"
+        }
+    }
+
+    attribute: {
+        name: "::android::hardware::graphics::composer::V2_1::IComposerClient::Command"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "int32_t"
+
+            enumerator: "LENGTH_MASK"
+            scalar_value: {
+                int32_t: 65535
+            }
+            enumerator: "OPCODE_SHIFT"
+            scalar_value: {
+                int32_t: 16
+            }
+            enumerator: "OPCODE_MASK"
+            scalar_value: {
+                int32_t: -65536
+            }
+            enumerator: "SELECT_DISPLAY"
+            scalar_value: {
+                int32_t: 0
+            }
+            enumerator: "SELECT_LAYER"
+            scalar_value: {
+                int32_t: 65536
+            }
+            enumerator: "SET_ERROR"
+            scalar_value: {
+                int32_t: 16777216
+            }
+            enumerator: "SET_CHANGED_COMPOSITION_TYPES"
+            scalar_value: {
+                int32_t: 16842752
+            }
+            enumerator: "SET_DISPLAY_REQUESTS"
+            scalar_value: {
+                int32_t: 16908288
+            }
+            enumerator: "SET_PRESENT_FENCE"
+            scalar_value: {
+                int32_t: 16973824
+            }
+            enumerator: "SET_RELEASE_FENCES"
+            scalar_value: {
+                int32_t: 17039360
+            }
+            enumerator: "SET_COLOR_TRANSFORM"
+            scalar_value: {
+                int32_t: 33554432
+            }
+            enumerator: "SET_CLIENT_TARGET"
+            scalar_value: {
+                int32_t: 33619968
+            }
+            enumerator: "SET_OUTPUT_BUFFER"
+            scalar_value: {
+                int32_t: 33685504
+            }
+            enumerator: "VALIDATE_DISPLAY"
+            scalar_value: {
+                int32_t: 33751040
+            }
+            enumerator: "ACCEPT_DISPLAY_CHANGES"
+            scalar_value: {
+                int32_t: 33816576
+            }
+            enumerator: "PRESENT_DISPLAY"
+            scalar_value: {
+                int32_t: 33882112
+            }
+            enumerator: "SET_LAYER_CURSOR_POSITION"
+            scalar_value: {
+                int32_t: 50331648
+            }
+            enumerator: "SET_LAYER_BUFFER"
+            scalar_value: {
+                int32_t: 50397184
+            }
+            enumerator: "SET_LAYER_SURFACE_DAMAGE"
+            scalar_value: {
+                int32_t: 50462720
+            }
+            enumerator: "SET_LAYER_BLEND_MODE"
+            scalar_value: {
+                int32_t: 67108864
+            }
+            enumerator: "SET_LAYER_COLOR"
+            scalar_value: {
+                int32_t: 67174400
+            }
+            enumerator: "SET_LAYER_COMPOSITION_TYPE"
+            scalar_value: {
+                int32_t: 67239936
+            }
+            enumerator: "SET_LAYER_DATASPACE"
+            scalar_value: {
+                int32_t: 67305472
+            }
+            enumerator: "SET_LAYER_DISPLAY_FRAME"
+            scalar_value: {
+                int32_t: 67371008
+            }
+            enumerator: "SET_LAYER_PLANE_ALPHA"
+            scalar_value: {
+                int32_t: 67436544
+            }
+            enumerator: "SET_LAYER_SIDEBAND_STREAM"
+            scalar_value: {
+                int32_t: 67502080
+            }
+            enumerator: "SET_LAYER_SOURCE_CROP"
+            scalar_value: {
+                int32_t: 67567616
+            }
+            enumerator: "SET_LAYER_TRANSFORM"
+            scalar_value: {
+                int32_t: 67633152
+            }
+            enumerator: "SET_LAYER_VISIBLE_REGION"
+            scalar_value: {
+                int32_t: 67698688
+            }
+            enumerator: "SET_LAYER_Z_ORDER"
+            scalar_value: {
+                int32_t: 67764224
+            }
+        }
+    }
+
+    api: {
+        name: "registerCallback"
+        arg: {
+            type: TYPE_HIDL_CALLBACK
+            predefined_type: "IComposerCallback"
+            is_callback: true
+        }
+        callflow: {
+            entry: true
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "getMaxVirtualDisplayCount"
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "createVirtualDisplay"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::Error"
+        }
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "uint64_t"
+        }
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::common::V1_0::PixelFormat"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::common::V1_0::PixelFormat"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "destroyVirtualDisplay"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::Error"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint64_t"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "createLayer"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::Error"
+        }
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "uint64_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint64_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "destroyLayer"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::Error"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint64_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint64_t"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "getActiveConfig"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::Error"
+        }
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint64_t"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "getClientTargetSupport"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::Error"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint64_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::common::V1_0::PixelFormat"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::common::V1_0::Dataspace"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "getColorModes"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::Error"
+        }
+        return_type_hidl: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_ENUM
+                predefined_type: "::android::hardware::graphics::common::V1_0::ColorMode"
+            }
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint64_t"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "getDisplayAttribute"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::Error"
+        }
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint64_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::IComposerClient::Attribute"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "getDisplayConfigs"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::Error"
+        }
+        return_type_hidl: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint32_t"
+            }
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint64_t"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "getDisplayName"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::Error"
+        }
+        return_type_hidl: {
+            type: TYPE_STRING
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint64_t"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "getDisplayType"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::Error"
+        }
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::IComposerClient::DisplayType"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint64_t"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "getDozeSupport"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::Error"
+        }
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint64_t"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "getHdrCapabilities"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::Error"
+        }
+        return_type_hidl: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_ENUM
+                predefined_type: "::android::hardware::graphics::common::V1_0::Hdr"
+            }
+        }
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "float_t"
+        }
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "float_t"
+        }
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "float_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint64_t"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "setClientTargetSlotCount"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::Error"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint64_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "setActiveConfig"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::Error"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint64_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "setColorMode"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::Error"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint64_t"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::common::V1_0::ColorMode"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "setPowerMode"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::Error"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint64_t"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::IComposerClient::PowerMode"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "setVsyncEnabled"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::Error"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint64_t"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::IComposerClient::Vsync"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "setInputCommandQueue"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::Error"
+        }
+        arg: {
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "getOutputCommandQueue"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::Error"
+        }
+        return_type_hidl: {
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "executeCommands"
+        return_type_hidl: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::Error"
+        }
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+        return_type_hidl: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        return_type_hidl: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_HANDLE
+            }
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+        arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_HANDLE
+            }
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+}

@@ -1,0 +1,72 @@
+component_class: HAL_HIDL
+component_type_version: 2.1
+component_name: "IComposerCallback"
+
+package: "android.hardware.graphics.composer"
+
+import: "android.hardware.graphics.composer@2.1::types"
+
+interface: {
+    attribute: {
+        name: "::android::hardware::graphics::composer::V2_1::IComposerCallback::Connection"
+        type: TYPE_ENUM
+        enum_value: {
+            scalar_type: "int32_t"
+
+            enumerator: "INVALID"
+            scalar_value: {
+                int32_t: 0
+            }
+            enumerator: "CONNECTED"
+            scalar_value: {
+                int32_t: 1
+            }
+            enumerator: "DISCONNECTED"
+            scalar_value: {
+                int32_t: 2
+            }
+        }
+    }
+
+    api: {
+        name: "onHotplug"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint64_t"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::graphics::composer::V2_1::IComposerCallback::Connection"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "onRefresh"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint64_t"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+    api: {
+        name: "onVsync"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint64_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int64_t"
+        }
+        callflow: {
+            next: "*"
+        }
+    }
+
+}
