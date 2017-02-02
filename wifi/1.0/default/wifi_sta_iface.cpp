@@ -250,6 +250,15 @@ Return<void> WifiStaIface::stopSendingKeepAlivePackets(
                          cmd_id);
 }
 
+Return<void> WifiStaIface::setScanningMacOui(
+    const hidl_array<uint8_t, 3>& oui, setScanningMacOui_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                         &WifiStaIface::setScanningMacOuiInternal,
+                         hidl_status_cb,
+                         oui);
+}
+
 Return<void> WifiStaIface::startDebugPacketFateMonitoring(
     startDebugPacketFateMonitoring_cb hidl_status_cb) {
   return validateAndCall(this,
@@ -550,6 +559,12 @@ WifiStatus WifiStaIface::startSendingKeepAlivePacketsInternal(
 WifiStatus WifiStaIface::stopSendingKeepAlivePacketsInternal(uint32_t cmd_id) {
   legacy_hal::wifi_error legacy_status =
       legacy_hal_.lock()->stopSendingOffloadedPacket(cmd_id);
+  return createWifiStatusFromLegacyError(legacy_status);
+}
+
+WifiStatus WifiStaIface::setScanningMacOuiInternal(const std::array<uint8_t, 3>& oui) {
+  legacy_hal::wifi_error legacy_status =
+      legacy_hal_.lock()->setScanningMacOui(oui);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
