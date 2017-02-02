@@ -14,41 +14,20 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "HWComposerService"
+#define LOG_TAG "android.hardware.graphics.composer@2.1-service"
+
+#include <android/hardware/graphics/composer/2.1/IComposer.h>
 
 #include <binder/ProcessState.h>
-#include <hidl/HidlTransportSupport.h>
-#include <utils/StrongPointer.h>
-#include "Hwc.h"
+#include <hidl/LegacySupport.h>
 
-using android::hardware::configureRpcThreadpool;
-using android::hardware::joinRpcThreadpool;
-using android::sp;
 using android::hardware::graphics::composer::V2_1::IComposer;
-using android::hardware::graphics::composer::V2_1::implementation::HIDL_FETCH_IComposer;
+using android::hardware::defaultPassthroughServiceImplementation;
 
-int main()
-{
-    const char instance[] = "hwcomposer";
-
-    ALOGI("Service is starting.");
-
-    configureRpcThreadpool(1, true /* callerWillJoin */);
-    sp<IComposer> service = HIDL_FETCH_IComposer(instance);
-    if (service == nullptr) {
-        ALOGI("getService returned NULL");
-        return -1;
-    }
-
-    LOG_FATAL_IF(service->isRemote(), "Service is REMOTE!");
-
-    service->registerAsService(instance);
-
+int main() {
     // the conventional HAL might start binder services
     android::ProcessState::self()->setThreadPoolMaxThreadCount(4);
     android::ProcessState::self()->startThreadPool();
 
-    joinRpcThreadpool();
-
-    return 0;
+    return defaultPassthroughServiceImplementation<IComposer>("hwcomposer");
 }

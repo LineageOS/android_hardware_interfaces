@@ -99,7 +99,6 @@ private:
 
     // Some existing gralloc drivers do not support retaining more than once,
     // when we are in passthrough mode.
-#ifdef BINDERIZED
     bool openGralloc()
     {
         const hw_module_t* module = nullptr;
@@ -188,12 +187,6 @@ private:
 
     // gralloc0
     const gralloc_module_t* mModule;
-#else
-    bool openGralloc() { return true; }
-    void closeGralloc() {}
-    buffer_handle_t cloneBuffer(buffer_handle_t handle) { return handle; }
-    void releaseBuffer(buffer_handle_t) {}
-#endif
 };
 
 HandleImporter sHandleImporter;
