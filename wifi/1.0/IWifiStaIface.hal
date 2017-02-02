@@ -438,6 +438,19 @@ interface IWifiStaIface extends IWifiIface {
   stopSendingKeepAlivePackets(CommandId cmdId) generates (WifiStatus status);
 
   /**
+   * Set the MAC OUI during scanning.
+   * An OUI {Organizationally Unique Identifier} is a 24-bit number that
+   * uniquely identifies a vendor or manufacturer.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+   *         |WifiStatusCode.ERROR_UNKNOWN|
+   */
+  setScanningMacOui(uint8_t[3] oui) generates (WifiStatus status);
+
+  /**
    * API to start packet fate monitoring.
    * - Once started, monitoring must remain active until HAL is stopped or the
    *   chip is reconfigured.
