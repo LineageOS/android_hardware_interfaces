@@ -114,38 +114,38 @@ cc_library_shared {
 }
 
 genrule {
-    name: "android.hardware.ir@1.0-IConsumerIr-vts.profiler_genc++",
+    name: "android.hardware.ir@1.0-vts.profiler_genc++",
     tools: ["hidl-gen", "vtsc"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.ir@1.0 && $(location vtsc) -mPROFILER -tSOURCE -b$(genDir) android/hardware/ir/1.0/ $(genDir)/android/hardware/ir/1.0/",
     srcs: [
-        "IConsumerIr.hal",
         "types.hal",
+        "IConsumerIr.hal",
     ],
     out: [
-        "android/hardware/ir/1.0/ConsumerIr.vts.cpp",
         "android/hardware/ir/1.0/types.vts.cpp",
+        "android/hardware/ir/1.0/ConsumerIr.vts.cpp",
     ],
 }
 
 genrule {
-    name: "android.hardware.ir@1.0-IConsumerIr-vts.profiler_genc++_headers",
+    name: "android.hardware.ir@1.0-vts.profiler_genc++_headers",
     tools: ["hidl-gen", "vtsc"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.ir@1.0 && $(location vtsc) -mPROFILER -tHEADER -b$(genDir) android/hardware/ir/1.0/ $(genDir)/android/hardware/ir/1.0/",
     srcs: [
-        "IConsumerIr.hal",
         "types.hal",
+        "IConsumerIr.hal",
     ],
     out: [
-        "android/hardware/ir/1.0/ConsumerIr.vts.h",
         "android/hardware/ir/1.0/types.vts.h",
+        "android/hardware/ir/1.0/ConsumerIr.vts.h",
     ],
 }
 
 cc_library_shared {
-    name: "android.hardware.ir@1.0-IConsumerIr-vts.profiler",
-    generated_sources: ["android.hardware.ir@1.0-IConsumerIr-vts.profiler_genc++"],
-    generated_headers: ["android.hardware.ir@1.0-IConsumerIr-vts.profiler_genc++_headers"],
-    export_generated_headers: ["android.hardware.ir@1.0-IConsumerIr-vts.profiler_genc++_headers"],
+    name: "android.hardware.ir@1.0-vts.profiler",
+    generated_sources: ["android.hardware.ir@1.0-vts.profiler_genc++"],
+    generated_headers: ["android.hardware.ir@1.0-vts.profiler_genc++_headers"],
+    export_generated_headers: ["android.hardware.ir@1.0-vts.profiler_genc++_headers"],
     shared_libs: [
         "libbase",
         "libhidlbase",
