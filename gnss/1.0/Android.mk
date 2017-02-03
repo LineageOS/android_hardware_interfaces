@@ -1046,5 +1046,58 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
 
+################################################################################
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := android.hardware.gnss@1.0-java-constants
+LOCAL_MODULE_CLASS := JAVA_LIBRARIES
+
+intermediates := $(local-generated-sources-dir)
+
+HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
+#
+GEN := $(intermediates)/android/hardware/gnss/V1_0/Constants.java
+$(GEN): $(HIDL)
+$(GEN): $(LOCAL_PATH)/types.hal
+$(GEN): $(LOCAL_PATH)/IAGnss.hal
+$(GEN): $(LOCAL_PATH)/IAGnssCallback.hal
+$(GEN): $(LOCAL_PATH)/IAGnssRil.hal
+$(GEN): $(LOCAL_PATH)/IAGnssRilCallback.hal
+$(GEN): $(LOCAL_PATH)/IGnss.hal
+$(GEN): $(LOCAL_PATH)/IGnssBatching.hal
+$(GEN): $(LOCAL_PATH)/IGnssBatchingCallback.hal
+$(GEN): $(LOCAL_PATH)/IGnssCallback.hal
+$(GEN): $(LOCAL_PATH)/IGnssConfiguration.hal
+$(GEN): $(LOCAL_PATH)/IGnssDebug.hal
+$(GEN): $(LOCAL_PATH)/IGnssGeofenceCallback.hal
+$(GEN): $(LOCAL_PATH)/IGnssGeofencing.hal
+$(GEN): $(LOCAL_PATH)/IGnssMeasurement.hal
+$(GEN): $(LOCAL_PATH)/IGnssMeasurementCallback.hal
+$(GEN): $(LOCAL_PATH)/IGnssNavigationMessage.hal
+$(GEN): $(LOCAL_PATH)/IGnssNavigationMessageCallback.hal
+$(GEN): $(LOCAL_PATH)/IGnssNi.hal
+$(GEN): $(LOCAL_PATH)/IGnssNiCallback.hal
+$(GEN): $(LOCAL_PATH)/IGnssXtra.hal
+$(GEN): $(LOCAL_PATH)/IGnssXtraCallback.hal
+
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava-constants \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.gnss@1.0
+
+$(GEN):
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+# Avoid dependency cycle of framework.jar -> this-library -> framework.jar
+LOCAL_NO_STANDARD_LIBRARIES := true
+LOCAL_JAVA_LIBRARIES := core-oj
+
+include $(BUILD_STATIC_JAVA_LIBRARY)
+
+
 
 include $(call all-makefiles-under,$(LOCAL_PATH))

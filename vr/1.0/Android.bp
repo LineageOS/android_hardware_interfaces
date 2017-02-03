@@ -106,7 +106,7 @@ cc_library_shared {
 }
 
 genrule {
-    name: "android.hardware.vr@1.0-IVr-vts.profiler_genc++",
+    name: "android.hardware.vr@1.0-vts.profiler_genc++",
     tools: ["hidl-gen", "vtsc"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.vr@1.0 && $(location vtsc) -mPROFILER -tSOURCE -b$(genDir) android/hardware/vr/1.0/ $(genDir)/android/hardware/vr/1.0/",
     srcs: [
@@ -118,7 +118,7 @@ genrule {
 }
 
 genrule {
-    name: "android.hardware.vr@1.0-IVr-vts.profiler_genc++_headers",
+    name: "android.hardware.vr@1.0-vts.profiler_genc++_headers",
     tools: ["hidl-gen", "vtsc"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.vr@1.0 && $(location vtsc) -mPROFILER -tHEADER -b$(genDir) android/hardware/vr/1.0/ $(genDir)/android/hardware/vr/1.0/",
     srcs: [
@@ -130,10 +130,10 @@ genrule {
 }
 
 cc_library_shared {
-    name: "android.hardware.vr@1.0-IVr-vts.profiler",
-    generated_sources: ["android.hardware.vr@1.0-IVr-vts.profiler_genc++"],
-    generated_headers: ["android.hardware.vr@1.0-IVr-vts.profiler_genc++_headers"],
-    export_generated_headers: ["android.hardware.vr@1.0-IVr-vts.profiler_genc++_headers"],
+    name: "android.hardware.vr@1.0-vts.profiler",
+    generated_sources: ["android.hardware.vr@1.0-vts.profiler_genc++"],
+    generated_headers: ["android.hardware.vr@1.0-vts.profiler_genc++_headers"],
+    export_generated_headers: ["android.hardware.vr@1.0-vts.profiler_genc++_headers"],
     shared_libs: [
         "libbase",
         "libhidlbase",

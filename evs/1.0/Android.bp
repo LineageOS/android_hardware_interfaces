@@ -78,3 +78,130 @@ cc_library_shared {
         "android.hidl.base@1.0",
     ],
 }
+
+genrule {
+    name: "android.hardware.evs.vts.driver@1.0_genc++",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.evs@1.0 && $(location vtsc) -mDRIVER -tSOURCE -b$(genDir) android/hardware/evs/1.0/ $(genDir)/android/hardware/evs/1.0/",
+    srcs: [
+        "types.hal",
+        "IEvsCamera.hal",
+        "IEvsCameraStream.hal",
+        "IEvsDisplay.hal",
+        "IEvsEnumerator.hal",
+    ],
+    out: [
+        "android/hardware/evs/1.0/types.vts.cpp",
+        "android/hardware/evs/1.0/EvsCamera.vts.cpp",
+        "android/hardware/evs/1.0/EvsCameraStream.vts.cpp",
+        "android/hardware/evs/1.0/EvsDisplay.vts.cpp",
+        "android/hardware/evs/1.0/EvsEnumerator.vts.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.evs.vts.driver@1.0_genc++_headers",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.evs@1.0 && $(location vtsc) -mDRIVER -tHEADER -b$(genDir) android/hardware/evs/1.0/ $(genDir)/android/hardware/evs/1.0/",
+    srcs: [
+        "types.hal",
+        "IEvsCamera.hal",
+        "IEvsCameraStream.hal",
+        "IEvsDisplay.hal",
+        "IEvsEnumerator.hal",
+    ],
+    out: [
+        "android/hardware/evs/1.0/types.vts.h",
+        "android/hardware/evs/1.0/EvsCamera.vts.h",
+        "android/hardware/evs/1.0/EvsCameraStream.vts.h",
+        "android/hardware/evs/1.0/EvsDisplay.vts.h",
+        "android/hardware/evs/1.0/EvsEnumerator.vts.h",
+    ],
+}
+
+cc_library_shared {
+    name: "android.hardware.evs.vts.driver@1.0",
+    generated_sources: ["android.hardware.evs.vts.driver@1.0_genc++"],
+    generated_headers: ["android.hardware.evs.vts.driver@1.0_genc++_headers"],
+    export_generated_headers: ["android.hardware.evs.vts.driver@1.0_genc++_headers"],
+    shared_libs: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "liblog",
+        "libutils",
+        "libcutils",
+        "libvts_common",
+        "libvts_datatype",
+        "libvts_measurement",
+        "libvts_multidevice_proto",
+        "libcamera_metadata",
+        "libprotobuf-cpp-full",
+        "android.hidl.base@1.0",
+        "android.hardware.evs@1.0",
+    ],
+    export_shared_lib_headers: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "libutils",
+        "android.hidl.base@1.0",
+    ],
+}
+
+genrule {
+    name: "android.hardware.evs@1.0-vts.profiler_genc++",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.evs@1.0 && $(location vtsc) -mPROFILER -tSOURCE -b$(genDir) android/hardware/evs/1.0/ $(genDir)/android/hardware/evs/1.0/",
+    srcs: [
+        "types.hal",
+        "IEvsCamera.hal",
+        "IEvsCameraStream.hal",
+        "IEvsDisplay.hal",
+        "IEvsEnumerator.hal",
+    ],
+    out: [
+        "android/hardware/evs/1.0/types.vts.cpp",
+        "android/hardware/evs/1.0/EvsCamera.vts.cpp",
+        "android/hardware/evs/1.0/EvsCameraStream.vts.cpp",
+        "android/hardware/evs/1.0/EvsDisplay.vts.cpp",
+        "android/hardware/evs/1.0/EvsEnumerator.vts.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.evs@1.0-vts.profiler_genc++_headers",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.evs@1.0 && $(location vtsc) -mPROFILER -tHEADER -b$(genDir) android/hardware/evs/1.0/ $(genDir)/android/hardware/evs/1.0/",
+    srcs: [
+        "types.hal",
+        "IEvsCamera.hal",
+        "IEvsCameraStream.hal",
+        "IEvsDisplay.hal",
+        "IEvsEnumerator.hal",
+    ],
+    out: [
+        "android/hardware/evs/1.0/types.vts.h",
+        "android/hardware/evs/1.0/EvsCamera.vts.h",
+        "android/hardware/evs/1.0/EvsCameraStream.vts.h",
+        "android/hardware/evs/1.0/EvsDisplay.vts.h",
+        "android/hardware/evs/1.0/EvsEnumerator.vts.h",
+    ],
+}
+
+cc_library_shared {
+    name: "android.hardware.evs@1.0-vts.profiler",
+    generated_sources: ["android.hardware.evs@1.0-vts.profiler_genc++"],
+    generated_headers: ["android.hardware.evs@1.0-vts.profiler_genc++_headers"],
+    export_generated_headers: ["android.hardware.evs@1.0-vts.profiler_genc++_headers"],
+    shared_libs: [
+        "libbase",
+        "libhidlbase",
+        "libhidltransport",
+        "libvts_profiling",
+        "libvts_multidevice_proto",
+        "libprotobuf-cpp-full",
+        "android.hidl.base@1.0",
+        "android.hardware.evs@1.0",
+    ],
+}
