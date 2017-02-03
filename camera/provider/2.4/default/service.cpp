@@ -17,41 +17,13 @@
 #define LOG_TAG "android.hardware.camera.provider@2.4-service"
 
 #include <android/hardware/camera/provider/2.4/ICameraProvider.h>
-#include <CameraProvider.h>
-
-#include <hidl/HidlTransportSupport.h>
 #include <hidl/LegacySupport.h>
-#include <utils/StrongPointer.h>
 
-using android::hardware::configureRpcThreadpool;
-using android::hardware::joinRpcThreadpool;
-using android::sp;
 using android::hardware::camera::provider::V2_4::ICameraProvider;
-using android::hardware::camera::provider::V2_4::implementation::HIDL_FETCH_ICameraProvider;
+using android::hardware::defaultPassthroughServiceImplementation;
 
 int main()
 {
-    const char instance[] = "legacy/0";
-
-    // TODO(b/34817742): use defaultServicePassthroughImplementation
-    // so that the toggle is implemented correctly
-    using ::android::hardware::details::blockIfBinderizationDisabled;
-    blockIfBinderizationDisabled(ICameraProvider::descriptor, instance);
-
     ALOGI("Camera provider Service is starting.");
-
-    configureRpcThreadpool(1, true /* callerWillJoin */);
-    // TODO (b/34510650): check the passthrough/binderized dev key
-    sp<ICameraProvider> service = HIDL_FETCH_ICameraProvider(instance);
-    if (service == nullptr) {
-        ALOGI("Camera provider getService returned NULL");
-        return -1;
-    }
-
-    LOG_FATAL_IF(service->isRemote(), "Camera provider service is REMOTE!");
-
-    service->registerAsService(instance);
-    joinRpcThreadpool();
-
-    return 0;
+    return defaultPassthroughServiceImplementation<ICameraProvider>("legacy/0");
 }

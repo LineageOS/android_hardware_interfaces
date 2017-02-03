@@ -1,32 +1,8 @@
 cc_library_shared {
-    name: "android.hardware.camera.device@3.2-impl",
+    name: "camera.device@3.2-impl",
     srcs: ["CameraDevice.cpp",
            "CameraDeviceSession.cpp",
            "convert.cpp"],
-    shared_libs: [
-        "libhidlbase",
-        "libhidltransport",
-        "libhwbinder",
-        "libutils",
-        "libcutils",
-        "android.hardware.camera.device@3.2",
-        "android.hardware.camera.provider@2.4",
-        "liblog",
-        "libhardware",
-        "libcamera_metadata"
-    ],
-    static_libs: [
-        "android.hardware.camera.common@1.0-helper"
-    ],
-    export_include_dirs: ["."]
-}
-
-cc_library_shared {
-    name: "android.hardware.camera.device@3.2-impl-binderized",
-    srcs: ["CameraDevice.cpp",
-           "CameraDeviceSession.cpp",
-           "convert.cpp"],
-    cppflags: ["-DBINDERIZED"],
     shared_libs: [
         "libhidlbase",
         "libhidltransport",
