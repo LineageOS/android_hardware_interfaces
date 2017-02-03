@@ -53,6 +53,8 @@ class VendorInterface {
             PacketReadCallback packet_read_cb);
   void Close();
 
+  void OnTimeout();
+
   void OnDataReady(int fd);
 
   void *lib_handle_;
