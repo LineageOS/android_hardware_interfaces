@@ -36,7 +36,7 @@ VehiclePropValuePool::RecyclableType VehiclePropValuePool::obtain(
 
 VehiclePropValuePool::RecyclableType VehiclePropValuePool::obtain(
         const VehiclePropValue& src) {
-    if (src.prop == VehicleProperty::INVALID) {
+    if (src.prop == toInt(VehicleProperty::INVALID)) {
         ALOGE("Unable to obtain an object from pool for unknown property");
         return RecyclableType();
     }

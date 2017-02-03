@@ -32,7 +32,7 @@ interface IVehicle {
    * StatusCode::INVALID_ARG, otherwise a list of vehicle property
    * configurations with StatusCode::OK
    */
-  getPropConfigs(vec<VehicleProperty> props)
+  getPropConfigs(vec<int32_t> props)
           generates (StatusCode status, vec<VehiclePropConfig> propConfigs);
 
   /**
@@ -84,7 +84,7 @@ interface IVehicle {
    * If this client wasn't subscribed to the given property, this method
    * must return StatusCode::INVALID_ARG.
    */
-  unsubscribe(IVehicleCallback callback, VehicleProperty propId)
+  unsubscribe(IVehicleCallback callback, int32_t propId)
           generates (StatusCode status);
 
   /**

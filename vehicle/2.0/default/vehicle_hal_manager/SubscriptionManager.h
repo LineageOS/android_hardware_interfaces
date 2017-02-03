@@ -50,7 +50,7 @@ public:
 
     void addOrUpdateSubscription(const SubscribeOptions &opts);
 
-    bool isSubscribed(VehicleProperty propId,
+    bool isSubscribed(int32_t propId,
                       int32_t areaId,
                       SubscribeFlags flags);
 
@@ -59,7 +59,7 @@ private:
     const int32_t mPid;
     const int32_t mUid;
 
-    std::map<VehicleProperty, SubscribeOptions> mSubscriptions;
+    std::map<int32_t, SubscribeOptions> mSubscriptions;
 };
 
 class HalClientVector : private SortedVector<sp<HalClient>> , public RefBase {
@@ -103,26 +103,26 @@ public:
             SubscribeFlags flags) const;
 
     std::list<sp<HalClient>> getSubscribedClients(
-        VehicleProperty propId, int32_t area, SubscribeFlags flags) const;
+        int32_t propId, int32_t area, SubscribeFlags flags) const;
 
     /**
      * Returns true the client was unsubscribed successfully and there are
      * no more clients subscribed to given propId.
      */
     bool unsubscribe(const sp<IVehicleCallback>& callback,
-                     VehicleProperty propId);
+                     int32_t propId);
 private:
     std::list<sp< HalClient>> getSubscribedClientsLocked(
-            VehicleProperty propId, int32_t area, SubscribeFlags flags) const;
+            int32_t propId, int32_t area, SubscribeFlags flags) const;
 
     bool updateHalEventSubscriptionLocked(const SubscribeOptions &opts,
                                           SubscribeOptions *out);
 
-    void addClientToPropMapLocked(VehicleProperty propId,
+    void addClientToPropMapLocked(int32_t propId,
                                   const sp<HalClient> &client);
 
     sp<HalClientVector> getClientsForPropertyLocked(
-            VehicleProperty propId) const;
+            int32_t propId) const;
 
     sp<HalClient> getOrCreateHalClientLocked(
             const sp<IVehicleCallback> &callback);
@@ -133,8 +133,8 @@ private:
     mutable std::mutex mLock;
 
     std::map<sp<IVehicleCallback>, sp<HalClient>> mClients;
-    std::map<VehicleProperty, sp<HalClientVector>> mPropToClients;
-    std::map<VehicleProperty, SubscribeOptions> mHalEventSubscribeOptions;
+    std::map<int32_t, sp<HalClientVector>> mPropToClients;
+    std::map<int32_t, SubscribeOptions> mHalEventSubscribeOptions;
 };
 
 

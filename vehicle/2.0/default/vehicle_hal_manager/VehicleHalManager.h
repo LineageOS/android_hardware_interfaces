@@ -66,7 +66,7 @@ public:
     // ---------------------------------------------------------------------------------------------
     // Methods derived from IVehicle
     Return<void> getAllPropConfigs(getAllPropConfigs_cb _hidl_cb)  override;
-    Return<void> getPropConfigs(const hidl_vec<VehicleProperty>& properties,
+    Return<void> getPropConfigs(const hidl_vec<int32_t>& properties,
                                 getPropConfigs_cb _hidl_cb)  override;
     Return<void> get(const VehiclePropValue& requestedPropValue,
                      get_cb _hidl_cb)  override;
@@ -74,7 +74,7 @@ public:
     Return<StatusCode> subscribe(const sp<IVehicleCallback>& callback,
                                 const hidl_vec<SubscribeOptions>& options)  override;
     Return<StatusCode> unsubscribe(const sp<IVehicleCallback>& callback,
-                                   VehicleProperty propId)  override;
+                                   int32_t propId)  override;
     Return<void> debugDump(debugDump_cb _hidl_cb = nullptr) override;
 
 private:
@@ -85,7 +85,7 @@ private:
     // ---------------------------------------------------------------------------------------------
     // Events received from VehicleHal
     void onHalEvent(VehiclePropValuePtr  v);
-    void onHalPropertySetError(StatusCode errorCode, VehicleProperty property,
+    void onHalPropertySetError(StatusCode errorCode, int32_t property,
                                int32_t areaId);
 
     // ---------------------------------------------------------------------------------------------
@@ -94,14 +94,14 @@ private:
 
     void handlePropertySetEvent(const VehiclePropValue& value);
 
-    const VehiclePropConfig* getPropConfigOrNull(VehicleProperty prop) const;
+    const VehiclePropConfig* getPropConfigOrNull(int32_t prop) const;
 
     bool checkWritePermission(const VehiclePropConfig &config,
                               const Caller& callee) const;
     bool checkReadPermission(const VehiclePropConfig &config,
                              const Caller& caller) const;
     bool checkAcl(uid_t callerUid,
-                  VehicleProperty propertyId,
+                  int32_t propertyId,
                   VehiclePropertyAccess requiredAccess) const;
 
     static bool isSubscribable(const VehiclePropConfig& config,

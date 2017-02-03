@@ -36,7 +36,7 @@ public:
 
     using HalEventFunction = std::function<void(VehiclePropValuePtr)>;
     using HalErrorFunction = std::function<void(
-            StatusCode errorCode, VehicleProperty property, int32_t areaId)>;
+            StatusCode errorCode, int32_t property, int32_t areaId)>;
 
     virtual ~VehicleHal() {}
 
@@ -57,16 +57,16 @@ public:
      *                   rate, e.g. for properties with
      *                   VehiclePropertyChangeMode::CONTINUOUS
      */
-    virtual StatusCode subscribe(VehicleProperty property,
-                               int32_t areas,
-                               float sampleRate) = 0;
+    virtual StatusCode subscribe(int32_t property,
+                                 int32_t areas,
+                                 float sampleRate) = 0;
 
     /**
      * Unsubscribe from HAL events for given property
      *
      * @param property vehicle property to unsubscribe
      */
-    virtual StatusCode unsubscribe(VehicleProperty property) = 0;
+    virtual StatusCode unsubscribe(int32_t property) = 0;
 
     /**
      * Override this method if you need to do one-time initialization.
@@ -95,7 +95,8 @@ protected:
 
     /* Propagates error during set operation to the vehicle HAL clients. */
     void doHalPropertySetError(StatusCode errorCode,
-                               VehicleProperty propId, int32_t areaId) {
+                               int32_t propId,
+                               int32_t areaId) {
         mOnHalPropertySetError(errorCode, propId, areaId);
     }
 

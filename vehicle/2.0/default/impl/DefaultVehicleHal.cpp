@@ -33,7 +33,7 @@ VehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(
     *outStatus = StatusCode::OK;
 
     VehiclePropValuePtr v;
-    VehicleProperty property = requestedPropValue.prop;
+    auto property = static_cast<VehicleProperty>(requestedPropValue.prop);
     int32_t areaId = requestedPropValue.areaId;
     auto& pool = *getValuePool();
 
@@ -105,7 +105,7 @@ VehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(
     }
 
     if (StatusCode::OK == *outStatus && v.get() != nullptr) {
-        v->prop = property;
+        v->prop = toInt(property);
         v->areaId = areaId;
         v->timestamp = elapsedRealtimeNano();
     }
@@ -114,7 +114,7 @@ VehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(
 }
 
 StatusCode DefaultVehicleHal::set(const VehiclePropValue& propValue) {
-    auto property = propValue.prop;
+    auto property = static_cast<VehicleProperty>(propValue.prop);
     const auto& v = propValue.value;
 
     StatusCode status = StatusCode::OK;

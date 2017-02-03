@@ -54,6 +54,6 @@ interface IVehicleCallback {
      *                 occurred, must be 0 for global properties
      */
     oneway onPropertySetError(StatusCode errorCode,
-                              VehicleProperty propId,
+                              int32_t propId,
                               int32_t areaId);
 };

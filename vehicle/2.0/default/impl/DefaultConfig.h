@@ -29,20 +29,20 @@ namespace impl {
 
 const VehiclePropConfig kVehicleProperties[] = {
     {
-        .prop = VehicleProperty::INFO_MAKE,
+        .prop = toInt(VehicleProperty::INFO_MAKE),
         .access = VehiclePropertyAccess::READ,
         .changeMode = VehiclePropertyChangeMode::STATIC,
     },
 
     {
-        .prop = VehicleProperty::HVAC_POWER_ON,
+        .prop = toInt(VehicleProperty::HVAC_POWER_ON),
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         .supportedAreas = toInt(VehicleAreaZone::ROW_1)
     },
 
     {
-        .prop = VehicleProperty::HVAC_DEFROSTER,
+        .prop = toInt(VehicleProperty::HVAC_DEFROSTER),
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         .supportedAreas =
@@ -51,28 +51,28 @@ const VehiclePropConfig kVehicleProperties[] = {
     },
 
     {
-        .prop = VehicleProperty::HVAC_RECIRC_ON,
+        .prop = toInt(VehicleProperty::HVAC_RECIRC_ON),
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         .supportedAreas = toInt(VehicleAreaZone::ROW_1)
     },
 
     {
-        .prop = VehicleProperty::HVAC_AC_ON,
+        .prop = toInt(VehicleProperty::HVAC_AC_ON),
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         .supportedAreas = toInt(VehicleAreaZone::ROW_1)
     },
 
     {
-        .prop = VehicleProperty::HVAC_AUTO_ON,
+        .prop = toInt(VehicleProperty::HVAC_AUTO_ON),
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         .supportedAreas = toInt(VehicleAreaZone::ROW_1)
     },
 
     {
-        .prop = VehicleProperty::HVAC_FAN_SPEED,
+        .prop = toInt(VehicleProperty::HVAC_FAN_SPEED),
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         .supportedAreas = toInt(VehicleAreaZone::ROW_1),
@@ -86,14 +86,14 @@ const VehiclePropConfig kVehicleProperties[] = {
     },
 
     {
-        .prop = VehicleProperty::HVAC_FAN_DIRECTION,
+        .prop = toInt(VehicleProperty::HVAC_FAN_DIRECTION),
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         .supportedAreas = toInt(VehicleAreaZone::ROW_1),
     },
 
     {
-        .prop = VehicleProperty::HVAC_TEMPERATURE_SET,
+        .prop = toInt(VehicleProperty::HVAC_TEMPERATURE_SET),
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         .supportedAreas =
@@ -114,25 +114,25 @@ const VehiclePropConfig kVehicleProperties[] = {
     },
 
     {
-        .prop = VehicleProperty::NIGHT_MODE,
+        .prop = toInt(VehicleProperty::NIGHT_MODE),
         .access = VehiclePropertyAccess::READ,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
     },
 
     {
-        .prop = VehicleProperty::DRIVING_STATUS,
+        .prop = toInt(VehicleProperty::DRIVING_STATUS),
         .access = VehiclePropertyAccess::READ,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
     },
 
     {
-        .prop = VehicleProperty::GEAR_SELECTION,
+        .prop = toInt(VehicleProperty::GEAR_SELECTION),
         .access = VehiclePropertyAccess::READ,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
     },
 
     {
-        .prop = VehicleProperty::INFO_FUEL_CAPACITY,
+        .prop = toInt(VehicleProperty::INFO_FUEL_CAPACITY),
         .access = VehiclePropertyAccess::READ,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         .areaConfigs = {
@@ -144,7 +144,7 @@ const VehiclePropConfig kVehicleProperties[] = {
     },
 
     {
-        .prop = VehicleProperty::DISPLAY_BRIGHTNESS,
+        .prop = toInt(VehicleProperty::DISPLAY_BRIGHTNESS),
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         .areaConfigs = {
@@ -156,20 +156,20 @@ const VehiclePropConfig kVehicleProperties[] = {
     },
 
     {
-        .prop = VehicleProperty::IGNITION_STATE,
+        .prop = toInt(VehicleProperty::IGNITION_STATE),
         .access = VehiclePropertyAccess::READ,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
     },
 
     {
-        .prop = VehicleProperty::OBD2_LIVE_FRAME,
+        .prop = toInt(VehicleProperty::OBD2_LIVE_FRAME),
         .access = VehiclePropertyAccess::READ,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         .configArray = {0,0}
     },
 
     {
-        .prop = VehicleProperty::OBD2_FREEZE_FRAME,
+        .prop = toInt(VehicleProperty::OBD2_FREEZE_FRAME),
         .access = VehiclePropertyAccess::READ,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         .configArray = {0,0}

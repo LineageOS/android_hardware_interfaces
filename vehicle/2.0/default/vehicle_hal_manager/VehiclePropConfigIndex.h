@@ -37,11 +37,11 @@ public:
         : mConfigs(properties), mPropToConfig(mConfigs)
     {}
 
-    bool hasConfig(VehicleProperty property) const {
+    bool hasConfig(int32_t property) const {
         return mPropToConfig.indexOfKey(property) >= 0;
     }
 
-    const VehiclePropConfig& getConfig(VehicleProperty property) const {
+    const VehiclePropConfig& getConfig(int32_t property) const {
         return *mPropToConfig.valueFor(property);
     }
 
@@ -50,7 +50,7 @@ public:
     }
 
 private:
-    typedef KeyedVector<VehicleProperty, const VehiclePropConfig*> PropConfigMap;
+    typedef KeyedVector<int32_t, const VehiclePropConfig*> PropConfigMap;
     class ImmutablePropConfigMap : private PropConfigMap {
     public:
         ImmutablePropConfigMap(const std::vector<VehiclePropConfig>& configs) {

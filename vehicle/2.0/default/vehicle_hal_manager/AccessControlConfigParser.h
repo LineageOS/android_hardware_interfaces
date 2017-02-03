@@ -30,12 +30,12 @@ namespace vehicle {
 namespace V2_0 {
 
 struct PropertyAcl {
-    VehicleProperty propId;
+    int32_t propId;
     unsigned uid;
     VehiclePropertyAccess access;
 };
 
-using PropertyAclMap = std::unordered_multimap<VehicleProperty, PropertyAcl>;
+using PropertyAclMap = std::unordered_multimap<int32_t, PropertyAcl>;
 
 /**
  * Parser for per-property access control in vehicle HAL.
@@ -64,7 +64,7 @@ public:
      *
      * @param properties - properties supported by HAL implementation
      */
-    AccessControlConfigParser(const std::vector<VehicleProperty>& properties);
+    AccessControlConfigParser(const std::vector<int32_t>& properties);
 
     /**
      * Parses config content from given stream and writes results to
@@ -81,7 +81,7 @@ private:
 
     bool parsePropertyId(const std::string& strPropId,
                                 VehiclePropertyGroup propertyGroup,
-                                VehicleProperty* outVehicleProperty) const;
+                                int32_t* outVehicleProperty) const;
 
     bool parseUid(const std::string& strUid, unsigned* outUid) const;
 
@@ -100,7 +100,7 @@ private:
     // aliases.
 
     // Map property ids w/o TYPE and AREA to VehicleProperty.
-    std::unordered_map<int, VehicleProperty> mStrippedToVehiclePropertyMap;
+    std::unordered_map<int32_t, int32_t> mStrippedToVehiclePropertyMap;
 };
 
 }  // namespace V2_0

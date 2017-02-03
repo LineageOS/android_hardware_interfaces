@@ -70,7 +70,9 @@ void HalClient::addOrUpdateSubscription(const SubscribeOptions &opts)  {
     }
 }
 
-bool HalClient::isSubscribed(VehicleProperty propId, int32_t areaId, SubscribeFlags flags) {
+bool HalClient::isSubscribed(int32_t propId,
+                             int32_t areaId,
+                             SubscribeFlags flags) {
     auto it = mSubscriptions.find(propId);
     if (it == mSubscriptions.end()) {
         return false;
@@ -136,13 +138,13 @@ std::list<HalClientValues> SubscriptionManager::distributeValuesToClients(
 }
 
 std::list<sp<HalClient>> SubscriptionManager::getSubscribedClients(
-    VehicleProperty propId, int32_t area, SubscribeFlags flags) const {
+    int32_t propId, int32_t area, SubscribeFlags flags) const {
     MuxGuard g(mLock);
     return getSubscribedClientsLocked(propId, area, flags);
 }
 
 std::list<sp<HalClient>> SubscriptionManager::getSubscribedClientsLocked(
-        VehicleProperty propId, int32_t area, SubscribeFlags flags) const {
+        int32_t propId, int32_t area, SubscribeFlags flags) const {
     std::list<sp<HalClient>> subscribedClients;
 
     sp<HalClientVector> propClients = getClientsForPropertyLocked(propId);
@@ -180,7 +182,7 @@ bool SubscriptionManager::updateHalEventSubscriptionLocked(
 }
 
 void SubscriptionManager::addClientToPropMapLocked(
-        VehicleProperty propId, const sp<HalClient> &client) {
+        int32_t propId, const sp<HalClient> &client) {
     auto it = mPropToClients.find(propId);
     sp<HalClientVector> propClients;
     if (it == mPropToClients.end()) {
@@ -193,7 +195,7 @@ void SubscriptionManager::addClientToPropMapLocked(
 }
 
 sp<HalClientVector> SubscriptionManager::getClientsForPropertyLocked(
-        VehicleProperty propId) const {
+        int32_t propId) const {
     auto it = mPropToClients.find(propId);
     return it == mPropToClients.end() ? nullptr : it->second;
 }
@@ -214,7 +216,7 @@ sp<HalClient> SubscriptionManager::getOrCreateHalClientLocked(
 }
 
 bool SubscriptionManager::unsubscribe(const sp<IVehicleCallback>& callback,
-                                      VehicleProperty propId) {
+                                      int32_t propId) {
     MuxGuard g(mLock);
     auto propertyClients = getClientsForPropertyLocked(propId);
     auto clientIter = mClients.find(callback);

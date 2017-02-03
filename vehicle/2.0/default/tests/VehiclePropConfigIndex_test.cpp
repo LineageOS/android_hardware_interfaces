@@ -43,11 +43,11 @@ public:
 TEST_F(PropConfigTest, hasConfig) {
     VehiclePropConfigIndex index(configs);
 
-    ASSERT_TRUE(index.hasConfig(VehicleProperty::HVAC_FAN_SPEED));
-    ASSERT_TRUE(index.hasConfig(VehicleProperty::INFO_MAKE));
-    ASSERT_TRUE(index.hasConfig(VehicleProperty::INFO_FUEL_CAPACITY));
+    ASSERT_TRUE(index.hasConfig(toInt(VehicleProperty::HVAC_FAN_SPEED)));
+    ASSERT_TRUE(index.hasConfig(toInt(VehicleProperty::INFO_MAKE)));
+    ASSERT_TRUE(index.hasConfig(toInt(VehicleProperty::INFO_FUEL_CAPACITY)));
 
-    ASSERT_FALSE(index.hasConfig(VehicleProperty::INVALID));
+    ASSERT_FALSE(index.hasConfig(toInt(VehicleProperty::INVALID)));
 }
 
 TEST_F(PropConfigTest, getAllConfig) {
@@ -63,7 +63,7 @@ TEST_F(PropConfigTest, getAllConfig) {
 
 TEST_F(PropConfigTest, getConfigs) {
     VehiclePropConfigIndex index(configs);
-    auto actualConfig = index.getConfig(VehicleProperty::HVAC_FAN_SPEED);
+    auto actualConfig = index.getConfig(toInt(VehicleProperty::HVAC_FAN_SPEED));
     ASSERT_EQ(toString(configs[1]), toString(actualConfig));
 }
 

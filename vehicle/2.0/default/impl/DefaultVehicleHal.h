@@ -45,14 +45,14 @@ public:
 
     StatusCode set(const VehiclePropValue& propValue) override;
 
-    StatusCode subscribe(VehicleProperty property,
-                       int32_t areas,
-                       float sampleRate) {
+    StatusCode subscribe(int32_t /*property*/,
+                         int32_t /*areas*/,
+                         float /*sampleRate*/) override {
         // TODO(pavelm): implement
         return StatusCode::OK;
     }
 
-    StatusCode unsubscribe(VehicleProperty property) {
+    StatusCode unsubscribe(int32_t /*property*/) override {
         // TODO(pavelm): implement
         return StatusCode::OK;
     }

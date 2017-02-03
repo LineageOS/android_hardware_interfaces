@@ -52,7 +52,7 @@ public:
              StatusCode* outStatus) override {
         *outStatus = StatusCode::OK;
         VehiclePropValuePtr pValue;
-        VehicleProperty property = requestedPropValue.prop;
+        auto property = static_cast<VehicleProperty>(requestedPropValue.prop);
         int32_t areaId = requestedPropValue.areaId;
 
         switch (property) {
@@ -76,7 +76,7 @@ public:
                 pValue->value.stringValue = kCarMake;
                 break;
             default:
-                auto key = makeKey(property, areaId);
+                auto key = makeKey(toInt(property), areaId);
                 if (mValues.count(key) == 0) {
                     ALOGW("");
                 }
@@ -84,7 +84,7 @@ public:
         }
 
         if (*outStatus == StatusCode::OK && pValue.get() != nullptr) {
-            pValue->prop = property;
+            pValue->prop = toInt(property);
             pValue->areaId = areaId;
             pValue->timestamp = elapsedRealtimeNano();
         }
@@ -93,7 +93,7 @@ public:
     }
 
     StatusCode set(const VehiclePropValue& propValue) override {
-        if (VehicleProperty::MIRROR_FOLD == propValue.prop
+        if (toInt(VehicleProperty::MIRROR_FOLD) == propValue.prop
                 && mirrorFoldAttemptsLeft-- > 0) {
             return StatusCode::TRY_AGAIN;
         }
@@ -102,13 +102,13 @@ public:
         return StatusCode::OK;
     }
 
-    StatusCode subscribe(VehicleProperty property,
-                       int32_t areas,
-                       float sampleRate) override {
+    StatusCode subscribe(int32_t property,
+                         int32_t areas,
+                         float sampleRate) override {
         return StatusCode::OK;
     }
 
-    StatusCode unsubscribe(VehicleProperty property) override {
+    StatusCode unsubscribe(int32_t property) override {
         return StatusCode::OK;
     }
 
@@ -116,8 +116,7 @@ public:
         doHalEvent(std::move(value));
     }
 
-    void sendHalError(StatusCode error, VehicleProperty property,
-                      int32_t areaId) {
+    void sendHalError(StatusCode error, int32_t property, int32_t areaId) {
         doHalPropertySetError(error, property, areaId);
     }
 
@@ -130,7 +129,7 @@ private:
         return makeKey(v.prop, v.areaId);
     }
 
-    int64_t makeKey(VehicleProperty prop, int32_t area) const {
+    int64_t makeKey(int32_t prop, int32_t area) const {
         return (static_cast<int64_t>(prop) << 32) | area;
     }
 
@@ -153,7 +152,7 @@ protected:
         hal.reset(nullptr);
     }
 public:
-    void invokeGet(VehicleProperty property, int32_t areaId) {
+    void invokeGet(int32_t property, int32_t areaId) {
         VehiclePropValue requestedValue {};
         requestedValue.prop = property;
         requestedValue.areaId = areaId;
@@ -174,7 +173,7 @@ public:
             called = true;
         });
         ASSERT_TRUE(called) << "callback wasn't called for prop: "
-                            << enumToHexString(requestedPropValue.prop);
+                            << hexString(requestedPropValue.prop);
 
         actualValue = refValue;
         actualStatusCode = refStatus;
@@ -190,8 +189,9 @@ public:
 };
 
 TEST_F(VehicleHalManagerTest, getPropConfigs) {
-    hidl_vec<VehicleProperty> properties =
-        { VehicleProperty::HVAC_FAN_SPEED, VehicleProperty::INFO_MAKE };
+    hidl_vec<int32_t> properties =
+        { toInt(VehicleProperty::HVAC_FAN_SPEED),
+          toInt(VehicleProperty::INFO_MAKE) };
     bool called = false;
 
     manager->getPropConfigs(properties,
@@ -205,7 +205,7 @@ TEST_F(VehicleHalManagerTest, getPropConfigs) {
     ASSERT_TRUE(called);  // Verify callback received.
 
     called = false;
-    manager->getPropConfigs({ VehicleProperty::HVAC_FAN_SPEED },
+    manager->getPropConfigs({ toInt(VehicleProperty::HVAC_FAN_SPEED) },
             [&called] (StatusCode status,
                        const hidl_vec<VehiclePropConfig>& c) {
         ASSERT_EQ(StatusCode::OK, status);
@@ -234,7 +234,7 @@ TEST_F(VehicleHalManagerTest, getAllPropConfigs) {
 }
 
 TEST_F(VehicleHalManagerTest, halErrorEvent) {
-    const VehicleProperty PROP = VehicleProperty::DISPLAY_BRIGHTNESS;
+    const auto PROP = toInt(VehicleProperty::DISPLAY_BRIGHTNESS);
 
     sp<MockedVehicleCallback> cb = new MockedVehicleCallback();
 
@@ -252,7 +252,7 @@ TEST_F(VehicleHalManagerTest, halErrorEvent) {
 }
 
 TEST_F(VehicleHalManagerTest, subscribe) {
-    const VehicleProperty PROP = VehicleProperty::DISPLAY_BRIGHTNESS;
+    const auto PROP = toInt(VehicleProperty::DISPLAY_BRIGHTNESS);
 
     sp<MockedVehicleCallback> cb = new MockedVehicleCallback();
 
@@ -267,7 +267,7 @@ TEST_F(VehicleHalManagerTest, subscribe) {
     ASSERT_EQ(StatusCode::OK, res);
 
     auto unsubscribedValue = objectPool->obtain(VehiclePropertyType::INT32);
-    unsubscribedValue->prop = VehicleProperty::HVAC_FAN_SPEED;
+    unsubscribedValue->prop = toInt(VehicleProperty::HVAC_FAN_SPEED);
 
     hal->sendPropEvent(std::move(unsubscribedValue));
     auto& receivedEnvents = cb->getReceivedEvents();
@@ -293,7 +293,7 @@ TEST_F(VehicleHalManagerTest, subscribe) {
 }
 
 TEST_F(VehicleHalManagerTest, subscribe_WriteOnly) {
-    const VehicleProperty PROP = VehicleProperty::HVAC_SEAT_TEMPERATURE;
+    const auto PROP = toInt(VehicleProperty::HVAC_SEAT_TEMPERATURE);
 
     sp<MockedVehicleCallback> cb = new MockedVehicleCallback();
 
@@ -317,10 +317,10 @@ TEST_F(VehicleHalManagerTest, subscribe_WriteOnly) {
 }
 
 TEST_F(VehicleHalManagerTest, get_Complex) {
-    invokeGet(VehicleProperty::VEHICLE_MAP_SERVICE, 0);
+    invokeGet(toInt(VehicleProperty::VEHICLE_MAP_SERVICE), 0);
 
     ASSERT_EQ(StatusCode::OK, actualStatusCode);
-    ASSERT_EQ(VehicleProperty::VEHICLE_MAP_SERVICE, actualValue.prop);
+    ASSERT_EQ(toInt(VehicleProperty::VEHICLE_MAP_SERVICE), actualValue.prop);
 
     ASSERT_EQ(3, actualValue.value.bytes.size());
     ASSERT_EQ(1, actualValue.value.bytes[0]);
@@ -343,20 +343,20 @@ TEST_F(VehicleHalManagerTest, get_Complex) {
 }
 
 TEST_F(VehicleHalManagerTest, get_StaticString) {
-    invokeGet(VehicleProperty::INFO_MAKE, 0);
+    invokeGet(toInt(VehicleProperty::INFO_MAKE), 0);
 
     ASSERT_EQ(StatusCode::OK, actualStatusCode);
-    ASSERT_EQ(VehicleProperty::INFO_MAKE, actualValue.prop);
+    ASSERT_EQ(toInt(VehicleProperty::INFO_MAKE), actualValue.prop);
     ASSERT_STREQ(kCarMake, actualValue.value.stringValue.c_str());
 }
 
 TEST_F(VehicleHalManagerTest, get_NegativeCases) {
     // Write-only property must fail.
-    invokeGet(VehicleProperty::HVAC_SEAT_TEMPERATURE, 0);
+    invokeGet(toInt(VehicleProperty::HVAC_SEAT_TEMPERATURE), 0);
     ASSERT_EQ(StatusCode::ACCESS_DENIED, actualStatusCode);
 
     // Unknown property must fail.
-    invokeGet(VehicleProperty::MIRROR_Z_MOVE, 0);
+    invokeGet(toInt(VehicleProperty::MIRROR_Z_MOVE), 0);
     ASSERT_EQ(StatusCode::INVALID_ARG, actualStatusCode);
 }
 
@@ -364,7 +364,7 @@ TEST_F(VehicleHalManagerTest, get_Retriable) {
     actualStatusCode = StatusCode::TRY_AGAIN;
     int attempts = 0;
     while (StatusCode::TRY_AGAIN == actualStatusCode && ++attempts < 10) {
-        invokeGet(VehicleProperty::INFO_FUEL_CAPACITY, 0);
+        invokeGet(toInt(VehicleProperty::INFO_FUEL_CAPACITY), 0);
 
     }
     ASSERT_EQ(StatusCode::OK, actualStatusCode);
@@ -373,7 +373,7 @@ TEST_F(VehicleHalManagerTest, get_Retriable) {
 }
 
 TEST_F(VehicleHalManagerTest, set_Basic) {
-    const auto PROP = VehicleProperty::DISPLAY_BRIGHTNESS;
+    const auto PROP = toInt(VehicleProperty::DISPLAY_BRIGHTNESS);
     const auto VAL = 7;
 
     auto expectedValue = hal->getValuePool()->obtainInt32(VAL);
@@ -390,7 +390,7 @@ TEST_F(VehicleHalManagerTest, set_Basic) {
 }
 
 TEST_F(VehicleHalManagerTest, set_DifferentAreas) {
-    const auto PROP = VehicleProperty::HVAC_FAN_SPEED;
+    const auto PROP = toInt(VehicleProperty::HVAC_FAN_SPEED);
     const auto VAL1 = 1;
     const auto VAL2 = 2;
     const auto AREA1 = toInt(VehicleAreaZone::ROW_1_LEFT);
@@ -426,7 +426,7 @@ TEST_F(VehicleHalManagerTest, set_DifferentAreas) {
 }
 
 TEST_F(VehicleHalManagerTest, set_Retriable) {
-    const auto PROP = VehicleProperty::MIRROR_FOLD;
+    const auto PROP = toInt(VehicleProperty::MIRROR_FOLD);
 
     auto v = hal->getValuePool()->obtainBoolean(true);
     v->prop = PROP;

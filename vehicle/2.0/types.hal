@@ -2520,7 +2520,8 @@ struct VehicleAreaConfig {
 };
 
 struct VehiclePropConfig {
-    VehicleProperty prop;
+    /* Property identifier */
+    int32_t prop;
 
     /*
      * Defines if the property is read or write or both.
@@ -2581,7 +2582,7 @@ struct VehiclePropConfig {
  */
 struct VehiclePropValue {
     /* Property identifier */
-    VehicleProperty prop;
+    int32_t prop;
 
     /* Time is elapsed nanoseconds since boot */
     int64_t timestamp;
@@ -2701,7 +2702,7 @@ enum SubscribeFlags : int32_t {
  */
 struct SubscribeOptions {
   /* Property to subscribe */
-  VehicleProperty propId;
+  int32_t propId;
 
   /*
    * Area ids - this must be a bit mask of areas to subscribe or 0 to subscribe

@@ -33,32 +33,30 @@ constexpr int32_t kAllSupportedAreas = 0;
 
 /** Returns underlying (integer) value for given enum. */
 template<typename ENUM>
-inline typename std::underlying_type<ENUM>::type toInt(ENUM const value) {
+inline constexpr typename std::underlying_type<ENUM>::type toInt(
+        ENUM const value) {
     return static_cast<typename std::underlying_type<ENUM>::type>(value);
 }
 
-inline VehiclePropertyType getPropType(VehicleProperty prop) {
+inline constexpr VehiclePropertyType getPropType(int32_t prop) {
     return static_cast<VehiclePropertyType>(
-        static_cast<int32_t>(prop)
-        & static_cast<int32_t>(VehiclePropertyType::MASK));
+            prop & toInt(VehiclePropertyType::MASK));
 }
 
-inline VehiclePropertyGroup getPropGroup(VehicleProperty prop) {
+inline constexpr VehiclePropertyGroup getPropGroup(int32_t prop) {
     return static_cast<VehiclePropertyGroup>(
-        static_cast<int32_t>(prop)
-        & static_cast<int32_t>(VehiclePropertyGroup::MASK));
+            prop & toInt(VehiclePropertyGroup::MASK));
 }
 
-inline VehicleArea getPropArea(VehicleProperty prop) {
-    return static_cast<VehicleArea>(
-        static_cast<int32_t>(prop) & static_cast<int32_t>(VehicleArea::MASK));
+inline constexpr VehicleArea getPropArea(int32_t prop) {
+    return static_cast<VehicleArea>(prop & toInt(VehicleArea::MASK));
 }
 
-inline bool isGlobalProp(VehicleProperty prop) {
+inline constexpr bool isGlobalProp(int32_t prop) {
     return getPropArea(prop) == VehicleArea::GLOBAL;
 }
 
-inline bool isSystemProperty(VehicleProperty prop) {
+inline constexpr bool isSystemProperty(int32_t prop) {
     return VehiclePropertyGroup::SYSTEM == getPropGroup(prop);
 }
 
