@@ -161,7 +161,7 @@ void DefaultVehicleHal::onCreate() {
         propConfigs.begin(),
         propConfigs.end(),
         [] (VehiclePropConfig config) -> bool {
-            return (config.prop == VehicleProperty::OBD2_LIVE_FRAME);
+            return (config.prop == toInt(VehicleProperty::OBD2_LIVE_FRAME));
         });
     mObd2SensorStore.reset(new Obd2SensorStore(
         obd2LiveFramePropConfig->configArray[0],
