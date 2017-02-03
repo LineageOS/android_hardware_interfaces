@@ -56,8 +56,7 @@ class AsyncFdWatcherSocketTest : public ::testing::Test {
     int reuse_flag = 1;
     EXPECT_FALSE(setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuse_flag,
                             sizeof(reuse_flag)) < 0);
-    EXPECT_FALSE(bind(fd, (sockaddr*)&serv_addr, sizeof(serv_addr)) <
-                 0);
+    EXPECT_FALSE(bind(fd, (sockaddr*)&serv_addr, sizeof(serv_addr)) < 0);
 
     ALOGD("%s before listen", __func__);
     listen(fd, 1);
@@ -81,11 +80,12 @@ class AsyncFdWatcherSocketTest : public ::testing::Test {
     int n = TEMP_FAILURE_RETRY(read(fd, server_buffer_, kBufferSize - 1));
     EXPECT_FALSE(n < 0);
 
-    if (n == 0)  // got EOF
+    if (n == 0) {  // got EOF
       ALOGD("%s: EOF", __func__);
-    else
+    } else {
       ALOGD("%s: Got something", __func__);
       n = write(fd, "1", 1);
+    }
   }
 
   void SetUp() override {
@@ -101,7 +101,10 @@ class AsyncFdWatcherSocketTest : public ::testing::Test {
       int connection_fd = AcceptConnection(fd);
       ALOGD("%s: Conn_watcher fd = %d", __func__, fd);
 
-      conn_watcher_.ConfigureTimeout(std::chrono::seconds(0), [this]() { bool connection_timeout_cleared = false; ASSERT_TRUE(connection_timeout_cleared); });
+      conn_watcher_.ConfigureTimeout(std::chrono::seconds(0), [this]() {
+        bool connection_timeout_cleared = false;
+        ASSERT_TRUE(connection_timeout_cleared);
+      });
 
       ALOGD("%s: 3", __func__);
       async_fd_watcher_.WatchFdForNonBlockingReads(
@@ -110,7 +113,10 @@ class AsyncFdWatcherSocketTest : public ::testing::Test {
       // Time out if it takes longer than a second.
       SetTimeout(std::chrono::seconds(1));
     });
-    conn_watcher_.ConfigureTimeout(std::chrono::seconds(1), [this]() { bool connection_timeout = true; ASSERT_FALSE(connection_timeout); });
+    conn_watcher_.ConfigureTimeout(std::chrono::seconds(1), [this]() {
+      bool connection_timeout = true;
+      ASSERT_FALSE(connection_timeout);
+    });
   }
 
   void CleanUpServer() {
@@ -135,7 +141,7 @@ class AsyncFdWatcherSocketTest : public ::testing::Test {
   }
 
   bool TimedOut() {
-    ALOGD("%s %d", __func__, timed_out_? 1 : 0);
+    ALOGD("%s %d", __func__, timed_out_ ? 1 : 0);
     return timed_out_;
   }
 
@@ -198,8 +204,8 @@ TEST_F(AsyncFdWatcherSocketTest, Connect) {
 
   // Fail if the client doesn't connect within 1 second.
   conn_watcher.ConfigureTimeout(std::chrono::seconds(1), [this]() {
-     bool connection_timeout = true;
-     ASSERT_FALSE(connection_timeout);
+    bool connection_timeout = true;
+    ASSERT_FALSE(connection_timeout);
   });
 
   ConnectClient();
@@ -220,10 +226,43 @@ TEST_F(AsyncFdWatcherSocketTest, TimedOutConnect) {
   });
 
   // Set the timeout flag after 100ms.
-  conn_watcher.ConfigureTimeout(std::chrono::milliseconds(100), [this, timeout_ptr]() { *timeout_ptr = true; });
+  conn_watcher.ConfigureTimeout(std::chrono::milliseconds(100),
+                                [this, timeout_ptr]() { *timeout_ptr = true; });
   EXPECT_FALSE(timed_out);
   sleep(1);
   EXPECT_TRUE(timed_out);
+  conn_watcher.StopWatchingFileDescriptor();
+  close(socket_fd);
+}
+
+// Modify the timeout in a timeout callback.
+TEST_F(AsyncFdWatcherSocketTest, TimedOutSchedulesTimeout) {
+  int socket_fd = StartServer();
+  bool timed_out = false;
+  bool timed_out2 = false;
+
+  AsyncFdWatcher conn_watcher;
+  conn_watcher.WatchFdForNonBlockingReads(socket_fd, [this](int fd) {
+    int connection_fd = AcceptConnection(fd);
+    close(connection_fd);
+  });
+
+  // Set a timeout flag in each callback.
+  conn_watcher.ConfigureTimeout(
+      std::chrono::milliseconds(500),
+      [this, &conn_watcher, &timed_out, &timed_out2]() {
+        timed_out = true;
+        conn_watcher.ConfigureTimeout(std::chrono::seconds(1),
+                                      [&timed_out2]() { timed_out2 = true; });
+      });
+  EXPECT_FALSE(timed_out);
+  EXPECT_FALSE(timed_out2);
+  sleep(1);
+  EXPECT_TRUE(timed_out);
+  EXPECT_FALSE(timed_out2);
+  sleep(1);
+  EXPECT_TRUE(timed_out);
+  EXPECT_TRUE(timed_out2);
   conn_watcher.StopWatchingFileDescriptor();
   close(socket_fd);
 }
