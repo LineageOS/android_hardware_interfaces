@@ -219,10 +219,18 @@ TEST_F(BluetoothAddressTest, get_local_address) {
   EXPECT_TRUE(BluetoothAddress::get_local_address(address));
   EXPECT_TRUE(memcmp(address, kTestAddr1_bytes, BluetoothAddress::kBytes) == 0);
 
-  // File contains a zero address.
+  // File contains a zero address.  A random address will be generated.
   FileWriteString(kAddrPath, kZeros);
   EXPECT_TRUE(property_set(PROPERTY_BT_BDADDR_PATH, kAddrPath) == 0);
-  EXPECT_FALSE(BluetoothAddress::get_local_address(address));
+  EXPECT_TRUE(property_set(PERSIST_BDADDR_PROPERTY, kTestAddrBad1) == 0);
+  EXPECT_TRUE(BluetoothAddress::get_local_address(address));
+  EXPECT_TRUE(memcmp(address, kZeros_bytes, BluetoothAddress::kBytes) != 0);
+  char prop[PROP_VALUE_MAX] = "Before reading";
+  EXPECT_TRUE(property_get(PERSIST_BDADDR_PROPERTY, prop, NULL) ==
+              BluetoothAddress::kStringLength);
+  char address_str[BluetoothAddress::kStringLength + 1];
+  BluetoothAddress::bytes_to_string(address, address_str);
+  EXPECT_TRUE(memcmp(address_str, prop, BluetoothAddress::kStringLength) == 0);
 
   // Factory property contains an address.
   EXPECT_TRUE(property_set(PERSIST_BDADDR_PROPERTY, kTestAddrBad1) == 0);
