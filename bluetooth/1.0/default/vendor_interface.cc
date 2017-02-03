@@ -44,6 +44,11 @@ struct {
   uint16_t opcode;
 } internal_command;
 
+// True when LPM is not enabled yet or wake is not asserted.
+bool lpm_wake_deasserted;
+uint32_t lpm_timeout_ms;
+bool recent_activity_flag;
+
 VendorInterface* g_vendor_interface = nullptr;
 
 const size_t preamble_size_for_type[] = {
@@ -271,6 +276,9 @@ bool VendorInterface::Open(InitializeCompleteCallback initialize_complete_cb,
   fd_watcher_.WatchFdForNonBlockingReads(uart_fd_,
                                          [this](int fd) { OnDataReady(fd); });
 
+  // Initially, the power management is off.
+  lpm_wake_deasserted = false;
+
   // Start configuring the firmware
   firmware_startup_timer_ = new FirmwareStartupTimer();
   lib_interface_->op(BT_VND_OP_FW_CFG, nullptr);
@@ -302,6 +310,19 @@ void VendorInterface::Close() {
 size_t VendorInterface::Send(uint8_t type, const uint8_t* data, size_t length) {
   if (uart_fd_ == INVALID_FD) return 0;
 
+  recent_activity_flag = true;
+
+  if (lpm_wake_deasserted == true) {
+    // Restart the timer.
+    fd_watcher_.ConfigureTimeout(std::chrono::milliseconds(lpm_timeout_ms),
+                                 [this]() { OnTimeout(); });
+    // Assert wake.
+    lpm_wake_deasserted = false;
+    bt_vendor_lpm_wake_state_t wakeState = BT_VND_LPM_WAKE_ASSERT;
+    lib_interface_->op(BT_VND_OP_LPM_WAKE_SET_STATE, &wakeState);
+    ALOGV("%s: Sent wake before (%02x)", __func__, data[0] | (data[1] << 8));
+  }
+
   int rv = write_safely(uart_fd_, &type, sizeof(type));
   if (rv == sizeof(type))
     rv = write_safely(uart_fd_, data, length);
@@ -321,6 +342,32 @@ void VendorInterface::OnFirmwareConfigured(uint8_t result) {
     initialize_complete_cb_(result == 0);
     initialize_complete_cb_ = nullptr;
   }
+
+  lib_interface_->op(BT_VND_OP_GET_LPM_IDLE_TIMEOUT, &lpm_timeout_ms);
+  ALOGI("%s: lpm_timeout_ms %d", __func__, lpm_timeout_ms);
+
+  bt_vendor_lpm_mode_t mode = BT_VND_LPM_ENABLE;
+  lib_interface_->op(BT_VND_OP_LPM_SET_MODE, &mode);
+
+  ALOGD("%s Calling StartLowPowerWatchdog()", __func__);
+  fd_watcher_.ConfigureTimeout(std::chrono::milliseconds(lpm_timeout_ms),
+                               [this]() { OnTimeout(); });
+
+  bt_vendor_lpm_wake_state_t wakeState = BT_VND_LPM_WAKE_ASSERT;
+  lib_interface_->op(BT_VND_OP_LPM_WAKE_SET_STATE, &wakeState);
+}
+
+void VendorInterface::OnTimeout() {
+  ALOGV("%s", __func__);
+  if (recent_activity_flag == false) {
+    lpm_wake_deasserted = true;
+    bt_vendor_lpm_wake_state_t wakeState = BT_VND_LPM_WAKE_DEASSERT;
+    lib_interface_->op(BT_VND_OP_LPM_WAKE_SET_STATE, &wakeState);
+    fd_watcher_.ConfigureTimeout(std::chrono::seconds(0), []() {
+      ALOGE("Zero timeout! Should never happen.");
+    });
+  }
+  recent_activity_flag = false;
 }
 
 void VendorInterface::OnDataReady(int fd) {
