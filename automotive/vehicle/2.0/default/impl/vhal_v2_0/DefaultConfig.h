@@ -28,6 +28,11 @@ namespace V2_0 {
 
 namespace impl {
 
+const VehicleProperty kHvacPowerProperties[] = {
+    VehicleProperty::HVAC_FAN_SPEED,
+    VehicleProperty::HVAC_FAN_DIRECTION,
+};
+
 const VehiclePropConfig kVehicleProperties[] = {
     {
         .prop = toInt(VehicleProperty::INFO_MAKE),
@@ -63,7 +68,10 @@ const VehiclePropConfig kVehicleProperties[] = {
         .prop = toInt(VehicleProperty::HVAC_POWER_ON),
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-        .supportedAreas = toInt(VehicleAreaZone::ROW_1)
+        .supportedAreas = toInt(VehicleAreaZone::ROW_1),
+        // TODO(bryaneyler): Ideally, this is generated dynamically from
+        // kHvacPowerProperties.
+        .configString = "0x12400500,0x12400501"  // HVAC_FAN_SPEED,HVAC_FAN_DIRECTION
     },
 
     {
