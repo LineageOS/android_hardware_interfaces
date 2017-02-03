@@ -79,7 +79,8 @@ struct Stream : public IStream, public ParametersUtil {
     Return<Result> close()  override;
 
     // Utility methods for extending interfaces.
-    static Result analyzeStatus(const char* funcName, int status, int ignoreError = OK);
+    static Result analyzeStatus(
+            const char* funcName, int status, int ignoreError = OK, int ignoreError2 = OK);
 
   private:
     audio_stream_t *mStream;
