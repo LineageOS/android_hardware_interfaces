@@ -140,9 +140,15 @@ void AsyncFdWatcher::ThreadRoutine() {
 
     // Timeout.
     if (retval == 0) {
-      std::unique_lock<std::mutex> guard(timeout_mutex_);
-      if (timeout_ms_ > std::chrono::milliseconds(0) && timeout_cb_)
-        timeout_cb_();
+      // Allow the timeout callback to modify the timeout.
+      TimeoutCallback saved_cb;
+      {
+        std::unique_lock<std::mutex> guard(timeout_mutex_);
+        if (timeout_ms_ > std::chrono::milliseconds(0))
+          saved_cb = timeout_cb_;
+      }
+      if (saved_cb != nullptr)
+        saved_cb();
       continue;
     }
 
