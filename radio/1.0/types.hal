@@ -540,7 +540,7 @@ enum RadioTechnology : int32_t {
     LTE_CA = 19,
 };
 
-enum DataProfile : int32_t {
+enum DataProfileId : int32_t {
     DEFAULT = 0,
     TETHERED = 1,
     IMS = 2,
@@ -1059,6 +1059,70 @@ enum SuppServiceClass : int32_t {
     MAX = 1 << 7
 };
 
+enum ApnTypes : int32_t {
+    NONE = 0,                             // None
+    DEFAULT = 1 << 0,                     // APN type for default data traffic
+    MMS = 1 << 1,                         // APN type for MMS traffic
+    SUPL = 1 << 2,                        // APN type for SUPL assisted GPS
+    DUN = 1 << 3,                         // APN type for DUN traffic
+    HIPRI = 1 << 4,                       // APN type for HiPri traffic
+    FOTA = 1 << 5,                        // APN type for FOTA
+    IMS = 1 << 6,                         // APN type for IMS
+    CBS = 1 << 7,                         // APN type for CBS
+    IA = 1 << 8,                          // APN type for IA Initial Attach APN
+    EMERGENCY = 1 << 9,                   // APN type for Emergency PDN. This is not an IA apn,
+                                          // but is used for access to carrier services in an
+                                          // emergency call situation.
+    ALL = DEFAULT | MMS | SUPL | DUN | HIPRI | FOTA | IMS | CBS | IA | EMERGENCY,
+};
+
+enum IndicationFilter : int32_t {
+    NONE = 0,
+    SIGNAL_STRENGTH = 1 << 0,             // When this bit is set, modem should always send the
+                                          // signal strength update through
+                                          // IRadioIndication.currentSignalStrength(),
+                                          // otherwise suppress it.
+    FULL_NETWORK_STATE = 1 << 1,          // When this bit is set, modem should always invoke
+                                          // IRadioIndication.networkStateChanged() when any field
+                                          // in VoiceRegStateResult or DataRegStateResult changes.
+                                          // When this bit is not set, modem should suppress
+                                          // IRadioIndication.networkStateChanged() when there are
+                                          // only changes from those insignificant fields
+                                          // (e.g. cell info). Modem should continue invoking
+                                          // IRadioIndication.networkStateChanged()
+                                          // when significant fields are updated even when this bit
+                                          // is not set. The following fields are considered
+                                          // significant, registration state and radio technology.
+    DATA_CALL_DORMANCY_CHANGED = 1 << 2,  // When this bit is set, modem should send the data call
+                                          // list changed indication
+                                          // IRadioIndication.dataCallListChanged() whenever any
+                                          // field in ITypes.SetupDataCallResult changes. Otherwise
+                                          // modem should suppress the indication when the only
+                                          // changed field is 'active' (for data dormancy).
+                                          // For all other fields change, modem should continue
+                                          // sending IRadioIndication.dataCallListChanged()
+                                          // regardless this bit is set or not.
+    ALL = SIGNAL_STRENGTH | FULL_NETWORK_STATE | DATA_CALL_DORMANCY_CHANGED,
+};
+
+enum MvnoType : int32_t {
+    NONE,                                 // None
+    IMSI,                                 // The matching data is based on IMSI.
+    GID,                                  // The matching data is based on group id.
+    SPN,                                  // The matching data is based service provider name.
+};
+
+enum DeviceStateType : int32_t {
+    POWER_SAVE_MODE,                      // Device power save mode (provided by PowerManager)
+                                          // True indicates the device is in power save mode.
+    CHARGING_STATE,                       // Device charging state (provided by BatteryManager)
+                                          // True indicates the device is charging.
+    LOW_DATA_EXPECTED                     // Low data expected mode. True indicates low data traffic
+                                          // is expected, for example, when the device is idle
+                                          // (e.g. not doing tethering in the background). Note
+                                          // this doesn't mean no data is expected.
+};
+
 struct RadioResponseInfo {
     RadioResponseType type;               // Response type
     int32_t serial;                       // Serial number of the request
@@ -1289,7 +1353,7 @@ struct VoiceRegStateResult {
                                           // In UMTS, CID is UMTS Cell Identity (see TS 25.331)
                                           // in 28 bits
     int32_t rat;                          // indicates the available voice radio technology,
-                                          // valid values as defined by RIL_RadioTechnology.
+                                          // valid values as defined by RadioTechnology.
     int32_t baseStationId;                // Base Station ID. if registered on a CDMA
                                           // system or -1 if not. Base Station ID in decimal format
     int32_t baseStationLatitude;          // Base Station latitude. if registered on a
@@ -1375,7 +1439,7 @@ struct DataRegStateResult {
     int32_t cid;                          // CID if registered or -1 if not
                                           // valid CID are 0x00000000 - 0x0fffffff
     int32_t rat;                          // indicates the available data radio technology,
-                                          // valid values as defined by RIL_RadioTechnology.
+                                          // valid values as defined by RadioTechnology.
     int32_t reasonDataDenied;             // if registration state is 3 (Registration
                                           // denied) this is an enumerated reason why
                                           // registration was denied. See 3GPP TS 24.008,
@@ -1698,14 +1762,17 @@ struct HardwareConfig {
 };
 
 struct DataProfileInfo {
-    int32_t profileId;                    // id of the data profile
+    DataProfileId profileId;              // id of the data profile
     string apn;                           // The APN to connect to
     string protocol;                      // One of the PDP_type values in TS 27.007 section 10.1.1.
                                           // For example, "IP", "IPV6", "IPV4V6", or "PPP".
-    ApnAuthType authType;
+    string roamingProtocol;               // one of the PDP_type values in TS 27.007 section 10.1.1
+                                          // used on roaming network. For example, "IP", "IPV6",
+                                          // "IPV4V6", or "PPP".
+    ApnAuthType authType;                 // APN authentication type
     string user;                          // The username for APN, or empty string
     string password;                      // The password for APN, or empty string
-    DataProfileInfoType type;
+    DataProfileInfoType type;             // Data profile technology type
     int32_t maxConnsTime;                 // The period in seconds to limit the maximum connections
     int32_t maxConns;                     // The maximum connections during maxConnsTime
     int32_t waitTime;                     // The required wait time in seconds after a successful UE
@@ -1713,6 +1780,17 @@ struct DataProfileInfo {
                                           // the device can send a new PDN connection request for
                                           // that given PDN
     bool enabled;                         // True to enable the profile, false to disable
+    bitfield<ApnTypes> supportedApnTypesBitmap; // Supported APN types bitmap. See ApnTypes for the
+                                          // value of each bit.
+    bitfield<RadioAccessFamily> bearerBitmap; // The bearer bitmap. See RadioAccessFamily for the
+                                          // value of each bit.
+    int32_t mtu;                          // Maximum transmission unit (MTU) size in bytes
+    MvnoType mvnoType;                    // The MVNO matching data type
+    string mvnoMatchData;                 // MVNO matching data. This is defined by the carrier.
+                                          // For example,
+                                          //      SPN like: "A MOBILE", "BEN NL", etc...
+                                          //      IMSI like: "302720x94", "2060188", etc...
+                                          //      GID like: "4E", "33", etc...
 };
 
 struct RadioCapability {

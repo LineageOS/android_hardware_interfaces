@@ -28,7 +28,7 @@ interface: {
     }
 
     api: {
-        name: "voiceNetworkStateChanged"
+        name: "networkStateChanged"
         arg: {
             type: TYPE_ENUM
             predefined_type: "::android::hardware::radio::V1_0::RadioIndicationType"

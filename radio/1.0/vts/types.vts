@@ -1817,7 +1817,7 @@ attribute: {
 }
 
 attribute: {
-    name: "::android::hardware::radio::V1_0::DataProfile"
+    name: "::android::hardware::radio::V1_0::DataProfileId"
     type: TYPE_ENUM
     enum_value: {
         scalar_type: "int32_t"
@@ -1859,7 +1859,7 @@ attribute: {
     enum_value: {
         scalar_type: "int32_t"
 
-        enumerator: "MEMORY_CAPAPCITY_EXCEEDED"
+        enumerator: "MEMORY_CAPACITY_EXCEEDED"
         scalar_value: {
             int32_t: 211
         }
@@ -1913,7 +1913,7 @@ attribute: {
         scalar_value: {
             int32_t: 1
         }
-        enumerator: "UNKOWN"
+        enumerator: "UNKNOWN"
         scalar_value: {
             int32_t: 2
         }
@@ -2406,7 +2406,7 @@ attribute: {
         scalar_value: {
             int32_t: 1
         }
-        enumerator: "FACORY_RESET"
+        enumerator: "FACTORY_RESET"
         scalar_value: {
             int32_t: 2
         }
@@ -3551,6 +3551,138 @@ attribute: {
 }
 
 attribute: {
+    name: "::android::hardware::radio::V1_0::ApnTypes"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "NONE"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "DEFAULT"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "MMS"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "SUPL"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "DUN"
+        scalar_value: {
+            int32_t: 8
+        }
+        enumerator: "HIPRI"
+        scalar_value: {
+            int32_t: 16
+        }
+        enumerator: "FOTA"
+        scalar_value: {
+            int32_t: 32
+        }
+        enumerator: "IMS"
+        scalar_value: {
+            int32_t: 64
+        }
+        enumerator: "CBS"
+        scalar_value: {
+            int32_t: 128
+        }
+        enumerator: "IA"
+        scalar_value: {
+            int32_t: 256
+        }
+        enumerator: "EMERGENCY"
+        scalar_value: {
+            int32_t: 512
+        }
+        enumerator: "ALL"
+        scalar_value: {
+            int32_t: 1023
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::radio::V1_0::IndicationFilter"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "NONE"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "SIGNAL_STRENGTH"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "FULL_NETWORK_STATE"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "DATA_CALL_DORMANCY_CHANGED"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "ALL"
+        scalar_value: {
+            int32_t: 7
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::radio::V1_0::MvnoType"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "NONE"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "IMSI"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "GID"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "SPN"
+        scalar_value: {
+            int32_t: 3
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::radio::V1_0::DeviceStateType"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "POWER_SAVE_MODE"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "CHARGING_STATE"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "LOW_DATA_EXPECTED"
+        scalar_value: {
+            int32_t: 2
+        }
+    }
+}
+
+attribute: {
     name: "::android::hardware::radio::V1_0::RadioResponseInfo"
     type: TYPE_STRUCT
     struct_value: {
@@ -4528,7 +4660,7 @@ attribute: {
         scalar_type: "int32_t"
     }
     struct_value: {
-        name: "basestationId"
+        name: "baseStationId"
         type: TYPE_SCALAR
         scalar_type: "int32_t"
     }
@@ -4956,8 +5088,8 @@ attribute: {
     type: TYPE_STRUCT
     struct_value: {
         name: "profileId"
-        type: TYPE_SCALAR
-        scalar_type: "int32_t"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::radio::V1_0::DataProfileId"
     }
     struct_value: {
         name: "apn"
@@ -4965,6 +5097,10 @@ attribute: {
     }
     struct_value: {
         name: "protocol"
+        type: TYPE_STRING
+    }
+    struct_value: {
+        name: "roamingProtocol"
         type: TYPE_STRING
     }
     struct_value: {
@@ -5005,6 +5141,32 @@ attribute: {
         type: TYPE_SCALAR
         scalar_type: "bool_t"
     }
+    struct_value: {
+        name: "supportedApnTypesBitmap"
+        type: TYPE_MASK
+        scalar_type: "int32_t"
+        predefined_type: "::android::hardware::radio::V1_0::ApnTypes"
+    }
+    struct_value: {
+        name: "bearerBitmap"
+        type: TYPE_MASK
+        scalar_type: "int32_t"
+        predefined_type: "::android::hardware::radio::V1_0::RadioAccessFamily"
+    }
+    struct_value: {
+        name: "mtu"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
+    }
+    struct_value: {
+        name: "mvnoType"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::radio::V1_0::MvnoType"
+    }
+    struct_value: {
+        name: "mvnoMatchData"
+        type: TYPE_STRING
+    }
 }
 
 attribute: {
@@ -5022,7 +5184,8 @@ attribute: {
     }
     struct_value: {
         name: "raf"
-        type: TYPE_ENUM
+        type: TYPE_MASK
+        scalar_type: "int32_t"
         predefined_type: "::android::hardware::radio::V1_0::RadioAccessFamily"
     }
     struct_value: {
@@ -5087,8 +5250,8 @@ attribute: {
     struct_value: {
         name: "txmModetimeMs"
         type: TYPE_ARRAY
+        vector_size: 5
         vector_value: {
-            vector_size: 5
             type: TYPE_SCALAR
             scalar_type: "uint32_t"
         }
@@ -5238,7 +5401,7 @@ attribute: {
         predefined_type: "::android::hardware::radio::V1_0::CdmaSignalInfoRecord"
     }
     struct_value: {
-        name: "numbertype"
+        name: "numberType"
         type: TYPE_ENUM
         predefined_type: "::android::hardware::radio::V1_0::CdmaCallWaitingNumberType"
     }
@@ -5477,7 +5640,8 @@ attribute: {
     }
     struct_value: {
         name: "serviceClass"
-        type: TYPE_ENUM
+        type: TYPE_MASK
+        scalar_type: "int32_t"
         predefined_type: "::android::hardware::radio::V1_0::SuppServiceClass"
     }
     struct_value: {

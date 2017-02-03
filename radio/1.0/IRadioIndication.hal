@@ -42,12 +42,13 @@ interface IRadioIndication {
     oneway callStateChanged(RadioIndicationType type);
 
     /*
-     * Indicates when voice network state changed
-     * Callee must invoke IRadio.getVoiceRegistrationState() and IRadio.getOperator()
+     * Indicates when voice or data network state changed
+     * Callee must invoke IRadio.getVoiceRegistrationState(), IRadio.getDataRegistrationState(),
+     * and IRadio.getOperator()
      *
      * @param type Type of radio indication
      */
-    oneway voiceNetworkStateChanged(RadioIndicationType type);
+    oneway networkStateChanged(RadioIndicationType type);
 
     /*
      * Indicates when new SMS is received.
