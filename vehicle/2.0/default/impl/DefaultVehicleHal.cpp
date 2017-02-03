@@ -16,6 +16,8 @@
 
 #include "DefaultVehicleHal.h"
 
+#include <algorithm>
+
 #define LOG_TAG "default_vehicle"
 #include <android/log.h>
 
@@ -153,6 +155,96 @@ StatusCode DefaultVehicleHal::set(const VehiclePropValue& propValue) {
     return status;
 }
 
+void DefaultVehicleHal::onCreate() {
+    const auto& propConfigs(listProperties());
+    auto obd2LiveFramePropConfig = std::find_if(
+        propConfigs.begin(),
+        propConfigs.end(),
+        [] (VehiclePropConfig config) -> bool {
+            return (config.prop == VehicleProperty::OBD2_LIVE_FRAME);
+        });
+    mObd2SensorStore.reset(new Obd2SensorStore(
+        obd2LiveFramePropConfig->configArray[0],
+        obd2LiveFramePropConfig->configArray[1]));
+    // precalculate OBD2 sensor values
+    mObd2SensorStore->setIntegerSensor(
+        Obd2IntegerSensorIndex::FUEL_SYSTEM_STATUS,
+        toInt(FuelSystemStatus::CLOSED_LOOP));
+    mObd2SensorStore->setIntegerSensor(
+        Obd2IntegerSensorIndex::MALFUNCTION_INDICATOR_LIGHT_ON, 0);
+    mObd2SensorStore->setIntegerSensor(
+        Obd2IntegerSensorIndex::IGNITION_MONITORS_SUPPORTED,
+        toInt(IgnitionMonitorKind::SPARK));
+    mObd2SensorStore->setIntegerSensor(Obd2IntegerSensorIndex::IGNITION_SPECIFIC_MONITORS,
+        CommonIgnitionMonitors::COMPONENTS_AVAILABLE |
+        CommonIgnitionMonitors::MISFIRE_AVAILABLE |
+        SparkIgnitionMonitors::AC_REFRIGERANT_AVAILABLE |
+        SparkIgnitionMonitors::EVAPORATIVE_SYSTEM_AVAILABLE);
+    mObd2SensorStore->setIntegerSensor(
+        Obd2IntegerSensorIndex::INTAKE_AIR_TEMPERATURE, 35);
+    mObd2SensorStore->setIntegerSensor(
+        Obd2IntegerSensorIndex::COMMANDED_SECONDARY_AIR_STATUS,
+        toInt(SecondaryAirStatus::FROM_OUTSIDE_OR_OFF));
+    mObd2SensorStore->setIntegerSensor(
+        Obd2IntegerSensorIndex::NUM_OXYGEN_SENSORS_PRESENT, 1);
+    mObd2SensorStore->setIntegerSensor(
+        Obd2IntegerSensorIndex::RUNTIME_SINCE_ENGINE_START, 500);
+    mObd2SensorStore->setIntegerSensor(
+        Obd2IntegerSensorIndex::DISTANCE_TRAVELED_WITH_MALFUNCTION_INDICATOR_LIGHT_ON, 0);
+    mObd2SensorStore->setIntegerSensor(
+        Obd2IntegerSensorIndex::WARMUPS_SINCE_CODES_CLEARED, 51);
+    mObd2SensorStore->setIntegerSensor(
+        Obd2IntegerSensorIndex::DISTANCE_TRAVELED_SINCE_CODES_CLEARED, 365);
+    mObd2SensorStore->setIntegerSensor(
+        Obd2IntegerSensorIndex::ABSOLUTE_BAROMETRIC_PRESSURE, 30);
+    mObd2SensorStore->setIntegerSensor(
+        Obd2IntegerSensorIndex::CONTROL_MODULE_VOLTAGE, 12);
+    mObd2SensorStore->setIntegerSensor(
+        Obd2IntegerSensorIndex::AMBIENT_AIR_TEMPERATURE, 18);
+    mObd2SensorStore->setIntegerSensor(
+        Obd2IntegerSensorIndex::MAX_FUEL_AIR_EQUIVALENCE_RATIO, 1);
+    mObd2SensorStore->setIntegerSensor(
+        Obd2IntegerSensorIndex::FUEL_TYPE, toInt(FuelType::GASOLINE));
+    mObd2SensorStore->setFloatSensor(
+        Obd2FloatSensorIndex::CALCULATED_ENGINE_LOAD, 0.153);
+    mObd2SensorStore->setFloatSensor(
+        Obd2FloatSensorIndex::SHORT_TERM_FUEL_TRIM_BANK1, -0.16);
+    mObd2SensorStore->setFloatSensor(
+        Obd2FloatSensorIndex::LONG_TERM_FUEL_TRIM_BANK1, -0.16);
+    mObd2SensorStore->setFloatSensor(
+        Obd2FloatSensorIndex::SHORT_TERM_FUEL_TRIM_BANK2, -0.16);
+    mObd2SensorStore->setFloatSensor(
+        Obd2FloatSensorIndex::LONG_TERM_FUEL_TRIM_BANK2, -0.16);
+    mObd2SensorStore->setFloatSensor(
+        Obd2FloatSensorIndex::INTAKE_MANIFOLD_ABSOLUTE_PRESSURE, 7.5);
+    mObd2SensorStore->setFloatSensor(
+        Obd2FloatSensorIndex::ENGINE_RPM, 1250.);
+    mObd2SensorStore->setFloatSensor(
+        Obd2FloatSensorIndex::VEHICLE_SPEED, 40.);
+    mObd2SensorStore->setFloatSensor(
+        Obd2FloatSensorIndex::TIMING_ADVANCE, 2.5);
+    mObd2SensorStore->setFloatSensor(
+        Obd2FloatSensorIndex::THROTTLE_POSITION, 19.75);
+    mObd2SensorStore->setFloatSensor(
+        Obd2FloatSensorIndex::OXYGEN_SENSOR1_VOLTAGE, 0.265);
+    mObd2SensorStore->setFloatSensor(
+        Obd2FloatSensorIndex::FUEL_TANK_LEVEL_INPUT, 0.824);
+    mObd2SensorStore->setFloatSensor(
+        Obd2FloatSensorIndex::EVAPORATION_SYSTEM_VAPOR_PRESSURE, -0.373);
+    mObd2SensorStore->setFloatSensor(
+        Obd2FloatSensorIndex::CATALYST_TEMPERATURE_BANK1_SENSOR1, 190.);
+    mObd2SensorStore->setFloatSensor(
+        Obd2FloatSensorIndex::RELATIVE_THROTTLE_POSITION, 3.);
+    mObd2SensorStore->setFloatSensor(
+        Obd2FloatSensorIndex::ABSOLUTE_THROTTLE_POSITION_B, 0.306);
+    mObd2SensorStore->setFloatSensor(
+        Obd2FloatSensorIndex::ACCELERATOR_PEDAL_POSITION_D, 0.188);
+    mObd2SensorStore->setFloatSensor(
+        Obd2FloatSensorIndex::ACCELERATOR_PEDAL_POSITION_E, 0.094);
+    mObd2SensorStore->setFloatSensor(
+        Obd2FloatSensorIndex::COMMANDED_THROTTLE_ACTUATOR, 0.024);
+}
+
 StatusCode DefaultVehicleHal::getHvacTemperature(int32_t areaId,
                                                  float* outValue)  {
     if (areaId == toInt(VehicleAreaZone::ROW_1_LEFT)) {
@@ -205,73 +297,17 @@ StatusCode DefaultVehicleHal::setHvacDefroster(int32_t areaId, bool value) {
     return StatusCode::OK;
 }
 
-static std::vector<int32_t> fillObd2IntValues() {
-    std::vector<int32_t> intValues(toInt(Obd2IntegerSensorIndex::LAST_SYSTEM_INDEX));
-#define SENSOR(name) toInt(Obd2IntegerSensorIndex:: name)
-    intValues[SENSOR(FUEL_SYSTEM_STATUS)] = toInt(FuelSystemStatus::CLOSED_LOOP);
-    intValues[SENSOR(MALFUNCTION_INDICATOR_LIGHT_ON)] = 0;
-    intValues[SENSOR(IGNITION_MONITORS_SUPPORTED)] = toInt(IgnitionMonitorKind::SPARK);
-    intValues[SENSOR(IGNITION_SPECIFIC_MONITORS)] =
-        CommonIgnitionMonitors::COMPONENTS_AVAILABLE |
-        CommonIgnitionMonitors::MISFIRE_AVAILABLE |
-        SparkIgnitionMonitors::AC_REFRIGERANT_AVAILABLE |
-        SparkIgnitionMonitors::EVAPORATIVE_SYSTEM_AVAILABLE;
-    intValues[SENSOR(INTAKE_AIR_TEMPERATURE)] = 35;
-    intValues[SENSOR(COMMANDED_SECONDARY_AIR_STATUS)] =
-        toInt(SecondaryAirStatus::FROM_OUTSIDE_OR_OFF);
-    intValues[SENSOR(NUM_OXYGEN_SENSORS_PRESENT)] = 1;
-    intValues[SENSOR(RUNTIME_SINCE_ENGINE_START)] = 500;
-    intValues[SENSOR(DISTANCE_TRAVELED_WITH_MALFUNCTION_INDICATOR_LIGHT_ON)] = 0;
-    intValues[SENSOR(WARMUPS_SINCE_CODES_CLEARED)] = 51;
-    intValues[SENSOR(DISTANCE_TRAVELED_SINCE_CODES_CLEARED)] = 365;
-    intValues[SENSOR(ABSOLUTE_BAROMETRIC_PRESSURE)] = 30;
-    intValues[SENSOR(CONTROL_MODULE_VOLTAGE)] = 12;
-    intValues[SENSOR(AMBIENT_AIR_TEMPERATURE)] = 18;
-    intValues[SENSOR(MAX_FUEL_AIR_EQUIVALENCE_RATIO)] = 1;
-    intValues[SENSOR(FUEL_TYPE)] = toInt(FuelType::GASOLINE);
-#undef SENSOR
-    return intValues;
-}
-
-static std::vector<float> fillObd2FloatValues() {
-    std::vector<float> floatValues(toInt(Obd2FloatSensorIndex::LAST_SYSTEM_INDEX));
-#define SENSOR(name) toInt(Obd2FloatSensorIndex:: name)
-    floatValues[SENSOR(CALCULATED_ENGINE_LOAD)] = 0.153;
-    floatValues[SENSOR(SHORT_TERM_FUEL_TRIM_BANK1)] = -0.16;
-    floatValues[SENSOR(LONG_TERM_FUEL_TRIM_BANK1)] = -0.16;
-    floatValues[SENSOR(SHORT_TERM_FUEL_TRIM_BANK2)] = -0.16;
-    floatValues[SENSOR(LONG_TERM_FUEL_TRIM_BANK2)] = -0.16;
-    floatValues[SENSOR(INTAKE_MANIFOLD_ABSOLUTE_PRESSURE)] = 7.5;
-    floatValues[SENSOR(ENGINE_RPM)] = 1250.;
-    floatValues[SENSOR(VEHICLE_SPEED)] = 40.;
-    floatValues[SENSOR(TIMING_ADVANCE)] = 2.5;
-    floatValues[SENSOR(THROTTLE_POSITION)] = 19.75;
-    floatValues[SENSOR(OXYGEN_SENSOR1_VOLTAGE)] = 0.265;
-    floatValues[SENSOR(FUEL_TANK_LEVEL_INPUT)] = 0.824;
-    floatValues[SENSOR(EVAPORATION_SYSTEM_VAPOR_PRESSURE)] = -0.373;
-    floatValues[SENSOR(CATALYST_TEMPERATURE_BANK1_SENSOR1)] = 190.;
-    floatValues[SENSOR(RELATIVE_THROTTLE_POSITION)] = 3.;
-    floatValues[SENSOR(ABSOLUTE_THROTTLE_POSITION_B)] = 0.306;
-    floatValues[SENSOR(ACCELERATOR_PEDAL_POSITION_D)] = 0.188;
-    floatValues[SENSOR(ACCELERATOR_PEDAL_POSITION_E)] = 0.094;
-    floatValues[SENSOR(COMMANDED_THROTTLE_ACTUATOR)] = 0.024;
-#undef SENSOR
-    return floatValues;
-}
-
 StatusCode DefaultVehicleHal::fillObd2LiveFrame(VehiclePropValuePtr* v) {
-    static std::vector<int32_t> intValues(fillObd2IntValues());
-    static std::vector<float> floatValues(fillObd2FloatValues());
-    (*v)->value.int32Values = intValues;
-    (*v)->value.floatValues = floatValues;
+    (*v)->value.int32Values = mObd2SensorStore->getIntegerSensors();
+    (*v)->value.floatValues = mObd2SensorStore->getFloatSensors();
+    (*v)->value.bytes = mObd2SensorStore->getSensorsBitmask();
     return StatusCode::OK;
 }
 
 StatusCode DefaultVehicleHal::fillObd2FreezeFrame(VehiclePropValuePtr* v) {
-    static std::vector<int32_t> intValues(fillObd2IntValues());
-    static std::vector<float> floatValues(fillObd2FloatValues());
-    (*v)->value.int32Values = intValues;
-    (*v)->value.floatValues = floatValues;
+    (*v)->value.int32Values = mObd2SensorStore->getIntegerSensors();
+    (*v)->value.floatValues = mObd2SensorStore->getFloatSensors();
+    (*v)->value.bytes = mObd2SensorStore->getSensorsBitmask();
     (*v)->value.stringValue = "P0010";
     return StatusCode::OK;
 }

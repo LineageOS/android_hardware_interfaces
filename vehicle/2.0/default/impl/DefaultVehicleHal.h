@@ -17,8 +17,11 @@
 #ifndef android_hardware_vehicle_V2_0_impl_DefaultVehicleHal_H_
 #define android_hardware_vehicle_V2_0_impl_DefaultVehicleHal_H_
 
+#include <memory>
+
 #include <VehicleHal.h>
 #include <impl/DefaultConfig.h>
+#include <vehicle_hal_manager/Obd2SensorStore.h>
 #include <utils/SystemClock.h>
 
 namespace android {
@@ -37,6 +40,8 @@ public:
 
     VehiclePropValuePtr get(const VehiclePropValue& requestedPropValue,
                             StatusCode* outStatus) override;
+
+    void onCreate() override;
 
     StatusCode set(const VehiclePropValue& propValue) override;
 
@@ -57,8 +62,8 @@ private:
     StatusCode setHvacTemperature(int32_t areaId, float value);
     StatusCode getHvacDefroster(int32_t areaId, bool* outValue);
     StatusCode setHvacDefroster(int32_t areaId, bool value);
-    StatusCode fillObd2LiveFrame (VehiclePropValuePtr* v);
-    StatusCode fillObd2FreezeFrame (VehiclePropValuePtr* v);
+    StatusCode fillObd2LiveFrame(VehiclePropValuePtr* v);
+    StatusCode fillObd2FreezeFrame(VehiclePropValuePtr* v);
 private:
     int32_t mFanSpeed = 3;
     int32_t mBrightness = 7;
@@ -71,6 +76,7 @@ private:
     bool mHvacAcOn = true;
     bool mHvacAutoOn = true;
     VehicleHvacFanDirection mFanDirection = VehicleHvacFanDirection::FACE;
+    std::unique_ptr<Obd2SensorStore> mObd2SensorStore{nullptr};
 };
 
 }  // impl

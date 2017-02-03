@@ -165,12 +165,14 @@ const VehiclePropConfig kVehicleProperties[] = {
         .prop = VehicleProperty::OBD2_LIVE_FRAME,
         .access = VehiclePropertyAccess::READ,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+        .configArray = {0,0}
     },
 
     {
         .prop = VehicleProperty::OBD2_FREEZE_FRAME,
         .access = VehiclePropertyAccess::READ,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+        .configArray = {0,0}
     }
 };
 
