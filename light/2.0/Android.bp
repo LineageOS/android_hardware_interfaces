@@ -114,38 +114,38 @@ cc_library_shared {
 }
 
 genrule {
-    name: "android.hardware.light@2.0-ILight-vts.profiler_genc++",
+    name: "android.hardware.light@2.0-vts.profiler_genc++",
     tools: ["hidl-gen", "vtsc"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.light@2.0 && $(location vtsc) -mPROFILER -tSOURCE -b$(genDir) android/hardware/light/2.0/ $(genDir)/android/hardware/light/2.0/",
     srcs: [
-        "ILight.hal",
         "types.hal",
+        "ILight.hal",
     ],
     out: [
-        "android/hardware/light/2.0/Light.vts.cpp",
         "android/hardware/light/2.0/types.vts.cpp",
+        "android/hardware/light/2.0/Light.vts.cpp",
     ],
 }
 
 genrule {
-    name: "android.hardware.light@2.0-ILight-vts.profiler_genc++_headers",
+    name: "android.hardware.light@2.0-vts.profiler_genc++_headers",
     tools: ["hidl-gen", "vtsc"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.light@2.0 && $(location vtsc) -mPROFILER -tHEADER -b$(genDir) android/hardware/light/2.0/ $(genDir)/android/hardware/light/2.0/",
     srcs: [
-        "ILight.hal",
         "types.hal",
+        "ILight.hal",
     ],
     out: [
-        "android/hardware/light/2.0/Light.vts.h",
         "android/hardware/light/2.0/types.vts.h",
+        "android/hardware/light/2.0/Light.vts.h",
     ],
 }
 
 cc_library_shared {
-    name: "android.hardware.light@2.0-ILight-vts.profiler",
-    generated_sources: ["android.hardware.light@2.0-ILight-vts.profiler_genc++"],
-    generated_headers: ["android.hardware.light@2.0-ILight-vts.profiler_genc++_headers"],
-    export_generated_headers: ["android.hardware.light@2.0-ILight-vts.profiler_genc++_headers"],
+    name: "android.hardware.light@2.0-vts.profiler",
+    generated_sources: ["android.hardware.light@2.0-vts.profiler_genc++"],
+    generated_headers: ["android.hardware.light@2.0-vts.profiler_genc++_headers"],
+    export_generated_headers: ["android.hardware.light@2.0-vts.profiler_genc++_headers"],
     shared_libs: [
         "libbase",
         "libhidlbase",

@@ -130,84 +130,42 @@ cc_library_shared {
 }
 
 genrule {
-    name: "android.hardware.soundtrigger@2.0-ISoundTriggerHw-vts.profiler_genc++",
+    name: "android.hardware.soundtrigger@2.0-vts.profiler_genc++",
     tools: ["hidl-gen", "vtsc"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.soundtrigger@2.0 && $(location vtsc) -mPROFILER -tSOURCE -b$(genDir) android/hardware/soundtrigger/2.0/ $(genDir)/android/hardware/soundtrigger/2.0/",
     srcs: [
-        "ISoundTriggerHw.hal",
         "types.hal",
+        "ISoundTriggerHw.hal",
+        "ISoundTriggerHwCallback.hal",
     ],
     out: [
+        "android/hardware/soundtrigger/2.0/types.vts.cpp",
         "android/hardware/soundtrigger/2.0/SoundTriggerHw.vts.cpp",
-        "android/hardware/soundtrigger/2.0/types.vts.cpp",
-    ],
-}
-
-genrule {
-    name: "android.hardware.soundtrigger@2.0-ISoundTriggerHw-vts.profiler_genc++_headers",
-    tools: ["hidl-gen", "vtsc"],
-    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.soundtrigger@2.0 && $(location vtsc) -mPROFILER -tHEADER -b$(genDir) android/hardware/soundtrigger/2.0/ $(genDir)/android/hardware/soundtrigger/2.0/",
-    srcs: [
-        "ISoundTriggerHw.hal",
-        "types.hal",
-    ],
-    out: [
-        "android/hardware/soundtrigger/2.0/SoundTriggerHw.vts.h",
-        "android/hardware/soundtrigger/2.0/types.vts.h",
-    ],
-}
-
-cc_library_shared {
-    name: "android.hardware.soundtrigger@2.0-ISoundTriggerHw-vts.profiler",
-    generated_sources: ["android.hardware.soundtrigger@2.0-ISoundTriggerHw-vts.profiler_genc++"],
-    generated_headers: ["android.hardware.soundtrigger@2.0-ISoundTriggerHw-vts.profiler_genc++_headers"],
-    export_generated_headers: ["android.hardware.soundtrigger@2.0-ISoundTriggerHw-vts.profiler_genc++_headers"],
-    shared_libs: [
-        "libbase",
-        "libhidlbase",
-        "libhidltransport",
-        "libvts_profiling",
-        "libvts_multidevice_proto",
-        "libprotobuf-cpp-full",
-        "android.hardware.audio.common@2.0",
-        "android.hidl.base@1.0",
-        "android.hardware.soundtrigger@2.0",
-    ],
-}
-
-genrule {
-    name: "android.hardware.soundtrigger@2.0-ISoundTriggerHwCallback-vts.profiler_genc++",
-    tools: ["hidl-gen", "vtsc"],
-    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.soundtrigger@2.0 && $(location vtsc) -mPROFILER -tSOURCE -b$(genDir) android/hardware/soundtrigger/2.0/ $(genDir)/android/hardware/soundtrigger/2.0/",
-    srcs: [
-        "ISoundTriggerHwCallback.hal",
-        "types.hal",
-    ],
-    out: [
         "android/hardware/soundtrigger/2.0/SoundTriggerHwCallback.vts.cpp",
-        "android/hardware/soundtrigger/2.0/types.vts.cpp",
     ],
 }
 
 genrule {
-    name: "android.hardware.soundtrigger@2.0-ISoundTriggerHwCallback-vts.profiler_genc++_headers",
+    name: "android.hardware.soundtrigger@2.0-vts.profiler_genc++_headers",
     tools: ["hidl-gen", "vtsc"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.soundtrigger@2.0 && $(location vtsc) -mPROFILER -tHEADER -b$(genDir) android/hardware/soundtrigger/2.0/ $(genDir)/android/hardware/soundtrigger/2.0/",
     srcs: [
-        "ISoundTriggerHwCallback.hal",
         "types.hal",
+        "ISoundTriggerHw.hal",
+        "ISoundTriggerHwCallback.hal",
     ],
     out: [
-        "android/hardware/soundtrigger/2.0/SoundTriggerHwCallback.vts.h",
         "android/hardware/soundtrigger/2.0/types.vts.h",
+        "android/hardware/soundtrigger/2.0/SoundTriggerHw.vts.h",
+        "android/hardware/soundtrigger/2.0/SoundTriggerHwCallback.vts.h",
     ],
 }
 
 cc_library_shared {
-    name: "android.hardware.soundtrigger@2.0-ISoundTriggerHwCallback-vts.profiler",
-    generated_sources: ["android.hardware.soundtrigger@2.0-ISoundTriggerHwCallback-vts.profiler_genc++"],
-    generated_headers: ["android.hardware.soundtrigger@2.0-ISoundTriggerHwCallback-vts.profiler_genc++_headers"],
-    export_generated_headers: ["android.hardware.soundtrigger@2.0-ISoundTriggerHwCallback-vts.profiler_genc++_headers"],
+    name: "android.hardware.soundtrigger@2.0-vts.profiler",
+    generated_sources: ["android.hardware.soundtrigger@2.0-vts.profiler_genc++"],
+    generated_headers: ["android.hardware.soundtrigger@2.0-vts.profiler_genc++_headers"],
+    export_generated_headers: ["android.hardware.soundtrigger@2.0-vts.profiler_genc++_headers"],
     shared_libs: [
         "libbase",
         "libhidlbase",

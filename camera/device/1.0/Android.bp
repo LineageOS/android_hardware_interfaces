@@ -76,3 +76,131 @@ cc_library_shared {
         "android.hidl.base@1.0",
     ],
 }
+
+genrule {
+    name: "android.hardware.camera.device.vts.driver@1.0_genc++",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.camera.device@1.0 && $(location vtsc) -mDRIVER -tSOURCE -b$(genDir) android/hardware/camera/device/1.0/ $(genDir)/android/hardware/camera/device/1.0/",
+    srcs: [
+        "types.hal",
+        "ICameraDevice.hal",
+        "ICameraDeviceCallback.hal",
+        "ICameraDevicePreviewCallback.hal",
+    ],
+    out: [
+        "android/hardware/camera/device/1.0/types.vts.cpp",
+        "android/hardware/camera/device/1.0/CameraDevice.vts.cpp",
+        "android/hardware/camera/device/1.0/CameraDeviceCallback.vts.cpp",
+        "android/hardware/camera/device/1.0/CameraDevicePreviewCallback.vts.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.camera.device.vts.driver@1.0_genc++_headers",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.camera.device@1.0 && $(location vtsc) -mDRIVER -tHEADER -b$(genDir) android/hardware/camera/device/1.0/ $(genDir)/android/hardware/camera/device/1.0/",
+    srcs: [
+        "types.hal",
+        "ICameraDevice.hal",
+        "ICameraDeviceCallback.hal",
+        "ICameraDevicePreviewCallback.hal",
+    ],
+    out: [
+        "android/hardware/camera/device/1.0/types.vts.h",
+        "android/hardware/camera/device/1.0/CameraDevice.vts.h",
+        "android/hardware/camera/device/1.0/CameraDeviceCallback.vts.h",
+        "android/hardware/camera/device/1.0/CameraDevicePreviewCallback.vts.h",
+    ],
+}
+
+cc_library_shared {
+    name: "android.hardware.camera.device.vts.driver@1.0",
+    generated_sources: ["android.hardware.camera.device.vts.driver@1.0_genc++"],
+    generated_headers: ["android.hardware.camera.device.vts.driver@1.0_genc++_headers"],
+    export_generated_headers: ["android.hardware.camera.device.vts.driver@1.0_genc++_headers"],
+    shared_libs: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "liblog",
+        "libutils",
+        "libcutils",
+        "libvts_common",
+        "libvts_datatype",
+        "libvts_measurement",
+        "libvts_multidevice_proto",
+        "libcamera_metadata",
+        "libprotobuf-cpp-full",
+        "android.hardware.camera.common@1.0",
+        "android.hardware.graphics.allocator@2.0",
+        "android.hardware.graphics.common@1.0",
+        "android.hidl.base@1.0",
+        "android.hardware.camera.device@1.0",
+    ],
+    export_shared_lib_headers: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "libutils",
+        "android.hardware.camera.common@1.0",
+        "android.hardware.graphics.allocator@2.0",
+        "android.hardware.graphics.common@1.0",
+        "android.hidl.base@1.0",
+    ],
+}
+
+genrule {
+    name: "android.hardware.camera.device@1.0-vts.profiler_genc++",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.camera.device@1.0 && $(location vtsc) -mPROFILER -tSOURCE -b$(genDir) android/hardware/camera/device/1.0/ $(genDir)/android/hardware/camera/device/1.0/",
+    srcs: [
+        "types.hal",
+        "ICameraDevice.hal",
+        "ICameraDeviceCallback.hal",
+        "ICameraDevicePreviewCallback.hal",
+    ],
+    out: [
+        "android/hardware/camera/device/1.0/types.vts.cpp",
+        "android/hardware/camera/device/1.0/CameraDevice.vts.cpp",
+        "android/hardware/camera/device/1.0/CameraDeviceCallback.vts.cpp",
+        "android/hardware/camera/device/1.0/CameraDevicePreviewCallback.vts.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.camera.device@1.0-vts.profiler_genc++_headers",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.camera.device@1.0 && $(location vtsc) -mPROFILER -tHEADER -b$(genDir) android/hardware/camera/device/1.0/ $(genDir)/android/hardware/camera/device/1.0/",
+    srcs: [
+        "types.hal",
+        "ICameraDevice.hal",
+        "ICameraDeviceCallback.hal",
+        "ICameraDevicePreviewCallback.hal",
+    ],
+    out: [
+        "android/hardware/camera/device/1.0/types.vts.h",
+        "android/hardware/camera/device/1.0/CameraDevice.vts.h",
+        "android/hardware/camera/device/1.0/CameraDeviceCallback.vts.h",
+        "android/hardware/camera/device/1.0/CameraDevicePreviewCallback.vts.h",
+    ],
+}
+
+cc_library_shared {
+    name: "android.hardware.camera.device@1.0-vts.profiler",
+    generated_sources: ["android.hardware.camera.device@1.0-vts.profiler_genc++"],
+    generated_headers: ["android.hardware.camera.device@1.0-vts.profiler_genc++_headers"],
+    export_generated_headers: ["android.hardware.camera.device@1.0-vts.profiler_genc++_headers"],
+    shared_libs: [
+        "libbase",
+        "libhidlbase",
+        "libhidltransport",
+        "libvts_profiling",
+        "libvts_multidevice_proto",
+        "libprotobuf-cpp-full",
+        "android.hardware.camera.common@1.0",
+        "android.hardware.graphics.allocator@2.0",
+        "android.hardware.graphics.common@1.0",
+        "android.hidl.base@1.0",
+        "android.hardware.camera.device@1.0",
+    ],
+}

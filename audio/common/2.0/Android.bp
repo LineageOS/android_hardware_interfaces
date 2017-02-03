@@ -44,3 +44,95 @@ cc_library_shared {
         "libutils",
     ],
 }
+
+genrule {
+    name: "android.hardware.audio.common.vts.driver@2.0_genc++",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.audio.common@2.0 && $(location vtsc) -mDRIVER -tSOURCE -b$(genDir) android/hardware/audio/common/2.0/ $(genDir)/android/hardware/audio/common/2.0/",
+    srcs: [
+        "types.hal",
+    ],
+    out: [
+        "android/hardware/audio/common/2.0/types.vts.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.audio.common.vts.driver@2.0_genc++_headers",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.audio.common@2.0 && $(location vtsc) -mDRIVER -tHEADER -b$(genDir) android/hardware/audio/common/2.0/ $(genDir)/android/hardware/audio/common/2.0/",
+    srcs: [
+        "types.hal",
+    ],
+    out: [
+        "android/hardware/audio/common/2.0/types.vts.h",
+    ],
+}
+
+cc_library_shared {
+    name: "android.hardware.audio.common.vts.driver@2.0",
+    generated_sources: ["android.hardware.audio.common.vts.driver@2.0_genc++"],
+    generated_headers: ["android.hardware.audio.common.vts.driver@2.0_genc++_headers"],
+    export_generated_headers: ["android.hardware.audio.common.vts.driver@2.0_genc++_headers"],
+    shared_libs: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "liblog",
+        "libutils",
+        "libcutils",
+        "libvts_common",
+        "libvts_datatype",
+        "libvts_measurement",
+        "libvts_multidevice_proto",
+        "libcamera_metadata",
+        "libprotobuf-cpp-full",
+        "android.hardware.audio.common@2.0",
+    ],
+    export_shared_lib_headers: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "libutils",
+    ],
+}
+
+genrule {
+    name: "android.hardware.audio.common@2.0-vts.profiler_genc++",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.audio.common@2.0 && $(location vtsc) -mPROFILER -tSOURCE -b$(genDir) android/hardware/audio/common/2.0/ $(genDir)/android/hardware/audio/common/2.0/",
+    srcs: [
+        "types.hal",
+    ],
+    out: [
+        "android/hardware/audio/common/2.0/types.vts.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.audio.common@2.0-vts.profiler_genc++_headers",
+    tools: ["hidl-gen", "vtsc"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.audio.common@2.0 && $(location vtsc) -mPROFILER -tHEADER -b$(genDir) android/hardware/audio/common/2.0/ $(genDir)/android/hardware/audio/common/2.0/",
+    srcs: [
+        "types.hal",
+    ],
+    out: [
+        "android/hardware/audio/common/2.0/types.vts.h",
+    ],
+}
+
+cc_library_shared {
+    name: "android.hardware.audio.common@2.0-vts.profiler",
+    generated_sources: ["android.hardware.audio.common@2.0-vts.profiler_genc++"],
+    generated_headers: ["android.hardware.audio.common@2.0-vts.profiler_genc++_headers"],
+    export_generated_headers: ["android.hardware.audio.common@2.0-vts.profiler_genc++_headers"],
+    shared_libs: [
+        "libbase",
+        "libhidlbase",
+        "libhidltransport",
+        "libvts_profiling",
+        "libvts_multidevice_proto",
+        "libprotobuf-cpp-full",
+        "android.hardware.audio.common@2.0",
+    ],
+}
