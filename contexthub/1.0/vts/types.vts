@@ -71,6 +71,7 @@ attribute: {
     struct_value: {
         name: "flags"
         type: TYPE_MASK
+        scalar_type: "uint32_t"
         predefined_type: "::android::hardware::contexthub::V1_0::NanoAppFlags"
     }
     struct_value: {
@@ -411,6 +412,7 @@ attribute: {
     struct_value: {
         name: "flags"
         type: TYPE_MASK
+        scalar_type: "uint32_t"
         predefined_type: "::android::hardware::contexthub::V1_0::HubMemoryFlag"
     }
 }
