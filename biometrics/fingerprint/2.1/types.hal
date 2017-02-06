@@ -49,6 +49,8 @@ enum RequestStatus : int32_t {
  * followed by ERROR_CANCELED.
  */
 enum FingerprintError : int32_t {
+  /* Used for testing, no error returned */
+  ERROR_NO_ERROR = 0,
   /* The hardware has an error that can't be resolved. */
   ERROR_HW_UNAVAILABLE = 1,
   /* Bad data; operation can't continue */
