@@ -23,5 +23,5 @@ using android::hardware::thermal::V1_0::IThermal;
 using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
-    return defaultPassthroughServiceImplementation<IThermal>("thermal");
+    return defaultPassthroughServiceImplementation<IThermal>();
 }

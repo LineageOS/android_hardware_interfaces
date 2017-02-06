@@ -40,7 +40,6 @@ using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::sp;
 
-#define THERMAL_SERVICE_NAME "thermal"
 #define MONITORING_OPERATION_NUMBER 10
 
 #define MAX_DEVICE_TEMPERATURE 200
@@ -50,7 +49,7 @@ using ::android::sp;
 class ThermalHidlTest : public ::testing::Test {
  public:
   virtual void SetUp() override {
-    thermal_ = IThermal::getService(THERMAL_SERVICE_NAME);
+    thermal_ = IThermal::getService();
     ASSERT_NE(thermal_, nullptr);
     baseSize_ = 0;
     names_.clear();
