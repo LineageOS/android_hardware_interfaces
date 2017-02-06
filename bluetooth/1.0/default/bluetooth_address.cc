@@ -83,6 +83,34 @@ bool BluetoothAddress::get_local_address(uint8_t* local_addr) {
     valid_bda = true;
   }
 
+  /* Generate new BDA if necessary */
+  if (!valid_bda) {
+    char bdstr[kStringLength + 1];
+
+    /* No autogen BDA. Generate one now. */
+    local_addr[0] = 0x22;
+    local_addr[1] = 0x22;
+    local_addr[2] = (uint8_t)rand();
+    local_addr[3] = (uint8_t)rand();
+    local_addr[4] = (uint8_t)rand();
+    local_addr[5] = (uint8_t)rand();
+
+    /* Convert to ascii, and store as a persistent property */
+    bytes_to_string(local_addr, bdstr);
+
+    ALOGE("%s: No preset BDA! Generating BDA: %s for prop %s", __func__,
+          (char*)bdstr, PERSIST_BDADDR_PROPERTY);
+    ALOGE("%s: This is a bug in the platform!  Please fix!", __func__);
+
+    if (property_set(PERSIST_BDADDR_PROPERTY, (char*)bdstr) < 0) {
+      ALOGE("%s: Failed to set random BDA in prop %s", __func__,
+            PERSIST_BDADDR_PROPERTY);
+      valid_bda = false;
+    } else {
+      valid_bda = true;
+    }
+  }
+
   return valid_bda;
 }
 
