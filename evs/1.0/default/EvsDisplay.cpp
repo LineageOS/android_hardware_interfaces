@@ -149,7 +149,8 @@ Return<void> EvsDisplay::getTargetBuffer(getTargetBuffer_cb _hidl_cb)  {
         GraphicBufferAllocator& alloc(GraphicBufferAllocator::get());
         status_t result = alloc.allocate(mBuffer.width, mBuffer.height,
                                          mBuffer.format, 1, mBuffer.usage,
-                                         &handle, &mBuffer.stride,
+                                         mBuffer.usage, &handle,
+                                         &mBuffer.stride,
                                          0, "EvsDisplay");
         if (result != NO_ERROR) {
             ALOGE("Error %d allocating %d x %d graphics buffer",
