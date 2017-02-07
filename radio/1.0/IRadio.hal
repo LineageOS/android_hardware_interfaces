@@ -375,23 +375,16 @@ interface IRadio {
      *    number of simultaneous data call contexts.
      *
      * @param serial Serial number of request.
-     * @param radioTechnology Radio technology to use: 0-CDMA, 1-GSM/UMTS, 2...
-     *        for values above 2 this is RadioTechnology + 2.
-     * @param profile is a RadioDataProfile (support is optional)
-     * @param apn is the APN to connect to if radio technology is GSM/UMTS. This APN must
-     *        override the one in the profile. empty string indicates no APN overrride.
-     * @param user is the username for APN, or empty string
-     * @param password is the password for APN, or empty string
-     * @param authType is the PAP / CHAP auth type.
-     * @param protocol is the connection type to request must be one of the
-     *        PDP_type values in TS 27.007 section 10.1.1.
-     *        For example, "IP", "IPV6", "IPV4V6", or "PPP".
+     * @param radioTechnology Radio technology to use.
+     * @param dataProfileInfo data profile info.
+     * @param modemCognitive Indicating this profile was sent to the modem through setDataProfile
+     *        earlier.
+     * @param roamingAllowed Indicating data roaming is allowed or not by the user.
      *
      * Response function is IRadioResponse.setupDataCallResponse()
      */
-    oneway setupDataCall(int32_t serial, int32_t radioTechnology,
-            int32_t profile, string apn, string user, string password, ApnAuthType authType,
-            string protocol);
+    oneway setupDataCall(int32_t serial, RadioTechnology radioTechnology,
+            DataProfileInfo dataProfileInfo, bool modemCognitive, bool roamingAllowed);
 
     /*
      * Request ICC I/O operation.
@@ -847,7 +840,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param accept true = accept the call setup, false = reject the call setup
      *
-     * Response callback is IRadioCallback.handleStkCallSetupRequestFromSimResponse()
+     * Response callback is IRadioResponse.handleStkCallSetupRequestFromSimResponse()
      */
     oneway handleStkCallSetupRequestFromSim(int32_t serial,
             bool accept);
@@ -857,7 +850,7 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioCallback.explicitCallTransferResponse()
+     * Response callback is IRadioResponse.explicitCallTransferResponse()
      */
     oneway explicitCallTransfer(int32_t serial);
 
@@ -868,7 +861,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param nwType PreferredNetworkType defined in types.hal
      *
-     * Response callback is IRadioCallback.setPreferredNetworkTypeResponse()
+     * Response callback is IRadioResponse.setPreferredNetworkTypeResponse()
      */
     oneway setPreferredNetworkType(int32_t serial,
             PreferredNetworkType nwType);
@@ -879,7 +872,7 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioCallback.getPreferredNetworkTypeResponse()
+     * Response callback is IRadioResponse.getPreferredNetworkTypeResponse()
      */
     oneway getPreferredNetworkType(int32_t serial);
 
@@ -888,7 +881,7 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioCallback.getNeighboringCidsResponse()
+     * Response callback is IRadioResponse.getNeighboringCidsResponse()
      */
     oneway getNeighboringCids(int32_t serial);
 
@@ -902,7 +895,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param enable true = updates enabled (+CREG=2), false = updates disabled (+CREG=1)
      *
-     * Response callback is IRadioCallback.setLocationUpdatesResponse()
+     * Response callback is IRadioResponse.setLocationUpdatesResponse()
      */
     oneway setLocationUpdates(int32_t serial, bool enable);
 
@@ -913,7 +906,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param cdmaSub CdmaSubscriptionSource
      *
-     * Response callback is IRadioCallback.setCdmaSubscriptionSourceResponse()
+     * Response callback is IRadioResponse.setCdmaSubscriptionSourceResponse()
      */
     oneway setCdmaSubscriptionSource(int32_t serial,
             CdmaSubscriptionSource cdmaSub);
@@ -924,7 +917,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param type CdmaRoamingType defined in types.hal
      *
-     * Response callback is IRadioCallback.setCdmaRoamingPreferenceResponse()
+     * Response callback is IRadioResponse.setCdmaRoamingPreferenceResponse()
      */
     oneway setCdmaRoamingPreference(int32_t serial,
             CdmaRoamingType type);
@@ -934,7 +927,7 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioCallback.getCdmaRoamingPreferenceResponse()
+     * Response callback is IRadioResponse.getCdmaRoamingPreferenceResponse()
      */
     oneway getCdmaRoamingPreference(int32_t serial);
 
@@ -944,7 +937,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param mode TtyMode
      *
-     * Response callback is IRadioCallback.setTTYModeResponse()
+     * Response callback is IRadioResponse.setTTYModeResponse()
      */
     oneway setTTYMode(int32_t serial, TtyMode mode);
 
@@ -953,7 +946,7 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioCallback.getTTYModeResponse()
+     * Response callback is IRadioResponse.getTTYModeResponse()
      */
     oneway getTTYMode(int32_t serial);
 
@@ -964,7 +957,7 @@ interface IRadio {
      * @param enable false for Standard Privacy Mode (Public Long Code Mask)
      *        true for Enhanced Privacy Mode (Private Long Code Mask)
      *
-     * Response callback is IRadioCallback.setPreferredVoicePrivacyResponse()
+     * Response callback is IRadioResponse.setPreferredVoicePrivacyResponse()
      */
     oneway setPreferredVoicePrivacy(int32_t serial, bool enable);
 
@@ -973,7 +966,7 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioCallback.getPreferredVoicePrivacyResponse()
+     * Response callback is IRadioResponse.getPreferredVoicePrivacyResponse()
      */
     oneway getPreferredVoicePrivacy(int32_t serial);
 
@@ -983,7 +976,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param featureCode String associated with Flash command
      *
-     * Response callback is IRadioCallback.sendCDMAFeatureCodeResponse()
+     * Response callback is IRadioResponse.sendCDMAFeatureCodeResponse()
      */
     oneway sendCDMAFeatureCode(int32_t serial, string featureCode);
 
@@ -995,7 +988,7 @@ interface IRadio {
      * @param on DTMF ON length in milliseconds, or 0 to use default
      * @param off is the DTMF OFF length in milliseconds, or 0 to use default
      *
-     * Response callback is IRadioCallback.sendBurstDtmfResponse()
+     * Response callback is IRadioResponse.sendBurstDtmfResponse()
      */
     oneway sendBurstDtmf(int32_t serial, string dtmf, int32_t on, int32_t off);
 
@@ -1005,7 +998,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param sms Cdma Sms to be sent described by CdmaSmsMessage in types.hal
      *
-     * Response callback is IRadioCallback.sendCdmaSmsResponse()
+     * Response callback is IRadioResponse.sendCdmaSmsResponse()
      */
     oneway sendCdmaSms(int32_t serial, CdmaSmsMessage sms);
 
@@ -1016,7 +1009,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param smsAck Cdma Sms ack to be sent described by CdmaSmsAck in types.hal
      *
-     * Response callback is IRadioCallback.acknowledgeLastIncomingCdmaSmsResponse()
+     * Response callback is IRadioResponse.acknowledgeLastIncomingCdmaSmsResponse()
      */
     oneway acknowledgeLastIncomingCdmaSms(int32_t serial, CdmaSmsAck smsAck);
 
@@ -1025,7 +1018,7 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioCallback.getGsmBroadcastConfigResponse()
+     * Response callback is IRadioResponse.getGsmBroadcastConfigResponse()
      */
     oneway getGsmBroadcastConfig(int32_t serial);
 
@@ -1035,7 +1028,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param configInfo Setting of GSM/WCDMA Cell broadcast config
      *
-     * Response callback is IRadioCallback.setGsmBroadcastConfigResponse()
+     * Response callback is IRadioResponse.setGsmBroadcastConfigResponse()
      */
     oneway setGsmBroadcastConfig(int32_t serial, vec<GsmBroadcastSmsConfigInfo> configInfo);
 
@@ -1046,7 +1039,7 @@ interface IRadio {
      * @param activate indicates to activate or turn off the reception of GSM/WCDMA
      *        Cell Broadcast SMS. true = activate, false = turn off
      *
-     * Response callback is IRadioCallback.setGsmBroadcastActivationResponse()
+     * Response callback is IRadioResponse.setGsmBroadcastActivationResponse()
      */
     oneway setGsmBroadcastActivation(int32_t serial, bool activate);
 
@@ -1055,7 +1048,7 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioCallback.getCdmaBroadcastConfigResponse()
+     * Response callback is IRadioResponse.getCdmaBroadcastConfigResponse()
      */
     oneway getCdmaBroadcastConfig(int32_t serial);
 
@@ -1065,7 +1058,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param configInfo CDMA Broadcast SMS config to be set.
      *
-     * Response callback is IRadioCallback.setCdmaBroadcastConfigResponse()
+     * Response callback is IRadioResponse.setCdmaBroadcastConfigResponse()
      */
     oneway setCdmaBroadcastConfig(int32_t serial, vec<CdmaBroadcastSmsConfigInfo> configInfo);
 
@@ -1076,7 +1069,7 @@ interface IRadio {
      * @param activate indicates to activate or turn off the reception of CDMA
      *        Cell Broadcast SMS. true = activate, false = turn off
      *
-     * Response callback is IRadioCallback.setCdmaBroadcastActivationResponse()
+     * Response callback is IRadioResponse.setCdmaBroadcastActivationResponse()
      */
     oneway setCdmaBroadcastActivation(int32_t serial, bool activate);
 
@@ -1088,7 +1081,7 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioCallback.getCDMASubscriptionResponse()
+     * Response callback is IRadioResponse.getCDMASubscriptionResponse()
      */
     oneway getCDMASubscription(int32_t serial);
 
@@ -1098,7 +1091,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param cdmaSms CDMA message as defined by CdmaSmsWriteArgs in types.hal
      *
-     * Response callback is IRadioCallback.writeSmsToRuimResponse()
+     * Response callback is IRadioResponse.writeSmsToRuimResponse()
      */
     oneway writeSmsToRuim(int32_t serial, CdmaSmsWriteArgs cdmaSms);
 
@@ -1108,7 +1101,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param index record index of the message to delete
      *
-     * Response callback is IRadioCallback.deleteSmsOnRuimResponse()
+     * Response callback is IRadioResponse.deleteSmsOnRuimResponse()
      */
     oneway deleteSmsOnRuim(int32_t serial, int32_t index);
 
@@ -1120,7 +1113,7 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioCallback.getDeviceIdentityResponse()
+     * Response callback is IRadioResponse.getDeviceIdentityResponse()
      */
     oneway getDeviceIdentity(int32_t serial);
 
@@ -1131,7 +1124,7 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioCallback.exitEmergencyCallbackModeResponse()
+     * Response callback is IRadioResponse.exitEmergencyCallbackModeResponse()
      */
     oneway exitEmergencyCallbackMode(int32_t serial);
 
@@ -1140,7 +1133,7 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioCallback.getSmscAddressResponse()
+     * Response callback is IRadioResponse.getSmscAddressResponse()
      */
     oneway getSmscAddress(int32_t serial);
 
@@ -1150,7 +1143,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param smsc Short Message Service Center address to set
      *
-     * Response callback is IRadioCallback.setSmscAddressResponse()
+     * Response callback is IRadioResponse.setSmscAddressResponse()
      */
     oneway setSmscAddress(int32_t serial, string smsc);
 
@@ -1161,7 +1154,7 @@ interface IRadio {
      * @param available true if memory is available for storing new messages,
      *        false if memory capacity is exceeded
      *
-     * Response callback is IRadioCallback.reportSmsMemoryStatusResponse()
+     * Response callback is IRadioResponse.reportSmsMemoryStatusResponse()
      */
     oneway reportSmsMemoryStatus(int32_t serial, bool available);
 
@@ -1171,7 +1164,7 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioCallback.reportStkServiceIsRunningResponse()
+     * Response callback is IRadioResponse.reportStkServiceIsRunningResponse()
      */
     oneway reportStkServiceIsRunning(int32_t serial);
 
@@ -1180,7 +1173,7 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioCallback.getCdmaSubscriptionSourceResponse()
+     * Response callback is IRadioResponse.getCdmaSubscriptionSourceResponse()
      */
     oneway getCdmaSubscriptionSource(int32_t serial);
 
@@ -1191,7 +1184,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param challenge challenge string in Base64 format
      *
-     * Response callback is IRadioCallback.requestIsimAuthenticationResponse()
+     * Response callback is IRadioResponse.requestIsimAuthenticationResponse()
      */
     oneway requestIsimAuthentication(int32_t serial, string challenge);
 
@@ -1205,7 +1198,7 @@ interface IRadio {
      *        false on failed receipt (send RP-ERROR)
      * @param ackPdu acknowledgement TPDU in hexadecimal format
      *
-     * Response callback is IRadioCallback.acknowledgeIncomingGsmSmsWithPduResponse()
+     * Response callback is IRadioResponse.acknowledgeIncomingGsmSmsWithPduResponse()
      */
     oneway acknowledgeIncomingGsmSmsWithPdu(int32_t serial, bool success, string ackPdu);
 
@@ -1224,7 +1217,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param contents SAT/USAT command in hexadecimal format starting with command tag
      *
-     * Response callback is IRadioCallback.sendEnvelopeWithStatusResponse()
+     * Response callback is IRadioResponse.sendEnvelopeWithStatusResponse()
      */
     oneway sendEnvelopeWithStatus(int32_t serial, string contents);
 
@@ -1234,7 +1227,7 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioCallback.getVoiceRadioTechnologyResponse()
+     * Response callback is IRadioResponse.getVoiceRadioTechnologyResponse()
      */
     oneway getVoiceRadioTechnology(int32_t serial);
 
@@ -1246,7 +1239,7 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioCallback.getCellInfoListResponse()
+     * Response callback is IRadioResponse.getCellInfoListResponse()
      */
     oneway getCellInfoList(int32_t serial);
 
@@ -1259,7 +1252,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param rate minimum time in milliseconds to indicate time between unsolicited cellInfoList()
      *
-     * Response callback is IRadioCallback.setCellInfoListRateResponse()
+     * Response callback is IRadioResponse.setCellInfoListRateResponse()
      */
     oneway setCellInfoListRate(int32_t serial, int32_t rate);
 
@@ -1267,26 +1260,21 @@ interface IRadio {
      * Set an apn to initial attach network
      *
      * @param serial Serial number of request.
-     * @param apn is the APN to connect to if radio technology is GSM/UMTS. This APN must
-     *        override the one in the profile. empty string indicates no APN overrride.
-     * @param protocol is the connection type to request must be one of the
-     *        PDP_type values in TS 27.007 section 10.1.1.
-     *        For example, "IP", "IPV6", "IPV4V6", or "PPP".
-     * @param authType is the PAP / CHAP auth type.
-     * @param user is the username for APN, or empty string
-     * @param password is the password for APN, or empty string
+     * @param dataProfileInfo data profile containing APN settings
+     * @param modemCognitive is indicating the data profile was sent to the modem through
+     *        setDataProfile earlier.
      *
-     * Response callback is IRadioCallback.setInitialAttachApnResponse()
+     * Response callback is IRadioResponse.setInitialAttachApnResponse()
      */
-    oneway setInitialAttachApn(int32_t serial, string apn, string protocol, ApnAuthType authType,
-            string username, string password);
+    oneway setInitialAttachApn(int32_t serial, DataProfileInfo dataProfileInfo,
+            bool modemCognitive);
 
     /*
      * Request current IMS registration state
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioCallback.getImsRegistrationStateResponse()
+     * Response callback is IRadioResponse.getImsRegistrationStateResponse()
      */
     oneway getImsRegistrationState(int32_t serial);
 
@@ -1299,7 +1287,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param message ImsSmsMessage as defined in types.hal to be sent
      *
-     * Response callback is IRadioCallback.sendImsSmsResponse()
+     * Response callback is IRadioResponse.sendImsSmsResponse()
      */
     oneway sendImsSms(int32_t serial, ImsSmsMessage message);
 
@@ -1313,7 +1301,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param message SimApdu as defined in types.hal to be sent
      *
-     * Response callback is IRadioCallback.iccTransmitApduBasicChannelResponse()
+     * Response callback is IRadioResponse.iccTransmitApduBasicChannelResponse()
      */
     oneway iccTransmitApduBasicChannel(int32_t serial, SimApdu message);
 
@@ -1324,7 +1312,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param aid AID value, See ETSI 102.221 and 101.220.
      *
-     * Response callback is IRadioCallback.iccOpenLogicalChannelResponse()
+     * Response callback is IRadioResponse.iccOpenLogicalChannelResponse()
      */
     oneway iccOpenLogicalChannel(int32_t serial, string aid);
 
@@ -1335,7 +1323,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param channelId session id of the logical channel (+CCHC).
      *
-     * Response callback is IRadioCallback.iccCloseLogicalChannelResponse()
+     * Response callback is IRadioResponse.iccCloseLogicalChannelResponse()
      */
     oneway iccCloseLogicalChannel(int32_t serial, int32_t channelId);
 
@@ -1348,7 +1336,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param message SimApdu as defined in types.hal to be sent
      *
-     * Response callback is IRadioCallback.iccTransmitApduLogicalChannelResponse()
+     * Response callback is IRadioResponse.iccTransmitApduLogicalChannelResponse()
      */
     oneway iccTransmitApduLogicalChannel(int32_t serial, SimApdu message);
 
@@ -1359,7 +1347,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param itemId NvItem is radio NV item as defined in types.hal
      *
-     * Response callback is IRadioCallback.nvReadItemResponse()
+     * Response callback is IRadioResponse.nvReadItemResponse()
      */
     oneway nvReadItem(int32_t serial, NvItem itemId);
 
@@ -1370,7 +1358,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param item NvWriteItem as defined in types.hal
      *
-     * Response callback is IRadioCallback.nvWriteItemResponse()
+     * Response callback is IRadioResponse.nvWriteItemResponse()
      */
     oneway nvWriteItem(int32_t serial, NvWriteItem item);
 
@@ -1381,7 +1369,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param prl PRL as a byte array
      *
-     * Response callback is IRadioCallback.nvWriteCdmaPrlResponse()
+     * Response callback is IRadioResponse.nvWriteCdmaPrlResponse()
      */
     oneway nvWriteCdmaPrl(int32_t serial, vec<uint8_t> prl);
 
@@ -1392,7 +1380,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param resetType ResetNvType as defined in types.hal
      *
-     * Response callback is IRadioCallback.nvResetConfigResponse()
+     * Response callback is IRadioResponse.nvResetConfigResponse()
      */
     oneway nvResetConfig(int32_t serial, ResetNvType resetType);
 
@@ -1402,7 +1390,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param uiccSub SelectUiccSub as defined in types.hal
      *
-     * Response callback is IRadioCallback.setUiccSubscriptionResponse()
+     * Response callback is IRadioResponse.setUiccSubscriptionResponse()
      */
     oneway setUiccSubscription(int32_t serial, SelectUiccSub uiccSub);
 
@@ -1412,7 +1400,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param allow true to allow data calls, false to disallow data calls
      *
-     * Response callback is IRadioCallback.setDataAllowedResponse()
+     * Response callback is IRadioResponse.setDataAllowedResponse()
      */
     oneway setDataAllowed(int32_t serial, bool allow);
 
@@ -1421,7 +1409,7 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioCallback.getHardwareConfigResponse()
+     * Response callback is IRadioResponse.getHardwareConfigResponse()
      */
     oneway getHardwareConfig(int32_t serial);
 
@@ -1434,7 +1422,7 @@ interface IRadio {
      * @param authData the challenge string in Base64 format, see 3GPP TS 31.102 7.1.2
      * @param aid AID value, See ETSI 102.221 8.1 and 101.220 4, empty string if no value
      *
-     * Response callback is IRadioCallback.requestIccSimAuthenticationResponse()
+     * Response callback is IRadioResponse.requestIccSimAuthenticationResponse()
      */
     oneway requestIccSimAuthentication(int32_t serial, int32_t authContext, string authData,
             string aid);
@@ -1446,7 +1434,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param profiles Array of DataProfiles to set.
      *
-     * Response callback is IRadioCallback.setDataProfileResponse()
+     * Response callback is IRadioResponse.setDataProfileResponse()
      */
     oneway setDataProfile(int32_t serial, vec<DataProfileInfo> profiles);
 
@@ -1456,7 +1444,7 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioCallback.requestShutdownResponse()
+     * Response callback is IRadioResponse.requestShutdownResponse()
      */
     oneway requestShutdown(int32_t serial);
 
@@ -1465,7 +1453,7 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioCallback.getRadioCapabilityResponse()
+     * Response callback is IRadioResponse.getRadioCapabilityResponse()
      */
     oneway getRadioCapability(int32_t serial);
 
@@ -1478,7 +1466,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * @param rc RadioCapability structure to be set
      *
-     * Response callback is IRadioCallback.setRadioCapabilityResponse()
+     * Response callback is IRadioResponse.setRadioCapabilityResponse()
      */
     oneway setRadioCapability(int32_t serial, RadioCapability rc);
 
@@ -1489,7 +1477,7 @@ interface IRadio {
      * @param reportInterval desired reporting interval (ms).
      * @param pullMode LCE service mode. true: PULL; false: PUSH.
      *
-     * Response callback is IRadioCallback.startLceServiceResponse()
+     * Response callback is IRadioResponse.startLceServiceResponse()
      */
     oneway startLceService(int32_t serial, int32_t reportInterval, bool pullMode);
 
@@ -1499,7 +1487,7 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioCallback.stopLceServiceResponse()
+     * Response callback is IRadioResponse.stopLceServiceResponse()
      */
     oneway stopLceService(int32_t serial);
 
@@ -1508,7 +1496,7 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioCallback.pullLceDataResponse()
+     * Response callback is IRadioResponse.pullLceDataResponse()
      */
     oneway pullLceData(int32_t serial);
 
@@ -1520,7 +1508,7 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioCallback.getModemActivityInfoResponse()
+     * Response callback is IRadioResponse.getModemActivityInfoResponse()
      */
     oneway getModemActivityInfo(int32_t serial);
 
@@ -1544,7 +1532,7 @@ interface IRadio {
      * @param carriers CarrierRestrictions consisting allowed and excluded carriers as defined
      *        in types.hal
      *
-     * Response callback is IRadioCallback.setAllowedCarriersResponse()
+     * Response callback is IRadioResponse.setAllowedCarriersResponse()
      */
     oneway setAllowedCarriers(int32_t serial, bool allAllowed, CarrierRestrictions carriers);
 
@@ -1553,14 +1541,40 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioCallback.getAllowedCarriersResponse()
+     * Response callback is IRadioResponse.getAllowedCarriersResponse()
      */
     oneway getAllowedCarriers(int32_t serial);
 
     /*
+     * Send the updated device state.
+     * This is providing the device state information for the modem to perform power saving
+     * strategies.
+     *
+     * @param serial Serial number of request.
+     * @param deviceStateType The updated device state type.
+     * @param state The updated state. See the definition of state at DeviceStateType.
+     *
+     * Response callback is IRadioResponse.sendDeviceStateResponse()
+     */
+    oneway sendDeviceState(int32_t serial, DeviceStateType deviceStateType, bool state);
+
+    /*
+     * Set the indication filter.
+     * This is used to prevent unnecessary application processor wake up for power saving purposes
+     * by suppressing the indications in certain scenarios.
+     *
+     * @param serial Serial number of request.
+     * @param indicationFilter 32-bit bitmap of IndicationFilter. Bits set to 1 indicate the
+     *        indications are enabled. See IndicationFilter for the definition of each bit.
+     *
+     * Response callback is IRadioResponse.setIndicationFilterResponse()
+     */
+    oneway setIndicationFilter(int32_t serial, bitfield<IndicationFilter> indicationFilter);
+
+    /*
      * When response type received from a radio indication or radio response is
      * RadioIndicationType:UNSOLICITED_ACK_EXP or RadioResponseType:SOLICITED_ACK_EXP respectively,
-     * acknowledge the receipt of those messages by sending reseponeAcknowledgement().
+     * acknowledge the receipt of those messages by sending responseAcknowledgement().
      *
      */
     oneway responseAcknowledgement();

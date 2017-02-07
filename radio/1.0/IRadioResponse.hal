@@ -1939,7 +1939,26 @@ interface IRadioResponse {
             CarrierRestrictions carriers);
 
     /*
-     * Acknowldege the receipt of radio request sent to the vendor. This must be sent only for
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     */
+    oneway sendDeviceStateResponse(RadioResponseInfo info);
+
+    /*
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:RADIO_NOT_AVAILABLE
+     */
+    oneway setIndicationFilterResponse(RadioResponseInfo info);
+
+    /*
+     * Acknowledge the receipt of radio request sent to the vendor. This must be sent only for
      * radio request which take long time to respond.
      * For more details, refer https://source.android.com/devices/tech/connect/ril.html
      *
