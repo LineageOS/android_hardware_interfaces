@@ -38,7 +38,6 @@ LOCAL_SHARED_LIBRARIES := \
     libhidltransport \
     libhwbinder \
     liblog \
-    libmediautils \
     libutils \
     android.hardware.audio@2.0 \
     android.hardware.audio.common@2.0 \

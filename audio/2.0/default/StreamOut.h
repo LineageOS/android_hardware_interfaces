@@ -45,7 +45,6 @@ using ::android::hardware::audio::V2_0::IStreamOut;
 using ::android::hardware::audio::V2_0::IStreamOutCallback;
 using ::android::hardware::audio::V2_0::ParameterValue;
 using ::android::hardware::audio::V2_0::Result;
-using ::android::hardware::audio::V2_0::ThreadPriority;
 using ::android::hardware::audio::V2_0::TimeSpec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
@@ -91,8 +90,7 @@ struct StreamOut : public IStreamOut {
     Return<uint32_t> getLatency()  override;
     Return<Result> setVolume(float left, float right)  override;
     Return<void> prepareForWriting(
-            uint32_t frameSize, uint32_t framesCount, ThreadPriority threadPriority,
-            prepareForWriting_cb _hidl_cb)  override;
+            uint32_t frameSize, uint32_t framesCount, prepareForWriting_cb _hidl_cb)  override;
     Return<void> getRenderPosition(getRenderPosition_cb _hidl_cb)  override;
     Return<void> getNextWriteTimestamp(getNextWriteTimestamp_cb _hidl_cb)  override;
     Return<Result> setCallback(const sp<IStreamOutCallback>& callback)  override;

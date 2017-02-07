@@ -933,3 +933,8 @@ struct AudioPort {
         AudioPortSessionExt session;
     } ext;
 };
+
+struct ThreadInfo {
+    int64_t pid;
+    int64_t tid;
+};
