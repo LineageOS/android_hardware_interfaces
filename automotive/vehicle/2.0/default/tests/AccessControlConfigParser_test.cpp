@@ -50,7 +50,7 @@ TEST_F(AccessControlConfigParserTest, basicParsing) {
 
     ASSERT_TRUE(parser->parseFromStream(&file, &aclMap));
 
-    ASSERT_EQ(1, aclMap.size());
+    ASSERT_EQ(1u, aclMap.size());
     auto it = aclMap.find(toInt(VehicleProperty::HVAC_FAN_SPEED));
     ASSERT_NE(aclMap.end(), it);
     ASSERT_EQ(VehiclePropertyAccess::READ_WRITE, it->second.access);
@@ -74,7 +74,7 @@ TEST_F(AccessControlConfigParserTest, multipleUids) {
     for (auto it = range.first; it != range.second; ++it) {
         auto& acl = it->second;
 
-        ASSERT_EQ(1, expectedUids.count(acl.uid))
+        ASSERT_EQ(1u, expectedUids.count(acl.uid))
                 << " uid: " << std::hex << acl.uid;
 
         if (acl.uid == 0xbeef) {
@@ -93,12 +93,12 @@ TEST_F(AccessControlConfigParserTest, fileContainsJunk) {
 
     ASSERT_FALSE(parser->parseFromStream(&file, &aclMap));
 
-    ASSERT_EQ(1, aclMap.size());
+    ASSERT_EQ(1u, aclMap.size());
     auto it = aclMap.find(toInt(VehicleProperty::HVAC_FAN_SPEED));
     ASSERT_NE(aclMap.end(), it);
     ASSERT_EQ(VehiclePropertyAccess::READ, it->second.access);
     ASSERT_EQ(toInt(VehicleProperty::HVAC_FAN_SPEED), it->second.propId);
-    ASSERT_EQ(0xbeef, it->second.uid);
+    ASSERT_EQ(0xBEEFu, it->second.uid);
 }
 
 TEST_F(AccessControlConfigParserTest, badIntegerFormat) {
@@ -106,7 +106,7 @@ TEST_F(AccessControlConfigParserTest, badIntegerFormat) {
     file << "S:0x0500 A12 RW " << std::endl;
 
     ASSERT_FALSE(parser->parseFromStream(&file, &aclMap));
-    ASSERT_EQ(0, aclMap.size());
+    ASSERT_EQ(0u, aclMap.size());
 }
 
 TEST_F(AccessControlConfigParserTest, ignoreNotSupportedProperties) {
@@ -114,7 +114,7 @@ TEST_F(AccessControlConfigParserTest, ignoreNotSupportedProperties) {
     file << "S:0x0666 1000 RW " << std::endl;
 
     ASSERT_FALSE(parser->parseFromStream(&file, &aclMap));
-    ASSERT_EQ(0, aclMap.size());
+    ASSERT_EQ(0u, aclMap.size());
 }
 
 TEST_F(AccessControlConfigParserTest, multipleCalls) {
@@ -122,12 +122,12 @@ TEST_F(AccessControlConfigParserTest, multipleCalls) {
     configFile << "S:0x0500 1000 RW" << std::endl;
 
     ASSERT_TRUE(parser->parseFromStream(&configFile, &aclMap));
-    ASSERT_EQ(1, aclMap.size());
+    ASSERT_EQ(1u, aclMap.size());
 
     std::stringstream configFile2;
     configFile2 << "S:0x0501 1004 RW" << std::endl;
     ASSERT_TRUE(parser->parseFromStream(&configFile2, &aclMap));
-    ASSERT_EQ(2, aclMap.size());
+    ASSERT_EQ(2u, aclMap.size());
 
     auto it = aclMap.find(toInt(VehicleProperty::HVAC_FAN_SPEED));
     ASSERT_NE(aclMap.end(), it);

@@ -103,13 +103,13 @@ public:
         return StatusCode::OK;
     }
 
-    StatusCode subscribe(int32_t property,
-                         int32_t areas,
-                         float sampleRate) override {
+    StatusCode subscribe(int32_t /* property */,
+                         int32_t /* areas */,
+                         float /* sampleRate */) override {
         return StatusCode::OK;
     }
 
-    StatusCode unsubscribe(int32_t property) override {
+    StatusCode unsubscribe(int32_t /* property */) override {
         return StatusCode::OK;
     }
 
@@ -323,20 +323,20 @@ TEST_F(VehicleHalManagerTest, get_Complex) {
     ASSERT_EQ(StatusCode::OK, actualStatusCode);
     ASSERT_EQ(toInt(VehicleProperty::VEHICLE_MAP_SERVICE), actualValue.prop);
 
-    ASSERT_EQ(3, actualValue.value.bytes.size());
+    ASSERT_EQ(3u, actualValue.value.bytes.size());
     ASSERT_EQ(1, actualValue.value.bytes[0]);
     ASSERT_EQ(2, actualValue.value.bytes[1]);
     ASSERT_EQ(3, actualValue.value.bytes[2]);
 
-    ASSERT_EQ(2, actualValue.value.int32Values.size());
+    ASSERT_EQ(2u, actualValue.value.int32Values.size());
     ASSERT_EQ(10, actualValue.value.int32Values[0]);
     ASSERT_EQ(20, actualValue.value.int32Values[1]);
 
-    ASSERT_EQ(2, actualValue.value.floatValues.size());
+    ASSERT_EQ(2u, actualValue.value.floatValues.size());
     ASSERT_FLOAT_EQ(1.1, actualValue.value.floatValues[0]);
     ASSERT_FLOAT_EQ(2.2, actualValue.value.floatValues[1]);
 
-    ASSERT_EQ(2, actualValue.value.int64Values.size());
+    ASSERT_EQ(2u, actualValue.value.int64Values.size());
     ASSERT_FLOAT_EQ(30, actualValue.value.int64Values[0]);
     ASSERT_FLOAT_EQ(40, actualValue.value.int64Values[1]);
 

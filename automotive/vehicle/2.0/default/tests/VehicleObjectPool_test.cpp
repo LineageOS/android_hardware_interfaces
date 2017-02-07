@@ -85,9 +85,9 @@ TEST_F(VehicleObjectPoolTest, valuePoolMultithreadedBenchmark) {
     // In this test we have T threads that concurrently in C cycles
     // obtain and release O VehiclePropValue objects of FLOAT / INT32 types.
 
-    const auto T = 2;
-    const auto C  = 500;
-    const auto O = 100;
+    const int T = 2;
+    const int C = 500;
+    const int O = 100;
 
     auto poolPtr = valuePool.get();
 
@@ -112,10 +112,10 @@ TEST_F(VehicleObjectPoolTest, valuePoolMultithreadedBenchmark) {
     }
     auto finish = elapsedRealtimeNano();
 
-    ASSERT_EQ(T * C * O, stats->Obtained);
-    ASSERT_EQ(T * C * O, stats->Recycled);
+    ASSERT_EQ(static_cast<uint32_t>(T * C * O), stats->Obtained);
+    ASSERT_EQ(static_cast<uint32_t>(T * C * O), stats->Recycled);
     // Created less than obtained.
-    ASSERT_GE(T * O, stats->Created);
+    ASSERT_GE(static_cast<uint32_t>(T * O), stats->Created);
 
     auto elapsedMs = (finish - start) / 1000000;
     ASSERT_GE(1000, elapsedMs);  // Less a second to access 100K objects.
