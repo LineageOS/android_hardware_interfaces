@@ -121,6 +121,7 @@ interface IOmxBufferProducer {
         uint32_t transformHint;
         uint32_t numPendingBuffers;
         uint64_t nextFrameNumber;
+        bool bufferReplaced;
         FrameEventHistoryDelta frameTimestamps;
     };
 
