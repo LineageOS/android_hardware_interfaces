@@ -1,0 +1,2673 @@
+component_class: HAL_HIDL
+component_type_version: 2.0
+component_name: "types"
+
+package: "android.hardware.automotive.vehicle"
+
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehiclePropertyType"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "STRING"
+        scalar_value: {
+            int32_t: 1048576
+        }
+        enumerator: "BOOLEAN"
+        scalar_value: {
+            int32_t: 2097152
+        }
+        enumerator: "INT32"
+        scalar_value: {
+            int32_t: 4194304
+        }
+        enumerator: "INT32_VEC"
+        scalar_value: {
+            int32_t: 4259840
+        }
+        enumerator: "INT64"
+        scalar_value: {
+            int32_t: 5242880
+        }
+        enumerator: "FLOAT"
+        scalar_value: {
+            int32_t: 6291456
+        }
+        enumerator: "FLOAT_VEC"
+        scalar_value: {
+            int32_t: 6356992
+        }
+        enumerator: "BYTES"
+        scalar_value: {
+            int32_t: 7340032
+        }
+        enumerator: "COMPLEX"
+        scalar_value: {
+            int32_t: 14680064
+        }
+        enumerator: "MASK"
+        scalar_value: {
+            int32_t: 16711680
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleArea"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "GLOBAL"
+        scalar_value: {
+            int32_t: 16777216
+        }
+        enumerator: "ZONE"
+        scalar_value: {
+            int32_t: 33554432
+        }
+        enumerator: "WINDOW"
+        scalar_value: {
+            int32_t: 50331648
+        }
+        enumerator: "MIRROR"
+        scalar_value: {
+            int32_t: 67108864
+        }
+        enumerator: "SEAT"
+        scalar_value: {
+            int32_t: 83886080
+        }
+        enumerator: "DOOR"
+        scalar_value: {
+            int32_t: 100663296
+        }
+        enumerator: "MASK"
+        scalar_value: {
+            int32_t: 251658240
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehiclePropertyGroup"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "SYSTEM"
+        scalar_value: {
+            int32_t: 268435456
+        }
+        enumerator: "VENDOR"
+        scalar_value: {
+            int32_t: 536870912
+        }
+        enumerator: "MASK"
+        scalar_value: {
+            int32_t: -268435456
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleProperty"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "INVALID"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "INFO_VIN"
+        scalar_value: {
+            int32_t: 286261504
+        }
+        enumerator: "INFO_MAKE"
+        scalar_value: {
+            int32_t: 286261505
+        }
+        enumerator: "INFO_MODEL"
+        scalar_value: {
+            int32_t: 286261506
+        }
+        enumerator: "INFO_MODEL_YEAR"
+        scalar_value: {
+            int32_t: 289407235
+        }
+        enumerator: "INFO_FUEL_CAPACITY"
+        scalar_value: {
+            int32_t: 291504388
+        }
+        enumerator: "PERF_ODOMETER"
+        scalar_value: {
+            int32_t: 291504644
+        }
+        enumerator: "PERF_VEHICLE_SPEED"
+        scalar_value: {
+            int32_t: 291504647
+        }
+        enumerator: "ENGINE_COOLANT_TEMP"
+        scalar_value: {
+            int32_t: 291504897
+        }
+        enumerator: "ENGINE_OIL_TEMP"
+        scalar_value: {
+            int32_t: 291504900
+        }
+        enumerator: "ENGINE_RPM"
+        scalar_value: {
+            int32_t: 291504901
+        }
+        enumerator: "GEAR_SELECTION"
+        scalar_value: {
+            int32_t: 289408000
+        }
+        enumerator: "CURRENT_GEAR"
+        scalar_value: {
+            int32_t: 289408001
+        }
+        enumerator: "PARKING_BRAKE_ON"
+        scalar_value: {
+            int32_t: 287310850
+        }
+        enumerator: "DRIVING_STATUS"
+        scalar_value: {
+            int32_t: 289408004
+        }
+        enumerator: "FUEL_LEVEL_LOW"
+        scalar_value: {
+            int32_t: 287310853
+        }
+        enumerator: "NIGHT_MODE"
+        scalar_value: {
+            int32_t: 287310855
+        }
+        enumerator: "TURN_SIGNAL_STATE"
+        scalar_value: {
+            int32_t: 289408008
+        }
+        enumerator: "IGNITION_STATE"
+        scalar_value: {
+            int32_t: 289408009
+        }
+        enumerator: "HVAC_FAN_SPEED"
+        scalar_value: {
+            int32_t: 306185472
+        }
+        enumerator: "HVAC_FAN_DIRECTION"
+        scalar_value: {
+            int32_t: 306185473
+        }
+        enumerator: "HVAC_TEMPERATURE_CURRENT"
+        scalar_value: {
+            int32_t: 308282626
+        }
+        enumerator: "HVAC_TEMPERATURE_SET"
+        scalar_value: {
+            int32_t: 308282627
+        }
+        enumerator: "HVAC_DEFROSTER"
+        scalar_value: {
+            int32_t: 320865540
+        }
+        enumerator: "HVAC_AC_ON"
+        scalar_value: {
+            int32_t: 304088325
+        }
+        enumerator: "HVAC_MAX_AC_ON"
+        scalar_value: {
+            int32_t: 304088326
+        }
+        enumerator: "HVAC_MAX_DEFROST_ON"
+        scalar_value: {
+            int32_t: 304088327
+        }
+        enumerator: "HVAC_RECIRC_ON"
+        scalar_value: {
+            int32_t: 304088328
+        }
+        enumerator: "HVAC_DUAL_ON"
+        scalar_value: {
+            int32_t: 304088329
+        }
+        enumerator: "HVAC_AUTO_ON"
+        scalar_value: {
+            int32_t: 304088330
+        }
+        enumerator: "HVAC_SEAT_TEMPERATURE"
+        scalar_value: {
+            int32_t: 356517131
+        }
+        enumerator: "HVAC_SIDE_MIRROR_HEAT"
+        scalar_value: {
+            int32_t: 339739916
+        }
+        enumerator: "HVAC_STEERING_WHEEL_TEMP"
+        scalar_value: {
+            int32_t: 289408269
+        }
+        enumerator: "HVAC_TEMPERATURE_UNITS"
+        scalar_value: {
+            int32_t: 306185486
+        }
+        enumerator: "HVAC_ACTUAL_FAN_SPEED_RPM"
+        scalar_value: {
+            int32_t: 306185487
+        }
+        enumerator: "HVAC_FAN_DIRECTION_AVAILABLE"
+        scalar_value: {
+            int32_t: 306185489
+        }
+        enumerator: "HVAC_POWER_ON"
+        scalar_value: {
+            int32_t: 304088336
+        }
+        enumerator: "ENV_OUTSIDE_TEMPERATURE"
+        scalar_value: {
+            int32_t: 291505923
+        }
+        enumerator: "ENV_CABIN_TEMPERATURE"
+        scalar_value: {
+            int32_t: 291505924
+        }
+        enumerator: "RADIO_PRESET"
+        scalar_value: {
+            int32_t: 289474561
+        }
+        enumerator: "AUDIO_FOCUS"
+        scalar_value: {
+            int32_t: 289474816
+        }
+        enumerator: "AUDIO_VOLUME"
+        scalar_value: {
+            int32_t: 289474817
+        }
+        enumerator: "AUDIO_VOLUME_LIMIT"
+        scalar_value: {
+            int32_t: 289474818
+        }
+        enumerator: "AUDIO_ROUTING_POLICY"
+        scalar_value: {
+            int32_t: 289474819
+        }
+        enumerator: "AUDIO_HW_VARIANT"
+        scalar_value: {
+            int32_t: 289409284
+        }
+        enumerator: "AUDIO_EXT_ROUTING_HINT"
+        scalar_value: {
+            int32_t: 289474821
+        }
+        enumerator: "AP_POWER_STATE"
+        scalar_value: {
+            int32_t: 2560
+        }
+        enumerator: "DISPLAY_BRIGHTNESS"
+        scalar_value: {
+            int32_t: 289409537
+        }
+        enumerator: "AP_POWER_BOOTUP_REASON"
+        scalar_value: {
+            int32_t: 289409538
+        }
+        enumerator: "HW_KEY_INPUT"
+        scalar_value: {
+            int32_t: 289475088
+        }
+        enumerator: "INSTRUMENT_CLUSTER_INFO"
+        scalar_value: {
+            int32_t: 289475104
+        }
+        enumerator: "UNIX_TIME"
+        scalar_value: {
+            int32_t: 290458160
+        }
+        enumerator: "CURRENT_TIME_IN_SECONDS"
+        scalar_value: {
+            int32_t: 289409585
+        }
+        enumerator: "DOOR_POS"
+        scalar_value: {
+            int32_t: 373295872
+        }
+        enumerator: "DOOR_MOVE"
+        scalar_value: {
+            int32_t: 373295873
+        }
+        enumerator: "DOOR_LOCK"
+        scalar_value: {
+            int32_t: 371198722
+        }
+        enumerator: "MIRROR_Z_POS"
+        scalar_value: {
+            int32_t: 339741504
+        }
+        enumerator: "MIRROR_Z_MOVE"
+        scalar_value: {
+            int32_t: 339741505
+        }
+        enumerator: "MIRROR_Y_POS"
+        scalar_value: {
+            int32_t: 339741506
+        }
+        enumerator: "MIRROR_Y_MOVE"
+        scalar_value: {
+            int32_t: 339741507
+        }
+        enumerator: "MIRROR_LOCK"
+        scalar_value: {
+            int32_t: 287312708
+        }
+        enumerator: "MIRROR_FOLD"
+        scalar_value: {
+            int32_t: 287312709
+        }
+        enumerator: "SEAT_MEMORY_SELECT"
+        scalar_value: {
+            int32_t: 356518784
+        }
+        enumerator: "SEAT_MEMORY_SET"
+        scalar_value: {
+            int32_t: 356518785
+        }
+        enumerator: "SEAT_BELT_BUCKLED"
+        scalar_value: {
+            int32_t: 354421634
+        }
+        enumerator: "SEAT_BELT_HEIGHT_POS"
+        scalar_value: {
+            int32_t: 356518787
+        }
+        enumerator: "SEAT_BELT_HEIGHT_MOVE"
+        scalar_value: {
+            int32_t: 356518788
+        }
+        enumerator: "SEAT_FORE_AFT_POS"
+        scalar_value: {
+            int32_t: 356518789
+        }
+        enumerator: "SEAT_FORE_AFT_MOVE"
+        scalar_value: {
+            int32_t: 356518790
+        }
+        enumerator: "SEAT_BACKREST_ANGLE_1_POS"
+        scalar_value: {
+            int32_t: 356518791
+        }
+        enumerator: "SEAT_BACKREST_ANGLE_1_MOVE"
+        scalar_value: {
+            int32_t: 356518792
+        }
+        enumerator: "SEAT_BACKREST_ANGLE_2_POS"
+        scalar_value: {
+            int32_t: 356518793
+        }
+        enumerator: "SEAT_BACKREST_ANGLE_2_MOVE"
+        scalar_value: {
+            int32_t: 356518794
+        }
+        enumerator: "SEAT_HEIGHT_POS"
+        scalar_value: {
+            int32_t: 356518795
+        }
+        enumerator: "SEAT_HEIGHT_MOVE"
+        scalar_value: {
+            int32_t: 356518796
+        }
+        enumerator: "SEAT_DEPTH_POS"
+        scalar_value: {
+            int32_t: 356518797
+        }
+        enumerator: "SEAT_DEPTH_MOVE"
+        scalar_value: {
+            int32_t: 356518798
+        }
+        enumerator: "SEAT_TILT_POS"
+        scalar_value: {
+            int32_t: 356518799
+        }
+        enumerator: "SEAT_TILT_MOVE"
+        scalar_value: {
+            int32_t: 356518800
+        }
+        enumerator: "SEAT_LUMBAR_FORE_AFT_POS"
+        scalar_value: {
+            int32_t: 356518801
+        }
+        enumerator: "SEAT_LUMBAR_FORE_AFT_MOVE"
+        scalar_value: {
+            int32_t: 356518802
+        }
+        enumerator: "SEAT_LUMBAR_SIDE_SUPPORT_POS"
+        scalar_value: {
+            int32_t: 356518803
+        }
+        enumerator: "SEAT_LUMBAR_SIDE_SUPPORT_MOVE"
+        scalar_value: {
+            int32_t: 356518804
+        }
+        enumerator: "SEAT_HEADREST_HEIGHT_POS"
+        scalar_value: {
+            int32_t: 289409941
+        }
+        enumerator: "SEAT_HEADREST_HEIGHT_MOVE"
+        scalar_value: {
+            int32_t: 356518806
+        }
+        enumerator: "SEAT_HEADREST_ANGLE_POS"
+        scalar_value: {
+            int32_t: 356518807
+        }
+        enumerator: "SEAT_HEADREST_ANGLE_MOVE"
+        scalar_value: {
+            int32_t: 356518808
+        }
+        enumerator: "SEAT_HEADREST_FORE_AFT_POS"
+        scalar_value: {
+            int32_t: 356518809
+        }
+        enumerator: "SEAT_HEADREST_FORE_AFT_MOVE"
+        scalar_value: {
+            int32_t: 356518810
+        }
+        enumerator: "WINDOW_POS"
+        scalar_value: {
+            int32_t: 289409984
+        }
+        enumerator: "WINDOW_MOVE"
+        scalar_value: {
+            int32_t: 289409985
+        }
+        enumerator: "WINDOW_VENT_POS"
+        scalar_value: {
+            int32_t: 289409986
+        }
+        enumerator: "WINDOW_VENT_MOVE"
+        scalar_value: {
+            int32_t: 289409987
+        }
+        enumerator: "WINDOW_LOCK"
+        scalar_value: {
+            int32_t: 287312836
+        }
+        enumerator: "VEHICLE_MAP_SERVICE"
+        scalar_value: {
+            int32_t: 299895808
+        }
+        enumerator: "OBD2_LIVE_FRAME"
+        scalar_value: {
+            int32_t: 299896064
+        }
+        enumerator: "OBD2_FREEZE_FRAME"
+        scalar_value: {
+            int32_t: 299896065
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleHvacFanDirection"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "FACE"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "FLOOR"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "FACE_AND_FLOOR"
+        scalar_value: {
+            int32_t: 3
+        }
+        enumerator: "DEFROST"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "DEFROST_AND_FLOOR"
+        scalar_value: {
+            int32_t: 5
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleRadioConstants"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "VEHICLE_RADIO_PRESET_MIN_VALUE"
+        scalar_value: {
+            int32_t: 1
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleAudioFocusRequest"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "REQUEST_GAIN"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "REQUEST_GAIN_TRANSIENT"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "REQUEST_GAIN_TRANSIENT_MAY_DUCK"
+        scalar_value: {
+            int32_t: 3
+        }
+        enumerator: "REQUEST_GAIN_TRANSIENT_NO_DUCK"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "REQUEST_RELEASE"
+        scalar_value: {
+            int32_t: 5
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleAudioFocusState"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "STATE_GAIN"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "STATE_GAIN_TRANSIENT"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "STATE_LOSS_TRANSIENT_CAN_DUCK"
+        scalar_value: {
+            int32_t: 3
+        }
+        enumerator: "STATE_LOSS_TRANSIENT"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "STATE_LOSS"
+        scalar_value: {
+            int32_t: 5
+        }
+        enumerator: "STATE_LOSS_TRANSIENT_EXLCUSIVE"
+        scalar_value: {
+            int32_t: 6
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleAudioStreamFlag"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "STREAM0_FLAG"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "STREAM1_FLAG"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "STREAM2_FLAG"
+        scalar_value: {
+            int32_t: 4
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleAudioStream"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "STREAM0"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "STREAM1"
+        scalar_value: {
+            int32_t: 1
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleAudioExtFocusFlag"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "NONE_FLAG"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "PERMANENT_FLAG"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "TRANSIENT_FLAG"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "PLAY_ONLY_FLAG"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "MUTE_MEDIA_FLAG"
+        scalar_value: {
+            int32_t: 8
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleAudioFocusIndex"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "FOCUS"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "STREAMS"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "EXTERNAL_FOCUS_STATE"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "AUDIO_CONTEXTS"
+        scalar_value: {
+            int32_t: 3
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleAudioContextFlag"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "MUSIC_FLAG"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "NAVIGATION_FLAG"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "VOICE_COMMAND_FLAG"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "CALL_FLAG"
+        scalar_value: {
+            int32_t: 8
+        }
+        enumerator: "ALARM_FLAG"
+        scalar_value: {
+            int32_t: 16
+        }
+        enumerator: "NOTIFICATION_FLAG"
+        scalar_value: {
+            int32_t: 32
+        }
+        enumerator: "UNKNOWN_FLAG"
+        scalar_value: {
+            int32_t: 64
+        }
+        enumerator: "SAFETY_ALERT_FLAG"
+        scalar_value: {
+            int32_t: 128
+        }
+        enumerator: "CD_ROM_FLAG"
+        scalar_value: {
+            int32_t: 256
+        }
+        enumerator: "AUX_AUDIO_FLAG"
+        scalar_value: {
+            int32_t: 512
+        }
+        enumerator: "SYSTEM_SOUND_FLAG"
+        scalar_value: {
+            int32_t: 1024
+        }
+        enumerator: "RADIO_FLAG"
+        scalar_value: {
+            int32_t: 2048
+        }
+        enumerator: "EXT_SOURCE_FLAG"
+        scalar_value: {
+            int32_t: 4096
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleAudioVolumeCapabilityFlag"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "PERSISTENT_STORAGE"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "MASTER_VOLUME_ONLY"
+        scalar_value: {
+            int32_t: 2
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleAudioVolumeState"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "STATE_OK"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "LIMIT_REACHED"
+        scalar_value: {
+            int32_t: 1
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleAudioVolumeIndex"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "INDEX_STREAM"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "INDEX_VOLUME"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "INDEX_STATE"
+        scalar_value: {
+            int32_t: 2
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleAudioVolumeLimitIndex"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "STREAM"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "MAX_VOLUME"
+        scalar_value: {
+            int32_t: 1
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleAudioRoutingPolicyIndex"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "STREAM"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "CONTEXTS"
+        scalar_value: {
+            int32_t: 1
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleAudioHwVariantConfigFlag"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "INTERNAL_RADIO_FLAG"
+        scalar_value: {
+            int32_t: 1
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleApPowerStateConfigFlag"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "ENABLE_DEEP_SLEEP_FLAG"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "CONFIG_SUPPORT_TIMER_POWER_ON_FLAG"
+        scalar_value: {
+            int32_t: 2
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleApPowerState"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "OFF"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "DEEP_SLEEP"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "ON_DISP_OFF"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "ON_FULL"
+        scalar_value: {
+            int32_t: 3
+        }
+        enumerator: "SHUTDOWN_PREPARE"
+        scalar_value: {
+            int32_t: 4
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleApPowerStateShutdownParam"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "SHUTDOWN_IMMEDIATELY"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "CAN_SLEEP"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "SHUTDOWN_ONLY"
+        scalar_value: {
+            int32_t: 3
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleApPowerSetState"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "BOOT_COMPLETE"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "DEEP_SLEEP_ENTRY"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "DEEP_SLEEP_EXIT"
+        scalar_value: {
+            int32_t: 3
+        }
+        enumerator: "SHUTDOWN_POSTPONE"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "SHUTDOWN_START"
+        scalar_value: {
+            int32_t: 5
+        }
+        enumerator: "DISPLAY_OFF"
+        scalar_value: {
+            int32_t: 6
+        }
+        enumerator: "DISPLAY_ON"
+        scalar_value: {
+            int32_t: 7
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleApPowerStateIndex"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "STATE"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "ADDITIONAL"
+        scalar_value: {
+            int32_t: 1
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleApPowerBootupReason"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "USER_POWER_ON"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "USER_UNLOCK"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "TIMER"
+        scalar_value: {
+            int32_t: 2
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleHwKeyInputAction"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "ACTION_DOWN"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "ACTION_UP"
+        scalar_value: {
+            int32_t: 1
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleDisplay"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "MAIN"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "INSTRUMENT_CLUSTER"
+        scalar_value: {
+            int32_t: 1
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleInstrumentClusterType"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "NONE"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "HAL_INTERFACE"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "EXTERNAL_DISPLAY"
+        scalar_value: {
+            int32_t: 2
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleUnit"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "SHOULD_NOT_USE"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "METER_PER_SEC"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "RPM"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "HERTZ"
+        scalar_value: {
+            int32_t: 3
+        }
+        enumerator: "PERCENTILE"
+        scalar_value: {
+            int32_t: 16
+        }
+        enumerator: "MILLIMETER"
+        scalar_value: {
+            int32_t: 32
+        }
+        enumerator: "METER"
+        scalar_value: {
+            int32_t: 33
+        }
+        enumerator: "KILOMETER"
+        scalar_value: {
+            int32_t: 35
+        }
+        enumerator: "CELSIUS"
+        scalar_value: {
+            int32_t: 48
+        }
+        enumerator: "FAHRENHEIT"
+        scalar_value: {
+            int32_t: 49
+        }
+        enumerator: "KELVIN"
+        scalar_value: {
+            int32_t: 50
+        }
+        enumerator: "MILLILITER"
+        scalar_value: {
+            int32_t: 64
+        }
+        enumerator: "NANO_SECS"
+        scalar_value: {
+            int32_t: 80
+        }
+        enumerator: "SECS"
+        scalar_value: {
+            int32_t: 83
+        }
+        enumerator: "YEAR"
+        scalar_value: {
+            int32_t: 89
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehiclePropertyChangeMode"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "STATIC"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "ON_CHANGE"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "CONTINUOUS"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "POLL"
+        scalar_value: {
+            int32_t: 3
+        }
+        enumerator: "ON_SET"
+        scalar_value: {
+            int32_t: 4
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehiclePropertyAccess"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "NONE"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "READ"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "WRITE"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "READ_WRITE"
+        scalar_value: {
+            int32_t: 3
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleDrivingStatus"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "UNRESTRICTED"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "NO_VIDEO"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "NO_KEYBOARD_INPUT"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "NO_VOICE_INPUT"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "NO_CONFIG"
+        scalar_value: {
+            int32_t: 8
+        }
+        enumerator: "LIMIT_MESSAGE_LEN"
+        scalar_value: {
+            int32_t: 16
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleGear"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "GEAR_NEUTRAL"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "GEAR_REVERSE"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "GEAR_PARK"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "GEAR_DRIVE"
+        scalar_value: {
+            int32_t: 8
+        }
+        enumerator: "GEAR_LOW"
+        scalar_value: {
+            int32_t: 16
+        }
+        enumerator: "GEAR_1"
+        scalar_value: {
+            int32_t: 16
+        }
+        enumerator: "GEAR_2"
+        scalar_value: {
+            int32_t: 32
+        }
+        enumerator: "GEAR_3"
+        scalar_value: {
+            int32_t: 64
+        }
+        enumerator: "GEAR_4"
+        scalar_value: {
+            int32_t: 128
+        }
+        enumerator: "GEAR_5"
+        scalar_value: {
+            int32_t: 256
+        }
+        enumerator: "GEAR_6"
+        scalar_value: {
+            int32_t: 512
+        }
+        enumerator: "GEAR_7"
+        scalar_value: {
+            int32_t: 1024
+        }
+        enumerator: "GEAR_8"
+        scalar_value: {
+            int32_t: 2048
+        }
+        enumerator: "GEAR_9"
+        scalar_value: {
+            int32_t: 4096
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleAreaZone"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "ROW_1_LEFT"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "ROW_1_CENTER"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "ROW_1_RIGHT"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "ROW_1"
+        scalar_value: {
+            int32_t: 8
+        }
+        enumerator: "ROW_2_LEFT"
+        scalar_value: {
+            int32_t: 16
+        }
+        enumerator: "ROW_2_CENTER"
+        scalar_value: {
+            int32_t: 32
+        }
+        enumerator: "ROW_2_RIGHT"
+        scalar_value: {
+            int32_t: 64
+        }
+        enumerator: "ROW_2"
+        scalar_value: {
+            int32_t: 128
+        }
+        enumerator: "ROW_3_LEFT"
+        scalar_value: {
+            int32_t: 256
+        }
+        enumerator: "ROW_3_CENTER"
+        scalar_value: {
+            int32_t: 512
+        }
+        enumerator: "ROW_3_RIGHT"
+        scalar_value: {
+            int32_t: 1024
+        }
+        enumerator: "ROW_3"
+        scalar_value: {
+            int32_t: 2048
+        }
+        enumerator: "ROW_4_LEFT"
+        scalar_value: {
+            int32_t: 4096
+        }
+        enumerator: "ROW_4_CENTER"
+        scalar_value: {
+            int32_t: 8192
+        }
+        enumerator: "ROW_4_RIGHT"
+        scalar_value: {
+            int32_t: 16384
+        }
+        enumerator: "ROW_4"
+        scalar_value: {
+            int32_t: 32768
+        }
+        enumerator: "WHOLE_CABIN"
+        scalar_value: {
+            int32_t: -2147483648
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleAreaSeat"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "ROW_1_LEFT"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "ROW_1_CENTER"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "ROW_1_RIGHT"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "ROW_2_LEFT"
+        scalar_value: {
+            int32_t: 16
+        }
+        enumerator: "ROW_2_CENTER"
+        scalar_value: {
+            int32_t: 32
+        }
+        enumerator: "ROW_2_RIGHT"
+        scalar_value: {
+            int32_t: 64
+        }
+        enumerator: "ROW_3_LEFT"
+        scalar_value: {
+            int32_t: 256
+        }
+        enumerator: "ROW_3_CENTER"
+        scalar_value: {
+            int32_t: 512
+        }
+        enumerator: "ROW_3_RIGHT"
+        scalar_value: {
+            int32_t: 1024
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleAreaWindow"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "FRONT_WINDSHIELD"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "REAR_WINDSHIELD"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "ROOF_TOP"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "ROW_1_LEFT"
+        scalar_value: {
+            int32_t: 16
+        }
+        enumerator: "ROW_1_RIGHT"
+        scalar_value: {
+            int32_t: 32
+        }
+        enumerator: "ROW_2_LEFT"
+        scalar_value: {
+            int32_t: 256
+        }
+        enumerator: "ROW_2_RIGHT"
+        scalar_value: {
+            int32_t: 512
+        }
+        enumerator: "ROW_3_LEFT"
+        scalar_value: {
+            int32_t: 4096
+        }
+        enumerator: "ROW_3_RIGHT"
+        scalar_value: {
+            int32_t: 8192
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleAreaDoor"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "ROW_1_LEFT"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "ROW_1_RIGHT"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "ROW_2_LEFT"
+        scalar_value: {
+            int32_t: 16
+        }
+        enumerator: "ROW_2_RIGHT"
+        scalar_value: {
+            int32_t: 64
+        }
+        enumerator: "ROW_3_LEFT"
+        scalar_value: {
+            int32_t: 256
+        }
+        enumerator: "ROW_3_RIGHT"
+        scalar_value: {
+            int32_t: 1024
+        }
+        enumerator: "HOOD"
+        scalar_value: {
+            int32_t: 268435456
+        }
+        enumerator: "REAR"
+        scalar_value: {
+            int32_t: 536870912
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleAreaMirror"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "DRIVER_LEFT"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "DRIVER_RIGHT"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "DRIVER_CENTER"
+        scalar_value: {
+            int32_t: 4
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleTurnSignal"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "NONE"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "RIGHT"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "LEFT"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "EMERGENCY"
+        scalar_value: {
+            int32_t: 4
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleAreaConfig"
+    type: TYPE_STRUCT
+    struct_value: {
+        name: "areaId"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
+    }
+    struct_value: {
+        name: "minInt32Value"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
+    }
+    struct_value: {
+        name: "maxInt32Value"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
+    }
+    struct_value: {
+        name: "minInt64Value"
+        type: TYPE_SCALAR
+        scalar_type: "int64_t"
+    }
+    struct_value: {
+        name: "maxInt64Value"
+        type: TYPE_SCALAR
+        scalar_type: "int64_t"
+    }
+    struct_value: {
+        name: "minFloatValue"
+        type: TYPE_SCALAR
+        scalar_type: "float_t"
+    }
+    struct_value: {
+        name: "maxFloatValue"
+        type: TYPE_SCALAR
+        scalar_type: "float_t"
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehiclePropConfig"
+    type: TYPE_STRUCT
+    struct_value: {
+        name: "prop"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::automotive::vehicle::V2_0::VehicleProperty"
+    }
+    struct_value: {
+        name: "access"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::automotive::vehicle::V2_0::VehiclePropertyAccess"
+    }
+    struct_value: {
+        name: "changeMode"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::automotive::vehicle::V2_0::VehiclePropertyChangeMode"
+    }
+    struct_value: {
+        name: "supportedAreas"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
+    }
+    struct_value: {
+        name: "areaConfigs"
+        type: TYPE_VECTOR
+        vector_value: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::automotive::vehicle::V2_0::VehicleAreaConfig"
+        }
+    }
+    struct_value: {
+        name: "configFlags"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
+    }
+    struct_value: {
+        name: "configArray"
+        type: TYPE_VECTOR
+        vector_value: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+    }
+    struct_value: {
+        name: "configString"
+        type: TYPE_STRING
+    }
+    struct_value: {
+        name: "minSampleRate"
+        type: TYPE_SCALAR
+        scalar_type: "float_t"
+    }
+    struct_value: {
+        name: "maxSampleRate"
+        type: TYPE_SCALAR
+        scalar_type: "float_t"
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehiclePropValue"
+    type: TYPE_STRUCT
+    sub_struct: {
+        name: "::android::hardware::automotive::vehicle::V2_0::VehiclePropValue::RawValue"
+        type: TYPE_STRUCT
+        struct_value: {
+            name: "int32Values"
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "int32_t"
+            }
+        }
+        struct_value: {
+            name: "floatValues"
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "float_t"
+            }
+        }
+        struct_value: {
+            name: "int64Values"
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "int64_t"
+            }
+        }
+        struct_value: {
+            name: "bytes"
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+        struct_value: {
+            name: "stringValue"
+            type: TYPE_STRING
+        }
+    }
+    struct_value: {
+        name: "prop"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::automotive::vehicle::V2_0::VehicleProperty"
+    }
+    struct_value: {
+        name: "timestamp"
+        type: TYPE_SCALAR
+        scalar_type: "int64_t"
+    }
+    struct_value: {
+        name: "areaId"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
+    }
+    struct_value: {
+        name: "value"
+        type: TYPE_STRUCT
+        predefined_type: "::android::hardware::automotive::vehicle::V2_0::VehiclePropValue::RawValue"
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehicleIgnitionState"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "UNDEFINED"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "LOCK"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "OFF"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "ACC"
+        scalar_value: {
+            int32_t: 3
+        }
+        enumerator: "ON"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "START"
+        scalar_value: {
+            int32_t: 5
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VehiclePropertyOperation"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "GENERIC"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "SET"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "GET"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "SUBSCRIBE"
+        scalar_value: {
+            int32_t: 3
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::SubscribeFlags"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "UNDEFINED"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "HAL_EVENT"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "SET_CALL"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "DEFAULT"
+        scalar_value: {
+            int32_t: 1
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::SubscribeOptions"
+    type: TYPE_STRUCT
+    struct_value: {
+        name: "propId"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::automotive::vehicle::V2_0::VehicleProperty"
+    }
+    struct_value: {
+        name: "vehicleAreas"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
+    }
+    struct_value: {
+        name: "sampleRate"
+        type: TYPE_SCALAR
+        scalar_type: "float_t"
+    }
+    struct_value: {
+        name: "flags"
+        type: TYPE_ENUM
+        predefined_type: "::android::hardware::automotive::vehicle::V2_0::SubscribeFlags"
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::StatusCode"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "OK"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "TRY_AGAIN"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "INVALID_ARG"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "NOT_AVAILABLE"
+        scalar_value: {
+            int32_t: 3
+        }
+        enumerator: "ACCESS_DENIED"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "INTERNAL_ERROR"
+        scalar_value: {
+            int32_t: 5
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::FuelSystemStatus"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "OPEN_INSUFFICIENT_ENGINE_TEMPERATURE"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "CLOSED_LOOP"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "OPEN_ENGINE_LOAD_OR_DECELERATION"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "OPEN_SYSTEM_FAILURE"
+        scalar_value: {
+            int32_t: 8
+        }
+        enumerator: "CLOSED_LOOP_BUT_FEEDBACK_FAULT"
+        scalar_value: {
+            int32_t: 16
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::IgnitionMonitorKind"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "SPARK"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "COMPRESSION"
+        scalar_value: {
+            int32_t: 1
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::CommonIgnitionMonitors"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "COMPONENTS_AVAILABLE"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "COMPONENTS_INCOMPLETE"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "FUEL_SYSTEM_AVAILABLE"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "FUEL_SYSTEM_INCOMPLETE"
+        scalar_value: {
+            int32_t: 8
+        }
+        enumerator: "MISFIRE_AVAILABLE"
+        scalar_value: {
+            int32_t: 16
+        }
+        enumerator: "MISFIRE_INCOMPLETE"
+        scalar_value: {
+            int32_t: 32
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::SparkIgnitionMonitors"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "COMPONENTS_AVAILABLE"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "COMPONENTS_INCOMPLETE"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "FUEL_SYSTEM_AVAILABLE"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "FUEL_SYSTEM_INCOMPLETE"
+        scalar_value: {
+            int32_t: 8
+        }
+        enumerator: "MISFIRE_AVAILABLE"
+        scalar_value: {
+            int32_t: 16
+        }
+        enumerator: "MISFIRE_INCOMPLETE"
+        scalar_value: {
+            int32_t: 32
+        }
+        enumerator: "EGR_AVAILABLE"
+        scalar_value: {
+            int32_t: 64
+        }
+        enumerator: "EGR_INCOMPLETE"
+        scalar_value: {
+            int32_t: 128
+        }
+        enumerator: "OXYGEN_SENSOR_HEATER_AVAILABLE"
+        scalar_value: {
+            int32_t: 256
+        }
+        enumerator: "OXYGEN_SENSOR_HEATER_INCOMPLETE"
+        scalar_value: {
+            int32_t: 512
+        }
+        enumerator: "OXYGEN_SENSOR_AVAILABLE"
+        scalar_value: {
+            int32_t: 1024
+        }
+        enumerator: "OXYGEN_SENSOR_INCOMPLETE"
+        scalar_value: {
+            int32_t: 2048
+        }
+        enumerator: "AC_REFRIGERANT_AVAILABLE"
+        scalar_value: {
+            int32_t: 4096
+        }
+        enumerator: "AC_REFRIGERANT_INCOMPLETE"
+        scalar_value: {
+            int32_t: 8192
+        }
+        enumerator: "SECONDARY_AIR_SYSTEM_AVAILABLE"
+        scalar_value: {
+            int32_t: 16384
+        }
+        enumerator: "SECONDARY_AIR_SYSTEM_INCOMPLETE"
+        scalar_value: {
+            int32_t: 32768
+        }
+        enumerator: "EVAPORATIVE_SYSTEM_AVAILABLE"
+        scalar_value: {
+            int32_t: 65536
+        }
+        enumerator: "EVAPORATIVE_SYSTEM_INCOMPLETE"
+        scalar_value: {
+            int32_t: 131072
+        }
+        enumerator: "HEATED_CATALYST_AVAILABLE"
+        scalar_value: {
+            int32_t: 262144
+        }
+        enumerator: "HEATED_CATALYST_INCOMPLETE"
+        scalar_value: {
+            int32_t: 524288
+        }
+        enumerator: "CATALYST_AVAILABLE"
+        scalar_value: {
+            int32_t: 1048576
+        }
+        enumerator: "CATALYST_INCOMPLETE"
+        scalar_value: {
+            int32_t: 2097152
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::CompressionIgnitionMonitors"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "COMPONENTS_AVAILABLE"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "COMPONENTS_INCOMPLETE"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "FUEL_SYSTEM_AVAILABLE"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "FUEL_SYSTEM_INCOMPLETE"
+        scalar_value: {
+            int32_t: 8
+        }
+        enumerator: "MISFIRE_AVAILABLE"
+        scalar_value: {
+            int32_t: 16
+        }
+        enumerator: "MISFIRE_INCOMPLETE"
+        scalar_value: {
+            int32_t: 32
+        }
+        enumerator: "EGR_OR_VVT_AVAILABLE"
+        scalar_value: {
+            int32_t: 64
+        }
+        enumerator: "EGR_OR_VVT_INCOMPLETE"
+        scalar_value: {
+            int32_t: 128
+        }
+        enumerator: "PM_FILTER_AVAILABLE"
+        scalar_value: {
+            int32_t: 256
+        }
+        enumerator: "PM_FILTER_INCOMPLETE"
+        scalar_value: {
+            int32_t: 512
+        }
+        enumerator: "EXHAUST_GAS_SENSOR_AVAILABLE"
+        scalar_value: {
+            int32_t: 1024
+        }
+        enumerator: "EXHAUST_GAS_SENSOR_INCOMPLETE"
+        scalar_value: {
+            int32_t: 2048
+        }
+        enumerator: "BOOST_PRESSURE_AVAILABLE"
+        scalar_value: {
+            int32_t: 4096
+        }
+        enumerator: "BOOST_PRESSURE_INCOMPLETE"
+        scalar_value: {
+            int32_t: 8192
+        }
+        enumerator: "NOx_SCR__AVAILABLE"
+        scalar_value: {
+            int32_t: 16384
+        }
+        enumerator: "NOx_SCR_INCOMPLETE"
+        scalar_value: {
+            int32_t: 32768
+        }
+        enumerator: "NMHC_CATALYST_AVAILABLE"
+        scalar_value: {
+            int32_t: 65536
+        }
+        enumerator: "NMHC_CATALYST_INCOMPLETE"
+        scalar_value: {
+            int32_t: 131072
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::SecondaryAirStatus"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "UPSTREAM"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "DOWNSTREAM_OF_CATALYCIC_CONVERTER"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "FROM_OUTSIDE_OR_OFF"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "PUMP_ON_FOR_DIAGNOSTICS"
+        scalar_value: {
+            int32_t: 8
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::FuelType"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "NOT_AVAILABLE"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "GASOLINE"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "METHANOL"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "ETHANOL"
+        scalar_value: {
+            int32_t: 3
+        }
+        enumerator: "DIESEL"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "LPG"
+        scalar_value: {
+            int32_t: 5
+        }
+        enumerator: "CNG"
+        scalar_value: {
+            int32_t: 6
+        }
+        enumerator: "PROPANE"
+        scalar_value: {
+            int32_t: 7
+        }
+        enumerator: "ELECTRIC"
+        scalar_value: {
+            int32_t: 8
+        }
+        enumerator: "BIFUEL_RUNNING_GASOLINE"
+        scalar_value: {
+            int32_t: 9
+        }
+        enumerator: "BIFUEL_RUNNING_METHANOL"
+        scalar_value: {
+            int32_t: 10
+        }
+        enumerator: "BIFUEL_RUNNING_ETHANOL"
+        scalar_value: {
+            int32_t: 11
+        }
+        enumerator: "BIFUEL_RUNNING_LPG"
+        scalar_value: {
+            int32_t: 12
+        }
+        enumerator: "BIFUEL_RUNNING_CNG"
+        scalar_value: {
+            int32_t: 13
+        }
+        enumerator: "BIFUEL_RUNNING_PROPANE"
+        scalar_value: {
+            int32_t: 14
+        }
+        enumerator: "BIFUEL_RUNNING_ELECTRIC"
+        scalar_value: {
+            int32_t: 15
+        }
+        enumerator: "BIFUEL_RUNNING_ELECTRIC_AND_COMBUSTION"
+        scalar_value: {
+            int32_t: 16
+        }
+        enumerator: "HYBRID_GASOLINE"
+        scalar_value: {
+            int32_t: 17
+        }
+        enumerator: "HYBRID_ETHANOL"
+        scalar_value: {
+            int32_t: 18
+        }
+        enumerator: "HYBRID_DIESEL"
+        scalar_value: {
+            int32_t: 19
+        }
+        enumerator: "HYBRID_ELECTRIC"
+        scalar_value: {
+            int32_t: 20
+        }
+        enumerator: "HYBRID_RUNNING_ELECTRIC_AND_COMBUSTION"
+        scalar_value: {
+            int32_t: 21
+        }
+        enumerator: "HYBRID_REGENERATIVE"
+        scalar_value: {
+            int32_t: 22
+        }
+        enumerator: "BIFUEL_RUNNING_DIESEL"
+        scalar_value: {
+            int32_t: 23
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::Obd2IntegerSensorIndex"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "FUEL_SYSTEM_STATUS"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "MALFUNCTION_INDICATOR_LIGHT_ON"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "IGNITION_MONITORS_SUPPORTED"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "COMMANDED_SECONDARY_AIR_STATUS"
+        scalar_value: {
+            int32_t: 5
+        }
+        enumerator: "NUM_OXYGEN_SENSORS_PRESENT"
+        scalar_value: {
+            int32_t: 6
+        }
+        enumerator: "RUNTIME_SINCE_ENGINE_START"
+        scalar_value: {
+            int32_t: 7
+        }
+        enumerator: "DISTANCE_TRAVELED_WITH_MALFUNCTION_INDICATOR_LIGHT_ON"
+        scalar_value: {
+            int32_t: 8
+        }
+        enumerator: "WARMUPS_SINCE_CODES_CLEARED"
+        scalar_value: {
+            int32_t: 9
+        }
+        enumerator: "DISTANCE_TRAVELED_SINCE_CODES_CLEARED"
+        scalar_value: {
+            int32_t: 10
+        }
+        enumerator: "ABSOLUTE_BAROMETRIC_PRESSURE"
+        scalar_value: {
+            int32_t: 11
+        }
+        enumerator: "CONTROL_MODULE_VOLTAGE"
+        scalar_value: {
+            int32_t: 12
+        }
+        enumerator: "AMBIENT_AIR_TEMPERATURE"
+        scalar_value: {
+            int32_t: 13
+        }
+        enumerator: "TIME_WITH_MALFUNCTION_LIGHT_ON"
+        scalar_value: {
+            int32_t: 14
+        }
+        enumerator: "TIME_SINCE_TROUBLE_CODES_CLEARED"
+        scalar_value: {
+            int32_t: 15
+        }
+        enumerator: "MAX_FUEL_AIR_EQUIVALENCE_RATIO"
+        scalar_value: {
+            int32_t: 16
+        }
+        enumerator: "MAX_OXYGEN_SENSOR_VOLTAGE"
+        scalar_value: {
+            int32_t: 17
+        }
+        enumerator: "MAX_OXYGEN_SENSOR_CURRENT"
+        scalar_value: {
+            int32_t: 18
+        }
+        enumerator: "MAX_INTAKE_MANIFOLD_ABSOLUTE_PRESSURE"
+        scalar_value: {
+            int32_t: 19
+        }
+        enumerator: "MAX_AIR_FLOW_RATE_FROM_MASS_AIR_FLOW_SENSOR"
+        scalar_value: {
+            int32_t: 20
+        }
+        enumerator: "FUEL_TYPE"
+        scalar_value: {
+            int32_t: 21
+        }
+        enumerator: "FUEL_RAIL_ABSOLUTE_PRESSURE"
+        scalar_value: {
+            int32_t: 22
+        }
+        enumerator: "ENGINE_OIL_TEMPERATURE"
+        scalar_value: {
+            int32_t: 23
+        }
+        enumerator: "DRIVER_DEMAND_PERCENT_TORQUE"
+        scalar_value: {
+            int32_t: 24
+        }
+        enumerator: "ENGINE_ACTUAL_PERCENT_TORQUE"
+        scalar_value: {
+            int32_t: 25
+        }
+        enumerator: "ENGINE_REFERENCE_PERCENT_TORQUE"
+        scalar_value: {
+            int32_t: 26
+        }
+        enumerator: "ENGINE_PERCENT_TORQUE_DATA_IDLE"
+        scalar_value: {
+            int32_t: 27
+        }
+        enumerator: "ENGINE_PERCENT_TORQUE_DATA_POINT1"
+        scalar_value: {
+            int32_t: 28
+        }
+        enumerator: "ENGINE_PERCENT_TORQUE_DATA_POINT2"
+        scalar_value: {
+            int32_t: 29
+        }
+        enumerator: "ENGINE_PERCENT_TORQUE_DATA_POINT3"
+        scalar_value: {
+            int32_t: 30
+        }
+        enumerator: "ENGINE_PERCENT_TORQUE_DATA_POINT4"
+        scalar_value: {
+            int32_t: 31
+        }
+        enumerator: "LAST_SYSTEM_INDEX"
+        scalar_value: {
+            int32_t: 31
+        }
+        enumerator: "VENDOR_START_INDEX"
+        scalar_value: {
+            int32_t: 32
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::Obd2FloatSensorIndex"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "CALCULATED_ENGINE_LOAD"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "ENGINE_COOLANT_TEMPERATURE"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "SHORT_TERM_FUEL_TRIM_BANK1"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "LONG_TERM_FUEL_TRIM_BANK1"
+        scalar_value: {
+            int32_t: 3
+        }
+        enumerator: "SHORT_TERM_FUEL_TRIM_BANK2"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "LONG_TERM_FUEL_TRIM_BANK2"
+        scalar_value: {
+            int32_t: 5
+        }
+        enumerator: "FUEL_PRESSURE"
+        scalar_value: {
+            int32_t: 6
+        }
+        enumerator: "INTAKE_MANIFOLD_ABSOLUTE_PRESSURE"
+        scalar_value: {
+            int32_t: 7
+        }
+        enumerator: "ENGINE_RPM"
+        scalar_value: {
+            int32_t: 8
+        }
+        enumerator: "VEHICLE_SPEED"
+        scalar_value: {
+            int32_t: 9
+        }
+        enumerator: "TIMING_ADVANCE"
+        scalar_value: {
+            int32_t: 10
+        }
+        enumerator: "MAF_AIR_FLOW_RATE"
+        scalar_value: {
+            int32_t: 11
+        }
+        enumerator: "THROTTLE_POSITION"
+        scalar_value: {
+            int32_t: 12
+        }
+        enumerator: "OXYGEN_SENSOR1_VOLTAGE"
+        scalar_value: {
+            int32_t: 13
+        }
+        enumerator: "OXYGEN_SENSOR1_SHORT_TERM_FUEL_TRIM"
+        scalar_value: {
+            int32_t: 14
+        }
+        enumerator: "OXYGEN_SENSOR1_FUEL_AIR_EQUIVALENCE_RATIO"
+        scalar_value: {
+            int32_t: 15
+        }
+        enumerator: "OXYGEN_SENSOR2_VOLTAGE"
+        scalar_value: {
+            int32_t: 16
+        }
+        enumerator: "OXYGEN_SENSOR2_SHORT_TERM_FUEL_TRIM"
+        scalar_value: {
+            int32_t: 17
+        }
+        enumerator: "OXYGEN_SENSOR2_FUEL_AIR_EQUIVALENCE_RATIO"
+        scalar_value: {
+            int32_t: 18
+        }
+        enumerator: "OXYGEN_SENSOR3_VOLTAGE"
+        scalar_value: {
+            int32_t: 19
+        }
+        enumerator: "OXYGEN_SENSOR3_SHORT_TERM_FUEL_TRIM"
+        scalar_value: {
+            int32_t: 20
+        }
+        enumerator: "OXYGEN_SENSOR3_FUEL_AIR_EQUIVALENCE_RATIO"
+        scalar_value: {
+            int32_t: 21
+        }
+        enumerator: "OXYGEN_SENSOR4_VOLTAGE"
+        scalar_value: {
+            int32_t: 22
+        }
+        enumerator: "OXYGEN_SENSOR4_SHORT_TERM_FUEL_TRIM"
+        scalar_value: {
+            int32_t: 23
+        }
+        enumerator: "OXYGEN_SENSOR4_FUEL_AIR_EQUIVALENCE_RATIO"
+        scalar_value: {
+            int32_t: 24
+        }
+        enumerator: "OXYGEN_SENSOR5_VOLTAGE"
+        scalar_value: {
+            int32_t: 25
+        }
+        enumerator: "OXYGEN_SENSOR5_SHORT_TERM_FUEL_TRIM"
+        scalar_value: {
+            int32_t: 26
+        }
+        enumerator: "OXYGEN_SENSOR5_FUEL_AIR_EQUIVALENCE_RATIO"
+        scalar_value: {
+            int32_t: 27
+        }
+        enumerator: "OXYGEN_SENSOR6_VOLTAGE"
+        scalar_value: {
+            int32_t: 28
+        }
+        enumerator: "OXYGEN_SENSOR6_SHORT_TERM_FUEL_TRIM"
+        scalar_value: {
+            int32_t: 29
+        }
+        enumerator: "OXYGEN_SENSOR6_FUEL_AIR_EQUIVALENCE_RATIO"
+        scalar_value: {
+            int32_t: 30
+        }
+        enumerator: "OXYGEN_SENSOR7_VOLTAGE"
+        scalar_value: {
+            int32_t: 31
+        }
+        enumerator: "OXYGEN_SENSOR7_SHORT_TERM_FUEL_TRIM"
+        scalar_value: {
+            int32_t: 32
+        }
+        enumerator: "OXYGEN_SENSOR7_FUEL_AIR_EQUIVALENCE_RATIO"
+        scalar_value: {
+            int32_t: 33
+        }
+        enumerator: "OXYGEN_SENSOR8_VOLTAGE"
+        scalar_value: {
+            int32_t: 34
+        }
+        enumerator: "OXYGEN_SENSOR8_SHORT_TERM_FUEL_TRIM"
+        scalar_value: {
+            int32_t: 35
+        }
+        enumerator: "OXYGEN_SENSOR8_FUEL_AIR_EQUIVALENCE_RATIO"
+        scalar_value: {
+            int32_t: 36
+        }
+        enumerator: "FUEL_RAIL_PRESSURE"
+        scalar_value: {
+            int32_t: 37
+        }
+        enumerator: "FUEL_RAIL_GAUGE_PRESSURE"
+        scalar_value: {
+            int32_t: 38
+        }
+        enumerator: "COMMANDED_EXHAUST_GAS_RECIRCULATION"
+        scalar_value: {
+            int32_t: 39
+        }
+        enumerator: "EXHAUST_GAS_RECIRCULATION_ERROR"
+        scalar_value: {
+            int32_t: 40
+        }
+        enumerator: "COMMANDED_EVAPORATIVE_PURGE"
+        scalar_value: {
+            int32_t: 41
+        }
+        enumerator: "FUEL_TANK_LEVEL_INPUT"
+        scalar_value: {
+            int32_t: 42
+        }
+        enumerator: "EVAPORATION_SYSTEM_VAPOR_PRESSURE"
+        scalar_value: {
+            int32_t: 43
+        }
+        enumerator: "CATALYST_TEMPERATURE_BANK1_SENSOR1"
+        scalar_value: {
+            int32_t: 44
+        }
+        enumerator: "CATALYST_TEMPERATURE_BANK2_SENSOR1"
+        scalar_value: {
+            int32_t: 45
+        }
+        enumerator: "CATALYST_TEMPERATURE_BANK1_SENSOR2"
+        scalar_value: {
+            int32_t: 46
+        }
+        enumerator: "CATALYST_TEMPERATURE_BANK2_SENSOR2"
+        scalar_value: {
+            int32_t: 47
+        }
+        enumerator: "ABSOLUTE_LOAD_VALUE"
+        scalar_value: {
+            int32_t: 48
+        }
+        enumerator: "FUEL_AIR_COMMANDED_EQUIVALENCE_RATIO"
+        scalar_value: {
+            int32_t: 49
+        }
+        enumerator: "RELATIVE_THROTTLE_POSITION"
+        scalar_value: {
+            int32_t: 50
+        }
+        enumerator: "ABSOLUTE_THROTTLE_POSITION_B"
+        scalar_value: {
+            int32_t: 51
+        }
+        enumerator: "ABSOLUTE_THROTTLE_POSITION_C"
+        scalar_value: {
+            int32_t: 52
+        }
+        enumerator: "ACCELERATOR_PEDAL_POSITION_D"
+        scalar_value: {
+            int32_t: 53
+        }
+        enumerator: "ACCELERATOR_PEDAL_POSITION_E"
+        scalar_value: {
+            int32_t: 54
+        }
+        enumerator: "ACCELERATOR_PEDAL_POSITION_F"
+        scalar_value: {
+            int32_t: 55
+        }
+        enumerator: "COMMANDED_THROTTLE_ACTUATOR"
+        scalar_value: {
+            int32_t: 56
+        }
+        enumerator: "ETHANOL_FUEL_PERCENTAGE"
+        scalar_value: {
+            int32_t: 57
+        }
+        enumerator: "ABSOLUTE_EVAPORATION_SYSTEM_VAPOR_PRESSURE"
+        scalar_value: {
+            int32_t: 58
+        }
+        enumerator: "SHORT_TERM_SECONDARY_OXYGEN_SENSOR_TRIM_BANK1"
+        scalar_value: {
+            int32_t: 59
+        }
+        enumerator: "SHORT_TERM_SECONDARY_OXYGEN_SENSOR_TRIM_BANK2"
+        scalar_value: {
+            int32_t: 60
+        }
+        enumerator: "SHORT_TERM_SECONDARY_OXYGEN_SENSOR_TRIM_BANK3"
+        scalar_value: {
+            int32_t: 61
+        }
+        enumerator: "SHORT_TERM_SECONDARY_OXYGEN_SENSOR_TRIM_BANK4"
+        scalar_value: {
+            int32_t: 62
+        }
+        enumerator: "LONG_TERM_SECONDARY_OXYGEN_SENSOR_TRIM_BANK1"
+        scalar_value: {
+            int32_t: 63
+        }
+        enumerator: "LONG_TERM_SECONDARY_OXYGEN_SENSOR_TRIM_BANK2"
+        scalar_value: {
+            int32_t: 64
+        }
+        enumerator: "LONG_TERM_SECONDARY_OXYGEN_SENSOR_TRIM_BANK3"
+        scalar_value: {
+            int32_t: 65
+        }
+        enumerator: "LONG_TERM_SECONDARY_OXYGEN_SENSOR_TRIM_BANK4"
+        scalar_value: {
+            int32_t: 66
+        }
+        enumerator: "RELATIVE_ACCELERATOR_PEDAL_POSITION"
+        scalar_value: {
+            int32_t: 67
+        }
+        enumerator: "HYBRID_BATTERY_PACK_REMAINING_LIFE"
+        scalar_value: {
+            int32_t: 68
+        }
+        enumerator: "FUEL_INJECTION_TIMING"
+        scalar_value: {
+            int32_t: 69
+        }
+        enumerator: "ENGINE_FUEL_RATE"
+        scalar_value: {
+            int32_t: 70
+        }
+        enumerator: "LAST_SYSTEM_INDEX"
+        scalar_value: {
+            int32_t: 70
+        }
+        enumerator: "VENDOR_START_INDEX"
+        scalar_value: {
+            int32_t: 71
+        }
+    }
+}
+
