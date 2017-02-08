@@ -16,8 +16,8 @@
 
  #include <gtest/gtest.h>
 
-#include "vehicle_hal_manager/Obd2SensorStore.h"
-#include "vehicle_hal_manager/VehicleUtils.h"
+#include "vhal_v2_0/Obd2SensorStore.h"
+#include "vhal_v2_0/VehicleUtils.h"
 
 namespace android {
 namespace hardware {

@@ -21,7 +21,7 @@
 
 #include <gtest/gtest.h>
 
-#include "vehicle_hal_manager/VehicleHalManager.h"
+#include "vhal_v2_0/VehicleHalManager.h"
 
 #include "VehicleHalTestUtils.h"
 

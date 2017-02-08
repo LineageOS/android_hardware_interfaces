@@ -18,15 +18,16 @@
 #define android_hardware_automotive_vehicle_V2_0_impl_DefaultVehicleHal_H_
 
 #include <memory>
-
-#include <VehicleHal.h>
-#include <impl/DefaultConfig.h>
 #include <sys/socket.h>
 #include <thread>
-#include <utils/SystemClock.h>
-#include <vehicle_hal_manager/Obd2SensorStore.h>
-#include "VehicleHalProto.pb.h"
 
+#include <utils/SystemClock.h>
+
+#include <vhal_v2_0/VehicleHal.h>
+#include <vhal_v2_0/Obd2SensorStore.h>
+
+#include "DefaultConfig.h"
+#include "VehicleHalProto.pb.h"
 
 namespace android {
 namespace hardware {

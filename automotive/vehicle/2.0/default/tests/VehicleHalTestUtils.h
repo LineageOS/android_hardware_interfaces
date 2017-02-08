@@ -18,9 +18,10 @@
 #define android_hardware_automotive_vehicle_V2_0_VehicleDebugUtils_H_
 
 #include <android/hardware/automotive/vehicle/2.0/types.h>
-#include <vehicle_hal_manager/VehicleUtils.h>
 #include <ios>
 #include <sstream>
+
+#include "vhal_v2_0/VehicleUtils.h"
 
 namespace android {
 namespace hardware {

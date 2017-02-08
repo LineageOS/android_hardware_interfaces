@@ -1,0 +1,46 @@
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.1 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.1
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.automotive.vehicle@2.1;
+
+import android.hardware.automotive.vehicle@2.0;
+
+/*
+ * Extension of VehicleProperty enum declared in Vehicle HAL 2.0
+ */
+enum VehicleProperty: @2.0::VehicleProperty {
+    /*
+     * Reports wheel rotational distance in meters since last wheel tick
+     * event
+     *
+     * The value is a vector each element represents distance for individual
+     * wheel in the following order: left front, right front, left rear,
+     * right rear. VehiclePropValue.timestamp must be correctly filled in.
+     *
+     * Vendors must specify wheels that support this sensor in
+     * VehiclePropConfig.configFlags. The format of this field is a bitset of
+     * values from Wheel enum.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE |VehiclePropertyChangeMode:CONTINUOUS
+     * @access VehiclePropertyAccess:READ
+     * @unit VehicleUnit:METER
+     */
+    WHEEL_TICK = (
+      0x0306
+      | VehiclePropertyGroup:SYSTEM
+      | VehiclePropertyType:FLOAT_VEC
+      | VehicleArea:GLOBAL),
+};
