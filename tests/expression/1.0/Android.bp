@@ -13,8 +13,7 @@ genrule {
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.tests.expression@1.0",
     srcs: [
-        "IExpression.hal",
-        "IExpressionExt.hal",
+        ":android.hardware.tests.expression@1.0_hal",
     ],
     out: [
         "android/hardware/tests/expression/1.0/ExpressionAll.cpp",
@@ -27,8 +26,7 @@ genrule {
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.tests.expression@1.0",
     srcs: [
-        "IExpression.hal",
-        "IExpressionExt.hal",
+        ":android.hardware.tests.expression@1.0_hal",
     ],
     out: [
         "android/hardware/tests/expression/1.0/IExpression.h",
