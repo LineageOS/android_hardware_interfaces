@@ -76,6 +76,8 @@ include $(CLEAR_VARS)
 LOCAL_MODULE:= $(vhal_v2_0)-default-impl-lib
 LOCAL_SRC_FILES:= \
     impl/vhal_v2_0/DefaultVehicleHal.cpp \
+    impl/vhal_v2_0/PipeComm.cpp \
+    impl/vhal_v2_0/SocketComm.cpp
 
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/impl/vhal_v2_0
@@ -87,6 +89,7 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
     $(vhal_v2_0)-manager-lib \
 
 LOCAL_SHARED_LIBRARIES := \
+    libbase \
     libbinder \
     libhidlbase \
     libhidltransport \
@@ -98,6 +101,8 @@ LOCAL_SHARED_LIBRARIES := \
 
 LOCAL_STATIC_LIBRARIES := \
     $(vhal_v2_0)-libproto-native \
+
+LOCAL_CFLAGS += -Wall -Wextra -Werror
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -148,6 +153,7 @@ LOCAL_SRC_FILES := \
     VehicleService.cpp
 
 LOCAL_SHARED_LIBRARIES := \
+    libbase \
     libbinder \
     libhidlbase \
     libhidltransport \
@@ -161,5 +167,7 @@ LOCAL_STATIC_LIBRARIES := \
     $(vhal_v2_0)-manager-lib \
     $(vhal_v2_0)-default-impl-lib \
     $(vhal_v2_0)-libproto-native \
+
+LOCAL_CFLAGS += -Wall -Wextra -Werror
 
 include $(BUILD_EXECUTABLE)

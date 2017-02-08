@@ -23,6 +23,9 @@
 
 #include <utils/SystemClock.h>
 
+#include "CommBase.h"
+#include "VehicleHalProto.pb.h"
+
 #include <vhal_v2_0/VehicleHal.h>
 #include <vhal_v2_0/Obd2SensorStore.h>
 
@@ -45,13 +48,7 @@ public:
         mExit = 1;
 
         // Close emulator socket if it is open
-        {
-            std::lock_guard<std::mutex> lock(mTxMutex);
-            if (mCurSocket != -1) {
-                close(mCurSocket);
-                mCurSocket = -1;
-            }
-        }
+        mComm->stop();
 
         mThread.join();
     }
@@ -94,8 +91,8 @@ private:
     void populateProtoVehiclePropValue(emulator::VehiclePropValue* protoVal,
                                        const VehiclePropValue* val);
     void setDefaultValue(VehiclePropValue* prop);
-    void rxMsg(void);
-    void rxThread(void);
+    void rxMsg();
+    void rxThread();
     void txMsg(emulator::EmulatorMessage& txMsg);
     StatusCode updateProperty(const VehiclePropValue& propValue);
     StatusCode fillObd2LiveFrame(VehiclePropValue* v);
@@ -106,14 +103,12 @@ private:
 private:
     // TODO:  Use a hashtable to support indexing props
     std::vector<std::unique_ptr<VehiclePropValue>> mProps;
-    std::atomic<int> mCurSocket;
     std::atomic<int> mExit;
     std::unique_ptr<VehiclePropValue> mLiveObd2Frame {nullptr};
     std::vector<std::unique_ptr<VehiclePropValue>> mFreezeObd2Frames;
     std::mutex mPropsMutex;
-    int mSocket;
-    std::mutex mTxMutex;
     std::thread mThread;
+    std::unique_ptr<CommBase> mComm{nullptr};
 };
 
 }  // impl

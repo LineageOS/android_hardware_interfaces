@@ -39,6 +39,7 @@ LOCAL_STATIC_LIBRARIES := \
     $(vhal_v2_0)-libproto-native
 
 LOCAL_SHARED_LIBRARIES := \
+    libbase \
     libbinder \
     libhidlbase \
     libhidltransport \
@@ -48,6 +49,8 @@ LOCAL_SHARED_LIBRARIES := \
     libprotobuf-cpp-lite \
     $(vhal_v2_0) \
     $(vhal_v2_1) \
+
+LOCAL_CFLAGS += -Wall -Wextra -Werror
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -71,6 +74,7 @@ LOCAL_STATIC_LIBRARIES := \
     $(vhal_v2_1)-default-impl-lib \
 
 LOCAL_SHARED_LIBRARIES := \
+    libbase \
     libbinder \
     libhidlbase \
     libhidltransport \
@@ -80,5 +84,7 @@ LOCAL_SHARED_LIBRARIES := \
     libprotobuf-cpp-lite \
     $(vhal_v2_0) \
     $(vhal_v2_1) \
+
+LOCAL_CFLAGS += -Wall -Wextra -Werror
 
 include $(BUILD_EXECUTABLE)
