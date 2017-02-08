@@ -53,7 +53,6 @@ using LegacyGnssSystemInfo = ::GnssSystemInfo;
  * IGnssCallback interface to be passed into the conventional implementation of the GNSS HAL.
  */
 struct Gnss : public IGnss {
-    // TODO: Add flp_device_t, either in ctor, or later attach?
     Gnss(gps_device_t* gnss_device);
     ~Gnss();
 
@@ -109,11 +108,27 @@ struct Gnss : public IGnss {
     static void setSystemInfoCb(const LegacyGnssSystemInfo* info);
 
     /*
+     * Wakelock consolidation, only needed for dual use of a gps.h & fused_location.h HAL
+     *
+     * Ensures that if the last call from either legacy .h was to acquire a wakelock, that a
+     * wakelock is held.  Otherwise releases it.
+     */
+    static void acquireWakelockFused();
+    static void releaseWakelockFused();
+
+    /*
      * Holds function pointers to the callback methods.
      */
     static GpsCallbacks sGnssCb;
 
  private:
+    // for wakelock consolidation, see above
+    static void acquireWakelockGnss();
+    static void releaseWakelockGnss();
+    static void updateWakelock();
+    static bool sWakelockHeldGnss;
+    static bool sWakelockHeldFused;
+
     sp<GnssXtra> mGnssXtraIface = nullptr;
     sp<AGnssRil> mGnssRil = nullptr;
     sp<GnssGeofencing> mGnssGeofencingIface = nullptr;

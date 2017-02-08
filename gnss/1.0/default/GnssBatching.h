@@ -6,7 +6,6 @@
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
 
-
 namespace android {
 namespace hardware {
 namespace gnss {
@@ -35,8 +34,26 @@ struct GnssBatching : public IGnssBatching {
     Return<bool> stop() override;
     Return<void> cleanup() override;
 
+    /*
+     * Callback methods to be passed into the conventional FLP HAL by the default
+     * implementation. These methods are not part of the IGnssBatching base class.
+     */
+    static void locationCb(int32_t locationsCount, FlpLocation** locations);
+    static void acquireWakelockCb();
+    static void releaseWakelockCb();
+    static int32_t setThreadEventCb(ThreadEvent event);
+    static void flpCapabilitiesCb(int32_t capabilities);
+    static void flpStatusCb(int32_t status);
+
+    /*
+     * Holds function pointers to the callback methods.
+     */
+    static FlpCallbacks sFlpCb;
+
  private:
     const FlpLocationInterface* mFlpLocationIface = nullptr;
+    static sp<IGnssBatchingCallback> sGnssBatchingCbIface;
+    static bool sFlpSupportsBatching;
 };
 
 extern "C" IGnssBatching* HIDL_FETCH_IGnssBatching(const char* name);

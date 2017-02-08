@@ -28,6 +28,8 @@ namespace implementation {
 std::vector<std::unique_ptr<ThreadFuncArgs>> Gnss::sThreadFuncArgsList;
 sp<IGnssCallback> Gnss::sGnssCbIface = nullptr;
 bool Gnss::sInterfaceExists = false;
+bool Gnss::sWakelockHeldGnss = false;
+bool Gnss::sWakelockHeldFused = false;
 
 GpsCallbacks Gnss::sGnssCb = {
     .size = sizeof(GpsCallbacks),
@@ -253,21 +255,62 @@ void Gnss::setCapabilitiesCb(uint32_t capabilities) {
 }
 
 void Gnss::acquireWakelockCb() {
-    if (sGnssCbIface == nullptr) {
-        ALOGE("%s: GNSS Callback Interface configured incorrectly", __func__);
-        return;
-    }
-
-    sGnssCbIface->gnssAcquireWakelockCb();
+    acquireWakelockGnss();
 }
 
 void Gnss::releaseWakelockCb() {
+    releaseWakelockGnss();
+}
+
+
+void Gnss::acquireWakelockGnss() {
+    sWakelockHeldGnss = true;
+    updateWakelock();
+}
+
+void Gnss::releaseWakelockGnss() {
+    sWakelockHeldGnss = false;
+    updateWakelock();
+}
+
+void Gnss::acquireWakelockFused() {
+    sWakelockHeldFused = true;
+    updateWakelock();
+}
+
+void Gnss::releaseWakelockFused() {
+    sWakelockHeldFused = false;
+    updateWakelock();
+}
+
+void Gnss::updateWakelock() {
+    // Track the state of the last request - in case the wake lock in the layer above is reference
+    // counted.
+    static bool sWakelockHeld = false;
+
     if (sGnssCbIface == nullptr) {
         ALOGE("%s: GNSS Callback Interface configured incorrectly", __func__);
         return;
     }
 
-    sGnssCbIface->gnssReleaseWakelockCb();
+    if (sWakelockHeldGnss || sWakelockHeldFused) {
+        if (!sWakelockHeld) {
+            ALOGI("%s: GNSS HAL Wakelock acquired due to gps: %d, fused: %d", __func__,
+                    sWakelockHeldGnss, sWakelockHeldFused);
+            sWakelockHeld = true;
+            sGnssCbIface->gnssAcquireWakelockCb();
+        }
+    } else {
+        if (sWakelockHeld) {
+            ALOGI("%s: GNSS HAL Wakelock released", __func__);
+        } else  {
+            // To avoid burning power, always release, even if logic got here with sWakelock false
+            // which it shouldn't, unless underlying *.h implementation makes duplicate requests.
+            ALOGW("%s: GNSS HAL Wakelock released, duplicate request", __func__);
+        }
+        sWakelockHeld = false;
+        sGnssCbIface->gnssReleaseWakelockCb();
+    }
 }
 
 void Gnss::requestUtcTimeCb() {
@@ -541,8 +584,26 @@ Return<sp<IGnssBatching>> Gnss::getExtensionGnssBatching()  {
     if (mGnssIface == nullptr) {
         ALOGE("%s: Gnss interface is unavailable", __func__);
     } else {
-        // TODO(b/34133439): actually get an flpLocationIface
+        hw_module_t* module;
         const FlpLocationInterface* flpLocationIface = nullptr;
+        int err = hw_get_module(FUSED_LOCATION_HARDWARE_MODULE_ID, (hw_module_t const**)&module);
+
+        if (err != 0) {
+            ALOGE("gnss flp hw_get_module failed: %d", err);
+        } else if (module == nullptr) {
+            ALOGE("Fused Location hw_get_module returned null module");
+        } else if (module->methods == nullptr) {
+            ALOGE("Fused Location hw_get_module returned null methods");
+        } else {
+            hw_device_t* device;
+            err = module->methods->open(module, FUSED_LOCATION_HARDWARE_MODULE_ID, &device);
+            if (err != 0) {
+                ALOGE("flpDevice open failed: %d", err);
+            } else {
+                flp_device_t * flpDevice = reinterpret_cast<flp_device_t*>(device);
+                flpLocationIface = flpDevice->get_flp_interface(flpDevice);
+            }
+        }
 
         if (flpLocationIface == nullptr) {
             ALOGE("%s: GnssBatching interface is not implemented by HAL", __func__);
@@ -550,7 +611,6 @@ Return<sp<IGnssBatching>> Gnss::getExtensionGnssBatching()  {
             mGnssBatching = new GnssBatching(flpLocationIface);
         }
     }
-
     return mGnssBatching;
 }
 
