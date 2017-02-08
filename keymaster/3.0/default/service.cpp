@@ -26,10 +26,8 @@ using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
 
 using android::hardware::keymaster::V3_0::IKeymasterDevice;
-using android::hardware::registerPassthroughServiceImplementation;
+using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
-    configureRpcThreadpool(1, true /*callerWillJoin*/);
-    registerPassthroughServiceImplementation<IKeymasterDevice>("keymaster");
-    joinRpcThreadpool();
+    return defaultPassthroughServiceImplementation<IKeymasterDevice>("keymaster", 1);
 }
