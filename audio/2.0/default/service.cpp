@@ -22,6 +22,7 @@
 #include <android/hardware/audio/effect/2.0/IEffectsFactory.h>
 #include <android/hardware/soundtrigger/2.0/ISoundTriggerHw.h>
 #include <android/hardware/broadcastradio/1.0/IBroadcastRadioFactory.h>
+#include <android/hardware/broadcastradio/1.1/IBroadcastRadioFactory.h>
 
 using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
@@ -31,7 +32,13 @@ using android::hardware::audio::effect::V2_0::IEffectsFactory;
 using android::hardware::audio::V2_0::IDevicesFactory;
 using android::hardware::soundtrigger::V2_0::ISoundTriggerHw;
 using android::hardware::registerPassthroughServiceImplementation;
-using android::hardware::broadcastradio::V1_0::IBroadcastRadioFactory;
+namespace broadcastradio = android::hardware::broadcastradio;
+
+#ifdef TARGET_USES_BCRADIO_FUTURE_FEATURES
+static const bool useBroadcastRadioFutureFeatures = true;
+#else
+static const bool useBroadcastRadioFutureFeatures = false;
+#endif
 
 using android::OK;
 
@@ -45,7 +52,13 @@ int main(int /* argc */, char* /* argv */ []) {
     // Soundtrigger and FM radio might be not present.
     status = registerPassthroughServiceImplementation<ISoundTriggerHw>("sound_trigger.primary");
     ALOGE_IF(status != OK, "Error while registering soundtrigger service: %d", status);
-    status = registerPassthroughServiceImplementation<IBroadcastRadioFactory>();
+    if (useBroadcastRadioFutureFeatures) {
+        status = registerPassthroughServiceImplementation<
+            broadcastradio::V1_1::IBroadcastRadioFactory>();
+    } else {
+        status = registerPassthroughServiceImplementation<
+            broadcastradio::V1_0::IBroadcastRadioFactory>();
+    }
     ALOGE_IF(status != OK, "Error while registering fm radio service: %d", status);
     joinRpcThreadpool();
     return status;

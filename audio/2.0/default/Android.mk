@@ -69,12 +69,17 @@ LOCAL_SHARED_LIBRARIES := \
     android.hardware.audio.common@2.0 \
     android.hardware.audio.effect@2.0 \
     android.hardware.soundtrigger@2.0 \
-    android.hardware.broadcastradio@1.0
+    android.hardware.broadcastradio@1.0 \
+    android.hardware.broadcastradio@1.1
 
 ifeq ($(strip $(AUDIOSERVER_MULTILIB)),)
 LOCAL_MULTILIB := 32
 else
 LOCAL_MULTILIB := $(AUDIOSERVER_MULTILIB)
+endif
+
+ifeq ($(TARGET_USES_BCRADIO_FUTURE_FEATURES),true)
+LOCAL_CFLAGS += -DTARGET_USES_BCRADIO_FUTURE_FEATURES
 endif
 
 include $(BUILD_EXECUTABLE)
