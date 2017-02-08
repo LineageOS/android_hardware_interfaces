@@ -286,7 +286,7 @@ unsigned EvsCamera::increaseAvailableFrames_Locked(unsigned numToAdd) {
         buffer_handle_t memHandle = nullptr;
         status_t result = alloc.allocate(mWidth, mHeight,
                                          mFormat, 1,
-                                         mUsage,
+                                         mUsage, mUsage,
                                          &memHandle, &mStride, 0, "EvsCamera");
         if (result != NO_ERROR) {
             ALOGE("Error %d allocating %d x %d graphics buffer", result, mWidth, mHeight);
