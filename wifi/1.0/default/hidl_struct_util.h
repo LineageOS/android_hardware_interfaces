@@ -110,9 +110,6 @@ bool convertHidlNanSubscribeRequestToLegacy(
 bool convertHidlNanTransmitFollowupRequestToLegacy(
     const NanTransmitFollowupRequest& hidl_request,
     legacy_hal::NanTransmitFollowupRequest* legacy_request);
-bool convertHidlNanBeaconSdfPayloadRequestToLegacy(
-    const NanBeaconSdfPayloadRequest& hidl_request,
-    legacy_hal::NanBeaconSdfPayloadRequest* legacy_request);
 bool convertHidlNanDataPathInitiatorRequestToLegacy(
     const NanInitiateDataPathRequest& hidl_request,
     legacy_hal::NanDataPathInitiatorRequest* legacy_request);
@@ -135,9 +132,6 @@ bool convertLegacyNanDataPathRequestIndToHidl(
 bool convertLegacyNanDataPathConfirmIndToHidl(
     const legacy_hal::NanDataPathConfirmInd& legacy_ind,
     NanDataPathConfirmInd* hidl_ind);
-bool convertLegacyNanBeaconSdfPayloadIndToHidl(
-    const legacy_hal::NanBeaconSdfPayloadInd& legacy_ind,
-    NanBeaconSdfPayloadInd* hidl_ind);
 
 // RTT controller conversion methods.
 bool convertHidlVectorOfRttConfigToLegacy(
