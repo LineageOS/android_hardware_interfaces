@@ -54,6 +54,10 @@ public:
     // Returns a vector that contains a bitmask for all stored sensors.
     const std::vector<uint8_t>& getSensorsBitmask() const;
 
+    // Given a stringValue, fill in a VehiclePropValue
+    void fillPropValue(VehiclePropValue *propValue,
+            std::string dtc) const;
+
 private:
     class BitmaskInVector {
     public:
