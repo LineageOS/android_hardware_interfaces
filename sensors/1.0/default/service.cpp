@@ -23,5 +23,9 @@ using android::hardware::sensors::V1_0::ISensors;
 using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
-    return defaultPassthroughServiceImplementation<ISensors>();
+    /* Sensors framework service needs at least two threads.
+     * One thread blocks on a "poll"
+     * The second thread is needed for all other HAL methods.
+     */
+    return defaultPassthroughServiceImplementation<ISensors>(2);
 }
