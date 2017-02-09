@@ -18,10 +18,19 @@ package android.hardware.wifi@1.0;
 
 /**
  * NAN Response and Asynchronous Event Callbacks.
+ *
+ * References to "NAN Spec" are to the Wi-Fi Alliance "Wi-Fi Neighbor Awareness
+ * Networking (NAN) Technical Specification".
  */
 interface IWifiNanIfaceEventCallback {
   /**
-   * Callback invoked in response to a capability request |getCapabilitiesRequest|.
+   * Notify callbacks are asynchronous callbacks - but in response to |IWifiNanIface| method calls.
+   * Each method will receive a notify callback to return results (on success) or failure status.
+   */
+
+  /**
+   * Asynchronous callback invoked in response to a capability request
+   * |IWifiNanIface.getCapabilitiesRequest|.
    *
    * @param cmdId command Id corresponding to the original request.
    * @param status WifiNanStatus of the operation. Possible status codes are:
@@ -32,7 +41,7 @@ interface IWifiNanIfaceEventCallback {
                                     NanCapabilities capabilities);
 
   /**
-   * Callback invoked in response to an enable request |enableRequest|.
+   * Asynchronous callback invoked in response to an enable request |IWifiNanIface.enableRequest|.
    *
    * @param cmdId command Id corresponding to the original request.
    * @param status WifiNanStatus of the operation. Possible status codes are:
@@ -46,7 +55,7 @@ interface IWifiNanIfaceEventCallback {
   oneway notifyEnableResponse(CommandIdShort id, WifiNanStatus status);
 
   /**
-   * Callback invoked in response to a config request |configRequest|.
+   * Asynchronous callback invoked in response to a config request |IWifiNanIface.configRequest|.
    *
    * @param cmdId command Id corresponding to the original request.
    * @param status WifiNanStatus of the operation. Possible status codes are:
@@ -58,7 +67,7 @@ interface IWifiNanIfaceEventCallback {
   oneway notifyConfigResponse(CommandIdShort id, WifiNanStatus status);
 
   /**
-   * Callback invoked in response to a disable request |disableRequest|.
+   * Asynchronous callback invoked in response to a disable request |IWifiNanIface.disableRequest|.
    *
    * @param cmdId command Id corresponding to the original request.
    * @param status WifiNanStatus of the operation. Possible status codes are:
@@ -68,7 +77,8 @@ interface IWifiNanIfaceEventCallback {
   oneway notifyDisableResponse(CommandIdShort id, WifiNanStatus status);
 
   /**
-   * Callback invoked to notify the status of the start publish request |startPublishRequest|.
+   * Asynchronous callback invoked to notify the status of the start publish request
+   * |IWifiNanIface.startPublishRequest|.
    *
    * @param cmdId command Id corresponding to the original request.
    * @param status WifiNanStatus of the operation. Possible status codes are:
@@ -82,7 +92,8 @@ interface IWifiNanIfaceEventCallback {
   oneway notifyStartPublishResponse(CommandIdShort id, WifiNanStatus status, uint8_t sessionId);
 
   /**
-   * Callback invoked in response to a stop publish request |stopPublishRequest|.
+   * Asynchronous callback invoked in response to a stop publish request
+   * |IWifiNanIface.stopPublishRequest|.
    *
    * @param cmdId command Id corresponding to the original request.
    * @param status WifiNanStatus of the operation. Possible status codes are:
@@ -93,7 +104,8 @@ interface IWifiNanIfaceEventCallback {
   oneway notifyStopPublishResponse(CommandIdShort id, WifiNanStatus status);
 
   /**
-   * Callback invoked to notify the status of the start subscribe request |startSubscribeRequest|.
+   * Asynchronous callback invoked to notify the status of the start subscribe request
+   * |IWifiNanIface.startSubscribeRequest|.
    *
    * @param cmdId command Id corresponding to the original request.
    * @param status WifiNanStatus of the operation. Possible status codes are:
@@ -107,7 +119,8 @@ interface IWifiNanIfaceEventCallback {
   oneway notifyStartSubscribeResponse(CommandIdShort id, WifiNanStatus status, uint8_t sessionId);
 
   /**
-   * Callback invoked in response to a stop subscribe request |stopSubscribeRequest|.
+   * Asynchronous callback invoked in response to a stop subscribe request
+   * |IWifiNanIface.stopSubscribeRequest|.
    *
    * @param cmdId command Id corresponding to the original request.
    * @param status WifiNanStatus of the operation. Possible status codes are:
@@ -118,7 +131,8 @@ interface IWifiNanIfaceEventCallback {
   oneway notifyStopSubscribeResponse(CommandIdShort id, WifiNanStatus status);
 
   /**
-   * Callback invoked in response to a transmit followup request |transmitFollowupRequest|.
+   * Asynchronous callback invoked in response to a transmit followup request
+   * |IWifiNanIface.transmitFollowupRequest|.
    *
    * @param cmdId command Id corresponding to the original request.
    * @param status WifiNanStatus of the operation. Possible status codes are:
@@ -131,7 +145,8 @@ interface IWifiNanIfaceEventCallback {
   oneway notifyTransmitFollowupResponse(CommandIdShort id, WifiNanStatus status);
 
   /**
-   * Callback invoked in response to a create data interface request |createDataInterfaceRequest|.
+   * Asynchronous callback invoked in response to a create data interface request
+   * |IWifiNanIface.createDataInterfaceRequest|.
    *
    * @param cmdId command Id corresponding to the original request.
    * @param status WifiNanStatus of the operation. Possible status codes are:
@@ -142,7 +157,8 @@ interface IWifiNanIfaceEventCallback {
   oneway notifyCreateDataInterfaceResponse(CommandIdShort id, WifiNanStatus status);
 
   /**
-   * Callback invoked in response to a delete data interface request |deleteDataInterfaceRequest|.
+   * Asynchronous callback invoked in response to a delete data interface request
+   * |IWifiNanIface.deleteDataInterfaceRequest|.
    *
    * @param cmdId command Id corresponding to the original request.
    * @param status WifiNanStatus of the operation. Possible status codes are:
@@ -153,7 +169,8 @@ interface IWifiNanIfaceEventCallback {
   oneway notifyDeleteDataInterfaceResponse(CommandIdShort id, WifiNanStatus status);
 
   /**
-   * Callback invoked in response to an initiate data path request |initiateDataPathRequest|.
+   * Asynchronous callback invoked in response to an initiate data path request
+   * |IWifiNanIface.initiateDataPathRequest|.
    *
    * @param cmdId command Id corresponding to the original request.
    * @param status WifiNanStatus of the operation. Possible status codes are:
@@ -168,8 +185,8 @@ interface IWifiNanIfaceEventCallback {
         uint32_t ndpInstanceId );
 
   /**
-   * Callback invoked in response to a respond to data path indication request
-   * |respondToDataPathIndicationRequest|.
+   * Asynchronous callback invoked in response to a respond to data path indication request
+   * |IWifiNanIface.respondToDataPathIndicationRequest|.
    *
    * @param cmdId command Id corresponding to the original request.
    * @param status WifiNanStatus of the operation. Possible status codes are:
@@ -182,7 +199,8 @@ interface IWifiNanIfaceEventCallback {
   oneway notifyRespondToDataPathIndicationResponse(CommandIdShort id, WifiNanStatus status);
 
   /**
-   * Callback invoked in response to a terminate data path request |terminateDataPathRequest|.
+   * Asynchronous callback invoked in response to a terminate data path request
+   * |IWifiNanIface.terminateDataPathRequest|.
    *
    * @param cmdId command Id corresponding to the original request.
    * @param status WifiNanStatus of the operation. Possible status codes are:
