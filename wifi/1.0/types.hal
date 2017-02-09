@@ -823,6 +823,18 @@ struct NanConfigRequest {
    */
   uint8_t numberOfPublishServiceIdsInBeacon;
   /**
+   * Control whether subscribe service IDs are included in Sync/Discovery beacons.
+   * Spec: Subscribe Service ID List Attribute
+   */
+  bool includeSubscribeServiceIdsInBeacon;
+  /**
+   * If |includeSubscribeServiceIdsInBeacon| is true then specifies the number of subscribe service
+   * IDs to include in the Sync/Discovery beacons:
+   *  Value = 0: include as many service IDs as will fit into the maximum allowed beacon frame size.
+   *  Value must fit within 7 bits - i.e. <= 127.
+   */
+  uint8_t numberOfSubscribeServiceIdsInBeacon;
+  /**
    * Number of samples used to calculate RSSI.
    */
   uint16_t rssiWindowSize;
