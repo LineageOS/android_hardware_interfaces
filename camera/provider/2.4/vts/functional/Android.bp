@@ -26,7 +26,8 @@ cc_test {
         "libutils",
         "android.hardware.camera.provider@2.4",
         "android.hardware.camera.device@3.2",
-        "libcamera_metadata"
+        "libcamera_metadata",
+        "libui"
     ],
     static_libs: ["libgtest"],
     cflags: [
