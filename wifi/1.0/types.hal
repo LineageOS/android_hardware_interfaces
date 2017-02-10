@@ -934,6 +934,13 @@ struct NanDiscoveryCommonConfig {
    */
   vec<uint8_t> serviceSpecificInfo;
   /**
+   * Arbitrary information communicated in discovery packets - there is no semantic meaning to these
+   * bytes. They are passed-through from publisher to subscriber as-is with no parsing.
+   * Max length: |NanCapabilities.maxExtendedServiceSpecificInfoLen|.
+   * Spec: Service Descriptor Extension Attribute (SDEA) / Service Info
+   */
+  vec<uint8_t> extendedServiceSpecificInfo;
+  /**
    * Ordered sequence of <length, value> pairs (|length| uses 1 byte and contains the number of
    * bytes in the |value| field) which specify further match criteria (beyond the service name).
    * The match behavior is specified in details in the NAN spec.
@@ -1124,6 +1131,13 @@ struct NanTransmitFollowupRequest {
    */
   vec<uint8_t> serviceSpecificInfo;
   /**
+   * Arbitrary information communicated in discovery packets - there is no semantic meaning to these
+   * bytes. They are passed-through from publisher to subscriber as-is with no parsing.
+   * Max length: |NanCapabilities.maxExtendedServiceSpecificInfoLen|.
+   * Spec: Service Descriptor Extension Attribute (SDEA) / Service Info
+   */
+  vec<uint8_t> extendedServiceSpecificInfo;
+  /**
    * Disable |IWifiNanIfaceEventCallback.eventTransmitFollowup| - i.e. do not get indication on
    * whether the follow-up was transmitted and received successfully.
    */
@@ -1259,6 +1273,10 @@ struct NanCapabilities {
    */
   uint32_t maxServiceSpecificInfoLen;
   /**
+   * Maximum length (in bytes) of the extended service specific info field.
+   */
+  uint32_t maxExtendedServiceSpecificInfoLen;
+  /**
    * Maximum length (in bytes) of vendor-specific (VSA) data.
    */
   uint32_t maxVsaDataLen;
@@ -1314,6 +1332,13 @@ struct NanMatchInd {
    * NAN Spec: Service Descriptor Attribute (SDA) / Service Info
    */
   vec<uint8_t> serviceSpecificInfo;
+  /**
+   * Arbitrary information communicated in discovery packets - there is no semantic meaning to these
+   * bytes. They are passed-through from publisher to subscriber as-is with no parsing.
+   * Max length: |NanCapabilities.maxExtendedServiceSpecificInfoLen|.
+   * Spec: Service Descriptor Extension Attribute (SDEA) / Service Info
+   */
+  vec<uint8_t> extendedServiceSpecificInfo;
   /**
    * The match filter from the discovery packet (publish or subscribe) which caused service
    * discovery. Matches the peer's |NanDiscoveryCommonConfig.txMatchFilter|.
@@ -1412,6 +1437,13 @@ struct NanFollowupReceivedInd {
    * NAN Spec: Service Descriptor Attribute (SDA) / Service Info
    */
   vec<uint8_t> serviceSpecificInfo;
+  /**
+   * Arbitrary information communicated in discovery packets - there is no semantic meaning to these
+   * bytes. They are passed-through from publisher to subscriber as-is with no parsing.
+   * Max length: |NanCapabilities.maxExtendedServiceSpecificInfoLen|.
+   * Spec: Service Descriptor Extension Attribute (SDEA) / Service Info
+   */
+  vec<uint8_t> extendedServiceSpecificInfo;
 };
 
 /**
