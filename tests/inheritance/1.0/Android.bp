@@ -15,10 +15,7 @@ genrule {
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.tests.inheritance@1.0",
     srcs: [
-        "IChild.hal",
-        "IFetcher.hal",
-        "IGrandparent.hal",
-        "IParent.hal",
+        ":android.hardware.tests.inheritance@1.0_hal",
     ],
     out: [
         "android/hardware/tests/inheritance/1.0/ChildAll.cpp",
@@ -33,10 +30,7 @@ genrule {
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.tests.inheritance@1.0",
     srcs: [
-        "IChild.hal",
-        "IFetcher.hal",
-        "IGrandparent.hal",
-        "IParent.hal",
+        ":android.hardware.tests.inheritance@1.0_hal",
     ],
     out: [
         "android/hardware/tests/inheritance/1.0/IChild.h",
