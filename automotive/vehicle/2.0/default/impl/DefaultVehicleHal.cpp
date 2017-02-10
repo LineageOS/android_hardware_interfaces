@@ -181,87 +181,113 @@ VehiclePropValue* DefaultVehicleHal::getVehiclePropValueLocked(int32_t propId, i
     return nullptr;
 }
 
-void DefaultVehicleHal::initObd2LiveFrame(VehiclePropConfig& obd2LiveFramePropConfig) {
-    mObd2SensorStore.reset(new Obd2SensorStore(
-        obd2LiveFramePropConfig.configArray[0],
-        obd2LiveFramePropConfig.configArray[1]));
-    // precalculate OBD2 sensor values
-    mObd2SensorStore->setIntegerSensor(
+static std::unique_ptr<Obd2SensorStore> fillDefaultObd2Frame(
+        size_t numVendorIntegerSensors,
+        size_t numVendorFloatSensors) {
+    std::unique_ptr<Obd2SensorStore> sensorStore(new Obd2SensorStore(
+            numVendorIntegerSensors, numVendorFloatSensors));
+
+    sensorStore->setIntegerSensor(
         Obd2IntegerSensorIndex::FUEL_SYSTEM_STATUS,
         toInt(FuelSystemStatus::CLOSED_LOOP));
-    mObd2SensorStore->setIntegerSensor(
+    sensorStore->setIntegerSensor(
         Obd2IntegerSensorIndex::MALFUNCTION_INDICATOR_LIGHT_ON, 0);
-    mObd2SensorStore->setIntegerSensor(
+    sensorStore->setIntegerSensor(
         Obd2IntegerSensorIndex::IGNITION_MONITORS_SUPPORTED,
         toInt(IgnitionMonitorKind::SPARK));
-    mObd2SensorStore->setIntegerSensor(Obd2IntegerSensorIndex::IGNITION_SPECIFIC_MONITORS,
+    sensorStore->setIntegerSensor(Obd2IntegerSensorIndex::IGNITION_SPECIFIC_MONITORS,
         CommonIgnitionMonitors::COMPONENTS_AVAILABLE |
         CommonIgnitionMonitors::MISFIRE_AVAILABLE |
         SparkIgnitionMonitors::AC_REFRIGERANT_AVAILABLE |
         SparkIgnitionMonitors::EVAPORATIVE_SYSTEM_AVAILABLE);
-    mObd2SensorStore->setIntegerSensor(
+    sensorStore->setIntegerSensor(
         Obd2IntegerSensorIndex::INTAKE_AIR_TEMPERATURE, 35);
-    mObd2SensorStore->setIntegerSensor(
+    sensorStore->setIntegerSensor(
         Obd2IntegerSensorIndex::COMMANDED_SECONDARY_AIR_STATUS,
         toInt(SecondaryAirStatus::FROM_OUTSIDE_OR_OFF));
-    mObd2SensorStore->setIntegerSensor(
+    sensorStore->setIntegerSensor(
         Obd2IntegerSensorIndex::NUM_OXYGEN_SENSORS_PRESENT, 1);
-    mObd2SensorStore->setIntegerSensor(
+    sensorStore->setIntegerSensor(
         Obd2IntegerSensorIndex::RUNTIME_SINCE_ENGINE_START, 500);
-    mObd2SensorStore->setIntegerSensor(
+    sensorStore->setIntegerSensor(
         Obd2IntegerSensorIndex::DISTANCE_TRAVELED_WITH_MALFUNCTION_INDICATOR_LIGHT_ON, 0);
-    mObd2SensorStore->setIntegerSensor(
+    sensorStore->setIntegerSensor(
         Obd2IntegerSensorIndex::WARMUPS_SINCE_CODES_CLEARED, 51);
-    mObd2SensorStore->setIntegerSensor(
+    sensorStore->setIntegerSensor(
         Obd2IntegerSensorIndex::DISTANCE_TRAVELED_SINCE_CODES_CLEARED, 365);
-    mObd2SensorStore->setIntegerSensor(
+    sensorStore->setIntegerSensor(
         Obd2IntegerSensorIndex::ABSOLUTE_BAROMETRIC_PRESSURE, 30);
-    mObd2SensorStore->setIntegerSensor(
+    sensorStore->setIntegerSensor(
         Obd2IntegerSensorIndex::CONTROL_MODULE_VOLTAGE, 12);
-    mObd2SensorStore->setIntegerSensor(
+    sensorStore->setIntegerSensor(
         Obd2IntegerSensorIndex::AMBIENT_AIR_TEMPERATURE, 18);
-    mObd2SensorStore->setIntegerSensor(
+    sensorStore->setIntegerSensor(
         Obd2IntegerSensorIndex::MAX_FUEL_AIR_EQUIVALENCE_RATIO, 1);
-    mObd2SensorStore->setIntegerSensor(
+    sensorStore->setIntegerSensor(
         Obd2IntegerSensorIndex::FUEL_TYPE, toInt(FuelType::GASOLINE));
-    mObd2SensorStore->setFloatSensor(
+    sensorStore->setFloatSensor(
         Obd2FloatSensorIndex::CALCULATED_ENGINE_LOAD, 0.153);
-    mObd2SensorStore->setFloatSensor(
+    sensorStore->setFloatSensor(
         Obd2FloatSensorIndex::SHORT_TERM_FUEL_TRIM_BANK1, -0.16);
-    mObd2SensorStore->setFloatSensor(
+    sensorStore->setFloatSensor(
         Obd2FloatSensorIndex::LONG_TERM_FUEL_TRIM_BANK1, -0.16);
-    mObd2SensorStore->setFloatSensor(
+    sensorStore->setFloatSensor(
         Obd2FloatSensorIndex::SHORT_TERM_FUEL_TRIM_BANK2, -0.16);
-    mObd2SensorStore->setFloatSensor(
+    sensorStore->setFloatSensor(
         Obd2FloatSensorIndex::LONG_TERM_FUEL_TRIM_BANK2, -0.16);
-    mObd2SensorStore->setFloatSensor(
+    sensorStore->setFloatSensor(
         Obd2FloatSensorIndex::INTAKE_MANIFOLD_ABSOLUTE_PRESSURE, 7.5);
-    mObd2SensorStore->setFloatSensor(
+    sensorStore->setFloatSensor(
         Obd2FloatSensorIndex::ENGINE_RPM, 1250.);
-    mObd2SensorStore->setFloatSensor(
+    sensorStore->setFloatSensor(
         Obd2FloatSensorIndex::VEHICLE_SPEED, 40.);
-    mObd2SensorStore->setFloatSensor(
+    sensorStore->setFloatSensor(
         Obd2FloatSensorIndex::TIMING_ADVANCE, 2.5);
-    mObd2SensorStore->setFloatSensor(
+    sensorStore->setFloatSensor(
         Obd2FloatSensorIndex::THROTTLE_POSITION, 19.75);
-    mObd2SensorStore->setFloatSensor(
+    sensorStore->setFloatSensor(
         Obd2FloatSensorIndex::OXYGEN_SENSOR1_VOLTAGE, 0.265);
-    mObd2SensorStore->setFloatSensor(
+    sensorStore->setFloatSensor(
         Obd2FloatSensorIndex::FUEL_TANK_LEVEL_INPUT, 0.824);
-    mObd2SensorStore->setFloatSensor(
+    sensorStore->setFloatSensor(
         Obd2FloatSensorIndex::EVAPORATION_SYSTEM_VAPOR_PRESSURE, -0.373);
-    mObd2SensorStore->setFloatSensor(
+    sensorStore->setFloatSensor(
         Obd2FloatSensorIndex::CATALYST_TEMPERATURE_BANK1_SENSOR1, 190.);
-    mObd2SensorStore->setFloatSensor(
+    sensorStore->setFloatSensor(
         Obd2FloatSensorIndex::RELATIVE_THROTTLE_POSITION, 3.);
-    mObd2SensorStore->setFloatSensor(
+    sensorStore->setFloatSensor(
         Obd2FloatSensorIndex::ABSOLUTE_THROTTLE_POSITION_B, 0.306);
-    mObd2SensorStore->setFloatSensor(
+    sensorStore->setFloatSensor(
         Obd2FloatSensorIndex::ACCELERATOR_PEDAL_POSITION_D, 0.188);
-    mObd2SensorStore->setFloatSensor(
+    sensorStore->setFloatSensor(
         Obd2FloatSensorIndex::ACCELERATOR_PEDAL_POSITION_E, 0.094);
-    mObd2SensorStore->setFloatSensor(
+    sensorStore->setFloatSensor(
         Obd2FloatSensorIndex::COMMANDED_THROTTLE_ACTUATOR, 0.024);
+
+    return sensorStore;
+}
+
+void DefaultVehicleHal::initObd2LiveFrame(VehiclePropConfig& propConfig) {
+    auto sensorStore = fillDefaultObd2Frame(propConfig.configArray[0],
+            propConfig.configArray[1]);
+    mLiveObd2Frame = createVehiclePropValue(VehiclePropertyType::COMPLEX, 0);
+    sensorStore->fillPropValue(mLiveObd2Frame.get(), "");
+}
+
+void DefaultVehicleHal::initObd2FreezeFrame(VehiclePropConfig& propConfig) {
+    auto sensorStore = fillDefaultObd2Frame(propConfig.configArray[0],
+            propConfig.configArray[1]);
+
+    mFreezeObd2Frames.push_back(
+            createVehiclePropValue(VehiclePropertyType::COMPLEX,0));
+    mFreezeObd2Frames.push_back(
+            createVehiclePropValue(VehiclePropertyType::COMPLEX,0));
+    mFreezeObd2Frames.push_back(
+            createVehiclePropValue(VehiclePropertyType::COMPLEX,0));
+
+    sensorStore->fillPropValue(mFreezeObd2Frames[0].get(), "P0070");
+    sensorStore->fillPropValue(mFreezeObd2Frames[1].get(), "P0102");
+    sensorStore->fillPropValue(mFreezeObd2Frames[2].get(), "P0123");
 }
 
 void DefaultVehicleHal::parseRxProtoBuf(std::vector<uint8_t>& msg) {
@@ -598,11 +624,15 @@ VehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(
     switch (propId) {
     case toInt(VehicleProperty::OBD2_LIVE_FRAME):
         v = pool.obtainComplex();
-        status = fillObd2LiveFrame(&v);
+        status = fillObd2LiveFrame(v.get());
         break;
     case toInt(VehicleProperty::OBD2_FREEZE_FRAME):
         v = pool.obtainComplex();
-        status = fillObd2FreezeFrame(&v);
+        status = fillObd2FreezeFrame(requestedPropValue, v.get());
+        break;
+    case toInt(VehicleProperty::OBD2_FREEZE_FRAME_INFO):
+        v = pool.obtainComplex();
+        status = fillObd2DtcInfo(v.get());
         break;
     default:
         {
@@ -627,16 +657,24 @@ VehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(
 }
 
 StatusCode DefaultVehicleHal::set(const VehiclePropValue& propValue) {
-    StatusCode status = updateProperty(propValue);
-
-    if (status == StatusCode::OK) {
-        // Send property update to emulator
-        emulator::EmulatorMessage msg;
-        emulator::VehiclePropValue *val = msg.add_value();
-        populateProtoVehiclePropValue(val, &propValue);
-        msg.set_status(emulator::RESULT_OK);
-        msg.set_msg_type(emulator::SET_PROPERTY_ASYNC);
-        txMsg(msg);
+    auto propId = propValue.prop;
+    StatusCode status;
+    switch (propId) {
+        case toInt(VehicleProperty::OBD2_FREEZE_FRAME_CLEAR):
+            status = clearObd2FreezeFrames(propValue);
+            break;
+        default:
+            status = updateProperty(propValue);
+            if (status == StatusCode::OK) {
+                // Send property update to emulator
+                emulator::EmulatorMessage msg;
+                emulator::VehiclePropValue *val = msg.add_value();
+                populateProtoVehiclePropValue(val, &propValue);
+                msg.set_status(emulator::RESULT_OK);
+                msg.set_msg_type(emulator::SET_PROPERTY_ASYNC);
+                txMsg(msg);
+            }
+            break;
     }
 
     return status;
@@ -680,6 +718,9 @@ void DefaultVehicleHal::onCreate() {
             case toInt(VehicleProperty::OBD2_LIVE_FRAME):
                 initObd2LiveFrame(cfg);
                 break;
+            case toInt(VehicleProperty::OBD2_FREEZE_FRAME):
+                initObd2FreezeFrame(cfg);
+                break;
             default:
                 // Need to handle each complex property separately
                 break;
@@ -721,20 +762,77 @@ void DefaultVehicleHal::onCreate() {
     mThread = std::thread(&DefaultVehicleHal::rxThread, this);
 }
 
-StatusCode DefaultVehicleHal::fillObd2LiveFrame(VehiclePropValuePtr* v) {
-    (*v)->value.int32Values = mObd2SensorStore->getIntegerSensors();
-    (*v)->value.floatValues = mObd2SensorStore->getFloatSensors();
-    (*v)->value.bytes = mObd2SensorStore->getSensorsBitmask();
+StatusCode DefaultVehicleHal::fillObd2LiveFrame(VehiclePropValue* v) {
+    v->prop = toInt(VehicleProperty::OBD2_LIVE_FRAME);
+    v->value.int32Values = mLiveObd2Frame->value.int32Values;
+    v->value.floatValues = mLiveObd2Frame->value.floatValues;
+    v->value.bytes = mLiveObd2Frame->value.bytes;
     return StatusCode::OK;
 }
 
-StatusCode DefaultVehicleHal::fillObd2FreezeFrame(VehiclePropValuePtr* v) {
-    (*v)->value.int32Values = mObd2SensorStore->getIntegerSensors();
-    (*v)->value.floatValues = mObd2SensorStore->getFloatSensors();
-    (*v)->value.bytes = mObd2SensorStore->getSensorsBitmask();
-    (*v)->value.stringValue = "P0010";
+template<typename Iterable>
+typename Iterable::const_iterator findPropValueAtTimestamp(
+        const Iterable& frames,
+        int64_t timestamp) {
+    return std::find_if(frames.begin(),
+            frames.end(),
+            [timestamp] (const std::unique_ptr<VehiclePropValue>&
+                         propValue) -> bool {
+                             return propValue->timestamp == timestamp;
+            });
+}
+
+StatusCode DefaultVehicleHal::fillObd2FreezeFrame(
+        const VehiclePropValue& requestedPropValue, VehiclePropValue* v) {
+    if (requestedPropValue.value.int64Values.size() != 1) {
+        ALOGE("asked for OBD2_FREEZE_FRAME without valid timestamp");
+        return StatusCode::INVALID_ARG;
+    }
+    auto timestamp = requestedPropValue.value.int64Values[0];
+    auto freezeFrameIter = findPropValueAtTimestamp(mFreezeObd2Frames,
+            timestamp);
+    if(mFreezeObd2Frames.end() == freezeFrameIter) {
+        ALOGE("asked for OBD2_FREEZE_FRAME at invalid timestamp");
+        return StatusCode::INVALID_ARG;
+    }
+    const std::unique_ptr<VehiclePropValue>& freezeFrame = *freezeFrameIter;
+    v->prop = toInt(VehicleProperty::OBD2_FREEZE_FRAME);
+    v->value.int32Values = freezeFrame->value.int32Values;
+    v->value.floatValues = freezeFrame->value.floatValues;
+    v->value.bytes = freezeFrame->value.bytes;
+    v->value.stringValue = freezeFrame->value.stringValue;
+    v->timestamp = freezeFrame->timestamp;
     return StatusCode::OK;
 }
+
+StatusCode DefaultVehicleHal::clearObd2FreezeFrames(
+    const VehiclePropValue& propValue) {
+    if (propValue.value.int64Values.size() == 0) {
+        mFreezeObd2Frames.clear();
+        return StatusCode::OK;
+    } else {
+        for(int64_t timestamp: propValue.value.int64Values) {
+            auto freezeFrameIter = findPropValueAtTimestamp(mFreezeObd2Frames,
+                    timestamp);
+            if(mFreezeObd2Frames.end() == freezeFrameIter) {
+                ALOGE("asked for OBD2_FREEZE_FRAME at invalid timestamp");
+                return StatusCode::INVALID_ARG;
+            }
+            mFreezeObd2Frames.erase(freezeFrameIter);
+        }
+    }
+    return StatusCode::OK;
+}
+
+StatusCode DefaultVehicleHal::fillObd2DtcInfo(VehiclePropValue* v) {
+    std::vector<int64_t> timestamps;
+    for(const auto& freezeFrame: mFreezeObd2Frames) {
+        timestamps.push_back(freezeFrame->timestamp);
+    }
+    v->value.int64Values = timestamps;
+    return StatusCode::OK;
+}
+
 
 
 }  // impl

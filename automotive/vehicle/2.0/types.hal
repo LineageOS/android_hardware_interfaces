@@ -1829,6 +1829,10 @@ enum VehicleProperty: int32_t {
      *   configArray[1] : number of vendor-specific float-valued sensors
      *                    that can be returned in a frame.
      *
+     * A get of this property must take the following form:
+     *   int64Values[0]: timestamp of the freeze frame to retrieve.
+     *                   Valid timestamps are given by OBD2_DTC_INFO.
+     *
      * The values are to be interpreted as follows:
      * the indices defined in Obd2IntegerSensorIndex are to be used to
      * read from int32Values;
@@ -1860,8 +1864,49 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:COMPLEX
         | VehicleArea:GLOBAL),
 
-};
+    /*
+     * OBD2 Freeze Frame Information
+     *
+     * This property describes the current freeze frames stored in vehicle
+     * memory and available for retrieval via OBD2_FREEZE_FRAME.
+     *
+     * The values are to be interpreted as follows:
+     * each element of int64Values is the timestamp at which a a fault code
+     * has been detected and the corresponding freeze frame stored, and each
+     * such element can be used as the key to OBD2_FREEZE_FRAME to retrieve
+     * the corresponding freeze frame.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     */
+    OBD2_FREEZE_FRAME_INFO = (
+        0x0D02
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:COMPLEX
+        | VehicleArea:GLOBAL),
 
+    /*
+     * OBD2 Freeze Frame Clear
+     *
+     * This property allows deletion of any of the freeze frames stored in
+     * vehicle memory, as described by OBD2_DTC_INFO.
+     *
+     * A set of this property is to be interpreted as follows:
+     * if int64Values contains no elements, then all DTCs stored will be cleared;
+     * if int64Values contains one or more elements, then DTCs at the timestamps
+     * stored in int64Values will be cleared, and the others not cleared, except
+     * the memory will be compacted so that all remaining DTCs are stored
+     * contiguously.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:WRITE
+     */
+    OBD2_FREEZE_FRAME_CLEAR = (
+        0x0D03
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:COMPLEX
+        | VehicleArea:GLOBAL),
+};
 /*
  * Bit flags for fan direction
  */

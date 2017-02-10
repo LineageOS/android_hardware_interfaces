@@ -16,6 +16,7 @@
 
 #include "Obd2SensorStore.h"
 
+#include <utils/SystemClock.h>
 #include <vehicle_hal_manager/VehicleUtils.h>
 
 namespace android {
@@ -97,6 +98,16 @@ const std::vector<float>& Obd2SensorStore::getFloatSensors() const {
 const std::vector<uint8_t>& Obd2SensorStore::getSensorsBitmask() const {
     return mSensorsBitmask.getBitmask();
 }
+
+void Obd2SensorStore::fillPropValue(VehiclePropValue *propValue,
+                                    std::string dtc) const {
+    propValue->timestamp = elapsedRealtimeNano();
+    propValue->value.int32Values = getIntegerSensors();
+    propValue->value.floatValues = getFloatSensors();
+    propValue->value.bytes = getSensorsBitmask();
+    propValue->value.stringValue = dtc;
+}
+
 
 
 }  // namespace V2_0
