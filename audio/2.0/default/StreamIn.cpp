@@ -119,7 +119,7 @@ bool ReadThread::threadLoop() {
     while(!std::atomic_load_explicit(mStop, std::memory_order_acquire)) {
         // TODO: Remove manual event flag handling once blocking MQ is implemented. b/33815422
         uint32_t efState = 0;
-        mEfGroup->wait(static_cast<uint32_t>(MessageQueueFlagBits::NOT_FULL), &efState, NS_PER_SEC);
+        mEfGroup->wait(static_cast<uint32_t>(MessageQueueFlagBits::NOT_FULL), &efState);
         if (!(efState & static_cast<uint32_t>(MessageQueueFlagBits::NOT_FULL))) {
             continue;  // Nothing to do.
         }
