@@ -20,7 +20,6 @@
 
 #include <android/log.h>
 #include <hardware/audio.h>
-#include <mediautils/SchedulingPolicyService.h>
 #include <utils/Trace.h>
 
 #include "StreamOut.h"
@@ -30,6 +29,8 @@ namespace hardware {
 namespace audio {
 namespace V2_0 {
 namespace implementation {
+
+using ::android::hardware::audio::common::V2_0::ThreadInfo;
 
 namespace {
 
@@ -41,8 +42,7 @@ class WriteThread : public Thread {
             StreamOut::CommandMQ* commandMQ,
             StreamOut::DataMQ* dataMQ,
             StreamOut::StatusMQ* statusMQ,
-            EventFlag* efGroup,
-            ThreadPriority threadPriority)
+            EventFlag* efGroup)
             : Thread(false /*canCallJava*/),
               mStop(stop),
               mStream(stream),
@@ -50,12 +50,9 @@ class WriteThread : public Thread {
               mDataMQ(dataMQ),
               mStatusMQ(statusMQ),
               mEfGroup(efGroup),
-              mThreadPriority(threadPriority),
               mBuffer(new uint8_t[dataMQ->getQuantumCount()]) {
     }
     virtual ~WriteThread() {}
-
-    status_t readyToRun() override;
 
   private:
     std::atomic<bool>* mStop;
@@ -64,7 +61,6 @@ class WriteThread : public Thread {
     StreamOut::DataMQ* mDataMQ;
     StreamOut::StatusMQ* mStatusMQ;
     EventFlag* mEfGroup;
-    ThreadPriority mThreadPriority;
     std::unique_ptr<uint8_t[]> mBuffer;
     IStreamOut::WriteStatus mStatus;
 
@@ -74,16 +70,6 @@ class WriteThread : public Thread {
     void doGetPresentationPosition();
     void doWrite();
 };
-
-status_t WriteThread::readyToRun() {
-    if (mThreadPriority != ThreadPriority::NORMAL) {
-        int err = requestPriority(
-                getpid(), getTid(), static_cast<int>(mThreadPriority), true /*asynchronous*/);
-        ALOGW_IF(err, "failed to set priority %d for pid %d tid %d; error %d",
-                static_cast<int>(mThreadPriority), getpid(), getTid(), err);
-    }
-    return OK;
-}
 
 void WriteThread::doWrite() {
     const size_t availToRead = mDataMQ->availableToRead();
@@ -297,14 +283,14 @@ Return<Result> StreamOut::setVolume(float left, float right)  {
 }
 
 Return<void> StreamOut::prepareForWriting(
-        uint32_t frameSize, uint32_t framesCount, ThreadPriority threadPriority,
-        prepareForWriting_cb _hidl_cb)  {
+        uint32_t frameSize, uint32_t framesCount, prepareForWriting_cb _hidl_cb)  {
     status_t status;
+    ThreadInfo threadInfo = { 0, 0 };
     // Create message queues.
     if (mDataMQ) {
         ALOGE("the client attempts to call prepareForWriting twice");
         _hidl_cb(Result::INVALID_STATE,
-                CommandMQ::Descriptor(), DataMQ::Descriptor(), StatusMQ::Descriptor());
+                CommandMQ::Descriptor(), DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
         return Void();
     }
     std::unique_ptr<CommandMQ> tempCommandMQ(new CommandMQ(1));
@@ -316,7 +302,7 @@ Return<void> StreamOut::prepareForWriting(
         ALOGE_IF(!tempDataMQ->isValid(), "data MQ is invalid");
         ALOGE_IF(!tempStatusMQ->isValid(), "status MQ is invalid");
         _hidl_cb(Result::INVALID_ARGUMENTS,
-                CommandMQ::Descriptor(), DataMQ::Descriptor(), StatusMQ::Descriptor());
+                CommandMQ::Descriptor(), DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
         return Void();
     }
     // TODO: Remove event flag management once blocking MQ is implemented. b/33815422
@@ -324,7 +310,7 @@ Return<void> StreamOut::prepareForWriting(
     if (status != OK || !mEfGroup) {
         ALOGE("failed creating event flag for data MQ: %s", strerror(-status));
         _hidl_cb(Result::INVALID_ARGUMENTS,
-                CommandMQ::Descriptor(), DataMQ::Descriptor(), StatusMQ::Descriptor());
+                CommandMQ::Descriptor(), DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
         return Void();
     }
 
@@ -335,20 +321,23 @@ Return<void> StreamOut::prepareForWriting(
             tempCommandMQ.get(),
             tempDataMQ.get(),
             tempStatusMQ.get(),
-            mEfGroup,
-            threadPriority);
+            mEfGroup);
     status = mWriteThread->run("writer", PRIORITY_URGENT_AUDIO);
     if (status != OK) {
         ALOGW("failed to start writer thread: %s", strerror(-status));
         _hidl_cb(Result::INVALID_ARGUMENTS,
-                CommandMQ::Descriptor(), DataMQ::Descriptor(), StatusMQ::Descriptor());
+                CommandMQ::Descriptor(), DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
         return Void();
     }
 
     mCommandMQ = std::move(tempCommandMQ);
     mDataMQ = std::move(tempDataMQ);
     mStatusMQ = std::move(tempStatusMQ);
-    _hidl_cb(Result::OK, *mCommandMQ->getDesc(), *mDataMQ->getDesc(), *mStatusMQ->getDesc());
+    threadInfo.pid = getpid();
+    threadInfo.tid = mWriteThread->getTid();
+    _hidl_cb(Result::OK,
+            *mCommandMQ->getDesc(), *mDataMQ->getDesc(), *mStatusMQ->getDesc(),
+            threadInfo);
     return Void();
 }
 

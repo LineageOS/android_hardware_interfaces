@@ -44,7 +44,6 @@ using ::android::hardware::audio::V2_0::IStream;
 using ::android::hardware::audio::V2_0::IStreamIn;
 using ::android::hardware::audio::V2_0::ParameterValue;
 using ::android::hardware::audio::V2_0::Result;
-using ::android::hardware::audio::V2_0::ThreadPriority;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::hidl_vec;
@@ -89,8 +88,7 @@ struct StreamIn : public IStreamIn {
     Return<void> getAudioSource(getAudioSource_cb _hidl_cb)  override;
     Return<Result> setGain(float gain)  override;
     Return<void> prepareForReading(
-            uint32_t frameSize, uint32_t framesCount, ThreadPriority threadPriority,
-            prepareForReading_cb _hidl_cb)  override;
+            uint32_t frameSize, uint32_t framesCount, prepareForReading_cb _hidl_cb)  override;
     Return<uint32_t> getInputFramesLost()  override;
     Return<void> getCapturePosition(getCapturePosition_cb _hidl_cb)  override;
     Return<Result> start() override;

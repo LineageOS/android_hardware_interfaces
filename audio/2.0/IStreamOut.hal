@@ -85,11 +85,14 @@ interface IStreamOut extends IStream {
      *     to the driver;
      *  -- status queue is used for reporting operation status
      *     (e.g. amount of bytes actually written or error code).
-     * The driver operates on a dedicated thread.
+     *
+     * The driver operates on a dedicated thread. The client must ensure that
+     * the thread is given an appropriate priority and assigned to correct
+     * scheduler and cgroup. For this purpose, the method returns identifiers
+     * of the driver thread.
      *
      * @param frameSize the size of a single frame, in bytes.
      * @param framesCount the number of frames in a buffer.
-     * @param threadPriority priority of the driver thread.
      * @return retval OK if both message queues were created successfully.
      *                INVALID_STATE if the method was already called.
      *                INVALID_ARGUMENTS if there was a problem setting up
@@ -99,15 +102,15 @@ interface IStreamOut extends IStream {
      *                specified at the stream opening.
      * @return statusMQ a message queue used for passing status from the driver
      *                  using WriteStatus structures.
+     * @return threadInfo identifiers of the driver's dedicated thread.
      */
-    prepareForWriting(
-            uint32_t frameSize, uint32_t framesCount,
-            ThreadPriority threadPriority)
+    prepareForWriting(uint32_t frameSize, uint32_t framesCount)
     generates (
             Result retval,
             fmq_sync<WriteCommand> commandMQ,
             fmq_sync<uint8_t> dataMQ,
-            fmq_sync<WriteStatus> statusMQ);
+            fmq_sync<WriteStatus> statusMQ,
+            ThreadInfo threadInfo);
 
     /*
      * Return the number of audio frames written by the audio DSP to DAC since
