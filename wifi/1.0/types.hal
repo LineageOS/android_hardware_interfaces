@@ -1289,10 +1289,6 @@ struct NanCapabilities {
    */
   uint32_t maxExtendedServiceSpecificInfoLen;
   /**
-   * Maximum length (in bytes) of vendor-specific (VSA) data.
-   */
-  uint32_t maxVsaDataLen;
-  /**
    * Maximum number of data interfaces (NDI) which can be created concurrently on the device.
    */
   uint32_t maxNdiInterfaces;
