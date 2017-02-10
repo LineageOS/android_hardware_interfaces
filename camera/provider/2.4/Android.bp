@@ -13,8 +13,7 @@ genrule {
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.camera.provider@2.4",
     srcs: [
-        "ICameraProvider.hal",
-        "ICameraProviderCallback.hal",
+        ":android.hardware.camera.provider@2.4_hal",
     ],
     out: [
         "android/hardware/camera/provider/2.4/CameraProviderAll.cpp",
@@ -27,8 +26,7 @@ genrule {
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.camera.provider@2.4",
     srcs: [
-        "ICameraProvider.hal",
-        "ICameraProviderCallback.hal",
+        ":android.hardware.camera.provider@2.4_hal",
     ],
     out: [
         "android/hardware/camera/provider/2.4/ICameraProvider.h",

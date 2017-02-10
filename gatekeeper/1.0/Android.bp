@@ -13,8 +13,7 @@ genrule {
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.gatekeeper@1.0",
     srcs: [
-        "types.hal",
-        "IGatekeeper.hal",
+        ":android.hardware.gatekeeper@1.0_hal",
     ],
     out: [
         "android/hardware/gatekeeper/1.0/types.cpp",
@@ -27,8 +26,7 @@ genrule {
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.gatekeeper@1.0",
     srcs: [
-        "types.hal",
-        "IGatekeeper.hal",
+        ":android.hardware.gatekeeper@1.0_hal",
     ],
     out: [
         "android/hardware/gatekeeper/1.0/types.h",

@@ -19,14 +19,7 @@ genrule {
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.audio@2.0",
     srcs: [
-        "types.hal",
-        "IDevice.hal",
-        "IDevicesFactory.hal",
-        "IPrimaryDevice.hal",
-        "IStream.hal",
-        "IStreamIn.hal",
-        "IStreamOut.hal",
-        "IStreamOutCallback.hal",
+        ":android.hardware.audio@2.0_hal",
     ],
     out: [
         "android/hardware/audio/2.0/types.cpp",
@@ -45,14 +38,7 @@ genrule {
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.audio@2.0",
     srcs: [
-        "types.hal",
-        "IDevice.hal",
-        "IDevicesFactory.hal",
-        "IPrimaryDevice.hal",
-        "IStream.hal",
-        "IStreamIn.hal",
-        "IStreamOut.hal",
-        "IStreamOutCallback.hal",
+        ":android.hardware.audio@2.0_hal",
     ],
     out: [
         "android/hardware/audio/2.0/types.h",

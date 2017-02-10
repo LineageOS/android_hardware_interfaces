@@ -19,14 +19,7 @@ genrule {
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.media.omx@1.0",
     srcs: [
-        "types.hal",
-        "IGraphicBufferSource.hal",
-        "IOmx.hal",
-        "IOmxBufferProducer.hal",
-        "IOmxBufferSource.hal",
-        "IOmxNode.hal",
-        "IOmxObserver.hal",
-        "IOmxProducerListener.hal",
+        ":android.hardware.media.omx@1.0_hal",
     ],
     out: [
         "android/hardware/media/omx/1.0/types.cpp",
@@ -45,14 +38,7 @@ genrule {
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.media.omx@1.0",
     srcs: [
-        "types.hal",
-        "IGraphicBufferSource.hal",
-        "IOmx.hal",
-        "IOmxBufferProducer.hal",
-        "IOmxBufferSource.hal",
-        "IOmxNode.hal",
-        "IOmxObserver.hal",
-        "IOmxProducerListener.hal",
+        ":android.hardware.media.omx@1.0_hal",
     ],
     out: [
         "android/hardware/media/omx/1.0/types.h",
