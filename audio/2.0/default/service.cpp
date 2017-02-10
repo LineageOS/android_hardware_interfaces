@@ -33,11 +33,20 @@ using android::hardware::soundtrigger::V2_0::ISoundTriggerHw;
 using android::hardware::registerPassthroughServiceImplementation;
 using android::hardware::broadcastradio::V1_0::IBroadcastRadioFactory;
 
+using android::OK;
+
 int main(int /* argc */, char* /* argv */ []) {
     configureRpcThreadpool(16, true /*callerWillJoin*/);
-    registerPassthroughServiceImplementation<IDevicesFactory>("audio_devices_factory");
-    registerPassthroughServiceImplementation<IEffectsFactory>("audio_effects_factory");
-    registerPassthroughServiceImplementation<ISoundTriggerHw>("sound_trigger.primary");
-    registerPassthroughServiceImplementation<IBroadcastRadioFactory>("broadcastradio");
+    android::status_t status;
+    status = registerPassthroughServiceImplementation<IDevicesFactory>("audio_devices_factory");
+    LOG_ALWAYS_FATAL_IF(status != OK, "Error while registering audio service: %d", status);
+    status = registerPassthroughServiceImplementation<IEffectsFactory>("audio_effects_factory");
+    LOG_ALWAYS_FATAL_IF(status != OK, "Error while registering audio effects service: %d", status);
+    // Soundtrigger and FM radio might be not present.
+    status = registerPassthroughServiceImplementation<ISoundTriggerHw>("sound_trigger.primary");
+    ALOGE_IF(status != OK, "Error while registering soundtrigger service: %d", status);
+    status = registerPassthroughServiceImplementation<IBroadcastRadioFactory>("broadcastradio");
+    ALOGE_IF(status != OK, "Error while registering fm radio service: %d", status);
     joinRpcThreadpool();
+    return status;
 }
