@@ -87,9 +87,6 @@ class WifiNanIface : public IWifiNanIface {
   Return<void> terminateDataPathRequest(uint16_t cmd_id,
                                         uint32_t ndpInstanceId,
                                         terminateDataPathRequest_cb hidl_status_cb) override;
-  Return<void> beaconSdfPayloadRequest(uint16_t cmd_id,
-                                       const NanBeaconSdfPayloadRequest& msg,
-                                       beaconSdfPayloadRequest_cb hidl_status_cb) override;
 
  private:
   // Corresponding worker functions for the HIDL methods.
@@ -121,8 +118,6 @@ class WifiNanIface : public IWifiNanIface {
       uint16_t cmd_id, const NanRespondToDataPathIndicationRequest& msg);
   WifiStatus terminateDataPathRequestInternal(
       uint16_t cmd_id, uint32_t ndpInstanceId);
-  WifiStatus beaconSdfPayloadRequestInternal(
-      uint16_t cmd_id, const NanBeaconSdfPayloadRequest& msg);
 
   std::string ifname_;
   std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;

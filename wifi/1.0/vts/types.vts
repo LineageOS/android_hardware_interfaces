@@ -1513,44 +1513,6 @@ attribute: {
 }
 
 attribute: {
-    name: "::android::hardware::wifi::V1_0::NanBeaconSdfPayloadRequest"
-    type: TYPE_STRUCT
-    struct_value: {
-        name: "transmitInNext16dws"
-        type: TYPE_SCALAR
-        scalar_type: "bool_t"
-    }
-    struct_value: {
-        name: "transmitInDiscoveryBeacon"
-        type: TYPE_SCALAR
-        scalar_type: "bool_t"
-    }
-    struct_value: {
-        name: "transmitInSyncBeacon"
-        type: TYPE_SCALAR
-        scalar_type: "bool_t"
-    }
-    struct_value: {
-        name: "transmitInServiceDiscoveryFrame"
-        type: TYPE_SCALAR
-        scalar_type: "bool_t"
-    }
-    struct_value: {
-        name: "vendorOui"
-        type: TYPE_SCALAR
-        scalar_type: "uint32_t"
-    }
-    struct_value: {
-        name: "vsa"
-        type: TYPE_VECTOR
-        vector_value: {
-            type: TYPE_SCALAR
-            scalar_type: "uint8_t"
-        }
-    }
-}
-
-attribute: {
     name: "::android::hardware::wifi::V1_0::NanCapabilities"
     type: TYPE_STRUCT
     struct_value: {
@@ -1799,56 +1761,6 @@ attribute: {
         enumerator: "SERVICE_DISCOVERY_MASK"
         scalar_value: {
             uint32_t: 4
-        }
-    }
-}
-
-attribute: {
-    name: "::android::hardware::wifi::V1_0::NanBeaconSdfPayloadInd"
-    type: TYPE_STRUCT
-    struct_value: {
-        name: "addr"
-        type: TYPE_ARRAY
-        vector_value: {
-            vector_size: 6
-            type: TYPE_SCALAR
-            scalar_type: "uint8_t"
-        }
-    }
-    struct_value: {
-        name: "isVsaReceived"
-        type: TYPE_SCALAR
-        scalar_type: "bool_t"
-    }
-    struct_value: {
-        name: "vsaReceivedOnFrames"
-        type: TYPE_MASK
-        predefined_type: "::android::hardware::wifi::V1_0::NanVsaRxFrameMask"
-    }
-    struct_value: {
-        name: "vsaVendorOui"
-        type: TYPE_SCALAR
-        scalar_type: "uint32_t"
-    }
-    struct_value: {
-        name: "vsa"
-        type: TYPE_VECTOR
-        vector_value: {
-            type: TYPE_SCALAR
-            scalar_type: "uint8_t"
-        }
-    }
-    struct_value: {
-        name: "isBeaconSdfPayloadReceived"
-        type: TYPE_SCALAR
-        scalar_type: "bool_t"
-    }
-    struct_value: {
-        name: "beaconSdfPayloadData"
-        type: TYPE_VECTOR
-        vector_value: {
-            type: TYPE_SCALAR
-            scalar_type: "uint8_t"
         }
     }
 }
