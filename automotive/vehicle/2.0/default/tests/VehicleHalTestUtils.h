@@ -131,12 +131,12 @@ public:
         mEventCond.notify_one();
         return Return<void>();
     }
-    Return<void> onPropertySet(const VehiclePropValue& value) override {
+    Return<void> onPropertySet(const VehiclePropValue& /* value */) override {
         return Return<void>();
     }
-    Return<void> onPropertySetError(StatusCode errorCode,
-                                    int32_t propId,
-                                    int32_t areaId) override {
+    Return<void> onPropertySetError(StatusCode /* errorCode */,
+                                    int32_t /* propId */,
+                                    int32_t /* areaId */) override {
         return Return<void>();
     }
 

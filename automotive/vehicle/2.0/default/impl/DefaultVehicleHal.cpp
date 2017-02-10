@@ -15,9 +15,9 @@
  */
 
 #define LOG_TAG "DefaultVehicleHal"
+#include <android/log.h>
 
 #include <algorithm>
-#include <android/log.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 
