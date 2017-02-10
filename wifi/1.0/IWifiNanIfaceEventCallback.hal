@@ -195,18 +195,6 @@ interface IWifiNanIfaceEventCallback {
   oneway notifyTerminateDataPathResponse(CommandIdShort id, WifiNanStatus status);
 
   /**
-   * Callback invoked in response to a request to include vendor-specific payload in beacon or SDF
-   * frames |beaconSdfPayloadRequest|.
-   *
-   * @param cmdId command Id corresponding to the original request.
-   * @param status WifiNanStatus of the operation. Possible status codes are:
-   *        |NanStatusType.SUCCESS|
-   *        |NanStatusType.INVALID_ARGS|
-   *        |NanStatusType.INTERNAL_FAILURE|
-   */
-  oneway notifyBeaconSdfPayloadResponse(CommandIdShort id, WifiNanStatus status);
-
-  /**
    * Callbacks for the various asynchornous NAN Events.
    */
 
@@ -303,11 +291,4 @@ interface IWifiNanIfaceEventCallback {
    * @param ndpInstanceId: data-path ID of the terminated data-path.
    */
   oneway eventDataPathTerminated(uint32_t ndpInstanceId);
-
-  /**
-   * Asynchronous callback indicating vendor-specific payload received in NAN beacon or SDF frame.
-   *
-   * @param event: NanBeaconSdfPayloadInd containing event details.
-   */
-  oneway eventBeaconSdfPayload(NanBeaconSdfPayloadInd event);
 };

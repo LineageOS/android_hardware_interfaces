@@ -240,19 +240,4 @@ interface IWifiNanIface extends IWifiIface {
    */
   terminateDataPathRequest(CommandIdShort cmdId, uint32_t ndpInstanceId)
       generates (WifiStatus status);
-
-  /**
-   * Configure NAN Beacon or SDF payload to include vendor-specific payload.
-   *
-   * @param cmdId command Id to use for this invocation.
-   * @param msg Instance of |NanBeaconSdfPayloadRequest|.
-   * @return status WifiStatus of the operation.
-   *         Possible status codes:
-   *         |WifiStatusCode.SUCCESS|,
-   *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
-   *         |WifiStatusCode.ERROR_INVALID_ARGS|,
-   *         |WifiStatusCode.ERROR_UNKNOWN|
-   */
-  beaconSdfPayloadRequest(CommandIdShort cmdId, NanBeaconSdfPayloadRequest msg)
-      generates (WifiStatus status);
 };
