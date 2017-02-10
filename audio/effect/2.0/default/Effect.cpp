@@ -77,10 +77,7 @@ bool ProcessThread::threadLoop() {
     // as the Thread uses mutexes, and this can lead to priority inversion.
     while(!std::atomic_load_explicit(mStop, std::memory_order_acquire)) {
         uint32_t efState = 0;
-        mEfGroup->wait(
-                static_cast<uint32_t>(MessageQueueFlagBits::REQUEST_PROCESS_ALL),
-                &efState,
-                NS_PER_SEC);
+        mEfGroup->wait(static_cast<uint32_t>(MessageQueueFlagBits::REQUEST_PROCESS_ALL), &efState);
         if (!(efState & static_cast<uint32_t>(MessageQueueFlagBits::REQUEST_PROCESS_ALL))
                 || (efState & static_cast<uint32_t>(MessageQueueFlagBits::REQUEST_QUIT))) {
             continue;  // Nothing to do or time to quit.
