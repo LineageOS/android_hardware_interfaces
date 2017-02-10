@@ -13,8 +13,7 @@ genrule {
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.tests.pointer@1.0",
     srcs: [
-        "IGraph.hal",
-        "IPointer.hal",
+        ":android.hardware.tests.pointer@1.0_hal",
     ],
     out: [
         "android/hardware/tests/pointer/1.0/GraphAll.cpp",
@@ -27,8 +26,7 @@ genrule {
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.tests.pointer@1.0",
     srcs: [
-        "IGraph.hal",
-        "IPointer.hal",
+        ":android.hardware.tests.pointer@1.0_hal",
     ],
     out: [
         "android/hardware/tests/pointer/1.0/IGraph.h",
