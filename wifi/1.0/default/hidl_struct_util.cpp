@@ -917,6 +917,7 @@ bool convertHidlNanPublishRequestToLegacy(
   memcpy(legacy_request->service_specific_info,
         hidl_request.baseConfigs.serviceSpecificInfo.data(),
         legacy_request->service_specific_info_len);
+  // TODO: b/35193423 add support for extended service specific info
   legacy_request->rx_match_filter_len = hidl_request.baseConfigs.rxMatchFilter.size();
   if (legacy_request->rx_match_filter_len > NAN_MAX_MATCH_FILTER_LEN) {
     LOG(ERROR) << "convertHidlNanPublishRequestToLegacy: rx_match_filter_len too large";
@@ -995,6 +996,7 @@ bool convertHidlNanSubscribeRequestToLegacy(
   memcpy(legacy_request->service_specific_info,
         hidl_request.baseConfigs.serviceSpecificInfo.data(),
         legacy_request->service_specific_info_len);
+  // TODO: b/35193423 add support for extended service specific info
   legacy_request->rx_match_filter_len = hidl_request.baseConfigs.rxMatchFilter.size();
   if (legacy_request->rx_match_filter_len > NAN_MAX_MATCH_FILTER_LEN) {
     LOG(ERROR) << "convertHidlNanSubscribeRequestToLegacy: rx_match_filter_len too large";
@@ -1081,6 +1083,7 @@ bool convertHidlNanTransmitFollowupRequestToLegacy(
   memcpy(legacy_request->service_specific_info,
         hidl_request.serviceSpecificInfo.data(),
         legacy_request->service_specific_info_len);
+  // TODO: b/35193423 add support for extended service specific info
   legacy_request->recv_indication_cfg = hidl_request.disableFollowupResultIndication ? 0x1 : 0x0;
 
   return true;
@@ -1272,6 +1275,7 @@ bool convertLegacyNanCapabilitiesResponseToHidl(
   hidl_response->maxMatchFilterLen = legacy_response.max_match_filter_len;
   hidl_response->maxTotalMatchFilterLen = legacy_response.max_total_match_filter_len;
   hidl_response->maxServiceSpecificInfoLen = legacy_response.max_service_specific_info_len;
+  // TODO: b/35193423 add support for extended service specific info
   hidl_response->maxVsaDataLen = legacy_response.max_vsa_data_len;
   hidl_response->maxNdiInterfaces = legacy_response.max_ndi_interfaces;
   hidl_response->maxNdpSessions = legacy_response.max_ndp_sessions;
@@ -1296,6 +1300,7 @@ bool convertLegacyNanMatchIndToHidl(
   hidl_ind->addr = hidl_array<uint8_t, 6>(legacy_ind.addr);
   hidl_ind->serviceSpecificInfo = std::vector<uint8_t>(legacy_ind.service_specific_info,
         legacy_ind.service_specific_info + legacy_ind.service_specific_info_len);
+  // TODO: b/35193423 add support for extended service specific info
   hidl_ind->matchFilter = std::vector<uint8_t>(legacy_ind.sdf_match_filter,
         legacy_ind.sdf_match_filter + legacy_ind.sdf_match_filter_len);
   hidl_ind->matchOccuredInBeaconFlag = legacy_ind.match_occured_flag == 1;
