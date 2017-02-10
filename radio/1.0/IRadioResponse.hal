@@ -1562,6 +1562,16 @@ interface IRadioResponse {
 
     /*
      * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:GENERIC_FAILURE
+     */
+    oneway reportStkServiceIsRunningResponse(RadioResponseInfo info);
+
+    /*
+     * @param info Response info struct containing response type, serial no. and error
      * @param source CDMA subscription source
      *
      * Valid errors returned:
