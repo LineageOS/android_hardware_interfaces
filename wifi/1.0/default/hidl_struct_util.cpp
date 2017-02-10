@@ -1177,30 +1177,6 @@ bool convertHidlNanConfigRequestToLegacy(
   return true;
 }
 
-bool convertHidlNanBeaconSdfPayloadRequestToLegacy(
-    const NanBeaconSdfPayloadRequest& hidl_request,
-    legacy_hal::NanBeaconSdfPayloadRequest* legacy_request) {
-  if (!legacy_request) {
-    LOG(ERROR) << "convertHidlNanBeaconSdfPayloadRequestToLegacy: legacy_request is null";
-    return false;
-  }
-  memset(legacy_request, 0, sizeof(legacy_hal::NanBeaconSdfPayloadRequest));
-
-  legacy_request->vsa.payload_transmit_flag = hidl_request.transmitInNext16dws ? 1 : 0;
-  legacy_request->vsa.tx_in_discovery_beacon = hidl_request.transmitInDiscoveryBeacon;
-  legacy_request->vsa.tx_in_sync_beacon = hidl_request.transmitInSyncBeacon;
-  legacy_request->vsa.tx_in_service_discovery = hidl_request.transmitInServiceDiscoveryFrame;
-  legacy_request->vsa.vendor_oui = hidl_request.vendorOui;
-  legacy_request->vsa.vsa_len = hidl_request.vsa.size();
-  if (legacy_request->vsa.vsa_len > NAN_MAX_VSA_DATA_LEN) {
-    LOG(ERROR) << "convertHidlNanBeaconSdfPayloadRequestToLegacy: vsa_len too long";
-    return false;
-  }
-  memcpy(legacy_request->vsa.vsa, hidl_request.vsa.data(), legacy_request->vsa.vsa_len);
-
-  return true;
-}
-
 bool convertHidlNanDataPathInitiatorRequestToLegacy(
     const NanInitiateDataPathRequest& hidl_request,
     legacy_hal::NanDataPathInitiatorRequest* legacy_request) {
@@ -1348,26 +1324,6 @@ bool convertLegacyNanFollowupIndToHidl(
   hidl_ind->receivedInFaw = legacy_ind.dw_or_faw == 1;
   hidl_ind->message = std::vector<uint8_t>(legacy_ind.service_specific_info,
         legacy_ind.service_specific_info + legacy_ind.service_specific_info_len);
-
-  return true;
-}
-
-bool convertLegacyNanBeaconSdfPayloadIndToHidl(
-    const legacy_hal::NanBeaconSdfPayloadInd& legacy_ind,
-    NanBeaconSdfPayloadInd* hidl_ind) {
-  if (!hidl_ind) {
-    LOG(ERROR) << "convertLegacyNanBeaconSdfPayloadIndToHidl: hidl_ind is null";
-    return false;
-  }
-  hidl_ind->addr = hidl_array<uint8_t, 6>(legacy_ind.addr);
-  hidl_ind->isVsaReceived = legacy_ind.is_vsa_received == 1;
-  hidl_ind->vsaReceivedOnFrames = legacy_ind.vsa.vsa_received_on;
-  hidl_ind->vsaVendorOui = legacy_ind.vsa.vendor_oui;
-  hidl_ind->vsa = std::vector<uint8_t>(legacy_ind.vsa.vsa,
-        legacy_ind.vsa.vsa + legacy_ind.vsa.attr_len);
-  hidl_ind->isBeaconSdfPayloadReceived = legacy_ind.is_beacon_sdf_payload_received == 1;
-  hidl_ind->beaconSdfPayloadData = std::vector<uint8_t>(legacy_ind.data.frame_data,
-        legacy_ind.data.frame_data + legacy_ind.data.frame_len);
 
   return true;
 }
