@@ -867,7 +867,7 @@ struct NanDiscoveryCommonConfig {
    * The ID of the discovery session being configured. A value of 0 specifies a request to create
    * a new discovery session.
    */
-  uint16_t sessionId;
+  uint8_t sessionId;
   /**
    * The lifetime of the discovery session in seconds. A value of 0 means run forever or until
    * canceled.
@@ -1042,7 +1042,7 @@ struct NanTransmitFollowupRequest {
    * ID of an active publish or subscribe discovery session. Follow-up message is transmitted in the
    * context of the discovery session.
    */
-  uint16_t discoverySessionId;
+  uint8_t discoverySessionId;
   /**
    * ID of the peer. Obtained as part of an earlier |eventMatch| or |eventFollowupReceived|.
    */
@@ -1228,7 +1228,7 @@ struct NanMatchInd {
   /**
    * Publish or subscribe discovery session ID of an existing discovery session.
    */
-  uint16_t discoverySessionId;
+  uint8_t discoverySessionId;
   /**
    * A unique ID of the peer. Can be subsequently used in |transmitFollowupRequest|.
    */
@@ -1313,7 +1313,7 @@ struct NanFollowupReceivedInd {
    * Discovery session (publish or subscribe) ID of a previously created discovery session. The
    * message is received in the context of this discovery session.
    */
-  uint16_t discoverySessionId;
+  uint8_t discoverySessionId;
   /**
    * A unique ID of the peer. Can be subsequently used in |transmitFollowupRequest|.
    */
@@ -1378,7 +1378,7 @@ struct NanDataPathRequestInd {
    * ID of an active publish or subscribe discovery session - the data-path request is in the
    * context of this discovery session.
    */
-  uint16_t discoverySessionId;
+  uint8_t discoverySessionId;
   /**
    * MAC address of the Initiator peer. This is the MAC address of the peer's management/discovery
    * NAN interface.
