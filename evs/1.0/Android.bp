@@ -16,11 +16,7 @@ genrule {
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.evs@1.0",
     srcs: [
-        "types.hal",
-        "IEvsCamera.hal",
-        "IEvsCameraStream.hal",
-        "IEvsDisplay.hal",
-        "IEvsEnumerator.hal",
+        ":android.hardware.evs@1.0_hal",
     ],
     out: [
         "android/hardware/evs/1.0/types.cpp",
@@ -36,11 +32,7 @@ genrule {
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.evs@1.0",
     srcs: [
-        "types.hal",
-        "IEvsCamera.hal",
-        "IEvsCameraStream.hal",
-        "IEvsDisplay.hal",
-        "IEvsEnumerator.hal",
+        ":android.hardware.evs@1.0_hal",
     ],
     out: [
         "android/hardware/evs/1.0/types.h",

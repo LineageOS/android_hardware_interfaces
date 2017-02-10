@@ -12,7 +12,7 @@ genrule {
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.audio.common@2.0",
     srcs: [
-        "types.hal",
+        ":android.hardware.audio.common@2.0_hal",
     ],
     out: [
         "android/hardware/audio/common/2.0/types.cpp",
@@ -24,7 +24,7 @@ genrule {
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.audio.common@2.0",
     srcs: [
-        "types.hal",
+        ":android.hardware.audio.common@2.0_hal",
     ],
     out: [
         "android/hardware/audio/common/2.0/types.h",

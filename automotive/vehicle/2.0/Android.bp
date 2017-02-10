@@ -14,9 +14,7 @@ genrule {
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.automotive.vehicle@2.0",
     srcs: [
-        "types.hal",
-        "IVehicle.hal",
-        "IVehicleCallback.hal",
+        ":android.hardware.automotive.vehicle@2.0_hal",
     ],
     out: [
         "android/hardware/automotive/vehicle/2.0/types.cpp",
@@ -30,9 +28,7 @@ genrule {
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.automotive.vehicle@2.0",
     srcs: [
-        "types.hal",
-        "IVehicle.hal",
-        "IVehicleCallback.hal",
+        ":android.hardware.automotive.vehicle@2.0_hal",
     ],
     out: [
         "android/hardware/automotive/vehicle/2.0/types.h",

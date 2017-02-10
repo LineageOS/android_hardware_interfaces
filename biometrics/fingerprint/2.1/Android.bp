@@ -14,9 +14,7 @@ genrule {
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.biometrics.fingerprint@2.1",
     srcs: [
-        "types.hal",
-        "IBiometricsFingerprint.hal",
-        "IBiometricsFingerprintClientCallback.hal",
+        ":android.hardware.biometrics.fingerprint@2.1_hal",
     ],
     out: [
         "android/hardware/biometrics/fingerprint/2.1/types.cpp",
@@ -30,9 +28,7 @@ genrule {
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.biometrics.fingerprint@2.1",
     srcs: [
-        "types.hal",
-        "IBiometricsFingerprint.hal",
-        "IBiometricsFingerprintClientCallback.hal",
+        ":android.hardware.biometrics.fingerprint@2.1_hal",
     ],
     out: [
         "android/hardware/biometrics/fingerprint/2.1/types.h",
