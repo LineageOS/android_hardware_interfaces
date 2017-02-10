@@ -17,4 +17,7 @@ subdirs = [
     "pointer/1.0",
     "pointer/1.0/default",
     "pointer/1.0/default/lib",
+    "versioning/1.0",
+    "versioning/2.2",
+    "versioning/2.3",
 ]
