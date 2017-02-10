@@ -234,8 +234,10 @@ bool CameraProvider::initialize() {
 
     // Setup vendor tags here so HAL can setup vendor keys in camera characteristics
     VendorTagDescriptor::clearGlobalVendorTagDescriptor();
-    bool setupSucceed = setUpVendorTags();
-    return !setupSucceed; // return flag here is mInitFailed
+    if (!setUpVendorTags()) {
+        ALOGE("%s: Vendor tag setup failed, will not be available.", __FUNCTION__);
+    }
+    return false; // mInitFailed
 }
 
 bool CameraProvider::setUpVendorTags() {
@@ -245,7 +247,7 @@ bool CameraProvider::setUpVendorTags() {
     // Check if vendor operations have been implemented
     if (!mModule->isVendorTagDefined()) {
         ALOGI("%s: No vendor tags defined for this device.", __FUNCTION__);
-        return false;
+        return true;
     }
 
     mModule->getVendorTagOps(&vOps);
