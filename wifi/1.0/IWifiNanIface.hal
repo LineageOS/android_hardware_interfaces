@@ -21,6 +21,9 @@ import IWifiNanIfaceEventCallback;
 
 /**
  * Interface used to represent a single NAN(Neighbour Aware Network) iface.
+ *
+ * References to "NAN Spec" are to the Wi-Fi Alliance "Wi-Fi Neighbor Awareness
+ * Networking (NAN) Technical Specification".
  */
 interface IWifiNanIface extends IWifiIface {
   /**
@@ -39,7 +42,8 @@ interface IWifiNanIface extends IWifiIface {
       generates (WifiStatus status);
 
   /**
-   * Get NAN capabilities.
+   * Get NAN capabilities. Asynchronous response is with
+   * |IWifiNanIfaceEventCallback.notifyCapabilitiesResponse|.
    *
    * @param cmdId command Id to use for this invocation.
    * @return status WifiStatus of the operation.
@@ -53,8 +57,9 @@ interface IWifiNanIface extends IWifiIface {
   /**
    * Enable NAN: configures and activates NAN clustering (does not start
    * a discovery session or set up data-interfaces or data-paths). Use the
-   * |configureRequest| method to change the configuration of an already enabled
+   * |IWifiNanIface.configureRequest| method to change the configuration of an already enabled
    * NAN interface.
+   * Asynchronous response is with |IWifiNanIfaceEventCallback.notifyEnableResponse|.
    *
    * @param cmdId command Id to use for this invocation.
    * @param msg Instance of |NanEnableRequest|.
@@ -70,7 +75,8 @@ interface IWifiNanIface extends IWifiIface {
 
   /**
    * Configure NAN: configures an existing NAN functionality (i.e. assumes
-   * |enableRequest| already submitted and succeeded).
+   * |IWifiNanIface.enableRequest| already submitted and succeeded).
+   * Asynchronous response is with |IWifiNanIfaceEventCallback.notifyConfigResponse|.
    *
    * @param cmdId command Id to use for this invocation.
    * @param msg Instance of |NanConfigRequest|.
@@ -86,6 +92,7 @@ interface IWifiNanIface extends IWifiIface {
 
   /**
    * Disable NAN functionality.
+   * Asynchronous response is with |IWifiNanIfaceEventCallback.notifyDisableResponse|.
    *
    * @param cmdId command Id to use for this invocation.
    * @return status WifiStatus of the operation.
@@ -98,6 +105,7 @@ interface IWifiNanIface extends IWifiIface {
 
   /**
    * Publish request to start advertising a discovery service.
+   * Asynchronous response is with |IWifiNanIfaceEventCallback.notifyStartPublishResponse|.
    *
    * @param cmdId command Id to use for this invocation.
    * @param msg Instance of |NanPublishRequest|.
@@ -113,6 +121,7 @@ interface IWifiNanIface extends IWifiIface {
 
   /**
    * Stop publishing a discovery service.
+   * Asynchronous response is with |IWifiNanIfaceEventCallback.notifyStopPublishResponse|.
    *
    * @param cmdId command Id to use for this invocation.
    * @param sessionId ID of the publish discovery session to be stopped.
@@ -127,6 +136,7 @@ interface IWifiNanIface extends IWifiIface {
 
   /**
    * Subscribe request to start searching for a discovery service.
+   * Asynchronous response is with |IWifiNanIfaceEventCallback.notifyStartSubscribeResponse|.
    *
    * @param cmdId command Id to use for this invocation.
    * @param msg Instance of |NanSubscribeRequest|.
@@ -142,6 +152,7 @@ interface IWifiNanIface extends IWifiIface {
 
   /**
    * Stop subscribing to a discovery service.
+   * Asynchronous response is with |IWifiNanIfaceEventCallback.notifyStopSubscribeResponse|.
    *
    * @param cmdId command Id to use for this invocation.
    * @param sessionId ID of the subscribe discovery session to be stopped.
@@ -156,6 +167,7 @@ interface IWifiNanIface extends IWifiIface {
 
   /**
    * NAN transmit follow up message request.
+   * Asynchronous response is with |IWifiNanIfaceEventCallback.notifyTransmitFollowupResponse|.
    *
    * @param cmdId command Id to use for this invocation.
    * @param msg Instance of |NanTransmitFollowupRequest|.
@@ -171,6 +183,7 @@ interface IWifiNanIface extends IWifiIface {
 
   /**
    * Create a NAN Data Interface.
+   * Asynchronous response is with |IWifiNanIfaceEventCallback.notifyCreateDataInterfaceResponse|.
    *
    * @param cmdId command Id to use for this invocation.
    * @return status WifiStatus of the operation.
@@ -184,6 +197,7 @@ interface IWifiNanIface extends IWifiIface {
 
   /**
    * Delete a NAN Data Interface.
+   * Asynchronous response is with |IWifiNanIfaceEventCallback.notifyDeleteDataInterfaceResponse|.
    *
    * @param cmdId command Id to use for this invocation.
    * @return status WifiStatus of the operation.
@@ -197,6 +211,7 @@ interface IWifiNanIface extends IWifiIface {
 
   /**
    * Initiate a data-path (NDP) setup operation: Initiator.
+   * Asynchronous response is with |IWifiNanIfaceEventCallback.notifyInitiateDataPathResponse|.
    *
    * @param cmdId command Id to use for this invocation.
    * @param msg Instance of |NanInitiateDataPathRequest|.
@@ -213,6 +228,8 @@ interface IWifiNanIface extends IWifiIface {
   /**
    * Respond to a received data indication as part of a data-path (NDP) setup operation. An
    * indication is received by the Responder from the Initiator.
+   * Asynchronous response is with
+   * |IWifiNanIfaceEventCallback.notifyRespondToDataPathIndicationResponse|.
    *
    * @param cmdId command Id to use for this invocation.
    * @param msg Instance of |NanRespondToDataPathIndicationRequest|.
@@ -229,6 +246,7 @@ interface IWifiNanIface extends IWifiIface {
 
   /**
    * Data-path (NDP) termination request: executed by either Initiator or Responder.
+   * Asynchronous response is with |IWifiNanIfaceEventCallback.notifyTerminateDataPathResponse|.
    *
    * @param cmdId command Id to use for this invocation.
    * @param ndpInstanceId Data-path instance ID to be terminated.
