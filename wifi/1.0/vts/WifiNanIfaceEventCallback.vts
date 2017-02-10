@@ -192,18 +192,6 @@ interface: {
     }
 
     api: {
-        name: "notifyBeaconSdfPayloadResponse"
-        arg: {
-            type: TYPE_SCALAR
-            scalar_type: "uint16_t"
-        }
-        arg: {
-            type: TYPE_STRUCT
-            predefined_type: "::android::hardware::wifi::V1_0::WifiNanStatus"
-        }
-    }
-
-    api: {
         name: "eventClusterEvent"
         arg: {
             type: TYPE_STRUCT
@@ -304,14 +292,6 @@ interface: {
         arg: {
             type: TYPE_SCALAR
             scalar_type: "uint32_t"
-        }
-    }
-
-    api: {
-        name: "eventBeaconSdfPayload"
-        arg: {
-            type: TYPE_STRUCT
-            predefined_type: "::android::hardware::wifi::V1_0::NanBeaconSdfPayloadInd"
         }
     }
 

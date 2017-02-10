@@ -1159,31 +1159,6 @@ struct NanRespondToDataPathIndicationRequest {
 };
 
 /**
- * Specifies vendor-specific information fields to be included in NAN management frames.
- */
-struct NanBeaconSdfPayloadRequest {
-  /**
-   * If true information is transmitted in next 16 DWs, else only in the next (1) DW.
-   */
-  bool transmitInNext16dws;
-  /**
-   * Specify the management frames in which the vendor-specific information is included.
-   */
-  bool transmitInDiscoveryBeacon;
-  bool transmitInSyncBeacon;
-  bool transmitInServiceDiscoveryFrame;
-  /**
-   * Organizationally Unique Identifier (OUI).
-   */
-  uint32_t vendorOui;
-  /**
-   * Vendor specific attribute to be transmitted.
-   * Max length: |NanCapabilities.maxVsaDataLen|.
-   */
-  vec<uint8_t> vsa;
-};
-
-/**
  * NDP Capabilities response.
  */
 struct NanCapabilities {
@@ -1391,54 +1366,6 @@ struct NanClusterEventInd {
    * MAC Address associated with the corresponding event.
    */
   MacAddress addr;
-};
-
-/**
- * Mask to determine on which frames the vendor-specific attribute (VSA) was received on.
- */
-enum NanVsaRxFrameMask: uint32_t {
-  DISCOVERY_BEACON_MASK = 1 << 0,
-  SYNC_BEACON_MASK = 1 << 1,
-  SERVICE_DISCOVERY_MASK = 1 << 2
-};
-
-/**
- * NAN Beacon or SDF Payload Indication Message structure.
- * The BeaconSdfPayloadInd message indicates to the upper layers that information
- * elements were received either in a Beacon or SDF which needs to be delivered
- * outside of a Publish/Subscribe Handle.
- */
-struct NanBeaconSdfPayloadInd {
-  /**
-   * The MAC address of the peer which sent the attributes.
-   */
-  MacAddress addr;
-  /**
-   * A flag indicating whether a vendor-specific attribute (VSA) has been received.
-   */
-  bool isVsaReceived;
-  /**
-   * Frames on which this vendor specific attribute was received.
-   * Mask |NanVsaRxFrameMask| defined above.
-   */
-  bitfield<NanVsaRxFrameMask> vsaReceivedOnFrames;
-  /**
-   * Organizationally Unique Identifier (OUI) of the vendor-specific attribute.
-   */
-  uint32_t vsaVendorOui;
-  /**
-   * Contents of the vendor specific attribute.
-   * Max length: |NanCapabilities.maxVsaDataLen|.
-   */
-  vec<uint8_t> vsa;
-  /**
-   * A flag indicating whether a NAN beacon or SDF payload has been received.
-   */
-  bool isBeaconSdfPayloadReceived;
-  /**
-   * The contents of the NAN beacon or SDF payload.
-   */
-  vec<uint8_t> beaconSdfPayloadData;
 };
 
 /**
