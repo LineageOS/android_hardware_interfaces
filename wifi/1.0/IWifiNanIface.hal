@@ -122,7 +122,7 @@ interface IWifiNanIface extends IWifiIface {
    *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
    *         |WifiStatusCode.ERROR_UNKNOWN|
    */
-  stopPublishRequest(CommandIdShort cmdId, uint16_t sessionId)
+  stopPublishRequest(CommandIdShort cmdId, uint8_t sessionId)
       generates (WifiStatus status);
 
   /**
@@ -151,7 +151,7 @@ interface IWifiNanIface extends IWifiIface {
    *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
    *         |WifiStatusCode.ERROR_UNKNOWN|
    */
-  stopSubscribeRequest(CommandIdShort cmdId, uint16_t sessionId)
+  stopSubscribeRequest(CommandIdShort cmdId, uint8_t sessionId)
       generates (WifiStatus status);
 
   /**

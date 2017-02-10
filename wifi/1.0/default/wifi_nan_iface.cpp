@@ -495,7 +495,7 @@ Return<void> WifiNanIface::startPublishRequest(uint16_t cmd_id,
 
 Return<void> WifiNanIface::stopPublishRequest(
     uint16_t cmd_id,
-    uint16_t sessionId,
+    uint8_t sessionId,
     stopPublishRequest_cb hidl_status_cb) {
   return validateAndCall(this,
                          WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
@@ -519,7 +519,7 @@ Return<void> WifiNanIface::startSubscribeRequest(
 
 Return<void> WifiNanIface::stopSubscribeRequest(
     uint16_t cmd_id,
-    uint16_t sessionId,
+    uint8_t sessionId,
     stopSubscribeRequest_cb hidl_status_cb) {
   return validateAndCall(this,
                          WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
@@ -665,7 +665,7 @@ WifiStatus WifiNanIface::startPublishRequestInternal(uint16_t cmd_id,
 }
 
 WifiStatus WifiNanIface::stopPublishRequestInternal(
-    uint16_t cmd_id, uint16_t sessionId) {
+    uint16_t cmd_id, uint8_t sessionId) {
   legacy_hal::NanPublishCancelRequest legacy_msg;
   legacy_msg.publish_id = sessionId;
   legacy_hal::wifi_error legacy_status =
@@ -686,7 +686,7 @@ WifiStatus WifiNanIface::startSubscribeRequestInternal(
 }
 
 WifiStatus WifiNanIface::stopSubscribeRequestInternal(
-    uint16_t cmd_id, uint16_t sessionId) {
+    uint16_t cmd_id, uint8_t sessionId) {
   legacy_hal::NanSubscribeCancelRequest legacy_msg;
   legacy_msg.subscribe_id = sessionId;
   legacy_hal::wifi_error legacy_status =

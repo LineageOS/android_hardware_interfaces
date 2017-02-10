@@ -79,7 +79,7 @@ interface IWifiNanIfaceEventCallback {
    *        |NanStatusType.INVALID_SESSION_ID|
    * @param sessionId ID of the new publish session (if successfully created).
    */
-  oneway notifyStartPublishResponse(CommandIdShort id, WifiNanStatus status, uint16_t sessionId);
+  oneway notifyStartPublishResponse(CommandIdShort id, WifiNanStatus status, uint8_t sessionId);
 
   /**
    * Callback invoked in response to a stop publish request |stopPublishRequest|.
@@ -104,7 +104,7 @@ interface IWifiNanIfaceEventCallback {
    *        |NanStatusType.INVALID_SESSION_ID|
    * @param sessionId ID of the new subscribe session (if successfully created).
    */
-  oneway notifyStartSubscribeResponse(CommandIdShort id, WifiNanStatus status, uint16_t sessionId);
+  oneway notifyStartSubscribeResponse(CommandIdShort id, WifiNanStatus status, uint8_t sessionId);
 
   /**
    * Callback invoked in response to a stop subscribe request |stopSubscribeRequest|.
@@ -223,7 +223,7 @@ interface IWifiNanIfaceEventCallback {
    *                Possible status codes are:
    *                |NanStatusType.SUCCESS|
    */
-  oneway eventPublishTerminated(uint16_t sessionId, WifiNanStatus status);
+  oneway eventPublishTerminated(uint8_t sessionId, WifiNanStatus status);
 
   /**
    * Asynchronous callback indicating that an active subscribe session has terminated.
@@ -233,7 +233,7 @@ interface IWifiNanIfaceEventCallback {
    *                 Possible status codes are:
    *                |NanStatusType.SUCCESS|
    */
-  oneway eventSubscribeTerminated(uint16_t sessionId, WifiNanStatus status);
+  oneway eventSubscribeTerminated(uint8_t sessionId, WifiNanStatus status);
 
   /**
    * Asynchronous callback indicating that a match has occurred: i.e. a service has been
@@ -249,7 +249,7 @@ interface IWifiNanIfaceEventCallback {
    * @param discoverySessionId: The discovery session ID of the expired match.
    * @param peerId: The peer ID of the expired match.
    */
-  oneway eventMatchExpired(uint16_t discoverySessionId, uint32_t peerId);
+  oneway eventMatchExpired(uint8_t discoverySessionId, uint32_t peerId);
 
   /**
    * Asynchronous callback indicating that a followup message has been received from a peer.
