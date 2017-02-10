@@ -12,7 +12,7 @@ genrule {
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.benchmarks.msgq@1.0",
     srcs: [
-        "IBenchmarkMsgQ.hal",
+        ":android.hardware.benchmarks.msgq@1.0_hal",
     ],
     out: [
         "android/hardware/benchmarks/msgq/1.0/BenchmarkMsgQAll.cpp",
@@ -24,7 +24,7 @@ genrule {
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.benchmarks.msgq@1.0",
     srcs: [
-        "IBenchmarkMsgQ.hal",
+        ":android.hardware.benchmarks.msgq@1.0_hal",
     ],
     out: [
         "android/hardware/benchmarks/msgq/1.0/IBenchmarkMsgQ.h",
