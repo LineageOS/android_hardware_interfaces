@@ -787,6 +787,7 @@ bool convertHidlNanEnableRequestToLegacy(
   legacy_request->sid_beacon_val =
         (hidl_request.configParams.includePublishServiceIdsInBeacon ? 0x1 : 0x0)
             | (hidl_request.configParams.numberOfPublishServiceIdsInBeacon << 1);
+  // TODO: b/35195516 connect SubscribeServiceIds to legacy HAL once implemented
   legacy_request->config_rssi_window_size = 1;
   legacy_request->rssi_window_size_val = hidl_request.configParams.rssiWindowSize;
   legacy_request->config_disc_mac_addr_randomization = 1;
@@ -1114,6 +1115,7 @@ bool convertHidlNanConfigRequestToLegacy(
   }
   legacy_request->sid_beacon = (hidl_request.includePublishServiceIdsInBeacon ? 0x1 : 0x0)
         | (hidl_request.numberOfPublishServiceIdsInBeacon << 1);
+  // TODO: b/35195516 connect SubscribeServiceIds to legacy HAL once implemented
   legacy_request->config_rssi_window_size = 1;
   legacy_request->rssi_window_size_val = hidl_request.rssiWindowSize;
   legacy_request->config_disc_mac_addr_randomization = 1;
