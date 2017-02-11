@@ -383,6 +383,7 @@ attribute: {
     struct_value: {
         name: "eventReportScheme"
         type: TYPE_MASK
+        scalar_type: "uint32_t"
         predefined_type: "::android::hardware::wifi::V1_0::StaBackgroundScanBucketEventReportSchemeMask"
     }
     struct_value: {
@@ -567,8 +568,8 @@ attribute: {
     struct_value: {
         name: "bssid"
         type: TYPE_ARRAY
+        vector_size: 6
         vector_value: {
-            vector_size: 6
             type: TYPE_SCALAR
             scalar_type: "uint8_t"
         }
@@ -622,6 +623,7 @@ attribute: {
     struct_value: {
         name: "flags"
         type: TYPE_MASK
+        scalar_type: "int32_t"
         predefined_type: "::android::hardware::wifi::V1_0::StaScanDataFlagMask"
     }
     struct_value: {
@@ -662,8 +664,8 @@ attribute: {
         type: TYPE_VECTOR
         vector_value: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -674,8 +676,8 @@ attribute: {
         type: TYPE_VECTOR
         vector_value: {
             type: TYPE_ARRAY
+            vector_size: 32
             vector_value: {
-                vector_size: 32
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -689,11 +691,11 @@ attribute: {
     enum_value: {
         scalar_type: "uint8_t"
 
-        enumerator: "ENABLED"
+        enumerator: "DISABLED"
         scalar_value: {
             uint8_t: 0
         }
-        enumerator: "DISABLED"
+        enumerator: "ENABLED"
         scalar_value: {
             uint8_t: 1
         }
@@ -920,7 +922,7 @@ attribute: {
         scalar_type: "uint8_t"
     }
     struct_value: {
-        name: "rssiProximity"
+        name: "rssiCloseProximity"
         type: TYPE_SCALAR
         scalar_type: "uint8_t"
     }
@@ -955,12 +957,12 @@ attribute: {
         scalar_type: "bool_t"
     }
     struct_value: {
-        name: "clusterIdLowVal"
+        name: "clusterIdBottomRangeVal"
         type: TYPE_SCALAR
         scalar_type: "uint16_t"
     }
     struct_value: {
-        name: "clusterIdHighVal"
+        name: "clusterIdTopRangeVal"
         type: TYPE_SCALAR
         scalar_type: "uint16_t"
     }
@@ -972,8 +974,8 @@ attribute: {
     struct_value: {
         name: "intfAddrVal"
         type: TYPE_ARRAY
+        vector_size: 6
         vector_value: {
-            vector_size: 6
             type: TYPE_SCALAR
             scalar_type: "uint8_t"
         }
@@ -1015,7 +1017,8 @@ attribute: {
     }
     struct_value: {
         name: "discoveryChannelMhzVal"
-        type: TYPE_VECTOR
+        type: TYPE_ARRAY
+        vector_size: 2
         vector_value: {
             type: TYPE_SCALAR
             scalar_type: "uint32_t"
@@ -1028,7 +1031,8 @@ attribute: {
     }
     struct_value: {
         name: "useBeaconsInBandVal"
-        type: TYPE_VECTOR
+        type: TYPE_ARRAY
+        vector_size: 2
         vector_value: {
             type: TYPE_SCALAR
             scalar_type: "bool_t"
@@ -1041,7 +1045,8 @@ attribute: {
     }
     struct_value: {
         name: "useSdfInBandVal"
-        type: TYPE_VECTOR
+        type: TYPE_ARRAY
+        vector_size: 2
         vector_value: {
             type: TYPE_SCALAR
             scalar_type: "bool_t"
@@ -1073,12 +1078,22 @@ attribute: {
         scalar_type: "bool_t"
     }
     struct_value: {
-        name: "includeServiceIdsInBeacon"
+        name: "includePublishServiceIdsInBeacon"
         type: TYPE_SCALAR
         scalar_type: "bool_t"
     }
     struct_value: {
-        name: "numberOfServiceIdsInBeacon"
+        name: "numberOfPublishServiceIdsInBeacon"
+        type: TYPE_SCALAR
+        scalar_type: "uint8_t"
+    }
+    struct_value: {
+        name: "includeSubscribeServiceIdsInBeacon"
+        type: TYPE_SCALAR
+        scalar_type: "bool_t"
+    }
+    struct_value: {
+        name: "numberOfSubscribeServiceIdsInBeacon"
         type: TYPE_SCALAR
         scalar_type: "uint8_t"
     }
@@ -1099,10 +1114,46 @@ attribute: {
     }
     struct_value: {
         name: "bandSpecificConfig"
-        type: TYPE_VECTOR
+        type: TYPE_ARRAY
+        vector_size: 2
         vector_value: {
+            name: "::android::hardware::wifi::V1_0::NanBandSpecificConfig"
             type: TYPE_STRUCT
-            predefined_type: "::android::hardware::wifi::V1_0::NanBandSpecificConfig"
+            struct_value: {
+                name: "rssiClose"
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+            struct_value: {
+                name: "rssiMiddle"
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+            struct_value: {
+                name: "rssiCloseProximity"
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+            struct_value: {
+                name: "dwellTimeMs"
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+            struct_value: {
+                name: "scanPeriodSec"
+                type: TYPE_SCALAR
+                scalar_type: "uint16_t"
+            }
+            struct_value: {
+                name: "validDiscoveryWindowIntervalVal"
+                type: TYPE_SCALAR
+                scalar_type: "bool_t"
+            }
+            struct_value: {
+                name: "discoveryWindowIntervalVal"
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
         }
     }
 }
@@ -1112,7 +1163,8 @@ attribute: {
     type: TYPE_STRUCT
     struct_value: {
         name: "operateInBand"
-        type: TYPE_VECTOR
+        type: TYPE_ARRAY
+        vector_size: 2
         vector_value: {
             type: TYPE_SCALAR
             scalar_type: "bool_t"
@@ -1179,7 +1231,7 @@ attribute: {
     struct_value: {
         name: "sessionId"
         type: TYPE_SCALAR
-        scalar_type: "uint16_t"
+        scalar_type: "uint8_t"
     }
     struct_value: {
         name: "ttlSec"
@@ -1198,7 +1250,11 @@ attribute: {
     }
     struct_value: {
         name: "serviceName"
-        type: TYPE_STRING
+        type: TYPE_VECTOR
+        vector_value: {
+            type: TYPE_SCALAR
+            scalar_type: "uint8_t"
+        }
     }
     struct_value: {
         name: "discoveryMatchIndicator"
@@ -1207,6 +1263,14 @@ attribute: {
     }
     struct_value: {
         name: "serviceSpecificInfo"
+        type: TYPE_VECTOR
+        vector_value: {
+            type: TYPE_SCALAR
+            scalar_type: "uint8_t"
+        }
+    }
+    struct_value: {
+        name: "extendedServiceSpecificInfo"
         type: TYPE_VECTOR
         vector_value: {
             type: TYPE_SCALAR
@@ -1252,6 +1316,7 @@ attribute: {
     struct_value: {
         name: "supportedCipherTypes"
         type: TYPE_MASK
+        scalar_type: "uint32_t"
         predefined_type: "::android::hardware::wifi::V1_0::NanCipherSuiteType"
     }
     struct_value: {
@@ -1280,17 +1345,18 @@ attribute: {
     struct_value: {
         name: "configRangingIndications"
         type: TYPE_MASK
+        scalar_type: "uint32_t"
         predefined_type: "::android::hardware::wifi::V1_0::NanRangingIndication"
     }
     struct_value: {
         name: "distanceIngressCm"
         type: TYPE_SCALAR
-        scalar_type: "uint32_t"
+        scalar_type: "uint16_t"
     }
     struct_value: {
         name: "distanceEgressCm"
         type: TYPE_SCALAR
-        scalar_type: "uint32_t"
+        scalar_type: "uint16_t"
     }
 }
 
@@ -1352,8 +1418,8 @@ attribute: {
         type: TYPE_VECTOR
         vector_value: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -1367,7 +1433,7 @@ attribute: {
     struct_value: {
         name: "discoverySessionId"
         type: TYPE_SCALAR
-        scalar_type: "uint16_t"
+        scalar_type: "uint8_t"
     }
     struct_value: {
         name: "peerId"
@@ -1377,8 +1443,8 @@ attribute: {
     struct_value: {
         name: "addr"
         type: TYPE_ARRAY
+        vector_size: 6
         vector_value: {
-            vector_size: 6
             type: TYPE_SCALAR
             scalar_type: "uint8_t"
         }
@@ -1394,7 +1460,15 @@ attribute: {
         scalar_type: "bool_t"
     }
     struct_value: {
-        name: "message"
+        name: "serviceSpecificInfo"
+        type: TYPE_VECTOR
+        vector_value: {
+            type: TYPE_SCALAR
+            scalar_type: "uint8_t"
+        }
+    }
+    struct_value: {
+        name: "extendedServiceSpecificInfo"
         type: TYPE_VECTOR
         vector_value: {
             type: TYPE_SCALAR
@@ -1419,8 +1493,8 @@ attribute: {
     struct_value: {
         name: "peerDiscMacAddr"
         type: TYPE_ARRAY
+        vector_size: 6
         vector_value: {
-            vector_size: 6
             type: TYPE_SCALAR
             scalar_type: "uint8_t"
         }
@@ -1455,6 +1529,7 @@ attribute: {
     struct_value: {
         name: "supportedCipherTypes"
         type: TYPE_MASK
+        scalar_type: "uint32_t"
         predefined_type: "::android::hardware::wifi::V1_0::NanCipherSuiteType"
     }
     struct_value: {
@@ -1500,6 +1575,7 @@ attribute: {
     struct_value: {
         name: "supportedCipherTypes"
         type: TYPE_MASK
+        scalar_type: "uint32_t"
         predefined_type: "::android::hardware::wifi::V1_0::NanCipherSuiteType"
     }
     struct_value: {
@@ -1551,6 +1627,11 @@ attribute: {
         scalar_type: "uint32_t"
     }
     struct_value: {
+        name: "maxExtendedServiceSpecificInfoLen"
+        type: TYPE_SCALAR
+        scalar_type: "uint32_t"
+    }
+    struct_value: {
         name: "maxVsaDataLen"
         type: TYPE_SCALAR
         scalar_type: "uint32_t"
@@ -1583,6 +1664,7 @@ attribute: {
     struct_value: {
         name: "supportedCipherSuites"
         type: TYPE_MASK
+        scalar_type: "uint32_t"
         predefined_type: "::android::hardware::wifi::V1_0::NanCipherSuiteType"
     }
 }
@@ -1593,7 +1675,7 @@ attribute: {
     struct_value: {
         name: "discoverySessionId"
         type: TYPE_SCALAR
-        scalar_type: "uint16_t"
+        scalar_type: "uint8_t"
     }
     struct_value: {
         name: "peerId"
@@ -1603,14 +1685,22 @@ attribute: {
     struct_value: {
         name: "addr"
         type: TYPE_ARRAY
+        vector_size: 6
         vector_value: {
-            vector_size: 6
             type: TYPE_SCALAR
             scalar_type: "uint8_t"
         }
     }
     struct_value: {
         name: "serviceSpecificInfo"
+        type: TYPE_VECTOR
+        vector_value: {
+            type: TYPE_SCALAR
+            scalar_type: "uint8_t"
+        }
+    }
+    struct_value: {
+        name: "extendedServiceSpecificInfo"
         type: TYPE_VECTOR
         vector_value: {
             type: TYPE_SCALAR
@@ -1643,6 +1733,7 @@ attribute: {
     struct_value: {
         name: "peerSupportedCipherTypes"
         type: TYPE_MASK
+        scalar_type: "uint32_t"
         predefined_type: "::android::hardware::wifi::V1_0::NanCipherSuiteType"
     }
     struct_value: {
@@ -1663,6 +1754,7 @@ attribute: {
     struct_value: {
         name: "rangingIndicationType"
         type: TYPE_MASK
+        scalar_type: "uint32_t"
         predefined_type: "::android::hardware::wifi::V1_0::NanRangingIndication"
     }
 }
@@ -1673,7 +1765,7 @@ attribute: {
     struct_value: {
         name: "discoverySessionId"
         type: TYPE_SCALAR
-        scalar_type: "uint16_t"
+        scalar_type: "uint8_t"
     }
     struct_value: {
         name: "peerId"
@@ -1683,8 +1775,8 @@ attribute: {
     struct_value: {
         name: "addr"
         type: TYPE_ARRAY
+        vector_size: 6
         vector_value: {
-            vector_size: 6
             type: TYPE_SCALAR
             scalar_type: "uint8_t"
         }
@@ -1695,7 +1787,15 @@ attribute: {
         scalar_type: "bool_t"
     }
     struct_value: {
-        name: "message"
+        name: "serviceSpecificInfo"
+        type: TYPE_VECTOR
+        vector_value: {
+            type: TYPE_SCALAR
+            scalar_type: "uint8_t"
+        }
+    }
+    struct_value: {
+        name: "extendedServiceSpecificInfo"
         type: TYPE_VECTOR
         vector_value: {
             type: TYPE_SCALAR
@@ -1736,31 +1836,10 @@ attribute: {
     struct_value: {
         name: "addr"
         type: TYPE_ARRAY
+        vector_size: 6
         vector_value: {
-            vector_size: 6
             type: TYPE_SCALAR
             scalar_type: "uint8_t"
-        }
-    }
-}
-
-attribute: {
-    name: "::android::hardware::wifi::V1_0::NanVsaRxFrameMask"
-    type: TYPE_ENUM
-    enum_value: {
-        scalar_type: "uint32_t"
-
-        enumerator: "DISCOVERY_BEACON_MASK"
-        scalar_value: {
-            uint32_t: 1
-        }
-        enumerator: "SYNC_BEACON_MASK"
-        scalar_value: {
-            uint32_t: 2
-        }
-        enumerator: "SERVICE_DISCOVERY_MASK"
-        scalar_value: {
-            uint32_t: 4
         }
     }
 }
@@ -1771,13 +1850,13 @@ attribute: {
     struct_value: {
         name: "discoverySessionId"
         type: TYPE_SCALAR
-        scalar_type: "uint16_t"
+        scalar_type: "uint8_t"
     }
     struct_value: {
         name: "peerDiscMacAddr"
         type: TYPE_ARRAY
+        vector_size: 6
         vector_value: {
-            vector_size: 6
             type: TYPE_SCALAR
             scalar_type: "uint8_t"
         }
@@ -1818,8 +1897,8 @@ attribute: {
     struct_value: {
         name: "peerNdiMacAddr"
         type: TYPE_ARRAY
+        vector_size: 6
         vector_value: {
-            vector_size: 6
             type: TYPE_SCALAR
             scalar_type: "uint8_t"
         }
@@ -2018,8 +2097,8 @@ attribute: {
     struct_value: {
         name: "addr"
         type: TYPE_ARRAY
+        vector_size: 6
         vector_value: {
-            vector_size: 6
             type: TYPE_SCALAR
             scalar_type: "uint8_t"
         }
@@ -2097,8 +2176,8 @@ attribute: {
     struct_value: {
         name: "addr"
         type: TYPE_ARRAY
+        vector_size: 6
         vector_value: {
-            vector_size: 6
             type: TYPE_SCALAR
             scalar_type: "uint8_t"
         }
@@ -2246,11 +2325,13 @@ attribute: {
     struct_value: {
         name: "preambleSupport"
         type: TYPE_MASK
+        scalar_type: "uint32_t"
         predefined_type: "::android::hardware::wifi::V1_0::RttPreamble"
     }
     struct_value: {
         name: "bwSupport"
         type: TYPE_MASK
+        scalar_type: "uint32_t"
         predefined_type: "::android::hardware::wifi::V1_0::RttBw"
     }
     struct_value: {
@@ -2342,8 +2423,8 @@ attribute: {
     struct_value: {
         name: "countryCode"
         type: TYPE_ARRAY
+        vector_size: 2
         vector_value: {
-            vector_size: 2
             type: TYPE_SCALAR
             scalar_type: "int8_t"
         }
