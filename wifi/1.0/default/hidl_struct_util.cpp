@@ -1278,7 +1278,7 @@ bool convertLegacyNanCapabilitiesResponseToHidl(
   hidl_response->maxTotalMatchFilterLen = legacy_response.max_total_match_filter_len;
   hidl_response->maxServiceSpecificInfoLen = legacy_response.max_service_specific_info_len;
   // TODO: b/35193423 add support for extended service specific info
-  hidl_response->maxVsaDataLen = legacy_response.max_vsa_data_len;
+  hidl_response->maxExtendedServiceSpecificInfoLen = 0;
   hidl_response->maxNdiInterfaces = legacy_response.max_ndi_interfaces;
   hidl_response->maxNdpSessions = legacy_response.max_ndp_sessions;
   hidl_response->maxAppInfoLen = legacy_response.max_app_info_len;
