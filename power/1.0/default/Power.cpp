@@ -81,7 +81,7 @@ Return<void> Power::getPlatformLowPowerStats(getPlatformLowPowerStats_cb _hidl_c
     number_platform_modes = mModule->get_number_of_platform_modes(mModule);
     if (number_platform_modes)
     {
-       if (SIZE_MAX / sizeof(size_t) <= number_platform_modes)  // overflow
+       if ((ssize_t) (SIZE_MAX / sizeof(size_t)) <= number_platform_modes)  // overflow
            goto done;
        voters = new (std::nothrow) size_t [number_platform_modes];
        if (voters == nullptr)
@@ -91,7 +91,7 @@ Return<void> Power::getPlatformLowPowerStats(getPlatformLowPowerStats_cb _hidl_c
        if (ret != 0)
            goto done;
 
-       if (SIZE_MAX / sizeof(power_state_platform_sleep_state_t)
+       if ((ssize_t) (SIZE_MAX / sizeof(power_state_platform_sleep_state_t))
            <= number_platform_modes)  // overflow
            goto done;
        legacy_states = new (std::nothrow)
