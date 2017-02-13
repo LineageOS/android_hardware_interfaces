@@ -6,6 +6,7 @@ package: "android.hardware.wifi.supplicant"
 
 import: "android.hardware.wifi.supplicant@1.0::ISupplicantNetwork"
 import: "android.hardware.wifi.supplicant@1.0::types"
+import: "android.hidl.base@1.0::types"
 
 interface: {
     attribute: {
@@ -68,8 +69,7 @@ interface: {
         }
         return_type_hidl: {
             type: TYPE_HIDL_INTERFACE
-            predefined_type: "ISupplicantNetwork"
-            is_callback: false
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantNetwork"
         }
     }
 
@@ -93,8 +93,7 @@ interface: {
         }
         return_type_hidl: {
             type: TYPE_HIDL_INTERFACE
-            predefined_type: "ISupplicantNetwork"
-            is_callback: false
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantNetwork"
         }
         arg: {
             type: TYPE_SCALAR
@@ -125,6 +124,22 @@ interface: {
         }
         arg: {
             type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "setWpsDeviceType"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_ARRAY
+            vector_size: 8
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
         }
     }
 
@@ -180,6 +195,7 @@ interface: {
         }
         arg: {
             type: TYPE_MASK
+            scalar_type: "uint16_t"
             predefined_type: "::android::hardware::wifi::supplicant::V1_0::WpsConfigMethods"
         }
     }
