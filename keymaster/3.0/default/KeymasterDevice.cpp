@@ -375,6 +375,7 @@ Return<void> KeymasterDevice::getHardwareFeatures(getHardwareFeatures_cb _hidl_c
 }
 
 Return<ErrorCode> KeymasterDevice::addRngEntropy(const hidl_vec<uint8_t>& data) {
+    if (!data.size()) return ErrorCode::OK;
     return legacy_enum_conversion(
         keymaster_device_->add_rng_entropy(keymaster_device_, &data[0], data.size()));
 }
