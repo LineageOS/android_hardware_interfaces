@@ -4,6 +4,7 @@ component_name: "ISupplicantStaNetworkCallback"
 
 package: "android.hardware.wifi.supplicant"
 
+import: "android.hidl.base@1.0::types"
 
 interface: {
     attribute: {
@@ -14,8 +15,8 @@ interface: {
             type: TYPE_VECTOR
             vector_value: {
                 type: TYPE_ARRAY
+                vector_size: 16
                 vector_value: {
-                    vector_size: 16
                     type: TYPE_SCALAR
                     scalar_type: "uint8_t"
                 }
@@ -29,8 +30,8 @@ interface: {
         struct_value: {
             name: "rand"
             type: TYPE_ARRAY
+            vector_size: 16
             vector_value: {
-                vector_size: 16
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -38,8 +39,8 @@ interface: {
         struct_value: {
             name: "autn"
             type: TYPE_ARRAY
+            vector_size: 16
             vector_value: {
-                vector_size: 16
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }

@@ -7,19 +7,18 @@ package: "android.hardware.radio"
 import: "android.hardware.radio@1.0::IRadioIndication"
 import: "android.hardware.radio@1.0::IRadioResponse"
 import: "android.hardware.radio@1.0::types"
+import: "android.hidl.base@1.0::types"
 
 interface: {
     api: {
         name: "setResponseFunctions"
         arg: {
             type: TYPE_HIDL_INTERFACE
-            predefined_type: "IRadioResponse"
-            is_callback: false
+            predefined_type: "::android::hardware::radio::V1_0::IRadioResponse"
         }
         arg: {
             type: TYPE_HIDL_INTERFACE
-            predefined_type: "IRadioIndication"
-            is_callback: false
+            predefined_type: "::android::hardware::radio::V1_0::IRadioIndication"
         }
     }
 

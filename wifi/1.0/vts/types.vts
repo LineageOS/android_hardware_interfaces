@@ -1632,11 +1632,6 @@ attribute: {
         scalar_type: "uint32_t"
     }
     struct_value: {
-        name: "maxVsaDataLen"
-        type: TYPE_SCALAR
-        scalar_type: "uint32_t"
-    }
-    struct_value: {
         name: "maxNdiInterfaces"
         type: TYPE_SCALAR
         scalar_type: "uint32_t"
