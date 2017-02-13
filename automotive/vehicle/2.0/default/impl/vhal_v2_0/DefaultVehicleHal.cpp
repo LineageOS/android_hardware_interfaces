@@ -537,6 +537,9 @@ void DefaultVehicleHal::setDefaultValue(VehiclePropValue* prop) {
     case toInt(VehicleProperty::HVAC_TEMPERATURE_SET):
         prop->value.floatValues[0] = 16;
         break;
+    case toInt(VehicleProperty::ENV_OUTSIDE_TEMPERATURE):
+        prop->value.floatValues[0] = 25;
+        break;
     case toInt(VehicleProperty::NIGHT_MODE):
         prop->value.int32Values[0] = 0;
         break;
