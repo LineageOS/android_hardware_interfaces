@@ -726,26 +726,6 @@ interface IRadio {
     oneway getDataCallList(int32_t serial);
 
     /*
-     * This request is reserved for OEM-specific uses. It passes raw byte arrays back and forth.
-     *
-     * @param serial Serial number of request.
-     * @param data data passed as raw bytes to oem
-     *
-     * Response function is IRadioResponse.sendOemRadioRequestRawResponse()
-     */
-    oneway sendOemRadioRequestRaw(int32_t serial, vec<uint8_t> data);
-
-    /*
-     * This request is reserved for OEM-specific uses. It passes strings back and forth.
-     *
-     * @param serial Serial number of request.
-     * @param data data passed as strings to oem
-     *
-     * Response function is IRadioResponse.sendOemRadioRequestStringsResponse()
-     */
-    oneway sendOemRadioRequestStrings(int32_t serial, vec<string> data);
-
-    /*
      * Indicates the current state of the screen. When the screen is off, the
      * Radio must notify the baseband to suppress certain notifications (eg,
      * signal strength and changes in LAC/CID or BID/SID/NID/latitude/longitude)
