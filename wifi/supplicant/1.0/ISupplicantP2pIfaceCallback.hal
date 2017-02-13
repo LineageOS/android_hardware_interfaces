@@ -195,43 +195,6 @@ interface ISupplicantP2pIfaceCallback {
   oneway onInvitationResult(Bssid bssid, P2pStatusCode status);
 
   /**
-   * Used to indicate a push-button request generated during provision discovery.
-   *
-   * @param p2pDeviceAddress P2P device address.
-   */
-  oneway onProvisionDiscoveryPbcRequest(MacAddress p2pDeviceAddress);
-
-  /**
-   * Used to indicate a push-button response generated during provision discovery.
-   *
-   * @param p2pDeviceAddress P2P device address.
-   */
-  oneway onProvisionDiscoveryPbcResponse(MacAddress p2pDeviceAddress);
-
-  /**
-   * Used to indicate the pin generated during provision discovery.
-   *
-   * @param p2pDeviceAddress P2P device address.
-   * @param generatedPin 8 digit pin generated.
-   */
-  oneway onProvisionDiscoveryShowPin(
-      MacAddress p2pDeviceAddress, string generatedPin);
-
-  /**
-   * Used to indicate that a pin needs to be entered during provision discovery.
-   *
-   * @param p2pDeviceAddress P2P device address.
-   */
-  oneway onProvisionDiscoveryEnterPin(MacAddress p2pDeviceAddress);
-
-  /**
-   * Used to indicate a provision discovery failure.
-   *
-   * @param p2pDeviceAddress P2P device address.
-   */
-  oneway onProvisionDiscoveryFailure(MacAddress p2pDeviceAddress);
-
-  /**
    * Used to indicate the completion of a P2P provision discovery request.
    *
    * @param p2pDeviceAddress P2P device address.

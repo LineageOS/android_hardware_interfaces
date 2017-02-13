@@ -19,6 +19,7 @@ LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_CPPFLAGS := -Wall -Werror -Wextra
 LOCAL_SRC_FILES := \
     hidl_struct_util.cpp \
+    hidl_sync_util.cpp \
     service.cpp \
     wifi.cpp \
     wifi_ap_iface.cpp \

@@ -19,6 +19,7 @@
 #include <android-base/logging.h>
 #include <cutils/properties.h>
 
+#include "hidl_sync_util.h"
 #include "wifi_legacy_hal.h"
 #include "wifi_legacy_hal_stubs.h"
 
@@ -54,7 +55,8 @@ namespace legacy_hal {
 // std::function methods to be invoked.
 // Callback to be invoked once |stop| is complete.
 std::function<void(wifi_handle handle)> on_stop_complete_internal_callback;
-void onStopComplete(wifi_handle handle) {
+void onAsyncStopComplete(wifi_handle handle) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
   if (on_stop_complete_internal_callback) {
     on_stop_complete_internal_callback(handle);
   }
@@ -62,7 +64,7 @@ void onStopComplete(wifi_handle handle) {
 
 // Callback to be invoked for driver dump.
 std::function<void(char*, int)> on_driver_memory_dump_internal_callback;
-void onDriverMemoryDump(char* buffer, int buffer_size) {
+void onSyncDriverMemoryDump(char* buffer, int buffer_size) {
   if (on_driver_memory_dump_internal_callback) {
     on_driver_memory_dump_internal_callback(buffer, buffer_size);
   }
@@ -70,7 +72,7 @@ void onDriverMemoryDump(char* buffer, int buffer_size) {
 
 // Callback to be invoked for firmware dump.
 std::function<void(char*, int)> on_firmware_memory_dump_internal_callback;
-void onFirmwareMemoryDump(char* buffer, int buffer_size) {
+void onSyncFirmwareMemoryDump(char* buffer, int buffer_size) {
   if (on_firmware_memory_dump_internal_callback) {
     on_firmware_memory_dump_internal_callback(buffer, buffer_size);
   }
@@ -79,7 +81,8 @@ void onFirmwareMemoryDump(char* buffer, int buffer_size) {
 // Callback to be invoked for Gscan events.
 std::function<void(wifi_request_id, wifi_scan_event)>
     on_gscan_event_internal_callback;
-void onGscanEvent(wifi_request_id id, wifi_scan_event event) {
+void onAsyncGscanEvent(wifi_request_id id, wifi_scan_event event) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
   if (on_gscan_event_internal_callback) {
     on_gscan_event_internal_callback(id, event);
   }
@@ -88,9 +91,10 @@ void onGscanEvent(wifi_request_id id, wifi_scan_event event) {
 // Callback to be invoked for Gscan full results.
 std::function<void(wifi_request_id, wifi_scan_result*, uint32_t)>
     on_gscan_full_result_internal_callback;
-void onGscanFullResult(wifi_request_id id,
-                       wifi_scan_result* result,
-                       uint32_t buckets_scanned) {
+void onAsyncGscanFullResult(wifi_request_id id,
+                            wifi_scan_result* result,
+                            uint32_t buckets_scanned) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
   if (on_gscan_full_result_internal_callback) {
     on_gscan_full_result_internal_callback(id, result, buckets_scanned);
   }
@@ -99,10 +103,10 @@ void onGscanFullResult(wifi_request_id id,
 // Callback to be invoked for link layer stats results.
 std::function<void((wifi_request_id, wifi_iface_stat*, int, wifi_radio_stat*))>
     on_link_layer_stats_result_internal_callback;
-void onLinkLayerStatsResult(wifi_request_id id,
-                            wifi_iface_stat* iface_stat,
-                            int num_radios,
-                            wifi_radio_stat* radio_stat) {
+void onSyncLinkLayerStatsResult(wifi_request_id id,
+                                wifi_iface_stat* iface_stat,
+                                int num_radios,
+                                wifi_radio_stat* radio_stat) {
   if (on_link_layer_stats_result_internal_callback) {
     on_link_layer_stats_result_internal_callback(
         id, iface_stat, num_radios, radio_stat);
@@ -112,7 +116,10 @@ void onLinkLayerStatsResult(wifi_request_id id,
 // Callback to be invoked for rssi threshold breach.
 std::function<void((wifi_request_id, uint8_t*, int8_t))>
     on_rssi_threshold_breached_internal_callback;
-void onRssiThresholdBreached(wifi_request_id id, uint8_t* bssid, int8_t rssi) {
+void onAsyncRssiThresholdBreached(wifi_request_id id,
+                                  uint8_t* bssid,
+                                  int8_t rssi) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
   if (on_rssi_threshold_breached_internal_callback) {
     on_rssi_threshold_breached_internal_callback(id, bssid, rssi);
   }
@@ -121,10 +128,11 @@ void onRssiThresholdBreached(wifi_request_id id, uint8_t* bssid, int8_t rssi) {
 // Callback to be invoked for ring buffer data indication.
 std::function<void(char*, char*, int, wifi_ring_buffer_status*)>
     on_ring_buffer_data_internal_callback;
-void onRingBufferData(char* ring_name,
-                      char* buffer,
-                      int buffer_size,
-                      wifi_ring_buffer_status* status) {
+void onAsyncRingBufferData(char* ring_name,
+                           char* buffer,
+                           int buffer_size,
+                           wifi_ring_buffer_status* status) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
   if (on_ring_buffer_data_internal_callback) {
     on_ring_buffer_data_internal_callback(
         ring_name, buffer, buffer_size, status);
@@ -134,10 +142,11 @@ void onRingBufferData(char* ring_name,
 // Callback to be invoked for error alert indication.
 std::function<void(wifi_request_id, char*, int, int)>
     on_error_alert_internal_callback;
-void onErrorAlert(wifi_request_id id,
-                  char* buffer,
-                  int buffer_size,
-                  int err_code) {
+void onAsyncErrorAlert(wifi_request_id id,
+                       char* buffer,
+                       int buffer_size,
+                       int err_code) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
   if (on_error_alert_internal_callback) {
     on_error_alert_internal_callback(id, buffer, buffer_size, err_code);
   }
@@ -147,9 +156,10 @@ void onErrorAlert(wifi_request_id id,
 std::function<void(
     wifi_request_id, unsigned num_results, wifi_rtt_result* rtt_results[])>
     on_rtt_results_internal_callback;
-void onRttResults(wifi_request_id id,
-                  unsigned num_results,
-                  wifi_rtt_result* rtt_results[]) {
+void onAsyncRttResults(wifi_request_id id,
+                       unsigned num_results,
+                       wifi_rtt_result* rtt_results[]) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
   if (on_rtt_results_internal_callback) {
     on_rtt_results_internal_callback(id, num_results, rtt_results);
   }
@@ -161,7 +171,8 @@ void onRttResults(wifi_request_id id,
 // So, handle all of them here directly to avoid adding an unnecessary layer.
 std::function<void(transaction_id, const NanResponseMsg&)>
     on_nan_notify_response_user_callback;
-void onNanNotifyResponse(transaction_id id, NanResponseMsg* msg) {
+void onAysncNanNotifyResponse(transaction_id id, NanResponseMsg* msg) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
   if (on_nan_notify_response_user_callback && msg) {
     on_nan_notify_response_user_callback(id, *msg);
   }
@@ -169,14 +180,16 @@ void onNanNotifyResponse(transaction_id id, NanResponseMsg* msg) {
 
 std::function<void(const NanPublishTerminatedInd&)>
     on_nan_event_publish_terminated_user_callback;
-void onNanEventPublishTerminated(NanPublishTerminatedInd* event) {
+void onAysncNanEventPublishTerminated(NanPublishTerminatedInd* event) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
   if (on_nan_event_publish_terminated_user_callback && event) {
     on_nan_event_publish_terminated_user_callback(*event);
   }
 }
 
 std::function<void(const NanMatchInd&)> on_nan_event_match_user_callback;
-void onNanEventMatch(NanMatchInd* event) {
+void onAysncNanEventMatch(NanMatchInd* event) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
   if (on_nan_event_match_user_callback && event) {
     on_nan_event_match_user_callback(*event);
   }
@@ -184,7 +197,8 @@ void onNanEventMatch(NanMatchInd* event) {
 
 std::function<void(const NanMatchExpiredInd&)>
     on_nan_event_match_expired_user_callback;
-void onNanEventMatchExpired(NanMatchExpiredInd* event) {
+void onAysncNanEventMatchExpired(NanMatchExpiredInd* event) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
   if (on_nan_event_match_expired_user_callback && event) {
     on_nan_event_match_expired_user_callback(*event);
   }
@@ -192,14 +206,16 @@ void onNanEventMatchExpired(NanMatchExpiredInd* event) {
 
 std::function<void(const NanSubscribeTerminatedInd&)>
     on_nan_event_subscribe_terminated_user_callback;
-void onNanEventSubscribeTerminated(NanSubscribeTerminatedInd* event) {
+void onAysncNanEventSubscribeTerminated(NanSubscribeTerminatedInd* event) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
   if (on_nan_event_subscribe_terminated_user_callback && event) {
     on_nan_event_subscribe_terminated_user_callback(*event);
   }
 }
 
 std::function<void(const NanFollowupInd&)> on_nan_event_followup_user_callback;
-void onNanEventFollowup(NanFollowupInd* event) {
+void onAysncNanEventFollowup(NanFollowupInd* event) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
   if (on_nan_event_followup_user_callback && event) {
     on_nan_event_followup_user_callback(*event);
   }
@@ -207,21 +223,24 @@ void onNanEventFollowup(NanFollowupInd* event) {
 
 std::function<void(const NanDiscEngEventInd&)>
     on_nan_event_disc_eng_event_user_callback;
-void onNanEventDiscEngEvent(NanDiscEngEventInd* event) {
+void onAysncNanEventDiscEngEvent(NanDiscEngEventInd* event) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
   if (on_nan_event_disc_eng_event_user_callback && event) {
     on_nan_event_disc_eng_event_user_callback(*event);
   }
 }
 
 std::function<void(const NanDisabledInd&)> on_nan_event_disabled_user_callback;
-void onNanEventDisabled(NanDisabledInd* event) {
+void onAysncNanEventDisabled(NanDisabledInd* event) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
   if (on_nan_event_disabled_user_callback && event) {
     on_nan_event_disabled_user_callback(*event);
   }
 }
 
 std::function<void(const NanTCAInd&)> on_nan_event_tca_user_callback;
-void onNanEventTca(NanTCAInd* event) {
+void onAysncNanEventTca(NanTCAInd* event) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
   if (on_nan_event_tca_user_callback && event) {
     on_nan_event_tca_user_callback(*event);
   }
@@ -229,7 +248,8 @@ void onNanEventTca(NanTCAInd* event) {
 
 std::function<void(const NanBeaconSdfPayloadInd&)>
     on_nan_event_beacon_sdf_payload_user_callback;
-void onNanEventBeaconSdfPayload(NanBeaconSdfPayloadInd* event) {
+void onAysncNanEventBeaconSdfPayload(NanBeaconSdfPayloadInd* event) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
   if (on_nan_event_beacon_sdf_payload_user_callback && event) {
     on_nan_event_beacon_sdf_payload_user_callback(*event);
   }
@@ -237,14 +257,16 @@ void onNanEventBeaconSdfPayload(NanBeaconSdfPayloadInd* event) {
 
 std::function<void(const NanDataPathRequestInd&)>
     on_nan_event_data_path_request_user_callback;
-void onNanEventDataPathRequest(NanDataPathRequestInd* event) {
+void onAysncNanEventDataPathRequest(NanDataPathRequestInd* event) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
   if (on_nan_event_data_path_request_user_callback && event) {
     on_nan_event_data_path_request_user_callback(*event);
   }
 }
 std::function<void(const NanDataPathConfirmInd&)>
     on_nan_event_data_path_confirm_user_callback;
-void onNanEventDataPathConfirm(NanDataPathConfirmInd* event) {
+void onAysncNanEventDataPathConfirm(NanDataPathConfirmInd* event) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
   if (on_nan_event_data_path_confirm_user_callback && event) {
     on_nan_event_data_path_confirm_user_callback(*event);
   }
@@ -252,7 +274,8 @@ void onNanEventDataPathConfirm(NanDataPathConfirmInd* event) {
 
 std::function<void(const NanDataPathEndInd&)>
     on_nan_event_data_path_end_user_callback;
-void onNanEventDataPathEnd(NanDataPathEndInd* event) {
+void onAysncNanEventDataPathEnd(NanDataPathEndInd* event) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
   if (on_nan_event_data_path_end_user_callback && event) {
     on_nan_event_data_path_end_user_callback(*event);
   }
@@ -260,7 +283,8 @@ void onNanEventDataPathEnd(NanDataPathEndInd* event) {
 
 std::function<void(const NanTransmitFollowupInd&)>
     on_nan_event_transmit_follow_up_user_callback;
-void onNanEventTransmitFollowUp(NanTransmitFollowupInd* event) {
+void onAysncNanEventTransmitFollowUp(NanTransmitFollowupInd* event) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
   if (on_nan_event_transmit_follow_up_user_callback && event) {
     on_nan_event_transmit_follow_up_user_callback(*event);
   }
@@ -326,7 +350,8 @@ wifi_error WifiLegacyHal::stop(
     return WIFI_SUCCESS;
   }
   LOG(DEBUG) << "Stopping legacy HAL";
-  on_stop_complete_internal_callback = [&](wifi_handle handle) {
+  on_stop_complete_internal_callback = [on_stop_complete_user_callback,
+                                        this](wifi_handle handle) {
     CHECK_EQ(global_handle_, handle) << "Handle mismatch";
     // Invalidate all the internal pointers now that the HAL is
     // stopped.
@@ -335,7 +360,7 @@ wifi_error WifiLegacyHal::stop(
     on_stop_complete_user_callback();
   };
   awaiting_event_loop_termination_ = true;
-  global_func_table_.wifi_cleanup(global_handle_, onStopComplete);
+  global_func_table_.wifi_cleanup(global_handle_, onAsyncStopComplete);
   LOG(DEBUG) << "Legacy HAL stop complete";
   is_started_ = false;
   return WIFI_SUCCESS;
@@ -391,7 +416,7 @@ WifiLegacyHal::requestDriverMemoryDump() {
                        reinterpret_cast<uint8_t*>(buffer) + buffer_size);
   };
   wifi_error status = global_func_table_.wifi_get_driver_memory_dump(
-      wlan_interface_handle_, {onDriverMemoryDump});
+      wlan_interface_handle_, {onSyncDriverMemoryDump});
   on_driver_memory_dump_internal_callback = nullptr;
   return {status, std::move(driver_dump)};
 }
@@ -406,7 +431,7 @@ WifiLegacyHal::requestFirmwareMemoryDump() {
                          reinterpret_cast<uint8_t*>(buffer) + buffer_size);
   };
   wifi_error status = global_func_table_.wifi_get_firmware_memory_dump(
-      wlan_interface_handle_, {onFirmwareMemoryDump});
+      wlan_interface_handle_, {onSyncFirmwareMemoryDump});
   on_firmware_memory_dump_internal_callback = nullptr;
   return {status, std::move(firmware_dump)};
 }
@@ -488,7 +513,8 @@ wifi_error WifiLegacyHal::startGscan(
     }
   };
 
-  wifi_scan_result_handler handler = {onGscanFullResult, onGscanEvent};
+  wifi_scan_result_handler handler = {onAsyncGscanFullResult,
+                                      onAsyncGscanEvent};
   wifi_error status = global_func_table_.wifi_start_gscan(
       id, wlan_interface_handle_, params, handler);
   if (status != WIFI_SUCCESS) {
@@ -584,7 +610,7 @@ std::pair<wifi_error, LinkLayerStats> WifiLegacyHal::getLinkLayerStats() {
   };
 
   wifi_error status = global_func_table_.wifi_get_link_stats(
-      0, wlan_interface_handle_, {onLinkLayerStatsResult});
+      0, wlan_interface_handle_, {onSyncLinkLayerStatsResult});
   on_link_layer_stats_result_internal_callback = nullptr;
   return {status, link_stats};
 }
@@ -609,12 +635,12 @@ wifi_error WifiLegacyHal::startRssiMonitoring(
         std::copy(bssid_ptr, bssid_ptr + 6, std::begin(bssid_arr));
         on_threshold_breached_user_callback(id, bssid_arr, rssi);
       };
-  wifi_error status =
-      global_func_table_.wifi_start_rssi_monitoring(id,
-                                                    wlan_interface_handle_,
-                                                    max_rssi,
-                                                    min_rssi,
-                                                    {onRssiThresholdBreached});
+  wifi_error status = global_func_table_.wifi_start_rssi_monitoring(
+      id,
+      wlan_interface_handle_,
+      max_rssi,
+      min_rssi,
+      {onAsyncRssiThresholdBreached});
   if (status != WIFI_SUCCESS) {
     on_rssi_threshold_breached_internal_callback = nullptr;
   }
@@ -789,7 +815,7 @@ wifi_error WifiLegacyHal::registerRingBufferCallbackHandler(
     }
   };
   wifi_error status = global_func_table_.wifi_set_log_handler(
-      0, wlan_interface_handle_, {onRingBufferData});
+      0, wlan_interface_handle_, {onAsyncRingBufferData});
   if (status != WIFI_SUCCESS) {
     on_ring_buffer_data_internal_callback = nullptr;
   }
@@ -850,7 +876,7 @@ wifi_error WifiLegacyHal::registerErrorAlertCallbackHandler(
     }
   };
   wifi_error status = global_func_table_.wifi_set_alert_handler(
-      0, wlan_interface_handle_, {onErrorAlert});
+      0, wlan_interface_handle_, {onAsyncErrorAlert});
   if (status != WIFI_SUCCESS) {
     on_error_alert_internal_callback = nullptr;
   }
@@ -896,7 +922,7 @@ wifi_error WifiLegacyHal::startRttRangeRequest(
                                                 wlan_interface_handle_,
                                                 rtt_configs.size(),
                                                 rtt_configs_internal.data(),
-                                                {onRttResults});
+                                                {onAsyncRttResults});
   if (status != WIFI_SUCCESS) {
     on_rtt_results_internal_callback = nullptr;
   }
@@ -1000,20 +1026,20 @@ wifi_error WifiLegacyHal::nanRegisterCallbackHandlers(
 
   return global_func_table_.wifi_nan_register_handler(
       wlan_interface_handle_,
-      {onNanNotifyResponse,
-       onNanEventPublishTerminated,
-       onNanEventMatch,
-       onNanEventMatchExpired,
-       onNanEventSubscribeTerminated,
-       onNanEventFollowup,
-       onNanEventDiscEngEvent,
-       onNanEventDisabled,
-       onNanEventTca,
-       onNanEventBeaconSdfPayload,
-       onNanEventDataPathRequest,
-       onNanEventDataPathConfirm,
-       onNanEventDataPathEnd,
-       onNanEventTransmitFollowUp});
+      {onAysncNanNotifyResponse,
+       onAysncNanEventPublishTerminated,
+       onAysncNanEventMatch,
+       onAysncNanEventMatchExpired,
+       onAysncNanEventSubscribeTerminated,
+       onAysncNanEventFollowup,
+       onAysncNanEventDiscEngEvent,
+       onAysncNanEventDisabled,
+       onAysncNanEventTca,
+       onAysncNanEventBeaconSdfPayload,
+       onAysncNanEventDataPathRequest,
+       onAysncNanEventDataPathConfirm,
+       onAysncNanEventDataPathEnd,
+       onAysncNanEventTransmitFollowUp});
 }
 
 wifi_error WifiLegacyHal::nanEnableRequest(transaction_id id,
