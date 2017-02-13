@@ -1,5 +1,6 @@
 cc_library_shared {
     name: "android.hardware.camera.provider@2.4-impl",
+    proprietary: true,
     relative_install_path: "hw",
     srcs: ["CameraProvider.cpp"],
     shared_libs: [
@@ -24,6 +25,7 @@ cc_library_shared {
 
 cc_binary {
     name: "android.hardware.camera.provider@2.4-service",
+    proprietary: true,
     relative_install_path: "hw",
     srcs: ["service.cpp"],
     compile_multilib: "32",

@@ -14,6 +14,7 @@
 
 cc_library_shared {
     name: "android.hardware.memtrack@1.0-impl",
+    proprietary: true,
     relative_install_path: "hw",
     srcs: ["Memtrack.cpp"],
 
@@ -32,6 +33,7 @@ cc_library_shared {
 
 cc_binary {
     relative_install_path: "hw",
+    proprietary: true,
     name: "android.hardware.memtrack@1.0-service",
     init_rc: ["android.hardware.memtrack@1.0-service.rc"],
     srcs: ["service.cpp"],

@@ -1,5 +1,6 @@
 cc_library_shared {
     name: "android.hardware.graphics.allocator@2.0-impl",
+    proprietary: true,
     relative_install_path: "hw",
     srcs: ["Gralloc.cpp"],
     cppflags: ["-Wall", "-Wextra"],
@@ -18,6 +19,7 @@ cc_library_shared {
 
 cc_binary {
     name: "android.hardware.graphics.allocator@2.0-service",
+    proprietary: true,
     relative_install_path: "hw",
     srcs: ["service.cpp"],
     init_rc: ["android.hardware.graphics.allocator@2.0-service.rc"],

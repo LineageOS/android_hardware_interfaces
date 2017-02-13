@@ -1,4 +1,4 @@
-service gralloc-2-0 /system/bin/hw/android.hardware.graphics.allocator@2.0-service
+service gralloc-2-0 /vendor/bin/hw/android.hardware.graphics.allocator@2.0-service
     class hal
     user system
     group graphics drmrpc readproc

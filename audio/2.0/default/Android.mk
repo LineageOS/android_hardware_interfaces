@@ -19,6 +19,7 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_MODULE := android.hardware.audio@2.0-impl
 LOCAL_MODULE_RELATIVE_PATH := hw
+LOCAL_PROPRIETARY_MODULE := true
 LOCAL_SRC_FILES := \
     Conversions.cpp \
     Device.cpp \
@@ -55,6 +56,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := android.hardware.audio@2.0-service
 LOCAL_INIT_RC := android.hardware.audio@2.0-service.rc
 LOCAL_MODULE_RELATIVE_PATH := hw
+LOCAL_PROPRIETARY_MODULE := true
 LOCAL_SRC_FILES := \
     service.cpp
 

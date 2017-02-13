@@ -1,5 +1,6 @@
 cc_library_shared {
     name: "android.hardware.vr@1.0-impl",
+    proprietary: true,
     relative_install_path: "hw",
     srcs: ["Vr.cpp"],
     shared_libs: [
@@ -18,6 +19,7 @@ cc_library_shared {
 
 cc_binary {
     relative_install_path: "hw",
+    proprietary: true,
     name: "android.hardware.vr@1.0-service",
     init_rc: ["android.hardware.vr@1.0-service.rc"],
     srcs: ["service.cpp"],

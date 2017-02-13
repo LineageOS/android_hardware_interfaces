@@ -2,6 +2,7 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := android.hardware.health@1.0-impl
+LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_C_INCLUDES := system/core/healthd/include system/core/base/include
 LOCAL_SRC_FILES := \
@@ -37,6 +38,7 @@ LOCAL_SHARED_LIBRARIES := \
 include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
+LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_MODULE := android.hardware.health@1.0-service
 LOCAL_INIT_RC := android.hardware.health@1.0-service.rc

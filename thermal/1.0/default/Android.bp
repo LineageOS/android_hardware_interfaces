@@ -1,5 +1,6 @@
 cc_library_shared {
     name: "android.hardware.thermal@1.0-impl",
+    proprietary: true,
     relative_install_path: "hw",
     srcs: ["Thermal.cpp"],
     shared_libs: [

@@ -2,6 +2,7 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := android.hardware.tv.input@1.0-impl
+LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_SRC_FILES := \
     TvInput.cpp \
@@ -21,6 +22,7 @@ include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE_RELATIVE_PATH := hw
+LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE := android.hardware.tv.input@1.0-service
 LOCAL_INIT_RC := android.hardware.tv.input@1.0-service.rc
 LOCAL_SRC_FILES := \

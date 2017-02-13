@@ -20,6 +20,7 @@ cc_library_static {
 
 cc_library_shared {
     name: "android.hardware.graphics.composer@2.1-impl",
+    proprietary: true,
     relative_install_path: "hw",
     srcs: ["Hwc.cpp"],
     static_libs: ["libhwcomposer-client"],
@@ -41,6 +42,7 @@ cc_library_shared {
 
 cc_binary {
     name: "android.hardware.graphics.composer@2.1-service",
+    proprietary: true,
     relative_install_path: "hw",
     srcs: ["service.cpp"],
     init_rc: ["android.hardware.graphics.composer@2.1-service.rc"],

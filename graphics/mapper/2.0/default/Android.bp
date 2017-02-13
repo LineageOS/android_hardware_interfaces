@@ -15,6 +15,7 @@
 
 cc_library_shared {
     name: "android.hardware.graphics.mapper@2.0-impl",
+    proprietary: true,
     relative_install_path: "hw",
     srcs: ["GrallocMapper.cpp"],
     cppflags: ["-Wall", "-Wextra"],

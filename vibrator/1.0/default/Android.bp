@@ -12,8 +12,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 cc_library_shared {
     name: "android.hardware.vibrator@1.0-impl",
+    proprietary: true,
     relative_install_path: "hw",
     srcs: ["Vibrator.cpp"],
     shared_libs: [
