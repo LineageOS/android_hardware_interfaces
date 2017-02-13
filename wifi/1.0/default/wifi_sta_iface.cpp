@@ -389,7 +389,9 @@ WifiStatus WifiStaIface::startBackgroundScanInternal(
           return;
         }
         for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
-          callback->onBackgroundScanFailure(id);
+          if (!callback->onBackgroundScanFailure(id).isOk()) {
+            LOG(ERROR) << "Failed to invoke onBackgroundScanFailure callback";
+          }
         }
       };
   const auto& on_results_callback = [weak_ptr_this](
@@ -407,7 +409,9 @@ WifiStatus WifiStaIface::startBackgroundScanInternal(
       return;
     }
     for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
-      callback->onBackgroundScanResults(id, hidl_scan_datas);
+      if (!callback->onBackgroundScanResults(id, hidl_scan_datas).isOk()) {
+        LOG(ERROR) << "Failed to invoke onBackgroundScanResults callback";
+      }
     }
   };
   const auto& on_full_result_callback = [weak_ptr_this](
@@ -426,7 +430,9 @@ WifiStatus WifiStaIface::startBackgroundScanInternal(
       return;
     }
     for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
-      callback->onBackgroundFullScanResult(id, hidl_scan_result);
+      if (!callback->onBackgroundFullScanResult(id, hidl_scan_result).isOk()) {
+        LOG(ERROR) << "Failed to invoke onBackgroundFullScanResult callback";
+      }
     }
   };
   legacy_hal::wifi_error legacy_status =
@@ -486,7 +492,9 @@ WifiStatus WifiStaIface::startRssiMonitoringInternal(uint32_t cmd_id,
       return;
     }
     for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
-      callback->onRssiThresholdBreached(id, bssid, rssi);
+      if (!callback->onRssiThresholdBreached(id, bssid, rssi).isOk()) {
+        LOG(ERROR) << "Failed to invoke onRssiThresholdBreached callback";
+      }
     }
   };
   legacy_hal::wifi_error legacy_status =
