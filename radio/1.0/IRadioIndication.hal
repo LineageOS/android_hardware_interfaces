@@ -293,14 +293,6 @@ interface IRadioIndication {
    oneway cdmaInfoRec(RadioIndicationType type, CdmaInformationRecords records);
 
    /*
-    * This is for OEM specific use.
-    *
-    * @param type Type of radio indication
-    * @param data data passed as raw bytes
-    */
-   oneway oemHookRaw(RadioIndicationType type, vec<uint8_t> data);
-
-   /*
     * Indicates that nework doesn't have in-band information, need to
     * play out-band tone.
     *
