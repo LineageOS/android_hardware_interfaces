@@ -7,6 +7,7 @@ package: "android.hardware.wifi.supplicant"
 import: "android.hardware.wifi.supplicant@1.0::ISupplicantNetwork"
 import: "android.hardware.wifi.supplicant@1.0::ISupplicantP2pNetworkCallback"
 import: "android.hardware.wifi.supplicant@1.0::types"
+import: "android.hidl.base@1.0::types"
 
 interface: {
     api: {
@@ -52,8 +53,7 @@ interface: {
         }
         arg: {
             type: TYPE_HIDL_CALLBACK
-            predefined_type: "ISupplicantP2pNetworkCallback"
-            is_callback: true
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantP2pNetworkCallback"
         }
     }
 
@@ -80,8 +80,8 @@ interface: {
         }
         return_type_hidl: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }

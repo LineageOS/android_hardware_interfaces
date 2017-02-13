@@ -7,19 +7,18 @@ package: "android.hardware.radio"
 import: "android.hardware.radio@1.0::IRadioIndication"
 import: "android.hardware.radio@1.0::IRadioResponse"
 import: "android.hardware.radio@1.0::types"
+import: "android.hidl.base@1.0::types"
 
 interface: {
     api: {
         name: "setResponseFunctions"
         arg: {
             type: TYPE_HIDL_INTERFACE
-            predefined_type: "IRadioResponse"
-            is_callback: false
+            predefined_type: "::android::hardware::radio::V1_0::IRadioResponse"
         }
         arg: {
             type: TYPE_HIDL_INTERFACE
-            predefined_type: "IRadioIndication"
-            is_callback: false
+            predefined_type: "::android::hardware::radio::V1_0::IRadioIndication"
         }
     }
 
@@ -315,28 +314,20 @@ interface: {
             scalar_type: "int32_t"
         }
         arg: {
-            type: TYPE_SCALAR
-            scalar_type: "int32_t"
-        }
-        arg: {
-            type: TYPE_SCALAR
-            scalar_type: "int32_t"
-        }
-        arg: {
-            type: TYPE_STRING
-        }
-        arg: {
-            type: TYPE_STRING
-        }
-        arg: {
-            type: TYPE_STRING
-        }
-        arg: {
             type: TYPE_ENUM
-            predefined_type: "::android::hardware::radio::V1_0::ApnAuthType"
+            predefined_type: "::android::hardware::radio::V1_0::RadioTechnology"
         }
         arg: {
-            type: TYPE_STRING
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::DataProfileInfo"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
         }
     }
 
@@ -1198,20 +1189,12 @@ interface: {
             scalar_type: "int32_t"
         }
         arg: {
-            type: TYPE_STRING
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::DataProfileInfo"
         }
         arg: {
-            type: TYPE_STRING
-        }
-        arg: {
-            type: TYPE_ENUM
-            predefined_type: "::android::hardware::radio::V1_0::ApnAuthType"
-        }
-        arg: {
-            type: TYPE_STRING
-        }
-        arg: {
-            type: TYPE_STRING
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
         }
     }
 
@@ -1487,6 +1470,35 @@ interface: {
         arg: {
             type: TYPE_SCALAR
             scalar_type: "int32_t"
+        }
+    }
+
+    api: {
+        name: "sendDeviceState"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+        arg: {
+            type: TYPE_ENUM
+            predefined_type: "::android::hardware::radio::V1_0::DeviceStateType"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+    }
+
+    api: {
+        name: "setIndicationFilter"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+        arg: {
+            type: TYPE_MASK
+            scalar_type: "int32_t"
+            predefined_type: "::android::hardware::radio::V1_0::IndicationFilter"
         }
     }
 

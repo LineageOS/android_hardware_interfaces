@@ -5,39 +5,12 @@ component_name: "ISupplicantP2pIface"
 package: "android.hardware.wifi.supplicant"
 
 import: "android.hardware.wifi.supplicant@1.0::ISupplicantIface"
+import: "android.hardware.wifi.supplicant@1.0::ISupplicantNetwork"
 import: "android.hardware.wifi.supplicant@1.0::ISupplicantP2pIfaceCallback"
 import: "android.hardware.wifi.supplicant@1.0::types"
+import: "android.hidl.base@1.0::types"
 
 interface: {
-    attribute: {
-        name: "::android::hardware::wifi::supplicant::V1_0::ISupplicantIface::ParamSizeLimits"
-        type: TYPE_ENUM
-        enum_value: {
-            scalar_type: "uint32_t"
-
-            enumerator: "WPS_DEVICE_NAME_MAX_LEN"
-            scalar_value: {
-                uint32_t: 32
-            }
-            enumerator: "WPS_MANUFACTURER_MAX_LEN"
-            scalar_value: {
-                uint32_t: 64
-            }
-            enumerator: "WPS_MODEL_NAME_MAX_LEN"
-            scalar_value: {
-                uint32_t: 32
-            }
-            enumerator: "WPS_MODEL_NUMBER_MAX_LEN"
-            scalar_value: {
-                uint32_t: 32
-            }
-            enumerator: "WPS_SERIAL_NUMBER_MAX_LEN"
-            scalar_value: {
-                uint32_t: 32
-            }
-        }
-    }
-
     attribute: {
         name: "::android::hardware::wifi::supplicant::V1_0::ISupplicantP2pIface::WpsProvisionMethod"
         type: TYPE_ENUM
@@ -126,8 +99,7 @@ interface: {
         }
         return_type_hidl: {
             type: TYPE_HIDL_INTERFACE
-            predefined_type: "ISupplicantNetwork"
-            is_callback: false
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantNetwork"
         }
     }
 
@@ -151,8 +123,7 @@ interface: {
         }
         return_type_hidl: {
             type: TYPE_HIDL_INTERFACE
-            predefined_type: "ISupplicantNetwork"
-            is_callback: false
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantNetwork"
         }
         arg: {
             type: TYPE_SCALAR
@@ -183,6 +154,22 @@ interface: {
         }
         arg: {
             type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "setWpsDeviceType"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_ARRAY
+            vector_size: 8
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
         }
     }
 
@@ -238,6 +225,7 @@ interface: {
         }
         arg: {
             type: TYPE_MASK
+            scalar_type: "uint16_t"
             predefined_type: "::android::hardware::wifi::supplicant::V1_0::WpsConfigMethods"
         }
     }
@@ -250,8 +238,7 @@ interface: {
         }
         arg: {
             type: TYPE_HIDL_CALLBACK
-            predefined_type: "ISupplicantP2pIfaceCallback"
-            is_callback: true
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantP2pIfaceCallback"
         }
     }
 
@@ -263,8 +250,8 @@ interface: {
         }
         return_type_hidl: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -355,8 +342,8 @@ interface: {
         }
         arg: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -398,8 +385,8 @@ interface: {
         }
         arg: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -445,8 +432,8 @@ interface: {
         }
         arg: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -464,16 +451,16 @@ interface: {
         }
         arg: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
         }
         arg: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -492,8 +479,8 @@ interface: {
         }
         arg: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -562,8 +549,8 @@ interface: {
         }
         arg: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -578,12 +565,13 @@ interface: {
         }
         return_type_hidl: {
             type: TYPE_MASK
+            scalar_type: "uint32_t"
             predefined_type: "::android::hardware::wifi::supplicant::V1_0::P2pGroupCapabilityMask"
         }
         arg: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -677,8 +665,8 @@ interface: {
         }
         arg: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -727,8 +715,8 @@ interface: {
         }
         arg: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -763,8 +751,8 @@ interface: {
         }
         arg: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -802,8 +790,8 @@ interface: {
         }
         arg: {
             type: TYPE_ARRAY
+            vector_size: 8
             vector_value: {
-                vector_size: 8
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }

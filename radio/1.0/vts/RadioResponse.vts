@@ -5,6 +5,7 @@ component_name: "IRadioResponse"
 package: "android.hardware.radio"
 
 import: "android.hardware.radio@1.0::types"
+import: "android.hidl.base@1.0::types"
 
 interface: {
     api: {
@@ -1368,6 +1369,22 @@ interface: {
         arg: {
             type: TYPE_STRUCT
             predefined_type: "::android::hardware::radio::V1_0::CarrierRestrictions"
+        }
+    }
+
+    api: {
+        name: "sendDeviceStateResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
+        }
+    }
+
+    api: {
+        name: "setIndicationFilterResponse"
+        arg: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::radio::V1_0::RadioResponseInfo"
         }
     }
 
