@@ -72,12 +72,27 @@ interface IOmxBufferProducer {
     };
 
     /**
+     * Ref: frameworks/native/include/gui/FrameTimestamp.h: CompositorTiming
+     *
+     * The most recent compositor timing info sent from consumer to producer
+     * through a HIDL interface.
+     */
+    struct CompositorTiming {
+        int64_t deadlineNs;
+        int64_t intervalNs;
+        int64_t presentLatencyNs;
+    };
+
+    /**
      * Ref: frameworks/native/include/gui/FrameTimestamp.h: FrameEventHistoryDelta
      *
      * A collection of updates from consumer to producer that can be sent
      * through a HIDL interface.
      */
-    typedef vec<FrameEventsDelta> FrameEventHistoryDelta;
+    struct FrameEventHistoryDelta {
+        vec<FrameEventsDelta> deltas;
+        CompositorTiming compositorTiming;
+    };
 
     /**
      * Modes for disconnection.
