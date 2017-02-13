@@ -5,6 +5,7 @@ component_name: "ISupplicantStaIfaceCallback"
 package: "android.hardware.wifi.supplicant"
 
 import: "android.hardware.wifi.supplicant@1.0::types"
+import: "android.hidl.base@1.0::types"
 
 interface: {
     attribute: {
@@ -305,8 +306,8 @@ interface: {
         }
         arg: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -328,8 +329,8 @@ interface: {
         name: "onAnqpQueryDone"
         arg: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -348,8 +349,8 @@ interface: {
         name: "onHs20IconQueryDone"
         arg: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -396,8 +397,8 @@ interface: {
         name: "onConnected"
         arg: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -408,8 +409,8 @@ interface: {
         name: "onDisconnected"
         arg: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -428,8 +429,8 @@ interface: {
         name: "onAssociationCompleted"
         arg: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -440,8 +441,8 @@ interface: {
         name: "onAssociationRejected"
         arg: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -456,8 +457,8 @@ interface: {
         name: "onAuthenticationTimeout"
         arg: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -476,8 +477,8 @@ interface: {
         name: "onWpsEventFail"
         arg: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -494,6 +495,22 @@ interface: {
 
     api: {
         name: "onWpsEventPbcOverlap"
+    }
+
+    api: {
+        name: "onExtRadioWorkStart"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
+    }
+
+    api: {
+        name: "onExtRadioWorkTimeout"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
+        }
     }
 
 }

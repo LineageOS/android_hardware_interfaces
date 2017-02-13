@@ -6,18 +6,23 @@ package: "android.hardware.bluetooth"
 
 import: "android.hardware.bluetooth@1.0::IBluetoothHciCallbacks"
 import: "android.hardware.bluetooth@1.0::types"
+import: "android.hidl.base@1.0::types"
 
 interface: {
     api: {
         name: "initialize"
-        return_type_hidl: {
-            type: TYPE_ENUM
-            predefined_type: "::android::hardware::bluetooth::V1_0::Status"
-        }
         arg: {
             type: TYPE_HIDL_INTERFACE
-            predefined_type: "IBluetoothHciCallbacks"
-            is_callback: false
+            predefined_type: "::android::hardware::bluetooth::V1_0::IBluetoothHciCallbacks"
+        }
+        callflow: {
+            entry: true
+        }
+        callflow: {
+            next: "sendHciCommand"
+            next: "sendAclData"
+            next: "sendScoData"
+            next: "close"
         }
     }
 
@@ -30,6 +35,12 @@ interface: {
                 scalar_type: "uint8_t"
             }
         }
+        callflow: {
+            next: "sendHciCommand"
+            next: "sendAclData"
+            next: "sendScoData"
+            next: "close"
+        }
     }
 
     api: {
@@ -40,6 +51,12 @@ interface: {
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
+        }
+        callflow: {
+            next: "sendHciCommand"
+            next: "sendAclData"
+            next: "sendScoData"
+            next: "close"
         }
     }
 
@@ -52,10 +69,19 @@ interface: {
                 scalar_type: "uint8_t"
             }
         }
+        callflow: {
+            next: "sendHciCommand"
+            next: "sendAclData"
+            next: "sendScoData"
+            next: "close"
+        }
     }
 
     api: {
         name: "close"
+        callflow: {
+            exit: true
+        }
     }
 
 }

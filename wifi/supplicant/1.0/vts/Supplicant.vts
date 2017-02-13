@@ -6,7 +6,9 @@ package: "android.hardware.wifi.supplicant"
 
 import: "android.hardware.wifi.supplicant@1.0::ISupplicantCallback"
 import: "android.hardware.wifi.supplicant@1.0::ISupplicantIface"
+import: "android.hardware.wifi.supplicant@1.0::ISupplicantNetwork"
 import: "android.hardware.wifi.supplicant@1.0::types"
+import: "android.hidl.base@1.0::types"
 
 interface: {
     attribute: {
@@ -64,8 +66,7 @@ interface: {
         }
         return_type_hidl: {
             type: TYPE_HIDL_INTERFACE
-            predefined_type: "ISupplicantIface"
-            is_callback: false
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantIface"
         }
         arg: {
             type: TYPE_STRUCT
@@ -96,8 +97,7 @@ interface: {
         }
         arg: {
             type: TYPE_HIDL_CALLBACK
-            predefined_type: "ISupplicantCallback"
-            is_callback: true
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantCallback"
         }
     }
 

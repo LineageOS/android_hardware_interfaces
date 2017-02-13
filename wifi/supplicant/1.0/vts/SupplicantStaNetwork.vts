@@ -7,6 +7,7 @@ package: "android.hardware.wifi.supplicant"
 import: "android.hardware.wifi.supplicant@1.0::ISupplicantNetwork"
 import: "android.hardware.wifi.supplicant@1.0::ISupplicantStaNetworkCallback"
 import: "android.hardware.wifi.supplicant@1.0::types"
+import: "android.hidl.base@1.0::types"
 
 interface: {
     attribute: {
@@ -247,8 +248,8 @@ interface: {
         struct_value: {
             name: "kc"
             type: TYPE_ARRAY
+            vector_size: 8
             vector_value: {
-                vector_size: 8
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -256,8 +257,8 @@ interface: {
         struct_value: {
             name: "sres"
             type: TYPE_ARRAY
+            vector_size: 4
             vector_value: {
-                vector_size: 4
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -278,8 +279,8 @@ interface: {
         struct_value: {
             name: "ik"
             type: TYPE_ARRAY
+            vector_size: 16
             vector_value: {
-                vector_size: 16
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -287,8 +288,8 @@ interface: {
         struct_value: {
             name: "ck"
             type: TYPE_ARRAY
+            vector_size: 16
             vector_value: {
-                vector_size: 16
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -338,8 +339,7 @@ interface: {
         }
         arg: {
             type: TYPE_HIDL_CALLBACK
-            predefined_type: "ISupplicantStaNetworkCallback"
-            is_callback: true
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaNetworkCallback"
         }
     }
 
@@ -366,8 +366,8 @@ interface: {
         }
         arg: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -394,6 +394,7 @@ interface: {
         }
         arg: {
             type: TYPE_MASK
+            scalar_type: "uint32_t"
             predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaNetwork::KeyMgmtMask"
         }
     }
@@ -406,6 +407,7 @@ interface: {
         }
         arg: {
             type: TYPE_MASK
+            scalar_type: "uint32_t"
             predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaNetwork::ProtoMask"
         }
     }
@@ -418,6 +420,7 @@ interface: {
         }
         arg: {
             type: TYPE_MASK
+            scalar_type: "uint32_t"
             predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaNetwork::AuthAlgMask"
         }
     }
@@ -430,6 +433,7 @@ interface: {
         }
         arg: {
             type: TYPE_MASK
+            scalar_type: "uint32_t"
             predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaNetwork::GroupCipherMask"
         }
     }
@@ -442,6 +446,7 @@ interface: {
         }
         arg: {
             type: TYPE_MASK
+            scalar_type: "uint32_t"
             predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaNetwork::PairwiseCipherMask"
         }
     }
@@ -670,6 +675,18 @@ interface: {
     }
 
     api: {
+        name: "setProactiveKeyCaching"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+    }
+
+    api: {
         name: "setIdStr"
         return_type_hidl: {
             type: TYPE_STRUCT
@@ -677,6 +694,18 @@ interface: {
         }
         arg: {
             type: TYPE_STRING
+        }
+    }
+
+    api: {
+        name: "setUpdateIdentifier"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "uint32_t"
         }
     }
 
@@ -703,8 +732,8 @@ interface: {
         }
         return_type_hidl: {
             type: TYPE_ARRAY
+            vector_size: 6
             vector_value: {
-                vector_size: 6
                 type: TYPE_SCALAR
                 scalar_type: "uint8_t"
             }
@@ -731,6 +760,7 @@ interface: {
         }
         return_type_hidl: {
             type: TYPE_MASK
+            scalar_type: "uint32_t"
             predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaNetwork::KeyMgmtMask"
         }
     }
@@ -743,6 +773,7 @@ interface: {
         }
         return_type_hidl: {
             type: TYPE_MASK
+            scalar_type: "uint32_t"
             predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaNetwork::ProtoMask"
         }
     }
@@ -755,6 +786,7 @@ interface: {
         }
         return_type_hidl: {
             type: TYPE_MASK
+            scalar_type: "uint32_t"
             predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaNetwork::AuthAlgMask"
         }
     }
@@ -767,6 +799,7 @@ interface: {
         }
         return_type_hidl: {
             type: TYPE_MASK
+            scalar_type: "uint32_t"
             predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaNetwork::GroupCipherMask"
         }
     }
@@ -779,6 +812,7 @@ interface: {
         }
         return_type_hidl: {
             type: TYPE_MASK
+            scalar_type: "uint32_t"
             predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaNetwork::PairwiseCipherMask"
         }
     }
@@ -1052,8 +1086,19 @@ interface: {
             predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
         }
         arg: {
+            type: TYPE_VECTOR
+            vector_value: {
+                type: TYPE_STRUCT
+                predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaNetwork::NetworkResponseEapSimGsmAuthParams"
+            }
+        }
+    }
+
+    api: {
+        name: "sendNetworkEapSimGsmAuthFailure"
+        return_type_hidl: {
             type: TYPE_STRUCT
-            predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaNetwork::NetworkResponseEapSimGsmAuthParams"
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
         }
     }
 
@@ -1066,6 +1111,30 @@ interface: {
         arg: {
             type: TYPE_STRUCT
             predefined_type: "::android::hardware::wifi::supplicant::V1_0::ISupplicantStaNetwork::NetworkResponseEapSimUmtsAuthParams"
+        }
+    }
+
+    api: {
+        name: "sendNetworkEapSimUmtsAutsResponse"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
+        }
+        arg: {
+            type: TYPE_ARRAY
+            vector_size: 14
+            vector_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint8_t"
+            }
+        }
+    }
+
+    api: {
+        name: "sendNetworkEapSimUmtsAuthFailure"
+        return_type_hidl: {
+            type: TYPE_STRUCT
+            predefined_type: "::android::hardware::wifi::supplicant::V1_0::SupplicantStatus"
         }
     }
 
