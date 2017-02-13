@@ -1764,7 +1764,7 @@ enum VehicleProperty: int32_t {
      * Its contents are to be interpreted as follows:
      * the indices defined in VmsMessageIntegerValuesIndex are to be used to
      * read from int32Values;
-     * stringValue is a serialized VMS message as defined in the vms protocol
+     * bytes is a serialized VMS message as defined in the vms protocol
      * which is opaque to the framework;
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
@@ -3203,11 +3203,14 @@ enum VmsMessageType : int32_t {
  */
 enum VmsMessageIntegerValuesIndex : int32_t {
   /* The message type as enumerated by VmsMessageType enum. */
-  VMS_MESSAGE_TYPE = 1,
+  VMS_MESSAGE_TYPE = 0,
 
   /* The layer ID as defined in the vms protocol. */
-  VMS_LAYER_ID = 2,
+  VMS_LAYER_ID = 1,
 
   /* The version of the VMS layer. */
-  VMS_LAYER_VERSION = 3,
+  VMS_LAYER_VERSION = 2,
+
+  /* The number of bytes in the payload */
+  VMS_PAYLOAD_SIZE_BYTES = 3,
 };
