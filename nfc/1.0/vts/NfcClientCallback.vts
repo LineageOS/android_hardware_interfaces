@@ -5,6 +5,7 @@ component_name: "INfcClientCallback"
 package: "android.hardware.nfc"
 
 import: "android.hardware.nfc@1.0::types"
+import: "android.hidl.base@1.0::types"
 
 interface: {
     api: {
