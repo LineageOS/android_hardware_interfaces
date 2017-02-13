@@ -399,48 +399,53 @@ Return<void> CameraDeviceSession::configureStreams(
         return Void();
     }
 
+    if (status != Status::OK) {
+        _hidl_cb(status, outStreams);
+        return Void();
+    }
 
+    camera3_stream_configuration_t stream_list;
+    hidl_vec<camera3_stream_t*> streams;
 
-    if (status == Status::OK) {
-        camera3_stream_configuration_t stream_list;
-        hidl_vec<camera3_stream_t*> streams;
+    stream_list.operation_mode = (uint32_t) requestedConfiguration.operationMode;
+    stream_list.num_streams = requestedConfiguration.streams.size();
+    streams.resize(stream_list.num_streams);
+    stream_list.streams = streams.data();
 
-        stream_list.operation_mode = (uint32_t) requestedConfiguration.operationMode;
-        stream_list.num_streams = requestedConfiguration.streams.size();
-        streams.resize(stream_list.num_streams);
-        stream_list.streams = streams.data();
+    for (uint32_t i = 0; i < stream_list.num_streams; i++) {
+        int id = requestedConfiguration.streams[i].id;
 
-        for (uint32_t i = 0; i < stream_list.num_streams; i++) {
-            int id = requestedConfiguration.streams[i].id;
-
-            if (mStreamMap.count(id) == 0) {
-                Camera3Stream stream;
-                convertFromHidl(requestedConfiguration.streams[i], &stream);
-                mStreamMap[id] = stream;
-                mCirculatingBuffers.emplace(stream.mId, CirculatingBuffers{});
-            } else {
-                // width/height/format must not change, but usage/rotation might need to change
-                if (mStreamMap[id].stream_type !=
-                        (int) requestedConfiguration.streams[i].streamType ||
-                        mStreamMap[id].width != requestedConfiguration.streams[i].width ||
-                        mStreamMap[id].height != requestedConfiguration.streams[i].height ||
-                        mStreamMap[id].format != (int) requestedConfiguration.streams[i].format ||
-                        mStreamMap[id].data_space != (android_dataspace_t)
-                                requestedConfiguration.streams[i].dataSpace) {
-                    ALOGE("%s: stream %d configuration changed!", __FUNCTION__, id);
-                    _hidl_cb(Status::INTERNAL_ERROR, outStreams);
-                    return Void();
-                }
-                mStreamMap[id].rotation = (int) requestedConfiguration.streams[i].rotation;
-                mStreamMap[id].usage = (uint32_t) requestedConfiguration.streams[i].usage;
+        if (mStreamMap.count(id) == 0) {
+            Camera3Stream stream;
+            convertFromHidl(requestedConfiguration.streams[i], &stream);
+            mStreamMap[id] = stream;
+            mCirculatingBuffers.emplace(stream.mId, CirculatingBuffers{});
+        } else {
+            // width/height/format must not change, but usage/rotation might need to change
+            if (mStreamMap[id].stream_type !=
+                    (int) requestedConfiguration.streams[i].streamType ||
+                    mStreamMap[id].width != requestedConfiguration.streams[i].width ||
+                    mStreamMap[id].height != requestedConfiguration.streams[i].height ||
+                    mStreamMap[id].format != (int) requestedConfiguration.streams[i].format ||
+                    mStreamMap[id].data_space != (android_dataspace_t)
+                            requestedConfiguration.streams[i].dataSpace) {
+                ALOGE("%s: stream %d configuration changed!", __FUNCTION__, id);
+                _hidl_cb(Status::INTERNAL_ERROR, outStreams);
+                return Void();
             }
-            streams[i] = &mStreamMap[id];
+            mStreamMap[id].rotation = (int) requestedConfiguration.streams[i].rotation;
+            mStreamMap[id].usage = (uint32_t) requestedConfiguration.streams[i].usage;
         }
+        streams[i] = &mStreamMap[id];
+    }
 
-        ATRACE_BEGIN("camera3->configure_streams");
-        status_t ret = mDevice->ops->configure_streams(mDevice, &stream_list);
-        ATRACE_END();
+    ATRACE_BEGIN("camera3->configure_streams");
+    status_t ret = mDevice->ops->configure_streams(mDevice, &stream_list);
+    ATRACE_END();
 
+    // In case Hal returns error most likely it was not able to release
+    // the corresponding resources of the deleted streams.
+    if (ret == OK) {
         // delete unused streams, note we do this after adding new streams to ensure new stream
         // will not have the same address as deleted stream, and HAL has a chance to reference
         // the to be deleted stream in configure_streams call
@@ -455,28 +460,35 @@ Return<void> CameraDeviceSession::configureStreams(
             }
             if (!found) {
                 // Unmap all buffers of deleted stream
-                for (auto& pair : mCirculatingBuffers.at(id)) {
-                    sHandleImporter.freeBuffer(pair.second);
-                }
-                mCirculatingBuffers[id].clear();
-                mCirculatingBuffers.erase(id);
+                // in case the configuration call succeeds and HAL
+                // is able to release the corresponding resources too.
+                cleanupBuffersLocked(id);
                 it = mStreamMap.erase(it);
             } else {
                 ++it;
             }
         }
-
-        if (ret == -EINVAL) {
-            status = Status::ILLEGAL_ARGUMENT;
-        } else if (ret != OK) {
-            status = Status::INTERNAL_ERROR;
-        } else {
-            convertToHidl(stream_list, &outStreams);
-        }
-
     }
+
+    if (ret == -EINVAL) {
+        status = Status::ILLEGAL_ARGUMENT;
+    } else if (ret != OK) {
+        status = Status::INTERNAL_ERROR;
+    } else {
+        convertToHidl(stream_list, &outStreams);
+    }
+
     _hidl_cb(status, outStreams);
     return Void();
+}
+
+// Needs to get called after acquiring 'mInflightLock'
+void CameraDeviceSession::cleanupBuffersLocked(int id) {
+    for (auto& pair : mCirculatingBuffers.at(id)) {
+        sHandleImporter.freeBuffer(pair.second);
+    }
+    mCirculatingBuffers[id].clear();
+    mCirculatingBuffers.erase(id);
 }
 
 Return<Status> CameraDeviceSession::processCaptureRequest(const CaptureRequest& request)  {

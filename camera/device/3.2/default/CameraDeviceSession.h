@@ -123,6 +123,8 @@ private:
     static void cleanupInflightFences(
             hidl_vec<int>& allFences, size_t numFences);
 
+    void cleanupBuffersLocked(int id);
+
     /**
      * Static callback forwarding methods from HAL to instance
      */
