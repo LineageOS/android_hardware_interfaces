@@ -124,6 +124,9 @@ using on_error_alert_callback =
 /**
  * Class that encapsulates all legacy HAL interactions.
  * This class manages the lifetime of the event loop thread used by legacy HAL.
+ *
+ * Note: aThere will only be a single instance of this class created in the Wifi
+ * object and will be valid for the lifetime of the process.
  */
 class WifiLegacyHal {
  public:

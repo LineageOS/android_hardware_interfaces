@@ -17,6 +17,7 @@
 #ifndef HIDL_RETURN_UTIL_H_
 #define HIDL_RETURN_UTIL_H_
 
+#include "hidl_sync_util.h"
 #include "wifi_status_util.h"
 
 namespace android {
@@ -44,6 +45,7 @@ Return<void> validateAndCall(
     WorkFuncT&& work,
     const std::function<void(const WifiStatus&)>& hidl_cb,
     Args&&... args) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
   if (obj->isValid()) {
     hidl_cb((obj->*work)(std::forward<Args>(args)...));
   } else {
@@ -61,6 +63,7 @@ Return<void> validateAndCall(
     WorkFuncT&& work,
     const std::function<void(const WifiStatus&, ReturnT)>& hidl_cb,
     Args&&... args) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
   if (obj->isValid()) {
     const auto& ret_pair = (obj->*work)(std::forward<Args>(args)...);
     const WifiStatus& status = std::get<0>(ret_pair);
@@ -86,6 +89,7 @@ Return<void> validateAndCall(
     WorkFuncT&& work,
     const std::function<void(const WifiStatus&, ReturnT1, ReturnT2)>& hidl_cb,
     Args&&... args) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
   if (obj->isValid()) {
     const auto& ret_tuple = (obj->*work)(std::forward<Args>(args)...);
     const WifiStatus& status = std::get<0>(ret_tuple);
