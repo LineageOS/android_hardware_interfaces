@@ -15,11 +15,10 @@
  */
 #define LOG_TAG "android.hardware.drm@1.0-impl"
 
-#include <utils/Log.h>
-
 #include "DrmFactory.h"
 #include "DrmPlugin.h"
 #include "TypeConvert.h"
+#include <utils/Log.h>
 
 namespace android {
 namespace hardware {
@@ -27,66 +26,56 @@ namespace drm {
 namespace V1_0 {
 namespace implementation {
 
-DrmFactory::DrmFactory() :
-    trebleLoader("/vendor/lib/hw", "createDrmFactory"),
-    legacyLoader("/vendor/lib/mediadrm", "createDrmFactory") {
-}
+    DrmFactory::DrmFactory() :
+        loader("/vendor/lib/mediadrm", "createDrmFactory") {
+    }
 
-// Methods from ::android::hardware::drm::V1_0::IDrmFactory follow.
-Return<bool> DrmFactory::isCryptoSchemeSupported(
-        const hidl_array<uint8_t, 16>& uuid) {
-    return isCryptoSchemeSupported(trebleLoader, uuid) ||
-            isCryptoSchemeSupported(legacyLoader, uuid);
-}
+    // Methods from ::android::hardware::drm::V1_0::IDrmFactory follow.
+    Return<bool> DrmFactory::isCryptoSchemeSupported (
+            const hidl_array<uint8_t, 16>& uuid) {
+        for (size_t i = 0; i < loader.factoryCount(); i++) {
+            if (loader.getFactory(i)->isCryptoSchemeSupported(uuid.data())) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-Return<bool> DrmFactory::isContentTypeSupported (
-        const hidl_string& mimeType) {
-    return isContentTypeSupported<PluginLoader, hidl_string>(trebleLoader, mimeType) ||
-            isContentTypeSupported<LegacyLoader, String8>(legacyLoader, mimeType);
-}
+    Return<bool> DrmFactory::isContentTypeSupported (
+            const hidl_string& mimeType) {
+        for (size_t i = 0; i < loader.factoryCount(); i++) {
+            if (loader.getFactory(i)->isContentTypeSupported(String8(mimeType.c_str()))) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     Return<void> DrmFactory::createPlugin(const hidl_array<uint8_t, 16>& uuid,
             const hidl_string& appPackageName, createPlugin_cb _hidl_cb) {
-        sp<IDrmPlugin> plugin = createTreblePlugin(uuid, appPackageName);
-    if (plugin == nullptr) {
-        plugin = createLegacyPlugin(uuid);
-    }
-    _hidl_cb(plugin != nullptr ? Status::OK : Status::ERROR_DRM_CANNOT_HANDLE, plugin);
-    return Void();
-}
 
-sp<IDrmPlugin> DrmFactory::createTreblePlugin(const hidl_array<uint8_t, 16>& uuid,
-        const hidl_string& appPackageName) {
-    sp<IDrmPlugin> plugin;
-    for (size_t i = 0; i < trebleLoader.factoryCount(); i++) {
-        Return<void> hResult = trebleLoader.getFactory(i)->createPlugin(uuid,
-                appPackageName, [&](Status status, const sp<IDrmPlugin>& hPlugin) {
-                    if (status == Status::OK) {
-                        plugin = hPlugin;
-                    }
+        for (size_t i = 0; i < loader.factoryCount(); i++) {
+            if (loader.getFactory(i)->isCryptoSchemeSupported(uuid.data())) {
+                android::DrmPlugin *legacyPlugin = NULL;
+                status_t status = loader.getFactory(i)->createDrmPlugin(
+                        uuid.data(), &legacyPlugin);
+                DrmPlugin *newPlugin = NULL;
+                if (legacyPlugin == NULL) {
+                    ALOGE("Drm legacy HAL: failed to create drm plugin");
+                } else {
+                    newPlugin = new DrmPlugin(legacyPlugin);
                 }
-            );
-        if (plugin != nullptr) {
-            return plugin;
+                _hidl_cb(toStatus(status), newPlugin);
+                return Void();
+            }
         }
+        _hidl_cb(Status::ERROR_DRM_CANNOT_HANDLE, NULL);
+        return Void();
     }
-    return nullptr;
-}
 
-sp<IDrmPlugin> DrmFactory::createLegacyPlugin(const hidl_array<uint8_t, 16>& uuid) {
-    android::DrmPlugin *legacyPlugin = nullptr;
-    for (size_t i = 0; i < legacyLoader.factoryCount(); i++) {
-        legacyLoader.getFactory(i)->createDrmPlugin(uuid.data(), &legacyPlugin);
-        if (legacyPlugin) {
-            return new DrmPlugin(legacyPlugin);
-        }
+    IDrmFactory* HIDL_FETCH_IDrmFactory(const char* /* name */) {
+        return new DrmFactory();
     }
-    return nullptr;
-}
-
-IDrmFactory* HIDL_FETCH_IDrmFactory(const char* /* name */) {
-    return new DrmFactory();
-}
 
 }  // namespace implementation
 }  // namespace V1_0
