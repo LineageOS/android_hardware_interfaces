@@ -15,11 +15,10 @@
  */
 #define LOG_TAG "android.hardware.drm@1.0-impl"
 
-#include <utils/Log.h>
-
 #include "CryptoFactory.h"
 #include "CryptoPlugin.h"
 #include "TypeConvert.h"
+#include <utils/Log.h>
 
 namespace android {
 namespace hardware {
@@ -27,63 +26,45 @@ namespace drm {
 namespace V1_0 {
 namespace implementation {
 
-CryptoFactory::CryptoFactory() :
-    trebleLoader("/vendor/lib/hw", "createCryptoFactory"),
-    legacyLoader("/vendor/lib/mediadrm", "createCryptoFactory") {
-}
-
-// Methods from ::android::hardware::drm::V1_0::ICryptoFactory follow.
-Return<bool> CryptoFactory::isCryptoSchemeSupported(
-        const hidl_array<uint8_t, 16>& uuid) {
-    return isCryptoSchemeSupported(trebleLoader, uuid) ||
-            isCryptoSchemeSupported(legacyLoader, uuid);
-}
-
-Return<void> CryptoFactory::createPlugin(const hidl_array<uint8_t, 16>& uuid,
-        const hidl_vec<uint8_t>& initData, createPlugin_cb _hidl_cb) {
-    sp<ICryptoPlugin> plugin = createTreblePlugin(uuid, initData);
-    if (plugin == nullptr) {
-        plugin = createLegacyPlugin(uuid, initData);
+    CryptoFactory::CryptoFactory() :
+        loader("/vendor/lib/mediadrm", "createCryptoFactory") {
     }
-    _hidl_cb(plugin != nullptr ? Status::OK : Status::ERROR_DRM_CANNOT_HANDLE, plugin);
-    return Void();
-}
 
-sp<ICryptoPlugin> CryptoFactory::createTreblePlugin(const hidl_array<uint8_t, 16>& uuid,
-        const hidl_vec<uint8_t>& initData) {
-    sp<ICryptoPlugin> plugin;
-    for (size_t i = 0; i < trebleLoader.factoryCount(); i++) {
-        Return<void> hResult = trebleLoader.getFactory(i)->createPlugin(uuid, initData,
-                [&](Status status, const sp<ICryptoPlugin>& hPlugin) {
-                    if (status == Status::OK) {
-                        plugin = hPlugin;
-                    }
+    // Methods from ::android::hardware::drm::V1_0::ICryptoFactory follow.
+    Return<bool> CryptoFactory::isCryptoSchemeSupported(
+            const hidl_array<uint8_t, 16>& uuid) {
+        for (size_t i = 0; i < loader.factoryCount(); i++) {
+            if (loader.getFactory(i)->isCryptoSchemeSupported(uuid.data())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    Return<void> CryptoFactory::createPlugin(const hidl_array<uint8_t, 16>& uuid,
+            const hidl_vec<uint8_t>& initData, createPlugin_cb _hidl_cb) {
+        for (size_t i = 0; i < loader.factoryCount(); i++) {
+            if (loader.getFactory(i)->isCryptoSchemeSupported(uuid.data())) {
+                android::CryptoPlugin *legacyPlugin = NULL;
+                status_t status = loader.getFactory(i)->createPlugin(uuid.data(),
+                        initData.data(), initData.size(), &legacyPlugin);
+                CryptoPlugin *newPlugin = NULL;
+                if (legacyPlugin == NULL) {
+                    ALOGE("Crypto legacy HAL: failed to create crypto plugin");
+                } else {
+                    newPlugin = new CryptoPlugin(legacyPlugin);
                 }
-            );
-        if (plugin != nullptr) {
-            return plugin;
+                _hidl_cb(toStatus(status), newPlugin);
+                return Void();
+            }
         }
+        _hidl_cb(Status::ERROR_DRM_CANNOT_HANDLE, NULL);
+        return Void();
     }
-    return nullptr;
-}
 
-sp<ICryptoPlugin> CryptoFactory::createLegacyPlugin(const hidl_array<uint8_t, 16>& uuid,
-        const hidl_vec<uint8_t>& initData) {
-    android::CryptoPlugin *legacyPlugin = nullptr;
-    for (size_t i = 0; i < legacyLoader.factoryCount(); i++) {
-        legacyLoader.getFactory(i)->createPlugin(uuid.data(),
-                initData.data(), initData.size(), &legacyPlugin);
-        if (legacyPlugin) {
-            return new CryptoPlugin(legacyPlugin);
-        }
+    ICryptoFactory* HIDL_FETCH_ICryptoFactory(const char* /* name */) {
+        return new CryptoFactory();
     }
-    return nullptr;
-}
-
-
-ICryptoFactory* HIDL_FETCH_ICryptoFactory(const char* /* name */) {
-    return new CryptoFactory();
-}
 
 }  // namespace implementation
 }  // namespace V1_0
