@@ -1,6 +1,7 @@
 cc_library_shared {
     name: "android.hardware.nfc@1.0-impl",
     relative_install_path: "hw",
+    proprietary: true,
     srcs: ["Nfc.cpp"],
     shared_libs: [
         "liblog",
