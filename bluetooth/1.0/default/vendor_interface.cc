@@ -414,6 +414,7 @@ void VendorInterface::OnDataReady(int fd) {
                hci_packet_.data() + preamble_size_for_type[hci_packet_type_] +
                    hci_packet_bytes_read_,
                hci_packet_bytes_remaining_));
+      CHECK(bytes_read > 0);
       hci_packet_bytes_remaining_ -= bytes_read;
       hci_packet_bytes_read_ += bytes_read;
       if (hci_packet_bytes_remaining_ == 0) {
