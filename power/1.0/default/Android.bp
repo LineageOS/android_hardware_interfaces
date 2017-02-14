@@ -18,6 +18,11 @@ cc_library_shared {
     relative_install_path: "hw",
     srcs: ["Power.cpp"],
 
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+
     shared_libs: [
         "liblog",
         "libhardware",
@@ -36,6 +41,11 @@ cc_binary {
     name: "android.hardware.power@1.0-service",
     init_rc: ["android.hardware.power@1.0-service.rc"],
     srcs: ["service.cpp"],
+
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
 
     shared_libs: [
         "liblog",
