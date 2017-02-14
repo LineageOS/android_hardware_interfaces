@@ -122,9 +122,9 @@ class BluetoothHidlTest : public ::testing::Test {
   virtual void SetUp() override {
     // currently test passthrough mode only
     bluetooth = IBluetoothHci::getService();
+    ASSERT_NE(bluetooth, nullptr);
     ALOGW("%s: getService() for bluetooth is %s", __func__,
           bluetooth->isRemote() ? "remote" : "local");
-    ASSERT_NE(bluetooth, nullptr);
 
     bluetooth_cb = new BluetoothHciCallbacks(*this);
     ASSERT_NE(bluetooth_cb, nullptr);
