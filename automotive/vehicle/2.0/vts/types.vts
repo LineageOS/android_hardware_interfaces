@@ -162,6 +162,10 @@ attribute: {
         scalar_value: {
             int32_t: 291504901
         }
+        enumerator: "WHEEL_TICK"
+        scalar_value: {
+            int32_t: 291570438
+        }
         enumerator: "GEAR_SELECTION"
         scalar_value: {
             int32_t: 289408000
@@ -282,9 +286,17 @@ attribute: {
         scalar_value: {
             int32_t: 289474816
         }
+        enumerator: "AUDIO_FOCUS_EXT_SYNC"
+        scalar_value: {
+            int32_t: 289474832
+        }
         enumerator: "AUDIO_VOLUME"
         scalar_value: {
             int32_t: 289474817
+        }
+        enumerator: "AUDIO_VOLUME_EXT_SYNC"
+        scalar_value: {
+            int32_t: 289474833
         }
         enumerator: "AUDIO_VOLUME_LIMIT"
         scalar_value: {
@@ -302,9 +314,17 @@ attribute: {
         scalar_value: {
             int32_t: 289474821
         }
+        enumerator: "AUDIO_STREAM_STATE"
+        scalar_value: {
+            int32_t: 289474822
+        }
+        enumerator: "AUDIO_PARAMETERS"
+        scalar_value: {
+            int32_t: 286263559
+        }
         enumerator: "AP_POWER_STATE"
         scalar_value: {
-            int32_t: 2560
+            int32_t: 289475072
         }
         enumerator: "DISPLAY_BRIGHTNESS"
         scalar_value: {
@@ -505,6 +525,14 @@ attribute: {
         enumerator: "OBD2_FREEZE_FRAME"
         scalar_value: {
             int32_t: 299896065
+        }
+        enumerator: "OBD2_FREEZE_FRAME_INFO"
+        scalar_value: {
+            int32_t: 299896066
+        }
+        enumerator: "OBD2_FREEZE_FRAME_CLEAR"
+        scalar_value: {
+            int32_t: 299896067
         }
     }
 }
@@ -1585,8 +1613,8 @@ attribute: {
     type: TYPE_STRUCT
     struct_value: {
         name: "prop"
-        type: TYPE_ENUM
-        predefined_type: "::android::hardware::automotive::vehicle::V2_0::VehicleProperty"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
     }
     struct_value: {
         name: "access"
@@ -1685,8 +1713,8 @@ attribute: {
     }
     struct_value: {
         name: "prop"
-        type: TYPE_ENUM
-        predefined_type: "::android::hardware::automotive::vehicle::V2_0::VehicleProperty"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
     }
     struct_value: {
         name: "timestamp"
@@ -1793,8 +1821,8 @@ attribute: {
     type: TYPE_STRUCT
     struct_value: {
         name: "propId"
-        type: TYPE_ENUM
-        predefined_type: "::android::hardware::automotive::vehicle::V2_0::VehicleProperty"
+        type: TYPE_SCALAR
+        scalar_type: "int32_t"
     }
     struct_value: {
         name: "vehicleAreas"
@@ -2104,6 +2132,35 @@ attribute: {
 }
 
 attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::Wheel"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "UNKNOWN"
+        scalar_value: {
+            int32_t: 0
+        }
+        enumerator: "LEFT_FRONT"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "RIGHT_FRONT"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "LEFT_REAR"
+        scalar_value: {
+            int32_t: 4
+        }
+        enumerator: "RIGHT_REAR"
+        scalar_value: {
+            int32_t: 8
+        }
+    }
+}
+
+attribute: {
     name: "::android::hardware::automotive::vehicle::V2_0::SecondaryAirStatus"
     type: TYPE_ENUM
     enum_value: {
@@ -2250,6 +2307,14 @@ attribute: {
         enumerator: "IGNITION_MONITORS_SUPPORTED"
         scalar_value: {
             int32_t: 2
+        }
+        enumerator: "IGNITION_SPECIFIC_MONITORS"
+        scalar_value: {
+            int32_t: 3
+        }
+        enumerator: "INTAKE_AIR_TEMPERATURE"
+        scalar_value: {
+            int32_t: 4
         }
         enumerator: "COMMANDED_SECONDARY_AIR_STATUS"
         scalar_value: {
@@ -2667,6 +2732,48 @@ attribute: {
         enumerator: "VENDOR_START_INDEX"
         scalar_value: {
             int32_t: 71
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VmsMessageType"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "SUBSCRIBE"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "UNSUBSCRIBE"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "DATA"
+        scalar_value: {
+            int32_t: 3
+        }
+    }
+}
+
+attribute: {
+    name: "::android::hardware::automotive::vehicle::V2_0::VmsMessageIntegerValuesIndex"
+    type: TYPE_ENUM
+    enum_value: {
+        scalar_type: "int32_t"
+
+        enumerator: "VMS_MESSAGE_TYPE"
+        scalar_value: {
+            int32_t: 1
+        }
+        enumerator: "VMS_LAYER_ID"
+        scalar_value: {
+            int32_t: 2
+        }
+        enumerator: "VMS_LAYER_VERSION"
+        scalar_value: {
+            int32_t: 3
         }
     }
 }

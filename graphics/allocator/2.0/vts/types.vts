@@ -84,6 +84,10 @@ attribute: {
         scalar_value: {
             uint64_t: 4194304
         }
+        enumerator: "SENSOR_DIRECT_DATA"
+        scalar_value: {
+            uint64_t: 8388608
+        }
     }
 }
 
@@ -128,6 +132,10 @@ attribute: {
         enumerator: "RENDERSCRIPT"
         scalar_value: {
             uint64_t: 1048576
+        }
+        enumerator: "GPU_DATA_BUFFER"
+        scalar_value: {
+            uint64_t: 8388608
         }
     }
 }

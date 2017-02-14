@@ -7,6 +7,7 @@ package: "android.hardware.graphics.composer"
 import: "android.hardware.graphics.common@1.0::types"
 import: "android.hardware.graphics.composer@2.1::IComposerCallback"
 import: "android.hardware.graphics.composer@2.1::types"
+import: "android.hidl.base@1.0::types"
 
 interface: {
     attribute: {
@@ -422,8 +423,7 @@ interface: {
         name: "registerCallback"
         arg: {
             type: TYPE_HIDL_CALLBACK
-            predefined_type: "IComposerCallback"
-            is_callback: true
+            predefined_type: "::android::hardware::graphics::composer::V2_1::IComposerCallback"
         }
         callflow: {
             entry: true
@@ -849,6 +849,11 @@ interface: {
             predefined_type: "::android::hardware::graphics::composer::V2_1::Error"
         }
         arg: {
+            type: TYPE_FMQ_SYNC
+            fmq_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint32_t"
+            }
         }
         callflow: {
             next: "*"
@@ -862,6 +867,11 @@ interface: {
             predefined_type: "::android::hardware::graphics::composer::V2_1::Error"
         }
         return_type_hidl: {
+            type: TYPE_FMQ_SYNC
+            fmq_value: {
+                type: TYPE_SCALAR
+                scalar_type: "uint32_t"
+            }
         }
         callflow: {
             next: "*"

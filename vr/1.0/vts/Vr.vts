@@ -4,6 +4,7 @@ component_name: "IVr"
 
 package: "android.hardware.vr"
 
+import: "android.hidl.base@1.0::types"
 
 interface: {
     api: {

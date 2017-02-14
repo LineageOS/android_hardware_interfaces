@@ -374,6 +374,7 @@ attribute: {
     struct_value: {
         name: "flags"
         type: TYPE_MASK
+        scalar_type: "uint32_t"
         predefined_type: "::android::hardware::sensors::V1_0::SensorFlagBits"
     }
 }
@@ -546,8 +547,8 @@ attribute: {
     struct_value: {
         name: "uuid"
         type: TYPE_ARRAY
+        vector_size: 16
         vector_value: {
-            vector_size: 16
             type: TYPE_SCALAR
             scalar_type: "uint8_t"
         }
@@ -652,8 +653,8 @@ attribute: {
         union_value: {
             name: "data_int32"
             type: TYPE_ARRAY
+            vector_size: 14
             vector_value: {
-                vector_size: 14
                 type: TYPE_SCALAR
                 scalar_type: "int32_t"
             }
@@ -661,8 +662,8 @@ attribute: {
         union_value: {
             name: "data_float"
             type: TYPE_ARRAY
+            vector_size: 14
             vector_value: {
-                vector_size: 14
                 type: TYPE_SCALAR
                 scalar_type: "float_t"
             }
@@ -726,8 +727,8 @@ attribute: {
     union_value: {
         name: "pose6DOF"
         type: TYPE_ARRAY
+        vector_size: 15
         vector_value: {
-            vector_size: 15
             type: TYPE_SCALAR
             scalar_type: "float_t"
         }
@@ -745,8 +746,8 @@ attribute: {
     union_value: {
         name: "data"
         type: TYPE_ARRAY
+        vector_size: 16
         vector_value: {
-            vector_size: 16
             type: TYPE_SCALAR
             scalar_type: "float_t"
         }

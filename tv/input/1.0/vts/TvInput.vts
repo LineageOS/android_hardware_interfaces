@@ -4,16 +4,17 @@ component_name: "ITvInput"
 
 package: "android.hardware.tv.input"
 
+import: "android.hardware.audio.common@2.0::types"
 import: "android.hardware.tv.input@1.0::ITvInputCallback"
 import: "android.hardware.tv.input@1.0::types"
+import: "android.hidl.base@1.0::types"
 
 interface: {
     api: {
         name: "setCallback"
         arg: {
             type: TYPE_HIDL_CALLBACK
-            predefined_type: "ITvInputCallback"
-            is_callback: true
+            predefined_type: "::android::hardware::tv::input::V1_0::ITvInputCallback"
         }
         callflow: {
             entry: true

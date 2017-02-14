@@ -4,8 +4,11 @@ component_name: "IComposer"
 
 package: "android.hardware.graphics.composer"
 
+import: "android.hardware.graphics.common@1.0::types"
+import: "android.hardware.graphics.composer@2.1::IComposerCallback"
 import: "android.hardware.graphics.composer@2.1::IComposerClient"
 import: "android.hardware.graphics.composer@2.1::types"
+import: "android.hidl.base@1.0::types"
 
 interface: {
     attribute: {
@@ -73,8 +76,7 @@ interface: {
         }
         return_type_hidl: {
             type: TYPE_HIDL_INTERFACE
-            predefined_type: "IComposerClient"
-            is_callback: false
+            predefined_type: "::android::hardware::graphics::composer::V2_1::IComposerClient"
         }
         callflow: {
             entry: true

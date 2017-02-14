@@ -6,6 +6,7 @@ package: "android.hardware.automotive.vehicle"
 
 import: "android.hardware.automotive.vehicle@2.0::IVehicleCallback"
 import: "android.hardware.automotive.vehicle@2.0::types"
+import: "android.hidl.base@1.0::types"
 
 interface: {
     api: {
@@ -35,8 +36,8 @@ interface: {
         arg: {
             type: TYPE_VECTOR
             vector_value: {
-                type: TYPE_ENUM
-                predefined_type: "::android::hardware::automotive::vehicle::V2_0::VehicleProperty"
+                type: TYPE_SCALAR
+                scalar_type: "int32_t"
             }
         }
     }
@@ -77,8 +78,7 @@ interface: {
         }
         arg: {
             type: TYPE_HIDL_CALLBACK
-            predefined_type: "IVehicleCallback"
-            is_callback: true
+            predefined_type: "::android::hardware::automotive::vehicle::V2_0::IVehicleCallback"
         }
         arg: {
             type: TYPE_VECTOR
@@ -97,12 +97,11 @@ interface: {
         }
         arg: {
             type: TYPE_HIDL_CALLBACK
-            predefined_type: "IVehicleCallback"
-            is_callback: true
+            predefined_type: "::android::hardware::automotive::vehicle::V2_0::IVehicleCallback"
         }
         arg: {
-            type: TYPE_ENUM
-            predefined_type: "::android::hardware::automotive::vehicle::V2_0::VehicleProperty"
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
         }
     }
 

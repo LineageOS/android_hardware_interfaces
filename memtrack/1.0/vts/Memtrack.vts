@@ -5,6 +5,7 @@ component_name: "IMemtrack"
 package: "android.hardware.memtrack"
 
 import: "android.hardware.memtrack@1.0::types"
+import: "android.hidl.base@1.0::types"
 
 interface: {
     api: {
