@@ -41,7 +41,8 @@ struct CryptoFactory : public ICryptoFactory {
     CryptoFactory();
     virtual ~CryptoFactory() {}
 
-    // Methods from ::android::hardware::drmn::V1_0::ICryptoFactory follow.
+    // Methods from ::android::hardware::drm::V1_0::ICryptoFactory follow.
+
     Return<bool> isCryptoSchemeSupported(const hidl_array<uint8_t, 16>& uuid)
             override;
 
@@ -50,27 +51,7 @@ struct CryptoFactory : public ICryptoFactory {
             override;
 
 private:
-    template <typename L> Return<bool> isCryptoSchemeSupported(
-            const L& loader, const hidl_array<uint8_t, 16>& uuid) {
-        for (size_t i = 0; i < loader.factoryCount(); i++) {
-           if (loader.getFactory(i)->isCryptoSchemeSupported(uuid.data())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    sp<ICryptoPlugin> createTreblePlugin(const hidl_array<uint8_t, 16>& uuid,
-                    const hidl_vec<uint8_t>& initData);
-
-    sp<ICryptoPlugin> createLegacyPlugin(const hidl_array<uint8_t, 16>& uuid,
-                    const hidl_vec<uint8_t>& initData);
-
-    typedef android::PluginLoader<ICryptoFactory> PluginLoader;
-    PluginLoader trebleLoader;
-
-    typedef android::PluginLoader<android::CryptoFactory> LegacyLoader;
-    LegacyLoader legacyLoader;
+    android::PluginLoader<android::CryptoFactory> loader;
 
     CryptoFactory(const CryptoFactory &) = delete;
     void operator=(const CryptoFactory &) = delete;
