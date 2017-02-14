@@ -56,8 +56,8 @@ attribute: {
     struct_value: {
         name: "node"
         type: TYPE_ARRAY
+        vector_size: 6
         vector_value: {
-            vector_size: 6
             type: TYPE_SCALAR
             scalar_type: "uint8_t"
         }
@@ -381,9 +381,13 @@ attribute: {
         scalar_value: {
             uint32_t: 553648128
         }
-        enumerator: "LDAC"
+        enumerator: "AC4"
         scalar_value: {
             uint32_t: 570425344
+        }
+        enumerator: "LDAC"
+        scalar_value: {
+            uint32_t: 587202560
         }
         enumerator: "MAIN_MASK"
         scalar_value: {
@@ -810,6 +814,10 @@ attribute: {
         enumerator: "IN_FRONT_BACK"
         scalar_value: {
             uint32_t: 48
+        }
+        enumerator: "IN_6"
+        scalar_value: {
+            uint32_t: 252
         }
         enumerator: "IN_VOICE_UPLINK_MONO"
         scalar_value: {
@@ -1357,13 +1365,17 @@ attribute: {
         scalar_value: {
             int32_t: 15
         }
-        enumerator: "CNT"
+        enumerator: "ASSISTANT"
         scalar_value: {
             int32_t: 16
         }
+        enumerator: "CNT"
+        scalar_value: {
+            int32_t: 17
+        }
         enumerator: "MAX"
         scalar_value: {
-            int32_t: 15
+            int32_t: 16
         }
     }
 }
@@ -1545,8 +1557,8 @@ attribute: {
     struct_value: {
         name: "values"
         type: TYPE_ARRAY
+        vector_size: 32
         vector_value: {
-            vector_size: 32
             type: TYPE_SCALAR
             scalar_type: "int32_t"
         }
@@ -1620,8 +1632,8 @@ attribute: {
     struct_value: {
         name: "address"
         type: TYPE_ARRAY
+        vector_size: 32
         vector_value: {
-            vector_size: 32
             type: TYPE_SCALAR
             scalar_type: "uint8_t"
         }
@@ -1785,8 +1797,8 @@ attribute: {
     struct_value: {
         name: "address"
         type: TYPE_ARRAY
+        vector_size: 32
         vector_value: {
-            vector_size: 32
             type: TYPE_SCALAR
             scalar_type: "uint8_t"
         }
@@ -1922,6 +1934,21 @@ attribute: {
         name: "ext"
         type: TYPE_UNION
         predefined_type: "::android::hardware::audio::common::V2_0::AudioPort::Ext"
+    }
+}
+
+attribute: {
+    name: "::android::hardware::audio::common::V2_0::ThreadInfo"
+    type: TYPE_STRUCT
+    struct_value: {
+        name: "pid"
+        type: TYPE_SCALAR
+        scalar_type: "int64_t"
+    }
+    struct_value: {
+        name: "tid"
+        type: TYPE_SCALAR
+        scalar_type: "int64_t"
     }
 }
 

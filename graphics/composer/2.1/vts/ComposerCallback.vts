@@ -5,6 +5,7 @@ component_name: "IComposerCallback"
 package: "android.hardware.graphics.composer"
 
 import: "android.hardware.graphics.composer@2.1::types"
+import: "android.hidl.base@1.0::types"
 
 interface: {
     attribute: {

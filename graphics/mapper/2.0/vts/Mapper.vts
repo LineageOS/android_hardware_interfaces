@@ -7,6 +7,7 @@ package: "android.hardware.graphics.mapper"
 import: "android.hardware.graphics.allocator@2.0::types"
 import: "android.hardware.graphics.common@1.0::types"
 import: "android.hardware.graphics.mapper@2.0::types"
+import: "android.hidl.base@1.0::types"
 
 interface: {
     attribute: {

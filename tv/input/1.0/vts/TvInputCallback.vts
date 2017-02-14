@@ -4,7 +4,9 @@ component_name: "ITvInputCallback"
 
 package: "android.hardware.tv.input"
 
+import: "android.hardware.audio.common@2.0::types"
 import: "android.hardware.tv.input@1.0::types"
+import: "android.hidl.base@1.0::types"
 
 interface: {
     api: {

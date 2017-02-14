@@ -6,6 +6,8 @@ package: "android.hardware.graphics.allocator"
 
 import: "android.hardware.graphics.allocator@2.0::IAllocatorClient"
 import: "android.hardware.graphics.allocator@2.0::types"
+import: "android.hardware.graphics.common@1.0::types"
+import: "android.hidl.base@1.0::types"
 
 interface: {
     attribute: {
@@ -73,8 +75,7 @@ interface: {
         }
         return_type_hidl: {
             type: TYPE_HIDL_INTERFACE
-            predefined_type: "IAllocatorClient"
-            is_callback: false
+            predefined_type: "::android::hardware::graphics::allocator::V2_0::IAllocatorClient"
         }
         callflow: {
             entry: true

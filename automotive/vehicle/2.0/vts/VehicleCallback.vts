@@ -5,6 +5,7 @@ component_name: "IVehicleCallback"
 package: "android.hardware.automotive.vehicle"
 
 import: "android.hardware.automotive.vehicle@2.0::types"
+import: "android.hidl.base@1.0::types"
 
 interface: {
     api: {
@@ -33,8 +34,8 @@ interface: {
             predefined_type: "::android::hardware::automotive::vehicle::V2_0::StatusCode"
         }
         arg: {
-            type: TYPE_ENUM
-            predefined_type: "::android::hardware::automotive::vehicle::V2_0::VehicleProperty"
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
         }
         arg: {
             type: TYPE_SCALAR
