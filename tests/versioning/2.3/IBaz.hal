@@ -16,9 +16,8 @@
 
 package android.hardware.tests.versioning@2.3;
 
-import @2.2::IFoo;
+import @1.0::IFoo;
 
-// Must extend @2.2::IFoo.
-interface IFoo extends @2.2::IFoo {
+interface IBaz extends @1.0::IFoo {
 
 };
