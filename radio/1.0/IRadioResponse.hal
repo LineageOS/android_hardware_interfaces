@@ -1968,6 +1968,18 @@ interface IRadioResponse {
     oneway setIndicationFilterResponse(RadioResponseInfo info);
 
     /*
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:SIM_ABSENT
+     *   RadioError:INVALID_ARGUMENTS
+     */
+    oneway setSimCardPowerResponse(RadioResponseInfo info);
+
+    /*
      * Acknowledge the receipt of radio request sent to the vendor. This must be sent only for
      * radio request which take long time to respond.
      * For more details, refer https://source.android.com/devices/tech/connect/ril.html
