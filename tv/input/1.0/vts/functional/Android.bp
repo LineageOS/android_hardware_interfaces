@@ -31,13 +31,8 @@ cc_test {
     ],
     static_libs: ["libgtest"],
     cflags: [
-// TODO: add --coverage when the segfault issue is fixed.
-//        "--coverage",
         "-O0",
         "-g",
-    ],
-//    ldflags: [
-//        "--coverage"
-//    ]
+    ]
 }
 
