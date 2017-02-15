@@ -17,7 +17,7 @@
 // Would normally be 'vendor.example.extension.light@2.0' however, this is
 // a google extension example. A vendor extension should also live in the
 // vendor partition.
-package android.hardware.example.extension.light@2.0;
+package android.hardware.tests.extension.light@2.0;
 
 import android.hardware.light@2.0;
 
