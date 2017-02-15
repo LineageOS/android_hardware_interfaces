@@ -75,6 +75,10 @@ void convertFromSensorEvent(const sensors_event_t &src, Event *dst) {
         case SensorType::META_DATA:
         {
             dst->u.meta.what = (MetaDataEventType)src.meta_data.what;
+            // Legacy HALs contain the handle reference in the meta data field.
+            // Copy that over to the handle of the event. In legacy HALs this
+            // field was expected to be 0.
+            dst->sensorHandle = src.meta_data.sensor;
             break;
         }
 
@@ -212,8 +216,12 @@ void convertToSensorEvent(const Event &src, sensors_event_t *dst) {
   switch (src.sensorType) {
       case SensorType::META_DATA:
       {
+          // Legacy HALs expect the handle reference in the meta data field.
+          // Copy it over from the handle of the event.
           dst->meta_data.what = (int32_t)src.u.meta.what;
-          dst->meta_data.sensor = dst->sensor;
+          dst->meta_data.sensor = src.sensorHandle;
+          // Set the sensor handle to 0 to maintain compatibility.
+          dst->sensor = 0;
           break;
       }
 
