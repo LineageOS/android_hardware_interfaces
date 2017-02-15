@@ -715,8 +715,8 @@ struct NanBandSpecificConfig {
     * Value of 0:
     *  - reserved in 2.4GHz band
     *  - no wakeup at all in 5GHz band
-    * The publish/subscribe period values don't override the device level configurations if
-    * specified.
+    * The publish/subscribe period values don't override this device level configurations if
+    * it is specified.
     * Configuration is only used only if |validDiscoveryWindowIntervalVal| is set to true.
     * NAN Spec: Device Capability Attribute / 2.4 GHz DW, Device Capability Attribute / 5 GHz DW
     */
@@ -915,8 +915,8 @@ struct NanDiscoveryCommonConfig {
   /**
    * Indicates the interval between two Discovery Windows in which the device supporting the
    * service is awake to transmit or receive the Service Discovery frames. Valid values of Awake
-   * DW Interval are: 1, 2, 4, 8 and 16. A value of 0 will default to 1. Overrides any
-   * |NanBandSpecificConfig.discoveryWindowIntervalVal| configurations.
+   * DW Interval are: 1, 2, 4, 8 and 16. A value of 0 will default to 1. Does not override
+   * |NanBandSpecificConfig.discoveryWindowIntervalVal| configurations if those are specified.
    */
   uint16_t discoveryWindowPeriod;
   /**
