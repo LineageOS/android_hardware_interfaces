@@ -35,11 +35,7 @@ cc_test {
     ],
     static_libs: ["libgtest", "libhwcomposer-command-buffer"],
     cflags: [
-        "--coverage",
         "-O0",
         "-g",
-    ],
-    ldflags: [
-        "--coverage",
-    ],
+    ]
 }
