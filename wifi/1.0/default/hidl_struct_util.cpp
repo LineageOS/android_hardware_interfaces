@@ -1285,8 +1285,7 @@ bool convertLegacyNanCapabilitiesResponseToHidl(
   hidl_response->maxNdpSessions = legacy_response.max_ndp_sessions;
   hidl_response->maxAppInfoLen = legacy_response.max_app_info_len;
   hidl_response->maxQueuedTransmitFollowupMsgs = legacy_response.max_queued_transmit_followup_msgs;
-  // TODO: b/34059183 to add to underlying HAL
-  hidl_response->maxSubscribeInterfaceAddresses = NAN_MAX_SUBSCRIBE_MAX_ADDRESS;
+  hidl_response->maxSubscribeInterfaceAddresses = legacy_response.max_subscribe_address;
   hidl_response->supportedCipherSuites = legacy_response.cipher_suites_supported;
 
   return true;
