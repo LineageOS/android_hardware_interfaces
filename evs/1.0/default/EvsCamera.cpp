@@ -69,7 +69,8 @@ EvsCamera::EvsCamera(const char *id) :
     mHeight = (mDescription.defaultVerResolution) ? mDescription.defaultVerResolution : 480;
 
     mFormat = HAL_PIXEL_FORMAT_RGBA_8888;
-    mUsage  = GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_HW_CAMERA_WRITE;
+    mUsage  = GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_HW_CAMERA_WRITE |
+              GRALLOC_USAGE_SW_READ_RARELY | GRALLOC_USAGE_SW_WRITE_RARELY;
 }
 
 
@@ -440,7 +441,7 @@ void EvsCamera::generateFrames() {
 }
 
 
-void EvsCamera::fillTestFrame(BufferDesc buff) {
+void EvsCamera::fillTestFrame(const BufferDesc& buff) {
     // Lock our output buffer for writing
     uint32_t *pixels = nullptr;
     GraphicBufferMapper &mapper = GraphicBufferMapper::get();
@@ -474,7 +475,8 @@ void EvsCamera::fillTestFrame(BufferDesc buff) {
             pixels[col] = expectedPixel;
         }
         // Point to the next row
-        pixels = pixels + (buff.stride / sizeof(*pixels));
+        // NOTE:  stride retrieved from gralloc is in units of pixels
+        pixels = pixels + buff.stride;
     }
 
     // Release our output buffer

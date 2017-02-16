@@ -58,7 +58,7 @@ private:
     unsigned decreaseAvailableFrames_Locked(unsigned numToRemove);
 
     void generateFrames();
-    void fillTestFrame(BufferDesc buff);
+    void fillTestFrame(const BufferDesc& buff);
 
     CameraDesc                  mDescription = {};  // The properties of this camera
 
