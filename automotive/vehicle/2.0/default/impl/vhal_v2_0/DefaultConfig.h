@@ -18,7 +18,7 @@
 #define android_hardware_automotive_vehicle_V2_0_impl_DefaultConfig_H_
 
 #include <android/hardware/automotive/vehicle/2.0/IVehicle.h>
-#include <vehicle_hal_manager/VehicleUtils.h>
+#include <vhal_v2_0/VehicleUtils.h>
 
 namespace android {
 namespace hardware {

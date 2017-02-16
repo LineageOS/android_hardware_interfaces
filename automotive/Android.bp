@@ -2,4 +2,5 @@
 subdirs = [
     "vehicle",
     "vehicle/2.0",
+    "vehicle/2.1",
 ]

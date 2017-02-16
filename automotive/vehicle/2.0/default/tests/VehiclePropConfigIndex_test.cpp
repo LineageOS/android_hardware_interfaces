@@ -16,7 +16,7 @@
 
 #include <gtest/gtest.h>
 
-#include "vehicle_hal_manager/VehiclePropConfigIndex.h"
+#include "vhal_v2_0/VehiclePropConfigIndex.h"
 
 #include "VehicleHalTestUtils.h"
 

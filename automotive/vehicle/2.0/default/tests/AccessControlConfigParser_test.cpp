@@ -19,8 +19,8 @@
 #include <fstream>
 #include <unordered_set>
 
-#include "vehicle_hal_manager/AccessControlConfigParser.h"
-#include <vehicle_hal_manager/VehicleUtils.h>
+#include "vhal_v2_0/AccessControlConfigParser.h"
+#include "vhal_v2_0/VehicleUtils.h"
 
 namespace android {
 namespace hardware {

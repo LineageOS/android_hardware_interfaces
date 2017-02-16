@@ -20,7 +20,7 @@
 
 #include <utils/SystemClock.h>
 
-#include "vehicle_hal_manager/VehicleObjectPool.h"
+#include "vhal_v2_0/VehicleObjectPool.h"
 
 namespace android {
 namespace hardware {

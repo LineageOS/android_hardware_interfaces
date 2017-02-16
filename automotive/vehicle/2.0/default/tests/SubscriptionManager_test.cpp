@@ -19,7 +19,7 @@
 
 #include <gtest/gtest.h>
 
-#include "vehicle_hal_manager/SubscriptionManager.h"
+#include "vhal_v2_0/SubscriptionManager.h"
 
 #include "VehicleHalTestUtils.h"
 

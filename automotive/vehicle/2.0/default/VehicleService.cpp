@@ -20,9 +20,8 @@
 
 #include <iostream>
 
-
-#include <vehicle_hal_manager/VehicleHalManager.h>
-#include <impl/DefaultVehicleHal.h>
+#include <vhal_v2_0/VehicleHalManager.h>
+#include <vhal_v2_0/DefaultVehicleHal.h>
 
 using namespace android;
 using namespace android::hardware;

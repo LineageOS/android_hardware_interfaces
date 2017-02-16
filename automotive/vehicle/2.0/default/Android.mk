@@ -14,20 +14,26 @@
 
 LOCAL_PATH := $(call my-dir)
 
-module_prefix = android.hardware.automotive.vehicle@2.0
+vhal_v2_0 = android.hardware.automotive.vehicle@2.0
 
 ###############################################################################
 # Vehicle reference implementation lib
 ###############################################################################
 include $(CLEAR_VARS)
-LOCAL_MODULE := $(module_prefix)-manager-lib
+LOCAL_MODULE := $(vhal_v2_0)-manager-lib
 LOCAL_SRC_FILES := \
-    vehicle_hal_manager/AccessControlConfigParser.cpp \
-    vehicle_hal_manager/Obd2SensorStore.cpp \
-    vehicle_hal_manager/SubscriptionManager.cpp \
-    vehicle_hal_manager/VehicleHalManager.cpp \
-    vehicle_hal_manager/VehicleObjectPool.cpp \
-    vehicle_hal_manager/VehicleUtils.cpp \
+    common/src/AccessControlConfigParser.cpp \
+    common/src/Obd2SensorStore.cpp \
+    common/src/SubscriptionManager.cpp \
+    common/src/VehicleHalManager.cpp \
+    common/src/VehicleObjectPool.cpp \
+    common/src/VehicleUtils.cpp \
+
+LOCAL_C_INCLUDES := \
+    $(LOCAL_PATH)/common/include/vhal_v2_0
+
+LOCAL_EXPORT_C_INCLUDE_DIRS := \
+    $(LOCAL_PATH)/common/include
 
 LOCAL_SHARED_LIBRARIES := \
     libbinder \
@@ -36,7 +42,7 @@ LOCAL_SHARED_LIBRARIES := \
     libhwbinder \
     liblog \
     libutils \
-    $(module_prefix) \
+    $(vhal_v2_0) \
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -44,11 +50,11 @@ include $(BUILD_STATIC_LIBRARY)
 # Vehicle HAL Protobuf library
 ###############################################################################
 include $(CLEAR_VARS)
-LOCAL_SRC_FILES := $(call all-proto-files-under, impl/proto)
+LOCAL_SRC_FILES := $(call all-proto-files-under, impl/vhal_v2_0/proto)
 
 LOCAL_PROTOC_OPTIMIZE_TYPE := nano
 
-LOCAL_MODULE := $(module_prefix)-libproto-native
+LOCAL_MODULE := $(vhal_v2_0)-libproto-native
 LOCAL_MODULE_CLASS := STATIC_LIBRARIES
 
 LOCAL_MODULE_TAGS := optional
@@ -57,7 +63,7 @@ LOCAL_STRIP_MODULE := keep_symbols
 
 generated_sources_dir := $(call local-generated-sources-dir)
 LOCAL_EXPORT_C_INCLUDE_DIRS := \
-    $(generated_sources_dir)/proto/$(LOCAL_PATH)/impl/proto
+    $(generated_sources_dir)/proto/$(LOCAL_PATH)/impl/vhal_v2_0/proto
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -67,9 +73,18 @@ include $(BUILD_STATIC_LIBRARY)
 ###############################################################################
 include $(CLEAR_VARS)
 
-LOCAL_MODULE:= $(module_prefix)-default-impl-lib
+LOCAL_MODULE:= $(vhal_v2_0)-default-impl-lib
 LOCAL_SRC_FILES:= \
-    impl/DefaultVehicleHal.cpp \
+    impl/vhal_v2_0/DefaultVehicleHal.cpp \
+
+LOCAL_C_INCLUDES := \
+    $(LOCAL_PATH)/impl/vhal_v2_0
+
+LOCAL_EXPORT_C_INCLUDE_DIRS := \
+    $(LOCAL_PATH)/impl
+
+LOCAL_WHOLE_STATIC_LIBRARIES := \
+    $(vhal_v2_0)-manager-lib \
 
 LOCAL_SHARED_LIBRARIES := \
     libbinder \
@@ -79,10 +94,10 @@ LOCAL_SHARED_LIBRARIES := \
     liblog \
     libprotobuf-cpp-lite \
     libutils \
-    $(module_prefix) \
+    $(vhal_v2_0) \
 
 LOCAL_STATIC_LIBRARIES := \
-    $(module_prefix)-libproto-native
+    $(vhal_v2_0)-libproto-native \
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -92,9 +107,10 @@ include $(BUILD_STATIC_LIBRARY)
 ###############################################################################
 include $(CLEAR_VARS)
 
-LOCAL_MODULE:= $(module_prefix)-manager-unit-tests
+LOCAL_MODULE:= $(vhal_v2_0)-manager-unit-tests
 
-LOCAL_WHOLE_STATIC_LIBRARIES := $(module_prefix)-manager-lib
+LOCAL_WHOLE_STATIC_LIBRARIES := \
+    $(vhal_v2_0)-manager-lib \
 
 LOCAL_SRC_FILES:= \
     tests/AccessControlConfigParser_test.cpp \
@@ -111,7 +127,7 @@ LOCAL_SHARED_LIBRARIES := \
     libhwbinder \
     liblog \
     libutils \
-    $(module_prefix) \
+    $(vhal_v2_0) \
 
 LOCAL_CFLAGS += -Wall -Wextra
 LOCAL_MODULE_TAGS := tests
@@ -123,17 +139,13 @@ include $(BUILD_NATIVE_TEST)
 # Vehicle HAL service
 ###############################################################################
 include $(CLEAR_VARS)
-LOCAL_MODULE := $(module_prefix)-service
-LOCAL_INIT_RC := $(module_prefix)-service.rc
+LOCAL_MODULE := $(vhal_v2_0)-service
+LOCAL_INIT_RC := $(vhal_v2_0)-service.rc
 LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE_RELATIVE_PATH := hw
 
 LOCAL_SRC_FILES := \
     VehicleService.cpp
-
-LOCAL_WHOLE_STATIC_LIBRARIES := \
-    $(module_prefix)-manager-lib \
-    $(module_prefix)-default-impl-lib \
 
 LOCAL_SHARED_LIBRARIES := \
     libbinder \
@@ -143,9 +155,11 @@ LOCAL_SHARED_LIBRARIES := \
     liblog \
     libprotobuf-cpp-lite \
     libutils \
-    $(module_prefix) \
+    $(vhal_v2_0) \
 
 LOCAL_STATIC_LIBRARIES := \
-    $(module_prefix)-libproto-native
+    $(vhal_v2_0)-manager-lib \
+    $(vhal_v2_0)-default-impl-lib \
+    $(vhal_v2_0)-libproto-native \
 
 include $(BUILD_EXECUTABLE)

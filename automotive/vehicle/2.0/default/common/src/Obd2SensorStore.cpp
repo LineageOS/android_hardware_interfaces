@@ -17,7 +17,7 @@
 #include "Obd2SensorStore.h"
 
 #include <utils/SystemClock.h>
-#include <vehicle_hal_manager/VehicleUtils.h>
+#include "VehicleUtils.h"
 
 namespace android {
 namespace hardware {

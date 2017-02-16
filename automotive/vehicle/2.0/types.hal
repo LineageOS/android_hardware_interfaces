@@ -226,28 +226,6 @@ enum VehicleProperty: int32_t {
         | VehicleArea:GLOBAL),
 
     /*
-     * Reports wheel rotational distance in meters since last wheel tick
-     * event
-     *
-     * The value is a vector each element represents distance for individual
-     * wheel in the following order: left front, right front, left rear,
-     * right rear. VehiclePropValue.timestamp must be correctly filled in.
-     *
-     * Vendors must specify wheels that support this sensor in
-     * VehiclePropConfig.configFlags. The format of this field is a bitset of
-     * values from Wheel enum.
-     *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE|VehiclePropertyChangeMode:CONTINUOUS
-     * @access VehiclePropertyAccess:READ
-     * @unit VehicleUnit:METER
-     */
-    WHEEL_TICK = (
-        0x0306
-        | VehiclePropertyGroup:SYSTEM
-        | VehiclePropertyType:FLOAT_VEC
-        | VehicleArea:GLOBAL),
-
-    /*
      * Currently selected gear
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE

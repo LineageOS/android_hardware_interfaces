@@ -18,8 +18,7 @@
 #define android_hardware_automotive_vehicle_V2_0_VehicleHal_H
 
 #include <android/hardware/automotive/vehicle/2.0/IVehicle.h>
-#include "vehicle_hal_manager/VehicleObjectPool.h"
-
+#include "VehicleObjectPool.h"
 
 namespace android {
 namespace hardware {
