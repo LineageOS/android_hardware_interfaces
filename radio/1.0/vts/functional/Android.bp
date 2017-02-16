@@ -15,12 +15,12 @@
 //
 
 cc_test {
-    name: "radio_hidl_hal_test",
+    name: "VtsHalRadioV1_0TargetTest",
     gtest: true,
     srcs: ["radio_hidl_hal_test.cpp",
            "radio_response.cpp",
            "radio_hidl_hal_icc.cpp",
-           "radio_hidl_hal_main.cpp"],
+           "VtsHalRadioV1_0TargetTest.cpp"],
     shared_libs: [
         "libbase",
         "liblog",
