@@ -18,7 +18,7 @@ package android.hardware.tests.versioning@2.3;
 
 import @2.2::IBar;
 
-// Must extend @2.3::IBar.
+// Must extend @2.2::IBar.
 interface IBar extends @2.2::IBar {
 
 };
