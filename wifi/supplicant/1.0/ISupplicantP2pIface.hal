@@ -612,4 +612,64 @@ interface ISupplicantP2pIface extends ISupplicantIface {
    *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
   setWfdDeviceInfo(uint8_t[8] info) generates (SupplicantStatus status);
+
+  /**
+   * Creates a NFC handover request message.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+   * @return request Bytes representing the handover request as specified in
+   *         section 3.1.1 of NFC Connection Handover 1.2 Technical
+   *         Specification.
+   */
+  createNfcHandoverRequestMessage()
+      generates (SupplicantStatus status, vec<uint8_t> request);
+
+  /**
+   * Creates a NFC handover select message.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+   * @return select Bytes representing the handover select as specified in
+   *         section 3.1.2 of NFC Connection Handover 1.2 Technical
+   *         Specification.
+   */
+  createNfcHandoverSelectMessage()
+      generates (SupplicantStatus status, vec<uint8_t> select);
+
+  /**
+   * Report the response of the NFC handover request.
+   *
+   * @param request Bytes representing the handover request as specified in
+   *        section 3.1.1 of NFC Connection Handover 1.2 Technical
+   *        Specification.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+   */
+  reportNfcHandoverResponse(vec<uint8_t> request)
+      generates (SupplicantStatus status);
+
+  /**
+   * Report the initiation of the NFC handover select.
+   *
+   * @param select Bytes representing the handover select as specified in
+   *        section 3.1.2 of NFC Connection Handover 1.2 Technical
+   *        Specification.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+   */
+  reportNfcHandoverInitiation(vec<uint8_t> select)
+      generates (SupplicantStatus status);
 };
