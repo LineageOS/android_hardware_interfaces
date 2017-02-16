@@ -13,6 +13,7 @@ intermediates := $(call local-generated-sources-dir, COMMON)
 HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
 
 LOCAL_JAVA_LIBRARIES := \
+    android.hardware.tests.versioning@1.0-java \
     android.hardware.tests.versioning@2.2-java \
     android.hidl.base@1.0-java \
 
@@ -33,6 +34,25 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         android.hardware.tests.versioning@2.3::IBar
 
 $(GEN): $(LOCAL_PATH)/IBar.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build IBaz.hal
+#
+GEN := $(intermediates)/android/hardware/tests/versioning/V2_3/IBaz.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBaz.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.tests.versioning@2.3::IBaz
+
+$(GEN): $(LOCAL_PATH)/IBaz.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
 
@@ -68,6 +88,7 @@ intermediates := $(call local-generated-sources-dir, COMMON)
 HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
+    android.hardware.tests.versioning@1.0-java-static \
     android.hardware.tests.versioning@2.2-java-static \
     android.hidl.base@1.0-java-static \
 
@@ -88,6 +109,25 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         android.hardware.tests.versioning@2.3::IBar
 
 $(GEN): $(LOCAL_PATH)/IBar.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build IBaz.hal
+#
+GEN := $(intermediates)/android/hardware/tests/versioning/V2_3/IBaz.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBaz.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.tests.versioning@2.3::IBaz
+
+$(GEN): $(LOCAL_PATH)/IBaz.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
 
