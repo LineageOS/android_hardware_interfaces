@@ -4,6 +4,7 @@ filegroup {
     name: "android.hardware.tests.versioning@2.3_hal",
     srcs: [
         "IBar.hal",
+        "IBaz.hal",
         "IFoo.hal",
     ],
 }
@@ -17,6 +18,7 @@ genrule {
     ],
     out: [
         "android/hardware/tests/versioning/2.3/BarAll.cpp",
+        "android/hardware/tests/versioning/2.3/BazAll.cpp",
         "android/hardware/tests/versioning/2.3/FooAll.cpp",
     ],
 }
@@ -34,6 +36,11 @@ genrule {
         "android/hardware/tests/versioning/2.3/BnHwBar.h",
         "android/hardware/tests/versioning/2.3/BpHwBar.h",
         "android/hardware/tests/versioning/2.3/BsBar.h",
+        "android/hardware/tests/versioning/2.3/IBaz.h",
+        "android/hardware/tests/versioning/2.3/IHwBaz.h",
+        "android/hardware/tests/versioning/2.3/BnHwBaz.h",
+        "android/hardware/tests/versioning/2.3/BpHwBaz.h",
+        "android/hardware/tests/versioning/2.3/BsBaz.h",
         "android/hardware/tests/versioning/2.3/IFoo.h",
         "android/hardware/tests/versioning/2.3/IHwFoo.h",
         "android/hardware/tests/versioning/2.3/BnHwFoo.h",
@@ -54,13 +61,17 @@ cc_library_shared {
         "liblog",
         "libutils",
         "libcutils",
+        "android.hardware.tests.versioning@1.0",
         "android.hardware.tests.versioning@2.2",
+        "android.hidl.base@1.0",
     ],
     export_shared_lib_headers: [
         "libhidlbase",
         "libhidltransport",
         "libhwbinder",
         "libutils",
+        "android.hardware.tests.versioning@1.0",
         "android.hardware.tests.versioning@2.2",
+        "android.hidl.base@1.0",
     ],
 }
