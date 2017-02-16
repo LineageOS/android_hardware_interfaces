@@ -293,11 +293,17 @@ enum BufferType : uint32_t {
 };
 
 /**
- * A SharedBuffer describes a decrypt buffer which is defined by an offset and
- * a size.  The offset is relative to the shared memory base which is established
- * using setSharedMemoryBase().
+ * SharedBuffer describes a decrypt buffer which is defined by a bufferId, an
+ * offset and a size.  The offset is relative to the shared memory base for the
+ * memory region identified by bufferId, which is established by
+ * setSharedMemoryBase().
  */
 struct SharedBuffer {
+    /**
+     * The unique buffer identifier
+     */
+    uint32_t bufferId;
+
     /**
      * The offset from the shared memory base
      */

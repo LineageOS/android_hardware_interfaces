@@ -49,8 +49,9 @@ namespace implementation {
         return toStatus(mLegacyPlugin->setMediaDrmSession(toVector(sessionId)));
     }
 
-    Return<void> CryptoPlugin::setSharedBufferBase(const hidl_memory& base) {
-        mSharedBufferBase = mapMemory(base);
+    Return<void> CryptoPlugin::setSharedBufferBase(const hidl_memory& base,
+            uint32_t bufferId) {
+        mSharedBufferMap[bufferId] = mapMemory(base);
         return Void();
     }
 
@@ -62,9 +63,17 @@ namespace implementation {
             const DestinationBuffer& destination,
             decrypt_cb _hidl_cb) {
 
-        if (mSharedBufferBase == NULL) {
-            _hidl_cb(Status::BAD_VALUE, 0, "decrypt buffer base not set");
+        if (mSharedBufferMap.find(source.bufferId) == mSharedBufferMap.end()) {
+            _hidl_cb(Status::ERROR_DRM_CANNOT_HANDLE, 0, "source decrypt buffer base not set");
             return Void();
+        }
+
+        if (destination.type == BufferType::SHARED_MEMORY) {
+            const SharedBuffer& dest = destination.nonsecureMemory;
+            if (mSharedBufferMap.find(dest.bufferId) == mSharedBufferMap.end()) {
+                _hidl_cb(Status::ERROR_DRM_CANNOT_HANDLE, 0, "destination decrypt buffer base not set");
+                return Void();
+            }
         }
 
         android::CryptoPlugin::Mode legacyMode;
@@ -97,20 +106,22 @@ namespace implementation {
         }
 
         AString detailMessage;
+        sp<IMemory> sourceBase = mSharedBufferMap[source.bufferId];
 
-        if (source.offset + offset + source.size > mSharedBufferBase->getSize()) {
+        if (source.offset + offset + source.size > sourceBase->getSize()) {
             _hidl_cb(Status::ERROR_DRM_CANNOT_HANDLE, 0, "invalid buffer size");
             return Void();
         }
 
         uint8_t *base = static_cast<uint8_t *>
-                (static_cast<void *>(mSharedBufferBase->getPointer()));
+                (static_cast<void *>(sourceBase->getPointer()));
         void *srcPtr = static_cast<void *>(base + source.offset + offset);
 
         void *destPtr = NULL;
         if (destination.type == BufferType::SHARED_MEMORY) {
             const SharedBuffer& destBuffer = destination.nonsecureMemory;
-            if (destBuffer.offset + destBuffer.size > mSharedBufferBase->getSize()) {
+            sp<IMemory> destBase = mSharedBufferMap[destBuffer.bufferId];
+            if (destBuffer.offset + destBuffer.size > destBase->getSize()) {
                 _hidl_cb(Status::ERROR_DRM_CANNOT_HANDLE, 0, "invalid buffer size");
                 return Void();
             }

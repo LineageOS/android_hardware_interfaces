@@ -57,8 +57,8 @@ struct CryptoPlugin : public ICryptoPlugin {
     Return<Status> setMediaDrmSession(const hidl_vec<uint8_t>& sessionId)
             override;
 
-    Return<void> setSharedBufferBase(const ::android::hardware::hidl_memory& base)
-            override;
+    Return<void> setSharedBufferBase(const ::android::hardware::hidl_memory& base,
+        uint32_t bufferId) override;
 
     Return<void> decrypt(bool secure, const hidl_array<uint8_t, 16>& keyId,
             const hidl_array<uint8_t, 16>& iv, Mode mode, const Pattern& pattern,
@@ -68,7 +68,7 @@ struct CryptoPlugin : public ICryptoPlugin {
 
 private:
     android::CryptoPlugin *mLegacyPlugin;
-    sp<IMemory> mSharedBufferBase;
+    std::map<uint32_t, sp<IMemory> > mSharedBufferMap;
 
     CryptoPlugin() = delete;
     CryptoPlugin(const CryptoPlugin &) = delete;
