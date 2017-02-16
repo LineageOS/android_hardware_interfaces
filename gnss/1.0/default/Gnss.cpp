@@ -60,6 +60,7 @@ Gnss::Gnss(gps_device_t* gnssDevice) {
 }
 
 Gnss::~Gnss() {
+    sInterfaceExists = false;
     sThreadFuncArgsList.clear();
 }
 
@@ -75,7 +76,10 @@ void Gnss::locationCb(GpsLocation* location) {
     }
 
     android::hardware::gnss::V1_0::GnssLocation gnssLocation = convertToGnssLocation(location);
-    sGnssCbIface->gnssLocationCb(gnssLocation);
+    auto ret = sGnssCbIface->gnssLocationCb(gnssLocation);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
 }
 
 void Gnss::statusCb(GpsStatus* gnssStatus) {
@@ -92,7 +96,10 @@ void Gnss::statusCb(GpsStatus* gnssStatus) {
     IGnssCallback::GnssStatusValue status =
             static_cast<IGnssCallback::GnssStatusValue>(gnssStatus->status);
 
-    sGnssCbIface->gnssStatusCb(status);
+    auto ret = sGnssCbIface->gnssStatusCb(status);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
 }
 
 void Gnss::gnssSvStatusCb(GnssSvStatus* status) {
@@ -131,7 +138,10 @@ void Gnss::gnssSvStatusCb(GnssSvStatus* status) {
         svStatus.gnssSvList[i] = gnssSvInfo;
     }
 
-    sGnssCbIface->gnssSvStatusCb(svStatus);
+    auto ret = sGnssCbIface->gnssSvStatusCb(svStatus);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
 }
 
 /*
@@ -231,7 +241,10 @@ void Gnss::gpsSvStatusCb(GpsSvStatus* svInfo) {
         }
     }
 
-    sGnssCbIface->gnssSvStatusCb(svStatus);
+    auto ret = sGnssCbIface->gnssSvStatusCb(svStatus);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
 }
 
 void Gnss::nmeaCb(GpsUtcTime timestamp, const char* nmea, int length) {
@@ -242,7 +255,10 @@ void Gnss::nmeaCb(GpsUtcTime timestamp, const char* nmea, int length) {
 
     android::hardware::hidl_string nmeaString;
     nmeaString.setToExternal(nmea, length);
-    sGnssCbIface->gnssNmeaCb(timestamp, nmeaString);
+    auto ret = sGnssCbIface->gnssNmeaCb(timestamp, nmeaString);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
 }
 
 void Gnss::setCapabilitiesCb(uint32_t capabilities) {
@@ -251,7 +267,10 @@ void Gnss::setCapabilitiesCb(uint32_t capabilities) {
         return;
     }
 
-    sGnssCbIface->gnssSetCapabilitesCb(capabilities);
+    auto ret = sGnssCbIface->gnssSetCapabilitesCb(capabilities);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
 }
 
 void Gnss::acquireWakelockCb() {
@@ -298,7 +317,10 @@ void Gnss::updateWakelock() {
             ALOGI("%s: GNSS HAL Wakelock acquired due to gps: %d, fused: %d", __func__,
                     sWakelockHeldGnss, sWakelockHeldFused);
             sWakelockHeld = true;
-            sGnssCbIface->gnssAcquireWakelockCb();
+            auto ret = sGnssCbIface->gnssAcquireWakelockCb();
+            if (!ret.isOk()) {
+                ALOGE("%s: Unable to invoke callback", __func__);
+            }
         }
     } else {
         if (sWakelockHeld) {
@@ -309,7 +331,10 @@ void Gnss::updateWakelock() {
             ALOGW("%s: GNSS HAL Wakelock released, duplicate request", __func__);
         }
         sWakelockHeld = false;
-        sGnssCbIface->gnssReleaseWakelockCb();
+        auto ret = sGnssCbIface->gnssReleaseWakelockCb();
+        if (!ret.isOk()) {
+            ALOGE("%s: Unable to invoke callback", __func__);
+        }
     }
 }
 
@@ -319,7 +344,10 @@ void Gnss::requestUtcTimeCb() {
         return;
     }
 
-    sGnssCbIface->gnssRequestTimeCb();
+    auto ret = sGnssCbIface->gnssRequestTimeCb();
+    if (!ret.isOk()) {
+            ALOGE("%s: Unable to invoke callback", __func__);
+    }
 }
 
 pthread_t Gnss::createThreadCb(const char* name, void (*start)(void*), void* arg) {
@@ -341,7 +369,10 @@ void Gnss::setSystemInfoCb(const LegacyGnssSystemInfo* info) {
         .yearOfHw = info->year_of_hw
     };
 
-    sGnssCbIface->gnssSetSystemInfoCb(gnssInfo);
+    auto ret = sGnssCbIface->gnssSetSystemInfoCb(gnssInfo);
+    if (!ret.isOk()) {
+            ALOGE("%s: Unable to invoke callback", __func__);
+    }
 }
 
 
@@ -434,7 +465,10 @@ Return<bool> Gnss::setPositionMode(IGnss::GnssPositionMode mode,
 Return<sp<IAGnssRil>> Gnss::getExtensionAGnssRil()  {
     if (mGnssIface == nullptr) {
         ALOGE("%s: Gnss interface is unavailable", __func__);
-    } else {
+        return nullptr;
+    }
+
+    if (mGnssRil == nullptr) {
         const AGpsRilInterface* agpsRilIface = static_cast<const AGpsRilInterface*>(
                 mGnssIface->get_extension(AGPS_RIL_INTERFACE));
         if (agpsRilIface == nullptr) {
@@ -449,7 +483,10 @@ Return<sp<IAGnssRil>> Gnss::getExtensionAGnssRil()  {
 Return<sp<IGnssConfiguration>> Gnss::getExtensionGnssConfiguration()  {
     if (mGnssIface == nullptr) {
         ALOGE("%s: Gnss interface is unavailable", __func__);
-    } else {
+        return nullptr;
+    }
+
+    if (mGnssConfig == nullptr) {
         const GnssConfigurationInterface* gnssConfigIface =
                 static_cast<const GnssConfigurationInterface*>(
                         mGnssIface->get_extension(GNSS_CONFIGURATION_INTERFACE));
@@ -462,10 +499,14 @@ Return<sp<IGnssConfiguration>> Gnss::getExtensionGnssConfiguration()  {
     }
     return mGnssConfig;
 }
+
 Return<sp<IGnssGeofencing>> Gnss::getExtensionGnssGeofencing()  {
     if (mGnssIface == nullptr) {
         ALOGE("%s: Gnss interface is unavailable", __func__);
-    } else {
+        return nullptr;
+    }
+
+    if (mGnssGeofencingIface == nullptr) {
         const GpsGeofencingInterface* gpsGeofencingIface =
                 static_cast<const GpsGeofencingInterface*>(
                         mGnssIface->get_extension(GPS_GEOFENCING_INTERFACE));
@@ -483,7 +524,10 @@ Return<sp<IGnssGeofencing>> Gnss::getExtensionGnssGeofencing()  {
 Return<sp<IAGnss>> Gnss::getExtensionAGnss()  {
     if (mGnssIface == nullptr) {
         ALOGE("%s: Gnss interface is unavailable", __func__);
-    } else {
+        return nullptr;
+    }
+
+    if (mAGnssIface == nullptr) {
         const AGpsInterface* agpsIface = static_cast<const AGpsInterface*>(
                 mGnssIface->get_extension(AGPS_INTERFACE));
         if (agpsIface == nullptr) {
@@ -498,7 +542,10 @@ Return<sp<IAGnss>> Gnss::getExtensionAGnss()  {
 Return<sp<IGnssNi>> Gnss::getExtensionGnssNi()  {
     if (mGnssIface == nullptr) {
         ALOGE("%s: Gnss interface is unavailable", __func__);
-    } else {
+        return nullptr;
+    }
+
+    if (mGnssNi == nullptr) {
         const GpsNiInterface* gpsNiIface = static_cast<const GpsNiInterface*>(
                 mGnssIface->get_extension(GPS_NI_INTERFACE));
         if (gpsNiIface == nullptr) {
@@ -513,7 +560,10 @@ Return<sp<IGnssNi>> Gnss::getExtensionGnssNi()  {
 Return<sp<IGnssMeasurement>> Gnss::getExtensionGnssMeasurement() {
     if (mGnssIface == nullptr) {
         ALOGE("%s: Gnss interface is unavailable", __func__);
-    } else {
+        return nullptr;
+    }
+
+    if (mGnssMeasurement == nullptr) {
         const GpsMeasurementInterface* gpsMeasurementIface =
                 static_cast<const GpsMeasurementInterface*>(
                         mGnssIface->get_extension(GPS_MEASUREMENT_INTERFACE));
@@ -530,7 +580,10 @@ Return<sp<IGnssMeasurement>> Gnss::getExtensionGnssMeasurement() {
 Return<sp<IGnssNavigationMessage>> Gnss::getExtensionGnssNavigationMessage() {
     if (mGnssIface == nullptr) {
         ALOGE("%s: Gnss interface is unavailable", __func__);
-    } else {
+        return nullptr;
+    }
+
+    if (mGnssNavigationMessage == nullptr) {
         const GpsNavigationMessageInterface* gpsNavigationMessageIface =
                 static_cast<const GpsNavigationMessageInterface*>(
                         mGnssIface->get_extension(GPS_NAVIGATION_MESSAGE_INTERFACE));
@@ -549,7 +602,10 @@ Return<sp<IGnssNavigationMessage>> Gnss::getExtensionGnssNavigationMessage() {
 Return<sp<IGnssXtra>> Gnss::getExtensionXtra()  {
     if (mGnssIface == nullptr) {
         ALOGE("%s: Gnss interface is unavailable", __func__);
-    } else {
+        return nullptr;
+    }
+
+    if (mGnssXtraIface == nullptr) {
         const GpsXtraInterface* gpsXtraIface = static_cast<const GpsXtraInterface*>(
                 mGnssIface->get_extension(GPS_XTRA_INTERFACE));
 
@@ -566,7 +622,10 @@ Return<sp<IGnssXtra>> Gnss::getExtensionXtra()  {
 Return<sp<IGnssDebug>> Gnss::getExtensionGnssDebug()  {
     if (mGnssIface == nullptr) {
         ALOGE("%s: Gnss interface is unavailable", __func__);
-    } else {
+        return nullptr;
+    }
+
+    if (mGnssDebug == nullptr) {
         const GpsDebugInterface* gpsDebugIface = static_cast<const GpsDebugInterface*>(
                 mGnssIface->get_extension(GPS_DEBUG_INTERFACE));
 
@@ -583,7 +642,10 @@ Return<sp<IGnssDebug>> Gnss::getExtensionGnssDebug()  {
 Return<sp<IGnssBatching>> Gnss::getExtensionGnssBatching()  {
     if (mGnssIface == nullptr) {
         ALOGE("%s: Gnss interface is unavailable", __func__);
-    } else {
+        return nullptr;
+    }
+
+    if (mGnssBatching == nullptr) {
         hw_module_t* module;
         const FlpLocationInterface* flpLocationIface = nullptr;
         int err = hw_get_module(FUSED_LOCATION_HARDWARE_MODULE_ID, (hw_module_t const**)&module);

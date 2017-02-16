@@ -42,6 +42,7 @@ AGnssRil::AGnssRil(const AGpsRilInterface* aGpsRilIface) : mAGnssRilIface(aGpsRi
 
 AGnssRil::~AGnssRil() {
     sThreadFuncArgsList.clear();
+    sInterfaceExists = false;
 }
 
 void AGnssRil::requestSetId(uint32_t flags) {
@@ -50,7 +51,10 @@ void AGnssRil::requestSetId(uint32_t flags) {
         return;
     }
 
-    sAGnssRilCbIface->requestSetIdCb(flags);
+    auto ret = sAGnssRilCbIface->requestSetIdCb(flags);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
 }
 
 void AGnssRil::requestRefLoc(uint32_t /*flags*/) {
@@ -59,7 +63,10 @@ void AGnssRil::requestRefLoc(uint32_t /*flags*/) {
         return;
     }
 
-    sAGnssRilCbIface->requestRefLocCb();
+    auto ret = sAGnssRilCbIface->requestRefLocCb();
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
 }
 
 pthread_t AGnssRil::createThreadCb(const char* name, void (*start)(void*), void* arg) {

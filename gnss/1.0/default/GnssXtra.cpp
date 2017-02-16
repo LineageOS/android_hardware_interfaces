@@ -35,6 +35,7 @@ GpsXtraCallbacks GnssXtra::sGnssXtraCb = {
 
 GnssXtra::~GnssXtra() {
     sThreadFuncArgsList.clear();
+    sInterfaceExists = false;
 }
 
 pthread_t GnssXtra::createThreadCb(const char* name, void (*start)(void*), void* arg) {
@@ -53,7 +54,10 @@ void GnssXtra::gnssXtraDownloadRequestCb() {
         return;
     }
 
-    sGnssXtraCbIface->downloadRequestCb();
+    auto ret = sGnssXtraCbIface->downloadRequestCb();
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
 }
 
 // Methods from ::android::hardware::gnss::V1_0::IGnssXtra follow.

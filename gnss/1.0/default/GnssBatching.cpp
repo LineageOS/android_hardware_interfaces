@@ -103,7 +103,10 @@ void GnssBatching::locationCb(int32_t locationsCount, FlpLocation** locations) {
         gnssLocations.push_back(convertToGnssLocation(locations[iLocation]));
     }
 
-    sGnssBatchingCbIface->gnssLocationBatchCb(gnssLocations);
+    auto ret = sGnssBatchingCbIface->gnssLocationBatchCb(gnssLocations);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
 }
 
 void GnssBatching::acquireWakelockCb() {

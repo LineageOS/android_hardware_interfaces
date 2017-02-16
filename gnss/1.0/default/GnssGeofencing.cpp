@@ -48,6 +48,7 @@ GnssGeofencing::GnssGeofencing(const GpsGeofencingInterface* gpsGeofencingIface)
 
 GnssGeofencing::~GnssGeofencing() {
     sThreadFuncArgsList.clear();
+    sInterfaceExists = false;
 }
 void GnssGeofencing::gnssGfTransitionCb(int32_t geofenceId,
                                         GpsLocation* location,
@@ -64,11 +65,14 @@ void GnssGeofencing::gnssGfTransitionCb(int32_t geofenceId,
     }
 
     GnssLocation gnssLocation = convertToGnssLocation(location);
-    mGnssGeofencingCbIface->gnssGeofenceTransitionCb(
+    auto ret = mGnssGeofencingCbIface->gnssGeofenceTransitionCb(
             geofenceId,
             gnssLocation,
             static_cast<IGnssGeofenceCallback::GeofenceTransition>(transition),
             timestamp);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
 }
 
 void GnssGeofencing::gnssGfStatusCb(int32_t status, GpsLocation* location) {
@@ -85,8 +89,11 @@ void GnssGeofencing::gnssGfStatusCb(int32_t status, GpsLocation* location) {
         gnssLocation = {};
     }
 
-    mGnssGeofencingCbIface->gnssGeofenceStatusCb(
+    auto ret = mGnssGeofencingCbIface->gnssGeofenceStatusCb(
             static_cast<IGnssGeofenceCallback::GeofenceAvailability>(status), gnssLocation);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
 }
 
 void GnssGeofencing::gnssGfAddCb(int32_t geofenceId, int32_t status) {
@@ -95,8 +102,11 @@ void GnssGeofencing::gnssGfAddCb(int32_t geofenceId, int32_t status) {
         return;
     }
 
-    mGnssGeofencingCbIface->gnssGeofenceAddCb(
+    auto ret = mGnssGeofencingCbIface->gnssGeofenceAddCb(
             geofenceId, static_cast<IGnssGeofenceCallback::GeofenceStatus>(status));
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
 }
 
 void GnssGeofencing::gnssGfRemoveCb(int32_t geofenceId, int32_t status) {
@@ -105,8 +115,11 @@ void GnssGeofencing::gnssGfRemoveCb(int32_t geofenceId, int32_t status) {
         return;
     }
 
-    mGnssGeofencingCbIface->gnssGeofenceRemoveCb(
-      geofenceId, static_cast<IGnssGeofenceCallback::GeofenceStatus>(status));
+    auto ret = mGnssGeofencingCbIface->gnssGeofenceRemoveCb(
+            geofenceId, static_cast<IGnssGeofenceCallback::GeofenceStatus>(status));
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
 }
 
 void GnssGeofencing::gnssGfPauseCb(int32_t geofenceId, int32_t status) {
@@ -115,8 +128,11 @@ void GnssGeofencing::gnssGfPauseCb(int32_t geofenceId, int32_t status) {
         return;
     }
 
-    mGnssGeofencingCbIface->gnssGeofencePauseCb(
+    auto ret = mGnssGeofencingCbIface->gnssGeofencePauseCb(
             geofenceId, static_cast<IGnssGeofenceCallback::GeofenceStatus>(status));
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
 }
 
 void GnssGeofencing::gnssGfResumeCb(int32_t geofenceId, int32_t status) {
@@ -125,8 +141,11 @@ void GnssGeofencing::gnssGfResumeCb(int32_t geofenceId, int32_t status) {
         return;
     }
 
-    mGnssGeofencingCbIface->gnssGeofenceResumeCb(
+    auto ret = mGnssGeofencingCbIface->gnssGeofenceResumeCb(
             geofenceId, static_cast<IGnssGeofenceCallback::GeofenceStatus>(status));
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
 }
 
 pthread_t GnssGeofencing::createThreadCb(const char* name, void (*start)(void*), void* arg) {
