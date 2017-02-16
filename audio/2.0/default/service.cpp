@@ -38,7 +38,7 @@ using android::OK;
 int main(int /* argc */, char* /* argv */ []) {
     configureRpcThreadpool(16, true /*callerWillJoin*/);
     android::status_t status;
-    status = registerPassthroughServiceImplementation<IDevicesFactory>("audio_devices_factory");
+    status = registerPassthroughServiceImplementation<IDevicesFactory>();
     LOG_ALWAYS_FATAL_IF(status != OK, "Error while registering audio service: %d", status);
     status = registerPassthroughServiceImplementation<IEffectsFactory>("audio_effects_factory");
     LOG_ALWAYS_FATAL_IF(status != OK, "Error while registering audio effects service: %d", status);
