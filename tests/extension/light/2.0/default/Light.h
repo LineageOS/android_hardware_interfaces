@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ANDROID_HARDWARE_EXAMPLE_EXTENSION_LIGHT_V2_0_LIGHT_H
-#define ANDROID_HARDWARE_EXAMPLE_EXTENSION_LIGHT_V2_0_LIGHT_H
+#ifndef ANDROID_HARDWARE_TESTS_EXTENSION_LIGHT_V2_0_LIGHT_H
+#define ANDROID_HARDWARE_TESTS_EXTENSION_LIGHT_V2_0_LIGHT_H
 
-#include <android/hardware/example/extension/light/2.0/IExtLight.h>
+#include <android/hardware/tests/extension/light/2.0/IExtLight.h>
 #include <hidl/Status.h>
 
 #include <hidl/MQDescriptor.h>
 namespace android {
 namespace hardware {
-namespace example {
+namespace tests {
 namespace extension {
 namespace light {
 namespace V2_0 {
 namespace implementation {
 
-using ::android::hardware::example::extension::light::V2_0::ExtLightState;
-using ::android::hardware::example::extension::light::V2_0::IExtLight;
+using ::android::hardware::tests::extension::light::V2_0::ExtLightState;
+using ::android::hardware::tests::extension::light::V2_0::IExtLight;
 using ::android::hardware::light::V2_0::ILight;
 using ::android::hardware::light::V2_0::LightState;
 using ::android::hardware::light::V2_0::Status;
@@ -54,8 +54,8 @@ struct Light : public IExtLight {
 }  // namespace V2_0
 }  // namespace light
 }  // namespace extension
-}  // namespace example
+}  // namespace tests
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_EXAMPLE_EXTENSION_LIGHT_V2_0_LIGHT_H
+#endif  // ANDROID_HARDWARE_TESTS_EXTENSION_LIGHT_V2_0_LIGHT_H

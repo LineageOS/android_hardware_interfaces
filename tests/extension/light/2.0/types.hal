@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.hardware.example.extension.light@2.0;
+package android.hardware.tests.extension.light@2.0;
 
 import android.hardware.light@2.0;
 

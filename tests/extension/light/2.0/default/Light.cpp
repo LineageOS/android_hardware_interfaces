@@ -17,7 +17,7 @@
 
 namespace android {
 namespace hardware {
-namespace example {
+namespace tests {
 namespace extension {
 namespace light {
 namespace V2_0 {
@@ -66,6 +66,6 @@ Return<Status> Light::setExtLight(Type /* type */,
 }  // namespace V2_0
 }  // namespace light
 }  // namespace extension
-}  // namespace example
+}  // namespace tests
 }  // namespace hardware
 }  // namespace android

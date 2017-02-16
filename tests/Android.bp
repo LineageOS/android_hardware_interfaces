@@ -4,6 +4,7 @@ subdirs = [
     "bar/1.0/default",
     "baz/1.0",
     "expression/1.0",
+    "extension/light/2.0",
     "foo/1.0",
     "foo/1.0/default",
     "foo/1.0/default/lib",

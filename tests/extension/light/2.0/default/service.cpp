@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "android.hardware.light@2.0-service"
+#define LOG_TAG "android.hardware.tests.extension.light@2.0-service"
 
 #include <android/log.h>
 #include <hidl/HidlTransportSupport.h>
@@ -24,8 +24,8 @@ using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
 using android::sp;
 
-// Generated HIDL files
 using android::hardware::light::V2_0::ILight;
+using android::hardware::tests::extension::light::V2_0::implementation::Light;
 
 int main() {
     android::sp<ILight> service = new Light();
