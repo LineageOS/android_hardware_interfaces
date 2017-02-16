@@ -106,7 +106,10 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
     PAP = 1,
     MSPAP = 2,
     MSPAPV2 = 3,
-    GTC = 4
+    GTC = 4,
+    SIM = 5,
+    AKA = 6,
+    AKA_PRIME = 7
   };
 
   /** Params of |sendNetworkEapSimGsmAuthResponse| request. (Refer RFC 4186) */
@@ -894,6 +897,22 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return idStr ID string set.
    */
   getIdStr() generates (SupplicantStatus status, string idStr);
+
+  /**
+   * Retrieves a WPS-NFC configuration token for this network.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   * @return token Bytes representing WPS-NFC configuration token.
+   *         This is a dump of all the WPS atrributes of the AP configuration
+   *         as specified in the Wi-Fi Protected Setup Specification.
+   */
+  getWpsNfcConfigurationToken()
+      generates (SupplicantStatus status, vec<uint8_t> token);
 
   /**
    * Enable the network for connection purposes.
