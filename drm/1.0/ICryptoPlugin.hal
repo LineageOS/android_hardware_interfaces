@@ -62,8 +62,16 @@ interface ICryptoPlugin {
      * After the shared buffer base is established, the decrypt() method
      * receives SharedBuffer instances which specify the buffer address range
      * for decrypt source and destination addresses.
+     *
+     * There can be multiple shared buffers per crypto plugin. The buffers
+     * are distinguished by the bufferId.
+     *
+     * @param base the base IMemory of the memory buffer identified by
+     * bufferId
+     * @param bufferId identifies the specific shared buffer for which
+     * the base is being set.
      */
-    setSharedBufferBase(memory base);
+    setSharedBufferBase(memory base, uint32_t bufferId);
 
     /**
      * Decrypt an array of subsamples from the source memory buffer to the
