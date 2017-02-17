@@ -59,6 +59,22 @@ interface IKeymasterDevice {
                   string keymasterAuthorName);
 
     /**
+     * Parses a hardware authentication token blob to extract the details needed to determine if the
+     * token is applicable to a given keymaster operation. This method is intended to be
+     * implemented by the HAL, without requiring a call into the trusted hardware.  It is not
+     * necessary for this method to verify that the values in the blob are correct.
+     *
+     * @param token The token blob provided by the authentication app.
+     *
+     * @return error ErrorCode::OK or, if the blob is invalid, ErrorCode::INVALD_ARGUMENT if the
+     *             blob is the wrong size, the wrong version, or incorrectly structured.
+     *
+     * @return tokenInfo Information extracted from the auth token.
+     */
+    parseHardwareAuthToken(vec<uint8_t> token)
+        generates(ErrorCode error, HardwareAuthTokenInfo tokenInfo);
+
+    /**
      * Adds entropy to the RNG used by keymaster. Entropy added through this method is guaranteed
      * not to be the only source of entropy used, and the mixing function is required to be secure,
      * in the sense that if the RNG is seeded (from any source) with any data the attacker cannot
