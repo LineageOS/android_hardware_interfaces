@@ -1572,6 +1572,20 @@ interface IRadio {
     oneway setIndicationFilter(int32_t serial, bitfield<IndicationFilter> indicationFilter);
 
     /*
+     * Set SIM card power state.
+     * Request is equivalent to inserting or removing the card.
+     *
+     * The radio modem must generate IRadioIndication.simStatusChanged() as if the SIM had been
+     * inserted or removed.
+     *
+     * @param serial Serial number of request
+     * @param powerUp True if powering up the sim card
+     *
+     * Response callback is IRadioResponse.setSimCardPowerResponse()
+     */
+    oneway setSimCardPower(int32_t serial, bool powerUp);
+
+    /*
      * When response type received from a radio indication or radio response is
      * RadioIndicationType:UNSOLICITED_ACK_EXP or RadioResponseType:SOLICITED_ACK_EXP respectively,
      * acknowledge the receipt of those messages by sending responseAcknowledgement().
