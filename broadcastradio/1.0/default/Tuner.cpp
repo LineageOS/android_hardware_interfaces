@@ -22,7 +22,7 @@
 #include "BroadcastRadio.h"
 #include "Tuner.h"
 #include "Utils.h"
-#include <system/radio_metadata.h>
+#include <system/RadioMetadataWrapper.h>
 
 namespace android {
 namespace hardware {
@@ -167,6 +167,7 @@ Return<Result> Tuner::cancel()  {
 Return<void> Tuner::getProgramInformation(getProgramInformation_cb _hidl_cb)  {
     int rc;
     radio_program_info_t halInfo;
+    RadioMetadataWrapper metadataWrapper(&halInfo.metadata);
     ProgramInfo info;
 
     ALOGV("%s", __FUNCTION__);
@@ -175,12 +176,10 @@ Return<void> Tuner::getProgramInformation(getProgramInformation_cb _hidl_cb)  {
         goto exit;
     }
 
-    radio_metadata_allocate(&halInfo.metadata, 0, 0);
     rc = mHalTuner->get_program_information(mHalTuner, &halInfo);
     if (rc == 0) {
         Utils::convertProgramInfoFromHal(&info, &halInfo);
     }
-    radio_metadata_deallocate(halInfo.metadata);
 
 exit:
     _hidl_cb(Utils::convertHalResult(rc), info);
