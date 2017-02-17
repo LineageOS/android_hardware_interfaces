@@ -73,30 +73,30 @@ Return<Type> Context::allocationGetType(Allocation allocation) {
     return rs_to_hidl<Type>(_type);
 }
 
-Return<Allocation> Context::allocationCreateTyped(Type type, AllocationMipmapControl mips, int32_t usage, Ptr ptr) {
+Return<Allocation> Context::allocationCreateTyped(Type type, AllocationMipmapControl amips, int32_t usage, Ptr ptr) {
     RsType _type = hidl_to_rs<RsType>(type);
-    RsAllocationMipmapControl _mips = static_cast<RsAllocationMipmapControl>(mips);
+    RsAllocationMipmapControl _amips = static_cast<RsAllocationMipmapControl>(amips);
     uint32_t _usage = usage;
     uintptr_t _ptr = hidl_to_rs<uintptr_t>(ptr);
-    RsAllocation _allocation = Device::getHal().AllocationCreateTyped(mContext, _type, _mips, _usage, _ptr);
+    RsAllocation _allocation = Device::getHal().AllocationCreateTyped(mContext, _type, _amips, _usage, _ptr);
     return rs_to_hidl<Allocation>(_allocation);
 }
 
-Return<Allocation> Context::allocationCreateFromBitmap(Type type, AllocationMipmapControl mips, const hidl_vec<uint8_t>& bitmap, int32_t usage) {
+Return<Allocation> Context::allocationCreateFromBitmap(Type type, AllocationMipmapControl amips, const hidl_vec<uint8_t>& bitmap, int32_t usage) {
     RsType _type = hidl_to_rs<RsType>(type);
-    RsAllocationMipmapControl _mips = static_cast<RsAllocationMipmapControl>(mips);
+    RsAllocationMipmapControl _amips = static_cast<RsAllocationMipmapControl>(amips);
     const hidl_vec<uint8_t>& _bitmap = bitmap;
     uint32_t _usage = usage;
-    RsAllocation _allocation = Device::getHal().AllocationCreateFromBitmap(mContext, _type, _mips, _bitmap.data(), _bitmap.size(), _usage);
+    RsAllocation _allocation = Device::getHal().AllocationCreateFromBitmap(mContext, _type, _amips, _bitmap.data(), _bitmap.size(), _usage);
     return rs_to_hidl<Allocation>(_allocation);
 }
 
-Return<Allocation> Context::allocationCubeCreateFromBitmap(Type type, AllocationMipmapControl mips, const hidl_vec<uint8_t>& bitmap, int32_t usage) {
+Return<Allocation> Context::allocationCubeCreateFromBitmap(Type type, AllocationMipmapControl amips, const hidl_vec<uint8_t>& bitmap, int32_t usage) {
     RsType _type = hidl_to_rs<RsType>(type);
-    RsAllocationMipmapControl _mips = static_cast<RsAllocationMipmapControl>(mips);
+    RsAllocationMipmapControl _amips = static_cast<RsAllocationMipmapControl>(amips);
     const hidl_vec<uint8_t>& _bitmap = bitmap;
     uint32_t _usage = usage;
-    RsAllocation _allocation = Device::getHal().AllocationCubeCreateFromBitmap(mContext, _type, _mips, _bitmap.data(), _bitmap.size(), _usage);
+    RsAllocation _allocation = Device::getHal().AllocationCubeCreateFromBitmap(mContext, _type, _amips, _bitmap.data(), _bitmap.size(), _usage);
     return rs_to_hidl<Allocation>(_allocation);
 }
 

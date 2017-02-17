@@ -40,9 +40,9 @@ struct Context : public IContext {
     Return<Allocation> allocationAdapterCreate(Type type, Allocation baseAlloc) override;
     Return<void> allocationAdapterOffset(Allocation alloc, const hidl_vec<uint32_t>& offsets) override;
     Return<Type> allocationGetType(Allocation allocation) override;
-    Return<Allocation> allocationCreateTyped(Type type, AllocationMipmapControl mips, int32_t usage, Ptr ptr) override;
-    Return<Allocation> allocationCreateFromBitmap(Type type, AllocationMipmapControl mips, const hidl_vec<uint8_t>& bitmap, int32_t usage) override;
-    Return<Allocation> allocationCubeCreateFromBitmap(Type type, AllocationMipmapControl mips, const hidl_vec<uint8_t>& bitmap, int32_t usage) override;
+    Return<Allocation> allocationCreateTyped(Type type, AllocationMipmapControl amips, int32_t usage, Ptr ptr) override;
+    Return<Allocation> allocationCreateFromBitmap(Type type, AllocationMipmapControl amips, const hidl_vec<uint8_t>& bitmap, int32_t usage) override;
+    Return<Allocation> allocationCubeCreateFromBitmap(Type type, AllocationMipmapControl amips, const hidl_vec<uint8_t>& bitmap, int32_t usage) override;
     Return<NativeWindow> allocationGetNativeWindow(Allocation allocation) override;
     Return<void> allocationSetNativeWindow(Allocation allocation, NativeWindow nativewindow) override;
     Return<void> allocationSetupBufferQueue(Allocation alloc, uint32_t numBuffer) override;
