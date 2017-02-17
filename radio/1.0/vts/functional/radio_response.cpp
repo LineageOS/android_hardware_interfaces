@@ -655,6 +655,11 @@ Return<void> RadioResponse::setIndicationFilterResponse(
     return Void();
 }
 
+Return<void> RadioResponse::setSimCardPowerResponse(
+        const RadioResponseInfo& info) {
+    return Void();
+}
+
 Return<void> RadioResponse::acknowledgeRequest(int32_t serial) {
     return Void();
 }
