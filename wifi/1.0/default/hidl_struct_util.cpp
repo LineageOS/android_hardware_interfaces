@@ -134,6 +134,7 @@ bool convertLegacyDebugRingBufferStatusToHidl(
     return false;
   }
   hidl_status->ringName = reinterpret_cast<const char*>(legacy_status.name);
+  hidl_status->flags = 0;
   for (const auto flag : {WIFI_RING_BUFFER_FLAG_HAS_BINARY_ENTRIES,
                           WIFI_RING_BUFFER_FLAG_HAS_ASCII_ENTRIES}) {
     if (flag & legacy_status.flags) {
@@ -457,6 +458,7 @@ bool convertLegacyCachedGscanResultsToHidl(
   if (!hidl_scan_data) {
     return false;
   }
+  hidl_scan_data->flags = 0;
   for (const auto flag : {legacy_hal::WIFI_SCAN_FLAG_INTERRUPTED}) {
     if (legacy_cached_scan_result.flags & flag) {
       hidl_scan_data->flags |=
@@ -1749,6 +1751,7 @@ bool convertLegacyRttCapabilitiesToHidl(
   hidl_capabilities->lcrSupported = legacy_capabilities.lcr_support;
   hidl_capabilities->responderSupported =
       legacy_capabilities.responder_supported;
+  hidl_capabilities->preambleSupport = 0;
   for (const auto flag : {legacy_hal::WIFI_RTT_PREAMBLE_LEGACY,
                           legacy_hal::WIFI_RTT_PREAMBLE_HT,
                           legacy_hal::WIFI_RTT_PREAMBLE_VHT}) {
@@ -1758,6 +1761,7 @@ bool convertLegacyRttCapabilitiesToHidl(
               convertLegacyRttPreambleToHidl(flag));
     }
   }
+  hidl_capabilities->bwSupport = 0;
   for (const auto flag : {legacy_hal::WIFI_RTT_BW_5,
                           legacy_hal::WIFI_RTT_BW_10,
                           legacy_hal::WIFI_RTT_BW_20,
