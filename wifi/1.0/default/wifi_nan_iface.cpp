@@ -400,6 +400,16 @@ WifiNanIface::WifiNanIface(
       LOG(ERROR) << "on_event_beacon_sdf_payload - should not be called";
   };
 
+  callback_handlers.on_event_range_request = [weak_ptr_this](
+        const legacy_hal::NanRangeRequestInd& /* msg */) {
+      LOG(ERROR) << "on_event_range_request - should not be called";
+  };
+
+  callback_handlers.on_event_range_report = [weak_ptr_this](
+        const legacy_hal::NanRangeReportInd& /* msg */) {
+      LOG(ERROR) << "on_event_range_report - should not be called";
+  };
+
   legacy_hal::wifi_error legacy_status =
       legacy_hal_.lock()->nanRegisterCallbackHandlers(callback_handlers);
   if (legacy_status != legacy_hal::WIFI_SUCCESS) {
