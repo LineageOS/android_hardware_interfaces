@@ -417,6 +417,8 @@ public:
 
     Return<void> setIndicationFilterResponse(const RadioResponseInfo& info);
 
+    Return<void> setSimCardPowerResponse(const RadioResponseInfo& info);
+
     Return<void> acknowledgeRequest(int32_t serial);
 };
 
