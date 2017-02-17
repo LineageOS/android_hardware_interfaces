@@ -141,6 +141,7 @@ interface IWifiNanIfaceEventCallback {
    *        |NanStatusType.INTERNAL_FAILURE|
    *        |NanStatusType.INVALID_SESSION_ID|
    *        |NanStatusType.INVALID_PEER_ID|
+   *        |NanStatusType.FOLLOWUP_TX_QUEUE_FULL|
    */
   oneway notifyTransmitFollowupResponse(CommandIdShort id, WifiNanStatus status);
 
@@ -281,8 +282,9 @@ interface IWifiNanIfaceEventCallback {
    *
    * @param cmdId command Id corresponding to the original |transmitFollowupRequest| request.
    * @param status WifiNanStatus of the operation.  Possible status codes are:
+   *               |NanStatusType.SUCCESS|
    *               |NanStatusType.NO_OTA_ACK|
-   *               |NanStatusType.FOLLOWUP_TX_QUEUE_FULL|
+   *               |NanStatusType.PROTOCOL_FAILURE|
    */
   oneway eventTransmitFollowup(CommandIdShort id, WifiNanStatus status);
 
