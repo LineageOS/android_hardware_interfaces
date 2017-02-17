@@ -1503,6 +1503,18 @@ interface: {
     }
 
     api: {
+        name: "setSimCardPower"
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "int32_t"
+        }
+        arg: {
+            type: TYPE_SCALAR
+            scalar_type: "bool_t"
+        }
+    }
+
+    api: {
         name: "responseAcknowledgement"
     }
 
