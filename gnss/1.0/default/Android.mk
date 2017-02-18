@@ -28,6 +28,8 @@ LOCAL_SHARED_LIBRARIES := \
     android.hardware.gnss@1.0 \
     libhardware
 
+LOCAL_CFLAGS += -Werror
+
 include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
