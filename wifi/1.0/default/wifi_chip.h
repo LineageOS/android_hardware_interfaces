@@ -22,6 +22,7 @@
 #include <android-base/macros.h>
 #include <android/hardware/wifi/1.0/IWifiChip.h>
 
+#include "hidl_callback_util.h"
 #include "wifi_ap_iface.h"
 #include "wifi_legacy_hal.h"
 #include "wifi_mode_controller.h"
@@ -62,7 +63,7 @@ class WifiChip : public IWifiChip {
   // valid before processing them.
   void invalidate();
   bool isValid();
-  std::vector<sp<IWifiChipEventCallback>> getEventCallbacks();
+  std::set<sp<IWifiChipEventCallback>> getEventCallbacks();
 
   // HIDL methods exposed.
   Return<void> getId(getId_cb hidl_status_cb) override;
@@ -179,7 +180,6 @@ class WifiChip : public IWifiChip {
   ChipId chip_id_;
   std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
   std::weak_ptr<mode_controller::WifiModeController> mode_controller_;
-  std::vector<sp<IWifiChipEventCallback>> event_callbacks_;
   sp<WifiApIface> ap_iface_;
   sp<WifiNanIface> nan_iface_;
   sp<WifiP2pIface> p2p_iface_;
@@ -191,6 +191,8 @@ class WifiChip : public IWifiChip {
   // registration mechanism. Use this to check if we have already
   // registered a callback.
   bool debug_ring_buffer_cb_registered_;
+  hidl_callback_util::HidlCallbackHandler<IWifiChipEventCallback>
+      event_cb_handler_;
 
   DISALLOW_COPY_AND_ASSIGN(WifiChip);
 };
