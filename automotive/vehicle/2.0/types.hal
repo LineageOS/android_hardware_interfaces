@@ -330,9 +330,12 @@ enum VehicleProperty: int32_t {
     /*
      * Fan speed setting
      *
+     * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
+     * guaranteed to work if HVAC unit is off.  See HVAC_POWER_ON property for
+     * details.
+     *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
-     * @allow_out_of_range_value : OFF
      */
     HVAC_FAN_SPEED = (
         0x0500
@@ -343,10 +346,13 @@ enum VehicleProperty: int32_t {
     /*
      * Fan direction setting
      *
+     * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
+     * guaranteed to work if HVAC unit is off.  See HVAC_POWER_ON property for
+     * details.
+     *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
      * @data_enum VehicleHvacFanDirection
-     * @allow_out_of_range_value : OFF
      */
     HVAC_FAN_DIRECTION = (
         0x0501
@@ -356,6 +362,10 @@ enum VehicleProperty: int32_t {
 
     /*
      * HVAC current temperature.
+     *
+     * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
+     * guaranteed to work if HVAC unit is off.  See HVAC_POWER_ON property for
+     * details.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
@@ -369,9 +379,12 @@ enum VehicleProperty: int32_t {
     /*
      * HVAC, target temperature set.
      *
+     * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
+     * guaranteed to work if HVAC unit is off.  See HVAC_POWER_ON property for
+     * details.
+     *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
-     * @allow_out_of_range_value : MIN / MAX / OFF
      */
     HVAC_TEMPERATURE_SET = (
         0x0503
@@ -381,6 +394,10 @@ enum VehicleProperty: int32_t {
 
     /*
      * On/off defrost
+     *
+     * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
+     * guaranteed to work if HVAC unit is off.  See HVAC_POWER_ON property for
+     * details.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
@@ -393,6 +410,10 @@ enum VehicleProperty: int32_t {
 
     /*
      * On/off AC
+     *
+     * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
+     * guaranteed to work if HVAC unit is off.  See HVAC_POWER_ON property for
+     * details.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
@@ -407,6 +428,10 @@ enum VehicleProperty: int32_t {
     /*
      * On/off max AC
      *
+     * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
+     * guaranteed to work if HVAC unit is off.  See HVAC_POWER_ON property for
+     * details.
+     *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
      */
@@ -418,6 +443,10 @@ enum VehicleProperty: int32_t {
 
     /*
      * On/off max defrost
+     *
+     * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
+     * guaranteed to work if HVAC unit is off.  See HVAC_POWER_ON property for
+     * details.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
@@ -431,6 +460,10 @@ enum VehicleProperty: int32_t {
     /*
      * On/off re-circulation
      *
+     * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
+     * guaranteed to work if HVAC unit is off.  See HVAC_POWER_ON property for
+     * details.
+     *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
      */
@@ -443,6 +476,10 @@ enum VehicleProperty: int32_t {
     /*
      * On/off dual. This must be defined per each row.
      *
+     * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
+     * guaranteed to work if HVAC unit is off.  See HVAC_POWER_ON property for
+     * details.
+     *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
      */
@@ -454,6 +491,10 @@ enum VehicleProperty: int32_t {
 
     /*
      * On/off automatic mode
+     *
+     * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
+     * guaranteed to work if HVAC unit is off.  See HVAC_POWER_ON property for
+     * details.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
@@ -475,6 +516,10 @@ enum VehicleProperty: int32_t {
      * min/max range defines the allowable range and number of steps in each
      * direction.
      *
+     * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
+     * guaranteed to work if HVAC unit is off.  See HVAC_POWER_ON property for
+     * details.
+     *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
      */
@@ -490,8 +535,12 @@ enum VehicleProperty: int32_t {
      * Increase values denote higher heating levels for side mirrors.
      * 0 indicates heating is turned off.
      *
-     * @change_mode VEHICLE_PROP_CHANGE_MODE_ON_CHANGE
-     * @access VEHICLE_PROP_ACCESS_READ_WRITE
+     * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
+     * guaranteed to work if HVAC unit is off.  See HVAC_POWER_ON property for
+     * details.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
      */
     HVAC_SIDE_MIRROR_HEAT = (
         0x050C
@@ -507,8 +556,12 @@ enum VehicleProperty: int32_t {
      * Negative value indicates cooling.
      * 0 indicates temperature control is off.
      *
-     * @change_mode VEHICLE_PROP_CHANGE_MODE_ON_CHANGE
-     * @access VEHICLE_PROP_ACCESS_READ_WRITE
+     * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
+     * guaranteed to work if HVAC unit is off.  See HVAC_POWER_ON property for
+     * details.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
      */
     HVAC_STEERING_WHEEL_TEMP = (
         0x050D
@@ -523,8 +576,11 @@ enum VehicleProperty: int32_t {
      * different unit from VehicleUnit enum.
      * This parameter affects all HVAC temperatures in the system.
      *
-     * @change_mode VEHICLE_PROP_CHANGE_MODE_ON_CHANGE
-     * @access VEHICLE_PROP_ACCESS_READ
+     * IVehicle#get is not guaranteed to work if HVAC unit is off.  See
+     * HVAC_POWER_ON property for details.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
      */
     HVAC_TEMPERATURE_UNITS = (
         0x050E
@@ -535,9 +591,11 @@ enum VehicleProperty: int32_t {
     /**
      * Actual fan speed
      *
-     * @change_mode VEHICLE_PROP_CHANGE_MODE_ON_CHANGE
-     * @access VEHICLE_PROP_ACCESS_READ
-     * @allow_out_of_range_value : OFF
+     * IVehicle#get is not guaranteed to work if HVAC unit is off.  See
+     * HVAC_POWER_ON property for details.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
      */
     HVAC_ACTUAL_FAN_SPEED_RPM = (
         0x050F
@@ -555,9 +613,8 @@ enum VehicleProperty: int32_t {
      *
      * 0x12 = (1 << 1) | (1 << 4)
      *
-     * @change_mode VEHICLE_PROP_CHANGE_MODE_STATIC
-     * @access VEHICLE_PROP_ACCESS_READ
-     * @allow_out_of_range_value : OFF
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:READ
      */
     HVAC_FAN_DIRECTION_AVAILABLE = (
         0x0511
