@@ -16,10 +16,10 @@
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := supplicant_hidl_test
+LOCAL_MODULE := VtsHalWifiSupplicantV1_0TargetTest
 LOCAL_CPPFLAGS := -Wall -Werror -Wextra
 LOCAL_SRC_FILES := \
-    main.cpp \
+    VtsHalWifiSupplicantV1_0TargetTest.cpp \
     supplicant_hidl_test.cpp \
     supplicant_hidl_test_utils.cpp \
     supplicant_p2p_iface_hidl_test.cpp \
