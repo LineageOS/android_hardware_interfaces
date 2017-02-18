@@ -214,45 +214,46 @@ interface ISupplicantStaIfaceCallback {
    * Used to indicate the result of ANQP (either for IEEE 802.11u Interworking
    * or Hotspot 2.0) query.
    *
-   * @param macAddress MAC address of the access point.
+   * @param bssid BSSID of the access point.
    * @param data ANQP data fetched from the access point.
    *        All the fields in this struct must be empty if the query failed.
    * @param hs20Data ANQP data fetched from the Hotspot 2.0 access point.
    *        All the fields in this struct must be empty if the query failed.
    */
-  oneway onAnqpQueryDone(MacAddress macAddress,
-                         AnqpData data,
-                         Hs20AnqpData hs20Data);
+  oneway onAnqpQueryDone(Bssid bssid, AnqpData data, Hs20AnqpData hs20Data);
 
   /**
    * Used to indicate the result of Hotspot 2.0 Icon query.
    *
-   * @param macAddress MAC address of the access point.
+   * @param bssid BSSID of the access point.
    * @param fileName Name of the file that was requested.
    * @param data Icon data fetched from the access point.
    *        Must be empty if the query failed.
    */
-  oneway onHs20IconQueryDone(MacAddress macAddress,
-                             string fileName,
-                             vec<uint8_t> data);
+  oneway onHs20IconQueryDone(Bssid bssid, string fileName, vec<uint8_t> data);
 
   /**
    * Used to indicate a Hotspot 2.0 subscription remediation event.
    *
+   * @param bssid BSSID of the access point.
    * @param osuMethod OSU method.
    * @param url URL of the server.
    */
-  oneway onHs20SubscriptionRemediation(OsuMethod osuMethod, string url);
+  oneway onHs20SubscriptionRemediation(Bssid bssid,
+                                       OsuMethod osuMethod,
+                                       string url);
 
   /**
    * Used to indicate a Hotspot 2.0 imminent deauth notice.
    *
+   * @param bssid BSSID of the access point.
    * @param reasonCode Code to indicate the deauth reason.
    *        Refer to section 3.2.1.2 of the Hotspot 2.0 spec.
    * @param reAuthDelayInSec Delay before reauthenticating.
    * @param url URL of the server.
    */
-  oneway onHs20DeauthImminentNotice(uint32_t reasonCode,
+  oneway onHs20DeauthImminentNotice(Bssid bssid,
+                                    uint32_t reasonCode,
                                     uint32_t reAuthDelayInSec,
                                     string url);
 
