@@ -15,9 +15,9 @@
 //
 
 cc_test {
-    name: "nfc_hidl_hal_test",
+    name: "VtsHalNfcV1_0TargetTest",
     gtest: true,
-    srcs: ["nfc_hidl_hal_test.cpp"],
+    srcs: ["VtsHalNfcV1_0TargetTest.cpp"],
     shared_libs: [
         "libbase",
         "liblog",
