@@ -85,8 +85,9 @@ Return<void> Wifi::getChip(ChipId chip_id, getChip_cb hidl_status_cb) {
 
 WifiStatus Wifi::registerEventCallbackInternal(
     const sp<IWifiEventCallback>& event_callback) {
-  // TODO(b/31632518): remove the callback when the client is destroyed
-  event_callbacks_.emplace_back(event_callback);
+  if (!event_cb_handler_.addCallback(event_callback)) {
+    return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
+  }
   return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 
@@ -102,13 +103,13 @@ WifiStatus Wifi::startInternal() {
     // Create the chip instance once the HAL is started.
     chip_ = new WifiChip(kChipId, legacy_hal_, mode_controller_);
     run_state_ = RunState::STARTED;
-    for (const auto& callback : event_callbacks_) {
+    for (const auto& callback : event_cb_handler_.getCallbacks()) {
       if (!callback->onStart().isOk()) {
         LOG(ERROR) << "Failed to invoke onStart callback";
       };
     }
   } else {
-    for (const auto& callback : event_callbacks_) {
+    for (const auto& callback : event_cb_handler_.getCallbacks()) {
       if (!callback->onFailure(wifi_status).isOk()) {
         LOG(ERROR) << "Failed to invoke onFailure callback";
       }
@@ -126,13 +127,13 @@ WifiStatus Wifi::stopInternal() {
   }
   WifiStatus wifi_status = stopLegacyHalAndDeinitializeModeController();
   if (wifi_status.code == WifiStatusCode::SUCCESS) {
-    for (const auto& callback : event_callbacks_) {
+    for (const auto& callback : event_cb_handler_.getCallbacks()) {
       if (!callback->onStop().isOk()) {
         LOG(ERROR) << "Failed to invoke onStop callback";
       };
     }
   } else {
-    for (const auto& callback : event_callbacks_) {
+    for (const auto& callback : event_cb_handler_.getCallbacks()) {
       if (!callback->onFailure(wifi_status).isOk()) {
         LOG(ERROR) << "Failed to invoke onFailure callback";
       }
