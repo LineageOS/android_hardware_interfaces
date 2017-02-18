@@ -15,9 +15,9 @@
 //
 
 cc_test {
-    name: "sensors_hidl_hal_test",
+    name: "VtsHalSensorsV1_0TargetTest",
     gtest: true,
-    srcs: ["sensors_hidl_hal_test.cpp"],
+    srcs: ["VtsHalSensorsV1_0TargetTest.cpp"],
     shared_libs: [
         "android.hardware.sensors@1.0",
         "libcutils",

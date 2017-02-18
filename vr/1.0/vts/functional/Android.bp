@@ -15,9 +15,9 @@
 //
 
 cc_test {
-    name: "vr_hidl_hal_test",
+    name: "VtsHalVrV1_0TargetTest",
     gtest: true,
-    srcs: ["vr_hidl_hal_test.cpp"],
+    srcs: ["VtsHalVrV1_0TargetTest.cpp"],
     shared_libs: [
         "liblog",
         "libhidlbase",

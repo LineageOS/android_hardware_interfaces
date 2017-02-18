@@ -15,9 +15,9 @@
 //
 
 cc_test {
-    name: "fingerprint_hidl_hal_test",
+    name: "VtsHalBiometricsFingerprintV2_1TargetTest",
     gtest: true,
-    srcs: ["fingerprint_hidl_hal_test.cpp"],
+    srcs: ["VtsHalBiometricsFingerprintV2_1TargetTest.cpp"],
     shared_libs: [
         "libbase",
         "libhidltransport",

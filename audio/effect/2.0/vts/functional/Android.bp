@@ -15,9 +15,9 @@
 //
 
 cc_test {
-    name: "audio_effect_hidl_hal_test",
+    name: "VtsHalAudioEffectV2_0TargetTest",
     gtest: true,
-    srcs: ["audio_effect_hidl_hal_test.cpp"],
+    srcs: ["VtsHalAudioEffectV2_0TargetTest.cpp"],
     shared_libs: [
         "libbase",
         "liblog",

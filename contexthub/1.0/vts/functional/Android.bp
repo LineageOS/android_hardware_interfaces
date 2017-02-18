@@ -15,9 +15,9 @@
 //
 
 cc_test {
-    name: "contexthub_hidl_hal_test",
+    name: "VtsHalContexthubV1_0TargetTest",
     gtest: true,
-    srcs: ["contexthub_hidl_hal_test.cpp"],
+    srcs: ["VtsHalContexthubV1_0TargetTest.cpp"],
     shared_libs: [
         "liblog",
         "libhidlbase",

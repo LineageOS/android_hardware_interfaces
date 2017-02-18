@@ -15,9 +15,9 @@
 //
 
 cc_test {
-    name: "thermal_hidl_hal_test",
+    name: "VtsHalThermalV1_0TargetTest",
     gtest: true,
-    srcs: ["thermal_hidl_hal_test.cpp"],
+    srcs: ["VtsHalThermalV1_0TargetTest.cpp"],
     shared_libs: [
         "libbase",
         "liblog",

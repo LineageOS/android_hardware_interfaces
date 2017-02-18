@@ -15,9 +15,9 @@
 //
 
 cc_test {
-    name: "light_hidl_hal_test",
+    name: "VtsHalLightV2_0TargetTest",
     gtest: true,
-    srcs: ["light_hidl_hal_test.cpp"],
+    srcs: ["VtsHalLightV2_0TargetTest.cpp"],
     shared_libs: [
         "libbase",
         "libhidlbase",

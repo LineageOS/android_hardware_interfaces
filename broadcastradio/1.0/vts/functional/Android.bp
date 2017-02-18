@@ -15,9 +15,9 @@
 //
 
 cc_test {
-    name: "broadcastradio_hidl_hal_test",
+    name: "VtsHalBroadcastradioV1_0TargetTest",
     gtest: true,
-    srcs: ["broadcastradio_hidl_hal_test.cpp"],
+    srcs: ["VtsHalBroadcastradioV1_0TargetTest.cpp"],
     shared_libs: [
         "libbase",
         "liblog",

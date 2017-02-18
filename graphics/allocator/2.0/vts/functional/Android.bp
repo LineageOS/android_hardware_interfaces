@@ -15,9 +15,9 @@
 //
 
 cc_test {
-    name: "graphics_allocator_hidl_hal_test",
+    name: "VtsHalGraphicsAllocatorV2_0TargetTest",
     gtest: true,
-    srcs: ["graphics_allocator_hidl_hal_test.cpp"],
+    srcs: ["VtsHalGraphicsAllocatorV2_0TargetTest.cpp"],
     shared_libs: [
         "libbase",
         "liblog",

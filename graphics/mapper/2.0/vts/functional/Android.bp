@@ -15,9 +15,9 @@
 //
 
 cc_test {
-    name: "graphics_mapper_hidl_hal_test",
+    name: "VtsHalGraphicsMapperV2_0TargetTest",
     gtest: true,
-    srcs: ["graphics_mapper_hidl_hal_test.cpp"],
+    srcs: ["VtsHalGraphicsMapperV2_0TargetTest.cpp"],
     shared_libs: [
         "libbase",
         "liblog",

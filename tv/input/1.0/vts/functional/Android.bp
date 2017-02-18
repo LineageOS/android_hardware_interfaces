@@ -15,9 +15,9 @@
 //
 
 cc_test {
-    name: "tv_input_hidl_hal_test",
+    name: "VtsHalTvInputV1_0TargetTest",
     gtest: true,
-    srcs: ["tv_input_hidl_hal_test.cpp"],
+    srcs: ["VtsHalTvInputV1_0TargetTest.cpp"],
     shared_libs: [
         "libbase",
         "liblog",

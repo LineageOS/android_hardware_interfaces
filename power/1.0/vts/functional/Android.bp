@@ -15,9 +15,9 @@
 //
 
 cc_test {
-    name: "power_hidl_hal_test",
+    name: "VtsHalPowerV1_0TargetTest",
     gtest: true,
-    srcs: ["power_hidl_hal_test.cpp"],
+    srcs: ["VtsHalPowerV1_0TargetTest.cpp"],
     shared_libs: [
         "libbase",
         "liblog",

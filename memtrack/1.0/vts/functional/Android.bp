@@ -15,9 +15,9 @@
 //
 
 cc_test {
-    name: "memtrack_hidl_hal_test",
+    name: "VtsHalMemtrackV1_0TargetTest",
     gtest: true,
-    srcs: ["memtrack_hidl_hal_test.cpp"],
+    srcs: ["VtsHalMemtrackV1_0TargetTest.cpp"],
     shared_libs: [
         "libbase",
         "liblog",

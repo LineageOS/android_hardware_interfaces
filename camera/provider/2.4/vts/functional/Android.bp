@@ -15,9 +15,9 @@
 //
 
 cc_test {
-    name: "camera_hidl_hal_test",
+    name: "VtsHalCameraProviderV2_4TargetTest",
     gtest: true,
-    srcs: ["camera_hidl_hal_test.cpp"],
+    srcs: ["VtsHalCameraProviderV2_4TargetTest.cpp"],
     shared_libs: [
         "liblog",
         "libhidlbase",
