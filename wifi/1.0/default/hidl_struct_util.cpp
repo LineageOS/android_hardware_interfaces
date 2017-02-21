@@ -795,9 +795,6 @@ bool convertHidlNanEnableRequestToLegacy(
   legacy_request->config_disc_mac_addr_randomization = 1;
   legacy_request->disc_mac_addr_rand_interval_sec =
         hidl_request.configParams.macAddressRandomizationIntervalSec;
-  legacy_request->config_responder_auto_response = 1;
-  legacy_request->ranging_auto_response_cfg = hidl_request.configParams.acceptRangingRequests ?
-       legacy_hal::NAN_RANGING_AUTO_RESPONSE_ENABLE : legacy_hal::NAN_RANGING_AUTO_RESPONSE_DISABLE;
   legacy_request->config_2dot4g_rssi_close = 1;
   if (hidl_request.configParams.bandSpecificConfig.size() != 2) {
     LOG(ERROR) << "convertHidlNanEnableRequestToLegacy: bandSpecificConfig.size() != 2";
@@ -963,6 +960,9 @@ bool convertHidlNanPublishRequestToLegacy(
         hidl_request.baseConfigs.configRangingIndications;
   legacy_request->ranging_cfg.distance_ingress_cm = hidl_request.baseConfigs.distanceIngressCm;
   legacy_request->ranging_cfg.distance_egress_cm = hidl_request.baseConfigs.distanceEgressCm;
+  legacy_request->ranging_auto_response = hidl_request.baseConfigs.rangingRequired ?
+        legacy_hal::NAN_RANGING_AUTO_RESPONSE_ENABLE : legacy_hal::NAN_RANGING_AUTO_RESPONSE_DISABLE;
+  legacy_request->range_report = legacy_hal::NAN_DISABLE_RANGE_REPORT;
   legacy_request->publish_type = (legacy_hal::NanPublishType) hidl_request.publishType;
   legacy_request->tx_type = (legacy_hal::NanTxType) hidl_request.txType;
 
@@ -1042,6 +1042,9 @@ bool convertHidlNanSubscribeRequestToLegacy(
         hidl_request.baseConfigs.configRangingIndications;
   legacy_request->ranging_cfg.distance_ingress_cm = hidl_request.baseConfigs.distanceIngressCm;
   legacy_request->ranging_cfg.distance_egress_cm = hidl_request.baseConfigs.distanceEgressCm;
+  legacy_request->ranging_auto_response = hidl_request.baseConfigs.rangingRequired ?
+        legacy_hal::NAN_RANGING_AUTO_RESPONSE_ENABLE : legacy_hal::NAN_RANGING_AUTO_RESPONSE_DISABLE;
+  legacy_request->range_report = legacy_hal::NAN_DISABLE_RANGE_REPORT;
   legacy_request->subscribe_type = (legacy_hal::NanSubscribeType) hidl_request.subscribeType;
   legacy_request->serviceResponseFilter = (legacy_hal::NanSRFType) hidl_request.srfType;
   legacy_request->serviceResponseInclude = hidl_request.srfRespondIfInAddressSet ?
@@ -1123,9 +1126,6 @@ bool convertHidlNanConfigRequestToLegacy(
   legacy_request->config_disc_mac_addr_randomization = 1;
   legacy_request->disc_mac_addr_rand_interval_sec =
         hidl_request.macAddressRandomizationIntervalSec;
-  legacy_request->config_responder_auto_response = 1;
-  legacy_request->ranging_auto_response_cfg = hidl_request.acceptRangingRequests ?
-       legacy_hal::NAN_RANGING_AUTO_RESPONSE_ENABLE : legacy_hal::NAN_RANGING_AUTO_RESPONSE_DISABLE;
   /* TODO : missing
   legacy_request->config_2dot4g_rssi_close = 1;
   legacy_request->rssi_close_2dot4g_val =
@@ -1314,8 +1314,8 @@ bool convertLegacyNanMatchIndToHidl(
         legacy_ind.peer_sdea_params.security_cfg == legacy_hal::NAN_DP_CONFIG_SECURITY;
   hidl_ind->peerRequiresRanging =
         legacy_ind.peer_sdea_params.ranging_state == legacy_hal::NAN_RANGING_ENABLE;
-  hidl_ind->rangingMeasurementInCm = legacy_ind.range_result.range_measurement_cm;
-  hidl_ind->rangingIndicationType = legacy_ind.range_result.ranging_event_type;
+  hidl_ind->rangingMeasurementInCm = legacy_ind.range_info.range_measurement_cm;
+  hidl_ind->rangingIndicationType = legacy_ind.range_info.ranging_event_type;
 
   return true;
 }
