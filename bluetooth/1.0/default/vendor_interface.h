@@ -59,7 +59,7 @@ class VendorInterface {
 
   void *lib_handle_;
   bt_vendor_interface_t *lib_interface_;
-  AsyncFdWatcher fd_watcher_;
+  async::AsyncFdWatcher fd_watcher_;
   int uart_fd_;
   PacketReadCallback packet_read_cb_;
   InitializeCompleteCallback initialize_complete_cb_;
