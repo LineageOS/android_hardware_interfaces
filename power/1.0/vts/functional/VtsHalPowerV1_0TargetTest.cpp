@@ -23,6 +23,8 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
+
 using ::android::hardware::power::V1_0::IPower;
 using ::android::hardware::power::V1_0::Feature;
 using ::android::hardware::power::V1_0::PowerHint;
@@ -31,6 +33,13 @@ using ::android::hardware::power::V1_0::Status;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::sp;
+
+using std::vector;
+
+#define CPU_GOVERNOR_PATH \
+  "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
+#define AVAILABLE_GOVERNORS_PATH \
+  "/sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors"
 
 class PowerHidlTest : public ::testing::Test {
  public:
@@ -55,6 +64,48 @@ TEST_F(PowerHidlTest, SetInteractive) {
   ASSERT_TRUE(ret.isOk());
 }
 
+// Test Power::setInteractive and Power::powerHint(Launch)
+// with each available CPU governor, if available
+TEST_F(PowerHidlTest, TryDifferentGovernors) {
+  Return<void> ret;
+
+  int fd1 = open(CPU_GOVERNOR_PATH, O_RDWR);
+  int fd2 = open(AVAILABLE_GOVERNORS_PATH, O_RDONLY);
+  if (fd1 < 0 || fd2 < 0) {
+      // Files don't exist, so skip the rest of the test case
+      SUCCEED();
+  }
+
+  char old_governor[80];
+  ASSERT_LE(0, read(fd1, old_governor, 80));
+
+  char governors[1024];
+  ASSERT_LE(0, read(fd2, governors, 1024));
+  close(fd2);
+
+  char *saveptr;
+  char *name = strtok_r(governors, " ", &saveptr);
+  while (name && strlen(name) > 1) {
+    ASSERT_LE(0, write(fd1, name, strlen(name)));
+    ret = power->setInteractive(true);
+    ASSERT_TRUE(ret.isOk());
+
+    ret = power->setInteractive(false);
+    ASSERT_TRUE(ret.isOk());
+
+    ret = power->setInteractive(false);
+    ASSERT_TRUE(ret.isOk());
+
+    power->powerHint(PowerHint::LAUNCH, 1);
+    power->powerHint(PowerHint::LAUNCH, 0);
+
+    name = strtok_r(NULL, " ", &saveptr);
+  }
+
+  ASSERT_LE(0, write(fd1, old_governor, strlen(old_governor)));
+  close(fd1);
+}
+
 // Sanity check Power::powerHint on good and bad inputs.
 TEST_F(PowerHidlTest, PowerHint) {
   PowerHint badHint = static_cast<PowerHint>(0xA);
@@ -65,12 +116,32 @@ TEST_F(PowerHidlTest, PowerHint) {
                 badHint};
   Return<void> ret;
   for (auto hint : hints) {
-    ret = power->powerHint(hint, 1);
+    ret = power->powerHint(hint, 30000);
     ASSERT_TRUE(ret.isOk());
 
     ret = power->powerHint(hint, 0);
     ASSERT_TRUE(ret.isOk());
   }
+
+  // Turning these hints on in different orders triggers different code paths,
+  // so iterate over possible orderings.
+  std::vector<PowerHint> hints2 = {PowerHint::LAUNCH, PowerHint::VR_MODE,
+                                   PowerHint::SUSTAINED_PERFORMANCE,
+                                   PowerHint::INTERACTION};
+  auto compareHints = [](PowerHint l, PowerHint r) {
+    return static_cast<uint32_t>(l) < static_cast<uint32_t>(r);
+  };
+  std::sort(hints2.begin(), hints2.end(), compareHints);
+  do {
+    for (auto iter = hints2.begin(); iter != hints2.end(); iter++) {
+      ret = power->powerHint(*iter, 0);
+      ASSERT_TRUE(ret.isOk());
+    }
+    for (auto iter = hints2.begin(); iter != hints2.end(); iter++) {
+      ret = power->powerHint(*iter, 30000);
+      ASSERT_TRUE(ret.isOk());
+    }
+  } while (std::next_permutation(hints2.begin(), hints2.end(), compareHints));
 }
 
 // Sanity check Power::setFeature() on good and bad inputs.
