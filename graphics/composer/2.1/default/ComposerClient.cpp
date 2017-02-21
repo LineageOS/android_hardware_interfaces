@@ -230,6 +230,8 @@ ComposerClient::ComposerClient(ComposerBase& hal)
 
 ComposerClient::~ComposerClient()
 {
+    ALOGD("client destroyed");
+
     mHal.enableCallback(false);
     mHal.removeClient();
 
@@ -275,17 +277,23 @@ void ComposerClient::onHotplug(Display display,
         }
     }
 
-    mCallback->onHotplug(display, connected);
+    auto ret = mCallback->onHotplug(display, connected);
+    ALOGE_IF(!ret.isOk(), "failed to send onHotplug: %s",
+            ret.description().c_str());
 }
 
 void ComposerClient::onRefresh(Display display)
 {
-    mCallback->onRefresh(display);
+    auto ret = mCallback->onRefresh(display);
+    ALOGE_IF(!ret.isOk(), "failed to send onRefresh: %s",
+            ret.description().c_str());
 }
 
 void ComposerClient::onVsync(Display display, int64_t timestamp)
 {
-    mCallback->onVsync(display, timestamp);
+    auto ret = mCallback->onVsync(display, timestamp);
+    ALOGE_IF(!ret.isOk(), "failed to send onVsync: %s",
+            ret.description().c_str());
 }
 
 Return<void> ComposerClient::registerCallback(
