@@ -42,7 +42,6 @@ public:
 private:
     DisplayDesc     mInfo           = {};
     BufferDesc      mBuffer         = {};       // A graphics buffer into which we'll store images
-    uint32_t        mStride         = 0;        // Bytes per line in the buffer
 
     bool            mFrameBusy      = false;    // A flag telling us our buffer is in use
     DisplayState    mRequestedState = DisplayState::NOT_VISIBLE;

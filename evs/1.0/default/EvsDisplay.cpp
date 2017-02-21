@@ -169,7 +169,7 @@ Return<void> EvsDisplay::getTargetBuffer(getTargetBuffer_cb _hidl_cb)  {
         mBuffer.memHandle = handle;
         mFrameBusy = false;
         ALOGD("Allocated new buffer %p with stride %u",
-              mBuffer.memHandle.getNativeHandle(), mStride);
+              mBuffer.memHandle.getNativeHandle(), mBuffer.stride);
     }
 
     // Do we have a frame available?
@@ -263,7 +263,8 @@ Return<EvsResult> EvsDisplay::returnTargetBufferForDisplay(const BufferDesc& buf
                     continue;
                 }
                 // Walk across this row (we'll step rows below)
-                if (pixels[col] != expectedPixel) {
+                uint32_t receivedPixel = pixels[col];
+                if (receivedPixel != expectedPixel) {
                     ALOGE("Pixel check mismatch in frame buffer");
                     frameLooksGood = false;
                     break;
@@ -274,8 +275,8 @@ Return<EvsResult> EvsDisplay::returnTargetBufferForDisplay(const BufferDesc& buf
                 break;
             }
 
-            // Point to the next row
-            pixels = pixels + (mStride / sizeof(*pixels));
+            // Point to the next row (NOTE:  gralloc reports stride in units of pixels)
+            pixels = pixels + mBuffer.stride;
         }
 
         // Ensure we don't see the same buffer twice without it being rewritten
