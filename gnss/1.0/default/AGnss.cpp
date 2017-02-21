@@ -41,6 +41,7 @@ AGnss::AGnss(const AGpsInterface* aGpsIface) : mAGnssIface(aGpsIface) {
 
 AGnss::~AGnss() {
     sThreadFuncArgsList.clear();
+    sInterfaceExists = false;
 }
 
 void AGnss::statusCb(AGpsStatus* status) {
@@ -78,7 +79,10 @@ void AGnss::statusCb(AGpsStatus* status) {
                     /*
                      * Callback to client with agnssStatusIpV4Cb.
                      */
-                    sAGnssCbIface->agnssStatusIpV4Cb(aGnssStatusIpV4);
+                    auto ret = sAGnssCbIface->agnssStatusIpV4Cb(aGnssStatusIpV4);
+                    if (!ret.isOk()) {
+                        ALOGE("%s: Unable to invoke callback", __func__);
+                    }
                     break;
                 }
             case AF_INET6:
@@ -96,7 +100,10 @@ void AGnss::statusCb(AGpsStatus* status) {
                             &(status->addr));
                     memcpy(&(aGnssStatusIpV6.ipV6Addr[0]), in6->sin6_addr.s6_addr,
                            aGnssStatusIpV6.ipV6Addr.size());
-                    sAGnssCbIface->agnssStatusIpV6Cb(aGnssStatusIpV6);
+                    auto ret = sAGnssCbIface->agnssStatusIpV6Cb(aGnssStatusIpV6);
+                    if (!ret.isOk()) {
+                        ALOGE("%s: Unable to invoke callback", __func__);
+                    }
                     break;
                 }
              default:
@@ -117,7 +124,10 @@ void AGnss::statusCb(AGpsStatus* status) {
         /*
          * Callback to client with agnssStatusIpV4Cb.
          */
-        sAGnssCbIface->agnssStatusIpV4Cb(aGnssStatusIpV4);
+        auto ret = sAGnssCbIface->agnssStatusIpV4Cb(aGnssStatusIpV4);
+        if (!ret.isOk()) {
+            ALOGE("%s: Unable to invoke callback", __func__);
+        }
     } else {
         ALOGE("%s: Invalid size for AGPS Status", __func__);
     }

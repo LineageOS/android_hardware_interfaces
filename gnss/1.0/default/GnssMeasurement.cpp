@@ -96,7 +96,10 @@ void GnssMeasurement::gnssMeasurementCb(LegacyGnssData* legacyGnssData) {
         .hwClockDiscontinuityCount = clockVal.hw_clock_discontinuity_count
     };
 
-    sGnssMeasureCbIface->GnssMeasurementCb(gnssData);
+    auto ret = sGnssMeasureCbIface->GnssMeasurementCb(gnssData);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
 }
 
 /*
@@ -223,7 +226,10 @@ void GnssMeasurement::gpsMeasurementCb(GpsData* gpsData) {
     gnssData.clock.driftUncertaintyNsps = clockVal.drift_uncertainty_nsps;
     gnssData.clock.gnssClockFlags = clockVal.flags;
 
-    sGnssMeasureCbIface->GnssMeasurementCb(gnssData);
+    auto ret = sGnssMeasureCbIface->GnssMeasurementCb(gnssData);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
 }
 
 // Methods from ::android::hardware::gnss::V1_0::IGnssMeasurement follow.

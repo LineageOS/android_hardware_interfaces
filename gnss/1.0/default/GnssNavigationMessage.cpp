@@ -59,7 +59,10 @@ void GnssNavigationMessage::gnssNavigationMessageCb(LegacyGnssNavigationMessage*
     navigationMsg.submessageId = message->submessage_id;
     navigationMsg.data.setToExternal(message->data, message->data_length);
 
-    sGnssNavigationMsgCbIface->gnssNavigationMessageCb(navigationMsg);
+    auto ret = sGnssNavigationMsgCbIface->gnssNavigationMessageCb(navigationMsg);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
 }
 
 // Methods from ::android::hardware::gnss::V1_0::IGnssNavigationMessage follow.

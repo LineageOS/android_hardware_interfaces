@@ -41,6 +41,7 @@ GnssNi::GnssNi(const GpsNiInterface* gpsNiIface) : mGnssNiIface(gpsNiIface) {
 
 GnssNi::~GnssNi() {
     sThreadFuncArgsList.clear();
+    sInterfaceExists = false;
 }
 
 pthread_t GnssNi::createThreadCb(const char* name, void (*start)(void*), void* arg) {
@@ -73,7 +74,10 @@ void GnssNi::niNotifyCb(GpsNiNotification* notification) {
                 static_cast<IGnssNiCallback::GnssNiEncodingType>(notification->text_encoding)
     };
 
-    sGnssNiCbIface->niNotifyCb(notificationGnss);
+    auto ret = sGnssNiCbIface->niNotifyCb(notificationGnss);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
 }
 
 // Methods from ::android::hardware::gnss::V1_0::IGnssNi follow.
