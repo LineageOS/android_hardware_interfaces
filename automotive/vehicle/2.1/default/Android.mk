@@ -18,17 +18,47 @@ vhal_v2_0 = android.hardware.automotive.vehicle@2.0
 vhal_v2_1 = android.hardware.automotive.vehicle@2.1
 
 ###############################################################################
+# Vehicle reference implementation lib
+###############################################################################
+include $(CLEAR_VARS)
+LOCAL_MODULE := $(vhal_v2_1)-manager-lib
+LOCAL_SRC_FILES := \
+    common/src/Obd2SensorStore.cpp
+
+LOCAL_C_INCLUDES := \
+    $(LOCAL_PATH)/common/include/vhal_v2_1 \
+    $(LOCAL_PATH)/../../2.0/default/common/include/vhal_v2_0 \
+
+LOCAL_EXPORT_C_INCLUDE_DIRS := \
+    $(LOCAL_PATH)/common/include
+
+LOCAL_SHARED_LIBRARIES := \
+    libbinder \
+    libhidlbase \
+    libhidltransport \
+    libhwbinder \
+    liblog \
+    libutils \
+    $(vhal_v2_1) \
+
+include $(BUILD_STATIC_LIBRARY)
+
+###############################################################################
 # Vehicle default VehicleHAL implementation
 ###############################################################################
 include $(CLEAR_VARS)
 
 LOCAL_MODULE:= $(vhal_v2_1)-default-impl-lib
+LOCAL_SRC_FILES:= \
+    impl/vhal_v2_1/DefaultVehicleHal.cpp \
 
 LOCAL_C_INCLUDES := \
-    $(LOCAL_PATH)/impl/vhal_v2_1
+    $(LOCAL_PATH)/impl/vhal_v2_1 \
+    $(LOCAL_PATH)/common/include
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := \
-    $(LOCAL_PATH)/impl
+    $(LOCAL_PATH)/impl \
+    $(LOCAL_PATH)/common/include
 
 
 # LOCAL_WHOLE_STATIC_LIBRARIES := \
@@ -36,6 +66,7 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := \
 LOCAL_STATIC_LIBRARIES := \
     $(vhal_v2_0)-default-impl-lib \
     $(vhal_v2_0)-manager-lib \
+    $(vhal_v2_1)-manager-lib \
     $(vhal_v2_0)-libproto-native
 
 LOCAL_SHARED_LIBRARIES := \
@@ -69,6 +100,7 @@ LOCAL_STATIC_LIBRARIES := \
     $(vhal_v2_0)-manager-lib \
     $(vhal_v2_0)-default-impl-lib \
     $(vhal_v2_1)-default-impl-lib \
+    $(vhal_v2_1)-manager-lib \
 
 LOCAL_SHARED_LIBRARIES := \
     libbinder \
