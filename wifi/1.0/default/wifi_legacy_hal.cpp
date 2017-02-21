@@ -289,6 +289,24 @@ void onAysncNanEventTransmitFollowUp(NanTransmitFollowupInd* event) {
     on_nan_event_transmit_follow_up_user_callback(*event);
   }
 }
+
+std::function<void(const NanRangeRequestInd&)>
+    on_nan_event_range_request_user_callback;
+void onAysncNanEventRangeRequest(NanRangeRequestInd* event) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
+  if (on_nan_event_range_request_user_callback && event) {
+    on_nan_event_range_request_user_callback(*event);
+  }
+}
+
+std::function<void(const NanRangeReportInd&)>
+    on_nan_event_range_report_user_callback;
+void onAysncNanEventRangeReport(NanRangeReportInd* event) {
+  const auto lock = hidl_sync_util::acquireGlobalLock();
+  if (on_nan_event_range_report_user_callback && event) {
+    on_nan_event_range_report_user_callback(*event);
+  }
+}
 // End of the free-standing "C" style callbacks.
 
 WifiLegacyHal::WifiLegacyHal()
@@ -1023,6 +1041,10 @@ wifi_error WifiLegacyHal::nanRegisterCallbackHandlers(
       user_callbacks.on_event_data_path_end;
   on_nan_event_transmit_follow_up_user_callback =
       user_callbacks.on_event_transmit_follow_up;
+  on_nan_event_range_request_user_callback =
+      user_callbacks.on_event_range_request;
+  on_nan_event_range_report_user_callback =
+      user_callbacks.on_event_range_report;
 
   return global_func_table_.wifi_nan_register_handler(
       wlan_interface_handle_,
@@ -1039,7 +1061,9 @@ wifi_error WifiLegacyHal::nanRegisterCallbackHandlers(
        onAysncNanEventDataPathRequest,
        onAysncNanEventDataPathConfirm,
        onAysncNanEventDataPathEnd,
-       onAysncNanEventTransmitFollowUp});
+       onAysncNanEventTransmitFollowUp,
+       onAysncNanEventRangeRequest,
+       onAysncNanEventRangeReport});
 }
 
 wifi_error WifiLegacyHal::nanEnableRequest(transaction_id id,
@@ -1261,6 +1285,8 @@ void WifiLegacyHal::invalidate() {
   on_nan_event_data_path_confirm_user_callback = nullptr;
   on_nan_event_data_path_end_user_callback = nullptr;
   on_nan_event_transmit_follow_up_user_callback = nullptr;
+  on_nan_event_range_request_user_callback = nullptr;
+  on_nan_event_range_report_user_callback = nullptr;
 }
 
 }  // namespace legacy_hal
