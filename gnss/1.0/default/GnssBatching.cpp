@@ -115,7 +115,7 @@ void GnssBatching::releaseWakelockCb() {
 }
 
 // this can just return success, because threads are now set up on demand in the jni layer
-int32_t GnssBatching::setThreadEventCb(ThreadEvent event) {
+int32_t GnssBatching::setThreadEventCb(ThreadEvent /*event*/) {
     return FLP_RESULT_SUCCESS;
 }
 
