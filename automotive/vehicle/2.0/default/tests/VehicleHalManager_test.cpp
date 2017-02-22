@@ -68,15 +68,16 @@ public:
                     pValue = getValuePool()->obtainFloat(42.42);
                 }
                 break;
-            case VehicleProperty::VEHICLE_MAP_SERVICE:
-                pValue = getValuePool()->obtainComplex();
-                pValue->value.int32Values = hidl_vec<int32_t> { 10, 20 };
-                pValue->value.int64Values = hidl_vec<int64_t> { 30, 40 };
-                pValue->value.floatValues = hidl_vec<float_t> { 1.1, 2.2 };
-                pValue->value.bytes = hidl_vec<uint8_t> { 1, 2, 3 };
-                pValue->value.stringValue = kCarMake;
-                break;
             default:
+                if (requestedPropValue.prop == kCustomComplexProperty) {
+                    pValue = getValuePool()->obtainComplex();
+                    pValue->value.int32Values = hidl_vec<int32_t> { 10, 20 };
+                    pValue->value.int64Values = hidl_vec<int64_t> { 30, 40 };
+                    pValue->value.floatValues = hidl_vec<float_t> { 1.1, 2.2 };
+                    pValue->value.bytes = hidl_vec<uint8_t> { 1, 2, 3 };
+                    pValue->value.stringValue = kCarMake;
+                    break;
+                }
                 auto key = makeKey(toInt(property), areaId);
                 if (mValues.count(key) == 0) {
                     ALOGW("");
@@ -318,10 +319,10 @@ TEST_F(VehicleHalManagerTest, subscribe_WriteOnly) {
 }
 
 TEST_F(VehicleHalManagerTest, get_Complex) {
-    invokeGet(toInt(VehicleProperty::VEHICLE_MAP_SERVICE), 0);
+    invokeGet(kCustomComplexProperty, 0);
 
     ASSERT_EQ(StatusCode::OK, actualStatusCode);
-    ASSERT_EQ(toInt(VehicleProperty::VEHICLE_MAP_SERVICE), actualValue.prop);
+    ASSERT_EQ(kCustomComplexProperty, actualValue.prop);
 
     ASSERT_EQ(3u, actualValue.value.bytes.size());
     ASSERT_EQ(1, actualValue.value.bytes[0]);

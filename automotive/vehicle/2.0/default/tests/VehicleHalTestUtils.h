@@ -29,6 +29,11 @@ namespace automotive {
 namespace vehicle {
 namespace V2_0 {
 
+constexpr int32_t kCustomComplexProperty = 0xbeef
+        | VehiclePropertyGroup::VENDOR
+        | VehiclePropertyType::COMPLEX
+        | VehicleArea::GLOBAL;
+
 const VehiclePropConfig kVehicleProperties[] = {
     {
         .prop = toInt(VehicleProperty::INFO_MAKE),
@@ -109,7 +114,7 @@ const VehiclePropConfig kVehicleProperties[] = {
 
     // Complex data type.
     {
-        .prop = toInt(VehicleProperty::VEHICLE_MAP_SERVICE),
+        .prop = kCustomComplexProperty,
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE
     }

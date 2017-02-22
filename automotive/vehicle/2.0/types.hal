@@ -1790,26 +1790,6 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:BOOLEAN
         | VehicleArea:GLOBAL),
-
-    /*
-     * Vehicle Maps Service (VMS) message
-     *
-     * This property uses COMPLEX data to communicate vms messages.
-     *
-     * Its contents are to be interpreted as follows:
-     * the indices defined in VmsMessageIntegerValuesIndex are to be used to
-     * read from int32Values;
-     * bytes is a serialized VMS message as defined in the vms protocol
-     * which is opaque to the framework;
-     *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
-     */
-    VEHICLE_MAP_SERVICE = (
-        0x0C00
-        | VehiclePropertyGroup:SYSTEM
-        | VehiclePropertyType:COMPLEX
-        | VehicleArea:GLOBAL),
 };
 
 /*
@@ -2706,36 +2686,4 @@ enum Wheel : int32_t {
     RIGHT_FRONT = 0x2,
     LEFT_REAR = 0x4,
     RIGHT_REAR = 0x8,
-};
-
-/*
- * This enum lists the types of supported VMS messages.
- */
-enum VmsMessageType : int32_t {
-  /* A client subscribes to a layer. */
-  SUBSCRIBE = 1,
-
-  /* A client unsubscribes from a layer. */
-  UNSUBSCRIBE = 2,
-
-  /* A client publishes a data packet. */
-  DATA = 3,
-};
-
-/*
- * This enum provides the canonical mapping for VMS properties that have an
- * integer value.
- */
-enum VmsMessageIntegerValuesIndex : int32_t {
-  /* The message type as enumerated by VmsMessageType enum. */
-  VMS_MESSAGE_TYPE = 0,
-
-  /* The layer ID as defined in the vms protocol. */
-  VMS_LAYER_ID = 1,
-
-  /* The version of the VMS layer. */
-  VMS_LAYER_VERSION = 2,
-
-  /* The number of bytes in the payload */
-  VMS_PAYLOAD_SIZE_BYTES = 3,
 };
