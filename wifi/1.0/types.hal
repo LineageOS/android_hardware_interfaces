@@ -1062,6 +1062,13 @@ struct NanPublishRequest {
    * peer.
    */
   NanTxType txType;
+  /**
+   * Specifies whether data-path requests |IWifiNanIfaceEventCallback.eventDataPathRequest| (in
+   * the context of this discovery session) are automatically accepted (if true) - in which case
+   * the Responder must not call the |IWifiNanIface.respondToDataPathIndicationRequest| method and
+   * the device must automatically accept the data-path request and complete the negotiation.
+   */
+  bool autoAcceptDataPathRequests;
 };
 
 /**
