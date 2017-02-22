@@ -40,14 +40,27 @@ enum TvInputType : int32_t {
     DISPLAY_PORT = 10,
 };
 
+/*
+ * Status of cable connection.
+ * This status is for devices having availability to detect the cable in a mechanical way,
+ * regardless of whether the connected external device is electrically on or not.
+ * If the device does not have such capability, you must use UNKNOWN.
+ */
+enum CableConnectionStatus : int32_t {
+    UNKNOWN = 0,
+    CONNECTED = 1,
+    DISCONNECTED = 2,
+};
+
 struct TvInputDeviceInfo {
     int32_t deviceId;
     TvInputType type;
-    uint32_t portId;          // HDMI port ID number. e.g. 2 for HDMI 2
-    AudioDevice audioType;    // Audio device type. e.g AudioDevice::IN_HDMI
-    uint8_t[32] audioAddress; // Audio device address. "" if N/A. If the text
-                              // length is less than 32, the remaining part
-                              // must be filled with 0s.
+    uint32_t portId;                             // HDMI port ID number. e.g. 2 for HDMI 2
+    CableConnectionStatus cableConnectionStatus; // Cable connection status.
+    AudioDevice audioType;                       // Audio device type. e.g AudioDevice::IN_HDMI
+    uint8_t[32] audioAddress;                    // Audio device address. "" if N/A. If the text
+                                                 // length is less than 32, the remaining part
+                                                 // must be filled with 0s.
 };
 
 enum TvInputEventType : int32_t {

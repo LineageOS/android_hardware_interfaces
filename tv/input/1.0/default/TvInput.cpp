@@ -158,6 +158,7 @@ void TvInput::notify(struct tv_input_device* __unused, tv_input_event_t* event,
         tvInputEvent.deviceInfo.type = static_cast<TvInputType>(
                 event->device_info.type);
         tvInputEvent.deviceInfo.portId = event->device_info.hdmi.port_id;
+        tvInputEvent.deviceInfo.cableConnectionStatus = CableConnectionStatus::UNKNOWN;
         // TODO: Ensure the legacy audio type code is the same once audio HAL default
         // implementation is ready.
         tvInputEvent.deviceInfo.audioType = static_cast<AudioDevice>(
