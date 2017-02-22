@@ -123,7 +123,7 @@ class BluetoothHidlTest : public ::testing::Test {
     // currently test passthrough mode only
     bluetooth = IBluetoothHci::getService();
     ASSERT_NE(bluetooth, nullptr);
-    ALOGW("%s: getService() for bluetooth is %s", __func__,
+    ALOGI("%s: getService() for bluetooth is %s", __func__,
           bluetooth->isRemote() ? "remote" : "local");
 
     bluetooth_cb = new BluetoothHciCallbacks(*this);
@@ -255,7 +255,7 @@ class BluetoothHidlTest : public ::testing::Test {
     virtual ~BluetoothHciCallbacks() = default;
 
     Return<void> initializationComplete(Status status) override {
-      parent_.initialized = true;
+      parent_.initialized = (status == Status::SUCCESS);
       parent_.notify_initialized();
       ALOGV("%s (status = %d)", __func__, static_cast<int>(status));
       return Void();
