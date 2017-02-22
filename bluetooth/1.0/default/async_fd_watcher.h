@@ -22,8 +22,7 @@
 namespace android {
 namespace hardware {
 namespace bluetooth {
-namespace V1_0 {
-namespace implementation {
+namespace async {
 
 using ReadCallback = std::function<void(int)>;
 using TimeoutCallback = std::function<void(void)>;
@@ -62,8 +61,7 @@ class AsyncFdWatcher {
 };
 
 
-} // namespace implementation
-} // namespace V1_0
+} // namespace async
 } // namespace bluetooth
 } // namespace hardware
 } // namespace android
