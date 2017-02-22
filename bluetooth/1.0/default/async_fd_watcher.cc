@@ -41,12 +41,7 @@ int AsyncFdWatcher::WatchFdForNonBlockingReads(
   }
 
   // Start the thread if not started yet
-  int started = tryStartThread();
-  if (started != 0) {
-    return started;
-  }
-
-  return 0;
+  return tryStartThread();
 }
 
 int AsyncFdWatcher::ConfigureTimeout(
