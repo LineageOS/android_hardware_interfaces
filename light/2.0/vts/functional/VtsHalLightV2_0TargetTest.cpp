@@ -37,31 +37,6 @@ using ::android::sp;
 #define ASSERT_OK(ret) ASSERT_TRUE(ret.isOk())
 #define EXPECT_OK(ret) EXPECT_TRUE(ret.isOk())
 
-class LightHidlTest : public ::testing::Test {
-public:
-    virtual void SetUp() override {
-        light = ILight::getService();
-
-        ASSERT_NE(light, nullptr);
-        LOG(INFO) << "Test is remote " << light->isRemote();
-
-        ASSERT_OK(light->getSupportedTypes([this](const hidl_vec<Type> &types) {
-            supportedTypes = types;
-        }));
-    }
-
-    virtual void TearDown() override {}
-
-    sp<ILight> light;
-    std::vector<Type> supportedTypes;
-};
-
-class LightHidlEnvironment : public ::testing::Environment {
-public:
-    virtual void SetUp() {}
-    virtual void TearDown() {}
-};
-
 const static LightState kWhite = {
     .color = 0xFFFFFFFF,
     .flashMode = Flash::TIMED,
@@ -97,18 +72,47 @@ const static std::set<Type> kAllTypes = {
     Type::WIFI
 };
 
+class LightHidlTest : public ::testing::Test {
+public:
+    virtual void SetUp() override {
+        light = ILight::getService();
+
+        ASSERT_NE(light, nullptr);
+        LOG(INFO) << "Test is remote " << light->isRemote();
+
+        ASSERT_OK(light->getSupportedTypes([this](const hidl_vec<Type> &types) {
+            supportedTypes = types;
+        }));
+    }
+
+    sp<ILight> light;
+    std::vector<Type> supportedTypes;
+
+    virtual void TearDown() override {
+        for (const Type& type: supportedTypes) {
+            Return<Status> ret = light->setLight(type, kOff);
+            EXPECT_OK(ret);
+            EXPECT_EQ(Status::SUCCESS, static_cast<Status>(ret));
+        }
+
+        // must leave the device in a useable condition
+        if (std::find(supportedTypes.begin(),
+                      supportedTypes.end(),
+                      Type::BACKLIGHT) != supportedTypes.end()) {
+            Return<Status> ret = light->setLight(Type::BACKLIGHT, kWhite);
+            EXPECT_OK(ret);
+            EXPECT_EQ(Status::SUCCESS, static_cast<Status>(ret));
+        }
+    }
+
+};
+
 /**
  * Ensure all lights which are reported as supported work.
  */
 TEST_F(LightHidlTest, TestSupported) {
     for (const Type& type: supportedTypes) {
         Return<Status> ret = light->setLight(type, kWhite);
-        EXPECT_OK(ret);
-        EXPECT_EQ(Status::SUCCESS, static_cast<Status>(ret));
-    }
-
-    for (const Type& type: supportedTypes) {
-        Return<Status> ret = light->setLight(type, kOff);
         EXPECT_OK(ret);
         EXPECT_EQ(Status::SUCCESS, static_cast<Status>(ret));
     }
@@ -125,12 +129,6 @@ TEST_F(LightHidlTest, TestLowPersistance) {
         Status status = ret;
         EXPECT_TRUE(Status::SUCCESS == status ||
                     Status::BRIGHTNESS_NOT_SUPPORTED == status);
-    }
-
-    for (const Type& type: supportedTypes) {
-        Return<Status> ret = light->setLight(type, kOff);
-        EXPECT_OK(ret);
-        EXPECT_EQ(Status::SUCCESS, static_cast<Status>(ret));
     }
 }
 
@@ -151,7 +149,6 @@ TEST_F(LightHidlTest, TestUnsupported) {
 }
 
 int main(int argc, char **argv) {
-    ::testing::AddGlobalTestEnvironment(new LightHidlEnvironment);
     ::testing::InitGoogleTest(&argc, argv);
     int status = RUN_ALL_TESTS();
     LOG(INFO) << "Test result = " << status;
