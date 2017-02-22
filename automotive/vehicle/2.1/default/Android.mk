@@ -58,7 +58,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := $(vhal_v2_1)-service
 LOCAL_INIT_RC := $(vhal_v2_1)-service.rc
 LOCAL_MODULE_RELATIVE_PATH := hw
-
+LOCAL_PROPRIETARY_MODULE := true
 LOCAL_SRC_FILES := \
     service.cpp
 
