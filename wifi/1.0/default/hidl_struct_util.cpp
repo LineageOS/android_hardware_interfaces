@@ -306,21 +306,21 @@ bool convertLegacyGscanCapabilitiesToHidl(
   return true;
 }
 
-legacy_hal::wifi_band convertHidlGscanBandToLegacy(StaBackgroundScanBand band) {
+legacy_hal::wifi_band convertHidlWifiBandToLegacy(WifiBand band) {
   switch (band) {
-    case StaBackgroundScanBand::BAND_UNSPECIFIED:
+    case WifiBand::BAND_UNSPECIFIED:
       return legacy_hal::WIFI_BAND_UNSPECIFIED;
-    case StaBackgroundScanBand::BAND_24GHZ:
+    case WifiBand::BAND_24GHZ:
       return legacy_hal::WIFI_BAND_BG;
-    case StaBackgroundScanBand::BAND_5GHZ:
+    case WifiBand::BAND_5GHZ:
       return legacy_hal::WIFI_BAND_A;
-    case StaBackgroundScanBand::BAND_5GHZ_DFS:
+    case WifiBand::BAND_5GHZ_DFS:
       return legacy_hal::WIFI_BAND_A_DFS;
-    case StaBackgroundScanBand::BAND_5GHZ_WITH_DFS:
+    case WifiBand::BAND_5GHZ_WITH_DFS:
       return legacy_hal::WIFI_BAND_A_WITH_DFS;
-    case StaBackgroundScanBand::BAND_24GHZ_5GHZ:
+    case WifiBand::BAND_24GHZ_5GHZ:
       return legacy_hal::WIFI_BAND_ABG;
-    case StaBackgroundScanBand::BAND_24GHZ_5GHZ_WITH_DFS:
+    case WifiBand::BAND_24GHZ_5GHZ_WITH_DFS:
       return legacy_hal::WIFI_BAND_ABG_WITH_DFS;
   };
   CHECK(false);

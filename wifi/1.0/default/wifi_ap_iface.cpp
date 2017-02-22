@@ -17,6 +17,7 @@
 #include <android-base/logging.h>
 
 #include "hidl_return_util.h"
+#include "hidl_struct_util.h"
 #include "wifi_ap_iface.h"
 #include "wifi_status_util.h"
 
@@ -64,6 +65,15 @@ Return<void> WifiApIface::setCountryCode(const hidl_array<int8_t, 2>& code,
                          code);
 }
 
+Return<void> WifiApIface::getValidFrequenciesForBand(
+    WifiBand band, getValidFrequenciesForBand_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                         &WifiApIface::getValidFrequenciesForBandInternal,
+                         hidl_status_cb,
+                         band);
+}
+
 std::pair<WifiStatus, std::string> WifiApIface::getNameInternal() {
   return {createWifiStatus(WifiStatusCode::SUCCESS), ifname_};
 }
@@ -79,6 +89,16 @@ WifiStatus WifiApIface::setCountryCodeInternal(
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
+std::pair<WifiStatus, std::vector<WifiChannelInMhz>>
+WifiApIface::getValidFrequenciesForBandInternal(WifiBand band) {
+  static_assert(sizeof(WifiChannelInMhz) == sizeof(uint32_t), "Size mismatch");
+  legacy_hal::wifi_error legacy_status;
+  std::vector<uint32_t> valid_frequencies;
+  std::tie(legacy_status, valid_frequencies) =
+      legacy_hal_.lock()->getValidFrequenciesForBand(
+          hidl_struct_util::convertHidlWifiBandToLegacy(band));
+  return {createWifiStatusFromLegacyError(legacy_status), valid_frequencies};
+}
 }  // namespace implementation
 }  // namespace V1_0
 }  // namespace wifi

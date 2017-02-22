@@ -210,6 +210,37 @@ struct WifiRateInfo {
 };
 
 /**
+ * Wifi bands defined in 80211 spec.
+ */
+enum WifiBand : uint32_t {
+  BAND_UNSPECIFIED = 0,
+  /**
+   * 2.4 GHz.
+   */
+  BAND_24GHZ = 1,
+  /**
+   * 5 GHz without DFS.
+   */
+  BAND_5GHZ = 2,
+  /**
+   * 5 GHz DFS only.
+   */
+  BAND_5GHZ_DFS = 4,
+  /**
+   * 5 GHz with DFS.
+   */
+  BAND_5GHZ_WITH_DFS = 6,
+  /**
+   * 2.4 GHz + 5 GHz; no DFS.
+   */
+  BAND_24GHZ_5GHZ = 3,
+  /**
+   * 2.4 GHz + 5 GHz with DFS
+   */
+  BAND_24GHZ_5GHZ_WITH_DFS = 7
+};
+
+/**
  * STA specific types.
  * TODO(b/32159498): Move to a separate sta_types.hal.
  */
@@ -251,37 +282,6 @@ struct StaBackgroundScanCapabilities {
 };
 
 /**
- * Bands that can be specified in Background scan requests.
- */
-enum StaBackgroundScanBand : uint32_t {
-  BAND_UNSPECIFIED = 0,
-  /**
-   * 2.4 GHz.
-   */
-  BAND_24GHZ = 1,
-  /**
-   * 5 GHz without DFS.
-   */
-  BAND_5GHZ = 2,
-  /**
-   * 5 GHz DFS only.
-   */
-  BAND_5GHZ_DFS = 4,
-  /**
-   * 5 GHz with DFS.
-   */
-  BAND_5GHZ_WITH_DFS = 6,
-  /**
-   * 2.4 GHz + 5 GHz; no DFS.
-   */
-  BAND_24GHZ_5GHZ = 3,
-  /**
-   * 2.4 GHz + 5 GHz with DFS
-   */
-  BAND_24GHZ_5GHZ_WITH_DFS = 7
-};
-
-/**
  * Mask of event reporting schemes that can be specified in background scan
  * requests.
  */
@@ -311,12 +311,13 @@ enum StaBackgroundScanBucketEventReportSchemeMask : uint32_t {
  */
 struct StaBackgroundScanBucketParameters {
   /**
-   * Bands to scan or 0 if frequencies list must be used instead.
+   * Bands to scan or |BAND_UNSPECIFIED| if frequencies list must be used
+   * instead.
    */
-  StaBackgroundScanBand band;
+  WifiBand band;
   /**
    * Channel frequencies (in Mhz) to scan if |band| is set to
-   * |UNSPECIFIED|.
+   * |BAND_UNSPECIFIED|.
    */
   vec<WifiChannelInMhz> frequencies;
   /**

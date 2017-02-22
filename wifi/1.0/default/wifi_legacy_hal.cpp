@@ -562,7 +562,7 @@ wifi_error WifiLegacyHal::stopGscan(wifi_request_id id) {
 }
 
 std::pair<wifi_error, std::vector<uint32_t>>
-WifiLegacyHal::getValidFrequenciesForGscan(wifi_band band) {
+WifiLegacyHal::getValidFrequenciesForBand(wifi_band band) {
   static_assert(sizeof(uint32_t) >= sizeof(wifi_channel),
                 "Wifi Channel cannot be represented in output");
   std::vector<uint32_t> freqs;
