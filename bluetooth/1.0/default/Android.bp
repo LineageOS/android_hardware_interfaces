@@ -17,7 +17,6 @@ cc_library_shared {
     name: "android.hardware.bluetooth@1.0-impl",
     relative_install_path: "hw",
     srcs: [
-        "async_fd_watcher.cc",
         "bluetooth_hci.cc",
         "bluetooth_address.cc",
         "vendor_interface.cc",
@@ -33,12 +32,28 @@ cc_library_shared {
         "liblog",
         "libutils",
     ],
+    static_libs: [
+        "android.hardware.bluetooth-async",
+    ],
+}
+
+cc_library_static {
+    name: "android.hardware.bluetooth-async",
+    srcs: [
+        "async_fd_watcher.cc",
+    ],
+    export_include_dirs: ["."],
+    shared_libs: [
+        "libbase",
+        "libcutils",
+        "liblog",
+        "libutils",
+    ],
 }
 
 cc_test {
     name: "bluetooth-vendor-interface-unit-tests",
     srcs: [
-        "async_fd_watcher.cc",
         "test/async_fd_watcher_unittest.cc",
     ],
     local_include_dirs: [
@@ -47,6 +62,9 @@ cc_test {
     shared_libs: [
         "libbase",
         "liblog",
+    ],
+    static_libs: [
+        "android.hardware.bluetooth-async",
     ],
 }
 
