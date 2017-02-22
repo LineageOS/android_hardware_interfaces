@@ -33,6 +33,8 @@ namespace bluetooth {
 namespace V1_0 {
 namespace implementation {
 
+using android::hardware::bluetooth::async::AsyncFdWatcher;
+
 class AsyncFdWatcherSocketTest : public ::testing::Test {
  public:
   static const uint16_t kPort = 6111;
