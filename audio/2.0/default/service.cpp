@@ -40,7 +40,7 @@ int main(int /* argc */, char* /* argv */ []) {
     android::status_t status;
     status = registerPassthroughServiceImplementation<IDevicesFactory>();
     LOG_ALWAYS_FATAL_IF(status != OK, "Error while registering audio service: %d", status);
-    status = registerPassthroughServiceImplementation<IEffectsFactory>("audio_effects_factory");
+    status = registerPassthroughServiceImplementation<IEffectsFactory>();
     LOG_ALWAYS_FATAL_IF(status != OK, "Error while registering audio effects service: %d", status);
     // Soundtrigger and FM radio might be not present.
     status = registerPassthroughServiceImplementation<ISoundTriggerHw>("sound_trigger.primary");

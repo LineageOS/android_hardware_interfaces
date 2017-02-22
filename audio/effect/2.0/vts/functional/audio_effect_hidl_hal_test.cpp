@@ -38,7 +38,7 @@ using ::android::sp;
 class AudioEffectHidlTest : public ::testing::Test {
  public:
   virtual void SetUp() override {
-    effectsFactory = IEffectsFactory::getService("audio_effects_factory");
+    effectsFactory = IEffectsFactory::getService();
     ASSERT_NE(effectsFactory, nullptr);
   }
 
