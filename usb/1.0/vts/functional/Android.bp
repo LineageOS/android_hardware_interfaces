@@ -15,9 +15,9 @@
 //
 
 cc_test {
-    name: "usb_hidl_hal_test",
+    name: "VtsHalUsbV1_0TargetTest",
     gtest: true,
-    srcs: ["usb_hidl_hal_test.cpp"],
+    srcs: ["VtsHalUsbV1_0TargetTest.cpp"],
     shared_libs: [
         "libbase",
         "liblog",
