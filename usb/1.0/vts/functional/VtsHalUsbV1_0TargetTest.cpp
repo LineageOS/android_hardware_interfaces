@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "usb_hidl_hal_test"
+#define LOG_TAG "VtsHalUsbV1_0TargetTest"
 #include <android-base/logging.h>
 
 #include <android/hardware/usb/1.0/IUsb.h>
