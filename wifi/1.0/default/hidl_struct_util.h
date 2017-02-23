@@ -60,7 +60,7 @@ bool convertLegacyApfCapabilitiesToHidl(
 bool convertLegacyGscanCapabilitiesToHidl(
     const legacy_hal::wifi_gscan_capabilities& legacy_caps,
     StaBackgroundScanCapabilities* hidl_caps);
-legacy_hal::wifi_band convertHidlGscanBandToLegacy(StaBackgroundScanBand band);
+legacy_hal::wifi_band convertHidlWifiBandToLegacy(WifiBand band);
 bool convertHidlGscanParamsToLegacy(
     const StaBackgroundScanParameters& hidl_scan_params,
     legacy_hal::wifi_scan_cmd_params* legacy_scan_params);
