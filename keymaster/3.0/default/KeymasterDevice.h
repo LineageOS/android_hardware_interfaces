@@ -44,9 +44,11 @@ using ::android::sp;
 
 class KeymasterDevice : public IKeymasterDevice {
   public:
-    KeymasterDevice(keymaster2_device_t* dev, uint32_t hardware_version, bool hardware_supports_ec)
+    KeymasterDevice(keymaster2_device_t* dev, uint32_t hardware_version, bool hardware_supports_ec,
+                    bool hardware_supports_all_digests)
         : keymaster_device_(dev), hardware_version_(hardware_version),
-          hardware_supports_ec_(hardware_supports_ec) {}
+          hardware_supports_ec_(hardware_supports_ec),
+          hardware_supports_all_digests_(hardware_supports_all_digests) {}
     virtual ~KeymasterDevice();
 
     // Methods from ::android::hardware::keymaster::V3_0::IKeymasterDevice follow.
@@ -85,6 +87,7 @@ class KeymasterDevice : public IKeymasterDevice {
     keymaster2_device_t* keymaster_device_;
     uint32_t hardware_version_;
     bool hardware_supports_ec_;
+    bool hardware_supports_all_digests_;
 };
 
 extern "C" IKeymasterDevice* HIDL_FETCH_IKeymasterDevice(const char* name);

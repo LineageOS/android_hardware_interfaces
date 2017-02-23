@@ -43,10 +43,20 @@ interface IKeymasterDevice {
      *             key attestation certificates, signed with a key injected in a secure
      *             environment. CDD requires that all devices initially launched with Android O or
      *             later must support hardware attestation.
+     *
+     * @return supportsAllDigests is true if the hardware supports all keymaster digest functions,
+     *             namely ND-5, SHA-1, SHA-224, SHA-256, SHA-384 and SHA-512. CDD requires that all
+     *             devices launched initially with Android O or later must support all digests.
+     *
+     * @return keymasterName is the name of the keymaster implementation.
+     *
+     * @return keymasterAuthorName is the name of the author of the keymaster implementation
+     *             (generally this should be the name of an organization, not an individual.)
      */
     getHardwareFeatures()
-        generates(bool isSecure, bool supportsEllipticCurve,
-                  bool supportsSymmetricCryptography, bool supportsAttestation);
+        generates(bool isSecure, bool supportsEllipticCurve, bool supportsSymmetricCryptography,
+                  bool supportsAttestation, bool supportsAllDigests, string keymasterName,
+                  string keymasterAuthorName);
 
     /**
      * Adds entropy to the RNG used by keymaster. Entropy added through this method is guaranteed

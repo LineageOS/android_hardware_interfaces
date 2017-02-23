@@ -102,7 +102,8 @@ err:
     return rc;
 }
 
-static int keymaster1_device_initialize(const hw_module_t* mod, keymaster2_device_t** dev) {
+static int keymaster1_device_initialize(const hw_module_t* mod, keymaster2_device_t** dev,
+                                        bool* supports_all_digests) {
     assert(mod->module_api_version >= KEYMASTER_MODULE_API_VERSION_1_0);
     ALOGI("Found keymaster1 module %s, version %x", mod->name, mod->module_api_version);
 
@@ -126,6 +127,7 @@ static int keymaster1_device_initialize(const hw_module_t* mod, keymaster2_devic
     }
 
     // SoftKeymasterDevice will be deleted by keymaster_device_release()
+    *supports_all_digests = soft_keymaster->supports_all_digests();
     *dev = soft_keymaster.release()->keymaster2_device();
     return 0;
 
@@ -157,7 +159,7 @@ err:
 }
 
 static int keymaster_device_initialize(keymaster2_device_t** dev, uint32_t* version,
-                                       bool* supports_ec) {
+                                       bool* supports_ec, bool* supports_all_digests) {
     const hw_module_t* mod;
 
     *supports_ec = true;
@@ -173,6 +175,7 @@ static int keymaster_device_initialize(keymaster2_device_t** dev, uint32_t* vers
 
     if (mod->module_api_version < KEYMASTER_MODULE_API_VERSION_1_0) {
         *version = 0;
+        *supports_all_digests = false;
         int rc = keymaster0_device_initialize(mod, dev);
         if (rc == 0 && ((*dev)->flags & KEYMASTER_SUPPORTS_EC) == 0) {
             *supports_ec = false;
@@ -180,9 +183,10 @@ static int keymaster_device_initialize(keymaster2_device_t** dev, uint32_t* vers
         return rc;
     } else if (mod->module_api_version == KEYMASTER_MODULE_API_VERSION_1_0) {
         *version = 1;
-        return keymaster1_device_initialize(mod, dev);
+        return keymaster1_device_initialize(mod, dev, supports_all_digests);
     } else {
         *version = 2;
+        *supports_all_digests = true;
         return keymaster2_device_initialize(mod, dev);
     }
 }
@@ -353,7 +357,7 @@ static inline hidl_vec<KeyParameter> kmParamSet2Hidl(const keymaster_key_param_s
 
 // Methods from ::android::hardware::keymaster::V3_0::IKeymasterDevice follow.
 Return<void> KeymasterDevice::getHardwareFeatures(getHardwareFeatures_cb _hidl_cb) {
-    bool is_secure = false;
+    bool is_secure = !(keymaster_device_->flags & KEYMASTER_SOFTWARE_ONLY);
     bool supports_symmetric_cryptography = false;
     bool supports_attestation = false;
 
@@ -363,14 +367,12 @@ Return<void> KeymasterDevice::getHardwareFeatures(getHardwareFeatures_cb _hidl_c
     /* Falls through */
     case 1:
         supports_symmetric_cryptography = true;
-    /* Falls through */
-    case 0:
-        is_secure = true;
         break;
     };
 
     _hidl_cb(is_secure, hardware_supports_ec_, supports_symmetric_cryptography,
-             supports_attestation);
+             supports_attestation, hardware_supports_all_digests_,
+             keymaster_device_->common.module->name, keymaster_device_->common.module->author);
     return Void();
 }
 
@@ -519,21 +521,19 @@ Return<void> KeymasterDevice::attestKey(const hidl_vec<uint8_t>& keyToAttest,
 
     for (size_t i = 0; i < attestParams.size(); ++i) {
         switch (attestParams[i].tag) {
-            case Tag::ATTESTATION_ID_BRAND:
-            case Tag::ATTESTATION_ID_DEVICE:
-            case Tag::ATTESTATION_ID_PRODUCT:
-            case Tag::ATTESTATION_ID_SERIAL:
-            case Tag::ATTESTATION_ID_IMEI:
-            case Tag::ATTESTATION_ID_MEID:
-            case Tag::ATTESTATION_ID_MANUFACTURER:
-            case Tag::ATTESTATION_ID_MODEL:
-                // Device id attestation may only be supported if the device is able to permanently
-                // destroy its knowledge of the ids. This device is unable to do this, so it must
-                // never perform any device id attestation.
-                _hidl_cb(ErrorCode::CANNOT_ATTEST_IDS, resultCertChain);
-                return Void();
-            default:
-                break;
+        case Tag::ATTESTATION_ID_BRAND:
+        case Tag::ATTESTATION_ID_DEVICE:
+        case Tag::ATTESTATION_ID_PRODUCT:
+        case Tag::ATTESTATION_ID_SERIAL:
+        case Tag::ATTESTATION_ID_IMEI:
+        case Tag::ATTESTATION_ID_MEID:
+            // Device id attestation may only be supported if the device is able to permanently
+            // destroy its knowledge of the ids. This device is unable to do this, so it must
+            // never perform any device id attestation.
+            _hidl_cb(ErrorCode::CANNOT_ATTEST_IDS, resultCertChain);
+            return Void();
+        default:
+            break;
         }
     }
 
@@ -703,7 +703,8 @@ IKeymasterDevice* HIDL_FETCH_IKeymasterDevice(const char* /* name */) {
 
     uint32_t version;
     bool supports_ec;
-    auto rc = keymaster_device_initialize(&dev, &version, &supports_ec);
+    bool supports_all_digests;
+    auto rc = keymaster_device_initialize(&dev, &version, &supports_ec, &supports_all_digests);
     if (rc) return nullptr;
 
     auto kmrc = ::keymaster::ConfigureDevice(dev);
@@ -712,7 +713,7 @@ IKeymasterDevice* HIDL_FETCH_IKeymasterDevice(const char* /* name */) {
         return nullptr;
     }
 
-    return new KeymasterDevice(dev, version, supports_ec);
+    return new KeymasterDevice(dev, version, supports_ec, supports_all_digests);
 }
 
 }  // namespace implementation
