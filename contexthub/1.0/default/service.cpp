@@ -23,5 +23,5 @@ using android::hardware::contexthub::V1_0::IContexthub;
 using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
-    return defaultPassthroughServiceImplementation<IContexthub>("context_hub");
+    return defaultPassthroughServiceImplementation<IContexthub>();
 }
