@@ -1010,22 +1010,12 @@ struct NanDiscoveryCommonConfig {
   bool securityEnabledInNdp;
   /**
    * Specifies whether or not there is a ranging requirement in this discovery session.
-   * Ranging is only performed if all other match criteria with the peer are met.
+   * Ranging is only performed if all other match criteria with the peer are met. Ranging must
+   * be performed if both peers in the discovery session (publisher and subscriber) set this
+   * flag to true. Otherwise, if either peer sets this flag to false, ranging must not be performed
+   * and must not impact discovery decisions.
    * Note: specifying that ranging is required also implies that this device must automatically
    * accept ranging requests from peers.
-   *   Solicited Publisher + Passive Subscriber:
-   *     Publisher/Subscriber:
-   *     true/true: ranging performed.
-   *     true/false: subscriber doesn't require ranging (match if all other criteria met). I.e.
-   *                 publisher requiring range doesn't gate subscriber matching.
-   *     false/true: subscriber tries ranging but publisher refuses (no match).
-   *     false/false: ranging isn't attempted and doesn't impact match.
-   *   Unsolicited Publisher + Active Subscriber:
-   *     Publisher/Subscriber:
-   *     true/true: ranging performed.
-   *     true/false: publisher attempts ranging but subscriber doesn't allow - no match.
-   *     false/true: publisher doesn't attempt ranging, should not impact match.
-   *     false/false: ranging isn't attempted and doesn't impact match.
    * NAN Spec: Service Discovery Extension Attribute (SDEA) / Control / Ranging Require.
    */
   bool rangingRequired;
