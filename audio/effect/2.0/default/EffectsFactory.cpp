@@ -95,7 +95,7 @@ restart:
     status = EffectQueryNumberEffects(&numEffects);
     if (status != OK) {
         retval = Result::NOT_INITIALIZED;
-        ALOGW("Error querying number of effects: %s", strerror(-status));
+        ALOGE("Error querying number of effects: %s", strerror(-status));
         goto exit;
     }
     result.resize(numEffects);
@@ -105,7 +105,7 @@ restart:
         if (status == OK) {
             effectDescriptorFromHal(halDescriptor, &result[i]);
         } else {
-            ALOGW("Error querying effect at position %d / %d: %s",
+            ALOGE("Error querying effect at position %d / %d: %s",
                     i, numEffects, strerror(-status));
             switch (status) {
                 case -ENOSYS: {
@@ -139,7 +139,7 @@ Return<void> EffectsFactory::getDescriptor(const Uuid& uid, getDescriptor_cb _hi
     effectDescriptorFromHal(halDescriptor, &descriptor);
     Result retval(Result::OK);
     if (status != OK) {
-        ALOGW("Error querying effect descriptor for %s: %s",
+        ALOGE("Error querying effect descriptor for %s: %s",
                 uuidToString(halUuid).c_str(), strerror(-status));
         if (status == -ENOENT) {
             retval = Result::INVALID_ARGUMENTS;
@@ -168,11 +168,13 @@ Return<void> EffectsFactory::createEffect(
             effect = dispatchEffectInstanceCreation(halDescriptor, handle);
             effectId = EffectMap::getInstance().add(handle);
         } else {
+            ALOGE("Error querying effect descriptor for %s: %s",
+                    uuidToString(halUuid).c_str(), strerror(-status));
             EffectRelease(handle);
         }
     }
     if (status != OK) {
-        ALOGW("Error creating effect %s: %s", uuidToString(halUuid).c_str(), strerror(-status));
+        ALOGE("Error creating effect %s: %s", uuidToString(halUuid).c_str(), strerror(-status));
         if (status == -ENOENT) {
             retval = Result::INVALID_ARGUMENTS;
         } else {

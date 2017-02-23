@@ -60,6 +60,8 @@ using ::android::sp;
 
 struct Effect : public IEffect {
     typedef MessageQueue<Result, kSynchronizedReadWrite> StatusMQ;
+    using GetParameterSuccessCallback =
+            std::function<void(uint32_t valueSize, const void* valueData)>;
 
     explicit Effect(effect_handle_t handle);
 
@@ -163,6 +165,22 @@ struct Effect : public IEffect {
         return setParameterImpl(sizeof(params), params, sizeof(T), &paramValue);
     }
 
+    Result getParameterImpl(
+            uint32_t paramSize,
+            const void* paramData,
+            uint32_t valueSize,
+            GetParameterSuccessCallback onSuccess) {
+        return getParameterImpl(paramSize, paramData, valueSize, valueSize, onSuccess);
+    }
+    Result getParameterImpl(
+            uint32_t paramSize,
+            const void* paramData,
+            uint32_t requestValueSize,
+            uint32_t replyValueSize,
+            GetParameterSuccessCallback onSuccess);
+    Result setParameterImpl(
+            uint32_t paramSize, const void* paramData, uint32_t valueSize, const void* valueData);
+
   private:
     friend struct VirtualizerEffect;  // for getParameterImpl
     friend struct VisualizerEffect;   // to allow executing commands
@@ -170,8 +188,6 @@ struct Effect : public IEffect {
     using CommandSuccessCallback = std::function<void()>;
     using GetConfigCallback = std::function<void(Result retval, const EffectConfig& config)>;
     using GetCurrentConfigSuccessCallback = std::function<void(void* configData)>;
-    using GetParameterSuccessCallback =
-            std::function<void(uint32_t valueSize, const void* valueData)>;
     using GetSupportedConfigsSuccessCallback =
             std::function<void(uint32_t supportedConfigs, void* configsData)>;
 
@@ -220,11 +236,6 @@ struct Effect : public IEffect {
     void getConfigImpl(int commandCode, const char* commandName, GetConfigCallback cb);
     Result getCurrentConfigImpl(
             uint32_t featureId, uint32_t configSize, GetCurrentConfigSuccessCallback onSuccess);
-    Result getParameterImpl(
-            uint32_t paramSize,
-            const void* paramData,
-            uint32_t valueSize,
-            GetParameterSuccessCallback onSuccess);
     Result getSupportedConfigsImpl(
             uint32_t featureId,
             uint32_t maxConfigs,
@@ -252,8 +263,6 @@ struct Effect : public IEffect {
             const EffectConfig& config,
             const sp<IEffectBufferProviderCallback>& inputBufferProvider,
             const sp<IEffectBufferProviderCallback>& outputBufferProvider);
-    Result setParameterImpl(
-            uint32_t paramSize, const void* paramData, uint32_t valueSize, const void* valueData);
 };
 
 }  // namespace implementation

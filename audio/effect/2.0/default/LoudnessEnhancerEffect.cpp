@@ -182,7 +182,18 @@ Return<Result> LoudnessEnhancerEffect::setTargetGain(int32_t targetGainMb)  {
 }
 
 Return<void> LoudnessEnhancerEffect::getTargetGain(getTargetGain_cb _hidl_cb)  {
-    return mEffect->getIntegerParam(LOUDNESS_ENHANCER_DEFAULT_TARGET_GAIN_MB, _hidl_cb);
+    // AOSP Loudness Enhancer expects the size of the request to not include the
+    // size of the parameter.
+    uint32_t paramId = LOUDNESS_ENHANCER_DEFAULT_TARGET_GAIN_MB;
+    uint32_t targetGainMb = 0;
+    Result retval = mEffect->getParameterImpl(
+            sizeof(paramId), &paramId,
+            0, sizeof(targetGainMb),
+            [&] (uint32_t, const void* valueData) {
+                memcpy(&targetGainMb, valueData, sizeof(targetGainMb));
+            });
+    _hidl_cb(retval, targetGainMb);
+    return Void();
 }
 
 } // namespace implementation

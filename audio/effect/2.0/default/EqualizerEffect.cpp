@@ -35,10 +35,15 @@ EqualizerEffect::EqualizerEffect(effect_handle_t handle)
 EqualizerEffect::~EqualizerEffect() {}
 
 void EqualizerEffect::propertiesFromHal(
-        t_equalizer_settings& halProperties,
+        const t_equalizer_settings& halProperties,
         IEqualizerEffect::AllProperties* properties) {
     properties->curPreset = halProperties.curPreset;
-    properties->bandLevels.setToExternal(&halProperties.bandLevels[0], halProperties.numBands);
+    // t_equalizer_settings incorrectly defines bandLevels as uint16_t,
+    // whereas the actual type of values used by effects is int16_t.
+    const int16_t* signedBandLevels =
+            reinterpret_cast<const int16_t*>(&halProperties.bandLevels[0]);
+    properties->bandLevels.setToExternal(
+            const_cast<int16_t*>(signedBandLevels), halProperties.numBands);
 }
 
 std::vector<uint8_t> EqualizerEffect::propertiesToHal(
@@ -200,18 +205,18 @@ Return<void> EqualizerEffect::getNumBands(getNumBands_cb _hidl_cb)  {
 }
 
 Return<void> EqualizerEffect::getLevelRange(getLevelRange_cb _hidl_cb)  {
-    uint16_t halLevels[2] = { 0, 0 };
+    int16_t halLevels[2] = { 0, 0 };
     Result retval = mEffect->getParam(EQ_PARAM_LEVEL_RANGE, halLevels);
     _hidl_cb(retval, halLevels[0], halLevels[1]);
     return Void();
 }
 
-Return<Result> EqualizerEffect::setBandLevel(uint16_t band, uint16_t level)  {
+Return<Result> EqualizerEffect::setBandLevel(uint16_t band, int16_t level)  {
     return mEffect->setParam(EQ_PARAM_BAND_LEVEL, band, level);
 }
 
 Return<void> EqualizerEffect::getBandLevel(uint16_t band, getBandLevel_cb _hidl_cb)  {
-    uint16_t halLevel = 0;
+    int16_t halLevel = 0;
     Result retval = mEffect->getParam(EQ_PARAM_BAND_LEVEL, band, halLevel);
     _hidl_cb(retval, halLevel);
     return Void();
@@ -272,14 +277,28 @@ Return<Result> EqualizerEffect::setAllProperties(
         const IEqualizerEffect::AllProperties& properties)  {
     t_equalizer_settings *halPropertiesPtr = nullptr;
     std::vector<uint8_t> halBuffer = propertiesToHal(properties, &halPropertiesPtr);
-    return mEffect->setParam(EQ_PARAM_PROPERTIES, *halPropertiesPtr);
+    uint32_t paramId = EQ_PARAM_PROPERTIES;
+    return mEffect->setParameterImpl(
+            sizeof(paramId), &paramId, halBuffer.size(), halPropertiesPtr);
 }
 
 Return<void> EqualizerEffect::getAllProperties(getAllProperties_cb _hidl_cb)  {
-    t_equalizer_settings halProperties;
-    Result retval = mEffect->getParam(EQ_PARAM_PROPERTIES, halProperties);
+    uint16_t numBands = 0;
+    Result retval = mEffect->getParam(EQ_PARAM_NUM_BANDS, numBands);
     AllProperties properties;
-    propertiesFromHal(halProperties, &properties);
+    if (retval != Result::OK) {
+        _hidl_cb(retval, properties);
+        return Void();
+    }
+    size_t valueSize = sizeof(t_equalizer_settings) + sizeof(int16_t) * numBands;
+    uint32_t paramId = EQ_PARAM_PROPERTIES;
+    retval = mEffect->getParameterImpl(
+            sizeof(paramId), &paramId, valueSize,
+            [&] (uint32_t, const void* valueData) {
+                const t_equalizer_settings* halProperties =
+                        reinterpret_cast<const t_equalizer_settings*>(valueData);
+                propertiesFromHal(*halProperties, &properties);
+            });
     _hidl_cb(retval, properties);
     return Void();
 }
