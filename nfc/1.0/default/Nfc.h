@@ -19,6 +19,16 @@ using ::android::hardware::hidl_vec;
 using ::android::hardware::hidl_string;
 using ::android::sp;
 
+struct NfcDeathRecipient : hidl_death_recipient {
+    NfcDeathRecipient(const sp<INfc> nfc) : mNfc(nfc) {
+    }
+
+    virtual void serviceDied(uint64_t /*cookie*/, const wp<::android::hidl::base::V1_0::IBase>& /*who*/) {
+        mNfc->close();
+    }
+    sp<INfc> mNfc;
+};
+
 struct Nfc : public INfc {
   Nfc(nfc_nci_device_t* device);
   ::android::hardware::Return<NfcStatus> open(const sp<INfcClientCallback>& clientCallback)  override;
@@ -31,21 +41,28 @@ struct Nfc : public INfc {
 
   static void eventCallback(uint8_t event, uint8_t status) {
       if (mCallback != nullptr) {
-          mCallback->sendEvent(
+          auto ret = mCallback->sendEvent(
                   (::android::hardware::nfc::V1_0::NfcEvent) event,
                   (::android::hardware::nfc::V1_0::NfcStatus) status);
+          if (!ret.isOk()) {
+              ALOGW("Failed to call back into NFC process.");
+          }
       }
   }
   static void dataCallback(uint16_t data_len, uint8_t* p_data) {
       hidl_vec<uint8_t> data;
       data.setToExternal(p_data, data_len);
       if (mCallback != nullptr) {
-          mCallback->sendData(data);
+          auto ret = mCallback->sendData(data);
+          if (!ret.isOk()) {
+              ALOGW("Failed to call back into NFC process.");
+          }
       }
   }
   private:
     static sp<INfcClientCallback> mCallback;
     const nfc_nci_device_t*       mDevice;
+    sp<NfcDeathRecipient>         mDeathRecipient;
 };
 
 extern "C" INfc* HIDL_FETCH_INfc(const char* name);
