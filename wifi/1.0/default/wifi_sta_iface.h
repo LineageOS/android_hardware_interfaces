@@ -57,9 +57,8 @@ class WifiStaIface : public IWifiStaIface {
       installApfPacketFilter_cb hidl_status_cb) override;
   Return<void> getBackgroundScanCapabilities(
       getBackgroundScanCapabilities_cb hidl_status_cb) override;
-  Return<void> getValidFrequenciesForBackgroundScan(
-      StaBackgroundScanBand band,
-      getValidFrequenciesForBackgroundScan_cb hidl_status_cb) override;
+  Return<void> getValidFrequenciesForBand(
+      WifiBand band, getValidFrequenciesForBand_cb hidl_status_cb) override;
   Return<void> startBackgroundScan(
       uint32_t cmd_id,
       const StaBackgroundScanParameters& params,
@@ -119,7 +118,7 @@ class WifiStaIface : public IWifiStaIface {
   std::pair<WifiStatus, StaBackgroundScanCapabilities>
   getBackgroundScanCapabilitiesInternal();
   std::pair<WifiStatus, std::vector<WifiChannelInMhz>>
-  getValidFrequenciesForBackgroundScanInternal(StaBackgroundScanBand band);
+  getValidFrequenciesForBandInternal(WifiBand band);
   WifiStatus startBackgroundScanInternal(
       uint32_t cmd_id, const StaBackgroundScanParameters& params);
   WifiStatus stopBackgroundScanInternal(uint32_t cmd_id);

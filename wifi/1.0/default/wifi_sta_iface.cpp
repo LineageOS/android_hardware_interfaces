@@ -106,15 +106,13 @@ Return<void> WifiStaIface::getBackgroundScanCapabilities(
                          hidl_status_cb);
 }
 
-Return<void> WifiStaIface::getValidFrequenciesForBackgroundScan(
-    StaBackgroundScanBand band,
-    getValidFrequenciesForBackgroundScan_cb hidl_status_cb) {
-  return validateAndCall(
-      this,
-      WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
-      &WifiStaIface::getValidFrequenciesForBackgroundScanInternal,
-      hidl_status_cb,
-      band);
+Return<void> WifiStaIface::getValidFrequenciesForBand(
+    WifiBand band, getValidFrequenciesForBand_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                         &WifiStaIface::getValidFrequenciesForBandInternal,
+                         hidl_status_cb,
+                         band);
 }
 
 Return<void> WifiStaIface::startBackgroundScan(
@@ -363,14 +361,13 @@ WifiStaIface::getBackgroundScanCapabilitiesInternal() {
 }
 
 std::pair<WifiStatus, std::vector<WifiChannelInMhz>>
-WifiStaIface::getValidFrequenciesForBackgroundScanInternal(
-    StaBackgroundScanBand band) {
+WifiStaIface::getValidFrequenciesForBandInternal(WifiBand band) {
   static_assert(sizeof(WifiChannelInMhz) == sizeof(uint32_t), "Size mismatch");
   legacy_hal::wifi_error legacy_status;
   std::vector<uint32_t> valid_frequencies;
   std::tie(legacy_status, valid_frequencies) =
-      legacy_hal_.lock()->getValidFrequenciesForGscan(
-          hidl_struct_util::convertHidlGscanBandToLegacy(band));
+      legacy_hal_.lock()->getValidFrequenciesForBand(
+          hidl_struct_util::convertHidlWifiBandToLegacy(band));
   return {createWifiStatusFromLegacyError(legacy_status), valid_frequencies};
 }
 

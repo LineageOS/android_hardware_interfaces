@@ -180,7 +180,6 @@ interface IWifiStaIface extends IWifiIface {
    * for the provided band. These channels may be specifed in the
    * |BackgroundScanBucketParameters.frequenciesInMhz| for a background scan
    * request.
-   * Must fail if |StaIfaceCapabilityMask.BACKGROUND_SCAN| is not set.
    *
    * @param band Band for which the frequency list is being generated.
    * @return status WifiStatus of the operation.
@@ -192,7 +191,7 @@ interface IWifiStaIface extends IWifiIface {
    *         |WifiStatusCode.ERROR_UNKNOWN|
    * @return frequencies vector of valid frequencies for the provided band.
    */
-  getValidFrequenciesForBackgroundScan(StaBackgroundScanBand band)
+  getValidFrequenciesForBand(WifiBand band)
       generates (WifiStatus status, vec<WifiChannelInMhz> frequencies);
 
   /**
