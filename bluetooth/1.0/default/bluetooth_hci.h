@@ -30,8 +30,20 @@ namespace implementation {
 using ::android::hardware::Return;
 using ::android::hardware::hidl_vec;
 
+struct BluetoothDeathRecipient : hidl_death_recipient {
+  BluetoothDeathRecipient(const sp<IBluetoothHci> hci) : mHci(hci) {}
+
+  virtual void serviceDied(
+      uint64_t /*cookie*/,
+      const wp<::android::hidl::base::V1_0::IBase>& /*who*/) {
+    mHci->close();
+  }
+  sp<IBluetoothHci> mHci;
+};
+
 class BluetoothHci : public IBluetoothHci {
  public:
+  BluetoothHci();
   Return<void> initialize(
       const ::android::sp<IBluetoothHciCallbacks>& cb) override;
   Return<void> sendHciCommand(const hidl_vec<uint8_t>& packet) override;
@@ -42,6 +54,7 @@ class BluetoothHci : public IBluetoothHci {
  private:
   void sendDataToController(const uint8_t type, const hidl_vec<uint8_t>& data);
   ::android::sp<IBluetoothHciCallbacks> event_cb_;
+  ::android::sp<BluetoothDeathRecipient> deathRecipient;
 };
 
 extern "C" IBluetoothHci* HIDL_FETCH_IBluetoothHci(const char* name);
