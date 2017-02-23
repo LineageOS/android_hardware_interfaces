@@ -23,7 +23,6 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := $(vhal_v2_0)-manager-lib
 LOCAL_SRC_FILES := \
     common/src/AccessControlConfigParser.cpp \
-    common/src/Obd2SensorStore.cpp \
     common/src/SubscriptionManager.cpp \
     common/src/VehicleHalManager.cpp \
     common/src/VehicleObjectPool.cpp \
@@ -114,7 +113,6 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
 
 LOCAL_SRC_FILES:= \
     tests/AccessControlConfigParser_test.cpp \
-    tests/Obd2SensorStore_test.cpp \
     tests/SubscriptionManager_test.cpp \
     tests/VehicleHalManager_test.cpp \
     tests/VehicleObjectPool_test.cpp \

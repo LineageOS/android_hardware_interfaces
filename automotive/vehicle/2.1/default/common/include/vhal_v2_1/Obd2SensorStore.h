@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-#ifndef android_hardware_automotive_vehicle_V2_0_Obd2SensorStore_H_
-#define android_hardware_automotive_vehicle_V2_0_Obd2SensorStore_H_
+#ifndef android_hardware_automotive_vehicle_V2_1_Obd2SensorStore_H_
+#define android_hardware_automotive_vehicle_V2_1_Obd2SensorStore_H_
 
 #include <vector>
 
-#include "VehicleHal.h"
+#include <android/hardware/automotive/vehicle/2.1/types.h>
 
 namespace android {
 namespace hardware {
 namespace automotive {
 namespace vehicle {
-namespace V2_0 {
+namespace V2_1 {
 
 // This class wraps all the logic required to create an OBD2 frame.
 // It allows storing sensor values, setting appropriate bitmasks as needed,
@@ -38,14 +38,14 @@ public:
                     size_t numVendorFloatSensors);
 
     // Stores an integer-valued sensor.
-    StatusCode setIntegerSensor(Obd2IntegerSensorIndex index, int32_t value);
+    V2_0::StatusCode setIntegerSensor(Obd2IntegerSensorIndex index, int32_t value);
     // Stores an integer-valued sensor.
-    StatusCode setIntegerSensor(size_t index, int32_t value);
+    V2_0::StatusCode setIntegerSensor(size_t index, int32_t value);
 
     // Stores a float-valued sensor.
-    StatusCode setFloatSensor(Obd2FloatSensorIndex index, float value);
+    V2_0::StatusCode setFloatSensor(Obd2FloatSensorIndex index, float value);
     // Stores a float-valued sensor.
-    StatusCode setFloatSensor(size_t index, float value);
+    V2_0::StatusCode setFloatSensor(size_t index, float value);
 
     // Returns a vector that contains all integer sensors stored.
     const std::vector<int32_t>& getIntegerSensors() const;
@@ -55,7 +55,7 @@ public:
     const std::vector<uint8_t>& getSensorsBitmask() const;
 
     // Given a stringValue, fill in a VehiclePropValue
-    void fillPropValue(VehiclePropValue *propValue,
+    void fillPropValue(V2_0::VehiclePropValue *propValue,
             std::string dtc) const;
 
 private:
@@ -77,7 +77,7 @@ private:
     BitmaskInVector mSensorsBitmask;
 };
 
-}  // namespace V2_0
+}  // namespace V2_1
 }  // namespace vehicle
 }  // namespace automotive
 }  // namespace hardware

@@ -160,32 +160,6 @@ const VehiclePropConfig kVehicleProperties[] = {
         .prop = toInt(VehicleProperty::IGNITION_STATE),
         .access = VehiclePropertyAccess::READ,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-    },
-
-    {
-        .prop = toInt(VehicleProperty::OBD2_LIVE_FRAME),
-        .access = VehiclePropertyAccess::READ,
-        .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-        .configArray = {0,0}
-    },
-
-    {
-        .prop = toInt(VehicleProperty::OBD2_FREEZE_FRAME),
-        .access = VehiclePropertyAccess::READ,
-        .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-        .configArray = {0,0}
-    },
-
-    {
-        .prop = toInt(VehicleProperty::OBD2_FREEZE_FRAME_INFO),
-        .access = VehiclePropertyAccess::READ,
-        .changeMode = VehiclePropertyChangeMode::ON_CHANGE
-    },
-
-    {
-        .prop = toInt(VehicleProperty::OBD2_FREEZE_FRAME_CLEAR),
-        .access = VehiclePropertyAccess::WRITE,
-        .changeMode = VehiclePropertyChangeMode::ON_CHANGE
     }
 };
 

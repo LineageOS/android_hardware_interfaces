@@ -33,6 +33,32 @@ const V2_0::VehiclePropConfig kVehicleProperties[] = {
         .prop = V2_0::toInt(V2_1::VehicleProperty::WHEEL_TICK),
         .access = V2_0::VehiclePropertyAccess::READ,
         .changeMode = V2_0::VehiclePropertyChangeMode::CONTINUOUS,
+    },
+
+    {
+        .prop = V2_0::toInt(V2_1::VehicleProperty::OBD2_LIVE_FRAME),
+        .access = V2_0::VehiclePropertyAccess::READ,
+        .changeMode = V2_0::VehiclePropertyChangeMode::ON_CHANGE,
+        .configArray = {0,0}
+    },
+
+    {
+        .prop = V2_0::toInt(V2_1::VehicleProperty::OBD2_FREEZE_FRAME),
+        .access = V2_0::VehiclePropertyAccess::READ,
+        .changeMode = V2_0::VehiclePropertyChangeMode::ON_CHANGE,
+        .configArray = {0,0}
+    },
+
+    {
+        .prop = V2_0::toInt(V2_1::VehicleProperty::OBD2_FREEZE_FRAME_INFO),
+        .access = V2_0::VehiclePropertyAccess::READ,
+        .changeMode = V2_0::VehiclePropertyChangeMode::ON_CHANGE
+    },
+
+    {
+        .prop = V2_0::toInt(V2_1::VehicleProperty::OBD2_FREEZE_FRAME_CLEAR),
+        .access = V2_0::VehiclePropertyAccess::WRITE,
+        .changeMode = V2_0::VehiclePropertyChangeMode::ON_CHANGE
     }
 };
 

@@ -24,7 +24,6 @@
 #include <utils/SystemClock.h>
 
 #include <vhal_v2_0/VehicleHal.h>
-#include <vhal_v2_0/Obd2SensorStore.h>
 
 #include "DefaultConfig.h"
 #include "VehicleHalProto.pb.h"
@@ -86,8 +85,6 @@ private:
     void doGetPropertyAll(emulator::EmulatorMessage& rxMsg, emulator::EmulatorMessage& respMsg);
     void doSetProperty(emulator::EmulatorMessage& rxMsg, emulator::EmulatorMessage& respMsg);
     VehiclePropValue* getVehiclePropValueLocked(int32_t propId, int32_t areaId);
-    void initObd2LiveFrame(VehiclePropConfig& propConfig);
-    void initObd2FreezeFrame(VehiclePropConfig& propConfig);
     void parseRxProtoBuf(std::vector<uint8_t>& msg);
     void populateProtoVehicleConfig(emulator::VehiclePropConfig* protoCfg,
                                     const VehiclePropConfig& cfg);
@@ -98,18 +95,11 @@ private:
     void rxThread(void);
     void txMsg(emulator::EmulatorMessage& txMsg);
     StatusCode updateProperty(const VehiclePropValue& propValue);
-    StatusCode fillObd2LiveFrame(VehiclePropValue* v);
-    StatusCode fillObd2FreezeFrame(const VehiclePropValue& requestedPropValue,
-            VehiclePropValue* v);
-    StatusCode fillObd2DtcInfo(VehiclePropValue *v);
-    StatusCode clearObd2FreezeFrames(const VehiclePropValue& propValue);
 private:
     // TODO:  Use a hashtable to support indexing props
     std::vector<std::unique_ptr<VehiclePropValue>> mProps;
     std::atomic<int> mCurSocket;
     std::atomic<int> mExit;
-    std::unique_ptr<VehiclePropValue> mLiveObd2Frame {nullptr};
-    std::vector<std::unique_ptr<VehiclePropValue>> mFreezeObd2Frames;
     std::mutex mPropsMutex;
     int mSocket;
     std::mutex mTxMutex;

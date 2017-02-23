@@ -23,7 +23,7 @@ namespace android {
 namespace hardware {
 namespace automotive {
 namespace vehicle {
-namespace V2_0 {
+namespace V2_1 {
 
 Obd2SensorStore::BitmaskInVector::BitmaskInVector(size_t numBits)
 {
@@ -57,8 +57,8 @@ const std::vector<uint8_t>& Obd2SensorStore::BitmaskInVector::getBitmask() const
 Obd2SensorStore::Obd2SensorStore(size_t numVendorIntegerSensors,
                                  size_t numVendorFloatSensors) {
         // because the last index is valid *inclusive*
-        const size_t numSystemIntegerSensors = toInt(Obd2IntegerSensorIndex::LAST_SYSTEM_INDEX)+1;
-        const size_t numSystemFloatSensors = toInt(Obd2FloatSensorIndex::LAST_SYSTEM_INDEX)+1;
+        const size_t numSystemIntegerSensors = V2_0::toInt(Obd2IntegerSensorIndex::LAST_SYSTEM_INDEX)+1;
+        const size_t numSystemFloatSensors = V2_0::toInt(Obd2FloatSensorIndex::LAST_SYSTEM_INDEX)+1;
         mIntegerSensors = std::vector<int32_t>(
             numSystemIntegerSensors+numVendorIntegerSensors, 0);
         mFloatSensors = std::vector<float>(
@@ -66,25 +66,25 @@ Obd2SensorStore::Obd2SensorStore(size_t numVendorIntegerSensors,
         mSensorsBitmask.resize(mIntegerSensors.size()+mFloatSensors.size());
 }
 
-StatusCode Obd2SensorStore::setIntegerSensor(Obd2IntegerSensorIndex index,
+V2_0::StatusCode Obd2SensorStore::setIntegerSensor(Obd2IntegerSensorIndex index,
     int32_t value) {
-    return setIntegerSensor(toInt(index), value);
+    return setIntegerSensor(V2_0::toInt(index), value);
 }
-StatusCode Obd2SensorStore::setFloatSensor(Obd2FloatSensorIndex index,
+V2_0::StatusCode Obd2SensorStore::setFloatSensor(Obd2FloatSensorIndex index,
     float value) {
-    return setFloatSensor(toInt(index), value);
+    return setFloatSensor(V2_0::toInt(index), value);
 }
 
-StatusCode Obd2SensorStore::setIntegerSensor(size_t index, int32_t value) {
+V2_0::StatusCode Obd2SensorStore::setIntegerSensor(size_t index, int32_t value) {
     mIntegerSensors[index] = value;
     mSensorsBitmask.set(index, true);
-    return StatusCode::OK;
+    return V2_0::StatusCode::OK;
 }
 
-StatusCode Obd2SensorStore::setFloatSensor(size_t index, float value) {
+V2_0::StatusCode Obd2SensorStore::setFloatSensor(size_t index, float value) {
     mFloatSensors[index] = value;
     mSensorsBitmask.set(index + mIntegerSensors.size(), true);
-    return StatusCode::OK;
+    return V2_0::StatusCode::OK;
 }
 
 const std::vector<int32_t>& Obd2SensorStore::getIntegerSensors() const {
@@ -99,7 +99,7 @@ const std::vector<uint8_t>& Obd2SensorStore::getSensorsBitmask() const {
     return mSensorsBitmask.getBitmask();
 }
 
-void Obd2SensorStore::fillPropValue(VehiclePropValue *propValue,
+void Obd2SensorStore::fillPropValue(V2_0::VehiclePropValue *propValue,
                                     std::string dtc) const {
     propValue->timestamp = elapsedRealtimeNano();
     propValue->value.int32Values = getIntegerSensors();

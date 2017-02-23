@@ -23,6 +23,7 @@
 
 #include <vhal_v2_0/VehicleHal.h>
 #include <vhal_v2_0/DefaultVehicleHal.h>
+#include <vhal_v2_1/Obd2SensorStore.h>
 
 #include "DefaultConfig.h"
 
@@ -52,14 +53,9 @@ public:
     }
 
     VehiclePropValuePtr get(const V2_0::VehiclePropValue& requestedPropValue,
-                            V2_0::StatusCode* outStatus) override {
-        // TODO(pavelm): put logic related to VHAL 2.1 here (OBD, VMS, etc)
-        return mVehicleHal20->get(requestedPropValue, outStatus);
-    }
+                            V2_0::StatusCode* outStatus) override;
 
-    V2_0::StatusCode set(const V2_0::VehiclePropValue& propValue) override {
-        return mVehicleHal20->set(propValue);
-    }
+    V2_0::StatusCode set(const V2_0::VehiclePropValue& propValue) override;
 
     V2_0::StatusCode subscribe(int32_t property,
                                int32_t areas,
@@ -71,14 +67,21 @@ public:
         return mVehicleHal20->unsubscribe(property);
     }
 
-    void onCreate() override {
-        mVehicleHal20->init(getValuePool(),
-                            std::bind(&DefaultVehicleHal::doHalEvent, this, _1),
-                            std::bind(&DefaultVehicleHal::doHalPropertySetError, this, _1, _2, _3));
-    }
+    void onCreate() override;
+
+private:
+    void initObd2LiveFrame(V2_0::VehiclePropConfig& propConfig);
+    void initObd2FreezeFrame(V2_0::VehiclePropConfig& propConfig);
+    V2_0::StatusCode fillObd2LiveFrame(V2_0::VehiclePropValue* v);
+    V2_0::StatusCode fillObd2FreezeFrame(const V2_0::VehiclePropValue& requestedPropValue,
+            V2_0::VehiclePropValue* v);
+    V2_0::StatusCode fillObd2DtcInfo(V2_0::VehiclePropValue *v);
+    V2_0::StatusCode clearObd2FreezeFrames(const V2_0::VehiclePropValue& propValue);
 
 private:
     V2_0::VehicleHal* mVehicleHal20;
+    std::unique_ptr<V2_0::VehiclePropValue> mLiveObd2Frame {nullptr};
+    std::vector<std::unique_ptr<V2_0::VehiclePropValue>> mFreezeObd2Frames;
 };
 
 }  // impl
