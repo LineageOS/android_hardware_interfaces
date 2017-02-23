@@ -434,9 +434,11 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
   setEapClientCert(string path) generates (SupplicantStatus status);
 
   /**
-   * Set EAP private key file path for this network.
+   * Set EAP private key Id for this network.
+   * This is used if private key operations for EAP-TLS are performed
+   * using a smartcard.
    *
-   * @param path value to set.
+   * @param id value to set.
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
@@ -444,7 +446,7 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
    */
-  setEapPrivateKey(string path) generates (SupplicantStatus status);
+  setEapPrivateKeyId(string id) generates (SupplicantStatus status);
 
   /**
    * Set EAP subject match for this network.
@@ -810,16 +812,16 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
   getEapClientCert() generates (SupplicantStatus status, string path);
 
   /**
-   * Get EAP private key file path set for this network.
+   * Get EAP private key Id set for this network.
    *
    * @return status Status of the operation.
    *         Possible status codes:
    *         |SupplicantStatusCode.SUCCESS|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
-   * @return path value set.
+   * @return id value set.
    */
-  getEapPrivateKey() generates (SupplicantStatus status, string path);
+  getEapPrivateKeyId() generates (SupplicantStatus status, string id);
 
   /**
    * Get EAP subject match set for this network.
