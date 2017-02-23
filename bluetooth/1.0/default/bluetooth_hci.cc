@@ -30,9 +30,13 @@ static const uint8_t HCI_DATA_TYPE_COMMAND = 1;
 static const uint8_t HCI_DATA_TYPE_ACL = 2;
 static const uint8_t HCI_DATA_TYPE_SCO = 3;
 
+BluetoothHci::BluetoothHci()
+    : deathRecipient(new BluetoothDeathRecipient(this)) {}
+
 Return<void> BluetoothHci::initialize(
     const ::android::sp<IBluetoothHciCallbacks>& cb) {
   ALOGW("BluetoothHci::initialize()");
+  cb->linkToDeath(deathRecipient, 0);
   event_cb_ = cb;
 
   bool rc = VendorInterface::Initialize(
@@ -62,6 +66,7 @@ Return<void> BluetoothHci::initialize(
 
 Return<void> BluetoothHci::close() {
   ALOGW("BluetoothHci::close()");
+  event_cb_->unlinkToDeath(deathRecipient);
   VendorInterface::Shutdown();
   return Void();
 }
