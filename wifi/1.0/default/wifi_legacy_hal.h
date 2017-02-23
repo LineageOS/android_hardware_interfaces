@@ -175,7 +175,7 @@ class WifiLegacyHal {
       const on_gscan_results_callback& on_results_callback,
       const on_gscan_full_result_callback& on_full_result_callback);
   wifi_error stopGscan(wifi_request_id id);
-  std::pair<wifi_error, std::vector<uint32_t>> getValidFrequenciesForGscan(
+  std::pair<wifi_error, std::vector<uint32_t>> getValidFrequenciesForBand(
       wifi_band band);
   // Link layer stats functions.
   wifi_error enableLinkLayerStats(bool debug);
