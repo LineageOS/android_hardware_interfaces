@@ -923,30 +923,6 @@ interface IRadioResponse {
 
     /*
      * @param info Response info struct containing response type, serial no. and error
-     * @param data data returned by oem
-     *
-     * Valid errors returned:
-     *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:OEM_ERROR_X
-     */
-    oneway sendOemRilRequestRawResponse(RadioResponseInfo info, vec<uint8_t> data);
-
-    /*
-     * @param info Response info struct containing response type, serial no. and error
-     * @param data data returned by oem
-     *
-     * Valid errors returned:
-     *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:OEM_ERROR_X
-     */
-    oneway sendOemRilRequestStringsResponse(RadioResponseInfo info, vec<string> data);
-
-    /*
-     * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
      *   RadioError:NONE
