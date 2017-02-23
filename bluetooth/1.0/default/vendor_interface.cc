@@ -51,19 +51,6 @@ bool recent_activity_flag;
 
 VendorInterface* g_vendor_interface = nullptr;
 
-const size_t preamble_size_for_type[] = {
-    0, HCI_COMMAND_PREAMBLE_SIZE, HCI_ACL_PREAMBLE_SIZE, HCI_SCO_PREAMBLE_SIZE,
-    HCI_EVENT_PREAMBLE_SIZE};
-const size_t packet_length_offset_for_type[] = {
-    0, HCI_LENGTH_OFFSET_CMD, HCI_LENGTH_OFFSET_ACL, HCI_LENGTH_OFFSET_SCO,
-    HCI_LENGTH_OFFSET_EVT};
-
-size_t HciGetPacketLengthForType(HciPacketType type, const uint8_t* preamble) {
-  size_t offset = packet_length_offset_for_type[type];
-  if (type != HCI_PACKET_TYPE_ACL_DATA) return preamble[offset];
-  return (((preamble[offset + 1]) << 8) | preamble[offset]);
-}
-
 HC_BT_HDR* WrapPacketAndCopy(uint16_t event, const hidl_vec<uint8_t>& data) {
   size_t packet_size = data.size() + sizeof(HC_BT_HDR);
   HC_BT_HDR* packet = reinterpret_cast<HC_BT_HDR*>(new uint8_t[packet_size]);
@@ -274,7 +261,7 @@ bool VendorInterface::Open(InitializeCompleteCallback initialize_complete_cb,
   ALOGI("%s UART fd: %d", __func__, uart_fd_);
 
   fd_watcher_.WatchFdForNonBlockingReads(uart_fd_,
-                                         [this](int fd) { OnDataReady(fd); });
+                                         [this](int fd) { hci_packetizer_.OnDataReady(fd); });
 
   // Initially, the power management is off.
   lpm_wake_deasserted = true;
@@ -370,72 +357,26 @@ void VendorInterface::OnTimeout() {
   recent_activity_flag = false;
 }
 
-void VendorInterface::OnDataReady(int fd) {
-  switch (hci_parser_state_) {
-    case HCI_IDLE: {
-      uint8_t buffer[1] = {0};
-      size_t bytes_read = TEMP_FAILURE_RETRY(read(fd, buffer, 1));
-      CHECK(bytes_read == 1);
-      hci_packet_type_ = static_cast<HciPacketType>(buffer[0]);
-      // TODO(eisenbach): Check for workaround(s)
-      CHECK(hci_packet_type_ >= HCI_PACKET_TYPE_ACL_DATA &&
-            hci_packet_type_ <= HCI_PACKET_TYPE_EVENT)
-          << "buffer[0] = " << static_cast<unsigned int>(buffer[0]);
-      hci_parser_state_ = HCI_TYPE_READY;
-      hci_packet_bytes_remaining_ = preamble_size_for_type[hci_packet_type_];
-      hci_packet_bytes_read_ = 0;
-      break;
-    }
+void VendorInterface::OnPacketReady() {
+  VendorInterface::get()->HandleIncomingPacket();
+}
 
-    case HCI_TYPE_READY: {
-      size_t bytes_read = TEMP_FAILURE_RETRY(
-          read(fd, hci_packet_preamble_ + hci_packet_bytes_read_,
-               hci_packet_bytes_remaining_));
-      CHECK(bytes_read > 0);
-      hci_packet_bytes_remaining_ -= bytes_read;
-      hci_packet_bytes_read_ += bytes_read;
-      if (hci_packet_bytes_remaining_ == 0) {
-        size_t packet_length =
-            HciGetPacketLengthForType(hci_packet_type_, hci_packet_preamble_);
-        hci_packet_.resize(preamble_size_for_type[hci_packet_type_] +
-                           packet_length);
-        memcpy(hci_packet_.data(), hci_packet_preamble_,
-               preamble_size_for_type[hci_packet_type_]);
-        hci_packet_bytes_remaining_ = packet_length;
-        hci_parser_state_ = HCI_PAYLOAD;
-        hci_packet_bytes_read_ = 0;
-      }
-      break;
-    }
-
-    case HCI_PAYLOAD: {
-      size_t bytes_read = TEMP_FAILURE_RETRY(
-          read(fd,
-               hci_packet_.data() + preamble_size_for_type[hci_packet_type_] +
-                   hci_packet_bytes_read_,
-               hci_packet_bytes_remaining_));
-      CHECK(bytes_read > 0);
-      hci_packet_bytes_remaining_ -= bytes_read;
-      hci_packet_bytes_read_ += bytes_read;
-      if (hci_packet_bytes_remaining_ == 0) {
+void VendorInterface::HandleIncomingPacket() {
+  HciPacketType hci_packet_type = hci_packetizer_.GetPacketType();
+  hidl_vec<uint8_t> hci_packet = hci_packetizer_.GetPacket();
         if (internal_command.cb != nullptr &&
-            hci_packet_type_ == HCI_PACKET_TYPE_EVENT &&
-            internal_command_event_match(hci_packet_)) {
+            hci_packet_type == HCI_PACKET_TYPE_EVENT &&
+            internal_command_event_match(hci_packet)) {
           HC_BT_HDR* bt_hdr =
-              WrapPacketAndCopy(HCI_PACKET_TYPE_EVENT, hci_packet_);
+              WrapPacketAndCopy(HCI_PACKET_TYPE_EVENT, hci_packet);
 
           // The callbacks can send new commands, so don't zero after calling.
           tINT_CMD_CBACK saved_cb = internal_command.cb;
           internal_command.cb = nullptr;
           saved_cb(bt_hdr);
         } else {
-          packet_read_cb_(hci_packet_type_, hci_packet_);
+          packet_read_cb_(hci_packet_type, hci_packet);
         }
-        hci_parser_state_ = HCI_IDLE;
-      }
-      break;
-    }
-  }
 }
 
 }  // namespace implementation
