@@ -32,7 +32,6 @@ LOCAL_SHARED_LIBRARIES := \
   libhidlbase \
   libhidltransport \
   libhardware \
-  libhwbinder \
   liblog \
   libutils \
 
@@ -64,7 +63,6 @@ LOCAL_SHARED_LIBRARIES := \
     libhidlbase \
     libhidlmemory \
     libhidltransport \
-    libhwbinder \
     liblog \
     libmediadrm \
     libstagefright_foundation \

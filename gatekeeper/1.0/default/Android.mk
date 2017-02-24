@@ -14,7 +14,6 @@ LOCAL_SHARED_LIBRARIES := \
     libhardware \
     libhidlbase \
     libhidltransport \
-    libhwbinder \
     libutils \
     liblog \
 
@@ -35,7 +34,6 @@ LOCAL_SHARED_LIBRARIES := \
     libhardware \
     libhidlbase \
     libhidltransport \
-    libhwbinder \
     libutils \
     liblog \
 

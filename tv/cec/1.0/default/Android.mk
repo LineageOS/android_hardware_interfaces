@@ -10,7 +10,6 @@ LOCAL_SRC_FILES := \
 LOCAL_SHARED_LIBRARIES := \
     libhidlbase \
     libhidltransport \
-    libhwbinder \
     liblog \
     libbase \
     libutils \
@@ -38,7 +37,6 @@ LOCAL_SHARED_LIBRARIES := \
     libhardware \
 
 LOCAL_SHARED_LIBRARIES += \
-    libhwbinder \
     libhidlbase \
     libhidltransport \
     android.hardware.tv.cec@1.0 \

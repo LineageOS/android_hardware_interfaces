@@ -14,7 +14,6 @@ LOCAL_SHARED_LIBRARIES := \
     libkeymaster1 \
     libhidlbase \
     libhidltransport \
-    libhwbinder \
     libutils \
     libhardware \
     android.hardware.keymaster@3.0
@@ -37,7 +36,6 @@ LOCAL_SHARED_LIBRARIES := \
     libutils \
     libhardware_legacy \
     libhardware \
-    libhwbinder \
     libhidlbase \
     libhidltransport \
     android.hardware.keymaster@3.0

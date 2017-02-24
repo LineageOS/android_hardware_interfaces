@@ -23,7 +23,6 @@ cc_library_shared {
         "liblog",
         "libcutils",
         "libhardware",
-        "libhwbinder",
         "libbase",
         "libcutils",
         "libutils",

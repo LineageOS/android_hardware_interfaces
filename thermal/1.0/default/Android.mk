@@ -33,7 +33,6 @@ LOCAL_SHARED_LIBRARIES := \
         libhardware \
 
 LOCAL_SHARED_LIBRARIES += \
-        libhwbinder \
         libhidlbase \
         libhidltransport \
         android.hardware.thermal@1.0 \

@@ -12,7 +12,6 @@ LOCAL_SRC_FILES := \
 LOCAL_SHARED_LIBRARIES := \
     libhidlbase \
     libhidltransport \
-    libhwbinder \
     libutils \
     android.hardware.light@2.0 \
     android.hardware.tests.extension.light@2.0 \

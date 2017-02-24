@@ -24,7 +24,6 @@ cc_test {
         "libcutils",
         "libhardware",
         "libhidlbase",
-        "libhwbinder",
         "libutils",
         "android.hardware.memtrack@1.0",
     ],

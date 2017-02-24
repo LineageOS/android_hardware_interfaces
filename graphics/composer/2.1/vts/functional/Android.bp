@@ -27,7 +27,6 @@ cc_test {
         "libfmq",
         "libhidlbase",
         "libhidltransport",
-        "libhwbinder",
         "liblog",
         "libnativehelper",
         "libsync",
