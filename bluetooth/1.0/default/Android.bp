@@ -34,6 +34,7 @@ cc_library_shared {
     ],
     static_libs: [
         "android.hardware.bluetooth-async",
+        "android.hardware.bluetooth-hci",
     ],
 }
 
@@ -46,6 +47,21 @@ cc_library_static {
     shared_libs: [
         "libbase",
         "libcutils",
+        "liblog",
+        "libutils",
+    ],
+}
+
+cc_library_static {
+    name: "android.hardware.bluetooth-hci",
+    srcs: [
+        "hci_packetizer.cc",
+    ],
+    export_include_dirs: ["."],
+    shared_libs: [
+        "libbase",
+        "libcutils",
+        "libhidlbase",
         "liblog",
         "libutils",
     ],
