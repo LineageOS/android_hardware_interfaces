@@ -10,7 +10,6 @@ LOCAL_SRC_FILES := \
 LOCAL_SHARED_LIBRARIES := \
     libhidlbase \
     libhidltransport \
-    libhwbinder \
     libutils \
     liblog \
     libcutils \
@@ -39,7 +38,6 @@ LOCAL_SHARED_LIBRARIES := \
     libhardware \
 
 LOCAL_SHARED_LIBRARIES += \
-    libhwbinder \
     libhidlbase \
     libhidltransport \
     android.hardware.light@2.0 \

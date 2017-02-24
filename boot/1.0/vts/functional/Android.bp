@@ -23,7 +23,6 @@ cc_test {
         "liblog",
         "libcutils",
         "libhidlbase",
-        "libhwbinder",
         "libnativehelper",
         "libutils",
         "android.hardware.boot@1.0",

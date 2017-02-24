@@ -16,7 +16,6 @@ LOCAL_SHARED_LIBRARIES := \
         libhardware_legacy \
         libhidlbase \
         libhidltransport \
-        libhwbinder \
         liblog \
         libutils \
         android.hardware.contexthub@1.0 \

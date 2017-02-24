@@ -22,7 +22,6 @@ cc_library_shared {
         "libhidlbase",
         "libhidltransport",
         "liblog",
-        "libhwbinder",
         "libutils",
         "libhardware",
         "android.hardware.vibrator@1.0",

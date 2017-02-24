@@ -37,7 +37,6 @@ LOCAL_SHARED_LIBRARIES := \
     libhardware \
     libhidlbase \
     libhidltransport \
-    libhwbinder \
     liblog \
     libutils \
     android.hardware.audio@2.0 \
@@ -64,7 +63,6 @@ LOCAL_SHARED_LIBRARIES := \
     libhidlbase \
     libhidltransport \
     liblog \
-    libhwbinder \
     libutils \
     libhardware \
     android.hardware.audio@2.0 \

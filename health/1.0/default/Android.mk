@@ -12,7 +12,6 @@ LOCAL_SHARED_LIBRARIES := \
     libcutils \
     libhidlbase \
     libhidltransport \
-    libhwbinder \
     liblog \
     libutils \
     android.hardware.health@1.0 \
@@ -51,7 +50,6 @@ LOCAL_SHARED_LIBRARIES := \
     libdl \
     libbase \
     libutils \
-    libhwbinder \
     libhidlbase \
     libhidltransport \
     android.hardware.health@1.0 \

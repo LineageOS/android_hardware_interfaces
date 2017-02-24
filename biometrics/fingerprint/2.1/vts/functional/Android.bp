@@ -22,7 +22,6 @@ cc_test {
         "libbase",
         "libhidltransport",
         "libhardware",
-        "libhwbinder",
         "libhidlbase",
         "liblog",
         "libutils",

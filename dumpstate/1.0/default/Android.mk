@@ -16,7 +16,6 @@ LOCAL_SHARED_LIBRARIES := \
     libdumpstateutil \
     libhidlbase \
     libhidltransport \
-    libhwbinder \
     liblog \
     libutils
 

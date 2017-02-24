@@ -7,7 +7,6 @@ cc_library_shared {
         "liblog",
         "libcutils",
         "libhardware",
-        "libhwbinder",
         "libbase",
         "libcutils",
         "libutils",
@@ -30,7 +29,6 @@ cc_binary {
         "libhardware",
         "libhidlbase",
         "libhidltransport",
-        "libhwbinder",
         "android.hardware.vr@1.0",
     ],
 }

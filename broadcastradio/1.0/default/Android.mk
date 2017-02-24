@@ -13,7 +13,6 @@ LOCAL_SRC_FILES := \
 LOCAL_SHARED_LIBRARIES := \
     libhidlbase \
     libhidltransport \
-    libhwbinder \
     libutils \
     liblog \
     libhardware \

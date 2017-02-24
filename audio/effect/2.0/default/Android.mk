@@ -29,7 +29,6 @@ LOCAL_SHARED_LIBRARIES := \
     libhidlbase \
     libhidlmemory \
     libhidltransport \
-    libhwbinder \
     liblog \
     libutils \
     android.hardware.audio.common@2.0 \

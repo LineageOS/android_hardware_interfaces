@@ -6,7 +6,6 @@ cc_library_shared {
     shared_libs: [
         "libhidlbase",
         "libhidltransport",
-        "libhwbinder",
         "libutils",
         "libcutils",
         "android.hardware.camera.device@1.0",
@@ -34,7 +33,6 @@ cc_binary {
         "libhidlbase",
         "libhidltransport",
         "liblog",
-        "libhwbinder",
         "libutils",
         "libhardware",
         "android.hardware.camera.device@1.0",
