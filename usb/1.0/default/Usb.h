@@ -32,6 +32,7 @@ using ::android::hardware::Void;
 using ::android::sp;
 
 struct Usb : public IUsb {
+    Usb();
     Return<void> switchRole(const hidl_string& portName, const PortRole& role) override;
     Return<void> setCallback(const sp<IUsbCallback>& callback) override;
     Return<void> queryPortStatus() override;
@@ -39,6 +40,7 @@ struct Usb : public IUsb {
     sp<IUsbCallback> mCallback;
     private:
         pthread_t mPoll;
+        pthread_mutex_t mLock = PTHREAD_MUTEX_INITIALIZER;
 };
 
 }  // namespace implementation
