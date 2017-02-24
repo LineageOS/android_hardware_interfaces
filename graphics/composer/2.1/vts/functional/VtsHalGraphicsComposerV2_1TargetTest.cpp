@@ -749,7 +749,7 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
 
  private:
   void SetUpGralloc() {
-    mAllocator = IAllocator::getService("gralloc");
+    mAllocator = IAllocator::getService();
     ASSERT_NE(nullptr, mAllocator.get());
 
     mAllocator->createClient([this](const auto& error, const auto& client) {
@@ -759,7 +759,7 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
     });
     ASSERT_NE(nullptr, mAllocatorClient.get());
 
-    mMapper = IMapper::getService("gralloc-mapper");
+    mMapper = IMapper::getService();
     ASSERT_NE(nullptr, mMapper.get());
     ASSERT_FALSE(mMapper->isRemote());
   }
