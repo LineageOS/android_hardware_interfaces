@@ -24,7 +24,6 @@ cc_test {
         "libcutils",
         "libhidlbase",
         "libhidltransport",
-        "libhwbinder",
         "libutils",
         "android.hardware.ir@1.0",
     ],

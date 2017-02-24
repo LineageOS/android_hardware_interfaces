@@ -21,7 +21,6 @@ cc_library_shared {
         "libhidlbase",
         "libhidltransport",
         "libhardware",
-        "libhwbinder",
         "liblog",
         "libutils",
         "android.hardware.ir@1.0",
@@ -37,7 +36,6 @@ cc_binary {
 
     shared_libs: [
         "liblog",
-        "libhwbinder",
         "libhardware",
         "libhidlbase",
         "libhidltransport",

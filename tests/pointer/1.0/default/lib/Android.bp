@@ -8,7 +8,6 @@ cc_library_shared {
         "libbase",
         "libhidlbase",
         "libhidltransport",
-        "libhwbinder",
         "liblog",
         "android.hardware.tests.pointer@1.0",
     ],

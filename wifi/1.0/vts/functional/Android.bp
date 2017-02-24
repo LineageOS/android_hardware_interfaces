@@ -34,7 +34,6 @@ cc_test {
         "libcutils",
         "libhidlbase",
         "libhidltransport",
-        "libhwbinder",
         "libnativehelper",
         "libutils",
         "android.hardware.wifi@1.0",

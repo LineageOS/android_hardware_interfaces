@@ -11,7 +11,6 @@ LOCAL_SHARED_LIBRARIES := \
     liblog \
     libhidlbase \
     libhidltransport \
-    libhwbinder \
     libhardware \
     libutils \
     android.hardware.boot@1.0 \
@@ -28,7 +27,6 @@ LOCAL_SRC_FILES := \
 
 LOCAL_SHARED_LIBRARIES := \
     liblog \
-    libhwbinder \
     libhardware \
     libhidlbase \
     libhidltransport \
