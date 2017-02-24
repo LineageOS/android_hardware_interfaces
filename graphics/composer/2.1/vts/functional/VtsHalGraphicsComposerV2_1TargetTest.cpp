@@ -18,9 +18,9 @@
 
 #include <IComposerCommandBuffer.h>
 #include <android-base/logging.h>
-#include <android/hardware/graphics/allocator/2.0/IAllocator.h>
-#include <android/hardware/graphics/composer/2.1/IComposer.h>
-#include <android/hardware/graphics/mapper/2.0/IMapper.h>
+#include "VtsHalGraphicsAllocatorTestUtils.h"
+#include "VtsHalGraphicsComposerTestUtils.h"
+#include "VtsHalGraphicsMapperTestUtils.h"
 
 #include <VtsHalHidlTargetBaseTest.h>
 #include <unistd.h>
@@ -46,12 +46,15 @@ using android::hardware::graphics::allocator::V2_0::ConsumerUsage;
 using android::hardware::graphics::allocator::V2_0::IAllocator;
 using android::hardware::graphics::allocator::V2_0::IAllocatorClient;
 using android::hardware::graphics::allocator::V2_0::ProducerUsage;
+using android::hardware::graphics::allocator::V2_0::tests::Allocator;
+using android::hardware::graphics::allocator::V2_0::tests::AllocatorClient;
 using android::hardware::graphics::common::V1_0::ColorMode;
 using android::hardware::graphics::common::V1_0::ColorTransform;
 using android::hardware::graphics::common::V1_0::Dataspace;
 using android::hardware::graphics::common::V1_0::PixelFormat;
 using android::hardware::graphics::common::V1_0::Transform;
 using android::hardware::graphics::mapper::V2_0::IMapper;
+using android::hardware::graphics::mapper::V2_0::tests::Mapper;
 using GrallocError = android::hardware::graphics::allocator::V2_0::Error;
 
 // IComposerCallback to be installed with IComposerClient::registerCallback.
@@ -134,13 +137,8 @@ class GraphicsComposerCallback : public IComposerCallback {
 class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
  protected:
   void SetUp() override {
-    mComposer = ::testing::VtsHalHidlTargetBaseTest::getService<IComposer>();
-    ASSERT_NE(nullptr, mComposer.get());
-
-    mComposerClient = createClient();
-    ASSERT_NE(nullptr, mComposerClient.get());
-
-    initCapabilities();
+    ASSERT_NO_FATAL_FAILURE(mComposer = std::make_unique<Composer>());
+    ASSERT_NO_FATAL_FAILURE(mComposerClient = mComposer->createClient());
 
     mComposerCallback = new GraphicsComposerCallback;
     mComposerClient->registerCallback(mComposerCallback);
@@ -157,177 +155,16 @@ class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
     }
   }
 
-  /**
-   * Initialize the set of supported capabilities.
-   */
-  void initCapabilities() {
-    mComposer->getCapabilities([this](const auto& capabilities) {
-      std::vector<IComposer::Capability> caps = capabilities;
-      mCapabilities.insert(caps.cbegin(), caps.cend());
-    });
-  }
-
-  /**
-   * Test whether a capability is supported.
-   */
-  bool hasCapability(IComposer::Capability capability) const {
-    return (mCapabilities.count(capability) > 0);
-  }
-
-  IComposerClient::DisplayType getDisplayType(Display display) {
-    IComposerClient::DisplayType type = IComposerClient::DisplayType::INVALID;
-    mComposerClient->getDisplayType(
-        display, [&](const auto& tmpError, const auto& tmpType) {
-          ASSERT_EQ(Error::NONE, tmpError);
-          type = tmpType;
-        });
-    return type;
-  }
-
-  Error createVirtualDisplay(Display* outDisplay) {
-    auto ret_count = mComposerClient->getMaxVirtualDisplayCount();
-    if (ret_count == 0) {
-      return Error::UNSUPPORTED;
-    }
-
-    Error err = Error::NO_RESOURCES;
-    Display display;
-    mComposerClient->createVirtualDisplay(
-        64, 64, PixelFormat::IMPLEMENTATION_DEFINED, kBufferSlotCount,
-        [&](const auto& tmpError, const auto& tmpDisplay, const auto&) {
-          err = tmpError;
-          display = tmpDisplay;
-        });
-
-    *outDisplay = display;
-    return err;
-  }
-
-  void destroyVirtualDisplay(Display display) {
-    auto ret = mComposerClient->destroyVirtualDisplay(display);
-    ASSERT_EQ(Error::NONE, static_cast<Error>(ret));
-  }
-
-  Error createLayer(Layer* outLayer) {
-    Error err = Error::NO_RESOURCES;
-    Layer layer;
-    mComposerClient->createLayer(
-        mPrimaryDisplay, kBufferSlotCount,
-        [&](const auto& tmpError, const auto& tmpLayer) {
-          err = tmpError;
-          layer = tmpLayer;
-        });
-
-    *outLayer = layer;
-    return err;
-  }
-
-  void destroyLayer(Layer layer) {
-    auto ret = mComposerClient->destroyLayer(mPrimaryDisplay, layer);
-    ASSERT_EQ(Error::NONE, static_cast<Error>(ret));
-  }
-
-  int32_t getDisplayAttribute(Config config,
-                              IComposerClient::Attribute attribute) {
-    int32_t value = -1;
-    mComposerClient->getDisplayAttribute(
-        mPrimaryDisplay, config, attribute,
-        [&](const auto& tmpError, const auto& tmpValue) {
-          ASSERT_EQ(Error::NONE, tmpError);
-          value = tmpValue;
-        });
-    return value;
-  }
-
-  std::vector<Config> getDisplayConfigs() {
-    std::vector<Config> configs;
-    mComposerClient->getDisplayConfigs(
-        mPrimaryDisplay, [&](const auto& tmpError, const auto& tmpConfigs) {
-          ASSERT_EQ(Error::NONE, tmpError);
-
-          configs = tmpConfigs;
-          ASSERT_FALSE(configs.empty());
-        });
-
-    return configs;
-  }
-
-  std::vector<ColorMode> getColorModes() {
-    std::vector<ColorMode> modes;
-    mComposerClient->getColorModes(
-        mPrimaryDisplay, [&](const auto& tmpError, const auto& tmpModes) {
-          ASSERT_EQ(Error::NONE, tmpError);
-
-          modes = tmpModes;
-          ASSERT_NE(modes.end(),
-                    std::find(modes.begin(), modes.end(), ColorMode::NATIVE));
-        });
-
-    return modes;
-  }
-
-  std::vector<IComposerClient::PowerMode> getPowerModes() {
-    std::vector<IComposerClient::PowerMode> modes;
-    modes.push_back(IComposerClient::PowerMode::OFF);
-
-    mComposerClient->getDozeSupport(
-        mPrimaryDisplay, [&](const auto& tmpError, const auto& tmpSupport) {
-          ASSERT_EQ(Error::NONE, tmpError);
-          if (tmpSupport) {
-            modes.push_back(IComposerClient::PowerMode::DOZE);
-            modes.push_back(IComposerClient::PowerMode::DOZE_SUSPEND);
-          }
-        });
-
-    // push ON last
-    modes.push_back(IComposerClient::PowerMode::ON);
-
-    return modes;
-  }
-
-  void setActiveConfig(Config config) {
-    auto ret = mComposerClient->setActiveConfig(mPrimaryDisplay, config);
-    ASSERT_EQ(Error::NONE, static_cast<Error>(ret));
-  }
-
-  void setColorMode(ColorMode mode) {
-    auto ret = mComposerClient->setColorMode(mPrimaryDisplay, mode);
-    ASSERT_EQ(Error::NONE, static_cast<Error>(ret));
-  }
-
-  void setPowerMode(IComposerClient::PowerMode mode) {
-    auto ret = mComposerClient->setPowerMode(mPrimaryDisplay, mode);
-    ASSERT_EQ(Error::NONE, static_cast<Error>(ret));
-  }
-
-  void setVsyncEnabled(bool enable) {
-    auto ret = mComposerClient->setVsyncEnabled(
-        mPrimaryDisplay,
-        enable ? IComposerClient::Vsync::ENABLE
-               : IComposerClient::Vsync::DISABLE);
-    ASSERT_EQ(Error::NONE, static_cast<Error>(ret));
-  }
   // use the slot count usually set by SF
   static constexpr uint32_t kBufferSlotCount = 64;
 
-  sp<IComposer> mComposer;
-  sp<IComposerClient> mComposerClient;
+  std::unique_ptr<Composer> mComposer;
+  std::unique_ptr<ComposerClient> mComposerClient;
   sp<GraphicsComposerCallback> mComposerCallback;
   // the first display and is assumed never to be removed
   Display mPrimaryDisplay;
 
  private:
-  sp<IComposerClient> createClient() {
-    sp<IComposerClient> client;
-    mComposer->createClient([&](const auto& tmpError, const auto& tmpClient) {
-      if (tmpError == Error::NONE) {
-        client = tmpClient;
-      }
-    });
-
-    return client;
-  }
-
   Display waitForFirstDisplay() {
     while (true) {
       std::vector<Display> displays = mComposerCallback->getDisplays();
@@ -339,9 +176,6 @@ class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
       return displays[0];
     }
   }
-
-  // the set of all supported capabilities
-  std::unordered_set<IComposer::Capability> mCapabilities;
 };
 
 /**
@@ -350,22 +184,16 @@ class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
  * Test that IComposer::getCapabilities returns no invalid capabilities.
  */
 TEST_F(GraphicsComposerHidlTest, GetCapabilities) {
-  mComposer->getCapabilities([](const auto& tmpCapabilities) {
-    std::vector<IComposer::Capability> capabilities = tmpCapabilities;
-    ASSERT_EQ(capabilities.end(),
-              std::find(capabilities.begin(), capabilities.end(),
-                        IComposer::Capability::INVALID));
-  });
+  auto capabilities = mComposer->getCapabilities();
+  ASSERT_EQ(capabilities.end(),
+            std::find(capabilities.begin(), capabilities.end(),
+                      IComposer::Capability::INVALID));
 }
 
 /**
  * Test IComposer::dumpDebugInfo.
  */
-TEST_F(GraphicsComposerHidlTest, DumpDebugInfo) {
-  mComposer->dumpDebugInfo([](const auto&) {
-    // nothing to do
-  });
-}
+TEST_F(GraphicsComposerHidlTest, DumpDebugInfo) { mComposer->dumpDebugInfo(); }
 
 /**
  * Test IComposer::createClient.
@@ -373,7 +201,7 @@ TEST_F(GraphicsComposerHidlTest, DumpDebugInfo) {
  * Test that IComposerClient is a singleton.
  */
 TEST_F(GraphicsComposerHidlTest, CreateClientSingleton) {
-  mComposer->createClient([&](const auto& tmpError, const auto&) {
+  mComposer->getRaw()->createClient([&](const auto& tmpError, const auto&) {
     EXPECT_EQ(Error::NO_RESOURCES, tmpError);
   });
 }
@@ -385,19 +213,22 @@ TEST_F(GraphicsComposerHidlTest, CreateClientSingleton) {
  * Test that virtual displays can be created and has the correct display type.
  */
 TEST_F(GraphicsComposerHidlTest, CreateVirtualDisplay) {
-  Display display;
-  Error err = createVirtualDisplay(&display);
-  if (err == Error::UNSUPPORTED) {
+  if (mComposerClient->getMaxVirtualDisplayCount() == 0) {
     GTEST_SUCCEED() << "no virtual display support";
     return;
   }
-  ASSERT_EQ(Error::NONE, err);
+
+  Display display;
+  PixelFormat format;
+  ASSERT_NO_FATAL_FAILURE(display = mComposerClient->createVirtualDisplay(
+                              64, 64, PixelFormat::IMPLEMENTATION_DEFINED,
+                              kBufferSlotCount, &format));
 
   // test display type
-  IComposerClient::DisplayType type = getDisplayType(display);
+  IComposerClient::DisplayType type = mComposerClient->getDisplayType(display);
   EXPECT_EQ(IComposerClient::DisplayType::VIRTUAL, type);
 
-  destroyVirtualDisplay(display);
+  mComposerClient->destroyVirtualDisplay(display);
 }
 
 /**
@@ -407,20 +238,17 @@ TEST_F(GraphicsComposerHidlTest, CreateVirtualDisplay) {
  */
 TEST_F(GraphicsComposerHidlTest, CreateLayer) {
   Layer layer;
-  Error err = createLayer(&layer);
-  ASSERT_EQ(Error::NONE, err);
+  ASSERT_NO_FATAL_FAILURE(
+      layer = mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
 
-  destroyLayer(layer);
+  mComposerClient->destroyLayer(mPrimaryDisplay, layer);
 }
 
 /**
  * Test IComposerClient::getDisplayName.
  */
 TEST_F(GraphicsComposerHidlTest, GetDisplayName) {
-  mComposerClient->getDisplayName(mPrimaryDisplay,
-                                  [&](const auto& tmpError, const auto&) {
-                                    ASSERT_EQ(Error::NONE, tmpError);
-                                  });
+  mComposerClient->getDisplayName(mPrimaryDisplay);
 }
 
 /**
@@ -430,8 +258,8 @@ TEST_F(GraphicsComposerHidlTest, GetDisplayName) {
  * for the primary display.
  */
 TEST_F(GraphicsComposerHidlTest, GetDisplayType) {
-  IComposerClient::DisplayType type = getDisplayType(mPrimaryDisplay);
-  EXPECT_EQ(IComposerClient::DisplayType::PHYSICAL, type);
+  ASSERT_EQ(IComposerClient::DisplayType::PHYSICAL,
+            mComposerClient->getDisplayType(mPrimaryDisplay));
 }
 
 /**
@@ -441,21 +269,21 @@ TEST_F(GraphicsComposerHidlTest, GetDisplayType) {
  * required client targets.
  */
 TEST_F(GraphicsComposerHidlTest, GetClientTargetSupport) {
-  std::vector<Config> configs = getDisplayConfigs();
+  std::vector<Config> configs =
+      mComposerClient->getDisplayConfigs(mPrimaryDisplay);
   for (auto config : configs) {
-    int32_t width =
-        getDisplayAttribute(config, IComposerClient::Attribute::WIDTH);
-    int32_t height =
-        getDisplayAttribute(config, IComposerClient::Attribute::HEIGHT);
+    int32_t width = mComposerClient->getDisplayAttribute(
+        mPrimaryDisplay, config, IComposerClient::Attribute::WIDTH);
+    int32_t height = mComposerClient->getDisplayAttribute(
+        mPrimaryDisplay, config, IComposerClient::Attribute::HEIGHT);
     ASSERT_LT(0, width);
     ASSERT_LT(0, height);
 
-    setActiveConfig(config);
+    mComposerClient->setActiveConfig(mPrimaryDisplay, config);
 
-    auto ret = mComposerClient->getClientTargetSupport(
+    ASSERT_TRUE(mComposerClient->getClientTargetSupport(
         mPrimaryDisplay, width, height, PixelFormat::RGBA_8888,
-        Dataspace::UNKNOWN);
-    ASSERT_EQ(Error::NONE, static_cast<Error>(ret));
+        Dataspace::UNKNOWN));
   }
 }
 
@@ -466,21 +294,22 @@ TEST_F(GraphicsComposerHidlTest, GetClientTargetSupport) {
  * formats, and succeeds or fails correctly for optional attributes.
  */
 TEST_F(GraphicsComposerHidlTest, GetDisplayAttribute) {
-  std::vector<Config> configs = getDisplayConfigs();
+  std::vector<Config> configs =
+      mComposerClient->getDisplayConfigs(mPrimaryDisplay);
   for (auto config : configs) {
     const std::array<IComposerClient::Attribute, 3> requiredAttributes = {{
         IComposerClient::Attribute::WIDTH, IComposerClient::Attribute::HEIGHT,
         IComposerClient::Attribute::VSYNC_PERIOD,
     }};
     for (auto attribute : requiredAttributes) {
-      getDisplayAttribute(config, attribute);
+      mComposerClient->getDisplayAttribute(mPrimaryDisplay, config, attribute);
     }
 
     const std::array<IComposerClient::Attribute, 2> optionalAttributes = {{
         IComposerClient::Attribute::DPI_X, IComposerClient::Attribute::DPI_Y,
     }};
     for (auto attribute : optionalAttributes) {
-      mComposerClient->getDisplayAttribute(
+      mComposerClient->getRaw()->getDisplayAttribute(
           mPrimaryDisplay, config, attribute,
           [&](const auto& tmpError, const auto&) {
             EXPECT_TRUE(tmpError == Error::NONE ||
@@ -494,19 +323,18 @@ TEST_F(GraphicsComposerHidlTest, GetDisplayAttribute) {
  * Test IComposerClient::getHdrCapabilities.
  */
 TEST_F(GraphicsComposerHidlTest, GetHdrCapabilities) {
-  mComposerClient->getHdrCapabilities(
-      mPrimaryDisplay,
-      [&](const auto& tmpError, const auto&, const auto&, const auto&,
-          const auto&) { ASSERT_EQ(Error::NONE, tmpError); });
+  float maxLuminance;
+  float maxAverageLuminance;
+  float minLuminance;
+  mComposerClient->getHdrCapabilities(mPrimaryDisplay, &maxLuminance,
+                                      &maxAverageLuminance, &minLuminance);
 }
 
 /**
  * Test IComposerClient::setClientTargetSlotCount.
  */
 TEST_F(GraphicsComposerHidlTest, SetClientTargetSlotCount) {
-  auto ret = mComposerClient->setClientTargetSlotCount(mPrimaryDisplay,
-                                                       kBufferSlotCount);
-  ASSERT_EQ(Error::NONE, static_cast<Error>(ret));
+  mComposerClient->setClientTargetSlotCount(mPrimaryDisplay, kBufferSlotCount);
 }
 
 /**
@@ -516,15 +344,11 @@ TEST_F(GraphicsComposerHidlTest, SetClientTargetSlotCount) {
  * configs.
  */
 TEST_F(GraphicsComposerHidlTest, SetActiveConfig) {
-  std::vector<Config> configs = getDisplayConfigs();
+  std::vector<Config> configs =
+      mComposerClient->getDisplayConfigs(mPrimaryDisplay);
   for (auto config : configs) {
-    setActiveConfig(config);
-
-    mComposerClient->getActiveConfig(
-        mPrimaryDisplay, [&](const auto& tmpError, const auto& tmpConfig) {
-          EXPECT_EQ(Error::NONE, tmpError);
-          EXPECT_EQ(config, tmpConfig);
-        });
+    mComposerClient->setActiveConfig(mPrimaryDisplay, config);
+    ASSERT_EQ(config, mComposerClient->getActiveConfig(mPrimaryDisplay));
   }
 }
 
@@ -534,9 +358,10 @@ TEST_F(GraphicsComposerHidlTest, SetActiveConfig) {
  * Test that IComposerClient::setColorMode succeeds for all color modes.
  */
 TEST_F(GraphicsComposerHidlTest, SetColorMode) {
-  std::vector<ColorMode> modes = getColorModes();
+  std::vector<ColorMode> modes =
+      mComposerClient->getColorModes(mPrimaryDisplay);
   for (auto mode : modes) {
-    setColorMode(mode);
+    mComposerClient->setColorMode(mPrimaryDisplay, mode);
   }
 }
 
@@ -546,9 +371,19 @@ TEST_F(GraphicsComposerHidlTest, SetColorMode) {
  * Test that IComposerClient::setPowerMode succeeds for all power modes.
  */
 TEST_F(GraphicsComposerHidlTest, SetPowerMode) {
-  std::vector<IComposerClient::PowerMode> modes = getPowerModes();
+  std::vector<IComposerClient::PowerMode> modes;
+  modes.push_back(IComposerClient::PowerMode::OFF);
+
+  if (mComposerClient->getDozeSupport(mPrimaryDisplay)) {
+    modes.push_back(IComposerClient::PowerMode::DOZE);
+    modes.push_back(IComposerClient::PowerMode::DOZE_SUSPEND);
+  }
+
+  // push ON last
+  modes.push_back(IComposerClient::PowerMode::ON);
+
   for (auto mode : modes) {
-    setPowerMode(mode);
+    mComposerClient->setPowerMode(mPrimaryDisplay, mode);
   }
 }
 
@@ -561,9 +396,9 @@ TEST_F(GraphicsComposerHidlTest, SetPowerMode) {
 TEST_F(GraphicsComposerHidlTest, SetVsyncEnabled) {
   mComposerCallback->setVsyncAllowed(true);
 
-  setVsyncEnabled(true);
+  mComposerClient->setVsyncEnabled(mPrimaryDisplay, true);
   usleep(60 * 1000);
-  setVsyncEnabled(false);
+  mComposerClient->setVsyncEnabled(mPrimaryDisplay, false);
 
   mComposerCallback->setVsyncAllowed(false);
 }
@@ -573,7 +408,10 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
  protected:
   void SetUp() override {
     ASSERT_NO_FATAL_FAILURE(GraphicsComposerHidlTest::SetUp());
-    ASSERT_NO_FATAL_FAILURE(SetUpGralloc());
+
+    ASSERT_NO_FATAL_FAILURE(mAllocator = std::make_unique<Allocator>());
+    ASSERT_NO_FATAL_FAILURE(mAllocatorClient = mAllocator->createClient());
+    ASSERT_NO_FATAL_FAILURE(mMapper = std::make_unique<Mapper>());
 
     mWriter = std::make_unique<CommandWriterBase>(1024);
     mReader = std::make_unique<CommandReader>();
@@ -581,80 +419,6 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
 
   void TearDown() override {
     ASSERT_NO_FATAL_FAILURE(GraphicsComposerHidlTest::TearDown());
-  }
-
-  const native_handle_t* cloneBuffer(const native_handle_t* handle) {
-    auto clone = native_handle_clone(handle);
-    if (!clone) {
-      return nullptr;
-    }
-
-    GrallocError err = mMapper->retain(clone);
-    if (err != GrallocError::NONE) {
-      native_handle_close(clone);
-      native_handle_delete(const_cast<native_handle_t*>(clone));
-      return nullptr;
-    }
-
-    return clone;
-  }
-
-  const native_handle_t* allocate(
-      const IAllocatorClient::BufferDescriptorInfo& info) {
-    // create descriptor
-    GrallocError err = GrallocError::NO_RESOURCES;
-    BufferDescriptor descriptor;
-    mAllocatorClient->createDescriptor(
-        info, [&](const auto& tmpError, const auto& tmpDescriptor) {
-          err = tmpError;
-          descriptor = tmpDescriptor;
-        });
-    if (err != GrallocError::NONE) {
-      return nullptr;
-    }
-
-    // allocate buffer
-    hidl_vec<BufferDescriptor> descriptors;
-    hidl_vec<Buffer> buffers;
-    descriptors.setToExternal(&descriptor, 1);
-    err = GrallocError::NO_RESOURCES;
-    mAllocatorClient->allocate(
-        descriptors, [&](const auto& tmpError, const auto& tmpBuffers) {
-          err = tmpError;
-          buffers = tmpBuffers;
-        });
-    if ((err != GrallocError::NONE && err != GrallocError::NOT_SHARED) ||
-        buffers.size() != 1) {
-      mAllocatorClient->destroyDescriptor(descriptors[0]);
-      return nullptr;
-    }
-
-    // export handle
-    err = GrallocError::NO_RESOURCES;
-    const native_handle_t* handle = nullptr;
-    mAllocatorClient->exportHandle(
-        descriptors[0], buffers[0],
-        [&](const auto& tmpError, const auto& tmpHandle) {
-          err = tmpError;
-          if (err != GrallocError::NONE) {
-            return;
-          }
-
-          handle = cloneBuffer(tmpHandle.getNativeHandle());
-          if (!handle) {
-            err = GrallocError::NO_RESOURCES;
-            return;
-          }
-        });
-
-    mAllocatorClient->destroyDescriptor(descriptors[0]);
-    mAllocatorClient->free(buffers[0]);
-
-    if (err != GrallocError::NONE) {
-      return nullptr;
-    }
-
-    return handle;
   }
 
   const native_handle_t* allocate() {
@@ -666,12 +430,7 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
     info.producerUsageMask = static_cast<uint64_t>(ProducerUsage::CPU_WRITE);
     info.consumerUsageMask = static_cast<uint64_t>(ConsumerUsage::CPU_READ);
 
-    return allocate(info);
-  }
-
-  void free(const native_handle_t* handle) {
-    auto ret = mMapper->release(handle);
-    ASSERT_EQ(GrallocError::NONE, static_cast<GrallocError>(ret));
+    return mMapper->allocate(mAllocatorClient, info);
   }
 
   void execute() {
@@ -682,20 +441,20 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
         mWriter->writeQueue(&queueChanged, &commandLength, &commandHandles));
 
     if (queueChanged) {
-      auto ret =
-          mComposerClient->setInputCommandQueue(*mWriter->getMQDescriptor());
+      auto ret = mComposerClient->getRaw()->setInputCommandQueue(
+          *mWriter->getMQDescriptor());
       ASSERT_EQ(Error::NONE, static_cast<Error>(ret));
       return;
     }
 
-    mComposerClient->executeCommands(
+    mComposerClient->getRaw()->executeCommands(
         commandLength, commandHandles,
         [&](const auto& tmpError, const auto& tmpOutQueueChanged,
             const auto& tmpOutLength, const auto& tmpOutHandles) {
           ASSERT_EQ(Error::NONE, tmpError);
 
           if (tmpOutQueueChanged) {
-            mComposerClient->getOutputCommandQueue(
+            mComposerClient->getRaw()->getOutputCommandQueue(
                 [&](const auto& tmpError, const auto& tmpDescriptor) {
                   ASSERT_EQ(Error::NONE, tmpError);
                   mReader->setMQDescriptor(tmpDescriptor);
@@ -748,25 +507,9 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
   std::unique_ptr<CommandReader> mReader;
 
  private:
-  void SetUpGralloc() {
-    mAllocator = ::testing::VtsHalHidlTargetBaseTest::getService<IAllocator>();
-    ASSERT_NE(nullptr, mAllocator.get());
-
-    mAllocator->createClient([this](const auto& error, const auto& client) {
-      if (error == GrallocError::NONE) {
-        mAllocatorClient = client;
-      }
-    });
-    ASSERT_NE(nullptr, mAllocatorClient.get());
-
-    mMapper = ::testing::VtsHalHidlTargetBaseTest::getService<IMapper>();
-    ASSERT_NE(nullptr, mMapper.get());
-    ASSERT_FALSE(mMapper->isRemote());
-  }
-
-  sp<IAllocator> mAllocator;
-  sp<IAllocatorClient> mAllocatorClient;
-  sp<IMapper> mMapper;
+  std::unique_ptr<Allocator> mAllocator;
+  std::unique_ptr<AllocatorClient> mAllocatorClient;
+  std::unique_ptr<Mapper> mMapper;
 };
 
 /**
@@ -801,22 +544,23 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_CLIENT_TARGET) {
  * Test IComposerClient::Command::SET_OUTPUT_BUFFER.
  */
 TEST_F(GraphicsComposerHidlCommandTest, SET_OUTPUT_BUFFER) {
-  auto handle = allocate();
-  ASSERT_NE(nullptr, handle);
-
-  Display display;
-  Error err = createVirtualDisplay(&display);
-  if (err == Error::UNSUPPORTED) {
+  if (mComposerClient->getMaxVirtualDisplayCount() == 0) {
     GTEST_SUCCEED() << "no virtual display support";
     return;
   }
-  ASSERT_EQ(Error::NONE, err);
+
+  Display display;
+  PixelFormat format;
+  ASSERT_NO_FATAL_FAILURE(display = mComposerClient->createVirtualDisplay(
+                              64, 64, PixelFormat::IMPLEMENTATION_DEFINED,
+                              kBufferSlotCount, &format));
+
+  const native_handle_t* handle;
+  ASSERT_NO_FATAL_FAILURE(handle = allocate());
 
   mWriter->selectDisplay(display);
   mWriter->setOutputBuffer(0, handle, -1);
-
-  destroyVirtualDisplay(display);
-  free(handle);
+  execute();
 }
 
 /**
@@ -853,16 +597,14 @@ TEST_F(GraphicsComposerHidlCommandTest, PRESENT_DISPLAY) {
  */
 TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_CURSOR_POSITION) {
   Layer layer;
-  Error err = createLayer(&layer);
-  ASSERT_EQ(Error::NONE, err);
+  ASSERT_NO_FATAL_FAILURE(
+      layer = mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
 
   mWriter->selectDisplay(mPrimaryDisplay);
   mWriter->selectLayer(layer);
   mWriter->setLayerCursorPosition(1, 1);
   mWriter->setLayerCursorPosition(0, 0);
   execute();
-
-  destroyLayer(layer);
 }
 
 /**
@@ -873,16 +615,13 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_BUFFER) {
   ASSERT_NE(nullptr, handle);
 
   Layer layer;
-  Error err = createLayer(&layer);
-  ASSERT_EQ(Error::NONE, err);
+  ASSERT_NO_FATAL_FAILURE(
+      layer = mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
 
   mWriter->selectDisplay(mPrimaryDisplay);
   mWriter->selectLayer(layer);
   mWriter->setLayerBuffer(0, handle, -1);
   execute();
-
-  destroyLayer(layer);
-  free(handle);
 }
 
 /**
@@ -890,8 +629,8 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_BUFFER) {
  */
 TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_SURFACE_DAMAGE) {
   Layer layer;
-  Error err = createLayer(&layer);
-  ASSERT_EQ(Error::NONE, err);
+  ASSERT_NO_FATAL_FAILURE(
+      layer = mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
 
   IComposerClient::Rect empty{0, 0, 0, 0};
   IComposerClient::Rect unit{0, 0, 1, 1};
@@ -902,8 +641,6 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_SURFACE_DAMAGE) {
   mWriter->setLayerSurfaceDamage(std::vector<IComposerClient::Rect>(1, unit));
   mWriter->setLayerSurfaceDamage(std::vector<IComposerClient::Rect>());
   execute();
-
-  destroyLayer(layer);
 }
 
 /**
@@ -911,8 +648,8 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_SURFACE_DAMAGE) {
  */
 TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_BLEND_MODE) {
   Layer layer;
-  Error err = createLayer(&layer);
-  ASSERT_EQ(Error::NONE, err);
+  ASSERT_NO_FATAL_FAILURE(
+      layer = mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
 
   mWriter->selectDisplay(mPrimaryDisplay);
   mWriter->selectLayer(layer);
@@ -920,8 +657,6 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_BLEND_MODE) {
   mWriter->setLayerBlendMode(IComposerClient::BlendMode::PREMULTIPLIED);
   mWriter->setLayerBlendMode(IComposerClient::BlendMode::COVERAGE);
   execute();
-
-  destroyLayer(layer);
 }
 
 /**
@@ -929,16 +664,14 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_BLEND_MODE) {
  */
 TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_COLOR) {
   Layer layer;
-  Error err = createLayer(&layer);
-  ASSERT_EQ(Error::NONE, err);
+  ASSERT_NO_FATAL_FAILURE(
+      layer = mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
 
   mWriter->selectDisplay(mPrimaryDisplay);
   mWriter->selectLayer(layer);
   mWriter->setLayerColor(IComposerClient::Color{0xff, 0xff, 0xff, 0xff});
   mWriter->setLayerColor(IComposerClient::Color{0, 0, 0, 0});
   execute();
-
-  destroyLayer(layer);
 }
 
 /**
@@ -946,8 +679,8 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_COLOR) {
  */
 TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_COMPOSITION_TYPE) {
   Layer layer;
-  Error err = createLayer(&layer);
-  ASSERT_EQ(Error::NONE, err);
+  ASSERT_NO_FATAL_FAILURE(
+      layer = mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
 
   mWriter->selectDisplay(mPrimaryDisplay);
   mWriter->selectLayer(layer);
@@ -956,8 +689,6 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_COMPOSITION_TYPE) {
   mWriter->setLayerCompositionType(IComposerClient::Composition::SOLID_COLOR);
   mWriter->setLayerCompositionType(IComposerClient::Composition::CURSOR);
   execute();
-
-  destroyLayer(layer);
 }
 
 /**
@@ -965,15 +696,13 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_COMPOSITION_TYPE) {
  */
 TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_DATASPACE) {
   Layer layer;
-  Error err = createLayer(&layer);
-  ASSERT_EQ(Error::NONE, err);
+  ASSERT_NO_FATAL_FAILURE(
+      layer = mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
 
   mWriter->selectDisplay(mPrimaryDisplay);
   mWriter->selectLayer(layer);
   mWriter->setLayerDataspace(Dataspace::UNKNOWN);
   execute();
-
-  destroyLayer(layer);
 }
 
 /**
@@ -981,15 +710,13 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_DATASPACE) {
  */
 TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_DISPLAY_FRAME) {
   Layer layer;
-  Error err = createLayer(&layer);
-  ASSERT_EQ(Error::NONE, err);
+  ASSERT_NO_FATAL_FAILURE(
+      layer = mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
 
   mWriter->selectDisplay(mPrimaryDisplay);
   mWriter->selectLayer(layer);
   mWriter->setLayerDisplayFrame(IComposerClient::Rect{0, 0, 1, 1});
   execute();
-
-  destroyLayer(layer);
 }
 
 /**
@@ -997,23 +724,21 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_DISPLAY_FRAME) {
  */
 TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_PLANE_ALPHA) {
   Layer layer;
-  Error err = createLayer(&layer);
-  ASSERT_EQ(Error::NONE, err);
+  ASSERT_NO_FATAL_FAILURE(
+      layer = mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
 
   mWriter->selectDisplay(mPrimaryDisplay);
   mWriter->selectLayer(layer);
   mWriter->setLayerPlaneAlpha(0.0f);
   mWriter->setLayerPlaneAlpha(1.0f);
   execute();
-
-  destroyLayer(layer);
 }
 
 /**
  * Test IComposerClient::Command::SET_LAYER_SIDEBAND_STREAM.
  */
 TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_SIDEBAND_STREAM) {
-  if (!hasCapability(IComposer::Capability::SIDEBAND_STREAM)) {
+  if (!mComposer->hasCapability(IComposer::Capability::SIDEBAND_STREAM)) {
     GTEST_SUCCEED() << "no sideband stream support";
     return;
   }
@@ -1022,16 +747,13 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_SIDEBAND_STREAM) {
   ASSERT_NE(nullptr, handle);
 
   Layer layer;
-  Error err = createLayer(&layer);
-  ASSERT_EQ(Error::NONE, err);
+  ASSERT_NO_FATAL_FAILURE(
+      layer = mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
 
   mWriter->selectDisplay(mPrimaryDisplay);
   mWriter->selectLayer(layer);
   mWriter->setLayerSidebandStream(handle);
   execute();
-
-  destroyLayer(layer);
-  free(handle);
 }
 
 /**
@@ -1039,15 +761,13 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_SIDEBAND_STREAM) {
  */
 TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_SOURCE_CROP) {
   Layer layer;
-  Error err = createLayer(&layer);
-  ASSERT_EQ(Error::NONE, err);
+  ASSERT_NO_FATAL_FAILURE(
+      layer = mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
 
   mWriter->selectDisplay(mPrimaryDisplay);
   mWriter->selectLayer(layer);
   mWriter->setLayerSourceCrop(IComposerClient::FRect{0.0f, 0.0f, 1.0f, 1.0f});
   execute();
-
-  destroyLayer(layer);
 }
 
 /**
@@ -1055,8 +775,8 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_SOURCE_CROP) {
  */
 TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_TRANSFORM) {
   Layer layer;
-  Error err = createLayer(&layer);
-  ASSERT_EQ(Error::NONE, err);
+  ASSERT_NO_FATAL_FAILURE(
+      layer = mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
 
   mWriter->selectDisplay(mPrimaryDisplay);
   mWriter->selectLayer(layer);
@@ -1071,8 +791,6 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_TRANSFORM) {
   mWriter->setLayerTransform(
       static_cast<Transform>(Transform::FLIP_V | Transform::ROT_90));
   execute();
-
-  destroyLayer(layer);
 }
 
 /**
@@ -1080,8 +798,8 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_TRANSFORM) {
  */
 TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_VISIBLE_REGION) {
   Layer layer;
-  Error err = createLayer(&layer);
-  ASSERT_EQ(Error::NONE, err);
+  ASSERT_NO_FATAL_FAILURE(
+      layer = mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
 
   IComposerClient::Rect empty{0, 0, 0, 0};
   IComposerClient::Rect unit{0, 0, 1, 1};
@@ -1092,8 +810,6 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_VISIBLE_REGION) {
   mWriter->setLayerVisibleRegion(std::vector<IComposerClient::Rect>(1, unit));
   mWriter->setLayerVisibleRegion(std::vector<IComposerClient::Rect>());
   execute();
-
-  destroyLayer(layer);
 }
 
 /**
@@ -1101,16 +817,14 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_VISIBLE_REGION) {
  */
 TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_Z_ORDER) {
   Layer layer;
-  Error err = createLayer(&layer);
-  ASSERT_EQ(Error::NONE, err);
+  ASSERT_NO_FATAL_FAILURE(
+      layer = mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
 
   mWriter->selectDisplay(mPrimaryDisplay);
   mWriter->selectLayer(layer);
   mWriter->setLayerZOrder(10);
   mWriter->setLayerZOrder(0);
   execute();
-
-  destroyLayer(layer);
 }
 
 }  // namespace anonymous
