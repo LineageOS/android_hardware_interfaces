@@ -317,6 +317,14 @@ Return<void> WifiChip::forceDumpToDebugRingBuffer(
                          ring_name);
 }
 
+Return<void> WifiChip::stopLoggingToDebugRingBuffer(
+    stopLoggingToDebugRingBuffer_cb hidl_status_cb) {
+  return validateAndCall(this,
+                         WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                         &WifiChip::stopLoggingToDebugRingBufferInternal,
+                         hidl_status_cb);
+}
+
 Return<void> WifiChip::getDebugHostWakeReasonStats(
     getDebugHostWakeReasonStats_cb hidl_status_cb) {
   return validateAndCall(this,
@@ -732,6 +740,12 @@ WifiStatus WifiChip::forceDumpToDebugRingBufferInternal(
   }
   legacy_hal::wifi_error legacy_status =
       legacy_hal_.lock()->getRingBufferData(ring_name);
+  return createWifiStatusFromLegacyError(legacy_status);
+}
+
+WifiStatus WifiChip::stopLoggingToDebugRingBufferInternal() {
+  legacy_hal::wifi_error legacy_status =
+      legacy_hal_.lock()->deregisterRingBufferCallbackHandler();
   return createWifiStatusFromLegacyError(legacy_status);
 }
 

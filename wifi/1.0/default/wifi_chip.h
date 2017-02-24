@@ -119,6 +119,8 @@ class WifiChip : public IWifiChip {
   Return<void> forceDumpToDebugRingBuffer(
       const hidl_string& ring_name,
       forceDumpToDebugRingBuffer_cb hidl_status_cb) override;
+  Return<void> stopLoggingToDebugRingBuffer(
+      stopLoggingToDebugRingBuffer_cb hidl_status_cb) override;
   Return<void> getDebugHostWakeReasonStats(
       getDebugHostWakeReasonStats_cb hidl_status_cb) override;
   Return<void> enableDebugErrorAlerts(
@@ -170,6 +172,7 @@ class WifiChip : public IWifiChip {
       uint32_t max_interval_in_sec,
       uint32_t min_data_size_in_bytes);
   WifiStatus forceDumpToDebugRingBufferInternal(const hidl_string& ring_name);
+  WifiStatus stopLoggingToDebugRingBufferInternal();
   std::pair<WifiStatus, WifiDebugHostWakeReasonStats>
   getDebugHostWakeReasonStatsInternal();
   WifiStatus enableDebugErrorAlertsInternal(bool enable);
