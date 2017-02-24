@@ -23,5 +23,5 @@ using android::hardware::health::V1_0::IHealth;
 using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
-    return defaultPassthroughServiceImplementation<IHealth>("health");
+    return defaultPassthroughServiceImplementation<IHealth>();
 }
