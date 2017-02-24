@@ -172,17 +172,22 @@ rescan:
                 ports++;
             }
         }
+
+        if (ports == 0) {
+            closedir(dp);
+            return Status::SUCCESS;
+        }
+
         names.resize(ports);
         rewinddir(dp);
 
         while ((ep = readdir (dp))) {
-            /* Check to see if new ports were added since the first pass. */
-            if (current >= ports) {
-               rewinddir(dp);
-               goto rescan;
-            }
-
             if (ep->d_type == DT_LNK) {
+                /* Check to see if new ports were added since the first pass. */
+                if (current >= ports) {
+                    rewinddir(dp);
+                    goto rescan;
+                }
                 names[current++] = ep->d_name;
             }
         }
@@ -234,7 +239,7 @@ Status getPortStatusHelper (hidl_vec<PortStatus>& currentPortStatus) {
 
     if (result == Status::SUCCESS) {
         currentPortStatus.resize(names.size());
-        for(std::vector<std::string>::size_type i = 0; i != names.size(); i++) {
+        for(std::vector<std::string>::size_type i = 0; i < names.size(); i++) {
             ALOGI("%s", names[i].c_str());
             currentPortStatus[i].portName = names[i];
 
