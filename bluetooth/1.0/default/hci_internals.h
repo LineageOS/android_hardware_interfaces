@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <stdlib.h>
+
 // HCI UART transport packet types (Volume 4, Part A, 2)
 enum HciPacketType {
   HCI_PACKET_TYPE_UNKNOWN = 0,

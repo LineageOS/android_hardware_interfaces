@@ -20,7 +20,7 @@
 
 #include "async_fd_watcher.h"
 #include "bt_vendor_lib.h"
-#include "hci_internals.h"
+#include "hci_packetizer.h"
 
 namespace android {
 namespace hardware {
@@ -46,6 +46,8 @@ class VendorInterface {
 
   void OnFirmwareConfigured(uint8_t result);
 
+  static void OnPacketReady();
+
  private:
   virtual ~VendorInterface() = default;
 
@@ -55,7 +57,7 @@ class VendorInterface {
 
   void OnTimeout();
 
-  void OnDataReady(int fd);
+  void HandleIncomingPacket();
 
   void *lib_handle_;
   bt_vendor_interface_t *lib_interface_;
@@ -64,13 +66,7 @@ class VendorInterface {
   PacketReadCallback packet_read_cb_;
   InitializeCompleteCallback initialize_complete_cb_;
 
-  enum HciParserState { HCI_IDLE, HCI_TYPE_READY, HCI_PAYLOAD };
-  HciParserState hci_parser_state_{HCI_IDLE};
-  HciPacketType hci_packet_type_{HCI_PACKET_TYPE_UNKNOWN};
-  uint8_t hci_packet_preamble_[HCI_PREAMBLE_SIZE_MAX];
-  hidl_vec<uint8_t> hci_packet_;
-  size_t hci_packet_bytes_remaining_;
-  size_t hci_packet_bytes_read_;
+  hci::HciPacketizer hci_packetizer_ {VendorInterface::OnPacketReady};
 
   FirmwareStartupTimer *firmware_startup_timer_;
 };
