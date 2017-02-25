@@ -32,7 +32,6 @@ LOCAL_SHARED_LIBRARIES := \
   libhardware \
 
 LOCAL_SHARED_LIBRARIES += \
-  libhwbinder \
   libhidlbase \
   libhidltransport \
   android.hardware.bluetooth@1.0 \
