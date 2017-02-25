@@ -27,7 +27,6 @@ cc_test {
         "libcutils",
         "libhidlbase",
         "libhidltransport",
-        "libhwbinder",
         "libnativehelper",
         "libutils",
         "android.hardware.radio@1.0",

@@ -14,7 +14,6 @@ cc_library_shared {
         "liblog",
         "libhidlbase",
         "libhidltransport",
-        "libhwbinder",
         "libutils",
         "android.hardware.renderscript@1.0",
         "android.hidl.base@1.0",
