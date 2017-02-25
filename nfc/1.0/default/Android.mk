@@ -18,7 +18,6 @@ LOCAL_SHARED_LIBRARIES := \
 	libhardware \
 
 LOCAL_SHARED_LIBRARIES += \
-	libhwbinder \
 	libhidlbase \
 	libhidltransport \
 	android.hardware.nfc@1.0 \

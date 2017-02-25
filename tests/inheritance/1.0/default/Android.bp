@@ -14,7 +14,6 @@ cc_library_shared {
         "libbase",
         "libhidlbase",
         "libhidltransport",
-        "libhwbinder",
         "liblog",
         "libutils",
         "android.hardware.tests.inheritance@1.0",
