@@ -29,5 +29,5 @@ using android::hardware::keymaster::V3_0::IKeymasterDevice;
 using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
-    return defaultPassthroughServiceImplementation<IKeymasterDevice>("keymaster", 1);
+    return defaultPassthroughServiceImplementation<IKeymasterDevice>();
 }
