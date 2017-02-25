@@ -134,7 +134,7 @@ class GraphicsComposerCallback : public IComposerCallback {
 class GraphicsComposerHidlTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    mComposer = IComposer::getService("hwcomposer");
+    mComposer = IComposer::getService();
     ASSERT_NE(nullptr, mComposer.get());
 
     mComposerClient = createClient();
