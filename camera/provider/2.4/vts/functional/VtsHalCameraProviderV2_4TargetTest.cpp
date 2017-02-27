@@ -60,13 +60,14 @@ using ::android::hardware::camera::device::V3_2::HalStreamConfiguration;
 using ::android::hardware::camera::device::V3_2::BufferStatus;
 using ::android::hardware::camera::device::V3_2::StreamBuffer;
 
-#define CAMERA_PASSTHROUGH_SERVICE_NAME "legacy/0"
-#define MAX_PREVIEW_WIDTH  1920
-#define MAX_PREVIEW_HEIGHT 1080
-#define MAX_VIDEO_WIDTH    4096
-#define MAX_VIDEO_HEIGHT   2160
-#define STREAM_BUFFER_TIMEOUT 3  // sec.
-#define DUMP_OUTPUT "/dev/null"
+const char kCameraPassthroughServiceName[] = "legacy/0";
+const uint32_t kMaxPreviewWidth = 1920;
+const uint32_t kMaxPreviewHeight = 1080;
+const uint32_t kMaxVideoWidth = 4096;
+const uint32_t kMaxVideoHeight = 2160;
+const int64_t kStreamBufferTimeoutSec = 3;
+const int64_t kTorchTimeoutSec = 1;
+const char kDumpOutput[] = "/dev/null";
 
 struct AvailableStream {
     int32_t width;
@@ -131,7 +132,7 @@ private:
 
 void CameraHidlEnvironment::SetUp() {
     // TODO: test the binderized mode
-    mProvider = ::testing::VtsHalHidlTargetTestBase::getService<ICameraProvider>(CAMERA_PASSTHROUGH_SERVICE_NAME);
+    mProvider = ::testing::VtsHalHidlTargetTestBase::getService<ICameraProvider>(kCameraPassthroughServiceName);
     // TODO: handle the device doesn't have any camera case
     ALOGI_IF(mProvider, "provider is not nullptr, %p", mProvider.get());
     ASSERT_NE(mProvider, nullptr);
@@ -172,6 +173,25 @@ public:
         CameraHidlTest *mParent;               // Parent object
     };
 
+    struct TorchProviderCb : public ICameraProviderCallback {
+        TorchProviderCb(CameraHidlTest *parent) : mParent(parent) {}
+        virtual Return<void> cameraDeviceStatusChange(
+                const hidl_string&, CameraDeviceStatus) override {
+            return Void();
+        }
+
+        virtual Return<void> torchModeStatusChange(
+                const hidl_string&, TorchModeStatus newStatus) override {
+            std::lock_guard<std::mutex> l(mParent->mTorchLock);
+            mParent->mTorchStatus = newStatus;
+            mParent->mTorchCond.notify_one();
+            return Void();
+        }
+
+     private:
+        CameraHidlTest *mParent;               // Parent object
+    };
+
     static Status getAvailableOutputStreams(camera_metadata_t *staticMeta,
             std::vector<AvailableStream> &outputStreams,
             AvailableStream *threshold = nullptr);
@@ -190,6 +210,10 @@ protected:
     std::condition_variable mResultCondition;  // Condition variable for incoming results
     uint32_t mResultFrameNumber;               // Expected result frame number
     std::vector<StreamBuffer> mResultBuffers;  // Holds stream buffers from capture result
+
+    std::mutex mTorchLock;                     // Synchronize access to torch status
+    std::condition_variable mTorchCond;        // Condition variable for torch status
+    TorchModeStatus mTorchStatus;              // Current torch status
 };
 
 Return<void> CameraHidlTest::DeviceCb::processCaptureResult(
@@ -311,8 +335,6 @@ TEST_F(CameraHidlTest, setCallback) {
     sp<ProviderCb> cb = new ProviderCb;
     auto status = env->mProvider->setCallback(cb);
     ASSERT_EQ(Status::OK, status);
-    // TODO: right now no callbacks are fired because there is no external camera
-    //       or torch mode change. Need to test torch API in CameraDevice test later.
 }
 
 // Test if ICameraProvider::getCameraDeviceInterface_V3_x returns Status::OK and non-null device
@@ -403,6 +425,7 @@ TEST_F(CameraHidlTest, getCameraCharacteristics) {
 }
 
 //In case it is supported verify that torch can be enabled.
+//Check for corresponding toch callbacks as well.
 TEST_F(CameraHidlTest, setTorchMode) {
     CameraHidlEnvironment* env = CameraHidlEnvironment::Instance();
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
@@ -415,6 +438,10 @@ TEST_F(CameraHidlTest, setTorchMode) {
             ASSERT_EQ(Status::OK, status);
             torchControlSupported = support;
         });
+
+    sp<TorchProviderCb> cb = new TorchProviderCb(this);
+    auto status = env->mProvider->setCallback(cb);
+    ASSERT_EQ(Status::OK, status);
 
     for (const auto& name : cameraDeviceNames) {
         if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_3_2) {
@@ -429,6 +456,7 @@ TEST_F(CameraHidlTest, setTorchMode) {
                     device3_2 = device;
                 });
 
+            mTorchStatus = TorchModeStatus::NOT_AVAILABLE;
             Status status = device3_2->setTorchMode(TorchMode::ON);
             ALOGI("setTorchMode return status %d", (int)status);
             if (!torchControlSupported) {
@@ -436,12 +464,36 @@ TEST_F(CameraHidlTest, setTorchMode) {
             } else {
                 ASSERT_TRUE(status == Status::OK || status == Status::OPERATION_NOT_SUPPORTED);
                 if (status == Status::OK) {
+                    std::unique_lock<std::mutex> l(mTorchLock);
+                    while (TorchModeStatus::NOT_AVAILABLE == mTorchStatus) {
+                        auto timeout = std::chrono::system_clock::now() +
+                                std::chrono::seconds(kTorchTimeoutSec);
+                        ASSERT_NE(std::cv_status::timeout,
+                                mTorchCond.wait_until(l, timeout));
+                    }
+                    ASSERT_EQ(TorchModeStatus::AVAILABLE_ON, mTorchStatus);
+                    mTorchStatus = TorchModeStatus::NOT_AVAILABLE;
+                    l.unlock();
+
                     status = device3_2->setTorchMode(TorchMode::OFF);
                     ASSERT_EQ(Status::OK, status);
+
+                    l.lock();
+                    while (TorchModeStatus::NOT_AVAILABLE == mTorchStatus) {
+                        auto timeout = std::chrono::system_clock::now() +
+                                std::chrono::seconds(kTorchTimeoutSec);
+                        ASSERT_NE(std::cv_status::timeout,
+                                mTorchCond.wait_until(l, timeout));
+                    }
+                    ASSERT_EQ(TorchModeStatus::AVAILABLE_OFF, mTorchStatus);
+
                 }
             }
         }
     }
+
+    status = env->mProvider->setCallback(nullptr);
+    ASSERT_EQ(Status::OK, status);
 }
 
 // Check dump functionality.
@@ -463,7 +515,7 @@ TEST_F(CameraHidlTest, dumpState) {
                 });
 
             native_handle_t* raw_handle = native_handle_create(1, 0);
-            raw_handle->data[0] = open(DUMP_OUTPUT, O_RDWR);
+            raw_handle->data[0] = open(kDumpOutput, O_RDWR);
             ASSERT_GE(raw_handle->data[0], 0);
             hidl_handle handle = raw_handle;
             device3_2->dumpState(handle);
@@ -503,7 +555,7 @@ TEST_F(CameraHidlTest, openClose) {
                 });
 
             native_handle_t* raw_handle = native_handle_create(1, 0);
-            raw_handle->data[0] = open(DUMP_OUTPUT, O_RDWR);
+            raw_handle->data[0] = open(kDumpOutput, O_RDWR);
             ASSERT_GE(raw_handle->data[0], 0);
             hidl_handle handle = raw_handle;
             device3_2->dumpState(handle);
@@ -862,7 +914,7 @@ TEST_F(CameraHidlTest, configureStreamsPreviewStillOutputs) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
     std::vector<AvailableStream> outputBlobStreams;
     std::vector<AvailableStream> outputPreviewStreams;
-    AvailableStream previewThreshold = {MAX_PREVIEW_WIDTH, MAX_PREVIEW_HEIGHT,
+    AvailableStream previewThreshold = {kMaxPreviewWidth, kMaxPreviewHeight,
             static_cast<int32_t>(PixelFormat::IMPLEMENTATION_DEFINED)};
     AvailableStream blobThreshold = {INT32_MAX, INT32_MAX,
             static_cast<int32_t>(PixelFormat::BLOB)};
@@ -1054,9 +1106,9 @@ TEST_F(CameraHidlTest, configureStreamsVideoStillOutputs) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
     std::vector<AvailableStream> outputBlobStreams;
     std::vector<AvailableStream> outputVideoStreams;
-    AvailableStream videoThreshold = {MAX_VIDEO_WIDTH, MAX_VIDEO_HEIGHT,
+    AvailableStream videoThreshold = {kMaxVideoWidth, kMaxVideoHeight,
             static_cast<int32_t>(PixelFormat::IMPLEMENTATION_DEFINED)};
-    AvailableStream blobThreshold = {MAX_VIDEO_WIDTH, MAX_VIDEO_HEIGHT,
+    AvailableStream blobThreshold = {kMaxVideoWidth, kMaxVideoHeight,
             static_cast<int32_t>(PixelFormat::BLOB)};
 
     for (const auto& name : cameraDeviceNames) {
@@ -1136,7 +1188,7 @@ TEST_F(CameraHidlTest, processCaptureRequestPreview) {
     CameraHidlEnvironment* env = CameraHidlEnvironment::Instance();
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
     std::vector<AvailableStream> outputPreviewStreams;
-    AvailableStream previewThreshold = {MAX_PREVIEW_WIDTH, MAX_PREVIEW_HEIGHT,
+    AvailableStream previewThreshold = {kMaxPreviewWidth, kMaxPreviewHeight,
             static_cast<int32_t>(PixelFormat::IMPLEMENTATION_DEFINED)};
     int32_t streamId = 0;
     uint64_t bufferId = 1;
@@ -1227,7 +1279,7 @@ TEST_F(CameraHidlTest, processCaptureRequestPreview) {
             l.lock();
             while (0 == mResultBuffers.size()) {
                 auto timeout = std::chrono::system_clock::now() +
-                        std::chrono::seconds(STREAM_BUFFER_TIMEOUT);
+                        std::chrono::seconds(kStreamBufferTimeoutSec);
                 ASSERT_NE(std::cv_status::timeout,
                         mResultCondition.wait_until(l, timeout));
             }
@@ -1248,7 +1300,7 @@ TEST_F(CameraHidlTest, processCaptureRequestPreview) {
             l.lock();
             while (0 == mResultBuffers.size()) {
                 auto timeout = std::chrono::system_clock::now() +
-                        std::chrono::seconds(STREAM_BUFFER_TIMEOUT);
+                        std::chrono::seconds(kStreamBufferTimeoutSec);
                 ASSERT_NE(std::cv_status::timeout,
                         mResultCondition.wait_until(l, timeout));
             }
@@ -1266,7 +1318,7 @@ TEST_F(CameraHidlTest, processCaptureRequestInvalidSinglePreview) {
     CameraHidlEnvironment* env = CameraHidlEnvironment::Instance();
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
     std::vector<AvailableStream> outputPreviewStreams;
-    AvailableStream previewThreshold = {MAX_PREVIEW_WIDTH, MAX_PREVIEW_HEIGHT,
+    AvailableStream previewThreshold = {kMaxPreviewWidth, kMaxPreviewHeight,
             static_cast<int32_t>(PixelFormat::IMPLEMENTATION_DEFINED)};
     int32_t streamId = 0;
     uint64_t bufferId = 1;
