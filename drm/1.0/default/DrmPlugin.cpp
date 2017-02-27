@@ -321,6 +321,7 @@ namespace implementation {
 
     Return<void> DrmPlugin::setListener(const sp<IDrmPluginListener>& listener) {
         mListener = listener;
+        mLegacyPlugin->setListener(listener == NULL ? NULL : this);
         return Void();
     }
 
@@ -372,8 +373,10 @@ namespace implementation {
             break;
         }
         if (sendEvent) {
-            mListener->sendEvent(eventType, toHidlVec(*sessionId),
-                    toHidlVec(*data));
+            Vector<uint8_t> emptyVector;
+            mListener->sendEvent(eventType,
+                    toHidlVec(sessionId == NULL ? emptyVector: *sessionId),
+                    toHidlVec(data == NULL ? emptyVector: *data));
         }
     }
 
