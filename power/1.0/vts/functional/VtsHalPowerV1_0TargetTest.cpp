@@ -19,6 +19,7 @@
 
 #include <cutils/properties.h>
 
+#include <android-base/unique_fd.h>
 #include <android/hardware/power/1.0/IPower.h>
 
 #include <gtest/gtest.h>
@@ -33,6 +34,7 @@ using ::android::hardware::power::V1_0::Status;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::sp;
+using ::android::base::unique_fd;
 
 using std::vector;
 
@@ -69,23 +71,24 @@ TEST_F(PowerHidlTest, SetInteractive) {
 TEST_F(PowerHidlTest, TryDifferentGovernors) {
   Return<void> ret;
 
-  int fd1 = open(CPU_GOVERNOR_PATH, O_RDWR);
-  int fd2 = open(AVAILABLE_GOVERNORS_PATH, O_RDONLY);
+  unique_fd fd1(open(CPU_GOVERNOR_PATH, O_RDWR));
+  unique_fd fd2(open(AVAILABLE_GOVERNORS_PATH, O_RDONLY));
   if (fd1 < 0 || fd2 < 0) {
-      // Files don't exist, so skip the rest of the test case
-      SUCCEED();
+    // Files don't exist, so skip the rest of the test case
+    SUCCEED();
   }
 
   char old_governor[80];
   ASSERT_LE(0, read(fd1, old_governor, 80));
 
   char governors[1024];
-  ASSERT_LE(0, read(fd2, governors, 1024));
-  close(fd2);
+  unsigned len = read(fd2, governors, 1024);
+  ASSERT_LE(0, len);
+  governors[len] = '\0';
 
   char *saveptr;
-  char *name = strtok_r(governors, " ", &saveptr);
-  while (name && strlen(name) > 1) {
+  char *name = strtok_r(governors, " \n", &saveptr);
+  while (name) {
     ASSERT_LE(0, write(fd1, name, strlen(name)));
     ret = power->setInteractive(true);
     ASSERT_TRUE(ret.isOk());
@@ -99,11 +102,10 @@ TEST_F(PowerHidlTest, TryDifferentGovernors) {
     power->powerHint(PowerHint::LAUNCH, 1);
     power->powerHint(PowerHint::LAUNCH, 0);
 
-    name = strtok_r(NULL, " ", &saveptr);
+    name = strtok_r(NULL, " \n", &saveptr);
   }
 
   ASSERT_LE(0, write(fd1, old_governor, strlen(old_governor)));
-  close(fd1);
 }
 
 // Sanity check Power::powerHint on good and bad inputs.
