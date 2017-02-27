@@ -56,6 +56,9 @@ cc_library_static {
     name: "android.hardware.bluetooth-hci",
     srcs: [
         "hci_packetizer.cc",
+        "hci_protocol.cc",
+        "h4_protocol.cc",
+        "mct_protocol.cc",
     ],
     export_include_dirs: ["."],
     shared_libs: [
@@ -71,16 +74,21 @@ cc_test {
     name: "bluetooth-vendor-interface-unit-tests",
     srcs: [
         "test/async_fd_watcher_unittest.cc",
+        "test/h4_protocol_unittest.cc",
+        "test/mct_protocol_unittest.cc",
     ],
     local_include_dirs: [
         "test",
     ],
     shared_libs: [
         "libbase",
+        "libhidlbase",
         "liblog",
     ],
     static_libs: [
         "android.hardware.bluetooth-async",
+        "android.hardware.bluetooth-hci",
+        "libgmock",
     ],
 }
 

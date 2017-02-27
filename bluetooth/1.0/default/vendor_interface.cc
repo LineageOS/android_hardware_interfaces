@@ -27,6 +27,8 @@
 #include <fcntl.h>
 
 #include "bluetooth_address.h"
+#include "h4_protocol.h"
+#include "mct_protocol.h"
 
 static const char* VENDOR_LIBRARY_NAME = "libbt-vendor.so";
 static const char* VENDOR_LIBRARY_SYMBOL_NAME =
@@ -62,30 +64,6 @@ HC_BT_HDR* WrapPacketAndCopy(uint16_t event, const hidl_vec<uint8_t>& data) {
   // be the only way the data is accessed, a pointer could be passed here...
   memcpy(packet->data, data.data(), data.size());
   return packet;
-}
-
-size_t write_safely(int fd, const uint8_t* data, size_t length) {
-  size_t transmitted_length = 0;
-  while (length > 0) {
-    ssize_t ret =
-        TEMP_FAILURE_RETRY(write(fd, data + transmitted_length, length));
-
-    if (ret == -1) {
-      if (errno == EAGAIN) continue;
-      ALOGE("%s error writing to UART (%s)", __func__, strerror(errno));
-      break;
-
-    } else if (ret == 0) {
-      // Nothing written :(
-      ALOGE("%s zero bytes written - something went wrong...", __func__);
-      break;
-    }
-
-    transmitted_length += ret;
-    length -= ret;
-  }
-
-  return transmitted_length;
 }
 
 bool internal_command_event_match(const hidl_vec<uint8_t>& packet) {
@@ -185,10 +163,12 @@ class FirmwareStartupTimer {
 
 bool VendorInterface::Initialize(
     InitializeCompleteCallback initialize_complete_cb,
-    PacketReadCallback packet_read_cb) {
+    PacketReadCallback event_cb, PacketReadCallback acl_cb,
+    PacketReadCallback sco_cb) {
   assert(!g_vendor_interface);
   g_vendor_interface = new VendorInterface();
-  return g_vendor_interface->Open(initialize_complete_cb, packet_read_cb);
+  return g_vendor_interface->Open(initialize_complete_cb, event_cb, acl_cb,
+                                  sco_cb);
 }
 
 void VendorInterface::Shutdown() {
@@ -201,9 +181,10 @@ void VendorInterface::Shutdown() {
 VendorInterface* VendorInterface::get() { return g_vendor_interface; }
 
 bool VendorInterface::Open(InitializeCompleteCallback initialize_complete_cb,
-                           PacketReadCallback packet_read_cb) {
+                           PacketReadCallback event_cb,
+                           PacketReadCallback acl_cb,
+                           PacketReadCallback sco_cb) {
   initialize_complete_cb_ = initialize_complete_cb;
-  packet_read_cb_ = packet_read_cb;
 
   // Initialize vendor interface
 
@@ -241,27 +222,40 @@ bool VendorInterface::Open(InitializeCompleteCallback initialize_complete_cb,
   power_state = BT_VND_PWR_ON;
   lib_interface_->op(BT_VND_OP_POWER_CTRL, &power_state);
 
-  // Get the UART socket
+  // Get the UART socket(s)
 
   int fd_list[CH_MAX] = {0};
   int fd_count = lib_interface_->op(BT_VND_OP_USERIAL_OPEN, &fd_list);
 
-  if (fd_count != 1) {
-    ALOGE("%s fd count %d != 1; we can't handle this currently...", __func__,
-          fd_count);
-    return false;
+  for (int i = 0; i < fd_count; i++) {
+    if (fd_list[i] == INVALID_FD) {
+      ALOGE("%s: fd %d is invalid!", __func__, fd_list[i]);
+      return false;
+    }
   }
 
-  uart_fd_ = fd_list[0];
-  if (uart_fd_ == INVALID_FD) {
-    ALOGE("%s unable to determine UART fd", __func__);
-    return false;
+  event_cb_ = event_cb;
+  PacketReadCallback intercept_events = [this](const hidl_vec<uint8_t>& event) {
+    HandleIncomingEvent(event);
+  };
+
+  if (fd_count == 1) {
+    hci::H4Protocol* h4_hci =
+        new hci::H4Protocol(fd_list[0], intercept_events, acl_cb, sco_cb);
+    fd_watcher_.WatchFdForNonBlockingReads(
+        fd_list[0], [h4_hci](int fd) { h4_hci->OnDataReady(fd); });
+    hci_ = h4_hci;
+  } else {
+    hci::MctProtocol* mct_hci =
+        new hci::MctProtocol(fd_list, intercept_events, acl_cb);
+    fd_watcher_.WatchFdForNonBlockingReads(
+        fd_list[CH_EVT], [mct_hci](int fd) { mct_hci->OnEventDataReady(fd); });
+    if (fd_count >= CH_ACL_IN)
+      fd_watcher_.WatchFdForNonBlockingReads(
+          fd_list[CH_ACL_IN],
+          [mct_hci](int fd) { mct_hci->OnAclDataReady(fd); });
+    hci_ = mct_hci;
   }
-
-  ALOGI("%s UART fd: %d", __func__, uart_fd_);
-
-  fd_watcher_.WatchFdForNonBlockingReads(uart_fd_,
-                                         [this](int fd) { hci_packetizer_.OnDataReady(fd); });
 
   // Initially, the power management is off.
   lpm_wake_deasserted = true;
@@ -276,12 +270,16 @@ bool VendorInterface::Open(InitializeCompleteCallback initialize_complete_cb,
 void VendorInterface::Close() {
   fd_watcher_.StopWatchingFileDescriptors();
 
+  if (hci_ != nullptr) {
+    delete hci_;
+    hci_ = nullptr;
+  }
+
   if (lib_interface_ != nullptr) {
     bt_vendor_lpm_mode_t mode = BT_VND_LPM_DISABLE;
     lib_interface_->op(BT_VND_OP_LPM_SET_MODE, &mode);
 
     lib_interface_->op(BT_VND_OP_USERIAL_CLOSE, nullptr);
-    uart_fd_ = INVALID_FD;
     int power_state = BT_VND_PWR_OFF;
     lib_interface_->op(BT_VND_OP_POWER_CTRL, &power_state);
   }
@@ -298,8 +296,6 @@ void VendorInterface::Close() {
 }
 
 size_t VendorInterface::Send(uint8_t type, const uint8_t* data, size_t length) {
-  if (uart_fd_ == INVALID_FD) return 0;
-
   recent_activity_flag = true;
 
   if (lpm_wake_deasserted == true) {
@@ -313,11 +309,7 @@ size_t VendorInterface::Send(uint8_t type, const uint8_t* data, size_t length) {
     ALOGV("%s: Sent wake before (%02x)", __func__, data[0] | (data[1] << 8));
   }
 
-  int rv = write_safely(uart_fd_, &type, sizeof(type));
-  if (rv == sizeof(type))
-    rv = write_safely(uart_fd_, data, length);
-
-  return rv;
+  return hci_->Send(type, data, length);
 }
 
 void VendorInterface::OnFirmwareConfigured(uint8_t result) {
@@ -357,26 +349,18 @@ void VendorInterface::OnTimeout() {
   recent_activity_flag = false;
 }
 
-void VendorInterface::OnPacketReady() {
-  VendorInterface::get()->HandleIncomingPacket();
-}
+void VendorInterface::HandleIncomingEvent(const hidl_vec<uint8_t>& hci_packet) {
+  if (internal_command.cb != nullptr &&
+      internal_command_event_match(hci_packet)) {
+    HC_BT_HDR* bt_hdr = WrapPacketAndCopy(HCI_PACKET_TYPE_EVENT, hci_packet);
 
-void VendorInterface::HandleIncomingPacket() {
-  HciPacketType hci_packet_type = hci_packetizer_.GetPacketType();
-  hidl_vec<uint8_t> hci_packet = hci_packetizer_.GetPacket();
-        if (internal_command.cb != nullptr &&
-            hci_packet_type == HCI_PACKET_TYPE_EVENT &&
-            internal_command_event_match(hci_packet)) {
-          HC_BT_HDR* bt_hdr =
-              WrapPacketAndCopy(HCI_PACKET_TYPE_EVENT, hci_packet);
-
-          // The callbacks can send new commands, so don't zero after calling.
-          tINT_CMD_CBACK saved_cb = internal_command.cb;
-          internal_command.cb = nullptr;
-          saved_cb(bt_hdr);
-        } else {
-          packet_read_cb_(hci_packet_type, hci_packet);
-        }
+    // The callbacks can send new commands, so don't zero after calling.
+    tINT_CMD_CBACK saved_cb = internal_command.cb;
+    internal_command.cb = nullptr;
+    saved_cb(bt_hdr);
+  } else {
+    event_cb_(hci_packet);
+  }
 }
 
 }  // namespace implementation
