@@ -15,6 +15,12 @@
  */
 
 #define LOG_TAG "SoundTriggerHidlHalTest"
+#include <stdlib.h>
+#include <time.h>
+
+#include <condition_variable>
+#include <mutex>
+
 #include <android/log.h>
 #include <cutils/native_handle.h>
 
@@ -23,6 +29,8 @@
 #include <android/hardware/soundtrigger/2.0/types.h>
 
 #include <VtsHalHidlTargetBaseTest.h>
+
+#define SHORT_TIMEOUT_PERIOD (1)
 
 using ::android::hardware::audio::common::V2_0::AudioDevice;
 using ::android::hardware::soundtrigger::V2_0::SoundModelHandle;
@@ -36,43 +44,101 @@ using ::android::hardware::Status;
 using ::android::hardware::Void;
 using ::android::sp;
 
+/**
+ * Test code uses this class to wait for notification from callback.
+ */
+class Monitor {
+ public:
+  Monitor() : mCount(0) {}
+
+  /**
+   * Adds 1 to the internal counter and unblocks one of the waiting threads.
+   */
+  void notify() {
+    std::unique_lock<std::mutex> lock(mMtx);
+    mCount++;
+    mCv.notify_one();
+  }
+
+  /**
+   * Blocks until the internal counter becomes greater than 0.
+   *
+   * If notified, this method decreases the counter by 1 and returns true.
+   * If timeout, returns false.
+   */
+  bool wait(int timeoutSeconds) {
+    std::unique_lock<std::mutex> lock(mMtx);
+    auto deadline = std::chrono::system_clock::now() +
+        std::chrono::seconds(timeoutSeconds);
+    while (mCount == 0) {
+      if (mCv.wait_until(lock, deadline) == std::cv_status::timeout) {
+        return false;
+      }
+    }
+    mCount--;
+    return true;
+  }
+
+ private:
+  std::mutex mMtx;
+  std::condition_variable mCv;
+  int mCount;
+};
+
 // The main test class for Sound Trigger HIDL HAL.
 class SoundTriggerHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
  public:
   virtual void SetUp() override {
     mSoundTriggerHal = ::testing::VtsHalHidlTargetBaseTest::getService<ISoundTriggerHw>("sound_trigger.primary");
     ASSERT_NE(nullptr, mSoundTriggerHal.get());
-    mCallback = new MyCallback();
+    mCallback = new SoundTriggerHwCallback(*this);
     ASSERT_NE(nullptr, mCallback.get());
   }
 
-  class MyCallback : public ISoundTriggerHwCallback {
-      virtual Return<void> recognitionCallback(
-                  const ISoundTriggerHwCallback::RecognitionEvent& event __unused,
-                  int32_t cookie __unused) {
-          ALOGI("%s", __FUNCTION__);
-          return Void();
-      }
+  static void SetUpTestCase() {
+    srand(time(nullptr));
+  }
 
-      virtual Return<void> phraseRecognitionCallback(
-              const ISoundTriggerHwCallback::PhraseRecognitionEvent& event __unused,
-              int32_t cookie __unused) {
-          ALOGI("%s", __FUNCTION__);
-          return Void();
-      }
+  class SoundTriggerHwCallback : public ISoundTriggerHwCallback {
+   private:
+    SoundTriggerHidlTest& mParent;
 
-      virtual Return<void> soundModelCallback(
-              const ISoundTriggerHwCallback::ModelEvent& event __unused,
-              int32_t cookie __unused) {
-          ALOGI("%s", __FUNCTION__);
-          return Void();
-      }
+   public:
+    SoundTriggerHwCallback(SoundTriggerHidlTest& parent) : mParent(parent) {}
+
+    virtual Return<void> recognitionCallback(
+        const ISoundTriggerHwCallback::RecognitionEvent& event __unused,
+        int32_t cookie __unused) {
+      ALOGI("%s", __FUNCTION__);
+      return Void();
+    }
+
+    virtual Return<void> phraseRecognitionCallback(
+        const ISoundTriggerHwCallback::PhraseRecognitionEvent& event __unused,
+        int32_t cookie __unused) {
+      ALOGI("%s", __FUNCTION__);
+      return Void();
+    }
+
+    virtual Return<void> soundModelCallback(
+        const ISoundTriggerHwCallback::ModelEvent& event,
+        int32_t cookie __unused) {
+      ALOGI("%s", __FUNCTION__);
+      mParent.lastModelEvent = event;
+      mParent.monitor.notify();
+      return Void();
+    }
   };
 
   virtual void TearDown() override {}
 
+  Monitor monitor;
+  // updated by soundModelCallback()
+  ISoundTriggerHwCallback::ModelEvent lastModelEvent;
+
+ protected:
   sp<ISoundTriggerHw> mSoundTriggerHal;
-  sp<MyCallback> mCallback;
+  sp<SoundTriggerHwCallback> mCallback;
 };
 
 // A class for test environment setup (kept since this file is a template).
@@ -137,6 +203,36 @@ TEST_F(SoundTriggerHidlTest, LoadInvalidModelFail) {
 
   EXPECT_TRUE(hidlReturn.isOk());
   EXPECT_NE(0, ret);
+  EXPECT_FALSE(monitor.wait(SHORT_TIMEOUT_PERIOD));
+}
+
+/**
+ * Test ISoundTriggerHw::loadSoundModel() method
+ *
+ * Verifies that:
+ *  - the implementation returns error when passed a sound model with random data.
+ */
+TEST_F(SoundTriggerHidlTest, LoadGenericSoundModelFail) {
+  int ret = -ENODEV;
+  ISoundTriggerHw::SoundModel model;
+  SoundModelHandle handle = 0;
+
+  model.type = SoundModelType::GENERIC;
+  model.data.resize(100);
+  for (auto& d : model.data) {
+    d = rand();
+  }
+
+  Return<void> loadReturn = mSoundTriggerHal->loadSoundModel(
+      model,
+      mCallback, 0, [&](int32_t retval, auto res) {
+    ret = retval;
+    handle = res;
+  });
+
+  EXPECT_TRUE(loadReturn.isOk());
+  EXPECT_NE(0, ret);
+  EXPECT_FALSE(monitor.wait(SHORT_TIMEOUT_PERIOD));
 }
 
 /**
