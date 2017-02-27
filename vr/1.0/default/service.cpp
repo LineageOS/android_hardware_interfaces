@@ -23,5 +23,5 @@ using android::hardware::vr::V1_0::IVr;
 using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
-    return defaultPassthroughServiceImplementation<IVr>("vr");
+    return defaultPassthroughServiceImplementation<IVr>();
 }
