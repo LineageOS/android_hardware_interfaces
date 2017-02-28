@@ -378,13 +378,18 @@ interface IRadio {
      * @param radioTechnology Radio technology to use.
      * @param dataProfileInfo data profile info.
      * @param modemCognitive Indicating this profile was sent to the modem through setDataProfile
-     *        earlier.
+     *                       earlier.
      * @param roamingAllowed Indicating data roaming is allowed or not by the user.
+     * @param isRoaming Indicating the device is roaming or not. The 'protocol' parameter in the old
+     *                  RIL API must be filled accordingly based on the roaming condition.
+     *                  Note this is for backward compatibility with the old radio modem. The modem
+     *                  must not use this param for any other reason.
      *
      * Response function is IRadioResponse.setupDataCallResponse()
      */
     oneway setupDataCall(int32_t serial, RadioTechnology radioTechnology,
-            DataProfileInfo dataProfileInfo, bool modemCognitive, bool roamingAllowed);
+            DataProfileInfo dataProfileInfo, bool modemCognitive, bool roamingAllowed,
+            bool isRoaming);
 
     /*
      * Request ICC I/O operation.
@@ -1139,7 +1144,7 @@ interface IRadio {
     oneway reportSmsMemoryStatus(int32_t serial, bool available);
 
     /*
-     * Indicates that the StkSerivce is running and is
+     * Indicates that the StkService is running and is
      * ready to receive unsolicited stkXXXXX commands.
      *
      * @param serial Serial number of request.
@@ -1241,13 +1246,17 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      * @param dataProfileInfo data profile containing APN settings
-     * @param modemCognitive is indicating the data profile was sent to the modem through
-     *        setDataProfile earlier.
+     * @param modemCognitive indicating the data profile was sent to the modem through
+     *                       setDataProfile earlier.
+     * @param isRoaming Indicating the device is roaming or not. The 'protocol' parameter in the old
+     *                  RIL_InitialAttachApn must be filled accordingly based on the roaming
+     *                  condition. Note this is for backward compatibility with the old radio modem.
+     *                  The modem must not use this param for any other reason.
      *
      * Response callback is IRadioResponse.setInitialAttachApnResponse()
      */
     oneway setInitialAttachApn(int32_t serial, DataProfileInfo dataProfileInfo,
-            bool modemCognitive);
+            bool modemCognitive, bool isRoaming);
 
     /*
      * Request current IMS registration state
@@ -1413,10 +1422,14 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      * @param profiles Array of DataProfiles to set.
+     * @param isRoaming Indicating the device is roaming or not. The 'protocol' parameter in the old
+     *                  RIL API RIL_DataProfileInfo must be filled accordingly based on the
+     *                  roaming condition. Note this is for backward compatibility with the old
+     *                  radio modem. The modem must not use this param for any other reason.
      *
      * Response callback is IRadioResponse.setDataProfileResponse()
      */
-    oneway setDataProfile(int32_t serial, vec<DataProfileInfo> profiles);
+    oneway setDataProfile(int32_t serial, vec<DataProfileInfo> profiles, bool isRoaming);
 
     /*
      * Device is shutting down. All further commands are ignored
@@ -1429,7 +1442,7 @@ interface IRadio {
     oneway requestShutdown(int32_t serial);
 
     /*
-     * Used to get phone radio capablility.
+     * Used to get phone radio capability.
      *
      * @param serial Serial number of request.
      *
