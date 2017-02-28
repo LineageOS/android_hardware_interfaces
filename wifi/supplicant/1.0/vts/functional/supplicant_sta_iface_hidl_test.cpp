@@ -16,7 +16,7 @@
 
 #include <android-base/logging.h>
 
-#include <gtest/gtest.h>
+#include <VtsHalHidlTargetBaseTest.h>
 
 #include "supplicant_hidl_test_utils.h"
 

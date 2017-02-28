@@ -16,7 +16,6 @@
 
 cc_test {
     name: "VtsHalWifiV1_0TargetTest",
-    gtest: true,
     srcs: [
         "VtsHalWifiV1_0TargetTest.cpp",
         "wifi_ap_iface_hidl_test.cpp",
@@ -38,7 +37,7 @@ cc_test {
         "libutils",
         "android.hardware.wifi@1.0",
     ],
-    static_libs: ["libgtest"],
+    static_libs: ["VtsHalHidlTargetBaseTest"],
     cflags: [
         "-O0",
         "-g",

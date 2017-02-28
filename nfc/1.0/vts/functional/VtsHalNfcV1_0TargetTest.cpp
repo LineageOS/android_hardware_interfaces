@@ -22,7 +22,7 @@
 #include <android/hardware/nfc/1.0/types.h>
 #include <hardware/nfc.h>
 
-#include <gtest/gtest.h>
+#include <VtsHalHidlTargetBaseTest.h>
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
@@ -56,10 +56,10 @@ using ::android::sp;
 #define TIMEOUT_PERIOD 5
 
 // The main test class for NFC HIDL HAL.
-class NfcHidlTest : public ::testing::Test {
+class NfcHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
  public:
   virtual void SetUp() override {
-    nfc_ = INfc::getService();
+    nfc_ = testing::VtsHalHidlTargetBaseTest::getService<INfc>();
     ASSERT_NE(nfc_, nullptr);
 
     nfc_cb_ = new NfcClientCallback(*this);
