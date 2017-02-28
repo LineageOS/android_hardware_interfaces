@@ -121,7 +121,7 @@ class BluetoothHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
  public:
   virtual void SetUp() override {
     // currently test passthrough mode only
-    bluetooth = testing::VtsHalHidlTargetBaseTest::getService<IBluetoothHci>();
+    bluetooth = ::testing::VtsHalHidlTargetBaseTest::getService<IBluetoothHci>();
     ASSERT_NE(bluetooth, nullptr);
     ALOGI("%s: getService() for bluetooth is %s", __func__,
           bluetooth->isRemote() ? "remote" : "local");
