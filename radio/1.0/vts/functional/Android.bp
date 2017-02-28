@@ -16,7 +16,6 @@
 
 cc_test {
     name: "VtsHalRadioV1_0TargetTest",
-    gtest: true,
     srcs: ["radio_hidl_hal_test.cpp",
            "radio_response.cpp",
            "radio_hidl_hal_icc.cpp",
@@ -31,7 +30,7 @@ cc_test {
         "libutils",
         "android.hardware.radio@1.0",
     ],
-    static_libs: ["libgtest"],
+    static_libs: ["VtsHalHidlTargetBaseTest"],
     cflags: [
         "-O0",
         "-g",

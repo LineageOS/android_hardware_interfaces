@@ -23,7 +23,7 @@
 #include <hardware/bluetooth.h>
 #include <utils/Log.h>
 
-#include <gtest/gtest.h>
+#include <VtsHalHidlTargetBaseTest.h>
 #include <condition_variable>
 #include <mutex>
 #include <queue>
@@ -117,11 +117,11 @@ class ThroughputLogger {
 };
 
 // The main test class for Bluetooth HIDL HAL.
-class BluetoothHidlTest : public ::testing::Test {
+class BluetoothHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
  public:
   virtual void SetUp() override {
     // currently test passthrough mode only
-    bluetooth = IBluetoothHci::getService();
+    bluetooth = testing::VtsHalHidlTargetBaseTest::getService<IBluetoothHci>();
     ASSERT_NE(bluetooth, nullptr);
     ALOGI("%s: getService() for bluetooth is %s", __func__,
           bluetooth->isRemote() ? "remote" : "local");

@@ -18,7 +18,7 @@
 
 #include <android/hardware/wifi/1.0/IWifiChip.h>
 
-#include <gtest/gtest.h>
+#include <VtsHalHidlTargetBaseTest.h>
 
 #include "wifi_hidl_test_utils.h"
 
@@ -28,7 +28,7 @@ using ::android::sp;
 /**
  * Fixture to use for all Wifi chip HIDL interface tests.
  */
-class WifiChipHidlTest : public ::testing::Test {
+class WifiChipHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
    public:
     virtual void SetUp() override {}
 
