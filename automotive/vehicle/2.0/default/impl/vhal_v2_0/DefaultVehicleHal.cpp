@@ -18,13 +18,13 @@
 #include <android/log.h>
 
 #include <algorithm>
-#include <netinet/in.h>
-#include <sys/socket.h>
+#include <android-base/properties.h>
+#include <cstdio>
 
 #include "DefaultVehicleHal.h"
+#include "PipeComm.h"
+#include "SocketComm.h"
 #include "VehicleHalProto.pb.h"
-
-#define DEBUG_SOCKET    (33452)
 
 namespace android {
 namespace hardware {
@@ -184,34 +184,35 @@ VehiclePropValue* DefaultVehicleHal::getVehiclePropValueLocked(int32_t propId, i
 void DefaultVehicleHal::parseRxProtoBuf(std::vector<uint8_t>& msg) {
     emulator::EmulatorMessage rxMsg;
     emulator::EmulatorMessage respMsg;
-    std::string str(reinterpret_cast<const char*>(msg.data()), msg.size());
 
-    rxMsg.ParseFromString(str);
+    if (rxMsg.ParseFromArray(msg.data(), msg.size())) {
+        switch (rxMsg.msg_type()) {
+        case emulator::GET_CONFIG_CMD:
+            doGetConfig(rxMsg, respMsg);
+            break;
+        case emulator::GET_CONFIG_ALL_CMD:
+            doGetConfigAll(rxMsg, respMsg);
+            break;
+        case emulator::GET_PROPERTY_CMD:
+            doGetProperty(rxMsg, respMsg);
+            break;
+        case emulator::GET_PROPERTY_ALL_CMD:
+            doGetPropertyAll(rxMsg, respMsg);
+            break;
+        case emulator::SET_PROPERTY_CMD:
+            doSetProperty(rxMsg, respMsg);
+            break;
+        default:
+            ALOGW("%s: Unknown message received, type = %d", __FUNCTION__, rxMsg.msg_type());
+            respMsg.set_status(emulator::ERROR_UNIMPLEMENTED_CMD);
+            break;
+        }
 
-    switch (rxMsg.msg_type()) {
-    case emulator::GET_CONFIG_CMD:
-        doGetConfig(rxMsg, respMsg);
-        break;
-    case emulator::GET_CONFIG_ALL_CMD:
-        doGetConfigAll(rxMsg, respMsg);
-        break;
-    case emulator::GET_PROPERTY_CMD:
-        doGetProperty(rxMsg, respMsg);
-        break;
-    case emulator::GET_PROPERTY_ALL_CMD:
-        doGetPropertyAll(rxMsg, respMsg);
-        break;
-    case emulator::SET_PROPERTY_CMD:
-        doSetProperty(rxMsg, respMsg);
-        break;
-    default:
-        ALOGW("%s: Unknown message received, type = %d", __FUNCTION__, rxMsg.msg_type());
-        respMsg.set_status(emulator::ERROR_UNIMPLEMENTED_CMD);
-        break;
+        // Send the reply
+        txMsg(respMsg);
+    } else {
+        ALOGE("%s: ParseFromString() failed. msgSize=%d", __FUNCTION__, static_cast<int>(msg.size()));
     }
-
-    // Send the reply
-    txMsg(respMsg);
 }
 
 // Copies internal VehiclePropConfig data structure to protobuf VehiclePropConfig
@@ -306,94 +307,50 @@ void DefaultVehicleHal::populateProtoVehiclePropValue(emulator::VehiclePropValue
     }
 }
 
-void DefaultVehicleHal::rxMsg(void) {
+void DefaultVehicleHal::rxMsg() {
     int  numBytes = 0;
-    int32_t msgSize;
-    do {
-        // This is a variable length message.
-        // Read the number of bytes to rx over the socket
-        numBytes = read(mCurSocket, &msgSize, sizeof(msgSize));
 
-        if (numBytes != sizeof(msgSize)) {
-            // This happens when connection is closed
-            ALOGD("%s: numBytes=%d, expected=4", __FUNCTION__, numBytes);
-            break;
-        }
+    while (mExit == 0) {
+        std::vector<uint8_t> msg = mComm->read();
 
-        std::vector<uint8_t> msg = std::vector<uint8_t>(msgSize);
-
-        numBytes = read(mCurSocket, msg.data(), msgSize);
-
-        if ((numBytes == msgSize) && (msgSize > 0)) {
+        if (msg.size() > 0) {
             // Received a message.
             parseRxProtoBuf(msg);
         } else {
             // This happens when connection is closed
-            ALOGD("%s: numBytes=%d, msgSize=%d", __FUNCTION__, numBytes, msgSize);
+            ALOGD("%s: numBytes=%d, msgSize=%d", __FUNCTION__, numBytes,
+                  static_cast<int32_t>(msg.size()));
             break;
         }
-    } while (mExit == 0);
+    }
 }
 
-void DefaultVehicleHal::rxThread(void) {
-    // Initialize the socket
-    {
-        int retVal;
-        struct sockaddr_in servAddr;
+void DefaultVehicleHal::rxThread() {
+    bool isEmulator = android::base::GetBoolProperty("ro.kernel.qemu", false);
 
-        mSocket = socket(AF_INET, SOCK_STREAM, 0);
-        if (mSocket < 0) {
-            ALOGE("%s: socket() failed, mSocket=%d, errno=%d", __FUNCTION__, mSocket, errno);
-            mSocket = -1;
-            return;
-        }
-
-        bzero(&servAddr, sizeof(servAddr));
-        servAddr.sin_family = AF_INET;
-        servAddr.sin_addr.s_addr = INADDR_ANY;
-        servAddr.sin_port = htons(DEBUG_SOCKET);
-
-        retVal = bind(mSocket, reinterpret_cast<struct sockaddr*>(&servAddr), sizeof(servAddr));
-        if(retVal < 0) {
-            ALOGE("%s: Error on binding: retVal=%d, errno=%d", __FUNCTION__, retVal, errno);
-            close(mSocket);
-            mSocket = -1;
-            return;
-        }
-
-        listen(mSocket, 1);
-
-        // Set the socket to be non-blocking so we can poll it continouously
-        fcntl(mSocket, F_SETFL, O_NONBLOCK);
+    if (isEmulator) {
+        // Initialize pipe to Emulator
+        mComm.reset(new PipeComm);
+    } else {
+        // Initialize socket over ADB
+        mComm.reset(new SocketComm);
     }
 
-    while (mExit == 0) {
-        struct sockaddr_in cliAddr;
-        socklen_t cliLen = sizeof(cliAddr);
-        int cSocket = accept(mSocket, reinterpret_cast<struct sockaddr*>(&cliAddr), &cliLen);
+    int retVal = mComm->open();
 
-        if (cSocket >= 0) {
-            {
-                std::lock_guard<std::mutex> lock(mTxMutex);
-                mCurSocket = cSocket;
+    if (retVal == 0) {
+        // Comms are properly opened
+        while (mExit == 0) {
+            retVal = mComm->connect();
+
+            if (retVal >= 0) {
+                rxMsg();
             }
-            ALOGD("%s: Incoming connection received on socket %d", __FUNCTION__, cSocket);
-            rxMsg();
-            ALOGD("%s: Connection terminated on socket %d", __FUNCTION__, cSocket);
-            {
-                std::lock_guard<std::mutex> lock(mTxMutex);
-                mCurSocket = -1;
-            }
+
+            // Check every 100ms for a new connection
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
-
-        // TODO:  Use a blocking socket?
-        // Check every 100ms for a new socket connection
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-
-    // Shutdown the socket
-    close(mSocket);
-    mSocket = -1;
 }
 
 // This function sets the default value of a property if we are interested in setting it.
@@ -454,21 +411,15 @@ void DefaultVehicleHal::setDefaultValue(VehiclePropValue* prop) {
 
 // Transmit a reply back to the emulator
 void DefaultVehicleHal::txMsg(emulator::EmulatorMessage& txMsg) {
-    std::string msgString;
+    int numBytes = txMsg.ByteSize();
+    std::vector<uint8_t> msg(numBytes);
 
-    if (txMsg.SerializeToString(&msgString)) {
-        int32_t msgLen = msgString.length();
+    if (txMsg.SerializeToArray(msg.data(), msg.size())) {
         int retVal = 0;
 
-        // TODO:  Prepend the message length to the string without a copy
-        msgString.insert(0, reinterpret_cast<char*>(&msgLen), 4);
-
         // Send the message
-        {
-            std::lock_guard<std::mutex> lock(mTxMutex);
-            if (mCurSocket != -1) {
-                retVal = write(mCurSocket, msgString.data(), msgString.size());
-            }
+        if (mExit == 0) {
+            mComm->write(msg);
         }
 
         if (retVal < 0) {
@@ -553,9 +504,7 @@ StatusCode DefaultVehicleHal::set(const VehiclePropValue& propValue) {
 // Parse supported properties list and generate vector of property values to hold current values.
 void DefaultVehicleHal::onCreate() {
     // Initialize member variables
-    mCurSocket = -1;
     mExit = 0;
-    mSocket = -1;
 
     // Get the list of configurations supported by this HAL
     std::vector<VehiclePropConfig> configs = listProperties();
