@@ -36,6 +36,30 @@ const VehiclePropConfig kVehicleProperties[] = {
     },
 
     {
+        .prop = toInt(VehicleProperty::PERF_VEHICLE_SPEED),
+        .access = VehiclePropertyAccess::READ,
+        .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+    },
+
+    {
+        .prop = toInt(VehicleProperty::CURRENT_GEAR),
+        .access = VehiclePropertyAccess::READ,
+        .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+    },
+
+    {
+        .prop = toInt(VehicleProperty::PARKING_BRAKE_ON),
+        .access = VehiclePropertyAccess::READ,
+        .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+    },
+
+    {
+        .prop = toInt(VehicleProperty::FUEL_LEVEL_LOW),
+        .access = VehiclePropertyAccess::READ,
+        .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+    },
+
+    {
         .prop = toInt(VehicleProperty::HVAC_POWER_ON),
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,

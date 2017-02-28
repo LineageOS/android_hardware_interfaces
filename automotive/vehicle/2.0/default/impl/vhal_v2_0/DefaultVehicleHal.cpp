@@ -361,6 +361,18 @@ void DefaultVehicleHal::setDefaultValue(VehiclePropValue* prop) {
     case toInt(VehicleProperty::INFO_MAKE):
         prop->value.stringValue = "Default Car";
         break;
+    case toInt(VehicleProperty::PERF_VEHICLE_SPEED):
+        prop->value.floatValues[0] = 0;
+        break;
+    case toInt(VehicleProperty::CURRENT_GEAR):
+        prop->value.int32Values[0] = toInt(VehicleGear::GEAR_PARK);
+        break;
+    case toInt(VehicleProperty::PARKING_BRAKE_ON):
+        prop->value.int32Values[0] = 1;
+        break;
+    case toInt(VehicleProperty::FUEL_LEVEL_LOW):
+        prop->value.int32Values[0] = 0;
+        break;
     case toInt(VehicleProperty::HVAC_POWER_ON):
         prop->value.int32Values[0] = 1;
         break;
