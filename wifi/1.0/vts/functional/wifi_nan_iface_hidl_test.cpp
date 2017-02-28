@@ -18,7 +18,7 @@
 
 #include <android/hardware/wifi/1.0/IWifiNanIface.h>
 
-#include <gtest/gtest.h>
+#include <VtsHalHidlTargetBaseTest.h>
 
 #include "wifi_hidl_test_utils.h"
 
@@ -28,7 +28,7 @@ using ::android::sp;
 /**
  * Fixture to use for all NAN Iface HIDL interface tests.
  */
-class WifiNanIfaceHidlTest : public ::testing::Test {
+class WifiNanIfaceHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
    public:
     virtual void SetUp() override {}
 

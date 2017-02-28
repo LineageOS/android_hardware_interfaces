@@ -15,7 +15,7 @@
  */
 
 #include <android-base/logging.h>
-#include <gtest/gtest.h>
+#include <VtsHalHidlTargetBaseTest.h>
 
 #include <hidl/HidlTransportSupport.h>
 #include <android/hidl/manager/1.0/IServiceManager.h>
@@ -174,7 +174,7 @@ void startSupplicantAndWaitForHidlService() {
 }
 
 sp<ISupplicant> getSupplicant() {
-    return ISupplicant::getService(kSupplicantServiceName);
+    return getService<ISupplicant>(kSupplicantServiceName);
 }
 
 sp<ISupplicantStaIface> getSupplicantStaIface() {
