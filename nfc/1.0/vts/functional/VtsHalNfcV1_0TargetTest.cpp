@@ -59,7 +59,7 @@ using ::android::sp;
 class NfcHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
  public:
   virtual void SetUp() override {
-    nfc_ = testing::VtsHalHidlTargetBaseTest::getService<INfc>();
+    nfc_ = ::testing::VtsHalHidlTargetBaseTest::getService<INfc>();
     ASSERT_NE(nfc_, nullptr);
 
     nfc_cb_ = new NfcClientCallback(*this);
