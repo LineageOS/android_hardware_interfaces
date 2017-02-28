@@ -25,8 +25,8 @@ namespace V1_0 {
 namespace implementation {
 
 void convertFromSensor(const sensor_t &src, SensorInfo *dst) {
-    dst->name = src.name;
-    dst->vendor = src.vendor;
+    dst->name = src.name == nullptr ? "" : src.name;
+    dst->vendor = src.vendor == nullptr ? "" : src.vendor;
     dst->version = src.version;
     dst->sensorHandle = src.handle;
     dst->type = (SensorType)src.type;
@@ -36,8 +36,8 @@ void convertFromSensor(const sensor_t &src, SensorInfo *dst) {
     dst->minDelay = src.minDelay;
     dst->fifoReservedEventCount = src.fifoReservedEventCount;
     dst->fifoMaxEventCount = src.fifoMaxEventCount;
-    dst->typeAsString = src.stringType;
-    dst->requiredPermission = src.requiredPermission;
+    dst->typeAsString = src.stringType == nullptr ? "" : src.stringType;
+    dst->requiredPermission = src.requiredPermission == nullptr ? "" : src.requiredPermission;
     dst->maxDelay = src.maxDelay;
     dst->flags = src.flags;
 }
