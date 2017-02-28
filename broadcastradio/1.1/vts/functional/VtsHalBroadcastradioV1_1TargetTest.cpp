@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,14 @@
 #include <hidl/HidlTransportSupport.h>
 #include <utils/threads.h>
 
-#include <android/hardware/broadcastradio/1.0/IBroadcastRadioFactory.h>
+#include <android/hardware/broadcastradio/1.1/IBroadcastRadioFactory.h>
 #include <android/hardware/broadcastradio/1.0/IBroadcastRadio.h>
-#include <android/hardware/broadcastradio/1.0/ITuner.h>
-#include <android/hardware/broadcastradio/1.0/ITunerCallback.h>
-#include <android/hardware/broadcastradio/1.0/types.h>
+#include <android/hardware/broadcastradio/1.1/ITuner.h>
+#include <android/hardware/broadcastradio/1.1/ITunerCallback.h>
+#include <android/hardware/broadcastradio/1.1/types.h>
 
+
+namespace V1_0 = ::android::hardware::broadcastradio::V1_0;
 
 using ::android::sp;
 using ::android::Mutex;
@@ -35,17 +37,17 @@ using ::android::Condition;
 using ::android::hardware::Return;
 using ::android::hardware::Status;
 using ::android::hardware::Void;
-using ::android::hardware::broadcastradio::V1_0::IBroadcastRadioFactory;
-using ::android::hardware::broadcastradio::V1_0::IBroadcastRadio;
-using ::android::hardware::broadcastradio::V1_0::ITuner;
-using ::android::hardware::broadcastradio::V1_0::ITunerCallback;
-using ::android::hardware::broadcastradio::V1_0::Result;
-using ::android::hardware::broadcastradio::V1_0::Class;
-using ::android::hardware::broadcastradio::V1_0::Properties;
 using ::android::hardware::broadcastradio::V1_0::BandConfig;
+using ::android::hardware::broadcastradio::V1_0::Class;
 using ::android::hardware::broadcastradio::V1_0::Direction;
-using ::android::hardware::broadcastradio::V1_0::ProgramInfo;
+using ::android::hardware::broadcastradio::V1_0::IBroadcastRadio;
 using ::android::hardware::broadcastradio::V1_0::MetaData;
+using ::android::hardware::broadcastradio::V1_0::Properties;
+using ::android::hardware::broadcastradio::V1_1::IBroadcastRadioFactory;
+using ::android::hardware::broadcastradio::V1_1::ITuner;
+using ::android::hardware::broadcastradio::V1_1::ITunerCallback;
+using ::android::hardware::broadcastradio::V1_1::ProgramInfo;
+using ::android::hardware::broadcastradio::V1_1::Result;
 
 
 // The main test class for Broadcast Radio HIDL HAL.
@@ -62,13 +64,12 @@ class BroadcastRadioHidlTest : public ::testing::Test {
                 getStub = true;
             }
         }
-        sp<IBroadcastRadioFactory> factory =
-              IBroadcastRadioFactory::getService(getStub);
+        auto factory = IBroadcastRadioFactory::getService(getStub);
         if (factory != 0) {
             factory->connectModule(Class::AM_FM,
                              [&](Result retval, const ::android::sp<IBroadcastRadio>& result) {
                 if (retval == Result::OK) {
-                  mRadio = result;
+                  mRadio = IBroadcastRadio::castFrom(result);
                 }
             });
         }
@@ -99,13 +100,21 @@ class BroadcastRadioHidlTest : public ::testing::Test {
             return Void();
         }
 
-        virtual Return<void> tuneComplete(Result result, const ProgramInfo& info __unused) {
+        virtual Return<void> tuneComplete(Result result __unused, const V1_0::ProgramInfo& info __unused) {
+            return Void();
+        }
+
+        virtual Return<void> tuneComplete_1_1(Result result, const ProgramInfo& info __unused) {
             ALOGI("%s result %d", __FUNCTION__, result);
             mParentTest->onResultCallback(result);
             return Void();
         }
 
-        virtual Return<void> afSwitch(const ProgramInfo& info __unused) {
+        virtual Return<void> afSwitch(const V1_0::ProgramInfo& info __unused) {
+            return Void();
+        }
+
+        virtual Return<void> afSwitch_1_1(const ProgramInfo& info __unused) {
             return Void();
         }
 
@@ -257,17 +266,16 @@ bool BroadcastRadioHidlTest::openTuner()
     }
     if (mTuner.get() == nullptr) {
         Result halResult = Result::NOT_INITIALIZED;
-        Return<void> hidlReturn =
-                mRadio->openTuner(mHalProperties.bands[0], true, mTunerCallback,
-                                  [&](Result result, const sp<ITuner>& tuner) {
-                        halResult = result;
-                        if (result == Result::OK) {
-                            mTuner = tuner;
-                        }
-                    });
+        auto hidlReturn = mRadio->openTuner(mHalProperties.bands[0], true, mTunerCallback,
+                [&](Result result, const sp<V1_0::ITuner>& tuner) {
+                    halResult = result;
+                    if (result == Result::OK) {
+                        mTuner = ITuner::castFrom(tuner);
+                    }
+                });
         EXPECT_TRUE(hidlReturn.isOk());
         EXPECT_EQ(Result::OK, halResult);
-        EXPECT_EQ(true, waitForCallback(kConfigCallbacktimeoutNs));
+        EXPECT_TRUE(waitForCallback(kConfigCallbacktimeoutNs));
     }
     EXPECT_NE(nullptr, mTuner.get());
     return nullptr != mTuner.get();
@@ -300,7 +308,7 @@ bool BroadcastRadioHidlTest::checkAntenna()
  *  - the implementation supports at one band
  */
 TEST_F(BroadcastRadioHidlTest, GetProperties) {
-    EXPECT_EQ(true, getProperties());
+    EXPECT_TRUE(getProperties());
 }
 
 /**
@@ -311,7 +319,7 @@ TEST_F(BroadcastRadioHidlTest, GetProperties) {
  *  - the method returns 0 (no error) and a valid ITuner interface
  */
 TEST_F(BroadcastRadioHidlTest, OpenTuner) {
-    EXPECT_EQ(true, openTuner());
+    EXPECT_TRUE(openTuner());
 }
 
 /**
@@ -324,13 +332,13 @@ TEST_F(BroadcastRadioHidlTest, OpenTuner) {
  *  - the configuration read back from HAl has the same class Id
  */
 TEST_F(BroadcastRadioHidlTest, SetAndGetConfiguration) {
-    ASSERT_EQ(true, openTuner());
+    ASSERT_TRUE(openTuner());
     // test setConfiguration
     mCallbackCalled = false;
     Return<Result> hidlResult = mTuner->setConfiguration(mHalProperties.bands[0]);
     EXPECT_TRUE(hidlResult.isOk());
     EXPECT_EQ(Result::OK, hidlResult);
-    EXPECT_EQ(true, waitForCallback(kConfigCallbacktimeoutNs));
+    EXPECT_TRUE(waitForCallback(kConfigCallbacktimeoutNs));
     EXPECT_EQ(Result::OK, mResultCallbackData);
 
     // test getConfiguration
@@ -357,21 +365,21 @@ TEST_F(BroadcastRadioHidlTest, SetAndGetConfiguration) {
  *  - the tuned callback is received within kTuneCallbacktimeoutNs ns
  */
 TEST_F(BroadcastRadioHidlTest, Scan) {
-    ASSERT_EQ(true, openTuner());
+    ASSERT_TRUE(openTuner());
     ASSERT_TRUE(checkAntenna());
     // test scan UP
     mCallbackCalled = false;
     Return<Result> hidlResult = mTuner->scan(Direction::UP, true);
     EXPECT_TRUE(hidlResult.isOk());
     EXPECT_EQ(Result::OK, hidlResult);
-    EXPECT_EQ(true, waitForCallback(kTuneCallbacktimeoutNs));
+    EXPECT_TRUE(waitForCallback(kTuneCallbacktimeoutNs));
 
     // test scan DOWN
     mCallbackCalled = false;
     hidlResult = mTuner->scan(Direction::DOWN, true);
     EXPECT_TRUE(hidlResult.isOk());
     EXPECT_EQ(Result::OK, hidlResult);
-    EXPECT_EQ(true, waitForCallback(kTuneCallbacktimeoutNs));
+    EXPECT_TRUE(waitForCallback(kTuneCallbacktimeoutNs));
 }
 
 /**
@@ -383,21 +391,21 @@ TEST_F(BroadcastRadioHidlTest, Scan) {
  *  - the tuned callback is received within kTuneCallbacktimeoutNs ns
  */
 TEST_F(BroadcastRadioHidlTest, Step) {
-    ASSERT_EQ(true, openTuner());
+    ASSERT_TRUE(openTuner());
     ASSERT_TRUE(checkAntenna());
     // test step UP
     mCallbackCalled = false;
     Return<Result> hidlResult = mTuner->step(Direction::UP, true);
     EXPECT_TRUE(hidlResult.isOk());
     EXPECT_EQ(Result::OK, hidlResult);
-    EXPECT_EQ(true, waitForCallback(kTuneCallbacktimeoutNs));
+    EXPECT_TRUE(waitForCallback(kTuneCallbacktimeoutNs));
 
     // test step DOWN
     mCallbackCalled = false;
     hidlResult = mTuner->step(Direction::DOWN, true);
     EXPECT_TRUE(hidlResult.isOk());
     EXPECT_EQ(Result::OK, hidlResult);
-    EXPECT_EQ(true, waitForCallback(kTuneCallbacktimeoutNs));
+    EXPECT_TRUE(waitForCallback(kTuneCallbacktimeoutNs));
 }
 
 /**
@@ -409,7 +417,7 @@ TEST_F(BroadcastRadioHidlTest, Step) {
  *  - the tuned callback is received within kTuneCallbacktimeoutNs ns after tune()
  */
 TEST_F(BroadcastRadioHidlTest, TuneAndGetProgramInformationAndCancel) {
-    ASSERT_EQ(true, openTuner());
+    ASSERT_TRUE(openTuner());
     ASSERT_TRUE(checkAntenna());
 
     // test tune
@@ -428,12 +436,12 @@ TEST_F(BroadcastRadioHidlTest, TuneAndGetProgramInformationAndCancel) {
     Return<Result> hidlResult = mTuner->tune(channel, 0);
     EXPECT_TRUE(hidlResult.isOk());
     EXPECT_EQ(Result::OK, hidlResult);
-    EXPECT_EQ(true, waitForCallback(kTuneCallbacktimeoutNs));
+    EXPECT_TRUE(waitForCallback(kTuneCallbacktimeoutNs));
 
     // test getProgramInformation
     ProgramInfo halInfo;
     Result halResult = Result::NOT_INITIALIZED;
-    Return<void> hidlReturn = mTuner->getProgramInformation(
+    Return<void> hidlReturn = mTuner->getProgramInformation_1_1(
         [&](Result result, const ProgramInfo& info) {
             halResult = result;
             if (result == Result::OK) {
@@ -442,12 +450,13 @@ TEST_F(BroadcastRadioHidlTest, TuneAndGetProgramInformationAndCancel) {
         });
     EXPECT_TRUE(hidlReturn.isOk());
     EXPECT_EQ(Result::OK, halResult);
+    auto &halInfo_1_1 = halInfo.base;
     if (mResultCallbackData == Result::OK) {
-        EXPECT_EQ(true, halInfo.tuned);
-        EXPECT_LE(halInfo.channel, upperLimit);
-        EXPECT_GE(halInfo.channel, lowerLimit);
+        EXPECT_TRUE(halInfo_1_1.tuned);
+        EXPECT_LE(halInfo_1_1.channel, upperLimit);
+        EXPECT_GE(halInfo_1_1.channel, lowerLimit);
     } else {
-        EXPECT_EQ(false, halInfo.tuned);
+        EXPECT_EQ(false, halInfo_1_1.tuned);
     }
 
     // test cancel
