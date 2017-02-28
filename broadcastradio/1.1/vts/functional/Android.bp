@@ -16,7 +16,6 @@
 
 cc_test {
     name: "VtsHalBroadcastradioV1_1TargetTest",
-    gtest: true,
     srcs: ["VtsHalBroadcastradioV1_1TargetTest.cpp"],
     shared_libs: [
         "libbase",
@@ -29,7 +28,7 @@ cc_test {
         "android.hardware.broadcastradio@1.0",
         "android.hardware.broadcastradio@1.1",
     ],
-    static_libs: ["libgtest"],
+    static_libs: ["VtsHalHidlTargetBaseTest"],
     cflags: [
         "-O0",
         "-g",

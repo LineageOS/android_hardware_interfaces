@@ -21,7 +21,7 @@
 #include <android/hardware/usb/1.0/IUsbCallback.h>
 #include <android/hardware/usb/1.0/types.h>
 
-#include <gtest/gtest.h>
+#include <VtsHalHidlTargetBaseTest.h>
 #include <stdlib.h>
 #include <chrono>
 #include <condition_variable>
@@ -50,7 +50,7 @@ using ::android::sp;
 #define USB_SERVICE_NAME "usb_hal"
 
 // The main test class for the USB hidl HAL
-class UsbHidlTest : public ::testing::Test {
+class UsbHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
  public:
   // Callback class for the USB HIDL hal.
   // Usb Hal will call this object upon role switch or port query.
@@ -97,7 +97,7 @@ class UsbHidlTest : public ::testing::Test {
 
   virtual void SetUp() override {
     ALOGI("Setup");
-    usb = IUsb::getService(USB_SERVICE_NAME);
+    usb = ::testing::VtsHalHidlTargetBaseTest::getService<IUsb>(USB_SERVICE_NAME);
     ASSERT_NE(usb, nullptr);
 
     usb_cb_2 = new UsbCallback(*this, 2);

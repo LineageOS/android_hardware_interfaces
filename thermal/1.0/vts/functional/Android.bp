@@ -16,7 +16,6 @@
 
 cc_test {
     name: "VtsHalThermalV1_0TargetTest",
-    gtest: true,
     srcs: ["VtsHalThermalV1_0TargetTest.cpp"],
     shared_libs: [
         "libbase",
@@ -28,7 +27,7 @@ cc_test {
         "libutils",
         "android.hardware.thermal@1.0",
     ],
-    static_libs: ["libgtest"],
+    static_libs: ["VtsHalHidlTargetBaseTest"],
     cflags: [
         "-O0",
         "-g",

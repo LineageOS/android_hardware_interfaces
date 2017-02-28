@@ -16,7 +16,6 @@
 
 cc_test {
     name: "VtsHalVrV1_0TargetTest",
-    gtest: true,
     srcs: ["VtsHalVrV1_0TargetTest.cpp"],
     shared_libs: [
         "liblog",
@@ -24,7 +23,7 @@ cc_test {
         "libutils",
         "android.hardware.vr@1.0",
     ],
-    static_libs: ["libgtest"],
+    static_libs: ["VtsHalHidlTargetBaseTest"],
     cflags: [
        "-O0",
         "-g",

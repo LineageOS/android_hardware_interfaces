@@ -16,7 +16,6 @@
 
 cc_test {
     name: "VtsHalGraphicsComposerV2_1TargetTest",
-    gtest: true,
     srcs: ["VtsHalGraphicsComposerV2_1TargetTest.cpp"],
     shared_libs: [
         "android.hardware.graphics.allocator@2.0",
@@ -32,7 +31,7 @@ cc_test {
         "libsync",
         "libutils",
     ],
-    static_libs: ["libgtest", "libhwcomposer-command-buffer"],
+    static_libs: ["VtsHalHidlTargetBaseTest", "libhwcomposer-command-buffer"],
     cflags: [
         "-O0",
         "-g",

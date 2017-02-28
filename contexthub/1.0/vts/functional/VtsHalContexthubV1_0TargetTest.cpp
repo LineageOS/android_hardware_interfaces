@@ -21,7 +21,7 @@
 #include <android/hardware/contexthub/1.0/IContexthubCallback.h>
 #include <android/hardware/contexthub/1.0/types.h>
 #include <android/log.h>
-#include <gtest/gtest.h>
+#include <VtsHalHidlTargetBaseTest.h>
 
 #include <cinttypes>
 #include <future>
@@ -80,7 +80,7 @@ std::vector<uint32_t> getHubIds() {
   static std::vector<uint32_t> hubIds;
 
   if (hubIds.size() == 0) {
-    sp<IContexthub> hubApi = IContexthub::getService(CONTEXTHUB_SERVICE_NAME);
+    sp<IContexthub> hubApi = ::testing::VtsHalHidlTargetBaseTest::getService<IContexthub>(CONTEXTHUB_SERVICE_NAME);
 
     if (hubApi != nullptr) {
       for (ContextHub hub : getHubsSync(hubApi)) {
@@ -95,10 +95,10 @@ std::vector<uint32_t> getHubIds() {
 
 // Base test fixture that initializes the HAL and makes the context hub API
 // handle available
-class ContexthubHidlTestBase : public ::testing::Test {
+class ContexthubHidlTestBase : public ::testing::VtsHalHidlTargetBaseTest {
  public:
   virtual void SetUp() override {
-    hubApi = IContexthub::getService(CONTEXTHUB_SERVICE_NAME);
+    hubApi = ::testing::VtsHalHidlTargetBaseTest::getService<IContexthub>(CONTEXTHUB_SERVICE_NAME);
     ASSERT_NE(hubApi, nullptr);
 
     // getHubs() must be called at least once for proper initialization of the

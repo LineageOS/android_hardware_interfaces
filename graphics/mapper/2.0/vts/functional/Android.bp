@@ -16,7 +16,6 @@
 
 cc_test {
     name: "VtsHalGraphicsMapperV2_0TargetTest",
-    gtest: true,
     srcs: ["VtsHalGraphicsMapperV2_0TargetTest.cpp"],
     shared_libs: [
         "libbase",
@@ -31,7 +30,7 @@ cc_test {
         "android.hardware.graphics.mapper@2.0",
         "android.hardware.graphics.common@1.0",
     ],
-    static_libs: ["libgtest"],
+    static_libs: ["VtsHalHidlTargetBaseTest"],
     cflags: [
         "-O0",
         "-g",

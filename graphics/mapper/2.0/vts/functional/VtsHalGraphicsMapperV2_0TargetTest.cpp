@@ -19,7 +19,7 @@
 #include <android-base/logging.h>
 #include <android/hardware/graphics/allocator/2.0/IAllocator.h>
 #include <android/hardware/graphics/mapper/2.0/IMapper.h>
-#include <gtest/gtest.h>
+#include <VtsHalHidlTargetBaseTest.h>
 #include <sync/sync.h>
 
 namespace android {
@@ -33,10 +33,10 @@ namespace {
 using namespace android::hardware::graphics::allocator::V2_0;
 using namespace android::hardware::graphics::common::V1_0;
 
-class GraphicsMapperHidlTest : public ::testing::Test {
+class GraphicsMapperHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
  protected:
   void SetUp() override {
-    mAllocator = IAllocator::getService();
+    mAllocator = ::testing::VtsHalHidlTargetBaseTest::getService<IAllocator>();
     ASSERT_NE(mAllocator, nullptr);
 
     mAllocator->createClient([this](const auto& error, const auto& client) {
@@ -46,7 +46,7 @@ class GraphicsMapperHidlTest : public ::testing::Test {
     });
     ASSERT_NE(mAllocatorClient, nullptr);
 
-    mMapper = IMapper::getService();
+    mMapper = ::testing::VtsHalHidlTargetBaseTest::getService<IMapper>();
     ASSERT_NE(nullptr, mMapper.get());
     ASSERT_FALSE(mMapper->isRemote());
 

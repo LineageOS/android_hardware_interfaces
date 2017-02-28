@@ -21,7 +21,7 @@
 
 #include <android/hardware/boot/1.0/IBootControl.h>
 
-#include <gtest/gtest.h>
+#include <VtsHalHidlTargetBaseTest.h>
 
 using ::android::hardware::boot::V1_0::IBootControl;
 using ::android::hardware::boot::V1_0::CommandResult;
@@ -32,10 +32,10 @@ using ::android::hardware::Return;
 using ::android::sp;
 
 // The main test class for the Boot HIDL HAL.
-class BootHidlTest : public ::testing::Test {
+class BootHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
  public:
   virtual void SetUp() override {
-    boot = IBootControl::getService();
+    boot = ::testing::VtsHalHidlTargetBaseTest::getService<IBootControl>();
     ASSERT_NE(boot, nullptr);
   }
 

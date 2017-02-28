@@ -15,7 +15,7 @@
  */
 
 #define LOG_TAG "BroadcastRadioHidlHalTest"
-#include <gtest/gtest.h>
+#include <VtsHalHidlTargetBaseTest.h>
 #include <android-base/logging.h>
 #include <cutils/native_handle.h>
 #include <cutils/properties.h>
@@ -52,19 +52,10 @@ using ::android::hardware::broadcastradio::V1_1::Result;
 
 // The main test class for Broadcast Radio HIDL HAL.
 
-class BroadcastRadioHidlTest : public ::testing::Test {
+class BroadcastRadioHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
  protected:
     virtual void SetUp() override {
-        bool getStub = false;
-        char getsubProperty[PROPERTY_VALUE_MAX];
-        if (property_get("vts.hidl.get_stub", getsubProperty, "") > 0) {
-            if (!strcmp(getsubProperty, "true") ||
-                    !strcmp(getsubProperty, "True") ||
-                    !strcmp(getsubProperty, "1")) {
-                getStub = true;
-            }
-        }
-        auto factory = IBroadcastRadioFactory::getService(getStub);
+        auto factory = ::testing::VtsHalHidlTargetBaseTest::getService<IBroadcastRadioFactory>();
         if (factory != 0) {
             factory->connectModule(Class::AM_FM,
                              [&](Result retval, const ::android::sp<IBroadcastRadio>& result) {
@@ -75,7 +66,6 @@ class BroadcastRadioHidlTest : public ::testing::Test {
         }
         mTunerCallback = new MyCallback(this);
         ASSERT_NE(nullptr, mRadio.get());
-        ASSERT_EQ(!getStub, mRadio->isRemote());
         ASSERT_NE(nullptr, mTunerCallback.get());
     }
 

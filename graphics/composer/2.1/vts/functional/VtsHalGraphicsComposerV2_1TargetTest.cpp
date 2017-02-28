@@ -22,7 +22,7 @@
 #include <android/hardware/graphics/composer/2.1/IComposer.h>
 #include <android/hardware/graphics/mapper/2.0/IMapper.h>
 
-#include <gtest/gtest.h>
+#include <VtsHalHidlTargetBaseTest.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -131,10 +131,10 @@ class GraphicsComposerCallback : public IComposerCallback {
   int mInvalidVsyncCount = 0;
 };
 
-class GraphicsComposerHidlTest : public ::testing::Test {
+class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
  protected:
   void SetUp() override {
-    mComposer = IComposer::getService();
+    mComposer = ::testing::VtsHalHidlTargetBaseTest::getService<IComposer>();
     ASSERT_NE(nullptr, mComposer.get());
 
     mComposerClient = createClient();
@@ -749,7 +749,7 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
 
  private:
   void SetUpGralloc() {
-    mAllocator = IAllocator::getService();
+    mAllocator = ::testing::VtsHalHidlTargetBaseTest::getService<IAllocator>();
     ASSERT_NE(nullptr, mAllocator.get());
 
     mAllocator->createClient([this](const auto& error, const auto& client) {
@@ -759,7 +759,7 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
     });
     ASSERT_NE(nullptr, mAllocatorClient.get());
 
-    mMapper = IMapper::getService();
+    mMapper = ::testing::VtsHalHidlTargetBaseTest::getService<IMapper>();
     ASSERT_NE(nullptr, mMapper.get());
     ASSERT_FALSE(mMapper->isRemote());
   }

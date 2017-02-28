@@ -24,7 +24,7 @@
 #include <android-base/logging.h>
 #include <android/hardware/thermal/1.0/IThermal.h>
 #include <android/hardware/thermal/1.0/types.h>
-#include <gtest/gtest.h>
+#include <VtsHalHidlTargetBaseTest.h>
 #include <unistd.h>
 
 using ::android::hardware::hidl_string;
@@ -46,10 +46,10 @@ using ::android::sp;
 #define MAX_FAN_SPEED 20000
 
 // The main test class for THERMAL HIDL HAL.
-class ThermalHidlTest : public ::testing::Test {
+class ThermalHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
  public:
   virtual void SetUp() override {
-    thermal_ = IThermal::getService();
+    thermal_ = ::testing::VtsHalHidlTargetBaseTest::getService<IThermal>();
     ASSERT_NE(thermal_, nullptr);
     baseSize_ = 0;
     names_.clear();

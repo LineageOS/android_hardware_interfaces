@@ -20,7 +20,7 @@
 
 #include <android-base/logging.h>
 #include <android/hardware/graphics/allocator/2.0/IAllocator.h>
-#include <gtest/gtest.h>
+#include <VtsHalHidlTargetBaseTest.h>
 
 namespace android {
 namespace hardware {
@@ -69,10 +69,10 @@ class TempDescriptor {
   BufferDescriptor mDescriptor;
 };
 
-class GraphicsAllocatorHidlTest : public ::testing::Test {
+class GraphicsAllocatorHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
  protected:
   void SetUp() override {
-    mAllocator = IAllocator::getService();
+    mAllocator = ::testing::VtsHalHidlTargetBaseTest::getService<IAllocator>();
     ASSERT_NE(mAllocator, nullptr);
 
     mAllocator->createClient([this](const auto& error, const auto& client) {
