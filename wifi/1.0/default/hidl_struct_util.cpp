@@ -973,6 +973,8 @@ bool convertHidlNanPublishRequestToLegacy(
   legacy_request->range_report = legacy_hal::NAN_DISABLE_RANGE_REPORT;
   legacy_request->publish_type = (legacy_hal::NanPublishType) hidl_request.publishType;
   legacy_request->tx_type = (legacy_hal::NanTxType) hidl_request.txType;
+  legacy_request->service_responder_policy = hidl_request.autoAcceptDataPathRequests ?
+        legacy_hal::NAN_SERVICE_ACCEPT_POLICY_ALL : legacy_hal::NAN_SERVICE_ACCEPT_POLICY_NONE;
 
   return true;
 }
