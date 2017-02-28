@@ -144,7 +144,7 @@ namespace implementation {
             status = android::OK;
             bytesWritten = result;
         } else {
-            status = -result;
+            status = result;
             bytesWritten = 0;
         }
 
