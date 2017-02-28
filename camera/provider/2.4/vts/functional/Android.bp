@@ -28,6 +28,8 @@ cc_test {
         "android.hardware.camera.device@3.2",
         "android.hardware.camera.device@1.0",
         "libcamera_metadata",
+        "libbinder",
+        "libgui",
         "libui"
     ],
     static_libs: ["VtsHalHidlTargetTestBase"],

@@ -21,6 +21,10 @@
 #include <android/log.h>
 #include <ui/GraphicBuffer.h>
 #include <VtsHalHidlTargetTestBase.h>
+#include <gui/BufferQueue.h>
+#include <gui/Surface.h>
+#include <gui/CpuConsumer.h>
+#include <binder/MemoryHeapBase.h>
 #include <regex>
 #include "system/camera_metadata.h"
 #include <hardware/gralloc.h>
@@ -30,6 +34,7 @@
 #include <condition_variable>
 #include <chrono>
 #include <inttypes.h>
+#include <utils/Errors.h>
 
 using ::android::hardware::Return;
 using ::android::hardware::Void;
@@ -38,7 +43,13 @@ using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::sp;
 using ::android::GraphicBuffer;
+using ::android::IGraphicBufferProducer;
+using ::android::IGraphicBufferConsumer;
+using ::android::BufferQueue;
+using ::android::CpuConsumer;
+using ::android::Surface;
 using ::android::hardware::graphics::common::V1_0::PixelFormat;
+using ::android::hardware::graphics::allocator::V2_0::ProducerUsage;
 using ::android::hardware::camera::common::V1_0::Status;
 using ::android::hardware::camera::common::V1_0::CameraDeviceStatus;
 using ::android::hardware::camera::common::V1_0::TorchMode;
@@ -69,6 +80,7 @@ using ::android::hardware::camera::device::V1_0::NotifyCallbackMsg;
 using ::android::hardware::camera::device::V1_0::DataCallbackMsg;
 using ::android::hardware::camera::device::V1_0::CameraFrameMetadata;
 using ::android::hardware::camera::device::V1_0::ICameraDevicePreviewCallback;
+using ::android::hardware::camera::device::V1_0::FrameCallbackFlag;
 
 const char kCameraPassthroughServiceName[] = "legacy/0";
 const uint32_t kMaxPreviewWidth = 1920;
@@ -120,6 +132,27 @@ namespace {
         }
         return 0;
     }
+
+    Status mapToStatus(::android::status_t s)  {
+        switch(s) {
+            case ::android::OK:
+                return Status::OK ;
+            case ::android::BAD_VALUE:
+                return Status::ILLEGAL_ARGUMENT ;
+            case -EBUSY:
+                return Status::CAMERA_IN_USE;
+            case -EUSERS:
+                return Status::MAX_CAMERAS_IN_USE;
+            case ::android::UNKNOWN_TRANSACTION:
+                return Status::METHOD_NOT_SUPPORTED;
+            case ::android::INVALID_OPERATION:
+                return Status::OPERATION_NOT_SUPPORTED;
+            case ::android::DEAD_OBJECT:
+                return Status::CAMERA_DISCONNECTED;
+        }
+        ALOGW("Unexpected HAL status code %d", s);
+        return Status::OPERATION_NOT_SUPPORTED;
+    }
 }
 
 // Test environment for camera
@@ -152,6 +185,233 @@ void CameraHidlEnvironment::SetUp() {
 
 void CameraHidlEnvironment::TearDown() {
     ALOGI("TearDown CameraHidlEnvironment");
+}
+
+struct PreviewWindowCb : public ICameraDevicePreviewCallback {
+    PreviewWindowCb(sp<ANativeWindow> anw) : mPreviewWidth(0),
+            mPreviewHeight(0), mFormat(0), mPreviewUsage(0),
+            mPreviewSwapInterval(-1), mCrop{-1, -1, -1, -1}, mAnw(anw) {}
+
+    using dequeueBuffer_cb =
+            std::function<void(Status status, uint64_t bufferId,
+                    const hidl_handle& buffer, uint32_t stride)>;
+    Return<void> dequeueBuffer(dequeueBuffer_cb _hidl_cb) override;
+
+    Return<Status> enqueueBuffer(uint64_t bufferId) override;
+
+    Return<Status> cancelBuffer(uint64_t bufferId) override;
+
+    Return<Status> setBufferCount(uint32_t count) override;
+
+    Return<Status> setBuffersGeometry(uint32_t w,
+            uint32_t h, PixelFormat format) override;
+
+    Return<Status> setCrop(int32_t left, int32_t top,
+            int32_t right, int32_t bottom) override;
+
+    Return<Status> setUsage(ProducerUsage usage) override;
+
+    Return<Status> setSwapInterval(int32_t interval) override;
+
+    using getMinUndequeuedBufferCount_cb =
+            std::function<void(Status status, uint32_t count)>;
+    Return<void> getMinUndequeuedBufferCount(
+            getMinUndequeuedBufferCount_cb _hidl_cb) override;
+
+    Return<Status> setTimestamp(int64_t timestamp) override;
+
+ private:
+    struct BufferHasher {
+        size_t operator()(const buffer_handle_t& buf) const {
+            if (buf == nullptr)
+                return 0;
+
+            size_t result = 1;
+            result = 31 * result + buf->numFds;
+            result = 31 * result + buf->numInts;
+            int length = buf->numFds + buf->numInts;
+            for (int i = 0; i < length; i++) {
+                result = 31 * result + buf->data[i];
+            }
+            return result;
+        }
+    };
+
+    struct BufferComparator {
+        bool operator()(const buffer_handle_t& buf1,
+                const buffer_handle_t& buf2) const {
+            if ((buf1->numFds == buf2->numFds) &&
+                    (buf1->numInts == buf2->numInts)) {
+                int length = buf1->numFds + buf1->numInts;
+                for (int i = 0; i < length; i++) {
+                    if (buf1->data[i] != buf2->data[i]) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+    };
+
+    std::pair<bool, uint64_t> getBufferId(ANativeWindowBuffer* anb);
+    void cleanupCirculatingBuffers();
+
+    std::mutex mBufferIdMapLock; // protecting mBufferIdMap and mNextBufferId
+    typedef std::unordered_map<const buffer_handle_t, uint64_t,
+            BufferHasher, BufferComparator> BufferIdMap;
+
+    BufferIdMap mBufferIdMap; // stream ID -> per stream buffer ID map
+    std::unordered_map<uint64_t, ANativeWindowBuffer*> mReversedBufMap;
+    uint64_t mNextBufferId = 1;
+
+    uint32_t mPreviewWidth, mPreviewHeight;
+    int mFormat, mPreviewUsage;
+    int32_t mPreviewSwapInterval;
+    android_native_rect_t mCrop;
+    sp<ANativeWindow> mAnw;     //Native window reference
+};
+
+std::pair<bool, uint64_t> PreviewWindowCb::getBufferId(
+        ANativeWindowBuffer* anb) {
+    std::lock_guard<std::mutex> lock(mBufferIdMapLock);
+
+    buffer_handle_t& buf = anb->handle;
+    auto it = mBufferIdMap.find(buf);
+    if (it == mBufferIdMap.end()) {
+        uint64_t bufId = mNextBufferId++;
+        mBufferIdMap[buf] = bufId;
+        mReversedBufMap[bufId] = anb;
+        return std::make_pair(true, bufId);
+    } else {
+        return std::make_pair(false, it->second);
+    }
+}
+
+void PreviewWindowCb::cleanupCirculatingBuffers() {
+    std::lock_guard<std::mutex> lock(mBufferIdMapLock);
+    mBufferIdMap.clear();
+    mReversedBufMap.clear();
+}
+
+Return<void> PreviewWindowCb::dequeueBuffer(dequeueBuffer_cb _hidl_cb) {
+    ANativeWindowBuffer* anb;
+    auto rc = native_window_dequeue_buffer_and_wait(mAnw.get(), &anb);
+    uint64_t bufferId = 0;
+    uint32_t stride = 0;
+    hidl_handle buf = nullptr;
+    if (rc == ::android::OK) {
+        auto pair = getBufferId(anb);
+        buf = (pair.first) ? anb->handle : nullptr;
+        bufferId = pair.second;
+        stride = anb->stride;
+    }
+
+    _hidl_cb(mapToStatus(rc), bufferId, buf, stride);
+    return Void();
+}
+
+Return<Status> PreviewWindowCb::enqueueBuffer(uint64_t bufferId) {
+    if (mReversedBufMap.count(bufferId) == 0) {
+        ALOGE("%s: bufferId %" PRIu64 " not found", __FUNCTION__, bufferId);
+        return Status::ILLEGAL_ARGUMENT;
+    }
+    return mapToStatus(mAnw->queueBuffer(mAnw.get(),
+            mReversedBufMap.at(bufferId), -1));
+}
+
+Return<Status> PreviewWindowCb::cancelBuffer(uint64_t bufferId) {
+    if (mReversedBufMap.count(bufferId) == 0) {
+        ALOGE("%s: bufferId %" PRIu64 " not found", __FUNCTION__, bufferId);
+        return Status::ILLEGAL_ARGUMENT;
+    }
+    return mapToStatus(mAnw->cancelBuffer(mAnw.get(),
+            mReversedBufMap.at(bufferId), -1));
+}
+
+Return<Status> PreviewWindowCb::setBufferCount(uint32_t count) {
+    if (mAnw.get() != nullptr) {
+        // WAR for b/27039775
+        native_window_api_disconnect(mAnw.get(), NATIVE_WINDOW_API_CAMERA);
+        native_window_api_connect(mAnw.get(), NATIVE_WINDOW_API_CAMERA);
+        if (mPreviewWidth != 0) {
+            native_window_set_buffers_dimensions(mAnw.get(),
+                    mPreviewWidth, mPreviewHeight);
+            native_window_set_buffers_format(mAnw.get(), mFormat);
+        }
+        if (mPreviewUsage != 0) {
+            native_window_set_usage(mAnw.get(), mPreviewUsage);
+        }
+        if (mPreviewSwapInterval >= 0) {
+            mAnw->setSwapInterval(mAnw.get(), mPreviewSwapInterval);
+        }
+        if (mCrop.left >= 0) {
+            native_window_set_crop(mAnw.get(), &(mCrop));
+        }
+    }
+
+    auto rc = native_window_set_buffer_count(mAnw.get(), count);
+    if (rc == ::android::OK) {
+        cleanupCirculatingBuffers();
+    }
+
+    return mapToStatus(rc);
+}
+
+Return<Status> PreviewWindowCb::setBuffersGeometry(uint32_t w, uint32_t h,
+        PixelFormat format) {
+    auto rc = native_window_set_buffers_dimensions(mAnw.get(), w, h);
+    if (rc == ::android::OK) {
+        mPreviewWidth = w;
+        mPreviewHeight = h;
+        rc = native_window_set_buffers_format(mAnw.get(),
+                static_cast<int>(format));
+        if (rc == ::android::OK) {
+            mFormat = static_cast<int>(format);
+        }
+    }
+
+    return mapToStatus(rc);
+}
+
+Return<Status> PreviewWindowCb::setCrop(int32_t left, int32_t top,
+        int32_t right, int32_t bottom) {
+    android_native_rect_t crop = { left, top, right, bottom };
+    auto rc = native_window_set_crop(mAnw.get(), &crop);
+    if (rc == ::android::OK) {
+        mCrop = crop;
+    }
+    return mapToStatus(rc);
+}
+
+Return<Status> PreviewWindowCb::setUsage(ProducerUsage usage) {
+    auto rc = native_window_set_usage(mAnw.get(), static_cast<int>(usage));
+    if (rc == ::android::OK) {
+        mPreviewUsage =  static_cast<int>(usage);
+    }
+    return mapToStatus(rc);
+}
+
+Return<Status> PreviewWindowCb::setSwapInterval(int32_t interval) {
+    auto rc = mAnw->setSwapInterval(mAnw.get(), interval);
+    if (rc == ::android::OK) {
+        mPreviewSwapInterval = interval;
+    }
+    return mapToStatus(rc);
+}
+
+Return<void> PreviewWindowCb::getMinUndequeuedBufferCount(
+        getMinUndequeuedBufferCount_cb _hidl_cb) {
+    int count = 0;
+    auto rc = mAnw->query(mAnw.get(),
+            NATIVE_WINDOW_MIN_UNDEQUEUED_BUFFERS, &count);
+    _hidl_cb(mapToStatus(rc), count);
+    return Void();
+}
+
+Return<Status> PreviewWindowCb::setTimestamp(int64_t timestamp) {
+    return mapToStatus(native_window_set_buffers_timestamp(mAnw.get(),
+            timestamp));
 }
 
 // The main test class for camera HIDL HAL.
@@ -265,6 +525,9 @@ protected:
     std::mutex mTorchLock;                     // Synchronize access to torch status
     std::condition_variable mTorchCond;        // Condition variable for torch status
     TorchModeStatus mTorchStatus;              // Current torch status
+
+    // Holds camera registered buffers
+    std::unordered_map<uint32_t, sp<::android::MemoryHeapBase> > mMemoryPool;
 };
 
 Return<void> CameraHidlTest::Camera1DeviceCb::notifyCallback(
@@ -274,13 +537,34 @@ Return<void> CameraHidlTest::Camera1DeviceCb::notifyCallback(
 }
 
 Return<uint32_t> CameraHidlTest::Camera1DeviceCb::registerMemory(
-        const hidl_handle& descriptor __unused, uint32_t bufferSize __unused,
-        uint32_t bufferCount __unused) {
-    return 0;
+        const hidl_handle& descriptor, uint32_t bufferSize,
+        uint32_t bufferCount) {
+    if (descriptor->numFds != 1) {
+        ALOGE("%s: camera memory descriptor has numFds %d (expect 1)",
+                __FUNCTION__, descriptor->numFds);
+        return 0;
+    }
+    if (descriptor->data[0] < 0) {
+        ALOGE("%s: camera memory descriptor has FD %d (expect >= 0)",
+                __FUNCTION__, descriptor->data[0]);
+        return 0;
+    }
+
+    sp<::android::MemoryHeapBase> pool = new ::android::MemoryHeapBase(
+            descriptor->data[0], bufferSize*bufferCount, 0, 0);
+    mParent->mMemoryPool.emplace(pool->getHeapID(), pool);
+
+    return pool->getHeapID();
 }
 
 Return<void> CameraHidlTest::Camera1DeviceCb::unregisterMemory(
         uint32_t memId __unused) {
+    if (mParent->mMemoryPool.count(memId) == 0) {
+        ALOGE("%s: memory pool ID %d not found", __FUNCTION__, memId);
+        return Void();
+    }
+
+    mParent->mMemoryPool.erase(memId);
     return Void();
 }
 
@@ -562,6 +846,149 @@ TEST_F(CameraHidlTest, getCameraInfo) {
                             FAIL() << "Unexpected camera facing:" << static_cast<uint32_t> (info.facing);
                     }
                 });
+        }
+    }
+}
+
+// Check whether preview window can be configured
+TEST_F(CameraHidlTest, setPreviewWindow) {
+    CameraHidlEnvironment* env = CameraHidlEnvironment::Instance();
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
+
+    for (const auto& name : cameraDeviceNames) {
+        if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
+            ::android::sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
+            ALOGI("getCameraCharacteristics: Testing camera device %s", name.c_str());
+            env->mProvider->getCameraDeviceInterface_V1_x(
+                name,
+                [&](auto status, const auto& device) {
+                    ALOGI("getCameraDeviceInterface_V1_x returns status:%d", (int)status);
+                    ASSERT_EQ(Status::OK, status);
+                    ASSERT_NE(device, nullptr);
+                    device1 = device;
+                });
+
+            sp<Camera1DeviceCb> deviceCb = new Camera1DeviceCb(this);
+            ASSERT_EQ(Status::OK, device1->open(deviceCb));
+
+            ASSERT_EQ(Status::OK, device1->setPreviewWindow(nullptr));
+            sp<IGraphicBufferProducer> producer;
+            sp<IGraphicBufferConsumer> consumer;
+            BufferQueue::createBufferQueue(&producer, &consumer);
+            sp<Surface> surface = new Surface(producer);
+            sp<ANativeWindow> window(surface);
+
+            sp<ICameraDevicePreviewCallback> previewCb = new PreviewWindowCb(
+                    window);
+            ASSERT_EQ(Status::OK, device1->setPreviewWindow(previewCb));
+
+            device1->close();
+        }
+    }
+}
+
+// Verify that setting preview window fails in case device is not open
+TEST_F(CameraHidlTest, setPreviewWindowInvalid) {
+    CameraHidlEnvironment* env = CameraHidlEnvironment::Instance();
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
+
+    for (const auto& name : cameraDeviceNames) {
+        if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
+            ::android::sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
+            ALOGI("getCameraCharacteristics: Testing camera device %s", name.c_str());
+            env->mProvider->getCameraDeviceInterface_V1_x(
+                name,
+                [&](auto status, const auto& device) {
+                    ALOGI("getCameraDeviceInterface_V1_x returns status:%d", (int)status);
+                    ASSERT_EQ(Status::OK, status);
+                    ASSERT_NE(device, nullptr);
+                    device1 = device;
+                });
+
+            ASSERT_EQ(Status::OPERATION_NOT_SUPPORTED,
+                    device1->setPreviewWindow(nullptr));
+        }
+    }
+}
+
+// Start and stop preview checking whether it gets enabled inbetween.
+TEST_F(CameraHidlTest, startStopPreview) {
+    CameraHidlEnvironment* env = CameraHidlEnvironment::Instance();
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
+
+    for (const auto& name : cameraDeviceNames) {
+        if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
+            ::android::sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
+            ALOGI("getCameraCharacteristics: Testing camera device %s", name.c_str());
+            env->mProvider->getCameraDeviceInterface_V1_x(
+                name,
+                [&](auto status, const auto& device) {
+                    ALOGI("getCameraDeviceInterface_V1_x returns status:%d", (int)status);
+                    ASSERT_EQ(Status::OK, status);
+                    ASSERT_NE(device, nullptr);
+                    device1 = device;
+                });
+
+            sp<Camera1DeviceCb> deviceCb = new Camera1DeviceCb(this);
+            ASSERT_EQ(Status::OK, device1->open(deviceCb));
+
+            sp<IGraphicBufferProducer> producer;
+            sp<IGraphicBufferConsumer> consumer;
+            BufferQueue::createBufferQueue(&producer, &consumer);
+            sp<CpuConsumer> cpuConsumer = new CpuConsumer(consumer, 1);
+            sp<Surface> surface = new Surface(producer);
+            sp<ANativeWindow> window(surface);
+
+            sp<PreviewWindowCb> previewCb = new PreviewWindowCb(
+                    window);
+            ASSERT_EQ(Status::OK, device1->setPreviewWindow(previewCb));
+            ASSERT_EQ(Status::OK, device1->startPreview());
+            ASSERT_TRUE(device1->previewEnabled());
+            device1->stopPreview();
+
+            device1->close();
+        }
+    }
+}
+
+// Start preview without active preview window. Preview should start as soon
+// as a valid active window gets configured.
+TEST_F(CameraHidlTest, startStopPreviewDelayed) {
+    CameraHidlEnvironment* env = CameraHidlEnvironment::Instance();
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
+
+    for (const auto& name : cameraDeviceNames) {
+        if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
+            ::android::sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
+            ALOGI("getCameraCharacteristics: Testing camera device %s", name.c_str());
+            env->mProvider->getCameraDeviceInterface_V1_x(
+                name,
+                [&](auto status, const auto& device) {
+                    ALOGI("getCameraDeviceInterface_V1_x returns status:%d", (int)status);
+                    ASSERT_EQ(Status::OK, status);
+                    ASSERT_NE(device, nullptr);
+                    device1 = device;
+                });
+
+            sp<Camera1DeviceCb> deviceCb = new Camera1DeviceCb(this);
+            ASSERT_EQ(Status::OK, device1->open(deviceCb));
+            ASSERT_EQ(Status::OK, device1->setPreviewWindow(nullptr));
+            ASSERT_EQ(Status::OK, device1->startPreview());
+
+            sp<IGraphicBufferProducer> producer;
+            sp<IGraphicBufferConsumer> consumer;
+            BufferQueue::createBufferQueue(&producer, &consumer);
+            sp<CpuConsumer> cpuConsumer = new CpuConsumer(consumer, 1);
+            sp<Surface> surface = new Surface(producer);
+            sp<ANativeWindow> window(surface);
+            sp<PreviewWindowCb> previewCb = new PreviewWindowCb(window);
+
+            //Preview should get enabled now
+            ASSERT_EQ(Status::OK, device1->setPreviewWindow(previewCb));
+            ASSERT_TRUE(device1->previewEnabled());
+            device1->stopPreview();
+
+            device1->close();
         }
     }
 }
