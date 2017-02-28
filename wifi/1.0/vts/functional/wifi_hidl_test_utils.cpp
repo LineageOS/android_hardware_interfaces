@@ -43,7 +43,7 @@ void stopFramework() {
 void startFramework() { ASSERT_EQ(std::system("svc wifi enable"), 0); }
 
 sp<IWifi> getWifi() {
-    sp<IWifi> wifi = testing::VtsHalHidlTargetBaseTest::getService<IWifi>();
+    sp<IWifi> wifi = ::testing::VtsHalHidlTargetBaseTest::getService<IWifi>();
     return wifi;
 }
 
