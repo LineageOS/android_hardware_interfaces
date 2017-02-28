@@ -156,6 +156,74 @@ TEST_F(GraphicsMapperHidlTest, LockBasic) {
   }
 }
 
+/**
+ * Test IMapper::lockFlex.  This locks a YV12 buffer, and makes sure we can
+ * write to and read from it.
+ */
+TEST_F(GraphicsMapperHidlTest, LockFlexBasic) {
+  auto info = mDummyDescriptorInfo;
+  info.format = PixelFormat::YV12;
+
+  const native_handle_t* buffer;
+  ASSERT_NO_FATAL_FAILURE(buffer = mMapper->allocate(mAllocatorClient, info));
+
+  // lock buffer for writing
+  const IMapper::Rect region{0, 0, static_cast<int32_t>(info.width),
+                             static_cast<int32_t>(info.height)};
+  int fence = -1;
+  FlexLayout layout;
+  ASSERT_NO_FATAL_FAILURE(
+      layout =
+          mMapper->lockFlex(buffer, info.producerUsageMask, 0, region, fence));
+  ASSERT_EQ(FlexFormat::YCBCR, layout.format);
+  ASSERT_EQ(3u, layout.planes.size());
+
+  const auto y_stride = layout.planes[0].vIncrement;
+  const auto c_stride = layout.planes[1].vIncrement;
+  auto y_data = static_cast<uint8_t*>(layout.planes[0].topLeft);
+  auto cb_data = static_cast<uint8_t*>(layout.planes[1].topLeft);
+  auto cr_data = static_cast<uint8_t*>(layout.planes[2].topLeft);
+
+  for (uint32_t y = 0; y < info.height; y++) {
+    for (uint32_t x = 0; x < info.width; x++) {
+      auto val = static_cast<uint8_t>(info.height * y + x);
+
+      y_data[y_stride * y + x] = val;
+      if (y % 2 == 0 && x % 2 == 0) {
+        cb_data[c_stride * y / 2 + x / 2] = val;
+        cr_data[c_stride * y / 2 + x / 2] = val;
+      }
+    }
+  }
+
+  ASSERT_NO_FATAL_FAILURE(fence = mMapper->unlock(buffer));
+
+  // lock buffer for reading
+  ASSERT_NO_FATAL_FAILURE(
+      layout =
+          mMapper->lockFlex(buffer, 0, info.consumerUsageMask, region, fence));
+
+  y_data = static_cast<uint8_t*>(layout.planes[0].topLeft);
+  cb_data = static_cast<uint8_t*>(layout.planes[1].topLeft);
+  cr_data = static_cast<uint8_t*>(layout.planes[2].topLeft);
+  for (uint32_t y = 0; y < info.height; y++) {
+    for (uint32_t x = 0; x < info.width; x++) {
+      auto val = static_cast<uint8_t>(info.height * y + x);
+
+      EXPECT_EQ(val, y_data[y_stride * y + x]);
+      if (y % 2 == 0 && x % 2 == 0) {
+        EXPECT_EQ(val, cb_data[c_stride * y / 2 + x / 2]);
+        EXPECT_EQ(val, cr_data[c_stride * y / 2 + x / 2]);
+      }
+    }
+  }
+
+  ASSERT_NO_FATAL_FAILURE(fence = mMapper->unlock(buffer));
+  if (fence >= 0) {
+    close(fence);
+  }
+}
+
 }  // namespace anonymous
 }  // namespace tests
 }  // namespace V2_0
