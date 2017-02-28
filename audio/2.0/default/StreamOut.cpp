@@ -79,6 +79,10 @@ void WriteThread::doWrite() {
         ssize_t writeResult = mStream->write(mStream, &mBuffer[0], availToRead);
         if (writeResult >= 0) {
             mStatus.reply.written = writeResult;
+            // Diagnostics of the cause of b/35813113.
+            ALOGE_IF(writeResult > availToRead,
+                    "legacy hal reports more bytes written than asked for: %lld > %lld",
+                    (long long)writeResult, (long long)availToRead);
         } else {
             mStatus.retval = Stream::analyzeStatus("write", writeResult);
         }
