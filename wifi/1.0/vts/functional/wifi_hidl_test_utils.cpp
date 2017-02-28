@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <gtest/gtest.h>
+#include <VtsHalHidlTargetBaseTest.h>
 
 #include "wifi_hidl_call_util.h"
 #include "wifi_hidl_test_utils.h"
@@ -43,7 +43,7 @@ void stopFramework() {
 void startFramework() { ASSERT_EQ(std::system("svc wifi enable"), 0); }
 
 sp<IWifi> getWifi() {
-    sp<IWifi> wifi = IWifi::getService();
+    sp<IWifi> wifi = testing::VtsHalHidlTargetBaseTest::getService<IWifi>();
     return wifi;
 }
 

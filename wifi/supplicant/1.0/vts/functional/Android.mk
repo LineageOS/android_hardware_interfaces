@@ -37,6 +37,6 @@ LOCAL_SHARED_LIBRARIES := \
     libwifi-system
 LOCAL_STATIC_LIBRARIES := \
     libgmock \
-    libgtest
+    VtsHalHidlTargetBaseTest
 include $(BUILD_NATIVE_TEST)
 
