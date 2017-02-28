@@ -166,6 +166,7 @@ WifiNanIface::WifiNanIface(
             LOG(ERROR) << "Failed to invoke the callback";
           }
         }
+        break;
     }
     case legacy_hal::NAN_DP_END: {
         for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
