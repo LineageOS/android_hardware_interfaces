@@ -877,6 +877,7 @@ struct NanEnableRequest {
  * Cipher suite flags.
  */
 enum NanCipherSuiteType : uint32_t {
+  NONE = 0, // No (open) security
   SHARED_KEY_128_MASK = 1 << 0, // NCS-SK-128
   SHARED_KEY_256_MASK = 1 << 1  // NCS-SK-256
 };
@@ -991,13 +992,15 @@ struct NanDiscoveryCommonConfig {
    */
   bool disableFollowupReceivedIndication;
   /**
-   * Cipher types supported in data-paths constructed in the context of this discovery session.
+   * Cipher type for data-paths constructed in the context of this discovery session. Must be
+   * specified as |NanCipherSuiteType.NONE| if no |pmk| is provided.
    */
-  bitfield<NanCipherSuiteType> supportedCipherTypes;
+  NanCipherSuiteType cipherType;
   /**
    * Optional Pairwise Master Key (PMK) for data-paths constructed in the context of this discovery
    * session. A PMK can also be provided during the actual construction of the data-path (which
-   * allows for unique PMKs for each data-path).
+   * allows for unique PMKs for each data-path). The |cipherType| must be specified if a PMK is
+   * provided.
    * Max length: 32
    * Ref: IEEE 802.11i
    */
@@ -1199,11 +1202,13 @@ struct NanInitiateDataPathRequest {
    */
   vec<uint8_t> appInfo;
   /**
-   * Cipher types supported in data-paths constructed in the context of this discovery session.
+   * Cipher type for the data-path being requested. Must be specified as |NanCipherSuiteType.NONE|
+   * if no |pmk| is provided.
    */
-  bitfield<NanCipherSuiteType> supportedCipherTypes;
+  NanCipherSuiteType cipherType;
   /**
    * Pairwise Master Key (PMK) for the data-path being requested (if |securityRequired| is true).
+   * The |cipherType| must be specified if a PMK is provided.
    * Max length: 32
    * Ref: IEEE 802.11i
    */
@@ -1243,11 +1248,13 @@ struct NanRespondToDataPathIndicationRequest {
    */
   vec<uint8_t> appInfo;
   /**
-   * Cipher types supported in data-paths constructed in the context of this discovery session.
+   * Cipher type for the data-path being negotiated. Must be specified as |NanCipherSuiteType.NONE|
+   * if no |pmk| is provided.
    */
-  bitfield<NanCipherSuiteType> supportedCipherTypes;
+  NanCipherSuiteType cipherType;
   /**
    * Pairwise Master Key (PMK) for the data-path being negotiated (if |securityRequired| is true).
+   * The |cipherType| must be specified if a PMK is provided.
    * Max length: 32
    */
   vec<uint8_t> pmk;
@@ -1374,13 +1381,14 @@ struct NanMatchInd {
    */
   uint8_t rssiValue;
   /**
-   * Cipher types supported by the peer for data-paths constructed in the context of this discovery
-   * session.
+   * Cipher type for data-paths constructed in the context of this discovery session. Valid if
+   * |peerRequiresSecurityEnabledInNdp| is true.
    */
-  bitfield<NanCipherSuiteType> peerSupportedCipherTypes;
+  NanCipherSuiteType peerCipherType;
   /**
    * Indicates whether or not the peer requires security enabled in any data-path (NDP) constructed
-   * in the context of this discovery session.
+   * in the context of this discovery session. The |cipherType| specifies the cipher type for such
+   * data-paths.
    * NAN Spec: Service Discovery Extension Attribute (SDEA) / Control / Security Required
    */
   bool peerRequiresSecurityEnabledInNdp;
