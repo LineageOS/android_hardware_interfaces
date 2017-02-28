@@ -17,6 +17,7 @@
 #define LOG_TAG "camera_hidl_hal_test"
 #include <android/hardware/camera/provider/2.4/ICameraProvider.h>
 #include <android/hardware/camera/device/3.2/ICameraDevice.h>
+#include <android/hardware/camera/device/1.0/ICameraDevice.h>
 #include <android/log.h>
 #include <ui/GraphicBuffer.h>
 #include <VtsHalHidlTargetTestBase.h>
@@ -63,6 +64,11 @@ using ::android::hardware::camera::device::V3_2::StreamBuffer;
 using ::android::hardware::camera::device::V3_2::MsgType;
 using ::android::hardware::camera::device::V3_2::ErrorMsg;
 using ::android::hardware::camera::device::V3_2::ErrorCode;
+using ::android::hardware::camera::device::V1_0::CameraFacing;
+using ::android::hardware::camera::device::V1_0::NotifyCallbackMsg;
+using ::android::hardware::camera::device::V1_0::DataCallbackMsg;
+using ::android::hardware::camera::device::V1_0::CameraFrameMetadata;
+using ::android::hardware::camera::device::V1_0::ICameraDevicePreviewCallback;
 
 const char kCameraPassthroughServiceName[] = "legacy/0";
 const uint32_t kMaxPreviewWidth = 1920;
@@ -105,10 +111,11 @@ namespace {
         if (!match) {
             return -1;
         }
-        if (sm[1].compare(kHAL3_2) == 0) {
+        std::string version = sm[1].str();
+        if (version.compare(kHAL3_2) == 0) {
             // maybe switched to 3.4 or define the hidl version enumlater
             return CAMERA_DEVICE_API_VERSION_3_2;
-        } else if (sm[1].compare(kHAL1_0) == 0) {
+        } else if (version.compare(kHAL1_0) == 0) {
             return CAMERA_DEVICE_API_VERSION_1_0;
         }
         return 0;
@@ -197,6 +204,34 @@ public:
         CameraHidlTest *mParent;               // Parent object
     };
 
+    struct Camera1DeviceCb :
+            public ::android::hardware::camera::device::V1_0::ICameraDeviceCallback {
+        Camera1DeviceCb(CameraHidlTest *parent) : mParent(parent) {}
+
+        Return<void> notifyCallback(NotifyCallbackMsg msgType,
+                int32_t ext1, int32_t ext2) override;
+
+        Return<uint32_t> registerMemory(const hidl_handle& descriptor,
+                uint32_t bufferSize, uint32_t bufferCount) override;
+
+        Return<void> unregisterMemory(uint32_t memId) override;
+
+        Return<void> dataCallback(DataCallbackMsg msgType,
+                uint32_t data, uint32_t bufferIndex,
+                const CameraFrameMetadata& metadata) override;
+
+        Return<void> dataCallbackTimestamp(DataCallbackMsg msgType,
+                uint32_t data, uint32_t bufferIndex,
+                int64_t timestamp) override;
+
+        Return<void> handleCallbackTimestamp(DataCallbackMsg msgType,
+                const hidl_handle& frameData,uint32_t data,
+                uint32_t bufferIndex, int64_t timestamp) override;
+
+     private:
+        CameraHidlTest *mParent;               // Parent object
+    };
+
     void openEmptyDeviceSession(const std::string &name,
             const CameraHidlEnvironment* env,
             sp<ICameraDeviceSession> *session /*out*/,
@@ -231,6 +266,43 @@ protected:
     std::condition_variable mTorchCond;        // Condition variable for torch status
     TorchModeStatus mTorchStatus;              // Current torch status
 };
+
+Return<void> CameraHidlTest::Camera1DeviceCb::notifyCallback(
+        NotifyCallbackMsg msgType __unused, int32_t ext1 __unused,
+        int32_t ext2 __unused) {
+    return Void();
+}
+
+Return<uint32_t> CameraHidlTest::Camera1DeviceCb::registerMemory(
+        const hidl_handle& descriptor __unused, uint32_t bufferSize __unused,
+        uint32_t bufferCount __unused) {
+    return 0;
+}
+
+Return<void> CameraHidlTest::Camera1DeviceCb::unregisterMemory(
+        uint32_t memId __unused) {
+    return Void();
+}
+
+Return<void> CameraHidlTest::Camera1DeviceCb::dataCallback(
+        DataCallbackMsg msgType __unused, uint32_t data __unused,
+        uint32_t bufferIndex __unused,
+        const CameraFrameMetadata& metadata __unused) {
+    return Void();
+}
+
+Return<void> CameraHidlTest::Camera1DeviceCb::dataCallbackTimestamp(
+        DataCallbackMsg msgType __unused, uint32_t data __unused,
+        uint32_t bufferIndex __unused, int64_t timestamp __unused) {
+    return Void();
+}
+
+Return<void> CameraHidlTest::Camera1DeviceCb::handleCallbackTimestamp(
+        DataCallbackMsg msgType __unused, const hidl_handle& frameData __unused,
+        uint32_t data __unused, uint32_t bufferIndex __unused,
+        int64_t timestamp __unused) {
+    return Void();
+}
 
 Return<void> CameraHidlTest::DeviceCb::processCaptureResult(
         const CaptureResult& result) {
@@ -364,8 +436,8 @@ TEST_F(CameraHidlTest, setCallback) {
     ASSERT_EQ(Status::OK, status);
 }
 
-// Test if ICameraProvider::getCameraDeviceInterface_V3_x returns Status::OK and non-null device
-TEST_F(CameraHidlTest, getCameraDeviceInterface_V3_x) {
+// Test if ICameraProvider::getCameraDeviceInterface returns Status::OK and non-null device
+TEST_F(CameraHidlTest, getCameraDeviceInterface) {
     CameraHidlEnvironment* env = CameraHidlEnvironment::Instance();
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
 
@@ -377,6 +449,14 @@ TEST_F(CameraHidlTest, getCameraDeviceInterface_V3_x) {
                     ALOGI("getCameraDeviceInterface_V3_x returns status:%d", (int)status);
                     ASSERT_EQ(Status::OK, status);
                     ASSERT_NE(device3_2, nullptr);
+                });
+        } else if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
+            env->mProvider->getCameraDeviceInterface_V1_x(
+                name,
+                [&](auto status, const auto& device1) {
+                    ALOGI("getCameraDeviceInterface_V1_x returns status:%d", (int)status);
+                    ASSERT_EQ(Status::OK, status);
+                    ASSERT_NE(device1, nullptr);
                 });
         }
     }
@@ -409,6 +489,77 @@ TEST_F(CameraHidlTest, getResourceCost) {
                     ASSERT_LE(resourceCost.resourceCost, 100u);
                     for (const auto& name : resourceCost.conflictingDevices) {
                         ALOGI("    Conflicting device: %s", name.c_str());
+                    }
+                });
+        } else {
+            ::android::sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
+            ALOGI("getResourceCost: Testing camera device %s", name.c_str());
+            env->mProvider->getCameraDeviceInterface_V1_x(
+                name,
+                [&](auto status, const auto& device) {
+                    ALOGI("getCameraDeviceInterface_V1_x returns status:%d", (int)status);
+                    ASSERT_EQ(Status::OK, status);
+                    ASSERT_NE(device, nullptr);
+                    device1 = device;
+                });
+
+            device1->getResourceCost(
+                [&](auto status, const auto& resourceCost) {
+                    ALOGI("getResourceCost returns status:%d", (int)status);
+                    ASSERT_EQ(Status::OK, status);
+                    ALOGI("    Resource cost is %d", resourceCost.resourceCost);
+                    ASSERT_LE(resourceCost.resourceCost, 100u);
+                    for (const auto& name : resourceCost.conflictingDevices) {
+                        ALOGI("    Conflicting device: %s", name.c_str());
+                    }
+                });
+        }
+    }
+}
+
+// Verify that the static camera info can be retrieved
+// successfully.
+TEST_F(CameraHidlTest, getCameraInfo) {
+    CameraHidlEnvironment* env = CameraHidlEnvironment::Instance();
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
+
+    for (const auto& name : cameraDeviceNames) {
+        if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
+            ::android::sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
+            ALOGI("getCameraCharacteristics: Testing camera device %s", name.c_str());
+            env->mProvider->getCameraDeviceInterface_V1_x(
+                name,
+                [&](auto status, const auto& device) {
+                    ALOGI("getCameraDeviceInterface_V1_x returns status:%d", (int)status);
+                    ASSERT_EQ(Status::OK, status);
+                    ASSERT_NE(device, nullptr);
+                    device1 = device;
+                });
+
+            device1->getCameraInfo(
+                [&](auto status, const auto& info) {
+                    ALOGI("getCameraInfo returns status:%d", (int)status);
+                    ASSERT_EQ(Status::OK, status);
+                    switch(info.orientation) {
+                        case 0:
+                        case 90:
+                        case 180:
+                        case 270:
+                            //Expected cases
+                            ALOGI("camera orientation: %d", info.orientation);
+                            break;
+                        default:
+                            FAIL() << "Unexpected camera orientation:" << info.orientation;
+                    }
+                    switch(info.facing) {
+                        case CameraFacing::BACK:
+                        case CameraFacing::FRONT:
+                        case CameraFacing::EXTERNAL:
+                            //Expected cases
+                            ALOGI("camera facing: %d", info.facing);
+                            break;
+                        default:
+                            FAIL() << "Unexpected camera facing:" << static_cast<uint32_t> (info.facing);
                     }
                 });
         }
@@ -518,6 +669,54 @@ TEST_F(CameraHidlTest, setTorchMode) {
                     }
                 }
             }
+        } else if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
+            ::android::sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
+            ALOGI("setTorchMode: Testing camera device %s", name.c_str());
+            env->mProvider->getCameraDeviceInterface_V1_x(
+                name,
+                [&](auto status, const auto& device) {
+                    ALOGI("getCameraDeviceInterface_V1_x returns status:%d", (int)status);
+                    ASSERT_EQ(Status::OK, status);
+                    ASSERT_NE(device, nullptr);
+                    device1 = device;
+                });
+
+            mTorchStatus = TorchModeStatus::NOT_AVAILABLE;
+            Status status = device1->setTorchMode(TorchMode::ON);
+            ALOGI("setTorchMode return status %d", (int)status);
+            if (!torchControlSupported) {
+                ASSERT_EQ(Status::METHOD_NOT_SUPPORTED, status);
+            } else {
+                ASSERT_TRUE(status == Status::OK || status == Status::OPERATION_NOT_SUPPORTED);
+                if (status == Status::OK) {
+                    {
+                        std::unique_lock<std::mutex> l(mTorchLock);
+                        while (TorchModeStatus::NOT_AVAILABLE == mTorchStatus) {
+                            auto timeout = std::chrono::system_clock::now() +
+                                    std::chrono::seconds(kTorchTimeoutSec);
+                            ASSERT_NE(std::cv_status::timeout,
+                                    mTorchCond.wait_until(l, timeout));
+                        }
+                        ASSERT_EQ(TorchModeStatus::AVAILABLE_ON, mTorchStatus);
+                        mTorchStatus = TorchModeStatus::NOT_AVAILABLE;
+                    }
+
+                    status = device1->setTorchMode(TorchMode::OFF);
+                    ASSERT_EQ(Status::OK, status);
+
+                    {
+                        std::unique_lock<std::mutex> l(mTorchLock);
+                        while (TorchModeStatus::NOT_AVAILABLE == mTorchStatus) {
+                            auto timeout = std::chrono::system_clock::now() +
+                                    std::chrono::seconds(kTorchTimeoutSec);
+                            ASSERT_NE(std::cv_status::timeout,
+                                    mTorchCond.wait_until(l, timeout));
+                        }
+                        ASSERT_EQ(TorchModeStatus::AVAILABLE_OFF, mTorchStatus);
+                    }
+
+                }
+            }
         }
     }
 
@@ -548,6 +747,25 @@ TEST_F(CameraHidlTest, dumpState) {
             ASSERT_GE(raw_handle->data[0], 0);
             hidl_handle handle = raw_handle;
             device3_2->dumpState(handle);
+            close(raw_handle->data[0]);
+            native_handle_delete(raw_handle);
+        } else if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
+            ::android::sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
+            ALOGI("dumpState: Testing camera device %s", name.c_str());
+            env->mProvider->getCameraDeviceInterface_V1_x(
+                name,
+                [&](auto status, const auto& device) {
+                    ALOGI("getCameraDeviceInterface_V1_x returns status:%d", (int)status);
+                    ASSERT_EQ(Status::OK, status);
+                    ASSERT_NE(device, nullptr);
+                    device1 = device;
+                });
+
+            native_handle_t* raw_handle = native_handle_create(1, 0);
+            raw_handle->data[0] = open(kDumpOutput, O_RDWR);
+            ASSERT_GE(raw_handle->data[0], 0);
+            hidl_handle handle = raw_handle;
+            device1->dumpState(handle);
             close(raw_handle->data[0]);
             native_handle_delete(raw_handle);
         }
@@ -594,6 +812,29 @@ TEST_F(CameraHidlTest, openClose) {
             session->close();
             // TODO: test all session API calls return INTERNAL_ERROR after close
             // TODO: keep a wp copy here and verify session cannot be promoted out of this scope
+        } else if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
+            ::android::sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
+            ALOGI("openClose: Testing camera device %s", name.c_str());
+            env->mProvider->getCameraDeviceInterface_V1_x(
+                name,
+                [&](auto status, const auto& device) {
+                    ALOGI("getCameraDeviceInterface_V1_x returns status:%d", (int)status);
+                    ASSERT_EQ(Status::OK, status);
+                    ASSERT_NE(device, nullptr);
+                    device1 = device;
+                });
+            sp<Camera1DeviceCb> cb = new Camera1DeviceCb(this);
+            ASSERT_EQ(Status::OK, device1->open(cb));
+
+            native_handle_t* raw_handle = native_handle_create(1, 0);
+            raw_handle->data[0] = open(kDumpOutput, O_RDWR);
+            ASSERT_GE(raw_handle->data[0], 0);
+            hidl_handle handle = raw_handle;
+            device1->dumpState(handle);
+            close(raw_handle->data[0]);
+            native_handle_delete(raw_handle);
+
+            device1->close();
         }
     }
 }
