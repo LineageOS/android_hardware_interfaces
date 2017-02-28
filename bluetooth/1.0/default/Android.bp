@@ -15,6 +15,7 @@
 
 cc_library_shared {
     name: "android.hardware.bluetooth@1.0-impl",
+    proprietary: true,
     relative_install_path: "hw",
     srcs: [
         "bluetooth_hci.cc",
