@@ -950,7 +950,7 @@ bool convertHidlNanPublishRequestToLegacy(
         hidl_request.baseConfigs.disableMatchExpirationIndication ? 0x2 : 0x0;
   legacy_request->recv_indication_cfg |=
         hidl_request.baseConfigs.disableFollowupReceivedIndication ? 0x4 : 0x0;
-  legacy_request->cipher_type = hidl_request.baseConfigs.supportedCipherTypes;
+  legacy_request->cipher_type = (unsigned int) hidl_request.baseConfigs.cipherType;
   legacy_request->pmk_len = hidl_request.baseConfigs.pmk.size();
   if (legacy_request->pmk_len > NAN_PMK_INFO_LEN) {
     LOG(ERROR) << "convertHidlNanPublishRequestToLegacy: pmk_len too large";
@@ -1041,7 +1041,7 @@ bool convertHidlNanSubscribeRequestToLegacy(
         hidl_request.baseConfigs.disableMatchExpirationIndication ? 0x2 : 0x0;
   legacy_request->recv_indication_cfg |=
         hidl_request.baseConfigs.disableFollowupReceivedIndication ? 0x4 : 0x0;
-  legacy_request->cipher_type = hidl_request.baseConfigs.supportedCipherTypes;
+  legacy_request->cipher_type = (unsigned int) hidl_request.baseConfigs.cipherType;
   legacy_request->pmk_len = hidl_request.baseConfigs.pmk.size();
   if (legacy_request->pmk_len > NAN_PMK_INFO_LEN) {
     LOG(ERROR) << "convertHidlNanSubscribeRequestToLegacy: pmk_len too large";
@@ -1230,14 +1230,15 @@ bool convertHidlNanDataPathInitiatorRequestToLegacy(
         legacy_hal::NAN_DP_CONFIG_SECURITY : legacy_hal::NAN_DP_CONFIG_NO_SECURITY;
   legacy_request->app_info.ndp_app_info_len = hidl_request.appInfo.size();
   if (legacy_request->app_info.ndp_app_info_len > NAN_DP_MAX_APP_INFO_LEN) {
-    LOG(ERROR) << "convertHidlNanDataPathInitiatorRequestToLegacy: ndp_app_info_len to large";
+    LOG(ERROR) << "convertHidlNanDataPathInitiatorRequestToLegacy: ndp_app_info_len too large";
     return false;
   }
   memcpy(legacy_request->app_info.ndp_app_info, hidl_request.appInfo.data(),
         legacy_request->app_info.ndp_app_info_len);
-  legacy_request->cipher_type = hidl_request.supportedCipherTypes;
+  legacy_request->cipher_type = (unsigned int) hidl_request.cipherType;
   legacy_request->pmk_len = hidl_request.pmk.size();
   if (legacy_request->pmk_len > NAN_PMK_INFO_LEN) {
+    LOG(ERROR) << "convertHidlNanDataPathInitiatorRequestToLegacy: pmk_len too large";
     return false;
   }
   memcpy(legacy_request->pmk, hidl_request.pmk.data(), legacy_request->pmk_len);
@@ -1267,7 +1268,7 @@ bool convertHidlNanDataPathIndicationResponseToLegacy(
   }
   memcpy(legacy_request->app_info.ndp_app_info, hidl_request.appInfo.data(),
         legacy_request->app_info.ndp_app_info_len);
-  legacy_request->cipher_type = hidl_request.supportedCipherTypes;
+  legacy_request->cipher_type = (unsigned int) hidl_request.cipherType;
   legacy_request->pmk_len = hidl_request.pmk.size();
   if (legacy_request->pmk_len > NAN_PMK_INFO_LEN) {
     LOG(ERROR) << "convertHidlNanDataPathIndicationResponseToLegacy: pmk_len too large";
@@ -1337,7 +1338,7 @@ bool convertLegacyNanMatchIndToHidl(
   hidl_ind->matchOccuredInBeaconFlag = legacy_ind.match_occured_flag == 1;
   hidl_ind->outOfResourceFlag = legacy_ind.out_of_resource_flag == 1;
   hidl_ind->rssiValue = legacy_ind.rssi_value;
-  hidl_ind->peerSupportedCipherTypes = legacy_ind.peer_cipher_type;
+  hidl_ind->peerCipherType = (NanCipherSuiteType) legacy_ind.peer_cipher_type;
   hidl_ind->peerRequiresSecurityEnabledInNdp =
         legacy_ind.peer_sdea_params.security_cfg == legacy_hal::NAN_DP_CONFIG_SECURITY;
   hidl_ind->peerRequiresRanging =
