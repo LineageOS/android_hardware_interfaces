@@ -1281,11 +1281,11 @@ struct SendSmsResult {
 };
 
 struct SetupDataCallResult {
-    int32_t status;                       // A RadioDataCallFailCause, 0 which is
-                                          // RadioDataCallFailCause:NONE if no error
-    int32_t suggestedRetryTime;           // If status != 0, this fields indicates the suggested
-                                          // retry back-off timer value RIL wants to override the
-                                          // one pre-configured in FW.
+    DataCallFailCause status;             // Data call fail cause. DataCallFailCause.NONE if no
+                                          // error.
+    int32_t suggestedRetryTime;           // If status != DataCallFailCause.NONE, this field
+                                          // indicates the suggested retry back-off timer value RIL
+                                          // wants to override the one pre-configured in FW.
                                           // The unit is milliseconds.
                                           // The value < 0 means no value is suggested.
                                           // The value 0 means retry must be done ASAP.
@@ -1296,8 +1296,8 @@ struct SetupDataCallResult {
     string type;                          // One of the PDP_type values in TS 27.007 section 10.1.1.
                                           // For example, "IP", "IPV6", "IPV4V6", or "PPP". If
                                           // status is
-                                          // RadioDataCallFailCause:ONLY_SINGLE_BEARER_ALLOWED this
-                                          // is the type supported such as "IP" or "IPV6"
+                                          // DataCallFailCause.ONLY_SINGLE_BEARER_ALLOWED, this
+                                          // is the type supported such as "IP" or "IPV6".
     string ifname;                        // The network interface name
     string addresses;                     // A space-delimited list of addresses with optional "/"
                                           // prefix length, e.g., "192.0.1.3" or
