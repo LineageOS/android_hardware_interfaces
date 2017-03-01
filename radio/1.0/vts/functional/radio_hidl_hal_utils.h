@@ -27,6 +27,7 @@
 #include <android/hardware/radio/1.0/types.h>
 
 using ::android::hardware::radio::V1_0::ActivityStatsInfo;
+using ::android::hardware::radio::V1_0::AppType;
 using ::android::hardware::radio::V1_0::CardStatus;
 using ::android::hardware::radio::V1_0::Call;
 using ::android::hardware::radio::V1_0::CallForwardInfo;
@@ -39,6 +40,7 @@ using ::android::hardware::radio::V1_0::ClipStatus;
 using ::android::hardware::radio::V1_0::DataRegStateResult;
 using ::android::hardware::radio::V1_0::GsmBroadcastSmsConfigInfo;
 using ::android::hardware::radio::V1_0::HardwareConfig;
+using ::android::hardware::radio::V1_0::IccIo;
 using ::android::hardware::radio::V1_0::IccIoResult;
 using ::android::hardware::radio::V1_0::IRadio;
 using ::android::hardware::radio::V1_0::IRadioResponse;
@@ -60,6 +62,7 @@ using ::android::hardware::radio::V1_0::RadioTechnologyFamily;
 using ::android::hardware::radio::V1_0::SendSmsResult;
 using ::android::hardware::radio::V1_0::SetupDataCallResult;
 using ::android::hardware::radio::V1_0::SignalStrength;
+using ::android::hardware::radio::V1_0::SimApdu;
 using ::android::hardware::radio::V1_0::TtyMode;
 using ::android::hardware::radio::V1_0::VoiceRegStateResult;
 
@@ -71,6 +74,7 @@ using ::android::sp;
 #define TIMEOUT_PERIOD 20
 
 class RadioHidlTest;
+extern CardStatus cardStatus;
 
 /* Callback class for radio response */
 class RadioResponse : public IRadioResponse {
@@ -79,7 +83,9 @@ private:
 
 public:
     RadioResponseInfo rspInfo;
-    CardStatus cardStatus;
+    hidl_string imsi;
+    IccIoResult iccIoResult;
+    int channelId;
 
     RadioResponse(RadioHidlTest& parent);
 
@@ -443,6 +449,7 @@ public:
     sp<IRadio> radio;
     sp<RadioResponse> radioRsp;
     sp<IRadioIndication> radioInd;
+
 };
 
 // A class for test environment setup

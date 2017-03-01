@@ -27,6 +27,12 @@ void RadioHidlTest::SetUp() {
 
     radioInd = NULL;
     radio->setResponseFunctions(radioRsp, radioInd);
+
+    radio->getIccCardStatus(1);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
+    EXPECT_EQ(1, radioRsp->rspInfo.serial);
+    EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
 }
 
 void RadioHidlTest::TearDown() {
