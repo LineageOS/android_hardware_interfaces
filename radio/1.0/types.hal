@@ -499,21 +499,21 @@ enum DataCallFailCause : int32_t {
  * "managed roaming"
  */
 enum RegState : int32_t {
-    NOT_REG_MT_NOT_SEARCHING_OP,          // Not registered, MT is not currently searching
+    NOT_REG_MT_NOT_SEARCHING_OP = 0,      // Not registered, MT is not currently searching
                                           // a new operator to register
-    REG_HOME,                             // Registered, home network
-    NOT_REG_MT_SEARCHING_OP,              // Not registered, but MT is currently searching
+    REG_HOME = 1,                         // Registered, home network
+    NOT_REG_MT_SEARCHING_OP = 2,          // Not registered, but MT is currently searching
                                           // a new operator to register
-    REG_DENIED,                           // Registration denied
-    UNKNOWN,                              // Unknown
-    REG_ROAMING,                          // Registered, roaming
-    NOT_REG_MT_NOT_SEARCHING_OP_EM,       // Same as NOT_REG_MT_NOT_SEARCHING_OP but indicates that
+    REG_DENIED = 3,                       // Registration denied
+    UNKNOWN = 4,                          // Unknown
+    REG_ROAMING = 5,                      // Registered, roaming
+    NOT_REG_MT_NOT_SEARCHING_OP_EM = 10,  // Same as NOT_REG_MT_NOT_SEARCHING_OP but indicates that
                                           // emergency calls are enabled.
-    NOT_REG_MT_SEARCHING_OP_EM,           // Same as NOT_REG_MT_SEARCHING_OP but indicates that
+    NOT_REG_MT_SEARCHING_OP_EM = 12,      // Same as NOT_REG_MT_SEARCHING_OP but indicates that
                                           // emergency calls are enabled.
-    REG_DENIED_EM,                        // Same as REG_DENIED but indicates that
+    REG_DENIED_EM = 13,                   // Same as REG_DENIED but indicates that
                                           // emergency calls are enabled.
-    UNKNOWN_EM,                           // Same as UNKNOWN but indicates that
+    UNKNOWN_EM = 14,                      // Same as UNKNOWN but indicates that
                                           // emergency calls are enabled.
 };
 
@@ -815,6 +815,7 @@ enum CdmaSmsWriteArgsStatus : int32_t {
 };
 
 enum CellInfoType : int32_t {
+    NONE = 0,
     GSM = 1,
     CDMA = 2,
     LTE = 3,
@@ -1343,125 +1344,6 @@ struct IccIoResult {
                                           // Base64 format, see 3GPP TS 31.102 7.1.2
 };
 
-struct VoiceRegStateResult {
-    RegState regState;
-    int32_t lac;                          // LAC if registered on a GSM/WCDMA system or
-                                          // -1 if not.Valid LAC are 0x0000 - 0xffff
-    int32_t cid;                          // CID. if registered on a * GSM/WCDMA or -1 if not
-                                          // Valid CID are 0x00000000 - 0xffffffff
-                                          // In GSM, CID is Cell ID (see TS 27.007) in 16 bits
-                                          // In UMTS, CID is UMTS Cell Identity (see TS 25.331)
-                                          // in 28 bits
-    int32_t rat;                          // indicates the available voice radio technology,
-                                          // valid values as defined by RadioTechnology.
-    int32_t baseStationId;                // Base Station ID. if registered on a CDMA
-                                          // system or -1 if not. Base Station ID in decimal format
-    int32_t baseStationLatitude;          // Base Station latitude. if registered on a
-                                          // CDMA system or -1 if not. Base Station latitude is a
-                                          // decimal number as specified in 3GPP2 C.S0005-A v6.0.
-                                          // It is represented in units of 0.25 seconds and ranges
-                                          // from -1296000 to 1296000, both values inclusive
-                                          // (corresponding to a range of -90 to +90 degrees).
-    int32_t baseStationLongitude;         // Base Station longitude. if registered on a
-                                          // CDMA system or -1 if not. Base Station
-                                          // longitude is a decimal number as specified in
-                                          // 3GPP2 C.S0005-A v6.0. It is represented in
-                                          // units of 0.25 seconds and ranges from -2592000
-                                          // to 2592000, both values inclusive (corresponding
-                                          // to a range of -180 to +180 degrees).
-    bool cssSupported;                    // concurrent services support indicator. if
-                                          // registered on a CDMA system.
-                                          // false - Concurrent services not supported,
-                                          // true - Concurrent services supported
-    int32_t systemId;                     // System ID. if registered on a CDMA system or
-                                          // -1 if not. Valid System ID are 0 - 32767
-    int32_t networkId;                    // Network ID. if registered on a CDMA system or
-                                          // -1 if not. Valid System ID are 0 - 65535
-    int32_t roamingIndicator;             // TSB-58 Roaming Indicator if registered
-                                          // on a CDMA or EVDO system or -1 if not.
-                                          // Valid values are 0-255.
-    int32_t systemIsInPrl;                // indicates whether the current system is in the
-                                          // PRL if registered on a CDMA or EVDO system or -1 if
-                                          // not. 0=not in the PRL, 1=in the PRL
-    int32_t defaultRoamingIndicator;      // default Roaming Indicator from the PRL,
-                                          // if registered on a CDMA or EVDO system or -1 if not.
-                                          // Valid values are 0-255.
-    int32_t reasonForDenial;              // reasonForDenial if registration state is 3
-                                          // (Registration denied) this is an enumerated reason why
-                                          // registration was denied. See 3GPP TS 24.008,
-                                          // 10.5.3.6 and Annex G.
-                                          // 0 - General
-                                          // 1 - Authentication Failure
-                                          // 2 - IMSI unknown in HLR
-                                          // 3 - Illegal MS
-                                          // 4 - Illegal ME
-                                          // 5 - PLMN not allowed
-                                          // 6 - Location area not allowed
-                                          // 7 - Roaming not allowed
-                                          // 8 - No Suitable Cells in this Location Area
-                                          // 9 - Network failure
-                                          // 10 - Persistent location update reject
-                                          // 11 - PLMN not allowed
-                                          // 12 - Location area not allowed
-                                          // 13 - Roaming not allowed in this Location Area
-                                          // 15 - No Suitable Cells in this Location Area
-                                          // 17 - Network Failure
-                                          // 20 - MAC Failure
-                                          // 21 - Sync Failure
-                                          // 22 - Congestion
-                                          // 23 - GSM Authentication unacceptable
-                                          // 25 - Not Authorized for this CSG
-                                          // 32 - Service option not supported
-                                          // 33 - Requested service option not subscribed
-                                          // 34 - Service option temporarily out of order
-                                          // 38 - Call cannot be identified
-                                          // 48-63 - Retry upon entry into a new cell
-                                          // 95 - Semantically incorrect message
-                                          // 96 - Invalid mandatory information
-                                          // 97 - Message type non-existent or not implemented
-                                          // 98 - Message type not compatible with protocol state
-                                          // 99 - Information element non-existent or not implemented
-                                          // 100 - Conditional IE error
-                                          // 101 - Message not compatible with protocol state
-                                          // 111 - Protocol error, unspecified
-    int32_t psc;                          // Primary Scrambling Code of the current
-                                          // cell as described in TS 25.331, in hexadecimal
-                                          // format, or -1 if unknown or not registered
-                                          // to a UMTS network.
-};
-
-struct DataRegStateResult {
-    RegState regState;                    // Valid reg states are NOT_REG_MT_NOT_SEARCHING_OP,
-                                          // REG_HOME, NOT_REG_MT_SEARCHING_OP, REG_DENIED,
-                                          // UNKNOWN, REG_ROAMING defined in RegState
-    int32_t lac;                          // LAC if registered or -1 if not
-                                          // valid LAC are 0x0000 - 0xffff
-    int32_t cid;                          // CID if registered or -1 if not
-                                          // valid CID are 0x00000000 - 0x0fffffff
-    int32_t rat;                          // indicates the available data radio technology,
-                                          // valid values as defined by RadioTechnology.
-    int32_t reasonDataDenied;             // if registration state is 3 (Registration
-                                          // denied) this is an enumerated reason why
-                                          // registration was denied. See 3GPP TS 24.008,
-                                          // Annex G.6 "Additional cause codes for GMM".
-                                          // 7 == GPRS services not allowed
-                                          // 8 == GPRS services and non-GPRS services not allowed
-                                          // 9 == MS identity cannot be derived by the network
-                                          // 10 == Implicitly detached
-                                          // 14 == GPRS services not allowed in this PLMN
-                                          // 16 == MSC temporarily not reachable
-                                          // 40 == No PDP context activated
-    int32_t maxDataCalls;                 // The maximum number of simultaneous Data Calls that
-                                          // must be established using setupDataCall().
-    // The values below are optional LTE location information in decimal.
-    // If a value is unknown that value must be -1.
-    int32_t tac;                          // a 16-bit Tracking Area Code.
-    int32_t phyCid;                       // a 0-503 Physical Cell Identifier.
-    int32_t eci;                          // a 28-bit E-UTRAN Cell Identifier.
-    int32_t csgid;                        // a 27-bit Closed Subscriber Group Identity.
-    int32_t tadv;                         // a 6-bit timing advance value.
-};
-
 // See also com.android.internal.telephony.gsm.CallForwardInfo
 struct CallForwardInfo {
     CallForwardInfoStatus status;         // For queryCallForwardStatus()
@@ -1685,6 +1567,100 @@ struct CellInfo {
                                           // empty
     vec<CellInfoTdscdma> tdscdma;         // Valid only if type = tdscdma and size = 1 else must be
                                           // empty
+};
+
+struct CellIdentity {
+    CellInfoType cellInfoType;            // cell type for selecting from union CellInfo
+    // Only one of the below vectors must be of size 1, based on a valid CellInfoType and
+    // others must be of size 0. If cell info type is NONE, then all the vectors
+    // must be of size 0.
+    vec<CellIdentityGsm> cellIdentityGsm;
+    vec<CellIdentityWcdma> cellIdentityWcdma;
+    vec<CellIdentityCdma> cellIdentityCdma;
+    vec<CellIdentityLte> cellIdentityLte;
+    vec<CellIdentityTdscdma> cellIdentityTdscdma;
+};
+
+struct VoiceRegStateResult {
+    RegState regState;                    // Valid reg states are NOT_REG_MT_NOT_SEARCHING_OP,
+                                          // REG_HOME, NOT_REG_MT_SEARCHING_OP, REG_DENIED,
+                                          // UNKNOWN, REG_ROAMING defined in RegState
+    int32_t rat;                          // indicates the available voice radio technology,
+                                          // valid values as defined by RadioTechnology.
+    bool cssSupported;                    // concurrent services support indicator. if
+                                          // registered on a CDMA system.
+                                          // false - Concurrent services not supported,
+                                          // true - Concurrent services supported
+    int32_t roamingIndicator;             // TSB-58 Roaming Indicator if registered
+                                          // on a CDMA or EVDO system or -1 if not.
+                                          // Valid values are 0-255.
+    int32_t systemIsInPrl;                // indicates whether the current system is in the
+                                          // PRL if registered on a CDMA or EVDO system or -1 if
+                                          // not. 0=not in the PRL, 1=in the PRL
+    int32_t defaultRoamingIndicator;      // default Roaming Indicator from the PRL,
+                                          // if registered on a CDMA or EVDO system or -1 if not.
+                                          // Valid values are 0-255.
+    int32_t reasonForDenial;              // reasonForDenial if registration state is 3
+                                          // (Registration denied) this is an enumerated reason why
+                                          // registration was denied. See 3GPP TS 24.008,
+                                          // 10.5.3.6 and Annex G.
+                                          // 0 - General
+                                          // 1 - Authentication Failure
+                                          // 2 - IMSI unknown in HLR
+                                          // 3 - Illegal MS
+                                          // 4 - Illegal ME
+                                          // 5 - PLMN not allowed
+                                          // 6 - Location area not allowed
+                                          // 7 - Roaming not allowed
+                                          // 8 - No Suitable Cells in this Location Area
+                                          // 9 - Network failure
+                                          // 10 - Persistent location update reject
+                                          // 11 - PLMN not allowed
+                                          // 12 - Location area not allowed
+                                          // 13 - Roaming not allowed in this Location Area
+                                          // 15 - No Suitable Cells in this Location Area
+                                          // 17 - Network Failure
+                                          // 20 - MAC Failure
+                                          // 21 - Sync Failure
+                                          // 22 - Congestion
+                                          // 23 - GSM Authentication unacceptable
+                                          // 25 - Not Authorized for this CSG
+                                          // 32 - Service option not supported
+                                          // 33 - Requested service option not subscribed
+                                          // 34 - Service option temporarily out of order
+                                          // 38 - Call cannot be identified
+                                          // 48-63 - Retry upon entry into a new cell
+                                          // 95 - Semantically incorrect message
+                                          // 96 - Invalid mandatory information
+                                          // 97 - Message type non-existent or not implemented
+                                          // 98 - Message type not compatible with protocol state
+                                          // 99 - Information element non-existent or not implemented
+                                          // 100 - Conditional IE error
+                                          // 101 - Message not compatible with protocol state
+                                          // 111 - Protocol error, unspecified
+    CellIdentity cellIdentity;
+};
+
+struct DataRegStateResult {
+    RegState regState;                    // Valid reg states are NOT_REG_MT_NOT_SEARCHING_OP,
+                                          // REG_HOME, NOT_REG_MT_SEARCHING_OP, REG_DENIED,
+                                          // UNKNOWN, REG_ROAMING defined in RegState
+    int32_t rat;                          // indicates the available data radio technology,
+                                          // valid values as defined by RadioTechnology.
+    int32_t reasonDataDenied;             // if registration state is 3 (Registration
+                                          // denied) this is an enumerated reason why
+                                          // registration was denied. See 3GPP TS 24.008,
+                                          // Annex G.6 "Additional cause codes for GMM".
+                                          // 7 == GPRS services not allowed
+                                          // 8 == GPRS services and non-GPRS services not allowed
+                                          // 9 == MS identity cannot be derived by the network
+                                          // 10 == Implicitly detached
+                                          // 14 == GPRS services not allowed in this PLMN
+                                          // 16 == MSC temporarily not reachable
+                                          // 40 == No PDP context activated
+    int32_t maxDataCalls;                 // The maximum number of simultaneous Data Calls that
+                                          // must be established using setupDataCall().
+    CellIdentity cellIdentity;
 };
 
 struct GsmSmsMessage {
