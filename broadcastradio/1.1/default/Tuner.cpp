@@ -200,6 +200,13 @@ exit:
     return Void();
 }
 
+Return<void> Tuner::getProgramList(const hidl_string& filter __unused, getProgramList_cb _hidl_cb) {
+    hidl_vec<ProgramInfo> pList;
+    // TODO(b/34054813): do the actual implementation.
+    _hidl_cb(ProgramListResult::NOT_INITIALIZED, pList);
+    return Void();
+}
+
 } // namespace implementation
 }  // namespace V1_1
 }  // namespace broadcastradio

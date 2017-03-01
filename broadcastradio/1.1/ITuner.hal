@@ -19,11 +19,32 @@ package android.hardware.broadcastradio@1.1;
 import @1.0::ITuner;
 
 interface ITuner extends @1.0::ITuner {
-    /*
+
+    /**
      * Retrieve current station information.
      * @return result OK if scan successfully started
      *                NOT_INITIALIZED if another error occurs
      * @return info Current program information.
      */
     getProgramInformation_1_1() generates(Result result, ProgramInfo info);
+
+    /**
+     * Retrieve station list.
+     *
+     * This call does not trigger actual scan, but operates on the list cached
+     * internally at the driver level.
+     *
+     * @param filter vendor-specific filter for the stations to be retrieved.
+     *               An empty string MUST result in full list.
+     *               Client application MUST verify vendor/product name
+     *               before setting this parameter to anything else.
+     * @return result OK if the list was successfully retrieved.
+     *                NOT_READY if the scan is in progress.
+     *                NOT_STARTED if the scan has not been started.
+     *                NOT_INITIALIZED if any other error occurs.
+     * @return programList List of stations available for user.
+     */
+    getProgramList(string filter)
+            generates(ProgramListResult result, vec<ProgramInfo> programList);
+
 };
