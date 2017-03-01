@@ -22,7 +22,7 @@
 #include <android/hardware/soundtrigger/2.0/ISoundTriggerHw.h>
 #include <android/hardware/soundtrigger/2.0/types.h>
 
-#include <gtest/gtest.h>
+#include <VtsHalHidlTargetBaseTest.h>
 
 using ::android::hardware::audio::common::V2_0::AudioDevice;
 using ::android::hardware::soundtrigger::V2_0::SoundModelHandle;
@@ -37,10 +37,10 @@ using ::android::hardware::Void;
 using ::android::sp;
 
 // The main test class for Sound Trigger HIDL HAL.
-class SoundTriggerHidlTest : public ::testing::Test {
+class SoundTriggerHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
  public:
   virtual void SetUp() override {
-    mSoundTriggerHal = ISoundTriggerHw::getService("sound_trigger.primary");
+    mSoundTriggerHal = ::testing::VtsHalHidlTargetBaseTest::getService<ISoundTriggerHw>("sound_trigger.primary");
     ASSERT_NE(nullptr, mSoundTriggerHal.get());
     mCallback = new MyCallback();
     ASSERT_NE(nullptr, mCallback.get());

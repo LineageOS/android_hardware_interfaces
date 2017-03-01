@@ -21,7 +21,7 @@
 #include <android/hardware/tv/input/1.0/ITvInput.h>
 #include <android/hardware/tv/input/1.0/ITvInputCallback.h>
 
-#include <gtest/gtest.h>
+#include <VtsHalHidlTargetBaseTest.h>
 #include <utils/KeyedVector.h>
 #include <mutex>
 #include <vector>
@@ -43,10 +43,10 @@ using ::android::sp;
 #define DEFAULT_ID INT32_MIN
 
 /* The main test class for TV Input HIDL HAL. */
-class TvInputHidlTest : public ::testing::Test {
+class TvInputHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
  public:
   virtual void SetUp() override {
-    tv_input_ = ITvInput::getService();
+    tv_input_ = ::testing::VtsHalHidlTargetBaseTest::getService<ITvInput>();
     ASSERT_NE(tv_input_, nullptr);
     tv_input_callback_ = new TvInputCallback(*this);
     ASSERT_NE(tv_input_callback_, nullptr);

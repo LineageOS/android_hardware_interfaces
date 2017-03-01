@@ -18,7 +18,7 @@
 #include <android-base/logging.h>
 #include <android/hardware/memtrack/1.0/IMemtrack.h>
 
-#include <gtest/gtest.h>
+#include <VtsHalHidlTargetBaseTest.h>
 
 #include <algorithm>
 #include <vector>
@@ -34,10 +34,10 @@ using ::android::sp;
 using std::vector;
 using std::count_if;
 
-class MemtrackHidlTest : public ::testing::Test {
+class MemtrackHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
  public:
   virtual void SetUp() override {
-    memtrack = IMemtrack::getService();
+    memtrack = ::testing::VtsHalHidlTargetBaseTest::getService<IMemtrack>();
     ASSERT_NE(memtrack, nullptr);
   }
 

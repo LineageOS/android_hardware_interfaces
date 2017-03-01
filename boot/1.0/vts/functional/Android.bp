@@ -16,7 +16,6 @@
 
 cc_test {
     name: "VtsHalBootV1_0TargetTest",
-    gtest: true,
     srcs: ["VtsHalBootV1_0TargetTest.cpp"],
     shared_libs: [
         "libbase",
@@ -27,7 +26,7 @@ cc_test {
         "libutils",
         "android.hardware.boot@1.0",
     ],
-    static_libs: ["libgtest"],
+    static_libs: ["VtsHalHidlTargetBaseTest"],
     cflags: [
         "-O0",
         "-g",

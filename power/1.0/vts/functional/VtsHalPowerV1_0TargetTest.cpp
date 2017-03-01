@@ -22,7 +22,7 @@
 #include <android-base/unique_fd.h>
 #include <android/hardware/power/1.0/IPower.h>
 
-#include <gtest/gtest.h>
+#include <VtsHalHidlTargetBaseTest.h>
 
 #include <algorithm>
 
@@ -43,10 +43,10 @@ using std::vector;
 #define AVAILABLE_GOVERNORS_PATH \
   "/sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors"
 
-class PowerHidlTest : public ::testing::Test {
+class PowerHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
  public:
   virtual void SetUp() override {
-    power = IPower::getService();
+    power = ::testing::VtsHalHidlTargetBaseTest::getService<IPower>();
     ASSERT_NE(power, nullptr);
   }
 

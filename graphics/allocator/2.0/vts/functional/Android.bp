@@ -16,7 +16,6 @@
 
 cc_test {
     name: "VtsHalGraphicsAllocatorV2_0TargetTest",
-    gtest: true,
     srcs: ["VtsHalGraphicsAllocatorV2_0TargetTest.cpp"],
     shared_libs: [
         "libbase",
@@ -28,7 +27,7 @@ cc_test {
         "libutils",
         "android.hardware.graphics.allocator@2.0",
     ],
-    static_libs: ["libgtest"],
+    static_libs: ["VtsHalHidlTargetBaseTest"],
     cflags: [
         "-O0",
         "-g",

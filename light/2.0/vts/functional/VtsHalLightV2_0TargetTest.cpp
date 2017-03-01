@@ -19,7 +19,7 @@
 #include <android-base/logging.h>
 #include <android/hardware/light/2.0/ILight.h>
 #include <android/hardware/light/2.0/types.h>
-#include <gtest/gtest.h>
+#include <VtsHalHidlTargetBaseTest.h>
 #include <set>
 #include <unistd.h>
 
@@ -72,10 +72,10 @@ const static std::set<Type> kAllTypes = {
     Type::WIFI
 };
 
-class LightHidlTest : public ::testing::Test {
+class LightHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
 public:
     virtual void SetUp() override {
-        light = ILight::getService();
+        light = ::testing::VtsHalHidlTargetBaseTest::getService<ILight>();
 
         ASSERT_NE(light, nullptr);
         LOG(INFO) << "Test is remote " << light->isRemote();

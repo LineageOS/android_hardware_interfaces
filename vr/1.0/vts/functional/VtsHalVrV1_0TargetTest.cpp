@@ -18,7 +18,7 @@
 #include <android-base/logging.h>
 #include <android/hardware/vr/1.0/IVr.h>
 #include <android/log.h>
-#include <gtest/gtest.h>
+#include <VtsHalHidlTargetBaseTest.h>
 #include <hardware/vr.h>
 
 using ::android::hardware::vr::V1_0::IVr;
@@ -27,10 +27,10 @@ using ::android::hardware::Void;
 using ::android::sp;
 
 // The main test class for VR HIDL HAL.
-class VrHidlTest : public ::testing::Test {
+class VrHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
  public:
   void SetUp() override {
-    vr = IVr::getService();
+    vr = ::testing::VtsHalHidlTargetBaseTest::getService<IVr>();
     ASSERT_NE(vr, nullptr);
   }
 
