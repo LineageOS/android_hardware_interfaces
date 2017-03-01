@@ -161,8 +161,21 @@ enum StreamConfigurationMode : uint32_t {
      * CONSTRAINED_HIGH_SPEED_VIDEO in the android.request.availableCapabilities
      * static metadata.
      */
-    CONSTRAINED_HIGH_SPEED_MODE = 1
+    CONSTRAINED_HIGH_SPEED_MODE = 1,
 
+    /**
+     * A set of vendor-defined operating modes, for custom default camera
+     * application features that can't be implemented in the fully flexible fashion
+     * required for NORMAL_MODE.
+     */
+    VENDOR_MODE_0 = 0x8000,
+    VENDOR_MODE_1,
+    VENDOR_MODE_2,
+    VENDOR_MODE_3,
+    VENDOR_MODE_4,
+    VENDOR_MODE_5,
+    VENDOR_MODE_6,
+    VENDOR_MODE_7
 };
 
 /**
