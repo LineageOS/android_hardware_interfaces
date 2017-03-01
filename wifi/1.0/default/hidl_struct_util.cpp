@@ -338,7 +338,6 @@ bool convertHidlGscanParamsToLegacy(
       hidl_scan_params.reportThresholdPercent;
   legacy_scan_params->report_threshold_num_scans =
       hidl_scan_params.reportThresholdNumScans;
-  // TODO(b/33194311): Expose these max limits in the HIDL interface.
   if (hidl_scan_params.buckets.size() > MAX_BUCKETS) {
     return false;
   }
@@ -366,7 +365,6 @@ bool convertHidlGscanParamsToLegacy(
             convertHidlGscanReportEventFlagToLegacy(flag);
       }
     }
-    // TODO(b/33194311): Expose these max limits in the HIDL interface.
     if (hidl_bucket_spec.frequencies.size() > MAX_CHANNELS) {
       return false;
     }

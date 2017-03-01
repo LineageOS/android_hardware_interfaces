@@ -31,9 +31,12 @@ interface IWifiStaIfaceEventCallback {
    * |StaBackgroundScanBucketParameters.eventReportScheme|.
    *
    * @param cmdId command ID corresponding to the request.
+   * @param bucketsScanned Bitset where each bit indicates if the bucket with
+   *        that index (starting at 0) was scanned.
    * @parm result Full scan result for an AP.
    */
-  oneway onBackgroundFullScanResult(CommandId cmdId, StaScanResult result);
+  oneway onBackgroundFullScanResult(
+      CommandId cmdId, uint32_t bucketsScanned, StaScanResult result);
 
   /**
    * Called when the |StaBackgroundScanBucketParameters.eventReportScheme| flags
