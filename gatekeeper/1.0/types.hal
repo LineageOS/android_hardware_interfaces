@@ -37,6 +37,6 @@ struct GatekeeperResponse {
      * otherwise unused (0)
      */
     uint32_t timeout;
-    /* optional crypto blob */
+    /* optional crypto blob. Opaque to Android system. */
     vec<uint8_t> data;
 };
