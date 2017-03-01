@@ -236,7 +236,7 @@ void Utils::convertProgramInfoFromHal(ProgramInfo *info, radio_program_info_t *h
     info_1_0.signalStrength = halInfo->signal_strength;
     convertMetaDataFromHal(info_1_0.metadata, halInfo->metadata);
     // TODO(b/34348946): add support for HAL 1.1 fields
-    info_1_1.digitalStatus = DigitalStatus::INVALID;
+    info_1_1.flags = 0;
 }
 
 //static
