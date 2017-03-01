@@ -415,7 +415,7 @@ WifiStatus WifiStaIface::startBackgroundScanInternal(
   const auto& on_full_result_callback = [weak_ptr_this](
       legacy_hal::wifi_request_id id,
       const legacy_hal::wifi_scan_result* result,
-      uint32_t /* buckets_scanned */) {
+      uint32_t buckets_scanned) {
     const auto shared_ptr_this = weak_ptr_this.promote();
     if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
       LOG(ERROR) << "Callback invoked on an invalid object";
@@ -428,7 +428,8 @@ WifiStatus WifiStaIface::startBackgroundScanInternal(
       return;
     }
     for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
-      if (!callback->onBackgroundFullScanResult(id, hidl_scan_result).isOk()) {
+      if (!callback->onBackgroundFullScanResult(
+              id, buckets_scanned, hidl_scan_result).isOk()) {
         LOG(ERROR) << "Failed to invoke onBackgroundFullScanResult callback";
       }
     }

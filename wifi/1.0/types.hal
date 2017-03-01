@@ -306,6 +306,15 @@ enum StaBackgroundScanBucketEventReportSchemeMask : uint32_t {
 };
 
 /**
+ * Max limits for background scan.
+ */
+enum StaScanLimits : uint32_t {
+  MAX_CHANNELS = 16,
+  MAX_BUCKETS = 16,
+  MAX_AP_CACHE_PER_SCAN = 32
+};
+
+/**
  * Background Scan parameters per bucket that can be specified in background
  * scan requests.
  */
@@ -318,6 +327,7 @@ struct StaBackgroundScanBucketParameters {
   /**
    * Channel frequencies (in Mhz) to scan if |band| is set to
    * |BAND_UNSPECIFIED|.
+   * Max length: |StaScanLimits.MAX_CHANNELS|.
    */
   vec<WifiChannelInMhz> frequencies;
   /**
@@ -361,6 +371,7 @@ struct StaBackgroundScanParameters {
   /**
    * Maximum number of APs that must be stored for each scan. If the maximum
    * is reached the highest RSSI results must be returned.
+   * Max length: |StaScanLimits.MAX_AP_CACHE_PER_SCAN|.
    */
   uint32_t maxApPerScan;
   /**
@@ -374,6 +385,7 @@ struct StaBackgroundScanParameters {
   uint32_t reportThresholdNumScans;
   /**
    * List of buckets to be scheduled.
+   * Max length: |StaScanLimits.MAX_BUCKETS|.
    */
   vec<StaBackgroundScanBucketParameters> buckets;
 };
@@ -506,8 +518,8 @@ struct StaScanData {
    */
   bitfield<StaScanDataFlagMask> flags;
   /**
-   * Bitset where each bit indicates if the bucket with that index was
-   * scanned.
+   * Bitset where each bit indicates if the bucket with that index (starting at
+   * 0) was scanned.
    */
   uint32_t bucketsScanned;
   /**

@@ -629,6 +629,19 @@ interface IWifiChip {
   forceDumpToDebugRingBuffer(string ringName) generates (WifiStatus status);
 
   /**
+   * API to stop the debug data collection for all ring buffers.
+   *
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.NOT_AVAILABLE|,
+   *         |WifiStatusCode.UNKNOWN|
+   */
+  stopLoggingToDebugRingBuffer() generates (WifiStatus status);
+
+  /**
    * API to retrieve the wifi wake up reason stats for debugging.
    * The driver is expected to start maintaining these stats once the chip
    * is configured using |configureChip|. These stats must be reset whenever
