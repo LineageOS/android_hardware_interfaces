@@ -20,6 +20,7 @@
 #include <android/hardware/soundtrigger/2.0/ISoundTriggerHw.h>
 #include <android/hardware/soundtrigger/2.0/ISoundTriggerHwCallback.h>
 #include <hidl/Status.h>
+#include <stdatomic.h>
 #include <utils/threads.h>
 #include <utils/KeyedVector.h>
 #include <system/sound_trigger.h>
