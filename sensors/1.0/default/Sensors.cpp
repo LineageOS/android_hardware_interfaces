@@ -145,21 +145,40 @@ Return<Result> Sensors::activate(
 }
 
 Return<void> Sensors::poll(int32_t maxCount, poll_cb _hidl_cb) {
+
     hidl_vec<Event> out;
     hidl_vec<SensorInfo> dynamicSensorsAdded;
 
-    if (maxCount <= 0) {
-        _hidl_cb(Result::BAD_VALUE, out, dynamicSensorsAdded);
-        return Void();
+    std::unique_ptr<sensors_event_t[]> data;
+    int err = android::NO_ERROR;
+
+    { // scope of reentry lock
+
+        // This enforces a single client, meaning that a maximum of one client can call poll().
+        // If this function is re-entred, it means that we are stuck in a state that may prevent
+        // the system from proceeding normally.
+        //
+        // Exit and let the system restart the sensor-hal-implementation hidl service.
+        //
+        // This function must not call _hidl_cb(...) or return until there is no risk of blocking.
+        std::unique_lock<std::mutex> lock(mPollLock, std::try_to_lock);
+        if(!lock.owns_lock()){
+            // cannot get the lock, hidl service will go into deadlock if it is not restarted.
+            // This is guaranteed to not trigger in passthrough mode.
+            LOG(FATAL) <<
+                    "ISensors::poll() re-entry. I do not know what to do except killing myself.";
+        }
+
+        if (maxCount <= 0) {
+            err = android::BAD_VALUE;
+        } else {
+            int bufferSize = maxCount <= kPollMaxBufferSize ? maxCount : kPollMaxBufferSize;
+            data.reset(new sensors_event_t[bufferSize]);
+            err = mSensorDevice->poll(
+                    reinterpret_cast<sensors_poll_device_t *>(mSensorDevice),
+                    data.get(), bufferSize);
+        }
     }
-
-    int bufferSize = maxCount <= kPollMaxBufferSize ? maxCount : kPollMaxBufferSize;
-
-    std::unique_ptr<sensors_event_t[]> data(new sensors_event_t[bufferSize]);
-
-    int err = mSensorDevice->poll(
-            reinterpret_cast<sensors_poll_device_t *>(mSensorDevice),
-            data.get(), bufferSize);
 
     if (err < 0) {
         _hidl_cb(ResultFromStatus(err), out, dynamicSensorsAdded);
