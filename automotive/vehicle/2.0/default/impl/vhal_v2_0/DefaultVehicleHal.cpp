@@ -102,9 +102,9 @@ void DefaultVehicleHal::doGetPropertyAll(emulator::EmulatorMessage& /* rxMsg */,
     {
         std::lock_guard<std::mutex> lock(mPropsMutex);
 
-        for (auto& propVal : mProps) {
+        for (auto& prop : mProps) {
             emulator::VehiclePropValue* protoVal = respMsg.add_value();
-            populateProtoVehiclePropValue(protoVal, propVal.get());
+            populateProtoVehiclePropValue(protoVal, prop.second.get());
         }
     }
 }
@@ -172,10 +172,9 @@ VehiclePropValue* DefaultVehicleHal::getVehiclePropValueLocked(int32_t propId, i
         areaId = 0;
     }
 
-    for (auto& prop : mProps) {
-        if ((prop->prop == propId) && (prop->areaId == areaId)) {
-            return prop.get();
-        }
+    auto prop = mProps.find(std::make_pair(propId, areaId));
+    if (prop != mProps.end()) {
+        return prop->second.get();
     }
     ALOGW("%s: Property not found:  propId = 0x%x, areaId = 0x%x", __FUNCTION__, propId, areaId);
     return nullptr;
@@ -497,6 +496,18 @@ StatusCode DefaultVehicleHal::set(const VehiclePropValue& propValue) {
     StatusCode status;
     switch (propId) {
         default:
+            if (mHvacPowerProps.find(VehicleProperty(propId)) !=
+                    mHvacPowerProps.end()) {
+                auto prop = mProps.find(
+                    std::make_pair(toInt(VehicleProperty::HVAC_POWER_ON), 0));
+                if (prop != mProps.end()) {
+                    if (prop->second->value.int32Values.size() == 1 &&
+                        prop->second->value.int32Values[0] == 0) {
+                        status = StatusCode::NOT_AVAILABLE;
+                        break;
+                    }
+                }
+            }
             status = updateProperty(propValue);
             if (status == StatusCode::OK) {
                 // Send property update to emulator
@@ -517,6 +528,10 @@ StatusCode DefaultVehicleHal::set(const VehiclePropValue& propValue) {
 void DefaultVehicleHal::onCreate() {
     // Initialize member variables
     mExit = 0;
+
+    for (auto& prop : kHvacPowerProperties) {
+        mHvacPowerProps.insert(prop);
+    }
 
     // Get the list of configurations supported by this HAL
     std::vector<VehiclePropConfig> configs = listProperties();
@@ -579,7 +594,7 @@ void DefaultVehicleHal::onCreate() {
             prop->areaId = curArea;
             prop->prop = cfg.prop;
             setDefaultValue(prop.get());
-            mProps.push_back(std::move(prop));
+            mProps[std::make_pair(prop->prop, prop->areaId)] = std::move(prop);
         } while (supportedAreas != 0);
     }
 

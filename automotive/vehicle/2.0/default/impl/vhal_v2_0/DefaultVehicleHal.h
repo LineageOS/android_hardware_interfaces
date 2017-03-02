@@ -17,9 +17,11 @@
 #ifndef android_hardware_automotive_vehicle_V2_0_impl_DefaultVehicleHal_H_
 #define android_hardware_automotive_vehicle_V2_0_impl_DefaultVehicleHal_H_
 
+#include <map>
 #include <memory>
 #include <sys/socket.h>
 #include <thread>
+#include <unordered_set>
 
 #include <utils/SystemClock.h>
 
@@ -93,9 +95,11 @@ private:
     void txMsg(emulator::EmulatorMessage& txMsg);
     StatusCode updateProperty(const VehiclePropValue& propValue);
 private:
-    // TODO:  Use a hashtable to support indexing props
-    std::vector<std::unique_ptr<VehiclePropValue>> mProps;
+    std::map<
+        std::pair<int32_t /*VehicleProperty*/, int32_t /*areaId*/>,
+        std::unique_ptr<VehiclePropValue>> mProps;
     std::atomic<int> mExit;
+    std::unordered_set<VehicleProperty> mHvacPowerProps;
     std::mutex mPropsMutex;
     std::thread mThread;
     std::unique_ptr<CommBase> mComm{nullptr};
