@@ -20,6 +20,7 @@
 
 #include <android/hardware/sensors/1.0/ISensors.h>
 #include <hardware/sensors.h>
+#include <mutex>
 
 namespace android {
 namespace hardware {
@@ -65,6 +66,7 @@ private:
     status_t mInitCheck;
     sensors_module_t *mSensorModule;
     sensors_poll_device_1_t *mSensorDevice;
+    std::mutex mPollLock;
 
     int getHalDeviceVersion() const;
 
