@@ -96,7 +96,7 @@ bool convertLegacyFeaturesToHidlChipCapabilities(
   if (!hidl_caps) {
     return false;
   }
-  *hidl_caps = 0;
+  *hidl_caps = {};
   using HidlChipCaps = IWifiChip::ChipCapabilityMask;
   for (const auto feature : {legacy_hal::WIFI_LOGGER_MEMORY_DUMP_SUPPORTED,
                              legacy_hal::WIFI_LOGGER_DRIVER_DUMP_SUPPORTED,
@@ -133,6 +133,7 @@ bool convertLegacyDebugRingBufferStatusToHidl(
   if (!hidl_status) {
     return false;
   }
+  *hidl_status = {};
   hidl_status->ringName = reinterpret_cast<const char*>(legacy_status.name);
   hidl_status->flags = 0;
   for (const auto flag : {WIFI_RING_BUFFER_FLAG_HAS_BINARY_ENTRIES,
@@ -165,7 +166,7 @@ bool convertLegacyVectorOfDebugRingBufferStatusToHidl(
   if (!hidl_status_vec) {
     return false;
   }
-  hidl_status_vec->clear();
+  *hidl_status_vec = {};
   for (const auto& legacy_status : legacy_status_vec) {
     WifiDebugRingBufferStatus hidl_status;
     if (!convertLegacyDebugRingBufferStatusToHidl(legacy_status,
@@ -183,6 +184,7 @@ bool convertLegacyWakeReasonStatsToHidl(
   if (!hidl_stats) {
     return false;
   }
+  *hidl_stats = {};
   hidl_stats->totalCmdEventWakeCnt =
       legacy_stats.wake_reason_cnt.total_cmd_event_wake;
   hidl_stats->cmdEventWakeCntPerType = legacy_stats.cmd_event_wake_cnt;
@@ -227,6 +229,7 @@ bool convertLegacyFeaturesToHidlStaCapabilities(
   if (!hidl_caps) {
     return false;
   }
+  *hidl_caps = {};
   *hidl_caps = 0;
   using HidlStaIfaceCaps = IWifiStaIface::StaIfaceCapabilityMask;
   for (const auto feature : {legacy_hal::WIFI_LOGGER_PACKET_FATE_SUPPORTED}) {
@@ -263,6 +266,7 @@ bool convertLegacyApfCapabilitiesToHidl(
   if (!hidl_caps) {
     return false;
   }
+  *hidl_caps = {};
   hidl_caps->version = legacy_caps.version;
   hidl_caps->maxLength = legacy_caps.max_len;
   return true;
@@ -299,6 +303,7 @@ bool convertLegacyGscanCapabilitiesToHidl(
   if (!hidl_caps) {
     return false;
   }
+  *hidl_caps = {};
   hidl_caps->maxCacheSize = legacy_caps.max_scan_cache_size;
   hidl_caps->maxBuckets = legacy_caps.max_scan_buckets;
   hidl_caps->maxApCachePerScan = legacy_caps.max_ap_cache_per_scan;
@@ -332,6 +337,7 @@ bool convertHidlGscanParamsToLegacy(
   if (!legacy_scan_params) {
     return false;
   }
+  *legacy_scan_params = {};
   legacy_scan_params->base_period = hidl_scan_params.basePeriodInMs;
   legacy_scan_params->max_ap_per_scan = hidl_scan_params.maxApPerScan;
   legacy_scan_params->report_threshold_percent =
@@ -384,6 +390,7 @@ bool convertLegacyIeToHidl(
   if (!hidl_ie) {
     return false;
   }
+  *hidl_ie = {};
   hidl_ie->id = legacy_ie.id;
   hidl_ie->data =
       std::vector<uint8_t>(legacy_ie.data, legacy_ie.data + legacy_ie.len);
@@ -396,6 +403,7 @@ bool convertLegacyIeBlobToHidl(const uint8_t* ie_blob,
   if (!ie_blob || !hidl_ies) {
     return false;
   }
+  *hidl_ies = {};
   const uint8_t* ies_begin = ie_blob;
   const uint8_t* ies_end = ie_blob + ie_blob_len;
   const uint8_t* next_ie = ies_begin;
@@ -426,6 +434,7 @@ bool convertLegacyGscanResultToHidl(
   if (!hidl_scan_result) {
     return false;
   }
+  *hidl_scan_result = {};
   hidl_scan_result->timeStampInUs = legacy_scan_result.ts;
   hidl_scan_result->ssid = std::vector<uint8_t>(
       legacy_scan_result.ssid,
@@ -456,6 +465,7 @@ bool convertLegacyCachedGscanResultsToHidl(
   if (!hidl_scan_data) {
     return false;
   }
+  *hidl_scan_data = {};
   hidl_scan_data->flags = 0;
   for (const auto flag : {legacy_hal::WIFI_SCAN_FLAG_INTERRUPTED}) {
     if (legacy_cached_scan_result.flags & flag) {
@@ -492,7 +502,7 @@ bool convertLegacyVectorOfCachedGscanResultsToHidl(
   if (!hidl_scan_datas) {
     return false;
   }
-  hidl_scan_datas->clear();
+  *hidl_scan_datas = {};
   for (const auto& legacy_cached_scan_result : legacy_cached_scan_results) {
     StaScanData hidl_scan_data;
     if (!convertLegacyCachedGscanResultsToHidl(legacy_cached_scan_result,
@@ -579,6 +589,7 @@ bool convertLegacyDebugPacketFateFrameToHidl(
   if (!hidl_frame) {
     return false;
   }
+  *hidl_frame = {};
   hidl_frame->frameType =
       convertLegacyDebugPacketFateFrameTypeToHidl(legacy_frame.payload_type);
   hidl_frame->frameLen = legacy_frame.frame_len;
@@ -597,6 +608,7 @@ bool convertLegacyDebugTxPacketFateToHidl(
   if (!hidl_fate) {
     return false;
   }
+  *hidl_fate = {};
   hidl_fate->fate = convertLegacyDebugTxPacketFateToHidl(legacy_fate.fate);
   return convertLegacyDebugPacketFateFrameToHidl(legacy_fate.frame_inf,
                                                  &hidl_fate->frameInfo);
@@ -608,7 +620,7 @@ bool convertLegacyVectorOfDebugTxPacketFateToHidl(
   if (!hidl_fates) {
     return false;
   }
-  hidl_fates->clear();
+  *hidl_fates = {};
   for (const auto& legacy_fate : legacy_fates) {
     WifiDebugTxPacketFateReport hidl_fate;
     if (!convertLegacyDebugTxPacketFateToHidl(legacy_fate, &hidl_fate)) {
@@ -625,6 +637,7 @@ bool convertLegacyDebugRxPacketFateToHidl(
   if (!hidl_fate) {
     return false;
   }
+  *hidl_fate = {};
   hidl_fate->fate = convertLegacyDebugRxPacketFateToHidl(legacy_fate.fate);
   return convertLegacyDebugPacketFateFrameToHidl(legacy_fate.frame_inf,
                                                  &hidl_fate->frameInfo);
@@ -636,7 +649,7 @@ bool convertLegacyVectorOfDebugRxPacketFateToHidl(
   if (!hidl_fates) {
     return false;
   }
-  hidl_fates->clear();
+  *hidl_fates = {};
   for (const auto& legacy_fate : legacy_fates) {
     WifiDebugRxPacketFateReport hidl_fate;
     if (!convertLegacyDebugRxPacketFateToHidl(legacy_fate, &hidl_fate)) {
@@ -653,6 +666,7 @@ bool convertLegacyLinkLayerStatsToHidl(
   if (!hidl_stats) {
     return false;
   }
+  *hidl_stats = {};
   // iface legacy_stats conversion.
   hidl_stats->iface.beaconRx = legacy_stats.iface.beacon_rx;
   hidl_stats->iface.avgRssiMgmt = legacy_stats.iface.rssi_mgmt;
@@ -706,6 +720,7 @@ bool convertLegacyRoamingCapabilitiesToHidl(
   if (!hidl_caps) {
     return false;
   }
+  *hidl_caps = {};
   hidl_caps->maxBlacklistSize = legacy_caps.max_blacklist_size;
   hidl_caps->maxWhitelistSize = legacy_caps.max_whitelist_size;
   return true;
@@ -717,6 +732,7 @@ bool convertHidlRoamingConfigToLegacy(
   if (!legacy_config) {
     return false;
   }
+  *legacy_config = {};
   if (hidl_config.bssidBlacklist.size() > MAX_BLACKLIST_BSSID ||
       hidl_config.ssidWhitelist.size() > MAX_WHITELIST_SSID) {
     return false;
@@ -762,7 +778,7 @@ bool convertHidlNanEnableRequestToLegacy(
     LOG(ERROR) << "convertHidlNanEnableRequestToLegacy: null legacy_request";
     return false;
   }
-  memset(legacy_request, 0, sizeof(legacy_hal::NanEnableRequest));
+  *legacy_request = {};
 
   legacy_request->config_2dot4g_support = 1;
   legacy_request->support_2dot4g_val = hidl_request.operateInBand[
@@ -892,7 +908,7 @@ bool convertHidlNanPublishRequestToLegacy(
     LOG(ERROR) << "convertHidlNanPublishRequestToLegacy: null legacy_request";
     return false;
   }
-  memset(legacy_request, 0, sizeof(legacy_hal::NanPublishRequest));
+  *legacy_request = {};
 
   legacy_request->publish_id = hidl_request.baseConfigs.sessionId;
   legacy_request->ttl = hidl_request.baseConfigs.ttlSec;
@@ -984,7 +1000,7 @@ bool convertHidlNanSubscribeRequestToLegacy(
     LOG(ERROR) << "convertHidlNanSubscribeRequestToLegacy: legacy_request is null";
     return false;
   }
-  memset(legacy_request, 0, sizeof(legacy_hal::NanSubscribeRequest));
+  *legacy_request = {};
 
   legacy_request->subscribe_id = hidl_request.baseConfigs.sessionId;
   legacy_request->ttl = hidl_request.baseConfigs.ttlSec;
@@ -1089,7 +1105,7 @@ bool convertHidlNanTransmitFollowupRequestToLegacy(
     LOG(ERROR) << "convertHidlNanTransmitFollowupRequestToLegacy: legacy_request is null";
     return false;
   }
-  memset(legacy_request, 0, sizeof(legacy_hal::NanTransmitFollowupRequest));
+  *legacy_request = {};
 
   legacy_request->publish_subscribe_id = hidl_request.discoverySessionId;
   legacy_request->requestor_instance_id = hidl_request.peerId;
@@ -1128,7 +1144,7 @@ bool convertHidlNanConfigRequestToLegacy(
     LOG(ERROR) << "convertHidlNanConfigRequestToLegacy: legacy_request is null";
     return false;
   }
-  memset(legacy_request, 0, sizeof(legacy_hal::NanConfigRequest));
+  *legacy_request = {};
 
   // TODO: b/34059183 tracks missing configurations in legacy HAL or uknown defaults
   legacy_request->master_pref = hidl_request.masterPref;
@@ -1218,7 +1234,7 @@ bool convertHidlNanDataPathInitiatorRequestToLegacy(
     LOG(ERROR) << "convertHidlNanDataPathInitiatorRequestToLegacy: legacy_request is null";
     return false;
   }
-  memset(legacy_request, 0, sizeof(legacy_hal::NanDataPathInitiatorRequest));
+  *legacy_request = {};
 
   legacy_request->requestor_instance_id = hidl_request.peerId;
   memcpy(legacy_request->peer_disc_mac_addr, hidl_request.peerDiscMacAddr.data(), 6);
@@ -1253,7 +1269,7 @@ bool convertHidlNanDataPathIndicationResponseToLegacy(
     LOG(ERROR) << "convertHidlNanDataPathIndicationResponseToLegacy: legacy_request is null";
     return false;
   }
-  memset(legacy_request, 0, sizeof(legacy_hal::NanDataPathIndicationResponse));
+  *legacy_request = {};
 
   legacy_request->rsp_code = hidl_request.acceptRequest ?
         legacy_hal::NAN_DP_REQUEST_ACCEPT : legacy_hal::NAN_DP_REQUEST_REJECT;
@@ -1286,9 +1302,10 @@ bool convertLegacyNanResponseHeaderToHidl(
     LOG(ERROR) << "convertLegacyNanResponseHeaderToHidl: wifiNanStatus is null";
     return false;
   }
+  *wifiNanStatus = {};
+
   wifiNanStatus->status = convertLegacyNanStatusTypeToHidl(legacy_response.status);
   wifiNanStatus->description = legacy_response.nan_error;
-
   return true;
 }
 
@@ -1299,6 +1316,8 @@ bool convertLegacyNanCapabilitiesResponseToHidl(
     LOG(ERROR) << "convertLegacyNanCapabilitiesResponseToHidl: hidl_response is null";
     return false;
   }
+  *hidl_response = {};
+
   hidl_response->maxConcurrentClusters = legacy_response.max_concurrent_nan_clusters;
   hidl_response->maxPublishes = legacy_response.max_publishes;
   hidl_response->maxSubscribes = legacy_response.max_subscribes;
@@ -1325,6 +1344,8 @@ bool convertLegacyNanMatchIndToHidl(
     LOG(ERROR) << "convertLegacyNanMatchIndToHidl: hidl_ind is null";
     return false;
   }
+  *hidl_ind = {};
+
   hidl_ind->discoverySessionId = legacy_ind.publish_subscribe_id;
   hidl_ind->peerId = legacy_ind.requestor_instance_id;
   hidl_ind->addr = hidl_array<uint8_t, 6>(legacy_ind.addr);
@@ -1356,6 +1377,8 @@ bool convertLegacyNanFollowupIndToHidl(
     LOG(ERROR) << "convertLegacyNanFollowupIndToHidl: hidl_ind is null";
     return false;
   }
+  *hidl_ind = {};
+
   hidl_ind->discoverySessionId = legacy_ind.publish_subscribe_id;
   hidl_ind->peerId = legacy_ind.requestor_instance_id;
   hidl_ind->addr = hidl_array<uint8_t, 6>(legacy_ind.addr);
@@ -1376,6 +1399,8 @@ bool convertLegacyNanDataPathRequestIndToHidl(
     LOG(ERROR) << "convertLegacyNanDataPathRequestIndToHidl: hidl_ind is null";
     return false;
   }
+  *hidl_ind = {};
+
   hidl_ind->discoverySessionId = legacy_ind.service_instance_id;
   hidl_ind->peerDiscMacAddr = hidl_array<uint8_t, 6>(legacy_ind.peer_disc_mac_addr);
   hidl_ind->ndpInstanceId = legacy_ind.ndp_instance_id;
@@ -1394,6 +1419,8 @@ bool convertLegacyNanDataPathConfirmIndToHidl(
     LOG(ERROR) << "convertLegacyNanDataPathConfirmIndToHidl: hidl_ind is null";
     return false;
   }
+  *hidl_ind = {};
+
   hidl_ind->ndpInstanceId = legacy_ind.ndp_instance_id;
   hidl_ind->dataPathSetupSuccess = legacy_ind.rsp_code == legacy_hal::NAN_DP_REQUEST_ACCEPT;
   hidl_ind->peerNdiMacAddr = hidl_array<uint8_t, 6>(legacy_ind.peer_ndi_mac_addr);
@@ -1635,6 +1662,7 @@ bool convertHidlWifiChannelInfoToLegacy(
   if (!legacy_info) {
     return false;
   }
+  *legacy_info = {};
   legacy_info->width = convertHidlWifiChannelWidthToLegacy(hidl_info.width);
   legacy_info->center_freq = hidl_info.centerFreq;
   legacy_info->center_freq0 = hidl_info.centerFreq0;
@@ -1648,6 +1676,7 @@ bool convertLegacyWifiChannelInfoToHidl(
   if (!hidl_info) {
     return false;
   }
+  *hidl_info = {};
   hidl_info->width = convertLegacyWifiChannelWidthToHidl(legacy_info.width);
   hidl_info->centerFreq = legacy_info.center_freq;
   hidl_info->centerFreq0 = legacy_info.center_freq0;
@@ -1660,6 +1689,7 @@ bool convertHidlRttConfigToLegacy(const RttConfig& hidl_config,
   if (!legacy_config) {
     return false;
   }
+  *legacy_config = {};
   CHECK(hidl_config.addr.size() == sizeof(legacy_config->addr));
   memcpy(legacy_config->addr, hidl_config.addr.data(), hidl_config.addr.size());
   legacy_config->type = convertHidlRttTypeToLegacy(hidl_config.type);
@@ -1688,7 +1718,7 @@ bool convertHidlVectorOfRttConfigToLegacy(
   if (!legacy_configs) {
     return false;
   }
-  legacy_configs->clear();
+  *legacy_configs = {};
   for (const auto& hidl_config : hidl_configs) {
     legacy_hal::wifi_rtt_config legacy_config;
     if (!convertHidlRttConfigToLegacy(hidl_config, &legacy_config)) {
@@ -1705,6 +1735,7 @@ bool convertHidlRttLciInformationToLegacy(
   if (!legacy_info) {
     return false;
   }
+  *legacy_info = {};
   legacy_info->latitude = hidl_info.latitude;
   legacy_info->longitude = hidl_info.longitude;
   legacy_info->altitude = hidl_info.altitude;
@@ -1725,6 +1756,7 @@ bool convertHidlRttLcrInformationToLegacy(
   if (!legacy_info) {
     return false;
   }
+  *legacy_info = {};
   CHECK(hidl_info.countryCode.size() == sizeof(legacy_info->country_code));
   memcpy(legacy_info->country_code,
          hidl_info.countryCode.data(),
@@ -1745,6 +1777,7 @@ bool convertHidlRttResponderToLegacy(
   if (!legacy_responder) {
     return false;
   }
+  *legacy_responder = {};
   if (!convertHidlWifiChannelInfoToLegacy(hidl_responder.channel,
                                           &legacy_responder->channel)) {
     return false;
@@ -1760,6 +1793,7 @@ bool convertLegacyRttResponderToHidl(
   if (!hidl_responder) {
     return false;
   }
+  *hidl_responder = {};
   if (!convertLegacyWifiChannelInfoToHidl(legacy_responder.channel,
                                           &hidl_responder->channel)) {
     return false;
@@ -1775,6 +1809,7 @@ bool convertLegacyRttCapabilitiesToHidl(
   if (!hidl_capabilities) {
     return false;
   }
+  *hidl_capabilities = {};
   hidl_capabilities->rttOneSidedSupported =
       legacy_capabilities.rtt_one_sided_supported;
   hidl_capabilities->rttFtmSupported = legacy_capabilities.rtt_ftm_supported;
@@ -1814,6 +1849,7 @@ bool convertLegacyWifiRateInfoToHidl(const legacy_hal::wifi_rate& legacy_rate,
   if (!hidl_rate) {
     return false;
   }
+  *hidl_rate = {};
   hidl_rate->preamble =
       convertLegacyWifiRatePreambleToHidl(legacy_rate.preamble);
   hidl_rate->nss = convertLegacyWifiRateNssToHidl(legacy_rate.nss);
@@ -1829,6 +1865,7 @@ bool convertLegacyRttResultToHidl(
   if (!hidl_result) {
     return false;
   }
+  *hidl_result = {};
   CHECK(sizeof(legacy_result.addr) == hidl_result->addr.size());
   memcpy(
       hidl_result->addr.data(), legacy_result.addr, sizeof(legacy_result.addr));
@@ -1873,7 +1910,7 @@ bool convertLegacyVectorOfRttResultToHidl(
   if (!hidl_results) {
     return false;
   }
-  hidl_results->clear();
+  *hidl_results = {};
   for (const auto legacy_result : legacy_results) {
     RttResult hidl_result;
     if (!convertLegacyRttResultToHidl(*legacy_result, &hidl_result)) {
