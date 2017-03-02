@@ -118,6 +118,7 @@ void DefaultVehicleHal::doSetProperty(emulator::EmulatorMessage& rxMsg,
 
     val.prop = protoVal.prop();
     val.areaId = protoVal.area_id();
+    val.timestamp = elapsedRealtimeNano();
 
     // Copy value data if it is set.  This automatically handles complex data types if needed.
     if (protoVal.has_string_value()) {
@@ -453,7 +454,7 @@ StatusCode DefaultVehicleHal::updateProperty(const VehiclePropValue& propValue) 
         VehiclePropValue* internalPropValue = getVehiclePropValueLocked(propId, areaId);
         if (internalPropValue != nullptr) {
             internalPropValue->value = propValue.value;
-            internalPropValue->timestamp = elapsedRealtimeNano();
+            internalPropValue->timestamp = propValue.timestamp;
             status = StatusCode::OK;
         }
     }
