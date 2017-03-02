@@ -1,5 +1,5 @@
 cc_binary {
-    name: "android.hardware.evs@1.0-service",
+    name: "android.hardware.automotive.evs@1.0-service",
     proprietary: true,
     relative_install_path: "hw",
     srcs: [
@@ -8,10 +8,10 @@ cc_binary {
         "EvsEnumerator.cpp",
         "EvsDisplay.cpp"
     ],
-    init_rc: ["android.hardware.evs@1.0-service.rc"],
+    init_rc: ["android.hardware.automotive.evs@1.0-service.rc"],
 
     shared_libs: [
-        "android.hardware.evs@1.0",
+        "android.hardware.automotive.evs@1.0",
         "libui",
         "libbase",
         "libbinder",

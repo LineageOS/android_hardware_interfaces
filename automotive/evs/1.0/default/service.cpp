@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "android.hardware.evs@1.0-service"
+#define LOG_TAG "android.hardware.automotive.evs@1.0-service"
 
 #include <unistd.h>
 
@@ -33,11 +33,11 @@ using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
 
 // Generated HIDL files
-using android::hardware::evs::V1_0::IEvsEnumerator;
-using android::hardware::evs::V1_0::IEvsDisplay;
+using android::hardware::automotive::evs::V1_0::IEvsEnumerator;
+using android::hardware::automotive::evs::V1_0::IEvsDisplay;
 
 // The namespace in which all our implementation code lives
-using namespace android::hardware::evs::V1_0::implementation;
+using namespace android::hardware::automotive::evs::V1_0::implementation;
 using namespace android;
 
 

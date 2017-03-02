@@ -1,4 +1,0 @@
-service evs-hal-1-0 /vendor/bin/hw/android.hardware.evs@1.0-service
-    class hal
-    user cameraserver
-    group camera

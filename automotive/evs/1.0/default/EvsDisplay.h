@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_EVS_V1_0_EVSDISPLAY_H
-#define ANDROID_HARDWARE_EVS_V1_0_EVSDISPLAY_H
+#ifndef ANDROID_HARDWARE_AUTOMOTIVE_EVS_V1_0_EVSDISPLAY_H
+#define ANDROID_HARDWARE_AUTOMOTIVE_EVS_V1_0_EVSDISPLAY_H
 
-#include <android/hardware/evs/1.0/IEvsDisplay.h>
+#include <android/hardware/automotive/evs/1.0/IEvsDisplay.h>
 #include <ui/GraphicBuffer.h>
 
 namespace android {
 namespace hardware {
+namespace automotive {
 namespace evs {
 namespace V1_0 {
 namespace implementation {
 
 class EvsDisplay : public IEvsDisplay {
 public:
-    // Methods from ::android::hardware::evs::V1_0::IEvsDisplay follow.
+    // Methods from ::android::hardware::automotive::evs::V1_0::IEvsDisplay follow.
     Return<void> getDisplayInfo(getDisplayInfo_cb _hidl_cb)  override;
     Return<EvsResult> setDisplayState(DisplayState state)  override;
     Return<DisplayState> getDisplayState()  override;
@@ -52,7 +53,8 @@ private:
 } // namespace implementation
 } // namespace V1_0
 } // namespace evs
+} // namespace automotive
 } // namespace hardware
 } // namespace android
 
-#endif  // ANDROID_HARDWARE_EVS_V1_0_EVSDISPLAY_H
+#endif  // ANDROID_HARDWARE_AUTOMOTIVE_EVS_V1_0_EVSDISPLAY_H
