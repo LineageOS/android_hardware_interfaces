@@ -1,0 +1,27 @@
+cc_library_shared {
+    name: "camera.device@1.0-impl",
+    srcs: [
+        "CameraDevice.cpp",
+    ],
+    shared_libs: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "libutils",
+        "android.hardware.camera.device@1.0",
+        "android.hardware.camera.common@1.0",
+        "android.hardware.graphics.allocator@2.0",
+        "android.hardware.graphics.common@1.0",
+        "android.hidl.base@1.0",
+        "libcutils",
+        "liblog",
+        "libhardware",
+        "libcamera_metadata",
+        "libbinder",
+    ],
+    static_libs: [
+        "android.hardware.camera.common@1.0-helper"
+    ],
+    export_include_dirs: ["."]
+}
+

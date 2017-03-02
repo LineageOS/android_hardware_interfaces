@@ -20,6 +20,7 @@
 #include <hardware/camera.h>
 #include <utils/Mutex.h>
 #include <utils/KeyedVector.h>
+#include <utils/RefBase.h>
 
 #include "CameraMetadata.h"
 

@@ -15,11 +15,11 @@
  */
 
 #define LOG_TAG "CamDev@3.2-impl"
-#include <android/log.h>
+#include <utils/Log.h>
 
 #include <utils/Vector.h>
 #include <utils/Trace.h>
-#include "CameraDevice.h"
+#include "CameraDevice_3_2.h"
 #include <include/convert.h>
 
 namespace android {

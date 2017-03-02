@@ -3,6 +3,7 @@ subdirs = [
     "common/1.0",
     "common/1.0/default",
     "device/1.0",
+    "device/1.0/default",
     "device/3.2",
     "device/3.2/default",
     "metadata/3.2",

@@ -26,6 +26,7 @@
 #include <hidl/Status.h>
 #include <hidl/MQDescriptor.h>
 #include <include/convert.h>
+#include "HandleImporter.h"
 
 namespace android {
 namespace hardware {
@@ -39,6 +40,7 @@ using ::android::hardware::camera::device::V3_2::HalStreamConfiguration;
 using ::android::hardware::camera::device::V3_2::StreamConfiguration;
 using ::android::hardware::camera::device::V3_2::ICameraDeviceSession;
 using ::android::hardware::camera::common::V1_0::Status;
+using ::android::hardware::camera::common::V1_0::helper::HandleImporter;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::hidl_vec;
@@ -108,6 +110,8 @@ private:
     typedef std::unordered_map<uint64_t, buffer_handle_t> CirculatingBuffers;
     // Stream ID -> circulating buffers map
     std::map<int, CirculatingBuffers> mCirculatingBuffers;
+
+    static HandleImporter& sHandleImporter;
 
     bool mInitFail;
     bool initialize();
