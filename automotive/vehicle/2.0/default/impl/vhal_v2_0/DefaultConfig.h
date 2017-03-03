@@ -147,6 +147,15 @@ const VehiclePropConfig kVehicleProperties[] = {
     },
 
     {
+        .prop = toInt(VehicleProperty::ENV_OUTSIDE_TEMPERATURE),
+        .access = VehiclePropertyAccess::READ,
+        // TODO(bryaneyler): Support ON_CHANGE as well.
+        .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
+        .minSampleRate = 1.0f,
+        .maxSampleRate = 2.0f,
+    },
+
+    {
         .prop = toInt(VehicleProperty::NIGHT_MODE),
         .access = VehiclePropertyAccess::READ,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
