@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.hardware.benchmarks.msgq@1.0;
+package android.hardware.tests.msgq@1.0;
 
 interface IBenchmarkMsgQ {
     /*
