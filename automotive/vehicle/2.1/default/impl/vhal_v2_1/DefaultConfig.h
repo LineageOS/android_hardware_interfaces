@@ -59,6 +59,12 @@ const V2_0::VehiclePropConfig kVehicleProperties[] = {
         .prop = V2_0::toInt(V2_1::VehicleProperty::OBD2_FREEZE_FRAME_CLEAR),
         .access = V2_0::VehiclePropertyAccess::WRITE,
         .changeMode = V2_0::VehiclePropertyChangeMode::ON_CHANGE
+    },
+
+    {
+        .prop = V2_0::toInt(VehicleProperty::VEHICLE_MAP_SERVICE),
+        .access = V2_0::VehiclePropertyAccess::READ_WRITE,
+        .changeMode = V2_0::VehiclePropertyChangeMode::ON_CHANGE
     }
 };
 
