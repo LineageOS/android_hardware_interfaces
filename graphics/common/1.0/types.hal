@@ -792,7 +792,7 @@ enum Dataspace : int32_t {
     TRANSFER_GAMMA2_8 = 6 << TRANSFER_SHIFT,
 
     /*
-     * SMPTE ST 2084
+     * SMPTE ST 2084 (Dolby Perceptual Quantizer)
      *
      * Transfer characteristic curve:
      *  E = ((c1 + c2 * L^n) / (1 + c3 * L^n)) ^ m
@@ -1067,6 +1067,15 @@ enum Dataspace : int32_t {
      * Use full range, BT.709 transfer and BT2020 standard
      */
     BT2020 = STANDARD_BT2020 | TRANSFER_SMPTE_170M | RANGE_FULL,
+
+    /*
+     * ITU-R Recommendation 2020 (BT.2020)
+     *
+     * Ultra High-definition television
+     *
+     * Use full range, SMPTE 2084 (PQ) transfer and BT2020 standard
+     */
+    BT2020_PQ = STANDARD_BT2020 | TRANSFER_ST2084 | RANGE_FULL,
 
 
     /*
