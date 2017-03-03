@@ -481,6 +481,42 @@ TEST_F(BroadcastRadioHidlTest, TuneAndGetProgramInformationAndCancel) {
     EXPECT_EQ(Result::OK, hidlResult);
 }
 
+/**
+ * Test ITuner::tune failing when channel out of the range is provided.
+ *
+ * Verifies that:
+ *  - the method returns INVALID_ARGUMENTS when applicable
+ *  - the method recovers and succeeds after passing correct arguments
+ */
+TEST_F(BroadcastRadioHidlTest, TuneFailsOutOfBounds) {
+    ASSERT_TRUE(openTuner());
+    ASSERT_TRUE(checkAntenna());
+
+    // get current channel bounds
+    BandConfig halConfig;
+    Result halResult;
+    auto configResult = mTuner->getConfiguration([&](Result result, const BandConfig& config) {
+        halResult = result;
+        halConfig = config;
+    });
+    ASSERT_TRUE(configResult.isOk());
+    ASSERT_EQ(Result::OK, halResult);
+
+    // try to tune slightly above the limit and expect to fail
+    auto badChannel = halConfig.upperLimit + halConfig.spacings[0];
+    auto tuneResult = mTuner->tune(badChannel, 0);
+    EXPECT_TRUE(tuneResult.isOk());
+    EXPECT_EQ(Result::INVALID_ARGUMENTS, tuneResult);
+    EXPECT_TRUE(waitForCallback(kTuneCallbacktimeoutNs));
+
+    // tuning exactly at the limit should succeed
+    auto goodChannel = halConfig.upperLimit;
+    tuneResult = mTuner->tune(goodChannel, 0);
+    EXPECT_TRUE(tuneResult.isOk());
+    EXPECT_EQ(Result::OK, tuneResult);
+    EXPECT_TRUE(waitForCallback(kTuneCallbacktimeoutNs));
+}
+
 
 int main(int argc, char** argv) {
   ::testing::AddGlobalTestEnvironment(new BroadcastRadioHidlEnvironment);
