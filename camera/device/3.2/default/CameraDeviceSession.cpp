@@ -17,6 +17,7 @@
 #define LOG_TAG "CamDevSession@3.2-impl"
 #include <android/log.h>
 
+#include <set>
 #include <utils/Trace.h>
 #include <hardware/gralloc.h>
 #include <hardware/gralloc1.h>
@@ -30,12 +31,25 @@ namespace V3_2 {
 namespace implementation {
 
 HandleImporter& CameraDeviceSession::sHandleImporter = HandleImporter::getInstance();
+const int CameraDeviceSession::ResultBatcher::NOT_BATCHED;
 
 CameraDeviceSession::CameraDeviceSession(
-    camera3_device_t* device, const sp<ICameraDeviceCallback>& callback) :
+    camera3_device_t* device,
+    const camera_metadata_t* deviceInfo,
+    const sp<ICameraDeviceCallback>& callback) :
         camera3_callback_ops({&sProcessCaptureResult, &sNotify}),
         mDevice(device),
-        mCallback(callback) {
+        mResultBatcher(callback) {
+
+    mDeviceInfo = deviceInfo;
+    uint32_t numPartialResults = 1;
+    camera_metadata_entry partialResultsCount =
+            mDeviceInfo.find(ANDROID_REQUEST_PARTIAL_RESULT_COUNT);
+    if (partialResultsCount.count > 0) {
+        numPartialResults = partialResultsCount.data.i32[0];
+    }
+    mResultBatcher.setNumPartialResults(numPartialResults);
+
     mInitFail = initialize();
 }
 
@@ -177,6 +191,354 @@ void CameraDeviceSession::cleanupInflightFences(
     }
 }
 
+CameraDeviceSession::ResultBatcher::ResultBatcher(
+        const sp<ICameraDeviceCallback>& callback) : mCallback(callback) {};
+
+bool CameraDeviceSession::ResultBatcher::InflightBatch::allDelivered() const {
+    if (!mShutterDelivered) return false;
+
+    if (mPartialResultProgress < mNumPartialResults) {
+        return false;
+    }
+
+    for (const auto& pair : mBatchBufs) {
+        if (!pair.second.mDelivered) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void CameraDeviceSession::ResultBatcher::setNumPartialResults(uint32_t n) {
+    Mutex::Autolock _l(mLock);
+    mNumPartialResults = n;
+}
+
+void CameraDeviceSession::ResultBatcher::setBatchedStreams(
+        const std::vector<int>& streamsToBatch) {
+    Mutex::Autolock _l(mLock);
+    mStreamsToBatch = streamsToBatch;
+}
+
+void CameraDeviceSession::ResultBatcher::registerBatch(
+        const hidl_vec<CaptureRequest>& requests) {
+    auto batch = std::make_shared<InflightBatch>();
+    batch->mFirstFrame = requests[0].frameNumber;
+    batch->mBatchSize = requests.size();
+    batch->mLastFrame = batch->mFirstFrame + batch->mBatchSize - 1;
+    batch->mNumPartialResults = mNumPartialResults;
+    for (int id : mStreamsToBatch) {
+        batch->mBatchBufs[id] = InflightBatch::BufferBatch();
+    }
+    Mutex::Autolock _l(mLock);
+    mInflightBatches.push_back(batch);
+}
+
+std::pair<int, std::shared_ptr<CameraDeviceSession::ResultBatcher::InflightBatch>>
+CameraDeviceSession::ResultBatcher::getBatch(
+        uint32_t frameNumber) {
+    Mutex::Autolock _l(mLock);
+    int numBatches = mInflightBatches.size();
+    if (numBatches == 0) {
+        return std::make_pair(NOT_BATCHED, nullptr);
+    }
+    uint32_t frameMin = mInflightBatches[0]->mFirstFrame;
+    uint32_t frameMax = mInflightBatches[numBatches - 1]->mLastFrame;
+    if (frameNumber < frameMin || frameNumber > frameMax) {
+        return std::make_pair(NOT_BATCHED, nullptr);
+    }
+    for (int i = 0; i < numBatches; i++) {
+        if (frameNumber >= mInflightBatches[i]->mFirstFrame &&
+                frameNumber <= mInflightBatches[i]->mLastFrame) {
+            return std::make_pair(i, mInflightBatches[i]);
+        }
+    }
+    return std::make_pair(NOT_BATCHED, nullptr);
+}
+
+void CameraDeviceSession::ResultBatcher::checkAndRemoveFirstBatch() {
+    Mutex::Autolock _l(mLock);
+    if (mInflightBatches.size() > 0) {
+        std::shared_ptr<InflightBatch> batch = mInflightBatches[0];
+        bool shouldRemove = false;
+        {
+            Mutex::Autolock _l(batch->mLock);
+            if (batch->allDelivered()) {
+                batch->mRemoved = true;
+                shouldRemove = true;
+            }
+        }
+        if (shouldRemove) {
+            mInflightBatches.pop_front();
+        }
+    }
+}
+
+void CameraDeviceSession::ResultBatcher::sendBatchShutterCbsLocked(std::shared_ptr<InflightBatch> batch) {
+    if (batch->mShutterDelivered) {
+        ALOGW("%s: batch shutter callback already sent!", __FUNCTION__);
+        return;
+    }
+
+    mCallback->notify(batch->mShutterMsgs);
+    batch->mShutterDelivered = true;
+    batch->mShutterMsgs.clear();
+}
+
+void CameraDeviceSession::ResultBatcher::freeReleaseFences(hidl_vec<CaptureResult>& results) {
+    for (auto& result : results) {
+        if (result.inputBuffer.releaseFence.getNativeHandle() != nullptr) {
+            native_handle_t* handle = const_cast<native_handle_t*>(
+                    result.inputBuffer.releaseFence.getNativeHandle());
+            native_handle_delete(handle);
+        }
+        for (auto& buf : result.outputBuffers) {
+            if (buf.releaseFence.getNativeHandle() != nullptr) {
+                native_handle_t* handle = const_cast<native_handle_t*>(
+                        buf.releaseFence.getNativeHandle());
+                native_handle_delete(handle);
+            }
+        }
+    }
+    return;
+}
+
+void CameraDeviceSession::ResultBatcher::sendBatchBuffersLocked(std::shared_ptr<InflightBatch> batch) {
+    sendBatchBuffersLocked(batch, mStreamsToBatch);
+}
+
+void CameraDeviceSession::ResultBatcher::sendBatchBuffersLocked(
+        std::shared_ptr<InflightBatch> batch, const std::vector<int>& streams) {
+    size_t batchSize = 0;
+    for (int streamId : streams) {
+        auto it = batch->mBatchBufs.find(streamId);
+        if (it != batch->mBatchBufs.end()) {
+            InflightBatch::BufferBatch& bb = it->second;
+            if (bb.mDelivered) {
+                continue;
+            }
+            if (bb.mBuffers.size() > batchSize) {
+                batchSize = bb.mBuffers.size();
+            }
+        } else {
+            ALOGE("%s: stream ID %d is not batched!", __FUNCTION__, streamId);
+            return;
+        }
+    }
+
+    if (batchSize == 0) {
+        ALOGW("%s: there is no buffer to be delivered for this batch.", __FUNCTION__);
+        for (int streamId : streams) {
+            InflightBatch::BufferBatch& bb = batch->mBatchBufs[streamId];
+            bb.mDelivered = true;
+        }
+        return;
+    }
+
+    hidl_vec<CaptureResult> results;
+    results.resize(batchSize);
+    for (size_t i = 0; i < batchSize; i++) {
+        results[i].frameNumber = batch->mFirstFrame + i;
+        results[i].partialResult = 0; // 0 for buffer only results
+        results[i].inputBuffer.streamId = -1;
+        results[i].inputBuffer.bufferId = 0;
+        results[i].inputBuffer.buffer = nullptr;
+        std::vector<StreamBuffer> outBufs;
+        for (int streamId : streams) {
+            InflightBatch::BufferBatch& bb = batch->mBatchBufs[streamId];
+            if (bb.mDelivered) {
+                continue;
+            }
+            if (i < bb.mBuffers.size()) {
+                outBufs.push_back(bb.mBuffers[i]);
+            }
+        }
+        results[i].outputBuffers = outBufs;
+    }
+    mCallback->processCaptureResult(results);
+    freeReleaseFences(results);
+    for (int streamId : streams) {
+        InflightBatch::BufferBatch& bb = batch->mBatchBufs[streamId];
+        bb.mDelivered = true;
+        bb.mBuffers.clear();
+    }
+}
+
+void CameraDeviceSession::ResultBatcher::sendBatchMetadataLocked(
+    std::shared_ptr<InflightBatch> batch, uint32_t lastPartialResultIdx) {
+    if (lastPartialResultIdx <= batch->mPartialResultProgress) {
+        // Result has been delivered. Return
+        ALOGW("%s: partial result %u has been delivered", __FUNCTION__, lastPartialResultIdx);
+        return;
+    }
+
+    std::vector<CaptureResult> results;
+    std::vector<uint32_t> toBeRemovedIdxes;
+    for (auto& pair : batch->mResultMds) {
+        uint32_t partialIdx = pair.first;
+        if (partialIdx > lastPartialResultIdx) {
+            continue;
+        }
+        toBeRemovedIdxes.push_back(partialIdx);
+        InflightBatch::MetadataBatch& mb = pair.second;
+        for (const auto& p : mb.mMds) {
+            CaptureResult result;
+            result.frameNumber = p.first;
+            result.result = std::move(p.second);
+            result.inputBuffer.streamId = -1;
+            result.inputBuffer.bufferId = 0;
+            result.inputBuffer.buffer = nullptr;
+            result.partialResult = partialIdx;
+            results.push_back(std::move(result));
+        }
+        mb.mMds.clear();
+    }
+    mCallback->processCaptureResult(results);
+    batch->mPartialResultProgress = lastPartialResultIdx;
+    for (uint32_t partialIdx : toBeRemovedIdxes) {
+        batch->mResultMds.erase(partialIdx);
+    }
+}
+
+void CameraDeviceSession::ResultBatcher::notifySingleMsg(NotifyMsg& msg) {
+    mCallback->notify({msg});
+    return;
+}
+
+void CameraDeviceSession::ResultBatcher::notify(NotifyMsg& msg) {
+    uint32_t frameNumber;
+    if (CC_LIKELY(msg.type == MsgType::SHUTTER)) {
+        frameNumber = msg.msg.shutter.frameNumber;
+    } else {
+        frameNumber = msg.msg.error.frameNumber;
+    }
+
+    auto pair = getBatch(frameNumber);
+    int batchIdx = pair.first;
+    if (batchIdx == NOT_BATCHED) {
+        notifySingleMsg(msg);
+        return;
+    }
+
+    // When error happened, stop batching for all batches earlier
+    if (CC_UNLIKELY(msg.type == MsgType::ERROR)) {
+        Mutex::Autolock _l(mLock);
+        for (int i = 0; i <= batchIdx; i++) {
+            // Send batched data up
+            std::shared_ptr<InflightBatch> batch = mInflightBatches[0];
+            {
+                Mutex::Autolock _l(batch->mLock);
+                sendBatchShutterCbsLocked(batch);
+                sendBatchBuffersLocked(batch);
+                sendBatchMetadataLocked(batch, mNumPartialResults);
+                if (!batch->allDelivered()) {
+                    ALOGE("%s: error: some batch data not sent back to framework!",
+                            __FUNCTION__);
+                }
+                batch->mRemoved = true;
+            }
+            mInflightBatches.pop_front();
+        }
+        // Send the error up
+        notifySingleMsg(msg);
+        return;
+    }
+    // Queue shutter callbacks for future delivery
+    std::shared_ptr<InflightBatch> batch = pair.second;
+    {
+        Mutex::Autolock _l(batch->mLock);
+        // Check if the batch is removed (mostly by notify error) before lock was acquired
+        if (batch->mRemoved) {
+            // Fall back to non-batch path
+            notifySingleMsg(msg);
+            return;
+        }
+
+        batch->mShutterMsgs.push_back(msg);
+        if (frameNumber == batch->mLastFrame) {
+            sendBatchShutterCbsLocked(batch);
+        }
+    } // end of batch lock scope
+
+    // see if the batch is complete
+    if (frameNumber == batch->mLastFrame) {
+        checkAndRemoveFirstBatch();
+    }
+}
+
+void CameraDeviceSession::ResultBatcher::processOneCaptureResult(CaptureResult& result) {
+    hidl_vec<CaptureResult> results = {result};
+    mCallback->processCaptureResult(results);
+    freeReleaseFences(results);
+    return;
+}
+
+void CameraDeviceSession::ResultBatcher::processCaptureResult(CaptureResult& result) {
+    auto pair = getBatch(result.frameNumber);
+    int batchIdx = pair.first;
+    if (batchIdx == NOT_BATCHED) {
+        processOneCaptureResult(result);
+        return;
+    }
+    std::shared_ptr<InflightBatch> batch = pair.second;
+    {
+        Mutex::Autolock _l(batch->mLock);
+        // Check if the batch is removed (mostly by notify error) before lock was acquired
+        if (batch->mRemoved) {
+            // Fall back to non-batch path
+            processOneCaptureResult(result);
+            return;
+        }
+
+        // queue metadata
+        if (result.result.size() != 0) {
+            // Save a copy of metadata
+            batch->mResultMds[result.partialResult].mMds.push_back(
+                    std::make_pair(result.frameNumber, result.result));
+        }
+
+        // queue buffer
+        std::vector<int> filledStreams;
+        std::vector<StreamBuffer> nonBatchedBuffers;
+        for (auto& buffer : result.outputBuffers) {
+            auto it = batch->mBatchBufs.find(buffer.streamId);
+            if (it != batch->mBatchBufs.end()) {
+                InflightBatch::BufferBatch& bb = it->second;
+                bb.mBuffers.push_back(buffer);
+                filledStreams.push_back(buffer.streamId);
+            } else {
+                nonBatchedBuffers.push_back(buffer);
+            }
+        }
+
+        // send non-batched buffers up
+        if (nonBatchedBuffers.size() > 0 || result.inputBuffer.streamId != -1) {
+            CaptureResult nonBatchedResult;
+            nonBatchedResult.frameNumber = result.frameNumber;
+            nonBatchedResult.outputBuffers = nonBatchedBuffers;
+            nonBatchedResult.inputBuffer = result.inputBuffer;
+            nonBatchedResult.partialResult = 0; // 0 for buffer only results
+            processOneCaptureResult(nonBatchedResult);
+        }
+
+        if (result.frameNumber == batch->mLastFrame) {
+            // Send data up
+            if (result.partialResult > 0) {
+                sendBatchMetadataLocked(batch, result.partialResult);
+            }
+            // send buffer up
+            if (filledStreams.size() > 0) {
+                sendBatchBuffersLocked(batch, filledStreams);
+            }
+        }
+    } // end of batch lock scope
+
+    // see if the batch is complete
+    if (result.frameNumber == batch->mLastFrame) {
+        checkAndRemoveFirstBatch();
+    }
+}
+
 // Methods from ::android::hardware::camera::device::V3_2::ICameraDeviceSession follow.
 Return<void> CameraDeviceSession::constructDefaultRequestSettings(
         RequestTemplate type, constructDefaultRequestSettings_cb _hidl_cb)  {
@@ -283,6 +645,16 @@ Return<void> CameraDeviceSession::configureStreams(
                 ++it;
             }
         }
+
+        // Track video streams
+        mVideoStreamIds.clear();
+        for (const auto& stream : requestedConfiguration.streams) {
+            if (stream.streamType == StreamType::OUTPUT &&
+                    stream.usage & graphics::allocator::V2_0::ConsumerUsage::VIDEO_ENCODER) {
+                mVideoStreamIds.push_back(stream.id);
+            }
+        }
+        mResultBatcher.setBatchedStreams(mVideoStreamIds);
     }
 
     if (ret == -EINVAL) {
@@ -306,7 +678,26 @@ void CameraDeviceSession::cleanupBuffersLocked(int id) {
     mCirculatingBuffers.erase(id);
 }
 
-Return<Status> CameraDeviceSession::processCaptureRequest(const CaptureRequest& request)  {
+Return<void> CameraDeviceSession::processCaptureRequest(
+        const hidl_vec<CaptureRequest>& requests, processCaptureRequest_cb _hidl_cb)  {
+    uint32_t numRequestProcessed = 0;
+    Status s = Status::OK;
+    for (size_t i = 0; i < requests.size(); i++, numRequestProcessed++) {
+        s = processOneCaptureRequest(requests[i]);
+        if (s != Status::OK) {
+            break;
+        }
+    }
+
+    if (s == Status::OK && requests.size() > 1) {
+        mResultBatcher.registerBatch(requests);
+    }
+
+    _hidl_cb(s, numRequestProcessed);
+    return Void();
+}
+
+Status CameraDeviceSession::processOneCaptureRequest(const CaptureRequest& request)  {
     Status status = initStatus();
     if (status != Status::OK) {
         ALOGE("%s: camera init failed or disconnected", __FUNCTION__);
@@ -437,7 +828,7 @@ void CameraDeviceSession::sProcessCaptureResult(
     bool hasInputBuf = (hal_result->input_buffer != nullptr);
     size_t numOutputBufs = hal_result->num_output_buffers;
     size_t numBufs = numOutputBufs + (hasInputBuf ? 1 : 0);
-    {
+    if (numBufs > 0) {
         Mutex::Autolock _l(d->mInflightLock);
         if (hasInputBuf) {
             int streamId = static_cast<Camera3Stream*>(hal_result->input_buffer->stream)->mId;
@@ -463,10 +854,7 @@ void CameraDeviceSession::sProcessCaptureResult(
     }
     // We don't need to validate/import fences here since we will be passing them to camera service
     // within the scope of this function
-
     CaptureResult result;
-    hidl_vec<native_handle_t*> releaseFences;
-    releaseFences.resize(numBufs);
     result.frameNumber = frameNumber;
     result.partialResult = hal_result->partial_result;
     convertToHidl(hal_result->result, &result.result);
@@ -477,11 +865,11 @@ void CameraDeviceSession::sProcessCaptureResult(
         result.inputBuffer.status = (BufferStatus) hal_result->input_buffer->status;
         // skip acquire fence since it's no use to camera service
         if (hal_result->input_buffer->release_fence != -1) {
-            releaseFences[numOutputBufs] = native_handle_create(/*numFds*/1, /*numInts*/0);
-            releaseFences[numOutputBufs]->data[0] = hal_result->input_buffer->release_fence;
-            result.inputBuffer.releaseFence = releaseFences[numOutputBufs];
+            native_handle_t* handle = native_handle_create(/*numFds*/1, /*numInts*/0);
+            handle->data[0] = hal_result->input_buffer->release_fence;
+            result.inputBuffer.releaseFence = handle;
         } else {
-            releaseFences[numOutputBufs] = nullptr;
+            result.inputBuffer.releaseFence = nullptr;
         }
     } else {
         result.inputBuffer.streamId = -1;
@@ -495,11 +883,11 @@ void CameraDeviceSession::sProcessCaptureResult(
         result.outputBuffers[i].status = (BufferStatus) hal_result->output_buffers[i].status;
         // skip acquire fence since it's of no use to camera service
         if (hal_result->output_buffers[i].release_fence != -1) {
-            releaseFences[i] = native_handle_create(/*numFds*/1, /*numInts*/0);
-            releaseFences[i]->data[0] = hal_result->output_buffers[i].release_fence;
-            result.outputBuffers[i].releaseFence = releaseFences[i];
+            native_handle_t* handle = native_handle_create(/*numFds*/1, /*numInts*/0);
+            handle->data[0] = hal_result->output_buffers[i].release_fence;
+            result.outputBuffers[i].releaseFence = handle;
         } else {
-            releaseFences[i] = nullptr;
+            result.outputBuffers[i].releaseFence = nullptr;
         }
     }
 
@@ -507,21 +895,17 @@ void CameraDeviceSession::sProcessCaptureResult(
     // Do this before call back to camera service because camera service might jump to
     // configure_streams right after the processCaptureResult call so we need to finish
     // updating inflight queues first
-    {
+    if (numBufs > 0) {
         Mutex::Autolock _l(d->mInflightLock);
         if (hasInputBuf) {
             int streamId = static_cast<Camera3Stream*>(hal_result->input_buffer->stream)->mId;
             auto key = std::make_pair(streamId, frameNumber);
-            // TODO (b/34169301): currently HAL closed the fence
-            //sHandleImporter.closeFence(d->mInflightBuffers[key].acquire_fence);
             d->mInflightBuffers.erase(key);
         }
 
         for (size_t i = 0; i < numOutputBufs; i++) {
             int streamId = static_cast<Camera3Stream*>(hal_result->output_buffers[i].stream)->mId;
             auto key = std::make_pair(streamId, frameNumber);
-            // TODO (b/34169301): currently HAL closed the fence
-            //sHandleImporter.closeFence(d->mInflightBuffers[key].acquire_fence);
             d->mInflightBuffers.erase(key);
         }
 
@@ -530,12 +914,7 @@ void CameraDeviceSession::sProcessCaptureResult(
         }
     }
 
-    d->mCallback->processCaptureResult(result);
-
-    for (size_t i = 0; i < releaseFences.size(); i++) {
-        // We don't close the FD here as HAL needs to signal it later.
-        native_handle_delete(releaseFences[i]);
-    }
+    d->mResultBatcher.processCaptureResult(result);
 }
 
 void CameraDeviceSession::sNotify(
@@ -545,15 +924,16 @@ void CameraDeviceSession::sNotify(
             const_cast<CameraDeviceSession*>(static_cast<const CameraDeviceSession*>(cb));
     NotifyMsg hidlMsg;
     convertToHidl(msg, &hidlMsg);
+
     if (hidlMsg.type == (MsgType) CAMERA3_MSG_ERROR &&
             hidlMsg.msg.error.errorStreamId != -1) {
         if (d->mStreamMap.count(hidlMsg.msg.error.errorStreamId) != 1) {
             ALOGE("%s: unknown stream ID %d reports an error!",
                     __FUNCTION__, hidlMsg.msg.error.errorStreamId);
+            return;
         }
-        return;
     }
-    d->mCallback->notify(hidlMsg);
+    d->mResultBatcher.notify(hidlMsg);
 }
 
 } // namespace implementation

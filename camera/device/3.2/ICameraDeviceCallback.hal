@@ -35,7 +35,8 @@ interface ICameraDeviceCallback {
     /**
      * processCaptureResult:
      *
-     * Send results from a completed capture to the framework.
+     * Send results from one or more completed or partially completed captures
+     * to the framework.
      * processCaptureResult() may be invoked multiple times by the HAL in
      * response to a single capture request. This allows, for example, the
      * metadata and low-resolution buffers to be returned in one call, and
@@ -61,11 +62,14 @@ interface ICameraDeviceCallback {
      * acceptable and expected that the buffer for request 5 for stream A may be
      * returned after the buffer for request 6 for stream B is. And it is
      * acceptable that the result metadata for request 6 for stream B is
-     * returned before the buffer for request 5 for stream A is.
+     * returned before the buffer for request 5 for stream A is. If multiple
+     * capture results are included in a single call, camera framework must
+     * process results sequentially from lower index to higher index, as if
+     * these results were sent to camera framework one by one, from lower index
+     * to higher index.
      *
      * The HAL retains ownership of result structure, which only needs to be
-     * valid to access during this call. The framework must copy whatever it
-     * needs before this call returns.
+     * valid to access during this call.
      *
      * The output buffers do not need to be filled yet; the framework must wait
      * on the stream buffer release sync fence before reading the buffer
@@ -93,20 +97,23 @@ interface ICameraDeviceCallback {
      *
      * Performance requirements:
      *
-     * This is a non-blocking call. The framework must return this call in 5ms.
+     * This is a non-blocking call. The framework must handle each CaptureResult
+     * within 5ms.
      *
      * The pipeline latency (see S7 for definition) should be less than or equal to
      * 4 frame intervals, and must be less than or equal to 8 frame intervals.
      *
      */
-    processCaptureResult(CaptureResult result);
+    processCaptureResult(vec<CaptureResult> results);
 
     /**
      * notify:
      *
      * Asynchronous notification callback from the HAL, fired for various
      * reasons. Only for information independent of frame capture, or that
-     * require specific timing.
+     * require specific timing. Multiple messages may be sent in one call; a
+     * message with a higher index must be considered to have occurred after a
+     * message with a lower index.
      *
      * Multiple threads may call notify() simultaneously.
      *
@@ -119,8 +126,8 @@ interface ICameraDeviceCallback {
      * ------------------------------------------------------------------------
      * Performance requirements:
      *
-     * This is a non-blocking call. The framework must return this call in 5ms.
+     * This is a non-blocking call. The framework must handle each message in 5ms.
      */
-    notify(NotifyMsg msg);
+    notify(vec<NotifyMsg> msgs);
 
 };

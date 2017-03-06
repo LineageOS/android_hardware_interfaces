@@ -17,6 +17,8 @@
 #ifndef ANDROID_HARDWARE_CAMERA_DEVICE_V3_2_CAMERADEVICE3SESSION_H
 #define ANDROID_HARDWARE_CAMERA_DEVICE_V3_2_CAMERADEVICE3SESSION_H
 
+#include <deque>
+#include <map>
 #include <unordered_map>
 #include "hardware/camera_common.h"
 #include "hardware/camera3.h"
@@ -27,6 +29,7 @@
 #include <hidl/MQDescriptor.h>
 #include <include/convert.h>
 #include "HandleImporter.h"
+#include "CameraMetadata.h"
 
 namespace android {
 namespace hardware {
@@ -64,7 +67,9 @@ extern "C" {
 
 struct CameraDeviceSession : public ICameraDeviceSession, private camera3_callback_ops  {
 
-    CameraDeviceSession(camera3_device_t*, const sp<ICameraDeviceCallback>&);
+    CameraDeviceSession(camera3_device_t*,
+                        const camera_metadata_t* deviceInfo,
+                        const sp<ICameraDeviceCallback>&);
     ~CameraDeviceSession();
     // Call by CameraDevice to dump active device states
     void dumpState(const native_handle_t* fd);
@@ -75,9 +80,12 @@ struct CameraDeviceSession : public ICameraDeviceSession, private camera3_callba
     bool isClosed();
 
     // Methods from ::android::hardware::camera::device::V3_2::ICameraDeviceSession follow.
-    Return<void> constructDefaultRequestSettings(RequestTemplate type, constructDefaultRequestSettings_cb _hidl_cb) override;
-    Return<void> configureStreams(const StreamConfiguration& requestedConfiguration, configureStreams_cb _hidl_cb) override;
-    Return<Status> processCaptureRequest(const CaptureRequest& request) override;
+    Return<void> constructDefaultRequestSettings(
+            RequestTemplate type, constructDefaultRequestSettings_cb _hidl_cb) override;
+    Return<void> configureStreams(
+            const StreamConfiguration& requestedConfiguration, configureStreams_cb _hidl_cb) override;
+    Return<void> processCaptureRequest(
+            const hidl_vec<CaptureRequest>& requests, processCaptureRequest_cb _hidl_cb) override;
     Return<Status> flush() override;
     Return<void> close() override;
 
@@ -94,7 +102,6 @@ private:
     bool mDisconnected = false;
 
     camera3_device_t* mDevice;
-    const sp<ICameraDeviceCallback> mCallback;
     // Stream ID -> Camera3Stream cache
     std::map<int, Camera3Stream> mStreamMap;
 
@@ -114,6 +121,104 @@ private:
     static HandleImporter& sHandleImporter;
 
     bool mInitFail;
+
+    common::V1_0::helper::CameraMetadata mDeviceInfo;
+
+    class ResultBatcher {
+    public:
+        ResultBatcher(const sp<ICameraDeviceCallback>& callback);
+        void setNumPartialResults(uint32_t n);
+        void setBatchedStreams(const std::vector<int>& streamsToBatch);
+
+        void registerBatch(const hidl_vec<CaptureRequest>& requests);
+        void notify(NotifyMsg& msg);
+        void processCaptureResult(CaptureResult& result);
+
+    private:
+        struct InflightBatch {
+            // Protect access to entire struct. Acquire this lock before read/write any data or
+            // calling any methods. processCaptureResult and notify will compete for this lock
+            // HIDL IPCs might be issued while the lock is held
+            Mutex mLock;
+
+            bool allDelivered() const;
+
+            uint32_t mFirstFrame;
+            uint32_t mLastFrame;
+            uint32_t mBatchSize;
+
+            bool mShutterDelivered = false;
+            std::vector<NotifyMsg> mShutterMsgs;
+
+            struct BufferBatch {
+                bool mDelivered = false;
+                // This currently assumes every batched request will output to the batched stream
+                // and since HAL must always send buffers in order, no frameNumber tracking is
+                // needed
+                std::vector<StreamBuffer> mBuffers;
+            };
+            // Stream ID -> VideoBatch
+            std::unordered_map<int, BufferBatch> mBatchBufs;
+
+            struct MetadataBatch {
+                //                   (frameNumber, metadata)
+                std::vector<std::pair<uint32_t, CameraMetadata>> mMds;
+            };
+            // Partial result IDs that has been delivered to framework
+            uint32_t mNumPartialResults;
+            uint32_t mPartialResultProgress = 0;
+            // partialResult -> MetadataBatch
+            std::map<uint32_t, MetadataBatch> mResultMds;
+
+            // Set to true when batch is removed from mInflightBatches
+            // processCaptureResult and notify must check this flag after acquiring mLock to make
+            // sure this batch isn't removed while waiting for mLock
+            bool mRemoved = false;
+        };
+
+        static const int NOT_BATCHED = -1;
+
+        // Get the batch index and pointer to InflightBatch (nullptrt if the frame is not batched)
+        // Caller must acquire the InflightBatch::mLock before accessing the InflightBatch
+        // It's possible that the InflightBatch is removed from mInflightBatches before the
+        // InflightBatch::mLock is acquired (most likely caused by an error notification), so
+        // caller must check InflightBatch::mRemoved flag after the lock is acquried.
+        // This method will hold ResultBatcher::mLock briefly
+        std::pair<int, std::shared_ptr<InflightBatch>> getBatch(uint32_t frameNumber);
+
+        // Check if the first batch in mInflightBatches is ready to be removed, and remove it if so
+        // This method will hold ResultBatcher::mLock briefly
+        void checkAndRemoveFirstBatch();
+
+        // The following sendXXXX methods must be called while the InflightBatch::mLock is locked
+        // HIDL IPC methods will be called during these methods.
+        void sendBatchShutterCbsLocked(std::shared_ptr<InflightBatch> batch);
+        // send buffers for all batched streams
+        void sendBatchBuffersLocked(std::shared_ptr<InflightBatch> batch);
+        // send buffers for specified streams
+        void sendBatchBuffersLocked(
+                std::shared_ptr<InflightBatch> batch, const std::vector<int>& streams);
+        void sendBatchMetadataLocked(
+                std::shared_ptr<InflightBatch> batch, uint32_t lastPartialResultIdx);
+        // End of sendXXXX methods
+
+        // helper methods
+        void freeReleaseFences(hidl_vec<CaptureResult>&);
+        void notifySingleMsg(NotifyMsg& msg);
+        void processOneCaptureResult(CaptureResult& result);
+
+        // Protect access to mInflightBatches, mNumPartialResults and mStreamsToBatch
+        // processCaptureRequest, processCaptureResult, notify will compete for this lock
+        // Do NOT issue HIDL IPCs while holding this lock (except when HAL reports error)
+        mutable Mutex mLock;
+        std::deque<std::shared_ptr<InflightBatch>> mInflightBatches;
+        uint32_t mNumPartialResults;
+        std::vector<int> mStreamsToBatch;
+        const sp<ICameraDeviceCallback> mCallback;
+    } mResultBatcher;
+
+    std::vector<int> mVideoStreamIds;
+
     bool initialize();
 
     Status initStatus() const;
@@ -129,6 +234,7 @@ private:
 
     void cleanupBuffersLocked(int id);
 
+    Status processOneCaptureRequest(const CaptureRequest& request);
     /**
      * Static callback forwarding methods from HAL to instance
      */

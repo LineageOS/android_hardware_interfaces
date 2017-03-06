@@ -229,7 +229,18 @@ Return<void> CameraDevice::open(const sp<ICameraDeviceCallback>& callback, open_
             return Void();
         }
 
-        session = new CameraDeviceSession(device, callback);
+        struct camera_info info;
+        res = mModule->getCameraInfo(mCameraIdInt, &info);
+        if (res != OK) {
+            ALOGE("%s: Could not open camera: getCameraInfo failed", __FUNCTION__);
+            device->common.close(&device->common);
+            mLock.unlock();
+            _hidl_cb(Status::ILLEGAL_ARGUMENT, nullptr);
+            return Void();
+        }
+
+        session = new CameraDeviceSession(
+                device, info.static_camera_characteristics, callback);
         if (session == nullptr) {
             ALOGE("%s: camera device session allocation failed", __FUNCTION__);
             mLock.unlock();
