@@ -6,11 +6,9 @@ filegroup {
         "types.hal",
         "IGraphicBufferSource.hal",
         "IOmx.hal",
-        "IOmxBufferProducer.hal",
         "IOmxBufferSource.hal",
         "IOmxNode.hal",
         "IOmxObserver.hal",
-        "IOmxProducerListener.hal",
     ],
 }
 
@@ -25,11 +23,9 @@ genrule {
         "android/hardware/media/omx/1.0/types.cpp",
         "android/hardware/media/omx/1.0/GraphicBufferSourceAll.cpp",
         "android/hardware/media/omx/1.0/OmxAll.cpp",
-        "android/hardware/media/omx/1.0/OmxBufferProducerAll.cpp",
         "android/hardware/media/omx/1.0/OmxBufferSourceAll.cpp",
         "android/hardware/media/omx/1.0/OmxNodeAll.cpp",
         "android/hardware/media/omx/1.0/OmxObserverAll.cpp",
-        "android/hardware/media/omx/1.0/OmxProducerListenerAll.cpp",
     ],
 }
 
@@ -52,11 +48,6 @@ genrule {
         "android/hardware/media/omx/1.0/BnHwOmx.h",
         "android/hardware/media/omx/1.0/BpHwOmx.h",
         "android/hardware/media/omx/1.0/BsOmx.h",
-        "android/hardware/media/omx/1.0/IOmxBufferProducer.h",
-        "android/hardware/media/omx/1.0/IHwOmxBufferProducer.h",
-        "android/hardware/media/omx/1.0/BnHwOmxBufferProducer.h",
-        "android/hardware/media/omx/1.0/BpHwOmxBufferProducer.h",
-        "android/hardware/media/omx/1.0/BsOmxBufferProducer.h",
         "android/hardware/media/omx/1.0/IOmxBufferSource.h",
         "android/hardware/media/omx/1.0/IHwOmxBufferSource.h",
         "android/hardware/media/omx/1.0/BnHwOmxBufferSource.h",
@@ -72,11 +63,6 @@ genrule {
         "android/hardware/media/omx/1.0/BnHwOmxObserver.h",
         "android/hardware/media/omx/1.0/BpHwOmxObserver.h",
         "android/hardware/media/omx/1.0/BsOmxObserver.h",
-        "android/hardware/media/omx/1.0/IOmxProducerListener.h",
-        "android/hardware/media/omx/1.0/IHwOmxProducerListener.h",
-        "android/hardware/media/omx/1.0/BnHwOmxProducerListener.h",
-        "android/hardware/media/omx/1.0/BpHwOmxProducerListener.h",
-        "android/hardware/media/omx/1.0/BsOmxProducerListener.h",
     ],
 }
 
@@ -92,6 +78,7 @@ cc_library_shared {
         "liblog",
         "libutils",
         "libcutils",
+        "android.hardware.graphics.bufferqueue@1.0",
         "android.hardware.graphics.common@1.0",
         "android.hardware.media@1.0",
         "android.hidl.base@1.0",
@@ -101,6 +88,7 @@ cc_library_shared {
         "libhidltransport",
         "libhwbinder",
         "libutils",
+        "android.hardware.graphics.bufferqueue@1.0",
         "android.hardware.graphics.common@1.0",
         "android.hardware.media@1.0",
         "android.hidl.base@1.0",

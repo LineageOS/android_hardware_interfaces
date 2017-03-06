@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package android.hardware.media.omx@1.0;
+package android.hardware.graphics.bufferqueue@1.0;
 
 /**
  * Ref: frameworks/native/include/gui/IProducerListener.h: IProducerListener
  * This is a wrapper/wrapped HAL interface for the actual binder interface.
  */
-interface IOmxProducerListener {
+interface IProducerListener {
     oneway onBufferReleased();
     needsReleaseNotify() generates (bool result);
 };
