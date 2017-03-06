@@ -36,11 +36,12 @@ using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 
 void stopFramework() {
-    ASSERT_EQ(std::system("svc wifi disable"), 0);
+    ASSERT_EQ(std::system("stop"), 0);
+    stopWifi();
     sleep(5);
 }
 
-void startFramework() { ASSERT_EQ(std::system("svc wifi enable"), 0); }
+void startFramework() { ASSERT_EQ(std::system("start"), 0); }
 
 sp<IWifi> getWifi() {
     sp<IWifi> wifi = ::testing::VtsHalHidlTargetBaseTest::getService<IWifi>();
