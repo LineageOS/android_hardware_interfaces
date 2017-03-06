@@ -1,0 +1,19 @@
+cc_library_shared {
+    name: "android.hardware.tests.msgq@1.0-impl",
+    relative_install_path: "hw",
+    proprietary: true,
+    srcs: [
+        "TestMsgQ.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "libcutils",
+        "libfmq",
+        "libhidlbase",
+        "libhidltransport",
+        "liblog",
+        "libutils",
+        "android.hardware.tests.msgq@1.0",
+        "android.hidl.base@1.0",
+    ],
+}
