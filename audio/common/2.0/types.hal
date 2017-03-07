@@ -537,6 +537,7 @@ enum AudioDevice : uint32_t {
     /* audio bus implemented by the audio system (e.g an MOST stereo channel) */
     OUT_BUS                       = 0x1000000,
     OUT_PROXY                     = 0x2000000,
+    OUT_USB_HEADSET               = 0x4000000,
     OUT_DEFAULT                   = BIT_DEFAULT,
     OUT_ALL      = (OUT_EARPIECE |
             OUT_SPEAKER |
@@ -603,6 +604,7 @@ enum AudioDevice : uint32_t {
     /* audio bus implemented by the audio system (e.g an MOST stereo channel) */
     IN_BUS                   = BIT_IN | 0x100000,
     IN_PROXY                 = BIT_IN | 0x1000000,
+    IN_USB_HEADSET           = BIT_IN | 0x2000000,
     IN_DEFAULT               = BIT_IN | BIT_DEFAULT,
 
     IN_ALL     = (IN_COMMUNICATION |
@@ -670,6 +672,7 @@ enum AudioOutputFlag : int32_t {
     DIRECT_PCM = 0x2000,     // Audio stream containing PCM data that needs
                              // to pass through compress path for DSP post proc.
     MMAP_NOIRQ = 0x4000, // output operates in MMAP no IRQ mode.
+    VOIP_CALL_RX = 0x8000, // preferred output for VoIP calls.
 };
 
 /*
@@ -680,12 +683,13 @@ enum AudioOutputFlag : int32_t {
  */
 @export(name="audio_input_flags_t", value_prefix="AUDIO_INPUT_FLAG_")
 enum AudioInputFlag : int32_t {
-    NONE       = 0x0,  // no attributes
-    FAST       = 0x1,  // prefer an input that supports "fast tracks"
-    HW_HOTWORD = 0x2,  // prefer an input that captures from hw hotword source
-    RAW        = 0x4,  // minimize signal processing
-    SYNC       = 0x8,  // synchronize I/O streams
-    MMAP_NOIRQ = 0x10, // input operates in MMAP no IRQ mode.
+    NONE         = 0x0,  // no attributes
+    FAST         = 0x1,  // prefer an input that supports "fast tracks"
+    HW_HOTWORD   = 0x2,  // prefer an input that captures from hw hotword source
+    RAW          = 0x4,  // minimize signal processing
+    SYNC         = 0x8,  // synchronize I/O streams
+    MMAP_NOIRQ   = 0x10, // input operates in MMAP no IRQ mode.
+    VOIP_CALL_TX = 0x20, // preferred input for VoIP calls.
 };
 
 @export(name="audio_usage_t", value_prefix="AUDIO_USAGE_")
