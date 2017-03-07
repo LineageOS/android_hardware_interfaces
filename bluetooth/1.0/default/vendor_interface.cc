@@ -274,7 +274,7 @@ bool VendorInterface::Open(InitializeCompleteCallback initialize_complete_cb,
 }
 
 void VendorInterface::Close() {
-  fd_watcher_.StopWatchingFileDescriptor();
+  fd_watcher_.StopWatchingFileDescriptors();
 
   if (lib_interface_ != nullptr) {
     bt_vendor_lpm_mode_t mode = BT_VND_LPM_DISABLE;
