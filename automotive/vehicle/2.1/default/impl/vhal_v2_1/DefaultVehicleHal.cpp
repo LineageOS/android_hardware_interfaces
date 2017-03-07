@@ -270,6 +270,11 @@ V2_0::StatusCode DefaultVehicleHal::set(
     case V2_0::toInt(V2_1::VehicleProperty::OBD2_FREEZE_FRAME_CLEAR):
         return clearObd2FreezeFrames(propValue);
         break;
+    case V2_0::toInt(V2_1::VehicleProperty::VEHICLE_MAP_SERVICE):
+        // Placeholder for future implementation of VMS property in the default hal. For now, just
+        // returns OK; otherwise, hal clients crash with property not supported.
+        return V2_0::StatusCode::OK;
+        break;
     default:
         return mVehicleHal20->set(propValue);
     }
