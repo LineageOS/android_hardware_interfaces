@@ -15,15 +15,16 @@
  */
 
 #define LOG_TAG "fingerprint_hidl_hal_test"
+#define SERVICE_NAME "fingerprint_hal"
 
 #include <android-base/logging.h>
 #include <android/hardware/biometrics/fingerprint/2.1/IBiometricsFingerprint.h>
 #include <android/hardware/biometrics/fingerprint/2.1/IBiometricsFingerprintClientCallback.h>
-#include <chrono>
-#include <VtsHalHidlTargetBaseTest.h>
 #include <hidl/HidlSupport.h>
 #include <hidl/HidlTransportSupport.h>
+#include <VtsHalHidlTargetBaseTest.h>
 
+using android::Condition;
 using android::hardware::biometrics::fingerprint::V2_1::IBiometricsFingerprint;
 using android::hardware::biometrics::fingerprint::V2_1::IBiometricsFingerprintClientCallback;
 using android::hardware::biometrics::fingerprint::V2_1::FingerprintAcquiredInfo;
@@ -31,68 +32,107 @@ using android::hardware::biometrics::fingerprint::V2_1::FingerprintError;
 using android::hardware::biometrics::fingerprint::V2_1::RequestStatus;
 using android::hardware::hidl_vec;
 using android::hardware::Return;
+using android::Mutex;
+using android::sp;
 
-#define SERVICE_NAME "fingerprint_hal"
-
-class FingerprintHidlTest : public ::testing::VtsHalHidlTargetBaseTest,
-    public IBiometricsFingerprintClientCallback {
+class FingerprintHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
 
 protected:
-    android::sp<IBiometricsFingerprint> service;
-    FingerprintError err;
-    // State changes should occur within this threshold, otherwise the
-    // framework' will assume things have broken.
-    std::chrono::seconds threshold;
+    class MyCallback : public IBiometricsFingerprintClientCallback {
 
+        // implement methods of IBiometricsFingerprintClientCallback
+        virtual Return<void> onEnrollResult(uint64_t, uint32_t, uint32_t,
+                uint32_t) override {
+            callBackCalled();
+            return Return<void>();
+        }
+
+        virtual Return<void> onAcquired(uint64_t, FingerprintAcquiredInfo,
+                int32_t) override {
+            callBackCalled();
+            return Return<void>();
+        }
+
+        virtual Return<void> onAuthenticated(uint64_t, uint32_t, uint32_t,
+                const hidl_vec<uint8_t>&) override {
+            callBackCalled();
+            return Return<void>();
+        }
+
+        virtual Return<void> onError(uint64_t, FingerprintError error, int32_t)
+                override {
+            mTestCase->mErr = error;
+            callBackCalled();
+            return Return<void>();
+        }
+
+        virtual Return<void> onRemoved(uint64_t, uint32_t, uint32_t, uint32_t)
+                override {
+            callBackCalled();
+            return Return<void>();
+        }
+
+        virtual Return<void> onEnumerate(uint64_t, uint32_t, uint32_t,
+                uint32_t) override {
+            callBackCalled();
+            return Return<void>();
+        }
+
+        void callBackCalled () {
+            mTestCase->mCallbackCalled = true;
+            mTestCase->mCallbackCond.broadcast();
+        }
+
+        FingerprintHidlTest* mTestCase;
+    public:
+        MyCallback(FingerprintHidlTest* aTest) : mTestCase(aTest) {}
+    };
+
+    sp<MyCallback> mCallback;
+    bool mCallbackCalled;
+    Condition mCallbackCond;
+    FingerprintError mErr;
+    Mutex mLock;
+    sp<IBiometricsFingerprint> mService;
+    static const unsigned int kThresholdInSeconds = 3;
+
+    void clearErr () {
+        mErr = FingerprintError::ERROR_NO_ERROR;
+    }
+
+    // Timed callback mechanism.  Will block up to kThresholdInSeconds,
+    // returning true if callback was invoked in that time frame.
+    bool waitForCallback(const unsigned int seconds = kThresholdInSeconds) {
+        nsecs_t reltime = seconds_to_nanoseconds(seconds);
+        Mutex::Autolock _l(mLock);
+        nsecs_t endTime = systemTime() + reltime;
+        while (!mCallbackCalled) {
+            if (reltime == 0) {
+                mCallbackCond.wait(mLock);
+            } else {
+                nsecs_t now = systemTime();
+                if (now > endTime) {
+                    return false;
+                }
+                mCallbackCond.waitRelative(mLock, endTime - now);
+            }
+        }
+        return true;
+    }
 public:
-    FingerprintHidlTest ():
-        err(FingerprintError::ERROR_NO_ERROR), threshold(1) {}
+    FingerprintHidlTest (): mCallbackCalled(false) {}
 
     virtual void SetUp() override {
-        service = ::testing::VtsHalHidlTargetBaseTest::getService<IBiometricsFingerprint>(SERVICE_NAME);
+        mService = ::testing::VtsHalHidlTargetBaseTest::getService<IBiometricsFingerprint>(SERVICE_NAME);
 
-        ASSERT_NE(service, nullptr);
+        ASSERT_NE(mService, nullptr);
         clearErr();
 
+        mCallback = new MyCallback(this);
         // TODO: instantly fail any test that receives a death notification
     }
 
     virtual void TearDown() override {}
-
-    // implement methods of IBiometricsFingerprintClientCallback
-    virtual Return<void> onEnrollResult(uint64_t, uint32_t, uint32_t, uint32_t)
-            override {
-        return Return<void>();
-    }
-    virtual Return<void> onAcquired(uint64_t, FingerprintAcquiredInfo, int32_t)
-            override {
-        return Return<void>();
-    }
-
-    virtual Return<void> onAuthenticated(uint64_t, uint32_t, uint32_t, const
-            hidl_vec<uint8_t>&) override {
-        return Return<void>();
-    }
-
-    virtual Return<void> onError(uint64_t, FingerprintError error, int32_t)
-            override {
-        err = error;
-        return Return<void>();
-    }
-
-    virtual Return<void> onRemoved(uint64_t, uint32_t, uint32_t, uint32_t)
-            override {
-        return Return<void>();
-    }
-
-    virtual Return<void> onEnumerate(uint64_t, uint32_t, uint32_t, uint32_t)
-            override {
-        return Return<void>();
-    }
-
-    void clearErr () {
-        err = FingerprintError::ERROR_NO_ERROR;
-    }
 };
 
 class FingerprintHidlEnvironment : public ::testing::Environment {
@@ -103,50 +143,42 @@ public:
 
 // The service should be reachable.
 TEST_F(FingerprintHidlTest, ConnectTest) {
-    Return<uint64_t> rc = service->setNotify(this);
+    Return<uint64_t> rc = mService->setNotify(mCallback);
     EXPECT_NE(rc, 0UL);
 }
 
 // Cancel should always return ERROR_CANCELED from any starting state including
 // the IDLE state.
 TEST_F(FingerprintHidlTest, CancelTest) {
-    Return<uint64_t> rc = service->setNotify(this);
+    Return<uint64_t> rc = mService->setNotify(mCallback);
     EXPECT_NE(rc, 0UL);
 
-    auto start = std::chrono::system_clock::now();
-    Return<RequestStatus> res = service->cancel();
-    auto end = std::chrono::system_clock::now();
-    auto diff = end - start;
-
+    Return<RequestStatus> res = mService->cancel();
+    // make sure callback was invoked within kThresholdInSeconds
+    EXPECT_EQ(true, waitForCallback());
     // check that we were able to make an IPC request successfully
     EXPECT_EQ(RequestStatus::SYS_OK, res);
     // check error should be ERROR_CANCELED
-    EXPECT_EQ(FingerprintError::ERROR_CANCELED, err);
-    // check that this did not take longer than a threshold
-    EXPECT_TRUE(diff <= threshold);
+    EXPECT_EQ(FingerprintError::ERROR_CANCELED, mErr);
 }
 
 // A call to cancel should after any other method call should set the error
 // state to canceled.
 TEST_F(FingerprintHidlTest, AuthTest) {
-    Return<uint64_t> rc = service->setNotify(this);
+    Return<uint64_t> rc = mService->setNotify(mCallback);
     EXPECT_NE(rc, 0UL);
 
-    Return<RequestStatus> res = service->authenticate(0, 0);
+    Return<RequestStatus> res = mService->authenticate(0, 0);
     // check that we were able to make an IPC request successfully
     EXPECT_EQ(RequestStatus::SYS_OK, res);
 
-    auto start = std::chrono::system_clock::now();
-    res = service->cancel();
-    auto end = std::chrono::system_clock::now();
-    auto diff = end - start;
-
+    res = mService->cancel();
+    // make sure callback was invoked within kThresholdInSeconds
+    EXPECT_EQ(true, waitForCallback());
     // check that we were able to make an IPC request successfully
     EXPECT_EQ(RequestStatus::SYS_OK, res);
     // check error should be ERROR_CANCELED
-    EXPECT_EQ(FingerprintError::ERROR_CANCELED, err);
-    // check that this did not take longer than a threshold
-    EXPECT_TRUE(diff <= threshold);
+    EXPECT_EQ(FingerprintError::ERROR_CANCELED, mErr);
 }
 
 int main(int argc, char **argv) {
