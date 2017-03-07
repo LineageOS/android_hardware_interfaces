@@ -131,7 +131,7 @@ GrallocHal::~GrallocHal()
 
 void GrallocHal::initCapabilities()
 {
-    uint32_t count;
+    uint32_t count = 0;
     mDevice->getCapabilities(mDevice, &count, nullptr);
 
     std::vector<Capability> caps(count);
