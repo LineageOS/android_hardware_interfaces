@@ -314,11 +314,6 @@ Return<void> RadioResponse::sendOemRilRequestStringsResponse(
     return Void();
 }
 
-Return<void> RadioResponse::sendScreenStateResponse(
-        const RadioResponseInfo& /*info*/) {
-    return Void();
-}
-
 Return<void> RadioResponse::setSuppServiceNotificationsResponse(
         const RadioResponseInfo& /*info*/) {
     return Void();
