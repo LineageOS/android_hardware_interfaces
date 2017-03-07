@@ -42,6 +42,7 @@ using ::android::hardware::broadcastradio::V1_0::ITunerCallback;
 using ::android::hardware::broadcastradio::V1_0::Result;
 using ::android::hardware::broadcastradio::V1_0::Class;
 using ::android::hardware::broadcastradio::V1_0::Properties;
+using ::android::hardware::broadcastradio::V1_0::Band;
 using ::android::hardware::broadcastradio::V1_0::BandConfig;
 using ::android::hardware::broadcastradio::V1_0::Direction;
 using ::android::hardware::broadcastradio::V1_0::ProgramInfo;
@@ -83,15 +84,15 @@ class BroadcastRadioHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
             return Void();
         }
 
-        virtual Return<void> configChange(Result result, const BandConfig& config __unused) {
+        virtual Return<void> configChange(Result result, const BandConfig& config) {
             ALOGI("%s result %d", __FUNCTION__, result);
-            mParentTest->onResultCallback(result);
+            mParentTest->onConfigChangeCallback(result, config);
             return Void();
         }
 
-        virtual Return<void> tuneComplete(Result result, const ProgramInfo& info __unused) {
+        virtual Return<void> tuneComplete(Result result, const ProgramInfo& info) {
             ALOGI("%s result %d", __FUNCTION__, result);
-            mParentTest->onResultCallback(result);
+            mParentTest->onTuneCompleteCallback(result, info);
             return Void();
         }
 
@@ -146,11 +147,22 @@ class BroadcastRadioHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
     }
 
     /**
-     * Method called by MyCallback when a callback with status is received
+     * Method called by MyCallback when configChange() callback is received.
      */
-    void onResultCallback(Result result) {
+    void onConfigChangeCallback(Result result, const BandConfig& config) {
         Mutex::Autolock _l(mLock);
         mResultCallbackData = result;
+        mBandConfigCallbackData = config;
+        onCallback_l();
+    }
+
+    /**
+     * Method called by MyCallback when tuneComplete() callback is received.
+     */
+    void onTuneCompleteCallback(Result result, const ProgramInfo& info) {
+        Mutex::Autolock _l(mLock);
+        mResultCallbackData = result;
+        mProgramInfoCallbackData = info;
         onCallback_l();
     }
 
@@ -209,6 +221,8 @@ class BroadcastRadioHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
     bool mCallbackCalled;
     bool mBoolCallbackData;
     Result mResultCallbackData;
+    ProgramInfo mProgramInfoCallbackData;
+    BandConfig mBandConfigCallbackData;
     bool mHwFailure;
 };
 
@@ -218,6 +232,35 @@ class BroadcastRadioHidlEnvironment : public ::testing::Environment {
     virtual void SetUp() {}
     virtual void TearDown() {}
 };
+
+namespace android {
+namespace hardware {
+namespace broadcastradio {
+namespace V1_0 {
+
+/**
+ * Compares two BandConfig objects for testing purposes.
+ */
+static bool operator==(const BandConfig& l, const BandConfig& r) {
+    if (l.type != r.type) return false;
+    if (l.antennaConnected != r.antennaConnected) return false;
+    if (l.lowerLimit != r.lowerLimit) return false;
+    if (l.upperLimit != r.upperLimit) return false;
+    if (l.spacings != r.spacings) return false;
+    if (l.type == Band::AM || l.type == Band::AM_HD) {
+        return l.ext.am == r.ext.am;
+    } else if (l.type == Band::FM || l.type == Band::FM_HD) {
+        return l.ext.fm == r.ext.fm;
+    } else {
+        // unsupported type
+        return false;
+    }
+}
+
+}  // V1_0
+}  // broadcastradio
+}  // hardware
+}  // android
 
 bool BroadcastRadioHidlTest::getProperties()
 {
@@ -351,11 +394,12 @@ TEST_F(BroadcastRadioHidlTest, SetAndGetConfiguration) {
     ASSERT_EQ(true, openTuner());
     // test setConfiguration
     mCallbackCalled = false;
-    Return<Result> hidlResult = mTuner->setConfiguration(mHalProperties.bands[0]);
+    Return<Result> hidlResult = mTuner->setConfiguration(mHalProperties.bands[1]);
     EXPECT_TRUE(hidlResult.isOk());
     EXPECT_EQ(Result::OK, hidlResult);
     EXPECT_EQ(true, waitForCallback(kConfigCallbacktimeoutNs));
     EXPECT_EQ(Result::OK, mResultCallbackData);
+    EXPECT_EQ(mHalProperties.bands[1], mBandConfigCallbackData);
 
     // test getConfiguration
     BandConfig halConfig;
@@ -369,7 +413,7 @@ TEST_F(BroadcastRadioHidlTest, SetAndGetConfiguration) {
             });
     EXPECT_TRUE(hidlReturn.isOk());
     EXPECT_EQ(Result::OK, halResult);
-    EXPECT_EQ(mHalProperties.bands[0].type, halConfig.type);
+    EXPECT_EQ(mHalProperties.bands[1], halConfig);
 }
 
 /**
@@ -453,6 +497,7 @@ TEST_F(BroadcastRadioHidlTest, TuneAndGetProgramInformationAndCancel) {
     EXPECT_TRUE(hidlResult.isOk());
     EXPECT_EQ(Result::OK, hidlResult);
     EXPECT_EQ(true, waitForCallback(kTuneCallbacktimeoutNs));
+    EXPECT_EQ(channel, mProgramInfoCallbackData.channel);
 
     // test getProgramInformation
     ProgramInfo halInfo;
