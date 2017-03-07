@@ -234,8 +234,6 @@ public:
     Return<void> sendOemRilRequestStringsResponse(const RadioResponseInfo& info,
             const ::android::hardware::hidl_vec<::android::hardware::hidl_string>& data);
 
-    Return<void> sendScreenStateResponse(const RadioResponseInfo& info);
-
     Return<void> setSuppServiceNotificationsResponse(
             const RadioResponseInfo& info);
 

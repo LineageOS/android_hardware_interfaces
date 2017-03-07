@@ -928,17 +928,6 @@ interface IRadioResponse {
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:GENERIC_FAILURE
-     */
-    oneway sendScreenStateResponse(RadioResponseInfo info);
-
-    /*
-     * @param info Response info struct containing response type, serial no. and error
-     *
-     * Valid errors returned:
-     *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:SIM_BUSY
      *   RadioError:NO_MEMORY
      *   RadioError:SYSTEM_ERR

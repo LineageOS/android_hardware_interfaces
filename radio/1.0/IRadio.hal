@@ -731,20 +731,6 @@ interface IRadio {
     oneway getDataCallList(int32_t serial);
 
     /*
-     * Indicates the current state of the screen. When the screen is off, the
-     * Radio must notify the baseband to suppress certain notifications (eg,
-     * signal strength and changes in LAC/CID or BID/SID/NID/latitude/longitude)
-     * in an effort to conserve power. These notifications must resume when the
-     * screen is on.
-     *
-     * @param serial Serial number of request.
-     * @param enable true = screen on, false = screen off.
-     *
-     * Response function is IRadioResponse.sendScreenStateResponse()
-     */
-    oneway sendScreenState(int32_t serial, bool enable);
-
-    /*
      * Enables/disables supplementary service related notifications from the network.
      * Notifications are reported via unsolSuppSvcNotification().
      *
