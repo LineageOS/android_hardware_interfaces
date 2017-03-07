@@ -28,6 +28,7 @@
 #include "CommBase.h"
 #include "VehicleHalProto.pb.h"
 
+#include <vhal_v2_0/RecurrentTimer.h>
 #include <vhal_v2_0/VehicleHal.h>
 
 #include "DefaultConfig.h"
@@ -43,7 +44,13 @@ namespace impl {
 
 class DefaultVehicleHal : public VehicleHal {
 public:
-    DefaultVehicleHal() : mThread() {}
+    DefaultVehicleHal() : mRecurrentTimer(
+            std::bind(&DefaultVehicleHal::onContinuousPropertyTimer, this, std::placeholders::_1)) {
+        for (size_t i = 0; i < arraysize(kVehicleProperties); i++) {
+            mPropConfigMap[kVehicleProperties->prop] = &kVehicleProperties[i];
+        }
+    }
+
     ~DefaultVehicleHal() override {
         // Notify thread to finish and wait for it to terminate
         mExit = 1;
@@ -66,16 +73,9 @@ public:
 
     StatusCode set(const VehiclePropValue& propValue) override;
 
-    StatusCode subscribe(int32_t property, int32_t areas, float sampleRate) {
-        ALOGD("%s: not implemented: prop=0x%x, areas=0x%x, rate=%f", __FUNCTION__, property,
-              areas, sampleRate);
-        return StatusCode::OK;
-    }
+    StatusCode subscribe(int32_t property, int32_t areas, float sampleRate) override;
 
-    StatusCode unsubscribe(int32_t property) {
-        ALOGD("%s: not implemented: prop=0x%x", __FUNCTION__, property);
-        return StatusCode::OK;
-    }
+    StatusCode unsubscribe(int32_t property) override;
 
 private:
     void doGetConfig(emulator::EmulatorMessage& rxMsg, emulator::EmulatorMessage& respMsg);
@@ -83,7 +83,9 @@ private:
     void doGetProperty(emulator::EmulatorMessage& rxMsg, emulator::EmulatorMessage& respMsg);
     void doGetPropertyAll(emulator::EmulatorMessage& rxMsg, emulator::EmulatorMessage& respMsg);
     void doSetProperty(emulator::EmulatorMessage& rxMsg, emulator::EmulatorMessage& respMsg);
-    VehiclePropValue* getVehiclePropValueLocked(int32_t propId, int32_t areaId);
+    VehiclePropValue* getVehiclePropValueLocked(int32_t propId, int32_t areaId = 0);
+    const VehiclePropConfig* getPropConfig(int32_t propId) const;
+    bool isContinuousProperty(int32_t propId) const;
     void parseRxProtoBuf(std::vector<uint8_t>& msg);
     void populateProtoVehicleConfig(emulator::VehiclePropConfig* protoCfg,
                                     const VehiclePropConfig& cfg);
@@ -94,6 +96,13 @@ private:
     void rxThread();
     void txMsg(emulator::EmulatorMessage& txMsg);
     StatusCode updateProperty(const VehiclePropValue& propValue);
+
+    constexpr std::chrono::nanoseconds hertzToNanoseconds(float hz) const {
+        return std::chrono::nanoseconds(static_cast<int64_t>(1000000000L / hz));
+    }
+
+    void onContinuousPropertyTimer(const std::vector<int32_t>& properties);
+
 private:
     std::map<
         std::pair<int32_t /*VehicleProperty*/, int32_t /*areaId*/>,
@@ -103,6 +112,8 @@ private:
     std::mutex mPropsMutex;
     std::thread mThread;
     std::unique_ptr<CommBase> mComm{nullptr};
+    RecurrentTimer mRecurrentTimer;
+    std::unordered_map<int32_t, const VehiclePropConfig*> mPropConfigMap;
 };
 
 }  // impl

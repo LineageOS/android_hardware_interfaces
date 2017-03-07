@@ -43,8 +43,7 @@ const VehiclePropValue kEmptyValue{};
  */
 constexpr auto kMaxHidlVecOfVehiclPropValuePoolSize = 20;
 
-Return<void> VehicleHalManager::getAllPropConfigs(
-        getAllPropConfigs_cb _hidl_cb) {
+Return<void> VehicleHalManager::getAllPropConfigs(getAllPropConfigs_cb _hidl_cb) {
     ALOGI("getAllPropConfigs called");
     hidl_vec<VehiclePropConfig> hidlConfigs;
     auto& halConfig = mConfigIndex->getAllConfigs();
@@ -58,9 +57,8 @@ Return<void> VehicleHalManager::getAllPropConfigs(
     return Void();
 }
 
-Return<void> VehicleHalManager::getPropConfigs(
-        const hidl_vec<int32_t> &properties,
-        getPropConfigs_cb _hidl_cb) {
+Return<void> VehicleHalManager::getPropConfigs(const hidl_vec<int32_t> &properties,
+                                               getPropConfigs_cb _hidl_cb) {
     std::vector<VehiclePropConfig> configs;
     for (size_t i = 0; i < properties.size(); i++) {
         auto prop = properties[i];
@@ -77,8 +75,7 @@ Return<void> VehicleHalManager::getPropConfigs(
     return Void();
 }
 
-Return<void> VehicleHalManager::get(
-        const VehiclePropValue& requestedPropValue, get_cb _hidl_cb) {
+Return<void> VehicleHalManager::get(const VehiclePropValue& requestedPropValue, get_cb _hidl_cb) {
     const auto* config = getPropConfigOrNull(requestedPropValue.prop);
     if (config == nullptr) {
         ALOGE("Failed to get value: config not found, property: 0x%x",
@@ -119,9 +116,8 @@ Return<StatusCode> VehicleHalManager::set(const VehiclePropValue &value) {
     return Return<StatusCode>(status);
 }
 
-Return<StatusCode> VehicleHalManager::subscribe(
-        const sp<IVehicleCallback> &callback,
-        const hidl_vec<SubscribeOptions> &options) {
+Return<StatusCode> VehicleHalManager::subscribe(const sp<IVehicleCallback> &callback,
+                                                const hidl_vec<SubscribeOptions> &options) {
     hidl_vec<SubscribeOptions> verifiedOptions(options);
     auto caller = getCaller();
     for (size_t i = 0; i < verifiedOptions.size(); i++) {
@@ -132,6 +128,11 @@ Return<StatusCode> VehicleHalManager::subscribe(
         if (config == nullptr) {
             ALOGE("Failed to subscribe: config not found, property: 0x%x",
                   prop);
+            return StatusCode::INVALID_ARG;
+        }
+
+        if (ops.flags == SubscribeFlags::UNDEFINED) {
+            ALOGE("Failed to subscribe: undefined flag in options provided");
             return StatusCode::INVALID_ARG;
         }
 
@@ -157,22 +158,24 @@ Return<StatusCode> VehicleHalManager::subscribe(
         ops.sampleRate = checkSampleRate(*config, ops.sampleRate);
     }
 
-    std::list<SubscribeOptions> updatedOptions =
-        mSubscriptionManager.addOrUpdateSubscription(callback, verifiedOptions);
+    std::list<SubscribeOptions> updatedOptions;
+    auto res = mSubscriptionManager.addOrUpdateSubscription(callback, verifiedOptions,
+                                                            &updatedOptions);
+    if (StatusCode::OK != res) {
+        ALOGW("%s failed to subscribe, error code: %d", __func__, res);
+        return res;
+    }
 
     for (auto opt : updatedOptions) {
         mHal->subscribe(opt.propId, opt.vehicleAreas, opt.sampleRate);
     }
-    // TODO(pavelm): link to death callback (not implemented yet in HIDL)
 
     return StatusCode::OK;
 }
 
-Return<StatusCode> VehicleHalManager::unsubscribe(
-        const sp<IVehicleCallback>& callback, int32_t propId) {
-    if (mSubscriptionManager.unsubscribe(callback, propId)) {
-        mHal->unsubscribe(propId);
-    }
+Return<StatusCode> VehicleHalManager::unsubscribe(const sp<IVehicleCallback>& callback,
+                                                  int32_t propId) {
+    mSubscriptionManager.unsubscribe(callback, propId);
     return StatusCode::OK;
 }
 
@@ -239,8 +242,7 @@ void VehicleHalManager::onHalPropertySetError(StatusCode errorCode,
     }
 }
 
-void VehicleHalManager::onBatchHalEvent(
-        const std::vector<VehiclePropValuePtr>& values) {
+void VehicleHalManager::onBatchHalEvent(const std::vector<VehiclePropValuePtr>& values) {
     const auto& clientValues = mSubscriptionManager.distributeValuesToClients(
             values, SubscribeFlags::HAL_EVENT);
 
@@ -257,7 +259,12 @@ void VehicleHalManager::onBatchHalEvent(
         for (VehiclePropValue* pValue : cv.values) {
             shallowCopy(&(vec)[i++], *pValue);
         }
-        cv.client->getCallback()->onPropertyEvent(vec);
+        auto status = cv.client->getCallback()->onPropertyEvent(vec);
+        if (!status.isOk()) {
+            ALOGE("Failed to notify client %s, err: %s",
+                  toString(cv.client->getCallback()).c_str(),
+                  status.description().c_str());
+        }
     }
 }
 
@@ -377,6 +384,10 @@ void VehicleHalManager::readAndParseAclConfig(const char* filename,
         parser->parseFromStream(&file, outAclMap);
         file.close();
     }
+}
+
+void VehicleHalManager::onAllClientsUnsubscribed(int32_t propertyId) {
+    mHal->unsubscribe(propertyId);
 }
 
 }  // namespace V2_0

@@ -23,6 +23,7 @@
 #include <list>
 
 #include <android/log.h>
+#include <hidl/HidlSupport.h>
 #include <hwbinder/IPCThreadState.h>
 
 #include <android/hardware/automotive/vehicle/2.0/IVehicle.h>
@@ -50,10 +51,8 @@ public:
     }
 
     void addOrUpdateSubscription(const SubscribeOptions &opts);
-
-    bool isSubscribed(int32_t propId,
-                      int32_t areaId,
-                      SubscribeFlags flags);
+    bool isSubscribed(int32_t propId, int32_t areaId, SubscribeFlags flags);
+    std::vector<int32_t> getSubscribedProperties() const;
 
 private:
     const sp<IVehicleCallback> mCallback;
@@ -85,15 +84,29 @@ struct HalClientValues {
 
 class SubscriptionManager {
 public:
-    virtual ~SubscriptionManager() {}
+    using OnPropertyUnsubscribed = std::function<void(int32_t)>;
+
+    /**
+     * Constructs SubscriptionManager
+     *
+     * @param onPropertyUnsubscribed - this callback function will be called when there are no
+     *                                    more client subscribed to particular property.
+     */
+    SubscriptionManager(const OnPropertyUnsubscribed& onPropertyUnsubscribed)
+            : mOnPropertyUnsubscribed(onPropertyUnsubscribed),
+                mCallbackDeathRecipient(new DeathRecipient(
+                    std::bind(&SubscriptionManager::onCallbackDead, this, std::placeholders::_1)))
+    {}
+
+    ~SubscriptionManager() = default;
 
     /**
      * Updates subscription. Returns the vector of properties subscription that
      * needs to be updated in VehicleHAL.
      */
-    std::list<SubscribeOptions> addOrUpdateSubscription(
-            const sp<IVehicleCallback>& callback,
-            const hidl_vec<SubscribeOptions>& optionList);
+    StatusCode addOrUpdateSubscription(const sp<IVehicleCallback>& callback,
+                                       const hidl_vec<SubscribeOptions>& optionList,
+                                       std::list<SubscribeOptions>* outUpdatedOptions);
 
     /**
      * Returns a list of IVehicleCallback -> list of VehiclePropValue ready for
@@ -103,30 +116,48 @@ public:
             const std::vector<recyclable_ptr<VehiclePropValue>>& propValues,
             SubscribeFlags flags) const;
 
-    std::list<sp<HalClient>> getSubscribedClients(
-        int32_t propId, int32_t area, SubscribeFlags flags) const;
-
+    std::list<sp<HalClient>> getSubscribedClients(int32_t propId,
+                                                  int32_t area,
+                                                  SubscribeFlags flags) const;
     /**
-     * Returns true the client was unsubscribed successfully and there are
-     * no more clients subscribed to given propId.
+     * If there are no clients subscribed to given properties than callback function provided
+     * in the constructor will be called.
      */
-    bool unsubscribe(const sp<IVehicleCallback>& callback,
-                     int32_t propId);
+    void unsubscribe(const sp<IVehicleCallback>& callback, int32_t propId);
 private:
-    std::list<sp< HalClient>> getSubscribedClientsLocked(
-            int32_t propId, int32_t area, SubscribeFlags flags) const;
+    std::list<sp<HalClient>> getSubscribedClientsLocked(int32_t propId,
+                                                        int32_t area,
+                                                        SubscribeFlags flags) const;
 
-    bool updateHalEventSubscriptionLocked(const SubscribeOptions &opts,
-                                          SubscribeOptions *out);
+    bool updateHalEventSubscriptionLocked(const SubscribeOptions &opts, SubscribeOptions* out);
 
-    void addClientToPropMapLocked(int32_t propId,
-                                  const sp<HalClient> &client);
+    void addClientToPropMapLocked(int32_t propId, const sp<HalClient>& client);
 
-    sp<HalClientVector> getClientsForPropertyLocked(
-            int32_t propId) const;
+    sp<HalClientVector> getClientsForPropertyLocked(int32_t propId) const;
 
-    sp<HalClient> getOrCreateHalClientLocked(
-            const sp<IVehicleCallback> &callback);
+    sp<HalClient> getOrCreateHalClientLocked(const sp<IVehicleCallback> &callback);
+
+    void onCallbackDead(uint64_t cookie);
+
+private:
+    using OnClientDead = std::function<void(uint64_t)>;
+
+    class DeathRecipient : public hidl_death_recipient {
+    public:
+        DeathRecipient(const OnClientDead& onClientDead)
+            : mOnClientDead(onClientDead) {}
+        ~DeathRecipient() = default;
+
+        DeathRecipient(const DeathRecipient& ) = delete;
+        DeathRecipient& operator=(const DeathRecipient&) = delete;
+
+        void serviceDied(uint64_t cookie,
+                         const wp<::android::hidl::base::V1_0::IBase>& /* who */) override {
+            mOnClientDead(cookie);
+        }
+    private:
+        OnClientDead mOnClientDead;
+    };
 
 private:
     using MuxGuard = std::lock_guard<std::mutex>;
@@ -136,6 +167,9 @@ private:
     std::map<sp<IVehicleCallback>, sp<HalClient>> mClients;
     std::map<int32_t, sp<HalClientVector>> mPropToClients;
     std::map<int32_t, SubscribeOptions> mHalEventSubscribeOptions;
+
+    OnPropertyUnsubscribed mOnPropertyUnsubscribed;
+    sp<DeathRecipient> mCallbackDeathRecipient;
 };
 
 
