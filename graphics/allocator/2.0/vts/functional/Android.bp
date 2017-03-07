@@ -14,6 +14,25 @@
 // limitations under the License.
 //
 
+cc_library_static {
+    name: "libVtsHalGraphicsAllocatorTestUtils",
+    srcs: ["VtsHalGraphicsAllocatorTestUtils.cpp"],
+    shared_libs: [
+        "android.hardware.graphics.allocator@2.0",
+    ],
+    static_libs: [
+        "VtsHalHidlTargetBaseTest",
+    ],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-O0",
+        "-g",
+    ],
+    export_include_dirs: ["."],
+}
+
 cc_test {
     name: "VtsHalGraphicsAllocatorV2_0TargetTest",
     srcs: ["VtsHalGraphicsAllocatorV2_0TargetTest.cpp"],
@@ -27,8 +46,14 @@ cc_test {
         "libutils",
         "android.hardware.graphics.allocator@2.0",
     ],
-    static_libs: ["VtsHalHidlTargetBaseTest"],
+    static_libs: [
+        "libVtsHalGraphicsAllocatorTestUtils",
+        "VtsHalHidlTargetBaseTest",
+    ],
     cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
         "-O0",
         "-g",
     ]
