@@ -176,13 +176,7 @@ const VehiclePropConfig kVehicleProperties[] = {
     {
         .prop = toInt(VehicleProperty::INFO_FUEL_CAPACITY),
         .access = VehiclePropertyAccess::READ,
-        .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-        .areaConfigs = {
-            VehicleAreaConfig {
-                .minFloatValue = 0,
-                .maxFloatValue = 1.0
-            }
-        }
+        .changeMode = VehiclePropertyChangeMode::STATIC,
     },
 
     {

@@ -410,7 +410,7 @@ void DefaultVehicleHal::setDefaultValue(VehiclePropValue* prop) {
         prop->value.int32Values[0] = toInt(VehicleGear::GEAR_PARK);
         break;
     case toInt(VehicleProperty::INFO_FUEL_CAPACITY):
-        prop->value.floatValues[0] = 0.75f;
+        prop->value.floatValues[0] = 123000.0f;  // In milliliters
         break;
     case toInt(VehicleProperty::ENGINE_OIL_TEMP):
         prop->value.floatValues[0] = 101;
