@@ -325,18 +325,42 @@ TEST_F(NfcHidlTest, PowerCycle) {
 }
 
 /*
+ * PowerCycleAfterClose:
+ * Calls powerCycle() after close()
+ * Checks status
+ */
+TEST_F(NfcHidlTest, PowerCycleAfterClose) {
+  EXPECT_EQ(NfcStatus::OK, nfc_->close());
+  // Wait for CLOSE_CPLT event
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(NfcEvent::CLOSE_CPLT, last_event_);
+  EXPECT_EQ(NfcStatus::OK, last_status_);
+
+  EXPECT_EQ(NfcStatus::FAILED, nfc_->powerCycle());
+
+  EXPECT_EQ(NfcStatus::OK, nfc_->open(nfc_cb_));
+  // Wait for OPEN_CPLT event
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(NfcEvent::OPEN_CPLT, last_event_);
+  EXPECT_EQ(NfcStatus::OK, last_status_);
+}
+
+/*
  * CoreInitialized:
- * Calls coreInitialized()
+ * Calls coreInitialized() with different data
  * Waits for NfcEvent.POST_INIT_CPLT
  */
 TEST_F(NfcHidlTest, CoreInitialized) {
   NfcData data;
   data.resize(1);
-  data[0] = 0;
-  EXPECT_EQ(NfcStatus::OK, nfc_->coreInitialized(data));
-  // Wait for NfcEvent.POST_INIT_CPLT
-  EXPECT_EQ(std::cv_status::no_timeout, wait());
-  EXPECT_EQ(NfcEvent::POST_INIT_CPLT, last_event_);
+  for (int i = 0; i <= 6; i++)
+  {
+    data[0] = i;
+    EXPECT_EQ(NfcStatus::OK, nfc_->coreInitialized(data));
+    // Wait for NfcEvent.POST_INIT_CPLT
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(NfcEvent::POST_INIT_CPLT, last_event_);
+  }
 }
 
 /*
@@ -348,12 +372,86 @@ TEST_F(NfcHidlTest, ControlGranted) {
   EXPECT_EQ(NfcStatus::OK, nfc_->controlGranted());
 }
 
+/*
+ * ControlGrantedAfterClose:
+ * Call controlGranted() after close
+ * Checks the return value
+ */
+TEST_F(NfcHidlTest, ControlGrantedAfterClose) {
+  EXPECT_EQ(NfcStatus::OK, nfc_->close());
+  // Wait for CLOSE_CPLT event
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(NfcEvent::CLOSE_CPLT, last_event_);
+  EXPECT_EQ(NfcStatus::OK, last_status_);
+
+  EXPECT_EQ(NfcStatus::OK, nfc_->controlGranted());
+
+  EXPECT_EQ(NfcStatus::OK, nfc_->open(nfc_cb_));
+  // Wait for OPEN_CPLT event
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(NfcEvent::OPEN_CPLT, last_event_);
+  EXPECT_EQ(NfcStatus::OK, last_status_);
+}
+
 /* PreDiscover:
  * Calls prediscover()
  * Checks the return value
  */
 TEST_F(NfcHidlTest, PreDiscover) {
   EXPECT_EQ(NfcStatus::OK, nfc_->prediscover());
+}
+
+/*
+ * PreDiscoverAfterClose:
+ * Call prediscover() after close
+ * Checks the return value
+ */
+TEST_F(NfcHidlTest, PreDiscoverAfterClose) {
+  EXPECT_EQ(NfcStatus::OK, nfc_->close());
+  // Wait for CLOSE_CPLT event
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(NfcEvent::CLOSE_CPLT, last_event_);
+  EXPECT_EQ(NfcStatus::OK, last_status_);
+
+  EXPECT_EQ(NfcStatus::OK, nfc_->prediscover());
+
+  EXPECT_EQ(NfcStatus::OK, nfc_->open(nfc_cb_));
+  // Wait for OPEN_CPLT event
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(NfcEvent::OPEN_CPLT, last_event_);
+  EXPECT_EQ(NfcStatus::OK, last_status_);
+}
+
+/*
+ * CloseAfterClose:
+ * Calls close() multiple times
+ * Checks status
+ */
+TEST_F(NfcHidlTest, CloseAfterClose) {
+  EXPECT_EQ(NfcStatus::OK, nfc_->close());
+  // Wait for CLOSE_CPLT event
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(NfcEvent::CLOSE_CPLT, last_event_);
+  EXPECT_EQ(NfcStatus::OK, last_status_);
+
+  EXPECT_EQ(NfcStatus::FAILED, nfc_->close());
+
+  EXPECT_EQ(NfcStatus::OK, nfc_->open(nfc_cb_));
+  // Wait for OPEN_CPLT event
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(NfcEvent::OPEN_CPLT, last_event_);
+  EXPECT_EQ(NfcStatus::OK, last_status_);
+}
+
+
+/*
+ * OpenAfterOpen:
+ * Calls open() multiple times
+ * Checks status
+ */
+TEST_F(NfcHidlTest, OpenAfterOpen) {
+  EXPECT_EQ(NfcStatus::OK, nfc_->open(nfc_cb_));
+  EXPECT_EQ(NfcStatus::OK, nfc_->open(nfc_cb_));
 }
 
 int main(int argc, char** argv) {
