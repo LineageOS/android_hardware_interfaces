@@ -42,8 +42,6 @@ using ::android::hardware::contexthub::V1_0::Result;
 using ::android::hardware::contexthub::V1_0::TransactionResult;
 using ::android::sp;
 
-#define CONTEXTHUB_SERVICE_NAME "contexthub"
-
 #define ASSERT_OK(result) ASSERT_EQ(result, Result::OK)
 #define EXPECT_OK(result) EXPECT_EQ(result, Result::OK)
 
@@ -80,7 +78,7 @@ std::vector<uint32_t> getHubIds() {
   static std::vector<uint32_t> hubIds;
 
   if (hubIds.size() == 0) {
-    sp<IContexthub> hubApi = ::testing::VtsHalHidlTargetBaseTest::getService<IContexthub>(CONTEXTHUB_SERVICE_NAME);
+    sp<IContexthub> hubApi = ::testing::VtsHalHidlTargetBaseTest::getService<IContexthub>();
 
     if (hubApi != nullptr) {
       for (ContextHub hub : getHubsSync(hubApi)) {
@@ -98,7 +96,7 @@ std::vector<uint32_t> getHubIds() {
 class ContexthubHidlTestBase : public ::testing::VtsHalHidlTargetBaseTest {
  public:
   virtual void SetUp() override {
-    hubApi = ::testing::VtsHalHidlTargetBaseTest::getService<IContexthub>(CONTEXTHUB_SERVICE_NAME);
+    hubApi = ::testing::VtsHalHidlTargetBaseTest::getService<IContexthub>();
     ASSERT_NE(hubApi, nullptr);
 
     // getHubs() must be called at least once for proper initialization of the
