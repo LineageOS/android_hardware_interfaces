@@ -19,12 +19,15 @@
 #include <algorithm>
 #include <atomic>
 #include <condition_variable>
+#include <map>
 #include <mutex>
 #include <thread>
 #include <vector>
 #include "fcntl.h"
 #include "sys/select.h"
 #include "unistd.h"
+
+static const int INVALID_FD = -1;
 
 namespace android {
 namespace hardware {
@@ -36,8 +39,7 @@ int AsyncFdWatcher::WatchFdForNonBlockingReads(
   // Add file descriptor and callback
   {
     std::unique_lock<std::mutex> guard(internal_mutex_);
-    read_fd_ = file_descriptor;
-    cb_ = on_read_fd_ready_callback;
+    watched_fds_[file_descriptor] = on_read_fd_ready_callback;
   }
 
   // Start the thread if not started yet
@@ -58,7 +60,7 @@ int AsyncFdWatcher::ConfigureTimeout(
   return 0;
 }
 
-void AsyncFdWatcher::StopWatchingFileDescriptor() { stopThread(); }
+void AsyncFdWatcher::StopWatchingFileDescriptors() { stopThread(); }
 
 AsyncFdWatcher::~AsyncFdWatcher() {}
 
@@ -90,8 +92,7 @@ int AsyncFdWatcher::stopThread() {
 
   {
     std::unique_lock<std::mutex> guard(internal_mutex_);
-    cb_ = nullptr;
-    read_fd_ = -1;
+    watched_fds_.clear();
   }
 
   {
@@ -115,7 +116,11 @@ void AsyncFdWatcher::ThreadRoutine() {
     fd_set read_fds;
     FD_ZERO(&read_fds);
     FD_SET(notification_listen_fd_, &read_fds);
-    FD_SET(read_fd_, &read_fds);
+    int max_read_fd = INVALID_FD;
+    for (auto& it : watched_fds_) {
+      FD_SET(it.first, &read_fds);
+      max_read_fd = std::max(max_read_fd, it.first);
+    }
 
     struct timeval timeout;
     struct timeval* timeout_ptr = NULL;
@@ -126,7 +131,7 @@ void AsyncFdWatcher::ThreadRoutine() {
     }
 
     // Wait until there is data available to read on some FD.
-    int nfds = std::max(notification_listen_fd_, read_fd_);
+    int nfds = std::max(notification_listen_fd_, max_read_fd);
     int retval = select(nfds + 1, &read_fds, NULL, NULL, timeout_ptr);
 
     // There was some error.
@@ -153,10 +158,21 @@ void AsyncFdWatcher::ThreadRoutine() {
       continue;
     }
 
-    // Invoke the data ready callback if appropriate.
-    if (FD_ISSET(read_fd_, &read_fds)) {
+    // Invoke the data ready callbacks if appropriate.
+    std::vector<decltype(watched_fds_)::value_type> saved_callbacks;
+    {
       std::unique_lock<std::mutex> guard(internal_mutex_);
-      if (cb_) cb_(read_fd_);
+      for (auto& it : watched_fds_) {
+        if (FD_ISSET(it.first, &read_fds)) {
+          saved_callbacks.push_back(it);
+        }
+      }
+    }
+
+    for (auto& it : saved_callbacks) {
+      if (it.second) {
+        it.second(it.first);
+      }
     }
   }
 }

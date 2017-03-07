@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 
+#define LOG_TAG "async_fd_watcher_unittest"
+
 #include "async_fd_watcher.h"
 #include <gtest/gtest.h>
 #include <cstdint>
@@ -122,8 +124,8 @@ class AsyncFdWatcherSocketTest : public ::testing::Test {
   }
 
   void CleanUpServer() {
-    async_fd_watcher_.StopWatchingFileDescriptor();
-    conn_watcher_.StopWatchingFileDescriptor();
+    async_fd_watcher_.StopWatchingFileDescriptors();
+    conn_watcher_.StopWatchingFileDescriptors();
     close(socket_fd_);
   }
 
@@ -211,7 +213,7 @@ TEST_F(AsyncFdWatcherSocketTest, Connect) {
   });
 
   ConnectClient();
-  conn_watcher.StopWatchingFileDescriptor();
+  conn_watcher.StopWatchingFileDescriptors();
   close(socket_fd);
 }
 
@@ -233,7 +235,7 @@ TEST_F(AsyncFdWatcherSocketTest, TimedOutConnect) {
   EXPECT_FALSE(timed_out);
   sleep(1);
   EXPECT_TRUE(timed_out);
-  conn_watcher.StopWatchingFileDescriptor();
+  conn_watcher.StopWatchingFileDescriptors();
   close(socket_fd);
 }
 
@@ -265,8 +267,62 @@ TEST_F(AsyncFdWatcherSocketTest, TimedOutSchedulesTimeout) {
   sleep(1);
   EXPECT_TRUE(timed_out);
   EXPECT_TRUE(timed_out2);
-  conn_watcher.StopWatchingFileDescriptor();
+  conn_watcher.StopWatchingFileDescriptors();
   close(socket_fd);
+}
+
+// Use a single AsyncFdWatcher to watch two file descriptors.
+TEST_F(AsyncFdWatcherSocketTest, WatchTwoFileDescriptors) {
+  int sockfd[2];
+  socketpair(AF_LOCAL, SOCK_STREAM, 0, sockfd);
+  bool cb1_called = false;
+  bool* cb1_called_ptr = &cb1_called;
+  bool cb2_called = false;
+  bool* cb2_called_ptr = &cb2_called;
+
+  AsyncFdWatcher watcher;
+  watcher.WatchFdForNonBlockingReads(sockfd[0], [cb1_called_ptr](int fd) {
+    char read_buf[1] = {0};
+    int n = TEMP_FAILURE_RETRY(read(fd, read_buf, sizeof(read_buf)));
+    ASSERT_TRUE(n == sizeof(read_buf));
+    ASSERT_TRUE(read_buf[0] == '1');
+    *cb1_called_ptr = true;
+  });
+
+  watcher.WatchFdForNonBlockingReads(sockfd[1], [cb2_called_ptr](int fd) {
+    char read_buf[1] = {0};
+    int n = TEMP_FAILURE_RETRY(read(fd, read_buf, sizeof(read_buf)));
+    ASSERT_TRUE(n == sizeof(read_buf));
+    ASSERT_TRUE(read_buf[0] == '2');
+    *cb2_called_ptr = true;
+  });
+
+  // Fail if the test doesn't pass within 3 seconds
+  watcher.ConfigureTimeout(std::chrono::seconds(3), [this]() {
+    bool connection_timeout = true;
+    ASSERT_FALSE(connection_timeout);
+  });
+
+  EXPECT_FALSE(cb1_called);
+  EXPECT_FALSE(cb2_called);
+
+  char one_buf[1] = {'1'};
+  TEMP_FAILURE_RETRY(write(sockfd[1], one_buf, sizeof(one_buf)));
+
+  sleep(1);
+
+  EXPECT_TRUE(cb1_called);
+  EXPECT_FALSE(cb2_called);
+
+  char two_buf[1] = {'2'};
+  TEMP_FAILURE_RETRY(write(sockfd[0], two_buf, sizeof(two_buf)));
+
+  sleep(1);
+
+  EXPECT_TRUE(cb1_called);
+  EXPECT_TRUE(cb2_called);
+
+  watcher.StopWatchingFileDescriptors();
 }
 
 // Use two AsyncFdWatchers to set up a server socket.
