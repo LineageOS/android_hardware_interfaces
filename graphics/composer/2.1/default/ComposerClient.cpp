@@ -230,30 +230,69 @@ ComposerClient::ComposerClient(ComposerBase& hal)
 
 ComposerClient::~ComposerClient()
 {
-    ALOGD("client destroyed");
+    // We want to call hwc2_close here (and move hwc2_open to the
+    // constructor), with the assumption that hwc2_close would
+    //
+    //  - clean up all resources owned by the client
+    //  - make sure all displays are blank (since there is no layer)
+    //
+    // But since SF used to crash at this point, different hwcomposer2
+    // implementations behave differently on hwc2_close.  Our only portable
+    // choice really is to abort().  But that is not an option anymore
+    // because we might also have VTS or VR as clients that can come and go.
+    //
+    // Below we manually clean all resources (layers and virtual
+    // displays), and perform a presentDisplay afterwards.
+    ALOGW("destroying composer client");
 
     mHal.enableCallback(false);
-    mHal.removeClient();
 
-    // no need to grab the mutex as any in-flight hwbinder call should keep
-    // the client alive
+    // no need to grab the mutex as any in-flight hwbinder call would have
+    // kept the client alive
     for (const auto& dpy : mDisplayData) {
-        if (!dpy.second.Layers.empty()) {
-            ALOGW("client destroyed with valid layers");
-        }
+        ALOGW("destroying client resources for display %" PRIu64, dpy.first);
+
         for (const auto& ly : dpy.second.Layers) {
             mHal.destroyLayer(dpy.first, ly.first);
         }
 
         if (dpy.second.IsVirtual) {
-            ALOGW("client destroyed with valid virtual display");
             mHal.destroyVirtualDisplay(dpy.first);
+        } else {
+            ALOGW("performing a final presentDisplay");
+
+            std::vector<Layer> changedLayers;
+            std::vector<IComposerClient::Composition> compositionTypes;
+            uint32_t displayRequestMask = 0;
+            std::vector<Layer> requestedLayers;
+            std::vector<uint32_t> requestMasks;
+            mHal.validateDisplay(dpy.first, &changedLayers, &compositionTypes,
+                    &displayRequestMask, &requestedLayers, &requestMasks);
+
+            mHal.acceptDisplayChanges(dpy.first);
+
+            int32_t presentFence = -1;
+            std::vector<Layer> releasedLayers;
+            std::vector<int32_t> releaseFences;
+            mHal.presentDisplay(dpy.first, &presentFence, &releasedLayers, &releaseFences);
+            if (presentFence >= 0) {
+                close(presentFence);
+            }
+            for (auto fence : releaseFences) {
+                if (fence >= 0) {
+                    close(fence);
+                }
+            }
         }
     }
 
     mDisplayData.clear();
 
     sHandleImporter.cleanup();
+
+    mHal.removeClient();
+
+    ALOGW("removed composer client");
 }
 
 void ComposerClient::initialize()
