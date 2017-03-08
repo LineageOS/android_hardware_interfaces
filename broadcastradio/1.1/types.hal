@@ -20,6 +20,12 @@ import @1.0::types;
 
 typedef @1.0::Result Result;
 
+enum ProgramListResult : Result {
+    NOT_READY,
+    NOT_STARTED,
+    TEMPORARILY_UNAVAILABLE,
+};
+
 enum DigitalStatus : int32_t {
     INVALID     = -1,
     UNAVAILABLE = 1,  // current program is analog-only
