@@ -16,11 +16,11 @@
 
 #pragma once
 
-#include <functional>
-
 #include <hidl/HidlSupport.h>
 
+#include "bt_vendor_lib.h"
 #include "hci_internals.h"
+#include "hci_packetizer.h"
 
 namespace android {
 namespace hardware {
@@ -28,23 +28,19 @@ namespace bluetooth {
 namespace hci {
 
 using ::android::hardware::hidl_vec;
-using HciPacketReadyCallback = std::function<void(void)>;
+using PacketReadCallback = std::function<void(const hidl_vec<uint8_t>&)>;
 
-class HciPacketizer {
+// Implementation of HCI protocol bits common to different transports
+class HciProtocol {
  public:
-  HciPacketizer(HciPacketReadyCallback packet_cb)
-      : packet_ready_cb_(packet_cb){};
-  void OnDataReady(int fd, HciPacketType packet_type);
-  const hidl_vec<uint8_t>& GetPacket() const;
+  HciProtocol() = default;
+  virtual ~HciProtocol(){};
+
+  // Protocol-specific implementation of sending packets.
+  virtual size_t Send(uint8_t type, const uint8_t* data, size_t length) = 0;
 
  protected:
-  enum State { HCI_PREAMBLE, HCI_PAYLOAD };
-  State state_{HCI_PREAMBLE};
-  uint8_t preamble_[HCI_PREAMBLE_SIZE_MAX];
-  hidl_vec<uint8_t> packet_;
-  size_t bytes_remaining_{0};
-  size_t bytes_read_{0};
-  HciPacketReadyCallback packet_ready_cb_;
+  static size_t WriteSafely(int fd, const uint8_t* data, size_t length);
 };
 
 }  // namespace hci
