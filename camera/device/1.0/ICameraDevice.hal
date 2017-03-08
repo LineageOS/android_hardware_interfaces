@@ -125,8 +125,7 @@ interface ICameraDevice {
      *         the torch on through the device interface.
      *     OPERATION_NOT_SUPPORTED:
      *         This camera device does not have a flash unit. This must
-     *         be returned if and only if android.flash.info.available is
-     *         false.
+     *         be returned if and only if parameter key flash-mode-values is not present.
      *     CAMERA_DISCONNECTED:
      *         An external camera device has been disconnected, and is no longer
      *         available. This camera device interface is now stale, and a new
