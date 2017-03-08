@@ -277,6 +277,20 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
   setPskPassphrase(string psk) generates (SupplicantStatus status);
 
   /**
+   * Set raw psk for WPA_PSK network.
+   *
+   * @param psk value to set as specified in IEEE 802.11i-2004 standard.
+   *        This is the calculated using 'wpa_passphrase <ssid> [passphrase]'
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   */
+  setPsk(uint8_t[32] psk) generates (SupplicantStatus status);
+
+  /**
    * Set WEP key for WEP network.
    *
    * @param keyIdx Index of wep key to set.
@@ -662,6 +676,8 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
 
   /**
    * Get passphrase for WPA_PSK network.
+   * Must return a failure if network has no passphrase set (use |getPsk| if
+   * network was configured with raw psk instead).
    *
    * @return status Status of the operation.
    *         Possible status codes:
@@ -670,6 +686,19 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
    * @return psk value set.
    */
   getPskPassphrase() generates (SupplicantStatus status, string psk);
+
+  /**
+   * Get raw psk for WPA_PSK network.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   * @param psk value set.
+   */
+  getPsk() generates (SupplicantStatus status, uint8_t[32] psk);
 
   /**
    * Get WEP key for WEP network.
