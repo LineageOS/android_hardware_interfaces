@@ -1,4 +1,7 @@
 service gnss_service /vendor/bin/hw/android.hardware.gnss@1.0-service
     class main
     user system
-    group system
+#
+# TODO:(b/35757613) - STOPSHIP - HAL cannot have direct inet access
+#
+    group system inet
