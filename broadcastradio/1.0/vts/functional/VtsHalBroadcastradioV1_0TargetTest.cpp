@@ -417,6 +417,38 @@ TEST_F(BroadcastRadioHidlTest, SetAndGetConfiguration) {
 }
 
 /**
+ * Test ITuner::setConfiguration() with invalid arguments.
+ *
+ * Verifies that:
+ *  - the methods returns INVALID_ARGUMENTS on invalid arguments
+ *  - the method recovers and succeeds after passing correct arguments
+ */
+TEST_F(BroadcastRadioHidlTest, SetConfigurationFails) {
+    ASSERT_EQ(true, openTuner());
+
+    // Let's define a config that's bad for sure.
+    BandConfig badConfig = {};
+    badConfig.type = Band::FM;
+    badConfig.lowerLimit = 0xFFFFFFFF;
+    badConfig.upperLimit = 0;
+    badConfig.spacings = (std::vector<uint32_t>){ 0 };
+
+    // Test setConfiguration failing on bad data.
+    mCallbackCalled = false;
+    auto setResult = mTuner->setConfiguration(badConfig);
+    EXPECT_TRUE(setResult.isOk());
+    EXPECT_EQ(Result::INVALID_ARGUMENTS, setResult);
+
+    // Test setConfiguration recovering after passing good data.
+    mCallbackCalled = false;
+    setResult = mTuner->setConfiguration(mHalProperties.bands[0]);
+    EXPECT_TRUE(setResult.isOk());
+    EXPECT_EQ(Result::OK, setResult);
+    EXPECT_EQ(true, waitForCallback(kConfigCallbacktimeoutNs));
+    EXPECT_EQ(Result::OK, mResultCallbackData);
+}
+
+/**
  * Test ITuner::scan
  *
  * Verifies that:
