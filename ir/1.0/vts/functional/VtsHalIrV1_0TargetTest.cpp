@@ -45,7 +45,6 @@ class ConsumerIrHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
 
 // Test transmit() for the min and max frequency of every available range
 TEST_F(ConsumerIrHidlTest, TransmitTest) {
-  int32_t freqs;
   bool success;
   hidl_vec<ConsumerIrFreqRange> ranges;
   auto cb = [&](bool s, hidl_vec<ConsumerIrFreqRange> v) {
