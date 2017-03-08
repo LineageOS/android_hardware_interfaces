@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.hardware.evs@1.0;
+package android.hardware.automotive.evs@1.0;
 
 import types;
 import IEvsCamera;

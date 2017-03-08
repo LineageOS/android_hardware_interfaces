@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "android.hardware.evs@1.0-service"
+#define LOG_TAG "android.hardware.automotive.evs@1.0-service"
 
 #include "EvsCamera.h"
 
@@ -24,6 +24,7 @@
 
 namespace android {
 namespace hardware {
+namespace automotive {
 namespace evs {
 namespace V1_0 {
 namespace implementation {
@@ -42,9 +43,9 @@ const unsigned MAX_BUFFERS_IN_FLIGHT = 100;
 // As it stands, if the client dies suddenly, the buffer may be stranded.
 
 EvsCamera::EvsCamera(const char *id) :
-    mFramesAllowed(0),
-    mFramesInUse(0),
-    mStreamState(STOPPED) {
+        mFramesAllowed(0),
+        mFramesInUse(0),
+        mStreamState(STOPPED) {
 
     ALOGD("EvsCamera instantiated");
 
@@ -96,7 +97,7 @@ EvsCamera::~EvsCamera() {
 }
 
 
-// Methods from ::android::hardware::evs::V1_0::IEvsCamera follow.
+// Methods from ::android::hardware::automotive::evs::V1_0::IEvsCamera follow.
 Return<void> EvsCamera::getId(getId_cb id_cb) {
     ALOGD("getId");
 
@@ -487,5 +488,6 @@ void EvsCamera::fillTestFrame(const BufferDesc& buff) {
 } // namespace implementation
 } // namespace V1_0
 } // namespace evs
+} // namespace automotive
 } // namespace hardware
 } // namespace android

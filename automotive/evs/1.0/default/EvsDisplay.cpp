@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "android.hardware.evs@1.0-service"
+#define LOG_TAG "android.hardware.automotive.evs@1.0-service"
 
 #include "EvsDisplay.h"
 
@@ -24,6 +24,7 @@
 
 namespace android {
 namespace hardware {
+namespace automotive {
 namespace evs {
 namespace V1_0 {
 namespace implementation {
@@ -242,7 +243,7 @@ Return<EvsResult> EvsDisplay::returnTargetBufferForDisplay(const BufferDesc& buf
 
         // If we failed to lock the pixel buffer, we're about to crash, but log it first
         if (!pixels) {
-            ALOGE("Camera failed to gain access to image buffer for reading");
+            ALOGE("Display failed to gain access to image buffer for reading");
         }
 
         // Check the test pixels
@@ -302,5 +303,6 @@ Return<EvsResult> EvsDisplay::returnTargetBufferForDisplay(const BufferDesc& buf
 } // namespace implementation
 } // namespace V1_0
 } // namespace evs
+} // namespace automotive
 } // namespace hardware
 } // namespace android

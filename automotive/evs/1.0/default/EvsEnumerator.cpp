@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "android.hardware.evs@1.0-service"
+#define LOG_TAG "android.hardware.automotive.evs@1.0-service"
 
 #include "EvsEnumerator.h"
 #include "EvsCamera.h"
@@ -22,6 +22,7 @@
 
 namespace android {
 namespace hardware {
+namespace automotive {
 namespace evs {
 namespace V1_0 {
 namespace implementation {
@@ -42,7 +43,7 @@ EvsEnumerator::EvsEnumerator() {
     mCameraList.emplace_back( new EvsCamera(EvsCamera::kCameraName_RightTurn), false );
 }
 
-// Methods from ::android::hardware::evs::V1_0::IEvsEnumerator follow.
+// Methods from ::android::hardware::automotive::evs::V1_0::IEvsEnumerator follow.
 Return<void> EvsEnumerator::getCameraList(getCameraList_cb _hidl_cb)  {
     ALOGD("getCameraList");
 
@@ -168,5 +169,6 @@ Return<DisplayState> EvsEnumerator::getDisplayState()  {
 } // namespace implementation
 } // namespace V1_0
 } // namespace evs
+} // namespace automotive
 } // namespace hardware
 } // namespace android

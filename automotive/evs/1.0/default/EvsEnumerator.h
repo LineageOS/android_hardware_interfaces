@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_EVS_V1_0_EVSCAMERAENUMERATOR_H
-#define ANDROID_HARDWARE_EVS_V1_0_EVSCAMERAENUMERATOR_H
+#ifndef ANDROID_HARDWARE_AUTOMOTIVE_EVS_V1_0_EVSCAMERAENUMERATOR_H
+#define ANDROID_HARDWARE_AUTOMOTIVE_EVS_V1_0_EVSCAMERAENUMERATOR_H
 
-#include <android/hardware/evs/1.0/IEvsEnumerator.h>
-#include <android/hardware/evs/1.0/IEvsCamera.h>
+#include <android/hardware/automotive/evs/1.0/IEvsEnumerator.h>
+#include <android/hardware/automotive/evs/1.0/IEvsCamera.h>
 
 #include <list>
 
@@ -26,13 +26,14 @@
 
 namespace android {
 namespace hardware {
+namespace automotive {
 namespace evs {
 namespace V1_0 {
 namespace implementation {
 
 class EvsEnumerator : public IEvsEnumerator {
 public:
-    // Methods from ::android::hardware::evs::V1_0::IEvsEnumerator follow.
+    // Methods from ::android::hardware::automotive::evs::V1_0::IEvsEnumerator follow.
     Return<void> getCameraList(getCameraList_cb _hidl_cb)  override;
     Return<sp<IEvsCamera>> openCamera(const hidl_string& cameraId) override;
     Return<void> closeCamera(const ::android::sp<IEvsCamera>& carCamera)  override;
@@ -57,7 +58,8 @@ private:
 } // namespace implementation
 } // namespace V1_0
 } // namespace evs
+} // namespace automotive
 } // namespace hardware
 } // namespace android
 
-#endif  // ANDROID_HARDWARE_EVS_V1_0_EVSCAMERAENUMERATOR_H
+#endif  // ANDROID_HARDWARE_AUTOMOTIVE_EVS_V1_0_EVSCAMERAENUMERATOR_H
