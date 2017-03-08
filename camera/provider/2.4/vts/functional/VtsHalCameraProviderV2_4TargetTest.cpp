@@ -545,6 +545,9 @@ protected:
     std::vector<StreamBuffer> mResultBuffers;  // Holds stream buffers from capture result
     std::vector<ErrorMsg> mErrors;             // Holds incoming error notifications
     DataCallbackMsg mDataMessageTypeReceived;  // Most recent message type received through data callbacks
+    uint32_t mVideoBufferIndex;                // Buffer index of the most recent video buffer
+    uint32_t mVideoData;                       // Buffer data of the most recent video buffer
+    hidl_handle mVideoNativeHandle;            // Most recent video buffer native handle
 
     std::mutex mTorchLock;                     // Synchronize access to torch status
     std::condition_variable mTorchCond;        // Condition variable for torch status
@@ -581,8 +584,7 @@ Return<uint32_t> CameraHidlTest::Camera1DeviceCb::registerMemory(
     return pool->getHeapID();
 }
 
-Return<void> CameraHidlTest::Camera1DeviceCb::unregisterMemory(
-        uint32_t memId __unused) {
+Return<void> CameraHidlTest::Camera1DeviceCb::unregisterMemory(uint32_t memId) {
     if (mParent->mMemoryPool.count(memId) == 0) {
         ALOGE("%s: memory pool ID %d not found", __FUNCTION__, memId);
         return Void();
@@ -604,15 +606,36 @@ Return<void> CameraHidlTest::Camera1DeviceCb::dataCallback(
 }
 
 Return<void> CameraHidlTest::Camera1DeviceCb::dataCallbackTimestamp(
-        DataCallbackMsg msgType __unused, uint32_t data __unused,
-        uint32_t bufferIndex __unused, int64_t timestamp __unused) {
+        DataCallbackMsg msgType, uint32_t data,
+        uint32_t bufferIndex, int64_t timestamp __unused) {
+    std::unique_lock<std::mutex> l(mParent->mLock);
+    mParent->mDataMessageTypeReceived = msgType;
+    mParent->mVideoBufferIndex = bufferIndex;
+    if (mParent->mMemoryPool.count(data) == 0) {
+        ALOGE("%s: memory pool ID %d not found", __FUNCTION__, data);
+        ADD_FAILURE();
+    }
+    mParent->mVideoData = data;
+    mParent->mResultCondition.notify_one();
+
     return Void();
 }
 
 Return<void> CameraHidlTest::Camera1DeviceCb::handleCallbackTimestamp(
-        DataCallbackMsg msgType __unused, const hidl_handle& frameData __unused,
-        uint32_t data __unused, uint32_t bufferIndex __unused,
+        DataCallbackMsg msgType, const hidl_handle& frameData,
+        uint32_t data __unused, uint32_t bufferIndex,
         int64_t timestamp __unused) {
+    std::unique_lock<std::mutex> l(mParent->mLock);
+    mParent->mDataMessageTypeReceived = msgType;
+    mParent->mVideoBufferIndex = bufferIndex;
+    if (mParent->mMemoryPool.count(data) == 0) {
+        ALOGE("%s: memory pool ID %d not found", __FUNCTION__, data);
+        ADD_FAILURE();
+    }
+    mParent->mVideoData = data;
+    mParent->mVideoNativeHandle = frameData;
+    mParent->mResultCondition.notify_one();
+
     return Void();
 }
 
@@ -1155,6 +1178,116 @@ TEST_F(CameraHidlTest, cancelPictureFail) {
             ASSERT_NE(Status::OK, device1->cancelPicture());
 
             device1->stopPreview();
+
+            device1->close();
+        }
+    }
+}
+
+// Test basic video recording.
+TEST_F(CameraHidlTest, startStopRecording) {
+    CameraHidlEnvironment* env = CameraHidlEnvironment::Instance();
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
+
+    for (const auto& name : cameraDeviceNames) {
+        if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
+            sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
+            openCameraDevice(name, env, &device1 /*out*/);
+            ASSERT_NE(nullptr, device1.get());
+            sp<BufferItemConsumer> bufferItemConsumer;
+            sp<BufferItemHander> bufferHandler;
+            setupPreviewWindow(device1, &bufferItemConsumer /*out*/,
+                    &bufferHandler /*out*/);
+
+            {
+                std::unique_lock<std::mutex> l(mLock);
+                mDataMessageTypeReceived = DataCallbackMsg::RAW_IMAGE_NOTIFY;
+            }
+
+            device1->enableMsgType((unsigned int)DataCallbackMsg::PREVIEW_FRAME);
+            ASSERT_TRUE(device1->msgTypeEnabled(
+                    (unsigned int)DataCallbackMsg::PREVIEW_FRAME));
+            ASSERT_EQ(Status::OK, device1->startPreview());
+
+            {
+                std::unique_lock<std::mutex> l(mLock);
+                while (DataCallbackMsg::PREVIEW_FRAME != mDataMessageTypeReceived) {
+                    auto timeout = std::chrono::system_clock::now() +
+                            std::chrono::seconds(kStreamBufferTimeoutSec);
+                    ASSERT_NE(std::cv_status::timeout,
+                            mResultCondition.wait_until(l, timeout));
+                }
+                mDataMessageTypeReceived = DataCallbackMsg::RAW_IMAGE_NOTIFY;
+                mVideoBufferIndex = UINT32_MAX;
+            }
+
+            device1->disableMsgType(
+                    (unsigned int)DataCallbackMsg::PREVIEW_FRAME);
+            ASSERT_FALSE(device1->msgTypeEnabled(
+                    (unsigned int)DataCallbackMsg::PREVIEW_FRAME));
+
+            bool videoMetaEnabled = false;
+            auto rc = device1->storeMetaDataInBuffers(true);
+            // It is allowed for devices to not support this feature
+            ASSERT_TRUE((Status::OK == rc) ||
+                    (Status::OPERATION_NOT_SUPPORTED == rc));
+            if (Status::OK == rc) {
+                videoMetaEnabled = true;
+            }
+
+            device1->enableMsgType((unsigned int)DataCallbackMsg::VIDEO_FRAME);
+            ASSERT_TRUE(device1->msgTypeEnabled(
+                    (unsigned int)DataCallbackMsg::VIDEO_FRAME));
+            ASSERT_FALSE(device1->recordingEnabled());
+
+            ASSERT_EQ(Status::OK, device1->startRecording());
+
+            {
+                std::unique_lock<std::mutex> l(mLock);
+                while (DataCallbackMsg::VIDEO_FRAME !=
+                        mDataMessageTypeReceived) {
+                    auto timeout = std::chrono::system_clock::now() +
+                            std::chrono::seconds(kStreamBufferTimeoutSec);
+                    ASSERT_NE(std::cv_status::timeout,
+                            mResultCondition.wait_until(l, timeout));
+                }
+                ASSERT_NE(UINT32_MAX, mVideoBufferIndex);
+
+                device1->disableMsgType(
+                        (unsigned int)DataCallbackMsg::VIDEO_FRAME);
+                ASSERT_FALSE(device1->msgTypeEnabled(
+                        (unsigned int)DataCallbackMsg::VIDEO_FRAME));
+            }
+
+            ASSERT_TRUE(device1->recordingEnabled());
+            if (videoMetaEnabled) {
+                device1->releaseRecordingFrameHandle(mVideoData,
+                        mVideoBufferIndex, mVideoNativeHandle);
+            } else {
+                device1->releaseRecordingFrame(mVideoData, mVideoBufferIndex);
+            }
+
+            device1->stopRecording();
+            device1->stopPreview();
+
+            device1->close();
+        }
+    }
+}
+
+// It shouldn't be possible to start recording without enabling preview first.
+TEST_F(CameraHidlTest, startRecordingFail) {
+    CameraHidlEnvironment* env = CameraHidlEnvironment::Instance();
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
+
+    for (const auto& name : cameraDeviceNames) {
+        if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
+            sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
+            openCameraDevice(name, env, &device1 /*out*/);
+            ASSERT_NE(nullptr, device1.get());
+
+            ASSERT_FALSE(device1->recordingEnabled());
+            ASSERT_NE(Status::OK, device1->startRecording());
 
             device1->close();
         }
