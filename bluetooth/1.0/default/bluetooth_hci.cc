@@ -44,21 +44,14 @@ Return<void> BluetoothHci::initialize(
         event_cb_->initializationComplete(
             status ? Status::SUCCESS : Status::INITIALIZATION_ERROR);
       },
-      [this](HciPacketType type, const hidl_vec<uint8_t>& packet) {
-        switch (type) {
-          case HCI_PACKET_TYPE_EVENT:
-            event_cb_->hciEventReceived(packet);
-            break;
-          case HCI_PACKET_TYPE_ACL_DATA:
-            event_cb_->aclDataReceived(packet);
-            break;
-          case HCI_PACKET_TYPE_SCO_DATA:
-            event_cb_->scoDataReceived(packet);
-            break;
-          default:
-            ALOGE("%s Unexpected event type %d", __func__, type);
-            break;
-        }
+      [this](const hidl_vec<uint8_t>& packet) {
+        event_cb_->hciEventReceived(packet);
+      },
+      [this](const hidl_vec<uint8_t>& packet) {
+        event_cb_->aclDataReceived(packet);
+      },
+      [this](const hidl_vec<uint8_t>& packet) {
+        event_cb_->scoDataReceived(packet);
       });
   if (!rc) event_cb_->initializationComplete(Status::INITIALIZATION_ERROR);
   return Void();
