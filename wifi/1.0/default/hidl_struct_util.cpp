@@ -354,7 +354,10 @@ bool convertHidlGscanParamsToLegacy(
         hidl_scan_params.buckets[bucket_idx];
     legacy_hal::wifi_scan_bucket_spec& legacy_bucket_spec =
         legacy_scan_params->buckets[bucket_idx];
-    legacy_bucket_spec.bucket = bucket_idx;
+    if (hidl_bucket_spec.bucketIdx >= MAX_BUCKETS) {
+      return false;
+    }
+    legacy_bucket_spec.bucket = hidl_bucket_spec.bucketIdx;
     legacy_bucket_spec.band =
         convertHidlWifiBandToLegacy(hidl_bucket_spec.band);
     legacy_bucket_spec.period = hidl_bucket_spec.periodInMs;
