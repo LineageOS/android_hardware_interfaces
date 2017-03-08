@@ -14,14 +14,13 @@
 // limitations under the License.
 //
 
-#include "hci_packetizer.h"
+#include "hci_protocol.h"
 
-#define LOG_TAG "android.hardware.bluetooth.hci_packetizer"
+#define LOG_TAG "android.hardware.bluetooth-hci-hci_protocol"
 #include <android-base/logging.h>
-#include <utils/Log.h>
-
-#include <dlfcn.h>
+#include <assert.h>
 #include <fcntl.h>
+#include <utils/Log.h>
 
 namespace {
 
@@ -45,44 +44,28 @@ namespace hardware {
 namespace bluetooth {
 namespace hci {
 
-const hidl_vec<uint8_t>& HciPacketizer::GetPacket() const { return packet_; }
+size_t HciProtocol::WriteSafely(int fd, const uint8_t* data, size_t length) {
+  size_t transmitted_length = 0;
+  while (length > 0) {
+    ssize_t ret =
+        TEMP_FAILURE_RETRY(write(fd, data + transmitted_length, length));
 
-void HciPacketizer::OnDataReady(int fd, HciPacketType packet_type) {
-  switch (state_) {
-    case HCI_PREAMBLE: {
-      size_t bytes_read = TEMP_FAILURE_RETRY(
-          read(fd, preamble_ + bytes_read_,
-               preamble_size_for_type[packet_type] - bytes_read_));
-      CHECK(bytes_read > 0);
-      bytes_read_ += bytes_read;
-      if (bytes_read_ == preamble_size_for_type[packet_type]) {
-        size_t packet_length =
-            HciGetPacketLengthForType(packet_type, preamble_);
-        packet_.resize(preamble_size_for_type[packet_type] + packet_length);
-        memcpy(packet_.data(), preamble_, preamble_size_for_type[packet_type]);
-        bytes_remaining_ = packet_length;
-        state_ = HCI_PAYLOAD;
-        bytes_read_ = 0;
-      }
+    if (ret == -1) {
+      if (errno == EAGAIN) continue;
+      ALOGE("%s error writing to UART (%s)", __func__, strerror(errno));
+      break;
+
+    } else if (ret == 0) {
+      // Nothing written :(
+      ALOGE("%s zero bytes written - something went wrong...", __func__);
       break;
     }
 
-    case HCI_PAYLOAD: {
-      size_t bytes_read = TEMP_FAILURE_RETRY(read(
-          fd,
-          packet_.data() + preamble_size_for_type[packet_type] + bytes_read_,
-          bytes_remaining_));
-      CHECK(bytes_read > 0);
-      bytes_remaining_ -= bytes_read;
-      bytes_read_ += bytes_read;
-      if (bytes_remaining_ == 0) {
-        packet_ready_cb_();
-        state_ = HCI_PREAMBLE;
-        bytes_read_ = 0;
-      }
-      break;
-    }
+    transmitted_length += ret;
+    length -= ret;
   }
+
+  return transmitted_length;
 }
 
 }  // namespace hci
