@@ -146,7 +146,6 @@ Return<void> StreamMmap<T>::createMmapBuffer(int32_t minSizeFrames, size_t frame
     }
     _hidl_cb(retval, info);
     if (hidlHandle != nullptr) {
-        native_handle_close(hidlHandle);
         native_handle_delete(hidlHandle);
     }
     return Void();
