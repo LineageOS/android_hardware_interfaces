@@ -35,11 +35,11 @@ TEST(RecurrentTimerTest, oneInterval) {
     auto counterRef = std::ref(counter);
     RecurrentTimer timer([&counterRef](const std::vector<int32_t>& cookies) {
         ASSERT_EQ(1u, cookies.size());
-        ASSERT_EQ(0xDeadBeef, cookies.front());
+        ASSERT_EQ(0xdead, cookies.front());
         counterRef.get()++;
     });
 
-    timer.registerRecurrentEvent(milliseconds(1), 0xDeadBeef);
+    timer.registerRecurrentEvent(milliseconds(1), 0xdead);
     std::this_thread::sleep_for(milliseconds(100));
     ASSERT_EQ_WITH_TOLERANCE(100, counter.load(), 20);
 }
