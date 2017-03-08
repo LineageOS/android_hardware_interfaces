@@ -23,7 +23,7 @@
 #include <VtsHalHidlTargetTestBase.h>
 #include <gui/BufferQueue.h>
 #include <gui/Surface.h>
-#include <gui/CpuConsumer.h>
+#include <gui/BufferItemConsumer.h>
 #include <binder/MemoryHeapBase.h>
 #include <regex>
 #include "system/camera_metadata.h"
@@ -42,11 +42,12 @@ using ::android::hardware::hidl_handle;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::sp;
+using ::android::wp;
 using ::android::GraphicBuffer;
 using ::android::IGraphicBufferProducer;
 using ::android::IGraphicBufferConsumer;
 using ::android::BufferQueue;
-using ::android::CpuConsumer;
+using ::android::BufferItemConsumer;
 using ::android::Surface;
 using ::android::hardware::graphics::common::V1_0::PixelFormat;
 using ::android::hardware::graphics::allocator::V2_0::ProducerUsage;
@@ -186,6 +187,22 @@ void CameraHidlEnvironment::SetUp() {
 void CameraHidlEnvironment::TearDown() {
     ALOGI("TearDown CameraHidlEnvironment");
 }
+
+struct BufferItemHander: public BufferItemConsumer::FrameAvailableListener {
+    BufferItemHander(wp<BufferItemConsumer> consumer) : mConsumer(consumer) {}
+
+    void onFrameAvailable(const android::BufferItem&) override {
+        sp<BufferItemConsumer> consumer = mConsumer.promote();
+        ASSERT_NE(nullptr, consumer.get());
+
+        android::BufferItem buffer;
+        ASSERT_EQ(android::OK, consumer->acquireBuffer(&buffer, 0));
+        ASSERT_EQ(android::OK, consumer->releaseBuffer(buffer));
+    }
+
+ private:
+    wp<BufferItemConsumer> mConsumer;
+};
 
 struct PreviewWindowCb : public ICameraDevicePreviewCallback {
     PreviewWindowCb(sp<ANativeWindow> anw) : mPreviewWidth(0),
@@ -492,6 +509,12 @@ public:
         CameraHidlTest *mParent;               // Parent object
     };
 
+    void openCameraDevice(const std::string &name,const CameraHidlEnvironment* env,
+            sp<::android::hardware::camera::device::V1_0::ICameraDevice> *device /*out*/);
+    void setupPreviewWindow(
+            const sp<::android::hardware::camera::device::V1_0::ICameraDevice> &device,
+            sp<BufferItemConsumer> *bufferItemConsumer /*out*/,
+            sp<BufferItemHander> *bufferHandler /*out*/);
     void openEmptyDeviceSession(const std::string &name,
             const CameraHidlEnvironment* env,
             sp<ICameraDeviceSession> *session /*out*/,
@@ -521,6 +544,7 @@ protected:
     uint32_t mResultFrameNumber;               // Expected result frame number
     std::vector<StreamBuffer> mResultBuffers;  // Holds stream buffers from capture result
     std::vector<ErrorMsg> mErrors;             // Holds incoming error notifications
+    DataCallbackMsg mDataMessageTypeReceived;  // Most recent message type received through data callbacks
 
     std::mutex mTorchLock;                     // Synchronize access to torch status
     std::condition_variable mTorchCond;        // Condition variable for torch status
@@ -572,6 +596,10 @@ Return<void> CameraHidlTest::Camera1DeviceCb::dataCallback(
         DataCallbackMsg msgType __unused, uint32_t data __unused,
         uint32_t bufferIndex __unused,
         const CameraFrameMetadata& metadata __unused) {
+    std::unique_lock<std::mutex> l(mParent->mLock);
+    mParent->mDataMessageTypeReceived = msgType;
+    mParent->mResultCondition.notify_one();
+
     return Void();
 }
 
@@ -911,37 +939,21 @@ TEST_F(CameraHidlTest, setPreviewWindowInvalid) {
     }
 }
 
-// Start and stop preview checking whether it gets enabled inbetween.
+// Start and stop preview checking whether it gets enabled in between.
 TEST_F(CameraHidlTest, startStopPreview) {
     CameraHidlEnvironment* env = CameraHidlEnvironment::Instance();
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
 
     for (const auto& name : cameraDeviceNames) {
         if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
-            ::android::sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
-            ALOGI("getCameraCharacteristics: Testing camera device %s", name.c_str());
-            env->mProvider->getCameraDeviceInterface_V1_x(
-                name,
-                [&](auto status, const auto& device) {
-                    ALOGI("getCameraDeviceInterface_V1_x returns status:%d", (int)status);
-                    ASSERT_EQ(Status::OK, status);
-                    ASSERT_NE(device, nullptr);
-                    device1 = device;
-                });
+            sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
+                    openCameraDevice(name, env, &device1 /*out*/);
+            ASSERT_NE(nullptr, device1.get());
+            sp<BufferItemConsumer> bufferItemConsumer;
+            sp<BufferItemHander> bufferHandler;
+            setupPreviewWindow(device1,
+                    &bufferItemConsumer /*out*/, &bufferHandler /*out*/);
 
-            sp<Camera1DeviceCb> deviceCb = new Camera1DeviceCb(this);
-            ASSERT_EQ(Status::OK, device1->open(deviceCb));
-
-            sp<IGraphicBufferProducer> producer;
-            sp<IGraphicBufferConsumer> consumer;
-            BufferQueue::createBufferQueue(&producer, &consumer);
-            sp<CpuConsumer> cpuConsumer = new CpuConsumer(consumer, 1);
-            sp<Surface> surface = new Surface(producer);
-            sp<ANativeWindow> window(surface);
-
-            sp<PreviewWindowCb> previewCb = new PreviewWindowCb(
-                    window);
-            ASSERT_EQ(Status::OK, device1->setPreviewWindow(previewCb));
             ASSERT_EQ(Status::OK, device1->startPreview());
             ASSERT_TRUE(device1->previewEnabled());
             device1->stopPreview();
@@ -959,33 +971,189 @@ TEST_F(CameraHidlTest, startStopPreviewDelayed) {
 
     for (const auto& name : cameraDeviceNames) {
         if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
-            ::android::sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
-            ALOGI("getCameraCharacteristics: Testing camera device %s", name.c_str());
-            env->mProvider->getCameraDeviceInterface_V1_x(
-                name,
-                [&](auto status, const auto& device) {
-                    ALOGI("getCameraDeviceInterface_V1_x returns status:%d", (int)status);
-                    ASSERT_EQ(Status::OK, status);
-                    ASSERT_NE(device, nullptr);
-                    device1 = device;
-                });
+            sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
+            openCameraDevice(name, env, &device1 /*out*/);
+            ASSERT_NE(nullptr, device1.get());
 
-            sp<Camera1DeviceCb> deviceCb = new Camera1DeviceCb(this);
-            ASSERT_EQ(Status::OK, device1->open(deviceCb));
             ASSERT_EQ(Status::OK, device1->setPreviewWindow(nullptr));
             ASSERT_EQ(Status::OK, device1->startPreview());
 
-            sp<IGraphicBufferProducer> producer;
-            sp<IGraphicBufferConsumer> consumer;
-            BufferQueue::createBufferQueue(&producer, &consumer);
-            sp<CpuConsumer> cpuConsumer = new CpuConsumer(consumer, 1);
-            sp<Surface> surface = new Surface(producer);
-            sp<ANativeWindow> window(surface);
-            sp<PreviewWindowCb> previewCb = new PreviewWindowCb(window);
+            sp<BufferItemConsumer> bufferItemConsumer;
+            sp<BufferItemHander> bufferHandler;
+            setupPreviewWindow(device1, &bufferItemConsumer /*out*/,
+                    &bufferHandler /*out*/);
 
             //Preview should get enabled now
-            ASSERT_EQ(Status::OK, device1->setPreviewWindow(previewCb));
             ASSERT_TRUE(device1->previewEnabled());
+            device1->stopPreview();
+
+            device1->close();
+        }
+    }
+}
+
+// Verify that image capture behaves as expected along with preview callbacks.
+TEST_F(CameraHidlTest, takePicture) {
+    CameraHidlEnvironment* env = CameraHidlEnvironment::Instance();
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
+
+    for (const auto& name : cameraDeviceNames) {
+        if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
+            sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
+            openCameraDevice(name, env, &device1 /*out*/);
+            ASSERT_NE(nullptr, device1.get());
+            sp<BufferItemConsumer> bufferItemConsumer;
+            sp<BufferItemHander> bufferHandler;
+            setupPreviewWindow(device1, &bufferItemConsumer /*out*/,
+                    &bufferHandler /*out*/);
+
+            {
+                std::unique_lock<std::mutex> l(mLock);
+                mDataMessageTypeReceived = DataCallbackMsg::RAW_IMAGE_NOTIFY;
+            }
+
+            device1->enableMsgType((unsigned int)DataCallbackMsg::PREVIEW_FRAME);
+            ASSERT_TRUE(device1->msgTypeEnabled(
+                    (unsigned int)DataCallbackMsg::PREVIEW_FRAME));
+            ASSERT_EQ(Status::OK, device1->startPreview());
+
+            {
+                std::unique_lock<std::mutex> l(mLock);
+                while (DataCallbackMsg::PREVIEW_FRAME !=
+                        mDataMessageTypeReceived) {
+                    auto timeout = std::chrono::system_clock::now() +
+                            std::chrono::seconds(kStreamBufferTimeoutSec);
+                    ASSERT_NE(std::cv_status::timeout,
+                            mResultCondition.wait_until(l, timeout));
+                }
+            }
+
+            device1->disableMsgType(
+                    (unsigned int)DataCallbackMsg::PREVIEW_FRAME);
+            ASSERT_FALSE(device1->msgTypeEnabled(
+                    (unsigned int)DataCallbackMsg::PREVIEW_FRAME));
+            device1->enableMsgType(
+                    (unsigned int)DataCallbackMsg::COMPRESSED_IMAGE);
+            ASSERT_TRUE(device1->msgTypeEnabled(
+                    (unsigned int)DataCallbackMsg::COMPRESSED_IMAGE));
+
+            {
+                std::unique_lock<std::mutex> l(mLock);
+                mDataMessageTypeReceived = DataCallbackMsg::RAW_IMAGE_NOTIFY;
+            }
+
+            ASSERT_EQ(Status::OK, device1->takePicture());
+
+            {
+                std::unique_lock<std::mutex> l(mLock);
+                while (DataCallbackMsg::COMPRESSED_IMAGE !=
+                        mDataMessageTypeReceived) {
+                    auto timeout = std::chrono::system_clock::now() +
+                            std::chrono::seconds(kStreamBufferTimeoutSec);
+                    ASSERT_NE(std::cv_status::timeout,
+                            mResultCondition.wait_until(l, timeout));
+                }
+            }
+
+            device1->disableMsgType(
+                    (unsigned int)DataCallbackMsg::COMPRESSED_IMAGE);
+            ASSERT_FALSE(device1->msgTypeEnabled(
+                    (unsigned int)DataCallbackMsg::COMPRESSED_IMAGE));
+
+            device1->stopPreview();
+
+            device1->close();
+        }
+    }
+}
+
+// Image capture should fail in case preview didn't get enabled first.
+TEST_F(CameraHidlTest, takePictureFail) {
+    CameraHidlEnvironment* env = CameraHidlEnvironment::Instance();
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
+
+    for (const auto& name : cameraDeviceNames) {
+        if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
+            sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
+            openCameraDevice(name, env, &device1 /*out*/);
+            ASSERT_NE(nullptr, device1.get());
+
+            ASSERT_NE(Status::OK, device1->takePicture());
+
+            device1->close();
+        }
+    }
+}
+
+// Verify that image capture can be cancelled.
+TEST_F(CameraHidlTest, cancelPicture) {
+    CameraHidlEnvironment* env = CameraHidlEnvironment::Instance();
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
+
+    for (const auto& name : cameraDeviceNames) {
+        if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
+            sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
+            openCameraDevice(name, env, &device1 /*out*/);
+            ASSERT_NE(nullptr, device1.get());
+            sp<BufferItemConsumer> bufferItemConsumer;
+            sp<BufferItemHander> bufferHandler;
+            setupPreviewWindow(device1, &bufferItemConsumer /*out*/,
+                    &bufferHandler /*out*/);
+
+            {
+                std::unique_lock<std::mutex> l(mLock);
+                mDataMessageTypeReceived = DataCallbackMsg::RAW_IMAGE_NOTIFY;
+            }
+
+            device1->enableMsgType((unsigned int)DataCallbackMsg::PREVIEW_FRAME);
+            ASSERT_TRUE(device1->msgTypeEnabled(
+                    (unsigned int)DataCallbackMsg::PREVIEW_FRAME));
+            ASSERT_EQ(Status::OK, device1->startPreview());
+
+            {
+                std::unique_lock<std::mutex> l(mLock);
+                while (DataCallbackMsg::PREVIEW_FRAME !=
+                        mDataMessageTypeReceived) {
+                    auto timeout = std::chrono::system_clock::now() +
+                            std::chrono::seconds(kStreamBufferTimeoutSec);
+                    ASSERT_NE(std::cv_status::timeout,
+                            mResultCondition.wait_until(l, timeout));
+                }
+            }
+
+            device1->disableMsgType(
+                    (unsigned int)DataCallbackMsg::PREVIEW_FRAME);
+            ASSERT_FALSE(device1->msgTypeEnabled(
+                    (unsigned int)DataCallbackMsg::PREVIEW_FRAME));
+
+            ASSERT_EQ(Status::OK, device1->takePicture());
+            ASSERT_EQ(Status::OK, device1->cancelPicture());
+
+            device1->stopPreview();
+
+            device1->close();
+        }
+    }
+}
+
+// Image capture cancel should fail when image capture is not running.
+TEST_F(CameraHidlTest, cancelPictureFail) {
+    CameraHidlEnvironment* env = CameraHidlEnvironment::Instance();
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
+
+    for (const auto& name : cameraDeviceNames) {
+        if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
+            sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
+            openCameraDevice(name, env, &device1 /*out*/);
+            ASSERT_NE(nullptr, device1.get());
+            sp<BufferItemConsumer> bufferItemConsumer;
+            sp<BufferItemHander> bufferHandler;
+            setupPreviewWindow(device1, &bufferItemConsumer /*out*/,
+                    &bufferHandler /*out*/);
+
+            ASSERT_EQ(Status::OK, device1->startPreview());
+            ASSERT_NE(Status::OK, device1->cancelPicture());
+
             device1->stopPreview();
 
             device1->close();
@@ -1098,7 +1266,7 @@ TEST_F(CameraHidlTest, setTorchMode) {
             }
         } else if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
             ::android::sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
-            ALOGI("setTorchMode: Testing camera device %s", name.c_str());
+            ALOGI("dumpState: Testing camera device %s", name.c_str());
             env->mProvider->getCameraDeviceInterface_V1_x(
                 name,
                 [&](auto status, const auto& device) {
@@ -1240,18 +1408,9 @@ TEST_F(CameraHidlTest, openClose) {
             // TODO: test all session API calls return INTERNAL_ERROR after close
             // TODO: keep a wp copy here and verify session cannot be promoted out of this scope
         } else if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
-            ::android::sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
-            ALOGI("openClose: Testing camera device %s", name.c_str());
-            env->mProvider->getCameraDeviceInterface_V1_x(
-                name,
-                [&](auto status, const auto& device) {
-                    ALOGI("getCameraDeviceInterface_V1_x returns status:%d", (int)status);
-                    ASSERT_EQ(Status::OK, status);
-                    ASSERT_NE(device, nullptr);
-                    device1 = device;
-                });
-            sp<Camera1DeviceCb> cb = new Camera1DeviceCb(this);
-            ASSERT_EQ(Status::OK, device1->open(cb));
+            sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
+            openCameraDevice(name, env, &device1 /*out*/);
+            ASSERT_NE(nullptr, device1.get());
 
             native_handle_t* raw_handle = native_handle_create(1, 0);
             raw_handle->data[0] = open(kDumpOutput, O_RDWR);
@@ -2323,6 +2482,51 @@ void CameraHidlTest::openEmptyDeviceSession(const std::string &name,
                 reinterpret_cast<const camera_metadata_t*>(metadata.data()));
         ASSERT_NE(nullptr, *staticMeta);
     });
+}
+
+void CameraHidlTest::openCameraDevice(const std::string &name,
+        const CameraHidlEnvironment* env,
+        sp<::android::hardware::camera::device::V1_0::ICameraDevice> *device1 /*out*/) {
+    ASSERT_TRUE(nullptr != env);
+    ASSERT_TRUE(nullptr != device1);
+
+    env->mProvider->getCameraDeviceInterface_V1_x(
+            name,
+            [&](auto status, const auto& device) {
+            ALOGI("getCameraDeviceInterface_V1_x returns status:%d",
+                  (int)status);
+            ASSERT_EQ(Status::OK, status);
+            ASSERT_NE(device, nullptr);
+            *device1 = device;
+        });
+
+    sp<Camera1DeviceCb> deviceCb = new Camera1DeviceCb(this);
+    ASSERT_EQ(Status::OK, (*device1)->open(deviceCb));
+}
+
+void CameraHidlTest::setupPreviewWindow(
+        const sp<::android::hardware::camera::device::V1_0::ICameraDevice> &device,
+        sp<BufferItemConsumer> *bufferItemConsumer /*out*/,
+        sp<BufferItemHander> *bufferHandler /*out*/) {
+    ASSERT_NE(nullptr, device.get());
+    ASSERT_NE(nullptr, bufferItemConsumer);
+    ASSERT_NE(nullptr, bufferHandler);
+
+    sp<IGraphicBufferProducer> producer;
+    sp<IGraphicBufferConsumer> consumer;
+    BufferQueue::createBufferQueue(&producer, &consumer);
+    *bufferItemConsumer = new BufferItemConsumer(consumer,
+            GraphicBuffer::USAGE_HW_TEXTURE); //Use GLConsumer default usage flags
+    ASSERT_NE(nullptr, (*bufferItemConsumer).get());
+    *bufferHandler = new BufferItemHander(*bufferItemConsumer);
+    ASSERT_NE(nullptr, (*bufferHandler).get());
+    (*bufferItemConsumer)->setFrameAvailableListener(*bufferHandler);
+    sp<Surface> surface = new Surface(producer);
+    sp<PreviewWindowCb> previewCb = new PreviewWindowCb(surface);
+
+    auto rc = device->setPreviewWindow(previewCb);
+    ASSERT_TRUE(rc.isOk());
+    ASSERT_EQ(Status::OK, rc);
 }
 
 int main(int argc, char **argv) {
