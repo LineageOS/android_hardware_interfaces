@@ -52,7 +52,7 @@ namespace implementation {
     }
 
     Return<void> DrmFactory::createPlugin(const hidl_array<uint8_t, 16>& uuid,
-            const hidl_string& appPackageName, createPlugin_cb _hidl_cb) {
+            const hidl_string& /* appPackageName */, createPlugin_cb _hidl_cb) {
 
         for (size_t i = 0; i < loader.factoryCount(); i++) {
             if (loader.getFactory(i)->isCryptoSchemeSupported(uuid.data())) {
