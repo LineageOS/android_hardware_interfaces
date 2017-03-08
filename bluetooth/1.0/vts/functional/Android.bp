@@ -16,6 +16,7 @@
 
 cc_test {
     name: "VtsHalBluetoothV1_0TargetTest",
+    defaults: ["hidl_defaults"],
     srcs: ["VtsHalBluetoothV1_0TargetTest.cpp"],
     shared_libs: [
         "libbase",
