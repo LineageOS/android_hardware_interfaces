@@ -278,8 +278,10 @@ interface ISupplicantStaIfaceCallback {
    *        reject.
    * @param statusCode 802.11 code to indicate the reject reason.
    *        Refer to section 8.4.1.9 of IEEE 802.11 spec.
+   * @param timedOut Whether failure is due to timeout rather
+   *        than explicit rejection response from the AP.
    */
-  oneway onAssociationRejected(Bssid bssid, uint32_t statusCode);
+  oneway onAssociationRejected(Bssid bssid, uint32_t statusCode, bool timedOut);
 
   /**
    * Used to indicate the timeout of authentication to an AP.
