@@ -320,6 +320,11 @@ enum StaScanLimits : uint32_t {
  */
 struct StaBackgroundScanBucketParameters {
   /**
+   * Bucket index. This index is used to report results in
+   * |StaScanData.bucketsScanned|.
+   */
+  uint32_t bucketIdx;
+  /**
    * Bands to scan or |BAND_UNSPECIFIED| if frequencies list must be used
    * instead.
    */
