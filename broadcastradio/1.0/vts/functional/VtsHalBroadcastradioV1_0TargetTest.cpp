@@ -42,6 +42,7 @@ using ::android::hardware::broadcastradio::V1_0::ITunerCallback;
 using ::android::hardware::broadcastradio::V1_0::Result;
 using ::android::hardware::broadcastradio::V1_0::Class;
 using ::android::hardware::broadcastradio::V1_0::Properties;
+using ::android::hardware::broadcastradio::V1_0::Band;
 using ::android::hardware::broadcastradio::V1_0::BandConfig;
 using ::android::hardware::broadcastradio::V1_0::Direction;
 using ::android::hardware::broadcastradio::V1_0::ProgramInfo;
@@ -370,6 +371,38 @@ TEST_F(BroadcastRadioHidlTest, SetAndGetConfiguration) {
     EXPECT_TRUE(hidlReturn.isOk());
     EXPECT_EQ(Result::OK, halResult);
     EXPECT_EQ(mHalProperties.bands[0].type, halConfig.type);
+}
+
+/**
+ * Test ITuner::setConfiguration() with invalid arguments.
+ *
+ * Verifies that:
+ *  - the methods returns INVALID_ARGUMENTS on invalid arguments
+ *  - the method recovers and succeeds after passing correct arguments
+ */
+TEST_F(BroadcastRadioHidlTest, SetConfigurationFails) {
+    ASSERT_EQ(true, openTuner());
+
+    // Let's define a config that's bad for sure.
+    BandConfig badConfig = {};
+    badConfig.type = Band::FM;
+    badConfig.lowerLimit = 0xFFFFFFFF;
+    badConfig.upperLimit = 0;
+    badConfig.spacings = (std::vector<uint32_t>){ 0 };
+
+    // Test setConfiguration failing on bad data.
+    mCallbackCalled = false;
+    auto setResult = mTuner->setConfiguration(badConfig);
+    EXPECT_TRUE(setResult.isOk());
+    EXPECT_EQ(Result::INVALID_ARGUMENTS, setResult);
+
+    // Test setConfiguration recovering after passing good data.
+    mCallbackCalled = false;
+    setResult = mTuner->setConfiguration(mHalProperties.bands[0]);
+    EXPECT_TRUE(setResult.isOk());
+    EXPECT_EQ(Result::OK, setResult);
+    EXPECT_EQ(true, waitForCallback(kConfigCallbacktimeoutNs));
+    EXPECT_EQ(Result::OK, mResultCallbackData);
 }
 
 /**
