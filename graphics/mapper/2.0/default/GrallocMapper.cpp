@@ -127,7 +127,7 @@ GrallocMapperHal::~GrallocMapperHal()
 
 void GrallocMapperHal::initCapabilities()
 {
-    uint32_t count;
+    uint32_t count = 0;
     mDevice->getCapabilities(mDevice, &count, nullptr);
 
     std::vector<int32_t> caps(count);
