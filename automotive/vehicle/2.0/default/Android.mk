@@ -133,7 +133,7 @@ LOCAL_SHARED_LIBRARIES := \
     libutils \
     $(vhal_v2_0) \
 
-LOCAL_CFLAGS += -Wall -Wextra
+LOCAL_CFLAGS += -Wall -Wextra -Werror
 LOCAL_MODULE_TAGS := tests
 
 include $(BUILD_NATIVE_TEST)
