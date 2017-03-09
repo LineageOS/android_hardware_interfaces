@@ -41,11 +41,8 @@ using hci::MctProtocol;
 
 static char sample_data1[100] = "A point is that which has no part.";
 static char sample_data2[100] = "A line is breadthless length.";
-static char sample_data3[100] = "The ends of a line are points.";
 static char acl_data[100] =
     "A straight line is a line which lies evenly with the points on itself.";
-static char sco_data[100] =
-    "A surface is that which has length and breadth only.";
 static char event_data[100] = "The edges of a surface are lines.";
 
 MATCHER_P3(HidlVecMatches, preamble, preamble_length, payload, "") {

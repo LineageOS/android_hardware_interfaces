@@ -22,23 +22,6 @@
 #include <fcntl.h>
 #include <utils/Log.h>
 
-namespace {
-
-const size_t preamble_size_for_type[] = {
-    0, HCI_COMMAND_PREAMBLE_SIZE, HCI_ACL_PREAMBLE_SIZE, HCI_SCO_PREAMBLE_SIZE,
-    HCI_EVENT_PREAMBLE_SIZE};
-const size_t packet_length_offset_for_type[] = {
-    0, HCI_LENGTH_OFFSET_CMD, HCI_LENGTH_OFFSET_ACL, HCI_LENGTH_OFFSET_SCO,
-    HCI_LENGTH_OFFSET_EVT};
-
-size_t HciGetPacketLengthForType(HciPacketType type, const uint8_t* preamble) {
-  size_t offset = packet_length_offset_for_type[type];
-  if (type != HCI_PACKET_TYPE_ACL_DATA) return preamble[offset];
-  return (((preamble[offset + 1]) << 8) | preamble[offset]);
-}
-
-}  // namespace
-
 namespace android {
 namespace hardware {
 namespace bluetooth {
