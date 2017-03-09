@@ -16,6 +16,7 @@
 
 cc_test {
     name: "VtsHalWifiV1_0TargetTest",
+    defaults: ["hidl_defaults"],
     srcs: [
         "VtsHalWifiV1_0TargetTest.cpp",
         "wifi_ap_iface_hidl_test.cpp",

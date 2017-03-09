@@ -1,3 +1,11 @@
 subdirs = [
     "*"
 ]
+
+cc_defaults {
+    name: "hidl_defaults",
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+}
