@@ -83,7 +83,7 @@ TEST_F(PowerHidlTest, TryDifferentGovernors) {
 
   char governors[1024];
   unsigned len = read(fd2, governors, 1024);
-  ASSERT_LE(0, len);
+  ASSERT_LE(0u, len);
   governors[len] = '\0';
 
   char *saveptr;
