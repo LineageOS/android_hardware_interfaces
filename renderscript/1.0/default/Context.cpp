@@ -711,7 +711,7 @@ Return<void> Context::scriptGetVarV(Script vs, uint32_t slot, Size len, scriptGe
     RsScript _vs = hidl_to_rs<RsScript>(vs);
     uint32_t _slot = slot;
     size_t _len = static_cast<size_t>(len);
-    std::vector<uint8_t> _data(static_cast<size_t>(len));
+    std::vector<uint8_t> _data(_len);
     Device::getHal().ScriptGetVarV(mContext, _vs, _slot, _data.data(), _data.size());
     hidl_vec<uint8_t> data = _data;
     _hidl_cb(data);
