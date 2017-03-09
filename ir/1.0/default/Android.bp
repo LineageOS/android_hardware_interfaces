@@ -14,6 +14,7 @@
 // limitations under the License.
 cc_library_shared {
     name: "android.hardware.ir@1.0-impl",
+    defaults: ["hidl_defaults"],
     relative_install_path: "hw",
     proprietary: true,
     srcs: ["ConsumerIr.cpp"],
@@ -29,6 +30,7 @@ cc_library_shared {
 
 cc_binary {
     relative_install_path: "hw",
+    defaults: ["hidl_defaults"],
     name: "android.hardware.ir@1.0-service",
     proprietary: true,
     init_rc: ["android.hardware.ir@1.0-service.rc"],
