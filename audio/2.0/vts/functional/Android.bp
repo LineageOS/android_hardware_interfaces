@@ -16,6 +16,7 @@
 
 cc_test {
     name: "VtsHalAudioV2_0TargetTest",
+    defaults: ["hidl_defaults"],
     gtest: true,
     srcs: ["AudioPrimaryHidlHalTest.cpp"],
     shared_libs: [

@@ -1,5 +1,6 @@
 cc_library_shared {
     name: "android.hardware.sensors@1.0-impl",
+    defaults: ["hidl_defaults"],
     proprietary: true,
     relative_install_path: "hw",
     srcs: ["Sensors.cpp"],
@@ -22,6 +23,7 @@ cc_library_shared {
 
 cc_library_static {
     name: "android.hardware.sensors@1.0-convert",
+    defaults: ["hidl_defaults"],
     srcs: ["convert.cpp"],
     export_include_dirs: ["include"],
     shared_libs: [

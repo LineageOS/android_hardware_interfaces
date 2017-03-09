@@ -14,6 +14,7 @@
 
 cc_library_shared {
     name: "android.hardware.power@1.0-impl",
+    defaults: ["hidl_defaults"],
     proprietary: true,
     relative_install_path: "hw",
     srcs: ["Power.cpp"],
@@ -36,6 +37,7 @@ cc_library_shared {
 
 cc_binary {
     proprietary: true,
+    defaults: ["hidl_defaults"],
     relative_install_path: "hw",
     name: "android.hardware.power@1.0-service",
     init_rc: ["android.hardware.power@1.0-service.rc"],

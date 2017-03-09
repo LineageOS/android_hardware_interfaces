@@ -1,5 +1,6 @@
 cc_library_shared {
     name: "camera.device@3.2-impl",
+    defaults: ["hidl_defaults"],
     srcs: ["CameraDevice.cpp",
            "CameraDeviceSession.cpp",
            "convert.cpp"],

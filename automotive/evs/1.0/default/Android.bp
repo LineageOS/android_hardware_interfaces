@@ -1,5 +1,6 @@
 cc_binary {
     name: "android.hardware.automotive.evs@1.0-service",
+    defaults: ["hidl_defaults"],
     proprietary: true,
     relative_install_path: "hw",
     srcs: [

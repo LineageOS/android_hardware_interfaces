@@ -16,6 +16,7 @@
 
 cc_test {
     name: "VtsHalContexthubV1_0TargetTest",
+    defaults: ["hidl_defaults"],
     srcs: ["VtsHalContexthubV1_0TargetTest.cpp"],
     shared_libs: [
         "liblog",

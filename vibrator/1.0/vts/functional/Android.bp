@@ -16,6 +16,7 @@
 
 cc_test {
     name: "VtsHalVibratorV1_0TargetTest",
+    defaults: ["hidl_defaults"],
     srcs: ["VtsHalVibratorV1_0TargetTest.cpp"],
     shared_libs: [
         "libbase",

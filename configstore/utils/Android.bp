@@ -16,6 +16,7 @@
 
 cc_library_headers {
     name: "android.hardware.configstore-utils",
+    defaults: ["hidl_defaults"],
     export_include_dirs: ["include"],
     shared_libs: [
         "libhidlbase"

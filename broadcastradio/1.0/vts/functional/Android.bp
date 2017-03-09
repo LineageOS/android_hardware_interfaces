@@ -16,6 +16,7 @@
 
 cc_test {
     name: "VtsHalBroadcastradioV1_0TargetTest",
+    defaults: ["hidl_defaults"],
     srcs: ["VtsHalBroadcastradioV1_0TargetTest.cpp"],
     shared_libs: [
         "libbase",

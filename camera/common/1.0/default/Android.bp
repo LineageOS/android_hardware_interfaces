@@ -1,5 +1,6 @@
 cc_library_static {
     name: "android.hardware.camera.common@1.0-helper",
+    defaults: ["hidl_defaults"],
     srcs: [
         "CameraModule.cpp",
         "CameraMetadata.cpp",

@@ -16,6 +16,7 @@
 
 cc_test {
     name: "VtsHalBiometricsFingerprintV2_1TargetTest",
+    defaults: ["hidl_defaults"],
     srcs: ["VtsHalBiometricsFingerprintV2_1TargetTest.cpp"],
     shared_libs: [
         "libbase",

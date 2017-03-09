@@ -16,6 +16,7 @@
 
 cc_library_static {
     name: "libVtsHalGraphicsComposerTestUtils",
+    defaults: ["hidl_defaults"],
     srcs: ["VtsHalGraphicsComposerTestUtils.cpp"],
     shared_libs: ["android.hardware.graphics.composer@2.1"],
     static_libs: [
@@ -33,6 +34,7 @@ cc_library_static {
 
 cc_test {
     name: "VtsHalGraphicsComposerV2_1TargetTest",
+    defaults: ["hidl_defaults"],
     srcs: ["VtsHalGraphicsComposerV2_1TargetTest.cpp"],
     shared_libs: [
         "android.hardware.graphics.allocator@2.0",

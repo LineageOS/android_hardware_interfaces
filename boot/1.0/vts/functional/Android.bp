@@ -16,6 +16,7 @@
 
 cc_test {
     name: "VtsHalBootV1_0TargetTest",
+    defaults: ["hidl_defaults"],
     srcs: ["VtsHalBootV1_0TargetTest.cpp"],
     shared_libs: [
         "libbase",

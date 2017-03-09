@@ -16,6 +16,7 @@
 
 cc_test {
     name: "VtsHalSensorsV1_0TargetTest",
+    defaults: ["hidl_defaults"],
     srcs: ["VtsHalSensorsV1_0TargetTest.cpp"],
     shared_libs: [
         "android.hardware.sensors@1.0",
