@@ -810,7 +810,7 @@ TEST_F(CameraHidlTest, configureStreamsZSLInputOutputs) {
 
             int32_t streamId = 0;
             for (auto &inputIter : inputOutputMap) {
-                AvailableStream input, output;
+                AvailableStream input;
                 ASSERT_EQ(Status::OK,
                         findLargestSize(inputStreams, inputIter.inputFormat, input));
                 ASSERT_NE(0u, inputStreams.size());
