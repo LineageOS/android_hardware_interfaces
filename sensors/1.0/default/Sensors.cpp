@@ -97,6 +97,15 @@ Sensors::Sensors()
     // is considered optional.
     CHECK_GE(getHalDeviceVersion(), SENSORS_DEVICE_API_VERSION_1_3);
 
+    if (getHalDeviceVersion() == SENSORS_DEVICE_API_VERSION_1_4) {
+        if (mSensorDevice->inject_sensor_data == nullptr) {
+            LOG(ERROR) << "HAL specifies version 1.4, but does not implement inject_sensor_data()";
+        }
+        if (mSensorModule->set_operation_mode == nullptr) {
+            LOG(ERROR) << "HAL specifies version 1.4, but does not implement set_operation_mode()";
+        }
+    }
+
     mInitCheck = OK;
 }
 
@@ -132,6 +141,10 @@ int Sensors::getHalDeviceVersion() const {
 }
 
 Return<Result> Sensors::setOperationMode(OperationMode mode) {
+    if (getHalDeviceVersion() < SENSORS_DEVICE_API_VERSION_1_4
+            || mSensorModule->set_operation_mode == nullptr) {
+        return Result::INVALID_OPERATION;
+    }
     return ResultFromStatus(mSensorModule->set_operation_mode((uint32_t)mode));
 }
 
@@ -236,7 +249,8 @@ Return<Result> Sensors::flush(int32_t sensor_handle) {
 }
 
 Return<Result> Sensors::injectSensorData(const Event& event) {
-    if (getHalDeviceVersion() < SENSORS_DEVICE_API_VERSION_1_4) {
+    if (getHalDeviceVersion() < SENSORS_DEVICE_API_VERSION_1_4
+            || mSensorDevice->inject_sensor_data == nullptr) {
         return Result::INVALID_OPERATION;
     }
 
