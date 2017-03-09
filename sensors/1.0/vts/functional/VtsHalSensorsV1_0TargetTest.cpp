@@ -213,7 +213,7 @@ std::vector<Event> SensorsTestSharedMemory::parseEvents(int64_t lastCounter, siz
     int32_t type = *reinterpret_cast<int32_t *>(mBuffer + offset + kOffsetType);
     int64_t timestamp = *reinterpret_cast<int64_t *>(mBuffer + offset + kOffsetTimestamp);
 
-    ALOGV("offset = %zu, cnt %" PRId32 ", token %" PRId32 ", type %" PRId32 ", timestamp %" PRId64,
+    ALOGV("offset = %zu, cnt %" PRId64 ", token %" PRId32 ", type %" PRId32 ", timestamp %" PRId64,
         offset, atomicCounter, token, type, timestamp);
 
     Event event = {
@@ -688,7 +688,7 @@ TEST_F(SensorsHidlTest, NormalAccelerometerStreamingOperation) {
 
   ALOGI("Collected %zu samples", events.size());
 
-  ASSERT_GT(events.size(), 0);
+  ASSERT_GT(events.size(), 0u);
 
   size_t nRealEvent = 0;
   for (auto & e : events) {
@@ -773,7 +773,6 @@ TEST_F(SensorsHidlTest, AccelerometerSamplingPeriodHotSwitchOperation) {
   std::vector<Event> events1, events2;
 
   constexpr int64_t batchingPeriodInNs = 0; // no batching
-  constexpr useconds_t minTimeUs = 5*1000*1000;  // 5 s
   constexpr size_t minNEvent = 50;
   constexpr SensorType type = SensorType::ACCELEROMETER;
 
@@ -826,7 +825,7 @@ TEST_F(SensorsHidlTest, AccelerometerSamplingPeriodHotSwitchOperation) {
       ++ nEvent;
     }
   }
-  ASSERT_GT(nEvent, 2);
+  ASSERT_GT(nEvent, 2u);
   minDelayAverageInterval = timestampInterval / (nEvent - 1);
 
   nEvent = 0;
@@ -842,7 +841,7 @@ TEST_F(SensorsHidlTest, AccelerometerSamplingPeriodHotSwitchOperation) {
       ++ nEvent;
     }
   }
-  ASSERT_GT(nEvent, 2);
+  ASSERT_GT(nEvent, 2u);
   maxDelayAverageInterval = timestampInterval / (nEvent - 1);
 
   // change of rate is significant.
@@ -859,8 +858,6 @@ TEST_F(SensorsHidlTest, AccelerometerBatchingOperation) {
   std::vector<Event> events;
 
   constexpr int64_t oneSecondInNs = 1ull * 1000 * 1000 * 1000;
-  constexpr useconds_t minTimeUs = 5*1000*1000;  // 5 s
-  constexpr size_t minNEvent = 50;
   constexpr SensorType type = SensorType::ACCELEROMETER;
   constexpr int64_t maxBatchingTestTimeNs = 30ull * 1000 * 1000 * 1000;
 
@@ -974,7 +971,7 @@ TEST_F(SensorsHidlTest, GyroscopeAshmemDirectReport) {
   auto events = mem->parseEvents();
 
   // allowed to be 55% of nominal freq (50Hz)
-  ASSERT_GT(events.size(), 50 / 2);
+  ASSERT_GT(events.size(), 50u / 2u);
   ASSERT_LT(events.size(), static_cast<size_t>(110*1.5));
 
   int64_t lastTimestamp = 0;
