@@ -33,7 +33,6 @@ static std::string to_string(const IBaz::Foo &foo);
 static std::string to_string(const hidl_string &s);
 static std::string to_string(bool x);
 static std::string to_string(const IBaz::StringMatrix5x3 &M);
-static std::string to_string(const IBaz::StringMatrix3x5 &M);
 
 template<typename T, size_t SIZE>
 static std::string to_string(const hidl_array<T, SIZE> &array);
@@ -142,10 +141,6 @@ static std::string to_string(const IBaz::Foo &foo) {
 }
 
 static std::string to_string(const IBaz::StringMatrix5x3 &M) {
-    return to_string(M.s);
-}
-
-static std::string to_string(const IBaz::StringMatrix3x5 &M) {
     return to_string(M.s);
 }
 
