@@ -18,6 +18,7 @@
 #include <android/hardware/camera/provider/2.4/ICameraProvider.h>
 #include <android/hardware/camera/device/3.2/ICameraDevice.h>
 #include <android/hardware/camera/device/1.0/ICameraDevice.h>
+#include "CameraParameters.h"
 #include <android/log.h>
 #include <ui/GraphicBuffer.h>
 #include <VtsHalHidlTargetTestBase.h>
@@ -49,6 +50,7 @@ using ::android::IGraphicBufferConsumer;
 using ::android::BufferQueue;
 using ::android::BufferItemConsumer;
 using ::android::Surface;
+using ::android::CameraParameters;
 using ::android::hardware::graphics::common::V1_0::PixelFormat;
 using ::android::hardware::graphics::allocator::V2_0::ProducerUsage;
 using ::android::hardware::camera::common::V1_0::Status;
@@ -89,6 +91,7 @@ const uint32_t kMaxPreviewHeight = 1080;
 const uint32_t kMaxVideoWidth = 4096;
 const uint32_t kMaxVideoHeight = 2160;
 const int64_t kStreamBufferTimeoutSec = 3;
+const int64_t kAutoFocusTimeoutSec = 5;
 const int64_t kTorchTimeoutSec = 1;
 const int64_t kEmptyFlushTimeoutMSec = 200;
 const char kDumpOutput[] = "/dev/null";
@@ -537,6 +540,8 @@ public:
     static Status findLargestSize(
             const std::vector<AvailableStream> &streamSizes,
             int32_t format, AvailableStream &result);
+    static Status isAutoFocusModeAvailable(
+            ::android::CameraParameters &cameraParams, const char *mode) ;
 
 protected:
     std::mutex mLock;                          // Synchronize access to member variables
@@ -548,6 +553,7 @@ protected:
     uint32_t mVideoBufferIndex;                // Buffer index of the most recent video buffer
     uint32_t mVideoData;                       // Buffer data of the most recent video buffer
     hidl_handle mVideoNativeHandle;            // Most recent video buffer native handle
+    NotifyCallbackMsg mNotifyMessage;          // Current notification message
 
     std::mutex mTorchLock;                     // Synchronize access to torch status
     std::condition_variable mTorchCond;        // Condition variable for torch status
@@ -558,8 +564,12 @@ protected:
 };
 
 Return<void> CameraHidlTest::Camera1DeviceCb::notifyCallback(
-        NotifyCallbackMsg msgType __unused, int32_t ext1 __unused,
+        NotifyCallbackMsg msgType, int32_t ext1 __unused,
         int32_t ext2 __unused) {
+    std::unique_lock<std::mutex> l(mParent->mLock);
+    mParent->mNotifyMessage = msgType;
+    mParent->mResultCondition.notify_one();
+
     return Void();
 }
 
@@ -1288,6 +1298,127 @@ TEST_F(CameraHidlTest, startRecordingFail) {
 
             ASSERT_FALSE(device1->recordingEnabled());
             ASSERT_NE(Status::OK, device1->startRecording());
+
+            device1->close();
+        }
+    }
+}
+
+// Check autofocus support if available.
+TEST_F(CameraHidlTest, autoFocus) {
+    CameraHidlEnvironment* env = CameraHidlEnvironment::Instance();
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
+    std::vector<const char *> focusModes = {CameraParameters::FOCUS_MODE_AUTO,
+            CameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE,
+            CameraParameters::FOCUS_MODE_CONTINUOUS_VIDEO};
+
+    for (const auto& name : cameraDeviceNames) {
+        if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
+            sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
+            openCameraDevice(name, env, &device1 /*out*/);
+            ASSERT_NE(nullptr, device1.get());
+
+            ::android::CameraParameters cameraParams;
+            device1->getParameters([&] (const ::android::hardware::hidl_string& params) {
+                ASSERT_FALSE(params.empty());
+                ::android::String8 paramString(params.c_str());
+                cameraParams.unflatten(paramString);
+            });
+
+            if (Status::OK != isAutoFocusModeAvailable(cameraParams,
+                    CameraParameters::FOCUS_MODE_AUTO)) {
+                device1->close();
+                continue;
+            }
+
+            sp<BufferItemConsumer> bufferItemConsumer;
+            sp<BufferItemHander> bufferHandler;
+            setupPreviewWindow(device1, &bufferItemConsumer /*out*/,
+                    &bufferHandler /*out*/);
+            ASSERT_EQ(Status::OK, device1->startPreview());
+
+            device1->enableMsgType((unsigned int)NotifyCallbackMsg::FOCUS);
+            ASSERT_TRUE(device1->msgTypeEnabled(
+                    (unsigned int)NotifyCallbackMsg::FOCUS));
+
+            for (auto &iter : focusModes) {
+                if (Status::OK != isAutoFocusModeAvailable(cameraParams,
+                        iter)) {
+                    continue;
+                }
+
+                cameraParams.set(CameraParameters::KEY_FOCUS_MODE, iter);
+                ASSERT_EQ(Status::OK, device1->setParameters(
+                        cameraParams.flatten().string()));
+                {
+                    std::unique_lock<std::mutex> l(mLock);
+                    mNotifyMessage = NotifyCallbackMsg::ERROR;
+                }
+
+                ASSERT_EQ(Status::OK, device1->autoFocus());
+
+                {
+                    std::unique_lock<std::mutex> l(mLock);
+                    while (NotifyCallbackMsg::FOCUS != mNotifyMessage) {
+                        auto timeout = std::chrono::system_clock::now() +
+                                std::chrono::seconds(kAutoFocusTimeoutSec);
+                        ASSERT_NE(std::cv_status::timeout,
+                                mResultCondition.wait_until(l, timeout));
+                    }
+                }
+            }
+
+            device1->disableMsgType((unsigned int)NotifyCallbackMsg::FOCUS);
+            ASSERT_FALSE(device1->msgTypeEnabled(
+                    (unsigned int)NotifyCallbackMsg::FOCUS));
+
+            device1->stopPreview();
+
+            device1->close();
+        }
+    }
+}
+
+// In case autofocus is supported verify that it can be cancelled.
+TEST_F(CameraHidlTest, cancelAutoFocus) {
+    CameraHidlEnvironment* env = CameraHidlEnvironment::Instance();
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
+
+    for (const auto& name : cameraDeviceNames) {
+        if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
+            sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
+            openCameraDevice(name, env, &device1 /*out*/);
+            ASSERT_NE(nullptr, device1.get());
+
+            ::android::CameraParameters cameraParams;
+            device1->getParameters([&] (const ::android::hardware::hidl_string& params) {
+                ASSERT_FALSE(params.empty());
+                ::android::String8 paramString(params.c_str());
+                cameraParams.unflatten(paramString);
+            });
+
+            if (Status::OK != isAutoFocusModeAvailable(cameraParams,
+                    CameraParameters::FOCUS_MODE_AUTO)) {
+                device1->close();
+                continue;
+            }
+
+            // It should be fine to call before preview starts.
+            ASSERT_EQ(Status::OK, device1->cancelAutoFocus());
+
+            sp<BufferItemConsumer> bufferItemConsumer;
+            sp<BufferItemHander> bufferHandler;
+            setupPreviewWindow(device1, &bufferItemConsumer /*out*/,
+                    &bufferHandler /*out*/);
+            ASSERT_EQ(Status::OK, device1->startPreview());
+
+            // It should be fine to call after preview starts too.
+            ASSERT_EQ(Status::OK, device1->cancelAutoFocus());
+
+            ASSERT_EQ(Status::OK, device1->autoFocus());
+            ASSERT_EQ(Status::OK, device1->cancelAutoFocus());
+
+            device1->stopPreview();
 
             device1->close();
         }
@@ -2510,6 +2641,19 @@ Status CameraHidlTest::findLargestSize(
     }
 
     return (result.format == format) ? Status::OK : Status::ILLEGAL_ARGUMENT;
+}
+
+// Check whether the camera device supports specific focus mode.
+Status CameraHidlTest::isAutoFocusModeAvailable(
+        ::android::CameraParameters &cameraParams,
+        const char *mode) {
+    ::android::String8 focusModes(cameraParams.get(
+            CameraParameters::KEY_SUPPORTED_FOCUS_MODES));
+    if (focusModes.contains(mode)) {
+        return Status::OK;
+    }
+
+    return Status::METHOD_NOT_SUPPORTED;
 }
 
 // Open a device session and configure a preview stream.

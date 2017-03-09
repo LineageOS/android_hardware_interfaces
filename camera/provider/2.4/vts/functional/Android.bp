@@ -17,7 +17,8 @@
 cc_test {
     name: "VtsHalCameraProviderV2_4TargetTest",
     defaults: ["hidl_defaults"],
-    srcs: ["VtsHalCameraProviderV2_4TargetTest.cpp"],
+    srcs: ["VtsHalCameraProviderV2_4TargetTest.cpp",
+           "CameraParameters.cpp" ],
     shared_libs: [
         "liblog",
         "libhidlbase",
