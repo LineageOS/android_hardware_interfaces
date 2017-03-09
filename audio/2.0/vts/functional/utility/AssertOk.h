@@ -48,3 +48,4 @@ inline void assertInvalidArguments(
 #define EXPECT_OK(ret) EXPECT_NO_FATAL_FAILURE(detail::assertOk(ret))
 
 #define ASSERT_INVALID_ARGUMENTS(ret) ASSERT_NO_FATAL_FAILURE(detail::assertInvalidArguments(ret))
+#define EXPECT_INVALID_ARGUMENTS(ret) EXPECT_NO_FATAL_FAILURE(detail::assertInvalidArguments(ret))

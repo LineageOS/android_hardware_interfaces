@@ -186,60 +186,7 @@ TEST_F(AudioPrimaryHidlTest, Init) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-//////////////////////////// {set,get}MasterVolume ///////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-
-class MasterVolumeTest : public AudioPrimaryHidlTest {
-protected:
-    void testSetGetConsistency(float volume, Result expectedSetResult, float expectedGetVolume) {
-        SCOPED_TRACE("Test set/get consistency for " + to_string(volume));
-        auto ret = device->setMasterVolume(volume);
-        ASSERT_TRUE(ret.isOk());
-        ASSERT_EQ(expectedSetResult, ret);
-
-        float observedVolume;
-        ASSERT_OK(device->getMasterVolume(returnIn(res, observedVolume)));
-        ASSERT_OK(res);
-
-        // Check that `get` returned the expected value
-        EXPECT_EQ(expectedGetVolume, observedVolume);
-    }
-};
-
-TEST_F(MasterVolumeTest, MasterVolumeTest) {
-    doc::test("Test the master volume if supported");
-    {
-        SCOPED_TRACE("Check for master volume support");
-        auto ret = device->setMasterVolume(1);
-        ASSERT_TRUE(ret.isOk());
-        if (ret == Result::NOT_SUPPORTED) {
-            doc::partialTest("Master volume is not supported");
-            return;
-        }
-    }
-    // NOTE: this code has never been tested on a platform supporting MasterVolume
-    float lastValidVolumeSet;
-    using Volumes = float[];
-    SCOPED_TRACE("As set/get master volume are supported...");
-    {
-        SCOPED_TRACE("...test them with valid values");
-        for (float validVolume : Volumes{0, 0.5, 1}) {
-            ASSERT_NO_FATAL_FAILURE(testSetGetConsistency(validVolume, Result::OK, validVolume));
-            lastValidVolumeSet = validVolume;
-        }
-    }{
-        SCOPED_TRACE("...test them with tricky values");
-        for (float outOfBoundVolume :Volumes{-0.1, 1.1, NAN, INFINITY, -INFINITY,
-                                             1 + std::numeric_limits<float>::epsilon()}) {
-        ASSERT_NO_FATAL_FAILURE(testSetGetConsistency(outOfBoundVolume,
-                                                      Result::INVALID_ARGUMENTS,
-                                                      lastValidVolumeSet));
-        }
-    }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-////////////////////////// {set,get}{Master,Mic}Mute /////////////////////////
+///////////////////// {set,get}{Master,Mic}{Mute,Volume} /////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
 template <class Property>
@@ -249,14 +196,16 @@ protected:
     /** Test a property getter and setter. */
     template <class Getter, class Setter>
     void testAccessors(const string& propertyName, const vector<Property>& valuesToTest,
-                       Setter setter, Getter getter) {
+                       Setter setter, Getter getter,
+                       const vector<Property>& invalidValues = {}) {
 
         Property initialValue; // Save initial value to restore it at the end of the test
         ASSERT_OK((device.get()->*getter)(returnIn(res, initialValue)));
         ASSERT_OK(res);
 
         for (Property setValue : valuesToTest) {
-            SCOPED_TRACE("Test " + propertyName + " getter and setter for " + testing::PrintToString(setValue));
+            SCOPED_TRACE("Test " + propertyName + " getter and setter for " +
+                         testing::PrintToString(setValue));
             ASSERT_OK((device.get()->*setter)(setValue));
             Property getValue;
             // Make sure the getter returns the same value just set
@@ -265,13 +214,20 @@ protected:
             EXPECT_EQ(setValue, getValue);
         }
 
+        for (Property invalidValue : invalidValues) {
+            SCOPED_TRACE("Try to set " + propertyName + " with the invalid value " +
+                         testing::PrintToString(invalidValue));
+            EXPECT_INVALID_ARGUMENTS((device.get()->*setter)(invalidValue));
+        }
+
         ASSERT_OK((device.get()->*setter)(initialValue)); // restore initial value
     }
 
     /** Test the getter and setter of an optional feature. */
     template <class Getter, class Setter>
     void testOptionalAccessors(const string& propertyName, const vector<Property>& valuesToTest,
-                               Setter setter, Getter getter) {
+                               Setter setter, Getter getter,
+                               const vector<Property>& invalidValues = {}) {
         doc::test("Test the optional " + propertyName + " getters and setter");
         {
             SCOPED_TRACE("Test feature support by calling the getter");
@@ -284,7 +240,7 @@ protected:
             ASSERT_OK(res); // If it is supported it must succeed
         }
         // The feature is supported, test it
-        testAccessors(propertyName, valuesToTest, setter, getter);
+        testAccessors(propertyName, valuesToTest, setter, getter, invalidValues);
     }
 };
 
@@ -301,6 +257,16 @@ TEST_F(BoolAccessorPrimaryHidlTest, MasterMuteTest) {
     testOptionalAccessors("master mute", {true, false, true},
                           &IDevice::setMasterMute, &IDevice::getMasterMute);
     // TODO: check that the master volume is really muted
+}
+
+using FloatAccessorPrimaryHidlTest = AccessorPrimaryHidlTest<float>;
+TEST_F(FloatAccessorPrimaryHidlTest, MasterVolumeTest) {
+    doc::test("Test the master volume if supported");
+    testOptionalAccessors("master volume",  {0, 0.5, 1},
+                          &IDevice::setMasterVolume, &IDevice::getMasterVolume,
+                          {-0.1, 1.1, NAN, INFINITY, -INFINITY,
+                           1 + std::numeric_limits<float>::epsilon()});
+    // TODO: check that the master volume is really changed
 }
 
 //////////////////////////////////////////////////////////////////////////////
