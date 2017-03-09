@@ -102,16 +102,16 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetBaseTest {
 
     // Dummy callback handlers
     Return<void> gnssStatusCb(
-        const IGnssCallback::GnssStatusValue status) override {
+        const IGnssCallback::GnssStatusValue /* status */) override {
       return Void();
     }
     Return<void> gnssSvStatusCb(
-        const IGnssCallback::GnssSvStatus& svStatus) override {
+        const IGnssCallback::GnssSvStatus& /* svStatus */) override {
       return Void();
     }
     Return<void> gnssNmeaCb(
-        int64_t timestamp,
-        const android::hardware::hidl_string& nmea) override {
+        int64_t /* timestamp */,
+        const android::hardware::hidl_string& /* nmea */) override {
       return Void();
     }
     Return<void> gnssAcquireWakelockCb() override { return Void(); }
