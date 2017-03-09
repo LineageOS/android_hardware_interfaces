@@ -465,25 +465,15 @@ TEST_F(AudioPrimaryHidlTest, debugDump) {
     hidl_handle handle;
     handle.setTo(nativeHandle, true /*take ownership*/);
 
-    auto ret = device->debugDump(handle);
-    ASSERT_TRUE(ret.isOk());
-
-    // FIXME: debugDump does not return a Result.
+    // TODO: debugDump does not return a Result.
     // This mean that the hal can not report that it not implementing the function.
-    // As the default hal does not implement debugDump, the function can not be tested.
-    /*
-    res = ret;
-    if (res == Result::NOT_SUPPORTED) {
-         doc::partialTest("debugDump is not implemented");
-         return;
-    }
-    ASSERT_OK(res);
-    rewind(file);
+    ASSERT_OK(device->debugDump(handle));
+
+    rewind(file); // can not fail
 
     // Check that at least one bit was written by the hal
     char buff;
-    ASSERT_EQ(1, fread(&buff, sizeof(buff), 1, file));
-    */
+    ASSERT_EQ(size_t{1}, fread(&buff, sizeof(buff), 1, file));
     EXPECT_EQ(0, fclose(file)) << errno;
 }
 
