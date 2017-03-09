@@ -659,15 +659,10 @@ static void testAccessors(IStream* stream, AudioConfig audioConfig) {
 
     testGetAudioProperties(stream, audioConfig);
 
-    // FIXME: Stream wrapper does not implement getDevice properly.
-    // It needs to call getProperty({"routing"}).
-    // The current implementation segfault with the default hal
-    /*
-     * auto ret = stream->getDevice();
-     * ASSERT_TRUE(ret.isOk());
-     * AudioDevice device = ret;
-     * ASSERT_EQ(AudioDevice::OUT_ALL, device);
-     */
+    auto ret = stream->getDevice();
+    ASSERT_TRUE(ret.isOk());
+    AudioDevice device = ret;
+    ASSERT_EQ(AudioDevice::OUT_DEFAULT, device);
 }
 
 TEST_P(InputStreamTest, GettersTest) {

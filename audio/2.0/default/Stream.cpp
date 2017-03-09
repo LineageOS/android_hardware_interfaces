@@ -189,7 +189,9 @@ Return<Result> Stream::standby()  {
 }
 
 Return<AudioDevice> Stream::getDevice()  {
-    return AudioDevice(mStream->get_device(mStream));
+    int device;
+    Result retval = getParam(AudioParameter::keyRouting, &device);
+    return retval == Result::OK ? static_cast<AudioDevice>(device) : AudioDevice::NONE;
 }
 
 Return<Result> Stream::setDevice(const DeviceAddress& address)  {
