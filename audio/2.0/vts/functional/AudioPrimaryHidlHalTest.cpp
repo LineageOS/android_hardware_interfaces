@@ -618,8 +618,8 @@ static void testGetAudioProperties(IStream* stream, AudioConfig expectedConfig) 
     stream->getAudioProperties(returnIn(sampleRateHz, mask, format));
 
     // FIXME: the qcom hal it does not currently negotiate the sampleRate & channel mask
-    // EXPECT_EQ(expectedConfig.sampleRateHz, sampleRateHz);
-    // EXPECT_EQ(expectedConfig.channelMask, mask);
+    EXPECT_EQ(expectedConfig.sampleRateHz, sampleRateHz);
+    EXPECT_EQ(expectedConfig.channelMask, mask);
     EXPECT_EQ(expectedConfig.format, format);
 }
 
@@ -631,11 +631,11 @@ static void testAccessors(IStream* stream, AudioConfig audioConfig) {
 
     auto sampleRate = extract(stream->getSampleRate());
     // FIXME: the qcom hal it does not currently negotiate the sampleRate
-    // ASSERT_EQ(audioConfig.sampleRateHz, sampleRate);
+    ASSERT_EQ(audioConfig.sampleRateHz, sampleRate);
 
     auto channelMask = extract(stream->getChannelMask());
     // FIXME: the qcom hal it does not currently negotiate the channelMask
-    // ASSERT_EQ(audioConfig.channelMask, channelMask);
+    ASSERT_EQ(audioConfig.channelMask, channelMask);
 
     auto frameSize = extract(stream->getFrameSize());
     ASSERT_GE(frameSize, 0U);
