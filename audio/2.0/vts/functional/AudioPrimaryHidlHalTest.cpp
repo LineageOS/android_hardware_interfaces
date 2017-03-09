@@ -335,6 +335,20 @@ private:
     }
 };
 
+/** Generate a test name based on an audio config.
+ *
+ * As the only parameter changing are channel mask and sample rate,
+ * only print those ones in the test name.
+ */
+static string generateTestName(const testing::TestParamInfo<AudioConfig>& info) {
+    const AudioConfig& config = info.param;
+    return to_string(info.index) + "__" + to_string(config.sampleRateHz)+ "_" +
+            // "MONO" is more clear than "FRONT_LEFT"
+            ((config.channelMask == AudioChannelMask::OUT_MONO ||
+              config.channelMask == AudioChannelMask::IN_MONO) ?
+                    "MONO" : toString(config.channelMask));
+}
+
 //////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// getInputBufferSize /////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -372,10 +386,12 @@ TEST_P(RequiredInputBufferSizeTest, RequiredInputBufferSizeTest) {
 }
 INSTANTIATE_TEST_CASE_P(
         RequiredInputBufferSize, RequiredInputBufferSizeTest,
-        ::testing::ValuesIn(AudioConfigPrimaryTest::getRequiredSupportCaptureAudioConfig()));
+        ::testing::ValuesIn(AudioConfigPrimaryTest::getRequiredSupportCaptureAudioConfig()),
+         &generateTestName);
 INSTANTIATE_TEST_CASE_P(
         SupportedInputBufferSize, RequiredInputBufferSizeTest,
-        ::testing::ValuesIn(AudioConfigPrimaryTest::getSupportedCaptureAudioConfig()));
+        ::testing::ValuesIn(AudioConfigPrimaryTest::getSupportedCaptureAudioConfig()),
+         &generateTestName);
 
 // Test that the recommended capture config are supported or lead to a INVALID_ARGUMENTS return
 class OptionalInputBufferSizeTest : public AudioCaptureConfigPrimaryTest {};
@@ -385,7 +401,8 @@ TEST_P(OptionalInputBufferSizeTest, OptionalInputBufferSizeTest) {
 }
 INSTANTIATE_TEST_CASE_P(
         RecommendedCaptureAudioConfigSupport, OptionalInputBufferSizeTest,
-        ::testing::ValuesIn(AudioConfigPrimaryTest::getRecommendedSupportCaptureAudioConfig()));
+        ::testing::ValuesIn(AudioConfigPrimaryTest::getRecommendedSupportCaptureAudioConfig()),
+         &generateTestName);
 
 //////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// setScreenState ///////////////////////////////
@@ -516,14 +533,17 @@ TEST_P(OutputStreamTest, OpenOutputStreamTest) {
 }
 INSTANTIATE_TEST_CASE_P(
         RequiredOutputStreamConfigSupport, OutputStreamTest,
-        ::testing::ValuesIn(AudioConfigPrimaryTest::getRequiredSupportPlaybackAudioConfig()));
+        ::testing::ValuesIn(AudioConfigPrimaryTest::getRequiredSupportPlaybackAudioConfig()),
+         &generateTestName);
 INSTANTIATE_TEST_CASE_P(
         SupportedOutputStreamConfig, OutputStreamTest,
-        ::testing::ValuesIn(AudioConfigPrimaryTest::getSupportedPlaybackAudioConfig()));
+        ::testing::ValuesIn(AudioConfigPrimaryTest::getSupportedPlaybackAudioConfig()),
+         &generateTestName);
 
 INSTANTIATE_TEST_CASE_P(
         RecommendedOutputStreamConfigSupport, OutputStreamTest,
-        ::testing::ValuesIn(AudioConfigPrimaryTest::getRecommendedSupportPlaybackAudioConfig()));
+        ::testing::ValuesIn(AudioConfigPrimaryTest::getRecommendedSupportPlaybackAudioConfig()),
+         &generateTestName);
 
 ////////////////////////////// openInputStream //////////////////////////////
 
@@ -548,14 +568,17 @@ TEST_P(InputStreamTest, OpenInputStreamTest) {
 }
 INSTANTIATE_TEST_CASE_P(
         RequiredInputStreamConfigSupport, InputStreamTest,
-        ::testing::ValuesIn(AudioConfigPrimaryTest::getRequiredSupportCaptureAudioConfig()));
+        ::testing::ValuesIn(AudioConfigPrimaryTest::getRequiredSupportCaptureAudioConfig()),
+         &generateTestName);
 INSTANTIATE_TEST_CASE_P(
         SupportedInputStreamConfig, InputStreamTest,
-        ::testing::ValuesIn(AudioConfigPrimaryTest::getSupportedCaptureAudioConfig()));
+        ::testing::ValuesIn(AudioConfigPrimaryTest::getSupportedCaptureAudioConfig()),
+         &generateTestName);
 
 INSTANTIATE_TEST_CASE_P(
         RecommendedInputStreamConfigSupport, InputStreamTest,
-        ::testing::ValuesIn(AudioConfigPrimaryTest::getRecommendedSupportCaptureAudioConfig()));
+        ::testing::ValuesIn(AudioConfigPrimaryTest::getRecommendedSupportCaptureAudioConfig()),
+         &generateTestName);
 
 //////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// IStream getters ///////////////////////////////
