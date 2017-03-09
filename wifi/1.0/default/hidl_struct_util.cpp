@@ -987,7 +987,7 @@ bool convertHidlNanPublishRequestToLegacy(
   legacy_request->ranging_cfg.distance_egress_cm = hidl_request.baseConfigs.distanceEgressCm;
   legacy_request->ranging_auto_response = hidl_request.baseConfigs.rangingRequired ?
         legacy_hal::NAN_RANGING_AUTO_RESPONSE_ENABLE : legacy_hal::NAN_RANGING_AUTO_RESPONSE_DISABLE;
-  legacy_request->range_report = legacy_hal::NAN_DISABLE_RANGE_REPORT;
+  legacy_request->sdea_params.range_report = legacy_hal::NAN_DISABLE_RANGE_REPORT;
   legacy_request->publish_type = (legacy_hal::NanPublishType) hidl_request.publishType;
   legacy_request->tx_type = (legacy_hal::NanTxType) hidl_request.txType;
   legacy_request->service_responder_policy = hidl_request.autoAcceptDataPathRequests ?
@@ -1080,7 +1080,7 @@ bool convertHidlNanSubscribeRequestToLegacy(
   legacy_request->ranging_cfg.distance_egress_cm = hidl_request.baseConfigs.distanceEgressCm;
   legacy_request->ranging_auto_response = hidl_request.baseConfigs.rangingRequired ?
         legacy_hal::NAN_RANGING_AUTO_RESPONSE_ENABLE : legacy_hal::NAN_RANGING_AUTO_RESPONSE_DISABLE;
-  legacy_request->range_report = legacy_hal::NAN_DISABLE_RANGE_REPORT;
+  legacy_request->sdea_params.range_report = legacy_hal::NAN_DISABLE_RANGE_REPORT;
   legacy_request->subscribe_type = (legacy_hal::NanSubscribeType) hidl_request.subscribeType;
   legacy_request->serviceResponseFilter = (legacy_hal::NanSRFType) hidl_request.srfType;
   legacy_request->serviceResponseInclude = hidl_request.srfRespondIfInAddressSet ?
