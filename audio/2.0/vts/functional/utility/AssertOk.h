@@ -31,8 +31,20 @@ inline void assertOk(::android::hardware::Return<::android::hardware::audio::V2_
     assertOk(result);
 }
 
+inline void assertInvalidArguments(::android::hardware::audio::V2_0::Result result) {
+    ASSERT_EQ(decltype(result)::INVALID_ARGUMENTS, result);
+}
+
+inline void assertInvalidArguments(
+        ::android::hardware::Return<::android::hardware::audio::V2_0::Result> ret) {
+    ASSERT_TRUE(ret.isOk());
+    ::android::hardware::audio::V2_0::Result result = ret;
+    assertInvalidArguments(result);
+}
 }
 
 // Test anything provided is and contains only OK
 #define ASSERT_OK(ret) ASSERT_NO_FATAL_FAILURE(detail::assertOk(ret))
 #define EXPECT_OK(ret) EXPECT_NO_FATAL_FAILURE(detail::assertOk(ret))
+
+#define ASSERT_INVALID_ARGUMENTS(ret) ASSERT_NO_FATAL_FAILURE(detail::assertInvalidArguments(ret))
