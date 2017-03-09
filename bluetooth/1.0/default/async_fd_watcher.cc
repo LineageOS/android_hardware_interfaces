@@ -159,19 +159,13 @@ void AsyncFdWatcher::ThreadRoutine() {
     }
 
     // Invoke the data ready callbacks if appropriate.
-    std::vector<decltype(watched_fds_)::value_type> saved_callbacks;
     {
+      // Hold the mutex to make sure that the callbacks are still valid.
       std::unique_lock<std::mutex> guard(internal_mutex_);
       for (auto& it : watched_fds_) {
         if (FD_ISSET(it.first, &read_fds)) {
-          saved_callbacks.push_back(it);
-        }
-      }
-    }
-
-    for (auto& it : saved_callbacks) {
-      if (it.second) {
         it.second(it.first);
+        }
       }
     }
   }
