@@ -162,7 +162,7 @@ Return<void> EvsCamera::doneWithFrame(const BufferDesc& buffer)  {
         if (buffer.memHandle == nullptr) {
             ALOGE("ignoring doneWithFrame called with null handle");
         } else if (buffer.bufferId >= mBuffers.size()) {
-            ALOGE("ignoring doneWithFrame called with invalid bufferId %d (max is %lu)",
+            ALOGE("ignoring doneWithFrame called with invalid bufferId %d (max is %zd)",
                   buffer.bufferId, mBuffers.size()-1);
         } else if (!mBuffers[buffer.bufferId].inUse) {
             ALOGE("ignoring doneWithFrame called on frame %d which is already free",
