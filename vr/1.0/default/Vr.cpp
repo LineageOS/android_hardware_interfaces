@@ -43,7 +43,6 @@ Return<void> Vr::setVrMode(bool enabled)  {
 }
 
 IVr* HIDL_FETCH_IVr(const char * /*name*/) {
-    vr_module_t *vr_module;
     const hw_module_t *hw_module = NULL;
 
     int ret = hw_get_module(VR_HARDWARE_MODULE_ID, &hw_module);
