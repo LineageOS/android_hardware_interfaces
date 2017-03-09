@@ -31,18 +31,18 @@ namespace composer {
 namespace V2_1 {
 namespace implementation {
 
-class BufferClone {
+class BufferCacheEntry {
 public:
-    BufferClone();
-    BufferClone(BufferClone&& other);
+    BufferCacheEntry();
+    BufferCacheEntry(BufferCacheEntry&& other);
 
-    BufferClone(const BufferClone& other) = delete;
-    BufferClone& operator=(const BufferClone& other) = delete;
+    BufferCacheEntry(const BufferCacheEntry& other) = delete;
+    BufferCacheEntry& operator=(const BufferCacheEntry& other) = delete;
 
-    BufferClone& operator=(buffer_handle_t handle);
-    ~BufferClone();
+    BufferCacheEntry& operator=(buffer_handle_t handle);
+    ~BufferCacheEntry();
 
-    operator buffer_handle_t() const { return mHandle; }
+    buffer_handle_t getHandle() const { return mHandle; }
 
 private:
     void clear();
@@ -108,15 +108,15 @@ public:
 
 protected:
     struct LayerBuffers {
-        std::vector<BufferClone> Buffers;
-        BufferClone SidebandStream;
+        std::vector<BufferCacheEntry> Buffers;
+        BufferCacheEntry SidebandStream;
     };
 
     struct DisplayData {
         bool IsVirtual;
 
-        std::vector<BufferClone> ClientTargets;
-        std::vector<BufferClone> OutputBuffers;
+        std::vector<BufferCacheEntry> ClientTargets;
+        std::vector<BufferCacheEntry> OutputBuffers;
 
         std::unordered_map<Layer, LayerBuffers> Layers;
 
@@ -167,12 +167,23 @@ protected:
             LAYER_BUFFERS,
             LAYER_SIDEBAND_STREAMS,
         };
+        Error lookupBufferCacheEntryLocked(BufferCache cache, uint32_t slot,
+                BufferCacheEntry** outEntry);
         Error lookupBuffer(BufferCache cache, uint32_t slot,
-                bool useCache, buffer_handle_t& handle);
+                bool useCache, buffer_handle_t handle,
+                buffer_handle_t* outHandle);
+        void updateBuffer(BufferCache cache, uint32_t slot,
+                bool useCache, buffer_handle_t handle);
 
-        Error lookupLayerSidebandStream(buffer_handle_t& handle)
+        Error lookupLayerSidebandStream(buffer_handle_t handle,
+                buffer_handle_t* outHandle)
         {
             return lookupBuffer(BufferCache::LAYER_SIDEBAND_STREAMS,
+                    0, false, handle, outHandle);
+        }
+        void updateLayerSidebandStream(buffer_handle_t handle)
+        {
+            updateBuffer(BufferCache::LAYER_SIDEBAND_STREAMS,
                     0, false, handle);
         }
 

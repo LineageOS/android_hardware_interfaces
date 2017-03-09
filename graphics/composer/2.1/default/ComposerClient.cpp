@@ -193,30 +193,30 @@ HandleImporter sHandleImporter;
 
 } // anonymous namespace
 
-BufferClone::BufferClone()
+BufferCacheEntry::BufferCacheEntry()
     : mHandle(nullptr)
 {
 }
 
-BufferClone::BufferClone(BufferClone&& other)
+BufferCacheEntry::BufferCacheEntry(BufferCacheEntry&& other)
 {
     mHandle = other.mHandle;
     other.mHandle = nullptr;
 }
 
-BufferClone& BufferClone::operator=(buffer_handle_t handle)
+BufferCacheEntry& BufferCacheEntry::operator=(buffer_handle_t handle)
 {
     clear();
     mHandle = handle;
     return *this;
 }
 
-BufferClone::~BufferClone()
+BufferCacheEntry::~BufferCacheEntry()
 {
     clear();
 }
 
-void BufferClone::clear()
+void BufferCacheEntry::clear()
 {
     if (mHandle) {
         sHandleImporter.freeBuffer(mHandle);
@@ -706,10 +706,13 @@ bool ComposerClient::CommandReader::parseSetClientTarget(uint16_t length)
     auto damage = readRegion((length - 4) / 4);
 
     auto err = lookupBuffer(BufferCache::CLIENT_TARGETS,
-            slot, useCache, clientTarget);
+            slot, useCache, clientTarget, &clientTarget);
     if (err == Error::NONE) {
         err = mHal.setClientTarget(mDisplay, clientTarget, fence,
                 dataspace, damage);
+
+        updateBuffer(BufferCache::CLIENT_TARGETS, slot, useCache,
+                clientTarget);
     }
     if (err != Error::NONE) {
         close(fence);
@@ -731,9 +734,12 @@ bool ComposerClient::CommandReader::parseSetOutputBuffer(uint16_t length)
     auto fence = readFence();
 
     auto err = lookupBuffer(BufferCache::OUTPUT_BUFFERS,
-            slot, useCache, outputBuffer);
+            slot, useCache, outputBuffer, &outputBuffer);
     if (err == Error::NONE) {
         err = mHal.setOutputBuffer(mDisplay, outputBuffer, fence);
+
+        updateBuffer(BufferCache::OUTPUT_BUFFERS,
+            slot, useCache, outputBuffer);
     }
     if (err != Error::NONE) {
         close(fence);
@@ -831,9 +837,12 @@ bool ComposerClient::CommandReader::parseSetLayerBuffer(uint16_t length)
     auto fence = readFence();
 
     auto err = lookupBuffer(BufferCache::LAYER_BUFFERS,
-            slot, useCache, buffer);
+            slot, useCache, buffer, &buffer);
     if (err == Error::NONE) {
         err = mHal.setLayerBuffer(mDisplay, mLayer, buffer, fence);
+
+        updateBuffer(BufferCache::LAYER_BUFFERS,
+            slot, useCache, buffer);
     }
     if (err != Error::NONE) {
         close(fence);
@@ -952,9 +961,11 @@ bool ComposerClient::CommandReader::parseSetLayerSidebandStream(uint16_t length)
 
     auto stream = readHandle();
 
-    auto err = lookupLayerSidebandStream(stream);
+    auto err = lookupLayerSidebandStream(stream, &stream);
     if (err == Error::NONE) {
         err = mHal.setLayerSidebandStream(mDisplay, mLayer, stream);
+
+        updateLayerSidebandStream(stream);
     }
     if (err != Error::NONE) {
         mWriter.setError(getCommandLoc(), err);
@@ -1053,26 +1064,24 @@ hwc_frect_t ComposerClient::CommandReader::readFRect()
     };
 }
 
-Error ComposerClient::CommandReader::lookupBuffer(BufferCache cache,
-        uint32_t slot, bool useCache, buffer_handle_t& handle)
+Error ComposerClient::CommandReader::lookupBufferCacheEntryLocked(
+        BufferCache cache, uint32_t slot, BufferCacheEntry** outEntry)
 {
-    std::lock_guard<std::mutex> lock(mClient.mDisplayDataMutex);
-
     auto dpy = mClient.mDisplayData.find(mDisplay);
     if (dpy == mClient.mDisplayData.end()) {
         return Error::BAD_DISPLAY;
     }
 
-    BufferClone* clone = nullptr;
+    BufferCacheEntry* entry = nullptr;
     switch (cache) {
     case BufferCache::CLIENT_TARGETS:
         if (slot < dpy->second.ClientTargets.size()) {
-            clone = &dpy->second.ClientTargets[slot];
+            entry = &dpy->second.ClientTargets[slot];
         }
         break;
     case BufferCache::OUTPUT_BUFFERS:
         if (slot < dpy->second.OutputBuffers.size()) {
-            clone = &dpy->second.OutputBuffers[slot];
+            entry = &dpy->second.OutputBuffers[slot];
         }
         break;
     case BufferCache::LAYER_BUFFERS:
@@ -1082,7 +1091,7 @@ Error ComposerClient::CommandReader::lookupBuffer(BufferCache cache,
                 return Error::BAD_LAYER;
             }
             if (slot < ly->second.Buffers.size()) {
-                clone = &ly->second.Buffers[slot];
+                entry = &ly->second.Buffers[slot];
             }
         }
         break;
@@ -1093,7 +1102,7 @@ Error ComposerClient::CommandReader::lookupBuffer(BufferCache cache,
                 return Error::BAD_LAYER;
             }
             if (slot == 0) {
-                clone = &ly->second.SidebandStream;
+                entry = &ly->second.SidebandStream;
             }
         }
         break;
@@ -1101,23 +1110,57 @@ Error ComposerClient::CommandReader::lookupBuffer(BufferCache cache,
         break;
     }
 
-    if (!clone) {
-        ALOGW("invalid buffer slot");
+    if (!entry) {
+        ALOGW("invalid buffer slot %" PRIu32, slot);
         return Error::BAD_PARAMETER;
     }
 
-    // use or update cache
+    *outEntry = entry;
+
+    return Error::NONE;
+}
+
+Error ComposerClient::CommandReader::lookupBuffer(BufferCache cache,
+        uint32_t slot, bool useCache, buffer_handle_t handle,
+        buffer_handle_t* outHandle)
+{
     if (useCache) {
-        handle = *clone;
+        std::lock_guard<std::mutex> lock(mClient.mDisplayDataMutex);
+
+        BufferCacheEntry* entry;
+        Error error = lookupBufferCacheEntryLocked(cache, slot, &entry);
+        if (error != Error::NONE) {
+            return error;
+        }
+
+        // input handle is ignored
+        *outHandle = entry->getHandle();
     } else {
         if (!sHandleImporter.importBuffer(handle)) {
             return Error::NO_RESOURCES;
         }
 
-        *clone = handle;
+        *outHandle = handle;
     }
 
     return Error::NONE;
+}
+
+void ComposerClient::CommandReader::updateBuffer(BufferCache cache,
+        uint32_t slot, bool useCache, buffer_handle_t handle)
+{
+    // handle was looked up from cache
+    if (useCache) {
+        return;
+    }
+
+    std::lock_guard<std::mutex> lock(mClient.mDisplayDataMutex);
+
+    BufferCacheEntry* entry = nullptr;
+    lookupBufferCacheEntryLocked(cache, slot, &entry);
+    LOG_FATAL_IF(!entry, "failed to find the cache entry to update");
+
+    *entry = handle;
 }
 
 } // namespace implementation
