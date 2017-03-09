@@ -437,7 +437,6 @@ void CameraDeviceSession::sProcessCaptureResult(
     bool hasInputBuf = (hal_result->input_buffer != nullptr);
     size_t numOutputBufs = hal_result->num_output_buffers;
     size_t numBufs = numOutputBufs + (hasInputBuf ? 1 : 0);
-    Status status = Status::OK;
     {
         Mutex::Autolock _l(d->mInflightLock);
         if (hasInputBuf) {
