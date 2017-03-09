@@ -310,7 +310,6 @@ TEST_F(SoundTriggerHidlTest, StopRecognitionNoAStartFail) {
  */
 TEST_F(SoundTriggerHidlTest, stopAllRecognitions) {
     Return<int32_t> hidlReturn(0);
-    SoundModelHandle handle = 0;
 
     hidlReturn = mSoundTriggerHal->stopAllRecognitions();
 
