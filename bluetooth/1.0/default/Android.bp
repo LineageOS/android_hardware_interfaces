@@ -15,6 +15,7 @@
 
 cc_library_shared {
     name: "android.hardware.bluetooth@1.0-impl",
+    defaults: ["hidl_defaults"],
     proprietary: true,
     relative_install_path: "hw",
     srcs: [
@@ -40,6 +41,7 @@ cc_library_shared {
 
 cc_library_static {
     name: "android.hardware.bluetooth-async",
+    defaults: ["hidl_defaults"],
     srcs: [
         "async_fd_watcher.cc",
     ],
@@ -54,6 +56,7 @@ cc_library_static {
 
 cc_library_static {
     name: "android.hardware.bluetooth-hci",
+    defaults: ["hidl_defaults"],
     srcs: [
         "hci_packetizer.cc",
         "hci_protocol.cc",
@@ -72,6 +75,7 @@ cc_library_static {
 
 cc_test {
     name: "bluetooth-vendor-interface-unit-tests",
+    defaults: ["hidl_defaults"],
     srcs: [
         "test/async_fd_watcher_unittest.cc",
         "test/h4_protocol_unittest.cc",
@@ -94,6 +98,7 @@ cc_test {
 
 cc_test_host {
     name: "bluetooth-address-unit-tests",
+    defaults: ["hidl_defaults"],
     srcs: [
         "bluetooth_address.cc",
         "test/bluetooth_address_test.cc",
