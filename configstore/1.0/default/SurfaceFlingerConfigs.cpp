@@ -49,6 +49,26 @@ Return<void> SurfaceFlingerConfigs::useContextPriority(useContextPriority_cb _hi
     return Void();
 }
 
+Return<void> SurfaceFlingerConfigs::hasWideColorDisplay(hasWideColorDisplay_cb _hidl_cb) {
+    bool value = false;
+#ifdef HAS_WIDE_COLOR_DISPLAY
+    value = true;
+#endif
+    _hidl_cb({true, value});
+    LOG(INFO) << "SurfaceFlinger Display: " << (value ? "Wide Color" : "Standard Color");
+    return Void();
+}
+
+Return<void> SurfaceFlingerConfigs::hasHDRDisplay(hasHDRDisplay_cb _hidl_cb) {
+    bool value = false;
+#ifdef HAS_HDR_DISPLAY
+    value = true;
+#endif
+    _hidl_cb({true, value});
+    LOG(INFO) << "SurfaceFlinger Display: " << (value ? "HDR" : "SDR");
+    return Void();
+}
+
 // Methods from ::android::hidl::base::V1_0::IBase follow.
 
 ISurfaceFlingerConfigs* HIDL_FETCH_ISurfaceFlingerConfigs(const char* /* name */) {

@@ -47,4 +47,27 @@ interface ISurfaceFlingerConfigs {
      * availabe.
      */
     useContextPriority() generates(OptionalBool value);
+
+    /*
+     * hasWideColorDisplay indicates that the device has
+     * or can support a wide-color display, e.g. color space
+     * greater than sRGB. Typical display may have same
+     * color primaries as DCI-P3.
+     * Indicate support for this feature by setting
+     * TARGET_HAS_WIDE_COLOR_DISPLAY to true in BoardConfig.mk
+     * This also means that the device is color managed.
+     * A color managed device will use the appropriate
+     * display mode depending on the content on the screen.
+     * Default is sRGB.
+     */
+    hasWideColorDisplay() generates (OptionalBool value);
+
+    /*
+     * hwHdrDisplay indicates that the device has
+     * or can support an HDR (High Dynamic Range) display.
+     * Typically an HDR display is also wide-color.
+     * Indicate support for this feature by setting
+     * TARGET_HAS_HDR_DISPLAY to true in BoardConfig.mk
+     */
+    hasHDRDisplay() generates (OptionalBool value);
 };
