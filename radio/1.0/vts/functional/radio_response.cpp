@@ -77,11 +77,15 @@ Return<void> RadioResponse::supplyNetworkDepersonalizationResponse(
 }
 
 Return<void> RadioResponse::getCurrentCallsResponse(
-        const RadioResponseInfo& /*info*/, const ::android::hardware::hidl_vec<Call>& /*calls*/) {
+        const RadioResponseInfo& info, const ::android::hardware::hidl_vec<Call>& /*calls*/) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
-Return<void> RadioResponse::dialResponse(const RadioResponseInfo& /*info*/) {
+Return<void> RadioResponse::dialResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
@@ -94,37 +98,51 @@ Return<void> RadioResponse::getIMSIForAppResponse(
 }
 
 Return<void> RadioResponse::hangupConnectionResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
 Return<void> RadioResponse::hangupWaitingOrBackgroundResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
 Return<void> RadioResponse::hangupForegroundResumeBackgroundResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
 Return<void> RadioResponse::switchWaitingOrHoldingAndActiveResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
 Return<void> RadioResponse::conferenceResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
 Return<void> RadioResponse::rejectCallResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
 Return<void> RadioResponse::getLastCallFailCauseResponse(
-        const RadioResponseInfo& /*info*/, const LastCallFailCauseInfo& /*failCauseInfo*/) {
+        const RadioResponseInfo& info, const LastCallFailCauseInfo& /*failCauseInfo*/) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
@@ -154,7 +172,9 @@ Return<void> RadioResponse::setRadioPowerResponse(const RadioResponseInfo& /*inf
     return Void();
 }
 
-Return<void> RadioResponse::sendDtmfResponse(const RadioResponseInfo& /*info*/) {
+Return<void> RadioResponse::sendDtmfResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
@@ -187,11 +207,15 @@ Return<void> RadioResponse::iccIOForAppResponse(
     return Void();
 }
 
-Return<void> RadioResponse::sendUssdResponse(const RadioResponseInfo& /*info*/) {
+Return<void> RadioResponse::sendUssdResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
-Return<void> RadioResponse::cancelPendingUssdResponse(const RadioResponseInfo& /*info*/) {
+Return<void> RadioResponse::cancelPendingUssdResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
@@ -205,21 +229,29 @@ Return<void> RadioResponse::setClirResponse(const RadioResponseInfo& /*info*/) {
 }
 
 Return<void> RadioResponse::getCallForwardStatusResponse(
-        const RadioResponseInfo& /*info*/, const ::android::hardware::hidl_vec<CallForwardInfo>&
+        const RadioResponseInfo& info, const ::android::hardware::hidl_vec<CallForwardInfo>&
         /*callForwardInfos*/) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
-Return<void> RadioResponse::setCallForwardResponse(const RadioResponseInfo& /*info*/) {
+Return<void> RadioResponse::setCallForwardResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
 Return<void> RadioResponse::getCallWaitingResponse(
-        const RadioResponseInfo& /*info*/, bool /*enable*/, int32_t /*serviceClass*/) {
+        const RadioResponseInfo& info, bool /*enable*/, int32_t /*serviceClass*/) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
-Return<void> RadioResponse::setCallWaitingResponse(const RadioResponseInfo& /*info*/) {
+Return<void> RadioResponse::setCallWaitingResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
@@ -229,7 +261,9 @@ Return<void> RadioResponse::acknowledgeLastIncomingGsmSmsResponse(const RadioRes
     return Void();
 }
 
-Return<void> RadioResponse::acceptCallResponse(const RadioResponseInfo& /*info*/) {
+Return<void> RadioResponse::acceptCallResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
@@ -273,12 +307,16 @@ Return<void> RadioResponse::getAvailableNetworksResponse(
 }
 
 Return<void> RadioResponse::startDtmfResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
 Return<void> RadioResponse::stopDtmfResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
@@ -287,15 +325,21 @@ Return<void> RadioResponse::getBasebandVersionResponse(
     return Void();
 }
 
-Return<void> RadioResponse::separateConnectionResponse(const RadioResponseInfo& /*info*/) {
+Return<void> RadioResponse::separateConnectionResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
-Return<void> RadioResponse::setMuteResponse(const RadioResponseInfo& /*info*/) {
+Return<void> RadioResponse::setMuteResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
-Return<void> RadioResponse::getMuteResponse(const RadioResponseInfo& /*info*/, bool /*enable*/) {
+Return<void> RadioResponse::getMuteResponse(const RadioResponseInfo& info, bool /*enable*/) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
@@ -366,7 +410,9 @@ Return<void> RadioResponse::handleStkCallSetupRequestFromSimResponse(
     return Void();
 }
 
-Return<void> RadioResponse::explicitCallTransferResponse(const RadioResponseInfo& /*info*/) {
+Return<void> RadioResponse::explicitCallTransferResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
@@ -425,7 +471,9 @@ Return<void> RadioResponse::sendCDMAFeatureCodeResponse(const RadioResponseInfo&
     return Void();
 }
 
-Return<void> RadioResponse::sendBurstDtmfResponse(const RadioResponseInfo& /*info*/) {
+Return<void> RadioResponse::sendBurstDtmfResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 

@@ -29,6 +29,7 @@
 using ::android::hardware::radio::V1_0::ActivityStatsInfo;
 using ::android::hardware::radio::V1_0::AppType;
 using ::android::hardware::radio::V1_0::CardStatus;
+using ::android::hardware::radio::V1_0::CardState;
 using ::android::hardware::radio::V1_0::Call;
 using ::android::hardware::radio::V1_0::CallForwardInfo;
 using ::android::hardware::radio::V1_0::CarrierRestrictions;
@@ -38,6 +39,7 @@ using ::android::hardware::radio::V1_0::CdmaSubscriptionSource;
 using ::android::hardware::radio::V1_0::CellInfo;
 using ::android::hardware::radio::V1_0::ClipStatus;
 using ::android::hardware::radio::V1_0::DataRegStateResult;
+using ::android::hardware::radio::V1_0::Dial;
 using ::android::hardware::radio::V1_0::GsmBroadcastSmsConfigInfo;
 using ::android::hardware::radio::V1_0::HardwareConfig;
 using ::android::hardware::radio::V1_0::IccIo;
