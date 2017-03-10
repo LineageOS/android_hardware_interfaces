@@ -15,7 +15,7 @@
  */
 
 #include <android-base/logging.h>
-#include <VtsHalHidlTargetBaseTest.h>
+#include <VtsHalHidlTargetTestBase.h>
 
 #include <hidl/HidlTransportSupport.h>
 #include <android/hidl/manager/1.0/IServiceManager.h>
