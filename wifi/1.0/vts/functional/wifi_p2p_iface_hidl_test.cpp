@@ -18,7 +18,7 @@
 
 #include <android/hardware/wifi/1.0/IWifiP2pIface.h>
 
-#include <VtsHalHidlTargetBaseTest.h>
+#include <VtsHalHidlTargetTestBase.h>
 
 #include "wifi_hidl_test_utils.h"
 
@@ -28,7 +28,7 @@ using ::android::sp;
 /**
  * Fixture to use for all P2P Iface HIDL interface tests.
  */
-class WifiP2pIfaceHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
+class WifiP2pIfaceHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    public:
     virtual void SetUp() override {}
 

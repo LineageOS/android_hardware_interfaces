@@ -17,7 +17,7 @@
 #include<radio_hidl_hal_utils.h>
 
 void RadioHidlTest::SetUp() {
-    radio = ::testing::VtsHalHidlTargetBaseTest::getService<IRadio>(hidl_string("rild"));
+    radio = ::testing::VtsHalHidlTargetTestBase::getService<IRadio>(hidl_string("rild"));
     ASSERT_NE(radio, nullptr);
 
     radioRsp = new RadioResponse(*this);
