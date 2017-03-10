@@ -14,17 +14,32 @@
 // limitations under the License.
 //
 
+cc_library_static {
+    name: "VtsHalWifiV1_0TargetTestUtil",
+    srcs: [
+        "VtsHalWifiV1_0TargetTest.cpp",
+        "wifi_hidl_call_util_selftest.cpp",
+        "wifi_hidl_test.cpp",
+        "wifi_hidl_test_utils.cpp"],
+    shared_libs: [
+        "libbase",
+        "liblog",
+        "libcutils",
+        "libhidlbase",
+        "libhidltransport",
+        "libnativehelper",
+        "libutils",
+        "android.hardware.wifi@1.0",
+    ],
+    static_libs: ["VtsHalHidlTargetTestBase"],
+}
+
 cc_test {
     name: "VtsHalWifiV1_0TargetTest",
     defaults: ["hidl_defaults"],
     srcs: [
-        "VtsHalWifiV1_0TargetTest.cpp",
         "wifi_ap_iface_hidl_test.cpp",
         "wifi_chip_hidl_test.cpp",
-        "wifi_hidl_call_util_selftest.cpp",
-        "wifi_hidl_test.cpp",
-        "wifi_hidl_test_utils.cpp",
-        "wifi_nan_iface_hidl_test.cpp",
         "wifi_p2p_iface_hidl_test.cpp",
         "wifi_rtt_controller_hidl_test.cpp",
         "wifi_sta_iface_hidl_test.cpp"],
@@ -38,7 +53,28 @@ cc_test {
         "libutils",
         "android.hardware.wifi@1.0",
     ],
-    static_libs: ["VtsHalHidlTargetTestBase"],
+    static_libs: ["VtsHalWifiV1_0TargetTestUtil", "VtsHalHidlTargetTestBase"],
+    cflags: [
+        "-O0",
+        "-g",
+    ],
+}
+
+cc_test {
+    name: "VtsHalWifiNanV1_0TargetTest",
+    defaults: ["hidl_defaults"],
+    srcs: ["wifi_nan_iface_hidl_test.cpp"],
+    shared_libs: [
+        "libbase",
+        "liblog",
+        "libcutils",
+        "libhidlbase",
+        "libhidltransport",
+        "libnativehelper",
+        "libutils",
+        "android.hardware.wifi@1.0",
+    ],
+    static_libs: ["VtsHalWifiV1_0TargetTestUtil", "VtsHalHidlTargetTestBase"],
     cflags: [
         "-O0",
         "-g",
