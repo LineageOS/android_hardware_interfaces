@@ -26,7 +26,6 @@ struct SurfaceFlingerConfigs : public ISurfaceFlingerConfigs {
     // Methods from ::android::hardware::configstore::V1_0::ISurfaceFlingerConfigs follow.
     Return<void> vsyncEventPhaseOffsetNs(vsyncEventPhaseOffsetNs_cb _hidl_cb) override;
     Return<void> vsyncSfEventPhaseOffsetNs(vsyncEventPhaseOffsetNs_cb _hidl_cb) override;
-    Return<void> useTripleFramebuffer(useTripleFramebuffer_cb _hidl_cb) override;
     Return<void> useContextPriority(useContextPriority_cb _hidl_cb) override;
     Return<void> hasWideColorDisplay(hasWideColorDisplay_cb _hidl_cb) override;
     Return<void> hasHDRDisplay(hasHDRDisplay_cb _hidl_cb) override;
@@ -35,6 +34,7 @@ struct SurfaceFlingerConfigs : public ISurfaceFlingerConfigs {
     Return<void> maxVirtualDisplaySize(maxVirtualDisplaySize_cb _hidl_cb) override;
     Return<void> hasSyncFramework(hasSyncFramework_cb _hidl_cb) override;
     Return<void> useVrFlinger(useVrFlinger_cb _hidl_cb) override;
+    Return<void> maxFrameBufferAcquiredBuffers(maxFrameBufferAcquiredBuffers_cb _hidl_cb) override;
 
     // Methods from ::android::hidl::base::V1_0::IBase follow.
 
