@@ -25,6 +25,7 @@ using ::android::sp;
 struct SurfaceFlingerConfigs : public ISurfaceFlingerConfigs {
     // Methods from ::android::hardware::configstore::V1_0::ISurfaceFlingerConfigs follow.
     Return<void> vsyncEventPhaseOffsetNs(vsyncEventPhaseOffsetNs_cb _hidl_cb) override;
+    Return<void> vsyncSfEventPhaseOffsetNs(vsyncEventPhaseOffsetNs_cb _hidl_cb) override;
     Return<void> useTripleFramebuffer(useTripleFramebuffer_cb _hidl_cb) override;
 
     // Methods from ::android::hidl::base::V1_0::IBase follow.

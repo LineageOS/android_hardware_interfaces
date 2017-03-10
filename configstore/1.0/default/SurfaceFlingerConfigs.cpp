@@ -19,6 +19,16 @@ Return<void> SurfaceFlingerConfigs::vsyncEventPhaseOffsetNs(vsyncEventPhaseOffse
     return Void();
 }
 
+Return<void> SurfaceFlingerConfigs::vsyncSfEventPhaseOffsetNs(vsyncEventPhaseOffsetNs_cb _hidl_cb) {
+#ifdef SF_VSYNC_EVENT_PHASE_OFFSET_NS
+    _hidl_cb({true, SF_VSYNC_EVENT_PHASE_OFFSET_NS});
+    LOG(INFO) << "sfvsync event phase offset ns =  " << SF_VSYNC_EVENT_PHASE_OFFSET_NS;
+#else
+    _hidl_cb({false, 0});
+#endif
+    return Void();
+}
+
 Return<void> SurfaceFlingerConfigs::useTripleFramebuffer(useTripleFramebuffer_cb _hidl_cb) {
     bool value = false;
 #ifdef USE_TRIPLE_FRAMEBUFFER
