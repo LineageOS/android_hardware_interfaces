@@ -165,8 +165,9 @@ Return<void> Sensors::poll(int32_t maxCount, poll_cb _hidl_cb) {
         if(!lock.owns_lock()){
             // cannot get the lock, hidl service will go into deadlock if it is not restarted.
             // This is guaranteed to not trigger in passthrough mode.
-            LOG(FATAL) <<
+            LOG(ERROR) <<
                     "ISensors::poll() re-entry. I do not know what to do except killing myself.";
+            ::exit(-1);
         }
 
         if (maxCount <= 0) {
