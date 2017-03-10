@@ -1541,6 +1541,119 @@ TEST_F(CameraHidlTest, sendCommandSmoothZoom) {
     }
 }
 
+// Basic sanity tests related to camera parameters.
+TEST_F(CameraHidlTest, getSetParameters) {
+    CameraHidlEnvironment* env = CameraHidlEnvironment::Instance();
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
+
+    for (const auto& name : cameraDeviceNames) {
+        if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
+            sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
+            openCameraDevice(name, env, &device1 /*out*/);
+            ASSERT_NE(nullptr, device1.get());
+
+            ::android::CameraParameters cameraParams;
+            device1->getParameters([&] (const ::android::hardware::hidl_string& params) {
+                ASSERT_FALSE(params.empty());
+                ::android::String8 paramString(params.c_str());
+                cameraParams.unflatten(paramString);
+            });
+
+            int32_t width, height;
+            cameraParams.getPictureSize(&width, &height);
+            ASSERT_TRUE((0 < width) && (0 < height));
+            cameraParams.getPreviewSize(&width, &height);
+            ASSERT_TRUE((0 < width) && (0 < height));
+            int32_t minFps, maxFps;
+            cameraParams.getPreviewFpsRange(&minFps, &maxFps);
+            ASSERT_TRUE((0 < minFps) && (0 < maxFps));
+            ASSERT_NE(nullptr, cameraParams.getPreviewFormat());
+            ASSERT_NE(nullptr, cameraParams.getPictureFormat());
+            ASSERT_TRUE(strcmp(CameraParameters::PIXEL_FORMAT_JPEG,
+                    cameraParams.getPictureFormat()) == 0);
+
+            const char *flashMode = cameraParams.get(
+                    CameraParameters::KEY_FLASH_MODE);
+            ASSERT_TRUE((nullptr == flashMode) || (strcmp(
+                    CameraParameters::FLASH_MODE_OFF, flashMode) == 0));
+
+            const char *wbMode = cameraParams.get(
+                    CameraParameters::KEY_WHITE_BALANCE);
+            ASSERT_TRUE((nullptr == wbMode) || (strcmp(
+                    CameraParameters::WHITE_BALANCE_AUTO, wbMode) == 0));
+
+            const char *effect = cameraParams.get(CameraParameters::KEY_EFFECT);
+            ASSERT_TRUE((nullptr == effect) || (strcmp(
+                    CameraParameters::EFFECT_NONE, effect) == 0));
+
+            ::android::Vector<::android::Size> previewSizes;
+            cameraParams.getSupportedPreviewSizes(previewSizes);
+            ASSERT_FALSE(previewSizes.empty());
+            ::android::Vector<::android::Size> pictureSizes;
+            cameraParams.getSupportedPictureSizes(pictureSizes);
+            ASSERT_FALSE(pictureSizes.empty());
+            const char *previewFormats = cameraParams.get(
+                    CameraParameters::KEY_SUPPORTED_PREVIEW_FORMATS);
+            ASSERT_NE(nullptr, previewFormats);
+            ::android::String8 previewFormatsString(previewFormats);
+            ASSERT_TRUE(previewFormatsString.contains(
+                    CameraParameters::PIXEL_FORMAT_YUV420SP));
+            ASSERT_NE(nullptr, cameraParams.get(
+                    CameraParameters::KEY_SUPPORTED_PICTURE_FORMATS));
+            ASSERT_NE(nullptr, cameraParams.get(
+                    CameraParameters::KEY_SUPPORTED_PREVIEW_FRAME_RATES));
+            const char *focusModes = cameraParams.get(
+                    CameraParameters::KEY_SUPPORTED_FOCUS_MODES);
+            ASSERT_NE(nullptr, focusModes);
+            ::android::String8 focusModesString(focusModes);
+            const char *focusMode = cameraParams.get(
+                    CameraParameters::KEY_FOCUS_MODE);
+            ASSERT_NE(nullptr, focusMode);
+            // Auto focus mode should be default
+            if (focusModesString.contains(CameraParameters::FOCUS_MODE_AUTO)) {
+                ASSERT_TRUE(strcmp(
+                        CameraParameters::FOCUS_MODE_AUTO, focusMode) == 0);
+            }
+            ASSERT_TRUE(0 < cameraParams.getInt(
+                    CameraParameters::KEY_FOCAL_LENGTH));
+            int32_t horizontalViewAngle = cameraParams.getInt(
+                    CameraParameters::KEY_HORIZONTAL_VIEW_ANGLE);
+            ASSERT_TRUE((0 < horizontalViewAngle) && (360 >= horizontalViewAngle));
+            int32_t verticalViewAngle = cameraParams.getInt(
+                    CameraParameters::KEY_VERTICAL_VIEW_ANGLE);
+            ASSERT_TRUE((0 < verticalViewAngle) && (360 >= verticalViewAngle));
+            int32_t jpegQuality = cameraParams.getInt(
+                    CameraParameters::KEY_JPEG_QUALITY);
+            ASSERT_TRUE((1 <= jpegQuality) && (100 >= jpegQuality));
+            int32_t jpegThumbQuality = cameraParams.getInt(
+                    CameraParameters::KEY_JPEG_THUMBNAIL_QUALITY);
+            ASSERT_TRUE((1 <= jpegThumbQuality) && (100 >= jpegThumbQuality));
+
+            cameraParams.setPictureSize(pictureSizes[0].width,
+                    pictureSizes[0].height);
+            cameraParams.setPreviewSize(previewSizes[0].width,
+                    previewSizes[0].height);
+
+            ASSERT_EQ(Status::OK, device1->setParameters(
+                    cameraParams.flatten().string()));
+            device1->getParameters([&] (const ::android::hardware::hidl_string& params) {
+                ASSERT_FALSE(params.empty());
+                ::android::String8 paramString(params.c_str());
+                cameraParams.unflatten(paramString);
+            });
+
+            cameraParams.getPictureSize(&width, &height);
+            ASSERT_TRUE((pictureSizes[0].width == width) &&
+                    (pictureSizes[0].height == height));
+            cameraParams.getPreviewSize(&width, &height);
+            ASSERT_TRUE((previewSizes[0].width == width) &&
+                    (previewSizes[0].height == height));
+
+            device1->close();
+        }
+    }
+}
+
 // Verify that the static camera characteristics can be retrieved
 // successfully.
 TEST_F(CameraHidlTest, getCameraCharacteristics) {
