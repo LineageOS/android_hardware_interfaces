@@ -59,6 +59,8 @@ void onAsyncStopComplete(wifi_handle handle) {
   const auto lock = hidl_sync_util::acquireGlobalLock();
   if (on_stop_complete_internal_callback) {
     on_stop_complete_internal_callback(handle);
+    // Invalidate this callback since we don't want this firing again.
+    on_stop_complete_internal_callback = nullptr;
   }
 }
 
@@ -1261,7 +1263,6 @@ WifiLegacyHal::getGscanCachedResults() {
 void WifiLegacyHal::invalidate() {
   global_handle_ = nullptr;
   wlan_interface_handle_ = nullptr;
-  on_stop_complete_internal_callback = nullptr;
   on_driver_memory_dump_internal_callback = nullptr;
   on_firmware_memory_dump_internal_callback = nullptr;
   on_gscan_event_internal_callback = nullptr;
