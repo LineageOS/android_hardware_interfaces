@@ -273,9 +273,6 @@ void VendorInterface::Close() {
   if (lib_interface_ != nullptr) {
     bt_vendor_lpm_mode_t mode = BT_VND_LPM_DISABLE;
     lib_interface_->op(BT_VND_OP_LPM_SET_MODE, &mode);
-
-    int power_state = BT_VND_PWR_OFF;
-    lib_interface_->op(BT_VND_OP_POWER_CTRL, &power_state);
   }
 
   fd_watcher_.StopWatchingFileDescriptors();
@@ -287,6 +284,9 @@ void VendorInterface::Close() {
 
   if (lib_interface_ != nullptr) {
     lib_interface_->op(BT_VND_OP_USERIAL_CLOSE, nullptr);
+
+    int power_state = BT_VND_PWR_OFF;
+    lib_interface_->op(BT_VND_OP_POWER_CTRL, &power_state);
   }
 
   if (lib_handle_ != nullptr) {
