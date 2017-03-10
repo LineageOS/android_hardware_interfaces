@@ -32,6 +32,7 @@
 
 #include <android/hardware/audio/2.0/IDevice.h>
 #include <android/hardware/audio/2.0/IDevicesFactory.h>
+#include <android/hardware/audio/2.0/IPrimaryDevice.h>
 #include <android/hardware/audio/2.0/types.h>
 #include <android/hardware/audio/common/2.0/types.h>
 
@@ -50,6 +51,8 @@ using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::audio::V2_0::DeviceAddress;
 using ::android::hardware::audio::V2_0::IDevice;
+using ::android::hardware::audio::V2_0::IPrimaryDevice;
+using TtyMode = ::android::hardware::audio::V2_0::IPrimaryDevice::TtyMode;
 using ::android::hardware::audio::V2_0::IDevicesFactory;
 using ::android::hardware::audio::V2_0::IStream;
 using ::android::hardware::audio::V2_0::IStreamIn;
@@ -63,6 +66,7 @@ using ::android::hardware::audio::common::V2_0::AudioFormat;
 using ::android::hardware::audio::common::V2_0::AudioHandleConsts;
 using ::android::hardware::audio::common::V2_0::AudioInputFlag;
 using ::android::hardware::audio::common::V2_0::AudioIoHandle;
+using ::android::hardware::audio::common::V2_0::AudioMode;
 using ::android::hardware::audio::common::V2_0::AudioOffloadInfo;
 using ::android::hardware::audio::common::V2_0::AudioOutputFlag;
 using ::android::hardware::audio::common::V2_0::AudioSource;
@@ -154,19 +158,23 @@ public:
         ASSERT_NO_FATAL_FAILURE(AudioHidlTest::SetUp()); // setup base
 
         if (device == nullptr) {
-            environment->registerTearDown([]{ device.clear(); });
             IDevicesFactory::Result result;
+            sp<IDevice> baseDevice;
             ASSERT_OK(devicesFactory->openDevice(IDevicesFactory::Device::PRIMARY,
-                                                 returnIn(result, device)));
+                                                 returnIn(result, baseDevice)));
+            ASSERT_TRUE(baseDevice != nullptr);
+
+            environment->registerTearDown([]{ device.clear(); });
+            device = IPrimaryDevice::castFrom(baseDevice);
+            ASSERT_TRUE(device != nullptr);
         }
-        ASSERT_TRUE(device != nullptr);
     }
 
 protected:
     // Cache the device opening to speed up each test by ~0.5s
-    static sp<IDevice> device;
+    static sp<IPrimaryDevice> device;
 };
-sp<IDevice> AudioPrimaryHidlTest::device;
+sp<IPrimaryDevice> AudioPrimaryHidlTest::device;
 
 TEST_F(AudioPrimaryHidlTest, OpenPrimaryDevice) {
     doc::test("Test the openDevice (called in SetUp)");
@@ -234,42 +242,64 @@ TEST_F(MasterVolumeTest, MasterVolumeTest) {
 ////////////////////////// {set,get}{Master,Mic}Mute /////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-class BoolAccessorPrimaryHidlTest : public AudioPrimaryHidlTest {
+template <class Property>
+class AccessorPrimaryHidlTest : public AudioPrimaryHidlTest {
 protected:
+
+    /** Test a property getter and setter. */
     template <class Getter, class Setter>
-    void testBoolAccessors(const string& propertyName, const vector<bool>& valuesToTest,
-                           Setter setter, Getter getter) {
-        for (bool setState : valuesToTest) {
-            SCOPED_TRACE("Test " + propertyName + " state: " + to_string(setState));
-            ASSERT_OK((device.get()->*setter)(setState));
-            bool getState;
-            ASSERT_OK((device.get()->*getter)(returnIn(res, getState)));
+    void testAccessors(const string& propertyName, const vector<Property>& valuesToTest,
+                       Setter setter, Getter getter) {
+
+        Property initialValue; // Save initial value to restore it at the end of the test
+        ASSERT_OK((device.get()->*getter)(returnIn(res, initialValue)));
+        ASSERT_OK(res);
+
+        for (Property setValue : valuesToTest) {
+            SCOPED_TRACE("Test " + propertyName + " getter and setter for " + testing::PrintToString(setValue));
+            ASSERT_OK((device.get()->*setter)(setValue));
+            Property getValue;
+            // Make sure the getter returns the same value just set
+            ASSERT_OK((device.get()->*getter)(returnIn(res, getValue)));
             ASSERT_OK(res);
-            ASSERT_EQ(setState, getState);
+            EXPECT_EQ(setValue, getValue);
         }
+
+        ASSERT_OK((device.get()->*setter)(initialValue)); // restore initial value
+    }
+
+    /** Test the getter and setter of an optional feature. */
+    template <class Getter, class Setter>
+    void testOptionalAccessors(const string& propertyName, const vector<Property>& valuesToTest,
+                               Setter setter, Getter getter) {
+        doc::test("Test the optional " + propertyName + " getters and setter");
+        {
+            SCOPED_TRACE("Test feature support by calling the getter");
+            Property initialValue;
+            ASSERT_OK((device.get()->*getter)(returnIn(res, initialValue)));
+            if (res == Result::NOT_SUPPORTED) {
+                doc::partialTest(propertyName + " getter is not supported");
+                return;
+            }
+            ASSERT_OK(res); // If it is supported it must succeed
+        }
+        // The feature is supported, test it
+        testAccessors(propertyName, valuesToTest, setter, getter);
     }
 };
 
+using BoolAccessorPrimaryHidlTest = AccessorPrimaryHidlTest<bool>;
+
 TEST_F(BoolAccessorPrimaryHidlTest, MicMuteTest) {
     doc::test("Check that the mic can be muted and unmuted");
-    testBoolAccessors("mic mute", {true, false, true}, &IDevice::setMicMute, &IDevice::getMicMute);
+    testAccessors("mic mute", {true, false, true}, &IDevice::setMicMute, &IDevice::getMicMute);
     // TODO: check that the mic is really muted (all sample are 0)
 }
 
 TEST_F(BoolAccessorPrimaryHidlTest, MasterMuteTest) {
     doc::test("If master mute is supported, try to mute and unmute the master output");
-    {
-        SCOPED_TRACE("Check for master mute support");
-        auto ret = device->setMasterMute(false);
-        ASSERT_TRUE(ret.isOk());
-        if (ret == Result::NOT_SUPPORTED) {
-            doc::partialTest("Master mute is not supported");
-            return;
-        }
-    }
-    // NOTE: this code has never been tested on a platform supporting MasterMute
-    testBoolAccessors("master mute", {true, false, true},
-                      &IDevice::setMasterMute, &IDevice::getMasterMute);
+    testOptionalAccessors("master mute", {true, false, true},
+                          &IDevice::setMasterMute, &IDevice::getMasterMute);
     // TODO: check that the master volume is really muted
 }
 
@@ -618,8 +648,8 @@ static void testGetAudioProperties(IStream* stream, AudioConfig expectedConfig) 
     stream->getAudioProperties(returnIn(sampleRateHz, mask, format));
 
     // FIXME: the qcom hal it does not currently negotiate the sampleRate & channel mask
-    // EXPECT_EQ(expectedConfig.sampleRateHz, sampleRateHz);
-    // EXPECT_EQ(expectedConfig.channelMask, mask);
+    EXPECT_EQ(expectedConfig.sampleRateHz, sampleRateHz);
+    EXPECT_EQ(expectedConfig.channelMask, mask);
     EXPECT_EQ(expectedConfig.format, format);
 }
 
@@ -631,11 +661,11 @@ static void testAccessors(IStream* stream, AudioConfig audioConfig) {
 
     auto sampleRate = extract(stream->getSampleRate());
     // FIXME: the qcom hal it does not currently negotiate the sampleRate
-    // ASSERT_EQ(audioConfig.sampleRateHz, sampleRate);
+    ASSERT_EQ(audioConfig.sampleRateHz, sampleRate);
 
     auto channelMask = extract(stream->getChannelMask());
     // FIXME: the qcom hal it does not currently negotiate the channelMask
-    // ASSERT_EQ(audioConfig.channelMask, channelMask);
+    ASSERT_EQ(audioConfig.channelMask, channelMask);
 
     auto frameSize = extract(stream->getFrameSize());
     ASSERT_GE(frameSize, 0U);
@@ -659,15 +689,10 @@ static void testAccessors(IStream* stream, AudioConfig audioConfig) {
 
     testGetAudioProperties(stream, audioConfig);
 
-    // FIXME: Stream wrapper does not implement getDevice properly.
-    // It needs to call getProperty({"routing"}).
-    // The current implementation segfault with the default hal
-    /*
-     * auto ret = stream->getDevice();
-     * ASSERT_TRUE(ret.isOk());
-     * AudioDevice device = ret;
-     * ASSERT_EQ(AudioDevice::OUT_ALL, device);
-     */
+    auto ret = stream->getDevice();
+    ASSERT_TRUE(ret.isOk());
+    AudioDevice device = ret;
+    ASSERT_EQ(AudioDevice::OUT_DEFAULT, device);
 }
 
 TEST_P(InputStreamTest, GettersTest) {
@@ -692,6 +717,68 @@ TEST_F(AudioPrimaryHidlTest, AudioPatches) {
         return;
     }
     // TODO: test audio patches
+}
+
+//////////////////////////////////////////////////////////////////////////////
+/////////////////////////////// PrimaryDevice ////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+TEST_F(AudioPrimaryHidlTest, setVoiceVolume) {
+    doc::test("Make sure setVoiceVolume only succeed if volume is in [0,1]");
+    for (float volume : {0.0, 0.01, 0.5, 0.09, 1.0}) {
+        SCOPED_TRACE("volume=" + to_string(volume));
+        ASSERT_OK(device->setVoiceVolume(volume));
+    }
+    for (float volume : (float[]){-INFINITY,-1.0, -0.0,
+                                  1.0 + std::numeric_limits<float>::epsilon(), 2.0, INFINITY,
+                                  NAN}) {
+        SCOPED_TRACE("volume=" + to_string(volume));
+        // FIXME: NAN should never be accepted
+        // FIXME: Missing api doc. What should the impl do if the volume is outside [0,1] ?
+        ASSERT_INVALID_ARGUMENTS(device->setVoiceVolume(volume));
+    }
+}
+
+TEST_F(AudioPrimaryHidlTest, setMode) {
+    doc::test("Make sure setMode always succeeds if mode is valid");
+    for (AudioMode mode : {AudioMode::IN_CALL, AudioMode::IN_COMMUNICATION,
+                           AudioMode::RINGTONE, AudioMode::CURRENT,
+                           AudioMode::NORMAL /* Make sure to leave the test in normal mode */ }) {
+        SCOPED_TRACE("mode=" + toString(mode));
+        ASSERT_OK(device->setMode(mode));
+    }
+
+    // FIXME: Missing api doc. What should the impl do if the mode is invalid ?
+    ASSERT_INVALID_ARGUMENTS(device->setMode(AudioMode::INVALID));
+}
+
+
+TEST_F(BoolAccessorPrimaryHidlTest, BtScoNrecEnabled) {
+    doc::test("Query and set the BT SCO NR&EC state");
+    testOptionalAccessors("BtScoNrecEnabled", {true, false, true},
+                         &IPrimaryDevice::setBtScoNrecEnabled,
+                         &IPrimaryDevice::getBtScoNrecEnabled);
+}
+
+TEST_F(BoolAccessorPrimaryHidlTest, setGetBtScoWidebandEnabled) {
+    doc::test("Query and set the SCO whideband state");
+    testOptionalAccessors("BtScoWideband", {true, false, true},
+                         &IPrimaryDevice::setBtScoWidebandEnabled,
+                         &IPrimaryDevice::getBtScoWidebandEnabled);
+}
+
+using TtyModeAccessorPrimaryHidlTest = AccessorPrimaryHidlTest<TtyMode>;
+TEST_F(TtyModeAccessorPrimaryHidlTest, setGetTtyMode) {
+    doc::test("Query and set the TTY mode state");
+    testOptionalAccessors("TTY mode", {TtyMode::OFF, TtyMode::HCO, TtyMode::VCO, TtyMode::FULL},
+                          &IPrimaryDevice::setTtyMode, &IPrimaryDevice::getTtyMode);
+}
+
+TEST_F(BoolAccessorPrimaryHidlTest, setGetHac) {
+    doc::test("Query and set the HAC state");
+    testAccessors("HAC", {true, false, true},
+                         &IPrimaryDevice::setHacEnabled,
+                         &IPrimaryDevice::getHacEnabled);
 }
 
 //////////////////////////////////////////////////////////////////////////////
