@@ -17,7 +17,6 @@
 cc_test {
     name: "VtsHalAudioV2_0TargetTest",
     defaults: ["hidl_defaults"],
-    gtest: true,
     srcs: ["AudioPrimaryHidlHalTest.cpp"],
     shared_libs: [
         "libbase",
@@ -28,7 +27,7 @@ cc_test {
         "android.hardware.audio@2.0",
         "android.hardware.audio.common@2.0",
     ],
-    static_libs: ["libgtest"],
+    static_libs: ["VtsHalHidlTargetTestBase"],
     cflags: [
         "-O0",
         "-g",

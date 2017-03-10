@@ -26,7 +26,7 @@
 #include <type_traits>
 #include <vector>
 
-#include <gtest/gtest.h>
+#include <VtsHalHidlTargetTestBase.h>
 
 #include <android-base/logging.h>
 
@@ -113,7 +113,7 @@ private:
 // Instance to register global tearDown
 static Environment* environment;
 
-class HidlTest : public ::testing::Test {
+class HidlTest : public ::testing::VtsHalHidlTargetTestBase {
 protected:
     // Convenient member to store results
     Result res;
@@ -131,7 +131,7 @@ public:
 
         if (devicesFactory == nullptr) {
             environment->registerTearDown([]{ devicesFactory.clear(); });
-            devicesFactory = IDevicesFactory::getService();
+            devicesFactory = ::testing::VtsHalHidlTargetTestBase::getService<IDevicesFactory>();
         }
         ASSERT_TRUE(devicesFactory != nullptr);
     }
