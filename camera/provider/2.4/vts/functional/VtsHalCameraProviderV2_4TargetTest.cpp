@@ -520,6 +520,22 @@ public:
             const sp<::android::hardware::camera::device::V1_0::ICameraDevice> &device,
             sp<BufferItemConsumer> *bufferItemConsumer /*out*/,
             sp<BufferItemHander> *bufferHandler /*out*/);
+    void stopPreviewAndClose(
+            const sp<::android::hardware::camera::device::V1_0::ICameraDevice> &device);
+    void startPreview(
+            const sp<::android::hardware::camera::device::V1_0::ICameraDevice> &device);
+    void enableMsgType(unsigned int msgType,
+            const sp<::android::hardware::camera::device::V1_0::ICameraDevice> &device);
+    void disableMsgType(unsigned int msgType,
+            const sp<::android::hardware::camera::device::V1_0::ICameraDevice> &device);
+    void getParameters(
+            const sp<::android::hardware::camera::device::V1_0::ICameraDevice> &device,
+            CameraParameters *cameraParams /*out*/);
+    void setParameters(
+            const sp<::android::hardware::camera::device::V1_0::ICameraDevice> &device,
+            const CameraParameters &cameraParams);
+    void waitForFrameLocked(DataCallbackMsg msgFrame,
+            std::unique_lock<std::mutex> &l);
     void openEmptyDeviceSession(const std::string &name,
             const CameraHidlEnvironment* env,
             sp<ICameraDeviceSession> *session /*out*/,
@@ -579,13 +595,13 @@ Return<uint32_t> CameraHidlTest::Camera1DeviceCb::registerMemory(
         const hidl_handle& descriptor, uint32_t bufferSize,
         uint32_t bufferCount) {
     if (descriptor->numFds != 1) {
-        ALOGE("%s: camera memory descriptor has numFds %d (expect 1)",
-                __FUNCTION__, descriptor->numFds);
+        ADD_FAILURE() << "camera memory descriptor has"
+                " numFds " <<  descriptor->numFds << " (expect 1)" ;
         return 0;
     }
     if (descriptor->data[0] < 0) {
-        ALOGE("%s: camera memory descriptor has FD %d (expect >= 0)",
-                __FUNCTION__, descriptor->data[0]);
+        ADD_FAILURE() << "camera memory descriptor has"
+                " FD " << descriptor->data[0] << " (expect >= 0)";
         return 0;
     }
 
@@ -599,6 +615,7 @@ Return<uint32_t> CameraHidlTest::Camera1DeviceCb::registerMemory(
 Return<void> CameraHidlTest::Camera1DeviceCb::unregisterMemory(uint32_t memId) {
     if (mParent->mMemoryPool.count(memId) == 0) {
         ALOGE("%s: memory pool ID %d not found", __FUNCTION__, memId);
+        ADD_FAILURE();
         return Void();
     }
 
@@ -624,8 +641,7 @@ Return<void> CameraHidlTest::Camera1DeviceCb::dataCallbackTimestamp(
     mParent->mDataMessageTypeReceived = msgType;
     mParent->mVideoBufferIndex = bufferIndex;
     if (mParent->mMemoryPool.count(data) == 0) {
-        ALOGE("%s: memory pool ID %d not found", __FUNCTION__, data);
-        ADD_FAILURE();
+        ADD_FAILURE() << "memory pool ID " << data << "not found";
     }
     mParent->mVideoData = data;
     mParent->mResultCondition.notify_one();
@@ -641,8 +657,7 @@ Return<void> CameraHidlTest::Camera1DeviceCb::handleCallbackTimestamp(
     mParent->mDataMessageTypeReceived = msgType;
     mParent->mVideoBufferIndex = bufferIndex;
     if (mParent->mMemoryPool.count(data) == 0) {
-        ALOGE("%s: memory pool ID %d not found", __FUNCTION__, data);
-        ADD_FAILURE();
+        ADD_FAILURE() << "memory pool ID " << data << " not found";
     }
     mParent->mVideoData = data;
     mParent->mVideoNativeHandle = frameData;
@@ -700,7 +715,8 @@ Return<void> CameraHidlTest::DeviceCb::notify(
 hidl_vec<hidl_string> CameraHidlTest::getCameraDeviceNames() {
     CameraHidlEnvironment* env = CameraHidlEnvironment::Instance();
     hidl_vec<hidl_string> cameraDeviceNames;
-    env->mProvider->getCameraIdList(
+    Return<void> ret;
+    ret = env->mProvider->getCameraIdList(
         [&](auto status, const auto& idList) {
             ALOGI("getCameraIdList returns status:%d", (int)status);
             for (size_t i = 0; i < idList.size(); i++) {
@@ -709,22 +725,28 @@ hidl_vec<hidl_string> CameraHidlTest::getCameraDeviceNames() {
             ASSERT_EQ(Status::OK, status);
             cameraDeviceNames = idList;
         });
+    if (!ret.isOk()) {
+        ADD_FAILURE();
+    }
     return cameraDeviceNames;
 }
 
 // Test if ICameraProvider::isTorchModeSupported returns Status::OK
 TEST_F(CameraHidlTest, isTorchModeSupported) {
-    CameraHidlEnvironment::Instance()->mProvider->isSetTorchModeSupported(
+    Return<void> ret;
+    ret = CameraHidlEnvironment::Instance()->mProvider->isSetTorchModeSupported(
         [&](auto status, bool support) {
             ALOGI("isSetTorchModeSupported returns status:%d supported:%d",
                     (int)status, support);
             ASSERT_EQ(Status::OK, status);
         });
+    ASSERT_TRUE(ret.isOk());
 }
 
 // TODO: consider removing this test if getCameraDeviceNames() has the same coverage
 TEST_F(CameraHidlTest, getCameraIdList) {
-    CameraHidlEnvironment::Instance()->mProvider->getCameraIdList(
+    Return<void> ret;
+    ret = CameraHidlEnvironment::Instance()->mProvider->getCameraIdList(
         [&](auto status, const auto& idList) {
             ALOGI("getCameraIdList returns status:%d", (int)status);
             for (size_t i = 0; i < idList.size(); i++) {
@@ -735,11 +757,13 @@ TEST_F(CameraHidlTest, getCameraIdList) {
             // Not necessary hold for external cameras providers
             ASSERT_GT(idList.size(), 0u);
         });
+    ASSERT_TRUE(ret.isOk());
 }
 
 // Test if ICameraProvider::getVendorTags returns Status::OK
 TEST_F(CameraHidlTest, getVendorTags) {
-    CameraHidlEnvironment::Instance()->mProvider->getVendorTags(
+    Return<void> ret;
+    ret = CameraHidlEnvironment::Instance()->mProvider->getVendorTags(
         [&](auto status, const auto& vendorTagSecs) {
             ALOGI("getVendorTags returns status:%d numSections %zu",
                     (int)status, vendorTagSecs.size());
@@ -756,6 +780,7 @@ TEST_F(CameraHidlTest, getVendorTags) {
             }
             ASSERT_EQ(Status::OK, status);
         });
+    ASSERT_TRUE(ret.isOk());
 }
 
 // Test if ICameraProvider::setCallback returns Status::OK
@@ -780,6 +805,7 @@ TEST_F(CameraHidlTest, setCallback) {
     };
     sp<ProviderCb> cb = new ProviderCb;
     auto status = env->mProvider->setCallback(cb);
+    ASSERT_TRUE(status.isOk());
     ASSERT_EQ(Status::OK, status);
 }
 
@@ -790,21 +816,25 @@ TEST_F(CameraHidlTest, getCameraDeviceInterface) {
 
     for (const auto& name : cameraDeviceNames) {
         if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_3_2) {
-            env->mProvider->getCameraDeviceInterface_V3_x(
+            Return<void> ret;
+            ret = env->mProvider->getCameraDeviceInterface_V3_x(
                 name,
                 [&](auto status, const auto& device3_2) {
                     ALOGI("getCameraDeviceInterface_V3_x returns status:%d", (int)status);
                     ASSERT_EQ(Status::OK, status);
                     ASSERT_NE(device3_2, nullptr);
                 });
+            ASSERT_TRUE(ret.isOk());
         } else if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
-            env->mProvider->getCameraDeviceInterface_V1_x(
+            Return<void> ret;
+            ret = env->mProvider->getCameraDeviceInterface_V1_x(
                 name,
                 [&](auto status, const auto& device1) {
                     ALOGI("getCameraDeviceInterface_V1_x returns status:%d", (int)status);
                     ASSERT_EQ(Status::OK, status);
                     ASSERT_NE(device1, nullptr);
                 });
+            ASSERT_TRUE(ret.isOk());
         }
     }
 }
@@ -819,7 +849,8 @@ TEST_F(CameraHidlTest, getResourceCost) {
         if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_3_2) {
             ::android::sp<::android::hardware::camera::device::V3_2::ICameraDevice> device3_2;
             ALOGI("getResourceCost: Testing camera device %s", name.c_str());
-            env->mProvider->getCameraDeviceInterface_V3_x(
+            Return<void> ret;
+            ret = env->mProvider->getCameraDeviceInterface_V3_x(
                 name,
                 [&](auto status, const auto& device) {
                     ALOGI("getCameraDeviceInterface_V3_x returns status:%d", (int)status);
@@ -827,8 +858,9 @@ TEST_F(CameraHidlTest, getResourceCost) {
                     ASSERT_NE(device, nullptr);
                     device3_2 = device;
                 });
+            ASSERT_TRUE(ret.isOk());
 
-            device3_2->getResourceCost(
+            ret = device3_2->getResourceCost(
                 [&](auto status, const auto& resourceCost) {
                     ALOGI("getResourceCost returns status:%d", (int)status);
                     ASSERT_EQ(Status::OK, status);
@@ -838,10 +870,12 @@ TEST_F(CameraHidlTest, getResourceCost) {
                         ALOGI("    Conflicting device: %s", name.c_str());
                     }
                 });
+            ASSERT_TRUE(ret.isOk());
         } else {
             ::android::sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
             ALOGI("getResourceCost: Testing camera device %s", name.c_str());
-            env->mProvider->getCameraDeviceInterface_V1_x(
+            Return<void> ret;
+            ret = env->mProvider->getCameraDeviceInterface_V1_x(
                 name,
                 [&](auto status, const auto& device) {
                     ALOGI("getCameraDeviceInterface_V1_x returns status:%d", (int)status);
@@ -849,8 +883,9 @@ TEST_F(CameraHidlTest, getResourceCost) {
                     ASSERT_NE(device, nullptr);
                     device1 = device;
                 });
+            ASSERT_TRUE(ret.isOk());
 
-            device1->getResourceCost(
+            ret = device1->getResourceCost(
                 [&](auto status, const auto& resourceCost) {
                     ALOGI("getResourceCost returns status:%d", (int)status);
                     ASSERT_EQ(Status::OK, status);
@@ -860,6 +895,7 @@ TEST_F(CameraHidlTest, getResourceCost) {
                         ALOGI("    Conflicting device: %s", name.c_str());
                     }
                 });
+            ASSERT_TRUE(ret.isOk());
         }
     }
 }
@@ -874,7 +910,8 @@ TEST_F(CameraHidlTest, getCameraInfo) {
         if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
             ::android::sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
             ALOGI("getCameraCharacteristics: Testing camera device %s", name.c_str());
-            env->mProvider->getCameraDeviceInterface_V1_x(
+            Return<void> ret;
+            ret = env->mProvider->getCameraDeviceInterface_V1_x(
                 name,
                 [&](auto status, const auto& device) {
                     ALOGI("getCameraDeviceInterface_V1_x returns status:%d", (int)status);
@@ -882,8 +919,9 @@ TEST_F(CameraHidlTest, getCameraInfo) {
                     ASSERT_NE(device, nullptr);
                     device1 = device;
                 });
+            ASSERT_TRUE(ret.isOk());
 
-            device1->getCameraInfo(
+            ret = device1->getCameraInfo(
                 [&](auto status, const auto& info) {
                     ALOGI("getCameraInfo returns status:%d", (int)status);
                     ASSERT_EQ(Status::OK, status);
@@ -909,6 +947,7 @@ TEST_F(CameraHidlTest, getCameraInfo) {
                             FAIL() << "Unexpected camera facing:" << static_cast<uint32_t> (info.facing);
                     }
                 });
+            ASSERT_TRUE(ret.isOk());
         }
     }
 }
@@ -920,32 +959,17 @@ TEST_F(CameraHidlTest, setPreviewWindow) {
 
     for (const auto& name : cameraDeviceNames) {
         if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
-            ::android::sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
-            ALOGI("getCameraCharacteristics: Testing camera device %s", name.c_str());
-            env->mProvider->getCameraDeviceInterface_V1_x(
-                name,
-                [&](auto status, const auto& device) {
-                    ALOGI("getCameraDeviceInterface_V1_x returns status:%d", (int)status);
-                    ASSERT_EQ(Status::OK, status);
-                    ASSERT_NE(device, nullptr);
-                    device1 = device;
-                });
+            sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
+                    openCameraDevice(name, env, &device1 /*out*/);
+            ASSERT_NE(nullptr, device1.get());
+            sp<BufferItemConsumer> bufferItemConsumer;
+            sp<BufferItemHander> bufferHandler;
+            setupPreviewWindow(device1,
+                    &bufferItemConsumer /*out*/, &bufferHandler /*out*/);
 
-            sp<Camera1DeviceCb> deviceCb = new Camera1DeviceCb(this);
-            ASSERT_EQ(Status::OK, device1->open(deviceCb));
-
-            ASSERT_EQ(Status::OK, device1->setPreviewWindow(nullptr));
-            sp<IGraphicBufferProducer> producer;
-            sp<IGraphicBufferConsumer> consumer;
-            BufferQueue::createBufferQueue(&producer, &consumer);
-            sp<Surface> surface = new Surface(producer);
-            sp<ANativeWindow> window(surface);
-
-            sp<ICameraDevicePreviewCallback> previewCb = new PreviewWindowCb(
-                    window);
-            ASSERT_EQ(Status::OK, device1->setPreviewWindow(previewCb));
-
-            device1->close();
+            Return<void> ret;
+            ret = device1->close();
+            ASSERT_TRUE(ret.isOk());
         }
     }
 }
@@ -959,7 +983,8 @@ TEST_F(CameraHidlTest, setPreviewWindowInvalid) {
         if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
             ::android::sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
             ALOGI("getCameraCharacteristics: Testing camera device %s", name.c_str());
-            env->mProvider->getCameraDeviceInterface_V1_x(
+            Return<void> ret;
+            ret = env->mProvider->getCameraDeviceInterface_V1_x(
                 name,
                 [&](auto status, const auto& device) {
                     ALOGI("getCameraDeviceInterface_V1_x returns status:%d", (int)status);
@@ -967,9 +992,11 @@ TEST_F(CameraHidlTest, setPreviewWindowInvalid) {
                     ASSERT_NE(device, nullptr);
                     device1 = device;
                 });
+            ASSERT_TRUE(ret.isOk());
 
-            ASSERT_EQ(Status::OPERATION_NOT_SUPPORTED,
-                    device1->setPreviewWindow(nullptr));
+            Return<Status> returnStatus = device1->setPreviewWindow(nullptr);
+            ASSERT_TRUE(returnStatus.isOk());
+            ASSERT_EQ(Status::OPERATION_NOT_SUPPORTED, returnStatus);
         }
     }
 }
@@ -989,11 +1016,13 @@ TEST_F(CameraHidlTest, startStopPreview) {
             setupPreviewWindow(device1,
                     &bufferItemConsumer /*out*/, &bufferHandler /*out*/);
 
-            ASSERT_EQ(Status::OK, device1->startPreview());
-            ASSERT_TRUE(device1->previewEnabled());
-            device1->stopPreview();
+            startPreview(device1);
 
-            device1->close();
+            Return<bool> returnBoolStatus = device1->previewEnabled();
+            ASSERT_TRUE(returnBoolStatus.isOk());
+            ASSERT_TRUE(returnBoolStatus);
+
+            stopPreviewAndClose(device1);
         }
     }
 }
@@ -1010,8 +1039,11 @@ TEST_F(CameraHidlTest, startStopPreviewDelayed) {
             openCameraDevice(name, env, &device1 /*out*/);
             ASSERT_NE(nullptr, device1.get());
 
-            ASSERT_EQ(Status::OK, device1->setPreviewWindow(nullptr));
-            ASSERT_EQ(Status::OK, device1->startPreview());
+            Return<Status> returnStatus = device1->setPreviewWindow(nullptr);
+            ASSERT_TRUE(returnStatus.isOk());
+            ASSERT_EQ(Status::OK, returnStatus);
+
+            startPreview(device1);
 
             sp<BufferItemConsumer> bufferItemConsumer;
             sp<BufferItemHander> bufferHandler;
@@ -1019,10 +1051,11 @@ TEST_F(CameraHidlTest, startStopPreviewDelayed) {
                     &bufferHandler /*out*/);
 
             //Preview should get enabled now
-            ASSERT_TRUE(device1->previewEnabled());
-            device1->stopPreview();
+            Return<bool> returnBoolStatus = device1->previewEnabled();
+            ASSERT_TRUE(returnBoolStatus.isOk());
+            ASSERT_TRUE(returnBoolStatus);
 
-            device1->close();
+            stopPreviewAndClose(device1);
         }
     }
 }
@@ -1047,57 +1080,36 @@ TEST_F(CameraHidlTest, takePicture) {
                 mDataMessageTypeReceived = DataCallbackMsg::RAW_IMAGE_NOTIFY;
             }
 
-            device1->enableMsgType((unsigned int)DataCallbackMsg::PREVIEW_FRAME);
-            ASSERT_TRUE(device1->msgTypeEnabled(
-                    (unsigned int)DataCallbackMsg::PREVIEW_FRAME));
-            ASSERT_EQ(Status::OK, device1->startPreview());
+            enableMsgType((unsigned int)DataCallbackMsg::PREVIEW_FRAME, device1);
+            startPreview(device1);
 
             {
                 std::unique_lock<std::mutex> l(mLock);
-                while (DataCallbackMsg::PREVIEW_FRAME !=
-                        mDataMessageTypeReceived) {
-                    auto timeout = std::chrono::system_clock::now() +
-                            std::chrono::seconds(kStreamBufferTimeoutSec);
-                    ASSERT_NE(std::cv_status::timeout,
-                            mResultCondition.wait_until(l, timeout));
-                }
+                waitForFrameLocked(DataCallbackMsg::PREVIEW_FRAME, l);
             }
 
-            device1->disableMsgType(
-                    (unsigned int)DataCallbackMsg::PREVIEW_FRAME);
-            ASSERT_FALSE(device1->msgTypeEnabled(
-                    (unsigned int)DataCallbackMsg::PREVIEW_FRAME));
-            device1->enableMsgType(
-                    (unsigned int)DataCallbackMsg::COMPRESSED_IMAGE);
-            ASSERT_TRUE(device1->msgTypeEnabled(
-                    (unsigned int)DataCallbackMsg::COMPRESSED_IMAGE));
+            disableMsgType((unsigned int)DataCallbackMsg::PREVIEW_FRAME,
+                            device1);
+            enableMsgType((unsigned int)DataCallbackMsg::COMPRESSED_IMAGE,
+                    device1);
 
             {
                 std::unique_lock<std::mutex> l(mLock);
                 mDataMessageTypeReceived = DataCallbackMsg::RAW_IMAGE_NOTIFY;
             }
 
-            ASSERT_EQ(Status::OK, device1->takePicture());
+            Return<Status> returnStatus = device1->takePicture();
+            ASSERT_TRUE(returnStatus.isOk());
+            ASSERT_EQ(Status::OK, returnStatus);
 
             {
                 std::unique_lock<std::mutex> l(mLock);
-                while (DataCallbackMsg::COMPRESSED_IMAGE !=
-                        mDataMessageTypeReceived) {
-                    auto timeout = std::chrono::system_clock::now() +
-                            std::chrono::seconds(kStreamBufferTimeoutSec);
-                    ASSERT_NE(std::cv_status::timeout,
-                            mResultCondition.wait_until(l, timeout));
-                }
+                waitForFrameLocked(DataCallbackMsg::COMPRESSED_IMAGE, l);
             }
 
-            device1->disableMsgType(
-                    (unsigned int)DataCallbackMsg::COMPRESSED_IMAGE);
-            ASSERT_FALSE(device1->msgTypeEnabled(
-                    (unsigned int)DataCallbackMsg::COMPRESSED_IMAGE));
-
-            device1->stopPreview();
-
-            device1->close();
+            disableMsgType((unsigned int)DataCallbackMsg::COMPRESSED_IMAGE,
+                    device1);
+            stopPreviewAndClose(device1);
         }
     }
 }
@@ -1113,9 +1125,12 @@ TEST_F(CameraHidlTest, takePictureFail) {
             openCameraDevice(name, env, &device1 /*out*/);
             ASSERT_NE(nullptr, device1.get());
 
-            ASSERT_NE(Status::OK, device1->takePicture());
+            Return<Status> returnStatus = device1->takePicture();
+            ASSERT_TRUE(returnStatus.isOk());
+            ASSERT_NE(Status::OK, returnStatus);
 
-            device1->close();
+            Return<void> ret = device1->close();
+            ASSERT_TRUE(ret.isOk());
         }
     }
 }
@@ -1134,39 +1149,17 @@ TEST_F(CameraHidlTest, cancelPicture) {
             sp<BufferItemHander> bufferHandler;
             setupPreviewWindow(device1, &bufferItemConsumer /*out*/,
                     &bufferHandler /*out*/);
+            startPreview(device1);
 
-            {
-                std::unique_lock<std::mutex> l(mLock);
-                mDataMessageTypeReceived = DataCallbackMsg::RAW_IMAGE_NOTIFY;
-            }
+            Return<Status> returnStatus = device1->takePicture();
+            ASSERT_TRUE(returnStatus.isOk());
+            ASSERT_EQ(Status::OK, returnStatus);
 
-            device1->enableMsgType((unsigned int)DataCallbackMsg::PREVIEW_FRAME);
-            ASSERT_TRUE(device1->msgTypeEnabled(
-                    (unsigned int)DataCallbackMsg::PREVIEW_FRAME));
-            ASSERT_EQ(Status::OK, device1->startPreview());
+            returnStatus = device1->cancelPicture();
+            ASSERT_TRUE(returnStatus.isOk());
+            ASSERT_EQ(Status::OK, returnStatus);
 
-            {
-                std::unique_lock<std::mutex> l(mLock);
-                while (DataCallbackMsg::PREVIEW_FRAME !=
-                        mDataMessageTypeReceived) {
-                    auto timeout = std::chrono::system_clock::now() +
-                            std::chrono::seconds(kStreamBufferTimeoutSec);
-                    ASSERT_NE(std::cv_status::timeout,
-                            mResultCondition.wait_until(l, timeout));
-                }
-            }
-
-            device1->disableMsgType(
-                    (unsigned int)DataCallbackMsg::PREVIEW_FRAME);
-            ASSERT_FALSE(device1->msgTypeEnabled(
-                    (unsigned int)DataCallbackMsg::PREVIEW_FRAME));
-
-            ASSERT_EQ(Status::OK, device1->takePicture());
-            ASSERT_EQ(Status::OK, device1->cancelPicture());
-
-            device1->stopPreview();
-
-            device1->close();
+            stopPreviewAndClose(device1);
         }
     }
 }
@@ -1185,13 +1178,13 @@ TEST_F(CameraHidlTest, cancelPictureFail) {
             sp<BufferItemHander> bufferHandler;
             setupPreviewWindow(device1, &bufferItemConsumer /*out*/,
                     &bufferHandler /*out*/);
+            startPreview(device1);
 
-            ASSERT_EQ(Status::OK, device1->startPreview());
-            ASSERT_NE(Status::OK, device1->cancelPicture());
+            Return<Status> returnStatus = device1->cancelPicture();
+            ASSERT_TRUE(returnStatus.isOk());
+            ASSERT_NE(Status::OK, returnStatus);
 
-            device1->stopPreview();
-
-            device1->close();
+            stopPreviewAndClose(device1);
         }
     }
 }
@@ -1216,73 +1209,63 @@ TEST_F(CameraHidlTest, startStopRecording) {
                 mDataMessageTypeReceived = DataCallbackMsg::RAW_IMAGE_NOTIFY;
             }
 
-            device1->enableMsgType((unsigned int)DataCallbackMsg::PREVIEW_FRAME);
-            ASSERT_TRUE(device1->msgTypeEnabled(
-                    (unsigned int)DataCallbackMsg::PREVIEW_FRAME));
-            ASSERT_EQ(Status::OK, device1->startPreview());
+            enableMsgType((unsigned int)DataCallbackMsg::PREVIEW_FRAME, device1);
+            startPreview(device1);
 
             {
                 std::unique_lock<std::mutex> l(mLock);
-                while (DataCallbackMsg::PREVIEW_FRAME != mDataMessageTypeReceived) {
-                    auto timeout = std::chrono::system_clock::now() +
-                            std::chrono::seconds(kStreamBufferTimeoutSec);
-                    ASSERT_NE(std::cv_status::timeout,
-                            mResultCondition.wait_until(l, timeout));
-                }
+                waitForFrameLocked(DataCallbackMsg::PREVIEW_FRAME, l);
                 mDataMessageTypeReceived = DataCallbackMsg::RAW_IMAGE_NOTIFY;
                 mVideoBufferIndex = UINT32_MAX;
             }
 
-            device1->disableMsgType(
-                    (unsigned int)DataCallbackMsg::PREVIEW_FRAME);
-            ASSERT_FALSE(device1->msgTypeEnabled(
-                    (unsigned int)DataCallbackMsg::PREVIEW_FRAME));
+            disableMsgType((unsigned int)DataCallbackMsg::PREVIEW_FRAME, device1);
 
             bool videoMetaEnabled = false;
-            auto rc = device1->storeMetaDataInBuffers(true);
+            Return<Status> returnStatus = device1->storeMetaDataInBuffers(true);
+            ASSERT_TRUE(returnStatus.isOk());
             // It is allowed for devices to not support this feature
-            ASSERT_TRUE((Status::OK == rc) ||
-                    (Status::OPERATION_NOT_SUPPORTED == rc));
-            if (Status::OK == rc) {
+            ASSERT_TRUE((Status::OK == returnStatus) ||
+                    (Status::OPERATION_NOT_SUPPORTED == returnStatus));
+            if (Status::OK == returnStatus) {
                 videoMetaEnabled = true;
             }
 
-            device1->enableMsgType((unsigned int)DataCallbackMsg::VIDEO_FRAME);
-            ASSERT_TRUE(device1->msgTypeEnabled(
-                    (unsigned int)DataCallbackMsg::VIDEO_FRAME));
-            ASSERT_FALSE(device1->recordingEnabled());
+            enableMsgType((unsigned int)DataCallbackMsg::VIDEO_FRAME, device1);
+            Return<bool> returnBoolStatus = device1->recordingEnabled();
+            ASSERT_TRUE(returnBoolStatus.isOk());
+            ASSERT_FALSE(returnBoolStatus);
 
-            ASSERT_EQ(Status::OK, device1->startRecording());
+            returnStatus = device1->startRecording();
+            ASSERT_TRUE(returnStatus.isOk());
+            ASSERT_EQ(Status::OK, returnStatus);
 
             {
                 std::unique_lock<std::mutex> l(mLock);
-                while (DataCallbackMsg::VIDEO_FRAME !=
-                        mDataMessageTypeReceived) {
-                    auto timeout = std::chrono::system_clock::now() +
-                            std::chrono::seconds(kStreamBufferTimeoutSec);
-                    ASSERT_NE(std::cv_status::timeout,
-                            mResultCondition.wait_until(l, timeout));
-                }
+                waitForFrameLocked(DataCallbackMsg::VIDEO_FRAME, l);
                 ASSERT_NE(UINT32_MAX, mVideoBufferIndex);
-
-                device1->disableMsgType(
-                        (unsigned int)DataCallbackMsg::VIDEO_FRAME);
-                ASSERT_FALSE(device1->msgTypeEnabled(
-                        (unsigned int)DataCallbackMsg::VIDEO_FRAME));
+                disableMsgType((unsigned int)DataCallbackMsg::VIDEO_FRAME,
+                        device1);
             }
 
-            ASSERT_TRUE(device1->recordingEnabled());
+            returnBoolStatus = device1->recordingEnabled();
+            ASSERT_TRUE(returnBoolStatus.isOk());
+            ASSERT_TRUE(returnBoolStatus);
+
+            Return<void> ret;
             if (videoMetaEnabled) {
-                device1->releaseRecordingFrameHandle(mVideoData,
+                ret = device1->releaseRecordingFrameHandle(mVideoData,
                         mVideoBufferIndex, mVideoNativeHandle);
+                ASSERT_TRUE(ret.isOk());
             } else {
-                device1->releaseRecordingFrame(mVideoData, mVideoBufferIndex);
+                ret = device1->releaseRecordingFrame(mVideoData, mVideoBufferIndex);
+                ASSERT_TRUE(ret.isOk());
             }
 
-            device1->stopRecording();
-            device1->stopPreview();
+            ret = device1->stopRecording();
+            ASSERT_TRUE(ret.isOk());
 
-            device1->close();
+            stopPreviewAndClose(device1);
         }
     }
 }
@@ -1298,10 +1281,16 @@ TEST_F(CameraHidlTest, startRecordingFail) {
             openCameraDevice(name, env, &device1 /*out*/);
             ASSERT_NE(nullptr, device1.get());
 
-            ASSERT_FALSE(device1->recordingEnabled());
-            ASSERT_NE(Status::OK, device1->startRecording());
+            Return<bool> returnBoolStatus = device1->recordingEnabled();
+            ASSERT_TRUE(returnBoolStatus.isOk());
+            ASSERT_FALSE(returnBoolStatus);
 
-            device1->close();
+            Return<Status> returnStatus = device1->startRecording();
+            ASSERT_TRUE(returnStatus.isOk());
+            ASSERT_NE(Status::OK, returnStatus);
+
+            Return<void> ret = device1->close();
+            ASSERT_TRUE(ret.isOk());
         }
     }
 }
@@ -1321,15 +1310,12 @@ TEST_F(CameraHidlTest, autoFocus) {
             ASSERT_NE(nullptr, device1.get());
 
             ::android::CameraParameters cameraParams;
-            device1->getParameters([&] (const ::android::hardware::hidl_string& params) {
-                ASSERT_FALSE(params.empty());
-                ::android::String8 paramString(params.c_str());
-                cameraParams.unflatten(paramString);
-            });
+            getParameters(device1, &cameraParams /*out*/);
 
             if (Status::OK != isAutoFocusModeAvailable(cameraParams,
                     CameraParameters::FOCUS_MODE_AUTO)) {
-                device1->close();
+                Return<void> ret = device1->close();
+                ASSERT_TRUE(ret.isOk());
                 continue;
             }
 
@@ -1337,11 +1323,8 @@ TEST_F(CameraHidlTest, autoFocus) {
             sp<BufferItemHander> bufferHandler;
             setupPreviewWindow(device1, &bufferItemConsumer /*out*/,
                     &bufferHandler /*out*/);
-            ASSERT_EQ(Status::OK, device1->startPreview());
-
-            device1->enableMsgType((unsigned int)NotifyCallbackMsg::FOCUS);
-            ASSERT_TRUE(device1->msgTypeEnabled(
-                    (unsigned int)NotifyCallbackMsg::FOCUS));
+            startPreview(device1);
+            enableMsgType((unsigned int)NotifyCallbackMsg::FOCUS, device1);
 
             for (auto &iter : focusModes) {
                 if (Status::OK != isAutoFocusModeAvailable(cameraParams,
@@ -1350,14 +1333,15 @@ TEST_F(CameraHidlTest, autoFocus) {
                 }
 
                 cameraParams.set(CameraParameters::KEY_FOCUS_MODE, iter);
-                ASSERT_EQ(Status::OK, device1->setParameters(
-                        cameraParams.flatten().string()));
+                setParameters(device1, cameraParams);
                 {
                     std::unique_lock<std::mutex> l(mLock);
                     mNotifyMessage = NotifyCallbackMsg::ERROR;
                 }
 
-                ASSERT_EQ(Status::OK, device1->autoFocus());
+                Return<Status> returnStatus = device1->autoFocus();
+                ASSERT_TRUE(returnStatus.isOk());
+                ASSERT_EQ(Status::OK, returnStatus);
 
                 {
                     std::unique_lock<std::mutex> l(mLock);
@@ -1370,13 +1354,8 @@ TEST_F(CameraHidlTest, autoFocus) {
                 }
             }
 
-            device1->disableMsgType((unsigned int)NotifyCallbackMsg::FOCUS);
-            ASSERT_FALSE(device1->msgTypeEnabled(
-                    (unsigned int)NotifyCallbackMsg::FOCUS));
-
-            device1->stopPreview();
-
-            device1->close();
+            disableMsgType((unsigned int)NotifyCallbackMsg::FOCUS, device1);
+            stopPreviewAndClose(device1);
         }
     }
 }
@@ -1393,15 +1372,12 @@ TEST_F(CameraHidlTest, cancelAutoFocus) {
             ASSERT_NE(nullptr, device1.get());
 
             ::android::CameraParameters cameraParams;
-            device1->getParameters([&] (const ::android::hardware::hidl_string& params) {
-                ASSERT_FALSE(params.empty());
-                ::android::String8 paramString(params.c_str());
-                cameraParams.unflatten(paramString);
-            });
+            getParameters(device1, &cameraParams /*out*/);
 
             if (Status::OK != isAutoFocusModeAvailable(cameraParams,
                     CameraParameters::FOCUS_MODE_AUTO)) {
-                device1->close();
+                Return<void> ret = device1->close();
+                ASSERT_TRUE(ret.isOk());
                 continue;
             }
 
@@ -1412,17 +1388,22 @@ TEST_F(CameraHidlTest, cancelAutoFocus) {
             sp<BufferItemHander> bufferHandler;
             setupPreviewWindow(device1, &bufferItemConsumer /*out*/,
                     &bufferHandler /*out*/);
-            ASSERT_EQ(Status::OK, device1->startPreview());
+            startPreview(device1);
 
             // It should be fine to call after preview starts too.
-            ASSERT_EQ(Status::OK, device1->cancelAutoFocus());
+            Return<Status> returnStatus = device1->cancelAutoFocus();
+            ASSERT_TRUE(returnStatus.isOk());
+            ASSERT_EQ(Status::OK, returnStatus);
 
-            ASSERT_EQ(Status::OK, device1->autoFocus());
-            ASSERT_EQ(Status::OK, device1->cancelAutoFocus());
+            returnStatus = device1->autoFocus();
+            ASSERT_TRUE(returnStatus.isOk());
+            ASSERT_EQ(Status::OK, returnStatus);
 
-            device1->stopPreview();
+            returnStatus = device1->cancelAutoFocus();
+            ASSERT_TRUE(returnStatus.isOk());
+            ASSERT_EQ(Status::OK, returnStatus);
 
-            device1->close();
+            stopPreviewAndClose(device1);
         }
     }
 }
@@ -1439,18 +1420,15 @@ TEST_F(CameraHidlTest, sendCommandFaceDetection) {
             ASSERT_NE(nullptr, device1.get());
 
             ::android::CameraParameters cameraParams;
-            device1->getParameters([&] (const ::android::hardware::hidl_string& params) {
-                ASSERT_FALSE(params.empty());
-                ::android::String8 paramString(params.c_str());
-                cameraParams.unflatten(paramString);
-            });
+            getParameters(device1, &cameraParams /*out*/);
 
             int32_t hwFaces = cameraParams.getInt(
                     CameraParameters::KEY_MAX_NUM_DETECTED_FACES_HW);
             int32_t swFaces = cameraParams.getInt(
                     CameraParameters::KEY_MAX_NUM_DETECTED_FACES_SW);
             if ((0 >= hwFaces) && (0 >= swFaces)) {
-                device1->close();
+                Return<void> ret = device1->close();
+                ASSERT_TRUE(ret.isOk());
                 continue;
             }
 
@@ -1458,31 +1436,37 @@ TEST_F(CameraHidlTest, sendCommandFaceDetection) {
             sp<BufferItemHander> bufferHandler;
             setupPreviewWindow(device1, &bufferItemConsumer /*out*/,
                     &bufferHandler /*out*/);
-            ASSERT_EQ(Status::OK, device1->startPreview());
+            startPreview(device1);
 
             if (0 < hwFaces) {
-                ASSERT_EQ(Status::OK, device1->sendCommand(
+                Return<Status> returnStatus = device1->sendCommand(
                         CommandType::START_FACE_DETECTION,
-                        CAMERA_FACE_DETECTION_HW, 0));
+                        CAMERA_FACE_DETECTION_HW, 0);
+                ASSERT_TRUE(returnStatus.isOk());
+                ASSERT_EQ(Status::OK, returnStatus);
                 // TODO(epeev) : Enable and check for face notifications
-                ASSERT_EQ(Status::OK, device1->sendCommand(
+                returnStatus = device1->sendCommand(
                         CommandType::STOP_FACE_DETECTION,
-                        CAMERA_FACE_DETECTION_HW, 0));
+                        CAMERA_FACE_DETECTION_HW, 0);
+                ASSERT_TRUE(returnStatus.isOk());
+                ASSERT_EQ(Status::OK, returnStatus);
             }
 
             if (0 < swFaces) {
-                ASSERT_EQ(Status::OK, device1->sendCommand(
+                Return<Status> returnStatus = device1->sendCommand(
                         CommandType::START_FACE_DETECTION,
-                        CAMERA_FACE_DETECTION_SW, 0));
+                        CAMERA_FACE_DETECTION_SW, 0);
+                ASSERT_TRUE(returnStatus.isOk());
+                ASSERT_EQ(Status::OK, returnStatus);
                 // TODO(epeev) : Enable and check for face notifications
-                ASSERT_EQ(Status::OK, device1->sendCommand(
+                returnStatus = device1->sendCommand(
                         CommandType::STOP_FACE_DETECTION,
-                        CAMERA_FACE_DETECTION_SW, 0));
+                        CAMERA_FACE_DETECTION_SW, 0);
+                ASSERT_TRUE(returnStatus.isOk());
+                ASSERT_EQ(Status::OK, returnStatus);
             }
 
-            device1->stopPreview();
-
-            device1->close();
+            stopPreviewAndClose(device1);
         }
     }
 }
@@ -1499,11 +1483,7 @@ TEST_F(CameraHidlTest, sendCommandSmoothZoom) {
             ASSERT_NE(nullptr, device1.get());
 
             ::android::CameraParameters cameraParams;
-            device1->getParameters([&] (const ::android::hardware::hidl_string& params) {
-                ASSERT_FALSE(params.empty());
-                ::android::String8 paramString(params.c_str());
-                cameraParams.unflatten(paramString);
-            });
+            getParameters(device1, &cameraParams /*out*/);
 
             const char *smoothZoomStr = cameraParams.get(
                     CameraParameters::KEY_SMOOTH_ZOOM_SUPPORTED);
@@ -1511,7 +1491,8 @@ TEST_F(CameraHidlTest, sendCommandSmoothZoom) {
                     (strcmp(smoothZoomStr, CameraParameters::TRUE) == 0)) ?
                             true : false;
             if (!smoothZoomSupported) {
-                device1->close();
+                Return<void> ret = device1->close();
+                ASSERT_TRUE(ret.isOk());
                 continue;
             }
 
@@ -1523,20 +1504,20 @@ TEST_F(CameraHidlTest, sendCommandSmoothZoom) {
             sp<BufferItemHander> bufferHandler;
             setupPreviewWindow(device1, &bufferItemConsumer /*out*/,
                     &bufferHandler /*out*/);
-            ASSERT_EQ(Status::OK, device1->startPreview());
+            startPreview(device1);
+            setParameters(device1, cameraParams);
 
-            ASSERT_EQ(Status::OK, device1->setParameters(
-                    cameraParams.flatten().string()));
+            Return<Status> returnStatus = device1->sendCommand(
+                    CommandType::START_SMOOTH_ZOOM, maxZoom, 0);
+            ASSERT_TRUE(returnStatus.isOk());
+            ASSERT_EQ(Status::OK, returnStatus);
+            // TODO(epeev) : Enable and check for face notifications
+            returnStatus = device1->sendCommand(CommandType::STOP_SMOOTH_ZOOM,
+                    0, 0);
+            ASSERT_TRUE(returnStatus.isOk());
+            ASSERT_EQ(Status::OK, returnStatus);
 
-            ASSERT_EQ(Status::OK, device1->sendCommand(
-                    CommandType::START_SMOOTH_ZOOM, maxZoom, 0));
-            // TODO (epeev): Enable and check for zoom notifications
-            ASSERT_EQ(Status::OK, device1->sendCommand(
-                    CommandType::STOP_SMOOTH_ZOOM, 0, 0));
-
-            device1->stopPreview();
-
-            device1->close();
+            stopPreviewAndClose(device1);
         }
     }
 }
@@ -1553,11 +1534,7 @@ TEST_F(CameraHidlTest, getSetParameters) {
             ASSERT_NE(nullptr, device1.get());
 
             ::android::CameraParameters cameraParams;
-            device1->getParameters([&] (const ::android::hardware::hidl_string& params) {
-                ASSERT_FALSE(params.empty());
-                ::android::String8 paramString(params.c_str());
-                cameraParams.unflatten(paramString);
-            });
+            getParameters(device1, &cameraParams /*out*/);
 
             int32_t width, height;
             cameraParams.getPictureSize(&width, &height);
@@ -1634,13 +1611,8 @@ TEST_F(CameraHidlTest, getSetParameters) {
             cameraParams.setPreviewSize(previewSizes[0].width,
                     previewSizes[0].height);
 
-            ASSERT_EQ(Status::OK, device1->setParameters(
-                    cameraParams.flatten().string()));
-            device1->getParameters([&] (const ::android::hardware::hidl_string& params) {
-                ASSERT_FALSE(params.empty());
-                ::android::String8 paramString(params.c_str());
-                cameraParams.unflatten(paramString);
-            });
+            setParameters(device1, cameraParams);
+            getParameters(device1, &cameraParams /*out*/);
 
             cameraParams.getPictureSize(&width, &height);
             ASSERT_TRUE((pictureSizes[0].width == width) &&
@@ -1649,7 +1621,8 @@ TEST_F(CameraHidlTest, getSetParameters) {
             ASSERT_TRUE((previewSizes[0].width == width) &&
                     (previewSizes[0].height == height));
 
-            device1->close();
+            Return<void> ret = device1->close();
+            ASSERT_TRUE(ret.isOk());
         }
     }
 }
@@ -1664,7 +1637,8 @@ TEST_F(CameraHidlTest, getCameraCharacteristics) {
         if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_3_2) {
             ::android::sp<::android::hardware::camera::device::V3_2::ICameraDevice> device3_2;
             ALOGI("getCameraCharacteristics: Testing camera device %s", name.c_str());
-            env->mProvider->getCameraDeviceInterface_V3_x(
+            Return<void> ret;
+            ret = env->mProvider->getCameraDeviceInterface_V3_x(
                 name,
                 [&](auto status, const auto& device) {
                     ALOGI("getCameraDeviceInterface_V3_x returns status:%d", (int)status);
@@ -1672,8 +1646,9 @@ TEST_F(CameraHidlTest, getCameraCharacteristics) {
                     ASSERT_NE(device, nullptr);
                     device3_2 = device;
                 });
+            ASSERT_TRUE(ret.isOk());
 
-            device3_2->getCameraCharacteristics(
+            ret = device3_2->getCameraCharacteristics(
                 [&](auto status, const auto& chars) {
                     ALOGI("getCameraCharacteristics returns status:%d", (int)status);
                     ASSERT_EQ(Status::OK, status);
@@ -1686,6 +1661,7 @@ TEST_F(CameraHidlTest, getCameraCharacteristics) {
                     ASSERT_GT(entryCount, 0u);
                     ALOGI("getCameraCharacteristics metadata entry count is %zu", entryCount);
                 });
+            ASSERT_TRUE(ret.isOk());
         }
     }
 }
@@ -1696,8 +1672,9 @@ TEST_F(CameraHidlTest, setTorchMode) {
     CameraHidlEnvironment* env = CameraHidlEnvironment::Instance();
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
     bool torchControlSupported = false;
+    Return<void> ret;
 
-    CameraHidlEnvironment::Instance()->mProvider->isSetTorchModeSupported(
+    ret = CameraHidlEnvironment::Instance()->mProvider->isSetTorchModeSupported(
         [&](auto status, bool support) {
             ALOGI("isSetTorchModeSupported returns status:%d supported:%d",
                     (int)status, support);
@@ -1705,15 +1682,17 @@ TEST_F(CameraHidlTest, setTorchMode) {
             torchControlSupported = support;
         });
 
+
     sp<TorchProviderCb> cb = new TorchProviderCb(this);
-    auto status = env->mProvider->setCallback(cb);
-    ASSERT_EQ(Status::OK, status);
+    Return<Status> returnStatus = env->mProvider->setCallback(cb);
+    ASSERT_TRUE(returnStatus.isOk());
+    ASSERT_EQ(Status::OK, returnStatus);
 
     for (const auto& name : cameraDeviceNames) {
         if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_3_2) {
             ::android::sp<::android::hardware::camera::device::V3_2::ICameraDevice> device3_2;
             ALOGI("setTorchMode: Testing camera device %s", name.c_str());
-            env->mProvider->getCameraDeviceInterface_V3_x(
+            ret = env->mProvider->getCameraDeviceInterface_V3_x(
                 name,
                 [&](auto status, const auto& device) {
                     ALOGI("getCameraDeviceInterface_V3_x returns status:%d", (int)status);
@@ -1721,15 +1700,17 @@ TEST_F(CameraHidlTest, setTorchMode) {
                     ASSERT_NE(device, nullptr);
                     device3_2 = device;
                 });
+            ASSERT_TRUE(ret.isOk());
 
             mTorchStatus = TorchModeStatus::NOT_AVAILABLE;
-            Status status = device3_2->setTorchMode(TorchMode::ON);
-            ALOGI("setTorchMode return status %d", (int)status);
+            returnStatus = device3_2->setTorchMode(TorchMode::ON);
+            ASSERT_TRUE(returnStatus.isOk());
             if (!torchControlSupported) {
-                ASSERT_EQ(Status::METHOD_NOT_SUPPORTED, status);
+                ASSERT_EQ(Status::METHOD_NOT_SUPPORTED, returnStatus);
             } else {
-                ASSERT_TRUE(status == Status::OK || status == Status::OPERATION_NOT_SUPPORTED);
-                if (status == Status::OK) {
+                ASSERT_TRUE(returnStatus == Status::OK ||
+                            returnStatus == Status::OPERATION_NOT_SUPPORTED);
+                if (returnStatus == Status::OK) {
                     {
                         std::unique_lock<std::mutex> l(mTorchLock);
                         while (TorchModeStatus::NOT_AVAILABLE == mTorchStatus) {
@@ -1742,8 +1723,9 @@ TEST_F(CameraHidlTest, setTorchMode) {
                         mTorchStatus = TorchModeStatus::NOT_AVAILABLE;
                     }
 
-                    status = device3_2->setTorchMode(TorchMode::OFF);
-                    ASSERT_EQ(Status::OK, status);
+                    returnStatus = device3_2->setTorchMode(TorchMode::OFF);
+                    ASSERT_TRUE(returnStatus.isOk());
+                    ASSERT_EQ(Status::OK, returnStatus);
 
                     {
                         std::unique_lock<std::mutex> l(mTorchLock);
@@ -1760,7 +1742,7 @@ TEST_F(CameraHidlTest, setTorchMode) {
         } else if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
             ::android::sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
             ALOGI("dumpState: Testing camera device %s", name.c_str());
-            env->mProvider->getCameraDeviceInterface_V1_x(
+            ret = env->mProvider->getCameraDeviceInterface_V1_x(
                 name,
                 [&](auto status, const auto& device) {
                     ALOGI("getCameraDeviceInterface_V1_x returns status:%d", (int)status);
@@ -1768,15 +1750,17 @@ TEST_F(CameraHidlTest, setTorchMode) {
                     ASSERT_NE(device, nullptr);
                     device1 = device;
                 });
+            ASSERT_TRUE(ret.isOk());
 
             mTorchStatus = TorchModeStatus::NOT_AVAILABLE;
-            Status status = device1->setTorchMode(TorchMode::ON);
-            ALOGI("setTorchMode return status %d", (int)status);
+            returnStatus = device1->setTorchMode(TorchMode::ON);
+            ASSERT_TRUE(returnStatus.isOk());
             if (!torchControlSupported) {
-                ASSERT_EQ(Status::METHOD_NOT_SUPPORTED, status);
+                ASSERT_EQ(Status::METHOD_NOT_SUPPORTED, returnStatus);
             } else {
-                ASSERT_TRUE(status == Status::OK || status == Status::OPERATION_NOT_SUPPORTED);
-                if (status == Status::OK) {
+                ASSERT_TRUE(returnStatus == Status::OK ||
+                            returnStatus == Status::OPERATION_NOT_SUPPORTED);
+                if (returnStatus == Status::OK) {
                     {
                         std::unique_lock<std::mutex> l(mTorchLock);
                         while (TorchModeStatus::NOT_AVAILABLE == mTorchStatus) {
@@ -1789,8 +1773,9 @@ TEST_F(CameraHidlTest, setTorchMode) {
                         mTorchStatus = TorchModeStatus::NOT_AVAILABLE;
                     }
 
-                    status = device1->setTorchMode(TorchMode::OFF);
-                    ASSERT_EQ(Status::OK, status);
+                    returnStatus = device1->setTorchMode(TorchMode::OFF);
+                    ASSERT_TRUE(returnStatus.isOk());
+                    ASSERT_EQ(Status::OK, returnStatus);
 
                     {
                         std::unique_lock<std::mutex> l(mTorchLock);
@@ -1802,26 +1787,29 @@ TEST_F(CameraHidlTest, setTorchMode) {
                         }
                         ASSERT_EQ(TorchModeStatus::AVAILABLE_OFF, mTorchStatus);
                     }
-
                 }
             }
+            ret = device1->close();
+            ASSERT_TRUE(ret.isOk());
         }
     }
 
-    status = env->mProvider->setCallback(nullptr);
-    ASSERT_EQ(Status::OK, status);
+    returnStatus = env->mProvider->setCallback(nullptr);
+    ASSERT_TRUE(returnStatus.isOk());
+    ASSERT_EQ(Status::OK, returnStatus);
 }
 
 // Check dump functionality.
 TEST_F(CameraHidlTest, dumpState) {
     CameraHidlEnvironment* env = CameraHidlEnvironment::Instance();
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
+    Return<void> ret;
 
     for (const auto& name : cameraDeviceNames) {
         if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_3_2) {
             ::android::sp<::android::hardware::camera::device::V3_2::ICameraDevice> device3_2;
             ALOGI("dumpState: Testing camera device %s", name.c_str());
-            env->mProvider->getCameraDeviceInterface_V3_x(
+            ret = env->mProvider->getCameraDeviceInterface_V3_x(
                 name,
                 [&](auto status, const auto& device) {
                     ALOGI("getCameraDeviceInterface_V3_x returns status:%d", (int)status);
@@ -1829,18 +1817,20 @@ TEST_F(CameraHidlTest, dumpState) {
                     ASSERT_NE(device, nullptr);
                     device3_2 = device;
                 });
+            ASSERT_TRUE(ret.isOk());
 
             native_handle_t* raw_handle = native_handle_create(1, 0);
             raw_handle->data[0] = open(kDumpOutput, O_RDWR);
             ASSERT_GE(raw_handle->data[0], 0);
             hidl_handle handle = raw_handle;
-            device3_2->dumpState(handle);
+            ret= device3_2->dumpState(handle);
+            ASSERT_TRUE(ret.isOk());
             close(raw_handle->data[0]);
             native_handle_delete(raw_handle);
         } else if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
             ::android::sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
             ALOGI("dumpState: Testing camera device %s", name.c_str());
-            env->mProvider->getCameraDeviceInterface_V1_x(
+            ret = env->mProvider->getCameraDeviceInterface_V1_x(
                 name,
                 [&](auto status, const auto& device) {
                     ALOGI("getCameraDeviceInterface_V1_x returns status:%d", (int)status);
@@ -1848,12 +1838,15 @@ TEST_F(CameraHidlTest, dumpState) {
                     ASSERT_NE(device, nullptr);
                     device1 = device;
                 });
+            ASSERT_TRUE(ret.isOk());
 
             native_handle_t* raw_handle = native_handle_create(1, 0);
             raw_handle->data[0] = open(kDumpOutput, O_RDWR);
             ASSERT_GE(raw_handle->data[0], 0);
             hidl_handle handle = raw_handle;
-            device1->dumpState(handle);
+            Return<Status> returnStatus = device1->dumpState(handle);
+            ASSERT_TRUE(returnStatus.isOk());
+            ASSERT_EQ(Status::OK, returnStatus);
             close(raw_handle->data[0]);
             native_handle_delete(raw_handle);
         }
@@ -1864,12 +1857,13 @@ TEST_F(CameraHidlTest, dumpState) {
 TEST_F(CameraHidlTest, openClose) {
     CameraHidlEnvironment* env = CameraHidlEnvironment::Instance();
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
+    Return<void> ret;
 
     for (const auto& name : cameraDeviceNames) {
         if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_3_2) {
             ::android::sp<::android::hardware::camera::device::V3_2::ICameraDevice> device3_2;
             ALOGI("openClose: Testing camera device %s", name.c_str());
-            env->mProvider->getCameraDeviceInterface_V3_x(
+            ret = env->mProvider->getCameraDeviceInterface_V3_x(
                 name,
                 [&](auto status, const auto& device) {
                     ALOGI("getCameraDeviceInterface_V3_x returns status:%d", (int)status);
@@ -1877,10 +1871,11 @@ TEST_F(CameraHidlTest, openClose) {
                     ASSERT_NE(device, nullptr);
                     device3_2 = device;
                 });
+            ASSERT_TRUE(ret.isOk());
 
             sp<EmptyDeviceCb> cb = new EmptyDeviceCb;
             sp<ICameraDeviceSession> session;
-            device3_2->open(
+            ret = device3_2->open(
                 cb,
                 [&](auto status, const auto& newSession) {
                     ALOGI("device::open returns status:%d", (int)status);
@@ -1888,16 +1883,19 @@ TEST_F(CameraHidlTest, openClose) {
                     ASSERT_NE(newSession, nullptr);
                     session = newSession;
                 });
+            ASSERT_TRUE(ret.isOk());
 
             native_handle_t* raw_handle = native_handle_create(1, 0);
             raw_handle->data[0] = open(kDumpOutput, O_RDWR);
             ASSERT_GE(raw_handle->data[0], 0);
             hidl_handle handle = raw_handle;
-            device3_2->dumpState(handle);
+            ret = device3_2->dumpState(handle);
+            ASSERT_TRUE(ret.isOk());
             close(raw_handle->data[0]);
             native_handle_delete(raw_handle);
 
-            session->close();
+            ret = session->close();
+            ASSERT_TRUE(ret.isOk());
             // TODO: test all session API calls return INTERNAL_ERROR after close
             // TODO: keep a wp copy here and verify session cannot be promoted out of this scope
         } else if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
@@ -1909,11 +1907,14 @@ TEST_F(CameraHidlTest, openClose) {
             raw_handle->data[0] = open(kDumpOutput, O_RDWR);
             ASSERT_GE(raw_handle->data[0], 0);
             hidl_handle handle = raw_handle;
-            device1->dumpState(handle);
+            Return<Status> returnStatus = device1->dumpState(handle);
+            ASSERT_TRUE(returnStatus.isOk());
+            ASSERT_EQ(Status::OK, returnStatus);
             close(raw_handle->data[0]);
             native_handle_delete(raw_handle);
 
-            device1->close();
+            ret = device1->close();
+            ASSERT_TRUE(ret.isOk());
         }
     }
 }
@@ -1927,8 +1928,9 @@ TEST_F(CameraHidlTest, constructDefaultRequestSettings) {
     for (const auto& name : cameraDeviceNames) {
         if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_3_2) {
             ::android::sp<::android::hardware::camera::device::V3_2::ICameraDevice> device3_2;
+            Return<void> ret;
             ALOGI("constructDefaultRequestSettings: Testing camera device %s", name.c_str());
-            env->mProvider->getCameraDeviceInterface_V3_x(
+            ret = env->mProvider->getCameraDeviceInterface_V3_x(
                 name,
                 [&](auto status, const auto& device) {
                     ALOGI("getCameraDeviceInterface_V3_x returns status:%d", (int)status);
@@ -1936,10 +1938,11 @@ TEST_F(CameraHidlTest, constructDefaultRequestSettings) {
                     ASSERT_NE(device, nullptr);
                     device3_2 = device;
                 });
+            ASSERT_TRUE(ret.isOk());
 
             sp<EmptyDeviceCb> cb = new EmptyDeviceCb;
             sp<ICameraDeviceSession> session;
-            device3_2->open(
+            ret = device3_2->open(
                 cb,
                 [&](auto status, const auto& newSession) {
                     ALOGI("device::open returns status:%d", (int)status);
@@ -1947,11 +1950,12 @@ TEST_F(CameraHidlTest, constructDefaultRequestSettings) {
                     ASSERT_NE(newSession, nullptr);
                     session = newSession;
                 });
+            ASSERT_TRUE(ret.isOk());
 
             for (uint32_t t = (uint32_t) RequestTemplate::PREVIEW;
                     t <= (uint32_t) RequestTemplate::MANUAL; t++) {
                 RequestTemplate reqTemplate = (RequestTemplate) t;
-                session->constructDefaultRequestSettings(
+                ret = session->constructDefaultRequestSettings(
                     reqTemplate,
                     [&](auto status, const auto& req) {
                         ALOGI("constructDefaultRequestSettings returns status:%d", (int)status);
@@ -1978,8 +1982,10 @@ TEST_F(CameraHidlTest, constructDefaultRequestSettings) {
                             ASSERT_EQ(0u, req.size());
                         }
                     });
+                ASSERT_TRUE(ret.isOk());
             }
-            session->close();
+            ret = session->close();
+            ASSERT_TRUE(ret.isOk());
         }
     }
 }
@@ -1994,6 +2000,7 @@ TEST_F(CameraHidlTest, configureStreamsAvailableOutputs) {
     for (const auto& name : cameraDeviceNames) {
         if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_3_2) {
             camera_metadata_t *staticMeta;
+            Return<void> ret;
             sp<ICameraDeviceSession> session;
             openEmptyDeviceSession(name, env, &session /*out*/,
                     &staticMeta /*out*/);
@@ -2013,17 +2020,19 @@ TEST_F(CameraHidlTest, configureStreamsAvailableOutputs) {
                 ::android::hardware::hidl_vec<Stream> streams = {stream};
                 StreamConfiguration config = {streams,
                         StreamConfigurationMode::NORMAL_MODE};
-                session->configureStreams(config, [streamId] (Status s,
+                ret = session->configureStreams(config, [streamId] (Status s,
                         HalStreamConfiguration halConfig) {
                     ASSERT_EQ(Status::OK, s);
                     ASSERT_EQ(1u, halConfig.streams.size());
                     ASSERT_EQ(halConfig.streams[0].id, streamId);
                 });
+                ASSERT_TRUE(ret.isOk());
                 streamId++;
             }
 
             free_camera_metadata(staticMeta);
-            session->close();
+            ret = session->close();
+            ASSERT_TRUE(ret.isOk());
         }
     }
 }
@@ -2037,6 +2046,7 @@ TEST_F(CameraHidlTest, configureStreamsInvalidOutputs) {
     for (const auto& name : cameraDeviceNames) {
         if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_3_2) {
             camera_metadata_t *staticMeta;
+            Return<void> ret;
             sp<ICameraDeviceSession> session;
             openEmptyDeviceSession(name, env, &session /*out*/,
                     &staticMeta /*out*/);
@@ -2055,11 +2065,12 @@ TEST_F(CameraHidlTest, configureStreamsInvalidOutputs) {
             ::android::hardware::hidl_vec<Stream> streams = {stream};
             StreamConfiguration config = {streams,
                     StreamConfigurationMode::NORMAL_MODE};
-            session->configureStreams(config, [] (Status s,
+            ret = session->configureStreams(config, [] (Status s,
                     HalStreamConfiguration) {
                 ASSERT_TRUE((Status::ILLEGAL_ARGUMENT == s) ||
                             (Status::INTERNAL_ERROR == s));
             });
+            ASSERT_TRUE(ret.isOk());
 
             stream = {streamId++, StreamType::OUTPUT,
                     static_cast<uint32_t> (UINT32_MAX),
@@ -2069,10 +2080,11 @@ TEST_F(CameraHidlTest, configureStreamsInvalidOutputs) {
             streams[0] = stream;
             config = {streams,
                     StreamConfigurationMode::NORMAL_MODE};
-            session->configureStreams(config, [] (Status s,
+            ret = session->configureStreams(config, [] (Status s,
                     HalStreamConfiguration) {
                 ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
             });
+            ASSERT_TRUE(ret.isOk());
 
             for (auto &it : outputStreams) {
                 stream = {streamId++, StreamType::OUTPUT,
@@ -2083,10 +2095,11 @@ TEST_F(CameraHidlTest, configureStreamsInvalidOutputs) {
                 streams[0] = stream;
                 config = {streams,
                         StreamConfigurationMode::NORMAL_MODE};
-                session->configureStreams(config, [] (Status s,
+                ret = session->configureStreams(config, [] (Status s,
                         HalStreamConfiguration) {
                     ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
                 });
+                ASSERT_TRUE(ret.isOk());
 
                 stream = {streamId++, StreamType::OUTPUT,
                         static_cast<uint32_t> (it.width),
@@ -2096,14 +2109,16 @@ TEST_F(CameraHidlTest, configureStreamsInvalidOutputs) {
                 streams[0] = stream;
                 config = {streams,
                         StreamConfigurationMode::NORMAL_MODE};
-                session->configureStreams(config, [] (Status s,
+                ret = session->configureStreams(config, [] (Status s,
                         HalStreamConfiguration) {
                     ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
                 });
+                ASSERT_TRUE(ret.isOk());
             }
 
             free_camera_metadata(staticMeta);
-            session->close();
+            ret = session->close();
+            ASSERT_TRUE(ret.isOk());
         }
     }
 }
@@ -2119,16 +2134,18 @@ TEST_F(CameraHidlTest, configureStreamsZSLInputOutputs) {
     for (const auto& name : cameraDeviceNames) {
         if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_3_2) {
             camera_metadata_t *staticMeta;
+            Return<void> ret;
             sp<ICameraDeviceSession> session;
             openEmptyDeviceSession(name, env, &session /*out*/,
                     &staticMeta /*out*/);
 
-            Status ret = isZSLModeAvailable(staticMeta);
-            if (Status::METHOD_NOT_SUPPORTED == ret) {
-                session->close();
+            Status rc = isZSLModeAvailable(staticMeta);
+            if (Status::METHOD_NOT_SUPPORTED == rc) {
+                ret = session->close();
+                ASSERT_TRUE(ret.isOk());
                 continue;
             }
-            ASSERT_EQ(Status::OK, ret);
+            ASSERT_EQ(Status::OK, rc);
 
             inputStreams.clear();
             ASSERT_EQ(Status::OK, getAvailableOutputStreams(staticMeta,
@@ -2174,16 +2191,18 @@ TEST_F(CameraHidlTest, configureStreamsZSLInputOutputs) {
                             inputStream, zslStream, outputStream};
                     StreamConfiguration config = {streams,
                             StreamConfigurationMode::NORMAL_MODE};
-                    session->configureStreams(config, [streamId] (Status s,
+                    ret = session->configureStreams(config, [streamId] (Status s,
                             HalStreamConfiguration halConfig) {
                         ASSERT_EQ(Status::OK, s);
                         ASSERT_EQ(3u, halConfig.streams.size());
                     });
+                    ASSERT_TRUE(ret.isOk());
                 }
             }
 
             free_camera_metadata(staticMeta);
-            session->close();
+            ret = session->close();
+            ASSERT_TRUE(ret.isOk());
         }
     }
 }
@@ -2203,6 +2222,7 @@ TEST_F(CameraHidlTest, configureStreamsPreviewStillOutputs) {
     for (const auto& name : cameraDeviceNames) {
         if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_3_2) {
             camera_metadata_t *staticMeta;
+            Return<void> ret;
             sp<ICameraDeviceSession> session;
             openEmptyDeviceSession(name, env, &session /*out*/,
                     &staticMeta /*out*/);
@@ -2234,16 +2254,18 @@ TEST_F(CameraHidlTest, configureStreamsPreviewStillOutputs) {
                             previewStream, blobStream};
                     StreamConfiguration config = {streams,
                             StreamConfigurationMode::NORMAL_MODE};
-                    session->configureStreams(config, [streamId] (Status s,
+                    ret = session->configureStreams(config, [streamId] (Status s,
                             HalStreamConfiguration halConfig) {
                         ASSERT_EQ(Status::OK, s);
                         ASSERT_EQ(2u, halConfig.streams.size());
                     });
+                    ASSERT_TRUE(ret.isOk());
                 }
             }
 
             free_camera_metadata(staticMeta);
-            session->close();
+            ret = session->close();
+            ASSERT_TRUE(ret.isOk());
         }
     }
 }
@@ -2258,13 +2280,15 @@ TEST_F(CameraHidlTest, configureStreamsConstrainedOutputs) {
     for (const auto& name : cameraDeviceNames) {
         if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_3_2) {
             camera_metadata_t *staticMeta;
+            Return<void> ret;
             sp<ICameraDeviceSession> session;
             openEmptyDeviceSession(name, env, &session /*out*/,
                     &staticMeta /*out*/);
 
             Status rc = isConstrainedModeAvailable(staticMeta);
             if (Status::METHOD_NOT_SUPPORTED == rc) {
-                session->close();
+                ret = session->close();
+                ASSERT_TRUE(ret.isOk());
                 continue;
             }
             ASSERT_EQ(Status::OK, rc);
@@ -2282,12 +2306,13 @@ TEST_F(CameraHidlTest, configureStreamsConstrainedOutputs) {
             ::android::hardware::hidl_vec<Stream> streams = {stream};
             StreamConfiguration config = {streams,
                     StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE};
-            session->configureStreams(config, [streamId] (Status s,
+            ret = session->configureStreams(config, [streamId] (Status s,
                     HalStreamConfiguration halConfig) {
                 ASSERT_EQ(Status::OK, s);
                 ASSERT_EQ(1u, halConfig.streams.size());
                 ASSERT_EQ(halConfig.streams[0].id, streamId);
             });
+            ASSERT_TRUE(ret.isOk());
 
             stream = {streamId++, StreamType::OUTPUT,
                     static_cast<uint32_t> (0),
@@ -2297,11 +2322,12 @@ TEST_F(CameraHidlTest, configureStreamsConstrainedOutputs) {
             streams[0] = stream;
             config = {streams,
                     StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE};
-            session->configureStreams(config, [streamId] (Status s,
+            ret = session->configureStreams(config, [streamId] (Status s,
                     HalStreamConfiguration) {
                 ASSERT_TRUE((Status::ILLEGAL_ARGUMENT == s) ||
                             (Status::INTERNAL_ERROR == s));
             });
+            ASSERT_TRUE(ret.isOk());
 
             stream = {streamId++, StreamType::OUTPUT,
                     static_cast<uint32_t> (UINT32_MAX),
@@ -2311,10 +2337,11 @@ TEST_F(CameraHidlTest, configureStreamsConstrainedOutputs) {
             streams[0] = stream;
             config = {streams,
                     StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE};
-            session->configureStreams(config, [streamId] (Status s,
+            ret = session->configureStreams(config, [streamId] (Status s,
                     HalStreamConfiguration) {
                 ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
             });
+            ASSERT_TRUE(ret.isOk());
 
             stream = {streamId++, StreamType::OUTPUT,
                     static_cast<uint32_t> (hfrStream.width),
@@ -2324,13 +2351,15 @@ TEST_F(CameraHidlTest, configureStreamsConstrainedOutputs) {
             streams[0] = stream;
             config = {streams,
                     StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE};
-            session->configureStreams(config, [streamId] (Status s,
+            ret = session->configureStreams(config, [streamId] (Status s,
                     HalStreamConfiguration) {
                 ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
             });
+            ASSERT_TRUE(ret.isOk());
 
             free_camera_metadata(staticMeta);
-            session->close();
+            ret = session->close();
+            ASSERT_TRUE(ret.isOk());
         }
     }
 }
@@ -2350,6 +2379,7 @@ TEST_F(CameraHidlTest, configureStreamsVideoStillOutputs) {
     for (const auto& name : cameraDeviceNames) {
         if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_3_2) {
             camera_metadata_t *staticMeta;
+            Return<void> ret;
             sp<ICameraDeviceSession> session;
             openEmptyDeviceSession(name, env, &session /*out*/,
                     &staticMeta /*out*/);
@@ -2382,16 +2412,18 @@ TEST_F(CameraHidlTest, configureStreamsVideoStillOutputs) {
                             videoStream, blobStream};
                     StreamConfiguration config = {streams,
                             StreamConfigurationMode::NORMAL_MODE};
-                    session->configureStreams(config, [streamId] (Status s,
+                    ret = session->configureStreams(config, [streamId] (Status s,
                             HalStreamConfiguration halConfig) {
                         ASSERT_EQ(Status::OK, s);
                         ASSERT_EQ(2u, halConfig.streams.size());
                     });
+                    ASSERT_TRUE(ret.isOk());
                 }
             }
 
             free_camera_metadata(staticMeta);
-            session->close();
+            ret = session->close();
+            ASSERT_TRUE(ret.isOk());
         }
     }
 }
@@ -2416,10 +2448,12 @@ TEST_F(CameraHidlTest, processCaptureRequestPreview) {
                     &halStreamConfig /*out*/);
 
             RequestTemplate reqTemplate = RequestTemplate::PREVIEW;
-            session->constructDefaultRequestSettings(reqTemplate,
+            Return<void> ret;
+            ret = session->constructDefaultRequestSettings(reqTemplate,
                 [&](auto status, const auto& req) {
                     ASSERT_EQ(Status::OK, status);
                     settings = req; });
+            ASSERT_TRUE(ret.isOk());
 
             sp<GraphicBuffer> gb = new GraphicBuffer(previewStream.width,
                     previewStream.height,
@@ -2443,7 +2477,10 @@ TEST_F(CameraHidlTest, processCaptureRequestPreview) {
                 mResultFrameNumber = frameNumber;
             }
 
-            ASSERT_EQ(Status::OK, session->processCaptureRequest(request));
+            Return<Status> returnStatus = session->processCaptureRequest(
+                    request);
+            ASSERT_TRUE(returnStatus.isOk());
+            ASSERT_EQ(Status::OK, returnStatus);
 
             {
                 std::unique_lock<std::mutex> l(mLock);
@@ -2465,7 +2502,10 @@ TEST_F(CameraHidlTest, processCaptureRequestPreview) {
                 mResultFrameNumber++;
             }
 
-            ASSERT_EQ(Status::OK, session->processCaptureRequest(request));
+            returnStatus = session->processCaptureRequest(
+                    request);
+            ASSERT_TRUE(returnStatus.isOk());
+            ASSERT_EQ(Status::OK, returnStatus);
 
             {
                 std::unique_lock<std::mutex> l(mLock);
@@ -2479,7 +2519,8 @@ TEST_F(CameraHidlTest, processCaptureRequestPreview) {
                 ASSERT_EQ(previewStream.id, mResultBuffers[0].streamId);
             }
 
-            session->close();
+            ret = session->close();
+            ASSERT_TRUE(ret.isOk());
         }
     }
 }
@@ -2522,10 +2563,13 @@ TEST_F(CameraHidlTest, processCaptureRequestInvalidSinglePreview) {
                     emptyInputBuffer, outputBuffers};
 
             //Settings were not correctly initialized, we should fail here
-            ASSERT_EQ(Status::INTERNAL_ERROR,
-                    session->processCaptureRequest(request));
+            Return<Status> returnStatus = session->processCaptureRequest(
+                    request);
+            ASSERT_TRUE(returnStatus.isOk());
+            ASSERT_EQ(Status::INTERNAL_ERROR, returnStatus);
 
-            session->close();
+            Return<void> ret = session->close();
+            ASSERT_TRUE(ret.isOk());
         }
     }
 }
@@ -2551,10 +2595,12 @@ TEST_F(CameraHidlTest, processCaptureRequestInvalidBuffer) {
                     &halStreamConfig /*out*/);
 
             RequestTemplate reqTemplate = RequestTemplate::PREVIEW;
-            session->constructDefaultRequestSettings(reqTemplate,
+            Return<void> ret;
+            ret = session->constructDefaultRequestSettings(reqTemplate,
                 [&](auto status, const auto& req) {
                     ASSERT_EQ(Status::OK, status);
                     settings = req; });
+            ASSERT_TRUE(ret.isOk());
 
             ::android::hardware::hidl_vec<StreamBuffer> emptyOutputBuffers;
             StreamBuffer emptyInputBuffer = {-1, 0, nullptr,
@@ -2563,10 +2609,14 @@ TEST_F(CameraHidlTest, processCaptureRequestInvalidBuffer) {
                     emptyInputBuffer, emptyOutputBuffers};
 
             //Output buffers are missing, we should fail here
+            Return<Status> returnStatus = session->processCaptureRequest(
+                    request);
+            ASSERT_TRUE(returnStatus.isOk());
             ASSERT_EQ(Status::INTERNAL_ERROR,
-                    session->processCaptureRequest(request));
+                      returnStatus);
 
-            session->close();
+            ret = session->close();
+            ASSERT_TRUE(ret.isOk());
         }
     }
 }
@@ -2592,10 +2642,12 @@ TEST_F(CameraHidlTest, flushPreviewRequest) {
                     &halStreamConfig /*out*/);
 
             RequestTemplate reqTemplate = RequestTemplate::PREVIEW;
-            session->constructDefaultRequestSettings(reqTemplate,
+            Return<void> ret;
+            ret = session->constructDefaultRequestSettings(reqTemplate,
                 [&](auto status, const auto& req) {
                     ASSERT_EQ(Status::OK, status);
                     settings = req; });
+            ASSERT_TRUE(ret.isOk());
 
             sp<GraphicBuffer> gb = new GraphicBuffer(previewStream.width,
                     previewStream.height,
@@ -2620,9 +2672,14 @@ TEST_F(CameraHidlTest, flushPreviewRequest) {
                 mResultFrameNumber = frameNumber;
             }
 
-            ASSERT_EQ(Status::OK, session->processCaptureRequest(request));
+            Return<Status> returnStatus = session->processCaptureRequest(
+                    request);
+            ASSERT_TRUE(returnStatus.isOk());
+            ASSERT_EQ(Status::OK, returnStatus);
             //Flush before waiting for request to complete.
-            ASSERT_EQ(Status::OK, session->flush());
+            returnStatus = session->flush();
+            ASSERT_TRUE(returnStatus.isOk());
+            ASSERT_EQ(Status::OK, returnStatus);
 
             {
                 std::unique_lock<std::mutex> l(mLock);
@@ -2656,7 +2713,8 @@ TEST_F(CameraHidlTest, flushPreviewRequest) {
                 }
             }
 
-            session->close();
+            ret = session->close();
+            ASSERT_TRUE(ret.isOk());
         }
     }
 }
@@ -2685,7 +2743,9 @@ TEST_F(CameraHidlTest, flushEmpty) {
                 mResultFrameNumber = 0;
             }
 
-            ASSERT_EQ(Status::OK, session->flush());
+            Return<Status> returnStatus = session->flush();
+            ASSERT_TRUE(returnStatus.isOk());
+            ASSERT_EQ(Status::OK, returnStatus);
 
             {
                 std::unique_lock<std::mutex> l(mLock);
@@ -2697,7 +2757,8 @@ TEST_F(CameraHidlTest, flushEmpty) {
                 ASSERT_TRUE(mResultBuffers.empty());
             }
 
-            session->close();
+            Return<void> ret = session->close();
+            ASSERT_TRUE(ret.isOk());
         }
     }
 }
@@ -2900,7 +2961,8 @@ void CameraHidlTest::configurePreviewStream(const std::string &name,
     std::vector<AvailableStream> outputPreviewStreams;
     ::android::sp<ICameraDevice> device3_2;
     ALOGI("configureStreams: Testing camera device %s", name.c_str());
-    env->mProvider->getCameraDeviceInterface_V3_x(
+    Return<void> ret;
+    ret = env->mProvider->getCameraDeviceInterface_V3_x(
         name,
         [&](auto status, const auto& device) {
             ALOGI("getCameraDeviceInterface_V3_x returns status:%d",
@@ -2909,9 +2971,10 @@ void CameraHidlTest::configurePreviewStream(const std::string &name,
             ASSERT_NE(device, nullptr);
             device3_2 = device;
         });
+    ASSERT_TRUE(ret.isOk());
 
     sp<DeviceCb> cb = new DeviceCb(this);
-    device3_2->open(
+    ret = device3_2->open(
         cb,
         [&](auto status, const auto& newSession) {
             ALOGI("device::open returns status:%d", (int)status);
@@ -2919,15 +2982,17 @@ void CameraHidlTest::configurePreviewStream(const std::string &name,
             ASSERT_NE(newSession, nullptr);
             *session = newSession;
         });
+    ASSERT_TRUE(ret.isOk());
 
     camera_metadata_t *staticMeta;
-    device3_2->getCameraCharacteristics([&] (Status s,
+    ret = device3_2->getCameraCharacteristics([&] (Status s,
             CameraMetadata metadata) {
         ASSERT_EQ(Status::OK, s);
         staticMeta = clone_camera_metadata(
                 reinterpret_cast<const camera_metadata_t*>(metadata.data()));
          ASSERT_NE(nullptr, staticMeta);
     });
+    ASSERT_TRUE(ret.isOk());
 
     outputPreviewStreams.clear();
     auto rc = getAvailableOutputStreams(staticMeta,
@@ -2944,12 +3009,13 @@ void CameraHidlTest::configurePreviewStream(const std::string &name,
     ::android::hardware::hidl_vec<Stream> streams = {*previewStream};
     StreamConfiguration config = {streams,
             StreamConfigurationMode::NORMAL_MODE};
-    (*session)->configureStreams(config, [&] (Status s,
+    ret = (*session)->configureStreams(config, [&] (Status s,
             HalStreamConfiguration halConfig) {
         ASSERT_EQ(Status::OK, s);
         ASSERT_EQ(1u, halConfig.streams.size());
         *halStreamConfig = halConfig;
     });
+    ASSERT_TRUE(ret.isOk());
 }
 
 // Open a device session with empty callbacks and return static metadata.
@@ -2963,7 +3029,8 @@ void CameraHidlTest::openEmptyDeviceSession(const std::string &name,
 
     ::android::sp<ICameraDevice> device3_2;
     ALOGI("configureStreams: Testing camera device %s", name.c_str());
-    env->mProvider->getCameraDeviceInterface_V3_x(
+    Return<void> ret;
+    ret = env->mProvider->getCameraDeviceInterface_V3_x(
         name,
         [&](auto status, const auto& device) {
             ALOGI("getCameraDeviceInterface_V3_x returns status:%d",
@@ -2972,31 +3039,36 @@ void CameraHidlTest::openEmptyDeviceSession(const std::string &name,
             ASSERT_NE(device, nullptr);
             device3_2 = device;
         });
+    ASSERT_TRUE(ret.isOk());
 
     sp<EmptyDeviceCb> cb = new EmptyDeviceCb();
-    device3_2->open(cb, [&](auto status, const auto& newSession) {
+    ret = device3_2->open(cb, [&](auto status, const auto& newSession) {
             ALOGI("device::open returns status:%d", (int)status);
             ASSERT_EQ(Status::OK, status);
             ASSERT_NE(newSession, nullptr);
             *session = newSession;
         });
+    ASSERT_TRUE(ret.isOk());
 
-    device3_2->getCameraCharacteristics([&] (Status s,
+    ret = device3_2->getCameraCharacteristics([&] (Status s,
             CameraMetadata metadata) {
         ASSERT_EQ(Status::OK, s);
         *staticMeta = clone_camera_metadata(
                 reinterpret_cast<const camera_metadata_t*>(metadata.data()));
         ASSERT_NE(nullptr, *staticMeta);
     });
+    ASSERT_TRUE(ret.isOk());
 }
 
+// Open a particular camera device.
 void CameraHidlTest::openCameraDevice(const std::string &name,
         const CameraHidlEnvironment* env,
         sp<::android::hardware::camera::device::V1_0::ICameraDevice> *device1 /*out*/) {
     ASSERT_TRUE(nullptr != env);
     ASSERT_TRUE(nullptr != device1);
 
-    env->mProvider->getCameraDeviceInterface_V1_x(
+    Return<void> ret;
+    ret = env->mProvider->getCameraDeviceInterface_V1_x(
             name,
             [&](auto status, const auto& device) {
             ALOGI("getCameraDeviceInterface_V1_x returns status:%d",
@@ -3005,11 +3077,15 @@ void CameraHidlTest::openCameraDevice(const std::string &name,
             ASSERT_NE(device, nullptr);
             *device1 = device;
         });
+    ASSERT_TRUE(ret.isOk());
 
     sp<Camera1DeviceCb> deviceCb = new Camera1DeviceCb(this);
-    ASSERT_EQ(Status::OK, (*device1)->open(deviceCb));
+    Return<Status> returnStatus = (*device1)->open(deviceCb);
+    ASSERT_TRUE(returnStatus.isOk());
+    ASSERT_EQ(Status::OK, returnStatus);
 }
 
+// Initialize and configure a preview window.
 void CameraHidlTest::setupPreviewWindow(
         const sp<::android::hardware::camera::device::V1_0::ICameraDevice> &device,
         sp<BufferItemConsumer> *bufferItemConsumer /*out*/,
@@ -3033,6 +3109,82 @@ void CameraHidlTest::setupPreviewWindow(
     auto rc = device->setPreviewWindow(previewCb);
     ASSERT_TRUE(rc.isOk());
     ASSERT_EQ(Status::OK, rc);
+}
+
+// Stop camera preview and close camera.
+void CameraHidlTest::stopPreviewAndClose(
+        const sp<::android::hardware::camera::device::V1_0::ICameraDevice> &device) {
+    Return<void> ret = device->stopPreview();
+    ASSERT_TRUE(ret.isOk());
+
+    ret = device->close();
+    ASSERT_TRUE(ret.isOk());
+}
+
+// Enable a specific camera message type.
+void CameraHidlTest::enableMsgType(unsigned int msgType,
+        const sp<::android::hardware::camera::device::V1_0::ICameraDevice> &device) {
+    Return<void> ret = device->enableMsgType(msgType);
+    ASSERT_TRUE(ret.isOk());
+
+    Return<bool> returnBoolStatus = device->msgTypeEnabled(msgType);
+    ASSERT_TRUE(returnBoolStatus.isOk());
+    ASSERT_TRUE(returnBoolStatus);
+}
+
+// Disable a specific camera message type.
+void CameraHidlTest::disableMsgType(unsigned int msgType,
+        const sp<::android::hardware::camera::device::V1_0::ICameraDevice> &device) {
+    Return<void> ret = device->disableMsgType(msgType);
+    ASSERT_TRUE(ret.isOk());
+
+    Return<bool> returnBoolStatus = device->msgTypeEnabled(msgType);
+    ASSERT_TRUE(returnBoolStatus.isOk());
+    ASSERT_FALSE(returnBoolStatus);
+}
+
+// Wait until a specific frame notification arrives.
+void CameraHidlTest::waitForFrameLocked(DataCallbackMsg msgFrame,
+        std::unique_lock<std::mutex> &l) {
+    while (msgFrame != mDataMessageTypeReceived) {
+        auto timeout = std::chrono::system_clock::now() +
+                std::chrono::seconds(kStreamBufferTimeoutSec);
+        ASSERT_NE(std::cv_status::timeout,
+                mResultCondition.wait_until(l, timeout));
+    }
+}
+
+// Start preview on a particular camera device
+void CameraHidlTest::startPreview(
+        const sp<::android::hardware::camera::device::V1_0::ICameraDevice> &device) {
+    Return<Status> returnStatus = device->startPreview();
+    ASSERT_TRUE(returnStatus.isOk());
+    ASSERT_EQ(Status::OK, returnStatus);
+}
+
+// Retrieve camera parameters.
+void CameraHidlTest::getParameters(
+        const sp<::android::hardware::camera::device::V1_0::ICameraDevice> &device,
+        CameraParameters *cameraParams /*out*/) {
+    ASSERT_NE(nullptr, cameraParams);
+
+    Return<void> ret;
+    ret = device->getParameters([&] (const ::android::hardware::hidl_string& params) {
+        ASSERT_FALSE(params.empty());
+        ::android::String8 paramString(params.c_str());
+        (*cameraParams).unflatten(paramString);
+    });
+    ASSERT_TRUE(ret.isOk());
+}
+
+// Set camera parameters.
+void CameraHidlTest::setParameters(
+        const sp<::android::hardware::camera::device::V1_0::ICameraDevice> &device,
+        const CameraParameters &cameraParams) {
+    Return<Status> returnStatus = device->setParameters(
+            cameraParams.flatten().string());
+    ASSERT_TRUE(returnStatus.isOk());
+    ASSERT_EQ(Status::OK, returnStatus);
 }
 
 int main(int argc, char **argv) {
