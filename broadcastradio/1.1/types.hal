@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,18 +26,38 @@ enum ProgramListResult : Result {
     TEMPORARILY_UNAVAILABLE,
 };
 
-enum DigitalStatus : int32_t {
-    INVALID     = -1,
-    UNAVAILABLE = 1,  // current program is analog-only
-    AVAILABLE   = 2,  // digital mode is available, but disabled
-    BUFFERING   = 3,  // digital mode is available and buffering has started
-    ACTIVE      = 4,  // digital mode is currently playing
+/**
+ * Extra flags for program information.
+ */
+enum ProgramInfoFlags : uint32_t {
+    /**
+     * Set when the program is currently playing live stream.
+     * This may result in a slightly altered reception parameters,
+     * usually targetted at reduced latency.
+     */
+    LIVE = 1 << 0,
+
+    /**
+     * Radio stream is not playing, ie. due to bad reception conditions or
+     * buffering. In this state volume knob MAY be disabled to prevent user
+     * increasing volume too much.
+     */
+    MUTED = 1 << 1,
 };
 
-/* Radio program information. Returned by the HAL with event RADIO_EVENT_TUNED.
+/**
+ * Radio program information. Returned by the HAL with event RADIO_EVENT_TUNED.
  * Contains information on currently tuned channel.
  */
 struct ProgramInfo {
     @1.0::ProgramInfo base;
-    DigitalStatus digitalStatus;
+    bitfield<ProgramInfoFlags> flags;
+
+    /**
+     * Vendors are allowed to define their own set of flags and store it in this
+     * field. They MUST verify vendor/product name from Properties struct
+     * (IBroadcastRadio::getProperties) before doing any interpretation
+     * of such values.
+     */
+    uint32_t vendorFlags;
 };
