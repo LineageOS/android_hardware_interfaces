@@ -19,7 +19,7 @@
 #include <android/hardware/wifi/1.0/IWifiNanIface.h>
 #include <android/hardware/wifi/1.0/IWifiNanIfaceEventCallback.h>
 
-#include <VtsHalHidlTargetBaseTest.h>
+#include <VtsHalHidlTargetTestBase.h>
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
@@ -38,7 +38,7 @@ using ::android::sp;
 /**
  * Fixture to use for all NAN Iface HIDL interface tests.
  */
-class WifiNanIfaceHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
+class WifiNanIfaceHidlTest : public ::testing::VtsHalHidlTargetTestBase {
   public:
     virtual void SetUp() override {
       iwifiNanIface = getWifiNanIface();

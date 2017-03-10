@@ -21,7 +21,7 @@
 #include <android/hardware/ir/1.0/IConsumerIr.h>
 #include <android/hardware/ir/1.0/types.h>
 
-#include <VtsHalHidlTargetBaseTest.h>
+#include <VtsHalHidlTargetTestBase.h>
 #include <algorithm>
 
 using ::android::hardware::ir::V1_0::IConsumerIr;
@@ -31,10 +31,10 @@ using ::android::hardware::Return;
 using ::android::sp;
 
 // The main test class for IR HIDL HAL.
-class ConsumerIrHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
+class ConsumerIrHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  public:
   virtual void SetUp() override {
-    ir = ::testing::VtsHalHidlTargetBaseTest::getService<IConsumerIr>();
+    ir = ::testing::VtsHalHidlTargetTestBase::getService<IConsumerIr>();
     ASSERT_NE(ir, nullptr);
   }
 

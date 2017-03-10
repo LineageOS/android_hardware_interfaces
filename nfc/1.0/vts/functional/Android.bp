@@ -28,7 +28,7 @@ cc_test {
         "libutils",
         "android.hardware.nfc@1.0",
     ],
-    static_libs: ["VtsHalHidlTargetBaseTest"],
+    static_libs: ["VtsHalHidlTargetTestBase"],
     cflags: [
         "-O0",
         "-g",

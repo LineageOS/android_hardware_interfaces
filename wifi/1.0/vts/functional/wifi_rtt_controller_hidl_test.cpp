@@ -18,7 +18,7 @@
 
 #include <android/hardware/wifi/1.0/IWifiRttController.h>
 
-#include <VtsHalHidlTargetBaseTest.h>
+#include <VtsHalHidlTargetTestBase.h>
 
 #include "wifi_hidl_test_utils.h"
 
@@ -28,7 +28,7 @@ using ::android::sp;
 /**
  * Fixture to use for all RTT controller HIDL interface tests.
  */
-class WifiRttControllerHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
+class WifiRttControllerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    public:
     virtual void SetUp() override {}
 

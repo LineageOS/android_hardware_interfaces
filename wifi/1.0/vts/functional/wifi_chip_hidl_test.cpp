@@ -18,7 +18,7 @@
 
 #include <android/hardware/wifi/1.0/IWifiChip.h>
 
-#include <VtsHalHidlTargetBaseTest.h>
+#include <VtsHalHidlTargetTestBase.h>
 
 #include "wifi_hidl_call_util.h"
 #include "wifi_hidl_test_utils.h"
@@ -63,7 +63,7 @@ bool hasAnyRingBufferCapabilities(uint32_t caps) {
 /**
  * Fixture to use for all Wifi chip HIDL interface tests.
  */
-class WifiChipHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
+class WifiChipHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    public:
     virtual void SetUp() override {
         wifi_chip_ = getWifiChip();
