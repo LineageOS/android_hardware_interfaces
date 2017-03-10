@@ -41,5 +41,11 @@ android::sp<android::hardware::wifi::V1_0::IWifiP2pIface> getWifiP2pIface();
 android::sp<android::hardware::wifi::V1_0::IWifiStaIface> getWifiStaIface();
 android::sp<android::hardware::wifi::V1_0::IWifiRttController>
 getWifiRttController();
+// Configure the chip in a mode to support the creation of the provided
+// iface type.
+bool configureChipToSupportIfaceType(
+    const android::sp<android::hardware::wifi::V1_0::IWifiChip>& wifi_chip,
+    android::hardware::wifi::V1_0::IfaceType type,
+    android::hardware::wifi::V1_0::ChipModeId* configured_mode_id);
 // Used to trigger IWifi.stop() at the end of every test.
 void stopWifi();
