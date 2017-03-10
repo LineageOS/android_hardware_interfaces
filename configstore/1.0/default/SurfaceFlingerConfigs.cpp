@@ -89,6 +89,18 @@ Return<void> SurfaceFlingerConfigs::useHwcForRGBtoYUV(useHwcForRGBtoYUV_cb _hidl
     return Void();
 }
 
+Return<void> SurfaceFlingerConfigs::maxVirtualDisplaySize(maxVirtualDisplaySize_cb _hidl_cb) {
+  uint64_t maxSize = 0;
+#ifdef MAX_VIRTUAL_DISPLAY_DIMENSION
+  maxSize = MAX_VIRTUAL_DISPLAY_DIMENSION;
+  _hidl_cb({true, maxSize});
+  LOG(INFO) << "SurfaceFlinger MaxVirtualDisplaySize: " << maxSize;
+#else
+  _hidl_cb({false, maxSize});
+#endif
+  return Void();
+}
+
 // Methods from ::android::hidl::base::V1_0::IBase follow.
 ISurfaceFlingerConfigs* HIDL_FETCH_ISurfaceFlingerConfigs(const char* /* name */) {
     return new SurfaceFlingerConfigs();
