@@ -21,7 +21,7 @@
 #include <type_traits>
 #include <utility>
 
-#include <VtsHalHidlTargetBaseTest.h>
+#include <VtsHalHidlTargetTestBase.h>
 
 namespace {
 namespace detail {

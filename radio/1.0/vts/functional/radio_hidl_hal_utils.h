@@ -16,7 +16,7 @@
 
 #include <android-base/logging.h>
 
-#include <VtsHalHidlTargetBaseTest.h>
+#include <VtsHalHidlTargetTestBase.h>
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
@@ -435,7 +435,7 @@ public:
 };
 
 // The main test class for Radio HIDL.
-class RadioHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
+class RadioHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 private:
     std::mutex mtx;
     std::condition_variable cv;

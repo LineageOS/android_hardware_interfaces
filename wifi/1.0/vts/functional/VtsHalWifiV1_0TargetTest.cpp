@@ -16,7 +16,7 @@
 
 #include <android-base/logging.h>
 
-#include <VtsHalHidlTargetBaseTest.h>
+#include <VtsHalHidlTargetTestBase.h>
 
 #include "wifi_hidl_test_utils.h"
 
