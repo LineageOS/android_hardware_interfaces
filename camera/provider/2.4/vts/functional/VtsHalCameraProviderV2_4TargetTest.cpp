@@ -19,6 +19,7 @@
 #include <android/hardware/camera/device/3.2/ICameraDevice.h>
 #include <android/hardware/camera/device/1.0/ICameraDevice.h>
 #include "CameraParameters.h"
+#include <system/camera.h>
 #include <android/log.h>
 #include <ui/GraphicBuffer.h>
 #include <VtsHalHidlTargetTestBase.h>
@@ -80,6 +81,7 @@ using ::android::hardware::camera::device::V3_2::ErrorMsg;
 using ::android::hardware::camera::device::V3_2::ErrorCode;
 using ::android::hardware::camera::device::V1_0::CameraFacing;
 using ::android::hardware::camera::device::V1_0::NotifyCallbackMsg;
+using ::android::hardware::camera::device::V1_0::CommandType;
 using ::android::hardware::camera::device::V1_0::DataCallbackMsg;
 using ::android::hardware::camera::device::V1_0::CameraFrameMetadata;
 using ::android::hardware::camera::device::V1_0::ICameraDevicePreviewCallback;
@@ -1417,6 +1419,120 @@ TEST_F(CameraHidlTest, cancelAutoFocus) {
 
             ASSERT_EQ(Status::OK, device1->autoFocus());
             ASSERT_EQ(Status::OK, device1->cancelAutoFocus());
+
+            device1->stopPreview();
+
+            device1->close();
+        }
+    }
+}
+
+// Check whether face detection is available and try to enable&disable.
+TEST_F(CameraHidlTest, sendCommandFaceDetection) {
+    CameraHidlEnvironment* env = CameraHidlEnvironment::Instance();
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
+
+    for (const auto& name : cameraDeviceNames) {
+        if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
+            sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
+            openCameraDevice(name, env, &device1 /*out*/);
+            ASSERT_NE(nullptr, device1.get());
+
+            ::android::CameraParameters cameraParams;
+            device1->getParameters([&] (const ::android::hardware::hidl_string& params) {
+                ASSERT_FALSE(params.empty());
+                ::android::String8 paramString(params.c_str());
+                cameraParams.unflatten(paramString);
+            });
+
+            int32_t hwFaces = cameraParams.getInt(
+                    CameraParameters::KEY_MAX_NUM_DETECTED_FACES_HW);
+            int32_t swFaces = cameraParams.getInt(
+                    CameraParameters::KEY_MAX_NUM_DETECTED_FACES_SW);
+            if ((0 >= hwFaces) && (0 >= swFaces)) {
+                device1->close();
+                continue;
+            }
+
+            sp<BufferItemConsumer> bufferItemConsumer;
+            sp<BufferItemHander> bufferHandler;
+            setupPreviewWindow(device1, &bufferItemConsumer /*out*/,
+                    &bufferHandler /*out*/);
+            ASSERT_EQ(Status::OK, device1->startPreview());
+
+            if (0 < hwFaces) {
+                ASSERT_EQ(Status::OK, device1->sendCommand(
+                        CommandType::START_FACE_DETECTION,
+                        CAMERA_FACE_DETECTION_HW, 0));
+                // TODO(epeev) : Enable and check for face notifications
+                ASSERT_EQ(Status::OK, device1->sendCommand(
+                        CommandType::STOP_FACE_DETECTION,
+                        CAMERA_FACE_DETECTION_HW, 0));
+            }
+
+            if (0 < swFaces) {
+                ASSERT_EQ(Status::OK, device1->sendCommand(
+                        CommandType::START_FACE_DETECTION,
+                        CAMERA_FACE_DETECTION_SW, 0));
+                // TODO(epeev) : Enable and check for face notifications
+                ASSERT_EQ(Status::OK, device1->sendCommand(
+                        CommandType::STOP_FACE_DETECTION,
+                        CAMERA_FACE_DETECTION_SW, 0));
+            }
+
+            device1->stopPreview();
+
+            device1->close();
+        }
+    }
+}
+
+// Check whether smooth zoom is available and try to enable&disable.
+TEST_F(CameraHidlTest, sendCommandSmoothZoom) {
+    CameraHidlEnvironment* env = CameraHidlEnvironment::Instance();
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames();
+
+    for (const auto& name : cameraDeviceNames) {
+        if (getCameraDeviceVersion(name) == CAMERA_DEVICE_API_VERSION_1_0) {
+            sp<::android::hardware::camera::device::V1_0::ICameraDevice> device1;
+            openCameraDevice(name, env, &device1 /*out*/);
+            ASSERT_NE(nullptr, device1.get());
+
+            ::android::CameraParameters cameraParams;
+            device1->getParameters([&] (const ::android::hardware::hidl_string& params) {
+                ASSERT_FALSE(params.empty());
+                ::android::String8 paramString(params.c_str());
+                cameraParams.unflatten(paramString);
+            });
+
+            const char *smoothZoomStr = cameraParams.get(
+                    CameraParameters::KEY_SMOOTH_ZOOM_SUPPORTED);
+            bool smoothZoomSupported = ((nullptr != smoothZoomStr) &&
+                    (strcmp(smoothZoomStr, CameraParameters::TRUE) == 0)) ?
+                            true : false;
+            if (!smoothZoomSupported) {
+                device1->close();
+                continue;
+            }
+
+            int32_t maxZoom = cameraParams.getInt(
+                    CameraParameters::KEY_MAX_ZOOM);
+            ASSERT_TRUE(0 < maxZoom);
+
+            sp<BufferItemConsumer> bufferItemConsumer;
+            sp<BufferItemHander> bufferHandler;
+            setupPreviewWindow(device1, &bufferItemConsumer /*out*/,
+                    &bufferHandler /*out*/);
+            ASSERT_EQ(Status::OK, device1->startPreview());
+
+            ASSERT_EQ(Status::OK, device1->setParameters(
+                    cameraParams.flatten().string()));
+
+            ASSERT_EQ(Status::OK, device1->sendCommand(
+                    CommandType::START_SMOOTH_ZOOM, maxZoom, 0));
+            // TODO (epeev): Enable and check for zoom notifications
+            ASSERT_EQ(Status::OK, device1->sendCommand(
+                    CommandType::STOP_SMOOTH_ZOOM, 0, 0));
 
             device1->stopPreview();
 
