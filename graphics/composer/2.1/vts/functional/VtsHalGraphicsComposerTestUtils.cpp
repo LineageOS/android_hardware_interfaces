@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <VtsHalHidlTargetBaseTest.h>
+#include <VtsHalHidlTargetTestBase.h>
 
 #include "VtsHalGraphicsComposerTestUtils.h"
 
@@ -28,7 +28,7 @@ namespace tests {
 Composer::Composer() { init(); }
 
 void Composer::init() {
-  mComposer = ::testing::VtsHalHidlTargetBaseTest::getService<IComposer>();
+  mComposer = ::testing::VtsHalHidlTargetTestBase::getService<IComposer>();
   ASSERT_NE(nullptr, mComposer.get()) << "failed to get composer service";
 
   std::vector<IComposer::Capability> capabilities = getCapabilities();

@@ -22,7 +22,7 @@
 #include <android/hardware/biometrics/fingerprint/2.1/IBiometricsFingerprintClientCallback.h>
 #include <hidl/HidlSupport.h>
 #include <hidl/HidlTransportSupport.h>
-#include <VtsHalHidlTargetBaseTest.h>
+#include <VtsHalHidlTargetTestBase.h>
 
 using android::Condition;
 using android::hardware::biometrics::fingerprint::V2_1::IBiometricsFingerprint;
@@ -35,7 +35,7 @@ using android::hardware::Return;
 using android::Mutex;
 using android::sp;
 
-class FingerprintHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
+class FingerprintHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
 protected:
     class MyCallback : public IBiometricsFingerprintClientCallback {
@@ -123,7 +123,7 @@ public:
     FingerprintHidlTest (): mCallbackCalled(false) {}
 
     virtual void SetUp() override {
-        mService = ::testing::VtsHalHidlTargetBaseTest::getService<IBiometricsFingerprint>(SERVICE_NAME);
+        mService = ::testing::VtsHalHidlTargetTestBase::getService<IBiometricsFingerprint>(SERVICE_NAME);
 
         ASSERT_NE(mService, nullptr);
         clearErr();

@@ -17,7 +17,7 @@
 #define LOG_TAG "graphics_mapper_hidl_hal_test"
 
 #include <android-base/logging.h>
-#include <VtsHalHidlTargetBaseTest.h>
+#include <VtsHalHidlTargetTestBase.h>
 #include <sync/sync.h>
 #include "VtsHalGraphicsMapperTestUtils.h"
 
@@ -32,7 +32,7 @@ namespace {
 using namespace android::hardware::graphics::allocator::V2_0;
 using namespace android::hardware::graphics::allocator::V2_0::tests;
 
-class GraphicsMapperHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
+class GraphicsMapperHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  protected:
   void SetUp() override {
     ASSERT_NO_FATAL_FAILURE(mAllocator = std::make_unique<Allocator>());

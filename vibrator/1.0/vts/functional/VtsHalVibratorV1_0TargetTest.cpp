@@ -19,7 +19,7 @@
 #include <android-base/logging.h>
 #include <android/hardware/vibrator/1.0/IVibrator.h>
 #include <android/hardware/vibrator/1.0/types.h>
-#include <VtsHalHidlTargetBaseTest.h>
+#include <VtsHalHidlTargetTestBase.h>
 #include <unistd.h>
 
 using ::android::hardware::vibrator::V1_0::IVibrator;
@@ -29,10 +29,10 @@ using ::android::hardware::Void;
 using ::android::sp;
 
 // The main test class for VIBRATOR HIDL HAL.
-class VibratorHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
+class VibratorHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  public:
   virtual void SetUp() override {
-    vibrator = ::testing::VtsHalHidlTargetBaseTest::getService<IVibrator>();
+    vibrator = ::testing::VtsHalHidlTargetTestBase::getService<IVibrator>();
     ASSERT_NE(vibrator, nullptr);
   }
 

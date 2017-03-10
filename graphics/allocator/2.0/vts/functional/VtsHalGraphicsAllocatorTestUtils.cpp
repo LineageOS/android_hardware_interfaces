@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <VtsHalHidlTargetBaseTest.h>
+#include <VtsHalHidlTargetTestBase.h>
 
 #include "VtsHalGraphicsAllocatorTestUtils.h"
 
@@ -28,7 +28,7 @@ namespace tests {
 Allocator::Allocator() { init(); }
 
 void Allocator::init() {
-  mAllocator = ::testing::VtsHalHidlTargetBaseTest::getService<IAllocator>();
+  mAllocator = ::testing::VtsHalHidlTargetTestBase::getService<IAllocator>();
   ASSERT_NE(nullptr, mAllocator.get()) << "failed to get allocator service";
 
   std::vector<IAllocator::Capability> capabilities = getCapabilities();

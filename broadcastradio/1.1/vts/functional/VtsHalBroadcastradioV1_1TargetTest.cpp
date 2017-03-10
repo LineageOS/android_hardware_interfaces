@@ -15,7 +15,7 @@
  */
 
 #define LOG_TAG "BroadcastRadioHidlHalTest"
-#include <VtsHalHidlTargetBaseTest.h>
+#include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
 #include <cutils/native_handle.h>
 #include <cutils/properties.h>
@@ -52,10 +52,10 @@ using ::android::hardware::broadcastradio::V1_1::Result;
 
 // The main test class for Broadcast Radio HIDL HAL.
 
-class BroadcastRadioHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
+class BroadcastRadioHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  protected:
     virtual void SetUp() override {
-        auto factory = ::testing::VtsHalHidlTargetBaseTest::getService<IBroadcastRadioFactory>();
+        auto factory = ::testing::VtsHalHidlTargetTestBase::getService<IBroadcastRadioFactory>();
         if (factory != 0) {
             factory->connectModule(Class::AM_FM,
                              [&](Result retval, const ::android::sp<IBroadcastRadio>& result) {

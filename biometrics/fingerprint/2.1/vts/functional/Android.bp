@@ -27,7 +27,7 @@ cc_test {
         "libutils",
         "android.hardware.biometrics.fingerprint@2.1",
     ],
-    static_libs: ["VtsHalHidlTargetBaseTest"],
+    static_libs: ["VtsHalHidlTargetTestBase"],
     cflags: [
         "-O0",
         "-g",

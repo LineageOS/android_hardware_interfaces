@@ -22,7 +22,7 @@
 #include "VtsHalGraphicsComposerTestUtils.h"
 #include "VtsHalGraphicsMapperTestUtils.h"
 
-#include <VtsHalHidlTargetBaseTest.h>
+#include <VtsHalHidlTargetTestBase.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -134,7 +134,7 @@ class GraphicsComposerCallback : public IComposerCallback {
   int mInvalidVsyncCount = 0;
 };
 
-class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
+class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  protected:
   void SetUp() override {
     ASSERT_NO_FATAL_FAILURE(mComposer = std::make_unique<Composer>());

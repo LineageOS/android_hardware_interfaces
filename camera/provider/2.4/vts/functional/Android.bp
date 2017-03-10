@@ -29,7 +29,7 @@ cc_test {
         "libcamera_metadata",
         "libui"
     ],
-    static_libs: ["VtsHalHidlTargetBaseTest"],
+    static_libs: ["VtsHalHidlTargetTestBase"],
     cflags: [
         "-O0",
         "-g",

@@ -19,7 +19,7 @@
 #include <android/hardware/camera/device/3.2/ICameraDevice.h>
 #include <android/log.h>
 #include <ui/GraphicBuffer.h>
-#include <VtsHalHidlTargetBaseTest.h>
+#include <VtsHalHidlTargetTestBase.h>
 #include <regex>
 #include "system/camera_metadata.h"
 #include <hardware/gralloc.h>
@@ -131,7 +131,7 @@ private:
 
 void CameraHidlEnvironment::SetUp() {
     // TODO: test the binderized mode
-    mProvider = ::testing::VtsHalHidlTargetBaseTest::getService<ICameraProvider>(CAMERA_PASSTHROUGH_SERVICE_NAME);
+    mProvider = ::testing::VtsHalHidlTargetTestBase::getService<ICameraProvider>(CAMERA_PASSTHROUGH_SERVICE_NAME);
     // TODO: handle the device doesn't have any camera case
     ALOGI_IF(mProvider, "provider is not nullptr, %p", mProvider.get());
     ASSERT_NE(mProvider, nullptr);
@@ -142,7 +142,7 @@ void CameraHidlEnvironment::TearDown() {
 }
 
 // The main test class for camera HIDL HAL.
-class CameraHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
+class CameraHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 public:
     virtual void SetUp() override {}
     virtual void TearDown() override {}

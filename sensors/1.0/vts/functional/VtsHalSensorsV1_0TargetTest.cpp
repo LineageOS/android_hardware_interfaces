@@ -20,7 +20,7 @@
 #include <android/hardware/sensors/1.0/types.h>
 #include <android/log.h>
 #include <cutils/ashmem.h>
-#include <VtsHalHidlTargetBaseTest.h>
+#include <VtsHalHidlTargetTestBase.h>
 #include <hardware/sensors.h>       // for sensor type strings
 
 #include <algorithm>
@@ -80,7 +80,7 @@ class SensorsHidlEnvironment : public ::testing::Environment {
 };
 
 void SensorsHidlEnvironment::SetUp() {
-  sensors = ::testing::VtsHalHidlTargetBaseTest::getService<ISensors>();
+  sensors = ::testing::VtsHalHidlTargetTestBase::getService<ISensors>();
   ALOGI_IF(sensors, "sensors is not nullptr, %p", sensors.get());
   ASSERT_NE(sensors, nullptr);
 
@@ -309,7 +309,7 @@ SensorsTestSharedMemory* SensorsTestSharedMemory::create(SharedMemType type, siz
 }
 
 // The main test class for SENSORS HIDL HAL.
-class SensorsHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
+class SensorsHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  public:
   virtual void SetUp() override {
   }

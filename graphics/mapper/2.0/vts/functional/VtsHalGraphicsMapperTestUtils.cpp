@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <VtsHalHidlTargetBaseTest.h>
+#include <VtsHalHidlTargetTestBase.h>
 
 #include "VtsHalGraphicsMapperTestUtils.h"
 
@@ -32,7 +32,7 @@ using android::hardware::graphics::allocator::V2_0::Error;
 Mapper::Mapper() { init(); }
 
 void Mapper::init() {
-  mMapper = ::testing::VtsHalHidlTargetBaseTest::getService<IMapper>();
+  mMapper = ::testing::VtsHalHidlTargetTestBase::getService<IMapper>();
   ASSERT_NE(nullptr, mMapper.get()) << "failed to get mapper service";
   ASSERT_FALSE(mMapper->isRemote()) << "mapper is not in passthrough mode";
 }

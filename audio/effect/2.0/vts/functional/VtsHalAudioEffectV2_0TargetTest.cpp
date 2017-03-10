@@ -21,7 +21,7 @@
 #include <android/hardware/audio/effect/2.0/IEffectsFactory.h>
 #include <android/hardware/audio/effect/2.0/types.h>
 
-#include <VtsHalHidlTargetBaseTest.h>
+#include <VtsHalHidlTargetTestBase.h>
 
 using ::android::hardware::audio::common::V2_0::Uuid;
 using ::android::hardware::audio::effect::V2_0::EffectDescriptor;
@@ -35,10 +35,10 @@ using ::android::hardware::hidl_vec;
 using ::android::sp;
 
 // The main test class for Audio Effect HIDL HAL.
-class AudioEffectHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
+class AudioEffectHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  public:
   virtual void SetUp() override {
-    effectsFactory = ::testing::VtsHalHidlTargetBaseTest::getService<IEffectsFactory>();
+    effectsFactory = ::testing::VtsHalHidlTargetTestBase::getService<IEffectsFactory>();
     ASSERT_NE(effectsFactory, nullptr);
   }
 

@@ -17,7 +17,7 @@
 #define LOG_TAG "graphics_allocator_hidl_hal_test"
 
 #include <android-base/logging.h>
-#include <VtsHalHidlTargetBaseTest.h>
+#include <VtsHalHidlTargetTestBase.h>
 
 #include "VtsHalGraphicsAllocatorTestUtils.h"
 
@@ -40,7 +40,7 @@ using android::hardware::graphics::common::V1_0::PixelFormat;
     }                                                       \
   } while (0)
 
-class GraphicsAllocatorHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
+class GraphicsAllocatorHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  protected:
   void SetUp() override {
     ASSERT_NO_FATAL_FAILURE(mAllocator = std::make_unique<Allocator>());

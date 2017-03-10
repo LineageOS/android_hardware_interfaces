@@ -28,7 +28,7 @@
 #include <android/hardware/soundtrigger/2.0/ISoundTriggerHw.h>
 #include <android/hardware/soundtrigger/2.0/types.h>
 
-#include <VtsHalHidlTargetBaseTest.h>
+#include <VtsHalHidlTargetTestBase.h>
 
 #define SHORT_TIMEOUT_PERIOD (1)
 
@@ -86,10 +86,10 @@ class Monitor {
 };
 
 // The main test class for Sound Trigger HIDL HAL.
-class SoundTriggerHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
+class SoundTriggerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  public:
   virtual void SetUp() override {
-    mSoundTriggerHal = ::testing::VtsHalHidlTargetBaseTest::getService<ISoundTriggerHw>("sound_trigger.primary");
+    mSoundTriggerHal = ::testing::VtsHalHidlTargetTestBase::getService<ISoundTriggerHw>("sound_trigger.primary");
     ASSERT_NE(nullptr, mSoundTriggerHal.get());
     mCallback = new SoundTriggerHwCallback(*this);
     ASSERT_NE(nullptr, mCallback.get());

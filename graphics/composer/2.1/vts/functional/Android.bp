@@ -20,7 +20,7 @@ cc_library_static {
     srcs: ["VtsHalGraphicsComposerTestUtils.cpp"],
     shared_libs: ["android.hardware.graphics.composer@2.1"],
     static_libs: [
-        "VtsHalHidlTargetBaseTest",
+        "VtsHalHidlTargetTestBase",
     ],
     cflags: [
         "-Wall",
@@ -55,7 +55,7 @@ cc_test {
         "libVtsHalGraphicsAllocatorTestUtils",
         "libVtsHalGraphicsComposerTestUtils",
         "libVtsHalGraphicsMapperTestUtils",
-        "VtsHalHidlTargetBaseTest",
+        "VtsHalHidlTargetTestBase",
     ],
     cflags: [
         "-Wall",

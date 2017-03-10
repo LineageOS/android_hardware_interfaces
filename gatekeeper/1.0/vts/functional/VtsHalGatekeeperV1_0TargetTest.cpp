@@ -30,7 +30,7 @@
 #include <android/hardware/gatekeeper/1.0/IGatekeeper.h>
 #include <android/hardware/gatekeeper/1.0/types.h>
 
-#include <VtsHalHidlTargetBaseTest.h>
+#include <VtsHalHidlTargetTestBase.h>
 
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
@@ -76,7 +76,7 @@ static const hw_auth_token_t *toAuthToken(GatekeeperResponse &rsp) {
 }
 
 // The main test class for Gatekeeper HIDL HAL.
-class GatekeeperHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
+class GatekeeperHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  protected:
   void setUid(uint32_t uid) { uid_ = uid; }
 
@@ -187,7 +187,7 @@ class GatekeeperHidlTest : public ::testing::VtsHalHidlTargetBaseTest {
   GatekeeperHidlTest() : uid_(0) {}
   virtual void SetUp() override {
     GatekeeperResponse rsp;
-    gatekeeper_ = ::testing::VtsHalHidlTargetBaseTest::getService<IGatekeeper>();
+    gatekeeper_ = ::testing::VtsHalHidlTargetTestBase::getService<IGatekeeper>();
     ASSERT_NE(nullptr, gatekeeper_.get());
     doDeleteAllUsers(rsp);
   }
