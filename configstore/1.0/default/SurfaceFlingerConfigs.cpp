@@ -59,6 +59,16 @@ Return<void> SurfaceFlingerConfigs::hasWideColorDisplay(hasWideColorDisplay_cb _
     return Void();
 }
 
+Return<void> SurfaceFlingerConfigs::hasSyncFramework(hasSyncFramework_cb _hidl_cb) {
+    bool value = true;
+#ifdef RUNNING_WITHOUT_SYNC_FRAMEWORK
+    value = false;
+#endif
+    _hidl_cb({true, value});
+    LOG(INFO) << "SurfaceFlinger hasSyncFramework: " << value;
+    return Void();
+}
+
 Return<void> SurfaceFlingerConfigs::hasHDRDisplay(hasHDRDisplay_cb _hidl_cb) {
     bool value = false;
 #ifdef HAS_HDR_DISPLAY
