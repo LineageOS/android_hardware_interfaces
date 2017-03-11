@@ -49,6 +49,7 @@ using ::android::hardware::Return;
 using ::android::hardware::hidl_handle;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
+using ::android::hardware::MQDescriptorSync;
 using ::android::hardware::audio::V2_0::DeviceAddress;
 using ::android::hardware::audio::V2_0::IDevice;
 using ::android::hardware::audio::V2_0::IPrimaryDevice;
@@ -56,6 +57,8 @@ using TtyMode = ::android::hardware::audio::V2_0::IPrimaryDevice::TtyMode;
 using ::android::hardware::audio::V2_0::IDevicesFactory;
 using ::android::hardware::audio::V2_0::IStream;
 using ::android::hardware::audio::V2_0::IStreamIn;
+using ReadParameters = ::android::hardware::audio::V2_0::IStreamIn::ReadParameters;
+using ReadStatus = ::android::hardware::audio::V2_0::IStreamIn::ReadStatus;
 using ::android::hardware::audio::V2_0::IStreamOut;
 using ::android::hardware::audio::V2_0::MmapBufferInfo;
 using ::android::hardware::audio::V2_0::MmapPosition;
@@ -72,6 +75,7 @@ using ::android::hardware::audio::common::V2_0::AudioMode;
 using ::android::hardware::audio::common::V2_0::AudioOffloadInfo;
 using ::android::hardware::audio::common::V2_0::AudioOutputFlag;
 using ::android::hardware::audio::common::V2_0::AudioSource;
+using ::android::hardware::audio::common::V2_0::ThreadInfo;
 
 using utility::returnIn;
 
@@ -858,23 +862,72 @@ TEST_IO_STREAM(GetMmapPositionOfNonMmapedStream,
                testGetMmapPositionOfNonMmapedStream(stream.get()))
 
 //////////////////////////////////////////////////////////////////////////////
+///////////////////////////////// StreamIn ///////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+TEST_P(InputStreamTest, GetAudioSource) {
+    doc::test("Retrieving the audio source of an input stream should always succeed");
+    AudioSource source;
+    ASSERT_OK(stream->getAudioSource(returnIn(res, source)));
+    ASSERT_OK(res);
+    ASSERT_EQ(AudioSource::DEFAULT, source);
+}
+
+static void testUnitaryGain(std::function<Return<Result> (float)> setGain) {
+    for (float value : {0.0, 0.01, 0.5, 0.09, 1.0}) {
+        SCOPED_TRACE("value=" + to_string(value));
+        ASSERT_OK(setGain(value));
+    }
+    for (float value : (float[]){-INFINITY,-1.0, -0.0,
+                                 1.0 + std::numeric_limits<float>::epsilon(), 2.0, INFINITY,
+                                 NAN}) {
+        SCOPED_TRACE("value=" + to_string(value));
+        // FIXME: NAN should never be accepted
+        // FIXME: Missing api doc. What should the impl do if the volume is outside [0,1] ?
+        ASSERT_RESULT(Result::INVALID_ARGUMENTS, setGain(value));
+    }
+}
+
+TEST_P(InputStreamTest, SetGain) {
+    doc::test("The gain of an input stream should only be set between [0,1]");
+    testUnitaryGain([this](float volume) { return stream->setGain(volume); });
+}
+
+static void testPrepareForReading(IStreamIn* stream, uint32_t frameSize, uint32_t framesCount) {
+    Result res;
+    // Ignore output parameters as the call should fail
+    ASSERT_OK(stream->prepareForReading(frameSize, framesCount,
+                                        [&res](auto r, auto&, auto&, auto&, auto&) { res = r; }));
+    EXPECT_RESULT(invalidArgsOrNotSupported, res);
+}
+
+TEST_P(InputStreamTest, PrepareForReadingWithHugeBuffer) {
+    doc::test("Preparing a stream for reading with a 2^32 sized buffer should fail");
+    testPrepareForReading(stream.get(), 1, std::numeric_limits<uint32_t>::max());
+}
+
+TEST_P(InputStreamTest, PrepareForReadingCheckOverflow) {
+    doc::test("Preparing a stream for reading with a overflowing sized buffer should fail");
+    auto uintMax = std::numeric_limits<uint32_t>::max();
+    testPrepareForReading(stream.get(), uintMax, uintMax);
+}
+
+TEST_P(InputStreamTest, getCapturePosition) {
+    doc::test("The capture position of a non prepared stream should not be retrievable");
+    uint64_t frames;
+    uint64_t time;
+    ASSERT_OK(stream->getCapturePosition(returnIn(res, frames, time)));
+    ASSERT_RESULT(invalidStateOrNotSupported, res);
+}
+
+//////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// PrimaryDevice ////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
+
 TEST_F(AudioPrimaryHidlTest, setVoiceVolume) {
     doc::test("Make sure setVoiceVolume only succeed if volume is in [0,1]");
-    for (float volume : {0.0, 0.01, 0.5, 0.09, 1.0}) {
-        SCOPED_TRACE("volume=" + to_string(volume));
-        ASSERT_OK(device->setVoiceVolume(volume));
-    }
-    for (float volume : (float[]){-INFINITY,-1.0, -0.0,
-                                  1.0 + std::numeric_limits<float>::epsilon(), 2.0, INFINITY,
-                                  NAN}) {
-        SCOPED_TRACE("volume=" + to_string(volume));
-        // FIXME: NAN should never be accepted
-        // FIXME: Missing api doc. What should the impl do if the volume is outside [0,1] ?
-        ASSERT_RESULT(Result::INVALID_ARGUMENTS, device->setVoiceVolume(volume));
-    }
+    testUnitaryGain([this](float volume) { return device->setVoiceVolume(volume); });
 }
 
 TEST_F(AudioPrimaryHidlTest, setMode) {
