@@ -13,23 +13,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <type_traits>
 
-// Use HIDL generated toString methods to pretty print gtest errors
+/** @file Use HIDL generated toString methods to pretty print gtest errors */
+
+namespace detail {
+
+// Print the value of an enum as hex
+template <class Enum>
+inline void printUnderlyingValue(Enum value, ::std::ostream* os) {
+    *os << std::hex << " (0x" << static_cast<std::underlying_type_t<Enum>>(value) << ")";
+}
+
+} // namespace detail
+
 namespace android {
 namespace hardware {
 namespace audio {
 namespace V2_0 {
+
 inline void PrintTo(const Result& result, ::std::ostream* os) {
     *os << toString(result);
+    detail::printUnderlyingValue(result, os);
 }
+
 } // namespace V2_0
 namespace common {
 namespace V2_0 {
+
 inline void PrintTo(const AudioConfig& config, ::std::ostream* os) {
     *os << toString(config);
 }
+
+inline void PrintTo(const AudioDevice& device, ::std::ostream* os) {
+    *os << toString(device);
+    detail::printUnderlyingValue(device, os);
+}
+
+inline void PrintTo(const AudioChannelMask& channelMask, ::std::ostream* os) {
+    *os << toString(channelMask);
+    detail::printUnderlyingValue(channelMask, os);
+}
+
 } // namespace V2_0
 } // namespace common
-}
-}
-}
+} // namespace audio
+} // namespace hardware
+} // namespace android
