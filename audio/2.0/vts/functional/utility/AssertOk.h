@@ -13,39 +13,59 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include <vector>
+#include <algorithm>
+
 #include <hidl/Status.h>
 
 namespace detail {
 
-inline void assertOk(::android::hardware::Return<void> ret) {
+// This is a detail namespace, thus it is OK to import a class as nobody else is allowed to use it
+using ::android::hardware::Return;
+using ::android::hardware::audio::V2_0::Result;
+
+inline void assertResult(Result expected, Result result) {
+    ASSERT_EQ(expected, result);
+}
+
+inline void assertResult(Result expected, Return<Result> ret) {
+    ASSERT_TRUE(ret.isOk());
+    Result result = ret;
+    assertResult(expected, result);
+}
+
+inline void assertResult(std::vector<Result> expected, Result result) {
+    if (std::find(expected.begin(), expected.end(), result) != expected.end()) {
+        return; // result is in expected
+    }
+    FAIL() << "Expected result " << ::testing::PrintToString(result)
+           << " to be one of " << ::testing::PrintToString(expected);
+}
+
+inline void assertResult(std::vector<Result> expected, Return<Result> ret) {
+    ASSERT_TRUE(ret.isOk());
+    Result result = ret;
+    assertResult(expected, result);
+}
+
+inline void assertOk(Return<void> ret) {
     ASSERT_TRUE(ret.isOk());
 }
 
-inline void assertOk(::android::hardware::audio::V2_0::Result result) {
-    ASSERT_EQ(decltype(result)::OK, result);
+inline void assertOk(Result result) {
+    assertResult(Result::OK, result);
 }
 
-inline void assertOk(::android::hardware::Return<::android::hardware::audio::V2_0::Result> ret) {
-    ASSERT_TRUE(ret.isOk());
-    ::android::hardware::audio::V2_0::Result result = ret;
-    assertOk(result);
+inline void assertOk(Return<Result> ret) {
+    assertResult(Result::OK, std::move(ret));
 }
 
-inline void assertInvalidArguments(::android::hardware::audio::V2_0::Result result) {
-    ASSERT_EQ(decltype(result)::INVALID_ARGUMENTS, result);
-}
-
-inline void assertInvalidArguments(
-        ::android::hardware::Return<::android::hardware::audio::V2_0::Result> ret) {
-    ASSERT_TRUE(ret.isOk());
-    ::android::hardware::audio::V2_0::Result result = ret;
-    assertInvalidArguments(result);
-}
 }
 
 // Test anything provided is and contains only OK
 #define ASSERT_OK(ret) ASSERT_NO_FATAL_FAILURE(detail::assertOk(ret))
 #define EXPECT_OK(ret) EXPECT_NO_FATAL_FAILURE(detail::assertOk(ret))
 
-#define ASSERT_INVALID_ARGUMENTS(ret) ASSERT_NO_FATAL_FAILURE(detail::assertInvalidArguments(ret))
-#define EXPECT_INVALID_ARGUMENTS(ret) EXPECT_NO_FATAL_FAILURE(detail::assertInvalidArguments(ret))
+#define ASSERT_RESULT(expected, ret) ASSERT_NO_FATAL_FAILURE(detail::assertResult(expected, ret))
+#define EXPECT_RESULT(expected, ret) ASSERT_NO_FATAL_FAILURE(detail::assertResult(expected, ret))

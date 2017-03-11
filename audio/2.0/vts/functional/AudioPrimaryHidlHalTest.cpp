@@ -217,7 +217,7 @@ protected:
         for (Property invalidValue : invalidValues) {
             SCOPED_TRACE("Try to set " + propertyName + " with the invalid value " +
                          testing::PrintToString(invalidValue));
-            EXPECT_INVALID_ARGUMENTS((device.get()->*setter)(invalidValue));
+            EXPECT_RESULT(Result::INVALID_ARGUMENTS, (device.get()->*setter)(invalidValue));
         }
 
         ASSERT_OK((device.get()->*setter)(initialValue)); // restore initial value
@@ -714,7 +714,7 @@ TEST_F(AudioPrimaryHidlTest, setVoiceVolume) {
         SCOPED_TRACE("volume=" + to_string(volume));
         // FIXME: NAN should never be accepted
         // FIXME: Missing api doc. What should the impl do if the volume is outside [0,1] ?
-        ASSERT_INVALID_ARGUMENTS(device->setVoiceVolume(volume));
+        ASSERT_RESULT(Result::INVALID_ARGUMENTS, device->setVoiceVolume(volume));
     }
 }
 
@@ -728,7 +728,7 @@ TEST_F(AudioPrimaryHidlTest, setMode) {
     }
 
     // FIXME: Missing api doc. What should the impl do if the mode is invalid ?
-    ASSERT_INVALID_ARGUMENTS(device->setMode(AudioMode::INVALID));
+    ASSERT_RESULT(Result::INVALID_ARGUMENTS, device->setMode(AudioMode::INVALID));
 }
 
 
