@@ -16,6 +16,8 @@
 
 #define LOG_TAG "memtrack_hidl_hal_test"
 #include <android-base/logging.h>
+#include <android-base/unique_fd.h>
+
 #include <android/hardware/memtrack/1.0/IMemtrack.h>
 
 #include <VtsHalHidlTargetTestBase.h>
@@ -31,6 +33,7 @@ using ::android::hardware::memtrack::V1_0::MemtrackStatus;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::sp;
+using ::android::base::unique_fd;
 using std::vector;
 using std::count_if;
 
@@ -66,42 +69,6 @@ bool validStatus(MemtrackStatus s) {
   return std::find(statusVec.begin(), statusVec.end(), s) != statusVec.end();
 }
 
-/* Returns a pid found in /proc for which the string read from
- * /proc/[pid]/cmdline matches cmd, or -1 if no such pid exists.
- */
-pid_t getPidFromCmd(const char cmd[], uint32_t len) {
-  const char procs[] = "/proc/";
-  DIR *dir = opendir(procs);
-  if (!dir) {
-    return -1;
-  }
-
-  struct dirent *proc;
-  while ((proc = readdir(dir)) != NULL) {
-    if (!isdigit(proc->d_name[0])) {
-      continue;
-    }
-    char line[len];
-    char fname[PATH_MAX];
-    snprintf(fname, PATH_MAX, "/proc/%s/cmdline", proc->d_name);
-
-    FILE *file = fopen(fname, "r");
-    if (!file) {
-      continue;
-    }
-    char *str = fgets(line, len, file);
-    fclose(file);
-    if (!str || strcmp(str, cmd)) {
-      continue;
-    } else {
-      closedir(dir);
-      return atoi(proc->d_name);
-    }
-  }
-  closedir(dir);
-  return -1;
-}
-
 auto generate_cb(MemtrackStatus *s, hidl_vec<MemtrackRecord> *v) {
   return [=](MemtrackStatus status, hidl_vec<MemtrackRecord> vec) {
     *s = status;
@@ -135,15 +102,15 @@ TEST_F(MemtrackHidlTest, BadTypeTest) {
   ASSERT_TRUE(validStatus(s));
 }
 
-/* Call memtrack on the surfaceflinger process and check that the results are
- * reasonable for all memory types, including valid flag combinations for
- * every MemtrackRecord returned.
+/* Call memtrack on this process and check that the results are reasonable
+ * for all memory types, including valid flag combinations for every
+ * MemtrackRecord returned.
  */
-TEST_F(MemtrackHidlTest, SurfaceflingerTest) {
-  const char cmd[] = "/system/bin/surfaceflinger";
-  const uint32_t len = sizeof(cmd);
-  pid_t pid = getPidFromCmd(cmd, len);
-  ASSERT_LE(0, pid) << "Surfaceflinger process not found";
+TEST_F(MemtrackHidlTest, GetMemoryTest) {
+  /* Opening this device causes the kernel to provide memtrack with memory
+   * info for this process.
+   */
+  unique_fd fd(open("/dev/kgsl-3d0", O_RDWR));
 
   MemtrackStatus s;
   hidl_vec<MemtrackRecord> v;
@@ -152,7 +119,7 @@ TEST_F(MemtrackHidlTest, SurfaceflingerTest) {
   for (uint32_t i = 0; i < static_cast<uint32_t>(MemtrackType::NUM_TYPES);
        i++) {
     Return<void> ret =
-        memtrack->getMemory(pid, static_cast<MemtrackType>(i), cb);
+        memtrack->getMemory(getpid(), static_cast<MemtrackType>(i), cb);
     ASSERT_TRUE(ret.isOk());
 
     switch (s) {
