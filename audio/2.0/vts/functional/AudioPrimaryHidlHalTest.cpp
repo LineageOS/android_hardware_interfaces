@@ -595,8 +595,40 @@ static R extract(Return<R> ret) {
     return ret;
 }
 
+/* Could not find a way to write a test for two parametrized class fixure
+ * thus use this macro do duplicate tests for Input and Output stream */
+#define TEST_IO_STREAM(test_name, documentation, code) \
+    TEST_P(InputStreamTest, test_name) { \
+        doc::test(documentation); \
+        code; \
+    } \
+    TEST_P(OutputStreamTest, test_name) { \
+        doc::test(documentation); \
+        code; \
+    }
+
+TEST_IO_STREAM(GetFrameCount, "Check that the stream frame count == the one it was opened with",
+               ASSERT_EQ(audioConfig.frameCount, extract(stream->getFrameCount())))
+
+TEST_IO_STREAM(GetSampleRate, "Check that the stream sample rate == the one it was opened with",
+               ASSERT_EQ(audioConfig.sampleRateHz, extract(stream->getSampleRate())))
+
+TEST_IO_STREAM(GetChannelMask, "Check that the stream channel mask == the one it was opened with",
+               ASSERT_EQ(audioConfig.channelMask, extract(stream->getChannelMask())))
+
+TEST_IO_STREAM(GetFormat, "Check that the stream format == the one it was opened with",
+               ASSERT_EQ(audioConfig.format, extract(stream->getFormat())))
+
+// TODO: for now only check that the framesize is not incoherent
+TEST_IO_STREAM(GetFrameSize, "Check that the stream frame size == the one it was opened with",
+               ASSERT_GT(extract(stream->getFrameSize()), 0U))
+
+TEST_IO_STREAM(GetBufferSize, "Check that the stream buffer size== the one it was opened with",
+               ASSERT_GE(extract(stream->getBufferSize()), \
+                                     extract(stream->getFrameSize())));
+
 template <class Property, class CapabilityGetter, class Getter, class Setter>
-static void testCapabilityGetter(const string& name,IStream* stream, Property currentValue,
+static void testCapabilityGetter(const string& name, IStream* stream, Property currentValue,
                                  CapabilityGetter capablityGetter, Getter getter, Setter setter) {
     hidl_vec<Property> capabilities;
     ASSERT_OK((stream->*capablityGetter)(returnIn(capabilities)));
@@ -619,6 +651,24 @@ static void testCapabilityGetter(const string& name,IStream* stream, Property cu
     }
 }
 
+TEST_IO_STREAM(SupportedSampleRate, "Check that the stream sample rate is declared as supported",
+               testCapabilityGetter("getSupportedSampleRate", stream.get(), \
+                                    extract(stream->getSampleRate()), \
+                                    &IStream::getSupportedSampleRates, \
+                                    &IStream::getSampleRate, &IStream::setSampleRate))
+
+TEST_IO_STREAM(SupportedChannelMask, "Check that the stream channel mask is declared as supported",
+               testCapabilityGetter("getSupportedChannelMask", stream.get(), \
+                                    extract(stream->getChannelMask()), \
+                                    &IStream::getSupportedChannelMasks, \
+                                    &IStream::getChannelMask, &IStream::setChannelMask))
+
+TEST_IO_STREAM(SupportedFormat, "Check that the stream format is declared as supported",
+               testCapabilityGetter("getSupportedFormat", stream.get(), \
+                                    extract(stream->getFormat()), \
+                                    &IStream::getSupportedFormats, \
+                                    &IStream::getFormat, &IStream::setFormat))
+
 static void testGetAudioProperties(IStream* stream, AudioConfig expectedConfig) {
     uint32_t sampleRateHz;
     AudioChannelMask mask;
@@ -632,54 +682,9 @@ static void testGetAudioProperties(IStream* stream, AudioConfig expectedConfig) 
     EXPECT_EQ(expectedConfig.format, format);
 }
 
-static void testAccessors(IStream* stream, AudioConfig audioConfig) {
-    doc::test("Test IStream getters and setters that can be called in the stop state");
-
-    auto frameCount = extract(stream->getFrameCount());
-    ASSERT_EQ(audioConfig.frameCount, frameCount);
-
-    auto sampleRate = extract(stream->getSampleRate());
-    // FIXME: the qcom hal it does not currently negotiate the sampleRate
-    ASSERT_EQ(audioConfig.sampleRateHz, sampleRate);
-
-    auto channelMask = extract(stream->getChannelMask());
-    // FIXME: the qcom hal it does not currently negotiate the channelMask
-    ASSERT_EQ(audioConfig.channelMask, channelMask);
-
-    auto frameSize = extract(stream->getFrameSize());
-    ASSERT_GE(frameSize, 0U);
-
-    auto bufferSize = extract(stream->getBufferSize());
-    ASSERT_GE(bufferSize, frameSize);
-
-    testCapabilityGetter("getSupportedsampleRate", stream, sampleRate,
-                         &IStream::getSupportedSampleRates,
-                         &IStream::getSampleRate, &IStream::setSampleRate);
-
-    testCapabilityGetter("getSupportedChannelMask", stream, channelMask,
-                         &IStream::getSupportedChannelMasks,
-                         &IStream::getChannelMask, &IStream::setChannelMask);
-
-    AudioFormat format = extract(stream->getFormat());
-    ASSERT_EQ(audioConfig.format, format);
-
-    testCapabilityGetter("getSupportedFormats", stream, format,
-                         &IStream::getSupportedFormats, &IStream::getFormat, &IStream::setFormat);
-
-    testGetAudioProperties(stream, audioConfig);
-
-    auto ret = stream->getDevice();
-    ASSERT_TRUE(ret.isOk());
-    AudioDevice device = ret;
-    ASSERT_EQ(AudioDevice::OUT_DEFAULT, device);
-}
-
-TEST_P(InputStreamTest, GettersTest) {
-    testAccessors(stream.get(), audioConfig);
-}
-TEST_P(OutputStreamTest, GettersTest) {
-    testAccessors(stream.get(), audioConfig);
-}
+TEST_IO_STREAM(GetAudioProperties,
+               "Check that the stream audio properties == the ones it was opened with",
+               testGetAudioProperties(stream.get(), audioConfig))
 
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// AudioPatches ////////////////////////////////
