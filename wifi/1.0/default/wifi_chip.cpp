@@ -19,6 +19,7 @@
 #include "hidl_return_util.h"
 #include "hidl_struct_util.h"
 #include "wifi_chip.h"
+#include "wifi_feature_flags.h"
 #include "wifi_status_util.h"
 
 namespace {
@@ -388,16 +389,21 @@ WifiChip::getAvailableModesInternal() {
   // The chip combination supported for current devices is fixed for now with
   // 2 separate modes of operation:
   // Mode 1 (STA mode): Will support 1 STA and 1 P2P or NAN iface operations
-  // concurrently.
+  // concurrently [NAN conditional on wifiHidlFeatureAware]
   // Mode 2 (AP mode): Will support 1 AP iface operations.
   // TODO (b/32997844): Read this from some device specific flags in the
   // makefile.
   // STA mode iface combinations.
   const IWifiChip::ChipIfaceCombinationLimit
       sta_chip_iface_combination_limit_1 = {{IfaceType::STA}, 1};
-  const IWifiChip::ChipIfaceCombinationLimit
-      sta_chip_iface_combination_limit_2 = {{IfaceType::P2P, IfaceType::NAN},
-                                            1};
+  IWifiChip::ChipIfaceCombinationLimit sta_chip_iface_combination_limit_2;
+  if (WifiFeatureFlags::wifiHidlFeatureAware) {
+    sta_chip_iface_combination_limit_2 = {{IfaceType::P2P, IfaceType::NAN},
+                                          1};
+  } else {
+    sta_chip_iface_combination_limit_2 = {{IfaceType::P2P},
+                                          1};
+  }
   const IWifiChip::ChipIfaceCombination sta_chip_iface_combination = {
       {sta_chip_iface_combination_limit_1, sta_chip_iface_combination_limit_2}};
   const IWifiChip::ChipMode sta_chip_mode = {kStaChipModeId,
@@ -552,18 +558,22 @@ WifiStatus WifiChip::removeApIfaceInternal(const std::string& ifname) {
 
 std::pair<WifiStatus, sp<IWifiNanIface>> WifiChip::createNanIfaceInternal() {
   // Only 1 of NAN or P2P iface can be active at a time.
-  if (current_mode_id_ != kStaChipModeId || nan_iface_.get() ||
-      p2p_iface_.get()) {
+  if (WifiFeatureFlags::wifiHidlFeatureAware) {
+    if (current_mode_id_ != kStaChipModeId || nan_iface_.get() ||
+        p2p_iface_.get()) {
+      return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
+    }
+    std::string ifname = legacy_hal_.lock()->getNanIfaceName();
+    nan_iface_ = new WifiNanIface(ifname, legacy_hal_);
+    for (const auto& callback : event_cb_handler_.getCallbacks()) {
+      if (!callback->onIfaceAdded(IfaceType::NAN, ifname).isOk()) {
+        LOG(ERROR) << "Failed to invoke onIfaceAdded callback";
+      }
+    }
+    return {createWifiStatus(WifiStatusCode::SUCCESS), nan_iface_};
+  } else {
     return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
   }
-  std::string ifname = legacy_hal_.lock()->getNanIfaceName();
-  nan_iface_ = new WifiNanIface(ifname, legacy_hal_);
-  for (const auto& callback : event_cb_handler_.getCallbacks()) {
-    if (!callback->onIfaceAdded(IfaceType::NAN, ifname).isOk()) {
-      LOG(ERROR) << "Failed to invoke onIfaceAdded callback";
-    }
-  }
-  return {createWifiStatus(WifiStatusCode::SUCCESS), nan_iface_};
 }
 
 std::pair<WifiStatus, std::vector<hidl_string>>
