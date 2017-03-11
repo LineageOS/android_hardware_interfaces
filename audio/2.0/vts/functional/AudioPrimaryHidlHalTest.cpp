@@ -57,6 +57,8 @@ using ::android::hardware::audio::V2_0::IDevicesFactory;
 using ::android::hardware::audio::V2_0::IStream;
 using ::android::hardware::audio::V2_0::IStreamIn;
 using ::android::hardware::audio::V2_0::IStreamOut;
+using ::android::hardware::audio::V2_0::MmapBufferInfo;
+using ::android::hardware::audio::V2_0::MmapPosition;
 using ::android::hardware::audio::V2_0::ParameterValue;
 using ::android::hardware::audio::V2_0::Result;
 using ::android::hardware::audio::common::V2_0::AudioChannelMask;
@@ -270,13 +272,36 @@ TEST_F(FloatAccessorPrimaryHidlTest, MasterVolumeTest) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
+//////////////////////////////// AudioPatches ////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+class AudioPatchPrimaryHidlTest : public AudioPrimaryHidlTest {
+protected:
+    bool areAudioPatchesSupported() {
+        auto result = device->supportsAudioPatches();
+        EXPECT_TRUE(result.isOk());
+        return result;
+    }
+};
+
+TEST_F(AudioPatchPrimaryHidlTest, AudioPatches) {
+    doc::test("Test if audio patches are supported");
+    if (!areAudioPatchesSupported()) {
+        doc::partialTest("Audio patches are not supported");
+        return;
+    }
+    // TODO: test audio patches
+}
+
+
+//////////////////////////////////////////////////////////////////////////////
 //////////////// Required and recommended audio format support ///////////////
 // From: https://source.android.com/compatibility/android-cdd.html#5_4_audio_recording
 // From: https://source.android.com/compatibility/android-cdd.html#5_5_audio_playback
 /////////// TODO: move to the beginning of the file for easier update ////////
 //////////////////////////////////////////////////////////////////////////////
 
-class AudioConfigPrimaryTest : public AudioPrimaryHidlTest {
+class AudioConfigPrimaryTest : public AudioPatchPrimaryHidlTest {
 public:
     // Cache result ?
     static const vector<AudioConfig> getRequiredSupportPlaybackAudioConfig() {
@@ -504,6 +529,10 @@ protected:
         open = true;
     }
 
+    Return<Result> closeStream() {
+        open = false;
+        return stream->close();
+    }
 private:
     void TearDown() override {
         if (open) {
@@ -514,6 +543,7 @@ private:
 protected:
 
     AudioConfig audioConfig;
+    DeviceAddress address = {};
     sp<Stream> stream;
     bool open = false;
 };
@@ -523,12 +553,11 @@ protected:
 class OutputStreamTest : public OpenStreamTest<IStreamOut> {
     virtual void SetUp() override {
         ASSERT_NO_FATAL_FAILURE(OpenStreamTest::SetUp()); // setup base
-
+        address.device = AudioDevice::OUT_DEFAULT;
         const AudioConfig& config = GetParam();
-        DeviceAddress deviceAddr{};  // Ignored by primary hal
         AudioOutputFlag flags = AudioOutputFlag::NONE; // TODO: test all flag combination
         testOpen([&](AudioIoHandle handle, AudioConfig config, auto cb)
-                 { return device->openOutputStream(handle, deviceAddr, config, flags, cb); },
+                 { return device->openOutputStream(handle, address, config, flags, cb); },
                  config);
     }
 };
@@ -556,13 +585,12 @@ class InputStreamTest : public OpenStreamTest<IStreamIn> {
 
     virtual void SetUp() override {
         ASSERT_NO_FATAL_FAILURE(OpenStreamTest::SetUp()); // setup base
-
+        address.device = AudioDevice::IN_DEFAULT;
         const AudioConfig& config = GetParam();
-        DeviceAddress deviceAddr{}; // TODO: test all devices
         AudioInputFlag flags = AudioInputFlag::NONE; // TODO: test all flag combination
         AudioSource source = AudioSource::DEFAULT; // TODO: test all flag combination
         testOpen([&](AudioIoHandle handle, AudioConfig config, auto cb)
-                 { return device->openInputStream(handle, deviceAddr, config, flags, source, cb); },
+                 { return device->openInputStream(handle, address, config, flags, source, cb); },
                  config);
     }
 };
@@ -674,6 +702,30 @@ TEST_IO_STREAM(SupportedFormat, "Check that the stream format is declared as sup
                                     &IStream::getSupportedFormats, \
                                     &IStream::getFormat, &IStream::setFormat))
 
+static void testGetDevice(IStream* stream, AudioDevice expectedDevice) {
+    auto ret = stream->getDevice();
+    ASSERT_TRUE(ret.isOk());
+    AudioDevice device = ret;
+    ASSERT_EQ(expectedDevice, device);
+}
+
+TEST_IO_STREAM(GetDevice, "Check that the stream device == the one it was opened with",
+               areAudioPatchesSupported() ? doc::partialTest("Audio patches are supported") : \
+                                            testGetDevice(stream.get(), address.device))
+
+static void testSetDevice(IStream* stream, const DeviceAddress& address) {
+    DeviceAddress otherAddress = address;
+    otherAddress.device = (address.device & AudioDevice::BIT_IN) == 0 ?
+            AudioDevice::OUT_SPEAKER : AudioDevice::IN_BUILTIN_MIC;
+    EXPECT_OK(stream->setDevice(otherAddress));
+
+    ASSERT_OK(stream->setDevice(address)); // Go back to the original value
+}
+
+TEST_IO_STREAM(SetDevice, "Check that the stream can be rerouted to SPEAKER or BUILTIN_MIC",
+               areAudioPatchesSupported() ? doc::partialTest("Audio patches are supported") : \
+                                            testSetDevice(stream.get(), address))
+
 static void testGetAudioProperties(IStream* stream, AudioConfig expectedConfig) {
     uint32_t sampleRateHz;
     AudioChannelMask mask;
@@ -691,26 +743,119 @@ TEST_IO_STREAM(GetAudioProperties,
                "Check that the stream audio properties == the ones it was opened with",
                testGetAudioProperties(stream.get(), audioConfig))
 
+static void testConnectedState(IStream* stream) {
+    DeviceAddress address = {};
+    using AD = AudioDevice;
+    for (auto device : {AD::OUT_HDMI, AD::OUT_WIRED_HEADPHONE, AD::IN_USB_HEADSET}) {
+        address.device = device;
+
+        ASSERT_OK(stream->setConnectedState(address, true));
+        ASSERT_OK(stream->setConnectedState(address, false));
+    }
+}
+TEST_IO_STREAM(SetConnectedState,
+               "Check that the stream can be notified of device connection and deconnection",
+               testConnectedState(stream.get()))
+
+
+static auto invalidArgsOrNotSupported = {Result::INVALID_ARGUMENTS, Result::NOT_SUPPORTED};
+TEST_IO_STREAM(SetHwAvSync, "Try to set hardware sync to an invalid value",
+               ASSERT_RESULT(invalidArgsOrNotSupported, stream->setHwAvSync(666)))
+
+static void checkGetParameter(IStream* stream, hidl_vec<hidl_string> keys,
+                              vector<Result> expectedResults) {
+    hidl_vec<ParameterValue> parameters;
+    Result res;
+    ASSERT_OK(stream->getParameters(keys, returnIn(res, parameters)));
+    ASSERT_RESULT(expectedResults, res);
+    if (res == Result::OK) {
+        ASSERT_EQ(0U, parameters.size());
+    }
+}
+
+/* Get/Set parameter is intended to be an opaque channel between vendors app and their HALs.
+ * Thus can not be meaningfully tested.
+ * TODO: Doc missing. Should asking for an empty set of params raise an error ?
+ */
+TEST_IO_STREAM(getEmptySetParameter, "Retrieve the values of an empty set",
+               checkGetParameter(stream.get(), {} /* keys */,
+                                 {Result::OK, Result::INVALID_ARGUMENTS}))
+
+
+TEST_IO_STREAM(getNonExistingParameter, "Retrieve the values of an non existing parameter",
+               checkGetParameter(stream.get(), {"Non existing key"} /* keys */,
+                                 {Result::INVALID_ARGUMENTS}))
+
+static vector<Result> okOrNotSupported = {Result::OK, Result::INVALID_ARGUMENTS};
+TEST_IO_STREAM(setEmptySetParameter, "Set the values of an empty set of parameters",
+               ASSERT_RESULT(okOrNotSupported, stream->setParameters({})))
+
+TEST_IO_STREAM(setNonExistingParameter, "Set the values of an non existing parameter",
+               ASSERT_RESULT(Result::INVALID_ARGUMENTS,
+                             stream->setParameters({{"non existing key", "0"}})))
+
 TEST_IO_STREAM(DebugDump,
                "Check that a stream can dump its state without error",
                testDebugDump([this](const auto& handle){ return stream->debugDump(handle); }))
 
 //////////////////////////////////////////////////////////////////////////////
-//////////////////////////////// AudioPatches ////////////////////////////////
+////////////////////////////// addRemoveEffect ///////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
+TEST_IO_STREAM(AddNonExistingEffect, "Adding a non existing effect should fail",
+               ASSERT_RESULT(Result::INVALID_ARGUMENTS, stream->addEffect(666)))
+TEST_IO_STREAM(RemoveNonExistingEffect, "Removing a non existing effect should fail",
+               ASSERT_RESULT(Result::INVALID_ARGUMENTS, stream->removeEffect(666)))
 
-TEST_F(AudioPrimaryHidlTest, AudioPatches) {
-    doc::test("Test if audio patches are supported");
-    auto result = device->supportsAudioPatches();
-    ASSERT_TRUE(result.isOk());
-    bool supportsAudioPatch = result;
-    if (!supportsAudioPatch) {
-        doc::partialTest("Audio patches are not supported");
-        return;
-    }
-    // TODO: test audio patches
+//TODO: positive tests
+
+//////////////////////////////////////////////////////////////////////////////
+/////////////////////////////// Control ////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+TEST_IO_STREAM(standby, "Make sure the stream can be put in stanby",
+               ASSERT_OK(stream->standby())) // can not fail
+
+static vector<Result> invalidStateOrNotSupported = {Result::INVALID_STATE, Result::NOT_SUPPORTED};
+
+TEST_IO_STREAM(startNoMmap, "Starting a mmaped stream before mapping it should fail",
+               ASSERT_RESULT(invalidStateOrNotSupported, stream->start()))
+
+TEST_IO_STREAM(stopNoMmap, "Stopping a mmaped stream before mapping it should fail",
+               ASSERT_RESULT(invalidStateOrNotSupported, stream->stop()))
+
+TEST_IO_STREAM(getMmapPositionNoMmap, "Get a stream Mmap position before mapping it should fail",
+               ASSERT_RESULT(invalidStateOrNotSupported, stream->stop()))
+
+TEST_IO_STREAM(close, "Make sure a stream can be closed", ASSERT_OK(closeStream()))
+TEST_IO_STREAM(closeTwice, "Make sure a stream can not be closed twice",
+               ASSERT_OK(closeStream()); \
+               ASSERT_RESULT(Result::INVALID_STATE, closeStream()))
+
+static void testCreateTooBigMmapBuffer(IStream* stream) {
+    MmapBufferInfo info;
+    Result res;
+    // Assume that int max is a value too big to be allocated
+    // This is true currently with a 32bit media server, but might not when it will run in 64 bit
+    auto minSizeFrames = std::numeric_limits<int32_t>::max();
+    ASSERT_OK(stream->createMmapBuffer(minSizeFrames, returnIn(res, info)));
+    ASSERT_RESULT(invalidArgsOrNotSupported, res);
 }
+
+TEST_IO_STREAM(CreateTooBigMmapBuffer, "Create mmap buffer too big should fail",
+               testCreateTooBigMmapBuffer(stream.get()))
+
+
+static void testGetMmapPositionOfNonMmapedStream(IStream* stream) {
+    Result res;
+    MmapPosition position;
+    ASSERT_OK(stream->getMmapPosition(returnIn(res, position)));
+    ASSERT_RESULT(invalidArgsOrNotSupported, res);
+}
+
+TEST_IO_STREAM(GetMmapPositionOfNonMmapedStream,
+               "Retrieving the mmap position of a non mmaped stream should fail",
+               testGetMmapPositionOfNonMmapedStream(stream.get()))
 
 //////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// PrimaryDevice ////////////////////////////////
