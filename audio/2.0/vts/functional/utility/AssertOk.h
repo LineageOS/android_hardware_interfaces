@@ -29,13 +29,13 @@ inline void assertResult(Result expected, Result result) {
     ASSERT_EQ(expected, result);
 }
 
-inline void assertResult(Result expected, Return<Result> ret) {
+inline void assertResult(Result expected, const Return<Result> &ret) {
     ASSERT_TRUE(ret.isOk());
     Result result = ret;
     assertResult(expected, result);
 }
 
-inline void assertResult(std::vector<Result> expected, Result result) {
+inline void assertResult(const std::vector<Result> &expected, Result result) {
     if (std::find(expected.begin(), expected.end(), result) != expected.end()) {
         return; // result is in expected
     }
@@ -43,13 +43,13 @@ inline void assertResult(std::vector<Result> expected, Result result) {
            << " to be one of " << ::testing::PrintToString(expected);
 }
 
-inline void assertResult(std::vector<Result> expected, Return<Result> ret) {
+inline void assertResult(const std::vector<Result> &expected, const Return<Result> &ret) {
     ASSERT_TRUE(ret.isOk());
     Result result = ret;
     assertResult(expected, result);
 }
 
-inline void assertOk(Return<void> ret) {
+inline void assertOk(const Return<void> &ret) {
     ASSERT_TRUE(ret.isOk());
 }
 
@@ -57,8 +57,8 @@ inline void assertOk(Result result) {
     assertResult(Result::OK, result);
 }
 
-inline void assertOk(Return<Result> ret) {
-    assertResult(Result::OK, std::move(ret));
+inline void assertOk(const Return<Result> &ret) {
+    assertResult(Result::OK, ret);
 }
 
 }
@@ -68,4 +68,4 @@ inline void assertOk(Return<Result> ret) {
 #define EXPECT_OK(ret) EXPECT_NO_FATAL_FAILURE(detail::assertOk(ret))
 
 #define ASSERT_RESULT(expected, ret) ASSERT_NO_FATAL_FAILURE(detail::assertResult(expected, ret))
-#define EXPECT_RESULT(expected, ret) ASSERT_NO_FATAL_FAILURE(detail::assertResult(expected, ret))
+#define EXPECT_RESULT(expected, ret) EXPECT_NO_FATAL_FAILURE(detail::assertResult(expected, ret))
