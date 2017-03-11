@@ -1898,10 +1898,12 @@ bool convertLegacyRttResultToHidl(
   hidl_result->timeStampInUs = legacy_result.ts;
   hidl_result->burstDurationInMs = legacy_result.burst_duration;
   hidl_result->negotiatedBurstNum = legacy_result.negotiated_burst_num;
-  if (!convertLegacyIeToHidl(*legacy_result.LCI, &hidl_result->lci)) {
+  if (legacy_result.LCI && !convertLegacyIeToHidl(*legacy_result.LCI,
+                                                  &hidl_result->lci)) {
     return false;
   }
-  if (!convertLegacyIeToHidl(*legacy_result.LCR, &hidl_result->lcr)) {
+  if (legacy_result.LCR && !convertLegacyIeToHidl(*legacy_result.LCR,
+                                                  &hidl_result->lcr)) {
     return false;
   }
   return true;
