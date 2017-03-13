@@ -143,7 +143,7 @@ typedef MacAddress Bssid;
 /**
  * TimeStamp in milliseconds (ms).
  */
-typedef uint32_t TimeStampInMs;
+typedef uint64_t TimeStampInMs;
 
 /**
  * TimeStamp in microseconds (us).
@@ -478,7 +478,7 @@ struct StaLinkLayerRadioStats {
  */
 struct StaLinkLayerStats {
   StaLinkLayerIfaceStats iface;
-  StaLinkLayerRadioStats radio;
+  vec<StaLinkLayerRadioStats> radios;
   /**
    * TimeStamp for each stats sample.
    * This is the absolute milliseconds from boot when these stats were
