@@ -436,8 +436,8 @@ TEST_F(AudioPrimaryHidlTest, getParameters) {
 //////////////////////////////// debugDebug //////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-TEST_F(AudioPrimaryHidlTest, debugDump) {
-    doc::test("Check that the hal can dump its state without error");
+template <class DebugDump>
+static void testDebugDump(DebugDump debugDump) {
     FILE* file = tmpfile();
     ASSERT_NE(nullptr, file) << errno;
 
@@ -450,7 +450,7 @@ TEST_F(AudioPrimaryHidlTest, debugDump) {
 
     // TODO: debugDump does not return a Result.
     // This mean that the hal can not report that it not implementing the function.
-    ASSERT_OK(device->debugDump(handle));
+    ASSERT_OK(debugDump(handle));
 
     rewind(file); // can not fail
 
@@ -458,6 +458,11 @@ TEST_F(AudioPrimaryHidlTest, debugDump) {
     char buff;
     ASSERT_EQ(size_t{1}, fread(&buff, sizeof(buff), 1, file));
     EXPECT_EQ(0, fclose(file)) << errno;
+}
+
+TEST_F(AudioPrimaryHidlTest, debugDump) {
+    doc::test("Check that the hal can dump its state without error");
+    testDebugDump([this](const auto& handle){ return device->debugDump(handle); });
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -685,6 +690,10 @@ static void testGetAudioProperties(IStream* stream, AudioConfig expectedConfig) 
 TEST_IO_STREAM(GetAudioProperties,
                "Check that the stream audio properties == the ones it was opened with",
                testGetAudioProperties(stream.get(), audioConfig))
+
+TEST_IO_STREAM(DebugDump,
+               "Check that a stream can dump its state without error",
+               testDebugDump([this](const auto& handle){ return stream->debugDump(handle); }))
 
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// AudioPatches ////////////////////////////////
