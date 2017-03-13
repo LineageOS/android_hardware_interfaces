@@ -19,9 +19,10 @@ package android.hardware.broadcastradio@1.1;
 import @1.0::ITunerCallback;
 
 /**
- * Some methods of @1.1::ITunerCallback are updated versions of those from @1.0:ITunerCallback.
- * All 1.1 drivers should call both (eg. tuneComplete and tuneComplete_1_1), while 1.1 clients
- * should ignore 1.0 ones, to avoid receiving a callback twice.
+ * Some methods of @1.1::ITunerCallback are updated versions of those from
+ * @1.0:ITunerCallback. All 1.1 HAL implementations must call both
+ * (eg. tuneComplete and tuneComplete_1_1), while 1.1 clients may ignore 1.0
+ * ones, to avoid receiving a callback twice.
  */
 interface ITunerCallback extends @1.0::ITunerCallback {
     /*
@@ -37,4 +38,27 @@ interface ITunerCallback extends @1.0::ITunerCallback {
      * @param info A ProgramInfo structure describing the new tuned station.
      */
     oneway afSwitch_1_1(ProgramInfo info);
+
+    /**
+     * Called by the HAL when background scan initiated by startBackgroundScan
+     * finishes. If the list was changed, programListChanged must be called too.
+     * @param result OK if the scan succeeded, client may retrieve the actual
+     *               list with ITuner::getProgramList.
+     *               TEMPORARILY_UNAVAILABLE if the scan was interrupted due to
+     *               hardware becoming temporarily unavailable.
+     *               NOT_INITIALIZED other error, ie. HW failure.
+     */
+    oneway backgroundScanComplete(ProgramListResult result);
+
+    /**
+     * Called each time the internally cached program list changes. HAL may not
+     * call it immediately, ie. it may wait for a short time to accumulate
+     * multiple list change notifications into a single event.
+     *
+     * It may be triggered either by an explicitly issued background scan,
+     * or a scan issued by the device internally.
+     *
+     * Client may retrieve the actual list with ITuner::getProgramList.
+     */
+    oneway programListChanged();
 };

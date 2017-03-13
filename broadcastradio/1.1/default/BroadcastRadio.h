@@ -16,7 +16,7 @@
 #ifndef ANDROID_HARDWARE_BROADCASTRADIO_V1_1_BROADCASTRADIO_H
 #define ANDROID_HARDWARE_BROADCASTRADIO_V1_1_BROADCASTRADIO_H
 
-#include <android/hardware/broadcastradio/1.0/IBroadcastRadio.h>
+#include <android/hardware/broadcastradio/1.1/IBroadcastRadio.h>
 #include <android/hardware/broadcastradio/1.1/types.h>
 #include <hardware/radio.h>
 
@@ -30,12 +30,13 @@ using V1_0::Class;
 using V1_0::BandConfig;
 using V1_0::Properties;
 
-struct BroadcastRadio : public V1_0::IBroadcastRadio {
+struct BroadcastRadio : public V1_1::IBroadcastRadio {
 
     BroadcastRadio(Class classId);
 
-    // Methods from ::android::hardware::broadcastradio::V1_0::IBroadcastRadio follow.
+    // Methods from ::android::hardware::broadcastradio::V1_1::IBroadcastRadio follow.
     Return<void> getProperties(getProperties_cb _hidl_cb) override;
+    Return<void> getProperties_1_1(getProperties_1_1_cb _hidl_cb) override;
     Return<void> openTuner(const BandConfig& config, bool audio,
             const sp<V1_0::ITunerCallback>& callback, openTuner_cb _hidl_cb) override;
 

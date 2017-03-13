@@ -26,7 +26,33 @@ interface ITuner extends @1.0::ITuner {
      *                NOT_INITIALIZED if another error occurs
      * @return info Current program information.
      */
-    getProgramInformation_1_1() generates(Result result, ProgramInfo info);
+    getProgramInformation_1_1() generates (Result result, ProgramInfo info);
+
+    /**
+     * Initiates a background scan to update internally cached program list.
+     *
+     * HAL client may not need to initiate the scan explicitly with this call,
+     * ie. HAL implementation MAY perform the scan on boot. It's a common
+     * practice in devices with two physical tuners with background scanning.
+     *
+     * Device must call backgroundScanComplete if the result is OK, even if the
+     * scan fails later (it must pass proper result through the callback).
+     * Otherwise, backgroundScanComplete must not be called as a result of this
+     * certain attempt. It may still be called as a response to another call to
+     * startBackgroundScan, former or latter.
+     *
+     * Device may utilize an already running (but not finished) scan for
+     * subsequent calls to startBackgroundScan, issuing a single
+     * backgroundScanComplete callback.
+     *
+     * @return result OK if the scan was properly scheduled (this does not mean
+     *                it successfully finished).
+     *                TEMPORARILY_UNAVAILABLE if the background scan is
+     *                temporarily unavailable, ie. due to ongoing foreground
+     *                playback in single-tuner device.
+     *                NOT_INITIALIZED other error, ie. HW failure.
+     */
+    startBackgroundScan() generates (ProgramListResult result);
 
     /**
      * Retrieve station list.
@@ -40,11 +66,12 @@ interface ITuner extends @1.0::ITuner {
      *               before setting this parameter to anything else.
      * @return result OK if the list was successfully retrieved.
      *                NOT_READY if the scan is in progress.
-     *                NOT_STARTED if the scan has not been started.
+     *                NOT_STARTED if the scan has not been started, client may
+     *                call startBackgroundScan to fix this.
      *                NOT_INITIALIZED if any other error occurs.
      * @return programList List of stations available for user.
      */
     getProgramList(string filter)
-            generates(ProgramListResult result, vec<ProgramInfo> programList);
+        generates (ProgramListResult result, vec<ProgramInfo> programList);
 
 };

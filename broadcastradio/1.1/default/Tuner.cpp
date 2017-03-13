@@ -200,6 +200,10 @@ exit:
     return Void();
 }
 
+Return<ProgramListResult> Tuner::startBackgroundScan() {
+    return ProgramListResult::NOT_INITIALIZED;
+}
+
 Return<void> Tuner::getProgramList(const hidl_string& filter __unused, getProgramList_cb _hidl_cb) {
     hidl_vec<ProgramInfo> pList;
     // TODO(b/34054813): do the actual implementation.

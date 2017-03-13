@@ -94,7 +94,7 @@ int BroadcastRadio::closeHalTuner(const struct radio_tuner *halTuner)
 }
 
 
-// Methods from ::android::hardware::broadcastradio::V1_0::IBroadcastRadio follow.
+// Methods from ::android::hardware::broadcastradio::V1_1::IBroadcastRadio follow.
 Return<void> BroadcastRadio::getProperties(getProperties_cb _hidl_cb)
 {
     int rc;
@@ -113,6 +113,11 @@ Return<void> BroadcastRadio::getProperties(getProperties_cb _hidl_cb)
 exit:
     _hidl_cb(Utils::convertHalResult(rc), properties);
     return Void();
+}
+
+Return<void> BroadcastRadio::getProperties_1_1(getProperties_1_1_cb _hidl_cb __unused)
+{
+    return Status::fromExceptionCode(Status::EX_UNSUPPORTED_OPERATION);
 }
 
 Return<void> BroadcastRadio::openTuner(const BandConfig& config, bool audio,
