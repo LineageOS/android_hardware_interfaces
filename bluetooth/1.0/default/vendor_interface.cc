@@ -215,11 +215,9 @@ bool VendorInterface::Open(InitializeCompleteCallback initialize_complete_cb,
 
   ALOGD("%s vendor library loaded", __func__);
 
-  // Power cycle chip
+  // Power on the controller
 
-  int power_state = BT_VND_PWR_OFF;
-  lib_interface_->op(BT_VND_OP_POWER_CTRL, &power_state);
-  power_state = BT_VND_PWR_ON;
+  int power_state = BT_VND_PWR_ON;
   lib_interface_->op(BT_VND_OP_POWER_CTRL, &power_state);
 
   // Get the UART socket(s)
