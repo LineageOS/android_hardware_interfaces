@@ -138,7 +138,7 @@ int SoundTriggerHalImpl::doLoadSoundModel(const ISoundTriggerHw::SoundModel& sou
         } while (mClients.valueFor(*modelId) != 0 && *modelId != 0);
     }
     LOG_ALWAYS_FATAL_IF(*modelId == 0,
-                        "wrap around in sound model IDs, num loaded models %d", mClients.size());
+                        "wrap around in sound model IDs, num loaded models %zu", mClients.size());
 
     client = new SoundModelClient(*modelId, callback, cookie);
 
