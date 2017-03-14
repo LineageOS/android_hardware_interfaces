@@ -586,6 +586,17 @@ enum StaRoamingState : uint8_t {
  */
 
 /**
+ * Size limits for parameters used in the NAN interface.
+ */
+enum NanParamSizeLimits : uint32_t {
+  /* Minimum length of Passphrase argument for data-path configuration */
+  MIN_PASSPHRASE_LENGTH = 8,
+
+  /* Maximum length of Passphrase argument for data-path configuration */
+  MAX_PASSPHRASE_LENGTH = 63,
+};
+
+/**
  * A unique short handle provided by the client to identify individual invocations of
  * certain API's like |IWifiNanIface.*|.
  */
@@ -698,6 +709,15 @@ enum NanDataPathChannelCfg : uint32_t {
   REQUEST_CHANNEL_SETUP,     // Channel request is specified - but may be overridden by firmware.
   FORCE_CHANNEL_SETUP,       // Channel request is specified and must be respected. If the firmware
                              // cannot honor the request then the data-path request is rejected.
+};
+
+/**
+ * NAN DP (data-path) security configuration options.
+ */
+enum NanDataPathSecurityType : uint32_t {
+  OPEN,       // no security
+  PMK,        // security: PMK
+  PASSPHRASE, // security: passphrase
 };
 
 /**
@@ -910,6 +930,38 @@ enum NanRangingIndication : uint32_t {
 };
 
 /**
+ * Configuration of NAN data-path security.
+ */
+struct NanDataPathSecurityConfig {
+  /**
+   * Security configuration of the data-path (NDP). Security is required if not equal to
+   * |NanDataPathSecurityType.OPEN|.
+   * NAN Spec: Service Discovery Extension Attribute (SDEA) / Control / Security Required
+   */
+  NanDataPathSecurityType securityType;
+  /**
+   * Cipher type for data-paths. If |securityType| is |NanDataPathSecurityType.OPEN| then must
+   * be set to |NanCipherSuiteType.NONE|, otherwise a non-|NanCipherSuiteType.NONE| cipher suite
+   * must be specified.
+   */
+  NanCipherSuiteType cipherType;
+  /**
+   * Optional Pairwise Master Key (PMK). Must be specified (and is only used) if |securityType| is
+   * set to |NanDataPathSecurityType.PMK|.
+   * Ref: IEEE 802.11i
+   */
+  uint8_t[32] pmk;
+  /**
+   * Optional Passphrase. Must be specified (and is only used) if |securityType| is set to
+   * |NanDataPathSecurityType.PASSPHRASE|.
+   * Min length: |MIN_PASSPHRASE_LENGTH|
+   * Max length: |MAX_PASSPHRASE_LENGTH|
+   * NAN Spec: Appendix: Mapping pass-phrase to PMK for NCS-SK Cipher Suites
+   */
+  vec<uint8_t> passphrase;
+};
+
+/**
  * Configurations of NAN discovery sessions: common to publish and subscribe discovery.
  */
 struct NanDiscoveryCommonConfig {
@@ -1009,25 +1061,11 @@ struct NanDiscoveryCommonConfig {
    */
   bool disableFollowupReceivedIndication;
   /**
-   * Cipher type for data-paths constructed in the context of this discovery session. Must be
-   * specified as |NanCipherSuiteType.NONE| if no |pmk| is provided.
+   * Security configuration of data-paths created in the context of this discovery session. Security
+   * parameters can be overridden during the actual construction of the data-path - allowing
+   * individual data-paths to have unique PMKs or Passphrases.
    */
-  NanCipherSuiteType cipherType;
-  /**
-   * Optional Pairwise Master Key (PMK) for data-paths constructed in the context of this discovery
-   * session. A PMK can also be provided during the actual construction of the data-path (which
-   * allows for unique PMKs for each data-path). The |cipherType| must be specified if a PMK is
-   * provided.
-   * Max length: 32
-   * Ref: IEEE 802.11i
-   */
-  vec<uint8_t> pmk;
-  /**
-   * Specifies whether or not security is enabled in any data-path (NDP) constructed in the context
-   * of this discovery session.
-   * NAN Spec: Service Discovery Extension Attribute (SDEA) / Control / Security Required
-   */
-  bool securityEnabledInNdp;
+  NanDataPathSecurityConfig securityConfig;
   /**
    * Specifies whether or not there is a ranging requirement in this discovery session.
    * Ranging is only performed if all other match criteria with the peer are met. Ranging must
@@ -1213,10 +1251,9 @@ struct NanInitiateDataPathRequest {
    */
   string ifaceName;
   /**
-   * Specifies whether or not security is required for the data-path being created.
-   * NAN Spec: Data Path Attributes / NDP Attribute / NDP Control / Security Present
+   * Security configuration of the requested data-path.
    */
-  bool securityRequired;
+  NanDataPathSecurityConfig securityConfig;
   /**
    * Arbitrary information communicated to the peer as part of the data-path setup process - there
    * is no semantic meaning to these bytes. They are passed-through from sender to receiver as-is
@@ -1226,17 +1263,13 @@ struct NanInitiateDataPathRequest {
    */
   vec<uint8_t> appInfo;
   /**
-   * Cipher type for the data-path being requested. Must be specified as |NanCipherSuiteType.NONE|
-   * if no |pmk| is provided.
+   * A service name to be used with |passphrase| to construct a Pairwise Master Key (PMK) for the
+   * data-path. Only relevant when a data-path is requested which is not associated with a NAN
+   * discovery session - e.g. using out-of-band discovery.
+   * Constraints: same as |NanDiscoveryCommonConfig.serviceName|
+   * NAN Spec: Appendix: Mapping pass-phrase to PMK for NCS-SK Cipher Suites
    */
-  NanCipherSuiteType cipherType;
-  /**
-   * Pairwise Master Key (PMK) for the data-path being requested (if |securityRequired| is true).
-   * The |cipherType| must be specified if a PMK is provided.
-   * Max length: 32
-   * Ref: IEEE 802.11i
-   */
-  vec<uint8_t> pmk;
+  vec<uint8_t> serviceNameOutOfBand;
 };
 
 /**
@@ -1259,10 +1292,9 @@ struct NanRespondToDataPathIndicationRequest {
    */
   string ifaceName;
   /**
-   * Specifies whether or not security is required for the data-path being created.
-   * NAN Spec: Data Path Attributes / NDP Attribute / NDP Control / Security Present
+   * Security configuration of the requested data-path.
    */
-  bool securityRequired;
+  NanDataPathSecurityConfig securityConfig;
   /**
    * Arbitrary information communicated to the peer as part of the data-path setup process - there
    * is no semantic meaning to these bytes. They are passed-through from sender to receiver as-is
@@ -1272,16 +1304,13 @@ struct NanRespondToDataPathIndicationRequest {
    */
   vec<uint8_t> appInfo;
   /**
-   * Cipher type for the data-path being negotiated. Must be specified as |NanCipherSuiteType.NONE|
-   * if no |pmk| is provided.
+   * A service name to be used with |passphrase| to construct a Pairwise Master Key (PMK) for the
+   * data-path. Only relevant when a data-path is requested which is not associated with a NAN
+   * discovery session - e.g. using out-of-band discovery.
+   * Constraints: same as |NanDiscoveryCommonConfig.serviceName|
+   * NAN Spec: Appendix: Mapping pass-phrase to PMK for NCS-SK Cipher Suites
    */
-  NanCipherSuiteType cipherType;
-  /**
-   * Pairwise Master Key (PMK) for the data-path being negotiated (if |securityRequired| is true).
-   * The |cipherType| must be specified if a PMK is provided.
-   * Max length: 32
-   */
-  vec<uint8_t> pmk;
+  vec<uint8_t> serviceNameOutOfBand;
 };
 
 /**
