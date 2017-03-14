@@ -601,33 +601,37 @@ std::pair<wifi_error, LinkLayerStats> WifiLegacyHal::getLinkLayerStats() {
   LinkLayerStats link_stats{};
   LinkLayerStats* link_stats_ptr = &link_stats;
 
-  on_link_layer_stats_result_internal_callback = [&link_stats_ptr](
-      wifi_request_id /* id */,
-      wifi_iface_stat* iface_stats_ptr,
-      int num_radios,
-      wifi_radio_stat* radio_stats_ptr) {
-    if (iface_stats_ptr != nullptr) {
-      link_stats_ptr->iface = *iface_stats_ptr;
-      link_stats_ptr->iface.num_peers = 0;
-    } else {
-      LOG(ERROR) << "Invalid iface stats in link layer stats";
-    }
-    if (num_radios == 1 && radio_stats_ptr != nullptr) {
-      link_stats_ptr->radio = *radio_stats_ptr;
-      // Copy over the tx level array to the separate vector.
-      if (radio_stats_ptr->num_tx_levels > 0 &&
-          radio_stats_ptr->tx_time_per_levels != nullptr) {
-        link_stats_ptr->radio_tx_time_per_levels.assign(
-            radio_stats_ptr->tx_time_per_levels,
-            radio_stats_ptr->tx_time_per_levels +
-                radio_stats_ptr->num_tx_levels);
-      }
-      link_stats_ptr->radio.num_tx_levels = 0;
-      link_stats_ptr->radio.tx_time_per_levels = nullptr;
-    } else {
-      LOG(ERROR) << "Invalid radio stats in link layer stats";
-    }
-  };
+  on_link_layer_stats_result_internal_callback =
+      [&link_stats_ptr](wifi_request_id /* id */,
+                        wifi_iface_stat* iface_stats_ptr,
+                        int num_radios,
+                        wifi_radio_stat* radio_stats_ptr) {
+        if (iface_stats_ptr != nullptr) {
+          link_stats_ptr->iface = *iface_stats_ptr;
+          link_stats_ptr->iface.num_peers = 0;
+        } else {
+          LOG(ERROR) << "Invalid iface stats in link layer stats";
+        }
+        if (num_radios <= 0 || radio_stats_ptr == nullptr) {
+          LOG(ERROR) << "Invalid radio stats in link layer stats";
+          return;
+        }
+        for (int i = 0; i < num_radios; i++) {
+          LinkLayerRadioStats radio;
+          radio.stats = radio_stats_ptr[i];
+          // Copy over the tx level array to the separate vector.
+          if (radio_stats_ptr[i].num_tx_levels > 0 &&
+              radio_stats_ptr[i].tx_time_per_levels != nullptr) {
+            radio.tx_time_per_levels.assign(
+                radio_stats_ptr[i].tx_time_per_levels,
+                radio_stats_ptr[i].tx_time_per_levels +
+                    radio_stats_ptr[i].num_tx_levels);
+          }
+          radio.stats.num_tx_levels = 0;
+          radio.stats.tx_time_per_levels = nullptr;
+          link_stats_ptr->radios.push_back(radio);
+        }
+      };
 
   wifi_error status = global_func_table_.wifi_get_link_stats(
       0, wlan_interface_handle_, {onSyncLinkLayerStatsResult});
