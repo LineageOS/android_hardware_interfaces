@@ -1354,10 +1354,12 @@ enum ColorMode : int32_t {
    *
    * PC/Internet (sRGB) Gamma Correction (GC):
    *
-   *  if Vlinear ≤ 0.0031308
+   *  if Vlinear ≤ 0.0030186
    *    Vnonlinear = 12.92 * Vlinear
    *  else
    *    Vnonlinear = 1.055 * (Vlinear)^(1/2.4) – 0.055
+   *
+   * Note: In most cases sRGB transfer function will be fine.
    */
   DISPLAY_P3 = 9
 };
