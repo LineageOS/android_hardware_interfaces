@@ -39,6 +39,16 @@ Return<void> SurfaceFlingerConfigs::useTripleFramebuffer(useTripleFramebuffer_cb
     return Void();
 }
 
+Return<void> SurfaceFlingerConfigs::useContextPriority(useContextPriority_cb _hidl_cb) {
+#ifdef USE_CONTEXT_PRIORITY
+    _hidl_cb({true, USE_CONTEXT_PRIORITY});
+    LOG(INFO) << "SurfaceFlinger useContextPriority=" << USE_CONTEXT_PRIORITY;
+#else
+    _hidl_cb({false, false});
+#endif
+    return Void();
+}
+
 // Methods from ::android::hidl::base::V1_0::IBase follow.
 
 ISurfaceFlingerConfigs* HIDL_FETCH_ISurfaceFlingerConfigs(const char* /* name */) {
