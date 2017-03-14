@@ -17,4 +17,5 @@ package android.hardware.configstore@1.0;
 
 interface ISurfaceFlingerConfigs {
     vsyncEventPhaseOffsetNs() generates (OptionalInt64 value);
+    useTripleFramebuffer() generates (OptionalBool value);
 };

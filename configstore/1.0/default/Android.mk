@@ -13,7 +13,6 @@ LOCAL_SHARED_LIBRARIES := \
     libbase \
     libhidlbase \
     libhidltransport \
-    libhwbinder \
     libutils \
     android.hardware.configstore@1.0 \
     android.hidl.base@1.0
@@ -35,7 +34,6 @@ LOCAL_SHARED_LIBRARIES := \
     libutils \
     libhidlbase \
     libhidltransport \
-    libhwbinder \
     android.hardware.configstore@1.0 \
 
 include $(BUILD_EXECUTABLE)
