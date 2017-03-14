@@ -49,10 +49,14 @@ struct PacketFilterCapabilities {
 // The |wifi_radio_stat.tx_time_per_levels| stats is provided as a pointer in
 // |wifi_radio_stat| structure in the legacy HAL API. Separate that out
 // into a separate return element to avoid passing pointers around.
+struct LinkLayerRadioStats {
+  wifi_radio_stat stats;
+  std::vector<uint32_t> tx_time_per_levels;
+};
+
 struct LinkLayerStats {
   wifi_iface_stat iface;
-  wifi_radio_stat radio;
-  std::vector<uint32_t> radio_tx_time_per_levels;
+  std::vector<LinkLayerRadioStats> radios;
 };
 #pragma GCC diagnostic pop
 

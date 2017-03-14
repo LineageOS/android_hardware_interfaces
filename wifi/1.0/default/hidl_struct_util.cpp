@@ -706,11 +706,17 @@ bool convertLegacyLinkLayerStatsToHidl(
   hidl_stats->iface.wmeVoPktStats.retries =
       legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].retries;
   // radio legacy_stats conversion.
-  hidl_stats->radio.onTimeInMs = legacy_stats.radio.on_time;
-  hidl_stats->radio.txTimeInMs = legacy_stats.radio.tx_time;
-  hidl_stats->radio.rxTimeInMs = legacy_stats.radio.rx_time;
-  hidl_stats->radio.onTimeInMsForScan = legacy_stats.radio.on_time_scan;
-  hidl_stats->radio.txTimeInMsPerLevel = legacy_stats.radio_tx_time_per_levels;
+  std::vector<StaLinkLayerRadioStats> hidl_radios_stats;
+  for (const auto& legacy_radio_stats : legacy_stats.radios) {
+    StaLinkLayerRadioStats hidl_radio_stats;
+    hidl_radio_stats.onTimeInMs = legacy_radio_stats.stats.on_time;
+    hidl_radio_stats.txTimeInMs = legacy_radio_stats.stats.tx_time;
+    hidl_radio_stats.rxTimeInMs = legacy_radio_stats.stats.rx_time;
+    hidl_radio_stats.onTimeInMsForScan = legacy_radio_stats.stats.on_time_scan;
+    hidl_radio_stats.txTimeInMsPerLevel = legacy_radio_stats.tx_time_per_levels;
+    hidl_radios_stats.push_back(hidl_radio_stats);
+  }
+  hidl_stats->radios = hidl_radios_stats;
   // Timestamp in the HAL wrapper here since it's not provided in the legacy
   // HAL API.
   hidl_stats->timeStampInMs = uptimeMillis();
