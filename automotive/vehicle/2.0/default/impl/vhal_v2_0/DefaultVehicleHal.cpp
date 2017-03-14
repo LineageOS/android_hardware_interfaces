@@ -503,16 +503,15 @@ StatusCode DefaultVehicleHal::set(const VehiclePropValue& propValue) {
     StatusCode status;
     switch (propId) {
         default:
-            if (mHvacPowerProps.find(VehicleProperty(propId)) !=
-                    mHvacPowerProps.end()) {
-                auto prop = mProps.find(
-                    std::make_pair(toInt(VehicleProperty::HVAC_POWER_ON), 0));
-                if (prop != mProps.end()) {
-                    if (prop->second->value.int32Values.size() == 1 &&
-                        prop->second->value.int32Values[0] == 0) {
-                        status = StatusCode::NOT_AVAILABLE;
-                        break;
-                    }
+            if (mHvacPowerProps.count(propId)) {
+                std::lock_guard<std::mutex> lock(mPropsMutex);
+                auto hvacPowerOn = getVehiclePropValueLocked(toInt(VehicleProperty::HVAC_POWER_ON),
+                                                             toInt(VehicleAreaZone::ROW_1));
+
+                if (hvacPowerOn && hvacPowerOn->value.int32Values.size() == 1
+                        && hvacPowerOn->value.int32Values[0] == 0) {
+                    status = StatusCode::NOT_AVAILABLE;
+                    break;
                 }
             }
             status = updateProperty(propValue);
