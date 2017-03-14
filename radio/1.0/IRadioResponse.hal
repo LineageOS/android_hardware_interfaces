@@ -787,10 +787,13 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:OPERATION_NOT_ALLOWED
-     *   RadioError:GENERIC_FAILURE
+     *   RadioError:ABORTED
+     *   RadioError:DEVICE_IN_USE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:NO_MEMORY
+     *   RadioError:MODEM_ERR
      */
     oneway getAvailableNetworksResponse(RadioResponseInfo info,
             vec<OperatorInfo> networkInfos);
