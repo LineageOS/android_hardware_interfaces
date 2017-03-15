@@ -17,9 +17,9 @@
 #include <android-base/logging.h>
 #include <VtsHalHidlTargetTestBase.h>
 
-#include <hidl/HidlTransportSupport.h>
 #include <android/hidl/manager/1.0/IServiceManager.h>
 #include <android/hidl/manager/1.0/IServiceNotification.h>
+#include <hidl/HidlTransportSupport.h>
 
 #include <wifi_hal/driver_tool.h>
 #include <wifi_system/interface_tool.h>
@@ -174,7 +174,7 @@ void startSupplicantAndWaitForHidlService() {
 }
 
 sp<ISupplicant> getSupplicant() {
-    return getService<ISupplicant>(kSupplicantServiceName);
+    return ::testing::VtsHalHidlTargetTestBase::getService<ISupplicant>();
 }
 
 sp<ISupplicantStaIface> getSupplicantStaIface() {
