@@ -181,9 +181,17 @@ enum PixelFormat : int32_t {
      *    - GRALLOC_USAGE_SW_*
      *    - GRALLOC_USAGE_RENDERSCRIPT
      *
-     * When used with ANativeWindow, the dataSpace should be
-     * HAL_DATASPACE_ARBITRARY, as raw image sensor buffers require substantial
-     * extra metadata to define.
+     * When used with ANativeWindow, the mapping of the dataSpace field to
+     * buffer contents for RAW16 is as follows:
+     *
+     *  dataSpace value               | Buffer contents
+     * -------------------------------+-----------------------------------------
+     *  HAL_DATASPACE_ARBITRARY       | Raw image sensor data, layout is as
+     *                                | defined above.
+     *  HAL_DATASPACE_DEPTH           | Unprocessed implementation-dependent raw
+     *                                | depth measurements, opaque with 16 bit
+     *                                | samples.
+     *  Other                         | Unsupported
      */
     RAW16 = 0x20,
 
