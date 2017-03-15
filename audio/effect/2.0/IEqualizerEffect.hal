@@ -29,34 +29,36 @@ interface IEqualizerEffect extends IEffect {
      * Returns the minimum and maximum band levels supported.
      */
     getLevelRange()
-            generates (Result retval, uint16_t minLevel, uint16_t maxLevel);
+            generates (Result retval, int16_t minLevel, int16_t maxLevel);
 
     /*
      * Sets the gain for the given equalizer band.
      */
-    setBandLevel(uint16_t band, uint16_t level) generates (Result retval);
+    setBandLevel(uint16_t band, int16_t level) generates (Result retval);
 
     /*
      * Gets the gain for the given equalizer band.
      */
-    getBandLevel(uint16_t band) generates (Result retval, uint16_t level);
+    getBandLevel(uint16_t band) generates (Result retval, int16_t level);
 
     /*
-     * Gets the center frequency of the given band.
+     * Gets the center frequency of the given band, in milliHertz.
      */
     getBandCenterFrequency(uint16_t band)
-            generates (Result retval, uint32_t centerFreq);
+            generates (Result retval, uint32_t centerFreqmHz);
 
     /*
-     * Gets the frequency range of the given frequency band.
+     * Gets the frequency range of the given frequency band, in milliHertz.
      */
     getBandFrequencyRange(uint16_t band)
-            generates (Result retval, uint32_t minFreqHz, uint32_t maxFreqHz);
+            generates (Result retval, uint32_t minFreqmHz, uint32_t maxFreqmHz);
 
     /*
-     * Gets the band that has the most effect on the given frequency.
+     * Gets the band that has the most effect on the given frequency
+     * in milliHertz.
      */
-    getBandForFrequency(uint32_t freq) generates (Result retval, uint16_t band);
+    getBandForFrequency(uint32_t freqmHz)
+            generates (Result retval, uint16_t band);
 
     /*
      * Gets the names of all presets the equalizer supports.
@@ -76,7 +78,7 @@ interface IEqualizerEffect extends IEffect {
 
     struct AllProperties {
         uint16_t curPreset;
-        vec<uint16_t> bandLevels;
+        vec<int16_t> bandLevels;
     };
 
     /*

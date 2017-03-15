@@ -114,7 +114,7 @@ struct EqualizerEffect : public IEqualizerEffect {
     // Methods from ::android::hardware::audio::effect::V2_0::IEqualizerEffect follow.
     Return<void> getNumBands(getNumBands_cb _hidl_cb)  override;
     Return<void> getLevelRange(getLevelRange_cb _hidl_cb)  override;
-    Return<Result> setBandLevel(uint16_t band, uint16_t level)  override;
+    Return<Result> setBandLevel(uint16_t band, int16_t level)  override;
     Return<void> getBandLevel(uint16_t band, getBandLevel_cb _hidl_cb)  override;
     Return<void> getBandCenterFrequency(
             uint16_t band, getBandCenterFrequency_cb _hidl_cb)  override;
@@ -132,7 +132,7 @@ struct EqualizerEffect : public IEqualizerEffect {
     virtual ~EqualizerEffect();
 
     void propertiesFromHal(
-            t_equalizer_settings& halProperties,
+            const t_equalizer_settings& halProperties,
             IEqualizerEffect::AllProperties* properties);
     std::vector<uint8_t> propertiesToHal(
             const IEqualizerEffect::AllProperties& properties,

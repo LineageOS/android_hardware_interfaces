@@ -188,6 +188,8 @@ void Effect::effectAuxChannelsConfigToHal(
 // static
 void Effect::effectBufferConfigFromHal(
         const buffer_config_t& halConfig, EffectBufferConfig* config) {
+    config->buffer.id = 0;
+    config->buffer.frameCount = 0;
     config->samplingRateHz = halConfig.samplingRate;
     config->channels = AudioChannelMask(halConfig.channels);
     config->format = AudioFormat(halConfig.format);
@@ -282,7 +284,7 @@ Result Effect::analyzeStatus(
 
 void Effect::getConfigImpl(int commandCode, const char* commandName, GetConfigCallback cb) {
     uint32_t halResultSize = sizeof(effect_config_t);
-    effect_config_t halConfig;
+    effect_config_t halConfig{};
     status_t status = (*mHandle)->command(
             mHandle, commandCode, 0, NULL, &halResultSize, &halConfig);
     EffectConfig config;
@@ -309,15 +311,16 @@ Result Effect::getCurrentConfigImpl(
 Result Effect::getParameterImpl(
         uint32_t paramSize,
         const void* paramData,
-        uint32_t valueSize,
+        uint32_t requestValueSize,
+        uint32_t replyValueSize,
         GetParameterSuccessCallback onSuccess) {
     // As it is unknown what method HAL uses for copying the provided parameter data,
     // it is safer to make sure that input and output buffers do not overlap.
     std::vector<uint8_t> halCmdBuffer =
-            parameterToHal(paramSize, paramData, valueSize, nullptr);
+            parameterToHal(paramSize, paramData, requestValueSize, nullptr);
     const void *valueData = nullptr;
     std::vector<uint8_t> halParamBuffer =
-            parameterToHal(paramSize, paramData, valueSize, &valueData);
+            parameterToHal(paramSize, paramData, replyValueSize, &valueData);
     uint32_t halParamBufferSize = halParamBuffer.size();
 
     return sendCommandReturningStatusAndData(
