@@ -630,7 +630,6 @@ interface IRadio {
 
     /*
      * Scans for available networks
-     * This request must not respond until the new operator is selected and registered.
      *
      * @param serial Serial number of request.
      *

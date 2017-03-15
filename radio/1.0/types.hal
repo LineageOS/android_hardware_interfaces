@@ -86,9 +86,11 @@ enum RadioError : int32_t {
     SS_MODIFIED_TO_SS = 27,               // SS request modified to different SS request
     LCE_NOT_SUPPORTED = 36,               // LCE service not supported(36 in RILConstants.java)
     NO_MEMORY = 37,                       // Not sufficient memory to process the request
-    INTERNAL_ERR = 38,                    // Hit unexpected vendor internal error scenario
+    INTERNAL_ERR = 38,                    // Modem hit unexpected error scenario while handling
+                                          // this request
     SYSTEM_ERR = 39,                      // Hit platform or system error
-    MODEM_ERR = 40,                       // Hit unexpected modem error
+    MODEM_ERR = 40,                       // Vendor RIL got unexpected or incorrect response
+                                          // from modem for this request
     INVALID_STATE = 41,                   // Unexpected request for the current state
     NO_RESOURCES = 42,                    // Not sufficient resource to process the request
     SIM_ERR = 43,                         // Received error from SIM card
