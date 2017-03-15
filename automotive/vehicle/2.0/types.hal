@@ -191,7 +191,7 @@ enum VehicleProperty: int32_t {
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE|VehiclePropertyChangeMode:CONTINUOUS
      * @access VehiclePropertyAccess:READ
-     * @unit VehicleUnit:CELCIUS
+     * @unit VehicleUnit:CELSIUS
      */
     ENGINE_COOLANT_TEMP = (
         0x0301
@@ -204,7 +204,7 @@ enum VehicleProperty: int32_t {
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE|VehiclePropertyChangeMode:CONTINUOUS
      * @access VehiclePropertyAccess:READ
-     * @unit VehicleUnit:CELCIUS
+     * @unit VehicleUnit:CELSIUS
      */
     ENGINE_OIL_TEMP = (
         0x0304
@@ -645,7 +645,7 @@ enum VehicleProperty: int32_t {
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE|VehiclePropertyChangeMode:CONTINUOUS
      * @access VehiclePropertyAccess:READ
-     * @unit VehicleUnit:CELCIUS
+     * @unit VehicleUnit:CELSIUS
      */
     ENV_OUTSIDE_TEMPERATURE = (
         0x0703
@@ -658,7 +658,7 @@ enum VehicleProperty: int32_t {
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE|VehiclePropertyChangeMode:CONTINUOUS
      * @access VehiclePropertyAccess:READ
-     * @unit VehicleUnit:CELCIUS
+     * @unit VehicleUnit:CELSIUS
      */
     ENV_CABIN_TEMPERATURE = (
         0x0704
