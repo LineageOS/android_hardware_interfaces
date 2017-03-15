@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,29 @@
  * limitations under the License.
  */
 
-package android.hardware.media.omx@1.0;
+package android.hardware.graphics.bufferqueue@1.0;
+
+import android.hardware.media@1.0::Fence;
+import android.hardware.media@1.0::AnwBuffer;
+import android.hardware.media@1.0::Rect;
+import android.hardware.media@1.0::Region;
 
 import android.hardware.graphics.common@1.0::Dataspace;
 import android.hardware.graphics.common@1.0::PixelFormat;
 
-import android.hardware.media@1.0::types;
-import IOmxProducerListener;
+import IProducerListener;
 
 /**
  * Ref: frameworks/native/include/gui/IGraphicBufferProducer.h:
  *      IGraphicBufferProducer
  * This is a wrapper/wrapped HAL interface for the actual binder interface.
  */
-interface IOmxBufferProducer {
+interface IGraphicBufferProducer {
+
+    /**
+     * Type for return values of functions in IGraphicBufferProducer.
+     */
+    typedef int32_t Status;
 
     /**
      * Ref: frameworks/native/include/ui/FenceTime.h: FenceTime::Snapshot
@@ -142,7 +151,7 @@ interface IOmxBufferProducer {
 
     /**
      * requestBuffer requests a new buffer for the given index. The server (i.e.
-     * the IOmxBufferProducer implementation) assigns the newly created
+     * the IProducerListener implementation) assigns the newly created
      * buffer to the given slot index, and the client is expected to mirror the
      * slot->buffer mapping so that it's not necessary to transfer an
      * AnwBuffer for every dequeue operation.
@@ -466,12 +475,12 @@ interface IOmxBufferProducer {
         );
 
     /**
-     * connect attempts to connect a client API to the IOmxBufferProducer.
-     * This must be called before any other IOmxBufferProducer methods are
+     * connect attempts to connect a client API to the IGraphicBufferProducer.
+     * This must be called before any other IGraphicBufferProducer methods are
      * called except for getAllocator. A consumer must be already connected.
      *
      * This method will fail if the connect was previously called on the
-     * IOmxBufferProducer and no corresponding disconnect call was made.
+     * IGraphicBufferProducer and no corresponding disconnect call was made.
      *
      * The listener is an optional binder callback object that can be used if
      * the producer wants to be notified when the consumer releases a buffer
@@ -506,7 +515,7 @@ interface IOmxBufferProducer {
      * should be treated as opaque fatal unrecoverable errors.
      */
     connect(
-            IOmxProducerListener listener,
+            IProducerListener listener,
             int32_t api,
             bool producerControlledByApp
         ) generates (
@@ -516,8 +525,8 @@ interface IOmxBufferProducer {
 
     /**
      * disconnect attempts to disconnect a client API from the
-     * IOmxBufferProducer.  Calling this method will cause any subsequent
-     * calls to other IOmxBufferProducer methods to fail except for
+     * IGraphicBufferProducer.  Calling this method will cause any subsequent
+     * calls to other IGraphicBufferProducer methods to fail except for
      * getAllocator and connect.  Successfully calling connect after this will
      * allow the other methods to succeed again.
      *
@@ -526,7 +535,7 @@ interface IOmxBufferProducer {
      * Alternatively if mode is AllLocal, then the API value is ignored, and any API
      * connected from the same PID calling disconnect will be disconnected.
      *
-     * Disconnecting from an abandoned IOmxBufferProducer is legal and
+     * Disconnecting from an abandoned IGraphicBufferProducer is legal and
      * is considered a no-op.
      *
      * Return of a value other than NO_ERROR means an error has occurred:
@@ -543,7 +552,7 @@ interface IOmxBufferProducer {
         );
 
     /**
-     * Attaches a sideband buffer stream to the IOmxBufferProducer.
+     * Attaches a sideband buffer stream to the IGraphicBufferProducer.
      *
      * A sideband stream is a device-specific mechanism for passing buffers
      * from the producer to the consumer without using dequeueBuffer/

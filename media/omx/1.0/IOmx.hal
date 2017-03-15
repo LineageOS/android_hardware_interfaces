@@ -16,11 +16,11 @@
 
 package android.hardware.media.omx@1.0;
 
+import android.hardware.graphics.bufferqueue@1.0::IGraphicBufferProducer;
 import android.hardware.media@1.0::types;
 
 import IOmxNode;
 import IOmxObserver;
-import IOmxBufferProducer;
 import IGraphicBufferSource;
 
 /**
@@ -76,7 +76,7 @@ interface IOmx {
     createInputSurface(
         ) generates (
             Status status,
-            IOmxBufferProducer producer,
+            IGraphicBufferProducer producer,
             IGraphicBufferSource source
         );
 };
