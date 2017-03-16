@@ -32,6 +32,7 @@ using ::android::hardware::radio::V1_0::CardStatus;
 using ::android::hardware::radio::V1_0::CardState;
 using ::android::hardware::radio::V1_0::Call;
 using ::android::hardware::radio::V1_0::CallForwardInfo;
+using ::android::hardware::radio::V1_0::CarrierMatchType;
 using ::android::hardware::radio::V1_0::CarrierRestrictions;
 using ::android::hardware::radio::V1_0::CdmaRoamingType;
 using ::android::hardware::radio::V1_0::CdmaBroadcastSmsConfigInfo;
@@ -39,6 +40,7 @@ using ::android::hardware::radio::V1_0::CdmaSubscriptionSource;
 using ::android::hardware::radio::V1_0::CellInfo;
 using ::android::hardware::radio::V1_0::ClipStatus;
 using ::android::hardware::radio::V1_0::DataRegStateResult;
+using ::android::hardware::radio::V1_0::DeviceStateType;
 using ::android::hardware::radio::V1_0::Dial;
 using ::android::hardware::radio::V1_0::GsmBroadcastSmsConfigInfo;
 using ::android::hardware::radio::V1_0::HardwareConfig;
@@ -54,6 +56,8 @@ using ::android::hardware::radio::V1_0::LastCallFailCauseInfo;
 using ::android::hardware::radio::V1_0::LceDataInfo;
 using ::android::hardware::radio::V1_0::LceStatusInfo;
 using ::android::hardware::radio::V1_0::NeighboringCell;
+using ::android::hardware::radio::V1_0::NvItem;
+using ::android::hardware::radio::V1_0::NvWriteItem;
 using ::android::hardware::radio::V1_0::OperatorInfo;
 using ::android::hardware::radio::V1_0::PreferredNetworkType;
 using ::android::hardware::radio::V1_0::RadioBandMode;
@@ -61,6 +65,8 @@ using ::android::hardware::radio::V1_0::RadioCapability;
 using ::android::hardware::radio::V1_0::RadioResponseType;
 using ::android::hardware::radio::V1_0::RadioTechnology;
 using ::android::hardware::radio::V1_0::RadioTechnologyFamily;
+using ::android::hardware::radio::V1_0::ResetNvType;
+using ::android::hardware::radio::V1_0::SelectUiccSub;
 using ::android::hardware::radio::V1_0::SendSmsResult;
 using ::android::hardware::radio::V1_0::SetupDataCallResult;
 using ::android::hardware::radio::V1_0::SignalStrength;
@@ -69,11 +75,12 @@ using ::android::hardware::radio::V1_0::TtyMode;
 using ::android::hardware::radio::V1_0::VoiceRegStateResult;
 
 using ::android::hardware::hidl_string;
+using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::sp;
 
-#define TIMEOUT_PERIOD 20
+#define TIMEOUT_PERIOD 40
 
 class RadioHidlTest;
 extern CardStatus cardStatus;
