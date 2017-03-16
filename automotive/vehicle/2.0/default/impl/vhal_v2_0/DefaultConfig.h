@@ -28,9 +28,9 @@ namespace V2_0 {
 
 namespace impl {
 
-const VehicleProperty kHvacPowerProperties[] = {
-    VehicleProperty::HVAC_FAN_SPEED,
-    VehicleProperty::HVAC_FAN_DIRECTION,
+const int32_t kHvacPowerProperties[] = {
+    toInt(VehicleProperty::HVAC_FAN_SPEED),
+    toInt(VehicleProperty::HVAC_FAN_DIRECTION),
 };
 
 const VehiclePropConfig kVehicleProperties[] = {
