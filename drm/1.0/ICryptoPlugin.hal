@@ -99,7 +99,8 @@ interface ICryptoPlugin {
      * ERROR_DRM_RESOURCE_BUSY if the resources required to perform the
      * decryption are not available, ERROR_DRM_INSUFFICIENT_OUTPUT_PROTECTION
      * if required output protections are not active,
-     * ERROR_DRM_SESSION_NOT_OPENED if the decrypt session is not opened, or
+     * ERROR_DRM_SESSION_NOT_OPENED if the decrypt session is not opened,
+     * ERROR_DRM_DECRYPT if the decrypt operation fails, and
      * ERROR_DRM_CANNOT_HANDLE in other failure cases.
      * @return bytesWritten the number of bytes output from the decryption
      * @return detailedError if the error is a vendor-specific error, the

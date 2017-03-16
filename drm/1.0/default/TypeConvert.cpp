@@ -59,6 +59,9 @@ Status toStatus(status_t legacyStatus) {
     case android::ERROR_DRM_DEVICE_REVOKED:
         status = Status::ERROR_DRM_DEVICE_REVOKED;
         break;
+    case android::ERROR_DRM_DECRYPT:
+        status = Status::ERROR_DRM_DECRYPT;
+        break;
     default:
         ALOGW("Unable to convert legacy status: %d, defaulting to UNKNOWN",
             legacyStatus);

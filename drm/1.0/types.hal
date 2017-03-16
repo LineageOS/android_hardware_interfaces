@@ -90,6 +90,12 @@ enum Status : uint32_t {
     ERROR_DRM_DEVICE_REVOKED,
 
     /**
+     * The DRM Plugin must return ERROR_DRM_DECRYPT if the CryptoPlugin
+     * decrypt operation fails.
+     */
+    ERROR_DRM_DECRYPT,
+
+    /**
      * ERROR_DRM_UNKNOWN must be returned when a fatal failure occurs and no
      * other defined error is appropriate.
      */
