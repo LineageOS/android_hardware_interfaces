@@ -79,8 +79,17 @@ Return<void> SurfaceFlingerConfigs::presentTimeOffsetFromVSyncNs(presentTimeOffs
       return Void();
 }
 
-// Methods from ::android::hidl::base::V1_0::IBase follow.
+Return<void> SurfaceFlingerConfigs::useHwcForRGBtoYUV(useHwcForRGBtoYUV_cb _hidl_cb) {
+    bool value = false;
+#ifdef FORCE_HWC_COPY_FOR_VIRTUAL_DISPLAYS
+    value = true;
+#endif
+    _hidl_cb({true, value});
+    LOG(INFO) << "SurfaceFlinger forceHwcForRGBtoYUV: " << value;
+    return Void();
+}
 
+// Methods from ::android::hidl::base::V1_0::IBase follow.
 ISurfaceFlingerConfigs* HIDL_FETCH_ISurfaceFlingerConfigs(const char* /* name */) {
     return new SurfaceFlingerConfigs();
 }

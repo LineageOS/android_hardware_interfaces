@@ -31,6 +31,7 @@ struct SurfaceFlingerConfigs : public ISurfaceFlingerConfigs {
     Return<void> hasWideColorDisplay(hasWideColorDisplay_cb _hidl_cb) override;
     Return<void> hasHDRDisplay(hasHDRDisplay_cb _hidl_cb) override;
     Return<void> presentTimeOffsetFromVSyncNs(presentTimeOffsetFromVSyncNs_cb _hidl_cb) override;
+    Return<void> useHwcForRGBtoYUV(useHwcForRGBtoYUV_cb _hidl_cb) override;
 
     // Methods from ::android::hidl::base::V1_0::IBase follow.
 
