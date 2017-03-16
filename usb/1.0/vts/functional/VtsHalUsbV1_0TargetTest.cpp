@@ -47,8 +47,6 @@ using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::sp;
 
-#define USB_SERVICE_NAME "usb_hal"
-
 // The main test class for the USB hidl HAL
 class UsbHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  public:
@@ -97,7 +95,7 @@ class UsbHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
   virtual void SetUp() override {
     ALOGI("Setup");
-    usb = ::testing::VtsHalHidlTargetTestBase::getService<IUsb>(USB_SERVICE_NAME);
+    usb = ::testing::VtsHalHidlTargetTestBase::getService<IUsb>();
     ASSERT_NE(usb, nullptr);
 
     usb_cb_2 = new UsbCallback(*this, 2);
