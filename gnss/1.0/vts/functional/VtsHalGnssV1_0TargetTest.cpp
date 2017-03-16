@@ -33,17 +33,16 @@ using android::hardware::gnss::V1_0::IGnss;
 using android::hardware::gnss::V1_0::IGnssCallback;
 using android::sp;
 
-#define TIMEOUT_SECONDS 5  // for basic commands/responses
+#define TIMEOUT_SEC 3  // for basic commands/responses
 
 // The main test class for GNSS HAL.
 class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
  public:
   virtual void SetUp() override {
-    /* TODO(b/35678469): Setup the init.rc for VTS such that there's a
-     * single caller
-     * to the GNSS HAL - as part of confirming that the info & capabilities
-     * callbacks trigger.
-     */
+    // Clean between tests
+    capabilities_called_count_ = 0;
+    location_called_count_ = 0;
+    info_called_count_ = 0;
 
     gnss_hal_ = ::testing::VtsHalHidlTargetTestBase::getService<IGnss>();
     ASSERT_NE(gnss_hal_, nullptr);
@@ -53,15 +52,35 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
 
     auto result = gnss_hal_->setCallback(gnss_cb_);
     if (!result.isOk()) {
-      ALOGE("result of failed callback set %s", result.description().c_str());
+      ALOGE("result of failed setCallback %s", result.description().c_str());
     }
 
     ASSERT_TRUE(result.isOk());
     ASSERT_TRUE(result);
 
-    /* TODO(b/35678469): Implement the capabilities & info (year) checks &
-     * value store here.
+    /*
+     * At least one callback should trigger - it may be capabilites, or
+     * system info first, so wait again if capabilities not received.
      */
+    EXPECT_EQ(std::cv_status::no_timeout, wait(TIMEOUT_SEC));
+    if (capabilities_called_count_ == 0) {
+      EXPECT_EQ(std::cv_status::no_timeout, wait(TIMEOUT_SEC));
+    }
+
+    /*
+     * Generally should be 1 capabilites callback -
+     * or possibly 2 in some recovery cases (default cached & refreshed)
+     */
+    EXPECT_GE(capabilities_called_count_, 1);
+    EXPECT_LE(capabilities_called_count_, 2);
+
+    /*
+     * Clear notify/waiting counter, allowing up till the timeout after
+     * the last reply for final startup messages to arrive (esp. system
+     * info.)
+     */
+    while (wait(TIMEOUT_SEC) == std::cv_status::no_timeout) {
+    }
   }
 
   virtual void TearDown() override {
@@ -93,9 +112,9 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
 
   /* Callback class for data & Event. */
   class GnssCallback : public IGnssCallback {
+   public:
     GnssHalTest& parent_;
 
-   public:
     GnssCallback(GnssHalTest& parent) : parent_(parent){};
 
     virtual ~GnssCallback() = default;
@@ -171,16 +190,33 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
  * Sets up the callback, awaits the capabilities, and calls cleanup
  *
  * Since this is just the basic operation of SetUp() and TearDown(),
- * the function definition is intentionally kept empty
+ * the function definition is intentionally empty
  */
 TEST_F(GnssHalTest, SetCallbackCapabilitiesCleanup) {}
 
-void CheckLocation(GnssLocation& location) {
+/*
+ * CheckLocation:
+ * Helper function to vet Location fields
+ */
+
+void CheckLocation(GnssLocation& location, bool checkAccuracies) {
   EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_LAT_LONG);
   EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_ALTITUDE);
   EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_SPEED);
   EXPECT_TRUE(location.gnssLocationFlags &
               GnssLocationFlags::HAS_HORIZONTAL_ACCURACY);
+  // New uncertainties available in O must be provided,
+  // at least when paired with modern hardware (2017+)
+  if (checkAccuracies) {
+    EXPECT_TRUE(location.gnssLocationFlags &
+                GnssLocationFlags::HAS_VERTICAL_ACCURACY);
+    EXPECT_TRUE(location.gnssLocationFlags &
+                GnssLocationFlags::HAS_SPEED_ACCURACY);
+    if (location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING) {
+      EXPECT_TRUE(location.gnssLocationFlags &
+                  GnssLocationFlags::HAS_BEARING_ACCURACY);
+    }
+  }
   EXPECT_GE(location.latitudeDegrees, -90.0);
   EXPECT_LE(location.latitudeDegrees, 90.0);
   EXPECT_GE(location.longitudeDegrees, -180.0);
@@ -190,12 +226,17 @@ void CheckLocation(GnssLocation& location) {
   EXPECT_GE(location.speedMetersPerSec, 0.0);
   EXPECT_LE(location.speedMetersPerSec, 5.0);  // VTS tests are stationary.
 
+  // Non-zero speeds must be reported with an associated bearing
+  if (location.speedMetersPerSec > 0.0) {
+    EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING);
+  }
+
   /*
    * Tolerating some especially high values for accuracy estimate, in case of
-   * first fix with especially poor geoemtry (happens occasionally)
+   * first fix with especially poor geometry (happens occasionally)
    */
   EXPECT_GT(location.horizontalAccuracyMeters, 0.0);
-  EXPECT_LE(location.horizontalAccuracyMeters, 200.0);
+  EXPECT_LE(location.horizontalAccuracyMeters, 250.0);
 
   /*
    * Some devices may define bearing as -180 to +180, others as 0 to 360.
@@ -220,11 +261,6 @@ void CheckLocation(GnssLocation& location) {
 
   // Check timestamp > 1.48e12 (47 years in msec - 1970->2017+)
   EXPECT_GT(location.timestamp, 1.48e12);
-
-  /* TODO(b/35678469): Check if the hardware year is 2017+, and if so,
-   * that bearing, plus vertical, speed & bearing accuracy are present.
-   * And allow bearing to be not present, only if associated with a speed of 0.0
-   */
 }
 
 /*
@@ -241,6 +277,9 @@ TEST_F(GnssHalTest, GetLocation) {
 #define LOCATION_TIMEOUT_SUBSEQUENT_SEC 3
 #define LOCATIONS_TO_CHECK 5
 
+  bool checkMoreAccuracies =
+      (info_called_count_ > 0 && last_info_.yearOfHw >= 2017);
+
   auto result = gnss_hal_->setPositionMode(
       IGnss::GnssPositionMode::MS_BASED,
       IGnss::GnssPositionRecurrence::RECURRENCE_PERIODIC, MIN_INTERVAL_MSEC,
@@ -254,15 +293,18 @@ TEST_F(GnssHalTest, GetLocation) {
   ASSERT_TRUE(result.isOk());
   ASSERT_TRUE(result);
 
-  EXPECT_EQ(std::cv_status::no_timeout, wait(LOCATION_TIMEOUT_FIRST_SEC));
-  EXPECT_EQ(location_called_count_, 1);
-  CheckLocation(last_location_);
+  // GPS signals initially optional for this test, so don't expect no timeout
+  // yet
+  wait(LOCATION_TIMEOUT_FIRST_SEC);
+  if (location_called_count_ > 0) {
+    CheckLocation(last_location_, checkMoreAccuracies);
+  }
 
   for (int i = 1; i < LOCATIONS_TO_CHECK; i++) {
-    EXPECT_EQ(std::cv_status::no_timeout,
-              wait(LOCATION_TIMEOUT_SUBSEQUENT_SEC));
-    EXPECT_EQ(location_called_count_, i + 1);
-    CheckLocation(last_location_);
+    wait(LOCATION_TIMEOUT_SUBSEQUENT_SEC);
+    if (location_called_count_ > 0) {
+      CheckLocation(last_location_, checkMoreAccuracies);
+    }
   }
 
   result = gnss_hal_->stop();
