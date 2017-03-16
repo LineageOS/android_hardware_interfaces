@@ -18,13 +18,21 @@
 #define ANDROID_HARDWARE_GRAPHICS_COMPOSER_V2_1_HWC_H
 
 #include <mutex>
+#include <memory>
 #include <unordered_set>
 #include <vector>
 
 #include <android/hardware/graphics/composer/2.1/IComposer.h>
+#define HWC2_INCLUDE_STRINGIFICATION
+#define HWC2_USE_CPP11
 #include <hardware/hwcomposer2.h>
-
+#undef HWC2_INCLUDE_STRINGIFICATION
+#undef HWC2_USE_CPP11
 #include "ComposerBase.h"
+
+namespace android {
+    class HWC2On1Adapter;
+}
 
 namespace android {
 namespace hardware {
@@ -204,6 +212,10 @@ private:
 
     std::mutex mClientMutex;
     wp<ComposerClient> mClient;
+
+    // If the HWC implementation version is < 2.0, use an adapter to interface
+    // between HWC 2.0 <-> HWC 1.X.
+    std::unique_ptr<HWC2On1Adapter> mAdapter;
 };
 
 extern "C" IComposer* HIDL_FETCH_IComposer(const char* name);
