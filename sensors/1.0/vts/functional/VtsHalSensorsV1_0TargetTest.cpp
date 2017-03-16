@@ -20,6 +20,7 @@
 #include <android/hardware/sensors/1.0/types.h>
 #include <android/log.h>
 #include <cutils/ashmem.h>
+#include <utils/SystemClock.h>
 #include <VtsHalHidlTargetTestBase.h>
 #include <hardware/sensors.h>       // for sensor type strings
 
@@ -42,6 +43,7 @@ using ::android::sp;
 using namespace ::android::hardware::sensors::V1_0;
 
 // Test environment for sensors
+class SensorsHidlTest;
 class SensorsHidlEnvironment : public ::testing::Environment {
  public:
   // get the test environment singleton
@@ -49,9 +51,6 @@ class SensorsHidlEnvironment : public ::testing::Environment {
     static SensorsHidlEnvironment* instance = new SensorsHidlEnvironment;
     return instance;
   }
-
-  // sensors hidl service
-  sp<ISensors> sensors;
 
   virtual void SetUp();
   virtual void TearDown();
@@ -64,10 +63,15 @@ class SensorsHidlEnvironment : public ::testing::Environment {
   void setCollection(bool enable);
 
  private:
+  friend SensorsHidlTest;
+  // sensors hidl service
+  sp<ISensors> sensors;
+
   SensorsHidlEnvironment() {}
 
   void addEvent(const Event& ev);
   void startPollingThread();
+  void resetHal();
   static void pollingThread(SensorsHidlEnvironment* env, std::shared_ptr<bool> stop);
 
   bool collectionEnabled;
@@ -80,9 +84,9 @@ class SensorsHidlEnvironment : public ::testing::Environment {
 };
 
 void SensorsHidlEnvironment::SetUp() {
-  sensors = ::testing::VtsHalHidlTargetTestBase::getService<ISensors>();
-  ALOGI_IF(sensors, "sensors is not nullptr, %p", sensors.get());
-  ASSERT_NE(sensors, nullptr);
+  resetHal();
+
+  ASSERT_NE(sensors, nullptr) << "sensors is nullptr, cannot get hidl service";
 
   collectionEnabled = false;
   startPollingThread();
@@ -93,12 +97,75 @@ void SensorsHidlEnvironment::SetUp() {
 }
 
 void SensorsHidlEnvironment::TearDown() {
-  ALOGI("TearDown SensorsHidlEnvironement");
-
   if (stopThread) {
     *stopThread = true;
   }
   pollThread.detach();
+}
+
+void SensorsHidlEnvironment::resetHal() {
+  // wait upto 100ms * 10 = 1s for hidl service.
+  constexpr auto RETRY_DELAY = std::chrono::milliseconds(100);
+
+  std::string step;
+  bool succeed = false;
+  for (size_t retry = 10; retry > 0; --retry) {
+    // this do ... while is for easy error handling
+    do {
+      step = "getService()";
+      sensors = ISensors::getService();
+      if (sensors == nullptr) {
+        break;
+      }
+
+      step = "poll() check";
+      // Poke ISensor service. If it has lingering connection from previous generation of
+      // system server, it will kill itself. There is no intention to handle the poll result,
+      // which will be done since the size is 0.
+      if(!sensors->poll(0, [](auto, const auto &, const auto &) {}).isOk()) {
+        break;
+      }
+
+      step = "getSensorList";
+      std::vector<SensorInfo> sensorList;
+      if (!sensors->getSensorsList(
+          [&] (const ::android::hardware::hidl_vec<SensorInfo> &list) {
+            sensorList.reserve(list.size());
+            for (size_t i = 0; i < list.size(); ++i) {
+              sensorList.push_back(list[i]);
+            }
+          }).isOk()) {
+        break;
+      }
+
+      // stop each sensor individually
+      step = "stop each sensor";
+      bool ok = true;
+      for (const auto &i : sensorList) {
+        if (!sensors->activate(i.sensorHandle, false).isOk()) {
+          ok = false;
+          break;
+        }
+      }
+      if (!ok) {
+        break;
+      }
+
+      // mark it done
+      step = "done";
+      succeed = true;
+    } while(0);
+
+    if (succeed) {
+      return;
+    }
+
+    // Delay 100ms before retry, hidl service is expected to come up in short time after crash.
+    ALOGI("%s unsuccessful, try again soon (remaining retry %zu).", step.c_str(), retry - 1);
+    std::this_thread::sleep_for(RETRY_DELAY);
+  }
+
+  sensors = nullptr;
 }
 
 void SensorsHidlEnvironment::catEvents(std::vector<Event>* output) {
@@ -257,6 +324,10 @@ SensorsTestSharedMemory::SensorsTestSharedMemory(SharedMemType type, size_t size
       }
       break;
     }
+    case SharedMemType::GRALLOC: {
+
+      break;
+    }
     default:
       break;
   }
@@ -308,6 +379,58 @@ SensorsTestSharedMemory* SensorsTestSharedMemory::create(SharedMemType type, siz
   return m;
 }
 
+class SensorEventsChecker {
+ public:
+  virtual bool check(const std::vector<Event> &events, std::string *out) const = 0;
+  virtual ~SensorEventsChecker() {}
+};
+
+class NullChecker : public SensorEventsChecker {
+ public:
+  virtual bool check(const std::vector<Event> &, std::string *) const {
+    return true;
+  }
+};
+
+class SensorEventPerEventChecker : public SensorEventsChecker {
+ public:
+  virtual bool checkEvent(const Event &event, std::string *out) const = 0;
+  virtual bool check(const std::vector<Event> &events, std::string *out) const {
+    for (const auto &e : events) {
+      if (!checkEvent(e, out)) {
+        return false;
+      }
+    }
+    return true;
+  }
+};
+
+class Vec3NormChecker : public SensorEventPerEventChecker {
+ public:
+  Vec3NormChecker(float min, float max) : mRange(min, max) {}
+  static Vec3NormChecker byNominal(float nominal, float allowedError) {
+    return Vec3NormChecker(nominal - allowedError, nominal + allowedError);
+  }
+
+  virtual bool checkEvent(const Event &event, std::string *out) const {
+    Vec3 v = event.u.vec3;
+    float norm = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+    if (norm < mRange.first || norm > mRange.second) {
+      if (out != nullptr) {
+        std::ostringstream ss;
+        ss << "Event @ " << event.timestamp << " (" << v.x << ", " << v.y << ", " << v.z << ")"
+           << " has norm " << norm << ", which is beyond range"
+           << " [" << mRange.first << ", " << mRange.second << "]";
+        *out = ss.str();
+      }
+      return false;
+    }
+    return true;
+  }
+ protected:
+  std::pair<float, float> mRange;
+};
+
 // The main test class for SENSORS HIDL HAL.
 class SensorsHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  public:
@@ -332,6 +455,7 @@ class SensorsHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
  protected:
   SensorInfo defaultSensorByType(SensorType type);
+  std::vector<SensorInfo> getSensorsList();
   std::vector<Event> collectEvents(useconds_t timeLimitUs, size_t nEventLimit,
         bool clearBeforeStart = true, bool changeCollection = true);
 
@@ -393,16 +517,36 @@ class SensorsHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     return (int32_t) type > 0;
   }
 
-  static bool typeMatchStringType(SensorType type, const hidl_string& stringType);
-  static bool typeMatchReportMode(SensorType type, SensorFlagBits reportMode);
-  static bool delayMatchReportMode(int32_t minDelay, int32_t maxDelay, SensorFlagBits reportMode);
+  void testStreamingOperation(SensorType type,
+                              std::chrono::nanoseconds samplingPeriod,
+                              std::chrono::seconds duration,
+                              const SensorEventsChecker &checker);
+  void testSamplingRateHotSwitchOperation(SensorType type);
+  void testBatchingOperation(SensorType type);
+  void testDirectReportOperation(
+      SensorType type, SharedMemType memType, RateLevel rate, const SensorEventsChecker &checker);
+
+  static void assertTypeMatchStringType(SensorType type, const hidl_string& stringType);
+  static void assertTypeMatchReportMode(SensorType type, SensorFlagBits reportMode);
+  static void assertDelayMatchReportMode(
+          int32_t minDelay, int32_t maxDelay, SensorFlagBits reportMode);
   static SensorFlagBits expectedReportModeForType(SensorType type);
+  static bool isDirectReportRateSupported(SensorInfo sensor, RateLevel rate);
+  static bool isDirectChannelTypeSupported(SensorInfo sensor, SharedMemType type);
+
+  // checkers
+  static const Vec3NormChecker sAccelNormChecker;
+  static const Vec3NormChecker sGyroNormChecker;
 
   // all sensors and direct channnels used
   std::unordered_set<int32_t> mSensorHandles;
   std::unordered_set<int32_t> mDirectChannelHandles;
 };
 
+const Vec3NormChecker SensorsHidlTest::sAccelNormChecker(
+        Vec3NormChecker::byNominal(GRAVITY_EARTH, 0.5f/*m/s^2*/));
+const Vec3NormChecker SensorsHidlTest::sGyroNormChecker(
+        Vec3NormChecker::byNominal(0.f, 0.1f/*rad/s*/));
 
 Return<Result> SensorsHidlTest::activate(int32_t sensorHandle, bool enabled) {
   // If activating a sensor, add the handle in a set so that when test fails it can be turned off.
@@ -433,7 +577,7 @@ Return<void> SensorsHidlTest::registerDirectChannel(
 std::vector<Event> SensorsHidlTest::collectEvents(useconds_t timeLimitUs, size_t nEventLimit,
       bool clearBeforeStart, bool changeCollection) {
   std::vector<Event> events;
-  constexpr useconds_t SLEEP_GRANULARITY = 100*1000; //gradularity 100 ms
+  constexpr useconds_t SLEEP_GRANULARITY = 100*1000; //granularity 100 ms
 
   ALOGI("collect max of %zu events for %d us, clearBeforeStart %d",
         nEventLimit, timeLimitUs, clearBeforeStart);
@@ -464,94 +608,93 @@ std::vector<Event> SensorsHidlTest::collectEvents(useconds_t timeLimitUs, size_t
   return events;
 }
 
-bool SensorsHidlTest::typeMatchStringType(SensorType type, const hidl_string& stringType) {
+void SensorsHidlTest::assertTypeMatchStringType(SensorType type, const hidl_string& stringType) {
 
   if (type >= SensorType::DEVICE_PRIVATE_BASE) {
-    return true;
+    return;
   }
 
-  bool res = true;
   switch (type) {
 #define CHECK_TYPE_STRING_FOR_SENSOR_TYPE(type) \
-    case SensorType::type: res = stringType == SENSOR_STRING_TYPE_ ## type;\
-      break;\
-
+    case SensorType::type: ASSERT_STREQ(SENSOR_STRING_TYPE_ ## type, stringType); break;
     CHECK_TYPE_STRING_FOR_SENSOR_TYPE(ACCELEROMETER);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(MAGNETIC_FIELD);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(ORIENTATION);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(GYROSCOPE);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(LIGHT);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(PRESSURE);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(TEMPERATURE);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(PROXIMITY);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(GRAVITY);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(LINEAR_ACCELERATION);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(ROTATION_VECTOR);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(RELATIVE_HUMIDITY);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(ACCELEROMETER_UNCALIBRATED);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(ADDITIONAL_INFO);
     CHECK_TYPE_STRING_FOR_SENSOR_TYPE(AMBIENT_TEMPERATURE);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(MAGNETIC_FIELD_UNCALIBRATED);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(DEVICE_ORIENTATION);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(DYNAMIC_SENSOR_META);
     CHECK_TYPE_STRING_FOR_SENSOR_TYPE(GAME_ROTATION_VECTOR);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(GYROSCOPE_UNCALIBRATED);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(SIGNIFICANT_MOTION);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(STEP_DETECTOR);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(STEP_COUNTER);
     CHECK_TYPE_STRING_FOR_SENSOR_TYPE(GEOMAGNETIC_ROTATION_VECTOR);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(GLANCE_GESTURE);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(GRAVITY);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(GYROSCOPE);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(GYROSCOPE_UNCALIBRATED);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(HEART_BEAT);
     CHECK_TYPE_STRING_FOR_SENSOR_TYPE(HEART_RATE);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(LIGHT);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(LINEAR_ACCELERATION);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(LOW_LATENCY_OFFBODY_DETECT);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(MAGNETIC_FIELD);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(MAGNETIC_FIELD_UNCALIBRATED);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(MOTION_DETECT);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(ORIENTATION);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(PICK_UP_GESTURE);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(POSE_6DOF);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(PRESSURE);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(PROXIMITY);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(RELATIVE_HUMIDITY);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(ROTATION_VECTOR);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(SIGNIFICANT_MOTION);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(STATIONARY_DETECT);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(STEP_COUNTER);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(STEP_DETECTOR);
+    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(TEMPERATURE);
     CHECK_TYPE_STRING_FOR_SENSOR_TYPE(TILT_DETECTOR);
     CHECK_TYPE_STRING_FOR_SENSOR_TYPE(WAKE_GESTURE);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(GLANCE_GESTURE);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(PICK_UP_GESTURE);
     CHECK_TYPE_STRING_FOR_SENSOR_TYPE(WRIST_TILT_GESTURE);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(DEVICE_ORIENTATION);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(POSE_6DOF);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(STATIONARY_DETECT);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(MOTION_DETECT);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(HEART_BEAT);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(DYNAMIC_SENSOR_META);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(ADDITIONAL_INFO);
-    CHECK_TYPE_STRING_FOR_SENSOR_TYPE(LOW_LATENCY_OFFBODY_DETECT);
     default:
-      ALOGW("Type %d is not checked, stringType = %s", (int)type, stringType.c_str());
+      FAIL() << "Type " << static_cast<int>(type) << " in android defined range is not checked, "
+             << "stringType = " << stringType;
 #undef CHECK_TYPE_STRING_FOR_SENSOR_TYPE
   }
-  return res;
 }
 
-bool SensorsHidlTest::typeMatchReportMode(SensorType type, SensorFlagBits reportMode) {
+void SensorsHidlTest::assertTypeMatchReportMode(SensorType type, SensorFlagBits reportMode) {
   if (type >= SensorType::DEVICE_PRIVATE_BASE) {
-    return true;
+    return;
   }
 
   SensorFlagBits expected = expectedReportModeForType(type);
 
-  return expected == (SensorFlagBits)-1 || expected == reportMode;
+  ASSERT_TRUE(expected == (SensorFlagBits) -1 || expected == reportMode)
+      << "reportMode=" << static_cast<int>(reportMode)
+      << "expected=" << static_cast<int>(expected);
 }
 
-bool SensorsHidlTest::delayMatchReportMode(
+void SensorsHidlTest::assertDelayMatchReportMode(
     int32_t minDelay, int32_t maxDelay, SensorFlagBits reportMode) {
-  bool res = true;
   switch(reportMode) {
     case SensorFlagBits::CONTINUOUS_MODE:
-      res = (minDelay > 0) && (maxDelay >= 0);
+      ASSERT_LT(0, minDelay);
+      ASSERT_LE(0, maxDelay);
       break;
     case SensorFlagBits::ON_CHANGE_MODE:
-      //TODO: current implementation does not satisfy minDelay == 0 on Proximity
-      res = (minDelay >= 0) && (maxDelay >= 0);
-      //res = (minDelay == 0) && (maxDelay >= 0);
+      ASSERT_LE(0, minDelay);
+      ASSERT_LE(0, maxDelay);
       break;
     case SensorFlagBits::ONE_SHOT_MODE:
-      res = (minDelay == -1) && (maxDelay == 0);
+      ASSERT_EQ(-1, minDelay);
+      ASSERT_EQ(0, maxDelay);
       break;
     case SensorFlagBits::SPECIAL_REPORTING_MODE:
-      res = (minDelay == 0) && (maxDelay == 0);
+      // do not enforce anything for special reporting mode
       break;
     default:
-      res = false;
+      FAIL() << "Report mode " << static_cast<int>(reportMode) << " not checked";
   }
-
-  return res;
 }
 
+// return -1 means no expectation for this type
 SensorFlagBits SensorsHidlTest::expectedReportModeForType(SensorType type) {
   switch (type) {
     case SensorType::ACCELEROMETER:
@@ -599,6 +742,24 @@ SensorFlagBits SensorsHidlTest::expectedReportModeForType(SensorType type) {
   }
 }
 
+bool SensorsHidlTest::isDirectReportRateSupported(SensorInfo sensor, RateLevel rate) {
+  unsigned int r =
+      static_cast<unsigned int>(sensor.flags & SensorFlagBits::MASK_DIRECT_REPORT)
+        >> static_cast<unsigned int>(SensorFlagShift::DIRECT_REPORT);
+  return r >= static_cast<unsigned int>(rate);
+}
+
+bool SensorsHidlTest::isDirectChannelTypeSupported(SensorInfo sensor, SharedMemType type) {
+  switch (type) {
+    case SharedMemType::ASHMEM:
+      return (sensor.flags & SensorFlagBits::DIRECT_CHANNEL_ASHMEM) != 0;
+    case SharedMemType::GRALLOC:
+      return (sensor.flags & SensorFlagBits::DIRECT_CHANNEL_GRALLOC) != 0;
+    default:
+      return false;
+  }
+}
+
 SensorInfo SensorsHidlTest::defaultSensorByType(SensorType type) {
   SensorInfo ret;
 
@@ -617,65 +778,152 @@ SensorInfo SensorsHidlTest::defaultSensorByType(SensorType type) {
   return ret;
 }
 
+std::vector<SensorInfo> SensorsHidlTest::getSensorsList() {
+  std::vector<SensorInfo> ret;
+
+  S()->getSensorsList(
+      [&] (const auto &list) {
+        const size_t count = list.size();
+        ret.reserve(list.size());
+        for (size_t i = 0; i < count; ++i) {
+          ret.push_back(list[i]);
+        }
+      });
+
+  return ret;
+}
+
 // Test if sensor list returned is valid
 TEST_F(SensorsHidlTest, SensorListValid) {
   S()->getSensorsList(
       [&] (const auto &list) {
         const size_t count = list.size();
         for (size_t i = 0; i < count; ++i) {
-          auto &s = list[i];
-          ALOGV("\t%zu: handle=%#08x type=%d name=%s",
-                i, s.sensorHandle, (int)s.type, s.name.c_str());
+          const auto &s = list[i];
+          SCOPED_TRACE(::testing::Message() << i << "/" << count << ": "
+                       << " handle=0x" << std::hex << std::setw(8) << std::setfill('0')
+                       << s.sensorHandle << std::dec
+                       << " type=" << static_cast<int>(s.type)
+                       << " name=" << s.name);
 
           // Test non-empty type string
-          ASSERT_FALSE(s.typeAsString.empty());
+          EXPECT_FALSE(s.typeAsString.empty());
 
           // Test defined type matches defined string type
-          ASSERT_TRUE(typeMatchStringType(s.type, s.typeAsString));
+          EXPECT_NO_FATAL_FAILURE(assertTypeMatchStringType(s.type, s.typeAsString));
 
           // Test if all sensor has name and vendor
-          ASSERT_FALSE(s.name.empty());
-          ASSERT_FALSE(s.vendor.empty());
+          EXPECT_FALSE(s.name.empty());
+          EXPECT_FALSE(s.vendor.empty());
 
           // Test power > 0, maxRange > 0
-          ASSERT_GE(s.power, 0);
-          ASSERT_GT(s.maxRange, 0);
+          EXPECT_LE(0, s.power);
+          EXPECT_LT(0, s.maxRange);
 
           // Info type, should have no sensor
-          ASSERT_FALSE(
+          EXPECT_FALSE(
               s.type == SensorType::ADDITIONAL_INFO
               || s.type == SensorType::META_DATA);
 
           // Test fifoMax >= fifoReserved
-          ALOGV("max reserve = %d, %d", s.fifoMaxEventCount, s.fifoReservedEventCount);
-          ASSERT_GE(s.fifoMaxEventCount, s.fifoReservedEventCount);
+          EXPECT_GE(s.fifoMaxEventCount, s.fifoReservedEventCount)
+              << "max=" << s.fifoMaxEventCount << " reserved=" << s.fifoReservedEventCount;
 
           // Test Reporting mode valid
-          ASSERT_TRUE(typeMatchReportMode(s.type, extractReportMode(s.flags)));
+          EXPECT_NO_FATAL_FAILURE(assertTypeMatchReportMode(s.type, extractReportMode(s.flags)));
 
           // Test min max are in the right order
-          ASSERT_LE(s.minDelay, s.maxDelay);
+          EXPECT_LE(s.minDelay, s.maxDelay);
           // Test min/max delay matches reporting mode
-          ASSERT_TRUE(delayMatchReportMode(s.minDelay, s.maxDelay, extractReportMode(s.flags)));
+          EXPECT_NO_FATAL_FAILURE(
+              assertDelayMatchReportMode(s.minDelay, s.maxDelay, extractReportMode(s.flags)));
         }
       });
 }
 
-// Test if sensor hal can do normal accelerometer streaming properly
-TEST_F(SensorsHidlTest, NormalAccelerometerStreamingOperation) {
+// Test if sensor list returned is valid
+TEST_F(SensorsHidlTest, SetOperationMode) {
+    std::vector<SensorInfo> sensorList = getSensorsList();
 
+    bool needOperationModeSupport =
+        std::any_of(sensorList.begin(), sensorList.end(),
+                    [] (const auto& s) {
+                      return (s.flags & SensorFlagBits::DATA_INJECTION) != 0;
+                    });
+    if (!needOperationModeSupport) {
+      return;
+    }
+
+    ASSERT_EQ(Result::OK, S()->setOperationMode(OperationMode::NORMAL));
+    ASSERT_EQ(Result::OK, S()->setOperationMode(OperationMode::DATA_INJECTION));
+    ASSERT_EQ(Result::OK, S()->setOperationMode(OperationMode::NORMAL));
+}
+
+// Test if sensor list returned is valid
+TEST_F(SensorsHidlTest, InjectSensorEventData) {
+    std::vector<SensorInfo> sensorList = getSensorsList();
+    std::vector<SensorInfo> sensorSupportInjection;
+
+    bool needOperationModeSupport =
+        std::any_of(sensorList.begin(), sensorList.end(),
+                    [&sensorSupportInjection] (const auto& s) {
+                      bool ret = (s.flags & SensorFlagBits::DATA_INJECTION) != 0;
+                      if (ret) {
+                        sensorSupportInjection.push_back(s);
+                      }
+                      return ret;
+                    });
+    if (!needOperationModeSupport) {
+      return;
+    }
+
+    ASSERT_EQ(Result::OK, S()->setOperationMode(OperationMode::NORMAL));
+    ASSERT_EQ(Result::OK, S()->setOperationMode(OperationMode::DATA_INJECTION));
+
+    for (const auto &s : sensorSupportInjection) {
+      switch (s.type) {
+        case SensorType::ACCELEROMETER:
+        case SensorType::GYROSCOPE:
+        case SensorType::MAGNETIC_FIELD: {
+          usleep(100000); // sleep 100ms
+
+          Event dummy;
+          dummy.timestamp = android::elapsedRealtimeNano();
+          dummy.sensorType = s.type;
+          dummy.sensorHandle = s.sensorHandle;
+          Vec3 v = {1, 2, 3, SensorStatus::ACCURACY_HIGH};
+          dummy.u.vec3 = v;
+
+          EXPECT_EQ(Result::OK, S()->injectSensorData(dummy));
+          break;
+        }
+        default:
+          break;
+      }
+    }
+    ASSERT_EQ(Result::OK, S()->setOperationMode(OperationMode::NORMAL));
+}
+
+void SensorsHidlTest::testStreamingOperation(SensorType type,
+                                             std::chrono::nanoseconds samplingPeriod,
+                                             std::chrono::seconds duration,
+                                             const SensorEventsChecker &checker) {
   std::vector<Event> events;
 
-  constexpr int64_t samplingPeriodInNs = 20ull*1000*1000; // 20ms
-  constexpr int64_t batchingPeriodInNs = 0; // no batching
-  constexpr useconds_t minTimeUs = 5*1000*1000;  // 5 s
-  constexpr size_t minNEvent = 100;  // at lease 100 events
-  constexpr SensorType type = SensorType::ACCELEROMETER;
+  const int64_t samplingPeriodInNs = samplingPeriod.count();
+  const int64_t batchingPeriodInNs = 0; // no batching
+  const useconds_t minTimeUs = std::chrono::microseconds(duration).count();
+  const size_t minNEvent = duration / samplingPeriod;
 
   SensorInfo sensor = defaultSensorByType(type);
 
   if (!isValidType(sensor.type)) {
     // no default sensor of this type
+    return;
+  }
+
+  if (std::chrono::microseconds(sensor.minDelay) > samplingPeriod) {
+    // rate not supported
     return;
   }
 
@@ -691,90 +939,110 @@ TEST_F(SensorsHidlTest, NormalAccelerometerStreamingOperation) {
   ASSERT_GT(events.size(), 0u);
 
   size_t nRealEvent = 0;
+  bool handleMismatchReported = false;
+  bool metaSensorTypeErrorReported = false;
   for (auto & e : events) {
     if (e.sensorType == type) {
-
-      ASSERT_EQ(e.sensorHandle, handle);
-
-      Vec3 acc = e.u.vec3;
-
-      double gravityNorm = std::sqrt(acc.x * acc.x + acc.y * acc.y + acc.z * acc.z);
-      ALOGV("Norm = %f", gravityNorm);
-
-      // assert this is earth gravity
-      ASSERT_TRUE(std::fabs(gravityNorm - GRAVITY_EARTH) < 1);
-
+      // avoid generating hundreds of error
+      if (!handleMismatchReported) {
+        EXPECT_EQ(e.sensorHandle, handle)
+            << (handleMismatchReported = true,
+                "Event of the same type must come from the sensor registered");
+      }
       ++ nRealEvent;
     } else {
-      ALOGI("Event type %d, handle %d", (int) e.sensorType, (int) e.sensorHandle);
-      // Only meta types are allowed besides the subscribed sensor
-      ASSERT_TRUE(isMetaSensorType(e.sensorType));
+      // avoid generating hundreds of error
+      if (!metaSensorTypeErrorReported) {
+        EXPECT_TRUE(isMetaSensorType(e.sensorType))
+            << (metaSensorTypeErrorReported = true,
+                "Only meta types are allowed besides the type registered");
+      }
     }
   }
 
-  ASSERT_GE(nRealEvent, minNEvent / 2); // make sure returned events are not all meta
+  std::string s;
+  EXPECT_TRUE(checker.check(events, &s)) << s;
+
+  EXPECT_GE(nRealEvent, minNEvent / 2); // make sure returned events are not all meta
 }
 
-// Test if sensor hal can do gyroscope streaming properly
-TEST_F(SensorsHidlTest, NormalGyroscopeStreamingOperation) {
-  std::vector<Event> events;
-
-  constexpr int64_t samplingPeriodInNs = 10ull*1000*1000; // 10ms
-  constexpr int64_t batchingPeriodInNs = 0; // no batching
-  constexpr useconds_t minTimeUs = 5*1000*1000;  // 5 s
-  constexpr size_t minNEvent = 200;
-  constexpr SensorType type = SensorType::GYROSCOPE;
-
-  SensorInfo sensor = defaultSensorByType(type);
-
-  if (!isValidType(sensor.type)) {
-    // no default sensor of this type
-    return;
-  }
-
-  int32_t handle = sensor.sensorHandle;
-
-  ASSERT_EQ(batch(handle, samplingPeriodInNs, batchingPeriodInNs), Result::OK);
-  ASSERT_EQ(activate(handle, 1), Result::OK);
-  events = collectEvents(minTimeUs, minNEvent, true /*clearBeforeStart*/);
-  ASSERT_EQ(activate(handle, 0), Result::OK);
-
-  ALOGI("Collected %zu samples", events.size());
-
-  ASSERT_GT(events.size(), 0u);
-
-  size_t nRealEvent = 0;
-  for (auto & e : events) {
-    if (e.sensorType == type) {
-
-      ASSERT_EQ(e.sensorHandle, handle);
-
-      Vec3 gyro = e.u.vec3;
-
-      double gyroNorm = std::sqrt(gyro.x * gyro.x + gyro.y * gyro.y + gyro.z * gyro.z);
-      ALOGV("Gyro Norm = %f", gyroNorm);
-
-      // assert not drifting
-      ASSERT_TRUE(gyroNorm < 0.1);  // < ~5 degree/s
-
-      ++ nRealEvent;
-    } else {
-      ALOGI("Event type %d, handle %d", (int) e.sensorType, (int) e.sensorHandle);
-      // Only meta types are allowed besides the subscribed sensor
-      ASSERT_TRUE(isMetaSensorType(e.sensorType));
-    }
-  }
-
-  ASSERT_GE(nRealEvent, minNEvent / 2); // make sure returned events are not all meta
+// Test if sensor hal can do UI speed accelerometer streaming properly
+TEST_F(SensorsHidlTest, AccelerometerStreamingOperationSlow) {
+  testStreamingOperation(SensorType::ACCELEROMETER,
+                         std::chrono::milliseconds(200),
+                         std::chrono::seconds(5),
+                         sAccelNormChecker);
 }
 
-// Test if sensor hal can do accelerometer sampling rate switch properly when sensor is active
-TEST_F(SensorsHidlTest, AccelerometerSamplingPeriodHotSwitchOperation) {
+// Test if sensor hal can do normal speed accelerometer streaming properly
+TEST_F(SensorsHidlTest, AccelerometerStreamingOperationNormal) {
+  testStreamingOperation(SensorType::ACCELEROMETER,
+                         std::chrono::milliseconds(20),
+                         std::chrono::seconds(5),
+                         sAccelNormChecker);
+}
+
+// Test if sensor hal can do game speed accelerometer streaming properly
+TEST_F(SensorsHidlTest, AccelerometerStreamingOperationFast) {
+  testStreamingOperation(SensorType::ACCELEROMETER,
+                         std::chrono::milliseconds(5),
+                         std::chrono::seconds(5),
+                         sAccelNormChecker);
+}
+
+// Test if sensor hal can do UI speed gyroscope streaming properly
+TEST_F(SensorsHidlTest, GyroscopeStreamingOperationSlow) {
+  testStreamingOperation(SensorType::GYROSCOPE,
+                         std::chrono::milliseconds(200),
+                         std::chrono::seconds(5),
+                         sGyroNormChecker);
+}
+
+// Test if sensor hal can do normal speed gyroscope streaming properly
+TEST_F(SensorsHidlTest, GyroscopeStreamingOperationNormal) {
+  testStreamingOperation(SensorType::GYROSCOPE,
+                         std::chrono::milliseconds(20),
+                         std::chrono::seconds(5),
+                         sGyroNormChecker);
+}
+
+// Test if sensor hal can do game speed gyroscope streaming properly
+TEST_F(SensorsHidlTest, GyroscopeStreamingOperationFast) {
+  testStreamingOperation(SensorType::GYROSCOPE,
+                         std::chrono::milliseconds(5),
+                         std::chrono::seconds(5),
+                         sGyroNormChecker);
+}
+
+// Test if sensor hal can do UI speed magnetometer streaming properly
+TEST_F(SensorsHidlTest, MagnetometerStreamingOperationSlow) {
+  testStreamingOperation(SensorType::MAGNETIC_FIELD,
+                         std::chrono::milliseconds(200),
+                         std::chrono::seconds(5),
+                         NullChecker());
+}
+
+// Test if sensor hal can do normal speed magnetometer streaming properly
+TEST_F(SensorsHidlTest, MagnetometerStreamingOperationNormal) {
+  testStreamingOperation(SensorType::MAGNETIC_FIELD,
+                         std::chrono::milliseconds(20),
+                         std::chrono::seconds(5),
+                         NullChecker());
+}
+
+// Test if sensor hal can do game speed magnetometer streaming properly
+TEST_F(SensorsHidlTest, MagnetometerStreamingOperationFast) {
+  testStreamingOperation(SensorType::MAGNETIC_FIELD,
+                         std::chrono::milliseconds(5),
+                         std::chrono::seconds(5),
+                         NullChecker());
+}
+
+void SensorsHidlTest::testSamplingRateHotSwitchOperation(SensorType type) {
   std::vector<Event> events1, events2;
 
   constexpr int64_t batchingPeriodInNs = 0; // no batching
   constexpr size_t minNEvent = 50;
-  constexpr SensorType type = SensorType::ACCELEROMETER;
 
   SensorInfo sensor = defaultSensorByType(type);
 
@@ -845,21 +1113,34 @@ TEST_F(SensorsHidlTest, AccelerometerSamplingPeriodHotSwitchOperation) {
   maxDelayAverageInterval = timestampInterval / (nEvent - 1);
 
   // change of rate is significant.
-  ASSERT_GT((maxDelayAverageInterval - minDelayAverageInterval), minDelayAverageInterval / 10);
+  EXPECT_GT((maxDelayAverageInterval - minDelayAverageInterval), minDelayAverageInterval / 10);
 
   // fastest rate sampling time is close to spec
   ALOGI("minDelayAverageInterval = %" PRId64, minDelayAverageInterval);
-  ASSERT_LT(std::abs(minDelayAverageInterval - minSamplingPeriodInNs),
+  EXPECT_LT(std::abs(minDelayAverageInterval - minSamplingPeriodInNs),
       minSamplingPeriodInNs / 10);
 }
 
-// Test if sensor hal can do normal accelerometer batching properly
-TEST_F(SensorsHidlTest, AccelerometerBatchingOperation) {
+// Test if sensor hal can do accelerometer sampling rate switch properly when sensor is active
+TEST_F(SensorsHidlTest, AccelerometerSamplingPeriodHotSwitchOperation) {
+  testSamplingRateHotSwitchOperation(SensorType::ACCELEROMETER);
+}
+
+// Test if sensor hal can do gyroscope sampling rate switch properly when sensor is active
+TEST_F(SensorsHidlTest, GyroscopeSamplingPeriodHotSwitchOperation) {
+  testSamplingRateHotSwitchOperation(SensorType::GYROSCOPE);
+}
+
+// Test if sensor hal can do magnetometer sampling rate switch properly when sensor is active
+TEST_F(SensorsHidlTest, MagnetometerSamplingPeriodHotSwitchOperation) {
+  testSamplingRateHotSwitchOperation(SensorType::MAGNETIC_FIELD);
+}
+
+void SensorsHidlTest::testBatchingOperation(SensorType type) {
   std::vector<Event> events;
 
-  constexpr int64_t oneSecondInNs = 1ull * 1000 * 1000 * 1000;
-  constexpr SensorType type = SensorType::ACCELEROMETER;
   constexpr int64_t maxBatchingTestTimeNs = 30ull * 1000 * 1000 * 1000;
+  constexpr int64_t oneSecondInNs = 1ull * 1000 * 1000 * 1000;
 
   SensorInfo sensor = defaultSensorByType(type);
 
@@ -922,24 +1203,46 @@ TEST_F(SensorsHidlTest, AccelerometerBatchingOperation) {
   ASSERT_GT(nEvent, (size_t)(batchingPeriodInNs / minSamplingPeriodInNs * 9 / 10));
 }
 
-// Test sensor event direct report with ashmem for gyro sensor
-TEST_F(SensorsHidlTest, GyroscopeAshmemDirectReport) {
+// Test if sensor hal can do accelerometer batching properly
+TEST_F(SensorsHidlTest, AccelerometerBatchingOperation) {
+  testBatchingOperation(SensorType::ACCELEROMETER);
+}
 
-  constexpr SensorType type = SensorType::GYROSCOPE;
-  constexpr size_t kEventSize = 104;
+// Test if sensor hal can do gyroscope batching properly
+TEST_F(SensorsHidlTest, GyroscopeBatchingOperation) {
+  testBatchingOperation(SensorType::GYROSCOPE);
+}
+
+// Test if sensor hal can do magnetometer batching properly
+TEST_F(SensorsHidlTest, MagnetometerBatchingOperation) {
+  testBatchingOperation(SensorType::MAGNETIC_FIELD);
+}
+
+void SensorsHidlTest::testDirectReportOperation(
+    SensorType type, SharedMemType memType, RateLevel rate, const SensorEventsChecker &checker) {
+  constexpr size_t kEventSize = static_cast<size_t>(SensorsEventFormatOffset::TOTAL_LENGTH);
   constexpr size_t kNEvent = 500;
   constexpr size_t kMemSize = kEventSize * kNEvent;
 
+  constexpr float kNormalNominal = 50;
+  constexpr float kFastNominal = 200;
+  constexpr float kVeryFastNominal = 800;
+
+  constexpr float kNominalTestTimeSec = 1.f;
+  constexpr float kMaxTestTimeSec = kNominalTestTimeSec + 0.5f; // 0.5 second for initialization
+
   SensorInfo sensor = defaultSensorByType(type);
 
-  if (!(sensor.flags | SensorFlagBits::MASK_DIRECT_REPORT)
-      || !(sensor.flags | SensorFlagBits::DIRECT_CHANNEL_ASHMEM)) {
-    // does not declare support
+  if (!isDirectReportRateSupported(sensor, rate)) {
+    return;
+  }
+
+  if (!isDirectChannelTypeSupported(sensor, memType)) {
     return;
   }
 
   std::unique_ptr<SensorsTestSharedMemory>
-      mem(SensorsTestSharedMemory::create(SharedMemType::ASHMEM, kMemSize));
+      mem(SensorsTestSharedMemory::create(memType, kMemSize));
   ASSERT_NE(mem, nullptr);
 
   char* buffer = mem->getBuffer();
@@ -961,39 +1264,119 @@ TEST_F(SensorsHidlTest, GyroscopeAshmemDirectReport) {
   }
 
   int32_t eventToken;
-  configDirectReport(sensor.sensorHandle, channelHandle, RateLevel::NORMAL,
+  configDirectReport(sensor.sensorHandle, channelHandle, rate,
       [&eventToken] (auto result, auto token) {
           ASSERT_EQ(result, Result::OK);
           eventToken = token;
       });
 
-  usleep(1500000); // sleep 1 sec for data, plus 0.5 sec for initialization
+  usleep(static_cast<useconds_t>(kMaxTestTimeSec * 1e6f));
   auto events = mem->parseEvents();
 
-  // allowed to be 55% of nominal freq (50Hz)
-  ASSERT_GT(events.size(), 50u / 2u);
-  ASSERT_LT(events.size(), static_cast<size_t>(110*1.5));
+  // find norminal rate
+  float nominalFreq = 0.f;
+  switch (rate) {
+      case RateLevel::NORMAL:
+          nominalFreq = kNormalNominal;
+          break;
+      case RateLevel::FAST:
+          nominalFreq = kFastNominal;
+          break;
+      case RateLevel::VERY_FAST:
+          nominalFreq = kVeryFastNominal;
+          break;
+      case RateLevel::STOP:
+          FAIL();
+  }
+
+  // allowed to be between 55% and 220% of nominal freq
+  ASSERT_GT(events.size(), static_cast<size_t>(nominalFreq * 0.55f * kNominalTestTimeSec));
+  ASSERT_LT(events.size(), static_cast<size_t>(nominalFreq * 2.2f * kMaxTestTimeSec));
 
   int64_t lastTimestamp = 0;
+  bool typeErrorReported = false;
+  bool tokenErrorReported = false;
+  bool timestampErrorReported = false;
   for (auto &e : events) {
-    ASSERT_EQ(e.sensorType, type);
-    ASSERT_EQ(e.sensorHandle, eventToken);
-    ASSERT_GT(e.timestamp, lastTimestamp);
-
-    Vec3 gyro = e.u.vec3;
-    double gyroNorm = std::sqrt(gyro.x * gyro.x + gyro.y * gyro.y + gyro.z * gyro.z);
-    // assert not drifting
-    ASSERT_TRUE(gyroNorm < 0.1);  // < ~5 degree/sa
-
+    if (!typeErrorReported) {
+      EXPECT_EQ(type, e.sensorType)
+          << (typeErrorReported = true, "Type in event does not match type of sensor registered.");
+    }
+    if (!tokenErrorReported) {
+      EXPECT_EQ(eventToken, e.sensorHandle)
+          << (tokenErrorReported = true,
+            "Event token does not match that retured from configDirectReport");
+    }
+    if (!timestampErrorReported) {
+      EXPECT_GT(e.timestamp, lastTimestamp)
+          << (timestampErrorReported = true, "Timestamp not monotonically increasing");
+    }
     lastTimestamp = e.timestamp;
   }
+
+  std::string s;
+  EXPECT_TRUE(checker.check(events, &s)) << s;
 
   // stop sensor and unregister channel
   configDirectReport(sensor.sensorHandle, channelHandle, RateLevel::STOP,
         [&eventToken] (auto result, auto) {
-            ASSERT_EQ(result, Result::OK);
+            EXPECT_EQ(result, Result::OK);
         });
-  ASSERT_EQ(unregisterDirectChannel(channelHandle), Result::OK);
+  EXPECT_EQ(unregisterDirectChannel(channelHandle), Result::OK);
+}
+
+// Test sensor event direct report with ashmem for accel sensor at normal rate
+TEST_F(SensorsHidlTest, AccelerometerAshmemDirectReportOperationNormal) {
+  testDirectReportOperation(SensorType::ACCELEROMETER, SharedMemType::ASHMEM, RateLevel::NORMAL,
+                            sAccelNormChecker);
+}
+
+// Test sensor event direct report with ashmem for accel sensor at fast rate
+TEST_F(SensorsHidlTest, AccelerometerAshmemDirectReportOperationFast) {
+  testDirectReportOperation(SensorType::ACCELEROMETER, SharedMemType::ASHMEM, RateLevel::FAST,
+                            sAccelNormChecker);
+}
+
+// Test sensor event direct report with ashmem for accel sensor at very fast rate
+TEST_F(SensorsHidlTest, AccelerometerAshmemDirectReportOperationVeryFast) {
+  testDirectReportOperation(SensorType::ACCELEROMETER, SharedMemType::ASHMEM, RateLevel::VERY_FAST,
+                            sAccelNormChecker);
+}
+
+// Test sensor event direct report with ashmem for gyro sensor at normal rate
+TEST_F(SensorsHidlTest, GyroscopeAshmemDirectReportOperationNormal) {
+  testDirectReportOperation(SensorType::GYROSCOPE, SharedMemType::ASHMEM, RateLevel::NORMAL,
+                            sGyroNormChecker);
+}
+
+// Test sensor event direct report with ashmem for gyro sensor at fast rate
+TEST_F(SensorsHidlTest, GyroscopeAshmemDirectReportOperationFast) {
+  testDirectReportOperation(SensorType::GYROSCOPE, SharedMemType::ASHMEM, RateLevel::FAST,
+                            sGyroNormChecker);
+}
+
+// Test sensor event direct report with ashmem for gyro sensor at very fast rate
+TEST_F(SensorsHidlTest, GyroscopeAshmemDirectReportOperationVeryFast) {
+  testDirectReportOperation(SensorType::GYROSCOPE, SharedMemType::ASHMEM, RateLevel::VERY_FAST,
+                            sGyroNormChecker);
+}
+
+// Test sensor event direct report with ashmem for mag sensor at normal rate
+TEST_F(SensorsHidlTest, MagnetometerAshmemDirectReportOperationNormal) {
+  testDirectReportOperation(SensorType::MAGNETIC_FIELD, SharedMemType::ASHMEM, RateLevel::NORMAL,
+                            NullChecker());
+}
+
+// Test sensor event direct report with ashmem for mag sensor at fast rate
+TEST_F(SensorsHidlTest, MagnetometerAshmemDirectReportOperationFast) {
+  testDirectReportOperation(SensorType::MAGNETIC_FIELD, SharedMemType::ASHMEM, RateLevel::FAST,
+                            NullChecker());
+}
+
+// Test sensor event direct report with ashmem for mag sensor at very fast rate
+TEST_F(SensorsHidlTest, MagnetometerAshmemDirectReportOperationVeryFast) {
+  testDirectReportOperation(
+      SensorType::MAGNETIC_FIELD, SharedMemType::ASHMEM, RateLevel::VERY_FAST, NullChecker());
 }
 
 int main(int argc, char **argv) {
