@@ -70,4 +70,10 @@ interface ISurfaceFlingerConfigs {
      * TARGET_HAS_HDR_DISPLAY to true in BoardConfig.mk
      */
     hasHDRDisplay() generates (OptionalBool value);
+
+    /*
+     * Specify the offset in nanoseconds to add to vsync time when timestamping
+     * present fences.
+     */
+    presentTimeOffsetFromVSyncNs() generates(OptionalInt64 value);
 };

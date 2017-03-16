@@ -69,6 +69,16 @@ Return<void> SurfaceFlingerConfigs::hasHDRDisplay(hasHDRDisplay_cb _hidl_cb) {
     return Void();
 }
 
+Return<void> SurfaceFlingerConfigs::presentTimeOffsetFromVSyncNs(presentTimeOffsetFromVSyncNs_cb _hidl_cb) {
+#ifdef PRESENT_TIME_OFFSET_FROM_VSYNC_NS
+      _hidl_cb({true, PRESENT_TIME_OFFSET_FROM_VSYNC_NS});
+      LOG(INFO) << "SurfaceFlinger presentTimeStampOffsetNs =  " << PRESENT_TIME_OFFSET_FROM_VSYNC_NS;
+#else
+      _hidl_cb({false, 0});
+#endif
+      return Void();
+}
+
 // Methods from ::android::hidl::base::V1_0::IBase follow.
 
 ISurfaceFlingerConfigs* HIDL_FETCH_ISurfaceFlingerConfigs(const char* /* name */) {
