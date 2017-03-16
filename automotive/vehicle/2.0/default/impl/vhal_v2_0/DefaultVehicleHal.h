@@ -47,7 +47,7 @@ public:
     DefaultVehicleHal() : mRecurrentTimer(
             std::bind(&DefaultVehicleHal::onContinuousPropertyTimer, this, std::placeholders::_1)) {
         for (size_t i = 0; i < arraysize(kVehicleProperties); i++) {
-            mPropConfigMap[kVehicleProperties->prop] = &kVehicleProperties[i];
+            mPropConfigMap[kVehicleProperties[i].prop] = &kVehicleProperties[i];
         }
     }
 
