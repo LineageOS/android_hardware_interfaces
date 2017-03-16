@@ -248,10 +248,9 @@ bool VendorInterface::Open(InitializeCompleteCallback initialize_complete_cb,
         new hci::MctProtocol(fd_list, intercept_events, acl_cb);
     fd_watcher_.WatchFdForNonBlockingReads(
         fd_list[CH_EVT], [mct_hci](int fd) { mct_hci->OnEventDataReady(fd); });
-    if (fd_count >= CH_ACL_IN)
-      fd_watcher_.WatchFdForNonBlockingReads(
-          fd_list[CH_ACL_IN],
-          [mct_hci](int fd) { mct_hci->OnAclDataReady(fd); });
+    fd_watcher_.WatchFdForNonBlockingReads(
+        fd_list[CH_ACL_IN],
+        [mct_hci](int fd) { mct_hci->OnAclDataReady(fd); });
     hci_ = mct_hci;
   }
 
