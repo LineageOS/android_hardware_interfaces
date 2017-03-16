@@ -183,6 +183,12 @@ bool CameraProvider::initialize() {
     }
     ALOGI("Loaded \"%s\" camera module", mModule->getModuleName());
 
+    // Setup vendor tags here so HAL can setup vendor keys in camera characteristics
+    VendorTagDescriptor::clearGlobalVendorTagDescriptor();
+    if (!setUpVendorTags()) {
+        ALOGE("%s: Vendor tag setup failed, will not be available.", __FUNCTION__);
+    }
+
     // Setup callback now because we are going to try openLegacy next
     err = mModule->setCallbacks(this);
     if (err != OK) {
@@ -225,11 +231,6 @@ bool CameraProvider::initialize() {
         }
     }
 
-    // Setup vendor tags here so HAL can setup vendor keys in camera characteristics
-    VendorTagDescriptor::clearGlobalVendorTagDescriptor();
-    if (!setUpVendorTags()) {
-        ALOGE("%s: Vendor tag setup failed, will not be available.", __FUNCTION__);
-    }
     return false; // mInitFailed
 }
 
