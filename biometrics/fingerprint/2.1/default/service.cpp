@@ -35,7 +35,7 @@ int main() {
     configureRpcThreadpool(1, true /*callerWillJoin*/);
 
     if (bio != nullptr) {
-        bio->registerAsService("fingerprint_hal");
+        bio->registerAsService();
     } else {
         ALOGE("Can't create instance of BiometricsFingerprint, nullptr");
     }

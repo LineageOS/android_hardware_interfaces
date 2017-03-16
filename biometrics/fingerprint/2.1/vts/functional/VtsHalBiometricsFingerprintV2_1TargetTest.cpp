@@ -15,7 +15,6 @@
  */
 
 #define LOG_TAG "fingerprint_hidl_hal_test"
-#define SERVICE_NAME "fingerprint_hal"
 
 #include <android-base/logging.h>
 #include <android/hardware/biometrics/fingerprint/2.1/IBiometricsFingerprint.h>
@@ -123,7 +122,7 @@ public:
     FingerprintHidlTest (): mCallbackCalled(false) {}
 
     virtual void SetUp() override {
-        mService = ::testing::VtsHalHidlTargetTestBase::getService<IBiometricsFingerprint>(SERVICE_NAME);
+        mService = ::testing::VtsHalHidlTargetTestBase::getService<IBiometricsFingerprint>();
 
         ASSERT_NE(mService, nullptr);
         clearErr();
