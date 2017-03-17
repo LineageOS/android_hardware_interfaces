@@ -280,13 +280,34 @@ interface IRadioResponse {
 
     /*
      * @param info Response info struct containing response type, serial no. and error
-     * @param failCauseInfo Contains LastCallFailCause and vendor cause code. GSM failure reasons
-     *        are mapped to cause codes defined in TS 24.008 Annex H where possible. CDMA
-     *        failure reasons are derived from the possible call failure scenarios
-     *        described in the "CDMA IS-2000 Release A (C.S0005-A v6.0)" standard.
+     * @param failCauseInfo Contains LastCallFailCause and vendor cause code.
      *
-     * The implementation must return LastCallFailCause:ERROR_UNSPECIFIED for blocked
-     * MO calls by restricted state (See unsolRestrictedStateChanged)
+     *   The vendor cause code must be used for debugging purpose only.
+     *   The implementation must return one of the values of LastCallFailCause
+     *   as mentioned below
+     *
+     *   GSM failure reasons codes for the cause codes defined in TS 24.008 Annex H
+     *   where possible.
+     *   CDMA failure reasons codes for the possible call failure scenarios
+     *   described in the "CDMA IS-2000 Release A (C.S0005-A v6.0)" standard.
+     *   Any of the following reason codes if the call is failed or dropped due to reason
+     *   mentioned with in the braces.
+     *      LastCallFailCause:RADIO_OFF (Radio is OFF)
+     *      LastCallFailCause:OUT_OF_SERVICE (No cell coverage)
+     *      LastCallFailCause:NO_VALID_SIM (No valid SIM)
+     *      LastCallFailCause:RADIO_INTERNAL_ERROR (Modem hit unexpected error scenario)
+     *      LastCallFailCause:NETWORK_RESP_TIMEOUT (No response from network)
+     *      LastCallFailCause:NETWORK_REJECT (Explicit network reject)
+     *      LastCallFailCause:RADIO_ACCESS_FAILURE (RRC connection failure. Eg.RACH)
+     *      LastCallFailCause:RADIO_LINK_FAILURE (Radio Link Failure)
+     *      LastCallFailCause:RADIO_LINK_LOST (Radio link lost due to poor coverage)
+     *      LastCallFailCause:RADIO_UPLINK_FAILURE (Radio uplink failure)
+     *      LastCallFailCause:RADIO_SETUP_FAILURE (RRC connection setup failure)
+     *      LastCallFailCause:RADIO_RELEASE_NORMAL (RRC connection release, normal)
+     *      LastCallFailCause:RADIO_RELEASE_ABNORMAL (RRC connection release, abnormal)
+     *      LastCallFailCause:ACCESS_CLASS_BLOCKED (Access class barring)
+     *      LastCallFailCause:NETWORK_DETACH (Explicit network detach)
+     *   OEM causes (LastCallFailCause:OEM_CAUSE_XX) must be used for debug purpose only
      *
      * If the implementation does not have access to the exact cause codes,
      * then it must return one of the values listed in LastCallFailCause,

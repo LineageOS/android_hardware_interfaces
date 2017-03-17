@@ -383,6 +383,21 @@ enum LastCallFailCause : int32_t {
     DIAL_MODIFIED_TO_USSD = 244,          // STK Call Control
     DIAL_MODIFIED_TO_SS = 245,
     DIAL_MODIFIED_TO_DIAL = 246,
+    RADIO_OFF = 247,                      // Radio is OFF
+    OUT_OF_SERVICE = 248,                 // No cellular coverage
+    NO_VALID_SIM = 249,                   // No valid SIM is present
+    RADIO_INTERNAL_ERROR = 250,           // Internal error at Modem
+    NETWORK_RESP_TIMEOUT = 251,           // No response from network
+    NETWORK_REJECT = 252,                 // Explicit network reject
+    RADIO_ACCESS_FAILURE = 253,           // RRC connection failure. Eg.RACH
+    RADIO_LINK_FAILURE = 254,             // Radio Link Failure
+    RADIO_LINK_LOST = 255,                // Radio link lost due to poor coverage
+    RADIO_UPLINK_FAILURE = 256,           // Radio uplink failure
+    RADIO_SETUP_FAILURE = 257,            // RRC connection setup failure
+    RADIO_RELEASE_NORMAL = 258,           // RRC connection release, normal
+    RADIO_RELEASE_ABNORMAL = 259,         // RRC connection release, abnormal
+    ACCESS_CLASS_BLOCKED = 260,           // Access class barring
+    NETWORK_DETACH = 261,                 // Explicit network detach
     CDMA_LOCKED_UNTIL_POWER_CYCLE = 1000,
     CDMA_DROP = 1001,
     CDMA_INTERCEPT = 1002,
@@ -393,10 +408,29 @@ enum LastCallFailCause : int32_t {
     CDMA_PREEMPTED = 1007,
     CDMA_NOT_EMERGENCY = 1008,            // For non-emergency number dialed during emergency
                                           // callback mode
-    CDMA_ACCESS_BLOCKED = 1009,           // This error will be deprecated soon,
+    CDMA_ACCESS_BLOCKED = 1009,
+
+    /* OEM specific error codes. Used to distinguish error from
+     * CALL_FAIL_ERROR_UNSPECIFIED and help assist debugging */
+    OEM_CAUSE_1 = 0xf001,
+    OEM_CAUSE_2 = 0xf002,
+    OEM_CAUSE_3 = 0xf003,
+    OEM_CAUSE_4 = 0xf004,
+    OEM_CAUSE_5 = 0xf005,
+    OEM_CAUSE_6 = 0xf006,
+    OEM_CAUSE_7 = 0xf007,
+    OEM_CAUSE_8 = 0xf008,
+    OEM_CAUSE_9 = 0xf009,
+    OEM_CAUSE_10 = 0xf00a,
+    OEM_CAUSE_11 = 0xf00b,
+    OEM_CAUSE_12 = 0xf00c,
+    OEM_CAUSE_13 = 0xf00d,
+    OEM_CAUSE_14 = 0xf00e,
+    OEM_CAUSE_15 = 0xf00f,
+
+    ERROR_UNSPECIFIED = 0xffff,           // This error will be deprecated soon,
                                           // vendor code must make sure to map error
                                           // code to specific error
-    ERROR_UNSPECIFIED = 0xffff,
 };
 
 enum DataCallFailCause : int32_t {
