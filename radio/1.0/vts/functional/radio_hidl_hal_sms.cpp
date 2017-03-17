@@ -34,12 +34,11 @@ TEST_F(RadioHidlTest, sendSms) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        EXPECT_EQ(RadioError::INVALID_STATE, radioRsp->rspInfo.error);
+        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS
+                || radioRsp->rspInfo.error == RadioError::MODEM_ERR
+                || radioRsp->rspInfo.error == RadioError::SYSTEM_ERR
+                || radioRsp->rspInfo.error == RadioError::INVALID_STATE);
         EXPECT_EQ(0, radioRsp->sendSmsResult.errorCode);
-    } else {
-        EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
-        EXPECT_EQ("", radioRsp->sendSmsResult.ackPDU);
-        EXPECT_EQ(-1, radioRsp->sendSmsResult.errorCode);
     }
 }
 
@@ -61,11 +60,10 @@ TEST_F(RadioHidlTest, sendSMSExpectMore) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        EXPECT_EQ(RadioError::INVALID_STATE, radioRsp->rspInfo.error);
-    } else {
-        EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
-        EXPECT_EQ("", radioRsp->sendSmsResult.ackPDU);
-        EXPECT_EQ(-1, radioRsp->sendSmsResult.errorCode);
+        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS
+                || radioRsp->rspInfo.error == RadioError::MODEM_ERR
+                || radioRsp->rspInfo.error == RadioError::SYSTEM_ERR
+                || radioRsp->rspInfo.error == RadioError::INVALID_STATE);
     }
 }
 
@@ -84,9 +82,7 @@ TEST_F(RadioHidlTest, acknowledgeLastIncomingGsmSms) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        EXPECT_EQ(RadioError::INVALID_STATE, radioRsp->rspInfo.error);
-    } else {
-        // TODO(shuoq): Will test right behavior when inserted sim card is considered
+        EXPECT_EQ(RadioError::INVALID_ARGUMENTS, radioRsp->rspInfo.error);
     }
 }
 
@@ -106,8 +102,6 @@ TEST_F(RadioHidlTest, acknowledgeIncomingGsmSmsWithPdu) {
 
     if (cardStatus.cardState == CardState::ABSENT) {
         // TODO(shuoq): Will add error check when we know the expected error from QC
-    } else {
-        // TODO(shuoq): Will test right behavior when inserted sim card is considered
     }
 }
 
@@ -148,9 +142,10 @@ TEST_F(RadioHidlTest, sendCdmaSms) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        // TODO(shuoq): Will add error check when we know the expected error from QC
-    } else {
-        // TODO(shuoq): radioRsp->sendSmsResult needs to be investigated when Sim card is in
+        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS
+                || radioRsp->rspInfo.error == RadioError::MODEM_ERR
+                || radioRsp->rspInfo.error == RadioError::SYSTEM_ERR
+                || radioRsp->rspInfo.error == RadioError::INVALID_STATE);
     }
 }
 
@@ -172,8 +167,6 @@ TEST_F(RadioHidlTest, acknowledgeLastIncomingCdmaSms) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        EXPECT_EQ(RadioError::NO_SMS_TO_ACK, radioRsp->rspInfo.error);
-    } else {
         EXPECT_EQ(RadioError::NO_SMS_TO_ACK, radioRsp->rspInfo.error);
     }
 }
@@ -224,9 +217,6 @@ TEST_F(RadioHidlTest, sendImsSms) {
 
     if (cardStatus.cardState == CardState::ABSENT) {
         EXPECT_EQ(RadioError::INVALID_ARGUMENTS, radioRsp->rspInfo.error);
-    } else {
-        EXPECT_EQ(RadioError::INVALID_ARGUMENTS, radioRsp->rspInfo.error);
-        // TODO(shuoq): radioRsp->sendSmsResult needs to be investigated when sim card is in
     }
 }
 
@@ -243,10 +233,11 @@ TEST_F(RadioHidlTest, getSmscAddress) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        // TODO(shuoq): Will add error check when we know the expected error from QC
-    } else {
-        EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
-        // TODO(shuoq): radioRsp->smscAddress needs to be investigated when Sim card is in
+        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS
+                || radioRsp->rspInfo.error == RadioError::MODEM_ERR
+                || radioRsp->rspInfo.error == RadioError::SYSTEM_ERR
+                || radioRsp->rspInfo.error == RadioError::INVALID_STATE
+                || radioRsp->rspInfo.error == RadioError::INVALID_MODEM_STATE);
     }
 }
 
@@ -264,8 +255,6 @@ TEST_F(RadioHidlTest, setSmscAddress) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        EXPECT_EQ(RadioError::INVALID_SMS_FORMAT, radioRsp->rspInfo.error);
-    } else {
         EXPECT_EQ(RadioError::INVALID_SMS_FORMAT, radioRsp->rspInfo.error);
     }
 }
@@ -287,9 +276,10 @@ TEST_F(RadioHidlTest, writeSmsToSim) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        // TODO(shuoq): Will add error check when we know the expected error from QC
-    } else {
-        // TODO(shuoq): radioRsp->writeSmsToSimIndex needs to be investigated when Sim card is in
+        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS
+                || radioRsp->rspInfo.error == RadioError::MODEM_ERR
+                || radioRsp->rspInfo.error == RadioError::INVALID_MODEM_STATE
+                || radioRsp->rspInfo.error == RadioError::INTERNAL_ERR);
     }
 }
 
@@ -307,9 +297,10 @@ TEST_F(RadioHidlTest, deleteSmsOnSim) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        // TODO(shuoq): Will add error check when we know the expected error from QC
-    } else {
-        EXPECT_EQ(RadioError::NO_SUCH_ENTRY, radioRsp->rspInfo.error);
+        EXPECT_EQ(RadioError::INVALID_SMS_FORMAT, radioRsp->rspInfo.error);
+        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS
+                || radioRsp->rspInfo.error == RadioError::MODEM_ERR
+                || radioRsp->rspInfo.error == RadioError::SYSTEM_ERR);
     }
 }
 
@@ -355,9 +346,10 @@ TEST_F(RadioHidlTest, writeSmsToRuim) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        // TODO(shuoq): Will add error check when we know the expected error from QC
-    } else {
-        // TODO(shuoq): radioRsp->writeSmsToRuimIndex needs to be investigated when sim card is in
+        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS
+                || radioRsp->rspInfo.error == RadioError::MODEM_ERR
+                || radioRsp->rspInfo.error == RadioError::INVALID_MODEM_STATE
+                || radioRsp->rspInfo.error == RadioError::INTERNAL_ERR);
     }
 }
 
@@ -404,9 +396,9 @@ TEST_F(RadioHidlTest, deleteSmsOnRuim) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        // TODO(shuoq): Will add error check when we know the expected error from QC
-    } else {
-        // TODO(shuoq): Will test right behavior when inserted sim card is considered
+        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS
+                || radioRsp->rspInfo.error == RadioError::MODEM_ERR
+                || radioRsp->rspInfo.error == RadioError::SYSTEM_ERR);
     }
 }
 
@@ -424,8 +416,9 @@ TEST_F(RadioHidlTest, reportSmsMemoryStatus) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        // TODO(shuoq): Will add error check when we know the expected error from QC
-    } else {
-        EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
+        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS
+                || radioRsp->rspInfo.error == RadioError::MODEM_ERR
+                || radioRsp->rspInfo.error == RadioError::SYSTEM_ERR
+                || radioRsp->rspInfo.error == RadioError::INVALID_STATE);
     }
 }
