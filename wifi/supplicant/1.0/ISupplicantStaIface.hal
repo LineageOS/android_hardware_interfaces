@@ -460,4 +460,19 @@ interface ISupplicantStaIface extends ISupplicantIface {
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|
    */
   removeExtRadioWork(uint32_t id) generates (SupplicantStatus status);
+
+  /**
+   * Enable/Disable auto reconnect to networks.
+   * Use this to prevent wpa_supplicant from trying to connect to networks
+   * on its own.
+   *
+   * @param enable true to enable, false to disable.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_DISABLED|
+   */
+  enableAutoReconnect(bool enable) generates (SupplicantStatus status);
 };
