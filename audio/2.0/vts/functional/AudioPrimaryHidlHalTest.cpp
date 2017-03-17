@@ -50,6 +50,7 @@ using ::android::hardware::hidl_handle;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::MQDescriptorSync;
+using ::android::hardware::audio::V2_0::AudioDrain;
 using ::android::hardware::audio::V2_0::DeviceAddress;
 using ::android::hardware::audio::V2_0::IDevice;
 using ::android::hardware::audio::V2_0::IPrimaryDevice;
@@ -57,9 +58,11 @@ using TtyMode = ::android::hardware::audio::V2_0::IPrimaryDevice::TtyMode;
 using ::android::hardware::audio::V2_0::IDevicesFactory;
 using ::android::hardware::audio::V2_0::IStream;
 using ::android::hardware::audio::V2_0::IStreamIn;
+using ::android::hardware::audio::V2_0::TimeSpec;
 using ReadParameters = ::android::hardware::audio::V2_0::IStreamIn::ReadParameters;
 using ReadStatus = ::android::hardware::audio::V2_0::IStreamIn::ReadStatus;
 using ::android::hardware::audio::V2_0::IStreamOut;
+using ::android::hardware::audio::V2_0::IStreamOutCallback;
 using ::android::hardware::audio::V2_0::MmapBufferInfo;
 using ::android::hardware::audio::V2_0::MmapPosition;
 using ::android::hardware::audio::V2_0::ParameterValue;
@@ -790,9 +793,9 @@ TEST_IO_STREAM(getNonExistingParameter, "Retrieve the values of an non existing 
                checkGetParameter(stream.get(), {"Non existing key"} /* keys */,
                                  {Result::INVALID_ARGUMENTS}))
 
-static vector<Result> okOrNotSupported = {Result::OK, Result::INVALID_ARGUMENTS};
+static vector<Result> okOrInvalidArguments = {Result::OK, Result::INVALID_ARGUMENTS};
 TEST_IO_STREAM(setEmptySetParameter, "Set the values of an empty set of parameters",
-               ASSERT_RESULT(okOrNotSupported, stream->setParameters({})))
+               ASSERT_RESULT(okOrInvalidArguments, stream->setParameters({})))
 
 TEST_IO_STREAM(setNonExistingParameter, "Set the values of an non existing parameter",
                ASSERT_RESULT(Result::INVALID_ARGUMENTS,
@@ -919,6 +922,183 @@ TEST_P(InputStreamTest, getCapturePosition) {
     ASSERT_OK(stream->getCapturePosition(returnIn(res, frames, time)));
     ASSERT_RESULT(invalidStateOrNotSupported, res);
 }
+
+//////////////////////////////////////////////////////////////////////////////
+///////////////////////////////// StreamIn ///////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+TEST_P(OutputStreamTest, getLatency) {
+    doc::test("Make sure latency is over 0");
+    auto result = stream->getLatency();
+    ASSERT_TRUE(result.isOk());
+    ASSERT_GT(result, 0U);
+}
+
+TEST_P(OutputStreamTest, setVolume) {
+    doc::test("Try to set the output volume");
+    auto result = stream->setVolume(1, 1);
+    ASSERT_TRUE(result.isOk());
+    if (result == Result::NOT_SUPPORTED) {
+        doc::partialTest("setVolume is not supported");
+        return;
+    }
+    testUnitaryGain([this](float volume) { return stream->setVolume(volume, volume); });
+}
+
+static void testPrepareForWriting(IStreamOut* stream, uint32_t frameSize, uint32_t framesCount) {
+    Result res;
+    // Ignore output parameters as the call should fail
+    ASSERT_OK(stream->prepareForWriting(frameSize, framesCount,
+                                        [&res](auto r, auto&, auto&, auto&, auto&) { res = r; }));
+    EXPECT_RESULT(invalidArgsOrNotSupported, res);
+}
+
+TEST_P(OutputStreamTest, PrepareForWriteWithHugeBuffer) {
+    doc::test("Preparing a stream for writing with a 2^32 sized buffer should fail");
+    testPrepareForWriting(stream.get(), 1, std::numeric_limits<uint32_t>::max());
+}
+
+TEST_P(OutputStreamTest, PrepareForWritingCheckOverflow) {
+    doc::test("Preparing a stream for writing with a overflowing sized buffer should fail");
+    auto uintMax = std::numeric_limits<uint32_t>::max();
+    testPrepareForWriting(stream.get(), uintMax, uintMax);
+}
+
+struct Capability {
+    Capability(IStreamOut* stream) {
+        EXPECT_OK(stream->supportsPauseAndResume(returnIn(pause, resume)));
+        auto ret = stream->supportsDrain();
+        EXPECT_TRUE(ret.isOk());
+        if (ret.isOk()) {
+            drain = ret;
+        }
+    }
+    bool pause = false;
+    bool resume = false;
+    bool drain = false;
+};
+
+TEST_P(OutputStreamTest, SupportsPauseAndResumeAndDrain) {
+    Capability(stream.get());
+}
+
+TEST_P(OutputStreamTest, GetRenderPosition) {
+    uint32_t dspFrames;
+    ASSERT_OK(stream->getRenderPosition(returnIn(res, dspFrames)));
+    if (res == Result::NOT_SUPPORTED) {
+        doc::partialTest("getRenderPosition is not supported");
+        return;
+    }
+    ASSERT_OK(res);
+    ASSERT_EQ(0U, dspFrames);
+}
+
+TEST_P(OutputStreamTest, GetNextWriteTimestamp) {
+    uint64_t timestampUs;
+    ASSERT_OK(stream->getRenderPosition(returnIn(res, timestampUs)));
+    if (res == Result::NOT_SUPPORTED) {
+        doc::partialTest("getRenderPosition is not supported");
+        return;
+    }
+    ASSERT_OK(res);
+    ASSERT_EQ(0U, timestampUs);
+}
+
+/** Stub implementation of out stream callback. */
+class MockOutCallbacks : public IStreamOutCallback {
+    Return<void> onWriteReady() override { return {}; }
+    Return<void> onDrainReady() override { return {}; }
+    Return<void> onError() override { return {}; }
+};
+
+static bool isAsyncModeSupported(IStreamOut *stream) {
+    auto res = stream->setCallback(new MockOutCallbacks);
+    stream->clearCallback(); // try to restore the no callback state, ignore any error
+    auto okOrNotSupported = { Result::OK, Result::NOT_SUPPORTED };
+    EXPECT_RESULT(okOrNotSupported, res);
+    return res.isOk() ? res == Result::OK : false;
+}
+
+TEST_P(OutputStreamTest, SetCallback) {
+    if (!isAsyncModeSupported(stream.get())) {
+        doc::partialTest("The stream does not support async operations");
+        return;
+    }
+    ASSERT_OK(stream->setCallback(new MockOutCallbacks));
+    ASSERT_OK(stream->setCallback(new MockOutCallbacks));
+}
+
+TEST_P(OutputStreamTest, clearCallback) {
+    if (!isAsyncModeSupported(stream.get())) {
+        doc::partialTest("The stream does not support async operations");
+        return;
+    }
+    // TODO: Clarify if clearing a non existing callback should fail
+    ASSERT_OK(stream->setCallback(new MockOutCallbacks));
+    ASSERT_OK(stream->clearCallback());
+}
+
+TEST_P(OutputStreamTest, Resume) {
+    if (!Capability(stream.get()).resume) {
+        doc::partialTest("The output stream does not support resume");
+        return;
+    }
+    ASSERT_RESULT(Result::INVALID_STATE, stream->resume());
+}
+
+TEST_P(OutputStreamTest, Pause) {
+    if (!Capability(stream.get()).pause) {
+        doc::partialTest("The output stream does not support pause");
+        return;
+    }
+    ASSERT_RESULT(Result::INVALID_STATE, stream->resume());
+}
+
+static void testDrain(IStreamOut *stream, AudioDrain type) {
+    if (!Capability(stream).drain) {
+        doc::partialTest("The output stream does not support pause");
+        return;
+    }
+    ASSERT_RESULT(Result::OK, stream->drain(type));
+}
+
+TEST_P(OutputStreamTest, DrainAll) {
+    testDrain(stream.get(), AudioDrain::ALL);
+}
+
+TEST_P(OutputStreamTest, DrainEarlyNotify) {
+    testDrain(stream.get(), AudioDrain::EARLY_NOTIFY);
+}
+
+TEST_P(OutputStreamTest, FlushStop) {
+    ASSERT_OK(stream->flush());
+}
+
+/** Return thee difference in us of two TimeSpec */
+uint64_t operator-(TimeSpec left, TimeSpec right) {
+    auto toMicroSec = [](auto ts) { return ts.tvSec * 1e+6 + ts.tvNSec / 1e+3; };
+    return toMicroSec(left) - toMicroSec(right);
+}
+
+TEST_P(OutputStreamTest, GetPresentationPositionStop) {
+    uint64_t frames;
+    TimeSpec mesureTS;
+    ASSERT_OK(stream->getPresentationPosition(returnIn(res, frames, mesureTS)));
+    if (res == Result::NOT_SUPPORTED) {
+        doc::partialTest("getpresentationPosition is not supported");
+        return;
+    }
+    ASSERT_EQ(0U, frames);
+
+    struct timespec currentTS;
+    ASSERT_EQ(0, clock_gettime(CLOCK_MONOTONIC, &currentTS)) << errno;
+
+    auto toMicroSec = [](uint64_t sec, auto nsec) { return sec * 1e+6 + nsec / 1e+3; };
+    auto currentTime = toMicroSec(currentTS.tv_sec, currentTS.tv_nsec);
+    auto mesureTime = toMicroSec(mesureTS.tvSec, mesureTS.tvNSec);
+    ASSERT_PRED2([](auto c, auto m){ return  c - m < 1e+6; }, currentTime, mesureTime);
+}
+
 
 //////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// PrimaryDevice ////////////////////////////////
