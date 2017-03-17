@@ -15,6 +15,7 @@
  */
 
 #include "VtsHalRenderscriptV1_0TargetTest.h"
+#include <system/window.h>
 
 /*
  * ContextCreateAndDestroy:
@@ -81,7 +82,7 @@ TEST_F(RenderscriptHidlTest, MetadataTest) {
                                           elementMetadata = _metadata; });
     EXPECT_EQ(DataType::FLOAT_32, (DataType)elementMetadata[0]);
     EXPECT_EQ(DataKind::USER, (DataKind)elementMetadata[1]);
-    EXPECT_EQ(false, ((uint32_t)elementMetadata[2] == 1) ? true : false);
+    EXPECT_EQ(false, elementMetadata[2]);
     EXPECT_EQ(1u, (uint32_t)elementMetadata[3]);
     EXPECT_EQ(0u, (uint32_t)elementMetadata[4]);
 
@@ -134,21 +135,17 @@ TEST_F(RenderscriptHidlTest, ResizeTest) {
  * Calls: elementCreate, typeCreate, allocationCreateTyped, allocation2DWrite,
  * allocationGetNativeWindow, allocationSetNativeWindow, allocationIoSend,
  * allocationIoReceive, allocation2DRead
- *
- * This test currently has a bug, and should be fixed by 3/17.
- * TODO(butlermichael)
  */
-/*
 TEST_F(RenderscriptHidlTest, NativeWindowIoTest) {
     // uint8x4
     Element element = context->elementCreate(DataType::UNSIGNED_8, DataKind::USER, false, 4);
     // 512 x 512 x uint8x4
     Type type = context->typeCreate(element, 512, 512, 0, false, false, YuvFormat::YUV_NONE);
     std::vector<uint32_t> dataIn(512*512), dataOut(512*512);
-    std::generate(dataIn.begin(), dataIn.end(), [](){ static int val = 0; return (uint32_t)val++; });
+    std::generate(dataIn.begin(), dataIn.end(), [](){ static uint32_t val = 0; return val++; });
     hidl_vec<uint8_t> _data;
     _data.setToExternal((uint8_t*)dataIn.data(), dataIn.size()*sizeof(uint32_t));
-    // 512 x 512 x float1
+    // 512 x 512 x uint8x4
     Allocation allocationRecv = context->allocationCreateTyped(type, AllocationMipmapControl::NONE,
                                                                (int)(AllocationUsageType::SCRIPT
                                                                | AllocationUsageType::IO_INPUT),
@@ -157,21 +154,20 @@ TEST_F(RenderscriptHidlTest, NativeWindowIoTest) {
                                                                (int)(AllocationUsageType::SCRIPT
                                                                | AllocationUsageType::IO_OUTPUT),
                                                                (Ptr)nullptr);
-    context->allocation2DWrite(allocationSend, 0, 0, 0, AllocationCubemapFace::POSITIVE_X, 512, 512,
-                               _data, 0);
     NativeWindow nativeWindow = context->allocationGetNativeWindow(allocationRecv);
     EXPECT_NE(NativeWindow(0), nativeWindow);
 
+    ((ANativeWindow *)nativeWindow)->incStrong(nullptr);
+
     context->allocationSetNativeWindow(allocationSend, nativeWindow);
+    context->allocation2DWrite(allocationSend, 0, 0, 0, AllocationCubemapFace::POSITIVE_X, 512, 512,
+                               _data, 0);
     context->allocationIoSend(allocationSend);
     context->allocationIoReceive(allocationRecv);
     context->allocation2DRead(allocationRecv, 0, 0, 0, AllocationCubemapFace::POSITIVE_X, 512, 512,
                               (Ptr)dataOut.data(), (Size)dataOut.size()*sizeof(uint32_t), 0);
-    bool same = std::all_of(dataOut.begin(), dataOut.end(),
-                             [](uint32_t x){ static int val = 0; return x == (uint32_t)val++; });
-    EXPECT_EQ(true, same);
+    EXPECT_EQ(dataIn, dataOut);
 }
-*/
 
 /*
  * Three allocations are created, two with IO_INPUT and one with IO_OUTPUT. The
@@ -180,21 +176,17 @@ TEST_F(RenderscriptHidlTest, NativeWindowIoTest) {
  * Calls: elementCreate, typeCreate, allocationCreateTyped,
  * allocationCreateFromBitmap, allocationSetupBufferQueue,
  * allocationShareBufferQueue
- *
- * This test currently has a bug, and should be fixed by 3/17.
- * TODO(butlermichael)
  */
-/*
 TEST_F(RenderscriptHidlTest, BufferQueueTest) {
-    // float1
-    Element element = context->elementCreate(DataType::FLOAT_32, DataKind::USER, false, 1);
-    // 512 x 512 x float1
+    // uint8x4
+    Element element = context->elementCreate(DataType::UNSIGNED_8, DataKind::USER, false, 4);
+    // 512 x 512 x uint8x4
     Type type = context->typeCreate(element, 512, 512, 0, false, false, YuvFormat::YUV_NONE);
-    std::vector<float> dataIn(512*512), dataOut1(512*512), dataOut2(512*512);
-    std::generate(dataIn.begin(), dataIn.end(), [](){ static int val = 0; return (float)val++; });
+    std::vector<uint32_t> dataIn(512*512), dataOut1(512*512), dataOut2(512*512);
+    std::generate(dataIn.begin(), dataIn.end(), [](){ static uint32_t val = 0; return val++; });
     hidl_vec<uint8_t> _data;
-    _data.setToExternal((uint8_t*)dataIn.data(), dataIn.size()*sizeof(float));
-    // 512 x 512 x float1
+    _data.setToExternal((uint8_t*)dataIn.data(), dataIn.size()*sizeof(uint32_t));
+    // 512 x 512 x uint8x4
     Allocation allocationRecv1 = context->allocationCreateTyped(type, AllocationMipmapControl::NONE,
                                                                 (int)(AllocationUsageType::SCRIPT
                                                                 | AllocationUsageType::IO_INPUT),
@@ -203,16 +195,37 @@ TEST_F(RenderscriptHidlTest, BufferQueueTest) {
                                                                 (int)(AllocationUsageType::SCRIPT
                                                                 | AllocationUsageType::IO_INPUT),
                                                                 (Ptr)nullptr);
-    Allocation allocationSend = context->allocationCreateFromBitmap(type,
-                                                                    AllocationMipmapControl::NONE,
-                                                                    _data,
-                                                                   (int)(AllocationUsageType::SCRIPT
-                                                                 | AllocationUsageType::IO_OUTPUT));
+    Allocation allocationSend  = context->allocationCreateTyped(type, AllocationMipmapControl::NONE,
+                                                                (int)(AllocationUsageType::SCRIPT
+                                                                | AllocationUsageType::IO_INPUT),
+                                                                (Ptr)nullptr);
     context->allocationSetupBufferQueue(allocationRecv1, 2);
-    context->allocationShareBufferQueue(allocationRecv1, allocationRecv2);
-    // TODO: test the buffer queue
+    context->allocationShareBufferQueue(allocationRecv2, allocationRecv1);
+
+    NativeWindow nativeWindow1 = context->allocationGetNativeWindow(allocationRecv1);
+    EXPECT_NE(NativeWindow(0), nativeWindow1);
+    NativeWindow nativeWindow2 = context->allocationGetNativeWindow(allocationRecv2);
+    EXPECT_EQ(nativeWindow2, nativeWindow1);
+
+    ((ANativeWindow *)nativeWindow1)->incStrong(nullptr);
+
+    context->allocationSetNativeWindow(allocationSend, nativeWindow1);
+    context->allocation2DWrite(allocationSend, 0, 0, 0, AllocationCubemapFace::POSITIVE_X, 512, 512,
+                               _data, 0);
+    context->allocationIoSend(allocationSend);
+    context->allocationIoReceive(allocationRecv1);
+    context->allocation2DRead(allocationRecv1, 0, 0, 0, AllocationCubemapFace::POSITIVE_X, 512, 512,
+                              (Ptr)dataOut1.data(), (Size)dataOut1.size()*sizeof(uint32_t), 0);
+    EXPECT_EQ(dataIn, dataOut1);
+
+    context->allocation2DWrite(allocationSend, 0, 0, 0, AllocationCubemapFace::POSITIVE_X, 512, 512,
+                               _data, 0);
+    context->allocationIoSend(allocationSend);
+    context->allocationIoReceive(allocationRecv2);
+    context->allocation2DRead(allocationRecv2, 0, 0, 0, AllocationCubemapFace::POSITIVE_X, 512, 512,
+                              (Ptr)dataOut2.data(), (Size)dataOut2.size()*sizeof(uint32_t), 0);
+    EXPECT_EQ(dataIn, dataOut2);
 }
-*/
 
 /*
  * This test sets up the message queue, sends a message, peeks at the message,
@@ -220,33 +233,29 @@ TEST_F(RenderscriptHidlTest, BufferQueueTest) {
  *
  * Calls: contextInitToClient, contextSendMessage, contextPeekMessage,
  * contextGetMessage, contextDeinitToClient, contextLog
- *
- * This test currently has a bug, and should be fixed by 3/17.
- * TODO(butlermichael)
  */
-/*
 TEST_F(RenderscriptHidlTest, ContextMessageTest) {
     context->contextInitToClient();
 
-    std::string messageOut = "correct";
+    const char * message = "correct";
+    std::vector<char> messageSend(message, message + sizeof(message));
     hidl_vec<uint8_t> _data;
-    _data.setToExternal((uint8_t*)const_cast<char*>(messageOut.c_str()), messageOut.length());
+    _data.setToExternal((uint8_t*)messageSend.data(), messageSend.size());
     context->contextSendMessage(0, _data);
     MessageToClientType messageType;
     size_t size;
     uint32_t subID;
     context->contextPeekMessage([&](MessageToClientType _type, Size _size, uint32_t _subID){
                                 messageType = _type; size = (uint32_t)_size; subID = _subID; });
-    std::vector<char> messageIn(size, '\0');
-    context->contextGetMessage(messageIn.data(), messageIn.size(),
+    std::vector<char> messageRecv(size, '\0');
+    context->contextGetMessage(messageRecv.data(), messageRecv.size(),
                                [&](MessageToClientType _type, Size _size){
                                messageType = _type; size = (uint32_t)_size; });
-    EXPECT_EQ(messageOut, messageIn.data());
+    EXPECT_EQ(messageSend, messageRecv);
 
     context->contextDeinitToClient();
     context->contextLog();
 }
-*/
 
 /*
  * Call through a bunch of APIs and make sure they don’t crash. Assign the name

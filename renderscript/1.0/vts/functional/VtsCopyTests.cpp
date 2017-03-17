@@ -43,9 +43,7 @@ TEST_F(RenderscriptHidlTest, Simple1DCopyTest) {
     context->allocation1DWrite(allocation, 0, 0, (Size)dataIn.size(), _data);
     context->allocation1DRead(allocation, 0, 0, (uint32_t)dataOut.size(), (Ptr)dataOut.data(),
                               (Size)dataOut.size()*sizeof(float));
-    bool same = std::all_of(dataOut.begin(), dataOut.end(),
-                            [](float x){ static int val = 0; return x == (float)val++; });
-    EXPECT_EQ(true, same);
+    EXPECT_EQ(dataIn, dataOut);
 }
 
 /*
@@ -76,9 +74,7 @@ TEST_F(RenderscriptHidlTest, Simple2DCopyTest) {
                                _data, 0);
     context->allocation2DRead(allocation, 0, 0, 0, AllocationCubemapFace::POSITIVE_X, 128, 128,
                               (Ptr)dataOut.data(), (Size)dataOut.size()*sizeof(float), 0);
-    bool same = std::all_of(dataOut.begin(), dataOut.end(),
-                            [](float x){ static int val = 0; return x == (float)val++; });
-    EXPECT_EQ(true, same);
+    EXPECT_EQ(dataIn, dataOut);
 }
 
 /*
@@ -108,9 +104,7 @@ TEST_F(RenderscriptHidlTest, Simple3DCopyTest) {
     context->allocation3DWrite(allocation, 0, 0, 0, 0, 32, 32, 32, _data, 0);
     context->allocation3DRead(allocation, 0, 0, 0, 0, 32, 32, 32, (Ptr)dataOut.data(),
                               (Size)dataOut.size()*sizeof(float), 0);
-    bool same = std::all_of(dataOut.begin(), dataOut.end(),
-                            [](float x){ static int val = 0; return x == (float)val++; });
-    EXPECT_EQ(true, same);
+    EXPECT_EQ(dataIn, dataOut);
 }
 
 /*
@@ -139,18 +133,14 @@ TEST_F(RenderscriptHidlTest, SimpleBitmapTest) {
                                                                 AllocationMipmapControl::NONE,
                                                                 _data,
                                                                 (int)AllocationUsageType::SCRIPT);
-    EXPECT_NE(allocation, Allocation(0));
+    EXPECT_NE(Allocation(0), allocation);
 
     context->allocationCopyToBitmap(allocation, (Ptr)dataOut1.data(),
                                     (Size)dataOut1.size()*sizeof(float));
-    bool same1 = std::all_of(dataOut1.begin(), dataOut1.end(),
-                             [](float x){ static int val = 0; return x == (float)val++; });
-    EXPECT_EQ(true, same1);
+    EXPECT_EQ(dataIn, dataOut1);
 
     context->allocationRead(allocation, (Ptr)dataOut2.data(), (Size)dataOut2.size()*sizeof(float));
-    bool same2 = std::all_of(dataOut2.begin(), dataOut2.end(),
-                             [](float x){ static int val = 0; return x == (float)val++; });
-    EXPECT_EQ(true, same2);
+    EXPECT_EQ(dataIn, dataOut2);
 }
 
 /*
@@ -368,24 +358,20 @@ TEST_F(RenderscriptHidlTest, SimpleCubemapTest) {
 /*
  * This test creates a complex element type (uint8_t, uint32_t) out of known
  * elements. It then verifies the element structure was created correctly.
- * Finally, the test creates a 128-wide, 1-dimension allocation of this type
- * and transfers memory to and from this structure.
+ * Finally, the test creates a 1-wide, 1-dimension allocation of this type
+ * and transfers memory to and from a single cell of this Allocation.
  *
  * Calls: elementCreate, elementComplexCreate, elementGetSubElements,
  * typeCreate, allocationCreateTyped, allocationElementWrite,
  * allocationElementRead
- *
- * This test currently has a bug, and should be fixed by 3/17.
- * TODO(butlermichael)
  */
-/*
 TEST_F(RenderscriptHidlTest, ComplexElementTest) {
     Element element1 = context->elementCreate(DataType::UNSIGNED_8, DataKind::USER, false, 1);
     Element element2 = context->elementCreate(DataType::UNSIGNED_32, DataKind::USER, false, 1);
 
     hidl_vec<Element> eins = {element1, element2};
     hidl_vec<hidl_string> names = {hidl_string("first"), hidl_string("second")};
-    hidl_vec<Size> arraySizesPtr = {sizeof(uint8_t), sizeof(uint32_t)};
+    hidl_vec<Size> arraySizesPtr = {1, 1};
     Element element3 = context->elementComplexCreate(eins, names, arraySizesPtr);
     EXPECT_NE(Element(0), element3);
 
@@ -400,28 +386,25 @@ TEST_F(RenderscriptHidlTest, ComplexElementTest) {
                                                         namesOut.push_back(_names[1]);
                                                         arraySizesOut = _arraySizes;
                                                     });
-    EXPECT_NE(Element(0), ids[0]);
-    EXPECT_NE(Element(0), ids[1]);
+    EXPECT_EQ(element1, ids[0]);
+    EXPECT_EQ(element2, ids[1]);
     EXPECT_EQ("first", namesOut[0]);
     EXPECT_EQ("second", namesOut[1]);
-    EXPECT_EQ(sizeof(uint8_t), arraySizesOut[0]);
-    EXPECT_EQ(sizeof(uint32_t), arraySizesOut[1]);
+    EXPECT_EQ(Size(1), arraySizesOut[0]);
+    EXPECT_EQ(Size(1), arraySizesOut[1]);
 
-    // 128 x (uint8_t, uint32_t)
-    Type type = context->typeCreate(element3, 128, 0, 0, false, false, YuvFormat::YUV_NONE);
-    // 128 x (uint8_t, uint32_t)
+    // 1 x (uint8_t, uint32_t)
+    Type type = context->typeCreate(element3, 1, 0, 0, false, false, YuvFormat::YUV_NONE);
+    // 1 x (uint8_t, uint32_t)
     Allocation allocation = context->allocationCreateTyped(type, AllocationMipmapControl::NONE,
                                                            (int)AllocationUsageType::SCRIPT,
                                                            (Ptr)nullptr);
-    std::vector<uint32_t> dataIn(128), dataOut(128);
+    std::vector<uint32_t> dataIn(1), dataOut(1);
     std::generate(dataIn.begin(), dataIn.end(), [](){ static uint32_t val = 0; return val++; });
     hidl_vec<uint8_t> _data;
     _data.setToExternal((uint8_t*)dataIn.data(), dataIn.size()*sizeof(uint32_t));
     context->allocationElementWrite(allocation, 0, 0, 0, 0, _data, 1);
     context->allocationElementRead(allocation, 0, 0, 0, 0, (Ptr)dataOut.data(),
                                    (Size)dataOut.size()*sizeof(uint32_t), 1);
-    bool same = std::all_of(dataOut.begin(), dataOut.end(),
-                            [](uint32_t x){ static uint32_t val = 0; return x == val++; });
-    EXPECT_EQ(true, same);
+    EXPECT_EQ(dataIn, dataOut);
 }
-*/
