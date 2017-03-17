@@ -288,3 +288,19 @@ TEST_F(RadioHidlTest, requestIccSimAuthentication) {
         EXPECT_EQ(RadioError::INVALID_ARGUMENTS, radioRsp->rspInfo.error);
     }
 }
+
+/*
+ * Test IRadio.supplyNetworkDepersonalization() for the response returned.
+ */
+TEST_F(RadioHidlTest, supplyNetworkDepersonalization) {
+    int serial = 1;
+
+    radio->supplyNetworkDepersonalization(serial, hidl_string("test"));
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp->rspInfo.serial);
+
+    if (cardStatus.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::PASSWORD_INCORRECT);
+    }
+}
