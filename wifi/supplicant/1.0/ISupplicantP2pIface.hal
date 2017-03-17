@@ -611,7 +611,7 @@ interface ISupplicantP2pIface extends ISupplicantIface {
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
    */
-  setWfdDeviceInfo(uint8_t[8] info) generates (SupplicantStatus status);
+  setWfdDeviceInfo(uint8_t[6] info) generates (SupplicantStatus status);
 
   /**
    * Creates a NFC handover request message.

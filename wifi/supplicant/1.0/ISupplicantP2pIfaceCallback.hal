@@ -105,7 +105,7 @@ interface ISupplicantP2pIfaceCallback {
       MacAddress srcAddress, MacAddress p2pDeviceAddress,
       uint8_t[8] primaryDeviceType, string deviceName,
       bitfield<WpsConfigMethods> configMethods, uint8_t deviceCapabilities,
-      bitfield<P2pGroupCapabilityMask> groupCapabilities, uint8_t[8] wfdDeviceInfo);
+      bitfield<P2pGroupCapabilityMask> groupCapabilities, uint8_t[6] wfdDeviceInfo);
 
   /**
    * Used to indicate that a P2P device has been lost.
