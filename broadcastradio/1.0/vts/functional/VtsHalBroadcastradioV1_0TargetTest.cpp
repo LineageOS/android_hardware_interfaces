@@ -454,6 +454,7 @@ TEST_F(BroadcastRadioHidlTest, SetConfigurationFails) {
  *  - the HAL implements the method
  *  - the method returns 0 (no error)
  *  - the tuned callback is received within kTuneCallbacktimeoutNs ns
+ *  - skipping sub-channel or not does not fail the call
  */
 TEST_F(BroadcastRadioHidlTest, Scan) {
     ASSERT_EQ(true, openTuner());
@@ -467,7 +468,7 @@ TEST_F(BroadcastRadioHidlTest, Scan) {
 
     // test scan DOWN
     mCallbackCalled = false;
-    hidlResult = mTuner->scan(Direction::DOWN, true);
+    hidlResult = mTuner->scan(Direction::DOWN, false);
     EXPECT_TRUE(hidlResult.isOk());
     EXPECT_EQ(Result::OK, hidlResult);
     EXPECT_EQ(true, waitForCallback(kTuneCallbacktimeoutNs));
@@ -480,13 +481,14 @@ TEST_F(BroadcastRadioHidlTest, Scan) {
  *  - the HAL implements the method
  *  - the method returns 0 (no error)
  *  - the tuned callback is received within kTuneCallbacktimeoutNs ns
+ *  - skipping sub-channel or not does not fail the call
  */
 TEST_F(BroadcastRadioHidlTest, Step) {
     ASSERT_EQ(true, openTuner());
     ASSERT_TRUE(checkAntenna());
     // test step UP
     mCallbackCalled = false;
-    Return<Result> hidlResult = mTuner->step(Direction::UP, true);
+    Return<Result> hidlResult = mTuner->step(Direction::UP, false);
     EXPECT_TRUE(hidlResult.isOk());
     EXPECT_EQ(Result::OK, hidlResult);
     EXPECT_EQ(true, waitForCallback(kTuneCallbacktimeoutNs));
