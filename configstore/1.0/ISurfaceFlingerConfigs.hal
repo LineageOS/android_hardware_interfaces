@@ -90,4 +90,10 @@ interface ISurfaceFlingerConfigs {
      *  Must be equals to min(max_width, max_height).
      */
     maxVirtualDisplaySize() generates (OptionalUInt64 value);
+
+    /*
+     * Indicates if Sync framework is available. Sync framework provides fence
+     * mechanism which significantly reduces buffer processing latency.
+     */
+    hasSyncFramework() generates(OptionalBool value);
 };
