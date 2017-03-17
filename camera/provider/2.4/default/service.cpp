@@ -25,5 +25,5 @@ using android::hardware::defaultPassthroughServiceImplementation;
 int main()
 {
     ALOGI("Camera provider Service is starting.");
-    return defaultPassthroughServiceImplementation<ICameraProvider>("legacy/0");
+    return defaultPassthroughServiceImplementation<ICameraProvider>("legacy/0", /*maxThreads*/ 6);
 }
