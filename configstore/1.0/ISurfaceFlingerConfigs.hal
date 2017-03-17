@@ -84,4 +84,10 @@ interface ISurfaceFlingerConfigs {
      * GL composition.
      */
     useHwcForRGBtoYUV() generates(OptionalBool value);
+
+    /*
+     *  Maximum dimension supported by HWC for virtual display.
+     *  Must be equals to min(max_width, max_height).
+     */
+    maxVirtualDisplaySize() generates (OptionalUInt64 value);
 };
