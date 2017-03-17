@@ -33,7 +33,6 @@ using ::android::sp;
 using ::android::Mutex;
 using ::android::Condition;
 using ::android::hardware::Return;
-using ::android::hardware::Status;
 using ::android::hardware::Void;
 using ::android::hardware::broadcastradio::V1_0::IBroadcastRadioFactory;
 using ::android::hardware::broadcastradio::V1_0::IBroadcastRadio;

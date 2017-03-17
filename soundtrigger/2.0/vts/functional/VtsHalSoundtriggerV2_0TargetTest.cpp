@@ -40,7 +40,6 @@ using ::android::hardware::soundtrigger::V2_0::PhraseRecognitionExtra;
 using ::android::hardware::soundtrigger::V2_0::ISoundTriggerHw;
 using ::android::hardware::soundtrigger::V2_0::ISoundTriggerHwCallback;
 using ::android::hardware::Return;
-using ::android::hardware::Status;
 using ::android::hardware::Void;
 using ::android::sp;
 
