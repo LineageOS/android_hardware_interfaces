@@ -565,6 +565,7 @@ enum AudioDevice : uint32_t {
             OUT_IP |
             OUT_BUS |
             OUT_PROXY |
+            OUT_USB_HEADSET |
             OUT_DEFAULT),
     OUT_ALL_A2DP = (OUT_BLUETOOTH_A2DP |
             OUT_BLUETOOTH_A2DP_HEADPHONES |
@@ -572,7 +573,7 @@ enum AudioDevice : uint32_t {
     OUT_ALL_SCO  = (OUT_BLUETOOTH_SCO |
             OUT_BLUETOOTH_SCO_HEADSET |
             OUT_BLUETOOTH_SCO_CARKIT),
-    OUT_ALL_USB  = (OUT_USB_ACCESSORY | OUT_USB_DEVICE),
+    OUT_ALL_USB  = (OUT_USB_ACCESSORY | OUT_USB_DEVICE | OUT_USB_HEADSET),
     /* input devices */
     IN_COMMUNICATION         = BIT_IN | 0x1,
     IN_AMBIENT               = BIT_IN | 0x2,
@@ -629,9 +630,10 @@ enum AudioDevice : uint32_t {
             IN_IP |
             IN_BUS |
             IN_PROXY |
+            IN_USB_HEADSET |
             IN_DEFAULT),
     IN_ALL_SCO = IN_BLUETOOTH_SCO_HEADSET,
-    IN_ALL_USB  = (IN_USB_ACCESSORY | IN_USB_DEVICE),
+    IN_ALL_USB  = (IN_USB_ACCESSORY | IN_USB_DEVICE | IN_USB_HEADSET),
 };
 
 /*
