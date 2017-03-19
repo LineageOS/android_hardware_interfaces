@@ -30,6 +30,19 @@ static const uint8_t HCI_DATA_TYPE_COMMAND = 1;
 static const uint8_t HCI_DATA_TYPE_ACL = 2;
 static const uint8_t HCI_DATA_TYPE_SCO = 3;
 
+class BluetoothDeathRecipient : public hidl_death_recipient {
+ public:
+  BluetoothDeathRecipient(const sp<IBluetoothHci> hci) : mHci(hci) {}
+
+  virtual void serviceDied(
+      uint64_t /*cookie*/,
+      const wp<::android::hidl::base::V1_0::IBase>& /*who*/) {
+    ALOGE("BluetoothDeathRecipient::serviceDied - Bluetooth service died");
+    mHci->close();
+  }
+  sp<IBluetoothHci> mHci;
+};
+
 BluetoothHci::BluetoothHci()
     : deathRecipient(new BluetoothDeathRecipient(this)) {}
 
@@ -41,19 +54,37 @@ Return<void> BluetoothHci::initialize(
 
   bool rc = VendorInterface::Initialize(
       [this](bool status) {
-        event_cb_->initializationComplete(
+        auto hidl_status = event_cb_->initializationComplete(
             status ? Status::SUCCESS : Status::INITIALIZATION_ERROR);
+        if (!hidl_status.isOk()) {
+          ALOGE("VendorInterface -> Unable to call initializationComplete()");
+        }
       },
       [this](const hidl_vec<uint8_t>& packet) {
-        event_cb_->hciEventReceived(packet);
+        auto hidl_status = event_cb_->hciEventReceived(packet);
+        if (!hidl_status.isOk()) {
+          ALOGE("VendorInterface -> Unable to call hciEventReceived()");
+        }
       },
       [this](const hidl_vec<uint8_t>& packet) {
-        event_cb_->aclDataReceived(packet);
+        auto hidl_status = event_cb_->aclDataReceived(packet);
+        if (!hidl_status.isOk()) {
+          ALOGE("VendorInterface -> Unable to call aclDataReceived()");
+        }
       },
       [this](const hidl_vec<uint8_t>& packet) {
-        event_cb_->scoDataReceived(packet);
+        auto hidl_status = event_cb_->scoDataReceived(packet);
+        if (!hidl_status.isOk()) {
+          ALOGE("VendorInterface -> Unable to call scoDataReceived()");
+        }
       });
-  if (!rc) event_cb_->initializationComplete(Status::INITIALIZATION_ERROR);
+  if (!rc) {
+    auto hidl_status =
+        event_cb_->initializationComplete(Status::INITIALIZATION_ERROR);
+    if (!hidl_status.isOk()) {
+      ALOGE("VendorInterface -> Unable to call initializationComplete(ERR)");
+    }
+  }
   return Void();
 }
 
