@@ -30,16 +30,7 @@ namespace implementation {
 using ::android::hardware::Return;
 using ::android::hardware::hidl_vec;
 
-struct BluetoothDeathRecipient : hidl_death_recipient {
-  BluetoothDeathRecipient(const sp<IBluetoothHci> hci) : mHci(hci) {}
-
-  virtual void serviceDied(
-      uint64_t /*cookie*/,
-      const wp<::android::hidl::base::V1_0::IBase>& /*who*/) {
-    mHci->close();
-  }
-  sp<IBluetoothHci> mHci;
-};
+class BluetoothDeathRecipient;
 
 class BluetoothHci : public IBluetoothHci {
  public:
