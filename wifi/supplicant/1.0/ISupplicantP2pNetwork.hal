@@ -100,4 +100,34 @@ interface ISupplicantP2pNetwork extends ISupplicantNetwork {
    * @return isGo true if group owner, false otherwise.
    */
   isGo() generates (SupplicantStatus status, bool isGo);
+
+  /**
+   * Set the list of P2P Clients in a persistent group (GO).
+   * This is a list of P2P Clients (P2P Device Address) that have joined
+   * the persistent group. This is maintained on the GO for persistent
+   * group entries (disabled == 2).
+   *
+   * @param clients MAC address of the clients.
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantP2ptusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   */
+  setClientList(vec<MacAddress> clients) generates (SupplicantStatus status);
+
+  /**
+   * Get the list of P2P Clients in a persistent group (GO).
+   * This is a list of P2P Clients (P2P Device Address) that have joined
+   * the persistent group. This is maintained on the GO for persistent
+   * group entries (disabled == 2).
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantP2ptusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+   * @return clients MAC address of the clients.
+   */
+  getClientList() generates (SupplicantStatus status, vec<MacAddress> clients);
 };

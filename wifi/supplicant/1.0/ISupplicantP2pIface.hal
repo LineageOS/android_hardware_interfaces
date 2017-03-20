@@ -672,4 +672,15 @@ interface ISupplicantP2pIface extends ISupplicantIface {
    */
   reportNfcHandoverInitiation(vec<uint8_t> select)
       generates (SupplicantStatus status);
+
+  /**
+   * Persist the current configuration to disk.
+   *
+   * @return status Status of the operation.
+   *         Possible status codes:
+   *         |SupplicantStatusCode.SUCCESS|,
+   *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+   *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+   */
+  saveConfig() generates (SupplicantStatus status);
 };
