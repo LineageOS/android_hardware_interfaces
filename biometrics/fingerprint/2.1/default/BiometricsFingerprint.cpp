@@ -264,27 +264,35 @@ void BiometricsFingerprint::notify(const fingerprint_msg_t *msg) {
         case FINGERPRINT_ERROR: {
                 int32_t vendorCode = 0;
                 FingerprintError result = VendorErrorFilter(msg->data.error, &vendorCode);
-                thisPtr->mClientCallback->onError(devId, result, vendorCode);
+                if (!thisPtr->mClientCallback->onError(devId, result, vendorCode).isOk()) {
+                    ALOGE("failed to invoke fingerprint onError callback");
+                }
             }
             break;
         case FINGERPRINT_ACQUIRED: {
                 int32_t vendorCode = 0;
                 FingerprintAcquiredInfo result =
                     VendorAcquiredFilter(msg->data.acquired.acquired_info, &vendorCode);
-                thisPtr->mClientCallback->onAcquired(devId, result, vendorCode);
+                if (!thisPtr->mClientCallback->onAcquired(devId, result, vendorCode).isOk()) {
+                    ALOGE("failed to invoke fingerprint onAcquired callback");
+                }
             }
             break;
         case FINGERPRINT_TEMPLATE_ENROLLING:
-            thisPtr->mClientCallback->onEnrollResult(devId,
-                msg->data.enroll.finger.fid,
-                msg->data.enroll.finger.gid,
-                msg->data.enroll.samples_remaining);
+            if (!thisPtr->mClientCallback->onEnrollResult(devId,
+                    msg->data.enroll.finger.fid,
+                    msg->data.enroll.finger.gid,
+                    msg->data.enroll.samples_remaining).isOk()) {
+                ALOGE("failed to invoke fingerprint onEnrollResult callback");
+            }
             break;
         case FINGERPRINT_TEMPLATE_REMOVED:
-            thisPtr->mClientCallback->onRemoved(devId,
-                msg->data.removed.finger.fid,
-                msg->data.removed.finger.gid,
-                msg->data.removed.remaining_templates);
+            if (!thisPtr->mClientCallback->onRemoved(devId,
+                    msg->data.removed.finger.fid,
+                    msg->data.removed.finger.gid,
+                    msg->data.removed.remaining_templates).isOk()) {
+                ALOGE("failed to invoke fingerprint onRemoved callback");
+            }
             break;
         case FINGERPRINT_AUTHENTICATED:
             if (msg->data.authenticated.finger.fid != 0) {
@@ -292,23 +300,29 @@ void BiometricsFingerprint::notify(const fingerprint_msg_t *msg) {
                     reinterpret_cast<const uint8_t *>(&msg->data.authenticated.hat);
                 const hidl_vec<uint8_t> token(
                     std::vector<uint8_t>(hat, hat + sizeof(msg->data.authenticated.hat)));
-                thisPtr->mClientCallback->onAuthenticated(devId,
-                    msg->data.authenticated.finger.fid,
-                    msg->data.authenticated.finger.gid,
-                    token);
+                if (!thisPtr->mClientCallback->onAuthenticated(devId,
+                        msg->data.authenticated.finger.fid,
+                        msg->data.authenticated.finger.gid,
+                        token).isOk()) {
+                    ALOGE("failed to invoke fingerprint onAuthenticated callback");
+                }
             } else {
                 // Not a recognized fingerprint
-                thisPtr->mClientCallback->onAuthenticated(devId,
-                    msg->data.authenticated.finger.fid,
-                    msg->data.authenticated.finger.gid,
-                    hidl_vec<uint8_t>());
+                if (!thisPtr->mClientCallback->onAuthenticated(devId,
+                        msg->data.authenticated.finger.fid,
+                        msg->data.authenticated.finger.gid,
+                        hidl_vec<uint8_t>()).isOk()) {
+                    ALOGE("failed to invoke fingerprint onAuthenticated callback");
+                }
             }
             break;
         case FINGERPRINT_TEMPLATE_ENUMERATING:
-            thisPtr->mClientCallback->onEnumerate(devId,
-                msg->data.enumerated.finger.fid,
-                msg->data.enumerated.finger.gid,
-                msg->data.enumerated.remaining_templates);
+            if (!thisPtr->mClientCallback->onEnumerate(devId,
+                    msg->data.enumerated.finger.fid,
+                    msg->data.enumerated.finger.gid,
+                    msg->data.enumerated.remaining_templates).isOk()) {
+                ALOGE("failed to invoke fingerprint onEnumerate callback");
+            }
             break;
     }
 }
