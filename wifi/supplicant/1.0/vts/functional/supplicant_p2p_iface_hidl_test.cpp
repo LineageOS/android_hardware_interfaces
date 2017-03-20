@@ -81,7 +81,7 @@ class IfaceCallback : public ISupplicantP2pIfaceCallback {
         const hidl_array<uint8_t, 8>& /* primaryDeviceType */,
         const hidl_string& /* deviceName */, uint16_t /* configMethods */,
         uint8_t /* deviceCapabilities */, uint32_t /* groupCapabilities */,
-        const hidl_array<uint8_t, 8>& /* wfdDeviceInfo */) override {
+        const hidl_array<uint8_t, 6>& /* wfdDeviceInfo */) override {
         return Void();
     }
     Return<void> onDeviceLost(
