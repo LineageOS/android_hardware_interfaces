@@ -22,4 +22,5 @@ subdirs = [
     "versioning/1.0",
     "versioning/2.2",
     "versioning/2.3",
+    "versioning/2.4",
 ]
