@@ -24,10 +24,18 @@ using android::hardware::configureRpcThreadpool;
 using android::hardware::registerPassthroughServiceImplementation;
 using android::hardware::joinRpcThreadpool;
 
+using android::status_t;
+using android::OK;
+
 int main() {
     // TODO(b/34857894): tune the max thread count.
     configureRpcThreadpool(10, true);
-    registerPassthroughServiceImplementation<ISurfaceFlingerConfigs>();
+
+    status_t status;
+
+    status = registerPassthroughServiceImplementation<ISurfaceFlingerConfigs>();
+    LOG_ALWAYS_FATAL_IF(status != OK, "Could not register ISurfaceFlingerConfigs");
+
     // other interface registration comes here
     joinRpcThreadpool();
     return 0;
