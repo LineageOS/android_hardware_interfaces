@@ -22,6 +22,8 @@
 
 #include "ComposerClient.h"
 #include "Hwc.h"
+#include "hardware/hwcomposer.h"
+#include "hwc2on1adapter/HWC2On1Adapter.h"
 
 namespace android {
 namespace hardware {
@@ -30,13 +32,36 @@ namespace composer {
 namespace V2_1 {
 namespace implementation {
 
+
 HwcHal::HwcHal(const hw_module_t* module)
-    : mDevice(nullptr), mDispatch()
+    : mDevice(nullptr), mDispatch(), mAdapter()
 {
-    int status = hwc2_open(module, &mDevice);
-    if (status) {
-        LOG_ALWAYS_FATAL("failed to open hwcomposer2 device: %s",
-                strerror(-status));
+    // Determine what kind of module is available (HWC2 vs HWC1.X).
+    hw_device_t* device = nullptr;
+    int error = module->methods->open(module, HWC_HARDWARE_COMPOSER, &device);
+    if (error != 0) {
+        ALOGE("Failed to open HWC device (%s), aborting", strerror(-error));
+        abort();
+    }
+    uint32_t majorVersion = (device->version >> 24) & 0xF;
+
+    // If we don't have a HWC2, we need to wrap whatever we have in an adapter.
+    if (majorVersion != 2) {
+        uint32_t minorVersion = device->version & HARDWARE_API_VERSION_2_MAJ_MIN_MASK;
+        minorVersion = (minorVersion >> 16) & 0xF;
+        ALOGI("Found HWC implementation v%d.%d", majorVersion, minorVersion);
+        if (minorVersion < 1) {
+            ALOGE("Cannot adapt to HWC version %d.%d. Minimum supported is 1.1",
+                  majorVersion, minorVersion);
+            abort();
+        }
+        mAdapter = std::make_unique<HWC2On1Adapter>(
+                reinterpret_cast<hwc_composer_device_1*>(device));
+
+        // Place the adapter in front of the device module.
+        mDevice = mAdapter.get();
+    } else {
+        mDevice = reinterpret_cast<hwc2_device_t*>(device);
     }
 
     initCapabilities();
