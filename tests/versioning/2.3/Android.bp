@@ -63,6 +63,7 @@ cc_library_shared {
         "libcutils",
         "android.hardware.tests.versioning@1.0",
         "android.hardware.tests.versioning@2.2",
+        "android.hidl.base@1.0",
     ],
     export_shared_lib_headers: [
         "libhidlbase",
@@ -71,5 +72,6 @@ cc_library_shared {
         "libutils",
         "android.hardware.tests.versioning@1.0",
         "android.hardware.tests.versioning@2.2",
+        "android.hidl.base@1.0",
     ],
 }
