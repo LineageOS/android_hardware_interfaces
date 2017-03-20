@@ -171,14 +171,16 @@ interface ICameraDeviceSession {
     /**
      * processCaptureRequest:
      *
-     * Send a new capture request to the HAL. The HAL must not return from
-     * this call until it is ready to accept the next request to process. Only
-     * one call to processCaptureRequest() must be made at a time by the
-     * framework, and the calls must all be from the same thread. The next call
-     * to processCaptureRequest() must be made as soon as a new request and
-     * its associated buffers are available. In a normal preview scenario, this
-     * means the function is generally called again by the framework almost
-     * instantly.
+     * Send a list of capture requests to the HAL. The HAL must not return from
+     * this call until it is ready to accept the next set of requests to
+     * process. Only one call to processCaptureRequest() must be made at a time
+     * by the framework, and the calls must all be from the same thread. The
+     * next call to processCaptureRequest() must be made as soon as a new
+     * request and its associated buffers are available. In a normal preview
+     * scenario, this means the function is generally called again by the
+     * framework almost instantly. If more than one request is provided by the
+     * client, the HAL must process the requests in order of lowest index to
+     * highest index.
      *
      * The actual request processing is asynchronous, with the results of
      * capture being returned by the HAL through the processCaptureResult()
@@ -229,10 +231,14 @@ interface ICameraDeviceSession {
      *         If the camera device has encountered a serious error. After this
      *         error is returned, only the close() method can be successfully
      *         called by the framework.
+     * @return numRequestProcessed Number of requests successfully processed by
+     *     camera HAL. When status is OK, this must be equal to the size of
+     *     requests. When the call fails, this number is the number of requests
+     *     that HAL processed successfully before HAL runs into an error.
      *
      */
-    processCaptureRequest(CaptureRequest request)
-            generates (Status status);
+    processCaptureRequest(vec<CaptureRequest> requests)
+            generates (Status status, uint32_t numRequestProcessed);
 
     /**
      * flush:

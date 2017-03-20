@@ -445,13 +445,13 @@ public:
     hidl_vec<hidl_string> getCameraDeviceNames();
 
     struct EmptyDeviceCb : public ICameraDeviceCallback {
-        virtual Return<void> processCaptureResult(const CaptureResult& /*result*/) override {
+        virtual Return<void> processCaptureResult(const hidl_vec<CaptureResult>& /*results*/) override {
             ALOGI("processCaptureResult callback");
             ADD_FAILURE(); // Empty callback should not reach here
             return Void();
         }
 
-        virtual Return<void> notify(const NotifyMsg& /*msg*/) override {
+        virtual Return<void> notify(const hidl_vec<NotifyMsg>& /*msgs*/) override {
             ALOGI("notify callback");
             ADD_FAILURE(); // Empty callback should not reach here
             return Void();
@@ -460,8 +460,8 @@ public:
 
     struct DeviceCb : public ICameraDeviceCallback {
         DeviceCb(CameraHidlTest *parent) : mParent(parent) {}
-        Return<void> processCaptureResult(const CaptureResult& result) override;
-        Return<void> notify(const NotifyMsg& msg) override;
+        Return<void> processCaptureResult(const hidl_vec<CaptureResult>& results) override;
+        Return<void> notify(const hidl_vec<NotifyMsg>& msgs) override;
 
      private:
         CameraHidlTest *mParent;               // Parent object
@@ -667,12 +667,13 @@ Return<void> CameraHidlTest::Camera1DeviceCb::handleCallbackTimestamp(
 }
 
 Return<void> CameraHidlTest::DeviceCb::processCaptureResult(
-        const CaptureResult& result) {
+        const hidl_vec<CaptureResult>& results) {
     if (nullptr == mParent) {
         return Void();
     }
 
     std::unique_lock<std::mutex> l(mParent->mLock);
+    const CaptureResult& result = results[0];
 
     if(mParent->mResultFrameNumber != result.frameNumber) {
         ALOGE("%s: Unexpected frame number! Expected: %u received: %u",
@@ -695,7 +696,8 @@ Return<void> CameraHidlTest::DeviceCb::processCaptureResult(
 }
 
 Return<void> CameraHidlTest::DeviceCb::notify(
-        const NotifyMsg& message) {
+        const hidl_vec<NotifyMsg>& messages) {
+    const NotifyMsg& message = messages[0];
 
     if (MsgType::ERROR == message.type) {
         {
@@ -2477,10 +2479,17 @@ TEST_F(CameraHidlTest, processCaptureRequestPreview) {
                 mResultFrameNumber = frameNumber;
             }
 
-            Return<Status> returnStatus = session->processCaptureRequest(
-                    request);
+            Status status = Status::INTERNAL_ERROR;
+            uint32_t numRequestProcessed = 0;
+            Return<void> returnStatus = session->processCaptureRequest(
+                    {request},
+                    [&status, &numRequestProcessed] (auto s, uint32_t n) {
+                        status = s;
+                        numRequestProcessed = n;
+                    });
             ASSERT_TRUE(returnStatus.isOk());
-            ASSERT_EQ(Status::OK, returnStatus);
+            ASSERT_EQ(Status::OK, status);
+            ASSERT_EQ(numRequestProcessed, 1u);
 
             {
                 std::unique_lock<std::mutex> l(mLock);
@@ -2503,9 +2512,14 @@ TEST_F(CameraHidlTest, processCaptureRequestPreview) {
             }
 
             returnStatus = session->processCaptureRequest(
-                    request);
+                    {request},
+                    [&status, &numRequestProcessed] (auto s, uint32_t n) {
+                        status = s;
+                        numRequestProcessed = n;
+                    });
             ASSERT_TRUE(returnStatus.isOk());
-            ASSERT_EQ(Status::OK, returnStatus);
+            ASSERT_EQ(Status::OK, status);
+            ASSERT_EQ(numRequestProcessed, 1u);
 
             {
                 std::unique_lock<std::mutex> l(mLock);
@@ -2563,12 +2577,19 @@ TEST_F(CameraHidlTest, processCaptureRequestInvalidSinglePreview) {
                     emptyInputBuffer, outputBuffers};
 
             //Settings were not correctly initialized, we should fail here
-            Return<Status> returnStatus = session->processCaptureRequest(
-                    request);
-            ASSERT_TRUE(returnStatus.isOk());
-            ASSERT_EQ(Status::INTERNAL_ERROR, returnStatus);
+            Status status = Status::OK;
+            uint32_t numRequestProcessed = 0;
+            Return<void> ret = session->processCaptureRequest(
+                    {request},
+                    [&status, &numRequestProcessed] (auto s, uint32_t n) {
+                        status = s;
+                        numRequestProcessed = n;
+                    });
+            ASSERT_TRUE(ret.isOk());
+            ASSERT_EQ(Status::INTERNAL_ERROR, status);
+            ASSERT_EQ(numRequestProcessed, 0u);
 
-            Return<void> ret = session->close();
+            ret = session->close();
             ASSERT_TRUE(ret.isOk());
         }
     }
@@ -2609,11 +2630,17 @@ TEST_F(CameraHidlTest, processCaptureRequestInvalidBuffer) {
                     emptyInputBuffer, emptyOutputBuffers};
 
             //Output buffers are missing, we should fail here
-            Return<Status> returnStatus = session->processCaptureRequest(
-                    request);
-            ASSERT_TRUE(returnStatus.isOk());
-            ASSERT_EQ(Status::INTERNAL_ERROR,
-                      returnStatus);
+            Status status = Status::OK;
+            uint32_t numRequestProcessed = 0;
+            ret = session->processCaptureRequest(
+                    {request},
+                    [&status, &numRequestProcessed] (auto s, uint32_t n) {
+                        status = s;
+                        numRequestProcessed = n;
+                    });
+            ASSERT_TRUE(ret.isOk());
+            ASSERT_EQ(Status::INTERNAL_ERROR, status);
+            ASSERT_EQ(numRequestProcessed, 0u);
 
             ret = session->close();
             ASSERT_TRUE(ret.isOk());
@@ -2672,12 +2699,20 @@ TEST_F(CameraHidlTest, flushPreviewRequest) {
                 mResultFrameNumber = frameNumber;
             }
 
-            Return<Status> returnStatus = session->processCaptureRequest(
-                    request);
-            ASSERT_TRUE(returnStatus.isOk());
-            ASSERT_EQ(Status::OK, returnStatus);
+            Status status = Status::INTERNAL_ERROR;
+            uint32_t numRequestProcessed = 0;
+            ret = session->processCaptureRequest(
+                    {request},
+                    [&status, &numRequestProcessed] (auto s, uint32_t n) {
+                        status = s;
+                        numRequestProcessed = n;
+                    });
+
+            ASSERT_TRUE(ret.isOk());
+            ASSERT_EQ(Status::OK, status);
+            ASSERT_EQ(numRequestProcessed, 1u);
             //Flush before waiting for request to complete.
-            returnStatus = session->flush();
+            Return<Status> returnStatus = session->flush();
             ASSERT_TRUE(returnStatus.isOk());
             ASSERT_EQ(Status::OK, returnStatus);
 
