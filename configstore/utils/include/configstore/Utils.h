@@ -20,6 +20,10 @@
 #include <hidl/Status.h>
 #include <stdatomic.h>
 
+#pragma push_macro("LOG_TAG")
+#undef LOG_TAG
+#define LOG_TAG "ConfigStoreUtil"
+
 namespace android {
 namespace hardware {
 namespace configstore {
@@ -39,9 +43,13 @@ decltype(V::value) get(const decltype(V::value) &defValue) {
             // fallback to the default value
             ret.specified = false;
         } else {
-            (*configs.*func)([&ret](V v) {
+            auto status = (*configs.*func)([&ret](V v) {
                 ret = v;
             });
+            if (!status.isOk()) {
+                ALOGE("HIDL call failed. %s", status.description().c_str());
+                ret.specified = false;
+            }
         }
 
         return ret;
@@ -90,5 +98,7 @@ std::string getString(const std::string &defValue) {
 }  // namespace configstore
 }  // namespace hardware
 }  // namespace android
+
+#pragma pop_macro("LOG_TAG")
 
 #endif  // ANDROID_HARDWARE_CONFIGSTORE_UTILS_H
