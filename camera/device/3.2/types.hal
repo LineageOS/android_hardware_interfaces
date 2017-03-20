@@ -248,6 +248,12 @@ struct Stream {
      * streamType INPUT, the value of this field is always 0. For all streams
      * passed via configureStreams(), the HAL must set its own
      * additional usage flags in its output HalStreamConfiguration.
+     *
+     * The usage flag for an output stream may be bitwise combination of usage
+     * flags for multiple consumers, for the purpose of sharing one camera
+     * stream between those consumers. The HAL must fail configureStreams call
+     * with ILLEGAL_ARGUMENT if the combined flags cannot be supported due to
+     * imcompatible buffer format, dataSpace, or other hardware limitations.
      */
     ConsumerUsageFlags usage;
 
