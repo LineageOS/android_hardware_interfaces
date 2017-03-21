@@ -33,7 +33,7 @@ interface IRadio {
      * @param radioResponse Object containing response functions
      * @param radioIndication Object containing radio indications
      */
-    oneway setResponseFunctions(IRadioResponse radioResponse,
+    setResponseFunctions(IRadioResponse radioResponse,
             IRadioIndication radioIndication);
 
     /*
