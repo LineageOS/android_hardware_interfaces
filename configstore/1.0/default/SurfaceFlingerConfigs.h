@@ -34,7 +34,6 @@ struct SurfaceFlingerConfigs : public ISurfaceFlingerConfigs {
     Return<void> useHwcForRGBtoYUV(useHwcForRGBtoYUV_cb _hidl_cb) override;
     Return<void> maxVirtualDisplaySize(maxVirtualDisplaySize_cb _hidl_cb) override;
     Return<void> hasSyncFramework(hasSyncFramework_cb _hidl_cb) override;
-    Return<void> useVrFlinger(useVrFlinger_cb _hidl_cb) override;
 
     // Methods from ::android::hidl::base::V1_0::IBase follow.
 

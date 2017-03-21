@@ -96,12 +96,4 @@ interface ISurfaceFlingerConfigs {
      * mechanism which significantly reduces buffer processing latency.
      */
     hasSyncFramework() generates(OptionalBool value);
-
-    /*
-     * Return true if surface flinger should use vr flinger for compatible vr
-     * apps, false otherwise. Devices that will never be running vr apps should
-     * return false to avoid extra resource usage. Daydream ready devices must
-     * return true for full vr support.
-     */
-    useVrFlinger() generates (OptionalBool value);
 };
