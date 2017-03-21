@@ -40,8 +40,6 @@ struct SurfaceFlingerConfigs : public ISurfaceFlingerConfigs {
 
 };
 
-extern "C" ISurfaceFlingerConfigs* HIDL_FETCH_ISurfaceFlingerConfigs(const char* name);
-
 }  // namespace implementation
 }  // namespace V1_0
 }  // namespace configstore
