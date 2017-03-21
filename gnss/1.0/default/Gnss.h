@@ -52,7 +52,8 @@ using LegacyGnssSystemInfo = ::GnssSystemInfo;
  * Represents the standard GNSS interface. Also contains wrapper methods to allow methods from
  * IGnssCallback interface to be passed into the conventional implementation of the GNSS HAL.
  */
-struct Gnss : public IGnss {
+class Gnss : public IGnss {
+  public:
     Gnss(gps_device_t* gnss_device);
     ~Gnss();
 
@@ -122,12 +123,33 @@ struct Gnss : public IGnss {
     static GpsCallbacks sGnssCb;
 
  private:
+    /*
+     * For handling system-server death while GNSS service lives on.
+     */
+    class GnssHidlDeathRecipient : public hidl_death_recipient {
+      public:
+        GnssHidlDeathRecipient(const sp<Gnss> gnss) : mGnss(gnss) {
+        }
+
+        virtual void serviceDied(uint64_t /*cookie*/,
+                const wp<::android::hidl::base::V1_0::IBase>& /*who*/) {
+            mGnss->handleHidlDeath();
+        }
+      private:
+        sp<Gnss> mGnss;
+    };
+
     // for wakelock consolidation, see above
     static void acquireWakelockGnss();
     static void releaseWakelockGnss();
     static void updateWakelock();
     static bool sWakelockHeldGnss;
     static bool sWakelockHeldFused;
+
+    /*
+     * Cleanup for death notification
+     */
+    void handleHidlDeath();
 
     sp<GnssXtra> mGnssXtraIface = nullptr;
     sp<AGnssRil> mGnssRil = nullptr;
@@ -139,10 +161,17 @@ struct Gnss : public IGnss {
     sp<GnssDebug> mGnssDebug = nullptr;
     sp<GnssConfiguration> mGnssConfig = nullptr;
     sp<GnssBatching> mGnssBatching = nullptr;
+
+    sp<GnssHidlDeathRecipient> mDeathRecipient;
+
     const GpsInterface* mGnssIface = nullptr;
     static sp<IGnssCallback> sGnssCbIface;
     static std::vector<std::unique_ptr<ThreadFuncArgs>> sThreadFuncArgsList;
     static bool sInterfaceExists;
+
+    // Values saved for resend
+    static uint32_t sCapabilitiesCached;
+    static uint16_t sYearOfHwCached;
 };
 
 extern "C" IGnss* HIDL_FETCH_IGnss(const char* name);

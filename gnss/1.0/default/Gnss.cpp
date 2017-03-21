@@ -46,7 +46,11 @@ GpsCallbacks Gnss::sGnssCb = {
     .gnss_sv_status_cb = gnssSvStatusCb,
 };
 
-Gnss::Gnss(gps_device_t* gnssDevice) {
+uint32_t Gnss::sCapabilitiesCached = 0;
+uint16_t Gnss::sYearOfHwCached = 0;
+
+Gnss::Gnss(gps_device_t* gnssDevice) :
+        mDeathRecipient(new GnssHidlDeathRecipient(this)) {
     /* Error out if an instance of the interface already exists. */
     LOG_ALWAYS_FATAL_IF(sInterfaceExists);
     sInterfaceExists = true;
@@ -271,6 +275,9 @@ void Gnss::setCapabilitiesCb(uint32_t capabilities) {
     if (!ret.isOk()) {
         ALOGE("%s: Unable to invoke callback", __func__);
     }
+
+    // Save for reconnection when some legacy hal's don't resend this info
+    sCapabilitiesCached = capabilities;
 }
 
 void Gnss::acquireWakelockCb() {
@@ -373,6 +380,9 @@ void Gnss::setSystemInfoCb(const LegacyGnssSystemInfo* info) {
     if (!ret.isOk()) {
             ALOGE("%s: Unable to invoke callback", __func__);
     }
+
+    // Save for reconnection when some legacy hal's don't resend this info
+    sYearOfHwCached = info->year_of_hw;
 }
 
 
@@ -383,7 +393,30 @@ Return<bool> Gnss::setCallback(const sp<IGnssCallback>& callback)  {
         return false;
     }
 
+    if (callback == nullptr)  {
+        ALOGE("%s: Null callback ignored", __func__);
+        return false;
+    }
+
+    if (sGnssCbIface != NULL) {
+        ALOGW("%s called more than once. Unexpected unless test.", __func__);
+        sGnssCbIface->unlinkToDeath(mDeathRecipient);
+    }
+
     sGnssCbIface = callback;
+    callback->linkToDeath(mDeathRecipient, 0 /*cookie*/);
+
+    // If this was received in the past, send it up again to refresh caller.
+    // mGnssIface will override after init() is called below, if needed
+    // (though it's unlikely the gps.h capabilities or system info will change.)
+    if (sCapabilitiesCached != 0) {
+        setCapabilitiesCb(sCapabilitiesCached);
+    }
+    if (sYearOfHwCached != 0) {
+        LegacyGnssSystemInfo info;
+        info.year_of_hw = sYearOfHwCached;
+        setSystemInfoCb(&info);
+    }
 
     return (mGnssIface->init(&sGnssCb) == 0);
 }
@@ -674,6 +707,30 @@ Return<sp<IGnssBatching>> Gnss::getExtensionGnssBatching()  {
         }
     }
     return mGnssBatching;
+}
+
+void Gnss::handleHidlDeath() {
+    ALOGW("GNSS service noticed HIDL death. Stopping all GNSS operations.");
+
+    // commands down to the HAL implementation
+    stop(); // stop ongoing GPS tracking
+    if (mGnssMeasurement != nullptr) {
+        mGnssMeasurement->close();
+    }
+    if (mGnssNavigationMessage != nullptr) {
+        mGnssNavigationMessage->close();
+    }
+    if (mGnssBatching != nullptr) {
+        mGnssBatching->stop();
+        mGnssBatching->cleanup();
+    }
+    cleanup();
+
+    /*
+     * This has died, so close it off in case (race condition) callbacks happen
+     * before HAL processes above messages.
+     */
+    sGnssCbIface = nullptr;
 }
 
 IGnss* HIDL_FETCH_IGnss(const char* /* hal */) {
