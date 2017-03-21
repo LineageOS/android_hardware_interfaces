@@ -111,18 +111,6 @@ Return<void> SurfaceFlingerConfigs::maxVirtualDisplaySize(maxVirtualDisplaySize_
   return Void();
 }
 
-Return<void> SurfaceFlingerConfigs::useVrFlinger(useVrFlinger_cb _hidl_cb) {
-    bool value = false;
-    bool specified = false;
-#ifdef USE_VR_FLINGER
-    value = true;
-    specified = true;
-#endif
-    _hidl_cb({specified, value});
-    LOG(INFO) << "SurfaceFlinger UseVrFlinger: " << (value ? "true" : "false");
-    return Void();
-}
-
 // Methods from ::android::hidl::base::V1_0::IBase follow.
 ISurfaceFlingerConfigs* HIDL_FETCH_ISurfaceFlingerConfigs(const char* /* name */) {
     return new SurfaceFlingerConfigs();
