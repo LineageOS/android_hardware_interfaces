@@ -22,6 +22,8 @@
 #include <VtsHalHidlTargetTestBase.h>
 #include <unistd.h>
 
+using ::android::hardware::vibrator::V1_0::Effect;
+using ::android::hardware::vibrator::V1_0::EffectStrength;
 using ::android::hardware::vibrator::V1_0::IVibrator;
 using ::android::hardware::vibrator::V1_0::Status;
 using ::android::hardware::Return;
@@ -50,10 +52,47 @@ class VibratorHidlEnvironment : public ::testing::Environment {
  private:
 };
 
+static void validatePerformEffect(Status status, uint32_t lengthMs) {
+  ASSERT_TRUE(status == Status::OK || status == Status::UNSUPPORTED_OPERATION);
+  if (status == Status::OK) {
+      ASSERT_GT(lengthMs, static_cast<uint32_t>(0));
+  } else {
+      ASSERT_EQ(lengthMs, static_cast<uint32_t>(0));
+  }
+}
+
 TEST_F(VibratorHidlTest, OnThenOffBeforeTimeout) {
   EXPECT_EQ(Status::OK, vibrator->on(2000));
   sleep(1);
   EXPECT_EQ(Status::OK, vibrator->off());
+}
+
+TEST_F(VibratorHidlTest, PerformEffect) {
+  vibrator->perform(Effect::CLICK, EffectStrength::MEDIUM, validatePerformEffect);
+  vibrator->perform(Effect::DOUBLE_CLICK, EffectStrength::LIGHT, validatePerformEffect);
+}
+
+TEST_F(VibratorHidlTest, ChangeVibrationalAmplitude) {
+  if (vibrator->supportsAmplitudeControl()) {
+    EXPECT_EQ(Status::OK, vibrator->setAmplitude(1));
+    EXPECT_EQ(Status::OK, vibrator->on(2000));
+    EXPECT_EQ(Status::OK, vibrator->setAmplitude(128));
+    sleep(1);
+    EXPECT_EQ(Status::OK, vibrator->setAmplitude(255));
+    sleep(1);
+  }
+}
+
+TEST_F(VibratorHidlTest, AmplitudeOutsideRangeFails) {
+  if (vibrator->supportsAmplitudeControl()) {
+    EXPECT_EQ(Status::BAD_VALUE, vibrator->setAmplitude(0));
+  }
+}
+
+TEST_F(VibratorHidlTest, SetAmplitudeReturnUnsupportedOperationIfNotSupported) {
+  if (!vibrator->supportsAmplitudeControl()) {
+    EXPECT_EQ(Status::UNSUPPORTED_OPERATION, vibrator->setAmplitude(1));
+  }
 }
 
 int main(int argc, char **argv) {

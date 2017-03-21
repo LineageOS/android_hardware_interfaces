@@ -16,7 +16,33 @@
 
 package android.hardware.vibrator@1.0;
 
-enum Status: uint32_t {
-    OK             = 0,
-    ERR            = 1
+enum Status : uint32_t {
+    OK,
+    UNKNOWN_ERROR,
+    BAD_VALUE,
+    UNSUPPORTED_OPERATION
+};
+
+@export
+enum Effect : uint32_t {
+    /**
+     * A single click effect.
+     *
+     * This effect should produce a sharp, crisp click sensation.
+     */
+    CLICK,
+    /**
+     * A double click effect.
+     *
+     * This effect should produce two sequential sharp, crisp click sensations with a minimal
+     * amount of time between them.
+     */
+    DOUBLE_CLICK
+};
+
+@export
+enum EffectStrength : uint8_t {
+    LIGHT,
+    MEDIUM,
+    STRONG
 };

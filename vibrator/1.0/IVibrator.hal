@@ -17,7 +17,8 @@
 package android.hardware.vibrator@1.0;
 
 interface IVibrator {
-  /** Turn on vibrator
+  /**
+   * Turn on vibrator
    *
    * This function must only be called after the previous timeout has expired or
    * was canceled (through off()).
@@ -26,10 +27,46 @@ interface IVibrator {
    */
   on(uint32_t timeoutMs) generates (Status vibratorOnRet);
 
-  /** Turn off vibrator
+  /**
+   * Turn off vibrator
    *
    * Cancel a previously-started vibration, if any.
    * @return vibratorOffRet whether vibrator command was successful or not.
    */
   off() generates (Status vibratorOffRet);
+
+  /**
+   * Returns whether the vibrator supports changes to its vibrational amplitude.
+   */
+  supportsAmplitudeControl() generates (bool supports);
+
+  /**
+   * Sets the motor's vibrational amplitude.
+   *
+   * Changes the force being produced by the underlying motor.
+   *
+   * @param amplitude The unitless force setting. Note that this number must
+   *                  be between 1 and 255, inclusive. If the motor does not
+   *                  have exactly 255 steps, it must do it's best to map it
+   *                  onto the number of steps it does have.
+   * @return status Whether the command was successful or not. Must return
+   *                Status::UNSUPPORTED_OPERATION if setting the amplitude is
+   *                not supported by the device.
+   */
+  setAmplitude(uint8_t amplitude) generates (Status status);
+
+  /**
+   * Fire off a predefined haptic event.
+   *
+   * @param event The type of haptic event to trigger.
+   * @return status Whether the effect was successfully performed or not. Must
+   *                return Status::UNSUPPORTED_OPERATION is the effect is not
+   *                supported.
+   * @return lengthMs The length of time the event is expected to take in
+   *                  milliseconds. This doesn't need to be perfectly accurate,
+   *                  but should be a reasonable approximation. Should be a
+   *                  positive, non-zero value if the returned status is
+   *                  Status::OK, and set to 0 otherwise.
+   */
+  perform(Effect effect, EffectStrength strength) generates (Status status, uint32_t lengthMs);
 };

@@ -17,6 +17,25 @@ LOCAL_JAVA_LIBRARIES := \
 
 
 #
+# Build types.hal (Effect)
+#
+GEN := $(intermediates)/android/hardware/vibrator/V1_0/Effect.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.vibrator@1.0::types.Effect
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
 # Build types.hal (Status)
 #
 GEN := $(intermediates)/android/hardware/vibrator/V1_0/Status.java
@@ -73,6 +92,25 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 
 
 #
+# Build types.hal (Effect)
+#
+GEN := $(intermediates)/android/hardware/vibrator/V1_0/Effect.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.vibrator@1.0::types.Effect
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
 # Build types.hal (Status)
 #
 GEN := $(intermediates)/android/hardware/vibrator/V1_0/Status.java
@@ -111,6 +149,40 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
 $(GEN): $(LOCAL_PATH)/IVibrator.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
+include $(BUILD_STATIC_JAVA_LIBRARY)
+
+
+################################################################################
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := android.hardware.vibrator@1.0-java-constants
+LOCAL_MODULE_CLASS := JAVA_LIBRARIES
+
+intermediates := $(local-generated-sources-dir)
+
+HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
+#
+GEN := $(intermediates)/android/hardware/vibrator/V1_0/Constants.java
+$(GEN): $(HIDL)
+$(GEN): $(LOCAL_PATH)/types.hal
+$(GEN): $(LOCAL_PATH)/IVibrator.hal
+
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava-constants \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.vibrator@1.0
+
+$(GEN):
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+# Avoid dependency cycle of framework.jar -> this-library -> framework.jar
+LOCAL_NO_STANDARD_LIBRARIES := true
+LOCAL_JAVA_LIBRARIES := core-oj
+
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
 

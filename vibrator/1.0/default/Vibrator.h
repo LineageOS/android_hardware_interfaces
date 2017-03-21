@@ -26,23 +26,18 @@ namespace vibrator {
 namespace V1_0 {
 namespace implementation {
 
-using ::android::hardware::vibrator::V1_0::IVibrator;
-using ::android::hardware::vibrator::V1_0::Status;
-using ::android::hardware::Return;
-using ::android::hardware::Void;
-using ::android::hardware::hidl_vec;
-using ::android::hardware::hidl_string;
-using ::android::sp;
-
 struct Vibrator : public IVibrator {
   Vibrator(vibrator_device_t *device);
 
   // Methods from ::android::hardware::vibrator::V1_0::IVibrator follow.
   Return<Status> on(uint32_t timeoutMs)  override;
   Return<Status> off()  override;
+  Return<bool> supportsAmplitudeControl() override;
+  Return<Status> setAmplitude(uint8_t amplitude) override;
+  Return<void> perform(Effect effect, EffectStrength strength, perform_cb _hidl_cb) override;
 
-  private:
-    vibrator_device_t    *mDevice;
+private:
+  vibrator_device_t    *mDevice;
 };
 
 extern "C" IVibrator* HIDL_FETCH_IVibrator(const char* name);
