@@ -769,6 +769,9 @@ static auto invalidArgsOrNotSupported = {Result::INVALID_ARGUMENTS, Result::NOT_
 TEST_IO_STREAM(SetHwAvSync, "Try to set hardware sync to an invalid value",
                ASSERT_RESULT(invalidArgsOrNotSupported, stream->setHwAvSync(666)))
 
+TEST_IO_STREAM(GetHwAvSync, "Get hardware sync can not fail",
+               ASSERT_TRUE(device->getHwAvSync().isOk()))
+
 static void checkGetParameter(IStream* stream, hidl_vec<hidl_string> keys,
                               vector<Result> expectedResults) {
     hidl_vec<ParameterValue> parameters;
@@ -915,6 +918,14 @@ TEST_P(InputStreamTest, PrepareForReadingCheckOverflow) {
     testPrepareForReading(stream.get(), uintMax, uintMax);
 }
 
+TEST_P(InputStreamTest, GetInputFramesLost) {
+    doc::test("The number of frames lost on a never started stream should be 0");
+    auto ret = stream->getInputFramesLost();
+    ASSERT_TRUE(ret.isOk());
+    uint32_t framesLost{ret};
+    ASSERT_EQ(0U, framesLost);
+}
+
 TEST_P(InputStreamTest, getCapturePosition) {
     doc::test("The capture position of a non prepared stream should not be retrievable");
     uint64_t frames;
@@ -995,13 +1006,12 @@ TEST_P(OutputStreamTest, GetRenderPosition) {
 
 TEST_P(OutputStreamTest, GetNextWriteTimestamp) {
     uint64_t timestampUs;
-    ASSERT_OK(stream->getRenderPosition(returnIn(res, timestampUs)));
+    ASSERT_OK(stream->getNextWriteTimestamp(returnIn(res, timestampUs)));
     if (res == Result::NOT_SUPPORTED) {
-        doc::partialTest("getRenderPosition is not supported");
+        doc::partialTest("getNextWriteTimestamp is not supported");
         return;
     }
-    ASSERT_OK(res);
-    ASSERT_EQ(0U, timestampUs);
+    ASSERT_EQ(Result::INVALID_STATE, res);
 }
 
 /** Stub implementation of out stream callback. */
@@ -1071,13 +1081,13 @@ TEST_P(OutputStreamTest, DrainEarlyNotify) {
 }
 
 TEST_P(OutputStreamTest, FlushStop) {
-    ASSERT_OK(stream->flush());
-}
-
-/** Return thee difference in us of two TimeSpec */
-uint64_t operator-(TimeSpec left, TimeSpec right) {
-    auto toMicroSec = [](auto ts) { return ts.tvSec * 1e+6 + ts.tvNSec / 1e+3; };
-    return toMicroSec(left) - toMicroSec(right);
+    auto ret = stream->flush();
+    ASSERT_TRUE(ret.isOk());
+    if (ret == Result::NOT_SUPPORTED) {
+        doc::partialTest("Flush is not supported");
+        return;
+    }
+    ASSERT_OK(ret);
 }
 
 TEST_P(OutputStreamTest, GetPresentationPositionStop) {
