@@ -21,8 +21,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include "Hwc.h"
+#include <hardware/hwcomposer2.h>
 #include "IComposerCommandBuffer.h"
+#include "ComposerBase.h"
 
 namespace android {
 namespace hardware {

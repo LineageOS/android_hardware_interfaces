@@ -16,12 +16,12 @@
 
 #define LOG_TAG "HwcPassthrough"
 
-#include <type_traits>
+#include "Hwc.h"
 
+#include <type_traits>
 #include <log/log.h>
 
 #include "ComposerClient.h"
-#include "Hwc.h"
 #include "hardware/hwcomposer.h"
 #include "hwc2on1adapter/HWC2On1Adapter.h"
 
