@@ -39,7 +39,8 @@ using namespace std::placeholders;
 
 class DefaultVehicleHal : public V2_0::VehicleHal {
 public:
-    DefaultVehicleHal(V2_0::VehicleHal* vhal20) : mVehicleHal20(vhal20) {}
+    DefaultVehicleHal(V2_0::impl::DefaultVehicleHal* vhal20) :
+          mVehicleHal20(vhal20) {}
 
     std::vector<V2_0::VehiclePropConfig> listProperties() override {
         std::vector<V2_0::VehiclePropConfig> propConfigs(mVehicleHal20->listProperties());
@@ -70,17 +71,16 @@ public:
     void onCreate() override;
 
 private:
-    void initObd2LiveFrame(V2_0::VehiclePropConfig& propConfig);
+    void initObd2LiveFrame(V2_0::VehiclePropConfig& propConfig,
+        V2_0::VehiclePropValue* liveObd2Frame);
     void initObd2FreezeFrame(V2_0::VehiclePropConfig& propConfig);
-    V2_0::StatusCode fillObd2LiveFrame(V2_0::VehiclePropValue* v);
     V2_0::StatusCode fillObd2FreezeFrame(const V2_0::VehiclePropValue& requestedPropValue,
             V2_0::VehiclePropValue* v);
     V2_0::StatusCode fillObd2DtcInfo(V2_0::VehiclePropValue *v);
     V2_0::StatusCode clearObd2FreezeFrames(const V2_0::VehiclePropValue& propValue);
 
 private:
-    V2_0::VehicleHal* mVehicleHal20;
-    std::unique_ptr<V2_0::VehiclePropValue> mLiveObd2Frame {nullptr};
+    V2_0::impl::DefaultVehicleHal* mVehicleHal20;
     std::vector<std::unique_ptr<V2_0::VehiclePropValue>> mFreezeObd2Frames;
 };
 

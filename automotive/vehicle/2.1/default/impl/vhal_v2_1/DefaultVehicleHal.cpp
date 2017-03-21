@@ -120,12 +120,12 @@ static std::unique_ptr<Obd2SensorStore> fillDefaultObd2Frame(
     return sensorStore;
 }
 
-void DefaultVehicleHal::initObd2LiveFrame(V2_0::VehiclePropConfig& propConfig) {
+void DefaultVehicleHal::initObd2LiveFrame(V2_0::VehiclePropConfig& propConfig,
+    V2_0::VehiclePropValue* liveObd2Frame) {
     auto sensorStore = fillDefaultObd2Frame(propConfig.configArray[0],
             propConfig.configArray[1]);
-    mLiveObd2Frame = createVehiclePropValue(
-            V2_0::VehiclePropertyType::COMPLEX, 0);
-    sensorStore->fillPropValue(mLiveObd2Frame.get(), "");
+    sensorStore->fillPropValue(liveObd2Frame, "");
+    liveObd2Frame->prop = V2_0::toInt(VehicleProperty::OBD2_LIVE_FRAME);
 }
 
 void DefaultVehicleHal::initObd2FreezeFrame(V2_0::VehiclePropConfig& propConfig) {
@@ -142,14 +142,6 @@ void DefaultVehicleHal::initObd2FreezeFrame(V2_0::VehiclePropConfig& propConfig)
     sensorStore->fillPropValue(mFreezeObd2Frames[0].get(), "P0070");
     sensorStore->fillPropValue(mFreezeObd2Frames[1].get(), "P0102");
     sensorStore->fillPropValue(mFreezeObd2Frames[2].get(), "P0123");
-}
-
-V2_0::StatusCode DefaultVehicleHal::fillObd2LiveFrame(V2_0::VehiclePropValue* v) {
-    v->prop = V2_0::toInt(VehicleProperty::OBD2_LIVE_FRAME);
-    v->value.int32Values = mLiveObd2Frame->value.int32Values;
-    v->value.floatValues = mLiveObd2Frame->value.floatValues;
-    v->value.bytes = mLiveObd2Frame->value.bytes;
-    return V2_0::StatusCode::OK;
 }
 
 template<typename Iterable>
@@ -224,8 +216,11 @@ void DefaultVehicleHal::onCreate() {
     std::vector<V2_0::VehiclePropConfig> configs = listProperties();
     for (auto& cfg : configs) {
         switch(cfg.prop) {
-            case V2_0::toInt(V2_1::VehicleProperty::OBD2_LIVE_FRAME):
-                initObd2LiveFrame(cfg);
+            case V2_0::toInt(V2_1::VehicleProperty::OBD2_LIVE_FRAME): {
+                auto liveObd2Frame = createVehiclePropValue(V2_0::VehiclePropertyType::COMPLEX, 0);
+                initObd2LiveFrame(cfg, liveObd2Frame.get());
+                mVehicleHal20->addCustomProperty(*liveObd2Frame);
+            }
                 break;
             case V2_0::toInt(V2_1::VehicleProperty::OBD2_FREEZE_FRAME):
                 initObd2FreezeFrame(cfg);
@@ -245,10 +240,6 @@ DefaultVehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(
     auto& pool = *getValuePool();
 
     switch (propId) {
-    case V2_0::toInt(V2_1::VehicleProperty::OBD2_LIVE_FRAME):
-        v = pool.obtainComplex();
-        *outStatus = fillObd2LiveFrame(v.get());
-        return v;
     case V2_0::toInt(V2_1::VehicleProperty::OBD2_FREEZE_FRAME):
         v = pool.obtainComplex();
         *outStatus = fillObd2FreezeFrame(requestedPropValue, v.get());

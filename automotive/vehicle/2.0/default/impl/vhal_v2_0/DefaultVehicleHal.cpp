@@ -104,7 +104,7 @@ void DefaultVehicleHal::doGetPropertyAll(emulator::EmulatorMessage& /* rxMsg */,
 
         for (auto& prop : mProps) {
             emulator::VehiclePropValue* protoVal = respMsg.add_value();
-            populateProtoVehiclePropValue(protoVal, prop.second.get());
+            populateProtoVehiclePropValue(protoVal, prop.second->get());
         }
     }
 }
@@ -175,7 +175,7 @@ VehiclePropValue* DefaultVehicleHal::getVehiclePropValueLocked(int32_t propId, i
 
     auto prop = mProps.find(std::make_pair(propId, areaId));
     if (prop != mProps.end()) {
-        return prop->second.get();
+        return prop->second->get();
     }
     ALOGW("%s: Property not found:  propId = 0x%x, areaId = 0x%x", __func__, propId, areaId);
     return nullptr;
@@ -530,6 +530,13 @@ StatusCode DefaultVehicleHal::set(const VehiclePropValue& propValue) {
     return status;
 }
 
+V2_0::StatusCode DefaultVehicleHal::addCustomProperty(int32_t property,
+    std::unique_ptr<CustomVehiclePropertyHandler>&& handler) {
+    mProps[std::make_pair(property, 0)] = std::move(handler);
+    ALOGW("%s: Added custom property: propId = 0x%x", __func__, property);
+    return StatusCode::OK;
+}
+
 // Parse supported properties list and generate vector of property values to hold current values.
 void DefaultVehicleHal::onCreate() {
     // Initialize member variables
@@ -598,7 +605,11 @@ void DefaultVehicleHal::onCreate() {
             prop->areaId = curArea;
             prop->prop = cfg.prop;
             setDefaultValue(prop.get());
-            mProps[std::make_pair(prop->prop, prop->areaId)] = std::move(prop);
+            std::unique_ptr<CustomVehiclePropertyHandler> handler;
+            handler.reset(new StoredValueCustomVehiclePropertyHandler());
+            handler->set(*prop);
+            mProps[std::make_pair(prop->prop, prop->areaId)] =
+                    std::move(handler);
         } while (supportedAreas != 0);
     }
 
