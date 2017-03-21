@@ -346,6 +346,24 @@ interface ISupplicantStaIfaceCallback {
   };
 
   /**
+   * BSSID change Reasons.
+   */
+  enum BssidChangeReason : uint8_t {
+    /**
+     * Started association with new bssid.
+     */
+    ASSOC_START = 0,
+    /**
+     * Completed association with new bssid.
+     */
+    ASSOC_COMPLETE = 1,
+    /**
+     * Dis-association with current bssid.
+     */
+    DISASSOC = 2
+  };
+
+  /**
    * Used to indicate that a new network has been added.
    *
    * @param id Network ID allocated to the corresponding network.
@@ -464,6 +482,16 @@ interface ISupplicantStaIfaceCallback {
    * Used to indicate an EAP authentication failure.
    */
   oneway onEapFailure();
+
+  /**
+   * Used to indicate the change of active bssid.
+   * This is useful to figure out when the driver/firmware roams to a bssid
+   * on its own.
+   *
+   * @param reason Reason why the bssid changed.
+   * @param bssid BSSID of the corresponding AP.
+   */
+  oneway onBssidChanged(BssidChangeReason reason, Bssid bssid);
 
   /**
    * Used to indicate the success of a WPS connection attempt.
