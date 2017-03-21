@@ -21,7 +21,7 @@
 #include <log/log.h>
 
 #include "ComposerClient.h"
-#include "Hwc.h"
+#include "ComposerBase.h"
 #include "IComposerCommandBuffer.h"
 
 namespace android {
