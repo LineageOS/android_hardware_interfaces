@@ -496,7 +496,9 @@ Return<void> RadioResponse::setLocationUpdatesResponse(
     return Void();
 }
 
-Return<void> RadioResponse::setCdmaSubscriptionSourceResponse(const RadioResponseInfo& /*info*/) {
+Return<void> RadioResponse::setCdmaSubscriptionSourceResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
@@ -539,7 +541,9 @@ Return<void> RadioResponse::getPreferredVoicePrivacyResponse(
     return Void();
 }
 
-Return<void> RadioResponse::sendCDMAFeatureCodeResponse(const RadioResponseInfo& /*info*/) {
+Return<void> RadioResponse::sendCDMAFeatureCodeResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
