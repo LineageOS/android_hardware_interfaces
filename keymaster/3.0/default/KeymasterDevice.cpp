@@ -583,6 +583,9 @@ Return<void> KeymasterDevice::upgradeKey(const hidl_vec<uint8_t>& keyBlobToUpgra
 }
 
 Return<ErrorCode> KeymasterDevice::deleteKey(const hidl_vec<uint8_t>& keyBlob) {
+    if (keymaster_device_->delete_key == nullptr) {
+        return ErrorCode::UNIMPLEMENTED;
+    }
     auto kmKeyBlob = hidlVec2KmKeyBlob(keyBlob);
     return legacy_enum_conversion(keymaster_device_->delete_key(keymaster_device_, &kmKeyBlob));
 }
