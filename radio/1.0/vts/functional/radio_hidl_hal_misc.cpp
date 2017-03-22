@@ -417,6 +417,23 @@ TEST_F(RadioHidlTest, getCdmaSubscriptionSource) {
 }
 
 /*
+ * Test IRadio.setCdmaSubscriptionSource() for the response returned.
+ */
+TEST_F(RadioHidlTest, setCdmaSubscriptionSource) {
+    int serial = 1;
+
+    radio->setCdmaSubscriptionSource(++serial, CdmaSubscriptionSource::RUIM_SIM);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp->rspInfo.serial);
+
+    if (cardStatus.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::SIM_ABSENT
+                || radioRsp->rspInfo.error == RadioError::SUBSCRIPTION_NOT_AVAILABLE);
+    }
+}
+
+/*
  * Test IRadio.getVoiceRadioTechnology() for the response returned.
  */
 TEST_F(RadioHidlTest, getVoiceRadioTechnology) {
@@ -455,7 +472,7 @@ TEST_F(RadioHidlTest, setCellInfoListRate) {
     int serial = 1;
 
     // TODO(sanketpadawe): RIL crashes with value of rate = 10
-    radio->setCellInfoListRate(++serial, 0);
+    radio->setCellInfoListRate(++serial, 10);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
