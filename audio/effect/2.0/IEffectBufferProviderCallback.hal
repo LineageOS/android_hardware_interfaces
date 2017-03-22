@@ -27,7 +27,6 @@ interface IEffectBufferProviderCallback {
      *
      * @return buffer audio buffer for processing
      */
-    // TODO(mnaganov): replace with FMQ version.
     getBuffer() generates (AudioBuffer buffer);
 
     /*
@@ -35,6 +34,5 @@ interface IEffectBufferProviderCallback {
      *
      * @param buffer audio buffer for processing
      */
-    // TODO(mnaganov): replace with FMQ version.
     putBuffer(AudioBuffer buffer);
 };

@@ -101,7 +101,6 @@ bool WriteThread::threadLoop() {
     // This implementation doesn't return control back to the Thread until it decides to stop,
     // as the Thread uses mutexes, and this can lead to priority inversion.
     while(!std::atomic_load_explicit(mStop, std::memory_order_acquire)) {
-        // TODO: Remove manual event flag handling once blocking MQ is implemented. b/33815422
         uint32_t efState = 0;
         mEfGroup->wait(static_cast<uint32_t>(MessageQueueFlagBits::NOT_EMPTY), &efState);
         if (!(efState & static_cast<uint32_t>(MessageQueueFlagBits::NOT_EMPTY))) {
@@ -304,7 +303,6 @@ Return<void> StreamOut::prepareForWriting(
                 CommandMQ::Descriptor(), DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
         return Void();
     }
-    // TODO: Remove event flag management once blocking MQ is implemented. b/33815422
     status = EventFlag::createEventFlag(tempDataMQ->getEventFlagWord(), &mEfGroup);
     if (status != OK || !mEfGroup) {
         ALOGE("failed creating event flag for data MQ: %s", strerror(-status));

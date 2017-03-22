@@ -205,7 +205,7 @@ void Effect::effectBufferConfigToHal(const EffectBufferConfig& config, buffer_co
     halConfig->buffer.raw = NULL;
     halConfig->samplingRate = config.samplingRateHz;
     halConfig->channels = static_cast<uint32_t>(config.channels);
-    // TODO(mnaganov): The framework code currently does not use BP, implement later.
+    // Note: The framework code does not use BP.
     halConfig->bufferProvider.cookie = NULL;
     halConfig->bufferProvider.getBuffer = NULL;
     halConfig->bufferProvider.releaseBuffer = NULL;
