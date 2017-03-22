@@ -86,6 +86,7 @@ using ::android::hardware::camera::device::V1_0::DataCallbackMsg;
 using ::android::hardware::camera::device::V1_0::CameraFrameMetadata;
 using ::android::hardware::camera::device::V1_0::ICameraDevicePreviewCallback;
 using ::android::hardware::camera::device::V1_0::FrameCallbackFlag;
+using ::android::hardware::camera::device::V1_0::HandleTimestampMessage;
 
 const char kCameraPassthroughServiceName[] = "legacy/0";
 const uint32_t kMaxPreviewWidth = 1920;
@@ -510,6 +511,10 @@ public:
                 const hidl_handle& frameData,uint32_t data,
                 uint32_t bufferIndex, int64_t timestamp) override;
 
+        Return<void> handleCallbackTimestampBatch(DataCallbackMsg msgType,
+                const ::android::hardware::hidl_vec<HandleTimestampMessage>& batch) override;
+
+
      private:
         CameraHidlTest *mParent;               // Parent object
     };
@@ -663,6 +668,23 @@ Return<void> CameraHidlTest::Camera1DeviceCb::handleCallbackTimestamp(
     mParent->mVideoNativeHandle = frameData;
     mParent->mResultCondition.notify_one();
 
+    return Void();
+}
+
+Return<void> CameraHidlTest::Camera1DeviceCb::handleCallbackTimestampBatch(
+        DataCallbackMsg msgType,
+        const hidl_vec<HandleTimestampMessage>& batch) {
+    std::unique_lock<std::mutex> l(mParent->mLock);
+    for (auto& msg : batch) {
+        mParent->mDataMessageTypeReceived = msgType;
+        mParent->mVideoBufferIndex = msg.bufferIndex;
+        if (mParent->mMemoryPool.count(msg.data) == 0) {
+            ADD_FAILURE() << "memory pool ID " << msg.data << " not found";
+        }
+        mParent->mVideoData = msg.data;
+        mParent->mVideoNativeHandle = msg.frameData;
+        mParent->mResultCondition.notify_one();
+    }
     return Void();
 }
 

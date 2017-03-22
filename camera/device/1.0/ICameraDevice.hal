@@ -328,6 +328,20 @@ interface ICameraDevice {
     releaseRecordingFrameHandle(MemoryId memId, uint32_t bufferIndex, handle frame);
 
     /**
+     * Release a batch of record frames previously returned by CAMERA_MSG_VIDEO_FRAME
+     * in handleCallbackTimestampBatch.
+     *
+     * It is camera HAL client's responsibility to release video recording
+     * frames sent out by the camera HAL before the camera HAL receives a call
+     * to disableMsgType(CAMERA_MSG_VIDEO_FRAME). After it receives the call to
+     * disableMsgType(CAMERA_MSG_VIDEO_FRAME), it is the camera HAL's
+     * responsibility to manage the life-cycle of the video recording frames.
+     *
+     * @param batch A batch of recording frames to be released by camera HAL.
+     */
+    releaseRecordingFrameHandleBatch(vec<VideoFrameMessage> batch);
+
+    /**
      * Start auto focus.
      *
      * The notification callback routine is called with

@@ -92,10 +92,24 @@ interface ICameraDeviceCallback {
      * @param timestamp The time this buffer was captured by the camera, in
      *     nanoseconds.
      *
-     * @return frameId a frame ID to be used with releaseRecordingFrameId later
-     *
      */
     handleCallbackTimestamp(DataCallbackMsg msgType, handle frameData, MemoryId data,
             uint32_t bufferIndex, int64_t timestamp);
+
+    /**
+     * Send a batch of image data buffer to the camera service, with timestamps
+     *
+     * This callback can be used to send multiple frames to camera framework in one callback, which
+     * reduce number of callbacks in performance intensive use cases, such as high speed video
+     * recording. The HAL must not mix use of this method with handleCallbackTimestamp in one
+     * recording session (between startRecording and stopRecording)
+     *
+     * @param msgType The kind of image buffer data this call represents.
+     * @param batch a vector messages. Each message contains a image buffer and a timestamp. The
+     *     messages must be ordered in time from lower index to higher index, so that timestamp of
+     *     i-th message is always smaller than i+1-th message.
+     *
+     */
+    handleCallbackTimestampBatch(DataCallbackMsg msgType, vec<HandleTimestampMessage> batch);
 
 };
