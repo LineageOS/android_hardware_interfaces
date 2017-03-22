@@ -17,13 +17,15 @@
 #define LOG_TAG "android.hardware.configstore@1.0-service"
 
 #include <android/hardware/configstore/1.0/ISurfaceFlingerConfigs.h>
-#include <hidl/LegacySupport.h>
+#include <hidl/HidlTransportSupport.h>
 
-using android::hardware::configstore::V1_0::ISurfaceFlingerConfigs;
+#include "SurfaceFlingerConfigs.h"
+
 using android::hardware::configureRpcThreadpool;
-using android::hardware::registerPassthroughServiceImplementation;
 using android::hardware::joinRpcThreadpool;
-
+using android::hardware::configstore::V1_0::ISurfaceFlingerConfigs;
+using android::hardware::configstore::V1_0::implementation::SurfaceFlingerConfigs;
+using android::sp;
 using android::status_t;
 using android::OK;
 
@@ -31,9 +33,8 @@ int main() {
     // TODO(b/34857894): tune the max thread count.
     configureRpcThreadpool(10, true);
 
-    status_t status;
-
-    status = registerPassthroughServiceImplementation<ISurfaceFlingerConfigs>();
+    sp<ISurfaceFlingerConfigs> surfaceFlingerConfigs = new SurfaceFlingerConfigs;
+    status_t status = surfaceFlingerConfigs->registerAsService();
     LOG_ALWAYS_FATAL_IF(status != OK, "Could not register ISurfaceFlingerConfigs");
 
     // other interface registration comes here
