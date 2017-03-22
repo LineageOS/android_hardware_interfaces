@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "Baz.h"
 #include <android-base/logging.h>
 
@@ -26,150 +42,6 @@ Return<void> BazCallback::hey() {
     return Void();
 }
 
-// TODO(b/35703683) : replace usage of below methods with toString()
-
-static std::string to_string(const IBaz::Foo::Bar &bar);
-static std::string to_string(const IBaz::Foo &foo);
-static std::string to_string(const hidl_string &s);
-static std::string to_string(bool x);
-static std::string to_string(const IBaz::StringMatrix5x3 &M);
-
-template<typename T, size_t SIZE>
-static std::string to_string(const hidl_array<T, SIZE> &array);
-
-template<size_t SIZE>
-static std::string to_string(const hidl_array<uint8_t, SIZE> &array);
-
-template<typename T>
-static std::string to_string(const hidl_vec<T> &vec) {
-    std::string out;
-    out = "[";
-    for (size_t i = 0; i < vec.size(); ++i) {
-        if (i > 0) {
-            out += ", ";
-        }
-        out += to_string(vec[i]);
-    }
-    out += "]";
-
-    return out;
-}
-
-template<typename T, size_t SIZE>
-static std::string to_string(const hidl_array<T, SIZE> &array) {
-    std::string out;
-    out = "[";
-    for (size_t i = 0; i < SIZE; ++i) {
-        if (i > 0) {
-            out += ", ";
-        }
-        out += to_string(array[i]);
-    }
-    out += "]";
-
-    return out;
-}
-
-template<size_t SIZE>
-static std::string to_string(const hidl_array<uint8_t, SIZE> &array) {
-    std::string out;
-    for (size_t i = 0; i < SIZE; ++i) {
-        if (i > 0) {
-            out += ":";
-        }
-
-        char tmp[3];
-        sprintf(tmp, "%02x", array[i]);
-
-        out += tmp;
-    }
-
-    return out;
-}
-
-template<typename T, size_t SIZE1, size_t SIZE2>
-static std::string to_string(const hidl_array<T, SIZE1, SIZE2> &array) {
-    std::string out;
-    out = "[";
-    for (size_t i = 0; i < SIZE1; ++i) {
-        if (i > 0) {
-            out += ", ";
-        }
-
-        out += "[";
-        for (size_t j = 0; j < SIZE2; ++j) {
-            if (j > 0) {
-                out += ", ";
-            }
-
-            out += to_string(array[i][j]);
-        }
-        out += "]";
-    }
-    out += "]";
-
-    return out;
-}
-
-static std::string to_string(bool x) {
-    return x ? "true" : "false";
-}
-
-static std::string to_string(const hidl_string &s) {
-    return std::string("'") + s.c_str() + "'";
-}
-
-static std::string to_string(const IBaz::Foo::Bar &bar) {
-    std::string out;
-    out = "Bar(";
-    out += "z = " + to_string(bar.z) + ", ";
-    out += "s = '" + std::string(bar.s.c_str()) + "'";
-    out += ")";
-
-    return out;
-}
-
-static std::string to_string(const IBaz::Foo &foo) {
-    std::string out;
-    out = "Foo(";
-    out += "x = " + to_string(foo.x) + ", ";
-    out += "y = " + to_string(foo.y) + ", ";
-    out += "aaa = " + to_string(foo.aaa);
-    out += ")";
-
-    return out;
-}
-
-static std::string to_string(const IBaz::StringMatrix5x3 &M) {
-    return to_string(M.s);
-}
-
-static std::string VectorOfArray_to_string(const IBaz::VectorOfArray &in) {
-    std::string out;
-    out += "VectorOfArray(";
-
-    for (size_t i = 0; i < in.addresses.size(); ++i) {
-        if (i > 0) {
-            out += ", ";
-        }
-
-        for (size_t j = 0; j < 6; ++j) {
-            if (j > 0) {
-                out += ":";
-            }
-
-            char tmp[3];
-            sprintf(tmp, "%02x", in.addresses[i][j]);
-
-            out += tmp;
-        }
-    }
-
-    out += ")";
-
-    return out;
-}
-
 // Methods from ::android::hardware::tests::baz::V1_0::IBase follow.
 Return<void> Baz::someBaseMethod() {
     LOG(INFO) << "Baz::someBaseMethod";
@@ -178,20 +50,14 @@ Return<void> Baz::someBaseMethod() {
 }
 
 Return<bool> Baz::someBoolMethod(bool x) {
-    LOG(INFO) << "Baz::someBoolMethod(" << to_string(x) << ")";
+    LOG(INFO) << "Baz::someBoolMethod(" << std::to_string(x) << ")";
 
     return !x;
 }
 
 Return<void> Baz::someBoolArrayMethod(const hidl_array<bool, 3>& x,
                                       someBoolArrayMethod_cb _hidl_cb) {
-    LOG(INFO) << "Baz::someBoolArrayMethod("
-        << to_string(x[0])
-        << ", "
-        << to_string(x[1])
-        << ", "
-        << to_string(x[2])
-        << ")";
+    LOG(INFO) << "Baz::someBoolArrayMethod(" << toString(x) << ")";
 
     hidl_array<bool, 4> out;
     out[0] = !x[0];
@@ -205,7 +71,7 @@ Return<void> Baz::someBoolArrayMethod(const hidl_array<bool, 3>& x,
 }
 
 Return<void> Baz::someBoolVectorMethod(const hidl_vec<bool>& x, someBoolVectorMethod_cb _hidl_cb) {
-    LOG(INFO) << "Baz::someBoolVectorMethod(" << to_string(x) << ")";
+    LOG(INFO) << "Baz::someBoolVectorMethod(" << toString(x) << ")";
 
     hidl_vec<bool> out;
     out.resize(x.size());
@@ -220,7 +86,7 @@ Return<void> Baz::someBoolVectorMethod(const hidl_vec<bool>& x, someBoolVectorMe
 
 Return<void> Baz::someOtherBaseMethod(const IBase::Foo& foo, someOtherBaseMethod_cb _hidl_cb) {
     LOG(INFO) << "Baz::someOtherBaseMethod "
-              << to_string(foo);
+              << toString(foo);
 
     _hidl_cb(foo);
 
@@ -230,7 +96,7 @@ Return<void> Baz::someOtherBaseMethod(const IBase::Foo& foo, someOtherBaseMethod
 Return<void> Baz::someMethodWithFooArrays(const hidl_array<IBase::Foo, 2>& fooInput,
                                           someMethodWithFooArrays_cb _hidl_cb) {
     LOG(INFO) << "Baz::someMethodWithFooArrays "
-              << to_string(fooInput);
+              << toString(fooInput);
 
     hidl_array<IBaz::Foo, 2> fooOutput;
     fooOutput[0] = fooInput[1];
@@ -244,7 +110,7 @@ Return<void> Baz::someMethodWithFooArrays(const hidl_array<IBase::Foo, 2>& fooIn
 Return<void> Baz::someMethodWithFooVectors(const hidl_vec<IBase::Foo>& fooInput,
                                            someMethodWithFooVectors_cb _hidl_cb) {
     LOG(INFO) << "Baz::someMethodWithFooVectors "
-              << to_string(fooInput);
+              << toString(fooInput);
 
     hidl_vec<IBaz::Foo> fooOutput;
     fooOutput.resize(2);
@@ -259,7 +125,7 @@ Return<void> Baz::someMethodWithFooVectors(const hidl_vec<IBase::Foo>& fooInput,
 Return<void> Baz::someMethodWithVectorOfArray(const IBase::VectorOfArray& in,
                                               someMethodWithVectorOfArray_cb _hidl_cb) {
     LOG(INFO) << "Baz::someMethodWithVectorOfArray "
-              << VectorOfArray_to_string(in);
+              << toString(in);
 
     IBase::VectorOfArray out;
 
@@ -278,7 +144,7 @@ Return<void> Baz::someMethodWithVectorOfArray(const IBase::VectorOfArray& in,
 Return<void> Baz::someMethodTakingAVectorOfArray(const hidl_vec<hidl_array<uint8_t, 6>>& in,
                                                  someMethodTakingAVectorOfArray_cb _hidl_cb) {
     LOG(INFO) << "Baz::someMethodTakingAVectorOfArray "
-              << to_string(in);
+              << toString(in);
 
     const size_t n = in.size();
 
@@ -295,7 +161,7 @@ Return<void> Baz::someMethodTakingAVectorOfArray(const hidl_vec<hidl_array<uint8
 }
 
 Return<void> Baz::transpose(const IBase::StringMatrix5x3& in, transpose_cb _hidl_cb) {
-    LOG(INFO) << "Baz::transpose " << to_string(in);
+    LOG(INFO) << "Baz::transpose " << toString(in);
 
     IBase::StringMatrix3x5 out;
     for (size_t i = 0; i < 3; ++i) {
@@ -310,7 +176,7 @@ Return<void> Baz::transpose(const IBase::StringMatrix5x3& in, transpose_cb _hidl
 }
 
 Return<void> Baz::transpose2(const hidl_array<hidl_string, 5, 3>& in, transpose2_cb _hidl_cb) {
-    LOG(INFO) << "Baz::transpose2 " << to_string(in);
+    LOG(INFO) << "Baz::transpose2 " << toString(in);
 
     hidl_array<hidl_string, 3, 5> out;
     for (size_t i = 0; i < 3; ++i) {
@@ -443,7 +309,7 @@ Return<IBaz::SomeEnum> Baz::useAnEnum(IBaz::SomeEnum zzz) {
 Return<void> Baz::haveSomeStrings(const hidl_array<hidl_string, 3>& array,
                                   haveSomeStrings_cb _hidl_cb) {
     LOG(INFO) << "haveSomeStrings("
-              << to_string(array)
+              << toString(array)
               << ")";
 
     hidl_array<hidl_string, 2> result;
@@ -457,7 +323,7 @@ Return<void> Baz::haveSomeStrings(const hidl_array<hidl_string, 3>& array,
 
 Return<void> Baz::haveAStringVec(const hidl_vec<hidl_string>& vector,
                                  haveAStringVec_cb _hidl_cb) {
-    LOG(INFO) << "haveAStringVec(" << to_string(vector) << ")";
+    LOG(INFO) << "haveAStringVec(" << toString(vector) << ")";
 
     hidl_vec<hidl_string> result;
     result.resize(2);
