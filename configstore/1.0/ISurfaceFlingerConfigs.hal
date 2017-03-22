@@ -40,8 +40,6 @@ interface ISurfaceFlingerConfigs {
     vsyncEventPhaseOffsetNs() generates (OptionalInt64 value);
     vsyncSfEventPhaseOffsetNs() generates (OptionalInt64 value);
 
-    useTripleFramebuffer() generates (OptionalBool value);
-
     /*
      * Instruct the Render Engine to use EGL_IMG_context_priority hint if
      * availabe.
@@ -104,4 +102,10 @@ interface ISurfaceFlingerConfigs {
      * return true for full vr support.
      */
     useVrFlinger() generates (OptionalBool value);
+
+    /*
+     * Controls the number of buffers SurfaceFlinger will allocate for use in
+     * FramebufferSurface.
+     */
+    maxFrameBufferAcquiredBuffers() generates(OptionalInt64 value);
 };

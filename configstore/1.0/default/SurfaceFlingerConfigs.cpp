@@ -29,22 +29,22 @@ Return<void> SurfaceFlingerConfigs::vsyncSfEventPhaseOffsetNs(vsyncEventPhaseOff
     return Void();
 }
 
-Return<void> SurfaceFlingerConfigs::useTripleFramebuffer(useTripleFramebuffer_cb _hidl_cb) {
-    bool value = false;
-#ifdef USE_TRIPLE_FRAMEBUFFER
-    value = true;
-#endif
-    _hidl_cb({true, value});
-    LOG(INFO) << "SurfaceFlinger FrameBuffer: " << (value ? "triple" : "double");
-    return Void();
-}
-
 Return<void> SurfaceFlingerConfigs::useContextPriority(useContextPriority_cb _hidl_cb) {
 #ifdef USE_CONTEXT_PRIORITY
     _hidl_cb({true, USE_CONTEXT_PRIORITY});
     LOG(INFO) << "SurfaceFlinger useContextPriority=" << USE_CONTEXT_PRIORITY;
 #else
     _hidl_cb({false, false});
+#endif
+    return Void();
+}
+
+Return<void> SurfaceFlingerConfigs::maxFrameBufferAcquiredBuffers(maxFrameBufferAcquiredBuffers_cb _hidl_cb) {
+#ifdef NUM_FRAMEBUFFER_SURFACE_BUFFERS
+    _hidl_cb({true, NUM_FRAMEBUFFER_SURFACE_BUFFERS});
+    LOG(INFO) << "SurfaceFlinger FrameBuffer max acquired buffers : " << NUM_FRAMEBUFFER_SURFACE_BUFFERS;
+#else
+    _hidl_cb({false, 0});
 #endif
     return Void();
 }
