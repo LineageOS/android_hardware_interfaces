@@ -89,7 +89,6 @@ struct Uuid {
 enum AudioStreamType : int32_t {
     // These values must kept in sync with
     //  frameworks/base/media/java/android/media/AudioSystem.java
-    // TODO: Synchronization should be done automatically by tools
     DEFAULT          = -1,
     MIN              = 0,
     VOICE_CALL       = 0,
@@ -169,10 +168,8 @@ enum AudioSessionConsts : int32_t {
     OUTPUT_MIX = 0,
     /*
      * Application does not specify an explicit session ID to be used, and
-     * requests a new session ID to be allocated TODO use unique values for
-     * AUDIO_SESSION_OUTPUT_MIX and AUDIO_SESSION_ALLOCATE, after all uses have
-     * been updated from 0 to the appropriate symbol, and have been tested.
-     * Corresponds to AudioManager.AUDIO_SESSION_ID_GENERATE and
+     * requests a new session ID to be allocated. Corresponds to
+     * AudioManager.AUDIO_SESSION_ID_GENERATE and
      * AudioSystem.AUDIO_SESSION_ALLOCATE.
      */
     ALLOCATE = 0,
@@ -698,7 +695,6 @@ enum AudioInputFlag : int32_t {
 enum AudioUsage : int32_t {
     // These values must kept in sync with
     //  frameworks/base/media/java/android/media/AudioAttributes.java
-    // TODO: Synchronization should be done automatically by tools
     UNKNOWN                            = 0,
     MEDIA                              = 1,
     VOICE_COMMUNICATION                = 2,
