@@ -135,7 +135,10 @@ enum Tag : uint32_t {
                                                     in attestation */
     ATTESTATION_ID_MEID = TagType:BYTES | 715,   /* Used to provide the device's MEID to be included
                                                     in attestation */
-
+    ATTESTATION_ID_MANUFACTURER = TagType:BYTES | 716, /* Used to provide the device's manufacturer
+                                                          name to be included in attestation */
+    ATTESTATION_ID_MODEL = TagType:BYTES | 717,  /* Used to provide the device's model name to be
+                                                    included in attestation */
 
     /* Tags used only to provide data to or receive data from operations */
     ASSOCIATED_DATA = TagType:BYTES | 1000, /* Used to provide associated data for AEAD modes. */
