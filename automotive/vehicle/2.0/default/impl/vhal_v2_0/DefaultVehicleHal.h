@@ -44,7 +44,31 @@ namespace impl {
 
 class DefaultVehicleHal : public VehicleHal {
 public:
-    DefaultVehicleHal() : mRecurrentTimer(
+    class CustomVehiclePropertyHandler {
+    public:
+        virtual VehiclePropValue* get() = 0;
+        virtual StatusCode set(const VehiclePropValue& propValue) = 0;
+        virtual ~CustomVehiclePropertyHandler() = default;
+    };
+
+protected:
+    class StoredValueCustomVehiclePropertyHandler :
+        public CustomVehiclePropertyHandler {
+    public:
+        VehiclePropValue* get() override {
+            return mPropValue.get();
+        }
+
+        StatusCode set(const VehiclePropValue& propValue) {
+            *mPropValue = propValue;
+            return StatusCode::OK;
+        }
+private:
+    std::unique_ptr<VehiclePropValue> mPropValue{new VehiclePropValue()};
+};
+
+public:
+  DefaultVehicleHal() : mRecurrentTimer(
             std::bind(&DefaultVehicleHal::onContinuousPropertyTimer, this, std::placeholders::_1)) {
         for (size_t i = 0; i < arraysize(kVehicleProperties); i++) {
             mPropConfigMap[kVehicleProperties[i].prop] = &kVehicleProperties[i];
@@ -77,6 +101,43 @@ public:
 
     StatusCode unsubscribe(int32_t property) override;
 
+    /**
+     * Add custom property information to this HAL instance.
+     *
+     * This is useful for allowing later versions of Vehicle HAL to coalesce
+     * the list of properties they support with a previous version of the HAL.
+     *
+     * @param property The identifier of the new property
+     * @param handler The object that will handle get/set requests
+     * @return OK on success, an error code on failure
+     */
+    virtual StatusCode addCustomProperty(int32_t,
+        std::unique_ptr<CustomVehiclePropertyHandler>&&);
+
+    /**
+     * Add custom property information to this HAL instance.
+     *
+     * This is useful for allowing later versions of Vehicle HAL to coalesce
+     * the list of properties they support with a previous version of the HAL.
+     *
+     * @param initialValue The initial value for the new property. This is not
+     *                     constant data, as later set() operations can change
+     *                     this value at will
+     * @return OK on success, an error code on failure
+     */
+    virtual StatusCode addCustomProperty(
+        const VehiclePropValue& initialValue) {
+        std::unique_ptr<CustomVehiclePropertyHandler> handler;
+        handler.reset(new StoredValueCustomVehiclePropertyHandler());
+        StatusCode setResponse = handler->set(initialValue);
+        if (StatusCode::OK == setResponse) {
+          return addCustomProperty(initialValue.prop,
+                                   std::move(handler));
+        } else {
+          return setResponse;
+        }
+    }
+
 private:
     void doGetConfig(emulator::EmulatorMessage& rxMsg, emulator::EmulatorMessage& respMsg);
     void doGetConfigAll(emulator::EmulatorMessage& rxMsg, emulator::EmulatorMessage& respMsg);
@@ -106,7 +167,7 @@ private:
 private:
     std::map<
         std::pair<int32_t /*VehicleProperty*/, int32_t /*areaId*/>,
-        std::unique_ptr<VehiclePropValue>> mProps;
+        std::unique_ptr<CustomVehiclePropertyHandler>> mProps;
     std::atomic<int> mExit;
     std::unordered_set<int32_t> mHvacPowerProps;
     std::mutex mPropsMutex;
