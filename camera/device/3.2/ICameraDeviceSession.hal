@@ -152,6 +152,7 @@ interface ICameraDeviceSession {
      *             camera3_stream_configuration_t->operation_mode requirements
      *             for non-NORMAL mode, or the requested operation_mode is not
      *             supported by the HAL.
+     *           - Unsupported usage flag
      *         The camera service cannot filter out all possible illegal stream
      *         configurations, since some devices may support more simultaneous
      *         streams or larger stream resolutions than the minimum required
