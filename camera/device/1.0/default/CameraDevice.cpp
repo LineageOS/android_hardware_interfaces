@@ -20,6 +20,8 @@
 #include <hardware/gralloc1.h>
 #include <utils/Trace.h>
 
+#include <grallocusage/GrallocUsageConversion.h>
+
 #include "CameraDevice_1_0.h"
 
 namespace android {
@@ -29,7 +31,6 @@ namespace device {
 namespace V1_0 {
 namespace implementation {
 
-using ::android::hardware::graphics::allocator::V2_0::ProducerUsage;
 using ::android::hardware::graphics::common::V1_0::PixelFormat;
 
 HandleImporter& CameraDevice::sHandleImporter = HandleImporter::getInstance();
@@ -252,7 +253,10 @@ int CameraDevice::sSetUsage(struct preview_stream_ops* w, int usage) {
     }
 
     object->cleanUpCirculatingBuffers();
-    return getStatusT(object->mPreviewCallback->setUsage((ProducerUsage) usage));
+    ProducerUsageFlags producerUsage;
+    uint64_t consumerUsage;
+    ::android_convertGralloc0To1Usage(usage, &producerUsage, &consumerUsage);
+    return getStatusT(object->mPreviewCallback->setUsage(producerUsage));
 }
 
 int CameraDevice::sSetSwapInterval(struct preview_stream_ops *w, int interval) {
