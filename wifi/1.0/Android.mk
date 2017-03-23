@@ -226,6 +226,44 @@ $(GEN): $(LOCAL_PATH)/types.hal
 LOCAL_GENERATED_SOURCES += $(GEN)
 
 #
+# Build types.hal (NanDataPathSecurityConfig)
+#
+GEN := $(intermediates)/android/hardware/wifi/V1_0/NanDataPathSecurityConfig.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.wifi@1.0::types.NanDataPathSecurityConfig
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathSecurityType)
+#
+GEN := $(intermediates)/android/hardware/wifi/V1_0/NanDataPathSecurityType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.wifi@1.0::types.NanDataPathSecurityType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
 # Build types.hal (NanDebugConfig)
 #
 GEN := $(intermediates)/android/hardware/wifi/V1_0/NanDebugConfig.java
@@ -353,6 +391,25 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         -randroid.hardware:hardware/interfaces \
         -randroid.hidl:system/libhidl/transport \
         android.hardware.wifi@1.0::types.NanMatchInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanParamSizeLimits)
+#
+GEN := $(intermediates)/android/hardware/wifi/V1_0/NanParamSizeLimits.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.wifi@1.0::types.NanParamSizeLimits
 
 $(GEN): $(LOCAL_PATH)/types.hal
 	$(transform-generated-source)
@@ -2048,6 +2105,44 @@ $(GEN): $(LOCAL_PATH)/types.hal
 LOCAL_GENERATED_SOURCES += $(GEN)
 
 #
+# Build types.hal (NanDataPathSecurityConfig)
+#
+GEN := $(intermediates)/android/hardware/wifi/V1_0/NanDataPathSecurityConfig.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.wifi@1.0::types.NanDataPathSecurityConfig
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanDataPathSecurityType)
+#
+GEN := $(intermediates)/android/hardware/wifi/V1_0/NanDataPathSecurityType.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.wifi@1.0::types.NanDataPathSecurityType
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
 # Build types.hal (NanDebugConfig)
 #
 GEN := $(intermediates)/android/hardware/wifi/V1_0/NanDebugConfig.java
@@ -2175,6 +2270,25 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         -randroid.hardware:hardware/interfaces \
         -randroid.hidl:system/libhidl/transport \
         android.hardware.wifi@1.0::types.NanMatchInd
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (NanParamSizeLimits)
+#
+GEN := $(intermediates)/android/hardware/wifi/V1_0/NanParamSizeLimits.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.wifi@1.0::types.NanParamSizeLimits
 
 $(GEN): $(LOCAL_PATH)/types.hal
 	$(transform-generated-source)
