@@ -48,21 +48,42 @@ using ::android::hardware::broadcastradio::V1_0::ProgramInfo;
 using ::android::hardware::broadcastradio::V1_0::MetaData;
 
 
+#define RETURN_IF_SKIPPED \
+    if (skipped) { \
+        std::cout << "[  SKIPPED ] This device class is not supported. " << std::endl; \
+        return; \
+    }
+
 // The main test class for Broadcast Radio HIDL HAL.
 
-class BroadcastRadioHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class BroadcastRadioHidlTest : public ::testing::VtsHalHidlTargetTestBase,
+        public ::testing::WithParamInterface<Class> {
  protected:
     virtual void SetUp() override {
+        ASSERT_EQ(nullptr, mRadio.get());
+
+        radioClass = GetParam();
+        skipped = false;
+
         sp<IBroadcastRadioFactory> factory =
               ::testing::VtsHalHidlTargetTestBase::getService<IBroadcastRadioFactory>();
-        if (factory != 0) {
-            factory->connectModule(Class::AM_FM,
-                             [&](Result retval, const ::android::sp<IBroadcastRadio>& result) {
-                if (retval == Result::OK) {
-                  mRadio = result;
-                }
-            });
+        ASSERT_NE(nullptr, factory.get());
+
+        Result connectResult;
+        factory->connectModule(radioClass, [&](Result ret, const sp<IBroadcastRadio>& radio) {
+            connectResult = ret;
+            mRadio = radio;
+            onCallback_l();
+        });
+        EXPECT_EQ(true, waitForCallback(kConnectCallbacktimeoutNs));
+        mCallbackCalled = false;
+
+        if (connectResult == Result::INVALID_ARGUMENTS) {
+            skipped = true;
+            return;
         }
+        ASSERT_EQ(connectResult, Result::OK);
+
         mTunerCallback = new MyCallback(this);
         ASSERT_NE(nullptr, mRadio.get());
         ASSERT_NE(nullptr, mTunerCallback.get());
@@ -175,9 +196,9 @@ class BroadcastRadioHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     }
 
 
-        BroadcastRadioHidlTest() :
-            mCallbackCalled(false), mBoolCallbackData(false),
-            mResultCallbackData(Result::OK), mHwFailure(false) {}
+    BroadcastRadioHidlTest()
+        : mCallbackCalled(false), mBoolCallbackData(false), mResultCallbackData(Result::OK),
+        mHwFailure(false) {}
 
     void onCallback_l() {
         if (!mCallbackCalled) {
@@ -208,9 +229,12 @@ class BroadcastRadioHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     bool openTuner();
     bool checkAntenna();
 
+    static const nsecs_t kConnectCallbacktimeoutNs = seconds_to_nanoseconds(1);
     static const nsecs_t kConfigCallbacktimeoutNs = seconds_to_nanoseconds(10);
     static const nsecs_t kTuneCallbacktimeoutNs = seconds_to_nanoseconds(30);
 
+    Class radioClass;
+    bool skipped;
     sp<IBroadcastRadio> mRadio;
     Properties mHalProperties;
     sp<ITuner> mTuner;
@@ -223,13 +247,6 @@ class BroadcastRadioHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     ProgramInfo mProgramInfoCallbackData;
     BandConfig mBandConfigCallbackData;
     bool mHwFailure;
-};
-
-// A class for test environment setup (kept since this file is a template).
-class BroadcastRadioHidlEnvironment : public ::testing::Environment {
- public:
-    virtual void SetUp() {}
-    virtual void TearDown() {}
 };
 
 namespace android {
@@ -331,7 +348,8 @@ bool BroadcastRadioHidlTest::checkAntenna()
  *  - the implementation supports at least one tuner
  *  - the implementation supports at one band
  */
-TEST_F(BroadcastRadioHidlTest, GetProperties) {
+TEST_P(BroadcastRadioHidlTest, GetProperties) {
+    RETURN_IF_SKIPPED;
     EXPECT_EQ(true, getProperties());
 }
 
@@ -342,7 +360,8 @@ TEST_F(BroadcastRadioHidlTest, GetProperties) {
  *  - the HAL implements the method
  *  - the method returns 0 (no error) and a valid ITuner interface
  */
-TEST_F(BroadcastRadioHidlTest, OpenTuner) {
+TEST_P(BroadcastRadioHidlTest, OpenTuner) {
+    RETURN_IF_SKIPPED;
     EXPECT_EQ(true, openTuner());
 }
 
@@ -353,7 +372,8 @@ TEST_F(BroadcastRadioHidlTest, OpenTuner) {
  *  - ITuner destruction gets propagated through HAL
  *  - the openTuner method works well when called for the second time
  */
-TEST_F(BroadcastRadioHidlTest, ReopenTuner) {
+TEST_P(BroadcastRadioHidlTest, ReopenTuner) {
+    RETURN_IF_SKIPPED;
     EXPECT_TRUE(openTuner());
     mTuner.clear();
     EXPECT_TRUE(openTuner());
@@ -366,7 +386,8 @@ TEST_F(BroadcastRadioHidlTest, ReopenTuner) {
  *  - the openTuner method fails when called for the second time without deleting previous
  *    ITuner instance
  */
-TEST_F(BroadcastRadioHidlTest, OpenTunerTwice) {
+TEST_P(BroadcastRadioHidlTest, OpenTunerTwice) {
+    RETURN_IF_SKIPPED;
     EXPECT_TRUE(openTuner());
 
     Result halResult = Result::NOT_INITIALIZED;
@@ -389,7 +410,8 @@ TEST_F(BroadcastRadioHidlTest, OpenTunerTwice) {
  *  - the configuration callback is received within kConfigCallbacktimeoutNs ns
  *  - the configuration read back from HAl has the same class Id
  */
-TEST_F(BroadcastRadioHidlTest, SetAndGetConfiguration) {
+TEST_P(BroadcastRadioHidlTest, SetAndGetConfiguration) {
+    RETURN_IF_SKIPPED;
     ASSERT_EQ(true, openTuner());
     // test setConfiguration
     mCallbackCalled = false;
@@ -422,7 +444,8 @@ TEST_F(BroadcastRadioHidlTest, SetAndGetConfiguration) {
  *  - the methods returns INVALID_ARGUMENTS on invalid arguments
  *  - the method recovers and succeeds after passing correct arguments
  */
-TEST_F(BroadcastRadioHidlTest, SetConfigurationFails) {
+TEST_P(BroadcastRadioHidlTest, SetConfigurationFails) {
+    RETURN_IF_SKIPPED;
     ASSERT_EQ(true, openTuner());
 
     // Let's define a config that's bad for sure.
@@ -456,7 +479,8 @@ TEST_F(BroadcastRadioHidlTest, SetConfigurationFails) {
  *  - the tuned callback is received within kTuneCallbacktimeoutNs ns
  *  - skipping sub-channel or not does not fail the call
  */
-TEST_F(BroadcastRadioHidlTest, Scan) {
+TEST_P(BroadcastRadioHidlTest, Scan) {
+    RETURN_IF_SKIPPED;
     ASSERT_EQ(true, openTuner());
     ASSERT_TRUE(checkAntenna());
     // test scan UP
@@ -483,7 +507,8 @@ TEST_F(BroadcastRadioHidlTest, Scan) {
  *  - the tuned callback is received within kTuneCallbacktimeoutNs ns
  *  - skipping sub-channel or not does not fail the call
  */
-TEST_F(BroadcastRadioHidlTest, Step) {
+TEST_P(BroadcastRadioHidlTest, Step) {
+    RETURN_IF_SKIPPED;
     ASSERT_EQ(true, openTuner());
     ASSERT_TRUE(checkAntenna());
     // test step UP
@@ -509,7 +534,8 @@ TEST_F(BroadcastRadioHidlTest, Step) {
  *  - the methods return 0 (no error)
  *  - the tuned callback is received within kTuneCallbacktimeoutNs ns after tune()
  */
-TEST_F(BroadcastRadioHidlTest, TuneAndGetProgramInformationAndCancel) {
+TEST_P(BroadcastRadioHidlTest, TuneAndGetProgramInformationAndCancel) {
+    RETURN_IF_SKIPPED;
     ASSERT_EQ(true, openTuner());
     ASSERT_TRUE(checkAntenna());
 
@@ -566,7 +592,8 @@ TEST_F(BroadcastRadioHidlTest, TuneAndGetProgramInformationAndCancel) {
  *  - the method returns INVALID_ARGUMENTS when applicable
  *  - the method recovers and succeeds after passing correct arguments
  */
-TEST_F(BroadcastRadioHidlTest, TuneFailsOutOfBounds) {
+TEST_P(BroadcastRadioHidlTest, TuneFailsOutOfBounds) {
+    RETURN_IF_SKIPPED;
     ASSERT_TRUE(openTuner());
     ASSERT_TRUE(checkAntenna());
 
@@ -595,9 +622,12 @@ TEST_F(BroadcastRadioHidlTest, TuneFailsOutOfBounds) {
     EXPECT_TRUE(waitForCallback(kTuneCallbacktimeoutNs));
 }
 
+INSTANTIATE_TEST_CASE_P(
+    BroadcastRadioHidlTestCases,
+    BroadcastRadioHidlTest,
+    ::testing::Values(Class::AM_FM, Class::SAT, Class::DT));
 
 int main(int argc, char** argv) {
-  ::testing::AddGlobalTestEnvironment(new BroadcastRadioHidlEnvironment);
   ::testing::InitGoogleTest(&argc, argv);
   int status = RUN_ALL_TESTS();
   ALOGI("Test result = %d", status);

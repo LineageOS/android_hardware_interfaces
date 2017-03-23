@@ -63,6 +63,7 @@ void BroadcastRadio::onFirstRef()
     if (rc != 0) {
         ALOGE("couldn't load radio module %s.%s (%s)",
               RADIO_HARDWARE_MODULE_ID, classString, strerror(-rc));
+        mStatus = Result::INVALID_ARGUMENTS;
         return;
     }
     rc = radio_hw_device_open(mod, &mHwDevice);
