@@ -31,9 +31,15 @@ using android::hardware::gnss::V1_0::GnssLocation;
 using android::hardware::gnss::V1_0::GnssLocationFlags;
 using android::hardware::gnss::V1_0::IGnss;
 using android::hardware::gnss::V1_0::IGnssCallback;
+using android::hardware::gnss::V1_0::IGnssDebug;
+using android::hardware::gnss::V1_0::IGnssMeasurement;
 using android::sp;
 
 #define TIMEOUT_SEC 3  // for basic commands/responses
+
+// Set these false for release, true for stronger test
+#define GNSS_SIGNAL_IS_PRESENT false
+#define GNSS_ASSISTANCE_IS_PRESENT false
 
 // The main test class for GNSS HAL.
 class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
@@ -273,7 +279,12 @@ TEST_F(GnssHalTest, GetLocation) {
 #define PREFERRED_ACCURACY 0   // Ideally perfect (matches GnssLocationProvider)
 #define PREFERRED_TIME_MSEC 0  // Ideally immediate
 
+#if GNSS_ASSISTANCE_IS_PRESENT
+#define LOCATION_TIMEOUT_FIRST_SEC 15
+#else
 #define LOCATION_TIMEOUT_FIRST_SEC 45
+#endif
+
 #define LOCATION_TIMEOUT_SUBSEQUENT_SEC 3
 #define LOCATIONS_TO_CHECK 5
 
@@ -286,16 +297,21 @@ TEST_F(GnssHalTest, GetLocation) {
       PREFERRED_ACCURACY, PREFERRED_TIME_MSEC);
 
   ASSERT_TRUE(result.isOk());
-  ASSERT_TRUE(result);
+  EXPECT_TRUE(result);
 
   result = gnss_hal_->start();
 
   ASSERT_TRUE(result.isOk());
-  ASSERT_TRUE(result);
+  EXPECT_TRUE(result);
 
-  // GPS signals initially optional for this test, so don't expect no timeout
-  // yet
+  /*
+   * GPS signals initially optional for this test, so don't expect no timeout
+   * yet
+   */
   wait(LOCATION_TIMEOUT_FIRST_SEC);
+  if (GNSS_SIGNAL_IS_PRESENT) {
+    ASSERT_GT(location_called_count_, 0);
+  }
   if (location_called_count_ > 0) {
     CheckLocation(last_location_, checkMoreAccuracies);
   }
@@ -311,6 +327,88 @@ TEST_F(GnssHalTest, GetLocation) {
 
   ASSERT_TRUE(result.isOk());
   ASSERT_TRUE(result);
+}
+
+/*
+ * InjectDelete:
+ * Ensures that calls to inject and/or delete information state are handled.
+ * Better tests await GPS signal
+ */
+TEST_F(GnssHalTest, InjectDelete) {
+  // confidently, well north of Alaska
+  auto result = gnss_hal_->injectLocation(80.0, -170.0, 1000.0);
+
+  // TODO: full self-diff including TODO's :)
+  ASSERT_TRUE(result.isOk());
+  EXPECT_TRUE(result);
+
+  // fake time, but generally reasonable values (time in Aug. 2018)
+  result = gnss_hal_->injectTime(1534567890123L, 123456L, 10000L);
+
+  ASSERT_TRUE(result.isOk());
+  EXPECT_TRUE(result);
+
+  auto resultVoid = gnss_hal_->deleteAidingData(IGnss::GnssAidingData::DELETE_ALL);
+
+  ASSERT_TRUE(resultVoid.isOk());
+}
+
+/*
+ * GetAllExtentions:
+ * Tries getting all optional extensions, and ensures a valid return
+ *   null or actual extension, no crash.
+ * Confirms year-based required extensions (Measurement & Debug) are present
+ */
+TEST_F(GnssHalTest, GetAllExtensions) {
+  // Basic call-is-handled checks
+  auto gnssXtra = gnss_hal_->getExtensionXtra();
+  ASSERT_TRUE(gnssXtra.isOk());
+
+  auto gnssRil = gnss_hal_->getExtensionAGnssRil();
+  ASSERT_TRUE(gnssRil.isOk());
+
+  auto gnssAgnss = gnss_hal_->getExtensionAGnss();
+  ASSERT_TRUE(gnssAgnss.isOk());
+
+  auto gnssNi = gnss_hal_->getExtensionGnssNi();
+  ASSERT_TRUE(gnssNi.isOk());
+
+  auto gnssNavigationMessage = gnss_hal_->getExtensionGnssNavigationMessage();
+  ASSERT_TRUE(gnssNavigationMessage.isOk());
+
+  auto gnssConfiguration = gnss_hal_->getExtensionGnssConfiguration();
+  ASSERT_TRUE(gnssConfiguration.isOk());
+
+  auto gnssGeofencing = gnss_hal_->getExtensionGnssGeofencing();
+  ASSERT_TRUE(gnssGeofencing.isOk());
+
+  auto gnssBatching = gnss_hal_->getExtensionGnssBatching();
+  ASSERT_TRUE(gnssBatching.isOk());
+
+  // Verifying, in some cases, that these return actual extensions
+  auto gnssMeasurement = gnss_hal_->getExtensionGnssMeasurement();
+  ASSERT_TRUE(gnssMeasurement.isOk());
+  if (last_capabilities_ & IGnssCallback::Capabilities::MEASUREMENTS) {
+    sp<IGnssMeasurement> iGnssMeas = gnssMeasurement;
+    EXPECT_NE(iGnssMeas, nullptr);
+  }
+
+  auto gnssDebug = gnss_hal_->getExtensionGnssDebug();
+  ASSERT_TRUE(gnssDebug.isOk());
+  if (info_called_count_ > 0 && last_info_.yearOfHw >= 2017) {
+    sp<IGnssDebug> iGnssDebug = gnssDebug;
+    EXPECT_NE(iGnssDebug, nullptr);
+  }
+}
+
+/*
+ * MeasurementCapabilities:
+ * Verifies that modern hardware supports measurement capabilities.
+ */
+TEST_F(GnssHalTest, MeasurementCapabilites) {
+  if (info_called_count_ > 0 && last_info_.yearOfHw >= 2016) {
+    EXPECT_TRUE(last_capabilities_ & IGnssCallback::Capabilities::MEASUREMENTS);
+  }
 }
 
 int main(int argc, char** argv) {
