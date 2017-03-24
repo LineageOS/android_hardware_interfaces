@@ -28,7 +28,6 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      */
     oneway getIccCardStatusResponse(RadioResponseInfo info, CardStatus cardStatus);
 
@@ -38,9 +37,7 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE (radio resetting)
-     *   RadioError:GENERIC_FAILURE
      *   RadioError:PASSWORD_INCORRECT
      */
     oneway supplyIccPinForAppResponse(RadioResponseInfo info, int32_t remainingRetries);
@@ -51,9 +48,7 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE (radio resetting)
-     *   RadioError:GENERIC_FAILURE
      *   RadioError:PASSWORD_INCORRECT (PUK is invalid)
      */
     oneway supplyIccPukForAppResponse(RadioResponseInfo info, int32_t remainingRetries);
@@ -64,9 +59,7 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE (radio resetting)
-     *   RadioError:GENERIC_FAILURE
      *   RadioError:PASSWORD_INCORRECT
      */
     oneway supplyIccPin2ForAppResponse(RadioResponseInfo info, int32_t remainingRetries);
@@ -76,9 +69,7 @@ interface IRadioResponse {
      * @param remainingRetries Number of retries remaining, must be equal to -1 if unknown.
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE (radio resetting)
-     *   RadioError:GENERIC_FAILURE
      *   RadioError:PASSWORD_INCORRECT (PUK is invalid)
      */
     oneway supplyIccPuk2ForAppResponse(RadioResponseInfo info, int32_t remainingRetries);
@@ -89,9 +80,7 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE (radio resetting)
-     *   RadioError:GENERIC_FAILURE
      *   RadioError:PASSWORD_INCORRECT
      */
     oneway changeIccPinForAppResponse(RadioResponseInfo info, int32_t remainingRetries);
@@ -102,9 +91,7 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE (radio resetting)
-     *   RadioError:GENERIC_FAILURE
      *   RadioError:PASSWORD_INCORRECT (old PIN2 is invalid)
      */
     oneway changeIccPin2ForAppResponse(RadioResponseInfo info, int32_t remainingRetries);
@@ -115,9 +102,7 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE (radio resetting)
-     *   RadioError:GENERIC_FAILURE
      *   RadioError:PASSWORD_INCORRECT (code is invalid)
      */
     oneway supplyNetworkDepersonalizationResponse(RadioResponseInfo info, int32_t remainingRetries);
@@ -128,7 +113,6 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE (radio resetting)
      *   RadioError:GENERIC_FAILURE (request will be made again in a few hundred msec)
      *   RadioError:NO_MEMORY
@@ -141,7 +125,6 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE (radio resetting)
-     *   RadioError:GENERIC_FAILURE
      *   RadioError:DIAL_MODIFIED_TO_USSD
      *   RadioError:DIAL_MODIFIED_TO_SS
      *   RadioError:DIAL_MODIFIED_TO_DIAL
@@ -167,9 +150,7 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE (radio resetting)
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getIMSIForAppResponse(RadioResponseInfo info, string imsi);
 
@@ -185,7 +166,6 @@ interface IRadioResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_CALL_ID
-     *   RadioError:GENERIC_FAILURE
      */
     oneway hangupConnectionResponse(RadioResponseInfo info);
 
@@ -203,7 +183,6 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:GENERIC_FAILURE
      */
     oneway hangupWaitingOrBackgroundResponse(RadioResponseInfo info);
 
@@ -221,7 +200,6 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:GENERIC_FAILURE
      */
     oneway hangupForegroundResumeBackgroundResponse(RadioResponseInfo info);
 
@@ -239,7 +217,6 @@ interface IRadioResponse {
      *   RadioError:INVALID_CALL_ID
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:GENERIC_FAILURE
      */
     oneway switchWaitingOrHoldingAndActiveResponse(RadioResponseInfo info);
 
@@ -256,7 +233,6 @@ interface IRadioResponse {
      *   RadioError:INVALID_CALL_ID
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:GENERIC_FAILURE
      */
     oneway conferenceResponse(RadioResponseInfo info);
 
@@ -274,7 +250,6 @@ interface IRadioResponse {
      *   RadioError:INVALID_CALL_ID
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:GENERIC_FAILURE
      */
     oneway rejectCallResponse(RadioResponseInfo info);
 
@@ -316,10 +291,8 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:NO_MEMORY
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getLastCallFailCauseResponse(RadioResponseInfo info,
             LastCallFailCauseInfo failCauseinfo);
@@ -330,7 +303,6 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE
      */
     oneway getSignalStrengthResponse(RadioResponseInfo info, SignalStrength sigStrength);
@@ -342,9 +314,7 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getVoiceRegistrationStateResponse(RadioResponseInfo info,
             VoiceRegStateResult voiceRegResponse);
@@ -356,9 +326,7 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getDataRegistrationStateResponse(RadioResponseInfo info,
             DataRegStateResult dataRegResponse);
@@ -371,9 +339,7 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getOperatorResponse(RadioResponseInfo info, string longName, string shortName,
             string numeric);
@@ -383,9 +349,7 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      *   RadioError:OPERATION_NOT_ALLOWED
      */
     oneway setRadioPowerResponse(RadioResponseInfo info);
@@ -401,7 +365,6 @@ interface IRadioResponse {
      *   RadioError:NO_MEMORY
      *   RadioError:MODEM_ERR
      *   RadioError:INVALID_CALL_ID
-     *   RadioError:GENERIC_FAILURE
      */
     oneway sendDtmfResponse(RadioResponseInfo info);
 
@@ -425,7 +388,6 @@ interface IRadioResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:NETWORK_ERR
      *   RadioError:MODE_NOT_SUPPORTED
-     *   RadioError:GENERIC_FAILURE
      */
     oneway sendSmsResponse(RadioResponseInfo info, SendSmsResult sms);
 
@@ -450,7 +412,6 @@ interface IRadioResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:NETWORK_ERR
      *   RadioError:MODE_NOT_SUPPORTED
-     *   RadioError:GENERIC_FAILURE
      */
     oneway sendSMSExpectMoreResponse(RadioResponseInfo info, SendSmsResult sms);
 
@@ -462,12 +423,10 @@ interface IRadioResponse {
      *   RadioError:NONE must be returned on both success and failure of setup with the
      *              DataCallResponse.status containing the actual status
      *              For all other errors the DataCallResponse is ignored.
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:OP_NOT_ALLOWED_BEFORE_REG_TO_NW
      *   RadioError:OP_NOT_ALLOWED_DURING_VOICE_CALL
      *   RadioError:REQUEST_NOT_SUPPORTED
-     *   RadioError:GENERIC_FAILURE
      */
     oneway setupDataCallResponse(RadioResponseInfo info, SetupDataCallResult dcResponse);
 
@@ -477,11 +436,9 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:SIM_PIN2
      *   RadioError:SIM_PUK2
-     *   RadioError:GENERIC_FAILURE
      */
     oneway iccIOForAppResponse(RadioResponseInfo info, IccIoResult iccIo);
 
@@ -504,7 +461,6 @@ interface IRadioResponse {
      *   RadioError:ABORTED
      *   RadioError:SYSTEM_ERR
      *   RadioError:INVALID_STATE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway sendUssdResponse(RadioResponseInfo info);
 
@@ -513,7 +469,6 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:SIM_BUSY
      *   RadioError:OPERATION_NOT_ALLOWED
@@ -521,7 +476,6 @@ interface IRadioResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:NO_MEMORY
      *   RadioError:INVALID_STATE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway cancelPendingUssdResponse(RadioResponseInfo info);
 
@@ -532,7 +486,6 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:SS_MODIFIED_TO_DIAL
      *   RadioError:SS_MODIFIED_TO_USSD
@@ -542,7 +495,6 @@ interface IRadioResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:FDN_CHECK_FAILURE
      *   RadioError:SYSTEM_ERR
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getClirResponse(RadioResponseInfo info, int32_t n, int32_t m);
 
@@ -558,7 +510,6 @@ interface IRadioResponse {
      *   RadioError:SS_MODIFIED_TO_SS
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:SYSTEM_ERR
-     *   RadioError:GENERIC_FAILURE
      */
     oneway setClirResponse(RadioResponseInfo info);
 
@@ -586,7 +537,6 @@ interface IRadioResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
      *   RadioError:FDN_CHECK_FAILURE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getCallForwardStatusResponse(RadioResponseInfo info,
             vec<CallForwardInfo> callForwardInfos);
@@ -607,7 +557,6 @@ interface IRadioResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_STATE
      *   RadioError:FDN_CHECK_FAILURE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway setCallForwardResponse(RadioResponseInfo info);
 
@@ -632,7 +581,6 @@ interface IRadioResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
      *   RadioError:FDN_CHECK_FAILURE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getCallWaitingResponse(RadioResponseInfo info, bool enable, int32_t serviceClass);
 
@@ -651,7 +599,6 @@ interface IRadioResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_STATE
      *   RadioError:FDN_CHECK_FAILURE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway setCallWaitingResponse(RadioResponseInfo info);
 
@@ -660,9 +607,7 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway acknowledgeLastIncomingGsmSmsResponse(RadioResponseInfo info);
 
@@ -671,7 +616,6 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_STATE
      *   RadioError:NO_MEMORY
@@ -679,7 +623,6 @@ interface IRadioResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_CALL_ID
-     *   RadioError:GENERIC_FAILURE
      */
     oneway acceptCallResponse(RadioResponseInfo info);
 
@@ -688,9 +631,7 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway deactivateDataCallResponse(RadioResponseInfo info);
 
@@ -712,7 +653,6 @@ interface IRadioResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:SYSTEM_ERR
      *   RadioError:FDN_CHECK_FAILURE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getFacilityLockForAppResponse(RadioResponseInfo info, int32_t response);
 
@@ -732,7 +672,6 @@ interface IRadioResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_STATE
      *   RadioError:FDN_CHECK_FAILURE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway setFacilityLockForAppResponse(RadioResponseInfo info, int32_t retry);
 
@@ -751,7 +690,6 @@ interface IRadioResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:SYSTEM_ERR
      *   RadioError:FDN_CHECK_FAILURE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway setBarringPasswordResponse(RadioResponseInfo info);
 
@@ -761,9 +699,7 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getNetworkSelectionModeResponse(RadioResponseInfo info, bool manual);
 
@@ -772,11 +708,9 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:ILLEGAL_SIM_OR_ME
      *   RadioError:OPERATION_NOT_ALLOWED
-     *   RadioError:GENERIC_FAILURE
      *
      * Returns RadioError:ILLEGAL_SIM_OR_ME when the failure is permanent and
      * no retries needed, such as illegal SIM or ME.
@@ -789,11 +723,9 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:ILLEGAL_SIM_OR_ME
      *   RadioError:OPERATION_NOT_ALLOWED
-     *   RadioError:GENERIC_FAILURE
      *
      * Returns RadioError:ILLEGAL_SIM_OR_ME when the failure is permanent and
      * no retries needed, such as illegal SIM or ME.
@@ -832,7 +764,6 @@ interface IRadioResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_CALL_ID
-     *   RadioError:GENERIC_FAILURE
      */
     oneway startDtmfResponse(RadioResponseInfo info);
 
@@ -850,7 +781,6 @@ interface IRadioResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_CALL_ID
-     *   RadioError:GENERIC_FAILURE
      */
     oneway stopDtmfResponse(RadioResponseInfo info);
 
@@ -861,9 +791,7 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:EMPTY_RECORD
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getBasebandVersionResponse(RadioResponseInfo info, string version);
 
@@ -882,7 +810,6 @@ interface IRadioResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_CALL_ID
      *   RadioError:OPERATION_NOT_ALLOWED
-     *   RadioError:GENERIC_FAILURE
      */
     oneway separateConnectionResponse(RadioResponseInfo info);
 
@@ -895,7 +822,6 @@ interface IRadioResponse {
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:NO_MEMORY
      *   RadioError:REQUEST_RATE_LIMITED
-     *   RadioError:GENERIC_FAILURE
      */
     oneway setMuteResponse(RadioResponseInfo info);
 
@@ -906,13 +832,11 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:SS_MODIFIED_TO_DIAL
      *   RadioError:SS_MODIFIED_TO_USSD
      *   RadioError:SS_MODIFIED_TO_SS
      *   RadioError:NO_MEMORY
      *   RadioError:REQUEST_RATE_LIMITED
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getMuteResponse(RadioResponseInfo info, bool enable);
 
@@ -929,7 +853,6 @@ interface IRadioResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
      *   RadioError:FDN_CHECK_FAILURE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getClipResponse(RadioResponseInfo info, ClipStatus status);
 
@@ -940,8 +863,6 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getDataCallListResponse(RadioResponseInfo info, vec<SetupDataCallResult> dcResponse);
 
@@ -957,7 +878,6 @@ interface IRadioResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
-     *   RadioError:GENERIC_FAILURE
      */
     oneway setSuppServiceNotificationsResponse(RadioResponseInfo info);
 
@@ -978,7 +898,6 @@ interface IRadioResponse {
      *   RadioError:INVALID_MODEM_STATE
      *   RadioError:MODE_NOT_SUPPORTED
      *   RadioError:INVALID_SMSC_ADDRESS
-     *   RadioError:GENERIC_FAILURE
      */
     oneway writeSmsToSimResponse(RadioResponseInfo info, int32_t index);
 
@@ -994,7 +913,6 @@ interface IRadioResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:MODEM_ERR
      *   RadioError:NO_SUCH_ENTRY
-     *   RadioError:GENERIC_FAILURE
      */
     oneway deleteSmsOnSimResponse(RadioResponseInfo info);
 
@@ -1004,9 +922,7 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:OPERATION_NOT_ALLOWED
-     *   RadioError:GENERIC_FAILURE
      */
     oneway setBandModeResponse(RadioResponseInfo info);
 
@@ -1018,7 +934,6 @@ interface IRadioResponse {
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getAvailableBandModesResponse(RadioResponseInfo info, vec<RadioBandMode> bandModes);
 
@@ -1030,10 +945,8 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:SIM_BUSY
      *   RadioError:OPERATION_NOT_ALLOWED
-     *   RadioError:GENERIC_FAILURE
      */
     oneway sendEnvelopeResponse(RadioResponseInfo info, string commandResponse);
 
@@ -1045,7 +958,6 @@ interface IRadioResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:OPERATION_NOT_ALLOWED
-     *   RadioError:GENERIC_FAILURE
      */
     oneway sendTerminalResponseToSimResponse(RadioResponseInfo info);
 
@@ -1057,7 +969,6 @@ interface IRadioResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:OPERATION_NOT_ALLOWED
-     *   RadioError:GENERIC_FAILURE
      */
     oneway handleStkCallSetupRequestFromSimResponse(RadioResponseInfo info);
 
@@ -1076,7 +987,6 @@ interface IRadioResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_CALL_ID
      *   RadioError:OPERATION_NOT_ALLOWED
-     *   RadioError:GENERIC_FAILURE
      */
     oneway explicitCallTransferResponse(RadioResponseInfo info);
 
@@ -1086,10 +996,8 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:MODE_NOT_SUPPORTED
-     *   RadioError:GENERIC_FAILURE
      */
     oneway setPreferredNetworkTypeResponse(RadioResponseInfo info);
 
@@ -1100,8 +1008,6 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getPreferredNetworkTypeResponse(RadioResponseInfo info,
             PreferredNetworkType nwType);
@@ -1114,7 +1020,6 @@ interface IRadioResponse {
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getNeighboringCidsResponse(RadioResponseInfo info, vec<NeighboringCell> cells);
 
@@ -1124,8 +1029,6 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:GENERIC_FAILURE
      */
     oneway setLocationUpdatesResponse(RadioResponseInfo info);
 
@@ -1135,10 +1038,8 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:SIM_ABSENT
      *   RadioError:SUBSCRIPTION_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway setCdmaSubscriptionSourceResponse(RadioResponseInfo info);
 
@@ -1148,8 +1049,6 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:GENERIC_FAILURE
      */
     oneway setCdmaRoamingPreferenceResponse(RadioResponseInfo info);
 
@@ -1161,7 +1060,6 @@ interface IRadioResponse {
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getCdmaRoamingPreferenceResponse(RadioResponseInfo info, CdmaRoamingType type);
 
@@ -1175,7 +1073,6 @@ interface IRadioResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
      *   RadioError:NO_MEMORY
-     *   RadioError:GENERIC_FAILURE
      */
     oneway setTTYModeResponse(RadioResponseInfo info);
 
@@ -1190,7 +1087,6 @@ interface IRadioResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
      *   RadioError:NO_MEMORY
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getTTYModeResponse(RadioResponseInfo info, TtyMode mode);
 
@@ -1204,7 +1100,6 @@ interface IRadioResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
      *   RadioError:NO_MEMORY
-     *   RadioError:GENERIC_FAILURE
      */
     oneway setPreferredVoicePrivacyResponse(RadioResponseInfo info);
 
@@ -1220,7 +1115,6 @@ interface IRadioResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
      *   RadioError:NO_MEMORY
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getPreferredVoicePrivacyResponse(RadioResponseInfo info, bool enable);
 
@@ -1239,7 +1133,6 @@ interface IRadioResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INVALID_CALL_ID
      *   RadioError:INVALID_STATE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway sendCDMAFeatureCodeResponse(RadioResponseInfo info);
 
@@ -1256,7 +1149,6 @@ interface IRadioResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INVALID_CALL_ID
      *   RadioError:INVALID_STATE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway sendBurstDtmfResponse(RadioResponseInfo info);
 
@@ -1281,7 +1173,6 @@ interface IRadioResponse {
      *   RadioError:ENCODING_ERR
      *   RadioError:INVALID_SMSC_ADDRESS
      *   RadioError:MODE_NOT_SUPPORTED
-     *   RadioError:GENERIC_FAILURE
      */
     oneway sendCdmaSmsResponse(RadioResponseInfo info, SendSmsResult sms);
 
@@ -1301,7 +1192,6 @@ interface IRadioResponse {
      *   RadioError:MODE_NOT_SUPPORTED
      *   RadioError:NETWORK_NOT_READY
      *   RadioError:INVALID_MODEM_STATE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway acknowledgeLastIncomingCdmaSmsResponse(RadioResponseInfo info);
 
@@ -1319,7 +1209,6 @@ interface IRadioResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:MODEM_ERR
      *   RadioError:NO_RESOURCES
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getGsmBroadcastConfigResponse(RadioResponseInfo info,
             vec<GsmBroadcastSmsConfigInfo> configs);
@@ -1336,7 +1225,6 @@ interface IRadioResponse {
      *   RadioError:REQUEST_RATE_LIMITED
      *   RadioError:SYSTEM_ERR
      *   RadioError:MODEM_ERR
-     *   RadioError:GENERIC_FAILURE
      */
     oneway setGsmBroadcastConfigResponse(RadioResponseInfo info);
 
@@ -1352,7 +1240,6 @@ interface IRadioResponse {
      *   RadioError:REQUEST_RATE_LIMITED
      *   RadioError:SYSTEM_ERR
      *   RadioError:MODEM_ERR
-     *   RadioError:GENERIC_FAILURE
      */
     oneway setGsmBroadcastActivationResponse(RadioResponseInfo info);
 
@@ -1370,7 +1257,6 @@ interface IRadioResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:MODEM_ERR
      *   RadioError:NO_RESOURCES
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getCdmaBroadcastConfigResponse(RadioResponseInfo info,
             vec<CdmaBroadcastSmsConfigInfo> configs);
@@ -1387,7 +1273,6 @@ interface IRadioResponse {
      *   RadioError:REQUEST_RATE_LIMITED
      *   RadioError:SYSTEM_ERR
      *   RadioError:MODEM_ERR
-     *   RadioError:GENERIC_FAILURE
      */
     oneway setCdmaBroadcastConfigResponse(RadioResponseInfo info);
 
@@ -1403,7 +1288,6 @@ interface IRadioResponse {
      *   RadioError:REQUEST_RATE_LIMITED
      *   RadioError:SYSTEM_ERR
      *   RadioError:MODEM_ERR
-     *   RadioError:GENERIC_FAILURE
      */
     oneway setCdmaBroadcastActivationResponse(RadioResponseInfo info);
 
@@ -1420,9 +1304,7 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:SUBSCRIPTION_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getCDMASubscriptionResponse(RadioResponseInfo info, string mdn, string hSid,
             string hNid, string min, string prl);
@@ -1445,7 +1327,6 @@ interface IRadioResponse {
      *   RadioError:INVALID_MODEM_STATE
      *   RadioError:MODE_NOT_SUPPORTED
      *   RadioError:INVALID_SMSC_ADDRESS
-     *   RadioError:GENERIC_FAILURE
      */
     oneway writeSmsToRuimResponse(RadioResponseInfo info, uint32_t index);
 
@@ -1461,7 +1342,6 @@ interface IRadioResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:MODEM_ERR
      *   RadioError:NO_SUCH_ENTRY
-     *   RadioError:GENERIC_FAILURE
      */
     oneway deleteSmsOnRuimResponse(RadioResponseInfo info);
 
@@ -1475,8 +1355,6 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:GENERIC_FAILURE
      *
      * If a empty string value is returned for any of the device id, it means that there was error
      * accessing the device.
@@ -1491,9 +1369,7 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INVALID_ARGUMENTS
      *   RadioError:OPERATION_NO_ALLOWED
-     *   RadioError:GENERIC_FAILURE
      */
     oneway exitEmergencyCallbackModeResponse(RadioResponseInfo info);
 
@@ -1512,7 +1388,6 @@ interface IRadioResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INVALID_MODEM_STATE
      *   RadioError:NOT_PROVISIONED
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getSmscAddressResponse(RadioResponseInfo info, string smsc);
 
@@ -1529,7 +1404,6 @@ interface IRadioResponse {
      *   RadioError:REQUEST_RATE_LIMITED
      *   RadioError:MODEM_ERR
      *   RadioError:NO_RESOURCES
-     *   RadioError:GENERIC_FAILURE
      */
     oneway setSmscAddressResponse(RadioResponseInfo info);
 
@@ -1545,7 +1419,6 @@ interface IRadioResponse {
      *   RadioError:REQUEST_RATE_LIMITED
      *   RadioError:MODEM_ERR
      *   RadioError:INVALID_STATE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway reportSmsMemoryStatusResponse(RadioResponseInfo info);
 
@@ -1555,7 +1428,6 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway reportStkServiceIsRunningResponse(RadioResponseInfo info);
 
@@ -1567,7 +1439,6 @@ interface IRadioResponse {
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:SUBSCRIPTION_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getCdmaSubscriptionSourceResponse(RadioResponseInfo info, CdmaSubscriptionSource source);
 
@@ -1578,7 +1449,6 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway requestIsimAuthenticationResponse(RadioResponseInfo info, string response);
 
@@ -1588,7 +1458,6 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway acknowledgeIncomingGsmSmsWithPduResponse(RadioResponseInfo info);
 
@@ -1601,7 +1470,6 @@ interface IRadioResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:SIM_BUSY
      *   RadioError:OPERATION_NOT_ALLOWED
-     *   RadioError:GENERIC_FAILURE
      */
     oneway sendEnvelopeWithStatusResponse(RadioResponseInfo info, IccIoResult iccIo);
 
@@ -1612,7 +1480,6 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getVoiceRadioTechnologyResponse(RadioResponseInfo info, RadioTechnology rat);
 
@@ -1623,7 +1490,6 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getCellInfoListResponse(RadioResponseInfo info, vec<CellInfo> cellInfo);
 
@@ -1633,7 +1499,6 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway setCellInfoListRateResponse(RadioResponseInfo info);
 
@@ -1644,7 +1509,6 @@ interface IRadioResponse {
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:SUBSCRIPTION_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway setInitialAttachApnResponse(RadioResponseInfo info);
 
@@ -1657,7 +1521,6 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getImsRegistrationStateResponse(RadioResponseInfo info, bool isRegistered,
             RadioTechnologyFamily ratFamily);
@@ -1682,7 +1545,6 @@ interface IRadioResponse {
      *   RadioError:NETWORK_ERR
      *   RadioError:ENCODING_ERR
      *   RadioError:MODE_NOT_SUPPORTED
-     *   RadioError:GENERIC_FAILURE
      */
     oneway sendImsSmsResponse(RadioResponseInfo info, SendSmsResult sms);
 
@@ -1693,7 +1555,6 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway iccTransmitApduBasicChannelResponse(RadioResponseInfo info, IccIoResult result);
 
@@ -1706,7 +1567,6 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      *   RadioError:MISSING_RESOURCE
      *   RadioError:NO_SUCH_ELEMENT
      */
@@ -1719,7 +1579,6 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway iccCloseLogicalChannelResponse(RadioResponseInfo info);
 
@@ -1730,7 +1589,6 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway iccTransmitApduLogicalChannelResponse(RadioResponseInfo info, IccIoResult result);
 
@@ -1741,7 +1599,6 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway nvReadItemResponse(RadioResponseInfo info, string result);
 
@@ -1751,7 +1608,6 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway nvWriteItemResponse(RadioResponseInfo info);
 
@@ -1761,7 +1617,6 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway nvWriteCdmaPrlResponse(RadioResponseInfo info);
 
@@ -1771,7 +1626,6 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway nvResetConfigResponse(RadioResponseInfo info);
 
@@ -1782,7 +1636,6 @@ interface IRadioResponse {
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:SUBSCRIPTION_NOT_SUPPORTED
-     *   RadioError:GENERIC_FAILURE
      */
     oneway setUiccSubscriptionResponse(RadioResponseInfo info);
 
@@ -1792,7 +1645,6 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway setDataAllowedResponse(RadioResponseInfo info);
 
@@ -1833,7 +1685,6 @@ interface IRadioResponse {
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:OPERATION_NOT_ALLOWED
-     *   RadioError:GENERIC_FAILURE
      */
     oneway requestShutdownResponse(RadioResponseInfo info);
 
@@ -1845,7 +1696,6 @@ interface IRadioResponse {
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:OPERATION_NOT_ALLOWED
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getRadioCapabilityResponse(RadioResponseInfo info, RadioCapability rc);
 
@@ -1858,7 +1708,6 @@ interface IRadioResponse {
      *   RadioError:NONE means a unsol radioCapability() will be sent within 30 seconds.
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:OPERATION_NOT_ALLOWED
-     *   RadioError:GENERIC_FAILURE
      */
     oneway setRadioCapabilityResponse(RadioResponseInfo info, RadioCapability rc);
 
@@ -1902,7 +1751,6 @@ interface IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:GENERIC_FAILURE
      */
     oneway getModemActivityInfoResponse(RadioResponseInfo info, ActivityStatsInfo activityInfo);
 
