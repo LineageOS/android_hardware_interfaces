@@ -20,14 +20,6 @@
 
 #include "wifi_hidl_test_utils.h"
 
-class WifiHidlEnvironment : public ::testing::Environment {
-   public:
-    virtual void SetUp() override { stopFramework(); }
-    virtual void TearDown() override { startFramework(); }
-
-   private:
-};
-
 int main(int argc, char** argv) {
     ::testing::AddGlobalTestEnvironment(new WifiHidlEnvironment);
     ::testing::InitGoogleTest(&argc, argv);

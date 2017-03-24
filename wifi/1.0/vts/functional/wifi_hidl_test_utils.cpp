@@ -82,14 +82,6 @@ bool configureChipToSupportIfaceTypeInternal(const sp<IWifiChip>& wifi_chip,
 }
 }  // namespace
 
-void stopFramework() {
-    ASSERT_EQ(std::system("stop"), 0);
-    stopWifi();
-    sleep(5);
-}
-
-void startFramework() { ASSERT_EQ(std::system("start"), 0); }
-
 sp<IWifi> getWifi() {
     sp<IWifi> wifi = ::testing::VtsHalHidlTargetTestBase::getService<IWifi>();
     return wifi;
