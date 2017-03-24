@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2016 The Android Open Source Project
- *
+` *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,6 +17,7 @@
 
 #include "DrmFactory.h"
 #include "DrmPlugin.h"
+#include "LegacyPluginPath.h"
 #include "TypeConvert.h"
 #include <utils/Log.h>
 
@@ -27,7 +28,7 @@ namespace V1_0 {
 namespace implementation {
 
     DrmFactory::DrmFactory() :
-        loader("/vendor/lib/mediadrm", "createDrmFactory") {
+        loader(getDrmPluginPath(), "createDrmFactory") {
     }
 
     // Methods from ::android::hardware::drm::V1_0::IDrmFactory follow.

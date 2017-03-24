@@ -17,6 +17,7 @@
 
 #include "CryptoFactory.h"
 #include "CryptoPlugin.h"
+#include "LegacyPluginPath.h"
 #include "TypeConvert.h"
 #include <utils/Log.h>
 
@@ -27,7 +28,7 @@ namespace V1_0 {
 namespace implementation {
 
     CryptoFactory::CryptoFactory() :
-        loader("/vendor/lib/mediadrm", "createCryptoFactory") {
+        loader(getDrmPluginPath(), "createCryptoFactory") {
     }
 
     // Methods from ::android::hardware::drm::V1_0::ICryptoFactory follow.
