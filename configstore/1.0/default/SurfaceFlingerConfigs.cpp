@@ -29,12 +29,6 @@ Return<void> SurfaceFlingerConfigs::useTripleFramebuffer(useTripleFramebuffer_cb
     return Void();
 }
 
-// Methods from ::android::hidl::base::V1_0::IBase follow.
-
-ISurfaceFlingerConfigs* HIDL_FETCH_ISurfaceFlingerConfigs(const char* /* name */) {
-    return new SurfaceFlingerConfigs();
-}
-
 }  // namespace implementation
 }  // namespace V1_0
 }  // namespace configstore
