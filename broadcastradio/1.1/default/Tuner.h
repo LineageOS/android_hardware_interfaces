@@ -42,6 +42,7 @@ struct Tuner : public ITuner {
     Return<Result> cancel() override;
     Return<void> getProgramInformation(getProgramInformation_cb _hidl_cb) override;
     Return<void> getProgramInformation_1_1(getProgramInformation_1_1_cb _hidl_cb) override;
+    Return<ProgramListResult> startBackgroundScan() override;
     Return<void> getProgramList(const hidl_string& filter, getProgramList_cb _hidl_cb) override;
 
     static void callback(radio_hal_event_t *halEvent, void *cookie);

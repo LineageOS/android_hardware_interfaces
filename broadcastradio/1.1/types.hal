@@ -45,6 +45,16 @@ enum ProgramInfoFlags : uint32_t {
     MUTED = 1 << 1,
 };
 
+struct Properties {
+    @1.0::Properties base;
+
+    /**
+     * The hardware supports background scanning in general. At the given time
+     * it may not be available though, see startBackgroundScan.
+     */
+    bool supportsBackgroundScanning;
+};
+
 /**
  * Radio program information. Returned by the HAL with event RADIO_EVENT_TUNED.
  * Contains information on currently tuned channel.

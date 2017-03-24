@@ -4,6 +4,7 @@ filegroup {
     name: "android.hardware.broadcastradio@1.1_hal",
     srcs: [
         "types.hal",
+        "IBroadcastRadio.hal",
         "IBroadcastRadioFactory.hal",
         "ITuner.hal",
         "ITunerCallback.hal",
@@ -19,6 +20,7 @@ genrule {
     ],
     out: [
         "android/hardware/broadcastradio/1.1/types.cpp",
+        "android/hardware/broadcastradio/1.1/BroadcastRadioAll.cpp",
         "android/hardware/broadcastradio/1.1/BroadcastRadioFactoryAll.cpp",
         "android/hardware/broadcastradio/1.1/TunerAll.cpp",
         "android/hardware/broadcastradio/1.1/TunerCallbackAll.cpp",
@@ -34,6 +36,11 @@ genrule {
     ],
     out: [
         "android/hardware/broadcastradio/1.1/types.h",
+        "android/hardware/broadcastradio/1.1/IBroadcastRadio.h",
+        "android/hardware/broadcastradio/1.1/IHwBroadcastRadio.h",
+        "android/hardware/broadcastradio/1.1/BnHwBroadcastRadio.h",
+        "android/hardware/broadcastradio/1.1/BpHwBroadcastRadio.h",
+        "android/hardware/broadcastradio/1.1/BsBroadcastRadio.h",
         "android/hardware/broadcastradio/1.1/IBroadcastRadioFactory.h",
         "android/hardware/broadcastradio/1.1/IHwBroadcastRadioFactory.h",
         "android/hardware/broadcastradio/1.1/BnHwBroadcastRadioFactory.h",

@@ -47,6 +47,7 @@ using ::android::hardware::broadcastradio::V1_1::ITuner;
 using ::android::hardware::broadcastradio::V1_1::ITunerCallback;
 using ::android::hardware::broadcastradio::V1_1::ProgramInfo;
 using ::android::hardware::broadcastradio::V1_1::Result;
+using ::android::hardware::broadcastradio::V1_1::ProgramListResult;
 
 
 // The main test class for Broadcast Radio HIDL HAL.
@@ -125,6 +126,14 @@ class BroadcastRadioHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         virtual Return<void> newMetadata(uint32_t channel __unused, uint32_t subChannel __unused,
                            const ::android::hardware::hidl_vec<MetaData>& metadata __unused) {
             ALOGI("%s", __FUNCTION__);
+            return Void();
+        }
+
+        virtual Return<void> backgroundScanComplete(ProgramListResult result __unused) {
+            return Void();
+        }
+
+        virtual Return<void> programListChanged() {
             return Void();
         }
 
