@@ -24,11 +24,6 @@
 #include <android/hardware/wifi/1.0/IWifiRttController.h>
 #include <android/hardware/wifi/1.0/IWifiStaIface.h>
 
-// Used to stop the android framework (wifi service) before every
-// test.
-void stopFramework();
-void startFramework();
-
 // Helper functions to obtain references to the various HIDL interface objects.
 // Note: We only have a single instance of each of these objects currently.
 // These helper functions should be modified to return vectors if we support
@@ -49,3 +44,12 @@ bool configureChipToSupportIfaceType(
     android::hardware::wifi::V1_0::ChipModeId* configured_mode_id);
 // Used to trigger IWifi.stop() at the end of every test.
 void stopWifi();
+
+class WifiHidlEnvironment : public ::testing::Environment {
+ public:
+  virtual void SetUp() override {
+      stopWifi();
+      sleep(5);
+  }
+  virtual void TearDown() override {}
+};
