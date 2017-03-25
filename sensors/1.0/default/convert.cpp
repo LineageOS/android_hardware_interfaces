@@ -137,6 +137,7 @@ void convertFromSensorEvent(const sensors_event_t &src, Event *dst) {
       case SensorType::STATIONARY_DETECT:
       case SensorType::MOTION_DETECT:
       case SensorType::HEART_BEAT:
+      case SensorType::LOW_LATENCY_OFFBODY_DETECT:
       {
           dst->u.scalar = src.data[0];
           break;
@@ -280,6 +281,7 @@ void convertToSensorEvent(const Event &src, sensors_event_t *dst) {
         case SensorType::STATIONARY_DETECT:
         case SensorType::MOTION_DETECT:
         case SensorType::HEART_BEAT:
+        case SensorType::LOW_LATENCY_OFFBODY_DETECT:
         {
             dst->data[0] = src.u.scalar;
             break;

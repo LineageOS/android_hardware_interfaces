@@ -722,6 +722,7 @@ SensorFlagBits SensorsHidlTest::expectedReportModeForType(SensorType type) {
     case SensorType::DEVICE_ORIENTATION:
     case SensorType::MOTION_DETECT:
     case SensorType::STEP_COUNTER:
+    case SensorType::LOW_LATENCY_OFFBODY_DETECT:
       return SensorFlagBits::ON_CHANGE_MODE;
 
     case SensorType::SIGNIFICANT_MOTION:
