@@ -54,6 +54,7 @@ genrule {
     ],
     out: [
         "android/hardware/wifi/1.0/types.h",
+        "android/hardware/wifi/1.0/hwtypes.h",
         "android/hardware/wifi/1.0/IWifi.h",
         "android/hardware/wifi/1.0/IHwWifi.h",
         "android/hardware/wifi/1.0/BnHwWifi.h",

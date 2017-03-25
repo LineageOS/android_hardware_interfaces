@@ -38,6 +38,7 @@ genrule {
     ],
     out: [
         "android/hardware/tests/bar/1.0/types.h",
+        "android/hardware/tests/bar/1.0/hwtypes.h",
         "android/hardware/tests/bar/1.0/IBar.h",
         "android/hardware/tests/bar/1.0/IHwBar.h",
         "android/hardware/tests/bar/1.0/BnHwBar.h",
