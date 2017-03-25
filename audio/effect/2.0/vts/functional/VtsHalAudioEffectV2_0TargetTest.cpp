@@ -31,8 +31,10 @@
 using android::hardware::audio::common::V2_0::AudioDevice;
 using android::hardware::audio::common::V2_0::AudioHandleConsts;
 using android::hardware::audio::common::V2_0::AudioMode;
+using android::hardware::audio::common::V2_0::AudioSource;
 using android::hardware::audio::common::V2_0::Uuid;
 using android::hardware::audio::effect::V2_0::AudioBuffer;
+using android::hardware::audio::effect::V2_0::EffectAuxChannelsConfig;
 using android::hardware::audio::effect::V2_0::EffectBufferConfig;
 using android::hardware::audio::effect::V2_0::EffectConfig;
 using android::hardware::audio::effect::V2_0::EffectDescriptor;
@@ -278,6 +280,33 @@ TEST_F(AudioEffectHidlTest, GetSetConfig) {
   EXPECT_EQ(Result::OK, ret2);
 }
 
+TEST_F(AudioEffectHidlTest, GetConfigReverse) {
+  description("Verify that GetConfigReverse does not crash");
+  Return<void> ret =
+      effect->getConfigReverse([&](Result, const EffectConfig&) {});
+  EXPECT_TRUE(ret.isOk());
+}
+
+TEST_F(AudioEffectHidlTest, GetSupportedAuxChannelsConfigs) {
+  description("Verify that GetSupportedAuxChannelsConfigs does not crash");
+  Return<void> ret = effect->getSupportedAuxChannelsConfigs(
+      0, [&](Result, const hidl_vec<EffectAuxChannelsConfig>&) {});
+  EXPECT_TRUE(ret.isOk());
+}
+
+TEST_F(AudioEffectHidlTest, GetAuxChannelsConfig) {
+  description("Verify that GetAuxChannelsConfig does not crash");
+  Return<void> ret = effect->getAuxChannelsConfig(
+      [&](Result, const EffectAuxChannelsConfig&) {});
+  EXPECT_TRUE(ret.isOk());
+}
+
+TEST_F(AudioEffectHidlTest, SetAuxChannelsConfig) {
+  description("Verify that SetAuxChannelsConfig does not crash");
+  Return<Result> ret = effect->setAuxChannelsConfig(EffectAuxChannelsConfig());
+  EXPECT_TRUE(ret.isOk());
+}
+
 // Not generated automatically because AudioBuffer contains
 // instances of hidl_memory which can't be compared properly
 // in general case due to presence of handles.
@@ -394,6 +423,25 @@ TEST_F(AudioEffectHidlTest, SetAudioMode) {
   EXPECT_EQ(Result::OK, ret);
 }
 
+TEST_F(AudioEffectHidlTest, SetConfigReverse) {
+  description("Verify that SetConfigReverse does not crash");
+  Return<Result> ret =
+      effect->setConfigReverse(EffectConfig(), nullptr, nullptr);
+  EXPECT_TRUE(ret.isOk());
+}
+
+TEST_F(AudioEffectHidlTest, SetInputDevice) {
+  description("Verify that SetInputDevice does not crash");
+  Return<Result> ret = effect->setInputDevice(AudioDevice::IN_BUILTIN_MIC);
+  EXPECT_TRUE(ret.isOk());
+}
+
+TEST_F(AudioEffectHidlTest, SetAudioSource) {
+  description("Verify that SetAudioSource does not crash");
+  Return<Result> ret = effect->setAudioSource(AudioSource::MIC);
+  EXPECT_TRUE(ret.isOk());
+}
+
 TEST_F(AudioEffectHidlTest, Offload) {
   description("Verify that calling Offload methods works for an effect");
   EffectOffloadParameter offloadParam;
@@ -434,17 +482,48 @@ TEST_F(AudioEffectHidlTest, SetProcessBuffers) {
   EXPECT_EQ(Result::OK, ret2);
 }
 
-// Testing getConfigReverse, getAuxChannelsConfig,
-// getSupportedAuxChannelsConfigs, setAudioSource, setConfigReverse,
-// setInputDevice doesn't make sense, because normally they are not supported by
-// the Equalizer, but it wouldn't be a problem if some vendor implementation
-// supports them, thus we can't test these methods neither for success, nor for
-// failure.
+TEST_F(AudioEffectHidlTest, Command) {
+  description("Verify that Command does not crash");
+  Return<void> ret = effect->command(0, hidl_vec<uint8_t>(), 0,
+                                     [&](int32_t, const hidl_vec<uint8_t>&) {});
+  EXPECT_TRUE(ret.isOk());
+}
 
-// command, getParameter, getSupportedConfigsForFeature,
-// getCurrentConfigForFeature, setCurrentConfigForFeature, setParameter are
-// opaque channels between vendor apps and HALs, and can't be meaningfully
-// tested with effects that don't support them.
+TEST_F(AudioEffectHidlTest, SetParameter) {
+  description("Verify that SetParameter does not crash");
+  Return<Result> ret =
+      effect->setParameter(hidl_vec<uint8_t>(), hidl_vec<uint8_t>());
+  EXPECT_TRUE(ret.isOk());
+}
+
+TEST_F(AudioEffectHidlTest, GetParameter) {
+  description("Verify that GetParameter does not crash");
+  Return<void> ret = effect->getParameter(
+      hidl_vec<uint8_t>(), 0, [&](Result, const hidl_vec<uint8_t>&) {});
+  EXPECT_TRUE(ret.isOk());
+}
+
+TEST_F(AudioEffectHidlTest, GetSupportedConfigsForFeature) {
+  description("Verify that GetSupportedConfigsForFeature does not crash");
+  Return<void> ret = effect->getSupportedConfigsForFeature(
+      0, 0, 0, [&](Result, uint32_t, const hidl_vec<uint8_t>&) {});
+  EXPECT_TRUE(ret.isOk());
+}
+
+TEST_F(AudioEffectHidlTest, GetCurrentConfigForFeature) {
+  description("Verify that GetCurrentConfigForFeature does not crash");
+  Return<void> ret = effect->getCurrentConfigForFeature(
+      0, 0, [&](Result, const hidl_vec<uint8_t>&) {});
+  EXPECT_TRUE(ret.isOk());
+}
+
+TEST_F(AudioEffectHidlTest, SetCurrentConfigForFeature) {
+  description("Verify that SetCurrentConfigForFeature does not crash");
+  Return<Result> ret =
+      effect->setCurrentConfigForFeature(0, hidl_vec<uint8_t>());
+  EXPECT_TRUE(ret.isOk());
+}
+
 
 // The main test class for Equalizer Audio Effect HIDL HAL.
 class EqualizerAudioEffectHidlTest : public AudioEffectHidlTest {
