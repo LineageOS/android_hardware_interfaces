@@ -211,6 +211,17 @@ Return<void> Tuner::getProgramList(const hidl_string& filter __unused, getProgra
     return Void();
 }
 
+Return<void> Tuner::isAnalogForced(isAnalogForced_cb _hidl_cb) {
+    // TODO(b/34348946): do the actual implementation.
+    _hidl_cb(Result::NOT_INITIALIZED, false);
+    return Void();
+}
+
+Return<Result> Tuner::setAnalogForced(bool isForced __unused) {
+    // TODO(b/34348946): do the actual implementation.
+    return Result::NOT_INITIALIZED;
+}
+
 } // namespace implementation
 }  // namespace V1_1
 }  // namespace broadcastradio
