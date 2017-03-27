@@ -30,6 +30,7 @@ genrule {
     ],
     out: [
         "android/hardware/boot/1.0/types.h",
+        "android/hardware/boot/1.0/hwtypes.h",
         "android/hardware/boot/1.0/IBootControl.h",
         "android/hardware/boot/1.0/IHwBootControl.h",
         "android/hardware/boot/1.0/BnHwBootControl.h",

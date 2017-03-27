@@ -30,6 +30,7 @@ genrule {
     ],
     out: [
         "android/hardware/ir/1.0/types.h",
+        "android/hardware/ir/1.0/hwtypes.h",
         "android/hardware/ir/1.0/IConsumerIr.h",
         "android/hardware/ir/1.0/IHwConsumerIr.h",
         "android/hardware/ir/1.0/BnHwConsumerIr.h",
