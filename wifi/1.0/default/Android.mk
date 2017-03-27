@@ -48,6 +48,5 @@ LOCAL_SHARED_LIBRARIES := \
     libwifi-hal \
     libwifi-system \
     libcld80211
-LOCAL_WHOLE_STATIC_LIBRARIES := $(LIB_WIFI_HAL)
 LOCAL_INIT_RC := android.hardware.wifi@1.0-service.rc
 include $(BUILD_EXECUTABLE)
