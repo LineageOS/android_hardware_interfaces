@@ -30,6 +30,7 @@ genrule {
     ],
     out: [
         "android/hardware/tests/extension/light/2.0/types.h",
+        "android/hardware/tests/extension/light/2.0/hwtypes.h",
         "android/hardware/tests/extension/light/2.0/IExtLight.h",
         "android/hardware/tests/extension/light/2.0/IHwExtLight.h",
         "android/hardware/tests/extension/light/2.0/BnHwExtLight.h",

@@ -30,6 +30,7 @@ genrule {
     ],
     out: [
         "android/hardware/gatekeeper/1.0/types.h",
+        "android/hardware/gatekeeper/1.0/hwtypes.h",
         "android/hardware/gatekeeper/1.0/IGatekeeper.h",
         "android/hardware/gatekeeper/1.0/IHwGatekeeper.h",
         "android/hardware/gatekeeper/1.0/BnHwGatekeeper.h",

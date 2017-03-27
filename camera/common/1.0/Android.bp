@@ -28,6 +28,7 @@ genrule {
     ],
     out: [
         "android/hardware/camera/common/1.0/types.h",
+        "android/hardware/camera/common/1.0/hwtypes.h",
     ],
 }
 

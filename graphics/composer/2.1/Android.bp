@@ -34,6 +34,7 @@ genrule {
     ],
     out: [
         "android/hardware/graphics/composer/2.1/types.h",
+        "android/hardware/graphics/composer/2.1/hwtypes.h",
         "android/hardware/graphics/composer/2.1/IComposer.h",
         "android/hardware/graphics/composer/2.1/IHwComposer.h",
         "android/hardware/graphics/composer/2.1/BnHwComposer.h",

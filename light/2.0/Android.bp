@@ -30,6 +30,7 @@ genrule {
     ],
     out: [
         "android/hardware/light/2.0/types.h",
+        "android/hardware/light/2.0/hwtypes.h",
         "android/hardware/light/2.0/ILight.h",
         "android/hardware/light/2.0/IHwLight.h",
         "android/hardware/light/2.0/BnHwLight.h",

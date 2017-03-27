@@ -28,6 +28,7 @@ genrule {
     ],
     out: [
         "android/hardware/graphics/common/1.0/types.h",
+        "android/hardware/graphics/common/1.0/hwtypes.h",
     ],
 }
 

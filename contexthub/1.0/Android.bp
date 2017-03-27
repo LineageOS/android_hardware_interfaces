@@ -32,6 +32,7 @@ genrule {
     ],
     out: [
         "android/hardware/contexthub/1.0/types.h",
+        "android/hardware/contexthub/1.0/hwtypes.h",
         "android/hardware/contexthub/1.0/IContexthub.h",
         "android/hardware/contexthub/1.0/IHwContexthub.h",
         "android/hardware/contexthub/1.0/BnHwContexthub.h",

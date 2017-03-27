@@ -34,6 +34,7 @@ genrule {
     ],
     out: [
         "android/hardware/camera/device/3.2/types.h",
+        "android/hardware/camera/device/3.2/hwtypes.h",
         "android/hardware/camera/device/3.2/ICameraDevice.h",
         "android/hardware/camera/device/3.2/IHwCameraDevice.h",
         "android/hardware/camera/device/3.2/BnHwCameraDevice.h",
