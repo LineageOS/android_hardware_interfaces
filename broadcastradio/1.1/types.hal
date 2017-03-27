@@ -23,7 +23,7 @@ typedef @1.0::Result Result;
 enum ProgramListResult : Result {
     NOT_READY,
     NOT_STARTED,
-    TEMPORARILY_UNAVAILABLE,
+    UNAVAILABLE,
 };
 
 /**

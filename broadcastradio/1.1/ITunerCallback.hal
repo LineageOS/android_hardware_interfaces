@@ -40,11 +40,19 @@ interface ITunerCallback extends @1.0::ITunerCallback {
     oneway afSwitch_1_1(ProgramInfo info);
 
     /**
+     * Called by the HAL when background scan feature becomes available or not.
+     *
+     * @param isAvailable true, if the tuner turned temporarily background-
+     *                    capable, false in the other case.
+     */
+    oneway backgroundScanAvailable(bool isAvailable);
+
+    /**
      * Called by the HAL when background scan initiated by startBackgroundScan
      * finishes. If the list was changed, programListChanged must be called too.
      * @param result OK if the scan succeeded, client may retrieve the actual
      *               list with ITuner::getProgramList.
-     *               TEMPORARILY_UNAVAILABLE if the scan was interrupted due to
+     *               UNAVAILABLE if the scan was interrupted due to
      *               hardware becoming temporarily unavailable.
      *               NOT_INITIALIZED other error, ie. HW failure.
      */

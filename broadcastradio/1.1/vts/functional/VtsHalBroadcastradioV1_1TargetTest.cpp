@@ -129,6 +129,10 @@ class BroadcastRadioHidlTest : public ::testing::VtsHalHidlTargetTestBase {
             return Void();
         }
 
+        virtual Return<void> backgroundScanAvailable(bool isAvailable __unused) {
+            return Void();
+        }
+
         virtual Return<void> backgroundScanComplete(ProgramListResult result __unused) {
             return Void();
         }
