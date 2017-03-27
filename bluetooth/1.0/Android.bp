@@ -32,6 +32,7 @@ genrule {
     ],
     out: [
         "android/hardware/bluetooth/1.0/types.h",
+        "android/hardware/bluetooth/1.0/hwtypes.h",
         "android/hardware/bluetooth/1.0/IBluetoothHci.h",
         "android/hardware/bluetooth/1.0/IHwBluetoothHci.h",
         "android/hardware/bluetooth/1.0/BnHwBluetoothHci.h",
