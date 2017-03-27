@@ -30,6 +30,7 @@ genrule {
     ],
     out: [
         "android/hardware/configstore/1.0/types.h",
+        "android/hardware/configstore/1.0/hwtypes.h",
         "android/hardware/configstore/1.0/ISurfaceFlingerConfigs.h",
         "android/hardware/configstore/1.0/IHwSurfaceFlingerConfigs.h",
         "android/hardware/configstore/1.0/BnHwSurfaceFlingerConfigs.h",

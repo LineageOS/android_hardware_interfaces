@@ -32,6 +32,7 @@ genrule {
     ],
     out: [
         "android/hardware/renderscript/1.0/types.h",
+        "android/hardware/renderscript/1.0/hwtypes.h",
         "android/hardware/renderscript/1.0/IContext.h",
         "android/hardware/renderscript/1.0/IHwContext.h",
         "android/hardware/renderscript/1.0/BnHwContext.h",
