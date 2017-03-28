@@ -47,8 +47,8 @@ interface ITuner extends @1.0::ITuner {
      *
      * @return result OK if the scan was properly scheduled (this does not mean
      *                it successfully finished).
-     *                TEMPORARILY_UNAVAILABLE if the background scan is
-     *                temporarily unavailable, ie. due to ongoing foreground
+     *                UNAVAILABLE if the background scan is unavailable,
+     *                ie. temporarily due to ongoing foreground
      *                playback in single-tuner device.
      *                NOT_INITIALIZED other error, ie. HW failure.
      */
