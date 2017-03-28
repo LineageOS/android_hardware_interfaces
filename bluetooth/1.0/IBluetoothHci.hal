@@ -18,7 +18,7 @@ package android.hardware.bluetooth@1.0;
 
 import IBluetoothHciCallbacks;
 
-/*
+/**
  * The Host Controller Interface (HCI) is the layer defined by the Bluetooth
  * specification between the software that runs on the host and the Bluetooth
  * controller chip. This boundary is the natural choice for a Hardware
