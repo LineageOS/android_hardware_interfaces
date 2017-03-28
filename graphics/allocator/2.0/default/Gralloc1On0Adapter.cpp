@@ -21,6 +21,8 @@
 #include "Gralloc1On0Adapter.h"
 #include "gralloc1-adapter.h"
 
+#include <grallocusage/GrallocUsageConversion.h>
+
 #include <hardware/gralloc.h>
 
 #include <utils/Log.h>
@@ -240,8 +242,8 @@ gralloc1_error_t Gralloc1On0Adapter::allocate(
     // pointer, which only occurs when mDevice has been loaded successfully and
     // we are permitted to allocate
 
-    int usage = static_cast<int>(descriptor->producerUsage) |
-            static_cast<int>(descriptor->consumerUsage);
+    int usage = android_convertGralloc1To0Usage(
+            descriptor->producerUsage, descriptor->consumerUsage);
     buffer_handle_t handle = nullptr;
     int stride = 0;
     ALOGV("Calling alloc(%p, %u, %u, %i, %u)", mDevice, descriptor->width,
@@ -438,7 +440,7 @@ gralloc1_error_t Gralloc1On0Adapter::lock(
 {
     if (mMinorVersion >= 3) {
         int result = mModule->lockAsync(mModule, buffer->getHandle(),
-                static_cast<int32_t>(producerUsage | consumerUsage),
+                android_convertGralloc1To0Usage(producerUsage, consumerUsage),
                 accessRegion.left, accessRegion.top, accessRegion.width,
                 accessRegion.height, outData, acquireFence);
         if (result != 0) {
@@ -448,7 +450,7 @@ gralloc1_error_t Gralloc1On0Adapter::lock(
         syncWaitForever(acquireFence, "Gralloc1On0Adapter::lock");
 
         int result = mModule->lock(mModule, buffer->getHandle(),
-                static_cast<int32_t>(producerUsage | consumerUsage),
+                android_convertGralloc1To0Usage(producerUsage, consumerUsage),
                 accessRegion.left, accessRegion.top, accessRegion.width,
                 accessRegion.height, outData);
         ALOGV("gralloc0 lock returned %d", result);
