@@ -232,10 +232,8 @@ sp<HalClient> SubscriptionManager::getOrCreateHalClientLocked(
                   __func__, callback.get(), res.description().c_str());
             return nullptr;
         }
-        IPCThreadState* self = IPCThreadState::self();
-        pid_t pid = self->getCallingPid();
-        uid_t uid = self->getCallingUid();
-        sp<HalClient> client = new HalClient(callback, pid, uid);
+
+        sp<HalClient> client = new HalClient(callback);
         mClients.emplace(callback, client);
         return client;
     } else {

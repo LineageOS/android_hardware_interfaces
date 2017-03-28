@@ -24,7 +24,7 @@
 
 #include <android/log.h>
 #include <hidl/HidlSupport.h>
-#include <hwbinder/IPCThreadState.h>
+#include <utils/SortedVector.h>
 
 #include <android/hardware/automotive/vehicle/2.0/IVehicle.h>
 
@@ -39,10 +39,8 @@ namespace V2_0 {
 
 class HalClient : public android::RefBase {
 public:
-    HalClient(const sp<IVehicleCallback> &callback,
-              int32_t pid,
-              int32_t uid)
-        : mCallback(callback), mPid(pid), mUid(uid) {}
+    HalClient(const sp<IVehicleCallback> &callback)
+        : mCallback(callback) {}
 
     virtual ~HalClient() {}
 public:
@@ -56,8 +54,6 @@ public:
 
 private:
     const sp<IVehicleCallback> mCallback;
-    const int32_t mPid;
-    const int32_t mUid;
 
     std::map<int32_t, SubscribeOptions> mSubscriptions;
 };
