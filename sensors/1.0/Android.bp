@@ -30,6 +30,7 @@ genrule {
     ],
     out: [
         "android/hardware/sensors/1.0/types.h",
+        "android/hardware/sensors/1.0/hwtypes.h",
         "android/hardware/sensors/1.0/ISensors.h",
         "android/hardware/sensors/1.0/IHwSensors.h",
         "android/hardware/sensors/1.0/BnHwSensors.h",

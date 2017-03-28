@@ -38,6 +38,7 @@ genrule {
     ],
     out: [
         "android/hardware/drm/1.0/types.h",
+        "android/hardware/drm/1.0/hwtypes.h",
         "android/hardware/drm/1.0/ICryptoFactory.h",
         "android/hardware/drm/1.0/IHwCryptoFactory.h",
         "android/hardware/drm/1.0/BnHwCryptoFactory.h",

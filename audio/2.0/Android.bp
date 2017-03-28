@@ -42,6 +42,7 @@ genrule {
     ],
     out: [
         "android/hardware/audio/2.0/types.h",
+        "android/hardware/audio/2.0/hwtypes.h",
         "android/hardware/audio/2.0/IDevice.h",
         "android/hardware/audio/2.0/IHwDevice.h",
         "android/hardware/audio/2.0/BnHwDevice.h",

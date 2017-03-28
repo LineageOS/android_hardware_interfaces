@@ -32,6 +32,7 @@ genrule {
     ],
     out: [
         "android/hardware/soundtrigger/2.0/types.h",
+        "android/hardware/soundtrigger/2.0/hwtypes.h",
         "android/hardware/soundtrigger/2.0/ISoundTriggerHw.h",
         "android/hardware/soundtrigger/2.0/IHwSoundTriggerHw.h",
         "android/hardware/soundtrigger/2.0/BnHwSoundTriggerHw.h",

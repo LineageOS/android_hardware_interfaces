@@ -30,6 +30,7 @@ genrule {
     ],
     out: [
         "android/hardware/graphics/mapper/2.0/types.h",
+        "android/hardware/graphics/mapper/2.0/hwtypes.h",
         "android/hardware/graphics/mapper/2.0/IMapper.h",
         "android/hardware/graphics/mapper/2.0/IHwMapper.h",
         "android/hardware/graphics/mapper/2.0/BnHwMapper.h",

@@ -30,6 +30,7 @@ genrule {
     ],
     out: [
         "android/hardware/keymaster/3.0/types.h",
+        "android/hardware/keymaster/3.0/hwtypes.h",
         "android/hardware/keymaster/3.0/IKeymasterDevice.h",
         "android/hardware/keymaster/3.0/IHwKeymasterDevice.h",
         "android/hardware/keymaster/3.0/BnHwKeymasterDevice.h",

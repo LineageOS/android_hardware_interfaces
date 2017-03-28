@@ -32,6 +32,7 @@ genrule {
     ],
     out: [
         "android/hardware/usb/1.0/types.h",
+        "android/hardware/usb/1.0/hwtypes.h",
         "android/hardware/usb/1.0/IUsb.h",
         "android/hardware/usb/1.0/IHwUsb.h",
         "android/hardware/usb/1.0/BnHwUsb.h",

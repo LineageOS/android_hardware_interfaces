@@ -38,6 +38,7 @@ genrule {
     ],
     out: [
         "android/hardware/media/omx/1.0/types.h",
+        "android/hardware/media/omx/1.0/hwtypes.h",
         "android/hardware/media/omx/1.0/IGraphicBufferSource.h",
         "android/hardware/media/omx/1.0/IHwGraphicBufferSource.h",
         "android/hardware/media/omx/1.0/BnHwGraphicBufferSource.h",
