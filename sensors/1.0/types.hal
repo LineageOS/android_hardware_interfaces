@@ -1148,7 +1148,8 @@ union EventPayload {
      * SensorType::TILT_DETECTOR, SensorType::WAKE_GESTURE,
      * SensorType::GLANCE_GESTURE, SensorType::PICK_UP_GESTURE,
      * SensorType::WRIST_TILT_GESTURE, SensorType::STATIONARY_DETECT,
-     * SensorType::MOTION_DETECT, SensorType::HEART_BEAT
+     * SensorType::MOTION_DETECT, SensorType::HEART_BEAT,
+     * SensorType::LOW_LATENCY_OFFBODY_DETECT
      */
     float scalar;
 
