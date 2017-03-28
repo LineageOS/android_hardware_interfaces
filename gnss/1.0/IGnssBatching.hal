@@ -18,7 +18,7 @@ package android.hardware.gnss@1.0;
 
 import IGnssBatchingCallback;
 
-/*
+/**
  * Extended interface for GNSS Batching support.
  *
  * If this interface is supported, this batching request must be able to run in
@@ -39,12 +39,12 @@ import IGnssBatchingCallback;
  */
 
 interface IGnssBatching {
-    /*
+    /**
      * Enum which holds the bit masks for batching control.
      */
     @export(name="", value_prefix="FLP_BATCH_")
     enum Flag : uint8_t {
-        /*
+        /**
          * If this flag is set, the hardware implementation
          * must wake up the application processor when the FIFO is full, and
          * call IGnssBatchingCallback to return the locations.
@@ -56,19 +56,19 @@ interface IGnssBatching {
     };
 
     struct Options {
-        /*
+        /**
          * Time interval between samples in the location batch, in nano
          * seconds.
          */
         int64_t periodNanos;
 
-        /*
+        /**
          * Flags controlling how batching should behave.
          */
         bitfield<Flag> flags;
     };
 
-    /*
+    /**
      * Opens the interface and provides the callback routines
      * to the implementation of this interface.
      *
@@ -78,7 +78,7 @@ interface IGnssBatching {
      */
     init(IGnssBatchingCallback callback) generates (bool success);
 
-    /*
+    /**
      * Return the batch size (in number of GnssLocation objects)
      * available in this hardware implementation.
      *
@@ -93,7 +93,7 @@ interface IGnssBatching {
      */
     getBatchSize() generates (uint16_t batchSize);
 
-    /*
+    /**
      * Start batching locations. This API is primarily used when the AP is
      * asleep and the device can batch locations in the hardware.
      *

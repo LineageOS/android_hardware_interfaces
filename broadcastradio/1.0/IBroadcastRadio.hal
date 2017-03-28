@@ -21,7 +21,7 @@ import ITuner;
 
 interface IBroadcastRadio {
 
-    /*
+    /**
      * Retrieve implementation properties.
      * @return result Operation completion status: OK in case of success,
      *                NOT_INITIALIZED in case of initialization error.
@@ -30,7 +30,7 @@ interface IBroadcastRadio {
      */
     getProperties() generates (Result result, Properties properties);
 
-    /*
+    /**
      * Open a tuner interface for the requested configuration.
      * If no other tuner is opened, this will power on the radio hardware.
      * The hardware must be powered down when all tuner interface are released.

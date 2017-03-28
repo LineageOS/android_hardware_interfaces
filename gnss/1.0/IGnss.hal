@@ -28,23 +28,23 @@ import IGnssGeofencing;
 import IGnssNi;
 import IGnssXtra;
 
-/* Represents the standard GNSS (Global Navigation Satellite System) interface. */
+/** Represents the standard GNSS (Global Navigation Satellite System) interface. */
 interface IGnss {
-    /* Requested operational mode for GNSS operation. */
+    /** Requested operational mode for GNSS operation. */
     @export(name="", value_prefix="GPS_POSITION_MODE_")
     enum GnssPositionMode : uint8_t {
         /** Mode for running GNSS standalone (no assistance). */
         STANDALONE  = 0,
         /** AGNSS MS-Based mode. */
         MS_BASED    = 1,
-        /*
+        /**
          * AGNSS MS-Assisted mode. This mode is not maintained by the platform anymore.
          * It is strongly recommended to use MS_BASED instead.
          */
         MS_ASSISTED = 2,
     };
 
-    /* Requested recurrence mode for GNSS operation. */
+    /** Requested recurrence mode for GNSS operation. */
     @export(name="", value_prefix="GPS_POSITION_")
     enum GnssPositionRecurrence : uint32_t {
         /** Receive GNSS fixes on a recurring basis at a specified period. */
@@ -53,7 +53,7 @@ interface IGnss {
         RECURRENCE_SINGLE    = 1
     };
 
-    /*
+    /**
      * Flags used to specify which aiding data to delete when calling
      * deleteAidingData().
      */
@@ -74,7 +74,7 @@ interface IGnss {
         DELETE_ALL          = 0xFFFF
     };
 
-    /*
+    /**
      * Opens the interface and provides the callback routines
      * to the implementation of this interface.
      *
@@ -84,7 +84,7 @@ interface IGnss {
      */
     setCallback(IGnssCallback callback) generates (bool success);
 
-    /*
+    /**
      * Starts a location output stream using the IGnssCallback
      * gnssLocationCb(), following the settings from the most recent call to
      * setPositionMode().
@@ -96,19 +96,19 @@ interface IGnss {
      */
     start() generates (bool success);
 
-    /*
+    /**
      * Stops the location output stream.
      *
      * @return success Returns true on success.
      */
     stop() generates (bool success);
 
-    /*
+    /**
      * Closes the interface.
      */
     cleanup();
 
-    /*
+    /**
      * Injects the current time.
      *
      * @param timeMs This is the UTC time received from the NTP server, its value
@@ -124,7 +124,7 @@ interface IGnss {
     injectTime(GnssUtcTime timeMs, int64_t timeReferenceMs, int32_t uncertaintyMs)
         generates (bool success);
 
-    /*
+    /**
      * Injects current location from another location provider (typically cell
      * ID).
      *
@@ -137,7 +137,7 @@ interface IGnss {
     injectLocation(double latitudeDegrees, double longitudeDegrees, float accuracyMeters)
         generates (bool success);
 
-    /*
+    /**
      * Specifies that the next call to start will not use the
      * information defined in the flags. GnssAidingData value of DELETE_ALL is
      * passed for a cold start.
@@ -146,7 +146,7 @@ interface IGnss {
      */
     deleteAidingData(GnssAidingData aidingDataFlags);
 
-    /*
+    /**
      * Sets the GnssPositionMode parameter,its associated recurrence value,
      * the time between fixes,requested fix accuracy and time to first fix.
      *
@@ -165,70 +165,70 @@ interface IGnss {
                     uint32_t preferredTimeMs)
         generates (bool success);
 
-    /*
+    /**
      * This method returns the IAGnssRil Interface.
      *
      * @return aGnssRilIface Handle to the IAGnssRil interface.
      */
     getExtensionAGnssRil() generates (IAGnssRil aGnssRilIface);
 
-    /*
+    /**
      * This method returns the IGnssGeofencing Interface.
      *
      * @return gnssGeofencingIface Handle to the IGnssGeofencing interface.
      */
     getExtensionGnssGeofencing() generates(IGnssGeofencing gnssGeofencingIface);
 
-    /*
+    /**
      * This method returns the IAGnss Interface.
      *
      * @return aGnssIface Handle to the IAGnss interface.
      */
     getExtensionAGnss() generates (IAGnss aGnssIface);
 
-    /*
+    /**
      * This method returns the IGnssNi interface.
      *
      * @return gnssNiIface Handle to the IGnssNi interface.
      */
     getExtensionGnssNi() generates (IGnssNi gnssNiIface);
 
-    /*
+    /**
      * This method returns the IGnssMeasurement interface.
      *
      * @return gnssMeasurementIface Handle to the IGnssMeasurement interface.
      */
     getExtensionGnssMeasurement() generates (IGnssMeasurement gnssMeasurementIface);
 
-    /*
+    /**
      * This method returns the IGnssNavigationMessage interface.
      *
      * @return gnssNavigationIface gnssNavigationIface to the IGnssNavigationMessage interface.
      */
     getExtensionGnssNavigationMessage() generates (IGnssNavigationMessage gnssNavigationIface);
 
-    /*
+    /**
      * This method returns the IGnssXtra interface.
      *
      * @return xtraIface Handle to the IGnssXtra interface.
      */
     getExtensionXtra() generates (IGnssXtra xtraIface);
 
-    /*
+    /**
      * This method returns the IGnssConfiguration interface.
      *
      * @return gnssConfigIface Handle to the IGnssConfiguration interface.
      */
     getExtensionGnssConfiguration() generates (IGnssConfiguration gnssConfigIface);
 
-    /*
+    /**
      * This method returns the IGnssDebug interface.
      *
      * @return debugIface Handle to the IGnssDebug interface.
      */
     getExtensionGnssDebug() generates (IGnssDebug debugIface);
 
-    /*
+    /**
      * This method returns the IGnssBatching interface.
      *
      * @return batchingIface Handle to the IGnssBatching interface.

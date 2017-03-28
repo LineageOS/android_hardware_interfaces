@@ -25,12 +25,12 @@ interface IVisualizerEffect extends IEffect {
         MIN = 128    // minimum capture size in samples
     };
 
-    /*
+    /**
      * Sets the number PCM samples in the capture.
      */
     setCaptureSize(uint16_t captureSize) generates (Result retval);
 
-    /*
+    /**
      * Gets the number PCM samples in the capture.
      */
     getCaptureSize() generates (Result retval, uint16_t captureSize);
@@ -42,22 +42,22 @@ interface IVisualizerEffect extends IEffect {
         AS_PLAYED = 1
     };
 
-    /*
+    /**
      * Specifies the way the captured data is scaled.
      */
     setScalingMode(ScalingMode scalingMode) generates (Result retval);
 
-    /*
+    /**
      * Retrieves the way the captured data is scaled.
      */
     getScalingMode() generates (Result retval, ScalingMode scalingMode);
 
-    /*
+    /**
      * Informs the visualizer about the downstream latency.
      */
     setLatency(uint32_t latencyMs) generates (Result retval);
 
-    /*
+    /**
      * Gets the downstream latency.
      */
     getLatency() generates (Result retval, uint32_t latencyMs);
@@ -69,19 +69,19 @@ interface IVisualizerEffect extends IEffect {
         PEAK_RMS = 0x1
     };
 
-    /*
+    /**
      * Specifies which measurements are to be made.
      */
     setMeasurementMode(MeasurementMode measurementMode)
             generates (Result retval);
 
-    /*
+    /**
      * Retrieves which measurements are to be made.
      */
     getMeasurementMode() generates (
             Result retval, MeasurementMode measurementMode);
 
-    /*
+    /**
      * Retrieves the latest PCM snapshot captured by the visualizer engine.  The
      * number of samples to capture is specified by 'setCaptureSize' parameter.
      *
@@ -99,7 +99,7 @@ interface IVisualizerEffect extends IEffect {
             } peakAndRms;
         } value;
     };
-    /*
+    /**
      * Retrieves the lastest measurements. The measurements to be made
      * are specified by 'setMeasurementMode' parameter.
      *

@@ -20,7 +20,7 @@ import @1.0::IBroadcastRadio;
 
 interface IBroadcastRadio extends @1.0::IBroadcastRadio {
 
-    /*
+    /**
      * Retrieve implementation properties.
      * @return properties A Properties structure containing implementation
      *                    description and capabilities.

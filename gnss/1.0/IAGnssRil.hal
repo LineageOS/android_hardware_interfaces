@@ -18,7 +18,7 @@ package android.hardware.gnss@1.0;
 
 import IAGnssRilCallback;
 
-/*
+/**
  * Extended interface for AGNSS RIL support. An Assisted GNSS Radio Interface
  * Layer interface allows the GNSS chipset to request radio interface layer
  * information from Android platform. Examples of such information are reference
@@ -50,41 +50,42 @@ interface IAGnssRil {
         LTE_CELLID   = 4,
     };
 
-    /* CellID for 2G, 3G and LTE, used in AGNSS. */
+    /** CellID for 2G, 3G and LTE, used in AGNSS. */
     struct AGnssRefLocationCellID {
         AGnssRefLocationType type;
 
-        /* Mobile Country Code. */
+        /** Mobile Country Code. */
         uint16_t mcc;
 
-        /* Mobile Network Code .*/
+        /**
+         * Mobile Network Code .*/
         uint16_t mnc;
 
-        /*
+        /**
          * Location Area Code in 2G, 3G and LTE. In 3G lac is discarded. In LTE,
          * lac is populated with tac, to ensure that we don't break old clients that
          * might rely in the old (wrong) behavior.
          */
         uint16_t lac;
 
-        /* Cell id in 2G. Utran Cell id in 3G. Cell Global Id EUTRA in LTE. */
+        /** Cell id in 2G. Utran Cell id in 3G. Cell Global Id EUTRA in LTE. */
         uint32_t cid;
 
-        /* Tracking Area Code in LTE. */
+        /** Tracking Area Code in LTE. */
         uint16_t tac;
 
-        /* Physical Cell id in LTE (not used in 2G and 3G) */
+        /** Physical Cell id in LTE (not used in 2G and 3G) */
         uint16_t pcid;
     };
 
-    /* Represents ref locations */
+    /** Represents ref locations */
     struct AGnssRefLocation {
         AGnssRefLocationType type;
 
         AGnssRefLocationCellID cellID;
     };
 
-    /*
+    /**
      * Opens the AGNSS interface and provides the callback routines
      * to the implementation of this interface.
      *
@@ -92,14 +93,14 @@ interface IAGnssRil {
      */
     setCallback(IAGnssRilCallback callback);
 
-    /*
+    /**
      * Sets the reference location.
      *
      * @param agnssReflocation AGNSS reference location CellID.
      */
     setRefLocation(AGnssRefLocation agnssReflocation);
 
-    /*
+    /**
      * Sets the SET ID.
      *
      * @param type Must be populated with either IMSI or MSISDN or NONE.
@@ -114,7 +115,7 @@ interface IAGnssRil {
      */
     setSetId(SetIDType type, string setid) generates (bool success);
 
-    /*
+    /**
      * Notify GNSS of network status changes.
      *
      * @param connected Indicates whether network connectivity exists and
@@ -129,7 +130,7 @@ interface IAGnssRil {
     updateNetworkState(bool connected, NetworkType type, bool roaming)
         generates (bool success);
 
-    /*
+    /**
      * Notify GNSS of network status changes.
      *
      * @param available Indicates whether network connectivity is available.

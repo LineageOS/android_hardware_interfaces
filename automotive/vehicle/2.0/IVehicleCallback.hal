@@ -18,7 +18,7 @@ package android.hardware.automotive.vehicle@2.0;
 
 interface IVehicleCallback {
 
-    /*
+    /**
      * Event callback happens whenever a variable that the API user has
      * subscribed to needs to be reported. This may be based purely on
      * threshold and frequency (a regular subscription, see subscribe call's
@@ -31,7 +31,7 @@ interface IVehicleCallback {
      */
     oneway onPropertyEvent(vec<VehiclePropValue> propValues);
 
-    /*
+    /**
      * This method gets called if the client was subscribed to a property using
      * SubscribeFlags::SET_CALL flag and IVehicle#set(...) method was called.
      *
@@ -42,7 +42,7 @@ interface IVehicleCallback {
      */
     oneway onPropertySet(VehiclePropValue propValue);
 
-    /*
+    /**
      * Set property value is usually asynchronous operation. Thus even if
      * client received StatusCode::OK from the IVehicle::set(...) this
      * doesn't guarantee that the value was successfully propagated to the

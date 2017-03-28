@@ -37,7 +37,8 @@ interface ISensors {
      */
     setOperationMode(OperationMode mode) generates (Result result);
 
-    /* Activate/de-activate one sensor.
+    /**
+     * Activate/de-activate one sensor.
      *
      * After sensor de-activation, existing sensor events that have not
      * been picked up by poll() must be abandoned immediately so that
@@ -76,7 +77,7 @@ interface ISensors {
                 vec<Event> data,
                 vec<SensorInfo> dynamicSensorsAdded);
 
-    /*
+    /**
      * Sets a sensor’s parameters, including sampling frequency and maximum
      * report latency. This function can be called while the sensor is
      * activated, in which case it must not cause any sensor measurements to
@@ -96,7 +97,7 @@ interface ISensors {
           int64_t samplingPeriodNs,
           int64_t maxReportLatencyNs) generates (Result result);
 
-    /*
+    /**
      * Trigger a flush of internal FIFO.
      *
      * Flush adds a FLUSH_COMPLETE metadata event to the end of the "batch mode"
@@ -113,7 +114,7 @@ interface ISensors {
      */
     flush(int32_t sensorHandle) generates (Result result);
 
-    /*
+    /**
      * Inject a single sensor event or push operation environment parameters to
      * device.
      *
@@ -137,7 +138,7 @@ interface ISensors {
      */
     injectSensorData(Event event) generates (Result result);
 
-    /*
+    /**
      * Register direct report channel.
      *
      * Register a direct channel with supplied shared memory information. Upon
@@ -156,7 +157,7 @@ interface ISensors {
     registerDirectChannel(SharedMemInfo mem)
             generates (Result result, int32_t channelHandle);
 
-    /*
+    /**
      * Unregister direct report channel.
      *
      * Unregister a direct channel previously registered using
@@ -169,7 +170,7 @@ interface ISensors {
      */
     unregisterDirectChannel(int32_t channelHandle) generates (Result result);
 
-    /*
+    /**
      * Configure direct sensor event report in direct channel.
      *
      * This function start, modify rate or stop direct report of a sensor in a

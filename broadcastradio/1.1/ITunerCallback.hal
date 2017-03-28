@@ -25,7 +25,7 @@ import @1.0::ITunerCallback;
  * ones, to avoid receiving a callback twice.
  */
 interface ITunerCallback extends @1.0::ITunerCallback {
-    /*
+    /**
      * Method called by the HAL when a tuning operation completes
      * following a step(), scan() or tune() command.
      * @param result OK if tune succeeded or TIMEOUT in case of time out.
@@ -33,7 +33,7 @@ interface ITunerCallback extends @1.0::ITunerCallback {
      */
     oneway tuneComplete_1_1(Result result, ProgramInfo info);
 
-    /*
+    /**
      * Method called by the HAL when a frequency switch occurs.
      * @param info A ProgramInfo structure describing the new tuned station.
      */

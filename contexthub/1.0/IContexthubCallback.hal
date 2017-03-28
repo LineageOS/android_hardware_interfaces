@@ -17,7 +17,7 @@
 package android.hardware.contexthub@1.0;
 
 interface IContexthubCallback {
-    /*
+    /**
      * This callback is passed by the Contexthub service to the HAL
      * implementation to allow the HAL to send asynchronous messages back
      * to the service and registered clients of the ContextHub service.
@@ -27,7 +27,7 @@ interface IContexthubCallback {
      */
      handleClientMsg(ContextHubMsg msg);
 
-    /*
+    /**
      * This callback is passed by the Contexthub service to the HAL
      * implementation to allow the HAL to send the response for a
      * transaction.
@@ -39,7 +39,7 @@ interface IContexthubCallback {
      */
      handleTxnResult(uint32_t txnId, TransactionResult result);
 
-    /*
+    /**
      * This callback is passed by the Contexthub service to the HAL
      * implementation to allow the HAL to send an asynchronous event
      * to the ContextHub service.
@@ -49,7 +49,7 @@ interface IContexthubCallback {
      */
      handleHubEvent(AsyncEventType evt);
 
-    /*
+    /**
      * This callback is passed by the Contexthub service to the HAL
      * implementation to allow the HAL to send a notification to the service
      * that a nanp-app has aborted.
@@ -63,7 +63,7 @@ interface IContexthubCallback {
      */
      handleAppAbort(uint64_t appId, uint32_t abortCode);
 
-     /*
+     /**
       * This callback is passed by the Contexthub service to the HAL
       * implementation to allow the HAL to send information about the
       * currently loaded and active nanoapps on the hub.

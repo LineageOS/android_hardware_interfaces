@@ -19,7 +19,7 @@ package android.hardware.usb@1.0;
 import IUsbCallback;
 
 interface IUsb {
-    /*
+    /**
      * This function is used to change the port role of a specific port.
      * For example, when PD_SWAP or PR_SWAP is supported.
      * This is function is asynchronous. The status of the role switch
@@ -31,7 +31,7 @@ interface IUsb {
      */
     oneway switchRole(string portName, PortRole role);
 
-    /*
+    /**
      * This function is used to register a callback function which is
      * called by the HAL whenever there is a change in the port state.
      * i.e. DATA_ROLE, POWER_ROLE or MODE.
@@ -44,7 +44,7 @@ interface IUsb {
      */
     oneway setCallback(IUsbCallback callback);
 
-    /*
+    /**
      * This functions is used to request the hal for the current status
      * status of the Type-C ports. This method is async/oneway. The result of the
      * query would be sent through the IUsbCallback object's notifyRoleSwitchStatus

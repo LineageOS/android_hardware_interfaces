@@ -20,18 +20,18 @@ import android.hardware.graphics.common@1.0;
 import IComposerCallback;
 
 interface IComposerClient {
-    /* Display attributes queryable through getDisplayAttribute. */
+    /** Display attributes queryable through getDisplayAttribute. */
     enum Attribute : int32_t {
         INVALID = 0,
 
-        /* Dimensions in pixels */
+        /** Dimensions in pixels */
         WIDTH = 1,
         HEIGHT = 2,
 
-        /* Vsync period in nanoseconds */
+        /** Vsync period in nanoseconds */
         VSYNC_PERIOD = 3,
 
-        /*
+        /**
          * Dots per thousand inches (DPI * 1000). Scaling by 1000 allows these
          * numbers to be stored in an int32_t without losing too much
          * precision. If the DPI for a configuration is unavailable or is
@@ -41,15 +41,15 @@ interface IComposerClient {
         DPI_Y = 5,
     };
 
-    /* Display requests returned by getDisplayRequests. */
+    /** Display requests returned by getDisplayRequests. */
     enum DisplayRequest : uint32_t {
-        /*
+        /**
          * Instructs the client to provide a new client target buffer, even if
          * no layers are marked for client composition.
          */
         FLIP_CLIENT_TARGET = 1 << 0,
 
-        /*
+        /**
          * Instructs the client to write the result of client composition
          * directly into the virtual display output buffer. If any of the
          * layers are not marked as Composition::CLIENT or the given display
@@ -58,9 +58,9 @@ interface IComposerClient {
         WRITE_CLIENT_TARGET_TO_OUTPUT = 1 << 1,
     };
 
-    /* Layer requests returned from getDisplayRequests. */
+    /** Layer requests returned from getDisplayRequests. */
     enum LayerRequest : uint32_t {
-        /*
+        /**
          * The client must clear its target with transparent pixels where
          * this layer would be. The client may ignore this request if the
          * layer must be blended.
@@ -68,24 +68,24 @@ interface IComposerClient {
         CLEAR_CLIENT_TARGET = 1 << 0,
     };
 
-    /* Power modes for use with setPowerMode. */
+    /** Power modes for use with setPowerMode. */
     enum PowerMode : int32_t {
-        /* The display is fully off (blanked). */
+        /** The display is fully off (blanked). */
         OFF = 0,
 
-        /*
+        /**
          * These are optional low power modes. getDozeSupport may be called to
          * determine whether a given display supports these modes.
          */
 
-        /*
+        /**
          * The display is turned on and configured in a low power state that
          * is suitable for presenting ambient information to the user,
          * possibly with lower fidelity than ON, but with greater efficiency.
          */
         DOZE = 1,
 
-        /*
+        /**
          * The display is configured as in DOZE but may stop applying display
          * updates from the client. This is effectively a hint to the device
          * that drawing to the display has been suspended and that the the
@@ -100,40 +100,40 @@ interface IComposerClient {
          */
         DOZE_SUSPEND = 3,
 
-        /* The display is fully on. */
+        /** The display is fully on. */
         ON = 2,
     };
 
-    /* Vsync values passed to setVsyncEnabled. */
+    /** Vsync values passed to setVsyncEnabled. */
     enum Vsync : int32_t {
         INVALID = 0,
 
-        /* Enable vsync. */
+        /** Enable vsync. */
         ENABLE = 1,
 
-        /* Disable vsync. */
+        /** Disable vsync. */
         DISABLE = 2,
     };
 
-    /* Blend modes, settable per layer. */
+    /** Blend modes, settable per layer. */
     enum BlendMode : int32_t {
         INVALID = 0,
 
-        /* colorOut = colorSrc */
+        /** colorOut = colorSrc */
         NONE = 1,
 
-        /* colorOut = colorSrc + colorDst * (1 - alphaSrc) */
+        /** colorOut = colorSrc + colorDst * (1 - alphaSrc) */
         PREMULTIPLIED = 2,
 
-        /* colorOut = colorSrc * alphaSrc + colorDst * (1 - alphaSrc) */
+        /** colorOut = colorSrc * alphaSrc + colorDst * (1 - alphaSrc) */
         COVERAGE = 3,
     };
 
-    /* Possible composition types for a given layer. */
+    /** Possible composition types for a given layer. */
     enum Composition : int32_t {
         INVALID = 0,
 
-        /*
+        /**
          * The client must composite this layer into the client target buffer
          * (provided to the device through setClientTarget).
          *
@@ -142,7 +142,7 @@ interface IComposerClient {
          */
         CLIENT = 1,
 
-        /*
+        /**
          * The device must handle the composition of this layer through a
          * hardware overlay or other similar means.
          *
@@ -151,7 +151,7 @@ interface IComposerClient {
          */
         DEVICE = 2,
 
-        /*
+        /**
          * The device must render this layer using the color set through
          * setLayerColor. If this functionality is not supported on a layer
          * that the client sets to SOLID_COLOR, the device must request that
@@ -163,7 +163,7 @@ interface IComposerClient {
          */
         SOLID_COLOR = 3,
 
-        /*
+        /**
          * Similar to DEVICE, but the position of this layer may also be set
          * asynchronously through setCursorPosition. If this functionality is
          * not supported on a layer that the client sets to CURSOR, the device
@@ -177,7 +177,7 @@ interface IComposerClient {
          */
         CURSOR = 4,
 
-        /*
+        /**
          * The device must handle the composition of this layer, as well as
          * its buffer updates and content synchronization. Only supported on
          * devices which provide Capability::SIDEBAND_STREAM.
@@ -189,26 +189,26 @@ interface IComposerClient {
         SIDEBAND = 5,
     };
 
-    /* Display types returned by getDisplayType. */
+    /** Display types returned by getDisplayType. */
     enum DisplayType : int32_t {
         INVALID = 0,
 
-        /*
+        /**
          * All physical displays, including both internal displays and
          * hotpluggable external displays.
          */
         PHYSICAL = 1,
 
-        /* Virtual displays created by createVirtualDisplay. */
+        /** Virtual displays created by createVirtualDisplay. */
         VIRTUAL = 2,
     };
 
-    /* Special index values (always negative) for command queue commands. */
+    /** Special index values (always negative) for command queue commands. */
     enum HandleIndex : int32_t {
-        /* No handle */
+        /** No handle */
         EMPTY = -1,
 
-        /* Use cached handle */
+        /** Use cached handle */
         CACHED = -2,
     };
 
@@ -233,7 +233,7 @@ interface IComposerClient {
         uint8_t a;
     };
 
-    /*
+    /**
      * Provides a IComposerCallback object for the device to call.
      *
      * This function must be called only once.
@@ -244,7 +244,7 @@ interface IComposerClient {
     @callflow(next="*")
     registerCallback(IComposerCallback callback);
 
-    /*
+    /**
      * Returns the maximum number of virtual displays supported by this device
      * (which may be 0). The client must not attempt to create more than this
      * many virtual displays on this device. This number must not change for
@@ -255,7 +255,7 @@ interface IComposerClient {
     @callflow(next="*")
     getMaxVirtualDisplayCount() generates (uint32_t count);
 
-    /*
+    /**
      * Creates a new virtual display with the given width and height. The
      * format passed into this function is the default format requested by the
      * consumer of the virtual display output buffers.
@@ -286,7 +286,7 @@ interface IComposerClient {
                          Display display,
                          PixelFormat format);
 
-    /*
+    /**
      * Destroys a virtual display. After this call all resources consumed by
      * this display may be freed by the device and any operations performed on
      * this display must fail.
@@ -300,7 +300,7 @@ interface IComposerClient {
     @callflow(next="*")
     destroyVirtualDisplay(Display display) generates (Error error);
 
-    /*
+    /**
      * Creates a new layer on the given display.
      *
      * @param display is the display on which to create the layer.
@@ -317,7 +317,7 @@ interface IComposerClient {
      generates (Error error,
                 Layer layer);
 
-    /*
+    /**
      * Destroys the given layer.
      *
      * @param display is the display on which the layer was created.
@@ -329,7 +329,7 @@ interface IComposerClient {
     @callflow(next="*")
     destroyLayer(Display display, Layer layer) generates (Error error);
 
-    /*
+    /**
      * Retrieves which display configuration is currently active.
      *
      * If no display configuration is currently active, this function must
@@ -346,7 +346,7 @@ interface IComposerClient {
     @callflow(next="*")
     getActiveConfig(Display display) generates (Error error, Config config);
 
-    /*
+    /**
      * Returns whether a client target with the given properties can be
      * handled by the device.
      *
@@ -373,7 +373,7 @@ interface IComposerClient {
                            Dataspace dataspace)
                 generates (Error error);
 
-    /*
+    /**
      * Returns the color modes supported on this display.
      *
      * All devices must support at least ColorMode::NATIVE.
@@ -388,7 +388,7 @@ interface IComposerClient {
        generates (Error error,
                   vec<ColorMode> modes);
 
-    /*
+    /**
      * Returns a display attribute value for a particular display
      * configuration.
      *
@@ -410,7 +410,7 @@ interface IComposerClient {
              generates (Error error,
                         int32_t value);
 
-    /*
+    /**
      * Returns handles for all of the valid display configurations on this
      * display.
      *
@@ -424,7 +424,7 @@ interface IComposerClient {
            generates (Error error,
                       vec<Config> configs);
 
-    /*
+    /**
      * Returns a human-readable version of the display's name.
      *
      * @return error is NONE upon success. Otherwise,
@@ -434,7 +434,7 @@ interface IComposerClient {
     @callflow(next="*")
     getDisplayName(Display display) generates (Error error, string name);
 
-    /*
+    /**
      * Returns whether the given display is a physical or virtual display.
      *
      * @param display is the display to query.
@@ -445,7 +445,7 @@ interface IComposerClient {
     @callflow(next="*")
     getDisplayType(Display display) generates (Error error, DisplayType type);
 
-    /*
+    /**
      * Returns whether the given display supports PowerMode::DOZE and
      * PowerMode::DOZE_SUSPEND. DOZE_SUSPEND may not provide any benefit over
      * DOZE (see the definition of PowerMode for more information), but if
@@ -460,7 +460,7 @@ interface IComposerClient {
     @callflow(next="*")
     getDozeSupport(Display display) generates (Error error, bool support);
 
-    /*
+    /**
      * Returns the high dynamic range (HDR) capabilities of the given display,
      * which are invariant with regard to the active configuration.
      *
@@ -486,7 +486,7 @@ interface IComposerClient {
                        float maxAverageLuminance,
                        float minLuminance);
 
-    /*
+    /**
      * Set the number of client target slots to be reserved.
      *
      * @param display is the display to which the slots are reserved.
@@ -500,7 +500,7 @@ interface IComposerClient {
                              uint32_t clientTargetSlotCount)
                   generates (Error error);
 
-    /*
+    /**
      * Sets the active configuration for this display. Upon returning, the
      * given display configuration must be active and remain so until either
      * this function is called again or the display is disconnected.
@@ -515,7 +515,7 @@ interface IComposerClient {
     @callflow(next="*")
     setActiveConfig(Display display, Config config) generates (Error error);
 
-    /*
+    /**
      * Sets the color mode of the given display.
      *
      * Upon returning from this function, the color mode change must have
@@ -534,7 +534,7 @@ interface IComposerClient {
     @callflow(next="*")
     setColorMode(Display display, ColorMode mode) generates (Error error);
 
-    /*
+    /**
      * Sets the power mode of the given display. The transition must be
      * complete when this function returns. It is valid to call this function
      * multiple times with the same power mode.
@@ -553,7 +553,7 @@ interface IComposerClient {
     @callflow(next="*")
     setPowerMode(Display display, PowerMode mode) generates (Error error);
 
-    /*
+    /**
      * Enables or disables the vsync signal for the given display. Virtual
      * displays never generate vsync callbacks, and any attempt to enable
      * vsync for a virtual display though this function must succeed and have
@@ -568,7 +568,7 @@ interface IComposerClient {
     @callflow(next="*")
     setVsyncEnabled(Display display, Vsync enabled) generates (Error error);
 
-    /*
+    /**
      * Sets the input command message queue.
      *
      * @param descriptor is the descriptor of the input command message queue.
@@ -579,7 +579,7 @@ interface IComposerClient {
     setInputCommandQueue(fmq_sync<uint32_t> descriptor)
               generates (Error error);
 
-    /*
+    /**
      * Gets the output command message queue.
      *
      * This function must only be called inside executeCommands closure.
@@ -593,7 +593,7 @@ interface IComposerClient {
               generates (Error error,
                          fmq_sync<uint32_t> descriptor);
 
-    /*
+    /**
      * Executes commands from the input command message queue. Return values
      * generated by the input commands are written to the output command
      * message queue in the form of value commands.
@@ -620,7 +620,7 @@ interface IComposerClient {
                     uint32_t outLength,
                     vec<handle> outHandles);
 
-    /*
+    /**
      * SELECT_DISPLAY has this pseudo prototype
      *
      *   selectDisplay(Display display);
@@ -1099,18 +1099,18 @@ interface IComposerClient {
         OPCODE_SHIFT                       = 16,
         OPCODE_MASK                        = 0xffff << OPCODE_SHIFT,
 
-        /* special commands */
+        /** special commands */
         SELECT_DISPLAY                     = 0x000 << OPCODE_SHIFT,
         SELECT_LAYER                       = 0x001 << OPCODE_SHIFT,
 
-        /* value commands (for return values) */
+        /** value commands (for return values) */
         SET_ERROR                          = 0x100 << OPCODE_SHIFT,
         SET_CHANGED_COMPOSITION_TYPES      = 0x101 << OPCODE_SHIFT,
         SET_DISPLAY_REQUESTS               = 0x102 << OPCODE_SHIFT,
         SET_PRESENT_FENCE                  = 0x103 << OPCODE_SHIFT,
         SET_RELEASE_FENCES                 = 0x104 << OPCODE_SHIFT,
 
-        /* display commands */
+        /** display commands */
         SET_COLOR_TRANSFORM                = 0x200 << OPCODE_SHIFT,
         SET_CLIENT_TARGET                  = 0x201 << OPCODE_SHIFT,
         SET_OUTPUT_BUFFER                  = 0x202 << OPCODE_SHIFT,
@@ -1118,12 +1118,12 @@ interface IComposerClient {
         ACCEPT_DISPLAY_CHANGES             = 0x204 << OPCODE_SHIFT,
         PRESENT_DISPLAY                    = 0x205 << OPCODE_SHIFT,
 
-        /* layer commands (VALIDATE_DISPLAY not required) */
+        /** layer commands (VALIDATE_DISPLAY not required) */
         SET_LAYER_CURSOR_POSITION          = 0x300 << OPCODE_SHIFT,
         SET_LAYER_BUFFER                   = 0x301 << OPCODE_SHIFT,
         SET_LAYER_SURFACE_DAMAGE           = 0x302 << OPCODE_SHIFT,
 
-        /* layer state commands (VALIDATE_DISPLAY required) */
+        /** layer state commands (VALIDATE_DISPLAY required) */
         SET_LAYER_BLEND_MODE               = 0x400 << OPCODE_SHIFT,
         SET_LAYER_COLOR                    = 0x401 << OPCODE_SHIFT,
         SET_LAYER_COMPOSITION_TYPE         = 0x402 << OPCODE_SHIFT,
@@ -1136,7 +1136,7 @@ interface IComposerClient {
         SET_LAYER_VISIBLE_REGION           = 0x409 << OPCODE_SHIFT,
         SET_LAYER_Z_ORDER                  = 0x40a << OPCODE_SHIFT,
 
-        /* 0x800 - 0xfff are reserved for vendor extensions */
-        /* 0x1000 - 0xffff are reserved */
+        /** 0x800 - 0xfff are reserved for vendor extensions */
+        /** 0x1000 - 0xffff are reserved */
     };
 };

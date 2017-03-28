@@ -20,7 +20,7 @@ import IBroadcastRadio;
 
 interface IBroadcastRadioFactory {
 
-    /*
+    /**
      * Connects to a broadcast radio HAL module for a given class
      * (AM/FM, Satellite, DAB).
      *

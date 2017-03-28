@@ -1,12 +1,12 @@
 package android.hardware.gnss@1.0;
 import IGnssXtraCallback;
 
-/*
+/**
  * This interface is used by the GNSS HAL to request the framework
  * to download XTRA data.
  */
 interface IGnssXtra {
-    /*
+    /**
      * Opens the XTRA interface and provides the callback routines
      * to the implementation of this interface.
      *
@@ -16,7 +16,7 @@ interface IGnssXtra {
      */
     setCallback(IGnssXtraCallback callback) generates (bool success);
 
-    /*
+    /**
      * Inject the downloaded XTRA data into the GNSS receiver.
      *
      * @param xtraData GNSS XTRA data.

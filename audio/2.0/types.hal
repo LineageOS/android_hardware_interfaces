@@ -28,14 +28,16 @@ enum Result : int32_t {
 
 @export(name="audio_drain_type_t", value_prefix="AUDIO_DRAIN_")
 enum AudioDrain : int32_t {
-    /* drain() returns when all data has been played. */
+    /** drain() returns when all data has been played. */
     ALL,
-    /* drain() returns a short time before all data from the current track has
-       been played to give time for gapless track switch. */
+    /**
+     * drain() returns a short time before all data from the current track has
+     * been played to give time for gapless track switch.
+     */
     EARLY_NOTIFY
 };
 
-/*
+/**
  * A substitute for POSIX timespec.
  */
 struct TimeSpec {
@@ -43,7 +45,7 @@ struct TimeSpec {
     uint64_t tvNSec;  // nanoseconds
 };
 
-/*
+/**
  * IEEE 802 MAC address.
  */
 typedef uint8_t[6] MacAddress;
@@ -53,7 +55,7 @@ struct ParameterValue {
     string value;
 };
 
-/*
+/**
  * Specifies a device in case when several devices of the same type
  * can be connected (e.g. BT A2DP, USB).
  */
@@ -71,7 +73,7 @@ struct DeviceAddress {
     string rSubmixAddress;  // used for REMOTE_SUBMIX
 };
 
-/*
+/**
  * Mmap buffer descriptor returned by IStream.createMmapBuffer().
  * Used by streams opened in mmap mode.
  */
@@ -81,7 +83,7 @@ struct MmapBufferInfo {
     int32_t burstSizeFrames;      // transfer size granularity in frames
 };
 
-/*
+/**
  * Mmap buffer read/write position returned by IStream.getMmapPosition().
  * Used by streams opened in mmap mode.
  */
@@ -90,7 +92,7 @@ struct MmapPosition {
     int32_t  positionFrames;  // increasing 32 bit frame count reset when IStream.stop() is called
 };
 
-/*
+/**
  * The message queue flags used to synchronize reads and writes from
  * message queues used by StreamIn and StreamOut.
  */

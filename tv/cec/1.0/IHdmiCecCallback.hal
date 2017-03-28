@@ -17,13 +17,13 @@
 package android.hardware.tv.cec@1.0;
 
 interface IHdmiCecCallback {
-    /*
+    /**
      * The callback function that must be called by HAL implementation to notify
      * the system of new CEC message arrival.
      */
     oneway onCecMessage(CecMessage message);
 
-    /*
+    /**
      * The callback function that must be called by HAL implementation to notify
      * the system of new hotplug event.
      */

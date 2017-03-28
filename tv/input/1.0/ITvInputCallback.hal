@@ -17,7 +17,7 @@
 package android.hardware.tv.input@1.0;
 
 interface ITvInputCallback {
-    /*
+    /**
      * Notifies the client that an event has occured. For possible event types,
      * check TvInputEventType.
      *

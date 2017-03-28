@@ -18,7 +18,7 @@ package android.hardware.thermal@1.0;
 
 interface IThermal {
 
-    /*
+    /**
      * Retrieves temperatures in Celsius.
      *
      * @return status Status of the operation. If status code is FAILURE,
@@ -38,7 +38,7 @@ interface IThermal {
     getTemperatures()
         generates (ThermalStatus status, vec<Temperature> temperatures);
 
-    /*
+    /**
      * Retrieves CPU usage information of each core: active and total times
      * in ms since first boot.
      *
@@ -55,7 +55,7 @@ interface IThermal {
     @exit
     getCpuUsages() generates (ThermalStatus status, vec<CpuUsage> cpuUsages);
 
-    /*
+    /**
      * Retrieves the cooling devices information.
      *
      * @return status Status of the operation. If status code is FAILURE,

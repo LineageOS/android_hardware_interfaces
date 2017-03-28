@@ -17,130 +17,131 @@
 package android.hardware.graphics.allocator@2.0;
 
 enum Error : int32_t {
-    NONE            = 0, /* no error */
-    BAD_DESCRIPTOR  = 1, /* invalid BufferDescriptor */
-    BAD_BUFFER      = 2, /* invalid Buffer */
-    BAD_VALUE       = 3, /* invalid width, height, etc. */
-    NOT_SHARED      = 4, /* buffers not sharing backing store */
-    NO_RESOURCES    = 5, /* temporary failure due to resource contention */
-    UNDEFINED       = 6, /* an operation has no defined meaning */
-    UNSUPPORTED     = 7, /* permanent failure */
+    NONE            = 0, /** no error */
+    BAD_DESCRIPTOR  = 1, /** invalid BufferDescriptor */
+    BAD_BUFFER      = 2, /** invalid Buffer */
+    BAD_VALUE       = 3, /** invalid width, height, etc. */
+    NOT_SHARED      = 4, /** buffers not sharing backing store */
+    NO_RESOURCES    = 5, /** temporary failure due to resource contention */
+    UNDEFINED       = 6, /** an operation has no defined meaning */
+    UNSUPPORTED     = 7, /** permanent failure */
 };
 
 enum ProducerUsage : uint64_t {
-    /* bit 0 is reserved */
+    /** bit 0 is reserved */
 
-    /* buffer is read by CPU occasionally */
+    /** buffer is read by CPU occasionally */
     CPU_READ        = 1ULL << 1,
-    /* buffer is read by CPU frequently */
+    /** buffer is read by CPU frequently */
     CPU_READ_OFTEN  = 1ULL << 2,
 
-    /* bit 3 is reserved */
-    /* bit 4 is reserved */
+    /** bit 3 is reserved */
+    /** bit 4 is reserved */
 
-    /* buffer is written by CPU occasionally */
+    /** buffer is written by CPU occasionally */
     CPU_WRITE       = 1ULL << 5,
-    /* buffer is written by CPU frequently */
+    /** buffer is written by CPU frequently */
     CPU_WRITE_OFTEN = 1ULL << 6,
 
-    /* bit 7 is reserved */
-    /* bit 8 is reserved */
+    /** bit 7 is reserved */
+    /** bit 8 is reserved */
 
-    /* buffer is used as a GPU render target */
+    /** buffer is used as a GPU render target */
     GPU_RENDER_TARGET = 1ULL << 9,
 
-    /* bit 10 is reserved */
-    /* bit 11 is reserved */
-    /* bit 12 is reserved */
-    /* bit 13 is reserved */
+    /** bit 10 is reserved */
+    /** bit 11 is reserved */
+    /** bit 12 is reserved */
+    /** bit 13 is reserved */
 
-    /*
+    /**
      * Buffer is allocated with hardware-level protection against copying the
      * contents (or information derived from the contents) into unprotected
      * memory.
      */
     PROTECTED         = 1ULL << 14,
 
-    /* bit 15 is reserved */
-    /* bit 16 is reserved */
+    /** bit 15 is reserved */
+    /** bit 16 is reserved */
 
-    /* buffer is used as a camera HAL output */
+    /** buffer is used as a camera HAL output */
     CAMERA            = 1ULL << 17,
 
-    /* bit 18 is reserved */
-    /* bit 19 is reserved */
-    /* bit 20 is reserved */
-    /* bit 21 is reserved */
+    /** bit 18 is reserved */
+    /** bit 19 is reserved */
+    /** bit 20 is reserved */
+    /** bit 21 is reserved */
 
-    /* buffer is used as a video decoder output */
+    /** buffer is used as a video decoder output */
     VIDEO_DECODER     = 1ULL << 22,
 
-    /* buffer is used as a sensor direct report output */
+    /** buffer is used as a sensor direct report output */
     SENSOR_DIRECT_DATA = 1ULL << 23,
 
-    /* bits 24-27 are reserved for future versions */
-    /* bits 28-31 are reserved for vendor extensions */
+    /** bits 24-27 are reserved for future versions */
+    /** bits 28-31 are reserved for vendor extensions */
 
-    /* bits 32-47 are reserved for future versions */
-    /* bits 48-63 are reserved for vendor extensions */
+    /** bits 32-47 are reserved for future versions */
+    /** bits 48-63 are reserved for vendor extensions */
 };
 
 enum ConsumerUsage : uint64_t {
-    /* bit 0 is reserved */
+    /** bit 0 is reserved */
 
-    /* buffer is read by CPU occasionally */
+    /** buffer is read by CPU occasionally */
     CPU_READ          = 1ULL << 1,
-    /* buffer is read by CPU frequently */
+    /** buffer is read by CPU frequently */
     CPU_READ_OFTEN    = 1ULL << 2,
 
-    /* bit 3 is reserved */
-    /* bit 4 is reserved */
-    /* bit 5 is reserved */
-    /* bit 6 is reserved */
-    /* bit 7 is reserved */
+    /** bit 3 is reserved */
+    /** bit 4 is reserved */
+    /** bit 5 is reserved */
+    /** bit 6 is reserved */
+    /** bit 7 is reserved */
 
-    /* buffer is used as a GPU texture */
+    /** buffer is used as a GPU texture */
     GPU_TEXTURE       = 1ULL << 8,
 
-    /* bit 9 is reserved */
-    /* bit 10 is reserved */
+    /** bit 9 is reserved */
+    /** bit 10 is reserved */
 
-    /* buffer is used by hwcomposer HAL */
+    /** buffer is used by hwcomposer HAL */
     HWCOMPOSER        = 1ULL << 11,
-    /* buffer is a hwcomposer HAL client target */
+    /** buffer is a hwcomposer HAL client target */
     CLIENT_TARGET     = 1ULL << 12,
 
-    /* bit 13 is reserved */
-    /* bit 14 is reserved */
+    /** bit 13 is reserved */
+    /** bit 14 is reserved */
 
-    /* buffer is used as a hwcomposer HAL cursor */
+    /** buffer is used as a hwcomposer HAL cursor */
     CURSOR            = 1ULL << 15,
 
-    /* buffer is used as a video encoder input */
+    /** buffer is used as a video encoder input */
     VIDEO_ENCODER     = 1ULL << 16,
 
-    /* bit 17 is reserved */
+    /** bit 17 is reserved */
 
-    /* buffer is used as a camera HAL input */
+    /** buffer is used as a camera HAL input */
     CAMERA            = 1ULL << 18,
 
-    /* bit 19 is reserved */
+    /** bit 19 is reserved */
 
-    /* buffer is used as a renderscript allocation */
+    /** buffer is used as a renderscript allocation */
     RENDERSCRIPT      = 1ULL << 20,
 
-    /* bit 21 is reserved */
-    /* bit 22 is reserved */
+    /** bit 21 is reserved */
+    /** bit 22 is reserved */
 
-    /* buffer is used as as an OpenGL shader storage or uniform
+    /**
+     * buffer is used as as an OpenGL shader storage or uniform
        buffer object */
     GPU_DATA_BUFFER    = 1ULL << 23,
 
-    /* bits 24-27 are reserved for future versions */
-    /* bits 28-31 are reserved for vendor extensions */
+    /** bits 24-27 are reserved for future versions */
+    /** bits 28-31 are reserved for vendor extensions */
 
-    /* bits 32-47 are reserved for future versions */
-    /* bits 48-63 are reserved for vendor extensions */
+    /** bits 32-47 are reserved for future versions */
+    /** bits 48-63 are reserved for vendor extensions */
 };
 
 typedef uint64_t BufferDescriptor;
