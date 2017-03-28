@@ -27,6 +27,7 @@ enum Result : int32_t {
 };
 
 /* Type of physical TV input. */
+@export(name="", value_prefix="TV_INPUT_TYPE_")
 enum TvInputType : int32_t {
     OTHER = 1,         // Generic hardware.
     TUNER = 2,         // Tuner. e.g. built-in terrestrial tuner
@@ -46,6 +47,7 @@ enum TvInputType : int32_t {
  * regardless of whether the connected external device is electrically on or not.
  * If the device does not have such capability, you must use UNKNOWN.
  */
+@export(name="", value_prefix="CABLE_CONNECTION_STATUS_")
 enum CableConnectionStatus : int32_t {
     UNKNOWN = 0,
     CONNECTED = 1,
@@ -63,6 +65,7 @@ struct TvInputDeviceInfo {
                                                  // must be filled with 0s.
 };
 
+@export(name="", value_prefix="EVENT_")
 enum TvInputEventType : int32_t {
     /*
      * Hardware notifies the framework that a device is available.

@@ -19,8 +19,6 @@
 
 #include "TvInput.h"
 
-const native_handle_t kNullNativeHandle{sizeof(native_handle_t), 0, 0, {}};
-
 namespace android {
 namespace hardware {
 namespace tv {
@@ -117,8 +115,6 @@ Return<void> TvInput::openStream(int32_t deviceId, int32_t streamId, openStream_
             sidebandStream = stream.sideband_stream_source_handle;
         }
     } else {
-        // TODO(b/30814137)
-        sidebandStream = const_cast<native_handle_t*>(&kNullNativeHandle);
         if (ret == -EBUSY) {
             res = Result::NO_RESOURCE;
         } else if (ret == -EEXIST) {
