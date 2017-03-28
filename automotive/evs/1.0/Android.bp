@@ -36,6 +36,7 @@ genrule {
     ],
     out: [
         "android/hardware/automotive/evs/1.0/types.h",
+        "android/hardware/automotive/evs/1.0/hwtypes.h",
         "android/hardware/automotive/evs/1.0/IEvsCamera.h",
         "android/hardware/automotive/evs/1.0/IHwEvsCamera.h",
         "android/hardware/automotive/evs/1.0/BnHwEvsCamera.h",

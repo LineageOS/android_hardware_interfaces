@@ -32,6 +32,7 @@ genrule {
     ],
     out: [
         "android/hardware/tv/cec/1.0/types.h",
+        "android/hardware/tv/cec/1.0/hwtypes.h",
         "android/hardware/tv/cec/1.0/IHdmiCec.h",
         "android/hardware/tv/cec/1.0/IHwHdmiCec.h",
         "android/hardware/tv/cec/1.0/BnHwHdmiCec.h",

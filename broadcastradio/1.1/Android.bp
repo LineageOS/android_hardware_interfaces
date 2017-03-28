@@ -36,6 +36,7 @@ genrule {
     ],
     out: [
         "android/hardware/broadcastradio/1.1/types.h",
+        "android/hardware/broadcastradio/1.1/hwtypes.h",
         "android/hardware/broadcastradio/1.1/IBroadcastRadio.h",
         "android/hardware/broadcastradio/1.1/IHwBroadcastRadio.h",
         "android/hardware/broadcastradio/1.1/BnHwBroadcastRadio.h",

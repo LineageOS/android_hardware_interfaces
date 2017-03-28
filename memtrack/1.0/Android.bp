@@ -30,6 +30,7 @@ genrule {
     ],
     out: [
         "android/hardware/memtrack/1.0/types.h",
+        "android/hardware/memtrack/1.0/hwtypes.h",
         "android/hardware/memtrack/1.0/IMemtrack.h",
         "android/hardware/memtrack/1.0/IHwMemtrack.h",
         "android/hardware/memtrack/1.0/BnHwMemtrack.h",

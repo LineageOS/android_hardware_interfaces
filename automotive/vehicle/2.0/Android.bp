@@ -32,6 +32,7 @@ genrule {
     ],
     out: [
         "android/hardware/automotive/vehicle/2.0/types.h",
+        "android/hardware/automotive/vehicle/2.0/hwtypes.h",
         "android/hardware/automotive/vehicle/2.0/IVehicle.h",
         "android/hardware/automotive/vehicle/2.0/IHwVehicle.h",
         "android/hardware/automotive/vehicle/2.0/BnHwVehicle.h",

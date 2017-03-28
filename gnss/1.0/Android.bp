@@ -68,6 +68,7 @@ genrule {
     ],
     out: [
         "android/hardware/gnss/1.0/types.h",
+        "android/hardware/gnss/1.0/hwtypes.h",
         "android/hardware/gnss/1.0/IAGnss.h",
         "android/hardware/gnss/1.0/IHwAGnss.h",
         "android/hardware/gnss/1.0/BnHwAGnss.h",

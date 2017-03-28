@@ -32,6 +32,7 @@ genrule {
     ],
     out: [
         "android/hardware/biometrics/fingerprint/2.1/types.h",
+        "android/hardware/biometrics/fingerprint/2.1/hwtypes.h",
         "android/hardware/biometrics/fingerprint/2.1/IBiometricsFingerprint.h",
         "android/hardware/biometrics/fingerprint/2.1/IHwBiometricsFingerprint.h",
         "android/hardware/biometrics/fingerprint/2.1/BnHwBiometricsFingerprint.h",

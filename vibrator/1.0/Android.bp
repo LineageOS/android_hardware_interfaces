@@ -30,6 +30,7 @@ genrule {
     ],
     out: [
         "android/hardware/vibrator/1.0/types.h",
+        "android/hardware/vibrator/1.0/hwtypes.h",
         "android/hardware/vibrator/1.0/IVibrator.h",
         "android/hardware/vibrator/1.0/IHwVibrator.h",
         "android/hardware/vibrator/1.0/BnHwVibrator.h",

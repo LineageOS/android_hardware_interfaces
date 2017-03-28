@@ -32,6 +32,7 @@ genrule {
     ],
     out: [
         "android/hardware/tv/input/1.0/types.h",
+        "android/hardware/tv/input/1.0/hwtypes.h",
         "android/hardware/tv/input/1.0/ITvInput.h",
         "android/hardware/tv/input/1.0/IHwTvInput.h",
         "android/hardware/tv/input/1.0/BnHwTvInput.h",

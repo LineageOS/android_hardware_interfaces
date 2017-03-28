@@ -32,6 +32,7 @@ genrule {
     ],
     out: [
         "android/hardware/graphics/allocator/2.0/types.h",
+        "android/hardware/graphics/allocator/2.0/hwtypes.h",
         "android/hardware/graphics/allocator/2.0/IAllocator.h",
         "android/hardware/graphics/allocator/2.0/IHwAllocator.h",
         "android/hardware/graphics/allocator/2.0/BnHwAllocator.h",

@@ -28,6 +28,7 @@ genrule {
     ],
     out: [
         "android/hardware/audio/common/2.0/types.h",
+        "android/hardware/audio/common/2.0/hwtypes.h",
     ],
 }
 

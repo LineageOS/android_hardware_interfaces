@@ -30,6 +30,7 @@ genrule {
     ],
     out: [
         "android/hardware/health/1.0/types.h",
+        "android/hardware/health/1.0/hwtypes.h",
         "android/hardware/health/1.0/IHealth.h",
         "android/hardware/health/1.0/IHwHealth.h",
         "android/hardware/health/1.0/BnHwHealth.h",
