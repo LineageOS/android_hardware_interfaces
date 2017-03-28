@@ -17,7 +17,7 @@
 package android.hardware.tests.msgq@1.0;
 
 interface IBenchmarkMsgQ {
-    /*
+    /**
      * This method requests the service to set up Synchronous read/write
      * wait-free FMQ with the client as reader.
      * @return ret Will be true if the setup was successful, false otherwise.
@@ -27,7 +27,7 @@ interface IBenchmarkMsgQ {
     configureClientInboxSyncReadWrite()
         generates(bool ret, fmq_sync<uint8_t> mqDescIn);
 
-    /*
+    /**
      * This method requests the service to set up Synchronous read/write
      * wait-free FMQ with the client as writer.
      * @return ret Will be true if the setup was successful, false otherwise.
@@ -37,7 +37,7 @@ interface IBenchmarkMsgQ {
     configureClientOutboxSyncReadWrite()
         generates(bool ret, fmq_sync<uint8_t> mqDescOut);
 
-    /*
+    /**
      * This method request the service to write into the FMQ.
      * @param count Number to messages to write.
      * @return ret Will be true if the write operation was successful,
@@ -45,14 +45,14 @@ interface IBenchmarkMsgQ {
      */
     requestWrite(int32_t count) generates (bool ret);
 
-    /*
+    /**
      * This method request the service to read from the FMQ.
      * @param count Number to messages to read.
      * @ret Will be true if the read operation was successful, false otherwise.
      */
     requestRead(int32_t count) generates (bool ret);
 
-    /*
+    /**
      * This method kicks off a benchmarking experiment where
      * the client writes a message into its outbox FMQ,
      * the service reads it and writes it into the client's
@@ -62,14 +62,14 @@ interface IBenchmarkMsgQ {
      */
     benchmarkPingPong(uint32_t numIter);
 
-    /*
+    /**
      * This method kicks off a benchmarking experiment where
      * the service writes into an FMQ and the client reads the same.
      * @param numIter The number of iterations to run the experiment.
      */
     benchmarkServiceWriteClientRead(uint32_t numIter);
 
-    /*
+    /**
      * This method sends a vector of time duration(in ns).
      * @param timeData vector of time instants measured by client.
      * Each entry is the number of ns between the epoch and a

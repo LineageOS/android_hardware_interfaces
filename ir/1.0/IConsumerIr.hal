@@ -17,7 +17,7 @@
 package android.hardware.ir@1.0;
 
 interface IConsumerIr {
-    /*
+    /**
      * transmit() sends an IR pattern at a given carrierFreq.
      *
      * The pattern is alternating series of carrier on and off periods measured in
@@ -30,7 +30,7 @@ interface IConsumerIr {
      */
     transmit(int32_t carrierFreq, vec<int32_t> pattern) generates (bool success);
 
-    /*
+    /**
      * getCarrierFreqs() enumerates which frequencies the IR transmitter supports.
      *
      * returns: On success, true and a vector of all supported frequency
