@@ -41,4 +41,5 @@ cc_library_static {
     include_dirs: ["system/core/libsync/include"],
     cflags: ["-Wall", "-Wextra", "-Wno-unused-parameter"],
     export_include_dirs: ["."],
+    whole_static_libs: ["libgrallocusage"],
 }
