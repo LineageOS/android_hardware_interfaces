@@ -53,8 +53,6 @@ class KeymasterDevice : public IKeymasterDevice {
 
     // Methods from ::android::hardware::keymaster::V3_0::IKeymasterDevice follow.
     Return<void> getHardwareFeatures(getHardwareFeatures_cb _hidl_cb);
-    Return<void> parseHardwareAuthToken(const hidl_vec<uint8_t>& token,
-                                        parseHardwareAuthToken_cb _hidl_cb);
     Return<ErrorCode> addRngEntropy(const hidl_vec<uint8_t>& data) override;
     Return<void> generateKey(const hidl_vec<KeyParameter>& keyParams,
                              generateKey_cb _hidl_cb) override;

@@ -33,8 +33,6 @@ namespace implementation {
 
 using ::keymaster::SoftKeymasterDevice;
 
-namespace {
-
 class SoftwareOnlyHidlKeymasterEnforcement : public ::keymaster::KeymasterEnforcement {
   public:
     SoftwareOnlyHidlKeymasterEnforcement() : KeymasterEnforcement(64, 64) {}
@@ -62,7 +60,7 @@ class SoftwareOnlyHidlKeymasterContext : public ::keymaster::SoftKeymasterContex
     std::unique_ptr<::keymaster::KeymasterEnforcement> enforcement_;
 };
 
-int keymaster0_device_initialize(const hw_module_t* mod, keymaster2_device_t** dev) {
+static int keymaster0_device_initialize(const hw_module_t* mod, keymaster2_device_t** dev) {
     assert(mod->module_api_version < KEYMASTER_MODULE_API_VERSION_1_0);
     ALOGI("Found keymaster0 module %s, version %x", mod->name, mod->module_api_version);
 
@@ -139,7 +137,7 @@ err:
     return rc;
 }
 
-int keymaster2_device_initialize(const hw_module_t* mod, keymaster2_device_t** dev) {
+static int keymaster2_device_initialize(const hw_module_t* mod, keymaster2_device_t** dev) {
     assert(mod->module_api_version >= KEYMASTER_MODULE_API_VERSION_2_0);
     ALOGI("Found keymaster2 module %s, version %x", mod->name, mod->module_api_version);
 
@@ -192,30 +190,6 @@ static int keymaster_device_initialize(keymaster2_device_t** dev, uint32_t* vers
         return keymaster2_device_initialize(mod, dev);
     }
 }
-
-template <typename IntType, uint32_t byteOrder> struct choose_ntoh;
-
-template <typename IntType> struct choose_ntoh<IntType, __ORDER_LITTLE_ENDIAN__> {
-    inline static IntType ntoh(const IntType& value) {
-        IntType result = 0;
-        const unsigned char* inbytes = reinterpret_cast<const unsigned char*>(&value);
-        unsigned char* outbytes = reinterpret_cast<unsigned char*>(&result);
-        for (int i = sizeof(IntType) - 1; i >= 0; --i) {
-            *(outbytes++) = inbytes[i];
-        }
-        return result;
-    }
-};
-
-template <typename IntType> struct choose_ntoh<IntType, __ORDER_BIG_ENDIAN__> {
-    inline static IntType hton(const IntType& value) { return value; }
-};
-
-template <typename IntType> inline IntType ntoh(const IntType& value) {
-    return choose_ntoh<IntType, __BYTE_ORDER__>::ntoh(value);
-}
-
-}  // anonymous namespace
 
 KeymasterDevice::~KeymasterDevice() {
     if (keymaster_device_) keymaster_device_->common.close(&keymaster_device_->common);
@@ -399,34 +373,6 @@ Return<void> KeymasterDevice::getHardwareFeatures(getHardwareFeatures_cb _hidl_c
     _hidl_cb(is_secure, hardware_supports_ec_, supports_symmetric_cryptography,
              supports_attestation, hardware_supports_all_digests_,
              keymaster_device_->common.module->name, keymaster_device_->common.module->author);
-    return Void();
-}
-
-Return<void> KeymasterDevice::parseHardwareAuthToken(const hidl_vec<uint8_t>& token,
-                                                     parseHardwareAuthToken_cb _hidl_cb) {
-    HardwareAuthTokenInfo parsedToken;
-    if (token.size() != sizeof(hw_auth_token_t)) {
-        ALOGE("Received auth token of length %zu, expected %zu", token.size(),
-              sizeof(hw_auth_token_t));
-        _hidl_cb(ErrorCode::INVALID_ARGUMENT, parsedToken);
-        return Void();
-    }
-
-    const hw_auth_token_t* authToken = reinterpret_cast<const hw_auth_token_t*>(token.data());
-    if (authToken->version != 0) {
-        ALOGE("Auth token version %u, expected version ", authToken->version);
-        _hidl_cb(ErrorCode::INVALID_ARGUMENT, parsedToken);
-        return Void();
-    }
-
-    parsedToken.challenge = authToken->challenge;
-    parsedToken.userId = authToken->user_id;
-    parsedToken.authenticatorId = authToken->authenticator_id;
-    parsedToken.authenticatorType =
-        static_cast<HardwareAuthenticatorType>(ntoh(authToken->authenticator_type));
-    parsedToken.timestamp = ntoh(authToken->timestamp);
-
-    _hidl_cb(ErrorCode::OK, parsedToken);
     return Void();
 }
 
