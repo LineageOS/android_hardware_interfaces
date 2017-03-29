@@ -15,9 +15,9 @@
  */
 package android.hardware.power@1.0;
 
-/* Power hint identifiers passed to powerHint() */
+/** Power hint identifiers passed to powerHint() */
 enum PowerHint : uint32_t {
-   /*
+   /**
     * Foreground app has started or stopped requesting a VSYNC pulse
     * from SurfaceFlinger. If the app has started requesting VSYNC
     * then CPU and GPU load is expected soon, and it may be appropriate
@@ -28,7 +28,7 @@ enum PowerHint : uint32_t {
     VSYNC = 0x00000001,
 
 
-   /*
+   /**
     * User is interacting with the device, for example, touchscreen
     * events are incoming. CPU and GPU load may be expected soon,
     * and it may be appropriate to raise speeds of CPU, memory bus,
@@ -38,13 +38,14 @@ enum PowerHint : uint32_t {
     INTERACTION = 0x00000002,
 
 
-    /* DO NOT USE VIDEO_ENCODE/_DECODE!  They will be removed in
+    /**
+     * DO NOT USE VIDEO_ENCODE/_DECODE!  They will be removed in
      * KLP.
      */
     VIDEO_ENCODE = 0x00000003,
     VIDEO_DECODE = 0x00000004,
 
-   /*
+   /**
     * Low power mode is activated or deactivated. Low power mode
     * is intended to save battery at the cost of performance. The data
     * parameter is non-zero when low power mode is activated, and zero
@@ -52,7 +53,7 @@ enum PowerHint : uint32_t {
     */
     LOW_POWER = 0x00000005,
 
-   /*
+   /**
     * Sustained Performance mode is actived or deactivated. Sustained
     * performance mode is intended to provide a consistent level of
     * performance for a prolonged amount of time. The data parameter is
@@ -61,7 +62,7 @@ enum PowerHint : uint32_t {
     */
     SUSTAINED_PERFORMANCE = 0x00000006,
 
-   /*
+   /**
     * VR Mode is activated or deactivated. VR mode is intended to
     * provide minimum guarantee for performance for the amount of time the
     * device can sustain it. The data parameter is non-zero when the mode
@@ -69,7 +70,7 @@ enum PowerHint : uint32_t {
     */
     VR_MODE = 0x00000007,
 
-   /*
+   /**
     * This hint indicates that an application has been launched. Can be used
     * for device specific optimizations during application launch. The data
     * parameter is non-zero when the application starts to launch and zero when
@@ -79,7 +80,7 @@ enum PowerHint : uint32_t {
 };
 
 enum Feature : uint32_t {
-    /*
+    /**
      * Enabling/Disabling this feature will allow/disallow the system
      * to wake up by tapping the screen twice.
      */
@@ -90,7 +91,7 @@ enum Status : uint32_t {
     SUCCESS = 0,
     FILESYSTEM_ERROR = 1
 };
-/*
+/**
  * Platform-level sleep state stats:
  * PowerStateVoter struct is useful for describing the individual voters
  * when a Platform-level sleep state is chosen by aggregation of votes from
@@ -100,24 +101,24 @@ enum Status : uint32_t {
  * entering the lowest Platform-level sleep state.
  */
 struct PowerStateVoter {
-    /*
+    /**
      * Name of the voter.
      */
      string name;
 
-    /*
+    /**
      * Total time in msec the voter voted for the platform sleep state since
      * boot.
      */
      uint64_t totalTimeInMsecVotedForSinceBoot;
 
-    /*
+    /**
      * Number of times the voter voted for the platform sleep state since boot.
      */
      uint64_t totalNumberOfTimesVotedSinceBoot;
 };
 
-/*
+/**
  * Platform-level sleep state stats:
  * PowerStatePlatformSleepState represents the Platform-level sleep state
  * the device is capable of getting into.
@@ -125,27 +126,27 @@ struct PowerStateVoter {
  * SoCs usually have more than one Platform-level sleep state.
  */
 struct PowerStatePlatformSleepState {
-    /*
+    /**
      * Platform-level Sleep state name.
      */
     string name;
 
-    /*
+    /**
      * Time spent in msec at this platform-level sleep state since boot.
      */
     uint64_t residencyInMsecSinceBoot;
 
-    /*
+    /**
      * Total number of times system entered this state.
      */
     uint64_t totalTransitions;
 
-    /*
+    /**
      * This platform-level sleep state can only be reached during system suspend
      */
     bool supportedOnlyInSuspend;
 
-    /*
+    /**
      * voters is useful if the Platform-level sleep state
      * is chosen by aggregation votes from multiple clients/system conditions.
      * All the voters have to say yes or all the system conditions need to be

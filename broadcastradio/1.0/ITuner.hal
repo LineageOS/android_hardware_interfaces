@@ -20,7 +20,7 @@ import ITunerCallback;
 
 interface ITuner {
 
-    /*
+    /**
      * Apply current radio band configuration (band, range, channel spacing...).
      * Automatically cancels pending scan, step or tune.
      * ITunerCallback.configChange() method MUST be called once the
@@ -33,7 +33,7 @@ interface ITuner {
      */
     setConfiguration(BandConfig config) generates(Result result);
 
-    /*
+    /**
      * Retrieve current radio band configuration.
      * @return result OK if valid configuration is returned,
      *                NOT_INITIALIZED in case of initialization error.
@@ -41,7 +41,7 @@ interface ITuner {
      */
     getConfiguration() generates(Result result, BandConfig config);
 
-    /*
+    /**
      * Start scanning up to next valid station.
      * Shall be called only when a valid configuration has been applied.
      * Automatically cancels pending scan, step or tune.
@@ -57,7 +57,7 @@ interface ITuner {
      */
     scan(Direction direction, bool skipSubChannel) generates(Result result);
 
-    /*
+    /**
      * Move one channel spacing up or down.
      * Must be called when a valid configuration has been applied.
      * Automatically cancels pending scan, step or tune.
@@ -73,7 +73,7 @@ interface ITuner {
      */
     step(Direction direction, bool skipSubChannel) generates(Result result);
 
-    /*
+    /**
      * Tune to specified channel.
      * Must be called when a valid configuration has been applied.
      * Automatically cancels pending scan, step or tune.
@@ -91,7 +91,7 @@ interface ITuner {
      */
     tune(uint32_t channel, uint32_t subChannel) generates(Result result);
 
-    /*
+    /**
      * Cancel a scan, step or tune operation.
      * Shall be called only while a scan, step or tune operation is pending.
      * ITunerCallback.tuneComplete() MUST NOT be sent by the HAL.
@@ -101,7 +101,7 @@ interface ITuner {
      */
     cancel() generates(Result result);
 
-    /*
+    /**
      * Retrieve current station information.
      * @return result OK if scan successfully started
      *                NOT_INITIALIZED if another error occurs

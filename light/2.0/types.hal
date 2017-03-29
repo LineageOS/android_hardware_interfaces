@@ -24,17 +24,17 @@ enum Status : int32_t {
 };
 
 enum Flash : int32_t {
-    /*
+    /**
      * Keep the light steady on or off.
      */
     NONE,
 
-    /*
+    /**
      * Flash the light at specified rate.
      */
     TIMED,
 
-    /*
+    /**
      * Flash the light using hardware assist.
      */
     HARDWARE,
@@ -77,7 +77,7 @@ enum Brightness : int32_t {
     LOW_PERSISTENCE,
 };
 
-/*
+/**
  * These light IDs correspond to logical lights, not physical.
  * So for example, if your INDICATOR light is in line with your
  * BUTTONS, it might make sense to also light the INDICATOR

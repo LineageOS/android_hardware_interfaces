@@ -16,68 +16,68 @@
 
 package android.hardware.gnss@1.0;
 
-/*
+/**
  * Interface for passing GNSS configuration info from platform to HAL.
  */
 interface IGnssConfiguration {
-    /*
+    /**
      * Enum which holds the bit masks for SUPL_MODE configuration parameter.
      */
     enum SuplMode : uint8_t {
-        /* Mobile Station Based */
+        /** Mobile Station Based */
         MSB = 0x01,
 
-        /* Mobile Station Assisted */
+        /** Mobile Station Assisted */
         MSA = 0x02
     };
 
-    /*
+    /**
      * Enum which holds the bit masks for GPS_LOCK configuration parameter.
      */
     enum GpsLock : uint8_t {
-        /* Lock Mobile Originated GPS functionalitues. */
+        /** Lock Mobile Originated GPS functionalitues. */
         MO    =  0x01,
 
-        /* Lock Network initiated GPS functionalities. */
+        /** Lock Network initiated GPS functionalities. */
         NI    =  0x02
     };
 
-    /*
+    /**
      * Enum that hold the bit masks for various LTE Positioning Profile settings (LPP_PROFILE
      * configuration parameter). If none of the bits in the enum are set, the default setting is
      * Radio Resource Location Protocol(RRLP).
      */
     enum LppProfile : uint8_t {
-        /* Enable LTE Positioning Protocol user plane */
+        /** Enable LTE Positioning Protocol user plane */
         USER_PLANE          = 0x01,
 
-        /* Enable LTE Positioning Protocol Control plane */
+        /** Enable LTE Positioning Protocol Control plane */
         CONTROL_PLANE       = 0x02
     };
 
-    /*
+    /**
      * Enum which holds the bit masks for A_GLONASS_POS_PROTOCOL_SELECT
      * configuration parameter.
      */
     enum GlonassPosProtocol : uint8_t {
-        /* Radio Resource Control(RRC) control-plane. */
+        /** Radio Resource Control(RRC) control-plane. */
         RRC_CPLANE                  = 0x01,
 
-        /* Radio Resource Location user-plane. */
+        /** Radio Resource Location user-plane. */
         RRLP_CPLANE                 = 0x02,
 
-        /* LTE Positioning Protocol User plane */
+        /** LTE Positioning Protocol User plane */
         LPP_UPLANE                  = 0x04
     };
 
-    /*
+    /**
      * IMPORTANT: GNSS HAL must expect the below methods to be called multiple
      * times. They can be called even when GnssLocationProvider is already
      * constructed and enabled. GNSS HAL must maintain the existing requests
      * for various callbacks regardless the change in configuration data.
      */
 
-     /*
+     /**
       * This method enables or disables emergency SUPL.
       *
       * @param enabled True if emergency SUPL is to be enabled.
@@ -86,7 +86,7 @@ interface IGnssConfiguration {
       */
      setSuplEs(bool enabled) generates (bool success);
 
-     /*
+     /**
       * This method sets the SUPL version requested by Carrier. The GNSS HAL
       * must use this version of the SUPL protocol if supported.
       *
@@ -99,7 +99,7 @@ interface IGnssConfiguration {
       */
      setSuplVersion(uint32_t version) generates (bool success);
 
-     /*
+     /**
       * This method sets the SUPL mode.
       *
       * @param mode Bit mask that specifies the SUPL mode which is set with the SuplMode enum.
@@ -108,7 +108,7 @@ interface IGnssConfiguration {
       */
      setSuplMode(bitfield<SuplMode> mode) generates (bool success);
 
-     /*
+     /**
       * This setting configures how GPS functionalities should be locked when
       * user turns off GPS On setting.
       *
@@ -119,7 +119,7 @@ interface IGnssConfiguration {
       */
      setGpsLock(bitfield<GpsLock> lock) generates (bool success);
 
-     /*
+     /**
       * This method sets the LTE Positioning Profile configuration.
       *
       * @param lppProfile Bitmask that specifies the LTE Positioning Profile
@@ -129,7 +129,7 @@ interface IGnssConfiguration {
       */
      setLppProfile(bitfield<LppProfile> lppProfile) generates (bool success);
 
-     /*
+     /**
       * This method selects positioning protocol on A-Glonass system.
       *
       * @param protocol Bitmask that specifies the positioning protocol to be
@@ -139,7 +139,7 @@ interface IGnssConfiguration {
       */
      setGlonassPositioningProtocol(bitfield<GlonassPosProtocol> protocol) generates (bool success);
 
-     /*
+     /**
       * This method configures which PDN to use.
       *
       * @param enable Use emergency PDN if true and regular PDN if false.

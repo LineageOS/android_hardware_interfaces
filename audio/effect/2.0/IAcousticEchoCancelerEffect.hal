@@ -20,12 +20,12 @@ import android.hardware.audio.common@2.0;
 import IEffect;
 
 interface IAcousticEchoCancelerEffect extends IEffect {
-    /*
+    /**
      * Sets echo delay value in milliseconds.
      */
     setEchoDelay(uint32_t echoDelayMs) generates (Result retval);
 
-    /*
+    /**
      * Gets echo delay value in milliseconds.
      */
     getEchoDelay() generates (Result retval, uint32_t echoDelayMs);

@@ -1,107 +1,107 @@
 package android.hardware.gnss@1.0;
 
-/* Extended interface for DEBUG support. */
+/** Extended interface for DEBUG support. */
 interface IGnssDebug {
     enum SatelliteEphemerisType : uint8_t {
-        /* no information is known to the gnss hardware, about this satellite */
+        /** no information is known to the gnss hardware, about this satellite */
         UNKNOWN,
-        /*  this satellite is known to exist */
+        /**  this satellite is known to exist */
         KNOWN,
-        /*  this satellite is not known to exist */
+        /**  this satellite is not known to exist */
         NONEXISTENT,
-        /* Only Almanac (approximate) location known for this satellite */
+        /** Only Almanac (approximate) location known for this satellite */
         ALMANAC_ONLY,
-        /* Ephemeris is known from demodulating the signal on device */
+        /** Ephemeris is known from demodulating the signal on device */
         DEMODULATED,
-        /* Ephemeris has been provided by SUPL */
+        /** Ephemeris has been provided by SUPL */
         SUPL_PROVIDED,
-        /* Ephemeris has been provided by another server */
+        /** Ephemeris has been provided by another server */
         OTHER_SERVER_PROVIDED,
-        /*
+        /**
          * Predicted ephemeris has been provided by a server
          * (e.g. Xtra, Extended Ephemeris, etc...)
          */
         SERVER_PREDICTED,
-        /*
+        /**
          * Predicted ephemeris in use, generated locally on the device (e.g. from prior
          * ephemeris)
          */
         LOCALLY_PREDICTED
     };
 
-    /*
+    /**
      * Provides the current best known position from any
      * source (GNSS or injected assistance).
      */
     struct PositionDebug {
-        /*
+        /**
          * Validity of the data in this struct. False only if no
          * latitude/longitude information is known.
          */
         bool valid;
-        /* Latitude expressed in degrees */
+        /** Latitude expressed in degrees */
         double latitudeDegrees;
-        /* Longitude expressed in degrees */
+        /** Longitude expressed in degrees */
         double longitudeDegrees;
-        /* Altitude above ellipsoid expressed in meters */
+        /** Altitude above ellipsoid expressed in meters */
         float altitudeMeters;
-        /* Represents speed in meters per second. */
+        /** Represents speed in meters per second. */
         float speedMetersPerSec;
-        /* Represents heading in degrees. */
+        /** Represents heading in degrees. */
         float bearingDegrees;
-        /*
+        /**
          * estimated horizontal accuracy of position expressed in meters, radial,
          * 68% confidence.
          */
         double horizontalAccuracyMeters;
-        /*
+        /**
          * estimated vertical accuracy of position expressed in meters, with
          * 68% confidence.
          */
         double verticalAccuracyMeters;
-        /*
+        /**
          * estimated speed accuracy in meters per second with 68% confidence.
          */
         double speedAccuracyMetersPerSecond;
-        /*
+        /**
          * estimated bearing accuracy degrees with 68% confidence.
          */
         double bearingAccuracyDegrees;
-        /*
+        /**
          * Time duration before this report that this position information was
          * valid.
          */
         float ageSeconds;
     };
 
-    /*
+    /**
      * Provides the current best known UTC time estimate.
      */
     struct TimeDebug {
-        /*
+        /**
          * Validity of the data in the struct.
          * False if current time is unknown.
          */
         bool valid;
-        /*
+        /**
          * UTC time estimate.
          */
         GnssUtcTime timeEstimate;
-        /* 68% error estimate in time. */
+        /** 68% error estimate in time. */
         float timeUncertaintyNs;
     };
 
-    /*
+    /**
      * Provides a single satellite info that has decoded navigation data.
      */
     struct SatelliteData {
-        /* Satellite vehicle ID number */
+        /** Satellite vehicle ID number */
         int16_t svid;
-        /* Defines the constellation type of the given SV. */
+        /** Defines the constellation type of the given SV. */
         GnssConstellationType constellation;
-        /* Defines the ephemeris type of the satellite. */
+        /** Defines the ephemeris type of the satellite. */
         SatelliteEphemerisType ephemerisType;
-        /*
+        /**
          * Time duration before this report, that the ephemeris source was last
          * updated, e.g. latest demodulation, or latest server download.
          * Set to 0 when ephemerisType is UNKNOWN.
@@ -109,16 +109,16 @@ interface IGnssDebug {
         float ephemerisAgeSeconds;
     };
 
-    /*
+    /**
      * Provides a set of debug information that is filled by the GNSS chipset
      * when the method getDebugData() is invoked.
      */
     struct DebugData {
-        /* Current best known position. */
+        /** Current best known position. */
         PositionDebug position;
-        /* Current best know time estimate */
+        /** Current best know time estimate */
         TimeDebug time;
-        /*
+        /**
          * Provides a list of the decoded satellite ephemeris.
          * Must provide a complete list for all constellations device can track,
          * including GnssConstellationType UNKNOWN.
@@ -127,7 +127,7 @@ interface IGnssDebug {
 
     };
 
-    /*
+    /**
      * This methods requests position, time and satellite ephemeris debug information
      * from the HAL.
      *

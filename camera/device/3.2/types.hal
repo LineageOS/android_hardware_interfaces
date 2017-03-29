@@ -68,16 +68,16 @@ enum StreamType : uint32_t {
  * The required counterclockwise rotation of camera stream.
  */
 enum StreamRotation : uint32_t  {
-    /* No rotation */
+    /** No rotation */
     ROTATION_0 = 0,
 
-    /* Rotate by 90 degree counterclockwise */
+    /** Rotate by 90 degree counterclockwise */
     ROTATION_90 = 1,
 
-    /* Rotate by 180 degree counterclockwise */
+    /** Rotate by 180 degree counterclockwise */
     ROTATION_180 = 2,
 
-    /* Rotate by 270 degree counterclockwise */
+    /** Rotate by 270 degree counterclockwise */
     ROTATION_270 = 3
 
 };

@@ -18,7 +18,7 @@ package android.hardware.automotive.vehicle@2.1;
 
 import android.hardware.automotive.vehicle@2.0;
 
-/*
+/**
  * New revision of IVehicle interface that supports properties defined in
  * VehicleProperty enum version 2.1.
  *

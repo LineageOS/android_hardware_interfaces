@@ -22,10 +22,10 @@ enum GnssMax : uint32_t {
     SVS_COUNT = 64,
 };
 
-/* Milliseconds since January 1, 1970 */
+/** Milliseconds since January 1, 1970 */
 typedef int64_t GnssUtcTime;
 
-/*
+/**
  * Constellation type of GnssSvInfo
  */
 
@@ -61,52 +61,52 @@ enum GnssLocationFlags : uint16_t {
     HAS_BEARING_ACCURACY      = 0x0080
 };
 
-/* Represents a location. */
+/** Represents a location. */
 struct GnssLocation {
-    /* Contains GnssLocationFlags bits. */
+    /** Contains GnssLocationFlags bits. */
     bitfield<GnssLocationFlags> gnssLocationFlags;
 
-    /* Represents latitude in degrees. */
+    /** Represents latitude in degrees. */
     double latitudeDegrees;
 
-    /* Represents longitude in degrees. */
+    /** Represents longitude in degrees. */
     double longitudeDegrees;
 
-    /*
+    /**
      * Represents altitude in meters above the WGS 84 reference ellipsoid.
      */
     double altitudeMeters;
 
-    /* Represents speed in meters per second. */
+    /** Represents speed in meters per second. */
     float speedMetersPerSec;
 
-    /* Represents heading in degrees. */
+    /** Represents heading in degrees. */
     float bearingDegrees;
 
-    /*
+    /**
     * Represents expected horizontal position accuracy, radial, in meters
     * (68% confidence).
     */
     float horizontalAccuracyMeters;
 
-    /*
+    /**
     * Represents expected vertical position accuracy in meters
     * (68% confidence).
     */
     float verticalAccuracyMeters;
 
-    /*
+    /**
     * Represents expected speed accuracy in meter per seconds
     * (68% confidence).
     */
     float speedAccuracyMetersPerSecond;
 
-    /*
+    /**
     * Represents expected bearing accuracy in degrees
     * (68% confidence).
     */
     float bearingAccuracyDegrees;
 
-    /* Timestamp for the location fix. */
+    /** Timestamp for the location fix. */
     GnssUtcTime timestamp;
 };

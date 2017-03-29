@@ -39,39 +39,39 @@ interface IAGnssCallback {
         AGNSS_DATA_CONN_FAILED   = 5
     };
 
-    /*
+    /**
      * Represents the status of AGNSS augmented to support IPv4.
      */
     @export(name="", value_prefix="GPS_")
     struct AGnssStatusIpV4 {
         AGnssType type;
         AGnssStatusValue status;
-        /*
+        /**
          * 32-bit IPv4 address.
          */
         uint32_t ipV4Addr;
     };
 
-    /*
+    /**
      * Represents the status of AGNSS augmented to support IPv6.
      */
     struct AGnssStatusIpV6 {
         AGnssType type;
         AGnssStatusValue status;
-        /*
+        /**
          * 128-bit IPv6 address.
          */
         uint8_t[16] ipV6Addr;
     };
 
-    /*
+    /**
      * Callback with AGNSS(IpV4) status information.
      *
      * @param status Will be of type AGnssStatusIpV4.
      */
     agnssStatusIpV4Cb(AGnssStatusIpV4 status);
 
-    /*
+    /**
      * Callback with AGNSS(IpV6) status information.
      *
      * @param status Will be of type AGnssStatusIpV6.

@@ -20,7 +20,7 @@ import android.hardware.audio.common@2.0;
 import IEffect;
 
 interface IEffectsFactory {
-    /*
+    /**
      * Returns descriptors of different effects in all loaded libraries.
      *
      * @return retval operation completion status.
@@ -28,7 +28,7 @@ interface IEffectsFactory {
      */
     getAllDescriptors() generates(Result retval, vec<EffectDescriptor> result);
 
-    /*
+    /**
      * Returns a descriptor of a particular effect.
      *
      * @return retval operation completion status.
@@ -36,7 +36,7 @@ interface IEffectsFactory {
      */
     getDescriptor(Uuid uid) generates(Result retval, EffectDescriptor result);
 
-    /*
+    /**
      * Creates an effect engine of the specified type.  To release the effect
      * engine, it is necessary to release references to the returned effect
      * object.
@@ -56,7 +56,7 @@ interface IEffectsFactory {
     createEffect(Uuid uid, AudioSession session, AudioIoHandle ioHandle)
         generates (Result retval, IEffect result, uint64_t effectId);
 
-    /*
+    /**
      * Dumps information about effects into the provided file descriptor.
      * This is used for the dumpsys facility.
      *

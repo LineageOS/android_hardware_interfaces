@@ -16,7 +16,7 @@
 
 package android.hardware.gnss@1.0;
 
-/*
+/**
  * GNSS Geofence.
  * There are 3 states associated with a Geofence: Inside, Outside, Unknown.
  * There are 3 transitions: ENTERED, EXITED, UNCERTAIN.
@@ -114,7 +114,7 @@ interface IGnssGeofenceCallback {
         ERROR_GENERIC            = -149
     };
 
-    /*
+    /**
      * The callback associated with the geofence transition.
      * The callback must only be called when the caller is interested in that
      * particular transition. For instance, if the caller is interested only in
@@ -134,7 +134,7 @@ interface IGnssGeofenceCallback {
     gnssGeofenceTransitionCb(int32_t geofenceId, GnssLocation location,
         GeofenceTransition transition, GnssUtcTime timestamp);
 
-    /*
+    /**
      * The callback associated with the availability of the GNSS system for
      * geofencing monitoring. If the GNSS system determines that it cannot monitor
      * geofences because of lack of reliability or unavailability of the GNSS
@@ -145,7 +145,7 @@ interface IGnssGeofenceCallback {
      */
     gnssGeofenceStatusCb(GeofenceAvailability status, GnssLocation lastLocation);
 
-    /*
+    /**
      * The callback associated with the addGeofence call.
      *
      * @param geofenceId Id of the geofence.
@@ -159,7 +159,7 @@ interface IGnssGeofenceCallback {
      */
     gnssGeofenceAddCb(int32_t geofenceId, GeofenceStatus status);
 
-    /*
+    /**
      * The callback associated with the removeGeofence call.
      *
      * @param geofenceId Id of the geofence.
@@ -169,7 +169,7 @@ interface IGnssGeofenceCallback {
      */
     gnssGeofenceRemoveCb(int32_t geofenceId, GeofenceStatus status);
 
-    /*
+    /**
      * The callback associated with the pauseGeofence call.
      *
      * @param geofenceId Id of the geofence.
@@ -180,7 +180,7 @@ interface IGnssGeofenceCallback {
      */
     gnssGeofencePauseCb(int32_t geofenceId, GeofenceStatus status);
 
-    /*
+    /**
      * The callback associated with the resumeGeofence call.
      *
      * @param geofenceId - Id of the geofence.

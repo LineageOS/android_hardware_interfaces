@@ -17,7 +17,7 @@
 package android.hardware.automotive.evs@1.0;
 
 
-/*
+/**
  * Bit flags indicating suggested uses for a given EVS camera
  *
  * The values in the UsageHint bit field provide a generic expression of how a
@@ -35,7 +35,7 @@ enum UsageHint : uint32_t {
 };
 
 
-/*
+/**
  * Structure describing the basic properties of an EVS camera
  *
  * The HAL is responsible for filling out this structure for each
@@ -55,7 +55,7 @@ struct CameraDesc {
 };
 
 
-/*
+/**
  * Structure describing the basic properties of an EVS display
  *
  * The HAL is responsible for filling out this structure to describe
@@ -71,7 +71,7 @@ struct DisplayDesc {
 };
 
 
-/*
+/**
  * Structure representing an image buffer through our APIs
  *
  * In addition to the handle to the graphics memory, we need to retain
@@ -94,7 +94,7 @@ struct BufferDesc {
 };
 
 
-/*
+/**
  * States for control of the EVS display
  *
  * The DisplayInfo structure describes the basic properties of an EVS display. Any EVS
@@ -112,7 +112,7 @@ enum DisplayState : uint32_t {
 };
 
 
-/* Error codes used in EVS HAL interface. */
+/** Error codes used in EVS HAL interface. */
 enum EvsResult : uint32_t {
     OK = 0,
     INVALID_ARG,

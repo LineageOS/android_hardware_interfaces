@@ -18,11 +18,11 @@ package android.hardware.automotive.vehicle@2.1;
 
 import android.hardware.automotive.vehicle@2.0;
 
-/*
+/**
  * Extension of VehicleProperty enum declared in Vehicle HAL 2.0
  */
 enum VehicleProperty: @2.0::VehicleProperty {
-    /*
+    /**
      * Reports wheel rotational distance in meters since last wheel tick
      * event
      *
@@ -44,7 +44,7 @@ enum VehicleProperty: @2.0::VehicleProperty {
       | VehiclePropertyType:FLOAT_VEC
       | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * OBD2 Live Sensor Data
      *
      * This property uses COMPLEX data to send a snapshot of the current (live)
@@ -84,7 +84,7 @@ enum VehicleProperty: @2.0::VehicleProperty {
       | VehiclePropertyType:COMPLEX
       | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * OBD2 Freeze Frame Sensor Data
      *
      * This property uses COMPLEX data to send a snapshot of the values of the
@@ -132,7 +132,7 @@ enum VehicleProperty: @2.0::VehicleProperty {
       | VehiclePropertyType:COMPLEX
       | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * OBD2 Freeze Frame Information
      *
      * This property describes the current freeze frames stored in vehicle
@@ -153,7 +153,7 @@ enum VehicleProperty: @2.0::VehicleProperty {
       | VehiclePropertyType:COMPLEX
       | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * OBD2 Freeze Frame Clear
      *
      * This property allows deletion of any of the freeze frames stored in
@@ -175,7 +175,7 @@ enum VehicleProperty: @2.0::VehicleProperty {
       | VehiclePropertyType:COMPLEX
       | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Vehicle Maps Service (VMS) message
      *
      * This property uses COMPLEX data to communicate vms messages.
@@ -196,7 +196,7 @@ enum VehicleProperty: @2.0::VehicleProperty {
         | VehicleArea:GLOBAL),
 };
 
-/* The status of a fuel system as described by the OBD2 specification. */
+/** The status of a fuel system as described by the OBD2 specification. */
 enum FuelSystemStatus : int32_t {
   OPEN_INSUFFICIENT_ENGINE_TEMPERATURE = 1,
 
@@ -209,14 +209,14 @@ enum FuelSystemStatus : int32_t {
   CLOSED_LOOP_BUT_FEEDBACK_FAULT = 16,
 };
 
-/* Defines which ignition monitors are available to be read. */
+/** Defines which ignition monitors are available to be read. */
 enum IgnitionMonitorKind : int32_t {
   SPARK = 0,
 
   COMPRESSION = 1,
 };
 
-/* These ignition monitors are common to both SPARK and COMPRESSION. */
+/** These ignition monitors are common to both SPARK and COMPRESSION. */
 enum CommonIgnitionMonitors : int32_t {
   COMPONENTS_AVAILABLE = 0x1 << 0,
   COMPONENTS_INCOMPLETE = 0x1 << 1,
@@ -228,7 +228,7 @@ enum CommonIgnitionMonitors : int32_t {
   MISFIRE_INCOMPLETE = 0x1 << 5,
 };
 
-/* Ignition monitors available for SPARK vehicles. */
+/** Ignition monitors available for SPARK vehicles. */
 enum SparkIgnitionMonitors : CommonIgnitionMonitors {
   EGR_AVAILABLE = 0x1 << 6,
   EGR_INCOMPLETE = 0x1 << 7,
@@ -255,7 +255,7 @@ enum SparkIgnitionMonitors : CommonIgnitionMonitors {
   CATALYST_INCOMPLETE = 0x1 << 21,
 };
 
-/* Ignition monitors only available for COMPRESSION vehicles. */
+/** Ignition monitors only available for COMPRESSION vehicles. */
 enum CompressionIgnitionMonitors : CommonIgnitionMonitors {
   EGR_OR_VVT_AVAILABLE = 0x1 << 6,
   EGR_OR_VVT_INCOMPLETE = 0x1 << 7,
@@ -336,7 +336,7 @@ enum FuelType : int32_t {
   BIFUEL_RUNNING_DIESEL = 23,
 };
 
-/*
+/**
  * This enum provides the canonical mapping for sensor properties that have an integer value.
  * The ordering of the values is taken from the OBD2 specification.
  * Some of the properties are represented as an integer mapping to another enum. In those cases
@@ -344,15 +344,15 @@ enum FuelType : int32_t {
  * Any value greater than the last reserved index is available to vendors to map their extensions.
  */
 enum Obd2IntegerSensorIndex : int32_t {
-  /* refer to FuelSystemStatus for a description of this value. */
+  /** refer to FuelSystemStatus for a description of this value. */
   FUEL_SYSTEM_STATUS = 0,
 
   MALFUNCTION_INDICATOR_LIGHT_ON = 1,
 
-  /* refer to IgnitionMonitorKind for a description of this value. */
+  /** refer to IgnitionMonitorKind for a description of this value. */
   IGNITION_MONITORS_SUPPORTED = 2,
 
-  /*
+  /**
    * The value of this sensor is a bitmask that specifies whether ignition-specific
    * tests are available and whether they are complete. The semantics of the individual
    * bits in this value are given by, respectively, SparkIgnitionMonitors and
@@ -362,7 +362,7 @@ enum Obd2IntegerSensorIndex : int32_t {
 
   INTAKE_AIR_TEMPERATURE = 4,
 
-  /* refer to SecondaryAirStatus for a description of this value. */
+  /** refer to SecondaryAirStatus for a description of this value. */
   COMMANDED_SECONDARY_AIR_STATUS = 5,
 
   NUM_OXYGEN_SENSORS_PRESENT = 6,
@@ -395,7 +395,7 @@ enum Obd2IntegerSensorIndex : int32_t {
 
   MAX_AIR_FLOW_RATE_FROM_MASS_AIR_FLOW_SENSOR = 20,
 
-  /* refer to FuelType for a description of this value. */
+  /** refer to FuelType for a description of this value. */
   FUEL_TYPE = 21,
 
   FUEL_RAIL_ABSOLUTE_PRESSURE = 22,
@@ -421,7 +421,7 @@ enum Obd2IntegerSensorIndex : int32_t {
   LAST_SYSTEM_INDEX = ENGINE_PERCENT_TORQUE_DATA_POINT4,
 };
 
-/*
+/**
  * This enum provides the canonical mapping for sensor properties that have a floating-point value.
  * The ordering of the values is taken from the OBD2 specification.
  * Any value greater than the last reserved index is available to vendors to map their extensions.
@@ -572,34 +572,34 @@ enum Obd2FloatSensorIndex : int32_t {
   LAST_SYSTEM_INDEX = ENGINE_FUEL_RATE,
 };
 
-/*
+/**
  * This enum lists the types of supported VMS messages.
  */
 enum VmsMessageType : int32_t {
-  /* A client subscribes to a layer. */
+  /** A client subscribes to a layer. */
   SUBSCRIBE = 1,
 
-  /* A client unsubscribes from a layer. */
+  /** A client unsubscribes from a layer. */
   UNSUBSCRIBE = 2,
 
-  /* A client publishes a data packet. */
+  /** A client publishes a data packet. */
   DATA = 3,
 };
 
-/*
+/**
  * This enum provides the canonical mapping for VMS properties that have an
  * integer value.
  */
 enum VmsMessageIntegerValuesIndex : int32_t {
-  /* The message type as enumerated by VmsMessageType enum. */
+  /** The message type as enumerated by VmsMessageType enum. */
   VMS_MESSAGE_TYPE = 0,
 
-  /* The layer ID as defined in the vms protocol. */
+  /** The layer ID as defined in the vms protocol. */
   VMS_LAYER_ID = 1,
 
-  /* The version of the VMS layer. */
+  /** The version of the VMS layer. */
   VMS_LAYER_VERSION = 2,
 
-  /* The number of bytes in the payload */
+  /** The number of bytes in the payload */
   VMS_PAYLOAD_SIZE_BYTES = 3,
 };

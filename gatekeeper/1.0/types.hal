@@ -31,12 +31,13 @@ enum GatekeeperStatusCode : int32_t {
  * Gatekeeper response to any/all requests has this structure as mandatory part
  */
 struct GatekeeperResponse {
-    /* request completion status */
+    /** request completion status */
     GatekeeperStatusCode code;
-    /* retry timeout in ms, if code == ERROR_RETRY_TIMEOUT
+    /**
+     * retry timeout in ms, if code == ERROR_RETRY_TIMEOUT
      * otherwise unused (0)
      */
     uint32_t timeout;
-    /* optional crypto blob. Opaque to Android system. */
+    /** optional crypto blob. Opaque to Android system. */
     vec<uint8_t> data;
 };

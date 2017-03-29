@@ -16,9 +16,9 @@
 
 package android.hardware.gnss@1.0;
 
-/* The callback interface to report measurements from the HAL. */
+/** The callback interface to report measurements from the HAL. */
 interface IGnssMeasurementCallback {
-    /*
+    /**
      * Flags to indicate what fields in GnssClock are valid.
      */
     @export(name="", value_prefix="GNSS_CLOCK_")
@@ -39,7 +39,7 @@ interface IGnssMeasurementCallback {
         HAS_DRIFT_UNCERTAINTY  = 1 << 6
     };
 
-    /*
+    /**
      * Flags to indicate what fields in GnssMeasurement are valid.
      */
     @export(name="", value_prefix="GNSS_MEASUREMENT_")
@@ -58,7 +58,7 @@ interface IGnssMeasurementCallback {
         HAS_AUTOMATIC_GAIN_CONTROL     = 1 << 13
     };
 
-    /*
+    /**
      * Enumeration of available values for the GNSS Measurement's multipath
      * indicator.
      */
@@ -72,7 +72,7 @@ interface IGnssMeasurementCallback {
         INDICATIOR_NOT_PRESENT = 2
     };
 
-    /*
+    /**
      * Flags indicating the GNSS measurement state.
      *
      * The expected behavior here is for GNSS HAL to set all the flags that applies.
@@ -106,7 +106,7 @@ interface IGnssMeasurementCallback {
         STATE_GLO_TOD_KNOWN          = 1 << 15,
     };
 
-    /*
+    /**
      * Flags indicating the Accumulated Delta Range's states.
      */
     @export(name="", value_prefix="GNSS_")
@@ -117,17 +117,17 @@ interface IGnssMeasurementCallback {
         ADR_STATE_CYCLE_SLIP = 1 << 2,
     };
 
-    /*
+    /**
      * Represents an estimate of the GNSS clock time.
      */
     struct GnssClock {
-        /*
+        /**
          * A set of flags indicating the validity of the fields in this data
          * structure.
          */
         bitfield<GnssClockFlags> gnssClockFlags;
 
-        /*
+        /**
          * Leap second data.
          * The sign of the value is defined by the following equation:
          *      utcTimeNs = timeNs - (fullBiasNs + biasNs) - leapSecond *
@@ -138,7 +138,7 @@ interface IGnssMeasurementCallback {
          */
         int16_t leapSecond;
 
-        /*
+        /**
          * The GNSS receiver internal clock value. This is the local hardware clock
          * value.
          *
@@ -159,7 +159,7 @@ interface IGnssMeasurementCallback {
          */
         int64_t timeNs;
 
-        /*
+        /**
          * 1-Sigma uncertainty associated with the clock's time in nanoseconds.
          * The uncertainty is represented as an absolute (single sided) value.
          *
@@ -170,7 +170,7 @@ interface IGnssMeasurementCallback {
          */
         double timeUncertaintyNs;
 
-        /*
+        /**
          * The difference between hardware clock ('time' field) inside GNSS receiver
          * and the true GNSS time since 0000Z, January 6, 1980, in nanoseconds.
          *
@@ -187,7 +187,7 @@ interface IGnssMeasurementCallback {
          */
         int64_t fullBiasNs;
 
-        /*
+        /**
          * Sub-nanosecond bias.
          * The error estimate for the sum of this and the fullBiasNs is the
          * biasUncertaintyNs.
@@ -198,7 +198,7 @@ interface IGnssMeasurementCallback {
          */
         double biasNs;
 
-        /*
+        /**
          * 1-Sigma uncertainty associated with the local estimate of GNSS time (clock
          * bias) in nanoseconds. The uncertainty is represented as an absolute
          * (single sided) value.
@@ -209,7 +209,7 @@ interface IGnssMeasurementCallback {
          */
         double biasUncertaintyNs;
 
-        /*
+        /**
          * The clock's drift in nanoseconds (per second).
          *
          * A positive value means that the frequency is higher than the nominal
@@ -223,7 +223,7 @@ interface IGnssMeasurementCallback {
          */
         double driftNsps;
 
-        /*
+        /**
          * 1-Sigma uncertainty associated with the clock's drift in nanoseconds (per
          * second).
          * The uncertainty is represented as an absolute (single sided) value.
@@ -234,7 +234,7 @@ interface IGnssMeasurementCallback {
          */
         double driftUncertaintyNsps;
 
-        /*
+        /**
          * When there are any discontinuities in the HW clock, this field is
          * mandatory.
          *
@@ -267,7 +267,7 @@ interface IGnssMeasurementCallback {
 
     };
 
-    /*
+    /**
      * Represents a GNSS Measurement, it contains raw and computed information.
      *
      * All signal measurement information (e.g. svTime,
@@ -277,24 +277,24 @@ interface IGnssMeasurementCallback {
      * position, velocity, or time.
      */
     struct GnssMeasurement{
-        /*
+        /**
          * A set of flags indicating the validity of the fields in this data
          * structure.
          */
         bitfield<GnssMeasurementFlags> flags;
 
-        /*
+        /**
          * Satellite vehicle ID number, as defined in GnssSvInfo::svid
          * This is a mandatory value.
          */
         int16_t svid;
 
-        /*
+        /**
          * Defines the constellation of the given SV.
          */
         GnssConstellationType constellation;
 
-        /*
+        /**
          * Time offset at which the measurement was taken in nanoseconds.
          * The reference receiver's time is specified by GnssData::clock::timeNs.
          *
@@ -307,7 +307,7 @@ interface IGnssMeasurementCallback {
          */
         double timeOffsetNs;
 
-        /*
+        /**
          * Per satellite sync state. It represents the current sync state for the
          * associated satellite.
          * Based on the sync state, the 'received GNSS tow' field must be interpreted
@@ -317,7 +317,7 @@ interface IGnssMeasurementCallback {
          */
         bitfield<GnssMeasurementState> state;
 
-        /*
+        /**
          * The received GNSS Time-of-Week at the measurement time, in nanoseconds.
          * For GNSS & QZSS, this is the received GNSS Time-of-Week at the
          * measurement time, in nanoseconds. The value is relative to the
@@ -402,14 +402,14 @@ interface IGnssMeasurementCallback {
          */
         int64_t receivedSvTimeInNs;
 
-        /*
+        /**
          * 1-Sigma uncertainty of the Received GNSS Time-of-Week in nanoseconds.
          *
          * This value must be populated if 'state' != STATE_UNKNOWN.
          */
         int64_t receivedSvTimeUncertaintyInNs;
 
-        /*
+        /**
          * Carrier-to-noise density in dB-Hz, typically in the range [0, 63].
          * It contains the measured C/N0 value for the signal at the antenna port.
          *
@@ -417,7 +417,7 @@ interface IGnssMeasurementCallback {
          */
         double cN0DbHz;
 
-        /*
+        /**
          * Pseudorange rate at the timestamp in m/s. The correction of a given
          * Pseudorange Rate value includes corrections for receiver and satellite
          * clock frequency errors. Ensure that this field is independent (see
@@ -445,7 +445,7 @@ interface IGnssMeasurementCallback {
          */
         double pseudorangeRateMps;
 
-        /*
+        /**
          * 1-Sigma uncertainty of the pseudorangeRateMps.
          * The uncertainty is represented as an absolute (single sided) value.
          *
@@ -453,7 +453,7 @@ interface IGnssMeasurementCallback {
          */
         double pseudorangeRateUncertaintyMps;
 
-        /*
+        /**
          * Accumulated delta range's state. It indicates whether ADR is reset or
          * there is a cycle slip(indicating loss of lock).
          *
@@ -461,7 +461,7 @@ interface IGnssMeasurementCallback {
          */
         bitfield<GnssAccumulatedDeltaRangeState> accumulatedDeltaRangeState;
 
-        /*
+        /**
          * Accumulated delta range since the last channel reset in meters.
          * A positive value indicates that the SV is moving away from the receiver.
          *
@@ -476,14 +476,14 @@ interface IGnssMeasurementCallback {
          */
         double accumulatedDeltaRangeM;
 
-        /*
+        /**
          * 1-Sigma uncertainty of the accumulated delta range in meters.
          * This value must be populated if 'accumulated delta range state' !=
          * ADR_STATE_UNKNOWN.
          */
         double accumulatedDeltaRangeUncertaintyM;
 
-        /*
+        /**
          * Carrier frequency of the signal tracked, for example it can be the
          * GPS central frequency for L1 = 1575.45 MHz, or L2 = 1227.60 MHz, L5 =
          * 1176.45 MHz, varying GLO channels, etc. If the field is not set, it
@@ -501,7 +501,7 @@ interface IGnssMeasurementCallback {
          */
         float carrierFrequencyHz;
 
-        /*
+        /**
          * The number of full carrier cycles between the satellite and the
          * receiver. The reference frequency is given by the field
          * 'carrierFrequencyHz'. Indications of possible cycle slips and
@@ -513,7 +513,7 @@ interface IGnssMeasurementCallback {
          */
         int64_t carrierCycles;
 
-        /*
+        /**
          * The RF phase detected by the receiver, in the range [0.0, 1.0].
          * This is usually the fractional part of the complete carrier phase
          * measurement.
@@ -526,14 +526,14 @@ interface IGnssMeasurementCallback {
          */
         double carrierPhase;
 
-        /*
+        /**
          * 1-Sigma uncertainty of the carrier-phase.
          * If the data is available, gnssClockFlags must contain
          * HAS_CARRIER_PHASE_UNCERTAINTY.
          */
         double carrierPhaseUncertainty;
 
-        /*
+        /**
          * An enumeration that indicates the 'multipath' state of the event.
          *
          * The multipath Indicator is intended to report the presence of overlapping
@@ -554,7 +554,7 @@ interface IGnssMeasurementCallback {
          */
         GnssMultipathIndicator multipathIndicator;
 
-        /*
+        /**
          * Signal-to-noise ratio at correlator output in dB.
          * If the data is available, gnssClockFlags must contain MEASUREMENT_HAS_SNR.
          * This is the power ratio of the "correlation peak height above the
@@ -562,7 +562,7 @@ interface IGnssMeasurementCallback {
          */
         double snrDb;
 
-        /*
+        /**
          * Automatic gain control (AGC) level. AGC acts as a variable gain
          * amplifier adjusting the power of the incoming signal. The AGC level
          * may be used to indicate potential interference. When AGC is at a
@@ -581,7 +581,7 @@ interface IGnssMeasurementCallback {
         double agcLevelDb;
     };
 
-    /*
+    /**
      * Represents a reading of GNSS measurements. For devices where GnssSystemInfo's
      * yearOfHw is set to 2016+, it is mandatory that these be provided, on
      * request, when the GNSS receiver is searching/tracking signals.
@@ -590,17 +590,17 @@ interface IGnssMeasurementCallback {
      * - Reporting of all tracked constellations are encouraged.
      */
     struct GnssData {
-        /* Number of GnssMeasurement elements. */
+        /** Number of GnssMeasurement elements. */
         uint32_t measurementCount;
 
-        /* The array of measurements. */
+        /** The array of measurements. */
         GnssMeasurement[GnssMax:SVS_COUNT] measurements;
 
         /** The GNSS clock time reading. */
         GnssClock clock;
     };
 
-    /*
+    /**
      * Callback for the hal to pass a GnssData structure back to the client.
      *
      * @param data Contains a reading of GNSS measurements.

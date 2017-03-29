@@ -18,7 +18,7 @@ package android.hardware.gnss@1.0;
 
 /** Represents a GNSS navigation message (or a fragment of it). */
 interface IGnssNavigationMessageCallback {
-    /*
+    /**
      * Enumeration of available values to indicate the GNSS Navigation message
      * types.
      *
@@ -48,7 +48,7 @@ interface IGnssNavigationMessageCallback {
         GAL_F           = 0x0602
     };
 
-    /*
+    /**
      * Status of Navigation Message
      * When a message is received properly without any parity error in its
      * navigation words, the status must be set to PARITY_PASSED. But if a message is
@@ -65,26 +65,26 @@ interface IGnssNavigationMessageCallback {
     };
 
     struct GnssNavigationMessage {
-        /*
+        /**
          * Satellite vehicle ID number, as defined in GnssSvInfo::svid
          * This is a mandatory value.
          */
         int16_t svid;
 
-        /*
+        /**
          * The type of message contained in the structure.
          * This is a mandatory value.
          */
         GnssNavigationMessageType type;
 
-        /*
+        /**
          * The status of the received navigation message.
          * No need to send any navigation message that contains words with parity
          * error and cannot be corrected.
          */
         bitfield<NavigationMessageStatus> status;
 
-        /*
+        /**
          * Message identifier. It provides an index so the complete Navigation
          * Message can be assembled.
          *
@@ -106,7 +106,7 @@ interface IGnssNavigationMessageCallback {
          */
         int16_t messageId;
 
-        /*
+        /**
          * Sub-message identifier. If required by the message 'type', this value
          * contains a sub-index within the current message (or frame) that is being
          * transmitted.
@@ -123,7 +123,7 @@ interface IGnssNavigationMessageCallback {
          */
         int16_t submessageId;
 
-        /*
+        /**
          * The data of the reported GNSS message. The bytes (or words) are specified
          * using big endian format (MSB first). The data is stored and decoded
          * in a server for research purposes.
@@ -158,7 +158,7 @@ interface IGnssNavigationMessageCallback {
         vec<uint8_t> data;
     };
 
-    /*
+    /**
      * The callback to report an available fragment of a GNSS navigation messages
      * from the HAL.
      *

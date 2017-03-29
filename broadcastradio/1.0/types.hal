@@ -24,33 +24,33 @@ enum Result : int32_t {
     TIMEOUT,
 };
 
-/*
+/**
  * Radio hardware module class. A given radio hardware module HAL is of one
  * class only. The platform can not have more than one hardware module of
  * each class. Current version of the framework only supports RADIO_CLASS_AM_FM.
  */
 enum Class : uint32_t {
-    /* FM (including HD radio) and AM */
+    /** FM (including HD radio) and AM */
     AM_FM = 0,
-    /* Satellite Radio */
+    /** Satellite Radio */
     SAT   = 1,
-    /* Digital Radio (DAB) */
+    /** Digital Radio (DAB) */
     DT    = 2,
 };
 
-/* value for field "type" of radio band described in struct radio_hal_band_config */
+/** value for field "type" of radio band described in struct radio_hal_band_config */
 enum Band : uint32_t {
-    /* Amplitude Modulation band: LW, MW, SW */
+    /** Amplitude Modulation band: LW, MW, SW */
     AM     = 0,
-    /* Frequency Modulation band: FM */
+    /** Frequency Modulation band: FM */
     FM     = 1,
-    /* FM HD Radio / DRM (IBOC) */
+    /** FM HD Radio / DRM (IBOC) */
     FM_HD  = 2,
-    /* AM HD Radio / DRM (IBOC) */
+    /** AM HD Radio / DRM (IBOC) */
     AM_HD  = 3,
 };
 
-/* RDS variant implemented. A struct FmBandConfig can list none or several. */
+/** RDS variant implemented. A struct FmBandConfig can list none or several. */
 enum Rds : uint32_t {
     NONE   = 0,
     WORLD  = (1<<0),
@@ -65,35 +65,35 @@ enum Deemphasis : uint32_t {
     D75   = (1<<1),
 };
 
-/* Scanning direction for scan() and step() tuner APIs */
+/** Scanning direction for scan() and step() tuner APIs */
 enum Direction : uint32_t {
     UP,
     DOWN
 };
 
-/* Unique handle allocated to a radio module */
+/** Unique handle allocated to a radio module */
 typedef uint32_t Handle;
 
 
-/* Additional attributes for an FM band configuration */
+/** Additional attributes for an FM band configuration */
 struct FmBandConfig {
-    /* deemphasis variant */
+    /** deemphasis variant */
     Deemphasis deemphasis;
-    /* stereo supported */
+    /** stereo supported */
     bool       stereo;
-    /* RDS variants supported */
+    /** RDS variants supported */
     Rds        rds;
-    /* Traffic Announcement supported */
+    /** Traffic Announcement supported */
     bool       ta;
-    /* Alternate Frequency supported */
+    /** Alternate Frequency supported */
     bool       af;
-    /* Emergency announcements supported */
+    /** Emergency announcements supported */
     bool       ea;
 };
 
-/* Additional attributes for an AM band configuration */
+/** Additional attributes for an AM band configuration */
 struct AmBandConfig {
-    /* Stereo supported */
+    /** Stereo supported */
     bool       stereo;
 };
 
@@ -120,83 +120,84 @@ struct BandConfig {
  * If more than one tuner is supported (num_tuners > 1), only one can be
  * connected to the audio source. */
 struct Properties {
-    /* Class of this module. E.g AM_FM */
+    /** Class of this module. E.g AM_FM */
     Class           classId;
-    /* implementor name */
+    /** implementor name */
     string          implementor;
-    /* product name */
+    /** product name */
     string          product;
-    /* product version */
+    /** product version */
     string          version;
-    /* serial number (for subscription services) */
+    /** serial number (for subscription services) */
     string          serial;
-    /* number of tuners controllable independently */
+    /** number of tuners controllable independently */
     uint32_t        numTuners;
-    /* number of audio sources driven simultaneously */
+    /** number of audio sources driven simultaneously */
     uint32_t        numAudioSources;
-    /* the hardware supports capture of audio source from audio HAL */
+    /** the hardware supports capture of audio source from audio HAL */
     bool            supportsCapture;
-    vec<BandConfig> bands; /* band descriptors */
+    vec<BandConfig> bands; /** band descriptors */
 };
 
 enum MetadataType : int32_t {
     INVALID    = -1,
-    /* Signed 32 bit integer  */
+    /** Signed 32 bit integer  */
     INT        = 0,
-    /* String */
+    /** String */
     TEXT       = 1,
-    /* Raw binary data (icon or art)
+    /**
+     * Raw binary data (icon or art)
        This data must be transparent to the android framework */
     RAW        = 2,
-    /* clock data, see MetaDataClock */
+    /** clock data, see MetaDataClock */
     CLOCK      = 3,
 };
 
 enum MetadataKey : int32_t {
     INVALID      = -1,
-    /* RDS PI                 - string  */
+    /** RDS PI                 - string  */
     RDS_PI       = 0,
-    /* RDS PS                 - string */
+    /** RDS PS                 - string */
     RDS_PS       = 1,
-    /* RDS PTY                - int32_t  */
+    /** RDS PTY                - int32_t  */
     RDS_PTY      = 2,
-    /* RBDS PTY               - int32_t  */
+    /** RBDS PTY               - int32_t  */
     RBDS_PTY     = 3,
-    /* RDS RT                 - string  */
+    /** RDS RT                 - string  */
     RDS_RT       = 4,
-    /* Song title             - string  */
+    /** Song title             - string  */
     TITLE        = 5,
-    /* Artist name            - string  */
+    /** Artist name            - string  */
     ARTIST       = 6,
-    /* Album name             - string  */
+    /** Album name             - string  */
     ALBUM        = 7,
-    /* Musical genre          - string  */
+    /** Musical genre          - string  */
     GENRE        = 8,
-    /* Station icon           - raw  */
+    /** Station icon           - raw  */
     ICON         = 9,
-    /* Album art              - raw  */
+    /** Album art              - raw  */
     ART          = 10,
-    /* Clock                  - MetaDataClock */
+    /** Clock                  - MetaDataClock */
     CLOCK        = 11,
 };
 
 struct MetaDataClock {
-     /* Seconds since epoch at GMT + 0. */
+     /** Seconds since epoch at GMT + 0. */
     uint64_t utcSecondsSinceEpoch;
-    /* Minutes offset from the GMT. */
+    /** Minutes offset from the GMT. */
     int32_t timezoneOffsetInMinutes;
 };
 
 struct MetaData {
     MetadataType type;
     MetadataKey key;
-    /* Value used for type MetadataType.INT */
+    /** Value used for type MetadataType.INT */
     int32_t intValue;
-    /* Value used for type MetadataType.CLOCK */
+    /** Value used for type MetadataType.CLOCK */
     MetaDataClock  clockValue;
-    /* Value used for type MetadataType.TEXT */
+    /** Value used for type MetadataType.TEXT */
     string  stringValue;
-    /* Value used for type MetadataType.RAW */
+    /** Value used for type MetadataType.RAW */
     vec<uint8_t> rawValue;
 };
 
@@ -205,12 +206,12 @@ struct MetaData {
  * Contains information on currently tuned channel.
  */
 struct ProgramInfo {
-    uint32_t     channel;   /* current channel. (e.g kHz for band type AM_FM) */
-    uint32_t     subChannel; /* current sub channel. (FM_HD) */
-    bool         tuned;     /* tuned to a program or not */
-    bool         stereo;    /* program is stereo or not */
-    bool         digital;   /* digital program or not (e.g HD Radio program) */
-    uint32_t     signalStrength; /* signal strength from 0 to 100 */
-    vec<MetaData> metadata; /* non empty if meta data are present (e.g PTY, song title ...) */
+    uint32_t     channel;   /** current channel. (e.g kHz for band type AM_FM) */
+    uint32_t     subChannel; /** current sub channel. (FM_HD) */
+    bool         tuned;     /** tuned to a program or not */
+    bool         stereo;    /** program is stereo or not */
+    bool         digital;   /** digital program or not (e.g HD Radio program) */
+    uint32_t     signalStrength; /** signal strength from 0 to 100 */
+    vec<MetaData> metadata; /** non empty if meta data are present (e.g PTY, song title ...) */
 };
 

@@ -18,7 +18,7 @@ package android.hardware.gnss@1.0;
 
 import IGnssNavigationMessageCallback;
 
-/*
+/**
  * Extended interface for GNSS navigation message reporting support.
  */
 interface IGnssNavigationMessage {
@@ -29,7 +29,7 @@ interface IGnssNavigationMessage {
         ERROR_GENERIC = -101
     };
 
-    /*
+    /**
      * Initializes the interface and registers the callback routines with the HAL.
      * After a successful call to 'setCallback' the HAL must begin to provide updates as
      * they become available.
@@ -45,7 +45,7 @@ interface IGnssNavigationMessage {
      */
      setCallback(IGnssNavigationMessageCallback callback) generates (GnssNavigationMessageStatus initRet);
 
-    /*
+    /**
      * Stops updates from the HAL, and unregisters the callback routines.
      * After a call to close(), the previously registered callbacks must be
      * considered invalid by the HAL.

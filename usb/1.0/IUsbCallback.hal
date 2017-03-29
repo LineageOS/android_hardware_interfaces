@@ -16,13 +16,13 @@
 
 package android.hardware.usb@1.0;
 
-/*
+/**
  * Callback object used for all the IUsb async methods which expects a result.
  * Caller is expected to register the callback object using setCallback method
  * to receive updates on the PortStatus.
  */
 interface IUsbCallback {
-    /*
+    /**
      * Used to convey the current port status to the caller.
      * Called either when PortState changes due to the port partner (or)
      * when caller requested for the PortStatus update through queryPortStatus.
@@ -34,7 +34,7 @@ interface IUsbCallback {
      */
     oneway notifyPortStatusChange(vec<PortStatus> currentPortStatus, Status retval);
 
-    /*
+    /**
      * Used to notify the result of the switchRole call to the caller.
      *
      * @param portName name of the port for which the roleswap is requested.

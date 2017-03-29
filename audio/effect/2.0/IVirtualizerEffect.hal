@@ -20,7 +20,7 @@ import android.hardware.audio.common@2.0;
 import IEffect;
 
 interface IVirtualizerEffect extends IEffect {
-    /*
+    /**
      * Returns whether setting virtualization strength is supported.
      */
     isStrengthSupported() generates (bool strengthSupported);
@@ -30,7 +30,7 @@ interface IVirtualizerEffect extends IEffect {
         MAX = 1000
     };
 
-    /*
+    /**
      * Sets virtualization strength.
      *
      * @param strength strength of the effect. The valid range for strength
@@ -41,7 +41,7 @@ interface IVirtualizerEffect extends IEffect {
      */
     setStrength(uint16_t strength) generates (Result retval);
 
-    /*
+    /**
      * Gets virtualization strength.
      */
     getStrength() generates (Result retval, uint16_t strength);
@@ -56,19 +56,19 @@ interface IVirtualizerEffect extends IEffect {
         int16_t elevation; // 0 is the horizontal plane
                            // +90 is above the listener, -90 is below
     };
-    /*
+    /**
      * Retrieves virtual speaker angles for the given channel mask on the
      * specified device.
      */
     getVirtualSpeakerAngles(AudioChannelMask mask, AudioDevice device)
             generates (Result retval, vec<SpeakerAngle> speakerAngles);
 
-    /*
+    /**
      * Forces the virtualizer effect for the given output device.
      */
     forceVirtualizationMode(AudioDevice device) generates (Result retval);
 
-    /*
+    /**
      * Returns audio device reflecting the current virtualization mode,
      * AUDIO_DEVICE_NONE when not virtualizing.
      */

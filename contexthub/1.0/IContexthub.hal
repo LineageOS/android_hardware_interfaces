@@ -18,7 +18,7 @@ package android.hardware.contexthub@1.0;
 
 import IContexthubCallback;
 
-/*
+/**
  * The Context Hub HAL provides an interface to a separate low-power processing
  * domain that has direct access to contextual information, such as sensors.
  * Native applications that run within a context hub are known as nanoapps, and
@@ -26,14 +26,14 @@ import IContexthubCallback;
  * standardized via the CHRE API, defined elsewhere.
  */
 interface IContexthub {
-    /*
+    /**
      * Enumerate all available context hubs on the system.
      *
      * @return hubs list of hubs on this system.
      */
     getHubs() generates (vec<ContextHub> hubs);
 
-    /*
+    /**
      * Register a callback for the HAL implementation to send asynchronous
      * messages to the service from a context hub. There can be a maximum of
      * one callback registered with the HAL. A call to this function when a

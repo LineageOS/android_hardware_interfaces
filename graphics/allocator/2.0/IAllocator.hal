@@ -20,23 +20,23 @@ import IAllocatorClient;
 
 interface IAllocator {
     enum Capability : int32_t {
-        /* reserved */
+        /** reserved */
         INVALID = 0,
 
-        /*
+        /**
          * IAllocatorClient::testAllocate must always return UNDEFINED unless
          * this capability is supported.
          */
         TEST_ALLOCATE = 1,
 
-        /*
+        /**
          * IAllocatorClient::BufferDescriptorInfo::layerCount must be 1 unless
          * this capability is supported.
          */
         LAYERED_BUFFERS = 2,
     };
 
-    /*
+    /**
      * Provides a list of supported capabilities (as described in the
      * definition of Capability above). This list must not change after
      * initialization.
@@ -48,7 +48,7 @@ interface IAllocator {
     @callflow(next="*")
     getCapabilities() generates (vec<Capability> capabilities);
 
-    /*
+    /**
      * Retrieves implementation-defined debug information, which will be
      * displayed during, for example, `dumpsys SurfaceFlinger`.
      *
@@ -59,7 +59,7 @@ interface IAllocator {
     @callflow(next="*")
     dumpDebugInfo() generates (string debugInfo);
 
-    /*
+    /**
      * Creates a client of the allocator. All resources created by the client
      * are owned by the client and are only visible to the client, unless they
      * are exported by exportHandle.

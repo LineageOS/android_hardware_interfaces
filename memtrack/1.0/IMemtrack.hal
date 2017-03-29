@@ -16,7 +16,7 @@
 
 package android.hardware.memtrack@1.0;
 
-/*
+/**
  * The Memory Tracker HAL is designed to return information about
  * device-specific memory usage.
  * The primary goal is to be able to track memory that is not
@@ -30,7 +30,7 @@ package android.hardware.memtrack@1.0;
  * setup actions and is called once before any calls to getMemory().
  */
 interface IMemtrack {
-    /*
+    /**
      * getMemory() populates MemtrackRecord vector with the sizes of memory
      * plus associated flags for that memory.
      *

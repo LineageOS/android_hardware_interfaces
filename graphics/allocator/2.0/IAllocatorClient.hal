@@ -20,7 +20,7 @@ import android.hardware.graphics.common@1.0::PixelFormat;
 
 interface IAllocatorClient {
     struct BufferDescriptorInfo {
-        /*
+        /**
          * The width specifies how many columns of pixels must be in the
          * allocated buffer, but does not necessarily represent the offset in
          * columns between the same column in adjacent rows. The rows may be
@@ -28,34 +28,34 @@ interface IAllocatorClient {
          */
         uint32_t width;
 
-       /*
+       /**
         * The height specifies how many rows of pixels must be in the
         * allocated buffer.
         */
         uint32_t height;
 
-       /*
+       /**
         * The number of image layers that must be in the allocated buffer.
         */
         uint32_t layerCount;
 
-        /* Buffer pixel format. */
+        /** Buffer pixel format. */
         PixelFormat format;
 
-        /*
+        /**
          * Buffer producer usage mask; valid flags can be found in the
          * definition of ProducerUsage.
          */
         uint64_t producerUsageMask;
 
-        /*
+        /**
          * Buffer consumer usage mask; valid flags can be found in the
          * definition of ConsumerUsage.
          */
         uint64_t consumerUsageMask;
     };
 
-    /*
+    /**
      * Creates a new, opaque buffer descriptor.
      *
      * @param descriptorInfo specifies the attributes of the buffer
@@ -71,7 +71,7 @@ interface IAllocatorClient {
           generates (Error error,
                      BufferDescriptor descriptor);
 
-    /*
+    /**
      * Destroys an existing buffer descriptor.
      *
      * @param descriptor is the descriptor to destroy.
@@ -81,7 +81,7 @@ interface IAllocatorClient {
     @callflow(next="*")
     destroyDescriptor(BufferDescriptor descriptor) generates (Error error);
 
-    /*
+    /**
      * Tests whether a buffer allocation can succeed, ignoring potential
      * resource contention which might lead to a NO_RESOURCES error.
      *
@@ -98,7 +98,7 @@ interface IAllocatorClient {
     @callflow(next="allocate")
     testAllocate(vec<BufferDescriptor> descriptors) generates (Error error);
 
-    /*
+    /**
      * Attempts to allocate a list of buffers sharing a backing store.
      *
      * Each buffer must correspond to one of the descriptors passed into the
@@ -124,7 +124,7 @@ interface IAllocatorClient {
         generates (Error error,
                    vec<Buffer> buffers);
 
-    /*
+    /**
      * Frees a buffer.
      *
      * @param buffer is the buffer to be freed.
@@ -135,7 +135,7 @@ interface IAllocatorClient {
     @callflow(next="*")
     free(Buffer buffer) generates (Error error);
 
-    /*
+    /**
      * Exports a buffer for use in other client libraries or for cross-process
      * sharing.
      *

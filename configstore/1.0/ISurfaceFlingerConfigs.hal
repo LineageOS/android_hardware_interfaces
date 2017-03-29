@@ -16,7 +16,7 @@
 package android.hardware.configstore@1.0;
 
 interface ISurfaceFlingerConfigs {
-    /*
+    /**
      * The following two methods define (respectively):
      *
      * - The phase offset between hardware vsync and when apps are woken up by the
@@ -40,13 +40,13 @@ interface ISurfaceFlingerConfigs {
     vsyncEventPhaseOffsetNs() generates (OptionalInt64 value);
     vsyncSfEventPhaseOffsetNs() generates (OptionalInt64 value);
 
-    /*
+    /**
      * Instruct the Render Engine to use EGL_IMG_context_priority hint if
      * availabe.
      */
     useContextPriority() generates(OptionalBool value);
 
-    /*
+    /**
      * hasWideColorDisplay indicates that the device has
      * or can support a wide-color display, e.g. color space
      * greater than sRGB. Typical display may have same
@@ -60,7 +60,7 @@ interface ISurfaceFlingerConfigs {
      */
     hasWideColorDisplay() generates (OptionalBool value);
 
-    /*
+    /**
      * hwHdrDisplay indicates that the device has
      * or can support an HDR (High Dynamic Range) display.
      * Typically an HDR display is also wide-color.
@@ -69,13 +69,13 @@ interface ISurfaceFlingerConfigs {
      */
     hasHDRDisplay() generates (OptionalBool value);
 
-    /*
+    /**
      * Specify the offset in nanoseconds to add to vsync time when timestamping
      * present fences.
      */
     presentTimeOffsetFromVSyncNs() generates(OptionalInt64 value);
 
-    /*
+    /**
      * Some hardware can do RGB->YUV conversion more efficiently in hardware
      * controlled by HWC than in hardware controlled by the video encoder.
      * This instruct VirtualDisplaySurface to use HWC for such conversion on
@@ -83,19 +83,19 @@ interface ISurfaceFlingerConfigs {
      */
     useHwcForRGBtoYUV() generates(OptionalBool value);
 
-    /*
+    /**
      *  Maximum dimension supported by HWC for virtual display.
      *  Must be equals to min(max_width, max_height).
      */
     maxVirtualDisplaySize() generates (OptionalUInt64 value);
 
-    /*
+    /**
      * Indicates if Sync framework is available. Sync framework provides fence
      * mechanism which significantly reduces buffer processing latency.
      */
     hasSyncFramework() generates(OptionalBool value);
 
-    /*
+    /**
      * Return true if surface flinger should use vr flinger for compatible vr
      * apps, false otherwise. Devices that will never be running vr apps should
      * return false to avoid extra resource usage. Daydream ready devices must
@@ -103,7 +103,7 @@ interface ISurfaceFlingerConfigs {
      */
     useVrFlinger() generates (OptionalBool value);
 
-    /*
+    /**
      * Controls the number of buffers SurfaceFlinger will allocate for use in
      * FramebufferSurface.
      */
