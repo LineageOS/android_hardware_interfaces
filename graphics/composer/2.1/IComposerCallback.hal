@@ -20,13 +20,13 @@ interface IComposerCallback {
     enum Connection : int32_t {
         INVALID = 0,
 
-        /* The display has been connected */
+        /** The display has been connected */
         CONNECTED = 1,
-        /* The display has been disconnected */
+        /** The display has been disconnected */
         DISCONNECTED = 2,
     };
 
-    /*
+    /**
      * Notifies the client that the given display has either been connected or
      * disconnected. Every active display (even a built-in physical display)
      * must trigger at least one hotplug notification, even if it only occurs
@@ -47,7 +47,7 @@ interface IComposerCallback {
     @callflow(next="*")
     onHotplug(Display display, Connection connected);
 
-    /*
+    /**
      * Notifies the client to trigger a screen refresh. This forces all layer
      * state for this display to be resent, and the display to be validated
      * and presented, even if there have been no changes.
@@ -61,7 +61,7 @@ interface IComposerCallback {
     @callflow(next="*")
     oneway onRefresh(Display display);
 
-    /*
+    /**
      * Notifies the client that a vsync event has occurred. This callback must
      * only be triggered when vsync is enabled for this display (through
      * setVsyncEnabled).

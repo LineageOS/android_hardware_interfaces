@@ -26,12 +26,12 @@ interface INoiseSuppressionEffect extends IEffect {
         HIGH
     };
 
-    /*
+    /**
      * Sets suppression level.
      */
     setSuppressionLevel(Level level) generates (Result retval);
 
-    /*
+    /**
      * Gets suppression level.
      */
     getSuppressionLevel() generates (Result retval, Level level);
@@ -41,12 +41,12 @@ interface INoiseSuppressionEffect extends IEffect {
         MULTI_CHANNEL
     };
 
-    /*
+    /**
      * Set suppression type.
      */
     setSuppressionType(Type type) generates (Result retval);
 
-    /*
+    /**
      * Get suppression type.
      */
     getSuppressionType() generates (Result retval, Type type);
@@ -56,12 +56,12 @@ interface INoiseSuppressionEffect extends IEffect {
         Type type;
     };
 
-    /*
+    /**
      * Sets all properties at once.
      */
     setAllProperties(AllProperties properties) generates (Result retval);
 
-    /*
+    /**
      * Gets all properties at once.
      */
     getAllProperties() generates (Result retval, AllProperties properties);

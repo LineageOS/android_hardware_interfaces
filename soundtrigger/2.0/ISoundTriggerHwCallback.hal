@@ -29,62 +29,66 @@ interface ISoundTriggerHwCallback {
         UPDATED  = 0,
     };
 
-    /*
+    /**
      * Generic recognition event sent via recognition callback
      */
     struct RecognitionEvent {
-        /* Recognition status e.g. SUCCESS */
+        /** Recognition status e.g. SUCCESS */
         RecognitionStatus status;
-        /* Sound model type for this event. e.g SoundModelType.TYPE_KEYPHRASE */
+        /** Sound model type for this event. e.g SoundModelType.TYPE_KEYPHRASE */
         SoundModelType    type;
-        /* Handle of loaded sound model which triggered the event */
+        /** Handle of loaded sound model which triggered the event */
         SoundModelHandle  model;
-        /* It is possible to capture audio from this */
-        /* utterance buffered by the implementation */
+        /** It is possible to capture audio from this */
+        /** utterance buffered by the implementation */
         bool              captureAvailable;
-        /* Audio session ID. framework use */
+        /** Audio session ID. framework use */
         int32_t           captureSession;
-        /* Delay in ms between end of model detection and start of audio
-        /* available for capture. A negative value is possible
+        /**
+         * Delay in ms between end of model detection and start of audio
+        /**
+         * available for capture. A negative value is possible
          * (e.g. if key phrase is also available for capture */
         int32_t           captureDelayMs;
-        /* Duration in ms of audio captured before the start of the trigger.
+        /**
+         * Duration in ms of audio captured before the start of the trigger.
          * 0 if none. */
         int32_t           capturePreambleMs;
-        /* The opaque data is the capture of the trigger sound */
+        /** The opaque data is the capture of the trigger sound */
         bool              triggerInData;
-        /* Audio format of either the trigger in event data or to use for
+        /**
+         * Audio format of either the trigger in event data or to use for
          * capture of the rest of the utterance */
         AudioConfig       audioConfig;
-        /* Opaque event data */
+        /** Opaque event data */
         vec<uint8_t>      data;
     };
 
-    /*
+    /**
      * Specialized recognition event for key phrase recognitions
      */
     struct PhraseRecognitionEvent {
-        /* Common part of the recognition event */
+        /** Common part of the recognition event */
         RecognitionEvent common;
-        /* List of descriptors for each recognized key phrase */
+        /** List of descriptors for each recognized key phrase */
         vec<PhraseRecognitionExtra> phraseExtras;
     };
 
-    /*
+    /**
      * Event sent via load sound model callback
      */
     struct ModelEvent {
-         /* Sound model status e.g. SoundModelStatus.UPDATED */
+         /** Sound model status e.g. SoundModelStatus.UPDATED */
         SoundModelStatus status;
-        /* Loaded sound model that triggered the event */
+        /** Loaded sound model that triggered the event */
         SoundModelHandle model;
-        /* Opaque event data, passed transparently by the framework */
+        /** Opaque event data, passed transparently by the framework */
         vec<uint8_t>     data;
     };
 
     typedef int32_t CallbackCookie;
 
-    /*
+    /**
      * Callback method called by the HAL when the sound recognition triggers
      * @param event A RecognitionEvent structure containing detailed results
      *              of the recognition triggered
@@ -93,7 +97,7 @@ interface ISoundTriggerHwCallback {
      */
     recognitionCallback(RecognitionEvent event, CallbackCookie cookie);
 
-    /*
+    /**
      * Callback method called by the HAL when the sound recognition triggers
      * for a key phrase sound model.
      * @param event A RecognitionEvent structure containing detailed results
@@ -103,7 +107,7 @@ interface ISoundTriggerHwCallback {
      */
     phraseRecognitionCallback(PhraseRecognitionEvent event,
                               CallbackCookie cookie);
-    /*
+    /**
      * Callback method called by the HAL when the sound model loading completes
      * @param event A ModelEvent structure containing detailed results of the
      *              model loading operation

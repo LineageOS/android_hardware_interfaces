@@ -16,7 +16,7 @@
 
 package android.hardware.automotive.vehicle@2.0;
 
-/*
+/**
  * Enumerates supported data types for VehicleProperty.
  *
  * This is a bitwise flag that supposed to be used in VehicleProperty enum.
@@ -31,7 +31,7 @@ enum VehiclePropertyType : int32_t {
     FLOAT_VEC      = 0x00610000,
     BYTES          = 0x00700000,
 
-    /*
+    /**
      * Any combination of scalar or vector types. The exact format must be
      * provided in the description of the property.
      */
@@ -40,7 +40,7 @@ enum VehiclePropertyType : int32_t {
     MASK           = 0x00ff0000
 };
 
-/*
+/**
  * Some properties may be associated with particular vehicle areas. For
  * example, VehicleProperty:DOOR_LOCK property must be associated with
  * particular door, thus this property must be marked with
@@ -62,18 +62,18 @@ enum VehicleArea : int32_t {
       MASK         = 0x0f000000,
 };
 
-/*
+/**
  * Enumerates property groups.
  *
  * This is a bitwise flag that supposed to be used in VehicleProperty enum.
  */
 enum VehiclePropertyGroup : int32_t {
-    /*
+    /**
      * Properties declared in AOSP must have this flag.
      */
     SYSTEM         = 0x10000000,
 
-    /*
+    /**
      * Properties declared by vendors must have this flag.
      */
     VENDOR         = 0x20000000,
@@ -81,7 +81,7 @@ enum VehiclePropertyGroup : int32_t {
     MASK           = 0xf0000000,
 };
 
-/*
+/**
  * Declares all vehicle properties. VehicleProperty has a bitwise structure.
  * Each property must have:
  *   - an unique id from range 0x0100 - 0xffff
@@ -95,10 +95,10 @@ enum VehiclePropertyGroup : int32_t {
  */
 enum VehicleProperty: int32_t {
 
-    /* Undefined property. */
+    /** Undefined property. */
     INVALID = 0x00000000,
 
-    /*
+    /**
      * VIN of vehicle
      *
      * @change_mode VehiclePropertyChangeMode:STATIC
@@ -110,7 +110,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:STRING
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Maker name of vehicle
      *
      * @change_mode VehiclePropertyChangeMode:STATIC
@@ -122,7 +122,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:STRING
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Model of vehicle
      *
      * @change_mode VehiclePropertyChangeMode:STATIC
@@ -134,7 +134,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:STRING
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Model year of vehicle.
      *
      * @change_mode VehiclePropertyChangeMode:STATIC
@@ -147,7 +147,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Fuel capacity of the vehicle
      *
      * @change_mode VehiclePropertyChangeMode:STATIC
@@ -160,7 +160,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:FLOAT
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Current odometer value of the vehicle
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE | VehiclePropertyChangeMode:CONTINUOUS
@@ -173,7 +173,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:FLOAT
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Speed of the vehicle
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE|VehiclePropertyChangeMode:CONTINUOUS
@@ -186,7 +186,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:FLOAT
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Temperature of engine coolant
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE|VehiclePropertyChangeMode:CONTINUOUS
@@ -199,7 +199,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:FLOAT
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Temperature of engine oil
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE|VehiclePropertyChangeMode:CONTINUOUS
@@ -212,7 +212,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:FLOAT
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Engine rpm
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE|VehiclePropertyChangeMode:CONTINUOUS
@@ -225,7 +225,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:FLOAT
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Currently selected gear
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
@@ -238,7 +238,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Current gear. In non-manual case, selected gear does not necessarily
      * match the current gear.
      *
@@ -252,7 +252,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Parking brake state.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
@@ -264,7 +264,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:BOOLEAN
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Driving status policy.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
@@ -277,7 +277,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Warning for fuel low level.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
@@ -289,7 +289,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:BOOLEAN
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Night mode or not.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
@@ -301,7 +301,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:BOOLEAN
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * State of the vehicles turn signals
      *
      * Values from VehicleTurnSignal
@@ -315,7 +315,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Represents ignition state
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
@@ -327,7 +327,7 @@ enum VehicleProperty: int32_t {
             | VehiclePropertyType:INT32
             | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Fan speed setting
      *
      * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
@@ -343,7 +343,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:ZONE),
 
-    /*
+    /**
      * Fan direction setting
      *
      * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
@@ -360,7 +360,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:ZONE),
 
-    /*
+    /**
      * HVAC current temperature.
      *
      * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
@@ -376,7 +376,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:FLOAT
         | VehicleArea:ZONE),
 
-    /*
+    /**
      * HVAC, target temperature set.
      *
      * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
@@ -392,7 +392,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:FLOAT
         | VehicleArea:ZONE),
 
-    /*
+    /**
      * On/off defrost
      *
      * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
@@ -408,7 +408,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:BOOLEAN
         | VehicleArea:WINDOW),
 
-    /*
+    /**
      * On/off AC
      *
      * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
@@ -425,7 +425,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:BOOLEAN
         | VehicleArea:ZONE),
 
-    /*
+    /**
      * On/off max AC
      *
      * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
@@ -441,7 +441,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:BOOLEAN
         | VehicleArea:ZONE),
 
-    /*
+    /**
      * On/off max defrost
      *
      * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
@@ -457,7 +457,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:BOOLEAN
         | VehicleArea:ZONE),
 
-    /*
+    /**
      * On/off re-circulation
      *
      * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
@@ -473,7 +473,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:BOOLEAN
         | VehicleArea:ZONE),
 
-    /*
+    /**
      * On/off dual. This must be defined per each row.
      *
      * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
@@ -489,7 +489,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:BOOLEAN
         | VehicleArea:ZONE),
 
-    /*
+    /**
      * On/off automatic mode
      *
      * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
@@ -505,7 +505,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:BOOLEAN
         | VehicleArea:ZONE),
 
-    /*
+    /**
      * Seat temperature
      *
      * Negative values indicate cooling.
@@ -622,7 +622,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:ZONE),
 
-    /*
+    /**
      * Represents power state for HVAC. Some HVAC properties must require
      * matching power to be turned on to get out of OFF state. For non-zoned
      * HVAC properties, VEHICLE_ALL_ZONE corresponds to global power state.
@@ -640,7 +640,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:BOOLEAN
         | VehicleArea:ZONE),
 
-    /*
+    /**
      * Outside temperature
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE|VehiclePropertyChangeMode:CONTINUOUS
@@ -653,7 +653,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:FLOAT
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Cabin temperature
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE|VehiclePropertyChangeMode:CONTINUOUS
@@ -666,7 +666,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:FLOAT
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Radio presets stored on the Car radio module. The data type used is int32
      * array with the following fields:
      * <ul>
@@ -690,7 +690,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32_VEC
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Represents audio focus state of Android side. Note that car's audio
      * module must own audio focus and grant audio focus to Android side when
      * requested by Android side. The focus has both per stream characteristics
@@ -776,7 +776,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32_VEC
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * A property to allow external component to control audio focus. Depending on
      * H/W architecture, audio HAL may need to control audio focus while vehicle
      * HAL is still interacting with upper layer. In such case, audio HAL may set
@@ -793,7 +793,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32_VEC
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Property to control audio volume of each audio context.
      *
      * VehiclePropConfig
@@ -830,7 +830,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32_VEC
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Property to allow audio volume sync from external components like audio HAL.
      * Some vehicle HAL implementation may get volume control from audio HAL and in such
      * case, setting AUDIO_VOLUME_EXT_SYNC property may trigger event in AUDIO_VOLUME property.
@@ -846,7 +846,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32_VEC
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Property for handling volume limit set by user. This limits maximum
      * volume that can be set per each context or physical stream.
      *
@@ -880,7 +880,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32_VEC
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Property to share audio routing policy of android side. This property is
      * set at the beginning to pass audio policy in android side down to
      * vehicle HAL and car audio module.
@@ -908,7 +908,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32_VEC
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Property to return audio H/W variant type used in this car. This allows
      * android side to support different audio policy based on H/W variant used.
      * Note that other components like CarService may need overlay update to
@@ -926,7 +926,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Property to pass hint on external audio routing. When android side
      * request focus with VehicleAudioExtFocusflag, this
      * property must be set before setting AUDIO_FOCUS property as a hint for
@@ -1028,7 +1028,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:STRING
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Property to control power state of application processor
      *
      * It is assumed that AP's power state is controller by separate power
@@ -1054,7 +1054,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32_VEC
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Property to represent brightness of the display. Some cars have single
      * control for the brightness of all displays and this property is to share
      * change in that control.
@@ -1073,7 +1073,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Property to report bootup reason for the current power on. This is a
      * static property that will not change for the whole duration until power
      * off. For example, even if user presses power on button after automatic
@@ -1091,7 +1091,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Property to feed H/W input events to android
      *
      * int32Values[0] : action defined by VehicleHwKeyInputAction
@@ -1109,7 +1109,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32_VEC
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Property to define instrument cluster information.
      * For VehicleInstrumentClusterType:EXTERNAL_DISPLAY:
      *  READ:
@@ -1143,7 +1143,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32_VEC
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Current date and time, encoded as Unix time.
      * This value denotes the number of seconds that have elapsed since
      * 1/1/1970.
@@ -1158,7 +1158,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT64
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Current time only.
      * Some vehicles may not keep track of date.  This property only affects
      * the current time, in seconds during the day.  Thus, the max value for
@@ -1174,7 +1174,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Door position
      *
      * This is an integer in case a door may be set to a particular position.
@@ -1192,7 +1192,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:DOOR),
 
-    /*
+    /**
      * Door move
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
@@ -1204,7 +1204,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:DOOR),
 
-    /*
+    /**
      * Door lock
      *
      * 'true' indicates door is locked
@@ -1218,7 +1218,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:BOOLEAN
         | VehicleArea:DOOR),
 
-    /*
+    /**
      * Mirror Z Position
      *
      * Positive value indicates tilt upwards, negative value is downwards
@@ -1232,7 +1232,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:MIRROR),
 
-    /*
+    /**
      * Mirror Z Move
      *
      * Positive value indicates tilt upwards, negative value is downwards
@@ -1246,7 +1246,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:MIRROR),
 
-    /*
+    /**
      * Mirror Y Position
      *
      * Positive value indicate tilt right, negative value is left
@@ -1260,7 +1260,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:MIRROR),
 
-    /*
+    /**
      * Mirror Y Move
      *
      * Positive value indicate tilt right, negative value is left
@@ -1274,7 +1274,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:MIRROR),
 
-    /*
+    /**
      * Mirror Lock
      *
      * True indicates mirror positions are locked and not changeable
@@ -1288,7 +1288,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:BOOLEAN
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Mirror Fold
      *
      * True indicates mirrors are folded
@@ -1302,7 +1302,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:BOOLEAN
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Seat memory select
      *
      * This parameter selects the memory preset to use to select the seat
@@ -1322,7 +1322,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Seat memory set
      *
      * This setting allows the user to save the current seat position settings
@@ -1338,7 +1338,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Seatbelt buckled
      *
      * True indicates belt is buckled.
@@ -1355,7 +1355,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:BOOLEAN
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Seatbelt height position
      *
      * Adjusts the shoulder belt anchor point.
@@ -1371,7 +1371,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Seatbelt height move
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
@@ -1383,7 +1383,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Seat fore/aft position
      *
      * Sets the seat position forward (closer to steering wheel) and backwards.
@@ -1399,7 +1399,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Seat fore/aft move
      *
      * Moves the seat position forward and aft.
@@ -1413,7 +1413,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Seat backrest angle 1 position
      *
      * Backrest angle 1 is the actuator closest to the bottom of the seat.
@@ -1429,7 +1429,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Seat backrest angle 1 move
      *
      * Moves the backrest forward or recline.
@@ -1443,7 +1443,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Seat backrest angle 2 position
      *
      * Backrest angle 2 is the next actuator up from the bottom of the seat.
@@ -1459,7 +1459,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Seat backrest angle 2 move
      *
      * Moves the backrest forward or recline.
@@ -1473,7 +1473,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Seat height position
      *
      * Sets the seat height.
@@ -1489,7 +1489,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Seat height move
      *
      * Moves the seat height.
@@ -1503,7 +1503,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Seat depth position
      *
      * Sets the seat depth, distance from back rest to front edge of seat.
@@ -1519,7 +1519,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Seat depth move
      *
      * Adjusts the seat depth.
@@ -1533,7 +1533,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Seat tilt position
      *
      * Sets the seat tilt.
@@ -1549,7 +1549,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Seat tilt move
      *
      * Tilts the seat.
@@ -1563,7 +1563,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Lumber fore/aft position
      *
      * Pushes the lumbar support forward and backwards
@@ -1579,7 +1579,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Lumbar fore/aft move
      *
      * Adjusts the lumbar support.
@@ -1593,7 +1593,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Lumbar side support position
      *
      * Sets the amount of lateral lumbar support.
@@ -1609,7 +1609,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Lumbar side support move
      *
      * Adjusts the amount of lateral lumbar support.
@@ -1623,7 +1623,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Headrest height position
      *
      * Sets the headrest height.
@@ -1639,7 +1639,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Headrest height move
      *
      * Moves the headrest up and down.
@@ -1653,7 +1653,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Headrest angle position
      *
      * Sets the angle of the headrest.
@@ -1669,7 +1669,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Headrest angle move
      *
      * Adjusts the angle of the headrest
@@ -1683,7 +1683,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Headrest fore/aft position
      *
      * Adjusts the headrest forwards and backwards.
@@ -1699,7 +1699,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Headrest fore/aft move
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
@@ -1711,7 +1711,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-    /*
+    /**
      * Window Position
      *
      * Max = window up / closed
@@ -1726,7 +1726,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Window Move
      *
      * Max = window up / closed
@@ -1743,7 +1743,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Window Vent Position
      *
      * This feature is used to control the vent feature on a sunroof.
@@ -1760,7 +1760,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Window Vent Move
      *
      * This feature is used to control the vent feature on a sunroof.
@@ -1777,7 +1777,7 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:GLOBAL),
 
-    /*
+    /**
      * Window Lock
      *
      * True indicates windows are locked and can't be moved.
@@ -1792,7 +1792,7 @@ enum VehicleProperty: int32_t {
         | VehicleArea:GLOBAL),
 };
 
-/*
+/**
  * Bit flags for fan direction
  */
 enum VehicleHvacFanDirection : int32_t {
@@ -1803,11 +1803,11 @@ enum VehicleHvacFanDirection : int32_t {
   DEFROST_AND_FLOOR = 0x5,
 };
 
-/*
+/**
  * Constants relevant to radio.
  */
 enum VehicleRadioConstants : int32_t {
-  /* Minimum value for the radio preset */
+  /** Minimum value for the radio preset */
   VEHICLE_RADIO_PRESET_MIN_VALUE = 1,
 };
 
@@ -1815,7 +1815,7 @@ enum VehicleAudioFocusRequest : int32_t {
   REQUEST_GAIN = 0x1,
   REQUEST_GAIN_TRANSIENT = 0x2,
   REQUEST_GAIN_TRANSIENT_MAY_DUCK = 0x3,
-  /*
+  /**
    * This is for the case where android side plays sound like UI feedback
    * and car side does not need to duck existing playback as long as
    * requested stream is available.
@@ -1826,34 +1826,34 @@ enum VehicleAudioFocusRequest : int32_t {
 };
 
 enum VehicleAudioFocusState : int32_t {
-  /*
+  /**
    * Android side has permanent focus and can play allowed streams.
    */
   STATE_GAIN = 0x1,
 
-  /*
+  /**
    * Android side has transient focus and can play allowed streams.
    */
   STATE_GAIN_TRANSIENT = 0x2,
 
-  /*
+  /**
    * Car audio module is playing guidance kind of sound outside Android.
    * Android side can still play through allowed streams with ducking.
    */
   STATE_LOSS_TRANSIENT_CAN_DUCK = 0x3,
 
-  /*
+  /**
    * Car audio module is playing transient sound outside Android. Android side
    * must stop playing any sounds.
    */
   STATE_LOSS_TRANSIENT = 0x4,
 
-  /*
+  /**
    * Android side has lost focus and cannot play any sound.
    */
   STATE_LOSS = 0x5,
 
-  /*
+  /**
    * car audio module is playing safety critical sound, and Android side cannot
    * request focus until the current state is finished. car audio module
    * restore it to the previous state when it can allow Android to play.
@@ -1862,7 +1862,7 @@ enum VehicleAudioFocusState : int32_t {
 
 };
 
-/*
+/**
  * Flags to represent multiple streams by combining these.
  */
 enum VehicleAudioStreamFlag : int32_t {
@@ -1871,7 +1871,7 @@ enum VehicleAudioStreamFlag : int32_t {
   STREAM2_FLAG = (0x1 << 2),
 };
 
-/*
+/**
  * Represents stream number (always 0 to N -1 where N is max number of streams).
  * Can be used for audio related property expecting one stream.
  */
@@ -1880,27 +1880,27 @@ enum VehicleAudioStream : int32_t {
   STREAM1 = 1,
 };
 
-/*
+/**
  * Flag to represent external focus state (outside Android).
  */
 enum VehicleAudioExtFocusFlag : int32_t {
-  /*
+  /**
    * No external focus holder.
    */
   NONE_FLAG = 0x0,
 
-  /*
+  /**
    * Car side (outside Android) has component holding GAIN kind of focus state.
    */
   PERMANENT_FLAG = 0x1,
 
-  /*
+  /**
    * Car side (outside Android) has component holding GAIN_TRANSIENT kind of
    * focus state.
    */
   TRANSIENT_FLAG = 0x2,
 
-  /*
+  /**
    * Car side is expected to play something while focus is held by Android side.
    * One example can be radio attached in car side. But Android's radio app
    * still must have focus, and Android side must be in GAIN state, but
@@ -1909,14 +1909,14 @@ enum VehicleAudioExtFocusFlag : int32_t {
    */
   PLAY_ONLY_FLAG = 0x4,
 
-  /*
+  /**
    * Car side must mute any media including radio. This can be used with any
    * focus request including GAIN* and RELEASE.
    */
   MUTE_MEDIA_FLAG = 0x8,
 };
 
-/*
+/**
  * Index in int32Values for VehicleProperty#AUDIO_FOCUS property.
  */
 enum VehicleAudioFocusIndex : int32_t {
@@ -1926,65 +1926,65 @@ enum VehicleAudioFocusIndex : int32_t {
   AUDIO_CONTEXTS = 3,
 };
 
-/*
+/**
  * Flags to tell the current audio context.
  */
 enum VehicleAudioContextFlag : int32_t {
-  /* Music playback is currently active. */
+  /** Music playback is currently active. */
   MUSIC_FLAG = 0x1,
 
-  /* Navigation is currently running. */
+  /** Navigation is currently running. */
   NAVIGATION_FLAG = 0x2,
 
-  /* Voice command session is currently running. */
+  /** Voice command session is currently running. */
   VOICE_COMMAND_FLAG = 0x4,
 
-  /* Voice call is currently active. */
+  /** Voice call is currently active. */
   CALL_FLAG = 0x8,
 
-  /*
+  /**
    * Alarm is active.
    * This must be only used in VehicleProperty#AUDIO_ROUTING_POLICY.
    */
   ALARM_FLAG = 0x10,
 
-  /*
+  /**
    * Notification sound is active.
    * This must be only used in VehicleProperty#AUDIO_ROUTING_POLICY.
    */
   NOTIFICATION_FLAG = 0x20,
 
-  /*
+  /**
    * Context unknown. Only used for VehicleProperty#AUDIO_ROUTING_POLICY to
    * represent default stream for unknown contents.
    */
   UNKNOWN_FLAG = 0x40,
 
-  /* Safety alert / warning is played. */
+  /** Safety alert / warning is played. */
   SAFETY_ALERT_FLAG = 0x80,
 
-  /* CD / DVD kind of audio is played */
+  /** CD / DVD kind of audio is played */
   CD_ROM_FLAG = 0x100,
 
-  /* Aux audio input is played */
+  /** Aux audio input is played */
   AUX_AUDIO_FLAG = 0x200,
 
-  /* system sound like UI feedback */
+  /** system sound like UI feedback */
   SYSTEM_SOUND_FLAG = 0x400,
 
-  /* Radio is played */
+  /** Radio is played */
   RADIO_FLAG = 0x800,
 
-  /* Ext source is played. This is for tagging generic ext sources. */
+  /** Ext source is played. This is for tagging generic ext sources. */
   EXT_SOURCE_FLAG = 0x1000,
 };
 
-/*
+/**
  * flags to represent capability of audio volume property.
  * used in configArray[1] of VehiclePropConfig.
  */
 enum VehicleAudioVolumeCapabilityFlag : int32_t {
-  /*
+  /**
    * External audio module or vehicle hal has persistent storage
    * to keep the volume level. This must be set only when per context
    * volume level is supported. When this is set, audio volume level per
@@ -1998,7 +1998,7 @@ enum VehicleAudioVolumeCapabilityFlag : int32_t {
    */
   PERSISTENT_STORAGE = 0x1,
 
-  /*
+  /**
    * When this flag is set, the H/W can support only single master volume for
    * all streams.
    * There is no way to set volume level differently per each stream or context.
@@ -2006,13 +2006,13 @@ enum VehicleAudioVolumeCapabilityFlag : int32_t {
   MASTER_VOLUME_ONLY = 0x2,
 };
 
-/*
+/**
  * enum to represent audio volume state.
  */
 enum VehicleAudioVolumeState : int32_t {
   STATE_OK = 0,
 
-  /*
+  /**
    * Audio volume has reached volume limit set in
    * VehicleProperty#AUDIO_VOLUME_LIMIT and user's request to increase volume
    * further is not allowed.
@@ -2020,7 +2020,7 @@ enum VehicleAudioVolumeState : int32_t {
   LIMIT_REACHED = 1,
 };
 
-/*
+/**
  * Index in int32Values for VehicleProperty#AUDIO_VOLUME property.
  */
 enum VehicleAudioVolumeIndex : int32_t {
@@ -2029,7 +2029,7 @@ enum VehicleAudioVolumeIndex : int32_t {
   INDEX_STATE = 2,
 };
 
-/*
+/**
  * Index in int32Values for VehicleProperty#AUDIO_VOLUME_LIMIT property.
  */
 enum VehicleAudioVolumeLimitIndex : int32_t {
@@ -2037,7 +2037,7 @@ enum VehicleAudioVolumeLimitIndex : int32_t {
   MAX_VOLUME = 1,
 };
 
-/*
+/**
  * Index in int32Values for VehicleProperty#AUDIO_ROUTING_POLICY property.
  */
 enum VehicleAudioRoutingPolicyIndex : int32_t {
@@ -2045,12 +2045,12 @@ enum VehicleAudioRoutingPolicyIndex : int32_t {
   CONTEXTS = 1,
 };
 
-/*
+/**
  * Flag to be used in VehiclePropConfig#configFlags for
  * VehicleProperty#AUDIO_HW_VARIANT.
  */
 enum VehicleAudioHwVariantConfigFlag : int32_t {
-  /*
+  /**
    * Flag to tell that radio is internal to android and radio must
    * be treated like other android stream like media.
    * When this flag is not set or AUDIO_HW_VARIANT does not exist,
@@ -2061,13 +2061,13 @@ enum VehicleAudioHwVariantConfigFlag : int32_t {
 };
 
 enum VehicleApPowerStateConfigFlag : int32_t /* NOTE: type is guessed */ {
-  /*
+  /**
    * AP can enter deep sleep state. If not set, AP will always shutdown from
    * VehicleApPowerState#SHUTDOWN_PREPARE power state.
    */
   ENABLE_DEEP_SLEEP_FLAG = 0x1,
 
-  /*
+  /**
    * The power controller can power on AP from off state after timeout
    * specified in VehicleApPowerSet VEHICLE_AP_POWER_SET_SHUTDOWN_READY message.
    */
@@ -2075,19 +2075,19 @@ enum VehicleApPowerStateConfigFlag : int32_t /* NOTE: type is guessed */ {
 };
 
 enum VehicleApPowerState : int32_t /* NOTE: type is guessed */ {
-  /* vehicle HAL will never publish this state to AP */
+  /** vehicle HAL will never publish this state to AP */
   OFF = 0,
 
-  /* vehicle HAL will never publish this state to AP */
+  /** vehicle HAL will never publish this state to AP */
   DEEP_SLEEP = 1,
 
-  /* AP is on but display must be off. */
+  /** AP is on but display must be off. */
   ON_DISP_OFF = 2,
 
-  /* AP is on with display on. This state allows full user interaction. */
+  /** AP is on with display on. This state allows full user interaction. */
   ON_FULL = 3,
 
-  /*
+  /**
    * The power controller has requested AP to shutdown. AP can either enter
    * sleep state or start full shutdown. AP can also request postponing
    * shutdown by sending VehicleApPowerSetState#SHUTDOWN_POSTPONE message. The
@@ -2100,30 +2100,30 @@ enum VehicleApPowerState : int32_t /* NOTE: type is guessed */ {
 };
 
 enum VehicleApPowerStateShutdownParam : int32_t {
-  /* AP must shutdown immediately. Postponing is not allowed. */
+  /** AP must shutdown immediately. Postponing is not allowed. */
   SHUTDOWN_IMMEDIATELY = 1,
 
-  /* AP can enter deep sleep instead of shutting down completely. */
+  /** AP can enter deep sleep instead of shutting down completely. */
   CAN_SLEEP = 2,
 
-  /* AP can only shutdown with postponing allowed. */
+  /** AP can only shutdown with postponing allowed. */
   SHUTDOWN_ONLY = 3,
 };
 
 enum VehicleApPowerSetState : int32_t /* NOTE: type is guessed */ {
-  /*
+  /**
    * AP has finished boot up, and can start shutdown if requested by power
    * controller.
    */
   BOOT_COMPLETE = 0x1,
 
-  /*
+  /**
    * AP is entering deep sleep state. How this state is implemented may vary
    * depending on each H/W, but AP's power must be kept in this state.
    */
   DEEP_SLEEP_ENTRY = 0x2,
 
-  /*
+  /**
    * AP is exiting from deep sleep state, and is in
    * VehicleApPowerState#SHUTDOWN_PREPARE state.
    * The power controller may change state to other ON states based on the
@@ -2131,7 +2131,7 @@ enum VehicleApPowerSetState : int32_t /* NOTE: type is guessed */ {
    */
   DEEP_SLEEP_EXIT = 0x3,
 
-  /*
+  /**
    * int32Values[1]: Time to postpone shutdown in ms. Maximum value can be
    *                 5000 ms.
    *                 If AP needs more time, it will send another POSTPONE
@@ -2139,7 +2139,7 @@ enum VehicleApPowerSetState : int32_t /* NOTE: type is guessed */ {
    */
   SHUTDOWN_POSTPONE = 0x4,
 
-  /*
+  /**
    * AP is starting shutting down. When system completes shutdown, everything
    * will stop in AP as kernel will stop all other contexts. It is
    * responsibility of vehicle HAL or lower level to synchronize that state
@@ -2158,7 +2158,7 @@ enum VehicleApPowerSetState : int32_t /* NOTE: type is guessed */ {
    */
   SHUTDOWN_START = 0x5,
 
-  /*
+  /**
    * User has requested to turn off headunit's display, which is detected in
    * android side.
    * The power controller may change the power state to
@@ -2166,7 +2166,7 @@ enum VehicleApPowerSetState : int32_t /* NOTE: type is guessed */ {
    */
   DISPLAY_OFF = 0x6,
 
-  /*
+  /**
    * User has requested to turn on headunit's display, most probably from power
    * key input which is attached to headunit. The power controller may change
    * the power state to VehicleApPowerState#ON_FULL.
@@ -2174,7 +2174,7 @@ enum VehicleApPowerSetState : int32_t /* NOTE: type is guessed */ {
   DISPLAY_ON = 0x7,
 };
 
-/*
+/**
  * Index in int32Values for VehicleProperty#AP_POWER_STATE property.
  */
 enum VehicleApPowerStateIndex : int32_t {
@@ -2182,23 +2182,23 @@ enum VehicleApPowerStateIndex : int32_t {
   ADDITIONAL = 1,
 };
 
-/*
+/**
  * Enum to represent bootup reason.
  */
 enum VehicleApPowerBootupReason : int32_t {
-  /*
+  /**
    * Power on due to user's pressing of power key or rotating of ignition
    * switch.
    */
   USER_POWER_ON = 0,
 
-  /*
+  /**
    * Automatic power on triggered by door unlock or any other kind of automatic
    * user detection.
    */
   USER_UNLOCK = 1,
 
-  /*
+  /**
    * Automatic power on triggered by timer. This only happens when AP has asked
    * wake-up after
    * certain time through time specified in
@@ -2208,40 +2208,40 @@ enum VehicleApPowerBootupReason : int32_t {
 };
 
 enum VehicleHwKeyInputAction : int32_t {
-  /* Key down */
+  /** Key down */
   ACTION_DOWN = 0,
 
-  /* Key up */
+  /** Key up */
   ACTION_UP = 1,
 };
 
 enum VehicleDisplay : int32_t {
-  /* center console */
+  /** center console */
   MAIN = 0,
 
   INSTRUMENT_CLUSTER = 1,
 };
 
-/*
+/**
  * Represents instrument cluster type available in system
  */
 enum VehicleInstrumentClusterType : int32_t {
-  /* Android has no access to instument cluster */
+  /** Android has no access to instument cluster */
   NONE = 0,
 
-  /*
+  /**
    * Instrument cluster can communicate through vehicle hal with additional
    * properties to exchange meta-data
    */
   HAL_INTERFACE = 1,
 
-  /*
+  /**
    * Instrument cluster is external display where android can render contents
    */
   EXTERNAL_DISPLAY = 2,
 };
 
-/*
+/**
  * Units used for int or float type with no attached enum types.
  */
 enum VehicleUnit : int32_t {
@@ -2263,17 +2263,17 @@ enum VehicleUnit : int32_t {
     YEAR           = 0x59,
 };
 
-  /*
+  /**
    * This describes how value of property can change.
    */
 enum VehiclePropertyChangeMode : int32_t {
-  /*
+  /**
    * Property of this type must never be changed. Subscription is not supported
    * for these properties.
    */
   STATIC = 0x00,
 
-  /*
+  /**
    * Property of this type must be reported when there is a change.
    * IVehicle#get call must return the current value.
    * Set operation for this property is assumed to be asynchronous. When the
@@ -2284,18 +2284,18 @@ enum VehiclePropertyChangeMode : int32_t {
    */
   ON_CHANGE = 0x01,
 
-  /*
+  /**
    * Property of this type change continuously and requires fixed rate of
    * sampling to retrieve the data.
    */
   CONTINUOUS = 0x02,
 
-  /*
+  /**
    * Property of this type may be polled to get the current value.
    */
   POLL = 0x03,
 
-  /*
+  /**
    * This is for property where change event must be sent only when the
    * value is set from external component. Normal value change must not trigger
    * event. For example, clock property can send change event only when it is
@@ -2305,7 +2305,7 @@ enum VehiclePropertyChangeMode : int32_t {
   ON_SET = 0x04,
 };
 
-/*
+/**
  * Property config defines the capabilities of it. User of the API
  * must first get the property config to understand the output from get()
  * commands and also to ensure that set() or events commands are in sync with
@@ -2319,7 +2319,7 @@ enum VehiclePropertyAccess : int32_t {
   READ_WRITE = 0x03,
 };
 
-/*
+/**
  * Car states.
  *
  * The driving states determine what features of the UI will be accessible.
@@ -2333,7 +2333,7 @@ enum VehicleDrivingStatus : int32_t {
   LIMIT_MESSAGE_LEN = 0x10,
 };
 
-/*
+/**
  * Various gears which can be selected by user and chosen in system.
  */
 enum VehicleGear: int32_t {
@@ -2353,7 +2353,7 @@ enum VehicleGear: int32_t {
   GEAR_9 = 0x1000,
 };
 
-/*
+/**
  * Various zones in the car.
  *
  * Zones are used for Air Conditioning purposes and divide the car into physical
@@ -2379,7 +2379,7 @@ enum VehicleAreaZone : int32_t {
   WHOLE_CABIN = 0x80000000,
 };
 
-/*
+/**
  * Various Seats in the car.
  */
 enum VehicleAreaSeat : int32_t {
@@ -2394,7 +2394,7 @@ enum VehicleAreaSeat : int32_t {
     ROW_3_RIGHT  = 0x0400
 };
 
-/*
+/**
  * Various windshields/windows in the car.
  */
 enum VehicleAreaWindow : int32_t {
@@ -2434,7 +2434,7 @@ enum VehicleTurnSignal : int32_t {
 };
 
 struct VehicleAreaConfig {
-    /*
+    /**
      * Area id is ignored for VehiclePropertyGroup:GLOBAL properties.
      */
     int32_t areaId;
@@ -2450,32 +2450,32 @@ struct VehicleAreaConfig {
 };
 
 struct VehiclePropConfig {
-    /* Property identifier */
+    /** Property identifier */
     int32_t prop;
 
-    /*
+    /**
      * Defines if the property is read or write or both.
      */
     VehiclePropertyAccess access;
 
-    /*
+    /**
      * Defines the change mode of the property.
      */
     VehiclePropertyChangeMode changeMode;
 
-    /*
+    /**
      * Some of the properties may have associated areas (for example, some hvac
      * properties are associated with VehicleAreaZone), in these
      * cases the config may contain an ORed value for the associated areas.
      */
     int32_t supportedAreas;
 
-    /*
+    /**
      * Contains per-area configuration.
      */
     vec<VehicleAreaConfig> areaConfigs;
 
-    /*
+    /**
      * Configuration flags for this property.
      *
      * For example, it may store the number of presets that are stored by the
@@ -2483,70 +2483,70 @@ struct VehiclePropConfig {
      */
     int32_t configFlags;
 
-    /* Contains additional configuration parameters */
+    /** Contains additional configuration parameters */
     vec<int32_t> configArray;
 
-    /*
+    /**
      * Some properties may require additional information passed over this
      * string. Most properties do not need to set this.
      */
     string configString;
 
-    /*
+    /**
      * Min sample rate in Hz.
      * Must be defined for VehiclePropertyChangeMode::CONTINUOUS
      */
     float minSampleRate;
 
-    /*
+    /**
      * Must be defined for VehiclePropertyChangeMode::CONTINUOUS
      * Max sample rate in Hz.
      */
     float maxSampleRate;
 };
 
-/*
+/**
  * Encapsulates the property name and the associated value. It
  * is used across various API calls to set values, get values or to register for
  * events.
  */
 struct VehiclePropValue {
-    /* Property identifier */
+    /** Property identifier */
     int32_t prop;
 
-    /* Time is elapsed nanoseconds since boot */
+    /** Time is elapsed nanoseconds since boot */
     int64_t timestamp;
 
-    /*
+    /**
      * Area type(s) for non-global property it must be one of the value from
      * VehicleArea* enums or 0 for global properties.
      */
     int32_t areaId;
 
-    /*
+    /**
      * Contains value for a single property. Depending on property data type of
      * this property (VehiclePropetyType) one field of this structure must be filled in.
      */
     struct RawValue {
-        /*
+        /**
          * This is used for properties of types VehiclePropertyType#INT
          * and VehiclePropertyType#INT_VEC
          */
         vec<int32_t> int32Values;
 
-        /*
+        /**
          * This is used for properties of types VehiclePropertyType#FLOAT
          * and VehiclePropertyType#FLOAT_VEC
          */
         vec<float> floatValues;
 
-        /* This is used for properties of type VehiclePropertyType#INT64 */
+        /** This is used for properties of type VehiclePropertyType#INT64 */
         vec<int64_t> int64Values;
 
-        /* This is used for properties of type VehiclePropertyType#BYTES */
+        /** This is used for properties of type VehiclePropertyType#BYTES */
         vec<uint8_t> bytes;
 
-        /* This is used for properties of type VehiclePropertyType#STRING */
+        /** This is used for properties of type VehiclePropertyType#STRING */
         string stringValue;
     };
 
@@ -2556,53 +2556,53 @@ struct VehiclePropValue {
 enum VehicleIgnitionState : int32_t {
     UNDEFINED = 0,
 
-    /* Steering wheel is locked */
+    /** Steering wheel is locked */
     LOCK = 1,
 
-     /*
+     /**
       * Steering wheel is not locked, engine and all accessories are OFF. If
       * car can be in LOCK and OFF state at the same time than HAL must report
       * LOCK state.
       */
     OFF,
 
-    /*
+    /**
      * Typically in this state accessories become available (e.g. radio).
      * Instrument cluster and engine are turned off
      */
     ACC,
 
-    /*
+    /**
      * Ignition is in state ON. Accessories and instrument cluster available,
      * engine might be running or ready to be started.
      */
     ON,
 
-    /* Typically in this state engine is starting (cranking). */
+    /** Typically in this state engine is starting (cranking). */
     START
 };
 
 
-/*
+/**
  * Represent the operation where the current error has happened.
  */
 enum VehiclePropertyOperation : int32_t {
-    /*
+    /**
      * Generic error to this property which is not tied to any operation.
      */
     GENERIC = 0,
 
-    /*
+    /**
      * Error happened while handling property set.
      */
     SET = 1,
 
-    /*
+    /**
      * Error happened while handling property get.
      */
     GET = 2,
 
-    /*
+    /**
      * Error happened while handling property subscription.
      */
     SUBSCRIBE = 3,
@@ -2612,13 +2612,13 @@ enum VehiclePropertyOperation : int32_t {
 enum SubscribeFlags : int32_t {
   UNDEFINED = 0x0,
 
-  /*
+  /**
    * Subscribe to event that was originated in vehicle HAL
    * (most likely this event came from the vehicle itself).
    */
   HAL_EVENT = 0x1,
 
-  /*
+  /**
    * Use this flag to subscribe on events when IVehicle#set(...) was called by
    * vehicle HAL's client (e.g. Car Service).
    */
@@ -2627,20 +2627,20 @@ enum SubscribeFlags : int32_t {
   DEFAULT = HAL_EVENT,
 };
 
-/*
+/**
  * Encapsulates information about subscription to vehicle property events.
  */
 struct SubscribeOptions {
-  /* Property to subscribe */
+  /** Property to subscribe */
   int32_t propId;
 
-  /*
+  /**
    * Area ids - this must be a bit mask of areas to subscribe or 0 to subscribe
    * to all areas.
    */
   int32_t vehicleAreas;
 
-  /*
+  /**
    * Sample rate in Hz.
    *
    * Must be provided for properties with
@@ -2651,31 +2651,31 @@ struct SubscribeOptions {
    */
   float sampleRate;
 
-  /* Flags that indicate what kind of events listen to. */
+  /** Flags that indicate what kind of events listen to. */
   SubscribeFlags flags;
 };
 
-/* Error codes used in vehicle HAL interface. */
+/** Error codes used in vehicle HAL interface. */
 enum StatusCode : int32_t {
   OK = 0,
 
-  /* Try again. */
+  /** Try again. */
   TRY_AGAIN = 1,
 
-  /* Invalid argument provided. */
+  /** Invalid argument provided. */
   INVALID_ARG = 2,
 
-  /*
+  /**
    * This code must be returned when device that associated with the vehicle
    * property is not available. For example, when client tries to set HVAC
    * temperature when the whole HVAC unit is turned OFF.
    */
   NOT_AVAILABLE = 3,
 
-  /* Access denied */
+  /** Access denied */
   ACCESS_DENIED = 4,
 
-  /* Something unexpected has happened in Vehicle HAL */
+  /** Something unexpected has happened in Vehicle HAL */
   INTERNAL_ERROR = 5,
 };
 

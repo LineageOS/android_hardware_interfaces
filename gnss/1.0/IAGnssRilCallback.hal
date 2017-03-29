@@ -16,26 +16,26 @@
 
 package android.hardware.gnss@1.0;
 
-/*
+/**
  * Callback for IAGnssRil interface. Used to request SET ID and
  * Reference Location.
  */
 interface IAGnssRilCallback {
-    /* Kinds of SET ID that can be requested */
+    /** Kinds of SET ID that can be requested */
     @export(name="", value_prefix="AGPS_RIL_REQUEST_SETID_")
     enum ID : uint32_t {
         IMSI    = 1 << 0L,
         MSISDN  = 1 << 1L,
     };
 
-    /*
+    /**
      * The Hal uses this API to request a SET ID.
      *
      * @param setIdflag Specifies the kind of SET ID that is required by the HAL.
      */
     requestSetIdCb(bitfield<ID> setIdflag);
 
-    /*
+    /**
      * The Hal uses this API to request a reference location.
      *
      */

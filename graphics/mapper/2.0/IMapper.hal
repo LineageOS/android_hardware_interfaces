@@ -27,7 +27,7 @@ interface IMapper {
         int32_t height;
     };
 
-    /*
+    /**
      * Adds a reference to the given buffer handle.
      *
      * A buffer handle received from a remote process or exported by
@@ -49,7 +49,7 @@ interface IMapper {
     @callflow(next="*")
     retain(handle bufferHandle) generates (Error error);
 
-    /*
+    /**
      * Removes a reference from the given buffer buffer.
      *
      * If no references remain, the buffer handle must be freed with
@@ -65,7 +65,7 @@ interface IMapper {
     @exit
     release(handle bufferHandle) generates (Error error);
 
-    /*
+    /**
      * Gets the width and height of the buffer in pixels.
      *
      * See IAllocator::BufferDescriptorInfo for more information.
@@ -82,7 +82,7 @@ interface IMapper {
                   uint32_t width,
                   uint32_t height);
 
-    /*
+    /**
      * Gets the format of the buffer.
      *
      * See IAllocator::BufferDescriptorInfo for more information.
@@ -97,7 +97,7 @@ interface IMapper {
         generates (Error error,
                    PixelFormat format);
 
-    /*
+    /**
      * Gets the number of layers of the buffer.
      *
      * See IAllocator::BufferDescriptorInfo for more information.
@@ -112,7 +112,7 @@ interface IMapper {
        generates (Error error,
                   uint32_t layerCount);
 
-    /*
+    /**
      * Gets the producer usage flags which were used to allocate this buffer.
      *
      * See IAllocator::BufferDescriptorInfo for more information.
@@ -128,7 +128,7 @@ interface IMapper {
               generates (Error error,
                          uint64_t usageMask);
 
-    /*
+    /**
      * Gets the consumer usage flags which were used to allocate this buffer.
      *
      * See IAllocator::BufferDescriptorInfo for more information.
@@ -144,7 +144,7 @@ interface IMapper {
               generates (Error error,
                          uint64_t usageMask);
 
-    /*
+    /**
      * Gets a value that uniquely identifies the backing store of the given
      * buffer.
      *
@@ -165,7 +165,7 @@ interface IMapper {
          generates (Error error,
                     BackingStore store);
 
-    /*
+    /**
      * Gets the stride of the buffer in pixels.
      *
      * The stride is the offset in pixel-sized elements between the same
@@ -185,7 +185,7 @@ interface IMapper {
         generates (Error error,
                    uint32_t stride);
 
-    /*
+    /**
      * Locks the given buffer for the specified CPU usage.
      *
      * Exactly one of producerUsageMask and consumerUsageMask must be 0. The
@@ -247,7 +247,7 @@ interface IMapper {
         generates (Error error,
                    pointer data);
 
-    /*
+    /**
      * This is largely the same as lock(), except that instead of returning a
      * pointer directly to the buffer data, it returns an FlexLayout struct
      * describing how to access the data planes.
@@ -296,7 +296,7 @@ interface IMapper {
         generates (Error error,
                    FlexLayout layout);
 
-    /*
+    /**
      * This function indicates to the device that the client will be done with
      * the buffer when releaseFence signals.
      *

@@ -16,9 +16,9 @@
 
 package android.hardware.gnss@1.0;
 
-/* The callback interface to report measurements from the HAL. */
+/** The callback interface to report measurements from the HAL. */
 interface IGnssBatchingCallback {
-    /*
+    /**
      * Called when a batch of locations is output, by various means, including
      * a flush request, as well as the buffer becoming full (if appropriate option
      * is set.)

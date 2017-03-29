@@ -20,32 +20,32 @@ import android.hardware.audio.common@2.0;
 import IEffect;
 
 interface IAutomaticGainControlEffect extends IEffect {
-    /*
+    /**
      * Sets target level in millibels.
      */
     setTargetLevel(int16_t targetLevelMb) generates (Result retval);
 
-    /*
+    /**
      * Gets target level.
      */
     getTargetLevel() generates (Result retval, int16_t targetLevelMb);
 
-    /*
+    /**
      * Sets gain in the compression range in millibels.
      */
     setCompGain(int16_t compGainMb) generates (Result retval);
 
-    /*
+    /**
      * Gets gain in the compression range.
      */
     getCompGain() generates (Result retval, int16_t compGainMb);
 
-    /*
+    /**
      * Enables or disables limiter.
      */
     setLimiterEnabled(bool enabled) generates (Result retval);
 
-    /*
+    /**
      * Returns whether limiter is enabled.
      */
     isLimiterEnabled() generates (Result retval, bool enabled);
@@ -56,12 +56,12 @@ interface IAutomaticGainControlEffect extends IEffect {
         bool limiterEnabled;
     };
 
-    /*
+    /**
      * Sets all properties at once.
      */
     setAllProperties(AllProperties properties) generates (Result retval);
 
-    /*
+    /**
      * Gets all properties at once.
      */
     getAllProperties() generates (Result retval, AllProperties properties);

@@ -22,14 +22,14 @@ import android.hardware.audio.effect@2.0::IEffect;
 interface IStream {
     typedef android.hardware.audio@2.0::Result Result;
 
-    /*
+    /**
      * Return the frame size (number of bytes per sample).
      *
      * @return frameSize frame size in bytes.
      */
     getFrameSize() generates (uint64_t frameSize);
 
-    /*
+    /**
      * Return the frame count of the buffer. Calling this method is equivalent
      * to getting AUDIO_PARAMETER_STREAM_FRAME_COUNT on the legacy HAL.
      *
@@ -37,7 +37,7 @@ interface IStream {
      */
     getFrameCount() generates (uint64_t count);
 
-    /*
+    /**
      * Return the size of input/output buffer in bytes for this stream.
      * It must be a multiple of the frame size.
      *
@@ -45,14 +45,14 @@ interface IStream {
      */
     getBufferSize() generates (uint64_t bufferSize);
 
-    /*
+    /**
      * Return the sampling rate in Hz.
      *
      * @return sampleRateHz sample rate in Hz.
      */
     getSampleRate() generates (uint32_t sampleRateHz);
 
-    /*
+    /**
      * Return supported sampling rates of the stream. Calling this method is
      * equivalent to getting AUDIO_PARAMETER_STREAM_SUP_SAMPLING_RATES on the
      * legacy HAL.
@@ -61,7 +61,7 @@ interface IStream {
      */
     getSupportedSampleRates() generates (vec<uint32_t> sampleRates);
 
-    /*
+    /**
      * Sets the sampling rate of the stream. Calling this method is equivalent
      * to setting AUDIO_PARAMETER_STREAM_SAMPLING_RATE on the legacy HAL.
      *
@@ -70,14 +70,14 @@ interface IStream {
      */
     setSampleRate(uint32_t sampleRateHz) generates (Result retval);
 
-    /*
+    /**
      * Return the channel mask of the stream.
      *
      * @return mask channel mask.
      */
     getChannelMask() generates (AudioChannelMask mask);
 
-    /*
+    /**
      * Return supported channel masks of the stream. Calling this method is
      * equivalent to getting AUDIO_PARAMETER_STREAM_SUP_CHANNELS on the legacy
      * HAL.
@@ -86,7 +86,7 @@ interface IStream {
      */
     getSupportedChannelMasks() generates (vec<AudioChannelMask> masks);
 
-    /*
+    /**
      * Sets the channel mask of the stream. Calling this method is equivalent to
      * setting AUDIO_PARAMETER_STREAM_CHANNELS on the legacy HAL.
      *
@@ -95,14 +95,14 @@ interface IStream {
      */
     setChannelMask(AudioChannelMask mask) generates (Result retval);
 
-    /*
+    /**
      * Return the audio format of the stream.
      *
      * @return format audio format.
      */
     getFormat() generates (AudioFormat format);
 
-    /*
+    /**
      * Return supported audio formats of the stream. Calling this method is
      * equivalent to getting AUDIO_PARAMETER_STREAM_SUP_FORMATS on the legacy
      * HAL.
@@ -111,7 +111,7 @@ interface IStream {
      */
     getSupportedFormats() generates (vec<AudioFormat> formats);
 
-    /*
+    /**
      * Sets the audio format of the stream. Calling this method is equivalent to
      * setting AUDIO_PARAMETER_STREAM_FORMAT on the legacy HAL.
      *
@@ -120,7 +120,7 @@ interface IStream {
      */
     setFormat(AudioFormat format) generates (Result retval);
 
-    /*
+    /**
      * Convenience method for retrieving several stream parameters in
      * one transaction.
      *
@@ -131,7 +131,7 @@ interface IStream {
     getAudioProperties() generates (
             uint32_t sampleRateHz, AudioChannelMask mask, AudioFormat format);
 
-    /*
+    /**
      * Applies audio effect to the stream.
      *
      * @param effectId effect ID (obtained from IEffectsFactory.createEffect) of
@@ -140,7 +140,7 @@ interface IStream {
      */
     addEffect(uint64_t effectId) generates (Result retval);
 
-    /*
+    /**
      * Stops application of the effect to the stream.
      *
      * @param effectId effect ID (obtained from IEffectsFactory.createEffect) of
@@ -149,7 +149,7 @@ interface IStream {
      */
     removeEffect(uint64_t effectId) generates (Result retval);
 
-    /*
+    /**
      * Put the audio hardware input/output into standby mode.
      * Driver must exit from standby mode at the next I/O operation.
      *
@@ -157,14 +157,14 @@ interface IStream {
      */
     standby() generates (Result retval);
 
-    /*
+    /**
      * Return the set of device(s) which this stream is connected to.
      *
      * @return device set of device(s) which this stream is connected to.
      */
     getDevice() generates (AudioDevice device);
 
-    /*
+    /**
      * Connects the stream to the device.
      *
      * This method must only be used for HALs that do not support
@@ -177,7 +177,7 @@ interface IStream {
      */
     setDevice(DeviceAddress address) generates (Result retval);
 
-    /*
+    /**
      * Notifies the stream about device connection state. Calling this method is
      * equivalent to setting AUDIO_PARAMETER_DEVICE_[DIS]CONNECT on the legacy
      * HAL.
@@ -189,7 +189,7 @@ interface IStream {
     setConnectedState(DeviceAddress address, bool connected)
             generates (Result retval);
 
-    /*
+    /**
      * Sets the HW synchronization source. Calling this method is equivalent to
      * setting AUDIO_PARAMETER_STREAM_HW_AV_SYNC on the legacy HAL.
      *
@@ -198,7 +198,7 @@ interface IStream {
      */
     setHwAvSync(AudioHwSync hwAvSync) generates (Result retval);
 
-    /*
+    /**
      * Generic method for retrieving vendor-specific parameter values.
      * The framework does not interpret the parameters, they are passed
      * in an opaque manner between a vendor application and HAL.
@@ -210,7 +210,7 @@ interface IStream {
     getParameters(vec<string> keys)
             generates (Result retval, vec<ParameterValue> parameters);
 
-    /*
+    /**
      * Generic method for setting vendor-specific parameter values.
      * The framework does not interpret the parameters, they are passed
      * in an opaque manner between a vendor application and HAL.
@@ -220,7 +220,7 @@ interface IStream {
      */
     setParameters(vec<ParameterValue> parameters) generates (Result retval);
 
-    /*
+    /**
      * Dumps information about the stream into the provided file descriptor.
      * This is used for the dumpsys facility.
      *
@@ -228,7 +228,7 @@ interface IStream {
      */
     debugDump(handle fd);
 
-    /*
+    /**
      * Called by the framework to start a stream operating in mmap mode.
      * createMmapBuffer() must be called before calling start().
      * Function only implemented by streams operating in mmap mode.
@@ -249,7 +249,7 @@ interface IStream {
      */
     stop() generates (Result retval) ;
 
-    /*
+    /**
      * Called by the framework to retrieve information on the mmap buffer used for audio
      * samples transfer.
      * Function only implemented by streams operating in mmap mode.
@@ -266,7 +266,7 @@ interface IStream {
     createMmapBuffer(int32_t minSizeFrames)
             generates (Result retval, MmapBufferInfo info);
 
-    /*
+    /**
      * Called by the framework to read current read/write position in the mmap buffer
      * with associated time stamp.
      * Function only implemented by streams operating in mmap mode.
@@ -280,7 +280,7 @@ interface IStream {
     getMmapPosition()
             generates (Result retval, MmapPosition position);
 
-    /*
+    /**
      * Called by the framework to deinitialize the stream and free up
      * all the currently allocated resources. It is recommended to close
      * the stream on the client side as soon as it is becomes unused.

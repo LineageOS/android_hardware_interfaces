@@ -249,7 +249,7 @@ struct CameraFrameMetadata {
     vec<CameraFace> faces;
 };
 
-/*
+/**
  * A simple integer handle to use to reference a particular memory buffer
  * between the HAL and the framework.
  */

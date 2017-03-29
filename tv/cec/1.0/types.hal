@@ -48,7 +48,7 @@ enum CecLogicalAddress : int32_t {
     BROADCAST = 15, // as Destination address
 };
 
-/*
+/**
  * HDMI CEC message types. The assigned values represent opcode used in CEC
  * frame as specified in CEC Table 8-26 of the CEC Spec 1.4b.
  */
@@ -123,7 +123,7 @@ enum CecMessageType : int32_t {
     ABORT = 0xFF,
 };
 
-/*
+/**
  * Operand description [Abort Reason]
  */
 enum AbortReason : int32_t {
@@ -144,7 +144,7 @@ enum Result : int32_t {
     FAILURE_BUSY = 5,
 };
 
-/*
+/**
  * error code used for send_message.
  */
 enum SendMessageResult : int32_t {
@@ -154,7 +154,7 @@ enum SendMessageResult : int32_t {
     FAIL = 3,
 };
 
-/*
+/**
  * HDMI port type.
  */
 enum HdmiPortType : int32_t {
@@ -162,24 +162,27 @@ enum HdmiPortType : int32_t {
     OUTPUT = 1,
 };
 
-/*
+/**
  * Options used for IHdmiCec.setOption()
  */
 enum OptionKey : int32_t {
-    /* When set to false, HAL does not wake up the system upon receiving <Image
+    /**
+     * When set to false, HAL does not wake up the system upon receiving <Image
      * View On> or <Text View On>. Used when user changes the TV settings to
      * disable the auto TV on functionality.
      * True by default.
      */
     WAKEUP = 1,
 
-    /* When set to false, all the CEC commands are discarded. Used when user
+    /**
+     * When set to false, all the CEC commands are discarded. Used when user
      * changes the TV settings to disable CEC functionality.
      * True by default.
      */
     ENABLE_CEC = 2,
 
-    /* Setting this flag to false means Android system must stop handling CEC
+    /**
+     * Setting this flag to false means Android system must stop handling CEC
      * service and yield the control over to the microprocessor that is powered
      * on through the standby mode. When set to true, the system must gain the
      * control over, hence telling the microprocessor to stop handling the CEC
@@ -190,17 +193,18 @@ enum OptionKey : int32_t {
      */
     SYSTEM_CEC_CONTROL = 3,
 
-    /* Option 4 not used */
+    /** Option 4 not used */
 };
 
 struct CecMessage {
-    /* logical address of sender */
+    /** logical address of sender */
     CecLogicalAddress initiator;
 
-    /* logical address of receiver */
+    /** logical address of receiver */
     CecLogicalAddress destination;
 
-    /* The maximum size of body is 15 (MaxLength::MESSAGE_BODY) as specified in
+    /**
+     * The maximum size of body is 15 (MaxLength::MESSAGE_BODY) as specified in
      * the section 6 of the CEC Spec 1.4b. Overflowed data must be ignored. */
     vec<uint8_t> body;
 };
@@ -210,7 +214,7 @@ struct HotplugEvent {
     uint32_t portId;
 };
 
-/*
+/**
  * HDMI port descriptor
  */
 struct HdmiPortInfo {

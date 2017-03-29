@@ -26,7 +26,7 @@ enum Result : int32_t {
     INVALID_STATE,
 };
 
-/* Type of physical TV input. */
+/** Type of physical TV input. */
 @export(name="", value_prefix="TV_INPUT_TYPE_")
 enum TvInputType : int32_t {
     OTHER = 1,         // Generic hardware.
@@ -41,7 +41,7 @@ enum TvInputType : int32_t {
     DISPLAY_PORT = 10,
 };
 
-/*
+/**
  * Status of cable connection.
  * This status is for devices having availability to detect the cable in a mechanical way,
  * regardless of whether the connected external device is electrically on or not.
@@ -67,7 +67,7 @@ struct TvInputDeviceInfo {
 
 @export(name="", value_prefix="EVENT_")
 enum TvInputEventType : int32_t {
-    /*
+    /**
      * Hardware notifies the framework that a device is available.
      *
      * Note that DEVICE_AVAILABLE and DEVICE_UNAVAILABLE events do not represent
@@ -89,7 +89,7 @@ enum TvInputEventType : int32_t {
      */
     DEVICE_AVAILABLE = 1,
 
-    /*
+    /**
      * Hardware notifies the framework that a device is unavailable.
      *
      * HAL implementation must generate this event when a device registered
@@ -104,7 +104,7 @@ enum TvInputEventType : int32_t {
      */
     DEVICE_UNAVAILABLE = 2,
 
-    /*
+    /**
      * Stream configurations are changed. Client must regard all open streams
      * at the specific device are closed, and must call
      * getStreamConfigurations() again, opening some of them if necessary.
@@ -126,7 +126,7 @@ enum TvInputEventType : int32_t {
 
 struct TvInputEvent {
     TvInputEventType type;
-    /*
+    /**
      * DEVICE_AVAILABLE: all fields are relevant.
      * DEVICE_UNAVAILABLE: only deviceId is relevant.
      * STREAM_CONFIGURATIONS_CHANGED: only deviceId is relevant.

@@ -16,16 +16,16 @@
 
 package android.hardware.gnss@1.0;
 
-/*
+/**
  * The interface is required for the HAL to communicate certain information
  * like status and location info back to the platform, the platform implements
  * the interfaces and passes a handle to the HAL.
  */
 interface IGnssCallback {
-    /* Flags for the gnssSetCapabilities callback. */
+    /** Flags for the gnssSetCapabilities callback. */
     @export(name="", value_prefix="GPS_CAPABILITY_")
     enum Capabilities : uint32_t {
-        /*
+        /**
          * GNSS HAL schedules fixes for RECURRENCE_PERIODIC mode.
          * If this is not set, then the framework will use 1000ms for
          * minInterval and will call start() and stop() to schedule the GNSS.
@@ -47,7 +47,7 @@ interface IGnssCallback {
         NAV_MESSAGES                    = 1 << 7
     };
 
-    /* GNSS status event values. */
+    /** GNSS status event values. */
     @export(name="", value_prefix="GPS_STATUS_")
     enum GnssStatusValue : uint8_t {
         /** GNSS status unknown. */
@@ -62,7 +62,7 @@ interface IGnssCallback {
         ENGINE_OFF     = 4
     };
 
-    /*
+    /**
      * Flags that indicate information about the satellite
      */
     @export(name="", value_prefix="GNSS_SV_FLAGS_")
@@ -75,7 +75,7 @@ interface IGnssCallback {
     };
 
     struct GnssSvInfo {
-        /*
+        /**
          * Pseudo-random number for the SV, or FCN/OSN number for Glonass. The
          * distinction is made by looking at constellation field. Values must be
          * in the range of:
@@ -93,12 +93,12 @@ interface IGnssCallback {
          */
         int16_t svid;
 
-        /*
+        /**
          * Defines the constellation of the given SV.
          */
         GnssConstellationType constellation;
 
-        /*
+        /**
          * Carrier-to-noise density in dB-Hz, typically in the range [0, 63].
          * It contains the measured C/N0 value for the signal at the antenna port.
          *
@@ -112,7 +112,7 @@ interface IGnssCallback {
         /** Azimuth of SV in degrees. */
         float azimuthDegrees;
 
-        /*
+        /**
          * Carrier frequency of the signal tracked, for example it can be the
          * GPS central frequency for L1 = 1575.45 MHz, or L2 = 1227.60 MHz, L5 =
          * 1176.45 MHz, varying GLO channels, etc. If the field is not set, it
@@ -130,22 +130,22 @@ interface IGnssCallback {
          */
         float carrierFrequencyHz;
 
-        /*
+        /**
          * Contains additional data about the given SV.
          */
         bitfield<GnssSvFlags> svFlag;
     };
 
-    /*
+    /**
      * Represents SV status.
      */
     struct GnssSvStatus {
-        /*
+        /**
          * Number of GNSS SVs currently visible, refers to the SVs stored in sv_list
          */
         uint32_t numSvs;
 
-        /*
+        /**
          * Pointer to an array of SVs information for all GNSS constellations,
          * except GNSS, which is reported using svList
          */
@@ -153,26 +153,26 @@ interface IGnssCallback {
 
     };
 
-    /*
+    /**
      * Called when a GNSS location is available.
      *
      * @param location Location information from HAL.
      */
     gnssLocationCb(GnssLocation location);
 
-    /*
+    /**
      * Called to communicate the status of the GNSS engine.
      *
      * @param status Status information from HAL.
      */
     gnssStatusCb(GnssStatusValue status);
 
-    /*
+    /**
      * @param svInfo SV status information from HAL.
      */
     gnssSvStatusCb(GnssSvStatus svInfo);
 
-    /*
+    /**
      * Called when NMEA data is available.
      * Callback for reporting NMEA sentences.
      *
@@ -195,7 +195,7 @@ interface IGnssCallback {
      */
     gnssNmeaCb(GnssUtcTime timestamp, string nmea);
 
-    /*
+    /**
      * Callback to inform framework of the GNSS engine's capabilities.
      *
      * @param capabilities Capability parameter is a bit field of
@@ -203,7 +203,7 @@ interface IGnssCallback {
      */
     gnssSetCapabilitesCb(bitfield<Capabilities> capabilities);
 
-    /*
+    /**
      * Callback utility for acquiring the GNSS wakelock. This can be used to prevent
      * the CPU from suspending while handling GNSS events.
      */
@@ -215,7 +215,7 @@ interface IGnssCallback {
     /** Callback for requesting NTP time */
     gnssRequestTimeCb();
 
-    /*
+    /**
      * Provides information about how new the underlying GPS/GNSS hardware and
      * software is.
      *
@@ -228,14 +228,14 @@ interface IGnssCallback {
      * GnssMeasurement support will be verified.
      */
     struct GnssSystemInfo{
-        /*
+        /**
          * year in which the last update was made to the underlying hardware/firmware
          * used to capture GNSS signals, e.g. 2016
          */
         uint16_t yearOfHw;
     };
 
-    /*
+    /**
      * Callback to inform framework of the engine's hardware version information.
      *
      * @param info GnssSystemInfo about the GPS/GNSS hardware.

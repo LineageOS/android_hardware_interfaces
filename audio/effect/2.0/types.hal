@@ -27,7 +27,7 @@ enum Result : int32_t {
     RESULT_TOO_BIG
 };
 
-/*
+/**
  * Effect engine capabilities/requirements flags.
  *
  * Definitions for flags field of effect descriptor.
@@ -195,7 +195,7 @@ enum EffectFlags : int32_t {
     NO_PROCESS = 1 << NO_PROCESS_SHIFT
 };
 
-/*
+/**
  * The effect descriptor contains necessary information to facilitate the
  * enumeration of the effect engines present in a library.
  */
@@ -212,7 +212,7 @@ struct EffectDescriptor {
     uint8_t[64] implementor;  // human readable effect implementor name
 };
 
-/*
+/**
  * A buffer is a chunk of audio data for processing.  Multi-channel audio is
  * always interleaved. The channel order is from LSB to MSB with regard to the
  * channel mask definition in audio.h, audio_channel_mask_t, e.g.:
@@ -235,7 +235,7 @@ enum EffectBufferAccess : int32_t {
     ACCESS_ACCUMULATE
 };
 
-/*
+/**
  * Determines what fields of EffectBufferConfig need to be considered.
  */
 @export(name="", value_prefix="EFFECT_CONFIG_")
@@ -248,7 +248,7 @@ enum EffectConfigParameters : int32_t {
     ALL = BUFFER | SMP_RATE | CHANNELS | FORMAT | ACC_MODE
 };
 
-/*
+/**
  * The buffer config structure specifies the input or output audio format
  * to be used by the effect engine.
  */
@@ -285,7 +285,7 @@ struct EffectOffloadParameter {
                              // the effect is attached to
 };
 
-/*
+/**
  * The message queue flags used to synchronize reads and writes from
  * the status message queue used by effects.
  */

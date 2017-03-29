@@ -16,7 +16,7 @@
 
 package android.hardware.memtrack@1.0;
 
-/*
+/**
  * SMAPS_ACCOUNTED/SMAPS_UNACCOUNTED
  * Flags to differentiate memory that can already be accounted for in
  * /proc/<pid>/smaps,
@@ -56,7 +56,7 @@ enum MemtrackFlag : uint32_t {
     SECURE = 1 << 9,
 };
 
-/* Tags which define the usage of the memory buffers. */
+/** Tags which define the usage of the memory buffers. */
 enum MemtrackType : uint32_t {
     OTHER = 0,
     GL = 1,
@@ -79,7 +79,7 @@ enum MemtrackStatus : uint32_t {
  */
 struct MemtrackRecord {
     uint64_t sizeInBytes;
-    /*
+    /**
      * This is the bitfield for the MemtrackFlag indicating all the flags that
      * are valid for this record.
      */

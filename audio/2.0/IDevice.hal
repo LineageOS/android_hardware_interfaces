@@ -23,14 +23,14 @@ import IStreamOut;
 interface IDevice {
     typedef android.hardware.audio@2.0::Result Result;
 
-    /*
+    /**
      * Returns whether the audio hardware interface has been initialized.
      *
      * @return retval OK on success, NOT_INITIALIZED on failure.
      */
     initCheck() generates (Result retval);
 
-    /*
+    /**
      * Sets the audio volume for all audio activities other than voice call. If
      * NOT_SUPPORTED is returned, the software mixer will emulate this
      * capability.
@@ -40,7 +40,7 @@ interface IDevice {
      */
     setMasterVolume(float volume) generates (Result retval);
 
-    /*
+    /**
      * Get the current master volume value for the HAL, if the HAL supports
      * master volume control. For example, AudioFlinger will query this value
      * from the primary audio HAL when the service starts and use the value for
@@ -52,7 +52,7 @@ interface IDevice {
      */
     getMasterVolume() generates (Result retval, float volume);
 
-    /*
+    /**
      * Sets microphone muting state.
      *
      * @param mute whether microphone is muted.
@@ -60,7 +60,7 @@ interface IDevice {
      */
     setMicMute(bool mute) generates (Result retval);
 
-    /*
+    /**
      * Gets whether microphone is muted.
      *
      * @return retval operation completion status.
@@ -68,7 +68,7 @@ interface IDevice {
      */
     getMicMute() generates (Result retval, bool mute);
 
-    /*
+    /**
      * Set the audio mute status for all audio activities. If the return value
      * is NOT_SUPPORTED, the software mixer will emulate this capability.
      *
@@ -89,7 +89,7 @@ interface IDevice {
      */
     getMasterMute() generates (Result retval, bool mute);
 
-    /*
+    /**
      * Returns audio input buffer size according to parameters passed or
      * INVALID_ARGUMENTS if one of the parameters is not supported.
      *
@@ -100,7 +100,7 @@ interface IDevice {
     getInputBufferSize(AudioConfig config)
             generates (Result retval, uint64_t bufferSize);
 
-    /*
+    /**
      * This method creates and opens the audio hardware output stream.
      * If the stream can not be opened with the proposed audio config,
      * HAL must provide suggested values for the audio config.
@@ -122,7 +122,7 @@ interface IDevice {
                     IStreamOut outStream,
                     AudioConfig suggestedConfig);
 
-    /*
+    /**
      * This method creates and opens the audio hardware input stream.
      * If the stream can not be opened with the proposed audio config,
      * HAL must provide suggested values for the audio config.
@@ -146,14 +146,14 @@ interface IDevice {
                     IStreamIn inStream,
                     AudioConfig suggestedConfig);
 
-    /*
+    /**
      * Returns whether HAL supports audio patches.
      *
      * @return supports true if audio patches are supported.
      */
     supportsAudioPatches() generates (bool supports);
 
-    /*
+    /**
      * Creates an audio patch between several source and sink ports.  The handle
      * is allocated by the HAL and must be unique for this audio HAL module.
      *
@@ -165,7 +165,7 @@ interface IDevice {
     createAudioPatch(vec<AudioPortConfig> sources, vec<AudioPortConfig> sinks)
             generates (Result retval, AudioPatchHandle patch);
 
-    /*
+    /**
      * Release an audio patch.
      *
      * @param patch patch handle.
@@ -173,7 +173,7 @@ interface IDevice {
      */
     releaseAudioPatch(AudioPatchHandle patch) generates (Result retval);
 
-    /*
+    /**
      * Returns the list of supported attributes for a given audio port.
      *
      * As input, 'port' contains the information (type, role, address etc...)
@@ -189,7 +189,7 @@ interface IDevice {
     getAudioPort(AudioPort port)
             generates (Result retval, AudioPort resultPort);
 
-    /*
+    /**
      * Set audio port configuration.
      *
      * @param config audio port configuration.
@@ -197,7 +197,7 @@ interface IDevice {
      */
     setAudioPortConfig(AudioPortConfig config) generates (Result retval);
 
-    /*
+    /**
      * Gets the HW synchronization source of the device. Calling this method is
      * equivalent to getting AUDIO_PARAMETER_HW_AV_SYNC on the legacy HAL.
      *
@@ -205,7 +205,7 @@ interface IDevice {
      */
     getHwAvSync() generates (AudioHwSync hwAvSync);
 
-    /*
+    /**
      * Sets whether the screen is on. Calling this method is equivalent to
      * setting AUDIO_PARAMETER_KEY_SCREEN_STATE on the legacy HAL.
      *
@@ -214,7 +214,7 @@ interface IDevice {
      */
     setScreenState(bool turnedOn) generates (Result retval);
 
-    /*
+    /**
      * Generic method for retrieving vendor-specific parameter values.
      * The framework does not interpret the parameters, they are passed
      * in an opaque manner between a vendor application and HAL.
@@ -226,7 +226,7 @@ interface IDevice {
     getParameters(vec<string> keys)
             generates (Result retval, vec<ParameterValue> parameters);
 
-    /*
+    /**
      * Generic method for setting vendor-specific parameter values.
      * The framework does not interpret the parameters, they are passed
      * in an opaque manner between a vendor application and HAL.
@@ -236,7 +236,7 @@ interface IDevice {
      */
     setParameters(vec<ParameterValue> parameters) generates (Result retval);
 
-    /*
+    /**
      * Dumps information about the stream into the provided file descriptor.
      * This is used for the dumpsys facility.
      *

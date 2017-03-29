@@ -91,7 +91,7 @@ verify(uint32_t uid, uint64_t challenge,
        vec<uint8_t> providedPassword)
     generates (GatekeeperResponse response);
 
-/*
+/**
  * Deletes the enrolledPasswordHandle associated with the uid. Once deleted
  * the user cannot be verified anymore.
  * This is an optional method.
@@ -107,7 +107,7 @@ verify(uint32_t uid, uint64_t challenge,
  */
 deleteUser(uint32_t uid) generates (GatekeeperResponse response);
 
-/*
+/**
  * Deletes all the enrolled_password_handles for all uid's. Once called,
  * no users must be enrolled on the device.
  * This is an optional method.

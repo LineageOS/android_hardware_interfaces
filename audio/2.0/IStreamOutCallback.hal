@@ -16,21 +16,21 @@
 
 package android.hardware.audio@2.0;
 
-/*
+/**
  * Asynchronous write callback interface.
  */
 interface IStreamOutCallback {
-    /*
+    /**
      * Non blocking write completed.
      */
     oneway onWriteReady();
 
-    /*
+    /**
      * Drain completed.
      */
     oneway onDrainReady();
 
-    /*
+    /**
      * Stream hit an error.
      */
     oneway onError();

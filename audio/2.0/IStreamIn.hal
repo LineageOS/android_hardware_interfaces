@@ -22,7 +22,7 @@ import IStream;
 interface IStreamIn extends IStream {
     typedef android.hardware.audio@2.0::Result Result;
 
-    /*
+    /**
      * Returns the source descriptor of the input stream. Calling this method is
      * equivalent to getting AUDIO_PARAMETER_STREAM_INPUT_SOURCE on the legacy
      * HAL.
@@ -32,7 +32,7 @@ interface IStreamIn extends IStream {
      */
     getAudioSource() generates (Result retval, AudioSource source);
 
-    /*
+    /**
      * Set the input gain for the audio driver.
      *
      * @param gain 1.0f is unity, 0.0f is zero.
@@ -40,7 +40,7 @@ interface IStreamIn extends IStream {
      */
     setGain(float gain) generates (Result retval);
 
-    /*
+    /**
      * Commands that can be executed on the driver reader thread.
      */
     enum ReadCommand : int32_t {
@@ -48,7 +48,7 @@ interface IStreamIn extends IStream {
         GET_CAPTURE_POSITION
     };
 
-    /*
+    /**
      * Data structure passed to the driver for executing commands
      * on the driver reader thread.
      */
@@ -60,7 +60,7 @@ interface IStreamIn extends IStream {
         } params;
     };
 
-    /*
+    /**
      * Data structure passed back to the client via status message queue
      * of 'read' operation.
      *
@@ -81,7 +81,7 @@ interface IStreamIn extends IStream {
         } reply;
     };
 
-    /*
+    /**
      * Set up required transports for receiving audio buffers from the driver.
      *
      * The transport consists of three message queues:
@@ -119,7 +119,7 @@ interface IStreamIn extends IStream {
             fmq_sync<ReadStatus> statusMQ,
             ThreadInfo threadInfo);
 
-    /*
+    /**
      * Return the amount of input frames lost in the audio driver since the last
      * call of this function.
      *
