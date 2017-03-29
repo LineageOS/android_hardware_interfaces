@@ -18,13 +18,13 @@ package android.hardware.radio.deprecated@1.0;
 
 import android.hardware.radio@1.0::types;
 
-/*
+/**
  * Interface declaring response functions to solicited oem hook requests.
  * Response functions defined in this interface are as per following convention:
  * <xyz>Response is response to IOemHook.<xyz>
  */
 interface IOemHookResponse {
-    /*
+    /**
      * @param info Response info struct containing response type, serial no. and error
      * @param data data returned by oem
      *
@@ -36,7 +36,7 @@ interface IOemHookResponse {
      */
     oneway sendRequestRawResponse(RadioResponseInfo info, vec<uint8_t> data);
 
-    /*
+    /**
      * @param info Response info struct containing response type, serial no. and error
      * @param data data returned by oem
      *

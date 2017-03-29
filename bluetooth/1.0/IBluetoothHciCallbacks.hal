@@ -16,7 +16,7 @@
 
 package android.hardware.bluetooth@1.0;
 
-/* The interface from the Bluetooth Controller to the stack. */
+/** The interface from the Bluetooth Controller to the stack. */
 interface IBluetoothHciCallbacks {
     /**
      * Invoked when the Bluetooth controller initialization has been
