@@ -71,7 +71,8 @@ public:
   DefaultVehicleHal() : mRecurrentTimer(
             std::bind(&DefaultVehicleHal::onContinuousPropertyTimer, this, std::placeholders::_1)) {
         for (size_t i = 0; i < arraysize(kVehicleProperties); i++) {
-            mPropConfigMap[kVehicleProperties[i].prop] = &kVehicleProperties[i];
+            const auto* config = &kVehicleProperties[i].config;
+            mPropConfigMap[config->prop] = config;
         }
     }
 
@@ -85,20 +86,12 @@ public:
         mThread.join();
     }
 
-    std::vector<VehiclePropConfig> listProperties() override {
-        return std::vector<VehiclePropConfig>(std::begin(kVehicleProperties),
-                                              std::end(kVehicleProperties));
-    }
-
+    void onCreate() override;
+    std::vector<VehiclePropConfig> listProperties() override;
     VehiclePropValuePtr get(const VehiclePropValue& requestedPropValue,
                             StatusCode* outStatus) override;
-
-    void onCreate() override;
-
     StatusCode set(const VehiclePropValue& propValue) override;
-
     StatusCode subscribe(int32_t property, int32_t areas, float sampleRate) override;
-
     StatusCode unsubscribe(int32_t property) override;
 
     /**
@@ -125,17 +118,12 @@ public:
      *                     this value at will
      * @return OK on success, an error code on failure
      */
-    virtual StatusCode addCustomProperty(
-        const VehiclePropValue& initialValue) {
-        std::unique_ptr<CustomVehiclePropertyHandler> handler;
-        handler.reset(new StoredValueCustomVehiclePropertyHandler());
-        StatusCode setResponse = handler->set(initialValue);
-        if (StatusCode::OK == setResponse) {
-          return addCustomProperty(initialValue.prop,
-                                   std::move(handler));
-        } else {
-          return setResponse;
-        }
+    virtual StatusCode addCustomProperty(const VehiclePropValue& initialValue) {
+        auto handler = std::make_unique<StoredValueCustomVehiclePropertyHandler>();
+        StatusCode response = handler->set(initialValue);
+        return StatusCode::OK == response
+               ? addCustomProperty(initialValue.prop, std::move(handler))
+               : response;
     }
 
 private:
@@ -152,7 +140,6 @@ private:
                                     const VehiclePropConfig& cfg);
     void populateProtoVehiclePropValue(emulator::VehiclePropValue* protoVal,
                                        const VehiclePropValue* val);
-    void setDefaultValue(VehiclePropValue* prop);
     void rxMsg();
     void rxThread();
     void txMsg(emulator::EmulatorMessage& txMsg);
