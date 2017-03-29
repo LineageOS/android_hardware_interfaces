@@ -18,11 +18,11 @@ package android.hardware.tv.cec@1.0;
 
 import IHdmiCecCallback;
 
-/*
+/**
  * HDMI-CEC HAL interface definition.
  */
 interface IHdmiCec {
-    /*
+    /**
      * Passes the logical address that must be used in this system.
      *
      * HAL must use it to configure the hardware so that the CEC commands
@@ -39,7 +39,7 @@ interface IHdmiCec {
     @callflow(next={"*"})
     addLogicalAddress(CecLogicalAddress addr) generates (Result result);
 
-    /*
+    /**
      * Clears all the logical addresses.
      *
      * It is used when the system doesn't need to process CEC command any more,
@@ -50,7 +50,7 @@ interface IHdmiCec {
     @exit
     clearLogicalAddress();
 
-    /*
+    /**
      * Gets the CEC physical address.
      *
      * The physical address depends on the topology of the network formed by
@@ -66,7 +66,7 @@ interface IHdmiCec {
     @callflow(next="*")
     getPhysicalAddress() generates (Result result, uint16_t addr);
 
-    /*
+    /**
      * Transmits HDMI-CEC message to other HDMI device.
      *
      * The method must be designed to return in a certain amount of time and not
@@ -84,7 +84,7 @@ interface IHdmiCec {
     @callflow(next="*")
     sendMessage(CecMessage message) generates (SendMessageResult result);
 
-    /*
+    /**
      * Sets a callback that HDMI-CEC HAL must later use for incoming CEC
      * messages or internal HDMI events.
      *
@@ -95,7 +95,7 @@ interface IHdmiCec {
     @entry
     setCallback(IHdmiCecCallback callback);
 
-    /*
+    /**
      * Returns the CEC version supported by underlying hardware.
      *
      * @return version the CEC version supported by underlying hardware.
@@ -103,7 +103,7 @@ interface IHdmiCec {
     @callflow(next={"*"})
     getCecVersion() generates (int32_t version);
 
-    /*
+    /**
      * Gets the identifier of the vendor.
      *
      * @return vendorId Identifier of the vendor that is the 24-bit unique
@@ -113,7 +113,7 @@ interface IHdmiCec {
     @callflow(next={"*"})
     getVendorId() generates (uint32_t vendorId);
 
-    /*
+    /**
      * Gets the hdmi port information of underlying hardware.
      *
      * @return infos The list of HDMI port information
@@ -121,7 +121,7 @@ interface IHdmiCec {
     @callflow(next={"*"})
     getPortInfo() generates (vec<HdmiPortInfo> infos);
 
-    /*
+    /**
      * Sets flags controlling the way HDMI-CEC service works down to HAL
      * implementation. Those flags must be used in case the feature needs update
      * in HAL itself, firmware or microcontroller.
@@ -132,7 +132,7 @@ interface IHdmiCec {
     @callflow(next="*")
     setOption(OptionKey key, bool value);
 
-    /*
+    /**
      * Passes the updated language information of Android system. Contains
      * three-letter code as defined in ISO/FDIS 639-2. Must be used for HAL to
      * respond to <Get Menu Language> while in standby mode.
@@ -143,7 +143,7 @@ interface IHdmiCec {
     @callflow(next="*")
     setLanguage(string language);
 
-    /*
+    /**
      * Configures ARC circuit in the hardware logic to start or stop the
      * feature.
      *
@@ -154,7 +154,7 @@ interface IHdmiCec {
     @callflow(next="*")
     enableAudioReturnChannel(int32_t portId, bool enable);
 
-    /*
+    /**
      * Gets the connection status of the specified port.
      *
      * @param portId Port id to be inspected for the connection status.

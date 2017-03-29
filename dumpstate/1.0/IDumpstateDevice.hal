@@ -17,7 +17,7 @@
 package android.hardware.dumpstate@1.0;
 
 interface IDumpstateDevice {
-    /*
+    /**
      * Dumps device-specific state into the given file descriptor.
      */
     dumpstateBoard(handle h);

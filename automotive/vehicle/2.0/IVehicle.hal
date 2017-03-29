@@ -25,7 +25,7 @@ interface IVehicle {
    */
   getAllPropConfigs() generates (vec<VehiclePropConfig> propConfigs);
 
-  /*
+  /**
    * Returns a list of property configurations for given properties.
    *
    * If requested VehicleProperty wasn't found it must return

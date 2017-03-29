@@ -20,12 +20,12 @@ import android.hardware.audio.common@2.0;
 import IEffect;
 
 interface ILoudnessEnhancerEffect extends IEffect {
-    /*
+    /**
      * Sets target gain expressed in millibels.
      */
     setTargetGain(int32_t targetGainMb) generates (Result retval);
 
-    /*
+    /**
      * Gets target gain expressed in millibels.
      */
     getTargetGain() generates (Result retval, int32_t targetGainMb);

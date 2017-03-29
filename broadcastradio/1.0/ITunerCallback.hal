@@ -19,13 +19,13 @@ package android.hardware.broadcastradio@1.0;
 
 interface ITunerCallback {
 
-    /*
+    /**
      * Method called by the HAL when a HW failure occurs.
      * The framework MUST close the ITuner interface and open a new one.
      */
     oneway hardwareFailure();
 
-    /*
+    /**
      * Method called by the HAL when a new configuration is applied
      * in response to IDevice.openTuner() or ITuner.setConfiguration().
      * @param result OK if the configuration has been applied,
@@ -35,7 +35,7 @@ interface ITunerCallback {
      */
     oneway configChange(Result result, BandConfig config);
 
-    /*
+    /**
      * Method called by the HAL when a tuning operation completes
      * following a step(), scan() or tune() command.
      * @param result OK if tune succeeded or TIMEOUT in case of time out.
@@ -43,33 +43,33 @@ interface ITunerCallback {
      */
     oneway tuneComplete(Result result, ProgramInfo info);
 
-    /*
+    /**
      * Method called by the HAL when a frequency switch occurs.
      * @param info A ProgramInfo structure describing the new tuned station.
      */
     oneway afSwitch(ProgramInfo info);
 
-    /*
+    /**
      * Method called by the HAL when the antenna connection state changes.
      * @param connected True if the antenna is connected, false otherwise.
      */
     oneway antennaStateChange(bool connected);
 
-    /*
+    /**
      * Method called by the HAL when a traffic announcement starts or
      * stops.
      * @param active True if the announcement starts, false if it stops.
      */
     oneway trafficAnnouncement(bool active);
 
-    /*
+    /**
      * Method called by the HAL when an emergency announcement starts
      * or stops.
      * @param active True if the announcement starts, false if it stops.
      */
     oneway emergencyAnnouncement(bool active);
 
-    /*
+    /**
      * Method called by the HAL when metadata for current station
      * are updated.
      * @param channel The channel the metadata is associated with.

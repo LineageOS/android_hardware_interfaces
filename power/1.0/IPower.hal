@@ -15,12 +15,12 @@
  */
 package android.hardware.power@1.0;
 
-/*
+/**
  * Constructor for the interface performs power management setup actions at
  * runtime startup, such as to set default cpufreq parameters.
  */
 interface IPower {
-    /*
+    /**
      * setInteractive() performs power management actions upon the
      * system entering interactive state (that is, the system is awake
      * and ready for interaction, often with UI devices such as
@@ -49,7 +49,7 @@ interface IPower {
      */
     setInteractive(bool interactive);
 
-    /*
+    /**
      * powerHint() is called to pass hints on power requirements which
      * may result in adjustment of power/performance parameters of the
      * cpufreq governor and other controls.
@@ -62,7 +62,7 @@ interface IPower {
      */
     powerHint(PowerHint hint, int32_t data);
 
-    /*
+    /**
      * setFeature() is called to turn on or off a particular feature
      * depending on the state parameter.
      *
@@ -71,7 +71,7 @@ interface IPower {
      */
     setFeature(Feature feature, bool activate);
 
-    /*
+    /**
      * Platform-level sleep state stats:
      * Report cumulative info on the statistics on platform-level sleep states
      * since boot.

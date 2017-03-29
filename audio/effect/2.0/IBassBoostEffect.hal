@@ -20,7 +20,7 @@ import android.hardware.audio.common@2.0;
 import IEffect;
 
 interface IBassBoostEffect extends IEffect {
-    /*
+    /**
      * Returns whether setting bass boost strength is supported.
      */
     isStrengthSupported() generates (Result retval, bool strengthSupported);
@@ -30,7 +30,7 @@ interface IBassBoostEffect extends IEffect {
         MAX = 1000
     };
 
-    /*
+    /**
      * Sets bass boost strength.
      *
      * @param strength strength of the effect. The valid range for strength
@@ -41,7 +41,7 @@ interface IBassBoostEffect extends IEffect {
      */
     setStrength(uint16_t strength) generates (Result retval);
 
-    /*
+    /**
      * Gets virtualization strength.
      */
     getStrength() generates (Result retval, uint16_t strength);

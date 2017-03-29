@@ -22,7 +22,7 @@ import IDevice;
 interface IPrimaryDevice extends IDevice {
     typedef android.hardware.audio@2.0::Result Result;
 
-    /*
+    /**
      * Sets the audio volume of a voice call.
      *
      * @param volume 1.0f means unity, 0.0f is zero.
@@ -30,7 +30,7 @@ interface IPrimaryDevice extends IDevice {
      */
     setVoiceVolume(float volume) generates (Result retval);
 
-    /*
+    /**
      * This method is used to notify the HAL about audio mode changes.
      *
      * @param mode new mode.
@@ -38,7 +38,7 @@ interface IPrimaryDevice extends IDevice {
      */
     setMode(AudioMode mode) generates (Result retval);
 
-    /*
+    /**
      * Gets whether BT SCO Noise Reduction and Echo Cancellation are enabled.
      * Calling this method is equivalent to getting AUDIO_PARAMETER_KEY_BT_NREC
      * on the legacy HAL.
@@ -48,7 +48,7 @@ interface IPrimaryDevice extends IDevice {
      */
     getBtScoNrecEnabled() generates (Result retval, bool enabled);
 
-    /*
+    /**
      * Sets whether BT SCO Noise Reduction and Echo Cancellation are enabled.
      * Calling this method is equivalent to setting AUDIO_PARAMETER_KEY_BT_NREC
      * on the legacy HAL.
@@ -58,7 +58,7 @@ interface IPrimaryDevice extends IDevice {
      */
     setBtScoNrecEnabled(bool enabled) generates (Result retval);
 
-    /*
+    /**
      * Gets whether BT SCO Wideband mode is enabled. Calling this method is
      * equivalent to getting AUDIO_PARAMETER_KEY_BT_SCO_WB on the legacy HAL.
      *
@@ -67,7 +67,7 @@ interface IPrimaryDevice extends IDevice {
      */
     getBtScoWidebandEnabled() generates (Result retval, bool enabled);
 
-    /*
+    /**
      * Sets whether BT SCO Wideband mode is enabled. Calling this method is
      * equivalent to setting AUDIO_PARAMETER_KEY_BT_SCO_WB on the legacy HAL.
      *
@@ -83,7 +83,7 @@ interface IPrimaryDevice extends IDevice {
         FULL
     };
 
-    /*
+    /**
      * Gets current TTY mode selection. Calling this method is equivalent to
      * getting AUDIO_PARAMETER_KEY_TTY_MODE on the legacy HAL.
      *
@@ -92,7 +92,7 @@ interface IPrimaryDevice extends IDevice {
      */
     getTtyMode() generates (Result retval, TtyMode mode);
 
-    /*
+    /**
      * Sets current TTY mode. Calling this method is equivalent to setting
      * AUDIO_PARAMETER_KEY_TTY_MODE on the legacy HAL.
      *
@@ -101,7 +101,7 @@ interface IPrimaryDevice extends IDevice {
      */
     setTtyMode(TtyMode mode) generates (Result retval);
 
-    /*
+    /**
      * Gets whether Hearing Aid Compatibility - Telecoil (HAC-T) mode is
      * enabled. Calling this method is equivalent to getting
      * AUDIO_PARAMETER_KEY_HAC on the legacy HAL.
@@ -111,7 +111,7 @@ interface IPrimaryDevice extends IDevice {
      */
     getHacEnabled() generates (Result retval, bool enabled);
 
-    /*
+    /**
      * Sets whether Hearing Aid Compatibility - Telecoil (HAC-T) mode is
      * enabled. Calling this method is equivalent to setting
      * AUDIO_PARAMETER_KEY_HAC on the legacy HAL.

@@ -16,7 +16,7 @@
 
 package android.hardware.graphics.mapper@2.0;
 
-/*
+/**
  * Structures for describing flexible YUVA/RGBA formats for consumption by
  * applications. Such flexible formats contain a plane for each component (e.g.
  * red, green, blue), where each plane is laid out in a grid-like pattern
@@ -49,19 +49,19 @@ package android.hardware.graphics.mapper@2.0;
  */
 
 enum FlexComponent : int32_t {
-    Y  = 1 << 0, /* luma */
-    CB = 1 << 1, /* chroma blue */
-    CR = 1 << 2, /* chroma red */
+    Y  = 1 << 0, /** luma */
+    CB = 1 << 1, /** chroma blue */
+    CR = 1 << 2, /** chroma red */
 
-    R  = 1 << 10, /* red */
-    G  = 1 << 11, /* green */
-    B  = 1 << 12, /* blue */
+    R  = 1 << 10, /** red */
+    G  = 1 << 11, /** green */
+    B  = 1 << 12, /** blue */
 
-    A  = 1 << 30, /* alpha */
+    A  = 1 << 30, /** alpha */
 };
 
 enum FlexFormat : int32_t {
-    /* not a flexible format */
+    /** not a flexible format */
     INVALID = 0x0,
 
     Y       = FlexComponent:Y,
@@ -73,38 +73,38 @@ enum FlexFormat : int32_t {
 };
 
 struct FlexPlane {
-    /* Pointer to the first byte of the top-left pixel of the plane. */
+    /** Pointer to the first byte of the top-left pixel of the plane. */
     pointer topLeft;
 
     FlexComponent component;
 
-    /*
+    /**
      * Bits allocated for the component in each pixel. Must be a positive
      * multiple of 8.
      */
     int32_t bitsPerComponent;
 
-    /*
+    /**
      * Number of the most significant bits used in the format for this
      * component. Must be between 1 and bitsPerComponent, inclusive.
      */
     int32_t bitsUsed;
 
-    /* Horizontal increment. */
+    /** Horizontal increment. */
     int32_t hIncrement;
-    /* Vertical increment. */
+    /** Vertical increment. */
     int32_t vIncrement;
-    /* Horizontal subsampling. Must be a positive power of 2. */
+    /** Horizontal subsampling. Must be a positive power of 2. */
     int32_t hSubsampling;
-    /* Vertical subsampling. Must be a positive power of 2. */
+    /** Vertical subsampling. Must be a positive power of 2. */
     int32_t vSubsampling;
 };
 
 struct FlexLayout {
-    /* The kind of flexible format. */
+    /** The kind of flexible format. */
     FlexFormat format;
 
-    /*
+    /**
      * A plane for each component; ordered in increasing component value
      * order. E.g. FlexFormat::RGBA maps 0 -> R, 1 -> G, etc.  Can have size 0
      * for FlexFormat::INVALID.
@@ -112,5 +112,5 @@ struct FlexLayout {
     vec<FlexPlane> planes;
 };
 
-/* Backing store ID of a buffer. See IMapper::getBackingStore. */
+/** Backing store ID of a buffer. See IMapper::getBackingStore. */
 typedef uint64_t BackingStore;

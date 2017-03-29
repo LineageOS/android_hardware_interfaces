@@ -18,9 +18,9 @@ package android.hardware.gnss@1.0;
 
 import IGnssGeofenceCallback;
 
-/* Extended interface for GNSS Geofencing support */
+/** Extended interface for GNSS Geofencing support */
 interface IGnssGeofencing {
-    /*
+    /**
      * Opens the geofence interface and provides the callback routines
      * to the HAL.
      *
@@ -28,7 +28,7 @@ interface IGnssGeofencing {
      */
     setCallback(IGnssGeofenceCallback callback);
 
-    /*
+    /**
      * Add a geofence area. This api currently supports circular geofences.
      *
      * @param geofenceId The id for the geofence. If a geofence with this id
@@ -59,14 +59,14 @@ interface IGnssGeofencing {
             uint32_t notificationResponsivenessMs,
             uint32_t unknownTimerMs);
 
-    /*
+    /**
      * Pause monitoring a particular geofence.
      *
      * @param geofenceId The id for the geofence.
      */
     pauseGeofence(int32_t geofenceId);
 
-    /*
+    /**
      * Resume monitoring a particular geofence.
      *
      * @param geofenceId - The id for the geofence.
@@ -78,7 +78,7 @@ interface IGnssGeofencing {
     resumeGeofence(int32_t geofenceId,
             bitfield<IGnssGeofenceCallback.GeofenceTransition> monitorTransitions);
 
-    /*
+    /**
      * Remove a geofence area. After the function returns, no notifications
      * must be sent.
      *

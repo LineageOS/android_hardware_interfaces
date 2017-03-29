@@ -18,7 +18,7 @@ package android.hardware.gnss@1.0;
 
 import IGnssMeasurementCallback;
 
-/*
+/**
  * Extended interface for GNSS Measurements support.
  */
 interface IGnssMeasurement {
@@ -29,7 +29,7 @@ interface IGnssMeasurement {
         ERROR_GENERIC = -101
     };
 
-    /*
+    /**
      * Initializes the interface and registers the callback routines with the HAL.
      * After a successful call to 'setCallback' the HAL must begin to provide updates at
      * an average output rate of 1Hz (occasional
@@ -46,7 +46,7 @@ interface IGnssMeasurement {
      */
     setCallback(IGnssMeasurementCallback callback) generates (GnssMeasurementStatus initRet);
 
-    /*
+    /**
      * Stops updates from the HAL, and unregisters the callback routines.
      * After a call to close(), the previously registered callbacks must be
      * considered invalid by the HAL.

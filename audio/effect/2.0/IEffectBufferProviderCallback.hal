@@ -16,12 +16,12 @@
 
 package android.hardware.audio.effect@2.0;
 
-/*
+/**
  * This callback interface contains functions that can be used by the effect
  * engine 'process' function to exchange input and output audio buffers.
  */
 interface IEffectBufferProviderCallback {
-    /*
+    /**
      * Called to retrieve a buffer where data should read from by 'process'
      * function.
      *
@@ -29,7 +29,7 @@ interface IEffectBufferProviderCallback {
      */
     getBuffer() generates (AudioBuffer buffer);
 
-    /*
+    /**
      * Called to provide a buffer with the data written by 'process' function.
      *
      * @param buffer audio buffer for processing

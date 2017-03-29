@@ -30,7 +30,7 @@ interface IDevicesFactory {
         STUB
     };
 
-    /*
+    /**
      * Opens an audio device. To close the device, it is necessary to release
      * references to the returned device object.
      *

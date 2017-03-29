@@ -19,7 +19,7 @@ package android.hardware.tv.input@1.0;
 import ITvInputCallback;
 
 interface ITvInput {
-    /*
+    /**
      * Sets a callback for events.
      *
      * Note that initially no device is available in the client side, so the
@@ -33,7 +33,7 @@ interface ITvInput {
     @callflow(next={"getStreamConfigurations"})
     setCallback(ITvInputCallback callback);
 
-    /*
+    /**
      * Gets stream configurations for a specific device.
      *
      * The configs object is valid only until the next
@@ -48,7 +48,7 @@ interface ITvInput {
     getStreamConfigurations(int32_t deviceId)
             generates (Result result, vec<TvStreamConfig> configurations);
 
-    /*
+    /**
      * Opens a specific stream in a device.
      *
      * @param deviceId Device ID for the steam to open.
@@ -65,7 +65,7 @@ interface ITvInput {
     openStream(int32_t deviceId, int32_t streamId)
             generates (Result result, handle sidebandStream);
 
-    /*
+    /**
      * Closes a specific stream in a device.
      *
      * @param deviceId Device ID for the steam to open.
