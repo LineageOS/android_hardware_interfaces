@@ -27,6 +27,7 @@
 #include <fmq/MessageQueue.h>
 #include <utils/Thread.h>
 
+#include "Device.h"
 #include "Stream.h"
 
 namespace android {
@@ -57,7 +58,7 @@ struct StreamOut : public IStreamOut {
     typedef MessageQueue<uint8_t, kSynchronizedReadWrite> DataMQ;
     typedef MessageQueue<WriteStatus, kSynchronizedReadWrite> StatusMQ;
 
-    StreamOut(audio_hw_device_t* device, audio_stream_out_t* stream);
+    StreamOut(const sp<Device>& device, audio_stream_out_t* stream);
 
     // Methods from ::android::hardware::audio::V2_0::IStream follow.
     Return<uint64_t> getFrameSize()  override;
@@ -112,10 +113,10 @@ struct StreamOut : public IStreamOut {
 
   private:
     bool mIsClosed;
-    audio_hw_device_t *mDevice;
+    const sp<Device> mDevice;
     audio_stream_out_t *mStream;
-    sp<Stream> mStreamCommon;
-    sp<StreamMmap<audio_stream_out_t>> mStreamMmap;
+    const sp<Stream> mStreamCommon;
+    const sp<StreamMmap<audio_stream_out_t>> mStreamMmap;
     sp<IStreamOutCallback> mCallback;
     std::unique_ptr<CommandMQ> mCommandMQ;
     std::unique_ptr<DataMQ> mDataMQ;

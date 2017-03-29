@@ -59,6 +59,14 @@ Result Device::analyzeStatus(const char* funcName, int status) {
     }
 }
 
+void Device::closeInputStream(audio_stream_in_t* stream) {
+    mDevice->close_input_stream(mDevice, stream);
+}
+
+void Device::closeOutputStream(audio_stream_out_t* stream) {
+    mDevice->close_output_stream(mDevice, stream);
+}
+
 char* Device::halGetParameters(const char* keys) {
     return mDevice->get_parameters(mDevice, keys);
 }
@@ -160,7 +168,7 @@ Return<void> Device::openOutputStream(
     ALOGV("open_output_stream status %d stream %p", status, halStream);
     sp<IStreamOut> streamOut;
     if (status == OK) {
-        streamOut = new StreamOut(mDevice, halStream);
+        streamOut = new StreamOut(this, halStream);
     }
     AudioConfig suggestedConfig;
     HidlUtils::audioConfigFromHal(halConfig, &suggestedConfig);
@@ -196,7 +204,7 @@ Return<void> Device::openInputStream(
     ALOGV("open_input_stream status %d stream %p", status, halStream);
     sp<IStreamIn> streamIn;
     if (status == OK) {
-        streamIn = new StreamIn(mDevice, halStream);
+        streamIn = new StreamIn(this, halStream);
     }
     AudioConfig suggestedConfig;
     HidlUtils::audioConfigFromHal(halConfig, &suggestedConfig);
