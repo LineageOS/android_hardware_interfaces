@@ -589,10 +589,10 @@ enum StaRoamingState : uint8_t {
  * Size limits for parameters used in the NAN interface.
  */
 enum NanParamSizeLimits : uint32_t {
-  /* Minimum length of Passphrase argument for data-path configuration */
+  /** Minimum length of Passphrase argument for data-path configuration */
   MIN_PASSPHRASE_LENGTH = 8,
 
-  /* Maximum length of Passphrase argument for data-path configuration */
+  /** Maximum length of Passphrase argument for data-path configuration */
   MAX_PASSPHRASE_LENGTH = 63,
 };
 
@@ -607,29 +607,29 @@ typedef uint16_t CommandIdShort;
  */
 enum NanStatusType : uint32_t {
   SUCCESS = 0,
-  /* NAN Discovery Engine/Host driver failures */
+  /** NAN Discovery Engine/Host driver failures */
   INTERNAL_FAILURE = 1,
-  /* NAN OTA failures */
+  /** NAN OTA failures */
   PROTOCOL_FAILURE = 2,
-  /* The publish/subscribe discovery session id is invalid */
+  /** The publish/subscribe discovery session id is invalid */
   INVALID_SESSION_ID = 3,
-  /* Out of resources to fufill request */
+  /** Out of resources to fufill request */
   NO_RESOURCES_AVAILABLE = 4,
-  /* Invalid arguments passed */
+  /** Invalid arguments passed */
   INVALID_ARGS = 5,
-  /* Invalid peer id */
+  /** Invalid peer id */
   INVALID_PEER_ID = 6,
-  /* Invalid NAN data-path (ndp) id */
+  /** Invalid NAN data-path (ndp) id */
   INVALID_NDP_ID = 7,
-  /* Attempting to enable NAN when not available, e.g. wifi is disabled */
+  /** Attempting to enable NAN when not available, e.g. wifi is disabled */
   NAN_NOT_ALLOWED = 8,
-  /* Over the air ACK not received */
+  /** Over the air ACK not received */
   NO_OTA_ACK = 9,
-  /* Attempting to enable NAN when already enabled */
+  /** Attempting to enable NAN when already enabled */
   ALREADY_ENABLED = 10,
-  /* Can't queue tx followup message foor transmission */
+  /** Can't queue tx followup message foor transmission */
   FOLLOWUP_TX_QUEUE_FULL = 11,
-  /* Unsupported concurrency of NAN and another feature - NAN disabled */
+  /** Unsupported concurrency of NAN and another feature - NAN disabled */
   UNSUPPORTED_CONCURRENCY_NAN_DISABLED = 12
 };
 

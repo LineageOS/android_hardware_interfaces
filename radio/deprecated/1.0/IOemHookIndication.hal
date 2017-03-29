@@ -18,11 +18,11 @@ package android.hardware.radio.deprecated@1.0;
 
 import android.hardware.radio@1.0::types;
 
-/*
+/**
  * Interface declaring unsolicited oem hook indications.
  */
 interface IOemHookIndication {
-   /*
+   /**
     * This is for OEM specific use.
     *
     * @param type Type of radio indication

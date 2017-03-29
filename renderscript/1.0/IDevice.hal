@@ -21,7 +21,7 @@ import IContext;
 
 interface IDevice {
 
-    /*
+    /**
      * Creates a RenderScript context.
      *
      * @param sdkVersion Target RS API level
