@@ -22,7 +22,7 @@ interface ITestMsgQ {
         FMQ_NOT_FULL  = 1 << 1,
     };
 
-    /*
+    /**
      * This method requests the service to set up a synchronous read/write
      * wait-free FMQ with the client as reader.
      *
@@ -33,7 +33,7 @@ interface ITestMsgQ {
     configureFmqSyncReadWrite()
         generates(bool ret, fmq_sync<uint16_t> mqDesc);
 
-    /*
+    /**
      * This method requests the service to return an MQDescriptor to
      * an unsynchronized FMQ set up by the server. If 'configureFmq' is
      * true, then the server sets up a new unsynchronized FMQ. This
@@ -48,7 +48,7 @@ interface ITestMsgQ {
      */
     getFmqUnsyncWrite(bool configureFmq) generates(bool ret, fmq_unsync<uint16_t> mqDesc);
 
-    /*
+    /**
      * This method request the service to write into the synchronized read/write
      * flavor of the FMQ.
      *
@@ -58,7 +58,7 @@ interface ITestMsgQ {
      */
     requestWriteFmqSync(int32_t count) generates(bool ret);
 
-    /*
+    /**
      * This method request the service to read from the synchronized read/write
      * FMQ.
      *
@@ -68,7 +68,7 @@ interface ITestMsgQ {
      */
     requestReadFmqSync(int32_t count) generates(bool ret);
 
-    /*
+    /**
      * This method request the service to write into the unsynchronized flavor
      * of FMQ.
      *
@@ -78,7 +78,7 @@ interface ITestMsgQ {
      */
     requestWriteFmqUnsync(int32_t count) generates(bool ret);
 
-    /*
+    /**
      * This method request the service to read from the unsynchronized flavor of
      * FMQ.
      *
@@ -88,7 +88,7 @@ interface ITestMsgQ {
      */
     requestReadFmqUnsync(int32_t count) generates(bool ret);
 
-    /*
+    /**
      * This method requests the service to trigger a blocking read.
      *
      * @param count Number of messages to read.
@@ -96,7 +96,7 @@ interface ITestMsgQ {
      */
     oneway requestBlockingRead(int32_t count);
 
-    /*
+    /**
      * This method requests the service to trigger a blocking read using
      * default Event Flag notification bits defined by the MessageQueue class.
      *
@@ -105,7 +105,7 @@ interface ITestMsgQ {
      */
     oneway requestBlockingReadDefaultEventFlagBits(int32_t count);
 
-    /*
+    /**
      * This method requests the service to repeatedly trigger blocking reads.
      *
      * @param count Number of messages to read in a single blocking read.

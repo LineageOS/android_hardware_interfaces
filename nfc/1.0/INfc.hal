@@ -19,7 +19,7 @@ package android.hardware.nfc@1.0;
 import INfcClientCallback;
 
 interface INfc {
-    /*
+    /**
      * Opens the NFC controller device and performs initialization.
      * This may include patch download and other vendor-specific initialization.
      *
@@ -37,7 +37,7 @@ interface INfc {
     @callflow(next={"write", "coreInitialized", "prediscover", "powerCycle", "controlGranted"})
     open(INfcClientCallback clientCallback) generates (NfcStatus status);
 
-    /*
+    /**
      * Performs an NCI write.
      *
      * This method may queue writes and return immediately. The only
@@ -49,7 +49,7 @@ interface INfc {
                     "controlGranted"})
     write(NfcData data) generates (uint32_t retval);
 
-    /*
+    /**
      * coreInitialized() is called after the CORE_INIT_RSP is received from the
      * NFCC. At this time, the HAL can do any chip-specific configuration.
      *
@@ -62,7 +62,7 @@ interface INfc {
     @callflow(next={"write", "prediscover", "close"})
     coreInitialized(NfcData data) generates (NfcStatus status);
 
-    /*
+    /**
      * prediscover is called every time before starting RF discovery.
      * It is a good place to do vendor-specific configuration that must be
      * performed every time RF discovery is about to be started.
@@ -76,7 +76,7 @@ interface INfc {
     @callflow(next={"write", "close", "coreInitialized", "powerCycle", "controlGranted"})
     prediscover() generates (NfcStatus status);
 
-    /*
+    /**
      * Close the NFC controller. Should free all resources.
      *
      * @return NfcStatus::OK on success and NfcStatus::FAILED on error.
@@ -84,7 +84,7 @@ interface INfc {
     @exit
     close() generates (NfcStatus status);
 
-    /*
+    /**
      * Grant HAL the exclusive control to send NCI commands.
      * Called in response to NfcEvent.REQUEST_CONTROL.
      * Must only be called when there are no NCI commands pending.
@@ -95,7 +95,7 @@ interface INfc {
     @callflow(next={"write", "close", "prediscover", "coreInitialized", "powerCycle"})
     controlGranted() generates (NfcStatus status);
 
-     /*
+     /**
      * Restart controller by power cyle;
      * NfcEvent.OPEN_CPLT will notify when operation is complete.
      *

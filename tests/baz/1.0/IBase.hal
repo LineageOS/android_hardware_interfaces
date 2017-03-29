@@ -38,7 +38,7 @@ interface IBase {
     };
 
     struct MoreThanOneArrayField {
-        /*
+        /**
          * Generated (Java) code used to redeclare the same variable name
          * multiple times in the same scope, this test ensures that that's no
          * longer the case.
