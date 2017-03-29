@@ -32,7 +32,7 @@ import android.hardware.renderscript@1.0::types;
 
 interface IContext {
 
-    /*
+    /**
      * TODO: Do we need to define "selectors"? It may be a property of the
      * "adapted allocation" that's returned.
      *
@@ -56,7 +56,7 @@ interface IContext {
     allocationAdapterCreate(Type type, Allocation baseAlloc)
                  generates (AllocationAdapter subAlloc);
 
-    /*
+    /**
      * TODO: Need to relate "offset" back to the terminology in
      * allocationAdapterCreate() -- the latter uses the terms "selector" and
      * "selected value". Can we use consistent terminology? Are "offset" and
@@ -72,7 +72,7 @@ interface IContext {
     @callflow(next={"*"})
     allocationAdapterOffset(AllocationAdapter alloc, vec<uint32_t> offsets);
 
-    /*
+    /**
      * TODO: add more explanation here.
      *
      * Returns the Type of the Allocation.
@@ -83,7 +83,7 @@ interface IContext {
     @callflow(next={"*"})
     allocationGetType(Allocation allocation) generates (Type type);
 
-    /*
+    /**
      * TODO: more clarification needed describing if the pointer can be aliased
      * or if the data can outlive the allocation.
      *
@@ -102,7 +102,7 @@ interface IContext {
                           bitfield<AllocationUsageType> usage, Ptr ptr)
                generates (Allocation allocation);
 
-    /*
+    /**
      * Creates an Allocation from a Bitmap.
      *
      * @param type Type describing data layout
@@ -118,7 +118,7 @@ interface IContext {
                                bitfield<AllocationUsageType> usage)
                     generates (Allocation allocation);
 
-    /*
+    /**
      * Creates a Cubemapped Allocation from a Bitmap.
      *
      * @param type Type describing data layout
@@ -135,7 +135,7 @@ interface IContext {
                                    bitfield<AllocationUsageType> usage)
                         generates (Allocation allocation);
 
-    /*
+    /**
      * Returns the handle to a raw buffer that is being managed by the screen
      * compositor. This operation is only valid for Allocations with
      * USAGE_IO_INPUT.
@@ -147,7 +147,7 @@ interface IContext {
     allocationGetNativeWindow(Allocation allocation)
                    generates (NativeWindow nativeWindow);
 
-    /*
+    /**
      * TODO: more clarification needed
      *
      * Sets the NativeWindow of an Allocation. This operation is only valid
@@ -159,7 +159,7 @@ interface IContext {
     @callflow(next={"*"})
     allocationSetNativeWindow(Allocation allocation, NativeWindow nativewindow);
 
-    /*
+    /**
      * Initialize BufferQueue with specified max number of buffers.
      *
      * @param alloc Allocation
@@ -168,7 +168,7 @@ interface IContext {
     @callflow(next={"*"})
     allocationSetupBufferQueue(Allocation alloc, uint32_t numBuffer);
 
-    /*
+    /**
      * TODO: clearly define baseAlloc vs subAlloc
      *
      * Shares the BufferQueue with another Allocation. Both must be
@@ -181,7 +181,7 @@ interface IContext {
     @callflow(next={"*"})
     allocationShareBufferQueue(Allocation baseAlloc, Allocation subAlloc);
 
-    /*
+    /**
      * Copies from the Allocation into a Bitmap. The bitmap must match the
      * dimensions of the Allocation.
      *
@@ -195,7 +195,7 @@ interface IContext {
     @callflow(next={"*"})
     allocationCopyToBitmap(Allocation allocation, Ptr data, Size sizeBytes);
 
-    /*
+    /**
      * TODO: should we consolidate all [123]DWrite functions or [123]DRead
      * functions into the same API call? Our current plan is to be very similar
      * to the dispatch table API. How much should we deviate from the original
@@ -219,7 +219,7 @@ interface IContext {
     allocation1DWrite(Allocation allocation, uint32_t offset, uint32_t lod,
                       uint32_t count, vec<uint8_t> data);
 
-    /*
+    /**
      * Copies a value into a single sub-Element of this Allocation.
      *
      * @param allocation Allocation to be updated
@@ -237,7 +237,7 @@ interface IContext {
                            uint32_t z, uint32_t lod, vec<uint8_t> data,
                            Size compIdx);
 
-    /*
+    /**
      * Copies from an array into a rectangular region in this Allocation.
      *
      * When this HAL entry is executed, all Vec3 elements have been explicitly
@@ -262,7 +262,7 @@ interface IContext {
                       uint32_t lod, AllocationCubemapFace face, uint32_t w,
                       uint32_t h, vec<uint8_t> data, Size stride);
 
-    /*
+    /**
      * Copies from an array into a 3D region in this Allocation.
      *
      * When this HAL entry is executed, all Vec3 elements have been explicitly
@@ -288,7 +288,7 @@ interface IContext {
                       uint32_t zoff, uint32_t lod, uint32_t w, uint32_t h,
                       uint32_t d, vec<uint8_t> data, Size stride);
 
-    /*
+    /**
      * Generates a mipmap chain. This is only valid if the Type of the
      * Allocation includes mipmaps.
      *
@@ -304,7 +304,7 @@ interface IContext {
     @callflow(next={"*"})
     allocationGenerateMipmaps(Allocation allocation);
 
-    /*
+    /**
      * Copies all of an Allocation's data into an array.
      *
      * All Vec3 elements of an Allocation are padded to be Vec4, so the data
@@ -320,7 +320,7 @@ interface IContext {
     @callflow(next={"*"})
     allocationRead(Allocation allocation, Ptr data, Size sizeBytes);
 
-    /*
+    /**
      * Copies a 1D region of this Allocation into an array.
      *
      * All Vec3 elements of an Allocation are padded to be Vec4, so the data
@@ -342,7 +342,7 @@ interface IContext {
     allocation1DRead(Allocation allocation, uint32_t xoff, uint32_t lod,
                      uint32_t count, Ptr data, Size sizeBytes);
 
-    /*
+    /**
      * Returns the value of a single sub-Element of this Allocation.
      *
      * HIDL is always running in Passthrough mode for RenderScript, so the
@@ -362,7 +362,7 @@ interface IContext {
                           uint32_t z, uint32_t lod, Ptr data, Size sizeBytes,
                           Size compIdx);
 
-    /*
+    /**
      * Copies from a rectangular region in this Allocation to an array.
      *
      * All Vec3 elements of an Allocation are padded to be Vec4, so the data
@@ -391,7 +391,7 @@ interface IContext {
                      uint32_t lod, AllocationCubemapFace face, uint32_t w,
                      uint32_t h, Ptr data, Size sizeBytes, Size stride);
 
-    /*
+    /**
      * Copies from a rectangular cuboid region in this Allocation to an array.
      *
      * All Vec3 elements of an Allocation are padded to be Vec4, so the data
@@ -421,7 +421,7 @@ interface IContext {
                      uint32_t zoff, uint32_t lod, uint32_t w, uint32_t h,
                      uint32_t d, Ptr data, Size sizeBytes, Size stride);
 
-    /*
+    /**
      * Propagates changes from one usage of the Allocation to the other usages
      * of the Allocation.
      *
@@ -431,7 +431,7 @@ interface IContext {
     @callflow(next={"*"})
     allocationSyncAll(Allocation allocation, AllocationUsageType usageType);
 
-    /*
+    /**
      * TODO: describe the functionality of resize1D better
      * TODO: original Java Doc description seems to contradict itself ("with
      * null contents and the region is otherwise undefined")
@@ -455,7 +455,7 @@ interface IContext {
     @callflow(next={"*"})
     allocationResize1D(Allocation allocation, uint32_t dimX);
 
-    /*
+    /**
      * TODO: There are allocationCopy2DRange and 3DRange, but no 1DRange. Should
      * the interface be cleaned up more?
      *
@@ -483,7 +483,7 @@ interface IContext {
                           uint32_t srcXoff, uint32_t srcYoff, uint32_t srcMip,
                           AllocationCubemapFace srcFace);
 
-    /*
+    /**
      * Copies a rectangular cuboid region into the allocation from another
      * Allocation.
      *
@@ -508,7 +508,7 @@ interface IContext {
                           Allocation srcAlloc, uint32_t srcXoff,
                           uint32_t srcYoff, uint32_t srcZoff, uint32_t srcMip);
 
-    /*
+    /**
      * TODO: define buffer and output stream
      *
      * Sends a buffer to the output stream. The contents of the Allocation may
@@ -520,7 +520,7 @@ interface IContext {
     @callflow(next={"*"})
     allocationIoSend(Allocation allocation);
 
-    /*
+    /**
      * Receives the latest input into the Allocation. This operation is only
      * valid if USAGE_IO_INPUT is set on the Allocation, otherwise an error
      * must be reported and no operations may be executed.
@@ -530,7 +530,7 @@ interface IContext {
     @callflow(next={"*"})
     allocationIoReceive(Allocation allocation);
 
-    /*
+    /**
      * TODO: describe default values for lod, face, and z better.
      * TODO: what cases can invalidate the pointer? Resize? It should be
      * clarified that this method should always return a valid pointer, but the
@@ -560,7 +560,7 @@ interface IContext {
                          AllocationCubemapFace face, uint32_t z)
               generates (Ptr dataPtr, Size stride);
 
-    /*
+    /**
      * Retrieves an Element's metadata from native code.
      *
      * @param element Element to be read
@@ -570,7 +570,7 @@ interface IContext {
     elementGetNativeMetadata(Element element)
                   generates (vec<uint32_t> elemData);
 
-    /*
+    /**
      * TODO: define Sub-Element handles better.
      *
      * Retrieves an Element's sub Elements, specifically their identifiers,
@@ -587,7 +587,7 @@ interface IContext {
                generates (vec<Element> ids, vec<string> names,
                           vec<Size> arraySizes);
 
-    /*
+    /**
      * TODO: can normalization flag be removed?
      *
      * Creates an Element.
@@ -602,7 +602,7 @@ interface IContext {
     elementCreate(DataType dt, DataKind dk, bool norm, uint32_t size)
        generates (Element element);
 
-    /*
+    /**
      * Creates a complex Element.
      *
      * @param einsPtr Container of input Elements
@@ -615,7 +615,7 @@ interface IContext {
                          vec<Size> arraySizesPtr)
               generates (Element element);
 
-    /*
+    /**
      * Retrives a Type's metadata from native code.
      *
      * @param type Type describing data layout
@@ -624,7 +624,7 @@ interface IContext {
     @callflow(next={"*"})
     typeGetNativeMetadata(Type type) generates (vec<OpaqueHandle> metadata);
 
-    /*
+    /**
      * Creates a new Type.
      *
      * If Type is 1D, Y and Z must be 0. If Type is 2D, Z must be 0.
@@ -644,14 +644,14 @@ interface IContext {
                bool mipmaps, bool faces, YuvFormat yuv)
     generates (Type type);
 
-    /*
+    /**
      * Destroys provided RenderScript context, including all objects created in
      * this context.
      */
     @exit
     contextDestroy();
 
-    /*
+    /**
      * TODO: provide overview of messaging model and figure out if this should
      * be part of HAL or not.
      * TODO: what is the "client" for purposes of this interface?
@@ -671,7 +671,7 @@ interface IContext {
     contextGetMessage(Ptr data, Size size)
            generates (MessageToClientType messageType, Size receiveLen);
 
-    /*
+    /**
      * TODO: define subID better.
      *
      * Gets the metadata of a message to ensure entire message can be properly
@@ -687,7 +687,7 @@ interface IContext {
             generates (MessageToClientType messageType, Size receiveLen,
                        uint32_t subID);
 
-    /*
+    /**
      * TODO: Define "previous commands" better
      * TODO: Is the message identifier the same as subID?
      *
@@ -702,7 +702,7 @@ interface IContext {
     @callflow(next={"*"})
     contextSendMessage(uint32_t id, vec<uint8_t> data);
 
-    /*
+    /**
      * TODO: Can this be done automatically as part of context creation? What
      * happens if we perform message operations before doing this?
      *
@@ -713,7 +713,7 @@ interface IContext {
     @callflow(next={"*"})
     contextInitToClient();
 
-    /*
+    /**
      * TODO: Why doesn't this happen automatically as part of context
      * destruction? What happens if the FIFO is not empty?
      *
@@ -722,7 +722,7 @@ interface IContext {
     @callflow(next={"*"})
     contextDeinitToClient();
 
-    /*
+    /**
      * TODO: do we need to mark asynchronous operations in this interface
      * definition?
      *
@@ -732,14 +732,14 @@ interface IContext {
     @callflow(next={"*"})
     contextFinish();
 
-    /*
+    /**
      * Prints the currently available debugging information about the state of
      * the RS context to the logcat.
      */
     @callflow(next={"*"})
     contextLog();
 
-    /*
+    /**
      * TODO: full path? relative path? Investigate further.
      *
      * Sets the cache directory of the context.
@@ -749,7 +749,7 @@ interface IContext {
     @callflow(next={"*"})
     contextSetCacheDir(string cacheDir);
 
-    /*
+    /**
      * TODO: does this apply to the GPU as well?
      *
      * Changes the priority of the cpu worker threads for this context.
@@ -759,7 +759,7 @@ interface IContext {
     @callflow(next={"*"})
     contextSetPriority(ThreadPriorities priority);
 
-    /*
+    /**
      * TODO: does this need to be part of the HAL? What if the object already
      * has a name?
      *
@@ -771,7 +771,7 @@ interface IContext {
     @callflow(next={"*"})
     assignName(ObjectBase obj, string name);
 
-    /*
+    /**
      * TODO: what if the object has no name?
      *
      * Returns the name of an object.
@@ -782,7 +782,7 @@ interface IContext {
     @callflow(next={"*"})
     getName(ObjectBase obj) generates (string name);
 
-    /*
+    /**
      * TODO: starting here we have a set of interfaces for use with
      * ScriptGroups. At the very least we should indicate for each one that's
      * what it's for. Should we include ScriptGroup in the interface names?
@@ -810,7 +810,7 @@ interface IContext {
                   vec<ScriptFieldID> depFieldIDS)
        generates (Closure closure);
 
-    /*
+    /**
      * Creates a Closure which represents a function call to a invocable
      * function, combined with arguments and values for global variables.
      *
@@ -827,7 +827,7 @@ interface IContext {
                         vec<int32_t> sizes)
              generates (Closure closure);
 
-    /*
+    /**
      * Sets the argument of a Closure at specified index and size to provided
      * value.
      *
@@ -839,7 +839,7 @@ interface IContext {
     @callflow(next={"*"})
     closureSetArg(Closure closure, uint32_t index, Ptr value, int32_t size);
 
-    /*
+    /**
      * Sets a global variable in a Closure.
      *
      * @param closure Closure
@@ -851,7 +851,7 @@ interface IContext {
     closureSetGlobal(Closure closure, ScriptFieldID fieldID, int64_t value,
                      int32_t size);
 
-    /*
+    /**
      * TODO: should slot be unsigned? (applies to other two ID interfaces, too)
      *
      * Creates a Script Kernel ID.
@@ -866,7 +866,7 @@ interface IContext {
                          bitfield<MetadataSignatureBitval> sig)
               generates (ScriptKernelID scriptKernelID);
 
-    /*
+    /**
      * Creates a Script Invoke ID.
      *
      * @param script Script
@@ -877,7 +877,7 @@ interface IContext {
     scriptInvokeIDCreate(Script script, int32_t slot)
               generates (ScriptInvokeID scriptInvokeID);
 
-    /*
+    /**
      * TODO: describe the return value better. What is it?
      *
      * Creates a Script Field ID.
@@ -890,7 +890,7 @@ interface IContext {
     scriptFieldIDCreate(Script script, int32_t slot)
              generates (ScriptFieldID scriptFieldID);
 
-    /*
+    /**
      * TODO: add more description
      *
      * Creates a Script Group.
@@ -908,7 +908,7 @@ interface IContext {
                       vec<Type> types)
            generates (ScriptGroup scriptGroup);
 
-    /*
+    /**
      * Creates a Script Group.
      *
      * @param name Name
@@ -920,7 +920,7 @@ interface IContext {
     scriptGroup2Create(string name, string cacheDir, vec<Closure> closures)
             generates (ScriptGroup2 scriptGroup2);
 
-    /*
+    /**
      * TODO: if SetInput/Output corresponds to the Java API setInput() and
      * setOutput(), which are documented as deprecated in API 23, do we need to
      * support them? Or can we fallback to the CPU when they're used? Or can't
@@ -937,7 +937,7 @@ interface IContext {
     @callflow(next={"*"})
     scriptGroupSetOutput(ScriptGroup sg, ScriptKernelID kid, Allocation alloc);
 
-    /*
+    /**
      * Sets an input of the Script Group. This specifies an Allocation to be
      * used for kernels that require an input Allocation provided from outside
      * of the Script Group.
@@ -949,7 +949,7 @@ interface IContext {
     @callflow(next={"*"})
     scriptGroupSetInput(ScriptGroup sg, ScriptKernelID kid, Allocation alloc);
 
-    /*
+    /**
      * Executes a Script Group.
      *
      * @param sg Script Group to be executed.
@@ -957,7 +957,7 @@ interface IContext {
     @callflow(next={"*"})
     scriptGroupExecute( ScriptGroup sg);
 
-    /*
+    /**
      * Frees any native resources associated with this object. The primary use
      * is to force immediate cleanup of resources when it is believed the GC
      * may not respond quickly enough.
@@ -967,7 +967,7 @@ interface IContext {
     @callflow(next={"*"})
     objDestroy(ObjectBase obj);
 
-    /*
+    /**
      * Creates a Sampler.
      *
      * @param magFilter Magnification value for the filter
@@ -984,7 +984,7 @@ interface IContext {
                   float aniso)
        generates (Sampler sampler);
 
-    /*
+    /**
      * Binds an Allocation to a global pointer in the Script.
      *
      * @param script Script to be bound to
@@ -994,7 +994,7 @@ interface IContext {
     @callflow(next={"*"})
     scriptBindAllocation(Script script, Allocation allocation, uint32_t slot);
 
-    /*
+    /**
      * TODO: is this necessary?
      *
      * Sets the timezone of a Script.
@@ -1005,7 +1005,7 @@ interface IContext {
     @callflow(next={"*"})
     scriptSetTimeZone(Script script, string timeZone);
 
-    /*
+    /**
      * TODO: can scriptInvoke be combined with scriptInvokeV?
      *
      * Launches an invokable function.
@@ -1016,7 +1016,7 @@ interface IContext {
     @callflow(next={"*"})
     scriptInvoke(Script vs, uint32_t slot);
 
-    /*
+    /**
      * Invokes a Script with values.
      *
      * @param vs Script to be invoked
@@ -1026,7 +1026,7 @@ interface IContext {
     @callflow(next={"*"})
     scriptInvokeV(Script vs, uint32_t slot, vec<uint8_t> data);
 
-    /*
+    /**
      * TODO: add documentation for params
      * TODO: Should we rename "ScriptCall" to "LaunchOptions"?
      *
@@ -1043,7 +1043,7 @@ interface IContext {
     scriptForEach(Script vs, uint32_t slot, vec<Allocation> vains,
                   Allocation vaout, vec<uint8_t> params, Ptr sc);
 
-    /*
+    /**
      * Launches a Reduction kernel.
      *
      * @param vs Script
@@ -1056,7 +1056,7 @@ interface IContext {
     scriptReduce(Script vs, uint32_t slot, vec<Allocation> vains,
                  Allocation vaout, Ptr sc);
 
-    /*
+    /**
      * Sets a Script's integer variable to a value.
      *
      * @param vs RenderScript Script
@@ -1066,7 +1066,7 @@ interface IContext {
     @callflow(next={"*"})
     scriptSetVarI(Script vs, uint32_t slot, int32_t value);
 
-    /*
+    /**
      * Sets a Script's Object variable to a value
      *
      * @param vs RenderScript Script
@@ -1076,7 +1076,7 @@ interface IContext {
     @callflow(next={"*"})
     scriptSetVarObj( Script vs,  uint32_t slot, ObjectBase obj);
 
-    /*
+    /**
      * Sets a Script's long variable to a value.
      *
      * @param vs RenderScript Script
@@ -1086,7 +1086,7 @@ interface IContext {
     @callflow(next={"*"})
     scriptSetVarJ(Script vs, uint32_t slot, int64_t value);
 
-    /*
+    /**
      * Sets a Script's float variable to a value.
      *
      * @param vs RenderScript Script
@@ -1096,7 +1096,7 @@ interface IContext {
     @callflow(next={"*"})
     scriptSetVarF(Script vs, uint32_t slot, float value);
 
-    /*
+    /**
      * Sets a Script's double variable to a value.
      *
      * @param vs RenderScript Script
@@ -1106,7 +1106,7 @@ interface IContext {
     @callflow(next={"*"})
     scriptSetVarD(Script vs, uint32_t slot, double value);
 
-    /*
+    /**
      * Sets a Script's struct variable to a value.
      *
      * @param vs RenderScript Script
@@ -1116,7 +1116,7 @@ interface IContext {
     @callflow(next={"*"})
     scriptSetVarV(Script vs, uint32_t slot, vec<uint8_t> data);
 
-    /*
+    /**
      * TODO: Why do we have typed setters but only untyped getter?
      *
      * Retrieves the value from a global variable in a script.
@@ -1130,7 +1130,7 @@ interface IContext {
     scriptGetVarV(Script vs, uint32_t slot, Size len)
        generates (vec<uint8_t> data);
 
-    /*
+    /**
      * TODO: Is this a value to be replicated for each member of the array? Or
      * is there a representation for each separate member?
      *
@@ -1147,7 +1147,7 @@ interface IContext {
     scriptSetVarVE(Script vs, uint32_t slot, vec<uint8_t> data, Element ve,
                    vec<uint32_t> dims);
 
-    /*
+    /**
      * TODO: is cacheDir redundant with createCache() function? Can we remove
      * it?
      * TODO: define resName more clearly
@@ -1163,7 +1163,7 @@ interface IContext {
     scriptCCreate(string resName, string cacheDir, vec<uint8_t> text)
        generates (Script script);
 
-    /*
+    /**
      * Creates a RenderScript Intrinsic script.
      *
      * @param id Intrinsic Script identifier
