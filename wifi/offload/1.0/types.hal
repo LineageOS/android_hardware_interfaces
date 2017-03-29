@@ -199,6 +199,20 @@ struct ScanStats {
     vec<LogRecord> logRecord;
 };
 
+/**
+ * Defines a list of return codes to indicate status of Offload HAL
+ */
+enum OffloadStatus : uint32_t {
+    /* No error */
+    OFFLOAD_STATUS_OK,
+    /* No Connection to underlying implementation */
+    OFFLOAD_STATUS_NO_CONNECTION,
+    /* Operation timeout */
+    OFFLOAD_STATUS_TIMEOUT,
+    /* Other errors */
+    OFFLOAD_STATUS_ERROR
+};
+
 
 
 
