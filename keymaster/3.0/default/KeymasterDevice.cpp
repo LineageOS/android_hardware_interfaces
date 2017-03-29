@@ -698,21 +698,14 @@ Return<ErrorCode> KeymasterDevice::abort(uint64_t operationHandle) {
     return legacy_enum_conversion(keymaster_device_->abort(keymaster_device_, operationHandle));
 }
 
-IKeymasterDevice* HIDL_FETCH_IKeymasterDevice(const char* name) {
+IKeymasterDevice* HIDL_FETCH_IKeymasterDevice(const char* /* name */) {
     keymaster2_device_t* dev = nullptr;
 
-    ALOGI("Fetching keymaster device name %s", name);
-
-    uint32_t version = -1;
-    bool supports_ec = false;
-    bool supports_all_digests = false;
-
-    if (name && strcmp(name, "softwareonly") == 0) {
-        dev = (new SoftKeymasterDevice(new SoftwareOnlyHidlKeymasterContext))->keymaster2_device();
-    } else if (name && strcmp(name, "default") == 0) {
-        auto rc = keymaster_device_initialize(&dev, &version, &supports_ec, &supports_all_digests);
-        if (rc) return nullptr;
-    }
+    uint32_t version;
+    bool supports_ec;
+    bool supports_all_digests;
+    auto rc = keymaster_device_initialize(&dev, &version, &supports_ec, &supports_all_digests);
+    if (rc) return nullptr;
 
     auto kmrc = ::keymaster::ConfigureDevice(dev);
     if (kmrc != KM_ERROR_OK) {
