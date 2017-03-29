@@ -135,7 +135,7 @@ bool ReadThread::threadLoop() {
 
 }  // namespace
 
-StreamIn::StreamIn(audio_hw_device_t* device, audio_stream_in_t* stream)
+StreamIn::StreamIn(const sp<Device>& device, audio_stream_in_t* stream)
         : mIsClosed(false), mDevice(device), mStream(stream),
           mStreamCommon(new Stream(&stream->common)),
           mStreamMmap(new StreamMmap<audio_stream_in_t>(stream)),
@@ -154,9 +154,8 @@ StreamIn::~StreamIn() {
         status_t status = EventFlag::deleteEventFlag(&mEfGroup);
         ALOGE_IF(status, "read MQ event flag deletion error: %s", strerror(-status));
     }
-    mDevice->close_input_stream(mDevice, mStream);
+    mDevice->closeInputStream(mStream);
     mStream = nullptr;
-    mDevice = nullptr;
 }
 
 // Methods from ::android::hardware::audio::V2_0::IStream follow.
