@@ -39,71 +39,77 @@ class SapHidlTest;
 
 /* Callback class for sap response */
 class SapCallback : public ISapCallback {
-private:
-    SapHidlTest& parent;
+ private:
+  SapHidlTest& parent;
 
-public:
-    SapResultCode sapResultCode;
-    int32_t sapResponseToken;
+ public:
+  SapResultCode sapResultCode;
+  int32_t sapResponseToken;
 
-    SapCallback(SapHidlTest& parent);
+  SapCallback(SapHidlTest& parent);
 
-    virtual ~SapCallback() = default;
+  virtual ~SapCallback() = default;
 
-    Return<void> connectResponse(int32_t token, SapConnectRsp sapConnectRsp, int32_t maxMsgSize);
+  Return<void> connectResponse(int32_t token, SapConnectRsp sapConnectRsp,
+                               int32_t maxMsgSize);
 
-    Return<void> disconnectResponse(int32_t token);
+  Return<void> disconnectResponse(int32_t token);
 
-    Return<void> disconnectIndication(int32_t token, SapDisconnectType disconnectType);
+  Return<void> disconnectIndication(int32_t token,
+                                    SapDisconnectType disconnectType);
 
-    Return<void> apduResponse(int32_t token, SapResultCode resultCode,
-            const ::android::hardware::hidl_vec<uint8_t>& apduRsp);
+  Return<void> apduResponse(
+      int32_t token, SapResultCode resultCode,
+      const ::android::hardware::hidl_vec<uint8_t>& apduRsp);
 
-    Return<void> transferAtrResponse(int32_t token, SapResultCode resultCode,
-            const ::android::hardware::hidl_vec<uint8_t>& atr);
+  Return<void> transferAtrResponse(
+      int32_t token, SapResultCode resultCode,
+      const ::android::hardware::hidl_vec<uint8_t>& atr);
 
-    Return<void> powerResponse(int32_t token, SapResultCode resultCode);
+  Return<void> powerResponse(int32_t token, SapResultCode resultCode);
 
-    Return<void> resetSimResponse(int32_t token, SapResultCode resultCode);
+  Return<void> resetSimResponse(int32_t token, SapResultCode resultCode);
 
-    Return<void> statusIndication(int32_t token, SapStatus status);
+  Return<void> statusIndication(int32_t token, SapStatus status);
 
-    Return<void> transferCardReaderStatusResponse(int32_t token, SapResultCode resultCode,
-            int32_t cardReaderStatus);
+  Return<void> transferCardReaderStatusResponse(int32_t token,
+                                                SapResultCode resultCode,
+                                                int32_t cardReaderStatus);
 
-    Return<void> errorResponse(int32_t token);
+  Return<void> errorResponse(int32_t token);
 
-    Return<void> transferProtocolResponse(int32_t token, SapResultCode resultCode);
+  Return<void> transferProtocolResponse(int32_t token,
+                                        SapResultCode resultCode);
 };
 
 // The main test class for Sap HIDL.
 class SapHidlTest : public ::testing::VtsHalHidlTargetTestBase {
-private:
-    std::mutex mtx;
-    std::condition_variable cv;
-    int count;
+ private:
+  std::mutex mtx;
+  std::condition_variable cv;
+  int count;
 
-public:
-    virtual void SetUp() override;
+ public:
+  virtual void SetUp() override;
 
-    virtual void TearDown() override;
+  virtual void TearDown() override;
 
-    /* Used as a mechanism to inform the test about data/event callback */
-    void notify();
+  /* Used as a mechanism to inform the test about data/event callback */
+  void notify();
 
-    /* Test code calls this function to wait for response */
-    std::cv_status wait();
+  /* Test code calls this function to wait for response */
+  std::cv_status wait();
 
-    /* Sap service */
-    sp<ISap> sap;
+  /* Sap service */
+  sp<ISap> sap;
 
-    /* Sap Callback object */
-    sp<SapCallback> sapCb;
+  /* Sap Callback object */
+  sp<SapCallback> sapCb;
 };
 
 // A class for test environment setup
 class SapHidlEnvironment : public ::testing::Environment {
-public:
-    virtual void SetUp() {}
-    virtual void TearDown() {}
+ public:
+  virtual void SetUp() {}
+  virtual void TearDown() {}
 };
