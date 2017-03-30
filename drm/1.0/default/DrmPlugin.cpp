@@ -77,7 +77,7 @@ namespace implementation {
             android::DrmPlugin::KeyRequestType legacyRequestType =
                     android::DrmPlugin::kKeyRequestType_Unknown;
 
-            status_t status = mLegacyPlugin->getKeyRequest(toVector(scope),
+            status = mLegacyPlugin->getKeyRequest(toVector(scope),
                     toVector(initData), String8(mimeType), legacyKeyType,
                     legacyOptionalParameters, legacyRequest, defaultUrl,
                     &legacyRequestType);
@@ -93,7 +93,7 @@ namespace implementation {
                 requestType = KeyRequestType::RELEASE;
                 break;
             case android::DrmPlugin::kKeyRequestType_Unknown:
-                status = android::BAD_VALUE;
+                requestType = KeyRequestType::UNKNOWN;
                 break;
             }
         }
