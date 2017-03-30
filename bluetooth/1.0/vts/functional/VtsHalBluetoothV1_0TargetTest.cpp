@@ -23,9 +23,8 @@
 #include <hardware/bluetooth.h>
 #include <utils/Log.h>
 
+#include <VtsHalHidlTargetCallbackBase.h>
 #include <VtsHalHidlTargetTestBase.h>
-#include <condition_variable>
-#include <mutex>
 #include <queue>
 
 using ::android::hardware::bluetooth::V1_0::IBluetoothHci;
@@ -92,6 +91,11 @@ using ::android::sp;
 #define ACL_BROADCAST_ACTIVE_SLAVE (0x1 << 4)
 #define ACL_PACKET_BOUNDARY_COMPLETE (0x3 << 6)
 
+constexpr char kCallbackNameAclEventReceived[] = "aclDataReceived";
+constexpr char kCallbackNameHciEventReceived[] = "hciEventReceived";
+constexpr char kCallbackNameInitializationComplete[] = "initializationComplete";
+constexpr char kCallbackNameScoEventReceived[] = "scoDataReceived";
+
 class ThroughputLogger {
  public:
   ThroughputLogger(std::string task)
@@ -121,7 +125,8 @@ class BluetoothHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  public:
   virtual void SetUp() override {
     // currently test passthrough mode only
-    bluetooth = ::testing::VtsHalHidlTargetTestBase::getService<IBluetoothHci>();
+    bluetooth =
+        ::testing::VtsHalHidlTargetTestBase::getService<IBluetoothHci>();
     ASSERT_NE(bluetooth, nullptr);
     ALOGI("%s: getService() for bluetooth is %s", __func__,
           bluetooth->isRemote() ? "remote" : "local");
@@ -135,10 +140,6 @@ class BluetoothHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     max_sco_data_packets = 0;
 
     initialized = false;
-    initialized_count = 0;
-    event_count = 0;
-    acl_count = 0;
-    sco_count = 0;
     event_cb_count = 0;
     acl_cb_count = 0;
     sco_cb_count = 0;
@@ -146,7 +147,18 @@ class BluetoothHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     ASSERT_EQ(initialized, false);
     bluetooth->initialize(bluetooth_cb);
 
-    wait_for_init_callback();
+    bluetooth_cb->SetWaitTimeout(kCallbackNameInitializationComplete,
+                                 WAIT_FOR_INIT_TIMEOUT);
+    bluetooth_cb->SetWaitTimeout(kCallbackNameHciEventReceived,
+                                 WAIT_FOR_HCI_EVENT_TIMEOUT);
+    bluetooth_cb->SetWaitTimeout(kCallbackNameAclEventReceived,
+                                 WAIT_FOR_ACL_DATA_TIMEOUT);
+    bluetooth_cb->SetWaitTimeout(kCallbackNameScoEventReceived,
+                                 WAIT_FOR_SCO_DATA_TIMEOUT);
+
+    EXPECT_TRUE(
+        bluetooth_cb->WaitForCallback(kCallbackNameInitializationComplete)
+            .first);
 
     ASSERT_EQ(initialized, true);
   }
@@ -171,82 +183,10 @@ class BluetoothHidlTest : public ::testing::VtsHalHidlTargetTestBase {
   void wait_for_command_complete_event(hidl_vec<uint8_t> cmd);
   int wait_for_completed_packets_event(uint16_t handle);
 
-  // Inform the test about the initialization callback
-  inline void notify_initialized() {
-    std::unique_lock<std::mutex> lock(initialized_mutex);
-    initialized_count++;
-    initialized_condition.notify_one();
-  }
-
-  // Test code calls this function to wait for the init callback
-  inline void wait_for_init_callback() {
-    std::unique_lock<std::mutex> lock(initialized_mutex);
-
-    auto start_time = std::chrono::steady_clock::now();
-    while (initialized_count == 0)
-      if (initialized_condition.wait_until(lock,
-                                     start_time + WAIT_FOR_INIT_TIMEOUT) ==
-          std::cv_status::timeout)
-        return;
-    initialized_count--;
-  }
-
-  // Inform the test about an event callback
-  inline void notify_event_received() {
-    std::unique_lock<std::mutex> lock(event_mutex);
-    event_count++;
-    event_condition.notify_one();
-  }
-
-  // Test code calls this function to wait for an event callback
-  inline void wait_for_event() {
-    std::unique_lock<std::mutex> lock(event_mutex);
-
-    auto start_time = std::chrono::steady_clock::now();
-    while (event_count == 0)
-      if (event_condition.wait_until(lock,
-                                     start_time + WAIT_FOR_HCI_EVENT_TIMEOUT) ==
-          std::cv_status::timeout)
-        return;
-    event_count--;
-  }
-
-  // Inform the test about an acl data callback
-  inline void notify_acl_data_received() {
-    std::unique_lock<std::mutex> lock(acl_mutex);
-    acl_count++;
-    acl_condition.notify_one();
-  }
-
-  // Test code calls this function to wait for an acl data callback
-  inline void wait_for_acl() {
-    std::unique_lock<std::mutex> lock(acl_mutex);
-
-    while (acl_count == 0)
-      acl_condition.wait_until(
-          lock, std::chrono::steady_clock::now() + WAIT_FOR_ACL_DATA_TIMEOUT);
-    acl_count--;
-  }
-
-  // Inform the test about a sco data callback
-  inline void notify_sco_data_received() {
-    std::unique_lock<std::mutex> lock(sco_mutex);
-    sco_count++;
-    sco_condition.notify_one();
-  }
-
-  // Test code calls this function to wait for a sco data callback
-  inline void wait_for_sco() {
-    std::unique_lock<std::mutex> lock(sco_mutex);
-
-    while (sco_count == 0)
-      sco_condition.wait_until(
-          lock, std::chrono::steady_clock::now() + WAIT_FOR_SCO_DATA_TIMEOUT);
-    sco_count--;
-  }
-
   // A simple test implementation of BluetoothHciCallbacks.
-  class BluetoothHciCallbacks : public IBluetoothHciCallbacks {
+  class BluetoothHciCallbacks
+      : public ::testing::VtsHalHidlTargetCallbackBase<BluetoothHidlTest>,
+        public IBluetoothHciCallbacks {
     BluetoothHidlTest& parent_;
 
    public:
@@ -256,7 +196,7 @@ class BluetoothHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
     Return<void> initializationComplete(Status status) override {
       parent_.initialized = (status == Status::SUCCESS);
-      parent_.notify_initialized();
+      NotifyFromCallback(kCallbackNameInitializationComplete);
       ALOGV("%s (status = %d)", __func__, static_cast<int>(status));
       return Void();
     };
@@ -265,7 +205,7 @@ class BluetoothHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         const ::android::hardware::hidl_vec<uint8_t>& event) override {
       parent_.event_cb_count++;
       parent_.event_queue.push(event);
-      parent_.notify_event_received();
+      NotifyFromCallback(kCallbackNameHciEventReceived);
       ALOGV("Event received (length = %d)", static_cast<int>(event.size()));
       return Void();
     };
@@ -274,7 +214,7 @@ class BluetoothHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         const ::android::hardware::hidl_vec<uint8_t>& data) override {
       parent_.acl_cb_count++;
       parent_.acl_queue.push(data);
-      parent_.notify_acl_data_received();
+      NotifyFromCallback(kCallbackNameAclEventReceived);
       return Void();
     };
 
@@ -282,13 +222,13 @@ class BluetoothHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         const ::android::hardware::hidl_vec<uint8_t>& data) override {
       parent_.sco_cb_count++;
       parent_.sco_queue.push(data);
-      parent_.notify_sco_data_received();
+      NotifyFromCallback(kCallbackNameScoEventReceived);
       return Void();
     };
   };
 
   sp<IBluetoothHci> bluetooth;
-  sp<IBluetoothHciCallbacks> bluetooth_cb;
+  sp<BluetoothHciCallbacks> bluetooth_cb;
   std::queue<hidl_vec<uint8_t>> event_queue;
   std::queue<hidl_vec<uint8_t>> acl_queue;
   std::queue<hidl_vec<uint8_t>> sco_queue;
@@ -303,20 +243,6 @@ class BluetoothHidlTest : public ::testing::VtsHalHidlTargetTestBase {
   int max_sco_data_packet_length;
   int max_acl_data_packets;
   int max_sco_data_packets;
-
- private:
-  std::mutex initialized_mutex;
-  std::mutex event_mutex;
-  std::mutex sco_mutex;
-  std::mutex acl_mutex;
-  std::condition_variable initialized_condition;
-  std::condition_variable event_condition;
-  std::condition_variable sco_condition;
-  std::condition_variable acl_condition;
-  int initialized_count;
-  int event_count;
-  int sco_count;
-  int acl_count;
 };
 
 // A class for test environment setup (kept since this file is a template).
@@ -334,7 +260,8 @@ void BluetoothHidlTest::wait_for_command_complete_event(hidl_vec<uint8_t> cmd) {
   int status_event_count = 0;
   hidl_vec<uint8_t> event;
   do {
-    wait_for_event();
+    EXPECT_TRUE(
+        bluetooth_cb->WaitForCallback(kCallbackNameHciEventReceived).first);
     EXPECT_LT(static_cast<size_t>(0), event_queue.size());
     if (event_queue.size() == 0) {
       event.resize(0);
@@ -366,7 +293,8 @@ void BluetoothHidlTest::setBufferSizes() {
   hidl_vec<uint8_t> cmd = COMMAND_HCI_READ_BUFFER_SIZE;
   bluetooth->sendHciCommand(cmd);
 
-  wait_for_event();
+  EXPECT_TRUE(
+      bluetooth_cb->WaitForCallback(kCallbackNameHciEventReceived).first);
 
   EXPECT_LT(static_cast<size_t>(0), event_queue.size());
   if (event_queue.size() == 0) return;
@@ -420,7 +348,8 @@ void BluetoothHidlTest::sendAndCheckHCI(int num_packets) {
     bluetooth->sendHciCommand(cmd);
 
     // Check the loopback of the HCI packet
-    wait_for_event();
+    EXPECT_TRUE(
+        bluetooth_cb->WaitForCallback(kCallbackNameHciEventReceived).first);
     hidl_vec<uint8_t> event = event_queue.front();
     event_queue.pop();
     size_t compare_length =
@@ -456,7 +385,8 @@ void BluetoothHidlTest::sendAndCheckSCO(int num_packets, size_t size,
     bluetooth->sendScoData(sco_vector);
 
     // Check the loopback of the SCO packet
-    wait_for_sco();
+    EXPECT_TRUE(
+        bluetooth_cb->WaitForCallback(kCallbackNameScoEventReceived).first);
     hidl_vec<uint8_t> sco_loopback = sco_queue.front();
     sco_queue.pop();
 
@@ -501,7 +431,8 @@ void BluetoothHidlTest::sendAndCheckACL(int num_packets, size_t size,
     bluetooth->sendAclData(acl_vector);
 
     // Check the loopback of the ACL packet
-    wait_for_acl();
+    EXPECT_TRUE(
+        bluetooth_cb->WaitForCallback(kCallbackNameAclEventReceived).first);
     hidl_vec<uint8_t> acl_loopback = acl_queue.front();
     acl_queue.pop();
 
@@ -527,7 +458,8 @@ void BluetoothHidlTest::sendAndCheckACL(int num_packets, size_t size,
 
 // Return the number of completed packets reported by the controller.
 int BluetoothHidlTest::wait_for_completed_packets_event(uint16_t handle) {
-  wait_for_event();
+  EXPECT_TRUE(
+      bluetooth_cb->WaitForCallback(kCallbackNameHciEventReceived).first);
   int packets_processed = 0;
   while (event_queue.size() > 0) {
     hidl_vec<uint8_t> event = event_queue.front();
@@ -554,7 +486,8 @@ void BluetoothHidlTest::enterLoopbackMode(std::vector<uint16_t>& sco_handles,
   int connection_event_count = 0;
   hidl_vec<uint8_t> event;
   do {
-    wait_for_event();
+    EXPECT_TRUE(
+        bluetooth_cb->WaitForCallback(kCallbackNameHciEventReceived).first);
     event = event_queue.front();
     event_queue.pop();
     EXPECT_GT(event.size(),
@@ -592,7 +525,7 @@ void BluetoothHidlTest::enterLoopbackMode(std::vector<uint16_t>& sco_handles,
 }
 
 // Empty test: Initialize()/Close() are called in SetUp()/TearDown().
-TEST_F(BluetoothHidlTest, InitializeAndClose) { }
+TEST_F(BluetoothHidlTest, InitializeAndClose) {}
 
 // Send an HCI Reset with sendHciCommand and wait for a command complete event.
 TEST_F(BluetoothHidlTest, HciReset) {
@@ -607,7 +540,8 @@ TEST_F(BluetoothHidlTest, HciVersionTest) {
   hidl_vec<uint8_t> cmd = COMMAND_HCI_READ_LOCAL_VERSION_INFORMATION;
   bluetooth->sendHciCommand(cmd);
 
-  wait_for_event();
+  EXPECT_TRUE(
+      bluetooth_cb->WaitForCallback(kCallbackNameHciEventReceived).first);
 
   hidl_vec<uint8_t> event = event_queue.front();
   event_queue.pop();
@@ -627,7 +561,8 @@ TEST_F(BluetoothHidlTest, HciUnknownCommand) {
   hidl_vec<uint8_t> cmd = COMMAND_HCI_SHOULD_BE_UNKNOWN;
   bluetooth->sendHciCommand(cmd);
 
-  wait_for_event();
+  EXPECT_TRUE(
+      bluetooth_cb->WaitForCallback(kCallbackNameHciEventReceived).first);
 
   hidl_vec<uint8_t> event = event_queue.front();
   event_queue.pop();
