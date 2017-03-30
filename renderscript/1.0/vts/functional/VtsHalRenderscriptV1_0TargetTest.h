@@ -32,6 +32,7 @@ using ::android::hardware::renderscript::V1_0::AllocationAdapter;
 using ::android::hardware::renderscript::V1_0::AllocationCubemapFace;
 using ::android::hardware::renderscript::V1_0::AllocationMipmapControl;
 using ::android::hardware::renderscript::V1_0::AllocationUsageType;
+using ::android::hardware::renderscript::V1_0::Closure;
 using ::android::hardware::renderscript::V1_0::IContext;
 using ::android::hardware::renderscript::V1_0::IDevice;
 using ::android::hardware::renderscript::V1_0::ContextType;
@@ -62,7 +63,26 @@ using ::android::hardware::hidl_vec;
 using ::android::hardware::hidl_string;
 using ::android::sp;
 
-// bitcode variables
+// bitcode slots
+extern const int mExportVarIdx_var_int;
+extern const int mExportVarIdx_var_long;
+extern const int mExportVarIdx_var_float;
+extern const int mExportVarIdx_var_double;
+extern const int mExportVarIdx_var_allocation;
+extern const int mExportVarIdx_var_uint32_t;
+extern const int mExportVarIdx_var_point2;
+extern const int mExportVarIdx_var_int_ptr;
+// bitcode invoke slots
+//extern const int mExportForEachIdx_root;
+extern const int mExportForEachIdx_increment;
+// bitcode reduce slots
+extern const int mExportReduceIdx_summation;
+// bitcode invoke slots
+extern const int mExportFuncIdx_function;
+extern const int mExportFuncIdx_functionV;
+extern const int mExportFuncIdx_setBuffer;
+extern const int mExportFuncIdx_setAllocation;
+// bitcode
 typedef signed char int8_t;
 extern const int8_t bitCode[];
 extern const int bitCodeLength;
