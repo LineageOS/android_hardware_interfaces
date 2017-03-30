@@ -18,7 +18,7 @@
 
 #include <android/hardware/automotive/vehicle/2.0/IVehicle.h>
 #include <android/log.h>
-#include <system/qemu_pipe.h>
+#include <qemu_pipe.h>
 
 #include "PipeComm.h"
 
