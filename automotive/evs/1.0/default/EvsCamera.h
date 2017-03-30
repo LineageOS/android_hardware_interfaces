@@ -32,54 +32,50 @@ namespace V1_0 {
 namespace implementation {
 
 
+// From EvsEnumerator.h
+class EvsEnumerator;
+
+
 class EvsCamera : public IEvsCamera {
 public:
     // Methods from ::android::hardware::automotive::evs::V1_0::IEvsCamera follow.
-    Return<void> getId(getId_cb id_cb) override;
-
+    Return<void> getCameraInfo(getCameraInfo_cb _hidl_cb)  override;
     Return <EvsResult> setMaxFramesInFlight(uint32_t bufferCount) override;
-
     Return <EvsResult> startVideoStream(const ::android::sp<IEvsCameraStream>& stream) override;
-
     Return<void> doneWithFrame(const BufferDesc& buffer) override;
-
     Return<void> stopVideoStream() override;
-
     Return <int32_t> getExtendedInfo(uint32_t opaqueIdentifier) override;
-
     Return <EvsResult> setExtendedInfo(uint32_t opaqueIdentifier, int32_t opaqueValue) override;
 
     // Implementation details
-    EvsCamera(const char* id);
-
+    EvsCamera(const char *id);
     virtual ~EvsCamera() override;
+    void forceShutdown();   // This gets called if another caller "steals" ownership of the camera
 
     const CameraDesc& getDesc() { return mDescription; };
 
     static const char kCameraName_Backup[];
-    static const char kCameraName_RightTurn[];
 
 private:
     // These three functions are expected to be called while mAccessLock is held
     bool setAvailableFrames_Locked(unsigned bufferCount);
-
     unsigned increaseAvailableFrames_Locked(unsigned numToAdd);
-
     unsigned decreaseAvailableFrames_Locked(unsigned numToRemove);
 
     void generateFrames();
-
     void fillTestFrame(const BufferDesc& buff);
 
-    CameraDesc mDescription = {};  // The properties of this camera
+    sp<EvsEnumerator> mEnumerator;  // The enumerator object that created this camera
+
+    CameraDesc mDescription = {};   // The properties of this camera
 
     std::thread mCaptureThread;     // The thread we'll use to synthesize frames
 
-    uint32_t mWidth = 0;        // Horizontal pixel count in the buffers
-    uint32_t mHeight = 0;        // Vertical pixel count in the buffers
-    uint32_t mFormat = 0;        // Values from android_pixel_format_t [TODO: YUV?  Leave opaque?]
-    uint32_t mUsage = 0;        // Values from from Gralloc.h
-    uint32_t mStride = 0;        // Bytes per line in the buffers
+    uint32_t mWidth  = 0;       // Horizontal pixel count in the buffers
+    uint32_t mHeight = 0;       // Vertical pixel count in the buffers
+    uint32_t mFormat = 0;       // Values from android_pixel_format_t [TODO: YUV?  Leave opaque?]
+    uint32_t mUsage  = 0;       // Values from from Gralloc.h
+    uint32_t mStride = 0;       // Bytes per line in the buffers
 
     sp <IEvsCameraStream> mStream = nullptr;  // The callback used to deliver each frame
 
@@ -98,10 +94,11 @@ private:
         STOPPED,
         RUNNING,
         STOPPING,
+        DEAD,
     };
     StreamStateValues mStreamState;
 
-    // Syncrhonization necessary to deconflict mCaptureThread from the main service thread
+    // Synchronization necessary to deconflict mCaptureThread from the main service thread
     std::mutex mAccessLock;
 };
 

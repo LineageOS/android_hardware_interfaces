@@ -18,40 +18,14 @@ package android.hardware.automotive.evs@1.0;
 
 
 /**
- * Bit flags indicating suggested uses for a given EVS camera
- *
- * The values in the UsageHint bit field provide a generic expression of how a
- * given camera is intended to be used. The values for these flags support
- * existing use cases, and are used by the default EVS application to select
- * appropriate cameras for display based on observed vehicle state (such as
- * turn signal activation or selection of reverse gear). When implementing
- * their own specialized EVS Applications, OEMs are free to use these flags
- * and/or the opaque vendor_flags to drive their own vehicle specific logic.
- */
-enum UsageHint : uint32_t {
-    USAGE_HINT_REVERSE      = 0x00000001,
-    USAGE_HINT_LEFT_TURN    = 0x00000002,
-    USAGE_HINT_RIGHT_TURN   = 0x00000004,
-};
-
-
-/**
  * Structure describing the basic properties of an EVS camera
  *
  * The HAL is responsible for filling out this structure for each
- * EVS camera in the system. Attention should be given to the field
- * of view, direction of view, and location parameters as these may
- * be used to (if available) to project overlay graphics into the
- * scene by an EVS application.
- * Any of these values for which the HAL does not have reasonable values
- * should be set to ZERO.
+ * EVS camera in the system.
  */
 struct CameraDesc {
-    string              cameraId;
-    bitfield<UsageHint> hints;                  // Mask of usage hints
-    uint32_t            vendorFlags;            // Opaque value from driver
-    uint32_t            defaultHorResolution;   // Units of pixels
-    uint32_t            defaultVerResolution;   // Units of pixels
+    string      cameraId;
+    uint32_t    vendorFlags;    // Opaque value from driver
 };
 
 
@@ -65,9 +39,7 @@ struct CameraDesc {
  */
 struct DisplayDesc {
     string      displayId;
-    uint32_t    vendorFlags;                // Opaque value from driver
-    uint32_t    defaultHorResolution;       // Units of pixels
-    uint32_t    defaultVerResolution;       // Units of pixels
+    uint32_t    vendorFlags;    // Opaque value from driver
 };
 
 
@@ -86,7 +58,8 @@ struct DisplayDesc {
 struct BufferDesc {
     uint32_t    width;      // Units of pixels
     uint32_t    height;     // Units of pixels
-    uint32_t    stride;     // Units of bytes
+    uint32_t    stride;     // Units of pixels to match gralloc
+    uint32_t    pixelSize;  // Units of bytes
     uint32_t    format;     // May contain values from android_pixel_format_t
     uint32_t    usage;      // May contain values from from Gralloc.h
     uint32_t    bufferId;   // Opaque value from driver
@@ -108,6 +81,7 @@ enum DisplayState : uint32_t {
     NOT_VISIBLE,            // Display is inhibited
     VISIBLE_ON_NEXT_FRAME,  // Will become visible with next frame
     VISIBLE,                // Display is currently active
+    DEAD,                   // Driver is in an undefined state.  Interface should be closed.
     NUM_STATES              // Must be last
 };
 
@@ -118,5 +92,6 @@ enum EvsResult : uint32_t {
     INVALID_ARG,
     STREAM_ALREADY_RUNNING,
     BUFFER_NOT_AVAILABLE,
+    OWNERSHIP_LOST,
     UNDERLYING_SERVICE_ERROR,
 };
