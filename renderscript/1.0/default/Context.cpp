@@ -63,7 +63,7 @@ Return<Allocation> Context::allocationAdapterCreate(Type type, Allocation baseAl
 Return<void> Context::allocationAdapterOffset(Allocation alloc, const hidl_vec<uint32_t>& offsets) {
     RsAllocation _alloc = hidl_to_rs<RsAllocation>(alloc);
     const hidl_vec<uint32_t>& _offsets = offsets;
-    Device::getHal().AllocationAdapterOffset(mContext, _alloc, _offsets.data(), _offsets.size());
+    Device::getHal().AllocationAdapterOffset(mContext, _alloc, _offsets.data(), _offsets.size() * sizeof(uint32_t));
     return Void();
 }
 
@@ -552,7 +552,7 @@ Return<ScriptGroup> Context::scriptGroupCreate(const hidl_vec<ScriptKernelID>& k
     std::vector<RsScriptKernelID> _dstK    = hidl_to_rs<RsScriptKernelID>(dstK,    [](ScriptFieldID val) { return hidl_to_rs<RsScriptKernelID>(val); });
     std::vector<RsScriptFieldID>  _dstF    = hidl_to_rs<RsScriptFieldID>(dstF,     [](ScriptFieldID val) { return hidl_to_rs<RsScriptFieldID>(val); });
     std::vector<RsType>           _types   = hidl_to_rs<RsType>(types,             [](Type val) { return hidl_to_rs<RsType>(val); });
-    RsScriptGroup _scriptGroup = Device::getHal().ScriptGroupCreate(mContext, _kernels.data(), _kernels.size(), _srcK.data(), _srcK.size(), _dstK.data(), _dstK.size(), _dstF.data(), _dstF.size(), _types.data(), _types.size());
+    RsScriptGroup _scriptGroup = Device::getHal().ScriptGroupCreate(mContext, _kernels.data(), _kernels.size() * sizeof(RsScriptKernelID), _srcK.data(), _srcK.size() * sizeof(RsScriptKernelID), _dstK.data(), _dstK.size() * sizeof(RsScriptKernelID), _dstF.data(), _dstF.size() * sizeof(RsScriptFieldID), _types.data(), _types.size() * sizeof(RsType));
     return rs_to_hidl<ScriptGroup>(_scriptGroup);
 }
 
@@ -725,7 +725,7 @@ Return<void> Context::scriptSetVarVE(Script vs, uint32_t slot, const hidl_vec<ui
     size_t _len = data.size();
     RsElement _ve = hidl_to_rs<RsElement>(ve);
     const uint32_t* _dimsPtr = dims.data();
-    size_t _dimLen = dims.size();
+    size_t _dimLen = dims.size() * sizeof(uint32_t);
     Device::getHal().ScriptSetVarVE(mContext, _vs, _slot, _dataPtr, _len, _ve, _dimsPtr, _dimLen);
     return Void();
 }
