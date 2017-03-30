@@ -22,10 +22,8 @@
 #include <android/hardware/nfc/1.0/types.h>
 #include <hardware/nfc.h>
 
+#include <VtsHalHidlTargetCallbackBase.h>
 #include <VtsHalHidlTargetTestBase.h>
-#include <chrono>
-#include <condition_variable>
-#include <mutex>
 
 using ::android::hardware::nfc::V1_0::INfc;
 using ::android::hardware::nfc::V1_0::INfcClientCallback;
@@ -55,6 +53,43 @@ using ::android::sp;
 #define VERSION 0x11
 #define TIMEOUT_PERIOD 5
 
+constexpr char kCallbackNameSendEvent[] = "sendEvent";
+constexpr char kCallbackNameSendData[] = "sendData";
+
+class NfcClientCallbackArgs {
+   public:
+    NfcEvent last_event_;
+    NfcStatus last_status_;
+    NfcData last_data_;
+};
+
+/* Callback class for data & Event. */
+class NfcClientCallback
+    : public ::testing::VtsHalHidlTargetCallbackBase<NfcClientCallbackArgs>,
+      public INfcClientCallback {
+   public:
+    virtual ~NfcClientCallback() = default;
+
+    /* sendEvent callback function - Records the Event & Status
+     * and notifies the TEST
+     **/
+    Return<void> sendEvent(NfcEvent event, NfcStatus event_status) override {
+        NfcClientCallbackArgs args;
+        args.last_event_ = event;
+        args.last_status_ = event_status;
+        NotifyFromCallback(kCallbackNameSendEvent, args);
+        return Void();
+    };
+
+    /* sendData callback function. Records the data and notifies the TEST*/
+    Return<void> sendData(const NfcData& data) override {
+        NfcClientCallbackArgs args;
+        args.last_data_ = data;
+        NotifyFromCallback(kCallbackNameSendData, args);
+        return Void();
+    };
+};
+
 // The main test class for NFC HIDL HAL.
 class NfcHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  public:
@@ -62,88 +97,28 @@ class NfcHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     nfc_ = ::testing::VtsHalHidlTargetTestBase::getService<INfc>();
     ASSERT_NE(nfc_, nullptr);
 
-    nfc_cb_ = new NfcClientCallback(*this);
+    nfc_cb_ = new NfcClientCallback();
     ASSERT_NE(nfc_cb_, nullptr);
-
-    count = 0;
-    last_event_ = NfcEvent::ERROR;
-    last_status_ = NfcStatus::FAILED;
 
     EXPECT_EQ(NfcStatus::OK, nfc_->open(nfc_cb_));
     // Wait for OPEN_CPLT event
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(NfcEvent::OPEN_CPLT, last_event_);
-    EXPECT_EQ(NfcStatus::OK, last_status_);
+    auto res = nfc_cb_->WaitForCallback(kCallbackNameSendEvent);
+    EXPECT_TRUE(res.no_timeout);
+    EXPECT_EQ(NfcEvent::OPEN_CPLT, res.args->last_event_);
+    EXPECT_EQ(NfcStatus::OK, res.args->last_status_);
   }
 
   virtual void TearDown() override {
     EXPECT_EQ(NfcStatus::OK, nfc_->close());
     // Wait for CLOSE_CPLT event
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(NfcEvent::CLOSE_CPLT, last_event_);
-    EXPECT_EQ(NfcStatus::OK, last_status_);
+    auto res = nfc_cb_->WaitForCallback(kCallbackNameSendEvent);
+    EXPECT_TRUE(res.no_timeout);
+    EXPECT_EQ(NfcEvent::CLOSE_CPLT, res.args->last_event_);
+    EXPECT_EQ(NfcStatus::OK, res.args->last_status_);
   }
-
-  /* Used as a mechanism to inform the test about data/event callback */
-  inline void notify() {
-    std::unique_lock<std::mutex> lock(mtx);
-    count++;
-    cv.notify_one();
-  }
-
-  /* Test code calls this function to wait for data/event callback */
-  inline std::cv_status wait() {
-    std::unique_lock<std::mutex> lock(mtx);
-
-    std::cv_status status = std::cv_status::no_timeout;
-    auto now = std::chrono::system_clock::now();
-    while (count == 0) {
-      status = cv.wait_until(lock, now + std::chrono::seconds(TIMEOUT_PERIOD));
-      if (status == std::cv_status::timeout) return status;
-    }
-    count--;
-    return status;
-  }
-
-  /* Callback class for data & Event. */
-  class NfcClientCallback : public INfcClientCallback {
-    NfcHidlTest& parent_;
-
-   public:
-    NfcClientCallback(NfcHidlTest& parent) : parent_(parent){};
-
-    virtual ~NfcClientCallback() = default;
-
-    /* sendEvent callback function - Records the Event & Status
-     * and notifies the TEST
-     **/
-    Return<void> sendEvent(NfcEvent event, NfcStatus event_status) override {
-      parent_.last_event_ = event;
-      parent_.last_status_ = event_status;
-      parent_.notify();
-      return Void();
-    };
-
-    /* sendData callback function. Records the data and notifies the TEST*/
-    Return<void> sendData(const NfcData& data) override {
-      size_t size = parent_.last_data_.size();
-      parent_.last_data_.resize(size + 1);
-      parent_.last_data_[size] = data;
-      parent_.notify();
-      return Void();
-    };
-  };
 
   sp<INfc> nfc_;
-  sp<INfcClientCallback> nfc_cb_;
-  NfcEvent last_event_;
-  NfcStatus last_status_;
-  hidl_vec<NfcData> last_data_;
-
- private:
-  std::mutex mtx;
-  std::condition_variable cv;
-  int count;
+  sp<NfcClientCallback> nfc_cb_;
 };
 
 // A class for test environment setup (kept since this file is a template).
@@ -175,12 +150,12 @@ TEST_F(NfcHidlTest, WriteCoreReset) {
   NfcData data = cmd;
   EXPECT_EQ(data.size(), nfc_->write(data));
   // Wait for CORE_RESET_RSP
-  EXPECT_EQ(std::cv_status::no_timeout, wait());
-  EXPECT_EQ(1ul, last_data_.size());
-  EXPECT_EQ(6ul, last_data_[0].size());
-  EXPECT_EQ((int)NfcStatus::OK, last_data_[0][3]);
-  EXPECT_GE(VERSION, last_data_[0][4]);
-  EXPECT_EQ(0ul, last_data_[0][5]);
+  auto res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
+  EXPECT_TRUE(res.no_timeout);
+  EXPECT_EQ(6ul, res.args->last_data_.size());
+  EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
+  EXPECT_GE(VERSION, res.args->last_data_[4]);
+  EXPECT_EQ(0ul, res.args->last_data_[5]);
 }
 
 /*
@@ -194,12 +169,12 @@ TEST_F(NfcHidlTest, WriteCoreResetConfigReset) {
   NfcData data = cmd;
   EXPECT_EQ(data.size(), nfc_->write(data));
   // Wait for CORE_RESET_RSP
-  EXPECT_EQ(std::cv_status::no_timeout, wait());
-  EXPECT_EQ(1ul, last_data_.size());
-  EXPECT_EQ(6ul, last_data_[0].size());
-  EXPECT_EQ((int)NfcStatus::OK, last_data_[0][3]);
-  EXPECT_GE(VERSION, last_data_[0][4]);
-  EXPECT_EQ(1ul, last_data_[0][5]);
+  auto res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
+  EXPECT_TRUE(res.no_timeout);
+  EXPECT_EQ(6ul, res.args->last_data_.size());
+  EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
+  EXPECT_GE(VERSION, res.args->last_data_[4]);
+  EXPECT_EQ(1ul, res.args->last_data_[5]);
 }
 
 /*
@@ -214,10 +189,10 @@ TEST_F(NfcHidlTest, WriteInvalidCommand) {
   NfcData data = cmd;
   EXPECT_EQ(data.size(), nfc_->write(data));
   // Wait for RSP
-  EXPECT_EQ(std::cv_status::no_timeout, wait());
-  EXPECT_EQ(1ul, last_data_.size());
-  EXPECT_EQ(4ul, last_data_[0].size());
-  EXPECT_EQ(SYNTAX_ERROR, last_data_[0][3]);
+  auto res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
+  EXPECT_TRUE(res.no_timeout);
+  EXPECT_EQ(4ul, res.args->last_data_.size());
+  EXPECT_EQ(SYNTAX_ERROR, res.args->last_data_[3]);
 }
 
 /*
@@ -236,29 +211,27 @@ TEST_F(NfcHidlTest, WriteInvalidAndThenValidCommand) {
   size_t size = data.size();
 
   for (int i = 0; i < 100; i++) {
-    last_data_.resize(0);
     data.resize(++size);
     data[size - 1] = 0xFF;
     EXPECT_EQ(data.size(), nfc_->write(data));
     // Wait for CORE_INTERFACE_ERROR_NTF
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(1ul, last_data_.size());
-    EXPECT_EQ(5ul, last_data_[0].size());
-    EXPECT_EQ(0x60, last_data_[0][0]);
-    EXPECT_EQ(0x08, last_data_[0][1]);
-    EXPECT_EQ(0x02, last_data_[0][2]);
-    EXPECT_EQ(SYNTAX_ERROR, last_data_[0][3]);
+    auto res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
+    EXPECT_TRUE(res.no_timeout);
+    EXPECT_EQ(5ul, res.args->last_data_.size());
+    EXPECT_EQ(0x60, res.args->last_data_[0]);
+    EXPECT_EQ(0x08, res.args->last_data_[1]);
+    EXPECT_EQ(0x02, res.args->last_data_[2]);
+    EXPECT_EQ(SYNTAX_ERROR, res.args->last_data_[3]);
   }
 
   cmd = CORE_CONN_CREATE_CMD;
   data = cmd;
-  last_data_.resize(0);
   EXPECT_EQ(data.size(), nfc_->write(data));
   // Wait for CORE_CONN_CREATE_RSP
-  EXPECT_EQ(std::cv_status::no_timeout, wait());
-  EXPECT_EQ(1ul, last_data_.size());
-  EXPECT_EQ(7ul, last_data_[0].size());
-  EXPECT_EQ((int)NfcStatus::OK, last_data_[0][3]);
+  auto res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
+  EXPECT_TRUE(res.no_timeout);
+  EXPECT_EQ(7ul, res.args->last_data_.size());
+  EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
 }
 /*
  * Bandwidth:
@@ -273,40 +246,48 @@ TEST_F(NfcHidlTest, Bandwidth) {
   NfcData data = cmd;
   EXPECT_EQ(data.size(), nfc_->write(data));
   // Wait for CORE_CONN_CREATE_RSP
-  EXPECT_EQ(std::cv_status::no_timeout, wait());
-  EXPECT_EQ(1ul, last_data_.size());
-  EXPECT_EQ(7ul, last_data_[0].size());
-  EXPECT_EQ((int)NfcStatus::OK, last_data_[0][3]);
-  uint8_t conn_id = last_data_[0][6];
-  uint32_t max_payload_size = last_data_[0][4];
+  auto res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
+  EXPECT_TRUE(res.no_timeout);
+  EXPECT_EQ(7ul, res.args->last_data_.size());
+  EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
+  uint8_t conn_id = res.args->last_data_[6];
+  uint32_t max_payload_size = res.args->last_data_[4];
 
   for (int loops = 0; loops < NUMBER_LOOPS; loops++) {
-    last_data_.resize(0);
-    data.resize(max_payload_size + LOOP_BACK_HEADER_SIZE);
-    data[0] = conn_id;
-    data[1] = 0x00;
-    data[2] = max_payload_size;
-    for (uint32_t i = 0; i < max_payload_size; i++) {
-      data[i + LOOP_BACK_HEADER_SIZE] = i;
+      res.args->last_data_.resize(0);
+      data.resize(max_payload_size + LOOP_BACK_HEADER_SIZE);
+      data[0] = conn_id;
+      data[1] = 0x00;
+      data[2] = max_payload_size;
+      for (uint32_t i = 0; i < max_payload_size; i++) {
+          data[i + LOOP_BACK_HEADER_SIZE] = i;
     }
     EXPECT_EQ(max_payload_size + LOOP_BACK_HEADER_SIZE, nfc_->write(data));
     // Wait for data and CORE_CONN_CREDITS_NTF
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    // Check if the same data was recieved back
-    EXPECT_EQ(2ul, last_data_.size());
+    auto res1 = nfc_cb_->WaitForCallback(kCallbackNameSendData);
+    EXPECT_TRUE(res1.no_timeout);
+    auto res2 = nfc_cb_->WaitForCallback(kCallbackNameSendData);
+    EXPECT_TRUE(res2.no_timeout);
+    // Check if the same data was received back
+    EXPECT_TRUE(res1.args);
+    EXPECT_TRUE(res2.args);
 
+    NfcData credits_ntf = res1.args->last_data_;
+    NfcData received_data = res2.args->last_data_;
     /* It is possible that CORE_CONN_CREDITS_NTF is received before data,
      * Find the order and do further checks depending on that */
-    uint8_t data_index = last_data_[0].size() == data.size() ? 0 : 1;
-    EXPECT_EQ(data.size(), last_data_[data_index].size());
+    if (received_data.size() != data.size()) {
+        credits_ntf = res2.args->last_data_;
+        received_data = res1.args->last_data_;
+    }
+    EXPECT_EQ(data.size(), received_data.size());
     for (size_t i = 0; i < data.size(); i++) {
-      EXPECT_EQ(data[i], last_data_[data_index][i]);
+        EXPECT_EQ(data[i], received_data[i]);
     }
 
-    EXPECT_EQ(6ul, last_data_[!data_index].size());
+    EXPECT_EQ(6ul, credits_ntf.size());
     // Check if the credit is refilled to 1
-    EXPECT_EQ(1, last_data_[!data_index][5]);
+    EXPECT_EQ(1, credits_ntf[5]);
   }
 }
 
@@ -319,9 +300,10 @@ TEST_F(NfcHidlTest, Bandwidth) {
 TEST_F(NfcHidlTest, PowerCycle) {
   EXPECT_EQ(NfcStatus::OK, nfc_->powerCycle());
   // Wait for NfcEvent.OPEN_CPLT
-  EXPECT_EQ(std::cv_status::no_timeout, wait());
-  EXPECT_EQ(NfcEvent::OPEN_CPLT, last_event_);
-  EXPECT_EQ(NfcStatus::OK, last_status_);
+  auto res = nfc_cb_->WaitForCallback(kCallbackNameSendEvent);
+  EXPECT_TRUE(res.no_timeout);
+  EXPECT_EQ(NfcEvent::OPEN_CPLT, res.args->last_event_);
+  EXPECT_EQ(NfcStatus::OK, res.args->last_status_);
 }
 
 /*
@@ -332,17 +314,19 @@ TEST_F(NfcHidlTest, PowerCycle) {
 TEST_F(NfcHidlTest, PowerCycleAfterClose) {
   EXPECT_EQ(NfcStatus::OK, nfc_->close());
   // Wait for CLOSE_CPLT event
-  EXPECT_EQ(std::cv_status::no_timeout, wait());
-  EXPECT_EQ(NfcEvent::CLOSE_CPLT, last_event_);
-  EXPECT_EQ(NfcStatus::OK, last_status_);
+  auto res = nfc_cb_->WaitForCallback(kCallbackNameSendEvent);
+  EXPECT_TRUE(res.no_timeout);
+  EXPECT_EQ(NfcEvent::CLOSE_CPLT, res.args->last_event_);
+  EXPECT_EQ(NfcStatus::OK, res.args->last_status_);
 
   EXPECT_EQ(NfcStatus::FAILED, nfc_->powerCycle());
 
   EXPECT_EQ(NfcStatus::OK, nfc_->open(nfc_cb_));
   // Wait for OPEN_CPLT event
-  EXPECT_EQ(std::cv_status::no_timeout, wait());
-  EXPECT_EQ(NfcEvent::OPEN_CPLT, last_event_);
-  EXPECT_EQ(NfcStatus::OK, last_status_);
+  res = nfc_cb_->WaitForCallback(kCallbackNameSendEvent);
+  EXPECT_TRUE(res.no_timeout);
+  EXPECT_EQ(NfcEvent::OPEN_CPLT, res.args->last_event_);
+  EXPECT_EQ(NfcStatus::OK, res.args->last_status_);
 }
 
 /*
@@ -353,13 +337,17 @@ TEST_F(NfcHidlTest, PowerCycleAfterClose) {
 TEST_F(NfcHidlTest, CoreInitialized) {
   NfcData data;
   data.resize(1);
-  for (int i = 0; i <= 6; i++)
-  {
-    data[0] = i;
-    EXPECT_EQ(NfcStatus::OK, nfc_->coreInitialized(data));
-    // Wait for NfcEvent.POST_INIT_CPLT
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(NfcEvent::POST_INIT_CPLT, last_event_);
+  NfcEvent last_event_;
+  for (int i = 0; i <= 6; i++) {
+      data[0] = i;
+      EXPECT_EQ(NfcStatus::OK, nfc_->coreInitialized(data));
+      // Wait for NfcEvent.POST_INIT_CPLT
+      auto res = nfc_cb_->WaitForCallbackAny();
+      if (res.name.compare(kCallbackNameSendEvent) == 0) {
+          last_event_ = res.args->last_event_;
+      }
+      EXPECT_TRUE(res.no_timeout);
+      EXPECT_EQ(NfcEvent::POST_INIT_CPLT, last_event_);
   }
 }
 
@@ -380,17 +368,19 @@ TEST_F(NfcHidlTest, ControlGranted) {
 TEST_F(NfcHidlTest, ControlGrantedAfterClose) {
   EXPECT_EQ(NfcStatus::OK, nfc_->close());
   // Wait for CLOSE_CPLT event
-  EXPECT_EQ(std::cv_status::no_timeout, wait());
-  EXPECT_EQ(NfcEvent::CLOSE_CPLT, last_event_);
-  EXPECT_EQ(NfcStatus::OK, last_status_);
+  auto res = nfc_cb_->WaitForCallback(kCallbackNameSendEvent);
+  EXPECT_TRUE(res.no_timeout);
+  EXPECT_EQ(NfcEvent::CLOSE_CPLT, res.args->last_event_);
+  EXPECT_EQ(NfcStatus::OK, res.args->last_status_);
 
   EXPECT_EQ(NfcStatus::OK, nfc_->controlGranted());
 
   EXPECT_EQ(NfcStatus::OK, nfc_->open(nfc_cb_));
   // Wait for OPEN_CPLT event
-  EXPECT_EQ(std::cv_status::no_timeout, wait());
-  EXPECT_EQ(NfcEvent::OPEN_CPLT, last_event_);
-  EXPECT_EQ(NfcStatus::OK, last_status_);
+  res = nfc_cb_->WaitForCallback(kCallbackNameSendEvent);
+  EXPECT_TRUE(res.no_timeout);
+  EXPECT_EQ(NfcEvent::OPEN_CPLT, res.args->last_event_);
+  EXPECT_EQ(NfcStatus::OK, res.args->last_status_);
 }
 
 /* PreDiscover:
@@ -409,17 +399,19 @@ TEST_F(NfcHidlTest, PreDiscover) {
 TEST_F(NfcHidlTest, PreDiscoverAfterClose) {
   EXPECT_EQ(NfcStatus::OK, nfc_->close());
   // Wait for CLOSE_CPLT event
-  EXPECT_EQ(std::cv_status::no_timeout, wait());
-  EXPECT_EQ(NfcEvent::CLOSE_CPLT, last_event_);
-  EXPECT_EQ(NfcStatus::OK, last_status_);
+  auto res = nfc_cb_->WaitForCallback(kCallbackNameSendEvent);
+  EXPECT_TRUE(res.no_timeout);
+  EXPECT_EQ(NfcEvent::CLOSE_CPLT, res.args->last_event_);
+  EXPECT_EQ(NfcStatus::OK, res.args->last_status_);
 
   EXPECT_EQ(NfcStatus::OK, nfc_->prediscover());
 
   EXPECT_EQ(NfcStatus::OK, nfc_->open(nfc_cb_));
   // Wait for OPEN_CPLT event
-  EXPECT_EQ(std::cv_status::no_timeout, wait());
-  EXPECT_EQ(NfcEvent::OPEN_CPLT, last_event_);
-  EXPECT_EQ(NfcStatus::OK, last_status_);
+  res = nfc_cb_->WaitForCallback(kCallbackNameSendEvent);
+  EXPECT_TRUE(res.no_timeout);
+  EXPECT_EQ(NfcEvent::OPEN_CPLT, res.args->last_event_);
+  EXPECT_EQ(NfcStatus::OK, res.args->last_status_);
 }
 
 /*
@@ -430,19 +422,20 @@ TEST_F(NfcHidlTest, PreDiscoverAfterClose) {
 TEST_F(NfcHidlTest, CloseAfterClose) {
   EXPECT_EQ(NfcStatus::OK, nfc_->close());
   // Wait for CLOSE_CPLT event
-  EXPECT_EQ(std::cv_status::no_timeout, wait());
-  EXPECT_EQ(NfcEvent::CLOSE_CPLT, last_event_);
-  EXPECT_EQ(NfcStatus::OK, last_status_);
+  auto res = nfc_cb_->WaitForCallback(kCallbackNameSendEvent);
+  EXPECT_TRUE(res.no_timeout);
+  EXPECT_EQ(NfcEvent::CLOSE_CPLT, res.args->last_event_);
+  EXPECT_EQ(NfcStatus::OK, res.args->last_status_);
 
   EXPECT_EQ(NfcStatus::FAILED, nfc_->close());
 
   EXPECT_EQ(NfcStatus::OK, nfc_->open(nfc_cb_));
   // Wait for OPEN_CPLT event
-  EXPECT_EQ(std::cv_status::no_timeout, wait());
-  EXPECT_EQ(NfcEvent::OPEN_CPLT, last_event_);
-  EXPECT_EQ(NfcStatus::OK, last_status_);
+  res = nfc_cb_->WaitForCallback(kCallbackNameSendEvent);
+  EXPECT_TRUE(res.no_timeout);
+  EXPECT_EQ(NfcEvent::OPEN_CPLT, res.args->last_event_);
+  EXPECT_EQ(NfcStatus::OK, res.args->last_status_);
 }
-
 
 /*
  * OpenAfterOpen:
