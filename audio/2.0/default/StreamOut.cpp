@@ -135,7 +135,7 @@ bool WriteThread::threadLoop() {
 
 }  // namespace
 
-StreamOut::StreamOut(audio_hw_device_t* device, audio_stream_out_t* stream)
+StreamOut::StreamOut(const sp<Device>& device, audio_stream_out_t* stream)
         : mIsClosed(false), mDevice(device), mStream(stream),
           mStreamCommon(new Stream(&stream->common)),
           mStreamMmap(new StreamMmap<audio_stream_out_t>(stream)),
@@ -155,9 +155,8 @@ StreamOut::~StreamOut() {
         ALOGE_IF(status, "write MQ event flag deletion error: %s", strerror(-status));
     }
     mCallback.clear();
-    mDevice->close_output_stream(mDevice, mStream);
+    mDevice->closeOutputStream(mStream);
     mStream = nullptr;
-    mDevice = nullptr;
 }
 
 // Methods from ::android::hardware::audio::V2_0::IStream follow.
