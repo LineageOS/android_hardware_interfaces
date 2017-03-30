@@ -44,6 +44,8 @@ struct Tuner : public ITuner {
     Return<void> getProgramInformation_1_1(getProgramInformation_1_1_cb _hidl_cb) override;
     Return<ProgramListResult> startBackgroundScan() override;
     Return<void> getProgramList(const hidl_string& filter, getProgramList_cb _hidl_cb) override;
+    Return<void> isAnalogForced(isAnalogForced_cb _hidl_cb) override;
+    Return<Result> setAnalogForced(bool isForced) override;
 
     static void callback(radio_hal_event_t *halEvent, void *cookie);
     void onCallback(radio_hal_event_t *halEvent);

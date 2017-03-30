@@ -74,4 +74,33 @@ interface ITuner extends @1.0::ITuner {
     getProgramList(string filter)
         generates (ProgramListResult result, vec<ProgramInfo> programList);
 
+    /**
+     * Checks, if the analog playback is forced, see setAnalogForced.
+     *
+     * The isForced value is only valid if result was OK.
+     *
+     * @return result OK if the call succeeded and isForced is valid.
+     *                INVALID_STATE if the switch is not supported at current
+     *                configuration.
+     *                NOT_INITIALIZED if any other error occurs.
+     * @return isForced true if analog is forced, false otherwise.
+     */
+    isAnalogForced() generates (Result result, bool isForced);
+
+    /**
+     * Forces the analog playback for the supporting radio technology.
+     *
+     * User may disable digital playback for FM HD Radio or hybrid FM/DAB with
+     * this option. This is purely user choice, ie. does not reflect digital-
+     * analog handover managed from the HAL implementation side.
+     *
+     * Some radio technologies may not support this, ie. DAB.
+     *
+     * @param isForced true to force analog, false for a default behaviour.
+     * @return result OK if the setting was successfully done.
+     *                INVALID_STATE if the switch is not supported at current
+     *                configuration.
+     *                NOT_INITIALIZED if any other error occurs.
+     */
+    setAnalogForced(bool isForced) generates (Result result);
 };
