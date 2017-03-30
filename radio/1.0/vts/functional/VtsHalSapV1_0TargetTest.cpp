@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#include<sap_hidl_hal_utils.h>
+#include <sap_hidl_hal_utils.h>
 
 int main(int argc, char** argv) {
-    // Add Sim-access Profile Hidl Environment
-    ::testing::AddGlobalTestEnvironment(new SapHidlEnvironment);
-    ::testing::InitGoogleTest(&argc, argv);
+  // Add Sim-access Profile Hidl Environment
+  ::testing::AddGlobalTestEnvironment(new SapHidlEnvironment);
+  ::testing::InitGoogleTest(&argc, argv);
 
-    int status = RUN_ALL_TESTS();
-    LOG(INFO) << "Test result = " << status;
+  int status = RUN_ALL_TESTS();
+  LOG(INFO) << "Test result = " << status;
 
-    return status;
+  return status;
 }
