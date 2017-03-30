@@ -16,8 +16,6 @@
 
 #include "vendor_interface.h"
 
-#include <assert.h>
-
 #define LOG_TAG "android.hardware.bluetooth@1.0-impl"
 #include <android-base/logging.h>
 #include <cutils/properties.h>
@@ -165,7 +163,7 @@ bool VendorInterface::Initialize(
     InitializeCompleteCallback initialize_complete_cb,
     PacketReadCallback event_cb, PacketReadCallback acl_cb,
     PacketReadCallback sco_cb) {
-  assert(!g_vendor_interface);
+  CHECK(!g_vendor_interface);
   g_vendor_interface = new VendorInterface();
   return g_vendor_interface->Open(initialize_complete_cb, event_cb, acl_cb,
                                   sco_cb);
