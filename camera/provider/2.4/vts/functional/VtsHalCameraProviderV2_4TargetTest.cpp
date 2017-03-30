@@ -61,6 +61,7 @@ using ::android::hardware::camera::common::V1_0::TorchModeStatus;
 using ::android::hardware::camera::provider::V2_4::ICameraProvider;
 using ::android::hardware::camera::provider::V2_4::ICameraProviderCallback;
 using ::android::hardware::camera::device::V3_2::ICameraDevice;
+using ::android::hardware::camera::device::V3_2::BufferCache;
 using ::android::hardware::camera::device::V3_2::CaptureRequest;
 using ::android::hardware::camera::device::V3_2::CaptureResult;
 using ::android::hardware::camera::device::V3_2::ICameraDeviceCallback;
@@ -2481,8 +2482,10 @@ TEST_F(CameraHidlTest, processCaptureRequestPreview) {
 
             Status status = Status::INTERNAL_ERROR;
             uint32_t numRequestProcessed = 0;
+            hidl_vec<BufferCache> cachesToRemove;
             Return<void> returnStatus = session->processCaptureRequest(
                     {request},
+                    cachesToRemove,
                     [&status, &numRequestProcessed] (auto s, uint32_t n) {
                         status = s;
                         numRequestProcessed = n;
@@ -2513,6 +2516,7 @@ TEST_F(CameraHidlTest, processCaptureRequestPreview) {
 
             returnStatus = session->processCaptureRequest(
                     {request},
+                    cachesToRemove,
                     [&status, &numRequestProcessed] (auto s, uint32_t n) {
                         status = s;
                         numRequestProcessed = n;
@@ -2579,8 +2583,10 @@ TEST_F(CameraHidlTest, processCaptureRequestInvalidSinglePreview) {
             //Settings were not correctly initialized, we should fail here
             Status status = Status::OK;
             uint32_t numRequestProcessed = 0;
+            hidl_vec<BufferCache> cachesToRemove;
             Return<void> ret = session->processCaptureRequest(
                     {request},
+                    cachesToRemove,
                     [&status, &numRequestProcessed] (auto s, uint32_t n) {
                         status = s;
                         numRequestProcessed = n;
@@ -2632,8 +2638,10 @@ TEST_F(CameraHidlTest, processCaptureRequestInvalidBuffer) {
             //Output buffers are missing, we should fail here
             Status status = Status::OK;
             uint32_t numRequestProcessed = 0;
+            hidl_vec<BufferCache> cachesToRemove;
             ret = session->processCaptureRequest(
                     {request},
+                    cachesToRemove,
                     [&status, &numRequestProcessed] (auto s, uint32_t n) {
                         status = s;
                         numRequestProcessed = n;
@@ -2701,8 +2709,10 @@ TEST_F(CameraHidlTest, flushPreviewRequest) {
 
             Status status = Status::INTERNAL_ERROR;
             uint32_t numRequestProcessed = 0;
+            hidl_vec<BufferCache> cachesToRemove;
             ret = session->processCaptureRequest(
                     {request},
+                    cachesToRemove,
                     [&status, &numRequestProcessed] (auto s, uint32_t n) {
                         status = s;
                         numRequestProcessed = n;

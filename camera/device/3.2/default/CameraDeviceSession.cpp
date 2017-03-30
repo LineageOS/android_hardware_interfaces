@@ -678,8 +678,32 @@ void CameraDeviceSession::cleanupBuffersLocked(int id) {
     mCirculatingBuffers.erase(id);
 }
 
+void CameraDeviceSession::updateBufferCaches(const hidl_vec<BufferCache>& cachesToRemove) {
+    Mutex::Autolock _l(mInflightLock);
+    for (auto& cache : cachesToRemove) {
+        auto cbsIt = mCirculatingBuffers.find(cache.streamId);
+        if (cbsIt == mCirculatingBuffers.end()) {
+            // The stream could have been removed
+            continue;
+        }
+        CirculatingBuffers& cbs = cbsIt->second;
+        auto it = cbs.find(cache.bufferId);
+        if (it != cbs.end()) {
+            sHandleImporter.freeBuffer(it->second);
+            cbs.erase(it);
+        } else {
+            ALOGE("%s: stream %d buffer %" PRIu64 " is not cached",
+                    __FUNCTION__, cache.streamId, cache.bufferId);
+        }
+    }
+}
+
 Return<void> CameraDeviceSession::processCaptureRequest(
-        const hidl_vec<CaptureRequest>& requests, processCaptureRequest_cb _hidl_cb)  {
+        const hidl_vec<CaptureRequest>& requests,
+        const hidl_vec<BufferCache>& cachesToRemove,
+        processCaptureRequest_cb _hidl_cb)  {
+    updateBufferCaches(cachesToRemove);
+
     uint32_t numRequestProcessed = 0;
     Status s = Status::OK;
     for (size_t i = 0; i < requests.size(); i++, numRequestProcessed++) {
