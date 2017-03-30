@@ -27,6 +27,7 @@
 #include <hidl/Status.h>
 #include <utils/Thread.h>
 
+#include "Device.h"
 #include "Stream.h"
 
 namespace android {
@@ -55,7 +56,7 @@ struct StreamIn : public IStreamIn {
     typedef MessageQueue<uint8_t, kSynchronizedReadWrite> DataMQ;
     typedef MessageQueue<ReadStatus, kSynchronizedReadWrite> StatusMQ;
 
-    StreamIn(audio_hw_device_t* device, audio_stream_in_t* stream);
+    StreamIn(const sp<Device>& device, audio_stream_in_t* stream);
 
     // Methods from ::android::hardware::audio::V2_0::IStream follow.
     Return<uint64_t> getFrameSize()  override;
@@ -101,10 +102,10 @@ struct StreamIn : public IStreamIn {
 
   private:
     bool mIsClosed;
-    audio_hw_device_t *mDevice;
+    const sp<Device> mDevice;
     audio_stream_in_t *mStream;
-    sp<Stream> mStreamCommon;
-    sp<StreamMmap<audio_stream_in_t>> mStreamMmap;
+    const sp<Stream> mStreamCommon;
+    const sp<StreamMmap<audio_stream_in_t>> mStreamMmap;
     std::unique_ptr<CommandMQ> mCommandMQ;
     std::unique_ptr<DataMQ> mDataMQ;
     std::unique_ptr<StatusMQ> mStatusMQ;
