@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include<radio_hidl_hal_utils.h>
+#include <radio_hidl_hal_utils.h>
 
 using namespace ::android::hardware::radio::V1_0;
 
@@ -22,198 +22,198 @@ using namespace ::android::hardware::radio::V1_0;
  * Test IRadio.getDataRegistrationState() for the response returned.
  */
 TEST_F(RadioHidlTest, getDataRegistrationState) {
-    int serial = 0;
+  int serial = 0;
 
-    radio->getDataRegistrationState(++serial);
+  radio->getDataRegistrationState(++serial);
 
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
-    EXPECT_EQ(serial, radioRsp->rspInfo.serial);
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
+  EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
-    if (cardStatus.cardState == CardState::ABSENT) {
-        EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
-    }
+  if (cardStatus.cardState == CardState::ABSENT) {
+    EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
+  }
 }
 
 /*
  * Test IRadio.setupDataCall() for the response returned.
  */
 TEST_F(RadioHidlTest, setupDataCall) {
-    int serial = 0;
+  int serial = 0;
 
-    RadioTechnology radioTechnology = RadioTechnology::LTE;
+  RadioTechnology radioTechnology = RadioTechnology::LTE;
 
-    DataProfileInfo dataProfileInfo;
-    memset(&dataProfileInfo, 0, sizeof(dataProfileInfo));
-    dataProfileInfo.profileId = DataProfileId::IMS;
-    dataProfileInfo.apn = hidl_string("VZWIMS");
-    dataProfileInfo.protocol = hidl_string("IPV4V6");
-    dataProfileInfo.roamingProtocol = hidl_string("IPV6");
-    dataProfileInfo.authType = ApnAuthType::NO_PAP_NO_CHAP;
-    dataProfileInfo.user = "";
-    dataProfileInfo.password = "";
-    dataProfileInfo.type = DataProfileInfoType::THREE_GPP2;
-    dataProfileInfo.maxConnsTime = 300;
-    dataProfileInfo.maxConns = 20;
-    dataProfileInfo.waitTime = 0;
-    dataProfileInfo.enabled = true;
-    dataProfileInfo.supportedApnTypesBitmap = 320;
-    dataProfileInfo.bearerBitmap = 161543;
-    dataProfileInfo.mtu = 0;
-    dataProfileInfo.mvnoType = MvnoType::NONE;
-    dataProfileInfo.mvnoMatchData = hidl_string();
+  DataProfileInfo dataProfileInfo;
+  memset(&dataProfileInfo, 0, sizeof(dataProfileInfo));
+  dataProfileInfo.profileId = DataProfileId::IMS;
+  dataProfileInfo.apn = hidl_string("VZWIMS");
+  dataProfileInfo.protocol = hidl_string("IPV4V6");
+  dataProfileInfo.roamingProtocol = hidl_string("IPV6");
+  dataProfileInfo.authType = ApnAuthType::NO_PAP_NO_CHAP;
+  dataProfileInfo.user = "";
+  dataProfileInfo.password = "";
+  dataProfileInfo.type = DataProfileInfoType::THREE_GPP2;
+  dataProfileInfo.maxConnsTime = 300;
+  dataProfileInfo.maxConns = 20;
+  dataProfileInfo.waitTime = 0;
+  dataProfileInfo.enabled = true;
+  dataProfileInfo.supportedApnTypesBitmap = 320;
+  dataProfileInfo.bearerBitmap = 161543;
+  dataProfileInfo.mtu = 0;
+  dataProfileInfo.mvnoType = MvnoType::NONE;
+  dataProfileInfo.mvnoMatchData = hidl_string();
 
-    bool modemCognitive = false;
-    bool roamingAllowed = false;
-    bool isRoaming = false;
+  bool modemCognitive = false;
+  bool roamingAllowed = false;
+  bool isRoaming = false;
 
-    radio->setupDataCall(++serial, radioTechnology, dataProfileInfo, modemCognitive,
-           roamingAllowed, isRoaming);
+  radio->setupDataCall(++serial, radioTechnology, dataProfileInfo,
+                       modemCognitive, roamingAllowed, isRoaming);
 
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
-    EXPECT_EQ(serial, radioRsp->rspInfo.serial);
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
+  EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
-    if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_FALSE(RadioError::NONE == radioRsp->rspInfo.error);
-    }
+  if (cardStatus.cardState == CardState::ABSENT) {
+    ASSERT_FALSE(RadioError::NONE == radioRsp->rspInfo.error);
+  }
 }
 
 /*
  * Test IRadio.deactivateDataCall() for the response returned.
  */
 TEST_F(RadioHidlTest, deactivateDataCall) {
-    int serial = 0;
-    int cid = 1;
-    bool reasonRadioShutDown = false;
+  int serial = 0;
+  int cid = 1;
+  bool reasonRadioShutDown = false;
 
-    radio->deactivateDataCall(++serial, cid, reasonRadioShutDown);
+  radio->deactivateDataCall(++serial, cid, reasonRadioShutDown);
 
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
-    EXPECT_EQ(serial, radioRsp->rspInfo.serial);
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
+  EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
-    if (cardStatus.cardState == CardState::ABSENT) {
-        EXPECT_EQ(RadioError::INVALID_ARGUMENTS, radioRsp->rspInfo.error);
-    }
+  if (cardStatus.cardState == CardState::ABSENT) {
+    EXPECT_EQ(RadioError::INVALID_ARGUMENTS, radioRsp->rspInfo.error);
+  }
 }
 
 /*
  * Test IRadio.getDataCallList() for the response returned.
  */
 TEST_F(RadioHidlTest, getDataCallList) {
-    int serial = 0;
+  int serial = 0;
 
-    radio->getDataCallList(++serial);
+  radio->getDataCallList(++serial);
 
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
-    EXPECT_EQ(serial, radioRsp->rspInfo.serial);
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
+  EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
-    if (cardStatus.cardState == CardState::ABSENT) {
-        EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
-    }
+  if (cardStatus.cardState == CardState::ABSENT) {
+    EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
+  }
 }
 
 /*
  * Test IRadio.setInitialAttachApn() for the response returned.
  */
 TEST_F(RadioHidlTest, setInitialAttachApn) {
-    int serial = 0;
+  int serial = 0;
 
-    DataProfileInfo dataProfileInfo;
-    memset(&dataProfileInfo, 0, sizeof(dataProfileInfo));
-    dataProfileInfo.profileId = DataProfileId::IMS;
-    dataProfileInfo.apn = hidl_string("VZWIMS");
-    dataProfileInfo.protocol = hidl_string("IPV4V6");
-    dataProfileInfo.roamingProtocol = hidl_string("IPV6");
-    dataProfileInfo.authType = ApnAuthType::NO_PAP_NO_CHAP;
-    dataProfileInfo.user = "";
-    dataProfileInfo.password = "";
-    dataProfileInfo.type = DataProfileInfoType::THREE_GPP2;
-    dataProfileInfo.maxConnsTime = 300;
-    dataProfileInfo.maxConns = 20;
-    dataProfileInfo.waitTime = 0;
-    dataProfileInfo.enabled = true;
-    dataProfileInfo.supportedApnTypesBitmap = 320;
-    dataProfileInfo.bearerBitmap = 161543;
-    dataProfileInfo.mtu = 0;
-    dataProfileInfo.mvnoType = MvnoType::NONE;
-    dataProfileInfo.mvnoMatchData = hidl_string();
+  DataProfileInfo dataProfileInfo;
+  memset(&dataProfileInfo, 0, sizeof(dataProfileInfo));
+  dataProfileInfo.profileId = DataProfileId::IMS;
+  dataProfileInfo.apn = hidl_string("VZWIMS");
+  dataProfileInfo.protocol = hidl_string("IPV4V6");
+  dataProfileInfo.roamingProtocol = hidl_string("IPV6");
+  dataProfileInfo.authType = ApnAuthType::NO_PAP_NO_CHAP;
+  dataProfileInfo.user = "";
+  dataProfileInfo.password = "";
+  dataProfileInfo.type = DataProfileInfoType::THREE_GPP2;
+  dataProfileInfo.maxConnsTime = 300;
+  dataProfileInfo.maxConns = 20;
+  dataProfileInfo.waitTime = 0;
+  dataProfileInfo.enabled = true;
+  dataProfileInfo.supportedApnTypesBitmap = 320;
+  dataProfileInfo.bearerBitmap = 161543;
+  dataProfileInfo.mtu = 0;
+  dataProfileInfo.mvnoType = MvnoType::NONE;
+  dataProfileInfo.mvnoMatchData = hidl_string();
 
-    bool modemCognitive = true;
-    bool isRoaming = false;
+  bool modemCognitive = true;
+  bool isRoaming = false;
 
-    radio->setInitialAttachApn(++serial, dataProfileInfo,
-           modemCognitive, isRoaming);
+  radio->setInitialAttachApn(++serial, dataProfileInfo, modemCognitive,
+                             isRoaming);
 
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
-    EXPECT_EQ(serial, radioRsp->rspInfo.serial);
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
+  EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
-    if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_FALSE(RadioError::NONE == radioRsp->rspInfo.error);
-    }
+  if (cardStatus.cardState == CardState::ABSENT) {
+    ASSERT_FALSE(RadioError::NONE == radioRsp->rspInfo.error);
+  }
 }
 
 /*
  * Test IRadio.setDataAllowed() for the response returned.
  */
 TEST_F(RadioHidlTest, setDataAllowed) {
-    int serial = 0;
-    bool allow = true;
+  int serial = 0;
+  bool allow = true;
 
-    radio->setDataAllowed(++serial, allow);
+  radio->setDataAllowed(++serial, allow);
 
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
-    EXPECT_EQ(serial, radioRsp->rspInfo.serial);
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
+  EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
-    if (cardStatus.cardState == CardState::ABSENT) {
-        EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
-    }
+  if (cardStatus.cardState == CardState::ABSENT) {
+    EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
+  }
 }
 
 /*
  * Test IRadio.setDataProfile() for the response returned.
  */
 TEST_F(RadioHidlTest, setDataProfile) {
-    int serial = 0;
+  int serial = 0;
 
-    // Create a dataProfileInfo
-    DataProfileInfo dataProfileInfo;
-    memset(&dataProfileInfo, 0, sizeof(dataProfileInfo));
-    dataProfileInfo.profileId = DataProfileId::IMS;
-    dataProfileInfo.apn = hidl_string("VZWIMS");
-    dataProfileInfo.protocol = hidl_string("IPV4V6");
-    dataProfileInfo.roamingProtocol = hidl_string("IPV6");
-    dataProfileInfo.authType = ApnAuthType::NO_PAP_NO_CHAP;
-    dataProfileInfo.user = "";
-    dataProfileInfo.password = "";
-    dataProfileInfo.type = DataProfileInfoType::THREE_GPP2;
-    dataProfileInfo.maxConnsTime = 300;
-    dataProfileInfo.maxConns = 20;
-    dataProfileInfo.waitTime = 0;
-    dataProfileInfo.enabled = true;
-    dataProfileInfo.supportedApnTypesBitmap = 320;
-    dataProfileInfo.bearerBitmap = 161543;
-    dataProfileInfo.mtu = 0;
-    dataProfileInfo.mvnoType = MvnoType::NONE;
-    dataProfileInfo.mvnoMatchData = hidl_string();
+  // Create a dataProfileInfo
+  DataProfileInfo dataProfileInfo;
+  memset(&dataProfileInfo, 0, sizeof(dataProfileInfo));
+  dataProfileInfo.profileId = DataProfileId::IMS;
+  dataProfileInfo.apn = hidl_string("VZWIMS");
+  dataProfileInfo.protocol = hidl_string("IPV4V6");
+  dataProfileInfo.roamingProtocol = hidl_string("IPV6");
+  dataProfileInfo.authType = ApnAuthType::NO_PAP_NO_CHAP;
+  dataProfileInfo.user = "";
+  dataProfileInfo.password = "";
+  dataProfileInfo.type = DataProfileInfoType::THREE_GPP2;
+  dataProfileInfo.maxConnsTime = 300;
+  dataProfileInfo.maxConns = 20;
+  dataProfileInfo.waitTime = 0;
+  dataProfileInfo.enabled = true;
+  dataProfileInfo.supportedApnTypesBitmap = 320;
+  dataProfileInfo.bearerBitmap = 161543;
+  dataProfileInfo.mtu = 0;
+  dataProfileInfo.mvnoType = MvnoType::NONE;
+  dataProfileInfo.mvnoMatchData = hidl_string();
 
-    // Create a dataProfileInfoList
-    android::hardware::hidl_vec<DataProfileInfo> dataProfileInfoList = {dataProfileInfo};
+  // Create a dataProfileInfoList
+  android::hardware::hidl_vec<DataProfileInfo> dataProfileInfoList = {
+      dataProfileInfo};
 
-    bool isRoadming = false;
+  bool isRoadming = false;
 
-    radio->setDataProfile(++serial, dataProfileInfoList, isRoadming);
+  radio->setDataProfile(++serial, dataProfileInfoList, isRoadming);
 
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
-    EXPECT_EQ(serial, radioRsp->rspInfo.serial);
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
+  EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
-    if (cardStatus.cardState == CardState::ABSENT) {
-        // TODO(shuoq): Will add error check when we know the expected error from QC
-    }
+  if (cardStatus.cardState == CardState::ABSENT) {
+    // TODO(shuoq): Will add error check when we know the expected error from QC
+  }
 }
-
