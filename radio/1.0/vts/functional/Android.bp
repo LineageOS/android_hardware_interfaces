@@ -44,3 +44,27 @@ cc_test {
         "-g",
     ],
 }
+
+cc_test {
+    name: "VtsHalSapV1_0TargetTest",
+    defaults: ["hidl_defaults"],
+    srcs: ["sap_callback.cpp",
+           "sap_hidl_hal_api.cpp",
+           "sap_hidl_hal_test.cpp",
+           "VtsHalSapV1_0TargetTest.cpp"],
+    shared_libs: [
+        "libbase",
+        "liblog",
+        "libcutils",
+        "libhidlbase",
+        "libhidltransport",
+        "libnativehelper",
+        "libutils",
+        "android.hardware.radio@1.0",
+    ],
+    static_libs: ["VtsHalHidlTargetTestBase"],
+    cflags: [
+        "-O0",
+        "-g",
+    ],
+}
