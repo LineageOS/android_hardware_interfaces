@@ -59,7 +59,7 @@ const ConfigDeclaration kVehicleProperties[] {
             .access = VehiclePropertyAccess::READ,
             .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         },
-        .initialValue = { .int32Values = {0} }
+        .initialValue = { .floatValues = {0.0f} }
     },
 
     {
@@ -195,10 +195,10 @@ const ConfigDeclaration kVehicleProperties[] {
         .initialAreaValues = {
             {
                 toInt(VehicleAreaZone::ROW_1_LEFT),
-                { .int32Values = {16} }
+                { .floatValues = {16} }
             }, {
                 toInt(VehicleAreaZone::ROW_1_RIGHT),
-                {.int32Values = {20} }
+                { .floatValues = {20} }
             }
         }
     },

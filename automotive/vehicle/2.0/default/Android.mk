@@ -25,6 +25,7 @@ LOCAL_SRC_FILES := \
     common/src/SubscriptionManager.cpp \
     common/src/VehicleHalManager.cpp \
     common/src/VehicleObjectPool.cpp \
+    common/src/VehiclePropertyStore.cpp \
     common/src/VehicleUtils.cpp \
 
 LOCAL_C_INCLUDES := \
@@ -72,9 +73,10 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE:= $(vhal_v2_0)-default-impl-lib
 LOCAL_SRC_FILES:= \
-    impl/vhal_v2_0/DefaultVehicleHal.cpp \
+    impl/vhal_v2_0/EmulatedVehicleHal.cpp \
+    impl/vhal_v2_0/VehicleEmulator.cpp \
     impl/vhal_v2_0/PipeComm.cpp \
-    impl/vhal_v2_0/SocketComm.cpp
+    impl/vhal_v2_0/SocketComm.cpp \
 
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/impl/vhal_v2_0
