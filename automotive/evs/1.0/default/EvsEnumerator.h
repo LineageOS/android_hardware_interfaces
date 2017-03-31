@@ -22,7 +22,6 @@
 
 #include <list>
 
-#include "EvsCamera.h"
 
 namespace android {
 namespace hardware {
@@ -30,6 +29,11 @@ namespace automotive {
 namespace evs {
 namespace V1_0 {
 namespace implementation {
+
+
+class EvsCamera;    // from EvsCamera.h
+class EvsDisplay;   // from EvsDisplay.h
+
 
 class EvsEnumerator : public IEvsEnumerator {
 public:
@@ -45,14 +49,18 @@ public:
     EvsEnumerator();
 
 private:
+    // NOTE:  All members values are static so that all clients operate on the same state
+    //        That is to say, this is effectively a singleton despite the fact that HIDL
+    //        constructs a new instance for each client.
     struct CameraRecord {
-        sp<EvsCamera>   pCamera;
-        bool            inUse;
-        CameraRecord(EvsCamera* p, bool b) : pCamera(p), inUse(b) {}
-    };
-    std::list<CameraRecord> mCameraList;
+        CameraDesc          desc;
+        wp<EvsCamera>       activeInstance;
 
-    wp<IEvsDisplay>         mActiveDisplay; // Weak pointer -> object destructs if client dies
+        CameraRecord(const char *cameraId) : desc() { desc.cameraId = cameraId; }
+    };
+    static std::list<CameraRecord> sCameraList;
+
+    static wp<EvsDisplay>          sActiveDisplay; // Weak pointer. Object destructs if client dies.
 };
 
 } // namespace implementation

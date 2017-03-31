@@ -17,6 +17,7 @@
 #define LOG_TAG "android.hardware.automotive.evs@1.0-service"
 
 #include "EvsCamera.h"
+#include "EvsEnumerator.h"
 
 #include <ui/GraphicBufferAllocator.h>
 #include <ui/GraphicBufferMapper.h>
@@ -30,17 +31,14 @@ namespace V1_0 {
 namespace implementation {
 
 
-// These are the special camera names for which we'll initialize custom test data
+// Special camera names for which we'll initialize alternate test data
 const char EvsCamera::kCameraName_Backup[]    = "backup";
-const char EvsCamera::kCameraName_RightTurn[] = "Right Turn";
+
 
 // Arbitrary limit on number of graphics buffers allowed to be allocated
 // Safeguards against unreasonable resource consumption and provides a testable limit
 const unsigned MAX_BUFFERS_IN_FLIGHT = 100;
 
-
-// TODO(b/31632518):  Need to get notification when our client dies so we can close the camera.
-// As it stands, if the client dies suddenly, the buffer may be stranded.
 
 EvsCamera::EvsCamera(const char *id) :
         mFramesAllowed(0),
@@ -53,21 +51,13 @@ EvsCamera::EvsCamera(const char *id) :
 
     // Set up dummy data for testing
     if (mDescription.cameraId == kCameraName_Backup) {
-        mDescription.hints                  = static_cast<uint32_t>(UsageHint::USAGE_HINT_REVERSE);
-        mDescription.vendorFlags            = 0xFFFFFFFF;   // Arbitrary value
-        mDescription.defaultHorResolution   = 320;          // 1/2 NTSC/VGA
-        mDescription.defaultVerResolution   = 240;          // 1/2 NTSC/VGA
-    } else if (mDescription.cameraId == kCameraName_RightTurn) {
-        // Nothing but the name and the usage hint
-        mDescription.hints                  = static_cast<uint32_t>(UsageHint::USAGE_HINT_RIGHT_TURN);
+        mWidth  = 640;          // full NTSC/VGA
+        mHeight = 480;          // full NTSC/VGA
+        mDescription.vendorFlags = 0xFFFFFFFF;   // Arbitrary value
     } else {
-        // Leave empty for a minimalist camera description without even a hint
+        mWidth  = 320;          // 1/2 NTSC/VGA
+        mHeight = 240;          // 1/2 NTSC/VGA
     }
-
-
-    // Set our buffer properties
-    mWidth  = (mDescription.defaultHorResolution) ? mDescription.defaultHorResolution : 640;
-    mHeight = (mDescription.defaultVerResolution) ? mDescription.defaultVerResolution : 480;
 
     mFormat = HAL_PIXEL_FORMAT_RGBA_8888;
     mUsage  = GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_HW_CAMERA_WRITE |
@@ -77,32 +67,49 @@ EvsCamera::EvsCamera(const char *id) :
 
 EvsCamera::~EvsCamera() {
     ALOGD("EvsCamera being destroyed");
-    std::lock_guard<std::mutex> lock(mAccessLock);
+    forceShutdown();
+}
+
+
+//
+// This gets called if another caller "steals" ownership of the camera
+//
+void EvsCamera::forceShutdown()
+{
+    ALOGD("EvsCamera forceShutdown");
 
     // Make sure our output stream is cleaned up
     // (It really should be already)
     stopVideoStream();
 
+    // Claim the lock while we work on internal state
+    std::lock_guard <std::mutex> lock(mAccessLock);
+
     // Drop all the graphics buffers we've been using
-    GraphicBufferAllocator& alloc(GraphicBufferAllocator::get());
-    for (auto&& rec : mBuffers) {
-        if (rec.inUse) {
-            ALOGE("Error - releasing buffer despite remote ownership");
+    if (mBuffers.size() > 0) {
+        GraphicBufferAllocator& alloc(GraphicBufferAllocator::get());
+        for (auto&& rec : mBuffers) {
+            if (rec.inUse) {
+                ALOGE("Error - releasing buffer despite remote ownership");
+            }
+            alloc.free(rec.handle);
+            rec.handle = nullptr;
         }
-        alloc.free(rec.handle);
-        rec.handle = nullptr;
+        mBuffers.clear();
     }
 
-    ALOGD("EvsCamera destroyed");
+    // Put this object into an unrecoverable error state since somebody else
+    // is going to own the underlying camera now
+    mStreamState = DEAD;
 }
 
 
 // Methods from ::android::hardware::automotive::evs::V1_0::IEvsCamera follow.
-Return<void> EvsCamera::getId(getId_cb id_cb) {
-    ALOGD("getId");
+Return<void> EvsCamera::getCameraInfo(getCameraInfo_cb _hidl_cb) {
+    ALOGD("getCameraInfo");
 
-    id_cb(mDescription.cameraId);
-
+    // Send back our self description
+    _hidl_cb(mDescription);
     return Void();
 }
 
@@ -110,6 +117,12 @@ Return<void> EvsCamera::getId(getId_cb id_cb) {
 Return<EvsResult> EvsCamera::setMaxFramesInFlight(uint32_t bufferCount) {
     ALOGD("setMaxFramesInFlight");
     std::lock_guard<std::mutex> lock(mAccessLock);
+
+    // If we've been displaced by another owner of the camera, then we can't do anything else
+    if (mStreamState == DEAD) {
+        ALOGE("ignoring setMaxFramesInFlight call when camera has been lost.");
+        return EvsResult::OWNERSHIP_LOST;
+    }
 
     // We cannot function without at least one video buffer to send data
     if (bufferCount < 1) {
@@ -130,6 +143,11 @@ Return<EvsResult> EvsCamera::startVideoStream(const ::android::sp<IEvsCameraStre
     ALOGD("startVideoStream");
     std::lock_guard<std::mutex> lock(mAccessLock);
 
+    // If we've been displaced by another owner of the camera, then we can't do anything else
+    if (mStreamState == DEAD) {
+        ALOGE("ignoring startVideoStream call when camera has been lost.");
+        return EvsResult::OWNERSHIP_LOST;
+    }
     if (mStreamState != STOPPED) {
         ALOGE("ignoring startVideoStream call when a stream is already running.");
         return EvsResult::STREAM_ALREADY_RUNNING;
@@ -207,6 +225,7 @@ Return<void> EvsCamera::stopVideoStream()  {
         lock.lock();
 
         mStreamState = STOPPED;
+        mStream = nullptr;
         ALOGD("Stream marked STOPPED.");
     }
 
@@ -231,6 +250,12 @@ Return<int32_t> EvsCamera::getExtendedInfo(uint32_t opaqueIdentifier)  {
 Return<EvsResult> EvsCamera::setExtendedInfo(uint32_t /*opaqueIdentifier*/, int32_t /*opaqueValue*/)  {
     ALOGD("setExtendedInfo");
     std::lock_guard<std::mutex> lock(mAccessLock);
+
+    // If we've been displaced by another owner of the camera, then we can't do anything else
+    if (mStreamState == DEAD) {
+        ALOGE("ignoring setExtendedInfo call when camera has been lost.");
+        return EvsResult::OWNERSHIP_LOST;
+    }
 
     // We don't store any device specific information in this implementation
     return EvsResult::INVALID_ARG;
@@ -358,7 +383,9 @@ void EvsCamera::generateFrames() {
 
     while (true) {
         bool timeForFrame = false;
-        // Lock scope
+        nsecs_t startTime = systemTime(SYSTEM_TIME_MONOTONIC);
+
+        // Lock scope for updating shared state
         {
             std::lock_guard<std::mutex> lock(mAccessLock);
 
@@ -427,8 +454,15 @@ void EvsCamera::generateFrames() {
             }
         }
 
-        // We arbitrarily choose to generate frames at 10 fps (1/10 * uSecPerSec)
-        usleep(100000);
+        // We arbitrarily choose to generate frames at 12 fps to ensure we pass the 10fps test requirement
+        static const int kTargetFrameRate = 12;
+        static const nsecs_t kTargetFrameTimeUs = 1000*1000 / kTargetFrameRate;
+        const nsecs_t now = systemTime(SYSTEM_TIME_MONOTONIC);
+        const nsecs_t workTimeUs = (now - startTime) / 1000;
+        const nsecs_t sleepDurationUs = kTargetFrameTimeUs - workTimeUs;
+        if (sleepDurationUs > 0) {
+            usleep(sleepDurationUs);
+        }
     }
 
     // If we've been asked to stop, send one last NULL frame to signal the actual end of stream

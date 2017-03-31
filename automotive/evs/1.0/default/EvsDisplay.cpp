@@ -30,12 +30,6 @@ namespace V1_0 {
 namespace implementation {
 
 
-// TODO(b/31632518):  Need to get notification when our client dies so we can close the camera.
-// As it stands, if the client dies suddently, the buffer may be stranded.
-// As possible work around would be to give the client a HIDL object to exclusively hold
-// and use it's destructor to perform some work in the server side.
-
-
 EvsDisplay::EvsDisplay() {
     ALOGD("EvsDisplay instantiated");
 
@@ -43,34 +37,55 @@ EvsDisplay::EvsDisplay() {
     // NOTE:  These are arbitrary values chosen for testing
     mInfo.displayId             = "Mock Display";
     mInfo.vendorFlags           = 3870;
-    mInfo.defaultHorResolution  = 320;
-    mInfo.defaultVerResolution  = 240;
+
+    // Assemble the buffer description we'll use for our render target
+    mBuffer.width       = 320;
+    mBuffer.height      = 240;
+    mBuffer.format      = HAL_PIXEL_FORMAT_RGBA_8888;
+    mBuffer.usage       = GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_COMPOSER;
+    mBuffer.bufferId    = 0x3870;  // Arbitrary magic number for self recognition
+    mBuffer.pixelSize   = 4;
 }
 
 
 EvsDisplay::~EvsDisplay() {
     ALOGD("EvsDisplay being destroyed");
+    forceShutdown();
+}
+
+
+/**
+ * This gets called if another caller "steals" ownership of the display
+ */
+void EvsDisplay::forceShutdown()
+{
+    ALOGD("EvsDisplay forceShutdown");
     std::lock_guard<std::mutex> lock(mAccessLock);
 
-    // Report if we're going away while a buffer is outstanding
-    if (mFrameBusy) {
-        ALOGE("EvsDisplay going down while client is holding a buffer");
-    }
-
-    // Make sure we release our frame buffer
+    // If the buffer isn't being held by a remote client, release it now as an
+    // optimization to release the resources more quickly than the destructor might
+    // get called.
     if (mBuffer.memHandle) {
+        // Report if we're going away while a buffer is outstanding
+        if (mFrameBusy) {
+            ALOGE("EvsDisplay going down while client is holding a buffer");
+        }
+
         // Drop the graphics buffer we've been using
         GraphicBufferAllocator& alloc(GraphicBufferAllocator::get());
         alloc.free(mBuffer.memHandle);
         mBuffer.memHandle = nullptr;
     }
-    ALOGD("EvsDisplay destroyed");
+
+    // Put this object into an unrecoverable error state since somebody else
+    // is going to own the display now.
+    mRequestedState = DisplayState::DEAD;
 }
 
 
 /**
  * Returns basic information about the EVS display provided by the system.
- * See the description of the DisplayDesc structure below for details.
+ * See the description of the DisplayDesc structure for details.
  */
 Return<void> EvsDisplay::getDisplayInfo(getDisplayInfo_cb _hidl_cb)  {
     ALOGD("getDisplayInfo");
@@ -93,6 +108,11 @@ Return<void> EvsDisplay::getDisplayInfo(getDisplayInfo_cb _hidl_cb)  {
 Return<EvsResult> EvsDisplay::setDisplayState(DisplayState state) {
     ALOGD("setDisplayState");
     std::lock_guard<std::mutex> lock(mAccessLock);
+
+    if (mRequestedState == DisplayState::DEAD) {
+        // This object no longer owns the display -- it's been superceeded!
+        return EvsResult::OWNERSHIP_LOST;
+    }
 
     // Ensure we recognize the requested state so we don't go off the rails
     if (state < DisplayState::NUM_STATES) {
@@ -119,10 +139,7 @@ Return<DisplayState> EvsDisplay::getDisplayState()  {
     ALOGD("getDisplayState");
     std::lock_guard<std::mutex> lock(mAccessLock);
 
-    // At the moment, we treat the requested state as immediately active
-    DisplayState currentState = mRequestedState;
-
-    return currentState;
+    return mRequestedState;
 }
 
 
@@ -137,15 +154,16 @@ Return<void> EvsDisplay::getTargetBuffer(getTargetBuffer_cb _hidl_cb)  {
     ALOGD("getTargetBuffer");
     std::lock_guard<std::mutex> lock(mAccessLock);
 
+    if (mRequestedState == DisplayState::DEAD) {
+        ALOGE("Rejecting buffer request from object that lost ownership of the display.");
+        BufferDesc nullBuff = {};
+        _hidl_cb(nullBuff);
+        return Void();
+    }
+
     // If we don't already have a buffer, allocate one now
     if (!mBuffer.memHandle) {
-        // Assemble the buffer description we'll use for our render target
-        mBuffer.width       = mInfo.defaultHorResolution;
-        mBuffer.height      = mInfo.defaultVerResolution;
-        mBuffer.format      = HAL_PIXEL_FORMAT_RGBA_8888;
-        mBuffer.usage       = GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_COMPOSER;
-        mBuffer.bufferId    = 0x3870;  // Arbitrary magic number for self recognition
-
+        // Allocate the buffer that will hold our displayable image
         buffer_handle_t handle = nullptr;
         GraphicBufferAllocator& alloc(GraphicBufferAllocator::get());
         status_t result = alloc.allocate(mBuffer.width, mBuffer.height,
@@ -220,6 +238,11 @@ Return<EvsResult> EvsDisplay::returnTargetBufferForDisplay(const BufferDesc& buf
 
     mFrameBusy = false;
 
+    // If we've been displaced by another owner of the display, then we can't do anything else
+    if (mRequestedState == DisplayState::DEAD) {
+        return EvsResult::OWNERSHIP_LOST;
+    }
+
     // If we were waiting for a new frame, this is it!
     if (mRequestedState == DisplayState::VISIBLE_ON_NEXT_FRAME) {
         mRequestedState = DisplayState::VISIBLE;
@@ -248,8 +271,8 @@ Return<EvsResult> EvsDisplay::returnTargetBufferForDisplay(const BufferDesc& buf
 
         // Check the test pixels
         bool frameLooksGood = true;
-        for (unsigned row = 0; row < mInfo.defaultVerResolution; row++) {
-            for (unsigned col = 0; col < mInfo.defaultHorResolution; col++) {
+        for (unsigned row = 0; row < mBuffer.height; row++) {
+            for (unsigned col = 0; col < mBuffer.width; col++) {
                 // Index into the row to check the pixel at this column.
                 // We expect 0xFF in the LSB channel, a vertical gradient in the
                 // second channel, a horitzontal gradient in the third channel, and
