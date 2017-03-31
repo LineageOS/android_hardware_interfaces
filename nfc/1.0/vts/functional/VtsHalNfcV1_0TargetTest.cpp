@@ -337,17 +337,16 @@ TEST_F(NfcHidlTest, PowerCycleAfterClose) {
 TEST_F(NfcHidlTest, CoreInitialized) {
   NfcData data;
   data.resize(1);
-  NfcEvent last_event_;
-  for (int i = 0; i <= 6; i++) {
+  // These parameters might lead to device specific proprietary behavior
+  // Using > 10 values should result in predictable and common results for
+  // most devices.
+  for (int i = 10; i <= 16; i++) {
       data[0] = i;
       EXPECT_EQ(NfcStatus::OK, nfc_->coreInitialized(data));
       // Wait for NfcEvent.POST_INIT_CPLT
-      auto res = nfc_cb_->WaitForCallbackAny();
-      if (res.name.compare(kCallbackNameSendEvent) == 0) {
-          last_event_ = res.args->last_event_;
-      }
+      auto res = nfc_cb_->WaitForCallback(kCallbackNameSendEvent);
       EXPECT_TRUE(res.no_timeout);
-      EXPECT_EQ(NfcEvent::POST_INIT_CPLT, last_event_);
+      EXPECT_EQ(NfcEvent::POST_INIT_CPLT, res.args->last_event_);
   }
 }
 
