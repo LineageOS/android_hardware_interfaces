@@ -353,80 +353,6 @@ void DefaultVehicleHal::rxThread() {
     }
 }
 
-// This function sets the default value of a property if we are interested in setting it.
-// TODO:  Co-locate the default values with the configuration structure, to make it easier to
-//          add new properties and their defaults.
-void DefaultVehicleHal::setDefaultValue(VehiclePropValue* prop) {
-    switch (prop->prop) {
-    case toInt(VehicleProperty::INFO_MAKE):
-        prop->value.stringValue = "Default Car";
-        break;
-    case toInt(VehicleProperty::PERF_VEHICLE_SPEED):
-        prop->value.floatValues[0] = 0;
-        break;
-    case toInt(VehicleProperty::CURRENT_GEAR):
-        prop->value.int32Values[0] = toInt(VehicleGear::GEAR_PARK);
-        break;
-    case toInt(VehicleProperty::PARKING_BRAKE_ON):
-        prop->value.int32Values[0] = 1;
-        break;
-    case toInt(VehicleProperty::FUEL_LEVEL_LOW):
-        prop->value.int32Values[0] = 0;
-        break;
-    case toInt(VehicleProperty::HVAC_POWER_ON):
-        prop->value.int32Values[0] = 1;
-        break;
-    case toInt(VehicleProperty::HVAC_DEFROSTER):
-        prop->value.int32Values[0] = 0;
-        break;
-    case toInt(VehicleProperty::HVAC_RECIRC_ON):
-        prop->value.int32Values[0] = 1;
-        break;
-    case toInt(VehicleProperty::HVAC_AC_ON):
-        prop->value.int32Values[0] = 1;
-        break;
-    case toInt(VehicleProperty::HVAC_AUTO_ON):
-        prop->value.int32Values[0] = 1;
-        break;
-    case toInt(VehicleProperty::HVAC_FAN_SPEED):
-        prop->value.int32Values[0] = 3;
-        break;
-    case toInt(VehicleProperty::HVAC_FAN_DIRECTION):
-        prop->value.int32Values[0] = toInt(VehicleHvacFanDirection::FACE);
-        break;
-    case toInt(VehicleProperty::HVAC_TEMPERATURE_SET):
-        prop->value.floatValues[0] = 16;
-        break;
-    case toInt(VehicleProperty::ENV_OUTSIDE_TEMPERATURE):
-        prop->value.floatValues[0] = 25;
-        break;
-    case toInt(VehicleProperty::NIGHT_MODE):
-        prop->value.int32Values[0] = 0;
-        break;
-    case toInt(VehicleProperty::DRIVING_STATUS):
-        prop->value.int32Values[0] = toInt(VehicleDrivingStatus::UNRESTRICTED);
-        break;
-    case toInt(VehicleProperty::GEAR_SELECTION):
-        prop->value.int32Values[0] = toInt(VehicleGear::GEAR_PARK);
-        break;
-    case toInt(VehicleProperty::INFO_FUEL_CAPACITY):
-        prop->value.floatValues[0] = 123000.0f;  // In milliliters
-        break;
-    case toInt(VehicleProperty::ENGINE_OIL_TEMP):
-        prop->value.floatValues[0] = 101;
-        break;
-    case toInt(VehicleProperty::DISPLAY_BRIGHTNESS):
-        prop->value.int32Values[0] = 7;
-        break;
-    case toInt(VehicleProperty::IGNITION_STATE):
-        prop->value.int32Values[0] = toInt(VehicleIgnitionState::ON);
-        break;
-    default:
-        ALOGW("%s: propId=0x%x not found", __func__, prop->prop);
-        break;
-    }
-}
-
 // Transmit a reply back to the emulator
 void DefaultVehicleHal::txMsg(emulator::EmulatorMessage& txMsg) {
     int numBytes = txMsg.ByteSize();
@@ -546,44 +472,9 @@ void DefaultVehicleHal::onCreate() {
         mHvacPowerProps.insert(prop);
     }
 
-    // Get the list of configurations supported by this HAL
-    std::vector<VehiclePropConfig> configs = listProperties();
-
-    for (auto& cfg : configs) {
-        VehiclePropertyType propType = getPropType(cfg.prop);
+    for (auto& it : kVehicleProperties) {
+        VehiclePropConfig cfg = it.config;
         int32_t supportedAreas = cfg.supportedAreas;
-        int32_t vecSize;
-
-        // Set the vector size based on property type
-        switch (propType) {
-        case VehiclePropertyType::BOOLEAN:
-        case VehiclePropertyType::INT32:
-        case VehiclePropertyType::INT64:
-        case VehiclePropertyType::FLOAT:
-            vecSize = 1;
-            break;
-        case VehiclePropertyType::INT32_VEC:
-        case VehiclePropertyType::FLOAT_VEC:
-        case VehiclePropertyType::BYTES:
-            // TODO:  Add proper support for these types
-            vecSize = 1;
-            break;
-        case VehiclePropertyType::STRING:
-            // Require individual handling
-            vecSize = 0;
-            break;
-        case VehiclePropertyType::COMPLEX:
-            switch (cfg.prop) {
-            default:
-                // Need to handle each complex property separately
-                break;
-            }
-            continue;
-        default:
-            ALOGE("%s: propType=0x%x not found", __func__, propType);
-            vecSize = 0;
-            break;
-        }
 
         //  A global property will have supportedAreas = 0
         if (getPropArea(cfg.prop) == VehicleArea::GLOBAL) {
@@ -593,28 +484,42 @@ void DefaultVehicleHal::onCreate() {
         // This loop is a do-while so it executes at least once to handle global properties
         do {
             int32_t curArea = supportedAreas;
-
-            // Clear the right-most bit of supportedAreas
-            supportedAreas &= supportedAreas - 1;
-
-            // Set curArea to the previously cleared bit
-            curArea ^= supportedAreas;
+            supportedAreas &= supportedAreas - 1;  // Clear the right-most bit of supportedAreas.
+            curArea ^= supportedAreas;  // Set curArea to the previously cleared bit.
 
             // Create a separate instance for each individual zone
-            std::unique_ptr<VehiclePropValue> prop = createVehiclePropValue(propType, vecSize);
-            prop->areaId = curArea;
-            prop->prop = cfg.prop;
-            setDefaultValue(prop.get());
-            std::unique_ptr<CustomVehiclePropertyHandler> handler;
-            handler.reset(new StoredValueCustomVehiclePropertyHandler());
-            handler->set(*prop);
-            mProps[std::make_pair(prop->prop, prop->areaId)] =
-                    std::move(handler);
+            VehiclePropValue prop = {
+                .prop = cfg.prop,
+                .areaId = curArea,
+            };
+            if (it.initialAreaValues.size() > 0) {
+                auto valueForAreaIt = it.initialAreaValues.find(curArea);
+                if (valueForAreaIt != it.initialAreaValues.end()) {
+                    prop.value = valueForAreaIt->second;
+                } else {
+                    ALOGW("%s failed to get default value for prop 0x%x area 0x%x",
+                            __func__, cfg.prop, curArea);
+                }
+            } else {
+                prop.value = it.initialValue;
+            }
+
+            auto handler = std::make_unique<StoredValueCustomVehiclePropertyHandler>();
+            handler->set(prop);
+            mProps[std::make_pair(prop.prop, prop.areaId)] = std::move(handler);
         } while (supportedAreas != 0);
     }
 
     // Start rx thread
     mThread = std::thread(&DefaultVehicleHal::rxThread, this);
+}
+
+std::vector<VehiclePropConfig> DefaultVehicleHal::listProperties()  {
+    std::vector<VehiclePropConfig> configs(mPropConfigMap.size());
+    for (auto&& it : mPropConfigMap) {
+        configs.push_back(*it.second);
+    }
+    return configs;
 }
 
 void DefaultVehicleHal::onContinuousPropertyTimer(const std::vector<int32_t>& properties) {
