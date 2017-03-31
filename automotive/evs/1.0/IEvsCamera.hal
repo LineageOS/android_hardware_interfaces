@@ -28,10 +28,10 @@ interface IEvsCamera {
     /**
      * Returns the ID of this camera.
      *
-     * Returns the string id of this camera. This must be the same value as reported in
-     * the camera_id field of the CameraDesc structure by EvsEnumerator::getCamerList().
+     * Returns the description of this camera. This must be the same value as reported
+     * by EvsEnumerator::getCamerList().
      */
-    getId() generates (string cameraId);
+    getCameraInfo() generates (CameraDesc info);
 
     /**
      * Specifies the depth of the buffer chain the camera is asked to support.

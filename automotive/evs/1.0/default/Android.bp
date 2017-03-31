@@ -23,4 +23,9 @@ cc_binary {
         "liblog",
         "libutils",
     ],
+
+    cflags: [
+        "-O0",
+        "-g",
+    ],
 }
