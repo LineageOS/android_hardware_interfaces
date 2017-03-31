@@ -27,9 +27,7 @@
 #include <set>
 
 #include <android/hardware/automotive/vehicle/2.0/IVehicle.h>
-#include <hwbinder/IPCThreadState.h>
 
-#include "AccessControlConfigParser.h"
 #include "ConcurrentQueue.h"
 #include "SubscriptionManager.h"
 #include "VehicleHal.h"
@@ -41,11 +39,6 @@ namespace hardware {
 namespace automotive {
 namespace vehicle {
 namespace V2_0 {
-
-struct Caller {
-    pid_t pid;
-    uid_t uid;
-};
 
 /**
  * This class is a thick proxy between IVehicle HIDL interface and vendor's implementation.
@@ -99,14 +92,8 @@ private:
 
     const VehiclePropConfig* getPropConfigOrNull(int32_t prop) const;
 
-    bool checkWritePermission(const VehiclePropConfig &config,
-                              const Caller& callee) const;
-    bool checkReadPermission(const VehiclePropConfig &config,
-                             const Caller& caller) const;
-    bool checkAcl(uid_t callerUid,
-                  int32_t propertyId,
-                  VehiclePropertyAccess requiredAccess) const;
-
+    bool checkWritePermission(const VehiclePropConfig &config) const;
+    bool checkReadPermission(const VehiclePropConfig &config) const;
     void onAllClientsUnsubscribed(int32_t propertyId);
 
     static bool isSubscribable(const VehiclePropConfig& config,
@@ -114,12 +101,6 @@ private:
     static bool isSampleRateFixed(VehiclePropertyChangeMode mode);
     static float checkSampleRate(const VehiclePropConfig& config,
                                  float sampleRate);
-    static void readAndParseAclConfig(const char* filename,
-                                      AccessControlConfigParser* parser,
-                                      PropertyAclMap* outAclMap);
-
-    static Caller getCaller();
-
 private:
     VehicleHal* mHal;
     std::unique_ptr<VehiclePropConfigIndex> mConfigIndex;
@@ -130,7 +111,6 @@ private:
     ConcurrentQueue<VehiclePropValuePtr> mEventQueue;
     BatchingConsumer<VehiclePropValuePtr> mBatchingConsumer;
     VehiclePropValuePool mValueObjectPool;
-    PropertyAclMap mPropertyAclMap;
 };
 
 }  // namespace V2_0

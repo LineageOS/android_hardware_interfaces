@@ -33,7 +33,6 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := \
     $(LOCAL_PATH)/common/include
 
 LOCAL_SHARED_LIBRARIES := \
-    libbinder \
     libhidlbase \
     libhidltransport \
     libhwbinder \
@@ -72,7 +71,6 @@ LOCAL_STATIC_LIBRARIES := \
 
 LOCAL_SHARED_LIBRARIES := \
     libbase \
-    libbinder \
     libhidlbase \
     libhidltransport \
     libhwbinder \
@@ -109,7 +107,6 @@ LOCAL_STATIC_LIBRARIES := \
 
 LOCAL_SHARED_LIBRARIES := \
     libbase \
-    libbinder \
     libhidlbase \
     libhidltransport \
     libhwbinder \

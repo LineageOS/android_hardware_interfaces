@@ -452,8 +452,8 @@ TEST(HalClientVectorTest, basic) {
     HalClientVector clients;
     sp<IVehicleCallback> callback1 = new MockedVehicleCallback();
 
-    sp<HalClient> c1 = new HalClient(callback1, 10, 20);
-    sp<HalClient> c2 = new HalClient(callback1, 10, 20);
+    sp<HalClient> c1 = new HalClient(callback1);
+    sp<HalClient> c2 = new HalClient(callback1);
 
     clients.addOrUpdate(c1);
     clients.addOrUpdate(c1);

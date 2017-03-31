@@ -22,7 +22,6 @@ vhal_v2_0 = android.hardware.automotive.vehicle@2.0
 include $(CLEAR_VARS)
 LOCAL_MODULE := $(vhal_v2_0)-manager-lib
 LOCAL_SRC_FILES := \
-    common/src/AccessControlConfigParser.cpp \
     common/src/SubscriptionManager.cpp \
     common/src/VehicleHalManager.cpp \
     common/src/VehicleObjectPool.cpp \
@@ -35,7 +34,6 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := \
     $(LOCAL_PATH)/common/include
 
 LOCAL_SHARED_LIBRARIES := \
-    libbinder \
     libhidlbase \
     libhidltransport \
     libhwbinder \
@@ -89,7 +87,6 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
 
 LOCAL_SHARED_LIBRARIES := \
     libbase \
-    libbinder \
     libhidlbase \
     libhidltransport \
     libhwbinder \
@@ -118,7 +115,6 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
     $(vhal_v2_0)-manager-lib \
 
 LOCAL_SRC_FILES:= \
-    tests/AccessControlConfigParser_test.cpp \
     tests/RecurrentTimer_test.cpp \
     tests/SubscriptionManager_test.cpp \
     tests/VehicleHalManager_test.cpp \
@@ -126,7 +122,6 @@ LOCAL_SRC_FILES:= \
     tests/VehiclePropConfigIndex_test.cpp \
 
 LOCAL_SHARED_LIBRARIES := \
-    libbinder \
     libhidlbase \
     libhidltransport \
     libhwbinder \
@@ -154,7 +149,6 @@ LOCAL_SRC_FILES := \
 
 LOCAL_SHARED_LIBRARIES := \
     libbase \
-    libbinder \
     libhidlbase \
     libhidltransport \
     libhwbinder \
