@@ -27,6 +27,7 @@ namespace evs {
 namespace V1_0 {
 namespace implementation {
 
+
 class EvsDisplay : public IEvsDisplay {
 public:
     // Methods from ::android::hardware::automotive::evs::V1_0::IEvsDisplay follow.
@@ -39,6 +40,8 @@ public:
     // Implementation details
     EvsDisplay();
     virtual ~EvsDisplay() override;
+
+    void forceShutdown();   // This gets called if another caller "steals" ownership of the display
 
 private:
     DisplayDesc     mInfo           = {};

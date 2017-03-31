@@ -31,14 +31,14 @@ interface IEvsEnumerator {
      */
     getCameraList() generates (vec<CameraDesc> cameras);
 
-
     /**
      * Get the IEvsCamera associated with a cameraId from a CameraDesc
      *
      * Given a camera's unique cameraId from ca CameraDesc, returns
-     * the ICamera interface assocaited with the specified camera.
-     * When done using the camera, it must be returned by calling
-     * closeCamera on the ICamera interface.
+     * the ICamera interface associated with the specified camera.
+     * When done using the camera, the caller may release it by calling closeCamera().
+     * TODO(b/36122635) Reliance on the sp<> going out of scope is not recommended because the
+     * resources may not be released right away due to asynchronos behavior in the hardware binder.
      */
     openCamera(string cameraId) generates (IEvsCamera carCamera);
 
@@ -57,6 +57,9 @@ interface IEvsEnumerator {
      * There can be at most one EVS display object for the system and this function
      * requests access to it. If the EVS display is not available or is already in use,
      * a null pointer is returned.
+     * When done using the display, the caller may release it by calling closeDisplay().
+     * TODO(b/36122635) Reliance on the sp<> going out of scope is not recommended because the
+     * resources may not be released right away due to asynchronos behavior in the hardware binder.
      */
     openDisplay() generates (IEvsDisplay display);
 
@@ -64,7 +67,7 @@ interface IEvsEnumerator {
      * Return the specified IEvsDisplay interface as no longer in use
      *
      * When the IEvsDisplay object is no longer required, it must be released.
-     * NOTE: All buffer must have been returned to the display before making this call.
+     * NOTE: All buffers must have been returned to the display before making this call.
      */
     closeDisplay(IEvsDisplay display);
 

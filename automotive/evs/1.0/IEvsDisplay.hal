@@ -27,7 +27,7 @@ interface IEvsDisplay {
     /**
      * Returns basic information about the EVS display provided by the system.
      *
-     * See the description of the DisplayDesc structure below for details.
+     * See the description of the DisplayDesc structure for details.
      */
      getDisplayInfo() generates (DisplayDesc info);
 
