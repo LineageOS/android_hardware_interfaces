@@ -73,21 +73,21 @@ class DrmHalVTSVendorModule {
      * value with initial version 1. The API version indicates which subclass
      * version DrmHalVTSVendorModule this instance is.
      */
-    virtual uint32_t getAPIVersion() = 0;
+    virtual uint32_t getAPIVersion() const = 0;
 
     /**
      * Return the UUID for the DRM HAL implementation. Protection System
      * Specific
      * UUID (see http://dashif.org/identifiers/protection/)
      */
-    virtual std::vector<uint8_t> getUUID() = 0;
+    virtual std::vector<uint8_t> getUUID() const = 0;
 
     /**
      * Return the service name for the DRM HAL implementation. If the hal is a
      * legacy
      * drm plugin, i.e. not running as a HIDL service, return the empty string.
      */
-    virtual std::string getServiceName() = 0;
+    virtual std::string getServiceName() const = 0;
 
    private:
     DrmHalVTSVendorModule(const DrmHalVTSVendorModule&) = delete;
@@ -103,7 +103,7 @@ class DrmHalVTSVendorModule_V1 : public DrmHalVTSVendorModule {
     DrmHalVTSVendorModule_V1() {}
     virtual ~DrmHalVTSVendorModule_V1() {}
 
-    virtual uint32_t getAPIVersion() { return 1; }
+    virtual uint32_t getAPIVersion() const { return 1; }
 
     /**
      * Handle a provisioning request. This function will be called if the HAL
@@ -178,11 +178,10 @@ class DrmHalVTSVendorModule_V1 : public DrmHalVTSVendorModule {
             const std::vector<uint8_t> keyId;
 
             /**
-             * The key value is provided to generate expected values for
-             * validating
-             * decryption.  If isSecure is false, no key value is required.
+             * The clear content key is provided to generate expected values for
+             * validating decryption.
              */
-            const std::vector<uint8_t> keyValue;
+            const std::vector<uint8_t> clearContentKey;
         };
         std::vector<Key> keys;
     };
@@ -191,7 +190,8 @@ class DrmHalVTSVendorModule_V1 : public DrmHalVTSVendorModule {
      * Return a list of content configurations that can be exercised by the
      * VTS test.
      */
-    virtual std::vector<ContentConfiguration> getContentConfigurations() = 0;
+    virtual std::vector<ContentConfiguration>
+            getContentConfigurations() const = 0;
 
     /**
      * Handle a key request. This function will be called if the HAL

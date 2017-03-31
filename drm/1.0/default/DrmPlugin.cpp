@@ -327,19 +327,25 @@ namespace implementation {
 
     Return<void> DrmPlugin::sendEvent(EventType eventType,
             const hidl_vec<uint8_t>& sessionId, const hidl_vec<uint8_t>& data) {
-        mListener->sendEvent(eventType, sessionId, data);
+        if (mListener != nullptr) {
+            mListener->sendEvent(eventType, sessionId, data);
+        }
         return Void();
     }
 
     Return<void> DrmPlugin::sendExpirationUpdate(
             const hidl_vec<uint8_t>& sessionId, int64_t expiryTimeInMS) {
-        mListener->sendExpirationUpdate(sessionId, expiryTimeInMS);
+        if (mListener != nullptr) {
+            mListener->sendExpirationUpdate(sessionId, expiryTimeInMS);
+        }
         return Void();
     }
 
     Return<void> DrmPlugin::sendKeysChange(const hidl_vec<uint8_t>& sessionId,
             const hidl_vec<KeyStatus>& keyStatusList, bool hasNewUsableKey) {
-        mListener->sendKeysChange(sessionId, keyStatusList, hasNewUsableKey);
+        if (mListener != nullptr) {
+            mListener->sendKeysChange(sessionId, keyStatusList, hasNewUsableKey);
+        }
         return Void();
     }
 

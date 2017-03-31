@@ -30,27 +30,33 @@ class VendorModules {
      * Initialize with a file system path where the shared libraries
      * are to be found.
      */
-    explicit VendorModules(const std::string& path) : mModulesPath(path) {}
+    explicit VendorModules(const std::string& dir) {
+        scanModules(dir);
+    }
     ~VendorModules() {}
-
-    /**
-     * Return a list of paths to available vendor modules.
-     */
-    std::vector<std::string> getVendorModulePaths();
 
     /**
      * Retrieve a DrmHalVTSVendorModule given its full path.  The
      * getAPIVersion method can be used to determine the versioned
      * subclass type.
      */
-    DrmHalVTSVendorModule* getVendorModule(const std::string& path);
+    DrmHalVTSVendorModule* getModule(const std::string& path);
+
+    /**
+     * Return the list of paths to available vendor modules.
+     */
+    std::vector<std::string> getPathList() const {return mPathList;}
 
    private:
-    std::string mModulesPath;
-    std::vector<std::string> mModuleList;
+    std::vector<std::string> mPathList;
     std::map<std::string, std::unique_ptr<SharedLibrary>> mOpenLibraries;
 
-    inline bool endsWith(const std::string& str, const std::string& suffix) {
+    /**
+     * Scan the list of paths to available vendor modules.
+     */
+    void scanModules(const std::string& dir);
+
+    inline bool endsWith(const std::string& str, const std::string& suffix) const {
         if (suffix.size() > str.size()) return false;
         return std::equal(suffix.rbegin(), suffix.rend(), str.rbegin());
     }
