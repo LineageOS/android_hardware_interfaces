@@ -53,6 +53,18 @@ struct Properties {
      * it may not be available though, see startBackgroundScan.
      */
     bool supportsBackgroundScanning;
+
+    /**
+     * Opaque vendor-specific string, to be passed to front-end without changes.
+     * Format of this string can vary across vendors.
+     *
+     * It may be used for extra features, that's not supported by a platform,
+     * for example: "preset-slots=6;ultra-hd-capable=false".
+     *
+     * Front-end application MUST verify vendor/product name from the
+     * @1.0::Properties struct before doing any interpretation of this value.
+     */
+    string vendorExension;
 };
 
 /**
@@ -64,10 +76,14 @@ struct ProgramInfo {
     bitfield<ProgramInfoFlags> flags;
 
     /**
-     * Vendors are allowed to define their own set of flags and store it in this
-     * field. They MUST verify vendor/product name from Properties struct
-     * (IBroadcastRadio::getProperties) before doing any interpretation
-     * of such values.
+     * Opaque vendor-specific string, to be passed to front-end without changes.
+     * Format of this string can vary across vendors.
+     *
+     * It may be used for extra features, that's not supported by a platform,
+     * for example: "paid-service=true;bitrate=320kbps".
+     *
+     * Front-end application MUST verify vendor/product name from the
+     * @1.0::Properties struct before doing any interpretation of this value.
      */
-    uint32_t vendorFlags;
+    string vendorExension;
 };
