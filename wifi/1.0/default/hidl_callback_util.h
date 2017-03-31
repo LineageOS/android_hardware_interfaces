@@ -82,7 +82,7 @@ class HidlCallbackHandler {
     return true;
   }
 
-  const std::set<android::sp<CallbackType>> getCallbacks() { return cb_set_; }
+  const std::set<android::sp<CallbackType>>& getCallbacks() { return cb_set_; }
 
   // Death notification for callbacks.
   void onObjectDeath(uint64_t cookie) {
