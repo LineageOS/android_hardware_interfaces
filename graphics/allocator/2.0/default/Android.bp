@@ -3,7 +3,7 @@ cc_library_shared {
     defaults: ["hidl_defaults"],
     proprietary: true,
     relative_install_path: "hw",
-    srcs: ["Gralloc.cpp"],
+    srcs: ["Gralloc.cpp", "Gralloc0Allocator.cpp", "Gralloc1Allocator.cpp"],
     cppflags: ["-Wall", "-Wextra"],
     shared_libs: [
         "android.hardware.graphics.allocator@2.0",
@@ -15,6 +15,7 @@ cc_library_shared {
         "liblog",
         "libutils",
     ],
+    static_libs: ["libgrallocmapperincludes"],
 }
 
 cc_binary {

@@ -18,10 +18,9 @@ cc_library_shared {
     defaults: ["hidl_defaults"],
     proprietary: true,
     relative_install_path: "hw",
-    srcs: ["GrallocMapper.cpp"],
+    srcs: ["GrallocMapper.cpp", "Gralloc0Mapper.cpp", "Gralloc1Mapper.cpp"],
     cppflags: ["-Wall", "-Wextra"],
     shared_libs: [
-        "android.hardware.graphics.allocator@2.0",
         "android.hardware.graphics.mapper@2.0",
         "libbase",
         "libcutils",
@@ -29,6 +28,12 @@ cc_library_shared {
         "libhidlbase",
         "libhidltransport",
         "liblog",
+        "libsync",
         "libutils",
     ],
+}
+
+cc_library_static {
+    name: "libgrallocmapperincludes",
+    export_include_dirs: ["."],
 }
