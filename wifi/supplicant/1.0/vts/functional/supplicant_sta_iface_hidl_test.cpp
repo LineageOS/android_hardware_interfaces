@@ -104,15 +104,22 @@ class IfaceCallback : public ISupplicantStaIfaceCallback {
     }
     Return<void> onDisconnected(const hidl_array<uint8_t, 6>& /* bssid */,
                                 bool /* locallyGenerated */,
-                                uint32_t /* reasonCode */) override {
+                                ISupplicantStaIfaceCallback::ReasonCode
+                                /* reasonCode */) override {
         return Void();
     }
     Return<void> onAssociationRejected(
-        const hidl_array<uint8_t, 6>& /* bssid */, uint32_t /* statusCode */,
+        const hidl_array<uint8_t, 6>& /* bssid */,
+        ISupplicantStaIfaceCallback::StatusCode /* statusCode */,
         bool /*timedOut */) override {
         return Void();
     }
     Return<void> onAuthenticationTimeout(
+        const hidl_array<uint8_t, 6>& /* bssid */) override {
+        return Void();
+    }
+    Return<void> onBssidChanged(
+        ISupplicantStaIfaceCallback::BssidChangeReason /* reason */,
         const hidl_array<uint8_t, 6>& /* bssid */) override {
         return Void();
     }
