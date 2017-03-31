@@ -3,30 +3,51 @@ package android.hardware.gnss@1.0;
 /** Extended interface for DEBUG support. */
 interface IGnssDebug {
     enum SatelliteEphemerisType : uint8_t {
-        /** no information is known to the gnss hardware, about this satellite */
-        UNKNOWN,
-        /**  this satellite is known to exist */
-        KNOWN,
-        /**  this satellite is not known to exist */
-        NONEXISTENT,
-        /** Only Almanac (approximate) location known for this satellite */
+        /** Ephemeris is known for this satellite. */
+        EPHEMERIS,
+        /**
+         * Ephemeris is not known, but Almanac (approximate location) is known.
+         */
         ALMANAC_ONLY,
-        /** Ephemeris is known from demodulating the signal on device */
+        /**
+         * Both ephemeris & almanac are not known (e.g. during a cold start
+         * blind search.)
+         */
+        NOT_AVAILABLE
+    };
+
+    enum SatelliteEphemerisSource : uint8_t {
+        /**
+         * The ephemeris (or almanac only) information was demodulated from the
+         * signal received on the device
+         */
         DEMODULATED,
-        /** Ephemeris has been provided by SUPL */
+        /**
+         * The ephemeris (or almanac only) information was received from a SUPL
+         * server.
+         */
         SUPL_PROVIDED,
-        /** Ephemeris has been provided by another server */
+        /**
+         * The ephemeris (or almanac only) information was provided by another
+         * server.
+         */
         OTHER_SERVER_PROVIDED,
         /**
-         * Predicted ephemeris has been provided by a server
-         * (e.g. Xtra, Extended Ephemeris, etc...)
+         * The ephemeris (or almanac only) information was provided by another
+         * method, e.g. injected via a local debug tool, from build defaults
+         * (e.g. almanac), or is from a satellite
+         * with SatelliteEphemerisType::NOT_AVAILABLE.
          */
-        SERVER_PREDICTED,
-        /**
-         * Predicted ephemeris in use, generated locally on the device (e.g. from prior
-         * ephemeris)
-         */
-        LOCALLY_PREDICTED
+        OTHER
+    };
+
+    enum SatelliteEphemerisHealth : uint8_t {
+        /** The ephemeris is known good. */
+        GOOD,
+        /** The ephemeris is known bad. */
+        BAD,
+        /** The ephemeris is unknown to be good or bad. */
+        UNKNOWN
     };
 
     /**
@@ -45,22 +66,22 @@ interface IGnssDebug {
         double longitudeDegrees;
         /** Altitude above ellipsoid expressed in meters */
         float altitudeMeters;
-        /** Represents speed in meters per second. */
+        /** Represents horizontal speed in meters per second. */
         float speedMetersPerSec;
         /** Represents heading in degrees. */
         float bearingDegrees;
         /**
-         * estimated horizontal accuracy of position expressed in meters, radial,
+         * Estimated horizontal accuracy of position expressed in meters, radial,
          * 68% confidence.
          */
         double horizontalAccuracyMeters;
         /**
-         * estimated vertical accuracy of position expressed in meters, with
+         * Estimated vertical accuracy of position expressed in meters, with
          * 68% confidence.
          */
         double verticalAccuracyMeters;
         /**
-         * estimated speed accuracy in meters per second with 68% confidence.
+         * Estimated speed accuracy in meters per second with 68% confidence.
          */
         double speedAccuracyMetersPerSecond;
         /**
@@ -69,26 +90,31 @@ interface IGnssDebug {
         double bearingAccuracyDegrees;
         /**
          * Time duration before this report that this position information was
-         * valid.
+         * valid.  This can, for example, be a previous injected location with
+         * an age potentially thousands of seconds old, or
+         * extrapolated to the current time (with appropriately increased
+         * accuracy estimates), with a (near) zero age.
          */
         float ageSeconds;
     };
 
     /**
      * Provides the current best known UTC time estimate.
+     * If no fresh information is available, e.g. after a delete all,
+     * then whatever the effective defaults are on the device must be
+     * provided (e.g. Jan. 1, 2017, with an uncertainty of 5 years) expressed
+     * in the specified units.
      */
     struct TimeDebug {
-        /**
-         * Validity of the data in the struct.
-         * False if current time is unknown.
-         */
-        bool valid;
-        /**
-         * UTC time estimate.
-         */
+        /** UTC time estimate. */
         GnssUtcTime timeEstimate;
         /** 68% error estimate in time. */
         float timeUncertaintyNs;
+        /**
+         * 68% error estimate in local clock drift,
+         * in nanoseconds per second (also known as parts per billion - ppb.)
+         */
+        float frequencyUncertaintyNsPerSec;
     };
 
     /**
@@ -99,14 +125,34 @@ interface IGnssDebug {
         int16_t svid;
         /** Defines the constellation type of the given SV. */
         GnssConstellationType constellation;
+
         /** Defines the ephemeris type of the satellite. */
         SatelliteEphemerisType ephemerisType;
+        /** Defines the ephemeris source of the satellite. */
+        SatelliteEphemerisSource ephemerisSource;
         /**
-         * Time duration before this report, that the ephemeris source was last
-         * updated, e.g. latest demodulation, or latest server download.
-         * Set to 0 when ephemerisType is UNKNOWN.
+         * Defines whether the satellite is known healthy
+         * (safe for use in location calculation.)
+         */
+        SatelliteEphemerisHealth ephemerisHealth;
+        /**
+         * Time duration from this report (current time), minus the
+         * effective time of the ephemeris source (e.g. TOE, TOA.)
+         * Set to 0 when ephemerisType is NOT_AVAILABLE.
          */
         float ephemerisAgeSeconds;
+
+        /**
+         * True if a server has provided a predicted orbit (& clock) for
+         * this satellite.
+         */
+        bool serverPredictionIsAvailable;
+        /**
+         * Time duration from this report (current time) minus the time of the
+         * start of the server predicted information.  For example, a 1 day
+         * old prediction would be reported as 86400 seconds here.
+         */
+        float serverPredictionAgeSeconds;
     };
 
     /**
@@ -119,12 +165,11 @@ interface IGnssDebug {
         /** Current best know time estimate */
         TimeDebug time;
         /**
-         * Provides a list of the decoded satellite ephemeris.
-         * Must provide a complete list for all constellations device can track,
+         * Provides a list of the available satellite data, for all
+         * satellites and constellations the device can track,
          * including GnssConstellationType UNKNOWN.
          */
         vec<SatelliteData> satelliteDataArray;
-
     };
 
     /**
