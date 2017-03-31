@@ -46,18 +46,18 @@ TEST_F(RenderscriptHidlTest, ElementCreate) {
 TEST_F(RenderscriptHidlTest, ElementTypeAllocationCreate) {
     // Element create test
     Element element = context->elementCreate(DataType::FLOAT_32, DataKind::USER, false, 1);
-    EXPECT_NE(Element(0), element);
+    ASSERT_NE(Element(0), element);
 
     // Type create test
     Type type = context->typeCreate(element, 1, 0, 0, false, false, YuvFormat::YUV_NONE);
-    EXPECT_NE(Type(0), type);
+    ASSERT_NE(Type(0), type);
 
     // Allocation create test
     Allocation allocation = context->allocationCreateTyped(type, AllocationMipmapControl::NONE,
                                                            (int)((uint32_t)AllocationUsageType::ALL
                                                            & ~(uint32_t)AllocationUsageType::OEM),
                                                            (Ptr)nullptr);
-    EXPECT_NE(Allocation(0), allocation);
+    ASSERT_NE(Allocation(0), allocation);
 
     // Allocation type test
     Type type2 = context->allocationGetType(allocation);
@@ -74,8 +74,11 @@ TEST_F(RenderscriptHidlTest, ElementTypeAllocationCreate) {
 TEST_F(RenderscriptHidlTest, MetadataTest) {
     // float1
     Element element = context->elementCreate(DataType::FLOAT_32, DataKind::USER, false, 1);
+    ASSERT_NE(Element(0), element);
+
     // 128 x float1
     Type type = context->typeCreate(element, 128, 0, 0, false, false, YuvFormat::YUV_NONE);
+    ASSERT_NE(Type(0), type);
 
     std::vector<uint32_t> elementMetadata(5);
     context->elementGetNativeMetadata(element, [&](const hidl_vec<uint32_t>& _metadata){
@@ -107,24 +110,30 @@ TEST_F(RenderscriptHidlTest, MetadataTest) {
 TEST_F(RenderscriptHidlTest, ResizeTest) {
     // float1
     Element element = context->elementCreate(DataType::FLOAT_32, DataKind::USER, false, 1);
+    ASSERT_NE(Element(0), element);
+
     // 128 x float1
     Type type = context->typeCreate(element, 128, 0, 0, false, false, YuvFormat::YUV_NONE);
+    ASSERT_NE(Type(0), type);
+
     // 128 x float1
     Allocation allocation = context->allocationCreateTyped(type, AllocationMipmapControl::NONE,
                                                            (int)AllocationUsageType::SCRIPT,
                                                            (Ptr)nullptr);
+    ASSERT_NE(Allocation(0), allocation);
+
     Ptr dataPtr1, dataPtr2;
     Size stride;
     context->allocationGetPointer(allocation, 0, AllocationCubemapFace::POSITIVE_X, 0,
                                   [&](Ptr _dataPtr, Size _stride){
                                       dataPtr1 = _dataPtr; stride = _stride; });
-    EXPECT_EQ(0ul, stride);
+    EXPECT_EQ(Size(0), stride);
 
     context->allocationResize1D(allocation, 1024*1024);
     context->allocationGetPointer(allocation, 0, AllocationCubemapFace::POSITIVE_X, 0,
                                   [&](Ptr _dataPtr, Size _stride){
                                       dataPtr2 = _dataPtr; stride = _stride; });
-    EXPECT_EQ(0ul, stride);
+    EXPECT_EQ(Size(0), stride);
     EXPECT_NE(dataPtr1, dataPtr2);
 }
 
@@ -139,8 +148,12 @@ TEST_F(RenderscriptHidlTest, ResizeTest) {
 TEST_F(RenderscriptHidlTest, NativeWindowIoTest) {
     // uint8x4
     Element element = context->elementCreate(DataType::UNSIGNED_8, DataKind::USER, false, 4);
+    ASSERT_NE(Element(0), element);
+
     // 512 x 512 x uint8x4
     Type type = context->typeCreate(element, 512, 512, 0, false, false, YuvFormat::YUV_NONE);
+    ASSERT_NE(Type(0), type);
+
     std::vector<uint32_t> dataIn(512*512), dataOut(512*512);
     std::generate(dataIn.begin(), dataIn.end(), [](){ static uint32_t val = 0; return val++; });
     hidl_vec<uint8_t> _data;
@@ -150,12 +163,16 @@ TEST_F(RenderscriptHidlTest, NativeWindowIoTest) {
                                                                (int)(AllocationUsageType::SCRIPT
                                                                | AllocationUsageType::IO_INPUT),
                                                                (Ptr)nullptr);
+    ASSERT_NE(Allocation(0), allocationRecv);
+
     Allocation allocationSend = context->allocationCreateTyped(type, AllocationMipmapControl::NONE,
                                                                (int)(AllocationUsageType::SCRIPT
                                                                | AllocationUsageType::IO_OUTPUT),
                                                                (Ptr)nullptr);
+    ASSERT_NE(Allocation(0), allocationSend);
+
     NativeWindow nativeWindow = context->allocationGetNativeWindow(allocationRecv);
-    EXPECT_NE(NativeWindow(0), nativeWindow);
+    ASSERT_NE(NativeWindow(0), nativeWindow);
 
     ((ANativeWindow *)nativeWindow)->incStrong(nullptr);
 
@@ -174,14 +191,20 @@ TEST_F(RenderscriptHidlTest, NativeWindowIoTest) {
  * two allocations with IO_INPUT are made to share the same BufferQueue.
  *
  * Calls: elementCreate, typeCreate, allocationCreateTyped,
- * allocationCreateFromBitmap, allocationSetupBufferQueue,
- * allocationShareBufferQueue
+ * allocationSetupBufferQueue, allocationShareBufferQueue,
+ * allocationGetNativeWindow, allocationSetNativeWindow,
+ * allocation2DWrite, allocation2DRead, allocationIoSend,
+ * allocationIoReceive
  */
 TEST_F(RenderscriptHidlTest, BufferQueueTest) {
     // uint8x4
     Element element = context->elementCreate(DataType::UNSIGNED_8, DataKind::USER, false, 4);
+    ASSERT_NE(Element(0), element);
+
     // 512 x 512 x uint8x4
     Type type = context->typeCreate(element, 512, 512, 0, false, false, YuvFormat::YUV_NONE);
+    ASSERT_NE(Type(0), type);
+
     std::vector<uint32_t> dataIn(512*512), dataOut1(512*512), dataOut2(512*512);
     std::generate(dataIn.begin(), dataIn.end(), [](){ static uint32_t val = 0; return val++; });
     hidl_vec<uint8_t> _data;
@@ -191,20 +214,28 @@ TEST_F(RenderscriptHidlTest, BufferQueueTest) {
                                                                 (int)(AllocationUsageType::SCRIPT
                                                                 | AllocationUsageType::IO_INPUT),
                                                                 (Ptr)nullptr);
+    ASSERT_NE(Allocation(0), allocationRecv1);
+
     Allocation allocationRecv2 = context->allocationCreateTyped(type, AllocationMipmapControl::NONE,
                                                                 (int)(AllocationUsageType::SCRIPT
                                                                 | AllocationUsageType::IO_INPUT),
                                                                 (Ptr)nullptr);
+    ASSERT_NE(Allocation(0), allocationRecv2);
+
     Allocation allocationSend  = context->allocationCreateTyped(type, AllocationMipmapControl::NONE,
                                                                 (int)(AllocationUsageType::SCRIPT
                                                                 | AllocationUsageType::IO_INPUT),
                                                                 (Ptr)nullptr);
+    ASSERT_NE(Allocation(0), allocationSend);
+
     context->allocationSetupBufferQueue(allocationRecv1, 2);
     context->allocationShareBufferQueue(allocationRecv2, allocationRecv1);
 
     NativeWindow nativeWindow1 = context->allocationGetNativeWindow(allocationRecv1);
-    EXPECT_NE(NativeWindow(0), nativeWindow1);
+    ASSERT_NE(NativeWindow(0), nativeWindow1);
+
     NativeWindow nativeWindow2 = context->allocationGetNativeWindow(allocationRecv2);
+    ASSERT_NE(NativeWindow(0), nativeWindow2);
     EXPECT_EQ(nativeWindow2, nativeWindow1);
 
     ((ANativeWindow *)nativeWindow1)->incStrong(nullptr);
@@ -269,6 +300,8 @@ TEST_F(RenderscriptHidlTest, MiscellaneousTests) {
     context->contextSetCacheDir("/data/local/tmp/temp/");
 
     Element element = context->elementCreate(DataType::UNSIGNED_8, DataKind::USER, false, 1);
+    ASSERT_NE(Element(0), element);
+
     std::string nameIn = "element_test_name";
     std::string nameOut = "not_name";
     hidl_string _nameIn;
