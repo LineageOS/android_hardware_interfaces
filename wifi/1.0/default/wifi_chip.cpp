@@ -855,7 +855,8 @@ WifiStatus WifiChip::registerDebugRingBufferCallback() {
     for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
       if (!callback->onDebugRingBufferDataAvailable(hidl_status, data).isOk()) {
         LOG(ERROR) << "Failed to invoke onDebugRingBufferDataAvailable"
-                   << " callback";
+                   << " callback on: " << toString(callback);
+
       }
     }
   };
