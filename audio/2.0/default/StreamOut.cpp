@@ -315,8 +315,11 @@ Return<void> StreamOut::prepareForWriting(
                 CommandMQ::Descriptor(), DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
         return Void();
     }
-    status = EventFlag::createEventFlag(tempDataMQ->getEventFlagWord(), &mEfGroup);
-    if (status != OK || !mEfGroup) {
+    EventFlag* tempRawEfGroup{};
+    status = EventFlag::createEventFlag(tempDataMQ->getEventFlagWord(), &tempRawEfGroup);
+    std::unique_ptr<EventFlag, void(*)(EventFlag*)> tempElfGroup(tempRawEfGroup,[](auto *ef) {
+            EventFlag::deleteEventFlag(&ef); });
+    if (status != OK || !tempElfGroup) {
         ALOGE("failed creating event flag for data MQ: %s", strerror(-status));
         _hidl_cb(Result::INVALID_ARGUMENTS,
                 CommandMQ::Descriptor(), DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
@@ -330,7 +333,7 @@ Return<void> StreamOut::prepareForWriting(
             tempCommandMQ.get(),
             tempDataMQ.get(),
             tempStatusMQ.get(),
-            mEfGroup);
+            tempElfGroup.get());
     if (!tempWriteThread->init()) {
         _hidl_cb(Result::INVALID_ARGUMENTS,
                  CommandMQ::Descriptor(), DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
@@ -348,6 +351,7 @@ Return<void> StreamOut::prepareForWriting(
     mDataMQ = std::move(tempDataMQ);
     mStatusMQ = std::move(tempStatusMQ);
     mWriteThread = tempWriteThread.release();
+    mEfGroup = tempElfGroup.release();
     threadInfo.pid = getpid();
     threadInfo.tid = mWriteThread->getTid();
     _hidl_cb(Result::OK,
