@@ -20,6 +20,7 @@
 
 #include <android/log.h>
 #include <hardware/audio.h>
+#include <memory>
 #include <utils/Trace.h>
 
 #include "StreamIn.h"
@@ -52,7 +53,11 @@ class ReadThread : public Thread {
               mDataMQ(dataMQ),
               mStatusMQ(statusMQ),
               mEfGroup(efGroup),
-              mBuffer(new uint8_t[dataMQ->getQuantumCount()]) {
+              mBuffer(nullptr) {
+    }
+    bool init() {
+        mBuffer.reset(new(std::nothrow) uint8_t[mDataMQ->getQuantumCount()]);
+        return mBuffer != nullptr;
     }
     virtual ~ReadThread() {}
 
@@ -328,13 +333,18 @@ Return<void> StreamIn::prepareForReading(
     }
 
     // Create and launch the thread.
-    mReadThread = new ReadThread(
+    auto tempReadThread = std::make_unique<ReadThread>(
             &mStopReadThread,
             mStream,
             tempCommandMQ.get(),
             tempDataMQ.get(),
             tempStatusMQ.get(),
             mEfGroup);
+    if (!tempReadThread->init()) {
+        _hidl_cb(Result::INVALID_ARGUMENTS,
+                CommandMQ::Descriptor(), DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
+        return Void();
+    }
     status = mReadThread->run("reader", PRIORITY_URGENT_AUDIO);
     if (status != OK) {
         ALOGW("failed to start reader thread: %s", strerror(-status));
@@ -346,6 +356,7 @@ Return<void> StreamIn::prepareForReading(
     mCommandMQ = std::move(tempCommandMQ);
     mDataMQ = std::move(tempDataMQ);
     mStatusMQ = std::move(tempStatusMQ);
+    mReadThread = tempReadThread.release();
     threadInfo.pid = getpid();
     threadInfo.tid = mReadThread->getTid();
     _hidl_cb(Result::OK,
