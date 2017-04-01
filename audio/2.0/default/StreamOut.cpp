@@ -297,8 +297,15 @@ Return<void> StreamOut::prepareForWriting(
         return Void();
     }
     std::unique_ptr<CommandMQ> tempCommandMQ(new CommandMQ(1));
-    std::unique_ptr<DataMQ> tempDataMQ(
-            new DataMQ(frameSize * framesCount, true /* EventFlag */));
+
+    if (frameSize > std::numeric_limits<size_t>::max() / framesCount) {
+        ALOGE("Requested buffer is too big, %d*%d can not fit in size_t", frameSize, framesCount);
+        _hidl_cb(Result::INVALID_ARGUMENTS,
+                CommandMQ::Descriptor(), DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
+        return Void();
+    }
+    std::unique_ptr<DataMQ> tempDataMQ(new DataMQ(frameSize * framesCount, true /* EventFlag */));
+
     std::unique_ptr<StatusMQ> tempStatusMQ(new StatusMQ(1));
     if (!tempCommandMQ->isValid() || !tempDataMQ->isValid() || !tempStatusMQ->isValid()) {
         ALOGE_IF(!tempCommandMQ->isValid(), "command MQ is invalid");
