@@ -171,6 +171,7 @@ public:
             sp<IDevice> baseDevice;
             ASSERT_OK(devicesFactory->openDevice(IDevicesFactory::Device::PRIMARY,
                                                  returnIn(result, baseDevice)));
+            ASSERT_OK(result);
             ASSERT_TRUE(baseDevice != nullptr);
 
             environment->registerTearDown([]{ device.clear(); });
