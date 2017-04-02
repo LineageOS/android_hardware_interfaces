@@ -158,7 +158,7 @@ class BluetoothHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
     EXPECT_TRUE(
         bluetooth_cb->WaitForCallback(kCallbackNameInitializationComplete)
-            .first);
+            .no_timeout);
 
     ASSERT_EQ(initialized, true);
   }
@@ -260,12 +260,12 @@ void BluetoothHidlTest::wait_for_command_complete_event(hidl_vec<uint8_t> cmd) {
   int status_event_count = 0;
   hidl_vec<uint8_t> event;
   do {
-    EXPECT_TRUE(
-        bluetooth_cb->WaitForCallback(kCallbackNameHciEventReceived).first);
-    EXPECT_LT(static_cast<size_t>(0), event_queue.size());
-    if (event_queue.size() == 0) {
-      event.resize(0);
-      break;
+      EXPECT_TRUE(bluetooth_cb->WaitForCallback(kCallbackNameHciEventReceived)
+                      .no_timeout);
+      EXPECT_LT(static_cast<size_t>(0), event_queue.size());
+      if (event_queue.size() == 0) {
+          event.resize(0);
+          break;
     }
     event = event_queue.front();
     event_queue.pop();
@@ -294,7 +294,7 @@ void BluetoothHidlTest::setBufferSizes() {
   bluetooth->sendHciCommand(cmd);
 
   EXPECT_TRUE(
-      bluetooth_cb->WaitForCallback(kCallbackNameHciEventReceived).first);
+      bluetooth_cb->WaitForCallback(kCallbackNameHciEventReceived).no_timeout);
 
   EXPECT_LT(static_cast<size_t>(0), event_queue.size());
   if (event_queue.size() == 0) return;
@@ -348,8 +348,8 @@ void BluetoothHidlTest::sendAndCheckHCI(int num_packets) {
     bluetooth->sendHciCommand(cmd);
 
     // Check the loopback of the HCI packet
-    EXPECT_TRUE(
-        bluetooth_cb->WaitForCallback(kCallbackNameHciEventReceived).first);
+    EXPECT_TRUE(bluetooth_cb->WaitForCallback(kCallbackNameHciEventReceived)
+                    .no_timeout);
     hidl_vec<uint8_t> event = event_queue.front();
     event_queue.pop();
     size_t compare_length =
@@ -385,8 +385,8 @@ void BluetoothHidlTest::sendAndCheckSCO(int num_packets, size_t size,
     bluetooth->sendScoData(sco_vector);
 
     // Check the loopback of the SCO packet
-    EXPECT_TRUE(
-        bluetooth_cb->WaitForCallback(kCallbackNameScoEventReceived).first);
+    EXPECT_TRUE(bluetooth_cb->WaitForCallback(kCallbackNameScoEventReceived)
+                    .no_timeout);
     hidl_vec<uint8_t> sco_loopback = sco_queue.front();
     sco_queue.pop();
 
@@ -431,8 +431,8 @@ void BluetoothHidlTest::sendAndCheckACL(int num_packets, size_t size,
     bluetooth->sendAclData(acl_vector);
 
     // Check the loopback of the ACL packet
-    EXPECT_TRUE(
-        bluetooth_cb->WaitForCallback(kCallbackNameAclEventReceived).first);
+    EXPECT_TRUE(bluetooth_cb->WaitForCallback(kCallbackNameAclEventReceived)
+                    .no_timeout);
     hidl_vec<uint8_t> acl_loopback = acl_queue.front();
     acl_queue.pop();
 
@@ -458,20 +458,20 @@ void BluetoothHidlTest::sendAndCheckACL(int num_packets, size_t size,
 
 // Return the number of completed packets reported by the controller.
 int BluetoothHidlTest::wait_for_completed_packets_event(uint16_t handle) {
-  EXPECT_TRUE(
-      bluetooth_cb->WaitForCallback(kCallbackNameHciEventReceived).first);
-  int packets_processed = 0;
-  while (event_queue.size() > 0) {
-    hidl_vec<uint8_t> event = event_queue.front();
-    event_queue.pop();
+    EXPECT_TRUE(bluetooth_cb->WaitForCallback(kCallbackNameHciEventReceived)
+                    .no_timeout);
+    int packets_processed = 0;
+    while (event_queue.size() > 0) {
+        hidl_vec<uint8_t> event = event_queue.front();
+        event_queue.pop();
 
-    EXPECT_EQ(EVENT_NUMBER_OF_COMPLETED_PACKETS, event[EVENT_CODE_BYTE]);
-    EXPECT_EQ(1, event[EVENT_NUMBER_OF_COMPLETED_PACKETS_NUM_HANDLES]);
+        EXPECT_EQ(EVENT_NUMBER_OF_COMPLETED_PACKETS, event[EVENT_CODE_BYTE]);
+        EXPECT_EQ(1, event[EVENT_NUMBER_OF_COMPLETED_PACKETS_NUM_HANDLES]);
 
-    uint16_t event_handle = event[3] + (event[4] << 8);
-    EXPECT_EQ(handle, event_handle);
+        uint16_t event_handle = event[3] + (event[4] << 8);
+        EXPECT_EQ(handle, event_handle);
 
-    packets_processed += event[5] + (event[6] << 8);
+        packets_processed += event[5] + (event[6] << 8);
   }
   return packets_processed;
 }
@@ -486,33 +486,34 @@ void BluetoothHidlTest::enterLoopbackMode(std::vector<uint16_t>& sco_handles,
   int connection_event_count = 0;
   hidl_vec<uint8_t> event;
   do {
-    EXPECT_TRUE(
-        bluetooth_cb->WaitForCallback(kCallbackNameHciEventReceived).first);
-    event = event_queue.front();
-    event_queue.pop();
-    EXPECT_GT(event.size(),
-              static_cast<size_t>(EVENT_COMMAND_COMPLETE_STATUS_BYTE));
-    if (event[EVENT_CODE_BYTE] == EVENT_CONNECTION_COMPLETE) {
+      EXPECT_TRUE(bluetooth_cb->WaitForCallback(kCallbackNameHciEventReceived)
+                      .no_timeout);
+      event = event_queue.front();
+      event_queue.pop();
       EXPECT_GT(event.size(),
-                static_cast<size_t>(EVENT_CONNECTION_COMPLETE_TYPE));
-      EXPECT_EQ(event[EVENT_LENGTH_BYTE],
-                EVENT_CONNECTION_COMPLETE_PARAM_LENGTH);
-      uint8_t connection_type = event[EVENT_CONNECTION_COMPLETE_TYPE];
+                static_cast<size_t>(EVENT_COMMAND_COMPLETE_STATUS_BYTE));
+      if (event[EVENT_CODE_BYTE] == EVENT_CONNECTION_COMPLETE) {
+          EXPECT_GT(event.size(),
+                    static_cast<size_t>(EVENT_CONNECTION_COMPLETE_TYPE));
+          EXPECT_EQ(event[EVENT_LENGTH_BYTE],
+                    EVENT_CONNECTION_COMPLETE_PARAM_LENGTH);
+          uint8_t connection_type = event[EVENT_CONNECTION_COMPLETE_TYPE];
 
-      EXPECT_TRUE(connection_type == EVENT_CONNECTION_COMPLETE_TYPE_SCO ||
-                  connection_type == EVENT_CONNECTION_COMPLETE_TYPE_ACL);
+          EXPECT_TRUE(connection_type == EVENT_CONNECTION_COMPLETE_TYPE_SCO ||
+                      connection_type == EVENT_CONNECTION_COMPLETE_TYPE_ACL);
 
-      // Save handles
-      uint16_t handle = event[EVENT_CONNECTION_COMPLETE_HANDLE_LSBYTE] |
-                        event[EVENT_CONNECTION_COMPLETE_HANDLE_LSBYTE + 1] << 8;
-      if (connection_type == EVENT_CONNECTION_COMPLETE_TYPE_SCO)
-        sco_handles.push_back(handle);
-      else
-        acl_handles.push_back(handle);
+          // Save handles
+          uint16_t handle = event[EVENT_CONNECTION_COMPLETE_HANDLE_LSBYTE] |
+                            event[EVENT_CONNECTION_COMPLETE_HANDLE_LSBYTE + 1]
+                                << 8;
+          if (connection_type == EVENT_CONNECTION_COMPLETE_TYPE_SCO)
+              sco_handles.push_back(handle);
+          else
+              acl_handles.push_back(handle);
 
-      ALOGD("Connect complete type = %d handle = %d",
-            event[EVENT_CONNECTION_COMPLETE_TYPE], handle);
-      connection_event_count++;
+          ALOGD("Connect complete type = %d handle = %d",
+                event[EVENT_CONNECTION_COMPLETE_TYPE], handle);
+          connection_event_count++;
     }
   } while (event[EVENT_CODE_BYTE] == EVENT_CONNECTION_COMPLETE);
 
@@ -541,7 +542,7 @@ TEST_F(BluetoothHidlTest, HciVersionTest) {
   bluetooth->sendHciCommand(cmd);
 
   EXPECT_TRUE(
-      bluetooth_cb->WaitForCallback(kCallbackNameHciEventReceived).first);
+      bluetooth_cb->WaitForCallback(kCallbackNameHciEventReceived).no_timeout);
 
   hidl_vec<uint8_t> event = event_queue.front();
   event_queue.pop();
@@ -562,7 +563,7 @@ TEST_F(BluetoothHidlTest, HciUnknownCommand) {
   bluetooth->sendHciCommand(cmd);
 
   EXPECT_TRUE(
-      bluetooth_cb->WaitForCallback(kCallbackNameHciEventReceived).first);
+      bluetooth_cb->WaitForCallback(kCallbackNameHciEventReceived).no_timeout);
 
   hidl_vec<uint8_t> event = event_queue.front();
   event_queue.pop();
