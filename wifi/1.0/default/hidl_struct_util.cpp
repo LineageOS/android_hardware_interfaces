@@ -417,17 +417,25 @@ bool convertLegacyIeBlobToHidl(const uint8_t* ie_blob,
     const wifi_ie& legacy_ie = (*reinterpret_cast<const wifi_ie*>(next_ie));
     uint32_t curr_ie_len = kIeHeaderLen + legacy_ie.len;
     if (next_ie + curr_ie_len > ies_end) {
-      return false;
+      LOG(ERROR) << "Error parsing IE blob. Next IE: " << (void *)next_ie
+                 << ", Curr IE len: " << curr_ie_len << ", IEs End: " << (void *)ies_end;
+      break;
     }
     WifiInformationElement hidl_ie;
     if (!convertLegacyIeToHidl(legacy_ie, &hidl_ie)) {
-      return false;
+      LOG(ERROR) << "Error converting IE. Id: " << legacy_ie.id
+                 << ", len: " << legacy_ie.len;
+      break;
     }
     hidl_ies->push_back(std::move(hidl_ie));
     next_ie += curr_ie_len;
   }
-  // Ensure that the blob has been fully consumed.
-  return (next_ie == ies_end);
+  // Check if the blob has been fully consumed.
+  if (next_ie != ies_end) {
+    LOG(ERROR) << "Failed to fully parse IE blob. Next IE: " << (void *)next_ie
+               << ", IEs End: " << (void *)ies_end;
+  }
+  return true;
 }
 
 bool convertLegacyGscanResultToHidl(
