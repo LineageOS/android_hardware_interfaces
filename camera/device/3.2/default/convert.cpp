@@ -15,7 +15,11 @@
  */
 
 #define LOG_TAG "android.hardware.camera.device@3.2-convert-impl"
+#include <inttypes.h>
+
 #include <android/log.h>
+
+#include <grallocusage/GrallocUsageConversion.h>
 
 #include "include/convert.h"
 
@@ -28,6 +32,7 @@ namespace implementation {
 
 using ::android::hardware::graphics::common::V1_0::Dataspace;
 using ::android::hardware::graphics::common::V1_0::PixelFormat;
+using ::android::hardware::graphics::allocator::V2_0::ConsumerUsage;
 using ::android::hardware::camera::device::V3_2::ConsumerUsageFlags;
 using ::android::hardware::camera::device::V3_2::ProducerUsageFlags;
 
@@ -66,23 +71,37 @@ void convertFromHidl(const Stream &src, Camera3Stream* dst) {
     dst->format = (int) src.format;
     dst->data_space = (android_dataspace_t) src.dataSpace;
     dst->rotation = (int) src.rotation;
-    dst->usage = (uint32_t) src.usage;
+    dst->usage = convertFromHidlUsage(src.usage);
     // Fields to be filled by HAL (max_buffers, priv) are initialized to 0
     dst->max_buffers = 0;
     dst->priv = 0;
     return;
 }
 
+uint32_t convertFromHidlUsage(ConsumerUsageFlags usage) {
+    uint32_t dstUsage = 0;
+    dstUsage = ::android_convertGralloc1To0Usage(/*producerUsage*/ 0, usage);
+    // Compatibility workaround - add HW_CAMERA_ZSL when ConsumerUsage.CAMERA is set, to
+    // match pre-HIDL expected usage flags
+    if ( (usage & ConsumerUsage::CAMERA) == static_cast<uint64_t>(ConsumerUsage::CAMERA)) {
+        dstUsage |= GRALLOC_USAGE_HW_CAMERA_ZSL;
+    }
+    return dstUsage;
+}
+
 void convertToHidl(const Camera3Stream* src, HalStream* dst) {
     dst->id = src->mId;
     dst->overrideFormat = (PixelFormat) src->format;
     dst->maxBuffers = src->max_buffers;
+    ConsumerUsageFlags consumerUsage;
+    ProducerUsageFlags producerUsage;
+    ::android_convertGralloc0To1Usage(src->usage, &producerUsage, &consumerUsage);
     if (src->stream_type == CAMERA3_STREAM_OUTPUT) {
         dst->consumerUsage = (ConsumerUsageFlags) 0;
-        dst->producerUsage = (ProducerUsageFlags) src->usage;
+        dst->producerUsage = producerUsage;
     } else if (src->stream_type == CAMERA3_STREAM_INPUT) {
         dst->producerUsage = (ProducerUsageFlags) 0;
-        dst->consumerUsage = (ConsumerUsageFlags) src->usage;
+        dst->consumerUsage = consumerUsage;
     } else {
         //Should not reach here per current HIDL spec, but we might end up adding
         // bi-directional stream to HIDL.
