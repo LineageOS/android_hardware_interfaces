@@ -540,6 +540,12 @@ void DefaultVehicleHal::onContinuousPropertyTimer(const std::vector<int32_t>& pr
             if (VehiclePropertyType::FLOAT == getPropType(property)) {
                 // Just get some randomness to continuous properties to see slightly differnt values
                 // on the other end.
+                if (v->value.floatValues.size() == 0) {
+                    ALOGW("continuous property 0x%x is of type float but does not have a"
+                          " float value. defaulting to zero",
+                          property);
+                    v->value.floatValues = android::hardware::hidl_vec<float>{0.0f};
+                }
                 v->value.floatValues[0] = v->value.floatValues[0] + std::rand() % 5;
             }
         } else {
