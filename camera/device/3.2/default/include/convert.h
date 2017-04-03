@@ -45,6 +45,8 @@ void convertToHidl(const camera_metadata_t* src, CameraMetadata* dst);
 void convertFromHidl(const Stream &src, Camera3Stream* dst);
 void convertToHidl(const Camera3Stream* src, HalStream* dst);
 
+uint32_t convertFromHidlUsage(ConsumerUsageFlags usage);
+
 void convertFromHidl(
         buffer_handle_t*, BufferStatus, camera3_stream_t*, int acquireFence, // inputs
         camera3_stream_buffer_t* dst);
