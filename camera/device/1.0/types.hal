@@ -254,3 +254,36 @@ struct CameraFrameMetadata {
  * between the HAL and the framework.
  */
 typedef uint32_t MemoryId;
+
+/*
+ * Struct containing arguments of ICameraDeviceCallback::handleCallbackTimestamp.
+ * Used to send a batch of messages in ICameraDeviceCallback::handleCallbackTimestampBatch.
+ */
+struct HandleTimestampMessage {
+    // The handle of image buffer data.
+    handle frameData;
+
+    // A memory handle to the buffer containing the data
+    MemoryId data;
+
+    // The offset into the memory handle where the buffer starts.
+    uint32_t bufferIndex;
+
+    // The time this buffer was captured by the camera, in nanoseconds
+    int64_t timestamp;
+};
+
+/*
+ * Struct containing arguments of ICameraDevice::releaseRecordingFrameHandle.
+ * Used by camera framework to send a batch of recording frames back to camera HAL.
+ */
+struct VideoFrameMessage {
+    // The handle of image buffer data.
+    handle frameData;
+
+    // A memory handle to the buffer containing the data
+    MemoryId data;
+
+    // The offset into the memory handle where the buffer starts.
+    uint32_t bufferIndex;
+};
