@@ -212,7 +212,7 @@ const ConfigDeclaration kVehicleProperties[] {
             .minSampleRate = 1.0f,
             .maxSampleRate = 2.0f,
         },
-        .initialValue = { .int32Values = {25} }
+        .initialValue = { .floatValues = {25.0f} }
     },
 
     {
