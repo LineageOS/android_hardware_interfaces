@@ -990,10 +990,12 @@ struct Capability {
 };
 
 TEST_P(OutputStreamTest, SupportsPauseAndResumeAndDrain) {
+    doc::test("Implementation must expose pause, resume and drain capabilities");
     Capability(stream.get());
 }
 
 TEST_P(OutputStreamTest, GetRenderPosition) {
+    doc::test("The render position should be 0 on a not started");
     uint32_t dspFrames;
     ASSERT_OK(stream->getRenderPosition(returnIn(res, dspFrames)));
     if (res == Result::NOT_SUPPORTED) {
@@ -1005,6 +1007,7 @@ TEST_P(OutputStreamTest, GetRenderPosition) {
 }
 
 TEST_P(OutputStreamTest, GetNextWriteTimestamp) {
+    doc::test("The render position of a stream just created should be 0");
     uint64_t timestampUs;
     ASSERT_OK(stream->getNextWriteTimestamp(returnIn(res, timestampUs)));
     if (res == Result::NOT_SUPPORTED) {
@@ -1030,6 +1033,7 @@ static bool isAsyncModeSupported(IStreamOut *stream) {
 }
 
 TEST_P(OutputStreamTest, SetCallback) {
+    doc::test("If supported, registering callback for async operation should never fail");
     if (!isAsyncModeSupported(stream.get())) {
         doc::partialTest("The stream does not support async operations");
         return;
@@ -1039,6 +1043,7 @@ TEST_P(OutputStreamTest, SetCallback) {
 }
 
 TEST_P(OutputStreamTest, clearCallback) {
+    doc::test("If supported, clearing a callback to go back to sync operation should not fail");
     if (!isAsyncModeSupported(stream.get())) {
         doc::partialTest("The stream does not support async operations");
         return;
@@ -1049,6 +1054,7 @@ TEST_P(OutputStreamTest, clearCallback) {
 }
 
 TEST_P(OutputStreamTest, Resume) {
+    doc::test("If supported, a stream should fail to resume if not previously paused");
     if (!Capability(stream.get()).resume) {
         doc::partialTest("The output stream does not support resume");
         return;
@@ -1057,6 +1063,7 @@ TEST_P(OutputStreamTest, Resume) {
 }
 
 TEST_P(OutputStreamTest, Pause) {
+    doc::test("If supported, a stream should fail to pause if not previously started");
     if (!Capability(stream.get()).pause) {
         doc::partialTest("The output stream does not support pause");
         return;
@@ -1066,21 +1073,24 @@ TEST_P(OutputStreamTest, Pause) {
 
 static void testDrain(IStreamOut *stream, AudioDrain type) {
     if (!Capability(stream).drain) {
-        doc::partialTest("The output stream does not support pause");
+        doc::partialTest("The output stream does not support drain");
         return;
     }
     ASSERT_RESULT(Result::OK, stream->drain(type));
 }
 
 TEST_P(OutputStreamTest, DrainAll) {
+    doc::test("If supported, a stream should always succeed to drain");
     testDrain(stream.get(), AudioDrain::ALL);
 }
 
 TEST_P(OutputStreamTest, DrainEarlyNotify) {
+    doc::test("If supported, a stream should always succeed to drain");
     testDrain(stream.get(), AudioDrain::EARLY_NOTIFY);
 }
 
 TEST_P(OutputStreamTest, FlushStop) {
+    doc::test("If supported, a stream should always succeed to flush");
     auto ret = stream->flush();
     ASSERT_TRUE(ret.isOk());
     if (ret == Result::NOT_SUPPORTED) {
@@ -1091,6 +1101,7 @@ TEST_P(OutputStreamTest, FlushStop) {
 }
 
 TEST_P(OutputStreamTest, GetPresentationPositionStop) {
+    doc::test("If supported, a stream should always succeed to retrieve the presentation position");
     uint64_t frames;
     TimeSpec mesureTS;
     ASSERT_OK(stream->getPresentationPosition(returnIn(res, frames, mesureTS)));
