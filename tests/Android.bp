@@ -8,6 +8,8 @@ subdirs = [
     "foo/1.0",
     "foo/1.0/default",
     "foo/1.0/default/lib",
+    "hash/1.0",
+    "hash/1.0/default",
     "inheritance/1.0",
     "inheritance/1.0/default",
     "libhwbinder/1.0",
