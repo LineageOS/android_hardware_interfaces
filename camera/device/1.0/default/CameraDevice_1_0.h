@@ -93,6 +93,8 @@ struct CameraDevice : public ICameraDevice {
     Return<void> releaseRecordingFrame(uint32_t memId, uint32_t bufferIndex) override;
     Return<void> releaseRecordingFrameHandle(
             uint32_t memId, uint32_t bufferIndex, const hidl_handle& frame) override;
+    Return<void> releaseRecordingFrameHandleBatch(
+            const hidl_vec<VideoFrameMessage>&) override;
     Return<Status> autoFocus() override;
     Return<Status> cancelAutoFocus() override;
     Return<Status> takePicture() override;
@@ -169,6 +171,16 @@ private:
 
     bool mMetadataMode = false;
 
+    mutable Mutex mBatchLock;
+    // Start of protection scope for mBatchLock
+    uint32_t mBatchSize = 0; // 0 for non-batch mode, set to other value to start batching
+    int32_t mBatchMsgType;   // Maybe only allow DataCallbackMsg::VIDEO_FRAME?
+    std::vector<HandleTimestampMessage> mInflightBatch;
+    // End of protection scope for mBatchLock
+
+    void handleCallbackTimestamp(
+            nsecs_t timestamp, int32_t msg_type,
+            MemoryId memId , unsigned index, native_handle_t* handle);
     void releaseRecordingFrameLocked(uint32_t memId, uint32_t bufferIndex, const native_handle_t*);
 
     // shared memory methods
@@ -178,13 +190,13 @@ private:
     // Device callback forwarding methods
     static void sNotifyCb(int32_t msg_type, int32_t ext1, int32_t ext2, void *user);
     static void sDataCb(int32_t msg_type, const camera_memory_t *data, unsigned int index,
-                          camera_frame_metadata_t *metadata, void *user);
+                        camera_frame_metadata_t *metadata, void *user);
     static void sDataCbTimestamp(nsecs_t timestamp, int32_t msg_type,
                                     const camera_memory_t *data, unsigned index, void *user);
 
     // Preview window callback forwarding methods
     static int sDequeueBuffer(struct preview_stream_ops* w,
-                                buffer_handle_t** buffer, int *stride);
+                              buffer_handle_t** buffer, int *stride);
 
     static int sLockBuffer(struct preview_stream_ops* w, buffer_handle_t* buffer);
 
@@ -195,7 +207,7 @@ private:
     static int sSetBufferCount(struct preview_stream_ops* w, int count);
 
     static int sSetBuffersGeometry(struct preview_stream_ops* w,
-                                     int width, int height, int format);
+                                   int width, int height, int format);
 
     static int sSetCrop(struct preview_stream_ops *w, int left, int top, int right, int bottom);
 
