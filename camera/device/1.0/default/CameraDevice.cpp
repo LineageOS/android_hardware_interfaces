@@ -420,6 +420,39 @@ void CameraDevice::sDataCb(int32_t msg_type, const camera_memory_t *data, unsign
     }
 }
 
+void CameraDevice::handleCallbackTimestamp(
+        nsecs_t timestamp, int32_t msg_type,
+        MemoryId memId , unsigned index, native_handle_t* handle) {
+    uint32_t batchSize = 0;
+    {
+        Mutex::Autolock _l(mBatchLock);
+        batchSize = mBatchSize;
+    }
+
+    if (batchSize == 0) { // non-batch mode
+        mDeviceCallback->handleCallbackTimestamp(
+                (DataCallbackMsg) msg_type, handle, memId, index, timestamp);
+    } else { // batch mode
+        Mutex::Autolock _l(mBatchLock);
+        size_t inflightSize = mInflightBatch.size();
+        if (inflightSize == 0) {
+            mBatchMsgType = msg_type;
+        } else if (mBatchMsgType != msg_type) {
+            ALOGE("%s: msg_type change (from %d to %d) is not supported!",
+                    __FUNCTION__, mBatchMsgType, msg_type);
+            return;
+        }
+        mInflightBatch.push_back({handle, memId, index, timestamp});
+
+        // Send batched frames to camera framework
+        if (mInflightBatch.size() >= batchSize) {
+            mDeviceCallback->handleCallbackTimestampBatch(
+                    (DataCallbackMsg) mBatchMsgType, mInflightBatch);
+            mInflightBatch.clear();
+        }
+    }
+}
+
 void CameraDevice::sDataCbTimestamp(nsecs_t timestamp, int32_t msg_type,
         const camera_memory_t *data, unsigned index, void *user) {
     ALOGV("%s", __FUNCTION__);
@@ -450,8 +483,7 @@ void CameraDevice::sDataCbTimestamp(nsecs_t timestamp, int32_t msg_type,
             object->mDeviceCallback->dataCallbackTimestamp(
                     (DataCallbackMsg) msg_type, mem->handle.mId, index, timestamp);
         } else {
-            object->mDeviceCallback->handleCallbackTimestamp(
-                    (DataCallbackMsg) msg_type, handle, mem->handle.mId, index, timestamp);
+            object->handleCallbackTimestamp(timestamp, msg_type, mem->handle.mId, index, handle);
         }
     }
 }
@@ -824,6 +856,17 @@ Return<void> CameraDevice::releaseRecordingFrameHandle(
     Mutex::Autolock _l(mLock);
     releaseRecordingFrameLocked(
             memId, bufferIndex, frame.getNativeHandle());
+    return Void();
+}
+
+Return<void> CameraDevice::releaseRecordingFrameHandleBatch(
+        const hidl_vec<VideoFrameMessage>& msgs) {
+    ALOGV("%s(%s)", __FUNCTION__, mCameraId.c_str());
+    Mutex::Autolock _l(mLock);
+    for (auto& msg : msgs) {
+        releaseRecordingFrameLocked(
+                msg.data, msg.bufferIndex, msg.frameData.getNativeHandle());
+    }
     return Void();
 }
 
