@@ -1,5 +1,5 @@
 service gralloc-2-0 /vendor/bin/hw/android.hardware.graphics.allocator@2.0-service
-    class hal
+    class hal animation
     user system
     group graphics drmrpc
     onrestart restart surfaceflinger
