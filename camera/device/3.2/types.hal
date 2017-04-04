@@ -958,3 +958,25 @@ struct CaptureResult {
     uint32_t partialResult;
 
 };
+
+/**
+ * BufferCache:
+ *
+ * A list of cached bufferIds associated with a certain stream.
+ * Buffers are passed between camera service and camera HAL via bufferId except
+ * the first time a new buffer is being passed to HAL in CaptureRequest. Camera
+ * service and camera HAL therefore need to maintain a cached map of bufferId
+ * and corresponing native handle.
+ *
+ */
+struct BufferCache {
+    /**
+     * The ID of the stream this list is associated with.
+     */
+    int32_t streamId;
+
+    /**
+     * A cached buffer ID associated with streamId.
+     */
+    uint64_t bufferId;
+};

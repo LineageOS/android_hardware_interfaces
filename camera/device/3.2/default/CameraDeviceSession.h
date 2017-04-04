@@ -85,7 +85,9 @@ struct CameraDeviceSession : public ICameraDeviceSession, private camera3_callba
     Return<void> configureStreams(
             const StreamConfiguration& requestedConfiguration, configureStreams_cb _hidl_cb) override;
     Return<void> processCaptureRequest(
-            const hidl_vec<CaptureRequest>& requests, processCaptureRequest_cb _hidl_cb) override;
+            const hidl_vec<CaptureRequest>& requests,
+            const hidl_vec<BufferCache>& cachesToRemove,
+            processCaptureRequest_cb _hidl_cb) override;
     Return<Status> flush() override;
     Return<void> close() override;
 
@@ -233,6 +235,8 @@ private:
             hidl_vec<int>& allFences, size_t numFences);
 
     void cleanupBuffersLocked(int id);
+
+    void updateBufferCaches(const hidl_vec<BufferCache>& cachesToRemove);
 
     Status processOneCaptureRequest(const CaptureRequest& request);
     /**
