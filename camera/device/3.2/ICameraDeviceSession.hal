@@ -183,6 +183,11 @@ interface ICameraDeviceSession {
      * client, the HAL must process the requests in order of lowest index to
      * highest index.
      *
+     * The cachesToRemove argument contains a list of buffer caches (see
+     * StreamBuffer document for more information on buffer cache) to be removed
+     * by camera HAL. Camera HAL must remove these cache entries whether or not
+     * this method returns OK.
+     *
      * The actual request processing is asynchronous, with the results of
      * capture being returned by the HAL through the processCaptureResult()
      * call. This call requires the result metadata to be available, but output
@@ -238,7 +243,8 @@ interface ICameraDeviceSession {
      *     that HAL processed successfully before HAL runs into an error.
      *
      */
-    processCaptureRequest(vec<CaptureRequest> requests)
+    processCaptureRequest(vec<CaptureRequest> requests,
+            vec<BufferCache> cachesToRemove)
             generates (Status status, uint32_t numRequestProcessed);
 
     /**
