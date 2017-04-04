@@ -71,8 +71,8 @@ interface IGnssDebug {
         /** Represents heading in degrees. */
         float bearingDegrees;
         /**
-         * Estimated horizontal accuracy of position expressed in meters, radial,
-         * 68% confidence.
+         * Estimated horizontal accuracy of position expressed in meters,
+         * radial, 68% confidence.
          */
         double horizontalAccuracyMeters;
         /**
@@ -126,7 +126,11 @@ interface IGnssDebug {
         /** Defines the constellation type of the given SV. */
         GnssConstellationType constellation;
 
-        /** Defines the ephemeris type of the satellite. */
+        /**
+         * Defines the standard broadcast ephemeris or almanac availability for
+         * the satellite.  To report status of predicted orbit and clock
+         * information, see the serverPrediction fields below.
+         */
         SatelliteEphemerisType ephemerisType;
         /** Defines the ephemeris source of the satellite. */
         SatelliteEphemerisSource ephemerisSource;
@@ -143,7 +147,7 @@ interface IGnssDebug {
         float ephemerisAgeSeconds;
 
         /**
-         * True if a server has provided a predicted orbit (& clock) for
+         * True if a server has provided a predicted orbit and clock model for
          * this satellite.
          */
         bool serverPredictionIsAvailable;
