@@ -22,8 +22,8 @@ cc_library_shared {
         "libbinder",
     ],
     static_libs: [
-        "android.hardware.camera.common@1.0-helper",
-        "libgrallocusage"
+        "android.hardware.camera.common@1.0-helper"
     ],
     export_include_dirs: ["."]
 }
+
