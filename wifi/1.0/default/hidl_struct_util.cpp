@@ -774,10 +774,104 @@ legacy_hal::fw_roaming_state_t convertHidlRoamingStateToLegacy(
   CHECK(false);
 }
 
+legacy_hal::NanMatchAlg convertHidlNanMatchAlgToLegacy(NanMatchAlg type) {
+  switch (type) {
+    case NanMatchAlg::MATCH_ONCE:
+      return legacy_hal::NAN_MATCH_ALG_MATCH_ONCE;
+    case NanMatchAlg::MATCH_CONTINUOUS:
+      return legacy_hal::NAN_MATCH_ALG_MATCH_CONTINUOUS;
+    case NanMatchAlg::MATCH_NEVER:
+      return legacy_hal::NAN_MATCH_ALG_MATCH_NEVER;
+  }
+  CHECK(false);
+}
+
+legacy_hal::NanPublishType convertHidlNanPublishTypeToLegacy(NanPublishType type) {
+  switch (type) {
+    case NanPublishType::UNSOLICITED:
+      return legacy_hal::NAN_PUBLISH_TYPE_UNSOLICITED;
+    case NanPublishType::SOLICITED:
+      return legacy_hal::NAN_PUBLISH_TYPE_SOLICITED;
+    case NanPublishType::UNSOLICITED_SOLICITED:
+      return legacy_hal::NAN_PUBLISH_TYPE_UNSOLICITED_SOLICITED;
+  }
+  CHECK(false);
+}
+
+legacy_hal::NanTxType convertHidlNanTxTypeToLegacy(NanTxType type) {
+  switch (type) {
+    case NanTxType::BROADCAST:
+      return legacy_hal::NAN_TX_TYPE_BROADCAST;
+    case NanTxType::UNICAST:
+      return legacy_hal::NAN_TX_TYPE_UNICAST;
+  }
+  CHECK(false);
+}
+
+legacy_hal::NanSubscribeType convertHidlNanSubscribeTypeToLegacy(NanSubscribeType type) {
+  switch (type) {
+    case NanSubscribeType::PASSIVE:
+      return legacy_hal::NAN_SUBSCRIBE_TYPE_PASSIVE;
+    case NanSubscribeType::ACTIVE:
+      return legacy_hal::NAN_SUBSCRIBE_TYPE_ACTIVE;
+  }
+  CHECK(false);
+}
+
+legacy_hal::NanSRFType convertHidlNanSrfTypeToLegacy(NanSrfType type) {
+  switch (type) {
+    case NanSrfType::BLOOM_FILTER:
+      return legacy_hal::NAN_SRF_ATTR_BLOOM_FILTER;
+    case NanSrfType::PARTIAL_MAC_ADDR:
+      return legacy_hal::NAN_SRF_ATTR_PARTIAL_MAC_ADDR;
+  }
+  CHECK(false);
+}
+
+legacy_hal::NanDataPathChannelCfg convertHidlNanDataPathChannelCfgToLegacy(
+    NanDataPathChannelCfg type) {
+  switch (type) {
+    case NanDataPathChannelCfg::CHANNEL_NOT_REQUESTED:
+      return legacy_hal::NAN_DP_CHANNEL_NOT_REQUESTED;
+    case NanDataPathChannelCfg::REQUEST_CHANNEL_SETUP:
+      return legacy_hal::NAN_DP_REQUEST_CHANNEL_SETUP;
+    case NanDataPathChannelCfg::FORCE_CHANNEL_SETUP:
+      return legacy_hal::NAN_DP_FORCE_CHANNEL_SETUP;
+  }
+  CHECK(false);
+}
+
 NanStatusType convertLegacyNanStatusTypeToHidl(
     legacy_hal::NanStatusType type) {
-  // values are identical - may need to do a mapping if they diverge in the future
-  return (NanStatusType) type;
+  switch (type) {
+    case legacy_hal::NAN_STATUS_SUCCESS:
+      return NanStatusType::SUCCESS;
+    case legacy_hal::NAN_STATUS_INTERNAL_FAILURE:
+      return NanStatusType::INTERNAL_FAILURE;
+    case legacy_hal::NAN_STATUS_PROTOCOL_FAILURE:
+      return NanStatusType::PROTOCOL_FAILURE;
+    case legacy_hal::NAN_STATUS_INVALID_PUBLISH_SUBSCRIBE_ID:
+      return NanStatusType::INVALID_SESSION_ID;
+    case legacy_hal::NAN_STATUS_NO_RESOURCE_AVAILABLE:
+      return NanStatusType::NO_RESOURCES_AVAILABLE;
+    case legacy_hal::NAN_STATUS_INVALID_PARAM:
+      return NanStatusType::INVALID_ARGS;
+    case legacy_hal::NAN_STATUS_INVALID_REQUESTOR_INSTANCE_ID:
+      return NanStatusType::INVALID_PEER_ID;
+    case legacy_hal::NAN_STATUS_INVALID_NDP_ID:
+      return NanStatusType::INVALID_NDP_ID;
+    case legacy_hal::NAN_STATUS_NAN_NOT_ALLOWED:
+      return NanStatusType::NAN_NOT_ALLOWED;
+    case legacy_hal::NAN_STATUS_NO_OTA_ACK:
+      return NanStatusType::NO_OTA_ACK;
+    case legacy_hal::NAN_STATUS_ALREADY_ENABLED:
+      return NanStatusType::ALREADY_ENABLED;
+    case legacy_hal::NAN_STATUS_FOLLOWUP_QUEUE_FULL:
+      return NanStatusType::FOLLOWUP_TX_QUEUE_FULL;
+    case legacy_hal::NAN_STATUS_UNSUPPORTED_CONCURRENCY_NAN_DISABLED:
+      return NanStatusType::UNSUPPORTED_CONCURRENCY_NAN_DISABLED;
+  }
+  CHECK(false);
 }
 
 bool convertHidlNanEnableRequestToLegacy(
@@ -931,7 +1025,7 @@ bool convertHidlNanPublishRequestToLegacy(
   memcpy(legacy_request->service_name, hidl_request.baseConfigs.serviceName.data(),
         legacy_request->service_name_len);
   legacy_request->publish_match_indicator =
-        (legacy_hal::NanMatchAlg) hidl_request.baseConfigs.discoveryMatchIndicator;
+        convertHidlNanMatchAlgToLegacy(hidl_request.baseConfigs.discoveryMatchIndicator);
   legacy_request->service_specific_info_len = hidl_request.baseConfigs.serviceSpecificInfo.size();
   if (legacy_request->service_specific_info_len > NAN_MAX_SERVICE_SPECIFIC_INFO_LEN) {
     LOG(ERROR) << "convertHidlNanPublishRequestToLegacy: service_specific_info_len too large";
@@ -1018,8 +1112,8 @@ bool convertHidlNanPublishRequestToLegacy(
   legacy_request->ranging_auto_response = hidl_request.baseConfigs.rangingRequired ?
         legacy_hal::NAN_RANGING_AUTO_RESPONSE_ENABLE : legacy_hal::NAN_RANGING_AUTO_RESPONSE_DISABLE;
   legacy_request->sdea_params.range_report = legacy_hal::NAN_DISABLE_RANGE_REPORT;
-  legacy_request->publish_type = (legacy_hal::NanPublishType) hidl_request.publishType;
-  legacy_request->tx_type = (legacy_hal::NanTxType) hidl_request.txType;
+  legacy_request->publish_type = convertHidlNanPublishTypeToLegacy(hidl_request.publishType);
+  legacy_request->tx_type = convertHidlNanTxTypeToLegacy(hidl_request.txType);
   legacy_request->service_responder_policy = hidl_request.autoAcceptDataPathRequests ?
         legacy_hal::NAN_SERVICE_ACCEPT_POLICY_ALL : legacy_hal::NAN_SERVICE_ACCEPT_POLICY_NONE;
 
@@ -1047,7 +1141,7 @@ bool convertHidlNanSubscribeRequestToLegacy(
   memcpy(legacy_request->service_name, hidl_request.baseConfigs.serviceName.data(),
         legacy_request->service_name_len);
   legacy_request->subscribe_match_indicator =
-        (legacy_hal::NanMatchAlg) hidl_request.baseConfigs.discoveryMatchIndicator;
+        convertHidlNanMatchAlgToLegacy(hidl_request.baseConfigs.discoveryMatchIndicator);
   legacy_request->service_specific_info_len = hidl_request.baseConfigs.serviceSpecificInfo.size();
   if (legacy_request->service_specific_info_len > NAN_MAX_SERVICE_SPECIFIC_INFO_LEN) {
     LOG(ERROR) << "convertHidlNanSubscribeRequestToLegacy: service_specific_info_len too large";
@@ -1134,8 +1228,8 @@ bool convertHidlNanSubscribeRequestToLegacy(
   legacy_request->ranging_auto_response = hidl_request.baseConfigs.rangingRequired ?
         legacy_hal::NAN_RANGING_AUTO_RESPONSE_ENABLE : legacy_hal::NAN_RANGING_AUTO_RESPONSE_DISABLE;
   legacy_request->sdea_params.range_report = legacy_hal::NAN_DISABLE_RANGE_REPORT;
-  legacy_request->subscribe_type = (legacy_hal::NanSubscribeType) hidl_request.subscribeType;
-  legacy_request->serviceResponseFilter = (legacy_hal::NanSRFType) hidl_request.srfType;
+  legacy_request->subscribe_type = convertHidlNanSubscribeTypeToLegacy(hidl_request.subscribeType);
+  legacy_request->serviceResponseFilter = convertHidlNanSrfTypeToLegacy(hidl_request.srfType);
   legacy_request->serviceResponseInclude = hidl_request.srfRespondIfInAddressSet ?
         legacy_hal::NAN_SRF_INCLUDE_RESPOND : legacy_hal::NAN_SRF_INCLUDE_DO_NOT_RESPOND;
   legacy_request->useServiceResponseFilter = hidl_request.shouldUseSrf ?
@@ -1295,7 +1389,7 @@ bool convertHidlNanDataPathInitiatorRequestToLegacy(
   legacy_request->requestor_instance_id = hidl_request.peerId;
   memcpy(legacy_request->peer_disc_mac_addr, hidl_request.peerDiscMacAddr.data(), 6);
   legacy_request->channel_request_type =
-        (legacy_hal::NanDataPathChannelCfg) hidl_request.channelRequestType;
+        convertHidlNanDataPathChannelCfgToLegacy(hidl_request.channelRequestType);
   legacy_request->channel = hidl_request.channel;
   strcpy(legacy_request->ndp_iface, hidl_request.ifaceName.c_str());
   legacy_request->ndp_cfg.security_cfg = (hidl_request.securityConfig.securityType
