@@ -35,11 +35,11 @@ using android::hardware::gnss::V1_0::IGnssDebug;
 using android::hardware::gnss::V1_0::IGnssMeasurement;
 using android::sp;
 
-#define TIMEOUT_SEC 3  // for basic commands/responses
+#define TIMEOUT_SEC 2  // for basic commands/responses
 
-// Set these false for release, true for stronger test
-#define GNSS_SIGNAL_IS_PRESENT false
-#define GNSS_ASSISTANCE_IS_PRESENT false
+// for command line argument on how strictly to run the test
+bool sAgpsIsPresent = false;  // if SUPL or XTRA assistance available
+bool sSignalIsWeak = false;  // if GNSS signals are weak (e.g. light indoor)
 
 // The main test class for GNSS HAL.
 class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
@@ -204,7 +204,6 @@ TEST_F(GnssHalTest, SetCallbackCapabilitiesCleanup) {}
  * CheckLocation:
  * Helper function to vet Location fields
  */
-
 void CheckLocation(GnssLocation& location, bool checkAccuracies) {
   EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_LAT_LONG);
   EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_ALTITUDE);
@@ -270,6 +269,39 @@ void CheckLocation(GnssLocation& location, bool checkAccuracies) {
 }
 
 /*
+ * StartAndGetSingleLocation:
+ * Helper function to get one Location and check fields
+ *
+ * returns  true if a location was successfully generated
+ */
+bool StartAndGetSingleLocation(GnssHalTest* test, bool checkAccuracies) {
+  auto result = test->gnss_hal_->start();
+
+  EXPECT_TRUE(result.isOk());
+  EXPECT_TRUE(result);
+
+  /*
+   * GPS signals initially optional for this test, so don't expect fast fix,
+   * or no timeout, unless signal is present
+   */
+  int firstGnssLocationTimeoutSeconds = sAgpsIsPresent ? 15 : 45;
+  if (sSignalIsWeak) {
+    // allow more time for weak signals
+    firstGnssLocationTimeoutSeconds += 30;
+  }
+
+  test->wait(firstGnssLocationTimeoutSeconds);
+  if (sAgpsIsPresent) {
+    EXPECT_EQ(test->location_called_count_, 1);
+  }
+  if (test->location_called_count_ > 0) {
+    CheckLocation(test->last_location_, checkAccuracies);
+    return true;
+  }
+  return false;
+}
+
+/*
  * GetLocation:
  * Turns on location, waits 45 second for at least 5 locations,
  * and checks them for reasonable validity.
@@ -278,12 +310,6 @@ TEST_F(GnssHalTest, GetLocation) {
 #define MIN_INTERVAL_MSEC 500
 #define PREFERRED_ACCURACY 0   // Ideally perfect (matches GnssLocationProvider)
 #define PREFERRED_TIME_MSEC 0  // Ideally immediate
-
-#if GNSS_ASSISTANCE_IS_PRESENT
-#define LOCATION_TIMEOUT_FIRST_SEC 15
-#else
-#define LOCATION_TIMEOUT_FIRST_SEC 45
-#endif
 
 #define LOCATION_TIMEOUT_SUBSEQUENT_SEC 3
 #define LOCATIONS_TO_CHECK 5
@@ -299,26 +325,17 @@ TEST_F(GnssHalTest, GetLocation) {
   ASSERT_TRUE(result.isOk());
   EXPECT_TRUE(result);
 
-  result = gnss_hal_->start();
-
-  ASSERT_TRUE(result.isOk());
-  EXPECT_TRUE(result);
-
   /*
    * GPS signals initially optional for this test, so don't expect no timeout
    * yet
    */
-  wait(LOCATION_TIMEOUT_FIRST_SEC);
-  if (GNSS_SIGNAL_IS_PRESENT) {
-    ASSERT_GT(location_called_count_, 0);
-  }
-  if (location_called_count_ > 0) {
-    CheckLocation(last_location_, checkMoreAccuracies);
-  }
+  bool gotLocation = StartAndGetSingleLocation(this, checkMoreAccuracies);
 
-  for (int i = 1; i < LOCATIONS_TO_CHECK; i++) {
-    wait(LOCATION_TIMEOUT_SUBSEQUENT_SEC);
-    if (location_called_count_ > 0) {
+  if (gotLocation) {
+    for (int i = 1; i < LOCATIONS_TO_CHECK; i++) {
+      EXPECT_EQ(std::cv_status::no_timeout,
+          wait(LOCATION_TIMEOUT_SUBSEQUENT_SEC));
+      EXPECT_EQ(location_called_count_, i + 1);
       CheckLocation(last_location_, checkMoreAccuracies);
     }
   }
@@ -332,13 +349,11 @@ TEST_F(GnssHalTest, GetLocation) {
 /*
  * InjectDelete:
  * Ensures that calls to inject and/or delete information state are handled.
- * Better tests await GPS signal
  */
 TEST_F(GnssHalTest, InjectDelete) {
   // confidently, well north of Alaska
   auto result = gnss_hal_->injectLocation(80.0, -170.0, 1000.0);
 
-  // TODO: full self-diff including TODO's :)
   ASSERT_TRUE(result.isOk());
   EXPECT_TRUE(result);
 
@@ -351,6 +366,9 @@ TEST_F(GnssHalTest, InjectDelete) {
   auto resultVoid = gnss_hal_->deleteAidingData(IGnss::GnssAidingData::DELETE_ALL);
 
   ASSERT_TRUE(resultVoid.isOk());
+
+  // Ensure we can get a good location after a bad injection has been deleted
+  StartAndGetSingleLocation(this, false);
 }
 
 /*
@@ -413,6 +431,18 @@ TEST_F(GnssHalTest, MeasurementCapabilites) {
 
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
+  /*
+   * These arguments not used by automated VTS testing.
+   * Only for use in manual testing, when wanting to run
+   * stronger tests that require the presence of GPS signal.
+   */
+  for (int i = 1; i < argc; i++) {
+    if (strcmp(argv[i],"-agps") == 0) {
+      sAgpsIsPresent = true;
+    } else if (strcmp(argv[i],"-weak") == 0) {
+      sSignalIsWeak = true;
+    }
+  }
   int status = RUN_ALL_TESTS();
   ALOGI("Test result = %d", status);
   return status;
