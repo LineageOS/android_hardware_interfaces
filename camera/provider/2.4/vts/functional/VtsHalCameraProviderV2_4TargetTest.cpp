@@ -21,7 +21,6 @@
 #include "CameraParameters.h"
 #include <system/camera.h>
 #include <android/log.h>
-#include <grallocusage/GrallocUsageConversion.h>
 #include <ui/GraphicBuffer.h>
 #include <VtsHalHidlTargetTestBase.h>
 #include <gui/BufferQueue.h>
@@ -54,7 +53,6 @@ using ::android::BufferItemConsumer;
 using ::android::Surface;
 using ::android::CameraParameters;
 using ::android::hardware::graphics::common::V1_0::PixelFormat;
-using ::android::hardware::graphics::allocator::V2_0::ConsumerUsage;
 using ::android::hardware::graphics::allocator::V2_0::ProducerUsage;
 using ::android::hardware::camera::common::V1_0::Status;
 using ::android::hardware::camera::common::V1_0::CameraDeviceStatus;
@@ -62,8 +60,6 @@ using ::android::hardware::camera::common::V1_0::TorchMode;
 using ::android::hardware::camera::common::V1_0::TorchModeStatus;
 using ::android::hardware::camera::provider::V2_4::ICameraProvider;
 using ::android::hardware::camera::provider::V2_4::ICameraProviderCallback;
-using ::android::hardware::camera::device::V3_2::ProducerUsageFlags;
-using ::android::hardware::camera::device::V3_2::ConsumerUsageFlags;
 using ::android::hardware::camera::device::V3_2::ICameraDevice;
 using ::android::hardware::camera::device::V3_2::BufferCache;
 using ::android::hardware::camera::device::V3_2::CaptureRequest;
@@ -84,7 +80,6 @@ using ::android::hardware::camera::device::V3_2::StreamBuffer;
 using ::android::hardware::camera::device::V3_2::MsgType;
 using ::android::hardware::camera::device::V3_2::ErrorMsg;
 using ::android::hardware::camera::device::V3_2::ErrorCode;
-using ::android::hardware::camera::device::V1_0::ProducerUsageFlags;
 using ::android::hardware::camera::device::V1_0::CameraFacing;
 using ::android::hardware::camera::device::V1_0::NotifyCallbackMsg;
 using ::android::hardware::camera::device::V1_0::CommandType;
@@ -238,7 +233,7 @@ struct PreviewWindowCb : public ICameraDevicePreviewCallback {
     Return<Status> setCrop(int32_t left, int32_t top,
             int32_t right, int32_t bottom) override;
 
-    Return<Status> setUsage(ProducerUsageFlags usage) override;
+    Return<Status> setUsage(ProducerUsage usage) override;
 
     Return<Status> setSwapInterval(int32_t interval) override;
 
@@ -413,11 +408,10 @@ Return<Status> PreviewWindowCb::setCrop(int32_t left, int32_t top,
     return mapToStatus(rc);
 }
 
-Return<Status> PreviewWindowCb::setUsage(ProducerUsageFlags usage) {
-    int dstUsage = ::android_convertGralloc1To0Usage(usage, /*consumerUsage*/ 0);
-    auto rc = native_window_set_usage(mAnw.get(), dstUsage);
+Return<Status> PreviewWindowCb::setUsage(ProducerUsage usage) {
+    auto rc = native_window_set_usage(mAnw.get(), static_cast<int>(usage));
     if (rc == ::android::OK) {
-        mPreviewUsage = dstUsage;
+        mPreviewUsage =  static_cast<int>(usage);
     }
     return mapToStatus(rc);
 }
@@ -2205,7 +2199,7 @@ TEST_F(CameraHidlTest, configureStreamsZSLInputOutputs) {
                             static_cast<uint32_t> (input.width),
                             static_cast<uint32_t> (input.height),
                             static_cast<PixelFormat> (input.format),
-                            static_cast<ConsumerUsageFlags>(ConsumerUsage::CAMERA), 0,
+                            GRALLOC_USAGE_HW_CAMERA_ZSL, 0,
                             StreamRotation::ROTATION_0};
                     Stream inputStream = {streamId++, StreamType::INPUT,
                             static_cast<uint32_t> (input.width),
@@ -2437,7 +2431,7 @@ TEST_F(CameraHidlTest, configureStreamsVideoStillOutputs) {
                             static_cast<uint32_t> (blobIter.width),
                             static_cast<uint32_t> (blobIter.height),
                             static_cast<PixelFormat> (blobIter.format),
-                            static_cast<ConsumerUsageFlags>(ConsumerUsage::VIDEO_ENCODER), 0,
+                            GRALLOC_USAGE_HW_VIDEO_ENCODER, 0,
                             StreamRotation::ROTATION_0};
                     ::android::hardware::hidl_vec<Stream> streams = {
                             videoStream, blobStream};
