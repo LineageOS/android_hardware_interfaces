@@ -20,12 +20,12 @@
 #include <unordered_map>
 #include "utils/Mutex.h"
 #include "utils/SortedVector.h"
-#include <binder/MemoryBase.h>
-#include <binder/MemoryHeapBase.h>
 #include "CameraModule.h"
 #include "HandleImporter.h"
 
 #include <android/hardware/camera/device/1.0/ICameraDevice.h>
+#include <android/hidl/allocator/1.0/IAllocator.h>
+#include <android/hidl/memory/1.0/IMemory.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
 
@@ -47,7 +47,9 @@ using ::android::hardware::camera::device::V1_0::ICameraDevice;
 using ::android::hardware::camera::device::V1_0::ICameraDeviceCallback;
 using ::android::hardware::camera::device::V1_0::ICameraDevicePreviewCallback;
 using ::android::hardware::camera::device::V1_0::MemoryId;
+using ::android::hidl::allocator::V1_0::IAllocator;
 using ::android::hidl::base::V1_0::IBase;
+using ::android::hidl::memory::V1_0::IMemory;
 using ::android::hardware::hidl_array;
 using ::android::hardware::hidl_memory;
 using ::android::hardware::hidl_string;
@@ -113,17 +115,24 @@ private:
     class CameraHeapMemory : public RefBase {
     public:
         CameraHeapMemory(int fd, size_t buf_size, uint_t num_buffers = 1);
-        explicit CameraHeapMemory(size_t buf_size, uint_t num_buffers = 1);
+        explicit CameraHeapMemory(
+            sp<IAllocator> ashmemAllocator, size_t buf_size, uint_t num_buffers = 1);
         void commonInitialization();
         virtual ~CameraHeapMemory();
 
         size_t mBufSize;
         uint_t mNumBufs;
-        // TODO: b/35887419: use hidl_memory instead and get rid of libbinder
-        sp<MemoryHeapBase> mHeap;
-        sp<MemoryBase>* mBuffers;
+
+        // Shared memory related members
+        hidl_memory      mHidlHeap;
+        native_handle_t* mHidlHandle; // contains one shared memory FD
+        void*            mHidlHeapMemData;
+        sp<IMemory>      mHidlHeapMemory; // munmap happens in ~IMemory()
+
         CameraMemory handle;
     };
+    sp<IAllocator> mAshmemAllocator;
+
 
     // TODO: b/35625849
     // Meta data buffer layout for passing a native_handle to codec
