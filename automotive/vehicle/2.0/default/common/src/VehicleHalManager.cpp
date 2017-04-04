@@ -18,10 +18,10 @@
 
 #include "VehicleHalManager.h"
 
+#include <cmath>
 #include <fstream>
 
 #include <android/log.h>
-#include <private/android_filesystem_config.h>
 
 #include "VehicleUtils.h"
 
@@ -84,7 +84,7 @@ Return<void> VehicleHalManager::get(const VehiclePropValue& requestedPropValue, 
         return Void();
     }
 
-    if (!checkReadPermission(*config, getCaller())) {
+    if (!checkReadPermission(*config)) {
         _hidl_cb(StatusCode::ACCESS_DENIED, kEmptyValue);
         return Void();
     }
@@ -105,7 +105,7 @@ Return<StatusCode> VehicleHalManager::set(const VehiclePropValue &value) {
         return StatusCode::INVALID_ARG;
     }
 
-    if (!checkWritePermission(*config, getCaller())) {
+    if (!checkWritePermission(*config)) {
         return StatusCode::ACCESS_DENIED;
     }
 
@@ -119,7 +119,6 @@ Return<StatusCode> VehicleHalManager::set(const VehiclePropValue &value) {
 Return<StatusCode> VehicleHalManager::subscribe(const sp<IVehicleCallback> &callback,
                                                 const hidl_vec<SubscribeOptions> &options) {
     hidl_vec<SubscribeOptions> verifiedOptions(options);
-    auto caller = getCaller();
     for (size_t i = 0; i < verifiedOptions.size(); i++) {
         SubscribeOptions& ops = verifiedOptions[i];
         auto prop = ops.propId;
@@ -134,10 +133,6 @@ Return<StatusCode> VehicleHalManager::subscribe(const sp<IVehicleCallback> &call
         if (ops.flags == SubscribeFlags::UNDEFINED) {
             ALOGE("Failed to subscribe: undefined flag in options provided");
             return StatusCode::INVALID_ARG;
-        }
-
-        if (!checkAcl(caller.uid, config->prop, VehiclePropertyAccess::READ)) {
-            return StatusCode::ACCESS_DENIED;
         }
 
         if (!isSubscribable(*config, ops.flags)) {
@@ -208,13 +203,6 @@ void VehicleHalManager::init() {
         supportedPropConfigs.size());
     for (const auto& config : supportedPropConfigs) {
         supportedProperties.push_back(config.prop);
-    }
-
-    AccessControlConfigParser aclParser(supportedProperties);
-    const char* configs[] = { "/system/etc/vehicle_access.conf",
-                              "/vendor/etc/vehicle_access.conf" };
-    for (const char* filename : configs) {
-        readAndParseAclConfig(filename, &aclParser, &mPropertyAclMap);
     }
 }
 
@@ -317,39 +305,22 @@ bool VehicleHalManager::isSubscribable(const VehiclePropConfig& config,
     return true;
 }
 
-bool VehicleHalManager::checkAcl(uid_t callerUid, int32_t propertyId,
-                                 VehiclePropertyAccess requiredAccess) const {
-    if (callerUid == AID_SYSTEM && isSystemProperty(propertyId)) {
-        return true;
-    }
-
-    auto range = mPropertyAclMap.equal_range(propertyId);
-    for (auto it = range.first; it != range.second; ++it) {
-        auto& acl = it->second;
-        if (acl.uid == callerUid && (acl.access & requiredAccess)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool VehicleHalManager::checkWritePermission(const VehiclePropConfig &config,
-                                             const Caller& caller) const {
+bool VehicleHalManager::checkWritePermission(const VehiclePropConfig &config) const {
     if (!(config.access & VehiclePropertyAccess::WRITE)) {
         ALOGW("Property 0%x has no write access", config.prop);
         return false;
+    } else {
+        return true;
     }
-    return checkAcl(caller.uid, config.prop, VehiclePropertyAccess::WRITE);
 }
 
-bool VehicleHalManager::checkReadPermission(const VehiclePropConfig &config,
-                                            const Caller& caller) const {
+bool VehicleHalManager::checkReadPermission(const VehiclePropConfig &config) const {
     if (!(config.access & VehiclePropertyAccess::READ)) {
         ALOGW("Property 0%x has no read access", config.prop);
         return false;
+    } else {
+        return true;
     }
-
-    return checkAcl(caller.uid, config.prop, VehiclePropertyAccess::READ);
 }
 
 void VehicleHalManager::handlePropertySetEvent(const VehiclePropValue& value) {
@@ -364,26 +335,6 @@ const VehiclePropConfig* VehicleHalManager::getPropConfigOrNull(
         int32_t prop) const {
     return mConfigIndex->hasConfig(prop)
            ? &mConfigIndex->getConfig(prop) : nullptr;
-}
-
-Caller VehicleHalManager::getCaller() {
-    Caller caller;
-    IPCThreadState* self = IPCThreadState::self();
-    caller.pid = self->getCallingPid();
-    caller.uid = self->getCallingUid();
-
-    return caller;
-}
-
-void VehicleHalManager::readAndParseAclConfig(const char* filename,
-                                              AccessControlConfigParser* parser,
-                                              PropertyAclMap* outAclMap) {
-    std::ifstream file(filename);
-    if (file.is_open()) {
-        ALOGI("Parsing file: %s", filename);
-        parser->parseFromStream(&file, outAclMap);
-        file.close();
-    }
 }
 
 void VehicleHalManager::onAllClientsUnsubscribed(int32_t propertyId) {
