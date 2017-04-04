@@ -44,6 +44,12 @@ interface IComposer {
          * applying the color transform during its composition step.
          */
         SKIP_CLIENT_COLOR_TRANSFORM = 2,
+
+        /**
+         * Specifies that the present fence must not be used as an accurate
+         * representation of the actual present time of a frame.
+         */
+        PRESENT_FENCE_IS_NOT_RELIABLE = 3,
     };
 
     /**
