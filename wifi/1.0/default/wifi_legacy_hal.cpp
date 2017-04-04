@@ -181,6 +181,12 @@ void onAysncNanNotifyResponse(transaction_id id, NanResponseMsg* msg) {
   }
 }
 
+std::function<void(const NanPublishRepliedInd&)>
+    on_nan_event_publish_replied_user_callback;
+void onAysncNanEventPublishReplied(NanPublishRepliedInd* /* event */) {
+  LOG(ERROR) << "onAysncNanEventPublishReplied triggered";
+}
+
 std::function<void(const NanPublishTerminatedInd&)>
     on_nan_event_publish_terminated_user_callback;
 void onAysncNanEventPublishTerminated(NanPublishTerminatedInd* event) {
@@ -1064,6 +1070,7 @@ wifi_error WifiLegacyHal::nanRegisterCallbackHandlers(
   return global_func_table_.wifi_nan_register_handler(
       wlan_interface_handle_,
       {onAysncNanNotifyResponse,
+       onAysncNanEventPublishReplied,
        onAysncNanEventPublishTerminated,
        onAysncNanEventMatch,
        onAysncNanEventMatchExpired,
