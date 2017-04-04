@@ -33,10 +33,7 @@ cc_test {
         "libgui",
         "libui"
     ],
-    static_libs: [
-        "VtsHalHidlTargetTestBase",
-        "libgrallocusage"
-    ],
+    static_libs: ["VtsHalHidlTargetTestBase"],
     cflags: [
         "-O0",
         "-g",

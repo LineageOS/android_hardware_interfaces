@@ -17,6 +17,7 @@
 package android.hardware.camera.device@1.0;
 
 import android.hardware.camera.common@1.0::types;
+import android.hardware.graphics.allocator@2.0::types;
 import android.hardware.graphics.common@1.0::types;
 
 /**
@@ -88,7 +89,7 @@ interface ICameraDevicePreviewCallback {
      *
      * @return Status The status code for this operation.
      */
-    setUsage(ProducerUsageFlags usage) generates (Status status);
+    setUsage(ProducerUsage usage) generates (Status status);
 
     /**
      * Set the expected buffering mode for the preview output.

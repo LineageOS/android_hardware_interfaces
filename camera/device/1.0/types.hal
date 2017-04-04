@@ -16,10 +16,6 @@
 
 package android.hardware.camera.device@1.0;
 
-import android.hardware.graphics.allocator@2.0::types;
-
-typedef bitfield<ProducerUsage> ProducerUsageFlags;
-
 enum CameraFacing : uint32_t {
     /** The facing of the camera is opposite to that of the screen. */
     BACK = 0,

@@ -611,7 +611,7 @@ Return<void> CameraDeviceSession::configureStreams(
                 return Void();
             }
             mStreamMap[id].rotation = (int) requestedConfiguration.streams[i].rotation;
-            mStreamMap[id].usage = convertFromHidlUsage(requestedConfiguration.streams[i].usage);
+            mStreamMap[id].usage = (uint32_t) requestedConfiguration.streams[i].usage;
         }
         streams[i] = &mStreamMap[id];
     }
