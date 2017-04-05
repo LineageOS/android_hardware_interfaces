@@ -17,24 +17,31 @@
 #ifndef ANDROID_HARDWARE_CONFIGSTORE_UTILS_H
 #define ANDROID_HARDWARE_CONFIGSTORE_UTILS_H
 
+#include <android/hardware/configstore/1.0/ISurfaceFlingerConfigs.h>
 #include <hidl/Status.h>
-#include <stdatomic.h>
 
-#pragma push_macro("LOG_TAG")
-#undef LOG_TAG
-#define LOG_TAG "ConfigStoreUtil"
+#include <sstream>
 
 namespace android {
 namespace hardware {
+
+namespace details {
+// Templated classes can use the below method
+// to avoid creating dependencies on liblog.
+bool wouldLogInfo();
+void logAlwaysInfo(const std::string& message);
+void logAlwaysError(const std::string& message);
+}  // namespace details
+
 namespace configstore {
+using namespace android::hardware::configstore::V1_0;
 // arguments V: type for the value (i.e., OptionalXXX)
 //           I: interface class name
 //           func: member function pointer
-using namespace V1_0;
-
 template<typename V, typename I, android::hardware::Return<void> (I::* func)
         (std::function<void(const V&)>)>
 decltype(V::value) get(const decltype(V::value) &defValue) {
+    using namespace android::hardware::details;
     auto getHelper = []()->V {
         V ret;
         sp<I> configs = I::getService();
@@ -47,7 +54,11 @@ decltype(V::value) get(const decltype(V::value) &defValue) {
                 ret = v;
             });
             if (!status.isOk()) {
-                ALOGE("HIDL call failed. %s", status.description().c_str());
+                std::ostringstream oss;
+                oss << "HIDL call failed for retrieving a config item from "
+                       "configstore : "
+                    << status.description().c_str();
+                logAlwaysError(oss.str());
                 ret.specified = false;
             }
         }
@@ -55,6 +66,24 @@ decltype(V::value) get(const decltype(V::value) &defValue) {
         return ret;
     };
     static V cachedValue = getHelper();
+
+    if (wouldLogInfo()) {
+        std::string iname = __PRETTY_FUNCTION__;
+        // func name starts with "func = " in __PRETTY_FUNCTION__
+        auto pos = iname.find("func = ");
+        if (pos != std::string::npos) {
+            iname = iname.substr(pos + sizeof("func = "));
+            iname.pop_back();  // remove trailing ']'
+        } else {
+            iname += " (unknown)";
+        }
+
+        std::ostringstream oss;
+        oss << iname << " retrieved: "
+            << (cachedValue.specified ? cachedValue.value : defValue)
+            << (cachedValue.specified ? "" : " (default)");
+        logAlwaysInfo(oss.str());
+    }
 
     return cachedValue.specified ? cachedValue.value : defValue;
 }
@@ -98,7 +127,5 @@ std::string getString(const std::string &defValue) {
 }  // namespace configstore
 }  // namespace hardware
 }  // namespace android
-
-#pragma pop_macro("LOG_TAG")
 
 #endif  // ANDROID_HARDWARE_CONFIGSTORE_UTILS_H
