@@ -40,6 +40,22 @@ const char *kHAL1_0 = "1.0";
 const int kMaxCameraDeviceNameLen = 128;
 const int kMaxCameraIdLen = 16;
 
+bool matchDeviceName(const hidl_string& deviceName, std::string* deviceVersion,
+                     std::string* cameraId) {
+    std::string deviceNameStd(deviceName.c_str());
+    std::smatch sm;
+    if (std::regex_match(deviceNameStd, sm, kDeviceNameRE)) {
+        if (deviceVersion != nullptr) {
+            *deviceVersion = sm[1];
+        }
+        if (cameraId != nullptr) {
+            *cameraId = sm[2];
+        }
+        return true;
+    }
+    return false;
+}
+
 } // anonymous namespace
 
 using ::android::hardware::camera::common::V1_0::CameraMetadataType;
@@ -112,30 +128,22 @@ Status CameraProvider::getHidlStatus(int status) {
     }
 }
 
-bool CameraProvider::matchDeviceName(const hidl_string& deviceName, std::smatch& sm) {
-    std::string deviceNameStd(deviceName.c_str());
-    return std::regex_match(deviceNameStd, sm, kDeviceNameRE);
-}
-
 std::string CameraProvider::getLegacyCameraId(const hidl_string& deviceName) {
-    std::smatch sm;
-    bool match = matchDeviceName(deviceName, sm);
-    if (!match) {
-        return std::string("");
-    }
-    return sm[2];
+    std::string cameraId;
+    matchDeviceName(deviceName, nullptr, &cameraId);
+    return cameraId;
 }
 
 int CameraProvider::getCameraDeviceVersion(const hidl_string& deviceName) {
-    std::smatch sm;
-    bool match = matchDeviceName(deviceName, sm);
+    std::string deviceVersion;
+    bool match = matchDeviceName(deviceName, &deviceVersion, nullptr);
     if (!match) {
         return -1;
     }
-    if (sm[1].compare(kHAL3_2) == 0) {
+    if (deviceVersion == kHAL3_2) {
         // maybe switched to 3.4 or define the hidl version enum later
         return CAMERA_DEVICE_API_VERSION_3_2;
-    } else if (sm[1].compare(kHAL1_0) == 0) {
+    } else if (deviceVersion == kHAL1_0) {
         return CAMERA_DEVICE_API_VERSION_1_0;
     }
     return 0;
@@ -322,15 +330,13 @@ Return<void> CameraProvider::isSetTorchModeSupported(isSetTorchModeSupported_cb 
 
 Return<void> CameraProvider::getCameraDeviceInterface_V1_x(
         const hidl_string& cameraDeviceName, getCameraDeviceInterface_V1_x_cb _hidl_cb)  {
-    std::smatch sm;
-    bool match = matchDeviceName(cameraDeviceName, sm);
+    std::string cameraId, deviceVersion;
+    bool match = matchDeviceName(cameraDeviceName, &deviceVersion, &cameraId);
     if (!match) {
         _hidl_cb(Status::ILLEGAL_ARGUMENT, nullptr);
         return Void();
     }
 
-    std::string cameraId = sm[2];
-    std::string deviceVersion = sm[1];
     std::string deviceName(cameraDeviceName.c_str());
     ssize_t index = mCameraDeviceNames.indexOf(std::make_pair(cameraId, deviceName));
     if (index == NAME_NOT_FOUND) { // Either an illegal name or a device version mismatch
@@ -377,15 +383,13 @@ Return<void> CameraProvider::getCameraDeviceInterface_V1_x(
 
 Return<void> CameraProvider::getCameraDeviceInterface_V3_x(
         const hidl_string& cameraDeviceName, getCameraDeviceInterface_V3_x_cb _hidl_cb)  {
-    std::smatch sm;
-    bool match = matchDeviceName(cameraDeviceName, sm);
+    std::string cameraId, deviceVersion;
+    bool match = matchDeviceName(cameraDeviceName, &deviceVersion, &cameraId);
     if (!match) {
         _hidl_cb(Status::ILLEGAL_ARGUMENT, nullptr);
         return Void();
     }
 
-    std::string cameraId = sm[2];
-    std::string deviceVersion = sm[1];
     std::string deviceName(cameraDeviceName.c_str());
     ssize_t index = mCameraDeviceNames.indexOf(std::make_pair(cameraId, deviceName));
     if (index == NAME_NOT_FOUND) { // Either an illegal name or a device version mismatch
