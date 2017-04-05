@@ -15,7 +15,7 @@
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := keymaster_hidl_hal_test
+LOCAL_MODULE := VtsHalKeymasterV3_0TargetTest
 LOCAL_SRC_FILES := \
         authorization_set.cpp \
         attestation_record.cpp \
