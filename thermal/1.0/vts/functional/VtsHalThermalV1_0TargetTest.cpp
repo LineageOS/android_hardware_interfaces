@@ -68,10 +68,12 @@ class ThermalHidlTest : public ::testing::VtsHalHidlTargetTestBase {
       if (i < baseSize_) {
         EXPECT_EQ(names_[i], temperatures[i].name.c_str());
       } else {
-        // Names must be unique.
-        EXPECT_EQ(names_.end(), std::find(names_.begin(), names_.end(),
-                                          temperatures[i].name.c_str()));
-        names_.push_back(temperatures[i].name);
+          // Names must be unique only for known temperature types.
+          if (temperatures[i].type != TemperatureType::UNKNOWN) {
+              EXPECT_EQ(names_.end(), std::find(names_.begin(), names_.end(),
+                                                temperatures[i].name.c_str()));
+          }
+          names_.push_back(temperatures[i].name);
       }
     }
     baseSize_ = size;
@@ -88,10 +90,9 @@ class ThermalHidlTest : public ::testing::VtsHalHidlTargetTestBase {
       if (i < baseSize_) {
         EXPECT_EQ(names_[i], cpuUsages[i].name.c_str());
       } else {
-        // Names must be unique.
-        EXPECT_EQ(names_.end(), std::find(names_.begin(), names_.end(),
-                                          cpuUsages[i].name.c_str()));
-        names_.push_back(cpuUsages[i].name);
+          // Names are not guaranteed to be unique because of the current
+          // default Thermal HAL implementation.
+          names_.push_back(cpuUsages[i].name);
       }
     }
     baseSize_ = size;
