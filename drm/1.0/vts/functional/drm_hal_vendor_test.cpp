@@ -973,8 +973,12 @@ INSTANTIATE_TEST_CASE_P(
         testing::ValuesIn(gVendorModules->getVendorModulePaths()));
 
 int main(int argc, char** argv) {
-    gVendorModules =
-            new drm_vts::VendorModules("/data/nativetest/drm_hidl_test/vendor");
+#if defined(__LP64__)
+    const char *kModulePath = "/data/local/tmp/64/lib";
+#else
+    const char *kModulePath = "/data/local/tmp/32/lib";
+#endif
+    gVendorModules = new drm_vts::VendorModules(kModulePath);
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
