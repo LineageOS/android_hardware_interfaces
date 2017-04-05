@@ -12,7 +12,6 @@ namespace implementation {
 Return<void> SurfaceFlingerConfigs::vsyncEventPhaseOffsetNs(vsyncEventPhaseOffsetNs_cb _hidl_cb) {
 #ifdef VSYNC_EVENT_PHASE_OFFSET_NS
     _hidl_cb({true, VSYNC_EVENT_PHASE_OFFSET_NS});
-    LOG(INFO) << "vsync event phase offset ns =  " << VSYNC_EVENT_PHASE_OFFSET_NS;
 #else
     _hidl_cb({false, 0});
 #endif
@@ -22,7 +21,6 @@ Return<void> SurfaceFlingerConfigs::vsyncEventPhaseOffsetNs(vsyncEventPhaseOffse
 Return<void> SurfaceFlingerConfigs::vsyncSfEventPhaseOffsetNs(vsyncEventPhaseOffsetNs_cb _hidl_cb) {
 #ifdef SF_VSYNC_EVENT_PHASE_OFFSET_NS
     _hidl_cb({true, SF_VSYNC_EVENT_PHASE_OFFSET_NS});
-    LOG(INFO) << "sfvsync event phase offset ns =  " << SF_VSYNC_EVENT_PHASE_OFFSET_NS;
 #else
     _hidl_cb({false, 0});
 #endif
@@ -32,7 +30,6 @@ Return<void> SurfaceFlingerConfigs::vsyncSfEventPhaseOffsetNs(vsyncEventPhaseOff
 Return<void> SurfaceFlingerConfigs::useContextPriority(useContextPriority_cb _hidl_cb) {
 #ifdef USE_CONTEXT_PRIORITY
     _hidl_cb({true, USE_CONTEXT_PRIORITY});
-    LOG(INFO) << "SurfaceFlinger useContextPriority=" << USE_CONTEXT_PRIORITY;
 #else
     _hidl_cb({false, false});
 #endif
@@ -42,7 +39,6 @@ Return<void> SurfaceFlingerConfigs::useContextPriority(useContextPriority_cb _hi
 Return<void> SurfaceFlingerConfigs::maxFrameBufferAcquiredBuffers(maxFrameBufferAcquiredBuffers_cb _hidl_cb) {
 #ifdef NUM_FRAMEBUFFER_SURFACE_BUFFERS
     _hidl_cb({true, NUM_FRAMEBUFFER_SURFACE_BUFFERS});
-    LOG(INFO) << "SurfaceFlinger FrameBuffer max acquired buffers : " << NUM_FRAMEBUFFER_SURFACE_BUFFERS;
 #else
     _hidl_cb({false, 0});
 #endif
@@ -55,7 +51,6 @@ Return<void> SurfaceFlingerConfigs::hasWideColorDisplay(hasWideColorDisplay_cb _
     value = true;
 #endif
     _hidl_cb({true, value});
-    LOG(INFO) << "SurfaceFlinger Display: " << (value ? "Wide Color" : "Standard Color");
     return Void();
 }
 
@@ -65,7 +60,6 @@ Return<void> SurfaceFlingerConfigs::hasSyncFramework(hasSyncFramework_cb _hidl_c
     value = false;
 #endif
     _hidl_cb({true, value});
-    LOG(INFO) << "SurfaceFlinger hasSyncFramework: " << value;
     return Void();
 }
 
@@ -75,14 +69,12 @@ Return<void> SurfaceFlingerConfigs::hasHDRDisplay(hasHDRDisplay_cb _hidl_cb) {
     value = true;
 #endif
     _hidl_cb({true, value});
-    LOG(INFO) << "SurfaceFlinger Display: " << (value ? "HDR" : "SDR");
     return Void();
 }
 
 Return<void> SurfaceFlingerConfigs::presentTimeOffsetFromVSyncNs(presentTimeOffsetFromVSyncNs_cb _hidl_cb) {
 #ifdef PRESENT_TIME_OFFSET_FROM_VSYNC_NS
       _hidl_cb({true, PRESENT_TIME_OFFSET_FROM_VSYNC_NS});
-      LOG(INFO) << "SurfaceFlinger presentTimeStampOffsetNs =  " << PRESENT_TIME_OFFSET_FROM_VSYNC_NS;
 #else
       _hidl_cb({false, 0});
 #endif
@@ -95,7 +87,6 @@ Return<void> SurfaceFlingerConfigs::useHwcForRGBtoYUV(useHwcForRGBtoYUV_cb _hidl
     value = true;
 #endif
     _hidl_cb({true, value});
-    LOG(INFO) << "SurfaceFlinger forceHwcForRGBtoYUV: " << value;
     return Void();
 }
 
@@ -104,7 +95,6 @@ Return<void> SurfaceFlingerConfigs::maxVirtualDisplaySize(maxVirtualDisplaySize_
 #ifdef MAX_VIRTUAL_DISPLAY_DIMENSION
   maxSize = MAX_VIRTUAL_DISPLAY_DIMENSION;
   _hidl_cb({true, maxSize});
-  LOG(INFO) << "SurfaceFlinger MaxVirtualDisplaySize: " << maxSize;
 #else
   _hidl_cb({false, maxSize});
 #endif
@@ -119,7 +109,6 @@ Return<void> SurfaceFlingerConfigs::useVrFlinger(useVrFlinger_cb _hidl_cb) {
     specified = true;
 #endif
     _hidl_cb({specified, value});
-    LOG(INFO) << "SurfaceFlinger UseVrFlinger: " << (value ? "true" : "false");
     return Void();
 }
 
