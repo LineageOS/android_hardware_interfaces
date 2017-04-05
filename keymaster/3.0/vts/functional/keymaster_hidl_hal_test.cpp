@@ -46,6 +46,8 @@ using ::std::string;
 // non-gtest argument will be used as the service name.
 string service_name = "default";
 
+static bool arm_deleteAllKeys = false;
+
 namespace android {
 namespace hardware {
 
@@ -488,13 +490,20 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         return ExportKey(format, key_blob_, client_id, app_data, key_material);
     }
 
-    ErrorCode DeleteKey(HidlBuf* key_blob) {
+    ErrorCode DeleteKey(HidlBuf* key_blob, bool keep_key_blob = false) {
         ErrorCode error = keymaster_->deleteKey(*key_blob);
-        *key_blob = HidlBuf();
+        if (!keep_key_blob) *key_blob = HidlBuf();
         return error;
     }
 
-    ErrorCode DeleteKey() { return DeleteKey(&key_blob_); }
+    ErrorCode DeleteKey(bool keep_key_blob = false) {
+        return DeleteKey(&key_blob_, keep_key_blob);
+    }
+
+    ErrorCode DeleteAllKeys() {
+        ErrorCode error = keymaster_->deleteAllKeys();
+        return error;
+    }
 
     ErrorCode GetCharacteristics(const HidlBuf& key_blob, const HidlBuf& client_id,
                                  const HidlBuf& app_data, KeyCharacteristics* key_characteristics) {
@@ -3893,6 +3902,124 @@ TEST_F(AttestationTest, HmacAttestation) {
                         &cert_chain));
 }
 
+typedef KeymasterHidlTest KeyDeletionTest;
+
+/**
+ * KeyDeletionTest.DeleteKey
+ *
+ * This test checks that if rollback protection is implemented, DeleteKey invalidates a formerly
+ * valid key blob.
+ */
+TEST_F(KeyDeletionTest, DeleteKey) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                             .RsaSigningKey(1024, 3)
+                                             .Digest(Digest::NONE)
+                                             .Padding(PaddingMode::NONE)
+                                             .Authorization(TAG_NO_AUTH_REQUIRED)));
+
+    // Delete must work if rollback protection is implemented
+    AuthorizationSet teeEnforced(key_characteristics_.teeEnforced);
+    bool rollback_protected = teeEnforced.Contains(TAG_ROLLBACK_RESISTANT);
+
+    if (rollback_protected) {
+        ASSERT_EQ(ErrorCode::OK, DeleteKey(true /* keep key blob */));
+    } else {
+        auto delete_result = DeleteKey(true /* keep key blob */);
+        ASSERT_TRUE(delete_result == ErrorCode::OK | delete_result == ErrorCode::UNIMPLEMENTED);
+    }
+
+    string message = "12345678901234567890123456789012";
+    AuthorizationSet begin_out_params;
+
+    if (rollback_protected) {
+        EXPECT_EQ(ErrorCode::INVALID_KEY_BLOB,
+                Begin(KeyPurpose::SIGN, key_blob_,
+                        AuthorizationSetBuilder().Digest(Digest::NONE).Padding(PaddingMode::NONE),
+                        &begin_out_params, &op_handle_));
+    } else {
+        EXPECT_EQ(ErrorCode::OK,
+                Begin(KeyPurpose::SIGN, key_blob_,
+                        AuthorizationSetBuilder().Digest(Digest::NONE).Padding(PaddingMode::NONE),
+                        &begin_out_params, &op_handle_));
+    }
+    AbortIfNeeded();
+    key_blob_ = HidlBuf();
+}
+
+/**
+ * KeyDeletionTest.DeleteInvalidKey
+ *
+ * This test checks that the HAL excepts invalid key blobs.
+ */
+TEST_F(KeyDeletionTest, DeleteInvalidKey) {
+    // Generate key just to check if rollback protection is implemented
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                             .RsaSigningKey(1024, 3)
+                                             .Digest(Digest::NONE)
+                                             .Padding(PaddingMode::NONE)
+                                             .Authorization(TAG_NO_AUTH_REQUIRED)));
+
+    // Delete must work if rollback protection is implemented
+    AuthorizationSet teeEnforced(key_characteristics_.teeEnforced);
+    bool rollback_protected = teeEnforced.Contains(TAG_ROLLBACK_RESISTANT);
+
+    // Delete the key we don't care about the result at this point.
+    DeleteKey();
+
+    // Now create an invalid key blob and delete it.
+    key_blob_ = HidlBuf("just some garbage data which is not a valid key blob");
+
+    if (rollback_protected) {
+        ASSERT_EQ(ErrorCode::OK, DeleteKey());
+    } else {
+        auto delete_result = DeleteKey();
+        ASSERT_TRUE(delete_result == ErrorCode::OK | delete_result == ErrorCode::UNIMPLEMENTED);
+    }
+}
+
+/**
+ * KeyDeletionTest.DeleteAllKeys
+ *
+ * This test is disarmed by default. To arm it use --arm_deleteAllKeys.
+ *
+ * BEWARE: This test has serious side effects. All user keys will be lost! This includes
+ * FBE/FDE encryption keys, which means that the device will not even boot until after the
+ * device has been wiped manually (e.g., fastboot flashall -w), and new FBE/FDE keys have
+ * been provisioned. Use this test only on dedicated testing devices that have no valuable
+ * credentials stored in Keystore/Keymaster.
+ */
+TEST_F(KeyDeletionTest, DeleteAllKeys) {
+    if (!arm_deleteAllKeys) return;
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                             .RsaSigningKey(1024, 3)
+                                             .Digest(Digest::NONE)
+                                             .Padding(PaddingMode::NONE)
+                                             .Authorization(TAG_NO_AUTH_REQUIRED)));
+
+    // Delete must work if rollback protection is implemented
+    AuthorizationSet teeEnforced(key_characteristics_.teeEnforced);
+    bool rollback_protected = teeEnforced.Contains(TAG_ROLLBACK_RESISTANT);
+
+    ASSERT_EQ(ErrorCode::OK, DeleteAllKeys());
+
+    string message = "12345678901234567890123456789012";
+    AuthorizationSet begin_out_params;
+
+    if (rollback_protected) {
+        EXPECT_EQ(ErrorCode::INVALID_KEY_BLOB,
+                Begin(KeyPurpose::SIGN, key_blob_,
+                        AuthorizationSetBuilder().Digest(Digest::NONE).Padding(PaddingMode::NONE),
+                        &begin_out_params, &op_handle_));
+    } else {
+        EXPECT_EQ(ErrorCode::OK,
+                Begin(KeyPurpose::SIGN, key_blob_,
+                        AuthorizationSetBuilder().Digest(Digest::NONE).Padding(PaddingMode::NONE),
+                        &begin_out_params, &op_handle_));
+    }
+    AbortIfNeeded();
+    key_blob_ = HidlBuf();
+}
+
 }  // namespace test
 }  // namespace V3_0
 }  // namespace keymaster
@@ -3901,9 +4028,19 @@ TEST_F(AttestationTest, HmacAttestation) {
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
-    if (argc == 2) {
-        ALOGI("Running keymaster VTS against service \"%s\"", argv[1]);
-        service_name = argv[1];
+    std::vector<std::string> positional_args;
+    for (int i = 1; i < argc; ++i) {
+        if (argv[i][0] == '-') {
+            if (std::string(argv[i]) == "--arm_deleteAllKeys") {
+                arm_deleteAllKeys = true;
+            }
+        } else {
+            positional_args.push_back(argv[i]);
+        }
+    }
+    if (positional_args.size()) {
+        ALOGI("Running keymaster VTS against service \"%s\"", positional_args[0].c_str());
+        service_name = positional_args[0];
     }
     int status = RUN_ALL_TESTS();
     ALOGI("Test result = %d", status);
