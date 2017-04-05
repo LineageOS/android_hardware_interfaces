@@ -1075,6 +1075,7 @@ bool convertHidlNanPublishRequestToLegacy(
         hidl_request.baseConfigs.disableMatchExpirationIndication ? 0x2 : 0x0;
   legacy_request->recv_indication_cfg |=
         hidl_request.baseConfigs.disableFollowupReceivedIndication ? 0x4 : 0x0;
+  legacy_request->recv_indication_cfg |= 0x8;
   legacy_request->cipher_type = (unsigned int) hidl_request.baseConfigs.securityConfig.cipherType;
   if (hidl_request.baseConfigs.securityConfig.securityType == NanDataPathSecurityType::PMK) {
     legacy_request->key_info.key_type = legacy_hal::NAN_SECURITY_KEY_INPUT_PMK;
