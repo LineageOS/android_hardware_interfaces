@@ -94,12 +94,10 @@ class DrmHalClearkeyFactoryTest : public ::testing::VtsHalHidlTargetTestBase {
               test_info->name());
 
         drmFactory =
-                ::testing::VtsHalHidlTargetTestBase::getService<IDrmFactory>(
-                        "drm");
+                ::testing::VtsHalHidlTargetTestBase::getService<IDrmFactory>();
         ASSERT_NE(drmFactory, nullptr);
         cryptoFactory =
-                ::testing::VtsHalHidlTargetTestBase::getService<ICryptoFactory>(
-                        "crypto");
+                ::testing::VtsHalHidlTargetTestBase::getService<ICryptoFactory>();
         ASSERT_NE(cryptoFactory, nullptr);
     }
 
