@@ -30,12 +30,18 @@
 TEST_F(RenderscriptHidlTest, Simple1DCopyTest) {
     // float1
     Element element = context->elementCreate(DataType::FLOAT_32, DataKind::USER, false, 1);
+    ASSERT_NE(Element(0), element);
+
     // 128 x float1
     Type type = context->typeCreate(element, 128, 0, 0, false, false, YuvFormat::YUV_NONE);
+    ASSERT_NE(Type(0), type);
+
     // 128 x float1
     Allocation allocation = context->allocationCreateTyped(type, AllocationMipmapControl::NONE,
                                                            (int)AllocationUsageType::SCRIPT,
                                                            (Ptr)nullptr);
+    ASSERT_NE(Allocation(0), allocation);
+
     std::vector<float> dataIn(128), dataOut(128);
     std::generate(dataIn.begin(), dataIn.end(), [](){ static int val = 0; return (float)val++; });
     hidl_vec<uint8_t> _data;
@@ -60,12 +66,18 @@ TEST_F(RenderscriptHidlTest, Simple1DCopyTest) {
 TEST_F(RenderscriptHidlTest, Simple2DCopyTest) {
     // float1
     Element element = context->elementCreate(DataType::FLOAT_32, DataKind::USER, false, 1);
+    ASSERT_NE(Element(0), element);
+
     // 128 x 128 x float1
     Type type = context->typeCreate(element, 128, 128, 0, false, false, YuvFormat::YUV_NONE);
+    ASSERT_NE(Type(0), type);
+
     // 128 x 128 x float1
     Allocation allocation = context->allocationCreateTyped(type, AllocationMipmapControl::NONE,
                                                            (int)AllocationUsageType::SCRIPT,
                                                            (Ptr)nullptr);
+    ASSERT_NE(Allocation(0), allocation);
+
     std::vector<float> dataIn(128*128), dataOut(128*128);
     std::generate(dataIn.begin(), dataIn.end(), [](){ static int val = 0; return (float)val++; });
     hidl_vec<uint8_t> _data;
@@ -91,12 +103,18 @@ TEST_F(RenderscriptHidlTest, Simple2DCopyTest) {
 TEST_F(RenderscriptHidlTest, Simple3DCopyTest) {
     // float1
     Element element = context->elementCreate(DataType::FLOAT_32, DataKind::USER, false, 1);
+    ASSERT_NE(Element(0), element);
+
     // 32 x 32 x 32 x float1
     Type type = context->typeCreate(element, 32, 32, 32, false, false, YuvFormat::YUV_NONE);
+    ASSERT_NE(Type(0), type);
+
     // 32 x 32 x 32 x float1
     Allocation allocation = context->allocationCreateTyped(type, AllocationMipmapControl::NONE,
                                                            (int)AllocationUsageType::SCRIPT,
                                                            (Ptr)nullptr);
+    ASSERT_NE(Allocation(0), allocation);
+
     std::vector<float> dataIn(32*32*32), dataOut(32*32*32);
     std::generate(dataIn.begin(), dataIn.end(), [](){ static int val = 0; return (float)val++; });
     hidl_vec<uint8_t> _data;
@@ -122,8 +140,12 @@ TEST_F(RenderscriptHidlTest, Simple3DCopyTest) {
 TEST_F(RenderscriptHidlTest, SimpleBitmapTest) {
     // float1
     Element element = context->elementCreate(DataType::FLOAT_32, DataKind::USER, false, 1);
+    ASSERT_NE(Element(0), element);
+
     // 512 x 512 x float1
     Type type = context->typeCreate(element, 512, 512, 0, false, false, YuvFormat::YUV_NONE);
+    ASSERT_NE(Type(0), type);
+
     std::vector<float> dataIn(512*512), dataOut1(512*512), dataOut2(512*512);
     std::generate(dataIn.begin(), dataIn.end(), [](){ static int val = 0; return (float)val++; });
     hidl_vec<uint8_t> _data;
@@ -133,7 +155,7 @@ TEST_F(RenderscriptHidlTest, SimpleBitmapTest) {
                                                                 AllocationMipmapControl::NONE,
                                                                 _data,
                                                                 (int)AllocationUsageType::SCRIPT);
-    EXPECT_NE(Allocation(0), allocation);
+    ASSERT_NE(Allocation(0), allocation);
 
     context->allocationCopyToBitmap(allocation, (Ptr)dataOut1.data(),
                                     (Size)dataOut1.size()*sizeof(float));
@@ -158,10 +180,16 @@ TEST_F(RenderscriptHidlTest, SimpleBitmapTest) {
 TEST_F(RenderscriptHidlTest, AllocationCopy2DRangeTest) {
     // float1
     Element element = context->elementCreate(DataType::FLOAT_32, DataKind::USER, false, 1);
+    ASSERT_NE(Element(0), element);
+
     // 512 x 512 x float1
     Type typeSrc = context->typeCreate(element, 512, 512, 0, false, false, YuvFormat::YUV_NONE);
+    ASSERT_NE(Type(0), typeSrc);
+
     // 256 x 256 x float1
     Type typeDst = context->typeCreate(element, 256, 256, 0, false, false, YuvFormat::YUV_NONE);
+    ASSERT_NE(Type(0), typeDst);
+
     std::vector<float> dataIn(512*512), dataOut(256*256), expected(256*256);
     std::generate(dataIn.begin(), dataIn.end(), [](){ static int val = 0; return (float)val++; });
     hidl_vec<uint8_t> _data;
@@ -170,10 +198,14 @@ TEST_F(RenderscriptHidlTest, AllocationCopy2DRangeTest) {
     Allocation allocSrc = context->allocationCreateFromBitmap(typeSrc,
                                                               AllocationMipmapControl::NONE, _data,
                                                               (int)AllocationUsageType::SCRIPT);
+    ASSERT_NE(Allocation(0), allocSrc);
+
     // 256 x 256 x float1
     Allocation allocDst = context->allocationCreateTyped(typeDst, AllocationMipmapControl::NONE,
                                                          (int)AllocationUsageType::SCRIPT,
                                                          (Ptr)nullptr);
+    ASSERT_NE(Allocation(0), allocDst);
+
     context->allocationCopy2DRange(allocDst, 0, 0, 0, AllocationCubemapFace::POSITIVE_X, 256, 256,
                                    allocSrc, 128, 128, 0, AllocationCubemapFace::POSITIVE_X);
     context->allocationRead(allocDst, (Ptr)dataOut.data(), (Size)dataOut.size()*sizeof(float));
@@ -200,10 +232,16 @@ TEST_F(RenderscriptHidlTest, AllocationCopy2DRangeTest) {
 TEST_F(RenderscriptHidlTest, AllocationCopy3DRangeTest) {
     // float1
     Element element = context->elementCreate(DataType::FLOAT_32, DataKind::USER, false, 1);
+    ASSERT_NE(Element(0), element);
+
     // 128 x 128 x 128 x float1
     Type typeSrc = context->typeCreate(element, 128, 128, 128, false, false, YuvFormat::YUV_NONE);
+    ASSERT_NE(Type(0), typeSrc);
+
     // 64 x 64 x 64 x float1
     Type typeDst = context->typeCreate(element, 64, 64, 64, false, false, YuvFormat::YUV_NONE);
+    ASSERT_NE(Type(0), typeDst);
+
     std::vector<float> dataIn(128*128*128), dataOut(64*64*64), expected(64*64*64);
     std::generate(dataIn.begin(), dataIn.end(), [](){ static int val = 0; return (float)val++; });
     hidl_vec<uint8_t> _data;
@@ -212,10 +250,14 @@ TEST_F(RenderscriptHidlTest, AllocationCopy3DRangeTest) {
     Allocation allocSrc = context->allocationCreateTyped(typeSrc, AllocationMipmapControl::NONE,
                                                          (int)AllocationUsageType::SCRIPT,
                                                          (Ptr)nullptr);
+    ASSERT_NE(Allocation(0), allocSrc);
+
     // 256 x 256 x float1
     Allocation allocDst = context->allocationCreateTyped(typeDst, AllocationMipmapControl::NONE,
                                                          (int)AllocationUsageType::SCRIPT,
                                                          (Ptr)nullptr);
+    ASSERT_NE(Allocation(0), allocDst);
+
     context->allocation3DWrite(allocSrc, 0, 0, 0, 0, 128, 128, 128, _data, 128*sizeof(float));
     context->allocationCopy3DRange(allocDst, 0, 0, 0, 0, 64, 64, 64, allocSrc, 32, 32, 32, 0);
     context->allocationRead(allocDst, (Ptr)dataOut.data(), (Size)dataOut.size()*sizeof(float));
@@ -243,8 +285,12 @@ TEST_F(RenderscriptHidlTest, AllocationCopy3DRangeTest) {
 TEST_F(RenderscriptHidlTest, SimpleAdapterTest) {
     // float1
     Element element = context->elementCreate(DataType::FLOAT_32, DataKind::USER, false, 1);
+    ASSERT_NE(Element(0), element);
+
     // 512 x 512 x float1
     Type type = context->typeCreate(element, 512, 512, 0, false, false, YuvFormat::YUV_NONE);
+    ASSERT_NE(Type(0), type);
+
     std::vector<float> dataIn(512*512), dataOut(256*256), expected;
     std::generate(dataIn.begin(), dataIn.end(), [](){ static int val = 0; return (float)val++; });
     hidl_vec<uint8_t> _data;
@@ -254,11 +300,15 @@ TEST_F(RenderscriptHidlTest, SimpleAdapterTest) {
                                                                 AllocationMipmapControl::NONE,
                                                                 _data,
                                                                 (int)AllocationUsageType::SCRIPT);
+    ASSERT_NE(Allocation(0), allocation);
+
     // 256 x 256 x float1
     Type subType = context->typeCreate(element, 256, 256, 0, false, false, YuvFormat::YUV_NONE);
+    ASSERT_NE(Type(0), subType);
+
     // 256 x 256 x float1
     AllocationAdapter allocationAdapter = context->allocationAdapterCreate(subType, allocation);
-    EXPECT_NE(AllocationAdapter(0), allocationAdapter);
+    ASSERT_NE(AllocationAdapter(0), allocationAdapter);
 
     std::vector<uint32_t> offsets(9, 0);
     offsets[0] = 128;
@@ -292,8 +342,12 @@ TEST_F(RenderscriptHidlTest, SimpleAdapterTest) {
 TEST_F(RenderscriptHidlTest, SimpleMipmapTest) {
     // uint8_t
     Element element = context->elementCreate(DataType::UNSIGNED_8, DataKind::USER, false, 1);
+    ASSERT_NE(Element(0), element);
+
     // 64 x 64 x uint8_t
     Type type = context->typeCreate(element, 64, 64, 0, true, false, YuvFormat::YUV_NONE);
+    ASSERT_NE(Type(0), type);
+
     std::vector<uint8_t> dataIn(64*64), dataOut(32*32), expected(32*32);
     std::generate(dataIn.begin(), dataIn.end(),
                   [](){ static int val = 0; return (uint8_t)(0xFF & val++); });
@@ -303,6 +357,8 @@ TEST_F(RenderscriptHidlTest, SimpleMipmapTest) {
     Allocation allocation = context->allocationCreateTyped(type, AllocationMipmapControl::FULL,
                                                          (int)AllocationUsageType::SCRIPT,
                                                          (Ptr)nullptr);
+    ASSERT_NE(Allocation(0), allocation);
+
     context->allocation2DWrite(allocation, 0, 0, 0, AllocationCubemapFace::POSITIVE_X, 64, 64,
                                _data, 64*sizeof(uint8_t));
     context->allocationGenerateMipmaps(allocation);
@@ -333,8 +389,12 @@ TEST_F(RenderscriptHidlTest, SimpleMipmapTest) {
 TEST_F(RenderscriptHidlTest, SimpleCubemapTest) {
     // float1
     Element element = context->elementCreate(DataType::FLOAT_32, DataKind::USER, false, 1);
+    ASSERT_NE(Element(0), element);
+
     // 128 x 128 x float1
     Type type = context->typeCreate(element, 128, 128, 0, false, true, YuvFormat::YUV_NONE);
+    ASSERT_NE(Type(0), type);
+
     std::vector<float> dataIn(128*128*6), dataOut(128*128), expected(128*128);
     std::generate(dataIn.begin(), dataIn.end(), [](){ static int val = 0; return (float)val++; });
     hidl_vec<uint8_t> _data;
@@ -342,7 +402,7 @@ TEST_F(RenderscriptHidlTest, SimpleCubemapTest) {
     // 128 x 128 x float1 x 6
     Allocation allocation = context->allocationCubeCreateFromBitmap(
         type, AllocationMipmapControl::NONE, _data, (int)AllocationUsageType::SCRIPT);
-    EXPECT_NE(Allocation(0), allocation);
+    ASSERT_NE(Allocation(0), allocation);
 
     context->allocation2DRead(allocation, 0, 0, 0, AllocationCubemapFace::NEGATIVE_Z, 128,
                               128, (Ptr)dataOut.data(), (Size)dataOut.size()*sizeof(float),
@@ -367,13 +427,16 @@ TEST_F(RenderscriptHidlTest, SimpleCubemapTest) {
  */
 TEST_F(RenderscriptHidlTest, ComplexElementTest) {
     Element element1 = context->elementCreate(DataType::UNSIGNED_8, DataKind::USER, false, 1);
+    ASSERT_NE(Element(0), element1);
+
     Element element2 = context->elementCreate(DataType::UNSIGNED_32, DataKind::USER, false, 1);
+    ASSERT_NE(Element(0), element2);
 
     hidl_vec<Element> eins = {element1, element2};
     hidl_vec<hidl_string> names = {hidl_string("first"), hidl_string("second")};
     hidl_vec<Size> arraySizesPtr = {1, 1};
     Element element3 = context->elementComplexCreate(eins, names, arraySizesPtr);
-    EXPECT_NE(Element(0), element3);
+    ASSERT_NE(Element(0), element3);
 
     std::vector<Element> ids;
     std::vector<std::string> namesOut;
@@ -395,10 +458,14 @@ TEST_F(RenderscriptHidlTest, ComplexElementTest) {
 
     // 1 x (uint8_t, uint32_t)
     Type type = context->typeCreate(element3, 1, 0, 0, false, false, YuvFormat::YUV_NONE);
+    ASSERT_NE(Type(0), type);
+
     // 1 x (uint8_t, uint32_t)
     Allocation allocation = context->allocationCreateTyped(type, AllocationMipmapControl::NONE,
                                                            (int)AllocationUsageType::SCRIPT,
                                                            (Ptr)nullptr);
+    ASSERT_NE(Allocation(0), allocation);
+
     std::vector<uint32_t> dataIn(1), dataOut(1);
     std::generate(dataIn.begin(), dataIn.end(), [](){ static uint32_t val = 0; return val++; });
     hidl_vec<uint8_t> _data;
