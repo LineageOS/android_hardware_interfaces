@@ -25,6 +25,8 @@
 TEST_F(RenderscriptHidlTest, IntrinsicTest) {
     // uint8
     Element element = context->elementCreate(DataType::UNSIGNED_8, DataKind::USER, false, 1);
+    EXPECT_NE(Element(0), element);
+
     Script script = context->scriptIntrinsicCreate(ScriptIntrinsicID::ID_BLUR, element);
     EXPECT_NE(Script(0), script);
 
@@ -43,7 +45,7 @@ TEST_F(RenderscriptHidlTest, ScriptVarTest) {
     hidl_vec<uint8_t> bitcode;
     bitcode.setToExternal((uint8_t*)bitCode, bitCodeLength);
     Script script = context->scriptCCreate("struct_test", "/data/local/tmp/", bitcode);
-    EXPECT_NE(Script(0), script);
+    ASSERT_NE(Script(0), script);
 
     // arg tests
     context->scriptSetVarI(script, mExportVarIdx_var_int, 100);
@@ -75,12 +77,18 @@ TEST_F(RenderscriptHidlTest, ScriptVarTest) {
 
     // float1
     Element element = context->elementCreate(DataType::FLOAT_32, DataKind::USER, false, 1);
+    ASSERT_NE(Element(0), element);
+
     // 128 x float1
     Type type = context->typeCreate(element, 128, 0, 0, false, false, YuvFormat::YUV_NONE);
+    ASSERT_NE(Type(0), type);
+
     // 128 x float1
     Allocation allocationIn = context->allocationCreateTyped(type, AllocationMipmapControl::NONE,
                                                              (int)AllocationUsageType::SCRIPT,
                                                              (Ptr)nullptr);
+    ASSERT_NE(Allocation(0), allocationIn);
+
     Allocation allocationOut = Allocation(0);
     context->scriptSetVarObj(script, mExportVarIdx_var_allocation, (ObjectBase)allocationIn);
     context->scriptGetVarV(script, mExportVarIdx_var_allocation, sizeof(ObjectBase),
@@ -107,6 +115,8 @@ TEST_F(RenderscriptHidlTest, ScriptVarTest) {
     _dimsVE.setToExternal((uint32_t*)dimsVE.data(), dimsVE.size());
     // intx2 to represent point2 which is {int, int}
     Element elementVE = context->elementCreate(DataType::SIGNED_32, DataKind::USER, false, 2);
+    ASSERT_NE(Element(0), elementVE);
+
     context->scriptSetVarVE(script, mExportVarIdx_var_point2, _dataVE, elementVE, _dimsVE);
     context->scriptGetVarV(script, mExportVarIdx_var_point2, 2*sizeof(int),
                            [&](const hidl_vec<uint8_t>& _data){
@@ -126,7 +136,7 @@ TEST_F(RenderscriptHidlTest, ScriptInvokeTest) {
     hidl_vec<uint8_t> bitcode;
     bitcode.setToExternal((uint8_t*)bitCode, bitCodeLength);
     Script script = context->scriptCCreate("struct_test", "/data/local/tmp/", bitcode);
-    EXPECT_NE(Script(0), script);
+    ASSERT_NE(Script(0), script);
 
     // invoke test
     int resultI = 0;
@@ -185,12 +195,16 @@ TEST_F(RenderscriptHidlTest, ScriptForEachTest) {
     hidl_vec<uint8_t> bitcode;
     bitcode.setToExternal((uint8_t*)bitCode, bitCodeLength);
     Script script = context->scriptCCreate("struct_test", "/data/local/tmp/", bitcode);
-    EXPECT_NE(Script(0), script);
+    ASSERT_NE(Script(0), script);
 
     // uint8_t
     Element element = context->elementCreate(DataType::UNSIGNED_8, DataKind::USER, false, 1);
+    ASSERT_NE(Element(0), element);
+
     // 64 x uint8_t
     Type type = context->typeCreate(element, 64, 0, 0, false, false, YuvFormat::YUV_NONE);
+    ASSERT_NE(Type(0), type);
+
     std::vector<uint8_t> dataIn(64), dataOut(64), expected(64);
     std::generate(dataIn.begin(), dataIn.end(), [](){ static uint8_t val = 0; return val++; });
     std::generate(expected.begin(), expected.end(), [](){ static uint8_t val = 1; return val++; });
@@ -200,9 +214,13 @@ TEST_F(RenderscriptHidlTest, ScriptForEachTest) {
     Allocation allocation = context->allocationCreateTyped(type, AllocationMipmapControl::NONE,
                                                            (int)AllocationUsageType::SCRIPT,
                                                            (Ptr)nullptr);
+    ASSERT_NE(Allocation(0), allocation);
+
     Allocation vout = context->allocationCreateTyped(type, AllocationMipmapControl::NONE,
                                                      (int)AllocationUsageType::SCRIPT,
                                                      (Ptr)nullptr);
+    ASSERT_NE(Allocation(0), vout);
+
     context->allocation1DWrite(allocation, 0, 0, (Size)dataIn.size(), _data);
     hidl_vec<Allocation> vains;
     vains.setToExternal(&allocation, 1);
@@ -223,13 +241,19 @@ TEST_F(RenderscriptHidlTest, ScriptReduceTest) {
     hidl_vec<uint8_t> bitcode;
     bitcode.setToExternal((uint8_t*)bitCode, bitCodeLength);
     Script script = context->scriptCCreate("struct_test", "/data/local/tmp/", bitcode);
-    EXPECT_NE(Script(0), script);
+    ASSERT_NE(Script(0), script);
 
     // uint8_t
     Element element = context->elementCreate(DataType::SIGNED_32, DataKind::USER, false, 1);
+    ASSERT_NE(Element(0), element);
+
     // 64 x uint8_t
     Type type = context->typeCreate(element, 64, 0, 0, false, false, YuvFormat::YUV_NONE);
+    ASSERT_NE(Type(0), type);
+
     Type type2 = context->typeCreate(element, 1, 0, 0, false, false, YuvFormat::YUV_NONE);
+    ASSERT_NE(Type(0), type2);
+
     std::vector<int> dataIn(64), dataOut(1);
     std::generate(dataIn.begin(), dataIn.end(), [](){ static int val = 0; return val++; });
     hidl_vec<uint8_t> _data;
@@ -238,9 +262,13 @@ TEST_F(RenderscriptHidlTest, ScriptReduceTest) {
     Allocation allocation = context->allocationCreateTyped(type, AllocationMipmapControl::NONE,
                                                            (int)AllocationUsageType::SCRIPT,
                                                            (Ptr)nullptr);
+    ASSERT_NE(Allocation(0), allocation);
+
     Allocation vaout = context->allocationCreateTyped(type2, AllocationMipmapControl::NONE,
                                                       (int)AllocationUsageType::SCRIPT,
                                                       (Ptr)nullptr);
+    ASSERT_NE(Allocation(0), vaout);
+
     context->allocation1DWrite(allocation, 0, 0, (Size)dataIn.size(), _data);
     hidl_vec<Allocation> vains;
     vains.setToExternal(&allocation, 1);
@@ -257,22 +285,29 @@ TEST_F(RenderscriptHidlTest, ScriptReduceTest) {
  * RenderScript script, represented in the bitcode.
  *
  * Calls: scriptCCreate, elementCreate, typeCreate, allocationCreateTyped,
- * scriptSetVarV, scriptBindAllocation, allocationRead
+ * allocation1DWrite, scriptBindAllocation, scriptSetVarV, scriptBindAllocation,
+ * allocationRead, scriptInvokeV, allocationRead
  */
 TEST_F(RenderscriptHidlTest, ScriptBindTest) {
     hidl_vec<uint8_t> bitcode;
     bitcode.setToExternal((uint8_t*)bitCode, bitCodeLength);
     Script script = context->scriptCCreate("struct_test", "/data/local/tmp/", bitcode);
-    EXPECT_NE(Script(0), script);
+    ASSERT_NE(Script(0), script);
 
     // in32
     Element element = context->elementCreate(DataType::SIGNED_32, DataKind::USER, false, 1);
+    ASSERT_NE(Element(0), element);
+
     // 64 x int32
     Type type = context->typeCreate(element, 64, 0, 0, false, false, YuvFormat::YUV_NONE);
+    ASSERT_NE(Type(0), type);
+
     // 64 x int32
     Allocation allocation = context->allocationCreateTyped(type, AllocationMipmapControl::NONE,
                                                            (int)AllocationUsageType::SCRIPT,
                                                            (Ptr)nullptr);
+    ASSERT_NE(Allocation(0), allocation);
+
     std::vector<int> dataIn(64), dataOut(64), expected(64, 5);
     hidl_vec<uint8_t> _data;
     _data.setToExternal((uint8_t*)dataIn.data(), dataIn.size()*sizeof(int));
@@ -295,7 +330,8 @@ TEST_F(RenderscriptHidlTest, ScriptBindTest) {
  *
  * Calls: elementCreate, typeCreate, allocationCreateTyped, allocation2DWrite,
  * scriptIntrinsicCreate, scriptKernelIDCreate, scriptFieldIDCreate,
- * scriptGroupCreate, scriptGroupSetOutput, scriptGroupExecute, allocation2DRead
+ * scriptGroupCreate, scriptSetVarObj, scriptGroupSetOutput, scriptGroupExecute,
+ * contextFinish, allocation2DRead
  */
 TEST_F(RenderscriptHidlTest, ScriptGroupTest) {
     std::vector<uint8_t> dataIn(256*256*1, 128), dataOut(256*256*4, 0), zeros(256*256*4, 0);
@@ -305,36 +341,49 @@ TEST_F(RenderscriptHidlTest, ScriptGroupTest) {
 
     // 256 x 256 YUV pixels
     Element element1 = context->elementCreate(DataType::UNSIGNED_8, DataKind::PIXEL_YUV, true, 1);
+    ASSERT_NE(Element(0), element1);
+
     Type type1 = context->typeCreate(element1, 256, 256, 0, false, false, YuvFormat::YUV_420_888);
+    ASSERT_NE(Type(0), type1);
+
     Allocation allocation1 = context->allocationCreateTyped(type1, AllocationMipmapControl::NONE,
                                                            (int)AllocationUsageType::SCRIPT,
                                                            (Ptr)nullptr);
+    ASSERT_NE(Allocation(0), allocation1);
+
     context->allocation2DWrite(allocation1, 0, 0, 0, AllocationCubemapFace::POSITIVE_X, 256, 256,
                                _dataIn, 0);
 
     // 256 x 256 RGBA pixels
     Element element2 = context->elementCreate(DataType::UNSIGNED_8, DataKind::PIXEL_RGBA, true, 4);
+    ASSERT_NE(Element(0), element2);
+
     Type type2 = context->typeCreate(element2, 256, 256, 0, false, false, YuvFormat::YUV_NONE);
+    ASSERT_NE(Type(0), type2);
+
     Allocation allocation2 = context->allocationCreateTyped(type2, AllocationMipmapControl::NONE,
                                                            (int)AllocationUsageType::SCRIPT,
                                                            (Ptr)nullptr);
+    ASSERT_NE(Allocation(0), allocation2);
+
     context->allocation2DWrite(allocation2, 0, 0, 0, AllocationCubemapFace::POSITIVE_X, 256, 256,
                                _dataOut, 0);
 
     // create scripts
     Script yuv2rgb = context->scriptIntrinsicCreate(ScriptIntrinsicID::ID_YUV_TO_RGB, element1);
-    EXPECT_NE(Script(0), yuv2rgb);
+    ASSERT_NE(Script(0), yuv2rgb);
 
     ScriptKernelID yuv2rgbKID = context->scriptKernelIDCreate(yuv2rgb, 0, 2);
-    EXPECT_NE(ScriptKernelID(0), yuv2rgbKID);
+    ASSERT_NE(ScriptKernelID(0), yuv2rgbKID);
 
     Script blur = context->scriptIntrinsicCreate(ScriptIntrinsicID::ID_BLUR, element2);
-    EXPECT_NE(Script(0), blur);
+    ASSERT_NE(Script(0), blur);
 
     ScriptKernelID blurKID = context->scriptKernelIDCreate(blur, 0, 2);
-    EXPECT_NE(ScriptKernelID(0), blurKID);
+    ASSERT_NE(ScriptKernelID(0), blurKID);
+
     ScriptFieldID blurFID = context->scriptFieldIDCreate(blur, 1);
-    EXPECT_NE(ScriptFieldID(0), blurFID);
+    ASSERT_NE(ScriptFieldID(0), blurFID);
 
     // ScriptGroup
     hidl_vec<ScriptKernelID> kernels = {yuv2rgbKID, blurKID};
@@ -343,7 +392,7 @@ TEST_F(RenderscriptHidlTest, ScriptGroupTest) {
     hidl_vec<ScriptFieldID> dstF = {blurFID};
     hidl_vec<Type> types = {type2};
     ScriptGroup scriptGroup = context->scriptGroupCreate(kernels, srcK, dstK, dstF, types);
-    EXPECT_NE(ScriptGroup(0), scriptGroup);
+    ASSERT_NE(ScriptGroup(0), scriptGroup);
 
     context->scriptSetVarObj(yuv2rgb, 0, (ObjectBase)allocation1);
     context->scriptGroupSetOutput(scriptGroup, blurKID, allocation2);
@@ -360,14 +409,16 @@ TEST_F(RenderscriptHidlTest, ScriptGroupTest) {
  * Similar to the ScriptGroup test, this test verifies the execution flow of
  * RenderScript kernels and invokables.
  *
- * Calls: scriptFieldIDCreate, closureCreate, scriptInvokeIDCreate,
- * invokeClosureCreate, closureSetGlobal, scriptGroup2Create, scriptGroupExecute
+ * Calls: scriptCCreate, elementCreate, typeCreate, allocationCreateTyped,
+ * allocation1DWrite, scriptFieldIDCreate, scriptInvokeIDCreate,
+ * invokeClosureCreate, closureCreate, closureSetGlobal, scriptGroup2Create,
+ * scriptGroupExecute, allocationRead
  */
 TEST_F(RenderscriptHidlTest, ScriptGroup2Test) {
     hidl_vec<uint8_t> bitcode;
     bitcode.setToExternal((uint8_t*)bitCode, bitCodeLength);
     Script script = context->scriptCCreate("struct_test", "/data/local/tmp/", bitcode);
-    EXPECT_NE(Script(0), script);
+    ASSERT_NE(Script(0), script);
 
     std::vector<uint8_t> dataIn(128, 128), dataOut(128, 0), expected(128, 7+1);
     hidl_vec<uint8_t> _dataIn, _dataOut;
@@ -375,19 +426,23 @@ TEST_F(RenderscriptHidlTest, ScriptGroup2Test) {
 
     // 256 x 256 YUV pixels
     Element element = context->elementCreate(DataType::UNSIGNED_8, DataKind::USER, false, 1);
+    ASSERT_NE(Element(0), element);
+
     Type type = context->typeCreate(element, 128, 0, 0, false, false, YuvFormat::YUV_NONE);
+    ASSERT_NE(Type(0), type);
+
     Allocation allocation = context->allocationCreateTyped(type, AllocationMipmapControl::NONE,
                                                            (int)AllocationUsageType::SCRIPT,
                                                            (Ptr)nullptr);
+    ASSERT_NE(Allocation(0), allocation);
+
     context->allocation1DWrite(allocation, 0, 0, (Size)_dataIn.size(), _dataIn);
 
     ScriptFieldID fieldID = context->scriptFieldIDCreate(script, mExportVarIdx_var_allocation);
-    EXPECT_NE(ScriptFieldID(0), fieldID);
     ASSERT_NE(ScriptFieldID(0), fieldID);
 
     // invoke
     ScriptInvokeID invokeID = context->scriptInvokeIDCreate(script, mExportFuncIdx_setAllocation);
-    EXPECT_NE(ScriptInvokeID(0), invokeID);
     ASSERT_NE(ScriptInvokeID(0), invokeID);
 
     int dim = 128;
@@ -397,12 +452,10 @@ TEST_F(RenderscriptHidlTest, ScriptGroup2Test) {
     hidl_vec<int64_t> values1 = {int64_t(0)};
     hidl_vec<int32_t> sizes1 = {int32_t(0)};
     Closure closure1 = context->invokeClosureCreate(invokeID, params, fieldIDS1, values1, sizes1);
-    EXPECT_NE(Closure(0), closure1);
     ASSERT_NE(Closure(0), closure1);
 
     // kernel
     ScriptKernelID kernelID = context->scriptKernelIDCreate(script, mExportForEachIdx_increment, 3);
-    EXPECT_NE(ScriptKernelID(0), kernelID);
     ASSERT_NE(ScriptKernelID(0), kernelID);
 
     hidl_vec<ScriptFieldID> fieldIDS2 = {ScriptFieldID(0)};
@@ -412,7 +465,6 @@ TEST_F(RenderscriptHidlTest, ScriptGroup2Test) {
     hidl_vec<ScriptFieldID> depFieldIDS2 = {fieldID};
     Closure closure2 = context->closureCreate(kernelID, allocation /* returnValue */, fieldIDS2,
                                               values2, sizes2, depClosures2, depFieldIDS2);
-    EXPECT_NE(Closure(0), closure2);
     ASSERT_NE(Closure(0), closure2);
 
     // set argument
@@ -424,7 +476,6 @@ TEST_F(RenderscriptHidlTest, ScriptGroup2Test) {
     hidl_string cacheDir = "/data/local/tmp";
     hidl_vec<Closure> closures = {closure1, closure2};
     ScriptGroup2 scriptGroup2 = context->scriptGroup2Create(name, cacheDir, closures);
-    EXPECT_NE(ScriptGroup2(0), scriptGroup2);
     ASSERT_NE(ScriptGroup2(0), scriptGroup2);
 
     context->scriptGroupExecute(scriptGroup2);
@@ -436,14 +487,15 @@ TEST_F(RenderscriptHidlTest, ScriptGroup2Test) {
  * Similar to the ScriptGroup test, this test verifies a single kernel can be
  * called by ScriptGroup with an unbound allocation specified before launch
  *
- * Calls: scriptFieldIDCreate, closureCreate, scriptInvokeIDCreate,
- * invokeClosureCreate, closureSetArg, scriptGroup2Create, scriptGroupExecute
+ * Calls: scriptCCreate, elementCreate, typeCreate, allocationCreateTyped,
+ * allocation1DWrite, scriptKernelIDCreate, closureCreate, closureSetArg,
+ * scriptGroup2Create, scriptGroupExecute, allocationRead
  */
 TEST_F(RenderscriptHidlTest, ScriptGroup2KernelTest) {
     hidl_vec<uint8_t> bitcode;
     bitcode.setToExternal((uint8_t*)bitCode, bitCodeLength);
     Script script = context->scriptCCreate("struct_test", "/data/local/tmp/", bitcode);
-    EXPECT_NE(Script(0), script);
+    ASSERT_NE(Script(0), script);
 
     std::vector<uint8_t> dataIn(128, 128), dataOut(128, 0), expected(128, 128 + 1);
     hidl_vec<uint8_t> _dataIn, _dataOut;
@@ -451,15 +503,20 @@ TEST_F(RenderscriptHidlTest, ScriptGroup2KernelTest) {
 
     // 256 x 256 YUV pixels
     Element element = context->elementCreate(DataType::UNSIGNED_8, DataKind::USER, false, 1);
+    ASSERT_NE(Element(0), element);
+
     Type type = context->typeCreate(element, 128, 0, 0, false, false, YuvFormat::YUV_NONE);
+    ASSERT_NE(Type(0), type);
+
     Allocation allocation = context->allocationCreateTyped(type, AllocationMipmapControl::NONE,
                                                            (int)AllocationUsageType::SCRIPT,
                                                            (Ptr)nullptr);
+    ASSERT_NE(Allocation(0), allocation);
+
     context->allocation1DWrite(allocation, 0, 0, (Size)_dataIn.size(), _dataIn);
 
     // kernel
     ScriptKernelID kernelID = context->scriptKernelIDCreate(script, mExportForEachIdx_increment, 3);
-    EXPECT_NE(ScriptKernelID(0), kernelID);
     ASSERT_NE(ScriptKernelID(0), kernelID);
 
     hidl_vec<ScriptFieldID> fieldIDS = {ScriptFieldID(0)};
@@ -469,7 +526,6 @@ TEST_F(RenderscriptHidlTest, ScriptGroup2KernelTest) {
     hidl_vec<ScriptFieldID> depFieldIDS = {ScriptFieldID(0)};
     Closure closure = context->closureCreate(kernelID, allocation /* returnValue */, fieldIDS,
                                               values, sizes, depClosures, depFieldIDS);
-    EXPECT_NE(Closure(0), closure);
     ASSERT_NE(Closure(0), closure);
 
     // set argument
@@ -480,7 +536,6 @@ TEST_F(RenderscriptHidlTest, ScriptGroup2KernelTest) {
     hidl_string cacheDir = "/data/local/tmp";
     hidl_vec<Closure> closures = {closure};
     ScriptGroup2 scriptGroup2 = context->scriptGroup2Create(name, cacheDir, closures);
-    EXPECT_NE(ScriptGroup2(0), scriptGroup2);
     ASSERT_NE(ScriptGroup2(0), scriptGroup2);
 
     context->scriptGroupExecute(scriptGroup2);
