@@ -22,6 +22,7 @@
 #include <android/hardware/usb/1.0/types.h>
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <log/log.h>
 #include <stdlib.h>
 #include <chrono>
 #include <condition_variable>

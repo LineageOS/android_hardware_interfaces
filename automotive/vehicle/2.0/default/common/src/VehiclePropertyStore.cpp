@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #define LOG_TAG "VehiclePropertyStore"
-#include <android/log.h>
+#include <log/log.h>
 
 #include <common/include/vhal_v2_0/VehicleUtils.h>
 #include "VehiclePropertyStore.h"

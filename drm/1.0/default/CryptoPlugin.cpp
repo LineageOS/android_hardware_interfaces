@@ -20,8 +20,8 @@
 
 #include <android/hidl/memory/1.0/IMemory.h>
 #include <hidlmemory/mapping.h>
+#include <log/log.h>
 #include <media/stagefright/foundation/AString.h>
-#include <utils/Log.h>
 
 using android::hardware::hidl_memory;
 using android::hidl::memory::V1_0::IMemory;

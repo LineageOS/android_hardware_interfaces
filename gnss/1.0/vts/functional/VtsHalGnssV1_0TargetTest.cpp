@@ -16,7 +16,7 @@
 
 #define LOG_TAG "VtsHalGnssV1_0TargetTest"
 #include <android/hardware/gnss/1.0/IGnss.h>
-#include <android/log.h>
+#include <log/log.h>
 
 #include <VtsHalHidlTargetTestBase.h>
 

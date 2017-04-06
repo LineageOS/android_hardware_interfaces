@@ -17,9 +17,10 @@
 #define LOG_TAG "DefaultVehicleHal_v2_1"
 #include <android/log.h>
 
-#include <algorithm>
+#include <log/log.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <algorithm>
 
 #include "EmulatedVehicleHal.h"
 #include "VehicleHalProto.pb.h"

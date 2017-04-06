@@ -16,7 +16,6 @@
 
 #define LOG_TAG "drm_hal_vendor_test@1.0"
 
-#include <android-base/logging.h>
 #include <android/hardware/drm/1.0/ICryptoFactory.h>
 #include <android/hardware/drm/1.0/ICryptoPlugin.h>
 #include <android/hardware/drm/1.0/IDrmFactory.h>
@@ -25,6 +24,7 @@
 #include <android/hidl/allocator/1.0/IAllocator.h>
 #include <gtest/gtest.h>
 #include <hidlmemory/mapping.h>
+#include <log/log.h>
 #include <memory>
 #include <random>
 

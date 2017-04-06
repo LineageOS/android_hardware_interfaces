@@ -16,12 +16,13 @@
 
 #define LOG_TAG "contexthub_hidl_hal_test"
 
+#include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/contexthub/1.0/IContexthub.h>
 #include <android/hardware/contexthub/1.0/IContexthubCallback.h>
 #include <android/hardware/contexthub/1.0/types.h>
 #include <android/log.h>
-#include <VtsHalHidlTargetTestBase.h>
+#include <log/log.h>
 
 #include <cinttypes>
 #include <future>

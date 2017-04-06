@@ -18,7 +18,7 @@
 
 #include <dirent.h>
 #include <dlfcn.h>
-#include <utils/Log.h>
+#include <log/log.h>
 #include <memory>
 
 #include "shared_library.h"

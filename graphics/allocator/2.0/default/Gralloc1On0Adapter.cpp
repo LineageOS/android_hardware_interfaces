@@ -25,7 +25,7 @@
 
 #include <hardware/gralloc.h>
 
-#include <utils/Log.h>
+#include <log/log.h>
 #include <sync/sync.h>
 
 #include <inttypes.h>

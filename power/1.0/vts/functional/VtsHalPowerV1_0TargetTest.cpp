@@ -24,6 +24,7 @@
 
 #include <VtsHalHidlTargetTestBase.h>
 
+#include <fcntl.h>
 #include <algorithm>
 
 using ::android::hardware::power::V1_0::IPower;

@@ -30,6 +30,8 @@
 #include <android/hardware/gatekeeper/1.0/IGatekeeper.h>
 #include <android/hardware/gatekeeper/1.0/types.h>
 
+#include <log/log.h>
+
 #include <VtsHalHidlTargetTestBase.h>
 
 using ::android::hardware::hidl_string;
