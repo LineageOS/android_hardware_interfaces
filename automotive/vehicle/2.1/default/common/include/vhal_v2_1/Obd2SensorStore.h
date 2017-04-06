@@ -55,8 +55,7 @@ public:
     const std::vector<uint8_t>& getSensorsBitmask() const;
 
     // Given a stringValue, fill in a VehiclePropValue
-    void fillPropValue(V2_0::VehiclePropValue *propValue,
-            std::string dtc) const;
+    void fillPropValue(const std::string& dtc, V2_0::VehiclePropValue *propValue) const;
 
 private:
     class BitmaskInVector {

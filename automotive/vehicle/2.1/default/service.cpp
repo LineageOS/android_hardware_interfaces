@@ -23,9 +23,10 @@
 #include <android/hardware/automotive/vehicle/2.1/IVehicle.h>
 
 #include <vhal_v2_0/VehicleHalManager.h>
-#include <vhal_v2_0/DefaultVehicleHal.h>
+#include <vhal_v2_0/VehiclePropertyStore.h>
+#include <vhal_v2_0/EmulatedVehicleHal.h>
 
-#include <vhal_v2_1/DefaultVehicleHal.h>
+#include <vhal_v2_1/EmulatedVehicleHal.h>
 
 using namespace android;
 using namespace android::hardware;
@@ -80,10 +81,10 @@ private:
 };
 
 int main(int /* argc */, char* /* argv */ []) {
-    auto halImpl20 = std::make_unique<V2_0::impl::DefaultVehicleHal>();
-    auto halImpl21 = std::make_unique<V2_1::impl::DefaultVehicleHal>(halImpl20.get());
-
-    auto vehicleManager = std::make_unique<V2_0::VehicleHalManager>(halImpl21.get());
+    auto store = std::make_unique<V2_0::VehiclePropertyStore>();
+    auto hal = std::make_unique<V2_1::impl::EmulatedVehicleHal>(store.get());
+    auto emulator = std::make_unique<V2_0::impl::VehicleEmulator>(hal.get());
+    auto vehicleManager = std::make_unique<V2_0::VehicleHalManager>(hal.get());
 
     Vehicle_V2_1 vehicle21(vehicleManager.get());
 
