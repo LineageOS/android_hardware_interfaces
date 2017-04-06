@@ -99,7 +99,7 @@ Return<sp<IEvsCamera>> EvsEnumerator::openCamera(const hidl_string& cameraId) {
     }
 
     // Construct a camera instance for the caller
-    pActiveCamera = new EvsCamera(cameraId);
+    pActiveCamera = new EvsCamera(cameraId.c_str());
     pRecord->activeInstance = pActiveCamera;
     if (pActiveCamera == nullptr) {
         ALOGE("Failed to allocate new EvsCamera object for %s\n", cameraId.c_str());
