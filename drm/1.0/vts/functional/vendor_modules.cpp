@@ -29,44 +29,37 @@ using std::vector;
 using std::unique_ptr;
 
 namespace drm_vts {
-vector<string> VendorModules::getVendorModulePaths() {
-    if (mModuleList.size() > 0) {
-        return mModuleList;
-    }
-
-    DIR* dir = opendir(mModulesPath.c_str());
+void VendorModules::scanModules(const std::string &directory) {
+    DIR* dir = opendir(directory.c_str());
     if (dir == NULL) {
-        ALOGE("Unable to open drm VTS vendor directory %s",
-              mModulesPath.c_str());
-        return mModuleList;
-    }
-
-    struct dirent* entry;
-    while ((entry = readdir(dir))) {
-        string fullpath = mModulesPath + "/" + entry->d_name;
-        if (endsWith(fullpath, ".so")) {
-            mModuleList.push_back(fullpath);
+        ALOGE("Unable to open drm VTS vendor directory %s", directory.c_str());
+    } else {
+        struct dirent* entry;
+        while ((entry = readdir(dir))) {
+            ALOGD("checking file %s", entry->d_name);
+            string fullpath = directory + "/" + entry->d_name;
+            if (endsWith(fullpath, ".so")) {
+                mPathList.push_back(fullpath);
+            }
         }
+        closedir(dir);
     }
-
-    closedir(dir);
-    return mModuleList;
 }
 
-DrmHalVTSVendorModule* VendorModules::getVendorModule(const string& path) {
-    unique_ptr<SharedLibrary>& library = mOpenLibraries[path];
-    if (!library) {
-        library = unique_ptr<SharedLibrary>(new SharedLibrary(path));
+DrmHalVTSVendorModule* VendorModules::getModule(const string& path) {
+    if (mOpenLibraries.find(path) == mOpenLibraries.end()) {
+        auto library = std::make_unique<SharedLibrary>(path);
         if (!library) {
             ALOGE("failed to map shared library %s", path.c_str());
             return NULL;
         }
+        mOpenLibraries[path] = std::move(library);
     }
+    const unique_ptr<SharedLibrary>& library = mOpenLibraries[path];
     void* symbol = library->lookup("vendorModuleFactory");
     if (symbol == NULL) {
         ALOGE("getVendorModule failed to lookup 'vendorModuleFactory' in %s: "
-              "%s",
-              path.c_str(), library->lastError());
+              "%s", path.c_str(), library->lastError());
         return NULL;
     }
     typedef DrmHalVTSVendorModule* (*ModuleFactory)();
