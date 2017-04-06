@@ -179,10 +179,9 @@ interface IDrmPlugin {
      * certificate authority (CA) is an entity which issues digital certificates
      * for use by other parties. It is an example of a trusted third party.
      * @return status the status of the call. The status must be OK or one of
-     * the following errors: BAD_VALUE if the sessionId is invalid,
-     * ERROR_DRM_CANNOT_HANDLE if the drm scheme does not require provisioning
-     * or ERROR_DRM_INVALID_STATE if the HAL is in a state where the provision
-     * request cannot be generated.
+     * the following errors: ERROR_DRM_CANNOT_HANDLE if the drm scheme does not
+     * require provisioning or ERROR_DRM_INVALID_STATE if the HAL is in a state
+     * where the provision request cannot be generated.
      * @return request if successful the opaque certificate request blob
      * is returned
      * @return defaultUrl URL that the provisioning request should be
