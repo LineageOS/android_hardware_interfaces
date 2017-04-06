@@ -27,6 +27,7 @@
 #include <hidl/HidlSupport.h>
 #include <hidlmemory/mapping.h>
 #include <memory>
+#include <openssl/aes.h>
 #include <random>
 
 #include "VtsHalHidlTargetTestBase.h"
@@ -122,6 +123,39 @@ TEST_F(DrmHalClearkeyFactoryTest, ClearKeyPluginSupported) {
 TEST_F(DrmHalClearkeyFactoryTest, InvalidPluginNotSupported) {
     EXPECT_FALSE(drmFactory->isCryptoSchemeSupported(kInvalidUUID));
     EXPECT_FALSE(cryptoFactory->isCryptoSchemeSupported(kInvalidUUID));
+}
+
+/**
+ * Ensure the factory doesn't support an empty UUID
+ */
+TEST_F(DrmHalClearkeyFactoryTest, EmptyPluginUUIDNotSupported) {
+    hidl_array<uint8_t, 16> emptyUUID;
+    EXPECT_FALSE(drmFactory->isCryptoSchemeSupported(emptyUUID));
+    EXPECT_FALSE(cryptoFactory->isCryptoSchemeSupported(emptyUUID));
+}
+
+/**
+ * Ensure empty content type is not supported
+ */
+TEST_F(DrmHalClearkeyFactoryTest, EmptyContentTypeNotSupported) {
+    hidl_string empty;
+    EXPECT_FALSE(drmFactory->isContentTypeSupported(empty));
+}
+
+/**
+ * Ensure invalid content type is not supported
+ */
+TEST_F(DrmHalClearkeyFactoryTest, InvalidContentTypeNotSupported) {
+    hidl_string invalid("abcdabcd");
+    EXPECT_FALSE(drmFactory->isContentTypeSupported(invalid));
+}
+
+/**
+ * Ensure valid content type is supported
+ */
+TEST_F(DrmHalClearkeyFactoryTest, ValidContentTypeSupported) {
+    hidl_string cencType("cenc");
+    EXPECT_TRUE(drmFactory->isContentTypeSupported(cencType));
 }
 
 /**
@@ -418,6 +452,26 @@ TEST_F(DrmHalClearkeyPluginTest, ProvideKeyResponseEmptyResponse) {
 }
 
 /**
+ * Test that a removeKeys on an empty sessionID returns BAD_VALUE
+ */
+TEST_F(DrmHalClearkeyPluginTest, RemoveKeysEmptySessionId) {
+    SessionId sessionId;
+    Status status = drmPlugin->removeKeys(sessionId);
+    EXPECT_TRUE(status == Status::BAD_VALUE);
+}
+
+/**
+ * Remove keys is not supported for clearkey.
+ */
+TEST_F(DrmHalClearkeyPluginTest, RemoveKeysNewSession) {
+    SessionId sessionId = openSession();
+    Status status = drmPlugin->removeKeys(sessionId);
+    // Clearkey plugin doesn't support remove keys
+    EXPECT_EQ(Status::ERROR_DRM_CANNOT_HANDLE, status);
+    closeSession(sessionId);
+}
+
+/**
  * Test that the clearkey plugin doesn't support getting
  * secure stops.
  */
@@ -617,7 +671,7 @@ TEST_F(DrmHalClearkeyPluginTest, GenericEncryptNotSupported) {
     ;
     hidl_vec<uint8_t> keyId = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
     hidl_vec<uint8_t> input = {1, 2, 3, 4, 5};
-    hidl_vec<uint8_t> iv = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    hidl_vec<uint8_t> iv = std::vector<uint8_t>(AES_BLOCK_SIZE, 0);
     auto res = drmPlugin->encrypt(session, keyId, input, iv,
                                   [&](Status status, const hidl_vec<uint8_t>&) {
                                       EXPECT_EQ(Status::ERROR_DRM_CANNOT_HANDLE,
@@ -629,10 +683,9 @@ TEST_F(DrmHalClearkeyPluginTest, GenericEncryptNotSupported) {
 
 TEST_F(DrmHalClearkeyPluginTest, GenericDecryptNotSupported) {
     SessionId session = openSession();
-    ;
     hidl_vec<uint8_t> keyId = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
     hidl_vec<uint8_t> input = {1, 2, 3, 4, 5};
-    hidl_vec<uint8_t> iv = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    hidl_vec<uint8_t> iv = std::vector<uint8_t>(AES_BLOCK_SIZE, 0);
     auto res = drmPlugin->decrypt(session, keyId, input, iv,
                                   [&](Status status, const hidl_vec<uint8_t>&) {
                                       EXPECT_EQ(Status::ERROR_DRM_CANNOT_HANDLE,
@@ -763,6 +816,17 @@ TEST_F(DrmHalClearkeyPluginTest, SetMediaDrmSessionClosedSession) {
 }
 
 /**
+ * setMediaDrmSession with an empty session id: BAD_VALUE.  An
+ * empty session clears the previously set session and should
+ * return OK.
+ */
+TEST_F(DrmHalClearkeyPluginTest, SetMediaDrmSessionEmptySession) {
+    SessionId sessionId;
+    Status status = cryptoPlugin->setMediaDrmSession(sessionId);
+    EXPECT_EQ(Status::OK, status);
+}
+
+/**
  * Decrypt tests
  */
 
@@ -771,9 +835,15 @@ class DrmHalClearkeyDecryptTest : public DrmHalClearkeyPluginTest {
     void loadKeys(const SessionId& sessionId);
     void fillRandom(const sp<IMemory>& memory);
     hidl_array<uint8_t, 16> toHidlArray(const vector<uint8_t>& vec) {
-        EXPECT_EQ(vec.size(), 16u);
+        EXPECT_EQ(16u, vec.size());
         return hidl_array<uint8_t, 16>(&vec[0]);
     }
+    uint32_t decrypt(Mode mode, uint8_t* iv, const hidl_vec<SubSample>& subSamples,
+            const Pattern& pattern, Status status);
+    void aes_ctr_decrypt(uint8_t* dest, uint8_t* src, uint8_t* iv,
+            const hidl_vec<SubSample>& subSamples, const vector<uint8_t>& key);
+    void aes_cbc_decrypt(uint8_t* dest, uint8_t* src, uint8_t* iv,
+            const hidl_vec<SubSample>& subSamples, const vector<uint8_t>& key);
 };
 
 /**
@@ -847,36 +917,162 @@ void DrmHalClearkeyDecryptTest::fillRandom(const sp<IMemory>& memory) {
     }
 }
 
-/**
- * Positive decrypt test.  "Decrypt" a single clear
- * segment.  Verify data matches.
- */
-TEST_F(DrmHalClearkeyDecryptTest, ClearSegmentTest) {
-    const size_t kSegmentSize = 1024;
+uint32_t DrmHalClearkeyDecryptTest::decrypt(Mode mode,
+        uint8_t* iv, const hidl_vec<SubSample>& subSamples,
+        const Pattern& pattern, Status expectedStatus) {
     const size_t kSegmentIndex = 0;
     const vector<uint8_t> keyId = {0x60, 0x06, 0x1e, 0x01, 0x7e, 0x47,
                                    0x7e, 0x87, 0x7e, 0x57, 0xd0, 0x0d,
                                    0x1e, 0xd0, 0x0d, 0x1e};
-    uint8_t iv[16] = {0};
+    const vector<uint8_t> contentKey = {0x1a, 0x8a, 0x20, 0x95, 0xe4,
+                                        0xde, 0xb2, 0xd2, 0x9e, 0xc8,
+                                        0x16, 0xac, 0x7b, 0xae, 0x20, 0x82};
+    uint8_t localIv[AES_BLOCK_SIZE];
+    memcpy(localIv, iv, AES_BLOCK_SIZE);
 
+    size_t totalSize = 0;
+    for (size_t i = 0; i < subSamples.size(); i++) {
+        totalSize += subSamples[i].numBytesOfClearData;
+        totalSize += subSamples[i].numBytesOfEncryptedData;
+    }
+
+    // The first totalSize bytes of shared memory is the encrypted
+    // input, the second totalSize bytes is the decrypted output.
     sp<IMemory> sharedMemory =
-            getDecryptMemory(kSegmentSize * 2, kSegmentIndex);
+            getDecryptMemory(totalSize * 2, kSegmentIndex);
 
-    SharedBuffer sourceBuffer = {
-            .bufferId = kSegmentIndex, .offset = 0, .size = kSegmentSize};
+    const SharedBuffer sourceBuffer = {
+        .bufferId = kSegmentIndex, .offset = 0, .size = totalSize};
     fillRandom(sharedMemory);
 
-    DestinationBuffer destBuffer = {.type = BufferType::SHARED_MEMORY,
-                                    {.bufferId = kSegmentIndex,
-                                     .offset = kSegmentSize,
-                                     .size = kSegmentSize},
-                                    .secureMemory = nullptr};
+    const DestinationBuffer destBuffer = {.type = BufferType::SHARED_MEMORY,
+                                          {.bufferId = kSegmentIndex,
+                                           .offset = totalSize,
+                                           .size = totalSize},
+                                          .secureMemory = nullptr};
+    const uint64_t offset = 0;
+    const bool kNotSecure = false;
+    uint32_t bytesWritten = 0;
+    auto res = cryptoPlugin->decrypt(kNotSecure, toHidlArray(keyId), localIv, mode,
+            pattern, subSamples, sourceBuffer, offset, destBuffer,
+            [&](Status status, uint32_t count, string detailedError) {
+                EXPECT_EQ(expectedStatus, status) << "Unexpected decrypt status " <<
+                detailedError;
+                bytesWritten = count;
+            });
+    EXPECT_OK(res);
 
-    Pattern noPattern = {0, 0};
-    vector<SubSample> subSamples = {{.numBytesOfClearData = kSegmentSize,
-                                     .numBytesOfEncryptedData = 0}};
-    uint64_t offset = 0;
+    if (bytesWritten != totalSize) {
+        return bytesWritten;
+    }
+    uint8_t* base = static_cast<uint8_t*>(
+            static_cast<void*>(sharedMemory->getPointer()));
 
+    // generate reference vector
+    vector<uint8_t> reference(totalSize);
+
+    memcpy(localIv, iv, AES_BLOCK_SIZE);
+    switch (mode) {
+    case Mode::UNENCRYPTED:
+        memcpy(&reference[0], base, totalSize);
+        break;
+    case Mode::AES_CTR:
+        aes_ctr_decrypt(&reference[0], base, localIv, subSamples, contentKey);
+        break;
+    case Mode::AES_CBC:
+        aes_cbc_decrypt(&reference[0], base, localIv, subSamples, contentKey);
+        break;
+    case Mode::AES_CBC_CTS:
+        EXPECT_TRUE(false) << "AES_CBC_CTS mode not supported";
+        break;
+    }
+
+    // compare reference to decrypted data which is at base + total size
+    EXPECT_EQ(0, memcmp(static_cast<void *>(&reference[0]),
+                        static_cast<void*>(base + totalSize), totalSize))
+            << "decrypt data mismatch";
+    return totalSize;
+}
+
+/**
+ * Decrypt a list of clear+encrypted subsamples using the specified key
+ * in AES-CTR mode
+ */
+void DrmHalClearkeyDecryptTest::aes_ctr_decrypt(uint8_t* dest, uint8_t* src,
+        uint8_t* iv, const hidl_vec<SubSample>& subSamples,
+        const vector<uint8_t>& key) {
+    AES_KEY decryptionKey;
+    AES_set_encrypt_key(&key[0], 128, &decryptionKey);
+
+    size_t offset = 0;
+    unsigned int blockOffset = 0;
+    uint8_t previousEncryptedCounter[AES_BLOCK_SIZE];
+    memset(previousEncryptedCounter, 0, AES_BLOCK_SIZE);
+
+    for (size_t i = 0; i < subSamples.size(); i++) {
+        const SubSample& subSample = subSamples[i];
+
+        if (subSample.numBytesOfClearData > 0) {
+            memcpy(dest + offset, src + offset, subSample.numBytesOfClearData);
+            offset += subSample.numBytesOfClearData;
+        }
+
+        if (subSample.numBytesOfEncryptedData > 0) {
+            AES_ctr128_encrypt(src + offset, dest + offset,
+                    subSample.numBytesOfEncryptedData, &decryptionKey,
+                    iv, previousEncryptedCounter, &blockOffset);
+            offset += subSample.numBytesOfEncryptedData;
+        }
+    }
+}
+
+/**
+ * Decrypt a list of clear+encrypted subsamples using the specified key
+ * in AES-CBC mode
+ */
+void DrmHalClearkeyDecryptTest::aes_cbc_decrypt(uint8_t* dest, uint8_t* src,
+        uint8_t* iv, const hidl_vec<SubSample>& subSamples,
+        const vector<uint8_t>& key) {
+    AES_KEY decryptionKey;
+    AES_set_encrypt_key(&key[0], 128, &decryptionKey);
+
+    size_t offset = 0;
+    size_t num = 0;
+    size_t ecount_buf = 0;
+    for (size_t i = 0; i < subSamples.size(); i++) {
+        memcpy(dest + offset, src + offset, subSamples[i].numBytesOfClearData);
+        offset += subSamples[i].numBytesOfClearData;
+
+        AES_cbc_encrypt(src + offset, dest + offset, subSamples[i].numBytesOfEncryptedData,
+                &decryptionKey, iv, 0 /* decrypt */);
+        offset += subSamples[i].numBytesOfEncryptedData;
+    }
+}
+
+/**
+ * Test query key status
+ */
+TEST_F(DrmHalClearkeyDecryptTest, TestQueryKeyStatus) {
+    auto sessionId = openSession();
+    auto res = drmPlugin->queryKeyStatus(sessionId,
+            [&](Status status, KeyedVector /* info */) {
+                // clearkey doesn't support this method
+                EXPECT_EQ(Status::ERROR_DRM_CANNOT_HANDLE, status);
+            });
+    EXPECT_OK(res);
+}
+
+
+/**
+ * Positive decrypt test.  "Decrypt" a single clear segment
+ */
+TEST_F(DrmHalClearkeyDecryptTest, ClearSegmentTest) {
+    vector<uint8_t> iv(AES_BLOCK_SIZE, 0);
+    const Pattern noPattern = {0, 0};
+    const uint32_t kByteCount = 256;
+    const vector<SubSample> subSamples = {
+        {.numBytesOfClearData = kByteCount,
+         .numBytesOfEncryptedData = 0}};
     auto sessionId = openSession();
     loadKeys(sessionId);
 
@@ -884,21 +1080,57 @@ TEST_F(DrmHalClearkeyDecryptTest, ClearSegmentTest) {
     EXPECT_EQ(Status::OK, status);
 
     const bool kNotSecure = false;
-    auto res = cryptoPlugin->decrypt(
-            kNotSecure, toHidlArray(keyId), iv, Mode::UNENCRYPTED, noPattern,
-            subSamples, sourceBuffer, offset, destBuffer,
-            [&](Status status, uint32_t bytesWritten, string detailedError) {
-                EXPECT_EQ(Status::OK, status) << "Failure in decryption:"
-                                              << detailedError;
-                EXPECT_EQ(bytesWritten, kSegmentSize);
-            });
-    EXPECT_OK(res);
+    uint32_t byteCount = decrypt(Mode::UNENCRYPTED, &iv[0], subSamples,
+            noPattern, Status::OK);
+    EXPECT_EQ(kByteCount, byteCount);
 
-    uint8_t* base = static_cast<uint8_t*>(
-            static_cast<void*>(sharedMemory->getPointer()));
+    closeSession(sessionId);
+}
 
-    EXPECT_EQ(0, memcmp(static_cast<void*>(base),
-                        static_cast<void*>(base + kSegmentSize), kSegmentSize))
-            << "decrypt data mismatch";
+/**
+ * Positive decrypt test.  Decrypt a single segment using AES_CTR.
+ * Verify data matches.
+ */
+TEST_F(DrmHalClearkeyDecryptTest, EncryptedAesCtrSegmentTest) {
+    vector<uint8_t> iv(AES_BLOCK_SIZE, 0);
+    const Pattern noPattern = {0, 0};
+    const uint32_t kClearBytes = 512;
+    const uint32_t kEncryptedBytes = 512;
+    const vector<SubSample> subSamples = {
+        {.numBytesOfClearData = kClearBytes,
+         .numBytesOfEncryptedData = kEncryptedBytes
+        }};
+    auto sessionId = openSession();
+    loadKeys(sessionId);
+
+    Status status = cryptoPlugin->setMediaDrmSession(sessionId);
+    EXPECT_EQ(Status::OK, status);
+
+    const bool kNotSecure = false;
+    uint32_t byteCount = decrypt(Mode::AES_CTR, &iv[0], subSamples,
+            noPattern, Status::OK);
+    EXPECT_EQ(kClearBytes + kEncryptedBytes, byteCount);
+
+    closeSession(sessionId);
+}
+/**
+ * Negative decrypt test. Decrypt without loading keys.
+ */
+TEST_F(DrmHalClearkeyDecryptTest, EncryptedAesCtrSegmentTestNoKeys) {
+    vector<uint8_t> iv(AES_BLOCK_SIZE, 0);
+    const Pattern noPattern = {0, 0};
+    const vector<SubSample> subSamples = {
+        {.numBytesOfClearData = 256,
+         .numBytesOfEncryptedData = 256}};
+    auto sessionId = openSession();
+
+    Status status = cryptoPlugin->setMediaDrmSession(sessionId);
+    EXPECT_EQ(Status::OK, status);
+
+    const bool kNotSecure = false;
+    uint32_t byteCount = decrypt(Mode::AES_CTR, &iv[0], subSamples,
+            noPattern, Status::ERROR_DRM_NO_LICENSE);
+    EXPECT_EQ(0u, byteCount);
+
     closeSession(sessionId);
 }
