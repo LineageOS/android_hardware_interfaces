@@ -16,7 +16,6 @@
 
 #define LOG_TAG "drm_hal_clearkey_test@1.0"
 
-#include <android-base/logging.h>
 #include <android/hardware/drm/1.0/ICryptoFactory.h>
 #include <android/hardware/drm/1.0/ICryptoPlugin.h>
 #include <android/hardware/drm/1.0/IDrmFactory.h>
@@ -26,6 +25,7 @@
 #include <gtest/gtest.h>
 #include <hidl/HidlSupport.h>
 #include <hidlmemory/mapping.h>
+#include <log/log.h>
 #include <memory>
 #include <openssl/aes.h>
 #include <random>

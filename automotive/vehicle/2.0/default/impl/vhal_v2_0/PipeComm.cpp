@@ -17,7 +17,7 @@
 #define LOG_TAG "PipeComm"
 
 #include <android/hardware/automotive/vehicle/2.0/IVehicle.h>
-#include <android/log.h>
+#include <log/log.h>
 #include <qemu_pipe.h>
 
 #include "PipeComm.h"

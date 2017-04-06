@@ -15,10 +15,10 @@
  */
 
 #define LOG_TAG "CamDev@1.0-impl"
-#include <utils/Log.h>
 #include <hardware/camera.h>
 #include <hardware/gralloc1.h>
 #include <hidlmemory/mapping.h>
+#include <log/log.h>
 #include <utils/Trace.h>
 
 #include "CameraDevice_1_0.h"
