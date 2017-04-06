@@ -28,41 +28,50 @@ namespace V2_1 {
 
 namespace impl {
 
+// Some handy constants to avoid conversions from enum to int.
+constexpr int OBD2_LIVE_FRAME = (int) V2_1::VehicleProperty::OBD2_LIVE_FRAME;
+constexpr int OBD2_FREEZE_FRAME = (int) V2_1::VehicleProperty::OBD2_FREEZE_FRAME;
+constexpr int OBD2_FREEZE_FRAME_INFO = (int) V2_1::VehicleProperty::OBD2_FREEZE_FRAME_INFO;
+constexpr int OBD2_FREEZE_FRAME_CLEAR = (int) V2_1::VehicleProperty::OBD2_FREEZE_FRAME_CLEAR;
+constexpr int VEHICLE_MAP_SERVICE = (int) V2_1::VehicleProperty::VEHICLE_MAP_SERVICE;
+constexpr int WHEEL_TICK = (int) V2_1::VehicleProperty::WHEEL_TICK;
+
+
 const V2_0::VehiclePropConfig kVehicleProperties[] = {
     {
-        .prop = V2_0::toInt(V2_1::VehicleProperty::WHEEL_TICK),
+        .prop = WHEEL_TICK,
         .access = V2_0::VehiclePropertyAccess::READ,
         .changeMode = V2_0::VehiclePropertyChangeMode::CONTINUOUS,
     },
 
     {
-        .prop = V2_0::toInt(V2_1::VehicleProperty::OBD2_LIVE_FRAME),
+        .prop = OBD2_LIVE_FRAME,
         .access = V2_0::VehiclePropertyAccess::READ,
         .changeMode = V2_0::VehiclePropertyChangeMode::ON_CHANGE,
         .configArray = {0,0}
     },
 
     {
-        .prop = V2_0::toInt(V2_1::VehicleProperty::OBD2_FREEZE_FRAME),
+        .prop = OBD2_FREEZE_FRAME,
         .access = V2_0::VehiclePropertyAccess::READ,
         .changeMode = V2_0::VehiclePropertyChangeMode::ON_CHANGE,
         .configArray = {0,0}
     },
 
     {
-        .prop = V2_0::toInt(V2_1::VehicleProperty::OBD2_FREEZE_FRAME_INFO),
+        .prop = OBD2_FREEZE_FRAME_INFO,
         .access = V2_0::VehiclePropertyAccess::READ,
         .changeMode = V2_0::VehiclePropertyChangeMode::ON_CHANGE
     },
 
     {
-        .prop = V2_0::toInt(V2_1::VehicleProperty::OBD2_FREEZE_FRAME_CLEAR),
+        .prop = OBD2_FREEZE_FRAME_CLEAR,
         .access = V2_0::VehiclePropertyAccess::WRITE,
         .changeMode = V2_0::VehiclePropertyChangeMode::ON_CHANGE
     },
 
     {
-        .prop = V2_0::toInt(VehicleProperty::VEHICLE_MAP_SERVICE),
+        .prop = VEHICLE_MAP_SERVICE,
         .access = V2_0::VehiclePropertyAccess::READ_WRITE,
         .changeMode = V2_0::VehiclePropertyChangeMode::ON_CHANGE
     }

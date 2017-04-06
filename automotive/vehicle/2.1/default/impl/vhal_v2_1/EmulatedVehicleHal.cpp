@@ -21,7 +21,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
-#include "DefaultVehicleHal.h"
+#include "EmulatedVehicleHal.h"
 #include "VehicleHalProto.pb.h"
 
 #define DEBUG_SOCKET    (33452)
@@ -120,118 +120,103 @@ static std::unique_ptr<Obd2SensorStore> fillDefaultObd2Frame(
     return sensorStore;
 }
 
-void DefaultVehicleHal::initObd2LiveFrame(V2_0::VehiclePropConfig& propConfig,
-    V2_0::VehiclePropValue* liveObd2Frame) {
-    auto sensorStore = fillDefaultObd2Frame(propConfig.configArray[0],
-            propConfig.configArray[1]);
-    sensorStore->fillPropValue(liveObd2Frame, "");
-    liveObd2Frame->prop = V2_0::toInt(VehicleProperty::OBD2_LIVE_FRAME);
+void EmulatedVehicleHal::initObd2LiveFrame(const V2_0::VehiclePropConfig& propConfig) {
+    auto liveObd2Frame = createVehiclePropValue(V2_0::VehiclePropertyType::COMPLEX, 0);
+    auto sensorStore = fillDefaultObd2Frame(static_cast<size_t>(propConfig.configArray[0]),
+                                            static_cast<size_t>(propConfig.configArray[1]));
+    sensorStore->fillPropValue("", liveObd2Frame.get());
+    liveObd2Frame->prop = OBD2_LIVE_FRAME;
+
+    mPropStore->writeValue(*liveObd2Frame);
 }
 
-void DefaultVehicleHal::initObd2FreezeFrame(V2_0::VehiclePropConfig& propConfig) {
-    auto sensorStore = fillDefaultObd2Frame(propConfig.configArray[0],
-            propConfig.configArray[1]);
+void EmulatedVehicleHal::initObd2FreezeFrame(const V2_0::VehiclePropConfig& propConfig) {
+    auto sensorStore = fillDefaultObd2Frame(static_cast<size_t>(propConfig.configArray[0]),
+                                            static_cast<size_t>(propConfig.configArray[1]));
 
-    mFreezeObd2Frames.push_back(
-            createVehiclePropValue(V2_0::VehiclePropertyType::COMPLEX,0));
-    mFreezeObd2Frames.push_back(
-            createVehiclePropValue(V2_0::VehiclePropertyType::COMPLEX,0));
-    mFreezeObd2Frames.push_back(
-            createVehiclePropValue(V2_0::VehiclePropertyType::COMPLEX,0));
-
-    sensorStore->fillPropValue(mFreezeObd2Frames[0].get(), "P0070");
-    sensorStore->fillPropValue(mFreezeObd2Frames[1].get(), "P0102");
-    sensorStore->fillPropValue(mFreezeObd2Frames[2].get(), "P0123");
+    static std::vector<std::string> sampleDtcs = { "P0070", "P0102" "P0123" };
+    for (auto&& dtc : sampleDtcs) {
+        auto freezeFrame = createVehiclePropValue(V2_0::VehiclePropertyType::COMPLEX, 0);
+        sensorStore->fillPropValue(dtc, freezeFrame.get());
+        mPropStore->writeValue(*freezeFrame);
+    }
 }
 
-template<typename Iterable>
-typename Iterable::const_iterator findPropValueAtTimestamp(
-        const Iterable& frames,
-        int64_t timestamp) {
-    return std::find_if(frames.begin(),
-            frames.end(),
-            [timestamp] (const std::unique_ptr<V2_0::VehiclePropValue>&
-                         propValue) -> bool {
-                             return propValue->timestamp == timestamp;
-            });
-}
-
-V2_0::StatusCode DefaultVehicleHal::fillObd2FreezeFrame(
+V2_0::StatusCode EmulatedVehicleHal::fillObd2FreezeFrame(
         const V2_0::VehiclePropValue& requestedPropValue,
-        V2_0::VehiclePropValue* v) {
+        V2_0::VehiclePropValue* outValue) {
     if (requestedPropValue.value.int64Values.size() != 1) {
         ALOGE("asked for OBD2_FREEZE_FRAME without valid timestamp");
         return V2_0::StatusCode::INVALID_ARG;
     }
     auto timestamp = requestedPropValue.value.int64Values[0];
-    auto freezeFrameIter = findPropValueAtTimestamp(mFreezeObd2Frames,
-            timestamp);
-    if(mFreezeObd2Frames.end() == freezeFrameIter) {
+    auto freezeFrame = mPropStore->readValueOrNull(OBD2_FREEZE_FRAME, 0, timestamp);
+    if(freezeFrame == nullptr) {
         ALOGE("asked for OBD2_FREEZE_FRAME at invalid timestamp");
         return V2_0::StatusCode::INVALID_ARG;
     }
-    const auto& freezeFrame = *freezeFrameIter;
-    v->prop = V2_0::toInt(VehicleProperty::OBD2_FREEZE_FRAME);
-    v->value.int32Values = freezeFrame->value.int32Values;
-    v->value.floatValues = freezeFrame->value.floatValues;
-    v->value.bytes = freezeFrame->value.bytes;
-    v->value.stringValue = freezeFrame->value.stringValue;
-    v->timestamp = freezeFrame->timestamp;
+    outValue->prop = OBD2_FREEZE_FRAME;
+    outValue->value.int32Values = freezeFrame->value.int32Values;
+    outValue->value.floatValues = freezeFrame->value.floatValues;
+    outValue->value.bytes = freezeFrame->value.bytes;
+    outValue->value.stringValue = freezeFrame->value.stringValue;
+    outValue->timestamp = freezeFrame->timestamp;
     return V2_0::StatusCode::OK;
 }
 
-V2_0::StatusCode DefaultVehicleHal::clearObd2FreezeFrames(
-    const V2_0::VehiclePropValue& propValue) {
+V2_0::StatusCode EmulatedVehicleHal::clearObd2FreezeFrames(const V2_0::VehiclePropValue& propValue) {
     if (propValue.value.int64Values.size() == 0) {
-        mFreezeObd2Frames.clear();
+        mPropStore->removeValuesForProperty(OBD2_FREEZE_FRAME);
         return V2_0::StatusCode::OK;
     } else {
         for(int64_t timestamp: propValue.value.int64Values) {
-            auto freezeFrameIter = findPropValueAtTimestamp(mFreezeObd2Frames,
-                    timestamp);
-            if(mFreezeObd2Frames.end() == freezeFrameIter) {
+            auto freezeFrame = mPropStore->readValueOrNull(OBD2_FREEZE_FRAME, 0, timestamp);
+            if(freezeFrame == nullptr) {
                 ALOGE("asked for OBD2_FREEZE_FRAME at invalid timestamp");
                 return V2_0::StatusCode::INVALID_ARG;
             }
-            mFreezeObd2Frames.erase(freezeFrameIter);
+            mPropStore->removeValue(*freezeFrame);
         }
     }
     return V2_0::StatusCode::OK;
 }
 
-V2_0::StatusCode DefaultVehicleHal::fillObd2DtcInfo(V2_0::VehiclePropValue* v) {
+V2_0::StatusCode EmulatedVehicleHal::fillObd2DtcInfo(V2_0::VehiclePropValue* outValue) {
     std::vector<int64_t> timestamps;
-    for(const auto& freezeFrame: mFreezeObd2Frames) {
-        timestamps.push_back(freezeFrame->timestamp);
+    for(const auto& freezeFrame: mPropStore->readValuesForProperty(OBD2_FREEZE_FRAME)) {
+        timestamps.push_back(freezeFrame.timestamp);
     }
-    v->value.int64Values = timestamps;
+    outValue->value.int64Values = timestamps;
     return V2_0::StatusCode::OK;
 }
 
-void DefaultVehicleHal::onCreate() {
-    mVehicleHal20->init(getValuePool(),
-                        std::bind(&DefaultVehicleHal::doHalEvent, this, _1),
-                        std::bind(&DefaultVehicleHal::doHalPropertySetError, this, _1, _2, _3));
+void EmulatedVehicleHal::onCreate() {
+    V2_0::impl::EmulatedVehicleHal::onCreate();
 
-    std::vector<V2_0::VehiclePropConfig> configs = listProperties();
-    for (auto& cfg : configs) {
-        switch(cfg.prop) {
-            case V2_0::toInt(V2_1::VehicleProperty::OBD2_LIVE_FRAME): {
-                auto liveObd2Frame = createVehiclePropValue(V2_0::VehiclePropertyType::COMPLEX, 0);
-                initObd2LiveFrame(cfg, liveObd2Frame.get());
-                mVehicleHal20->addCustomProperty(*liveObd2Frame);
+    initObd2LiveFrame(*mPropStore->getConfigOrDie(OBD2_LIVE_FRAME));
+    initObd2FreezeFrame(*mPropStore->getConfigOrDie(OBD2_FREEZE_FRAME));
+}
+
+void EmulatedVehicleHal::initStaticConfig() {
+    for (auto&& cfg = std::begin(kVehicleProperties); cfg != std::end(kVehicleProperties); ++cfg) {
+        V2_0::VehiclePropertyStore::TokenFunction tokenFunction = nullptr;
+
+        switch (cfg->prop) {
+            case OBD2_FREEZE_FRAME: {
+                tokenFunction = [] (const V2_0::VehiclePropValue& propValue) {
+                    return propValue.timestamp;
+                };
+                break;
             }
-                break;
-            case V2_0::toInt(V2_1::VehicleProperty::OBD2_FREEZE_FRAME):
-                initObd2FreezeFrame(cfg);
-                break;
             default:
                 break;
         }
+
+        mPropStore->registerProperty(*cfg, tokenFunction);
     }
 }
 
-DefaultVehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(
+EmulatedVehicleHal::VehiclePropValuePtr EmulatedVehicleHal::get(
         const V2_0::VehiclePropValue& requestedPropValue,
         V2_0::StatusCode* outStatus) {
 
@@ -240,34 +225,30 @@ DefaultVehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(
     auto& pool = *getValuePool();
 
     switch (propId) {
-    case V2_0::toInt(V2_1::VehicleProperty::OBD2_FREEZE_FRAME):
+    case OBD2_FREEZE_FRAME:
         v = pool.obtainComplex();
         *outStatus = fillObd2FreezeFrame(requestedPropValue, v.get());
         return v;
-    case V2_0::toInt(V2_1::VehicleProperty::OBD2_FREEZE_FRAME_INFO):
+    case OBD2_FREEZE_FRAME_INFO:
         v = pool.obtainComplex();
         *outStatus = fillObd2DtcInfo(v.get());
         return v;
     default:
-        return mVehicleHal20->get(requestedPropValue, outStatus);
+        return V2_0::impl::EmulatedVehicleHal::get(requestedPropValue, outStatus);
     }
 }
 
-V2_0::StatusCode DefaultVehicleHal::set(
-        const V2_0::VehiclePropValue& propValue) {
-
+V2_0::StatusCode EmulatedVehicleHal::set(const V2_0::VehiclePropValue& propValue) {
     auto propId = propValue.prop;
     switch (propId) {
-    case V2_0::toInt(V2_1::VehicleProperty::OBD2_FREEZE_FRAME_CLEAR):
+    case OBD2_FREEZE_FRAME_CLEAR:
         return clearObd2FreezeFrames(propValue);
-        break;
-    case V2_0::toInt(V2_1::VehicleProperty::VEHICLE_MAP_SERVICE):
+    case VEHICLE_MAP_SERVICE:
         // Placeholder for future implementation of VMS property in the default hal. For now, just
         // returns OK; otherwise, hal clients crash with property not supported.
         return V2_0::StatusCode::OK;
-        break;
     default:
-        return mVehicleHal20->set(propValue);
+        return V2_0::impl::EmulatedVehicleHal::set(propValue);
     }
 }
 

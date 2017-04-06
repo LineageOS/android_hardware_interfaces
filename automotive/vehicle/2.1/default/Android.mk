@@ -49,7 +49,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE:= $(vhal_v2_1)-default-impl-lib
 LOCAL_SRC_FILES:= \
-    impl/vhal_v2_1/DefaultVehicleHal.cpp \
+    impl/vhal_v2_1/EmulatedVehicleHal.cpp \
 
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/impl/vhal_v2_1 \
