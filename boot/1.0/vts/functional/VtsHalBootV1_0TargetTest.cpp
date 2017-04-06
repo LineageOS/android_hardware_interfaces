@@ -30,6 +30,8 @@ using ::android::hardware::boot::V1_0::Slot;
 using ::android::hardware::hidl_string;
 using ::android::hardware::Return;
 using ::android::sp;
+using std::string;
+using std::vector;
 
 // The main test class for the Boot HIDL HAL.
 class BootHidlTest : public ::testing::VtsHalHidlTargetTestBase {
@@ -83,7 +85,7 @@ TEST_F(BootHidlTest, SetActiveBootSlot) {
   {
     // Restore original flags to avoid problems on reboot
     CommandResult cr;
-    Return <void> result = boot->markBootSuccessful(generate_callback(&cr));
+    Return<void> result = boot->markBootSuccessful(generate_callback(&cr));
     EXPECT_TRUE(result.isOk());
     EXPECT_TRUE(cr.success);
   }
@@ -151,22 +153,21 @@ TEST_F(BootHidlTest, IsSlotMarkedSuccessful) {
 
 // Sanity check Boot::getSuffix() on good and bad inputs.
 TEST_F(BootHidlTest, GetSuffix) {
-  const char *suffixPtr;
-  auto cb = [&](hidl_string suffix) { suffixPtr = suffix.c_str(); };
-  for (Slot i = 0; i < 2; i++) {
-    CommandResult cr;
-    Return<void> result = boot->getSuffix(i, cb);
-    EXPECT_TRUE(result.isOk());
-    char correctSuffix[3];
-    snprintf(correctSuffix, sizeof(correctSuffix), "_%c", 'a' + i);
-    ASSERT_EQ(0, strcmp(suffixPtr, correctSuffix));
-  }
-  {
-    char emptySuffix[] = "";
-    Return<void> result = boot->getSuffix(boot->getNumberSlots(), cb);
-    EXPECT_TRUE(result.isOk());
-    ASSERT_EQ(0, strcmp(emptySuffix, suffixPtr));
-  }
+    string suffixStr;
+    vector<string> correctSuffixes = {"_a", "_b"};
+    auto cb = [&](hidl_string suffix) { suffixStr = suffix.c_str(); };
+    for (Slot i = 0; i < 2; i++) {
+        CommandResult cr;
+        Return<void> result = boot->getSuffix(i, cb);
+        EXPECT_TRUE(result.isOk());
+        ASSERT_EQ(0, suffixStr.compare(correctSuffixes[i]));
+    }
+    {
+        string emptySuffix = "";
+        Return<void> result = boot->getSuffix(boot->getNumberSlots(), cb);
+        EXPECT_TRUE(result.isOk());
+        ASSERT_EQ(0, suffixStr.compare(emptySuffix));
+    }
 }
 
 int main(int argc, char **argv) {
