@@ -26,8 +26,9 @@
 #include <gtest/gtest.h>
 #include <hidl/HidlSupport.h>
 #include <hidlmemory/mapping.h>
-#include <memory>
+#include <log/log.h>
 #include <openssl/aes.h>
+#include <memory>
 #include <random>
 
 #include "VtsHalHidlTargetTestBase.h"

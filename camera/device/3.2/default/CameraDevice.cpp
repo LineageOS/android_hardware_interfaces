@@ -15,7 +15,7 @@
  */
 
 #define LOG_TAG "CamDev@3.2-impl"
-#include <utils/Log.h>
+#include <log/log.h>
 
 #include <utils/Vector.h>
 #include <utils/Trace.h>

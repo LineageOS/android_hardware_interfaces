@@ -37,10 +37,10 @@ static const float kNanoToSeconds = 0.000000001f;
 #include <string.h>
 
 #include <hidl/HidlTransportSupport.h>
+#include <hwbinder/ProcessState.h>
+#include <log/log.h>
 #include <utils/Errors.h>
 #include <utils/StrongPointer.h>
-#include <utils/Log.h>
-#include <hwbinder/ProcessState.h>
 
 #include <android/log.h>
 #include <android/hardware/automotive/evs/1.0/IEvsCamera.h>

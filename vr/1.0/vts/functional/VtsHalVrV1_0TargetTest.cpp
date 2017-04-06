@@ -15,11 +15,11 @@
  */
 
 #define LOG_TAG "vr_hidl_hal_test"
+#include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/vr/1.0/IVr.h>
-#include <android/log.h>
-#include <VtsHalHidlTargetTestBase.h>
 #include <hardware/vr.h>
+#include <log/log.h>
 
 using ::android::hardware::vr::V1_0::IVr;
 using ::android::hardware::Return;
