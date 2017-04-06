@@ -99,8 +99,8 @@ const std::vector<uint8_t>& Obd2SensorStore::getSensorsBitmask() const {
     return mSensorsBitmask.getBitmask();
 }
 
-void Obd2SensorStore::fillPropValue(V2_0::VehiclePropValue *propValue,
-                                    std::string dtc) const {
+void Obd2SensorStore::fillPropValue(const std::string& dtc,
+                                    V2_0::VehiclePropValue *propValue) const {
     propValue->timestamp = elapsedRealtimeNano();
     propValue->value.int32Values = getIntegerSensors();
     propValue->value.floatValues = getFloatSensors();
