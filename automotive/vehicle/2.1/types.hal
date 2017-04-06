@@ -584,22 +584,43 @@ enum VmsMessageType : int32_t {
 
   /** A client publishes a data packet. */
   DATA = 3,
+
+  /* A client declaring layers offering. */
+  OFFERING = 4,
+
+  /* Update for the available layers. */
+  AVAILABILITY = 5,
 };
 
 /**
  * This enum provides the canonical mapping for VMS properties that have an
  * integer value.
  */
-enum VmsMessageIntegerValuesIndex : int32_t {
-  /** The message type as enumerated by VmsMessageType enum. */
+enum VmsBaseMessageIntegerValuesIndex : int32_t {
+  /* The message type as enumerated by VmsMessageType enum. */
   VMS_MESSAGE_TYPE = 0,
+};
 
-  /** The layer ID as defined in the vms protocol. */
+/*
+ * This enum provides the canonical mapping for VMS SUBMIT, UNSUBMIT and DATA
+ * messages integer value properties.
+ */
+enum VmsSimpleMessageIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
+  /* The layer ID as defined in the vms protocol. */
   VMS_LAYER_ID = 1,
 
-  /** The version of the VMS layer. */
+  /* The version of the VMS layer. */
   VMS_LAYER_VERSION = 2,
+};
 
-  /** The number of bytes in the payload */
-  VMS_PAYLOAD_SIZE_BYTES = 3,
+/*
+ * This enum provides the canonical mapping for VMS offering messages integer
+ * value properties
+ */
+enum VmsOfferingMessageIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
+  /* The number of VMS layer dependencies. */
+  VMS_NUMBER_OF_LAYERS_DEPENDENCIES = 1,
+
+  /* The first index that contain dependencies */
+  FIRST_DEPENDENCIES_INDEX = 2,
 };
