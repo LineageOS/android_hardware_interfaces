@@ -70,15 +70,15 @@ namespace implementation {
         if (status == android::OK) {
             android::KeyedVector<String8, String8> legacyOptionalParameters;
             for (size_t i = 0; i < optionalParameters.size(); i++) {
-                legacyOptionalParameters.add(String8(optionalParameters[i].key),
-                        String8(optionalParameters[i].value));
+                legacyOptionalParameters.add(String8(optionalParameters[i].key.c_str()),
+                        String8(optionalParameters[i].value.c_str()));
             }
 
             android::DrmPlugin::KeyRequestType legacyRequestType =
                     android::DrmPlugin::kKeyRequestType_Unknown;
 
             status = mLegacyPlugin->getKeyRequest(toVector(scope),
-                    toVector(initData), String8(mimeType), legacyKeyType,
+                    toVector(initData), String8(mimeType.c_str()), legacyKeyType,
                     legacyOptionalParameters, legacyRequest, defaultUrl,
                     &legacyRequestType);
 
@@ -149,7 +149,7 @@ namespace implementation {
         Vector<uint8_t> legacyRequest;
         String8 legacyDefaultUrl;
         status_t status = mLegacyPlugin->getProvisionRequest(
-                String8(certificateType), String8(certificateAuthority),
+                String8(certificateType.c_str()), String8(certificateAuthority.c_str()),
                 legacyRequest, legacyDefaultUrl);
 
         _hidl_cb(toStatus(status), toHidlVec(legacyRequest),
@@ -217,7 +217,7 @@ namespace implementation {
             getPropertyString_cb _hidl_cb) {
         String8 legacyValue;
         status_t status = mLegacyPlugin->getPropertyString(
-                String8(propertyName), legacyValue);
+                String8(propertyName.c_str()), legacyValue);
         _hidl_cb(toStatus(status), legacyValue.string());
         return Void();
     }
@@ -226,7 +226,7 @@ namespace implementation {
             getPropertyByteArray_cb _hidl_cb) {
         Vector<uint8_t> legacyValue;
         status_t status = mLegacyPlugin->getPropertyByteArray(
-                String8(propertyName), legacyValue);
+                String8(propertyName.c_str()), legacyValue);
         _hidl_cb(toStatus(status), toHidlVec(legacyValue));
         return Void();
     }
@@ -234,15 +234,15 @@ namespace implementation {
     Return<Status> DrmPlugin::setPropertyString(const hidl_string& propertyName,
             const hidl_string& value) {
         status_t legacyStatus =
-            mLegacyPlugin->setPropertyString(String8(propertyName),
-                    String8(value));
+            mLegacyPlugin->setPropertyString(String8(propertyName.c_str()),
+                    String8(value.c_str()));
         return toStatus(legacyStatus);
     }
 
     Return<Status> DrmPlugin::setPropertyByteArray(
             const hidl_string& propertyName, const hidl_vec<uint8_t>& value) {
         status_t legacyStatus =
-            mLegacyPlugin->setPropertyByteArray(String8(propertyName),
+            mLegacyPlugin->setPropertyByteArray(String8(propertyName.c_str()),
                     toVector(value));
         return toStatus(legacyStatus);
     }
@@ -251,7 +251,7 @@ namespace implementation {
             const hidl_vec<uint8_t>& sessionId, const hidl_string& algorithm) {
         status_t legacyStatus =
             mLegacyPlugin->setCipherAlgorithm(toVector(sessionId),
-                String8(algorithm));
+                String8(algorithm.c_str()));
         return toStatus(legacyStatus);
     }
 
@@ -259,7 +259,7 @@ namespace implementation {
             const hidl_vec<uint8_t>& sessionId, const hidl_string& algorithm) {
         status_t legacyStatus =
             mLegacyPlugin->setMacAlgorithm(toVector(sessionId),
-                String8(algorithm));
+                String8(algorithm.c_str()));
         return toStatus(legacyStatus);
     }
 
@@ -313,7 +313,7 @@ namespace implementation {
 
         Vector<uint8_t> legacySignature;
         status_t status = mLegacyPlugin->signRSA(toVector(sessionId),
-                String8(algorithm), toVector(message), toVector(wrappedKey),
+                String8(algorithm.c_str()), toVector(message), toVector(wrappedKey),
                 legacySignature);
         _hidl_cb(toStatus(status), toHidlVec(legacySignature));
         return Void();

@@ -616,7 +616,7 @@ void SensorsHidlTest::assertTypeMatchStringType(SensorType type, const hidl_stri
 
   switch (type) {
 #define CHECK_TYPE_STRING_FOR_SENSOR_TYPE(type) \
-    case SensorType::type: ASSERT_STREQ(SENSOR_STRING_TYPE_ ## type, stringType); break;
+    case SensorType::type: ASSERT_STREQ(SENSOR_STRING_TYPE_ ## type, stringType.c_str()); break;
     CHECK_TYPE_STRING_FOR_SENSOR_TYPE(ACCELEROMETER);
     CHECK_TYPE_STRING_FOR_SENSOR_TYPE(ACCELEROMETER_UNCALIBRATED);
     CHECK_TYPE_STRING_FOR_SENSOR_TYPE(ADDITIONAL_INFO);

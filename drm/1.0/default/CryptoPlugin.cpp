@@ -35,7 +35,7 @@ namespace implementation {
     // Methods from ::android::hardware::drm::V1_0::ICryptoPlugin follow
     Return<bool> CryptoPlugin::requiresSecureDecoderComponent(
             const hidl_string& mime) {
-        return mLegacyPlugin->requiresSecureDecoderComponent(mime);
+        return mLegacyPlugin->requiresSecureDecoderComponent(mime.c_str());
     }
 
     Return<void> CryptoPlugin::notifyResolution(uint32_t width,
