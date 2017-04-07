@@ -17,20 +17,31 @@
 #ifndef ANDROID_HARDWARE_CONFIGSTORE_UTILS_H
 #define ANDROID_HARDWARE_CONFIGSTORE_UTILS_H
 
+#include <android/hardware/configstore/1.0/ISurfaceFlingerConfigs.h>
 #include <hidl/Status.h>
-#include <stdatomic.h>
+
+#include <sstream>
 
 namespace android {
 namespace hardware {
+
+namespace details {
+// Templated classes can use the below method
+// to avoid creating dependencies on liblog.
+bool wouldLogInfo();
+void logAlwaysInfo(const std::string& message);
+void logAlwaysError(const std::string& message);
+}  // namespace details
+
 namespace configstore {
+using namespace android::hardware::configstore::V1_0;
 // arguments V: type for the value (i.e., OptionalXXX)
 //           I: interface class name
 //           func: member function pointer
-using namespace V1_0;
-
 template<typename V, typename I, android::hardware::Return<void> (I::* func)
         (std::function<void(const V&)>)>
 decltype(V::value) get(const decltype(V::value) &defValue) {
+    using namespace android::hardware::details;
     auto getHelper = []()->V {
         V ret;
         sp<I> configs = I::getService();
@@ -39,14 +50,38 @@ decltype(V::value) get(const decltype(V::value) &defValue) {
             // fallback to the default value
             ret.specified = false;
         } else {
-            (*configs.*func)([&ret](V v) {
-                ret = v;
-            });
+            auto status = (*configs.*func)([&ret](V v) { ret = v; });
+            if (!status.isOk()) {
+                std::ostringstream oss;
+                oss << "HIDL call failed for retrieving a config item from "
+                       "configstore : "
+                    << status.description().c_str();
+                logAlwaysError(oss.str());
+                ret.specified = false;
+            }
         }
 
         return ret;
     };
     static V cachedValue = getHelper();
+
+    if (wouldLogInfo()) {
+        std::string iname = __PRETTY_FUNCTION__;
+        // func name starts with "func = " in __PRETTY_FUNCTION__
+        auto pos = iname.find("func = ");
+        if (pos != std::string::npos) {
+            iname = iname.substr(pos + sizeof("func = "));
+            iname.pop_back();  // remove trailing ']'
+        } else {
+            iname += " (unknown)";
+        }
+
+        std::ostringstream oss;
+        oss << iname << " retrieved: "
+            << (cachedValue.specified ? cachedValue.value : defValue)
+            << (cachedValue.specified ? "" : " (default)");
+        logAlwaysInfo(oss.str());
+    }
 
     return cachedValue.specified ? cachedValue.value : defValue;
 }
