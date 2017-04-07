@@ -16,13 +16,13 @@
 
 #define LOG_TAG "CamComm1.0-VTDesc"
 
-#include <utils/Errors.h>
-#include <utils/Log.h>
-#include <utils/Mutex.h>
-#include <utils/Vector.h>
-#include <utils/SortedVector.h>
+#include <log/log.h>
 #include <system/camera_metadata.h>
 #include <camera_metadata_hidden.h>
+#include <utils/Errors.h>
+#include <utils/Mutex.h>
+#include <utils/SortedVector.h>
+#include <utils/Vector.h>
 
 #include "VendorTagDescriptor.h"
 

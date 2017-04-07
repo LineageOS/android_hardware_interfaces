@@ -26,8 +26,9 @@
 #include <android/hidl/allocator/1.0/IAllocator.h>
 #include <gtest/gtest.h>
 #include <hidlmemory/mapping.h>
-#include <memory>
+#include <log/log.h>
 #include <openssl/aes.h>
+#include <memory>
 #include <random>
 
 #include "drm_hal_vendor_module_api.h"

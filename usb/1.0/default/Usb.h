@@ -4,7 +4,7 @@
 #include <android/hardware/usb/1.0/IUsb.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
-#include <utils/Log.h>
+#include <log/log.h>
 
 #ifdef LOG_TAG
 #undef LOG_TAG

@@ -17,9 +17,11 @@
 #ifndef android_hardware_automotive_vehicle_V2_0_impl_VehicleHalEmulator_H_
 #define android_hardware_automotive_vehicle_V2_0_impl_VehicleHalEmulator_H_
 
+#include <log/log.h>
 #include <memory>
 #include <thread>
 #include <vector>
+
 #include "vhal_v2_0/VehicleHal.h"
 
 #include "CommBase.h"

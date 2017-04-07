@@ -23,6 +23,7 @@
 
 #include <android/log.h>
 #include <cutils/native_handle.h>
+#include <log/log.h>
 
 #include <android/hardware/audio/common/2.0/types.h>
 #include <android/hardware/soundtrigger/2.0/ISoundTriggerHw.h>

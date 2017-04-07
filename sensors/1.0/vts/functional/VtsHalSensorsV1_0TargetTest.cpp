@@ -15,14 +15,14 @@
  */
 
 #define LOG_TAG "sensors_hidl_hal_test"
+#include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/sensors/1.0/ISensors.h>
 #include <android/hardware/sensors/1.0/types.h>
-#include <android/log.h>
 #include <cutils/ashmem.h>
+#include <hardware/sensors.h>  // for sensor type strings
+#include <log/log.h>
 #include <utils/SystemClock.h>
-#include <VtsHalHidlTargetTestBase.h>
-#include <hardware/sensors.h>       // for sensor type strings
 
 #include <algorithm>
 #include <cinttypes>
