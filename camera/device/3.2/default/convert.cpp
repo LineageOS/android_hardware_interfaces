@@ -15,7 +15,7 @@
  */
 
 #define LOG_TAG "android.hardware.camera.device@3.2-convert-impl"
-#include <android/log.h>
+#include <log/log.h>
 
 #include "include/convert.h"
 

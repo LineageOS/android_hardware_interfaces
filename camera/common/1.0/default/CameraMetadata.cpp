@@ -17,7 +17,7 @@
 // #define LOG_NDEBUG 0
 
 #define LOG_TAG "CamComm1.0-MD"
-#include <utils/Log.h>
+#include <log/log.h>
 #include <utils/Errors.h>
 
 #include "CameraMetadata.h"

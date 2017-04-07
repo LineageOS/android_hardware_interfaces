@@ -19,9 +19,9 @@
 #include <unistd.h>
 
 #include <hidl/HidlTransportSupport.h>
+#include <log/log.h>
 #include <utils/Errors.h>
 #include <utils/StrongPointer.h>
-#include <utils/Log.h>
 
 #include "ServiceNames.h"
 #include "EvsEnumerator.h"

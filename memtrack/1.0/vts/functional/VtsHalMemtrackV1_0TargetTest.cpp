@@ -22,6 +22,7 @@
 
 #include <VtsHalHidlTargetTestBase.h>
 
+#include <fcntl.h>
 #include <algorithm>
 #include <vector>
 

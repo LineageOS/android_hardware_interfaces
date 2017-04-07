@@ -16,10 +16,10 @@
 #define LOG_TAG "android.hardware.drm@1.0-impl"
 
 #include "DrmFactory.h"
+#include <log/log.h>
 #include "DrmPlugin.h"
 #include "LegacyPluginPath.h"
 #include "TypeConvert.h"
-#include <utils/Log.h>
 
 namespace android {
 namespace hardware {

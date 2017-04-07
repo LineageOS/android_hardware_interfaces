@@ -15,8 +15,8 @@
  */
 
 #define LOG_TAG "HandleImporter"
-#include <utils/Log.h>
 #include "HandleImporter.h"
+#include <log/log.h>
 
 namespace android {
 namespace hardware {
