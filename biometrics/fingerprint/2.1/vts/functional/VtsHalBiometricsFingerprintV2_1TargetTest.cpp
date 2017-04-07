@@ -43,7 +43,7 @@ namespace {
 static const uint32_t kTimeout = 3;
 static const std::chrono::seconds kTimeoutInSeconds = std::chrono::seconds(kTimeout);
 static const uint32_t kGroupId = 99;
-static const std::string kTmpDir = "/data/local/tmp/";
+static const std::string kTmpDir = "/data/system/";
 static const uint32_t kIterations = 1000;
 
 // Wait for a callback to occur (signaled by the given future) up to the
@@ -186,6 +186,8 @@ class FingerprintHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     ASSERT_FALSE(mService == nullptr);
 
     // Create an active group
+    // FP service can only write to /data/system due to
+    // SELinux Policy and Linux Dir Permissions
     Return<RequestStatus> res = mService->setActiveGroup(kGroupId, kTmpDir);
     ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
   }
