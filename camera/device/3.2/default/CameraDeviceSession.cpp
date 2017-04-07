@@ -44,6 +44,7 @@ CameraDeviceSession::CameraDeviceSession(
     const sp<ICameraDeviceCallback>& callback) :
         camera3_callback_ops({&sProcessCaptureResult, &sNotify}),
         mDevice(device),
+        mDeviceVersion(device->common.version),
         mResultBatcher(callback) {
 
     mDeviceInfo = deviceInfo;
@@ -619,6 +620,36 @@ Return<void> CameraDeviceSession::constructDefaultRequestSettings(
     return Void();
 }
 
+/**
+ * Map Android N dataspace definitions back to Android M definitions, for
+ * use with HALv3.3 or older.
+ *
+ * Only map where correspondences exist, and otherwise preserve the value.
+ */
+android_dataspace CameraDeviceSession::mapToLegacyDataspace(
+        android_dataspace dataSpace) const {
+    if (mDeviceVersion <= CAMERA_DEVICE_API_VERSION_3_3) {
+        switch (dataSpace) {
+            case HAL_DATASPACE_V0_SRGB_LINEAR:
+                return HAL_DATASPACE_SRGB_LINEAR;
+            case HAL_DATASPACE_V0_SRGB:
+                return HAL_DATASPACE_SRGB;
+            case HAL_DATASPACE_V0_JFIF:
+                return HAL_DATASPACE_JFIF;
+            case HAL_DATASPACE_V0_BT601_625:
+                return HAL_DATASPACE_BT601_625;
+            case HAL_DATASPACE_V0_BT601_525:
+                return HAL_DATASPACE_BT601_525;
+            case HAL_DATASPACE_V0_BT709:
+                return HAL_DATASPACE_BT709;
+            default:
+                return dataSpace;
+        }
+    }
+
+   return dataSpace;
+}
+
 Return<void> CameraDeviceSession::configureStreams(
         const StreamConfiguration& requestedConfiguration, configureStreams_cb _hidl_cb)  {
     Status status = initStatus();
@@ -654,6 +685,8 @@ Return<void> CameraDeviceSession::configureStreams(
             Camera3Stream stream;
             convertFromHidl(requestedConfiguration.streams[i], &stream);
             mStreamMap[id] = stream;
+            mStreamMap[id].data_space = mapToLegacyDataspace(
+                    mStreamMap[id].data_space);
             mCirculatingBuffers.emplace(stream.mId, CirculatingBuffers{});
         } else {
             // width/height/format must not change, but usage/rotation might need to change
@@ -662,8 +695,9 @@ Return<void> CameraDeviceSession::configureStreams(
                     mStreamMap[id].width != requestedConfiguration.streams[i].width ||
                     mStreamMap[id].height != requestedConfiguration.streams[i].height ||
                     mStreamMap[id].format != (int) requestedConfiguration.streams[i].format ||
-                    mStreamMap[id].data_space != (android_dataspace_t)
-                            requestedConfiguration.streams[i].dataSpace) {
+                    mStreamMap[id].data_space !=
+                            mapToLegacyDataspace( static_cast<android_dataspace_t> (
+                                    requestedConfiguration.streams[i].dataSpace))) {
                 ALOGE("%s: stream %d configuration changed!", __FUNCTION__, id);
                 _hidl_cb(Status::INTERNAL_ERROR, outStreams);
                 return Void();
