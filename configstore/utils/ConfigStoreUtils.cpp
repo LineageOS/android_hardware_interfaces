@@ -14,22 +14,27 @@
 // limitations under the License.
 //
 
-cc_library_shared {
-    name: "android.hardware.configstore-utils",
-    defaults: ["hidl_defaults"],
+#define LOG_TAG "ConfigStore"
 
-    srcs: [ "ConfigStoreUtils.cpp" ],
+#include <android-base/logging.h>
+#include <configstore/Utils.h>
 
-    export_include_dirs: ["include"],
+namespace android {
+namespace hardware {
+namespace details {
 
-    shared_libs: [
-        "android.hardware.configstore@1.0",
-        "libbase",
-        "libhidlbase"
-    ],
-    export_shared_lib_headers: [
-        "android.hardware.configstore@1.0",
-        "libbase",
-        "libhidlbase"
-    ],
+bool wouldLogInfo() {
+    return WOULD_LOG(INFO);
 }
+
+void logAlwaysInfo(const std::string& message) {
+    LOG(INFO) << message;
+}
+
+void logAlwaysError(const std::string& message) {
+    LOG(ERROR) << message;
+}
+
+}  // namespace details
+}  // namespace hardware
+}  // namespace android
