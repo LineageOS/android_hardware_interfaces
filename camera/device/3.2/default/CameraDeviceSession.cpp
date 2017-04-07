@@ -45,16 +45,24 @@ CameraDeviceSession::CameraDeviceSession(
         camera3_callback_ops({&sProcessCaptureResult, &sNotify}),
         mDevice(device),
         mDeviceVersion(device->common.version),
+        mIsAELockAvailable(false),
+        mNumPartialResults(1),
         mResultBatcher(callback) {
 
     mDeviceInfo = deviceInfo;
-    uint32_t numPartialResults = 1;
     camera_metadata_entry partialResultsCount =
             mDeviceInfo.find(ANDROID_REQUEST_PARTIAL_RESULT_COUNT);
     if (partialResultsCount.count > 0) {
-        numPartialResults = partialResultsCount.data.i32[0];
+        mNumPartialResults = partialResultsCount.data.i32[0];
     }
-    mResultBatcher.setNumPartialResults(numPartialResults);
+    mResultBatcher.setNumPartialResults(mNumPartialResults);
+
+    camera_metadata_entry aeLockAvailableEntry = mDeviceInfo.find(
+            ANDROID_CONTROL_AE_LOCK_AVAILABLE);
+    if (aeLockAvailableEntry.count > 0) {
+        mIsAELockAvailable = (aeLockAvailableEntry.data.u8[0] ==
+                ANDROID_CONTROL_AE_LOCK_AVAILABLE_TRUE);
+    }
 
     mInitFail = initialize();
 }
@@ -128,6 +136,77 @@ void CameraDeviceSession::disconnect() {
 void CameraDeviceSession::dumpState(const native_handle_t* fd) {
     if (!isClosed()) {
         mDevice->ops->dump(mDevice, fd->data[0]);
+    }
+}
+
+/**
+ * For devices <= CAMERA_DEVICE_API_VERSION_3_2, AE_PRECAPTURE_TRIGGER_CANCEL is not supported so
+ * we need to override AE_PRECAPTURE_TRIGGER_CANCEL to AE_PRECAPTURE_TRIGGER_IDLE and AE_LOCK_OFF
+ * to AE_LOCK_ON to start cancelling AE precapture. If AE lock is not available, it still overrides
+ * AE_PRECAPTURE_TRIGGER_CANCEL to AE_PRECAPTURE_TRIGGER_IDLE but doesn't add AE_LOCK_ON to the
+ * request.
+ */
+bool CameraDeviceSession::handleAePrecaptureCancelRequestLocked(
+        const camera3_capture_request_t &halRequest,
+        ::android::hardware::camera::common::V1_0::helper::CameraMetadata *settings /*out*/,
+         AETriggerCancelOverride *override /*out*/) {
+    if ((mDeviceVersion > CAMERA_DEVICE_API_VERSION_3_2) ||
+            (nullptr == halRequest.settings) || (nullptr == settings) ||
+            (0 == get_camera_metadata_entry_count(halRequest.settings))) {
+        return false;
+    }
+
+    settings->clear();
+    settings->append(halRequest.settings);
+    camera_metadata_entry_t aePrecaptureTrigger =
+            settings->find(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER);
+    if (aePrecaptureTrigger.count > 0 &&
+            aePrecaptureTrigger.data.u8[0] ==
+                    ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER_CANCEL) {
+        // Always override CANCEL to IDLE
+        uint8_t aePrecaptureTrigger =
+                ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER_IDLE;
+        settings->update(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER,
+                &aePrecaptureTrigger, 1);
+        *override = { false, ANDROID_CONTROL_AE_LOCK_OFF,
+                true, ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER_CANCEL };
+
+        if (mIsAELockAvailable == true) {
+            camera_metadata_entry_t aeLock = settings->find(
+                    ANDROID_CONTROL_AE_LOCK);
+            if (aeLock.count == 0 || aeLock.data.u8[0] ==
+                    ANDROID_CONTROL_AE_LOCK_OFF) {
+                uint8_t aeLock = ANDROID_CONTROL_AE_LOCK_ON;
+                settings->update(ANDROID_CONTROL_AE_LOCK, &aeLock, 1);
+                override->applyAeLock = true;
+                override->aeLock = ANDROID_CONTROL_AE_LOCK_OFF;
+            }
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Override result metadata for cancelling AE precapture trigger applied in
+ * handleAePrecaptureCancelRequestLocked().
+ */
+void CameraDeviceSession::overrideResultForPrecaptureCancelLocked(
+        const AETriggerCancelOverride &aeTriggerCancelOverride,
+        ::android::hardware::camera::common::V1_0::helper::CameraMetadata *settings /*out*/) {
+    if (aeTriggerCancelOverride.applyAeLock) {
+        // Only devices <= v3.2 should have this override
+        assert(mDeviceVersion <= CAMERA_DEVICE_API_VERSION_3_2);
+        settings->update(ANDROID_CONTROL_AE_LOCK, &aeTriggerCancelOverride.aeLock, 1);
+    }
+
+    if (aeTriggerCancelOverride.applyAePrecaptureTrigger) {
+        // Only devices <= v3.2 should have this override
+        assert(mDeviceVersion <= CAMERA_DEVICE_API_VERSION_3_2);
+        settings->update(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER,
+                &aeTriggerCancelOverride.aePrecaptureTrigger, 1);
     }
 }
 
@@ -665,6 +744,14 @@ Return<void> CameraDeviceSession::configureStreams(
         return Void();
     }
 
+    if (!mInflightAETriggerOverrides.empty()) {
+        ALOGE("%s: trying to configureStreams while there are still %zu inflight"
+                " trigger overrides!", __FUNCTION__,
+                mInflightAETriggerOverrides.size());
+        _hidl_cb(Status::INTERNAL_ERROR, outStreams);
+        return Void();
+    }
+
     if (status != Status::OK) {
         _hidl_cb(status, outStreams);
         return Void();
@@ -871,6 +958,8 @@ Status CameraDeviceSession::processOneCaptureRequest(const CaptureRequest& reque
 
     hidl_vec<camera3_stream_buffer_t> outHalBufs;
     outHalBufs.resize(numOutputBufs);
+    bool aeCancelTriggerNeeded = false;
+    ::android::hardware::camera::common::V1_0::helper::CameraMetadata settingsOverride;
     {
         Mutex::Autolock _l(mInflightLock);
         if (hasInputBuf) {
@@ -896,12 +985,24 @@ Status CameraDeviceSession::processOneCaptureRequest(const CaptureRequest& reque
             outHalBufs[i] = bufCache;
         }
         halRequest.output_buffers = outHalBufs.data();
+
+        AETriggerCancelOverride triggerOverride;
+        aeCancelTriggerNeeded = handleAePrecaptureCancelRequestLocked(
+                halRequest, &settingsOverride /*out*/, &triggerOverride/*out*/);
+        if (aeCancelTriggerNeeded) {
+            mInflightAETriggerOverrides[halRequest.frame_number] =
+                    triggerOverride;
+            halRequest.settings = settingsOverride.getAndLock();
+        }
     }
 
     ATRACE_ASYNC_BEGIN("frame capture", request.frameNumber);
     ATRACE_BEGIN("camera3->process_capture_request");
     status_t ret = mDevice->ops->process_capture_request(mDevice, &halRequest);
     ATRACE_END();
+    if (aeCancelTriggerNeeded) {
+        settingsOverride.unlock(halRequest.settings);
+    }
     if (ret != OK) {
         Mutex::Autolock _l(mInflightLock);
         ALOGE("%s: HAL process_capture_request call failed!", __FUNCTION__);
@@ -914,6 +1015,9 @@ Status CameraDeviceSession::processOneCaptureRequest(const CaptureRequest& reque
         for (size_t i = 0; i < numOutputBufs; i++) {
             auto key = std::make_pair(request.outputBuffers[i].streamId, request.frameNumber);
             mInflightBuffers.erase(key);
+        }
+        if (aeCancelTriggerNeeded) {
+            mInflightAETriggerOverrides.erase(request.frameNumber);
         }
         return Status::INTERNAL_ERROR;
     }
@@ -942,6 +1046,12 @@ Return<void> CameraDeviceSession::close()  {
                 ALOGE("%s: trying to close while there are still %zu inflight buffers!",
                         __FUNCTION__, mInflightBuffers.size());
             }
+            if (!mInflightAETriggerOverrides.empty()) {
+                ALOGE("%s: trying to close while there are still %zu inflight "
+                        "trigger overrides!", __FUNCTION__,
+                        mInflightAETriggerOverrides.size());
+            }
+
         }
 
         ATRACE_BEGIN("camera3->close");
@@ -1005,6 +1115,22 @@ void CameraDeviceSession::sProcessCaptureResult(
     result.fmqResultSize = 0;
     result.partialResult = hal_result->partial_result;
     convertToHidl(hal_result->result, &result.result);
+    if (nullptr != hal_result->result) {
+        Mutex::Autolock _l(d->mInflightLock);
+        auto entry = d->mInflightAETriggerOverrides.find(frameNumber);
+        if (d->mInflightAETriggerOverrides.end() != entry) {
+            d->mOverridenResult.clear();
+            d->mOverridenResult.append(hal_result->result);
+            d->overrideResultForPrecaptureCancelLocked(entry->second,
+                    &d->mOverridenResult);
+            const camera_metadata_t *metaBuffer = d->mOverridenResult.getAndLock();
+            convertToHidl(metaBuffer, &result.result);
+            d->mOverridenResult.unlock(metaBuffer);
+            if (hal_result->partial_result == d->mNumPartialResults) {
+                d->mInflightAETriggerOverrides.erase(frameNumber);
+            }
+        }
+    }
     if (hasInputBuf) {
         result.inputBuffer.streamId =
                 static_cast<Camera3Stream*>(hal_result->input_buffer->stream)->mId;
@@ -1080,6 +1206,28 @@ void CameraDeviceSession::sNotify(
             return;
         }
     }
+
+    if (static_cast<camera3_msg_type_t>(hidlMsg.type) == CAMERA3_MSG_ERROR) {
+        switch (hidlMsg.msg.error.errorCode) {
+            case ErrorCode::ERROR_DEVICE:
+            case ErrorCode::ERROR_REQUEST:
+            case ErrorCode::ERROR_RESULT: {
+                Mutex::Autolock _l(d->mInflightLock);
+                auto entry = d->mInflightAETriggerOverrides.find(
+                        hidlMsg.msg.error.frameNumber);
+                if (d->mInflightAETriggerOverrides.end() != entry) {
+                    d->mInflightAETriggerOverrides.erase(
+                            hidlMsg.msg.error.frameNumber);
+                }
+            }
+                break;
+            case ErrorCode::ERROR_BUFFER:
+            default:
+                break;
+        }
+
+    }
+
     d->mResultBatcher.notify(hidlMsg);
 }
 
