@@ -7,6 +7,7 @@ filegroup {
         "IBase.hal",
         "IBaz.hal",
         "IBazCallback.hal",
+        "IQuux.hal",
     ],
 }
 
@@ -22,6 +23,7 @@ genrule {
         "android/hardware/tests/baz/1.0/BaseAll.cpp",
         "android/hardware/tests/baz/1.0/BazAll.cpp",
         "android/hardware/tests/baz/1.0/BazCallbackAll.cpp",
+        "android/hardware/tests/baz/1.0/QuuxAll.cpp",
     ],
 }
 
@@ -50,6 +52,11 @@ genrule {
         "android/hardware/tests/baz/1.0/BnHwBazCallback.h",
         "android/hardware/tests/baz/1.0/BpHwBazCallback.h",
         "android/hardware/tests/baz/1.0/BsBazCallback.h",
+        "android/hardware/tests/baz/1.0/IQuux.h",
+        "android/hardware/tests/baz/1.0/IHwQuux.h",
+        "android/hardware/tests/baz/1.0/BnHwQuux.h",
+        "android/hardware/tests/baz/1.0/BpHwQuux.h",
+        "android/hardware/tests/baz/1.0/BsQuux.h",
     ],
 }
 
