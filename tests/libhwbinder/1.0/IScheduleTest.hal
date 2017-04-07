@@ -16,6 +16,6 @@
 
 package android.hardware.tests.libhwbinder@1.0;
 
-interface IBenchmark {
-  sendVec(vec<uint8_t> data) generates (vec<uint8_t> data);
+interface IScheduleTest {
+  send(uint32_t cfg, uint32_t callerSta) generates (uint32_t data);
 };

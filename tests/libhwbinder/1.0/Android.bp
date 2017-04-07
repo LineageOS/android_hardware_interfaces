@@ -4,6 +4,7 @@ filegroup {
     name: "android.hardware.tests.libhwbinder@1.0_hal",
     srcs: [
         "IBenchmark.hal",
+        "IScheduleTest.hal",
     ],
 }
 
@@ -16,6 +17,7 @@ genrule {
     ],
     out: [
         "android/hardware/tests/libhwbinder/1.0/BenchmarkAll.cpp",
+        "android/hardware/tests/libhwbinder/1.0/ScheduleTestAll.cpp",
     ],
 }
 
@@ -32,6 +34,11 @@ genrule {
         "android/hardware/tests/libhwbinder/1.0/BnHwBenchmark.h",
         "android/hardware/tests/libhwbinder/1.0/BpHwBenchmark.h",
         "android/hardware/tests/libhwbinder/1.0/BsBenchmark.h",
+        "android/hardware/tests/libhwbinder/1.0/IScheduleTest.h",
+        "android/hardware/tests/libhwbinder/1.0/IHwScheduleTest.h",
+        "android/hardware/tests/libhwbinder/1.0/BnHwScheduleTest.h",
+        "android/hardware/tests/libhwbinder/1.0/BpHwScheduleTest.h",
+        "android/hardware/tests/libhwbinder/1.0/BsScheduleTest.h",
     ],
 }
 
