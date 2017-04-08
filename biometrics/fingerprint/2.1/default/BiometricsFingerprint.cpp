@@ -79,7 +79,7 @@ Return<RequestStatus> BiometricsFingerprint::ErrorFilter(int32_t error) {
         case -28: return RequestStatus::SYS_ENOSPC;
         case -110: return RequestStatus::SYS_ETIMEDOUT;
         default:
-            ALOGE("An unknown error returned from fingerprint vendor library");
+            ALOGE("An unknown error returned from fingerprint vendor library: %d", error);
             return RequestStatus::SYS_UNKNOWN;
     }
 }
