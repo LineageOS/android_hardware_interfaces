@@ -235,8 +235,10 @@ TEST_F(WifiChipHidlTest, RequestDriverDebugDump) {
     if (caps & IWifiChip::ChipCapabilityMask::DEBUG_MEMORY_DRIVER_DUMP) {
         EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_driver_dump.first.code);
     } else {
-        EXPECT_EQ(WifiStatusCode::ERROR_NOT_SUPPORTED,
-                  status_and_driver_dump.first.code);
+      // API semantics (today) are such that function cannot be called if not capable!
+      //
+      //  EXPECT_EQ(WifiStatusCode::ERROR_NOT_SUPPORTED,
+      //            status_and_driver_dump.first.code);
     }
 }
 
