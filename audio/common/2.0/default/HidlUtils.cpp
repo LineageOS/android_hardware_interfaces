@@ -28,6 +28,7 @@ using ::android::hardware::audio::common::V2_0::AudioPortRole;
 using ::android::hardware::audio::common::V2_0::AudioPortType;
 using ::android::hardware::audio::common::V2_0::AudioSource;
 using ::android::hardware::audio::common::V2_0::AudioStreamType;
+using ::android::hardware::audio::common::V2_0::AudioUsage;
 
 namespace android {
 
@@ -103,6 +104,9 @@ void HidlUtils::audioOffloadInfoFromHal(
     offload->durationMicroseconds = halOffload.duration_us;
     offload->hasVideo = halOffload.has_video;
     offload->isStreaming = halOffload.is_streaming;
+    offload->bitWidth = halOffload.bit_width;
+    offload->bufferSize = halOffload.offload_buffer_size;
+    offload->usage = static_cast<AudioUsage>(halOffload.usage);
 }
 
 void HidlUtils::audioOffloadInfoToHal(
