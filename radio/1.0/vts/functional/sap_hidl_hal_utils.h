@@ -34,6 +34,7 @@ using ::android::hardware::Void;
 using ::android::sp;
 
 #define TIMEOUT_PERIOD 40
+#define SAP_SERVICE_NAME "slot1"
 
 class SapHidlTest;
 
