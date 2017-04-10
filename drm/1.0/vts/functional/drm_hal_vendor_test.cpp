@@ -33,7 +33,8 @@
 
 #include "drm_hal_vendor_module_api.h"
 #include "vendor_modules.h"
-#include "VtsHalHidlTargetTestBase.h"
+#include <VtsHalHidlTargetCallbackBase.h>
+#include <VtsHalHidlTargetTestBase.h>
 
 using ::android::hardware::drm::V1_0::BufferType;
 using ::android::hardware::drm::V1_0::DestinationBuffer;
@@ -825,70 +826,58 @@ TEST_P(DrmHalVendorPluginTest, RequiresSecureDecoderConfig) {
 /**
  *  Event Handling tests
  */
+struct ListenerEventArgs {
+    EventType eventType;
+    SessionId sessionId;
+    hidl_vec<uint8_t> data;
+    int64_t expiryTimeInMS;
+    hidl_vec<KeyStatus> keyStatusList;
+    bool hasNewUsableKey;
+};
 
-class TestDrmPluginListener : public IDrmPluginListener {
+const char *kCallbackEvent = "SendEvent";
+const char *kCallbackExpirationUpdate = "SendExpirationUpdate";
+const char *kCallbackKeysChange = "SendKeysChange";
+
+class TestDrmPluginListener
+    : public ::testing::VtsHalHidlTargetCallbackBase<ListenerEventArgs>,
+      public IDrmPluginListener {
 public:
-    TestDrmPluginListener() {reset();}
+    TestDrmPluginListener() {
+        SetWaitTimeoutDefault(std::chrono::milliseconds(500));
+    }
     virtual ~TestDrmPluginListener() {}
 
     virtual Return<void> sendEvent(EventType eventType, const hidl_vec<uint8_t>& sessionId,
             const hidl_vec<uint8_t>& data) override {
-        eventType_ = eventType;
-        sessionId_ = sessionId;
-        data_ = data;
-        gotEvent_ = true;
+        ListenerEventArgs args;
+        args.eventType = eventType;
+        args.sessionId = sessionId;
+        args.data = data;
+        NotifyFromCallback(kCallbackEvent, args);
         return Void();
     }
 
     virtual Return<void> sendExpirationUpdate(const hidl_vec<uint8_t>& sessionId,
             int64_t expiryTimeInMS) override {
-        sessionId_ = sessionId;
-        expiryTimeInMS_ = expiryTimeInMS;
-        gotExpirationUpdate_ = true;
+        ListenerEventArgs args;
+        args.sessionId = sessionId;
+        args.expiryTimeInMS = expiryTimeInMS;
+        NotifyFromCallback(kCallbackExpirationUpdate, args);
         return Void();
     }
 
     virtual Return<void> sendKeysChange(const hidl_vec<uint8_t>& sessionId,
             const hidl_vec<KeyStatus>& keyStatusList, bool hasNewUsableKey) override {
-        sessionId_ = sessionId;
-        keyStatusList_ = keyStatusList;
-        hasNewUsableKey_ = hasNewUsableKey;
-        gotKeysChange_ = true;
+        ListenerEventArgs args;
+        args.sessionId = sessionId;
+        args.keyStatusList = keyStatusList;
+        args.hasNewUsableKey = hasNewUsableKey;
+        NotifyFromCallback(kCallbackKeysChange, args);
         return Void();
     }
-
-    EventType getEventType() const {return eventType_;}
-    SessionId getSessionId() const {return sessionId_;}
-    vector<uint8_t> getData() const {return data_;}
-    int64_t getExpiryTimeInMS() const {return expiryTimeInMS_;}
-    hidl_vec<KeyStatus> getKeyStatusList() const {return keyStatusList_;}
-    bool hasNewUsableKey() {return hasNewUsableKey_;}
-    bool gotEvent() {return gotEvent_;}
-    bool gotExpirationUpdate() {return gotExpirationUpdate_;}
-    bool gotKeysChange() {return gotKeysChange_;}
-
-    void reset() {
-        gotEvent_ = gotExpirationUpdate_ = gotKeysChange_ = false;
-        eventType_ = EventType::PROVISION_REQUIRED;
-        sessionId_ = SessionId();
-        data_ = hidl_vec<uint8_t>();
-        expiryTimeInMS_ = 0;
-        keyStatusList_ = hidl_vec<KeyStatus>();
-        hasNewUsableKey_ = false;
-    }
-
-private:
-    bool gotEvent_;
-    bool gotExpirationUpdate_;
-    bool gotKeysChange_;
-
-    EventType eventType_;
-    SessionId sessionId_;
-    hidl_vec<uint8_t> data_;
-    int64_t expiryTimeInMS_;
-    hidl_vec<KeyStatus> keyStatusList_;
-    bool hasNewUsableKey_;
 };
+
 
 /**
  * Simulate the plugin sending events. Make sure the listener
@@ -898,19 +887,20 @@ TEST_P(DrmHalVendorPluginTest, ListenerEvents) {
     sp<TestDrmPluginListener> listener = new TestDrmPluginListener();
     drmPlugin->setListener(listener);
     auto sessionId = openSession();
-    vector<uint8_t> data = {0, 1, 2};
+    hidl_vec<uint8_t> data = {0, 1, 2};
     EventType eventTypes[] = {EventType::PROVISION_REQUIRED,
                               EventType::KEY_NEEDED,
                               EventType::KEY_EXPIRED,
                               EventType::VENDOR_DEFINED,
                               EventType::SESSION_RECLAIMED};
     for (auto eventType : eventTypes) {
-        listener->reset();
         drmPlugin->sendEvent(eventType, sessionId, data);
-        while (!listener->gotEvent()) {usleep(100);}
-        EXPECT_EQ(eventType, listener->getEventType());
-        EXPECT_EQ(sessionId, listener->getSessionId());
-        EXPECT_EQ(data, listener->getData());
+        auto result = listener->WaitForCallback(kCallbackEvent);
+        EXPECT_TRUE(result.no_timeout);
+        EXPECT_TRUE(result.args);
+        EXPECT_EQ(eventType, result.args->eventType);
+        EXPECT_EQ(sessionId, result.args->sessionId);
+        EXPECT_EQ(data, result.args->data);
     }
     closeSession(sessionId);
 }
@@ -924,9 +914,11 @@ TEST_P(DrmHalVendorPluginTest, ListenerExpirationUpdate) {
     drmPlugin->setListener(listener);
     auto sessionId = openSession();
     drmPlugin->sendExpirationUpdate(sessionId, 100);
-    while (!listener->gotExpirationUpdate()) {usleep(100);}
-    EXPECT_EQ(sessionId, listener->getSessionId());
-    EXPECT_EQ(100, listener->getExpiryTimeInMS());
+    auto result = listener->WaitForCallback(kCallbackExpirationUpdate);
+    EXPECT_TRUE(result.no_timeout);
+    EXPECT_TRUE(result.args);
+    EXPECT_EQ(sessionId, result.args->sessionId);
+    EXPECT_EQ(100, result.args->expiryTimeInMS);
     closeSession(sessionId);
 }
 
@@ -947,10 +939,11 @@ TEST_P(DrmHalVendorPluginTest, ListenerKeysChange) {
     };
 
     drmPlugin->sendKeysChange(sessionId, keyStatusList, true);
-    while (!listener->gotKeysChange()) {usleep(100);}
-    EXPECT_EQ(sessionId, listener->getSessionId());
-    EXPECT_EQ(keyStatusList, listener->getKeyStatusList());
-    EXPECT_EQ(true, listener->hasNewUsableKey());
+    auto result = listener->WaitForCallback(kCallbackKeysChange);
+    EXPECT_TRUE(result.no_timeout);
+    EXPECT_TRUE(result.args);
+    EXPECT_EQ(sessionId, result.args->sessionId);
+    EXPECT_EQ(keyStatusList, result.args->keyStatusList);
 }
 
 /**
@@ -963,15 +956,14 @@ TEST_P(DrmHalVendorPluginTest, NotListening) {
     drmPlugin->setListener(nullptr);
 
     SessionId sessionId;
-    vector<uint8_t> data;
+    hidl_vec<uint8_t> data;
     hidl_vec<KeyStatus> keyStatusList;
     drmPlugin->sendEvent(EventType::PROVISION_REQUIRED, sessionId, data);
     drmPlugin->sendExpirationUpdate(sessionId, 100);
     drmPlugin->sendKeysChange(sessionId, keyStatusList, true);
-    usleep(1000); // can't wait for the event to be recieved, just wait a long time
-    EXPECT_EQ(false, listener->gotEvent());
-    EXPECT_EQ(false, listener->gotExpirationUpdate());
-    EXPECT_EQ(false, listener->gotKeysChange());
+    auto result = listener->WaitForCallbackAny(
+            {kCallbackEvent, kCallbackExpirationUpdate, kCallbackKeysChange});
+    EXPECT_FALSE(result.no_timeout);
 }
 
 
