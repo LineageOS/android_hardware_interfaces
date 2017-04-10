@@ -121,6 +121,7 @@ private:
     camera3_device_t* mDevice;
     uint32_t mDeviceVersion;
     bool mIsAELockAvailable;
+    bool mDerivePostRawSensKey;
     uint32_t mNumPartialResults;
     // Stream ID -> Camera3Stream cache
     std::map<int, Camera3Stream> mStreamMap;
@@ -132,6 +133,8 @@ private:
     // (frameNumber, AETriggerOverride) -> inflight request AETriggerOverrides
     std::map<uint32_t, AETriggerCancelOverride> mInflightAETriggerOverrides;
     ::android::hardware::camera::common::V1_0::helper::CameraMetadata mOverridenResult;
+    std::map<uint32_t, bool> mInflightRawBoostPresent;
+    ::android::hardware::camera::common::V1_0::helper::CameraMetadata mOverridenRequest;
 
     // buffers currently ciculating between HAL and camera service
     // key: bufferId sent via HIDL interface
