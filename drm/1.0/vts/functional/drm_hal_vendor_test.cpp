@@ -78,6 +78,7 @@ using std::vector;
 
 using ContentConfiguration = ::DrmHalVTSVendorModule_V1::ContentConfiguration;
 using Key = ::DrmHalVTSVendorModule_V1::ContentConfiguration::Key;
+using VtsTestBase = ::testing::VtsHalHidlTargetTestBase;
 
 #define ASSERT_OK(ret) ASSERT_TRUE(ret.isOk())
 #define EXPECT_OK(ret) EXPECT_TRUE(ret.isOk())
@@ -106,14 +107,22 @@ class DrmHalVendorFactoryTest : public testing::TestWithParam<std::string> {
               GetParam().c_str());
 
         ASSERT_NE(vendorModule, nullptr);
+
+        // First try the binderized service name provided by the vendor module.
+        // If that fails, which it can on non-binderized devices, try the default
+        // service.
         string name = vendorModule->getServiceName();
-        drmFactory =
-                ::testing::VtsHalHidlTargetTestBase::getService<IDrmFactory>(
-                        name != "default" ? name : "drm");
+        drmFactory = VtsTestBase::getService<IDrmFactory>(name);
+        if (drmFactory == nullptr) {
+            drmFactory = VtsTestBase::getService<IDrmFactory>("drm");
+        }
         ASSERT_NE(drmFactory, nullptr);
-        cryptoFactory =
-                ::testing::VtsHalHidlTargetTestBase::getService<ICryptoFactory>(
-                        name != "default" ? name : "crypto");
+
+        // Dot the same for the crypto factory
+        cryptoFactory = VtsTestBase::getService<ICryptoFactory>(name);
+        if (cryptoFactory == nullptr) {
+            VtsTestBase::getService<ICryptoFactory>("crypto");
+        }
         ASSERT_NE(cryptoFactory, nullptr);
     }
 
