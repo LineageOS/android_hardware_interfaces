@@ -1161,6 +1161,10 @@ enum DeviceStateType : int32_t {
                                           // this doesn't mean no data is expected.
 };
 
+enum P2Constant : int32_t {
+    NO_P2 = -1,                           // No P2 value is provided
+};
+
 struct RadioResponseInfo {
     RadioResponseType type;               // Response type
     int32_t serial;                       // Serial number of the request
