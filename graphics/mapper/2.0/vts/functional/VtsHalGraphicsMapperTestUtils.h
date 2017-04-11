@@ -17,13 +17,11 @@
 #ifndef VTS_HAL_GRAPHICS_MAPPER_UTILS
 #define VTS_HAL_GRAPHICS_MAPPER_UTILS
 
-#include <memory>
-#include <unordered_map>
+#include <unordered_set>
 
+#include <android/hardware/graphics/allocator/2.0/IAllocator.h>
 #include <android/hardware/graphics/mapper/2.0/IMapper.h>
 #include <utils/StrongPointer.h>
-
-#include "VtsHalGraphicsAllocatorTestUtils.h"
 
 namespace android {
 namespace hardware {
@@ -32,59 +30,62 @@ namespace mapper {
 namespace V2_0 {
 namespace tests {
 
-using android::hardware::graphics::common::V1_0::PixelFormat;
-using android::hardware::graphics::allocator::V2_0::IAllocatorClient;
-using android::hardware::graphics::allocator::V2_0::tests::AllocatorClient;
+using android::hardware::graphics::allocator::V2_0::IAllocator;
 
-// A wrapper to IMapper.
-class Mapper {
- public:
-  Mapper();
-  ~Mapper();
+// A wrapper to IAllocator and IMapper.
+class Gralloc {
+   public:
+    Gralloc();
+    ~Gralloc();
 
-  sp<IMapper> getRaw() const;
+    // IAllocator methods
 
-  void retain(const native_handle_t* handle);
-  void release(const native_handle_t* handle);
+    sp<IAllocator> getAllocator() const;
 
-  struct Dimensions {
-    uint32_t width;
-    uint32_t height;
-  };
-  Dimensions getDimensions(const native_handle_t* handle);
+    std::string dumpDebugInfo();
 
-  PixelFormat getFormat(const native_handle_t* handle);
-  uint32_t getLayerCount(const native_handle_t* handle);
-  uint64_t getProducerUsageMask(const native_handle_t* handle);
-  uint64_t getConsumerUsageMask(const native_handle_t* handle);
-  BackingStore getBackingStore(const native_handle_t* handle);
-  uint32_t getStride(const native_handle_t* handle);
+    // When import is false, this simply calls IAllocator::allocate. When import
+    // is true, the returned buffers are also imported into the mapper.
+    //
+    // Either case, the returned buffers must be freed with freeBuffer.
+    std::vector<const native_handle_t*> allocate(
+        const BufferDescriptor& descriptor, uint32_t count, bool import = true,
+        uint32_t* outStride = nullptr);
+    const native_handle_t* allocate(
+        const IMapper::BufferDescriptorInfo& descriptorInfo, bool import = true,
+        uint32_t* outStride = nullptr);
 
-  // We use fd instead of hidl_handle in these functions to pass fences
-  // in and out of the mapper.  The ownership of the fd is always transferred
-  // with each of these functions.
-  void* lock(const native_handle_t* handle, uint64_t producerUsageMask,
-             uint64_t consumerUsageMask, const IMapper::Rect& accessRegion,
-             int acquireFence);
-  FlexLayout lockFlex(const native_handle_t* handle, uint64_t producerUsageMask,
-                      uint64_t consumerUsageMask,
-                      const IMapper::Rect& accessRegion, int acquireFence);
-  int unlock(const native_handle_t* handle);
+    // IMapper methods
 
-  // Requests AllocatorClient to allocate a buffer, export the handle, and
-  // register the handle with mapper.
-  const native_handle_t* allocate(
-      std::unique_ptr<AllocatorClient>& allocatorClient,
-      const IAllocatorClient::BufferDescriptorInfo& info);
+    sp<IMapper> getMapper() const;
 
- private:
-  void init();
+    BufferDescriptor createDescriptor(
+        const IMapper::BufferDescriptorInfo& descriptorInfo);
 
-  sp<IMapper> mMapper;
+    const native_handle_t* importBuffer(const hidl_handle& rawHandle);
+    void freeBuffer(const native_handle_t* bufferHandle);
 
-  // Keep track of all registered (retained) handles.  When a test fails with
-  // ASSERT_*, the destructor will release the handles for the test.
-  std::unordered_map<const native_handle_t*, uint64_t> mHandles;
+    // We use fd instead of hidl_handle in these functions to pass fences
+    // in and out of the mapper.  The ownership of the fd is always transferred
+    // with each of these functions.
+    void* lock(const native_handle_t* bufferHandle, uint64_t cpuUsage,
+               const IMapper::Rect& accessRegion, int acquireFence);
+    YCbCrLayout lockYCbCr(const native_handle_t* bufferHandle,
+                          uint64_t cpuUsage, const IMapper::Rect& accessRegion,
+                          int acquireFence);
+    int unlock(const native_handle_t* bufferHandle);
+
+   private:
+    void init();
+    const native_handle_t* cloneBuffer(const hidl_handle& rawHandle);
+
+    sp<IAllocator> mAllocator;
+    sp<IMapper> mMapper;
+
+    // Keep track of all cloned and imported handles.  When a test fails with
+    // ASSERT_*, the destructor will free the handles for the test.
+    std::unordered_set<const native_handle_t*> mClonedBuffers;
+    std::unordered_set<const native_handle_t*> mImportedBuffers;
 };
 
 }  // namespace tests

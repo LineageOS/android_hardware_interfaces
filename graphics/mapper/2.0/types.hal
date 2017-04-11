@@ -16,101 +16,50 @@
 
 package android.hardware.graphics.mapper@2.0;
 
+enum Error : int32_t {
+    NONE            = 0, /** no error */
+    BAD_DESCRIPTOR  = 1, /** invalid BufferDescriptor */
+    BAD_BUFFER      = 2, /** invalid buffer handle */
+    BAD_VALUE       = 3, /** invalid width, height, etc. */
+    /* 4 is reserved */
+    NO_RESOURCES    = 5, /** temporary failure due to resource contention */
+    /* 6 is reserved */
+    UNSUPPORTED     = 7, /** permanent failure */
+};
+
 /**
- * Structures for describing flexible YUVA/RGBA formats for consumption by
- * applications. Such flexible formats contain a plane for each component (e.g.
- * red, green, blue), where each plane is laid out in a grid-like pattern
- * occupying unique byte addresses and with consistent byte offsets between
- * neighboring pixels.
- *
- * The FlexLayout structure is used with any pixel format that can be
- * represented by it, such as:
- *  - PixelFormat::YCBCR_*_888
- *  - PixelFormat::FLEX_RGB*_888
- *  - PixelFormat::RGB[AX]_888[8],BGRA_8888,RGB_888
- *  - PixelFormat::YV12,Y8,Y16,YCBCR_422_SP/I,YCRCB_420_SP
- *  - even implementation defined formats that can be represented by
- *    the structures
- *
- * Vertical increment (aka. row increment or stride) describes the distance in
- * bytes from the first pixel of one row to the first pixel of the next row
- * (below) for the component plane. This can be negative.
- *
- * Horizontal increment (aka. column or pixel increment) describes the distance
- * in bytes from one pixel to the next pixel (to the right) on the same row for
- * the component plane. This can be negative.
- *
- * Each plane can be subsampled either vertically or horizontally by
- * a power-of-two factor.
- *
- * The bit-depth of each component can be arbitrary, as long as the pixels are
- * laid out on whole bytes, in native byte-order, using the most significant
- * bits of each unit.
+ * A buffer descriptor is an implementation-defined opaque data returned by
+ * createDescriptor. It describes the properties of a buffer and is consumed
+ * by the allocator.
  */
+typedef vec<uint32_t> BufferDescriptor;
 
-enum FlexComponent : int32_t {
-    Y  = 1 << 0, /** luma */
-    CB = 1 << 1, /** chroma blue */
-    CR = 1 << 2, /** chroma red */
-
-    R  = 1 << 10, /** red */
-    G  = 1 << 11, /** green */
-    B  = 1 << 12, /** blue */
-
-    A  = 1 << 30, /** alpha */
+/**
+ * Structure for describing YCbCr formats for consumption by applications.
+ * This is used with PixelFormat::YCBCR_*_888.
+ *
+ * Buffer chroma subsampling is defined in the format.
+ * e.g. PixelFormat::YCBCR_420_888 has subsampling 4:2:0.
+ *
+ * Buffers must have a 8 bit depth.
+ *
+ * y, cb, and cr point to the first byte of their respective planes.
+ *
+ * Stride describes the distance in bytes from the first value of one row of
+ * the image to the first value of the next row. It includes the width of the
+ * image plus padding.
+ * yStride is the stride of the luma plane.
+ * cStride is the stride of the chroma planes.
+ *
+ * chromaStep is the distance in bytes from one chroma pixel value to the
+ * next. This is 2 bytes for semiplanar (because chroma values are interleaved
+ * and each chroma value is one byte) and 1 for planar.
+ */
+struct YCbCrLayout {
+    pointer y;
+    pointer cb;
+    pointer cr;
+    uint32_t yStride;
+    uint32_t cStride;
+    uint32_t chromaStep;
 };
-
-enum FlexFormat : int32_t {
-    /** not a flexible format */
-    INVALID = 0x0,
-
-    Y       = FlexComponent:Y,
-    YCBCR   = Y | FlexComponent:CB | FlexComponent:CR,
-    YCBCRA  = YCBCR | FlexComponent:A,
-
-    RGB     = FlexComponent:R | FlexComponent:G | FlexComponent:B,
-    RGBA    = RGB | FlexComponent:A,
-};
-
-struct FlexPlane {
-    /** Pointer to the first byte of the top-left pixel of the plane. */
-    pointer topLeft;
-
-    FlexComponent component;
-
-    /**
-     * Bits allocated for the component in each pixel. Must be a positive
-     * multiple of 8.
-     */
-    int32_t bitsPerComponent;
-
-    /**
-     * Number of the most significant bits used in the format for this
-     * component. Must be between 1 and bitsPerComponent, inclusive.
-     */
-    int32_t bitsUsed;
-
-    /** Horizontal increment. */
-    int32_t hIncrement;
-    /** Vertical increment. */
-    int32_t vIncrement;
-    /** Horizontal subsampling. Must be a positive power of 2. */
-    int32_t hSubsampling;
-    /** Vertical subsampling. Must be a positive power of 2. */
-    int32_t vSubsampling;
-};
-
-struct FlexLayout {
-    /** The kind of flexible format. */
-    FlexFormat format;
-
-    /**
-     * A plane for each component; ordered in increasing component value
-     * order. E.g. FlexFormat::RGBA maps 0 -> R, 1 -> G, etc.  Can have size 0
-     * for FlexFormat::INVALID.
-     */
-    vec<FlexPlane> planes;
-};
-
-/** Backing store ID of a buffer. See IMapper::getBackingStore. */
-typedef uint64_t BackingStore;

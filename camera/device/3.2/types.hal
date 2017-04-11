@@ -16,12 +16,10 @@
 
 package android.hardware.camera.device@3.2;
 
-import android.hardware.graphics.allocator@2.0::types;
 import android.hardware.graphics.common@1.0::types;
 
 typedef vec<uint8_t> CameraMetadata;
-typedef bitfield<ProducerUsage> ProducerUsageFlags;
-typedef bitfield<ConsumerUsage> ConsumerUsageFlags;
+typedef bitfield<BufferUsage> BufferUsageFlags;
 typedef bitfield<Dataspace> DataspaceFlags;
 
 /**
@@ -255,7 +253,7 @@ struct Stream {
      * with ILLEGAL_ARGUMENT if the combined flags cannot be supported due to
      * imcompatible buffer format, dataSpace, or other hardware limitations.
      */
-    ConsumerUsageFlags usage;
+    BufferUsageFlags usage;
 
     /**
      * A field that describes the contents of the buffer. The format and buffer
@@ -373,8 +371,8 @@ struct HalStream {
      * consumerUsage must be set. For other types, producerUsage must be set,
      * and consumerUsage must be 0.
      */
-    ProducerUsageFlags producerUsage;
-    ConsumerUsageFlags consumerUsage;
+    BufferUsageFlags producerUsage;
+    BufferUsageFlags consumerUsage;
 
     /**
      * The maximum number of buffers the HAL device may need to have dequeued at

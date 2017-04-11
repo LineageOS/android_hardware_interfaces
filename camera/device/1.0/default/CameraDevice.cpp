@@ -30,7 +30,7 @@ namespace device {
 namespace V1_0 {
 namespace implementation {
 
-using ::android::hardware::graphics::allocator::V2_0::ProducerUsage;
+using ::android::hardware::graphics::common::V1_0::BufferUsage;
 using ::android::hardware::graphics::common::V1_0::PixelFormat;
 
 HandleImporter& CameraDevice::sHandleImporter = HandleImporter::getInstance();
@@ -259,7 +259,7 @@ int CameraDevice::sSetUsage(struct preview_stream_ops* w, int usage) {
     }
 
     object->cleanUpCirculatingBuffers();
-    return getStatusT(object->mPreviewCallback->setUsage((ProducerUsage) usage));
+    return getStatusT(object->mPreviewCallback->setUsage((BufferUsage)usage));
 }
 
 int CameraDevice::sSetSwapInterval(struct preview_stream_ops *w, int interval) {

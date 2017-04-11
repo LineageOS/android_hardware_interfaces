@@ -650,7 +650,8 @@ Return<void> CameraDeviceSession::configureStreams(
         mVideoStreamIds.clear();
         for (const auto& stream : requestedConfiguration.streams) {
             if (stream.streamType == StreamType::OUTPUT &&
-                    stream.usage & graphics::allocator::V2_0::ConsumerUsage::VIDEO_ENCODER) {
+                stream.usage &
+                    graphics::common::V1_0::BufferUsage::VIDEO_ENCODER) {
                 mVideoStreamIds.push_back(stream.id);
             }
         }

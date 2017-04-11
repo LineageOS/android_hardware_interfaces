@@ -18,7 +18,6 @@
 
 #include <IComposerCommandBuffer.h>
 #include <android-base/logging.h>
-#include "VtsHalGraphicsAllocatorTestUtils.h"
 #include "VtsHalGraphicsComposerTestUtils.h"
 #include "VtsHalGraphicsMapperTestUtils.h"
 
@@ -40,22 +39,15 @@ namespace V2_1 {
 namespace tests {
 namespace {
 
-using android::hardware::graphics::allocator::V2_0::Buffer;
-using android::hardware::graphics::allocator::V2_0::BufferDescriptor;
-using android::hardware::graphics::allocator::V2_0::ConsumerUsage;
-using android::hardware::graphics::allocator::V2_0::IAllocator;
-using android::hardware::graphics::allocator::V2_0::IAllocatorClient;
-using android::hardware::graphics::allocator::V2_0::ProducerUsage;
-using android::hardware::graphics::allocator::V2_0::tests::Allocator;
-using android::hardware::graphics::allocator::V2_0::tests::AllocatorClient;
+using android::hardware::graphics::common::V1_0::BufferUsage;
 using android::hardware::graphics::common::V1_0::ColorMode;
 using android::hardware::graphics::common::V1_0::ColorTransform;
 using android::hardware::graphics::common::V1_0::Dataspace;
 using android::hardware::graphics::common::V1_0::PixelFormat;
 using android::hardware::graphics::common::V1_0::Transform;
 using android::hardware::graphics::mapper::V2_0::IMapper;
-using android::hardware::graphics::mapper::V2_0::tests::Mapper;
-using GrallocError = android::hardware::graphics::allocator::V2_0::Error;
+using android::hardware::graphics::mapper::V2_0::tests::Gralloc;
+using GrallocError = android::hardware::graphics::mapper::V2_0::Error;
 
 // IComposerCallback to be installed with IComposerClient::registerCallback.
 class GraphicsComposerCallback : public IComposerCallback {
@@ -409,9 +401,7 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
   void SetUp() override {
     ASSERT_NO_FATAL_FAILURE(GraphicsComposerHidlTest::SetUp());
 
-    ASSERT_NO_FATAL_FAILURE(mAllocator = std::make_unique<Allocator>());
-    ASSERT_NO_FATAL_FAILURE(mAllocatorClient = mAllocator->createClient());
-    ASSERT_NO_FATAL_FAILURE(mMapper = std::make_unique<Mapper>());
+    ASSERT_NO_FATAL_FAILURE(mGralloc = std::make_unique<Gralloc>());
 
     mWriter = std::make_unique<CommandWriterBase>(1024);
     mReader = std::make_unique<CommandReader>();
@@ -422,15 +412,15 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
   }
 
   const native_handle_t* allocate() {
-    IAllocatorClient::BufferDescriptorInfo info{};
-    info.width = 64;
-    info.height = 64;
-    info.layerCount = 1;
-    info.format = PixelFormat::RGBA_8888;
-    info.producerUsageMask = static_cast<uint64_t>(ProducerUsage::CPU_WRITE);
-    info.consumerUsageMask = static_cast<uint64_t>(ConsumerUsage::CPU_READ);
+      IMapper::BufferDescriptorInfo info{};
+      info.width = 64;
+      info.height = 64;
+      info.layerCount = 1;
+      info.format = PixelFormat::RGBA_8888;
+      info.usage = static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN |
+                                         BufferUsage::CPU_READ_OFTEN);
 
-    return mMapper->allocate(mAllocatorClient, info);
+      return mGralloc->allocate(info);
   }
 
   void execute() {
@@ -507,9 +497,7 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
   std::unique_ptr<CommandReader> mReader;
 
  private:
-  std::unique_ptr<Allocator> mAllocator;
-  std::unique_ptr<AllocatorClient> mAllocatorClient;
-  std::unique_ptr<Mapper> mMapper;
+  std::unique_ptr<Gralloc> mGralloc;
 };
 
 /**

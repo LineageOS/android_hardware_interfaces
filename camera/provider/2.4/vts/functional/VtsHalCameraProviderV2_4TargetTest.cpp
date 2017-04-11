@@ -52,8 +52,8 @@ using ::android::BufferQueue;
 using ::android::BufferItemConsumer;
 using ::android::Surface;
 using ::android::CameraParameters;
+using ::android::hardware::graphics::common::V1_0::BufferUsage;
 using ::android::hardware::graphics::common::V1_0::PixelFormat;
-using ::android::hardware::graphics::allocator::V2_0::ProducerUsage;
 using ::android::hardware::camera::common::V1_0::Status;
 using ::android::hardware::camera::common::V1_0::CameraDeviceStatus;
 using ::android::hardware::camera::common::V1_0::TorchMode;
@@ -233,7 +233,7 @@ struct PreviewWindowCb : public ICameraDevicePreviewCallback {
     Return<Status> setCrop(int32_t left, int32_t top,
             int32_t right, int32_t bottom) override;
 
-    Return<Status> setUsage(ProducerUsage usage) override;
+    Return<Status> setUsage(BufferUsage usage) override;
 
     Return<Status> setSwapInterval(int32_t interval) override;
 
@@ -408,7 +408,7 @@ Return<Status> PreviewWindowCb::setCrop(int32_t left, int32_t top,
     return mapToStatus(rc);
 }
 
-Return<Status> PreviewWindowCb::setUsage(ProducerUsage usage) {
+Return<Status> PreviewWindowCb::setUsage(BufferUsage usage) {
     auto rc = native_window_set_usage(mAnw.get(), static_cast<int>(usage));
     if (rc == ::android::OK) {
         mPreviewUsage =  static_cast<int>(usage);

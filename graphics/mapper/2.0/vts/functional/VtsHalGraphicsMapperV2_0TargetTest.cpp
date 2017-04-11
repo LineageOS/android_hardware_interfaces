@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "graphics_mapper_hidl_hal_test"
+#define LOG_TAG "VtsHalGraphicsMapperV2_0TargetTest"
 
-#include <android-base/logging.h>
 #include <VtsHalHidlTargetTestBase.h>
+#include <android-base/logging.h>
 #include <sync/sync.h>
 #include "VtsHalGraphicsMapperTestUtils.h"
 
@@ -29,202 +29,384 @@ namespace V2_0 {
 namespace tests {
 namespace {
 
-using namespace android::hardware::graphics::allocator::V2_0;
-using namespace android::hardware::graphics::allocator::V2_0::tests;
+using android::hardware::graphics::common::V1_0::BufferUsage;
+using android::hardware::graphics::common::V1_0::PixelFormat;
 
 class GraphicsMapperHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  protected:
   void SetUp() override {
-    ASSERT_NO_FATAL_FAILURE(mAllocator = std::make_unique<Allocator>());
-    ASSERT_NO_FATAL_FAILURE(mAllocatorClient = mAllocator->createClient());
-    ASSERT_NO_FATAL_FAILURE(mMapper = std::make_unique<Mapper>());
+      ASSERT_NO_FATAL_FAILURE(mGralloc = std::make_unique<Gralloc>());
 
-    mDummyDescriptorInfo.width = 64;
-    mDummyDescriptorInfo.height = 64;
-    mDummyDescriptorInfo.layerCount = 1;
-    mDummyDescriptorInfo.format = PixelFormat::RGBA_8888;
-    mDummyDescriptorInfo.producerUsageMask =
-        static_cast<uint64_t>(ProducerUsage::CPU_WRITE);
-    mDummyDescriptorInfo.consumerUsageMask =
-        static_cast<uint64_t>(ConsumerUsage::CPU_READ);
+      mDummyDescriptorInfo.width = 64;
+      mDummyDescriptorInfo.height = 64;
+      mDummyDescriptorInfo.layerCount = 1;
+      mDummyDescriptorInfo.format = PixelFormat::RGBA_8888;
+      mDummyDescriptorInfo.usage = static_cast<uint64_t>(
+          BufferUsage::CPU_WRITE_OFTEN | BufferUsage::CPU_READ_OFTEN);
   }
 
   void TearDown() override {}
 
-  std::unique_ptr<Allocator> mAllocator;
-  std::unique_ptr<AllocatorClient> mAllocatorClient;
-  std::unique_ptr<Mapper> mMapper;
-  IAllocatorClient::BufferDescriptorInfo mDummyDescriptorInfo{};
+  std::unique_ptr<Gralloc> mGralloc;
+  IMapper::BufferDescriptorInfo mDummyDescriptorInfo{};
 };
 
 /**
- * Test IMapper::retain and IMapper::release.
+ * Test IAllocator::dumpDebugInfo by calling it.
  */
-TEST_F(GraphicsMapperHidlTest, RetainRelease) {
-  const native_handle_t* buffer;
-  ASSERT_NO_FATAL_FAILURE(
-      buffer = mMapper->allocate(mAllocatorClient, mDummyDescriptorInfo));
-
-  const int maxRefs = 10;
-  for (int i = 0; i < maxRefs; i++) {
-    ASSERT_NO_FATAL_FAILURE(mMapper->retain(buffer));
-  }
-  for (int i = 0; i < maxRefs; i++) {
-    ASSERT_NO_FATAL_FAILURE(mMapper->release(buffer));
-  }
-
-  ASSERT_NO_FATAL_FAILURE(mMapper->release(buffer));
+TEST_F(GraphicsMapperHidlTest, AllocatorDumpDebugInfo) {
+    mGralloc->dumpDebugInfo();
 }
 
 /**
- * Test IMapper::get* getters.
+ * Test IAllocator::allocate with valid buffer descriptors.
  */
-TEST_F(GraphicsMapperHidlTest, Getters) {
-  const native_handle_t* buffer;
-  ASSERT_NO_FATAL_FAILURE(
-      buffer = mMapper->allocate(mAllocatorClient, mDummyDescriptorInfo));
+TEST_F(GraphicsMapperHidlTest, AllocatorAllocate) {
+    BufferDescriptor descriptor;
+    ASSERT_NO_FATAL_FAILURE(
+        descriptor = mGralloc->createDescriptor(mDummyDescriptorInfo));
 
-  IAllocatorClient::BufferDescriptorInfo info = {};
+    for (uint32_t count = 0; count < 5; count++) {
+        std::vector<const native_handle_t*> bufferHandles;
+        uint32_t stride;
+        ASSERT_NO_FATAL_FAILURE(bufferHandles = mGralloc->allocate(
+                                    descriptor, count, false, &stride));
 
-  Mapper::Dimensions dimensions;
-  ASSERT_NO_FATAL_FAILURE(dimensions = mMapper->getDimensions(buffer));
-  info.width = dimensions.width;
-  info.height = dimensions.height;
+        if (count >= 1) {
+            EXPECT_LE(mDummyDescriptorInfo.width, stride)
+                << "invalid buffer stride";
+        }
 
-  ASSERT_NO_FATAL_FAILURE(info.format = mMapper->getFormat(buffer));
-  ASSERT_NO_FATAL_FAILURE(info.producerUsageMask =
-                              mMapper->getProducerUsageMask(buffer));
-  ASSERT_NO_FATAL_FAILURE(info.consumerUsageMask =
-                              mMapper->getConsumerUsageMask(buffer));
+        for (auto bufferHandle : bufferHandles) {
+            mGralloc->freeBuffer(bufferHandle);
+        }
+    }
+}
 
-  EXPECT_EQ(mDummyDescriptorInfo.width, info.width);
-  EXPECT_EQ(mDummyDescriptorInfo.height, info.height);
-  EXPECT_EQ(mDummyDescriptorInfo.format, info.format);
-  EXPECT_EQ(mDummyDescriptorInfo.producerUsageMask, info.producerUsageMask);
-  EXPECT_EQ(mDummyDescriptorInfo.consumerUsageMask, info.consumerUsageMask);
+/**
+ * Test IAllocator::allocate with invalid buffer descriptors.
+ */
+TEST_F(GraphicsMapperHidlTest, AllocatorAllocateNegative) {
+    // this assumes any valid descriptor is non-empty
+    BufferDescriptor descriptor;
+    mGralloc->getAllocator()->allocate(
+        descriptor, 1, [&](const auto& tmpError, const auto&, const auto&) {
+            EXPECT_EQ(Error::BAD_DESCRIPTOR, tmpError);
+        });
+}
 
-  ASSERT_NO_FATAL_FAILURE(mMapper->getBackingStore(buffer));
+/**
+ * Test IAllocator::allocate does not leak.
+ */
+TEST_F(GraphicsMapperHidlTest, AllocatorAllocateNoLeak) {
+    auto info = mDummyDescriptorInfo;
+    info.width = 1024;
+    info.height = 1024;
 
-  uint32_t stride;
-  ASSERT_NO_FATAL_FAILURE(stride = mMapper->getStride(buffer));
-  EXPECT_LE(info.width, stride);
+    for (int i = 0; i < 2048; i++) {
+        auto bufferHandle = mGralloc->allocate(info, false);
+        mGralloc->freeBuffer(bufferHandle);
+    }
+}
+
+/**
+ * Test IMapper::createDescriptor with valid descriptor info.
+ */
+TEST_F(GraphicsMapperHidlTest, CreateDescriptorBasic) {
+    ASSERT_NO_FATAL_FAILURE(mGralloc->createDescriptor(mDummyDescriptorInfo));
+}
+
+/**
+ * Test IMapper::createDescriptor with invalid descriptor info.
+ */
+TEST_F(GraphicsMapperHidlTest, CreateDescriptorNegative) {
+    auto info = mDummyDescriptorInfo;
+    info.width = 0;
+    mGralloc->getMapper()->createDescriptor(
+        info, [&](const auto& tmpError, const auto&) {
+            EXPECT_EQ(Error::BAD_VALUE, tmpError)
+                << "createDescriptor did not fail with BAD_VALUE";
+        });
+}
+
+/**
+ * Test IMapper::importBuffer and IMapper::freeBuffer with allocated buffers.
+ */
+TEST_F(GraphicsMapperHidlTest, ImportFreeBufferBasic) {
+    const native_handle_t* bufferHandle;
+    ASSERT_NO_FATAL_FAILURE(bufferHandle =
+                                mGralloc->allocate(mDummyDescriptorInfo, true));
+    ASSERT_NO_FATAL_FAILURE(mGralloc->freeBuffer(bufferHandle));
+}
+
+/**
+ * Test IMapper::importBuffer and IMapper::freeBuffer with cloned buffers.
+ */
+TEST_F(GraphicsMapperHidlTest, ImportFreeBufferClone) {
+    const native_handle_t* clonedBufferHandle;
+    ASSERT_NO_FATAL_FAILURE(
+        clonedBufferHandle = mGralloc->allocate(mDummyDescriptorInfo, false));
+
+    // A cloned handle is a raw handle. Check that we can import it multiple
+    // times.
+    const native_handle_t* importedBufferHandles[2];
+    ASSERT_NO_FATAL_FAILURE(importedBufferHandles[0] =
+                                mGralloc->importBuffer(clonedBufferHandle));
+    ASSERT_NO_FATAL_FAILURE(importedBufferHandles[1] =
+                                mGralloc->importBuffer(clonedBufferHandle));
+    ASSERT_NO_FATAL_FAILURE(mGralloc->freeBuffer(importedBufferHandles[0]));
+    ASSERT_NO_FATAL_FAILURE(mGralloc->freeBuffer(importedBufferHandles[1]));
+
+    ASSERT_NO_FATAL_FAILURE(mGralloc->freeBuffer(clonedBufferHandle));
+}
+
+/**
+ * Test IMapper::importBuffer and IMapper::freeBuffer cross mapper instances.
+ */
+TEST_F(GraphicsMapperHidlTest, ImportFreeBufferSingleton) {
+    const native_handle_t* rawHandle;
+    ASSERT_NO_FATAL_FAILURE(
+        rawHandle = mGralloc->allocate(mDummyDescriptorInfo, false));
+
+    native_handle_t* importedHandle = nullptr;
+    mGralloc->getMapper()->importBuffer(
+        rawHandle, [&](const auto& tmpError, const auto& buffer) {
+            ASSERT_EQ(Error::NONE, tmpError);
+            importedHandle = static_cast<native_handle_t*>(buffer);
+        });
+
+    // free the imported handle with another mapper
+    std::unique_ptr<Gralloc> anotherGralloc;
+    ASSERT_NO_FATAL_FAILURE(anotherGralloc = std::make_unique<Gralloc>());
+    Error error = mGralloc->getMapper()->freeBuffer(importedHandle);
+    ASSERT_EQ(Error::NONE, error);
+
+    ASSERT_NO_FATAL_FAILURE(mGralloc->freeBuffer(rawHandle));
+}
+
+/**
+ * Test IMapper::importBuffer and IMapper::freeBuffer do not leak.
+ */
+TEST_F(GraphicsMapperHidlTest, ImportFreeBufferNoLeak) {
+    auto info = mDummyDescriptorInfo;
+    info.width = 1024;
+    info.height = 1024;
+
+    for (int i = 0; i < 2048; i++) {
+        auto bufferHandle = mGralloc->allocate(info, true);
+        mGralloc->freeBuffer(bufferHandle);
+    }
+}
+
+/**
+ * Test IMapper::importBuffer with invalid buffers.
+ */
+TEST_F(GraphicsMapperHidlTest, ImportBufferNegative) {
+    native_handle_t* invalidHandle = nullptr;
+    mGralloc->getMapper()->importBuffer(
+        invalidHandle, [&](const auto& tmpError, const auto&) {
+            EXPECT_EQ(Error::BAD_BUFFER, tmpError)
+                << "importBuffer with nullptr did not fail with BAD_BUFFER";
+        });
+
+    invalidHandle = native_handle_create(0, 0);
+    mGralloc->getMapper()->importBuffer(invalidHandle, [&](const auto& tmpError,
+                                                           const auto&) {
+        EXPECT_EQ(Error::BAD_BUFFER, tmpError)
+            << "importBuffer with invalid handle did not fail with BAD_BUFFER";
+    });
+    native_handle_delete(invalidHandle);
+
+    const native_handle_t* importedHandle;
+    ASSERT_NO_FATAL_FAILURE(importedHandle =
+                                mGralloc->allocate(mDummyDescriptorInfo, true));
+    mGralloc->getMapper()->importBuffer(
+        importedHandle, [&](const auto& tmpError, const auto&) {
+            EXPECT_EQ(Error::BAD_BUFFER, tmpError)
+                << "importBuffer with an "
+                   "already imported handle did "
+                   "not fail with BAD_BUFFER";
+        });
+    mGralloc->freeBuffer(importedHandle);
+}
+
+/**
+ * Test IMapper::freeBuffer with invalid buffers.
+ */
+TEST_F(GraphicsMapperHidlTest, FreeBufferNegative) {
+    native_handle_t* invalidHandle = nullptr;
+    Error error = mGralloc->getMapper()->freeBuffer(invalidHandle);
+    EXPECT_EQ(Error::BAD_BUFFER, error)
+        << "freeBuffer with nullptr did not fail with BAD_BUFFER";
+
+    invalidHandle = native_handle_create(0, 0);
+    error = mGralloc->getMapper()->freeBuffer(invalidHandle);
+    EXPECT_EQ(Error::BAD_BUFFER, error)
+        << "freeBuffer with invalid handle did not fail with BAD_BUFFER";
+    native_handle_delete(invalidHandle);
+
+    const native_handle_t* clonedBufferHandle;
+    ASSERT_NO_FATAL_FAILURE(
+        clonedBufferHandle = mGralloc->allocate(mDummyDescriptorInfo, false));
+    error = mGralloc->getMapper()->freeBuffer(invalidHandle);
+    EXPECT_EQ(Error::BAD_BUFFER, error)
+        << "freeBuffer with un-imported handle did not fail with BAD_BUFFER";
+
+    mGralloc->freeBuffer(clonedBufferHandle);
 }
 
 /**
  * Test IMapper::lock and IMapper::unlock.
  */
-TEST_F(GraphicsMapperHidlTest, LockBasic) {
-  const auto& info = mDummyDescriptorInfo;
+TEST_F(GraphicsMapperHidlTest, LockUnlockBasic) {
+    const auto& info = mDummyDescriptorInfo;
 
-  const native_handle_t* buffer;
-  ASSERT_NO_FATAL_FAILURE(
-      buffer = mMapper->allocate(mAllocatorClient, mDummyDescriptorInfo));
+    const native_handle_t* bufferHandle;
+    uint32_t stride;
+    ASSERT_NO_FATAL_FAILURE(bufferHandle =
+                                mGralloc->allocate(info, true, &stride));
 
-  uint32_t stride;
-  ASSERT_NO_FATAL_FAILURE(stride = mMapper->getStride(buffer));
+    // lock buffer for writing
+    const IMapper::Rect region{0, 0, static_cast<int32_t>(info.width),
+                               static_cast<int32_t>(info.height)};
+    int fence = -1;
+    uint8_t* data;
+    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(mGralloc->lock(
+                                bufferHandle, info.usage, region, fence)));
 
-  // lock buffer for writing
-  const IMapper::Rect region{0, 0, static_cast<int32_t>(info.width),
-                             static_cast<int32_t>(info.height)};
-  int fence = -1;
-  uint32_t* data;
-  ASSERT_NO_FATAL_FAILURE(
-      data = static_cast<uint32_t*>(
-          mMapper->lock(buffer, info.producerUsageMask, 0, region, fence)));
+    // RGBA_8888
+    size_t strideInBytes = stride * 4;
+    size_t writeInBytes = info.width * 4;
 
-  for (uint32_t y = 0; y < info.height; y++) {
-    for (uint32_t x = 0; x < info.width; x++) {
-      data[stride * y + x] = info.height * y + x;
+    for (uint32_t y = 0; y < info.height; y++) {
+        memset(data, y, writeInBytes);
+        data += strideInBytes;
     }
-  }
 
-  ASSERT_NO_FATAL_FAILURE(fence = mMapper->unlock(buffer));
+    ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(bufferHandle));
 
-  // lock buffer for reading
-  ASSERT_NO_FATAL_FAILURE(
-      data = static_cast<uint32_t*>(
-          mMapper->lock(buffer, 0, info.consumerUsageMask, region, fence)));
-  for (uint32_t y = 0; y < info.height; y++) {
-    for (uint32_t x = 0; x < info.width; x++) {
-      EXPECT_EQ(info.height * y + x, data[stride * y + x]);
+    // lock again for reading
+    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(mGralloc->lock(
+                                bufferHandle, info.usage, region, fence)));
+    for (uint32_t y = 0; y < info.height; y++) {
+        for (size_t i = 0; i < writeInBytes; i++) {
+            EXPECT_EQ(static_cast<uint8_t>(y), data[i]);
+        }
+        data += strideInBytes;
     }
-  }
 
-  ASSERT_NO_FATAL_FAILURE(fence = mMapper->unlock(buffer));
-  if (fence >= 0) {
-    close(fence);
-  }
+    ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(bufferHandle));
+    if (fence >= 0) {
+        close(fence);
+    }
 }
 
 /**
- * Test IMapper::lockFlex.  This locks a YV12 buffer, and makes sure we can
+ * Test IMapper::lockYCbCr.  This locks a YV12 buffer, and makes sure we can
  * write to and read from it.
  */
-TEST_F(GraphicsMapperHidlTest, LockFlexBasic) {
-  auto info = mDummyDescriptorInfo;
-  info.format = PixelFormat::YV12;
+TEST_F(GraphicsMapperHidlTest, LockYCbCrBasic) {
+    auto info = mDummyDescriptorInfo;
+    info.format = PixelFormat::YV12;
 
-  const native_handle_t* buffer;
-  ASSERT_NO_FATAL_FAILURE(buffer = mMapper->allocate(mAllocatorClient, info));
+    const native_handle_t* bufferHandle;
+    uint32_t stride;
+    ASSERT_NO_FATAL_FAILURE(bufferHandle =
+                                mGralloc->allocate(info, true, &stride));
 
-  // lock buffer for writing
-  const IMapper::Rect region{0, 0, static_cast<int32_t>(info.width),
-                             static_cast<int32_t>(info.height)};
-  int fence = -1;
-  FlexLayout layout;
-  ASSERT_NO_FATAL_FAILURE(
-      layout =
-          mMapper->lockFlex(buffer, info.producerUsageMask, 0, region, fence));
-  ASSERT_EQ(FlexFormat::YCBCR, layout.format);
-  ASSERT_EQ(3u, layout.planes.size());
+    // lock buffer for writing
+    const IMapper::Rect region{0, 0, static_cast<int32_t>(info.width),
+                               static_cast<int32_t>(info.height)};
+    int fence = -1;
+    YCbCrLayout layout;
+    ASSERT_NO_FATAL_FAILURE(
+        layout = mGralloc->lockYCbCr(bufferHandle, info.usage, region, fence));
 
-  const auto y_stride = layout.planes[0].vIncrement;
-  const auto c_stride = layout.planes[1].vIncrement;
-  auto y_data = static_cast<uint8_t*>(layout.planes[0].topLeft);
-  auto cb_data = static_cast<uint8_t*>(layout.planes[1].topLeft);
-  auto cr_data = static_cast<uint8_t*>(layout.planes[2].topLeft);
+    auto yData = static_cast<uint8_t*>(layout.y);
+    auto cbData = static_cast<uint8_t*>(layout.cb);
+    auto crData = static_cast<uint8_t*>(layout.cr);
+    for (uint32_t y = 0; y < info.height; y++) {
+        for (uint32_t x = 0; x < info.width; x++) {
+            auto val = static_cast<uint8_t>(info.height * y + x);
 
-  for (uint32_t y = 0; y < info.height; y++) {
-    for (uint32_t x = 0; x < info.width; x++) {
-      auto val = static_cast<uint8_t>(info.height * y + x);
-
-      y_data[y_stride * y + x] = val;
-      if (y % 2 == 0 && x % 2 == 0) {
-        cb_data[c_stride * y / 2 + x / 2] = val;
-        cr_data[c_stride * y / 2 + x / 2] = val;
-      }
+            yData[layout.yStride * y + x] = val;
+            if (y % 2 == 0 && x % 2 == 0) {
+                cbData[layout.cStride * y / 2 + x / 2] = val;
+                crData[layout.cStride * y / 2 + x / 2] = val;
+            }
+        }
     }
-  }
 
-  ASSERT_NO_FATAL_FAILURE(fence = mMapper->unlock(buffer));
+    ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(bufferHandle));
 
-  // lock buffer for reading
-  ASSERT_NO_FATAL_FAILURE(
-      layout =
-          mMapper->lockFlex(buffer, 0, info.consumerUsageMask, region, fence));
+    // lock again for reading
+    ASSERT_NO_FATAL_FAILURE(
+        layout = mGralloc->lockYCbCr(bufferHandle, info.usage, region, fence));
 
-  y_data = static_cast<uint8_t*>(layout.planes[0].topLeft);
-  cb_data = static_cast<uint8_t*>(layout.planes[1].topLeft);
-  cr_data = static_cast<uint8_t*>(layout.planes[2].topLeft);
-  for (uint32_t y = 0; y < info.height; y++) {
-    for (uint32_t x = 0; x < info.width; x++) {
-      auto val = static_cast<uint8_t>(info.height * y + x);
+    yData = static_cast<uint8_t*>(layout.y);
+    cbData = static_cast<uint8_t*>(layout.cb);
+    crData = static_cast<uint8_t*>(layout.cr);
+    for (uint32_t y = 0; y < info.height; y++) {
+        for (uint32_t x = 0; x < info.width; x++) {
+            auto val = static_cast<uint8_t>(info.height * y + x);
 
-      EXPECT_EQ(val, y_data[y_stride * y + x]);
-      if (y % 2 == 0 && x % 2 == 0) {
-        EXPECT_EQ(val, cb_data[c_stride * y / 2 + x / 2]);
-        EXPECT_EQ(val, cr_data[c_stride * y / 2 + x / 2]);
-      }
+            EXPECT_EQ(val, yData[layout.yStride * y + x]);
+            if (y % 2 == 0 && x % 2 == 0) {
+                EXPECT_EQ(val, cbData[layout.cStride * y / 2 + x / 2]);
+                EXPECT_EQ(val, crData[layout.cStride * y / 2 + x / 2]);
+            }
+        }
     }
-  }
 
-  ASSERT_NO_FATAL_FAILURE(fence = mMapper->unlock(buffer));
-  if (fence >= 0) {
-    close(fence);
-  }
+    ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(bufferHandle));
+    if (fence >= 0) {
+        close(fence);
+    }
 }
 
-}  // namespace anonymous
+/**
+ * Test IMapper::unlock with invalid buffers.
+ */
+TEST_F(GraphicsMapperHidlTest, UnlockNegative) {
+    native_handle_t* invalidHandle = nullptr;
+    mGralloc->getMapper()->unlock(
+        invalidHandle, [&](const auto& tmpError, const auto&) {
+            EXPECT_EQ(Error::BAD_BUFFER, tmpError)
+                << "unlock with nullptr did not fail with BAD_BUFFER";
+        });
+
+    invalidHandle = native_handle_create(0, 0);
+    mGralloc->getMapper()->unlock(
+        invalidHandle, [&](const auto& tmpError, const auto&) {
+            EXPECT_EQ(Error::BAD_BUFFER, tmpError)
+                << "unlock with invalid handle did not fail with BAD_BUFFER";
+        });
+    native_handle_delete(invalidHandle);
+
+    ASSERT_NO_FATAL_FAILURE(invalidHandle =
+                                const_cast<native_handle_t*>(mGralloc->allocate(
+                                    mDummyDescriptorInfo, false)));
+    mGralloc->getMapper()->unlock(invalidHandle, [&](const auto& tmpError,
+                                                     const auto&) {
+        EXPECT_EQ(Error::BAD_BUFFER, tmpError)
+            << "unlock with un-imported handle did not fail with BAD_BUFFER";
+    });
+    mGralloc->freeBuffer(invalidHandle);
+
+// disabled as it fails on many existing drivers
+#if 0
+  ASSERT_NO_FATAL_FAILURE(invalidHandle = const_cast<native_handle_t*>(
+                              mGralloc->allocate(mDummyDescriptorInfo, true)));
+  mGralloc->getMapper()->unlock(
+      invalidHandle, [&](const auto& tmpError, const auto&) {
+        EXPECT_EQ(Error::BAD_BUFFER, tmpError)
+            << "unlock with unlocked handle did not fail with BAD_BUFFER";
+      });
+  mGralloc->freeBuffer(invalidHandle);
+#endif
+}
+
+}  // namespace
 }  // namespace tests
 }  // namespace V2_0
 }  // namespace mapper
