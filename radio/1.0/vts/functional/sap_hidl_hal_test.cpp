@@ -18,7 +18,7 @@
 
 void SapHidlTest::SetUp() {
   sap = ::testing::VtsHalHidlTargetTestBase::getService<ISap>(
-      hidl_string("sap_uim_socket1"));
+      hidl_string(SAP_SERVICE_NAME));
   ASSERT_NE(sap, nullptr);
 
   sapCb = new SapCallback(*this);
