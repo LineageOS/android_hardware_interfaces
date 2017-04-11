@@ -23,7 +23,6 @@
 
 #include <android/log.h>
 #include <cutils/native_handle.h>
-#include <ui/GraphicBufferMapper.h>
 #include <ui/GraphicBuffer.h>
 
 #include <algorithm>    // std::min
@@ -135,11 +134,7 @@ Return<void> FrameHandler::deliverFrame(const BufferDesc& bufferArg) {
     // Local flag we use to keep track of when the stream is stopping
     bool timeToStop = false;
 
-    // TODO:  Why do we get a gralloc crash if we don't clone the buffer here?
-    BufferDesc buffer(bufferArg);
-    ALOGD("Clone the received frame as %p", buffer.memHandle.getNativeHandle());
-
-    if (buffer.memHandle.getNativeHandle() == nullptr) {
+    if (bufferArg.memHandle.getNativeHandle() == nullptr) {
         // Signal that the last frame has been received and the stream is stopped
         timeToStop = true;
     } else {
@@ -157,13 +152,8 @@ Return<void> FrameHandler::deliverFrame(const BufferDesc& bufferArg) {
                 printf("Didn't get target buffer - frame lost\n");
                 ALOGE("Didn't get requested output buffer -- skipping this frame.");
             } else {
-                // In order for the handles passed through HIDL and stored in the BufferDesc to
-                // be lockable, we must register them with GraphicBufferMapper
-                registerBufferHelper(tgtBuffer);
-                registerBufferHelper(buffer);
-
                 // Copy the contents of the of buffer.memHandle into tgtBuffer
-                copyBufferContents(tgtBuffer, buffer);
+                copyBufferContents(tgtBuffer, bufferArg);
 
                 // Send the target buffer back for display
                 Return <EvsResult> result = mDisplay->returnTargetBufferForDisplay(tgtBuffer);
@@ -183,10 +173,6 @@ Return<void> FrameHandler::deliverFrame(const BufferDesc& bufferArg) {
                     mFramesDisplayed++;
                     mLock.unlock();
                 }
-
-                // Now tell GraphicBufferMapper we won't be using these handles anymore
-                unregisterBufferHelper(tgtBuffer);
-                unregisterBufferHelper(buffer);
             }
         }
 
@@ -233,24 +219,22 @@ bool FrameHandler::copyBufferContents(const BufferDesc& tgtBuffer,
     const unsigned height    = std::min(tgtBuffer.height,
                                         srcBuffer.height);
 
-    android::GraphicBufferMapper &mapper = android::GraphicBufferMapper::get();
-
+    sp<android::GraphicBuffer> tgt = new android::GraphicBuffer(
+        tgtBuffer.memHandle, android::GraphicBuffer::CLONE_HANDLE,
+        tgtBuffer.width, tgtBuffer.height, tgtBuffer.format, 1, tgtBuffer.usage,
+        tgtBuffer.stride);
+    sp<android::GraphicBuffer> src = new android::GraphicBuffer(
+        srcBuffer.memHandle, android::GraphicBuffer::CLONE_HANDLE,
+        srcBuffer.width, srcBuffer.height, srcBuffer.format, 1, srcBuffer.usage,
+        srcBuffer.stride);
 
     // Lock our source buffer for reading
     unsigned char* srcPixels = nullptr;
-    mapper.registerBuffer(srcBuffer.memHandle);
-    mapper.lock(srcBuffer.memHandle,
-                GRALLOC_USAGE_SW_READ_OFTEN,
-                android::Rect(width, height),
-                (void **) &srcPixels);
+    src->lock(GRALLOC_USAGE_SW_READ_OFTEN, (void**)&srcPixels);
 
     // Lock our target buffer for writing
     unsigned char* tgtPixels = nullptr;
-    mapper.registerBuffer(tgtBuffer.memHandle);
-    mapper.lock(tgtBuffer.memHandle,
-                GRALLOC_USAGE_SW_WRITE_OFTEN,
-                android::Rect(width, height),
-                (void **) &tgtPixels);
+    tgt->lock(GRALLOC_USAGE_SW_WRITE_OFTEN, (void**)&tgtPixels);
 
     if (srcPixels && tgtPixels) {
         for (unsigned row = 0; row < height; row++) {
@@ -267,45 +251,11 @@ bool FrameHandler::copyBufferContents(const BufferDesc& tgtBuffer,
     }
 
     if (srcPixels) {
-        mapper.unlock(srcBuffer.memHandle);
+        src->unlock();
     }
     if (tgtPixels) {
-        mapper.unlock(tgtBuffer.memHandle);
+        tgt->unlock();
     }
-    mapper.unregisterBuffer(srcBuffer.memHandle);
-    mapper.unregisterBuffer(tgtBuffer.memHandle);
 
     return success;
-}
-
-
-void FrameHandler::registerBufferHelper(const BufferDesc& buffer)
-{
-    // In order for the handles passed through HIDL and stored in the BufferDesc to
-    // be lockable, we must register them with GraphicBufferMapper.
-    // If the device upon which we're running supports gralloc1, we could just call
-    // registerBuffer directly with the handle.  But that call  is broken for gralloc0 devices
-    // (which we care about, at least for now).  As a result, we have to synthesize a GraphicBuffer
-    // object around the buffer handle in order to make a call to the overloaded alternate
-    // version of the registerBuffer call that does happen to work on gralloc0 devices.
-#if REGISTER_BUFFER_ALWAYS_WORKS
-    android::GraphicBufferMapper::get().registerBuffer(buffer.memHandle);
-#else
-    android::sp<android::GraphicBuffer> pGfxBuff = new android::GraphicBuffer(
-            buffer.width, buffer.height, buffer.format,
-            1, /* we always use exactly one layer */
-            buffer.usage, buffer.stride,
-            const_cast<native_handle_t*>(buffer.memHandle.getNativeHandle()),
-            false /* GraphicBuffer should not try to free the handle */
-    );
-
-    android::GraphicBufferMapper::get().registerBuffer(pGfxBuff.get());
-#endif
-}
-
-
-void FrameHandler::unregisterBufferHelper(const BufferDesc& buffer)
-{
-    // Now tell GraphicBufferMapper we won't be using these handles anymore
-    android::GraphicBufferMapper::get().unregisterBuffer(buffer.memHandle);
 }

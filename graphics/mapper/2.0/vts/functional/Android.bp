@@ -24,7 +24,6 @@ cc_library_static {
     ],
     static_libs: [
         "VtsHalHidlTargetTestBase",
-        "libVtsHalGraphicsAllocatorTestUtils",
     ],
     cflags: [
         "-Wall",
@@ -54,7 +53,6 @@ cc_test {
         "android.hardware.graphics.common@1.0",
     ],
     static_libs: [
-        "libVtsHalGraphicsAllocatorTestUtils",
         "libVtsHalGraphicsMapperTestUtils",
         "VtsHalHidlTargetTestBase",
     ],

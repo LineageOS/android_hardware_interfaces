@@ -28,8 +28,7 @@ namespace implementation {
 
 using ::android::hardware::graphics::common::V1_0::Dataspace;
 using ::android::hardware::graphics::common::V1_0::PixelFormat;
-using ::android::hardware::camera::device::V3_2::ConsumerUsageFlags;
-using ::android::hardware::camera::device::V3_2::ProducerUsageFlags;
+using ::android::hardware::camera::device::V3_2::BufferUsageFlags;
 
 bool convertFromHidl(const CameraMetadata &src, const camera_metadata_t** dst) {
     if (src.size() == 0) {
@@ -78,11 +77,11 @@ void convertToHidl(const Camera3Stream* src, HalStream* dst) {
     dst->overrideFormat = (PixelFormat) src->format;
     dst->maxBuffers = src->max_buffers;
     if (src->stream_type == CAMERA3_STREAM_OUTPUT) {
-        dst->consumerUsage = (ConsumerUsageFlags) 0;
-        dst->producerUsage = (ProducerUsageFlags) src->usage;
+        dst->consumerUsage = (BufferUsageFlags)0;
+        dst->producerUsage = (BufferUsageFlags)src->usage;
     } else if (src->stream_type == CAMERA3_STREAM_INPUT) {
-        dst->producerUsage = (ProducerUsageFlags) 0;
-        dst->consumerUsage = (ConsumerUsageFlags) src->usage;
+        dst->producerUsage = (BufferUsageFlags)0;
+        dst->consumerUsage = (BufferUsageFlags)src->usage;
     } else {
         //Should not reach here per current HIDL spec, but we might end up adding
         // bi-directional stream to HIDL.

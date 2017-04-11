@@ -16,38 +16,9 @@
 
 package android.hardware.graphics.allocator@2.0;
 
-import IAllocatorClient;
+import android.hardware.graphics.mapper@2.0;
 
 interface IAllocator {
-    enum Capability : int32_t {
-        /** reserved */
-        INVALID = 0,
-
-        /**
-         * IAllocatorClient::testAllocate must always return UNDEFINED unless
-         * this capability is supported.
-         */
-        TEST_ALLOCATE = 1,
-
-        /**
-         * IAllocatorClient::BufferDescriptorInfo::layerCount must be 1 unless
-         * this capability is supported.
-         */
-        LAYERED_BUFFERS = 2,
-    };
-
-    /**
-     * Provides a list of supported capabilities (as described in the
-     * definition of Capability above). This list must not change after
-     * initialization.
-     *
-     * @return capabilities is a list of supported capabilities.
-     */
-    @entry
-    @exit
-    @callflow(next="*")
-    getCapabilities() generates (vec<Capability> capabilities);
-
     /**
      * Retrieves implementation-defined debug information, which will be
      * displayed during, for example, `dumpsys SurfaceFlinger`.
@@ -60,15 +31,27 @@ interface IAllocator {
     dumpDebugInfo() generates (string debugInfo);
 
     /**
-     * Creates a client of the allocator. All resources created by the client
-     * are owned by the client and are only visible to the client, unless they
-     * are exported by exportHandle.
+     * Allocates buffers with the properties specified by the descriptor.
      *
+     * @param descriptor specifies the properties of the buffers to allocate.
+     * @param count is the number of buffers to allocate.
      * @return error is NONE upon success. Otherwise,
-     *         NO_RESOURCES when no more client can currently be created.
-     * @return client is the newly created client.
+     *         BAD_DESCRIPTOR when the descriptor is invalid.
+     *         NO_RESOURCES when the allocation cannot be fulfilled at this
+     *                      time.
+     *         UNSUPPORTED when any of the property encoded in the descriptor
+     *                     is not supported.
+     * @return stride is the number of pixels between two consecutive rows of
+     *         the buffers, when the concept of consecutive rows is defined.
+     *         Otherwise, it has no meaning.
+     * @return buffers is an array of raw handles to the newly allocated
+     *         buffers.
      */
     @entry
+    @exit
     @callflow(next="*")
-    createClient() generates (Error error, IAllocatorClient client);
+    allocate(BufferDescriptor descriptor, uint32_t count)
+        generates (Error error,
+                   uint32_t stride,
+                   vec<handle> buffers);
 };

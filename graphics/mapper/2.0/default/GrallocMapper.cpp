@@ -17,14 +17,14 @@
 
 #include "GrallocMapper.h"
 
-#include <mutex>
-#include <vector>
-#include <unordered_map>
+#include "Gralloc0Mapper.h"
+#include "Gralloc1Mapper.h"
+#include "GrallocBufferDescriptor.h"
 
-#include <string.h>
+#include <inttypes.h>
 
-#include <hardware/gralloc1.h>
 #include <log/log.h>
+#include <sync/sync.h>
 
 namespace android {
 namespace hardware {
@@ -33,373 +33,250 @@ namespace mapper {
 namespace V2_0 {
 namespace implementation {
 
-namespace {
-
-using android::hardware::graphics::allocator::V2_0::Error;
+using android::hardware::graphics::common::V1_0::BufferUsage;
 using android::hardware::graphics::common::V1_0::PixelFormat;
 
-class GrallocMapperHal : public IMapper {
-public:
-    GrallocMapperHal(const hw_module_t* module);
-    ~GrallocMapperHal();
+std::mutex GrallocMapper::mMutex;
+std::unordered_set<buffer_handle_t> GrallocMapper::mRegisteredHandles;
 
-    // IMapper interface
-    Return<Error> retain(const hidl_handle& bufferHandle) override;
-    Return<Error> release(const hidl_handle& bufferHandle) override;
-    Return<void> getDimensions(const hidl_handle& bufferHandle,
-            getDimensions_cb hidl_cb) override;
-    Return<void> getFormat(const hidl_handle& bufferHandle,
-            getFormat_cb hidl_cb) override;
-    Return<void> getLayerCount(const hidl_handle& bufferHandle,
-            getLayerCount_cb hidl_cb) override;
-    Return<void> getProducerUsageMask(const hidl_handle& bufferHandle,
-            getProducerUsageMask_cb hidl_cb) override;
-    Return<void> getConsumerUsageMask(const hidl_handle& bufferHandle,
-            getConsumerUsageMask_cb hidl_cb) override;
-    Return<void> getBackingStore(const hidl_handle& bufferHandle,
-            getBackingStore_cb hidl_cb) override;
-    Return<void> getStride(const hidl_handle& bufferHandle,
-            getStride_cb hidl_cb) override;
-    Return<void> lock(const hidl_handle& bufferHandle,
-            uint64_t producerUsageMask, uint64_t consumerUsageMask,
-            const IMapper::Rect& accessRegion, const hidl_handle& acquireFence,
-            lock_cb hidl_cb) override;
-    Return<void> lockFlex(const hidl_handle& bufferHandle,
-            uint64_t producerUsageMask, uint64_t consumerUsageMask,
-            const IMapper::Rect& accessRegion, const hidl_handle& acquireFence,
-            lockFlex_cb hidl_cb) override;
-    Return<void> unlock(const hidl_handle& bufferHandle,
-            unlock_cb hidl_cb) override;
+bool GrallocMapper::validateDescriptorInfo(
+    const BufferDescriptorInfo& descriptorInfo) const {
+    const uint64_t validUsageBits =
+        BufferUsage::CPU_READ_MASK | BufferUsage::CPU_WRITE_MASK |
+        BufferUsage::GPU_TEXTURE | BufferUsage::GPU_RENDER_TARGET |
+        BufferUsage::COMPOSER_OVERLAY | BufferUsage::COMPOSER_CLIENT_TARGET |
+        BufferUsage::PROTECTED | BufferUsage::COMPOSER_CURSOR |
+        BufferUsage::VIDEO_ENCODER | BufferUsage::CAMERA_OUTPUT |
+        BufferUsage::CAMERA_INPUT | BufferUsage::RENDERSCRIPT |
+        BufferUsage::VIDEO_DECODER | BufferUsage::SENSOR_DIRECT_DATA |
+        BufferUsage::GPU_DATA_BUFFER | BufferUsage::VENDOR_MASK |
+        (mCapabilities.highUsageBits ? BufferUsage::VENDOR_MASK_HI
+                                     : static_cast<BufferUsage>(0));
 
-private:
-    void initCapabilities();
-
-    template<typename T>
-    void initDispatch(gralloc1_function_descriptor_t desc, T* outPfn);
-    void initDispatch();
-
-    static gralloc1_rect_t asGralloc1Rect(const IMapper::Rect& rect);
-    static bool dupFence(const hidl_handle& fenceHandle, int* outFd);
-
-    gralloc1_device_t* mDevice;
-
-    struct {
-        bool layeredBuffers;
-    } mCapabilities;
-
-    struct {
-        GRALLOC1_PFN_RETAIN retain;
-        GRALLOC1_PFN_RELEASE release;
-        GRALLOC1_PFN_GET_DIMENSIONS getDimensions;
-        GRALLOC1_PFN_GET_FORMAT getFormat;
-        GRALLOC1_PFN_GET_LAYER_COUNT getLayerCount;
-        GRALLOC1_PFN_GET_PRODUCER_USAGE getProducerUsage;
-        GRALLOC1_PFN_GET_CONSUMER_USAGE getConsumerUsage;
-        GRALLOC1_PFN_GET_BACKING_STORE getBackingStore;
-        GRALLOC1_PFN_GET_STRIDE getStride;
-        GRALLOC1_PFN_GET_NUM_FLEX_PLANES getNumFlexPlanes;
-        GRALLOC1_PFN_LOCK lock;
-        GRALLOC1_PFN_LOCK_FLEX lockFlex;
-        GRALLOC1_PFN_UNLOCK unlock;
-    } mDispatch;
-
-    std::mutex mMutex;
-    std::unordered_map<buffer_handle_t, size_t> mBufferReferenceCounts;
-};
-
-GrallocMapperHal::GrallocMapperHal(const hw_module_t* module)
-    : mDevice(nullptr), mCapabilities(), mDispatch()
-{
-    int status = gralloc1_open(module, &mDevice);
-    if (status) {
-        LOG_ALWAYS_FATAL("failed to open gralloc1 device: %s",
-                strerror(-status));
-    }
-
-    initCapabilities();
-    initDispatch();
-}
-
-GrallocMapperHal::~GrallocMapperHal()
-{
-    gralloc1_close(mDevice);
-}
-
-void GrallocMapperHal::initCapabilities()
-{
-    uint32_t count = 0;
-    mDevice->getCapabilities(mDevice, &count, nullptr);
-
-    std::vector<int32_t> caps(count);
-    mDevice->getCapabilities(mDevice, &count, caps.data());
-    caps.resize(count);
-
-    for (auto cap : caps) {
-        switch (cap) {
-        case GRALLOC1_CAPABILITY_LAYERED_BUFFERS:
-            mCapabilities.layeredBuffers = true;
-            break;
-        default:
-            break;
-        }
-    }
-}
-
-template<typename T>
-void GrallocMapperHal::initDispatch(gralloc1_function_descriptor_t desc,
-        T* outPfn)
-{
-    auto pfn = mDevice->getFunction(mDevice, desc);
-    if (!pfn) {
-        LOG_ALWAYS_FATAL("failed to get gralloc1 function %d", desc);
-    }
-
-    *outPfn = reinterpret_cast<T>(pfn);
-}
-
-void GrallocMapperHal::initDispatch()
-{
-    initDispatch(GRALLOC1_FUNCTION_RETAIN, &mDispatch.retain);
-    initDispatch(GRALLOC1_FUNCTION_RELEASE, &mDispatch.release);
-    initDispatch(GRALLOC1_FUNCTION_GET_DIMENSIONS, &mDispatch.getDimensions);
-    initDispatch(GRALLOC1_FUNCTION_GET_FORMAT, &mDispatch.getFormat);
-    if (mCapabilities.layeredBuffers) {
-        initDispatch(GRALLOC1_FUNCTION_GET_LAYER_COUNT,
-                &mDispatch.getLayerCount);
-    }
-    initDispatch(GRALLOC1_FUNCTION_GET_PRODUCER_USAGE,
-            &mDispatch.getProducerUsage);
-    initDispatch(GRALLOC1_FUNCTION_GET_CONSUMER_USAGE,
-            &mDispatch.getConsumerUsage);
-    initDispatch(GRALLOC1_FUNCTION_GET_BACKING_STORE,
-            &mDispatch.getBackingStore);
-    initDispatch(GRALLOC1_FUNCTION_GET_STRIDE, &mDispatch.getStride);
-    initDispatch(GRALLOC1_FUNCTION_GET_NUM_FLEX_PLANES,
-            &mDispatch.getNumFlexPlanes);
-    initDispatch(GRALLOC1_FUNCTION_LOCK, &mDispatch.lock);
-    initDispatch(GRALLOC1_FUNCTION_LOCK_FLEX, &mDispatch.lockFlex);
-    initDispatch(GRALLOC1_FUNCTION_UNLOCK, &mDispatch.unlock);
-}
-
-gralloc1_rect_t GrallocMapperHal::asGralloc1Rect(const IMapper::Rect& rect)
-{
-    return gralloc1_rect_t{rect.left, rect.top, rect.width, rect.height};
-}
-
-bool GrallocMapperHal::dupFence(const hidl_handle& fenceHandle, int* outFd)
-{
-    auto handle = fenceHandle.getNativeHandle();
-    if (!handle || handle->numFds == 0) {
-        *outFd = -1;
-        return true;
-    }
-
-    if (handle->numFds > 1) {
-        ALOGE("invalid fence handle with %d fds", handle->numFds);
+    if (!descriptorInfo.width || !descriptorInfo.height ||
+        !descriptorInfo.layerCount) {
         return false;
     }
 
-    *outFd = dup(handle->data[0]);
-    return (*outFd >= 0);
-}
-
-Return<Error> GrallocMapperHal::retain(const hidl_handle& bufferHandle)
-{
-    int32_t err = mDispatch.retain(mDevice, bufferHandle);
-    if (err == GRALLOC1_ERROR_NONE) {
-        auto nativeHandle = bufferHandle.getNativeHandle();
-        std::lock_guard<std::mutex> lock(mMutex);
-
-        ++mBufferReferenceCounts[nativeHandle];
-    }
-    return static_cast<Error>(err);
-}
-
-Return<Error> GrallocMapperHal::release(const hidl_handle& bufferHandle)
-{
-    int32_t err = mDispatch.release(mDevice, bufferHandle);
-    if (err == GRALLOC1_ERROR_NONE) {
-        auto nativeHandle = bufferHandle.getNativeHandle();
-        std::lock_guard<std::mutex> lock(mMutex);
-
-        auto iter = mBufferReferenceCounts.find(bufferHandle);
-        if (iter == mBufferReferenceCounts.end()) {
-            // this should never happen
-            err = GRALLOC1_ERROR_BAD_HANDLE;
-        } else if (--iter->second == 0) {
-            native_handle_close(nativeHandle);
-            native_handle_delete(const_cast<native_handle_t*>(nativeHandle));
-
-            mBufferReferenceCounts.erase(iter);
-        }
+    if (!mCapabilities.layeredBuffers && descriptorInfo.layerCount > 1) {
+        return false;
     }
 
-    return static_cast<Error>(err);
-}
-
-Return<void> GrallocMapperHal::getDimensions(const hidl_handle& bufferHandle,
-        getDimensions_cb hidl_cb)
-{
-    uint32_t width = 0;
-    uint32_t height = 0;
-    int32_t err = mDispatch.getDimensions(mDevice, bufferHandle,
-            &width, &height);
-
-    hidl_cb(static_cast<Error>(err), width, height);
-    return Void();
-}
-
-Return<void> GrallocMapperHal::getFormat(const hidl_handle& bufferHandle,
-        getFormat_cb hidl_cb)
-{
-    int32_t format = HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED;
-    int32_t err = mDispatch.getFormat(mDevice, bufferHandle, &format);
-
-    hidl_cb(static_cast<Error>(err), static_cast<PixelFormat>(format));
-    return Void();
-}
-
-Return<void> GrallocMapperHal::getLayerCount(const hidl_handle& bufferHandle,
-        getLayerCount_cb hidl_cb)
-{
-    int32_t err = GRALLOC1_ERROR_NONE;
-    uint32_t count = 1;
-    if (mCapabilities.layeredBuffers) {
-        err = mDispatch.getLayerCount(mDevice, bufferHandle, &count);
+    if (descriptorInfo.format == static_cast<PixelFormat>(0)) {
+        return false;
     }
 
-    hidl_cb(static_cast<Error>(err), count);
+    if (descriptorInfo.usage & ~validUsageBits) {
+        // could not fail as gralloc may use the reserved bits...
+        ALOGW("buffer descriptor with invalid usage bits 0x%" PRIx64,
+              descriptorInfo.usage & ~validUsageBits);
+    }
+
+    return true;
+}
+
+Return<void> GrallocMapper::createDescriptor(
+    const BufferDescriptorInfo& descriptorInfo, createDescriptor_cb hidl_cb) {
+    if (validateDescriptorInfo(descriptorInfo)) {
+        hidl_cb(Error::NONE, grallocEncodeBufferDescriptor(descriptorInfo));
+    } else {
+        hidl_cb(Error::BAD_VALUE, BufferDescriptor());
+    }
+
     return Void();
 }
 
-Return<void> GrallocMapperHal::getProducerUsageMask(
-        const hidl_handle& bufferHandle, getProducerUsageMask_cb hidl_cb)
-{
-    uint64_t mask = 0x0;
-    int32_t err = mDispatch.getProducerUsage(mDevice, bufferHandle, &mask);
-
-    hidl_cb(static_cast<Error>(err), mask);
-    return Void();
+bool GrallocMapper::addRegisteredHandle(buffer_handle_t bufferHandle) {
+    std::lock_guard<std::mutex> lock(mMutex);
+    return mRegisteredHandles.insert(bufferHandle).second;
 }
 
-Return<void> GrallocMapperHal::getConsumerUsageMask(
-        const hidl_handle& bufferHandle, getConsumerUsageMask_cb hidl_cb)
-{
-    uint64_t mask = 0x0;
-    int32_t err = mDispatch.getConsumerUsage(mDevice, bufferHandle, &mask);
+native_handle_t* GrallocMapper::popRegisteredHandle(void* buffer) {
+    auto bufferHandle = static_cast<native_handle_t*>(buffer);
 
-    hidl_cb(static_cast<Error>(err), mask);
-    return Void();
+    std::lock_guard<std::mutex> lock(mMutex);
+    return mRegisteredHandles.erase(bufferHandle) == 1 ? bufferHandle : nullptr;
 }
 
-Return<void> GrallocMapperHal::getBackingStore(
-        const hidl_handle& bufferHandle, getBackingStore_cb hidl_cb)
-{
-    uint64_t store = 0;
-    int32_t err = mDispatch.getBackingStore(mDevice, bufferHandle, &store);
+buffer_handle_t GrallocMapper::getRegisteredHandle(const void* buffer) {
+    auto bufferHandle = static_cast<buffer_handle_t>(buffer);
 
-    hidl_cb(static_cast<Error>(err), store);
-    return Void();
+    std::lock_guard<std::mutex> lock(mMutex);
+    return mRegisteredHandles.count(bufferHandle) == 1 ? bufferHandle : nullptr;
 }
 
-Return<void> GrallocMapperHal::getStride(const hidl_handle& bufferHandle,
-        getStride_cb hidl_cb)
-{
-    uint32_t stride = 0;
-    int32_t err = mDispatch.getStride(mDevice, bufferHandle, &stride);
+Return<void> GrallocMapper::importBuffer(const hidl_handle& rawHandle,
+                                         importBuffer_cb hidl_cb) {
+    // importing an already imported handle rather than a raw handle
+    if (getRegisteredHandle(rawHandle.getNativeHandle())) {
+        hidl_cb(Error::BAD_BUFFER, nullptr);
+        return Void();
+    }
 
-    hidl_cb(static_cast<Error>(err), stride);
-    return Void();
-}
+    if (!rawHandle.getNativeHandle()) {
+        hidl_cb(Error::BAD_BUFFER, nullptr);
+        return Void();
+    }
 
-Return<void> GrallocMapperHal::lock(const hidl_handle& bufferHandle,
-        uint64_t producerUsageMask, uint64_t consumerUsageMask,
-        const IMapper::Rect& accessRegion, const hidl_handle& acquireFence,
-        lock_cb hidl_cb)
-{
-    gralloc1_rect_t rect = asGralloc1Rect(accessRegion);
-
-    int fence = -1;
-    if (!dupFence(acquireFence, &fence)) {
+    native_handle_t* bufferHandle =
+        native_handle_clone(rawHandle.getNativeHandle());
+    if (!bufferHandle) {
         hidl_cb(Error::NO_RESOURCES, nullptr);
         return Void();
     }
 
+    Error error = registerBuffer(bufferHandle);
+    if (error != Error::NONE) {
+        native_handle_close(bufferHandle);
+        native_handle_delete(bufferHandle);
+
+        hidl_cb(error, nullptr);
+        return Void();
+    }
+
+    // The newly cloned handle is already registered?  This can only happen
+    // when a handle previously registered was native_handle_delete'd instead
+    // of freeBuffer'd.
+    if (!addRegisteredHandle(bufferHandle)) {
+        ALOGE("handle %p has already been imported; potential fd leaking",
+              bufferHandle);
+        unregisterBuffer(bufferHandle);
+        if (!mCapabilities.unregisterImplyDelete) {
+            native_handle_close(bufferHandle);
+            native_handle_delete(bufferHandle);
+        }
+
+        hidl_cb(Error::NO_RESOURCES, nullptr);
+        return Void();
+    }
+
+    hidl_cb(Error::NONE, bufferHandle);
+    return Void();
+}
+
+Return<Error> GrallocMapper::freeBuffer(void* buffer) {
+    native_handle_t* bufferHandle = popRegisteredHandle(buffer);
+    if (!bufferHandle) {
+        return Error::BAD_BUFFER;
+    }
+
+    unregisterBuffer(bufferHandle);
+    if (!mCapabilities.unregisterImplyDelete) {
+        native_handle_close(bufferHandle);
+        native_handle_delete(bufferHandle);
+    }
+
+    return Error::NONE;
+}
+
+void GrallocMapper::waitFenceFd(int fenceFd, const char* logname) {
+    if (fenceFd < 0) {
+        return;
+    }
+
+    const int warningTimeout = 3500;
+    const int error = sync_wait(fenceFd, warningTimeout);
+    if (error < 0 && errno == ETIME) {
+        ALOGE("%s: fence %d didn't signal in %u ms", logname, fenceFd,
+              warningTimeout);
+        sync_wait(fenceFd, -1);
+    }
+}
+
+bool GrallocMapper::getFenceFd(const hidl_handle& fenceHandle,
+                               int* outFenceFd) {
+    auto handle = fenceHandle.getNativeHandle();
+    if (handle && handle->numFds > 1) {
+        ALOGE("invalid fence handle with %d fds", handle->numFds);
+        return false;
+    }
+
+    *outFenceFd = (handle && handle->numFds == 1) ? handle->data[0] : -1;
+    return true;
+}
+
+hidl_handle GrallocMapper::getFenceHandle(int fenceFd, char* handleStorage) {
+    native_handle_t* handle = nullptr;
+    if (fenceFd >= 0) {
+        handle = native_handle_init(handleStorage, 1, 0);
+        handle->data[0] = fenceFd;
+    }
+
+    return hidl_handle(handle);
+}
+
+Return<void> GrallocMapper::lock(void* buffer, uint64_t cpuUsage,
+                                 const IMapper::Rect& accessRegion,
+                                 const hidl_handle& acquireFence,
+                                 lock_cb hidl_cb) {
+    buffer_handle_t bufferHandle = getRegisteredHandle(buffer);
+    if (!bufferHandle) {
+        hidl_cb(Error::BAD_BUFFER, nullptr);
+        return Void();
+    }
+
+    int fenceFd;
+    if (!getFenceFd(acquireFence, &fenceFd)) {
+        hidl_cb(Error::BAD_VALUE, nullptr);
+        return Void();
+    }
+
     void* data = nullptr;
-    int32_t err = mDispatch.lock(mDevice, bufferHandle, producerUsageMask,
-            consumerUsageMask, &rect, &data, fence);
-    if (err != GRALLOC1_ERROR_NONE) {
-        close(fence);
-    }
+    Error error =
+        lockBuffer(bufferHandle, cpuUsage, accessRegion, fenceFd, &data);
 
-    hidl_cb(static_cast<Error>(err), data);
+    hidl_cb(error, data);
     return Void();
 }
 
-Return<void> GrallocMapperHal::lockFlex(const hidl_handle& bufferHandle,
-        uint64_t producerUsageMask, uint64_t consumerUsageMask,
-        const IMapper::Rect& accessRegion, const hidl_handle& acquireFence,
-        lockFlex_cb hidl_cb)
-{
-    FlexLayout layout_reply{};
+Return<void> GrallocMapper::lockYCbCr(void* buffer, uint64_t cpuUsage,
+                                      const IMapper::Rect& accessRegion,
+                                      const hidl_handle& acquireFence,
+                                      lockYCbCr_cb hidl_cb) {
+    YCbCrLayout layout = {};
 
-    uint32_t planeCount = 0;
-    int32_t err = mDispatch.getNumFlexPlanes(mDevice, bufferHandle,
-            &planeCount);
-    if (err != GRALLOC1_ERROR_NONE) {
-        hidl_cb(static_cast<Error>(err), layout_reply);
+    buffer_handle_t bufferHandle = getRegisteredHandle(buffer);
+    if (!bufferHandle) {
+        hidl_cb(Error::BAD_BUFFER, layout);
         return Void();
     }
 
-    gralloc1_rect_t rect = asGralloc1Rect(accessRegion);
-
-    int fence = -1;
-    if (!dupFence(acquireFence, &fence)) {
-        hidl_cb(Error::NO_RESOURCES, layout_reply);
+    int fenceFd;
+    if (!getFenceFd(acquireFence, &fenceFd)) {
+        hidl_cb(Error::BAD_VALUE, layout);
         return Void();
     }
 
-    std::vector<android_flex_plane_t> planes(planeCount);
-    android_flex_layout_t layout{};
-    layout.num_planes = planes.size();
-    layout.planes = planes.data();
+    Error error =
+        lockBuffer(bufferHandle, cpuUsage, accessRegion, fenceFd, &layout);
 
-    err = mDispatch.lockFlex(mDevice, bufferHandle, producerUsageMask,
-            consumerUsageMask, &rect, &layout, fence);
-    if (err == GRALLOC1_ERROR_NONE) {
-        layout_reply.format = static_cast<FlexFormat>(layout.format);
+    hidl_cb(error, layout);
+    return Void();
+}
 
-        planes.resize(layout.num_planes);
-        layout_reply.planes.setToExternal(
-                reinterpret_cast<FlexPlane*>(planes.data()), planes.size());
+Return<void> GrallocMapper::unlock(void* buffer, unlock_cb hidl_cb) {
+    buffer_handle_t bufferHandle = getRegisteredHandle(buffer);
+    if (!bufferHandle) {
+        hidl_cb(Error::BAD_BUFFER, nullptr);
+        return Void();
+    }
+
+    int fenceFd;
+    Error error = unlockBuffer(bufferHandle, &fenceFd);
+    if (error == Error::NONE) {
+        NATIVE_HANDLE_DECLARE_STORAGE(fenceStorage, 1, 0);
+
+        hidl_cb(error, getFenceHandle(fenceFd, fenceStorage));
+
+        if (fenceFd >= 0) {
+            close(fenceFd);
+        }
     } else {
-        close(fence);
+        hidl_cb(error, nullptr);
     }
 
-    hidl_cb(static_cast<Error>(err), layout_reply);
     return Void();
 }
-
-Return<void> GrallocMapperHal::unlock(const hidl_handle& bufferHandle,
-        unlock_cb hidl_cb)
-{
-    int32_t fence = -1;
-    int32_t err = mDispatch.unlock(mDevice, bufferHandle, &fence);
-
-    NATIVE_HANDLE_DECLARE_STORAGE(fenceStorage, 1, 0);
-    hidl_handle fenceHandle;
-    if (err == GRALLOC1_ERROR_NONE && fence >= 0) {
-        auto nativeHandle = native_handle_init(fenceStorage, 1, 0);
-        nativeHandle->data[0] = fence;
-
-        fenceHandle = nativeHandle;
-    }
-
-    hidl_cb(static_cast<Error>(err), fenceHandle);
-    return Void();
-}
-
-} // anonymous namespace
 
 IMapper* HIDL_FETCH_IMapper(const char* /* name */) {
     const hw_module_t* module = nullptr;
@@ -410,12 +287,15 @@ IMapper* HIDL_FETCH_IMapper(const char* /* name */) {
     }
 
     uint8_t major = (module->module_api_version >> 8) & 0xff;
-    if (major != 1) {
-        ALOGE("unknown gralloc module major version %d", major);
-        return nullptr;
+    switch (major) {
+        case 1:
+            return new Gralloc1Mapper(module);
+        case 0:
+            return new Gralloc0Mapper(module);
+        default:
+            ALOGE("unknown gralloc module major version %d", major);
+            return nullptr;
     }
-
-    return new GrallocMapperHal(module);
 }
 
 } // namespace implementation
