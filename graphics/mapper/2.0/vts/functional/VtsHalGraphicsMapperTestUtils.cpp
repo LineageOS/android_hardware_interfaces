@@ -25,228 +25,233 @@ namespace mapper {
 namespace V2_0 {
 namespace tests {
 
-using android::hardware::graphics::allocator::V2_0::Buffer;
-using android::hardware::graphics::allocator::V2_0::BufferDescriptor;
-using android::hardware::graphics::allocator::V2_0::Error;
-
-Mapper::Mapper() { init(); }
-
-void Mapper::init() {
-  mMapper = ::testing::VtsHalHidlTargetTestBase::getService<IMapper>();
-  ASSERT_NE(nullptr, mMapper.get()) << "failed to get mapper service";
-  ASSERT_FALSE(mMapper->isRemote()) << "mapper is not in passthrough mode";
+Gralloc::Gralloc() {
+    init();
 }
 
-Mapper::~Mapper() {
-  for (auto it : mHandles) {
-    while (it.second) {
-      EXPECT_EQ(Error::NONE, mMapper->release(it.first))
-          << "failed to release handle " << it.first;
-      it.second--;
+void Gralloc::init() {
+    mAllocator = ::testing::VtsHalHidlTargetTestBase::getService<IAllocator>();
+    ASSERT_NE(nullptr, mAllocator.get()) << "failed to get allocator service";
+
+    mMapper = ::testing::VtsHalHidlTargetTestBase::getService<IMapper>();
+    ASSERT_NE(nullptr, mMapper.get()) << "failed to get mapper service";
+    ASSERT_FALSE(mMapper->isRemote()) << "mapper is not in passthrough mode";
+}
+
+Gralloc::~Gralloc() {
+    for (auto bufferHandle : mClonedBuffers) {
+        auto buffer = const_cast<native_handle_t*>(bufferHandle);
+        native_handle_close(buffer);
+        native_handle_delete(buffer);
     }
-  }
-  mHandles.clear();
+    mClonedBuffers.clear();
+
+    for (auto bufferHandle : mImportedBuffers) {
+        auto buffer = const_cast<native_handle_t*>(bufferHandle);
+        EXPECT_EQ(Error::NONE, mMapper->freeBuffer(buffer))
+            << "failed to free buffer " << buffer;
+    }
+    mImportedBuffers.clear();
 }
 
-sp<IMapper> Mapper::getRaw() const { return mMapper; }
-
-void Mapper::retain(const native_handle_t* handle) {
-  Error error = mMapper->retain(handle);
-  ASSERT_EQ(Error::NONE, error) << "failed to retain handle " << handle;
-
-  mHandles[handle]++;
+sp<IAllocator> Gralloc::getAllocator() const {
+    return mAllocator;
 }
 
-void Mapper::release(const native_handle_t* handle) {
-  Error error = mMapper->release(handle);
-  ASSERT_EQ(Error::NONE, error) << "failed to release handle " << handle;
+std::string Gralloc::dumpDebugInfo() {
+    std::string debugInfo;
+    mAllocator->dumpDebugInfo(
+        [&](const auto& tmpDebugInfo) { debugInfo = tmpDebugInfo.c_str(); });
 
-  if (--mHandles[handle] == 0) {
-    mHandles.erase(handle);
-  }
+    return debugInfo;
 }
 
-Mapper::Dimensions Mapper::getDimensions(const native_handle_t* handle) {
-  Dimensions dimensions = {};
-  mMapper->getDimensions(handle, [&](const auto& tmpError, const auto& tmpWidth,
-                                     const auto& tmpHeight) {
-    ASSERT_EQ(Error::NONE, tmpError)
-        << "failed to get dimensions for handle " << handle;
-    dimensions.width = tmpWidth;
-    dimensions.height = tmpHeight;
-  });
+const native_handle_t* Gralloc::cloneBuffer(const hidl_handle& rawHandle) {
+    const native_handle_t* bufferHandle =
+        native_handle_clone(rawHandle.getNativeHandle());
+    EXPECT_NE(nullptr, bufferHandle);
 
-  return dimensions;
+    if (bufferHandle) {
+        mClonedBuffers.insert(bufferHandle);
+    }
+
+    return bufferHandle;
 }
 
-PixelFormat Mapper::getFormat(const native_handle_t* handle) {
-  PixelFormat format = static_cast<PixelFormat>(0);
-  mMapper->getFormat(handle, [&](const auto& tmpError, const auto& tmpFormat) {
-    ASSERT_EQ(Error::NONE, tmpError)
-        << "failed to get format for handle " << handle;
-    format = tmpFormat;
-  });
+std::vector<const native_handle_t*> Gralloc::allocate(
+    const BufferDescriptor& descriptor, uint32_t count, bool import,
+    uint32_t* outStride) {
+    std::vector<const native_handle_t*> bufferHandles;
+    bufferHandles.reserve(count);
+    mAllocator->allocate(
+        descriptor, count, [&](const auto& tmpError, const auto& tmpStride,
+                               const auto& tmpBuffers) {
+            ASSERT_EQ(Error::NONE, tmpError) << "failed to allocate buffers";
+            ASSERT_EQ(count, tmpBuffers.size()) << "invalid buffer array";
 
-  return format;
+            for (uint32_t i = 0; i < count; i++) {
+                if (import) {
+                    ASSERT_NO_FATAL_FAILURE(
+                        bufferHandles.push_back(importBuffer(tmpBuffers[i])));
+                } else {
+                    ASSERT_NO_FATAL_FAILURE(
+                        bufferHandles.push_back(cloneBuffer(tmpBuffers[i])));
+                }
+            }
+
+            if (outStride) {
+                *outStride = tmpStride;
+            }
+        });
+
+    if (::testing::Test::HasFatalFailure()) {
+        bufferHandles.clear();
+    }
+
+    return bufferHandles;
 }
 
-uint32_t Mapper::getLayerCount(const native_handle_t* handle) {
-  uint32_t count = 0;
-  mMapper->getLayerCount(
-      handle, [&](const auto& tmpError, const auto& tmpCount) {
-        ASSERT_EQ(Error::NONE, tmpError)
-            << "failed to get layer count for handle " << handle;
-        count = tmpCount;
-      });
+const native_handle_t* Gralloc::allocate(
+    const IMapper::BufferDescriptorInfo& descriptorInfo, bool import,
+    uint32_t* outStride) {
+    BufferDescriptor descriptor = createDescriptor(descriptorInfo);
+    if (::testing::Test::HasFatalFailure()) {
+        return nullptr;
+    }
 
-  return count;
+    auto buffers = allocate(descriptor, 1, import, outStride);
+    if (::testing::Test::HasFatalFailure()) {
+        return nullptr;
+    }
+
+    return buffers[0];
 }
 
-uint64_t Mapper::getProducerUsageMask(const native_handle_t* handle) {
-  uint64_t usageMask = 0;
-  mMapper->getProducerUsageMask(
-      handle, [&](const auto& tmpError, const auto& tmpUsageMask) {
-        ASSERT_EQ(Error::NONE, tmpError)
-            << "failed to get producer usage mask for handle " << handle;
-        usageMask = tmpUsageMask;
-      });
-
-  return usageMask;
+sp<IMapper> Gralloc::getMapper() const {
+    return mMapper;
 }
 
-uint64_t Mapper::getConsumerUsageMask(const native_handle_t* handle) {
-  uint64_t usageMask = 0;
-  mMapper->getConsumerUsageMask(
-      handle, [&](const auto& tmpError, const auto& tmpUsageMask) {
-        ASSERT_EQ(Error::NONE, tmpError)
-            << "failed to get consumer usage mask for handle " << handle;
-        usageMask = tmpUsageMask;
-      });
+BufferDescriptor Gralloc::createDescriptor(
+    const IMapper::BufferDescriptorInfo& descriptorInfo) {
+    BufferDescriptor descriptor;
+    mMapper->createDescriptor(
+        descriptorInfo, [&](const auto& tmpError, const auto& tmpDescriptor) {
+            ASSERT_EQ(Error::NONE, tmpError) << "failed to create descriptor";
+            descriptor = tmpDescriptor;
+        });
 
-  return usageMask;
+    return descriptor;
 }
 
-BackingStore Mapper::getBackingStore(const native_handle_t* handle) {
-  BackingStore backingStore = 0;
-  mMapper->getBackingStore(
-      handle, [&](const auto& tmpError, const auto& tmpBackingStore) {
-        ASSERT_EQ(Error::NONE, tmpError)
-            << "failed to get backing store for handle " << handle;
-        backingStore = tmpBackingStore;
-      });
+const native_handle_t* Gralloc::importBuffer(const hidl_handle& rawHandle) {
+    const native_handle_t* bufferHandle = nullptr;
+    mMapper->importBuffer(
+        rawHandle, [&](const auto& tmpError, const auto& tmpBuffer) {
+            ASSERT_EQ(Error::NONE, tmpError) << "failed to import buffer %p"
+                                             << rawHandle.getNativeHandle();
+            bufferHandle = static_cast<const native_handle_t*>(tmpBuffer);
+        });
 
-  return backingStore;
+    if (bufferHandle) {
+        mImportedBuffers.insert(bufferHandle);
+    }
+
+    return bufferHandle;
 }
 
-uint32_t Mapper::getStride(const native_handle_t* handle) {
-  uint32_t stride = 0;
-  mMapper->getStride(handle, [&](const auto& tmpError, const auto& tmpStride) {
-    ASSERT_EQ(Error::NONE, tmpError)
-        << "failed to get stride for handle " << handle;
-    stride = tmpStride;
-  });
+void Gralloc::freeBuffer(const native_handle_t* bufferHandle) {
+    auto buffer = const_cast<native_handle_t*>(bufferHandle);
 
-  return stride;
+    if (mImportedBuffers.erase(bufferHandle)) {
+        Error error = mMapper->freeBuffer(buffer);
+        ASSERT_EQ(Error::NONE, error) << "failed to free buffer " << buffer;
+    } else {
+        mClonedBuffers.erase(bufferHandle);
+        native_handle_close(buffer);
+        native_handle_delete(buffer);
+    }
 }
 
-void* Mapper::lock(const native_handle_t* handle, uint64_t producerUsageMask,
-                   uint64_t consumerUsageMask,
-                   const IMapper::Rect& accessRegion, int acquireFence) {
-  NATIVE_HANDLE_DECLARE_STORAGE(acquireFenceStorage, 0, 1);
-  native_handle_t* acquireFenceHandle = nullptr;
-  if (acquireFence >= 0) {
-    acquireFenceHandle = native_handle_init(acquireFenceStorage, 0, 1);
-    acquireFenceHandle->data[0] = acquireFence;
-  }
+void* Gralloc::lock(const native_handle_t* bufferHandle, uint64_t cpuUsage,
+                    const IMapper::Rect& accessRegion, int acquireFence) {
+    auto buffer = const_cast<native_handle_t*>(bufferHandle);
 
-  void* data = nullptr;
-  mMapper->lock(
-      handle, producerUsageMask, consumerUsageMask, accessRegion,
-      acquireFenceHandle, [&](const auto& tmpError, const auto& tmpData) {
-        ASSERT_EQ(Error::NONE, tmpError) << "failed to lock handle " << handle;
-        data = tmpData;
-      });
+    NATIVE_HANDLE_DECLARE_STORAGE(acquireFenceStorage, 1, 0);
+    hidl_handle acquireFenceHandle;
+    if (acquireFence >= 0) {
+        auto h = native_handle_init(acquireFenceStorage, 1, 0);
+        h->data[0] = acquireFence;
+        acquireFenceHandle = h;
+    }
 
-  if (acquireFence >= 0) {
-    close(acquireFence);
-  }
-
-  return data;
-}
-
-FlexLayout Mapper::lockFlex(const native_handle_t* handle,
-                            uint64_t producerUsageMask,
-                            uint64_t consumerUsageMask,
-                            const IMapper::Rect& accessRegion,
-                            int acquireFence) {
-  NATIVE_HANDLE_DECLARE_STORAGE(acquireFenceStorage, 0, 1);
-  native_handle_t* acquireFenceHandle = nullptr;
-  if (acquireFence >= 0) {
-    acquireFenceHandle = native_handle_init(acquireFenceStorage, 0, 1);
-    acquireFenceHandle->data[0] = acquireFence;
-  }
-
-  FlexLayout layout = {};
-  mMapper->lockFlex(handle, producerUsageMask, consumerUsageMask, accessRegion,
-                    acquireFenceHandle,
-                    [&](const auto& tmpError, const auto& tmpLayout) {
+    void* data = nullptr;
+    mMapper->lock(buffer, cpuUsage, accessRegion, acquireFenceHandle,
+                  [&](const auto& tmpError, const auto& tmpData) {
                       ASSERT_EQ(Error::NONE, tmpError)
-                          << "failed to lockFlex handle " << handle;
-                      layout = tmpLayout;
-                    });
+                          << "failed to lock buffer " << buffer;
+                      data = tmpData;
+                  });
 
-  if (acquireFence >= 0) {
-    close(acquireFence);
-  }
-
-  return layout;
-}
-
-int Mapper::unlock(const native_handle_t* handle) {
-  int releaseFence = -1;
-  mMapper->unlock(handle, [&](const auto& tmpError,
-                              const auto& tmpReleaseFence) {
-    ASSERT_EQ(Error::NONE, tmpError) << "failed to unlock handle " << handle;
-
-    auto handle = tmpReleaseFence.getNativeHandle();
-    if (handle) {
-      ASSERT_EQ(0, handle->numInts) << "invalid fence handle " << handle;
-      if (handle->numFds == 1) {
-        releaseFence = dup(handle->data[0]);
-        ASSERT_LT(0, releaseFence) << "failed to dup fence fd";
-      } else {
-        ASSERT_EQ(0, handle->numFds) << " invalid fence handle " << handle;
-      }
+    if (acquireFence >= 0) {
+        close(acquireFence);
     }
-  });
 
-  return releaseFence;
+    return data;
 }
 
-const native_handle_t* Mapper::allocate(
-    std::unique_ptr<AllocatorClient>& allocatorClient,
-    const IAllocatorClient::BufferDescriptorInfo& info) {
-  BufferDescriptor descriptor = allocatorClient->createDescriptor(info);
-  if (::testing::Test::HasFatalFailure()) {
-    return nullptr;
-  }
+YCbCrLayout Gralloc::lockYCbCr(const native_handle_t* bufferHandle,
+                               uint64_t cpuUsage,
+                               const IMapper::Rect& accessRegion,
+                               int acquireFence) {
+    auto buffer = const_cast<native_handle_t*>(bufferHandle);
 
-  Buffer buffer = allocatorClient->allocate(descriptor);
-  if (::testing::Test::HasFatalFailure()) {
-    allocatorClient->destroyDescriptor(descriptor);
-    return nullptr;
-  }
+    NATIVE_HANDLE_DECLARE_STORAGE(acquireFenceStorage, 1, 0);
+    hidl_handle acquireFenceHandle;
+    if (acquireFence >= 0) {
+        auto h = native_handle_init(acquireFenceStorage, 1, 0);
+        h->data[0] = acquireFence;
+        acquireFenceHandle = h;
+    }
 
-  const native_handle_t* handle =
-      allocatorClient->exportHandle(descriptor, buffer);
-  if (handle) {
-    retain(handle);
-  }
+    YCbCrLayout layout = {};
+    mMapper->lockYCbCr(buffer, cpuUsage, accessRegion, acquireFenceHandle,
+                       [&](const auto& tmpError, const auto& tmpLayout) {
+                           ASSERT_EQ(Error::NONE, tmpError)
+                               << "failed to lockYCbCr buffer " << buffer;
+                           layout = tmpLayout;
+                       });
 
-  allocatorClient->free(buffer);
-  allocatorClient->destroyDescriptor(descriptor);
+    if (acquireFence >= 0) {
+        close(acquireFence);
+    }
 
-  return handle;
+    return layout;
+}
+
+int Gralloc::unlock(const native_handle_t* bufferHandle) {
+    auto buffer = const_cast<native_handle_t*>(bufferHandle);
+
+    int releaseFence = -1;
+    mMapper->unlock(
+        buffer, [&](const auto& tmpError, const auto& tmpReleaseFence) {
+            ASSERT_EQ(Error::NONE, tmpError) << "failed to unlock buffer "
+                                             << buffer;
+
+            auto fenceHandle = tmpReleaseFence.getNativeHandle();
+            if (fenceHandle) {
+                ASSERT_EQ(0, fenceHandle->numInts) << "invalid fence handle "
+                                                   << fenceHandle;
+                if (fenceHandle->numFds == 1) {
+                    releaseFence = dup(fenceHandle->data[0]);
+                    ASSERT_LT(0, releaseFence) << "failed to dup fence fd";
+                } else {
+                    ASSERT_EQ(0, fenceHandle->numFds)
+                        << " invalid fence handle " << fenceHandle;
+                }
+            }
+        });
+
+    return releaseFence;
 }
 
 }  // namespace tests

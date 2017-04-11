@@ -3,9 +3,7 @@
 filegroup {
     name: "android.hardware.graphics.allocator@2.0_hal",
     srcs: [
-        "types.hal",
         "IAllocator.hal",
-        "IAllocatorClient.hal",
     ],
 }
 
@@ -17,9 +15,7 @@ genrule {
         ":android.hardware.graphics.allocator@2.0_hal",
     ],
     out: [
-        "android/hardware/graphics/allocator/2.0/types.cpp",
         "android/hardware/graphics/allocator/2.0/AllocatorAll.cpp",
-        "android/hardware/graphics/allocator/2.0/AllocatorClientAll.cpp",
     ],
 }
 
@@ -31,18 +27,11 @@ genrule {
         ":android.hardware.graphics.allocator@2.0_hal",
     ],
     out: [
-        "android/hardware/graphics/allocator/2.0/types.h",
-        "android/hardware/graphics/allocator/2.0/hwtypes.h",
         "android/hardware/graphics/allocator/2.0/IAllocator.h",
         "android/hardware/graphics/allocator/2.0/IHwAllocator.h",
         "android/hardware/graphics/allocator/2.0/BnHwAllocator.h",
         "android/hardware/graphics/allocator/2.0/BpHwAllocator.h",
         "android/hardware/graphics/allocator/2.0/BsAllocator.h",
-        "android/hardware/graphics/allocator/2.0/IAllocatorClient.h",
-        "android/hardware/graphics/allocator/2.0/IHwAllocatorClient.h",
-        "android/hardware/graphics/allocator/2.0/BnHwAllocatorClient.h",
-        "android/hardware/graphics/allocator/2.0/BpHwAllocatorClient.h",
-        "android/hardware/graphics/allocator/2.0/BsAllocatorClient.h",
     ],
 }
 
@@ -59,6 +48,7 @@ cc_library_shared {
         "libutils",
         "libcutils",
         "android.hardware.graphics.common@1.0",
+        "android.hardware.graphics.mapper@2.0",
         "android.hidl.base@1.0",
     ],
     export_shared_lib_headers: [
@@ -67,6 +57,7 @@ cc_library_shared {
         "libhwbinder",
         "libutils",
         "android.hardware.graphics.common@1.0",
+        "android.hardware.graphics.mapper@2.0",
         "android.hidl.base@1.0",
     ],
 }
