@@ -22,6 +22,7 @@
 
 #include <android/hardware/wifi/supplicant/1.0/ISupplicantStaNetwork.h>
 
+#include "supplicant_hidl_call_util.h"
 #include "supplicant_hidl_test_utils.h"
 
 using ::android::sp;
@@ -39,7 +40,7 @@ using ::android::hardware::wifi::supplicant::V1_0::SupplicantStatusCode;
 
 namespace {
 constexpr char kTestSsidStr[] = "TestSsid1234";
-constexpr char kTestPsk[] = "TestPsk123";
+constexpr char kTestPskPassphrase[] = "TestPsk123";
 constexpr char kTestIdStr[] = "TestIdstr";
 constexpr char kTestEapPasswdStr[] = "TestEapPasswd1234";
 constexpr char kTestEapCert[] = "keystore://CERT";
@@ -54,7 +55,10 @@ constexpr uint8_t kTestRes[] = {0x56, 0x67, 0x67, 0xf4, 0x67};
 constexpr uint8_t kTestIk[] = {[0 ... 15] = 0x65};
 constexpr uint8_t kTestCk[] = {[0 ... 15] = 0x45};
 constexpr uint8_t kTestIdentity[] = {0x45, 0x67, 0x98, 0x67, 0x56};
+constexpr uint8_t kTestPsk[] = {[0 ... 31] = 0x12};
+constexpr uint8_t kTestAutParam[] = {[0 ... 13] = 0xe1};
 constexpr uint32_t kTestWepTxKeyIdx = 2;
+constexpr uint32_t kTestUpdateIdentifier = 21;
 constexpr uint32_t kTestKeyMgmt = (ISupplicantStaNetwork::KeyMgmtMask::WPA_PSK |
                                    ISupplicantStaNetwork::KeyMgmtMask::WPA_EAP);
 constexpr uint32_t kTestProto = (ISupplicantStaNetwork::ProtoMask::OSEN |
@@ -246,14 +250,26 @@ TEST_F(SupplicantStaNetworkHidlTest, SetGetPairwiseCipher) {
  */
 TEST_F(SupplicantStaNetworkHidlTest, SetGetPskPassphrase) {
     sta_network_->setPskPassphrase(
-        kTestPsk, [](const SupplicantStatus& status) {
+        kTestPskPassphrase, [](const SupplicantStatus& status) {
             EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
         });
     sta_network_->getPskPassphrase(
         [&](const SupplicantStatus& status, const hidl_string& psk) {
             EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
-            EXPECT_EQ(kTestPsk, std::string(psk.c_str()));
+            EXPECT_EQ(kTestPskPassphrase, std::string(psk.c_str()));
         });
+}
+
+/*
+ * SetGetPsk
+ */
+TEST_F(SupplicantStaNetworkHidlTest, SetGetPsk) {
+    EXPECT_EQ(SupplicantStatusCode::SUCCESS,
+              HIDL_INVOKE(sta_network_, setPsk, kTestPsk).code);
+    const auto& status_and_psk = HIDL_INVOKE(sta_network_, getPsk);
+    EXPECT_EQ(SupplicantStatusCode::SUCCESS, status_and_psk.first.code);
+    hidl_array<uint8_t, 32> expected_psk(kTestPsk);
+    EXPECT_EQ(expected_psk, status_and_psk.second);
 }
 
 /*
@@ -500,6 +516,21 @@ TEST_F(SupplicantStaNetworkHidlTest, SetGetEapAltSubjectMatch) {
 }
 
 /*
+ * SetGetEapSubjectMatch
+ */
+TEST_F(SupplicantStaNetworkHidlTest, SetGetEapSubjectMatch) {
+    EXPECT_EQ(
+        SupplicantStatusCode::SUCCESS,
+        HIDL_INVOKE(sta_network_, setEapSubjectMatch, kTestEapMatch).code);
+    const auto& status_and_subject_match =
+        HIDL_INVOKE(sta_network_, getEapSubjectMatch);
+    EXPECT_EQ(SupplicantStatusCode::SUCCESS,
+              status_and_subject_match.first.code);
+    EXPECT_EQ(kTestEapMatch,
+              std::string(status_and_subject_match.second.c_str()));
+}
+
+/*
  * SetGetEapDomainSuffixMatch
  */
 TEST_F(SupplicantStaNetworkHidlTest, SetGetEapDomainSuffixMatch) {
@@ -634,6 +665,14 @@ TEST_F(SupplicantStaNetworkHidlTest, SendNetworkEapSimGsmAuthResponse) {
 }
 
 /*
+ * SendNetworkEapSimGsmAuthFailure
+ */
+TEST_F(SupplicantStaNetworkHidlTest, SendNetworkEapSimGsmAuthFailure) {
+    EXPECT_EQ(SupplicantStatusCode::SUCCESS,
+              HIDL_INVOKE(sta_network_, sendNetworkEapSimGsmAuthFailure).code);
+}
+
+/*
  * SendNetworkEapSimUmtsAuthResponse
  */
 TEST_F(SupplicantStaNetworkHidlTest, SendNetworkEapSimUmtsAuthResponse) {
@@ -648,6 +687,24 @@ TEST_F(SupplicantStaNetworkHidlTest, SendNetworkEapSimUmtsAuthResponse) {
 }
 
 /*
+ * SendNetworkEapSimUmtsAuthFailure
+ */
+TEST_F(SupplicantStaNetworkHidlTest, SendNetworkEapSimUmtsAuthFailure) {
+    EXPECT_EQ(SupplicantStatusCode::SUCCESS,
+              HIDL_INVOKE(sta_network_, sendNetworkEapSimUmtsAuthFailure).code);
+}
+
+/*
+ * SendNetworkEapSimUmtsAutsResponse
+ */
+TEST_F(SupplicantStaNetworkHidlTest, SendNetworkEapSimUmtsAutsResponse) {
+    EXPECT_EQ(SupplicantStatusCode::SUCCESS,
+              HIDL_INVOKE(sta_network_, sendNetworkEapSimUmtsAutsResponse,
+                          kTestAutParam)
+                  .code);
+}
+
+/*
  * SendNetworkEapIdentityResponse
  */
 TEST_F(SupplicantStaNetworkHidlTest, SendNetworkEapIdentityResponse) {
@@ -657,4 +714,41 @@ TEST_F(SupplicantStaNetworkHidlTest, SendNetworkEapIdentityResponse) {
         [](const SupplicantStatus& status) {
             EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
         });
+}
+
+/*
+ * SetUpdateIdentifier
+ */
+TEST_F(SupplicantStaNetworkHidlTest, SetUpdateIdentifier) {
+    EXPECT_EQ(
+        SupplicantStatusCode::SUCCESS,
+        HIDL_INVOKE(sta_network_, setUpdateIdentifier, kTestUpdateIdentifier)
+            .code);
+}
+
+/*
+ * SetProactiveKeyCaching
+ */
+TEST_F(SupplicantStaNetworkHidlTest, SetProactiveKeyCaching) {
+    EXPECT_EQ(SupplicantStatusCode::SUCCESS,
+              HIDL_INVOKE(sta_network_, setProactiveKeyCaching, true).code);
+    EXPECT_EQ(SupplicantStatusCode::SUCCESS,
+              HIDL_INVOKE(sta_network_, setProactiveKeyCaching, false).code);
+}
+
+/*
+ * GetWpsNfcConfigurationToken
+ */
+TEST_F(SupplicantStaNetworkHidlTest, GetWpsNfcConfigurationToken) {
+    ASSERT_EQ(SupplicantStatusCode::SUCCESS,
+              HIDL_INVOKE(sta_network_, setSsid, ssid_).code);
+    ASSERT_EQ(SupplicantStatusCode::SUCCESS,
+              HIDL_INVOKE(sta_network_, setKeyMgmt, kTestKeyMgmt).code);
+    ASSERT_EQ(
+        SupplicantStatusCode::SUCCESS,
+        HIDL_INVOKE(sta_network_, setPskPassphrase, kTestPskPassphrase).code);
+    const auto& status_and_token =
+        HIDL_INVOKE(sta_network_, getWpsNfcConfigurationToken);
+    EXPECT_EQ(SupplicantStatusCode::SUCCESS, status_and_token.first.code);
+    EXPECT_FALSE(0 == status_and_token.second.size());
 }
