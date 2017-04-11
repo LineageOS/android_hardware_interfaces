@@ -20,6 +20,7 @@
 
 #include <android/hardware/wifi/supplicant/1.0/ISupplicantP2pIface.h>
 
+#include "supplicant_hidl_call_util.h"
 #include "supplicant_hidl_test_utils.h"
 
 using ::android::sp;
@@ -42,6 +43,7 @@ constexpr char kTestConnectPin[] = "34556665";
 constexpr char kTestGroupIfName[] = "TestGroup";
 constexpr uint32_t kTestConnectGoIntent = 6;
 constexpr uint32_t kTestFindTimeout = 5;
+constexpr uint32_t kTestSetGroupIdleTimeout = 6;
 constexpr SupplicantNetworkId kTestNetworkId = 5;
 constexpr uint32_t kTestChannel = 1;
 constexpr uint32_t kTestOperatingClass = 81;
@@ -410,4 +412,29 @@ TEST_F(SupplicantP2pIfaceHidlTest, SetMiracastMode) {
                                     EXPECT_EQ(SupplicantStatusCode::SUCCESS,
                                               status.code);
                                 });
+}
+
+/*
+ * SetGroupIdle
+ */
+TEST_F(SupplicantP2pIfaceHidlTest, SetGroupIdle) {
+    // This is not going to work with fake values.
+    EXPECT_NE(SupplicantStatusCode::SUCCESS,
+              HIDL_INVOKE(p2p_iface_, setGroupIdle, kTestGroupIfName,
+                          kTestSetGroupIdleTimeout)
+                  .code);
+}
+
+/*
+ * SetPowerSave
+ */
+TEST_F(SupplicantP2pIfaceHidlTest, SetPowerSave) {
+    // This is not going to work with fake values.
+    EXPECT_NE(
+        SupplicantStatusCode::SUCCESS,
+        HIDL_INVOKE(p2p_iface_, setPowerSave, kTestGroupIfName, true).code);
+    // This is not going to work with fake values.
+    EXPECT_NE(
+        SupplicantStatusCode::SUCCESS,
+        HIDL_INVOKE(p2p_iface_, setPowerSave, kTestGroupIfName, false).code);
 }
