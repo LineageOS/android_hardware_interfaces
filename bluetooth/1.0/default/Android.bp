@@ -41,21 +41,20 @@ cc_library_shared {
 
 cc_library_static {
     name: "android.hardware.bluetooth-async",
+    proprietary: true,
     defaults: ["hidl_defaults"],
     srcs: [
         "async_fd_watcher.cc",
     ],
     export_include_dirs: ["."],
     shared_libs: [
-        "libbase",
-        "libcutils",
         "liblog",
-        "libutils",
     ],
 }
 
 cc_library_static {
     name: "android.hardware.bluetooth-hci",
+    proprietary: true,
     defaults: ["hidl_defaults"],
     srcs: [
         "hci_packetizer.cc",
@@ -66,7 +65,6 @@ cc_library_static {
     export_include_dirs: ["."],
     shared_libs: [
         "libbase",
-        "libcutils",
         "libhidlbase",
         "liblog",
         "libutils",
