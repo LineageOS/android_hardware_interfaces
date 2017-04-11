@@ -219,10 +219,6 @@ TEST_F(SupplicantP2pIfaceHidlTest, StopFind) {
     p2p_iface_->stopFind([](const SupplicantStatus& status) {
         EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
     });
-
-    p2p_iface_->stopFind([](const SupplicantStatus& status) {
-        EXPECT_NE(SupplicantStatusCode::SUCCESS, status.code);
-    });
 }
 
 /*
