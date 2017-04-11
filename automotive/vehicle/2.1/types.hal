@@ -590,6 +590,12 @@ enum VmsMessageType : int32_t {
 
   /* Update for the available layers. */
   AVAILABILITY = 5,
+
+  /** Requesting layers that have subscribers. */
+  SUBSCRIPTION_REQUEST = 6,
+
+  /** Returning layers that have subscribers. */
+  SUBSCRIPTION_RESPONSE = 7,
 };
 
 /**
@@ -623,4 +629,22 @@ enum VmsOfferingMessageIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
 
   /* The first index that contain dependencies */
   FIRST_DEPENDENCIES_INDEX = 2,
+};
+
+/**
+ * A VMS subscription request only contains its message type. The format of a VMS subscription
+ * response is described below.
+ */
+enum VmsSubscriptionResponseFormat : VmsBaseMessageIntegerValuesIndex {
+  /**
+    * Recipients should ignore any packet with a sequence number that is less than the highest
+    * sequence number they have seen thus far.
+    */
+  SEQUENCE_NUMBER = 1,
+
+  /** The number of VMS layers. Each layer has two integers: type and version. */
+  NUMBER_OF_LAYERS = 2,
+
+  /** The first index that contains a layer. */
+  FIRST_LAYER = 3,
 };
