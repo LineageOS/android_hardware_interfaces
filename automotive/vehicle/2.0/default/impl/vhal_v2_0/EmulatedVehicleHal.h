@@ -34,6 +34,7 @@
 #include "DefaultConfig.h"
 #include "VehicleHalProto.pb.h"
 #include "VehicleEmulator.h"
+#include "FakeValueGenerator.h"
 
 namespace android {
 namespace hardware {
@@ -67,6 +68,9 @@ private:
         return std::chrono::nanoseconds(static_cast<int64_t>(1000000000L / hz));
     }
 
+    StatusCode handleGenerateFakeDataRequest(const VehiclePropValue& request);
+    void onFakeValueGenerated(int32_t propId, float value);
+
     void onContinuousPropertyTimer(const std::vector<int32_t>& properties);
     bool isContinuousProperty(int32_t propId) const;
 
@@ -74,6 +78,7 @@ private:
     VehiclePropertyStore* mPropStore;
     std::unordered_set<int32_t> mHvacPowerProps;
     RecurrentTimer mRecurrentTimer;
+    FakeValueGenerator mFakeValueGenerator;
 };
 
 }  // impl
