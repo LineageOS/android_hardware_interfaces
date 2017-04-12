@@ -65,6 +65,12 @@ HwcHal::HwcHal(const hw_module_t* module)
     }
 
     initCapabilities();
+    if (majorVersion >= 2 &&
+        hasCapability(Capability::PRESENT_FENCE_IS_NOT_RELIABLE)) {
+        ALOGE("Present fence must be reliable from HWC2 on.");
+        abort();
+    }
+
     initDispatch();
 }
 
