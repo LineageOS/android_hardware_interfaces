@@ -119,8 +119,10 @@ private:
 
 TEST_F(SubscriptionManagerTest, multipleClients) {
     std::list<SubscribeOptions> updatedOptions;
-    ASSERT_EQ(StatusCode::OK, manager.addOrUpdateSubscription(cb1, subscrToProp1, &updatedOptions));
-    ASSERT_EQ(StatusCode::OK, manager.addOrUpdateSubscription(cb2, subscrToProp1, &updatedOptions));
+    ASSERT_EQ(StatusCode::OK,
+              manager.addOrUpdateSubscription(1, cb1, subscrToProp1, &updatedOptions));
+    ASSERT_EQ(StatusCode::OK,
+              manager.addOrUpdateSubscription(2, cb2, subscrToProp1, &updatedOptions));
 
     auto clients = manager.getSubscribedClients(
             PROP1,
@@ -132,7 +134,8 @@ TEST_F(SubscriptionManagerTest, multipleClients) {
 
 TEST_F(SubscriptionManagerTest, negativeCases) {
     std::list<SubscribeOptions> updatedOptions;
-    ASSERT_EQ(StatusCode::OK, manager.addOrUpdateSubscription(cb1, subscrToProp1, &updatedOptions));
+    ASSERT_EQ(StatusCode::OK,
+              manager.addOrUpdateSubscription(1, cb1, subscrToProp1, &updatedOptions));
 
     // Wrong zone
     auto clients = manager.getSubscribedClients(
@@ -158,7 +161,8 @@ TEST_F(SubscriptionManagerTest, negativeCases) {
 
 TEST_F(SubscriptionManagerTest, mulipleSubscriptions) {
     std::list<SubscribeOptions> updatedOptions;
-    ASSERT_EQ(StatusCode::OK, manager.addOrUpdateSubscription(cb1, subscrToProp1, &updatedOptions));
+    ASSERT_EQ(StatusCode::OK, manager.addOrUpdateSubscription(1, cb1, subscrToProp1,
+                                                              &updatedOptions));
 
     auto clients = manager.getSubscribedClients(
             PROP1,
@@ -169,7 +173,7 @@ TEST_F(SubscriptionManagerTest, mulipleSubscriptions) {
 
     // Same property, but different zone, to make sure we didn't unsubscribe
     // from previous zone.
-    ASSERT_EQ(StatusCode::OK, manager.addOrUpdateSubscription(cb1, {
+    ASSERT_EQ(StatusCode::OK, manager.addOrUpdateSubscription(1, cb1, {
         SubscribeOptions {
                 .propId = PROP1,
                 .vehicleAreas = toInt(VehicleAreaZone::ROW_2),
@@ -190,15 +194,17 @@ TEST_F(SubscriptionManagerTest, mulipleSubscriptions) {
 
 TEST_F(SubscriptionManagerTest, unsubscribe) {
     std::list<SubscribeOptions> updatedOptions;
-    ASSERT_EQ(StatusCode::OK, manager.addOrUpdateSubscription(cb1, subscrToProp1, &updatedOptions));
-    ASSERT_EQ(StatusCode::OK, manager.addOrUpdateSubscription(cb2, subscrToProp2, &updatedOptions));
-    ASSERT_EQ(StatusCode::OK, manager.addOrUpdateSubscription(cb3, subscrToProp1and2,
-                                                              &updatedOptions));
+    ASSERT_EQ(StatusCode::OK,
+              manager.addOrUpdateSubscription(1, cb1, subscrToProp1, &updatedOptions));
+    ASSERT_EQ(StatusCode::OK,
+              manager.addOrUpdateSubscription(2, cb2, subscrToProp2, &updatedOptions));
+    ASSERT_EQ(StatusCode::OK,
+              manager.addOrUpdateSubscription(3, cb3, subscrToProp1and2, &updatedOptions));
 
-    ASSERT_ALL_EXISTS({cb1, cb3}, extractCallbacks(clientsToProp1()));
+    ASSERT_ALL_EXISTS({ cb1, cb3 }, extractCallbacks(clientsToProp1()));
     ASSERT_ALL_EXISTS({cb2, cb3}, extractCallbacks(clientsToProp2()));
 
-    manager.unsubscribe(cb1, PROP1);
+    manager.unsubscribe(1, PROP1);
     assertOnPropertyUnsubscribedNotCalled();
     ASSERT_ALL_EXISTS({cb3}, extractCallbacks(clientsToProp1()));
 
@@ -206,20 +212,20 @@ TEST_F(SubscriptionManagerTest, unsubscribe) {
     ASSERT_ALL_EXISTS({cb2, cb3}, extractCallbacks(clientsToProp2()));
 
     // No one subscribed to PROP1, subscription for PROP2 is not affected.
-    manager.unsubscribe(cb3, PROP1);
+    manager.unsubscribe(3, PROP1);
     assertLastUnsubscribedProperty(PROP1);
     ASSERT_ALL_EXISTS({cb2, cb3}, extractCallbacks(clientsToProp2()));
 
-    manager.unsubscribe(cb3, PROP2);
+    manager.unsubscribe(3, PROP2);
     assertOnPropertyUnsubscribedNotCalled();
     ASSERT_ALL_EXISTS({cb2}, extractCallbacks(clientsToProp2()));
 
     // The last client unsubscribed from this property.
-    manager.unsubscribe(cb2, PROP2);
+    manager.unsubscribe(2, PROP2);
     assertLastUnsubscribedProperty(PROP2);
 
     // No one subscribed anymore
-    manager.unsubscribe(cb1, PROP1);
+    manager.unsubscribe(1, PROP1);
     assertLastUnsubscribedProperty(PROP1);
 }
 
