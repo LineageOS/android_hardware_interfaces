@@ -1,5 +1,6 @@
 cc_library_shared {
     name: "libfootest",
+    vendor: true,
     defaults: ["hidl_defaults"],
     srcs: [
         "FooHelper.cpp"
