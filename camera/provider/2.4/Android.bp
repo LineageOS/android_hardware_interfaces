@@ -47,6 +47,7 @@ cc_library_shared {
     generated_sources: ["android.hardware.camera.provider@2.4_genc++"],
     generated_headers: ["android.hardware.camera.provider@2.4_genc++_headers"],
     export_generated_headers: ["android.hardware.camera.provider@2.4_genc++_headers"],
+    vendor_available: true,
     shared_libs: [
         "libhidlbase",
         "libhidltransport",

@@ -44,6 +44,7 @@ cc_library_shared {
     generated_sources: ["android.hardware.automotive.vehicle@2.1_genc++"],
     generated_headers: ["android.hardware.automotive.vehicle@2.1_genc++_headers"],
     export_generated_headers: ["android.hardware.automotive.vehicle@2.1_genc++_headers"],
+    vendor_available: true,
     shared_libs: [
         "libhidlbase",
         "libhidltransport",
