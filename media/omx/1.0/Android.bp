@@ -9,6 +9,7 @@ filegroup {
         "IOmxBufferSource.hal",
         "IOmxNode.hal",
         "IOmxObserver.hal",
+        "IOmxStore.hal",
     ],
 }
 
@@ -26,6 +27,7 @@ genrule {
         "android/hardware/media/omx/1.0/OmxBufferSourceAll.cpp",
         "android/hardware/media/omx/1.0/OmxNodeAll.cpp",
         "android/hardware/media/omx/1.0/OmxObserverAll.cpp",
+        "android/hardware/media/omx/1.0/OmxStoreAll.cpp",
     ],
 }
 
@@ -64,6 +66,11 @@ genrule {
         "android/hardware/media/omx/1.0/BnHwOmxObserver.h",
         "android/hardware/media/omx/1.0/BpHwOmxObserver.h",
         "android/hardware/media/omx/1.0/BsOmxObserver.h",
+        "android/hardware/media/omx/1.0/IOmxStore.h",
+        "android/hardware/media/omx/1.0/IHwOmxStore.h",
+        "android/hardware/media/omx/1.0/BnHwOmxStore.h",
+        "android/hardware/media/omx/1.0/BpHwOmxStore.h",
+        "android/hardware/media/omx/1.0/BsOmxStore.h",
     ],
 }
 

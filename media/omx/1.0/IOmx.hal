@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import IGraphicBufferSource;
 /**
  * Ref: frameworks/av/include/media/IOMX.h: IOMX
  *
- * IOmx is the main entry point for communicating with OMX components.
+ * IOmx has the ability to create OMX nodes.
  */
 interface IOmx {
 
@@ -41,8 +41,8 @@ interface IOmx {
     /**
      * List available components.
      *
-     * @param[out] status The status of the call.
-     * @param[out] nodeList The list of ComponentInfo.
+     * @return status The status of the call.
+     * @return nodeList The list of ComponentInfo.
      */
     listNodes(
         ) generates (
@@ -50,14 +50,15 @@ interface IOmx {
             vec<ComponentInfo> nodeList
         );
 
+
     /**
-     * Allocate an IOmxNode instance with the specified component name.
+     * Allocate an IOmxNode instance with the specified node name.
      *
-     * @param[in] name The name of the component to create.
-     * @param[in] observer An observer object that will receive messages from
+     * @param name The name of the node to create.
+     * @param observer An observer object that will receive messages from
      * the created instance.
-     * @param[out] status The status of the call.
-     * @param[out] omxNode The allocated instance of IOmxNode.
+     * @return status The status of the call.
+     * @return omxNode The allocated instance of `IOmxNode`.
      */
     allocateNode(
             string name,
@@ -70,8 +71,9 @@ interface IOmx {
     /**
      * Create an input surface for recording.
      *
-     * @param[out] producer The associated producer end of the buffer queue.
-     * @param[out] source The associated `IGraphicBufferSource`.
+     * @return status The status of the call.
+     * @return producer The associated producer end of the buffer queue.
+     * @return source The associated `IGraphicBufferSource`.
      */
     createInputSurface(
         ) generates (

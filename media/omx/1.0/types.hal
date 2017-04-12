@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ enum Status : int32_t {
     NAME_NOT_FOUND          = -2,
     WOULD_BLOCK             = -11,
     NO_MEMORY               = -12,
+    ALREADY_EXISTS          = -17,
     NO_INIT                 = -19,
     BAD_VALUE               = -22,
     DEAD_OBJECT             = -32,
