@@ -90,6 +90,8 @@ struct CameraDeviceSession : public ICameraDeviceSession, private camera3_callba
             const StreamConfiguration& requestedConfiguration, configureStreams_cb _hidl_cb) override;
     Return<void> getCaptureRequestMetadataQueue(
         getCaptureRequestMetadataQueue_cb _hidl_cb) override;
+    Return<void> getCaptureResultMetadataQueue(
+        getCaptureResultMetadataQueue_cb _hidl_cb) override;
     Return<void> processCaptureRequest(
             const hidl_vec<CaptureRequest>& requests,
             const hidl_vec<BufferCache>& cachesToRemove,
@@ -134,12 +136,15 @@ private:
 
     using RequestMetadataQueue = MessageQueue<uint8_t, kSynchronizedReadWrite>;
     std::unique_ptr<RequestMetadataQueue> mRequestMetadataQueue;
+    using ResultMetadataQueue = MessageQueue<uint8_t, kSynchronizedReadWrite>;
+    std::shared_ptr<ResultMetadataQueue> mResultMetadataQueue;
 
     class ResultBatcher {
     public:
         ResultBatcher(const sp<ICameraDeviceCallback>& callback);
         void setNumPartialResults(uint32_t n);
         void setBatchedStreams(const std::vector<int>& streamsToBatch);
+        void setResultMetadataQueue(std::shared_ptr<ResultMetadataQueue> q);
 
         void registerBatch(const hidl_vec<CaptureRequest>& requests);
         void notify(NotifyMsg& msg);
@@ -217,6 +222,7 @@ private:
         void freeReleaseFences(hidl_vec<CaptureResult>&);
         void notifySingleMsg(NotifyMsg& msg);
         void processOneCaptureResult(CaptureResult& result);
+        void invokeProcessCaptureResultCallback(hidl_vec<CaptureResult> &results, bool tryWriteFmq);
 
         // Protect access to mInflightBatches, mNumPartialResults and mStreamsToBatch
         // processCaptureRequest, processCaptureResult, notify will compete for this lock
@@ -226,6 +232,11 @@ private:
         uint32_t mNumPartialResults;
         std::vector<int> mStreamsToBatch;
         const sp<ICameraDeviceCallback> mCallback;
+        std::shared_ptr<ResultMetadataQueue> mResultMetadataQueue;
+
+        // Protect against invokeProcessCaptureResultCallback()
+        Mutex mProcessCaptureResultLock;
+
     } mResultBatcher;
 
     std::vector<int> mVideoStreamIds;
