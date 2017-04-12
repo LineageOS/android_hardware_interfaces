@@ -40,6 +40,10 @@ namespace {
 constexpr uint8_t kTestSsidPostfix[] = {'t', 'e', 's', 't'};
 constexpr uint8_t kTestMacAddr[] = {0x56, 0x67, 0x67, 0xf4, 0x56, 0x92};
 constexpr uint8_t kTestPeerMacAddr[] = {0x56, 0x67, 0x55, 0xf4, 0x56, 0x92};
+constexpr uint8_t kTestBonjourServiceQuery[] = {'t', 'e', 's', 't', 'q',
+                                                'u', 'e', 'r', 'y'};
+constexpr uint8_t kTestBonjourServiceResponse[] = {
+    't', 'e', 's', 't', 'r', 'e', 's', 'p', 'o', 'n', 's', 'e'};
 constexpr char kTestConnectPin[] = "34556665";
 constexpr char kTestGroupIfName[] = "TestGroup";
 constexpr char kTestWpsDeviceName[] = "TestWpsDeviceName";
@@ -47,17 +51,18 @@ constexpr char kTestWpsManufacturer[] = "TestManufacturer";
 constexpr char kTestWpsModelName[] = "TestModelName";
 constexpr char kTestWpsModelNumber[] = "TestModelNumber";
 constexpr char kTestWpsSerialNumber[] = "TestSerialNumber";
+constexpr char kTestUpnpServiceName[] = "TestServiceName";
 constexpr uint8_t kTestWpsDeviceType[] = {[0 ... 7] = 0x01};
 constexpr uint16_t kTestWpsConfigMethods = 0xffff;
 constexpr uint32_t kTestConnectGoIntent = 6;
 constexpr uint32_t kTestFindTimeout = 5;
 constexpr uint32_t kTestSetGroupIdleTimeout = 6;
-constexpr SupplicantNetworkId kTestNetworkId = 5;
 constexpr uint32_t kTestChannel = 1;
 constexpr uint32_t kTestOperatingClass = 81;
 constexpr uint32_t kTestFreqRange[] = {2412, 2432};
 constexpr uint32_t kTestExtListenPeriod = 400;
 constexpr uint32_t kTestExtListenInterval = 400;
+constexpr SupplicantNetworkId kTestNetworkId = 5;
 }  // namespace
 
 class SupplicantP2pIfaceHidlTest : public ::testing::VtsHalHidlTargetTestBase {
@@ -533,4 +538,64 @@ TEST_F(SupplicantP2pIfaceHidlTest, SetWpsConfigMethods) {
         SupplicantStatusCode::SUCCESS,
         HIDL_INVOKE(p2p_iface_, setWpsConfigMethods, kTestWpsConfigMethods)
             .code);
+}
+
+/*
+ * AddAndRemoveBonjourService
+ * This tests that we are able to add a bonjour service, and we can remove it
+ * by using the same query data.
+ * This also tests that removeBonjourSerive() returns error when there is no
+ * existing bonjour service with the same query data.
+ */
+TEST_F(SupplicantP2pIfaceHidlTest, AddAndRemoveBonjourService) {
+    EXPECT_EQ(SupplicantStatusCode::SUCCESS,
+              HIDL_INVOKE(
+                  p2p_iface_, addBonjourService,
+                  std::vector<uint8_t>(kTestBonjourServiceQuery,
+                                       kTestBonjourServiceQuery +
+                                           sizeof(kTestBonjourServiceQuery)),
+                  std::vector<uint8_t>(kTestBonjourServiceResponse,
+                                       kTestBonjourServiceResponse +
+                                           sizeof(kTestBonjourServiceResponse)))
+                  .code);
+    EXPECT_EQ(
+        SupplicantStatusCode::SUCCESS,
+        HIDL_INVOKE(p2p_iface_, removeBonjourService,
+                    std::vector<uint8_t>(kTestBonjourServiceQuery,
+                                         kTestBonjourServiceQuery +
+                                             sizeof(kTestBonjourServiceQuery)))
+            .code);
+    // This will fail because boujour service with kTestBonjourServiceQuery was
+    // already removed.
+    EXPECT_NE(
+        SupplicantStatusCode::SUCCESS,
+        HIDL_INVOKE(p2p_iface_, removeBonjourService,
+                    std::vector<uint8_t>(kTestBonjourServiceQuery,
+                                         kTestBonjourServiceQuery +
+                                             sizeof(kTestBonjourServiceQuery)))
+            .code);
+}
+
+/*
+ * AddAndRemoveUpnpService
+ * This tests that we are able to add a upnp service, and we can remove it
+ * by using the same service name.
+ * This also tests that removeUpnpService() returns error when there is no
+ * exsiting upnp service with the same service name.
+ */
+TEST_F(SupplicantP2pIfaceHidlTest, AddAndRemoveUpnpService) {
+    EXPECT_EQ(SupplicantStatusCode::SUCCESS,
+              HIDL_INVOKE(p2p_iface_, addUpnpService, 0 /* version */,
+                          kTestUpnpServiceName)
+                  .code);
+    EXPECT_EQ(SupplicantStatusCode::SUCCESS,
+              HIDL_INVOKE(p2p_iface_, removeUpnpService, 0 /* version */,
+                          kTestUpnpServiceName)
+                  .code);
+    // This will fail because Upnp service with kTestUpnpServiceName was
+    // already removed.
+    EXPECT_NE(SupplicantStatusCode::SUCCESS,
+              HIDL_INVOKE(p2p_iface_, removeUpnpService, 0 /* version */,
+                          kTestUpnpServiceName)
+                  .code);
 }
