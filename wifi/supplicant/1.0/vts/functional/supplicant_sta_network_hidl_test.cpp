@@ -384,6 +384,12 @@ TEST_F(SupplicantStaNetworkHidlTest, SetGetEapMethod) {
  * SetGetEapPhase2Method
  */
 TEST_F(SupplicantStaNetworkHidlTest, SetGetEapPhase2Method) {
+    ISupplicantStaNetwork::EapMethod set_eap_method =
+        ISupplicantStaNetwork::EapMethod::PEAP;
+    sta_network_->setEapMethod(
+        set_eap_method, [](const SupplicantStatus& status) {
+            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+        });
     ISupplicantStaNetwork::EapPhase2Method set_eap_phase2_method =
         ISupplicantStaNetwork::EapPhase2Method::NONE;
     sta_network_->setEapPhase2Method(
