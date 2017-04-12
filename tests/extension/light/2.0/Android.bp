@@ -44,6 +44,7 @@ cc_library_shared {
     generated_sources: ["android.hardware.tests.extension.light@2.0_genc++"],
     generated_headers: ["android.hardware.tests.extension.light@2.0_genc++_headers"],
     export_generated_headers: ["android.hardware.tests.extension.light@2.0_genc++_headers"],
+    vendor_available: true,
     shared_libs: [
         "libhidlbase",
         "libhidltransport",
