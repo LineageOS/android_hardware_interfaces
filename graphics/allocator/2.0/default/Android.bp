@@ -15,7 +15,9 @@ cc_library_shared {
         "liblog",
         "libutils",
     ],
-    static_libs: ["libgrallocmapperincludes"],
+    header_libs: [
+        "libgrallocmapperincludes",
+    ],
 }
 
 cc_binary {
