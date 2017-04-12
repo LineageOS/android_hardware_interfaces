@@ -23,7 +23,7 @@
 #include <unistd.h>
 
 #include <cutils/properties.h>
-#include <utils/Log.h>
+#include <log/log.h>
 
 static const int MAX_PROPERTIES = 5;
 
