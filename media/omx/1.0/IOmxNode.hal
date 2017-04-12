@@ -35,7 +35,7 @@ interface IOmxNode {
     /**
      * Free the node.
      *
-     * @param[out] status Status of the call.
+     * @return status Status of the call.
      */
     freeNode(
         ) generates (
@@ -45,9 +45,9 @@ interface IOmxNode {
     /**
      * Invoke a command on the node.
      *
-     * @param[in] cmd Type of the command.
-     * @param[in] param Parameter for the command.
-     * @param[out] status Status of the call.
+     * @param cmd Type of the command.
+     * @param param Parameter for the command.
+     * @return status Status of the call.
      *
      * @see OMX_SendCommand() in the OpenMax IL standard.
      */
@@ -61,10 +61,10 @@ interface IOmxNode {
     /**
      * Retrieve a parameter setting from the node.
      *
-     * @param[in] index Type of the parameter to retrieve.
-     * @param[in] inParams Information about the retrieval.
-     * @param[out] status Status of the call.
-     * @param[out] outParams Current parameter setting.
+     * @param index Type of the parameter to retrieve.
+     * @param inParams Information about the retrieval.
+     * @return status Status of the call.
+     * @return outParams Current parameter setting.
      *
      * @see OMX_GetParameter() in the OpenMax IL standard.
      */
@@ -79,9 +79,9 @@ interface IOmxNode {
     /**
      * Change a parameter setting of the node.
      *
-     * @param[in] index Type of the parameter to change.
-     * @param[in] params New parameter setting.
-     * @param[out] status Status of the call.
+     * @param index Type of the parameter to change.
+     * @param params New parameter setting.
+     * @return status Status of the call.
      *
      * @see OMX_SetParameter() in the OpenMax IL standard.
      */
@@ -95,10 +95,10 @@ interface IOmxNode {
     /**
      * Retrieve a configuration from the node.
      *
-     * @param[in] index Type of the configuration to retrieve.
-     * @param[in] inConfig Information about the retrieval.
-     * @param[out] status Status of the call.
-     * @param[out] outConfig Current configuration.
+     * @param index Type of the configuration to retrieve.
+     * @param inConfig Information about the retrieval.
+     * @return status Status of the call.
+     * @return outConfig Current configuration.
      *
      * @see OMX_GetConfig() in the OpenMax IL standard.
      */
@@ -113,9 +113,9 @@ interface IOmxNode {
     /**
      * Change a configuration of the node.
      *
-     * @param[in] index Type of the configuration to change.
-     * @param[in] config New configuration.
-     * @param[out] status Status of the call.
+     * @param index Type of the configuration to change.
+     * @param config New configuration.
+     * @return status Status of the call.
      *
      * @see OMX_SetConfig() in the OpenMax IL standard.
      */
@@ -129,9 +129,9 @@ interface IOmxNode {
     /**
      * Set the mode of a port on the node.
      *
-     * @param[in] portIndex Index of the port.
-     * @param[in] mode Target mode on the specified port.
-     * @param[out] status Status of the call.
+     * @param portIndex Index of the port.
+     * @param mode Target mode on the specified port.
+     * @return status Status of the call.
      */
     setPortMode(
             uint32_t portIndex,
@@ -144,11 +144,11 @@ interface IOmxNode {
      * Prepare a port for adaptive playback. This is based on the extension
      * "OMX.google.android.index.prepareForAdaptivePlayback".
      *
-     * @param[in] portIndex Index of the port.
-     * @param[in] enable Whether the adaptive playback is enabled or not.
-     * @param[in] maxFrameWidth Maximum frame width.
-     * @param[in] maxFrameHeight Maximum frame height.
-     * @param[out] status Status of the call.
+     * @param portIndex Index of the port.
+     * @param enable Whether the adaptive playback is enabled or not.
+     * @param maxFrameWidth Maximum frame width.
+     * @param maxFrameHeight Maximum frame height.
+     * @return status Status of the call.
      */
     prepareForAdaptivePlayback(
             uint32_t portIndex,
@@ -163,12 +163,12 @@ interface IOmxNode {
      * Configure a port for a tunneled playback mode. This is based on the
      * extension "OMX.google.android.index.configureVideoTunnelMode".
      *
-     * @param[in] portIndex Index of the port.
-     * @param[in] tunneled Whether the tunneled mode is used or not.
-     * @param[in] audioHwSync HW SYNC ID of the audio HAL output stream to sync
+     * @param portIndex Index of the port.
+     * @param tunneled Whether the tunneled mode is used or not.
+     * @param audioHwSync HW SYNC ID of the audio HAL output stream to sync
      * the video with.
-     * @param[out] status Status of the call.
-     * @param[out] sidebandHandle Codec-allocated sideband window handle.
+     * @return status Status of the call.
+     * @return sidebandHandle Codec-allocated sideband window handle.
      */
     configureVideoTunnelMode(
             uint32_t portIndex,
@@ -183,9 +183,9 @@ interface IOmxNode {
      * Retrieve the buffer usage on a port. This is based on the extension
      * "OMX.google.android.index.getAndroidNativeBufferUsage".
      *
-     * @param[in] portIndex Index of the port.
-     * @param[out] status Status of the call.
-     * @param[out] usage Current graphic buffer usage.
+     * @param portIndex Index of the port.
+     * @return status Status of the call.
+     * @return usage Current graphic buffer usage.
      */
     getGraphicBufferUsage(
             uint32_t portIndex
@@ -197,9 +197,9 @@ interface IOmxNode {
     /**
      * Set up a listener to events related to the input surface.
      *
-     * @param[in] bufferSource Listener object that implements
+     * @param bufferSource Listener object that implements
      * IOmxBufferSource.
-     * @param[out] status Status of the call.
+     * @return status Status of the call.
      *
      * @see IOmxBufferSource.
      */
@@ -212,12 +212,12 @@ interface IOmxNode {
     /**
      * Allocate an opaque buffer on a port as a native handle.
      *
-     * @param[in] portIndex Index of the port.
-     * @param[in] size Desired size of the buffer.
-     * @param[out] status Status of the call.
-     * @param[out] buffer Id of the allocated buffer, which will be needed in
+     * @param portIndex Index of the port.
+     * @param size Desired size of the buffer.
+     * @return status Status of the call.
+     * @return buffer Id of the allocated buffer, which will be needed in
      * other buffer-related functions.
-     * @param[out] nativeHandle Native handle of the allocated buffer.
+     * @return nativeHandle Native handle of the allocated buffer.
      *
      * @see OMX_AllocateBuffer() in the OpenMax IL standard.
      */
@@ -233,10 +233,10 @@ interface IOmxNode {
     /**
      * Assign a buffer to a port.
      *
-     * @param[in] portIndex Index of the port.
-     * @param[in] omxBuffer Buffer to be assigned to the port.
-     * @param[out] status Status of the call.
-     * @param[out] buffer Id of the assigned buffer, which will be needed in
+     * @param portIndex Index of the port.
+     * @param omxBuffer Buffer to be assigned to the port.
+     * @return status Status of the call.
+     * @return buffer Id of the assigned buffer, which will be needed in
      * other buffer-related functions.
      *
      * @see OMX_UseBuffer() in the OpenMax IL standard.
@@ -253,9 +253,9 @@ interface IOmxNode {
      * Free a buffer previously assigned to a port by allocateSecureBuffer() or
      * useBuffer().
      *
-     * @param[in] portIndex Index of the port.
-     * @param[in] buffer Id of the buffer to be freed.
-     * @param[out] status Status of the call.
+     * @param portIndex Index of the port.
+     * @param buffer Id of the buffer to be freed.
+     * @return status Status of the call.
      *
      * @see OMX_FreeBuffer() in the OpenMax IL standard.
      */
@@ -275,10 +275,10 @@ interface IOmxNode {
      * the new buffer passed in via \p omxBuffer before OMX_FillThisBuffer() is
      * called. Otherwise, \p omxBuffer is not used.
      *
-     * @param[in] buffer Id of the buffer to fill.
-     * @param[in] omxBuffer New buffer information (in metadata mode).
-     * @param[in] fence Fence to wait for (if not null).
-     * @param[out] status Status of the call.
+     * @param buffer Id of the buffer to fill.
+     * @param omxBuffer New buffer information (in metadata mode).
+     * @param fence Fence to wait for (if not null).
+     * @return status Status of the call.
      *
      * @see OMX_FillThisBuffer() in the OpenMax IL standard.
      */
@@ -299,12 +299,12 @@ interface IOmxNode {
      * the new buffer passed in via \p omxBuffer before OMX_EmptyThisBuffer() is
      * called. Otherwise, \p omxBuffer is not used.
      *
-     * @param[in] buffer Id of the buffer to fill.
-     * @param[in] omxBuffer New buffer information (in metadata mode).
-     * @param[in] flags Flags to be passed to OMX_EmptyBuffer().
-     * @param[in] timestampUs Timestamp OMX_EmptyBuffer().
-     * @param[in] fence Fence to wait for (if not null).
-     * @param[out] status Status of the call.
+     * @param buffer Id of the buffer to fill.
+     * @param omxBuffer New buffer information (in metadata mode).
+     * @param flags Flags to be passed to OMX_EmptyBuffer().
+     * @param timestampUs Timestamp OMX_EmptyBuffer().
+     * @param fence Fence to wait for (if not null).
+     * @return status Status of the call.
      *
      * @see OMX_EmptyThisBuffer() in the OpenMax IL standard.
      */
@@ -321,9 +321,9 @@ interface IOmxNode {
     /**
      * Request the node to translate an extension string to an index.
      *
-     * @param[in] parameterName Requested extension string.
-     * @param[out] status Status of the call.
-     * @param[out] index Translated index.
+     * @param parameterName Requested extension string.
+     * @return status Status of the call.
+     * @return index Translated index.
      *
      * @see OMX_GetExtensionIndex() in the OpenMax IL standard.
      */
@@ -340,8 +340,8 @@ interface IOmxNode {
      * receive the message in batches by the callback
      * IOmxObserver::onMessages().
      *
-     * @param[in] msg Message to send.
-     * @param[out] status Status of the call.
+     * @param msg Message to send.
+     * @return status Status of the call.
      *
      * @see IOmxObserver::onMessages().
      */
@@ -350,16 +350,5 @@ interface IOmxNode {
         ) generates (
             Status status
         );
-
-    /**
-     * Set quirks.
-     *
-     * @param[in] quirks Quirks for the component, generally obtained from
-     * MediaCodecList::getQuirksFor().
-     */
-    oneway setQuirks(
-            uint32_t quirks
-        );
-
 };
 
