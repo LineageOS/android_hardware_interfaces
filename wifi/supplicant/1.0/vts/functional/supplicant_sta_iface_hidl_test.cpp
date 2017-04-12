@@ -47,11 +47,18 @@ constexpr ISupplicantStaIface::Hs20AnqpSubtypes kTestHs20Types[] = {
     ISupplicantStaIface::Hs20AnqpSubtypes::WAN_METRICS,
     ISupplicantStaIface::Hs20AnqpSubtypes::OPERATOR_FRIENDLY_NAME};
 constexpr char kTestHs20IconFile[] = "TestFile";
+constexpr char kTestWpsDeviceName[] = "TestWpsDeviceName";
+constexpr char kTestWpsManufacturer[] = "TestManufacturer";
+constexpr char kTestWpsModelName[] = "TestModelName";
+constexpr char kTestWpsModelNumber[] = "TestModelNumber";
+constexpr char kTestWpsSerialNumber[] = "TestSerialNumber";
 constexpr char kTestRadioWorkName[] = "TestRadioWork";
 constexpr uint32_t kTestRadioWorkFrequency = 2412;
 constexpr uint32_t kTestRadioWorkTimeout = 8;
 constexpr uint32_t kTestRadioWorkId = 16;
 constexpr int8_t kTestCountryCode[] = {'U', 'S'};
+constexpr uint8_t kTestWpsDeviceType[] = {[0 ... 7] = 0x01};
+constexpr uint16_t kTestWpsConfigMethods = 0xffff;
 }  // namespace
 
 class SupplicantStaIfaceHidlTest : public ::testing::VtsHalHidlTargetTestBase {
@@ -430,6 +437,69 @@ TEST_F(SupplicantStaIfaceHidlTest, SetCountryCode) {
         kTestCountryCode, [](const SupplicantStatus& status) {
             EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
         });
+}
+
+/*
+ * SetWpsDeviceName
+ */
+TEST_F(SupplicantStaIfaceHidlTest, SetWpsDeviceName) {
+    EXPECT_EQ(
+        SupplicantStatusCode::SUCCESS,
+        HIDL_INVOKE(sta_iface_, setWpsDeviceName, kTestWpsDeviceName).code);
+}
+
+/*
+ * SetWpsDeviceType
+ */
+TEST_F(SupplicantStaIfaceHidlTest, SetWpsDeviceType) {
+    EXPECT_EQ(
+        SupplicantStatusCode::SUCCESS,
+        HIDL_INVOKE(sta_iface_, setWpsDeviceType, kTestWpsDeviceType).code);
+}
+
+/*
+ * SetWpsManufacturer
+ */
+TEST_F(SupplicantStaIfaceHidlTest, SetWpsManufacturer) {
+    EXPECT_EQ(
+        SupplicantStatusCode::SUCCESS,
+        HIDL_INVOKE(sta_iface_, setWpsManufacturer, kTestWpsManufacturer).code);
+}
+
+/*
+ * SetWpsModelName
+ */
+TEST_F(SupplicantStaIfaceHidlTest, SetWpsModelName) {
+    EXPECT_EQ(SupplicantStatusCode::SUCCESS,
+              HIDL_INVOKE(sta_iface_, setWpsModelName, kTestWpsModelName).code);
+}
+
+/*
+ * SetWpsModelNumber
+ */
+TEST_F(SupplicantStaIfaceHidlTest, SetWpsModelNumber) {
+    EXPECT_EQ(
+        SupplicantStatusCode::SUCCESS,
+        HIDL_INVOKE(sta_iface_, setWpsModelNumber, kTestWpsModelNumber).code);
+}
+
+/*
+ * SetWpsSerialNumber
+ */
+TEST_F(SupplicantStaIfaceHidlTest, SetWpsSerialNumber) {
+    EXPECT_EQ(
+        SupplicantStatusCode::SUCCESS,
+        HIDL_INVOKE(sta_iface_, setWpsSerialNumber, kTestWpsSerialNumber).code);
+}
+
+/*
+ * SetWpsConfigMethods
+ */
+TEST_F(SupplicantStaIfaceHidlTest, SetWpsConfigMethods) {
+    EXPECT_EQ(
+        SupplicantStatusCode::SUCCESS,
+        HIDL_INVOKE(sta_iface_, setWpsConfigMethods, kTestWpsConfigMethods)
+            .code);
 }
 
 /*
