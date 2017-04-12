@@ -1285,10 +1285,11 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      * @param aid AID value, See ETSI 102.221 and 101.220.
+     * @param p2 P2 value, described in ISO 7816-4. Ignore if equal to P2Constant:NO_P2
      *
      * Response callback is IRadioResponse.iccOpenLogicalChannelResponse()
      */
-    oneway iccOpenLogicalChannel(int32_t serial, string aid);
+    oneway iccOpenLogicalChannel(int32_t serial, string aid, int32_t p2);
 
     /**
      * Close a previously opened logical channel. This command reflects TS 27.007

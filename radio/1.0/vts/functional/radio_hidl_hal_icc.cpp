@@ -246,12 +246,15 @@ TEST_F(RadioHidlTest, iccTransmitApduBasicChannel) {
  */
 TEST_F(RadioHidlTest, iccOpenLogicalChannel) {
   int serial = 1;
-
+  int p2 = 0x04;
+  // Specified in ISO 7816-4 clause 7.1.1 0x04 means that FCP template is
+  // requested.
   for (int i = 0; i < (int)cardStatus.applications.size(); i++) {
-    radio->iccOpenLogicalChannel(++serial, cardStatus.applications[i].aidPtr);
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(serial, radioRsp->rspInfo.serial);
-    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
+      radio->iccOpenLogicalChannel(++serial, cardStatus.applications[i].aidPtr,
+                                   p2);
+      EXPECT_EQ(std::cv_status::no_timeout, wait());
+      EXPECT_EQ(serial, radioRsp->rspInfo.serial);
+      EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
   }
 }
 
