@@ -23,6 +23,7 @@ cc_library_shared {
 
 cc_library_static {
     name: "android.hardware.sensors@1.0-convert",
+    vendor_available: true,
     defaults: ["hidl_defaults"],
     srcs: ["convert.cpp"],
     export_include_dirs: ["include"],
