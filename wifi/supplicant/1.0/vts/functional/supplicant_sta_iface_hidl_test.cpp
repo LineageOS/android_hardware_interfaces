@@ -20,6 +20,7 @@
 
 #include <android/hardware/wifi/supplicant/1.0/ISupplicantStaIface.h>
 
+#include "supplicant_hidl_call_util.h"
 #include "supplicant_hidl_test_utils.h"
 
 using ::android::sp;
@@ -28,6 +29,7 @@ using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
+using ::android::hardware::wifi::supplicant::V1_0::IfaceType;
 using ::android::hardware::wifi::supplicant::V1_0::ISupplicantStaIface;
 using ::android::hardware::wifi::supplicant::V1_0::ISupplicantStaIfaceCallback;
 using ::android::hardware::wifi::supplicant::V1_0::ISupplicantStaNetwork;
@@ -160,6 +162,26 @@ TEST_F(SupplicantStaIfaceHidlTest, RegisterCallback) {
         new IfaceCallback(), [](const SupplicantStatus& status) {
             EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
         });
+}
+
+/*
+ * GetName
+ */
+TEST_F(SupplicantStaIfaceHidlTest, GetName) {
+    const auto& status_and_interface_name = HIDL_INVOKE(sta_iface_, getName);
+    EXPECT_EQ(SupplicantStatusCode::SUCCESS,
+              status_and_interface_name.first.code);
+    EXPECT_FALSE(std::string(status_and_interface_name.second).empty());
+}
+
+/*
+ * GetType
+ */
+TEST_F(SupplicantStaIfaceHidlTest, GetType) {
+    const auto& status_and_interface_type = HIDL_INVOKE(sta_iface_, getType);
+    EXPECT_EQ(SupplicantStatusCode::SUCCESS,
+              status_and_interface_type.first.code);
+    EXPECT_EQ(status_and_interface_type.second, IfaceType::STA);
 }
 
 /*
