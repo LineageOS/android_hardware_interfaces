@@ -519,6 +519,7 @@ Return<void> KeymasterDevice::attestKey(const hidl_vec<uint8_t>& keyToAttest,
 
     hidl_vec<hidl_vec<uint8_t>> resultCertChain;
 
+    bool foundAttestationApplicationId = false;
     for (size_t i = 0; i < attestParams.size(); ++i) {
         switch (attestParams[i].tag) {
         case Tag::ATTESTATION_ID_BRAND:
@@ -532,9 +533,20 @@ Return<void> KeymasterDevice::attestKey(const hidl_vec<uint8_t>& keyToAttest,
             // never perform any device id attestation.
             _hidl_cb(ErrorCode::CANNOT_ATTEST_IDS, resultCertChain);
             return Void();
+
+        case Tag::ATTESTATION_APPLICATION_ID:
+            foundAttestationApplicationId = true;
+            break;
+
         default:
             break;
         }
+    }
+
+    // KM3 devices reject missing attest application IDs. KM2 devices do not.
+    if (!foundAttestationApplicationId) {
+        _hidl_cb(ErrorCode::ATTESTATION_APPLICATION_ID_MISSING,
+                 resultCertChain);
     }
 
     keymaster_cert_chain_t cert_chain{nullptr, 0};
