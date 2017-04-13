@@ -108,4 +108,10 @@ interface ISurfaceFlingerConfigs {
      * FramebufferSurface.
      */
     maxFrameBufferAcquiredBuffers() generates(OptionalInt64 value);
+
+    /**
+     * Returns true if surface flinger should start
+     * hardware.graphics.allocator@2.0::IAllocator service.
+     */
+    startGraphicsAllocatorService() generates(OptionalBool value);
 };
