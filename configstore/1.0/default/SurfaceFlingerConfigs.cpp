@@ -112,6 +112,16 @@ Return<void> SurfaceFlingerConfigs::useVrFlinger(useVrFlinger_cb _hidl_cb) {
     return Void();
 }
 
+Return<void> SurfaceFlingerConfigs::startGraphicsAllocatorService(
+    startGraphicsAllocatorService_cb _hidl_cb) {
+    bool value = false;
+#ifdef START_GRAPHICS_ALLOCATOR_SERVICE
+    value = true;
+#endif
+    _hidl_cb({true, value});
+    return Void();
+}
+
 }  // namespace implementation
 }  // namespace V1_0
 }  // namespace configstore
