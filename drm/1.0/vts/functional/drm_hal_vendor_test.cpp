@@ -953,6 +953,7 @@ TEST_P(DrmHalVendorPluginTest, ListenerKeysChange) {
     EXPECT_TRUE(result.args);
     EXPECT_EQ(sessionId, result.args->sessionId);
     EXPECT_EQ(keyStatusList, result.args->keyStatusList);
+    closeSession(sessionId);
 }
 
 /**
@@ -1429,7 +1430,7 @@ TEST_P(DrmHalVendorDecryptTest, AttemptDecryptWithKeysRemoved) {
 
             uint32_t byteCount = decrypt(Mode::AES_CTR, key.isSecure,
                     toHidlArray(key.keyId), &iv[0], subSamples, noPattern,
-                    key.clearContentKey, Status::ERROR_DRM_DECRYPT);
+                    key.clearContentKey, Status::ERROR_DRM_NO_LICENSE);
             EXPECT_EQ(0u, byteCount);
 
             closeSession(sessionId);
