@@ -42,6 +42,13 @@ constexpr uint8_t kTestMacAddr[] = {0x56, 0x67, 0x67, 0xf4, 0x56, 0x92};
 constexpr uint8_t kTestPeerMacAddr[] = {0x56, 0x67, 0x55, 0xf4, 0x56, 0x92};
 constexpr char kTestConnectPin[] = "34556665";
 constexpr char kTestGroupIfName[] = "TestGroup";
+constexpr char kTestWpsDeviceName[] = "TestWpsDeviceName";
+constexpr char kTestWpsManufacturer[] = "TestManufacturer";
+constexpr char kTestWpsModelName[] = "TestModelName";
+constexpr char kTestWpsModelNumber[] = "TestModelNumber";
+constexpr char kTestWpsSerialNumber[] = "TestSerialNumber";
+constexpr uint8_t kTestWpsDeviceType[] = {[0 ... 7] = 0x01};
+constexpr uint16_t kTestWpsConfigMethods = 0xffff;
 constexpr uint32_t kTestConnectGoIntent = 6;
 constexpr uint32_t kTestFindTimeout = 5;
 constexpr uint32_t kTestSetGroupIdleTimeout = 6;
@@ -463,4 +470,67 @@ TEST_F(SupplicantP2pIfaceHidlTest, SetPowerSave) {
     EXPECT_NE(
         SupplicantStatusCode::SUCCESS,
         HIDL_INVOKE(p2p_iface_, setPowerSave, kTestGroupIfName, false).code);
+}
+
+/*
+ * SetWpsDeviceName
+ */
+TEST_F(SupplicantP2pIfaceHidlTest, SetWpsDeviceName) {
+    EXPECT_EQ(
+        SupplicantStatusCode::SUCCESS,
+        HIDL_INVOKE(p2p_iface_, setWpsDeviceName, kTestWpsDeviceName).code);
+}
+
+/*
+ * SetWpsDeviceType
+ */
+TEST_F(SupplicantP2pIfaceHidlTest, SetWpsDeviceType) {
+    EXPECT_EQ(
+        SupplicantStatusCode::SUCCESS,
+        HIDL_INVOKE(p2p_iface_, setWpsDeviceType, kTestWpsDeviceType).code);
+}
+
+/*
+ * SetWpsManufacturer
+ */
+TEST_F(SupplicantP2pIfaceHidlTest, SetWpsManufacturer) {
+    EXPECT_EQ(
+        SupplicantStatusCode::SUCCESS,
+        HIDL_INVOKE(p2p_iface_, setWpsManufacturer, kTestWpsManufacturer).code);
+}
+
+/*
+ * SetWpsModelName
+ */
+TEST_F(SupplicantP2pIfaceHidlTest, SetWpsModelName) {
+    EXPECT_EQ(SupplicantStatusCode::SUCCESS,
+              HIDL_INVOKE(p2p_iface_, setWpsModelName, kTestWpsModelName).code);
+}
+
+/*
+ * SetWpsModelNumber
+ */
+TEST_F(SupplicantP2pIfaceHidlTest, SetWpsModelNumber) {
+    EXPECT_EQ(
+        SupplicantStatusCode::SUCCESS,
+        HIDL_INVOKE(p2p_iface_, setWpsModelNumber, kTestWpsModelNumber).code);
+}
+
+/*
+ * SetWpsSerialNumber
+ */
+TEST_F(SupplicantP2pIfaceHidlTest, SetWpsSerialNumber) {
+    EXPECT_EQ(
+        SupplicantStatusCode::SUCCESS,
+        HIDL_INVOKE(p2p_iface_, setWpsSerialNumber, kTestWpsSerialNumber).code);
+}
+
+/*
+ * SetWpsConfigMethods
+ */
+TEST_F(SupplicantP2pIfaceHidlTest, SetWpsConfigMethods) {
+    EXPECT_EQ(
+        SupplicantStatusCode::SUCCESS,
+        HIDL_INVOKE(p2p_iface_, setWpsConfigMethods, kTestWpsConfigMethods)
+            .code);
 }
