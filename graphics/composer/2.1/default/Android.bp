@@ -1,5 +1,6 @@
 cc_library_static {
     name: "libhwcomposer-client",
+    vendor_available: true,
     defaults: ["hidl_defaults"],
     export_include_dirs: ["."],
     srcs: ["ComposerClient.cpp"],
