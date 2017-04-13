@@ -44,6 +44,7 @@ constexpr uint8_t kTestBonjourServiceQuery[] = {'t', 'e', 's', 't', 'q',
                                                 'u', 'e', 'r', 'y'};
 constexpr uint8_t kTestBonjourServiceResponse[] = {
     't', 'e', 's', 't', 'r', 'e', 's', 'p', 'o', 'n', 's', 'e'};
+constexpr uint8_t kTestWfdDeviceInfo[] = {[0 ... 5] = 0x01};
 constexpr char kTestConnectPin[] = "34556665";
 constexpr char kTestGroupIfName[] = "TestGroup";
 constexpr char kTestWpsDeviceName[] = "TestWpsDeviceName";
@@ -598,4 +599,23 @@ TEST_F(SupplicantP2pIfaceHidlTest, AddAndRemoveUpnpService) {
               HIDL_INVOKE(p2p_iface_, removeUpnpService, 0 /* version */,
                           kTestUpnpServiceName)
                   .code);
+}
+
+/*
+ * EnableWfd
+ */
+TEST_F(SupplicantP2pIfaceHidlTest, EnableWfd) {
+    EXPECT_EQ(SupplicantStatusCode::SUCCESS,
+              HIDL_INVOKE(p2p_iface_, enableWfd, true).code);
+    EXPECT_EQ(SupplicantStatusCode::SUCCESS,
+              HIDL_INVOKE(p2p_iface_, enableWfd, false).code);
+}
+
+/*
+ * SetWfdDeviceInfo
+ */
+TEST_F(SupplicantP2pIfaceHidlTest, SetWfdDeviceInfo) {
+    EXPECT_EQ(
+        SupplicantStatusCode::SUCCESS,
+        HIDL_INVOKE(p2p_iface_, setWfdDeviceInfo, kTestWfdDeviceInfo).code);
 }
