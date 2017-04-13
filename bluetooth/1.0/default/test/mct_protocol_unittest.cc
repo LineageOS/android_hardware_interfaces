@@ -25,10 +25,10 @@
 #include <mutex>
 #include <vector>
 
+#include <log/log.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <utils/Log.h>
 
 namespace android {
 namespace hardware {

@@ -17,7 +17,7 @@
 #define LOG_TAG "android.hardware.bluetooth@1.0-impl"
 #include "bluetooth_hci.h"
 
-#include <utils/Log.h>
+#include <log/log.h>
 
 #include "vendor_interface.h"
 
