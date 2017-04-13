@@ -5,7 +5,7 @@ LOCAL_PATH := $(call my-dir)
 ################################################################################
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := android.hardware.camera.common@1.0-java
+LOCAL_MODULE := android.hardware.camera.common-V1.0-java
 LOCAL_MODULE_CLASS := JAVA_LIBRARIES
 
 intermediates := $(call local-generated-sources-dir, COMMON)
@@ -188,7 +188,7 @@ include $(BUILD_JAVA_LIBRARY)
 ################################################################################
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := android.hardware.camera.common@1.0-java-static
+LOCAL_MODULE := android.hardware.camera.common-V1.0-java-static
 LOCAL_MODULE_CLASS := JAVA_LIBRARIES
 
 intermediates := $(call local-generated-sources-dir, COMMON)

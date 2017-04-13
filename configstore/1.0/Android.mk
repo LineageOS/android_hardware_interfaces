@@ -5,7 +5,7 @@ LOCAL_PATH := $(call my-dir)
 ################################################################################
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := android.hardware.configstore@1.0-java
+LOCAL_MODULE := android.hardware.configstore-V1.0-java
 LOCAL_MODULE_CLASS := JAVA_LIBRARIES
 
 intermediates := $(call local-generated-sources-dir, COMMON)
@@ -13,7 +13,7 @@ intermediates := $(call local-generated-sources-dir, COMMON)
 HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
 
 LOCAL_JAVA_LIBRARIES := \
-    android.hidl.base@1.0-java \
+    android.hidl.base-V1.0-java \
 
 
 #
@@ -156,7 +156,7 @@ include $(BUILD_JAVA_LIBRARY)
 ################################################################################
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := android.hardware.configstore@1.0-java-static
+LOCAL_MODULE := android.hardware.configstore-V1.0-java-static
 LOCAL_MODULE_CLASS := JAVA_LIBRARIES
 
 intermediates := $(call local-generated-sources-dir, COMMON)
@@ -164,7 +164,7 @@ intermediates := $(call local-generated-sources-dir, COMMON)
 HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    android.hidl.base@1.0-java-static \
+    android.hidl.base-V1.0-java-static \
 
 
 #
