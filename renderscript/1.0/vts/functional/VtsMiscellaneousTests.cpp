@@ -175,6 +175,8 @@ TEST_F(RenderscriptHidlTest, NativeWindowIoTest) {
     ASSERT_NE(NativeWindow(0), nativeWindow);
 
     ((ANativeWindow *)nativeWindow)->incStrong(nullptr);
+    native_window_api_connect((ANativeWindow*)nativeWindow,
+                              NATIVE_WINDOW_API_CPU);
 
     context->allocationSetNativeWindow(allocationSend, nativeWindow);
     context->allocation2DWrite(allocationSend, 0, 0, 0, AllocationCubemapFace::POSITIVE_X, 512, 512,
@@ -239,6 +241,8 @@ TEST_F(RenderscriptHidlTest, BufferQueueTest) {
     EXPECT_EQ(nativeWindow2, nativeWindow1);
 
     ((ANativeWindow *)nativeWindow1)->incStrong(nullptr);
+    native_window_api_connect((ANativeWindow*)nativeWindow1,
+                              NATIVE_WINDOW_API_CPU);
 
     context->allocationSetNativeWindow(allocationSend, nativeWindow1);
     context->allocation2DWrite(allocationSend, 0, 0, 0, AllocationCubemapFace::POSITIVE_X, 512, 512,
