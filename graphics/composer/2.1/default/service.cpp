@@ -28,7 +28,6 @@ using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
     // the conventional HAL might start binder services
-    android::ProcessState::initWithDriver("/dev/vndbinder");
     android::ProcessState::self()->setThreadPoolMaxThreadCount(4);
     android::ProcessState::self()->startThreadPool();
 
