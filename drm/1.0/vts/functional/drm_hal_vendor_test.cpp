@@ -113,14 +113,14 @@ class DrmHalVendorFactoryTest : public testing::TestWithParam<std::string> {
         string name = vendorModule->getServiceName();
         drmFactory = VtsTestBase::getService<IDrmFactory>(name);
         if (drmFactory == nullptr) {
-            drmFactory = VtsTestBase::getService<IDrmFactory>("drm");
+            drmFactory = VtsTestBase::getService<IDrmFactory>();
         }
         ASSERT_NE(drmFactory, nullptr);
 
-        // Dot the same for the crypto factory
+        // Do the same for the crypto factory
         cryptoFactory = VtsTestBase::getService<ICryptoFactory>(name);
         if (cryptoFactory == nullptr) {
-            VtsTestBase::getService<ICryptoFactory>("crypto");
+            VtsTestBase::getService<ICryptoFactory>();
         }
         ASSERT_NE(cryptoFactory, nullptr);
     }

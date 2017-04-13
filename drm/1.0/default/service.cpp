@@ -32,11 +32,11 @@ int main() {
     ALOGD("android.hardware.drm@1.0-service starting...");
     configureRpcThreadpool(8, true /* callerWillJoin */);
     android::status_t status =
-        registerPassthroughServiceImplementation<IDrmFactory>("drm");
+        registerPassthroughServiceImplementation<IDrmFactory>();
     LOG_ALWAYS_FATAL_IF(
         status != android::OK,
         "Error while registering drm service: %d", status);
-    status = registerPassthroughServiceImplementation<ICryptoFactory>("crypto");
+    status = registerPassthroughServiceImplementation<ICryptoFactory>();
     LOG_ALWAYS_FATAL_IF(
         status != android::OK,
         "Error while registering crypto service: %d", status);
