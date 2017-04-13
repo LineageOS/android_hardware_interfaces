@@ -318,6 +318,8 @@ TEST_F(RadioHidlTest, supplyNetworkDepersonalization) {
   EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
   if (cardStatus.cardState == CardState::ABSENT) {
-    ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::PASSWORD_INCORRECT);
+      ASSERT_TRUE(CheckGeneralError() ||
+                  radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                  radioRsp->rspInfo.error == RadioError::PASSWORD_INCORRECT);
   }
 }

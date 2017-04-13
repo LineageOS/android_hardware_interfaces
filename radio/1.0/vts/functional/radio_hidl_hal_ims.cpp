@@ -31,9 +31,8 @@ TEST_F(RadioHidlTest, getClir) {
   EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
   if (cardStatus.cardState == CardState::ABSENT) {
-    ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::MODEM_ERR ||
-                radioRsp->rspInfo.error == RadioError::SYSTEM_ERR ||
-                radioRsp->rspInfo.error == RadioError::INTERNAL_ERR);
+      ASSERT_TRUE(CheckGeneralError() ||
+                  radioRsp->rspInfo.error == RadioError::MODEM_ERR);
   }
 }
 
@@ -73,10 +72,9 @@ TEST_F(RadioHidlTest, getFacilityLockForApp) {
   EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
   if (cardStatus.cardState == CardState::ABSENT) {
-    ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
-                radioRsp->rspInfo.error == RadioError::MODEM_ERR ||
-                radioRsp->rspInfo.error == RadioError::SYSTEM_ERR ||
-                radioRsp->rspInfo.error == RadioError::INTERNAL_ERR);
+      ASSERT_TRUE(CheckGeneralError() ||
+                  radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                  radioRsp->rspInfo.error == RadioError::MODEM_ERR);
   }
 }
 
@@ -99,10 +97,9 @@ TEST_F(RadioHidlTest, setFacilityLockForApp) {
   EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
   if (cardStatus.cardState == CardState::ABSENT) {
-    ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
-                radioRsp->rspInfo.error == RadioError::MODEM_ERR ||
-                radioRsp->rspInfo.error == RadioError::SYSTEM_ERR ||
-                radioRsp->rspInfo.error == RadioError::INTERNAL_ERR);
+      ASSERT_TRUE(CheckGeneralError() ||
+                  radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                  radioRsp->rspInfo.error == RadioError::MODEM_ERR);
   }
 }
 
@@ -122,10 +119,11 @@ TEST_F(RadioHidlTest, setBarringPassword) {
   EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
   if (cardStatus.cardState == CardState::ABSENT) {
-    ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
-                radioRsp->rspInfo.error == RadioError::MODEM_ERR ||
-                radioRsp->rspInfo.error == RadioError::SYSTEM_ERR ||
-                radioRsp->rspInfo.error == RadioError::INTERNAL_ERR);
+      ASSERT_TRUE(CheckGeneralError() ||
+                  radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                  radioRsp->rspInfo.error == RadioError::NONE ||
+                  radioRsp->rspInfo.error == RadioError::MODEM_ERR ||
+                  radioRsp->rspInfo.error == RadioError::FDN_CHECK_FAILURE);
   }
 }
 
@@ -142,9 +140,8 @@ TEST_F(RadioHidlTest, getClip) {
   EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
   if (cardStatus.cardState == CardState::ABSENT) {
-    ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::MODEM_ERR ||
-                radioRsp->rspInfo.error == RadioError::SYSTEM_ERR ||
-                radioRsp->rspInfo.error == RadioError::INTERNAL_ERR);
+      ASSERT_TRUE(CheckGeneralError() ||
+                  radioRsp->rspInfo.error == RadioError::MODEM_ERR);
   }
 }
 
@@ -180,7 +177,7 @@ TEST_F(RadioHidlTest, requestIsimAuthentication) {
   EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
   if (cardStatus.cardState == CardState::ABSENT) {
-    EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
+      ASSERT_TRUE(CheckGeneralError());
   }
 }
 

@@ -75,7 +75,13 @@ TEST_F(RadioHidlTest, setupDataCall) {
   EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
   if (cardStatus.cardState == CardState::ABSENT) {
-    ASSERT_FALSE(RadioError::NONE == radioRsp->rspInfo.error);
+      ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE ||
+                  radioRsp->rspInfo.error == RadioError::RADIO_NOT_AVAILABLE ||
+                  radioRsp->rspInfo.error ==
+                      RadioError::OP_NOT_ALLOWED_BEFORE_REG_TO_NW ||
+                  radioRsp->rspInfo.error ==
+                      RadioError::OP_NOT_ALLOWED_DURING_VOICE_CALL ||
+                  CheckOEMError());
   }
 }
 
@@ -94,7 +100,7 @@ TEST_F(RadioHidlTest, deactivateDataCall) {
   EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
   if (cardStatus.cardState == CardState::ABSENT) {
-    EXPECT_EQ(RadioError::INVALID_ARGUMENTS, radioRsp->rspInfo.error);
+      EXPECT_EQ(RadioError::INVALID_CALL_ID, radioRsp->rspInfo.error);
   }
 }
 
@@ -111,7 +117,8 @@ TEST_F(RadioHidlTest, getDataCallList) {
   EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
   if (cardStatus.cardState == CardState::ABSENT) {
-    EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
+      ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE ||
+                  radioRsp->rspInfo.error == RadioError::RADIO_NOT_AVAILABLE);
   }
 }
 
@@ -152,7 +159,11 @@ TEST_F(RadioHidlTest, setInitialAttachApn) {
   EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
   if (cardStatus.cardState == CardState::ABSENT) {
-    ASSERT_FALSE(RadioError::NONE == radioRsp->rspInfo.error);
+      ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE ||
+                  radioRsp->rspInfo.error == RadioError::RADIO_NOT_AVAILABLE ||
+                  radioRsp->rspInfo.error ==
+                      RadioError::SUBSCRIPTION_NOT_AVAILABLE ||
+                  CheckOEMError());
   }
 }
 
