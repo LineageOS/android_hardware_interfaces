@@ -309,6 +309,15 @@ TEST_F(SupplicantP2pIfaceHidlTest, AddGroup) {
 }
 
 /*
+ * RemoveGroup
+ */
+TEST_F(SupplicantP2pIfaceHidlTest, RemoveGroup) {
+    // This is not going to work with fake values.
+    EXPECT_NE(SupplicantStatusCode::SUCCESS,
+              HIDL_INVOKE(p2p_iface_, removeGroup, kTestGroupIfName).code);
+}
+
+/*
  * Reject
  */
 TEST_F(SupplicantP2pIfaceHidlTest, Reject) {
