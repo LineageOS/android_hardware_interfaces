@@ -47,6 +47,10 @@ constexpr ISupplicantStaIface::Hs20AnqpSubtypes kTestHs20Types[] = {
     ISupplicantStaIface::Hs20AnqpSubtypes::WAN_METRICS,
     ISupplicantStaIface::Hs20AnqpSubtypes::OPERATOR_FRIENDLY_NAME};
 constexpr char kTestHs20IconFile[] = "TestFile";
+constexpr char kTestRadioWorkName[] = "TestRadioWork";
+constexpr uint32_t kTestRadioWorkFrequency = 2412;
+constexpr uint32_t kTestRadioWorkTimeout = 8;
+constexpr uint32_t kTestRadioWorkId = 16;
 constexpr int8_t kTestCountryCode[] = {'U', 'S'};
 }  // namespace
 
@@ -426,4 +430,39 @@ TEST_F(SupplicantStaIfaceHidlTest, SetCountryCode) {
         kTestCountryCode, [](const SupplicantStatus& status) {
             EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
         });
+}
+
+/*
+ * SetExternalSim
+ */
+TEST_F(SupplicantStaIfaceHidlTest, SetExternalSim) {
+    EXPECT_EQ(SupplicantStatusCode::SUCCESS,
+              HIDL_INVOKE(sta_iface_, setExternalSim, true).code);
+    EXPECT_EQ(SupplicantStatusCode::SUCCESS,
+              HIDL_INVOKE(sta_iface_, setExternalSim, false).code);
+}
+
+/*
+ * AddExtRadioWork
+ */
+TEST_F(SupplicantStaIfaceHidlTest, AddExtRadioWork) {
+    const auto& status_and_radio_work_id =
+        HIDL_INVOKE(sta_iface_, addExtRadioWork, kTestRadioWorkName,
+                    kTestRadioWorkFrequency, kTestRadioWorkTimeout);
+    EXPECT_EQ(SupplicantStatusCode::SUCCESS,
+              status_and_radio_work_id.first.code);
+    // removeExtRadio only succeeds if the added radio work hasn't started yet.
+    // So there this no guaranteed result from calling removeExtRadioWork here.
+    // That being said, currently we are not able to test addExtRadioWork and
+    // removeExtRadioWork in a row.
+}
+
+/*
+ * RemoveExtRadioWork
+ */
+TEST_F(SupplicantStaIfaceHidlTest, RemoveExtRadioWork) {
+    // This fails because there is no on going radio work with kTestRadioWorkId.
+    EXPECT_NE(
+        SupplicantStatusCode::SUCCESS,
+        HIDL_INVOKE(sta_iface_, removeExtRadioWork, kTestRadioWorkId).code);
 }
