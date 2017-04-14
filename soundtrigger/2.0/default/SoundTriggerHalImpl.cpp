@@ -294,8 +294,8 @@ exit:
     return ret;
 }
 
-SoundTriggerHalImpl::SoundTriggerHalImpl(const char *moduleName)
-    : mModuleName(moduleName), mHwDevice(NULL), mNextModelId(1)
+SoundTriggerHalImpl::SoundTriggerHalImpl()
+    : mModuleName("primary"), mHwDevice(NULL), mNextModelId(1)
 {
 }
 
@@ -304,9 +304,6 @@ void SoundTriggerHalImpl::onFirstRef()
     const hw_module_t *mod;
     int rc;
 
-    if (mModuleName == NULL || strlen(mModuleName) == 0) {
-        mModuleName = "primary";
-    }
     rc = hw_get_module_by_class(SOUND_TRIGGER_HARDWARE_MODULE_ID, mModuleName, &mod);
     if (rc != 0) {
         ALOGE("couldn't load sound trigger module %s.%s (%s)",
@@ -570,20 +567,9 @@ void SoundTriggerHalImpl::convertPhraseRecognitionExtraFromHal(
     delete[] levels;
 }
 
-ISoundTriggerHw *HIDL_FETCH_ISoundTriggerHw(const char *name)
+ISoundTriggerHw *HIDL_FETCH_ISoundTriggerHw(const char* /* name */)
 {
-    if (name != NULL) {
-        if (strncmp(SOUND_TRIGGER_HARDWARE_MODULE_ID, name,
-                strlen(SOUND_TRIGGER_HARDWARE_MODULE_ID)) != 0) {
-            return NULL;
-        }
-        name = strchr(name, '.');
-        if (name == NULL) {
-            return NULL;
-        }
-        name++;
-    }
-    return new SoundTriggerHalImpl(name);
+    return new SoundTriggerHalImpl();
 }
 } // namespace implementation
 }  // namespace V2_0
