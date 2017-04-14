@@ -16,8 +16,6 @@
 #define LOG_TAG "android.hardware.biometrics.fingerprint@2.1-service"
 #define LOG_VERBOSE "android.hardware.biometrics.fingerprint@2.1-service"
 
-// For communication with Keystore binder interface
-#include <keystore/keystore.h> // for error codes
 #include <hardware/hw_auth_token.h>
 
 #include <hardware/hardware.h>
