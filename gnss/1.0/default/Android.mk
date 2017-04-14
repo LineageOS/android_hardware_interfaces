@@ -47,6 +47,7 @@ LOCAL_SHARED_LIBRARIES := \
     libutils \
     libhardware_legacy \
     libhardware \
+    libbinder \
 
 LOCAL_SHARED_LIBRARIES += \
     libhidlbase \
