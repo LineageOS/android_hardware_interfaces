@@ -244,6 +244,7 @@ class DrmHalClearkeyPluginTest : public DrmHalClearkeyFactoryTest {
 
     SessionId openSession();
     void closeSession(const SessionId& sessionId);
+    hidl_vec<uint8_t> loadKeys(const SessionId& sessionId, const KeyType& type);
     sp<IMemory> getDecryptMemory(size_t size, size_t index);
 
    protected:
@@ -309,6 +310,70 @@ SessionId DrmHalClearkeyPluginTest::openSession() {
 void DrmHalClearkeyPluginTest::closeSession(const SessionId& sessionId) {
     auto result = drmPlugin->closeSession(sessionId);
     EXPECT_EQ(Status::OK, result);
+}
+
+/**
+ * Helper method to load keys for subsequent decrypt tests.
+ * These tests use predetermined key request/response to
+ * avoid requiring a round trip to a license server.
+ */
+hidl_vec<uint8_t> DrmHalClearkeyPluginTest::loadKeys(
+    const SessionId& sessionId, const KeyType& type = KeyType::STREAMING) {
+    hidl_vec<uint8_t> initData = {
+        // BMFF box header (4 bytes size + 'pssh')
+        0x00, 0x00, 0x00, 0x34, 0x70, 0x73, 0x73, 0x68,
+        // full box header (version = 1 flags = 0)
+        0x01, 0x00, 0x00, 0x00,
+        // system id
+        0x10, 0x77, 0xef, 0xec, 0xc0, 0xb2, 0x4d, 0x02, 0xac, 0xe3, 0x3c, 0x1e,
+        0x52, 0xe2, 0xfb, 0x4b,
+        // number of key ids
+        0x00, 0x00, 0x00, 0x01,
+        // key id
+        0x60, 0x06, 0x1e, 0x01, 0x7e, 0x47, 0x7e, 0x87, 0x7e, 0x57, 0xd0, 0x0d,
+        0x1e, 0xd0, 0x0d, 0x1e,
+        // size of data, must be zero
+        0x00, 0x00, 0x00, 0x00};
+
+    hidl_vec<uint8_t> expectedKeyRequest = {
+        0x7b, 0x22, 0x6b, 0x69, 0x64, 0x73, 0x22, 0x3a, 0x5b, 0x22, 0x59,
+        0x41, 0x59, 0x65, 0x41, 0x58, 0x35, 0x48, 0x66, 0x6f, 0x64, 0x2b,
+        0x56, 0x39, 0x41, 0x4e, 0x48, 0x74, 0x41, 0x4e, 0x48, 0x67, 0x22,
+        0x5d, 0x2c, 0x22, 0x74, 0x79, 0x70, 0x65, 0x22, 0x3a, 0x22, 0x74,
+        0x65, 0x6d, 0x70, 0x6f, 0x72, 0x61, 0x72, 0x79, 0x22, 0x7d};
+
+    hidl_vec<uint8_t> knownKeyResponse = {
+        0x7b, 0x22, 0x6b, 0x65, 0x79, 0x73, 0x22, 0x3a, 0x5b, 0x7b, 0x22,
+        0x6b, 0x74, 0x79, 0x22, 0x3a, 0x22, 0x6f, 0x63, 0x74, 0x22, 0x2c,
+        0x22, 0x6b, 0x69, 0x64, 0x22, 0x3a, 0x22, 0x59, 0x41, 0x59, 0x65,
+        0x41, 0x58, 0x35, 0x48, 0x66, 0x6f, 0x64, 0x2b, 0x56, 0x39, 0x41,
+        0x4e, 0x48, 0x74, 0x41, 0x4e, 0x48, 0x67, 0x22, 0x2c, 0x22, 0x6b,
+        0x22, 0x3a, 0x22, 0x47, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x54, 0x65,
+        0x73, 0x74, 0x4b, 0x65, 0x79, 0x42, 0x61, 0x73, 0x65, 0x36, 0x34,
+        0x67, 0x67, 0x67, 0x22, 0x7d, 0x5d, 0x7d, 0x0a};
+
+    hidl_string mimeType = "video/mp4";
+    KeyedVector optionalParameters;
+    auto res = drmPlugin->getKeyRequest(
+        sessionId, initData, mimeType, type, optionalParameters,
+        [&](Status status, const hidl_vec<uint8_t>& request,
+            KeyRequestType requestType, const hidl_string&) {
+            EXPECT_EQ(Status::OK, status);
+            EXPECT_EQ(KeyRequestType::INITIAL, requestType);
+            EXPECT_EQ(request, expectedKeyRequest);
+        });
+    EXPECT_OK(res);
+
+    hidl_vec<uint8_t> keySetId;
+    res = drmPlugin->provideKeyResponse(
+        sessionId, knownKeyResponse,
+        [&](Status status, const hidl_vec<uint8_t>& myKeySetId) {
+            EXPECT_EQ(Status::OK, status);
+            EXPECT_EQ(0u, myKeySetId.size());
+            keySetId = myKeySetId;
+        });
+    EXPECT_OK(res);
+    return keySetId;
 }
 
 /**
@@ -466,6 +531,30 @@ TEST_F(DrmHalClearkeyPluginTest, RemoveKeysNewSession) {
     Status status = drmPlugin->removeKeys(sessionId);
     // Clearkey plugin doesn't support remove keys
     EXPECT_EQ(Status::ERROR_DRM_CANNOT_HANDLE, status);
+    closeSession(sessionId);
+}
+
+/**
+ * Test that ClearKey cannot handle key restoring.
+ * Expected message is Status::ERROR_DRM_CANNOT_HANDLE.
+ */
+TEST_F(DrmHalClearkeyPluginTest, RestoreKeysCannotHandle) {
+    hidl_vec<uint8_t> keySetId = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
+    SessionId sessionId = openSession();
+    Status status = drmPlugin->restoreKeys(sessionId, keySetId);
+    EXPECT_EQ(Status::ERROR_DRM_CANNOT_HANDLE, status);
+    closeSession(sessionId);
+}
+
+/**
+ * Test that restoreKeys fails with a null key set ID.
+ * Error message is expected to be Status::BAD_VALUE.
+ */
+TEST_F(DrmHalClearkeyPluginTest, RestoreKeysNull) {
+    SessionId sessionId = openSession();
+    hidl_vec<uint8_t> nullKeySetId;
+    Status status = drmPlugin->restoreKeys(sessionId, nullKeySetId);
+    EXPECT_EQ(Status::BAD_VALUE, status);
     closeSession(sessionId);
 }
 
@@ -830,7 +919,6 @@ TEST_F(DrmHalClearkeyPluginTest, SetMediaDrmSessionEmptySession) {
 
 class DrmHalClearkeyDecryptTest : public DrmHalClearkeyPluginTest {
    public:
-    void loadKeys(const SessionId& sessionId);
     void fillRandom(const sp<IMemory>& memory);
     hidl_array<uint8_t, 16> toHidlArray(const vector<uint8_t>& vec) {
         EXPECT_EQ(16u, vec.size());
@@ -843,67 +931,6 @@ class DrmHalClearkeyDecryptTest : public DrmHalClearkeyPluginTest {
     void aes_cbc_decrypt(uint8_t* dest, uint8_t* src, uint8_t* iv,
             const hidl_vec<SubSample>& subSamples, const vector<uint8_t>& key);
 };
-
-/**
- * Helper method to load keys for subsequent decrypt tests.
- * These tests use predetermined key request/response to
- * avoid requiring a round trip to a license server.
- */
-void DrmHalClearkeyDecryptTest::loadKeys(const SessionId& sessionId) {
-    hidl_vec<uint8_t> initData = {
-            // BMFF box header (4 bytes size + 'pssh')
-            0x00, 0x00, 0x00, 0x34, 0x70, 0x73, 0x73, 0x68,
-            // full box header (version = 1 flags = 0)
-            0x01, 0x00, 0x00, 0x00,
-            // system id
-            0x10, 0x77, 0xef, 0xec, 0xc0, 0xb2, 0x4d, 0x02, 0xac, 0xe3, 0x3c,
-            0x1e, 0x52, 0xe2, 0xfb, 0x4b,
-            // number of key ids
-            0x00, 0x00, 0x00, 0x01,
-            // key id
-            0x60, 0x06, 0x1e, 0x01, 0x7e, 0x47, 0x7e, 0x87, 0x7e, 0x57, 0xd0,
-            0x0d, 0x1e, 0xd0, 0x0d, 0x1e,
-            // size of data, must be zero
-            0x00, 0x00, 0x00, 0x00};
-
-    hidl_vec<uint8_t> expectedKeyRequest = {
-            0x7b, 0x22, 0x6b, 0x69, 0x64, 0x73, 0x22, 0x3a, 0x5b, 0x22, 0x59,
-            0x41, 0x59, 0x65, 0x41, 0x58, 0x35, 0x48, 0x66, 0x6f, 0x64, 0x2b,
-            0x56, 0x39, 0x41, 0x4e, 0x48, 0x74, 0x41, 0x4e, 0x48, 0x67, 0x22,
-            0x5d, 0x2c, 0x22, 0x74, 0x79, 0x70, 0x65, 0x22, 0x3a, 0x22, 0x74,
-            0x65, 0x6d, 0x70, 0x6f, 0x72, 0x61, 0x72, 0x79, 0x22, 0x7d};
-
-    hidl_vec<uint8_t> knownKeyResponse = {
-            0x7b, 0x22, 0x6b, 0x65, 0x79, 0x73, 0x22, 0x3a, 0x5b, 0x7b, 0x22,
-            0x6b, 0x74, 0x79, 0x22, 0x3a, 0x22, 0x6f, 0x63, 0x74, 0x22, 0x2c,
-            0x22, 0x6b, 0x69, 0x64, 0x22, 0x3a, 0x22, 0x59, 0x41, 0x59, 0x65,
-            0x41, 0x58, 0x35, 0x48, 0x66, 0x6f, 0x64, 0x2b, 0x56, 0x39, 0x41,
-            0x4e, 0x48, 0x74, 0x41, 0x4e, 0x48, 0x67, 0x22, 0x2c, 0x22, 0x6b,
-            0x22, 0x3a, 0x22, 0x47, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x54, 0x65,
-            0x73, 0x74, 0x4b, 0x65, 0x79, 0x42, 0x61, 0x73, 0x65, 0x36, 0x34,
-            0x67, 0x67, 0x67, 0x22, 0x7d, 0x5d, 0x7d, 0x0a};
-
-    hidl_string mimeType = "video/mp4";
-    KeyedVector optionalParameters;
-    auto res = drmPlugin->getKeyRequest(
-            sessionId, initData, mimeType, KeyType::STREAMING,
-            optionalParameters,
-            [&](Status status, const hidl_vec<uint8_t>& request,
-                KeyRequestType requestType, const hidl_string&) {
-                EXPECT_EQ(Status::OK, status);
-                EXPECT_EQ(KeyRequestType::INITIAL, requestType);
-                EXPECT_EQ(request, expectedKeyRequest);
-            });
-    EXPECT_OK(res);
-
-    res = drmPlugin->provideKeyResponse(
-            sessionId, knownKeyResponse,
-            [&](Status status, const hidl_vec<uint8_t>& keySetId) {
-                EXPECT_EQ(Status::OK, status);
-                EXPECT_EQ(0u, keySetId.size());
-            });
-    EXPECT_OK(res);
-}
 
 void DrmHalClearkeyDecryptTest::fillRandom(const sp<IMemory>& memory) {
     random_device rd;

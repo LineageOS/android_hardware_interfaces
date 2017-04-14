@@ -141,6 +141,7 @@ class DrmHalVendorFactoryTest : public testing::TestWithParam<std::string> {
 
 TEST_P(DrmHalVendorFactoryTest, ValidateConfigurations) {
     const char* kVendorStr = "Vendor module ";
+    size_t count = 0;
     for (auto config : contentConfigurations) {
         ASSERT_TRUE(config.name.size() > 0) << kVendorStr << "has no name";
         ASSERT_TRUE(config.serverUrl.size() > 0) << kVendorStr
@@ -156,7 +157,9 @@ TEST_P(DrmHalVendorFactoryTest, ValidateConfigurations) {
             ASSERT_TRUE(key.keyId.size() > 0) << kVendorStr
                                               << " has zero length key value";
         }
+        count++;
     }
+    EXPECT_NE(0u, count);
 }
 
 /**
@@ -298,6 +301,10 @@ class DrmHalVendorPluginTest : public DrmHalVendorFactoryTest {
     SessionId openSession();
     void closeSession(const SessionId& sessionId);
     sp<IMemory> getDecryptMemory(size_t size, size_t index);
+    KeyedVector toHidlKeyedVector(const map<string, string>& params);
+    hidl_vec<uint8_t> loadKeys(const SessionId& sessionId,
+                               const ContentConfiguration& configuration,
+                               const KeyType& type);
 
    protected:
     sp<IDrmPlugin> drmPlugin;
@@ -386,6 +393,64 @@ SessionId DrmHalVendorPluginTest::openSession() {
 void DrmHalVendorPluginTest::closeSession(const SessionId& sessionId) {
     Status status = drmPlugin->closeSession(sessionId);
     EXPECT_EQ(Status::OK, status);
+}
+
+KeyedVector DrmHalVendorPluginTest::toHidlKeyedVector(
+    const map<string, string>& params) {
+    std::vector<KeyValue> stdKeyedVector;
+    for (auto it = params.begin(); it != params.end(); ++it) {
+        KeyValue keyValue;
+        keyValue.key = it->first;
+        keyValue.value = it->second;
+        stdKeyedVector.push_back(keyValue);
+    }
+    return KeyedVector(stdKeyedVector);
+}
+
+/**
+ * Helper method to load keys for subsequent decrypt tests.
+ * These tests use predetermined key request/response to
+ * avoid requiring a round trip to a license server.
+ */
+hidl_vec<uint8_t> DrmHalVendorPluginTest::loadKeys(
+    const SessionId& sessionId, const ContentConfiguration& configuration,
+    const KeyType& type = KeyType::STREAMING) {
+    hidl_vec<uint8_t> keyRequest;
+    auto res = drmPlugin->getKeyRequest(
+        sessionId, configuration.initData, configuration.mimeType, type,
+        toHidlKeyedVector(configuration.optionalParameters),
+        [&](Status status, const hidl_vec<uint8_t>& request,
+            KeyRequestType type, const hidl_string&) {
+            EXPECT_EQ(Status::OK, status) << "Failed to get "
+                                             "key request for configuration "
+                                          << configuration.name;
+            EXPECT_EQ(type, KeyRequestType::INITIAL);
+            EXPECT_NE(request.size(), 0u) << "Expected key request size"
+                                             " to have length > 0 bytes";
+            keyRequest = request;
+        });
+    EXPECT_OK(res);
+
+    /**
+     * Get key response from vendor module
+     */
+    hidl_vec<uint8_t> keyResponse =
+        vendorModule->handleKeyRequest(keyRequest, configuration.serverUrl);
+
+    EXPECT_NE(keyResponse.size(), 0u) << "Expected key response size "
+                                         "to have length > 0 bytes";
+
+    hidl_vec<uint8_t> keySetId;
+    res = drmPlugin->provideKeyResponse(
+        sessionId, keyResponse,
+        [&](Status status, const hidl_vec<uint8_t>& myKeySetId) {
+            EXPECT_EQ(Status::OK, status) << "Failure providing "
+                                             "key response for configuration "
+                                          << configuration.name;
+            keySetId = myKeySetId;
+        });
+    EXPECT_OK(res);
+    return keySetId;
 }
 
 /**
@@ -484,6 +549,56 @@ TEST_P(DrmHalVendorPluginTest, RemoveKeysNewSession) {
     Status status = drmPlugin->removeKeys(sessionId);
     EXPECT_TRUE(status == Status::OK);
     closeSession(sessionId);
+}
+
+/**
+ * Test that keys are successfully restored to a new session
+ * for all content having a policy that allows offline use.
+ */
+TEST_P(DrmHalVendorPluginTest, RestoreKeys) {
+    for (auto config : contentConfigurations) {
+        if (config.policy.allowOffline) {
+            auto sessionId = openSession();
+            hidl_vec<uint8_t> keySetId =
+                    loadKeys(sessionId, config, KeyType::OFFLINE);
+            closeSession(sessionId);
+            sessionId = openSession();
+            EXPECT_NE(0u, keySetId.size());
+            Status status = drmPlugin->restoreKeys(sessionId, keySetId);
+            EXPECT_EQ(Status::OK, status);
+            closeSession(sessionId);
+        }
+    }
+}
+
+/**
+ * Test that restoreKeys fails with a null key set ID.
+ * Error message is expected to be Status::BAD_VALUE.
+ */
+TEST_P(DrmHalVendorPluginTest, RestoreKeysNull) {
+    SessionId sessionId = openSession();
+    hidl_vec<uint8_t> nullKeySetId;
+    Status status = drmPlugin->restoreKeys(sessionId, nullKeySetId);
+    EXPECT_EQ(Status::BAD_VALUE, status);
+    closeSession(sessionId);
+}
+
+/**
+ * Test that restoreKeys fails to restore keys to a closed
+ * session. Error message is expected to be
+ * Status::ERROR_DRM_SESSION_NOT_OPENED.
+ */
+TEST_P(DrmHalVendorPluginTest, RestoreKeysClosedSession) {
+    for (auto config : contentConfigurations) {
+        auto sessionId = openSession();
+        hidl_vec<uint8_t> keySetId = loadKeys(sessionId, config);
+        EXPECT_NE(0u, keySetId.size());
+        closeSession(sessionId);
+        sessionId = openSession();
+        closeSession(sessionId);
+        Status status = drmPlugin->restoreKeys(sessionId, keySetId);
+        EXPECT_EQ(Status::ERROR_DRM_SESSION_NOT_OPENED, status);
+    }
 }
 
 /**
@@ -820,7 +935,6 @@ TEST_P(DrmHalVendorPluginTest, RequiresSecureDecoderInvalidMimeType) {
  * configurations
  */
 TEST_P(DrmHalVendorPluginTest, RequiresSecureDecoderConfig) {
-    const char* kVendorStr = "Vendor module ";
     for (auto config : contentConfigurations) {
         for (auto key : config.keys) {
             if (key.isSecure) {
@@ -1059,10 +1173,7 @@ class DrmHalVendorDecryptTest : public DrmHalVendorPluginTest {
     virtual ~DrmHalVendorDecryptTest() {}
 
    protected:
-    void loadKeys(const SessionId& sessionId,
-                  const ContentConfiguration& configuration);
     void fillRandom(const sp<IMemory>& memory);
-    KeyedVector toHidlKeyedVector(const map<string, string>& params);
     hidl_array<uint8_t, 16> toHidlArray(const vector<uint8_t>& vec) {
         EXPECT_EQ(vec.size(), 16u);
         return hidl_array<uint8_t, 16>(&vec[0]);
@@ -1078,63 +1189,6 @@ class DrmHalVendorDecryptTest : public DrmHalVendorPluginTest {
     void aes_cbc_decrypt(uint8_t* dest, uint8_t* src, uint8_t* iv,
             const hidl_vec<SubSample>& subSamples, const vector<uint8_t>& key);
 };
-
-KeyedVector DrmHalVendorDecryptTest::toHidlKeyedVector(
-        const map<string, string>& params) {
-    std::vector<KeyValue> stdKeyedVector;
-    for (auto it = params.begin(); it != params.end(); ++it) {
-        KeyValue keyValue;
-        keyValue.key = it->first;
-        keyValue.value = it->second;
-        stdKeyedVector.push_back(keyValue);
-    }
-    return KeyedVector(stdKeyedVector);
-}
-
-/**
- * Helper method to load keys for subsequent decrypt tests.
- * These tests use predetermined key request/response to
- * avoid requiring a round trip to a license server.
- */
-void DrmHalVendorDecryptTest::loadKeys(const SessionId& sessionId,
-        const ContentConfiguration& configuration) {
-    hidl_vec<uint8_t> keyRequest;
-    auto res = drmPlugin->getKeyRequest(
-            sessionId, configuration.initData, configuration.mimeType,
-            KeyType::STREAMING,
-            toHidlKeyedVector(configuration.optionalParameters),
-            [&](Status status, const hidl_vec<uint8_t>& request,
-                KeyRequestType type, const hidl_string&) {
-                EXPECT_EQ(Status::OK, status)
-                        << "Failed to get "
-                           "key request for configuration "
-                        << configuration.name;
-                EXPECT_EQ(type, KeyRequestType::INITIAL);
-                EXPECT_NE(request.size(), 0u) << "Expected key request size"
-                                                 " to have length > 0 bytes";
-                keyRequest = request;
-            });
-    EXPECT_OK(res);
-
-    /**
-     * Get key response from vendor module
-     */
-    hidl_vec<uint8_t> keyResponse =
-            vendorModule->handleKeyRequest(keyRequest, configuration.serverUrl);
-
-    EXPECT_NE(keyResponse.size(), 0u) << "Expected key response size "
-                                         "to have length > 0 bytes";
-
-    res = drmPlugin->provideKeyResponse(
-            sessionId, keyResponse,
-            [&](Status status, const hidl_vec<uint8_t>&) {
-                EXPECT_EQ(Status::OK, status)
-                        << "Failure providing "
-                           "key response for configuration "
-                        << configuration.name;
-            });
-    EXPECT_OK(res);
-}
 
 void DrmHalVendorDecryptTest::fillRandom(const sp<IMemory>& memory) {
     random_device rd;
