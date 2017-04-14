@@ -34,6 +34,7 @@ LOCAL_SHARED_LIBRARIES := \
   libhardware \
   liblog \
   libutils \
+  libbinder \
 
 LOCAL_C_INCLUDES := \
   hardware/interfaces/drm
