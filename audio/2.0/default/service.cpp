@@ -50,7 +50,7 @@ int main(int /* argc */, char* /* argv */ []) {
     status = registerPassthroughServiceImplementation<IEffectsFactory>();
     LOG_ALWAYS_FATAL_IF(status != OK, "Error while registering audio effects service: %d", status);
     // Soundtrigger and FM radio might be not present.
-    status = registerPassthroughServiceImplementation<ISoundTriggerHw>("sound_trigger.primary");
+    status = registerPassthroughServiceImplementation<ISoundTriggerHw>();
     ALOGE_IF(status != OK, "Error while registering soundtrigger service: %d", status);
     if (useBroadcastRadioFutureFeatures) {
         status = registerPassthroughServiceImplementation<
