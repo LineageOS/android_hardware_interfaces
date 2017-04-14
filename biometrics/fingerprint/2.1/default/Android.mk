@@ -10,12 +10,11 @@ LOCAL_SRC_FILES := \
     service.cpp \
 
 LOCAL_SHARED_LIBRARIES := \
-    libbinder \
+    libcutils \
     liblog \
     libhidlbase \
     libhidltransport \
     libhardware \
-    libkeystore_binder \
     libutils \
     android.hardware.biometrics.fingerprint@2.1 \
 
