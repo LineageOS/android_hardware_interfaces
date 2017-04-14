@@ -892,15 +892,6 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     static hidl_string author_;
 };
 
-uint32_t expected_keymaster_version() {
-    if (!KeymasterHidlTest::IsSecure()) return 2;  // SW is KM2
-
-    uint32_t keymaster_version = 0;
-    if (KeymasterHidlTest::SupportsSymmetric()) keymaster_version = 1;
-    if (KeymasterHidlTest::SupportsAttestation()) keymaster_version = 2;
-    return keymaster_version;
-}
-
 bool verify_attestation_record(const string& challenge, AuthorizationSet expected_sw_enforced,
                                AuthorizationSet expected_tee_enforced,
                                const hidl_vec<uint8_t>& attestation_cert) {
@@ -933,8 +924,25 @@ bool verify_attestation_record(const string& challenge, AuthorizationSet expecte
                                        &att_tee_enforced,                //
                                        &att_unique_id));
 
-    EXPECT_EQ(1U, att_attestation_version);
-    EXPECT_EQ(expected_keymaster_version(), att_keymaster_version);
+    if (att_keymaster_version == 3) {
+        EXPECT_EQ(2U, att_attestation_version);
+    } else {
+        EXPECT_EQ(1U, att_attestation_version);
+    }
+
+    if (!KeymasterHidlTest::IsSecure()) {
+        // SW is KM2
+        EXPECT_EQ(att_keymaster_version, 2U);
+    }
+
+    if (KeymasterHidlTest::SupportsSymmetric()) {
+        EXPECT_GE(att_keymaster_version, 1U);
+    }
+
+    if (KeymasterHidlTest::SupportsAttestation()) {
+        EXPECT_GE(att_keymaster_version, 2U);
+    }
+
     EXPECT_EQ(KeymasterHidlTest::IsSecure() ? SecurityLevel::TRUSTED_ENVIRONMENT
                                             : SecurityLevel::SOFTWARE,
               att_keymaster_security_level);
