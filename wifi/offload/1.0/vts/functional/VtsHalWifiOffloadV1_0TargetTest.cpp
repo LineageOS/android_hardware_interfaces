@@ -21,6 +21,7 @@
 #include <android/hardware/wifi/offload/1.0/IOffloadCallback.h>
 #include <android/hardware/wifi/offload/1.0/types.h>
 
+#include <VtsHalHidlTargetCallbackBase.h>
 #include <VtsHalHidlTargetTestBase.h>
 
 #include <vector>
@@ -31,13 +32,31 @@ using ::android::hardware::wifi::offload::V1_0::ScanResult;
 using ::android::hardware::wifi::offload::V1_0::ScanParam;
 using ::android::hardware::wifi::offload::V1_0::ScanFilter;
 using ::android::hardware::wifi::offload::V1_0::ScanStats;
+using ::android::hardware::wifi::offload::V1_0::OffloadStatus;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::hidl_vec;
 using ::android::sp;
 
-typedef std::function<void(const std::vector<ScanResult>& scanResult)>
-    OnOffloadScanResultsReadyHandler;
+constexpr char kOffloadCallbackSendScanResult[] = "onScanResult";
+constexpr char kOffloadCallbackSendError[] = "onError";
+
+namespace {
+const uint8_t kSsid[] = {'G', 'o', 'o', 'g', 'l', 'e'};
+const uint8_t kBssid[6] = {0x12, 0xef, 0xa1, 0x2c, 0x97, 0x8b};
+const int16_t kRssi = -60;
+const uint32_t kFrequency = 2412;
+const uint8_t kBssidSize = 6;
+const uint64_t kTsf = 0;
+const uint16_t kCapability = 0;
+const uint8_t kNetworkFlags = 0;
+}
+
+class OffloadCallbackArgs {
+   public:
+    hidl_vec<ScanResult> scan_results_;
+    OffloadStatus error_code_;
+};
 
 // The main test class for WifiOffload HIDL HAL.
 class WifiOffloadHidlTest : public ::testing::VtsHalHidlTargetTestBase {
@@ -47,43 +66,39 @@ class WifiOffloadHidlTest : public ::testing::VtsHalHidlTargetTestBase {
             ::testing::VtsHalHidlTargetTestBase::getService<IOffload>();
         ASSERT_NE(wifi_offload_, nullptr);
 
-        wifi_offload_cb_ = new OffloadCallback(
-            [this](std::vector<ScanResult> scanResult) -> void {
-                this->reportScanResults(scanResult);
-            });
+        wifi_offload_cb_ = new OffloadCallback();
         ASSERT_NE(wifi_offload_cb_, nullptr);
-
-        defaultSize = 0;
     }
 
     virtual void TearDown() override {}
 
-    void reportScanResults(std::vector<ScanResult> scanResult) {
-        defaultSize = scanResult.size();
-    }
-
-    /* Callback class for scanResult. */
-    class OffloadCallback : public IOffloadCallback {
+    /* Callback class for Offload HAL. */
+    class OffloadCallback
+        : public ::testing::VtsHalHidlTargetCallbackBase<OffloadCallbackArgs>,
+          public IOffloadCallback {
        public:
-        OffloadCallback(OnOffloadScanResultsReadyHandler handler)
-            : handler_(handler){};
+        OffloadCallback(){};
 
         virtual ~OffloadCallback() = default;
 
         Return<void> onScanResult(
-            const hidl_vec<ScanResult>& scanResult) override {
-            const std::vector<ScanResult> scanResult_(scanResult);
-            handler_(scanResult_);
+            const hidl_vec<ScanResult>& scan_result) override {
+            OffloadCallbackArgs args;
+            args.scan_results_ = scan_result;
+            NotifyFromCallback(kOffloadCallbackSendScanResult, args);
             return Void();
         };
 
-       private:
-        OnOffloadScanResultsReadyHandler handler_;
+        Return<void> onError(OffloadStatus status) {
+            OffloadCallbackArgs args;
+            args.error_code_ = status;
+            NotifyFromCallback(kOffloadCallbackSendError, args);
+            return Void();
+        }
     };
 
     sp<IOffload> wifi_offload_;
-    sp<IOffloadCallback> wifi_offload_cb_;
-    int defaultSize = 0;
+    sp<OffloadCallback> wifi_offload_cb_;
 };
 
 /*
@@ -131,6 +146,38 @@ TEST_F(WifiOffloadHidlTest, getScanStats) {
             *pScanStats = std::move(scanStats);
         });
     ASSERT_EQ(returnObject.isOk(), true);
+}
+
+/*
+ * Verify that onScanResult callback is invoked
+ */
+TEST_F(WifiOffloadHidlTest, getScanResults) {
+    wifi_offload_->setEventCallback(wifi_offload_cb_);
+    std::vector<ScanResult> scan_results;
+    std::vector<uint8_t> ssid(kSsid, kSsid + sizeof(kSsid));
+    ScanResult scan_result;
+    scan_result.tsf = kTsf;
+    scan_result.rssi = kRssi;
+    scan_result.frequency = kFrequency;
+    scan_result.capability = kCapability;
+    memcpy(&scan_result.bssid[0], &kBssid[0], kBssidSize);
+    scan_result.networkInfo.ssid = ssid;
+    scan_result.networkInfo.flags = kNetworkFlags;
+    scan_results.push_back(scan_result);
+    wifi_offload_cb_->onScanResult(scan_results);
+    auto res =
+        wifi_offload_cb_->WaitForCallback(kOffloadCallbackSendScanResult);
+    ASSERT_EQ(res.no_timeout, true);
+}
+
+/*
+ * Verify that onError callback is invoked
+ */
+TEST_F(WifiOffloadHidlTest, getError) {
+    wifi_offload_->setEventCallback(wifi_offload_cb_);
+    wifi_offload_cb_->onError(OffloadStatus::OFFLOAD_STATUS_ERROR);
+    auto res = wifi_offload_cb_->WaitForCallback(kOffloadCallbackSendError);
+    ASSERT_EQ(res.no_timeout, true);
 }
 
 // A class for test environment setup

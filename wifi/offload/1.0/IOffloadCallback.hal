@@ -22,4 +22,11 @@ interface IOffloadCallback {
      * @param scanResult a vector of scan result objects
      */
     oneway onScanResult(vec<ScanResult> scanResult);
+    /**
+     * Interface for the Offload HAL to inform the client of error conditions
+     * see OffloadStatus for the error conditions to be reported
+     *
+     * @param status OffloadStatus
+     */
+    oneway onError(OffloadStatus status);
 };
