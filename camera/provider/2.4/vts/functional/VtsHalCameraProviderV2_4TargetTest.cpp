@@ -2493,7 +2493,7 @@ TEST_F(CameraHidlTest, processCaptureRequestPreview) {
                     outputBuffer};
             StreamBuffer emptyInputBuffer = {-1, 0, nullptr,
                     BufferStatus::ERROR, nullptr, nullptr};
-            CaptureRequest request = {frameNumber, settings,
+            CaptureRequest request = {frameNumber, 0 /* fmqSettingsSize */, settings,
                     emptyInputBuffer, outputBuffers};
 
             {
@@ -2599,7 +2599,7 @@ TEST_F(CameraHidlTest, processCaptureRequestInvalidSinglePreview) {
                     outputBuffer};
             StreamBuffer emptyInputBuffer = {-1, 0, nullptr,
                     BufferStatus::ERROR, nullptr, nullptr};
-            CaptureRequest request = {frameNumber, settings,
+            CaptureRequest request = {frameNumber, 0 /* fmqSettingsSize */, settings,
                     emptyInputBuffer, outputBuffers};
 
             //Settings were not correctly initialized, we should fail here
@@ -2654,7 +2654,7 @@ TEST_F(CameraHidlTest, processCaptureRequestInvalidBuffer) {
             ::android::hardware::hidl_vec<StreamBuffer> emptyOutputBuffers;
             StreamBuffer emptyInputBuffer = {-1, 0, nullptr,
                     BufferStatus::ERROR, nullptr, nullptr};
-            CaptureRequest request = {frameNumber, settings,
+            CaptureRequest request = {frameNumber, 0/* fmqSettingsSize */, settings,
                     emptyInputBuffer, emptyOutputBuffers};
 
             //Output buffers are missing, we should fail here
@@ -2719,7 +2719,7 @@ TEST_F(CameraHidlTest, flushPreviewRequest) {
                     outputBuffer};
             const StreamBuffer emptyInputBuffer = {-1, 0, nullptr,
                     BufferStatus::ERROR, nullptr, nullptr};
-            CaptureRequest request = {frameNumber, settings,
+            CaptureRequest request = {frameNumber, 0 /* fmqSettingsSize */, settings,
                     emptyInputBuffer, outputBuffers};
 
             {
