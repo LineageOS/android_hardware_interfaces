@@ -853,6 +853,13 @@ struct CaptureResult {
     uint32_t frameNumber;
 
     /**
+     * If non-zero, read result from result queue instead
+     * (see ICameraDeviceSession.getCaptureResultMetadataQueue).
+     * If zero, read result from .result field.
+     */
+    uint64_t fmqResultSize;
+
+    /**
      * The result metadata for this capture. This contains information about the
      * final capture parameters, the state of the capture and post-processing
      * hardware, the state of the 3A algorithms, if enabled, and the output of

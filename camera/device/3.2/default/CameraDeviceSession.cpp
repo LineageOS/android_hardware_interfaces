@@ -32,6 +32,8 @@ namespace implementation {
 
 // Size of request metadata fast message queue. Change to 0 to always use hwbinder buffer.
 static constexpr size_t CAMERA_REQUEST_METADATA_QUEUE_SIZE = 1 << 20 /* 1MB */;
+// Size of result metadata fast message queue. Change to 0 to always use hwbinder buffer.
+static constexpr size_t CAMERA_RESULT_METADATA_QUEUE_SIZE  = 1 << 20 /* 1MB */;
 
 HandleImporter& CameraDeviceSession::sHandleImporter = HandleImporter::getInstance();
 const int CameraDeviceSession::ResultBatcher::NOT_BATCHED;
@@ -73,9 +75,16 @@ bool CameraDeviceSession::initialize() {
     mRequestMetadataQueue = std::make_unique<RequestMetadataQueue>(
             CAMERA_REQUEST_METADATA_QUEUE_SIZE, false /* non blocking */);
     if (!mRequestMetadataQueue->isValid()) {
-        ALOGE("%s: invalid fmq", __FUNCTION__);
+        ALOGE("%s: invalid request fmq", __FUNCTION__);
         return true;
     }
+    mResultMetadataQueue = std::make_shared<RequestMetadataQueue>(
+            CAMERA_RESULT_METADATA_QUEUE_SIZE, false /* non blocking */);
+    if (!mResultMetadataQueue->isValid()) {
+        ALOGE("%s: invalid result fmq", __FUNCTION__);
+        return true;
+    }
+    mResultBatcher.setResultMetadataQueue(mResultMetadataQueue);
 
     return false;
 }
@@ -231,6 +240,11 @@ void CameraDeviceSession::ResultBatcher::setBatchedStreams(
     mStreamsToBatch = streamsToBatch;
 }
 
+void CameraDeviceSession::ResultBatcher::setResultMetadataQueue(std::shared_ptr<ResultMetadataQueue> q) {
+    Mutex::Autolock _l(mLock);
+    mResultMetadataQueue = q;
+}
+
 void CameraDeviceSession::ResultBatcher::registerBatch(
         const hidl_vec<CaptureRequest>& requests) {
     auto batch = std::make_shared<InflightBatch>();
@@ -350,6 +364,7 @@ void CameraDeviceSession::ResultBatcher::sendBatchBuffersLocked(
     results.resize(batchSize);
     for (size_t i = 0; i < batchSize; i++) {
         results[i].frameNumber = batch->mFirstFrame + i;
+        results[i].fmqResultSize = 0;
         results[i].partialResult = 0; // 0 for buffer only results
         results[i].inputBuffer.streamId = -1;
         results[i].inputBuffer.bufferId = 0;
@@ -366,7 +381,7 @@ void CameraDeviceSession::ResultBatcher::sendBatchBuffersLocked(
         }
         results[i].outputBuffers = outBufs;
     }
-    mCallback->processCaptureResult(results);
+    invokeProcessCaptureResultCallback(results, /* tryWriteFmq */false);
     freeReleaseFences(results);
     for (int streamId : streams) {
         InflightBatch::BufferBatch& bb = batch->mBatchBufs[streamId];
@@ -396,6 +411,7 @@ void CameraDeviceSession::ResultBatcher::sendBatchMetadataLocked(
             CaptureResult result;
             result.frameNumber = p.first;
             result.result = std::move(p.second);
+            result.fmqResultSize = 0;
             result.inputBuffer.streamId = -1;
             result.inputBuffer.bufferId = 0;
             result.inputBuffer.buffer = nullptr;
@@ -404,7 +420,9 @@ void CameraDeviceSession::ResultBatcher::sendBatchMetadataLocked(
         }
         mb.mMds.clear();
     }
-    mCallback->processCaptureResult(results);
+    hidl_vec<CaptureResult> hResults;
+    hResults.setToExternal(results.data(), results.size());
+    invokeProcessCaptureResultCallback(hResults, /* tryWriteFmq */true);
     batch->mPartialResultProgress = lastPartialResultIdx;
     for (uint32_t partialIdx : toBeRemovedIdxes) {
         batch->mResultMds.erase(partialIdx);
@@ -477,9 +495,37 @@ void CameraDeviceSession::ResultBatcher::notify(NotifyMsg& msg) {
     }
 }
 
+void CameraDeviceSession::ResultBatcher::invokeProcessCaptureResultCallback(
+        hidl_vec<CaptureResult> &results, bool tryWriteFmq) {
+    if (mProcessCaptureResultLock.tryLock() != OK) {
+        ALOGW("%s: previous call is not finished! waiting 1s...",
+                __FUNCTION__);
+        if (mProcessCaptureResultLock.timedLock(1000000000 /* 1s */) != OK) {
+            ALOGE("%s: cannot acquire lock in 1s, cannot proceed",
+                    __FUNCTION__);
+            return;
+        }
+    }
+    if (tryWriteFmq && mResultMetadataQueue->availableToWrite() > 0) {
+        for (CaptureResult &result : results) {
+            if (result.result.size() > 0) {
+                if (mResultMetadataQueue->write(result.result.data(), result.result.size())) {
+                    result.fmqResultSize = result.result.size();
+                    result.result.resize(0);
+                } else {
+                    ALOGW("%s: couldn't utilize fmq, fall back to hwbinder", __FUNCTION__);
+                    result.fmqResultSize = 0;
+                }
+            }
+        }
+    }
+    mCallback->processCaptureResult(results);
+    mProcessCaptureResultLock.unlock();
+}
+
 void CameraDeviceSession::ResultBatcher::processOneCaptureResult(CaptureResult& result) {
     hidl_vec<CaptureResult> results = {result};
-    mCallback->processCaptureResult(results);
+    invokeProcessCaptureResultCallback(results, /* tryWriteFmq */true);
     freeReleaseFences(results);
     return;
 }
@@ -526,6 +572,7 @@ void CameraDeviceSession::ResultBatcher::processCaptureResult(CaptureResult& res
         if (nonBatchedBuffers.size() > 0 || result.inputBuffer.streamId != -1) {
             CaptureResult nonBatchedResult;
             nonBatchedResult.frameNumber = result.frameNumber;
+            nonBatchedResult.fmqResultSize = 0;
             nonBatchedResult.outputBuffers = nonBatchedBuffers;
             nonBatchedResult.inputBuffer = result.inputBuffer;
             nonBatchedResult.partialResult = 0; // 0 for buffer only results
@@ -713,6 +760,12 @@ void CameraDeviceSession::updateBufferCaches(const hidl_vec<BufferCache>& caches
 Return<void> CameraDeviceSession::getCaptureRequestMetadataQueue(
     getCaptureRequestMetadataQueue_cb _hidl_cb) {
     _hidl_cb(*mRequestMetadataQueue->getDesc());
+    return Void();
+}
+
+Return<void> CameraDeviceSession::getCaptureResultMetadataQueue(
+    getCaptureResultMetadataQueue_cb _hidl_cb) {
+    _hidl_cb(*mResultMetadataQueue->getDesc());
     return Void();
 }
 
@@ -915,6 +968,7 @@ void CameraDeviceSession::sProcessCaptureResult(
     // within the scope of this function
     CaptureResult result;
     result.frameNumber = frameNumber;
+    result.fmqResultSize = 0;
     result.partialResult = hal_result->partial_result;
     convertToHidl(hal_result->result, &result.result);
     if (hasInputBuf) {
