@@ -139,6 +139,8 @@ void EmulatedVehicleHal::initObd2FreezeFrame(const V2_0::VehiclePropConfig& prop
     for (auto&& dtc : sampleDtcs) {
         auto freezeFrame = createVehiclePropValue(V2_0::VehiclePropertyType::COMPLEX, 0);
         sensorStore->fillPropValue(dtc, freezeFrame.get());
+        freezeFrame->prop = OBD2_FREEZE_FRAME;
+
         mPropStore->writeValue(*freezeFrame);
     }
 }
