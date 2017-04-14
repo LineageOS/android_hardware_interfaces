@@ -244,6 +244,8 @@ static ErrorCode extract_auth_list(const KM_AUTH_LIST* record, AuthorizationSet*
     copyAuthTag(record->rsa_public_exponent, TAG_RSA_PUBLIC_EXPONENT, auth_list);
     copyAuthTag(record->usage_expire_date_time, TAG_USAGE_EXPIRE_DATETIME, auth_list);
     copyAuthTag(record->user_auth_type, TAG_USER_AUTH_TYPE, auth_list);
+    copyAuthTag(record->attestation_application_id,
+                TAG_ATTESTATION_APPLICATION_ID, auth_list);
 
     return ErrorCode::OK;
 }
