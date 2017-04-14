@@ -23,6 +23,7 @@
 #include "BiometricsFingerprint.h"
 
 #include <inttypes.h>
+#include <unistd.h>
 
 namespace android {
 namespace hardware {
@@ -187,7 +188,12 @@ Return<RequestStatus> BiometricsFingerprint::setActiveGroup(uint32_t gid,
         const hidl_string& storePath) {
     if (storePath.size() >= PATH_MAX || storePath.size() <= 0) {
         ALOGE("Bad path length: %zd", storePath.size());
+        return RequestStatus::SYS_EINVAL;
     }
+    if (access(storePath.c_str(), W_OK)) {
+        return RequestStatus::SYS_EINVAL;
+    }
+
     return ErrorFilter(mDevice->set_active_group(mDevice, gid,
                                                     storePath.c_str()));
 }
