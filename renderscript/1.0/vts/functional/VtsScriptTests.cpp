@@ -323,27 +323,30 @@ TEST_F(RenderscriptHidlTest, ScriptBindTest) {
 
 /*
  * This test groups together two RenderScript intrinsic kernels to run one after
- * the other asynchronously with respect to the client. The test configures YuvToRGB(A) and Blur,
- * and links them together such that Blur will execute after YuvToRGB(A) and use its result. The
- * test checks the data returned to make sure it was changed after passing through the entire
- * ScriptGroup.
+ * the other asynchronously with respect to the client. The test configures
+ * Blend and Blur, and links them together such that Blur will execute after
+ * Blend and use its result. The test checks the data returned to make sure it
+ * was changed after passing through the entire ScriptGroup.
  *
  * Calls: elementCreate, typeCreate, allocationCreateTyped, allocation2DWrite,
  * scriptIntrinsicCreate, scriptKernelIDCreate, scriptFieldIDCreate,
- * scriptGroupCreate, scriptSetVarObj, scriptGroupSetOutput, scriptGroupExecute,
- * contextFinish, allocation2DRead
+ * scriptGroupCreate, scriptGroupSetInput, scriptGroupSetOutput,
+ * scriptGroupExecute, contextFinish, allocation2DRead
  */
 TEST_F(RenderscriptHidlTest, ScriptGroupTest) {
-    std::vector<uint8_t> dataIn(256*256*1, 128), dataOut(256*256*4, 0), zeros(256*256*4, 0);
+    std::vector<uint8_t> dataIn(256 * 256 * 4, 128), dataOut(256 * 256 * 4, 0),
+        zeros(256 * 256 * 4, 0);
     hidl_vec<uint8_t> _dataIn, _dataOut;
     _dataIn.setToExternal(dataIn.data(), dataIn.size());
     _dataOut.setToExternal(dataOut.data(), dataOut.size());
 
     // 256 x 256 YUV pixels
-    Element element1 = context->elementCreate(DataType::UNSIGNED_8, DataKind::PIXEL_YUV, true, 1);
+    Element element1 = context->elementCreate(DataType::UNSIGNED_8,
+                                              DataKind::PIXEL_RGBA, true, 4);
     ASSERT_NE(Element(0), element1);
 
-    Type type1 = context->typeCreate(element1, 256, 256, 0, false, false, YuvFormat::YUV_420_888);
+    Type type1 = context->typeCreate(element1, 256, 256, 0, false, false,
+                                     YuvFormat::YUV_NONE);
     ASSERT_NE(Type(0), type1);
 
     Allocation allocation1 = context->allocationCreateTyped(type1, AllocationMipmapControl::NONE,
@@ -370,11 +373,12 @@ TEST_F(RenderscriptHidlTest, ScriptGroupTest) {
                                _dataOut, 0);
 
     // create scripts
-    Script yuv2rgb = context->scriptIntrinsicCreate(ScriptIntrinsicID::ID_YUV_TO_RGB, element1);
-    ASSERT_NE(Script(0), yuv2rgb);
+    Script blend =
+        context->scriptIntrinsicCreate(ScriptIntrinsicID::ID_BLEND, element1);
+    ASSERT_NE(Script(0), blend);
 
-    ScriptKernelID yuv2rgbKID = context->scriptKernelIDCreate(yuv2rgb, 0, 2);
-    ASSERT_NE(ScriptKernelID(0), yuv2rgbKID);
+    ScriptKernelID blendKID = context->scriptKernelIDCreate(blend, 1, 3);
+    ASSERT_NE(ScriptKernelID(0), blendKID);
 
     Script blur = context->scriptIntrinsicCreate(ScriptIntrinsicID::ID_BLUR, element2);
     ASSERT_NE(Script(0), blur);
@@ -386,15 +390,15 @@ TEST_F(RenderscriptHidlTest, ScriptGroupTest) {
     ASSERT_NE(ScriptFieldID(0), blurFID);
 
     // ScriptGroup
-    hidl_vec<ScriptKernelID> kernels = {yuv2rgbKID, blurKID};
-    hidl_vec<ScriptKernelID> srcK = {yuv2rgbKID};
+    hidl_vec<ScriptKernelID> kernels = {blendKID, blurKID};
+    hidl_vec<ScriptKernelID> srcK = {blendKID};
     hidl_vec<ScriptKernelID> dstK = {ScriptKernelID(0)};
     hidl_vec<ScriptFieldID> dstF = {blurFID};
     hidl_vec<Type> types = {type2};
     ScriptGroup scriptGroup = context->scriptGroupCreate(kernels, srcK, dstK, dstF, types);
     ASSERT_NE(ScriptGroup(0), scriptGroup);
 
-    context->scriptSetVarObj(yuv2rgb, 0, (ObjectBase)allocation1);
+    context->scriptGroupSetInput(scriptGroup, blendKID, allocation1);
     context->scriptGroupSetOutput(scriptGroup, blurKID, allocation2);
     context->scriptGroupExecute(scriptGroup);
     context->contextFinish();
