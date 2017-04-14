@@ -38,7 +38,7 @@ using ::android::hardware::soundtrigger::V2_0::ISoundTriggerHwCallback;
 
 class SoundTriggerHalImpl : public ISoundTriggerHw {
 public:
-        explicit SoundTriggerHalImpl(const char *moduleName = NULL);
+        SoundTriggerHalImpl();
 
         // Methods from ::android::hardware::soundtrigger::V2_0::ISoundTriggerHw follow.
         Return<void> getProperties(getProperties_cb _hidl_cb)  override;
