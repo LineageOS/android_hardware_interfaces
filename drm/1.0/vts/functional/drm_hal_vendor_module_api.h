@@ -158,17 +158,30 @@ class DrmHalVTSVendorModule_V1 : public DrmHalVTSVendorModule {
         const std::map<std::string, std::string> optionalParameters;
 
         /**
+         *  Define license policy attributes for the content configuration.
+         *  These attributes can affect which tests are able to be applied.
+         */
+        struct Policy {
+            /**
+             * Indicate if the license policy allows offline playback.
+             * Content configurated with this policy supports KeyType::OFFLINE
+             * key requests/responses. A vendor module should provide at least
+             * one content configuration where allowOffline is true if the drm
+             * scheme supports offline content.
+             */
+            bool allowOffline;
+        } policy;
+
+        /**
          * The keys that will be available once the keys are loaded
          */
         struct Key {
             /**
              * Indicate if the key content is configured to require secure
-             * buffers,
-             * where the output buffers are protected and cannot be accessed.
-             * A vendor module should provide some content configurations where
-             * isSecure is false, to allow decrypt result verification tests to
-             * be
-             * run.
+             * buffers, where the output buffers are protected and cannot be
+             * accessed by the non-secure cpu. A vendor module should provide
+             * at least one content configurations where isSecure is false, to
+             * allow decrypt result verification tests to be run.
              */
             bool isSecure;
 
