@@ -248,6 +248,21 @@ interface ICameraDeviceSession {
             generates (Status status, uint32_t numRequestProcessed);
 
     /**
+     * getCaptureRequestMetadataQueue:
+     *
+     * Retrieves the queue used along with processCaptureRequest. If
+     * client decides to use fast message queue to pass request metadata,
+     * it must:
+     * - Call getCaptureRequestMetadataQueue to retrieve the fast message queue;
+     * - In each of the requests sent in processCaptureRequest, set
+     *   fmqSettingsSize field of CaptureRequest to be the size to read from the
+     *   fast message queue; leave settings field of CaptureRequest empty.
+     *
+     * @return queue the queue that client writes request metadata to.
+     */
+    getCaptureRequestMetadataQueue() generates (fmq_sync<uint8_t> queue);
+
+    /**
      * flush:
      *
      * Flush all currently in-process captures and all buffers in the pipeline

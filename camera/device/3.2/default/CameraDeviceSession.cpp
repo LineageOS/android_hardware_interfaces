@@ -30,6 +30,9 @@ namespace device {
 namespace V3_2 {
 namespace implementation {
 
+// Size of request metadata fast message queue. Change to 0 to always use hwbinder buffer.
+static constexpr size_t CAMERA_REQUEST_METADATA_QUEUE_SIZE = 1 << 20 /* 1MB */;
+
 HandleImporter& CameraDeviceSession::sHandleImporter = HandleImporter::getInstance();
 const int CameraDeviceSession::ResultBatcher::NOT_BATCHED;
 
@@ -66,6 +69,14 @@ bool CameraDeviceSession::initialize() {
         mClosed = true;
         return true;
     }
+
+    mRequestMetadataQueue = std::make_unique<RequestMetadataQueue>(
+            CAMERA_REQUEST_METADATA_QUEUE_SIZE, false /* non blocking */);
+    if (!mRequestMetadataQueue->isValid()) {
+        ALOGE("%s: invalid fmq", __FUNCTION__);
+        return true;
+    }
+
     return false;
 }
 
@@ -699,6 +710,12 @@ void CameraDeviceSession::updateBufferCaches(const hidl_vec<BufferCache>& caches
     }
 }
 
+Return<void> CameraDeviceSession::getCaptureRequestMetadataQueue(
+    getCaptureRequestMetadataQueue_cb _hidl_cb) {
+    _hidl_cb(*mRequestMetadataQueue->getDesc());
+    return Void();
+}
+
 Return<void> CameraDeviceSession::processCaptureRequest(
         const hidl_vec<CaptureRequest>& requests,
         const hidl_vec<BufferCache>& cachesToRemove,
@@ -731,7 +748,24 @@ Status CameraDeviceSession::processOneCaptureRequest(const CaptureRequest& reque
 
     camera3_capture_request_t halRequest;
     halRequest.frame_number = request.frameNumber;
-    bool converted = convertFromHidl(request.settings, &halRequest.settings);
+
+    bool converted = true;
+    CameraMetadata settingsFmq;  // settings from FMQ
+    if (request.fmqSettingsSize > 0) {
+        // non-blocking read; client must write metadata before calling
+        // processOneCaptureRequest
+        settingsFmq.resize(request.fmqSettingsSize);
+        bool read = mRequestMetadataQueue->read(settingsFmq.data(), request.fmqSettingsSize);
+        if (read) {
+            converted = convertFromHidl(settingsFmq, &halRequest.settings);
+        } else {
+            ALOGE("%s: capture request settings metadata couldn't be read from fmq!", __FUNCTION__);
+            converted = false;
+        }
+    } else {
+        converted = convertFromHidl(request.settings, &halRequest.settings);
+    }
+
     if (!converted) {
         ALOGE("%s: capture request settings metadata is corrupt!", __FUNCTION__);
         return Status::INTERNAL_ERROR;

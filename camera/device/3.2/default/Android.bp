@@ -14,10 +14,14 @@ cc_library_shared {
         "android.hardware.camera.provider@2.4",
         "liblog",
         "libhardware",
-        "libcamera_metadata"
+        "libcamera_metadata",
+        "libfmq"
     ],
     static_libs: [
         "android.hardware.camera.common@1.0-helper"
     ],
-    export_include_dirs: ["."]
+    export_include_dirs: ["."],
+    export_shared_lib_headers: [
+        "libfmq",
+    ]
 }
