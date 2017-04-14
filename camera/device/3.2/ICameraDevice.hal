@@ -167,7 +167,7 @@ interface ICameraDevice {
      *         longer available. This interface is now stale, and a new instance
      *         must be acquired if the device is reconnected. All subsequent
      *         calls on this interface must return CAMERA_DISCONNECTED.
-     * @return cameraDevice The interface to the newly-opened camera session,
+     * @return session The interface to the newly-opened camera session,
      *     or null if status is not OK.
      */
     open(ICameraDeviceCallback callback) generates

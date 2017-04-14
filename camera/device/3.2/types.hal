@@ -753,11 +753,22 @@ struct CaptureRequest {
     uint32_t frameNumber;
 
     /**
-     * The settings buffer contains the capture and processing parameters for
+     * If non-zero, read settings from request queue instead
+     * (see ICameraDeviceSession.getCaptureRequestMetadataQueue).
+     * If zero, read settings from .settings field.
+     */
+    uint64_t fmqSettingsSize;
+
+    /**
+     * If fmqSettingsSize is zero,
+     * the settings buffer contains the capture and processing parameters for
      * the request. As a special case, an empty settings buffer indicates that
      * the settings are identical to the most-recently submitted capture
      * request. A empty buffer cannot be used as the first submitted request
      * after a configureStreams() call.
+     *
+     * This field must be used if fmqSettingsSize is zero. It must not be used
+     * if fmqSettingsSize is non-zero.
      */
     CameraMetadata settings;
 

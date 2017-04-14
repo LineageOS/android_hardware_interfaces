@@ -17,19 +17,20 @@
 #ifndef ANDROID_HARDWARE_CAMERA_DEVICE_V3_2_CAMERADEVICE3SESSION_H
 #define ANDROID_HARDWARE_CAMERA_DEVICE_V3_2_CAMERADEVICE3SESSION_H
 
+#include <android/hardware/camera/device/3.2/ICameraDevice.h>
+#include <android/hardware/camera/device/3.2/ICameraDeviceSession.h>
+#include <fmq/MessageQueue.h>
+#include <hidl/MQDescriptor.h>
+#include <hidl/Status.h>
+#include <include/convert.h>
 #include <deque>
 #include <map>
 #include <unordered_map>
-#include "hardware/camera_common.h"
-#include "hardware/camera3.h"
-#include "utils/Mutex.h"
-#include <android/hardware/camera/device/3.2/ICameraDevice.h>
-#include <android/hardware/camera/device/3.2/ICameraDeviceSession.h>
-#include <hidl/Status.h>
-#include <hidl/MQDescriptor.h>
-#include <include/convert.h>
-#include "HandleImporter.h"
 #include "CameraMetadata.h"
+#include "HandleImporter.h"
+#include "hardware/camera3.h"
+#include "hardware/camera_common.h"
+#include "utils/Mutex.h"
 
 namespace android {
 namespace hardware {
@@ -44,6 +45,9 @@ using ::android::hardware::camera::device::V3_2::StreamConfiguration;
 using ::android::hardware::camera::device::V3_2::ICameraDeviceSession;
 using ::android::hardware::camera::common::V1_0::Status;
 using ::android::hardware::camera::common::V1_0::helper::HandleImporter;
+using ::android::hardware::kSynchronizedReadWrite;
+using ::android::hardware::MessageQueue;
+using ::android::hardware::MQDescriptorSync;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::hidl_vec;
@@ -84,6 +88,8 @@ struct CameraDeviceSession : public ICameraDeviceSession, private camera3_callba
             RequestTemplate type, constructDefaultRequestSettings_cb _hidl_cb) override;
     Return<void> configureStreams(
             const StreamConfiguration& requestedConfiguration, configureStreams_cb _hidl_cb) override;
+    Return<void> getCaptureRequestMetadataQueue(
+        getCaptureRequestMetadataQueue_cb _hidl_cb) override;
     Return<void> processCaptureRequest(
             const hidl_vec<CaptureRequest>& requests,
             const hidl_vec<BufferCache>& cachesToRemove,
@@ -125,6 +131,9 @@ private:
     bool mInitFail;
 
     common::V1_0::helper::CameraMetadata mDeviceInfo;
+
+    using RequestMetadataQueue = MessageQueue<uint8_t, kSynchronizedReadWrite>;
+    std::unique_ptr<RequestMetadataQueue> mRequestMetadataQueue;
 
     class ResultBatcher {
     public:
