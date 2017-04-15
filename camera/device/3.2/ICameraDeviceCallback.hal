@@ -42,7 +42,9 @@ interface ICameraDeviceCallback {
      * metadata and low-resolution buffers to be returned in one call, and
      * post-processed JPEG buffers in a later call, once it is available. Each
      * call must include the frame number of the request it is returning
-     * metadata or buffers for.
+     * metadata or buffers for. Only one call to processCaptureResult
+     * may be made at a time by the HAL although the calls may come from
+     * different threads in the HAL.
      *
      * A component (buffer or metadata) of the complete result may only be
      * included in one process_capture_result call. A buffer for each stream,
