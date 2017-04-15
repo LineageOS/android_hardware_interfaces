@@ -625,14 +625,17 @@ TEST_P(DrmHalVendorPluginTest, RestoreKeysNull) {
 TEST_P(DrmHalVendorPluginTest, RestoreKeysClosedSession) {
     RETURN_IF_SKIPPED;
     for (auto config : contentConfigurations) {
-        auto sessionId = openSession();
-        hidl_vec<uint8_t> keySetId = loadKeys(sessionId, config);
-        EXPECT_NE(0u, keySetId.size());
-        closeSession(sessionId);
-        sessionId = openSession();
-        closeSession(sessionId);
-        Status status = drmPlugin->restoreKeys(sessionId, keySetId);
-        EXPECT_EQ(Status::ERROR_DRM_SESSION_NOT_OPENED, status);
+        if (config.policy.allowOffline) {
+            auto sessionId = openSession();
+            hidl_vec<uint8_t> keySetId =
+                    loadKeys(sessionId, config, KeyType::OFFLINE);
+            EXPECT_NE(0u, keySetId.size());
+            closeSession(sessionId);
+            sessionId = openSession();
+            closeSession(sessionId);
+            Status status = drmPlugin->restoreKeys(sessionId, keySetId);
+            EXPECT_EQ(Status::ERROR_DRM_SESSION_NOT_OPENED, status);
+        }
     }
 }
 
