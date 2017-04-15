@@ -29,7 +29,6 @@ LOCAL_SHARED_LIBRARIES := \
   libdl \
   libbase \
   libutils \
-  libhardware_legacy \
   libhardware \
 
 LOCAL_SHARED_LIBRARIES += \
