@@ -82,6 +82,14 @@ using VtsTestBase = ::testing::VtsHalHidlTargetTestBase;
 #define ASSERT_OK(ret) ASSERT_TRUE(ret.isOk())
 #define EXPECT_OK(ret) EXPECT_TRUE(ret.isOk())
 
+#define RETURN_IF_SKIPPED \
+    if (!vendorModule->isInstalled()) { \
+        std::cout << "[  SKIPPED ] This drm scheme not supported." << \
+                " library:" << GetParam() << " service-name:" << \
+                vendorModule->getServiceName() << std::endl; \
+        return; \
+    }
+
 static const uint8_t kInvalidUUID[16] = {
         0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80,
         0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80,
@@ -123,6 +131,12 @@ class DrmHalVendorFactoryTest : public testing::TestWithParam<std::string> {
             VtsTestBase::getService<ICryptoFactory>();
         }
         ASSERT_NE(cryptoFactory, nullptr);
+
+        // If drm scheme not installed skip subsequent tests
+        if (!drmFactory->isCryptoSchemeSupported(getVendorUUID())) {
+            vendorModule->setInstalled(false);
+            return;
+        }
     }
 
     virtual void TearDown() override {}
@@ -180,9 +194,10 @@ TEST_P(DrmHalVendorFactoryTest, EmptyPluginUUIDNotSupported) {
 }
 
 /**
- * Ensure the factory supports the scheme uuid in the config
+ * Check if the factory supports the scheme uuid in the config.
  */
-TEST_P(DrmHalVendorFactoryTest, EmptyPluginConfigUUIDSupported) {
+TEST_P(DrmHalVendorFactoryTest, PluginConfigUUIDSupported) {
+    RETURN_IF_SKIPPED;
     EXPECT_TRUE(drmFactory->isCryptoSchemeSupported(getVendorUUID()));
     EXPECT_TRUE(cryptoFactory->isCryptoSchemeSupported(getVendorUUID()));
 }
@@ -207,6 +222,7 @@ TEST_P(DrmHalVendorFactoryTest, InvalidContentTypeNotSupported) {
  * Ensure valid content types in the configs are supported
  */
 TEST_P(DrmHalVendorFactoryTest, ValidContentTypeSupported) {
+    RETURN_IF_SKIPPED;
     for (auto config : contentConfigurations) {
         EXPECT_TRUE(drmFactory->isContentTypeSupported(config.mimeType));
     }
@@ -216,6 +232,7 @@ TEST_P(DrmHalVendorFactoryTest, ValidContentTypeSupported) {
  * Ensure vendor drm plugin can be created
  */
 TEST_P(DrmHalVendorFactoryTest, CreateVendorDrmPlugin) {
+    RETURN_IF_SKIPPED;
     hidl_string packageName("android.hardware.drm.test");
     auto res = drmFactory->createPlugin(
             getVendorUUID(), packageName,
@@ -230,6 +247,7 @@ TEST_P(DrmHalVendorFactoryTest, CreateVendorDrmPlugin) {
  * Ensure vendor crypto plugin can be created
  */
 TEST_P(DrmHalVendorFactoryTest, CreateVendorCryptoPlugin) {
+    RETURN_IF_SKIPPED;
     hidl_vec<uint8_t> initVec;
     auto res = cryptoFactory->createPlugin(
             getVendorUUID(), initVec,
@@ -244,6 +262,7 @@ TEST_P(DrmHalVendorFactoryTest, CreateVendorCryptoPlugin) {
  * Ensure invalid drm plugin can't be created
  */
 TEST_P(DrmHalVendorFactoryTest, CreateInvalidDrmPlugin) {
+    RETURN_IF_SKIPPED;
     hidl_string packageName("android.hardware.drm.test");
     auto res = drmFactory->createPlugin(
             kInvalidUUID, packageName,
@@ -258,6 +277,7 @@ TEST_P(DrmHalVendorFactoryTest, CreateInvalidDrmPlugin) {
  * Ensure invalid crypto plugin can't be created
  */
 TEST_P(DrmHalVendorFactoryTest, CreateInvalidCryptoPlugin) {
+    RETURN_IF_SKIPPED;
     hidl_vec<uint8_t> initVec;
     auto res = cryptoFactory->createPlugin(
             kInvalidUUID, initVec,
@@ -274,6 +294,7 @@ class DrmHalVendorPluginTest : public DrmHalVendorFactoryTest {
     virtual void SetUp() override {
         // Create factories
         DrmHalVendorFactoryTest::SetUp();
+        RETURN_IF_SKIPPED;
 
         hidl_string packageName("android.hardware.drm.test");
         auto res = drmFactory->createPlugin(
@@ -325,6 +346,7 @@ class DrmHalVendorPluginTest : public DrmHalVendorFactoryTest {
  */
 
 TEST_P(DrmHalVendorPluginTest, DoProvisioning) {
+    RETURN_IF_SKIPPED;
     hidl_string certificateType;
     hidl_string certificateAuthority;
     hidl_vec<uint8_t> provisionRequest;
@@ -362,6 +384,7 @@ TEST_P(DrmHalVendorPluginTest, DoProvisioning) {
  * response is provided.
  */
 TEST_P(DrmHalVendorPluginTest, ProvideEmptyProvisionResponse) {
+    RETURN_IF_SKIPPED;
     hidl_vec<uint8_t> response;
     auto res = drmPlugin->provideProvisionResponse(
             response, [&](Status status, const hidl_vec<uint8_t>&,
@@ -457,6 +480,7 @@ hidl_vec<uint8_t> DrmHalVendorPluginTest::loadKeys(
  * Test that a session can be opened and closed
  */
 TEST_P(DrmHalVendorPluginTest, OpenCloseSession) {
+    RETURN_IF_SKIPPED;
     auto sessionId = openSession();
     closeSession(sessionId);
 }
@@ -466,6 +490,7 @@ TEST_P(DrmHalVendorPluginTest, OpenCloseSession) {
  * is prohibited with the documented error code.
  */
 TEST_P(DrmHalVendorPluginTest, CloseInvalidSession) {
+    RETURN_IF_SKIPPED;
     SessionId invalidSessionId;
     Status status = drmPlugin->closeSession(invalidSessionId);
     EXPECT_EQ(Status::BAD_VALUE, status);
@@ -476,6 +501,7 @@ TEST_P(DrmHalVendorPluginTest, CloseInvalidSession) {
  * is prohibited with the documented error code.
  */
 TEST_P(DrmHalVendorPluginTest, CloseClosedSession) {
+    RETURN_IF_SKIPPED;
     auto sessionId = openSession();
     closeSession(sessionId);
     Status status = drmPlugin->closeSession(sessionId);
@@ -486,6 +512,7 @@ TEST_P(DrmHalVendorPluginTest, CloseClosedSession) {
  * A get key request should fail if no sessionId is provided
  */
 TEST_P(DrmHalVendorPluginTest, GetKeyRequestNoSession) {
+    RETURN_IF_SKIPPED;
     SessionId invalidSessionId;
     hidl_vec<uint8_t> initData;
     hidl_string mimeType = "video/mp4";
@@ -502,6 +529,7 @@ TEST_P(DrmHalVendorPluginTest, GetKeyRequestNoSession) {
  * Test that an empty sessionID returns BAD_VALUE
  */
 TEST_P(DrmHalVendorPluginTest, ProvideKeyResponseEmptySessionId) {
+    RETURN_IF_SKIPPED;
     SessionId session;
 
     hidl_vec<uint8_t> keyResponse = {0x7b, 0x22, 0x6b, 0x65,
@@ -519,6 +547,7 @@ TEST_P(DrmHalVendorPluginTest, ProvideKeyResponseEmptySessionId) {
  * Test that an empty key response returns BAD_VALUE
  */
 TEST_P(DrmHalVendorPluginTest, ProvideKeyResponseEmptyResponse) {
+    RETURN_IF_SKIPPED;
     SessionId session = openSession();
     hidl_vec<uint8_t> emptyResponse;
     auto res = drmPlugin->provideKeyResponse(
@@ -535,6 +564,7 @@ TEST_P(DrmHalVendorPluginTest, ProvideKeyResponseEmptyResponse) {
  * Test that a removeKeys on an empty sessionID returns BAD_VALUE
  */
 TEST_P(DrmHalVendorPluginTest, RemoveKeysEmptySessionId) {
+    RETURN_IF_SKIPPED;
     SessionId sessionId;
     Status status = drmPlugin->removeKeys(sessionId);
     EXPECT_TRUE(status == Status::BAD_VALUE);
@@ -545,6 +575,7 @@ TEST_P(DrmHalVendorPluginTest, RemoveKeysEmptySessionId) {
  * that has no keys.
  */
 TEST_P(DrmHalVendorPluginTest, RemoveKeysNewSession) {
+    RETURN_IF_SKIPPED;
     SessionId sessionId = openSession();
     Status status = drmPlugin->removeKeys(sessionId);
     EXPECT_TRUE(status == Status::OK);
@@ -556,6 +587,7 @@ TEST_P(DrmHalVendorPluginTest, RemoveKeysNewSession) {
  * for all content having a policy that allows offline use.
  */
 TEST_P(DrmHalVendorPluginTest, RestoreKeys) {
+    RETURN_IF_SKIPPED;
     for (auto config : contentConfigurations) {
         if (config.policy.allowOffline) {
             auto sessionId = openSession();
@@ -576,6 +608,7 @@ TEST_P(DrmHalVendorPluginTest, RestoreKeys) {
  * Error message is expected to be Status::BAD_VALUE.
  */
 TEST_P(DrmHalVendorPluginTest, RestoreKeysNull) {
+    RETURN_IF_SKIPPED;
     SessionId sessionId = openSession();
     hidl_vec<uint8_t> nullKeySetId;
     Status status = drmPlugin->restoreKeys(sessionId, nullKeySetId);
@@ -589,6 +622,7 @@ TEST_P(DrmHalVendorPluginTest, RestoreKeysNull) {
  * Status::ERROR_DRM_SESSION_NOT_OPENED.
  */
 TEST_P(DrmHalVendorPluginTest, RestoreKeysClosedSession) {
+    RETURN_IF_SKIPPED;
     for (auto config : contentConfigurations) {
         auto sessionId = openSession();
         hidl_vec<uint8_t> keySetId = loadKeys(sessionId, config);
@@ -607,6 +641,7 @@ TEST_P(DrmHalVendorPluginTest, RestoreKeysClosedSession) {
  * clearing them.
  */
 TEST_P(DrmHalVendorPluginTest, GetSecureStops) {
+    RETURN_IF_SKIPPED;
     // There may be secure stops, depending on if there were keys
     // loaded and unloaded previously. Clear them to get to a known
     // state, then make sure there are none.
@@ -634,6 +669,7 @@ TEST_P(DrmHalVendorPluginTest, GetSecureStops) {
  * an empty ssid is provided.
  */
 TEST_P(DrmHalVendorPluginTest, GetSecureStopEmptySSID) {
+    RETURN_IF_SKIPPED;
     SecureStopId ssid;
     auto res = drmPlugin->getSecureStop(
             ssid, [&](Status status, const SecureStop&) {
@@ -647,6 +683,7 @@ TEST_P(DrmHalVendorPluginTest, GetSecureStopEmptySSID) {
  * or is completed successfully
  */
 TEST_P(DrmHalVendorPluginTest, ReleaseAllSecureStops) {
+    RETURN_IF_SKIPPED;
     Status status = drmPlugin->releaseAllSecureStops();
     EXPECT_TRUE(status == Status::OK ||
                 status == Status::ERROR_DRM_CANNOT_HANDLE);
@@ -658,6 +695,7 @@ TEST_P(DrmHalVendorPluginTest, ReleaseAllSecureStops) {
  * This is an optional API so it can also return CANNOT_HANDLE.
  */
 TEST_P(DrmHalVendorPluginTest, ReleaseSecureStopSequenceError) {
+    RETURN_IF_SKIPPED;
     SecureStopId ssid = {1, 2, 3, 4};
     Status status = drmPlugin->releaseSecureStop(ssid);
     EXPECT_TRUE(status == Status::ERROR_DRM_INVALID_STATE ||
@@ -670,6 +708,7 @@ TEST_P(DrmHalVendorPluginTest, ReleaseSecureStopSequenceError) {
  * CANNOT_HANDLE.
  */
 TEST_P(DrmHalVendorPluginTest, ReleaseSecureStopEmptySSID) {
+    RETURN_IF_SKIPPED;
     SecureStopId ssid;
     Status status = drmPlugin->releaseSecureStop(ssid);
     EXPECT_TRUE(status == Status::BAD_VALUE ||
@@ -682,6 +721,7 @@ TEST_P(DrmHalVendorPluginTest, ReleaseSecureStopEmptySSID) {
  * the plugin.
  */
 TEST_P(DrmHalVendorPluginTest, GetVendorProperty) {
+    RETURN_IF_SKIPPED;
     auto res = drmPlugin->getPropertyString(
             "vendor", [&](Status status, const hidl_string& value) {
                 EXPECT_EQ(Status::OK, status);
@@ -691,6 +731,7 @@ TEST_P(DrmHalVendorPluginTest, GetVendorProperty) {
 }
 
 TEST_P(DrmHalVendorPluginTest, GetVersionProperty) {
+    RETURN_IF_SKIPPED;
     auto res = drmPlugin->getPropertyString(
             "version", [&](Status status, const hidl_string& value) {
                 EXPECT_EQ(Status::OK, status);
@@ -700,6 +741,7 @@ TEST_P(DrmHalVendorPluginTest, GetVersionProperty) {
 }
 
 TEST_P(DrmHalVendorPluginTest, GetDescriptionProperty) {
+    RETURN_IF_SKIPPED;
     auto res = drmPlugin->getPropertyString(
             "description", [&](Status status, const hidl_string& value) {
                 EXPECT_EQ(Status::OK, status);
@@ -709,6 +751,7 @@ TEST_P(DrmHalVendorPluginTest, GetDescriptionProperty) {
 }
 
 TEST_P(DrmHalVendorPluginTest, GetAlgorithmsProperty) {
+    RETURN_IF_SKIPPED;
     auto res = drmPlugin->getPropertyString(
             "algorithms", [&](Status status, const hidl_string& value) {
                 if (status == Status::OK) {
@@ -721,6 +764,7 @@ TEST_P(DrmHalVendorPluginTest, GetAlgorithmsProperty) {
 }
 
 TEST_P(DrmHalVendorPluginTest, GetPropertyUniqueDeviceID) {
+    RETURN_IF_SKIPPED;
     auto res = drmPlugin->getPropertyByteArray(
             "deviceUniqueId",
             [&](Status status, const hidl_vec<uint8_t>& value) {
@@ -738,6 +782,7 @@ TEST_P(DrmHalVendorPluginTest, GetPropertyUniqueDeviceID) {
  * properties returns the documented error code.
  */
 TEST_P(DrmHalVendorPluginTest, GetInvalidStringProperty) {
+    RETURN_IF_SKIPPED;
     auto res = drmPlugin->getPropertyString(
             "invalid", [&](Status status, const hidl_string&) {
                 EXPECT_EQ(Status::ERROR_DRM_CANNOT_HANDLE, status);
@@ -746,6 +791,7 @@ TEST_P(DrmHalVendorPluginTest, GetInvalidStringProperty) {
 }
 
 TEST_P(DrmHalVendorPluginTest, GetInvalidByteArrayProperty) {
+    RETURN_IF_SKIPPED;
     auto res = drmPlugin->getPropertyByteArray(
             "invalid", [&](Status status, const hidl_vec<uint8_t>&) {
                 EXPECT_EQ(Status::ERROR_DRM_CANNOT_HANDLE, status);
@@ -758,11 +804,13 @@ TEST_P(DrmHalVendorPluginTest, GetInvalidByteArrayProperty) {
  * the expected status value.
  */
 TEST_P(DrmHalVendorPluginTest, SetStringPropertyNotSupported) {
+    RETURN_IF_SKIPPED;
     EXPECT_EQ(drmPlugin->setPropertyString("awefijaeflijwef", "value"),
               Status::ERROR_DRM_CANNOT_HANDLE);
 }
 
 TEST_P(DrmHalVendorPluginTest, SetByteArrayPropertyNotSupported) {
+    RETURN_IF_SKIPPED;
     hidl_vec<uint8_t> value;
     EXPECT_EQ(drmPlugin->setPropertyByteArray("awefijaeflijwef", value),
               Status::ERROR_DRM_CANNOT_HANDLE);
@@ -773,6 +821,7 @@ TEST_P(DrmHalVendorPluginTest, SetByteArrayPropertyNotSupported) {
  * the expected status value.
  */
 TEST_P(DrmHalVendorPluginTest, SetCipherInvalidAlgorithm) {
+    RETURN_IF_SKIPPED;
     SessionId session = openSession();
     hidl_string algorithm;
     Status status = drmPlugin->setCipherAlgorithm(session, algorithm);
@@ -785,6 +834,7 @@ TEST_P(DrmHalVendorPluginTest, SetCipherInvalidAlgorithm) {
  * the expected status value.
  */
 TEST_P(DrmHalVendorPluginTest, SetCipherAlgorithmNoSession) {
+    RETURN_IF_SKIPPED;
     SessionId session;
     hidl_string algorithm = "AES/CBC/NoPadding";
     Status status = drmPlugin->setCipherAlgorithm(session, algorithm);
@@ -798,6 +848,7 @@ TEST_P(DrmHalVendorPluginTest, SetCipherAlgorithmNoSession) {
  * either accept it or return ERROR_DRM_CANNOT_HANDLE
  */
 TEST_P(DrmHalVendorPluginTest, SetCipherAlgorithm) {
+    RETURN_IF_SKIPPED;
     SessionId session = openSession();
     ;
     hidl_string algorithm = "AES/CBC/NoPadding";
@@ -812,6 +863,7 @@ TEST_P(DrmHalVendorPluginTest, SetCipherAlgorithm) {
  * the expected status value.
  */
 TEST_P(DrmHalVendorPluginTest, SetMacInvalidAlgorithm) {
+    RETURN_IF_SKIPPED;
     SessionId session = openSession();
     hidl_string algorithm;
     Status status = drmPlugin->setMacAlgorithm(session, algorithm);
@@ -824,6 +876,7 @@ TEST_P(DrmHalVendorPluginTest, SetMacInvalidAlgorithm) {
  * the expected status value.
  */
 TEST_P(DrmHalVendorPluginTest, SetMacNullAlgorithmNoSession) {
+    RETURN_IF_SKIPPED;
     SessionId session;
     hidl_string algorithm = "HmacSHA256";
     Status status = drmPlugin->setMacAlgorithm(session, algorithm);
@@ -837,6 +890,7 @@ TEST_P(DrmHalVendorPluginTest, SetMacNullAlgorithmNoSession) {
  * either accept it or return ERROR_DRM_CANNOT_HANDLE
  */
 TEST_P(DrmHalVendorPluginTest, SetMacAlgorithm) {
+    RETURN_IF_SKIPPED;
     SessionId session = openSession();
     hidl_string algorithm = "HmacSHA256";
     Status status = drmPlugin->setMacAlgorithm(session, algorithm);
@@ -857,6 +911,7 @@ TEST_P(DrmHalVendorPluginTest, SetMacAlgorithm) {
  * inputs, e.g. empty sessionId
  */
 TEST_P(DrmHalVendorPluginTest, GenericEncryptNoSession) {
+    RETURN_IF_SKIPPED;
     SessionId session;
     hidl_vec<uint8_t> keyId, input, iv;
     auto res = drmPlugin->encrypt(
@@ -868,6 +923,7 @@ TEST_P(DrmHalVendorPluginTest, GenericEncryptNoSession) {
 }
 
 TEST_P(DrmHalVendorPluginTest, GenericDecryptNoSession) {
+    RETURN_IF_SKIPPED;
     SessionId session;
     hidl_vec<uint8_t> keyId, input, iv;
     auto res = drmPlugin->decrypt(
@@ -879,6 +935,7 @@ TEST_P(DrmHalVendorPluginTest, GenericDecryptNoSession) {
 }
 
 TEST_P(DrmHalVendorPluginTest, GenericSignNoSession) {
+    RETURN_IF_SKIPPED;
     SessionId session;
     hidl_vec<uint8_t> keyId, message;
     auto res = drmPlugin->sign(
@@ -890,6 +947,7 @@ TEST_P(DrmHalVendorPluginTest, GenericSignNoSession) {
 }
 
 TEST_P(DrmHalVendorPluginTest, GenericVerifyNoSession) {
+    RETURN_IF_SKIPPED;
     SessionId session;
     hidl_vec<uint8_t> keyId, message, signature;
     auto res = drmPlugin->verify(
@@ -900,6 +958,7 @@ TEST_P(DrmHalVendorPluginTest, GenericVerifyNoSession) {
 }
 
 TEST_P(DrmHalVendorPluginTest, GenericSignRSANoSession) {
+    RETURN_IF_SKIPPED;
     SessionId session;
     hidl_string algorithm;
     hidl_vec<uint8_t> message, wrappedKey;
@@ -920,6 +979,7 @@ TEST_P(DrmHalVendorPluginTest, GenericSignRSANoSession) {
  * Verify that requiresSecureDecoderComponent handles empty mimetype.
  */
 TEST_P(DrmHalVendorPluginTest, RequiresSecureDecoderEmptyMimeType) {
+    RETURN_IF_SKIPPED;
     EXPECT_FALSE(cryptoPlugin->requiresSecureDecoderComponent(""));
 }
 
@@ -927,6 +987,7 @@ TEST_P(DrmHalVendorPluginTest, RequiresSecureDecoderEmptyMimeType) {
  * Verify that requiresSecureDecoderComponent handles invalid mimetype.
  */
 TEST_P(DrmHalVendorPluginTest, RequiresSecureDecoderInvalidMimeType) {
+    RETURN_IF_SKIPPED;
     EXPECT_FALSE(cryptoPlugin->requiresSecureDecoderComponent("bad"));
 }
 
@@ -935,6 +996,7 @@ TEST_P(DrmHalVendorPluginTest, RequiresSecureDecoderInvalidMimeType) {
  * configurations
  */
 TEST_P(DrmHalVendorPluginTest, RequiresSecureDecoderConfig) {
+    RETURN_IF_SKIPPED;
     for (auto config : contentConfigurations) {
         for (auto key : config.keys) {
             if (key.isSecure) {
@@ -1006,6 +1068,7 @@ public:
  * gets them.
  */
 TEST_P(DrmHalVendorPluginTest, ListenerEvents) {
+    RETURN_IF_SKIPPED;
     sp<TestDrmPluginListener> listener = new TestDrmPluginListener();
     drmPlugin->setListener(listener);
     auto sessionId = openSession();
@@ -1032,6 +1095,7 @@ TEST_P(DrmHalVendorPluginTest, ListenerEvents) {
  * the listener gets them.
  */
 TEST_P(DrmHalVendorPluginTest, ListenerExpirationUpdate) {
+    RETURN_IF_SKIPPED;
     sp<TestDrmPluginListener> listener = new TestDrmPluginListener();
     drmPlugin->setListener(listener);
     auto sessionId = openSession();
@@ -1049,6 +1113,7 @@ TEST_P(DrmHalVendorPluginTest, ListenerExpirationUpdate) {
  * the listener gets them.
  */
 TEST_P(DrmHalVendorPluginTest, ListenerKeysChange) {
+    RETURN_IF_SKIPPED;
     sp<TestDrmPluginListener> listener = new TestDrmPluginListener();
     drmPlugin->setListener(listener);
     auto sessionId = openSession();
@@ -1074,6 +1139,7 @@ TEST_P(DrmHalVendorPluginTest, ListenerKeysChange) {
  * listener set.
  */
 TEST_P(DrmHalVendorPluginTest, NotListening) {
+    RETURN_IF_SKIPPED;
     sp<TestDrmPluginListener> listener = new TestDrmPluginListener();
     drmPlugin->setListener(listener);
     drmPlugin->setListener(nullptr);
@@ -1099,6 +1165,7 @@ TEST_P(DrmHalVendorPluginTest, NotListening) {
  * just call the method for coverage.
  */
 TEST_P(DrmHalVendorPluginTest, NotifyResolution) {
+    RETURN_IF_SKIPPED;
     cryptoPlugin->notifyResolution(1920, 1080);
 }
 
@@ -1138,6 +1205,7 @@ sp<IMemory> DrmHalVendorPluginTest::getDecryptMemory(size_t size,
  * is used to associate a drm session with a crypto session.
  */
 TEST_P(DrmHalVendorPluginTest, SetMediaDrmSession) {
+    RETURN_IF_SKIPPED;
     auto sessionId = openSession();
     Status status = cryptoPlugin->setMediaDrmSession(sessionId);
     EXPECT_EQ(Status::OK, status);
@@ -1148,6 +1216,7 @@ TEST_P(DrmHalVendorPluginTest, SetMediaDrmSession) {
  * setMediaDrmSession with a closed session id
  */
 TEST_P(DrmHalVendorPluginTest, SetMediaDrmSessionClosedSession) {
+    RETURN_IF_SKIPPED;
     auto sessionId = openSession();
     closeSession(sessionId);
     Status status = cryptoPlugin->setMediaDrmSession(sessionId);
@@ -1158,6 +1227,7 @@ TEST_P(DrmHalVendorPluginTest, SetMediaDrmSessionClosedSession) {
  * setMediaDrmSession with a empty session id: BAD_VALUE
  */
 TEST_P(DrmHalVendorPluginTest, SetMediaDrmSessionEmptySession) {
+    RETURN_IF_SKIPPED;
     SessionId sessionId;
     Status status = cryptoPlugin->setMediaDrmSession(sessionId);
     EXPECT_EQ(Status::BAD_VALUE, status);
@@ -1351,6 +1421,7 @@ void DrmHalVendorDecryptTest::aes_cbc_decrypt(uint8_t* dest, uint8_t* src,
  * Test key status with empty session id, should return BAD_VALUE
  */
 TEST_P(DrmHalVendorDecryptTest, QueryKeyStatusInvalidSession) {
+    RETURN_IF_SKIPPED;
     SessionId sessionId;
     auto res = drmPlugin->queryKeyStatus(sessionId,
             [&](Status status, KeyedVector /* info */) {
@@ -1364,6 +1435,7 @@ TEST_P(DrmHalVendorDecryptTest, QueryKeyStatusInvalidSession) {
  * Test key status.  There should be no key status prior to loading keys
  */
 TEST_P(DrmHalVendorDecryptTest, QueryKeyStatusWithNoKeys) {
+    RETURN_IF_SKIPPED;
     auto sessionId = openSession();
     auto keyStatus = queryKeyStatus(sessionId);
     EXPECT_EQ(0u, keyStatus.size());
@@ -1375,6 +1447,7 @@ TEST_P(DrmHalVendorDecryptTest, QueryKeyStatusWithNoKeys) {
  * Test key status.  There should be key status after loading keys.
  */
 TEST_P(DrmHalVendorDecryptTest, QueryKeyStatus) {
+    RETURN_IF_SKIPPED;
     for (auto config : contentConfigurations) {
         auto sessionId = openSession();
         loadKeys(sessionId, config);
@@ -1388,6 +1461,7 @@ TEST_P(DrmHalVendorDecryptTest, QueryKeyStatus) {
  * Positive decrypt test. "Decrypt" a single clear segment and verify.
  */
 TEST_P(DrmHalVendorDecryptTest, ClearSegmentTest) {
+    RETURN_IF_SKIPPED;
     for (auto config : contentConfigurations) {
         for (auto key : config.keys) {
             const size_t kSegmentSize = 1024;
@@ -1415,6 +1489,7 @@ TEST_P(DrmHalVendorDecryptTest, ClearSegmentTest) {
  * Verify data matches.
  */
 TEST_P(DrmHalVendorDecryptTest, EncryptedAesCtrSegmentTest) {
+    RETURN_IF_SKIPPED;
     for (auto config : contentConfigurations) {
         for (auto key : config.keys) {
             const size_t kSegmentSize = 1024;
@@ -1441,6 +1516,7 @@ TEST_P(DrmHalVendorDecryptTest, EncryptedAesCtrSegmentTest) {
  * Negative decrypt test. Decrypt without loading keys.
  */
 TEST_P(DrmHalVendorDecryptTest, EncryptedAesCtrSegmentTestNoKeys) {
+    RETURN_IF_SKIPPED;
     for (auto config : contentConfigurations) {
         for (auto key : config.keys) {
             vector<uint8_t> iv(AES_BLOCK_SIZE, 0);
@@ -1467,6 +1543,7 @@ TEST_P(DrmHalVendorDecryptTest, EncryptedAesCtrSegmentTestNoKeys) {
  * decryption can't be performed.
  */
 TEST_P(DrmHalVendorDecryptTest, AttemptDecryptWithKeysRemoved) {
+    RETURN_IF_SKIPPED;
     for (auto config : contentConfigurations) {
         for (auto key : config.keys) {
             vector<uint8_t> iv(AES_BLOCK_SIZE, 0);

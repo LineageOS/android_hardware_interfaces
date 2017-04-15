@@ -65,7 +65,7 @@ DrmHalVTSVendorModule* vendorModuleFactory();
 
 class DrmHalVTSVendorModule {
    public:
-    DrmHalVTSVendorModule() {}
+    DrmHalVTSVendorModule() : installed(true) {}
     virtual ~DrmHalVTSVendorModule() {}
 
     /**
@@ -89,7 +89,15 @@ class DrmHalVTSVendorModule {
      */
     virtual std::string getServiceName() const = 0;
 
+    /**
+     * Set a flag in the vendor module to indicate whether or not the drm
+     * scheme corresponding to this module is installed on the device.
+     */
+    void setInstalled(bool flag) {installed = flag;}
+    bool isInstalled() const {return installed;}
+
    private:
+    bool installed;
     DrmHalVTSVendorModule(const DrmHalVTSVendorModule&) = delete;
     void operator=(const DrmHalVTSVendorModule&) = delete;
 };
