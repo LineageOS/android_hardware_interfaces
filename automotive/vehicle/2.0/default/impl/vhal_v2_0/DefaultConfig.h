@@ -28,6 +28,25 @@ namespace V2_0 {
 
 namespace impl {
 
+/*
+ * This property is used for test purpose to generate fake events.
+ *
+ * It has the following format:
+ *
+ * int32Values[0] - command (1 - start fake data generation, 0 - stop)
+ * int32Values[1] - VehicleProperty to which command applies
+ *
+ * For start command, additional data should be provided:
+ *   int64Values[0] - periodic interval in nanoseconds
+ *   floatValues[0] - initial value
+ *   floatValues[1] - dispersion defines min and max range relative to initial value
+ *   floatValues[2] - increment, with every timer tick the value will be incremented by this amount
+ */
+const int32_t kGenerateFakeDataControllingProperty = 0x0666
+        | VehiclePropertyGroup::VENDOR
+        | VehicleArea::GLOBAL
+        | VehiclePropertyType::COMPLEX;
+
 const int32_t kHvacPowerProperties[] = {
     toInt(VehicleProperty::HVAC_FAN_SPEED),
     toInt(VehicleProperty::HVAC_FAN_DIRECTION),
@@ -58,6 +77,24 @@ const ConfigDeclaration kVehicleProperties[] {
             .prop = toInt(VehicleProperty::PERF_VEHICLE_SPEED),
             .access = VehiclePropertyAccess::READ,
             .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+        },
+        .initialValue = { .floatValues = {0.0f} }
+    },
+
+    {
+        .config = {
+            .prop = toInt(VehicleProperty::PERF_ODOMETER),
+            .access = VehiclePropertyAccess::READ,
+            .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+        },
+        .initialValue = { .floatValues = {0.0f} }
+    },
+
+    {
+        .config = {
+            .prop = toInt(VehicleProperty::ENGINE_RPM),
+            .access = VehiclePropertyAccess::READ,
+            .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
         },
         .initialValue = { .floatValues = {0.0f} }
     },
@@ -284,6 +321,14 @@ const ConfigDeclaration kVehicleProperties[] {
             .maxSampleRate = 10,  // 10 Hz, every 100 ms
         },
         .initialValue = { .floatValues = {101.0f} }
+    },
+
+    {
+        .config = {
+            .prop = kGenerateFakeDataControllingProperty,
+            .access = VehiclePropertyAccess::WRITE,
+            .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+        },
     }
 };
 
