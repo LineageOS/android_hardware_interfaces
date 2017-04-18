@@ -43,6 +43,12 @@ LOCAL_SHARED_LIBRARIES := \
     android.hardware.audio.common@2.0 \
     android.hardware.audio.common@2.0-util \
 
+LOCAL_HEADER_LIBRARIES := \
+    libaudioclient_headers \
+    libaudio_system_headers \
+    libhardware_headers \
+    libmedia_headers \
+
 LOCAL_WHOLE_STATIC_LIBRARIES := libmedia_helper
 
 include $(BUILD_SHARED_LIBRARY)
