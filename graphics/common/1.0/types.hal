@@ -37,15 +37,10 @@ enum PixelFormat : int32_t {
     RGB_565            = 4,
     BGRA_8888          = 5,
 
-    /**
-     * The following formats use 10bit integers for R, G, and B and
-     * 2 bits for alpha. This is used to improve color precision on
-     * wide-color devices, e.g. Display-P3 or scRGB.
-     *
-     * When used with ANativeWindow, the dataSpace field describes the color
-     * space of the buffer.
-     */
-    RGBA_1010102       = 0x2B,
+    /** Legacy formats (deprecated), used by ImageFormat.java */
+    YCBCR_422_SP       = 0x10,  // NV16
+    YCRCB_420_SP       = 0x11,  // NV21
+    YCBCR_422_I        = 0x14,  // YUY2
 
     /**
      * The following formats use a 16bit float per color component.
@@ -54,100 +49,6 @@ enum PixelFormat : int32_t {
      * space of the buffer.
      */
     RGBA_FP16          = 0x16,
-
-    /**
-     * 0x101 - 0x1FF
-     *
-     * This range is reserved for pixel formats that are specific to the HAL
-     * implementation.  Implementations can use any value in this range to
-     * communicate video pixel formats between their HAL modules.  These formats
-     * must not have an alpha channel.  Additionally, an EGLimage created from a
-     * gralloc buffer of one of these formats must be supported for use with the
-     * GL_OES_EGL_image_external OpenGL ES extension.
-     */
-
-    /**
-     * Android YUV format:
-     *
-     * This format is exposed outside of the HAL to software decoders and
-     * applications.  EGLImageKHR must support it in conjunction with the
-     * OES_EGL_image_external extension.
-     *
-     * YV12 is a 4:2:0 YCrCb planar format comprised of a WxH Y plane followed
-     * by (W/2) x (H/2) Cr and Cb planes.
-     *
-     * This format assumes
-     * - an even width
-     * - an even height
-     * - a horizontal stride multiple of 16 pixels
-     * - a vertical stride equal to the height
-     *
-     *   y_size = stride * height
-     *   c_stride = ALIGN(stride/2, 16)
-     *   c_size = c_stride * height/2
-     *   size = y_size + c_size * 2
-     *   cr_offset = y_size
-     *   cb_offset = y_size + c_size
-     *
-     * When used with ANativeWindow, the dataSpace field describes the color
-     * space of the buffer.
-     */
-    YV12   = 0x32315659, // YCrCb 4:2:0 Planar
-
-
-    /**
-     * Android Y8 format:
-     *
-     * This format is exposed outside of the HAL to the framework.
-     * The expected gralloc usage flags are SW_* and HW_CAMERA_*,
-     * and no other HW_ flags will be used.
-     *
-     * Y8 is a YUV planar format comprised of a WxH Y plane,
-     * with each pixel being represented by 8 bits.
-     *
-     * It is equivalent to just the Y plane from YV12.
-     *
-     * This format assumes
-     * - an even width
-     * - an even height
-     * - a horizontal stride multiple of 16 pixels
-     * - a vertical stride equal to the height
-     *
-     *   size = stride * height
-     *
-     * When used with ANativeWindow, the dataSpace field describes the color
-     * space of the buffer.
-     */
-    Y8     = 0x20203859,
-
-    /**
-     * Android Y16 format:
-     *
-     * This format is exposed outside of the HAL to the framework.
-     * The expected gralloc usage flags are SW_* and HW_CAMERA_*,
-     * and no other HW_ flags will be used.
-     *
-     * Y16 is a YUV planar format comprised of a WxH Y plane,
-     * with each pixel being represented by 16 bits.
-     *
-     * It is just like Y8, but has double the bits per pixel (little endian).
-     *
-     * This format assumes
-     * - an even width
-     * - an even height
-     * - a horizontal stride multiple of 16 pixels
-     * - a vertical stride equal to the height
-     * - strides are specified in pixels, not in bytes
-     *
-     *   size = stride * height * 2
-     *
-     * When used with ANativeWindow, the dataSpace field describes the color
-     * space of the buffer, except that dataSpace field
-     * HAL_DATASPACE_DEPTH indicates that this buffer contains a depth
-     * image where each sample is a distance value measured by a depth camera,
-     * plus an associated confidence value.
-     */
-    Y16    = 0x20363159,
 
     /**
      * Android RAW sensor format:
@@ -194,6 +95,93 @@ enum PixelFormat : int32_t {
      *  Other                         | Unsupported
      */
     RAW16 = 0x20,
+
+    /**
+     * Android binary blob graphics buffer format:
+     *
+     * This format is used to carry task-specific data which does not have a
+     * standard image structure. The details of the format are left to the two
+     * endpoints.
+     *
+     * A typical use case is for transporting JPEG-compressed images from the
+     * Camera HAL to the framework or to applications.
+     *
+     * Buffers of this format must have a height of 1, and width equal to their
+     * size in bytes.
+     *
+     * When used with ANativeWindow, the mapping of the dataSpace field to
+     * buffer contents for BLOB is as follows:
+     *
+     *  dataSpace value               | Buffer contents
+     * -------------------------------+-----------------------------------------
+     *  HAL_DATASPACE_JFIF            | An encoded JPEG image
+     *  HAL_DATASPACE_DEPTH           | An android_depth_points buffer
+     *  HAL_DATASPACE_SENSOR          | Sensor event data.
+     *  Other                         | Unsupported
+     *
+     */
+    BLOB = 0x21,
+
+    /**
+     * Android format indicating that the choice of format is entirely up to the
+     * device-specific Gralloc implementation.
+     *
+     * The Gralloc implementation should examine the usage bits passed in when
+     * allocating a buffer with this format, and it should derive the pixel
+     * format from those usage flags.  This format will never be used with any
+     * of the GRALLOC_USAGE_SW_* usage flags.
+     *
+     * If a buffer of this format is to be used as an OpenGL ES texture, the
+     * framework will assume that sampling the texture will always return an
+     * alpha value of 1.0 (i.e. the buffer contains only opaque pixel values).
+     *
+     * When used with ANativeWindow, the dataSpace field describes the color
+     * space of the buffer.
+     */
+    IMPLEMENTATION_DEFINED = 0x22,
+
+    /**
+     * Android flexible YCbCr 4:2:0 formats
+     *
+     * This format allows platforms to use an efficient YCbCr/YCrCb 4:2:0
+     * buffer layout, while still describing the general format in a
+     * layout-independent manner.  While called YCbCr, it can be
+     * used to describe formats with either chromatic ordering, as well as
+     * whole planar or semiplanar layouts.
+     *
+     * struct android_ycbcr (below) is the the struct used to describe it.
+     *
+     * This format must be accepted by the gralloc module when
+     * USAGE_SW_WRITE_* or USAGE_SW_READ_* are set.
+     *
+     * This format is locked for use by gralloc's (*lock_ycbcr) method, and
+     * locking with the (*lock) method will return an error.
+     *
+     * When used with ANativeWindow, the dataSpace field describes the color
+     * space of the buffer.
+     */
+    YCBCR_420_888 = 0x23,
+
+    /**
+     * Android opaque RAW format:
+     *
+     * This format is exposed outside of the camera HAL to applications.
+     *
+     * RAW_OPAQUE is a format for unprocessed raw image buffers coming from an
+     * image sensor. The actual structure of buffers of this format is
+     * implementation-dependent.
+     *
+     * This format must be accepted by the gralloc module when used with the
+     * following usage flags:
+     *    - GRALLOC_USAGE_HW_CAMERA_*
+     *    - GRALLOC_USAGE_SW_*
+     *    - GRALLOC_USAGE_RENDERSCRIPT
+     *
+     * When used with ANativeWindow, the dataSpace field should be
+     * HAL_DATASPACE_ARBITRARY, as raw image sensor buffers require substantial
+     * extra metadata to define.
+     */
+    RAW_OPAQUE = 0x24,
 
     /**
      * Android RAW10 format:
@@ -300,93 +288,6 @@ enum PixelFormat : int32_t {
     RAW12 = 0x26,
 
     /**
-     * Android opaque RAW format:
-     *
-     * This format is exposed outside of the camera HAL to applications.
-     *
-     * RAW_OPAQUE is a format for unprocessed raw image buffers coming from an
-     * image sensor. The actual structure of buffers of this format is
-     * implementation-dependent.
-     *
-     * This format must be accepted by the gralloc module when used with the
-     * following usage flags:
-     *    - GRALLOC_USAGE_HW_CAMERA_*
-     *    - GRALLOC_USAGE_SW_*
-     *    - GRALLOC_USAGE_RENDERSCRIPT
-     *
-     * When used with ANativeWindow, the dataSpace field should be
-     * HAL_DATASPACE_ARBITRARY, as raw image sensor buffers require substantial
-     * extra metadata to define.
-     */
-    RAW_OPAQUE = 0x24,
-
-    /**
-     * Android binary blob graphics buffer format:
-     *
-     * This format is used to carry task-specific data which does not have a
-     * standard image structure. The details of the format are left to the two
-     * endpoints.
-     *
-     * A typical use case is for transporting JPEG-compressed images from the
-     * Camera HAL to the framework or to applications.
-     *
-     * Buffers of this format must have a height of 1, and width equal to their
-     * size in bytes.
-     *
-     * When used with ANativeWindow, the mapping of the dataSpace field to
-     * buffer contents for BLOB is as follows:
-     *
-     *  dataSpace value               | Buffer contents
-     * -------------------------------+-----------------------------------------
-     *  HAL_DATASPACE_JFIF            | An encoded JPEG image
-     *  HAL_DATASPACE_DEPTH           | An android_depth_points buffer
-     *  HAL_DATASPACE_SENSOR          | Sensor event data.
-     *  Other                         | Unsupported
-     *
-     */
-    BLOB = 0x21,
-
-    /**
-     * Android format indicating that the choice of format is entirely up to the
-     * device-specific Gralloc implementation.
-     *
-     * The Gralloc implementation should examine the usage bits passed in when
-     * allocating a buffer with this format, and it should derive the pixel
-     * format from those usage flags.  This format will never be used with any
-     * of the GRALLOC_USAGE_SW_* usage flags.
-     *
-     * If a buffer of this format is to be used as an OpenGL ES texture, the
-     * framework will assume that sampling the texture will always return an
-     * alpha value of 1.0 (i.e. the buffer contains only opaque pixel values).
-     *
-     * When used with ANativeWindow, the dataSpace field describes the color
-     * space of the buffer.
-     */
-    IMPLEMENTATION_DEFINED = 0x22,
-
-    /**
-     * Android flexible YCbCr 4:2:0 formats
-     *
-     * This format allows platforms to use an efficient YCbCr/YCrCb 4:2:0
-     * buffer layout, while still describing the general format in a
-     * layout-independent manner.  While called YCbCr, it can be
-     * used to describe formats with either chromatic ordering, as well as
-     * whole planar or semiplanar layouts.
-     *
-     * struct android_ycbcr (below) is the the struct used to describe it.
-     *
-     * This format must be accepted by the gralloc module when
-     * USAGE_SW_WRITE_* or USAGE_SW_READ_* are set.
-     *
-     * This format is locked for use by gralloc's (*lock_ycbcr) method, and
-     * locking with the (*lock) method will return an error.
-     *
-     * When used with ANativeWindow, the dataSpace field describes the color
-     * space of the buffer.
-     */
-    YCBCR_420_888 = 0x23,
-
-    /**
      * Android flexible YCbCr 4:2:2 formats
      *
      * This format allows platforms to use an efficient YCbCr/YCrCb 4:2:2
@@ -442,11 +343,110 @@ enum PixelFormat : int32_t {
      */
     FLEX_RGBA_8888 = 0x2A,
 
-    /** Legacy formats (deprecated), used by ImageFormat.java */
-    YCBCR_422_SP       = 0x10,  // NV16
-    YCRCB_420_SP       = 0x11,  // NV21
-    YCBCR_422_I        = 0x14,  // YUY2
+    /**
+     * The following formats use 10bit integers for R, G, and B and
+     * 2 bits for alpha. This is used to improve color precision on
+     * wide-color devices, e.g. Display-P3 or scRGB.
+     *
+     * When used with ANativeWindow, the dataSpace field describes the color
+     * space of the buffer.
+     */
+    RGBA_1010102       = 0x2B,
+
     JPEG               = 0x100,
+
+    /**
+     * 0x101 - 0x1FF
+     *
+     * This range is reserved for pixel formats that are specific to the HAL
+     * implementation.  Implementations can use any value in this range to
+     * communicate video pixel formats between their HAL modules.  These formats
+     * must not have an alpha channel.  Additionally, an EGLimage created from a
+     * gralloc buffer of one of these formats must be supported for use with the
+     * GL_OES_EGL_image_external OpenGL ES extension.
+     */
+
+    /**
+     * Android Y8 format:
+     *
+     * This format is exposed outside of the HAL to the framework.
+     * The expected gralloc usage flags are SW_* and HW_CAMERA_*,
+     * and no other HW_ flags will be used.
+     *
+     * Y8 is a YUV planar format comprised of a WxH Y plane,
+     * with each pixel being represented by 8 bits.
+     *
+     * It is equivalent to just the Y plane from YV12.
+     *
+     * This format assumes
+     * - an even width
+     * - an even height
+     * - a horizontal stride multiple of 16 pixels
+     * - a vertical stride equal to the height
+     *
+     *   size = stride * height
+     *
+     * When used with ANativeWindow, the dataSpace field describes the color
+     * space of the buffer.
+     */
+    Y8     = 0x20203859,
+
+    /**
+     * Android Y16 format:
+     *
+     * This format is exposed outside of the HAL to the framework.
+     * The expected gralloc usage flags are SW_* and HW_CAMERA_*,
+     * and no other HW_ flags will be used.
+     *
+     * Y16 is a YUV planar format comprised of a WxH Y plane,
+     * with each pixel being represented by 16 bits.
+     *
+     * It is just like Y8, but has double the bits per pixel (little endian).
+     *
+     * This format assumes
+     * - an even width
+     * - an even height
+     * - a horizontal stride multiple of 16 pixels
+     * - a vertical stride equal to the height
+     * - strides are specified in pixels, not in bytes
+     *
+     *   size = stride * height * 2
+     *
+     * When used with ANativeWindow, the dataSpace field describes the color
+     * space of the buffer, except that dataSpace field
+     * HAL_DATASPACE_DEPTH indicates that this buffer contains a depth
+     * image where each sample is a distance value measured by a depth camera,
+     * plus an associated confidence value.
+     */
+    Y16    = 0x20363159,
+
+    /**
+     * Android YUV format:
+     *
+     * This format is exposed outside of the HAL to software decoders and
+     * applications.  EGLImageKHR must support it in conjunction with the
+     * OES_EGL_image_external extension.
+     *
+     * YV12 is a 4:2:0 YCrCb planar format comprised of a WxH Y plane followed
+     * by (W/2) x (H/2) Cr and Cb planes.
+     *
+     * This format assumes
+     * - an even width
+     * - an even height
+     * - a horizontal stride multiple of 16 pixels
+     * - a vertical stride equal to the height
+     *
+     *   y_size = stride * height
+     *   c_stride = ALIGN(stride/2, 16)
+     *   c_size = c_stride * height/2
+     *   size = y_size + c_size * 2
+     *   cr_offset = y_size
+     *   cb_offset = y_size + c_size
+     *
+     * When used with ANativeWindow, the dataSpace field describes the color
+     * space of the buffer.
+     */
+    YV12   = 0x32315659, // YCrCb 4:2:0 Planar
 };
 
 /**
