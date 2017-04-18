@@ -97,6 +97,7 @@ std::vector<int32_t> HalClient::getSubscribedProperties() const {
 }
 
 StatusCode SubscriptionManager::addOrUpdateSubscription(
+        ClientId clientId,
         const sp<IVehicleCallback> &callback,
         const hidl_vec<SubscribeOptions> &optionList,
         std::list<SubscribeOptions>* outUpdatedSubscriptions) {
@@ -106,7 +107,7 @@ StatusCode SubscriptionManager::addOrUpdateSubscription(
 
     ALOGI("SubscriptionManager::addOrUpdateSubscription, callback: %p", callback.get());
 
-    const sp<HalClient>& client = getOrCreateHalClientLocked(callback);
+    const sp<HalClient>& client = getOrCreateHalClientLocked(clientId, callback);
     if (client.get() == nullptr) {
         return StatusCode::INTERNAL_ERROR;
     }
@@ -221,10 +222,11 @@ sp<HalClientVector> SubscriptionManager::getClientsForPropertyLocked(
 }
 
 sp<HalClient> SubscriptionManager::getOrCreateHalClientLocked(
-        const sp<IVehicleCallback>& callback) {
-    auto it = mClients.find(callback);
+        ClientId clientId, const sp<IVehicleCallback>& callback) {
+    auto it = mClients.find(clientId);
+
     if (it == mClients.end()) {
-        uint64_t cookie = reinterpret_cast<uint64_t>(callback.get());
+        uint64_t cookie = reinterpret_cast<uint64_t>(clientId);
         ALOGI("Creating new client and linking to death recipient, cookie: 0x%" PRIx64, cookie);
         auto res = callback->linkToDeath(mCallbackDeathRecipient, cookie);
         if (!res.isOk()) {  // Client is already dead?
@@ -234,18 +236,18 @@ sp<HalClient> SubscriptionManager::getOrCreateHalClientLocked(
         }
 
         sp<HalClient> client = new HalClient(callback);
-        mClients.emplace(callback, client);
+        mClients.insert({clientId, client});
         return client;
     } else {
         return it->second;
     }
 }
 
-void SubscriptionManager::unsubscribe(const sp<IVehicleCallback>& callback,
+void SubscriptionManager::unsubscribe(ClientId clientId,
                                       int32_t propId) {
     MuxGuard g(mLock);
     auto propertyClients = getClientsForPropertyLocked(propId);
-    auto clientIter = mClients.find(callback);
+    auto clientIter = mClients.find(clientId);
     if (clientIter == mClients.end()) {
         ALOGW("Unable to unsubscribe: no callback found, propId: 0x%x", propId);
     } else {
@@ -285,12 +287,12 @@ void SubscriptionManager::unsubscribe(const sp<IVehicleCallback>& callback,
 
 void SubscriptionManager::onCallbackDead(uint64_t cookie) {
     ALOGI("%s, cookie: 0x%" PRIx64, __func__, cookie);
-    IVehicleCallback* callback = reinterpret_cast<IVehicleCallback*>(cookie);
+    ClientId clientId = cookie;
 
     std::vector<int32_t> props;
     {
         MuxGuard g(mLock);
-        const auto& it = mClients.find(callback);
+        const auto& it = mClients.find(clientId);
         if (it == mClients.end()) {
             return;  // Nothing to do here, client wasn't subscribed to any properties.
         }
@@ -299,7 +301,7 @@ void SubscriptionManager::onCallbackDead(uint64_t cookie) {
     }
 
     for (int32_t propId : props) {
-        unsubscribe(callback, propId);
+        unsubscribe(clientId, propId);
     }
 }
 

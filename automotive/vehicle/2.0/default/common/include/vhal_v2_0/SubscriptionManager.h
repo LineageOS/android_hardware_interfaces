@@ -78,6 +78,8 @@ struct HalClientValues {
     std::list<VehiclePropValue *> values;
 };
 
+using ClientId = uint64_t;
+
 class SubscriptionManager {
 public:
     using OnPropertyUnsubscribed = std::function<void(int32_t)>;
@@ -100,7 +102,8 @@ public:
      * Updates subscription. Returns the vector of properties subscription that
      * needs to be updated in VehicleHAL.
      */
-    StatusCode addOrUpdateSubscription(const sp<IVehicleCallback>& callback,
+    StatusCode addOrUpdateSubscription(ClientId clientId,
+                                       const sp<IVehicleCallback>& callback,
                                        const hidl_vec<SubscribeOptions>& optionList,
                                        std::list<SubscribeOptions>* outUpdatedOptions);
 
@@ -119,7 +122,7 @@ public:
      * If there are no clients subscribed to given properties than callback function provided
      * in the constructor will be called.
      */
-    void unsubscribe(const sp<IVehicleCallback>& callback, int32_t propId);
+    void unsubscribe(ClientId clientId, int32_t propId);
 private:
     std::list<sp<HalClient>> getSubscribedClientsLocked(int32_t propId,
                                                         int32_t area,
@@ -131,7 +134,8 @@ private:
 
     sp<HalClientVector> getClientsForPropertyLocked(int32_t propId) const;
 
-    sp<HalClient> getOrCreateHalClientLocked(const sp<IVehicleCallback> &callback);
+    sp<HalClient> getOrCreateHalClientLocked(ClientId callingPid,
+                                             const sp<IVehicleCallback>& callback);
 
     void onCallbackDead(uint64_t cookie);
 
@@ -160,7 +164,7 @@ private:
 
     mutable std::mutex mLock;
 
-    std::map<sp<IVehicleCallback>, sp<HalClient>> mClients;
+    std::map<ClientId, sp<HalClient>> mClients;
     std::map<int32_t, sp<HalClientVector>> mPropToClients;
     std::map<int32_t, SubscribeOptions> mHalEventSubscribeOptions;
 

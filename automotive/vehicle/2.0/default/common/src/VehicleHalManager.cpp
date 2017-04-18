@@ -22,6 +22,7 @@
 #include <fstream>
 
 #include <android/log.h>
+#include <android/hardware/automotive/vehicle/2.0/BpHwVehicleCallback.h>
 
 #include "VehicleUtils.h"
 
@@ -154,7 +155,8 @@ Return<StatusCode> VehicleHalManager::subscribe(const sp<IVehicleCallback> &call
     }
 
     std::list<SubscribeOptions> updatedOptions;
-    auto res = mSubscriptionManager.addOrUpdateSubscription(callback, verifiedOptions,
+    auto res = mSubscriptionManager.addOrUpdateSubscription(getClientId(callback),
+                                                            callback, verifiedOptions,
                                                             &updatedOptions);
     if (StatusCode::OK != res) {
         ALOGW("%s failed to subscribe, error code: %d", __func__, res);
@@ -170,7 +172,7 @@ Return<StatusCode> VehicleHalManager::subscribe(const sp<IVehicleCallback> &call
 
 Return<StatusCode> VehicleHalManager::unsubscribe(const sp<IVehicleCallback>& callback,
                                                   int32_t propId) {
-    mSubscriptionManager.unsubscribe(callback, propId);
+    mSubscriptionManager.unsubscribe(getClientId(callback), propId);
     return StatusCode::OK;
 }
 
@@ -339,6 +341,18 @@ const VehiclePropConfig* VehicleHalManager::getPropConfigOrNull(
 
 void VehicleHalManager::onAllClientsUnsubscribed(int32_t propertyId) {
     mHal->unsubscribe(propertyId);
+}
+
+ClientId VehicleHalManager::getClientId(const sp<IVehicleCallback>& callback) {
+    //TODO(b/32172906): rework this to get some kind of unique id for callback interface when this
+    // feature is ready in HIDL.
+
+    if (callback->isRemote()) {
+        BpHwVehicleCallback* hwCallback = static_cast<BpHwVehicleCallback*>(callback.get());
+        return static_cast<ClientId>(reinterpret_cast<intptr_t>(hwCallback->onAsBinder()));
+    } else {
+        return static_cast<ClientId>(reinterpret_cast<intptr_t>(callback.get()));
+    }
 }
 
 }  // namespace V2_0

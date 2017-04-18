@@ -101,6 +101,7 @@ private:
     static bool isSampleRateFixed(VehiclePropertyChangeMode mode);
     static float checkSampleRate(const VehiclePropConfig& config,
                                  float sampleRate);
+    static ClientId getClientId(const sp<IVehicleCallback>& callback);
 private:
     VehicleHal* mHal;
     std::unique_ptr<VehiclePropConfigIndex> mConfigIndex;
