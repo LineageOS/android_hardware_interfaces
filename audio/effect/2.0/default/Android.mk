@@ -36,4 +36,11 @@ LOCAL_SHARED_LIBRARIES := \
     android.hardware.audio.effect@2.0 \
     android.hidl.memory@1.0 \
 
+LOCAL_HEADER_LIBRARIES := \
+    libaudio_system_headers \
+    libaudioclient_headers \
+    libeffects_headers \
+    libhardware_headers \
+    libmedia_headers \
+
 include $(BUILD_SHARED_LIBRARY)
