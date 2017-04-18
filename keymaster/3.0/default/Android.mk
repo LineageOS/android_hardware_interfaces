@@ -34,7 +34,6 @@ LOCAL_SHARED_LIBRARIES := \
     libdl \
     libbase \
     libutils \
-    libhardware_legacy \
     libhardware \
     libhidlbase \
     libhidltransport \
