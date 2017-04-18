@@ -24,9 +24,14 @@ cc_library_shared {
     export_include_dirs: ["."],
 
     shared_libs: [
+        "liblog",
         "libutils",
         "libhidlbase",
         "android.hardware.audio.common@2.0",
     ],
 
+    header_libs: [
+        "libaudio_system_headers",
+        "libhardware_headers",
+    ],
 }
