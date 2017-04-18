@@ -13,7 +13,6 @@ LOCAL_SHARED_LIBRARIES := \
         libcutils \
         libdl \
         libhardware \
-        libhardware_legacy \
         libhidlbase \
         libhidltransport \
         liblog \
