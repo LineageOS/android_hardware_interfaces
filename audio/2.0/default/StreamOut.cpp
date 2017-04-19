@@ -18,6 +18,8 @@
 //#define LOG_NDEBUG 0
 #define ATRACE_TAG ATRACE_TAG_AUDIO
 
+#include <memory>
+
 #include <android/log.h>
 #include <hardware/audio.h>
 #include <utils/Trace.h>
@@ -50,7 +52,11 @@ class WriteThread : public Thread {
               mDataMQ(dataMQ),
               mStatusMQ(statusMQ),
               mEfGroup(efGroup),
-              mBuffer(new uint8_t[dataMQ->getQuantumCount()]) {
+              mBuffer(nullptr) {
+    }
+    bool init() {
+        mBuffer.reset(new(std::nothrow) uint8_t[mDataMQ->getQuantumCount()]);
+        return mBuffer != nullptr;
     }
     virtual ~WriteThread() {}
 
@@ -291,8 +297,15 @@ Return<void> StreamOut::prepareForWriting(
         return Void();
     }
     std::unique_ptr<CommandMQ> tempCommandMQ(new CommandMQ(1));
-    std::unique_ptr<DataMQ> tempDataMQ(
-            new DataMQ(frameSize * framesCount, true /* EventFlag */));
+
+    if (frameSize > std::numeric_limits<size_t>::max() / framesCount) {
+        ALOGE("Requested buffer is too big, %d*%d can not fit in size_t", frameSize, framesCount);
+        _hidl_cb(Result::INVALID_ARGUMENTS,
+                CommandMQ::Descriptor(), DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
+        return Void();
+    }
+    std::unique_ptr<DataMQ> tempDataMQ(new DataMQ(frameSize * framesCount, true /* EventFlag */));
+
     std::unique_ptr<StatusMQ> tempStatusMQ(new StatusMQ(1));
     if (!tempCommandMQ->isValid() || !tempDataMQ->isValid() || !tempStatusMQ->isValid()) {
         ALOGE_IF(!tempCommandMQ->isValid(), "command MQ is invalid");
@@ -302,8 +315,11 @@ Return<void> StreamOut::prepareForWriting(
                 CommandMQ::Descriptor(), DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
         return Void();
     }
-    status = EventFlag::createEventFlag(tempDataMQ->getEventFlagWord(), &mEfGroup);
-    if (status != OK || !mEfGroup) {
+    EventFlag* tempRawEfGroup{};
+    status = EventFlag::createEventFlag(tempDataMQ->getEventFlagWord(), &tempRawEfGroup);
+    std::unique_ptr<EventFlag, void(*)(EventFlag*)> tempElfGroup(tempRawEfGroup,[](auto *ef) {
+            EventFlag::deleteEventFlag(&ef); });
+    if (status != OK || !tempElfGroup) {
         ALOGE("failed creating event flag for data MQ: %s", strerror(-status));
         _hidl_cb(Result::INVALID_ARGUMENTS,
                 CommandMQ::Descriptor(), DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
@@ -311,14 +327,19 @@ Return<void> StreamOut::prepareForWriting(
     }
 
     // Create and launch the thread.
-    mWriteThread = new WriteThread(
+    auto tempWriteThread = std::make_unique<WriteThread>(
             &mStopWriteThread,
             mStream,
             tempCommandMQ.get(),
             tempDataMQ.get(),
             tempStatusMQ.get(),
-            mEfGroup);
-    status = mWriteThread->run("writer", PRIORITY_URGENT_AUDIO);
+            tempElfGroup.get());
+    if (!tempWriteThread->init()) {
+        _hidl_cb(Result::INVALID_ARGUMENTS,
+                 CommandMQ::Descriptor(), DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
+        return Void();
+    }
+    status = tempWriteThread->run("writer", PRIORITY_URGENT_AUDIO);
     if (status != OK) {
         ALOGW("failed to start writer thread: %s", strerror(-status));
         _hidl_cb(Result::INVALID_ARGUMENTS,
@@ -329,6 +350,8 @@ Return<void> StreamOut::prepareForWriting(
     mCommandMQ = std::move(tempCommandMQ);
     mDataMQ = std::move(tempDataMQ);
     mStatusMQ = std::move(tempStatusMQ);
+    mWriteThread = tempWriteThread.release();
+    mEfGroup = tempElfGroup.release();
     threadInfo.pid = getpid();
     threadInfo.tid = mWriteThread->getTid();
     _hidl_cb(Result::OK,
