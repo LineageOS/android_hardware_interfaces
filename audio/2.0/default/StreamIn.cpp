@@ -354,7 +354,7 @@ Return<void> StreamIn::prepareForReading(
                 CommandMQ::Descriptor(), DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
         return Void();
     }
-    status = mReadThread->run("reader", PRIORITY_URGENT_AUDIO);
+    status = tempReadThread->run("reader", PRIORITY_URGENT_AUDIO);
     if (status != OK) {
         ALOGW("failed to start reader thread: %s", strerror(-status));
         _hidl_cb(Result::INVALID_ARGUMENTS,
