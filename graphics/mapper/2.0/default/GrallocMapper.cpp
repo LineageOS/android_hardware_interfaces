@@ -36,8 +36,45 @@ namespace implementation {
 using android::hardware::graphics::common::V1_0::BufferUsage;
 using android::hardware::graphics::common::V1_0::PixelFormat;
 
-std::mutex GrallocMapper::mMutex;
-std::unordered_set<buffer_handle_t> GrallocMapper::mRegisteredHandles;
+namespace {
+
+class RegisteredHandlePool {
+   public:
+    bool add(buffer_handle_t bufferHandle) {
+        std::lock_guard<std::mutex> lock(mMutex);
+        return mHandles.insert(bufferHandle).second;
+    }
+
+    native_handle_t* pop(void* buffer) {
+        auto bufferHandle = static_cast<native_handle_t*>(buffer);
+
+        std::lock_guard<std::mutex> lock(mMutex);
+        return mHandles.erase(bufferHandle) == 1 ? bufferHandle : nullptr;
+    }
+
+    buffer_handle_t get(const void* buffer) {
+        auto bufferHandle = static_cast<buffer_handle_t>(buffer);
+
+        std::lock_guard<std::mutex> lock(mMutex);
+        return mHandles.count(bufferHandle) == 1 ? bufferHandle : nullptr;
+    }
+
+   private:
+    std::mutex mMutex;
+    std::unordered_set<buffer_handle_t> mHandles;
+};
+
+// GraphicBufferMapper is expected to be valid (and leaked) during process
+// termination.  We need to make sure IMapper, and in turn, gRegisteredHandles
+// are valid as well.  Create the registered handle pool on the heap, and let
+// it leak for simplicity.
+//
+// However, there is no way to make sure gralloc0/gralloc1 are valid.  Any use
+// of static/global object in gralloc0/gralloc1 that may have been destructed
+// is potentially broken.
+RegisteredHandlePool* gRegisteredHandles = new RegisteredHandlePool;
+
+}  // anonymous namespace
 
 bool GrallocMapper::validateDescriptorInfo(
     const BufferDescriptorInfo& descriptorInfo) const {
@@ -86,29 +123,10 @@ Return<void> GrallocMapper::createDescriptor(
     return Void();
 }
 
-bool GrallocMapper::addRegisteredHandle(buffer_handle_t bufferHandle) {
-    std::lock_guard<std::mutex> lock(mMutex);
-    return mRegisteredHandles.insert(bufferHandle).second;
-}
-
-native_handle_t* GrallocMapper::popRegisteredHandle(void* buffer) {
-    auto bufferHandle = static_cast<native_handle_t*>(buffer);
-
-    std::lock_guard<std::mutex> lock(mMutex);
-    return mRegisteredHandles.erase(bufferHandle) == 1 ? bufferHandle : nullptr;
-}
-
-buffer_handle_t GrallocMapper::getRegisteredHandle(const void* buffer) {
-    auto bufferHandle = static_cast<buffer_handle_t>(buffer);
-
-    std::lock_guard<std::mutex> lock(mMutex);
-    return mRegisteredHandles.count(bufferHandle) == 1 ? bufferHandle : nullptr;
-}
-
 Return<void> GrallocMapper::importBuffer(const hidl_handle& rawHandle,
                                          importBuffer_cb hidl_cb) {
     // importing an already imported handle rather than a raw handle
-    if (getRegisteredHandle(rawHandle.getNativeHandle())) {
+    if (gRegisteredHandles->get(rawHandle.getNativeHandle())) {
         hidl_cb(Error::BAD_BUFFER, nullptr);
         return Void();
     }
@@ -137,7 +155,7 @@ Return<void> GrallocMapper::importBuffer(const hidl_handle& rawHandle,
     // The newly cloned handle is already registered?  This can only happen
     // when a handle previously registered was native_handle_delete'd instead
     // of freeBuffer'd.
-    if (!addRegisteredHandle(bufferHandle)) {
+    if (!gRegisteredHandles->add(bufferHandle)) {
         ALOGE("handle %p has already been imported; potential fd leaking",
               bufferHandle);
         unregisterBuffer(bufferHandle);
@@ -155,7 +173,7 @@ Return<void> GrallocMapper::importBuffer(const hidl_handle& rawHandle,
 }
 
 Return<Error> GrallocMapper::freeBuffer(void* buffer) {
-    native_handle_t* bufferHandle = popRegisteredHandle(buffer);
+    native_handle_t* bufferHandle = gRegisteredHandles->pop(buffer);
     if (!bufferHandle) {
         return Error::BAD_BUFFER;
     }
@@ -209,7 +227,7 @@ Return<void> GrallocMapper::lock(void* buffer, uint64_t cpuUsage,
                                  const IMapper::Rect& accessRegion,
                                  const hidl_handle& acquireFence,
                                  lock_cb hidl_cb) {
-    buffer_handle_t bufferHandle = getRegisteredHandle(buffer);
+    buffer_handle_t bufferHandle = gRegisteredHandles->get(buffer);
     if (!bufferHandle) {
         hidl_cb(Error::BAD_BUFFER, nullptr);
         return Void();
@@ -235,7 +253,7 @@ Return<void> GrallocMapper::lockYCbCr(void* buffer, uint64_t cpuUsage,
                                       lockYCbCr_cb hidl_cb) {
     YCbCrLayout layout = {};
 
-    buffer_handle_t bufferHandle = getRegisteredHandle(buffer);
+    buffer_handle_t bufferHandle = gRegisteredHandles->get(buffer);
     if (!bufferHandle) {
         hidl_cb(Error::BAD_BUFFER, layout);
         return Void();
@@ -255,7 +273,7 @@ Return<void> GrallocMapper::lockYCbCr(void* buffer, uint64_t cpuUsage,
 }
 
 Return<void> GrallocMapper::unlock(void* buffer, unlock_cb hidl_cb) {
-    buffer_handle_t bufferHandle = getRegisteredHandle(buffer);
+    buffer_handle_t bufferHandle = gRegisteredHandles->get(buffer);
     if (!bufferHandle) {
         hidl_cb(Error::BAD_BUFFER, nullptr);
         return Void();

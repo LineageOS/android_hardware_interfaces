@@ -80,16 +80,8 @@ class GrallocMapper : public IMapper {
     virtual Error unlockBuffer(buffer_handle_t bufferHandle,
                                int* outFenceFd) = 0;
 
-    static bool addRegisteredHandle(buffer_handle_t bufferHandle);
-    static buffer_handle_t getRegisteredHandle(const void* buffer);
-    static native_handle_t* popRegisteredHandle(void* buffer);
-
     static bool getFenceFd(const hidl_handle& fenceHandle, int* outFenceFd);
     static hidl_handle getFenceHandle(int fenceFd, char* handleStorage);
-
-    // these are static and shared by all mappers
-    static std::mutex mMutex;
-    static std::unordered_set<buffer_handle_t> mRegisteredHandles;
 };
 
 extern "C" IMapper* HIDL_FETCH_IMapper(const char* name);
