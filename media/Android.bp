@@ -5,4 +5,5 @@ subdirs = [
     "omx/1.0/vts/functional/audio",
     "omx/1.0/vts/functional/component",
     "omx/1.0/vts/functional/master",
+    "omx/1.0/vts/functional/video",
 ]
