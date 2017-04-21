@@ -43,6 +43,8 @@ interface IGraphicBufferSource {
 
     setStopTimeUs(int64_t stopTimeUs) generates (Status status);
 
+    getStopTimeOffsetUs() generates (Status status, int64_t stopTimeOffsetUs);
+
     setColorAspects(ColorAspects aspects) generates (Status status);
 
     setTimeOffsetUs(int64_t timeOffsetUs) generates (Status status);
