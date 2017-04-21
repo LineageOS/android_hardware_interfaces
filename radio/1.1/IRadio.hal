@@ -81,4 +81,22 @@ interface IRadio extends @1.0::IRadio {
      */
     oneway setSimCardPower_1_1(int32_t serial, CardPowerState powerUp);
 
+    /**
+     * Starts a network scan
+     *
+     * @param serial Serial number of request.
+     * @param request Defines the radio networks/bands/channels which need to be scanned.
+     *
+     * Response function is IRadioResponse.startNetworkScanResponse()
+     */
+    oneway startNetworkScan(int32_t serial, NetworkScanRequest request);
+
+    /**
+     * Stops ongoing network scan
+     *
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.stopNetworkScanResponse()
+     */
+    oneway stopNetworkScan(int32_t serial);
 };
