@@ -154,6 +154,7 @@ interface ISupplicantP2pIface extends ISupplicantIface {
    *         |SupplicantStatusCode.SUCCESS|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+   *         |SupplicantStatusCode.FAILURE_IFACE_DISABLED|
    */
   find(uint32_t timeoutInSec) generates (SupplicantStatus status);
 
@@ -165,6 +166,7 @@ interface ISupplicantP2pIface extends ISupplicantIface {
    *         |SupplicantStatusCode.SUCCESS|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+   *         |SupplicantStatusCode.FAILURE_IFACE_DISABLED|
    */
   stopFind() generates (SupplicantStatus status);
 
@@ -292,6 +294,7 @@ interface ISupplicantP2pIface extends ISupplicantIface {
    *         |SupplicantStatusCode.SUCCESS|,
    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
    *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+   *         |SupplicantStatusCode.FAILURE_IFACE_DISABLED|
    */
   reject(MacAddress peerAddress) generates (SupplicantStatus status);
 
