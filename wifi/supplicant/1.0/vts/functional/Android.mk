@@ -34,7 +34,8 @@ LOCAL_SHARED_LIBRARIES := \
     liblog \
     libutils \
     libwifi-hal \
-    libwifi-system
+    libwifi-system \
+    libwifi-system-iface
 LOCAL_STATIC_LIBRARIES := \
     libgmock \
     VtsHalHidlTargetTestBase
