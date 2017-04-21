@@ -216,18 +216,6 @@ TEST_F(GraphicsMapperHidlTest, ImportBufferNegative) {
             << "importBuffer with invalid handle did not fail with BAD_BUFFER";
     });
     native_handle_delete(invalidHandle);
-
-    const native_handle_t* importedHandle;
-    ASSERT_NO_FATAL_FAILURE(importedHandle =
-                                mGralloc->allocate(mDummyDescriptorInfo, true));
-    mGralloc->getMapper()->importBuffer(
-        importedHandle, [&](const auto& tmpError, const auto&) {
-            EXPECT_EQ(Error::BAD_BUFFER, tmpError)
-                << "importBuffer with an "
-                   "already imported handle did "
-                   "not fail with BAD_BUFFER";
-        });
-    mGralloc->freeBuffer(importedHandle);
 }
 
 /**
