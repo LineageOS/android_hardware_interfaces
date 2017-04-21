@@ -131,14 +131,13 @@ interface IAGnssRil {
         generates (bool success);
 
     /**
-     * Notify GNSS of network status changes.
+     * Notify GNSS of network status changes and current APN.
      *
      * @param available Indicates whether network connectivity is available.
-     * @param apn String containing the Access Point Name.
+     * @param apn String containing the telephony preferred Access Point Name.
      *
      * @return success True if all parameters were valid and the operation was
      * successful.
-     * TODO(b/32022567): Add VTS test to validate the format of APN.
      */
     updateNetworkAvailability(bool available, string apn) generates (bool success);
 
