@@ -225,7 +225,7 @@ Return<void> Device::createAudioPatch(
     if (version() >= AUDIO_DEVICE_API_VERSION_3_0) {
         std::unique_ptr<audio_port_config[]> halSources(HidlUtils::audioPortConfigsToHal(sources));
         std::unique_ptr<audio_port_config[]> halSinks(HidlUtils::audioPortConfigsToHal(sinks));
-        audio_patch_handle_t halPatch;
+        audio_patch_handle_t halPatch = AUDIO_PATCH_HANDLE_NONE;
         retval = analyzeStatus(
                 "create_audio_patch",
                 mDevice->create_audio_patch(
