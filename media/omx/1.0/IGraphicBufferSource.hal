@@ -37,7 +37,7 @@ interface IGraphicBufferSource {
 
     setMaxFps(float maxFps) generates (Status status);
 
-    setTimeLapseConfig(int64_t timePerFrameUs, int64_t timePerCaptureUs) generates (Status status);
+    setTimeLapseConfig(double fps, double captureFps) generates (Status status);
 
     setStartTimeUs(int64_t startTimeUs) generates (Status status);
 
