@@ -35,7 +35,7 @@ static constexpr size_t CAMERA_REQUEST_METADATA_QUEUE_SIZE = 1 << 20 /* 1MB */;
 // Size of result metadata fast message queue. Change to 0 to always use hwbinder buffer.
 static constexpr size_t CAMERA_RESULT_METADATA_QUEUE_SIZE  = 1 << 20 /* 1MB */;
 
-HandleImporter& CameraDeviceSession::sHandleImporter = HandleImporter::getInstance();
+HandleImporter CameraDeviceSession::sHandleImporter;
 const int CameraDeviceSession::ResultBatcher::NOT_BATCHED;
 
 CameraDeviceSession::CameraDeviceSession(

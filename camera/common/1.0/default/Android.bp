@@ -15,7 +15,8 @@ cc_library_static {
     shared_libs: [
         "liblog",
         "libhardware",
-        "libcamera_metadata"],
+        "libcamera_metadata",
+        "android.hardware.graphics.mapper@2.0"],
     include_dirs: ["system/media/private/camera/include"],
     export_include_dirs : ["include"]
 }
