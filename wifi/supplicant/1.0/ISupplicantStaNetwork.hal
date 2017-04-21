@@ -354,6 +354,8 @@ interface ISupplicantStaNetwork extends ISupplicantNetwork {
   /**
    * Set EAP Phase2 Method for this network.
    *
+   * EAP method needs to be set for this to work.
+   *
    * @param method value to set.
    *        Must be one of |EapPhase2Method| values.
    * @return status Status of the operation.
