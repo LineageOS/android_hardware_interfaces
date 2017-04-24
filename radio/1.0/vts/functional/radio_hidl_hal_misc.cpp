@@ -787,6 +787,7 @@ TEST_F(RadioHidlTest, setSimCardPower) {
   EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
   if (cardStatus.cardState == CardState::ABSENT) {
-    ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
+      ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE ||
+                  radioRsp->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED);
   }
 }
