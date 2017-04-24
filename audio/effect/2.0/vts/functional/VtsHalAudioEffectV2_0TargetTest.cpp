@@ -47,6 +47,7 @@ using android::hardware::audio::effect::V2_0::Result;
 using android::hardware::MQDescriptorSync;
 using android::hardware::Return;
 using android::hardware::Void;
+using android::hardware::hidl_handle;
 using android::hardware::hidl_memory;
 using android::hardware::hidl_string;
 using android::hardware::hidl_vec;
@@ -140,6 +141,12 @@ TEST_F(AudioEffectsFactoryHidlTest, GetDescriptor) {
         });
   }
   EXPECT_TRUE(ret.isOk());
+}
+
+TEST_F(AudioEffectsFactoryHidlTest, DebugDumpInvalidArgument) {
+    description("Verify that debugDump doesn't crash on invalid arguments");
+    Return<void> ret = effectsFactory->debugDump(hidl_handle());
+    ASSERT_TRUE(ret.isOk());
 }
 
 // Equalizer effect is required by CDD, but only the type is fixed.
