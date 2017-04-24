@@ -155,6 +155,16 @@ TEST_F(AudioHidlTest, GetAudioDevicesFactoryService) {
     doc::test("test the getService (called in SetUp)");
 }
 
+TEST_F(AudioHidlTest, OpenDeviceInvalidParameter) {
+    doc::test("test passing an invalid parameter to openDevice");
+    IDevicesFactory::Result result;
+    sp<IDevice> device;
+    ASSERT_OK(devicesFactory->openDevice(IDevicesFactory::Device(-1),
+                                         returnIn(result, device)));
+    ASSERT_EQ(IDevicesFactory::Result::INVALID_ARGUMENTS, result);
+    ASSERT_TRUE(device == nullptr);
+}
+
 //////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// openDevice primary ///////////////////////////
 //////////////////////////////////////////////////////////////////////////////
