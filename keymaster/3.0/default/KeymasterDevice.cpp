@@ -547,6 +547,7 @@ Return<void> KeymasterDevice::attestKey(const hidl_vec<uint8_t>& keyToAttest,
     if (!foundAttestationApplicationId) {
         _hidl_cb(ErrorCode::ATTESTATION_APPLICATION_ID_MISSING,
                  resultCertChain);
+        return Void();
     }
 
     keymaster_cert_chain_t cert_chain{nullptr, 0};
