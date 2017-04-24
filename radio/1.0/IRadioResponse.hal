@@ -1811,7 +1811,6 @@ interface IRadioResponse {
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:REQUEST_NOT_SUPPORTED
-     *   RadioError:SIM_ABSENT
      *   RadioError:INVALID_ARGUMENTS
      */
     oneway setSimCardPowerResponse(RadioResponseInfo info);
