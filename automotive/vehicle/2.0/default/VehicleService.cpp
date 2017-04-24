@@ -33,7 +33,7 @@ int main(int /* argc */, char* /* argv */ []) {
     auto emulator = std::make_unique<impl::VehicleEmulator>(hal.get());
     auto service = std::make_unique<VehicleHalManager>(hal.get());
 
-    configureRpcThreadpool(1, true /* callerWillJoin */);
+    configureRpcThreadpool(4, true /* callerWillJoin */);
 
     ALOGI("Registering as service...");
     service->registerAsService();

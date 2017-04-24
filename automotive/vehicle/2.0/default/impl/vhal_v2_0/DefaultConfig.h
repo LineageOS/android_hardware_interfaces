@@ -77,6 +77,8 @@ const ConfigDeclaration kVehicleProperties[] {
             .prop = toInt(VehicleProperty::PERF_VEHICLE_SPEED),
             .access = VehiclePropertyAccess::READ,
             .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+            .minSampleRate = 1.0f,
+            .maxSampleRate = 1000.0f,
         },
         .initialValue = { .floatValues = {0.0f} }
     },
@@ -95,8 +97,10 @@ const ConfigDeclaration kVehicleProperties[] {
             .prop = toInt(VehicleProperty::ENGINE_RPM),
             .access = VehiclePropertyAccess::READ,
             .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
+            .minSampleRate = 1.0f,
+            .maxSampleRate = 1000.0f,
         },
-        .initialValue = { .floatValues = {0.0f} }
+        .initialValue = { .floatValues = {0.0f} },
     },
 
     {
