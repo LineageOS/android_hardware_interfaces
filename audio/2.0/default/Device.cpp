@@ -292,7 +292,7 @@ Return<Result> Device::setParameters(const hidl_vec<ParameterValue>& parameters)
 }
 
 Return<void> Device::debugDump(const hidl_handle& fd)  {
-    if (fd->numFds == 1) {
+    if (fd.getNativeHandle() != nullptr && fd->numFds == 1) {
         analyzeStatus("dump", mDevice->dump(mDevice, fd->data[0]));
     }
     return Void();
