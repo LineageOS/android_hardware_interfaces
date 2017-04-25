@@ -39,6 +39,7 @@ const char* DevicesFactory::deviceToString(IDevicesFactory::Device device) {
         case IDevicesFactory::Device::R_SUBMIX: return AUDIO_HARDWARE_MODULE_ID_REMOTE_SUBMIX;
         case IDevicesFactory::Device::STUB: return AUDIO_HARDWARE_MODULE_ID_STUB;
     }
+    return nullptr;
 }
 
 // static
@@ -75,19 +76,22 @@ out:
 // Methods from ::android::hardware::audio::V2_0::IDevicesFactory follow.
 Return<void> DevicesFactory::openDevice(IDevicesFactory::Device device, openDevice_cb _hidl_cb)  {
     audio_hw_device_t *halDevice;
-    int halStatus = loadAudioInterface(deviceToString(device), &halDevice);
-    Result retval(Result::OK);
+    Result retval(Result::INVALID_ARGUMENTS);
     sp<IDevice> result;
-    if (halStatus == OK) {
-        if (device == IDevicesFactory::Device::PRIMARY) {
-            result = new PrimaryDevice(halDevice);
-        } else {
-            result = new ::android::hardware::audio::V2_0::implementation::Device(halDevice);
+    const char* moduleName = deviceToString(device);
+    if (moduleName != nullptr) {
+        int halStatus = loadAudioInterface(moduleName, &halDevice);
+        if (halStatus == OK) {
+            if (device == IDevicesFactory::Device::PRIMARY) {
+                result = new PrimaryDevice(halDevice);
+            } else {
+                result = new ::android::hardware::audio::V2_0::implementation::
+                    Device(halDevice);
+            }
+            retval = Result::OK;
+        } else if (halStatus == -EINVAL) {
+            retval = Result::NOT_INITIALIZED;
         }
-    } else if (halStatus == -EINVAL) {
-        retval = Result::NOT_INITIALIZED;
-    } else {
-        retval = Result::INVALID_ARGUMENTS;
     }
     _hidl_cb(retval, result);
     return Void();
