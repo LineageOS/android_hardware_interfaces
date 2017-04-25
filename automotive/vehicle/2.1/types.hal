@@ -588,14 +588,17 @@ enum VmsMessageType : int32_t {
   /* A client declaring layers offering. */
   OFFERING = 4,
 
-  /* Update for the available layers. */
-  AVAILABILITY = 5,
+  /* Requesting the list of available layers. */
+  AVAILABILITY_REQUEST = 5,
+
+  /* Returning the list of available layers. */
+  AVAILABILITY_RESPONSE = 6,
 
   /** Requesting layers that have subscribers. */
-  SUBSCRIPTION_REQUEST = 6,
+  SUBSCRIPTION_REQUEST = 7,
 
   /** Returning layers that have subscribers. */
-  SUBSCRIPTION_RESPONSE = 7,
+  SUBSCRIPTION_RESPONSE = 8,
 };
 
 /**
