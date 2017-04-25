@@ -581,6 +581,11 @@ WifiLegacyHal::getValidFrequenciesForBand(wifi_band band) {
   return {status, std::move(freqs)};
 }
 
+wifi_error WifiLegacyHal::setDfsFlag(bool dfs_on) {
+  return global_func_table_.wifi_set_nodfs_flag(
+      wlan_interface_handle_, dfs_on ? 0 : 1);
+}
+
 wifi_error WifiLegacyHal::enableLinkLayerStats(bool debug) {
   wifi_link_layer_params params;
   params.mpdu_size_threshold = kLinkLayerStatsDataMpduSizeThreshold;
