@@ -31,7 +31,13 @@ interface IPresetReverbEffect extends IEffect {
         LAST = PLATE
     };
 
+    /**
+     * Sets the current preset.
+     */
     setPreset(Preset preset) generates (Result retval);
 
+    /**
+     * Gets the current preset.
+     */
     getPreset() generates (Result retval, Preset preset);
 };

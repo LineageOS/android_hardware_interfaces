@@ -100,7 +100,7 @@ interface IVisualizerEffect extends IEffect {
         } value;
     };
     /**
-     * Retrieves the lastest measurements. The measurements to be made
+     * Retrieves the latest measurements. The measurements to be made
      * are specified by 'setMeasurementMode' parameter.
      *
      * @return retval operation completion status.
