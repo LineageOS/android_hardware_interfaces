@@ -181,6 +181,7 @@ class WifiLegacyHal {
   wifi_error stopGscan(wifi_request_id id);
   std::pair<wifi_error, std::vector<uint32_t>> getValidFrequenciesForBand(
       wifi_band band);
+  wifi_error setDfsFlag(bool dfs_on);
   // Link layer stats functions.
   wifi_error enableLinkLayerStats(bool debug);
   wifi_error disableLinkLayerStats();

@@ -31,7 +31,14 @@ using hidl_return_util::validateAndCall;
 WifiStaIface::WifiStaIface(
     const std::string& ifname,
     const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal)
-    : ifname_(ifname), legacy_hal_(legacy_hal), is_valid_(true) {}
+    : ifname_(ifname), legacy_hal_(legacy_hal), is_valid_(true) {
+  // Turn on DFS channel usage for STA iface.
+  legacy_hal::wifi_error legacy_status =
+      legacy_hal_.lock()->setDfsFlag(true);
+  if (legacy_status != legacy_hal::WIFI_SUCCESS) {
+    LOG(ERROR) << "Failed to set DFS flag; DFS channels may be unavailable.";
+  }
+}
 
 void WifiStaIface::invalidate() {
   legacy_hal_.reset();
