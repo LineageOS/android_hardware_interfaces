@@ -25,7 +25,8 @@ interface IGnssNiCallback {
     enum GnssNiType : uint8_t {
         VOICE           = 1,
         UMTS_SUPL       = 2,
-        UMTS_CTRL_PLANE = 3
+        UMTS_CTRL_PLANE = 3,
+        EMERGENCY_SUPL  = 4
     };
 
     /**
