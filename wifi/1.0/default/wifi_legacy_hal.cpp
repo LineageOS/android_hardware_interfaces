@@ -164,6 +164,7 @@ void onAsyncRttResults(wifi_request_id id,
   const auto lock = hidl_sync_util::acquireGlobalLock();
   if (on_rtt_results_internal_callback) {
     on_rtt_results_internal_callback(id, num_results, rtt_results);
+    on_rtt_results_internal_callback = nullptr;
   }
 }
 
