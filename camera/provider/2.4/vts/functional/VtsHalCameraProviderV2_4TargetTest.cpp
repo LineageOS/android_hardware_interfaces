@@ -15,28 +15,29 @@
  */
 
 #define LOG_TAG "camera_hidl_hal_test"
-#include <android/hardware/camera/provider/2.4/ICameraProvider.h>
-#include <android/hardware/camera/device/3.2/ICameraDevice.h>
-#include <android/hardware/camera/device/1.0/ICameraDevice.h>
-#include "CameraParameters.h"
-#include <system/camera.h>
-#include <android/log.h>
-#include <ui/GraphicBuffer.h>
 #include <VtsHalHidlTargetTestBase.h>
+#include <android/hardware/camera/device/1.0/ICameraDevice.h>
+#include <android/hardware/camera/device/3.2/ICameraDevice.h>
+#include <android/hardware/camera/provider/2.4/ICameraProvider.h>
+#include <android/log.h>
+#include <binder/MemoryHeapBase.h>
+#include <grallocusage/GrallocUsageConversion.h>
+#include <gui/BufferItemConsumer.h>
 #include <gui/BufferQueue.h>
 #include <gui/Surface.h>
-#include <gui/BufferItemConsumer.h>
-#include <binder/MemoryHeapBase.h>
-#include <regex>
-#include "system/camera_metadata.h"
 #include <hardware/gralloc.h>
 #include <hardware/gralloc1.h>
-#include <unordered_map>
-#include <mutex>
-#include <condition_variable>
-#include <chrono>
 #include <inttypes.h>
+#include <system/camera.h>
+#include <ui/GraphicBuffer.h>
 #include <utils/Errors.h>
+#include <chrono>
+#include <condition_variable>
+#include <mutex>
+#include <regex>
+#include <unordered_map>
+#include "CameraParameters.h"
+#include "system/camera_metadata.h"
 
 using ::android::hardware::Return;
 using ::android::hardware::Void;
@@ -2480,11 +2481,12 @@ TEST_F(CameraHidlTest, processCaptureRequestPreview) {
                     settings = req; });
             ASSERT_TRUE(ret.isOk());
 
-            sp<GraphicBuffer> gb = new GraphicBuffer(previewStream.width,
-                    previewStream.height,
-                    static_cast<int32_t> (halStreamConfig.streams[0].overrideFormat),
-                    1, halStreamConfig.streams[0].producerUsage,
-                    halStreamConfig.streams[0].consumerUsage);
+            sp<GraphicBuffer> gb = new GraphicBuffer(
+                previewStream.width, previewStream.height,
+                static_cast<int32_t>(halStreamConfig.streams[0].overrideFormat),
+                1, android_convertGralloc1To0Usage(
+                       halStreamConfig.streams[0].producerUsage,
+                       halStreamConfig.streams[0].consumerUsage));
             ASSERT_NE(nullptr, gb.get());
             StreamBuffer outputBuffer = {halStreamConfig.streams[0].id,
                     bufferId, hidl_handle(gb->getNativeBuffer()->handle),
@@ -2586,11 +2588,12 @@ TEST_F(CameraHidlTest, processCaptureRequestInvalidSinglePreview) {
                     &session /*out*/, &previewStream /*out*/,
                     &halStreamConfig /*out*/);
 
-            sp<GraphicBuffer> gb = new GraphicBuffer(previewStream.width,
-                    previewStream.height,
-                    static_cast<int32_t> (halStreamConfig.streams[0].overrideFormat),
-                    1, halStreamConfig.streams[0].producerUsage,
-                    halStreamConfig.streams[0].consumerUsage);
+            sp<GraphicBuffer> gb = new GraphicBuffer(
+                previewStream.width, previewStream.height,
+                static_cast<int32_t>(halStreamConfig.streams[0].overrideFormat),
+                1, android_convertGralloc1To0Usage(
+                       halStreamConfig.streams[0].producerUsage,
+                       halStreamConfig.streams[0].consumerUsage));
 
             StreamBuffer outputBuffer = {halStreamConfig.streams[0].id,
                     bufferId, hidl_handle(gb->getNativeBuffer()->handle),
@@ -2706,11 +2709,12 @@ TEST_F(CameraHidlTest, flushPreviewRequest) {
                     settings = req; });
             ASSERT_TRUE(ret.isOk());
 
-            sp<GraphicBuffer> gb = new GraphicBuffer(previewStream.width,
-                    previewStream.height,
-                    static_cast<int32_t> (halStreamConfig.streams[0].overrideFormat),
-                    1, halStreamConfig.streams[0].producerUsage,
-                    halStreamConfig.streams[0].consumerUsage);
+            sp<GraphicBuffer> gb = new GraphicBuffer(
+                previewStream.width, previewStream.height,
+                static_cast<int32_t>(halStreamConfig.streams[0].overrideFormat),
+                1, android_convertGralloc1To0Usage(
+                       halStreamConfig.streams[0].producerUsage,
+                       halStreamConfig.streams[0].consumerUsage));
             ASSERT_NE(nullptr, gb.get());
             StreamBuffer outputBuffer = {halStreamConfig.streams[0].id,
                     bufferId, hidl_handle(gb->getNativeBuffer()->handle),

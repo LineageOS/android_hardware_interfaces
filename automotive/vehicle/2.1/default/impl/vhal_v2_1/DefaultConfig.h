@@ -42,6 +42,8 @@ const V2_0::VehiclePropConfig kVehicleProperties[] = {
         .prop = WHEEL_TICK,
         .access = V2_0::VehiclePropertyAccess::READ,
         .changeMode = V2_0::VehiclePropertyChangeMode::CONTINUOUS,
+        .minSampleRate = 1.0f,
+        .maxSampleRate = 100.0f,
     },
 
     {

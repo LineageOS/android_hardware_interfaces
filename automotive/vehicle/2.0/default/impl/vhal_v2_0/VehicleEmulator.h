@@ -52,8 +52,7 @@ public:
 protected:
     VehicleEmulator* getEmulatorOrDie() {
         std::lock_guard<std::mutex> g(mEmulatorLock);
-        ALOGI("%s, emulator: %p", __func__, mEmulator);
-        assert(mEmulator != nullptr);
+        if (mEmulator == nullptr) abort();
         return mEmulator;
     }
 
