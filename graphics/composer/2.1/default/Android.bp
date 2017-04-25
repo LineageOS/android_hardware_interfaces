@@ -5,8 +5,8 @@ cc_library_static {
     export_include_dirs: ["."],
     srcs: ["ComposerClient.cpp"],
     shared_libs: [
-        "android.hardware.graphics.allocator@2.0",
         "android.hardware.graphics.composer@2.1",
+        "android.hardware.graphics.mapper@2.0",
         "libbase",
         "libcutils",
         "libfmq",
@@ -27,8 +27,8 @@ cc_library_shared {
     srcs: ["Hwc.cpp"],
     static_libs: ["libhwcomposer-client"],
     shared_libs: [
-        "android.hardware.graphics.allocator@2.0",
         "android.hardware.graphics.composer@2.1",
+        "android.hardware.graphics.mapper@2.0",
         "libbase",
         "libcutils",
         "libfmq",
@@ -51,7 +51,6 @@ cc_binary {
     init_rc: ["android.hardware.graphics.composer@2.1-service.rc"],
     static_libs: ["libhwcomposer-client"],
     shared_libs: [
-        "android.hardware.graphics.allocator@2.0",
         "android.hardware.graphics.composer@2.1",
         "libbase",
         "libbinder",
