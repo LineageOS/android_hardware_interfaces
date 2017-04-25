@@ -189,6 +189,7 @@ TEST_P(DrmHalVendorFactoryTest, InvalidPluginNotSupported) {
  */
 TEST_P(DrmHalVendorFactoryTest, EmptyPluginUUIDNotSupported) {
     hidl_array<uint8_t, 16> emptyUUID;
+    memset(emptyUUID.data(), 0, 16);
     EXPECT_FALSE(drmFactory->isCryptoSchemeSupported(emptyUUID));
     EXPECT_FALSE(cryptoFactory->isCryptoSchemeSupported(emptyUUID));
 }
