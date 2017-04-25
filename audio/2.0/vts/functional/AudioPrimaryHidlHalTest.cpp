@@ -508,6 +508,11 @@ TEST_F(AudioPrimaryHidlTest, debugDump) {
     testDebugDump([this](const auto& handle){ return device->debugDump(handle); });
 }
 
+TEST_F(AudioPrimaryHidlTest, debugDumpInvalidArguments) {
+    doc::test("Check that the hal dump doesn't crash on invalid arguments");
+    ASSERT_OK(device->debugDump(hidl_handle()));
+}
+
 //////////////////////////////////////////////////////////////////////////////
 ////////////////////////// open{Output,Input}Stream //////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -818,6 +823,10 @@ TEST_IO_STREAM(setNonExistingParameter, "Set the values of an non existing param
 TEST_IO_STREAM(DebugDump,
                "Check that a stream can dump its state without error",
                testDebugDump([this](const auto& handle){ return stream->debugDump(handle); }))
+
+TEST_IO_STREAM(DebugDumpInvalidArguments,
+               "Check that the stream dump doesn't crash on invalid arguments",
+               ASSERT_OK(stream->debugDump(hidl_handle())))
 
 //////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// addRemoveEffect ///////////////////////////////
