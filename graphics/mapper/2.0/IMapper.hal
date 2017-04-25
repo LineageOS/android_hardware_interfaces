@@ -85,16 +85,23 @@ interface IMapper {
      * Imports a raw buffer handle to create an imported buffer handle for use
      * with the rest of the mapper or with other in-process libraries.
      *
-     * A buffer handle is considered raw when it is cloned or when it is
-     * received from another HAL or another process. A raw buffer handle must
-     * not be used to access the underlying graphics buffer. It must be
-     * imported to create an imported handle first.
+     * A buffer handle is considered raw when it is cloned (e.g., with
+     * native_handle_clone) from another buffer handle locally, or when it is
+     * received from another HAL server/client or another process. A raw
+     * buffer handle must not be used to access the underlying graphics
+     * buffer. It must be imported to create an imported handle first.
      *
      * This function must at least validate the raw handle before creating the
      * imported handle. It must also support importing the same raw handle
      * multiple times to create multiple imported handles. The imported handle
      * must be considered valid everywhere in the process, including in
      * another instance of the mapper.
+     *
+     * Because of passthrough HALs, a raw buffer handle received from a HAL
+     * may actually have been imported in the process. importBuffer must treat
+     * such a handle as if it is raw and must not return BAD_BUFFER. The
+     * returned handle is independent from the input handle as usual, and
+     * freeBuffer must be called on it when it is no longer needed.
      *
      * @param rawHandle is the raw buffer handle to import.
      * @return error is NONE upon success. Otherwise,
