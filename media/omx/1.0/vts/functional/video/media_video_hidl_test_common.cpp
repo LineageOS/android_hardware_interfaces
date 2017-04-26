@@ -281,7 +281,7 @@ void dispatchInputBuffer(sp<IOmxNode> omxNode,
 void flushPorts(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                 android::Vector<BufferInfo>* iBuffer,
                 android::Vector<BufferInfo>* oBuffer, OMX_U32 kPortIndexInput,
-                OMX_U32 kPortIndexOutput) {
+                OMX_U32 kPortIndexOutput, int64_t timeoutUs) {
     android::hardware::media::omx::V1_0::Status status;
     Message msg;
 
@@ -289,7 +289,7 @@ void flushPorts(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
     status = omxNode->sendCommand(toRawCommandType(OMX_CommandFlush),
                                   kPortIndexInput);
     ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
+    status = observer->dequeueMessage(&msg, timeoutUs, iBuffer, oBuffer);
     ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
     ASSERT_EQ(msg.type, Message::Type::EVENT);
     ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
@@ -304,7 +304,7 @@ void flushPorts(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
     status = omxNode->sendCommand(toRawCommandType(OMX_CommandFlush),
                                   kPortIndexOutput);
     ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
+    status = observer->dequeueMessage(&msg, timeoutUs, iBuffer, oBuffer);
     ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
     ASSERT_EQ(msg.type, Message::Type::EVENT);
     ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);

@@ -71,8 +71,15 @@ struct BufferInfo {
     ::android::sp<IMemory> mMemory;
 };
 
+struct FrameData {
+    int bytesCount;
+    uint32_t flags;
+    uint32_t timestamp;
+};
+
 struct CodecObserver : public IOmxObserver {
    public:
+    CodecObserver(std::function<void(Message)> fn) : callBack(fn) {}
     Return<void> onMessages(const hidl_vec<Message>& messages) override {
         android::Mutex::Autolock autoLock(msgLock);
         for (hidl_vec<Message>::const_iterator it = messages.begin();
@@ -103,6 +110,7 @@ struct CodecObserver : public IOmxObserver {
                         for (i = 0; i < oBuffers->size(); ++i) {
                             if ((*oBuffers)[i].id ==
                                 it->data.bufferData.buffer) {
+                                if (callBack) callBack(*it);
                                 oBuffers->editItemAt(i).owner = client;
                                 msgQueue.erase(it);
                                 break;
@@ -127,12 +135,14 @@ struct CodecObserver : public IOmxObserver {
                 }
                 ++it;
             }
+            if (finishBy - android::ALooper::GetNowUs() < 0)
+                return toStatus(android::TIMED_OUT);
             android::status_t err =
                 (timeoutUs < 0)
                     ? msgCondition.wait(msgLock)
                     : msgCondition.waitRelative(
                           msgLock,
-                          (finishBy - android::ALooper::GetNowUs()) * 1000);
+                          (finishBy - android::ALooper::GetNowUs()) * 1000ll);
             if (err == android::TIMED_OUT) return toStatus(err);
         }
     }
@@ -140,6 +150,7 @@ struct CodecObserver : public IOmxObserver {
     android::List<Message> msgQueue;
     android::Mutex msgLock;
     android::Condition msgCondition;
+    std::function<void(Message)> callBack;
 };
 
 /*

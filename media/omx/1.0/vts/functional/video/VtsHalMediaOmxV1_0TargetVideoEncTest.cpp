@@ -51,7 +51,7 @@ class ComponentTestEnvironment : public ::testing::Environment {
     virtual void SetUp() {}
     virtual void TearDown() {}
 
-    ComponentTestEnvironment() : instance("default") {}
+    ComponentTestEnvironment() : instance("default"), res("/sdcard/media/") {}
 
     void setInstance(const char* _instance) { instance = _instance; }
 
@@ -59,7 +59,7 @@ class ComponentTestEnvironment : public ::testing::Environment {
 
     void setRole(const char* _role) { role = _role; }
 
-    void setQuirks(int _quirks) { quirks = _quirks; }
+    void setRes(const char* _res) { res = _res; }
 
     const hidl_string getInstance() const { return instance; }
 
@@ -67,19 +67,19 @@ class ComponentTestEnvironment : public ::testing::Environment {
 
     const hidl_string getRole() const { return role; }
 
-    int getQuirks() const { return quirks; }
+    const hidl_string getRes() const { return res; }
 
     int initFromOptions(int argc, char** argv) {
         static struct option options[] = {
             {"instance", required_argument, 0, 'I'},
             {"component", required_argument, 0, 'C'},
             {"role", required_argument, 0, 'R'},
-            {"quirks", required_argument, 0, 'Q'},
+            {"res", required_argument, 0, 'P'},
             {0, 0, 0, 0}};
 
         while (true) {
             int index = 0;
-            int c = getopt_long(argc, argv, "I:C:Q:R:", options, &index);
+            int c = getopt_long(argc, argv, "I:C:R:P:", options, &index);
             if (c == -1) {
                 break;
             }
@@ -91,11 +91,11 @@ class ComponentTestEnvironment : public ::testing::Environment {
                 case 'C':
                     setComponent(optarg);
                     break;
-                case 'Q':
-                    setQuirks(atoi(optarg));
-                    break;
                 case 'R':
                     setRole(optarg);
+                    break;
+                case 'P':
+                    setRes(optarg);
                     break;
                 case '?':
                     break;
@@ -109,8 +109,8 @@ class ComponentTestEnvironment : public ::testing::Environment {
                     "test options are:\n\n"
                     "-I, --instance: HAL instance to test\n"
                     "-C, --component: OMX component to test\n"
-                    "-R, --Role: OMX component Role\n"
-                    "-Q, --quirks: Component quirks\n",
+                    "-R, --role: OMX component Role\n"
+                    "-P, --res: Resource files directory location\n",
                     argv[optind ?: 1], argv[0]);
             return 2;
         }
@@ -121,12 +121,12 @@ class ComponentTestEnvironment : public ::testing::Environment {
     hidl_string instance;
     hidl_string component;
     hidl_string role;
-    // to be removed when IOmxNode::setQuirks is removed
-    int quirks;
+    hidl_string res;
 };
 
 static ComponentTestEnvironment* gEnv = nullptr;
 
+// video encoder test fixture class
 class VideoEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    public:
     virtual void SetUp() override {
@@ -134,7 +134,7 @@ class VideoEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         omx = ::testing::VtsHalHidlTargetTestBase::getService<IOmx>(
             gEnv->getInstance());
         ASSERT_NE(omx, nullptr);
-        observer = new CodecObserver();
+        observer = new CodecObserver([this](Message msg) { (void)msg; });
         ASSERT_NE(observer, nullptr);
         ASSERT_EQ(strncmp(gEnv->getComponent().c_str(), "OMX.", 4), 0)
             << "Invalid Component Name";
@@ -252,21 +252,19 @@ void setDefaultPortParam(sp<IOmxNode> omxNode, OMX_U32 portIndex,
 }
 
 // LookUpTable of clips and metadata for component testing
-void GetURLForComponent(VideoEncHidlTest::standardComp comp,
-                        const char** mURL) {
+void GetURLForComponent(VideoEncHidlTest::standardComp comp, char* mURL) {
     struct CompToURL {
         VideoEncHidlTest::standardComp comp;
         const char* mURL;
     };
     static const CompToURL kCompToURL[] = {
         {VideoEncHidlTest::standardComp::avc,
-         "/sdcard/media/bbb_480x360_420p_30fps_32frames.yuv"},
+         "bbb_480x360_420p_30fps_32frames.yuv"},
     };
 
-    *mURL = nullptr;
     for (size_t i = 0; i < sizeof(kCompToURL) / sizeof(kCompToURL[0]); ++i) {
         if (kCompToURL[i].comp == comp) {
-            *mURL = kCompToURL[i].mURL;
+            strcat(mURL, kCompToURL[i].mURL);
             return;
         }
     }
@@ -328,6 +326,7 @@ void encodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
     }
 }
 
+// set component role
 TEST_F(VideoEncHidlTest, SetRole) {
     description("Test Set Component Role");
     android::hardware::media::omx::V1_0::Status status;
@@ -335,6 +334,7 @@ TEST_F(VideoEncHidlTest, SetRole) {
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 }
 
+// port format enumeration
 TEST_F(VideoEncHidlTest, EnumeratePortFormat) {
     description("Test Component on Mandatory Port Parameters (Port Format)");
     android::hardware::media::omx::V1_0::Status status;
@@ -360,6 +360,7 @@ TEST_F(VideoEncHidlTest, EnumeratePortFormat) {
     EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 }
 
+// test raw stream encode
 TEST_F(VideoEncHidlTest, EncodeTest) {
     description("Test Encode");
     android::hardware::media::omx::V1_0::Status status;
@@ -373,9 +374,9 @@ TEST_F(VideoEncHidlTest, EncodeTest) {
         kPortIndexInput = params.nStartPortNumber;
         kPortIndexOutput = kPortIndexInput + 1;
     }
-    const char* mURL = nullptr;
-    GetURLForComponent(compName, &mURL);
-    EXPECT_NE(mURL, nullptr);
+    char mURL[512];
+    strcpy(mURL, gEnv->getRes().c_str());
+    GetURLForComponent(compName, mURL);
 
     std::ifstream eleStream;
     eleStream.open(mURL, std::ifstream::binary);
