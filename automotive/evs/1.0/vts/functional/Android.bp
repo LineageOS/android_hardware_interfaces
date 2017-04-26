@@ -19,7 +19,8 @@ cc_test {
 
     srcs: [
         "VtsEvsV1_0TargetTest.cpp",
-        "FrameHandler.cpp"
+        "FrameHandler.cpp",
+        "FormatConvert.cpp"
     ],
 
     defaults: [

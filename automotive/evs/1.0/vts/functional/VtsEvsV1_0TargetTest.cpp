@@ -107,6 +107,8 @@ protected:
  * call to closeCamera.  Then repeats the test to ensure all cameras can be reopened.
  */
 TEST_F(EvsHidlTest, CameraOpenClean) {
+    ALOGI("Starting CameraOpenClean test");
+
     // Get the camera list
     loadCameraList();
 
@@ -137,6 +139,8 @@ TEST_F(EvsHidlTest, CameraOpenClean) {
  * the system to be tolerant of shutdown/restart race conditions.
  */
 TEST_F(EvsHidlTest, CameraOpenAggressive) {
+    ALOGI("Starting CameraOpenAggressive test");
+
     // Get the camera list
     loadCameraList();
 
@@ -183,6 +187,8 @@ TEST_F(EvsHidlTest, CameraOpenAggressive) {
  * Test both clean shut down and "aggressive open" device stealing behavior.
  */
 TEST_F(EvsHidlTest, DisplayOpen) {
+    ALOGI("Starting DisplayOpen test");
+
     // Request exclusive access to the EVS display, then let it go
     {
         sp<IEvsDisplay> pDisplay = pEnumerator->openDisplay();
@@ -229,6 +235,8 @@ TEST_F(EvsHidlTest, DisplayOpen) {
  * object itself or the owning enumerator.
  */
 TEST_F(EvsHidlTest, DisplayStates) {
+    ALOGI("Starting DisplayStates test");
+
     // Ensure the display starts in the expected state
     EXPECT_EQ((DisplayState)pEnumerator->getDisplayState(), DisplayState::NOT_OPEN);
 
@@ -270,15 +278,14 @@ TEST_F(EvsHidlTest, DisplayStates) {
     }
 
     // TODO:  This hack shouldn't be necessary.  b/36122635
-// NOTE:  Calling flushCommand here did not avoid the race.  Going back to sleep...  :(
-//    android::hardware::IPCThreadState::self()->flushCommands();
     sleep(1);
 
     // Now that the display pointer has gone out of scope, causing the IEvsDisplay interface
     // object to be destroyed, we should be back to the "not open" state.
     // NOTE:  If we want this to pass without the sleep above, we'd have to add the
     //        (now recommended) closeDisplay() call instead of relying on the smarter pointer
-    //        going out of scope.
+    //        going out of scope.  I've not done that because I want to verify that the deletion
+    //        of the object does actually clean up (eventually).
     EXPECT_EQ((DisplayState)pEnumerator->getDisplayState(), DisplayState::NOT_OPEN);
 }
 
@@ -288,6 +295,8 @@ TEST_F(EvsHidlTest, DisplayStates) {
  * Measure and qualify the stream start up time and streaming frame rate of each reported camera
  */
 TEST_F(EvsHidlTest, CameraStreamPerformance) {
+    ALOGI("Starting CameraStreamPerformance test");
+
     // Get the camera list
     loadCameraList();
 
@@ -304,7 +313,7 @@ TEST_F(EvsHidlTest, CameraStreamPerformance) {
         // Start the camera's video stream
         nsecs_t start = systemTime(SYSTEM_TIME_MONOTONIC);
         bool startResult = frameHandler->startStream();
-        EXPECT_EQ(startResult, true);
+        ASSERT_TRUE(startResult);
 
         // Ensure the first frame arrived within the expected time
         frameHandler->waitForFrameCount(1);
@@ -344,6 +353,8 @@ TEST_F(EvsHidlTest, CameraStreamPerformance) {
  * than one frame time.  The camera must cleanly skip frames until the client is ready again.
  */
 TEST_F(EvsHidlTest, CameraStreamBuffering) {
+    ALOGI("Starting CameraStreamBuffering test");
+
     // Arbitrary constant (should be > 1 and less than crazy)
     static const unsigned int kBuffersToHold = 6;
 
@@ -372,14 +383,14 @@ TEST_F(EvsHidlTest, CameraStreamBuffering) {
 
         // Start the camera's video stream
         bool startResult = frameHandler->startStream();
-        EXPECT_TRUE(startResult);
+        ASSERT_TRUE(startResult);
 
         // Check that the video stream stalls once we've gotten exactly the number of buffers
         // we requested since we told the frameHandler not to return them.
-        sleep(1);   // 1 second would be enough for at least 5 frames to be delivered worst case
+        sleep(2);   // 1 second should be enough for at least 5 frames to be delivered worst case
         unsigned framesReceived = 0;
         frameHandler->getFramesCounters(&framesReceived, nullptr);
-        EXPECT_EQ(kBuffersToHold, framesReceived);
+        ASSERT_EQ(kBuffersToHold, framesReceived) << "Stream didn't stall at expected buffer limit";
 
 
         // Give back one buffer
@@ -390,7 +401,7 @@ TEST_F(EvsHidlTest, CameraStreamBuffering) {
         // filled since we require 10fps minimum -- but give a 10% allowance just in case.
         usleep(110 * kMillisecondsToMicroseconds);
         frameHandler->getFramesCounters(&framesReceived, nullptr);
-        EXPECT_EQ(kBuffersToHold+1, framesReceived);
+        EXPECT_EQ(kBuffersToHold+1, framesReceived) << "Stream should've resumed";
 
         // Even when the camera pointer goes out of scope, the FrameHandler object will
         // keep the stream alive unless we tell it to shutdown.
@@ -411,6 +422,8 @@ TEST_F(EvsHidlTest, CameraStreamBuffering) {
  * which a human could observe to see the operation of the system on the physical display.
  */
 TEST_F(EvsHidlTest, CameraToDisplayRoundTrip) {
+    ALOGI("Starting CameraToDisplayRoundTrip test");
+
     // Get the camera list
     loadCameraList();
 
@@ -434,7 +447,7 @@ TEST_F(EvsHidlTest, CameraToDisplayRoundTrip) {
 
         // Start the camera's video stream
         bool startResult = frameHandler->startStream();
-        EXPECT_EQ(startResult, true);
+        ASSERT_TRUE(startResult);
 
         // Wait a while to let the data flow
         static const int kSecondsToWait = 5;
