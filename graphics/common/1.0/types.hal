@@ -314,13 +314,7 @@ enum PixelFormat : int32_t {
      */
     RAW12              = 0x26,
 
-    /**
-     * Must not use.
-     */
-    YCBCR_422_888      = 0x27,
-    YCBCR_444_888      = 0x28,
-    FLEX_RGB_888       = 0x29,
-    FLEX_RGBA_8888     = 0x2A,
+    /** 0x27 to 0x2A are reserved for flexible formats */
 
     /**
      * 32-bit packed format that has 2-bit A, 10-bit B, G, and R components,
@@ -331,11 +325,6 @@ enum PixelFormat : int32_t {
      * interpretation is defined by the dataspace.
      */
     RGBA_1010102       = 0x2B,
-
-    /**
-     * Must not use. 0x100 is reserved for vendor extensions.
-     */
-    JPEG               = 0x100,
 
     /**
      * 0x100 - 0x1FF
