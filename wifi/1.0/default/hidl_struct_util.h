@@ -94,7 +94,8 @@ bool convertLegacyVectorOfDebugRxPacketFateToHidl(
     std::vector<WifiDebugRxPacketFateReport>* hidl_fates);
 
 // NAN iface conversion methods.
-NanStatusType convertLegacyNanStatusTypeToHidl(legacy_hal::NanStatusType type);
+void convertToWifiNanStatus(legacy_hal::NanStatusType type, const char* str, size_t max_len,
+    WifiNanStatus* wifiNanStatus);
 bool convertHidlNanEnableRequestToLegacy(
     const NanEnableRequest& hidl_request,
     legacy_hal::NanEnableRequest* legacy_request);
