@@ -64,12 +64,12 @@ interface IEnvironmentalReverbEffect extends IEffect {
     getRoomLevel() generates (Result retval, int16_t roomLevel);
 
     /**
-     * Sets the room high frequences level.
+     * Sets the room high frequencies level.
      */
     setRoomHfLevel(int16_t roomHfLevel) generates (Result retval);
 
     /**
-     * Gets the room high frequences level.
+     * Gets the room high frequencies level.
      */
     getRoomHfLevel() generates (Result retval, int16_t roomHfLevel);
 
@@ -84,12 +84,12 @@ interface IEnvironmentalReverbEffect extends IEffect {
     getDecayTime() generates (Result retval, uint32_t decayTime);
 
     /**
-     * Sets the ratio of high frequences decay.
+     * Sets the ratio of high frequencies decay.
      */
     setDecayHfRatio(int16_t decayHfRatio) generates (Result retval);
 
     /**
-     * Gets the ratio of high frequences decay.
+     * Gets the ratio of high frequencies decay.
      */
     getDecayHfRatio() generates (Result retval, int16_t decayHfRatio);
 

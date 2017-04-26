@@ -125,11 +125,8 @@ Return<void> GrallocMapper::createDescriptor(
 
 Return<void> GrallocMapper::importBuffer(const hidl_handle& rawHandle,
                                          importBuffer_cb hidl_cb) {
-    // importing an already imported handle rather than a raw handle
-    if (gRegisteredHandles->get(rawHandle.getNativeHandle())) {
-        hidl_cb(Error::BAD_BUFFER, nullptr);
-        return Void();
-    }
+    // because of passthrough HALs, we must not generate an error when
+    // rawHandle has been imported
 
     if (!rawHandle.getNativeHandle()) {
         hidl_cb(Error::BAD_BUFFER, nullptr);

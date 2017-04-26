@@ -25,7 +25,13 @@ interface IDownmixEffect extends IEffect {
         FOLD   // mix the extra channels with FL/FR
     };
 
+    /**
+     * Sets the current downmix preset.
+     */
     setType(Type preset) generates (Result retval);
 
+    /**
+     * Gets the current downmix preset.
+     */
     getType() generates (Result retval, Type preset);
 };

@@ -155,6 +155,16 @@ TEST_F(AudioHidlTest, GetAudioDevicesFactoryService) {
     doc::test("test the getService (called in SetUp)");
 }
 
+TEST_F(AudioHidlTest, OpenDeviceInvalidParameter) {
+    doc::test("test passing an invalid parameter to openDevice");
+    IDevicesFactory::Result result;
+    sp<IDevice> device;
+    ASSERT_OK(devicesFactory->openDevice(IDevicesFactory::Device(-1),
+                                         returnIn(result, device)));
+    ASSERT_EQ(IDevicesFactory::Result::INVALID_ARGUMENTS, result);
+    ASSERT_TRUE(device == nullptr);
+}
+
 //////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// openDevice primary ///////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -498,6 +508,11 @@ TEST_F(AudioPrimaryHidlTest, debugDump) {
     testDebugDump([this](const auto& handle){ return device->debugDump(handle); });
 }
 
+TEST_F(AudioPrimaryHidlTest, debugDumpInvalidArguments) {
+    doc::test("Check that the hal dump doesn't crash on invalid arguments");
+    ASSERT_OK(device->debugDump(hidl_handle()));
+}
+
 //////////////////////////////////////////////////////////////////////////////
 ////////////////////////// open{Output,Input}Stream //////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -808,6 +823,10 @@ TEST_IO_STREAM(setNonExistingParameter, "Set the values of an non existing param
 TEST_IO_STREAM(DebugDump,
                "Check that a stream can dump its state without error",
                testDebugDump([this](const auto& handle){ return stream->debugDump(handle); }))
+
+TEST_IO_STREAM(DebugDumpInvalidArguments,
+               "Check that the stream dump doesn't crash on invalid arguments",
+               ASSERT_OK(stream->debugDump(hidl_handle())))
 
 //////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// addRemoveEffect ///////////////////////////////
