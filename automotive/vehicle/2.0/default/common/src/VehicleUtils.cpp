@@ -102,10 +102,10 @@ void shallowCopyHidlVec(hidl_vec <T>* dest, const hidl_vec <T>& src) {
 }
 
 void shallowCopyHidlStr(hidl_string* dest, const hidl_string& src) {
-    if (!src.empty()) {
+    if (src.empty()) {
+        dest->clear();
+    } else {
         dest->setToExternal(src.c_str(), src.size());
-    } else if (dest->size() > 0) {
-        dest->setToExternal(0, 0);
     }
 }
 
