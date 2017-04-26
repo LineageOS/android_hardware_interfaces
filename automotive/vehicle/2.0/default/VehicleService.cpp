@@ -36,8 +36,15 @@ int main(int /* argc */, char* /* argv */ []) {
     configureRpcThreadpool(4, true /* callerWillJoin */);
 
     ALOGI("Registering as service...");
-    service->registerAsService();
+    status_t status = service->registerAsService();
+
+    if (status != OK) {
+        ALOGE("Unable to register vehicle service (%d)", status);
+        return 1;
+    }
 
     ALOGI("Ready");
     joinRpcThreadpool();
+
+    return 1;
 }
