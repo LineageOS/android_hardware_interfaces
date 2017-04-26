@@ -1,0 +1,54 @@
+/*
+ * Copyright (C) 2016 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.radio@1.1;
+
+import IRadioResponse;
+import @1.0::IRadio;
+
+/**
+ * This interface is used by telephony and telecom to talk to cellular radio.
+ * All the functions have minimum one parameter:
+ * serial: which corresponds to serial no. of request. Serial numbers must only be memorized for the
+ * duration of a method call. If clients provide colliding serials (including passing the same
+ * serial to different methods), multiple responses (one for each method call) must still be served.
+ * setResponseFunctions must work with @1.1::IRadioResponse and @1.1::IRadioIndication.
+ */
+interface IRadio extends @1.0::IRadio {
+    /**
+     * Provide Carrier specific information to the modem that must be used to
+     * encrypt the IMSI and IMPI. Sent by the framework during boot, carrier
+     * switch and everytime the framework receives a new certificate.
+     *
+     * @param serial Serial number of request.
+     * @param carrierKey Carrier specific key to be used for encryption. It must
+     *        be opaque to the framework. This is the byte-stream representation
+     *        of the key. This is an external encoded form for the key used when
+     *        a standard representation of the key is needed outside the Java
+     *        Virtual Machine, as when transmitting the key to some other party.
+     *        The key is encoded according to a standard format
+     *        (such as X.509 SubjectPublicKeyInfo or PKCS#8), and is returned using
+     *        the getEncoded method.
+     * @param keyIdentifier This is an opaque value we're given by the carrier
+     *        and is returned to the carrier. This is used by the server to
+     *        help it locate the private key to decrypt the permanent identity.
+     *
+     * Response callback is
+     * IRadioResponse.setCarrierInfoForImsiEncryptionResponse()
+     */
+     oneway setCarrierInfoForImsiEncryption(int32_t serial, vec<uint8_t> carrierKey,
+             string keyIdentifier);
+};
