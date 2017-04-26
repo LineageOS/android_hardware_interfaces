@@ -88,11 +88,17 @@ int main(int /* argc */, char* /* argv */ []) {
 
     Vehicle_V2_1 vehicle21(vehicleManager.get());
 
-    ALOGI("Registering as service...");
-    vehicle21.registerAsService();
-
     configureRpcThreadpool(1, true /* callerWillJoin */);
+
+    ALOGI("Registering as service...");
+    status_t status = vehicle21.registerAsService();
+
+    if (status != OK) {
+        ALOGE("Unable to register vehicle service (%d).", status);
+        return 1;
+    }
 
     ALOGI("Ready");
     joinRpcThreadpool();
+    return 1;
 }
