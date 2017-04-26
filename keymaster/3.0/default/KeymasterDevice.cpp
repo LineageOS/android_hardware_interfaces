@@ -64,7 +64,7 @@ static int keymaster0_device_initialize(const hw_module_t* mod, keymaster2_devic
     assert(mod->module_api_version < KEYMASTER_MODULE_API_VERSION_1_0);
     ALOGI("Found keymaster0 module %s, version %x", mod->name, mod->module_api_version);
 
-    UniquePtr<SoftKeymasterDevice> soft_keymaster(new SoftKeymasterDevice);
+    std::unique_ptr<SoftKeymasterDevice> soft_keymaster(new SoftKeymasterDevice);
     keymaster0_device_t* km0_device = NULL;
     keymaster_error_t error = KM_ERROR_OK;
 
@@ -107,7 +107,7 @@ static int keymaster1_device_initialize(const hw_module_t* mod, keymaster2_devic
     assert(mod->module_api_version >= KEYMASTER_MODULE_API_VERSION_1_0);
     ALOGI("Found keymaster1 module %s, version %x", mod->name, mod->module_api_version);
 
-    UniquePtr<SoftKeymasterDevice> soft_keymaster(new SoftKeymasterDevice);
+    std::unique_ptr<SoftKeymasterDevice> soft_keymaster(new SoftKeymasterDevice);
     keymaster1_device_t* km1_device = nullptr;
     keymaster_error_t error = KM_ERROR_OK;
 
