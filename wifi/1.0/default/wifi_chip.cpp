@@ -804,14 +804,12 @@ WifiStatus WifiChip::enableDebugErrorAlertsInternal(bool enable) {
 WifiStatus WifiChip::handleChipConfiguration(ChipModeId mode_id) {
   // If the chip is already configured in a different mode, stop
   // the legacy HAL and then start it after firmware mode change.
+  // Currently the underlying implementation has a deadlock issue.
+  // We should return ERROR_NOT_SUPPORTED if chip is already configured in
+  // a different mode.
   if (current_mode_id_ != kInvalidModeId) {
-    invalidateAndRemoveAllIfaces();
-    legacy_hal::wifi_error legacy_status = legacy_hal_.lock()->stop([]() {});
-    if (legacy_status != legacy_hal::WIFI_SUCCESS) {
-      LOG(ERROR) << "Failed to stop legacy HAL: "
-                 << legacyErrorToString(legacy_status);
-      return createWifiStatusFromLegacyError(legacy_status);
-    }
+    // TODO(b/37446050): Fix the deadlock.
+    return createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED);
   }
   bool success;
   if (mode_id == kStaChipModeId) {
