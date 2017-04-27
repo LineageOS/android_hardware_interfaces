@@ -172,10 +172,6 @@ class ComponentHidlTest : public ::testing::VtsHalHidlTargetTestBase {
             }
         }
         ASSERT_NE(compClass, unknown_class) << "Invalid Component Class";
-
-        allocator = ::testing::VtsHalHidlTargetTestBase::getService<IAllocator>(
-            "ashmem");
-        ASSERT_NE(allocator, nullptr);
     }
 
     virtual void TearDown() override {
@@ -196,13 +192,19 @@ class ComponentHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     sp<IOmx> omx;
     sp<CodecObserver> observer;
     sp<IOmxNode> omxNode;
-    sp<IAllocator> allocator;
     standardCompClass compClass;
+
+   protected:
+    static void description(const std::string& description) {
+        RecordProperty("description", description);
+    }
 };
 
+// Random Index used for monkey testing while get/set parameters
 #define RANDOM_INDEX 1729
 
-void allocatePortBuffers(sp<IOmxNode> omxNode, sp<IAllocator> allocator,
+// allocate buffers needed on a component port
+void allocatePortBuffers(sp<IOmxNode> omxNode,
                          android::Vector<BufferInfo>* buffArray,
                          OMX_U32 portIndex) {
     android::hardware::media::omx::V1_0::Status status;
@@ -210,16 +212,20 @@ void allocatePortBuffers(sp<IOmxNode> omxNode, sp<IAllocator> allocator,
 
     buffArray->clear();
 
+    sp<IAllocator> allocator = IAllocator::getService("ashmem");
+    EXPECT_NE(allocator.get(), nullptr);
+
     status = getPortParam(omxNode, OMX_IndexParamPortDefinition, portIndex,
                           &portDef);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+
     for (size_t i = 0; i < portDef.nBufferCountActual; i++) {
         BufferInfo buffer;
         buffer.owner = client;
         buffer.omxBuffer.type = CodecBuffer::Type::SHARED_MEM;
         buffer.omxBuffer.attr.preset.rangeOffset = 0;
         buffer.omxBuffer.attr.preset.rangeLength = 0;
-        bool success;
+        bool success = false;
         allocator->allocate(
             portDef.nBufferSize,
             [&success, &buffer](bool _s,
@@ -228,6 +234,7 @@ void allocatePortBuffers(sp<IOmxNode> omxNode, sp<IAllocator> allocator,
                 buffer.omxBuffer.sharedMemory = mem;
             });
         ASSERT_EQ(success, true);
+        ASSERT_EQ(buffer.omxBuffer.sharedMemory.size(), portDef.nBufferSize);
 
         omxNode->useBuffer(
             portIndex, buffer.omxBuffer,
@@ -238,6 +245,223 @@ void allocatePortBuffers(sp<IOmxNode> omxNode, sp<IAllocator> allocator,
             });
         buffArray->push(buffer);
         ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    }
+}
+
+// State Transition : Loaded -> Idle
+// Note: This function does not make any background checks for this transition.
+// The callee holds the reponsibility to ensure the legality of the transition.
+void changeStateLoadedtoIdle(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
+                             android::Vector<BufferInfo>* iBuffer,
+                             android::Vector<BufferInfo>* oBuffer,
+                             OMX_U32 kPortIndexInput,
+                             OMX_U32 kPortIndexOutput) {
+    android::hardware::media::omx::V1_0::Status status;
+    Message msg;
+
+    // set state to idle
+    status = omxNode->sendCommand(toRawCommandType(OMX_CommandStateSet),
+                                  OMX_StateIdle);
+    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
+
+    // Dont switch states until the ports are populated
+    status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
+    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::TIMED_OUT);
+
+    // allocate buffers on input port
+    allocatePortBuffers(omxNode, iBuffer, kPortIndexInput);
+
+    // Dont switch states until the ports are populated
+    status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
+    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::TIMED_OUT);
+
+    // allocate buffers on output port
+    allocatePortBuffers(omxNode, oBuffer, kPortIndexOutput);
+
+    // As the ports are populated, check if the state transition is complete
+    status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
+    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
+    ASSERT_EQ(msg.type, Message::Type::EVENT);
+    ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
+    ASSERT_EQ(msg.data.eventData.data1, OMX_CommandStateSet);
+    ASSERT_EQ(msg.data.eventData.data2, OMX_StateIdle);
+
+    return;
+}
+
+// State Transition : Idle -> Loaded
+// Note: This function does not make any background checks for this transition.
+// The callee holds the reponsibility to ensure the legality of the transition.
+void changeStateIdletoLoaded(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
+                             android::Vector<BufferInfo>* iBuffer,
+                             android::Vector<BufferInfo>* oBuffer,
+                             OMX_U32 kPortIndexInput,
+                             OMX_U32 kPortIndexOutput) {
+    android::hardware::media::omx::V1_0::Status status;
+    Message msg;
+
+    // set state to Loaded
+    status = omxNode->sendCommand(toRawCommandType(OMX_CommandStateSet),
+                                  OMX_StateLoaded);
+    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
+
+    // dont change state until all buffers are freed
+    status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
+    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::TIMED_OUT);
+
+    for (size_t i = 0; i < iBuffer->size(); ++i) {
+        status = omxNode->freeBuffer(kPortIndexInput, (*iBuffer)[i].id);
+        ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
+    }
+
+    // dont change state until all buffers are freed
+    status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
+    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::TIMED_OUT);
+
+    for (size_t i = 0; i < oBuffer->size(); ++i) {
+        status = omxNode->freeBuffer(kPortIndexOutput, (*oBuffer)[i].id);
+        ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
+    }
+
+    status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
+    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
+    ASSERT_EQ(msg.type, Message::Type::EVENT);
+    ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
+    ASSERT_EQ(msg.data.eventData.data1, OMX_CommandStateSet);
+    ASSERT_EQ(msg.data.eventData.data2, OMX_StateLoaded);
+
+    return;
+}
+
+// State Transition : Idle -> Execute
+// Note: This function does not make any background checks for this transition.
+// The callee holds the reponsibility to ensure the legality of the transition.
+void changeStateIdletoExecute(sp<IOmxNode> omxNode,
+                              sp<CodecObserver> observer) {
+    android::hardware::media::omx::V1_0::Status status;
+    Message msg;
+
+    // set state to execute
+    status = omxNode->sendCommand(toRawCommandType(OMX_CommandStateSet),
+                                  OMX_StateExecuting);
+    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
+    status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT);
+    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
+    ASSERT_EQ(msg.type, Message::Type::EVENT);
+    ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
+    ASSERT_EQ(msg.data.eventData.data1, OMX_CommandStateSet);
+    ASSERT_EQ(msg.data.eventData.data2, OMX_StateExecuting);
+
+    return;
+}
+
+// State Transition : Execute -> Idle
+// Note: This function does not make any background checks for this transition.
+// The callee holds the reponsibility to ensure the legality of the transition.
+void changeStateExecutetoIdle(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
+                              android::Vector<BufferInfo>* iBuffer,
+                              android::Vector<BufferInfo>* oBuffer) {
+    android::hardware::media::omx::V1_0::Status status;
+    Message msg;
+
+    // set state to Idle
+    status = omxNode->sendCommand(toRawCommandType(OMX_CommandStateSet),
+                                  OMX_StateIdle);
+    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
+    status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
+    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
+    ASSERT_EQ(msg.type, Message::Type::EVENT);
+    ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
+    ASSERT_EQ(msg.data.eventData.data1, OMX_CommandStateSet);
+    ASSERT_EQ(msg.data.eventData.data2, OMX_StateIdle);
+
+    // test if client got all its buffers back
+    for (size_t i = 0; i < oBuffer->size(); ++i) {
+        EXPECT_EQ((*oBuffer)[i].owner, client);
+    }
+    for (size_t i = 0; i < iBuffer->size(); ++i) {
+        EXPECT_EQ((*iBuffer)[i].owner, client);
+    }
+}
+
+// dispatch buffer to output port
+void dispatchOutputBuffer(sp<IOmxNode> omxNode,
+                          android::Vector<BufferInfo>* buffArray,
+                          size_t bufferIndex) {
+    android::hardware::media::omx::V1_0::Status status;
+    CodecBuffer t;
+    t.sharedMemory = android::hardware::hidl_memory();
+    t.nativeHandle = android::hardware::hidl_handle();
+    t.type = CodecBuffer::Type::PRESET;
+    t.attr.preset.rangeOffset = 0;
+    t.attr.preset.rangeLength = 0;
+    native_handle_t* fenceNh = native_handle_create(0, 0);
+    ASSERT_NE(fenceNh, nullptr);
+    status = omxNode->fillBuffer((*buffArray)[bufferIndex].id, t, fenceNh);
+    native_handle_close(fenceNh);
+    native_handle_delete(fenceNh);
+    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
+    buffArray->editItemAt(bufferIndex).owner = component;
+}
+
+// dispatch buffer to input port
+void dispatchInputBuffer(sp<IOmxNode> omxNode,
+                         android::Vector<BufferInfo>* buffArray,
+                         size_t bufferIndex, int bytesCount, uint32_t flags,
+                         uint64_t timestamp) {
+    android::hardware::media::omx::V1_0::Status status;
+    CodecBuffer t;
+    t.sharedMemory = android::hardware::hidl_memory();
+    t.nativeHandle = android::hardware::hidl_handle();
+    t.type = CodecBuffer::Type::PRESET;
+    t.attr.preset.rangeOffset = 0;
+    t.attr.preset.rangeLength = bytesCount;
+    native_handle_t* fenceNh = native_handle_create(0, 0);
+    ASSERT_NE(fenceNh, nullptr);
+    status = omxNode->emptyBuffer((*buffArray)[bufferIndex].id, t, flags,
+                                  timestamp, fenceNh);
+    native_handle_close(fenceNh);
+    native_handle_delete(fenceNh);
+    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
+    buffArray->editItemAt(bufferIndex).owner = component;
+}
+
+// Flush input and output ports
+void flushPorts(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
+                android::Vector<BufferInfo>* iBuffer,
+                android::Vector<BufferInfo>* oBuffer, OMX_U32 kPortIndexInput,
+                OMX_U32 kPortIndexOutput) {
+    android::hardware::media::omx::V1_0::Status status;
+    Message msg;
+
+    // Flush input port
+    status = omxNode->sendCommand(toRawCommandType(OMX_CommandFlush),
+                                  kPortIndexInput);
+    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
+    status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
+    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
+    ASSERT_EQ(msg.type, Message::Type::EVENT);
+    ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
+    ASSERT_EQ(msg.data.eventData.data1, OMX_CommandFlush);
+    ASSERT_EQ(msg.data.eventData.data2, kPortIndexInput);
+    // test if client got all its buffers back
+    for (size_t i = 0; i < iBuffer->size(); ++i) {
+        EXPECT_EQ((*iBuffer)[i].owner, client);
+    }
+
+    // Flush output port
+    status = omxNode->sendCommand(toRawCommandType(OMX_CommandFlush),
+                                  kPortIndexOutput);
+    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
+    status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
+    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
+    ASSERT_EQ(msg.type, Message::Type::EVENT);
+    ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
+    ASSERT_EQ(msg.data.eventData.data1, OMX_CommandFlush);
+    ASSERT_EQ(msg.data.eventData.data2, kPortIndexOutput);
+    // test if client got all its buffers back
+    for (size_t i = 0; i < oBuffer->size(); ++i) {
+        EXPECT_EQ((*oBuffer)[i].owner, client);
     }
 }
 
@@ -262,6 +486,8 @@ Return<android::hardware::media::omx::V1_0::Status> setVideoPortFormat(
             eCompressionFormat.push_back(portFormat.eCompressionFormat);
         index++;
         if (index == 512) {
+            // enumerated way too many formats, highly unusual for this to
+            // happen.
             EXPECT_LE(index, 512U)
                 << "Expecting OMX_ErrorNoMore but not received";
             break;
@@ -317,6 +543,8 @@ Return<android::hardware::media::omx::V1_0::Status> setAudioPortFormat(
         eEncoding.push_back(portFormat.eEncoding);
         index++;
         if (index == 512) {
+            // enumerated way too many formats, highly unusual for this to
+            // happen.
             EXPECT_LE(index, 512U)
                 << "Expecting OMX_ErrorNoMore but not received";
             break;
@@ -348,22 +576,23 @@ Return<android::hardware::media::omx::V1_0::Status> setRole(
     return setParam(omxNode, OMX_IndexParamStandardComponentRole, &params);
 }
 
-// Set Component Role
 TEST_F(ComponentHidlTest, SetRole) {
+    description("Test Set Component Role");
     android::hardware::media::omx::V1_0::Status status;
     status = setRole(omxNode, gEnv->getRole().c_str());
-    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 }
 
-// Get Number of Ports and their Indices for all Domains
-// (Audio/Video/Image/Other)
 TEST_F(ComponentHidlTest, GetPortIndices) {
+    description("Test Component on Mandatory Port Parameters (Port ID's)");
     android::hardware::media::omx::V1_0::Status status;
     OMX_PORT_PARAM_TYPE params;
 
     status = setRole(omxNode, gEnv->getRole().c_str());
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 
+    // Get Number of Ports and their Indices for all Domains
+    // (Audio/Video/Image/Other)
     // All standard OMX components shall support following OMX Index types
     status = getParam(omxNode, OMX_IndexParamAudioInit, &params);
     EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
@@ -375,8 +604,8 @@ TEST_F(ComponentHidlTest, GetPortIndices) {
     EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 }
 
-// Enumerate Port Format
 TEST_F(ComponentHidlTest, EnumeratePortFormat) {
+    description("Test Component on Mandatory Port Parameters (Port Format)");
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
 
@@ -397,6 +626,7 @@ TEST_F(ComponentHidlTest, EnumeratePortFormat) {
     OMX_COLOR_FORMATTYPE colorFormat = OMX_COLOR_FormatYUV420Planar;
     OMX_U32 frameRate = 24 << 16;
 
+    // Enumerate Port Format
     if (compClass == audio_encoder) {
         status =
             setAudioPortFormat(omxNode, kPortIndexInput, OMX_AUDIO_CodingPCM);
@@ -432,8 +662,9 @@ TEST_F(ComponentHidlTest, EnumeratePortFormat) {
     }
 }
 
-// r/w default i/o port parameters
 TEST_F(ComponentHidlTest, SetDefaultPortParams) {
+    description(
+        "Test Component on Mandatory Port Parameters (Port Definition)");
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
 
@@ -451,15 +682,15 @@ TEST_F(ComponentHidlTest, SetDefaultPortParams) {
         kPortIndexOutput = kPortIndexInput + 1;
     }
 
+    // r/w default i/o port parameters
     OMX_PARAM_PORTDEFINITIONTYPE iPortDef;
     status = getPortParam(omxNode, OMX_IndexParamPortDefinition,
                           kPortIndexInput, &iPortDef);
     EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-
     if (status == android::hardware::media::omx::V1_0::Status::OK) {
         EXPECT_EQ(iPortDef.eDir, OMX_DirInput);
         EXPECT_EQ(iPortDef.bEnabled, OMX_TRUE);
-        EXPECT_EQ(iPortDef.bPopulated, 0);
+        EXPECT_EQ(iPortDef.bPopulated, OMX_FALSE);
         EXPECT_GE(iPortDef.nBufferCountMin, 1U);
         EXPECT_GE(iPortDef.nBufferCountActual, iPortDef.nBufferCountMin);
         if (compClass == audio_encoder || compClass == audio_decoder) {
@@ -495,12 +726,8 @@ TEST_F(ComponentHidlTest, SetDefaultPortParams) {
         if ((iPortDef.eDir != OMX_DirInput) ||
             (iPortDef.nBufferCountMin != dummy.nBufferCountMin) ||
             (iPortDef.nBufferSize != dummy.nBufferSize)) {
-            ALOGI(
-                "Warning, Component does not seem to preserve Read-Only "
-                "fields");
-            printf(
-                "Warning, Component does not seem to preserve Read-Only fields "
-                "\n");
+            std::cerr << "[          ] Warning ! Component input port does not "
+                         "preserve Read-Only fields \n";
         }
     }
 
@@ -511,7 +738,7 @@ TEST_F(ComponentHidlTest, SetDefaultPortParams) {
     if (status == ::android::hardware::media::omx::V1_0::Status::OK) {
         EXPECT_EQ(oPortDef.eDir, OMX_DirOutput);
         EXPECT_EQ(oPortDef.bEnabled, OMX_TRUE);
-        EXPECT_EQ(oPortDef.bPopulated, 0);
+        EXPECT_EQ(oPortDef.bPopulated, OMX_FALSE);
         EXPECT_GE(oPortDef.nBufferCountMin, 1U);
         EXPECT_GE(oPortDef.nBufferCountActual, oPortDef.nBufferCountMin);
         if (compClass == audio_encoder || compClass == audio_decoder) {
@@ -547,18 +774,82 @@ TEST_F(ComponentHidlTest, SetDefaultPortParams) {
         if ((oPortDef.eDir != OMX_DirOutput) ||
             (oPortDef.nBufferCountMin != dummy.nBufferCountMin) ||
             (oPortDef.nBufferSize != dummy.nBufferSize)) {
-            ALOGI(
-                "Warning, Component does not seem to preserve Read-Only "
-                "fields");
-            printf(
-                "Warning, Component does not seem to preserve Read-Only fields "
-                "\n");
+            std::cerr << "[          ] Warning ! Component output port does "
+                         "not preserve Read-Only fields \n";
         }
     }
 }
 
-// Test State Transitions & Flush
-TEST_F(ComponentHidlTest, StateTransitions_Flush) {
+TEST_F(ComponentHidlTest, PopulatePort) {
+    description("Verify bPopulated field of a component port");
+    android::hardware::media::omx::V1_0::Status status;
+    OMX_U32 portBase = 0;
+
+    status = setRole(omxNode, gEnv->getRole().c_str());
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    OMX_PORT_PARAM_TYPE params;
+    if (compClass == audio_decoder || compClass == audio_encoder) {
+        status = getParam(omxNode, OMX_IndexParamAudioInit, &params);
+    } else {
+        status = getParam(omxNode, OMX_IndexParamVideoInit, &params);
+    }
+    if (status == ::android::hardware::media::omx::V1_0::Status::OK) {
+        ASSERT_EQ(params.nPorts, 2U);
+        portBase = params.nStartPortNumber;
+    }
+
+    sp<IAllocator> allocator = IAllocator::getService("ashmem");
+    EXPECT_NE(allocator.get(), nullptr);
+
+    OMX_PARAM_PORTDEFINITIONTYPE portDef;
+    status =
+        getPortParam(omxNode, OMX_IndexParamPortDefinition, portBase, &portDef);
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    ASSERT_EQ(portDef.bPopulated, OMX_FALSE);
+
+    android::Vector<BufferInfo> pBuffer;
+    pBuffer.clear();
+    uint32_t nBufferSize = portDef.nBufferSize >> 1;
+
+    for (size_t i = 0; i < portDef.nBufferCountActual; i++) {
+        BufferInfo buffer;
+        buffer.owner = client;
+        buffer.omxBuffer.type = CodecBuffer::Type::SHARED_MEM;
+        buffer.omxBuffer.attr.preset.rangeOffset = 0;
+        buffer.omxBuffer.attr.preset.rangeLength = 0;
+        bool success = false;
+        allocator->allocate(
+            nBufferSize,
+            [&success, &buffer](bool _s,
+                                ::android::hardware::hidl_memory const& mem) {
+                success = _s;
+                buffer.omxBuffer.sharedMemory = mem;
+            });
+        ASSERT_EQ(success, true);
+        ASSERT_EQ(buffer.omxBuffer.sharedMemory.size(), nBufferSize);
+
+        omxNode->useBuffer(
+            portBase, buffer.omxBuffer,
+            [&status, &buffer](android::hardware::media::omx::V1_0::Status _s,
+                               uint32_t id) {
+                status = _s;
+                buffer.id = id;
+            });
+        pBuffer.push(buffer);
+        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    }
+
+    status =
+        getPortParam(omxNode, OMX_IndexParamPortDefinition, portBase, &portDef);
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    // A port is populated when all of the buffers indicated by
+    // nBufferCountActual
+    // with a size of at least nBufferSizehave been allocated on the port.
+    ASSERT_EQ(portDef.bPopulated, OMX_FALSE);
+}
+
+TEST_F(ComponentHidlTest, Flush) {
+    description("Test Flush");
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     Message msg;
@@ -580,163 +871,79 @@ TEST_F(ComponentHidlTest, StateTransitions_Flush) {
     android::Vector<BufferInfo> iBuffer, oBuffer;
 
     // set state to idle
-    status = omxNode->sendCommand(toRawCommandType(OMX_CommandStateSet),
-                                  OMX_StateIdle);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-
-    // Dont switch states until the ports got their buffers
-    status =
-        observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, &iBuffer, &oBuffer);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::TIMED_OUT);
-
-    // allocate buffers on input port
-    allocatePortBuffers(omxNode, allocator, &iBuffer, kPortIndexInput);
-
-    // Dont switch states until the ports got their buffers
-    status =
-        observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, &iBuffer, &oBuffer);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::TIMED_OUT);
-
-    // allocate buffers on output port
-    allocatePortBuffers(omxNode, allocator, &oBuffer, kPortIndexOutput);
-
-    status =
-        observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, &iBuffer, &oBuffer);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    ASSERT_EQ(msg.type, Message::Type::EVENT);
-    ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
-    ASSERT_EQ(msg.data.eventData.data1, OMX_CommandStateSet);
-    ASSERT_EQ(msg.data.eventData.data2, OMX_StateIdle);
-
+    changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
+                            kPortIndexInput, kPortIndexOutput);
     // set state to executing
-    status = omxNode->sendCommand(toRawCommandType(OMX_CommandStateSet),
-                                  OMX_StateExecuting);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    status =
-        observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, &iBuffer, &oBuffer);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    ASSERT_EQ(msg.type, Message::Type::EVENT);
-    ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
-    ASSERT_EQ(msg.data.eventData.data1, OMX_CommandStateSet);
-    ASSERT_EQ(msg.data.eventData.data2, OMX_StateExecuting);
-
-    CodecBuffer t;
-    t.sharedMemory = android::hardware::hidl_memory();
-    t.nativeHandle = android::hardware::hidl_handle();
-    t.type = CodecBuffer::Type::PRESET;
-    t.attr.preset.rangeOffset = 0;
-    t.attr.preset.rangeLength = 0;
-    for (size_t i = 0; i < oBuffer.size(); ++i) {
-        native_handle_t* fenceNh = native_handle_create(0, 0);
-        status = omxNode->fillBuffer(oBuffer[i].id, t, fenceNh);
-        native_handle_close(fenceNh);
-        native_handle_delete(fenceNh);
-        ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-        oBuffer.editItemAt(i).owner = component;
+    changeStateIdletoExecute(omxNode, observer);
+    // dispatch buffers
+    for (size_t i = 0; i < oBuffer.size(); i++) {
+        dispatchOutputBuffer(omxNode, &oBuffer, i);
     }
-
-    // set state to Idle
-    status = omxNode->sendCommand(toRawCommandType(OMX_CommandStateSet),
-                                  OMX_StateIdle);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    status =
-        observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, &iBuffer, &oBuffer);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    ASSERT_EQ(msg.type, Message::Type::EVENT);
-    ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
-    ASSERT_EQ(msg.data.eventData.data1, OMX_CommandStateSet);
-    ASSERT_EQ(msg.data.eventData.data2, OMX_StateIdle);
-
-    // test if client got all its buffers back
-    for (size_t i = 0; i < oBuffer.size(); ++i) {
-        EXPECT_EQ(oBuffer[i].owner, client);
+    // flush port
+    flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
+               kPortIndexOutput);
+    // dispatch buffers
+    for (size_t i = 0; i < iBuffer.size(); i++) {
+        dispatchInputBuffer(omxNode, &iBuffer, i, 0, 0, 0);
     }
-
-    // set state to executing
-    status = omxNode->sendCommand(toRawCommandType(OMX_CommandStateSet),
-                                  OMX_StateExecuting);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    status =
-        observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, &iBuffer, &oBuffer);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    ASSERT_EQ(msg.type, Message::Type::EVENT);
-    ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
-    ASSERT_EQ(msg.data.eventData.data1, OMX_CommandStateSet);
-    ASSERT_EQ(msg.data.eventData.data2, OMX_StateExecuting);
-
-    for (size_t i = 0; i < oBuffer.size(); i += 2) {
-        native_handle_t* fenceNh = native_handle_create(0, 0);
-        status = omxNode->fillBuffer(oBuffer[i].id, t, fenceNh);
-        native_handle_close(fenceNh);
-        native_handle_delete(fenceNh);
-        ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-        oBuffer.editItemAt(i).owner = component;
-    }
-
-    status = omxNode->sendCommand(toRawCommandType(OMX_CommandFlush),
-                                  kPortIndexOutput);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    status =
-        observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, &iBuffer, &oBuffer);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    ASSERT_EQ(msg.type, Message::Type::EVENT);
-    ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
-    ASSERT_EQ(msg.data.eventData.data1, OMX_CommandFlush);
-    ASSERT_EQ(msg.data.eventData.data2, kPortIndexOutput);
-
-    // test if client got all its buffers back
-    for (size_t i = 0; i < oBuffer.size(); ++i) {
-        EXPECT_EQ(oBuffer[i].owner, client);
-    }
-
-    // set state to Idle
-    status = omxNode->sendCommand(toRawCommandType(OMX_CommandStateSet),
-                                  OMX_StateIdle);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    status =
-        observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, &iBuffer, &oBuffer);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    ASSERT_EQ(msg.type, Message::Type::EVENT);
-    ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
-    ASSERT_EQ(msg.data.eventData.data1, OMX_CommandStateSet);
-    ASSERT_EQ(msg.data.eventData.data2, OMX_StateIdle);
-
-    // set state to Loaded
-    status = omxNode->sendCommand(toRawCommandType(OMX_CommandStateSet),
-                                  OMX_StateLoaded);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-
-    // dont change state until all buffers are freed
-    status =
-        observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, &iBuffer, &oBuffer);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::TIMED_OUT);
-
-    for (size_t i = 0; i < iBuffer.size(); ++i) {
-        status = omxNode->freeBuffer(kPortIndexInput, iBuffer[i].id);
-        ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    }
-
-    // dont change state until all buffers are freed
-    status =
-        observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, &iBuffer, &oBuffer);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::TIMED_OUT);
-
-    for (size_t i = 0; i < oBuffer.size(); ++i) {
-        status = omxNode->freeBuffer(kPortIndexOutput, oBuffer[i].id);
-        ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    }
-
-    status =
-        observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, &iBuffer, &oBuffer);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    ASSERT_EQ(msg.type, Message::Type::EVENT);
-    ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
-    ASSERT_EQ(msg.data.eventData.data1, OMX_CommandStateSet);
-    ASSERT_EQ(msg.data.eventData.data2, OMX_StateLoaded);
+    // flush ports
+    flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
+               kPortIndexOutput);
+    // set state to idle
+    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+    // set state to loaded
+    changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
+                            kPortIndexInput, kPortIndexOutput);
 }
 
-// Test State Transitions
+TEST_F(ComponentHidlTest, StateTransitions) {
+    description("Test State Transitions");
+    android::hardware::media::omx::V1_0::Status status;
+    uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
+    Message msg;
+
+    status = setRole(omxNode, gEnv->getRole().c_str());
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    OMX_PORT_PARAM_TYPE params;
+    if (compClass == audio_decoder || compClass == audio_encoder) {
+        status = getParam(omxNode, OMX_IndexParamAudioInit, &params);
+    } else {
+        status = getParam(omxNode, OMX_IndexParamVideoInit, &params);
+    }
+    if (status == ::android::hardware::media::omx::V1_0::Status::OK) {
+        ASSERT_EQ(params.nPorts, 2U);
+        kPortIndexInput = params.nStartPortNumber;
+        kPortIndexOutput = kPortIndexInput + 1;
+    }
+
+    android::Vector<BufferInfo> iBuffer, oBuffer;
+
+    // set state to idle
+    changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
+                            kPortIndexInput, kPortIndexOutput);
+    // set state to executing
+    changeStateIdletoExecute(omxNode, observer);
+    // dispatch buffers
+    for (size_t i = 0; i < oBuffer.size(); i++) {
+        dispatchOutputBuffer(omxNode, &oBuffer, i);
+    }
+    // set state to idle
+    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+    // set state to executing
+    changeStateIdletoExecute(omxNode, observer);
+    // dispatch buffers
+    for (size_t i = 0; i < iBuffer.size(); i++) {
+        dispatchInputBuffer(omxNode, &iBuffer, i, 0, 0, 0);
+    }
+    // set state to idle
+    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+    // set state to loaded
+    changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
+                            kPortIndexInput, kPortIndexOutput);
+}
+
 TEST_F(ComponentHidlTest, StateTransitions_M) {
+    description("Test State Transitions monkeying");
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     Message msg;
@@ -768,21 +975,8 @@ TEST_F(ComponentHidlTest, StateTransitions_M) {
     EXPECT_NE(status, android::hardware::media::omx::V1_0::Status::OK);
 
     // set state to idle
-    status = omxNode->sendCommand(toRawCommandType(OMX_CommandStateSet),
-                                  OMX_StateIdle);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-
-    // allocate buffers on i/o port
-    allocatePortBuffers(omxNode, allocator, &iBuffer, kPortIndexInput);
-    allocatePortBuffers(omxNode, allocator, &oBuffer, kPortIndexOutput);
-
-    status =
-        observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, &iBuffer, &oBuffer);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    ASSERT_EQ(msg.type, Message::Type::EVENT);
-    ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
-    ASSERT_EQ(msg.data.eventData.data1, OMX_CommandStateSet);
-    ASSERT_EQ(msg.data.eventData.data2, OMX_StateIdle);
+    changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
+                            kPortIndexInput, kPortIndexOutput);
 
     // set state to idle ; receive error OMX_ErrorSameState
     status = omxNode->sendCommand(toRawCommandType(OMX_CommandStateSet),
@@ -790,16 +984,7 @@ TEST_F(ComponentHidlTest, StateTransitions_M) {
     EXPECT_NE(status, android::hardware::media::omx::V1_0::Status::OK);
 
     // set state to executing
-    status = omxNode->sendCommand(toRawCommandType(OMX_CommandStateSet),
-                                  OMX_StateExecuting);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    status =
-        observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, &iBuffer, &oBuffer);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    ASSERT_EQ(msg.type, Message::Type::EVENT);
-    ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
-    ASSERT_EQ(msg.data.eventData.data1, OMX_CommandStateSet);
-    ASSERT_EQ(msg.data.eventData.data2, OMX_StateExecuting);
+    changeStateIdletoExecute(omxNode, observer);
 
     // set state to executing ; receive error OMX_ErrorSameState
     status = omxNode->sendCommand(toRawCommandType(OMX_CommandStateSet),
@@ -812,43 +997,15 @@ TEST_F(ComponentHidlTest, StateTransitions_M) {
     EXPECT_NE(status, android::hardware::media::omx::V1_0::Status::OK);
 
     // set state to Idle
-    status = omxNode->sendCommand(toRawCommandType(OMX_CommandStateSet),
-                                  OMX_StateIdle);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    status =
-        observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, &iBuffer, &oBuffer);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    ASSERT_EQ(msg.type, Message::Type::EVENT);
-    ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
-    ASSERT_EQ(msg.data.eventData.data1, OMX_CommandStateSet);
-    ASSERT_EQ(msg.data.eventData.data2, OMX_StateIdle);
+    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
 
     // set state to Loaded
-    status = omxNode->sendCommand(toRawCommandType(OMX_CommandStateSet),
-                                  OMX_StateLoaded);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-
-    for (size_t i = 0; i < iBuffer.size(); ++i) {
-        status = omxNode->freeBuffer(kPortIndexInput, iBuffer[i].id);
-        ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    }
-    for (size_t i = 0; i < oBuffer.size(); ++i) {
-        status = omxNode->freeBuffer(kPortIndexOutput, oBuffer[i].id);
-        ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    }
-
-    status =
-        observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, &iBuffer, &oBuffer);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    ASSERT_EQ(msg.type, Message::Type::EVENT);
-    ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
-    ASSERT_EQ(msg.data.eventData.data1, OMX_CommandStateSet);
-    ASSERT_EQ(msg.data.eventData.data2, OMX_StateLoaded);
+    changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
+                            kPortIndexInput, kPortIndexOutput);
 }
 
-// Enable and Disable Input and Output ports when the component is in Loaded
-// State
 TEST_F(ComponentHidlTest, PortEnableDisable_Loaded) {
+    description("Test Port Enable and Disable (Component State :: Loaded)");
     android::hardware::media::omx::V1_0::Status status;
     OMX_U32 portBase = 0;
     Message msg;
@@ -895,8 +1052,8 @@ TEST_F(ComponentHidlTest, PortEnableDisable_Loaded) {
     }
 }
 
-// Enable and Disable Input and Output ports when the component is in Idle State
 TEST_F(ComponentHidlTest, PortEnableDisable_Idle) {
+    description("Test Port Enable and Disable (Component State :: Idle)");
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     OMX_U32 portBase = 0;
@@ -918,22 +1075,10 @@ TEST_F(ComponentHidlTest, PortEnableDisable_Idle) {
 
     // Component State :: Idle
     android::Vector<BufferInfo> pBuffer[2];
+
     // set state to idle
-    status = omxNode->sendCommand(toRawCommandType(OMX_CommandStateSet),
-                                  OMX_StateIdle);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-
-    // allocate buffers on input port
-    allocatePortBuffers(omxNode, allocator, &pBuffer[0], kPortIndexInput);
-    allocatePortBuffers(omxNode, allocator, &pBuffer[1], kPortIndexOutput);
-
-    status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, &pBuffer[0],
-                                      &pBuffer[1]);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    ASSERT_EQ(msg.type, Message::Type::EVENT);
-    ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
-    ASSERT_EQ(msg.data.eventData.data1, OMX_CommandStateSet);
-    ASSERT_EQ(msg.data.eventData.data2, OMX_StateIdle);
+    changeStateLoadedtoIdle(omxNode, observer, &pBuffer[0], &pBuffer[1],
+                            kPortIndexInput, kPortIndexOutput);
 
     for (size_t i = portBase; i < portBase + 2; i++) {
         status =
@@ -982,7 +1127,7 @@ TEST_F(ComponentHidlTest, PortEnableDisable_Idle) {
             ASSERT_EQ(status,
                       android::hardware::media::omx::V1_0::Status::TIMED_OUT);
 
-            allocatePortBuffers(omxNode, allocator, &pBuffer[i - portBase], i);
+            allocatePortBuffers(omxNode, &pBuffer[i - portBase], i);
             status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT,
                                               &pBuffer[0], &pBuffer[1]);
             ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
@@ -994,10 +1139,14 @@ TEST_F(ComponentHidlTest, PortEnableDisable_Idle) {
             ASSERT_TRUE(false);
         }
     }
+
+    // set state to Loaded
+    changeStateIdletoLoaded(omxNode, observer, &pBuffer[0], &pBuffer[1],
+                            kPortIndexInput, kPortIndexOutput);
 }
 
-// Enable and Disable Input and Output ports when the component is in execute
 TEST_F(ComponentHidlTest, PortEnableDisable_Execute) {
+    description("Test Port Enable and Disable (Component State :: Execute)");
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     OMX_U32 portBase = 0;
@@ -1019,48 +1168,17 @@ TEST_F(ComponentHidlTest, PortEnableDisable_Execute) {
 
     // Component State :: Idle
     android::Vector<BufferInfo> pBuffer[2];
+
     // set state to idle
-    status = omxNode->sendCommand(toRawCommandType(OMX_CommandStateSet),
-                                  OMX_StateIdle);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
+    changeStateLoadedtoIdle(omxNode, observer, &pBuffer[0], &pBuffer[1],
+                            kPortIndexInput, kPortIndexOutput);
 
-    // allocate buffers on input port
-    allocatePortBuffers(omxNode, allocator, &pBuffer[0], kPortIndexInput);
-    allocatePortBuffers(omxNode, allocator, &pBuffer[1], kPortIndexOutput);
+    // set state to executing
+    changeStateIdletoExecute(omxNode, observer);
 
-    status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, &pBuffer[0],
-                                      &pBuffer[1]);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    ASSERT_EQ(msg.type, Message::Type::EVENT);
-    ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
-    ASSERT_EQ(msg.data.eventData.data1, OMX_CommandStateSet);
-    ASSERT_EQ(msg.data.eventData.data2, OMX_StateIdle);
-
-    // Component State :: Execute
-    status = omxNode->sendCommand(toRawCommandType(OMX_CommandStateSet),
-                                  OMX_StateExecuting);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, &pBuffer[0],
-                                      &pBuffer[1]);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    ASSERT_EQ(msg.type, Message::Type::EVENT);
-    ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
-    ASSERT_EQ(msg.data.eventData.data1, OMX_CommandStateSet);
-    ASSERT_EQ(msg.data.eventData.data2, OMX_StateExecuting);
-
-    CodecBuffer t;
-    t.sharedMemory = android::hardware::hidl_memory();
-    t.nativeHandle = android::hardware::hidl_handle();
-    t.type = CodecBuffer::Type::PRESET;
-    t.attr.preset.rangeOffset = 0;
-    t.attr.preset.rangeLength = 0;
-    for (size_t i = 0; i < pBuffer[1].size(); ++i) {
-        native_handle_t* fenceNh = native_handle_create(0, 0);
-        status = omxNode->fillBuffer(pBuffer[1][i].id, t, fenceNh);
-        native_handle_close(fenceNh);
-        native_handle_delete(fenceNh);
-        ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-        pBuffer[1].editItemAt(i).owner = component;
+    // dispatch buffers
+    for (size_t i = 0; i < pBuffer[1].size(); i++) {
+        dispatchOutputBuffer(omxNode, &pBuffer[1], i);
     }
 
     for (size_t i = portBase; i < portBase + 2; i++) {
@@ -1113,7 +1231,7 @@ TEST_F(ComponentHidlTest, PortEnableDisable_Execute) {
             ASSERT_EQ(status,
                       android::hardware::media::omx::V1_0::Status::TIMED_OUT);
 
-            allocatePortBuffers(omxNode, allocator, &pBuffer[i - portBase], i);
+            allocatePortBuffers(omxNode, &pBuffer[i - portBase], i);
             status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT,
                                               &pBuffer[0], &pBuffer[1]);
             ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
@@ -1125,10 +1243,18 @@ TEST_F(ComponentHidlTest, PortEnableDisable_Execute) {
             ASSERT_TRUE(false);
         }
     }
+
+    // set state to Idle
+    changeStateExecutetoIdle(omxNode, observer, &pBuffer[0], &pBuffer[1]);
+
+    // set state to Loaded
+    changeStateIdletoLoaded(omxNode, observer, &pBuffer[0], &pBuffer[1],
+                            kPortIndexInput, kPortIndexOutput);
 }
 
-// Enable and Disable Input and Output ports, (in loaded state)
 TEST_F(ComponentHidlTest, PortEnableDisable_M) {
+    description(
+        "Test Port Enable and Disable Monkeying (Component State :: Loaded)");
     android::hardware::media::omx::V1_0::Status status;
     OMX_U32 portBase = 0;
     Message msg;
