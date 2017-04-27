@@ -24,6 +24,7 @@ cc_library_shared {
         "vendor_interface.cc",
     ],
     shared_libs: [
+        "android.frameworks.schedulerservice@1.0",
         "android.hardware.bluetooth@1.0",
         "libbase",
         "libcutils",
@@ -48,6 +49,7 @@ cc_library_static {
     ],
     export_include_dirs: ["."],
     shared_libs: [
+        "android.frameworks.schedulerservice@1.0",
         "liblog",
     ],
 }
@@ -84,9 +86,11 @@ cc_test {
         "test",
     ],
     shared_libs: [
+        "android.frameworks.schedulerservice@1.0",
         "libbase",
         "libhidlbase",
         "liblog",
+        "libutils",
     ],
     static_libs: [
         "android.hardware.bluetooth-async",

@@ -75,7 +75,10 @@ TEST_F(RadioHidlTest, setGsmBroadcastConfig) {
   EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
   if (cardStatus.cardState == CardState::ABSENT) {
-    EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
+      ASSERT_TRUE(CheckGeneralError() ||
+                  radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                  radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
+                  radioRsp->rspInfo.error == RadioError::NONE);
   }
 }
 
@@ -92,7 +95,9 @@ TEST_F(RadioHidlTest, getGsmBroadcastConfig) {
   EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
   if (cardStatus.cardState == CardState::ABSENT) {
-    EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
+      ASSERT_TRUE(CheckGeneralError() ||
+                  radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
+                  radioRsp->rspInfo.error == RadioError::NONE);
   }
 }
 
@@ -117,7 +122,8 @@ TEST_F(RadioHidlTest, setCdmaBroadcastConfig) {
   EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
   if (cardStatus.cardState == CardState::ABSENT) {
-    EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
+      ASSERT_TRUE(CheckGeneralError() ||
+                  radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS);
   }
 }
 
@@ -134,7 +140,7 @@ TEST_F(RadioHidlTest, getCdmaBroadcastConfig) {
   EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
   if (cardStatus.cardState == CardState::ABSENT) {
-    EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
+      ASSERT_TRUE(CheckGeneralError());
   }
 }
 
@@ -152,7 +158,8 @@ TEST_F(RadioHidlTest, setCdmaBroadcastActivation) {
   EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
   if (cardStatus.cardState == CardState::ABSENT) {
-    EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
+      ASSERT_TRUE(CheckGeneralError() ||
+                  radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS);
   }
 }
 
@@ -170,6 +177,10 @@ TEST_F(RadioHidlTest, setGsmBroadcastActivation) {
   EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
   if (cardStatus.cardState == CardState::ABSENT) {
-    EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
+      ASSERT_TRUE(CheckGeneralError() ||
+                  radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                  radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
+                  radioRsp->rspInfo.error == RadioError::NONE ||
+                  radioRsp->rspInfo.error == RadioError::OPERATION_NOT_ALLOWED);
   }
 }
