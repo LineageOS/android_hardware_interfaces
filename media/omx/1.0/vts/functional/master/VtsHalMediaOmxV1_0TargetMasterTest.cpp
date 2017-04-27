@@ -105,6 +105,13 @@ TEST_F(MasterHidlTest, ListNodes) {
                nodeList = _nl;
            })
             .isOk());
+    for (size_t i = 0; i < nodeList.size(); i++) {
+        printf("%s", nodeList[i].mName.c_str());
+        for (size_t j = 0; j < ((nodeList[i]).mRoles).size(); j++) {
+            printf("\t %s", nodeList[i].mRoles[j].c_str());
+        }
+        printf("\n");
+    }
 }
 
 int main(int argc, char** argv) {
