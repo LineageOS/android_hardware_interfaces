@@ -173,8 +173,12 @@ TEST_F(WifiChipHidlTest, ConfigureChip) {
     EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_modes.first.code);
     EXPECT_LT(0u, status_and_modes.second.size());
     for (const auto& mode : status_and_modes.second) {
+        // configureChip() requires to be called with a fresh IWifiChip object.
+        wifi_chip_ = getWifiChip();
+        ASSERT_NE(nullptr, wifi_chip_.get());
         EXPECT_EQ(WifiStatusCode::SUCCESS,
                   HIDL_INVOKE(wifi_chip_, configureChip, mode.id).code);
+        stopWifi();
     }
 }
 
