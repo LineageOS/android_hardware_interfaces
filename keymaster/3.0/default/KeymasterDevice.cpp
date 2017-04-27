@@ -603,7 +603,13 @@ Return<ErrorCode> KeymasterDevice::deleteKey(const hidl_vec<uint8_t>& keyBlob) {
         return ErrorCode::UNIMPLEMENTED;
     }
     auto kmKeyBlob = hidlVec2KmKeyBlob(keyBlob);
-    return legacy_enum_conversion(keymaster_device_->delete_key(keymaster_device_, &kmKeyBlob));
+    auto rc = legacy_enum_conversion(
+        keymaster_device_->delete_key(keymaster_device_, &kmKeyBlob));
+    // Keymaster 3.0 requires deleteKey to return ErrorCode::OK if the key
+    // blob is unusable after the call. This is equally true if the key blob was
+    // unusable before.
+    if (rc == ErrorCode::INVALID_KEY_BLOB) return ErrorCode::OK;
+    return rc;
 }
 
 Return<ErrorCode> KeymasterDevice::deleteAllKeys() {
