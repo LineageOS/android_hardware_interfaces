@@ -46,6 +46,7 @@ CameraDeviceSession::CameraDeviceSession(
         mDevice(device),
         mDeviceVersion(device->common.version),
         mIsAELockAvailable(false),
+        mDerivePostRawSensKey(false),
         mNumPartialResults(1),
         mResultBatcher(callback) {
 
@@ -62,6 +63,13 @@ CameraDeviceSession::CameraDeviceSession(
     if (aeLockAvailableEntry.count > 0) {
         mIsAELockAvailable = (aeLockAvailableEntry.data.u8[0] ==
                 ANDROID_CONTROL_AE_LOCK_AVAILABLE_TRUE);
+    }
+
+    // Determine whether we need to derive sensitivity boost values for older devices.
+    // If post-RAW sensitivity boost range is listed, so should post-raw sensitivity control
+    // be listed (as the default value 100)
+    if (mDeviceInfo.exists(ANDROID_CONTROL_POST_RAW_SENSITIVITY_BOOST_RANGE)) {
+        mDerivePostRawSensKey = true;
     }
 
     mInitFail = initialize();
@@ -692,7 +700,22 @@ Return<void> CameraDeviceSession::constructDefaultRequestSettings(
                   __FUNCTION__, type);
             status = Status::ILLEGAL_ARGUMENT;
         } else {
-            convertToHidl(rawRequest, &outMetadata);
+            mOverridenRequest.clear();
+            mOverridenRequest.append(rawRequest);
+            // Derive some new keys for backward compatibility
+            if (mDerivePostRawSensKey && !mOverridenRequest.exists(
+                    ANDROID_CONTROL_POST_RAW_SENSITIVITY_BOOST)) {
+                int32_t defaultBoost[1] = {100};
+                mOverridenRequest.update(
+                        ANDROID_CONTROL_POST_RAW_SENSITIVITY_BOOST,
+                        defaultBoost, 1);
+                const camera_metadata_t *metaBuffer =
+                        mOverridenRequest.getAndLock();
+                convertToHidl(metaBuffer, &outMetadata);
+                mOverridenRequest.unlock(metaBuffer);
+            } else {
+                convertToHidl(rawRequest, &outMetadata);
+            }
         }
     }
     _hidl_cb(status, outMetadata);
@@ -748,6 +771,14 @@ Return<void> CameraDeviceSession::configureStreams(
         ALOGE("%s: trying to configureStreams while there are still %zu inflight"
                 " trigger overrides!", __FUNCTION__,
                 mInflightAETriggerOverrides.size());
+        _hidl_cb(Status::INTERNAL_ERROR, outStreams);
+        return Void();
+    }
+
+    if (!mInflightRawBoostPresent.empty()) {
+        ALOGE("%s: trying to configureStreams while there are still %zu inflight"
+                " boost overrides!", __FUNCTION__,
+                mInflightRawBoostPresent.size());
         _hidl_cb(Status::INTERNAL_ERROR, outStreams);
         return Void();
     }
@@ -1051,6 +1082,11 @@ Return<void> CameraDeviceSession::close()  {
                         "trigger overrides!", __FUNCTION__,
                         mInflightAETriggerOverrides.size());
             }
+            if (!mInflightRawBoostPresent.empty()) {
+                ALOGE("%s: trying to close while there are still %zu inflight "
+                        " RAW boost overrides!", __FUNCTION__,
+                        mInflightRawBoostPresent.size());
+            }
 
         }
 
@@ -1116,19 +1152,58 @@ void CameraDeviceSession::sProcessCaptureResult(
     result.partialResult = hal_result->partial_result;
     convertToHidl(hal_result->result, &result.result);
     if (nullptr != hal_result->result) {
+        bool resultOverriden = false;
         Mutex::Autolock _l(d->mInflightLock);
+
+        // Derive some new keys for backward compatibility
+        if (d->mDerivePostRawSensKey) {
+            camera_metadata_ro_entry entry;
+            if (find_camera_metadata_ro_entry(hal_result->result,
+                    ANDROID_CONTROL_POST_RAW_SENSITIVITY_BOOST, &entry) == 0) {
+                d->mInflightRawBoostPresent[frameNumber] = true;
+            } else {
+                auto entry = d->mInflightRawBoostPresent.find(frameNumber);
+                if (d->mInflightRawBoostPresent.end() == entry) {
+                    d->mInflightRawBoostPresent[frameNumber] = false;
+                }
+            }
+
+            if ((hal_result->partial_result == d->mNumPartialResults)) {
+                if (!d->mInflightRawBoostPresent[frameNumber]) {
+                    if (!resultOverriden) {
+                        d->mOverridenResult.clear();
+                        d->mOverridenResult.append(hal_result->result);
+                        resultOverriden = true;
+                    }
+                    int32_t defaultBoost[1] = {100};
+                    d->mOverridenResult.update(
+                            ANDROID_CONTROL_POST_RAW_SENSITIVITY_BOOST,
+                            defaultBoost, 1);
+                }
+
+                d->mInflightRawBoostPresent.erase(frameNumber);
+            }
+        }
+
         auto entry = d->mInflightAETriggerOverrides.find(frameNumber);
         if (d->mInflightAETriggerOverrides.end() != entry) {
-            d->mOverridenResult.clear();
-            d->mOverridenResult.append(hal_result->result);
+            if (!resultOverriden) {
+                d->mOverridenResult.clear();
+                d->mOverridenResult.append(hal_result->result);
+                resultOverriden = true;
+            }
             d->overrideResultForPrecaptureCancelLocked(entry->second,
                     &d->mOverridenResult);
-            const camera_metadata_t *metaBuffer = d->mOverridenResult.getAndLock();
-            convertToHidl(metaBuffer, &result.result);
-            d->mOverridenResult.unlock(metaBuffer);
             if (hal_result->partial_result == d->mNumPartialResults) {
                 d->mInflightAETriggerOverrides.erase(frameNumber);
             }
+        }
+
+        if (resultOverriden) {
+            const camera_metadata_t *metaBuffer =
+                    d->mOverridenResult.getAndLock();
+            convertToHidl(metaBuffer, &result.result);
+            d->mOverridenResult.unlock(metaBuffer);
         }
     }
     if (hasInputBuf) {
@@ -1219,6 +1294,14 @@ void CameraDeviceSession::sNotify(
                     d->mInflightAETriggerOverrides.erase(
                             hidlMsg.msg.error.frameNumber);
                 }
+
+                auto boostEntry = d->mInflightRawBoostPresent.find(
+                        hidlMsg.msg.error.frameNumber);
+                if (d->mInflightRawBoostPresent.end() != boostEntry) {
+                    d->mInflightRawBoostPresent.erase(
+                            hidlMsg.msg.error.frameNumber);
+                }
+
             }
                 break;
             case ErrorCode::ERROR_BUFFER:
