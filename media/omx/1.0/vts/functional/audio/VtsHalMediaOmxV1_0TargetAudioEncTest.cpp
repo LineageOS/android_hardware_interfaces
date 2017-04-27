@@ -153,9 +153,7 @@ class AudioEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
             standardComp CompName;
         };
         const StringToName kStringToName[] = {
-            {"mp3", mp3}, {"amrnb", amrnb},   {"amrwb", amrwb},
-            {"aac", aac}, {"vorbis", vorbis}, {"opus", opus},
-            {"pcm", pcm}, {"flac", flac},
+            {"amrnb", amrnb}, {"amrwb", amrwb}, {"aac", aac}, {"flac", flac},
         };
         const size_t kNumStringToName =
             sizeof(kStringToName) / sizeof(kStringToName[0]);
@@ -177,13 +175,9 @@ class AudioEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
             OMX_AUDIO_CODINGTYPE eEncoding;
         };
         static const CompToCoding kCompToCoding[] = {
-            {mp3, OMX_AUDIO_CodingMP3},
             {amrnb, OMX_AUDIO_CodingAMR},
             {amrwb, OMX_AUDIO_CodingAMR},
             {aac, OMX_AUDIO_CodingAAC},
-            {vorbis, OMX_AUDIO_CodingVORBIS},
-            {pcm, OMX_AUDIO_CodingPCM},
-            {opus, (OMX_AUDIO_CODINGTYPE)OMX_AUDIO_CodingAndroidOPUS},
             {flac, OMX_AUDIO_CodingFLAC},
         };
         static const size_t kNumCompToCoding =
@@ -206,13 +200,9 @@ class AudioEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     }
 
     enum standardComp {
-        mp3,
         amrnb,
         amrwb,
         aac,
-        vorbis,
-        opus,
-        pcm,
         flac,
         unknown_comp,
     };
@@ -222,17 +212,146 @@ class AudioEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     sp<IOmxNode> omxNode;
     standardComp compName;
     OMX_AUDIO_CODINGTYPE eEncoding;
+
+   protected:
+    static void description(const std::string& description) {
+        RecordProperty("description", description);
+    }
 };
 
-// Set Component Role
+// Set Default port param.
+void setDefaultPortParam(sp<IOmxNode> omxNode, OMX_U32 portIndex,
+                         OMX_AUDIO_CODINGTYPE eEncoding,
+                         AudioEncHidlTest::standardComp comp, int32_t nChannels,
+                         int32_t nSampleRate, int32_t nBitRate) {
+    android::hardware::media::omx::V1_0::Status status;
+
+    OMX_PARAM_PORTDEFINITIONTYPE portDef;
+    status = getPortParam(omxNode, OMX_IndexParamPortDefinition, portIndex,
+                          &portDef);
+    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+
+    portDef.format.audio.bFlagErrorConcealment = OMX_TRUE;
+    portDef.format.audio.eEncoding = eEncoding;
+    status = setPortParam(omxNode, OMX_IndexParamPortDefinition, portIndex,
+                          &portDef);
+    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+
+    switch ((int)eEncoding) {
+        case OMX_AUDIO_CodingFLAC:
+            setupFLACPort(omxNode, portIndex, nChannels, nSampleRate,
+                          5 /* nCompressionLevel */);
+            break;
+        case OMX_AUDIO_CodingAMR:
+            setupAMRPort(omxNode, portIndex, nBitRate,
+                         (comp == AudioEncHidlTest::standardComp::amrwb));
+            break;
+        case OMX_AUDIO_CodingAAC:
+            setupAACPort(omxNode, portIndex, OMX_AUDIO_AACObjectNull,
+                         OMX_AUDIO_AACStreamFormatMP4FF, nChannels, nBitRate,
+                         nSampleRate);
+            break;
+        default:
+            break;
+    }
+}
+
+// LookUpTable of clips and metadata for component testing
+void GetURLForComponent(AudioEncHidlTest::standardComp comp,
+                        const char** mURL) {
+    struct CompToURL {
+        AudioEncHidlTest::standardComp comp;
+        const char* mURL;
+    };
+    static const CompToURL kCompToURL[] = {
+        {AudioEncHidlTest::standardComp::aac,
+         "/sdcard/media/bbb_raw_2ch_48khz_s16le.raw"},
+        {AudioEncHidlTest::standardComp::amrnb,
+         "/sdcard/media/bbb_raw_1ch_8khz_s16le.raw"},
+        {AudioEncHidlTest::standardComp::amrwb,
+         "/sdcard/media/bbb_raw_1ch_16khz_s16le.raw"},
+        {AudioEncHidlTest::standardComp::flac,
+         "/sdcard/media/bbb_raw_2ch_48khz_s16le.raw"},
+    };
+
+    *mURL = nullptr;
+    for (size_t i = 0; i < sizeof(kCompToURL) / sizeof(kCompToURL[0]); ++i) {
+        if (kCompToURL[i].comp == comp) {
+            *mURL = kCompToURL[i].mURL;
+            return;
+        }
+    }
+}
+
+// Encode N Frames
+void encodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
+                   android::Vector<BufferInfo>* iBuffer,
+                   android::Vector<BufferInfo>* oBuffer, uint32_t nFrames,
+                   int32_t samplesPerFrame, int32_t nChannels,
+                   int32_t nSampleRate, std::ifstream& eleStream) {
+    android::hardware::media::omx::V1_0::Status status;
+    Message msg;
+
+    // dispatch output buffers
+    for (size_t i = 0; i < oBuffer->size(); i++) {
+        dispatchOutputBuffer(omxNode, oBuffer, i);
+    }
+    // dispatch input buffers
+    int bytesCount = samplesPerFrame * nChannels * 2;
+    int32_t timestampIncr =
+        (int)(((float)samplesPerFrame / nSampleRate) * 1000000);
+    uint64_t timestamp = 0;
+    for (size_t i = 0; i < iBuffer->size() && nFrames != 0; i++) {
+        char* ipBuffer = static_cast<char*>(
+            static_cast<void*>((*iBuffer)[i].mMemory->getPointer()));
+        ASSERT_LE(bytesCount,
+                  static_cast<int>((*iBuffer)[i].mMemory->getSize()));
+        eleStream.read(ipBuffer, bytesCount);
+        if (eleStream.gcount() != bytesCount) break;
+        dispatchInputBuffer(omxNode, iBuffer, i, bytesCount, 0, timestamp);
+        timestamp += timestampIncr;
+        nFrames--;
+    }
+
+    while (1) {
+        status =
+            observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
+
+        if (status == android::hardware::media::omx::V1_0::Status::OK)
+            ASSERT_TRUE(false);
+
+        if (nFrames == 0) break;
+
+        // Dispatch input buffer
+        size_t index = 0;
+        if ((index = getEmptyBufferID(iBuffer)) < iBuffer->size()) {
+            char* ipBuffer = static_cast<char*>(
+                static_cast<void*>((*iBuffer)[index].mMemory->getPointer()));
+            ASSERT_LE(bytesCount,
+                      static_cast<int>((*iBuffer)[index].mMemory->getSize()));
+            eleStream.read(ipBuffer, bytesCount);
+            if (eleStream.gcount() != bytesCount) break;
+            dispatchInputBuffer(omxNode, iBuffer, index, bytesCount, 0,
+                                timestamp);
+            timestamp += timestampIncr;
+            nFrames--;
+        }
+        // Dispatch output buffer
+        if ((index = getEmptyBufferID(oBuffer)) < oBuffer->size()) {
+            dispatchOutputBuffer(omxNode, oBuffer, index);
+        }
+    }
+}
+
 TEST_F(AudioEncHidlTest, SetRole) {
+    description("Test Set Component Role");
     android::hardware::media::omx::V1_0::Status status;
     status = setRole(omxNode, gEnv->getRole().c_str());
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 }
 
-// Enumerate Port Format
 TEST_F(AudioEncHidlTest, EnumeratePortFormat) {
+    description("Test Component on Mandatory Port Parameters (Port Format)");
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     status = setRole(omxNode, gEnv->getRole().c_str());
@@ -248,6 +367,86 @@ TEST_F(AudioEncHidlTest, EnumeratePortFormat) {
     EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     status = setAudioPortFormat(omxNode, kPortIndexOutput, eEncoding);
     EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+}
+
+TEST_F(AudioEncHidlTest, EncodeTest) {
+    description("Tests Encode");
+    android::hardware::media::omx::V1_0::Status status;
+    uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
+    status = setRole(omxNode, gEnv->getRole().c_str());
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    OMX_PORT_PARAM_TYPE params;
+    status = getParam(omxNode, OMX_IndexParamAudioInit, &params);
+    if (status == ::android::hardware::media::omx::V1_0::Status::OK) {
+        ASSERT_EQ(params.nPorts, 2U);
+        kPortIndexInput = params.nStartPortNumber;
+        kPortIndexOutput = kPortIndexInput + 1;
+    }
+    const char* mURL = nullptr;
+    GetURLForComponent(compName, &mURL);
+    EXPECT_NE(mURL, nullptr);
+
+    std::ifstream eleStream;
+    eleStream.open(mURL, std::ifstream::binary);
+    ASSERT_EQ(eleStream.is_open(), true);
+
+    // Configure input port
+    int32_t nChannels = 2;
+    int32_t nSampleRate = 44100;
+    int32_t samplesPerFrame = 1024;
+    int32_t nBitRate = 128000;
+    switch (compName) {
+        case amrnb:
+            nChannels = 1;
+            nSampleRate = 8000;
+            samplesPerFrame = 160;
+            nBitRate = 7400;
+            break;
+        case amrwb:
+            nChannels = 1;
+            nSampleRate = 16000;
+            samplesPerFrame = 160;
+            nBitRate = 15850;
+            break;
+        case aac:
+            nChannels = 2;
+            nSampleRate = 48000;
+            samplesPerFrame = 1024;
+            nBitRate = 128000;
+            break;
+        case flac:
+            nChannels = 2;
+            nSampleRate = 48000;
+            samplesPerFrame = 1152;
+            nBitRate = 128000;
+            break;
+        default:
+            ASSERT_TRUE(false);
+    }
+    setupPCMPort(omxNode, kPortIndexInput, nChannels, OMX_NumericalDataSigned,
+                 16, nSampleRate);
+    // Configure output port
+    setDefaultPortParam(omxNode, kPortIndexOutput, eEncoding, compName,
+                        nChannels, nSampleRate, nBitRate);
+
+    android::Vector<BufferInfo> iBuffer, oBuffer;
+
+    // set state to idle
+    changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
+                            kPortIndexInput, kPortIndexOutput);
+    // set state to executing
+    changeStateIdletoExecute(omxNode, observer);
+
+    encodeNFrames(omxNode, observer, &iBuffer, &oBuffer, 1024, samplesPerFrame,
+                  nChannels, nSampleRate, eleStream);
+
+    // set state to idle
+    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+    // set state to executing
+    changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
+                            kPortIndexInput, kPortIndexOutput);
+
+    eleStream.close();
 }
 
 int main(int argc, char** argv) {
