@@ -170,7 +170,7 @@ private:
     // Set by provider (when external camera is connected/disconnected)
     bool  mDisconnected;
 
-    static HandleImporter& sHandleImporter;
+    static HandleImporter sHandleImporter;
 
     const SortedVector<std::pair<std::string, std::string>>& mCameraDeviceNames;
 
