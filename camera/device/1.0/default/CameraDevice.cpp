@@ -33,7 +33,7 @@ namespace implementation {
 using ::android::hardware::graphics::common::V1_0::BufferUsage;
 using ::android::hardware::graphics::common::V1_0::PixelFormat;
 
-HandleImporter& CameraDevice::sHandleImporter = HandleImporter::getInstance();
+HandleImporter CameraDevice::sHandleImporter;
 
 Status CameraDevice::getHidlStatus(const int& status) {
     switch (status) {

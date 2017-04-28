@@ -145,7 +145,7 @@ private:
     // Stream ID -> circulating buffers map
     std::map<int, CirculatingBuffers> mCirculatingBuffers;
 
-    static HandleImporter& sHandleImporter;
+    static HandleImporter sHandleImporter;
 
     bool mInitFail;
 
