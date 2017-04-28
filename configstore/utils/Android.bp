@@ -16,6 +16,7 @@
 
 cc_library_shared {
     name: "android.hardware.configstore-utils",
+    vendor_available: true,
     defaults: ["hidl_defaults"],
 
     srcs: [ "ConfigStoreUtils.cpp" ],
