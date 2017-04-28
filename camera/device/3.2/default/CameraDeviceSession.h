@@ -111,14 +111,27 @@ private:
     // Set by CameraDevice (when external camera is disconnected)
     bool mDisconnected = false;
 
+    struct AETriggerCancelOverride {
+        bool applyAeLock;
+        uint8_t aeLock;
+        bool applyAePrecaptureTrigger;
+        uint8_t aePrecaptureTrigger;
+    };
+
     camera3_device_t* mDevice;
     uint32_t mDeviceVersion;
+    bool mIsAELockAvailable;
+    uint32_t mNumPartialResults;
     // Stream ID -> Camera3Stream cache
     std::map<int, Camera3Stream> mStreamMap;
 
     mutable Mutex mInflightLock; // protecting mInflightBuffers and mCirculatingBuffers
     // (streamID, frameNumber) -> inflight buffer cache
     std::map<std::pair<int, uint32_t>, camera3_stream_buffer_t>  mInflightBuffers;
+
+    // (frameNumber, AETriggerOverride) -> inflight request AETriggerOverrides
+    std::map<uint32_t, AETriggerCancelOverride> mInflightAETriggerOverrides;
+    ::android::hardware::camera::common::V1_0::helper::CameraMetadata mOverridenResult;
 
     // buffers currently ciculating between HAL and camera service
     // key: bufferId sent via HIDL interface
@@ -261,6 +274,15 @@ private:
 
     android_dataspace mapToLegacyDataspace(
             android_dataspace dataSpace) const;
+
+    bool handleAePrecaptureCancelRequestLocked(
+            const camera3_capture_request_t &halRequest,
+            android::hardware::camera::common::V1_0::helper::CameraMetadata *settings /*out*/,
+            AETriggerCancelOverride *override /*out*/);
+
+    void overrideResultForPrecaptureCancelLocked(
+            const AETriggerCancelOverride &aeTriggerCancelOverride,
+            ::android::hardware::camera::common::V1_0::helper::CameraMetadata *settings /*out*/);
 
     Status processOneCaptureRequest(const CaptureRequest& request);
     /**
