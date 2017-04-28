@@ -89,6 +89,7 @@ private:
 
     hidl_vec<VendorTagSection> mVendorTagSections;
     bool setUpVendorTags();
+    int checkCameraVersion(int id, camera_info info);
 
     // extract legacy camera ID/device version from a HIDL device name
     static std::string getLegacyCameraId(const hidl_string& deviceName);
