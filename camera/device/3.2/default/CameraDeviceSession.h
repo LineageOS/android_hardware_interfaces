@@ -112,6 +112,7 @@ private:
     bool mDisconnected = false;
 
     camera3_device_t* mDevice;
+    uint32_t mDeviceVersion;
     // Stream ID -> Camera3Stream cache
     std::map<int, Camera3Stream> mStreamMap;
 
@@ -257,6 +258,9 @@ private:
     void cleanupBuffersLocked(int id);
 
     void updateBufferCaches(const hidl_vec<BufferCache>& cachesToRemove);
+
+    android_dataspace mapToLegacyDataspace(
+            android_dataspace dataSpace) const;
 
     Status processOneCaptureRequest(const CaptureRequest& request);
     /**
