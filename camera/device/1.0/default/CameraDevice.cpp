@@ -21,6 +21,7 @@
 #include <log/log.h>
 #include <utils/Trace.h>
 
+#include <media/hardware/HardwareAPI.h> // For VideoNativeHandleMetadata
 #include "CameraDevice_1_0.h"
 
 namespace android {
@@ -500,7 +501,7 @@ void CameraDevice::sDataCbTimestamp(nsecs_t timestamp, int32_t msg_type,
         if (mem->mBufSize == sizeof(VideoNativeHandleMetadata)) {
             VideoNativeHandleMetadata* md = (VideoNativeHandleMetadata*)
                     ((uint8_t*) mem->mHidlHeapMemData + index * mem->mBufSize);
-            if (md->eType == VideoNativeHandleMetadata::kMetadataBufferTypeNativeHandleSource) {
+            if (md->eType == kMetadataBufferTypeNativeHandleSource) {
                 handle = md->pHandle;
             }
         }
@@ -837,7 +838,7 @@ void CameraDevice::releaseRecordingFrameLocked(
         void *data = ((uint8_t *) camMemory->mHidlHeapMemData) + bufferIndex * camMemory->mBufSize;
         if (handle) {
             VideoNativeHandleMetadata* md = (VideoNativeHandleMetadata*) data;
-            if (md->eType == VideoNativeHandleMetadata::kMetadataBufferTypeNativeHandleSource) {
+            if (md->eType == kMetadataBufferTypeNativeHandleSource) {
                 // Input handle will be closed by HIDL transport later, so clone it
                 // HAL implementation is responsible to close/delete the clone
                 native_handle_t* clone = native_handle_clone(handle);
