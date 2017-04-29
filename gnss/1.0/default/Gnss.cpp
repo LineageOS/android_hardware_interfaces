@@ -129,16 +129,19 @@ void Gnss::gnssSvStatusCb(GnssSvStatus* status) {
         auto svInfo = status->gnss_sv_list[i];
         IGnssCallback::GnssSvInfo gnssSvInfo = {
             .svid = svInfo.svid,
-            .constellation = static_cast<android::hardware::gnss::V1_0::GnssConstellationType>(
-                    svInfo.constellation),
+            .constellation = static_cast<
+                android::hardware::gnss::V1_0::GnssConstellationType>(
+                svInfo.constellation),
             .cN0Dbhz = svInfo.c_n0_dbhz,
             .elevationDegrees = svInfo.elevation,
             .azimuthDegrees = svInfo.azimuth,
-            .svFlag = svInfo.flags,
-            // Older chipsets do not provide carrier frequency, hence HAS_CARRIER_FREQUENCY flag
-            // is not set and the carrierFrequencyHz field is set to zero
-            .carrierFrequencyHz = 0
-        };
+            // Older chipsets do not provide carrier frequency, hence
+            // HAS_CARRIER_FREQUENCY flag and the carrierFrequencyHz fields
+            // are not set. So we are resetting both fields here.
+            .svFlag = static_cast<uint8_t>(
+                svInfo.flags &= ~(static_cast<uint8_t>(
+                    IGnssCallback::GnssSvFlags::HAS_CARRIER_FREQUENCY))),
+            .carrierFrequencyHz = 0};
         svStatus.gnssSvList[i] = gnssSvInfo;
     }
 
