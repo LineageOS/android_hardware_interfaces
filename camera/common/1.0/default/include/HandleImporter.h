@@ -17,9 +17,11 @@
 #ifndef CAMERA_COMMON_1_0_HANDLEIMPORTED_H
 #define CAMERA_COMMON_1_0_HANDLEIMPORTED_H
 
-#include <hardware/gralloc.h>
-#include <hardware/gralloc1.h>
 #include <system/window.h>
+#include <utils/Mutex.h>
+#include <android/hardware/graphics/mapper/2.0/IMapper.h>
+
+using android::hardware::graphics::mapper::V2_0::IMapper;
 
 namespace android {
 namespace hardware {
@@ -31,36 +33,24 @@ namespace helper {
 // Borrowed from graphics HAL. Use this until gralloc mapper HAL is working
 class HandleImporter {
 public:
-    static HandleImporter& getInstance();
+    HandleImporter();
 
     // In IComposer, any buffer_handle_t is owned by the caller and we need to
     // make a clone for hwcomposer2.  We also need to translate empty handle
     // to nullptr.  This function does that, in-place.
     bool importBuffer(buffer_handle_t& handle);
     void freeBuffer(buffer_handle_t handle);
-    bool importFence(const native_handle_t* handle, int& fd);
-    void closeFence(int fd);
+    bool importFence(const native_handle_t* handle, int& fd) const;
+    void closeFence(int fd) const;
 
 private:
-
-    HandleImporter() : mInitialized(false) {}
-    bool initialize();
+    void initializeLocked();
     void cleanup();
-    bool openGralloc();
-    void closeGralloc();
-    buffer_handle_t cloneBuffer(buffer_handle_t handle);
-    void releaseBuffer(buffer_handle_t handle);
 
-    static HandleImporter sHandleImporter;
+    Mutex mLock;
     bool mInitialized;
+    sp<IMapper> mMapper;
 
-    // gralloc1
-    gralloc1_device_t* mDevice;
-    GRALLOC1_PFN_RETAIN mRetain;
-    GRALLOC1_PFN_RELEASE mRelease;
-
-    // gralloc0
-    const gralloc_module_t* mModule;
 };
 
 } // namespace helper

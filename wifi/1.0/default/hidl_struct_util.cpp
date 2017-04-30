@@ -26,6 +26,16 @@ namespace V1_0 {
 namespace implementation {
 namespace hidl_struct_util {
 
+hidl_string safeConvertChar(const char* str, size_t max_len) {
+  const char* c = str;
+  size_t size = 0;
+  while (*c && (unsigned char)*c < 128 && size < max_len) {
+    ++size;
+    ++c;
+  }
+  return hidl_string(str, size);
+}
+
 IWifiChip::ChipCapabilityMask convertLegacyLoggerFeatureToHidlChipCapability(
     uint32_t feature) {
   using HidlChipCaps = IWifiChip::ChipCapabilityMask;
@@ -134,7 +144,8 @@ bool convertLegacyDebugRingBufferStatusToHidl(
     return false;
   }
   *hidl_status = {};
-  hidl_status->ringName = reinterpret_cast<const char*>(legacy_status.name);
+  hidl_status->ringName = safeConvertChar(reinterpret_cast<const char*>(legacy_status.name),
+        sizeof(legacy_status.name));
   hidl_status->flags = 0;
   for (const auto flag : {WIFI_RING_BUFFER_FLAG_HAS_BINARY_ENTRIES,
                           WIFI_RING_BUFFER_FLAG_HAS_ASCII_ENTRIES}) {
@@ -449,7 +460,8 @@ bool convertLegacyGscanResultToHidl(
   hidl_scan_result->timeStampInUs = legacy_scan_result.ts;
   hidl_scan_result->ssid = std::vector<uint8_t>(
       legacy_scan_result.ssid,
-      legacy_scan_result.ssid + strlen(legacy_scan_result.ssid));
+      legacy_scan_result.ssid + strnlen(legacy_scan_result.ssid,
+            sizeof(legacy_scan_result.ssid) - 1));
   memcpy(hidl_scan_result->bssid.data(),
          legacy_scan_result.bssid,
          hidl_scan_result->bssid.size());
@@ -880,6 +892,12 @@ NanStatusType convertLegacyNanStatusTypeToHidl(
       return NanStatusType::UNSUPPORTED_CONCURRENCY_NAN_DISABLED;
   }
   CHECK(false);
+}
+
+void convertToWifiNanStatus(legacy_hal::NanStatusType type, const char* str, size_t max_len,
+    WifiNanStatus* wifiNanStatus) {
+  wifiNanStatus->status = convertLegacyNanStatusTypeToHidl(type);
+  wifiNanStatus->description = safeConvertChar(str, max_len);
 }
 
 bool convertHidlNanEnableRequestToLegacy(
@@ -1539,8 +1557,8 @@ bool convertLegacyNanResponseHeaderToHidl(
   }
   *wifiNanStatus = {};
 
-  wifiNanStatus->status = convertLegacyNanStatusTypeToHidl(legacy_response.status);
-  wifiNanStatus->description = legacy_response.nan_error;
+  convertToWifiNanStatus(legacy_response.status, legacy_response.nan_error,
+        sizeof(legacy_response.nan_error), wifiNanStatus);
   return true;
 }
 

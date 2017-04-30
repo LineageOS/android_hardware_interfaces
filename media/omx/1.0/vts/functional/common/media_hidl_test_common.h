@@ -27,6 +27,7 @@
 #include <media/openmax/OMX_Component.h>
 #include <media/openmax/OMX_IndexExt.h>
 #include <media/openmax/OMX_AudioExt.h>
+#include <media/openmax/OMX_VideoExt.h>
 
 /*
  * TODO: Borrowed from Conversion.h. This is not the ideal way to do it.

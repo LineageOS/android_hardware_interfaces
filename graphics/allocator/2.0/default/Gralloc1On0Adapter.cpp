@@ -77,8 +77,7 @@ Gralloc1On0Adapter::~Gralloc1On0Adapter()
 }
 
 void Gralloc1On0Adapter::doGetCapabilities(uint32_t* outCount,
-        int32_t* outCapabilities)
-{
+                                           int32_t* /*outCapabilities*/) {
     *outCount = 0;
 }
 
