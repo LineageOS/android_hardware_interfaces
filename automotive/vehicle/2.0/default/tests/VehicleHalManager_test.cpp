@@ -17,6 +17,7 @@
 #include <unordered_map>
 #include <iostream>
 
+#include <android-base/macros.h>
 #include <utils/SystemClock.h>
 
 #include <gtest/gtest.h>
