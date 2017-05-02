@@ -18,7 +18,7 @@
 #define ANDROID_HARDWARE_GRAPHICS_MAPPER_V2_0_GRALLOC_MAPPER_H
 
 #include <android/hardware/graphics/mapper/2.0/IMapper.h>
-#include <system/window.h>
+#include <cutils/native_handle.h>
 
 #include <mutex>
 #include <unordered_set>
