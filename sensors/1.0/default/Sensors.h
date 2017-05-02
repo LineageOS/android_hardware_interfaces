@@ -18,6 +18,7 @@
 
 #define HARDWARE_INTERFACES_SENSORS_V1_0_DEFAULT_SENSORS_H_
 
+#include <android-base/macros.h>
 #include <android/hardware/sensors/1.0/ISensors.h>
 #include <hardware/sensors.h>
 #include <mutex>

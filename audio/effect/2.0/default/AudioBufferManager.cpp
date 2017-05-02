@@ -30,7 +30,10 @@ bool AudioBufferManager::wrap(const AudioBuffer& buffer, sp<AudioBufferWrapper>*
     ssize_t idx = mBuffers.indexOfKey(buffer.id);
     if (idx >= 0) {
         *wrapper = mBuffers[idx].promote();
-        if (*wrapper != nullptr) return true;
+        if (*wrapper != nullptr) {
+            (*wrapper)->getHalBuffer()->frameCount = buffer.frameCount;
+            return true;
+        }
         mBuffers.removeItemsAt(idx);
     }
     // Need to create and init a new AudioBufferWrapper.
