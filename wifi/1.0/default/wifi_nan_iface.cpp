@@ -217,8 +217,8 @@ WifiNanIface::WifiNanIface(
         return;
       }
       WifiNanStatus status;
-      status.status = hidl_struct_util::convertLegacyNanStatusTypeToHidl(msg.reason);
-      status.description = msg.nan_reason;
+      hidl_struct_util::convertToWifiNanStatus(msg.reason, msg.nan_reason, sizeof(msg.nan_reason),
+            &status);
 
       for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
         if (!callback->eventDisabled(status).isOk()) {
@@ -235,8 +235,8 @@ WifiNanIface::WifiNanIface(
         return;
       }
       WifiNanStatus status;
-      status.status = hidl_struct_util::convertLegacyNanStatusTypeToHidl(msg.reason);
-      status.description = msg.nan_reason;
+      hidl_struct_util::convertToWifiNanStatus(msg.reason, msg.nan_reason, sizeof(msg.nan_reason),
+            &status);
 
       for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
         if (!callback->eventPublishTerminated(msg.publish_id, status).isOk()) {
@@ -253,8 +253,8 @@ WifiNanIface::WifiNanIface(
         return;
       }
       WifiNanStatus status;
-      status.status = hidl_struct_util::convertLegacyNanStatusTypeToHidl(msg.reason);
-      status.description = msg.nan_reason;
+      hidl_struct_util::convertToWifiNanStatus(msg.reason, msg.nan_reason, sizeof(msg.nan_reason),
+            &status);
 
       for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
         if (!callback->eventSubscribeTerminated(msg.subscribe_id, status).isOk()) {
@@ -328,8 +328,8 @@ WifiNanIface::WifiNanIface(
         return;
       }
       WifiNanStatus status;
-      status.status = hidl_struct_util::convertLegacyNanStatusTypeToHidl(msg.reason);
-      status.description = msg.nan_reason;
+      hidl_struct_util::convertToWifiNanStatus(msg.reason, msg.nan_reason, sizeof(msg.nan_reason),
+            &status);
 
       for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
         if (!callback->eventTransmitFollowup(msg.id, status).isOk()) {

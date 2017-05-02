@@ -14,6 +14,7 @@ cc_library_shared {
         "android.hardware.camera.device@1.0",
         "android.hardware.camera.common@1.0",
         "android.hardware.graphics.allocator@2.0",
+        "android.hardware.graphics.mapper@2.0",
         "android.hardware.graphics.common@1.0",
         "android.hidl.allocator@1.0",
         "android.hidl.base@1.0",
@@ -25,6 +26,9 @@ cc_library_shared {
     ],
     static_libs: [
         "android.hardware.camera.common@1.0-helper"
+    ],
+    include_dirs: [
+        "frameworks/native/include/media/openmax"
     ],
     export_include_dirs: ["."]
 }

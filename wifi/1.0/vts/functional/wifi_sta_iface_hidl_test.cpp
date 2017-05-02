@@ -158,8 +158,10 @@ TEST_F(WifiStaIfaceHidlTest, LinkLayerStatsCollection) {
 
 /*
  * RSSIMonitoring:
- * Ensures that calls to enable and disable RSSI monitoring will return
- * a success status code.
+ * Ensures that calls to enable RSSI monitoring will return an error status
+ * code if device is not connected to an AP.
+ * Ensures that calls to disable RSSI monitoring will return an error status
+ * code if RSSI monitoring is not enabled.
  */
 TEST_F(WifiStaIfaceHidlTest, RSSIMonitoring) {
     if (!isCapabilitySupported(
@@ -171,11 +173,13 @@ TEST_F(WifiStaIfaceHidlTest, RSSIMonitoring) {
     const CommandId kCmd = 1;
     const Rssi kMaxRssi = -50;
     const Rssi kMinRssi = -90;
-    EXPECT_EQ(WifiStatusCode::SUCCESS,
+    // This is going to fail because device is not connected to an AP.
+    EXPECT_NE(WifiStatusCode::SUCCESS,
               HIDL_INVOKE(wifi_sta_iface_, startRssiMonitoring, kCmd, kMaxRssi,
                           kMinRssi)
                   .code);
-    EXPECT_EQ(WifiStatusCode::SUCCESS,
+    // This is going to fail because RSSI monitoring is not enabled.
+    EXPECT_NE(WifiStatusCode::SUCCESS,
               HIDL_INVOKE(wifi_sta_iface_, stopRssiMonitoring, kCmd).code);
 }
 

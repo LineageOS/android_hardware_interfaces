@@ -30,6 +30,22 @@ void allocatePortBuffers(sp<IOmxNode> omxNode,
                          android::Vector<BufferInfo>* buffArray,
                          OMX_U32 portIndex);
 
+void changeStateLoadedtoIdle(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
+                             android::Vector<BufferInfo>* iBuffer,
+                             android::Vector<BufferInfo>* oBuffer,
+                             OMX_U32 kPortIndexInput, OMX_U32 kPortIndexOutput);
+
+void changeStateIdletoLoaded(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
+                             android::Vector<BufferInfo>* iBuffer,
+                             android::Vector<BufferInfo>* oBuffer,
+                             OMX_U32 kPortIndexInput, OMX_U32 kPortIndexOutput);
+
+void changeStateIdletoExecute(sp<IOmxNode> omxNode, sp<CodecObserver> observer);
+
+void changeStateExecutetoIdle(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
+                              android::Vector<BufferInfo>* iBuffer,
+                              android::Vector<BufferInfo>* oBuffer);
+
 size_t getEmptyBufferID(android::Vector<BufferInfo>* buffArray);
 
 void dispatchInputBuffer(sp<IOmxNode> omxNode,
@@ -40,6 +56,11 @@ void dispatchInputBuffer(sp<IOmxNode> omxNode,
 void dispatchOutputBuffer(sp<IOmxNode> omxNode,
                           android::Vector<BufferInfo>* buffArray,
                           size_t bufferIndex);
+
+void flushPorts(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
+                android::Vector<BufferInfo>* iBuffer,
+                android::Vector<BufferInfo>* oBuffer, OMX_U32 kPortIndexInput,
+                OMX_U32 kPortIndexOutput);
 
 Return<android::hardware::media::omx::V1_0::Status> setAudioPortFormat(
     sp<IOmxNode> omxNode, OMX_U32 portIndex, OMX_AUDIO_CODINGTYPE encoding);
@@ -53,26 +74,23 @@ void setupPCMPort(sp<IOmxNode> omxNode, OMX_U32 portIndex, int32_t nChannels,
 
 void setupMP3Port(sp<IOmxNode> omxNode, OMX_U32 portIndex,
                   OMX_AUDIO_MP3STREAMFORMATTYPE eFormat, int32_t nChannels,
-                  int32_t nBitRate, int32_t nSampleRate, bool isEncoder);
+                  int32_t nBitRate, int32_t nSampleRate);
 
 void setupFLACPort(sp<IOmxNode> omxNode, OMX_U32 portIndex, int32_t nChannels,
-                   int32_t nSampleRate, int32_t nCompressionLevel,
-                   bool isEncoder);
+                   int32_t nSampleRate, int32_t nCompressionLevel);
 
 void setupOPUSPort(sp<IOmxNode> omxNode, OMX_U32 portIndex, int32_t nChannels,
-                   int32_t nBitRate, int32_t nSampleRate, bool isEncoder);
+                   int32_t nBitRate, int32_t nSampleRate);
 
 void setupAMRPort(sp<IOmxNode> omxNode, OMX_U32 portIndex, int32_t nBitRate,
-                  OMX_AUDIO_AMRBANDMODETYPE eAMRBandMode, bool isEncoder);
+                  bool isAMRWB);
 
 void setupVORBISPort(sp<IOmxNode> omxNode, OMX_U32 portIndex, int32_t nChannels,
-                     int32_t nBitRate, int32_t nSampleRate, int32_t nQuality,
-                     bool isEncoder);
+                     int32_t nBitRate, int32_t nSampleRate, int32_t nQuality);
 
 void setupAACPort(sp<IOmxNode> omxNode, OMX_U32 portIndex,
                   OMX_AUDIO_AACPROFILETYPE eAACProfile,
                   OMX_AUDIO_AACSTREAMFORMATTYPE eAACStreamFormat,
-                  int32_t nChannels, int32_t nBitRate, int32_t nSampleRate,
-                  bool isEncoder);
+                  int32_t nChannels, int32_t nBitRate, int32_t nSampleRate);
 
 #endif  // MEDIA_AUDIO_HIDL_TEST_COMMON_H
