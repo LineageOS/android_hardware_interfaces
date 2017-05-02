@@ -90,7 +90,6 @@ cc_library_shared {
         "android.hardware.graphics.bufferqueue@1.0",
         "android.hardware.graphics.common@1.0",
         "android.hardware.media@1.0",
-        "android.hidl.base@1.0",
     ],
     export_shared_lib_headers: [
         "libhidlbase",
@@ -100,6 +99,5 @@ cc_library_shared {
         "android.hardware.graphics.bufferqueue@1.0",
         "android.hardware.graphics.common@1.0",
         "android.hardware.media@1.0",
-        "android.hidl.base@1.0",
     ],
 }
