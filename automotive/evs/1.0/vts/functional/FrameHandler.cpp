@@ -17,6 +17,7 @@
 #define LOG_TAG "VtsHalEvsTest"
 
 #include "FrameHandler.h"
+#include "FormatConvert.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -24,14 +25,6 @@
 #include <android/log.h>
 #include <cutils/native_handle.h>
 #include <ui/GraphicBuffer.h>
-
-#include <algorithm>    // std::min
-
-
-// For the moment, we're assuming that the underlying EVS driver we're working with
-// is providing 4 byte RGBx data.  This is fine for loopback testing, although
-// real hardware is expected to provide YUV data -- most likly formatted as YV12
-static const unsigned kBytesPerPixel = 4;   // assuming 4 byte RGBx pixels
 
 
 FrameHandler::FrameHandler(android::sp <IEvsCamera> pCamera, CameraDesc cameraInfo,
@@ -58,14 +51,18 @@ void FrameHandler::shutdown()
 
 
 bool FrameHandler::startStream() {
+    // Tell the camera to start streaming
+    Return<EvsResult> result = mCamera->startVideoStream(this);
+    if (result != EvsResult::OK) {
+        return false;
+    }
+
     // Mark ourselves as running
     mLock.lock();
     mRunning = true;
     mLock.unlock();
 
-    // Tell the camera to start streaming
-    Return<EvsResult> result = mCamera->startVideoStream(this);
-    return (result == EvsResult::OK);
+    return true;
 }
 
 
@@ -82,7 +79,9 @@ void FrameHandler::blockingStopStream() {
 
     // Wait until the stream has actually stopped
     std::unique_lock<std::mutex> lock(mLock);
-    mSignal.wait(lock, [this](){ return !mRunning; });
+    if (mRunning) {
+        mSignal.wait(lock, [this]() { return !mRunning; });
+    }
 }
 
 
@@ -179,13 +178,13 @@ Return<void> FrameHandler::deliverFrame(const BufferDesc& bufferArg) {
 
         switch (mReturnMode) {
         case eAutoReturn:
-            // Send the camera buffer back now that we're done with it
+            // Send the camera buffer back now that the client has seen it
             ALOGD("Calling doneWithFrame");
             // TODO:  Why is it that we get a HIDL crash if we pass back the cloned buffer?
             mCamera->doneWithFrame(bufferArg);
             break;
         case eNoAutoReturn:
-            // Hang onto the buffer handle for now -- we'll return it explicitly later
+            // Hang onto the buffer handle for now -- the client will return it explicitly later
             mHeldBuffers.push(bufferArg);
         }
 
@@ -228,25 +227,41 @@ bool FrameHandler::copyBufferContents(const BufferDesc& tgtBuffer,
         srcBuffer.width, srcBuffer.height, srcBuffer.format, 1, srcBuffer.usage,
         srcBuffer.stride);
 
-    // Lock our source buffer for reading
-    unsigned char* srcPixels = nullptr;
+    // Lock our source buffer for reading (current expectation are for this to be NV21 format)
+    uint8_t* srcPixels = nullptr;
     src->lock(GRALLOC_USAGE_SW_READ_OFTEN, (void**)&srcPixels);
 
-    // Lock our target buffer for writing
-    unsigned char* tgtPixels = nullptr;
+    // Lock our target buffer for writing (should be RGBA8888 format)
+    uint32_t* tgtPixels = nullptr;
     tgt->lock(GRALLOC_USAGE_SW_WRITE_OFTEN, (void**)&tgtPixels);
 
     if (srcPixels && tgtPixels) {
-        for (unsigned row = 0; row < height; row++) {
-            // Copy the entire row of pixel data
-            memcpy(tgtPixels, srcPixels, width * kBytesPerPixel);
-
-            // Advance to the next row (keeping in mind that stride here is in units of pixels)
-            tgtPixels += tgtBuffer.stride * kBytesPerPixel;
-            srcPixels += srcBuffer.stride * kBytesPerPixel;
+        if (tgtBuffer.format != HAL_PIXEL_FORMAT_RGBA_8888) {
+            // We always expect 32 bit RGB for the display output for now.  Is there a need for 565?
+            ALOGE("Diplay buffer is always expected to be 32bit RGBA");
+            success = false;
+        } else {
+            if (srcBuffer.format == HAL_PIXEL_FORMAT_YCRCB_420_SP) {   // 420SP == NV21
+                copyNV21toRGB32(width, height,
+                                srcPixels,
+                                tgtPixels, tgtBuffer.stride);
+            } else if (srcBuffer.format == HAL_PIXEL_FORMAT_YV12) { // YUV_420P == YV12
+                copyYV12toRGB32(width, height,
+                                srcPixels,
+                                tgtPixels, tgtBuffer.stride);
+            } else if (srcBuffer.format == HAL_PIXEL_FORMAT_YCBCR_422_I) { // YUYV
+                copyYUYVtoRGB32(width, height,
+                                srcPixels, srcBuffer.stride,
+                                tgtPixels, tgtBuffer.stride);
+            } else if (srcBuffer.format == tgtBuffer.format) {  // 32bit RGBA
+                copyMatchedInterleavedFormats(width, height,
+                                              srcPixels, srcBuffer.stride,
+                                              tgtPixels, tgtBuffer.stride,
+                                              tgtBuffer.pixelSize);
+            }
         }
     } else {
-        ALOGE("Failed to copy buffer contents");
+        ALOGE("Failed to lock buffer contents for contents transfer");
         success = false;
     }
 
