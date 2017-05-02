@@ -59,7 +59,6 @@ cc_library_shared {
         "android.hardware.camera.device@1.0",
         "android.hardware.camera.device@3.2",
         "android.hardware.graphics.common@1.0",
-        "android.hidl.base@1.0",
     ],
     export_shared_lib_headers: [
         "libhidlbase",
@@ -70,6 +69,5 @@ cc_library_shared {
         "android.hardware.camera.device@1.0",
         "android.hardware.camera.device@3.2",
         "android.hardware.graphics.common@1.0",
-        "android.hidl.base@1.0",
     ],
 }
