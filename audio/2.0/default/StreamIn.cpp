@@ -319,19 +319,25 @@ Return<void> StreamIn::prepareForReading(uint32_t frameSize,
                                          prepareForReading_cb _hidl_cb) {
     status_t status;
     ThreadInfo threadInfo = {0, 0};
+
+    // Wrap the _hidl_cb to return an error
+    auto sendError = [this, &threadInfo, &_hidl_cb](Result result) {
+        _hidl_cb(result, CommandMQ::Descriptor(), DataMQ::Descriptor(),
+                 StatusMQ::Descriptor(), threadInfo);
+
+    };
+
     // Create message queues.
     if (mDataMQ) {
         ALOGE("the client attempts to call prepareForReading twice");
-        _hidl_cb(Result::INVALID_STATE, CommandMQ::Descriptor(),
-                 DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
+        sendError(Result::INVALID_STATE);
         return Void();
     }
     std::unique_ptr<CommandMQ> tempCommandMQ(new CommandMQ(1));
     if (frameSize > std::numeric_limits<size_t>::max() / framesCount) {
         ALOGE("Requested buffer is too big, %d*%d can not fit in size_t",
               frameSize, framesCount);
-        _hidl_cb(Result::INVALID_ARGUMENTS, CommandMQ::Descriptor(),
-                 DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
+        sendError(Result::INVALID_ARGUMENTS);
         return Void();
     }
     std::unique_ptr<DataMQ> tempDataMQ(
@@ -343,8 +349,7 @@ Return<void> StreamIn::prepareForReading(uint32_t frameSize,
         ALOGE_IF(!tempCommandMQ->isValid(), "command MQ is invalid");
         ALOGE_IF(!tempDataMQ->isValid(), "data MQ is invalid");
         ALOGE_IF(!tempStatusMQ->isValid(), "status MQ is invalid");
-        _hidl_cb(Result::INVALID_ARGUMENTS, CommandMQ::Descriptor(),
-                 DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
+        sendError(Result::INVALID_ARGUMENTS);
         return Void();
     }
     EventFlag* tempRawEfGroup{};
@@ -354,8 +359,7 @@ Return<void> StreamIn::prepareForReading(uint32_t frameSize,
         tempRawEfGroup, [](auto* ef) { EventFlag::deleteEventFlag(&ef); });
     if (status != OK || !tempElfGroup) {
         ALOGE("failed creating event flag for data MQ: %s", strerror(-status));
-        _hidl_cb(Result::INVALID_ARGUMENTS, CommandMQ::Descriptor(),
-                 DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
+        sendError(Result::INVALID_ARGUMENTS);
         return Void();
     }
 
@@ -364,15 +368,14 @@ Return<void> StreamIn::prepareForReading(uint32_t frameSize,
         &mStopReadThread, mStream, tempCommandMQ.get(), tempDataMQ.get(),
         tempStatusMQ.get(), tempElfGroup.get());
     if (!tempReadThread->init()) {
-        _hidl_cb(Result::INVALID_ARGUMENTS, CommandMQ::Descriptor(),
-                 DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
+        ALOGW("failed to start reader thread: %s", strerror(-status));
+        sendError(Result::INVALID_ARGUMENTS);
         return Void();
     }
     status = tempReadThread->run("reader", PRIORITY_URGENT_AUDIO);
     if (status != OK) {
         ALOGW("failed to start reader thread: %s", strerror(-status));
-        _hidl_cb(Result::INVALID_ARGUMENTS, CommandMQ::Descriptor(),
-                 DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
+        sendError(Result::INVALID_ARGUMENTS);
         return Void();
     }
 

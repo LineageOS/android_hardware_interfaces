@@ -295,11 +295,18 @@ Return<void> StreamOut::prepareForWriting(uint32_t frameSize,
                                           prepareForWriting_cb _hidl_cb) {
     status_t status;
     ThreadInfo threadInfo = {0, 0};
+
+    // Wrap the _hidl_cb to return an error
+    auto sendError = [this, &threadInfo, &_hidl_cb](Result result) {
+        _hidl_cb(result, CommandMQ::Descriptor(), DataMQ::Descriptor(),
+                 StatusMQ::Descriptor(), threadInfo);
+
+    };
+
     // Create message queues.
     if (mDataMQ) {
         ALOGE("the client attempts to call prepareForWriting twice");
-        _hidl_cb(Result::INVALID_STATE, CommandMQ::Descriptor(),
-                 DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
+        sendError(Result::INVALID_STATE);
         return Void();
     }
     std::unique_ptr<CommandMQ> tempCommandMQ(new CommandMQ(1));
@@ -320,8 +327,7 @@ Return<void> StreamOut::prepareForWriting(uint32_t frameSize,
         ALOGE_IF(!tempCommandMQ->isValid(), "command MQ is invalid");
         ALOGE_IF(!tempDataMQ->isValid(), "data MQ is invalid");
         ALOGE_IF(!tempStatusMQ->isValid(), "status MQ is invalid");
-        _hidl_cb(Result::INVALID_ARGUMENTS, CommandMQ::Descriptor(),
-                 DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
+        sendError(Result::INVALID_ARGUMENTS);
         return Void();
     }
     EventFlag* tempRawEfGroup{};
@@ -331,8 +337,7 @@ Return<void> StreamOut::prepareForWriting(uint32_t frameSize,
         tempRawEfGroup, [](auto* ef) { EventFlag::deleteEventFlag(&ef); });
     if (status != OK || !tempElfGroup) {
         ALOGE("failed creating event flag for data MQ: %s", strerror(-status));
-        _hidl_cb(Result::INVALID_ARGUMENTS, CommandMQ::Descriptor(),
-                 DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
+        sendError(Result::INVALID_ARGUMENTS);
         return Void();
     }
 
@@ -341,15 +346,14 @@ Return<void> StreamOut::prepareForWriting(uint32_t frameSize,
         &mStopWriteThread, mStream, tempCommandMQ.get(), tempDataMQ.get(),
         tempStatusMQ.get(), tempElfGroup.get());
     if (!tempWriteThread->init()) {
-        _hidl_cb(Result::INVALID_ARGUMENTS, CommandMQ::Descriptor(),
-                 DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
+        ALOGW("failed to start writer thread: %s", strerror(-status));
+        sendError(Result::INVALID_ARGUMENTS);
         return Void();
     }
     status = tempWriteThread->run("writer", PRIORITY_URGENT_AUDIO);
     if (status != OK) {
         ALOGW("failed to start writer thread: %s", strerror(-status));
-        _hidl_cb(Result::INVALID_ARGUMENTS, CommandMQ::Descriptor(),
-                 DataMQ::Descriptor(), StatusMQ::Descriptor(), threadInfo);
+        sendError(Result::INVALID_ARGUMENTS);
         return Void();
     }
 
