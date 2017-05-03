@@ -318,7 +318,7 @@ class AudioPatchPrimaryHidlTest : public AudioPrimaryHidlTest {
    protected:
     bool areAudioPatchesSupported() {
         auto result = device->supportsAudioPatches();
-        EXPECT_TRUE(result.isOk());
+        EXPECT_IS_OK(result);
         return result;
     }
 };
@@ -494,10 +494,10 @@ TEST_F(AudioPrimaryHidlTest, setScreenState) {
     doc::test("Check that the hal can receive the screen state");
     for (bool turnedOn : {false, true, true, false, false}) {
         auto ret = device->setScreenState(turnedOn);
-        ASSERT_TRUE(ret.isOk());
+        ASSERT_IS_OK(ret);
         Result result = ret;
-        ASSERT_TRUE(result == Result::OK || result == Result::NOT_SUPPORTED)
-            << toString(result);
+        auto okOrNotSupported = {Result::OK, Result::NOT_SUPPORTED};
+        ASSERT_RESULT(okOrNotSupported, result);
     }
 }
 
@@ -715,7 +715,7 @@ INSTANTIATE_TEST_CASE_P(
 template <class R>
 static R extract(Return<R> ret) {
     if (!ret.isOk()) {
-        ADD_FAILURE();
+        EXPECT_IS_OK(ret);
         return R{};
     }
     return ret;
@@ -819,7 +819,7 @@ static void testGetDevice(IStream* stream, AudioDevice expectedDevice) {
     // NOT_SUPPORTED
     // Thus allow NONE as signaling that the call is not supported.
     auto ret = stream->getDevice();
-    ASSERT_TRUE(ret.isOk());
+    ASSERT_IS_OK(ret);
     AudioDevice device = ret;
     ASSERT_TRUE(device == expectedDevice || device == AudioDevice::NONE)
         << "Expected: " << ::testing::PrintToString(expectedDevice)
@@ -891,7 +891,7 @@ TEST_IO_STREAM(SetHwAvSync, "Try to set hardware sync to an invalid value",
                              stream->setHwAvSync(666)))
 
 TEST_IO_STREAM(GetHwAvSync, "Get hardware sync can not fail",
-               ASSERT_TRUE(device->getHwAvSync().isOk()))
+               ASSERT_IS_OK(device->getHwAvSync()));
 
 static void checkGetNoParameter(IStream* stream, hidl_vec<hidl_string> keys,
                                 vector<Result> expectedResults) {
@@ -1048,7 +1048,7 @@ static void testUnitaryGain(std::function<Return<Result>(float)> setGain) {
 static void testOptionalUnitaryGain(
     std::function<Return<Result>(float)> setGain, string debugName) {
     auto result = setGain(1);
-    ASSERT_TRUE(result.isOk());
+    ASSERT_IS_OK(result);
     if (result == Result::NOT_SUPPORTED) {
         doc::partialTest(debugName + " is not supported");
         return;
@@ -1098,7 +1098,7 @@ TEST_P(InputStreamTest, GetInputFramesLost) {
     doc::test(
         "The number of frames lost on a never started stream should be 0");
     auto ret = stream->getInputFramesLost();
-    ASSERT_TRUE(ret.isOk());
+    ASSERT_IS_OK(ret);
     uint32_t framesLost{ret};
     ASSERT_EQ(0U, framesLost);
 }
@@ -1120,7 +1120,7 @@ TEST_P(InputStreamTest, getCapturePosition) {
 TEST_P(OutputStreamTest, getLatency) {
     doc::test("Make sure latency is over 0");
     auto result = stream->getLatency();
-    ASSERT_TRUE(result.isOk());
+    ASSERT_IS_OK(result);
     ASSERT_GT(result, 0U);
 }
 
@@ -1166,7 +1166,7 @@ struct Capability {
     Capability(IStreamOut* stream) {
         EXPECT_OK(stream->supportsPauseAndResume(returnIn(pause, resume)));
         auto ret = stream->supportsDrain();
-        EXPECT_TRUE(ret.isOk());
+        EXPECT_IS_OK(ret);
         if (ret.isOk()) {
             drain = ret;
         }
@@ -1301,7 +1301,7 @@ TEST_P(OutputStreamTest, DrainEarlyNotify) {
 TEST_P(OutputStreamTest, FlushStop) {
     doc::test("If supported, a stream should always succeed to flush");
     auto ret = stream->flush();
-    ASSERT_TRUE(ret.isOk());
+    ASSERT_IS_OK(ret);
     if (ret == Result::NOT_SUPPORTED) {
         doc::partialTest("Flush is not supported");
         return;

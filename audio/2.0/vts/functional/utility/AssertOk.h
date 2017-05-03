@@ -26,49 +26,93 @@ namespace detail {
 using ::android::hardware::Return;
 using ::android::hardware::audio::V2_0::Result;
 
-inline void assertResult(Result expected, Result result) {
-    ASSERT_EQ(expected, result);
+template <class T>
+inline ::testing::AssertionResult assertIsOk(const char* expr,
+                                             const Return<T>& ret) {
+    return ::testing::AssertionResult(ret.isOk())
+           << "Expected: " << expr
+           << "\n to be an OK Return but it is not: " << ret.description();
 }
 
-inline void assertResult(Result expected, const Return<Result>& ret) {
-    ASSERT_TRUE(ret.isOk());
-    Result result = ret;
-    assertResult(expected, result);
+// Call continuation if the provided result isOk
+template <class T, class Continuation>
+inline ::testing::AssertionResult continueIfIsOk(const char* expr,
+                                                 const Return<T>& ret,
+                                                 Continuation continuation) {
+    auto isOkStatus = assertIsOk(expr, ret);
+    return !isOkStatus ? isOkStatus : continuation();
 }
 
-inline void assertResult(const std::vector<Result>& expected, Result result) {
+// Expect two equal Results
+inline ::testing::AssertionResult assertResult(const char* e_expr,
+                                               const char* r_expr,
+                                               Result expected, Result result) {
+    return ::testing::AssertionResult(expected == result)
+           << "Value of: " << r_expr
+           << "\n  Actual: " << ::testing::PrintToString(result)
+           << "\nExpected: " << e_expr
+           << "\nWhich is: " << ::testing::PrintToString(expected);
+}
+
+// Expect two equal Results one being wrapped in an OK Return
+inline ::testing::AssertionResult assertResult(const char* e_expr,
+                                               const char* r_expr,
+                                               Result expected,
+                                               const Return<Result>& ret) {
+    return continueIfIsOk(r_expr, ret, [&] {
+        return assertResult(e_expr, r_expr, expected, Result{ret});
+    });
+}
+
+// Expect a Result to be part of a list of Results
+inline ::testing::AssertionResult assertResult(
+    const char* e_expr, const char* r_expr, const std::vector<Result>& expected,
+    Result result) {
     if (std::find(expected.begin(), expected.end(), result) != expected.end()) {
-        return;  // result is in expected
+        return ::testing::AssertionSuccess();  // result is in expected
     }
-    FAIL() << "Expected result " << ::testing::PrintToString(result)
-           << " to be one of " << ::testing::PrintToString(expected);
+    return ::testing::AssertionFailure()
+           << "Value of: " << r_expr
+           << "\n  Actual: " << ::testing::PrintToString(result)
+           << "\nExpected one of: " << e_expr
+           << "\n       Which is: " << ::testing::PrintToString(expected);
 }
 
-inline void assertResult(const std::vector<Result>& expected,
-                         const Return<Result>& ret) {
-    ASSERT_TRUE(ret.isOk());
-    Result result = ret;
-    assertResult(expected, result);
+// Expect a Result wrapped in an OK Return to be part of a list of Results
+inline ::testing::AssertionResult assertResult(
+    const char* e_expr, const char* r_expr, const std::vector<Result>& expected,
+    const Return<Result>& ret) {
+    return continueIfIsOk(r_expr, ret, [&] {
+        return assertResult(e_expr, r_expr, expected, Result{ret});
+    });
 }
 
-inline void assertOk(const Return<void>& ret) {
-    ASSERT_TRUE(ret.isOk());
+inline ::testing::AssertionResult assertOk(const char* expr,
+                                           const Return<void>& ret) {
+    return assertIsOk(expr, ret);
 }
 
-inline void assertOk(Result result) {
-    assertResult(Result::OK, result);
+inline ::testing::AssertionResult assertOk(const char* expr, Result result) {
+    return ::testing::AssertionResult(result == Result::OK)
+           << "Expected success: " << expr
+           << "\nActual: " << ::testing::PrintToString(result);
 }
 
-inline void assertOk(const Return<Result>& ret) {
-    assertResult(Result::OK, ret);
+inline ::testing::AssertionResult assertOk(const char* expr,
+                                           const Return<Result>& ret) {
+    return continueIfIsOk(expr, ret,
+                          [&] { return assertOk(expr, Result{ret}); });
 }
 }
+
+#define ASSERT_IS_OK(ret) ASSERT_PRED_FORMAT1(detail::assertIsOk, ret)
+#define EXPECT_IS_OK(ret) EXPECT_PRED_FORMAT1(detail::assertIsOk, ret)
 
 // Test anything provided is and contains only OK
-#define ASSERT_OK(ret) ASSERT_NO_FATAL_FAILURE(detail::assertOk(ret))
-#define EXPECT_OK(ret) EXPECT_NO_FATAL_FAILURE(detail::assertOk(ret))
+#define ASSERT_OK(ret) ASSERT_PRED_FORMAT1(detail::assertOk, ret)
+#define EXPECT_OK(ret) EXPECT_PRED_FORMAT1(detail::assertOk, ret)
 
 #define ASSERT_RESULT(expected, ret) \
-    ASSERT_NO_FATAL_FAILURE(detail::assertResult(expected, ret))
+    ASSERT_PRED_FORMAT2(detail::assertResult, expected, ret)
 #define EXPECT_RESULT(expected, ret) \
-    EXPECT_NO_FATAL_FAILURE(detail::assertResult(expected, ret))
+    EXPECT_PRED_FORMAT2(detail::assertResult, expected, ret)
