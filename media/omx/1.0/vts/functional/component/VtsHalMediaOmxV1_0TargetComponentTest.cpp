@@ -57,27 +57,22 @@ class ComponentTestEnvironment : public ::testing::Environment {
 
     void setRole(const char* _role) { role = _role; }
 
-    void setQuirks(int _quirks) { quirks = _quirks; }
-
     const hidl_string getInstance() const { return instance; }
 
     const hidl_string getComponent() const { return component; }
 
     const hidl_string getRole() const { return role; }
 
-    int getQuirks() const { return quirks; }
-
     int initFromOptions(int argc, char** argv) {
         static struct option options[] = {
             {"instance", required_argument, 0, 'I'},
             {"component", required_argument, 0, 'C'},
             {"role", required_argument, 0, 'R'},
-            {"quirks", required_argument, 0, 'Q'},
             {0, 0, 0, 0}};
 
         while (true) {
             int index = 0;
-            int c = getopt_long(argc, argv, "I:C:Q:R:", options, &index);
+            int c = getopt_long(argc, argv, "I:C:R:", options, &index);
             if (c == -1) {
                 break;
             }
@@ -88,9 +83,6 @@ class ComponentTestEnvironment : public ::testing::Environment {
                     break;
                 case 'C':
                     setComponent(optarg);
-                    break;
-                case 'Q':
-                    setQuirks(atoi(optarg));
                     break;
                 case 'R':
                     setRole(optarg);
@@ -107,8 +99,7 @@ class ComponentTestEnvironment : public ::testing::Environment {
                     "test options are:\n\n"
                     "-I, --instance: HAL instance to test\n"
                     "-C, --component: OMX component to test\n"
-                    "-R, --Role: OMX component Role\n"
-                    "-Q, --quirks: Component quirks\n",
+                    "-R, --Role: OMX component Role\n",
                     argv[optind ?: 1], argv[0]);
             return 2;
         }
@@ -119,12 +110,11 @@ class ComponentTestEnvironment : public ::testing::Environment {
     hidl_string instance;
     hidl_string component;
     hidl_string role;
-    // to be removed when IOmxNode::setQuirks is removed
-    int quirks;
 };
 
 static ComponentTestEnvironment* gEnv = nullptr;
 
+// generic component test fixture class
 class ComponentHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    public:
     virtual void SetUp() override {
@@ -132,7 +122,7 @@ class ComponentHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         omx = ::testing::VtsHalHidlTargetTestBase::getService<IOmx>(
             gEnv->getInstance());
         ASSERT_NE(omx, nullptr);
-        observer = new CodecObserver();
+        observer = new CodecObserver(nullptr);
         ASSERT_NE(observer, nullptr);
         ASSERT_EQ(strncmp(gEnv->getComponent().c_str(), "OMX.", 4), 0)
             << "Invalid Component Name";
@@ -465,14 +455,15 @@ void flushPorts(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
     }
 }
 
+// get/set video component port format
 Return<android::hardware::media::omx::V1_0::Status> setVideoPortFormat(
     sp<IOmxNode> omxNode, OMX_U32 portIndex,
-    OMX_VIDEO_CODINGTYPE compressionFormat, OMX_COLOR_FORMATTYPE colorFormat,
-    OMX_U32 frameRate) {
+    OMX_VIDEO_CODINGTYPE eCompressionFormat, OMX_COLOR_FORMATTYPE eColorFormat,
+    OMX_U32 xFramerate) {
     OMX_U32 index = 0;
     OMX_VIDEO_PARAM_PORTFORMATTYPE portFormat;
-    std::vector<OMX_COLOR_FORMATTYPE> eColorFormat;
-    std::vector<OMX_VIDEO_CODINGTYPE> eCompressionFormat;
+    std::vector<OMX_COLOR_FORMATTYPE> arrColorFormat;
+    std::vector<OMX_VIDEO_CODINGTYPE> arrCompressionFormat;
     android::hardware::media::omx::V1_0::Status status;
 
     while (1) {
@@ -480,10 +471,10 @@ Return<android::hardware::media::omx::V1_0::Status> setVideoPortFormat(
         status = getPortParam(omxNode, OMX_IndexParamVideoPortFormat, portIndex,
                               &portFormat);
         if (status != ::android::hardware::media::omx::V1_0::Status::OK) break;
-        if (compressionFormat == OMX_VIDEO_CodingUnused)
-            eColorFormat.push_back(portFormat.eColorFormat);
+        if (eCompressionFormat == OMX_VIDEO_CodingUnused)
+            arrColorFormat.push_back(portFormat.eColorFormat);
         else
-            eCompressionFormat.push_back(portFormat.eCompressionFormat);
+            arrCompressionFormat.push_back(portFormat.eCompressionFormat);
         index++;
         if (index == 512) {
             // enumerated way too many formats, highly unusual for this to
@@ -494,45 +485,46 @@ Return<android::hardware::media::omx::V1_0::Status> setVideoPortFormat(
         }
     }
     if (!index) return status;
-    if (compressionFormat == OMX_VIDEO_CodingUnused) {
-        for (index = 0; index < eColorFormat.size(); index++) {
-            if (eColorFormat[index] == colorFormat) {
-                portFormat.eColorFormat = eColorFormat[index];
+    if (eCompressionFormat == OMX_VIDEO_CodingUnused) {
+        for (index = 0; index < arrColorFormat.size(); index++) {
+            if (arrColorFormat[index] == eColorFormat) {
+                portFormat.eColorFormat = arrColorFormat[index];
                 break;
             }
         }
-        if (index == eColorFormat.size()) {
+        if (index == arrColorFormat.size()) {
             ALOGI("setting default color format");
-            portFormat.eColorFormat = eColorFormat[0];
+            portFormat.eColorFormat = arrColorFormat[0];
         }
         portFormat.eCompressionFormat = OMX_VIDEO_CodingUnused;
     } else {
-        for (index = 0; index < eCompressionFormat.size(); index++) {
-            if (eCompressionFormat[index] == compressionFormat) {
-                portFormat.eCompressionFormat = eCompressionFormat[index];
+        for (index = 0; index < arrCompressionFormat.size(); index++) {
+            if (arrCompressionFormat[index] == eCompressionFormat) {
+                portFormat.eCompressionFormat = arrCompressionFormat[index];
                 break;
             }
         }
-        if (index == eCompressionFormat.size()) {
+        if (index == arrCompressionFormat.size()) {
             ALOGI("setting default compression format");
-            portFormat.eCompressionFormat = eCompressionFormat[0];
+            portFormat.eCompressionFormat = arrCompressionFormat[0];
         }
         portFormat.eColorFormat = OMX_COLOR_FormatUnused;
     }
     // In setParam call nIndex shall be ignored as per omx-il specification.
     // see how this holds up by corrupting nIndex
     portFormat.nIndex = RANDOM_INDEX;
-    portFormat.xFramerate = frameRate;
+    portFormat.xFramerate = xFramerate;
     status = setPortParam(omxNode, OMX_IndexParamVideoPortFormat, portIndex,
                           &portFormat);
     return status;
 }
 
+// get/set audio component port format
 Return<android::hardware::media::omx::V1_0::Status> setAudioPortFormat(
-    sp<IOmxNode> omxNode, OMX_U32 portIndex, OMX_AUDIO_CODINGTYPE encoding) {
+    sp<IOmxNode> omxNode, OMX_U32 portIndex, OMX_AUDIO_CODINGTYPE eEncoding) {
     OMX_U32 index = 0;
     OMX_AUDIO_PARAM_PORTFORMATTYPE portFormat;
-    std::vector<OMX_AUDIO_CODINGTYPE> eEncoding;
+    std::vector<OMX_AUDIO_CODINGTYPE> arrEncoding;
     android::hardware::media::omx::V1_0::Status status;
 
     while (1) {
@@ -540,7 +532,7 @@ Return<android::hardware::media::omx::V1_0::Status> setAudioPortFormat(
         status = getPortParam(omxNode, OMX_IndexParamAudioPortFormat, portIndex,
                               &portFormat);
         if (status != ::android::hardware::media::omx::V1_0::Status::OK) break;
-        eEncoding.push_back(portFormat.eEncoding);
+        arrEncoding.push_back(portFormat.eEncoding);
         index++;
         if (index == 512) {
             // enumerated way too many formats, highly unusual for this to
@@ -551,15 +543,15 @@ Return<android::hardware::media::omx::V1_0::Status> setAudioPortFormat(
         }
     }
     if (!index) return status;
-    for (index = 0; index < eEncoding.size(); index++) {
-        if (eEncoding[index] == encoding) {
-            portFormat.eEncoding = eEncoding[index];
+    for (index = 0; index < arrEncoding.size(); index++) {
+        if (arrEncoding[index] == eEncoding) {
+            portFormat.eEncoding = arrEncoding[index];
             break;
         }
     }
-    if (index == eEncoding.size()) {
+    if (index == arrEncoding.size()) {
         ALOGI("setting default Port format");
-        portFormat.eEncoding = eEncoding[0];
+        portFormat.eEncoding = arrEncoding[0];
     }
     // In setParam call nIndex shall be ignored as per omx-il specification.
     // see how this holds up by corrupting nIndex
@@ -569,6 +561,7 @@ Return<android::hardware::media::omx::V1_0::Status> setAudioPortFormat(
     return status;
 }
 
+// set component role
 Return<android::hardware::media::omx::V1_0::Status> setRole(
     sp<IOmxNode> omxNode, const char* role) {
     OMX_PARAM_COMPONENTROLETYPE params;
@@ -576,6 +569,7 @@ Return<android::hardware::media::omx::V1_0::Status> setRole(
     return setParam(omxNode, OMX_IndexParamStandardComponentRole, &params);
 }
 
+// set component role
 TEST_F(ComponentHidlTest, SetRole) {
     description("Test Set Component Role");
     android::hardware::media::omx::V1_0::Status status;
@@ -583,8 +577,9 @@ TEST_F(ComponentHidlTest, SetRole) {
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 }
 
+// port indices enumeration
 TEST_F(ComponentHidlTest, GetPortIndices) {
-    description("Test Component on Mandatory Port Parameters (Port ID's)");
+    description("Test Component on Mandatory Port Parameters (Port Indices)");
     android::hardware::media::omx::V1_0::Status status;
     OMX_PORT_PARAM_TYPE params;
 
@@ -604,6 +599,7 @@ TEST_F(ComponentHidlTest, GetPortIndices) {
     EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 }
 
+// port format enumeration
 TEST_F(ComponentHidlTest, EnumeratePortFormat) {
     description("Test Component on Mandatory Port Parameters (Port Format)");
     android::hardware::media::omx::V1_0::Status status;
@@ -623,8 +619,8 @@ TEST_F(ComponentHidlTest, EnumeratePortFormat) {
         kPortIndexOutput = kPortIndexInput + 1;
     }
 
-    OMX_COLOR_FORMATTYPE colorFormat = OMX_COLOR_FormatYUV420Planar;
-    OMX_U32 frameRate = 24 << 16;
+    OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatYUV420Planar;
+    OMX_U32 xFramerate = 24U << 16;
 
     // Enumerate Port Format
     if (compClass == audio_encoder) {
@@ -644,7 +640,7 @@ TEST_F(ComponentHidlTest, EnumeratePortFormat) {
     } else if (compClass == video_encoder) {
         status =
             setVideoPortFormat(omxNode, kPortIndexInput, OMX_VIDEO_CodingUnused,
-                               colorFormat, frameRate);
+                               eColorFormat, xFramerate);
         EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
         status = setVideoPortFormat(omxNode, kPortIndexOutput,
                                     OMX_VIDEO_CodingAutoDetect,
@@ -655,13 +651,14 @@ TEST_F(ComponentHidlTest, EnumeratePortFormat) {
                                     OMX_VIDEO_CodingAutoDetect,
                                     OMX_COLOR_FormatUnused, 0U);
         EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-        status =
-            setVideoPortFormat(omxNode, kPortIndexOutput,
-                               OMX_VIDEO_CodingUnused, colorFormat, frameRate);
+        status = setVideoPortFormat(omxNode, kPortIndexOutput,
+                                    OMX_VIDEO_CodingUnused, eColorFormat,
+                                    xFramerate);
         EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     }
 }
 
+// get/set default port settings of a component
 TEST_F(ComponentHidlTest, SetDefaultPortParams) {
     description(
         "Test Component on Mandatory Port Parameters (Port Definition)");
@@ -700,11 +697,15 @@ TEST_F(ComponentHidlTest, SetDefaultPortParams) {
                 status = setPortParam(omxNode, OMX_IndexParamPortDefinition,
                                       kPortIndexInput, &iPortDef);
             }
-            EXPECT_EQ(status,
-                      ::android::hardware::media::omx::V1_0::Status::OK);
         } else if (compClass == video_encoder || compClass == video_decoder) {
             EXPECT_EQ(iPortDef.eDomain, OMX_PortDomainVideo);
+            if (compClass == video_decoder) {
+                iPortDef.format.video.bFlagErrorConcealment = OMX_TRUE;
+                status = setPortParam(omxNode, OMX_IndexParamPortDefinition,
+                                      kPortIndexInput, &iPortDef);
+            }
         }
+        EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
         OMX_PARAM_PORTDEFINITIONTYPE dummy = iPortDef;
         iPortDef.nBufferCountActual = iPortDef.nBufferCountMin - 1;
         status = setPortParam(omxNode, OMX_IndexParamPortDefinition,
@@ -748,11 +749,15 @@ TEST_F(ComponentHidlTest, SetDefaultPortParams) {
                 status = setPortParam(omxNode, OMX_IndexParamPortDefinition,
                                       kPortIndexOutput, &oPortDef);
             }
-            EXPECT_EQ(status,
-                      ::android::hardware::media::omx::V1_0::Status::OK);
         } else if (compClass == video_encoder || compClass == video_decoder) {
             EXPECT_EQ(oPortDef.eDomain, OMX_PortDomainVideo);
+            if (compClass == video_encoder) {
+                oPortDef.format.video.bFlagErrorConcealment = OMX_TRUE;
+                status = setPortParam(omxNode, OMX_IndexParamPortDefinition,
+                                      kPortIndexOutput, &oPortDef);
+            }
         }
+        EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
         OMX_PARAM_PORTDEFINITIONTYPE dummy = oPortDef;
         oPortDef.nBufferCountActual = oPortDef.nBufferCountMin - 1;
         status = setPortParam(omxNode, OMX_IndexParamPortDefinition,
@@ -780,6 +785,7 @@ TEST_F(ComponentHidlTest, SetDefaultPortParams) {
     }
 }
 
+// populate port test
 TEST_F(ComponentHidlTest, PopulatePort) {
     description("Verify bPopulated field of a component port");
     android::hardware::media::omx::V1_0::Status status;
@@ -843,11 +849,12 @@ TEST_F(ComponentHidlTest, PopulatePort) {
         getPortParam(omxNode, OMX_IndexParamPortDefinition, portBase, &portDef);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     // A port is populated when all of the buffers indicated by
-    // nBufferCountActual
-    // with a size of at least nBufferSizehave been allocated on the port.
+    // nBufferCountActual with a size of at least nBufferSizehave been
+    // allocated on the port.
     ASSERT_EQ(portDef.bPopulated, OMX_FALSE);
 }
 
+// Flush test
 TEST_F(ComponentHidlTest, Flush) {
     description("Test Flush");
     android::hardware::media::omx::V1_0::Status status;
@@ -896,8 +903,9 @@ TEST_F(ComponentHidlTest, Flush) {
                             kPortIndexInput, kPortIndexOutput);
 }
 
+// state transitions test
 TEST_F(ComponentHidlTest, StateTransitions) {
-    description("Test State Transitions");
+    description("Test State Transitions Loaded<->Idle<->Execute");
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     Message msg;
@@ -942,6 +950,7 @@ TEST_F(ComponentHidlTest, StateTransitions) {
                             kPortIndexInput, kPortIndexOutput);
 }
 
+// state transitions test - monkeying
 TEST_F(ComponentHidlTest, StateTransitions_M) {
     description("Test State Transitions monkeying");
     android::hardware::media::omx::V1_0::Status status;
@@ -1004,6 +1013,7 @@ TEST_F(ComponentHidlTest, StateTransitions_M) {
                             kPortIndexInput, kPortIndexOutput);
 }
 
+// port enable disable test
 TEST_F(ComponentHidlTest, PortEnableDisable_Loaded) {
     description("Test Port Enable and Disable (Component State :: Loaded)");
     android::hardware::media::omx::V1_0::Status status;
@@ -1052,6 +1062,7 @@ TEST_F(ComponentHidlTest, PortEnableDisable_Loaded) {
     }
 }
 
+// port enable disable test
 TEST_F(ComponentHidlTest, PortEnableDisable_Idle) {
     description("Test Port Enable and Disable (Component State :: Idle)");
     android::hardware::media::omx::V1_0::Status status;
@@ -1145,6 +1156,7 @@ TEST_F(ComponentHidlTest, PortEnableDisable_Idle) {
                             kPortIndexInput, kPortIndexOutput);
 }
 
+// port enable disable test
 TEST_F(ComponentHidlTest, PortEnableDisable_Execute) {
     description("Test Port Enable and Disable (Component State :: Execute)");
     android::hardware::media::omx::V1_0::Status status;
@@ -1252,6 +1264,7 @@ TEST_F(ComponentHidlTest, PortEnableDisable_Execute) {
                             kPortIndexInput, kPortIndexOutput);
 }
 
+// port enable disable test - monkeying
 TEST_F(ComponentHidlTest, PortEnableDisable_M) {
     description(
         "Test Port Enable and Disable Monkeying (Component State :: Loaded)");
