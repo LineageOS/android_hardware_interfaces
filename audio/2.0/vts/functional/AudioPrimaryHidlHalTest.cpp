@@ -1291,18 +1291,22 @@ TEST_F(AudioPrimaryHidlTest, setVoiceVolume) {
 }
 
 TEST_F(AudioPrimaryHidlTest, setMode) {
-    doc::test("Make sure setMode always succeeds if mode is valid");
+    doc::test(
+        "Make sure setMode always succeeds if mode is valid "
+        "and fails otherwise");
+    // Test Invalid values
+    for (AudioMode mode :
+         {AudioMode::INVALID, AudioMode::CURRENT, AudioMode::CNT}) {
+        SCOPED_TRACE("mode=" + toString(mode));
+        ASSERT_RESULT(Result::INVALID_ARGUMENTS, device->setMode(mode));
+    }
+    // Test valid values
     for (AudioMode mode :
          {AudioMode::IN_CALL, AudioMode::IN_COMMUNICATION, AudioMode::RINGTONE,
-          AudioMode::CURRENT,
           AudioMode::NORMAL /* Make sure to leave the test in normal mode */}) {
         SCOPED_TRACE("mode=" + toString(mode));
         ASSERT_OK(device->setMode(mode));
     }
-
-    // FIXME: Missing api doc. What should the impl do if the mode is invalid ?
-    ASSERT_RESULT(Result::INVALID_ARGUMENTS,
-                  device->setMode(AudioMode::INVALID));
 }
 
 TEST_F(BoolAccessorPrimaryHidlTest, BtScoNrecEnabled) {

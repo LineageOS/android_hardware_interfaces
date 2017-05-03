@@ -132,6 +132,18 @@ Return<Result> PrimaryDevice::setVoiceVolume(float volume) {
 }
 
 Return<Result> PrimaryDevice::setMode(AudioMode mode) {
+    // INVALID, CURRENT, CNT, MAX are reserved for internal use.
+    // TODO: remove the values from the HIDL interface
+    switch (mode) {
+        case AudioMode::NORMAL:
+        case AudioMode::RINGTONE:
+        case AudioMode::IN_CALL:
+        case AudioMode::IN_COMMUNICATION:
+            break;  // Valid values
+        default:
+            return Result::INVALID_ARGUMENTS;
+    };
+
     return mDevice->analyzeStatus(
         "set_mode", mDevice->device()->set_mode(
                         mDevice->device(), static_cast<audio_mode_t>(mode)));
