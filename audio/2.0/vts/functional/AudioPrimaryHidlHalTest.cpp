@@ -1076,7 +1076,7 @@ static void testPrepareForReading(IStreamIn* stream, uint32_t frameSize,
     ASSERT_OK(stream->prepareForReading(
         frameSize, framesCount,
         [&res](auto r, auto&, auto&, auto&, auto&) { res = r; }));
-    EXPECT_RESULT(invalidArgsOrNotSupported, res);
+    EXPECT_RESULT(Result::INVALID_ARGUMENTS, res);
 }
 
 TEST_P(InputStreamTest, PrepareForReadingWithZeroBuffer) {
@@ -1144,7 +1144,7 @@ static void testPrepareForWriting(IStreamOut* stream, uint32_t frameSize,
     ASSERT_OK(stream->prepareForWriting(
         frameSize, framesCount,
         [&res](auto r, auto&, auto&, auto&, auto&) { res = r; }));
-    EXPECT_RESULT(invalidArgsOrNotSupported, res);
+    EXPECT_RESULT(Result::INVALID_ARGUMENTS, res);
 }
 
 TEST_P(OutputStreamTest, PrepareForWriteWithZeroBuffer) {
