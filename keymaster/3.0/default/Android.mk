@@ -11,8 +11,7 @@ LOCAL_SHARED_LIBRARIES := \
     liblog \
     libsoftkeymasterdevice \
     libcrypto \
-    libkeymaster_portable \
-    libkeymaster \
+    libkeymaster1 \
     libhidlbase \
     libhidltransport \
     libutils \
