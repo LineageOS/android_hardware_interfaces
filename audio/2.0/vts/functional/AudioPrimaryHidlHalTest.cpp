@@ -1297,6 +1297,13 @@ TEST_P(OutputStreamTest, GetPresentationPositionStop) {
     }
     ASSERT_EQ(0U, frames);
 
+    if (mesureTS.tvNSec == 0 && mesureTS.tvSec == 0) {
+        // As the stream has never written a frame yet,
+        // the timestamp does not really have a meaning, allow to return 0
+        return;
+    }
+
+    // Make sure the return measure is not more than 1s old.
     struct timespec currentTS;
     ASSERT_EQ(0, clock_gettime(CLOCK_MONOTONIC, &currentTS)) << errno;
 
