@@ -102,6 +102,11 @@ void test(const std::string& testCaseDocumentation) {
 void partialTest(const std::string& reason) {
     ::testing::Test::RecordProperty("partialyRunTest", reason);
 }
+
+/** Add a note to the test. */
+void note(const std::string& note) {
+    ::testing::Test::RecordProperty("note", note);
+}
 }
 
 // Register callback for static object destruction
@@ -516,36 +521,41 @@ TEST_F(AudioPrimaryHidlTest, getParameters) {
 
 template <class DebugDump>
 static void testDebugDump(DebugDump debugDump) {
+    // Dump in a temporary file
+    // Note that SELinux must be deactivate for this test to work
     FILE* file = tmpfile();
     ASSERT_NE(nullptr, file) << errno;
 
+    // Wrap the temporary file file descriptor in a native handle
     auto* nativeHandle = native_handle_create(1, 0);
     ASSERT_NE(nullptr, nativeHandle);
     nativeHandle->data[0] = fileno(file);
 
+    // Wrap this native handle in a hidl handle
     hidl_handle handle;
     handle.setTo(nativeHandle, true /*take ownership*/);
 
+    ASSERT_OK(debugDump(handle));
+
+    // Check that at least one bit was written by the hal
     // TODO: debugDump does not return a Result.
     // This mean that the hal can not report that it not implementing the
     // function.
-    ASSERT_OK(debugDump(handle));
-
     rewind(file);  // can not fail
-
-    // Check that at least one bit was written by the hal
     char buff;
-    ASSERT_EQ(size_t{1}, fread(&buff, sizeof(buff), 1, file));
+    if (fread(&buff, sizeof(buff), 1, file) != 1) {
+        doc::note("debugDump does not seem implemented");
+    }
     EXPECT_EQ(0, fclose(file)) << errno;
 }
 
-TEST_F(AudioPrimaryHidlTest, debugDump) {
+TEST_F(AudioPrimaryHidlTest, DebugDump) {
     doc::test("Check that the hal can dump its state without error");
     testDebugDump(
         [this](const auto& handle) { return device->debugDump(handle); });
 }
 
-TEST_F(AudioPrimaryHidlTest, debugDumpInvalidArguments) {
+TEST_F(AudioPrimaryHidlTest, DebugDumpInvalidArguments) {
     doc::test("Check that the hal dump doesn't crash on invalid arguments");
     ASSERT_OK(device->debugDump(hidl_handle()));
 }
