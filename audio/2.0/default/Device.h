@@ -27,13 +27,13 @@
 
 #include <hidl/MQDescriptor.h>
 
+#include "ParametersUtil.h"
+
 namespace android {
 namespace hardware {
 namespace audio {
 namespace V2_0 {
 namespace implementation {
-
-class ParametersUtil;
 
 using ::android::hardware::audio::common::V2_0::AudioConfig;
 using ::android::hardware::audio::common::V2_0::AudioHwSync;
@@ -55,7 +55,7 @@ using ::android::hardware::hidl_vec;
 using ::android::hardware::hidl_string;
 using ::android::sp;
 
-struct Device : public IDevice {
+struct Device : public IDevice, public ParametersUtil {
     explicit Device(audio_hw_device_t* device);
 
     // Methods from ::android::hardware::audio::V2_0::IDevice follow.
@@ -101,18 +101,15 @@ struct Device : public IDevice {
     void closeInputStream(audio_stream_in_t* stream);
     void closeOutputStream(audio_stream_out_t* stream);
     audio_hw_device_t* device() const { return mDevice; }
-    Result getParam(const char* name, bool* value);
-    Result getParam(const char* name, int* value);
-    Result getParam(const char* name, String8* value);
-    Result setParam(const char* name, bool value);
-    Result setParam(const char* name, int value);
-    Result setParam(const char* name, const char* value);
 
-   private:
+  private:
     audio_hw_device_t *mDevice;
-    std::unique_ptr<ParametersUtil> mParameters;
 
     virtual ~Device();
+
+    // Methods from ParametersUtil.
+    char* halGetParameters(const char* keys) override;
+    int halSetParameters(const char* keysAndValues) override;
 
     uint32_t version() const { return mDevice->common.version; }
 };

@@ -26,7 +26,6 @@
 #include "Conversions.h"
 #include "Device.h"
 #include "HidlUtils.h"
-#include "ParametersUtil.h"
 #include "StreamIn.h"
 #include "StreamOut.h"
 
@@ -36,28 +35,9 @@ namespace audio {
 namespace V2_0 {
 namespace implementation {
 
-namespace {
-
-class ParametersUtilImpl : public ParametersUtil {
-   public:
-    ParametersUtilImpl(audio_hw_device_t* device) : mDevice{device} {}
-
-    char* halGetParameters(const char* keys) override {
-        return mDevice->get_parameters(mDevice, keys);
-    }
-
-    int halSetParameters(const char* keysAndValues) override {
-        return mDevice->set_parameters(mDevice, keysAndValues);
-    }
-
-   private:
-    audio_hw_device_t* mDevice;
-};
-
-}  // namespace
-
 Device::Device(audio_hw_device_t* device)
-    : mDevice{device}, mParameters{new ParametersUtilImpl(mDevice)} {}
+        : mDevice(device) {
+}
 
 Device::~Device() {
     int status = audio_hw_device_close(mDevice);
@@ -87,28 +67,12 @@ void Device::closeOutputStream(audio_stream_out_t* stream) {
     mDevice->close_output_stream(mDevice, stream);
 }
 
-Result Device::getParam(const char* name, bool* value) {
-    return mParameters->getParam(name, value);
+char* Device::halGetParameters(const char* keys) {
+    return mDevice->get_parameters(mDevice, keys);
 }
 
-Result Device::getParam(const char* name, int* value) {
-    return mParameters->getParam(name, value);
-}
-
-Result Device::getParam(const char* name, String8* value) {
-    return mParameters->getParam(name, value);
-}
-
-Result Device::setParam(const char* name, bool value) {
-    return mParameters->setParam(name, value);
-}
-
-Result Device::setParam(const char* name, int value) {
-    return mParameters->setParam(name, value);
-}
-
-Result Device::setParam(const char* name, const char* value) {
-    return mParameters->setParam(name, value);
+int Device::halSetParameters(const char* keysAndValues) {
+    return mDevice->set_parameters(mDevice, keysAndValues);
 }
 
 // Methods from ::android::hardware::audio::V2_0::IDevice follow.
@@ -310,22 +274,21 @@ Return<Result> Device::setAudioPortConfig(const AudioPortConfig& config)  {
 
 Return<AudioHwSync> Device::getHwAvSync()  {
     int halHwAvSync;
-    Result retval =
-        mParameters->getParam(AudioParameter::keyHwAvSync, &halHwAvSync);
+    Result retval = getParam(AudioParameter::keyHwAvSync, &halHwAvSync);
     return retval == Result::OK ? halHwAvSync : AUDIO_HW_SYNC_INVALID;
 }
 
 Return<Result> Device::setScreenState(bool turnedOn)  {
-    return mParameters->setParam(AudioParameter::keyScreenState, turnedOn);
+    return setParam(AudioParameter::keyScreenState, turnedOn);
 }
 
 Return<void> Device::getParameters(const hidl_vec<hidl_string>& keys, getParameters_cb _hidl_cb)  {
-    mParameters->getParametersImpl(keys, _hidl_cb);
+    getParametersImpl(keys, _hidl_cb);
     return Void();
 }
 
 Return<Result> Device::setParameters(const hidl_vec<ParameterValue>& parameters)  {
-    return mParameters->setParametersImpl(parameters);
+    return setParametersImpl(parameters);
 }
 
 Return<void> Device::debugDump(const hidl_handle& fd)  {
