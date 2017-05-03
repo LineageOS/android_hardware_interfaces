@@ -173,7 +173,7 @@ protected:
         Error lookupBuffer(BufferCache cache, uint32_t slot,
                 bool useCache, buffer_handle_t handle,
                 buffer_handle_t* outHandle);
-        void updateBuffer(BufferCache cache, uint32_t slot,
+        Error updateBuffer(BufferCache cache, uint32_t slot,
                 bool useCache, buffer_handle_t handle);
 
         Error lookupLayerSidebandStream(buffer_handle_t handle,
@@ -182,9 +182,9 @@ protected:
             return lookupBuffer(BufferCache::LAYER_SIDEBAND_STREAMS,
                     0, false, handle, outHandle);
         }
-        void updateLayerSidebandStream(buffer_handle_t handle)
+        Error updateLayerSidebandStream(buffer_handle_t handle)
         {
-            updateBuffer(BufferCache::LAYER_SIDEBAND_STREAMS,
+            return updateBuffer(BufferCache::LAYER_SIDEBAND_STREAMS,
                     0, false, handle);
         }
 

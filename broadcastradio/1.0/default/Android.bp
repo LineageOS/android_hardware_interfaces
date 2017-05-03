@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2016 The Android Open Source Project
+// Copyright (C) 2017 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,33 +14,28 @@
 // limitations under the License.
 //
 
-cc_test {
-    name: "VtsEvsV1_0Target",
-
+cc_library_shared {
+    name: "android.hardware.broadcastradio@1.0-impl",
+    vendor: true,
+    relative_install_path: "hw",
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+    ],
     srcs: [
-        "VtsEvsV1_0TargetTest.cpp",
-        "FrameHandler.cpp",
-        "FormatConvert.cpp"
+        "BroadcastRadio.cpp",
+        "BroadcastRadioFactory.cpp",
+        "Tuner.cpp",
+        "Utils.cpp",
     ],
-
-    defaults: [
-        "hidl_defaults",
-    ],
-
     shared_libs: [
-        "android.hardware.automotive.evs@1.0",
-        "liblog",
-        "libutils",
-        "libui",
         "libhidlbase",
         "libhidltransport",
-    ],
-
-    static_libs: ["VtsHalHidlTargetTestBase"],
-
-    cflags: [
-        "-O0",
-        "-g",
+        "libutils",
+        "liblog",
+        "libhardware",
+        "android.hardware.broadcastradio@1.0",
+        "libradio_metadata",
     ],
 }
-
