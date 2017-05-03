@@ -1182,27 +1182,39 @@ TEST_P(OutputStreamTest, SupportsPauseAndResumeAndDrain) {
     Capability(stream.get());
 }
 
+template <class Value>
+static void checkInvalidStateOr0(Result res, Value value) {
+    switch (res) {
+        case Result::INVALID_STATE:
+            break;
+        case Result::OK:
+            ASSERT_EQ(0U, value);
+            break;
+        default:
+            FAIL() << "Unexpected result " << toString(res);
+    }
+}
+
 TEST_P(OutputStreamTest, GetRenderPosition) {
-    doc::test("The render position should be 0 on a not started");
+    doc::test("A new stream render position should be 0 or INVALID_STATE");
     uint32_t dspFrames;
     ASSERT_OK(stream->getRenderPosition(returnIn(res, dspFrames)));
     if (res == Result::NOT_SUPPORTED) {
         doc::partialTest("getRenderPosition is not supported");
         return;
     }
-    ASSERT_OK(res);
-    ASSERT_EQ(0U, dspFrames);
+    checkInvalidStateOr0(res, dspFrames);
 }
 
 TEST_P(OutputStreamTest, GetNextWriteTimestamp) {
-    doc::test("The render position of a stream just created should be 0");
+    doc::test("A new stream next write timestamp should be 0 or INVALID_STATE");
     uint64_t timestampUs;
     ASSERT_OK(stream->getNextWriteTimestamp(returnIn(res, timestampUs)));
     if (res == Result::NOT_SUPPORTED) {
         doc::partialTest("getNextWriteTimestamp is not supported");
         return;
     }
-    ASSERT_EQ(Result::INVALID_STATE, res);
+    checkInvalidStateOr0(res, timestampUs);
 }
 
 /** Stub implementation of out stream callback. */
