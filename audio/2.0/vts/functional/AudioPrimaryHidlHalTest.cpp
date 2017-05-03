@@ -878,8 +878,8 @@ TEST_IO_STREAM(SetHwAvSync, "Try to set hardware sync to an invalid value",
 TEST_IO_STREAM(GetHwAvSync, "Get hardware sync can not fail",
                ASSERT_TRUE(device->getHwAvSync().isOk()))
 
-static void checkGetParameter(IStream* stream, hidl_vec<hidl_string> keys,
-                              vector<Result> expectedResults) {
+static void checkGetNoParameter(IStream* stream, hidl_vec<hidl_string> keys,
+                                vector<Result> expectedResults) {
     hidl_vec<ParameterValue> parameters;
     Result res;
     ASSERT_OK(stream->getParameters(keys, returnIn(res, parameters)));
@@ -892,16 +892,15 @@ static void checkGetParameter(IStream* stream, hidl_vec<hidl_string> keys,
 /* Get/Set parameter is intended to be an opaque channel between vendors app and
  * their HALs.
  * Thus can not be meaningfully tested.
- * TODO: Doc missing. Should asking for an empty set of params raise an error ?
  */
 TEST_IO_STREAM(getEmptySetParameter, "Retrieve the values of an empty set",
-               checkGetParameter(stream.get(), {} /* keys */,
-                                 {Result::OK, Result::INVALID_ARGUMENTS}))
+               checkGetNoParameter(stream.get(), {} /* keys */, {Result::OK}))
 
 TEST_IO_STREAM(getNonExistingParameter,
                "Retrieve the values of an non existing parameter",
-               checkGetParameter(stream.get(), {"Non existing key"} /* keys */,
-                                 {Result::INVALID_ARGUMENTS}))
+               checkGetNoParameter(stream.get(),
+                                   {"Non existing key"} /* keys */,
+                                   {Result::NOT_SUPPORTED}))
 
 static vector<Result> okOrInvalidArguments = {Result::OK,
                                               Result::INVALID_ARGUMENTS};

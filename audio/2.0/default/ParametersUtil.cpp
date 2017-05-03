@@ -22,11 +22,31 @@ namespace audio {
 namespace V2_0 {
 namespace implementation {
 
+// Static method and not private method to avoid leaking status_t dependency
+static Result getHalStatusToResult(status_t status) {
+    switch (status) {
+        case OK:
+            return Result::OK;
+        case BAD_VALUE:  // Nothing was returned, probably because the HAL does
+                         // not handle it
+            return Result::NOT_SUPPORTED;
+        case INVALID_OPERATION:  // Conversion from string to the requested type
+                                 // failed
+            return Result::INVALID_ARGUMENTS;
+        default:  // Should not happen
+            ALOGW("Unexpected status returned by getParam: %u", status);
+            return Result::INVALID_ARGUMENTS;
+    }
+}
+
 Result ParametersUtil::getParam(const char* name, bool* value) {
     String8 halValue;
     Result retval = getParam(name, &halValue);
     *value = false;
     if (retval == Result::OK) {
+        if (halValue.empty()) {
+            return Result::NOT_SUPPORTED;
+        }
         *value = !(halValue == AudioParameter::valueOff);
     }
     return retval;
@@ -37,8 +57,7 @@ Result ParametersUtil::getParam(const char* name, int* value) {
     AudioParameter keys;
     keys.addKey(halName);
     std::unique_ptr<AudioParameter> params = getParams(keys);
-    status_t halStatus = params->getInt(halName, *value);
-    return halStatus == OK ? Result::OK : Result::INVALID_ARGUMENTS;
+    return getHalStatusToResult(params->getInt(halName, *value));
 }
 
 Result ParametersUtil::getParam(const char* name, String8* value) {
@@ -46,8 +65,7 @@ Result ParametersUtil::getParam(const char* name, String8* value) {
     AudioParameter keys;
     keys.addKey(halName);
     std::unique_ptr<AudioParameter> params = getParams(keys);
-    status_t halStatus = params->get(halName, *value);
-    return halStatus == OK ? Result::OK : Result::INVALID_ARGUMENTS;
+    return getHalStatusToResult(params->get(halName, *value));
 }
 
 void ParametersUtil::getParametersImpl(
@@ -60,23 +78,20 @@ void ParametersUtil::getParametersImpl(
         halKeys.addKey(String8(keys[i].c_str()));
     }
     std::unique_ptr<AudioParameter> halValues = getParams(halKeys);
-    Result retval(Result::INVALID_ARGUMENTS);
+    Result retval =
+        halValues->size() == keys.size() ? Result::OK : Result::NOT_SUPPORTED;
     hidl_vec<ParameterValue> result;
-    if (halValues->size() > 0) {
-        result.resize(halValues->size());
-        String8 halKey, halValue;
-        for (size_t i = 0; i < halValues->size(); ++i) {
-            status_t status = halValues->getAt(i, halKey, halValue);
-            if (status != OK) {
-                result.resize(0);
-                break;
-            }
-            result[i].key = halKey.string();
-            result[i].value = halValue.string();
+    result.resize(halValues->size());
+    String8 halKey, halValue;
+    for (size_t i = 0; i < halValues->size(); ++i) {
+        status_t status = halValues->getAt(i, halKey, halValue);
+        if (status != OK) {
+            result.resize(0);
+            retval = getHalStatusToResult(status);
+            break;
         }
-        if (result.size() != 0) {
-            retval = Result::OK;
-        }
+        result[i].key = halKey.string();
+        result[i].value = halValue.string();
     }
     cb(retval, result);
 }
