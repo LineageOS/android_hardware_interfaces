@@ -815,10 +815,15 @@ TEST_IO_STREAM(SupportedFormat,
                                     &IStream::getFormat, &IStream::setFormat))
 
 static void testGetDevice(IStream* stream, AudioDevice expectedDevice) {
+    // Unfortunately the interface does not allow the implementation to return
+    // NOT_SUPPORTED
+    // Thus allow NONE as signaling that the call is not supported.
     auto ret = stream->getDevice();
     ASSERT_TRUE(ret.isOk());
     AudioDevice device = ret;
-    ASSERT_EQ(expectedDevice, device);
+    ASSERT_TRUE(device == expectedDevice || device == AudioDevice::NONE)
+        << "Expected: " << ::testing::PrintToString(expectedDevice)
+        << "\n  Actual: " << ::testing::PrintToString(device);
 }
 
 TEST_IO_STREAM(GetDevice,
