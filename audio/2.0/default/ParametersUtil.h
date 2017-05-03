@@ -37,23 +37,22 @@ using ::android::hardware::hidl_vec;
 
 class ParametersUtil {
   public:
-   virtual ~ParametersUtil() = default;
-   Result getParam(const char* name, bool* value);
-   Result getParam(const char* name, int* value);
-   Result getParam(const char* name, String8* value);
-   void getParametersImpl(
-       const hidl_vec<hidl_string>& keys,
-       std::function<void(Result retval,
-                          const hidl_vec<ParameterValue>& parameters)>
-           cb);
-   std::unique_ptr<AudioParameter> getParams(const AudioParameter& keys);
-   Result setParam(const char* name, bool value);
-   Result setParam(const char* name, int value);
-   Result setParam(const char* name, const char* value);
-   Result setParametersImpl(const hidl_vec<ParameterValue>& parameters);
-   Result setParams(const AudioParameter& param);
+    Result getParam(const char* name, bool* value);
+    Result getParam(const char* name, int* value);
+    Result getParam(const char* name, String8* value);
+    void getParametersImpl(
+            const hidl_vec<hidl_string>& keys,
+            std::function<void(Result retval, const hidl_vec<ParameterValue>& parameters)> cb);
+    std::unique_ptr<AudioParameter> getParams(const AudioParameter& keys);
+    Result setParam(const char* name, bool value);
+    Result setParam(const char* name, int value);
+    Result setParam(const char* name, const char* value);
+    Result setParametersImpl(const hidl_vec<ParameterValue>& parameters);
+    Result setParams(const AudioParameter& param);
 
   protected:
+    virtual ~ParametersUtil() {}
+
     virtual char* halGetParameters(const char* keys) = 0;
     virtual int halSetParameters(const char* keysAndValues) = 0;
 };
