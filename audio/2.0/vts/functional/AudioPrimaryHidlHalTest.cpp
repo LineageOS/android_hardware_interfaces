@@ -1038,6 +1038,12 @@ static void testPrepareForReading(IStreamIn* stream, uint32_t frameSize,
     EXPECT_RESULT(invalidArgsOrNotSupported, res);
 }
 
+TEST_P(InputStreamTest, PrepareForReadingWithZeroBuffer) {
+    doc::test(
+        "Preparing a stream for reading with a 0 sized buffer should fail");
+    testPrepareForReading(stream.get(), 0, 0);
+}
+
 TEST_P(InputStreamTest, PrepareForReadingWithHugeBuffer) {
     doc::test(
         "Preparing a stream for reading with a 2^32 sized buffer should fail");
@@ -1103,6 +1109,12 @@ static void testPrepareForWriting(IStreamOut* stream, uint32_t frameSize,
         frameSize, framesCount,
         [&res](auto r, auto&, auto&, auto&, auto&) { res = r; }));
     EXPECT_RESULT(invalidArgsOrNotSupported, res);
+}
+
+TEST_P(OutputStreamTest, PrepareForWriteWithZeroBuffer) {
+    doc::test(
+        "Preparing a stream for writing with a 0 sized buffer should fail");
+    testPrepareForWriting(stream.get(), 0, 0);
 }
 
 TEST_P(OutputStreamTest, PrepareForWriteWithHugeBuffer) {

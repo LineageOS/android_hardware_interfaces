@@ -334,8 +334,21 @@ Return<void> StreamIn::prepareForReading(uint32_t frameSize,
         return Void();
     }
     std::unique_ptr<CommandMQ> tempCommandMQ(new CommandMQ(1));
-    if (frameSize > std::numeric_limits<size_t>::max() / framesCount) {
-        ALOGE("Requested buffer is too big, %d*%d can not fit in size_t",
+
+    // Check frameSize and framesCount
+    if (frameSize == 0 || framesCount == 0) {
+        ALOGE("Null frameSize (%u) or framesCount (%u)", frameSize,
+              framesCount);
+        sendError(Result::INVALID_ARGUMENTS);
+        return Void();
+    }
+    // A message queue asserts if it can not handle the requested buffer,
+    // thus the client has to guess the maximum size it can handle
+    // Choose an arbitrary margin for the overhead of a message queue
+    size_t metadataOverhead = 100000;
+    if (frameSize >
+        (std::numeric_limits<size_t>::max() - metadataOverhead) / framesCount) {
+        ALOGE("Buffer too big: %u*%u bytes can not fit in a message queue",
               frameSize, framesCount);
         sendError(Result::INVALID_ARGUMENTS);
         return Void();
