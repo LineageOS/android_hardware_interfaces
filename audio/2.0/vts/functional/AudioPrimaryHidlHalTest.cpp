@@ -869,10 +869,10 @@ TEST_IO_STREAM(SetConnectedState,
                "deconnection",
                testConnectedState(stream.get()))
 
-static auto invalidArgsOrNotSupported = {Result::INVALID_ARGUMENTS,
-                                         Result::NOT_SUPPORTED};
+static auto invalidArgsOrNotSupportedOrOK = {Result::INVALID_ARGUMENTS,
+                                             Result::NOT_SUPPORTED, Result::OK};
 TEST_IO_STREAM(SetHwAvSync, "Try to set hardware sync to an invalid value",
-               ASSERT_RESULT(invalidArgsOrNotSupported,
+               ASSERT_RESULT(invalidArgsOrNotSupportedOrOK,
                              stream->setHwAvSync(666)))
 
 TEST_IO_STREAM(GetHwAvSync, "Get hardware sync can not fail",
@@ -902,15 +902,17 @@ TEST_IO_STREAM(getNonExistingParameter,
                                    {"Non existing key"} /* keys */,
                                    {Result::NOT_SUPPORTED}))
 
-static vector<Result> okOrInvalidArguments = {Result::OK,
-                                              Result::INVALID_ARGUMENTS};
 TEST_IO_STREAM(setEmptySetParameter,
                "Set the values of an empty set of parameters",
-               ASSERT_RESULT(okOrInvalidArguments, stream->setParameters({})))
+               ASSERT_RESULT(Result::OK, stream->setParameters({})))
 
 TEST_IO_STREAM(
     setNonExistingParameter, "Set the values of an non existing parameter",
-    ASSERT_RESULT(Result::INVALID_ARGUMENTS,
+    // Unfortunately, the set_parameter legacy interface did not return any
+    // error code when a key is not supported.
+    // To allow implementation to just wrapped the legacy one, consider OK as a
+    // valid result for setting a non existing parameter.
+    ASSERT_RESULT(invalidArgsOrNotSupportedOrOK,
                   stream->setParameters({{"non existing key", "0"}})))
 
 TEST_IO_STREAM(DebugDump,
@@ -964,6 +966,8 @@ TEST_IO_STREAM(closeTwice, "Make sure a stream can not be closed twice",
                ASSERT_OK(closeStream());
                ASSERT_RESULT(Result::INVALID_STATE, closeStream()))
 
+static auto invalidArgsOrNotSupported = {Result::INVALID_ARGUMENTS,
+                                         Result::NOT_SUPPORTED};
 static void testCreateTooBigMmapBuffer(IStream* stream) {
     MmapBufferInfo info;
     Result res;
