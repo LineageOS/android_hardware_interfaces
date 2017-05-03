@@ -594,7 +594,7 @@ class OpenStreamTest : public AudioConfigPrimaryTest,
                                returnIn(res, stream, suggestedConfigRetry)));
                 // This time it must succeed
                 ASSERT_OK(res);
-                ASSERT_TRUE(stream == nullptr);
+                ASSERT_TRUE(stream != nullptr);
                 audioConfig = suggestedConfig;
                 break;
             default:
@@ -895,7 +895,9 @@ static void checkGetNoParameter(IStream* stream, hidl_vec<hidl_string> keys,
     ASSERT_OK(stream->getParameters(keys, returnIn(res, parameters)));
     ASSERT_RESULT(expectedResults, res);
     if (res == Result::OK) {
-        ASSERT_EQ(0U, parameters.size());
+        for (auto& parameter : parameters) {
+            ASSERT_EQ(0U, parameter.value.size()) << toString(parameter);
+        }
     }
 }
 
