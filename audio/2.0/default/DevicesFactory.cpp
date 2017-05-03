@@ -86,7 +86,7 @@ Return<void> DevicesFactory::openDevice(IDevicesFactory::Device device, openDevi
                 result = new PrimaryDevice(halDevice);
             } else {
                 result = new ::android::hardware::audio::V2_0::implementation::
-                    Device(halDevice);
+                    Device(halDevice, moduleName);
             }
             retval = Result::OK;
         } else if (halStatus == -EINVAL) {
