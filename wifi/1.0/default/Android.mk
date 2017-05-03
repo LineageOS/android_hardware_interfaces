@@ -46,7 +46,6 @@ LOCAL_SHARED_LIBRARIES := \
     libnl \
     libutils \
     libwifi-hal \
-    libwifi-system \
-    libcld80211
+    libwifi-system
 LOCAL_INIT_RC := android.hardware.wifi@1.0-service.rc
 include $(BUILD_EXECUTABLE)
