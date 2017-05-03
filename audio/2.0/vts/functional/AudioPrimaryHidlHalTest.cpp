@@ -1020,6 +1020,10 @@ TEST_P(InputStreamTest, GetAudioSource) {
         "Retrieving the audio source of an input stream should always succeed");
     AudioSource source;
     ASSERT_OK(stream->getAudioSource(returnIn(res, source)));
+    if (res == Result::NOT_SUPPORTED) {
+        doc::partialTest("getAudioSource is not supported");
+        return;
+    }
     ASSERT_OK(res);
     ASSERT_EQ(AudioSource::DEFAULT, source);
 }
@@ -1040,9 +1044,22 @@ static void testUnitaryGain(std::function<Return<Result>(float)> setGain) {
     }
 }
 
+static void testOptionalUnitaryGain(
+    std::function<Return<Result>(float)> setGain, string debugName) {
+    auto result = setGain(1);
+    ASSERT_TRUE(result.isOk());
+    if (result == Result::NOT_SUPPORTED) {
+        doc::partialTest(debugName + " is not supported");
+        return;
+    }
+    testUnitaryGain(setGain);
+}
+
 TEST_P(InputStreamTest, SetGain) {
     doc::test("The gain of an input stream should only be set between [0,1]");
-    testUnitaryGain([this](float volume) { return stream->setGain(volume); });
+    testOptionalUnitaryGain(
+        [this](float volume) { return stream->setGain(volume); },
+        "InputStream::setGain");
 }
 
 static void testPrepareForReading(IStreamIn* stream, uint32_t frameSize,
@@ -1108,14 +1125,9 @@ TEST_P(OutputStreamTest, getLatency) {
 
 TEST_P(OutputStreamTest, setVolume) {
     doc::test("Try to set the output volume");
-    auto result = stream->setVolume(1, 1);
-    ASSERT_TRUE(result.isOk());
-    if (result == Result::NOT_SUPPORTED) {
-        doc::partialTest("setVolume is not supported");
-        return;
-    }
-    testUnitaryGain(
-        [this](float volume) { return stream->setVolume(volume, volume); });
+    testOptionalUnitaryGain(
+        [this](float volume) { return stream->setVolume(volume, volume); },
+        "setVolume");
 }
 
 static void testPrepareForWriting(IStreamOut* stream, uint32_t frameSize,
@@ -1369,8 +1381,9 @@ TEST_F(TtyModeAccessorPrimaryHidlTest, setGetTtyMode) {
 
 TEST_F(BoolAccessorPrimaryHidlTest, setGetHac) {
     doc::test("Query and set the HAC state");
-    testAccessors("HAC", {true, false, true}, &IPrimaryDevice::setHacEnabled,
-                  &IPrimaryDevice::getHacEnabled);
+    testOptionalAccessors("HAC", {true, false, true},
+                          &IPrimaryDevice::setHacEnabled,
+                          &IPrimaryDevice::getHacEnabled);
 }
 
 //////////////////////////////////////////////////////////////////////////////
