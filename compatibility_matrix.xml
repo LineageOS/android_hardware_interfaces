@@ -23,7 +23,8 @@
         <name>android.hardware.camera.provider</name>
         <version>2.4</version>
     </hal>
-    <hal format="hidl" optional="false">
+    <!-- TODO(b/35356977): configstore is required. -->
+    <hal format="hidl" optional="true">
         <name>android.hardware.configstore</name>
         <version>1.0-1</version>
     </hal>
@@ -71,7 +72,8 @@
         <name>android.hardware.light</name>
         <version>2.0</version>
     </hal>
-    <hal format="hidl" optional="false">
+    <!-- TODO(b/36097717): omx is required. -->
+    <hal format="hidl" optional="true">
         <name>android.hardware.media.omx</name>
         <version>1.0</version>
     </hal>
