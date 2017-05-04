@@ -1,49 +1,33 @@
-## Codec OMX Tests
+## Omx Hal @ 1.0 tests ##
 ---
+## Overview :
+The scope of the tests presented here is not restricted solely to testing omx hal @ 1.0 API but also test to omx core functionality and to an extent omx components as well. The current directory contains the following folders: audio, common, component, master and video. Besides common all other folders contain test fixtures for testing AV decoder, encoder components. Common constitutes files that are used across by these test applications.
 
-The current directory contains the following folders: audio, common, component, master
-and video.
+#### master :
+Functionality of master is to enumerate all the omx components (and the roles it supports) available in android media framework.
 
-Besides common, all other folders contain basic OMX unit tests for testing audio and video decoder-encoder
-components. common constitutes files that are used across test applications.
+usage: VtsHalMediaOmxV1\_0TargetMasterTest -I default
 
-## master
-Enumerates all the omx components (and their roles) available in android media framework.
+#### component :
+This folder includes test fixtures that tests aspects common to all omx compatible components. For instance, port enabling/disabling, enumerating port formats, state transitions, flush, ..., stay common to all components irrespective of the service they offer. Test fixtures are directed towards testing the omx core. Every standard OMX compatible component is expected to pass these tests.
 
-Usage:
+usage: VtsHalMediaOmxV1\_0TargetComponentTest -I default -C <comp name> -R <comp role>
 
-VtsHalMediaOmxV1\_0TargetMasterTest -I default
+#### audio :
+This folder includes test fixtures associated with testing audio encoder and decoder components such as simple encoding of a raw clip or decoding of an elementary stream, end of stream test, timestamp deviations test, flush test and so on. These tests are aimed towards testing the plugin that connects the component to the omx core.
 
-## component
-This folder includes test fixtures that tests aspects common to all OMX compatible components. For instance, port enabling/disabling, enumerating port formats, state transitions, flush etc. stay common to all components irrespective of the service they offer. In a way this tests the OMX Core. Every standard OMX compatible component is expected to pass these tests.
+usage:
 
+VtsHalMediaOmxV1\_0TargetAudioDecTest -I default -C <comp name> -R audio_decoder.<comp class> -P /sdcard/media/
 
-Usage:
+VtsHalMediaOmxV1\_0TargetAudioEncTest -I default -C <comp name> -R audio_encoder.<comp class> -P /sdcard/media/
 
-VtsHalMediaOmxV1\_0TargetComponentTest -I default -C <component name> -R <component role>
+#### video :
+This folder includes test fixtures associated with testing video encoder and decoder components such as simple encoding of a raw clip or decoding of an elementary stream, end of stream test, timestamp deviations test, flush test and so on. These tests are aimed towards testing the plugin that connects the component to the omx core.
 
-## audio
-This folder includes test fixtures associated with audio encoder/decoder components such as encoding/decoding, EOS test, timestamp test etc. These tests are aimed towards testing the component specific aspects.
+usage:
 
-Usage:
+VtsHalMediaOmxV1\_0TargetVideoDecTest -I default -C <comp name> -R video_decoder.<comp class> -P /sdcard/media/
 
-VtsHalMediaOmxV1\_0TargetAudioDecTest -I default -C <component name> -R audio_decoder.<class>
-
-VtsHalMediaOmxV1\_0TargetAudioEncTest -I default -C <component name> -R audio_encoder.<class>
-
-## video
-This folder includes test fixtures associated with video encoder/decoder components like encoding/decoding, EOS test, timestamp test etc. These tests are aimed towards testing the component specific aspects.
-
-Usage:
-
-VtsHalMediaOmxV1\_0TargetVideoDecTest -I default -C <component name> -R video_decoder.<class>
-
-VtsHalMediaOmxV1\_0TargetVideoEncTest -I default -C <component name> -R video_encoder.<class>
-
-## notes
-Every component shall be tested by two applications,
-
-* ComponentTest.
-
-* AudioDecTest/AudioEncTest/VideoDecTest/VideoEncTest depending on the component class.
+VtsHalMediaOmxV1\_0TargetVideoEncTest -I default -C <comp name> -R video_encoder.<comp class> -P /sdcard/media/
 
