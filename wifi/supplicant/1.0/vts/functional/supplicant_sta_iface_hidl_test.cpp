@@ -261,9 +261,7 @@ TEST_F(SupplicantStaIfaceHidlTest, SetPowerSave) {
 TEST_F(SupplicantStaIfaceHidlTest, InitiateTdlsDiscover) {
     sta_iface_->initiateTdlsDiscover(
         mac_addr_, [](const SupplicantStatus& status) {
-            // These requests will fail unless the MAC address mentioned is
-            // actually around.
-            EXPECT_EQ(SupplicantStatusCode::FAILURE_UNKNOWN, status.code);
+            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
         });
 }
 
@@ -273,9 +271,7 @@ TEST_F(SupplicantStaIfaceHidlTest, InitiateTdlsDiscover) {
 TEST_F(SupplicantStaIfaceHidlTest, InitiateTdlsSetup) {
     sta_iface_->initiateTdlsSetup(
         mac_addr_, [](const SupplicantStatus& status) {
-            // These requests will fail unless the MAC address mentioned is
-            // actually around.
-            EXPECT_EQ(SupplicantStatusCode::FAILURE_UNKNOWN, status.code);
+            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
         });
 }
 
@@ -285,9 +281,7 @@ TEST_F(SupplicantStaIfaceHidlTest, InitiateTdlsSetup) {
 TEST_F(SupplicantStaIfaceHidlTest, InitiateTdlsTeardown) {
     sta_iface_->initiateTdlsTeardown(
         mac_addr_, [](const SupplicantStatus& status) {
-            // These requests will fail unless the MAC address mentioned is
-            // actually around.
-            EXPECT_EQ(SupplicantStatusCode::FAILURE_UNKNOWN, status.code);
+            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
         });
 }
 
