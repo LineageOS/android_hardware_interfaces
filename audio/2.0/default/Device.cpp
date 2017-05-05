@@ -17,9 +17,11 @@
 #define LOG_TAG "DeviceHAL"
 //#define LOG_NDEBUG 0
 
-#include <algorithm>
 #include <memory.h>
 #include <string.h>
+#include <algorithm>
+#include <mutex>
+#include <vector>
 
 #include <android/log.h>
 
@@ -35,8 +37,57 @@ namespace audio {
 namespace V2_0 {
 namespace implementation {
 
-Device::Device(audio_hw_device_t* device)
-        : mDevice(device) {
+namespace {
+
+class Diagnostics {
+   public:
+    static Diagnostics& getInstance() {
+        std::lock_guard<std::mutex> _(mLock);
+        if (mInstance == nullptr) {
+            mInstance = new Diagnostics;
+        }
+        return *mInstance;
+    }
+
+    void registerDevice(Device* dev) {
+        std::lock_guard<std::mutex> _(mLock);
+        mDevices.push_back(wp<Device>(dev));
+    }
+
+    void checkForErasedHalCblk(const Device* dev) {
+        if (dev->version() != 0) return;  // all OK
+
+        std::ostringstream ss;
+        ss << "Zero HAL CB for " << dev->type() << ":" << std::hex
+           << dev->device() << "; Others: ";
+        {
+            std::lock_guard<std::mutex> _(mLock);
+            for (auto wp : mDevices) {
+                sp<Device> other{wp.promote()};
+                if (other.get() == nullptr || other.get() == dev) continue;
+                ss << other->type() << ":" << other->version() << ":"
+                   << std::hex << other->device() << "; ";
+            }
+        }
+        ALOGE("%s", ss.str().c_str());
+    }
+
+   private:
+    Diagnostics() {}
+
+    static std::mutex mLock;
+    static Diagnostics* mInstance;
+    std::vector<wp<Device>> mDevices;
+};
+
+std::mutex Diagnostics::mLock;
+Diagnostics* Diagnostics::mInstance{nullptr};
+
+}  // namespace
+
+Device::Device(audio_hw_device_t* device, const char* type)
+    : mDevice{device}, mType{type} {
+    Diagnostics::getInstance().registerDevice(this);
 }
 
 Device::~Device() {
@@ -68,10 +119,12 @@ void Device::closeOutputStream(audio_stream_out_t* stream) {
 }
 
 char* Device::halGetParameters(const char* keys) {
+    Diagnostics::getInstance().checkForErasedHalCblk(this);
     return mDevice->get_parameters(mDevice, keys);
 }
 
 int Device::halSetParameters(const char* keysAndValues) {
+    Diagnostics::getInstance().checkForErasedHalCblk(this);
     return mDevice->set_parameters(mDevice, keysAndValues);
 }
 
