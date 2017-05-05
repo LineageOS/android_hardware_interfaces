@@ -51,8 +51,10 @@ Result ParametersUtil::getParam(const char* name, String8* value) {
 }
 
 void ParametersUtil::getParametersImpl(
-        const hidl_vec<hidl_string>& keys,
-        std::function<void(Result retval, const hidl_vec<ParameterValue>& parameters)> cb)  {
+    const hidl_vec<hidl_string>& keys,
+    std::function<void(Result retval,
+                       const hidl_vec<ParameterValue>& parameters)>
+        cb) {
     AudioParameter halKeys;
     for (size_t i = 0; i < keys.size(); ++i) {
         halKeys.addKey(String8(keys[i].c_str()));
@@ -79,9 +81,10 @@ void ParametersUtil::getParametersImpl(
     cb(retval, result);
 }
 
-std::unique_ptr<AudioParameter> ParametersUtil::getParams(const AudioParameter& keys) {
+std::unique_ptr<AudioParameter> ParametersUtil::getParams(
+    const AudioParameter& keys) {
     String8 paramsAndValues;
-    char *halValues = halGetParameters(keys.keysToString().string());
+    char* halValues = halGetParameters(keys.keysToString().string());
     if (halValues != NULL) {
         paramsAndValues.setTo(halValues);
         free(halValues);
@@ -93,7 +96,8 @@ std::unique_ptr<AudioParameter> ParametersUtil::getParams(const AudioParameter& 
 
 Result ParametersUtil::setParam(const char* name, bool value) {
     AudioParameter param;
-    param.add(String8(name), String8(value ? AudioParameter::valueOn : AudioParameter::valueOff));
+    param.add(String8(name), String8(value ? AudioParameter::valueOn
+                                           : AudioParameter::valueOff));
     return setParams(param);
 }
 
@@ -109,10 +113,12 @@ Result ParametersUtil::setParam(const char* name, const char* value) {
     return setParams(param);
 }
 
-Result ParametersUtil::setParametersImpl(const hidl_vec<ParameterValue>& parameters)  {
+Result ParametersUtil::setParametersImpl(
+    const hidl_vec<ParameterValue>& parameters) {
     AudioParameter params;
     for (size_t i = 0; i < parameters.size(); ++i) {
-        params.add(String8(parameters[i].key.c_str()), String8(parameters[i].value.c_str()));
+        params.add(String8(parameters[i].key.c_str()),
+                   String8(parameters[i].value.c_str()));
     }
     return setParams(params);
 }
