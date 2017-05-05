@@ -376,6 +376,10 @@ bool convertFromSharedMemInfo(const SharedMemInfo& memIn, sensors_direct_mem_t *
             return false;
     }
 
+    if (memIn.memoryHandle == nullptr) {
+        return false;
+    }
+
     memOut->size = memIn.size;
     memOut->handle = memIn.memoryHandle;
     return true;
