@@ -3932,17 +3932,21 @@ TEST_F(AttestationTest, EcAttestationRequiresAttestationAppId) {
  * Verifies that attesting to AES keys fails in the expected way.
  */
 TEST_F(AttestationTest, AesAttestation) {
-    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                             .Authorization(TAG_NO_AUTH_REQUIRED)
-                                             .AesEncryptionKey(128)
-                                             .EcbMode()
-                                             .Padding(PaddingMode::PKCS7)));
+    ASSERT_EQ(ErrorCode::OK,
+              GenerateKey(AuthorizationSetBuilder()
+                              .Authorization(TAG_NO_AUTH_REQUIRED)
+                              .AesEncryptionKey(128)
+                              .EcbMode()
+                              .Padding(PaddingMode::PKCS7)));
 
     hidl_vec<hidl_vec<uint8_t>> cert_chain;
-    EXPECT_EQ(ErrorCode::INCOMPATIBLE_ALGORITHM,
-              AttestKey(AuthorizationSetBuilder().Authorization(TAG_ATTESTATION_CHALLENGE,
-                                                                HidlBuf("challenge")),
-                        &cert_chain));
+    EXPECT_EQ(
+        ErrorCode::INCOMPATIBLE_ALGORITHM,
+        AttestKey(
+            AuthorizationSetBuilder()
+                .Authorization(TAG_ATTESTATION_CHALLENGE, HidlBuf("challenge"))
+                .Authorization(TAG_ATTESTATION_APPLICATION_ID, HidlBuf("foo")),
+            &cert_chain));
 }
 
 /*
@@ -3951,18 +3955,22 @@ TEST_F(AttestationTest, AesAttestation) {
  * Verifies that attesting to HMAC keys fails in the expected way.
  */
 TEST_F(AttestationTest, HmacAttestation) {
-    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                             .Authorization(TAG_NO_AUTH_REQUIRED)
-                                             .HmacKey(128)
-                                             .EcbMode()
-                                             .Digest(Digest::SHA_2_256)
-                                             .Authorization(TAG_MIN_MAC_LENGTH, 128)));
+    ASSERT_EQ(ErrorCode::OK,
+              GenerateKey(AuthorizationSetBuilder()
+                              .Authorization(TAG_NO_AUTH_REQUIRED)
+                              .HmacKey(128)
+                              .EcbMode()
+                              .Digest(Digest::SHA_2_256)
+                              .Authorization(TAG_MIN_MAC_LENGTH, 128)));
 
     hidl_vec<hidl_vec<uint8_t>> cert_chain;
-    EXPECT_EQ(ErrorCode::INCOMPATIBLE_ALGORITHM,
-              AttestKey(AuthorizationSetBuilder().Authorization(TAG_ATTESTATION_CHALLENGE,
-                                                                HidlBuf("challenge")),
-                        &cert_chain));
+    EXPECT_EQ(
+        ErrorCode::INCOMPATIBLE_ALGORITHM,
+        AttestKey(
+            AuthorizationSetBuilder()
+                .Authorization(TAG_ATTESTATION_CHALLENGE, HidlBuf("challenge"))
+                .Authorization(TAG_ATTESTATION_APPLICATION_ID, HidlBuf("foo")),
+            &cert_chain));
 }
 
 typedef KeymasterHidlTest KeyDeletionTest;
