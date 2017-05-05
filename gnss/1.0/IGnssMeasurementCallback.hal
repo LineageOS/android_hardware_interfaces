@@ -556,7 +556,7 @@ interface IGnssMeasurementCallback {
 
         /**
          * Signal-to-noise ratio at correlator output in dB.
-         * If the data is available, gnssClockFlags must contain MEASUREMENT_HAS_SNR.
+         * If the data is available, GnssMeasurementFlags must contain HAS_SNR.
          * This is the power ratio of the "correlation peak height above the
          * observed noise floor" to "the noise RMS".
          */
