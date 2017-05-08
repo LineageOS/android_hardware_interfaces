@@ -31,6 +31,8 @@ struct ScheduleTest : public IScheduleTest {
     // Methods from ::android::hidl::base::V1_0::IBase follow.
 };
 
+extern "C" IScheduleTest* HIDL_FETCH_IScheduleTest(const char* name);
+
 }  // namespace implementation
 }  // namespace V1_0
 }  // namespace libhwbinder
