@@ -83,6 +83,10 @@ using ::android::hardware::audio::common::V2_0::ThreadInfo;
 
 using utility::returnIn;
 
+const char* getTestName() {
+    return ::testing::UnitTest::GetInstance()->current_test_info()->name();
+}
+
 namespace doc {
 /** Document the current test case.
  * Eg: calling `doc::test("Dump the state of the hal")` in the "debugDump" test
@@ -100,11 +104,13 @@ void test(const std::string& testCaseDocumentation) {
 /** Document why a test was not fully run. Usually due to an optional feature
  * not implemented. */
 void partialTest(const std::string& reason) {
+    LOG(INFO) << "Test " << getTestName() << " partially run: " << reason;
     ::testing::Test::RecordProperty("partialyRunTest", reason);
 }
 
 /** Add a note to the test. */
 void note(const std::string& note) {
+    LOG(INFO) << "Test " << getTestName() << " noted: " << note;
     ::testing::Test::RecordProperty("note", note);
 }
 }
