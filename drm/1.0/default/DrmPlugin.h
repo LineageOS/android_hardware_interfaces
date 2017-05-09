@@ -46,7 +46,7 @@ using ::android::sp;
 struct DrmPlugin : public IDrmPlugin, android::DrmPluginListener {
 
     DrmPlugin(android::DrmPlugin *plugin) : mLegacyPlugin(plugin) {}
-    ~DrmPlugin() {delete mLegacyPlugin;}
+    virtual ~DrmPlugin() {delete mLegacyPlugin;}
 
     // Methods from ::android::hardware::drm::V1_0::IDrmPlugin follow.
 
@@ -153,7 +153,7 @@ struct DrmPlugin : public IDrmPlugin, android::DrmPluginListener {
 
 private:
     android::DrmPlugin *mLegacyPlugin;
-    sp<IDrmPluginListener> mListener;
+    wp<IDrmPluginListener> mListener;
 
     DrmPlugin() = delete;
     DrmPlugin(const DrmPlugin &) = delete;
