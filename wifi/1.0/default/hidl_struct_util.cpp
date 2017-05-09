@@ -1125,7 +1125,7 @@ bool convertHidlNanPublishRequestToLegacy(
       return false;
     }
     if (legacy_request->key_info.body.passphrase_info.passphrase_len
-            > NAN_SECURITY_MIN_PASSPHRASE_LEN) {
+            > NAN_SECURITY_MAX_PASSPHRASE_LEN) {
       LOG(ERROR) << "convertHidlNanPublishRequestToLegacy: passphrase_len too large";
       return false;
     }
@@ -1241,7 +1241,7 @@ bool convertHidlNanSubscribeRequestToLegacy(
       return false;
     }
     if (legacy_request->key_info.body.passphrase_info.passphrase_len
-            > NAN_SECURITY_MIN_PASSPHRASE_LEN) {
+            > NAN_SECURITY_MAX_PASSPHRASE_LEN) {
       LOG(ERROR) << "convertHidlNanSubscribeRequestToLegacy: passphrase_len too large";
       return false;
     }
@@ -1465,7 +1465,7 @@ bool convertHidlNanDataPathInitiatorRequestToLegacy(
       return false;
     }
     if (legacy_request->key_info.body.passphrase_info.passphrase_len
-            > NAN_SECURITY_MIN_PASSPHRASE_LEN) {
+            > NAN_SECURITY_MAX_PASSPHRASE_LEN) {
       LOG(ERROR) << "convertHidlNanDataPathInitiatorRequestToLegacy: passphrase_len too large";
       return false;
     }
@@ -1529,7 +1529,7 @@ bool convertHidlNanDataPathIndicationResponseToLegacy(
       return false;
     }
     if (legacy_request->key_info.body.passphrase_info.passphrase_len
-            > NAN_SECURITY_MIN_PASSPHRASE_LEN) {
+            > NAN_SECURITY_MAX_PASSPHRASE_LEN) {
       LOG(ERROR) << "convertHidlNanDataPathIndicationResponseToLegacy: passphrase_len too large";
       return false;
     }
