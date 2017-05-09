@@ -183,7 +183,6 @@ int CameraDevice::sDequeueBuffer(struct preview_stream_ops* w,
 }
 
 int CameraDevice::sLockBuffer(struct preview_stream_ops*, buffer_handle_t*) {
-    // TODO: make sure lock_buffer is indeed a no-op (and will always be)
     return 0;
 }
 
@@ -585,8 +584,6 @@ Return<void> CameraDevice::getCameraInfo(getCameraInfo_cb _hidl_cb) {
             cameraInfo.facing = (CameraFacing) info.facing;
             // Device 1.0 does not support external camera facing.
             // The closest approximation would be front camera.
-            // TODO: figure out should we override here or let
-            //       camera service handle it.
             if (cameraInfo.facing == CameraFacing::EXTERNAL) {
                 cameraInfo.facing = CameraFacing::FRONT;
             }

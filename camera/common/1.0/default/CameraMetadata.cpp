@@ -508,8 +508,6 @@ status_t CameraMetadata::getTagFromName(const char *name,
         }
     }
 
-    // TODO: Make above get_camera_metadata_section_from_name ?
-
     if (section == NULL) {
         return NAME_NOT_FOUND;
     } else {
