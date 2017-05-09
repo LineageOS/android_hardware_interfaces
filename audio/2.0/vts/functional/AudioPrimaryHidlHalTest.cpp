@@ -1038,16 +1038,12 @@ static void testUnitaryGain(std::function<Return<Result>(float)> setGain) {
     for (float value :
          (float[]){-INFINITY, -1.0, 1.0 + std::numeric_limits<float>::epsilon(),
                    2.0, INFINITY, NAN}) {
-        SCOPED_TRACE("value=" + to_string(value));
-        // FIXME: NAN should never be accepted
-        // FIXME: Missing api doc. What should the impl do if the volume is
-        // outside [0,1] ?
-        ASSERT_RESULT(Result::INVALID_ARGUMENTS, setGain(value));
+        EXPECT_RESULT(Result::INVALID_ARGUMENTS, setGain(value)) << "value="
+                                                                 << value;
     }
     // Do not consider -0.0 as an invalid value as it is == with 0.0
     for (float value : {-0.0, 0.0, 0.01, 0.5, 0.09, 1.0 /* Restore volume*/}) {
-        SCOPED_TRACE("value=" + to_string(value));
-        ASSERT_OK(setGain(value));
+        EXPECT_OK(setGain(value)) << "value=" << value;
     }
 }
 
