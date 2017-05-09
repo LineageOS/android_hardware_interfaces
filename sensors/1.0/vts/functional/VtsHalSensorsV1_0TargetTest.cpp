@@ -200,19 +200,18 @@ void SensorsHidlEnvironment::pollingThread(
   bool needExit = *stop;
 
   while(!needExit) {
-    env->sensors->poll(1,
-        [&](auto result, const auto &events, const auto &dynamicSensorsAdded) {
+      env->sensors->poll(64, [&](auto result, const auto& events, const auto& dynamicSensorsAdded) {
           if (result != Result::OK
               || (events.size() == 0 && dynamicSensorsAdded.size() == 0)
               || *stop) {
-            needExit = true;
-            return;
+              needExit = true;
+              return;
           }
 
-          if (events.size() > 0) {
-            env->addEvent(events[0]);
+          for (const auto& e : events) {
+              env->addEvent(e);
           }
-        });
+      });
   }
   ALOGD("polling thread end");
 }
