@@ -30,6 +30,7 @@
 #include "HidlUtils.h"
 #include "StreamIn.h"
 #include "StreamOut.h"
+#include "Util.h"
 
 namespace android {
 namespace hardware {
@@ -141,12 +142,15 @@ Return<Result> Device::initCheck() {
 }
 
 Return<Result> Device::setMasterVolume(float volume) {
-    Result retval(Result::NOT_SUPPORTED);
-    if (mDevice->set_master_volume != NULL) {
-        retval = analyzeStatus("set_master_volume",
-                               mDevice->set_master_volume(mDevice, volume));
+    if (mDevice->set_master_volume == NULL) {
+        return Result::NOT_SUPPORTED;
     }
-    return retval;
+    if (!isGainNormalized(volume)) {
+        ALOGW("Can not set a master volume (%f) outside [0,1]", volume);
+        return Result::INVALID_ARGUMENTS;
+    }
+    return analyzeStatus("set_master_volume",
+                         mDevice->set_master_volume(mDevice, volume));
 }
 
 Return<void> Device::getMasterVolume(getMasterVolume_cb _hidl_cb) {

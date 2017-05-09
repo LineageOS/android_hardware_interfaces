@@ -25,6 +25,7 @@
 #include <utils/Trace.h>
 
 #include "StreamOut.h"
+#include "Util.h"
 
 namespace android {
 namespace hardware {
@@ -282,12 +283,16 @@ Return<uint32_t> StreamOut::getLatency() {
 }
 
 Return<Result> StreamOut::setVolume(float left, float right) {
-    Result retval(Result::NOT_SUPPORTED);
-    if (mStream->set_volume != NULL) {
-        retval = Stream::analyzeStatus(
-            "set_volume", mStream->set_volume(mStream, left, right));
+    if (mStream->set_volume == NULL) {
+        return Result::NOT_SUPPORTED;
     }
-    return retval;
+    if (!isGainNormalized(left)) {
+        ALOGW("Can not set a stream output volume {%f, %f} outside [0,1]", left,
+              right);
+        return Result::INVALID_ARGUMENTS;
+    }
+    return Stream::analyzeStatus("set_volume",
+                                 mStream->set_volume(mStream, left, right));
 }
 
 Return<void> StreamOut::prepareForWriting(uint32_t frameSize,

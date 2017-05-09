@@ -24,6 +24,7 @@
 #include <memory>
 
 #include "StreamIn.h"
+#include "Util.h"
 
 using ::android::hardware::audio::V2_0::MessageQueueFlagBits;
 
@@ -311,6 +312,10 @@ Return<void> StreamIn::getAudioSource(getAudioSource_cb _hidl_cb) {
 }
 
 Return<Result> StreamIn::setGain(float gain) {
+    if (!isGainNormalized(gain)) {
+        ALOGW("Can not set a stream input gain (%f) outside [0,1]", gain);
+        return Result::INVALID_ARGUMENTS;
+    }
     return Stream::analyzeStatus("set_gain", mStream->set_gain(mStream, gain));
 }
 
