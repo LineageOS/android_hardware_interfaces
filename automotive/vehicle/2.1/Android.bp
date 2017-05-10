@@ -11,7 +11,7 @@ filegroup {
 genrule {
     name: "android.hardware.automotive.vehicle@2.1_genc++",
     tools: ["hidl-gen"],
-    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.automotive.vehicle@2.1",
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-sources -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.automotive.vehicle@2.1",
     srcs: [
         ":android.hardware.automotive.vehicle@2.1_hal",
     ],
@@ -24,7 +24,7 @@ genrule {
 genrule {
     name: "android.hardware.automotive.vehicle@2.1_genc++_headers",
     tools: ["hidl-gen"],
-    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.automotive.vehicle@2.1",
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-headers -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.automotive.vehicle@2.1",
     srcs: [
         ":android.hardware.automotive.vehicle@2.1_hal",
     ],

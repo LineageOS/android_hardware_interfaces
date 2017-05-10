@@ -14,7 +14,7 @@ filegroup {
 genrule {
     name: "android.hardware.broadcastradio@1.1_genc++",
     tools: ["hidl-gen"],
-    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.broadcastradio@1.1",
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-sources -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.broadcastradio@1.1",
     srcs: [
         ":android.hardware.broadcastradio@1.1_hal",
     ],
@@ -30,7 +30,7 @@ genrule {
 genrule {
     name: "android.hardware.broadcastradio@1.1_genc++_headers",
     tools: ["hidl-gen"],
-    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.broadcastradio@1.1",
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-headers -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.broadcastradio@1.1",
     srcs: [
         ":android.hardware.broadcastradio@1.1_hal",
     ],
