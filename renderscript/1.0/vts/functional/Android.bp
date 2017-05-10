@@ -32,6 +32,7 @@ cc_test {
         "libhidltransport",
         "libnativehelper",
         "libutils",
+        "libnativewindow",
         "android.hardware.renderscript@1.0",
     ],
     static_libs: ["VtsHalHidlTargetTestBase"],
