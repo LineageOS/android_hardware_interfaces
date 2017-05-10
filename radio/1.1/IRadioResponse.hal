@@ -34,4 +34,16 @@ interface IRadioResponse extends @1.0::IRadioResponse {
      *   RadioError:MODEM_INTERNAL_FAILURE
      */
     oneway setCarrierInfoForImsiEncryptionResponse(RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:INVALID_ARGUMENTS
+     */
+    oneway setSimCardPowerResponse_1_1(RadioResponseInfo info);
+
 };
