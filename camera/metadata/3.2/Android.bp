@@ -10,7 +10,7 @@ filegroup {
 genrule {
     name: "android.hardware.camera.metadata@3.2_genc++",
     tools: ["hidl-gen"],
-    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.camera.metadata@3.2",
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-sources -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.camera.metadata@3.2",
     srcs: [
         ":android.hardware.camera.metadata@3.2_hal",
     ],
@@ -22,7 +22,7 @@ genrule {
 genrule {
     name: "android.hardware.camera.metadata@3.2_genc++_headers",
     tools: ["hidl-gen"],
-    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.camera.metadata@3.2",
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-headers -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.camera.metadata@3.2",
     srcs: [
         ":android.hardware.camera.metadata@3.2_hal",
     ],
