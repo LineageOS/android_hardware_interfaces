@@ -40,5 +40,5 @@ int main() {
         ALOGE("Couldn't set SCHED_FIFO: %d", errno);
     }
 
-    return defaultPassthroughServiceImplementation<IComposer>();
+    return defaultPassthroughServiceImplementation<IComposer>(4);
 }
