@@ -23,6 +23,7 @@
 
 #include <hardware/keymaster_defs.h>
 #include <keymaster/keymaster_configuration.h>
+#include <keymaster/km_openssl/soft_keymaster_enforcement.h>
 #include <keymaster/soft_keymaster_device.h>
 
 namespace android {
@@ -33,9 +34,9 @@ namespace implementation {
 
 using ::keymaster::SoftKeymasterDevice;
 
-class SoftwareOnlyHidlKeymasterEnforcement : public ::keymaster::KeymasterEnforcement {
+class SoftwareOnlyHidlKeymasterEnforcement : public ::keymaster::SoftKeymasterEnforcement {
   public:
-    SoftwareOnlyHidlKeymasterEnforcement() : KeymasterEnforcement(64, 64) {}
+    SoftwareOnlyHidlKeymasterEnforcement() : SoftKeymasterEnforcement(64, 64) {}
 
     uint32_t get_current_time() const override {
         struct timespec tp;
