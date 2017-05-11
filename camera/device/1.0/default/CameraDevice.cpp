@@ -428,30 +428,68 @@ void CameraDevice::sDataCb(int32_t msg_type, const camera_memory_t *data, unsign
              index, mem->mNumBufs);
         return;
     }
-    if (object->mDeviceCallback != nullptr) {
-        CameraFrameMetadata hidlMetadata;
-        if (metadata) {
-            hidlMetadata.faces.resize(metadata->number_of_faces);
-            for (size_t i = 0; i < hidlMetadata.faces.size(); i++) {
-                hidlMetadata.faces[i].score = metadata->faces[i].score;
-                hidlMetadata.faces[i].id = metadata->faces[i].id;
-                for (int k = 0; k < 4; k++) {
-                    hidlMetadata.faces[i].rect[k] = metadata->faces[i].rect[k];
-                }
-                for (int k = 0; k < 2; k++) {
-                    hidlMetadata.faces[i].leftEye[k] = metadata->faces[i].left_eye[k];
-                }
-                for (int k = 0; k < 2; k++) {
-                    hidlMetadata.faces[i].rightEye[k] = metadata->faces[i].right_eye[k];
-                }
-                for (int k = 0; k < 2; k++) {
-                    hidlMetadata.faces[i].mouth[k] = metadata->faces[i].mouth[k];
-                }
-            }
-        }
-        CameraHeapMemory* mem = static_cast<CameraHeapMemory *>(data->handle);
-        object->mDeviceCallback->dataCallback(
-                (DataCallbackMsg) msg_type, mem->handle.mId, index, hidlMetadata);
+    if(object->mQDeviceCallback != nullptr) {
+         vendor::qti::hardware::camera::device::V1_0::QCameraFrameMetadata hidlMetadata;
+         if (metadata) {
+             hidlMetadata.faces.resize(metadata->number_of_faces);
+             for (size_t i = 0; i < hidlMetadata.faces.size(); i++) {
+                 hidlMetadata.faces[i].score = metadata->faces[i].score;
+                 hidlMetadata.faces[i].id = metadata->faces[i].id;
+                 for (int k = 0; k < 4; k++) {
+                     hidlMetadata.faces[i].rect[k] = metadata->faces[i].rect[k];
+                 }
+                 for (int k = 0; k < 2; k++) {
+                     hidlMetadata.faces[i].leftEye[k] = metadata->faces[i].left_eye[k];
+                 }
+                 for (int k = 0; k < 2; k++) {
+                     hidlMetadata.faces[i].rightEye[k] = metadata->faces[i].right_eye[k];
+                 }
+                 for (int k = 0; k < 2; k++) {
+                     hidlMetadata.faces[i].mouth[k] = metadata->faces[i].mouth[k];
+                 }
+                 hidlMetadata.faces[i].smile_degree = metadata->faces[i].smile_degree;
+                 hidlMetadata.faces[i].smile_score = metadata->faces[i].smile_score;
+                 hidlMetadata.faces[i].blink_detected = metadata->faces[i].blink_detected;
+                 hidlMetadata.faces[i].face_recognised = metadata->faces[i].face_recognised;
+                 hidlMetadata.faces[i].gaze_angle = metadata->faces[i].gaze_angle;
+                 hidlMetadata.faces[i].updown_dir = metadata->faces[i].updown_dir;
+                 hidlMetadata.faces[i].leftright_dir = metadata->faces[i].leftright_dir;
+                 hidlMetadata.faces[i].roll_dir = metadata->faces[i].roll_dir;
+                 hidlMetadata.faces[i].left_right_gaze = metadata->faces[i].left_right_gaze;
+                 hidlMetadata.faces[i].top_bottom_gaze = metadata->faces[i].top_bottom_gaze;
+                 hidlMetadata.faces[i].leye_blink = metadata->faces[i].leye_blink;
+                 hidlMetadata.faces[i].reye_blink = metadata->faces[i].reye_blink;
+             }
+         }
+         CameraHeapMemory* mem = static_cast<CameraHeapMemory *>(data->handle);
+         object->mQDeviceCallback->QDataCallback(
+                 (DataCallbackMsg) msg_type, mem->handle.mId, index, hidlMetadata);
+    } else {
+       if (object->mDeviceCallback != nullptr) {
+           CameraFrameMetadata hidlMetadata;
+           if (metadata) {
+               hidlMetadata.faces.resize(metadata->number_of_faces);
+               for (size_t i = 0; i < hidlMetadata.faces.size(); i++) {
+                   hidlMetadata.faces[i].score = metadata->faces[i].score;
+                   hidlMetadata.faces[i].id = metadata->faces[i].id;
+                   for (int k = 0; k < 4; k++) {
+                       hidlMetadata.faces[i].rect[k] = metadata->faces[i].rect[k];
+                   }
+                   for (int k = 0; k < 2; k++) {
+                       hidlMetadata.faces[i].leftEye[k] = metadata->faces[i].left_eye[k];
+                   }
+                   for (int k = 0; k < 2; k++) {
+                       hidlMetadata.faces[i].rightEye[k] = metadata->faces[i].right_eye[k];
+                   }
+                   for (int k = 0; k < 2; k++) {
+                       hidlMetadata.faces[i].mouth[k] = metadata->faces[i].mouth[k];
+                   }
+               }
+           }
+           CameraHeapMemory* mem = static_cast<CameraHeapMemory *>(data->handle);
+           object->mDeviceCallback->dataCallback(
+                   (DataCallbackMsg) msg_type, mem->handle.mId, index, hidlMetadata);
+       }
     }
 }
 
@@ -667,6 +705,11 @@ Return<Status> CameraDevice::open(const sp<ICameraDeviceCallback>& callback) {
 
     initHalPreviewWindow();
     mDeviceCallback = callback;
+    mQDeviceCallback =
+        vendor::qti::hardware::camera::device::V1_0::IQCameraDeviceCallback::castFrom(callback);
+    if(mQDeviceCallback == nullptr) {
+        ALOGI("could not cast ICameraDeviceCallback to IQCameraDeviceCallback");
+    }
 
     if (mDevice->ops->set_callbacks) {
         mDevice->ops->set_callbacks(mDevice,
