@@ -25,21 +25,28 @@ interface IOffload {
      *
      * @param ScanParam paramters for scanning
      * @param ScanFilter settings to filter scan result
-     * @return boolean status indicating success (true) when configuration
-     *            is applied or failure (false) for invalid configuration
+     * @return OffloadStatus indicating status of operation provided by this API
+     * If OffloadStatusCode::OK is returned, the operation was successful
+     * If OffloadStatusCode::NO_CONNECTION is returned, connection to the hardware is lost
+     * If OffloadStatusCode::ERROR is returned, requested operation could not be completed
      */
     @entry
     @callflow(next={"setEventCallback", "subscribeScanResults"})
-    configureScans(ScanParam param, ScanFilter filter);
+    configureScans(ScanParam param, ScanFilter filter) generates (OffloadStatus status);
 
     /**
      * Get scan statistics
      *
+     * @return OffloadStatus indicating status of operation provided by this API
      * @return ScanStats statistics of scans performed
+     * If OffloadStatusCode::OK is returned, the operation was successful
+     * If OffloadStatusCode::NO_CONNECTION is returned, connection to the hardware is lost
+     * If OffloadStatusCode::ERROR is returned, requested operation could not be completed
+     * If OffloadStatusCode::TIMEOUT is returned, time out waiting for the requested data
      */
     @exit
     @callflow(next={"subscribeScanResults", "unsubscribeScanResults", "getScanStats"})
-    getScanStats() generates (ScanStats scanStats);
+    getScanStats() generates (OffloadStatus status, ScanStats scanStats);
 
     /**
      * Subscribe to asynchronous scan events sent by offload module. This enables
@@ -50,9 +57,13 @@ interface IOffload {
      *
      * @param delayMs an integer expressing the minimum delay in mS after
      *        subscribing when scan results must be delivered to the client
+     * @return OffloadStatus indicating status of operation provided by this API
+     * If OffloadStatusCode::OK is returned, the operation was successful
+     * If OffloadStatusCode::NO_CONNECTION is returned, connection to the hardware is lost
+     * If OffloadStatusCode::ERROR is returned, requested operation could not be completed
      */
     @callflow(next={"unsubscribeScanResults", "getScanStats"})
-    subscribeScanResults(uint32_t delayMs);
+    subscribeScanResults(uint32_t delayMs) generates (OffloadStatus status);
 
     /**
      * Unsubscribe to scan events sent by the offload module, hence disabling scans.
