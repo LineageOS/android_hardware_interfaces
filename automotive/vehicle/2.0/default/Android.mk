@@ -37,12 +37,36 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := \
 LOCAL_SHARED_LIBRARIES := \
     libhidlbase \
     libhidltransport \
-    libhwbinder \
     liblog \
     libutils \
     $(vhal_v2_0) \
 
 include $(BUILD_STATIC_LIBRARY)
+
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := $(vhal_v2_0)-manager-lib-shared
+LOCAL_SRC_FILES := \
+    common/src/SubscriptionManager.cpp \
+    common/src/VehicleHalManager.cpp \
+    common/src/VehicleObjectPool.cpp \
+    common/src/VehiclePropertyStore.cpp \
+    common/src/VehicleUtils.cpp \
+
+LOCAL_C_INCLUDES := \
+    $(LOCAL_PATH)/common/include/vhal_v2_0
+
+LOCAL_EXPORT_C_INCLUDE_DIRS := \
+    $(LOCAL_PATH)/common/include
+
+LOCAL_SHARED_LIBRARIES := \
+    libhidlbase \
+    libhidltransport \
+    liblog \
+    libutils \
+    $(vhal_v2_0) \
+
+include $(BUILD_SHARED_LIBRARY)
 
 ###############################################################################
 # Vehicle HAL Protobuf library
@@ -91,7 +115,6 @@ LOCAL_SHARED_LIBRARIES := \
     libbase \
     libhidlbase \
     libhidltransport \
-    libhwbinder \
     liblog \
     libprotobuf-cpp-lite \
     libutils \
@@ -125,7 +148,6 @@ LOCAL_SRC_FILES:= \
 LOCAL_SHARED_LIBRARIES := \
     libhidlbase \
     libhidltransport \
-    libhwbinder \
     liblog \
     libutils \
     $(vhal_v2_0) \
@@ -152,7 +174,6 @@ LOCAL_SHARED_LIBRARIES := \
     libbase \
     libhidlbase \
     libhidltransport \
-    libhwbinder \
     liblog \
     libprotobuf-cpp-lite \
     libutils \
