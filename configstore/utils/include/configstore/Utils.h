@@ -17,7 +17,7 @@
 #ifndef ANDROID_HARDWARE_CONFIGSTORE_UTILS_H
 #define ANDROID_HARDWARE_CONFIGSTORE_UTILS_H
 
-#include <android/hardware/configstore/1.0/ISurfaceFlingerConfigs.h>
+#include <android/hardware/configstore/1.0/types.h>
 #include <hidl/Status.h>
 
 #include <sstream>
@@ -34,7 +34,14 @@ void logAlwaysError(const std::string& message);
 }  // namespace details
 
 namespace configstore {
-using namespace android::hardware::configstore::V1_0;
+// import types from V1_0
+using ::android::hardware::configstore::V1_0::OptionalBool;
+using ::android::hardware::configstore::V1_0::OptionalInt32;
+using ::android::hardware::configstore::V1_0::OptionalUInt32;
+using ::android::hardware::configstore::V1_0::OptionalInt64;
+using ::android::hardware::configstore::V1_0::OptionalUInt64;
+using ::android::hardware::configstore::V1_0::OptionalString;
+
 // arguments V: type for the value (i.e., OptionalXXX)
 //           I: interface class name
 //           func: member function pointer
