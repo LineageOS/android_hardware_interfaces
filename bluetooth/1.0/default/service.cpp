@@ -20,10 +20,13 @@
 
 #include <hidl/LegacySupport.h>
 
+// Add an extra thread for calls to the scheduler service.
+static const size_t kMaxThreads = 2;
+
 // Generated HIDL files
 using android::hardware::bluetooth::V1_0::IBluetoothHci;
 using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
-  return defaultPassthroughServiceImplementation<IBluetoothHci>();
+    return defaultPassthroughServiceImplementation<IBluetoothHci>(kMaxThreads);
 }
