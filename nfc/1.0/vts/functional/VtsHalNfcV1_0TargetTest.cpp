@@ -42,6 +42,8 @@ using ::android::sp;
   { 0x20, 0x00, 0x01, 0x01 }
 #define CORE_CONN_CREATE_CMD \
   { 0x20, 0x04, 0x02, 0x01, 0x00 }
+#define CORE_INIT_CMD \
+    { 0x20, 0x01, 0x00 }
 #define INVALID_COMMAND \
   { 0x20, 0x00, 0x00 }
 #define FAULTY_DATA_PACKET \
@@ -155,7 +157,7 @@ TEST_F(NfcHidlTest, WriteCoreReset) {
   EXPECT_EQ(6ul, res.args->last_data_.size());
   EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
   EXPECT_GE(VERSION, res.args->last_data_[4]);
-  EXPECT_EQ(0ul, res.args->last_data_[5]);
+  EXPECT_GE(1ul, res.args->last_data_[5]);
 }
 
 /*
@@ -205,30 +207,47 @@ TEST_F(NfcHidlTest, WriteInvalidCommand) {
  * Check the response
  */
 TEST_F(NfcHidlTest, WriteInvalidAndThenValidCommand) {
-  // Send an Error Data Packet
-  std::vector<uint8_t> cmd = FAULTY_DATA_PACKET;
-  NfcData data = cmd;
-  size_t size = data.size();
-
-  for (int i = 0; i < 100; i++) {
-    data.resize(++size);
-    data[size - 1] = 0xFF;
+    std::vector<uint8_t> cmd = CORE_RESET_CMD;
+    NfcData data = cmd;
     EXPECT_EQ(data.size(), nfc_->write(data));
-    // Wait for CORE_INTERFACE_ERROR_NTF
+    // Wait for CORE_RESET_RSP
     auto res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
     EXPECT_TRUE(res.no_timeout);
-    EXPECT_EQ(5ul, res.args->last_data_.size());
-    EXPECT_EQ(0x60, res.args->last_data_[0]);
-    EXPECT_EQ(0x08, res.args->last_data_[1]);
-    EXPECT_EQ(0x02, res.args->last_data_[2]);
-    EXPECT_EQ(SYNTAX_ERROR, res.args->last_data_[3]);
+    EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
+    EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
+
+    cmd = CORE_INIT_CMD;
+    data = cmd;
+    EXPECT_EQ(data.size(), nfc_->write(data));
+    // Wait for CORE_INIT_RSP
+    res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
+    EXPECT_TRUE(res.no_timeout);
+    EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
+
+    // Send an Error Data Packet
+    cmd = FAULTY_DATA_PACKET;
+    data = cmd;
+    size_t size = data.size();
+
+    for (int i = 0; i < 100; i++) {
+        data.resize(++size);
+        data[size - 1] = 0xFF;
+        EXPECT_EQ(data.size(), nfc_->write(data));
+        // Wait for CORE_INTERFACE_ERROR_NTF
+        res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
+        EXPECT_TRUE(res.no_timeout);
+        EXPECT_EQ(5ul, res.args->last_data_.size());
+        EXPECT_EQ(0x60, res.args->last_data_[0]);
+        EXPECT_EQ(0x08, res.args->last_data_[1]);
+        EXPECT_EQ(0x02, res.args->last_data_[2]);
+        EXPECT_EQ(SYNTAX_ERROR, res.args->last_data_[3]);
   }
 
   cmd = CORE_CONN_CREATE_CMD;
   data = cmd;
   EXPECT_EQ(data.size(), nfc_->write(data));
   // Wait for CORE_CONN_CREATE_RSP
-  auto res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
+  res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
   EXPECT_TRUE(res.no_timeout);
   EXPECT_EQ(7ul, res.args->last_data_.size());
   EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
@@ -242,52 +261,70 @@ TEST_F(NfcHidlTest, WriteInvalidAndThenValidCommand) {
  * Repeat to send total of 1Mb data
  */
 TEST_F(NfcHidlTest, Bandwidth) {
-  std::vector<uint8_t> cmd = CORE_CONN_CREATE_CMD;
-  NfcData data = cmd;
-  EXPECT_EQ(data.size(), nfc_->write(data));
-  // Wait for CORE_CONN_CREATE_RSP
-  auto res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
-  EXPECT_TRUE(res.no_timeout);
-  EXPECT_EQ(7ul, res.args->last_data_.size());
-  EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
-  uint8_t conn_id = res.args->last_data_[6];
-  uint32_t max_payload_size = res.args->last_data_[4];
+    std::vector<uint8_t> cmd = CORE_RESET_CMD;
+    NfcData data = cmd;
+    EXPECT_EQ(data.size(), nfc_->write(data));
+    // Wait for CORE_RESET_RSP
+    auto res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
+    EXPECT_TRUE(res.no_timeout);
+    EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
+    EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
 
-  for (int loops = 0; loops < NUMBER_LOOPS; loops++) {
-      res.args->last_data_.resize(0);
-      data.resize(max_payload_size + LOOP_BACK_HEADER_SIZE);
-      data[0] = conn_id;
-      data[1] = 0x00;
-      data[2] = max_payload_size;
-      for (uint32_t i = 0; i < max_payload_size; i++) {
-          data[i + LOOP_BACK_HEADER_SIZE] = i;
-    }
-    EXPECT_EQ(max_payload_size + LOOP_BACK_HEADER_SIZE, nfc_->write(data));
-    // Wait for data and CORE_CONN_CREDITS_NTF
-    auto res1 = nfc_cb_->WaitForCallback(kCallbackNameSendData);
-    EXPECT_TRUE(res1.no_timeout);
-    auto res2 = nfc_cb_->WaitForCallback(kCallbackNameSendData);
-    EXPECT_TRUE(res2.no_timeout);
-    // Check if the same data was received back
-    EXPECT_TRUE(res1.args);
-    EXPECT_TRUE(res2.args);
+    cmd = CORE_INIT_CMD;
+    data = cmd;
+    EXPECT_EQ(data.size(), nfc_->write(data));
+    // Wait for CORE_INIT_RSP
+    res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
+    EXPECT_TRUE(res.no_timeout);
+    EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
 
-    NfcData credits_ntf = res1.args->last_data_;
-    NfcData received_data = res2.args->last_data_;
-    /* It is possible that CORE_CONN_CREDITS_NTF is received before data,
-     * Find the order and do further checks depending on that */
-    if (received_data.size() != data.size()) {
-        credits_ntf = res2.args->last_data_;
-        received_data = res1.args->last_data_;
-    }
-    EXPECT_EQ(data.size(), received_data.size());
-    for (size_t i = 0; i < data.size(); i++) {
-        EXPECT_EQ(data[i], received_data[i]);
-    }
+    cmd = CORE_CONN_CREATE_CMD;
+    data = cmd;
+    EXPECT_EQ(data.size(), nfc_->write(data));
+    // Wait for CORE_CONN_CREATE_RSP
+    res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
+    EXPECT_TRUE(res.no_timeout);
+    EXPECT_TRUE(res.no_timeout);
+    EXPECT_EQ(7ul, res.args->last_data_.size());
+    EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
+    uint8_t conn_id = res.args->last_data_[6];
+    uint32_t max_payload_size = res.args->last_data_[4];
 
-    EXPECT_EQ(6ul, credits_ntf.size());
-    // Check if the credit is refilled to 1
-    EXPECT_EQ(1, credits_ntf[5]);
+    for (int loops = 0; loops < NUMBER_LOOPS; loops++) {
+        res.args->last_data_.resize(0);
+        data.resize(max_payload_size + LOOP_BACK_HEADER_SIZE);
+        data[0] = conn_id;
+        data[1] = 0x00;
+        data[2] = max_payload_size;
+        for (uint32_t i = 0; i < max_payload_size; i++) {
+            data[i + LOOP_BACK_HEADER_SIZE] = i;
+        }
+        EXPECT_EQ(max_payload_size + LOOP_BACK_HEADER_SIZE, nfc_->write(data));
+        // Wait for data and CORE_CONN_CREDITS_NTF
+        auto res1 = nfc_cb_->WaitForCallback(kCallbackNameSendData);
+        EXPECT_TRUE(res1.no_timeout);
+        auto res2 = nfc_cb_->WaitForCallback(kCallbackNameSendData);
+        EXPECT_TRUE(res2.no_timeout);
+        // Check if the same data was received back
+        EXPECT_TRUE(res1.args);
+        EXPECT_TRUE(res2.args);
+
+        NfcData credits_ntf = res1.args->last_data_;
+        NfcData received_data = res2.args->last_data_;
+        /* It is possible that CORE_CONN_CREDITS_NTF is received before data,
+         * Find the order and do further checks depending on that */
+        if (received_data.size() != data.size()) {
+            credits_ntf = res2.args->last_data_;
+            received_data = res1.args->last_data_;
+        }
+        EXPECT_EQ(data.size(), received_data.size());
+        for (size_t i = 0; i < data.size(); i++) {
+            EXPECT_EQ(data[i], received_data[i]);
+        }
+
+        EXPECT_EQ(6ul, credits_ntf.size());
+        // Check if the credit is refilled to 1
+        EXPECT_EQ(1, credits_ntf[5]);
   }
 }
 
