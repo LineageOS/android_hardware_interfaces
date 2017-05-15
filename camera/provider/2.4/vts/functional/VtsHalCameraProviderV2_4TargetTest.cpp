@@ -2217,11 +2217,11 @@ TEST_F(CameraHidlTest, configureStreamsZSLInputOutputs) {
                             inputStream, zslStream, outputStream};
                     StreamConfiguration config = {streams,
                             StreamConfigurationMode::NORMAL_MODE};
-                    ret = session->configureStreams(config, [streamId] (Status s,
-                            HalStreamConfiguration halConfig) {
-                        ASSERT_EQ(Status::OK, s);
-                        ASSERT_EQ(3u, halConfig.streams.size());
-                    });
+                    ret = session->configureStreams(config,
+                                                    [](Status s, HalStreamConfiguration halConfig) {
+                                                        ASSERT_EQ(Status::OK, s);
+                                                        ASSERT_EQ(3u, halConfig.streams.size());
+                                                    });
                     ASSERT_TRUE(ret.isOk());
                 }
             }
@@ -2280,11 +2280,11 @@ TEST_F(CameraHidlTest, configureStreamsPreviewStillOutputs) {
                             previewStream, blobStream};
                     StreamConfiguration config = {streams,
                             StreamConfigurationMode::NORMAL_MODE};
-                    ret = session->configureStreams(config, [streamId] (Status s,
-                            HalStreamConfiguration halConfig) {
-                        ASSERT_EQ(Status::OK, s);
-                        ASSERT_EQ(2u, halConfig.streams.size());
-                    });
+                    ret = session->configureStreams(config,
+                                                    [](Status s, HalStreamConfiguration halConfig) {
+                                                        ASSERT_EQ(Status::OK, s);
+                                                        ASSERT_EQ(2u, halConfig.streams.size());
+                                                    });
                     ASSERT_TRUE(ret.isOk());
                 }
             }
@@ -2348,8 +2348,7 @@ TEST_F(CameraHidlTest, configureStreamsConstrainedOutputs) {
             streams[0] = stream;
             config = {streams,
                     StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE};
-            ret = session->configureStreams(config, [streamId] (Status s,
-                    HalStreamConfiguration) {
+            ret = session->configureStreams(config, [](Status s, HalStreamConfiguration) {
                 ASSERT_TRUE((Status::ILLEGAL_ARGUMENT == s) ||
                             (Status::INTERNAL_ERROR == s));
             });
@@ -2363,8 +2362,7 @@ TEST_F(CameraHidlTest, configureStreamsConstrainedOutputs) {
             streams[0] = stream;
             config = {streams,
                     StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE};
-            ret = session->configureStreams(config, [streamId] (Status s,
-                    HalStreamConfiguration) {
+            ret = session->configureStreams(config, [](Status s, HalStreamConfiguration) {
                 ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
             });
             ASSERT_TRUE(ret.isOk());
@@ -2377,8 +2375,7 @@ TEST_F(CameraHidlTest, configureStreamsConstrainedOutputs) {
             streams[0] = stream;
             config = {streams,
                     StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE};
-            ret = session->configureStreams(config, [streamId] (Status s,
-                    HalStreamConfiguration) {
+            ret = session->configureStreams(config, [](Status s, HalStreamConfiguration) {
                 ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
             });
             ASSERT_TRUE(ret.isOk());
@@ -2438,11 +2435,11 @@ TEST_F(CameraHidlTest, configureStreamsVideoStillOutputs) {
                             videoStream, blobStream};
                     StreamConfiguration config = {streams,
                             StreamConfigurationMode::NORMAL_MODE};
-                    ret = session->configureStreams(config, [streamId] (Status s,
-                            HalStreamConfiguration halConfig) {
-                        ASSERT_EQ(Status::OK, s);
-                        ASSERT_EQ(2u, halConfig.streams.size());
-                    });
+                    ret = session->configureStreams(config,
+                                                    [](Status s, HalStreamConfiguration halConfig) {
+                                                        ASSERT_EQ(Status::OK, s);
+                                                        ASSERT_EQ(2u, halConfig.streams.size());
+                                                    });
                     ASSERT_TRUE(ret.isOk());
                 }
             }

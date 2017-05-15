@@ -557,8 +557,7 @@ static void testDebugDump(DebugDump debugDump) {
 
 TEST_F(AudioPrimaryHidlTest, DebugDump) {
     doc::test("Check that the hal can dump its state without error");
-    testDebugDump(
-        [this](const auto& handle) { return device->debugDump(handle); });
+    testDebugDump([](const auto& handle) { return device->debugDump(handle); });
 }
 
 TEST_F(AudioPrimaryHidlTest, DebugDumpInvalidArguments) {
@@ -1341,8 +1340,7 @@ TEST_P(OutputStreamTest, GetPresentationPositionStop) {
 
 TEST_F(AudioPrimaryHidlTest, setVoiceVolume) {
     doc::test("Make sure setVoiceVolume only succeed if volume is in [0,1]");
-    testUnitaryGain(
-        [this](float volume) { return device->setVoiceVolume(volume); });
+    testUnitaryGain([](float volume) { return device->setVoiceVolume(volume); });
 }
 
 TEST_F(AudioPrimaryHidlTest, setMode) {
