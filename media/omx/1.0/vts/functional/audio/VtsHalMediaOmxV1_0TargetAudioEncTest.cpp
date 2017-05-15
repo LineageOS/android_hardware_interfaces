@@ -134,7 +134,7 @@ class AudioEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         omx = ::testing::VtsHalHidlTargetTestBase::getService<IOmx>(
             gEnv->getInstance());
         ASSERT_NE(omx, nullptr);
-        observer = new CodecObserver([this](Message msg) { (void)msg; });
+        observer = new CodecObserver([](Message msg) { (void)msg; });
         ASSERT_NE(observer, nullptr);
         ASSERT_EQ(strncmp(gEnv->getComponent().c_str(), "OMX.", 4), 0)
             << "Invalid Component Name";
