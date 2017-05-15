@@ -346,7 +346,7 @@ Return<android::hardware::media::omx::V1_0::Status> setAudioPortFormat(
         }
     }
     if (index == arrEncoding.size()) {
-        ALOGI("setting default Port format");
+        ALOGE("setting default Port format %x", (int)arrEncoding[0]);
         portFormat.eEncoding = arrEncoding[0];
     }
     // In setParam call nIndex shall be ignored as per omx-il specification.
@@ -364,9 +364,31 @@ Return<android::hardware::media::omx::V1_0::Status> setRole(
     return setParam(omxNode, OMX_IndexParamStandardComponentRole, &params);
 }
 
+void enumerateProfile(sp<IOmxNode> omxNode, OMX_U32 portIndex,
+                      std::vector<int32_t>* arrProfile) {
+    android::hardware::media::omx::V1_0::Status status;
+    OMX_AUDIO_PARAM_ANDROID_PROFILETYPE param;
+    param.nProfileIndex = 0;
+    arrProfile->clear();
+    while (1) {
+        status = getPortParam(
+            omxNode, (OMX_INDEXTYPE)OMX_IndexParamAudioProfileQuerySupported,
+            portIndex, &param);
+        if (status != ::android::hardware::media::omx::V1_0::Status::OK) break;
+        arrProfile->push_back(static_cast<int32_t>(param.eProfile));
+        param.nProfileIndex++;
+        if (param.nProfileIndex == 512) {
+            // enumerated way too many, highly unusual for this to happen.
+            EXPECT_LE(param.nProfileIndex, 512U)
+                << "Expecting OMX_ErrorNoMore but not received";
+            break;
+        }
+    }
+}
+
 void setupPCMPort(sp<IOmxNode> omxNode, OMX_U32 portIndex, int32_t nChannels,
                   OMX_NUMERICALDATATYPE eNumData, int32_t nBitPerSample,
-                  int32_t nSamplingRate) {
+                  int32_t nSamplingRate, OMX_AUDIO_PCMMODETYPE ePCMMode) {
     OMX_AUDIO_PARAM_PCMMODETYPE param;
     android::hardware::media::omx::V1_0::Status status;
     status = getPortParam(omxNode, OMX_IndexParamAudioPcm, portIndex, &param);
@@ -377,7 +399,7 @@ void setupPCMPort(sp<IOmxNode> omxNode, OMX_U32 portIndex, int32_t nChannels,
     param.bInterleaved = OMX_TRUE;
     param.nBitPerSample = nBitPerSample;
     param.nSamplingRate = nSamplingRate;
-    param.ePCMMode = OMX_AUDIO_PCMModeLinear;
+    param.ePCMMode = ePCMMode;
     switch (nChannels) {
         case 1:
             param.eChannelMapping[0] = OMX_AUDIO_ChannelCF;
