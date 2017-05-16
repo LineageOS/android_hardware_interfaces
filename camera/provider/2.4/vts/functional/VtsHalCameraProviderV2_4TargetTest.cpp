@@ -90,7 +90,7 @@ using ::android::hardware::camera::device::V1_0::ICameraDevicePreviewCallback;
 using ::android::hardware::camera::device::V1_0::FrameCallbackFlag;
 using ::android::hardware::camera::device::V1_0::HandleTimestampMessage;
 
-const char kCameraPassthroughServiceName[] = "legacy/0";
+const char kCameraLegacyServiceName[] = "legacy/0";
 const uint32_t kMaxPreviewWidth = 1920;
 const uint32_t kMaxPreviewHeight = 1080;
 const uint32_t kMaxVideoWidth = 4096;
@@ -185,9 +185,7 @@ private:
 };
 
 void CameraHidlEnvironment::SetUp() {
-    // TODO: test the binderized mode
-    mProvider = ::testing::VtsHalHidlTargetTestBase::getService<ICameraProvider>(kCameraPassthroughServiceName);
-    // TODO: handle the device doesn't have any camera case
+    mProvider = ::testing::VtsHalHidlTargetTestBase::getService<ICameraProvider>(kCameraLegacyServiceName);
     ALOGI_IF(mProvider, "provider is not nullptr, %p", mProvider.get());
     ASSERT_NE(mProvider, nullptr);
 }
