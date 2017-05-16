@@ -17,12 +17,14 @@
 #define LOG_TAG "media_omx_hidl_master_test"
 #include <android-base/logging.h>
 
+#include <VtsHalHidlTargetTestBase.h>
 #include <android/hardware/media/omx/1.0/IOmx.h>
+#include <android/hardware/media/omx/1.0/IOmxStore.h>
 #include <android/hardware/media/omx/1.0/types.h>
 #include <getopt.h>
 #include <log/log.h>
-#include <VtsHalHidlTargetTestBase.h>
 
+using ::android::hardware::media::omx::V1_0::IOmxStore;
 using ::android::hardware::media::omx::V1_0::IOmx;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
@@ -83,18 +85,76 @@ static ComponentTestEnvironment* gEnv = nullptr;
 class MasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    public:
     virtual void SetUp() override {
-        omx = ::testing::VtsHalHidlTargetTestBase::getService<IOmx>(
-            gEnv->getInstance());
+        omxStore = nullptr;
+        omxStore = ::testing::VtsHalHidlTargetTestBase::getService<IOmxStore>();
+        ASSERT_NE(omxStore, nullptr);
+        omx = nullptr;
+        omx = omxStore->getOmx(gEnv->getInstance());
         ASSERT_NE(omx, nullptr);
     }
 
     virtual void TearDown() override {}
 
+    sp<IOmxStore> omxStore;
     sp<IOmx> omx;
+
+   protected:
+    static void description(const std::string& description) {
+        RecordProperty("description", description);
+    }
 };
 
-// enumerate list of components and roles
+void displayComponentInfo(hidl_vec<IOmx::ComponentInfo>& nodeList) {
+    for (size_t i = 0; i < nodeList.size(); i++) {
+        printf("%s | ", nodeList[i].mName.c_str());
+        for (size_t j = 0; j < ((nodeList[i]).mRoles).size(); j++) {
+            printf("%s ", nodeList[i].mRoles[j].c_str());
+        }
+        printf("\n");
+    }
+}
+
+// list service attributes
+TEST_F(MasterHidlTest, ListServiceAttr) {
+    description("list service attributes");
+    android::hardware::media::omx::V1_0::Status status;
+    hidl_vec<IOmxStore::Attribute> attributes;
+    EXPECT_TRUE(omxStore
+                    ->listServiceAttributes([&status, &attributes](
+                        android::hardware::media::omx::V1_0::Status _s,
+                        hidl_vec<IOmxStore::Attribute> const& _nl) {
+                        status = _s;
+                        attributes = _nl;
+                    })
+                    .isOk());
+    if (attributes.size() == 0)
+        std::cerr << "[          ] Warning ! Attribute list empty \n";
+}
+
+// get node prefix
+TEST_F(MasterHidlTest, getNodePrefix) {
+    description("get node prefix");
+    hidl_string prefix;
+    omxStore->getNodePrefix(
+        [&prefix](hidl_string const& _nl) { prefix = _nl; });
+    if (prefix.empty())
+        std::cerr << "[          ] Warning ! Node Prefix empty \n";
+}
+
+// list roles
+TEST_F(MasterHidlTest, ListRoles) {
+    description("list roles");
+    hidl_vec<IOmxStore::RoleInfo> roleList;
+    omxStore->listRoles([&roleList](hidl_vec<IOmxStore::RoleInfo> const& _nl) {
+        roleList = _nl;
+    });
+    if (roleList.size() == 0)
+        std::cerr << "[          ] Warning ! RoleInfo list empty \n";
+}
+
+// list components and roles
 TEST_F(MasterHidlTest, ListNodes) {
+    description("enumerate component and roles");
     android::hardware::media::omx::V1_0::Status status;
     hidl_vec<IOmx::ComponentInfo> nodeList;
     EXPECT_TRUE(
@@ -105,13 +165,10 @@ TEST_F(MasterHidlTest, ListNodes) {
                nodeList = _nl;
            })
             .isOk());
-    for (size_t i = 0; i < nodeList.size(); i++) {
-        printf("%s", nodeList[i].mName.c_str());
-        for (size_t j = 0; j < ((nodeList[i]).mRoles).size(); j++) {
-            printf("\t %s", nodeList[i].mRoles[j].c_str());
-        }
-        printf("\n");
-    }
+    if (nodeList.size() == 0)
+        std::cerr << "[          ] Warning ! ComponentInfo list empty \n";
+    else
+        displayComponentInfo(nodeList);
 }
 
 int main(int argc, char** argv) {

@@ -130,14 +130,15 @@ static ComponentTestEnvironment* gEnv = nullptr;
 class AudioEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    public:
     virtual void SetUp() override {
+        disableTest = false;
         android::hardware::media::omx::V1_0::Status status;
         omx = ::testing::VtsHalHidlTargetTestBase::getService<IOmx>(
             gEnv->getInstance());
         ASSERT_NE(omx, nullptr);
         observer = new CodecObserver([this](Message msg) { (void)msg; });
         ASSERT_NE(observer, nullptr);
-        ASSERT_EQ(strncmp(gEnv->getComponent().c_str(), "OMX.", 4), 0)
-            << "Invalid Component Name";
+        if (strncmp(gEnv->getComponent().c_str(), "OMX.", 4) != 0)
+            disableTest = true;
         EXPECT_TRUE(omx->allocateNode(
                            gEnv->getComponent(), observer,
                            [&](android::hardware::media::omx::V1_0::Status _s,
@@ -169,7 +170,7 @@ class AudioEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                 break;
             }
         }
-        ASSERT_NE(compName, unknown_comp);
+        if (compName == unknown_comp) disableTest = true;
         struct CompToCoding {
             standardComp CompName;
             OMX_AUDIO_CODINGTYPE eEncoding;
@@ -189,7 +190,8 @@ class AudioEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                 break;
             }
         }
-        ASSERT_NE(i, kNumCompToCoding);
+        if (i == kNumCompToCoding) disableTest = true;
+        if (disableTest) std::cerr << "[          ] Warning !  Test Disabled\n";
     }
 
     virtual void TearDown() override {
@@ -212,6 +214,7 @@ class AudioEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     sp<IOmxNode> omxNode;
     standardComp compName;
     OMX_AUDIO_CODINGTYPE eEncoding;
+    bool disableTest;
 
    protected:
     static void description(const std::string& description) {
@@ -237,6 +240,14 @@ void setDefaultPortParam(sp<IOmxNode> omxNode, OMX_U32 portIndex,
                           &portDef);
     EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 
+    std::vector<int32_t> arrProfile;
+    int32_t profile;
+    if ((int)eEncoding == OMX_AUDIO_CodingAAC) {
+        enumerateProfile(omxNode, portIndex, &arrProfile);
+        if (arrProfile.empty() == true) ASSERT_TRUE(false);
+        profile = arrProfile[0];
+    }
+
     switch ((int)eEncoding) {
         case OMX_AUDIO_CodingFLAC:
             setupFLACPort(omxNode, portIndex, nChannels, nSampleRate,
@@ -247,7 +258,8 @@ void setDefaultPortParam(sp<IOmxNode> omxNode, OMX_U32 portIndex,
                          (comp == AudioEncHidlTest::standardComp::amrwb));
             break;
         case OMX_AUDIO_CodingAAC:
-            setupAACPort(omxNode, portIndex, OMX_AUDIO_AACObjectNull,
+            setupAACPort(omxNode, portIndex,
+                         static_cast<OMX_AUDIO_AACPROFILETYPE>(profile),
                          OMX_AUDIO_AACStreamFormatMP4FF, nChannels, nBitRate,
                          nSampleRate);
             break;
@@ -340,6 +352,7 @@ void encodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
 // set component role
 TEST_F(AudioEncHidlTest, SetRole) {
     description("Test Set Component Role");
+    if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     status = setRole(omxNode, gEnv->getRole().c_str());
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
@@ -348,6 +361,7 @@ TEST_F(AudioEncHidlTest, SetRole) {
 // port format enumeration
 TEST_F(AudioEncHidlTest, EnumeratePortFormat) {
     description("Test Component on Mandatory Port Parameters (Port Format)");
+    if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     status = setRole(omxNode, gEnv->getRole().c_str());
@@ -368,6 +382,7 @@ TEST_F(AudioEncHidlTest, EnumeratePortFormat) {
 // test raw stream encode
 TEST_F(AudioEncHidlTest, EncodeTest) {
     description("Tests Encode");
+    if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     status = setRole(omxNode, gEnv->getRole().c_str());
@@ -421,7 +436,7 @@ TEST_F(AudioEncHidlTest, EncodeTest) {
             ASSERT_TRUE(false);
     }
     setupPCMPort(omxNode, kPortIndexInput, nChannels, OMX_NumericalDataSigned,
-                 16, nSampleRate);
+                 16, nSampleRate, OMX_AUDIO_PCMModeLinear);
     // Configure output port
     setDefaultPortParam(omxNode, kPortIndexOutput, eEncoding, compName,
                         nChannels, nSampleRate, nBitRate);
