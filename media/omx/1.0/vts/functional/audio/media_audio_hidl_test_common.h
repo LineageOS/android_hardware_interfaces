@@ -68,9 +68,12 @@ Return<android::hardware::media::omx::V1_0::Status> setAudioPortFormat(
 Return<android::hardware::media::omx::V1_0::Status> setRole(
     sp<IOmxNode> omxNode, const char* role);
 
+void enumerateProfile(sp<IOmxNode> omxNode, OMX_U32 portIndex,
+                      std::vector<int32_t>* arrProfile);
+
 void setupPCMPort(sp<IOmxNode> omxNode, OMX_U32 portIndex, int32_t nChannels,
                   OMX_NUMERICALDATATYPE eNumData, int32_t nBitPerSample,
-                  int32_t nSamplingRate);
+                  int32_t nSamplingRate, OMX_AUDIO_PCMMODETYPE ePCMMode);
 
 void setupMP3Port(sp<IOmxNode> omxNode, OMX_U32 portIndex,
                   OMX_AUDIO_MP3STREAMFORMATTYPE eFormat, int32_t nChannels,
