@@ -17,6 +17,10 @@
 #ifndef MEDIA_HIDL_TEST_COMMON_H
 #define MEDIA_HIDL_TEST_COMMON_H
 
+#ifdef __LP64__
+#define OMX_ANDROID_COMPILE_AS_32BIT_ON_64BIT_PLATFORMS
+#endif
+
 #include <media/stagefright/foundation/ALooper.h>
 #include <utils/Condition.h>
 #include <utils/List.h>
@@ -213,6 +217,32 @@ Return<android::hardware::media::omx::V1_0::Status> setPortParam(
     params->nPortIndex = nPortIndex;
     return omxNode->setParameter(toRawIndexType(omxIdx),
                                  inHidlBytes(params, sizeof(*params)));
+}
+
+template <class T>
+Return<android::hardware::media::omx::V1_0::Status> getPortConfig(
+    sp<IOmxNode> omxNode, OMX_INDEXTYPE omxIdx, OMX_U32 nPortIndex, T* params) {
+    android::hardware::media::omx::V1_0::Status status;
+    InitOMXParams(params);
+    params->nPortIndex = nPortIndex;
+    omxNode->getConfig(
+        toRawIndexType(omxIdx), inHidlBytes(params, sizeof(*params)),
+        [&status, &params](android::hardware::media::omx::V1_0::Status _s,
+                           hidl_vec<uint8_t> const& outParams) {
+            status = _s;
+            std::copy(outParams.data(), outParams.data() + outParams.size(),
+                      static_cast<uint8_t*>(static_cast<void*>(params)));
+        });
+    return status;
+}
+
+template <class T>
+Return<android::hardware::media::omx::V1_0::Status> setPortConfig(
+    sp<IOmxNode> omxNode, OMX_INDEXTYPE omxIdx, OMX_U32 nPortIndex, T* params) {
+    InitOMXParams(params);
+    params->nPortIndex = nPortIndex;
+    return omxNode->setConfig(toRawIndexType(omxIdx),
+                              inHidlBytes(params, sizeof(*params)));
 }
 
 #endif  // MEDIA_HIDL_TEST_COMMON_H

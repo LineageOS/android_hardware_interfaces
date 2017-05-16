@@ -118,14 +118,15 @@ static ComponentTestEnvironment* gEnv = nullptr;
 class ComponentHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    public:
     virtual void SetUp() override {
+        disableTest = false;
         android::hardware::media::omx::V1_0::Status status;
         omx = ::testing::VtsHalHidlTargetTestBase::getService<IOmx>(
             gEnv->getInstance());
         ASSERT_NE(omx, nullptr);
         observer = new CodecObserver(nullptr);
         ASSERT_NE(observer, nullptr);
-        ASSERT_EQ(strncmp(gEnv->getComponent().c_str(), "OMX.", 4), 0)
-            << "Invalid Component Name";
+        if (strncmp(gEnv->getComponent().c_str(), "OMX.", 4) != 0)
+            disableTest = true;
         EXPECT_TRUE(omx->allocateNode(
                            gEnv->getComponent(), observer,
                            [&](android::hardware::media::omx::V1_0::Status _s,
@@ -161,7 +162,8 @@ class ComponentHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                 break;
             }
         }
-        ASSERT_NE(compClass, unknown_class) << "Invalid Component Class";
+        if (compClass == unknown_class) disableTest = true;
+        if (disableTest) std::cerr << "[          ] Warning !  Test Disabled\n";
     }
 
     virtual void TearDown() override {
@@ -183,6 +185,7 @@ class ComponentHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     sp<CodecObserver> observer;
     sp<IOmxNode> omxNode;
     standardCompClass compClass;
+    bool disableTest;
 
    protected:
     static void description(const std::string& description) {
@@ -493,7 +496,7 @@ Return<android::hardware::media::omx::V1_0::Status> setVideoPortFormat(
             }
         }
         if (index == arrColorFormat.size()) {
-            ALOGI("setting default color format");
+            ALOGE("setting default color format %x", (int)arrColorFormat[0]);
             portFormat.eColorFormat = arrColorFormat[0];
         }
         portFormat.eCompressionFormat = OMX_VIDEO_CodingUnused;
@@ -505,7 +508,8 @@ Return<android::hardware::media::omx::V1_0::Status> setVideoPortFormat(
             }
         }
         if (index == arrCompressionFormat.size()) {
-            ALOGI("setting default compression format");
+            ALOGE("setting default compression format %x",
+                  (int)arrCompressionFormat[0]);
             portFormat.eCompressionFormat = arrCompressionFormat[0];
         }
         portFormat.eColorFormat = OMX_COLOR_FormatUnused;
@@ -550,7 +554,7 @@ Return<android::hardware::media::omx::V1_0::Status> setAudioPortFormat(
         }
     }
     if (index == arrEncoding.size()) {
-        ALOGI("setting default Port format");
+        ALOGE("setting default Port format %x", (int)arrEncoding[0]);
         portFormat.eEncoding = arrEncoding[0];
     }
     // In setParam call nIndex shall be ignored as per omx-il specification.
@@ -569,9 +573,48 @@ Return<android::hardware::media::omx::V1_0::Status> setRole(
     return setParam(omxNode, OMX_IndexParamStandardComponentRole, &params);
 }
 
+// test dispatch message API call
+TEST_F(ComponentHidlTest, dispatchMsg) {
+    description("test dispatch message API call");
+    if (disableTest) return;
+    android::hardware::media::omx::V1_0::Status status;
+    Message msgin, msgout;
+
+    msgin.type = Message::Type::EVENT;
+
+    // dispatch EOS event, normally this is by component when it receives a
+    // EOS flag
+    msgin.data.eventData.event = OMX_EventBufferFlag;
+    msgin.data.eventData.data1 = 0U;
+    msgin.data.eventData.data2 = (uint32_t)OMX_BUFFERFLAG_EOS;
+    status = omxNode->dispatchMessage(msgin);
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    status = observer->dequeueMessage(&msgout, DEFAULT_TIMEOUT);
+    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
+    ASSERT_EQ(msgout.type, msgin.type);
+    ASSERT_EQ(msgout.data.eventData.event, msgin.data.eventData.event);
+    ASSERT_EQ(msgout.data.eventData.data1, msgin.data.eventData.data1);
+    ASSERT_EQ(msgout.data.eventData.data2, msgin.data.eventData.data2);
+
+    // dispatch dataspace changed event
+    msgin.data.eventData.event = OMX_EventDataSpaceChanged;
+    msgin.data.eventData.data1 = 281149440U;  // V0_BT601_625;
+    msgin.data.eventData.data2 = 0x1111;
+    msgin.data.eventData.data3 = 0x24;  // RAW_OPAQUE
+    status = omxNode->dispatchMessage(msgin);
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    status = observer->dequeueMessage(&msgout, DEFAULT_TIMEOUT);
+    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
+    ASSERT_EQ(msgout.type, msgin.type);
+    ASSERT_EQ(msgout.data.eventData.event, msgin.data.eventData.event);
+    ASSERT_EQ(msgout.data.eventData.data1, msgin.data.eventData.data1);
+    ASSERT_EQ(msgout.data.eventData.data2, msgin.data.eventData.data2);
+}
+
 // set component role
 TEST_F(ComponentHidlTest, SetRole) {
     description("Test Set Component Role");
+    if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     status = setRole(omxNode, gEnv->getRole().c_str());
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
@@ -580,6 +623,7 @@ TEST_F(ComponentHidlTest, SetRole) {
 // port indices enumeration
 TEST_F(ComponentHidlTest, GetPortIndices) {
     description("Test Component on Mandatory Port Parameters (Port Indices)");
+    if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     OMX_PORT_PARAM_TYPE params;
 
@@ -602,6 +646,7 @@ TEST_F(ComponentHidlTest, GetPortIndices) {
 // port format enumeration
 TEST_F(ComponentHidlTest, EnumeratePortFormat) {
     description("Test Component on Mandatory Port Parameters (Port Format)");
+    if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
 
@@ -662,6 +707,7 @@ TEST_F(ComponentHidlTest, EnumeratePortFormat) {
 TEST_F(ComponentHidlTest, SetDefaultPortParams) {
     description(
         "Test Component on Mandatory Port Parameters (Port Definition)");
+    if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
 
@@ -788,6 +834,7 @@ TEST_F(ComponentHidlTest, SetDefaultPortParams) {
 // populate port test
 TEST_F(ComponentHidlTest, PopulatePort) {
     description("Verify bPopulated field of a component port");
+    if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     OMX_U32 portBase = 0;
 
@@ -857,6 +904,7 @@ TEST_F(ComponentHidlTest, PopulatePort) {
 // Flush test
 TEST_F(ComponentHidlTest, Flush) {
     description("Test Flush");
+    if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     Message msg;
@@ -906,6 +954,7 @@ TEST_F(ComponentHidlTest, Flush) {
 // state transitions test
 TEST_F(ComponentHidlTest, StateTransitions) {
     description("Test State Transitions Loaded<->Idle<->Execute");
+    if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     Message msg;
@@ -953,6 +1002,7 @@ TEST_F(ComponentHidlTest, StateTransitions) {
 // state transitions test - monkeying
 TEST_F(ComponentHidlTest, StateTransitions_M) {
     description("Test State Transitions monkeying");
+    if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     Message msg;
@@ -1016,6 +1066,7 @@ TEST_F(ComponentHidlTest, StateTransitions_M) {
 // port enable disable test
 TEST_F(ComponentHidlTest, PortEnableDisable_Loaded) {
     description("Test Port Enable and Disable (Component State :: Loaded)");
+    if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     OMX_U32 portBase = 0;
     Message msg;
@@ -1053,7 +1104,7 @@ TEST_F(ComponentHidlTest, PortEnableDisable_Loaded) {
             ASSERT_EQ(msg.data.eventData.data1, OMX_CommandPortEnable);
             ASSERT_EQ(msg.data.eventData.data2, i);
         } else if (msg.data.eventData.event == OMX_EventError) {
-            ALOGI("Port %d Disabling failed with error %d", (int)i,
+            ALOGE("Port %d Disabling failed with error %d", (int)i,
                   (int)msg.data.eventData.event);
         } else {
             // something unexpected happened
@@ -1065,6 +1116,7 @@ TEST_F(ComponentHidlTest, PortEnableDisable_Loaded) {
 // port enable disable test
 TEST_F(ComponentHidlTest, PortEnableDisable_Idle) {
     description("Test Port Enable and Disable (Component State :: Idle)");
+    if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     OMX_U32 portBase = 0;
@@ -1104,7 +1156,7 @@ TEST_F(ComponentHidlTest, PortEnableDisable_Idle) {
                 // do not disable the port until all the buffers are freed
                 ASSERT_TRUE(false);
             } else if (msg.data.eventData.event == OMX_EventError) {
-                ALOGI("Port %d Disabling failed with error %d", (int)i,
+                ALOGE("Port %d Disabling failed with error %d", (int)i,
                       (int)msg.data.eventData.event);
             } else {
                 // something unexpected happened
@@ -1159,6 +1211,7 @@ TEST_F(ComponentHidlTest, PortEnableDisable_Idle) {
 // port enable disable test
 TEST_F(ComponentHidlTest, PortEnableDisable_Execute) {
     description("Test Port Enable and Disable (Component State :: Execute)");
+    if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     OMX_U32 portBase = 0;
@@ -1206,7 +1259,7 @@ TEST_F(ComponentHidlTest, PortEnableDisable_Execute) {
                 // do not disable the port until all the buffers are freed
                 ASSERT_TRUE(false);
             } else if (msg.data.eventData.event == OMX_EventError) {
-                ALOGI("Port %d Disabling failed with error %d", (int)i,
+                ALOGE("Port %d Disabling failed with error %d", (int)i,
                       (int)msg.data.eventData.event);
             } else {
                 // something unexpected happened
@@ -1268,6 +1321,7 @@ TEST_F(ComponentHidlTest, PortEnableDisable_Execute) {
 TEST_F(ComponentHidlTest, PortEnableDisable_M) {
     description(
         "Test Port Enable and Disable Monkeying (Component State :: Loaded)");
+    if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     OMX_U32 portBase = 0;
     Message msg;
@@ -1308,7 +1362,7 @@ TEST_F(ComponentHidlTest, PortEnableDisable_M) {
                 msg.data.eventData.data2 != portBase + 1)
                 EXPECT_TRUE(false);
         } else if (msg.data.eventData.event == OMX_EventError) {
-            ALOGI("Port %d Disabling failed with error %d", (int)i,
+            ALOGE("Port %d Disabling failed with error %d", (int)i,
                   (int)msg.data.eventData.event);
         } else {
             // something unexpected happened
@@ -1330,7 +1384,7 @@ TEST_F(ComponentHidlTest, PortEnableDisable_M) {
                 msg.data.eventData.data2 != portBase + 1)
                 EXPECT_TRUE(false);
         } else if (msg.data.eventData.event == OMX_EventError) {
-            ALOGI("Port %d Enabling failed with error %d", (int)i,
+            ALOGE("Port %d Enabling failed with error %d", (int)i,
                   (int)msg.data.eventData.event);
         } else {
             // something unexpected happened
