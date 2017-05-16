@@ -130,6 +130,7 @@ static ComponentTestEnvironment* gEnv = nullptr;
 class VideoDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    public:
     virtual void SetUp() override {
+        disableTest = false;
         android::hardware::media::omx::V1_0::Status status;
         omx = ::testing::VtsHalHidlTargetTestBase::getService<IOmx>(
             gEnv->getInstance());
@@ -137,8 +138,8 @@ class VideoDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         observer =
             new CodecObserver([this](Message msg) { handleMessage(msg); });
         ASSERT_NE(observer, nullptr);
-        ASSERT_EQ(strncmp(gEnv->getComponent().c_str(), "OMX.", 4), 0)
-            << "Invalid Component Name";
+        if (strncmp(gEnv->getComponent().c_str(), "OMX.", 4) != 0)
+            disableTest = true;
         EXPECT_TRUE(omx->allocateNode(
                            gEnv->getComponent(), observer,
                            [&](android::hardware::media::omx::V1_0::Status _s,
@@ -171,7 +172,7 @@ class VideoDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                 break;
             }
         }
-        ASSERT_NE(compName, unknown_comp);
+        if (compName == unknown_comp) disableTest = true;
         struct CompToCompression {
             standardComp CompName;
             OMX_VIDEO_CODINGTYPE eCompressionFormat;
@@ -191,11 +192,12 @@ class VideoDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                 break;
             }
         }
-        ASSERT_NE(i, kNumCompToCompression);
+        if (i == kNumCompToCompression) disableTest = true;
         eosFlag = false;
         framesReceived = 0;
         timestampUs = 0;
         timestampDevTest = false;
+        if (disableTest) std::cerr << "[          ] Warning !  Test Disabled\n";
     }
 
     virtual void TearDown() override {
@@ -266,6 +268,7 @@ class VideoDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     sp<IOmxNode> omxNode;
     standardComp compName;
     OMX_VIDEO_CODINGTYPE eCompressionFormat;
+    bool disableTest;
     bool eosFlag;
     uint32_t framesReceived;
     uint64_t timestampUs;
@@ -600,6 +603,7 @@ void decodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
 // set component role
 TEST_F(VideoDecHidlTest, SetRole) {
     description("Test Set Component Role");
+    if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     status = setRole(omxNode, gEnv->getRole().c_str());
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
@@ -608,6 +612,7 @@ TEST_F(VideoDecHidlTest, SetRole) {
 // port format enumeration
 TEST_F(VideoDecHidlTest, EnumeratePortFormat) {
     description("Test Component on Mandatory Port Parameters (Port Format)");
+    if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatYUV420Planar;
@@ -634,6 +639,7 @@ TEST_F(VideoDecHidlTest, EnumeratePortFormat) {
 // deviation
 TEST_F(VideoDecHidlTest, DecodeTest) {
     description("Tests Port Reconfiguration, Decode and timestamp deviation");
+    if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     status = setRole(omxNode, gEnv->getRole().c_str());
@@ -702,8 +708,57 @@ TEST_F(VideoDecHidlTest, DecodeTest) {
 }
 
 // end of sequence test
-TEST_F(VideoDecHidlTest, EOSTest) {
-    description("Test End of stream");
+TEST_F(VideoDecHidlTest, EOSTest_M) {
+    description("Test End of stream monkeying");
+    if (disableTest) return;
+    android::hardware::media::omx::V1_0::Status status;
+    uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
+    status = setRole(omxNode, gEnv->getRole().c_str());
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    OMX_PORT_PARAM_TYPE params;
+    status = getParam(omxNode, OMX_IndexParamVideoInit, &params);
+    if (status == ::android::hardware::media::omx::V1_0::Status::OK) {
+        ASSERT_EQ(params.nPorts, 2U);
+        kPortIndexInput = params.nStartPortNumber;
+        kPortIndexOutput = kPortIndexInput + 1;
+    }
+
+    // set Port Params
+    uint32_t nFrameWidth, nFrameHeight, xFramerate;
+    OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatYUV420Planar;
+    getInputChannelInfo(omxNode, kPortIndexInput, &nFrameWidth, &nFrameHeight,
+                        &xFramerate);
+    setDefaultPortParam(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
+                        eColorFormat, nFrameWidth, nFrameHeight, 0, xFramerate);
+    omxNode->prepareForAdaptivePlayback(kPortIndexOutput, false, 1920, 1080);
+
+    android::Vector<BufferInfo> iBuffer, oBuffer;
+
+    // set state to idle
+    changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
+                            kPortIndexInput, kPortIndexOutput);
+    // set state to executing
+    changeStateIdletoExecute(omxNode, observer);
+
+    // request EOS at the start
+    testEOS(&iBuffer, &oBuffer, true);
+    flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
+               kPortIndexOutput);
+    EXPECT_GE(framesReceived, 0U);
+    framesReceived = 0;
+    timestampUs = 0;
+
+    // set state to idle
+    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+    // set state to executing
+    changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
+                            kPortIndexInput, kPortIndexOutput);
+}
+
+// end of sequence test
+TEST_F(VideoDecHidlTest, ThumbnailTest) {
+    description("Test Request for thumbnail");
+    if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     status = setRole(omxNode, gEnv->getRole().c_str());
@@ -743,6 +798,7 @@ TEST_F(VideoDecHidlTest, EOSTest) {
                         &xFramerate);
     setDefaultPortParam(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
                         eColorFormat, nFrameWidth, nFrameHeight, 0, xFramerate);
+    omxNode->prepareForAdaptivePlayback(kPortIndexOutput, false, 1920, 1080);
 
     android::Vector<BufferInfo> iBuffer, oBuffer;
 
@@ -751,14 +807,6 @@ TEST_F(VideoDecHidlTest, EOSTest) {
                             kPortIndexInput, kPortIndexOutput);
     // set state to executing
     changeStateIdletoExecute(omxNode, observer);
-
-    // request EOS at the start
-    testEOS(&iBuffer, &oBuffer, true);
-    flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-               kPortIndexOutput);
-    EXPECT_GE(framesReceived, 0U);
-    framesReceived = 0;
-    timestampUs = 0;
 
     // request EOS for thumbnail
     size_t i = 0;
@@ -791,6 +839,66 @@ TEST_F(VideoDecHidlTest, EOSTest) {
     framesReceived = 0;
     timestampUs = 0;
 
+    // set state to idle
+    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+    // set state to executing
+    changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
+                            kPortIndexInput, kPortIndexOutput);
+}
+
+// end of sequence test
+TEST_F(VideoDecHidlTest, SimpleEOSTest) {
+    description("Test End of stream");
+    if (disableTest) return;
+    android::hardware::media::omx::V1_0::Status status;
+    uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
+    status = setRole(omxNode, gEnv->getRole().c_str());
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    OMX_PORT_PARAM_TYPE params;
+    status = getParam(omxNode, OMX_IndexParamVideoInit, &params);
+    if (status == ::android::hardware::media::omx::V1_0::Status::OK) {
+        ASSERT_EQ(params.nPorts, 2U);
+        kPortIndexInput = params.nStartPortNumber;
+        kPortIndexOutput = kPortIndexInput + 1;
+    }
+    char mURL[512], info[512];
+    strcpy(mURL, gEnv->getRes().c_str());
+    strcpy(info, gEnv->getRes().c_str());
+    GetURLForComponent(compName, mURL, info);
+
+    std::ifstream eleStream, eleInfo;
+
+    eleInfo.open(info);
+    ASSERT_EQ(eleInfo.is_open(), true);
+    android::Vector<FrameData> Info;
+    int bytesCount = 0;
+    uint32_t flags = 0;
+    uint32_t timestamp = 0;
+    while (1) {
+        if (!(eleInfo >> bytesCount)) break;
+        eleInfo >> flags;
+        eleInfo >> timestamp;
+        Info.push_back({bytesCount, flags, timestamp});
+    }
+    eleInfo.close();
+
+    // set Port Params
+    uint32_t nFrameWidth, nFrameHeight, xFramerate;
+    OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatYUV420Planar;
+    getInputChannelInfo(omxNode, kPortIndexInput, &nFrameWidth, &nFrameHeight,
+                        &xFramerate);
+    setDefaultPortParam(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
+                        eColorFormat, nFrameWidth, nFrameHeight, 0, xFramerate);
+    omxNode->prepareForAdaptivePlayback(kPortIndexOutput, false, 1920, 1080);
+
+    android::Vector<BufferInfo> iBuffer, oBuffer;
+
+    // set state to idle
+    changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
+                            kPortIndexInput, kPortIndexOutput);
+    // set state to executing
+    changeStateIdletoExecute(omxNode, observer);
+
     // request EOS at the end
     eleStream.open(mURL, std::ifstream::binary);
     ASSERT_EQ(eleStream.is_open(), true);
@@ -815,6 +923,7 @@ TEST_F(VideoDecHidlTest, EOSTest) {
 // test input/output port flush
 TEST_F(VideoDecHidlTest, FlushTest) {
     description("Test Flush");
+    if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     status = setRole(omxNode, gEnv->getRole().c_str());
