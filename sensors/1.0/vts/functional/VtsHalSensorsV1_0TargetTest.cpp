@@ -1319,9 +1319,7 @@ void SensorsHidlTest::testDirectReportOperation(
 
   // stop sensor and unregister channel
   configDirectReport(sensor.sensorHandle, channelHandle, RateLevel::STOP,
-        [&eventToken] (auto result, auto) {
-            EXPECT_EQ(result, Result::OK);
-        });
+                     [](auto result, auto) { EXPECT_EQ(result, Result::OK); });
   EXPECT_EQ(unregisterDirectChannel(channelHandle), Result::OK);
 }
 
