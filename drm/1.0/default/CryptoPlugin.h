@@ -44,7 +44,7 @@ using ::android::sp;
 struct CryptoPlugin : public ICryptoPlugin {
     CryptoPlugin(android::CryptoPlugin *plugin) : mLegacyPlugin(plugin) {}
 
-    virtual ~CryptoPlugin() {delete mLegacyPlugin;}
+    ~CryptoPlugin() {delete mLegacyPlugin;}
 
     // Methods from ::android::hardware::drm::V1_0::ICryptoPlugin
     // follow.
