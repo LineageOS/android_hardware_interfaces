@@ -31,4 +31,12 @@ interface IRadioIndication extends @1.0::IRadioIndication{
     * @param type Type of radio indication
     */
    oneway carrierInfoForImsiEncryption(RadioIndicationType info);
+
+    /**
+     * Incremental network scan results
+     *
+     * @param type Type of radio indication
+     * @param result Network scan result as NetworkScanResult defined in types.hal
+     */
+    oneway networkScanResult(RadioIndicationType type, NetworkScanResult result);
 };

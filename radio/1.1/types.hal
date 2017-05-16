@@ -16,8 +16,149 @@
 
 package android.hardware.radio@1.1;
 
+import @1.0::CellInfo;
+import @1.0::RadioError;
+
 enum CardPowerState : int32_t {
     POWER_DOWN,
     POWER_UP,
     POWER_UP_PASS_THROUGH,
+};
+
+enum RadioAccessNetworks : int32_t {
+    GERAN = 1,                              // GSM EDGE Radio Access Network
+    UTRAN = 2,                              // Universal Terrestrial Radio Access Network
+    EUTRAN = 3,                             // Evolved Universal Terrestrial Radio Access Network
+};
+
+enum GeranBands : int32_t {
+    BAND_T380 = 1,
+    BAND_T410 = 2,
+    BAND_450 = 3,
+    BAND_480 = 4,
+    BAND_710 = 5,
+    BAND_750 = 6,
+    BAND_T810 = 7,
+    BAND_850 = 8,
+    BAND_P900 = 9,
+    BAND_E900 = 10,
+    BAND_R900 = 11,
+    BAND_DCS1800 = 12,
+    BAND_PCS1900 = 13,
+    BAND_ER900 = 14,
+};
+
+enum UtranBands : int32_t {
+    BAND_1 = 1,
+    BAND_2 = 2,
+    BAND_3 = 3,
+    BAND_4 = 4,
+    BAND_5 = 5,
+    BAND_6 = 6,
+    BAND_7 = 7,
+    BAND_8 = 8,
+    BAND_9 = 9,
+    BAND_10 = 10,
+    BAND_11 = 11,
+    BAND_12 = 12,
+    BAND_13 = 13,
+    BAND_14 = 14,
+    BAND_19 = 19,
+    BAND_20 = 20,
+    BAND_21 = 21,
+    BAND_22 = 22,
+    BAND_25 = 25,
+    BAND_26 = 26,
+};
+
+enum EutranBands : int32_t {
+    BAND_1 = 1,
+    BAND_2 = 2,
+    BAND_3 = 3,
+    BAND_4 = 4,
+    BAND_5 = 5,
+    BAND_6 = 6,
+    BAND_7 = 7,
+    BAND_8 = 8,
+    BAND_9 = 9,
+    BAND_10 = 10,
+    BAND_11 = 11,
+    BAND_12 = 12,
+    BAND_13 = 13,
+    BAND_14 = 14,
+    BAND_17 = 17,
+    BAND_18 = 18,
+    BAND_19 = 19,
+    BAND_20 = 20,
+    BAND_21 = 21,
+    BAND_22 = 22,
+    BAND_23 = 23,
+    BAND_24 = 24,
+    BAND_25 = 25,
+    BAND_26 = 26,
+    BAND_27 = 27,
+    BAND_28 = 28,
+    BAND_30 = 30,
+    BAND_31 = 31,
+    BAND_33 = 33,
+    BAND_34 = 34,
+    BAND_35 = 35,
+    BAND_36 = 36,
+    BAND_37 = 37,
+    BAND_38 = 38,
+    BAND_39 = 39,
+    BAND_40 = 40,
+    BAND_41 = 41,
+    BAND_42 = 42,
+    BAND_43 = 43,
+    BAND_44 = 44,
+    BAND_45 = 45,
+    BAND_46 = 46,
+    BAND_47 = 47,
+    BAND_48 = 48,
+    BAND_65 = 65,
+    BAND_66 = 66,
+    BAND_68 = 68,
+    BAND_70 = 70,
+};
+
+enum ScanType : int32_t {
+    ONE_SHOT = 0,                           // Performs the scan only once
+    PERIODIC = 1,                           // Performs the scan periodically until cancelled
+};
+
+enum ScanStatus : int32_t {
+    PARTIAL = 1,                            // The result contains a part of the scan results
+    COMPLETE = 2,                           // The result contains the last part of the scan results
+};
+
+struct RadioAccessSpecifier {
+    RadioAccessNetworks radioAccessNetwork; // The type of network to scan
+    vec<GeranBands> geranBands;             // Valid only if radioAccessNetwork = GERAN
+                                            // otherwise must be empty
+                                            // Maximum length of the vector is 8
+    vec<UtranBands> utranBands;             // Valid only if radioAccessNetwork = UTRAN
+                                            // otherwise must be empty
+                                            // Maximum length of the vector is 8
+    vec<EutranBands> eutranBands;           // Valid only if radioAccessNetwork = EUTRAN
+                                            // otherwise must be empty
+                                            // Maximum length of the vector is 8
+    vec<int32_t> channels;                  // The radio channels to scan as defined in
+                                            // 3GPP TS 25.101 and 36.101
+                                            // Maximum length of the vector is 32
+};
+
+struct NetworkScanRequest {
+    ScanType type;                          // One shot scan or periodic
+    int32_t interval;                       // Time interval in seconds between periodic scans, only
+                                            // valid when type = PERIODIC
+                                            // Range: 5 to 600
+    vec<RadioAccessSpecifier> specifiers;   // networks with bands/channels to scan
+                                            // Maximum length of the vector is 8
+};
+
+struct NetworkScanResult {
+    ScanStatus status;                      // The status of the scan
+    RadioError error;                       // The error code of the incremental result
+    vec<CellInfo> networkInfos;             // List of network information as CellInfo
 };
