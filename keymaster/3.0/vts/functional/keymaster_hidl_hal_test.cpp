@@ -491,9 +491,10 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     }
 
     ErrorCode DeleteKey(HidlBuf* key_blob, bool keep_key_blob = false) {
-        ErrorCode error = keymaster_->deleteKey(*key_blob);
+        auto rc = keymaster_->deleteKey(*key_blob);
         if (!keep_key_blob) *key_blob = HidlBuf();
-        return error;
+        if (!rc.isOk()) return ErrorCode::UNKNOWN_ERROR;
+        return rc;
     }
 
     ErrorCode DeleteKey(bool keep_key_blob = false) {
@@ -507,12 +508,15 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
     ErrorCode GetCharacteristics(const HidlBuf& key_blob, const HidlBuf& client_id,
                                  const HidlBuf& app_data, KeyCharacteristics* key_characteristics) {
-        ErrorCode error;
-        keymaster_->getKeyCharacteristics(
-            key_blob, client_id, app_data,
-            [&](ErrorCode hidl_error, const KeyCharacteristics& hidl_key_characteristics) {
-                error = hidl_error, *key_characteristics = hidl_key_characteristics;
-            });
+        ErrorCode error = ErrorCode::UNKNOWN_ERROR;
+        EXPECT_TRUE(
+            keymaster_
+                ->getKeyCharacteristics(
+                    key_blob, client_id, app_data,
+                    [&](ErrorCode hidl_error, const KeyCharacteristics& hidl_key_characteristics) {
+                        error = hidl_error, *key_characteristics = hidl_key_characteristics;
+                    })
+                .isOk());
         return error;
     }
 
@@ -650,12 +654,16 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                         hidl_vec<hidl_vec<uint8_t>>* cert_chain) {
         SCOPED_TRACE("AttestKey");
         ErrorCode error;
-        keymaster_->attestKey(
+        auto rc = keymaster_->attestKey(
             key_blob, attest_params.hidl_data(),
             [&](ErrorCode hidl_error, const hidl_vec<hidl_vec<uint8_t>>& hidl_cert_chain) {
                 error = hidl_error;
                 *cert_chain = hidl_cert_chain;
             });
+
+        EXPECT_TRUE(rc.isOk()) << rc.description();
+        if (!rc.isOk()) return ErrorCode::UNKNOWN_ERROR;
+
         return error;
     }
 
@@ -3839,13 +3847,11 @@ TEST_F(AttestationTest, RsaAttestation) {
                                              .Authorization(TAG_INCLUDE_UNIQUE_ID)));
 
     hidl_vec<hidl_vec<uint8_t>> cert_chain;
-    EXPECT_EQ(
-        ErrorCode::OK,
-        AttestKey(
-            AuthorizationSetBuilder()
-                .Authorization(TAG_ATTESTATION_CHALLENGE, HidlBuf("challenge"))
-                .Authorization(TAG_ATTESTATION_APPLICATION_ID, HidlBuf("foo")),
-            &cert_chain));
+    ASSERT_EQ(ErrorCode::OK,
+              AttestKey(AuthorizationSetBuilder()
+                            .Authorization(TAG_ATTESTATION_CHALLENGE, HidlBuf("challenge"))
+                            .Authorization(TAG_ATTESTATION_APPLICATION_ID, HidlBuf("foo")),
+                        &cert_chain));
     EXPECT_GE(cert_chain.size(), 2U);
     EXPECT_TRUE(verify_chain(cert_chain));
     EXPECT_TRUE(
@@ -3889,13 +3895,11 @@ TEST_F(AttestationTest, EcAttestation) {
                                              .Authorization(TAG_INCLUDE_UNIQUE_ID)));
 
     hidl_vec<hidl_vec<uint8_t>> cert_chain;
-    EXPECT_EQ(
-        ErrorCode::OK,
-        AttestKey(
-            AuthorizationSetBuilder()
-                .Authorization(TAG_ATTESTATION_CHALLENGE, HidlBuf("challenge"))
-                .Authorization(TAG_ATTESTATION_APPLICATION_ID, HidlBuf("foo")),
-            &cert_chain));
+    ASSERT_EQ(ErrorCode::OK,
+              AttestKey(AuthorizationSetBuilder()
+                            .Authorization(TAG_ATTESTATION_CHALLENGE, HidlBuf("challenge"))
+                            .Authorization(TAG_ATTESTATION_APPLICATION_ID, HidlBuf("foo")),
+                        &cert_chain));
     EXPECT_GE(cert_chain.size(), 2U);
     EXPECT_TRUE(verify_chain(cert_chain));
 
