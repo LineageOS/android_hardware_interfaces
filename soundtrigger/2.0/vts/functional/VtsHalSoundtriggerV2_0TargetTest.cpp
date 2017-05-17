@@ -89,10 +89,11 @@ class Monitor {
 class SoundTriggerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  public:
   virtual void SetUp() override {
-    mSoundTriggerHal = ::testing::VtsHalHidlTargetTestBase::getService<ISoundTriggerHw>("sound_trigger.primary");
-    ASSERT_NE(nullptr, mSoundTriggerHal.get());
-    mCallback = new SoundTriggerHwCallback(*this);
-    ASSERT_NE(nullptr, mCallback.get());
+      mSoundTriggerHal =
+          ::testing::VtsHalHidlTargetTestBase::getService<ISoundTriggerHw>();
+      ASSERT_NE(nullptr, mSoundTriggerHal.get());
+      mCallback = new SoundTriggerHwCallback(*this);
+      ASSERT_NE(nullptr, mCallback.get());
   }
 
   static void SetUpTestCase() {
