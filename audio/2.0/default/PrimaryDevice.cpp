@@ -17,6 +17,7 @@
 #define LOG_TAG "PrimaryDeviceHAL"
 
 #include "PrimaryDevice.h"
+#include "Util.h"
 
 namespace android {
 namespace hardware {
@@ -126,6 +127,10 @@ Return<void> PrimaryDevice::debugDump(const hidl_handle& fd) {
 
 // Methods from ::android::hardware::audio::V2_0::IPrimaryDevice follow.
 Return<Result> PrimaryDevice::setVoiceVolume(float volume) {
+    if (!isGainNormalized(volume)) {
+        ALOGW("Can not set a voice volume (%f) outside [0,1]", volume);
+        return Result::INVALID_ARGUMENTS;
+    }
     return mDevice->analyzeStatus(
         "set_voice_volume",
         mDevice->device()->set_voice_volume(mDevice->device(), volume));

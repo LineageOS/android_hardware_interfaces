@@ -201,25 +201,25 @@ exit:
 }
 
 Return<ProgramListResult> Tuner::startBackgroundScan() {
-    return ProgramListResult::NOT_INITIALIZED;
+    return ProgramListResult::UNAVAILABLE;
 }
 
 Return<void> Tuner::getProgramList(const hidl_string& filter __unused, getProgramList_cb _hidl_cb) {
     hidl_vec<ProgramInfo> pList;
     // TODO(b/34054813): do the actual implementation.
-    _hidl_cb(ProgramListResult::NOT_INITIALIZED, pList);
+    _hidl_cb(ProgramListResult::NOT_STARTED, pList);
     return Void();
 }
 
 Return<void> Tuner::isAnalogForced(isAnalogForced_cb _hidl_cb) {
     // TODO(b/34348946): do the actual implementation.
-    _hidl_cb(Result::NOT_INITIALIZED, false);
+    _hidl_cb(Result::INVALID_STATE, false);
     return Void();
 }
 
 Return<Result> Tuner::setAnalogForced(bool isForced __unused) {
     // TODO(b/34348946): do the actual implementation.
-    return Result::NOT_INITIALIZED;
+    return Result::INVALID_STATE;
 }
 
 } // namespace implementation

@@ -65,6 +65,7 @@ interface ITuner extends @1.0::ITuner {
      *               Client application MUST verify vendor/product name
      *               before setting this parameter to anything else.
      * @return result OK if the list was successfully retrieved.
+     *                INVALID_ARGUMENTS if invalid arguments are passed
      *                NOT_READY if the scan is in progress.
      *                NOT_STARTED if the scan has not been started, client may
      *                call startBackgroundScan to fix this.
