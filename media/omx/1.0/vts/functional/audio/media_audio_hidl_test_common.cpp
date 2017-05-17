@@ -235,6 +235,26 @@ size_t getEmptyBufferID(android::Vector<BufferInfo>* buffArray) {
     return buffArray->size();
 }
 
+// dispatch buffer to output port
+void dispatchOutputBuffer(sp<IOmxNode> omxNode,
+                          android::Vector<BufferInfo>* buffArray,
+                          size_t bufferIndex) {
+    android::hardware::media::omx::V1_0::Status status;
+    CodecBuffer t;
+    t.sharedMemory = android::hardware::hidl_memory();
+    t.nativeHandle = android::hardware::hidl_handle();
+    t.type = CodecBuffer::Type::PRESET;
+    t.attr.preset.rangeOffset = 0;
+    t.attr.preset.rangeLength = 0;
+    native_handle_t* fenceNh = native_handle_create(0, 0);
+    ASSERT_NE(fenceNh, nullptr);
+    status = omxNode->fillBuffer((*buffArray)[bufferIndex].id, t, fenceNh);
+    native_handle_close(fenceNh);
+    native_handle_delete(fenceNh);
+    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
+    buffArray->editItemAt(bufferIndex).owner = component;
+}
+
 // dispatch buffer to input port
 void dispatchInputBuffer(sp<IOmxNode> omxNode,
                          android::Vector<BufferInfo>* buffArray,
@@ -257,31 +277,11 @@ void dispatchInputBuffer(sp<IOmxNode> omxNode,
     buffArray->editItemAt(bufferIndex).owner = component;
 }
 
-// dispatch buffer to output port
-void dispatchOutputBuffer(sp<IOmxNode> omxNode,
-                          android::Vector<BufferInfo>* buffArray,
-                          size_t bufferIndex) {
-    android::hardware::media::omx::V1_0::Status status;
-    CodecBuffer t;
-    t.sharedMemory = android::hardware::hidl_memory();
-    t.nativeHandle = android::hardware::hidl_handle();
-    t.type = CodecBuffer::Type::PRESET;
-    t.attr.preset.rangeOffset = 0;
-    t.attr.preset.rangeLength = 0;
-    native_handle_t* fenceNh = native_handle_create(0, 0);
-    ASSERT_NE(fenceNh, nullptr);
-    status = omxNode->fillBuffer((*buffArray)[bufferIndex].id, t, fenceNh);
-    native_handle_close(fenceNh);
-    native_handle_delete(fenceNh);
-    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    buffArray->editItemAt(bufferIndex).owner = component;
-}
-
 // Flush input and output ports
 void flushPorts(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                 android::Vector<BufferInfo>* iBuffer,
                 android::Vector<BufferInfo>* oBuffer, OMX_U32 kPortIndexInput,
-                OMX_U32 kPortIndexOutput) {
+                OMX_U32 kPortIndexOutput, int64_t timeoutUs) {
     android::hardware::media::omx::V1_0::Status status;
     Message msg;
 
@@ -289,7 +289,7 @@ void flushPorts(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
     status = omxNode->sendCommand(toRawCommandType(OMX_CommandFlush),
                                   kPortIndexInput);
     ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
+    status = observer->dequeueMessage(&msg, timeoutUs, iBuffer, oBuffer);
     ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
     ASSERT_EQ(msg.type, Message::Type::EVENT);
     ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
@@ -304,7 +304,7 @@ void flushPorts(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
     status = omxNode->sendCommand(toRawCommandType(OMX_CommandFlush),
                                   kPortIndexOutput);
     ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
+    status = observer->dequeueMessage(&msg, timeoutUs, iBuffer, oBuffer);
     ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
     ASSERT_EQ(msg.type, Message::Type::EVENT);
     ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
@@ -317,10 +317,10 @@ void flushPorts(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
 }
 
 Return<android::hardware::media::omx::V1_0::Status> setAudioPortFormat(
-    sp<IOmxNode> omxNode, OMX_U32 portIndex, OMX_AUDIO_CODINGTYPE encoding) {
+    sp<IOmxNode> omxNode, OMX_U32 portIndex, OMX_AUDIO_CODINGTYPE eEncoding) {
     OMX_U32 index = 0;
     OMX_AUDIO_PARAM_PORTFORMATTYPE portFormat;
-    std::vector<OMX_AUDIO_CODINGTYPE> eEncoding;
+    std::vector<OMX_AUDIO_CODINGTYPE> arrEncoding;
     android::hardware::media::omx::V1_0::Status status;
 
     while (1) {
@@ -328,24 +328,26 @@ Return<android::hardware::media::omx::V1_0::Status> setAudioPortFormat(
         status = getPortParam(omxNode, OMX_IndexParamAudioPortFormat, portIndex,
                               &portFormat);
         if (status != ::android::hardware::media::omx::V1_0::Status::OK) break;
-        eEncoding.push_back(portFormat.eEncoding);
+        arrEncoding.push_back(portFormat.eEncoding);
         index++;
         if (index == 512) {
+            // enumerated way too many formats, highly unusual for this to
+            // happen.
             EXPECT_LE(index, 512U)
                 << "Expecting OMX_ErrorNoMore but not received";
             break;
         }
     }
     if (!index) return status;
-    for (index = 0; index < eEncoding.size(); index++) {
-        if (eEncoding[index] == encoding) {
-            portFormat.eEncoding = eEncoding[index];
+    for (index = 0; index < arrEncoding.size(); index++) {
+        if (arrEncoding[index] == eEncoding) {
+            portFormat.eEncoding = arrEncoding[index];
             break;
         }
     }
-    if (index == eEncoding.size()) {
-        ALOGI("setting default Port format");
-        portFormat.eEncoding = eEncoding[0];
+    if (index == arrEncoding.size()) {
+        ALOGE("setting default Port format %x", (int)arrEncoding[0]);
+        portFormat.eEncoding = arrEncoding[0];
     }
     // In setParam call nIndex shall be ignored as per omx-il specification.
     // see how this holds up by corrupting nIndex
@@ -362,9 +364,31 @@ Return<android::hardware::media::omx::V1_0::Status> setRole(
     return setParam(omxNode, OMX_IndexParamStandardComponentRole, &params);
 }
 
+void enumerateProfile(sp<IOmxNode> omxNode, OMX_U32 portIndex,
+                      std::vector<int32_t>* arrProfile) {
+    android::hardware::media::omx::V1_0::Status status;
+    OMX_AUDIO_PARAM_ANDROID_PROFILETYPE param;
+    param.nProfileIndex = 0;
+    arrProfile->clear();
+    while (1) {
+        status = getPortParam(
+            omxNode, (OMX_INDEXTYPE)OMX_IndexParamAudioProfileQuerySupported,
+            portIndex, &param);
+        if (status != ::android::hardware::media::omx::V1_0::Status::OK) break;
+        arrProfile->push_back(static_cast<int32_t>(param.eProfile));
+        param.nProfileIndex++;
+        if (param.nProfileIndex == 512) {
+            // enumerated way too many, highly unusual for this to happen.
+            EXPECT_LE(param.nProfileIndex, 512U)
+                << "Expecting OMX_ErrorNoMore but not received";
+            break;
+        }
+    }
+}
+
 void setupPCMPort(sp<IOmxNode> omxNode, OMX_U32 portIndex, int32_t nChannels,
                   OMX_NUMERICALDATATYPE eNumData, int32_t nBitPerSample,
-                  int32_t nSamplingRate) {
+                  int32_t nSamplingRate, OMX_AUDIO_PCMMODETYPE ePCMMode) {
     OMX_AUDIO_PARAM_PCMMODETYPE param;
     android::hardware::media::omx::V1_0::Status status;
     status = getPortParam(omxNode, OMX_IndexParamAudioPcm, portIndex, &param);
@@ -375,7 +399,7 @@ void setupPCMPort(sp<IOmxNode> omxNode, OMX_U32 portIndex, int32_t nChannels,
     param.bInterleaved = OMX_TRUE;
     param.nBitPerSample = nBitPerSample;
     param.nSamplingRate = nSamplingRate;
-    param.ePCMMode = OMX_AUDIO_PCMModeLinear;
+    param.ePCMMode = ePCMMode;
     switch (nChannels) {
         case 1:
             param.eChannelMapping[0] = OMX_AUDIO_ChannelCF;

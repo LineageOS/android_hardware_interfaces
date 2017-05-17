@@ -461,10 +461,6 @@ Return<void> CameraProvider::getCameraDeviceInterface_V3_x(
         return Void();
     }
 
-    // TODO: we also need to keep a wp list of all generated devices to notify
-    //       devices of device present status change, but then each device might
-    //       need a sp<provider> to keep provider alive until all device closed?
-    //       Problem: do we have external camera products to test this?
     sp<android::hardware::camera::device::V3_2::implementation::CameraDevice> device =
             new android::hardware::camera::device::V3_2::implementation::CameraDevice(
                     mModule, cameraId, mCameraDeviceNames);

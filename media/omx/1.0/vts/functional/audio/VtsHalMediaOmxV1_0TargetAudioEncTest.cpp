@@ -51,7 +51,7 @@ class ComponentTestEnvironment : public ::testing::Environment {
     virtual void SetUp() {}
     virtual void TearDown() {}
 
-    ComponentTestEnvironment() : instance("default") {}
+    ComponentTestEnvironment() : instance("default"), res("/sdcard/media/") {}
 
     void setInstance(const char* _instance) { instance = _instance; }
 
@@ -59,7 +59,7 @@ class ComponentTestEnvironment : public ::testing::Environment {
 
     void setRole(const char* _role) { role = _role; }
 
-    void setQuirks(int _quirks) { quirks = _quirks; }
+    void setRes(const char* _res) { res = _res; }
 
     const hidl_string getInstance() const { return instance; }
 
@@ -67,19 +67,19 @@ class ComponentTestEnvironment : public ::testing::Environment {
 
     const hidl_string getRole() const { return role; }
 
-    int getQuirks() const { return quirks; }
+    const hidl_string getRes() const { return res; }
 
     int initFromOptions(int argc, char** argv) {
         static struct option options[] = {
             {"instance", required_argument, 0, 'I'},
             {"component", required_argument, 0, 'C'},
             {"role", required_argument, 0, 'R'},
-            {"quirks", required_argument, 0, 'Q'},
+            {"res", required_argument, 0, 'P'},
             {0, 0, 0, 0}};
 
         while (true) {
             int index = 0;
-            int c = getopt_long(argc, argv, "I:C:Q:R:", options, &index);
+            int c = getopt_long(argc, argv, "I:C:R:P:", options, &index);
             if (c == -1) {
                 break;
             }
@@ -91,11 +91,11 @@ class ComponentTestEnvironment : public ::testing::Environment {
                 case 'C':
                     setComponent(optarg);
                     break;
-                case 'Q':
-                    setQuirks(atoi(optarg));
-                    break;
                 case 'R':
                     setRole(optarg);
+                    break;
+                case 'P':
+                    setRes(optarg);
                     break;
                 case '?':
                     break;
@@ -109,8 +109,8 @@ class ComponentTestEnvironment : public ::testing::Environment {
                     "test options are:\n\n"
                     "-I, --instance: HAL instance to test\n"
                     "-C, --component: OMX component to test\n"
-                    "-R, --Role: OMX component Role\n"
-                    "-Q, --quirks: Component quirks\n",
+                    "-R, --role: OMX component Role\n"
+                    "-P, --res: Resource files directory location\n",
                     argv[optind ?: 1], argv[0]);
             return 2;
         }
@@ -121,23 +121,24 @@ class ComponentTestEnvironment : public ::testing::Environment {
     hidl_string instance;
     hidl_string component;
     hidl_string role;
-    // to be removed when IOmxNode::setQuirks is removed
-    int quirks;
+    hidl_string res;
 };
 
 static ComponentTestEnvironment* gEnv = nullptr;
 
+// audio encoder test fixture class
 class AudioEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    public:
     virtual void SetUp() override {
+        disableTest = false;
         android::hardware::media::omx::V1_0::Status status;
         omx = ::testing::VtsHalHidlTargetTestBase::getService<IOmx>(
             gEnv->getInstance());
         ASSERT_NE(omx, nullptr);
-        observer = new CodecObserver();
+        observer = new CodecObserver([](Message msg) { (void)msg; });
         ASSERT_NE(observer, nullptr);
-        ASSERT_EQ(strncmp(gEnv->getComponent().c_str(), "OMX.", 4), 0)
-            << "Invalid Component Name";
+        if (strncmp(gEnv->getComponent().c_str(), "OMX.", 4) != 0)
+            disableTest = true;
         EXPECT_TRUE(omx->allocateNode(
                            gEnv->getComponent(), observer,
                            [&](android::hardware::media::omx::V1_0::Status _s,
@@ -169,7 +170,7 @@ class AudioEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                 break;
             }
         }
-        ASSERT_NE(compName, unknown_comp);
+        if (compName == unknown_comp) disableTest = true;
         struct CompToCoding {
             standardComp CompName;
             OMX_AUDIO_CODINGTYPE eEncoding;
@@ -189,7 +190,8 @@ class AudioEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                 break;
             }
         }
-        ASSERT_NE(i, kNumCompToCoding);
+        if (i == kNumCompToCoding) disableTest = true;
+        if (disableTest) std::cerr << "[          ] Warning !  Test Disabled\n";
     }
 
     virtual void TearDown() override {
@@ -212,6 +214,7 @@ class AudioEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     sp<IOmxNode> omxNode;
     standardComp compName;
     OMX_AUDIO_CODINGTYPE eEncoding;
+    bool disableTest;
 
    protected:
     static void description(const std::string& description) {
@@ -237,6 +240,14 @@ void setDefaultPortParam(sp<IOmxNode> omxNode, OMX_U32 portIndex,
                           &portDef);
     EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 
+    std::vector<int32_t> arrProfile;
+    int32_t profile;
+    if ((int)eEncoding == OMX_AUDIO_CodingAAC) {
+        enumerateProfile(omxNode, portIndex, &arrProfile);
+        if (arrProfile.empty() == true) ASSERT_TRUE(false);
+        profile = arrProfile[0];
+    }
+
     switch ((int)eEncoding) {
         case OMX_AUDIO_CodingFLAC:
             setupFLACPort(omxNode, portIndex, nChannels, nSampleRate,
@@ -247,7 +258,8 @@ void setDefaultPortParam(sp<IOmxNode> omxNode, OMX_U32 portIndex,
                          (comp == AudioEncHidlTest::standardComp::amrwb));
             break;
         case OMX_AUDIO_CodingAAC:
-            setupAACPort(omxNode, portIndex, OMX_AUDIO_AACObjectNull,
+            setupAACPort(omxNode, portIndex,
+                         static_cast<OMX_AUDIO_AACPROFILETYPE>(profile),
                          OMX_AUDIO_AACStreamFormatMP4FF, nChannels, nBitRate,
                          nSampleRate);
             break;
@@ -257,27 +269,21 @@ void setDefaultPortParam(sp<IOmxNode> omxNode, OMX_U32 portIndex,
 }
 
 // LookUpTable of clips and metadata for component testing
-void GetURLForComponent(AudioEncHidlTest::standardComp comp,
-                        const char** mURL) {
+void GetURLForComponent(AudioEncHidlTest::standardComp comp, char* mURL) {
     struct CompToURL {
         AudioEncHidlTest::standardComp comp;
         const char* mURL;
     };
     static const CompToURL kCompToURL[] = {
-        {AudioEncHidlTest::standardComp::aac,
-         "/sdcard/media/bbb_raw_2ch_48khz_s16le.raw"},
-        {AudioEncHidlTest::standardComp::amrnb,
-         "/sdcard/media/bbb_raw_1ch_8khz_s16le.raw"},
-        {AudioEncHidlTest::standardComp::amrwb,
-         "/sdcard/media/bbb_raw_1ch_16khz_s16le.raw"},
-        {AudioEncHidlTest::standardComp::flac,
-         "/sdcard/media/bbb_raw_2ch_48khz_s16le.raw"},
+        {AudioEncHidlTest::standardComp::aac, "bbb_raw_2ch_48khz_s16le.raw"},
+        {AudioEncHidlTest::standardComp::amrnb, "bbb_raw_1ch_8khz_s16le.raw"},
+        {AudioEncHidlTest::standardComp::amrwb, "bbb_raw_1ch_16khz_s16le.raw"},
+        {AudioEncHidlTest::standardComp::flac, "bbb_raw_2ch_48khz_s16le.raw"},
     };
 
-    *mURL = nullptr;
     for (size_t i = 0; i < sizeof(kCompToURL) / sizeof(kCompToURL[0]); ++i) {
         if (kCompToURL[i].comp == comp) {
-            *mURL = kCompToURL[i].mURL;
+            strcat(mURL, kCompToURL[i].mURL);
             return;
         }
     }
@@ -343,15 +349,19 @@ void encodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
     }
 }
 
+// set component role
 TEST_F(AudioEncHidlTest, SetRole) {
     description("Test Set Component Role");
+    if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     status = setRole(omxNode, gEnv->getRole().c_str());
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 }
 
+// port format enumeration
 TEST_F(AudioEncHidlTest, EnumeratePortFormat) {
     description("Test Component on Mandatory Port Parameters (Port Format)");
+    if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     status = setRole(omxNode, gEnv->getRole().c_str());
@@ -369,8 +379,10 @@ TEST_F(AudioEncHidlTest, EnumeratePortFormat) {
     EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 }
 
+// test raw stream encode
 TEST_F(AudioEncHidlTest, EncodeTest) {
     description("Tests Encode");
+    if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     status = setRole(omxNode, gEnv->getRole().c_str());
@@ -382,9 +394,9 @@ TEST_F(AudioEncHidlTest, EncodeTest) {
         kPortIndexInput = params.nStartPortNumber;
         kPortIndexOutput = kPortIndexInput + 1;
     }
-    const char* mURL = nullptr;
-    GetURLForComponent(compName, &mURL);
-    EXPECT_NE(mURL, nullptr);
+    char mURL[512];
+    strcpy(mURL, gEnv->getRes().c_str());
+    GetURLForComponent(compName, mURL);
 
     std::ifstream eleStream;
     eleStream.open(mURL, std::ifstream::binary);
@@ -424,7 +436,7 @@ TEST_F(AudioEncHidlTest, EncodeTest) {
             ASSERT_TRUE(false);
     }
     setupPCMPort(omxNode, kPortIndexInput, nChannels, OMX_NumericalDataSigned,
-                 16, nSampleRate);
+                 16, nSampleRate, OMX_AUDIO_PCMModeLinear);
     // Configure output port
     setDefaultPortParam(omxNode, kPortIndexOutput, eEncoding, compName,
                         nChannels, nSampleRate, nBitRate);

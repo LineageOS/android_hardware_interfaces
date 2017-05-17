@@ -123,6 +123,9 @@ LOCAL_SRC_FILES:= \
     tests/VehicleObjectPool_test.cpp \
     tests/VehiclePropConfigIndex_test.cpp \
 
+LOCAL_HEADER_LIBRARIES := \
+    libbase_headers
+
 LOCAL_SHARED_LIBRARIES := \
     libhidlbase \
     libhidltransport \

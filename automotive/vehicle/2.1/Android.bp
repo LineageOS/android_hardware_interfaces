@@ -11,7 +11,7 @@ filegroup {
 genrule {
     name: "android.hardware.automotive.vehicle@2.1_genc++",
     tools: ["hidl-gen"],
-    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.automotive.vehicle@2.1",
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-sources -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.automotive.vehicle@2.1",
     srcs: [
         ":android.hardware.automotive.vehicle@2.1_hal",
     ],
@@ -24,7 +24,7 @@ genrule {
 genrule {
     name: "android.hardware.automotive.vehicle@2.1_genc++_headers",
     tools: ["hidl-gen"],
-    cmd: "$(location hidl-gen) -o $(genDir) -Lc++ -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.automotive.vehicle@2.1",
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-headers -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.automotive.vehicle@2.1",
     srcs: [
         ":android.hardware.automotive.vehicle@2.1_hal",
     ],
@@ -53,7 +53,6 @@ cc_library_shared {
         "libutils",
         "libcutils",
         "android.hardware.automotive.vehicle@2.0",
-        "android.hidl.base@1.0",
     ],
     export_shared_lib_headers: [
         "libhidlbase",
@@ -61,6 +60,5 @@ cc_library_shared {
         "libhwbinder",
         "libutils",
         "android.hardware.automotive.vehicle@2.0",
-        "android.hidl.base@1.0",
     ],
 }

@@ -48,29 +48,32 @@ void changeStateExecutetoIdle(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
 
 size_t getEmptyBufferID(android::Vector<BufferInfo>* buffArray);
 
+void dispatchOutputBuffer(sp<IOmxNode> omxNode,
+                          android::Vector<BufferInfo>* buffArray,
+                          size_t bufferIndex);
+
 void dispatchInputBuffer(sp<IOmxNode> omxNode,
                          android::Vector<BufferInfo>* buffArray,
                          size_t bufferIndex, int bytesCount, uint32_t flags,
                          uint64_t timestamp);
 
-void dispatchOutputBuffer(sp<IOmxNode> omxNode,
-                          android::Vector<BufferInfo>* buffArray,
-                          size_t bufferIndex);
-
 void flushPorts(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                 android::Vector<BufferInfo>* iBuffer,
                 android::Vector<BufferInfo>* oBuffer, OMX_U32 kPortIndexInput,
-                OMX_U32 kPortIndexOutput);
+                OMX_U32 kPortIndexOutput, int64_t timeoutUs = DEFAULT_TIMEOUT);
 
 Return<android::hardware::media::omx::V1_0::Status> setAudioPortFormat(
-    sp<IOmxNode> omxNode, OMX_U32 portIndex, OMX_AUDIO_CODINGTYPE encoding);
+    sp<IOmxNode> omxNode, OMX_U32 portIndex, OMX_AUDIO_CODINGTYPE eEncoding);
 
 Return<android::hardware::media::omx::V1_0::Status> setRole(
     sp<IOmxNode> omxNode, const char* role);
 
+void enumerateProfile(sp<IOmxNode> omxNode, OMX_U32 portIndex,
+                      std::vector<int32_t>* arrProfile);
+
 void setupPCMPort(sp<IOmxNode> omxNode, OMX_U32 portIndex, int32_t nChannels,
                   OMX_NUMERICALDATATYPE eNumData, int32_t nBitPerSample,
-                  int32_t nSamplingRate);
+                  int32_t nSamplingRate, OMX_AUDIO_PCMMODETYPE ePCMMode);
 
 void setupMP3Port(sp<IOmxNode> omxNode, OMX_U32 portIndex,
                   OMX_AUDIO_MP3STREAMFORMATTYPE eFormat, int32_t nChannels,

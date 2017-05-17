@@ -59,7 +59,7 @@ void dispatchInputBuffer(sp<IOmxNode> omxNode,
 void flushPorts(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                 android::Vector<BufferInfo>* iBuffer,
                 android::Vector<BufferInfo>* oBuffer, OMX_U32 kPortIndexInput,
-                OMX_U32 kPortIndexOutput);
+                OMX_U32 kPortIndexOutput, int64_t timeoutUs = DEFAULT_TIMEOUT);
 
 Return<android::hardware::media::omx::V1_0::Status> setVideoPortFormat(
     sp<IOmxNode> omxNode, OMX_U32 portIndex,
@@ -68,6 +68,10 @@ Return<android::hardware::media::omx::V1_0::Status> setVideoPortFormat(
 
 Return<android::hardware::media::omx::V1_0::Status> setRole(
     sp<IOmxNode> omxNode, const char* role);
+
+void enumerateProfileAndLevel(sp<IOmxNode> omxNode, OMX_U32 portIndex,
+                              std::vector<int32_t>* arrProfile,
+                              std::vector<int32_t>* arrLevel);
 
 void setupRAWPort(sp<IOmxNode> omxNode, OMX_U32 portIndex, OMX_U32 nFrameWidth,
                   OMX_U32 nFrameHeight, OMX_U32 nBitrate, OMX_U32 xFramerate,
@@ -80,5 +84,23 @@ void setupAVCPort(sp<IOmxNode> omxNode, OMX_U32 portIndex,
 void setupHEVCPort(sp<IOmxNode> omxNode, OMX_U32 portIndex,
                    OMX_VIDEO_HEVCPROFILETYPE eProfile,
                    OMX_VIDEO_HEVCLEVELTYPE eLevel);
+
+void setupMPEG4Port(sp<IOmxNode> omxNode, OMX_U32 portIndex,
+                    OMX_VIDEO_MPEG4PROFILETYPE eProfile,
+                    OMX_VIDEO_MPEG4LEVELTYPE eLevel, OMX_U32 xFramerate);
+
+void setupH263Port(sp<IOmxNode> omxNode, OMX_U32 portIndex,
+                   OMX_VIDEO_H263PROFILETYPE eProfile,
+                   OMX_VIDEO_H263LEVELTYPE eLevel, OMX_U32 xFramerate);
+
+void setupVPXPort(sp<IOmxNode> omxNode, OMX_U32 portIndex, OMX_U32 xFramerate);
+
+void setupVP8Port(sp<IOmxNode> omxNode, OMX_U32 portIndex,
+                  OMX_VIDEO_VP8PROFILETYPE eProfile,
+                  OMX_VIDEO_VP8LEVELTYPE eLevel);
+
+void setupVP9Port(sp<IOmxNode> omxNode, OMX_U32 portIndex,
+                  OMX_VIDEO_VP9PROFILETYPE eProfile,
+                  OMX_VIDEO_VP9LEVELTYPE eLevel);
 
 #endif  // MEDIA_VIDEO_HIDL_TEST_COMMON_H

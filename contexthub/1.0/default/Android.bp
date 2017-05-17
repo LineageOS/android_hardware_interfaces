@@ -32,3 +32,23 @@ cc_library_shared {
         "android.hardware.contexthub@1.0",
     ],
 }
+
+cc_binary {
+    name: "android.hardware.contexthub@1.0-service",
+    relative_install_path: "hw",
+    proprietary: true,
+    init_rc: ["android.hardware.contexthub@1.0-service.rc"],
+    srcs: ["service.cpp"],
+
+    shared_libs: [
+        "libbase",
+        "libcutils",
+        "libdl",
+        "libhardware",
+        "libhidlbase",
+        "libhidltransport",
+        "liblog",
+        "libutils",
+        "android.hardware.contexthub@1.0",
+    ],
+}

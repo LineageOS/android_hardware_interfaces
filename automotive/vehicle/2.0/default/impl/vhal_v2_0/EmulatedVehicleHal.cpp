@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #define LOG_TAG "DefaultVehicleHal_v2_0"
+
 #include <android/log.h>
+#include <android-base/macros.h>
 
 #include "EmulatedVehicleHal.h"
 

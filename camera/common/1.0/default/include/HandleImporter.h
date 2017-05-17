@@ -17,9 +17,9 @@
 #ifndef CAMERA_COMMON_1_0_HANDLEIMPORTED_H
 #define CAMERA_COMMON_1_0_HANDLEIMPORTED_H
 
-#include <system/window.h>
 #include <utils/Mutex.h>
 #include <android/hardware/graphics/mapper/2.0/IMapper.h>
+#include <cutils/native_handle.h>
 
 using android::hardware::graphics::mapper::V2_0::IMapper;
 

@@ -17,6 +17,10 @@
 #ifndef MEDIA_HIDL_TEST_COMMON_H
 #define MEDIA_HIDL_TEST_COMMON_H
 
+#ifdef __LP64__
+#define OMX_ANDROID_COMPILE_AS_32BIT_ON_64BIT_PLATFORMS
+#endif
+
 #include <media/stagefright/foundation/ALooper.h>
 #include <utils/Condition.h>
 #include <utils/List.h>
@@ -71,8 +75,15 @@ struct BufferInfo {
     ::android::sp<IMemory> mMemory;
 };
 
+struct FrameData {
+    int bytesCount;
+    uint32_t flags;
+    uint32_t timestamp;
+};
+
 struct CodecObserver : public IOmxObserver {
    public:
+    CodecObserver(std::function<void(Message)> fn) : callBack(fn) {}
     Return<void> onMessages(const hidl_vec<Message>& messages) override {
         android::Mutex::Autolock autoLock(msgLock);
         for (hidl_vec<Message>::const_iterator it = messages.begin();
@@ -103,6 +114,7 @@ struct CodecObserver : public IOmxObserver {
                         for (i = 0; i < oBuffers->size(); ++i) {
                             if ((*oBuffers)[i].id ==
                                 it->data.bufferData.buffer) {
+                                if (callBack) callBack(*it);
                                 oBuffers->editItemAt(i).owner = client;
                                 msgQueue.erase(it);
                                 break;
@@ -127,12 +139,14 @@ struct CodecObserver : public IOmxObserver {
                 }
                 ++it;
             }
+            if (finishBy - android::ALooper::GetNowUs() < 0)
+                return toStatus(android::TIMED_OUT);
             android::status_t err =
                 (timeoutUs < 0)
                     ? msgCondition.wait(msgLock)
                     : msgCondition.waitRelative(
                           msgLock,
-                          (finishBy - android::ALooper::GetNowUs()) * 1000);
+                          (finishBy - android::ALooper::GetNowUs()) * 1000ll);
             if (err == android::TIMED_OUT) return toStatus(err);
         }
     }
@@ -140,6 +154,7 @@ struct CodecObserver : public IOmxObserver {
     android::List<Message> msgQueue;
     android::Mutex msgLock;
     android::Condition msgCondition;
+    std::function<void(Message)> callBack;
 };
 
 /*
@@ -202,6 +217,32 @@ Return<android::hardware::media::omx::V1_0::Status> setPortParam(
     params->nPortIndex = nPortIndex;
     return omxNode->setParameter(toRawIndexType(omxIdx),
                                  inHidlBytes(params, sizeof(*params)));
+}
+
+template <class T>
+Return<android::hardware::media::omx::V1_0::Status> getPortConfig(
+    sp<IOmxNode> omxNode, OMX_INDEXTYPE omxIdx, OMX_U32 nPortIndex, T* params) {
+    android::hardware::media::omx::V1_0::Status status;
+    InitOMXParams(params);
+    params->nPortIndex = nPortIndex;
+    omxNode->getConfig(
+        toRawIndexType(omxIdx), inHidlBytes(params, sizeof(*params)),
+        [&status, &params](android::hardware::media::omx::V1_0::Status _s,
+                           hidl_vec<uint8_t> const& outParams) {
+            status = _s;
+            std::copy(outParams.data(), outParams.data() + outParams.size(),
+                      static_cast<uint8_t*>(static_cast<void*>(params)));
+        });
+    return status;
+}
+
+template <class T>
+Return<android::hardware::media::omx::V1_0::Status> setPortConfig(
+    sp<IOmxNode> omxNode, OMX_INDEXTYPE omxIdx, OMX_U32 nPortIndex, T* params) {
+    InitOMXParams(params);
+    params->nPortIndex = nPortIndex;
+    return omxNode->setConfig(toRawIndexType(omxIdx),
+                              inHidlBytes(params, sizeof(*params)));
 }
 
 #endif  // MEDIA_HIDL_TEST_COMMON_H

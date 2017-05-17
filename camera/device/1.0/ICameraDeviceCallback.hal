@@ -33,8 +33,6 @@ interface ICameraDeviceCallback {
      * Define a memory buffer from the provided handle and size, and return a
      * unique identifier for the HAL to use to reference it with.
      *
-     * TODO(b/33269977): Ensure this aligns with design and performance goals.
-     *
      * @param descriptor A native handle that must have exactly one file
      *     descriptor in it; the file descriptor must be memory mappable to
      *     bufferSize * bufferCount bytes.

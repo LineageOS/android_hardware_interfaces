@@ -19,6 +19,7 @@
 
 #include <unordered_map>
 
+#include <android-base/macros.h>
 #include <android/hardware/contexthub/1.0/IContexthub.h>
 #include <hardware/context_hub.h>
 

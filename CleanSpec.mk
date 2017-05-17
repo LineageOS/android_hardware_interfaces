@@ -52,3 +52,6 @@ $(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/bin/hw/android.hardware.blue
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/lib/hw/android.hardware.bluetooth*)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/lib64/hw/android.hardware.bluetooth*)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/etc/init/android.hardware.bluetooth*)
+$(call add-clean-step, rm -rf $(OUT)/soong/.intermediates/)
+$(call add-clean-step, rm -rf $(OUT_DIR)/soong/.intermediates/hardware/interfaces/)
+$(call add-clean-step, rm -rf $(OUT_DIR)/soong/.intermediates/hardware/interfaces/)

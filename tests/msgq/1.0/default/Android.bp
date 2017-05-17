@@ -31,7 +31,6 @@ cc_library_shared {
         "liblog",
         "libutils",
         "android.hardware.tests.msgq@1.0",
-        "android.hidl.base@1.0",
     ],
 }
 

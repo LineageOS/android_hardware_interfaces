@@ -25,14 +25,11 @@
 
 #include <utils/SystemClock.h>
 
-#include "VehicleHalProto.pb.h"
-
 #include <vhal_v2_0/RecurrentTimer.h>
 #include <vhal_v2_0/VehicleHal.h>
 #include "vhal_v2_0/VehiclePropertyStore.h"
 
 #include "DefaultConfig.h"
-#include "VehicleHalProto.pb.h"
 #include "VehicleEmulator.h"
 #include "FakeValueGenerator.h"
 

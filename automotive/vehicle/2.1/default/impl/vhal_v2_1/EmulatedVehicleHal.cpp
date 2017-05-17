@@ -23,7 +23,6 @@
 #include <algorithm>
 
 #include "EmulatedVehicleHal.h"
-#include "VehicleHalProto.pb.h"
 
 #define DEBUG_SOCKET    (33452)
 

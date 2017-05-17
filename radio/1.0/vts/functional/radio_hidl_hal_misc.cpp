@@ -556,7 +556,7 @@ TEST_F(RadioHidlTest, nvWriteCdmaPrl) {
 TEST_F(RadioHidlTest, nvResetConfig) {
   int serial = 1;
 
-  radio->nvResetConfig(++serial, ResetNvType::RELOAD);
+  radio->nvResetConfig(++serial, ResetNvType::ERASE);
   EXPECT_EQ(std::cv_status::no_timeout, wait());
   EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
   EXPECT_EQ(serial, radioRsp->rspInfo.serial);
@@ -733,6 +733,8 @@ TEST_F(RadioHidlTest, getModemActivityInfo) {
 TEST_F(RadioHidlTest, setAllowedCarriers) {
   int serial = 1;
   CarrierRestrictions carriers;
+
+  /* Carrier restriction with one carrier */
   memset(&carriers, 0, sizeof(carriers));
   carriers.allowedCarriers.resize(1);
   carriers.excludedCarriers.resize(0);
@@ -748,6 +750,20 @@ TEST_F(RadioHidlTest, setAllowedCarriers) {
 
   if (cardStatus.cardState == CardState::ABSENT) {
     ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE);
+  }
+
+  /* Reset back to no carrier restriction */
+  memset(&carriers, 0, sizeof(carriers));
+  carriers.allowedCarriers.resize(0);
+  carriers.excludedCarriers.resize(0);
+
+  radio->setAllowedCarriers(++serial, true, carriers);
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
+  EXPECT_EQ(serial, radioRsp->rspInfo.serial);
+
+  if (cardStatus.cardState == CardState::ABSENT) {
+      ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE);
   }
 }
 

@@ -56,7 +56,7 @@ using ::android::hardware::hidl_string;
 using ::android::sp;
 
 struct Device : public IDevice, public ParametersUtil {
-    explicit Device(audio_hw_device_t* device);
+    Device(audio_hw_device_t* device, const char* type);
 
     // Methods from ::android::hardware::audio::V2_0::IDevice follow.
     Return<Result> initCheck()  override;
@@ -101,17 +101,18 @@ struct Device : public IDevice, public ParametersUtil {
     void closeInputStream(audio_stream_in_t* stream);
     void closeOutputStream(audio_stream_out_t* stream);
     audio_hw_device_t* device() const { return mDevice; }
+    const char* type() const { return mType; }
+    uint32_t version() const { return mDevice->common.version; }
 
-  private:
+   private:
     audio_hw_device_t *mDevice;
+    const char* mType;
 
     virtual ~Device();
 
     // Methods from ParametersUtil.
     char* halGetParameters(const char* keys) override;
     int halSetParameters(const char* keysAndValues) override;
-
-    uint32_t version() const { return mDevice->common.version; }
 };
 
 }  // namespace implementation

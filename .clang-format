@@ -14,15 +14,11 @@
 # limitations under the License.
 #
 
-#
-# Below are some minor deviations from the default Google style to
-# accommodate for handling of the large legacy code base.
-#
-
 BasedOnStyle: Google
 CommentPragmas: NOLINT:.*
 DerivePointerAlignment: false
 AllowShortFunctionsOnASingleLine: Inline
+ColumnLimit: 100
 TabWidth: 4
 UseTab: Never
 IndentWidth: 4

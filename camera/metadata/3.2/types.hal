@@ -16,14 +16,6 @@
 
 package android.hardware.camera.metadata@3.2;
 
-/** TODO(b/33012412):
- *   - The following information should be code-generated from:
- *     system/media/camera/docs/metadata_properties.xml
- *   - Some enum below should be signed:
- *       - metadata section/key should be unsigned
- *       - matadata value enum should be signed
- */
-
 /**
  * Top level hierarchy definitions for camera metadata. *_INFO sections are for
  * the static metadata that can be retrived without opening the camera device.

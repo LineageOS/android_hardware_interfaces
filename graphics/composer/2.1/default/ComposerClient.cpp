@@ -655,18 +655,24 @@ bool ComposerClient::CommandReader::parseSetClientTarget(uint16_t length)
     auto fence = readFence();
     auto dataspace = readSigned();
     auto damage = readRegion((length - 4) / 4);
+    bool closeFence = true;
 
     auto err = lookupBuffer(BufferCache::CLIENT_TARGETS,
             slot, useCache, clientTarget, &clientTarget);
     if (err == Error::NONE) {
         err = mHal.setClientTarget(mDisplay, clientTarget, fence,
                 dataspace, damage);
-
-        updateBuffer(BufferCache::CLIENT_TARGETS, slot, useCache,
-                clientTarget);
+        auto updateBufErr = updateBuffer(BufferCache::CLIENT_TARGETS, slot,
+                useCache, clientTarget);
+        if (err == Error::NONE) {
+            closeFence = false;
+            err = updateBufErr;
+        }
+    }
+    if (closeFence) {
+        close(fence);
     }
     if (err != Error::NONE) {
-        close(fence);
         mWriter.setError(getCommandLoc(), err);
     }
 
@@ -683,17 +689,23 @@ bool ComposerClient::CommandReader::parseSetOutputBuffer(uint16_t length)
     auto slot = read();
     auto outputBuffer = readHandle(&useCache);
     auto fence = readFence();
+    bool closeFence = true;
 
     auto err = lookupBuffer(BufferCache::OUTPUT_BUFFERS,
             slot, useCache, outputBuffer, &outputBuffer);
     if (err == Error::NONE) {
         err = mHal.setOutputBuffer(mDisplay, outputBuffer, fence);
-
-        updateBuffer(BufferCache::OUTPUT_BUFFERS,
-            slot, useCache, outputBuffer);
+        auto updateBufErr = updateBuffer(BufferCache::OUTPUT_BUFFERS,
+                slot, useCache, outputBuffer);
+        if (err == Error::NONE) {
+            closeFence = false;
+            err = updateBufErr;
+        }
+    }
+    if (closeFence) {
+        close(fence);
     }
     if (err != Error::NONE) {
-        close(fence);
         mWriter.setError(getCommandLoc(), err);
     }
 
@@ -786,17 +798,23 @@ bool ComposerClient::CommandReader::parseSetLayerBuffer(uint16_t length)
     auto slot = read();
     auto buffer = readHandle(&useCache);
     auto fence = readFence();
+    bool closeFence = true;
 
     auto err = lookupBuffer(BufferCache::LAYER_BUFFERS,
             slot, useCache, buffer, &buffer);
     if (err == Error::NONE) {
         err = mHal.setLayerBuffer(mDisplay, mLayer, buffer, fence);
-
-        updateBuffer(BufferCache::LAYER_BUFFERS,
-            slot, useCache, buffer);
+        auto updateBufErr = updateBuffer(BufferCache::LAYER_BUFFERS, slot,
+                useCache, buffer);
+        if (err == Error::NONE) {
+            closeFence = false;
+            err = updateBufErr;
+        }
+    }
+    if (closeFence) {
+        close(fence);
     }
     if (err != Error::NONE) {
-        close(fence);
         mWriter.setError(getCommandLoc(), err);
     }
 
@@ -915,8 +933,10 @@ bool ComposerClient::CommandReader::parseSetLayerSidebandStream(uint16_t length)
     auto err = lookupLayerSidebandStream(stream, &stream);
     if (err == Error::NONE) {
         err = mHal.setLayerSidebandStream(mDisplay, mLayer, stream);
-
-        updateLayerSidebandStream(stream);
+        auto updateErr = updateLayerSidebandStream(stream);
+        if (err == Error::NONE) {
+            err = updateErr;
+        }
     }
     if (err != Error::NONE) {
         mWriter.setError(getCommandLoc(), err);
@@ -1097,21 +1117,24 @@ Error ComposerClient::CommandReader::lookupBuffer(BufferCache cache,
     return Error::NONE;
 }
 
-void ComposerClient::CommandReader::updateBuffer(BufferCache cache,
+Error ComposerClient::CommandReader::updateBuffer(BufferCache cache,
         uint32_t slot, bool useCache, buffer_handle_t handle)
 {
     // handle was looked up from cache
     if (useCache) {
-        return;
+        return Error::NONE;
     }
 
     std::lock_guard<std::mutex> lock(mClient.mDisplayDataMutex);
 
     BufferCacheEntry* entry = nullptr;
-    lookupBufferCacheEntryLocked(cache, slot, &entry);
-    LOG_FATAL_IF(!entry, "failed to find the cache entry to update");
+    Error error = lookupBufferCacheEntryLocked(cache, slot, &entry);
+    if (error != Error::NONE) {
+      return error;
+    }
 
     *entry = handle;
+    return Error::NONE;
 }
 
 } // namespace implementation

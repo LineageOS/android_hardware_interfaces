@@ -281,7 +281,7 @@ void dispatchInputBuffer(sp<IOmxNode> omxNode,
 void flushPorts(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                 android::Vector<BufferInfo>* iBuffer,
                 android::Vector<BufferInfo>* oBuffer, OMX_U32 kPortIndexInput,
-                OMX_U32 kPortIndexOutput) {
+                OMX_U32 kPortIndexOutput, int64_t timeoutUs) {
     android::hardware::media::omx::V1_0::Status status;
     Message msg;
 
@@ -289,7 +289,7 @@ void flushPorts(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
     status = omxNode->sendCommand(toRawCommandType(OMX_CommandFlush),
                                   kPortIndexInput);
     ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
+    status = observer->dequeueMessage(&msg, timeoutUs, iBuffer, oBuffer);
     ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
     ASSERT_EQ(msg.type, Message::Type::EVENT);
     ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
@@ -304,7 +304,7 @@ void flushPorts(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
     status = omxNode->sendCommand(toRawCommandType(OMX_CommandFlush),
                                   kPortIndexOutput);
     ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
+    status = observer->dequeueMessage(&msg, timeoutUs, iBuffer, oBuffer);
     ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
     ASSERT_EQ(msg.type, Message::Type::EVENT);
     ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
@@ -353,7 +353,7 @@ Return<android::hardware::media::omx::V1_0::Status> setVideoPortFormat(
             }
         }
         if (index == arrColorFormat.size()) {
-            ALOGI("setting default color format");
+            ALOGE("setting default color format %x", (int)arrColorFormat[0]);
             portFormat.eColorFormat = arrColorFormat[0];
         }
         portFormat.eCompressionFormat = OMX_VIDEO_CodingUnused;
@@ -365,7 +365,8 @@ Return<android::hardware::media::omx::V1_0::Status> setVideoPortFormat(
             }
         }
         if (index == arrCompressionFormat.size()) {
-            ALOGI("setting default compression format");
+            ALOGE("setting default compression format %x",
+                  (int)arrCompressionFormat[0]);
             portFormat.eCompressionFormat = arrCompressionFormat[0];
         }
         portFormat.eColorFormat = OMX_COLOR_FormatUnused;
@@ -382,6 +383,31 @@ Return<android::hardware::media::omx::V1_0::Status> setRole(
     OMX_PARAM_COMPONENTROLETYPE params;
     strcpy((char*)params.cRole, role);
     return setParam(omxNode, OMX_IndexParamStandardComponentRole, &params);
+}
+
+void enumerateProfileAndLevel(sp<IOmxNode> omxNode, OMX_U32 portIndex,
+                              std::vector<int32_t>* arrProfile,
+                              std::vector<int32_t>* arrLevel) {
+    android::hardware::media::omx::V1_0::Status status;
+    OMX_VIDEO_PARAM_PROFILELEVELTYPE param;
+    param.nProfileIndex = 0;
+    arrProfile->clear();
+    arrLevel->clear();
+    while (1) {
+        status =
+            getPortParam(omxNode, OMX_IndexParamVideoProfileLevelQuerySupported,
+                         portIndex, &param);
+        if (status != ::android::hardware::media::omx::V1_0::Status::OK) break;
+        arrProfile->push_back(static_cast<int32_t>(param.eProfile));
+        arrLevel->push_back(static_cast<int32_t>(param.eLevel));
+        param.nProfileIndex++;
+        if (param.nProfileIndex == 512) {
+            // enumerated way too many, highly unusual for this to happen.
+            EXPECT_LE(param.nProfileIndex, 512U)
+                << "Expecting OMX_ErrorNoMore but not received";
+            break;
+        }
+    }
 }
 
 void setupRAWPort(sp<IOmxNode> omxNode, OMX_U32 portIndex, OMX_U32 nFrameWidth,
@@ -446,6 +472,118 @@ void setupHEVCPort(sp<IOmxNode> omxNode, OMX_U32 portIndex,
     param.eLevel = eLevel;
     param.nKeyFrameInterval = 0xFFFFFFFE;
     status = setPortParam(omxNode, (OMX_INDEXTYPE)OMX_IndexParamVideoHevc,
+                          portIndex, &param);
+    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+}
+
+void setupMPEG4Port(sp<IOmxNode> omxNode, OMX_U32 portIndex,
+                    OMX_VIDEO_MPEG4PROFILETYPE eProfile,
+                    OMX_VIDEO_MPEG4LEVELTYPE eLevel, OMX_U32 xFramerate) {
+    android::hardware::media::omx::V1_0::Status status;
+    OMX_VIDEO_PARAM_MPEG4TYPE param;
+    (void)xFramerate;  // necessary for intra frame spacing
+
+    status = getPortParam(omxNode, OMX_IndexParamVideoMpeg4, portIndex, &param);
+    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+
+    param.nSliceHeaderSpacing = 0;
+    param.bSVH = OMX_FALSE;
+    param.bGov = OMX_FALSE;
+    param.nPFrames = 0xFFFFFFFE;
+    param.nBFrames = 0;
+    param.nIDCVLCThreshold = 0;
+    param.bACPred = OMX_TRUE;
+    param.nMaxPacketSize = 256;
+    param.eProfile = eProfile;
+    param.eLevel = eLevel;
+    param.nAllowedPictureTypes =
+        OMX_VIDEO_PictureTypeI | OMX_VIDEO_PictureTypeP;
+    param.nHeaderExtension = 0;
+    param.bReversibleVLC = OMX_FALSE;
+    status = setPortParam(omxNode, OMX_IndexParamVideoMpeg4, portIndex, &param);
+    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+}
+
+void setupH263Port(sp<IOmxNode> omxNode, OMX_U32 portIndex,
+                   OMX_VIDEO_H263PROFILETYPE eProfile,
+                   OMX_VIDEO_H263LEVELTYPE eLevel, OMX_U32 xFramerate) {
+    android::hardware::media::omx::V1_0::Status status;
+    OMX_VIDEO_PARAM_H263TYPE param;
+    (void)xFramerate;  // necessary for intra frame spacing
+
+    status = getPortParam(omxNode, OMX_IndexParamVideoH263, portIndex, &param);
+    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+
+    param.nPFrames = 0xFFFFFFFE;
+    param.nBFrames = 0;
+    param.eProfile = eProfile;
+    param.eLevel = eLevel;
+    param.nAllowedPictureTypes =
+        OMX_VIDEO_PictureTypeI | OMX_VIDEO_PictureTypeP;
+    param.bPLUSPTYPEAllowed = OMX_FALSE;
+    param.bForceRoundingTypeToZero = OMX_FALSE;
+    param.nPictureHeaderRepetition = 0;
+    param.nGOBHeaderInterval = 0;
+    status = setPortParam(omxNode, OMX_IndexParamVideoH263, portIndex, &param);
+    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+}
+
+void setupVPXPort(sp<IOmxNode> omxNode, OMX_U32 portIndex, OMX_U32 xFramerate) {
+    android::hardware::media::omx::V1_0::Status status;
+    OMX_VIDEO_PARAM_ANDROID_VP8ENCODERTYPE param;
+    (void)xFramerate;  // necessary for intra frame spacing
+
+    status = getPortParam(omxNode,
+                          (OMX_INDEXTYPE)OMX_IndexParamVideoAndroidVp8Encoder,
+                          portIndex, &param);
+    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+
+    param.nKeyFrameInterval = 0xFFFFFFFE;
+    param.eTemporalPattern = OMX_VIDEO_VPXTemporalLayerPatternNone;
+    param.nMinQuantizer = 2;
+    param.nMaxQuantizer = 63;
+    status = setPortParam(omxNode,
+                          (OMX_INDEXTYPE)OMX_IndexParamVideoAndroidVp8Encoder,
+                          portIndex, &param);
+    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+}
+
+void setupVP8Port(sp<IOmxNode> omxNode, OMX_U32 portIndex,
+                  OMX_VIDEO_VP8PROFILETYPE eProfile,
+                  OMX_VIDEO_VP8LEVELTYPE eLevel) {
+    android::hardware::media::omx::V1_0::Status status;
+    OMX_VIDEO_PARAM_VP8TYPE param;
+
+    status = getPortParam(omxNode, (OMX_INDEXTYPE)OMX_IndexParamVideoVp8,
+                          portIndex, &param);
+    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+
+    param.eProfile = eProfile;
+    param.eLevel = eLevel;
+    param.bErrorResilientMode = OMX_TRUE;
+    param.nDCTPartitions = 1;
+    status = setPortParam(omxNode, (OMX_INDEXTYPE)OMX_IndexParamVideoVp8,
+                          portIndex, &param);
+    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+}
+
+void setupVP9Port(sp<IOmxNode> omxNode, OMX_U32 portIndex,
+                  OMX_VIDEO_VP9PROFILETYPE eProfile,
+                  OMX_VIDEO_VP9LEVELTYPE eLevel) {
+    android::hardware::media::omx::V1_0::Status status;
+    OMX_VIDEO_PARAM_VP9TYPE param;
+
+    status = getPortParam(omxNode, (OMX_INDEXTYPE)OMX_IndexParamVideoVp9,
+                          portIndex, &param);
+    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+
+    param.eProfile = eProfile;
+    param.eLevel = eLevel;
+    param.bErrorResilientMode = OMX_TRUE;
+    param.nTileRows = 1;
+    param.nTileColumns = 1;
+    param.bEnableFrameParallelDecoding = OMX_TRUE;
+    status = setPortParam(omxNode, (OMX_INDEXTYPE)OMX_IndexParamVideoVp9,
                           portIndex, &param);
     EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 }

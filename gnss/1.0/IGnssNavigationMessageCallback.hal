@@ -28,14 +28,14 @@ interface IGnssNavigationMessageCallback {
     @export(name="", value_prefix="GNSS_NAVIGATION_MESSAGE_TYPE_")
     enum GnssNavigationMessageType : int16_t {
         UNKNOWN    = 0,
-        /** GNSS L1 C/A message contained in the structure.  */
-        GNSS_L1CA       = 0x0101,
-        /** GNSS L2-CNAV message contained in the structure. */
-        GNSS_L2CNAV     = 0x0102,
-        /** GNSS L5-CNAV message contained in the structure. */
-        GNSS_L5CNAV     = 0x0103,
-        /** GNSS CNAV-2 message contained in the structure. */
-        GNSS_CNAV2      = 0x0104,
+        /** GPS L1 C/A message contained in the structure.  */
+        GPS_L1CA       = 0x0101,
+        /** GPS L2-CNAV message contained in the structure. */
+        GPS_L2CNAV     = 0x0102,
+        /** GPS L5-CNAV message contained in the structure. */
+        GPS_L5CNAV     = 0x0103,
+        /** GPS CNAV-2 message contained in the structure. */
+        GPS_CNAV2      = 0x0104,
         /** Glonass L1 CA message contained in the structure. */
         GLO_L1CA        = 0x0301,
         /** Beidou D1 message contained in the structure. */

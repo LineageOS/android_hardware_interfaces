@@ -105,7 +105,7 @@ class AsyncFdWatcherSocketTest : public ::testing::Test {
       int connection_fd = AcceptConnection(fd);
       ALOGD("%s: Conn_watcher fd = %d", __func__, fd);
 
-      conn_watcher_.ConfigureTimeout(std::chrono::seconds(0), [this]() {
+      conn_watcher_.ConfigureTimeout(std::chrono::seconds(0), []() {
         bool connection_timeout_cleared = false;
         ASSERT_TRUE(connection_timeout_cleared);
       });
@@ -117,7 +117,7 @@ class AsyncFdWatcherSocketTest : public ::testing::Test {
       // Time out if it takes longer than a second.
       SetTimeout(std::chrono::seconds(1));
     });
-    conn_watcher_.ConfigureTimeout(std::chrono::seconds(1), [this]() {
+    conn_watcher_.ConfigureTimeout(std::chrono::seconds(1), []() {
       bool connection_timeout = true;
       ASSERT_FALSE(connection_timeout);
     });
@@ -207,7 +207,7 @@ TEST_F(AsyncFdWatcherSocketTest, Connect) {
   });
 
   // Fail if the client doesn't connect within 1 second.
-  conn_watcher.ConfigureTimeout(std::chrono::seconds(1), [this]() {
+  conn_watcher.ConfigureTimeout(std::chrono::seconds(1), []() {
     bool connection_timeout = true;
     ASSERT_FALSE(connection_timeout);
   });
@@ -231,7 +231,7 @@ TEST_F(AsyncFdWatcherSocketTest, TimedOutConnect) {
 
   // Set the timeout flag after 100ms.
   conn_watcher.ConfigureTimeout(std::chrono::milliseconds(100),
-                                [this, timeout_ptr]() { *timeout_ptr = true; });
+                                [timeout_ptr]() { *timeout_ptr = true; });
   EXPECT_FALSE(timed_out);
   sleep(1);
   EXPECT_TRUE(timed_out);
@@ -254,7 +254,7 @@ TEST_F(AsyncFdWatcherSocketTest, TimedOutSchedulesTimeout) {
   // Set a timeout flag in each callback.
   conn_watcher.ConfigureTimeout(
       std::chrono::milliseconds(500),
-      [this, &conn_watcher, &timed_out, &timed_out2]() {
+      [&conn_watcher, &timed_out, &timed_out2]() {
         timed_out = true;
         conn_watcher.ConfigureTimeout(std::chrono::seconds(1),
                                       [&timed_out2]() { timed_out2 = true; });
@@ -298,7 +298,7 @@ TEST_F(AsyncFdWatcherSocketTest, WatchTwoFileDescriptors) {
   });
 
   // Fail if the test doesn't pass within 3 seconds
-  watcher.ConfigureTimeout(std::chrono::seconds(3), [this]() {
+  watcher.ConfigureTimeout(std::chrono::seconds(3), []() {
     bool connection_timeout = true;
     ASSERT_FALSE(connection_timeout);
   });
