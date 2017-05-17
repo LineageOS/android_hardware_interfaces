@@ -327,27 +327,24 @@ namespace implementation {
 
     Return<void> DrmPlugin::sendEvent(EventType eventType,
             const hidl_vec<uint8_t>& sessionId, const hidl_vec<uint8_t>& data) {
-        auto listener = mListener.promote();
-        if (listener != nullptr) {
-            listener->sendEvent(eventType, sessionId, data);
+        if (mListener != nullptr) {
+            mListener->sendEvent(eventType, sessionId, data);
         }
         return Void();
     }
 
     Return<void> DrmPlugin::sendExpirationUpdate(
             const hidl_vec<uint8_t>& sessionId, int64_t expiryTimeInMS) {
-        auto listener = mListener.promote();
-        if (listener != nullptr) {
-            listener->sendExpirationUpdate(sessionId, expiryTimeInMS);
+        if (mListener != nullptr) {
+            mListener->sendExpirationUpdate(sessionId, expiryTimeInMS);
         }
         return Void();
     }
 
     Return<void> DrmPlugin::sendKeysChange(const hidl_vec<uint8_t>& sessionId,
             const hidl_vec<KeyStatus>& keyStatusList, bool hasNewUsableKey) {
-        auto listener = mListener.promote();
-        if (listener != nullptr) {
-            listener->sendKeysChange(sessionId, keyStatusList, hasNewUsableKey);
+        if (mListener != nullptr) {
+            mListener->sendKeysChange(sessionId, keyStatusList, hasNewUsableKey);
         }
         return Void();
     }
@@ -383,21 +380,15 @@ namespace implementation {
         }
         if (sendEvent) {
             Vector<uint8_t> emptyVector;
-            auto listener = mListener.promote();
-            if (listener != nullptr) {
-                listener->sendEvent(eventType,
-                        toHidlVec(sessionId == NULL ? emptyVector: *sessionId),
-                        toHidlVec(data == NULL ? emptyVector: *data));
-            }
+            mListener->sendEvent(eventType,
+                    toHidlVec(sessionId == NULL ? emptyVector: *sessionId),
+                    toHidlVec(data == NULL ? emptyVector: *data));
         }
     }
 
     void DrmPlugin::sendExpirationUpdate(Vector<uint8_t> const *sessionId,
             int64_t expiryTimeInMS) {
-        auto listener = mListener.promote();
-        if (listener != nullptr) {
-            listener->sendExpirationUpdate(toHidlVec(*sessionId), expiryTimeInMS);
-        }
+        mListener->sendExpirationUpdate(toHidlVec(*sessionId), expiryTimeInMS);
     }
 
     void DrmPlugin::sendKeysChange(Vector<uint8_t> const *sessionId,
@@ -433,11 +424,8 @@ namespace implementation {
             keyStatus.keyId = toHidlVec(legacyKeyStatus.mKeyId);
             keyStatusVec.push_back(keyStatus);
         }
-        auto listener = mListener.promote();
-        if (listener != nullptr) {
-            listener->sendKeysChange(toHidlVec(*sessionId),
-                    toHidlVec(keyStatusVec), hasNewUsableKey);
-        }
+        mListener->sendKeysChange(toHidlVec(*sessionId),
+                toHidlVec(keyStatusVec), hasNewUsableKey);
     }
 
 }  // namespace implementation
