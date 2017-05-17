@@ -92,6 +92,10 @@
         <version>1.0</version>
     </hal>
     <hal format="hidl" optional="true">
+        <name>android.hardware.oemlock</name>
+        <version>1.0</version>
+    </hal>
+    <hal format="hidl" optional="true">
         <name>android.hardware.power</name>
         <version>1.0</version>
     </hal>
