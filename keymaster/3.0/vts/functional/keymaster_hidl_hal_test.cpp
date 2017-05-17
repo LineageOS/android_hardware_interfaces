@@ -304,6 +304,22 @@ bool verify_chain(const hidl_vec<hidl_vec<uint8_t>>& chain) {
         EXPECT_EQ(1, X509_verify(key_cert.get(), signing_pubkey.get()))
             << "Verification of certificate " << i << " failed";
 
+        char* cert_issuer =  //
+            X509_NAME_oneline(X509_get_issuer_name(key_cert.get()), nullptr, 0);
+        char* signer_subj =
+            X509_NAME_oneline(X509_get_subject_name(signing_cert.get()), nullptr, 0);
+        EXPECT_STREQ(cert_issuer, signer_subj) << "Cert " << i
+                                               << " has wrong issuer.  (Possibly b/38394614)";
+        if (i == 0) {
+            char* cert_sub = X509_NAME_oneline(X509_get_subject_name(key_cert.get()), nullptr, 0);
+            EXPECT_STREQ("/CN=Android Keystore Key", cert_sub)
+                << "Cert " << i << " has wrong subject.  (Possibly b/38394614)";
+            free(cert_sub);
+        }
+
+        free(cert_issuer);
+        free(signer_subj);
+
         if (dump_Attestations) std::cout << bin2hex(chain[i]) << std::endl;
     }
 
@@ -985,11 +1001,13 @@ bool verify_attestation_record(const string& challenge, const string& app_id,
 
     att_sw_enforced.Sort();
     expected_sw_enforced.Sort();
-    EXPECT_EQ(filter_tags(expected_sw_enforced), filter_tags(att_sw_enforced));
+    EXPECT_EQ(filter_tags(expected_sw_enforced), filter_tags(att_sw_enforced))
+        << "(Possibly b/38394619)";
 
     att_tee_enforced.Sort();
     expected_tee_enforced.Sort();
-    EXPECT_EQ(filter_tags(expected_tee_enforced), filter_tags(att_tee_enforced));
+    EXPECT_EQ(filter_tags(expected_tee_enforced), filter_tags(att_tee_enforced))
+        << "(Possibly b/38394619)";
 
     return true;
 }
