@@ -51,6 +51,7 @@ genrule {
 
 cc_library_shared {
     name: "android.hardware.tests.versioning@2.3",
+    defaults: ["hidl-module-defaults"],
     generated_sources: ["android.hardware.tests.versioning@2.3_genc++"],
     generated_headers: ["android.hardware.tests.versioning@2.3_genc++_headers"],
     export_generated_headers: ["android.hardware.tests.versioning@2.3_genc++_headers"],
