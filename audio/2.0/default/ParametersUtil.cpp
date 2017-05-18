@@ -78,8 +78,9 @@ void ParametersUtil::getParametersImpl(
         halKeys.addKey(String8(keys[i].c_str()));
     }
     std::unique_ptr<AudioParameter> halValues = getParams(halKeys);
-    Result retval =
-        halValues->size() == keys.size() ? Result::OK : Result::NOT_SUPPORTED;
+    Result retval = (keys.size() == 0 || halValues->size() != 0)
+                        ? Result::OK
+                        : Result::NOT_SUPPORTED;
     hidl_vec<ParameterValue> result;
     result.resize(halValues->size());
     String8 halKey, halValue;
