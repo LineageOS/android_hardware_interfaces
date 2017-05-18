@@ -102,8 +102,13 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE (radio resetting)
      *   RadioError:PASSWORD_INCORRECT (code is invalid)
+     *   RadioError:NO_MEMORY
+     *   RadioError:INVALID_SIM_STATE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:SYSTEM_ERR
+     *   RadioError:MODEM_ERR
+     *   RadioError:INVALID_ARGUMENTS
      */
     oneway supplyNetworkDepersonalizationResponse(RadioResponseInfo info, int32_t remainingRetries);
 
@@ -1119,9 +1124,11 @@ interface IRadioResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:NO_MEMORY
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:SYSTEM_ERR
+     *   RadioError:MODEM_ERR
      *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:OPERATION_NOT_ALLOWED
      */
     oneway handleStkCallSetupRequestFromSimResponse(RadioResponseInfo info);
 
