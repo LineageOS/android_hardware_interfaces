@@ -17,6 +17,8 @@
 #ifndef ANDROID_HARDWARE_AUDIO_V2_0_STREAM_H
 #define ANDROID_HARDWARE_AUDIO_V2_0_STREAM_H
 
+#include <vector>
+
 #include <android/hardware/audio/2.0/IStream.h>
 #include <hardware/audio.h>
 #include <hidl/Status.h>
@@ -79,10 +81,11 @@ struct Stream : public IStream, public ParametersUtil {
     Return<Result> close()  override;
 
     // Utility methods for extending interfaces.
-    static Result analyzeStatus(
-            const char* funcName, int status, int ignoreError = OK, int ignoreError2 = OK);
+    static Result analyzeStatus(const char* funcName, int status);
+    static Result analyzeStatus(const char* funcName, int status,
+                                const std::vector<int>& ignoreErrors);
 
-  private:
+   private:
     audio_stream_t *mStream;
 
     virtual ~Stream();
