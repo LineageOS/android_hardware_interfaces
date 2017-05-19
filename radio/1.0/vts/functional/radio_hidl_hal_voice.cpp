@@ -184,7 +184,6 @@ TEST_F(RadioHidlTest, getLastCallFailCause) {
   EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
   if (cardStatus.cardState == CardState::ABSENT) {
-      EXPECT_EQ(radioRsp->rspInfo.error, RadioError::NONE);
       ASSERT_TRUE(CheckGeneralError() ||
                   radioRsp->rspInfo.error == RadioError::NONE);
   }
