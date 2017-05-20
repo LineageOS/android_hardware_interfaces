@@ -62,6 +62,7 @@ genrule {
 
 cc_library_shared {
     name: "android.hardware.tests.baz@1.0",
+    defaults: ["hidl-module-defaults"],
     generated_sources: ["android.hardware.tests.baz@1.0_genc++"],
     generated_headers: ["android.hardware.tests.baz@1.0_genc++_headers"],
     export_generated_headers: ["android.hardware.tests.baz@1.0_genc++_headers"],
