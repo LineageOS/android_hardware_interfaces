@@ -1,11 +1,11 @@
 /*
  * Copyright (C) 2017 The Android Open Source Project
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.1 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.1
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "android.hardware.configstore@1.0-service"
+#define LOG_TAG "android.hardware.configstore@1.1-service"
 
-#include <android/hardware/configstore/1.0/ISurfaceFlingerConfigs.h>
+#include <android/hardware/configstore/1.1/ISurfaceFlingerConfigs.h>
 #include <hidl/HidlTransportSupport.h>
 
 #include "SurfaceFlingerConfigs.h"
 
 using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
-using android::hardware::configstore::V1_0::ISurfaceFlingerConfigs;
-using android::hardware::configstore::V1_0::implementation::SurfaceFlingerConfigs;
+using android::hardware::configstore::V1_1::ISurfaceFlingerConfigs;
+using android::hardware::configstore::V1_1::implementation::SurfaceFlingerConfigs;
 using android::sp;
 using android::status_t;
 using android::OK;

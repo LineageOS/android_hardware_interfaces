@@ -55,3 +55,4 @@ $(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/etc/init/android.hardware.bl
 $(call add-clean-step, rm -rf $(OUT)/soong/.intermediates/)
 $(call add-clean-step, rm -rf $(OUT_DIR)/soong/.intermediates/hardware/interfaces/)
 $(call add-clean-step, rm -rf $(OUT_DIR)/soong/.intermediates/hardware/interfaces/)
+$(call add-clean-step, find $(PRODUCT_OUT)/system $(PRODUCT_OUT)/vendor -type f -name "android\.hardware\.configstore*" -print0 | xargs -0 rm -f)
