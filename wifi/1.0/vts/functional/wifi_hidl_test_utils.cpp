@@ -36,6 +36,9 @@ using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 
 namespace {
+constexpr uint32_t kHalStartRetryMaxCount = 5;
+constexpr uint32_t kHalStartRetryIntervalInMs = 2;
+
 bool findAnyModeSupportingIfaceType(
     IfaceType desired_type, const std::vector<IWifiChip::ChipMode>& modes,
     ChipModeId* mode_id) {
@@ -92,7 +95,15 @@ sp<IWifiChip> getWifiChip() {
     if (!wifi.get()) {
         return nullptr;
     }
-    if (HIDL_INVOKE(wifi, start).code != WifiStatusCode::SUCCESS) {
+    uint32_t retry_count = 0;
+    auto status = HIDL_INVOKE(wifi, start);
+    while (retry_count < kHalStartRetryMaxCount &&
+           status.code == WifiStatusCode::ERROR_NOT_AVAILABLE) {
+        retry_count++;
+        usleep(kHalStartRetryIntervalInMs * 1000);
+        status = HIDL_INVOKE(wifi, start);
+    }
+    if (status.code != WifiStatusCode::SUCCESS) {
         return nullptr;
     }
     const auto& status_and_chip_ids = HIDL_INVOKE(wifi, getChipIds);
