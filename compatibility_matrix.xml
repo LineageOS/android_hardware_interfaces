@@ -16,6 +16,14 @@
         </interface>
     </hal>
     <hal format="hidl" optional="true">
+        <name>android.hardware.automotive.evs</name>
+        <version>1.0</version>
+    </hal>
+    <hal format="hidl" optional="true">
+        <name>android.hardware.automotive.vehicle</name>
+        <version>2.1</version>
+    </hal>
+    <hal format="hidl" optional="true">
         <name>android.hardware.biometrics.fingerprint</name>
         <version>2.1</version>
         <interface>
