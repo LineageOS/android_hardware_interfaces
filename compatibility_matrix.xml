@@ -16,6 +16,22 @@
         </interface>
     </hal>
     <hal format="hidl" optional="true">
+        <name>android.hardware.automotive.evs</name>
+        <version>1.0</version>
+        <interface>
+            <name>IEvsEnumerator</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
+        <name>android.hardware.automotive.vehicle</name>
+        <version>2.0</version>
+        <interface>
+            <name>IVehicle</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
         <name>android.hardware.biometrics.fingerprint</name>
         <version>2.1</version>
         <interface>
@@ -36,6 +52,14 @@
         <version>1.0</version>
         <interface>
             <name>IBootControl</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
+        <name>android.hardware.broadcastradio</name>
+        <version>1.0</version>
+        <interface>
+            <name>IBroadcastRadioFactory</name>
             <instance>default</instance>
         </interface>
     </hal>
@@ -124,6 +148,14 @@
         </interface>
     </hal>
     <hal format="hidl" optional="true">
+        <name>android.hardware.health</name>
+        <version>1.0</version>
+        <interface>
+            <name>IHealth</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
         <name>android.hardware.ir</name>
         <version>1.0</version>
     </hal>
@@ -148,6 +180,10 @@
         <version>1.0</version>
         <interface>
             <name>IOmx</name>
+            <instance>default</instance>
+        </interface>
+        <interface>
+            <name>IOmxStore</name>
             <instance>default</instance>
         </interface>
     </hal>
@@ -228,6 +264,22 @@
         </interface>
     </hal>
     <hal format="hidl" optional="true">
+        <name>android.hardware.tv.cec</name>
+        <version>1.0</version>
+        <interface>
+            <name>IHdmiCec</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
+        <name>android.hardware.tv.input</name>
+        <version>1.0</version>
+        <interface>
+            <name>ITvInput</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
         <name>android.hardware.usb</name>
         <version>1.0</version>
         <interface>
@@ -259,4 +311,15 @@
             <instance>default</instance>
         </interface>
     </hal>
+    <hal format="hidl" optional="true">
+        <name>android.hardware.wifi.supplicant</name>
+        <version>1.0</version>
+        <interface>
+            <name>ISupplicant</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <kernel version="4.9.0" />
+    <kernel version="4.4.0" />
+    <kernel version="3.18.0" />
 </compatibility-matrix>
