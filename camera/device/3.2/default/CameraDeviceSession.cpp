@@ -403,12 +403,14 @@ void CameraDeviceSession::ResultBatcher::freeReleaseFences(hidl_vec<CaptureResul
         if (result.inputBuffer.releaseFence.getNativeHandle() != nullptr) {
             native_handle_t* handle = const_cast<native_handle_t*>(
                     result.inputBuffer.releaseFence.getNativeHandle());
+            native_handle_close(handle);
             native_handle_delete(handle);
         }
         for (auto& buf : result.outputBuffers) {
             if (buf.releaseFence.getNativeHandle() != nullptr) {
                 native_handle_t* handle = const_cast<native_handle_t*>(
                         buf.releaseFence.getNativeHandle());
+                native_handle_close(handle);
                 native_handle_delete(handle);
             }
         }
