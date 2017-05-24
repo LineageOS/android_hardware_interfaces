@@ -26,7 +26,7 @@
 #include <android/hardware/radio/1.0/IRadioResponse.h>
 #include <android/hardware/radio/1.0/types.h>
 
-#include <vts_test_util.h>
+#include "vts_test_util.h"
 
 using ::android::hardware::radio::V1_0::ActivityStatsInfo;
 using ::android::hardware::radio::V1_0::AppType;
@@ -90,7 +90,7 @@ extern CardStatus cardStatus;
 
 /* Callback class for radio response */
 class RadioResponse : public IRadioResponse {
-   private:
+   protected:
     RadioHidlTest& parent;
 
    public:
@@ -442,7 +442,7 @@ class RadioResponse : public IRadioResponse {
 
 // The main test class for Radio HIDL.
 class RadioHidlTest : public ::testing::VtsHalHidlTargetTestBase {
-   private:
+   protected:
     std::mutex mtx;
     std::condition_variable cv;
     int count;
