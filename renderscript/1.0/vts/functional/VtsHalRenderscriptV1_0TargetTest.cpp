@@ -28,6 +28,7 @@ void RenderscriptHidlTest::SetUp() {
 }
 
 void RenderscriptHidlTest::TearDown() {
+    context->contextFinish();
     context->contextDestroy();
 }
 
