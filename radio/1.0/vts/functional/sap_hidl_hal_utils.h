@@ -25,7 +25,7 @@
 #include <android/hardware/radio/1.0/ISapCallback.h>
 #include <android/hardware/radio/1.0/types.h>
 
-#include <vts_test_util.h>
+#include "vts_test_util.h"
 
 using namespace ::android::hardware::radio::V1_0;
 
