@@ -21,6 +21,8 @@ LOCAL_MODULE := VtsHalAudioV2_0TargetTest
 LOCAL_CPPFLAGS := -O0 -g -Wall -Wextra -Werror
 LOCAL_SRC_FILES := \
     AudioPrimaryHidlHalTest.cpp \
+    ValidateAudioConfiguration.cpp \
+    utility/ValidateXml.cpp
 
 LOCAL_C_INCLUDES := external/libxml2/include
 
