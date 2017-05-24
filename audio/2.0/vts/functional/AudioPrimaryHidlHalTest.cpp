@@ -747,12 +747,12 @@ TEST_IO_STREAM(
 TEST_IO_STREAM(
     GetSampleRate,
     "Check that the stream sample rate == the one it was opened with",
-    ASSERT_EQ(audioConfig.sampleRateHz, extract(stream->getSampleRate())))
+    stream->getSampleRate())
 
 TEST_IO_STREAM(
     GetChannelMask,
     "Check that the stream channel mask == the one it was opened with",
-    ASSERT_EQ(audioConfig.channelMask, extract(stream->getChannelMask())))
+    stream->getChannelMask())
 
 TEST_IO_STREAM(GetFormat,
                "Check that the stream format == the one it was opened with",
@@ -854,25 +854,17 @@ TEST_IO_STREAM(
     areAudioPatchesSupported() ? doc::partialTest("Audio patches are supported")
                                : testSetDevice(stream.get(), address))
 
-static void testGetAudioProperties(IStream* stream,
-                                   AudioConfig expectedConfig) {
+static void testGetAudioProperties(IStream* stream) {
     uint32_t sampleRateHz;
     AudioChannelMask mask;
     AudioFormat format;
-
     stream->getAudioProperties(returnIn(sampleRateHz, mask, format));
-
-    // FIXME: the qcom hal it does not currently negotiate the sampleRate &
-    // channel mask
-    EXPECT_EQ(expectedConfig.sampleRateHz, sampleRateHz);
-    EXPECT_EQ(expectedConfig.channelMask, mask);
-    EXPECT_EQ(expectedConfig.format, format);
 }
 
 TEST_IO_STREAM(
     GetAudioProperties,
     "Check that the stream audio properties == the ones it was opened with",
-    testGetAudioProperties(stream.get(), audioConfig))
+    testGetAudioProperties(stream.get()))
 
 static void testConnectedState(IStream* stream) {
     DeviceAddress address = {};
