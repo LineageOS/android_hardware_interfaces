@@ -143,15 +143,17 @@ TEST_F(RadioHidlTest, getAvailableNetworks) {
 
   radio->getAvailableNetworks(++serial);
   EXPECT_EQ(std::cv_status::no_timeout, wait());
-  EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
   EXPECT_EQ(serial, radioRsp->rspInfo.serial);
+  ASSERT_TRUE(radioRsp->rspInfo.type == RadioResponseType::SOLICITED ||
+              radioRsp->rspInfo.type == RadioResponseType::SOLICITED_ACK_EXP);
 
   if (cardStatus.cardState == CardState::ABSENT) {
-      ASSERT_TRUE(CheckGeneralError() ||
-                  radioRsp->rspInfo.error == RadioError::NONE ||
-                  radioRsp->rspInfo.error == RadioError::DEVICE_IN_USE ||
-                  radioRsp->rspInfo.error == RadioError::CANCELLED ||
-                  radioRsp->rspInfo.error == RadioError::OPERATION_NOT_ALLOWED);
+      ASSERT_TRUE(
+          CheckGeneralError() || radioRsp->rspInfo.error == RadioError::NONE ||
+          radioRsp->rspInfo.error == RadioError::DEVICE_IN_USE ||
+          radioRsp->rspInfo.error == RadioError::CANCELLED ||
+          radioRsp->rspInfo.error == RadioError::OPERATION_NOT_ALLOWED ||
+          radioRsp->rspInfo.error == RadioError::MODEM_ERR);
   }
 }
 
