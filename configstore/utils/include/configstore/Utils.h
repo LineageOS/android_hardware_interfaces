@@ -42,6 +42,15 @@ using ::android::hardware::configstore::V1_0::OptionalInt64;
 using ::android::hardware::configstore::V1_0::OptionalUInt64;
 using ::android::hardware::configstore::V1_0::OptionalString;
 
+// a function to retrieve and cache the service handle
+// for a particular interface
+template <typename I>
+sp<I> getService() {
+    // static initializer used for synchronizations
+    static sp<I> configs = I::getService();
+    return configs;
+}
+
 // arguments V: type for the value (i.e., OptionalXXX)
 //           I: interface class name
 //           func: member function pointer
@@ -49,9 +58,10 @@ template<typename V, typename I, android::hardware::Return<void> (I::* func)
         (std::function<void(const V&)>)>
 decltype(V::value) get(const decltype(V::value) &defValue) {
     using namespace android::hardware::details;
+    // static initializer used for synchronizations
     auto getHelper = []()->V {
         V ret;
-        sp<I> configs = I::getService();
+        sp<I> configs = getService<I>();
 
         if (!configs.get()) {
             // fallback to the default value
