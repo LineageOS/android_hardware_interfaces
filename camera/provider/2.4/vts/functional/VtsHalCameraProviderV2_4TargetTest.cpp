@@ -116,6 +116,7 @@ const int64_t kAutoFocusTimeoutSec = 5;
 const int64_t kTorchTimeoutSec = 1;
 const int64_t kEmptyFlushTimeoutMSec = 200;
 const char kDumpOutput[] = "/dev/null";
+const uint32_t kBurstFrameCount = 10;
 
 struct AvailableStream {
     int32_t width;
@@ -718,6 +719,20 @@ protected:
         // Buffers are added by process_capture_result when output buffers
         // return from HAL but framework.
         ::android::Vector<StreamBuffer> resultOutputBuffers;
+
+        InFlightRequest() :
+                shutterTimestamp(0),
+                errorCodeValid(false),
+                errorCode(ErrorCode::ERROR_BUFFER),
+                usePartialResult(false),
+                numPartialResults(0),
+                resultQueue(nullptr),
+                haveResultMetadata(false),
+                numBuffersLeft(0),
+                frameNumber(0),
+                partialResultCount(0),
+                errorStreamId(-1),
+                hasInputBuffer(false) {}
 
         InFlightRequest(ssize_t numBuffers, bool hasInput,
                 bool partialResults, uint32_t partialCount,
@@ -3543,6 +3558,151 @@ TEST_F(CameraHidlTest, processMultiCaptureRequestPreview) {
         defaultPreviewSettings.unlock(settingsBuffer);
         filteredSettings.unlock(filteredSettingsBuffer);
         ret = session3_4->close();
+        ASSERT_TRUE(ret.isOk());
+    }
+}
+
+// Generate and verify a burst containing alternating sensor sensitivity values
+TEST_F(CameraHidlTest, processCaptureRequestBurstISO) {
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
+    AvailableStream previewThreshold = {kMaxPreviewWidth, kMaxPreviewHeight,
+                                        static_cast<int32_t>(PixelFormat::IMPLEMENTATION_DEFINED)};
+    uint64_t bufferId = 1;
+    uint32_t frameNumber = 1;
+    ::android::hardware::hidl_vec<uint8_t> settings;
+
+    for (const auto& name : cameraDeviceNames) {
+        int deviceVersion = getCameraDeviceVersion(name, mProviderType);
+        if (deviceVersion == CAMERA_DEVICE_API_VERSION_1_0) {
+            continue;
+        } else if (deviceVersion <= 0) {
+            ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
+            ADD_FAILURE();
+            return;
+        }
+        camera_metadata_t* staticMetaBuffer;
+        Return<void> ret;
+        sp<ICameraDeviceSession> session;
+        openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMetaBuffer /*out*/);
+        ::android::hardware::camera::common::V1_0::helper::CameraMetadata staticMeta(
+                staticMetaBuffer);
+
+        camera_metadata_entry_t hwLevel = staticMeta.find(ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL);
+        ASSERT_TRUE(0 < hwLevel.count);
+        if (ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED == hwLevel.data.u8[0]) {
+            //Limited devices can skip this test
+            ret = session->close();
+            ASSERT_TRUE(ret.isOk());
+            continue;
+        }
+
+        camera_metadata_entry_t isoRange = staticMeta.find(ANDROID_SENSOR_INFO_SENSITIVITY_RANGE);
+        ASSERT_EQ(isoRange.count, 2u);
+
+        ret = session->close();
+        ASSERT_TRUE(ret.isOk());
+
+        bool supportsPartialResults = false;
+        uint32_t partialResultCount = 0;
+        V3_2::Stream previewStream;
+        HalStreamConfiguration halStreamConfig;
+        configurePreviewStream(name, deviceVersion, mProvider, &previewThreshold,
+                &session /*out*/, &previewStream /*out*/, &halStreamConfig /*out*/,
+                &supportsPartialResults /*out*/, &partialResultCount /*out*/);
+        std::shared_ptr<ResultMetadataQueue> resultQueue;
+
+        auto resultQueueRet = session->getCaptureResultMetadataQueue(
+            [&resultQueue](const auto& descriptor) {
+                resultQueue = std::make_shared<ResultMetadataQueue>(descriptor);
+                if (!resultQueue->isValid() || resultQueue->availableToWrite() <= 0) {
+                    ALOGE("%s: HAL returns empty result metadata fmq,"
+                            " not use it", __func__);
+                    resultQueue = nullptr;
+                    // Don't use the queue onwards.
+                }
+            });
+        ASSERT_TRUE(resultQueueRet.isOk());
+        ASSERT_NE(nullptr, resultQueue);
+
+        ret = session->constructDefaultRequestSettings(RequestTemplate::PREVIEW,
+            [&](auto status, const auto& req) {
+                ASSERT_EQ(Status::OK, status);
+                settings = req; });
+        ASSERT_TRUE(ret.isOk());
+
+        ::android::hardware::camera::common::V1_0::helper::CameraMetadata requestMeta;
+        StreamBuffer emptyInputBuffer = {-1, 0, nullptr, BufferStatus::ERROR, nullptr, nullptr};
+        sp<GraphicBuffer> buffers[kBurstFrameCount];
+        StreamBuffer outputBuffers[kBurstFrameCount];
+        CaptureRequest requests[kBurstFrameCount];
+        InFlightRequest inflightReqs[kBurstFrameCount];
+        int32_t isoValues[kBurstFrameCount];
+        hidl_vec<uint8_t> requestSettings[kBurstFrameCount];
+        for (uint32_t i = 0; i < kBurstFrameCount; i++) {
+            std::unique_lock<std::mutex> l(mLock);
+
+            isoValues[i] = ((i % 2) == 0) ? isoRange.data.i32[0] : isoRange.data.i32[1];
+            buffers[i] = new GraphicBuffer( previewStream.width, previewStream.height,
+                static_cast<int32_t>(halStreamConfig.streams[0].overrideFormat), 1,
+                android_convertGralloc1To0Usage( halStreamConfig.streams[0].producerUsage,
+                    halStreamConfig.streams[0].consumerUsage));
+            ASSERT_NE(nullptr, buffers[i].get());
+
+            outputBuffers[i] = {halStreamConfig.streams[0].id, bufferId + i,
+                hidl_handle( buffers[i]->getNativeBuffer()->handle), BufferStatus::OK, nullptr,
+                nullptr};
+            requestMeta.append(reinterpret_cast<camera_metadata_t *> (settings.data()));
+
+            // Disable all 3A routines
+            uint8_t mode = static_cast<uint8_t>(ANDROID_CONTROL_MODE_OFF);
+            ASSERT_EQ(::android::OK, requestMeta.update(ANDROID_CONTROL_MODE, &mode, 1));
+            ASSERT_EQ(::android::OK, requestMeta.update(ANDROID_SENSOR_SENSITIVITY, &isoValues[i],
+                        1));
+            camera_metadata_t *metaBuffer = requestMeta.release();
+            requestSettings[i].setToExternal(reinterpret_cast<uint8_t *> (metaBuffer),
+                    get_camera_metadata_size(metaBuffer), true);
+
+            requests[i] = {frameNumber + i, 0 /* fmqSettingsSize */, requestSettings[i],
+                emptyInputBuffer, {outputBuffers[i]}};
+
+            inflightReqs[i] = {1, false, supportsPartialResults, partialResultCount, resultQueue};
+            mInflightMap.add(frameNumber + i, &inflightReqs[i]);
+        }
+
+        Status status = Status::INTERNAL_ERROR;
+        uint32_t numRequestProcessed = 0;
+        hidl_vec<BufferCache> cachesToRemove;
+        hidl_vec<CaptureRequest> burstRequest;
+        burstRequest.setToExternal(requests, kBurstFrameCount);
+        Return<void> returnStatus = session->processCaptureRequest(burstRequest, cachesToRemove,
+                [&status, &numRequestProcessed] (auto s, uint32_t n) {
+                    status = s;
+                    numRequestProcessed = n;
+                });
+        ASSERT_TRUE(returnStatus.isOk());
+        ASSERT_EQ(Status::OK, status);
+        ASSERT_EQ(numRequestProcessed, kBurstFrameCount);
+
+        for (size_t i = 0; i < kBurstFrameCount; i++) {
+            std::unique_lock<std::mutex> l(mLock);
+            while (!inflightReqs[i].errorCodeValid && ((0 < inflightReqs[i].numBuffersLeft) ||
+                            (!inflightReqs[i].haveResultMetadata))) {
+                auto timeout = std::chrono::system_clock::now() +
+                        std::chrono::seconds(kStreamBufferTimeoutSec);
+                ASSERT_NE(std::cv_status::timeout, mResultCondition.wait_until(l, timeout));
+            }
+
+            ASSERT_FALSE(inflightReqs[i].errorCodeValid);
+            ASSERT_NE(inflightReqs[i].resultOutputBuffers.size(), 0u);
+            ASSERT_EQ(previewStream.id, inflightReqs[i].resultOutputBuffers[0].streamId);
+            ASSERT_FALSE(inflightReqs[i].collectedResult.isEmpty());
+            ASSERT_TRUE(inflightReqs[i].collectedResult.exists(ANDROID_SENSOR_SENSITIVITY));
+            camera_metadata_entry_t isoResult = inflightReqs[i].collectedResult.find(
+                    ANDROID_SENSOR_SENSITIVITY);
+            ASSERT_TRUE(isoResult.data.i32[0] == isoValues[i]);
+        }
+
+        ret = session->close();
         ASSERT_TRUE(ret.isOk());
     }
 }
