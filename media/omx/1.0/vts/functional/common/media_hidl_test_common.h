@@ -33,9 +33,19 @@
 #include <media/openmax/OMX_AudioExt.h>
 #include <media/openmax/OMX_VideoExt.h>
 
+#define DEFAULT_TIMEOUT 40000
+#define TIMEOUT_COUNTER (10000000 / DEFAULT_TIMEOUT)
+
+enum bufferOwner {
+    client,
+    component,
+    unknown,
+};
+
 /*
- * TODO: Borrowed from Conversion.h. This is not the ideal way to do it.
- * Loose these definitions once you include Conversion.h
+ * TODO: below definitions are borrowed from Conversion.h.
+ * This is not the ideal way to do it. Loose these definitions once you
+ * include Conversion.h
  */
 inline uint32_t toRawIndexType(OMX_INDEXTYPE l) {
     return static_cast<uint32_t>(l);
@@ -57,22 +67,14 @@ inline uint32_t toRawCommandType(OMX_COMMANDTYPE l) {
 }
 
 /*
- * Handle Callback functions EmptythisBuffer(), FillthisBuffer(),
- * EventHandler()
+ * struct definitions
  */
-#define DEFAULT_TIMEOUT 40000
-
-enum bufferOwner {
-    client,
-    component,
-    unknown,
-};
-
 struct BufferInfo {
     uint32_t id;
     bufferOwner owner;
     android::hardware::media::omx::V1_0::CodecBuffer omxBuffer;
     ::android::sp<IMemory> mMemory;
+    int32_t slot;
 };
 
 struct FrameData {
@@ -81,9 +83,14 @@ struct FrameData {
     uint32_t timestamp;
 };
 
+/*
+ * Handle Callback functions EmptythisBuffer(), FillthisBuffer(),
+ * EventHandler()
+ */
 struct CodecObserver : public IOmxObserver {
    public:
-    CodecObserver(std::function<void(Message)> fn) : callBack(fn) {}
+    CodecObserver(std::function<void(Message, const BufferInfo*)> fn)
+        : callBack(fn) {}
     Return<void> onMessages(const hidl_vec<Message>& messages) override {
         android::Mutex::Autolock autoLock(msgLock);
         for (hidl_vec<Message>::const_iterator it = messages.begin();
@@ -114,7 +121,7 @@ struct CodecObserver : public IOmxObserver {
                         for (i = 0; i < oBuffers->size(); ++i) {
                             if ((*oBuffers)[i].id ==
                                 it->data.bufferData.buffer) {
-                                if (callBack) callBack(*it);
+                                if (callBack) callBack(*it, &(*oBuffers)[i]);
                                 oBuffers->editItemAt(i).owner = client;
                                 msgQueue.erase(it);
                                 break;
@@ -129,6 +136,7 @@ struct CodecObserver : public IOmxObserver {
                         for (i = 0; i < iBuffers->size(); ++i) {
                             if ((*iBuffers)[i].id ==
                                 it->data.bufferData.buffer) {
+                                if (callBack) callBack(*it, &(*iBuffers)[i]);
                                 iBuffers->editItemAt(i).owner = client;
                                 msgQueue.erase(it);
                                 break;
@@ -154,7 +162,7 @@ struct CodecObserver : public IOmxObserver {
     android::List<Message> msgQueue;
     android::Mutex msgLock;
     android::Condition msgCondition;
-    std::function<void(Message)> callBack;
+    std::function<void(Message, const BufferInfo*)> callBack;
 };
 
 /*
@@ -244,5 +252,52 @@ Return<android::hardware::media::omx::V1_0::Status> setPortConfig(
     return omxNode->setConfig(toRawIndexType(omxIdx),
                               inHidlBytes(params, sizeof(*params)));
 }
+
+/*
+ * common functions declarations
+ */
+void allocatePortBuffers(sp<IOmxNode> omxNode,
+                         android::Vector<BufferInfo>* buffArray,
+                         OMX_U32 portIndex,
+                         PortMode portMode = PortMode::PRESET_BYTE_BUFFER);
+
+void changeStateLoadedtoIdle(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
+                             android::Vector<BufferInfo>* iBuffer,
+                             android::Vector<BufferInfo>* oBuffer,
+                             OMX_U32 kPortIndexInput, OMX_U32 kPortIndexOutput,
+                             PortMode* portMode = nullptr);
+
+void changeStateIdletoLoaded(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
+                             android::Vector<BufferInfo>* iBuffer,
+                             android::Vector<BufferInfo>* oBuffer,
+                             OMX_U32 kPortIndexInput, OMX_U32 kPortIndexOutput);
+
+void changeStateIdletoExecute(sp<IOmxNode> omxNode, sp<CodecObserver> observer);
+
+void changeStateExecutetoIdle(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
+                              android::Vector<BufferInfo>* iBuffer,
+                              android::Vector<BufferInfo>* oBuffer);
+
+size_t getEmptyBufferID(android::Vector<BufferInfo>* buffArray);
+
+void dispatchOutputBuffer(sp<IOmxNode> omxNode,
+                          android::Vector<BufferInfo>* buffArray,
+                          size_t bufferIndex,
+                          PortMode portMode = PortMode::PRESET_BYTE_BUFFER);
+
+void dispatchInputBuffer(sp<IOmxNode> omxNode,
+                         android::Vector<BufferInfo>* buffArray,
+                         size_t bufferIndex, int bytesCount, uint32_t flags,
+                         uint64_t timestamp);
+
+void flushPorts(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
+                android::Vector<BufferInfo>* iBuffer,
+                android::Vector<BufferInfo>* oBuffer, OMX_U32 kPortIndexInput,
+                OMX_U32 kPortIndexOutput, int64_t timeoutUs = DEFAULT_TIMEOUT);
+
+void testEOS(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
+             android::Vector<BufferInfo>* iBuffer,
+             android::Vector<BufferInfo>* oBuffer, bool signalEOS,
+             bool& eosFlag, PortMode* portMode = nullptr);
 
 #endif  // MEDIA_HIDL_TEST_COMMON_H
