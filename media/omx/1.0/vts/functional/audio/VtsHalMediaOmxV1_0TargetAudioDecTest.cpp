@@ -30,6 +30,7 @@ using ::android::hardware::media::omx::V1_0::IOmxObserver;
 using ::android::hardware::media::omx::V1_0::IOmxNode;
 using ::android::hardware::media::omx::V1_0::Message;
 using ::android::hardware::media::omx::V1_0::CodecBuffer;
+using ::android::hardware::media::omx::V1_0::PortMode;
 using ::android::hidl::allocator::V1_0::IAllocator;
 using ::android::hidl::memory::V1_0::IMemory;
 using ::android::hidl::memory::V1_0::IMapper;
@@ -136,7 +137,9 @@ class AudioDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
             gEnv->getInstance());
         ASSERT_NE(omx, nullptr);
         observer =
-            new CodecObserver([this](Message msg) { handleMessage(msg); });
+            new CodecObserver([this](Message msg, const BufferInfo* buffer) {
+                handleMessage(msg, buffer);
+            });
         ASSERT_NE(observer, nullptr);
         if (strncmp(gEnv->getComponent().c_str(), "OMX.", 4) != 0)
             disableTest = true;
@@ -218,7 +221,8 @@ class AudioDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
     // callback function to process messages received by onMessages() from IL
     // client.
-    void handleMessage(Message msg) {
+    void handleMessage(Message msg, const BufferInfo* buffer) {
+        (void)buffer;
         if (msg.type == Message::Type::FILL_BUFFER_DONE) {
             if (msg.data.extendedBufferData.flags & OMX_BUFFERFLAG_EOS) {
                 eosFlag = true;
@@ -254,12 +258,25 @@ class AudioDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                         }
                     }
                 }
+#define WRITE_OUTPUT 0
+#if WRITE_OUTPUT
+                static int count = 0;
+                FILE* ofp = nullptr;
+                if (count)
+                    ofp = fopen("out.bin", "ab");
+                else
+                    ofp = fopen("out.bin", "wb");
+                if (ofp != nullptr) {
+                    fwrite(static_cast<void*>(buffer->mMemory->getPointer()),
+                           sizeof(char),
+                           msg.data.extendedBufferData.rangeLength, ofp);
+                    fclose(ofp);
+                    count++;
+                }
+#endif
             }
         }
     }
-
-    void testEOS(android::Vector<BufferInfo>* iBuffer,
-                 android::Vector<BufferInfo>* oBuffer, bool signalEOS = false);
 
     enum standardComp {
         mp3,
@@ -293,44 +310,6 @@ class AudioDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         RecordProperty("description", description);
     }
 };
-
-// end of stream test for audio decoder components
-void AudioDecHidlTest::testEOS(android::Vector<BufferInfo>* iBuffer,
-                               android::Vector<BufferInfo>* oBuffer,
-                               bool signalEOS) {
-    android::hardware::media::omx::V1_0::Status status;
-    size_t i = 0;
-    if (signalEOS) {
-        if ((i = getEmptyBufferID(iBuffer)) < iBuffer->size()) {
-            // signal an empty buffer with flag set to EOS
-            dispatchInputBuffer(omxNode, iBuffer, i, 0, OMX_BUFFERFLAG_EOS, 0);
-        } else {
-            ASSERT_TRUE(false);
-        }
-    }
-    // Dispatch all client owned output buffers to recover remaining frames
-    while (1) {
-        if ((i = getEmptyBufferID(oBuffer)) < oBuffer->size()) {
-            dispatchOutputBuffer(omxNode, oBuffer, i);
-        } else {
-            break;
-        }
-    }
-    while (1) {
-        Message msg;
-        status =
-            observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
-        EXPECT_EQ(status,
-                  android::hardware::media::omx::V1_0::Status::TIMED_OUT);
-        for (; i < iBuffer->size(); i++) {
-            if ((*iBuffer)[i].owner != client) break;
-        }
-        if (i == iBuffer->size()) break;
-    }
-    // test for flag
-    EXPECT_EQ(eosFlag, true);
-    eosFlag = false;
-}
 
 // Set Default port param.
 void setDefaultPortParam(
@@ -580,8 +559,9 @@ void waitOnInputConsumption(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                             OMX_U32 kPortIndexInput, OMX_U32 kPortIndexOutput) {
     android::hardware::media::omx::V1_0::Status status;
     Message msg;
+    int timeOut = TIMEOUT_COUNTER;
 
-    while (1) {
+    while (timeOut--) {
         size_t i = 0;
         status =
             observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
@@ -603,6 +583,7 @@ void waitOnInputConsumption(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         if ((index = getEmptyBufferID(oBuffer)) < oBuffer->size()) {
             dispatchOutputBuffer(omxNode, oBuffer, index);
         }
+        timeOut--;
     }
 }
 
@@ -642,6 +623,8 @@ void decodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         frameID++;
     }
 
+    int timeOut = TIMEOUT_COUNTER;
+    bool stall = false;
     while (1) {
         status =
             observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
@@ -672,9 +655,21 @@ void decodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                                 (*Info)[frameID].bytesCount, flags,
                                 (*Info)[frameID].timestamp);
             frameID++;
-        }
+            stall = false;
+        } else
+            stall = true;
         if ((index = getEmptyBufferID(oBuffer)) < oBuffer->size()) {
             dispatchOutputBuffer(omxNode, oBuffer, index);
+            stall = false;
+        } else
+            stall = true;
+        if (stall)
+            timeOut--;
+        else
+            timeOut = TIMEOUT_COUNTER;
+        if (timeOut == 0) {
+            EXPECT_TRUE(false) << "Wait on Input/Output is found indefinite";
+            break;
         }
     }
 }
@@ -778,7 +773,7 @@ TEST_F(AudioDecHidlTest, DecodeTest) {
     eleStream.close();
     waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
                            kPortIndexInput, kPortIndexOutput);
-    testEOS(&iBuffer, &oBuffer);
+    testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag);
     EXPECT_EQ(timestampUslist.empty(), true);
     // set state to idle
     changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
@@ -825,7 +820,7 @@ TEST_F(AudioDecHidlTest, EOSTest_M) {
     changeStateIdletoExecute(omxNode, observer);
 
     // request EOS at the start
-    testEOS(&iBuffer, &oBuffer, true);
+    testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag);
     flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
                kPortIndexOutput);
     EXPECT_GE(framesReceived, 0U);
@@ -908,7 +903,7 @@ TEST_F(AudioDecHidlTest, ThumbnailTest) {
     eleStream.close();
     waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
                            kPortIndexInput, kPortIndexOutput);
-    testEOS(&iBuffer, &oBuffer);
+    testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag);
     flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
                kPortIndexOutput);
     EXPECT_GE(framesReceived, 1U);
@@ -924,7 +919,7 @@ TEST_F(AudioDecHidlTest, ThumbnailTest) {
     eleStream.close();
     waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
                            kPortIndexInput, kPortIndexOutput);
-    testEOS(&iBuffer, &oBuffer, true);
+    testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag);
     flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
                kPortIndexOutput);
     EXPECT_GE(framesReceived, 1U);
@@ -1004,7 +999,7 @@ TEST_F(AudioDecHidlTest, SimpleEOSTest) {
     eleStream.close();
     waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
                            kPortIndexInput, kPortIndexOutput);
-    testEOS(&iBuffer, &oBuffer);
+    testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag);
     flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
                kPortIndexOutput);
     framesReceived = 0;

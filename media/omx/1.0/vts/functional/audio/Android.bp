@@ -34,7 +34,8 @@ cc_test {
         "android.hidl.memory@1.0",
         "android.hardware.media.omx@1.0",
     ],
-    static_libs: ["VtsHalHidlTargetTestBase"],
+    static_libs: ["VtsHalHidlTargetTestBase",
+                  "VtsHalMediaOmxV1_0CommonUtil"],
     cflags: [
         "-O0",
         "-g",
@@ -65,7 +66,8 @@ cc_test {
         "android.hidl.memory@1.0",
         "android.hardware.media.omx@1.0",
     ],
-    static_libs: ["VtsHalHidlTargetTestBase"],
+    static_libs: ["VtsHalHidlTargetTestBase",
+                  "VtsHalMediaOmxV1_0CommonUtil"],
     cflags: [
         "-O0",
         "-g",
