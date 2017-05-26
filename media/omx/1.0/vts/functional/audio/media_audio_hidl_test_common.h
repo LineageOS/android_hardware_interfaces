@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 #define MEDIA_AUDIO_HIDL_TEST_COMMON_H
 
 #include <media_hidl_test_common.h>
+
 /*
  * Random Index used for monkey testing while get/set parameters
  */
@@ -26,42 +27,6 @@
 /*
  * Common audio utils
  */
-void allocatePortBuffers(sp<IOmxNode> omxNode,
-                         android::Vector<BufferInfo>* buffArray,
-                         OMX_U32 portIndex);
-
-void changeStateLoadedtoIdle(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
-                             android::Vector<BufferInfo>* iBuffer,
-                             android::Vector<BufferInfo>* oBuffer,
-                             OMX_U32 kPortIndexInput, OMX_U32 kPortIndexOutput);
-
-void changeStateIdletoLoaded(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
-                             android::Vector<BufferInfo>* iBuffer,
-                             android::Vector<BufferInfo>* oBuffer,
-                             OMX_U32 kPortIndexInput, OMX_U32 kPortIndexOutput);
-
-void changeStateIdletoExecute(sp<IOmxNode> omxNode, sp<CodecObserver> observer);
-
-void changeStateExecutetoIdle(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
-                              android::Vector<BufferInfo>* iBuffer,
-                              android::Vector<BufferInfo>* oBuffer);
-
-size_t getEmptyBufferID(android::Vector<BufferInfo>* buffArray);
-
-void dispatchOutputBuffer(sp<IOmxNode> omxNode,
-                          android::Vector<BufferInfo>* buffArray,
-                          size_t bufferIndex);
-
-void dispatchInputBuffer(sp<IOmxNode> omxNode,
-                         android::Vector<BufferInfo>* buffArray,
-                         size_t bufferIndex, int bytesCount, uint32_t flags,
-                         uint64_t timestamp);
-
-void flushPorts(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
-                android::Vector<BufferInfo>* iBuffer,
-                android::Vector<BufferInfo>* oBuffer, OMX_U32 kPortIndexInput,
-                OMX_U32 kPortIndexOutput, int64_t timeoutUs = DEFAULT_TIMEOUT);
-
 Return<android::hardware::media::omx::V1_0::Status> setAudioPortFormat(
     sp<IOmxNode> omxNode, OMX_U32 portIndex, OMX_AUDIO_CODINGTYPE eEncoding);
 
