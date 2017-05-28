@@ -34,11 +34,12 @@ interface IEvsEnumerator {
     /**
      * Get the IEvsCamera associated with a cameraId from a CameraDesc
      *
-     * Given a camera's unique cameraId from ca CameraDesc, returns
-     * the ICamera interface associated with the specified camera.
-     * When done using the camera, the caller may release it by calling closeCamera().
-     * TODO(b/36122635) Reliance on the sp<> going out of scope is not recommended because the
-     * resources may not be released right away due to asynchronos behavior in the hardware binder.
+     * Given a camera's unique cameraId from CameraDesc, returns the
+     * IEvsCamera interface associated with the specified camera. When
+     * done using the camera, the caller may release it by calling closeCamera().
+     * Note: Reliance on the sp<> going out of scope is not recommended
+     * because the resources may not be released right away due to asynchronos
+     * behavior in the hardware binder (ref b/36122635).
      */
     openCamera(string cameraId) generates (IEvsCamera carCamera);
 

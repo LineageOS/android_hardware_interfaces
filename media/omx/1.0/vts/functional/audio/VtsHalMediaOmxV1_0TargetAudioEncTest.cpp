@@ -30,6 +30,7 @@ using ::android::hardware::media::omx::V1_0::IOmxObserver;
 using ::android::hardware::media::omx::V1_0::IOmxNode;
 using ::android::hardware::media::omx::V1_0::Message;
 using ::android::hardware::media::omx::V1_0::CodecBuffer;
+using ::android::hardware::media::omx::V1_0::PortMode;
 using ::android::hidl::allocator::V1_0::IAllocator;
 using ::android::hidl::memory::V1_0::IMemory;
 using ::android::hidl::memory::V1_0::IMapper;
@@ -135,7 +136,10 @@ class AudioEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         omx = ::testing::VtsHalHidlTargetTestBase::getService<IOmx>(
             gEnv->getInstance());
         ASSERT_NE(omx, nullptr);
-        observer = new CodecObserver([this](Message msg) { (void)msg; });
+        observer =
+            new CodecObserver([this](Message msg, const BufferInfo* buffer) {
+                handleMessage(msg, buffer);
+            });
         ASSERT_NE(observer, nullptr);
         if (strncmp(gEnv->getComponent().c_str(), "OMX.", 4) != 0)
             disableTest = true;
@@ -191,6 +195,7 @@ class AudioEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
             }
         }
         if (i == kNumCompToCoding) disableTest = true;
+        eosFlag = false;
         if (disableTest) std::cerr << "[          ] Warning !  Test Disabled\n";
     }
 
@@ -198,6 +203,36 @@ class AudioEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         if (omxNode != nullptr) {
             EXPECT_TRUE((omxNode->freeNode()).isOk());
             omxNode = nullptr;
+        }
+    }
+
+    // callback function to process messages received by onMessages() from IL
+    // client.
+    void handleMessage(Message msg, const BufferInfo* buffer) {
+        (void)buffer;
+
+        if (msg.type == Message::Type::FILL_BUFFER_DONE) {
+            if (msg.data.extendedBufferData.flags & OMX_BUFFERFLAG_EOS) {
+                eosFlag = true;
+            }
+            if (msg.data.extendedBufferData.rangeLength != 0) {
+#define WRITE_OUTPUT 0
+#if WRITE_OUTPUT
+                static int count = 0;
+                FILE* ofp = nullptr;
+                if (count)
+                    ofp = fopen("out.bin", "ab");
+                else
+                    ofp = fopen("out.bin", "wb");
+                if (ofp != nullptr) {
+                    fwrite(static_cast<void*>(buffer->mMemory->getPointer()),
+                           sizeof(char),
+                           msg.data.extendedBufferData.rangeLength, ofp);
+                    fclose(ofp);
+                    count++;
+                }
+#endif
+            }
         }
     }
 
@@ -215,6 +250,7 @@ class AudioEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     standardComp compName;
     OMX_AUDIO_CODINGTYPE eEncoding;
     bool disableTest;
+    bool eosFlag;
 
    protected:
     static void description(const std::string& description) {
@@ -289,12 +325,44 @@ void GetURLForComponent(AudioEncHidlTest::standardComp comp, char* mURL) {
     }
 }
 
+// blocking call to ensures application to Wait till all the inputs are consumed
+void waitOnInputConsumption(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
+                            android::Vector<BufferInfo>* iBuffer,
+                            android::Vector<BufferInfo>* oBuffer) {
+    android::hardware::media::omx::V1_0::Status status;
+    Message msg;
+    int timeOut = TIMEOUT_COUNTER;
+
+    while (timeOut--) {
+        size_t i = 0;
+        status =
+            observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
+        EXPECT_EQ(status,
+                  android::hardware::media::omx::V1_0::Status::TIMED_OUT);
+        // status == TIMED_OUT, it could be due to process time being large
+        // than DEFAULT_TIMEOUT or component needs output buffers to start
+        // processing.
+        for (; i < iBuffer->size(); i++) {
+            if ((*iBuffer)[i].owner != client) break;
+        }
+        if (i == iBuffer->size()) break;
+
+        // Dispatch an output buffer assuming outQueue.empty() is true
+        size_t index;
+        if ((index = getEmptyBufferID(oBuffer)) < oBuffer->size()) {
+            dispatchOutputBuffer(omxNode, oBuffer, index);
+        }
+        timeOut--;
+    }
+}
+
 // Encode N Frames
 void encodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                    android::Vector<BufferInfo>* iBuffer,
                    android::Vector<BufferInfo>* oBuffer, uint32_t nFrames,
                    int32_t samplesPerFrame, int32_t nChannels,
-                   int32_t nSampleRate, std::ifstream& eleStream) {
+                   int32_t nSampleRate, std::ifstream& eleStream,
+                   bool signalEOS = true) {
     android::hardware::media::omx::V1_0::Status status;
     Message msg;
 
@@ -307,6 +375,7 @@ void encodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
     int32_t timestampIncr =
         (int)(((float)samplesPerFrame / nSampleRate) * 1000000);
     uint64_t timestamp = 0;
+    uint32_t flags = 0;
     for (size_t i = 0; i < iBuffer->size() && nFrames != 0; i++) {
         char* ipBuffer = static_cast<char*>(
             static_cast<void*>((*iBuffer)[i].mMemory->getPointer()));
@@ -314,11 +383,14 @@ void encodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                   static_cast<int>((*iBuffer)[i].mMemory->getSize()));
         eleStream.read(ipBuffer, bytesCount);
         if (eleStream.gcount() != bytesCount) break;
-        dispatchInputBuffer(omxNode, iBuffer, i, bytesCount, 0, timestamp);
+        if (signalEOS && (nFrames == 1)) flags = OMX_BUFFERFLAG_EOS;
+        dispatchInputBuffer(omxNode, iBuffer, i, bytesCount, flags, timestamp);
         timestamp += timestampIncr;
         nFrames--;
     }
 
+    int timeOut = TIMEOUT_COUNTER;
+    bool stall = false;
     while (1) {
         status =
             observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
@@ -337,14 +409,27 @@ void encodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                       static_cast<int>((*iBuffer)[index].mMemory->getSize()));
             eleStream.read(ipBuffer, bytesCount);
             if (eleStream.gcount() != bytesCount) break;
-            dispatchInputBuffer(omxNode, iBuffer, index, bytesCount, 0,
+            if (signalEOS && (nFrames == 1)) flags = OMX_BUFFERFLAG_EOS;
+            dispatchInputBuffer(omxNode, iBuffer, index, bytesCount, flags,
                                 timestamp);
             timestamp += timestampIncr;
             nFrames--;
-        }
+            stall = false;
+        } else
+            stall = true;
         // Dispatch output buffer
         if ((index = getEmptyBufferID(oBuffer)) < oBuffer->size()) {
             dispatchOutputBuffer(omxNode, oBuffer, index);
+            stall = false;
+        } else
+            stall = true;
+        if (stall)
+            timeOut--;
+        else
+            timeOut = TIMEOUT_COUNTER;
+        if (timeOut == 0) {
+            EXPECT_TRUE(false) << "Wait on Input/Output is found indefinite";
+            break;
         }
     }
 }
@@ -380,8 +465,8 @@ TEST_F(AudioEncHidlTest, EnumeratePortFormat) {
 }
 
 // test raw stream encode
-TEST_F(AudioEncHidlTest, EncodeTest) {
-    description("Tests Encode");
+TEST_F(AudioEncHidlTest, SimpleEncodeTest) {
+    description("Tests Basic encoding and EOS");
     if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
@@ -399,8 +484,6 @@ TEST_F(AudioEncHidlTest, EncodeTest) {
     GetURLForComponent(compName, mURL);
 
     std::ifstream eleStream;
-    eleStream.open(mURL, std::ifstream::binary);
-    ASSERT_EQ(eleStream.is_open(), true);
 
     // Configure input port
     int32_t nChannels = 2;
@@ -449,16 +532,19 @@ TEST_F(AudioEncHidlTest, EncodeTest) {
     // set state to executing
     changeStateIdletoExecute(omxNode, observer);
 
-    encodeNFrames(omxNode, observer, &iBuffer, &oBuffer, 1024, samplesPerFrame,
+    eleStream.open(mURL, std::ifstream::binary);
+    ASSERT_EQ(eleStream.is_open(), true);
+    encodeNFrames(omxNode, observer, &iBuffer, &oBuffer, 128, samplesPerFrame,
                   nChannels, nSampleRate, eleStream);
+    eleStream.close();
+    waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer);
+    testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag);
 
     // set state to idle
     changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
     // set state to executing
     changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
                             kPortIndexInput, kPortIndexOutput);
-
-    eleStream.close();
 }
 
 int main(int argc, char** argv) {

@@ -30,8 +30,6 @@
 #include "sys/select.h"
 #include "unistd.h"
 
-#include <android/frameworks/schedulerservice/1.0/ISchedulingPolicyService.h>
-
 static const int INVALID_FD = -1;
 
 static const int BT_RT_PRIORITY = 1;
@@ -119,19 +117,12 @@ int AsyncFdWatcher::notifyThread() {
 }
 
 void AsyncFdWatcher::ThreadRoutine() {
-  using ::android::frameworks::schedulerservice::V1_0::ISchedulingPolicyService;
-  using ::android::hardware::Return;
-  sp<ISchedulingPolicyService> manager = ISchedulingPolicyService::getService();
-  if (manager == nullptr) {
-    ALOGE("%s: Couldn't get scheduler manager to set SCHED_FIFO.", __func__);
-  } else {
-    Return<bool> ret = manager->requestPriority(getpid(),
-                                                gettid(),
-                                                BT_RT_PRIORITY);
-    if (!ret.isOk() || !ret) {
-      ALOGE("%s unable to set SCHED_FIFO for pid %d, tid %d", __func__,
-            getpid(), gettid());
-    }
+  // Make watching thread RT.
+  struct sched_param rt_params;
+  rt_params.sched_priority = BT_RT_PRIORITY;
+  if (sched_setscheduler(gettid(), SCHED_FIFO, &rt_params)) {
+    ALOGE("%s unable to set SCHED_FIFO for pid %d, tid %d, error %s", __func__,
+          getpid(), gettid(), strerror(errno));
   }
 
   while (running_) {

@@ -20,8 +20,8 @@
 
 #include <hidl/LegacySupport.h>
 
-// Add an extra thread for calls to the scheduler service.
-static const size_t kMaxThreads = 2;
+// Extra threads make priority inheritance faster.
+static const size_t kMaxThreads = 5;
 
 // Generated HIDL files
 using android::hardware::bluetooth::V1_0::IBluetoothHci;
