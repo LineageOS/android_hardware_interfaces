@@ -403,12 +403,14 @@ void CameraDeviceSession::ResultBatcher::freeReleaseFences(hidl_vec<CaptureResul
         if (result.inputBuffer.releaseFence.getNativeHandle() != nullptr) {
             native_handle_t* handle = const_cast<native_handle_t*>(
                     result.inputBuffer.releaseFence.getNativeHandle());
+            native_handle_close(handle);
             native_handle_delete(handle);
         }
         for (auto& buf : result.outputBuffers) {
             if (buf.releaseFence.getNativeHandle() != nullptr) {
                 native_handle_t* handle = const_cast<native_handle_t*>(
                         buf.releaseFence.getNativeHandle());
+                native_handle_close(handle);
                 native_handle_delete(handle);
             }
         }
@@ -586,8 +588,7 @@ void CameraDeviceSession::ResultBatcher::notify(NotifyMsg& msg) {
 void CameraDeviceSession::ResultBatcher::invokeProcessCaptureResultCallback(
         hidl_vec<CaptureResult> &results, bool tryWriteFmq) {
     if (mProcessCaptureResultLock.tryLock() != OK) {
-        ALOGW("%s: previous call is not finished! waiting 1s...",
-                __FUNCTION__);
+        ALOGV("%s: previous call is not finished! waiting 1s...", __FUNCTION__);
         if (mProcessCaptureResultLock.timedLock(1000000000 /* 1s */) != OK) {
             ALOGE("%s: cannot acquire lock in 1s, cannot proceed",
                     __FUNCTION__);

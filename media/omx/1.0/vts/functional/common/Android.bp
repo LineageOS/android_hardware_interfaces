@@ -14,34 +14,20 @@
 // limitations under the License.
 //
 
-cc_test {
-    name: "VtsHalMediaOmxV1_0TargetComponentTest",
+cc_library_static {
+    name: "VtsHalMediaOmxV1_0CommonUtil",
     defaults: ["hidl_defaults"],
-    srcs: ["VtsHalMediaOmxV1_0TargetComponentTest.cpp"],
+    srcs: ["media_hidl_test_common.cpp"],
     shared_libs: [
-        "libbase",
         "liblog",
-        "libcutils",
-        "libhidlbase",
         "libhidlmemory",
-        "libhidltransport",
-        "libhwbinder",
-        "libnativehelper",
-        "libutils",
-        "libstagefright_foundation",
         "android.hidl.allocator@1.0",
         "android.hidl.memory@1.0",
         "android.hardware.media.omx@1.0",
     ],
-    static_libs: ["VtsHalHidlTargetTestBase",
-                  "VtsHalMediaOmxV1_0CommonUtil"],
-    cflags: [
-        "-O0",
-        "-g",
-    ],
+    static_libs: ["VtsHalHidlTargetTestBase"],
+    cflags: [ "-O0", "-g", ],
     include_dirs: [
         "frameworks/native/include/media/openmax/",
-        "hardware/interfaces/media/omx/1.0/vts/functional/common",
     ],
 }
-
