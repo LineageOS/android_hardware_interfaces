@@ -14,19 +14,4 @@
  * limitations under the License.
  */
 
-#include <radio_hidl_hal_utils.h>
-
-int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(new RadioHidlEnvironment);
-    ::testing::InitGoogleTest(&argc, argv);
-
-    // setup seed for rand function
-    int seedSrand = time(NULL);
-    std::cout << "seed setup for random function (radio):" + std::to_string(seedSrand) << std::endl;
-    srand(seedSrand);
-
-    int status = RUN_ALL_TESTS();
-    LOG(INFO) << "Test result = " << status;
-
-    return status;
-}
+int GetRandomSerialNumber();
