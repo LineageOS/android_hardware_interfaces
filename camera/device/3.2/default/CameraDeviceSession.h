@@ -184,6 +184,9 @@ private:
             std::vector<NotifyMsg> mShutterMsgs;
 
             struct BufferBatch {
+                BufferBatch(uint32_t batchSize) {
+                    mBuffers.reserve(batchSize);
+                }
                 bool mDelivered = false;
                 // This currently assumes every batched request will output to the batched stream
                 // and since HAL must always send buffers in order, no frameNumber tracking is
@@ -240,6 +243,11 @@ private:
         void notifySingleMsg(NotifyMsg& msg);
         void processOneCaptureResult(CaptureResult& result);
         void invokeProcessCaptureResultCallback(hidl_vec<CaptureResult> &results, bool tryWriteFmq);
+
+        // move/push function avoids "hidl_handle& operator=(hidl_handle&)", which clones native
+        // handle
+        void moveStreamBuffer(StreamBuffer&& src, StreamBuffer& dst);
+        void pushStreamBuffer(StreamBuffer&& src, std::vector<StreamBuffer>& dst);
 
         // Protect access to mInflightBatches, mNumPartialResults and mStreamsToBatch
         // processCaptureRequest, processCaptureResult, notify will compete for this lock
