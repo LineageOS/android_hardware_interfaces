@@ -17,9 +17,18 @@
 cc_library_static {
     name: "libVtsHalGraphicsComposerTestUtils",
     defaults: ["hidl_defaults"],
-    srcs: ["VtsHalGraphicsComposerTestUtils.cpp"],
-    shared_libs: ["android.hardware.graphics.composer@2.1"],
+    srcs: [
+        "GraphicsComposerCallback.cpp",
+        "TestCommandReader.cpp",
+        "VtsHalGraphicsComposerTestUtils.cpp",
+    ],
+    shared_libs: [
+        "android.hardware.graphics.composer@2.1",
+        "libfmq",
+        "libsync",
+    ],
     static_libs: [
+        "libhwcomposer-command-buffer",
         "VtsHalHidlTargetTestBase",
     ],
     cflags: [
@@ -28,6 +37,7 @@ cc_library_static {
         "-Werror",
         "-O0",
         "-g",
+        "-DLOG_TAG=\"GraphicsComposerTestUtils\"",
     ],
     export_include_dirs: ["."],
 }
