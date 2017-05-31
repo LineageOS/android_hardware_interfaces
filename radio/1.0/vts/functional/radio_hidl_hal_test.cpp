@@ -65,7 +65,8 @@ bool RadioHidlTest::CheckGeneralError() {
             radioRsp->rspInfo.error == RadioError::NO_MEMORY ||
             radioRsp->rspInfo.error == RadioError::INTERNAL_ERR ||
             radioRsp->rspInfo.error == RadioError::SYSTEM_ERR ||
-            radioRsp->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED);
+            radioRsp->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED ||
+            radioRsp->rspInfo.error == RadioError::CANCELLED);
 }
 
 bool RadioHidlTest::CheckOEMError() {
