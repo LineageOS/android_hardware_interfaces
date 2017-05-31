@@ -47,6 +47,7 @@ using ::std::string;
 string service_name = "default";
 
 static bool arm_deleteAllKeys = false;
+static bool dump_Attestations = false;
 
 namespace android {
 namespace hardware {
@@ -233,6 +234,19 @@ string hex2str(string a) {
     return b;
 }
 
+char nibble2hex[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
+                       '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+
+string bin2hex(const hidl_vec<uint8_t>& data) {
+    string retval;
+    retval.reserve(data.size() * 2 + 1);
+    for (uint8_t byte : data) {
+        retval.push_back(nibble2hex[0x0F & (byte >> 4)]);
+        retval.push_back(nibble2hex[0x0F & byte]);
+    }
+    return retval;
+}
+
 string rsa_key = hex2str("30820275020100300d06092a864886f70d01010105000482025f3082025b"
                          "02010002818100c6095409047d8634812d5a218176e45c41d60a75b13901"
                          "f234226cffe776521c5a77b9e389417b71c0b6a44d13afe4e4a2805d46c9"
@@ -273,11 +287,13 @@ X509* parse_cert_blob(const hidl_vec<uint8_t>& blob) {
 
 bool verify_chain(const hidl_vec<hidl_vec<uint8_t>>& chain) {
     for (size_t i = 0; i < chain.size() - 1; ++i) {
-        auto& key_cert_blob = chain[i];
-        auto& signing_cert_blob = chain[i + 1];
-
-        X509_Ptr key_cert(parse_cert_blob(key_cert_blob));
-        X509_Ptr signing_cert(parse_cert_blob(signing_cert_blob));
+        X509_Ptr key_cert(parse_cert_blob(chain[i]));
+        X509_Ptr signing_cert;
+        if (i < chain.size() - 1) {
+            signing_cert.reset(parse_cert_blob(chain[i + 1]));
+        } else {
+            signing_cert.reset(parse_cert_blob(chain[i]));
+        }
         EXPECT_TRUE(!!key_cert.get() && !!signing_cert.get());
         if (!key_cert.get() || !signing_cert.get()) return false;
 
@@ -287,6 +303,8 @@ bool verify_chain(const hidl_vec<hidl_vec<uint8_t>>& chain) {
 
         EXPECT_EQ(1, X509_verify(key_cert.get(), signing_pubkey.get()))
             << "Verification of certificate " << i << " failed";
+
+        if (dump_Attestations) std::cout << bin2hex(chain[i]) << std::endl;
     }
 
     return true;
@@ -4114,6 +4132,9 @@ int main(int argc, char** argv) {
         if (argv[i][0] == '-') {
             if (std::string(argv[i]) == "--arm_deleteAllKeys") {
                 arm_deleteAllKeys = true;
+            }
+            if (std::string(argv[i]) == "--dump_attestations") {
+                dump_Attestations = true;
             }
         } else {
             positional_args.push_back(argv[i]);
