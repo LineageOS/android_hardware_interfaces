@@ -27,7 +27,8 @@ cc_test {
            "radio_hidl_hal_test.cpp",
            "radio_hidl_hal_voice.cpp",
            "radio_response.cpp",
-           "VtsHalRadioV1_0TargetTest.cpp"],
+           "VtsHalRadioV1_0TargetTest.cpp",
+           "vts_test_util.cpp"],
     shared_libs: [
         "libbase",
         "liblog",
@@ -51,7 +52,8 @@ cc_test {
     srcs: ["sap_callback.cpp",
            "sap_hidl_hal_api.cpp",
            "sap_hidl_hal_test.cpp",
-           "VtsHalSapV1_0TargetTest.cpp"],
+           "VtsHalSapV1_0TargetTest.cpp",
+           "vts_test_util.cpp"],
     shared_libs: [
         "libbase",
         "liblog",
