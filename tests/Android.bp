@@ -15,6 +15,7 @@ subdirs = [
     "inheritance/1.0/default",
     "libhwbinder/1.0",
     "libhwbinder/1.0/default",
+    "libhwbinder/aidl",
     "memory/1.0",
     "memory/1.0/default",
     "msgq/1.0",
@@ -22,8 +23,4 @@ subdirs = [
     "pointer/1.0",
     "pointer/1.0/default",
     "pointer/1.0/default/lib",
-    "versioning/1.0",
-    "versioning/2.2",
-    "versioning/2.3",
-    "versioning/2.4",
 ]

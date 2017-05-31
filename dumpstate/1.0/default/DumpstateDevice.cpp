@@ -37,7 +37,7 @@ Return<void> DumpstateDevice::dumpstateBoard(const hidl_handle& handle) {
     // this interface - since HIDL_FETCH_IDumpstateDevice() is not defined, this function will never
     // be called by dumpstate.
 
-    if (handle->numFds < 1) {
+    if (handle == nullptr || handle->numFds < 1) {
         ALOGE("no FDs\n");
         return Void();
     }

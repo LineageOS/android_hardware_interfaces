@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <vts_test_util.h>
+#include <iostream>
+using namespace std;
 
-package android.hardware.tests.versioning@2.3;
-
-import @2.2::IFoo;
-
-// Must extend @2.2::IFoo.
-interface IFoo extends @2.2::IFoo {
-
-};
+int GetRandomSerialNumber() {
+    return rand();
+}

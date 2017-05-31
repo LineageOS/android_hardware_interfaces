@@ -341,7 +341,7 @@ void CameraDeviceSession::ResultBatcher::registerBatch(
     batch->mLastFrame = batch->mFirstFrame + batch->mBatchSize - 1;
     batch->mNumPartialResults = mNumPartialResults;
     for (int id : mStreamsToBatch) {
-        batch->mBatchBufs[id] = InflightBatch::BufferBatch();
+        batch->mBatchBufs.emplace(id, batch->mBatchSize);
     }
     Mutex::Autolock _l(mLock);
     mInflightBatches.push_back(batch);
@@ -403,17 +403,42 @@ void CameraDeviceSession::ResultBatcher::freeReleaseFences(hidl_vec<CaptureResul
         if (result.inputBuffer.releaseFence.getNativeHandle() != nullptr) {
             native_handle_t* handle = const_cast<native_handle_t*>(
                     result.inputBuffer.releaseFence.getNativeHandle());
+            native_handle_close(handle);
             native_handle_delete(handle);
         }
         for (auto& buf : result.outputBuffers) {
             if (buf.releaseFence.getNativeHandle() != nullptr) {
                 native_handle_t* handle = const_cast<native_handle_t*>(
                         buf.releaseFence.getNativeHandle());
+                native_handle_close(handle);
                 native_handle_delete(handle);
             }
         }
     }
     return;
+}
+
+void CameraDeviceSession::ResultBatcher::moveStreamBuffer(StreamBuffer&& src, StreamBuffer& dst) {
+    // Only dealing with releaseFence here. Assume buffer/acquireFence are null
+    const native_handle_t* handle = src.releaseFence.getNativeHandle();
+    src.releaseFence = nullptr;
+    dst = src;
+    dst.releaseFence = handle;
+    if (handle != dst.releaseFence.getNativeHandle()) {
+        ALOGE("%s: native handle cloned!", __FUNCTION__);
+    }
+}
+
+void CameraDeviceSession::ResultBatcher::pushStreamBuffer(
+        StreamBuffer&& src, std::vector<StreamBuffer>& dst) {
+    // Only dealing with releaseFence here. Assume buffer/acquireFence are null
+    const native_handle_t* handle = src.releaseFence.getNativeHandle();
+    src.releaseFence = nullptr;
+    dst.push_back(src);
+    dst.back().releaseFence = handle;
+    if (handle != dst.back().releaseFence.getNativeHandle()) {
+        ALOGE("%s: native handle cloned!", __FUNCTION__);
+    }
 }
 
 void CameraDeviceSession::ResultBatcher::sendBatchBuffersLocked(std::shared_ptr<InflightBatch> batch) {
@@ -442,7 +467,12 @@ void CameraDeviceSession::ResultBatcher::sendBatchBuffersLocked(
     if (batchSize == 0) {
         ALOGW("%s: there is no buffer to be delivered for this batch.", __FUNCTION__);
         for (int streamId : streams) {
-            InflightBatch::BufferBatch& bb = batch->mBatchBufs[streamId];
+            auto it = batch->mBatchBufs.find(streamId);
+            if (it == batch->mBatchBufs.end()) {
+                ALOGE("%s: cannot find stream %d in batched buffers!", __FUNCTION__, streamId);
+                return;
+            }
+            InflightBatch::BufferBatch& bb = it->second;
             bb.mDelivered = true;
         }
         return;
@@ -458,21 +488,35 @@ void CameraDeviceSession::ResultBatcher::sendBatchBuffersLocked(
         results[i].inputBuffer.bufferId = 0;
         results[i].inputBuffer.buffer = nullptr;
         std::vector<StreamBuffer> outBufs;
+        outBufs.reserve(streams.size());
         for (int streamId : streams) {
-            InflightBatch::BufferBatch& bb = batch->mBatchBufs[streamId];
+            auto it = batch->mBatchBufs.find(streamId);
+            if (it == batch->mBatchBufs.end()) {
+                ALOGE("%s: cannot find stream %d in batched buffers!", __FUNCTION__, streamId);
+                return;
+            }
+            InflightBatch::BufferBatch& bb = it->second;
             if (bb.mDelivered) {
                 continue;
             }
             if (i < bb.mBuffers.size()) {
-                outBufs.push_back(bb.mBuffers[i]);
+                pushStreamBuffer(std::move(bb.mBuffers[i]), outBufs);
             }
         }
-        results[i].outputBuffers = outBufs;
+        results[i].outputBuffers.resize(outBufs.size());
+        for (size_t j = 0; j < outBufs.size(); j++) {
+            moveStreamBuffer(std::move(outBufs[j]), results[i].outputBuffers[j]);
+        }
     }
     invokeProcessCaptureResultCallback(results, /* tryWriteFmq */false);
     freeReleaseFences(results);
     for (int streamId : streams) {
-        InflightBatch::BufferBatch& bb = batch->mBatchBufs[streamId];
+        auto it = batch->mBatchBufs.find(streamId);
+        if (it == batch->mBatchBufs.end()) {
+            ALOGE("%s: cannot find stream %d in batched buffers!", __FUNCTION__, streamId);
+            return;
+        }
+        InflightBatch::BufferBatch& bb = it->second;
         bb.mDelivered = true;
         bb.mBuffers.clear();
     }
@@ -586,8 +630,7 @@ void CameraDeviceSession::ResultBatcher::notify(NotifyMsg& msg) {
 void CameraDeviceSession::ResultBatcher::invokeProcessCaptureResultCallback(
         hidl_vec<CaptureResult> &results, bool tryWriteFmq) {
     if (mProcessCaptureResultLock.tryLock() != OK) {
-        ALOGW("%s: previous call is not finished! waiting 1s...",
-                __FUNCTION__);
+        ALOGV("%s: previous call is not finished! waiting 1s...", __FUNCTION__);
         if (mProcessCaptureResultLock.timedLock(1000000000 /* 1s */) != OK) {
             ALOGE("%s: cannot acquire lock in 1s, cannot proceed",
                     __FUNCTION__);
@@ -612,7 +655,9 @@ void CameraDeviceSession::ResultBatcher::invokeProcessCaptureResultCallback(
 }
 
 void CameraDeviceSession::ResultBatcher::processOneCaptureResult(CaptureResult& result) {
-    hidl_vec<CaptureResult> results = {result};
+    hidl_vec<CaptureResult> results;
+    results.resize(1);
+    results[0] = std::move(result);
     invokeProcessCaptureResultCallback(results, /* tryWriteFmq */true);
     freeReleaseFences(results);
     return;
@@ -649,10 +694,10 @@ void CameraDeviceSession::ResultBatcher::processCaptureResult(CaptureResult& res
             auto it = batch->mBatchBufs.find(buffer.streamId);
             if (it != batch->mBatchBufs.end()) {
                 InflightBatch::BufferBatch& bb = it->second;
-                bb.mBuffers.push_back(buffer);
+                pushStreamBuffer(std::move(buffer), bb.mBuffers);
                 filledStreams.push_back(buffer.streamId);
             } else {
-                nonBatchedBuffers.push_back(buffer);
+                pushStreamBuffer(std::move(buffer), nonBatchedBuffers);
             }
         }
 
@@ -661,8 +706,12 @@ void CameraDeviceSession::ResultBatcher::processCaptureResult(CaptureResult& res
             CaptureResult nonBatchedResult;
             nonBatchedResult.frameNumber = result.frameNumber;
             nonBatchedResult.fmqResultSize = 0;
-            nonBatchedResult.outputBuffers = nonBatchedBuffers;
-            nonBatchedResult.inputBuffer = result.inputBuffer;
+            nonBatchedResult.outputBuffers.resize(nonBatchedBuffers.size());
+            for (size_t i = 0; i < nonBatchedBuffers.size(); i++) {
+                moveStreamBuffer(
+                        std::move(nonBatchedBuffers[i]), nonBatchedResult.outputBuffers[i]);
+            }
+            moveStreamBuffer(std::move(result.inputBuffer), nonBatchedResult.inputBuffer);
             nonBatchedResult.partialResult = 0; // 0 for buffer only results
             processOneCaptureResult(nonBatchedResult);
         }
