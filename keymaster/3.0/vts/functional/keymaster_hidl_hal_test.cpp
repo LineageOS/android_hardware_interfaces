@@ -4008,7 +4008,8 @@ TEST_F(KeyDeletionTest, DeleteKey) {
             Begin(KeyPurpose::SIGN, key_blob_, AuthorizationSetBuilder()
                                                    .Digest(Digest::NONE)
                                                    .Padding(PaddingMode::NONE),
-                  &begin_out_params, &op_handle_));
+                  &begin_out_params, &op_handle_))
+            << " (Possibly b/37623742)";
     } else {
         EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::SIGN, key_blob_,
                                        AuthorizationSetBuilder()
