@@ -47,6 +47,7 @@ using ::std::string;
 string service_name = "default";
 
 static bool arm_deleteAllKeys = false;
+static bool dump_Attestations = false;
 
 namespace android {
 namespace hardware {
@@ -233,6 +234,19 @@ string hex2str(string a) {
     return b;
 }
 
+char nibble2hex[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
+                       '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+
+string bin2hex(const hidl_vec<uint8_t>& data) {
+    string retval;
+    retval.reserve(data.size() * 2 + 1);
+    for (uint8_t byte : data) {
+        retval.push_back(nibble2hex[0x0F & (byte >> 4)]);
+        retval.push_back(nibble2hex[0x0F & byte]);
+    }
+    return retval;
+}
+
 string rsa_key = hex2str("30820275020100300d06092a864886f70d01010105000482025f3082025b"
                          "02010002818100c6095409047d8634812d5a218176e45c41d60a75b13901"
                          "f234226cffe776521c5a77b9e389417b71c0b6a44d13afe4e4a2805d46c9"
@@ -273,11 +287,13 @@ X509* parse_cert_blob(const hidl_vec<uint8_t>& blob) {
 
 bool verify_chain(const hidl_vec<hidl_vec<uint8_t>>& chain) {
     for (size_t i = 0; i < chain.size() - 1; ++i) {
-        auto& key_cert_blob = chain[i];
-        auto& signing_cert_blob = chain[i + 1];
-
-        X509_Ptr key_cert(parse_cert_blob(key_cert_blob));
-        X509_Ptr signing_cert(parse_cert_blob(signing_cert_blob));
+        X509_Ptr key_cert(parse_cert_blob(chain[i]));
+        X509_Ptr signing_cert;
+        if (i < chain.size() - 1) {
+            signing_cert.reset(parse_cert_blob(chain[i + 1]));
+        } else {
+            signing_cert.reset(parse_cert_blob(chain[i]));
+        }
         EXPECT_TRUE(!!key_cert.get() && !!signing_cert.get());
         if (!key_cert.get() || !signing_cert.get()) return false;
 
@@ -287,6 +303,24 @@ bool verify_chain(const hidl_vec<hidl_vec<uint8_t>>& chain) {
 
         EXPECT_EQ(1, X509_verify(key_cert.get(), signing_pubkey.get()))
             << "Verification of certificate " << i << " failed";
+
+        char* cert_issuer =  //
+            X509_NAME_oneline(X509_get_issuer_name(key_cert.get()), nullptr, 0);
+        char* signer_subj =
+            X509_NAME_oneline(X509_get_subject_name(signing_cert.get()), nullptr, 0);
+        EXPECT_STREQ(cert_issuer, signer_subj) << "Cert " << i
+                                               << " has wrong issuer.  (Possibly b/38394614)";
+        if (i == 0) {
+            char* cert_sub = X509_NAME_oneline(X509_get_subject_name(key_cert.get()), nullptr, 0);
+            EXPECT_STREQ("/CN=Android Keystore Key", cert_sub)
+                << "Cert " << i << " has wrong subject.  (Possibly b/38394614)";
+            free(cert_sub);
+        }
+
+        free(cert_issuer);
+        free(signer_subj);
+
+        if (dump_Attestations) std::cout << bin2hex(chain[i]) << std::endl;
     }
 
     return true;
@@ -491,9 +525,10 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     }
 
     ErrorCode DeleteKey(HidlBuf* key_blob, bool keep_key_blob = false) {
-        ErrorCode error = keymaster_->deleteKey(*key_blob);
+        auto rc = keymaster_->deleteKey(*key_blob);
         if (!keep_key_blob) *key_blob = HidlBuf();
-        return error;
+        if (!rc.isOk()) return ErrorCode::UNKNOWN_ERROR;
+        return rc;
     }
 
     ErrorCode DeleteKey(bool keep_key_blob = false) {
@@ -507,12 +542,15 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
     ErrorCode GetCharacteristics(const HidlBuf& key_blob, const HidlBuf& client_id,
                                  const HidlBuf& app_data, KeyCharacteristics* key_characteristics) {
-        ErrorCode error;
-        keymaster_->getKeyCharacteristics(
-            key_blob, client_id, app_data,
-            [&](ErrorCode hidl_error, const KeyCharacteristics& hidl_key_characteristics) {
-                error = hidl_error, *key_characteristics = hidl_key_characteristics;
-            });
+        ErrorCode error = ErrorCode::UNKNOWN_ERROR;
+        EXPECT_TRUE(
+            keymaster_
+                ->getKeyCharacteristics(
+                    key_blob, client_id, app_data,
+                    [&](ErrorCode hidl_error, const KeyCharacteristics& hidl_key_characteristics) {
+                        error = hidl_error, *key_characteristics = hidl_key_characteristics;
+                    })
+                .isOk());
         return error;
     }
 
@@ -650,12 +688,16 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                         hidl_vec<hidl_vec<uint8_t>>* cert_chain) {
         SCOPED_TRACE("AttestKey");
         ErrorCode error;
-        keymaster_->attestKey(
+        auto rc = keymaster_->attestKey(
             key_blob, attest_params.hidl_data(),
             [&](ErrorCode hidl_error, const hidl_vec<hidl_vec<uint8_t>>& hidl_cert_chain) {
                 error = hidl_error;
                 *cert_chain = hidl_cert_chain;
             });
+
+        EXPECT_TRUE(rc.isOk()) << rc.description();
+        if (!rc.isOk()) return ErrorCode::UNKNOWN_ERROR;
+
         return error;
     }
 
@@ -959,11 +1001,13 @@ bool verify_attestation_record(const string& challenge, const string& app_id,
 
     att_sw_enforced.Sort();
     expected_sw_enforced.Sort();
-    EXPECT_EQ(filter_tags(expected_sw_enforced), filter_tags(att_sw_enforced));
+    EXPECT_EQ(filter_tags(expected_sw_enforced), filter_tags(att_sw_enforced))
+        << "(Possibly b/38394619)";
 
     att_tee_enforced.Sort();
     expected_tee_enforced.Sort();
-    EXPECT_EQ(filter_tags(expected_tee_enforced), filter_tags(att_tee_enforced));
+    EXPECT_EQ(filter_tags(expected_tee_enforced), filter_tags(att_tee_enforced))
+        << "(Possibly b/38394619)";
 
     return true;
 }
@@ -3839,13 +3883,11 @@ TEST_F(AttestationTest, RsaAttestation) {
                                              .Authorization(TAG_INCLUDE_UNIQUE_ID)));
 
     hidl_vec<hidl_vec<uint8_t>> cert_chain;
-    EXPECT_EQ(
-        ErrorCode::OK,
-        AttestKey(
-            AuthorizationSetBuilder()
-                .Authorization(TAG_ATTESTATION_CHALLENGE, HidlBuf("challenge"))
-                .Authorization(TAG_ATTESTATION_APPLICATION_ID, HidlBuf("foo")),
-            &cert_chain));
+    ASSERT_EQ(ErrorCode::OK,
+              AttestKey(AuthorizationSetBuilder()
+                            .Authorization(TAG_ATTESTATION_CHALLENGE, HidlBuf("challenge"))
+                            .Authorization(TAG_ATTESTATION_APPLICATION_ID, HidlBuf("foo")),
+                        &cert_chain));
     EXPECT_GE(cert_chain.size(), 2U);
     EXPECT_TRUE(verify_chain(cert_chain));
     EXPECT_TRUE(
@@ -3889,13 +3931,11 @@ TEST_F(AttestationTest, EcAttestation) {
                                              .Authorization(TAG_INCLUDE_UNIQUE_ID)));
 
     hidl_vec<hidl_vec<uint8_t>> cert_chain;
-    EXPECT_EQ(
-        ErrorCode::OK,
-        AttestKey(
-            AuthorizationSetBuilder()
-                .Authorization(TAG_ATTESTATION_CHALLENGE, HidlBuf("challenge"))
-                .Authorization(TAG_ATTESTATION_APPLICATION_ID, HidlBuf("foo")),
-            &cert_chain));
+    ASSERT_EQ(ErrorCode::OK,
+              AttestKey(AuthorizationSetBuilder()
+                            .Authorization(TAG_ATTESTATION_CHALLENGE, HidlBuf("challenge"))
+                            .Authorization(TAG_ATTESTATION_APPLICATION_ID, HidlBuf("foo")),
+                        &cert_chain));
     EXPECT_GE(cert_chain.size(), 2U);
     EXPECT_TRUE(verify_chain(cert_chain));
 
@@ -4110,6 +4150,9 @@ int main(int argc, char** argv) {
         if (argv[i][0] == '-') {
             if (std::string(argv[i]) == "--arm_deleteAllKeys") {
                 arm_deleteAllKeys = true;
+            }
+            if (std::string(argv[i]) == "--dump_attestations") {
+                dump_Attestations = true;
             }
         } else {
             positional_args.push_back(argv[i]);
