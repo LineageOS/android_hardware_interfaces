@@ -26,7 +26,8 @@ namespace V2_0 {
 namespace implementation {
 
 PrimaryDevice::PrimaryDevice(audio_hw_device_t* device)
-    : mDevice{new Device(device, AUDIO_HARDWARE_MODULE_ID_PRIMARY)} {}
+        : mDevice(new Device(device)) {
+}
 
 PrimaryDevice::~PrimaryDevice() {}
 
