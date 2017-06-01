@@ -17,12 +17,17 @@
 #include <sap_hidl_hal_utils.h>
 
 int main(int argc, char** argv) {
-  // Add Sim-access Profile Hidl Environment
-  ::testing::AddGlobalTestEnvironment(new SapHidlEnvironment);
-  ::testing::InitGoogleTest(&argc, argv);
+    // Add Sim-access Profile Hidl Environment
+    ::testing::AddGlobalTestEnvironment(new SapHidlEnvironment);
+    ::testing::InitGoogleTest(&argc, argv);
 
-  int status = RUN_ALL_TESTS();
-  LOG(INFO) << "Test result = " << status;
+    // setup seed for rand function
+    int seedSrand = time(NULL);
+    std::cout << "seed setup for random function (sap):" + std::to_string(seedSrand) << std::endl;
+    srand(seedSrand);
 
-  return status;
+    int status = RUN_ALL_TESTS();
+    LOG(INFO) << "Test result = " << status;
+
+    return status;
 }
