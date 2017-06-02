@@ -620,6 +620,9 @@ enum VmsSimpleMessageIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
 
   /* The version of the VMS layer. */
   VMS_LAYER_VERSION = 2,
+
+  /* The layer type as defined in the vms protocol */
+  VMS_LAYER_SUB_TYPE = 3,
 };
 
 /*
