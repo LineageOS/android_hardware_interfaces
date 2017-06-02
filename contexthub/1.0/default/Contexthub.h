@@ -65,14 +65,26 @@ private:
 
     struct CachedHubInformation{
         struct hub_app_name_t osAppName;
-        sp<IContexthubCallback> callBack;
+        sp<IContexthubCallback> callback;
+    };
+
+    class DeathRecipient : public hidl_death_recipient {
+    public:
+        DeathRecipient(const sp<Contexthub> contexthub);
+
+        void serviceDied(
+                uint64_t cookie,
+                const wp<::android::hidl::base::V1_0::IBase>& who) override;
+
+    private:
+        sp<Contexthub> mContexthub;
     };
 
     status_t mInitCheck;
     const struct context_hub_module_t *mContextHubModule;
     std::unordered_map<uint32_t, CachedHubInformation> mCachedHubInfo;
 
-    sp<IContexthubCallback> mCb;
+    sp<DeathRecipient> mDeathRecipient;
     bool mIsTransactionPending;
     uint32_t mTransactionId;
 
@@ -84,6 +96,9 @@ private:
                         uint32_t msgType,
                         const uint8_t *msg,
                         int msgLen);
+
+    // Handle the case where the callback registered for the given hub ID dies
+    void handleServiceDeath(uint32_t hubId);
 
     static int contextHubCb(uint32_t hubId,
                             const struct hub_message_t *rxMsg,
