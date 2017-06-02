@@ -36,6 +36,7 @@ using ::android::hardware::media::omx::V1_0::IOmxNode;
 using ::android::hardware::media::omx::V1_0::Message;
 using ::android::hardware::media::omx::V1_0::CodecBuffer;
 using ::android::hardware::media::omx::V1_0::PortMode;
+using ::android::hardware::media::omx::V1_0::Status;
 using ::android::hidl::allocator::V1_0::IAllocator;
 using ::android::hidl::memory::V1_0::IMemory;
 using ::android::hidl::memory::V1_0::IMapper;
@@ -50,6 +51,14 @@ using ::android::sp;
 #include <media/hardware/HardwareAPI.h>
 #include <media_hidl_test_common.h>
 #include <memory>
+
+// set component role
+Return<android::hardware::media::omx::V1_0::Status> setRole(
+    sp<IOmxNode> omxNode, const char* role) {
+    OMX_PARAM_COMPONENTROLETYPE params;
+    strcpy((char*)params.cRole, role);
+    return setParam(omxNode, OMX_IndexParamStandardComponentRole, &params);
+}
 
 // allocate buffers needed on a component port
 void allocatePortBuffers(sp<IOmxNode> omxNode,
@@ -293,51 +302,59 @@ size_t getEmptyBufferID(android::Vector<BufferInfo>* buffArray) {
 void dispatchOutputBuffer(sp<IOmxNode> omxNode,
                           android::Vector<BufferInfo>* buffArray,
                           size_t bufferIndex, PortMode portMode) {
-    if (portMode == PortMode::DYNAMIC_ANW_BUFFER) {
-        android::hardware::media::omx::V1_0::Status status;
-        CodecBuffer t = (*buffArray)[bufferIndex].omxBuffer;
-        t.type = CodecBuffer::Type::ANW_BUFFER;
-        native_handle_t* fenceNh = native_handle_create(0, 0);
-        ASSERT_NE(fenceNh, nullptr);
-        status = omxNode->fillBuffer((*buffArray)[bufferIndex].id, t, fenceNh);
-        native_handle_close(fenceNh);
-        native_handle_delete(fenceNh);
-        ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-        buffArray->editItemAt(bufferIndex).owner = component;
-    } else {
-        android::hardware::media::omx::V1_0::Status status;
-        CodecBuffer t;
-        t.sharedMemory = android::hardware::hidl_memory();
-        t.nativeHandle = android::hardware::hidl_handle();
-        t.type = CodecBuffer::Type::PRESET;
-        t.attr.preset.rangeOffset = 0;
-        t.attr.preset.rangeLength = 0;
-        native_handle_t* fenceNh = native_handle_create(0, 0);
-        ASSERT_NE(fenceNh, nullptr);
-        status = omxNode->fillBuffer((*buffArray)[bufferIndex].id, t, fenceNh);
-        native_handle_close(fenceNh);
-        native_handle_delete(fenceNh);
-        ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-        buffArray->editItemAt(bufferIndex).owner = component;
+    android::hardware::media::omx::V1_0::Status status;
+    CodecBuffer t;
+    native_handle_t* fenceNh = native_handle_create(0, 0);
+    ASSERT_NE(fenceNh, nullptr);
+    switch (portMode) {
+        case PortMode::DYNAMIC_ANW_BUFFER:
+            t = (*buffArray)[bufferIndex].omxBuffer;
+            t.type = CodecBuffer::Type::ANW_BUFFER;
+            status =
+                omxNode->fillBuffer((*buffArray)[bufferIndex].id, t, fenceNh);
+            break;
+        case PortMode::PRESET_SECURE_BUFFER:
+        case PortMode::PRESET_BYTE_BUFFER:
+            t.sharedMemory = android::hardware::hidl_memory();
+            t.nativeHandle = android::hardware::hidl_handle();
+            t.type = CodecBuffer::Type::PRESET;
+            t.attr.preset.rangeOffset = 0;
+            t.attr.preset.rangeLength = 0;
+            status =
+                omxNode->fillBuffer((*buffArray)[bufferIndex].id, t, fenceNh);
+            break;
+        default:
+            status = Status::NAME_NOT_FOUND;
     }
+    native_handle_close(fenceNh);
+    native_handle_delete(fenceNh);
+    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
+    buffArray->editItemAt(bufferIndex).owner = component;
 }
 
 // dispatch buffer to input port
 void dispatchInputBuffer(sp<IOmxNode> omxNode,
                          android::Vector<BufferInfo>* buffArray,
                          size_t bufferIndex, int bytesCount, uint32_t flags,
-                         uint64_t timestamp) {
+                         uint64_t timestamp, PortMode portMode) {
     android::hardware::media::omx::V1_0::Status status;
     CodecBuffer t;
-    t.sharedMemory = android::hardware::hidl_memory();
-    t.nativeHandle = android::hardware::hidl_handle();
-    t.type = CodecBuffer::Type::PRESET;
-    t.attr.preset.rangeOffset = 0;
-    t.attr.preset.rangeLength = bytesCount;
     native_handle_t* fenceNh = native_handle_create(0, 0);
     ASSERT_NE(fenceNh, nullptr);
-    status = omxNode->emptyBuffer((*buffArray)[bufferIndex].id, t, flags,
-                                  timestamp, fenceNh);
+    switch (portMode) {
+        case PortMode::PRESET_SECURE_BUFFER:
+        case PortMode::PRESET_BYTE_BUFFER:
+            t.sharedMemory = android::hardware::hidl_memory();
+            t.nativeHandle = android::hardware::hidl_handle();
+            t.type = CodecBuffer::Type::PRESET;
+            t.attr.preset.rangeOffset = 0;
+            t.attr.preset.rangeLength = bytesCount;
+            status = omxNode->emptyBuffer((*buffArray)[bufferIndex].id, t,
+                                          flags, timestamp, fenceNh);
+            break;
+        default:
+            status = Status::NAME_NOT_FOUND;
+    }
     native_handle_close(fenceNh);
     native_handle_delete(fenceNh);
     ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
