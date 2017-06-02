@@ -18,4 +18,11 @@ cc_library_shared {
         "libutils",
         "android.hardware.renderscript@1.0",
     ],
+
+    product_variables: {
+        override_rs_driver: {
+            cflags: ["-DOVERRIDE_RS_DRIVER=%s"],
+        },
+    },
+
 }
