@@ -450,16 +450,13 @@ TEST_F(AudioEffectHidlTest, SetAudioSource) {
 }
 
 TEST_F(AudioEffectHidlTest, Offload) {
-  description("Verify that calling Offload method either works or returns not supported");
+  description("Verify that calling Offload method does not crash");
   EffectOffloadParameter offloadParam;
   offloadParam.isOffload = false;
   offloadParam.ioHandle =
       static_cast<int>(AudioHandleConsts::AUDIO_IO_HANDLE_NONE);
   Return<Result> ret = effect->offload(offloadParam);
   EXPECT_TRUE(ret.isOk());
-  EXPECT_TRUE(Result::OK == ret || Result::NOT_SUPPORTED == ret)
-          << "Expected OK or NOT_SUPPORTED, actual value: "
-          << static_cast<int32_t>(static_cast<Result>(ret));
 }
 
 TEST_F(AudioEffectHidlTest, PrepareForProcessing) {
