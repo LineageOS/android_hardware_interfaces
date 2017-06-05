@@ -14,29 +14,19 @@
 // limitations under the License.
 //
 
-cc_test {
-    name: "VtsHalAudioV2_0TargetTest",
-    defaults: ["hidl_defaults"],
-    srcs: ["AudioPrimaryHidlHalTest.cpp",
-           "ValidateAudioConfiguration.cpp"],
-    shared_libs: [
-        "libbase",
-        "liblog",
-        "libhidlbase",
-        "libhidltransport",
-        "libutils",
-        "libcutils",
-        "libxml2",
-        "android.hardware.audio@2.0",
-        "android.hardware.audio.common@2.0",
-        "android.hardware.audio.common.test.utility",
-    ],
-    static_libs: ["VtsHalHidlTargetTestBase"],
+cc_library_shared {
+    name: "android.hardware.audio.common.test.utility",
+    defaults : ["hidl_defaults"],
+    srcs: ["src/ValidateXml.cpp"],
     cflags: [
         "-O0",
         "-g",
-        "-Wall",
         "-Wextra",
-        "-Werror",
     ],
+    local_include_dirs: ["include/utility"],
+    export_include_dirs: ["include"],
+    shared_libs: ["libxml2", "liblog"],
+    static_libs: ["libgtest"],
+    export_static_lib_headers: ["libgtest"],
 }
+

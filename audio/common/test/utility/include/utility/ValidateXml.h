@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_AUDIO_TEST_VALIDATEXML
-#define ANDROID_HARDWARE_AUDIO_TEST_VALIDATEXML
+#ifndef ANDROID_HARDWARE_AUDIO_COMMON_TEST_UTILITY_VALIDATE_XML_H
+#define ANDROID_HARDWARE_AUDIO_COMMON_TEST_UTILITY_VALIDATE_XML_H
 
 #include <gtest/gtest.h>
 
 namespace android {
 namespace hardware {
 namespace audio {
+namespace common {
 namespace test {
+namespace utility {
 
 /** Validate the provided XmlFile with the provided xsdFile.
  * Intended to use with ASSERT_PRED_FORMAT2 as such:
@@ -33,12 +35,15 @@ namespace test {
                                        const char* xmlFilePath, const char* xsdPathName);
 
 /** Helper gtest ASSERT to test xml validity against an xsd. */
-#define ASSERT_VALID_XML(xmlFilePath, xsdFilePath) \
-    ASSERT_PRED_FORMAT2(::android::hardware::audio::test::validateXml, xmlFilePath, xsdFilePath)
+#define ASSERT_VALID_XML(xmlFilePath, xsdFilePath)                                      \
+    ASSERT_PRED_FORMAT2(::android::hardware::audio::common::test::utility::validateXml, \
+                        xmlFilePath, xsdFilePath)
 
-}  // namespace test
-}  // namespace audio
-}  // namespace hardware
-}  // namespace android
+}  // utility
+}  // test
+}  // common
+}  // audio
+}  // test
+}  // utility
 
-#endif  // ANDROID_HARDWARE_AUDIO_TEST_VALIDATEXML
+#endif  // ANDROID_HARDWARE_AUDIO_COMMON_TEST_UTILITY_VALIDATE_XML_H

@@ -30,7 +30,9 @@
 namespace android {
 namespace hardware {
 namespace audio {
+namespace common {
 namespace test {
+namespace utility {
 
 /** Map libxml2 structures to their corresponding deleters. */
 template <class T>
@@ -125,7 +127,9 @@ struct Libxml2Global {
     return ::testing::AssertionSuccess();
 }
 
-}  // namespace test
-}  // namespace audio
-}  // namespace hardware
-}  // namespace android
+}  // utility
+}  // test
+}  // common
+}  // audio
+}  // test
+}  // utility

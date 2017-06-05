@@ -14,29 +14,37 @@
  * limitations under the License.
  */
 
+#ifndef ANDROID_HARDWARE_AUDIO_COMMON_TEST_UTILITY_RETURN_IN_H
+#define ANDROID_HARDWARE_AUDIO_COMMON_TEST_UTILITY_RETURN_IN_H
+
 #include <tuple>
 
+namespace android {
+namespace hardware {
+namespace audio {
+namespace common {
+namespace test {
 namespace utility {
 
 namespace detail {
 // Helper class to generate the HIDL synchronous callback
 template <class... ResultStore>
 class ReturnIn {
- public:
+   public:
     // Provide to the constructor the variables where the output parameters must be copied
     // TODO: take pointers to match google output parameter style ?
     ReturnIn(ResultStore&... ts) : results(ts...) {}
     // Synchronous callback
     template <class... Results>
-    void operator() (Results&&...results) {
+    void operator()(Results&&... results) {
         set(std::forward<Results>(results)...);
     }
- private:
+
+   private:
     // Recursively set all output parameters
     template <class Head, class... Tail>
     void set(Head&& head, Tail&&... tail) {
-        std::get<sizeof...(ResultStore) - sizeof...(Tail) - 1>(results)
-                  = std::forward<Head>(head);
+        std::get<sizeof...(ResultStore) - sizeof...(Tail) - 1>(results) = std::forward<Head>(head);
         set(tail...);
     }
     // Trivial case
@@ -45,7 +53,7 @@ class ReturnIn {
     // All variables to set are stored here
     std::tuple<ResultStore&...> results;
 };
-} // namespace detail
+}  // namespace detail
 
 // Generate the HIDL synchronous callback with a copy policy
 // Input: the variables (lvalue reference) where to save the return values
@@ -53,6 +61,15 @@ class ReturnIn {
 // The output parameters *will be copied* do not use this function if you have
 // a zero copy policy
 template <class... ResultStore>
-detail::ReturnIn<ResultStore...> returnIn(ResultStore&... ts) { return {ts...};}
-
+detail::ReturnIn<ResultStore...> returnIn(ResultStore&... ts) {
+    return {ts...};
 }
+
+}  // utility
+}  // test
+}  // common
+}  // audio
+}  // test
+}  // utility
+
+#endif  // ANDROID_HARDWARE_AUDIO_COMMON_TEST_UTILITY_RETURN_IN_H

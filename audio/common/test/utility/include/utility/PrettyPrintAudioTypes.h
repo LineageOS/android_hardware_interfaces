@@ -13,11 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#ifndef ANDROID_HARDWARE_AUDIO_COMMON_TEST_UTILITY_PRETTY_PRINT_AUDIO_TYPES_H
+#define ANDROID_HARDWARE_AUDIO_COMMON_TEST_UTILITY_PRETTY_PRINT_AUDIO_TYPES_H
+
+#include <iosfwd>
 #include <type_traits>
+
+#include <android/hardware/audio/2.0/types.h>
+#include <android/hardware/audio/common/2.0/types.h>
 
 /** @file Use HIDL generated toString methods to pretty print gtest errors */
 
-namespace detail {
+namespace prettyPrintAudioTypesDetail {
 
 // Print the value of an enum as hex
 template <class Enum>
@@ -25,7 +33,7 @@ inline void printUnderlyingValue(Enum value, ::std::ostream* os) {
     *os << std::hex << " (0x" << static_cast<std::underlying_type_t<Enum>>(value) << ")";
 }
 
-} // namespace detail
+}  // namespace detail
 
 namespace android {
 namespace hardware {
@@ -34,10 +42,10 @@ namespace V2_0 {
 
 inline void PrintTo(const Result& result, ::std::ostream* os) {
     *os << toString(result);
-    detail::printUnderlyingValue(result, os);
+    prettyPrintAudioTypesDetail::printUnderlyingValue(result, os);
 }
 
-} // namespace V2_0
+}  // namespace V2_0
 namespace common {
 namespace V2_0 {
 
@@ -47,16 +55,18 @@ inline void PrintTo(const AudioConfig& config, ::std::ostream* os) {
 
 inline void PrintTo(const AudioDevice& device, ::std::ostream* os) {
     *os << toString(device);
-    detail::printUnderlyingValue(device, os);
+    prettyPrintAudioTypesDetail::printUnderlyingValue(device, os);
 }
 
 inline void PrintTo(const AudioChannelMask& channelMask, ::std::ostream* os) {
     *os << toString(channelMask);
-    detail::printUnderlyingValue(channelMask, os);
+    prettyPrintAudioTypesDetail::printUnderlyingValue(channelMask, os);
 }
 
-} // namespace V2_0
-} // namespace common
-} // namespace audio
-} // namespace hardware
-} // namespace android
+}  // namespace V2_0
+}  // namespace common
+}  // namespace audio
+}  // namespace hardware
+}  // namespace android
+
+#endif  // ANDROID_HARDWARE_AUDIO_COMMON_TEST_UTILITY_PRETTY_PRINT_AUDIO_TYPES_H
