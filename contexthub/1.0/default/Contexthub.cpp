@@ -38,6 +38,7 @@ static constexpr uint64_t ALL_APPS = UINT64_C(0xFFFFFFFFFFFFFFFF);
 Contexthub::Contexthub()
         : mInitCheck(NO_INIT),
           mContextHubModule(nullptr),
+          mDeathRecipient(new DeathRecipient(this)),
           mIsTransactionPending(false) {
     const hw_module_t *module;
 
@@ -96,7 +97,7 @@ Return<void> Contexthub::getHubs(getHubs_cb _hidl_cb) {
             c.stoppedPowerDrawMw = hubArray[i].stopped_power_draw_mw;
             c.sleepPowerDrawMw = hubArray[i].sleep_power_draw_mw;
 
-            info.callBack = nullptr;
+            info.callback = nullptr;
             info.osAppName = hubArray[i].os_app_name;
             mCachedHubInfo[hubArray[i].hub_id] = info;
 
@@ -108,6 +109,16 @@ Return<void> Contexthub::getHubs(getHubs_cb _hidl_cb) {
 
     _hidl_cb(hubs);
     return Void();
+}
+
+Contexthub::DeathRecipient::DeathRecipient(sp<Contexthub> contexthub)
+        : mContexthub(contexthub) {}
+
+void Contexthub::DeathRecipient::serviceDied(
+        uint64_t cookie,
+        const wp<::android::hidl::base::V1_0::IBase>& /*who*/) {
+    uint32_t hubId = static_cast<uint32_t>(cookie);
+    mContexthub->handleServiceDeath(hubId);
 }
 
 bool Contexthub::isValidHubId(uint32_t hubId) {
@@ -123,7 +134,7 @@ sp<IContexthubCallback> Contexthub::getCallBackForHubId(uint32_t hubId) {
     if (!isValidHubId(hubId)) {
         return nullptr;
     } else {
-        return mCachedHubInfo[hubId].callBack;
+        return mCachedHubInfo[hubId].callback;
     }
 }
 
@@ -193,8 +204,22 @@ Return<Result> Contexthub::registerCallback(uint32_t hubId,
                                                      contextHubCb,
                                                      this) == 0) {
         // Initialized && valid hub && subscription successful
+        if (mCachedHubInfo[hubId].callback != nullptr) {
+            ALOGD("Modifying callback for hubId %" PRIu32, hubId);
+            mCachedHubInfo[hubId].callback->unlinkToDeath(mDeathRecipient);
+        }
+
+        mCachedHubInfo[hubId].callback = cb;
+        if (cb != nullptr) {
+            Return<bool> linkResult = cb->linkToDeath(mDeathRecipient, hubId);
+            bool linkSuccess = linkResult.isOk() ?
+                static_cast<bool>(linkResult) : false;
+            if (!linkSuccess) {
+                ALOGW("Couldn't link death recipient for hubId %" PRIu32,
+                      hubId);
+            }
+        }
         retVal = Result::OK;
-        mCachedHubInfo[hubId].callBack = cb;
     } else {
         // Initalized && valid hubId - but subscription unsuccessful
         // This is likely an internal error in the HAL implementation, but we
@@ -307,6 +332,16 @@ int Contexthub::handleOsMessage(sp<IContexthubCallback> cb,
       }
 
       return retVal;
+}
+
+void Contexthub::handleServiceDeath(uint32_t hubId) {
+    ALOGI("Callback/service died for hubId %" PRIu32, hubId);
+    int ret = mContextHubModule->subscribe_messages(hubId, nullptr, nullptr);
+    if (ret != 0) {
+        ALOGW("Failed to unregister callback from hubId %" PRIu32 ": %d",
+              hubId, ret);
+    }
+    mCachedHubInfo[hubId].callback.clear();
 }
 
 int Contexthub::contextHubCb(uint32_t hubId,
