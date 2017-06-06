@@ -37,6 +37,7 @@ genrule {
 
 cc_library_shared {
     name: "android.hardware.configstore@1.1",
+    defaults: ["hidl-module-defaults"],
     generated_sources: ["android.hardware.configstore@1.1_genc++"],
     generated_headers: ["android.hardware.configstore@1.1_genc++_headers"],
     export_generated_headers: ["android.hardware.configstore@1.1_genc++_headers"],

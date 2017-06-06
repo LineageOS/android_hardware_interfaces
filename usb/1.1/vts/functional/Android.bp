@@ -15,28 +15,24 @@
 //
 
 cc_test {
-    name: "VtsHalAudioV2_0TargetTest",
+    name: "VtsHalUsbV1_1TargetTest",
     defaults: ["hidl_defaults"],
-    srcs: ["AudioPrimaryHidlHalTest.cpp",
-           "ValidateAudioConfiguration.cpp"],
+    srcs: ["VtsHalUsbV1_1TargetTest.cpp"],
     shared_libs: [
         "libbase",
         "liblog",
+        "libcutils",
         "libhidlbase",
         "libhidltransport",
+        "libnativehelper",
         "libutils",
-        "libcutils",
-        "libxml2",
-        "android.hardware.audio@2.0",
-        "android.hardware.audio.common@2.0",
-        "android.hardware.audio.common.test.utility",
+        "android.hardware.usb@1.0",
+        "android.hardware.usb@1.1",
     ],
     static_libs: ["VtsHalHidlTargetTestBase"],
     cflags: [
         "-O0",
         "-g",
-        "-Wall",
-        "-Wextra",
-        "-Werror",
     ],
 }
+
