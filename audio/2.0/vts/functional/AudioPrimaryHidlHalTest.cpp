@@ -21,9 +21,7 @@
 #include <cstddef>
 #include <cstdio>
 #include <limits>
-#include <list>
 #include <string>
-#include <type_traits>
 #include <vector>
 
 #include <VtsHalHidlTargetTestBase.h>
@@ -37,6 +35,8 @@
 #include <android/hardware/audio/common/2.0/types.h>
 
 #include "utility/AssertOk.h"
+#include "utility/Documentation.h"
+#include "utility/EnvironmentTearDown.h"
 #include "utility/PrettyPrintAudioTypes.h"
 #include "utility/ReturnIn.h"
 
@@ -59,8 +59,7 @@ using ::android::hardware::audio::V2_0::IDevicesFactory;
 using ::android::hardware::audio::V2_0::IStream;
 using ::android::hardware::audio::V2_0::IStreamIn;
 using ::android::hardware::audio::V2_0::TimeSpec;
-using ReadParameters =
-    ::android::hardware::audio::V2_0::IStreamIn::ReadParameters;
+using ReadParameters = ::android::hardware::audio::V2_0::IStreamIn::ReadParameters;
 using ReadStatus = ::android::hardware::audio::V2_0::IStreamIn::ReadStatus;
 using ::android::hardware::audio::V2_0::IStreamOut;
 using ::android::hardware::audio::V2_0::IStreamOutCallback;
@@ -81,61 +80,8 @@ using ::android::hardware::audio::common::V2_0::AudioOutputFlag;
 using ::android::hardware::audio::common::V2_0::AudioSource;
 using ::android::hardware::audio::common::V2_0::ThreadInfo;
 
-using utility::returnIn;
+using namespace ::android::hardware::audio::common::test::utility;
 
-const char* getTestName() {
-    return ::testing::UnitTest::GetInstance()->current_test_info()->name();
-}
-
-namespace doc {
-/** Document the current test case.
- * Eg: calling `doc::test("Dump the state of the hal")` in the "debugDump" test
- * will output:
- *   <testcase name="debugDump" status="run" time="6"
- *             classname="AudioPrimaryHidlTest"
-               description="Dump the state of the hal." />
- * see
- https://github.com/google/googletest/blob/master/googletest/docs/AdvancedGuide.md#logging-additional-information
- */
-void test(const std::string& testCaseDocumentation) {
-    ::testing::Test::RecordProperty("description", testCaseDocumentation);
-}
-
-/** Document why a test was not fully run. Usually due to an optional feature
- * not implemented. */
-void partialTest(const std::string& reason) {
-    LOG(INFO) << "Test " << getTestName() << " partially run: " << reason;
-    ::testing::Test::RecordProperty("partialyRunTest", reason);
-}
-
-/** Add a note to the test. */
-void note(const std::string& note) {
-    LOG(INFO) << "Test " << getTestName() << " noted: " << note;
-    ::testing::Test::RecordProperty("note", note);
-}
-}
-
-// Register callback for static object destruction
-// Avoid destroying static objects after main return.
-// Post main return destruction leads to incorrect gtest timing measurements as
-// well as harder
-// debuging if anything goes wrong during destruction.
-class Environment : public ::testing::Environment {
-   public:
-    using TearDownFunc = std::function<void()>;
-    void registerTearDown(TearDownFunc&& tearDown) {
-        tearDowns.push_back(std::move(tearDown));
-    }
-
-   private:
-    void TearDown() override {
-        // Call the tear downs in reverse order of insertion
-        for (auto& tearDown : tearDowns) {
-            tearDown();
-        }
-    }
-    std::list<TearDownFunc> tearDowns;
-};
 // Instance to register global tearDown
 static Environment* environment;
 
@@ -1402,6 +1348,5 @@ int main(int argc, char** argv) {
     ::testing::AddGlobalTestEnvironment(environment);
     ::testing::InitGoogleTest(&argc, argv);
     int status = RUN_ALL_TESTS();
-    LOG(INFO) << "Test result = " << status;
     return status;
 }
