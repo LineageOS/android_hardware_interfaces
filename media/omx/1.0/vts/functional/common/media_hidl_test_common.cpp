@@ -425,8 +425,15 @@ void testEOS(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         Message msg;
         status =
             observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
-        EXPECT_EQ(status,
-                  android::hardware::media::omx::V1_0::Status::TIMED_OUT);
+        if (status == android::hardware::media::omx::V1_0::Status::OK) {
+            if (msg.data.eventData.event == OMX_EventBufferFlag) {
+                // soft omx components donot send this, we will just ignore it
+                // for now
+            } else {
+                // something unexpected happened
+                EXPECT_TRUE(false);
+            }
+        }
         if (eosFlag == true) break;
     }
     // test for flag
