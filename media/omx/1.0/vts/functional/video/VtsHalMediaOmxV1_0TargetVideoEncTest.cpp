@@ -27,6 +27,7 @@
 #include <android/hardware/graphics/mapper/2.0/types.h>
 #include <android/hardware/media/omx/1.0/IGraphicBufferSource.h>
 #include <android/hardware/media/omx/1.0/IOmx.h>
+#include <android/hardware/media/omx/1.0/IOmxBufferSource.h>
 #include <android/hardware/media/omx/1.0/IOmxNode.h>
 #include <android/hardware/media/omx/1.0/IOmxObserver.h>
 #include <android/hardware/media/omx/1.0/types.h>
@@ -39,6 +40,7 @@ using ::android::hardware::graphics::bufferqueue::V1_0::IProducerListener;
 using ::android::hardware::graphics::common::V1_0::BufferUsage;
 using ::android::hardware::graphics::common::V1_0::PixelFormat;
 using ::android::hardware::media::omx::V1_0::IGraphicBufferSource;
+using ::android::hardware::media::omx::V1_0::IOmxBufferSource;
 using ::android::hardware::media::omx::V1_0::IOmx;
 using ::android::hardware::media::omx::V1_0::IOmxObserver;
 using ::android::hardware::media::omx::V1_0::IOmxNode;
@@ -345,6 +347,82 @@ struct CodecProducerListener : public IProducerListener {
     android::Mutex bufferLock;
 };
 
+// Mock IOmxBufferSource class. GraphicBufferSource.cpp in libstagefright/omx/
+// implements this class. Below is dummy class introduced to test if callback
+// functions are actually being called or not
+struct DummyBufferSource : public IOmxBufferSource {
+   public:
+    DummyBufferSource(sp<IOmxNode> node) {
+        callback = 0;
+        executing = false;
+        omxNode = node;
+    }
+    virtual Return<void> onOmxExecuting();
+    virtual Return<void> onOmxIdle();
+    virtual Return<void> onOmxLoaded();
+    virtual Return<void> onInputBufferAdded(uint32_t buffer);
+    virtual Return<void> onInputBufferEmptied(
+        uint32_t buffer, const ::android::hardware::hidl_handle& fence);
+
+    int callback;
+    bool executing;
+    sp<IOmxNode> omxNode;
+    android::Vector<BufferInfo> iBuffer, oBuffer;
+};
+
+Return<void> DummyBufferSource::onOmxExecuting() {
+    executing = true;
+    callback |= 0x1;
+    size_t index;
+    // Fetch a client owned input buffer and send an EOS
+    if ((index = getEmptyBufferID(&iBuffer)) < iBuffer.size()) {
+        android::hardware::media::omx::V1_0::Status status;
+        CodecBuffer t = iBuffer[index].omxBuffer;
+        t.type = CodecBuffer::Type::ANW_BUFFER;
+        native_handle_t* fenceNh = native_handle_create(0, 0);
+        EXPECT_NE(fenceNh, nullptr);
+        status = omxNode->emptyBuffer(iBuffer[index].id, t, OMX_BUFFERFLAG_EOS,
+                                      0, fenceNh);
+        native_handle_close(fenceNh);
+        native_handle_delete(fenceNh);
+        EXPECT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
+        iBuffer.editItemAt(index).owner = component;
+    }
+    return Void();
+};
+
+Return<void> DummyBufferSource::onOmxIdle() {
+    callback |= 0x2;
+    executing = false;
+    return Void();
+};
+
+Return<void> DummyBufferSource::onOmxLoaded() {
+    callback |= 0x4;
+    return Void();
+};
+
+Return<void> DummyBufferSource::onInputBufferAdded(uint32_t buffer) {
+    (void)buffer;
+    EXPECT_EQ(executing, false);
+    callback |= 0x8;
+    return Void();
+};
+
+Return<void> DummyBufferSource::onInputBufferEmptied(
+    uint32_t buffer, const ::android::hardware::hidl_handle& fence) {
+    (void)fence;
+    callback |= 0x10;
+    size_t i;
+    for (i = 0; i < iBuffer.size(); i++) {
+        if (iBuffer[i].id == buffer) {
+            iBuffer.editItemAt(i).owner = client;
+            break;
+        }
+    }
+    return Void();
+};
+
 // request VOP refresh
 void requestIDR(sp<IOmxNode> omxNode, OMX_U32 portIndex) {
     android::hardware::media::omx::V1_0::Status status;
@@ -417,6 +495,27 @@ void setRefreshPeriod(sp<IOmxNode> omxNode, OMX_U32 portIndex,
                           &param);
     if (status != ::android::hardware::media::omx::V1_0::Status::OK)
         std::cerr << "[          ] Warning ! unable to set Refresh Period \n";
+}
+
+void setLatency(sp<IOmxNode> omxNode, OMX_U32 portIndex, uint32_t latency) {
+    android::hardware::media::omx::V1_0::Status status;
+    OMX_PARAM_U32TYPE param;
+    param.nU32 = (OMX_U32)latency;
+    status = setPortConfig(omxNode, (OMX_INDEXTYPE)OMX_IndexConfigLatency,
+                           portIndex, &param);
+    if (status != ::android::hardware::media::omx::V1_0::Status::OK)
+        std::cerr << "[          ] Warning ! unable to set latency\n";
+}
+
+void getLatency(sp<IOmxNode> omxNode, OMX_U32 portIndex, uint32_t* latency) {
+    android::hardware::media::omx::V1_0::Status status;
+    OMX_PARAM_U32TYPE param;
+    status = getPortConfig(omxNode, (OMX_INDEXTYPE)OMX_IndexConfigLatency,
+                           portIndex, &param);
+    if (status != ::android::hardware::media::omx::V1_0::Status::OK)
+        std::cerr << "[          ] Warning ! unable to get latency\n";
+    else
+        *latency = param.nU32;
 }
 
 // Set Default port param.
@@ -586,7 +685,7 @@ int colorFormatConversion(BufferInfo* buffer, void* buff, PixelFormat format,
                   android::hardware::graphics::mapper::V2_0::Error::NONE);
         if (error != android::hardware::graphics::mapper::V2_0::Error::NONE)
             return 1;
-    } else if (format == PixelFormat::YCBCR_420_888) {
+    } else {
         void* data;
         mapper->lock(buff, buffer->omxBuffer.attr.anwBuffer.usage, rect, fence,
                      [&](android::hardware::graphics::mapper::V2_0::Error _e,
@@ -599,32 +698,75 @@ int colorFormatConversion(BufferInfo* buffer, void* buff, PixelFormat format,
         if (error != android::hardware::graphics::mapper::V2_0::Error::NONE)
             return 1;
 
-        ycbcrLayout.chromaStep = 1;
-        ycbcrLayout.yStride = buffer->omxBuffer.attr.anwBuffer.stride;
-        ycbcrLayout.cStride = ycbcrLayout.yStride >> 1;
-        ycbcrLayout.y = data;
-        ycbcrLayout.cb = static_cast<char*>(ycbcrLayout.y) +
-                         (ycbcrLayout.yStride * rect.height);
-        ycbcrLayout.cr = static_cast<char*>(ycbcrLayout.cb) +
-                         ((ycbcrLayout.yStride * rect.height) >> 2);
+        if (format == PixelFormat::YCBCR_420_888) {
+            ycbcrLayout.chromaStep = 1;
+            ycbcrLayout.yStride = buffer->omxBuffer.attr.anwBuffer.stride;
+            ycbcrLayout.cStride = ycbcrLayout.yStride >> 1;
+            ycbcrLayout.y = data;
+            ycbcrLayout.cb = static_cast<char*>(ycbcrLayout.y) +
+                             (ycbcrLayout.yStride * rect.height);
+            ycbcrLayout.cr = static_cast<char*>(ycbcrLayout.cb) +
+                             ((ycbcrLayout.yStride * rect.height) >> 2);
 
-        char* ipBuffer = static_cast<char*>(ycbcrLayout.y);
-        for (size_t y = rect.height; y > 0; --y) {
-            eleStream.read(ipBuffer, rect.width);
-            if (eleStream.gcount() != rect.width) return 1;
-            ipBuffer += ycbcrLayout.yStride;
-        }
-        ipBuffer = static_cast<char*>(ycbcrLayout.cb);
-        for (size_t y = rect.height >> 1; y > 0; --y) {
-            eleStream.read(ipBuffer, rect.width >> 1);
-            if (eleStream.gcount() != rect.width >> 1) return 1;
-            ipBuffer += ycbcrLayout.cStride;
-        }
-        ipBuffer = static_cast<char*>(ycbcrLayout.cr);
-        for (size_t y = rect.height >> 1; y > 0; --y) {
-            eleStream.read(ipBuffer, rect.width >> 1);
-            if (eleStream.gcount() != rect.width >> 1) return 1;
-            ipBuffer += ycbcrLayout.cStride;
+            char* ipBuffer = static_cast<char*>(ycbcrLayout.y);
+            for (size_t y = rect.height; y > 0; --y) {
+                eleStream.read(ipBuffer, rect.width);
+                if (eleStream.gcount() != rect.width) return 1;
+                ipBuffer += ycbcrLayout.yStride;
+            }
+            ipBuffer = static_cast<char*>(ycbcrLayout.cb);
+            for (size_t y = rect.height >> 1; y > 0; --y) {
+                eleStream.read(ipBuffer, rect.width >> 1);
+                if (eleStream.gcount() != rect.width >> 1) return 1;
+                ipBuffer += ycbcrLayout.cStride;
+            }
+            ipBuffer = static_cast<char*>(ycbcrLayout.cr);
+            for (size_t y = rect.height >> 1; y > 0; --y) {
+                eleStream.read(ipBuffer, rect.width >> 1);
+                if (eleStream.gcount() != rect.width >> 1) return 1;
+                ipBuffer += ycbcrLayout.cStride;
+            }
+        } else if (format == PixelFormat::YCRCB_420_SP) {
+            ycbcrLayout.chromaStep = 2;
+            ycbcrLayout.yStride = buffer->omxBuffer.attr.anwBuffer.stride;
+            ycbcrLayout.cStride = ycbcrLayout.yStride;
+            ycbcrLayout.y = data;
+            ycbcrLayout.cr = static_cast<char*>(ycbcrLayout.y) +
+                             (ycbcrLayout.yStride * rect.height);
+            ycbcrLayout.cb = static_cast<char*>(ycbcrLayout.cr) + 1;
+
+            char* ipBuffer = static_cast<char*>(ycbcrLayout.y);
+            for (size_t y = rect.height; y > 0; --y) {
+                eleStream.read(ipBuffer, rect.width);
+                if (eleStream.gcount() != rect.width) return 1;
+                ipBuffer += ycbcrLayout.yStride;
+            }
+            ipBuffer = static_cast<char*>(ycbcrLayout.cb);
+            for (size_t y = rect.height >> 1; y > 0; --y) {
+                for (int32_t x = 0; x<rect.width>> 1; ++x) {
+                    eleStream.read(&ipBuffer[2 * x], 1);
+                    if (eleStream.gcount() != 1) return 1;
+                }
+                ipBuffer += ycbcrLayout.cStride;
+            }
+            ipBuffer = static_cast<char*>(ycbcrLayout.cr);
+            for (size_t y = rect.height >> 1; y > 0; --y) {
+                for (int32_t x = 0; x<rect.width>> 1; ++x) {
+                    eleStream.read(&ipBuffer[2 * x], 1);
+                    if (eleStream.gcount() != 1) return 1;
+                }
+                ipBuffer += ycbcrLayout.cStride;
+            }
+        } else if (format == PixelFormat::BGRA_8888) {
+            char* ipBuffer = static_cast<char*>(data);
+            for (size_t y = rect.height; y > 0; --y) {
+                eleStream.read(ipBuffer, rect.width * 4);
+                if (eleStream.gcount() != rect.width * 4) return 1;
+                ipBuffer += buffer->omxBuffer.attr.anwBuffer.stride * 4;
+            }
+        } else {
+            EXPECT_TRUE(false) << "un expected pixel format";
+            return 1;
         }
 
         mapper->unlock(buff,
@@ -637,9 +779,6 @@ int colorFormatConversion(BufferInfo* buffer, void* buff, PixelFormat format,
                   android::hardware::graphics::mapper::V2_0::Error::NONE);
         if (error != android::hardware::graphics::mapper::V2_0::Error::NONE)
             return 1;
-    } else {
-        EXPECT_TRUE(false) << "un expected pixel format";
-        return 1;
     }
 
     return 0;
@@ -959,6 +1098,63 @@ TEST_F(VideoEncHidlTest, EnumeratePortFormat) {
     EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 }
 
+// Test IOmxBufferSource CallBacks
+TEST_F(VideoEncHidlTest, BufferSourceCallBacks) {
+    description("Test IOmxBufferSource CallBacks");
+    if (disableTest) return;
+    android::hardware::media::omx::V1_0::Status status;
+    uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
+    status = setRole(omxNode, gEnv->getRole().c_str());
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    OMX_PORT_PARAM_TYPE params;
+    status = getParam(omxNode, OMX_IndexParamVideoInit, &params);
+    if (status == ::android::hardware::media::omx::V1_0::Status::OK) {
+        ASSERT_EQ(params.nPorts, 2U);
+        kPortIndexInput = params.nStartPortNumber;
+        kPortIndexOutput = kPortIndexInput + 1;
+    }
+
+    // Configure input port
+    uint32_t nFrameWidth = 352;
+    uint32_t nFrameHeight = 288;
+    uint32_t xFramerate = (30U << 16);
+    OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatAndroidOpaque;
+    setupRAWPort(omxNode, kPortIndexInput, nFrameWidth, nFrameHeight, 0,
+                 xFramerate, eColorFormat);
+
+    sp<DummyBufferSource> buffersource = new DummyBufferSource(omxNode);
+    EXPECT_NE(buffersource, nullptr);
+    status = omxNode->setInputSurface(buffersource);
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+
+    // set port mode
+    PortMode portMode[2];
+    portMode[0] = PortMode::DYNAMIC_ANW_BUFFER;
+    portMode[1] = PortMode::PRESET_BYTE_BUFFER;
+    status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+
+    // set state to idle
+    changeStateLoadedtoIdle(omxNode, observer, &buffersource->iBuffer,
+                            &buffersource->oBuffer, kPortIndexInput,
+                            kPortIndexOutput, portMode);
+    // set state to executing
+    changeStateIdletoExecute(omxNode, observer);
+    testEOS(omxNode, observer, &buffersource->iBuffer, &buffersource->oBuffer,
+            false, eosFlag);
+    // set state to idle
+    changeStateExecutetoIdle(omxNode, observer, &buffersource->iBuffer,
+                             &buffersource->oBuffer);
+    // set state to executing
+    changeStateIdletoLoaded(omxNode, observer, &buffersource->iBuffer,
+                            &buffersource->oBuffer, kPortIndexInput,
+                            kPortIndexOutput);
+    // test for callbacks
+    EXPECT_EQ(buffersource->callback, 31);
+}
+
 // test raw stream encode (input is byte buffers)
 TEST_F(VideoEncHidlTest, EncodeTest) {
     description("Test Encode");
@@ -1023,6 +1219,10 @@ TEST_F(VideoEncHidlTest, EncodeTest) {
     status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 
+    uint32_t latency = 0;
+    setLatency(omxNode, kPortIndexInput, latency);
+    getLatency(omxNode, kPortIndexInput, &latency);
+
     android::Vector<BufferInfo> iBuffer, oBuffer;
 
     // set state to idle
@@ -1086,12 +1286,6 @@ TEST_F(VideoEncHidlTest, EncodeTestBufferMetaModes) {
     ASSERT_NE(producer, nullptr);
     ASSERT_NE(source, nullptr);
 
-    // Do setInputSurface()
-    // enable MetaMode on input port
-    status = source->configure(
-        omxNode, android::hardware::graphics::common::V1_0::Dataspace::UNKNOWN);
-    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-
     // setMaxDequeuedBufferCount
     int32_t returnval;
     int32_t value;
@@ -1125,6 +1319,12 @@ TEST_F(VideoEncHidlTest, EncodeTestBufferMetaModes) {
                           kPortIndexInput, &portDef);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 
+    // Do setInputSurface()
+    // enable MetaMode on input port
+    status = source->configure(
+        omxNode, android::hardware::graphics::common::V1_0::Dataspace::UNKNOWN);
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+
     // set port mode
     PortMode portMode[2];
     portMode[0] = PortMode::DYNAMIC_ANW_BUFFER;
@@ -1137,6 +1337,10 @@ TEST_F(VideoEncHidlTest, EncodeTestBufferMetaModes) {
     char mURL[512];
     strcpy(mURL, gEnv->getRes().c_str());
     GetURLForComponent(mURL);
+
+    uint32_t latency = 0;
+    setLatency(omxNode, kPortIndexInput, latency);
+    getLatency(omxNode, kPortIndexInput, &latency);
 
     std::ifstream eleStream;
 
@@ -1232,12 +1436,6 @@ TEST_F(VideoEncHidlTest, EncodeTestEOS) {
     ASSERT_NE(producer, nullptr);
     ASSERT_NE(source, nullptr);
 
-    // Do setInputSurface()
-    // enable MetaMode on input port
-    status = source->configure(
-        omxNode, android::hardware::graphics::common::V1_0::Dataspace::UNKNOWN);
-    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-
     // setMaxDequeuedBufferCount
     int32_t returnval;
     int32_t value;
@@ -1269,6 +1467,12 @@ TEST_F(VideoEncHidlTest, EncodeTestEOS) {
     portDef.nBufferCountActual = portDef.nBufferCountActual + value;
     status = setPortParam(omxNode, OMX_IndexParamPortDefinition,
                           kPortIndexInput, &portDef);
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+
+    // Do setInputSurface()
+    // enable MetaMode on input port
+    status = source->configure(
+        omxNode, android::hardware::graphics::common::V1_0::Dataspace::UNKNOWN);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 
     // set port mode

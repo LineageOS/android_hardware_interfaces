@@ -23,8 +23,11 @@
 #include <unordered_set>
 #include <vector>
 
+#include <IComposerCommandBuffer.h>
 #include <android/hardware/graphics/composer/2.1/IComposer.h>
 #include <utils/StrongPointer.h>
+
+#include "TestCommandReader.h"
 
 namespace android {
 namespace hardware {
@@ -44,6 +47,7 @@ class ComposerClient;
 class Composer {
  public:
   Composer();
+  explicit Composer(const std::string& name);
 
   sp<IComposer> getRaw() const;
 
@@ -101,6 +105,8 @@ class ComposerClient {
   void setColorMode(Display display, ColorMode mode);
   void setPowerMode(Display display, IComposerClient::PowerMode mode);
   void setVsyncEnabled(Display display, bool enabled);
+
+  void execute(TestCommandReader* reader, CommandWriterBase* writer);
 
  private:
   sp<IComposerClient> mClient;
