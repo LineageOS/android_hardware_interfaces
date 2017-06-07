@@ -642,7 +642,8 @@ int colorFormatConversion(BufferInfo* buffer, void* buff, PixelFormat format,
     rect.width = buffer->omxBuffer.attr.anwBuffer.width;
     rect.height = buffer->omxBuffer.attr.anwBuffer.height;
 
-    if (format == PixelFormat::YV12) {
+    if (format == PixelFormat::YV12 || format == PixelFormat::YCRCB_420_SP ||
+        format == PixelFormat::YCBCR_420_888) {
         mapper->lockYCbCr(
             buff, buffer->omxBuffer.attr.anwBuffer.usage, rect, fence,
             [&](android::hardware::graphics::mapper::V2_0::Error _e,
@@ -655,23 +656,32 @@ int colorFormatConversion(BufferInfo* buffer, void* buff, PixelFormat format,
         if (error != android::hardware::graphics::mapper::V2_0::Error::NONE)
             return 1;
 
-        EXPECT_EQ(ycbcrLayout.chromaStep, 1U);
         char* ipBuffer = static_cast<char*>(ycbcrLayout.y);
         for (size_t y = rect.height; y > 0; --y) {
             eleStream.read(ipBuffer, rect.width);
             if (eleStream.gcount() != rect.width) return 1;
             ipBuffer += ycbcrLayout.yStride;
         }
+
+        if (format == PixelFormat::YV12)
+            EXPECT_EQ(ycbcrLayout.chromaStep, 1U);
+        else if (format == PixelFormat::YCRCB_420_SP)
+            EXPECT_EQ(ycbcrLayout.chromaStep, 2U);
+
         ipBuffer = static_cast<char*>(ycbcrLayout.cb);
         for (size_t y = rect.height >> 1; y > 0; --y) {
-            eleStream.read(ipBuffer, rect.width >> 1);
-            if (eleStream.gcount() != rect.width >> 1) return 1;
+            for (int32_t x = 0; x < (rect.width >> 1); ++x) {
+                eleStream.read(&ipBuffer[ycbcrLayout.chromaStep * x], 1);
+                if (eleStream.gcount() != 1) return 1;
+            }
             ipBuffer += ycbcrLayout.cStride;
         }
         ipBuffer = static_cast<char*>(ycbcrLayout.cr);
         for (size_t y = rect.height >> 1; y > 0; --y) {
-            eleStream.read(ipBuffer, rect.width >> 1);
-            if (eleStream.gcount() != rect.width >> 1) return 1;
+            for (int32_t x = 0; x < (rect.width >> 1); ++x) {
+                eleStream.read(&ipBuffer[ycbcrLayout.chromaStep * x], 1);
+                if (eleStream.gcount() != 1) return 1;
+            }
             ipBuffer += ycbcrLayout.cStride;
         }
 
@@ -698,66 +708,7 @@ int colorFormatConversion(BufferInfo* buffer, void* buff, PixelFormat format,
         if (error != android::hardware::graphics::mapper::V2_0::Error::NONE)
             return 1;
 
-        if (format == PixelFormat::YCBCR_420_888) {
-            ycbcrLayout.chromaStep = 1;
-            ycbcrLayout.yStride = buffer->omxBuffer.attr.anwBuffer.stride;
-            ycbcrLayout.cStride = ycbcrLayout.yStride >> 1;
-            ycbcrLayout.y = data;
-            ycbcrLayout.cb = static_cast<char*>(ycbcrLayout.y) +
-                             (ycbcrLayout.yStride * rect.height);
-            ycbcrLayout.cr = static_cast<char*>(ycbcrLayout.cb) +
-                             ((ycbcrLayout.yStride * rect.height) >> 2);
-
-            char* ipBuffer = static_cast<char*>(ycbcrLayout.y);
-            for (size_t y = rect.height; y > 0; --y) {
-                eleStream.read(ipBuffer, rect.width);
-                if (eleStream.gcount() != rect.width) return 1;
-                ipBuffer += ycbcrLayout.yStride;
-            }
-            ipBuffer = static_cast<char*>(ycbcrLayout.cb);
-            for (size_t y = rect.height >> 1; y > 0; --y) {
-                eleStream.read(ipBuffer, rect.width >> 1);
-                if (eleStream.gcount() != rect.width >> 1) return 1;
-                ipBuffer += ycbcrLayout.cStride;
-            }
-            ipBuffer = static_cast<char*>(ycbcrLayout.cr);
-            for (size_t y = rect.height >> 1; y > 0; --y) {
-                eleStream.read(ipBuffer, rect.width >> 1);
-                if (eleStream.gcount() != rect.width >> 1) return 1;
-                ipBuffer += ycbcrLayout.cStride;
-            }
-        } else if (format == PixelFormat::YCRCB_420_SP) {
-            ycbcrLayout.chromaStep = 2;
-            ycbcrLayout.yStride = buffer->omxBuffer.attr.anwBuffer.stride;
-            ycbcrLayout.cStride = ycbcrLayout.yStride;
-            ycbcrLayout.y = data;
-            ycbcrLayout.cr = static_cast<char*>(ycbcrLayout.y) +
-                             (ycbcrLayout.yStride * rect.height);
-            ycbcrLayout.cb = static_cast<char*>(ycbcrLayout.cr) + 1;
-
-            char* ipBuffer = static_cast<char*>(ycbcrLayout.y);
-            for (size_t y = rect.height; y > 0; --y) {
-                eleStream.read(ipBuffer, rect.width);
-                if (eleStream.gcount() != rect.width) return 1;
-                ipBuffer += ycbcrLayout.yStride;
-            }
-            ipBuffer = static_cast<char*>(ycbcrLayout.cb);
-            for (size_t y = rect.height >> 1; y > 0; --y) {
-                for (int32_t x = 0; x<rect.width>> 1; ++x) {
-                    eleStream.read(&ipBuffer[2 * x], 1);
-                    if (eleStream.gcount() != 1) return 1;
-                }
-                ipBuffer += ycbcrLayout.cStride;
-            }
-            ipBuffer = static_cast<char*>(ycbcrLayout.cr);
-            for (size_t y = rect.height >> 1; y > 0; --y) {
-                for (int32_t x = 0; x<rect.width>> 1; ++x) {
-                    eleStream.read(&ipBuffer[2 * x], 1);
-                    if (eleStream.gcount() != 1) return 1;
-                }
-                ipBuffer += ycbcrLayout.cStride;
-            }
-        } else if (format == PixelFormat::BGRA_8888) {
+        if (format == PixelFormat::BGRA_8888) {
             char* ipBuffer = static_cast<char*>(data);
             for (size_t y = rect.height; y > 0; --y) {
                 eleStream.read(ipBuffer, rect.width * 4);
