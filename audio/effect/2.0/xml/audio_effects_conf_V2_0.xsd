@@ -58,7 +58,7 @@
   </xs:simpleType>
 
   <!-- Complex types -->
-  <xs:complexType name="libraryType">
+  <xs:complexType name="librariesType">
     <xs:annotation>
       <xs:documentation xml:lang="en">
         List of effect libraries to load. Each library element must have "name" and
@@ -83,18 +83,24 @@
     <xs:attribute name="library" type="xs:string" use="required"/>
     <xs:attribute name="uuid" type="aec:uuidType" use="required"/>
   </xs:complexType>
-  <xs:complexType name="effectProxyType">
+  <xs:complexType name="effectType">
     <xs:complexContent>
       <xs:extension base="aec:effectImplType">
-        <xs:sequence>
-          <xs:element name="libsw" type="aec:effectImplType" minOccurs="0" maxOccurs="1"/>
-          <xs:element name="libhw" type="aec:effectImplType" minOccurs="0" maxOccurs="1"/>
-        </xs:sequence>
         <xs:attribute name="name" type="xs:string" use="required"/>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
-  <xs:complexType name="effectType">
+  <xs:complexType name="effectProxyType">
+    <xs:complexContent>
+      <xs:extension base="aec:effectType">
+        <xs:sequence>
+          <xs:element name="libsw" type="aec:effectImplType"/>
+          <xs:element name="libhw" type="aec:effectImplType"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="effectsType">
     <xs:annotation>
       <xs:documentation xml:lang="en">
         List of effects to load. Each effect element must contain "name",
@@ -111,16 +117,17 @@
         Example:
 
         <effect name="name" library="lib" uuid="uuuu"/>
-        <effect name="proxied" library="proxy" uuid="xxxx">
+        <effectProxy name="proxied" library="proxy" uuid="xxxx">
             <libsw library="sw_bundle" uuid="yyyy"/>
             <libhw library="offload_bundle" uuid="zzzz"/>
-        </effect>
+        </effectProxy>
 
       </xs:documentation>
     </xs:annotation>
-    <xs:sequence>
-      <xs:element name="effect" type="aec:effectProxyType" minOccurs="0" maxOccurs="unbounded"/>
-    </xs:sequence>
+    <xs:choice maxOccurs="unbounded">
+      <xs:element name="effect" type="aec:effectType" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="effectProxy" type="aec:effectProxyType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:choice>
   </xs:complexType>
   <xs:complexType name="streamProcessingType">
     <xs:sequence>
@@ -185,8 +192,8 @@
   <xs:element name="audio_effects_conf">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name="libraries" type="aec:libraryType"/>
-        <xs:element name="effects" type="aec:effectType"/>
+        <xs:element name="libraries" type="aec:librariesType"/>
+        <xs:element name="effects" type="aec:effectsType"/>
         <xs:element name="postprocess" minOccurs="0" maxOccurs="1">
           <xs:complexType>
             <xs:sequence>
