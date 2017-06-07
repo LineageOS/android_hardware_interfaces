@@ -137,7 +137,7 @@ class AudioEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
             gEnv->getInstance());
         ASSERT_NE(omx, nullptr);
         observer =
-            new CodecObserver([](Message msg, const BufferInfo* buffer) {
+            new CodecObserver([this](Message msg, const BufferInfo* buffer) {
                 handleMessage(msg, buffer);
             });
         ASSERT_NE(observer, nullptr);
