@@ -367,7 +367,7 @@ TEST_F(ComponentHidlTest, SetRole) {
 }
 
 // port indices enumeration
-TEST_F(ComponentHidlTest, GetPortIndices) {
+TEST_F(ComponentHidlTest, DISABLED_GetPortIndices) {
     description("Test Component on Mandatory Port Parameters (Port Indices)");
     if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
@@ -390,7 +390,7 @@ TEST_F(ComponentHidlTest, GetPortIndices) {
 }
 
 // port format enumeration
-TEST_F(ComponentHidlTest, EnumeratePortFormat) {
+TEST_F(ComponentHidlTest, DISABLED_EnumeratePortFormat) {
     description("Test Component on Mandatory Port Parameters (Port Format)");
     if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
@@ -450,7 +450,7 @@ TEST_F(ComponentHidlTest, EnumeratePortFormat) {
 }
 
 // get/set default port settings of a component
-TEST_F(ComponentHidlTest, SetDefaultPortParams) {
+TEST_F(ComponentHidlTest, DISABLED_SetDefaultPortParams) {
     description(
         "Test Component on Mandatory Port Parameters (Port Definition)");
     if (disableTest) return;
@@ -548,7 +548,7 @@ TEST_F(ComponentHidlTest, SetDefaultPortParams) {
 }
 
 // populate port test
-TEST_F(ComponentHidlTest, PopulatePort) {
+TEST_F(ComponentHidlTest, DISABLED_PopulatePort) {
     description("Verify bPopulated field of a component port");
     if (disableTest || isSecure) return;
     android::hardware::media::omx::V1_0::Status status;
@@ -661,13 +661,18 @@ TEST_F(ComponentHidlTest, Flush) {
     // flush port
     flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
                kPortIndexOutput);
+    // TODO: Sending empty input buffers is slightly tricky.
+    // Components sometimes process input buffers even when output buffers are
+    // not dispatched. For instance Parsing sequence header does not require
+    // output buffers. In such instances sending 0 size input buffers might
+    // make component to send error events. so lets skip this aspect of testing.
     // dispatch buffers
-    for (size_t i = 0; i < iBuffer.size(); i++) {
-        dispatchInputBuffer(omxNode, &iBuffer, i, 0, 0, 0, portMode[0]);
-    }
-    // flush ports
-    flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-               kPortIndexOutput);
+    //    for (size_t i = 0; i < iBuffer.size(); i++) {
+    //        dispatchInputBuffer(omxNode, &iBuffer, i, 0, 0, 0, portMode[0]);
+    //    }
+    //    // flush ports
+    //    flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
+    //               kPortIndexOutput);
     // set state to idle
     changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
     // set state to loaded
@@ -718,21 +723,22 @@ TEST_F(ComponentHidlTest, StateTransitions) {
     }
     // set state to idle
     changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
-    // set state to executing
-    changeStateIdletoExecute(omxNode, observer);
-    // dispatch buffers
-    for (size_t i = 0; i < iBuffer.size(); i++) {
-        dispatchInputBuffer(omxNode, &iBuffer, i, 0, 0, 0, portMode[0]);
-    }
-    // set state to idle
-    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+    //    // set state to executing
+    //    changeStateIdletoExecute(omxNode, observer);
+    //    // TODO: Sending empty input buffers is slightly tricky.
+    //    // dispatch buffers
+    //    for (size_t i = 0; i < iBuffer.size(); i++) {
+    //        dispatchInputBuffer(omxNode, &iBuffer, i, 0, 0, 0, portMode[0]);
+    //    }
+    //    // set state to idle
+    //    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
     // set state to loaded
     changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
                             kPortIndexInput, kPortIndexOutput);
 }
 
 // state transitions test - monkeying
-TEST_F(ComponentHidlTest, StateTransitions_M) {
+TEST_F(ComponentHidlTest, DISABLED_StateTransitions_M) {
     description("Test State Transitions monkeying");
     if (disableTest || isSecure) return;
     android::hardware::media::omx::V1_0::Status status;
@@ -796,7 +802,7 @@ TEST_F(ComponentHidlTest, StateTransitions_M) {
 }
 
 // port enable disable test
-TEST_F(ComponentHidlTest, PortEnableDisable_Loaded) {
+TEST_F(ComponentHidlTest, DISABLED_PortEnableDisable_Loaded) {
     description("Test Port Enable and Disable (Component State :: Loaded)");
     if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
@@ -1068,7 +1074,7 @@ TEST_F(ComponentHidlTest, PortEnableDisable_Execute) {
 }
 
 // port enable disable test - monkeying
-TEST_F(ComponentHidlTest, PortEnableDisable_M) {
+TEST_F(ComponentHidlTest, DISABLED_PortEnableDisable_M) {
     description(
         "Test Port Enable and Disable Monkeying (Component State :: Loaded)");
     if (disableTest || isSecure) return;

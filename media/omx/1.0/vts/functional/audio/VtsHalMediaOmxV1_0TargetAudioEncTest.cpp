@@ -444,7 +444,7 @@ TEST_F(AudioEncHidlTest, SetRole) {
 }
 
 // port format enumeration
-TEST_F(AudioEncHidlTest, EnumeratePortFormat) {
+TEST_F(AudioEncHidlTest, DISABLED_EnumeratePortFormat) {
     description("Test Component on Mandatory Port Parameters (Port Format)");
     if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
