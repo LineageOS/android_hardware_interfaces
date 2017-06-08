@@ -487,16 +487,17 @@ Return<Result> StreamOut::flush() {
 Result StreamOut::getPresentationPositionImpl(audio_stream_out_t* stream,
                                               uint64_t* frames,
                                               TimeSpec* timeStamp) {
+    // Don't logspam on EINVAL--it's normal for get_presentation_position
+    // to return it sometimes. EAGAIN may be returned by A2DP audio HAL
+    // implementation. ENODATA can also be reported while the writer is
+    // continuously querying it, but the stream has been stopped.
+    static const std::vector<int> ignoredErrors{EINVAL, EAGAIN, ENODATA};
     Result retval(Result::NOT_SUPPORTED);
     if (stream->get_presentation_position == NULL) return retval;
     struct timespec halTimeStamp;
-    retval = Stream::analyzeStatus(
-        "get_presentation_position",
-        stream->get_presentation_position(stream, frames, &halTimeStamp),
-        // Don't logspam on EINVAL--it's normal for get_presentation_position
-        // to return it sometimes. EAGAIN may be returned by A2DP audio HAL
-        // implementation.
-        EINVAL, EAGAIN);
+    retval = Stream::analyzeStatus("get_presentation_position",
+                                   stream->get_presentation_position(stream, frames, &halTimeStamp),
+                                   ignoredErrors);
     if (retval == Result::OK) {
         timeStamp->tvSec = halTimeStamp.tv_sec;
         timeStamp->tvNSec = halTimeStamp.tv_nsec;
