@@ -967,11 +967,7 @@ bool verify_attestation_record(const string& challenge, const string& app_id,
                                        &att_tee_enforced,                //
                                        &att_unique_id));
 
-    if (att_keymaster_version == 3) {
-        EXPECT_EQ(2U, att_attestation_version);
-    } else {
-        EXPECT_EQ(1U, att_attestation_version);
-    }
+    EXPECT_TRUE(att_attestation_version == 1 || att_attestation_version == 2);
 
     expected_sw_enforced.push_back(TAG_ATTESTATION_APPLICATION_ID,
                                    HidlBuf(app_id));
