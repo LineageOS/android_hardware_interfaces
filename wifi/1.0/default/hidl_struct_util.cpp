@@ -1106,8 +1106,8 @@ bool convertHidlNanPublishRequestToLegacy(
     legacy_request->key_info.key_type = legacy_hal::NAN_SECURITY_KEY_INPUT_PMK;
     legacy_request->key_info.body.pmk_info.pmk_len =
         hidl_request.baseConfigs.securityConfig.pmk.size();
-    if (legacy_request->key_info.body.pmk_info.pmk_len > NAN_PMK_INFO_LEN) {
-      LOG(ERROR) << "convertHidlNanPublishRequestToLegacy: pmk_len too large";
+    if (legacy_request->key_info.body.pmk_info.pmk_len != NAN_PMK_INFO_LEN) {
+      LOG(ERROR) << "convertHidlNanPublishRequestToLegacy: invalid pmk_len";
       return false;
     }
     memcpy(legacy_request->key_info.body.pmk_info.pmk,
@@ -1223,8 +1223,8 @@ bool convertHidlNanSubscribeRequestToLegacy(
     legacy_request->key_info.key_type = legacy_hal::NAN_SECURITY_KEY_INPUT_PMK;
     legacy_request->key_info.body.pmk_info.pmk_len =
         hidl_request.baseConfigs.securityConfig.pmk.size();
-    if (legacy_request->key_info.body.pmk_info.pmk_len > NAN_PMK_INFO_LEN) {
-      LOG(ERROR) << "convertHidlNanSubscribeRequestToLegacy: pmk_len too large";
+    if (legacy_request->key_info.body.pmk_info.pmk_len != NAN_PMK_INFO_LEN) {
+      LOG(ERROR) << "convertHidlNanSubscribeRequestToLegacy: invalid pmk_len";
       return false;
     }
     memcpy(legacy_request->key_info.body.pmk_info.pmk,
@@ -1447,8 +1447,8 @@ bool convertHidlNanDataPathInitiatorRequestToLegacy(
   if (hidl_request.securityConfig.securityType == NanDataPathSecurityType::PMK) {
     legacy_request->key_info.key_type = legacy_hal::NAN_SECURITY_KEY_INPUT_PMK;
     legacy_request->key_info.body.pmk_info.pmk_len = hidl_request.securityConfig.pmk.size();
-    if (legacy_request->key_info.body.pmk_info.pmk_len > NAN_PMK_INFO_LEN) {
-      LOG(ERROR) << "convertHidlNanDataPathInitiatorRequestToLegacy: pmk_len too large";
+    if (legacy_request->key_info.body.pmk_info.pmk_len != NAN_PMK_INFO_LEN) {
+      LOG(ERROR) << "convertHidlNanDataPathInitiatorRequestToLegacy: invalid pmk_len";
       return false;
     }
     memcpy(legacy_request->key_info.body.pmk_info.pmk,
@@ -1511,8 +1511,8 @@ bool convertHidlNanDataPathIndicationResponseToLegacy(
   if (hidl_request.securityConfig.securityType == NanDataPathSecurityType::PMK) {
     legacy_request->key_info.key_type = legacy_hal::NAN_SECURITY_KEY_INPUT_PMK;
     legacy_request->key_info.body.pmk_info.pmk_len = hidl_request.securityConfig.pmk.size();
-    if (legacy_request->key_info.body.pmk_info.pmk_len > NAN_PMK_INFO_LEN) {
-      LOG(ERROR) << "convertHidlNanDataPathIndicationResponseToLegacy: pmk_len too large";
+    if (legacy_request->key_info.body.pmk_info.pmk_len != NAN_PMK_INFO_LEN) {
+      LOG(ERROR) << "convertHidlNanDataPathIndicationResponseToLegacy: invalid pmk_len";
       return false;
     }
     memcpy(legacy_request->key_info.body.pmk_info.pmk,
