@@ -1071,11 +1071,11 @@ TEST_F(VideoDecHidlTest, SimpleEOSTest) {
     ASSERT_EQ(eleStream.is_open(), true);
     decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
                   kPortIndexOutput, eleStream, &Info, 0, (int)Info.size(),
-                  portMode[1]);
+                  portMode[1], false);
     eleStream.close();
     waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
                            kPortIndexInput, kPortIndexOutput, portMode[1]);
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag, portMode);
+    testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, portMode);
     flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
                kPortIndexOutput);
     framesReceived = 0;
