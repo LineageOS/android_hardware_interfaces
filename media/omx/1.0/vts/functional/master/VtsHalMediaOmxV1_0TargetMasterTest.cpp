@@ -17,20 +17,34 @@
 #define LOG_TAG "media_omx_hidl_master_test"
 #include <android-base/logging.h>
 
-#include <VtsHalHidlTargetTestBase.h>
 #include <android/hardware/media/omx/1.0/IOmx.h>
+#include <android/hardware/media/omx/1.0/IOmxNode.h>
+#include <android/hardware/media/omx/1.0/IOmxObserver.h>
 #include <android/hardware/media/omx/1.0/IOmxStore.h>
 #include <android/hardware/media/omx/1.0/types.h>
-#include <getopt.h>
-#include <log/log.h>
+#include <android/hidl/allocator/1.0/IAllocator.h>
+#include <android/hidl/memory/1.0/IMapper.h>
+#include <android/hidl/memory/1.0/IMemory.h>
 
-using ::android::hardware::media::omx::V1_0::IOmxStore;
 using ::android::hardware::media::omx::V1_0::IOmx;
+using ::android::hardware::media::omx::V1_0::IOmxObserver;
+using ::android::hardware::media::omx::V1_0::IOmxNode;
+using ::android::hardware::media::omx::V1_0::IOmxStore;
+using ::android::hardware::media::omx::V1_0::Message;
+using ::android::hardware::media::omx::V1_0::CodecBuffer;
+using ::android::hardware::media::omx::V1_0::PortMode;
+using ::android::hidl::allocator::V1_0::IAllocator;
+using ::android::hidl::memory::V1_0::IMemory;
+using ::android::hidl::memory::V1_0::IMapper;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::hidl_string;
 using ::android::sp;
+
+#include <VtsHalHidlTargetTestBase.h>
+#include <getopt.h>
+#include <media_hidl_test_common.h>
 
 // A class for test environment setup
 class ComponentTestEnvironment : public ::testing::Environment {
@@ -127,8 +141,7 @@ TEST_F(MasterHidlTest, ListServiceAttr) {
                         attributes = _nl;
                     })
                     .isOk());
-    if (attributes.size() == 0)
-        std::cerr << "[          ] Warning ! Attribute list empty \n";
+    if (attributes.size() == 0) ALOGV("Warning, Attribute list empty");
 }
 
 // get node prefix
@@ -137,8 +150,7 @@ TEST_F(MasterHidlTest, getNodePrefix) {
     hidl_string prefix;
     omxStore->getNodePrefix(
         [&prefix](hidl_string const& _nl) { prefix = _nl; });
-    if (prefix.empty())
-        std::cerr << "[          ] Warning ! Node Prefix empty \n";
+    if (prefix.empty()) ALOGV("Warning, Node Prefix empty");
 }
 
 // list roles
@@ -148,15 +160,15 @@ TEST_F(MasterHidlTest, ListRoles) {
     omxStore->listRoles([&roleList](hidl_vec<IOmxStore::RoleInfo> const& _nl) {
         roleList = _nl;
     });
-    if (roleList.size() == 0)
-        std::cerr << "[          ] Warning ! RoleInfo list empty \n";
+    if (roleList.size() == 0) ALOGV("Warning, RoleInfo list empty");
 }
 
-// list components and roles
+// list components and roles.
 TEST_F(MasterHidlTest, ListNodes) {
     description("enumerate component and roles");
     android::hardware::media::omx::V1_0::Status status;
     hidl_vec<IOmx::ComponentInfo> nodeList;
+    bool isPass = true;
     EXPECT_TRUE(
         omx->listNodes([&status, &nodeList](
                            android::hardware::media::omx::V1_0::Status _s,
@@ -166,9 +178,36 @@ TEST_F(MasterHidlTest, ListNodes) {
            })
             .isOk());
     if (nodeList.size() == 0)
-        std::cerr << "[          ] Warning ! ComponentInfo list empty \n";
-    else
-        displayComponentInfo(nodeList);
+        ALOGV("Warning, ComponentInfo list empty");
+    else {
+        // displayComponentInfo(nodeList);
+        for (size_t i = 0; i < nodeList.size(); i++) {
+            sp<CodecObserver> observer = nullptr;
+            sp<IOmxNode> omxNode = nullptr;
+            observer = new CodecObserver(nullptr);
+            ASSERT_NE(observer, nullptr);
+            EXPECT_TRUE(
+                omx->allocateNode(
+                       nodeList[i].mName, observer,
+                       [&](android::hardware::media::omx::V1_0::Status _s,
+                           sp<IOmxNode> const& _nl) {
+                           status = _s;
+                           omxNode = _nl;
+                       })
+                    .isOk());
+            if (omxNode == nullptr) {
+                isPass = false;
+                std::cerr << "[    !OK   ] " << nodeList[i].mName.c_str()
+                          << "\n";
+            } else {
+                EXPECT_TRUE((omxNode->freeNode()).isOk());
+                omxNode = nullptr;
+                // std::cout << "[     OK   ] " << nodeList[i].mName.c_str() <<
+                // "\n";
+            }
+        }
+    }
+    EXPECT_TRUE(isPass);
 }
 
 int main(int argc, char** argv) {
