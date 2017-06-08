@@ -221,10 +221,11 @@ class VideoEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         isSecure = false;
         size_t suffixLen = strlen(".secure");
         if (strlen(gEnv->getComponent().c_str()) >= suffixLen) {
+            isSecure =
+                !strcmp(gEnv->getComponent().c_str() +
+                            strlen(gEnv->getComponent().c_str()) - suffixLen,
+                        ".secure");
         }
-        isSecure = !strcmp(gEnv->getComponent().c_str() +
-                               strlen(gEnv->getComponent().c_str()) - suffixLen,
-                           ".secure");
         if (isSecure) disableTest = true;
         if (disableTest) std::cerr << "[          ] Warning !  Test Disabled\n";
     }
@@ -1213,7 +1214,6 @@ TEST_F(VideoEncHidlTest, EncodeTest) {
     // set port mode
     PortMode portMode[2];
     portMode[0] = portMode[1] = PortMode::PRESET_BYTE_BUFFER;
-    if (isSecure && prependSPSPPS) portMode[1] = PortMode::PRESET_SECURE_BUFFER;
     status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
