@@ -442,8 +442,9 @@ TEST_F(RadioHidlTest, setCdmaSubscriptionSource) {
 
     if (cardStatus.cardState == CardState::ABSENT) {
         std::cout << static_cast<int>(radioRsp->rspInfo.error) << std::endl;
-        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::SIM_ABSENT ||
-                    radioRsp->rspInfo.error == RadioError::SUBSCRIPTION_NOT_AVAILABLE);
+        ASSERT_TRUE(CheckGeneralError() || radioRsp->rspInfo.error == RadioError::SIM_ABSENT ||
+                    radioRsp->rspInfo.error == RadioError::SUBSCRIPTION_NOT_AVAILABLE ||
+                    radioRsp->rspInfo.error == RadioError::NONE);
     }
 }
 
@@ -509,7 +510,7 @@ TEST_F(RadioHidlTest, nvReadItem) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE);
+        ASSERT_TRUE(CheckGeneralError() || radioRsp->rspInfo.error == RadioError::NONE);
     }
 }
 
@@ -528,7 +529,7 @@ TEST_F(RadioHidlTest, nvWriteItem) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE);
+        ASSERT_TRUE(CheckGeneralError() || radioRsp->rspInfo.error == RadioError::NONE);
     }
 }
 
@@ -545,7 +546,7 @@ TEST_F(RadioHidlTest, nvWriteCdmaPrl) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE);
+        ASSERT_TRUE(CheckGeneralError() || radioRsp->rspInfo.error == RadioError::NONE);
     }
 }
 
@@ -599,7 +600,7 @@ TEST_F(RadioHidlTest, getHardwareConfig) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE);
+        ASSERT_TRUE(CheckGeneralError() || radioRsp->rspInfo.error == RadioError::NONE);
     }
 }
 
