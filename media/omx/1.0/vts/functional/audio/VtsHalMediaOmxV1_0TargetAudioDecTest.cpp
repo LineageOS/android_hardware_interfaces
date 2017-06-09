@@ -479,7 +479,9 @@ void portReconfiguration(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                          android::Vector<BufferInfo>* oBuffer,
                          OMX_AUDIO_CODINGTYPE eEncoding,
                          OMX_U32 kPortIndexInput, OMX_U32 kPortIndexOutput,
-                         Message msg) {
+                         Message msg,
+                         AudioDecHidlTest::standardComp comp =
+                             AudioDecHidlTest::standardComp::unknown_comp) {
     android::hardware::media::omx::V1_0::Status status;
 
     if (msg.data.eventData.event == OMX_EventPortSettingsChanged) {
@@ -514,8 +516,18 @@ void portReconfiguration(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
             int32_t nSampleRate;
             getInputChannelInfo(omxNode, kPortIndexInput, eEncoding, &nChannels,
                                 &nSampleRate);
-            setDefaultPortParam(omxNode, kPortIndexOutput, OMX_AUDIO_CodingPCM,
-                                nChannels, nSampleRate);
+            // Configure output port
+            // SPECIAL CASE: Soft Vorbis, Opus and Raw Decoders do not offer way
+            // to
+            // configure output PCM port. The port undergoes auto configuration
+            // internally basing on parsed elementary stream information.
+            if (comp != AudioDecHidlTest::standardComp::vorbis &&
+                comp != AudioDecHidlTest::standardComp::opus &&
+                comp != AudioDecHidlTest::standardComp::raw) {
+                setDefaultPortParam(omxNode, kPortIndexOutput,
+                                    OMX_AUDIO_CodingPCM, nChannels,
+                                    nSampleRate);
+            }
 
             // If you can disable a port, then you should be able to
             // enable
@@ -594,7 +606,7 @@ void decodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                    OMX_AUDIO_CODINGTYPE eEncoding, OMX_U32 kPortIndexInput,
                    OMX_U32 kPortIndexOutput, std::ifstream& eleStream,
                    android::Vector<FrameData>* Info, int offset, int range,
-                   bool signalEOS = true) {
+                   AudioDecHidlTest::standardComp comp, bool signalEOS = true) {
     android::hardware::media::omx::V1_0::Status status;
     Message msg;
 
@@ -633,7 +645,7 @@ void decodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         if (status == android::hardware::media::omx::V1_0::Status::OK &&
             msg.type == Message::Type::EVENT) {
             portReconfiguration(omxNode, observer, iBuffer, oBuffer, eEncoding,
-                                kPortIndexInput, kPortIndexOutput, msg);
+                                kPortIndexInput, kPortIndexOutput, msg, comp);
         }
 
         if (frameID == (int)Info->size() || frameID == (offset + range)) break;
@@ -754,8 +766,13 @@ TEST_F(AudioDecHidlTest, DecodeTest) {
     getInputChannelInfo(omxNode, kPortIndexInput, eEncoding, &nChannels,
                         &nSampleRate);
     // Configure output port
-    setDefaultPortParam(omxNode, kPortIndexOutput, OMX_AUDIO_CodingPCM,
-                        nChannels, nSampleRate);
+    // SPECIAL CASE: Soft Vorbis, Opus and Raw Decoders do not offer way to
+    // configure output PCM port. The port undergoes auto configuration
+    // internally basing on parsed elementary stream information.
+    if (compName != vorbis && compName != opus && compName != raw) {
+        setDefaultPortParam(omxNode, kPortIndexOutput, OMX_AUDIO_CodingPCM,
+                            nChannels, nSampleRate);
+    }
 
     android::Vector<BufferInfo> iBuffer, oBuffer;
 
@@ -769,7 +786,7 @@ TEST_F(AudioDecHidlTest, DecodeTest) {
     ASSERT_EQ(eleStream.is_open(), true);
     decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
                   kPortIndexInput, kPortIndexOutput, eleStream, &Info, 0,
-                  (int)Info.size());
+                  (int)Info.size(), compName);
     eleStream.close();
     waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
                            kPortIndexInput, kPortIndexOutput);
@@ -812,8 +829,13 @@ TEST_F(AudioDecHidlTest, DISABLED_EOSTest_M) {
     getInputChannelInfo(omxNode, kPortIndexInput, eEncoding, &nChannels,
                         &nSampleRate);
     // Configure output port
-    setDefaultPortParam(omxNode, kPortIndexOutput, OMX_AUDIO_CodingPCM,
-                        nChannels, nSampleRate);
+    // SPECIAL CASE: Soft Vorbis, Opus and Raw Decoders do not offer way to
+    // configure output PCM port. The port undergoes auto configuration
+    // internally basing on parsed elementary stream information.
+    if (compName != vorbis && compName != opus && compName != raw) {
+        setDefaultPortParam(omxNode, kPortIndexOutput, OMX_AUDIO_CodingPCM,
+                            nChannels, nSampleRate);
+    }
 
     android::Vector<BufferInfo> iBuffer, oBuffer;
 
@@ -884,8 +906,13 @@ TEST_F(AudioDecHidlTest, ThumbnailTest) {
     getInputChannelInfo(omxNode, kPortIndexInput, eEncoding, &nChannels,
                         &nSampleRate);
     // Configure output port
-    setDefaultPortParam(omxNode, kPortIndexOutput, OMX_AUDIO_CodingPCM,
-                        nChannels, nSampleRate);
+    // SPECIAL CASE: Soft Vorbis, Opus and Raw Decoders do not offer way to
+    // configure output PCM port. The port undergoes auto configuration
+    // internally basing on parsed elementary stream information.
+    if (compName != vorbis && compName != opus && compName != raw) {
+        setDefaultPortParam(omxNode, kPortIndexOutput, OMX_AUDIO_CodingPCM,
+                            nChannels, nSampleRate);
+    }
 
     android::Vector<BufferInfo> iBuffer, oBuffer;
 
@@ -902,8 +929,8 @@ TEST_F(AudioDecHidlTest, ThumbnailTest) {
     eleStream.open(mURL, std::ifstream::binary);
     ASSERT_EQ(eleStream.is_open(), true);
     decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
-                  kPortIndexInput, kPortIndexOutput, eleStream, &Info, 0,
-                  i + 1);
+                  kPortIndexInput, kPortIndexOutput, eleStream, &Info, 0, i + 1,
+                  compName);
     eleStream.close();
     waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
                            kPortIndexInput, kPortIndexOutput);
@@ -919,7 +946,7 @@ TEST_F(AudioDecHidlTest, ThumbnailTest) {
     ASSERT_EQ(eleStream.is_open(), true);
     decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
                   kPortIndexInput, kPortIndexOutput, eleStream, &Info, 0, i + 1,
-                  false);
+                  compName, false);
     eleStream.close();
     waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
                            kPortIndexInput, kPortIndexOutput);
@@ -983,8 +1010,13 @@ TEST_F(AudioDecHidlTest, SimpleEOSTest) {
     getInputChannelInfo(omxNode, kPortIndexInput, eEncoding, &nChannels,
                         &nSampleRate);
     // Configure output port
-    setDefaultPortParam(omxNode, kPortIndexOutput, OMX_AUDIO_CodingPCM,
-                        nChannels, nSampleRate);
+    // SPECIAL CASE: Soft Vorbis, Opus and Raw Decoders do not offer way to
+    // configure output PCM port. The port undergoes auto configuration
+    // internally basing on parsed elementary stream information.
+    if (compName != vorbis && compName != opus && compName != raw) {
+        setDefaultPortParam(omxNode, kPortIndexOutput, OMX_AUDIO_CodingPCM,
+                            nChannels, nSampleRate);
+    }
 
     android::Vector<BufferInfo> iBuffer, oBuffer;
 
@@ -999,11 +1031,11 @@ TEST_F(AudioDecHidlTest, SimpleEOSTest) {
     ASSERT_EQ(eleStream.is_open(), true);
     decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
                   kPortIndexInput, kPortIndexOutput, eleStream, &Info, 0,
-                  (int)Info.size());
+                  (int)Info.size(), compName, false);
     eleStream.close();
     waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
                            kPortIndexInput, kPortIndexOutput);
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag);
+    testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag);
     flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
                kPortIndexOutput);
     framesReceived = 0;
@@ -1062,8 +1094,13 @@ TEST_F(AudioDecHidlTest, FlushTest) {
     getInputChannelInfo(omxNode, kPortIndexInput, eEncoding, &nChannels,
                         &nSampleRate);
     // Configure output port
-    setDefaultPortParam(omxNode, kPortIndexOutput, OMX_AUDIO_CodingPCM,
-                        nChannels, nSampleRate);
+    // SPECIAL CASE: Soft Vorbis, Opus and Raw Decoders do not offer way to
+    // configure output PCM port. The port undergoes auto configuration
+    // internally basing on parsed elementary stream information.
+    if (compName != vorbis && compName != opus && compName != raw) {
+        setDefaultPortParam(omxNode, kPortIndexOutput, OMX_AUDIO_CodingPCM,
+                            nChannels, nSampleRate);
+    }
 
     android::Vector<BufferInfo> iBuffer, oBuffer;
 
@@ -1081,7 +1118,7 @@ TEST_F(AudioDecHidlTest, FlushTest) {
     ASSERT_EQ(eleStream.is_open(), true);
     decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
                   kPortIndexInput, kPortIndexOutput, eleStream, &Info, 0,
-                  nFrames, false);
+                  nFrames, compName, false);
     // Note: Assumes 200 ms is enough to end any decode call that started
     flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
                kPortIndexOutput, 200000);
@@ -1103,7 +1140,7 @@ TEST_F(AudioDecHidlTest, FlushTest) {
     if (keyFrame) {
         decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
                       kPortIndexInput, kPortIndexOutput, eleStream, &Info,
-                      index, Info.size() - index, false);
+                      index, Info.size() - index, compName, false);
     }
     // Note: Assumes 200 ms is enough to end any decode call that started
     flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
