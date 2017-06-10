@@ -657,11 +657,21 @@ int colorFormatConversion(BufferInfo* buffer, void* buff, PixelFormat format,
         if (error != android::hardware::graphics::mapper::V2_0::Error::NONE)
             return 1;
 
+        int size = ((rect.width * rect.height * 3) >> 1);
+        char* img = new char[size];
+        if (img == nullptr) return 1;
+        eleStream.read(img, size);
+        if (eleStream.gcount() != size) {
+            delete[] img;
+            return 1;
+        }
+
+        char* imgTmp = img;
         char* ipBuffer = static_cast<char*>(ycbcrLayout.y);
         for (size_t y = rect.height; y > 0; --y) {
-            eleStream.read(ipBuffer, rect.width);
-            if (eleStream.gcount() != rect.width) return 1;
+            memcpy(ipBuffer, imgTmp, rect.width);
             ipBuffer += ycbcrLayout.yStride;
+            imgTmp += rect.width;
         }
 
         if (format == PixelFormat::YV12)
@@ -672,19 +682,19 @@ int colorFormatConversion(BufferInfo* buffer, void* buff, PixelFormat format,
         ipBuffer = static_cast<char*>(ycbcrLayout.cb);
         for (size_t y = rect.height >> 1; y > 0; --y) {
             for (int32_t x = 0; x < (rect.width >> 1); ++x) {
-                eleStream.read(&ipBuffer[ycbcrLayout.chromaStep * x], 1);
-                if (eleStream.gcount() != 1) return 1;
+                ipBuffer[ycbcrLayout.chromaStep * x] = *imgTmp++;
             }
             ipBuffer += ycbcrLayout.cStride;
         }
         ipBuffer = static_cast<char*>(ycbcrLayout.cr);
         for (size_t y = rect.height >> 1; y > 0; --y) {
             for (int32_t x = 0; x < (rect.width >> 1); ++x) {
-                eleStream.read(&ipBuffer[ycbcrLayout.chromaStep * x], 1);
-                if (eleStream.gcount() != 1) return 1;
+                ipBuffer[ycbcrLayout.chromaStep * x] = *imgTmp++;
             }
             ipBuffer += ycbcrLayout.cStride;
         }
+
+        delete[] img;
 
         mapper->unlock(buff,
                        [&](android::hardware::graphics::mapper::V2_0::Error _e,
@@ -793,7 +803,7 @@ int dispatchGraphicBuffer(sp<IOmxNode> omxNode,
     ::android::hardware::hidl_handle fence;
     IGraphicBufferProducer::FrameEventHistoryDelta outTimestamps;
     ::android::hardware::media::V1_0::AnwBuffer AnwBuffer;
-    PixelFormat format = PixelFormat::YV12;
+    PixelFormat format = PixelFormat::YCBCR_420_888;
     producer->dequeueBuffer(
         portDef.format.video.nFrameWidth, portDef.format.video.nFrameHeight,
         format, BufferUsage::CPU_READ_OFTEN | BufferUsage::CPU_WRITE_OFTEN,
@@ -878,6 +888,74 @@ int dispatchGraphicBuffer(sp<IOmxNode> omxNode,
     return 0;
 }
 
+int fillByteBuffer(sp<IOmxNode> omxNode, char* ipBuffer, OMX_U32 portIndexInput,
+                   std::ifstream& eleStream) {
+    android::hardware::media::omx::V1_0::Status status;
+    OMX_PARAM_PORTDEFINITIONTYPE portDef;
+    uint32_t i, j;
+
+    status = getPortParam(omxNode, OMX_IndexParamPortDefinition, portIndexInput,
+                          &portDef);
+    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+
+    int size = ((portDef.format.video.nFrameWidth *
+                 portDef.format.video.nFrameHeight * 3) >>
+                1);
+    char* img = new char[size];
+    if (img == nullptr) return 1;
+    eleStream.read(img, size);
+    if (eleStream.gcount() != size) {
+        delete[] img;
+        return 1;
+    }
+
+    char* Y = ipBuffer;
+    char* imgTmp = img;
+    for (j = 0; j < portDef.format.video.nFrameHeight; ++j) {
+        memcpy(Y, imgTmp, portDef.format.video.nFrameWidth);
+        Y += portDef.format.video.nStride;
+        imgTmp += portDef.format.video.nFrameWidth;
+    }
+
+    if (portDef.format.video.eColorFormat == OMX_COLOR_FormatYUV420SemiPlanar) {
+        char* Cb = ipBuffer + (portDef.format.video.nFrameHeight *
+                               portDef.format.video.nStride);
+        char* Cr = Cb + 1;
+        for (j = 0; j<portDef.format.video.nFrameHeight>> 1; ++j) {
+            for (i = 0; i < (portDef.format.video.nFrameWidth >> 1); ++i) {
+                Cb[2 * i] = *imgTmp++;
+            }
+            Cb += portDef.format.video.nStride;
+        }
+        for (j = 0; j<portDef.format.video.nFrameHeight>> 1; ++j) {
+            for (i = 0; i < (portDef.format.video.nFrameWidth >> 1); ++i) {
+                Cr[2 * i] = *imgTmp++;
+            }
+            Cr += portDef.format.video.nStride;
+        }
+    } else if (portDef.format.video.eColorFormat ==
+               OMX_COLOR_FormatYUV420Planar) {
+        char* Cb = ipBuffer + (portDef.format.video.nFrameHeight *
+                               portDef.format.video.nStride);
+        char* Cr = Cb + ((portDef.format.video.nFrameHeight *
+                          portDef.format.video.nStride) >>
+                         2);
+        for (j = 0; j<portDef.format.video.nFrameHeight>> 1; ++j) {
+            memcpy(Cb, imgTmp, (portDef.format.video.nFrameWidth >> 1));
+            Cb += (portDef.format.video.nStride >> 1);
+            imgTmp += (portDef.format.video.nFrameWidth >> 1);
+        }
+        for (j = 0; j<portDef.format.video.nFrameHeight>> 1; ++j) {
+            memcpy(Cr, imgTmp, (portDef.format.video.nFrameWidth >> 1));
+            Cr += (portDef.format.video.nStride >> 1);
+            imgTmp += (portDef.format.video.nFrameWidth >> 1);
+        }
+    }
+
+    delete[] img;
+    return 0;
+}
+
 // Encode N Frames
 void encodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                    OMX_U32 portIndexInput, OMX_U32 portIndexOutput,
@@ -924,8 +1002,8 @@ void encodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                 static_cast<void*>((*iBuffer)[i].mMemory->getPointer()));
             ASSERT_LE(bytesCount,
                       static_cast<int>((*iBuffer)[i].mMemory->getSize()));
-            eleStream.read(ipBuffer, bytesCount);
-            if (eleStream.gcount() != bytesCount) break;
+            if (fillByteBuffer(omxNode, ipBuffer, portIndexInput, eleStream))
+                break;
             if (signalEOS && (nFrames == 1)) flags = OMX_BUFFERFLAG_EOS;
             dispatchInputBuffer(omxNode, iBuffer, i, bytesCount, flags,
                                 timestamp);
@@ -979,8 +1057,9 @@ void encodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                 ASSERT_LE(
                     bytesCount,
                     static_cast<int>((*iBuffer)[index].mMemory->getSize()));
-                eleStream.read(ipBuffer, bytesCount);
-                if (eleStream.gcount() != bytesCount) break;
+                if (fillByteBuffer(omxNode, ipBuffer, portIndexInput,
+                                   eleStream))
+                    break;
                 if (signalEOS && (nFrames == 1)) flags = OMX_BUFFERFLAG_EOS;
                 dispatchInputBuffer(omxNode, iBuffer, index, bytesCount, flags,
                                     timestamp);
@@ -1134,9 +1213,26 @@ TEST_F(VideoEncHidlTest, EncodeTest) {
     uint32_t nFrameWidth = 352;
     uint32_t nFrameHeight = 288;
     uint32_t xFramerate = (30U << 16);
-    OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatYUV420Planar;
+    OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatUnused;
+    OMX_VIDEO_PARAM_PORTFORMATTYPE portFormat;
+    portFormat.nIndex = 0;
+    while (1) {
+        status = getPortParam(omxNode, OMX_IndexParamVideoPortFormat,
+                              kPortIndexInput, &portFormat);
+        if (status != ::android::hardware::media::omx::V1_0::Status::OK) break;
+        EXPECT_EQ(portFormat.eCompressionFormat, OMX_VIDEO_CodingUnused);
+        if (OMX_COLOR_FormatYUV420SemiPlanar == portFormat.eColorFormat ||
+            OMX_COLOR_FormatYUV420Planar == portFormat.eColorFormat) {
+            eColorFormat = portFormat.eColorFormat;
+            break;
+        }
+        portFormat.nIndex++;
+        if (portFormat.nIndex == 512) break;
+    }
+    ASSERT_NE(eColorFormat, OMX_COLOR_FormatUnused);
     setupRAWPort(omxNode, kPortIndexInput, nFrameWidth, nFrameHeight, 0,
                  xFramerate, eColorFormat);
+
     // Configure output port
     uint32_t nBitRate = 512000;
     setDefaultPortParam(omxNode, kPortIndexOutput, eCompressionFormat, nBitRate,
