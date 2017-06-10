@@ -1470,6 +1470,14 @@ TEST_F(VideoEncHidlTest, EncodeTestEOS) {
         kPortIndexOutput = kPortIndexInput + 1;
     }
 
+    // Configure input port
+    uint32_t nFrameWidth = 352;
+    uint32_t nFrameHeight = 288;
+    uint32_t xFramerate = (30U << 16);
+    OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatAndroidOpaque;
+    setupRAWPort(omxNode, kPortIndexInput, nFrameWidth, nFrameHeight, 0,
+                 xFramerate, eColorFormat);
+
     // CreateInputSurface
     EXPECT_TRUE(omx->createInputSurface(
                        [&](android::hardware::media::omx::V1_0::Status _s,
