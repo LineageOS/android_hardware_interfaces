@@ -33,7 +33,7 @@
 #include <media/openmax/OMX_AudioExt.h>
 #include <media/openmax/OMX_VideoExt.h>
 
-#define DEFAULT_TIMEOUT 40000
+#define DEFAULT_TIMEOUT 100000
 #define TIMEOUT_COUNTER (10000000 / DEFAULT_TIMEOUT)
 
 enum bufferOwner {
