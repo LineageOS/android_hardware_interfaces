@@ -249,8 +249,7 @@ class VideoEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
             if (msg.data.extendedBufferData.rangeLength != 0) {
                 // Test if current timestamp is among the list of queued
                 // timestamps
-                if (timestampDevTest && (prependSPSPPS ||
-                                         (msg.data.extendedBufferData.flags &
+                if (timestampDevTest && ((msg.data.extendedBufferData.flags &
                                           OMX_BUFFERFLAG_CODECCONFIG) == 0)) {
                     bool tsHit = false;
                     android::List<uint64_t>::iterator it =
