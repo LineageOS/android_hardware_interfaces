@@ -30,9 +30,6 @@
 Return<android::hardware::media::omx::V1_0::Status> setAudioPortFormat(
     sp<IOmxNode> omxNode, OMX_U32 portIndex, OMX_AUDIO_CODINGTYPE eEncoding);
 
-Return<android::hardware::media::omx::V1_0::Status> setRole(
-    sp<IOmxNode> omxNode, const char* role);
-
 void enumerateProfile(sp<IOmxNode> omxNode, OMX_U32 portIndex,
                       std::vector<int32_t>* arrProfile);
 
