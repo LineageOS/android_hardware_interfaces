@@ -307,7 +307,8 @@ TEST_F(RadioHidlTest, deleteSmsOnSim) {
                     radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
                     radioRsp->rspInfo.error == RadioError::NONE ||
                     radioRsp->rspInfo.error == RadioError::MODEM_ERR ||
-                    radioRsp->rspInfo.error == RadioError::NO_SUCH_ENTRY);
+                    radioRsp->rspInfo.error == RadioError::NO_SUCH_ENTRY ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_MODEM_STATE);
     }
 }
 
@@ -407,7 +408,12 @@ TEST_F(RadioHidlTest, deleteSmsOnRuim) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckGeneralError());
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::NONE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR ||
+                    radioRsp->rspInfo.error == RadioError::NO_SUCH_ENTRY ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_MODEM_STATE);
     }
 }
 

@@ -31,9 +31,6 @@ Return<android::hardware::media::omx::V1_0::Status> setVideoPortFormat(
     OMX_VIDEO_CODINGTYPE eCompressionFormat, OMX_COLOR_FORMATTYPE eColorFormat,
     OMX_U32 xFramerate);
 
-Return<android::hardware::media::omx::V1_0::Status> setRole(
-    sp<IOmxNode> omxNode, const char* role);
-
 void enumerateProfileAndLevel(sp<IOmxNode> omxNode, OMX_U32 portIndex,
                               std::vector<int32_t>* arrProfile,
                               std::vector<int32_t>* arrLevel);

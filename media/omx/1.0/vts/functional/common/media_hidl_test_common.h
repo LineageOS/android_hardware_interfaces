@@ -33,7 +33,7 @@
 #include <media/openmax/OMX_AudioExt.h>
 #include <media/openmax/OMX_VideoExt.h>
 
-#define DEFAULT_TIMEOUT 40000
+#define DEFAULT_TIMEOUT 100000
 #define TIMEOUT_COUNTER (10000000 / DEFAULT_TIMEOUT)
 
 enum bufferOwner {
@@ -256,6 +256,9 @@ Return<android::hardware::media::omx::V1_0::Status> setPortConfig(
 /*
  * common functions declarations
  */
+Return<android::hardware::media::omx::V1_0::Status> setRole(
+    sp<IOmxNode> omxNode, const char* role);
+
 void allocatePortBuffers(sp<IOmxNode> omxNode,
                          android::Vector<BufferInfo>* buffArray,
                          OMX_U32 portIndex,
@@ -288,7 +291,8 @@ void dispatchOutputBuffer(sp<IOmxNode> omxNode,
 void dispatchInputBuffer(sp<IOmxNode> omxNode,
                          android::Vector<BufferInfo>* buffArray,
                          size_t bufferIndex, int bytesCount, uint32_t flags,
-                         uint64_t timestamp);
+                         uint64_t timestamp,
+                         PortMode portMode = PortMode::PRESET_BYTE_BUFFER);
 
 void flushPorts(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                 android::Vector<BufferInfo>* iBuffer,

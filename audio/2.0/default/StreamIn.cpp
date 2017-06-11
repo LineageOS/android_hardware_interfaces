@@ -416,15 +416,15 @@ Return<uint32_t> StreamIn::getInputFramesLost() {
 // static
 Result StreamIn::getCapturePositionImpl(audio_stream_in_t* stream,
                                         uint64_t* frames, uint64_t* time) {
+    // HAL may have a stub function, always returning ENOSYS, don't
+    // spam the log in this case.
+    static const std::vector<int> ignoredErrors{ENOSYS};
     Result retval(Result::NOT_SUPPORTED);
     if (stream->get_capture_position != NULL) return retval;
     int64_t halFrames, halTime;
-    retval = Stream::analyzeStatus(
-        "get_capture_position",
-        stream->get_capture_position(stream, &halFrames, &halTime),
-        // HAL may have a stub function, always returning ENOSYS, don't
-        // spam the log in this case.
-        ENOSYS);
+    retval = Stream::analyzeStatus("get_capture_position",
+                                   stream->get_capture_position(stream, &halFrames, &halTime),
+                                   ignoredErrors);
     if (retval == Result::OK) {
         *frames = halFrames;
         *time = halTime;
