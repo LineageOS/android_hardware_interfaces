@@ -61,10 +61,11 @@ VehicleHal::VehiclePropValuePtr EmulatedVehicleHal::get(
 
 StatusCode EmulatedVehicleHal::set(const VehiclePropValue& propValue) {
     if (propValue.prop == kGenerateFakeDataControllingProperty) {
-        return handleGenerateFakeDataRequest(propValue);
-    };
-
-    if (mHvacPowerProps.count(propValue.prop)) {
+        StatusCode status = handleGenerateFakeDataRequest(propValue);
+        if (status != StatusCode::OK) {
+            return status;
+        }
+    } else if (mHvacPowerProps.count(propValue.prop)) {
         auto hvacPowerOn = mPropStore->readValueOrNull(toInt(VehicleProperty::HVAC_POWER_ON),
                                                       toInt(VehicleAreaZone::ROW_1));
 
@@ -176,6 +177,13 @@ bool EmulatedVehicleHal::isContinuousProperty(int32_t propId) const {
 }
 
 bool EmulatedVehicleHal::setPropertyFromVehicle(const VehiclePropValue& propValue) {
+    if (propValue.prop == kGenerateFakeDataControllingProperty) {
+        StatusCode status = handleGenerateFakeDataRequest(propValue);
+        if (status != StatusCode::OK) {
+            return false;
+        }
+    }
+
     if (mPropStore->writeValue(propValue)) {
         doHalEvent(getValuePool()->obtain(propValue));
         return true;

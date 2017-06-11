@@ -209,10 +209,11 @@ class VideoDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         isSecure = false;
         size_t suffixLen = strlen(".secure");
         if (strlen(gEnv->getComponent().c_str()) >= suffixLen) {
+            isSecure =
+                !strcmp(gEnv->getComponent().c_str() +
+                            strlen(gEnv->getComponent().c_str()) - suffixLen,
+                        ".secure");
         }
-        isSecure = !strcmp(gEnv->getComponent().c_str() +
-                               strlen(gEnv->getComponent().c_str()) - suffixLen,
-                           ".secure");
         if (isSecure) disableTest = true;
         if (disableTest) std::cout << "[          ] Warning !  Test Disabled\n";
     }
@@ -784,25 +785,15 @@ TEST_F(VideoDecHidlTest, DecodeTest) {
     eleInfo.close();
 
     // set port mode
-    if (isSecure) {
-        portMode[0] = PortMode::PRESET_SECURE_BUFFER;
-        portMode[1] = PortMode::DYNAMIC_ANW_BUFFER;
-        status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
-        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    portMode[0] = PortMode::PRESET_BYTE_BUFFER;
+    portMode[1] = PortMode::DYNAMIC_ANW_BUFFER;
+    status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
+    if (status != ::android::hardware::media::omx::V1_0::Status::OK) {
+        portMode[1] = PortMode::PRESET_BYTE_BUFFER;
         status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
         ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-    } else {
-        portMode[0] = PortMode::PRESET_BYTE_BUFFER;
-        portMode[1] = PortMode::DYNAMIC_ANW_BUFFER;
-        status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
-        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-        status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
-        if (status != ::android::hardware::media::omx::V1_0::Status::OK) {
-            portMode[1] = PortMode::PRESET_BYTE_BUFFER;
-            status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
-            ASSERT_EQ(status,
-                      ::android::hardware::media::omx::V1_0::Status::OK);
-        }
     }
 
     // set Port Params
@@ -1071,11 +1062,11 @@ TEST_F(VideoDecHidlTest, SimpleEOSTest) {
     ASSERT_EQ(eleStream.is_open(), true);
     decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
                   kPortIndexOutput, eleStream, &Info, 0, (int)Info.size(),
-                  portMode[1]);
+                  portMode[1], false);
     eleStream.close();
     waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
                            kPortIndexInput, kPortIndexOutput, portMode[1]);
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag, portMode);
+    testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, portMode);
     flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
                kPortIndexOutput);
     framesReceived = 0;
