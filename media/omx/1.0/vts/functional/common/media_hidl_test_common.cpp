@@ -532,7 +532,7 @@ void testEOS(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         }
     }
 
-    int timeOut = TIMEOUT_COUNTER;
+    int timeOut = TIMEOUT_COUNTER_PE;
     while (timeOut--) {
         // Dispatch all client owned output buffers to recover remaining frames
         while (1) {
@@ -541,15 +541,15 @@ void testEOS(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                 // if dispatch is successful, perhaps there is a latency
                 // in the component. Dont be in a haste to leave. reset timeout
                 // counter
-                timeOut = TIMEOUT_COUNTER;
+                timeOut = TIMEOUT_COUNTER_PE;
             } else {
                 break;
             }
         }
 
         Message msg;
-        status =
-            observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
+        status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT_PE, iBuffer,
+                                          oBuffer);
         if (status == android::hardware::media::omx::V1_0::Status::OK) {
             if (msg.data.eventData.event == OMX_EventPortSettingsChanged) {
                 if (fptr) {

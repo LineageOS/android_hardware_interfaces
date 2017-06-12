@@ -17,7 +17,6 @@
 #ifndef MEDIA_VIDEO_HIDL_TEST_COMMON_H
 #define MEDIA_VIDEO_HIDL_TEST_COMMON_H
 
-
 /*
  * Common video utils
  */
