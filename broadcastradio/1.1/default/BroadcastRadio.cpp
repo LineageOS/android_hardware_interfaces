@@ -115,9 +115,17 @@ exit:
     return Void();
 }
 
-Return<void> BroadcastRadio::getProperties_1_1(getProperties_1_1_cb _hidl_cb __unused)
-{
-    return Status::fromExceptionCode(Status::EX_UNSUPPORTED_OPERATION);
+Return<void> BroadcastRadio::getProperties_1_1(getProperties_1_1_cb _hidl_cb) {
+    radio_hal_properties_t halProperties;
+    V1_1::Properties properties = {};
+
+    LOG_ALWAYS_FATAL_IF(mHwDevice == nullptr, "HW device is not set");
+    int rc = mHwDevice->get_properties(mHwDevice, &halProperties);
+    LOG_ALWAYS_FATAL_IF(rc != 0, "Couldn't get device properties");
+    Utils::convertPropertiesFromHal(&properties.base, &halProperties);
+
+    _hidl_cb(properties);
+    return Void();
 }
 
 Return<void> BroadcastRadio::openTuner(const BandConfig& config, bool audio,
