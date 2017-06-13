@@ -200,8 +200,8 @@ uint64_t Gralloc1Allocator::toProducerUsage(uint64_t usage) {
     // should be filtered out
     uint64_t producerUsage =
         usage &
-        ~static_cast<uint64_t>(BufferUsage::CPU_READ_MASK |
-                               BufferUsage::CPU_WRITE_MASK);
+        ~static_cast<uint64_t>(BufferUsage::CPU_READ_MASK | BufferUsage::CPU_WRITE_MASK |
+                               BufferUsage::GPU_DATA_BUFFER);
 
     switch (usage & BufferUsage::CPU_WRITE_MASK) {
         case static_cast<uint64_t>(BufferUsage::CPU_WRITE_RARELY):
@@ -225,6 +225,8 @@ uint64_t Gralloc1Allocator::toProducerUsage(uint64_t usage) {
             break;
     }
 
+    // BufferUsage::GPU_DATA_BUFFER is always filtered out
+
     return producerUsage;
 }
 
@@ -233,8 +235,8 @@ uint64_t Gralloc1Allocator::toConsumerUsage(uint64_t usage) {
     // should be filtered out
     uint64_t consumerUsage =
         usage &
-        ~static_cast<uint64_t>(BufferUsage::CPU_READ_MASK |
-                               BufferUsage::CPU_WRITE_MASK);
+        ~static_cast<uint64_t>(BufferUsage::CPU_READ_MASK | BufferUsage::CPU_WRITE_MASK |
+                               BufferUsage::SENSOR_DIRECT_DATA | BufferUsage::GPU_DATA_BUFFER);
 
     switch (usage & BufferUsage::CPU_READ_MASK) {
         case static_cast<uint64_t>(BufferUsage::CPU_READ_RARELY):
@@ -245,6 +247,12 @@ uint64_t Gralloc1Allocator::toConsumerUsage(uint64_t usage) {
             break;
         default:
             break;
+    }
+
+    // BufferUsage::SENSOR_DIRECT_DATA is always filtered out
+
+    if (usage & BufferUsage::GPU_DATA_BUFFER) {
+        consumerUsage |= GRALLOC1_CONSUMER_USAGE_GPU_DATA_BUFFER;
     }
 
     return consumerUsage;
