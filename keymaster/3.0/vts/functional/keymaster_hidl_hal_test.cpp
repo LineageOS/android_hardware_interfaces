@@ -1373,7 +1373,7 @@ typedef KeymasterHidlTest GetKeyCharacteristicsTest;
  */
 TEST_F(GetKeyCharacteristicsTest, SimpleRsa) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                             .RsaSigningKey(256, 3)
+                                             .RsaSigningKey(1024, 3)
                                              .Digest(Digest::NONE)
                                              .Padding(PaddingMode::NONE)));
 
@@ -2245,7 +2245,7 @@ typedef KeymasterHidlTest ExportKeyTest;
  */
 TEST_F(ExportKeyTest, RsaUnsupportedKeyFormat) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                             .RsaSigningKey(256, 3)
+                                             .RsaSigningKey(1024, 3)
                                              .Digest(Digest::NONE)
                                              .Padding(PaddingMode::NONE)));
     HidlBuf export_data;
@@ -2262,7 +2262,7 @@ TEST_F(ExportKeyTest, RsaUnsupportedKeyFormat) {
 TEST_F(ExportKeyTest, DISABLED_RsaCorruptedKeyBlob) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                              .Authorization(TAG_NO_AUTH_REQUIRED)
-                                             .RsaSigningKey(256, 3)
+                                             .RsaSigningKey(1024, 3)
                                              .Digest(Digest::NONE)
                                              .Padding(PaddingMode::NONE)));
     for (size_t i = 0; i < key_blob_.size(); ++i) {
