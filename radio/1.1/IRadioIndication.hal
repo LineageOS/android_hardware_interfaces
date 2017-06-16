@@ -39,4 +39,15 @@ interface IRadioIndication extends @1.0::IRadioIndication{
      * @param result Network scan result as NetworkScanResult defined in types.hal
      */
     oneway networkScanResult(RadioIndicationType type, NetworkScanResult result);
+
+    /**
+     * Indicates a status update for a particular Keepalive session. This must include
+     * a handle for a previous session and should include a status update regarding the
+     * state of a keepalive. Unsolicited keepalive status reports should never be
+     * PENDING as unsolicited status should only be sent when known.
+     *
+     * @param type Type of radio indication
+     * @param status Status information for a Keepalive session
+     */
+    oneway keepaliveStatus(RadioIndicationType type, KeepaliveStatus status);
 };
