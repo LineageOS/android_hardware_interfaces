@@ -71,4 +71,26 @@ interface IRadioResponse extends @1.0::IRadioResponse {
      *   RadioError:MODEM_ERR
      */
     oneway stopNetworkScanResponse(RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param status Status object containing a new handle and a current status. The
+     * status returned here may be PENDING to indicate that the radio has not yet
+     * processed the keepalive request.
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:NO_RESOURCES
+     *   RadioError:INVALID_ARGUMENTS
+     */
+    oneway startKeepaliveResponse(RadioResponseInfo info, KeepaliveStatus status);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:INVALID_ARGUMENTS
+     */
+    oneway stopKeepaliveResponse(RadioResponseInfo info);
 };
