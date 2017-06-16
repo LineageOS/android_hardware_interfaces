@@ -293,20 +293,31 @@ Return<void> GrallocMapper::unlock(void* buffer, unlock_cb hidl_cb) {
     return Void();
 }
 
-IMapper* HIDL_FETCH_IMapper(const char* /* name */) {
-    const hw_module_t* module = nullptr;
-    int err = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, &module);
-    if (err) {
-        ALOGE("failed to get gralloc module");
-        return nullptr;
+namespace {
+// Load the gralloc module when this shared library is loaded, rather than
+// waiting until HIDL_FETCH_IMapper is called. This allows it (and its
+// dependencies) to be loaded by Zygote, reducing app startup time and sharing
+// pages dirtied during library load between all apps.
+struct GrallocModule {
+    const hw_module_t* module;
+    GrallocModule() : module(nullptr) {
+        int err = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, &module);
+        ALOGE_IF(err, "failed to get gralloc module: %s (%d)", strerror(-err),
+                 err);
     }
+};
+GrallocModule gGralloc;
+}  // namespace
 
-    uint8_t major = (module->module_api_version >> 8) & 0xff;
+IMapper* HIDL_FETCH_IMapper(const char* /* name */) {
+    if (!gGralloc.module) return nullptr;
+
+    uint8_t major = (gGralloc.module->module_api_version >> 8) & 0xff;
     switch (major) {
         case 1:
-            return new Gralloc1Mapper(module);
+            return new Gralloc1Mapper(gGralloc.module);
         case 0:
-            return new Gralloc0Mapper(module);
+            return new Gralloc0Mapper(gGralloc.module);
         default:
             ALOGE("unknown gralloc module major version %d", major);
             return nullptr;
