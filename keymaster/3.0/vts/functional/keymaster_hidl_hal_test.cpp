@@ -2279,8 +2279,7 @@ TEST_F(ExportKeyTest, RsaUnsupportedKeyFormat) {
  * Verifies that attempting to export RSA keys from corrupted key blobs fails.  This is essentially
  * a poor-man's key blob fuzzer.
  */
-// Disabled due to b/33385206
-TEST_F(ExportKeyTest, DISABLED_RsaCorruptedKeyBlob) {
+TEST_F(ExportKeyTest, RsaCorruptedKeyBlob) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                              .Authorization(TAG_NO_AUTH_REQUIRED)
                                              .RsaSigningKey(1024, 3)
@@ -2303,8 +2302,7 @@ TEST_F(ExportKeyTest, DISABLED_RsaCorruptedKeyBlob) {
  * Verifies that attempting to export ECDSA keys from corrupted key blobs fails.  This is
  * essentially a poor-man's key blob fuzzer.
  */
-// Disabled due to b/33385206
-TEST_F(ExportKeyTest, DISABLED_EcCorruptedKeyBlob) {
+TEST_F(ExportKeyTest, EcCorruptedKeyBlob) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                              .Authorization(TAG_NO_AUTH_REQUIRED)
                                              .EcdsaSigningKey(EcCurve::P_256)
