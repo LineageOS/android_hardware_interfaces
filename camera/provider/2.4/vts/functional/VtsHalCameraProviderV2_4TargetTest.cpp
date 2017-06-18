@@ -1680,7 +1680,8 @@ TEST_F(CameraHidlTest, getCameraCharacteristics) {
                     ASSERT_EQ(Status::OK, status);
                     const camera_metadata_t* metadata = (camera_metadata_t*) chars.data();
                     size_t expectedSize = chars.size();
-                    ASSERT_EQ(0, validate_camera_metadata_structure(metadata, &expectedSize));
+                    int result = validate_camera_metadata_structure(metadata, &expectedSize);
+                    ASSERT_TRUE(result == 0 || result == CAMERA_METADATA_VALIDATION_SHIFTED);
                     size_t entryCount = get_camera_metadata_entry_count(metadata);
                     // TODO: we can do better than 0 here. Need to check how many required
                     // characteristics keys we've defined.
@@ -1997,8 +1998,9 @@ TEST_F(CameraHidlTest, constructDefaultRequestSettings) {
                             const camera_metadata_t* metadata =
                                 (camera_metadata_t*) req.data();
                             size_t expectedSize = req.size();
-                            ASSERT_EQ(0, validate_camera_metadata_structure(
-                                    metadata, &expectedSize));
+                            int result = validate_camera_metadata_structure(
+                                    metadata, &expectedSize);
+                            ASSERT_TRUE(result == 0 || result == CAMERA_METADATA_VALIDATION_SHIFTED);
                             size_t entryCount = get_camera_metadata_entry_count(metadata);
                             // TODO: we can do better than 0 here. Need to check how many required
                             // request keys we've defined for each template
