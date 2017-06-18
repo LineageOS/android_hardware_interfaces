@@ -46,13 +46,12 @@ using ::android::sp;
     { 0x20, 0x01, 0x00 }
 #define INVALID_COMMAND \
   { 0x20, 0x00, 0x00 }
-#define FAULTY_DATA_PACKET \
-  { 0x00, 0x00, 0xFF }
 
 #define LOOP_BACK_HEADER_SIZE 3
 #define SYNTAX_ERROR 5
 #define NUMBER_LOOPS 3922
-#define VERSION 0x11
+#define NCI_VERSION_1_1 0x11
+#define NCI_VERSION_2 0x20
 #define TIMEOUT_PERIOD 5
 
 constexpr char kCallbackNameSendEvent[] = "sendEvent";
@@ -108,6 +107,42 @@ class NfcHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     EXPECT_TRUE(res.no_timeout);
     EXPECT_EQ(NfcEvent::OPEN_CPLT, res.args->last_event_);
     EXPECT_EQ(NfcStatus::OK, res.args->last_status_);
+
+    /* Get the NCI version that the device supports */
+    std::vector<uint8_t> cmd = CORE_RESET_CMD;
+    NfcData data = cmd;
+    EXPECT_EQ(data.size(), nfc_->write(data));
+    // Wait for CORE_RESET_RSP
+    res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
+    EXPECT_TRUE(res.no_timeout);
+    EXPECT_GE(6ul, res.args->last_data_.size());
+    EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
+    if (res.args->last_data_.size() == 6) {
+        nci_version = res.args->last_data_[4];
+    } else {
+        EXPECT_EQ(4ul, res.args->last_data_.size());
+        nci_version = NCI_VERSION_2;
+        res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
+        EXPECT_TRUE(res.no_timeout);
+    }
+
+    /*
+     * Close the hal and then re-open to make sure we are in a predictable
+     * state for all the tests.
+     */
+    EXPECT_EQ(NfcStatus::OK, nfc_->close());
+    // Wait for CLOSE_CPLT event
+    res = nfc_cb_->WaitForCallback(kCallbackNameSendEvent);
+    EXPECT_TRUE(res.no_timeout);
+    EXPECT_EQ(NfcEvent::CLOSE_CPLT, res.args->last_event_);
+    EXPECT_EQ(NfcStatus::OK, res.args->last_status_);
+
+    EXPECT_EQ(NfcStatus::OK, nfc_->open(nfc_cb_));
+    // Wait for OPEN_CPLT event
+    res = nfc_cb_->WaitForCallback(kCallbackNameSendEvent);
+    EXPECT_TRUE(res.no_timeout);
+    EXPECT_EQ(NfcEvent::OPEN_CPLT, res.args->last_event_);
+    EXPECT_EQ(NfcStatus::OK, res.args->last_status_);
   }
 
   virtual void TearDown() override {
@@ -119,6 +154,9 @@ class NfcHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     EXPECT_EQ(NfcStatus::OK, res.args->last_status_);
   }
 
+  /* NCI version the device supports
+   * 0x11 for NCI 1.1, 0x20 for NCI 2.0 and so forth */
+  uint8_t nci_version;
   sp<INfc> nfc_;
   sp<NfcClientCallback> nfc_cb_;
 };
@@ -154,10 +192,26 @@ TEST_F(NfcHidlTest, WriteCoreReset) {
   // Wait for CORE_RESET_RSP
   auto res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
   EXPECT_TRUE(res.no_timeout);
-  EXPECT_EQ(6ul, res.args->last_data_.size());
-  EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
-  EXPECT_GE(VERSION, res.args->last_data_[4]);
-  EXPECT_GE(1ul, res.args->last_data_[5]);
+
+  /* The response/notification format for CORE_RESET_CMD differs
+   * with NCI 1.0 and 2.0. */
+  if (nci_version <= NCI_VERSION_1_1) {
+      EXPECT_EQ(6ul, res.args->last_data_.size());
+      EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
+      EXPECT_GE(NCI_VERSION_1_1, res.args->last_data_[4]);
+      EXPECT_GE(1ul, res.args->last_data_[5]);
+  } else {
+      EXPECT_EQ(4ul, res.args->last_data_.size());
+      EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
+      // Wait for CORE_RESET_NTF
+      res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
+      EXPECT_TRUE(res.no_timeout);
+      // Check if reset trigger was due to CORE_RESET_CMD
+      EXPECT_LE(8ul, res.args->last_data_.size());
+      EXPECT_EQ(2ul, res.args->last_data_[3]);
+      EXPECT_GE(1ul, res.args->last_data_[4]);
+      EXPECT_EQ(NCI_VERSION_2, res.args->last_data_[5]);
+  }
 }
 
 /*
@@ -173,10 +227,26 @@ TEST_F(NfcHidlTest, WriteCoreResetConfigReset) {
   // Wait for CORE_RESET_RSP
   auto res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
   EXPECT_TRUE(res.no_timeout);
-  EXPECT_EQ(6ul, res.args->last_data_.size());
-  EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
-  EXPECT_GE(VERSION, res.args->last_data_[4]);
-  EXPECT_EQ(1ul, res.args->last_data_[5]);
+
+  /* The response/notification format for CORE_RESET_CMD differs
+   * with NCI 1.0 and 2.0. */
+  if (nci_version <= NCI_VERSION_1_1) {
+      EXPECT_EQ(6ul, res.args->last_data_.size());
+      EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
+      EXPECT_GE(NCI_VERSION_1_1, res.args->last_data_[4]);
+      EXPECT_EQ(1ul, res.args->last_data_[5]);
+  } else {
+      EXPECT_EQ(4ul, res.args->last_data_.size());
+      EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
+      // Wait for CORE_RESET_NTF
+      res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
+      EXPECT_TRUE(res.no_timeout);
+      // Check if reset trigger was due to CORE_RESET_CMD
+      EXPECT_LE(8ul, res.args->last_data_.size());
+      EXPECT_EQ(2ul, res.args->last_data_[3]);
+      EXPECT_EQ(1ul, res.args->last_data_[4]);
+      EXPECT_EQ(NCI_VERSION_2, res.args->last_data_[5]);
+  }
 }
 
 /*
@@ -199,8 +269,8 @@ TEST_F(NfcHidlTest, WriteInvalidCommand) {
 
 /*
  * WriteInvalidAndThenValidCommand:
- * Sends an Faulty Data Packet
- * Waits for CORE_INTERFACE_ERROR_NTF
+ * Sends an Invalid command
+ * Waits for response
  * Checks SYNTAX_ERROR status
  * Repeat for 100 times appending 0xFF each time to the packet
  * Send CORE_CONN_CREATE_CMD for loop-back mode
@@ -214,7 +284,13 @@ TEST_F(NfcHidlTest, WriteInvalidAndThenValidCommand) {
     auto res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
     EXPECT_TRUE(res.no_timeout);
     EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
-    EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
+
+    /* NCI 2.0 sends CORE_RESET_NTF everytime. */
+    if (nci_version == NCI_VERSION_2) {
+        // Wait for CORE_RESET_NTF
+        res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
+        EXPECT_TRUE(res.no_timeout);
+    }
 
     cmd = CORE_INIT_CMD;
     data = cmd;
@@ -225,7 +301,7 @@ TEST_F(NfcHidlTest, WriteInvalidAndThenValidCommand) {
     EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
 
     // Send an Error Data Packet
-    cmd = FAULTY_DATA_PACKET;
+    cmd = INVALID_COMMAND;
     data = cmd;
     size_t size = data.size();
 
@@ -233,13 +309,10 @@ TEST_F(NfcHidlTest, WriteInvalidAndThenValidCommand) {
         data.resize(++size);
         data[size - 1] = 0xFF;
         EXPECT_EQ(data.size(), nfc_->write(data));
-        // Wait for CORE_INTERFACE_ERROR_NTF
+        // Wait for response with SYNTAX_ERROR
         res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
         EXPECT_TRUE(res.no_timeout);
-        EXPECT_EQ(5ul, res.args->last_data_.size());
-        EXPECT_EQ(0x60, res.args->last_data_[0]);
-        EXPECT_EQ(0x08, res.args->last_data_[1]);
-        EXPECT_EQ(0x02, res.args->last_data_[2]);
+        EXPECT_EQ(4ul, res.args->last_data_.size());
         EXPECT_EQ(SYNTAX_ERROR, res.args->last_data_[3]);
   }
 
@@ -268,7 +341,13 @@ TEST_F(NfcHidlTest, Bandwidth) {
     auto res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
     EXPECT_TRUE(res.no_timeout);
     EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
-    EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
+
+    /* NCI 2.0 sends CORE_RESET_NTF everytime. */
+    if (nci_version == NCI_VERSION_2) {
+        // Wait for CORE_RESET_NTF
+        res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
+        EXPECT_TRUE(res.no_timeout);
+    }
 
     cmd = CORE_INIT_CMD;
     data = cmd;
@@ -379,7 +458,13 @@ TEST_F(NfcHidlTest, CoreInitialized) {
   // most devices.
   for (int i = 10; i <= 16; i++) {
       data[0] = i;
-      EXPECT_EQ(NfcStatus::OK, nfc_->coreInitialized(data));
+      NfcStatus status = nfc_->coreInitialized(data);
+
+      /* In case coreInitialized returned FAILED, do not wait for
+       * POST_INIT_CLPT event. */
+      if (status == NfcStatus::FAILED) continue;
+
+      EXPECT_EQ(NfcStatus::OK, status);
       // Wait for NfcEvent.POST_INIT_CPLT
       auto res = nfc_cb_->WaitForCallback(kCallbackNameSendEvent);
       EXPECT_TRUE(res.no_timeout);

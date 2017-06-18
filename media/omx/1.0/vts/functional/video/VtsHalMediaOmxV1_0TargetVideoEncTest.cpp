@@ -521,12 +521,15 @@ void getLatency(sp<IOmxNode> omxNode, OMX_U32 portIndex, uint32_t* latency) {
 // Set Default port param.
 void setDefaultPortParam(sp<IOmxNode> omxNode, OMX_U32 portIndex,
                          OMX_VIDEO_CODINGTYPE eCompressionFormat,
+                         OMX_U32 nFrameWidth, OMX_U32 nFrameHeight,
                          OMX_U32 nBitrate, OMX_U32 xFramerate) {
     android::hardware::media::omx::V1_0::Status status;
     OMX_PARAM_PORTDEFINITIONTYPE portDef;
     status = getPortParam(omxNode, OMX_IndexParamPortDefinition, portIndex,
                           &portDef);
     EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    portDef.format.video.nFrameWidth = nFrameWidth;
+    portDef.format.video.nFrameHeight = nFrameHeight;
     portDef.format.video.nBitrate = nBitrate;
     portDef.format.video.xFramerate = xFramerate;
     portDef.format.video.bFlagErrorConcealment = OMX_TRUE;
@@ -1028,6 +1031,9 @@ void encodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
             } else if (msg.data.eventData.event == OMX_EventError) {
                 EXPECT_TRUE(false) << "Received OMX_EventError, not sure why";
                 break;
+            } else if (msg.data.eventData.event == OMX_EventDataSpaceChanged) {
+                // TODO: how am i supposed to respond now?
+                std::cout << "[          ] Info ! OMX_EventDataSpaceChanged \n";
             } else {
                 ASSERT_TRUE(false);
             }
@@ -1234,8 +1240,8 @@ TEST_F(VideoEncHidlTest, EncodeTest) {
 
     // Configure output port
     uint32_t nBitRate = 512000;
-    setDefaultPortParam(omxNode, kPortIndexOutput, eCompressionFormat, nBitRate,
-                        xFramerate);
+    setDefaultPortParam(omxNode, kPortIndexOutput, eCompressionFormat,
+                        nFrameWidth, nFrameHeight, nBitRate, xFramerate);
     setRefreshPeriod(omxNode, kPortIndexOutput, 0);
 
     unsigned int index;
@@ -1318,6 +1324,11 @@ TEST_F(VideoEncHidlTest, EncodeTestBufferMetaModes) {
     OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatAndroidOpaque;
     setupRAWPort(omxNode, kPortIndexInput, nFrameWidth, nFrameHeight, 0,
                  xFramerate, eColorFormat);
+
+    // Configure output port
+    uint32_t nBitRate = 512000;
+    setDefaultPortParam(omxNode, kPortIndexOutput, eCompressionFormat,
+                        nFrameWidth, nFrameHeight, nBitRate, xFramerate);
 
     // CreateInputSurface
     EXPECT_TRUE(omx->createInputSurface(

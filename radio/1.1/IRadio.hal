@@ -89,4 +89,24 @@ interface IRadio extends @1.0::IRadio {
      * Response function is IRadioResponse.stopNetworkScanResponse()
      */
     oneway stopNetworkScan(int32_t serial);
+
+    /**
+     * Start a Keepalive session (for IPsec)
+     *
+     * @param serial Serial number of request.
+     * @param keepalive A request structure containing all necessary info to describe a keepalive
+     *
+     * Response function is IRadioResponse.startKeepaliveResponse()
+     */
+    oneway startKeepalive(int32_t serial, KeepaliveRequest keepalive);
+
+    /**
+     * Stop an ongoing Keepalive session (for IPsec)
+     *
+     * @param serial Serial number of request.
+     * @param sessionHandle The handle that was provided by IRadioResponse.startKeepaliveResponse
+     *
+     * Response function is IRadioResponse.stopKeepaliveResponse()
+     */
+    oneway stopKeepalive(int32_t serial, int32_t sessionHandle);
 };
