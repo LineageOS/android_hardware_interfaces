@@ -46,8 +46,6 @@ using ::android::sp;
     { 0x20, 0x01, 0x00 }
 #define INVALID_COMMAND \
   { 0x20, 0x00, 0x00 }
-#define FAULTY_DATA_PACKET \
-  { 0x00, 0x00, 0xFF }
 
 #define LOOP_BACK_HEADER_SIZE 3
 #define SYNTAX_ERROR 5
@@ -271,8 +269,8 @@ TEST_F(NfcHidlTest, WriteInvalidCommand) {
 
 /*
  * WriteInvalidAndThenValidCommand:
- * Sends an Faulty Data Packet
- * Waits for CORE_INTERFACE_ERROR_NTF
+ * Sends an Invalid command
+ * Waits for response
  * Checks SYNTAX_ERROR status
  * Repeat for 100 times appending 0xFF each time to the packet
  * Send CORE_CONN_CREATE_CMD for loop-back mode
@@ -303,7 +301,7 @@ TEST_F(NfcHidlTest, WriteInvalidAndThenValidCommand) {
     EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
 
     // Send an Error Data Packet
-    cmd = FAULTY_DATA_PACKET;
+    cmd = INVALID_COMMAND;
     data = cmd;
     size_t size = data.size();
 
@@ -311,13 +309,10 @@ TEST_F(NfcHidlTest, WriteInvalidAndThenValidCommand) {
         data.resize(++size);
         data[size - 1] = 0xFF;
         EXPECT_EQ(data.size(), nfc_->write(data));
-        // Wait for CORE_INTERFACE_ERROR_NTF
+        // Wait for response with SYNTAX_ERROR
         res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
         EXPECT_TRUE(res.no_timeout);
-        EXPECT_EQ(5ul, res.args->last_data_.size());
-        EXPECT_EQ(0x60, res.args->last_data_[0]);
-        EXPECT_EQ(0x08, res.args->last_data_[1]);
-        EXPECT_EQ(0x02, res.args->last_data_[2]);
+        EXPECT_EQ(4ul, res.args->last_data_.size());
         EXPECT_EQ(SYNTAX_ERROR, res.args->last_data_[3]);
   }
 
