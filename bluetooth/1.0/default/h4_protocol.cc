@@ -18,8 +18,10 @@
 
 #define LOG_TAG "android.hardware.bluetooth-hci-h4"
 #include <android-base/logging.h>
-#include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <log/log.h>
+#include <sys/uio.h>
 
 namespace android {
 namespace hardware {
@@ -27,11 +29,20 @@ namespace bluetooth {
 namespace hci {
 
 size_t H4Protocol::Send(uint8_t type, const uint8_t* data, size_t length) {
-  int rv = WriteSafely(uart_fd_, &type, sizeof(type));
-  if (rv == sizeof(type)) {
-    rv = WriteSafely(uart_fd_, data, length);
+  struct iovec iov[] = {{&type, sizeof(type)},
+                        {const_cast<uint8_t*>(data), length}};
+  ssize_t ret = 0;
+  do {
+    ret = TEMP_FAILURE_RETRY(writev(uart_fd_, iov, sizeof(iov) / sizeof(iov[0])));
+  } while (-1 == ret && EAGAIN == errno);
+
+  if (ret == -1) {
+    ALOGE("%s error writing to UART (%s)", __func__, strerror(errno));
+  } else if (ret == 0) {
+    // Nothing written :(
+    ALOGE("%s zero bytes written - something went wrong...", __func__);
   }
-  return rv;
+  return ret;
 }
 
 void H4Protocol::OnPacketReady() {
