@@ -72,7 +72,7 @@ LOCAL_SHARED_LIBRARIES := \
     libhidltransport \
     liblog \
     libmediadrm \
-    libstagefright_foundation \
+    libstagefright_foundation_vendor \
     libutils \
 
 LOCAL_C_INCLUDES := \
