@@ -1,6 +1,6 @@
 cc_library_static {
     name: "android.hardware.drm@1.0-helper",
-    vendor: true,
+    vendor_available: true,
     defaults: ["hidl_defaults"],
     srcs: [
         "SharedLibrary.cpp",
