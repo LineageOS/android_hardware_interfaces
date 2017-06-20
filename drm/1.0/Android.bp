@@ -89,3 +89,5 @@ cc_library_shared {
         "libutils",
     ],
 }
+
+subdirs = ["default"]
