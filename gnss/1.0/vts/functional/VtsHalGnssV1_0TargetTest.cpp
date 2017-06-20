@@ -39,7 +39,7 @@ using android::sp;
 
 // for command line argument on how strictly to run the test
 bool sAgpsIsPresent = false;  // if SUPL or XTRA assistance available
-bool sSignalIsWeak = false;  // if GNSS signals are weak (e.g. light indoor)
+bool sSignalIsWeak = false;   // if GNSS signals are weak (e.g. light indoor)
 
 // The main test class for GNSS HAL.
 class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
@@ -49,6 +49,7 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
     capabilities_called_count_ = 0;
     location_called_count_ = 0;
     info_called_count_ = 0;
+    notify_count_ = 0;
 
     gnss_hal_ = ::testing::VtsHalHidlTargetTestBase::getService<IGnss>();
     ASSERT_NE(gnss_hal_, nullptr);
@@ -93,12 +94,15 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
     if (gnss_hal_ != nullptr) {
       gnss_hal_->cleanup();
     }
+    if (notify_count_ > 0) {
+        ALOGW("%d unprocessed callbacks discarded", notify_count_);
+    }
   }
 
   /* Used as a mechanism to inform the test that a callback has occurred */
   inline void notify() {
     std::unique_lock<std::mutex> lock(mtx_);
-    count++;
+    notify_count_++;
     cv_.notify_one();
   }
 
@@ -108,12 +112,130 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
 
     std::cv_status status = std::cv_status::no_timeout;
     auto now = std::chrono::system_clock::now();
-    while (count == 0) {
-      status = cv_.wait_until(lock, now + std::chrono::seconds(timeoutSeconds));
-      if (status == std::cv_status::timeout) return status;
+    while (notify_count_ == 0) {
+        status = cv_.wait_until(lock, now + std::chrono::seconds(timeoutSeconds));
+        if (status == std::cv_status::timeout) return status;
     }
-    count--;
+    notify_count_--;
     return status;
+  }
+
+  /*
+   * StartAndGetSingleLocation:
+   * Helper function to get one Location and check fields
+   *
+   * returns  true if a location was successfully generated
+   */
+  bool StartAndGetSingleLocation(bool checkAccuracies) {
+      auto result = gnss_hal_->start();
+
+      EXPECT_TRUE(result.isOk());
+      EXPECT_TRUE(result);
+
+      /*
+       * GPS signals initially optional for this test, so don't expect fast fix,
+       * or no timeout, unless signal is present
+       */
+      int firstGnssLocationTimeoutSeconds = sAgpsIsPresent ? 15 : 45;
+      if (sSignalIsWeak) {
+          // allow more time for weak signals
+          firstGnssLocationTimeoutSeconds += 30;
+      }
+
+      wait(firstGnssLocationTimeoutSeconds);
+      if (sAgpsIsPresent) {
+          EXPECT_EQ(location_called_count_, 1);
+      }
+      if (location_called_count_ > 0) {
+          CheckLocation(last_location_, checkAccuracies);
+          return true;
+      }
+      return false;
+  }
+
+  /*
+   * StopAndClearLocations:
+   * Helper function to stop locations
+   *
+   * returns  true if a location was successfully generated
+   */
+  void StopAndClearLocations() {
+      auto result = gnss_hal_->stop();
+
+      EXPECT_TRUE(result.isOk());
+      EXPECT_TRUE(result);
+
+      /*
+       * Clear notify/waiting counter, allowing up till the timeout after
+       * the last reply for final startup messages to arrive (esp. system
+       * info.)
+       */
+      while (wait(TIMEOUT_SEC) == std::cv_status::no_timeout) {
+      }
+  }
+
+  /*
+   * CheckLocation:
+   * Helper function to vet Location fields
+   */
+  void CheckLocation(GnssLocation& location, bool checkAccuracies) {
+      EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_LAT_LONG);
+      EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_ALTITUDE);
+      EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_SPEED);
+      EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_HORIZONTAL_ACCURACY);
+      // New uncertainties available in O must be provided,
+      // at least when paired with modern hardware (2017+)
+      if (checkAccuracies) {
+          EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_VERTICAL_ACCURACY);
+          EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_SPEED_ACCURACY);
+          if (location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING) {
+              EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING_ACCURACY);
+          }
+      }
+      EXPECT_GE(location.latitudeDegrees, -90.0);
+      EXPECT_LE(location.latitudeDegrees, 90.0);
+      EXPECT_GE(location.longitudeDegrees, -180.0);
+      EXPECT_LE(location.longitudeDegrees, 180.0);
+      EXPECT_GE(location.altitudeMeters, -1000.0);
+      EXPECT_LE(location.altitudeMeters, 30000.0);
+      EXPECT_GE(location.speedMetersPerSec, 0.0);
+      EXPECT_LE(location.speedMetersPerSec, 5.0);  // VTS tests are stationary.
+
+      // Non-zero speeds must be reported with an associated bearing
+      if (location.speedMetersPerSec > 0.0) {
+          EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING);
+      }
+
+      /*
+       * Tolerating some especially high values for accuracy estimate, in case of
+       * first fix with especially poor geometry (happens occasionally)
+       */
+      EXPECT_GT(location.horizontalAccuracyMeters, 0.0);
+      EXPECT_LE(location.horizontalAccuracyMeters, 250.0);
+
+      /*
+       * Some devices may define bearing as -180 to +180, others as 0 to 360.
+       * Both are okay & understandable.
+       */
+      if (location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING) {
+          EXPECT_GE(location.bearingDegrees, -180.0);
+          EXPECT_LE(location.bearingDegrees, 360.0);
+      }
+      if (location.gnssLocationFlags & GnssLocationFlags::HAS_VERTICAL_ACCURACY) {
+          EXPECT_GT(location.verticalAccuracyMeters, 0.0);
+          EXPECT_LE(location.verticalAccuracyMeters, 500.0);
+      }
+      if (location.gnssLocationFlags & GnssLocationFlags::HAS_SPEED_ACCURACY) {
+          EXPECT_GT(location.speedAccuracyMetersPerSecond, 0.0);
+          EXPECT_LE(location.speedAccuracyMetersPerSecond, 50.0);
+      }
+      if (location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING_ACCURACY) {
+          EXPECT_GT(location.bearingAccuracyDegrees, 0.0);
+          EXPECT_LE(location.bearingAccuracyDegrees, 360.0);
+      }
+
+      // Check timestamp > 1.48e12 (47 years in msec - 1970->2017+)
+      EXPECT_GT(location.timestamp, 1.48e12);
   }
 
   /* Callback class for data & Event. */
@@ -188,7 +310,7 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
  private:
   std::mutex mtx_;
   std::condition_variable cv_;
-  int count;
+  int notify_count_;
 };
 
 /*
@@ -199,107 +321,6 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
  * the function definition is intentionally empty
  */
 TEST_F(GnssHalTest, SetCallbackCapabilitiesCleanup) {}
-
-/*
- * CheckLocation:
- * Helper function to vet Location fields
- */
-void CheckLocation(GnssLocation& location, bool checkAccuracies) {
-  EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_LAT_LONG);
-  EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_ALTITUDE);
-  EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_SPEED);
-  EXPECT_TRUE(location.gnssLocationFlags &
-              GnssLocationFlags::HAS_HORIZONTAL_ACCURACY);
-  // New uncertainties available in O must be provided,
-  // at least when paired with modern hardware (2017+)
-  if (checkAccuracies) {
-    EXPECT_TRUE(location.gnssLocationFlags &
-                GnssLocationFlags::HAS_VERTICAL_ACCURACY);
-    EXPECT_TRUE(location.gnssLocationFlags &
-                GnssLocationFlags::HAS_SPEED_ACCURACY);
-    if (location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING) {
-      EXPECT_TRUE(location.gnssLocationFlags &
-                  GnssLocationFlags::HAS_BEARING_ACCURACY);
-    }
-  }
-  EXPECT_GE(location.latitudeDegrees, -90.0);
-  EXPECT_LE(location.latitudeDegrees, 90.0);
-  EXPECT_GE(location.longitudeDegrees, -180.0);
-  EXPECT_LE(location.longitudeDegrees, 180.0);
-  EXPECT_GE(location.altitudeMeters, -1000.0);
-  EXPECT_LE(location.altitudeMeters, 30000.0);
-  EXPECT_GE(location.speedMetersPerSec, 0.0);
-  EXPECT_LE(location.speedMetersPerSec, 5.0);  // VTS tests are stationary.
-
-  // Non-zero speeds must be reported with an associated bearing
-  if (location.speedMetersPerSec > 0.0) {
-    EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING);
-  }
-
-  /*
-   * Tolerating some especially high values for accuracy estimate, in case of
-   * first fix with especially poor geometry (happens occasionally)
-   */
-  EXPECT_GT(location.horizontalAccuracyMeters, 0.0);
-  EXPECT_LE(location.horizontalAccuracyMeters, 250.0);
-
-  /*
-   * Some devices may define bearing as -180 to +180, others as 0 to 360.
-   * Both are okay & understandable.
-   */
-  if (location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING) {
-    EXPECT_GE(location.bearingDegrees, -180.0);
-    EXPECT_LE(location.bearingDegrees, 360.0);
-  }
-  if (location.gnssLocationFlags & GnssLocationFlags::HAS_VERTICAL_ACCURACY) {
-    EXPECT_GT(location.verticalAccuracyMeters, 0.0);
-    EXPECT_LE(location.verticalAccuracyMeters, 500.0);
-  }
-  if (location.gnssLocationFlags & GnssLocationFlags::HAS_SPEED_ACCURACY) {
-    EXPECT_GT(location.speedAccuracyMetersPerSecond, 0.0);
-    EXPECT_LE(location.speedAccuracyMetersPerSecond, 50.0);
-  }
-  if (location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING_ACCURACY) {
-    EXPECT_GT(location.bearingAccuracyDegrees, 0.0);
-    EXPECT_LE(location.bearingAccuracyDegrees, 360.0);
-  }
-
-  // Check timestamp > 1.48e12 (47 years in msec - 1970->2017+)
-  EXPECT_GT(location.timestamp, 1.48e12);
-}
-
-/*
- * StartAndGetSingleLocation:
- * Helper function to get one Location and check fields
- *
- * returns  true if a location was successfully generated
- */
-bool StartAndGetSingleLocation(GnssHalTest* test, bool checkAccuracies) {
-  auto result = test->gnss_hal_->start();
-
-  EXPECT_TRUE(result.isOk());
-  EXPECT_TRUE(result);
-
-  /*
-   * GPS signals initially optional for this test, so don't expect fast fix,
-   * or no timeout, unless signal is present
-   */
-  int firstGnssLocationTimeoutSeconds = sAgpsIsPresent ? 15 : 45;
-  if (sSignalIsWeak) {
-    // allow more time for weak signals
-    firstGnssLocationTimeoutSeconds += 30;
-  }
-
-  test->wait(firstGnssLocationTimeoutSeconds);
-  if (sAgpsIsPresent) {
-    EXPECT_EQ(test->location_called_count_, 1);
-  }
-  if (test->location_called_count_ > 0) {
-    CheckLocation(test->last_location_, checkAccuracies);
-    return true;
-  }
-  return false;
-}
 
 /*
  * GetLocation:
@@ -329,21 +350,17 @@ TEST_F(GnssHalTest, GetLocation) {
    * GPS signals initially optional for this test, so don't expect no timeout
    * yet
    */
-  bool gotLocation = StartAndGetSingleLocation(this, checkMoreAccuracies);
+  bool gotLocation = StartAndGetSingleLocation(checkMoreAccuracies);
 
   if (gotLocation) {
     for (int i = 1; i < LOCATIONS_TO_CHECK; i++) {
-      EXPECT_EQ(std::cv_status::no_timeout,
-          wait(LOCATION_TIMEOUT_SUBSEQUENT_SEC));
-      EXPECT_EQ(location_called_count_, i + 1);
-      CheckLocation(last_location_, checkMoreAccuracies);
+        EXPECT_EQ(std::cv_status::no_timeout, wait(LOCATION_TIMEOUT_SUBSEQUENT_SEC));
+        EXPECT_EQ(location_called_count_, i + 1);
+        CheckLocation(last_location_, checkMoreAccuracies);
     }
   }
 
-  result = gnss_hal_->stop();
-
-  ASSERT_TRUE(result.isOk());
-  ASSERT_TRUE(result);
+  StopAndClearLocations();
 }
 
 /*
@@ -368,7 +385,9 @@ TEST_F(GnssHalTest, InjectDelete) {
   ASSERT_TRUE(resultVoid.isOk());
 
   // Ensure we can get a good location after a bad injection has been deleted
-  StartAndGetSingleLocation(this, false);
+  StartAndGetSingleLocation(false);
+
+  StopAndClearLocations();
 }
 
 /*
@@ -437,10 +456,10 @@ int main(int argc, char** argv) {
    * stronger tests that require the presence of GPS signal.
    */
   for (int i = 1; i < argc; i++) {
-    if (strcmp(argv[i],"-agps") == 0) {
-      sAgpsIsPresent = true;
-    } else if (strcmp(argv[i],"-weak") == 0) {
-      sSignalIsWeak = true;
+      if (strcmp(argv[i], "-agps") == 0) {
+          sAgpsIsPresent = true;
+      } else if (strcmp(argv[i], "-weak") == 0) {
+          sSignalIsWeak = true;
     }
   }
   int status = RUN_ALL_TESTS();

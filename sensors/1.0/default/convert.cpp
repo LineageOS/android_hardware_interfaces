@@ -67,9 +67,11 @@ void convertFromSensorEvent(const sensors_event_t &src, Event *dst) {
     typedef ::android::hardware::sensors::V1_0::SensorType SensorType;
     typedef ::android::hardware::sensors::V1_0::MetaDataEventType MetaDataEventType;
 
-    dst->sensorHandle = src.sensor;
-    dst->sensorType = (SensorType)src.type;
-    dst->timestamp = src.timestamp;
+    *dst = {
+        .sensorHandle = src.sensor,
+        .sensorType = (SensorType)src.type,
+        .timestamp = src.timestamp
+    };
 
     switch (dst->sensorType) {
         case SensorType::META_DATA:
@@ -206,13 +208,13 @@ void convertFromSensorEvent(const sensors_event_t &src, Event *dst) {
 }
 
 void convertToSensorEvent(const Event &src, sensors_event_t *dst) {
-  dst->version = sizeof(sensors_event_t);
-  dst->sensor = src.sensorHandle;
-  dst->type = (int32_t)src.sensorType;
-  dst->reserved0 = 0;
-  dst->timestamp = src.timestamp;
-  dst->flags = 0;
-  dst->reserved1[0] = dst->reserved1[1] = dst->reserved1[2] = 0;
+  *dst = {
+      .version = sizeof(sensors_event_t),
+      .sensor = src.sensorHandle,
+      .type = (int32_t)src.sensorType,
+      .reserved0 = 0,
+      .timestamp = src.timestamp
+  };
 
   switch (src.sensorType) {
       case SensorType::META_DATA:
