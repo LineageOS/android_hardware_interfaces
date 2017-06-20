@@ -49,6 +49,7 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
     capabilities_called_count_ = 0;
     location_called_count_ = 0;
     info_called_count_ = 0;
+    notify_count_ = 0;
 
     gnss_hal_ = ::testing::VtsHalHidlTargetTestBase::getService<IGnss>();
     ASSERT_NE(gnss_hal_, nullptr);
@@ -93,12 +94,15 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
     if (gnss_hal_ != nullptr) {
       gnss_hal_->cleanup();
     }
+    if (notify_count_ > 0) {
+        ALOGW("%d unprocessed callbacks discarded", notify_count_);
+    }
   }
 
   /* Used as a mechanism to inform the test that a callback has occurred */
   inline void notify() {
     std::unique_lock<std::mutex> lock(mtx_);
-    count++;
+    notify_count_++;
     cv_.notify_one();
   }
 
@@ -108,11 +112,11 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
 
     std::cv_status status = std::cv_status::no_timeout;
     auto now = std::chrono::system_clock::now();
-    while (count == 0) {
-      status = cv_.wait_until(lock, now + std::chrono::seconds(timeoutSeconds));
-      if (status == std::cv_status::timeout) return status;
+    while (notify_count_ == 0) {
+        status = cv_.wait_until(lock, now + std::chrono::seconds(timeoutSeconds));
+        if (status == std::cv_status::timeout) return status;
     }
-    count--;
+    notify_count_--;
     return status;
   }
 
@@ -188,7 +192,7 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
  private:
   std::mutex mtx_;
   std::condition_variable cv_;
-  int count;
+  int notify_count_;
 };
 
 /*
