@@ -17,8 +17,7 @@
 cc_test {
     name: "VtsHalCameraProviderV2_4TargetTest",
     defaults: ["hidl_defaults"],
-    srcs: ["VtsHalCameraProviderV2_4TargetTest.cpp",
-           "CameraParameters.cpp" ],
+    srcs: ["VtsHalCameraProviderV2_4TargetTest.cpp"],
     shared_libs: [
         "liblog",
         "libhidlbase",
@@ -33,7 +32,11 @@ cc_test {
         "libgui",
         "libui"
     ],
-    static_libs: ["VtsHalHidlTargetTestBase", "libgrallocusage"],
+    static_libs: [
+        "VtsHalHidlTargetTestBase",
+        "libgrallocusage",
+        "android.hardware.camera.common@1.0-helper",
+    ],
     cflags: [
         "-O0",
         "-g",

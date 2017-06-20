@@ -5,6 +5,7 @@ cc_library_static {
     srcs: [
         "CameraModule.cpp",
         "CameraMetadata.cpp",
+        "CameraParameters.cpp",
         "VendorTagDescriptor.cpp",
         "HandleImporter.cpp"],
     cflags: [
