@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "drm-vts-shared-library"
+
+#include "SharedLibrary.h"
 
 #include <dlfcn.h>
-#include <shared_library.h>
 
-using std::string;
+namespace android {
+namespace hardware {
+namespace drm {
+namespace V1_0 {
+namespace helper {
 
-namespace drm_vts {
-
-SharedLibrary::SharedLibrary(const string& path) {
-    mLibHandle = dlopen(path.c_str(), RTLD_NOW);
+SharedLibrary::SharedLibrary(const String8& path) {
+    mLibHandle = dlopen(path.string(), RTLD_NOW);
 }
 
 SharedLibrary::~SharedLibrary() {
@@ -53,4 +55,9 @@ const char* SharedLibrary::lastError() const {
     const char* error = dlerror();
     return error ? error : "No errors or unknown error";
 }
-};
+
+}
+}
+}
+}
+} // namespace android

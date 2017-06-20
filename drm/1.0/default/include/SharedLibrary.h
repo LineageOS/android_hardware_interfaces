@@ -17,13 +17,18 @@
 #ifndef SHARED_LIBRARY_H_
 #define SHARED_LIBRARY_H_
 
-#include <string>
-#include <vector>
+#include <utils/RefBase.h>
+#include <utils/String8.h>
 
-namespace drm_vts {
-class SharedLibrary {
+namespace android {
+namespace hardware {
+namespace drm {
+namespace V1_0 {
+namespace helper {
+
+class SharedLibrary : public RefBase {
    public:
-    explicit SharedLibrary(const std::string& path);
+    explicit SharedLibrary(const String8& path);
     ~SharedLibrary();
 
     bool operator!() const;
@@ -36,6 +41,11 @@ class SharedLibrary {
     SharedLibrary(const SharedLibrary&) = delete;
     void operator=(const SharedLibrary&) = delete;
 };
-};
+
+}
+}
+}
+}
+}
 
 #endif  // SHARED_LIBRARY_H_

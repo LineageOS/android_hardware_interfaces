@@ -19,7 +19,6 @@ cc_test {
     srcs: [
         "drm_hal_clearkey_test.cpp",
         "drm_hal_vendor_test.cpp",
-        "shared_library.cpp",
         "vendor_modules.cpp"
         ],
     shared_libs: [
@@ -39,7 +38,8 @@ cc_test {
         "libutils",
     ],
     static_libs: [
-        "VtsHalHidlTargetTestBase"
+        "VtsHalHidlTargetTestBase",
+        "android.hardware.drm@1.0-helper",
     ],
     cflags: [
         "-O0",
