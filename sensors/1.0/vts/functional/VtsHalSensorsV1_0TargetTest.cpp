@@ -697,6 +697,7 @@ void SensorsHidlTest::assertDelayMatchReportMode(
 SensorFlagBits SensorsHidlTest::expectedReportModeForType(SensorType type) {
   switch (type) {
     case SensorType::ACCELEROMETER:
+    case SensorType::ACCELEROMETER_UNCALIBRATED:
     case SensorType::GYROSCOPE:
     case SensorType::MAGNETIC_FIELD:
     case SensorType::ORIENTATION:
@@ -719,7 +720,6 @@ SensorFlagBits SensorsHidlTest::expectedReportModeForType(SensorType type) {
     case SensorType::AMBIENT_TEMPERATURE:
     case SensorType::HEART_RATE:
     case SensorType::DEVICE_ORIENTATION:
-    case SensorType::MOTION_DETECT:
     case SensorType::STEP_COUNTER:
     case SensorType::LOW_LATENCY_OFFBODY_DETECT:
       return SensorFlagBits::ON_CHANGE_MODE;
@@ -728,6 +728,8 @@ SensorFlagBits SensorsHidlTest::expectedReportModeForType(SensorType type) {
     case SensorType::WAKE_GESTURE:
     case SensorType::GLANCE_GESTURE:
     case SensorType::PICK_UP_GESTURE:
+    case SensorType::MOTION_DETECT:
+    case SensorType::STATIONARY_DETECT:
       return SensorFlagBits::ONE_SHOT_MODE;
 
     case SensorType::STEP_DETECTOR:
