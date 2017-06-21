@@ -1,10 +1,11 @@
 cc_library_static {
     name: "android.hardware.camera.common@1.0-helper",
-    vendor: true,
+    vendor_available: true,
     defaults: ["hidl_defaults"],
     srcs: [
         "CameraModule.cpp",
         "CameraMetadata.cpp",
+        "CameraParameters.cpp",
         "VendorTagDescriptor.cpp",
         "HandleImporter.cpp"],
     cflags: [

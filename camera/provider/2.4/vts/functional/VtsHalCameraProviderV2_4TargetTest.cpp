@@ -36,7 +36,7 @@
 #include <mutex>
 #include <regex>
 #include <unordered_map>
-#include "CameraParameters.h"
+#include <CameraParameters.h>
 #include "system/camera_metadata.h"
 
 using ::android::hardware::Return;
@@ -52,13 +52,14 @@ using ::android::IGraphicBufferConsumer;
 using ::android::BufferQueue;
 using ::android::BufferItemConsumer;
 using ::android::Surface;
-using ::android::CameraParameters;
 using ::android::hardware::graphics::common::V1_0::BufferUsage;
 using ::android::hardware::graphics::common::V1_0::PixelFormat;
 using ::android::hardware::camera::common::V1_0::Status;
 using ::android::hardware::camera::common::V1_0::CameraDeviceStatus;
 using ::android::hardware::camera::common::V1_0::TorchMode;
 using ::android::hardware::camera::common::V1_0::TorchModeStatus;
+using ::android::hardware::camera::common::V1_0::helper::CameraParameters;
+using ::android::hardware::camera::common::V1_0::helper::Size;
 using ::android::hardware::camera::provider::V2_4::ICameraProvider;
 using ::android::hardware::camera::provider::V2_4::ICameraProviderCallback;
 using ::android::hardware::camera::device::V3_2::ICameraDevice;
@@ -564,7 +565,7 @@ public:
             const std::vector<AvailableStream> &streamSizes,
             int32_t format, AvailableStream &result);
     static Status isAutoFocusModeAvailable(
-            ::android::CameraParameters &cameraParams, const char *mode) ;
+            CameraParameters &cameraParams, const char *mode) ;
 
 protected:
     std::mutex mLock;                          // Synchronize access to member variables
@@ -1333,7 +1334,7 @@ TEST_F(CameraHidlTest, autoFocus) {
             openCameraDevice(name, env, &device1 /*out*/);
             ASSERT_NE(nullptr, device1.get());
 
-            ::android::CameraParameters cameraParams;
+            CameraParameters cameraParams;
             getParameters(device1, &cameraParams /*out*/);
 
             if (Status::OK != isAutoFocusModeAvailable(cameraParams,
@@ -1395,7 +1396,7 @@ TEST_F(CameraHidlTest, cancelAutoFocus) {
             openCameraDevice(name, env, &device1 /*out*/);
             ASSERT_NE(nullptr, device1.get());
 
-            ::android::CameraParameters cameraParams;
+            CameraParameters cameraParams;
             getParameters(device1, &cameraParams /*out*/);
 
             if (Status::OK != isAutoFocusModeAvailable(cameraParams,
@@ -1443,7 +1444,7 @@ TEST_F(CameraHidlTest, sendCommandFaceDetection) {
             openCameraDevice(name, env, &device1 /*out*/);
             ASSERT_NE(nullptr, device1.get());
 
-            ::android::CameraParameters cameraParams;
+            CameraParameters cameraParams;
             getParameters(device1, &cameraParams /*out*/);
 
             int32_t hwFaces = cameraParams.getInt(
@@ -1506,7 +1507,7 @@ TEST_F(CameraHidlTest, sendCommandSmoothZoom) {
             openCameraDevice(name, env, &device1 /*out*/);
             ASSERT_NE(nullptr, device1.get());
 
-            ::android::CameraParameters cameraParams;
+            CameraParameters cameraParams;
             getParameters(device1, &cameraParams /*out*/);
 
             const char *smoothZoomStr = cameraParams.get(
@@ -1557,7 +1558,7 @@ TEST_F(CameraHidlTest, getSetParameters) {
             openCameraDevice(name, env, &device1 /*out*/);
             ASSERT_NE(nullptr, device1.get());
 
-            ::android::CameraParameters cameraParams;
+            CameraParameters cameraParams;
             getParameters(device1, &cameraParams /*out*/);
 
             int32_t width, height;
@@ -1587,10 +1588,10 @@ TEST_F(CameraHidlTest, getSetParameters) {
             ASSERT_TRUE((nullptr == effect) || (strcmp(
                     CameraParameters::EFFECT_NONE, effect) == 0));
 
-            ::android::Vector<::android::Size> previewSizes;
+            ::android::Vector<Size> previewSizes;
             cameraParams.getSupportedPreviewSizes(previewSizes);
             ASSERT_FALSE(previewSizes.empty());
-            ::android::Vector<::android::Size> pictureSizes;
+            ::android::Vector<Size> pictureSizes;
             cameraParams.getSupportedPictureSizes(pictureSizes);
             ASSERT_FALSE(pictureSizes.empty());
             const char *previewFormats = cameraParams.get(
@@ -3003,7 +3004,7 @@ Status CameraHidlTest::findLargestSize(
 
 // Check whether the camera device supports specific focus mode.
 Status CameraHidlTest::isAutoFocusModeAvailable(
-        ::android::CameraParameters &cameraParams,
+        CameraParameters &cameraParams,
         const char *mode) {
     ::android::String8 focusModes(cameraParams.get(
             CameraParameters::KEY_SUPPORTED_FOCUS_MODES));
