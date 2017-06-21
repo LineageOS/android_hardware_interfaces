@@ -408,7 +408,7 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
   public:
     void TearDown() override {
         if (key_blob_.size()) {
-            EXPECT_EQ(ErrorCode::OK, DeleteKey());
+            CheckedDeleteKey();
         }
         AbortIfNeeded();
     }
@@ -539,6 +539,13 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         ErrorCode error = keymaster_->deleteAllKeys();
         return error;
     }
+
+    void CheckedDeleteKey(HidlBuf* key_blob, bool keep_key_blob = false) {
+        auto rc = DeleteKey(key_blob, keep_key_blob);
+        EXPECT_TRUE(rc == ErrorCode::OK || rc == ErrorCode::UNIMPLEMENTED);
+    }
+
+    void CheckedDeleteKey() { CheckedDeleteKey(&key_blob_); }
 
     ErrorCode GetCharacteristics(const HidlBuf& key_blob, const HidlBuf& client_id,
                                  const HidlBuf& app_data, KeyCharacteristics* key_characteristics) {
@@ -760,7 +767,7 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                             KeyFormat::RAW, key));
         string signature = MacMessage(message, digest, expected_mac.size() * 8);
         EXPECT_EQ(expected_mac, signature) << "Test vector didn't match for digest " << (int)digest;
-        DeleteKey();
+        CheckedDeleteKey();
     }
 
     void CheckAesCtrTestVector(const string& key, const string& nonce, const string& message,
@@ -1107,7 +1114,7 @@ TEST_F(NewKeyGenerationTest, Rsa) {
         EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size));
         EXPECT_TRUE(crypto_params.Contains(TAG_RSA_PUBLIC_EXPONENT, 3));
 
-        EXPECT_EQ(ErrorCode::OK, DeleteKey(&key_blob));
+        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -1152,7 +1159,7 @@ TEST_F(NewKeyGenerationTest, Ecdsa) {
         EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::EC));
         EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size));
 
-        EXPECT_EQ(ErrorCode::OK, DeleteKey(&key_blob));
+        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -1201,7 +1208,7 @@ TEST_F(NewKeyGenerationTest, EcdsaAllValidSizes) {
         EXPECT_EQ(ErrorCode::OK,
                   GenerateKey(AuthorizationSetBuilder().EcdsaSigningKey(size).Digest(Digest::NONE)))
             << "Failed to generate size: " << size;
-        DeleteKey();
+        CheckedDeleteKey();
     }
 }
 
@@ -1217,7 +1224,7 @@ TEST_F(NewKeyGenerationTest, EcdsaAllValidCurves) {
             ErrorCode::OK,
             GenerateKey(AuthorizationSetBuilder().EcdsaSigningKey(curve).Digest(Digest::SHA_2_512)))
             << "Failed to generate key on curve: " << curve;
-        DeleteKey();
+        CheckedDeleteKey();
     }
 }
 
@@ -1267,7 +1274,7 @@ TEST_F(NewKeyGenerationTest, Hmac) {
             EXPECT_TRUE(softwareEnforced.Contains(TAG_KEY_SIZE, key_size));
         }
 
-        EXPECT_EQ(ErrorCode::OK, DeleteKey(&key_blob));
+        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -1295,7 +1302,7 @@ TEST_F(NewKeyGenerationTest, HmacCheckKeySizes) {
                                                      .HmacKey(key_size)
                                                      .Digest(Digest::SHA_2_256)
                                                      .Authorization(TAG_MIN_MAC_LENGTH, 256)));
-            DeleteKey();
+            CheckedDeleteKey();
         }
     }
 }
@@ -1327,7 +1334,7 @@ TEST_F(NewKeyGenerationTest, HmacCheckMinMacLengths) {
                                       .HmacKey(128)
                                       .Digest(Digest::SHA_2_256)
                                       .Authorization(TAG_MIN_MAC_LENGTH, min_mac_length)));
-            DeleteKey();
+            CheckedDeleteKey();
         }
     }
 }
@@ -1717,7 +1724,7 @@ TEST_F(SigningOperationsTest, EcdsaAllSizesAndHashes) {
             string message(1024, 'a');
             if (digest == Digest::NONE) message.resize(key_size / 8);
             SignMessage(message, AuthorizationSetBuilder().Digest(digest));
-            DeleteKey();
+            CheckedDeleteKey();
         }
     }
 }
@@ -1738,7 +1745,7 @@ TEST_F(SigningOperationsTest, EcdsaAllCurves) {
 
         string message(1024, 'a');
         SignMessage(message, AuthorizationSetBuilder().Digest(Digest::SHA_2_256));
-        DeleteKey();
+        CheckedDeleteKey();
     }
 }
 
@@ -1799,7 +1806,7 @@ TEST_F(SigningOperationsTest, HmacAllDigests) {
         string signature = MacMessage(message, digest, 160);
         EXPECT_EQ(160U / 8U, signature.size())
             << "Failed to sign with HMAC key with digest " << digest;
-        DeleteKey();
+        CheckedDeleteKey();
     }
 }
 
@@ -2186,7 +2193,8 @@ TEST_F(VerificationOperationsTest, EcdsaAllDigestsAndCurves) {
                 << curve << ' ' << digest;
         }
 
-        ASSERT_EQ(ErrorCode::OK, DeleteKey());
+        auto rc = DeleteKey();
+        ASSERT_TRUE(rc == ErrorCode::OK || rc == ErrorCode::UNIMPLEMENTED);
     }
 }
 
@@ -2232,8 +2240,8 @@ TEST_F(VerificationOperationsTest, HmacSigningKeyCannotVerify) {
     VerifyMessage(verification_key, message, signature,
                   AuthorizationSetBuilder().Digest(Digest::SHA1));
 
-    EXPECT_EQ(ErrorCode::OK, DeleteKey(&signing_key));
-    EXPECT_EQ(ErrorCode::OK, DeleteKey(&verification_key));
+    CheckedDeleteKey(&signing_key);
+    CheckedDeleteKey(&verification_key);
 }
 
 typedef KeymasterHidlTest ExportKeyTest;
@@ -3481,14 +3489,14 @@ TEST_F(EncryptionOperationsTest, AesGcmCorruptKey) {
     string key = make_string(key_bytes);
     ASSERT_EQ(ErrorCode::OK, ImportKey(import_params, KeyFormat::RAW, key));
     string plaintext = DecryptMessage(ciphertext, params);
-    EXPECT_EQ(ErrorCode::OK, DeleteKey());
+    CheckedDeleteKey();
 
     // Corrupt key and attempt to decrypt
     key[0] = 0;
     ASSERT_EQ(ErrorCode::OK, ImportKey(import_params, KeyFormat::RAW, key));
     EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, params));
     EXPECT_EQ(ErrorCode::VERIFICATION_FAILED, Finish(ciphertext, &plaintext));
-    EXPECT_EQ(ErrorCode::OK, DeleteKey());
+    CheckedDeleteKey();
 }
 
 /*
