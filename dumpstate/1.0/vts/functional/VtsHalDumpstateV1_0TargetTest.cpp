@@ -59,6 +59,7 @@ TEST_F(DumpstateHidlTest, TestHandleWithNoFd) {
 // Positive test: make sure dumpstateBoard() writes something to the FD.
 TEST_F(DumpstateHidlTest, TestOk) {
     FILE* file = tmpfile();
+
     ASSERT_NE(nullptr, file) << "Could not create temp file: " << strerror(errno);
 
     native_handle_t* handle = native_handle_create(1, 0);
@@ -75,6 +76,29 @@ TEST_F(DumpstateHidlTest, TestOk) {
     ASSERT_EQ(1, read) << "dumped nothing";
 
     EXPECT_EQ(0, fclose(file)) << errno;
+
+    native_handle_close(handle);
+    native_handle_delete(handle);
+}
+
+// Positive test: make sure dumpstateBoard() doesn't crash with two FDs.
+TEST_F(DumpstateHidlTest, TestHandleWithTwoFds) {
+    FILE* file1 = tmpfile();
+    FILE* file2 = tmpfile();
+
+    ASSERT_NE(nullptr, file1) << "Could not create temp file #1: " << strerror(errno);
+    ASSERT_NE(nullptr, file2) << "Could not create temp file #2: " << strerror(errno);
+
+    native_handle_t* handle = native_handle_create(2, 0);
+    ASSERT_NE(handle, nullptr) << "Could not create native_handle";
+    handle->data[0] = fileno(file1);
+    handle->data[1] = fileno(file2);
+
+    Return<void> status = dumpstate->dumpstateBoard(handle);
+    ASSERT_TRUE(status.isOk()) << "Status should be ok: " << status.description();
+
+    EXPECT_EQ(0, fclose(file1)) << errno;
+    EXPECT_EQ(0, fclose(file2)) << errno;
 
     native_handle_close(handle);
     native_handle_delete(handle);

@@ -18,7 +18,14 @@ package android.hardware.dumpstate@1.0;
 
 interface IDumpstateDevice {
     /**
-     * Dumps device-specific state into the given file descriptor.
+     * Dump device-specific state into the given file descriptors.
+     *
+     * One file descriptor must be passed to this method but two may be passed:
+     * the first descriptor must be used to dump device-specific state in text
+     * format, the second descriptor is optional and may be used to dump
+     * device-specific state in binary format.
+     *
+     * @param h A native handle with one or two valid file descriptors.
      */
     dumpstateBoard(handle h);
 };
