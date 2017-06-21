@@ -189,4 +189,5 @@ fe3c3c2f572b72f15f8594c538b0577bd5c28722c31879cfe6231330cddb6747 android.hardwar
 
 # ABI preserving changes to HALs released in Android O
 
+760485232f6cce07f8bb05e3475509956996b702f77415ee5bff05e2ec5a5bcc android.hardware.dumpstate@1.0::IDumpstateDevice
 28e929b453df3d9f5060af2764e6cdb123ddb893e3e86923c877f6ff7e5f02c9 android.hardware.wifi@1.0::types
