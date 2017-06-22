@@ -26,6 +26,8 @@
 
 #include <vector>
 
+#include "hidl_call_util.h"
+
 using ::android::hardware::wifi::offload::V1_0::IOffload;
 using ::android::hardware::wifi::offload::V1_0::IOffloadCallback;
 using ::android::hardware::wifi::offload::V1_0::ScanResult;
@@ -33,6 +35,7 @@ using ::android::hardware::wifi::offload::V1_0::ScanParam;
 using ::android::hardware::wifi::offload::V1_0::ScanFilter;
 using ::android::hardware::wifi::offload::V1_0::ScanStats;
 using ::android::hardware::wifi::offload::V1_0::OffloadStatus;
+using ::android::hardware::wifi::offload::V1_0::OffloadStatusCode;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::hidl_vec;
@@ -89,7 +92,7 @@ class WifiOffloadHidlTest : public ::testing::VtsHalHidlTargetTestBase {
             return Void();
         };
 
-        Return<void> onError(OffloadStatus status) {
+        Return<void> onError(const OffloadStatus& status) override {
             OffloadCallbackArgs args;
             args.error_code_ = status;
             NotifyFromCallback(kOffloadCallbackSendError, args);
@@ -106,15 +109,15 @@ class WifiOffloadHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  */
 TEST_F(WifiOffloadHidlTest, setEventCallback) {
     auto returnObject = wifi_offload_->setEventCallback(wifi_offload_cb_);
-    ASSERT_EQ(returnObject.isOk(), true);
+    ASSERT_EQ(true, returnObject.isOk());
 }
 
 /*
  * Verify that subscribeScanResults method returns without errors
  */
 TEST_F(WifiOffloadHidlTest, subscribeScanResults) {
-    auto returnObject = wifi_offload_->subscribeScanResults(0);
-    ASSERT_EQ(returnObject.isOk(), true);
+    const auto& result = HIDL_INVOKE(wifi_offload_, subscribeScanResults, 0);
+    ASSERT_EQ(OffloadStatusCode::OK, result.code);
 }
 
 /*
@@ -122,7 +125,7 @@ TEST_F(WifiOffloadHidlTest, subscribeScanResults) {
  */
 TEST_F(WifiOffloadHidlTest, unsubscribeScanResults) {
     auto returnObject = wifi_offload_->unsubscribeScanResults();
-    ASSERT_EQ(returnObject.isOk(), true);
+    ASSERT_EQ(true, returnObject.isOk());
 }
 
 /*
@@ -131,21 +134,18 @@ TEST_F(WifiOffloadHidlTest, unsubscribeScanResults) {
 TEST_F(WifiOffloadHidlTest, configureScans) {
     ScanParam* pScanParam = new ScanParam();
     ScanFilter* pScanFilter = new ScanFilter();
-    auto returnObject =
-        wifi_offload_->configureScans(*pScanParam, *pScanFilter);
-    ASSERT_EQ(returnObject.isOk(), true);
+    const auto& result =
+        HIDL_INVOKE(wifi_offload_, configureScans, *pScanParam, *pScanFilter);
+    ASSERT_EQ(OffloadStatusCode::OK, result.code);
 }
 
 /*
  * Verify that getScanStats returns without any errors
  */
 TEST_F(WifiOffloadHidlTest, getScanStats) {
-    ScanStats* pScanStats = new ScanStats();
-    const auto& returnObject =
-        wifi_offload_->getScanStats([pScanStats](ScanStats scanStats) -> void {
-            *pScanStats = std::move(scanStats);
-        });
-    ASSERT_EQ(returnObject.isOk(), true);
+    const auto& result = HIDL_INVOKE(wifi_offload_, getScanStats);
+    OffloadStatus status = result.first;
+    ASSERT_EQ(OffloadStatusCode::OK, status.code);
 }
 
 /*
@@ -167,7 +167,7 @@ TEST_F(WifiOffloadHidlTest, getScanResults) {
     wifi_offload_cb_->onScanResult(scan_results);
     auto res =
         wifi_offload_cb_->WaitForCallback(kOffloadCallbackSendScanResult);
-    ASSERT_EQ(res.no_timeout, true);
+    ASSERT_EQ(true, res.no_timeout);
 }
 
 /*
@@ -175,9 +175,10 @@ TEST_F(WifiOffloadHidlTest, getScanResults) {
  */
 TEST_F(WifiOffloadHidlTest, getError) {
     wifi_offload_->setEventCallback(wifi_offload_cb_);
-    wifi_offload_cb_->onError(OffloadStatus::OFFLOAD_STATUS_ERROR);
+    OffloadStatus status = {OffloadStatusCode::ERROR, ""};
+    wifi_offload_cb_->onError(status);
     auto res = wifi_offload_cb_->WaitForCallback(kOffloadCallbackSendError);
-    ASSERT_EQ(res.no_timeout, true);
+    ASSERT_EQ(true, res.no_timeout);
 }
 
 // A class for test environment setup
