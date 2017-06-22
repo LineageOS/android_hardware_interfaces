@@ -152,6 +152,13 @@ public:
         endCommand();
     }
 
+    static constexpr uint32_t kPresentOrValidateDisplayResultLength = 1;
+    void setPresentOrValidateResult(uint32_t  state) {
+       beginCommand(IComposerClient::Command::SET_PRESENT_OR_VALIDATE_DISPLAY_RESULT, kPresentOrValidateDisplayResultLength);
+       write(state);
+       endCommand();
+    }
+
     void setChangedCompositionTypes(const std::vector<Layer>& layers,
             const std::vector<IComposerClient::Composition>& types)
     {
@@ -281,6 +288,14 @@ public:
     {
         beginCommand(IComposerClient::Command::VALIDATE_DISPLAY,
                 kValidateDisplayLength);
+        endCommand();
+    }
+
+    static constexpr uint16_t kPresentOrValidateDisplayLength = 0;
+    void presentOrvalidateDisplay()
+    {
+        beginCommand(IComposerClient::Command::PRESENT_OR_VALIDATE_DISPLAY,
+                     kPresentOrValidateDisplayLength);
         endCommand();
     }
 

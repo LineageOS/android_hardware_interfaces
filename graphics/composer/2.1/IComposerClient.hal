@@ -1117,6 +1117,7 @@ interface IComposerClient {
         VALIDATE_DISPLAY                   = 0x203 << OPCODE_SHIFT,
         ACCEPT_DISPLAY_CHANGES             = 0x204 << OPCODE_SHIFT,
         PRESENT_DISPLAY                    = 0x205 << OPCODE_SHIFT,
+        PRESENT_OR_VALIDATE_DISPLAY        = 0x206 << OPCODE_SHIFT,
 
         /** layer commands (VALIDATE_DISPLAY not required) */
         SET_LAYER_CURSOR_POSITION          = 0x300 << OPCODE_SHIFT,
@@ -1135,6 +1136,7 @@ interface IComposerClient {
         SET_LAYER_TRANSFORM                = 0x408 << OPCODE_SHIFT,
         SET_LAYER_VISIBLE_REGION           = 0x409 << OPCODE_SHIFT,
         SET_LAYER_Z_ORDER                  = 0x40a << OPCODE_SHIFT,
+        SET_PRESENT_OR_VALIDATE_DISPLAY_RESULT = 0x40b << OPCODE_SHIFT,
 
         /** 0x800 - 0xfff are reserved for vendor extensions */
         /** 0x1000 - 0xffff are reserved */
