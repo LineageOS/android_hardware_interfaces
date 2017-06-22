@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "Tuner"
-//#define LOG_NDEBUG 0
-
-#include <log/log.h>
+#define LOG_TAG "BroadcastRadioDefault.tuner"
+#define LOG_NDEBUG 0
 
 #include "BroadcastRadio.h"
 #include "Tuner.h"
-#include "Utils.h"
-#include <system/RadioMetadataWrapper.h>
+
+#include <log/log.h>
 
 namespace android {
 namespace hardware {
@@ -30,199 +28,283 @@ namespace broadcastradio {
 namespace V1_1 {
 namespace implementation {
 
-void Tuner::onCallback(radio_hal_event_t *halEvent)
-{
-    BandConfig config;
-    ProgramInfo info;
-    hidl_vec<MetaData> metadata;
+using namespace std::chrono_literals;
 
-    if (mCallback != 0) {
-        switch(halEvent->type) {
-        case RADIO_EVENT_CONFIG:
-            Utils::convertBandConfigFromHal(&config, &halEvent->config);
-            mCallback->configChange(Utils::convertHalResult(halEvent->status), config);
-            break;
-        case RADIO_EVENT_ANTENNA:
-            mCallback->antennaStateChange(halEvent->on);
-            break;
-        case RADIO_EVENT_TUNED:
-            Utils::convertProgramInfoFromHal(&info, &halEvent->info);
-            if (mCallback1_1 != nullptr) {
-                mCallback1_1->tuneComplete_1_1(Utils::convertHalResult(halEvent->status), info);
-            }
-            mCallback->tuneComplete(Utils::convertHalResult(halEvent->status), info.base);
-            break;
-        case RADIO_EVENT_METADATA: {
-            uint32_t channel;
-            uint32_t sub_channel;
-            if (radio_metadata_get_channel(halEvent->metadata, &channel, &sub_channel) == 0) {
-                Utils::convertMetaDataFromHal(metadata, halEvent->metadata);
-                mCallback->newMetadata(channel, sub_channel, metadata);
-            }
-            } break;
-        case RADIO_EVENT_TA:
-            mCallback->trafficAnnouncement(halEvent->on);
-            break;
-        case RADIO_EVENT_AF_SWITCH:
-            Utils::convertProgramInfoFromHal(&info, &halEvent->info);
-            if (mCallback1_1 != nullptr) {
-                mCallback1_1->afSwitch_1_1(info);
-            }
-            mCallback->afSwitch(info.base);
-            break;
-        case RADIO_EVENT_EA:
-            mCallback->emergencyAnnouncement(halEvent->on);
-            break;
-        case RADIO_EVENT_HW_FAILURE:
-        default:
-            mCallback->hardwareFailure();
-            break;
-        }
-    }
+using V1_0::Band;
+using V1_0::BandConfig;
+using V1_0::Direction;
+
+using std::chrono::milliseconds;
+using std::lock_guard;
+using std::move;
+using std::mutex;
+using std::sort;
+using std::vector;
+
+const struct {
+    milliseconds config = 50ms;
+    milliseconds scan = 200ms;
+    milliseconds step = 100ms;
+    milliseconds tune = 150ms;
+} gDefaultDelay;
+
+Tuner::Tuner(const sp<V1_0::ITunerCallback>& callback)
+    : mCallback(callback),
+      mCallback1_1(ITunerCallback::castFrom(callback).withDefault(nullptr)),
+      mVirtualFm(make_fm_radio()) {}
+
+void Tuner::forceClose() {
+    lock_guard<mutex> lk(mMut);
+    mIsClosed = true;
+    mThread.cancelAll();
 }
 
-//static
-void Tuner::callback(radio_hal_event_t *halEvent, void *cookie)
-{
-    wp<Tuner> weak(reinterpret_cast<Tuner*>(cookie));
-    sp<Tuner> tuner = weak.promote();
-    if (tuner == 0) return;
-    tuner->onCallback(halEvent);
+Return<Result> Tuner::setConfiguration(const BandConfig& config) {
+    ALOGV("%s", __func__);
+
+    if (config.lowerLimit >= config.upperLimit) return Result::INVALID_ARGUMENTS;
+
+    auto task = [this, config]() {
+        ALOGI("Setting AM/FM config");
+        lock_guard<mutex> lk(mMut);
+
+        mAmfmConfig = move(config);
+        mAmfmConfig.antennaConnected = true;
+        mIsAmfmConfigSet = true;
+        mCallback->configChange(Result::OK, mAmfmConfig);
+    };
+    mThread.schedule(task, gDefaultDelay.config);
+
+    return Result::OK;
 }
 
-Tuner::Tuner(const sp<V1_0::ITunerCallback>& callback, const wp<BroadcastRadio>& parentDevice)
-        : mHalTuner(NULL), mCallback(callback), mCallback1_1(ITunerCallback::castFrom(callback)),
-        mParentDevice(parentDevice)
-{
-    ALOGV("%s", __FUNCTION__);
-}
+Return<void> Tuner::getConfiguration(getConfiguration_cb _hidl_cb) {
+    ALOGV("%s", __func__);
 
-
-Tuner::~Tuner()
-{
-    ALOGV("%s", __FUNCTION__);
-    const sp<BroadcastRadio> parentDevice = mParentDevice.promote();
-    if (parentDevice != 0) {
-        parentDevice->closeHalTuner(mHalTuner);
+    lock_guard<mutex> lk(mMut);
+    if (mIsAmfmConfigSet) {
+        _hidl_cb(Result::OK, mAmfmConfig);
+    } else {
+        _hidl_cb(Result::NOT_INITIALIZED, {});
     }
-}
-
-// Methods from ::android::hardware::broadcastradio::V1_1::ITuner follow.
-Return<Result> Tuner::setConfiguration(const BandConfig& config)  {
-    ALOGV("%s", __FUNCTION__);
-    if (mHalTuner == NULL) {
-        return Utils::convertHalResult(-ENODEV);
-    }
-    radio_hal_band_config_t halConfig;
-    Utils::convertBandConfigToHal(&halConfig, &config);
-    int rc = mHalTuner->set_configuration(mHalTuner, &halConfig);
-    return Utils::convertHalResult(rc);
-}
-
-Return<void> Tuner::getConfiguration(getConfiguration_cb _hidl_cb)  {
-    int rc;
-    radio_hal_band_config_t halConfig;
-    BandConfig config;
-
-    ALOGV("%s", __FUNCTION__);
-    if (mHalTuner == NULL) {
-        rc = -ENODEV;
-        goto exit;
-    }
-    rc = mHalTuner->get_configuration(mHalTuner, &halConfig);
-    if (rc == 0) {
-        Utils::convertBandConfigFromHal(&config, &halConfig);
-    }
-
-exit:
-    _hidl_cb(Utils::convertHalResult(rc), config);
     return Void();
 }
 
-Return<Result> Tuner::scan(Direction direction, bool skipSubChannel)  {
-    if (mHalTuner == NULL) {
-        return Utils::convertHalResult(-ENODEV);
-    }
-    int rc = mHalTuner->scan(mHalTuner, static_cast<radio_direction_t>(direction), skipSubChannel);
-    return Utils::convertHalResult(rc);
+// makes ProgramInfo that points to no channel
+static ProgramInfo makeDummyProgramInfo(uint32_t channel) {
+    ProgramInfo info11 = {};
+    auto& info10 = info11.base;
+
+    info10.channel = channel;
+    info11.flags |= ProgramInfoFlags::MUTED;
+
+    return info11;
 }
 
-Return<Result> Tuner::step(Direction direction, bool skipSubChannel)  {
-    if (mHalTuner == NULL) {
-        return Utils::convertHalResult(-ENODEV);
+void Tuner::tuneInternalLocked() {
+    VirtualRadio* virtualRadio = nullptr;
+    if (mAmfmConfig.type == Band::FM_HD || mAmfmConfig.type == Band::FM) {
+        virtualRadio = &mVirtualFm;
     }
-    int rc = mHalTuner->step(mHalTuner, static_cast<radio_direction_t>(direction), skipSubChannel);
-    return Utils::convertHalResult(rc);
+
+    auto& info11 = mCurrentProgramInfo;
+    auto& info10 = info11.base;
+
+    VirtualProgram virtualProgram;
+    if (virtualRadio != nullptr && virtualRadio->getProgram(mCurrentProgram, virtualProgram)) {
+        // TODO(b/36864090): convert virtualProgram to ProgramInfo instead
+        info10.channel = mCurrentProgram;
+        info10.tuned = true;
+        info10.stereo = true;
+        info10.signalStrength = 100;
+    } else {
+        info11 = makeDummyProgramInfo(mCurrentProgram);
+    }
+    mIsTuneCompleted = true;
+
+    mCallback->tuneComplete(Result::OK, info10);
+    if (mCallback1_1 != nullptr) {
+        mCallback1_1->tuneComplete_1_1(Result::OK, info11);
+    }
+}
+
+Return<Result> Tuner::scan(Direction direction, bool skipSubChannel __unused) {
+    ALOGV("%s", __func__);
+    lock_guard<mutex> lk(mMut);
+    vector<VirtualProgram> list;
+
+    if (mAmfmConfig.type == Band::FM_HD || mAmfmConfig.type == Band::FM) {
+        list = mVirtualFm.getProgramList();
+    }
+
+    if (list.size() == 0) {
+        mIsTuneCompleted = false;
+        auto task = [this, direction]() {
+            ALOGI("Performing failed scan %s", toString(direction).c_str());
+
+            mCallback->tuneComplete(Result::TIMEOUT, {});
+            if (mCallback1_1 != nullptr) {
+                mCallback1_1->tuneComplete_1_1(Result::TIMEOUT, {});
+            }
+        };
+        mThread.schedule(task, gDefaultDelay.scan);
+
+        return Result::OK;
+    }
+
+    // Not optimal (O(sort) instead of O(n)), but not a big deal here;
+    // also, it's likely that list is already sorted (so O(n) anyway).
+    sort(list.begin(), list.end());
+    auto current = mCurrentProgram;
+    auto found = lower_bound(list.begin(), list.end(), VirtualProgram({current}));
+    if (direction == Direction::UP) {
+        if (found < list.end() - 1) {
+            if (found->channel == current) found++;
+        } else {
+            found = list.begin();
+        }
+    } else {
+        if (found > list.begin() && found != list.end()) {
+            found--;
+        } else {
+            found = list.end() - 1;
+        }
+    }
+    auto tuneTo = found->channel;
+
+    mIsTuneCompleted = false;
+    auto task = [this, tuneTo, direction]() {
+        ALOGI("Performing scan %s", toString(direction).c_str());
+
+        lock_guard<mutex> lk(mMut);
+        mCurrentProgram = tuneTo;
+        tuneInternalLocked();
+    };
+    mThread.schedule(task, gDefaultDelay.scan);
+
+    return Result::OK;
+}
+
+Return<Result> Tuner::step(Direction direction, bool skipSubChannel __unused) {
+    ALOGV("%s", __func__);
+
+    lock_guard<mutex> lk(mMut);
+    ALOGW_IF(!mIsAmfmConfigSet, "AM/FM config not set");
+    if (!mIsAmfmConfigSet) return Result::INVALID_STATE;
+    mIsTuneCompleted = false;
+
+    auto task = [this, direction]() {
+        ALOGI("Performing step %s", toString(direction).c_str());
+
+        lock_guard<mutex> lk(mMut);
+
+        if (direction == Direction::UP) {
+            mCurrentProgram += mAmfmConfig.spacings[0];
+        } else {
+            mCurrentProgram -= mAmfmConfig.spacings[0];
+        }
+
+        if (mCurrentProgram > mAmfmConfig.upperLimit) mCurrentProgram = mAmfmConfig.lowerLimit;
+        if (mCurrentProgram < mAmfmConfig.lowerLimit) mCurrentProgram = mAmfmConfig.upperLimit;
+
+        tuneInternalLocked();
+    };
+    mThread.schedule(task, gDefaultDelay.step);
+
+    return Result::OK;
 }
 
 Return<Result> Tuner::tune(uint32_t channel, uint32_t subChannel)  {
-    if (mHalTuner == NULL) {
-        return Utils::convertHalResult(-ENODEV);
+    ALOGV("%s(%d, %d)", __func__, channel, subChannel);
+
+    lock_guard<mutex> lk(mMut);
+    ALOGW_IF(!mIsAmfmConfigSet, "AM/FM config not set");
+    if (!mIsAmfmConfigSet) return Result::INVALID_STATE;
+    if (channel < mAmfmConfig.lowerLimit || channel > mAmfmConfig.upperLimit) {
+        return Result::INVALID_ARGUMENTS;
     }
-    int rc = mHalTuner->tune(mHalTuner, channel, subChannel);
-    return Utils::convertHalResult(rc);
+    mIsTuneCompleted = false;
+
+    auto task = [this, channel]() {
+        lock_guard<mutex> lk(mMut);
+        mCurrentProgram = channel;
+        tuneInternalLocked();
+    };
+    mThread.schedule(task, gDefaultDelay.tune);
+
+    return Result::OK;
 }
 
 Return<Result> Tuner::cancel()  {
-    if (mHalTuner == NULL) {
-        return Utils::convertHalResult(-ENODEV);
-    }
-    int rc = mHalTuner->cancel(mHalTuner);
-    return Utils::convertHalResult(rc);
+    ALOGV("%s", __func__);
+    mThread.cancelAll();
+    return Result::OK;
 }
 
 Return<void> Tuner::getProgramInformation(getProgramInformation_cb _hidl_cb)  {
-    ALOGV("%s", __FUNCTION__);
+    ALOGV("%s", __func__);
     return getProgramInformation_1_1([&](Result result, const ProgramInfo& info) {
         _hidl_cb(result, info.base);
     });
 }
 
 Return<void> Tuner::getProgramInformation_1_1(getProgramInformation_1_1_cb _hidl_cb)  {
-    int rc;
-    radio_program_info_t halInfo;
-    RadioMetadataWrapper metadataWrapper(&halInfo.metadata);
-    ProgramInfo info;
+    ALOGV("%s", __func__);
 
-    ALOGV("%s", __FUNCTION__);
-    if (mHalTuner == NULL) {
-        rc = -ENODEV;
-        goto exit;
+    lock_guard<mutex> lk(mMut);
+    if (mIsTuneCompleted) {
+        _hidl_cb(Result::OK, mCurrentProgramInfo);
+    } else {
+        _hidl_cb(Result::NOT_INITIALIZED, makeDummyProgramInfo(mCurrentProgram));
     }
-
-    rc = mHalTuner->get_program_information(mHalTuner, &halInfo);
-    if (rc == 0) {
-        Utils::convertProgramInfoFromHal(&info, &halInfo);
-    }
-
-exit:
-    _hidl_cb(Utils::convertHalResult(rc), info);
     return Void();
 }
 
 Return<ProgramListResult> Tuner::startBackgroundScan() {
+    ALOGV("%s", __func__);
     return ProgramListResult::UNAVAILABLE;
 }
 
 Return<void> Tuner::getProgramList(const hidl_string& filter __unused, getProgramList_cb _hidl_cb) {
-    hidl_vec<ProgramInfo> pList;
-    // TODO(b/34054813): do the actual implementation.
-    _hidl_cb(ProgramListResult::NOT_STARTED, pList);
+    ALOGV("%s", __func__);
+
+    auto& virtualRadio = mVirtualFm;
+    if (mAmfmConfig.type != Band::FM_HD && mAmfmConfig.type != Band::FM) {
+        _hidl_cb(ProgramListResult::OK, {});
+        return Void();
+    }
+
+    hidl_vec<ProgramInfo> list;
+    auto vList = virtualRadio.getProgramList();
+    list.resize(vList.size());
+    for (size_t i = 0; i < vList.size(); i++) {
+        auto& src = vList[i];
+        auto& dst11 = list[i];
+        auto& dst10 = dst11.base;
+
+        // TODO(b/36864090): convert virtualProgram to ProgramInfo instead
+        dst10.channel = src.channel;
+        dst10.tuned = true;
+    }
+
+    _hidl_cb(ProgramListResult::OK, list);
     return Void();
 }
 
 Return<void> Tuner::isAnalogForced(isAnalogForced_cb _hidl_cb) {
-    // TODO(b/34348946): do the actual implementation.
+    ALOGV("%s", __func__);
+    // TODO(b/36864090): implement
     _hidl_cb(Result::INVALID_STATE, false);
     return Void();
 }
 
 Return<Result> Tuner::setAnalogForced(bool isForced __unused) {
-    // TODO(b/34348946): do the actual implementation.
+    ALOGV("%s", __func__);
+    // TODO(b/36864090): implement
     return Result::INVALID_STATE;
 }
 
-} // namespace implementation
+}  // namespace implementation
 }  // namespace V1_1
 }  // namespace broadcastradio
 }  // namespace hardware
