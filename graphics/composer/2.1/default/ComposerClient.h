@@ -141,6 +141,7 @@ protected:
         bool parseSetClientTarget(uint16_t length);
         bool parseSetOutputBuffer(uint16_t length);
         bool parseValidateDisplay(uint16_t length);
+        bool parsePresentOrValidateDisplay(uint16_t length);
         bool parseAcceptDisplayChanges(uint16_t length);
         bool parsePresentDisplay(uint16_t length);
         bool parseSetLayerCursorPosition(uint16_t length);

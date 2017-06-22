@@ -562,6 +562,8 @@ bool ComposerClient::CommandReader::parseCommand(
         return parseSetOutputBuffer(length);
     case IComposerClient::Command::VALIDATE_DISPLAY:
         return parseValidateDisplay(length);
+    case IComposerClient::Command::PRESENT_OR_VALIDATE_DISPLAY:
+        return parsePresentOrValidateDisplay(length);
     case IComposerClient::Command::ACCEPT_DISPLAY_CHANGES:
         return parseAcceptDisplayChanges(length);
     case IComposerClient::Command::PRESENT_DISPLAY:
@@ -732,6 +734,47 @@ bool ComposerClient::CommandReader::parseValidateDisplay(uint16_t length)
                 compositionTypes);
         mWriter.setDisplayRequests(displayRequestMask,
                 requestedLayers, requestMasks);
+    } else {
+        mWriter.setError(getCommandLoc(), err);
+    }
+
+    return true;
+}
+
+bool ComposerClient::CommandReader::parsePresentOrValidateDisplay(uint16_t length)
+{
+    if (length != CommandWriterBase::kPresentOrValidateDisplayLength) {
+        return false;
+    }
+
+    // First try to Present as is.
+    int presentFence = -1;
+    std::vector<Layer> layers;
+    std::vector<int> fences;
+    auto err = mHal.presentDisplay(mDisplay, &presentFence, &layers, &fences);
+    if (err == Error::NONE) {
+        mWriter.setPresentOrValidateResult(1);
+        mWriter.setPresentFence(presentFence);
+        mWriter.setReleaseFences(layers, fences);
+        return true;
+    }
+
+    // Present has failed. We need to fallback to validate
+    std::vector<Layer> changedLayers;
+    std::vector<IComposerClient::Composition> compositionTypes;
+    uint32_t displayRequestMask = 0x0;
+    std::vector<Layer> requestedLayers;
+    std::vector<uint32_t> requestMasks;
+
+    err = mHal.validateDisplay(mDisplay, &changedLayers,
+                               &compositionTypes, &displayRequestMask,
+                               &requestedLayers, &requestMasks);
+    if (err == Error::NONE) {
+        mWriter.setPresentOrValidateResult(0);
+        mWriter.setChangedCompositionTypes(changedLayers,
+                                           compositionTypes);
+        mWriter.setDisplayRequests(displayRequestMask,
+                                   requestedLayers, requestMasks);
     } else {
         mWriter.setError(getCommandLoc(), err);
     }
