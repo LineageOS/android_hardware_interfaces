@@ -222,54 +222,6 @@ inline std::string vecToString(const hidl_vec<T>& vec) {
     return ss.str();
 }
 
-inline std::string toString(const VehiclePropValue &v) {
-    std::stringstream ss;
-    ss << "VehiclePropValue {n"
-       << "  prop: " << hexString(v.prop) << ",\n"
-       << "  areaId: " << hexString(v.areaId) << ",\n"
-       << "  timestamp: " << v.timestamp << ",\n"
-       << "  value {\n"
-       << "    int32Values: " << vecToString(v.value.int32Values) << ",\n"
-       << "    floatValues: " << vecToString(v.value.floatValues) << ",\n"
-       << "    int64Values: " << vecToString(v.value.int64Values) << ",\n"
-       << "    bytes: " << vecToString(v.value.bytes) << ",\n"
-       << "    string: " << v.value.stringValue.c_str() << ",\n"
-       << "  }\n"
-       << "}\n";
-
-    return ss.str();
-}
-
-inline std::string toString(const VehiclePropConfig &config) {
-    std::stringstream ss;
-    ss << "VehiclePropConfig {\n"
-       << "  prop: " << hexString(config.prop) << ",\n"
-       << "  supportedAreas: " << hexString(config.supportedAreas) << ",\n"
-       << "  access: " << enumToHexString(config.access) << ",\n"
-       << "  changeMode: " << enumToHexString(config.changeMode) << ",\n"
-       << "  configFlags: " << hexString(config.configFlags) << ",\n"
-       << "  minSampleRate: " << config.minSampleRate << ",\n"
-       << "  maxSampleRate: " << config.maxSampleRate << ",\n"
-       << "  configString: " << config.configString.c_str() << ",\n";
-
-    ss << "  areaConfigs {\n";
-    for (size_t i = 0; i < config.areaConfigs.size(); i++) {
-        const auto &area = config.areaConfigs[i];
-        ss << "    areaId: " << hexString(area.areaId) << ",\n"
-           << "    minFloatValue: " << area.minFloatValue << ",\n"
-           << "    minFloatValue: " << area.maxFloatValue << ",\n"
-           << "    minInt32Value: " << area.minInt32Value << ",\n"
-           << "    minInt32Value: " << area.maxInt32Value << ",\n"
-           << "    minInt64Value: " << area.minInt64Value << ",\n"
-           << "    minInt64Value: " << area.maxInt64Value << ",\n";
-    }
-    ss << "  }\n"
-       << "}\n";
-
-    return ss.str();
-}
-
-
 }  // namespace V2_0
 }  // namespace vehicle
 }  // namespace automotive
