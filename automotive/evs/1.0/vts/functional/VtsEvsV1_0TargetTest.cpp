@@ -17,8 +17,13 @@
 #define LOG_TAG "VtsHalEvsTest"
 
 
-// TODO:  How should we configure these values to target appropriate hardware?
-const static char kEnumeratorName[]  = "EvsEnumeratorHw-Mock";
+// Note:  We have't got a great way to indicate which target
+// should be tested, so we'll leave the interface served by the
+// default (mock) EVS driver here for easy reference.  All
+// actual EVS drivers should serve on the EvsEnumeratorHw name,
+// however, so the code is checked in that way.
+//const static char kEnumeratorName[]  = "EvsEnumeratorHw-Mock";
+const static char kEnumeratorName[]  = "EvsEnumeratorHw";
 
 
 // These values are called out in the EVS design doc (as of Mar 8, 2017)
