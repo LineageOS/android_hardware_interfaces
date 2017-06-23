@@ -222,6 +222,7 @@ private:
     static status_t getStatusT(const Status& s);
 
     Status initStatus() const;
+    void closeLocked();
 };
 
 }  // namespace implementation
