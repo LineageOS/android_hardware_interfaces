@@ -1,0 +1,140 @@
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.health@2.0;
+
+import @1.0::BatteryStatus;
+
+import IHealthInfoCallback;
+
+/**
+ * IHealth manages health info and posts events on registered callbacks.
+ */
+interface IHealth {
+
+    /**
+     * Register a callback for any health info events.
+     *
+     * Registering a new callback must not unregister the old one; the old
+     * callback remains registered until one of the following happens:
+     * - A client explicitly calls {@link unregisterCallback} to unregister it.
+     * - The client process that hosts the callback dies.
+     *
+     * @param callback the callback to register.
+     * @return result SUCCESS if successful,
+     *                UNKNOWN for other errors.
+     */
+    registerCallback(IHealthInfoCallback callback) generates (Result result);
+
+    /**
+     * Explicitly unregister a callback that is previously registered through
+     * {@link registerCallback}.
+     *
+     * @param callback the callback to unregister
+     * @return result SUCCESS if successful,
+     *                NOT_FOUND if callback is not registered previously,
+     *                UNKNOWN for other errors.
+     */
+    unregisterCallback(IHealthInfoCallback callback) generates (Result result);
+
+    /**
+     * Schedule update.
+     *
+     * When update() is called, the service must notify all registered callbacks
+     * with the most recent health info.
+     *
+     * @return result SUCCESS if successful,
+     *                CALLBACK_DIED if any registered callback is dead,
+     *                UNKNOWN for other errors.
+     */
+    update() generates (Result result);
+
+    /**
+     * Get battery capacity in microampere-hours(µAh).
+     *
+     * @return result SUCCESS if successful,
+     *                NOT_SUPPORTED if this property is not supported
+     *                 (e.g. the file that stores this property does not exist),
+     *                UNKNOWN for other errors.
+     * @return value battery capacity, or INT32_MIN if not successful.
+     */
+    getChargeCounter() generates (Result result, int32_t value);
+
+    /**
+     * Get instantaneous battery current in microamperes(µA).
+     *
+     * Positive values indicate net current entering the battery from a charge
+     * source, negative values indicate net current discharging from the
+     * battery.
+     *
+     * @return result SUCCESS if successful,
+     *                NOT_SUPPORTED if this property is not supported
+     *                 (e.g. the file that stores this property does not exist),
+     *                UNKNOWN for other errors.
+     * @return value instantaneous battery current, or INT32_MIN if not
+     *               successful.
+     */
+    getCurrentNow() generates (Result result, int32_t value);
+
+    /**
+     * Get average battery current in microamperes(µA).
+     *
+     * Positive values indicate net current entering the battery from a charge
+     * source, negative values indicate net current discharging from the
+     * battery. The time period over which the average is computed may depend on
+     * the fuel gauge hardware and its configuration.
+     *
+     * @return result SUCCESS if successful,
+     *                NOT_SUPPORTED if this property is not supported
+     *                 (e.g. the file that stores this property does not exist),
+     *                UNKNOWN for other errors.
+     * @return value average battery current, or INT32_MIN if not successful.
+     */
+    getCurrentAverage() generates (Result result, int32_t value);
+
+    /**
+     * Get remaining battery capacity percentage of total capacity
+     * (with no fractional part).
+     *
+     * @return result SUCCESS if successful,
+     *                NOT_SUPPORTED if this property is not supported
+     *                 (e.g. the file that stores this property does not exist),
+     *                UNKNOWN for other errors.
+     * @return value remaining battery capacity, or INT32_MIN if not successful.
+     */
+    getCapacity() generates (Result result, int32_t value);
+
+    /**
+     * Get battery remaining energy in nanowatt-hours.
+     *
+     * @return result SUCCESS if successful,
+     *                NOT_SUPPORTED if this property is not supported,
+     *                UNKNOWN for other errors.
+     * @return value remaining energy, or INT64_MIN if not successful.
+     */
+    getEnergyCounter() generates (Result result, int64_t value);
+
+    /**
+     * Get battery charge status.
+     *
+     * @return result SUCCESS if successful,
+     *                NOT_SUPPORTED if this property is not supported
+     *                 (e.g. the file that stores this property does not exist),
+     *                UNKNOWN other errors.
+     * @return value charge status, or UNKNOWN if not successful.
+     */
+    getChargeStatus() generates (Result result, BatteryStatus value);
+};
