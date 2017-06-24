@@ -77,6 +77,7 @@ TEST_F(PowerHidlTest, TryDifferentGovernors) {
   if (fd1 < 0 || fd2 < 0) {
     // Files don't exist, so skip the rest of the test case
     SUCCEED();
+    return;
   }
 
   char old_governor[80];
