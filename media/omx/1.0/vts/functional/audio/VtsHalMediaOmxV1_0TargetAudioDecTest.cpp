@@ -568,7 +568,8 @@ void waitOnInputConsumption(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                             android::Vector<BufferInfo>* iBuffer,
                             android::Vector<BufferInfo>* oBuffer,
                             OMX_AUDIO_CODINGTYPE eEncoding,
-                            OMX_U32 kPortIndexInput, OMX_U32 kPortIndexOutput) {
+                            OMX_U32 kPortIndexInput, OMX_U32 kPortIndexOutput,
+                            AudioDecHidlTest::standardComp comp) {
     android::hardware::media::omx::V1_0::Status status;
     Message msg;
     int timeOut = TIMEOUT_COUNTER;
@@ -580,7 +581,7 @@ void waitOnInputConsumption(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         if (status == android::hardware::media::omx::V1_0::Status::OK) {
             EXPECT_EQ(msg.type, Message::Type::EVENT);
             portReconfiguration(omxNode, observer, iBuffer, oBuffer, eEncoding,
-                                kPortIndexInput, kPortIndexOutput, msg);
+                                kPortIndexInput, kPortIndexOutput, msg, comp);
         }
         // status == TIMED_OUT, it could be due to process time being large
         // than DEFAULT_TIMEOUT or component needs output buffers to start
@@ -789,7 +790,7 @@ TEST_F(AudioDecHidlTest, DecodeTest) {
                   (int)Info.size(), compName);
     eleStream.close();
     waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
-                           kPortIndexInput, kPortIndexOutput);
+                           kPortIndexInput, kPortIndexOutput, compName);
     testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag);
     EXPECT_EQ(timestampUslist.empty(), true);
     // set state to idle
@@ -933,7 +934,7 @@ TEST_F(AudioDecHidlTest, ThumbnailTest) {
                   compName);
     eleStream.close();
     waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
-                           kPortIndexInput, kPortIndexOutput);
+                           kPortIndexInput, kPortIndexOutput, compName);
     testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag);
     flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
                kPortIndexOutput);
@@ -949,7 +950,7 @@ TEST_F(AudioDecHidlTest, ThumbnailTest) {
                   compName, false);
     eleStream.close();
     waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
-                           kPortIndexInput, kPortIndexOutput);
+                           kPortIndexInput, kPortIndexOutput, compName);
     testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag);
     flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
                kPortIndexOutput);
@@ -1034,7 +1035,7 @@ TEST_F(AudioDecHidlTest, SimpleEOSTest) {
                   (int)Info.size(), compName, false);
     eleStream.close();
     waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
-                           kPortIndexInput, kPortIndexOutput);
+                           kPortIndexInput, kPortIndexOutput, compName);
     testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag);
     flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
                kPortIndexOutput);

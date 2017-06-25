@@ -585,20 +585,26 @@ enum VmsMessageType : int32_t {
   /** A client publishes a data packet. */
   DATA = 3,
 
-  /* A client declaring layers offering. */
+  /** A client declaring layers offering. */
   OFFERING = 4,
 
-  /* Requesting the list of available layers. */
+  /** Requesting the list of available layers. */
   AVAILABILITY_REQUEST = 5,
 
-  /* Returning the list of available layers. */
+  /** Returning the list of available layers. */
   AVAILABILITY_RESPONSE = 6,
 
+  /** Sending to the HAL the current list of the available layers. */
+  AVAILABILITY_CHANGE = 7,
+
   /** Requesting layers that have subscribers. */
-  SUBSCRIPTION_REQUEST = 7,
+  SUBSCRIPTIONS_REQUEST = 8,
 
   /** Returning layers that have subscribers. */
-  SUBSCRIPTION_RESPONSE = 8,
+  SUBSCRIPTIONS_RESPONSE = 9,
+
+  /** Sending to the HAL the current list of the subscribed layers. */
+  SUBSCRIPTIONS_CHANGE = 10,
 };
 
 /**
@@ -630,11 +636,14 @@ enum VmsSimpleMessageIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
  * value properties
  */
 enum VmsOfferingMessageIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
+  /* The ID assigend to the publisher by the VMS core. */
+  PUBLISHER_ID = 1,
+
   /* The number of VMS layer dependencies. */
-  VMS_NUMBER_OF_LAYERS_DEPENDENCIES = 1,
+  VMS_NUMBER_OF_LAYERS_DEPENDENCIES = 2,
 
   /* The first index that contain dependencies */
-  FIRST_DEPENDENCIES_INDEX = 2,
+  FIRST_DEPENDENCIES_INDEX = 3,
 };
 
 /**
