@@ -202,18 +202,25 @@ struct ScanStats {
 /**
  * Defines a list of return codes to indicate status of Offload HAL
  */
-enum OffloadStatus : uint32_t {
+enum OffloadStatusCode : uint32_t {
     /* No error */
-    OFFLOAD_STATUS_OK,
+    OK,
     /* No Connection to underlying implementation */
-    OFFLOAD_STATUS_NO_CONNECTION,
+    NO_CONNECTION,
     /* Operation timeout */
-    OFFLOAD_STATUS_TIMEOUT,
+    TIMEOUT,
     /* Other errors */
-    OFFLOAD_STATUS_ERROR
+    ERROR
 };
 
-
+/**
+ * Generic structures to return the status of an operation
+ */
+struct OffloadStatus {
+  OffloadStatusCode code;
+  /* Error message */
+  string description;
+};
 
 
 
