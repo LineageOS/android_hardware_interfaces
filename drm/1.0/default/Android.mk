@@ -74,7 +74,7 @@ LOCAL_SHARED_LIBRARIES := \
     libhidlmemory \
     libhidltransport \
     liblog \
-    libstagefright_foundation_vendor \
+    libstagefright_foundation \
     libutils \
 
 LOCAL_STATIC_LIBRARIES := \
