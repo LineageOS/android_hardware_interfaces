@@ -43,7 +43,6 @@
   </xs:simpleType>
   <xs:simpleType name="streamOutputType">
     <xs:restriction base="xs:string">
-      <xs:enumeration value="default"/>
       <xs:enumeration value="voice_call"/>
       <xs:enumeration value="system"/>
       <xs:enumeration value="ring"/>
