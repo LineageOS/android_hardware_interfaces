@@ -56,17 +56,22 @@
       <xs:enumeration value="tts"/>
     </xs:restriction>
   </xs:simpleType>
+  <xs:simpleType name="relativePathType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[^/].*"/>
+    </xs:restriction>
+  </xs:simpleType>
 
   <!-- Complex types -->
   <xs:complexType name="librariesType">
     <xs:annotation>
       <xs:documentation xml:lang="en">
         List of effect libraries to load. Each library element must have "name" and
-        "path" attributes. The latter is giving the full path of the library .so file.
+        "path" attributes. The latter is giving the path of the library .so file
+        relative to the standard effect folders: /(vendor|odm|system)/lib(64)?/soundfx/
 
-        Example:
-
-        <library name="name" path="/vendor/lib/soundfx/lib.so"/>
+        Example for a library in "/vendor/lib/soundfx/lib.so":
+        <library name="name" path="lib.so"/>
 
       </xs:documentation>
     </xs:annotation>
@@ -74,7 +79,7 @@
       <xs:element name="library" minOccurs="0" maxOccurs="unbounded">
         <xs:complexType>
           <xs:attribute name="name" type="xs:string" use="required"/>
-          <xs:attribute name="path" type="xs:string" use="required"/>
+          <xs:attribute name="path" type="aec:relativePathType" use="required"/>
         </xs:complexType>
       </xs:element>
     </xs:sequence>
