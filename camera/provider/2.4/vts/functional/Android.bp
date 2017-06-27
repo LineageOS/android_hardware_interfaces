@@ -30,7 +30,8 @@ cc_test {
         "libcamera_metadata",
         "libbinder",
         "libgui",
-        "libui"
+        "libui",
+        "libfmq",
     ],
     static_libs: [
         "VtsHalHidlTargetTestBase",
