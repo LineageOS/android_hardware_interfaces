@@ -34,23 +34,13 @@ interface IRadio extends @1.0::IRadio {
      * switch and everytime the framework receives a new certificate.
      *
      * @param serial Serial number of request.
-     * @param carrierKey Carrier specific key to be used for encryption. It must
-     *        be opaque to the framework. This is the byte-stream representation
-     *        of the key. This is an external encoded form for the key used when
-     *        a standard representation of the key is needed outside the Java
-     *        Virtual Machine, as when transmitting the key to some other party.
-     *        The key is encoded according to a standard format
-     *        (such as X.509 SubjectPublicKeyInfo or PKCS#8), and is returned using
-     *        the getEncoded method.
-     * @param keyIdentifier This is an opaque value we're given by the carrier
-     *        and is returned to the carrier. This is used by the server to
-     *        help it locate the private key to decrypt the permanent identity.
+     * @param message ImsiEncryptionInfo as defined in types.hal.
+     *
      *
      * Response callback is
      * IRadioResponse.setCarrierInfoForImsiEncryptionResponse()
      */
-     oneway setCarrierInfoForImsiEncryption(int32_t serial, vec<uint8_t> carrierKey,
-             string keyIdentifier);
+     oneway setCarrierInfoForImsiEncryption(int32_t serial, ImsiEncryptionInfo imsiEncryptionInfo);
 
     /**
      * Set SIM card power state.
@@ -99,4 +89,24 @@ interface IRadio extends @1.0::IRadio {
      * Response function is IRadioResponse.stopNetworkScanResponse()
      */
     oneway stopNetworkScan(int32_t serial);
+
+    /**
+     * Start a Keepalive session (for IPsec)
+     *
+     * @param serial Serial number of request.
+     * @param keepalive A request structure containing all necessary info to describe a keepalive
+     *
+     * Response function is IRadioResponse.startKeepaliveResponse()
+     */
+    oneway startKeepalive(int32_t serial, KeepaliveRequest keepalive);
+
+    /**
+     * Stop an ongoing Keepalive session (for IPsec)
+     *
+     * @param serial Serial number of request.
+     * @param sessionHandle The handle that was provided by IRadioResponse.startKeepaliveResponse
+     *
+     * Response function is IRadioResponse.stopKeepaliveResponse()
+     */
+    oneway stopKeepalive(int32_t serial, int32_t sessionHandle);
 };
