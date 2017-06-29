@@ -56,14 +56,15 @@ class BroadcastRadioHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  protected:
     virtual void SetUp() override {
         auto factory = ::testing::VtsHalHidlTargetTestBase::getService<IBroadcastRadioFactory>();
-        if (factory != 0) {
-            factory->connectModule(Class::AM_FM,
-                             [&](Result retval, const ::android::sp<IBroadcastRadio>& result) {
-                if (retval == Result::OK) {
-                  mRadio = IBroadcastRadio::castFrom(result);
-                }
-            });
-        }
+        ASSERT_NE(nullptr, factory.get());
+        Result halResult;
+        factory->connectModule(Class::AM_FM, [&](Result retval, const sp<IBroadcastRadio>& result) {
+            halResult = retval;
+            if (retval == Result::OK) {
+                mRadio = IBroadcastRadio::castFrom(result);
+            }
+        });
+        ASSERT_EQ(Result::OK, halResult);
         mTunerCallback = new MyCallback(this);
         ASSERT_NE(nullptr, mRadio.get());
         ASSERT_NE(nullptr, mTunerCallback.get());
@@ -277,6 +278,7 @@ bool BroadcastRadioHidlTest::openTuner()
                 });
         EXPECT_TRUE(hidlReturn.isOk());
         EXPECT_EQ(Result::OK, halResult);
+        EXPECT_NE(nullptr, mTuner.get());
         EXPECT_TRUE(waitForCallback(kConfigCallbacktimeoutNs));
     }
     EXPECT_NE(nullptr, mTuner.get());

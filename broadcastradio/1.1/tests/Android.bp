@@ -14,31 +14,15 @@
 // limitations under the License.
 //
 
-cc_library_shared {
-    name: "android.hardware.broadcastradio@1.1-impl",
-    vendor: true,
-    relative_install_path: "hw",
+cc_test {
+    name: "android.hardware.broadcastradio@1.1-utils-tests",
     cflags: [
         "-Wall",
         "-Wextra",
         "-Werror",
     ],
     srcs: [
-        "BroadcastRadio.cpp",
-        "BroadcastRadioFactory.cpp",
-        "Tuner.cpp",
-        "VirtualProgram.cpp",
-        "VirtualRadio.cpp",
+        "WorkerThread_test.cpp",
     ],
-    static_libs: [
-        "android.hardware.broadcastradio@1.1-utils-lib",
-    ],
-    shared_libs: [
-        "libhidlbase",
-        "libhidltransport",
-        "libutils",
-        "liblog",
-        "android.hardware.broadcastradio@1.0",
-        "android.hardware.broadcastradio@1.1",
-    ],
+    static_libs: ["android.hardware.broadcastradio@1.1-utils-lib"],
 }

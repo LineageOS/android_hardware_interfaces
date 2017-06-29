@@ -16,6 +16,9 @@
 #ifndef ANDROID_HARDWARE_BROADCASTRADIO_V1_1_TUNER_H
 #define ANDROID_HARDWARE_BROADCASTRADIO_V1_1_TUNER_H
 
+#include "VirtualRadio.h"
+
+#include <WorkerThread.h>
 #include <android/hardware/broadcastradio/1.1/ITuner.h>
 #include <android/hardware/broadcastradio/1.1/ITunerCallback.h>
 
@@ -25,19 +28,16 @@ namespace broadcastradio {
 namespace V1_1 {
 namespace implementation {
 
-using V1_0::Direction;
-
-struct BroadcastRadio;
-
 struct Tuner : public ITuner {
+    Tuner(const sp<V1_0::ITunerCallback>& callback);
 
-    Tuner(const sp<V1_0::ITunerCallback>& callback, const wp<BroadcastRadio>& mParentDevice);
+    void forceClose();
 
-    // Methods from ::android::hardware::broadcastradio::V1_1::ITuner follow.
-    Return<Result> setConfiguration(const BandConfig& config) override;
+    // V1_1::ITuner methods
+    Return<Result> setConfiguration(const V1_0::BandConfig& config) override;
     Return<void> getConfiguration(getConfiguration_cb _hidl_cb) override;
-    Return<Result> scan(Direction direction, bool skipSubChannel) override;
-    Return<Result> step(Direction direction, bool skipSubChannel) override;
+    Return<Result> scan(V1_0::Direction direction, bool skipSubChannel) override;
+    Return<Result> step(V1_0::Direction direction, bool skipSubChannel) override;
     Return<Result> tune(uint32_t channel, uint32_t subChannel) override;
     Return<Result> cancel() override;
     Return<void> getProgramInformation(getProgramInformation_cb _hidl_cb) override;
@@ -47,21 +47,24 @@ struct Tuner : public ITuner {
     Return<void> isAnalogForced(isAnalogForced_cb _hidl_cb) override;
     Return<Result> setAnalogForced(bool isForced) override;
 
-    static void callback(radio_hal_event_t *halEvent, void *cookie);
-    void onCallback(radio_hal_event_t *halEvent);
+   private:
+    std::mutex mMut;
+    WorkerThread mThread;
+    bool mIsClosed = false;  // TODO(b/36864090): use it
 
-    void setHalTuner(const struct radio_tuner *halTuner) { mHalTuner = halTuner; }
-    const struct radio_tuner *getHalTuner() { return mHalTuner; }
-
-private:
-    ~Tuner();
-
-    const struct radio_tuner *mHalTuner;
     const sp<V1_0::ITunerCallback> mCallback;
     const sp<V1_1::ITunerCallback> mCallback1_1;
-    const wp<BroadcastRadio> mParentDevice;
-};
 
+    VirtualRadio mVirtualFm;
+
+    bool mIsAmfmConfigSet = false;
+    V1_0::BandConfig mAmfmConfig;
+    bool mIsTuneCompleted = false;
+    uint32_t mCurrentProgram;  // TODO(b/32621193): Station Selector
+    ProgramInfo mCurrentProgramInfo = {};
+
+    void tuneInternalLocked();
+};
 
 }  // namespace implementation
 }  // namespace V1_1

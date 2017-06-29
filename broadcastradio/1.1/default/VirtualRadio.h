@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ANDROID_HARDWARE_BROADCASTRADIO_V1_1_BROADCASTRADIOFACTORY_H
-#define ANDROID_HARDWARE_BROADCASTRADIO_V1_1_BROADCASTRADIOFACTORY_H
+#ifndef ANDROID_HARDWARE_BROADCASTRADIO_V1_1_VIRTUALRADIO_H
+#define ANDROID_HARDWARE_BROADCASTRADIO_V1_1_VIRTUALRADIO_H
 
-#include <android/hardware/broadcastradio/1.1/IBroadcastRadio.h>
-#include <android/hardware/broadcastradio/1.1/IBroadcastRadioFactory.h>
-#include <android/hardware/broadcastradio/1.1/types.h>
+#include "VirtualProgram.h"
+
+#include <mutex>
+#include <vector>
 
 namespace android {
 namespace hardware {
@@ -26,17 +27,20 @@ namespace broadcastradio {
 namespace V1_1 {
 namespace implementation {
 
-extern "C" IBroadcastRadioFactory* HIDL_FETCH_IBroadcastRadioFactory(const char* name);
+class VirtualRadio {
+   public:
+    VirtualRadio(VirtualRadio&& o);
+    VirtualRadio(std::vector<VirtualProgram> initialList);
 
-struct BroadcastRadioFactory : public IBroadcastRadioFactory {
-    BroadcastRadioFactory();
-
-    // V1_0::IBroadcastRadioFactory methods
-    Return<void> connectModule(V1_0::Class classId, connectModule_cb _hidl_cb) override;
+    std::vector<VirtualProgram> getProgramList();
+    bool getProgram(uint32_t channel, VirtualProgram& program);
 
    private:
-    std::map<V1_0::Class, sp<IBroadcastRadio>> mRadioModules;
+    std::mutex mMut;
+    std::vector<VirtualProgram> mPrograms;
 };
+
+VirtualRadio make_fm_radio();
 
 }  // namespace implementation
 }  // namespace V1_1
@@ -44,4 +48,4 @@ struct BroadcastRadioFactory : public IBroadcastRadioFactory {
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_BROADCASTRADIO_V1_1_BROADCASTRADIOFACTORY_H
+#endif  // ANDROID_HARDWARE_BROADCASTRADIO_V1_1_VIRTUALRADIO_H
