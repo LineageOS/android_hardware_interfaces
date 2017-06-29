@@ -59,7 +59,7 @@ TEST_F(ConsumerIrHidlTest, TransmitTest) {
     uint32_t len = 16;
     hidl_vec<int32_t> vec;
     vec.resize(len);
-    std::fill(vec.begin(), vec.end(), 1);
+    std::fill(vec.begin(), vec.end(), 1000);
     for (auto range = ranges.begin(); range != ranges.end(); range++) {
       EXPECT_TRUE(ir->transmit(range->min, vec));
       EXPECT_TRUE(ir->transmit(range->max, vec));
@@ -74,7 +74,6 @@ TEST_F(ConsumerIrHidlTest, BadFreqTest) {
   vec.resize(len);
   std::fill(vec.begin(), vec.end(), 1);
   EXPECT_FALSE(ir->transmit(-1, vec));
-  EXPECT_FALSE(ir->transmit(0, vec));
 }
 
 int main(int argc, char **argv) {
