@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package android.hardware.cas@1.0;
 
-#include <radio_hidl_hal_utils_v1_0.h>
-
-int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(new RadioHidlEnvironment);
-    ::testing::InitGoogleTest(&argc, argv);
-
-    // setup seed for rand function
-    int seedSrand = time(NULL);
-    std::cout << "seed setup for random function (radio):" + std::to_string(seedSrand) << std::endl;
-    srand(seedSrand);
-
-    int status = RUN_ALL_TESTS();
-    LOG(INFO) << "Test result = " << status;
-
-    return status;
-}
+interface ICasListener {
+    /**
+      * Notify the listener of a scheme-specific event from the CA system.
+      *
+      * @param event an integer whose meaning is scheme-specific.
+      * @param arg an integer whose meaning is scheme-specific.
+      * @param data a byte array of data whose format and meaning are
+      * scheme-specific.
+      */
+    onEvent(int32_t event, int32_t arg, vec<uint8_t> data);
+};

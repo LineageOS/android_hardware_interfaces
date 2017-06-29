@@ -14,19 +14,28 @@
  * limitations under the License.
  */
 
-#include <radio_hidl_hal_utils_v1_0.h>
+#ifndef ANDROID_HARDWARE_CAS_V1_0_TYPE_CONVERT_H
+#define ANDROID_HARDWARE_CAS_V1_0_TYPE_CONVERT_H
 
-int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(new RadioHidlEnvironment);
-    ::testing::InitGoogleTest(&argc, argv);
+#include <android/hardware/cas/1.0/types.h>
+#include <media/cas/CasAPI.h>
+#include <media/stagefright/MediaErrors.h>
+#include <utils/String8.h>
 
-    // setup seed for rand function
-    int seedSrand = time(NULL);
-    std::cout << "seed setup for random function (radio):" + std::to_string(seedSrand) << std::endl;
-    srand(seedSrand);
+namespace android {
+namespace hardware {
+namespace cas {
+namespace V1_0 {
+namespace implementation {
 
-    int status = RUN_ALL_TESTS();
-    LOG(INFO) << "Test result = " << status;
+Status toStatus(status_t legacyStatus);
 
-    return status;
-}
+String8 sessionIdToString(const CasSessionId &sessionId);
+
+}  // namespace implementation
+}  // namespace V1_0
+}  // namespace cas
+}  // namespace hardware
+}  // namespace android
+
+#endif // ANDROID_HARDWARE_CAS_V1_0_TYPE_CONVERT_H
