@@ -16,6 +16,7 @@
 
 cc_test {
     name: "android.hardware.broadcastradio@1.1-utils-tests",
+    vendor: true,
     cflags: [
         "-Wall",
         "-Wextra",
