@@ -37,7 +37,8 @@ TEST_F(RadioHidlTest, sendEnvelope) {
         std::cout << static_cast<int>(radioRsp->rspInfo.error) << std::endl;
         ASSERT_TRUE(CheckGeneralError() ||
                     radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
-                    radioRsp->rspInfo.error == RadioError::NONE);
+                    radioRsp->rspInfo.error == RadioError::NONE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR);
     }
 
     // Test with sending random string
@@ -54,7 +55,8 @@ TEST_F(RadioHidlTest, sendEnvelope) {
         std::cout << static_cast<int>(radioRsp->rspInfo.error) << std::endl;
         ASSERT_TRUE(CheckGeneralError() ||
                     radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
-                    radioRsp->rspInfo.error == RadioError::NONE);
+                    radioRsp->rspInfo.error == RadioError::NONE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR);
     }
 }
 
@@ -153,7 +155,8 @@ TEST_F(RadioHidlTest, sendEnvelopeWithStatus) {
 
     if (cardStatus.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckGeneralError() ||
-                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS);
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR);
     }
 
     // Test with sending random string
@@ -168,6 +171,7 @@ TEST_F(RadioHidlTest, sendEnvelopeWithStatus) {
 
     if (cardStatus.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckGeneralError() ||
-                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS);
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR);
     }
 }
