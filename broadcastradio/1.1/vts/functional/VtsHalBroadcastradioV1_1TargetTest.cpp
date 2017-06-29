@@ -456,11 +456,8 @@ TEST_F(BroadcastRadioHidlTest, TuneAndGetProgramInformationAndCancel) {
     EXPECT_EQ(Result::OK, halResult);
     auto &halInfo_1_1 = halInfo.base;
     if (mResultCallbackData == Result::OK) {
-        EXPECT_TRUE(halInfo_1_1.tuned);
         EXPECT_LE(halInfo_1_1.channel, upperLimit);
         EXPECT_GE(halInfo_1_1.channel, lowerLimit);
-    } else {
-        EXPECT_EQ(false, halInfo_1_1.tuned);
     }
 
     // test cancel
