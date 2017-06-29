@@ -107,24 +107,17 @@ void Tuner::tuneInternalLocked() {
         virtualRadio = &mVirtualFm;
     }
 
-    auto& info11 = mCurrentProgramInfo;
-    auto& info10 = info11.base;
-
     VirtualProgram virtualProgram;
     if (virtualRadio != nullptr && virtualRadio->getProgram(mCurrentProgram, virtualProgram)) {
-        // TODO(b/36864090): convert virtualProgram to ProgramInfo instead
-        info10.channel = mCurrentProgram;
-        info10.tuned = true;
-        info10.stereo = true;
-        info10.signalStrength = 100;
+        mCurrentProgramInfo = static_cast<ProgramInfo>(virtualProgram);
     } else {
-        info11 = makeDummyProgramInfo(mCurrentProgram);
+        mCurrentProgramInfo = makeDummyProgramInfo(mCurrentProgram);
     }
     mIsTuneCompleted = true;
 
-    mCallback->tuneComplete(Result::OK, info10);
+    mCallback->tuneComplete(Result::OK, mCurrentProgramInfo.base);
     if (mCallback1_1 != nullptr) {
-        mCallback1_1->tuneComplete_1_1(Result::OK, info11);
+        mCallback1_1->tuneComplete_1_1(Result::OK, mCurrentProgramInfo);
     }
 }
 
@@ -274,20 +267,8 @@ Return<void> Tuner::getProgramList(const hidl_string& filter __unused, getProgra
         return Void();
     }
 
-    hidl_vec<ProgramInfo> list;
-    auto vList = virtualRadio.getProgramList();
-    list.resize(vList.size());
-    for (size_t i = 0; i < vList.size(); i++) {
-        auto& src = vList[i];
-        auto& dst11 = list[i];
-        auto& dst10 = dst11.base;
-
-        // TODO(b/36864090): convert virtualProgram to ProgramInfo instead
-        dst10.channel = src.channel;
-        dst10.tuned = true;
-    }
-
-    _hidl_cb(ProgramListResult::OK, list);
+    auto list = virtualRadio.getProgramList();
+    _hidl_cb(ProgramListResult::OK, vector<ProgramInfo>(list.begin(), list.end()));
     return Void();
 }
 

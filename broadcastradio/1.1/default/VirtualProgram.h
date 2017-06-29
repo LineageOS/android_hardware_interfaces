@@ -16,6 +16,7 @@
 #ifndef ANDROID_HARDWARE_BROADCASTRADIO_V1_1_VIRTUALPROGRAM_H
 #define ANDROID_HARDWARE_BROADCASTRADIO_V1_1_VIRTUALPROGRAM_H
 
+#include <android/hardware/broadcastradio/1.1/types.h>
 #include <cstdint>
 
 namespace android {
@@ -27,6 +28,11 @@ namespace implementation {
 struct VirtualProgram {
     uint32_t channel;  // TODO(b/32621193): Station Selector
 
+    std::string programName = "";
+    std::string songArtist = "";
+    std::string songTitle = "";
+
+    explicit operator ProgramInfo() const;
     friend bool operator<(const VirtualProgram& lhs, const VirtualProgram& rhs);
 };
 
