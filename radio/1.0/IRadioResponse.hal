@@ -1565,6 +1565,7 @@ interface IRadioResponse {
      *   RadioError:INVALID_MODEM_STATE
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
+     *   RadioError:MODE_NOT_SUPPORTED
      */
     oneway sendCDMAFeatureCodeResponse(RadioResponseInfo info);
 
