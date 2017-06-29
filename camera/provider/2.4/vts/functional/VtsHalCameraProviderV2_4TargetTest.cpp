@@ -15,29 +15,33 @@
  */
 
 #define LOG_TAG "camera_hidl_hal_test"
-#include <VtsHalHidlTargetTestBase.h>
+
+#include <chrono>
+#include <mutex>
+#include <regex>
+#include <unordered_map>
+#include <condition_variable>
+
+#include <inttypes.h>
+
 #include <android/hardware/camera/device/1.0/ICameraDevice.h>
 #include <android/hardware/camera/device/3.2/ICameraDevice.h>
 #include <android/hardware/camera/provider/2.4/ICameraProvider.h>
-#include <android/log.h>
 #include <binder/MemoryHeapBase.h>
+#include <CameraMetadata.h>
+#include <CameraParameters.h>
+#include <fmq/MessageQueue.h>
 #include <grallocusage/GrallocUsageConversion.h>
 #include <gui/BufferItemConsumer.h>
 #include <gui/BufferQueue.h>
 #include <gui/Surface.h>
 #include <hardware/gralloc.h>
 #include <hardware/gralloc1.h>
-#include <inttypes.h>
 #include <system/camera.h>
+#include <system/camera_metadata.h>
 #include <ui/GraphicBuffer.h>
-#include <utils/Errors.h>
-#include <chrono>
-#include <condition_variable>
-#include <mutex>
-#include <regex>
-#include <unordered_map>
-#include "CameraParameters.h"
-#include "system/camera_metadata.h"
+
+#include <VtsHalHidlTargetTestBase.h>
 
 using ::android::hardware::Return;
 using ::android::hardware::Void;
@@ -89,6 +93,9 @@ using ::android::hardware::camera::device::V1_0::CameraFrameMetadata;
 using ::android::hardware::camera::device::V1_0::ICameraDevicePreviewCallback;
 using ::android::hardware::camera::device::V1_0::FrameCallbackFlag;
 using ::android::hardware::camera::device::V1_0::HandleTimestampMessage;
+using ::android::hardware::MessageQueue;
+using ::android::hardware::kSynchronizedReadWrite;
+using ResultMetadataQueue = MessageQueue<uint8_t, kSynchronizedReadWrite>;
 
 const char kCameraPassthroughServiceName[] = "legacy/0";
 const uint32_t kMaxPreviewWidth = 1920;
@@ -253,9 +260,7 @@ struct PreviewWindowCb : public ICameraDevicePreviewCallback {
 
             size_t result = 1;
             result = 31 * result + buf->numFds;
-            result = 31 * result + buf->numInts;
-            int length = buf->numFds + buf->numInts;
-            for (int i = 0; i < length; i++) {
+            for (int i = 0; i < buf->numFds; i++) {
                 result = 31 * result + buf->data[i];
             }
             return result;
@@ -265,10 +270,8 @@ struct PreviewWindowCb : public ICameraDevicePreviewCallback {
     struct BufferComparator {
         bool operator()(const buffer_handle_t& buf1,
                 const buffer_handle_t& buf2) const {
-            if ((buf1->numFds == buf2->numFds) &&
-                    (buf1->numInts == buf2->numInts)) {
-                int length = buf1->numFds + buf1->numInts;
-                for (int i = 0; i < length; i++) {
+            if (buf1->numFds == buf2->numFds) {
+                for (int i = 0; i < buf1->numFds; i++) {
                     if (buf1->data[i] != buf2->data[i]) {
                         return false;
                     }
@@ -552,7 +555,9 @@ public:
             const AvailableStream *previewThreshold,
             sp<ICameraDeviceSession> *session /*out*/,
             Stream *previewStream /*out*/,
-            HalStreamConfiguration *halStreamConfig /*out*/);
+            HalStreamConfiguration *halStreamConfig /*out*/,
+            bool *supportsPartialResults /*out*/,
+            uint32_t *partialResultCount /*out*/);
     static Status getAvailableOutputStreams(camera_metadata_t *staticMeta,
             std::vector<AvailableStream> &outputStreams,
             const AvailableStream *threshold = nullptr);
@@ -569,11 +574,75 @@ public:
             ::android::CameraParameters &cameraParams, const char *mode) ;
 
 protected:
+
+    // In-flight queue for tracking completion of capture requests.
+    struct InFlightRequest {
+        // Set by notify() SHUTTER call.
+        nsecs_t shutterTimestamp;
+
+        bool errorCodeValid;
+        ErrorCode errorCode;
+
+        //Is partial result supported
+        bool usePartialResult;
+
+        //Partial result count expected
+        uint32_t numPartialResults;
+
+        // Message queue
+        std::shared_ptr<ResultMetadataQueue> resultQueue;
+
+        // Set by process_capture_result call with valid metadata
+        bool haveResultMetadata;
+
+        // Decremented by calls to process_capture_result with valid output
+        // and input buffers
+        ssize_t numBuffersLeft;
+
+         // A 64bit integer to index the frame number associated with this result.
+        int64_t frameNumber;
+
+         // The partial result count (index) for this capture result.
+        int32_t partialResultCount;
+
+        // For buffer drop errors, the stream ID for the stream that lost a buffer.
+        // Otherwise -1.
+        int32_t errorStreamId;
+
+        // If this request has any input buffer
+        bool hasInputBuffer;
+
+        // Result metadata
+        ::android::hardware::camera::common::V1_0::helper::CameraMetadata collectedResult;
+
+        // Buffers are added by process_capture_result when output buffers
+        // return from HAL but framework.
+        ::android::Vector<StreamBuffer> resultOutputBuffers;
+
+        InFlightRequest(ssize_t numBuffers, bool hasInput,
+                bool partialResults, uint32_t partialCount,
+                std::shared_ptr<ResultMetadataQueue> queue = nullptr) :
+                shutterTimestamp(0),
+                errorCodeValid(false),
+                errorCode(ErrorCode::ERROR_BUFFER),
+                usePartialResult(partialResults),
+                numPartialResults(partialCount),
+                resultQueue(queue),
+                haveResultMetadata(false),
+                numBuffersLeft(numBuffers),
+                frameNumber(0),
+                partialResultCount(0),
+                errorStreamId(-1),
+                hasInputBuffer(hasInput) {}
+    };
+
+    // Map from frame number to the in-flight request state
+    typedef ::android::KeyedVector<uint32_t, InFlightRequest*> InFlightMap;
+
     std::mutex mLock;                          // Synchronize access to member variables
     std::condition_variable mResultCondition;  // Condition variable for incoming results
-    uint32_t mResultFrameNumber;               // Expected result frame number
-    std::vector<StreamBuffer> mResultBuffers;  // Holds stream buffers from capture result
-    std::vector<ErrorMsg> mErrors;             // Holds incoming error notifications
+    InFlightMap mInflightMap;                  // Map of all inflight requests
+
     DataCallbackMsg mDataMessageTypeReceived;  // Most recent message type received through data callbacks
     uint32_t mVideoBufferIndex;                // Buffer index of the most recent video buffer
     uint32_t mVideoData;                       // Buffer data of the most recent video buffer
@@ -696,45 +765,173 @@ Return<void> CameraHidlTest::DeviceCb::processCaptureResult(
         return Void();
     }
 
+    bool notify = false;
     std::unique_lock<std::mutex> l(mParent->mLock);
-    const CaptureResult& result = results[0];
+    for (size_t i = 0 ; i < results.size(); i++) {
+        uint32_t frameNumber = results[i].frameNumber;
 
-    if(mParent->mResultFrameNumber != result.frameNumber) {
-        ALOGE("%s: Unexpected frame number! Expected: %u received: %u",
-              __func__, mParent->mResultFrameNumber, result.frameNumber);
-        ADD_FAILURE();
+        if ((results[i].result.size() == 0) &&
+                (results[i].outputBuffers.size() == 0) &&
+                (results[i].inputBuffer.buffer == nullptr) &&
+                (results[i].fmqResultSize == 0)) {
+            ALOGE("%s: No result data provided by HAL for frame %d result count: %d",
+                  __func__, frameNumber, (int) results[i].fmqResultSize);
+            ADD_FAILURE();
+            break;
+        }
+
+        ssize_t idx = mParent->mInflightMap.indexOfKey(frameNumber);
+        if (::android::NAME_NOT_FOUND == idx) {
+            ALOGE("%s: Unexpected frame number! received: %u",
+                  __func__, frameNumber);
+            ADD_FAILURE();
+            break;
+        }
+
+        bool isPartialResult = false;
+        bool hasInputBufferInRequest = false;
+        InFlightRequest *request = mParent->mInflightMap.editValueAt(idx);
+        ::android::hardware::camera::device::V3_2::CameraMetadata resultMetadata;
+        size_t resultSize = 0;
+        if (results[i].fmqResultSize > 0) {
+            resultMetadata.resize(results[i].fmqResultSize);
+            if (request->resultQueue == nullptr) {
+                ADD_FAILURE();
+                break;
+            }
+            if (!request->resultQueue->read(resultMetadata.data(),
+                    results[i].fmqResultSize)) {
+                ALOGE("%s: Frame %d: Cannot read camera metadata from fmq,"
+                        "size = %" PRIu64, __func__, frameNumber,
+                        results[i].fmqResultSize);
+                ADD_FAILURE();
+                break;
+            }
+            resultSize = resultMetadata.size();
+        } else if (results[i].result.size() > 0) {
+            resultMetadata.setToExternal(const_cast<uint8_t *>(
+                    results[i].result.data()), results[i].result.size());
+            resultSize = resultMetadata.size();
+        }
+
+        if (!request->usePartialResult && (resultSize > 0) &&
+                (results[i].partialResult != 1)) {
+            ALOGE("%s: Result is malformed for frame %d: partial_result %u "
+                    "must be 1  if partial result is not supported", __func__,
+                    frameNumber, results[i].partialResult);
+            ADD_FAILURE();
+            break;
+        }
+
+        if (results[i].partialResult != 0) {
+            request->partialResultCount = results[i].partialResult;
+        }
+
+        // Check if this result carries only partial metadata
+        if (request->usePartialResult && (resultSize > 0)) {
+            if ((results[i].partialResult > request->numPartialResults) ||
+                    (results[i].partialResult < 1)) {
+                ALOGE("%s: Result is malformed for frame %d: partial_result %u"
+                        " must be  in the range of [1, %d] when metadata is "
+                        "included in the result", __func__, frameNumber,
+                        results[i].partialResult, request->numPartialResults);
+                ADD_FAILURE();
+                break;
+            }
+            request->collectedResult.append(
+                    reinterpret_cast<const camera_metadata_t*>(
+                            resultMetadata.data()));
+
+            isPartialResult =
+                    (results[i].partialResult < request->numPartialResults);
+        }
+
+        hasInputBufferInRequest = request->hasInputBuffer;
+
+        // Did we get the (final) result metadata for this capture?
+        if ((resultSize > 0) && !isPartialResult) {
+            if (request->haveResultMetadata) {
+                ALOGE("%s: Called multiple times with metadata for frame %d",
+                      __func__, frameNumber);
+                ADD_FAILURE();
+                break;
+            }
+            request->haveResultMetadata = true;
+            request->collectedResult.sort();
+        }
+
+        uint32_t numBuffersReturned = results[i].outputBuffers.size();
+        if (results[i].inputBuffer.buffer != nullptr) {
+            if (hasInputBufferInRequest) {
+                numBuffersReturned += 1;
+            } else {
+                ALOGW("%s: Input buffer should be NULL if there is no input"
+                        " buffer sent in the request", __func__);
+            }
+        }
+        request->numBuffersLeft -= numBuffersReturned;
+        if (request->numBuffersLeft < 0) {
+            ALOGE("%s: Too many buffers returned for frame %d", __func__,
+                    frameNumber);
+            ADD_FAILURE();
+            break;
+        }
+
+        request->resultOutputBuffers.appendArray(results[i].outputBuffers.data(),
+                results[i].outputBuffers.size());
+        // If shutter event is received notify the pending threads.
+        if (request->shutterTimestamp != 0) {
+            notify = true;
+        }
     }
-
-    size_t resultLength = result.outputBuffers.size();
-    for (size_t i = 0; i < resultLength; i++) {
-        mParent->mResultBuffers.push_back(result.outputBuffers[i]);
-    }
-
-    // TODO(epeev): Handle partial results in case client supports them and
-    //              verify the result against request settings.
 
     l.unlock();
-    mParent->mResultCondition.notify_one();
+    if (notify) {
+        mParent->mResultCondition.notify_one();
+    }
 
     return Void();
 }
 
 Return<void> CameraHidlTest::DeviceCb::notify(
         const hidl_vec<NotifyMsg>& messages) {
-    const NotifyMsg& message = messages[0];
+    std::lock_guard<std::mutex> l(mParent->mLock);
 
-    if (MsgType::ERROR == message.type) {
-        {
-            std::lock_guard<std::mutex> l(mParent->mLock);
-            mParent->mErrors.push_back(message.msg.error);
+    for (size_t i = 0; i < messages.size(); i++) {
+        ssize_t idx = mParent->mInflightMap.indexOfKey(
+                messages[i].msg.shutter.frameNumber);
+        if (::android::NAME_NOT_FOUND == idx) {
+            ALOGE("%s: Unexpected frame number! received: %u",
+                  __func__, messages[i].msg.shutter.frameNumber);
+            ADD_FAILURE();
+            break;
         }
+        InFlightRequest *r = mParent->mInflightMap.editValueAt(idx);
 
-        if ((ErrorCode::ERROR_REQUEST == message.msg.error.errorCode)
-                || (ErrorCode::ERROR_BUFFER == message.msg.error.errorCode)) {
-            mParent->mResultCondition.notify_one();
+        switch(messages[i].type) {
+            case MsgType::ERROR:
+                if (ErrorCode::ERROR_DEVICE == messages[i].msg.error.errorCode) {
+                    ALOGE("%s: Camera reported serious device error",
+                          __func__);
+                    ADD_FAILURE();
+                } else {
+                    r->errorCodeValid = true;
+                    r->errorCode = messages[i].msg.error.errorCode;
+                    r->errorStreamId = messages[i].msg.error.errorStreamId;
+                }
+                break;
+            case MsgType::SHUTTER:
+                r->shutterTimestamp = messages[i].msg.shutter.timestamp;
+                break;
+            default:
+                ALOGE("%s: Unsupported notify message %d", __func__,
+                      messages[i].type);
+                ADD_FAILURE();
+                break;
         }
     }
 
+    mParent->mResultCondition.notify_one();
     return Void();
 }
 
@@ -2468,9 +2665,31 @@ TEST_F(CameraHidlTest, processCaptureRequestPreview) {
             Stream previewStream;
             HalStreamConfiguration halStreamConfig;
             sp<ICameraDeviceSession> session;
+            bool supportsPartialResults = false;
+            uint32_t partialResultCount = 0;
             configurePreviewStream(name, env, &previewThreshold,
                     &session /*out*/, &previewStream /*out*/,
-                    &halStreamConfig /*out*/);
+                    &halStreamConfig /*out*/, &supportsPartialResults /*out*/,
+                    &partialResultCount/*out*/);
+
+            std::shared_ptr<ResultMetadataQueue> resultQueue;
+            auto resultQueueRet = session->getCaptureResultMetadataQueue(
+                [&resultQueue](const auto& descriptor) {
+                    resultQueue = std::make_shared<ResultMetadataQueue>(
+                            descriptor);
+                    if (!resultQueue->isValid() ||
+                            resultQueue->availableToWrite() <= 0) {
+                        ALOGE("%s: HAL returns empty result metadata fmq,"
+                                " not use it", __func__);
+                        resultQueue = nullptr;
+                        // Don't use the queue onwards.
+                    }
+                });
+            ASSERT_TRUE(resultQueueRet.isOk());
+            ASSERT_NE(nullptr, resultQueue);
+
+            InFlightRequest inflightReq = {1, false, supportsPartialResults,
+                    partialResultCount, resultQueue};
 
             RequestTemplate reqTemplate = RequestTemplate::PREVIEW;
             Return<void> ret;
@@ -2499,8 +2718,8 @@ TEST_F(CameraHidlTest, processCaptureRequestPreview) {
 
             {
                 std::unique_lock<std::mutex> l(mLock);
-                mResultBuffers.clear();
-                mResultFrameNumber = frameNumber;
+                mInflightMap.clear();
+                mInflightMap.add(frameNumber, &inflightReq);
             }
 
             Status status = Status::INTERNAL_ERROR;
@@ -2519,22 +2738,28 @@ TEST_F(CameraHidlTest, processCaptureRequestPreview) {
 
             {
                 std::unique_lock<std::mutex> l(mLock);
-                while (0 == mResultBuffers.size()) {
+                while (!inflightReq.errorCodeValid &&
+                        ((0 < inflightReq.numBuffersLeft) ||
+                                (!inflightReq.haveResultMetadata))) {
                     auto timeout = std::chrono::system_clock::now() +
                             std::chrono::seconds(kStreamBufferTimeoutSec);
                     ASSERT_NE(std::cv_status::timeout,
                             mResultCondition.wait_until(l, timeout));
                 }
 
-                ASSERT_EQ(BufferStatus::OK, mResultBuffers[0].status);
-                ASSERT_EQ(previewStream.id, mResultBuffers[0].streamId);
+                ASSERT_FALSE(inflightReq.errorCodeValid);
+                ASSERT_NE(inflightReq.resultOutputBuffers.size(), 0u);
+                ASSERT_EQ(previewStream.id,
+                          inflightReq.resultOutputBuffers[0].streamId);
 
                 request.frameNumber++;
                 //Empty settings should be supported after the first call
                 //for repeating requests.
                 request.settings.setToExternal(nullptr, 0, true);
-                mResultBuffers.clear();
-                mResultFrameNumber++;
+                mInflightMap.clear();
+                inflightReq = {1, false, supportsPartialResults,
+                                    partialResultCount, resultQueue};
+                mInflightMap.add(request.frameNumber, &inflightReq);
             }
 
             returnStatus = session->processCaptureRequest(
@@ -2550,14 +2775,19 @@ TEST_F(CameraHidlTest, processCaptureRequestPreview) {
 
             {
                 std::unique_lock<std::mutex> l(mLock);
-                while (0 == mResultBuffers.size()) {
+                while (!inflightReq.errorCodeValid &&
+                        ((0 < inflightReq.numBuffersLeft) ||
+                                (!inflightReq.haveResultMetadata))) {
                     auto timeout = std::chrono::system_clock::now() +
                             std::chrono::seconds(kStreamBufferTimeoutSec);
                     ASSERT_NE(std::cv_status::timeout,
                             mResultCondition.wait_until(l, timeout));
                 }
-                ASSERT_EQ(BufferStatus::OK, mResultBuffers[0].status);
-                ASSERT_EQ(previewStream.id, mResultBuffers[0].streamId);
+
+                ASSERT_FALSE(inflightReq.errorCodeValid);
+                ASSERT_NE(inflightReq.resultOutputBuffers.size(), 0u);
+                ASSERT_EQ(previewStream.id,
+                          inflightReq.resultOutputBuffers[0].streamId);
             }
 
             ret = session->close();
@@ -2583,9 +2813,12 @@ TEST_F(CameraHidlTest, processCaptureRequestInvalidSinglePreview) {
             Stream previewStream;
             HalStreamConfiguration halStreamConfig;
             sp<ICameraDeviceSession> session;
+            bool supportsPartialResults = false;
+            uint32_t partialResultCount = 0;
             configurePreviewStream(name, env, &previewThreshold,
                     &session /*out*/, &previewStream /*out*/,
-                    &halStreamConfig /*out*/);
+                    &halStreamConfig /*out*/, &supportsPartialResults /*out*/,
+                    &partialResultCount /*out*/);
 
             sp<GraphicBuffer> gb = new GraphicBuffer(
                 previewStream.width, previewStream.height,
@@ -2641,9 +2874,12 @@ TEST_F(CameraHidlTest, processCaptureRequestInvalidBuffer) {
             Stream previewStream;
             HalStreamConfiguration halStreamConfig;
             sp<ICameraDeviceSession> session;
+            bool supportsPartialResults = false;
+            uint32_t partialResultCount = 0;
             configurePreviewStream(name, env, &previewThreshold,
                     &session /*out*/, &previewStream /*out*/,
-                    &halStreamConfig /*out*/);
+                    &halStreamConfig /*out*/, &supportsPartialResults/*out*/,
+                    &partialResultCount /*out*/);
 
             RequestTemplate reqTemplate = RequestTemplate::PREVIEW;
             Return<void> ret;
@@ -2696,10 +2932,31 @@ TEST_F(CameraHidlTest, flushPreviewRequest) {
             Stream previewStream;
             HalStreamConfiguration halStreamConfig;
             sp<ICameraDeviceSession> session;
+            bool supportsPartialResults = false;
+            uint32_t partialResultCount = 0;
             configurePreviewStream(name, env, &previewThreshold,
                     &session /*out*/, &previewStream /*out*/,
-                    &halStreamConfig /*out*/);
+                    &halStreamConfig /*out*/, &supportsPartialResults /*out*/,
+                    &partialResultCount /*out*/);
 
+            std::shared_ptr<ResultMetadataQueue> resultQueue;
+            auto resultQueueRet = session->getCaptureResultMetadataQueue(
+                [&resultQueue](const auto& descriptor) {
+                    resultQueue = std::make_shared<ResultMetadataQueue>(
+                            descriptor);
+                    if (!resultQueue->isValid() ||
+                            resultQueue->availableToWrite() <= 0) {
+                        ALOGE("%s: HAL returns empty result metadata fmq,"
+                                " not use it", __func__);
+                        resultQueue = nullptr;
+                        // Don't use the queue onwards.
+                    }
+                });
+            ASSERT_TRUE(resultQueueRet.isOk());
+            ASSERT_NE(nullptr, resultQueue);
+
+            InFlightRequest inflightReq = {1, false, supportsPartialResults,
+                    partialResultCount, resultQueue};
             RequestTemplate reqTemplate = RequestTemplate::PREVIEW;
             Return<void> ret;
             ret = session->constructDefaultRequestSettings(reqTemplate,
@@ -2727,9 +2984,8 @@ TEST_F(CameraHidlTest, flushPreviewRequest) {
 
             {
                 std::unique_lock<std::mutex> l(mLock);
-                mResultBuffers.clear();
-                mErrors.clear();
-                mResultFrameNumber = frameNumber;
+                mInflightMap.clear();
+                mInflightMap.add(frameNumber, &inflightReq);
             }
 
             Status status = Status::INTERNAL_ERROR;
@@ -2753,32 +3009,30 @@ TEST_F(CameraHidlTest, flushPreviewRequest) {
 
             {
                 std::unique_lock<std::mutex> l(mLock);
-                while ((0 == mResultBuffers.size()) && (0 == mErrors.size())) {
+                while (!inflightReq.errorCodeValid &&
+                        ((0 < inflightReq.numBuffersLeft) ||
+                                (!inflightReq.haveResultMetadata))) {
                     auto timeout = std::chrono::system_clock::now() +
                             std::chrono::seconds(kStreamBufferTimeoutSec);
                     ASSERT_NE(std::cv_status::timeout,
                             mResultCondition.wait_until(l, timeout));
                 }
 
-                if (mErrors.empty()) {
-                    ASSERT_EQ(BufferStatus::OK, mResultBuffers[0].status);
-                    ASSERT_EQ(previewStream.id, mResultBuffers[0].streamId);
+                if (!inflightReq.errorCodeValid) {
+                    ASSERT_NE(inflightReq.resultOutputBuffers.size(), 0u);
+                    ASSERT_EQ(previewStream.id,
+                              inflightReq.resultOutputBuffers[0].streamId);
                 } else {
-                    for (auto &error : mErrors) {
-                        switch (error.errorCode) {
-                            case ErrorCode::ERROR_REQUEST:
-                            case ErrorCode::ERROR_RESULT:
-                                //Expected
-                                break;
-                            case ErrorCode::ERROR_BUFFER:
-                                //Expected as well
-                                ASSERT_EQ(frameNumber, error.frameNumber);
-                                ASSERT_EQ(previewStream.id, error.errorStreamId);
-                                break;
-                            case ErrorCode::ERROR_DEVICE:
-                            default:
-                                FAIL() <<"Unexpected error:" << static_cast<uint32_t> (error.errorCode);
-                        }
+                    switch (inflightReq.errorCode) {
+                        case ErrorCode::ERROR_REQUEST:
+                        case ErrorCode::ERROR_RESULT:
+                        case ErrorCode::ERROR_BUFFER:
+                            //Expected
+                            break;
+                        case ErrorCode::ERROR_DEVICE:
+                        default:
+                            FAIL() << "Unexpected error:" << static_cast<uint32_t> (
+                                    inflightReq.errorCode);
                     }
                 }
             }
@@ -2802,16 +3056,12 @@ TEST_F(CameraHidlTest, flushEmpty) {
             Stream previewStream;
             HalStreamConfiguration halStreamConfig;
             sp<ICameraDeviceSession> session;
+            bool supportsPartialResults = false;
+            uint32_t partialResultCount = 0;
             configurePreviewStream(name, env, &previewThreshold,
                     &session /*out*/, &previewStream /*out*/,
-                    &halStreamConfig /*out*/);
-
-            {
-                std::unique_lock<std::mutex> l(mLock);
-                mResultBuffers.clear();
-                mErrors.clear();
-                mResultFrameNumber = 0;
-            }
+                    &halStreamConfig /*out*/, &supportsPartialResults /*out*/,
+                    &partialResultCount /*out*/);
 
             Return<Status> returnStatus = session->flush();
             ASSERT_TRUE(returnStatus.isOk());
@@ -2823,8 +3073,6 @@ TEST_F(CameraHidlTest, flushEmpty) {
                         std::chrono::milliseconds(kEmptyFlushTimeoutMSec);
                 ASSERT_EQ(std::cv_status::timeout,
                         mResultCondition.wait_until(l, timeout));
-                ASSERT_TRUE(mErrors.empty());
-                ASSERT_TRUE(mResultBuffers.empty());
             }
 
             Return<void> ret = session->close();
@@ -3022,11 +3270,15 @@ void CameraHidlTest::configurePreviewStream(const std::string &name,
         const AvailableStream *previewThreshold,
         sp<ICameraDeviceSession> *session /*out*/,
         Stream *previewStream /*out*/,
-        HalStreamConfiguration *halStreamConfig /*out*/) {
+        HalStreamConfiguration *halStreamConfig /*out*/,
+        bool *supportsPartialResults /*out*/,
+        uint32_t *partialResultCount /*out*/) {
     ASSERT_NE(nullptr, env);
     ASSERT_NE(nullptr, session);
     ASSERT_NE(nullptr, previewStream);
     ASSERT_NE(nullptr, halStreamConfig);
+    ASSERT_NE(nullptr, supportsPartialResults);
+    ASSERT_NE(nullptr, partialResultCount);
 
     std::vector<AvailableStream> outputPreviewStreams;
     ::android::sp<ICameraDevice> device3_2;
@@ -3063,6 +3315,14 @@ void CameraHidlTest::configurePreviewStream(const std::string &name,
          ASSERT_NE(nullptr, staticMeta);
     });
     ASSERT_TRUE(ret.isOk());
+
+    camera_metadata_ro_entry entry;
+    auto status = find_camera_metadata_ro_entry(staticMeta,
+            ANDROID_REQUEST_PARTIAL_RESULT_COUNT, &entry);
+    if ((0 == status) && (entry.count > 0)) {
+        *partialResultCount = entry.data.i32[0];
+        *supportsPartialResults = (*partialResultCount > 1);
+    }
 
     outputPreviewStreams.clear();
     auto rc = getAvailableOutputStreams(staticMeta,

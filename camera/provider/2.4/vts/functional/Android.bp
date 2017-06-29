@@ -31,9 +31,14 @@ cc_test {
         "libcamera_metadata",
         "libbinder",
         "libgui",
-        "libui"
+        "libui",
+        "libfmq",
     ],
-    static_libs: ["VtsHalHidlTargetTestBase", "libgrallocusage"],
+    static_libs: [
+        "VtsHalHidlTargetTestBase",
+        "libgrallocusage",
+        "android.hardware.camera.common@1.0-helper",
+    ],
     cflags: [
         "-O0",
         "-g",
