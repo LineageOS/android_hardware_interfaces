@@ -70,3 +70,38 @@ cc_test {
         "-g",
     ],
 }
+
+cc_library_static {
+    name: "RadioHidlHalUtilsBase",
+    srcs : [
+        "radio_hidl_hal_test.cpp",
+        "radio_response.cpp"
+    ],
+    shared_libs: [
+        "libbase",
+        "liblog",
+        "libcutils",
+        "libhidlbase",
+        "libhidltransport",
+        "libnativehelper",
+        "libutils",
+        "android.hardware.radio@1.0",
+    ],
+    static_libs: ["VtsHalHidlTargetTestBase"],
+    cflags: [
+        "-O0",
+        "-g",
+    ],
+}
+
+cc_library_static {
+    name: "RadioVtsTestUtilBase",
+    srcs : [
+        "vts_test_util.cpp"
+    ],
+}
+
+cc_library_headers {
+    name: "radio.util.header@1.0",
+    export_include_dirs: ["."],
+}
