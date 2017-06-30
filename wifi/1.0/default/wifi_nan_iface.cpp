@@ -757,14 +757,8 @@ WifiStatus WifiNanIface::respondToDataPathIndicationRequestInternal(
 }
 WifiStatus WifiNanIface::terminateDataPathRequestInternal(
     uint16_t cmd_id, uint32_t ndpInstanceId) {
-  legacy_hal::NanDataPathEndRequest* legacy_msg = (legacy_hal::NanDataPathEndRequest*)malloc(
-      sizeof(legacy_hal::NanDataPathEndRequest) + sizeof(uint32_t));
-  legacy_msg->num_ndp_instances = 1;
-  legacy_msg->ndp_instance_id[0] = ndpInstanceId;
-
   legacy_hal::wifi_error legacy_status =
-      legacy_hal_.lock()->nanDataEnd(cmd_id, *legacy_msg);
-  free(legacy_msg);
+      legacy_hal_.lock()->nanDataEnd(cmd_id, ndpInstanceId);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
