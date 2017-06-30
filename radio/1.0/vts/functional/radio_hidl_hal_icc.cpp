@@ -317,6 +317,7 @@ TEST_F(RadioHidlTest, supplyNetworkDepersonalization) {
                     radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
                     radioRsp->rspInfo.error == RadioError::INVALID_SIM_STATE ||
                     radioRsp->rspInfo.error == RadioError::PASSWORD_INCORRECT ||
-                    radioRsp->rspInfo.error == RadioError::INTERNAL_ERR);
+                    radioRsp->rspInfo.error == RadioError::INTERNAL_ERR ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
     }
 }
