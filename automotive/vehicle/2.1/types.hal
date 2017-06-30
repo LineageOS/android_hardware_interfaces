@@ -45,6 +45,42 @@ enum VehicleProperty: @2.0::VehicleProperty {
       | VehicleArea:GLOBAL),
 
     /**
+     * Automatic re-circulation on/off
+     *
+     * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
+     * guaranteed to work if HVAC unit is off.  See HVAC_POWER_ON property for
+     * details.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    HVAC_AUTO_RECIRC_ON = (
+        0x0512
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:BOOLEAN
+        | VehicleArea:ZONE),
+
+    /**
+     * Vehicle Maps Service (VMS) message
+     *
+     * This property uses COMPLEX data to communicate vms messages.
+     *
+     * Its contents are to be interpreted as follows:
+     * the indices defined in VmsMessageIntegerValuesIndex are to be used to
+     * read from int32Values;
+     * bytes is a serialized VMS message as defined in the vms protocol
+     * which is opaque to the framework;
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    VEHICLE_MAP_SERVICE = (
+        0x0C00
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:COMPLEX
+        | VehicleArea:GLOBAL),
+
+    /**
      * OBD2 Live Sensor Data
      *
      * This property uses COMPLEX data to send a snapshot of the current (live)
@@ -174,26 +210,6 @@ enum VehicleProperty: @2.0::VehicleProperty {
       | VehiclePropertyGroup:SYSTEM
       | VehiclePropertyType:COMPLEX
       | VehicleArea:GLOBAL),
-
-    /**
-     * Vehicle Maps Service (VMS) message
-     *
-     * This property uses COMPLEX data to communicate vms messages.
-     *
-     * Its contents are to be interpreted as follows:
-     * the indices defined in VmsMessageIntegerValuesIndex are to be used to
-     * read from int32Values;
-     * bytes is a serialized VMS message as defined in the vms protocol
-     * which is opaque to the framework;
-     *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
-     */
-    VEHICLE_MAP_SERVICE = (
-        0x0C00
-        | VehiclePropertyGroup:SYSTEM
-        | VehiclePropertyType:COMPLEX
-        | VehicleArea:GLOBAL),
 };
 
 /** The status of a fuel system as described by the OBD2 specification. */
