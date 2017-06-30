@@ -41,6 +41,7 @@ class ConfigstoreHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     virtual void SetUp() override {
         sfConfigs = ::testing::VtsHalHidlTargetTestBase::getService<
             ISurfaceFlingerConfigs>();
+        ASSERT_NE(sfConfigs, nullptr);
     }
 
     virtual void TearDown() override {}
