@@ -100,6 +100,7 @@ using ::android::hardware::kSynchronizedReadWrite;
 using ResultMetadataQueue = MessageQueue<uint8_t, kSynchronizedReadWrite>;
 using ::android::hidl::manager::V1_0::IServiceManager;
 
+const char kCameraPassthroughServiceName[] = "legacy/0";
 const char *kProviderFQName = "android.hardware.camera.provider@2.4::ICameraProvider";
 const uint32_t kMaxPreviewWidth = 1920;
 const uint32_t kMaxPreviewHeight = 1080;
@@ -256,6 +257,20 @@ void CameraHidlEnvironment::SetUp() {
             }
         }
     });
+
+    std::string legacyName;
+    uint32_t legacyId;
+    ASSERT_TRUE(parseProviderName(kCameraPassthroughServiceName,
+            &legacyName /*out*/, &legacyId /*out*/));
+    auto legacyIt = mProviders.find(legacyName);
+    //Add any legacy passthrough implementations
+    if (legacyIt == mProviders.end()) {
+        sp<ICameraProvider> provider = ICameraProvider::tryGetService(
+                kCameraPassthroughServiceName);
+        if (nullptr != provider.get()) {
+            mProviders.emplace(legacyName, provider);
+        }
+    }
 
     ASSERT_FALSE(mProviders.empty());
 }
