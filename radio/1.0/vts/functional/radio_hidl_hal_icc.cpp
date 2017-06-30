@@ -319,4 +319,4 @@ TEST_F(RadioHidlTest, getIccCardStatus) {
                         radioRsp->rspInfo.error == RadioError::PASSWORD_INCORRECT ||
                         radioRsp->rspInfo.error == RadioError::INTERNAL_ERR);
         }
-}
+    }
