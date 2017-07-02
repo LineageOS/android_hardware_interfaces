@@ -13,12 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ANDROID_HARDWARE_BROADCASTRADIO_V1_1_BROADCASTRADIOFACTORY_H
-#define ANDROID_HARDWARE_BROADCASTRADIO_V1_1_BROADCASTRADIOFACTORY_H
-
-#include <android/hardware/broadcastradio/1.1/IBroadcastRadio.h>
-#include <android/hardware/broadcastradio/1.1/IBroadcastRadioFactory.h>
-#include <android/hardware/broadcastradio/1.1/types.h>
+#include "VirtualRadio.h"
 
 namespace android {
 namespace hardware {
@@ -26,22 +21,41 @@ namespace broadcastradio {
 namespace V1_1 {
 namespace implementation {
 
-extern "C" IBroadcastRadioFactory* HIDL_FETCH_IBroadcastRadioFactory(const char* name);
+using std::lock_guard;
+using std::move;
+using std::mutex;
+using std::vector;
 
-struct BroadcastRadioFactory : public IBroadcastRadioFactory {
-    BroadcastRadioFactory();
-
-    // V1_0::IBroadcastRadioFactory methods
-    Return<void> connectModule(V1_0::Class classId, connectModule_cb _hidl_cb) override;
-
-   private:
-    std::map<V1_0::Class, sp<IBroadcastRadio>> mRadioModules;
+vector<VirtualProgram> gInitialFmPrograms{
+    {94900}, {96500}, {97300}, {99700}, {101300}, {103700}, {106100},
 };
+
+VirtualRadio::VirtualRadio(VirtualRadio&& o) : mPrograms(move(o.mPrograms)) {}
+
+VirtualRadio::VirtualRadio(vector<VirtualProgram> initialList) : mPrograms(initialList) {}
+
+vector<VirtualProgram> VirtualRadio::getProgramList() {
+    lock_guard<mutex> lk(mMut);
+    return mPrograms;
+}
+
+bool VirtualRadio::getProgram(uint32_t channel, VirtualProgram& programOut) {
+    lock_guard<mutex> lk(mMut);
+    for (auto&& program : mPrograms) {
+        if (program.channel == channel) {
+            programOut = program;
+            return true;
+        }
+    }
+    return false;
+}
+
+VirtualRadio make_fm_radio() {
+    return VirtualRadio(gInitialFmPrograms);
+}
 
 }  // namespace implementation
 }  // namespace V1_1
 }  // namespace broadcastradio
 }  // namespace hardware
 }  // namespace android
-
-#endif  // ANDROID_HARDWARE_BROADCASTRADIO_V1_1_BROADCASTRADIOFACTORY_H
