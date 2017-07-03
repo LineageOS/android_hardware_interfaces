@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <radio_hidl_hal_utils.h>
+#include <radio_hidl_hal_utils_v1_0.h>
 
 /*
  * Test IRadio.getSignalStrength() for the response returned.
@@ -184,7 +184,7 @@ TEST_F(RadioHidlTest, setBandMode) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE);
+        ASSERT_TRUE(CheckGeneralError() || radioRsp->rspInfo.error == RadioError::NONE);
     }
 }
 
@@ -216,7 +216,7 @@ TEST_F(RadioHidlTest, setPreferredNetworkType) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE);
+        ASSERT_TRUE(CheckGeneralError() || radioRsp->rspInfo.error == RadioError::NONE);
     }
 }
 
@@ -705,7 +705,8 @@ TEST_F(RadioHidlTest, pullLceData) {
 
     if (cardStatus.cardState == CardState::ABSENT) {
         ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::RADIO_NOT_AVAILABLE || CheckOEMError() ||
-                    radioRsp->rspInfo.error == RadioError::INTERNAL_ERR);
+                    radioRsp->rspInfo.error == RadioError::INTERNAL_ERR ||
+                    radioRsp->rspInfo.error == RadioError::NONE);
     }
 }
 
@@ -745,7 +746,7 @@ TEST_F(RadioHidlTest, setAllowedCarriers) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE);
+        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE || CheckGeneralError());
   }
 
   /* Reset back to no carrier restriction */
@@ -759,7 +760,7 @@ TEST_F(RadioHidlTest, setAllowedCarriers) {
   EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
   if (cardStatus.cardState == CardState::ABSENT) {
-      ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE);
+      ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE || CheckGeneralError());
   }
 }
 
