@@ -27,6 +27,7 @@
 #include <android/hidl/allocator/1.0/IAllocator.h>
 #include <android/hidl/memory/1.0/IMapper.h>
 #include <android/hidl/memory/1.0/IMemory.h>
+#include <cutils/atomic.h>
 
 using ::android::hardware::graphics::common::V1_0::BufferUsage;
 using ::android::hardware::graphics::common::V1_0::PixelFormat;
@@ -47,6 +48,7 @@ using ::android::sp;
 
 #include <VtsHalHidlTargetTestBase.h>
 #include <getopt.h>
+#include <media/hardware/HardwareAPI.h>
 #include <media_hidl_test_common.h>
 #include <media_video_hidl_test_common.h>
 #include <fstream>
@@ -399,7 +401,7 @@ void GetURLForComponent(VideoDecHidlTest::standardComp comp, char* mURL,
 void allocateGraphicBuffers(sp<IOmxNode> omxNode, OMX_U32 portIndex,
                             android::Vector<BufferInfo>* buffArray,
                             uint32_t nFrameWidth, uint32_t nFrameHeight,
-                            int32_t* nStride, uint32_t count) {
+                            int32_t* nStride, int format, uint32_t count) {
     android::hardware::media::omx::V1_0::Status status;
     sp<android::hardware::graphics::allocator::V2_0::IAllocator> allocator =
         android::hardware::graphics::allocator::V2_0::IAllocator::getService();
@@ -416,7 +418,7 @@ void allocateGraphicBuffers(sp<IOmxNode> omxNode, OMX_U32 portIndex,
     descriptorInfo.width = nFrameWidth;
     descriptorInfo.height = nFrameHeight;
     descriptorInfo.layerCount = 1;
-    descriptorInfo.format = PixelFormat::RGBA_8888;
+    descriptorInfo.format = static_cast<PixelFormat>(format);
     descriptorInfo.usage = static_cast<uint64_t>(BufferUsage::CPU_READ_OFTEN);
     omxNode->getGraphicBufferUsage(
         portIndex,
@@ -441,6 +443,9 @@ void allocateGraphicBuffers(sp<IOmxNode> omxNode, OMX_U32 portIndex,
     EXPECT_EQ(error, android::hardware::graphics::mapper::V2_0::Error::NONE);
 
     EXPECT_EQ(buffArray->size(), count);
+
+    static volatile int32_t nextId = 0;
+    uint64_t id = static_cast<uint64_t>(getpid()) << 32;
     allocator->allocate(
         descriptor, count,
         [&](android::hardware::graphics::mapper::V2_0::Error _s, uint32_t _n1,
@@ -464,7 +469,7 @@ void allocateGraphicBuffers(sp<IOmxNode> omxNode, OMX_U32 portIndex,
                 buffArray->editItemAt(i).omxBuffer.attr.anwBuffer.layerCount =
                     descriptorInfo.layerCount;
                 buffArray->editItemAt(i).omxBuffer.attr.anwBuffer.id =
-                    (*buffArray)[i].id;
+                    id | static_cast<uint32_t>(android_atomic_inc(&nextId));
             }
         });
 }
@@ -510,12 +515,15 @@ void portReconfiguration(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
 
                 // set Port Params
                 uint32_t nFrameWidth, nFrameHeight, xFramerate;
-                OMX_COLOR_FORMATTYPE eColorFormat =
-                    OMX_COLOR_FormatYUV420Planar;
                 getInputChannelInfo(omxNode, kPortIndexInput, &nFrameWidth,
                                     &nFrameHeight, &xFramerate);
+                // get configured color format
+                OMX_PARAM_PORTDEFINITIONTYPE portDef;
+                status = getPortParam(omxNode, OMX_IndexParamPortDefinition,
+                                      kPortIndexOutput, &portDef);
                 setDefaultPortParam(omxNode, kPortIndexOutput,
-                                    OMX_VIDEO_CodingUnused, eColorFormat,
+                                    OMX_VIDEO_CodingUnused,
+                                    portDef.format.video.eColorFormat,
                                     nFrameWidth, nFrameHeight, 0, xFramerate);
 
                 // If you can disable a port, then you should be able to
@@ -547,6 +555,7 @@ void portReconfiguration(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                                            portDef.format.video.nFrameWidth,
                                            portDef.format.video.nFrameHeight,
                                            &portDef.format.video.nStride,
+                                           portDef.format.video.eColorFormat,
                                            portDef.nBufferCountActual);
                 }
                 status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT,
@@ -707,6 +716,116 @@ void decodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
     }
 }
 
+// DescribeColorFormatParams Copy Constructor (Borrowed from OMXUtils.cpp)
+android::DescribeColorFormatParams::DescribeColorFormatParams(
+    const android::DescribeColorFormat2Params& params) {
+    eColorFormat = params.eColorFormat;
+    nFrameWidth = params.nFrameWidth;
+    nFrameHeight = params.nFrameHeight;
+    nStride = params.nStride;
+    nSliceHeight = params.nSliceHeight;
+    bUsingNativeBuffers = params.bUsingNativeBuffers;
+};
+
+bool isColorFormatFlexibleYUV(sp<IOmxNode> omxNode,
+                              OMX_COLOR_FORMATTYPE eColorFormat) {
+    android::hardware::media::omx::V1_0::Status status;
+    unsigned int index = OMX_IndexMax, index2 = OMX_IndexMax;
+    omxNode->getExtensionIndex(
+        "OMX.google.android.index.describeColorFormat",
+        [&index](android::hardware::media::omx::V1_0::Status _s,
+                          unsigned int _nl) {
+            if (_s == ::android::hardware::media::omx::V1_0::Status::OK)
+                index = _nl;
+        });
+    omxNode->getExtensionIndex(
+        "OMX.google.android.index.describeColorFormat2",
+        [&index2](android::hardware::media::omx::V1_0::Status _s,
+                           unsigned int _nl) {
+            if (_s == ::android::hardware::media::omx::V1_0::Status::OK)
+                index2 = _nl;
+        });
+
+    android::DescribeColorFormat2Params describeParams;
+    describeParams.eColorFormat = eColorFormat;
+    describeParams.nFrameWidth = 128;
+    describeParams.nFrameHeight = 128;
+    describeParams.nStride = 128;
+    describeParams.nSliceHeight = 128;
+    describeParams.bUsingNativeBuffers = OMX_FALSE;
+    if (index != OMX_IndexMax) {
+        android::DescribeColorFormatParams describeParamsV1(describeParams);
+        status = getParam(omxNode, static_cast<OMX_INDEXTYPE>(index),
+                          &describeParamsV1);
+        if (status == ::android::hardware::media::omx::V1_0::Status::OK) {
+            android::MediaImage& img = describeParamsV1.sMediaImage;
+            if (img.mType == android::MediaImage::MEDIA_IMAGE_TYPE_YUV) {
+                if (img.mNumPlanes == 3 &&
+                    img.mPlane[img.Y].mHorizSubsampling == 1 &&
+                    img.mPlane[img.Y].mVertSubsampling == 1) {
+                    if (img.mPlane[img.U].mHorizSubsampling == 2 &&
+                        img.mPlane[img.U].mVertSubsampling == 2 &&
+                        img.mPlane[img.V].mHorizSubsampling == 2 &&
+                        img.mPlane[img.V].mVertSubsampling == 2) {
+                        if (img.mBitDepth <= 8) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    } else if (index2 != OMX_IndexMax) {
+        status = getParam(omxNode, static_cast<OMX_INDEXTYPE>(index2),
+                          &describeParams);
+        android::MediaImage2& img = describeParams.sMediaImage;
+        if (img.mType == android::MediaImage2::MEDIA_IMAGE_TYPE_YUV) {
+            if (img.mNumPlanes == 3 &&
+                img.mPlane[img.Y].mHorizSubsampling == 1 &&
+                img.mPlane[img.Y].mVertSubsampling == 1) {
+                if (img.mPlane[img.U].mHorizSubsampling == 2 &&
+                    img.mPlane[img.U].mVertSubsampling == 2 &&
+                    img.mPlane[img.V].mHorizSubsampling == 2 &&
+                    img.mPlane[img.V].mVertSubsampling == 2) {
+                    if (img.mBitDepth <= 8) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+// get default color format for output port
+void getDefaultColorFormat(sp<IOmxNode> omxNode, OMX_U32 kPortIndexOutput,
+                           PortMode oPortMode,
+                           OMX_COLOR_FORMATTYPE* eColorFormat) {
+    android::hardware::media::omx::V1_0::Status status;
+    OMX_VIDEO_PARAM_PORTFORMATTYPE portFormat;
+    *eColorFormat = OMX_COLOR_FormatUnused;
+    portFormat.nIndex = 0;
+    while (1) {
+        status = getPortParam(omxNode, OMX_IndexParamVideoPortFormat,
+                              kPortIndexOutput, &portFormat);
+        if (status != ::android::hardware::media::omx::V1_0::Status::OK) break;
+        EXPECT_EQ(portFormat.eCompressionFormat, OMX_VIDEO_CodingUnused);
+        if (oPortMode != PortMode::PRESET_BYTE_BUFFER) {
+            *eColorFormat = portFormat.eColorFormat;
+            break;
+        }
+        if (isColorFormatFlexibleYUV(omxNode, portFormat.eColorFormat)) {
+            *eColorFormat = portFormat.eColorFormat;
+            break;
+        }
+        if (OMX_COLOR_FormatYUV420SemiPlanar == portFormat.eColorFormat ||
+            OMX_COLOR_FormatYUV420Planar == portFormat.eColorFormat) {
+            *eColorFormat = portFormat.eColorFormat;
+            break;
+        }
+        portFormat.nIndex++;
+    }
+}
+
 // set component role
 TEST_F(VideoDecHidlTest, SetRole) {
     description("Test Set Component Role");
@@ -802,9 +921,17 @@ TEST_F(VideoDecHidlTest, DecodeTest) {
 
     // set Port Params
     uint32_t nFrameWidth, nFrameHeight, xFramerate;
-    OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatYUV420Planar;
     getInputChannelInfo(omxNode, kPortIndexInput, &nFrameWidth, &nFrameHeight,
                         &xFramerate);
+    // get default color format
+    OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatUnused;
+    getDefaultColorFormat(omxNode, kPortIndexOutput, portMode[1],
+                          &eColorFormat);
+    ASSERT_NE(eColorFormat, OMX_COLOR_FormatUnused);
+    status =
+        setVideoPortFormat(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
+                           eColorFormat, xFramerate);
+    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     setDefaultPortParam(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
                         eColorFormat, nFrameWidth, nFrameHeight, 0, xFramerate);
 
@@ -828,7 +955,8 @@ TEST_F(VideoDecHidlTest, DecodeTest) {
         allocateGraphicBuffers(
             omxNode, kPortIndexOutput, &oBuffer,
             portDef.format.video.nFrameWidth, portDef.format.video.nFrameHeight,
-            &portDef.format.video.nStride, portDef.nBufferCountActual);
+            &portDef.format.video.nStride, portDef.format.video.eColorFormat,
+            portDef.nBufferCountActual);
     }
 
     // Port Reconfiguration
@@ -866,21 +994,27 @@ TEST_F(VideoDecHidlTest, EOSTest_M) {
         kPortIndexOutput = kPortIndexInput + 1;
     }
 
-    // set Port Params
-    uint32_t nFrameWidth, nFrameHeight, xFramerate;
-    OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatYUV420Planar;
-    getInputChannelInfo(omxNode, kPortIndexInput, &nFrameWidth, &nFrameHeight,
-                        &xFramerate);
-    setDefaultPortParam(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
-                        eColorFormat, nFrameWidth, nFrameHeight, 0, xFramerate);
-
     // set port mode
-    PortMode portMode[2];
-    portMode[0] = portMode[1] = PortMode::PRESET_BYTE_BUFFER;
     status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+
+    // set Port Params
+    uint32_t nFrameWidth, nFrameHeight, xFramerate;
+    getInputChannelInfo(omxNode, kPortIndexInput, &nFrameWidth, &nFrameHeight,
+                        &xFramerate);
+    // get default color format
+    OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatUnused;
+    getDefaultColorFormat(omxNode, kPortIndexOutput, portMode[1],
+                          &eColorFormat);
+    ASSERT_NE(eColorFormat, OMX_COLOR_FormatUnused);
+    status =
+        setVideoPortFormat(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
+                           eColorFormat, xFramerate);
+    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    setDefaultPortParam(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
+                        eColorFormat, nFrameWidth, nFrameHeight, 0, xFramerate);
 
     android::Vector<BufferInfo> iBuffer, oBuffer;
 
@@ -956,19 +1090,19 @@ TEST_F(VideoDecHidlTest, ThumbnailTest) {
 
     // set Port Params
     uint32_t nFrameWidth, nFrameHeight, xFramerate;
-    OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatYUV420Planar;
     getInputChannelInfo(omxNode, kPortIndexInput, &nFrameWidth, &nFrameHeight,
                         &xFramerate);
+    // get default color format
+    OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatUnused;
+    getDefaultColorFormat(omxNode, kPortIndexOutput, portMode[1],
+                          &eColorFormat);
+    ASSERT_NE(eColorFormat, OMX_COLOR_FormatUnused);
+    status =
+        setVideoPortFormat(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
+                           eColorFormat, xFramerate);
+    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     setDefaultPortParam(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
                         eColorFormat, nFrameWidth, nFrameHeight, 0, xFramerate);
-
-    // set port mode
-    PortMode portMode[2];
-    portMode[0] = portMode[1] = PortMode::PRESET_BYTE_BUFFER;
-    status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
-    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-    status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
-    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 
     android::Vector<BufferInfo> iBuffer, oBuffer;
 
@@ -1069,19 +1203,19 @@ TEST_F(VideoDecHidlTest, SimpleEOSTest) {
 
     // set Port Params
     uint32_t nFrameWidth, nFrameHeight, xFramerate;
-    OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatYUV420Planar;
     getInputChannelInfo(omxNode, kPortIndexInput, &nFrameWidth, &nFrameHeight,
                         &xFramerate);
+    // get default color format
+    OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatUnused;
+    getDefaultColorFormat(omxNode, kPortIndexOutput, portMode[1],
+                          &eColorFormat);
+    ASSERT_NE(eColorFormat, OMX_COLOR_FormatUnused);
+    status =
+        setVideoPortFormat(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
+                           eColorFormat, xFramerate);
+    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     setDefaultPortParam(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
                         eColorFormat, nFrameWidth, nFrameHeight, 0, xFramerate);
-
-    // set port mode
-    PortMode portMode[2];
-    portMode[0] = portMode[1] = PortMode::PRESET_BYTE_BUFFER;
-    status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
-    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-    status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
-    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 
     android::Vector<BufferInfo> iBuffer, oBuffer;
 
@@ -1164,19 +1298,19 @@ TEST_F(VideoDecHidlTest, FlushTest) {
 
     // set Port Params
     uint32_t nFrameWidth, nFrameHeight, xFramerate;
-    OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatYUV420Planar;
     getInputChannelInfo(omxNode, kPortIndexInput, &nFrameWidth, &nFrameHeight,
                         &xFramerate);
+    // get default color format
+    OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatUnused;
+    getDefaultColorFormat(omxNode, kPortIndexOutput, portMode[1],
+                          &eColorFormat);
+    ASSERT_NE(eColorFormat, OMX_COLOR_FormatUnused);
+    status =
+        setVideoPortFormat(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
+                           eColorFormat, xFramerate);
+    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     setDefaultPortParam(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
                         eColorFormat, nFrameWidth, nFrameHeight, 0, xFramerate);
-
-    // set port mode
-    PortMode portMode[2];
-    portMode[0] = portMode[1] = PortMode::PRESET_BYTE_BUFFER;
-    status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
-    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-    status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
-    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 
     android::Vector<BufferInfo> iBuffer, oBuffer;
 
