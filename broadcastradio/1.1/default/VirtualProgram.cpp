@@ -15,6 +15,8 @@
  */
 #include "VirtualProgram.h"
 
+#include <Utils.h>
+
 namespace android {
 namespace hardware {
 namespace broadcastradio {
@@ -29,10 +31,12 @@ VirtualProgram::operator ProgramInfo() const {
     ProgramInfo info11 = {};
     auto& info10 = info11.base;
 
-    info10.channel = channel;
+    utils::getLegacyChannel(selector, info10.channel, info10.subChannel);
+    info11.selector = selector;
     info10.tuned = true;
     info10.stereo = true;
-    info10.signalStrength = 100;
+    info10.digital = utils::isDigital(selector);
+    info10.signalStrength = info10.digital ? 100 : 80;
 
     info10.metadata = hidl_vec<MetaData>({
         {MetadataType::TEXT, MetadataKey::RDS_PS, {}, {}, programName, {}},
@@ -43,8 +47,25 @@ VirtualProgram::operator ProgramInfo() const {
     return info11;
 }
 
+// Defining order on virtual programs, how they appear on band.
+// It's mostly for default implementation purposes, may not be complete or correct.
 bool operator<(const VirtualProgram& lhs, const VirtualProgram& rhs) {
-    return lhs.channel < rhs.channel;
+    auto& l = lhs.selector;
+    auto& r = rhs.selector;
+
+    // Two programs with the same primaryId is considered the same.
+    if (l.programType != r.programType) return l.programType < r.programType;
+    if (l.primaryId.type != r.primaryId.type) return l.primaryId.type < r.primaryId.type;
+    if (l.primaryId.value != r.primaryId.value) return l.primaryId.value < r.primaryId.value;
+
+    // A little exception for HD Radio subchannel - we check secondary ID too.
+    if (utils::hasId(l, IdentifierType::HD_SUBCHANNEL) &&
+        utils::hasId(r, IdentifierType::HD_SUBCHANNEL)) {
+        return utils::getId(l, IdentifierType::HD_SUBCHANNEL) <
+               utils::getId(r, IdentifierType::HD_SUBCHANNEL);
+    }
+
+    return false;
 }
 
 }  // namespace implementation

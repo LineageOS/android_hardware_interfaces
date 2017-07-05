@@ -68,11 +68,156 @@ struct Properties {
 };
 
 /**
+ * Type of a radio technology.
+ *
+ * All other values are reserved for future use.
+ */
+enum ProgramType : uint32_t {
+    AM = 1,  // analogue AM radio (with or without RDS)
+    FM,      // analogue FM radio (with or without RDS)
+    AM_HD,   // AM HD Radio
+    FM_HD,   // FM HD Radio
+    DAB,     // Digital audio broadcasting
+    DRMO,    // Digital Radio Mondiale
+    SXM,     // SiriusXM Satellite Radio
+    VENDOR,  // vendor-specific, not synced across devices
+};
+
+/**
+ * Type of program identifier component.
+ *
+ * It MUST match the radio technology for primary ID but does not have to match
+ * it for secondary IDs. For example, a satellite program may set AM/FM fallback
+ * frequency, if a station broadcasts both via satellite and AM/FM.
+ *
+ * The value format for each (but VENDOR_PRIMARY) identifier is strictly defined
+ * to maintain interoperability between devices made by different vendors.
+ *
+ * All other values are reserved for future use.
+ */
+enum IdentifierType : uint32_t {
+    AMFM_FREQUENCY = 1,  // kHz
+    RDS_PI,              // 16bit
+
+    /**
+     * 64bit compound primary identifier for HD Radio.
+     *
+     * Consists of (from the LSB):
+     * - 32bit: Station ID number;
+     * - 4bit: HD_SUBCHANNEL;
+     * - 18bit: AMFM_FREQUENCY.
+     * The remaining bits should be set to zeros when writing on the chip side
+     * and ignored when read.
+     */
+    HD_STATION_ID_EXT,
+
+    /**
+     * HD Radio subchannel - a value of range 0-7.
+     *
+     * The subchannel index is 0-based (where 0 is MPS and 1..7 are SPS),
+     * as opposed to HD Radio standard (where it's 1-based).
+     */
+    HD_SUBCHANNEL,
+
+    /**
+     * 24bit compound primary identifier for DAB.
+     *
+     * Consists of (from the LSB):
+     * - 16bit: SId;
+     * - 8bit: ECC code.
+     * The remaining bits should be set to zeros when writing on the chip side
+     * and ignored when read.
+     */
+    DAB_SIDECC,
+
+    DAB_ENSEMBLE,     // 16bit
+    DAB_SCID,         // 12bit
+    DAB_FREQUENCY,    // kHz
+    DRMO_SERVICE_ID,  // 24bit
+    DRMO_FREQUENCY,   // kHz
+    SXM_SERVICE_ID,   // 32bit
+    SXM_CHANNEL,      // 0-999 range
+
+    /**
+     * Primary identifier for vendor-specific radio technology.
+     * The value format is determined by a vendor.
+     *
+     * It must not be used in any other programType than VENDOR.
+     */
+    VENDOR_PRIMARY,
+};
+
+/**
+ * A single program identifier component, eg. frequency or channel ID.
+ *
+ * The uint32_t type field maps to IdentifierType enum. It's not straight,
+ * because the enum may be extended in future versions of the HAL. Values out of
+ * the enum range must not be used when writing and ignored when reading.
+ *
+ * The uint64_t value field holds the value in format described in comments for
+ * IdentifierType enum.
+ */
+struct ProgramIdentifier {
+    uint32_t type;  // IdentifierType
+    uint64_t value;
+};
+
+/**
+ * A set of identifiers necessary to tune to a given station.
+ *
+ * This can hold various identifiers, like
+ * - AM/FM frequency
+ * - HD Radio subchannel
+ * - DAB channel info
+ *
+ * The uint32_t programType field maps to ProgramType enum. It's not straight,
+ * because the enum may be extended in future versions of the HAL. Values out of
+ * the enum range must not be used when writing and ignored when reading.
+ *
+ * The primary ID uniquely identifies a station and can be used for equality
+ * check. The secondary IDs are supplementary and can speed up tuning process,
+ * but the primary ID is sufficient (ie. after a full band scan).
+ *
+ * Two selectors with different secondary IDs, but the same primary ID are
+ * considered equal. In particular, secondary IDs vector may get updated for
+ * an entry on the program list (ie. when a better frequency for a given
+ * station is found).
+ *
+ * The primaryId of a given programType MUST be of a specific type:
+ * - AM, FM: RDS_PI if the station broadcasts RDS, AMFM_FREQUENCY otherwise;
+ * - AM_HD, FM_HD: HD_STATION_ID_EXT;
+ * - DAB: DAB_SIDECC;
+ * - DRMO: DRMO_SERVICE_ID;
+ * - SXM: SXM_SERVICE_ID;
+ * - VENDOR: VENDOR_PRIMARY.
+ */
+struct ProgramSelector {
+    uint32_t programType;  // ProgramType
+    ProgramIdentifier primaryId;  // uniquely identifies a station
+    vec<ProgramIdentifier> secondaryIds;
+
+    /**
+     * Opaque vendor-specific identifiers, to be passed to front-end
+     * without changes.
+     *
+     * The order is meaningful, ie. the first element may be defined as
+     * frequency, second as the subchannel etc.
+     *
+     * The vector is not serialized (either locally or to the cloud),
+     * unless it's a VENDOR program type.
+     */
+    vec<uint64_t> vendorIds;
+};
+
+/**
  * Radio program information. Returned by the HAL with event RADIO_EVENT_TUNED.
  * Contains information on currently tuned channel.
  */
 struct ProgramInfo {
     @1.0::ProgramInfo base;
+
+    ProgramSelector selector;
+
     bitfield<ProgramInfoFlags> flags;
 
     /**

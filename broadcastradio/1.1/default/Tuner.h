@@ -39,6 +39,7 @@ struct Tuner : public ITuner {
     Return<Result> scan(V1_0::Direction direction, bool skipSubChannel) override;
     Return<Result> step(V1_0::Direction direction, bool skipSubChannel) override;
     Return<Result> tune(uint32_t channel, uint32_t subChannel) override;
+    Return<Result> tune_1_1(const ProgramSelector& program) override;
     Return<Result> cancel() override;
     Return<void> getProgramInformation(getProgramInformation_cb _hidl_cb) override;
     Return<void> getProgramInformation_1_1(getProgramInformation_1_1_cb _hidl_cb) override;
@@ -60,10 +61,10 @@ struct Tuner : public ITuner {
     bool mIsAmfmConfigSet = false;
     V1_0::BandConfig mAmfmConfig;
     bool mIsTuneCompleted = false;
-    uint32_t mCurrentProgram;  // TODO(b/32621193): Station Selector
+    ProgramSelector mCurrentProgram = {};
     ProgramInfo mCurrentProgramInfo = {};
 
-    void tuneInternalLocked();
+    void tuneInternalLocked(const ProgramSelector& sel);
 };
 
 }  // namespace implementation

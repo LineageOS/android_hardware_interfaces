@@ -48,7 +48,7 @@ using ::android::hardware::broadcastradio::V1_1::ITunerCallback;
 using ::android::hardware::broadcastradio::V1_1::ProgramInfo;
 using ::android::hardware::broadcastradio::V1_1::Result;
 using ::android::hardware::broadcastradio::V1_1::ProgramListResult;
-
+using ::android::hardware::hidl_vec;
 
 // The main test class for Broadcast Radio HIDL HAL.
 
@@ -134,7 +134,9 @@ class BroadcastRadioHidlTest : public ::testing::VtsHalHidlTargetTestBase {
             return Void();
         }
 
-        virtual Return<void> backgroundScanComplete(ProgramListResult result __unused) {
+        virtual Return<void> backgroundScanComplete(ProgramListResult result) {
+            ALOGV("%s", __func__);
+            mParentTest->onProgramListResultCallback(result);
             return Void();
         }
 
@@ -173,6 +175,15 @@ class BroadcastRadioHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     void onResultCallback(Result result) {
         Mutex::Autolock _l(mLock);
         mResultCallbackData = result;
+        onCallback_l();
+    }
+
+    /**
+     * Method called by MyCallback when a callback with status is received
+     */
+    void onProgramListResultCallback(ProgramListResult result) {
+        Mutex::Autolock _l(mLock);
+        mProgramListResultCallbackData = result;
         onCallback_l();
     }
 
@@ -221,6 +232,7 @@ class BroadcastRadioHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
     static const nsecs_t kConfigCallbacktimeoutNs = seconds_to_nanoseconds(10);
     static const nsecs_t kTuneCallbacktimeoutNs = seconds_to_nanoseconds(30);
+    static const nsecs_t kFullScanTimeoutNs = seconds_to_nanoseconds(60);
 
     sp<IBroadcastRadio> mRadio;
     Properties mHalProperties;
@@ -231,6 +243,7 @@ class BroadcastRadioHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     bool mCallbackCalled;
     bool mBoolCallbackData;
     Result mResultCallbackData;
+    ProgramListResult mProgramListResultCallbackData;
     bool mHwFailure;
 };
 
@@ -467,6 +480,53 @@ TEST_F(BroadcastRadioHidlTest, TuneAndGetProgramInformationAndCancel) {
     EXPECT_EQ(Result::OK, hidlResult);
 }
 
+TEST_F(BroadcastRadioHidlTest, TuneFromProgramList) {
+    ASSERT_TRUE(openTuner());
+    ASSERT_TRUE(checkAntenna());
+
+    ProgramInfo firstProgram;
+    bool isListEmpty;
+    ProgramListResult getListResult = ProgramListResult::NOT_INITIALIZED;
+    auto getListCb = [&](ProgramListResult result, const hidl_vec<ProgramInfo>& list) {
+        getListResult = result;
+        if (result != ProgramListResult::OK) return;
+        isListEmpty = (list.size() == 0);
+        // don't copy the whole list out, it might be heavy
+        if (!isListEmpty) firstProgram = list[0];
+    };
+
+    // first try...
+    auto hidlReturn = mTuner->getProgramList("", getListCb);
+    ASSERT_TRUE(hidlReturn.isOk());
+
+    if (getListResult == ProgramListResult::NOT_STARTED) {
+        auto result = mTuner->startBackgroundScan();
+        ASSERT_TRUE(result.isOk());
+        ASSERT_EQ(ProgramListResult::OK, result);
+        getListResult = ProgramListResult::NOT_READY;  // continue as in NOT_READY case
+    }
+    if (getListResult == ProgramListResult::NOT_READY) {
+        ASSERT_TRUE(waitForCallback(kFullScanTimeoutNs));
+        ASSERT_EQ(ProgramListResult::OK, mProgramListResultCallbackData);
+
+        // second (last) try...
+        hidlReturn = mTuner->getProgramList("", getListCb);
+        ASSERT_TRUE(hidlReturn.isOk());
+        ASSERT_EQ(ProgramListResult::OK, getListResult);
+    }
+
+    if (isListEmpty) {
+        std::cout << "[  SKIPPED ] Program list is empty. " << std::endl;
+        return;
+    }
+
+    auto tuneResult = mTuner->tune_1_1(firstProgram.selector);
+    ASSERT_TRUE(tuneResult.isOk());
+    EXPECT_EQ(Result::OK, tuneResult);
+    EXPECT_EQ(true, waitForCallback(kTuneCallbacktimeoutNs));
+    // TODO(b/36864490): check this too, when mProgramInfoCallbackData is cherry-picked from 1.0
+    // EXPECT_EQ(firstProgram.selector.primaryId, mProgramInfoCallbackData.selector.primaryId);
+}
 
 int main(int argc, char** argv) {
   ::testing::AddGlobalTestEnvironment(new BroadcastRadioHidlEnvironment);
