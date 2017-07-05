@@ -268,7 +268,7 @@ class WifiLegacyHal {
                                      const NanDataPathInitiatorRequest& msg);
   wifi_error nanDataIndicationResponse(
       transaction_id id, const NanDataPathIndicationResponse& msg);
-  wifi_error nanDataEnd(transaction_id id, const NanDataPathEndRequest& msg);
+  wifi_error nanDataEnd(transaction_id id, uint32_t ndpInstanceId);
   // AP functions.
   wifi_error setCountryCode(std::array<int8_t, 2> code);
 
