@@ -28,7 +28,10 @@ cc_test {
         "libutils",
         "android.hardware.bluetooth@1.0",
     ],
-    static_libs: ["VtsHalHidlTargetTestBase"],
+    static_libs: [
+        "VtsHalHidlTargetTestBase",
+        "libbluetooth-types",
+    ],
     cflags: [
         "-O0",
         "-g",
