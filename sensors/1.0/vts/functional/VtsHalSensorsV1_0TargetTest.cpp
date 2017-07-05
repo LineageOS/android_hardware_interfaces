@@ -543,7 +543,7 @@ class SensorsHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 };
 
 const Vec3NormChecker SensorsHidlTest::sAccelNormChecker(
-        Vec3NormChecker::byNominal(GRAVITY_EARTH, 0.5f/*m/s^2*/));
+        Vec3NormChecker::byNominal(GRAVITY_EARTH, 1.0f/*m/s^2*/));
 const Vec3NormChecker SensorsHidlTest::sGyroNormChecker(
         Vec3NormChecker::byNominal(0.f, 0.1f/*rad/s*/));
 
