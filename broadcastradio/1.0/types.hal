@@ -155,7 +155,7 @@ enum MetadataType : int32_t {
 
 enum MetadataKey : int32_t {
     INVALID      = -1,
-    /** RDS PI                 - string  */
+    /** RDS PI                 - int32_t  */
     RDS_PI       = 0,
     /** RDS PS                 - string */
     RDS_PS       = 1,
