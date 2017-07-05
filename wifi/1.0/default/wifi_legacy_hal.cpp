@@ -1197,11 +1197,19 @@ wifi_error WifiLegacyHal::nanDataIndicationResponse(
       id, wlan_interface_handle_, &msg_internal);
 }
 
+typedef struct {
+    u8 num_ndp_instances;
+    NanDataPathId ndp_instance_id;
+} NanDataPathEndSingleNdpIdRequest;
+
 wifi_error WifiLegacyHal::nanDataEnd(transaction_id id,
-                                     const NanDataPathEndRequest& msg) {
-  NanDataPathEndRequest msg_internal(msg);
-  return global_func_table_.wifi_nan_data_end(
-      id, wlan_interface_handle_, &msg_internal);
+                                     uint32_t ndpInstanceId) {
+  NanDataPathEndSingleNdpIdRequest msg;
+  msg.num_ndp_instances = 1;
+  msg.ndp_instance_id = ndpInstanceId;
+  wifi_error status = global_func_table_.wifi_nan_data_end(
+      id, wlan_interface_handle_, (NanDataPathEndRequest*)&msg);
+  return status;
 }
 
 wifi_error WifiLegacyHal::setCountryCode(std::array<int8_t, 2> code) {
