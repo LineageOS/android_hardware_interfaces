@@ -21,6 +21,28 @@ namespace broadcastradio {
 namespace V1_1 {
 namespace implementation {
 
+using V1_0::MetaData;
+using V1_0::MetadataKey;
+using V1_0::MetadataType;
+
+VirtualProgram::operator ProgramInfo() const {
+    ProgramInfo info11 = {};
+    auto& info10 = info11.base;
+
+    info10.channel = channel;
+    info10.tuned = true;
+    info10.stereo = true;
+    info10.signalStrength = 100;
+
+    info10.metadata = hidl_vec<MetaData>({
+        {MetadataType::TEXT, MetadataKey::RDS_PS, {}, {}, programName, {}},
+        {MetadataType::TEXT, MetadataKey::TITLE, {}, {}, songTitle, {}},
+        {MetadataType::TEXT, MetadataKey::ARTIST, {}, {}, songArtist, {}},
+    });
+
+    return info11;
+}
+
 bool operator<(const VirtualProgram& lhs, const VirtualProgram& rhs) {
     return lhs.channel < rhs.channel;
 }

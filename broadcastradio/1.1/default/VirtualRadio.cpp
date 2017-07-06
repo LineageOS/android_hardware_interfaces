@@ -27,7 +27,13 @@ using std::mutex;
 using std::vector;
 
 vector<VirtualProgram> gInitialFmPrograms{
-    {94900}, {96500}, {97300}, {99700}, {101300}, {103700}, {106100},
+    {94900, "Wild 94.9", "Drake ft. Rihanna", "Too Good"},
+    {96500, "KOIT", "Celine Dion", "All By Myself"},
+    {97300, "Alice@97.3", "Drops of Jupiter", "Train"},
+    {99700, "99.7 Now!", "The Chainsmokers", "Closer"},
+    {101300, "101-3 KISS-FM", "Justin Timberlake", "Rock Your Body"},
+    {103700, "iHeart80s @ 103.7", "Michael Jackson", "Billie Jean"},
+    {106100, "106 KMEL", "Drake", "Marvins Room"},
 };
 
 VirtualRadio::VirtualRadio(VirtualRadio&& o) : mPrograms(move(o.mPrograms)) {}
