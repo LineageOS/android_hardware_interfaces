@@ -189,6 +189,7 @@ V2_0::StatusCode EmulatedVehicleHal::fillObd2DtcInfo(V2_0::VehiclePropValue* out
         timestamps.push_back(freezeFrame.timestamp);
     }
     outValue->value.int64Values = timestamps;
+    outValue->prop = OBD2_FREEZE_FRAME_INFO;
     return V2_0::StatusCode::OK;
 }
 
