@@ -24,7 +24,11 @@ cc_library_static {
         "-Werror",
     ],
     srcs: [
+        "Utils.cpp",
         "WorkerThread.cpp",
     ],
     export_include_dirs: ["."],
+    shared_libs: [
+        "android.hardware.broadcastradio@1.1",
+    ],
 }

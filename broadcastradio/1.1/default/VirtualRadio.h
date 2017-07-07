@@ -33,7 +33,7 @@ class VirtualRadio {
     VirtualRadio(std::vector<VirtualProgram> initialList);
 
     std::vector<VirtualProgram> getProgramList();
-    bool getProgram(uint32_t channel, VirtualProgram& program);
+    bool getProgram(const ProgramSelector& selector, VirtualProgram& program);
 
    private:
     std::mutex mMut;

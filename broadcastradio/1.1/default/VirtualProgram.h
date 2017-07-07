@@ -26,7 +26,7 @@ namespace V1_1 {
 namespace implementation {
 
 struct VirtualProgram {
-    uint32_t channel;  // TODO(b/32621193): Station Selector
+    ProgramSelector selector;
 
     std::string programName = "";
     std::string songArtist = "";

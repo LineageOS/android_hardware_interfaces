@@ -20,6 +20,7 @@
 #include "BroadcastRadio.h"
 #include "Tuner.h"
 
+#include <Utils.h>
 #include <log/log.h>
 
 namespace android {
@@ -70,6 +71,8 @@ Return<Result> Tuner::setConfiguration(const BandConfig& config) {
 
         mAmfmConfig = move(config);
         mAmfmConfig.antennaConnected = true;
+        mCurrentProgram = utils::make_selector(mAmfmConfig.type, mAmfmConfig.lowerLimit);
+
         mIsAmfmConfigSet = true;
         mCallback->configChange(Result::OK, mAmfmConfig);
     };
@@ -90,28 +93,31 @@ Return<void> Tuner::getConfiguration(getConfiguration_cb _hidl_cb) {
     return Void();
 }
 
-// makes ProgramInfo that points to no channel
-static ProgramInfo makeDummyProgramInfo(uint32_t channel) {
+// makes ProgramInfo that points to no program
+static ProgramInfo makeDummyProgramInfo(const ProgramSelector& selector) {
     ProgramInfo info11 = {};
     auto& info10 = info11.base;
 
-    info10.channel = channel;
+    utils::getLegacyChannel(selector, info10.channel, info10.subChannel);
+    info11.selector = selector;
     info11.flags |= ProgramInfoFlags::MUTED;
 
     return info11;
 }
 
-void Tuner::tuneInternalLocked() {
+void Tuner::tuneInternalLocked(const ProgramSelector& sel) {
     VirtualRadio* virtualRadio = nullptr;
     if (mAmfmConfig.type == Band::FM_HD || mAmfmConfig.type == Band::FM) {
         virtualRadio = &mVirtualFm;
     }
 
     VirtualProgram virtualProgram;
-    if (virtualRadio != nullptr && virtualRadio->getProgram(mCurrentProgram, virtualProgram)) {
+    if (virtualRadio != nullptr && virtualRadio->getProgram(sel, virtualProgram)) {
+        mCurrentProgram = virtualProgram.selector;
         mCurrentProgramInfo = static_cast<ProgramInfo>(virtualProgram);
     } else {
-        mCurrentProgramInfo = makeDummyProgramInfo(mCurrentProgram);
+        mCurrentProgram = sel;
+        mCurrentProgramInfo = makeDummyProgramInfo(sel);
     }
     mIsTuneCompleted = true;
 
@@ -152,7 +158,7 @@ Return<Result> Tuner::scan(Direction direction, bool skipSubChannel __unused) {
     auto found = lower_bound(list.begin(), list.end(), VirtualProgram({current}));
     if (direction == Direction::UP) {
         if (found < list.end() - 1) {
-            if (found->channel == current) found++;
+            if (utils::tunesTo(current, found->selector)) found++;
         } else {
             found = list.begin();
         }
@@ -163,25 +169,31 @@ Return<Result> Tuner::scan(Direction direction, bool skipSubChannel __unused) {
             found = list.end() - 1;
         }
     }
-    auto tuneTo = found->channel;
+    auto tuneTo = found->selector;
 
     mIsTuneCompleted = false;
     auto task = [this, tuneTo, direction]() {
         ALOGI("Performing scan %s", toString(direction).c_str());
 
         lock_guard<mutex> lk(mMut);
-        mCurrentProgram = tuneTo;
-        tuneInternalLocked();
+        tuneInternalLocked(tuneTo);
     };
     mThread.schedule(task, gDefaultDelay.scan);
 
     return Result::OK;
 }
 
-Return<Result> Tuner::step(Direction direction, bool skipSubChannel __unused) {
+Return<Result> Tuner::step(Direction direction, bool skipSubChannel) {
     ALOGV("%s", __func__);
+    ALOGW_IF(!skipSubChannel, "can't step to next frequency without ignoring subChannel");
 
     lock_guard<mutex> lk(mMut);
+
+    if (!utils::isAmFm(utils::getType(mCurrentProgram))) {
+        ALOGE("Can't step in anything else than AM/FM");
+        return Result::NOT_INITIALIZED;
+    }
+
     ALOGW_IF(!mIsAmfmConfigSet, "AM/FM config not set");
     if (!mIsAmfmConfigSet) return Result::INVALID_STATE;
     mIsTuneCompleted = false;
@@ -191,57 +203,73 @@ Return<Result> Tuner::step(Direction direction, bool skipSubChannel __unused) {
 
         lock_guard<mutex> lk(mMut);
 
+        auto current = utils::getId(mCurrentProgram, IdentifierType::AMFM_FREQUENCY, 0);
+
         if (direction == Direction::UP) {
-            mCurrentProgram += mAmfmConfig.spacings[0];
+            current += mAmfmConfig.spacings[0];
         } else {
-            mCurrentProgram -= mAmfmConfig.spacings[0];
+            current -= mAmfmConfig.spacings[0];
         }
 
-        if (mCurrentProgram > mAmfmConfig.upperLimit) mCurrentProgram = mAmfmConfig.lowerLimit;
-        if (mCurrentProgram < mAmfmConfig.lowerLimit) mCurrentProgram = mAmfmConfig.upperLimit;
+        if (current > mAmfmConfig.upperLimit) current = mAmfmConfig.lowerLimit;
+        if (current < mAmfmConfig.lowerLimit) current = mAmfmConfig.upperLimit;
 
-        tuneInternalLocked();
+        tuneInternalLocked(utils::make_selector(mAmfmConfig.type, current));
     };
     mThread.schedule(task, gDefaultDelay.step);
 
     return Result::OK;
 }
 
-Return<Result> Tuner::tune(uint32_t channel, uint32_t subChannel)  {
+Return<Result> Tuner::tune(uint32_t channel, uint32_t subChannel) {
     ALOGV("%s(%d, %d)", __func__, channel, subChannel);
+    Band band;
+    {
+        lock_guard<mutex> lk(mMut);
+        band = mAmfmConfig.type;
+    }
+    return tune_1_1(utils::make_selector(band, channel, subChannel));
+}
+
+Return<Result> Tuner::tune_1_1(const ProgramSelector& sel) {
+    ALOGV("%s(%s)", __func__, toString(sel).c_str());
 
     lock_guard<mutex> lk(mMut);
-    ALOGW_IF(!mIsAmfmConfigSet, "AM/FM config not set");
-    if (!mIsAmfmConfigSet) return Result::INVALID_STATE;
-    if (channel < mAmfmConfig.lowerLimit || channel > mAmfmConfig.upperLimit) {
-        return Result::INVALID_ARGUMENTS;
-    }
-    mIsTuneCompleted = false;
 
-    auto task = [this, channel]() {
+    if (utils::isAmFm(utils::getType(mCurrentProgram))) {
+        ALOGW_IF(!mIsAmfmConfigSet, "AM/FM config not set");
+        if (!mIsAmfmConfigSet) return Result::INVALID_STATE;
+
+        auto freq = utils::getId(sel, IdentifierType::AMFM_FREQUENCY);
+        if (freq < mAmfmConfig.lowerLimit || freq > mAmfmConfig.upperLimit) {
+            return Result::INVALID_ARGUMENTS;
+        }
+    }
+
+    mIsTuneCompleted = false;
+    auto task = [this, sel]() {
         lock_guard<mutex> lk(mMut);
-        mCurrentProgram = channel;
-        tuneInternalLocked();
+        tuneInternalLocked(sel);
     };
     mThread.schedule(task, gDefaultDelay.tune);
 
     return Result::OK;
 }
 
-Return<Result> Tuner::cancel()  {
+Return<Result> Tuner::cancel() {
     ALOGV("%s", __func__);
     mThread.cancelAll();
     return Result::OK;
 }
 
-Return<void> Tuner::getProgramInformation(getProgramInformation_cb _hidl_cb)  {
+Return<void> Tuner::getProgramInformation(getProgramInformation_cb _hidl_cb) {
     ALOGV("%s", __func__);
     return getProgramInformation_1_1([&](Result result, const ProgramInfo& info) {
         _hidl_cb(result, info.base);
     });
 }
 
-Return<void> Tuner::getProgramInformation_1_1(getProgramInformation_1_1_cb _hidl_cb)  {
+Return<void> Tuner::getProgramInformation_1_1(getProgramInformation_1_1_cb _hidl_cb) {
     ALOGV("%s", __func__);
 
     lock_guard<mutex> lk(mMut);
