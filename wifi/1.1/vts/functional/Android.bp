@@ -15,9 +15,11 @@
 //
 
 cc_test {
-    name: "VtsHalBluetoothV1_0TargetTest",
+    name: "VtsHalWifiV1_1TargetTest",
     defaults: ["hidl_defaults"],
-    srcs: ["VtsHalBluetoothV1_0TargetTest.cpp"],
+    srcs: [
+        "VtsHalWifiV1_1TargetTest.cpp",
+        "wifi_chip_hidl_test.cpp"],
     shared_libs: [
         "libbase",
         "liblog",
@@ -26,12 +28,10 @@ cc_test {
         "libhidltransport",
         "libnativehelper",
         "libutils",
-        "android.hardware.bluetooth@1.0",
+        "android.hardware.wifi@1.0",
+        "android.hardware.wifi@1.1",
     ],
-    static_libs: [
-        "VtsHalHidlTargetTestBase",
-        "libbluetooth-types",
-    ],
+    static_libs: ["VtsHalWifiV1_0TargetTestUtil", "VtsHalHidlTargetTestBase"],
     cflags: [
         "-O0",
         "-g",

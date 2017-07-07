@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,39 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ANDROID_HARDWARE_BROADCASTRADIO_V1_1_VIRTUALRADIO_H
-#define ANDROID_HARDWARE_BROADCASTRADIO_V1_1_VIRTUALRADIO_H
 
-#include "VirtualProgram.h"
-
-#include <mutex>
-#include <vector>
+#ifndef WIFI_LEGACY_HAL_STUBS_H_
+#define WIFI_LEGACY_HAL_STUBS_H_
 
 namespace android {
 namespace hardware {
-namespace broadcastradio {
+namespace wifi {
 namespace V1_1 {
 namespace implementation {
+namespace legacy_hal {
+#include <hardware_legacy/wifi_hal.h>
 
-class VirtualRadio {
-   public:
-    VirtualRadio(VirtualRadio&& o);
-    VirtualRadio(std::vector<VirtualProgram> initialList);
-
-    std::vector<VirtualProgram> getProgramList();
-    bool getProgram(const ProgramSelector& selector, VirtualProgram& program);
-
-   private:
-    std::mutex mMut;
-    std::vector<VirtualProgram> mPrograms;
-};
-
-VirtualRadio make_fm_radio();
-
+bool initHalFuncTableWithStubs(wifi_hal_fn* hal_fn);
+}  // namespace legacy_hal
 }  // namespace implementation
 }  // namespace V1_1
-}  // namespace broadcastradio
+}  // namespace wifi
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_BROADCASTRADIO_V1_1_VIRTUALRADIO_H
+#endif  // WIFI_LEGACY_HAL_STUBS_H_

@@ -17,7 +17,6 @@
 #include "vendor_interface.h"
 
 #define LOG_TAG "android.hardware.bluetooth@1.0-impl"
-#include <android-base/logging.h>
 #include <cutils/properties.h>
 #include <utils/Log.h>
 
@@ -163,14 +162,16 @@ bool VendorInterface::Initialize(
     InitializeCompleteCallback initialize_complete_cb,
     PacketReadCallback event_cb, PacketReadCallback acl_cb,
     PacketReadCallback sco_cb) {
-  CHECK(!g_vendor_interface);
+  LOG_ALWAYS_FATAL_IF(g_vendor_interface, "%s: No previous Shutdown()?",
+                      __func__);
   g_vendor_interface = new VendorInterface();
   return g_vendor_interface->Open(initialize_complete_cb, event_cb, acl_cb,
                                   sco_cb);
 }
 
 void VendorInterface::Shutdown() {
-  CHECK(g_vendor_interface);
+  LOG_ALWAYS_FATAL_IF(!g_vendor_interface, "%s: No Vendor interface!",
+                      __func__);
   g_vendor_interface->Close();
   delete g_vendor_interface;
   g_vendor_interface = nullptr;
@@ -204,7 +205,9 @@ bool VendorInterface::Open(InitializeCompleteCallback initialize_complete_cb,
   // Get the local BD address
 
   uint8_t local_bda[BluetoothAddress::kBytes];
-  CHECK(BluetoothAddress::get_local_address(local_bda));
+  if (!BluetoothAddress::get_local_address(local_bda)) {
+    LOG_ALWAYS_FATAL("%s: No Bluetooth Address!", __func__);
+  }
   int status = lib_interface_->init(&lib_callbacks, (unsigned char*)local_bda);
   if (status) {
     ALOGE("%s unable to initialize vendor library: %d", __func__, status);
