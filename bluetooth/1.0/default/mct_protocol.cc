@@ -19,7 +19,6 @@
 #include <assert.h>
 
 #define LOG_TAG "android.hardware.bluetooth-hci-mct"
-#include <android-base/logging.h>
 #include <utils/Log.h>
 
 #include <fcntl.h>
@@ -45,7 +44,7 @@ size_t MctProtocol::Send(uint8_t type, const uint8_t* data, size_t length) {
     return WriteSafely(uart_fds_[CH_CMD], data, length);
   if (type == HCI_PACKET_TYPE_ACL_DATA)
     return WriteSafely(uart_fds_[CH_ACL_OUT], data, length);
-  CHECK(type == HCI_PACKET_TYPE_COMMAND || type == HCI_PACKET_TYPE_ACL_DATA);
+  LOG_ALWAYS_FATAL("%s: Unimplemented packet type = %d", __func__, type);
   return 0;
 }
 

@@ -15,6 +15,7 @@
 //
 
 #include <cutils/properties.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <gtest/gtest.h>
 
