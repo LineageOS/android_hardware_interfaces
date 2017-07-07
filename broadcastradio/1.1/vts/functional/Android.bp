@@ -29,9 +29,27 @@ cc_test {
         "android.hardware.broadcastradio@1.0",
         "android.hardware.broadcastradio@1.1",
     ],
-    static_libs: ["VtsHalHidlTargetTestBase"],
+    static_libs: [
+        "VtsHalHidlTargetTestBase",
+        "broadcastradio-vts-call-barrier",
+        "libgmock",
+    ],
     cflags: [
+        "-Wextra",
         "-O0",
         "-g",
+    ],
+}
+
+cc_library_static {
+    name: "broadcastradio-vts-call-barrier",
+    srcs: [
+        "call-barrier.cpp",
+    ],
+    export_include_dirs: ["."],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
     ],
 }

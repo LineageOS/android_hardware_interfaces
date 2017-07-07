@@ -121,7 +121,7 @@ Return<void> BroadcastRadio::getProperties_1_1(getProperties_1_1_cb _hidl_cb) {
 Return<void> BroadcastRadio::openTuner(const BandConfig& config, bool audio __unused,
                                        const sp<V1_0::ITunerCallback>& callback,
                                        openTuner_cb _hidl_cb) {
-    ALOGV("%s", __func__);
+    ALOGV("%s(%s)", __func__, toString(config.type).c_str());
     lock_guard<mutex> lk(mMut);
 
     auto oldTuner = mTuner.promote();

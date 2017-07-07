@@ -48,7 +48,7 @@ BroadcastRadioFactory::BroadcastRadioFactory() {
 }
 
 Return<void> BroadcastRadioFactory::connectModule(Class classId, connectModule_cb _hidl_cb) {
-    ALOGV("%s", __func__);
+    ALOGV("%s(%s)", __func__, toString(classId).c_str());
 
     auto moduleIt = mRadioModules.find(classId);
     if (moduleIt == mRadioModules.end()) {
