@@ -18,6 +18,7 @@
 
 #include <android/hardware/configstore/1.1/ISurfaceFlingerConfigs.h>
 #include <hidl/HidlTransportSupport.h>
+#include <hwminijail/HardwareMinijail.h>
 
 #include "SurfaceFlingerConfigs.h"
 
@@ -25,6 +26,7 @@ using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
 using android::hardware::configstore::V1_1::ISurfaceFlingerConfigs;
 using android::hardware::configstore::V1_1::implementation::SurfaceFlingerConfigs;
+using android::hardware::SetupMinijail;
 using android::sp;
 using android::status_t;
 using android::OK;
@@ -32,6 +34,8 @@ using android::OK;
 int main() {
     // TODO(b/34857894): tune the max thread count.
     configureRpcThreadpool(10, true);
+
+    SetupMinijail("/vendor/etc/seccomp_policy/configstore@1.1.policy");
 
     sp<ISurfaceFlingerConfigs> surfaceFlingerConfigs = new SurfaceFlingerConfigs;
     status_t status = surfaceFlingerConfigs->registerAsService();
