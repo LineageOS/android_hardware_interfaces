@@ -17,7 +17,7 @@
 #include "h4_protocol.h"
 
 #define LOG_TAG "android.hardware.bluetooth-hci-h4"
-#include <android-base/logging.h>
+
 #include <errno.h>
 #include <fcntl.h>
 #include <log/log.h>
@@ -38,9 +38,9 @@ size_t H4Protocol::Send(uint8_t type, const uint8_t* data, size_t length) {
 
   if (ret == -1) {
     ALOGE("%s error writing to UART (%s)", __func__, strerror(errno));
-  } else if (ret == 0) {
-    // Nothing written :(
-    ALOGE("%s zero bytes written - something went wrong...", __func__);
+  } else if (ret < static_cast<ssize_t>(length + 1)) {
+    ALOGE("%s: %d / %d bytes written - something went wrong...", __func__,
+          static_cast<int>(ret), static_cast<int>(length + 1));
   }
   return ret;
 }
@@ -56,10 +56,9 @@ void H4Protocol::OnPacketReady() {
     case HCI_PACKET_TYPE_SCO_DATA:
       sco_cb_(hci_packetizer_.GetPacket());
       break;
-    default: {
-      bool bad_packet_type = true;
-      CHECK(!bad_packet_type);
-    }
+    default:
+      LOG_ALWAYS_FATAL("%s: Unimplemented packet type %d", __func__,
+                       static_cast<int>(hci_packet_type_));
   }
   // Get ready for the next type byte.
   hci_packet_type_ = HCI_PACKET_TYPE_UNKNOWN;
@@ -68,8 +67,19 @@ void H4Protocol::OnPacketReady() {
 void H4Protocol::OnDataReady(int fd) {
   if (hci_packet_type_ == HCI_PACKET_TYPE_UNKNOWN) {
     uint8_t buffer[1] = {0};
-    size_t bytes_read = TEMP_FAILURE_RETRY(read(fd, buffer, 1));
-    CHECK(bytes_read == 1);
+    ssize_t bytes_read = TEMP_FAILURE_RETRY(read(fd, buffer, 1));
+    if (bytes_read != 1) {
+      if (bytes_read == 0) {
+        LOG_ALWAYS_FATAL("%s: Unexpected EOF reading the packet type!",
+                         __func__);
+      } else if (bytes_read < 0) {
+        LOG_ALWAYS_FATAL("%s: Read packet type error: %s", __func__,
+                         strerror(errno));
+      } else {
+        LOG_ALWAYS_FATAL("%s: More bytes read than expected (%u)!", __func__,
+                         static_cast<unsigned int>(bytes_read));
+      }
+    }
     hci_packet_type_ = static_cast<HciPacketType>(buffer[0]);
   } else {
     hci_packetizer_.OnDataReady(fd, hci_packet_type_);
