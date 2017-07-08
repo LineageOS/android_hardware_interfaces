@@ -36,6 +36,11 @@
 #define DEFAULT_TIMEOUT 100000
 #define TIMEOUT_COUNTER (10000000 / DEFAULT_TIMEOUT)
 
+/*
+ * Random Index used for monkey testing while get/set parameters
+ */
+#define RANDOM_INDEX 1729
+
 enum bufferOwner {
     client,
     component,
@@ -258,6 +263,14 @@ Return<android::hardware::media::omx::V1_0::Status> setPortConfig(
  */
 Return<android::hardware::media::omx::V1_0::Status> setRole(
     sp<IOmxNode> omxNode, const char* role);
+
+Return<android::hardware::media::omx::V1_0::Status> setVideoPortFormat(
+    sp<IOmxNode> omxNode, OMX_U32 portIndex,
+    OMX_VIDEO_CODINGTYPE eCompressionFormat, OMX_COLOR_FORMATTYPE eColorFormat,
+    OMX_U32 xFramerate);
+
+Return<android::hardware::media::omx::V1_0::Status> setAudioPortFormat(
+    sp<IOmxNode> omxNode, OMX_U32 portIndex, OMX_AUDIO_CODINGTYPE eEncoding);
 
 void allocatePortBuffers(sp<IOmxNode> omxNode,
                          android::Vector<BufferInfo>* buffArray,

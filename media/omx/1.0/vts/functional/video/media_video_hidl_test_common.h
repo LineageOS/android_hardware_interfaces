@@ -17,20 +17,10 @@
 #ifndef MEDIA_VIDEO_HIDL_TEST_COMMON_H
 #define MEDIA_VIDEO_HIDL_TEST_COMMON_H
 
-/*
- * Random Index used for monkey testing while get/set parameters
- */
-#define RANDOM_INDEX 1729
 
 /*
  * Common video utils
  */
-
-Return<android::hardware::media::omx::V1_0::Status> setVideoPortFormat(
-    sp<IOmxNode> omxNode, OMX_U32 portIndex,
-    OMX_VIDEO_CODINGTYPE eCompressionFormat, OMX_COLOR_FORMATTYPE eColorFormat,
-    OMX_U32 xFramerate);
-
 void enumerateProfileAndLevel(sp<IOmxNode> omxNode, OMX_U32 portIndex,
                               std::vector<int32_t>* arrProfile,
                               std::vector<int32_t>* arrLevel);
