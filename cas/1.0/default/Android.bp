@@ -32,4 +32,8 @@ cc_binary {
       "liblog",
       "libutils",
     ],
+    header_libs: [
+      "libstagefright_foundation_headers",
+      "media_plugin_headers",
+    ],
 }
