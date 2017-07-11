@@ -30,12 +30,14 @@ cc_defaults {
 
 cc_library_headers {
     name: "vhal_v2_0_common_headers",
+    vendor: true,
     export_include_dirs: ["common/include/vhal_v2_0"],
 }
 
 // Vehicle reference implementation lib
 cc_library_static {
     name: "android.hardware.automotive.vehicle@2.0-manager-lib",
+    vendor: true,
     defaults: ["vhal_v2_0_defaults"],
     srcs: [
         "common/src/SubscriptionManager.cpp",
@@ -50,6 +52,7 @@ cc_library_static {
 
 cc_library_shared {
     name: "android.hardware.automotive.vehicle@2.0-manager-lib-shared",
+    vendor: true,
     static_libs: ["android.hardware.automotive.vehicle@2.0-manager-lib"],
     export_static_lib_headers: ["android.hardware.automotive.vehicle@2.0-manager-lib"],
 }
@@ -57,6 +60,7 @@ cc_library_shared {
 // Vehicle default VehicleHAL implementation
 cc_library_static {
     name: "android.hardware.automotive.vehicle@2.0-default-impl-lib",
+    vendor: true,
     defaults: ["vhal_v2_0_defaults"],
     srcs: [
         "impl/vhal_v2_0/EmulatedVehicleHal.cpp",
@@ -79,6 +83,7 @@ cc_library_static {
 
 cc_test {
     name: "android.hardware.automotive.vehicle@2.0-manager-unit-tests",
+    vendor: true,
     defaults: ["vhal_v2_0_defaults"],
     whole_static_libs: ["android.hardware.automotive.vehicle@2.0-manager-lib"],
     srcs: [
@@ -95,7 +100,7 @@ cc_binary {
     name: "android.hardware.automotive.vehicle@2.0-service",
     defaults: ["vhal_v2_0_defaults"],
     init_rc: ["android.hardware.automotive.vehicle@2.0-service.rc"],
-    proprietary: true,
+    vendor: true,
     relative_install_path: "hw",
     srcs: ["VehicleService.cpp"],
     shared_libs: [
