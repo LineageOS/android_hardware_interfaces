@@ -105,9 +105,14 @@ static ProgramInfo makeDummyProgramInfo(const ProgramSelector& selector) {
     return info11;
 }
 
+bool Tuner::isFmLocked() {
+    if (!utils::isAmFm(utils::getType(mCurrentProgram))) return false;
+    return mAmfmConfig.type == Band::FM_HD || mAmfmConfig.type == Band::FM;
+}
+
 void Tuner::tuneInternalLocked(const ProgramSelector& sel) {
     VirtualRadio* virtualRadio = nullptr;
-    if (mAmfmConfig.type == Band::FM_HD || mAmfmConfig.type == Band::FM) {
+    if (isFmLocked()) {
         virtualRadio = &mVirtualFm;
     }
 
@@ -132,11 +137,11 @@ Return<Result> Tuner::scan(Direction direction, bool skipSubChannel __unused) {
     lock_guard<mutex> lk(mMut);
     vector<VirtualProgram> list;
 
-    if (mAmfmConfig.type == Band::FM_HD || mAmfmConfig.type == Band::FM) {
+    if (isFmLocked()) {
         list = mVirtualFm.getProgramList();
     }
 
-    if (list.size() == 0) {
+    if (list.empty()) {
         mIsTuneCompleted = false;
         auto task = [this, direction]() {
             ALOGI("Performing failed scan %s", toString(direction).c_str());
@@ -288,14 +293,17 @@ Return<ProgramListResult> Tuner::startBackgroundScan() {
 
 Return<void> Tuner::getProgramList(const hidl_string& filter __unused, getProgramList_cb _hidl_cb) {
     ALOGV("%s", __func__);
+    lock_guard<mutex> lk(mMut);
 
     auto& virtualRadio = mVirtualFm;
-    if (mAmfmConfig.type != Band::FM_HD && mAmfmConfig.type != Band::FM) {
+    if (!isFmLocked()) {
+        ALOGI("bands other than FM are not supported yet");
         _hidl_cb(ProgramListResult::OK, {});
         return Void();
     }
 
     auto list = virtualRadio.getProgramList();
+    ALOGD("returning a list of %zu programs", list.size());
     _hidl_cb(ProgramListResult::OK, vector<ProgramInfo>(list.begin(), list.end()));
     return Void();
 }

@@ -14,480 +14,236 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "BroadcastRadioHidlHalTest"
+#define LOG_TAG "broadcastradio.vts"
+
 #include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
+#include <call-barrier.h>
 #include <cutils/native_handle.h>
 #include <cutils/properties.h>
+#include <gmock/gmock.h>
 #include <hidl/HidlTransportSupport.h>
 #include <utils/threads.h>
 
+#include <chrono>
+
+#include <android/hardware/broadcastradio/1.1/IBroadcastRadio.h>
 #include <android/hardware/broadcastradio/1.1/IBroadcastRadioFactory.h>
-#include <android/hardware/broadcastradio/1.0/IBroadcastRadio.h>
 #include <android/hardware/broadcastradio/1.1/ITuner.h>
 #include <android/hardware/broadcastradio/1.1/ITunerCallback.h>
 #include <android/hardware/broadcastradio/1.1/types.h>
 
+#include "mock-timeout.h"
 
-namespace V1_0 = ::android::hardware::broadcastradio::V1_0;
+namespace android {
+namespace hardware {
+namespace broadcastradio {
+namespace V1_1 {
+namespace vts {
 
-using ::android::sp;
-using ::android::Mutex;
-using ::android::Condition;
-using ::android::hardware::Return;
-using ::android::hardware::Void;
-using ::android::hardware::broadcastradio::V1_0::BandConfig;
-using ::android::hardware::broadcastradio::V1_0::Class;
-using ::android::hardware::broadcastradio::V1_0::Direction;
-using ::android::hardware::broadcastradio::V1_0::IBroadcastRadio;
-using ::android::hardware::broadcastradio::V1_0::MetaData;
-using ::android::hardware::broadcastradio::V1_0::Properties;
-using ::android::hardware::broadcastradio::V1_1::IBroadcastRadioFactory;
-using ::android::hardware::broadcastradio::V1_1::ITuner;
-using ::android::hardware::broadcastradio::V1_1::ITunerCallback;
-using ::android::hardware::broadcastradio::V1_1::ProgramInfo;
-using ::android::hardware::broadcastradio::V1_1::Result;
-using ::android::hardware::broadcastradio::V1_1::ProgramListResult;
-using ::android::hardware::hidl_vec;
+using namespace std::chrono_literals;
 
-// The main test class for Broadcast Radio HIDL HAL.
+using testing::_;
+using testing::AnyNumber;
+using testing::ByMove;
+using testing::DoAll;
+using testing::SaveArg;
 
-class BroadcastRadioHidlTest : public ::testing::VtsHalHidlTargetTestBase {
- protected:
-    virtual void SetUp() override {
-        auto factory = ::testing::VtsHalHidlTargetTestBase::getService<IBroadcastRadioFactory>();
-        ASSERT_NE(nullptr, factory.get());
-        Result halResult;
-        factory->connectModule(Class::AM_FM, [&](Result retval, const sp<IBroadcastRadio>& result) {
-            halResult = retval;
-            if (retval == Result::OK) {
-                mRadio = IBroadcastRadio::castFrom(result);
-            }
-        });
-        ASSERT_EQ(Result::OK, halResult);
-        mTunerCallback = new MyCallback(this);
-        ASSERT_NE(nullptr, mRadio.get());
-        ASSERT_NE(nullptr, mTunerCallback.get());
-    }
+using broadcastradio::vts::CallBarrier;
+using V1_0::BandConfig;
+using V1_0::Class;
+using V1_0::MetaData;
 
-    virtual void TearDown() override {
-        mTuner.clear();
-        mRadio.clear();
-    }
+static constexpr auto kConfigTimeout = 10s;
+static constexpr auto kConnectModuleTimeout = 1s;
+static constexpr auto kTuneTimeout = 30s;
+static constexpr auto kFullScanTimeout = 1min;
 
-    class MyCallback : public ITunerCallback {
-     public:
-
-        // ITunerCallback methods (see doc in ITunerCallback.hal)
-        virtual Return<void> hardwareFailure() {
-            ALOGI("%s", __FUNCTION__);
-            mParentTest->onHwFailureCallback();
-            return Void();
-        }
-
-        virtual Return<void> configChange(Result result, const BandConfig& config __unused) {
-            ALOGI("%s result %d", __FUNCTION__, result);
-            mParentTest->onResultCallback(result);
-            return Void();
-        }
-
-        virtual Return<void> tuneComplete(Result result __unused, const V1_0::ProgramInfo& info __unused) {
-            return Void();
-        }
-
-        virtual Return<void> tuneComplete_1_1(Result result, const ProgramInfo& info __unused) {
-            ALOGI("%s result %d", __FUNCTION__, result);
-            mParentTest->onResultCallback(result);
-            return Void();
-        }
-
-        virtual Return<void> afSwitch(const V1_0::ProgramInfo& info __unused) {
-            return Void();
-        }
-
-        virtual Return<void> afSwitch_1_1(const ProgramInfo& info __unused) {
-            return Void();
-        }
-
-        virtual Return<void> antennaStateChange(bool connected) {
-            ALOGI("%s connected %d", __FUNCTION__, connected);
-            return Void();
-        }
-
-        virtual Return<void> trafficAnnouncement(bool active) {
-            ALOGI("%s active %d", __FUNCTION__, active);
-            return Void();
-        }
-
-        virtual Return<void> emergencyAnnouncement(bool active) {
-            ALOGI("%s active %d", __FUNCTION__, active);
-            return Void();
-        }
-
-        virtual Return<void> newMetadata(uint32_t channel __unused, uint32_t subChannel __unused,
-                           const ::android::hardware::hidl_vec<MetaData>& metadata __unused) {
-            ALOGI("%s", __FUNCTION__);
-            return Void();
-        }
-
-        virtual Return<void> backgroundScanAvailable(bool isAvailable __unused) {
-            return Void();
-        }
-
-        virtual Return<void> backgroundScanComplete(ProgramListResult result) {
-            ALOGV("%s", __func__);
-            mParentTest->onProgramListResultCallback(result);
-            return Void();
-        }
-
-        virtual Return<void> programListChanged() {
-            return Void();
-        }
-
-                MyCallback(BroadcastRadioHidlTest *parentTest) : mParentTest(parentTest) {}
-
-     private:
-        // BroadcastRadioHidlTest instance to which callbacks will be notified.
-        BroadcastRadioHidlTest *mParentTest;
-    };
-
-
-    /**
-     * Method called by MyCallback when a callback with no status or boolean value is received
-     */
-    void onCallback() {
-        Mutex::Autolock _l(mLock);
-        onCallback_l();
-    }
-
-    /**
-     * Method called by MyCallback when hardwareFailure() callback is received
-     */
-    void onHwFailureCallback() {
-        Mutex::Autolock _l(mLock);
-        mHwFailure = true;
-        onCallback_l();
-    }
-
-    /**
-     * Method called by MyCallback when a callback with status is received
-     */
-    void onResultCallback(Result result) {
-        Mutex::Autolock _l(mLock);
-        mResultCallbackData = result;
-        onCallback_l();
-    }
-
-    /**
-     * Method called by MyCallback when a callback with status is received
-     */
-    void onProgramListResultCallback(ProgramListResult result) {
-        Mutex::Autolock _l(mLock);
-        mProgramListResultCallbackData = result;
-        onCallback_l();
-    }
-
-    /**
-     * Method called by MyCallback when a boolean indication is received
-     */
-    void onBoolCallback(bool result) {
-        Mutex::Autolock _l(mLock);
-        mBoolCallbackData = result;
-        onCallback_l();
-    }
-
-
-        BroadcastRadioHidlTest() :
-            mCallbackCalled(false), mBoolCallbackData(false),
-            mResultCallbackData(Result::OK), mHwFailure(false) {}
-
-    void onCallback_l() {
-        if (!mCallbackCalled) {
-            mCallbackCalled = true;
-            mCallbackCond.broadcast();
-        }
-    }
-
-
-    bool waitForCallback(nsecs_t reltime = 0) {
-        Mutex::Autolock _l(mLock);
-        nsecs_t endTime = systemTime() + reltime;
-        while (!mCallbackCalled) {
-            if (reltime == 0) {
-                mCallbackCond.wait(mLock);
-            } else {
-                nsecs_t now = systemTime();
-                if (now > endTime) {
-                    return false;
-                }
-                mCallbackCond.waitRelative(mLock, endTime - now);
-            }
-        }
-        return true;
-    }
-
-    bool getProperties();
-    bool openTuner();
-    bool checkAntenna();
-
-    static const nsecs_t kConfigCallbacktimeoutNs = seconds_to_nanoseconds(10);
-    static const nsecs_t kTuneCallbacktimeoutNs = seconds_to_nanoseconds(30);
-    static const nsecs_t kFullScanTimeoutNs = seconds_to_nanoseconds(60);
-
-    sp<IBroadcastRadio> mRadio;
-    Properties mHalProperties;
-    sp<ITuner> mTuner;
-    sp<MyCallback> mTunerCallback;
-    Mutex mLock;
-    Condition mCallbackCond;
-    bool mCallbackCalled;
-    bool mBoolCallbackData;
-    Result mResultCallbackData;
-    ProgramListResult mProgramListResultCallbackData;
-    bool mHwFailure;
-};
-
-// A class for test environment setup (kept since this file is a template).
-class BroadcastRadioHidlEnvironment : public ::testing::Environment {
- public:
-    virtual void SetUp() {}
-    virtual void TearDown() {}
-};
-
-bool BroadcastRadioHidlTest::getProperties()
-{
-    if (mHalProperties.bands.size() == 0) {
-        Result halResult = Result::NOT_INITIALIZED;
-        Return<void> hidlReturn =
-                mRadio->getProperties([&](Result result, const Properties& properties) {
-                        halResult = result;
-                        if (result == Result::OK) {
-                            mHalProperties = properties;
-                        }
-                    });
-
-        EXPECT_TRUE(hidlReturn.isOk());
-        EXPECT_EQ(Result::OK, halResult);
-        EXPECT_EQ(Class::AM_FM, mHalProperties.classId);
-        EXPECT_GT(mHalProperties.numTuners, 0u);
-        EXPECT_GT(mHalProperties.bands.size(), 0u);
-    }
-    return mHalProperties.bands.size() > 0;
+static void printSkipped(std::string msg) {
+    std::cout << "[  SKIPPED ] " << msg << std::endl;
 }
 
-bool BroadcastRadioHidlTest::openTuner()
-{
-    if (!getProperties()) {
-        return false;
+class TunerCallbackMock : public ITunerCallback {
+   public:
+    MOCK_METHOD0(hardwareFailure, Return<void>());
+    MOCK_TIMEOUT_METHOD2(configChange, Return<void>(Result, const BandConfig&));
+    MOCK_METHOD2(tuneComplete, Return<void>(Result, const V1_0::ProgramInfo&));
+    MOCK_TIMEOUT_METHOD2(tuneComplete_1_1, Return<void>(Result, const ProgramInfo&));
+    MOCK_METHOD1(afSwitch, Return<void>(const V1_0::ProgramInfo&));
+    MOCK_METHOD1(afSwitch_1_1, Return<void>(const ProgramInfo&));
+    MOCK_METHOD1(antennaStateChange, Return<void>(bool connected));
+    MOCK_METHOD1(trafficAnnouncement, Return<void>(bool active));
+    MOCK_METHOD1(emergencyAnnouncement, Return<void>(bool active));
+    MOCK_METHOD3(newMetadata, Return<void>(uint32_t ch, uint32_t subCh, const hidl_vec<MetaData>&));
+    MOCK_METHOD1(backgroundScanAvailable, Return<void>(bool));
+    MOCK_TIMEOUT_METHOD1(backgroundScanComplete, Return<void>(ProgramListResult));
+    MOCK_METHOD0(programListChanged, Return<void>());
+};
+
+class BroadcastRadioHalTest : public ::testing::VtsHalHidlTargetTestBase,
+                              public ::testing::WithParamInterface<Class> {
+   protected:
+    virtual void SetUp() override;
+    virtual void TearDown() override;
+
+    // TODO(b/36864490): check all bands for good test conditions (ie. FM is more likely to have
+    // any stations on the list, so don't pick AM blindly).
+    bool openTuner(unsigned band);
+    const BandConfig& getBand(unsigned idx);
+
+    Class radioClass;
+    bool skipped = false;
+
+    sp<IBroadcastRadio> mRadioModule;
+    sp<ITuner> mTuner;
+    sp<TunerCallbackMock> mCallback = new TunerCallbackMock();
+
+   private:
+    hidl_vec<BandConfig> mBands;
+};
+
+void BroadcastRadioHalTest::SetUp() {
+    radioClass = GetParam();
+
+    // set general expectations for a callback
+    EXPECT_CALL(*mCallback, hardwareFailure()).Times(0);
+
+    // lookup HIDL service
+    auto factory = getService<IBroadcastRadioFactory>();
+    ASSERT_NE(nullptr, factory.get());
+
+    // connect radio module
+    Result connectResult;
+    CallBarrier onConnect;
+    factory->connectModule(radioClass, [&](Result ret, const sp<V1_0::IBroadcastRadio>& radio) {
+        connectResult = ret;
+        if (ret == Result::OK) mRadioModule = IBroadcastRadio::castFrom(radio);
+        onConnect.call();
+    });
+    ASSERT_TRUE(onConnect.waitForCall(kConnectModuleTimeout));
+
+    if (connectResult == Result::INVALID_ARGUMENTS) {
+        printSkipped("This device class is not supported.");
+        skipped = true;
+        return;
     }
-    if (mTuner.get() == nullptr) {
+    ASSERT_EQ(connectResult, Result::OK);
+    ASSERT_NE(nullptr, mRadioModule.get());
+
+    // get module properties
+    Properties prop11;
+    auto& prop10 = prop11.base;
+    auto propResult =
+        mRadioModule->getProperties_1_1([&](const Properties& properties) { prop11 = properties; });
+
+    ASSERT_TRUE(propResult.isOk());
+    EXPECT_EQ(radioClass, prop10.classId);
+    EXPECT_GT(prop10.numTuners, 0u);
+    if (radioClass == Class::AM_FM) {
+        EXPECT_GT(prop10.bands.size(), 0u);
+    }
+    mBands = prop10.bands;
+}
+
+void BroadcastRadioHalTest::TearDown() {
+    mTuner.clear();
+    mRadioModule.clear();
+    // TODO(b/36864490): wait (with timeout) until mCallback has only one reference
+}
+
+bool BroadcastRadioHalTest::openTuner(unsigned band) {
+    EXPECT_EQ(nullptr, mTuner.get());
+
+    if (radioClass == Class::AM_FM) {
+        EXPECT_TIMEOUT_CALL(*mCallback, configChange, Result::OK, _);
+    }
+
+    Result halResult = Result::NOT_INITIALIZED;
+    auto openCb = [&](Result result, const sp<V1_0::ITuner>& tuner) {
+        halResult = result;
+        if (result != Result::OK) return;
+        mTuner = ITuner::castFrom(tuner);
+    };
+    auto hidlResult = mRadioModule->openTuner(getBand(band), true, mCallback, openCb);
+
+    EXPECT_TRUE(hidlResult.isOk());
+    EXPECT_EQ(Result::OK, halResult);
+    EXPECT_NE(nullptr, mTuner.get());
+    if (radioClass == Class::AM_FM && mTuner != nullptr) {
+        EXPECT_TIMEOUT_CALL_WAIT(*mCallback, configChange, kConfigTimeout);
+
+        BandConfig halConfig;
         Result halResult = Result::NOT_INITIALIZED;
-        auto hidlReturn = mRadio->openTuner(mHalProperties.bands[0], true, mTunerCallback,
-                [&](Result result, const sp<V1_0::ITuner>& tuner) {
-                    halResult = result;
-                    if (result == Result::OK) {
-                        mTuner = ITuner::castFrom(tuner);
-                    }
-                });
-        EXPECT_TRUE(hidlReturn.isOk());
+        mTuner->getConfiguration([&](Result result, const BandConfig& config) {
+            halResult = result;
+            halConfig = config;
+        });
         EXPECT_EQ(Result::OK, halResult);
-        EXPECT_NE(nullptr, mTuner.get());
-        EXPECT_TRUE(waitForCallback(kConfigCallbacktimeoutNs));
+        EXPECT_TRUE(halConfig.antennaConnected);
     }
+
     EXPECT_NE(nullptr, mTuner.get());
     return nullptr != mTuner.get();
 }
 
-bool BroadcastRadioHidlTest::checkAntenna()
-{
-    BandConfig halConfig;
-    Result halResult = Result::NOT_INITIALIZED;
-    Return<void> hidlReturn =
-            mTuner->getConfiguration([&](Result result, const BandConfig& config) {
-                halResult = result;
-                if (result == Result::OK) {
-                    halConfig = config;
-                }
-            });
+const BandConfig& BroadcastRadioHalTest::getBand(unsigned idx) {
+    static const BandConfig dummyBandConfig = {};
 
-    return ((halResult == Result::OK) && (halConfig.antennaConnected == true));
-}
-
-
-/**
- * Test IBroadcastRadio::getProperties() method
- *
- * Verifies that:
- *  - the HAL implements the method
- *  - the method returns 0 (no error)
- *  - the implementation class is AM_FM
- *  - the implementation supports at least one tuner
- *  - the implementation supports at one band
- */
-TEST_F(BroadcastRadioHidlTest, GetProperties) {
-    EXPECT_TRUE(getProperties());
-}
-
-/**
- * Test IBroadcastRadio::openTuner() method
- *
- * Verifies that:
- *  - the HAL implements the method
- *  - the method returns 0 (no error) and a valid ITuner interface
- */
-TEST_F(BroadcastRadioHidlTest, OpenTuner) {
-    EXPECT_TRUE(openTuner());
-}
-
-/**
- * Test ITuner::setConfiguration() and getConfiguration methods
- *
- * Verifies that:
- *  - the HAL implements both methods
- *  - the methods return 0 (no error)
- *  - the configuration callback is received within kConfigCallbacktimeoutNs ns
- *  - the configuration read back from HAl has the same class Id
- */
-TEST_F(BroadcastRadioHidlTest, SetAndGetConfiguration) {
-    ASSERT_TRUE(openTuner());
-    // test setConfiguration
-    mCallbackCalled = false;
-    Return<Result> hidlResult = mTuner->setConfiguration(mHalProperties.bands[0]);
-    EXPECT_TRUE(hidlResult.isOk());
-    EXPECT_EQ(Result::OK, hidlResult);
-    EXPECT_TRUE(waitForCallback(kConfigCallbacktimeoutNs));
-    EXPECT_EQ(Result::OK, mResultCallbackData);
-
-    // test getConfiguration
-    BandConfig halConfig;
-    Result halResult;
-    Return<void> hidlReturn =
-            mTuner->getConfiguration([&](Result result, const BandConfig& config) {
-                halResult = result;
-                if (result == Result::OK) {
-                    halConfig = config;
-                }
-            });
-    EXPECT_TRUE(hidlReturn.isOk());
-    EXPECT_EQ(Result::OK, halResult);
-    EXPECT_EQ(mHalProperties.bands[0].type, halConfig.type);
-}
-
-/**
- * Test ITuner::scan
- *
- * Verifies that:
- *  - the HAL implements the method
- *  - the method returns 0 (no error)
- *  - the tuned callback is received within kTuneCallbacktimeoutNs ns
- */
-TEST_F(BroadcastRadioHidlTest, Scan) {
-    ASSERT_TRUE(openTuner());
-    ASSERT_TRUE(checkAntenna());
-    // test scan UP
-    mCallbackCalled = false;
-    Return<Result> hidlResult = mTuner->scan(Direction::UP, true);
-    EXPECT_TRUE(hidlResult.isOk());
-    EXPECT_EQ(Result::OK, hidlResult);
-    EXPECT_TRUE(waitForCallback(kTuneCallbacktimeoutNs));
-
-    // test scan DOWN
-    mCallbackCalled = false;
-    hidlResult = mTuner->scan(Direction::DOWN, true);
-    EXPECT_TRUE(hidlResult.isOk());
-    EXPECT_EQ(Result::OK, hidlResult);
-    EXPECT_TRUE(waitForCallback(kTuneCallbacktimeoutNs));
-}
-
-/**
- * Test ITuner::step
- *
- * Verifies that:
- *  - the HAL implements the method
- *  - the method returns 0 (no error)
- *  - the tuned callback is received within kTuneCallbacktimeoutNs ns
- */
-TEST_F(BroadcastRadioHidlTest, Step) {
-    ASSERT_TRUE(openTuner());
-    ASSERT_TRUE(checkAntenna());
-    // test step UP
-    mCallbackCalled = false;
-    Return<Result> hidlResult = mTuner->step(Direction::UP, true);
-    EXPECT_TRUE(hidlResult.isOk());
-    EXPECT_EQ(Result::OK, hidlResult);
-    EXPECT_TRUE(waitForCallback(kTuneCallbacktimeoutNs));
-
-    // test step DOWN
-    mCallbackCalled = false;
-    hidlResult = mTuner->step(Direction::DOWN, true);
-    EXPECT_TRUE(hidlResult.isOk());
-    EXPECT_EQ(Result::OK, hidlResult);
-    EXPECT_TRUE(waitForCallback(kTuneCallbacktimeoutNs));
-}
-
-/**
- * Test ITuner::tune,  getProgramInformation and cancel methods
- *
- * Verifies that:
- *  - the HAL implements the methods
- *  - the methods return 0 (no error)
- *  - the tuned callback is received within kTuneCallbacktimeoutNs ns after tune()
- */
-TEST_F(BroadcastRadioHidlTest, TuneAndGetProgramInformationAndCancel) {
-    ASSERT_TRUE(openTuner());
-    ASSERT_TRUE(checkAntenna());
-
-    // test tune
-    ASSERT_GT(mHalProperties.bands[0].spacings.size(), 0u);
-    ASSERT_GT(mHalProperties.bands[0].upperLimit, mHalProperties.bands[0].lowerLimit);
-
-    // test scan UP
-    uint32_t lowerLimit = mHalProperties.bands[0].lowerLimit;
-    uint32_t upperLimit = mHalProperties.bands[0].upperLimit;
-    uint32_t spacing = mHalProperties.bands[0].spacings[0];
-
-    uint32_t channel =
-            lowerLimit + (((upperLimit - lowerLimit) / 2 + spacing - 1) / spacing) * spacing;
-    mCallbackCalled = false;
-    mResultCallbackData = Result::NOT_INITIALIZED;
-    Return<Result> hidlResult = mTuner->tune(channel, 0);
-    EXPECT_TRUE(hidlResult.isOk());
-    EXPECT_EQ(Result::OK, hidlResult);
-    EXPECT_TRUE(waitForCallback(kTuneCallbacktimeoutNs));
-
-    // test getProgramInformation
-    ProgramInfo halInfo;
-    Result halResult = Result::NOT_INITIALIZED;
-    Return<void> hidlReturn = mTuner->getProgramInformation_1_1(
-        [&](Result result, const ProgramInfo& info) {
-            halResult = result;
-            if (result == Result::OK) {
-                halInfo = info;
-            }
-        });
-    EXPECT_TRUE(hidlReturn.isOk());
-    EXPECT_EQ(Result::OK, halResult);
-    auto &halInfo_1_1 = halInfo.base;
-    if (mResultCallbackData == Result::OK) {
-        EXPECT_LE(halInfo_1_1.channel, upperLimit);
-        EXPECT_GE(halInfo_1_1.channel, lowerLimit);
+    if (radioClass != Class::AM_FM) {
+        ALOGD("Not AM/FM radio, returning dummy band config");
+        return dummyBandConfig;
     }
 
-    // test cancel
-    mTuner->tune(lowerLimit, 0);
-    hidlResult = mTuner->cancel();
-    EXPECT_TRUE(hidlResult.isOk());
-    EXPECT_EQ(Result::OK, hidlResult);
+    EXPECT_GT(mBands.size(), idx);
+    if (mBands.size() <= idx) {
+        ALOGD("Band index out of bound, returning dummy band config");
+        return dummyBandConfig;
+    }
+
+    auto& band = mBands[idx];
+    ALOGD("Returning %s band", toString(band.type).c_str());
+    return band;
 }
 
-TEST_F(BroadcastRadioHidlTest, TuneFromProgramList) {
-    ASSERT_TRUE(openTuner());
-    ASSERT_TRUE(checkAntenna());
+/**
+ * Test IBroadcastRadio::openTuner() method called twice.
+ *
+ * Verifies that:
+ *  - the openTuner method succeeds when called for the second time without
+ *    deleting previous ITuner instance.
+ *
+ * This is a more strict requirement than in 1.0, where a second openTuner
+ * might fail.
+ */
+TEST_P(BroadcastRadioHalTest, OpenTunerTwice) {
+    if (skipped) return;
+    ASSERT_TRUE(openTuner(0));
+
+    Result halResult = Result::NOT_INITIALIZED;
+    auto openCb = [&](Result result, const sp<V1_0::ITuner>&) { halResult = result; };
+    auto hidlResult = mRadioModule->openTuner(getBand(0), true, mCallback, openCb);
+    ASSERT_TRUE(hidlResult.isOk());
+    ASSERT_EQ(Result::OK, halResult);
+}
+
+/**
+ * Test tuning to program list entry.
+ *
+ * Verifies that:
+ *  - getProgramList either succeeds or returns NOT_STARTED/NOT_READY status;
+ *  - if the program list is NOT_STARTED, startBackgroundScan makes it completed
+ *    within a full scan timeout and the next getProgramList call succeeds;
+ *  - if the program list is not empty, tune_1_1 call succeeds.
+ */
+TEST_P(BroadcastRadioHalTest, TuneFromProgramList) {
+    if (skipped) return;
+    ASSERT_TRUE(openTuner(0));
 
     ProgramInfo firstProgram;
     bool isListEmpty;
     ProgramListResult getListResult = ProgramListResult::NOT_INITIALIZED;
     auto getListCb = [&](ProgramListResult result, const hidl_vec<ProgramInfo>& list) {
+        ALOGD("getListCb(%s, ProgramInfo[%zu])", toString(result).c_str(), list.size());
         getListResult = result;
         if (result != ProgramListResult::OK) return;
         isListEmpty = (list.size() == 0);
@@ -496,40 +252,50 @@ TEST_F(BroadcastRadioHidlTest, TuneFromProgramList) {
     };
 
     // first try...
-    auto hidlReturn = mTuner->getProgramList("", getListCb);
-    ASSERT_TRUE(hidlReturn.isOk());
+    EXPECT_TIMEOUT_CALL(*mCallback, backgroundScanComplete, ProgramListResult::OK)
+        .Times(AnyNumber());
+    auto hidlResult = mTuner->getProgramList("", getListCb);
+    ASSERT_TRUE(hidlResult.isOk());
 
     if (getListResult == ProgramListResult::NOT_STARTED) {
         auto result = mTuner->startBackgroundScan();
-        ASSERT_TRUE(result.isOk());
         ASSERT_EQ(ProgramListResult::OK, result);
         getListResult = ProgramListResult::NOT_READY;  // continue as in NOT_READY case
     }
     if (getListResult == ProgramListResult::NOT_READY) {
-        ASSERT_TRUE(waitForCallback(kFullScanTimeoutNs));
-        ASSERT_EQ(ProgramListResult::OK, mProgramListResultCallbackData);
+        EXPECT_TIMEOUT_CALL_WAIT(*mCallback, backgroundScanComplete, kFullScanTimeout);
 
         // second (last) try...
-        hidlReturn = mTuner->getProgramList("", getListCb);
-        ASSERT_TRUE(hidlReturn.isOk());
+        hidlResult = mTuner->getProgramList("", getListCb);
+        ASSERT_TRUE(hidlResult.isOk());
         ASSERT_EQ(ProgramListResult::OK, getListResult);
     }
 
     if (isListEmpty) {
-        std::cout << "[  SKIPPED ] Program list is empty. " << std::endl;
+        printSkipped("Program list is empty.");
         return;
     }
 
+    ProgramInfo infoCb;
+    EXPECT_CALL(*mCallback, tuneComplete(_, _));
+    EXPECT_TIMEOUT_CALL(*mCallback, tuneComplete_1_1, Result::OK, _)
+        .WillOnce(DoAll(SaveArg<1>(&infoCb), testing::Return(ByMove(Void()))));
     auto tuneResult = mTuner->tune_1_1(firstProgram.selector);
-    ASSERT_TRUE(tuneResult.isOk());
-    EXPECT_EQ(Result::OK, tuneResult);
-    EXPECT_EQ(true, waitForCallback(kTuneCallbacktimeoutNs));
-    // TODO(b/36864490): check this too, when mProgramInfoCallbackData is cherry-picked from 1.0
-    // EXPECT_EQ(firstProgram.selector.primaryId, mProgramInfoCallbackData.selector.primaryId);
+    ASSERT_EQ(Result::OK, tuneResult);
+    EXPECT_TIMEOUT_CALL_WAIT(*mCallback, tuneComplete_1_1, kTuneTimeout);
+    EXPECT_EQ(firstProgram.selector.primaryId, infoCb.selector.primaryId);
 }
 
+INSTANTIATE_TEST_CASE_P(BroadcastRadioHalTestCases, BroadcastRadioHalTest,
+                        ::testing::Values(Class::AM_FM, Class::SAT, Class::DT));
+
+}  // namespace vts
+}  // namespace V1_1
+}  // namespace broadcastradio
+}  // namespace hardware
+}  // namespace android
+
 int main(int argc, char** argv) {
-  ::testing::AddGlobalTestEnvironment(new BroadcastRadioHidlEnvironment);
   ::testing::InitGoogleTest(&argc, argv);
   int status = RUN_ALL_TESTS();
   ALOGI("Test result = %d", status);
