@@ -29,12 +29,16 @@ namespace V2_1 {
 namespace impl {
 
 // Some handy constants to avoid conversions from enum to int.
+constexpr int ABS_ACTIVE = (int) V2_1::VehicleProperty::ABS_ACTIVE;
 constexpr int OBD2_LIVE_FRAME = (int) V2_1::VehicleProperty::OBD2_LIVE_FRAME;
 constexpr int OBD2_FREEZE_FRAME = (int) V2_1::VehicleProperty::OBD2_FREEZE_FRAME;
 constexpr int OBD2_FREEZE_FRAME_INFO = (int) V2_1::VehicleProperty::OBD2_FREEZE_FRAME_INFO;
 constexpr int OBD2_FREEZE_FRAME_CLEAR = (int) V2_1::VehicleProperty::OBD2_FREEZE_FRAME_CLEAR;
+constexpr int TRACTION_CONTROL_ACTIVE = (int) V2_1::VehicleProperty::TRACTION_CONTROL_ACTIVE;
 constexpr int VEHICLE_MAP_SERVICE = (int) V2_1::VehicleProperty::VEHICLE_MAP_SERVICE;
 constexpr int WHEEL_TICK = (int) V2_1::VehicleProperty::WHEEL_TICK;
+constexpr int ALL_WHEELS = (int) (V2_0::Wheel::LEFT_FRONT | V2_0::Wheel::RIGHT_FRONT |
+                                  V2_0::Wheel::LEFT_REAR | V2_0::Wheel::RIGHT_REAR);
 
 
 const V2_0::VehiclePropConfig kVehicleProperties[] = {
@@ -42,8 +46,21 @@ const V2_0::VehiclePropConfig kVehicleProperties[] = {
         .prop = WHEEL_TICK,
         .access = V2_0::VehiclePropertyAccess::READ,
         .changeMode = V2_0::VehiclePropertyChangeMode::CONTINUOUS,
+        .configArray = {ALL_WHEELS, 50000, 50000, 50000, 50000},
         .minSampleRate = 1.0f,
         .maxSampleRate = 100.0f,
+    },
+
+    {
+        .prop = ABS_ACTIVE,
+        .access = V2_0::VehiclePropertyAccess::READ,
+        .changeMode = V2_0::VehiclePropertyChangeMode::ON_CHANGE,
+    },
+
+    {
+        .prop = TRACTION_CONTROL_ACTIVE,
+        .access = V2_0::VehiclePropertyAccess::READ,
+        .changeMode = V2_0::VehiclePropertyChangeMode::ON_CHANGE,
     },
 
     {
