@@ -92,6 +92,10 @@ WifiStatus createWifiStatusFromLegacyError(legacy_hal::wifi_error error,
 
     case legacy_hal::WIFI_ERROR_UNKNOWN:
       return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN, "unknown");
+    default:
+      const std::string errStr = "errno: " + std::to_string(error)
+                                 + " (" + strerror(error) + ")";
+      return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN, errStr);
   }
 }
 
