@@ -343,13 +343,17 @@ wifi_error WifiLegacyHal::initialize() {
 }
 
 wifi_error WifiLegacyHal::start() {
-  // Ensure that we're starting in a good state.
-  CHECK(global_func_table_.wifi_initialize && !global_handle_ &&
-        !wlan_interface_handle_ && !awaiting_event_loop_termination_);
   if (is_started_) {
     LOG(DEBUG) << "Legacy HAL already started";
     return WIFI_SUCCESS;
   }
+  // Ensure that we're starting in a good state.
+  // In case of wifiStaSapConcurrency, if one of the interface is already active,
+  // then below check will always fail, as this check assumes that wifiLegacyHal
+  // is stopped before calling start. Since we don't need to start WifiLegacyHal
+  // move this check here and return from is_started_ check.
+  CHECK(global_func_table_.wifi_initialize && !global_handle_ &&
+        !wlan_interface_handle_ && !awaiting_event_loop_termination_);
   LOG(DEBUG) << "Starting legacy HAL";
   if (!iface_tool_.SetWifiUpState(true)) {
     LOG(ERROR) << "Failed to set WiFi interface up";

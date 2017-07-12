@@ -30,6 +30,9 @@ class WifiFeatureFlags {
 #else
   static const bool wifiHidlFeatureAware = false;
 #endif // WIFI_HIDL_FEATURE_AWARE
+
+  // Feature flag to allow STA + SAP combination from wifi vendor hal service
+  static const bool wifiStaSapConcurrency = true;
 };
 
 }  // namespace implementation
