@@ -195,7 +195,6 @@ fe3c3c2f572b72f15f8594c538b0577bd5c28722c31879cfe6231330cddb6747 android.hardwar
 
 # HALs released in Android O MR1
 
-37a00ee36a2e38f9ff87cf71a37a49c13fe194fbed123c6b05c69fc76071f5c9 android.hardware.configstore@1.1::ISurfaceFlingerConfigs
 4b65763663a94a3920134011691f8fbb42ccb7b7795589efddc049a9106047d6 android.hardware.oemlock@1.0::IOemLock
 e02cd3722cb5e8fa51179f5defacb4f7866f903c9c7c51dc01a3148473a71525 android.hardware.oemlock@1.0::types
 9f69e783fa2c482d90b2f799ddd33378a92d22a261983df6b492358e01f4d791 android.hardware.power@1.1::IPower
