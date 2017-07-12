@@ -80,7 +80,15 @@ enum ProgramType : uint32_t {
     DAB,     // Digital audio broadcasting
     DRMO,    // Digital Radio Mondiale
     SXM,     // SiriusXM Satellite Radio
-    VENDOR,  // vendor-specific, not synced across devices
+
+    /**
+     * Vendor-specific, not synced across devices.
+     *
+     * If it's necessary to support multiple vendor-specific program types, the
+     * type of vendor radio technology may be encoded in high bits
+     * of IDENTIFIER_TYPE_VENDOR_PRIMARY.
+     */
+    VENDOR,
 };
 
 /**
