@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "android.hardware.configstore@1.1-service"
+#define LOG_TAG "android.hardware.configstore@1.0-service"
 
-#include <android/hardware/configstore/1.1/ISurfaceFlingerConfigs.h>
+#include <android/hardware/configstore/1.0/ISurfaceFlingerConfigs.h>
 #include <hidl/HidlTransportSupport.h>
 
 #include "SurfaceFlingerConfigs.h"
 
 using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
-using android::hardware::configstore::V1_1::ISurfaceFlingerConfigs;
-using android::hardware::configstore::V1_1::implementation::SurfaceFlingerConfigs;
+using android::hardware::configstore::V1_0::ISurfaceFlingerConfigs;
+using android::hardware::configstore::V1_0::implementation::SurfaceFlingerConfigs;
 using android::sp;
 using android::status_t;
 using android::OK;
