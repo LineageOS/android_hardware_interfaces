@@ -364,6 +364,25 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
 $(GEN): $(LOCAL_PATH)/IRadioResponse.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build ISap.hal
+#
+GEN := $(intermediates)/android/hardware/radio/V1_1/ISap.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISap.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.radio@1.1::ISap
+
+$(GEN): $(LOCAL_PATH)/ISap.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
 include $(BUILD_JAVA_LIBRARY)
 
 
@@ -727,6 +746,25 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         android.hardware.radio@1.1::IRadioResponse
 
 $(GEN): $(LOCAL_PATH)/IRadioResponse.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build ISap.hal
+#
+GEN := $(intermediates)/android/hardware/radio/V1_1/ISap.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ISap.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.radio@1.1::ISap
+
+$(GEN): $(LOCAL_PATH)/ISap.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
 include $(BUILD_STATIC_JAVA_LIBRARY)
