@@ -17,6 +17,9 @@
 #include <android-base/logging.h>
 #include <utils/SystemClock.h>
 
+#include <android/hardware/wifi/1.0/IWifiChip.h>
+#include <android/hardware/wifi/1.1/IWifiChip.h>
+
 #include "hidl_struct_util.h"
 
 namespace android {
@@ -66,6 +69,17 @@ convertLegacyLoggerFeatureToHidlStaIfaceCapability(uint32_t feature) {
   return {};
 }
 
+V1_1::IWifiChip::ChipCapabilityMask convertLegacyFeatureToHidlChipCapability(
+    uint32_t feature) {
+  using HidlChipCaps = V1_1::IWifiChip::ChipCapabilityMask;
+  switch (feature) {
+    case WIFI_FEATURE_SET_TX_POWER_LIMIT:
+      return HidlChipCaps::SET_TX_POWER_LIMIT;
+  };
+  CHECK(false) << "Unknown legacy feature: " << feature;
+  return {};
+}
+
 IWifiStaIface::StaIfaceCapabilityMask
 convertLegacyFeatureToHidlStaIfaceCapability(uint32_t feature) {
   using HidlStaIfaceCaps = IWifiStaIface::StaIfaceCapabilityMask;
@@ -102,7 +116,9 @@ convertLegacyFeatureToHidlStaIfaceCapability(uint32_t feature) {
 }
 
 bool convertLegacyFeaturesToHidlChipCapabilities(
-    uint32_t legacy_logger_feature_set, uint32_t* hidl_caps) {
+    uint32_t legacy_feature_set,
+    uint32_t legacy_logger_feature_set,
+    uint32_t* hidl_caps) {
   if (!hidl_caps) {
     return false;
   }
@@ -115,6 +131,11 @@ bool convertLegacyFeaturesToHidlChipCapabilities(
                              legacy_hal::WIFI_LOGGER_WAKE_LOCK_SUPPORTED}) {
     if (feature & legacy_logger_feature_set) {
       *hidl_caps |= convertLegacyLoggerFeatureToHidlChipCapability(feature);
+    }
+  }
+  for (const auto feature : {WIFI_FEATURE_SET_TX_POWER_LIMIT}) {
+    if (feature & legacy_feature_set) {
+      *hidl_caps |= convertLegacyFeatureToHidlChipCapability(feature);
     }
   }
   // There are no flags for these 3 in the legacy feature set. Adding them to
@@ -241,7 +262,6 @@ bool convertLegacyFeaturesToHidlStaCapabilities(
     return false;
   }
   *hidl_caps = {};
-  *hidl_caps = 0;
   using HidlStaIfaceCaps = IWifiStaIface::StaIfaceCapabilityMask;
   for (const auto feature : {legacy_hal::WIFI_LOGGER_PACKET_FATE_SUPPORTED}) {
     if (feature & legacy_logger_feature_set) {
