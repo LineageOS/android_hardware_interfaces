@@ -97,17 +97,22 @@ class ComponentTestEnvironment : public ::testing::Environment {
 static ComponentTestEnvironment* gEnv = nullptr;
 
 class MasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+   private:
+    typedef ::testing::VtsHalHidlTargetTestBase Super;
    public:
     virtual void SetUp() override {
+        Super::SetUp();
         omxStore = nullptr;
-        omxStore = ::testing::VtsHalHidlTargetTestBase::getService<IOmxStore>();
+        omxStore = Super::getService<IOmxStore>();
         ASSERT_NE(omxStore, nullptr);
         omx = nullptr;
         omx = omxStore->getOmx(gEnv->getInstance());
         ASSERT_NE(omx, nullptr);
     }
 
-    virtual void TearDown() override {}
+    virtual void TearDown() override {
+        Super::TearDown();
+    }
 
     sp<IOmxStore> omxStore;
     sp<IOmx> omx;
