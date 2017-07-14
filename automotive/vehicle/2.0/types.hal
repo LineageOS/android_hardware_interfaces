@@ -742,18 +742,21 @@ enum VehicleProperty: int32_t {
      *                   0 means no active audio focus holder outside Android.
      *                   The state must have following values for each
      *                   VehicleAudioFocusState:
-     *                   GAIN: 0 or VehicleAudioExtFocusFlag#PLAY_ONLY_FLAG
-     *                       when radio is active in Android side.
-     *                   GAIN_TRANSIENT: 0. Can be
+     *                   GAIN: VehicleAudioExtFocusFlag#PLAY_ONLY_FLAG
+     *                       when radio is active in Android side. Otherwise,
+     *                       VehicleAudioExtFocusFlag#NONE_FLAG.
+     *                   GAIN_TRANSIENT: Can be
      *                       VehicleAudioExtFocusFlag#PERMANENT_FLAG or
      *                       VehicleAudioExtFocusFlag#TRANSIENT_FLAG if android
      *                       side has requested
      *                       REQUEST_GAIN_TRANSIENT_MAY_DUCK and car side is
-     *                       ducking.
-     *                   LOSS: 0 when no focus is audio is active in car side.
+     *                       ducking. Otherwise
+     *                       VehicleAudioExtFocusFlag#NONE_FLAG.
+     *                   LOSS: VehicleAudioExtFocusFlag#NONE_FLAG when no focus
+     *                       is active in car side.
      *                       VehicleAudioExtFocusFlag#PERMANENT_FLAG when car
      *                       side is playing something permanent.
-     *                   LOSS_TRANSIENT: always must be
+     *                   LOSS_TRANSIENT: must always be
      *                       VehicleAudioExtFocusFlag#PERMANENT_FLAG
      *   int32Values[3]: context requested by android side when responding to
      *                   focus request. When car side is taking focus away,
@@ -857,12 +860,12 @@ enum VehicleProperty: int32_t {
      *                    to represent audio module's capability.
      *
      * Data type looks like:
-     *   int32Values[0] : stream context as defined in VehicleAudioFocusFlag.
+     *   int32Values[0] : stream context as defined in VehicleAudioContextFlag.
      *                    If only physical stream is supported
      *                    (configArray[0] == 0), this must represent physical
      *                    stream number.
      *   int32Values[1] : maximum volume set to the stream. If there is no
-     *                    restriction, this value must be  bigger than
+     *                    restriction, this value must be bigger than
      *                    AUDIO_VOLUME's max value.
      *
      * If car does not support this feature, this property must not be
@@ -893,7 +896,7 @@ enum VehicleProperty: int32_t {
      *                    still use different audio stream for whatever reason.
      *   int32Values[1] : All audio contexts that must be sent through the
      *                     physical stream. Flag is defined in
-     *                     VehicleAudioFocusFlag.
+     *                     VehicleAudioContextFlag.
 
      * Setting of this property must be done for all available physical streams
      * based on audio H/W variant information acquired from AUDIO_HW_VARIANT
@@ -942,14 +945,13 @@ enum VehicleProperty: int32_t {
      * for the routing.
      * This property can support up to 128 external routings.
      * To give full flexibility, there is no standard definition for each bit
-     * flag and assigning each big flag to specific routing type is decided by
+     * flag and assigning each bit flag to specific routing type is decided by
      * VehiclePropConfig#configString.  VehiclePropConfig#configString has
      * format of each entry separated by ',' and each entry has format of
      * bitFlagPositon:typeString[:physicalStreamNumber].
-     *  bitFlagPosition: represents which big flag will be set to enable this
-     *  routing. 0 means
-     *    LSB in int32Values[0]. 31 will be MSB in int32Values[0]. 127 will MSB
-     *    in int32Values[3].
+     *  bitFlagPosition: represents which bit flag will be set to enable this
+     *    routing. 0 means LSB in int32Values[0]. 31 will be MSB in
+     *    int32Values[0]. 127 will MSB in int32Values[3].
      *  typeString: string representation of external routing. Some types are
      *    already defined in AUDIO_EXT_ROUTING_SOURCE_* and use them first
      *    before adding something custom. Applications will find each routing
@@ -1126,10 +1128,11 @@ enum VehicleProperty: int32_t {
      *                    change. Instrument cluster still needs to send
      *                    event with new mode to trigger actual mode change.
      *   int32Values[1] : The current app context relevant for instrument
-     *                    cluster. Use the same flag with VehicleAudioFocusFlag
-     *                    but this context represents active apps, not
-     *                    active audio. Instrument cluster side may change mode
-     *                    depending on the currently active contexts.
+     *                    cluster. Use the same flag with
+     *                    VehicleAudioContextFlag but this context represents
+     *                    active apps, not active audio. Instrument cluster
+     *                    side may change mode depending on the currently
+     *                    active contexts.
      *  When system boots up, Android side will write {0, 0, 0, 0} when it is
      *  ready to render to instrument cluster. Before this message, rendering
      *  from android must not be visible in the cluster.
@@ -2054,7 +2057,7 @@ enum VehicleAudioHwVariantConfigFlag : int32_t {
    * Flag to tell that radio is internal to android and radio must
    * be treated like other android stream like media.
    * When this flag is not set or AUDIO_HW_VARIANT does not exist,
-   * radio is treated as external module. This brins some delta in audio focus
+   * radio is treated as external module. This may affect audio focus
    * handling as well.
    */
   INTERNAL_RADIO_FLAG = 0x1,
