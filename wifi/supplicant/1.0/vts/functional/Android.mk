@@ -27,17 +27,18 @@ LOCAL_SRC_FILES := \
     supplicant_sta_network_hidl_test.cpp
 LOCAL_SHARED_LIBRARIES := \
     android.hardware.wifi.supplicant@1.0 \
+    android.hardware.wifi@1.0 \
     libbase \
     libcutils \
     libhidlbase \
     libhidltransport \
     liblog \
     libutils \
-    libwifi-hal \
     libwifi-system \
     libwifi-system-iface
 LOCAL_STATIC_LIBRARIES := \
     libgmock \
-    VtsHalHidlTargetTestBase
+    VtsHalHidlTargetTestBase \
+    VtsHalWifiV1_0TargetTestUtil
 include $(BUILD_NATIVE_TEST)
 
