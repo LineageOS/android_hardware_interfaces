@@ -30,7 +30,6 @@ using android::status_t;
 using android::OK;
 
 int main() {
-    // TODO(b/34857894): tune the max thread count.
     configureRpcThreadpool(10, true);
 
     sp<ISurfaceFlingerConfigs> surfaceFlingerConfigs = new SurfaceFlingerConfigs;
