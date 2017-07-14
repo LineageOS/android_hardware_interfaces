@@ -21,11 +21,11 @@
 #include <android/hidl/manager/1.0/IServiceNotification.h>
 #include <hidl/HidlTransportSupport.h>
 
-#include <wifi_hal/driver_tool.h>
 #include <wifi_system/interface_tool.h>
 #include <wifi_system/supplicant_manager.h>
 
 #include "supplicant_hidl_test_utils.h"
+#include "wifi_hidl_test_utils.h"
 
 using ::android::sp;
 using ::android::hardware::configureRpcThreadpool;
@@ -34,6 +34,8 @@ using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
+using ::android::hardware::wifi::V1_0::ChipModeId;
+using ::android::hardware::wifi::V1_0::IWifiChip;
 using ::android::hardware::wifi::supplicant::V1_0::ISupplicant;
 using ::android::hardware::wifi::supplicant::V1_0::ISupplicantIface;
 using ::android::hardware::wifi::supplicant::V1_0::ISupplicantNetwork;
@@ -44,21 +46,24 @@ using ::android::hardware::wifi::supplicant::V1_0::IfaceType;
 using ::android::hardware::wifi::supplicant::V1_0::SupplicantStatus;
 using ::android::hardware::wifi::supplicant::V1_0::SupplicantStatusCode;
 using ::android::hidl::manager::V1_0::IServiceNotification;
-using ::android::wifi_hal::DriverTool;
 using ::android::wifi_system::InterfaceTool;
 using ::android::wifi_system::SupplicantManager;
 
 namespace {
 const char kSupplicantServiceName[] = "default";
 
-// Helper function to initialize the driver and firmware to STA mode.
+// Helper function to initialize the driver and firmware to STA mode
+// using the vendor HAL HIDL interface.
 void initilializeDriverAndFirmware() {
-    DriverTool driver_tool;
-    InterfaceTool iface_tool;
-    EXPECT_TRUE(driver_tool.LoadDriver());
-    EXPECT_TRUE(driver_tool.ChangeFirmwareMode(DriverTool::kFirmwareModeSta));
-    EXPECT_TRUE(iface_tool.SetWifiUpState(true));
+    sp<IWifiChip> wifi_chip = getWifiChip();
+    ChipModeId mode_id;
+    EXPECT_TRUE(configureChipToSupportIfaceType(
+        wifi_chip, ::android::hardware::wifi::V1_0::IfaceType::STA, &mode_id));
 }
+
+// Helper function to deinitialize the driver and firmware
+// using the vendor HAL HIDL interface.
+void deInitilializeDriverAndFirmware() { stopWifi(); }
 
 // Helper function to find any iface of the desired type exposed.
 bool findIfaceOfType(sp<ISupplicant> supplicant, IfaceType desired_type,
@@ -149,11 +154,10 @@ void startWifiFramework() {
 }
 
 void stopSupplicant() {
-    DriverTool driver_tool;
     SupplicantManager supplicant_manager;
 
     ASSERT_TRUE(supplicant_manager.StopSupplicant());
-    ASSERT_TRUE(driver_tool.UnloadDriver());
+    deInitilializeDriverAndFirmware();
     ASSERT_FALSE(supplicant_manager.IsSupplicantRunning());
 }
 
