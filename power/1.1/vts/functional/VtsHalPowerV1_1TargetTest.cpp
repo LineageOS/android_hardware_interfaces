@@ -23,6 +23,7 @@
 using ::android::hardware::power::V1_1::IPower;
 using ::android::hardware::power::V1_1::PowerStateSubsystem;
 using ::android::hardware::power::V1_0::Status;
+using ::android::hardware::power::V1_0::PowerHint;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::sp;
@@ -52,6 +53,41 @@ TEST_F(PowerHidlTest, GetSubsystemLowPowerStats) {
   Return<void> ret = power->getSubsystemLowPowerStats(cb);
   ASSERT_TRUE(ret.isOk());
   ASSERT_TRUE(s == Status::SUCCESS || s == Status::FILESYSTEM_ERROR);
+}
+
+// Sanity check Power::powerHintAsync on good and bad inputs.
+TEST_F(PowerHidlTest, PowerHintAsync) {
+    PowerHint badHint = static_cast<PowerHint>(0xA);
+    auto hints = {PowerHint::VSYNC,        PowerHint::INTERACTION, PowerHint::VIDEO_ENCODE,
+                  PowerHint::VIDEO_DECODE, PowerHint::LOW_POWER,   PowerHint::SUSTAINED_PERFORMANCE,
+                  PowerHint::VR_MODE,      PowerHint::LAUNCH,      badHint};
+    Return<void> ret;
+    for (auto hint : hints) {
+        ret = power->powerHintAsync(hint, 30000);
+        ASSERT_TRUE(ret.isOk());
+
+        ret = power->powerHintAsync(hint, 0);
+        ASSERT_TRUE(ret.isOk());
+    }
+
+    // Turning these hints on in different orders triggers different code paths,
+    // so iterate over possible orderings.
+    std::vector<PowerHint> hints2 = {PowerHint::LAUNCH, PowerHint::VR_MODE,
+                                     PowerHint::SUSTAINED_PERFORMANCE, PowerHint::INTERACTION};
+    auto compareHints = [](PowerHint l, PowerHint r) {
+        return static_cast<uint32_t>(l) < static_cast<uint32_t>(r);
+    };
+    std::sort(hints2.begin(), hints2.end(), compareHints);
+    do {
+        for (auto iter = hints2.begin(); iter != hints2.end(); iter++) {
+            ret = power->powerHintAsync(*iter, 0);
+            ASSERT_TRUE(ret.isOk());
+        }
+        for (auto iter = hints2.begin(); iter != hints2.end(); iter++) {
+            ret = power->powerHintAsync(*iter, 30000);
+            ASSERT_TRUE(ret.isOk());
+        }
+    } while (std::next_permutation(hints2.begin(), hints2.end(), compareHints));
 }
 
 int main(int argc, char **argv) {

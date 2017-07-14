@@ -165,6 +165,11 @@ Return<void> Power::getSubsystemLowPowerStats(getSubsystemLowPowerStats_cb _hidl
     return Void();
 }
 
+Return<void> Power::powerHintAsync(PowerHint hint, int32_t data) {
+    // just call the normal power hint in this oneway function
+    return powerHint(hint, data);
+}
+
 } // namespace implementation
 }  // namespace V1_1
 }  // namespace power
