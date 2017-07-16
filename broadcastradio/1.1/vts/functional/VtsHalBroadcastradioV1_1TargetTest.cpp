@@ -139,6 +139,8 @@ void BroadcastRadioHalTest::SetUp() {
     ASSERT_TRUE(propResult.isOk());
     EXPECT_EQ(radioClass, prop10.classId);
     EXPECT_GT(prop10.numTuners, 0u);
+    EXPECT_GT(prop11.supportedProgramTypes.size(), 0u);
+    EXPECT_GT(prop11.supportedIdentifierTypes.size(), 0u);
     if (radioClass == Class::AM_FM) {
         EXPECT_GT(prop10.bands.size(), 0u);
     }
