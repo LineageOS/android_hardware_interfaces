@@ -33,4 +33,18 @@ interface IPower extends android.hardware.power@1.0::IPower {
      */
     getSubsystemLowPowerStats()
             generates (vec<PowerStateSubsystem> subsystems, Status retval);
+
+    /**
+     * powerHintAsync() is called to pass hints on power requirements which
+     * may result in adjustment of power/performance parameters of the
+     * cpufreq governor and other controls.
+     *
+     * A particular platform may choose to ignore any hint.
+     *
+     * @param hint PowerHint which is passed
+     * @param data contains additional information about the hint
+     * and is described along with the comments for each of the hints.
+     */
+    oneway powerHintAsync(PowerHint hint, int32_t data);
+
 };

@@ -4,5 +4,8 @@ subdirs = [
     "evs/1.0/default",
     "evs/1.0/vts/functional",
     "vehicle/2.0",
+    "vehicle/2.0/default",
+    "vehicle/2.0/default/impl/vhal_v2_0/proto",
     "vehicle/2.1",
+    "vehicle/2.1/default",
 ]

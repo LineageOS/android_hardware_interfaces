@@ -15,10 +15,10 @@
 //
 
 cc_test {
-    name: "VtsEvsV1_0Target",
+    name: "VtsHalEvsV1_0Target",
 
     srcs: [
-        "VtsEvsV1_0TargetTest.cpp",
+        "VtsHalEvsV1_0TargetTest.cpp",
         "FrameHandler.cpp",
         "FormatConvert.cpp"
     ],
@@ -43,4 +43,3 @@ cc_test {
         "-g",
     ],
 }
-

@@ -312,9 +312,16 @@ void flushPorts(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                 android::Vector<BufferInfo>* oBuffer, OMX_U32 kPortIndexInput,
                 OMX_U32 kPortIndexOutput, int64_t timeoutUs = DEFAULT_TIMEOUT);
 
+typedef void (*portreconfig)(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
+                             android::Vector<BufferInfo>* iBuffer,
+                             android::Vector<BufferInfo>* oBuffer,
+                             OMX_U32 kPortIndexInput, OMX_U32 kPortIndexOutput,
+                             Message msg, PortMode oPortMode, void* args);
 void testEOS(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
              android::Vector<BufferInfo>* iBuffer,
              android::Vector<BufferInfo>* oBuffer, bool signalEOS,
-             bool& eosFlag, PortMode* portMode = nullptr);
+             bool& eosFlag, PortMode* portMode = nullptr,
+             portreconfig fptr = nullptr, OMX_U32 kPortIndexInput = 0,
+             OMX_U32 kPortIndexOutput = 1, void* args = nullptr);
 
 #endif  // MEDIA_HIDL_TEST_COMMON_H

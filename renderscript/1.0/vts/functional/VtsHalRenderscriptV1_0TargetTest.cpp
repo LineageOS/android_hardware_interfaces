@@ -28,8 +28,10 @@ void RenderscriptHidlTest::SetUp() {
 }
 
 void RenderscriptHidlTest::TearDown() {
-    context->contextFinish();
-    context->contextDestroy();
+    if (context.get() != nullptr) {
+        context->contextFinish();
+        context->contextDestroy();
+    }
 }
 
 // A class for test environment setup (kept since this file is a template).
