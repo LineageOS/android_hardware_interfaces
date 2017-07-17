@@ -54,6 +54,8 @@ using broadcastradio::vts::CallBarrier;
 using V1_0::BandConfig;
 using V1_0::Class;
 using V1_0::MetaData;
+using V1_0::MetadataKey;
+using V1_0::MetadataType;
 
 static constexpr auto kConfigTimeout = 10s;
 static constexpr auto kConnectModuleTimeout = 1s;
@@ -93,6 +95,7 @@ class BroadcastRadioHalTest : public ::testing::VtsHalHidlTargetTestBase,
     // any stations on the list, so don't pick AM blindly).
     bool openTuner(unsigned band);
     const BandConfig& getBand(unsigned idx);
+    bool getProgramList(std::function<void(const hidl_vec<ProgramInfo>& list)> cb);
 
     Class radioClass;
     bool skipped = false;
@@ -207,6 +210,47 @@ const BandConfig& BroadcastRadioHalTest::getBand(unsigned idx) {
     return band;
 }
 
+bool BroadcastRadioHalTest::getProgramList(
+    std::function<void(const hidl_vec<ProgramInfo>& list)> cb) {
+    ProgramListResult getListResult = ProgramListResult::NOT_INITIALIZED;
+    bool isListEmpty = true;
+    auto getListCb = [&](ProgramListResult result, const hidl_vec<ProgramInfo>& list) {
+        ALOGD("getListCb(%s, ProgramInfo[%zu])", toString(result).c_str(), list.size());
+        getListResult = result;
+        if (result != ProgramListResult::OK) return;
+        isListEmpty = (list.size() == 0);
+        if (!isListEmpty) cb(list);
+    };
+
+    // first try...
+    EXPECT_TIMEOUT_CALL(*mCallback, backgroundScanComplete, ProgramListResult::OK)
+        .Times(AnyNumber());
+    auto hidlResult = mTuner->getProgramList("", getListCb);
+    EXPECT_TRUE(hidlResult.isOk());
+    if (!hidlResult.isOk()) return false;
+
+    if (getListResult == ProgramListResult::NOT_STARTED) {
+        auto result = mTuner->startBackgroundScan();
+        EXPECT_EQ(ProgramListResult::OK, result);
+        getListResult = ProgramListResult::NOT_READY;  // continue as in NOT_READY case
+    }
+    if (getListResult == ProgramListResult::NOT_READY) {
+        EXPECT_TIMEOUT_CALL_WAIT(*mCallback, backgroundScanComplete, kFullScanTimeout);
+
+        // second (last) try...
+        hidlResult = mTuner->getProgramList("", getListCb);
+        EXPECT_TRUE(hidlResult.isOk());
+        if (!hidlResult.isOk()) return false;
+        EXPECT_EQ(ProgramListResult::OK, getListResult);
+    }
+
+    if (isListEmpty) {
+        printSkipped("Program list is empty.");
+        return false;
+    }
+    return true;
+}
+
 /**
  * Test IBroadcastRadio::openTuner() method called twice.
  *
@@ -242,41 +286,11 @@ TEST_P(BroadcastRadioHalTest, TuneFromProgramList) {
     ASSERT_TRUE(openTuner(0));
 
     ProgramInfo firstProgram;
-    bool isListEmpty;
-    ProgramListResult getListResult = ProgramListResult::NOT_INITIALIZED;
-    auto getListCb = [&](ProgramListResult result, const hidl_vec<ProgramInfo>& list) {
-        ALOGD("getListCb(%s, ProgramInfo[%zu])", toString(result).c_str(), list.size());
-        getListResult = result;
-        if (result != ProgramListResult::OK) return;
-        isListEmpty = (list.size() == 0);
+    auto getCb = [&](const hidl_vec<ProgramInfo>& list) {
         // don't copy the whole list out, it might be heavy
-        if (!isListEmpty) firstProgram = list[0];
+        firstProgram = list[0];
     };
-
-    // first try...
-    EXPECT_TIMEOUT_CALL(*mCallback, backgroundScanComplete, ProgramListResult::OK)
-        .Times(AnyNumber());
-    auto hidlResult = mTuner->getProgramList("", getListCb);
-    ASSERT_TRUE(hidlResult.isOk());
-
-    if (getListResult == ProgramListResult::NOT_STARTED) {
-        auto result = mTuner->startBackgroundScan();
-        ASSERT_EQ(ProgramListResult::OK, result);
-        getListResult = ProgramListResult::NOT_READY;  // continue as in NOT_READY case
-    }
-    if (getListResult == ProgramListResult::NOT_READY) {
-        EXPECT_TIMEOUT_CALL_WAIT(*mCallback, backgroundScanComplete, kFullScanTimeout);
-
-        // second (last) try...
-        hidlResult = mTuner->getProgramList("", getListCb);
-        ASSERT_TRUE(hidlResult.isOk());
-        ASSERT_EQ(ProgramListResult::OK, getListResult);
-    }
-
-    if (isListEmpty) {
-        printSkipped("Program list is empty.");
-        return;
-    }
+    if (!getProgramList(getCb)) return;
 
     ProgramSelector selCb;
     EXPECT_CALL(*mCallback, tuneComplete(_, _));
@@ -294,6 +308,67 @@ TEST_P(BroadcastRadioHalTest, CancelAnnouncement) {
 
     auto hidlResult = mTuner->cancelAnnouncement();
     EXPECT_EQ(Result::OK, hidlResult);
+}
+
+/**
+ * Test getImage call with invalid image ID.
+ *
+ * Verifies that:
+ * - getImage call handles argument 0 gracefully
+ */
+TEST_P(BroadcastRadioHalTest, GetNoImage) {
+    if (skipped) return;
+
+    size_t len = 0;
+    auto hidlResult =
+        mRadioModule->getImage(0, [&](hidl_vec<uint8_t> rawImage) { len = rawImage.size(); });
+
+    ASSERT_TRUE(hidlResult.isOk());
+    ASSERT_EQ(0u, len);
+}
+
+/**
+ * Test proper image format in metadata.
+ *
+ * Verifies that:
+ * - all images in metadata are provided out-of-band (by id, not as a binary blob)
+ * - images are available for getImage call
+ */
+TEST_P(BroadcastRadioHalTest, OobImagesOnly) {
+    if (skipped) return;
+    ASSERT_TRUE(openTuner(0));
+
+    std::vector<int> imageIds;
+
+    ProgramInfo firstProgram;
+    auto getCb = [&](const hidl_vec<ProgramInfo>& list) {
+        for (auto&& program : list) {
+            for (auto&& entry : program.base.metadata) {
+                EXPECT_NE(MetadataType::RAW, entry.type);
+                if (entry.key != MetadataKey::ICON && entry.key != MetadataKey::ART) continue;
+                EXPECT_NE(0, entry.intValue);
+                EXPECT_EQ(0u, entry.rawValue.size());
+                if (entry.intValue != 0) imageIds.push_back(entry.intValue);
+            }
+        }
+    };
+    if (!getProgramList(getCb)) return;
+
+    if (imageIds.size() == 0) {
+        printSkipped("No images found");
+        return;
+    }
+
+    for (auto id : imageIds) {
+        ALOGD("Checking image %d", id);
+
+        size_t len = 0;
+        auto hidlResult =
+            mRadioModule->getImage(id, [&](hidl_vec<uint8_t> rawImage) { len = rawImage.size(); });
+
+        ASSERT_TRUE(hidlResult.isOk());
+        ASSERT_GT(len, 0u);
+    }
 }
 
 INSTANTIATE_TEST_CASE_P(BroadcastRadioHalTestCases, BroadcastRadioHalTest,

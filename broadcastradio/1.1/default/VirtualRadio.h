@@ -30,7 +30,7 @@ namespace implementation {
 class VirtualRadio {
    public:
     VirtualRadio(VirtualRadio&& o);
-    VirtualRadio(std::vector<VirtualProgram> initialList);
+    VirtualRadio(const std::vector<VirtualProgram> initialList);
 
     std::vector<VirtualProgram> getProgramList();
     bool getProgram(const ProgramSelector& selector, VirtualProgram& program);
