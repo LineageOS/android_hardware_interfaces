@@ -70,6 +70,10 @@ struct Properties {
 /**
  * Type of a radio technology.
  *
+ * There are multiple VENDOR program types just to make vendor implementation
+ * easier with multiple properitary radio technologies. They are treated the
+ * same by the framework.
+ *
  * All other values are reserved for future use.
  */
 enum ProgramType : uint32_t {
@@ -80,15 +84,10 @@ enum ProgramType : uint32_t {
     DAB,     // Digital audio broadcasting
     DRMO,    // Digital Radio Mondiale
     SXM,     // SiriusXM Satellite Radio
-
-    /**
-     * Vendor-specific, not synced across devices.
-     *
-     * If it's necessary to support multiple vendor-specific program types, the
-     * type of vendor radio technology may be encoded in high bits
-     * of IDENTIFIER_TYPE_VENDOR_PRIMARY.
-     */
-    VENDOR,
+    VENDOR1, // Vendor-specific, not synced across devices.
+    VENDOR2, // Vendor-specific, not synced across devices.
+    VENDOR3, // Vendor-specific, not synced across devices.
+    VENDOR4, // Vendor-specific, not synced across devices.
 };
 
 /**
@@ -150,9 +149,12 @@ enum IdentifierType : uint32_t {
      * Primary identifier for vendor-specific radio technology.
      * The value format is determined by a vendor.
      *
-     * It must not be used in any other programType than VENDOR.
+     * It must not be used in any other programType than VENDORx.
      */
-    VENDOR_PRIMARY,
+    VENDOR1_PRIMARY,
+    VENDOR2_PRIMARY,
+    VENDOR3_PRIMARY,
+    VENDOR4_PRIMARY,
 };
 
 /**

@@ -91,7 +91,10 @@ bool tunesTo(const ProgramSelector& a, const ProgramSelector& b) {
                 return haveEqualIds(a, b, IdentifierType::SXM_SERVICE_ID);
             }
             return haveEqualIds(a, b, IdentifierType::SXM_CHANNEL);
-        case ProgramType::VENDOR:
+        case ProgramType::VENDOR1:
+        case ProgramType::VENDOR2:
+        case ProgramType::VENDOR3:
+        case ProgramType::VENDOR4:
         default:
             ALOGW("Unsupported program type: %s", toString(type).c_str());
             return false;
