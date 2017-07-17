@@ -75,6 +75,10 @@ V1_1::IWifiChip::ChipCapabilityMask convertLegacyFeatureToHidlChipCapability(
   switch (feature) {
     case WIFI_FEATURE_SET_TX_POWER_LIMIT:
       return HidlChipCaps::SET_TX_POWER_LIMIT;
+    case WIFI_FEATURE_D2D_RTT:
+      return HidlChipCaps::D2D_RTT;
+    case WIFI_FEATURE_D2AP_RTT:
+      return HidlChipCaps::D2AP_RTT;
   };
   CHECK(false) << "Unknown legacy feature: " << feature;
   return {};
@@ -133,7 +137,9 @@ bool convertLegacyFeaturesToHidlChipCapabilities(
       *hidl_caps |= convertLegacyLoggerFeatureToHidlChipCapability(feature);
     }
   }
-  for (const auto feature : {WIFI_FEATURE_SET_TX_POWER_LIMIT}) {
+  for (const auto feature : {WIFI_FEATURE_SET_TX_POWER_LIMIT,
+                             WIFI_FEATURE_D2D_RTT,
+                             WIFI_FEATURE_D2AP_RTT}) {
     if (feature & legacy_feature_set) {
       *hidl_caps |= convertLegacyFeatureToHidlChipCapability(feature);
     }
