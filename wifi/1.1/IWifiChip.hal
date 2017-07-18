@@ -32,7 +32,15 @@ interface IWifiChip extends @1.0::IWifiChip {
     /**
      * Set/Reset Tx Power limits.
      */
-    SET_TX_POWER_LIMIT = 1 << 8
+    SET_TX_POWER_LIMIT = 1 << 8,
+    /**
+     * Device to Device RTT.
+     */
+    D2D_RTT            = 1 << 9,
+    /**
+     * Device to AP RTT.
+     */
+    D2AP_RTT           = 1 << 10
   };
 
   /**
