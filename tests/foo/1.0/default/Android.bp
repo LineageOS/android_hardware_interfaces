@@ -4,7 +4,6 @@ cc_library_shared {
     name: "android.hardware.tests.foo@1.0-impl",
     defaults: ["hidl_defaults"],
     relative_install_path: "hw",
-    proprietary: true,
     srcs: [
         "Foo.cpp",
     ],
