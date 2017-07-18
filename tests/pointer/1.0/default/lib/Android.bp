@@ -1,6 +1,5 @@
 cc_library_shared {
     name: "libpointertest",
-    vendor: true,
     defaults: ["hidl_defaults"],
     srcs: [
         "PointerHelper.cpp"
