@@ -604,12 +604,12 @@ void waitOnInputConsumption(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                             PortMode oPortMode) {
     android::hardware::media::omx::V1_0::Status status;
     Message msg;
-    int timeOut = TIMEOUT_COUNTER;
+    int timeOut = TIMEOUT_COUNTER_Q;
 
     while (timeOut--) {
         size_t i = 0;
         status =
-            observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
+            observer->dequeueMessage(&msg, DEFAULT_TIMEOUT_Q, iBuffer, oBuffer);
         if (status == android::hardware::media::omx::V1_0::Status::OK) {
             EXPECT_EQ(msg.type, Message::Type::EVENT);
             portReconfiguration(omxNode, observer, iBuffer, oBuffer,
@@ -628,8 +628,8 @@ void waitOnInputConsumption(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         size_t index;
         if ((index = getEmptyBufferID(oBuffer)) < oBuffer->size()) {
             dispatchOutputBuffer(omxNode, oBuffer, index, oPortMode);
+            timeOut = TIMEOUT_COUNTER_Q;
         }
-        timeOut--;
     }
 }
 
@@ -669,11 +669,12 @@ void decodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         frameID++;
     }
 
-    int timeOut = TIMEOUT_COUNTER;
-    bool stall = false;
+    int timeOut = TIMEOUT_COUNTER_Q;
+    bool iQueued, oQueued;
     while (1) {
+        iQueued = oQueued = false;
         status =
-            observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
+            observer->dequeueMessage(&msg, DEFAULT_TIMEOUT_Q, iBuffer, oBuffer);
 
         // Port Reconfiguration
         if (status == android::hardware::media::omx::V1_0::Status::OK &&
@@ -702,18 +703,16 @@ void decodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                                 (*Info)[frameID].bytesCount, flags,
                                 (*Info)[frameID].timestamp);
             frameID++;
-            stall = false;
-        } else
-            stall = true;
+            iQueued = true;
+        }
         if ((index = getEmptyBufferID(oBuffer)) < oBuffer->size()) {
             dispatchOutputBuffer(omxNode, oBuffer, index, oPortMode);
-            stall = false;
-        } else
-            stall = true;
-        if (stall)
-            timeOut--;
+            oQueued = true;
+        }
+        if (iQueued || oQueued)
+            timeOut = TIMEOUT_COUNTER_Q;
         else
-            timeOut = TIMEOUT_COUNTER;
+            timeOut--;
         if (timeOut == 0) {
             EXPECT_TRUE(false) << "Wait on Input/Output is found indefinite";
             break;
@@ -1165,9 +1164,8 @@ TEST_F(VideoDecHidlTest, FlushTest) {
     decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
                   kPortIndexOutput, eleStream, &Info, 0, nFrames, portMode[1],
                   false);
-    // Note: Assumes 200 ms is enough to end any decode call that started
     flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-               kPortIndexOutput, 200000);
+               kPortIndexOutput);
     framesReceived = 0;
 
     // Seek to next key frame and start decoding till the end
@@ -1188,9 +1186,8 @@ TEST_F(VideoDecHidlTest, FlushTest) {
                       kPortIndexOutput, eleStream, &Info, index,
                       Info.size() - index, portMode[1], false);
     }
-    // Note: Assumes 200 ms is enough to end any decode call that started
     flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-               kPortIndexOutput, 200000);
+               kPortIndexOutput);
     framesReceived = 0;
 
     // set state to idle
