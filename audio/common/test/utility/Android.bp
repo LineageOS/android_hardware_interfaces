@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-cc_library_shared {
+cc_library_static {
     name: "android.hardware.audio.common.test.utility",
     defaults : ["hidl_defaults"],
     srcs: ["src/ValidateXml.cpp"],
