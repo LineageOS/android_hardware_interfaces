@@ -98,7 +98,7 @@ static ProgramInfo makeDummyProgramInfo(const ProgramSelector& selector) {
     ProgramInfo info11 = {};
     auto& info10 = info11.base;
 
-    utils::getLegacyChannel(selector, info10.channel, info10.subChannel);
+    utils::getLegacyChannel(selector, &info10.channel, &info10.subChannel);
     info11.selector = selector;
     info11.flags |= ProgramInfoFlags::MUTED;
 
