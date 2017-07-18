@@ -15,7 +15,6 @@
 cc_library_shared {
     name: "android.hardware.tests.memory@1.0-impl",
     defaults: ["hidl_defaults"],
-    proprietary: true,
     relative_install_path: "hw",
     srcs: [
         "MemoryTest.cpp",
