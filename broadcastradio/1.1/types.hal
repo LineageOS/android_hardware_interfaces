@@ -66,6 +66,29 @@ struct Properties {
     bool supportsBackgroundScanning;
 
     /**
+     * A list of supported ProgramType values.
+     *
+     * If a program type is supported by radio module, it means it can tune
+     * to ProgramSelector of a given type.
+     *
+     * Support for VENDOR program type does not guarantee compatibility, as
+     * other module properties (implementor, product, version) must be checked.
+     */
+    vec<uint32_t> supportedProgramTypes;
+
+    /**
+     * A list of supported IdentifierType values.
+     *
+     * If an identifier is supported by radio module, it means it can use it for
+     * tuning to ProgramSelector with either primary or secondary Identifier of
+     * a given type.
+     *
+     * Support for VENDOR identifier type does not guarantee compatibility, as
+     * other module properties (implementor, product, version) must be checked.
+     */
+    vec<uint32_t> supportedIdentifierTypes;
+
+    /**
      * Opaque vendor-specific string, to be passed to front-end without changes.
      * Format of this string can vary across vendors.
      *
