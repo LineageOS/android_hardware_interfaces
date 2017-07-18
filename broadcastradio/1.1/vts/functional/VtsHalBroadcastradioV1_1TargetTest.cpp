@@ -68,9 +68,9 @@ class TunerCallbackMock : public ITunerCallback {
     MOCK_METHOD0(hardwareFailure, Return<void>());
     MOCK_TIMEOUT_METHOD2(configChange, Return<void>(Result, const BandConfig&));
     MOCK_METHOD2(tuneComplete, Return<void>(Result, const V1_0::ProgramInfo&));
-    MOCK_TIMEOUT_METHOD2(tuneComplete_1_1, Return<void>(Result, const ProgramInfo&));
+    MOCK_TIMEOUT_METHOD2(tuneComplete_1_1, Return<void>(Result, const ProgramSelector&));
     MOCK_METHOD1(afSwitch, Return<void>(const V1_0::ProgramInfo&));
-    MOCK_METHOD1(afSwitch_1_1, Return<void>(const ProgramInfo&));
+    MOCK_METHOD1(afSwitch_1_1, Return<void>(const ProgramSelector&));
     MOCK_METHOD1(antennaStateChange, Return<void>(bool connected));
     MOCK_METHOD1(trafficAnnouncement, Return<void>(bool active));
     MOCK_METHOD1(emergencyAnnouncement, Return<void>(bool active));
@@ -78,6 +78,7 @@ class TunerCallbackMock : public ITunerCallback {
     MOCK_METHOD1(backgroundScanAvailable, Return<void>(bool));
     MOCK_TIMEOUT_METHOD1(backgroundScanComplete, Return<void>(ProgramListResult));
     MOCK_METHOD0(programListChanged, Return<void>());
+    MOCK_METHOD0(programInfoChanged, Return<void>());
 };
 
 class BroadcastRadioHalTest : public ::testing::VtsHalHidlTargetTestBase,
@@ -276,14 +277,14 @@ TEST_P(BroadcastRadioHalTest, TuneFromProgramList) {
         return;
     }
 
-    ProgramInfo infoCb;
+    ProgramSelector selCb;
     EXPECT_CALL(*mCallback, tuneComplete(_, _));
     EXPECT_TIMEOUT_CALL(*mCallback, tuneComplete_1_1, Result::OK, _)
-        .WillOnce(DoAll(SaveArg<1>(&infoCb), testing::Return(ByMove(Void()))));
+        .WillOnce(DoAll(SaveArg<1>(&selCb), testing::Return(ByMove(Void()))));
     auto tuneResult = mTuner->tune_1_1(firstProgram.selector);
     ASSERT_EQ(Result::OK, tuneResult);
     EXPECT_TIMEOUT_CALL_WAIT(*mCallback, tuneComplete_1_1, kTuneTimeout);
-    EXPECT_EQ(firstProgram.selector.primaryId, infoCb.selector.primaryId);
+    EXPECT_EQ(firstProgram.selector.primaryId, selCb.primaryId);
 }
 
 INSTANTIATE_TEST_CASE_P(BroadcastRadioHalTestCases, BroadcastRadioHalTest,

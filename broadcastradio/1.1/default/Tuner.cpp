@@ -126,9 +126,10 @@ void Tuner::tuneInternalLocked(const ProgramSelector& sel) {
     }
     mIsTuneCompleted = true;
 
-    mCallback->tuneComplete(Result::OK, mCurrentProgramInfo.base);
-    if (mCallback1_1 != nullptr) {
-        mCallback1_1->tuneComplete_1_1(Result::OK, mCurrentProgramInfo);
+    if (mCallback1_1 == nullptr) {
+        mCallback->tuneComplete(Result::OK, mCurrentProgramInfo.base);
+    } else {
+        mCallback1_1->tuneComplete_1_1(Result::OK, mCurrentProgramInfo.selector);
     }
 }
 
@@ -146,8 +147,9 @@ Return<Result> Tuner::scan(Direction direction, bool skipSubChannel __unused) {
         auto task = [this, direction]() {
             ALOGI("Performing failed scan %s", toString(direction).c_str());
 
-            mCallback->tuneComplete(Result::TIMEOUT, {});
-            if (mCallback1_1 != nullptr) {
+            if (mCallback1_1 == nullptr) {
+                mCallback->tuneComplete(Result::TIMEOUT, {});
+            } else {
                 mCallback1_1->tuneComplete_1_1(Result::TIMEOUT, {});
             }
         };
