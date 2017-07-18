@@ -269,6 +269,11 @@ Return<Result> Tuner::cancel() {
     return Result::OK;
 }
 
+Return<Result> Tuner::cancelAnnouncement() {
+    ALOGV("%s", __func__);
+    return Result::OK;
+}
+
 Return<void> Tuner::getProgramInformation(getProgramInformation_cb _hidl_cb) {
     ALOGV("%s", __func__);
     return getProgramInformation_1_1([&](Result result, const ProgramInfo& info) {

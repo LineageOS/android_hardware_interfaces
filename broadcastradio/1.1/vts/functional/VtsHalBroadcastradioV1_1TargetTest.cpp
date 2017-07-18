@@ -47,6 +47,7 @@ using testing::_;
 using testing::AnyNumber;
 using testing::ByMove;
 using testing::DoAll;
+using testing::Invoke;
 using testing::SaveArg;
 
 using broadcastradio::vts::CallBarrier;
@@ -63,8 +64,9 @@ static void printSkipped(std::string msg) {
     std::cout << "[  SKIPPED ] " << msg << std::endl;
 }
 
-class TunerCallbackMock : public ITunerCallback {
-   public:
+struct TunerCallbackMock : public ITunerCallback {
+    TunerCallbackMock() { EXPECT_CALL(*this, hardwareFailure()).Times(0); }
+
     MOCK_METHOD0(hardwareFailure, Return<void>());
     MOCK_TIMEOUT_METHOD2(configChange, Return<void>(Result, const BandConfig&));
     MOCK_METHOD2(tuneComplete, Return<void>(Result, const V1_0::ProgramInfo&));
@@ -105,9 +107,6 @@ class BroadcastRadioHalTest : public ::testing::VtsHalHidlTargetTestBase,
 
 void BroadcastRadioHalTest::SetUp() {
     radioClass = GetParam();
-
-    // set general expectations for a callback
-    EXPECT_CALL(*mCallback, hardwareFailure()).Times(0);
 
     // lookup HIDL service
     auto factory = getService<IBroadcastRadioFactory>();
@@ -285,6 +284,14 @@ TEST_P(BroadcastRadioHalTest, TuneFromProgramList) {
     ASSERT_EQ(Result::OK, tuneResult);
     EXPECT_TIMEOUT_CALL_WAIT(*mCallback, tuneComplete_1_1, kTuneTimeout);
     EXPECT_EQ(firstProgram.selector.primaryId, selCb.primaryId);
+}
+
+TEST_P(BroadcastRadioHalTest, CancelAnnouncement) {
+    if (skipped) return;
+    ASSERT_TRUE(openTuner(0));
+
+    auto hidlResult = mTuner->cancelAnnouncement();
+    EXPECT_EQ(Result::OK, hidlResult);
 }
 
 INSTANTIATE_TEST_CASE_P(BroadcastRadioHalTestCases, BroadcastRadioHalTest,
