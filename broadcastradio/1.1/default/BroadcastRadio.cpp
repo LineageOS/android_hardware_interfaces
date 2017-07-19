@@ -101,7 +101,7 @@ Return<void> BroadcastRadio::getProperties_1_1(getProperties_1_1_cb _hidl_cb) {
         static_cast<uint32_t>(IdentifierType::HD_STATION_ID_EXT),
         static_cast<uint32_t>(IdentifierType::HD_SUBCHANNEL),
     });
-    prop11.vendorExension = "dummy";
+    prop11.vendorInfo = "dummy";
 
     prop10.bands.resize(mConfig.amFmBands.size());
     for (size_t i = 0; i < mConfig.amFmBands.size(); i++) {

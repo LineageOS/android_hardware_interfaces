@@ -98,7 +98,7 @@ struct Properties {
      * Front-end application MUST verify vendor/product name from the
      * @1.0::Properties struct before doing any interpretation of this value.
      */
-    string vendorExension;
+    string vendorInfo;
 };
 
 /**
@@ -285,5 +285,5 @@ struct ProgramInfo {
      * Front-end application MUST verify vendor/product name from the
      * @1.0::Properties struct before doing any interpretation of this value.
      */
-    string vendorExension;
+    string vendorInfo;
 };
