@@ -102,6 +102,16 @@ struct Properties {
 };
 
 /**
+ * Type of modulation.
+ *
+ * Used as a value for DRMO_MODULATION IdentifierType.
+ */
+enum Modulation : uint32_t {
+    AM = 1,
+    FM,
+};
+
+/**
  * Type of a radio technology.
  *
  * There are multiple VENDOR program types just to make vendor implementation
@@ -176,6 +186,7 @@ enum IdentifierType : uint32_t {
     DAB_FREQUENCY,    // kHz
     DRMO_SERVICE_ID,  // 24bit
     DRMO_FREQUENCY,   // kHz
+    DRMO_MODULATION,  // Modulation enum
     SXM_SERVICE_ID,   // 32bit
     SXM_CHANNEL,      // 0-999 range
 
