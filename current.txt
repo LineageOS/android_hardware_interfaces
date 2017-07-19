@@ -191,7 +191,7 @@ fe3c3c2f572b72f15f8594c538b0577bd5c28722c31879cfe6231330cddb6747 android.hardwar
 
 8a4082dbc7f5eef585dca841b2656ba62d6c7e10e25dd05507ead15d96224f4c android.hardware.broadcastradio@1.0::types
 760485232f6cce07f8bb05e3475509956996b702f77415ee5bff05e2ec5a5bcc android.hardware.dumpstate@1.0::IDumpstateDevice
-1fecfa1609ff9d27ebf761a84b4336efa9d5dac5b241f19a6663f70d8db2c4b1 android.hardware.radio@1.0::IRadioResponse
+e822cb7f4a1bdd45689c5e92ccd19a2201c20b771bd4b2ec1ae627e324591f9d android.hardware.radio@1.0::IRadioResponse
 28e929b453df3d9f5060af2764e6cdb123ddb893e3e86923c877f6ff7e5f02c9 android.hardware.wifi@1.0::types
 
 # HALs released in Android O MR1
