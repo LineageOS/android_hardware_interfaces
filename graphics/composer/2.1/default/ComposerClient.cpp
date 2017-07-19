@@ -1149,6 +1149,13 @@ Error ComposerClient::CommandReader::lookupBuffer(BufferCache cache,
 
         // input handle is ignored
         *outHandle = entry->getHandle();
+    } else if (cache == BufferCache::LAYER_SIDEBAND_STREAMS) {
+        if (handle) {
+            *outHandle = native_handle_clone(handle);
+            if (*outHandle == nullptr) {
+                return Error::NO_RESOURCES;
+            }
+        }
     } else {
         if (!sHandleImporter.importBuffer(handle)) {
             return Error::NO_RESOURCES;
