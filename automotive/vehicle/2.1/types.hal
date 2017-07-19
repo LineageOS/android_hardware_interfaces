@@ -23,12 +23,37 @@ import android.hardware.automotive.vehicle@2.0;
  */
 enum VehicleProperty: @2.0::VehicleProperty {
     /**
-     * Reports wheel rotational distance in meters since last wheel tick
-     * event
+     * Reports wheel ticks
      *
-     * The value is a vector each element represents distance for individual
-     * wheel in the following order: left front, right front, left rear,
-     * right rear. VehiclePropValue.timestamp must be correctly filled in.
+     * The first four elements represent ticks for individual wheels in the
+     * following order: front left, front right, rear right, rear left.  All
+     * tick counts are cumulative.  Tick counts increment when the vehicle
+     * moves forward, and decrement when vehicles moves in reverse.  The ticks
+     * should be reset to 0 when the vehicle is started by the user.
+     *
+     * The next element in the vector is a reset count.  A reset indicates
+     * previous tick counts are not comparable with this and future ones.  Some
+     * sort of discontinuity in tick counting has occurred.
+     *
+     *  int64Values[0] = reset count
+     *  int64Values[1] = front left ticks
+     *  int64Values[2] = front right ticks
+     *  int64Values[3] = rear right ticks
+     *  int64Values[4] = rear left ticks
+     *
+     * configArray is used to indicate the micrometers-per-wheel-tick value as well as
+     * which wheels are supported.  configArray is set as follows:
+     *
+     *  configArray[0], bits [0:3] = supported wheels.  Uses enum Wheel.
+     *  configArray[1] = micrometers per front left wheel tick
+     *  configArray[2] = micrometers per front right wheel tick
+     *  configArray[3] = micrometers per rear right wheel tick
+     *  configArray[4] = micrometers per rear left wheel tick
+     *
+     * NOTE:  If a wheel is not supported, its value shall always be set to
+     *          LONG_MAX = 9223372036854775807.
+     *
+     * VehiclePropValue.timestamp must be correctly filled in.
      *
      * Vendors must specify wheels that support this sensor in
      * VehiclePropConfig.configFlags. The format of this field is a bitset of
@@ -36,13 +61,36 @@ enum VehicleProperty: @2.0::VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE |VehiclePropertyChangeMode:CONTINUOUS
      * @access VehiclePropertyAccess:READ
-     * @unit VehicleUnit:METER
      */
     WHEEL_TICK = (
       0x0306
       | VehiclePropertyGroup:SYSTEM
-      | VehiclePropertyType:FLOAT_VEC
+      | VehiclePropertyType:COMPLEX
       | VehicleArea:GLOBAL),
+
+    /**
+     * ABS is active.  Set to true whenever ABS is activated.  Reset to false when ABS is off.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     */
+    ABS_ACTIVE = (
+        0x040A
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:BOOLEAN
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Traction Control is active.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     */
+    TRACTION_CONTROL_ACTIVE = (
+        0x040B
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:BOOLEAN
+        | VehicleArea:GLOBAL),
 
     /**
      * Automatic re-circulation on/off
