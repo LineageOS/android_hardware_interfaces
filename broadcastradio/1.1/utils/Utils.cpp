@@ -24,7 +24,6 @@ namespace android {
 namespace hardware {
 namespace broadcastradio {
 namespace V1_1 {
-namespace implementation {
 namespace utils {
 
 using V1_0::Band;
@@ -92,7 +91,10 @@ bool tunesTo(const ProgramSelector& a, const ProgramSelector& b) {
                 return haveEqualIds(a, b, IdentifierType::SXM_SERVICE_ID);
             }
             return haveEqualIds(a, b, IdentifierType::SXM_CHANNEL);
-        case ProgramType::VENDOR:
+        case ProgramType::VENDOR1:
+        case ProgramType::VENDOR2:
+        case ProgramType::VENDOR3:
+        case ProgramType::VENDOR4:
         default:
             ALOGW("Unsupported program type: %s", toString(type).c_str());
             return false;
@@ -166,26 +168,31 @@ ProgramSelector make_selector(Band band, uint32_t channel, uint32_t subChannel) 
     sel.primaryId.type = static_cast<uint32_t>(IdentifierType::AMFM_FREQUENCY);
     sel.primaryId.value = channel;
     if (subChannel > 0) {
-        // stating sub channel for AM/FM channel does not give any guarantees,
-        // but we can't do much more without HD station ID
+        /* stating sub channel for AM/FM channel does not give any guarantees,
+         * but we can't do much more without HD station ID
+         *
+         * The legacy APIs had 1-based subChannels, while ProgramSelector is 0-based.
+         */
         sel.secondaryIds = hidl_vec<ProgramIdentifier>{
-            {static_cast<uint32_t>(IdentifierType::HD_SUBCHANNEL), subChannel},
+            {static_cast<uint32_t>(IdentifierType::HD_SUBCHANNEL), subChannel - 1},
         };
     }
 
     return sel;
 }
 
-bool getLegacyChannel(const ProgramSelector& sel, uint32_t& channelOut, uint32_t& subChannelOut) {
+bool getLegacyChannel(const ProgramSelector& sel, uint32_t* channelOut, uint32_t* subChannelOut) {
+    if (channelOut) *channelOut = 0;
+    if (subChannelOut) *subChannelOut = 0;
     if (isAmFm(getType(sel))) {
-        channelOut = getId(sel, IdentifierType::AMFM_FREQUENCY);
-        subChannelOut = getId(sel, IdentifierType::HD_SUBCHANNEL, 0);
+        if (channelOut) *channelOut = getId(sel, IdentifierType::AMFM_FREQUENCY);
+        if (subChannelOut && hasId(sel, IdentifierType::HD_SUBCHANNEL)) {
+            // The legacy APIs had 1-based subChannels, while ProgramSelector is 0-based.
+            *subChannelOut = getId(sel, IdentifierType::HD_SUBCHANNEL) + 1;
+        }
         return true;
-    } else {
-        channelOut = 0;
-        subChannelOut = 0;
-        return false;
     }
+    return false;
 }
 
 bool isDigital(const ProgramSelector& sel) {
@@ -200,7 +207,6 @@ bool isDigital(const ProgramSelector& sel) {
 }
 
 }  // namespace utils
-}  // namespace implementation
 }  // namespace V1_1
 }  // namespace broadcastradio
 }  // namespace hardware

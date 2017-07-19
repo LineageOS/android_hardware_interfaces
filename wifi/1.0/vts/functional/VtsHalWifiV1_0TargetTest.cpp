@@ -20,10 +20,16 @@
 
 #include "wifi_hidl_test_utils.h"
 
+WifiHidlEnvironment* gEnv;
+
 int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(new WifiHidlEnvironment);
+    gEnv = new WifiHidlEnvironment();
+    ::testing::AddGlobalTestEnvironment(gEnv);
     ::testing::InitGoogleTest(&argc, argv);
-    int status = RUN_ALL_TESTS();
-    LOG(INFO) << "Test result = " << status;
+    int status = gEnv->initFromOptions(argc, argv);
+    if (status == 0) {
+        status = RUN_ALL_TESTS();
+        LOG(INFO) << "Test result = " << status;
+    }
     return status;
 }

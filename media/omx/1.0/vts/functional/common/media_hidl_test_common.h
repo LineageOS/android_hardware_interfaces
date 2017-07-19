@@ -33,8 +33,21 @@
 #include <media/openmax/OMX_AudioExt.h>
 #include <media/openmax/OMX_VideoExt.h>
 
+/* TIME OUTS (Wait time in dequeueMessage()) */
+
+/* As component is switching states (loaded<->idle<->execute), dequeueMessage()
+ * expects the events to be received within this duration */
 #define DEFAULT_TIMEOUT 100000
-#define TIMEOUT_COUNTER (10000000 / DEFAULT_TIMEOUT)
+/* Time interval between successive Input/Output enqueues */
+#define DEFAULT_TIMEOUT_Q 2000
+/* While the component is amidst a process call, asynchronous commands like
+ * flush, change states can get delayed (at max by process call time). Instead
+ * of waiting on DEFAULT_TIMEOUT, we give an additional leeway. */
+#define DEFAULT_TIMEOUT_PE 500000
+
+/* Breakout Timeout :: 5 sec*/
+#define TIMEOUT_COUNTER_Q (5000000 / DEFAULT_TIMEOUT_Q)
+#define TIMEOUT_COUNTER_PE (5000000 / DEFAULT_TIMEOUT_PE)
 
 /*
  * Random Index used for monkey testing while get/set parameters
@@ -310,7 +323,8 @@ void dispatchInputBuffer(sp<IOmxNode> omxNode,
 void flushPorts(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                 android::Vector<BufferInfo>* iBuffer,
                 android::Vector<BufferInfo>* oBuffer, OMX_U32 kPortIndexInput,
-                OMX_U32 kPortIndexOutput, int64_t timeoutUs = DEFAULT_TIMEOUT);
+                OMX_U32 kPortIndexOutput,
+                int64_t timeoutUs = DEFAULT_TIMEOUT_PE);
 
 typedef void (*portreconfig)(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                              android::Vector<BufferInfo>* iBuffer,

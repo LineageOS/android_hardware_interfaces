@@ -43,6 +43,17 @@ enum ProgramInfoFlags : uint32_t {
      * increasing volume too much.
      */
     MUTED = 1 << 1,
+
+    /**
+     * Station broadcasts traffic information regularly,
+     * but not necessarily right now.
+     */
+    TRAFFIC_PROGRAM = 1 << 2,
+
+    /**
+     * Station is broadcasting traffic information at the very moment.
+     */
+    TRAFFIC_ANNOUNCEMENT = 1 << 3,
 };
 
 struct Properties {
@@ -53,6 +64,29 @@ struct Properties {
      * it may not be available though, see startBackgroundScan.
      */
     bool supportsBackgroundScanning;
+
+    /**
+     * A list of supported ProgramType values.
+     *
+     * If a program type is supported by radio module, it means it can tune
+     * to ProgramSelector of a given type.
+     *
+     * Support for VENDOR program type does not guarantee compatibility, as
+     * other module properties (implementor, product, version) must be checked.
+     */
+    vec<uint32_t> supportedProgramTypes;
+
+    /**
+     * A list of supported IdentifierType values.
+     *
+     * If an identifier is supported by radio module, it means it can use it for
+     * tuning to ProgramSelector with either primary or secondary Identifier of
+     * a given type.
+     *
+     * Support for VENDOR identifier type does not guarantee compatibility, as
+     * other module properties (implementor, product, version) must be checked.
+     */
+    vec<uint32_t> supportedIdentifierTypes;
 
     /**
      * Opaque vendor-specific string, to be passed to front-end without changes.
@@ -70,6 +104,10 @@ struct Properties {
 /**
  * Type of a radio technology.
  *
+ * There are multiple VENDOR program types just to make vendor implementation
+ * easier with multiple properitary radio technologies. They are treated the
+ * same by the framework.
+ *
  * All other values are reserved for future use.
  */
 enum ProgramType : uint32_t {
@@ -80,7 +118,10 @@ enum ProgramType : uint32_t {
     DAB,     // Digital audio broadcasting
     DRMO,    // Digital Radio Mondiale
     SXM,     // SiriusXM Satellite Radio
-    VENDOR,  // vendor-specific, not synced across devices
+    VENDOR1, // Vendor-specific, not synced across devices.
+    VENDOR2, // Vendor-specific, not synced across devices.
+    VENDOR3, // Vendor-specific, not synced across devices.
+    VENDOR4, // Vendor-specific, not synced across devices.
 };
 
 /**
@@ -142,9 +183,12 @@ enum IdentifierType : uint32_t {
      * Primary identifier for vendor-specific radio technology.
      * The value format is determined by a vendor.
      *
-     * It must not be used in any other programType than VENDOR.
+     * It must not be used in any other programType than VENDORx.
      */
-    VENDOR_PRIMARY,
+    VENDOR1_PRIMARY,
+    VENDOR2_PRIMARY,
+    VENDOR3_PRIMARY,
+    VENDOR4_PRIMARY,
 };
 
 /**

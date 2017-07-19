@@ -31,7 +31,7 @@ VirtualProgram::operator ProgramInfo() const {
     ProgramInfo info11 = {};
     auto& info10 = info11.base;
 
-    utils::getLegacyChannel(selector, info10.channel, info10.subChannel);
+    utils::getLegacyChannel(selector, &info10.channel, &info10.subChannel);
     info11.selector = selector;
     info10.tuned = true;
     info10.stereo = true;

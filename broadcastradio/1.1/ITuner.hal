@@ -42,6 +42,24 @@ interface ITuner extends @1.0::ITuner {
     tune_1_1(ProgramSelector program) generates (Result result);
 
     /**
+     * Cancels announcement.
+     *
+     * If it was traffic announcement, trafficAnnouncement(false) callback
+     * should be called (just like it was ended in a normal way). Similarly for
+     * emergency announcement. If there was no announcement, then no action
+     * should be taken.
+     *
+     * There is a race condition between calling cancelAnnouncement and the
+     * actual announcement being finished, so trafficAnnouncement /
+     * emergencyAnnouncement callback should be tracked with proper locking.
+     *
+     * @return result OK if successfully cancelled announcement or there was
+     *                no announcement.
+     *                NOT_INITIALIZED if another error occurs.
+     */
+    cancelAnnouncement() generates (Result result);
+
+    /**
      * Retrieve current station information.
      * @return result OK if scan successfully started
      *                NOT_INITIALIZED if another error occurs

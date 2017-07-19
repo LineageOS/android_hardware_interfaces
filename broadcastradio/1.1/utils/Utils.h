@@ -25,7 +25,6 @@ namespace android {
 namespace hardware {
 namespace broadcastradio {
 namespace V1_1 {
-namespace implementation {
 namespace utils {
 
 /**
@@ -61,12 +60,11 @@ uint64_t getId(const ProgramSelector& sel, const IdentifierType type, uint64_t d
 
 ProgramSelector make_selector(V1_0::Band band, uint32_t channel, uint32_t subChannel = 0);
 
-bool getLegacyChannel(const ProgramSelector& sel, uint32_t& channelOut, uint32_t& subChannelOut);
+bool getLegacyChannel(const ProgramSelector& sel, uint32_t* channelOut, uint32_t* subChannelOut);
 
 bool isDigital(const ProgramSelector& sel);
 
 }  // namespace utils
-}  // namespace implementation
 }  // namespace V1_1
 }  // namespace broadcastradio
 }  // namespace hardware
