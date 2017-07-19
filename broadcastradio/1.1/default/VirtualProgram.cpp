@@ -17,6 +17,8 @@
 
 #include <Utils.h>
 
+#include "resources.h"
+
 namespace android {
 namespace hardware {
 namespace broadcastradio {
@@ -26,6 +28,23 @@ namespace implementation {
 using V1_0::MetaData;
 using V1_0::MetadataKey;
 using V1_0::MetadataType;
+
+// TODO (b/36864090): inject this data in a more elegant way
+static int gHalVersion = 2;  // 1 = 1.0, 2 = 1.1
+
+void setCompatibilityLevel(int halversion) {
+    gHalVersion = halversion;
+}
+
+static MetaData createDemoBitmap(MetadataKey key) {
+    MetaData bmp = {MetadataType::INT, key, resources::demoPngId, {}, {}, {}};
+    if (gHalVersion < 2) {
+        bmp.type = MetadataType::RAW;
+        bmp.intValue = 0;
+        bmp.rawValue = std::vector<uint8_t>(resources::demoPng, std::end(resources::demoPng));
+    }
+    return bmp;
+}
 
 VirtualProgram::operator ProgramInfo() const {
     ProgramInfo info11 = {};
@@ -42,6 +61,8 @@ VirtualProgram::operator ProgramInfo() const {
         {MetadataType::TEXT, MetadataKey::RDS_PS, {}, {}, programName, {}},
         {MetadataType::TEXT, MetadataKey::TITLE, {}, {}, songTitle, {}},
         {MetadataType::TEXT, MetadataKey::ARTIST, {}, {}, songArtist, {}},
+        createDemoBitmap(MetadataKey::ICON),
+        createDemoBitmap(MetadataKey::ART),
     });
 
     return info11;

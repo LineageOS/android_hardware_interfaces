@@ -52,7 +52,10 @@ const struct {
 Tuner::Tuner(const sp<V1_0::ITunerCallback>& callback)
     : mCallback(callback),
       mCallback1_1(ITunerCallback::castFrom(callback).withDefault(nullptr)),
-      mVirtualFm(make_fm_radio()) {}
+      mVirtualFm(make_fm_radio()) {
+    // TODO (b/36864090): inject this data in a more elegant way
+    setCompatibilityLevel(mCallback1_1 == nullptr ? 1 : 2);
+}
 
 void Tuner::forceClose() {
     lock_guard<mutex> lk(mMut);

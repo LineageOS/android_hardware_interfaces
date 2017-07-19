@@ -27,4 +27,23 @@ interface IBroadcastRadio extends @1.0::IBroadcastRadio {
      */
     getProperties_1_1() generates (Properties properties);
 
+    /**
+     * Fetch image from radio module.
+     *
+     * This call is meant to make V1_0::MetaData lightweight - instead of
+     * passing image data blob in MetadataType.RAW field, only identifier is
+     * passed, so the client may cache images or even not fetch them.
+     *
+     * Identifier may be any arbitrary number - sequential, sha256 prefix,
+     * or any other unique value selected by the vendor.
+     *
+     * The data should be a valid PNG, JPEG, GIF or BMP file.
+     * Invalid format must be handled gracefully as if the image was missing.
+     *
+     * @param id Identifier of an image;
+     *           value of 0 is reserved and should be treated as invalid image.
+     * @return image A binary blob with image data
+     *               or zero-length vector if identifier doesn't exists.
+     */
+    getImage(int32_t id) generates (vec<uint8_t> image);
 };

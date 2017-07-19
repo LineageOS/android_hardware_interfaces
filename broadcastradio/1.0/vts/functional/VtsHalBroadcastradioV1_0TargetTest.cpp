@@ -46,7 +46,8 @@ using ::android::hardware::broadcastradio::V1_0::BandConfig;
 using ::android::hardware::broadcastradio::V1_0::Direction;
 using ::android::hardware::broadcastradio::V1_0::ProgramInfo;
 using ::android::hardware::broadcastradio::V1_0::MetaData;
-
+using ::android::hardware::broadcastradio::V1_0::MetadataKey;
+using ::android::hardware::broadcastradio::V1_0::MetadataType;
 
 #define RETURN_IF_SKIPPED \
     if (skipped) { \
@@ -646,6 +647,52 @@ TEST_P(BroadcastRadioHidlTest, TuneFailsOutOfBounds) {
     EXPECT_TRUE(tuneResult.isOk());
     EXPECT_EQ(Result::OK, tuneResult);
     EXPECT_TRUE(waitForCallback(kTuneCallbacktimeoutNs));
+}
+
+/**
+ * Test proper image format in metadata.
+ *
+ * Verifies that:
+ * - all images in metadata are provided in-band (as a binary blob, not by id)
+ *
+ * This is a counter-test for OobImagesOnly from 1.1 VTS.
+ */
+TEST_P(BroadcastRadioHidlTest, IbImagesOnly) {
+    RETURN_IF_SKIPPED;
+    ASSERT_TRUE(openTuner());
+    ASSERT_TRUE(checkAntenna());
+
+    bool firstScan = true;
+    uint32_t firstChannel, prevChannel;
+    while (true) {
+        mCallbackCalled = false;
+        auto hidlResult = mTuner->scan(Direction::UP, true);
+        ASSERT_TRUE(hidlResult.isOk());
+        if (hidlResult == Result::TIMEOUT) {
+            ALOGI("Got timeout on scan operation");
+            break;
+        }
+        ASSERT_EQ(Result::OK, hidlResult);
+        ASSERT_EQ(true, waitForCallback(kTuneCallbacktimeoutNs));
+
+        if (firstScan) {
+            firstScan = false;
+            firstChannel = mProgramInfoCallbackData.channel;
+        } else {
+            // scanned the whole band
+            if (mProgramInfoCallbackData.channel >= firstChannel && prevChannel <= firstChannel) {
+                break;
+            }
+        }
+        prevChannel = mProgramInfoCallbackData.channel;
+
+        for (auto&& entry : mProgramInfoCallbackData.metadata) {
+            if (entry.key != MetadataKey::ICON && entry.key != MetadataKey::ART) continue;
+            EXPECT_EQ(MetadataType::RAW, entry.type);
+            EXPECT_EQ(0, entry.intValue);
+            EXPECT_GT(entry.rawValue.size(), 0u);
+        }
+    }
 }
 
 INSTANTIATE_TEST_CASE_P(

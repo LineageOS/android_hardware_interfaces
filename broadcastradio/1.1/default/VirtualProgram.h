@@ -25,6 +25,9 @@ namespace broadcastradio {
 namespace V1_1 {
 namespace implementation {
 
+// TODO (b/36864090): inject this data in a more elegant way
+void setCompatibilityLevel(int halversion);
+
 struct VirtualProgram {
     ProgramSelector selector;
 
