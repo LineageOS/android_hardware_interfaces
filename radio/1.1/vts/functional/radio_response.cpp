@@ -669,11 +669,15 @@ Return<void> RadioResponse_v1_1::setSimCardPowerResponse_1_1(const RadioResponse
     return Void();
 }
 
-Return<void> RadioResponse_v1_1::startNetworkScanResponse(const RadioResponseInfo& /*info*/) {
+Return<void> RadioResponse_v1_1::startNetworkScanResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_v1_1.notify();
     return Void();
 }
 
-Return<void> RadioResponse_v1_1::stopNetworkScanResponse(const RadioResponseInfo& /*info*/) {
+Return<void> RadioResponse_v1_1::stopNetworkScanResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_v1_1.notify();
     return Void();
 }
 
