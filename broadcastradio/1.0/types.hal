@@ -146,8 +146,11 @@ enum MetadataType : int32_t {
     /** String */
     TEXT       = 1,
     /**
-     * Raw binary data (icon or art)
-       This data must be transparent to the android framework */
+     * Raw binary data (icon or art).
+     *
+     * The data should be a valid PNG, JPEG, GIF or BMP file.
+     * Invalid format must be handled gracefully as if the field was missing.
+     */
     RAW        = 2,
     /** clock data, see MetaDataClock */
     CLOCK      = 3,
@@ -173,9 +176,9 @@ enum MetadataKey : int32_t {
     ALBUM        = 7,
     /** Musical genre          - string  */
     GENRE        = 8,
-    /** Station icon           - raw  */
+    /** Station icon           - raw (int32_t for HAL 1.1) */
     ICON         = 9,
-    /** Album art              - raw  */
+    /** Album art              - raw (int32_t for HAL 1.1) */
     ART          = 10,
     /** Clock                  - MetaDataClock */
     CLOCK        = 11,

@@ -63,6 +63,7 @@ struct BroadcastRadio : public V1_1::IBroadcastRadio {
     Return<void> openTuner(const V1_0::BandConfig& config, bool audio,
                            const sp<V1_0::ITunerCallback>& callback,
                            openTuner_cb _hidl_cb) override;
+    Return<void> getImage(int32_t id, getImage_cb _hidl_cb);
 
    private:
     std::mutex mMut;

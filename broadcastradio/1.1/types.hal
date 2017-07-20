@@ -98,7 +98,17 @@ struct Properties {
      * Front-end application MUST verify vendor/product name from the
      * @1.0::Properties struct before doing any interpretation of this value.
      */
-    string vendorExension;
+    string vendorInfo;
+};
+
+/**
+ * Type of modulation.
+ *
+ * Used as a value for DRMO_MODULATION IdentifierType.
+ */
+enum Modulation : uint32_t {
+    AM = 1,
+    FM,
 };
 
 /**
@@ -176,6 +186,7 @@ enum IdentifierType : uint32_t {
     DAB_FREQUENCY,    // kHz
     DRMO_SERVICE_ID,  // 24bit
     DRMO_FREQUENCY,   // kHz
+    DRMO_MODULATION,  // Modulation enum
     SXM_SERVICE_ID,   // 32bit
     SXM_CHANNEL,      // 0-999 range
 
@@ -274,5 +285,5 @@ struct ProgramInfo {
      * Front-end application MUST verify vendor/product name from the
      * @1.0::Properties struct before doing any interpretation of this value.
      */
-    string vendorExension;
+    string vendorInfo;
 };

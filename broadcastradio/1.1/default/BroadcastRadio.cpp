@@ -20,6 +20,8 @@
 
 #include <log/log.h>
 
+#include "resources.h"
+
 namespace android {
 namespace hardware {
 namespace broadcastradio {
@@ -99,7 +101,7 @@ Return<void> BroadcastRadio::getProperties_1_1(getProperties_1_1_cb _hidl_cb) {
         static_cast<uint32_t>(IdentifierType::HD_STATION_ID_EXT),
         static_cast<uint32_t>(IdentifierType::HD_SUBCHANNEL),
     });
-    prop11.vendorExension = "dummy";
+    prop11.vendorInfo = "dummy";
 
     prop10.bands.resize(mConfig.amFmBands.size());
     for (size_t i = 0; i < mConfig.amFmBands.size(); i++) {
@@ -152,6 +154,19 @@ Return<void> BroadcastRadio::openTuner(const BandConfig& config, bool audio __un
     }
 
     _hidl_cb(Result::OK, newTuner);
+    return Void();
+}
+
+Return<void> BroadcastRadio::getImage(int32_t id, getImage_cb _hidl_cb) {
+    ALOGV("%s(%x)", __func__, id);
+
+    if (id == resources::demoPngId) {
+        _hidl_cb(std::vector<uint8_t>(resources::demoPng, std::end(resources::demoPng)));
+        return {};
+    }
+
+    ALOGI("Image %x doesn't exists", id);
+    _hidl_cb({});
     return Void();
 }
 

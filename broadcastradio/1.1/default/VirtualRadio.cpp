@@ -32,7 +32,7 @@ using std::vector;
 
 using utils::make_selector;
 
-vector<VirtualProgram> gInitialFmPrograms{
+const vector<VirtualProgram> gInitialFmPrograms{
     {make_selector(Band::FM, 94900), "Wild 94.9", "Drake ft. Rihanna", "Too Good"},
     {make_selector(Band::FM, 96500), "KOIT", "Celine Dion", "All By Myself"},
     {make_selector(Band::FM, 97300), "Alice@97.3", "Drops of Jupiter", "Train"},
@@ -44,7 +44,7 @@ vector<VirtualProgram> gInitialFmPrograms{
 
 VirtualRadio::VirtualRadio(VirtualRadio&& o) : mPrograms(move(o.mPrograms)) {}
 
-VirtualRadio::VirtualRadio(vector<VirtualProgram> initialList) : mPrograms(initialList) {}
+VirtualRadio::VirtualRadio(const vector<VirtualProgram> initialList) : mPrograms(initialList) {}
 
 vector<VirtualProgram> VirtualRadio::getProgramList() {
     lock_guard<mutex> lk(mMut);

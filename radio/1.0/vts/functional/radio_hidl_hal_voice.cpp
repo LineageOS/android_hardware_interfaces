@@ -57,7 +57,7 @@ TEST_F(RadioHidlTest, dial) {
                     radioRsp->rspInfo.error == RadioError::NO_NETWORK_FOUND ||
                     radioRsp->rspInfo.error == RadioError::INVALID_CALL_ID ||
                     radioRsp->rspInfo.error == RadioError::DEVICE_IN_USE ||
-                    radioRsp->rspInfo.error == RadioError::MODE_NOT_SUPPORTED ||
+                    radioRsp->rspInfo.error == RadioError::OPERATION_NOT_ALLOWED ||
                     radioRsp->rspInfo.error == RadioError::INVALID_MODEM_STATE ||
                     radioRsp->rspInfo.error == RadioError::CANCELLED);
     }
@@ -373,7 +373,7 @@ TEST_F(RadioHidlTest, sendCDMAFeatureCode) {
                     radioRsp->rspInfo.error == RadioError::INVALID_CALL_ID ||
                     radioRsp->rspInfo.error == RadioError::INVALID_MODEM_STATE ||
                     radioRsp->rspInfo.error == RadioError::MODEM_ERR ||
-                    radioRsp->rspInfo.error == RadioError::MODE_NOT_SUPPORTED);
+                    radioRsp->rspInfo.error == RadioError::OPERATION_NOT_ALLOWED);
     }
 }
 
@@ -488,6 +488,6 @@ TEST_F(RadioHidlTest, sendBurstDtmf) {
                     radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
                     radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
                     radioRsp->rspInfo.error == RadioError::MODEM_ERR ||
-                    radioRsp->rspInfo.error == RadioError::MODE_NOT_SUPPORTED);
+                    radioRsp->rspInfo.error == RadioError::OPERATION_NOT_ALLOWED);
     }
 }
