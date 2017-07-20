@@ -110,6 +110,7 @@ public:
 protected:
     struct LayerBuffers {
         std::vector<BufferCacheEntry> Buffers;
+        // the handle is a sideband stream handle, not a buffer handle
         BufferCacheEntry SidebandStream;
     };
 
