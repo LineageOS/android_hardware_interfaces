@@ -186,3 +186,7 @@ d781c8d7e7b3fe5cca8cf6e1d8806e770982ae5358c7816ed51b0f0ec272e70d android.hardwar
 b12ef0bdd8a4d247a8a6e960b227ed32383f2b0241f55d67fcea6eff6a6737fa android.hardware.wifi.supplicant@1.0::ISupplicantStaNetwork
 d8f0877ae1d321c1d884c7631dfe36cab0ec8a4b2863d4b687f85d3549a63bcc android.hardware.wifi.supplicant@1.0::ISupplicantStaNetworkCallback
 fe3c3c2f572b72f15f8594c538b0577bd5c28722c31879cfe6231330cddb6747 android.hardware.wifi.supplicant@1.0::types
+
+# ABI preserving changes to HALs released in Android O
+
+78589343d8ee2e1b155acad3fbdc7fcbb6af94491aee968b2383c21627264f8b android.hardware.radio@1.0::IRadioResponse
