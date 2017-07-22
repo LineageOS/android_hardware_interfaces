@@ -681,7 +681,7 @@ enum VmsBaseMessageIntegerValuesIndex : int32_t {
 };
 
 /*
- * This enum provides the canonical mapping for VMS SUBMIT, UNSUBMIT and DATA
+ * This enum provides the canonical mapping for VMS SUBMIT and UNSUBMIT
  * messages integer value properties.
  */
 enum VmsSimpleMessageIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
@@ -693,6 +693,15 @@ enum VmsSimpleMessageIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
 
   /* The layer type as defined in the vms protocol */
   VMS_LAYER_SUB_TYPE = 3,
+};
+
+/*
+ * This enum provides the canonical mapping for VMS DATA
+ * message integer value properties.
+ */
+enum VmsDataMessageIntegerValuesIndex : VmsSimpleMessageIntegerValuesIndex {
+  /* A publisher ID of the client that published this message. */
+  VMS_PUBLISHER_ID = 4,
 };
 
 /*
