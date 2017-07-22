@@ -76,9 +76,13 @@ TEST_F(RadioHidlTest, setupDataCall) {
 
     if (cardStatus.cardState == CardState::ABSENT) {
         ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE ||
-                    radioRsp->rspInfo.error == RadioError::RADIO_NOT_AVAILABLE ||
-                    radioRsp->rspInfo.error == RadioError::OP_NOT_ALLOWED_BEFORE_REG_TO_NW ||
-                    radioRsp->rspInfo.error == RadioError::OP_NOT_ALLOWED_DURING_VOICE_CALL ||
+                    radioRsp->rspInfo.error ==
+                        RadioError::RADIO_NOT_AVAILABLE ||
+                    radioRsp->rspInfo.error ==
+                        RadioError::OP_NOT_ALLOWED_BEFORE_REG_TO_NW ||
+                    radioRsp->rspInfo.error ==
+                        RadioError::OP_NOT_ALLOWED_DURING_VOICE_CALL ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT ||
                     CheckOEMError());
     }
 }
@@ -98,7 +102,10 @@ TEST_F(RadioHidlTest, deactivateDataCall) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        EXPECT_EQ(RadioError::INVALID_CALL_ID, radioRsp->rspInfo.error);
+        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_CALL_ID ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT ||
+                    CheckOEMError());
     }
 }
 
@@ -116,7 +123,9 @@ TEST_F(RadioHidlTest, getDataCallList) {
 
     if (cardStatus.cardState == CardState::ABSENT) {
         ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE ||
-                    radioRsp->rspInfo.error == RadioError::RADIO_NOT_AVAILABLE);
+                    radioRsp->rspInfo.error ==
+                        RadioError::RADIO_NOT_AVAILABLE ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
     }
 }
 
@@ -220,6 +229,9 @@ TEST_F(RadioHidlTest, setDataProfile) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        // TODO(shuoq): Will add error check when we know the expected error from QC
+        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE ||
+                    radioRsp->rspInfo.error ==
+                        RadioError::RADIO_NOT_AVAILABLE ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
     }
 }
