@@ -126,6 +126,12 @@ WifiStatus Wifi::stopInternal() {
     return createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE,
                             "HAL is stopping");
   }
+  // Clear the chip object and its child objects since the HAL is now
+  // stopped.
+  if (chip_.get()) {
+    chip_->invalidate();
+    chip_.clear();
+  }
   WifiStatus wifi_status = stopLegacyHalAndDeinitializeModeController();
   if (wifi_status.code == WifiStatusCode::SUCCESS) {
     for (const auto& callback : event_cb_handler_.getCallbacks()) {
@@ -139,12 +145,6 @@ WifiStatus Wifi::stopInternal() {
         LOG(ERROR) << "Failed to invoke onFailure callback";
       }
     }
-  }
-  // Clear the chip object and its child objects since the HAL is now
-  // stopped.
-  if (chip_.get()) {
-    chip_->invalidate();
-    chip_.clear();
   }
   LOG(INFO) << "Wifi HAL stopped";
   return wifi_status;

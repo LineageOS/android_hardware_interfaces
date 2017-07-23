@@ -29,9 +29,11 @@ cc_test {
         "libxml2",
         "android.hardware.audio@2.0",
         "android.hardware.audio.common@2.0",
+    ],
+    static_libs: [
+        "VtsHalHidlTargetTestBase",
         "android.hardware.audio.common.test.utility",
     ],
-    static_libs: ["VtsHalHidlTargetTestBase"],
     cflags: [
         "-O0",
         "-g",
