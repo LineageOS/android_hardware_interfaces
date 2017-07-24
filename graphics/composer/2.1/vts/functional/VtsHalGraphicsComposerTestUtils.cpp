@@ -290,6 +290,11 @@ void ComposerClient::setVsyncEnabled(Display display, bool enabled) {
                                            : IComposerClient::Vsync::DISABLE;
   Error error = mClient->setVsyncEnabled(display, vsync);
   ASSERT_EQ(Error::NONE, error) << "failed to set vsync mode";
+
+  // give the hwbinder thread some time to handle any pending vsync callback
+  if (!enabled) {
+      usleep(5 * 1000);
+  }
 }
 
 }  // namespace tests
