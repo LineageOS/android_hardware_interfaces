@@ -34,3 +34,73 @@ TEST_F(RadioHidlTest_v1_1, setSimCardPower_1_1) {
                     radioRsp_v1_1->rspInfo.error == RadioError::RADIO_NOT_AVAILABLE);
     }
 }
+
+/*
+ * Test IRadio.startNetworkScan() for the response returned.
+ */
+TEST_F(RadioHidlTest_v1_1, startNetworkScan) {
+    int serial = GetRandomSerialNumber();
+
+    NetworkScanRequest request;
+    request.type = ScanType::ONE_SHOT;
+    request.interval = 60;
+    RadioAccessSpecifier specifier;
+    specifier.radioAccessNetwork = RadioAccessNetworks::GERAN;
+    specifier.geranBands.resize(2);
+    specifier.geranBands[0] = GeranBands::BAND_450;
+    specifier.geranBands[1] = GeranBands::BAND_480;
+    specifier.channels.resize(2);
+    specifier.channels[0] = 1;
+    specifier.channels[1] = 2;
+    request.specifiers.resize(1);
+    request.specifiers[0] = specifier;
+
+    radio_v1_1->startNetworkScan(serial, request);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_1->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_1->rspInfo.serial);
+
+    if (cardStatus.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(radioRsp_v1_1->rspInfo.error == RadioError::NONE ||
+                    radioRsp_v1_1->rspInfo.error == RadioError::SIM_ABSENT ||
+                    radioRsp_v1_1->rspInfo.error == RadioError::INVALID_ARGUMENTS);
+    }
+}
+
+/*
+ * Test IRadio.startNetworkScan() for the response returned.
+ */
+TEST_F(RadioHidlTest_v1_1, startNetworkScan_InvalidArgument) {
+    int serial = GetRandomSerialNumber();
+
+    NetworkScanRequest request;
+    request.type = ScanType::ONE_SHOT;
+    request.interval = 60;
+
+    radio_v1_1->startNetworkScan(serial, request);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_1->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_1->rspInfo.serial);
+
+    if (cardStatus.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(radioRsp_v1_1->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp_v1_1->rspInfo.error == RadioError::SIM_ABSENT);
+    }
+}
+
+/*
+ * Test IRadio.stopNetworkScan() for the response returned.
+ */
+TEST_F(RadioHidlTest_v1_1, stopNetworkScan) {
+    int serial = GetRandomSerialNumber();
+
+    radio_v1_1->stopNetworkScan(serial);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_1->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_1->rspInfo.serial);
+
+    if (cardStatus.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(radioRsp_v1_1->rspInfo.error == RadioError::NONE ||
+                    radioRsp_v1_1->rspInfo.error == RadioError::SIM_ABSENT);
+    }
+}
