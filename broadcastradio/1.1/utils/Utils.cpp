@@ -53,7 +53,9 @@ static bool anyHaveId(const ProgramSelector& a, const ProgramSelector& b,
 static bool haveEqualIds(const ProgramSelector& a, const ProgramSelector& b,
                          const IdentifierType type) {
     if (!bothHaveId(a, b, type)) return false;
-    // TODO(b/36864090): we should check all Ids of a given type (ie. other AF), not just one
+    /* We should check all Ids of a given type (ie. other AF),
+     * but it doesn't matter for default implementation.
+     */
     auto aId = getId(a, type);
     auto bId = getId(b, type);
     return aId == bId;
