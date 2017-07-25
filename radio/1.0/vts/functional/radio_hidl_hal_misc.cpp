@@ -675,9 +675,11 @@ TEST_F(RadioHidlTest, startLceService) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
+        std::cout << static_cast<int>(radioRsp->rspInfo.error) << std::endl;
         ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::RADIO_NOT_AVAILABLE ||
                     radioRsp->rspInfo.error == RadioError::LCE_NOT_SUPPORTED ||
-                    radioRsp->rspInfo.error == RadioError::INTERNAL_ERR);
+                    radioRsp->rspInfo.error == RadioError::INTERNAL_ERR ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
     }
 }
 
@@ -695,7 +697,8 @@ TEST_F(RadioHidlTest, stopLceService) {
     if (cardStatus.cardState == CardState::ABSENT) {
         ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE ||
                     radioRsp->rspInfo.error == RadioError::LCE_NOT_SUPPORTED ||
-                    radioRsp->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED);
+                    radioRsp->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
     }
 }
 
@@ -755,20 +758,20 @@ TEST_F(RadioHidlTest, setAllowedCarriers) {
 
     if (cardStatus.cardState == CardState::ABSENT) {
         ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE || CheckGeneralError());
-  }
+    }
 
-  /* Reset back to no carrier restriction */
-  memset(&carriers, 0, sizeof(carriers));
-  carriers.allowedCarriers.resize(0);
-  carriers.excludedCarriers.resize(0);
+    /* Reset back to no carrier restriction */
+    memset(&carriers, 0, sizeof(carriers));
+    carriers.allowedCarriers.resize(0);
+    carriers.excludedCarriers.resize(0);
 
-  radio->setAllowedCarriers(++serial, true, carriers);
-  EXPECT_EQ(std::cv_status::no_timeout, wait());
-  EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
-  EXPECT_EQ(serial, radioRsp->rspInfo.serial);
+    radio->setAllowedCarriers(++serial, true, carriers);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
-  if (cardStatus.cardState == CardState::ABSENT) {
-      ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE || CheckGeneralError());
+    if (cardStatus.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE || CheckGeneralError());
   }
 }
 
