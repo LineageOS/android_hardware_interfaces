@@ -18,9 +18,9 @@
 
 #include "VirtualRadio.h"
 
-#include <WorkerThread.h>
 #include <android/hardware/broadcastradio/1.1/ITuner.h>
 #include <android/hardware/broadcastradio/1.1/ITunerCallback.h>
+#include <broadcastradio-utils/WorkerThread.h>
 
 namespace android {
 namespace hardware {
