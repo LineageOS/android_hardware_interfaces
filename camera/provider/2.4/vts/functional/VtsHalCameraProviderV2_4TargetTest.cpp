@@ -2652,7 +2652,6 @@ TEST_F(CameraHidlTest, processCaptureRequestPreview) {
                         }
                     });
             ASSERT_TRUE(resultQueueRet.isOk());
-            ASSERT_NE(nullptr, resultQueue);
 
             InFlightRequest inflightReq = {1, false, supportsPartialResults, partialResultCount,
                                            resultQueue};
@@ -2900,7 +2899,6 @@ TEST_F(CameraHidlTest, flushPreviewRequest) {
                         }
                     });
             ASSERT_TRUE(resultQueueRet.isOk());
-            ASSERT_NE(nullptr, resultQueue);
 
             InFlightRequest inflightReq = {1, false, supportsPartialResults, partialResultCount,
                                            resultQueue};
