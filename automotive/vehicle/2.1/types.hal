@@ -131,33 +131,40 @@ enum VehicleProperty: @2.0::VehicleProperty {
     /**
      * OBD2 Live Sensor Data
      *
-     * This property uses COMPLEX data to send a snapshot of the current (live)
-     * values of the OBD2 sensors provided by the vehicle.
+     * Reports a snapshot of the current (live) values of the OBD2 sensors available.
      *
-     * VehiclePropConfig
-     *   configArray[0] : number of vendor-specific integer-valued sensors
-     *                    that can be returned in a frame.
-     *   configArray[1] : number of vendor-specific float-valued sensors
-     *                    that can be returned in a frame.
+     * The configArray is set as follows:
+     *   configArray[0] = number of vendor-specific integer-valued sensors
+     *   configArray[1] = number of vendor-specific float-valued sensors
      *
-     * The values are to be interpreted as follows:
-     * the indices defined in Obd2IntegerSensorIndex are to be used to
-     * read from int32Values;
-     * the indices defined in Obd2FloatSensorIndex are to be used to
-     * read from floatValues.
-     * the elements of bytes are to be interpreted as a bitmask, such that
-     * the bits 0 thru the integer value of
-     * Obd2IntegerSensorIndex.LAST_SYSTEM_INDEX + the value of configArray[0]
-     * are 1 if the corresponding index is a valid sensor index whose value can
-     * be read in the returned int32Values vector, 0 otherwise.
-     * the bits Obd2IntegerSensorIndex.LAST_SYSTEM_INDEX+1 thru
-     * Obd2FloatingSensorIndex.LAST_SYSTEM_INDEX + the value of configArray[1]
-     * are 1 if the corresponding index is a valid sensor index whose value
-     * can be read in the returned floatValues vector, 0 otherwise.
+     * The values of this property are to be interpreted as in the following example.
+     * Considering a configArray = {2,3}
+     * int32Values must be a vector containing Obd2IntegerSensorIndex.LAST_SYSTEM_INDEX + 2
+     * elements (that is, 33 elements);
+     * floatValues must be a vector containing Obd2FloatSensorIndex.LAST_SYSTEM_INDEX + 3
+     * elements (that is, 73 elements);
      *
-     * For example, int32Values[0] corresponds to FUEL_SYSTEM_STATUS, and
-     * floatValues[0] corresponds to CALCULATED_ENGINE_LOAD, but that mapping
-     * is only valid if the corresponding bits in the bytes vector are set to 1.
+     * It is possible for each frame to contain a different subset of sensor values, both system
+     * provided sensors, and vendor-specific ones. In order to support that, the bytes element
+     * of the property value is used as a bitmask,.
+     *
+     * bytes must have a sufficient number of bytes to represent the total number of possible
+     * sensors (in this case, 14 bytes to represent 106 possible values); it is to be read as
+     * a contiguous bitmask such that each bit indicates the presence or absence of a sensor
+     * from the frame, starting with as many bits as the size of int32Values, immediately
+     * followed by as many bits as the size of floatValues.
+     *
+     * For example, should bytes[0] = 0x4C (0b01001100) it would mean that:
+     *   int32Values[0 and 1] are not valid sensor values
+     *   int32Values[2 and 3] are valid sensor values
+     *   int32Values[4 and 5] are not valid sensor values
+     *   int32Values[6] is a valid sensor value
+     *   int32Values[7] is not a valid sensor value
+     * Should bytes[5] = 0x61 (0b01100001) it would mean that:
+     *   int32Values[32] is a valid sensor value
+     *   floatValues[0 thru 3] are not valid sensor values
+     *   floatValues[4 and 5] are valid sensor values
+     *   floatValues[6] is not a valid sensor value
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ
@@ -171,41 +178,23 @@ enum VehicleProperty: @2.0::VehicleProperty {
     /**
      * OBD2 Freeze Frame Sensor Data
      *
-     * This property uses COMPLEX data to send a snapshot of the values of the
-     * OBD2 sensors provided by the vehicle at the time that a diagnostic
-     * troubleshooting code (DTC) was recorded by the vehicle.
+     * Reports a snapshot of the value of the OBD2 sensors available at the time that a fault
+     * occurred and was detected.
      *
-     * VehiclePropConfig
-     *   configArray[0] : number of vendor-specific integer-valued sensors
-     *                    that can be returned in a frame.
-     *   configArray[1] : number of vendor-specific float-valued sensors
-     *                    that can be returned in a frame.
+     * A configArray must be provided with the same meaning as defined for OBD2_LIVE_FRAME.
      *
-     * A get of this property must take the following form:
-     *   int64Values[0]: timestamp of the freeze frame to retrieve.
-     *                   Valid timestamps are given by OBD2_DTC_INFO.
+     * The values of this property are to be interpreted in a similar fashion as those for
+     * OBD2_LIVE_FRAME, with the exception that the stringValue field may contain a non-empty
+     * diagnostic troubleshooting code (DTC).
      *
-     * The values are to be interpreted as follows:
-     * the indices defined in Obd2IntegerSensorIndex are to be used to
-     * read from int32Values;
-     * the indices defined in Obd2FloatSensorIndex are to be used to
-     * read from floatValues;
-     * the elements of bytes are to be interpreted as a bitmask, such that
-     * the bits 0 thru the integer value of
-     * Obd2IntegerSensorIndex.LAST_SYSTEM_INDEX + the value of configArray[0]
-     * are 1 if the corresponding index is a valid sensor index whose value can
-     * be read in the returned int32Values vector, 0 otherwise.
-     * the bits Obd2IntegerSensorIndex.LAST_SYSTEM_INDEX+1 thru
-     * Obd2FloatingSensorIndex.LAST_SYSTEM_INDEX + the value of configArray[1]
-     * are 1 if the corresponding index is a valid sensor index whose value
-     * can be read in the returned floatValues vector, 0 otherwise.
-     * stringValue is the DTC that caused this freeze frame to be recorded.
+     * A IVehicle#get request of this property must provide a value for int64Values[0].
+     * This will be interpreted as the timestamp of the freeze frame to retrieve. A list of
+     * timestamps can be obtained by a IVehicle#get of OBD2_FREEZE_FRAME_INFO.
      *
-     * For example, int32Values[0] corresponds to FUEL_SYSTEM_STATUS, and
-     * floatValues[0] corresponds to CALCULATED_ENGINE_LOAD, but that mapping
-     * is only valid if the corresponding bits in the bytes vector are set to 1,
-     * and a possible valid stringValue is "P0176" to indicate a malfunction
-     * of the fuel composition sensor circuit.
+     * Should no freeze frame be available at the given timestamp, a response of NOT_AVAILABLE
+     * must be returned by the implementation. Because vehicles may have limited storage for
+     * freeze frames, it is possible for a frame request to respond with NOT_AVAILABLE even if
+     * the associated timestamp has been recently obtained via OBD2_FREEZE_FRAME_INFO.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ
@@ -223,7 +212,7 @@ enum VehicleProperty: @2.0::VehicleProperty {
      * memory and available for retrieval via OBD2_FREEZE_FRAME.
      *
      * The values are to be interpreted as follows:
-     * each element of int64Values is the timestamp at which a a fault code
+     * each element of int64Values must be the timestamp at which a a fault code
      * has been detected and the corresponding freeze frame stored, and each
      * such element can be used as the key to OBD2_FREEZE_FRAME to retrieve
      * the corresponding freeze frame.
@@ -241,14 +230,18 @@ enum VehicleProperty: @2.0::VehicleProperty {
      * OBD2 Freeze Frame Clear
      *
      * This property allows deletion of any of the freeze frames stored in
-     * vehicle memory, as described by OBD2_DTC_INFO.
+     * vehicle memory, as described by OBD2_FREEZE_FRAME_INFO.
      *
-     * A set of this property is to be interpreted as follows:
-     * if int64Values contains no elements, then all DTCs stored will be cleared;
-     * if int64Values contains one or more elements, then DTCs at the timestamps
-     * stored in int64Values will be cleared, and the others not cleared, except
-     * the memory will be compacted so that all remaining DTCs are stored
-     * contiguously.
+     * The configArray is set as follows:
+     *  configArray[0] = 1 if the implementation is able to clear individual freeze frames
+     *                   by timestamp, 0 otherwise
+     *
+     * IVehicle#set of this property is to be interpreted as follows:
+     *   if int64Values contains no elements, then all frames stored must be cleared;
+     *   if int64Values contains one or more elements, then frames at the timestamps
+     *   stored in int64Values must be cleared, and the others not cleared. Should the
+     *   vehicle not support selective clearing of freeze frames, this latter mode must
+     *   return NOT_AVAILABLE.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:WRITE
