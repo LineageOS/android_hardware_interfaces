@@ -140,19 +140,6 @@ class ServiceNotificationListener : public IServiceNotification {
     std::condition_variable condition_;
 };
 
-void stopWifiFramework() {
-    ASSERT_EQ(std::system("stop"), 0);
-    // TODO: Use some other mechanism to wait for the framework to
-    // finish disabling.
-    sleep(5);
-}
-
-void startWifiFramework() {
-    ASSERT_EQ(std::system("start"), 0);
-    // These tests don't care whether the framework
-    // finished enabling or not.
-}
-
 void stopSupplicant() {
     SupplicantManager supplicant_manager;
 
