@@ -1,7 +1,6 @@
 cc_library_shared {
     name: "android.hardware.tests.hash@1.0-impl",
     relative_install_path: "hw",
-    proprietary: true,
     srcs: [
         "Hash.cpp",
     ],

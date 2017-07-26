@@ -1,3 +1,4 @@
+//
 // Copyright (C) 2016 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,21 +12,25 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
 
-cc_library_shared {
-    name: "android.hardware.tests.memory@1.0-impl",
+cc_test {
+    name: "VtsHalOemLockV1_0TargetTest",
     defaults: ["hidl_defaults"],
-    relative_install_path: "hw",
-    srcs: [
-        "MemoryTest.cpp",
-    ],
+    srcs: ["VtsHalOemLockV1_0TargetTest.cpp"],
     shared_libs: [
+        "libbase",
+        "liblog",
+        "libcutils",
         "libhidlbase",
         "libhidltransport",
-        "libhidlmemory",
-        "liblog",
+        "libnativehelper",
         "libutils",
-        "android.hardware.tests.memory@1.0",
-        "android.hidl.memory@1.0",
+        "android.hardware.oemlock@1.0",
+    ],
+    static_libs: ["VtsHalHidlTargetTestBase"],
+    cflags: [
+        "-O0",
+        "-g",
     ],
 }
