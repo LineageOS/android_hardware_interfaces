@@ -37,85 +37,86 @@ namespace impl {
 static std::unique_ptr<Obd2SensorStore> fillDefaultObd2Frame(
         size_t numVendorIntegerSensors,
         size_t numVendorFloatSensors) {
+    using V2_0::toInt;
     std::unique_ptr<Obd2SensorStore> sensorStore(new Obd2SensorStore(
             numVendorIntegerSensors, numVendorFloatSensors));
 
     sensorStore->setIntegerSensor(
-        Obd2IntegerSensorIndex::FUEL_SYSTEM_STATUS,
-        V2_0::toInt(FuelSystemStatus::CLOSED_LOOP));
+        DiagnosticIntegerSensorIndex::FUEL_SYSTEM_STATUS,
+        toInt(Obd2FuelSystemStatus::CLOSED_LOOP));
     sensorStore->setIntegerSensor(
-        Obd2IntegerSensorIndex::MALFUNCTION_INDICATOR_LIGHT_ON, 0);
+        DiagnosticIntegerSensorIndex::MALFUNCTION_INDICATOR_LIGHT_ON, 0);
     sensorStore->setIntegerSensor(
-        Obd2IntegerSensorIndex::IGNITION_MONITORS_SUPPORTED,
-        V2_0::toInt(IgnitionMonitorKind::SPARK));
-    sensorStore->setIntegerSensor(Obd2IntegerSensorIndex::IGNITION_SPECIFIC_MONITORS,
-        CommonIgnitionMonitors::COMPONENTS_AVAILABLE |
-        CommonIgnitionMonitors::MISFIRE_AVAILABLE |
-        SparkIgnitionMonitors::AC_REFRIGERANT_AVAILABLE |
-        SparkIgnitionMonitors::EVAPORATIVE_SYSTEM_AVAILABLE);
+        DiagnosticIntegerSensorIndex::IGNITION_MONITORS_SUPPORTED,
+        toInt(Obd2IgnitionMonitorKind::SPARK));
+    sensorStore->setIntegerSensor(DiagnosticIntegerSensorIndex::IGNITION_SPECIFIC_MONITORS,
+        Obd2CommonIgnitionMonitors::COMPONENTS_AVAILABLE |
+        Obd2CommonIgnitionMonitors::MISFIRE_AVAILABLE |
+        Obd2SparkIgnitionMonitors::AC_REFRIGERANT_AVAILABLE |
+        Obd2SparkIgnitionMonitors::EVAPORATIVE_SYSTEM_AVAILABLE);
     sensorStore->setIntegerSensor(
-        Obd2IntegerSensorIndex::INTAKE_AIR_TEMPERATURE, 35);
+        DiagnosticIntegerSensorIndex::INTAKE_AIR_TEMPERATURE, 35);
     sensorStore->setIntegerSensor(
-        Obd2IntegerSensorIndex::COMMANDED_SECONDARY_AIR_STATUS,
-        V2_0::toInt(SecondaryAirStatus::FROM_OUTSIDE_OR_OFF));
+        DiagnosticIntegerSensorIndex::COMMANDED_SECONDARY_AIR_STATUS,
+        toInt(Obd2SecondaryAirStatus::FROM_OUTSIDE_OR_OFF));
     sensorStore->setIntegerSensor(
-        Obd2IntegerSensorIndex::NUM_OXYGEN_SENSORS_PRESENT, 1);
+        DiagnosticIntegerSensorIndex::NUM_OXYGEN_SENSORS_PRESENT, 1);
     sensorStore->setIntegerSensor(
-        Obd2IntegerSensorIndex::RUNTIME_SINCE_ENGINE_START, 500);
+        DiagnosticIntegerSensorIndex::RUNTIME_SINCE_ENGINE_START, 500);
     sensorStore->setIntegerSensor(
-        Obd2IntegerSensorIndex::DISTANCE_TRAVELED_WITH_MALFUNCTION_INDICATOR_LIGHT_ON, 0);
+        DiagnosticIntegerSensorIndex::DISTANCE_TRAVELED_WITH_MALFUNCTION_INDICATOR_LIGHT_ON, 0);
     sensorStore->setIntegerSensor(
-        Obd2IntegerSensorIndex::WARMUPS_SINCE_CODES_CLEARED, 51);
+        DiagnosticIntegerSensorIndex::WARMUPS_SINCE_CODES_CLEARED, 51);
     sensorStore->setIntegerSensor(
-        Obd2IntegerSensorIndex::DISTANCE_TRAVELED_SINCE_CODES_CLEARED, 365);
+        DiagnosticIntegerSensorIndex::DISTANCE_TRAVELED_SINCE_CODES_CLEARED, 365);
     sensorStore->setIntegerSensor(
-        Obd2IntegerSensorIndex::ABSOLUTE_BAROMETRIC_PRESSURE, 30);
+        DiagnosticIntegerSensorIndex::ABSOLUTE_BAROMETRIC_PRESSURE, 30);
     sensorStore->setIntegerSensor(
-        Obd2IntegerSensorIndex::CONTROL_MODULE_VOLTAGE, 12);
+        DiagnosticIntegerSensorIndex::CONTROL_MODULE_VOLTAGE, 12);
     sensorStore->setIntegerSensor(
-        Obd2IntegerSensorIndex::AMBIENT_AIR_TEMPERATURE, 18);
+        DiagnosticIntegerSensorIndex::AMBIENT_AIR_TEMPERATURE, 18);
     sensorStore->setIntegerSensor(
-        Obd2IntegerSensorIndex::MAX_FUEL_AIR_EQUIVALENCE_RATIO, 1);
+        DiagnosticIntegerSensorIndex::MAX_FUEL_AIR_EQUIVALENCE_RATIO, 1);
     sensorStore->setIntegerSensor(
-        Obd2IntegerSensorIndex::FUEL_TYPE, V2_0::toInt(FuelType::GASOLINE));
+        DiagnosticIntegerSensorIndex::FUEL_TYPE, V2_0::toInt(Obd2FuelType::GASOLINE));
     sensorStore->setFloatSensor(
-        Obd2FloatSensorIndex::CALCULATED_ENGINE_LOAD, 0.153);
+        DiagnosticFloatSensorIndex::CALCULATED_ENGINE_LOAD, 0.153);
     sensorStore->setFloatSensor(
-        Obd2FloatSensorIndex::SHORT_TERM_FUEL_TRIM_BANK1, -0.16);
+        DiagnosticFloatSensorIndex::SHORT_TERM_FUEL_TRIM_BANK1, -0.16);
     sensorStore->setFloatSensor(
-        Obd2FloatSensorIndex::LONG_TERM_FUEL_TRIM_BANK1, -0.16);
+        DiagnosticFloatSensorIndex::LONG_TERM_FUEL_TRIM_BANK1, -0.16);
     sensorStore->setFloatSensor(
-        Obd2FloatSensorIndex::SHORT_TERM_FUEL_TRIM_BANK2, -0.16);
+        DiagnosticFloatSensorIndex::SHORT_TERM_FUEL_TRIM_BANK2, -0.16);
     sensorStore->setFloatSensor(
-        Obd2FloatSensorIndex::LONG_TERM_FUEL_TRIM_BANK2, -0.16);
+        DiagnosticFloatSensorIndex::LONG_TERM_FUEL_TRIM_BANK2, -0.16);
     sensorStore->setFloatSensor(
-        Obd2FloatSensorIndex::INTAKE_MANIFOLD_ABSOLUTE_PRESSURE, 7.5);
+        DiagnosticFloatSensorIndex::INTAKE_MANIFOLD_ABSOLUTE_PRESSURE, 7.5);
     sensorStore->setFloatSensor(
-        Obd2FloatSensorIndex::ENGINE_RPM, 1250.);
+        DiagnosticFloatSensorIndex::ENGINE_RPM, 1250.);
     sensorStore->setFloatSensor(
-        Obd2FloatSensorIndex::VEHICLE_SPEED, 40.);
+        DiagnosticFloatSensorIndex::VEHICLE_SPEED, 40.);
     sensorStore->setFloatSensor(
-        Obd2FloatSensorIndex::TIMING_ADVANCE, 2.5);
+        DiagnosticFloatSensorIndex::TIMING_ADVANCE, 2.5);
     sensorStore->setFloatSensor(
-        Obd2FloatSensorIndex::THROTTLE_POSITION, 19.75);
+        DiagnosticFloatSensorIndex::THROTTLE_POSITION, 19.75);
     sensorStore->setFloatSensor(
-        Obd2FloatSensorIndex::OXYGEN_SENSOR1_VOLTAGE, 0.265);
+        DiagnosticFloatSensorIndex::OXYGEN_SENSOR1_VOLTAGE, 0.265);
     sensorStore->setFloatSensor(
-        Obd2FloatSensorIndex::FUEL_TANK_LEVEL_INPUT, 0.824);
+        DiagnosticFloatSensorIndex::FUEL_TANK_LEVEL_INPUT, 0.824);
     sensorStore->setFloatSensor(
-        Obd2FloatSensorIndex::EVAPORATION_SYSTEM_VAPOR_PRESSURE, -0.373);
+        DiagnosticFloatSensorIndex::EVAPORATION_SYSTEM_VAPOR_PRESSURE, -0.373);
     sensorStore->setFloatSensor(
-        Obd2FloatSensorIndex::CATALYST_TEMPERATURE_BANK1_SENSOR1, 190.);
+        DiagnosticFloatSensorIndex::CATALYST_TEMPERATURE_BANK1_SENSOR1, 190.);
     sensorStore->setFloatSensor(
-        Obd2FloatSensorIndex::RELATIVE_THROTTLE_POSITION, 3.);
+        DiagnosticFloatSensorIndex::RELATIVE_THROTTLE_POSITION, 3.);
     sensorStore->setFloatSensor(
-        Obd2FloatSensorIndex::ABSOLUTE_THROTTLE_POSITION_B, 0.306);
+        DiagnosticFloatSensorIndex::ABSOLUTE_THROTTLE_POSITION_B, 0.306);
     sensorStore->setFloatSensor(
-        Obd2FloatSensorIndex::ACCELERATOR_PEDAL_POSITION_D, 0.188);
+        DiagnosticFloatSensorIndex::ACCELERATOR_PEDAL_POSITION_D, 0.188);
     sensorStore->setFloatSensor(
-        Obd2FloatSensorIndex::ACCELERATOR_PEDAL_POSITION_E, 0.094);
+        DiagnosticFloatSensorIndex::ACCELERATOR_PEDAL_POSITION_E, 0.094);
     sensorStore->setFloatSensor(
-        Obd2FloatSensorIndex::COMMANDED_THROTTLE_ACTUATOR, 0.024);
+        DiagnosticFloatSensorIndex::COMMANDED_THROTTLE_ACTUATOR, 0.024);
 
     return sensorStore;
 }
