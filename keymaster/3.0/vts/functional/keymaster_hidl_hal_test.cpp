@@ -993,8 +993,8 @@ bool verify_attestation_record(const string& challenge, const string& app_id,
                                    HidlBuf(app_id));
 
     if (!KeymasterHidlTest::IsSecure()) {
-        // SW is KM2
-        EXPECT_EQ(att_keymaster_version, 2U);
+        // SW is KM3
+        EXPECT_EQ(att_keymaster_version, 3U);
     }
 
     if (KeymasterHidlTest::SupportsSymmetric()) {
