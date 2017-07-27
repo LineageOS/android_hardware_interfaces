@@ -923,6 +923,7 @@ Return<void> CameraDeviceSession::configureStreams(
         status = Status::INTERNAL_ERROR;
     } else {
         convertToHidl(stream_list, &outStreams);
+        mFirstRequest = true;
     }
 
     _hidl_cb(status, outStreams);
@@ -1022,7 +1023,13 @@ Status CameraDeviceSession::processOneCaptureRequest(const CaptureRequest& reque
 
     if (!converted) {
         ALOGE("%s: capture request settings metadata is corrupt!", __FUNCTION__);
-        return Status::INTERNAL_ERROR;
+        return Status::ILLEGAL_ARGUMENT;
+    }
+
+    if (mFirstRequest && halRequest.settings == nullptr) {
+        ALOGE("%s: capture request settings must not be null for first request!",
+                __FUNCTION__);
+        return Status::ILLEGAL_ARGUMENT;
     }
 
     hidl_vec<buffer_handle_t*> allBufPtrs;
@@ -1031,6 +1038,12 @@ Status CameraDeviceSession::processOneCaptureRequest(const CaptureRequest& reque
             request.inputBuffer.bufferId != 0);
     size_t numOutputBufs = request.outputBuffers.size();
     size_t numBufs = numOutputBufs + (hasInputBuf ? 1 : 0);
+
+    if (numOutputBufs == 0) {
+        ALOGE("%s: capture request must have at least one output buffer!", __FUNCTION__);
+        return Status::ILLEGAL_ARGUMENT;
+    }
+
     status = importRequest(request, allBufPtrs, allFences);
     if (status != Status::OK) {
         return status;
@@ -1102,6 +1115,7 @@ Status CameraDeviceSession::processOneCaptureRequest(const CaptureRequest& reque
         return Status::INTERNAL_ERROR;
     }
 
+    mFirstRequest = false;
     return Status::OK;
 }
 
