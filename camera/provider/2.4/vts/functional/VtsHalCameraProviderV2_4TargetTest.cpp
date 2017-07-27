@@ -132,22 +132,34 @@ namespace {
     const char *kHAL1_0 = "1.0";
 
     bool matchDeviceName(const hidl_string& deviceName,
-            const hidl_string &providerType, std::smatch& sm) {
+            const hidl_string &providerType,
+            std::string* deviceVersion,
+            std::string* cameraId) {
         ::android::String8 pattern;
         pattern.appendFormat(kDeviceNameRE, providerType.c_str());
         std::regex e(pattern.string());
         std::string deviceNameStd(deviceName.c_str());
-        return std::regex_match(deviceNameStd, sm, e);
+        std::smatch sm;
+        if (std::regex_match(deviceNameStd, sm, e)) {
+            if (deviceVersion != nullptr) {
+                *deviceVersion = sm[1];
+            }
+            if (cameraId != nullptr) {
+                *cameraId = sm[2];
+            }
+            return true;
+        }
+        return false;
     }
 
     int getCameraDeviceVersion(const hidl_string& deviceName,
             const hidl_string &providerType) {
-        std::smatch sm;
-        bool match = matchDeviceName(deviceName, providerType, sm);
+        std::string version;
+        bool match = matchDeviceName(deviceName, providerType, &version, nullptr);
         if (!match) {
             return -1;
         }
-        std::string version = sm[1].str();
+
         if (version.compare(kHAL3_2) == 0) {
             // maybe switched to 3.4 or define the hidl version enumlater
             return CAMERA_DEVICE_API_VERSION_3_2;
@@ -2720,6 +2732,9 @@ TEST_F(CameraHidlTest, processCaptureRequestPreview) {
                 // Empty settings should be supported after the first call
                 // for repeating requests.
                 request.settings.setToExternal(nullptr, 0, true);
+                // The buffer has been registered to HAL by bufferId, so per
+                // API contract we should send a null handle for this buffer
+                request.outputBuffers[0].buffer = nullptr;
                 mInflightMap.clear();
                 inflightReq = {1, false, supportsPartialResults, partialResultCount, resultQueue};
                 mInflightMap.add(request.frameNumber, &inflightReq);
@@ -2803,7 +2818,7 @@ TEST_F(CameraHidlTest, processCaptureRequestInvalidSinglePreview) {
                     numRequestProcessed = n;
                 });
             ASSERT_TRUE(ret.isOk());
-            ASSERT_EQ(Status::INTERNAL_ERROR, status);
+            ASSERT_EQ(Status::ILLEGAL_ARGUMENT, status);
             ASSERT_EQ(numRequestProcessed, 0u);
 
             ret = session->close();
@@ -2857,7 +2872,7 @@ TEST_F(CameraHidlTest, processCaptureRequestInvalidBuffer) {
                     numRequestProcessed = n;
                 });
             ASSERT_TRUE(ret.isOk());
-            ASSERT_EQ(Status::INTERNAL_ERROR, status);
+            ASSERT_EQ(Status::ILLEGAL_ARGUMENT, status);
             ASSERT_EQ(numRequestProcessed, 0u);
 
             ret = session->close();
