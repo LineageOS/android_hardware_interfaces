@@ -17,8 +17,15 @@
 #define LOG_TAG "broadcastradio.vts"
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <android/hardware/broadcastradio/1.1/IBroadcastRadio.h>
+#include <android/hardware/broadcastradio/1.1/IBroadcastRadioFactory.h>
+#include <android/hardware/broadcastradio/1.1/ITuner.h>
+#include <android/hardware/broadcastradio/1.1/ITunerCallback.h>
+#include <android/hardware/broadcastradio/1.1/types.h>
 #include <android-base/logging.h>
-#include <call-barrier.h>
+#include <broadcastradio-utils/Utils.h>
+#include <broadcastradio-vts-utils/call-barrier.h>
+#include <broadcastradio-vts-utils/mock-timeout.h>
 #include <cutils/native_handle.h>
 #include <cutils/properties.h>
 #include <gmock/gmock.h>
@@ -26,14 +33,6 @@
 #include <utils/threads.h>
 
 #include <chrono>
-
-#include <android/hardware/broadcastradio/1.1/IBroadcastRadio.h>
-#include <android/hardware/broadcastradio/1.1/IBroadcastRadioFactory.h>
-#include <android/hardware/broadcastradio/1.1/ITuner.h>
-#include <android/hardware/broadcastradio/1.1/ITunerCallback.h>
-#include <android/hardware/broadcastradio/1.1/types.h>
-
-#include "mock-timeout.h"
 
 namespace android {
 namespace hardware {
@@ -56,6 +55,9 @@ using V1_0::Class;
 using V1_0::MetaData;
 using V1_0::MetadataKey;
 using V1_0::MetadataType;
+
+using std::chrono::steady_clock;
+using std::this_thread::sleep_for;
 
 static constexpr auto kConfigTimeout = 10s;
 static constexpr auto kConnectModuleTimeout = 1s;
@@ -91,10 +93,8 @@ class BroadcastRadioHalTest : public ::testing::VtsHalHidlTargetTestBase,
     virtual void SetUp() override;
     virtual void TearDown() override;
 
-    // TODO(b/36864490): check all bands for good test conditions (ie. FM is more likely to have
-    // any stations on the list, so don't pick AM blindly).
-    bool openTuner(unsigned band);
-    const BandConfig& getBand(unsigned idx);
+    bool openTuner();
+    bool nextBand();
     bool getProgramList(std::function<void(const hidl_vec<ProgramInfo>& list)> cb);
 
     Class radioClass;
@@ -105,8 +105,32 @@ class BroadcastRadioHalTest : public ::testing::VtsHalHidlTargetTestBase,
     sp<TunerCallbackMock> mCallback = new TunerCallbackMock();
 
    private:
+    const BandConfig& getBand(unsigned idx);
+
+    unsigned currentBandIndex = 0;
     hidl_vec<BandConfig> mBands;
 };
+
+/**
+ * Clears strong pointer and waits until the object gets destroyed.
+ *
+ * @param ptr The pointer to get cleared.
+ * @param timeout Time to wait for other references.
+ */
+template <typename T>
+static void clearAndWait(sp<T>& ptr, std::chrono::milliseconds timeout) {
+    wp<T> wptr = ptr;
+    ptr.clear();
+    auto limit = steady_clock::now() + timeout;
+    while (wptr.promote() != nullptr) {
+        constexpr auto step = 10ms;
+        if (steady_clock::now() + step > limit) {
+            FAIL() << "Pointer was not released within timeout";
+            break;
+        }
+        sleep_for(step);
+    }
+}
 
 void BroadcastRadioHalTest::SetUp() {
     radioClass = GetParam();
@@ -153,10 +177,10 @@ void BroadcastRadioHalTest::SetUp() {
 void BroadcastRadioHalTest::TearDown() {
     mTuner.clear();
     mRadioModule.clear();
-    // TODO(b/36864490): wait (with timeout) until mCallback has only one reference
+    clearAndWait(mCallback, 1s);
 }
 
-bool BroadcastRadioHalTest::openTuner(unsigned band) {
+bool BroadcastRadioHalTest::openTuner() {
     EXPECT_EQ(nullptr, mTuner.get());
 
     if (radioClass == Class::AM_FM) {
@@ -169,7 +193,8 @@ bool BroadcastRadioHalTest::openTuner(unsigned band) {
         if (result != Result::OK) return;
         mTuner = ITuner::castFrom(tuner);
     };
-    auto hidlResult = mRadioModule->openTuner(getBand(band), true, mCallback, openCb);
+    currentBandIndex = 0;
+    auto hidlResult = mRadioModule->openTuner(getBand(0), true, mCallback, openCb);
 
     EXPECT_TRUE(hidlResult.isOk());
     EXPECT_EQ(Result::OK, halResult);
@@ -210,6 +235,21 @@ const BandConfig& BroadcastRadioHalTest::getBand(unsigned idx) {
     return band;
 }
 
+bool BroadcastRadioHalTest::nextBand() {
+    if (currentBandIndex + 1 >= mBands.size()) return false;
+    currentBandIndex++;
+
+    BandConfig bandCb;
+    EXPECT_TIMEOUT_CALL(*mCallback, configChange, Result::OK, _)
+        .WillOnce(DoAll(SaveArg<1>(&bandCb), testing::Return(ByMove(Void()))));
+    auto hidlResult = mTuner->setConfiguration(getBand(currentBandIndex));
+    EXPECT_EQ(Result::OK, hidlResult);
+    EXPECT_TIMEOUT_CALL_WAIT(*mCallback, configChange, kConfigTimeout);
+    EXPECT_EQ(getBand(currentBandIndex), bandCb);
+
+    return true;
+}
+
 bool BroadcastRadioHalTest::getProgramList(
     std::function<void(const hidl_vec<ProgramInfo>& list)> cb) {
     ProgramListResult getListResult = ProgramListResult::NOT_INITIALIZED;
@@ -244,11 +284,7 @@ bool BroadcastRadioHalTest::getProgramList(
         EXPECT_EQ(ProgramListResult::OK, getListResult);
     }
 
-    if (isListEmpty) {
-        printSkipped("Program list is empty.");
-        return false;
-    }
-    return true;
+    return !isListEmpty;
 }
 
 /**
@@ -263,13 +299,13 @@ bool BroadcastRadioHalTest::getProgramList(
  */
 TEST_P(BroadcastRadioHalTest, OpenTunerTwice) {
     if (skipped) return;
-    ASSERT_TRUE(openTuner(0));
 
-    Result halResult = Result::NOT_INITIALIZED;
-    auto openCb = [&](Result result, const sp<V1_0::ITuner>&) { halResult = result; };
-    auto hidlResult = mRadioModule->openTuner(getBand(0), true, mCallback, openCb);
-    ASSERT_TRUE(hidlResult.isOk());
-    ASSERT_EQ(Result::OK, halResult);
+    ASSERT_TRUE(openTuner());
+
+    auto secondTuner = mTuner;
+    mTuner.clear();
+
+    ASSERT_TRUE(openTuner());
 }
 
 /**
@@ -283,17 +319,25 @@ TEST_P(BroadcastRadioHalTest, OpenTunerTwice) {
  */
 TEST_P(BroadcastRadioHalTest, TuneFromProgramList) {
     if (skipped) return;
-    ASSERT_TRUE(openTuner(0));
+    ASSERT_TRUE(openTuner());
 
     ProgramInfo firstProgram;
-    auto getCb = [&](const hidl_vec<ProgramInfo>& list) {
-        // don't copy the whole list out, it might be heavy
-        firstProgram = list[0];
-    };
-    if (!getProgramList(getCb)) return;
+    bool foundAny = false;
+    do {
+        auto getCb = [&](const hidl_vec<ProgramInfo>& list) {
+            // don't copy the whole list out, it might be heavy
+            firstProgram = list[0];
+        };
+        if (getProgramList(getCb)) foundAny = true;
+    } while (nextBand());
+    if (HasFailure()) return;
+    if (!foundAny) {
+        printSkipped("Program list is empty.");
+        return;
+    }
 
     ProgramSelector selCb;
-    EXPECT_CALL(*mCallback, tuneComplete(_, _));
+    EXPECT_CALL(*mCallback, tuneComplete(_, _)).Times(0);
     EXPECT_TIMEOUT_CALL(*mCallback, tuneComplete_1_1, Result::OK, _)
         .WillOnce(DoAll(SaveArg<1>(&selCb), testing::Return(ByMove(Void()))));
     auto tuneResult = mTuner->tune_1_1(firstProgram.selector);
@@ -304,7 +348,7 @@ TEST_P(BroadcastRadioHalTest, TuneFromProgramList) {
 
 TEST_P(BroadcastRadioHalTest, CancelAnnouncement) {
     if (skipped) return;
-    ASSERT_TRUE(openTuner(0));
+    ASSERT_TRUE(openTuner());
 
     auto hidlResult = mTuner->cancelAnnouncement();
     EXPECT_EQ(Result::OK, hidlResult);
@@ -336,23 +380,24 @@ TEST_P(BroadcastRadioHalTest, GetNoImage) {
  */
 TEST_P(BroadcastRadioHalTest, OobImagesOnly) {
     if (skipped) return;
-    ASSERT_TRUE(openTuner(0));
+    ASSERT_TRUE(openTuner());
 
     std::vector<int> imageIds;
 
-    ProgramInfo firstProgram;
-    auto getCb = [&](const hidl_vec<ProgramInfo>& list) {
-        for (auto&& program : list) {
-            for (auto&& entry : program.base.metadata) {
-                EXPECT_NE(MetadataType::RAW, entry.type);
-                if (entry.key != MetadataKey::ICON && entry.key != MetadataKey::ART) continue;
-                EXPECT_NE(0, entry.intValue);
-                EXPECT_EQ(0u, entry.rawValue.size());
-                if (entry.intValue != 0) imageIds.push_back(entry.intValue);
+    do {
+        auto getCb = [&](const hidl_vec<ProgramInfo>& list) {
+            for (auto&& program : list) {
+                for (auto&& entry : program.base.metadata) {
+                    EXPECT_NE(MetadataType::RAW, entry.type);
+                    if (entry.key != MetadataKey::ICON && entry.key != MetadataKey::ART) continue;
+                    EXPECT_NE(0, entry.intValue);
+                    EXPECT_EQ(0u, entry.rawValue.size());
+                    if (entry.intValue != 0) imageIds.push_back(entry.intValue);
+                }
             }
-        }
-    };
-    if (!getProgramList(getCb)) return;
+        };
+        getProgramList(getCb);
+    } while (nextBand());
 
     if (imageIds.size() == 0) {
         printSkipped("No images found");

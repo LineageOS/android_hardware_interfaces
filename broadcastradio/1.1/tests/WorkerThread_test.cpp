@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <WorkerThread.h>
+#include <broadcastradio-utils/WorkerThread.h>
 #include <gtest/gtest.h>
 
 namespace {

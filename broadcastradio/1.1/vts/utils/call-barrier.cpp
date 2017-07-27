@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "call-barrier.h"
+#include <broadcastradio-vts-utils/call-barrier.h>
 
 namespace android {
 namespace hardware {

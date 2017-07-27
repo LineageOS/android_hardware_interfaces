@@ -8,4 +8,5 @@ subdirs = [
     "1.1/tests",
     "1.1/utils",
     "1.1/vts/functional",
+    "1.1/vts/utils",
 ]

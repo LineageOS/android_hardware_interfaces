@@ -66,6 +66,13 @@ bool isDigital(const ProgramSelector& sel);
 
 }  // namespace utils
 }  // namespace V1_1
+
+namespace V1_0 {
+
+bool operator==(const BandConfig& l, const BandConfig& r);
+
+}  // namespace V1_0
+
 }  // namespace broadcastradio
 }  // namespace hardware
 }  // namespace android
