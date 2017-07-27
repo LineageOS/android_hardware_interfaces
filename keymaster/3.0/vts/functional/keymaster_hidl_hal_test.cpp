@@ -1565,7 +1565,9 @@ TEST_F(SigningOperationsTest, RsaNoPaddingTooLong) {
                                           .Digest(Digest::NONE)
                                           .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN)));
     string result;
-    EXPECT_EQ(ErrorCode::INVALID_INPUT_LENGTH, Finish(message, &result));
+    ErrorCode finish_error_code = Finish(message, &result);
+    EXPECT_TRUE(finish_error_code == ErrorCode::INVALID_INPUT_LENGTH ||
+                finish_error_code == ErrorCode::INVALID_ARGUMENT);
 
     // Very large message that should exceed the transfer buffer size of any reasonable TEE.
     message = string(128 * 1024, 'a');
@@ -1573,7 +1575,9 @@ TEST_F(SigningOperationsTest, RsaNoPaddingTooLong) {
               Begin(KeyPurpose::SIGN, AuthorizationSetBuilder()
                                           .Digest(Digest::NONE)
                                           .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN)));
-    EXPECT_EQ(ErrorCode::INVALID_INPUT_LENGTH, Finish(message, &result));
+    finish_error_code = Finish(message, &result);
+    EXPECT_TRUE(finish_error_code == ErrorCode::INVALID_INPUT_LENGTH ||
+                finish_error_code == ErrorCode::INVALID_ARGUMENT);
 }
 
 /*
