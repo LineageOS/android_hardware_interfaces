@@ -63,7 +63,8 @@ TEST_F(RadioHidlTest_v1_1, startNetworkScan) {
     if (cardStatus.cardState == CardState::ABSENT) {
         ASSERT_TRUE(radioRsp_v1_1->rspInfo.error == RadioError::NONE ||
                     radioRsp_v1_1->rspInfo.error == RadioError::SIM_ABSENT ||
-                    radioRsp_v1_1->rspInfo.error == RadioError::INVALID_ARGUMENTS);
+                    radioRsp_v1_1->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp_v1_1->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED);
     }
 }
 
@@ -84,7 +85,8 @@ TEST_F(RadioHidlTest_v1_1, startNetworkScan_InvalidArgument) {
 
     if (cardStatus.cardState == CardState::ABSENT) {
         ASSERT_TRUE(radioRsp_v1_1->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
-                    radioRsp_v1_1->rspInfo.error == RadioError::SIM_ABSENT);
+                    radioRsp_v1_1->rspInfo.error == RadioError::SIM_ABSENT ||
+                    radioRsp_v1_1->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED);
     }
 }
 
@@ -101,6 +103,7 @@ TEST_F(RadioHidlTest_v1_1, stopNetworkScan) {
 
     if (cardStatus.cardState == CardState::ABSENT) {
         ASSERT_TRUE(radioRsp_v1_1->rspInfo.error == RadioError::NONE ||
-                    radioRsp_v1_1->rspInfo.error == RadioError::SIM_ABSENT);
+                    radioRsp_v1_1->rspInfo.error == RadioError::SIM_ABSENT ||
+                    radioRsp_v1_1->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED);
     }
 }
