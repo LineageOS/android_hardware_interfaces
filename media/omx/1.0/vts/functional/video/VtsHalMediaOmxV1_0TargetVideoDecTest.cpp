@@ -587,9 +587,6 @@ void portReconfiguration(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         std::cout << "[          ] Warning ! OMX_EventError/ "
                      "Decode Frame Call might be failed \n";
         return;
-    } else if (msg.data.eventData.event == OMX_EventBufferFlag) {
-        // soft omx components donot send this, we will just ignore it
-        // for now
     } else {
         // something unexpected happened
         ASSERT_TRUE(false);
