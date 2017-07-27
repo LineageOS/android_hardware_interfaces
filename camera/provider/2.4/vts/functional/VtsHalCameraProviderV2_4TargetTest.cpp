@@ -1084,6 +1084,9 @@ TEST_F(CameraHidlTest, setCallback) {
     auto status = mProvider->setCallback(cb);
     ASSERT_TRUE(status.isOk());
     ASSERT_EQ(Status::OK, status);
+    status = mProvider->setCallback(nullptr);
+    ASSERT_TRUE(status.isOk());
+    ASSERT_EQ(Status::OK, status);
 }
 
 // Test if ICameraProvider::getCameraDeviceInterface returns Status::OK and non-null device
