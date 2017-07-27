@@ -898,13 +898,20 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         }
     }
 
-    void CheckOrigin() {
+    void CheckOrigin(bool asymmetric = false) {
         SCOPED_TRACE("CheckOrigin");
         if (is_secure_ && supports_symmetric_) {
             EXPECT_TRUE(
                 contains(key_characteristics_.teeEnforced, TAG_ORIGIN, KeyOrigin::IMPORTED));
         } else if (is_secure_) {
-            EXPECT_TRUE(contains(key_characteristics_.teeEnforced, TAG_ORIGIN, KeyOrigin::UNKNOWN));
+            // wrapped KM0
+            if (asymmetric) {
+                EXPECT_TRUE(
+                    contains(key_characteristics_.teeEnforced, TAG_ORIGIN, KeyOrigin::UNKNOWN));
+            } else {
+                EXPECT_TRUE(contains(key_characteristics_.softwareEnforced, TAG_ORIGIN,
+                                     KeyOrigin::IMPORTED));
+            }
         } else {
             EXPECT_TRUE(
                 contains(key_characteristics_.softwareEnforced, TAG_ORIGIN, KeyOrigin::IMPORTED));
@@ -1059,13 +1066,17 @@ TEST_F(KeymasterVersionTest, SensibleFeatures) {
 
 class NewKeyGenerationTest : public KeymasterHidlTest {
   protected:
-    void CheckBaseParams(const KeyCharacteristics& keyCharacteristics) {
+    void CheckBaseParams(const KeyCharacteristics& keyCharacteristics, bool asymmetric = false) {
         // TODO(swillden): Distinguish which params should be in which auth list.
 
         AuthorizationSet auths(keyCharacteristics.teeEnforced);
         auths.push_back(AuthorizationSet(keyCharacteristics.softwareEnforced));
 
-        EXPECT_TRUE(auths.Contains(TAG_ORIGIN, KeyOrigin::GENERATED));
+        if (!SupportsSymmetric() && asymmetric) {
+            EXPECT_TRUE(auths.Contains(TAG_ORIGIN, KeyOrigin::UNKNOWN));
+        } else {
+            EXPECT_TRUE(auths.Contains(TAG_ORIGIN, KeyOrigin::GENERATED));
+        }
 
         EXPECT_TRUE(auths.Contains(TAG_PURPOSE, KeyPurpose::SIGN));
         EXPECT_TRUE(auths.Contains(TAG_PURPOSE, KeyPurpose::VERIFY));
@@ -1114,7 +1125,7 @@ TEST_F(NewKeyGenerationTest, Rsa) {
                                              &key_blob, &key_characteristics));
 
         ASSERT_GT(key_blob.size(), 0U);
-        CheckBaseParams(key_characteristics);
+        CheckBaseParams(key_characteristics, true /* asymmetric */);
 
         AuthorizationSet crypto_params;
         if (IsSecure()) {
@@ -1160,7 +1171,7 @@ TEST_F(NewKeyGenerationTest, Ecdsa) {
                                                  .Authorizations(UserAuths()),
                                              &key_blob, &key_characteristics));
         ASSERT_GT(key_blob.size(), 0U);
-        CheckBaseParams(key_characteristics);
+        CheckBaseParams(key_characteristics, true /* asymmetric */);
 
         AuthorizationSet crypto_params;
         if (IsSecure()) {
@@ -2359,7 +2370,7 @@ TEST_F(ImportKeyTest, RsaSuccess) {
     CheckKm0CryptoParam(TAG_RSA_PUBLIC_EXPONENT, 65537U);
     CheckKm1CryptoParam(TAG_DIGEST, Digest::SHA_2_256);
     CheckKm1CryptoParam(TAG_PADDING, PaddingMode::RSA_PSS);
-    CheckOrigin();
+    CheckOrigin(true /* asymmetric */);
 
     string message(1024 / 8, 'a');
     auto params = AuthorizationSetBuilder().Digest(Digest::SHA_2_256).Padding(PaddingMode::RSA_PSS);
@@ -2415,7 +2426,7 @@ TEST_F(ImportKeyTest, EcdsaSuccess) {
     CheckKm1CryptoParam(TAG_DIGEST, Digest::SHA_2_256);
     CheckKm2CryptoParam(TAG_EC_CURVE, EcCurve::P_256);
 
-    CheckOrigin();
+    CheckOrigin(true /* asymmetric */);
 
     string message(32, 'a');
     auto params = AuthorizationSetBuilder().Digest(Digest::SHA_2_256);
@@ -2441,7 +2452,7 @@ TEST_F(ImportKeyTest, Ecdsa521Success) {
     CheckKm1CryptoParam(TAG_DIGEST, Digest::SHA_2_256);
     CheckKm2CryptoParam(TAG_EC_CURVE, EcCurve::P_521);
 
-    CheckOrigin();
+    CheckOrigin(true /* asymmetric */);
 
     string message(32, 'a');
     auto params = AuthorizationSetBuilder().Digest(Digest::SHA_2_256);
