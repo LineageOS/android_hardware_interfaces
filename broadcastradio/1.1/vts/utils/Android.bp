@@ -14,30 +14,15 @@
 // limitations under the License.
 //
 
-cc_test {
-    name: "VtsHalBroadcastradioV1_1TargetTest",
-    defaults: ["hidl_defaults"],
-    srcs: ["VtsHalBroadcastradioV1_1TargetTest.cpp"],
-    shared_libs: [
-        "libbase",
-        "liblog",
-        "libcutils",
-        "libhidlbase",
-        "libhidltransport",
-        "libnativehelper",
-        "libutils",
-        "android.hardware.broadcastradio@1.0",
-        "android.hardware.broadcastradio@1.1",
+cc_library_static {
+    name: "android.hardware.broadcastradio@1.1-vts-utils-lib",
+    srcs: [
+        "call-barrier.cpp",
     ],
-    static_libs: [
-        "VtsHalHidlTargetTestBase",
-        "android.hardware.broadcastradio@1.1-utils-lib",
-        "android.hardware.broadcastradio@1.1-vts-utils-lib",
-        "libgmock",
-    ],
+    export_include_dirs: ["include"],
     cflags: [
+        "-Wall",
         "-Wextra",
-        "-O0",
-        "-g",
+        "-Werror",
     ],
 }

@@ -17,7 +17,7 @@
 #define LOG_TAG "WorkerThread"
 //#define LOG_NDEBUG 0
 
-#include "WorkerThread.h"
+#include <broadcastradio-utils/WorkerThread.h>
 
 #include <log/log.h>
 

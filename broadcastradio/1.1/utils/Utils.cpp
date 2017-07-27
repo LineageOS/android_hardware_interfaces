@@ -16,7 +16,7 @@
 #define LOG_TAG "BroadcastRadioDefault.utils"
 //#define LOG_NDEBUG 0
 
-#include "Utils.h"
+#include <broadcastradio-utils/Utils.h>
 
 #include <log/log.h>
 
@@ -208,6 +208,26 @@ bool isDigital(const ProgramSelector& sel) {
 
 }  // namespace utils
 }  // namespace V1_1
+
+namespace V1_0 {
+
+bool operator==(const BandConfig& l, const BandConfig& r) {
+    if (l.type != r.type) return false;
+    if (l.antennaConnected != r.antennaConnected) return false;
+    if (l.lowerLimit != r.lowerLimit) return false;
+    if (l.upperLimit != r.upperLimit) return false;
+    if (l.spacings != r.spacings) return false;
+    if (l.type == Band::AM || l.type == Band::AM_HD) {
+        return l.ext.am == r.ext.am;
+    } else if (l.type == Band::FM || l.type == Band::FM_HD) {
+        return l.ext.fm == r.ext.fm;
+    } else {
+        ALOGW("Unsupported band config type: %s", toString(l.type).c_str());
+        return false;
+    }
+}
+
+}  // namespace V1_0
 }  // namespace broadcastradio
 }  // namespace hardware
 }  // namespace android
