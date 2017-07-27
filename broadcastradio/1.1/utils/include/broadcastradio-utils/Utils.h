@@ -27,6 +27,12 @@ namespace broadcastradio {
 namespace V1_1 {
 namespace utils {
 
+// TODO(b/64115813): move it out from frameworks/base/services/core/jni/BroadcastRadio/types.h
+enum class HalRevision : uint32_t {
+    V1_0 = 1,
+    V1_1,
+};
+
 /**
  * Checks, if {@code pointer} tunes to {@channel}.
  *
