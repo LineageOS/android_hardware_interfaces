@@ -212,12 +212,23 @@ struct ProgramInfo {
     uint32_t     channel;   /** current channel. (e.g kHz for band type AM_FM) */
     uint32_t     subChannel; /** current sub channel. (FM_HD) */
 
-    /** Tuned to a program (not a noise). It's the same condition that would stop scan operation. */
+    /**
+     * Tuned to a program (not a noise). It's the same condition that would
+     * stop scan operation.
+     */
     bool         tuned;
 
     bool         stereo;    /** program is stereo or not */
     bool         digital;   /** digital program or not (e.g HD Radio program) */
-    uint32_t     signalStrength; /** signal strength from 0 to 100 */
-    vec<MetaData> metadata; /** non empty if meta data are present (e.g PTY, song title ...) */
+
+    /**
+     * Signal quality measured in 0% to 100% range.
+     *
+     * Despite the name, this is not a signal strength.
+     * The purpose of this field is primarily informative.
+     */
+    uint32_t signalStrength;
+
+    vec<MetaData> metadata; /** Metadata: PTY, song title etc. */
 };
 
