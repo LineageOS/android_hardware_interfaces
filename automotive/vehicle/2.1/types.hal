@@ -260,8 +260,8 @@ enum VehicleProperty: @2.0::VehicleProperty {
       | VehicleArea:GLOBAL),
 };
 
-/** The status of a fuel system as described by the OBD2 specification. */
-enum FuelSystemStatus : int32_t {
+/** The status of the vehicle's fuel system. */
+enum Obd2FuelSystemStatus : int32_t {
   OPEN_INSUFFICIENT_ENGINE_TEMPERATURE = 1,
   CLOSED_LOOP = 2,
   OPEN_ENGINE_LOAD_OR_DECELERATION = 4,
@@ -270,13 +270,13 @@ enum FuelSystemStatus : int32_t {
 };
 
 /** Defines which ignition monitors are available to be read. */
-enum IgnitionMonitorKind : int32_t {
+enum Obd2IgnitionMonitorKind : int32_t {
   SPARK = 0,
   COMPRESSION = 1,
 };
 
 /** These ignition monitors are common to both SPARK and COMPRESSION. */
-enum CommonIgnitionMonitors : int32_t {
+enum Obd2CommonIgnitionMonitors : int32_t {
   COMPONENTS_AVAILABLE = 0x1 << 0,
   COMPONENTS_INCOMPLETE = 0x1 << 1,
 
@@ -288,7 +288,7 @@ enum CommonIgnitionMonitors : int32_t {
 };
 
 /** Ignition monitors available for SPARK vehicles. */
-enum SparkIgnitionMonitors : CommonIgnitionMonitors {
+enum Obd2SparkIgnitionMonitors : Obd2CommonIgnitionMonitors {
   EGR_AVAILABLE = 0x1 << 6,
   EGR_INCOMPLETE = 0x1 << 7,
 
@@ -315,7 +315,7 @@ enum SparkIgnitionMonitors : CommonIgnitionMonitors {
 };
 
 /** Ignition monitors only available for COMPRESSION vehicles. */
-enum CompressionIgnitionMonitors : CommonIgnitionMonitors {
+enum Obd2CompressionIgnitionMonitors : Obd2CommonIgnitionMonitors {
   EGR_OR_VVT_AVAILABLE = 0x1 << 6,
   EGR_OR_VVT_INCOMPLETE = 0x1 << 7,
 
@@ -335,14 +335,16 @@ enum CompressionIgnitionMonitors : CommonIgnitionMonitors {
   NMHC_CATALYST_INCOMPLETE = 0x1 << 17,
 };
 
-enum SecondaryAirStatus : int32_t {
+/** The status of the vehicle's secondary air system. */
+enum Obd2SecondaryAirStatus : int32_t {
   UPSTREAM = 1,
   DOWNSTREAM_OF_CATALYCIC_CONVERTER = 2,
   FROM_OUTSIDE_OR_OFF = 4,
   PUMP_ON_FOR_DIAGNOSTICS = 8,
 };
 
-enum FuelType : int32_t {
+/** The fuel type(s) supported by a vehicle. */
+enum Obd2FuelType : int32_t {
   NOT_AVAILABLE = 0,
   GASOLINE = 1,
   METHANOL = 2,
@@ -376,7 +378,7 @@ enum FuelType : int32_t {
  * expect a comment by the property definition describing the enum to look at for the mapping.
  * Any value greater than the last reserved index is available to vendors to map their extensions.
  */
-enum Obd2IntegerSensorIndex : int32_t {
+enum DiagnosticIntegerSensorIndex : int32_t {
   /** refer to FuelSystemStatus for a description of this value. */
   FUEL_SYSTEM_STATUS = 0,
   MALFUNCTION_INDICATOR_LIGHT_ON = 1,
@@ -431,7 +433,7 @@ enum Obd2IntegerSensorIndex : int32_t {
  * The ordering of the values is taken from the OBD2 specification.
  * Any value greater than the last reserved index is available to vendors to map their extensions.
  */
-enum Obd2FloatSensorIndex : int32_t {
+enum DiagnosticFloatSensorIndex : int32_t {
   CALCULATED_ENGINE_LOAD = 0,
   ENGINE_COOLANT_TEMPERATURE = 1,
   SHORT_TERM_FUEL_TRIM_BANK1 = 2,
