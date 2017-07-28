@@ -20,6 +20,8 @@
 #include <vector>
 
 #include <android/hardware/wifi/1.0/types.h>
+#include <android/hardware/wifi/1.0/IWifiChip.h>
+#include <android/hardware/wifi/1.1/IWifiChip.h>
 
 #include "wifi_legacy_hal.h"
 
@@ -51,6 +53,8 @@ bool convertLegacyVectorOfDebugRingBufferStatusToHidl(
 bool convertLegacyWakeReasonStatsToHidl(
     const legacy_hal::WakeReasonStats& legacy_stats,
     WifiDebugHostWakeReasonStats* hidl_stats);
+legacy_hal::wifi_power_scenario convertHidlTxPowerScenarioToLegacy(
+    V1_1::IWifiChip::TxPowerScenario hidl_scenario);
 
 // STA iface conversion methods.
 bool convertLegacyFeaturesToHidlStaCapabilities(
