@@ -27,9 +27,16 @@ namespace broadcastradio {
 namespace V1_1 {
 namespace implementation {
 
+/**
+ * A radio frequency space mock.
+ *
+ * This represents all broadcast waves in the air for a given radio technology,
+ * not a captured station list in the radio tuner memory.
+ *
+ * It's meant to abstract out radio content from default tuner implementation.
+ */
 class VirtualRadio {
    public:
-    VirtualRadio(VirtualRadio&& o);
     VirtualRadio(const std::vector<VirtualProgram> initialList);
 
     std::vector<VirtualProgram> getProgramList();
@@ -40,7 +47,29 @@ class VirtualRadio {
     std::vector<VirtualProgram> mPrograms;
 };
 
-VirtualRadio make_fm_radio();
+/**
+ * Get virtual radio space for a given radio class.
+ *
+ * As a space, each virtual radio always exists. For example, DAB frequencies
+ * exists in US, but contains no programs.
+ *
+ * The lifetime of the virtual radio space is virtually infinite, but for the
+ * needs of default implementation, it's bound with the lifetime of default
+ * implementation process.
+ *
+ * Internally, it's a static object, so trying to access the reference during
+ * default implementation library unloading may result in segmentation fault.
+ * It's unlikely for testing purposes.
+ *
+ * @param classId A class of radio technology.
+ * @return A reference to virtual radio space for a given technology.
+ */
+VirtualRadio& getRadio(V1_0::Class classId);
+
+VirtualRadio& getAmRadio();
+VirtualRadio& getFmRadio();
+VirtualRadio& getSatRadio();
+VirtualRadio& getDigitalRadio();
 
 }  // namespace implementation
 }  // namespace V1_1
