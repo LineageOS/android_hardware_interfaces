@@ -416,6 +416,52 @@ TEST_P(BroadcastRadioHalTest, OobImagesOnly) {
     }
 }
 
+/**
+ * Test AnalogForced switch.
+ *
+ * Verifies that:
+ * - setAnalogForced results either with INVALID_STATE, or isAnalogForced replying the same
+ */
+TEST_P(BroadcastRadioHalTest, AnalogForcedSwitch) {
+    if (skipped) return;
+    ASSERT_TRUE(openTuner());
+
+    bool forced;
+    Result halIsResult;
+    auto isCb = [&](Result result, bool isForced) {
+        halIsResult = result;
+        forced = isForced;
+    };
+
+    // set analog mode
+    auto setResult = mTuner->setAnalogForced(true);
+    ASSERT_TRUE(setResult.isOk());
+    if (Result::INVALID_STATE == setResult) {
+        // if setter fails, getter should fail too - it means the switch is not supported at all
+        auto isResult = mTuner->isAnalogForced(isCb);
+        ASSERT_TRUE(isResult.isOk());
+        EXPECT_EQ(Result::INVALID_STATE, halIsResult);
+        return;
+    }
+    ASSERT_EQ(Result::OK, setResult);
+
+    // check, if it's analog
+    auto isResult = mTuner->isAnalogForced(isCb);
+    ASSERT_TRUE(isResult.isOk());
+    EXPECT_EQ(Result::OK, halIsResult);
+    ASSERT_TRUE(forced);
+
+    // set digital mode
+    setResult = mTuner->setAnalogForced(false);
+    ASSERT_EQ(Result::OK, setResult);
+
+    // check, if it's digital
+    isResult = mTuner->isAnalogForced(isCb);
+    ASSERT_TRUE(isResult.isOk());
+    EXPECT_EQ(Result::OK, halIsResult);
+    ASSERT_FALSE(forced);
+}
+
 INSTANTIATE_TEST_CASE_P(BroadcastRadioHalTestCases, BroadcastRadioHalTest,
                         ::testing::Values(Class::AM_FM, Class::SAT, Class::DT));
 

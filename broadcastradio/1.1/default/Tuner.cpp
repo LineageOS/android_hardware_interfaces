@@ -52,7 +52,8 @@ const struct {
 Tuner::Tuner(const sp<V1_0::ITunerCallback>& callback)
     : mCallback(callback),
       mCallback1_1(ITunerCallback::castFrom(callback).withDefault(nullptr)),
-      mVirtualFm(make_fm_radio()) {
+      mVirtualFm(make_fm_radio()),
+      mIsAnalogForced(false) {
     // TODO (b/36864090): inject this data in a more elegant way
     setCompatibilityLevel(mCallback1_1 == nullptr ? 1 : 2);
 }
@@ -320,15 +321,14 @@ Return<void> Tuner::getProgramList(const hidl_string& filter __unused, getProgra
 
 Return<void> Tuner::isAnalogForced(isAnalogForced_cb _hidl_cb) {
     ALOGV("%s", __func__);
-    // TODO(b/36864090): implement
-    _hidl_cb(Result::INVALID_STATE, false);
+    _hidl_cb(Result::OK, mIsAnalogForced);
     return Void();
 }
 
-Return<Result> Tuner::setAnalogForced(bool isForced __unused) {
+Return<Result> Tuner::setAnalogForced(bool isForced) {
     ALOGV("%s", __func__);
-    // TODO(b/36864090): implement
-    return Result::INVALID_STATE;
+    mIsAnalogForced = isForced;
+    return Result::OK;
 }
 
 }  // namespace implementation

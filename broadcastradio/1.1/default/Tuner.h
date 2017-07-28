@@ -65,6 +65,7 @@ struct Tuner : public ITuner {
     bool mIsTuneCompleted = false;
     ProgramSelector mCurrentProgram = {};
     ProgramInfo mCurrentProgramInfo = {};
+    std::atomic<bool> mIsAnalogForced;
 
     void tuneInternalLocked(const ProgramSelector& sel);
     bool isFmLocked();  // TODO(b/36864090): make it generic, not FM only
