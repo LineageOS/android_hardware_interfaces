@@ -752,13 +752,13 @@ wifi_error WifiLegacyHal::setScanningMacOui(const std::array<uint8_t, 3>& oui) {
                                                       oui_internal.data());
 }
 
-wifi_error WifiLegacyHal::setTxPowerLimit(int32_t tx_level_dbm) {
-  return global_func_table_.wifi_set_tx_power_limit(wlan_interface_handle_,
-                                                    tx_level_dbm);
+wifi_error WifiLegacyHal::selectTxPowerScenario(wifi_power_scenario scenario) {
+  return global_func_table_.wifi_select_tx_power_scenario(
+      wlan_interface_handle_, scenario);
 }
 
-wifi_error WifiLegacyHal::resetTxPowerLimit() {
-  return global_func_table_.wifi_reset_tx_power_limit(wlan_interface_handle_);
+wifi_error WifiLegacyHal::resetTxPowerScenario() {
+  return global_func_table_.wifi_reset_tx_power_scenario(wlan_interface_handle_);
 }
 
 std::pair<wifi_error, uint32_t> WifiLegacyHal::getLoggerSupportedFeatureSet() {

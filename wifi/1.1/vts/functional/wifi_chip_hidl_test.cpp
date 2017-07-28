@@ -37,7 +37,8 @@ using ::android::hardware::wifi::V1_1::IWifiChip;
 using ::android::hardware::wifi::V1_0::IWifiStaIface;
 
 namespace {
-constexpr int32_t kFakePowerInDbm = -56;
+constexpr IWifiChip::TxPowerScenario kFakePowerScenario =
+    IWifiChip::TxPowerScenario::VOICE_CALL;
 }; //namespace
 
 /**
@@ -66,12 +67,12 @@ class WifiChipHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 };
 
 /*
- * SetTxPowerLimit
+ * SelectTxPowerScenario
  */
-TEST_F(WifiChipHidlTest, SetTxPowerLimit) {
+TEST_F(WifiChipHidlTest, SelectTxPowerScenario) {
     uint32_t caps = configureChipForStaIfaceAndGetCapabilities();
     const auto& status =
-        HIDL_INVOKE(wifi_chip_, setTxPowerLimit, kFakePowerInDbm);
+        HIDL_INVOKE(wifi_chip_, selectTxPowerScenario, kFakePowerScenario);
     if (caps & IWifiChip::ChipCapabilityMask::SET_TX_POWER_LIMIT) {
         EXPECT_EQ(WifiStatusCode::SUCCESS, status.code);
     } else {
@@ -80,12 +81,12 @@ TEST_F(WifiChipHidlTest, SetTxPowerLimit) {
 }
 
 /*
- * SetTxPowerLimit
+ * ResetTxPowerScenario
  */
-TEST_F(WifiChipHidlTest, ResetTxPowerLimit) {
+TEST_F(WifiChipHidlTest, ResetTxPowerScenario) {
     uint32_t caps = configureChipForStaIfaceAndGetCapabilities();
     const auto& status =
-        HIDL_INVOKE(wifi_chip_, resetTxPowerLimit);
+        HIDL_INVOKE(wifi_chip_, resetTxPowerScenario);
     if (caps & IWifiChip::ChipCapabilityMask::SET_TX_POWER_LIMIT) {
         EXPECT_EQ(WifiStatusCode::SUCCESS, status.code);
     } else {
