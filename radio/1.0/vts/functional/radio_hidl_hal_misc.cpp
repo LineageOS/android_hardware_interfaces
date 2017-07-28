@@ -397,7 +397,8 @@ TEST_F(RadioHidlTest, getDeviceIdentity) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE);
+        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE ||
+                    radioRsp->rspInfo.error == RadioError::EMPTY_RECORD);
     }
 }
 
