@@ -38,12 +38,12 @@ public:
                     size_t numVendorFloatSensors);
 
     // Stores an integer-valued sensor.
-    V2_0::StatusCode setIntegerSensor(Obd2IntegerSensorIndex index, int32_t value);
+    V2_0::StatusCode setIntegerSensor(DiagnosticIntegerSensorIndex index, int32_t value);
     // Stores an integer-valued sensor.
     V2_0::StatusCode setIntegerSensor(size_t index, int32_t value);
 
     // Stores a float-valued sensor.
-    V2_0::StatusCode setFloatSensor(Obd2FloatSensorIndex index, float value);
+    V2_0::StatusCode setFloatSensor(DiagnosticFloatSensorIndex index, float value);
     // Stores a float-valued sensor.
     V2_0::StatusCode setFloatSensor(size_t index, float value);
 
