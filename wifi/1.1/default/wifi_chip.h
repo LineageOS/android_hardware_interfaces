@@ -126,9 +126,11 @@ class WifiChip : public V1_1::IWifiChip {
       getDebugHostWakeReasonStats_cb hidl_status_cb) override;
   Return<void> enableDebugErrorAlerts(
       bool enable, enableDebugErrorAlerts_cb hidl_status_cb) override;
-  Return<void> setTxPowerLimit(
-      int32_t powerInDbm, setTxPowerLimit_cb hidl_status_cb) override;
-  Return<void> resetTxPowerLimit(resetTxPowerLimit_cb hidl_status_cb) override;
+  Return<void> selectTxPowerScenario(
+      TxPowerScenario scenario,
+      selectTxPowerScenario_cb hidl_status_cb) override;
+  Return<void> resetTxPowerScenario(
+      resetTxPowerScenario_cb hidl_status_cb) override;
 
  private:
   void invalidateAndRemoveAllIfaces();
@@ -180,8 +182,8 @@ class WifiChip : public V1_1::IWifiChip {
   std::pair<WifiStatus, WifiDebugHostWakeReasonStats>
   getDebugHostWakeReasonStatsInternal();
   WifiStatus enableDebugErrorAlertsInternal(bool enable);
-  WifiStatus setTxPowerLimitInternal(int32_t powerInDbm);
-  WifiStatus resetTxPowerLimitInternal();
+  WifiStatus selectTxPowerScenarioInternal(TxPowerScenario scenario);
+  WifiStatus resetTxPowerScenarioInternal();
 
   WifiStatus handleChipConfiguration(ChipModeId mode_id);
   WifiStatus registerDebugRingBufferCallback();

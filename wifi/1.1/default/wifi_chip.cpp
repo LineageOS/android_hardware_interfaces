@@ -343,20 +343,20 @@ Return<void> WifiChip::enableDebugErrorAlerts(
                          enable);
 }
 
-Return<void> WifiChip::setTxPowerLimit(
-    int32_t powerInDbm, setTxPowerLimit_cb hidl_status_cb) {
+Return<void> WifiChip::selectTxPowerScenario(
+    TxPowerScenario scenario, selectTxPowerScenario_cb hidl_status_cb) {
   return validateAndCall(this,
                          WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
-                         &WifiChip::setTxPowerLimitInternal,
+                         &WifiChip::selectTxPowerScenarioInternal,
                          hidl_status_cb,
-                         powerInDbm);
+                         scenario);
 }
 
-Return<void> WifiChip::resetTxPowerLimit(
-    resetTxPowerLimit_cb hidl_status_cb) {
+Return<void> WifiChip::resetTxPowerScenario(
+    resetTxPowerScenario_cb hidl_status_cb) {
   return validateAndCall(this,
                          WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
-                         &WifiChip::resetTxPowerLimitInternal,
+                         &WifiChip::resetTxPowerScenarioInternal,
                          hidl_status_cb);
 }
 
@@ -824,13 +824,14 @@ WifiStatus WifiChip::enableDebugErrorAlertsInternal(bool enable) {
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
-WifiStatus WifiChip::setTxPowerLimitInternal(int32_t powerInDbm) {
-  auto legacy_status = legacy_hal_.lock()->setTxPowerLimit(powerInDbm);
+WifiStatus WifiChip::selectTxPowerScenarioInternal(TxPowerScenario scenario) {
+  auto legacy_status = legacy_hal_.lock()->selectTxPowerScenario(
+      hidl_struct_util::convertHidlTxPowerScenarioToLegacy(scenario));
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
-WifiStatus WifiChip::resetTxPowerLimitInternal() {
-  auto legacy_status = legacy_hal_.lock()->resetTxPowerLimit();
+WifiStatus WifiChip::resetTxPowerScenarioInternal() {
+  auto legacy_status = legacy_hal_.lock()->resetTxPowerScenario();
   return createWifiStatusFromLegacyError(legacy_status);
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Android Open Source Project
+ * Copyright 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,24 +44,40 @@ interface IWifiChip extends @1.0::IWifiChip {
   };
 
   /**
-   * API to set TX power limit.
-   * This is used for meeting SAR requirements while making VOIP calls for
-   * example.
-   *
-   * @param powerInDbm Power level in dBm.
-   * @return status WifiStatus of the operation.
-   *         Possible status codes:
-   *         |WifiStatusCode.SUCCESS|,
-   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
-   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
-   *         |WifiStatusCode.NOT_AVAILABLE|,
-   *         |WifiStatusCode.UNKNOWN|
+   * List of preset wifi radio TX power levels for different scenarios.
+   * The actual power values (typically varies based on the channel,
+   * 802.11 connection type, number of MIMO streams, etc) for each scenario
+   * is defined by the OEM as a BDF file since it varies for each wifi chip
+   * vendor and device.
    */
-  setTxPowerLimit(int32_t powerInDbm) generates (WifiStatus status);
+  enum TxPowerScenario : uint32_t {
+    VOICE_CALL = 0,
+  };
 
   /**
-   * API to reset TX power limit.
-   * This is used to set the power back to default values.
+   * API to select one of the preset TX power scenarios.
+   *
+   * The framework must invoke this method with the appropriate scenario to let
+   * the wifi chip change it's transmitting power levels.
+   * OEM's should define various power profiles for each of the scenarios
+   * above (defined in |TxPowerScenario|).
+   *
+   * @param scenario One of the preselected scenarios defined in
+   *        |TxPowerScenario|.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+   *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+   *         |WifiStatusCode.NOT_AVAILABLE|,
+   *         |WifiStatusCode.UNKNOWN|
+   */
+  selectTxPowerScenario(TxPowerScenario scenario) generates (WifiStatus status);
+
+  /**
+   * API to reset TX power levels.
+   * This is used to indicate the end of the previously selected TX power
+   * scenario and let the wifi chip fall back to the default power values.
    *
    * @return status WifiStatus of the operation.
    *         Possible status codes:
@@ -71,5 +87,5 @@ interface IWifiChip extends @1.0::IWifiChip {
    *         |WifiStatusCode.NOT_AVAILABLE|,
    *         |WifiStatusCode.UNKNOWN|
    */
-  resetTxPowerLimit() generates (WifiStatus status);
+  resetTxPowerScenario() generates (WifiStatus status);
 };
