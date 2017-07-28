@@ -659,7 +659,9 @@ Return<void> RadioResponse_v1_1::acknowledgeRequest(int32_t /*serial*/) {
 
 /* 1.1 Apis */
 Return<void> RadioResponse_v1_1::setCarrierInfoForImsiEncryptionResponse(
-    const RadioResponseInfo& /*info*/) {
+    const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_v1_1.notify();
     return Void();
 }
 
