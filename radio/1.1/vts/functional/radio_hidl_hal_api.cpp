@@ -107,3 +107,26 @@ TEST_F(RadioHidlTest_v1_1, stopNetworkScan) {
                     radioRsp_v1_1->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED);
     }
 }
+
+/*
+ * Test IRadio.setCarrierInfoForImsiEncryption() for the response returned.
+ */
+TEST_F(RadioHidlTest_v1_1, setCarrierInfoForImsiEncryption) {
+    int serial = GetRandomSerialNumber();
+    ImsiEncryptionInfo imsiInfo;
+    imsiInfo.mcc = "310";
+    imsiInfo.mnc = "004";
+    imsiInfo.carrierKey = (std::vector<uint8_t>){1, 2, 3, 4, 5, 6};
+    imsiInfo.keyIdentifier = "Test";
+    imsiInfo.expirationTime = 20180101;
+
+    radio_v1_1->setCarrierInfoForImsiEncryption(serial, imsiInfo);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_1->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_1->rspInfo.serial);
+
+    if (cardStatus.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(radioRsp_v1_1->rspInfo.error == RadioError::NONE ||
+                    radioRsp_v1_1->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED);
+    }
+}
