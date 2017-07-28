@@ -17,9 +17,6 @@
 #include <android-base/logging.h>
 #include <utils/SystemClock.h>
 
-#include <android/hardware/wifi/1.0/IWifiChip.h>
-#include <android/hardware/wifi/1.1/IWifiChip.h>
-
 #include "hidl_struct_util.h"
 
 namespace android {
@@ -258,6 +255,15 @@ bool convertLegacyWakeReasonStatsToHidl(
   hidl_stats->rxIcmpPkWakeDetails.icmp6Ns =
       legacy_stats.wake_reason_cnt.rx_wake_pkt_classification_info.icmp6_ns;
   return true;
+}
+
+legacy_hal::wifi_power_scenario convertHidlTxPowerScenarioToLegacy(
+    V1_1::IWifiChip::TxPowerScenario hidl_scenario) {
+  switch (hidl_scenario) {
+    case V1_1::IWifiChip::TxPowerScenario::VOICE_CALL:
+      return legacy_hal::WIFI_POWER_SCENARIO_VOICE_CALL;
+  };
+  CHECK(false);
 }
 
 bool convertLegacyFeaturesToHidlStaCapabilities(
