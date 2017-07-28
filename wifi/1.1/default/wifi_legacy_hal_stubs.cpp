@@ -132,8 +132,8 @@ bool initHalFuncTableWithStubs(wifi_hal_fn* hal_fn) {
   populateStubFor(&hal_fn->wifi_get_roaming_capabilities);
   populateStubFor(&hal_fn->wifi_enable_firmware_roaming);
   populateStubFor(&hal_fn->wifi_configure_roaming);
-  populateStubFor(&hal_fn->wifi_set_tx_power_limit);
-  populateStubFor(&hal_fn->wifi_reset_tx_power_limit);
+  populateStubFor(&hal_fn->wifi_select_tx_power_scenario);
+  populateStubFor(&hal_fn->wifi_reset_tx_power_scenario);
   return true;
 }
 }  // namespace legacy_hal
