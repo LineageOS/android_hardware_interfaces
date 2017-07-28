@@ -56,9 +56,12 @@ const std::vector<uint8_t>& Obd2SensorStore::BitmaskInVector::getBitmask() const
 
 Obd2SensorStore::Obd2SensorStore(size_t numVendorIntegerSensors,
                                  size_t numVendorFloatSensors) {
+        using V2_0::toInt;
         // because the last index is valid *inclusive*
-        const size_t numSystemIntegerSensors = V2_0::toInt(Obd2IntegerSensorIndex::LAST_SYSTEM_INDEX)+1;
-        const size_t numSystemFloatSensors = V2_0::toInt(Obd2FloatSensorIndex::LAST_SYSTEM_INDEX)+1;
+        const size_t numSystemIntegerSensors =
+            toInt(DiagnosticIntegerSensorIndex::LAST_SYSTEM_INDEX)+1;
+        const size_t numSystemFloatSensors =
+            toInt(DiagnosticFloatSensorIndex::LAST_SYSTEM_INDEX)+1;
         mIntegerSensors = std::vector<int32_t>(
             numSystemIntegerSensors+numVendorIntegerSensors, 0);
         mFloatSensors = std::vector<float>(
@@ -66,11 +69,11 @@ Obd2SensorStore::Obd2SensorStore(size_t numVendorIntegerSensors,
         mSensorsBitmask.resize(mIntegerSensors.size()+mFloatSensors.size());
 }
 
-V2_0::StatusCode Obd2SensorStore::setIntegerSensor(Obd2IntegerSensorIndex index,
+V2_0::StatusCode Obd2SensorStore::setIntegerSensor(DiagnosticIntegerSensorIndex index,
     int32_t value) {
     return setIntegerSensor(V2_0::toInt(index), value);
 }
-V2_0::StatusCode Obd2SensorStore::setFloatSensor(Obd2FloatSensorIndex index,
+V2_0::StatusCode Obd2SensorStore::setFloatSensor(DiagnosticFloatSensorIndex index,
     float value) {
     return setFloatSensor(V2_0::toInt(index), value);
 }
