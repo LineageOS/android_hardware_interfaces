@@ -53,7 +53,7 @@ struct Tuner : public ITuner {
    private:
     std::mutex mMut;
     WorkerThread mThread;
-    bool mIsClosed = false;  // TODO(b/36864090): use it
+    bool mIsClosed = false;
 
     const sp<V1_0::ITunerCallback> mCallback;
     const sp<V1_1::ITunerCallback> mCallback1_1;

@@ -41,7 +41,7 @@ static MetaData createDemoBitmap(MetadataKey key) {
     if (gHalVersion < 2) {
         bmp.type = MetadataType::RAW;
         bmp.intValue = 0;
-        bmp.rawValue = std::vector<uint8_t>(resources::demoPng, std::end(resources::demoPng));
+        bmp.rawValue = hidl_vec<uint8_t>(resources::demoPng, std::end(resources::demoPng));
     }
     return bmp;
 }
