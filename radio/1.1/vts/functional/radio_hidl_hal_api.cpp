@@ -15,6 +15,7 @@
  */
 
 #include <radio_hidl_hal_utils_v1_1.h>
+#include <vector>
 
 /*
  * Test IRadio.setSimCardPower() for the response returned.
@@ -129,4 +130,116 @@ TEST_F(RadioHidlTest_v1_1, setCarrierInfoForImsiEncryption) {
         ASSERT_TRUE(radioRsp_v1_1->rspInfo.error == RadioError::NONE ||
                     radioRsp_v1_1->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED);
     }
+}
+
+/*
+ * Test IRadio.startKeepalive() for the response returned.
+ */
+TEST_F(RadioHidlTest_v1_1, startKeepalive) {
+    std::vector<KeepaliveRequest> requests = {
+        {
+            // Invalid IPv4 source address
+            KeepaliveType::NATT_IPV4,
+            {192, 168, 0 /*, 100*/},
+            1234,
+            {8, 8, 4, 4},
+            4500,
+            20000,
+            0xBAD,
+        },
+        {
+            // Invalid IPv4 destination address
+            KeepaliveType::NATT_IPV4,
+            {192, 168, 0, 100},
+            1234,
+            {8, 8, 4, 4, 1, 2, 3, 4},
+            4500,
+            20000,
+            0xBAD,
+        },
+        {
+            // Invalid Keepalive Type
+            static_cast<KeepaliveType>(-1),
+            {192, 168, 0, 100},
+            1234,
+            {8, 8, 4, 4},
+            4500,
+            20000,
+            0xBAD,
+        },
+        {
+            // Invalid IPv6 source address
+            KeepaliveType::NATT_IPV6,
+            {0xDE, 0xAD, 0xBE, 0xEF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFE, 0xED,
+             0xBE, 0xEF, 0xBD},
+            1234,
+            {0x20, 0x01, 0x48, 0x60, 0x48, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+             0x88, 0x44},
+            4500,
+            20000,
+            0xBAD,
+        },
+        {
+            // Invalid IPv6 destination address
+            KeepaliveType::NATT_IPV6,
+            {0xDE, 0xAD, 0xBE, 0xEF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFE, 0xED,
+             0xBE, 0xEF},
+            1234,
+            {0x20, 0x01, 0x48, 0x60, 0x48, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+             0x88,
+             /*0x44*/},
+            4500,
+            20000,
+            0xBAD,
+        },
+        {
+            // Invalid Context ID (cid), this should survive the initial
+            // range checking and fail in the modem data layer
+            KeepaliveType::NATT_IPV4,
+            {192, 168, 0, 100},
+            1234,
+            {8, 8, 4, 4},
+            4500,
+            20000,
+            0xBAD,
+        },
+        {
+            // Invalid Context ID (cid), this should survive the initial
+            // range checking and fail in the modem data layer
+            KeepaliveType::NATT_IPV6,
+            {0xDE, 0xAD, 0xBE, 0xEF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFE, 0xED,
+             0xBE, 0xEF},
+            1234,
+            {0x20, 0x01, 0x48, 0x60, 0x48, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+             0x88, 0x44},
+            4500,
+            20000,
+            0xBAD,
+        }};
+
+    for (auto req = requests.begin(); req != requests.end(); req++) {
+        int serial = GetRandomSerialNumber();
+        radio_v1_1->startKeepalive(serial, *req);
+        EXPECT_EQ(std::cv_status::no_timeout, wait());
+        EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_1->rspInfo.type);
+        EXPECT_EQ(serial, radioRsp_v1_1->rspInfo.serial);
+
+        ASSERT_TRUE(radioRsp_v1_1->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp_v1_1->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED);
+    }
+}
+
+/*
+ * Test IRadio.stopKeepalive() for the response returned.
+ */
+TEST_F(RadioHidlTest_v1_1, stopKeepalive) {
+    int serial = GetRandomSerialNumber();
+
+    radio_v1_1->stopKeepalive(serial, 0xBAD);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_1->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_1->rspInfo.serial);
+
+    ASSERT_TRUE(radioRsp_v1_1->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                radioRsp_v1_1->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED);
 }
