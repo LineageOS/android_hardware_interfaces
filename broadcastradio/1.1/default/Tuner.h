@@ -67,6 +67,7 @@ struct Tuner : public ITuner {
     ProgramInfo mCurrentProgramInfo = {};
     std::atomic<bool> mIsAnalogForced;
 
+    utils::HalRevision getHalRev() const;
     void tuneInternalLocked(const ProgramSelector& sel);
     bool isFmLocked();  // TODO(b/36864090): make it generic, not FM only
 };
