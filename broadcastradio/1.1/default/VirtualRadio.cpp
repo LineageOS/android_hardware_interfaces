@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define LOG_TAG "BroadcastRadioDefault.VirtualRadio"
+//#define LOG_NDEBUG 0
+
 #include "VirtualRadio.h"
 
 #include <broadcastradio-utils/Utils.h>
+#include <log/log.h>
 
 namespace android {
 namespace hardware {
@@ -24,6 +28,7 @@ namespace V1_1 {
 namespace implementation {
 
 using V1_0::Band;
+using V1_0::Class;
 
 using std::lock_guard;
 using std::move;
@@ -32,7 +37,7 @@ using std::vector;
 
 using utils::make_selector;
 
-const vector<VirtualProgram> gInitialFmPrograms{
+static const vector<VirtualProgram> gInitialFmPrograms{
     {make_selector(Band::FM, 94900), "Wild 94.9", "Drake ft. Rihanna", "Too Good"},
     {make_selector(Band::FM, 96500), "KOIT", "Celine Dion", "All By Myself"},
     {make_selector(Band::FM, 97300), "Alice@97.3", "Drops of Jupiter", "Train"},
@@ -42,7 +47,8 @@ const vector<VirtualProgram> gInitialFmPrograms{
     {make_selector(Band::FM, 106100), "106 KMEL", "Drake", "Marvins Room"},
 };
 
-VirtualRadio::VirtualRadio(VirtualRadio&& o) : mPrograms(move(o.mPrograms)) {}
+static VirtualRadio gEmptyRadio({});
+static VirtualRadio gFmRadio(gInitialFmPrograms);
 
 VirtualRadio::VirtualRadio(const vector<VirtualProgram> initialList) : mPrograms(initialList) {}
 
@@ -62,8 +68,34 @@ bool VirtualRadio::getProgram(const ProgramSelector& selector, VirtualProgram& p
     return false;
 }
 
-VirtualRadio make_fm_radio() {
-    return VirtualRadio(gInitialFmPrograms);
+VirtualRadio& getRadio(V1_0::Class classId) {
+    switch (classId) {
+        case Class::AM_FM:
+            return getFmRadio();
+        case Class::SAT:
+            return getSatRadio();
+        case Class::DT:
+            return getDigitalRadio();
+        default:
+            ALOGE("Invalid class ID");
+            return gEmptyRadio;
+    }
+}
+
+VirtualRadio& getAmRadio() {
+    return gEmptyRadio;
+}
+
+VirtualRadio& getFmRadio() {
+    return gFmRadio;
+}
+
+VirtualRadio& getSatRadio() {
+    return gEmptyRadio;
+}
+
+VirtualRadio& getDigitalRadio() {
+    return gEmptyRadio;
 }
 
 }  // namespace implementation

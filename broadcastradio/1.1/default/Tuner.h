@@ -29,7 +29,7 @@ namespace V1_1 {
 namespace implementation {
 
 struct Tuner : public ITuner {
-    Tuner(const sp<V1_0::ITunerCallback>& callback);
+    Tuner(V1_0::Class classId, const sp<V1_0::ITunerCallback>& callback);
 
     void forceClose();
 
@@ -55,11 +55,11 @@ struct Tuner : public ITuner {
     WorkerThread mThread;
     bool mIsClosed = false;
 
+    V1_0::Class mClassId;
     const sp<V1_0::ITunerCallback> mCallback;
     const sp<V1_1::ITunerCallback> mCallback1_1;
 
-    VirtualRadio mVirtualFm;
-
+    std::reference_wrapper<VirtualRadio> mVirtualRadio;
     bool mIsAmfmConfigSet = false;
     V1_0::BandConfig mAmfmConfig;
     bool mIsTuneCompleted = false;
@@ -69,7 +69,6 @@ struct Tuner : public ITuner {
 
     utils::HalRevision getHalRev() const;
     void tuneInternalLocked(const ProgramSelector& sel);
-    bool isFmLocked();  // TODO(b/36864090): make it generic, not FM only
 };
 
 }  // namespace implementation
