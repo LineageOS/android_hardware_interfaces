@@ -34,6 +34,7 @@ using namespace std::chrono_literals;
 using V1_0::Band;
 using V1_0::BandConfig;
 using V1_0::Direction;
+using utils::HalRevision;
 
 using std::chrono::milliseconds;
 using std::lock_guard;
@@ -53,10 +54,7 @@ Tuner::Tuner(const sp<V1_0::ITunerCallback>& callback)
     : mCallback(callback),
       mCallback1_1(ITunerCallback::castFrom(callback).withDefault(nullptr)),
       mVirtualFm(make_fm_radio()),
-      mIsAnalogForced(false) {
-    // TODO (b/36864090): inject this data in a more elegant way
-    setCompatibilityLevel(mCallback1_1 == nullptr ? 1 : 2);
-}
+      mIsAnalogForced(false) {}
 
 void Tuner::forceClose() {
     lock_guard<mutex> lk(mMut);
@@ -111,6 +109,14 @@ static ProgramInfo makeDummyProgramInfo(const ProgramSelector& selector) {
     return info11;
 }
 
+HalRevision Tuner::getHalRev() const {
+    if (mCallback1_1 != nullptr) {
+        return HalRevision::V1_1;
+    } else {
+        return HalRevision::V1_0;
+    }
+}
+
 bool Tuner::isFmLocked() {
     if (!utils::isAmFm(utils::getType(mCurrentProgram))) return false;
     return mAmfmConfig.type == Band::FM_HD || mAmfmConfig.type == Band::FM;
@@ -125,7 +131,7 @@ void Tuner::tuneInternalLocked(const ProgramSelector& sel) {
     VirtualProgram virtualProgram;
     if (virtualRadio != nullptr && virtualRadio->getProgram(sel, virtualProgram)) {
         mCurrentProgram = virtualProgram.selector;
-        mCurrentProgramInfo = static_cast<ProgramInfo>(virtualProgram);
+        mCurrentProgramInfo = virtualProgram.getProgramInfo(getHalRev());
     } else {
         mCurrentProgram = sel;
         mCurrentProgramInfo = makeDummyProgramInfo(sel);
@@ -335,7 +341,7 @@ Return<void> Tuner::getProgramList(const hidl_string& filter, getProgramList_cb 
 
     auto list = virtualRadio.getProgramList();
     ALOGD("returning a list of %zu programs", list.size());
-    _hidl_cb(ProgramListResult::OK, hidl_vec<ProgramInfo>(list.begin(), list.end()));
+    _hidl_cb(ProgramListResult::OK, getProgramInfoVector(list, getHalRev()));
     return {};
 }
 
