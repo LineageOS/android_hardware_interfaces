@@ -33,6 +33,7 @@ using namespace std::chrono_literals;
 
 using V1_0::Band;
 using V1_0::BandConfig;
+using V1_0::Class;
 using V1_0::Direction;
 using utils::HalRevision;
 
@@ -50,10 +51,11 @@ const struct {
     milliseconds tune = 150ms;
 } gDefaultDelay;
 
-Tuner::Tuner(const sp<V1_0::ITunerCallback>& callback)
-    : mCallback(callback),
+Tuner::Tuner(V1_0::Class classId, const sp<V1_0::ITunerCallback>& callback)
+    : mClassId(classId),
+      mCallback(callback),
       mCallback1_1(ITunerCallback::castFrom(callback).withDefault(nullptr)),
-      mVirtualFm(make_fm_radio()),
+      mVirtualRadio(getRadio(classId)),
       mIsAnalogForced(false) {}
 
 void Tuner::forceClose() {
@@ -66,6 +68,10 @@ Return<Result> Tuner::setConfiguration(const BandConfig& config) {
     ALOGV("%s", __func__);
     lock_guard<mutex> lk(mMut);
     if (mIsClosed) return Result::NOT_INITIALIZED;
+    if (mClassId != Class::AM_FM) {
+        ALOGE("Can't set AM/FM configuration on SAT/DT radio tuner");
+        return Result::INVALID_STATE;
+    }
 
     if (config.lowerLimit >= config.upperLimit) return Result::INVALID_ARGUMENTS;
 
@@ -76,6 +82,12 @@ Return<Result> Tuner::setConfiguration(const BandConfig& config) {
         mAmfmConfig = move(config);
         mAmfmConfig.antennaConnected = true;
         mCurrentProgram = utils::make_selector(mAmfmConfig.type, mAmfmConfig.lowerLimit);
+
+        if (mAmfmConfig.type == Band::FM_HD || mAmfmConfig.type == Band::FM) {
+            mVirtualRadio = std::ref(getFmRadio());
+        } else {
+            mVirtualRadio = std::ref(getAmRadio());
+        }
 
         mIsAmfmConfigSet = true;
         mCallback->configChange(Result::OK, mAmfmConfig);
@@ -117,19 +129,9 @@ HalRevision Tuner::getHalRev() const {
     }
 }
 
-bool Tuner::isFmLocked() {
-    if (!utils::isAmFm(utils::getType(mCurrentProgram))) return false;
-    return mAmfmConfig.type == Band::FM_HD || mAmfmConfig.type == Band::FM;
-}
-
 void Tuner::tuneInternalLocked(const ProgramSelector& sel) {
-    VirtualRadio* virtualRadio = nullptr;
-    if (isFmLocked()) {
-        virtualRadio = &mVirtualFm;
-    }
-
     VirtualProgram virtualProgram;
-    if (virtualRadio != nullptr && virtualRadio->getProgram(sel, virtualProgram)) {
+    if (mVirtualRadio.get().getProgram(sel, virtualProgram)) {
         mCurrentProgram = virtualProgram.selector;
         mCurrentProgramInfo = virtualProgram.getProgramInfo(getHalRev());
     } else {
@@ -150,11 +152,7 @@ Return<Result> Tuner::scan(Direction direction, bool skipSubChannel __unused) {
     lock_guard<mutex> lk(mMut);
     if (mIsClosed) return Result::NOT_INITIALIZED;
 
-    vector<VirtualProgram> list;
-
-    if (isFmLocked()) {
-        list = mVirtualFm.getProgramList();
-    }
+    auto list = mVirtualRadio.get().getProgramList();
 
     if (list.empty()) {
         mIsTuneCompleted = false;
@@ -332,14 +330,7 @@ Return<void> Tuner::getProgramList(const hidl_string& filter, getProgramList_cb 
         return {};
     }
 
-    auto& virtualRadio = mVirtualFm;
-    if (!isFmLocked()) {
-        ALOGI("bands other than FM are not supported yet");
-        _hidl_cb(ProgramListResult::OK, {});
-        return {};
-    }
-
-    auto list = virtualRadio.getProgramList();
+    auto list = mVirtualRadio.get().getProgramList();
     ALOGD("returning a list of %zu programs", list.size());
     _hidl_cb(ProgramListResult::OK, getProgramInfoVector(list, getHalRev()));
     return {};

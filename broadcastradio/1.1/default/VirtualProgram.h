@@ -25,6 +25,12 @@ namespace broadcastradio {
 namespace V1_1 {
 namespace implementation {
 
+/**
+ * A radio program mock.
+ *
+ * This represents broadcast waves flying over the air,
+ * not an entry for a captured station in the radio tuner memory.
+ */
 struct VirtualProgram {
     ProgramSelector selector;
 
