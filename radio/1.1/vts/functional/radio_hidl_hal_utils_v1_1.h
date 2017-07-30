@@ -53,6 +53,7 @@ class RadioResponse_v1_1 : public ::android::hardware::radio::V1_1::IRadioRespon
     hidl_string imsi;
     IccIoResult iccIoResult;
     int channelId;
+    KeepaliveStatus keepaliveStatus;
 
     // Sms
     SendSmsResult sendSmsResult;

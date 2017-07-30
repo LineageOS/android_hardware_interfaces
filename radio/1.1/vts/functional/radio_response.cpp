@@ -659,7 +659,9 @@ Return<void> RadioResponse_v1_1::acknowledgeRequest(int32_t /*serial*/) {
 
 /* 1.1 Apis */
 Return<void> RadioResponse_v1_1::setCarrierInfoForImsiEncryptionResponse(
-    const RadioResponseInfo& /*info*/) {
+    const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_v1_1.notify();
     return Void();
 }
 
@@ -681,11 +683,16 @@ Return<void> RadioResponse_v1_1::stopNetworkScanResponse(const RadioResponseInfo
     return Void();
 }
 
-Return<void> RadioResponse_v1_1::startKeepaliveResponse(const RadioResponseInfo& /*info*/,
-                                                        const KeepaliveStatus& /*status*/) {
+Return<void> RadioResponse_v1_1::startKeepaliveResponse(const RadioResponseInfo& info,
+                                                        const KeepaliveStatus& status) {
+    rspInfo = info;
+    keepaliveStatus = status;
+    parent_v1_1.notify();
     return Void();
 }
 
-Return<void> RadioResponse_v1_1::stopKeepaliveResponse(const RadioResponseInfo& /*info*/) {
+Return<void> RadioResponse_v1_1::stopKeepaliveResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_v1_1.notify();
     return Void();
 }
