@@ -143,7 +143,7 @@ Return<void> BroadcastRadio::openTuner(const BandConfig& config, bool audio __un
         mTuner = nullptr;
     }
 
-    sp<Tuner> newTuner = new Tuner(callback);
+    sp<Tuner> newTuner = new Tuner(mClassId, callback);
     mTuner = newTuner;
     if (mClassId == Class::AM_FM) {
         auto ret = newTuner->setConfiguration(config);

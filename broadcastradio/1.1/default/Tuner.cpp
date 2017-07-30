@@ -20,7 +20,7 @@
 #include "BroadcastRadio.h"
 #include "Tuner.h"
 
-#include <Utils.h>
+#include <broadcastradio-utils/Utils.h>
 #include <log/log.h>
 
 namespace android {
@@ -33,7 +33,9 @@ using namespace std::chrono_literals;
 
 using V1_0::Band;
 using V1_0::BandConfig;
+using V1_0::Class;
 using V1_0::Direction;
+using utils::HalRevision;
 
 using std::chrono::milliseconds;
 using std::lock_guard;
@@ -49,13 +51,12 @@ const struct {
     milliseconds tune = 150ms;
 } gDefaultDelay;
 
-Tuner::Tuner(const sp<V1_0::ITunerCallback>& callback)
-    : mCallback(callback),
+Tuner::Tuner(V1_0::Class classId, const sp<V1_0::ITunerCallback>& callback)
+    : mClassId(classId),
+      mCallback(callback),
       mCallback1_1(ITunerCallback::castFrom(callback).withDefault(nullptr)),
-      mVirtualFm(make_fm_radio()) {
-    // TODO (b/36864090): inject this data in a more elegant way
-    setCompatibilityLevel(mCallback1_1 == nullptr ? 1 : 2);
-}
+      mVirtualRadio(getRadio(classId)),
+      mIsAnalogForced(false) {}
 
 void Tuner::forceClose() {
     lock_guard<mutex> lk(mMut);
@@ -65,6 +66,12 @@ void Tuner::forceClose() {
 
 Return<Result> Tuner::setConfiguration(const BandConfig& config) {
     ALOGV("%s", __func__);
+    lock_guard<mutex> lk(mMut);
+    if (mIsClosed) return Result::NOT_INITIALIZED;
+    if (mClassId != Class::AM_FM) {
+        ALOGE("Can't set AM/FM configuration on SAT/DT radio tuner");
+        return Result::INVALID_STATE;
+    }
 
     if (config.lowerLimit >= config.upperLimit) return Result::INVALID_ARGUMENTS;
 
@@ -76,6 +83,12 @@ Return<Result> Tuner::setConfiguration(const BandConfig& config) {
         mAmfmConfig.antennaConnected = true;
         mCurrentProgram = utils::make_selector(mAmfmConfig.type, mAmfmConfig.lowerLimit);
 
+        if (mAmfmConfig.type == Band::FM_HD || mAmfmConfig.type == Band::FM) {
+            mVirtualRadio = std::ref(getFmRadio());
+        } else {
+            mVirtualRadio = std::ref(getAmRadio());
+        }
+
         mIsAmfmConfigSet = true;
         mCallback->configChange(Result::OK, mAmfmConfig);
     };
@@ -86,14 +99,14 @@ Return<Result> Tuner::setConfiguration(const BandConfig& config) {
 
 Return<void> Tuner::getConfiguration(getConfiguration_cb _hidl_cb) {
     ALOGV("%s", __func__);
-
     lock_guard<mutex> lk(mMut);
-    if (mIsAmfmConfigSet) {
+
+    if (!mIsClosed && mIsAmfmConfigSet) {
         _hidl_cb(Result::OK, mAmfmConfig);
     } else {
         _hidl_cb(Result::NOT_INITIALIZED, {});
     }
-    return Void();
+    return {};
 }
 
 // makes ProgramInfo that points to no program
@@ -108,21 +121,19 @@ static ProgramInfo makeDummyProgramInfo(const ProgramSelector& selector) {
     return info11;
 }
 
-bool Tuner::isFmLocked() {
-    if (!utils::isAmFm(utils::getType(mCurrentProgram))) return false;
-    return mAmfmConfig.type == Band::FM_HD || mAmfmConfig.type == Band::FM;
+HalRevision Tuner::getHalRev() const {
+    if (mCallback1_1 != nullptr) {
+        return HalRevision::V1_1;
+    } else {
+        return HalRevision::V1_0;
+    }
 }
 
 void Tuner::tuneInternalLocked(const ProgramSelector& sel) {
-    VirtualRadio* virtualRadio = nullptr;
-    if (isFmLocked()) {
-        virtualRadio = &mVirtualFm;
-    }
-
     VirtualProgram virtualProgram;
-    if (virtualRadio != nullptr && virtualRadio->getProgram(sel, virtualProgram)) {
+    if (mVirtualRadio.get().getProgram(sel, virtualProgram)) {
         mCurrentProgram = virtualProgram.selector;
-        mCurrentProgramInfo = static_cast<ProgramInfo>(virtualProgram);
+        mCurrentProgramInfo = virtualProgram.getProgramInfo(getHalRev());
     } else {
         mCurrentProgram = sel;
         mCurrentProgramInfo = makeDummyProgramInfo(sel);
@@ -139,11 +150,9 @@ void Tuner::tuneInternalLocked(const ProgramSelector& sel) {
 Return<Result> Tuner::scan(Direction direction, bool skipSubChannel __unused) {
     ALOGV("%s", __func__);
     lock_guard<mutex> lk(mMut);
-    vector<VirtualProgram> list;
+    if (mIsClosed) return Result::NOT_INITIALIZED;
 
-    if (isFmLocked()) {
-        list = mVirtualFm.getProgramList();
-    }
+    auto list = mVirtualRadio.get().getProgramList();
 
     if (list.empty()) {
         mIsTuneCompleted = false;
@@ -195,9 +204,10 @@ Return<Result> Tuner::scan(Direction direction, bool skipSubChannel __unused) {
 
 Return<Result> Tuner::step(Direction direction, bool skipSubChannel) {
     ALOGV("%s", __func__);
-    ALOGW_IF(!skipSubChannel, "can't step to next frequency without ignoring subChannel");
-
     lock_guard<mutex> lk(mMut);
+    if (mIsClosed) return Result::NOT_INITIALIZED;
+
+    ALOGW_IF(!skipSubChannel, "can't step to next frequency without ignoring subChannel");
 
     if (!utils::isAmFm(utils::getType(mCurrentProgram))) {
         ALOGE("Can't step in anything else than AM/FM");
@@ -243,8 +253,8 @@ Return<Result> Tuner::tune(uint32_t channel, uint32_t subChannel) {
 
 Return<Result> Tuner::tune_1_1(const ProgramSelector& sel) {
     ALOGV("%s(%s)", __func__, toString(sel).c_str());
-
     lock_guard<mutex> lk(mMut);
+    if (mIsClosed) return Result::NOT_INITIALIZED;
 
     if (utils::isAmFm(utils::getType(mCurrentProgram))) {
         ALOGW_IF(!mIsAmfmConfigSet, "AM/FM config not set");
@@ -268,12 +278,18 @@ Return<Result> Tuner::tune_1_1(const ProgramSelector& sel) {
 
 Return<Result> Tuner::cancel() {
     ALOGV("%s", __func__);
+    lock_guard<mutex> lk(mMut);
+    if (mIsClosed) return Result::NOT_INITIALIZED;
+
     mThread.cancelAll();
     return Result::OK;
 }
 
 Return<Result> Tuner::cancelAnnouncement() {
     ALOGV("%s", __func__);
+    lock_guard<mutex> lk(mMut);
+    if (mIsClosed) return Result::NOT_INITIALIZED;
+
     return Result::OK;
 }
 
@@ -286,49 +302,59 @@ Return<void> Tuner::getProgramInformation(getProgramInformation_cb _hidl_cb) {
 
 Return<void> Tuner::getProgramInformation_1_1(getProgramInformation_1_1_cb _hidl_cb) {
     ALOGV("%s", __func__);
-
     lock_guard<mutex> lk(mMut);
-    if (mIsTuneCompleted) {
+
+    if (mIsClosed) {
+        _hidl_cb(Result::NOT_INITIALIZED, {});
+    } else if (mIsTuneCompleted) {
         _hidl_cb(Result::OK, mCurrentProgramInfo);
     } else {
         _hidl_cb(Result::NOT_INITIALIZED, makeDummyProgramInfo(mCurrentProgram));
     }
-    return Void();
+    return {};
 }
 
 Return<ProgramListResult> Tuner::startBackgroundScan() {
     ALOGV("%s", __func__);
+    lock_guard<mutex> lk(mMut);
+    if (mIsClosed) return ProgramListResult::NOT_INITIALIZED;
+
     return ProgramListResult::UNAVAILABLE;
 }
 
-Return<void> Tuner::getProgramList(const hidl_string& filter __unused, getProgramList_cb _hidl_cb) {
-    ALOGV("%s", __func__);
+Return<void> Tuner::getProgramList(const hidl_string& filter, getProgramList_cb _hidl_cb) {
+    ALOGV("%s(%s)", __func__, filter.c_str());
     lock_guard<mutex> lk(mMut);
-
-    auto& virtualRadio = mVirtualFm;
-    if (!isFmLocked()) {
-        ALOGI("bands other than FM are not supported yet");
-        _hidl_cb(ProgramListResult::OK, {});
-        return Void();
+    if (mIsClosed) {
+        _hidl_cb(ProgramListResult::NOT_INITIALIZED, {});
+        return {};
     }
 
-    auto list = virtualRadio.getProgramList();
+    auto list = mVirtualRadio.get().getProgramList();
     ALOGD("returning a list of %zu programs", list.size());
-    _hidl_cb(ProgramListResult::OK, vector<ProgramInfo>(list.begin(), list.end()));
-    return Void();
+    _hidl_cb(ProgramListResult::OK, getProgramInfoVector(list, getHalRev()));
+    return {};
 }
 
 Return<void> Tuner::isAnalogForced(isAnalogForced_cb _hidl_cb) {
     ALOGV("%s", __func__);
-    // TODO(b/36864090): implement
-    _hidl_cb(Result::INVALID_STATE, false);
-    return Void();
+    lock_guard<mutex> lk(mMut);
+
+    if (mIsClosed) {
+        _hidl_cb(Result::NOT_INITIALIZED, false);
+    } else {
+        _hidl_cb(Result::OK, mIsAnalogForced);
+    }
+    return {};
 }
 
-Return<Result> Tuner::setAnalogForced(bool isForced __unused) {
+Return<Result> Tuner::setAnalogForced(bool isForced) {
     ALOGV("%s", __func__);
-    // TODO(b/36864090): implement
-    return Result::INVALID_STATE;
+    lock_guard<mutex> lk(mMut);
+    if (mIsClosed) return Result::NOT_INITIALIZED;
+
+    mIsAnalogForced = isForced;
+    return Result::OK;
 }
 
 }  // namespace implementation

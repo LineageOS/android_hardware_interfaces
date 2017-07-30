@@ -148,6 +148,7 @@ private:
     static HandleImporter sHandleImporter;
 
     bool mInitFail;
+    bool mFirstRequest = false;
 
     common::V1_0::helper::CameraMetadata mDeviceInfo;
 

@@ -17,7 +17,7 @@
 #define ANDROID_HARDWARE_BROADCASTRADIO_V1_1_VIRTUALPROGRAM_H
 
 #include <android/hardware/broadcastradio/1.1/types.h>
-#include <cstdint>
+#include <broadcastradio-utils/Utils.h>
 
 namespace android {
 namespace hardware {
@@ -25,9 +25,12 @@ namespace broadcastradio {
 namespace V1_1 {
 namespace implementation {
 
-// TODO (b/36864090): inject this data in a more elegant way
-void setCompatibilityLevel(int halversion);
-
+/**
+ * A radio program mock.
+ *
+ * This represents broadcast waves flying over the air,
+ * not an entry for a captured station in the radio tuner memory.
+ */
 struct VirtualProgram {
     ProgramSelector selector;
 
@@ -35,9 +38,13 @@ struct VirtualProgram {
     std::string songArtist = "";
     std::string songTitle = "";
 
-    explicit operator ProgramInfo() const;
+    ProgramInfo getProgramInfo(utils::HalRevision halRev) const;
+
     friend bool operator<(const VirtualProgram& lhs, const VirtualProgram& rhs);
 };
+
+std::vector<ProgramInfo> getProgramInfoVector(const std::vector<VirtualProgram>& vec,
+                                              utils::HalRevision halRev);
 
 }  // namespace implementation
 }  // namespace V1_1

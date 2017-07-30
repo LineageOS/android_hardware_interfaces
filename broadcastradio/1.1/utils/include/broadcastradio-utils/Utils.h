@@ -27,6 +27,12 @@ namespace broadcastradio {
 namespace V1_1 {
 namespace utils {
 
+// TODO(b/64115813): move it out from frameworks/base/services/core/jni/BroadcastRadio/types.h
+enum class HalRevision : uint32_t {
+    V1_0 = 1,
+    V1_1,
+};
+
 /**
  * Checks, if {@code pointer} tunes to {@channel}.
  *
@@ -66,6 +72,13 @@ bool isDigital(const ProgramSelector& sel);
 
 }  // namespace utils
 }  // namespace V1_1
+
+namespace V1_0 {
+
+bool operator==(const BandConfig& l, const BandConfig& r);
+
+}  // namespace V1_0
+
 }  // namespace broadcastradio
 }  // namespace hardware
 }  // namespace android
