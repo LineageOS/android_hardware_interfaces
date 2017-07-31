@@ -53,7 +53,7 @@ genrule {
     ],
 }
 
-cc_library_shared {
+cc_library {
     name: "android.hardware.radio@1.1",
     defaults: ["hidl-module-defaults"],
     generated_sources: ["android.hardware.radio@1.1_genc++"],
