@@ -123,7 +123,7 @@ genrule {
     ],
 }
 
-cc_library_shared {
+cc_library {
     name: "android.hardware.wifi@1.0",
     defaults: ["hidl-module-defaults"],
     generated_sources: ["android.hardware.wifi@1.0_genc++"],
