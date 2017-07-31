@@ -208,6 +208,25 @@ $(GEN): $(LOCAL_PATH)/types.hal
 LOCAL_GENERATED_SOURCES += $(GEN)
 
 #
+# Build types.hal (VmsAvailabilityStateIntegerValuesIndex)
+#
+GEN := $(intermediates)/android/hardware/automotive/vehicle/V2_1/VmsAvailabilityStateIntegerValuesIndex.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.automotive.vehicle@2.1::types.VmsAvailabilityStateIntegerValuesIndex
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
 # Build types.hal (VmsBaseMessageIntegerValuesIndex)
 #
 GEN := $(intermediates)/android/hardware/automotive/vehicle/V2_1/VmsBaseMessageIntegerValuesIndex.java
@@ -221,25 +240,6 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         -randroid.hardware:hardware/interfaces \
         -randroid.hidl:system/libhidl/transport \
         android.hardware.automotive.vehicle@2.1::types.VmsBaseMessageIntegerValuesIndex
-
-$(GEN): $(LOCAL_PATH)/types.hal
-	$(transform-generated-source)
-LOCAL_GENERATED_SOURCES += $(GEN)
-
-#
-# Build types.hal (VmsDataMessageIntegerValuesIndex)
-#
-GEN := $(intermediates)/android/hardware/automotive/vehicle/V2_1/VmsDataMessageIntegerValuesIndex.java
-$(GEN): $(HIDL)
-$(GEN): PRIVATE_HIDL := $(HIDL)
-$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
-$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
-$(GEN): PRIVATE_CUSTOM_TOOL = \
-        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava \
-        -randroid.hardware:hardware/interfaces \
-        -randroid.hidl:system/libhidl/transport \
-        android.hardware.automotive.vehicle@2.1::types.VmsDataMessageIntegerValuesIndex
 
 $(GEN): $(LOCAL_PATH)/types.hal
 	$(transform-generated-source)
@@ -265,6 +265,44 @@ $(GEN): $(LOCAL_PATH)/types.hal
 LOCAL_GENERATED_SOURCES += $(GEN)
 
 #
+# Build types.hal (VmsMessageWithLayerAndPublisherIdIntegerValuesIndex)
+#
+GEN := $(intermediates)/android/hardware/automotive/vehicle/V2_1/VmsMessageWithLayerAndPublisherIdIntegerValuesIndex.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.automotive.vehicle@2.1::types.VmsMessageWithLayerAndPublisherIdIntegerValuesIndex
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (VmsMessageWithLayerIntegerValuesIndex)
+#
+GEN := $(intermediates)/android/hardware/automotive/vehicle/V2_1/VmsMessageWithLayerIntegerValuesIndex.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.automotive.vehicle@2.1::types.VmsMessageWithLayerIntegerValuesIndex
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
 # Build types.hal (VmsOfferingMessageIntegerValuesIndex)
 #
 GEN := $(intermediates)/android/hardware/automotive/vehicle/V2_1/VmsOfferingMessageIntegerValuesIndex.java
@@ -284,9 +322,9 @@ $(GEN): $(LOCAL_PATH)/types.hal
 LOCAL_GENERATED_SOURCES += $(GEN)
 
 #
-# Build types.hal (VmsSimpleMessageIntegerValuesIndex)
+# Build types.hal (VmsSubscriptionsStateIntegerValuesIndex)
 #
-GEN := $(intermediates)/android/hardware/automotive/vehicle/V2_1/VmsSimpleMessageIntegerValuesIndex.java
+GEN := $(intermediates)/android/hardware/automotive/vehicle/V2_1/VmsSubscriptionsStateIntegerValuesIndex.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -296,26 +334,7 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         -Ljava \
         -randroid.hardware:hardware/interfaces \
         -randroid.hidl:system/libhidl/transport \
-        android.hardware.automotive.vehicle@2.1::types.VmsSimpleMessageIntegerValuesIndex
-
-$(GEN): $(LOCAL_PATH)/types.hal
-	$(transform-generated-source)
-LOCAL_GENERATED_SOURCES += $(GEN)
-
-#
-# Build types.hal (VmsSubscriptionResponseFormat)
-#
-GEN := $(intermediates)/android/hardware/automotive/vehicle/V2_1/VmsSubscriptionResponseFormat.java
-$(GEN): $(HIDL)
-$(GEN): PRIVATE_HIDL := $(HIDL)
-$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
-$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
-$(GEN): PRIVATE_CUSTOM_TOOL = \
-        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava \
-        -randroid.hardware:hardware/interfaces \
-        -randroid.hidl:system/libhidl/transport \
-        android.hardware.automotive.vehicle@2.1::types.VmsSubscriptionResponseFormat
+        android.hardware.automotive.vehicle@2.1::types.VmsSubscriptionsStateIntegerValuesIndex
 
 $(GEN): $(LOCAL_PATH)/types.hal
 	$(transform-generated-source)
@@ -548,6 +567,25 @@ $(GEN): $(LOCAL_PATH)/types.hal
 LOCAL_GENERATED_SOURCES += $(GEN)
 
 #
+# Build types.hal (VmsAvailabilityStateIntegerValuesIndex)
+#
+GEN := $(intermediates)/android/hardware/automotive/vehicle/V2_1/VmsAvailabilityStateIntegerValuesIndex.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.automotive.vehicle@2.1::types.VmsAvailabilityStateIntegerValuesIndex
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
 # Build types.hal (VmsBaseMessageIntegerValuesIndex)
 #
 GEN := $(intermediates)/android/hardware/automotive/vehicle/V2_1/VmsBaseMessageIntegerValuesIndex.java
@@ -561,25 +599,6 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         -randroid.hardware:hardware/interfaces \
         -randroid.hidl:system/libhidl/transport \
         android.hardware.automotive.vehicle@2.1::types.VmsBaseMessageIntegerValuesIndex
-
-$(GEN): $(LOCAL_PATH)/types.hal
-	$(transform-generated-source)
-LOCAL_GENERATED_SOURCES += $(GEN)
-
-#
-# Build types.hal (VmsDataMessageIntegerValuesIndex)
-#
-GEN := $(intermediates)/android/hardware/automotive/vehicle/V2_1/VmsDataMessageIntegerValuesIndex.java
-$(GEN): $(HIDL)
-$(GEN): PRIVATE_HIDL := $(HIDL)
-$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
-$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
-$(GEN): PRIVATE_CUSTOM_TOOL = \
-        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava \
-        -randroid.hardware:hardware/interfaces \
-        -randroid.hidl:system/libhidl/transport \
-        android.hardware.automotive.vehicle@2.1::types.VmsDataMessageIntegerValuesIndex
 
 $(GEN): $(LOCAL_PATH)/types.hal
 	$(transform-generated-source)
@@ -605,6 +624,44 @@ $(GEN): $(LOCAL_PATH)/types.hal
 LOCAL_GENERATED_SOURCES += $(GEN)
 
 #
+# Build types.hal (VmsMessageWithLayerAndPublisherIdIntegerValuesIndex)
+#
+GEN := $(intermediates)/android/hardware/automotive/vehicle/V2_1/VmsMessageWithLayerAndPublisherIdIntegerValuesIndex.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.automotive.vehicle@2.1::types.VmsMessageWithLayerAndPublisherIdIntegerValuesIndex
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build types.hal (VmsMessageWithLayerIntegerValuesIndex)
+#
+GEN := $(intermediates)/android/hardware/automotive/vehicle/V2_1/VmsMessageWithLayerIntegerValuesIndex.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.automotive.vehicle@2.1::types.VmsMessageWithLayerIntegerValuesIndex
+
+$(GEN): $(LOCAL_PATH)/types.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
 # Build types.hal (VmsOfferingMessageIntegerValuesIndex)
 #
 GEN := $(intermediates)/android/hardware/automotive/vehicle/V2_1/VmsOfferingMessageIntegerValuesIndex.java
@@ -624,9 +681,9 @@ $(GEN): $(LOCAL_PATH)/types.hal
 LOCAL_GENERATED_SOURCES += $(GEN)
 
 #
-# Build types.hal (VmsSimpleMessageIntegerValuesIndex)
+# Build types.hal (VmsSubscriptionsStateIntegerValuesIndex)
 #
-GEN := $(intermediates)/android/hardware/automotive/vehicle/V2_1/VmsSimpleMessageIntegerValuesIndex.java
+GEN := $(intermediates)/android/hardware/automotive/vehicle/V2_1/VmsSubscriptionsStateIntegerValuesIndex.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -636,26 +693,7 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         -Ljava \
         -randroid.hardware:hardware/interfaces \
         -randroid.hidl:system/libhidl/transport \
-        android.hardware.automotive.vehicle@2.1::types.VmsSimpleMessageIntegerValuesIndex
-
-$(GEN): $(LOCAL_PATH)/types.hal
-	$(transform-generated-source)
-LOCAL_GENERATED_SOURCES += $(GEN)
-
-#
-# Build types.hal (VmsSubscriptionResponseFormat)
-#
-GEN := $(intermediates)/android/hardware/automotive/vehicle/V2_1/VmsSubscriptionResponseFormat.java
-$(GEN): $(HIDL)
-$(GEN): PRIVATE_HIDL := $(HIDL)
-$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
-$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
-$(GEN): PRIVATE_CUSTOM_TOOL = \
-        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava \
-        -randroid.hardware:hardware/interfaces \
-        -randroid.hidl:system/libhidl/transport \
-        android.hardware.automotive.vehicle@2.1::types.VmsSubscriptionResponseFormat
+        android.hardware.automotive.vehicle@2.1::types.VmsSubscriptionsStateIntegerValuesIndex
 
 $(GEN): $(LOCAL_PATH)/types.hal
 	$(transform-generated-source)
