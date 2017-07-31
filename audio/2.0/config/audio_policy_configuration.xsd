@@ -188,6 +188,7 @@
                 <xs:complexType>
                     <xs:sequence>
                         <xs:element name="profile" type="profile" minOccurs="0" maxOccurs="unbounded"/>
+                        <xs:element name="gains" type="gains" minOccurs="0"/>
                     </xs:sequence>
                     <xs:attribute name="name" type="xs:token" use="required"/>
                     <xs:attribute name="role" type="role" use="required"/>
@@ -198,6 +199,10 @@
                     <xs:field xpath="format"/>
                     <xs:field xpath="samplingRate"/>
                     <xs:field xpath="channelMasks"/>
+                </xs:unique>
+                <xs:unique name="mixPortGainUniqueness">
+                    <xs:selector xpath="gains/gain"/>
+                    <xs:field xpath="@name"/>
                 </xs:unique>
             </xs:element>
         </xs:sequence>
@@ -365,22 +370,52 @@
         <xs:attribute name="samplingRates" type="samplingRates" use="required"/>
         <xs:attribute name="channelMasks" type="channelMask" use="required"/>
     </xs:complexType>
+    <xs:simpleType name="gainMode">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="AUDIO_GAIN_MODE_JOINT"/>
+            <xs:enumeration value="AUDIO_GAIN_MODE_CHANNELS"/>
+            <xs:enumeration value="AUDIO_GAIN_MODE_RAMP"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:complexType name="gains">
+        <xs:sequence>
+            <xs:element name="gain" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:attribute name="name" type="xs:token" use="required"/>
+                    <xs:attribute name="mode" type="gainMode" use="required"/>
+                    <xs:attribute name="channel_mask" type="channelMask" use="optional"/>
+                    <xs:attribute name="minValueMB" type="xs:int" use="optional"/>
+                    <xs:attribute name="maxValueMB" type="xs:int" use="optional"/>
+                    <xs:attribute name="defaultValueMB" type="xs:int" use="optional"/>
+                    <xs:attribute name="stepValueMB" type="xs:int" use="optional"/>
+                    <xs:attribute name="minRampMs" type="xs:int" use="optional"/>
+                    <xs:attribute name="maxRampMs" type="xs:int" use="optional"/>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
     <xs:complexType name="devicePorts">
         <xs:sequence>
             <xs:element name="devicePort" minOccurs="0" maxOccurs="unbounded">
                 <xs:complexType>
                     <xs:sequence>
                         <xs:element name="profile" type="profile" minOccurs="0" maxOccurs="unbounded"/>
+                        <xs:element name="gains" type="gains" minOccurs="0"/>
                     </xs:sequence>
                     <xs:attribute name="tagName" type="xs:token" use="required"/>
                     <xs:attribute name="type" type="audioDevice" use="required"/>
                     <xs:attribute name="role" type="role" use="required"/>
+                    <xs:attribute name="address" type="xs:string" use="optional"/>
                 </xs:complexType>
                 <xs:unique name="devicePortProfileUniqueness">
                     <xs:selector xpath="profile"/>
                     <xs:field xpath="format"/>
                     <xs:field xpath="samplingRate"/>
                     <xs:field xpath="channelMasks"/>
+                </xs:unique>
+                <xs:unique name="devicePortGainUniqueness">
+                    <xs:selector xpath="gains/gain"/>
+                    <xs:field xpath="@name"/>
                 </xs:unique>
             </xs:element>
         </xs:sequence>
