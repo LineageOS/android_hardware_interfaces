@@ -32,6 +32,8 @@ using ::android::hardware::wifi::offload::V1_0::IOffload;
 using ::android::hardware::wifi::offload::V1_0::IOffloadCallback;
 using ::android::hardware::wifi::offload::V1_0::ScanResult;
 using ::android::hardware::wifi::offload::V1_0::ScanParam;
+using ::android::hardware::wifi::offload::V1_0::Ssid;
+using ::android::hardware::wifi::offload::V1_0::NetworkInfo;
 using ::android::hardware::wifi::offload::V1_0::ScanFilter;
 using ::android::hardware::wifi::offload::V1_0::ScanStats;
 using ::android::hardware::wifi::offload::V1_0::OffloadStatus;
@@ -45,7 +47,8 @@ constexpr char kOffloadCallbackSendScanResult[] = "onScanResult";
 constexpr char kOffloadCallbackSendError[] = "onError";
 
 namespace {
-const uint8_t kSsid[] = {'G', 'o', 'o', 'g', 'l', 'e'};
+const uint8_t kSsid1[] = {'G', 'o', 'o', 'g', 'l', 'e'};
+const uint8_t kSsid2[] = {'X', 'f', 'i', 'n', 'i', 't', 'y'};
 const uint8_t kBssid[6] = {0x12, 0xef, 0xa1, 0x2c, 0x97, 0x8b};
 const int16_t kRssi = -60;
 const uint32_t kFrequency = 2412;
@@ -53,6 +56,10 @@ const uint8_t kBssidSize = 6;
 const uint64_t kTsf = 0;
 const uint16_t kCapability = 0;
 const uint8_t kNetworkFlags = 0;
+const uint32_t kFrequency1 = 2412;
+const uint32_t kFrequency2 = 2437;
+const uint32_t kDisconnectedModeScanIntervalMs = 5000;
+const int16_t kRssiThreshold = -76;
 }
 
 class OffloadCallbackArgs {
@@ -133,7 +140,28 @@ TEST_F(WifiOffloadHidlTest, unsubscribeScanResults) {
  */
 TEST_F(WifiOffloadHidlTest, configureScans) {
     ScanParam* pScanParam = new ScanParam();
+    std::vector<uint32_t> frequencyList = {kFrequency1, kFrequency2};
+    pScanParam->disconnectedModeScanIntervalMs =
+        kDisconnectedModeScanIntervalMs;
+    pScanParam->frequencyList = frequencyList;
+    std::vector<Ssid> ssidList;
+    std::vector<std::vector<uint8_t>> ssids{kSsid1, kSsid2};
+    for (const auto& ssid : ssids) {
+        Ssid tmp = ssid;
+        ssidList.push_back(tmp);
+    }
+    pScanParam->ssidList = ssidList;
     ScanFilter* pScanFilter = new ScanFilter();
+    pScanFilter->rssiThreshold = kRssiThreshold;
+    std::vector<std::vector<uint8_t>> match_ssids{kSsid1, kSsid2};
+    std::vector<uint8_t> security_flags{kNetworkFlags, kNetworkFlags};
+    std::vector<NetworkInfo> preferredNetworksList;
+    for (size_t i = 0; i < security_flags.size(); i++) {
+        NetworkInfo nwInfo;
+        nwInfo.ssid = match_ssids[i];
+        nwInfo.flags = security_flags[i];
+        preferredNetworksList.push_back(nwInfo);
+    }
     const auto& result =
         HIDL_INVOKE(wifi_offload_, configureScans, *pScanParam, *pScanFilter);
     ASSERT_EQ(OffloadStatusCode::OK, result.code);
@@ -154,7 +182,7 @@ TEST_F(WifiOffloadHidlTest, getScanStats) {
 TEST_F(WifiOffloadHidlTest, getScanResults) {
     wifi_offload_->setEventCallback(wifi_offload_cb_);
     std::vector<ScanResult> scan_results;
-    std::vector<uint8_t> ssid(kSsid, kSsid + sizeof(kSsid));
+    std::vector<uint8_t> ssid(kSsid1, kSsid1 + sizeof(kSsid1));
     ScanResult scan_result;
     scan_result.tsf = kTsf;
     scan_result.rssi = kRssi;
