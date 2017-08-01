@@ -84,6 +84,13 @@ interface ITuner extends @1.0::ITuner {
      * subsequent calls to startBackgroundScan, issuing a single
      * backgroundScanComplete callback.
      *
+     * If a device supports continuous background scanning, it may succeed
+     * (return OK and call backgroundScanComplete) without any additional
+     * operation performed.
+     *
+     * Foreground scanning may be implemented in the front end app with
+     * @1.0::ITuner scan operation.
+     *
      * @return result OK if the scan was properly scheduled (this does not mean
      *                it successfully finished).
      *                UNAVAILABLE if the background scan is unavailable,

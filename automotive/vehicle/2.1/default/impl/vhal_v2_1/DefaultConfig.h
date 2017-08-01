@@ -86,7 +86,8 @@ const V2_0::VehiclePropConfig kVehicleProperties[] = {
     {
         .prop = OBD2_FREEZE_FRAME_CLEAR,
         .access = V2_0::VehiclePropertyAccess::WRITE,
-        .changeMode = V2_0::VehiclePropertyChangeMode::ON_CHANGE
+        .changeMode = V2_0::VehiclePropertyChangeMode::ON_CHANGE,
+        .configArray = {1}
     },
 
     {

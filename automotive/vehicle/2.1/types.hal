@@ -119,6 +119,8 @@ enum VehicleProperty: @2.0::VehicleProperty {
      * bytes is a serialized VMS message as defined in the vms protocol
      * which is opaque to the framework;
      *
+     * IVehicle#get must always return StatusCode::NOT_AVAILABLE.
+     *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
      */
@@ -131,33 +133,40 @@ enum VehicleProperty: @2.0::VehicleProperty {
     /**
      * OBD2 Live Sensor Data
      *
-     * This property uses COMPLEX data to send a snapshot of the current (live)
-     * values of the OBD2 sensors provided by the vehicle.
+     * Reports a snapshot of the current (live) values of the OBD2 sensors available.
      *
-     * VehiclePropConfig
-     *   configArray[0] : number of vendor-specific integer-valued sensors
-     *                    that can be returned in a frame.
-     *   configArray[1] : number of vendor-specific float-valued sensors
-     *                    that can be returned in a frame.
+     * The configArray is set as follows:
+     *   configArray[0] = number of vendor-specific integer-valued sensors
+     *   configArray[1] = number of vendor-specific float-valued sensors
      *
-     * The values are to be interpreted as follows:
-     * the indices defined in Obd2IntegerSensorIndex are to be used to
-     * read from int32Values;
-     * the indices defined in Obd2FloatSensorIndex are to be used to
-     * read from floatValues.
-     * the elements of bytes are to be interpreted as a bitmask, such that
-     * the bits 0 thru the integer value of
-     * Obd2IntegerSensorIndex.LAST_SYSTEM_INDEX + the value of configArray[0]
-     * are 1 if the corresponding index is a valid sensor index whose value can
-     * be read in the returned int32Values vector, 0 otherwise.
-     * the bits Obd2IntegerSensorIndex.LAST_SYSTEM_INDEX+1 thru
-     * Obd2FloatingSensorIndex.LAST_SYSTEM_INDEX + the value of configArray[1]
-     * are 1 if the corresponding index is a valid sensor index whose value
-     * can be read in the returned floatValues vector, 0 otherwise.
+     * The values of this property are to be interpreted as in the following example.
+     * Considering a configArray = {2,3}
+     * int32Values must be a vector containing Obd2IntegerSensorIndex.LAST_SYSTEM_INDEX + 2
+     * elements (that is, 33 elements);
+     * floatValues must be a vector containing Obd2FloatSensorIndex.LAST_SYSTEM_INDEX + 3
+     * elements (that is, 73 elements);
      *
-     * For example, int32Values[0] corresponds to FUEL_SYSTEM_STATUS, and
-     * floatValues[0] corresponds to CALCULATED_ENGINE_LOAD, but that mapping
-     * is only valid if the corresponding bits in the bytes vector are set to 1.
+     * It is possible for each frame to contain a different subset of sensor values, both system
+     * provided sensors, and vendor-specific ones. In order to support that, the bytes element
+     * of the property value is used as a bitmask,.
+     *
+     * bytes must have a sufficient number of bytes to represent the total number of possible
+     * sensors (in this case, 14 bytes to represent 106 possible values); it is to be read as
+     * a contiguous bitmask such that each bit indicates the presence or absence of a sensor
+     * from the frame, starting with as many bits as the size of int32Values, immediately
+     * followed by as many bits as the size of floatValues.
+     *
+     * For example, should bytes[0] = 0x4C (0b01001100) it would mean that:
+     *   int32Values[0 and 1] are not valid sensor values
+     *   int32Values[2 and 3] are valid sensor values
+     *   int32Values[4 and 5] are not valid sensor values
+     *   int32Values[6] is a valid sensor value
+     *   int32Values[7] is not a valid sensor value
+     * Should bytes[5] = 0x61 (0b01100001) it would mean that:
+     *   int32Values[32] is a valid sensor value
+     *   floatValues[0 thru 3] are not valid sensor values
+     *   floatValues[4 and 5] are valid sensor values
+     *   floatValues[6] is not a valid sensor value
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ
@@ -171,41 +180,23 @@ enum VehicleProperty: @2.0::VehicleProperty {
     /**
      * OBD2 Freeze Frame Sensor Data
      *
-     * This property uses COMPLEX data to send a snapshot of the values of the
-     * OBD2 sensors provided by the vehicle at the time that a diagnostic
-     * troubleshooting code (DTC) was recorded by the vehicle.
+     * Reports a snapshot of the value of the OBD2 sensors available at the time that a fault
+     * occurred and was detected.
      *
-     * VehiclePropConfig
-     *   configArray[0] : number of vendor-specific integer-valued sensors
-     *                    that can be returned in a frame.
-     *   configArray[1] : number of vendor-specific float-valued sensors
-     *                    that can be returned in a frame.
+     * A configArray must be provided with the same meaning as defined for OBD2_LIVE_FRAME.
      *
-     * A get of this property must take the following form:
-     *   int64Values[0]: timestamp of the freeze frame to retrieve.
-     *                   Valid timestamps are given by OBD2_DTC_INFO.
+     * The values of this property are to be interpreted in a similar fashion as those for
+     * OBD2_LIVE_FRAME, with the exception that the stringValue field may contain a non-empty
+     * diagnostic troubleshooting code (DTC).
      *
-     * The values are to be interpreted as follows:
-     * the indices defined in Obd2IntegerSensorIndex are to be used to
-     * read from int32Values;
-     * the indices defined in Obd2FloatSensorIndex are to be used to
-     * read from floatValues;
-     * the elements of bytes are to be interpreted as a bitmask, such that
-     * the bits 0 thru the integer value of
-     * Obd2IntegerSensorIndex.LAST_SYSTEM_INDEX + the value of configArray[0]
-     * are 1 if the corresponding index is a valid sensor index whose value can
-     * be read in the returned int32Values vector, 0 otherwise.
-     * the bits Obd2IntegerSensorIndex.LAST_SYSTEM_INDEX+1 thru
-     * Obd2FloatingSensorIndex.LAST_SYSTEM_INDEX + the value of configArray[1]
-     * are 1 if the corresponding index is a valid sensor index whose value
-     * can be read in the returned floatValues vector, 0 otherwise.
-     * stringValue is the DTC that caused this freeze frame to be recorded.
+     * A IVehicle#get request of this property must provide a value for int64Values[0].
+     * This will be interpreted as the timestamp of the freeze frame to retrieve. A list of
+     * timestamps can be obtained by a IVehicle#get of OBD2_FREEZE_FRAME_INFO.
      *
-     * For example, int32Values[0] corresponds to FUEL_SYSTEM_STATUS, and
-     * floatValues[0] corresponds to CALCULATED_ENGINE_LOAD, but that mapping
-     * is only valid if the corresponding bits in the bytes vector are set to 1,
-     * and a possible valid stringValue is "P0176" to indicate a malfunction
-     * of the fuel composition sensor circuit.
+     * Should no freeze frame be available at the given timestamp, a response of NOT_AVAILABLE
+     * must be returned by the implementation. Because vehicles may have limited storage for
+     * freeze frames, it is possible for a frame request to respond with NOT_AVAILABLE even if
+     * the associated timestamp has been recently obtained via OBD2_FREEZE_FRAME_INFO.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ
@@ -223,7 +214,7 @@ enum VehicleProperty: @2.0::VehicleProperty {
      * memory and available for retrieval via OBD2_FREEZE_FRAME.
      *
      * The values are to be interpreted as follows:
-     * each element of int64Values is the timestamp at which a a fault code
+     * each element of int64Values must be the timestamp at which a a fault code
      * has been detected and the corresponding freeze frame stored, and each
      * such element can be used as the key to OBD2_FREEZE_FRAME to retrieve
      * the corresponding freeze frame.
@@ -241,14 +232,18 @@ enum VehicleProperty: @2.0::VehicleProperty {
      * OBD2 Freeze Frame Clear
      *
      * This property allows deletion of any of the freeze frames stored in
-     * vehicle memory, as described by OBD2_DTC_INFO.
+     * vehicle memory, as described by OBD2_FREEZE_FRAME_INFO.
      *
-     * A set of this property is to be interpreted as follows:
-     * if int64Values contains no elements, then all DTCs stored will be cleared;
-     * if int64Values contains one or more elements, then DTCs at the timestamps
-     * stored in int64Values will be cleared, and the others not cleared, except
-     * the memory will be compacted so that all remaining DTCs are stored
-     * contiguously.
+     * The configArray is set as follows:
+     *  configArray[0] = 1 if the implementation is able to clear individual freeze frames
+     *                   by timestamp, 0 otherwise
+     *
+     * IVehicle#set of this property is to be interpreted as follows:
+     *   if int64Values contains no elements, then all frames stored must be cleared;
+     *   if int64Values contains one or more elements, then frames at the timestamps
+     *   stored in int64Values must be cleared, and the others not cleared. Should the
+     *   vehicle not support selective clearing of freeze frames, this latter mode must
+     *   return NOT_AVAILABLE.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:WRITE
@@ -509,102 +504,196 @@ enum DiagnosticFloatSensorIndex : int32_t {
 };
 
 /**
- * This enum lists the types of supported VMS messages.
+ * This enum lists the types of supported VMS messages. It is used as the first
+ * integer in the vehicle property integers array and determines how the rest of
+ * the message is decoded.
  */
 enum VmsMessageType : int32_t {
-  /** A client subscribes to a layer. */
+  /**
+   * A request from the subscribers to the VMS service to subscribe to a layer.
+   *
+   * This message type uses enum VmsMessageWithLayerIntegerValuesIndex.
+   */
   SUBSCRIBE = 1,
 
-  /** A client unsubscribes from a layer. */
-  UNSUBSCRIBE = 2,
+  /**
+   * A request from the subscribers to the VMS service to subscribe to a layer from a specific publisher.
+   *
+   * This message type uses enum VmsMessageWithLayerAndPublisherIdIntegerValuesIndex.
+   */
+  SUBSCRIBE_TO_PUBLISHER = 2,
 
-  /** A client publishes a data packet. */
-  DATA = 3,
+  /**
+   * A request from the subscribers to the VMS service to unsubscribes from a layer.
+   *
+   * This message type uses enum VmsMessageWithLayerIntegerValuesIndex.
+   */
+  UNSUBSCRIBE = 3,
 
-  /** A client declaring layers offering. */
-  OFFERING = 4,
+  /**
+   * A request from the subscribers to the VMS service to unsubscribes from a layer from a specific publisher.
+   *
+   * This message type uses enum VmsMessageWithLayerAndPublisherIdIntegerValuesIndex.
+   */
+  UNSUBSCRIBE_TO_PUBLISHER = 4,
 
-  /** Requesting the list of available layers. */
-  AVAILABILITY_REQUEST = 5,
+  /**
+   * Information from the publishers to the VMS service about the layers which the client can publish.
+   *
+   * This message type uses enum VmsOfferingMessageIntegerValuesIndex.
+   */
+  OFFERING = 5,
 
-  /** Returning the list of available layers. */
-  AVAILABILITY_RESPONSE = 6,
+  /**
+   * A request from the subscribers to the VMS service to get the available layers.
+   *
+   * This message type uses enum VmsBaseMessageIntegerValuesIndex.
+   */
+  AVAILABILITY_REQUEST = 6,
 
-  /** Sending to the HAL the current list of the available layers. */
-  AVAILABILITY_CHANGE = 7,
+  /**
+   * A request from the publishers to the VMS service to get the layers with subscribers.
+   *
+   * This message type uses enum VmsBaseMessageIntegerValuesIndex.
+   */
+  SUBSCRIPTIONS_REQUEST = 7,
 
-  /** Requesting layers that have subscribers. */
-  SUBSCRIPTIONS_REQUEST = 8,
+  /**
+   * A response from the VMS service to the subscribers to a VmsMessageType.AVAILABILITY_REQUEST
+   *
+   * This message type uses enum VmsAvailabilityStateIntegerValuesIndex.
+   */
+  AVAILABILITY_RESPONSE = 8,
 
-  /** Returning layers that have subscribers. */
-  SUBSCRIPTIONS_RESPONSE = 9,
+  /**
+   * A notification from the VMS service to the subscribers on a change in the available layers.
+   *
+   * This message type uses enum VmsAvailabilityStateIntegerValuesIndex.
+   */
+  AVAILABILITY_CHANGE = 9,
 
-  /** Sending to the HAL the current list of the subscribed layers. */
-  SUBSCRIPTIONS_CHANGE = 10,
+  /**
+   * A response from the VMS service to the publishers to a VmsMessageType.SUBSCRIPTIONS_REQUEST
+   *
+   * This message type uses enum VmsSubscriptionsStateIntegerValuesIndex.
+   */
+  SUBSCRIPTIONS_RESPONSE = 10,
+
+  /**
+   * A notification from the VMS service to the publishers on a change in the layers with subscribers.
+   *
+   * This message type uses enum VmsSubscriptionsStateIntegerValuesIndex.
+   */
+  SUBSCRIPTIONS_CHANGE = 11,
+
+  /**
+   * A message from the VMS service to the subscribers or from the publishers to the VMS service
+   * with a serialized VMS data packet as defined in the VMS protocol.
+   *
+   * This message type uses enum VmsBaseMessageIntegerValuesIndex.
+   */
+  DATA = 12,
 };
 
 /**
- * This enum provides the canonical mapping for VMS properties that have an
- * integer value.
+ * Every VMS message starts with the type of the message from the VmsMessageType enum.
+ * Messages with no parameters such as VmsMessageType.AVAILABILITY_REQUEST,
+ * VmsMessageType.SUBSCRIPTIONS_REQUEST and VmsMessageType.DATA are also based on this enum.
  */
 enum VmsBaseMessageIntegerValuesIndex : int32_t {
   /* The message type as enumerated by VmsMessageType enum. */
-  VMS_MESSAGE_TYPE = 0,
+  MESSAGE_TYPE = 0,
 };
 
 /*
- * This enum provides the canonical mapping for VMS SUBMIT and UNSUBMIT
- * messages integer value properties.
+ * A VMS message with a layer is sent as part of a VmsMessageType.SUBSCRIBE or
+ * VmsMessageType.UNSUBSCRIBE messages.
+ *
+ * The layer type is defined in the VMS protocol, and the subtype and version are
+ * controlled by the implementer of the publisher.
  */
-enum VmsSimpleMessageIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
-  /* The layer ID as defined in the vms protocol. */
-  VMS_LAYER_ID = 1,
+enum VmsMessageWithLayerIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
+  LAYER_TYPE = 1,
 
-  /* The version of the VMS layer. */
-  VMS_LAYER_VERSION = 2,
+  LAYER_SUBTYPE = 2,
 
-  /* The layer type as defined in the vms protocol */
-  VMS_LAYER_SUB_TYPE = 3,
+  LAYER_VERSION = 3,
 };
 
 /*
- * This enum provides the canonical mapping for VMS DATA
- * message integer value properties.
+ * A VMS message with a layer and publisher ID is sent as part of a
+ * VmsMessageType.SUBSCRIBE_TO_PUBLISHER and VmsMessageType.UNSUBSCRIBE_TO_PUBLISHER messages.
  */
-enum VmsDataMessageIntegerValuesIndex : VmsSimpleMessageIntegerValuesIndex {
-  /* A publisher ID of the client that published this message. */
-  VMS_PUBLISHER_ID = 4,
+enum VmsMessageWithLayerAndPublisherIdIntegerValuesIndex : VmsMessageWithLayerIntegerValuesIndex {
+  PUBLISHER_ID = 4,
 };
 
 /*
- * This enum provides the canonical mapping for VMS offering messages integer
- * value properties
+ * An offering can be sent by publishers as part of VmsMessageType.OFFERING in order to
+ * advertise which layers they can publish and under which constraints: e.g., I can publish Layer X
+ * if someone else will publish Layer Y.
+ * The offering contains the publisher ID which was assigned to the publisher by the VMS service.
+ * A single offering is represented as:
+ * - Layer type
+ * - Layer subtype
+ * - Layer version
+ * - Number of dependencies (N)
+ * - N x (Layer type, Layer subtype, Layer version)
  */
 enum VmsOfferingMessageIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
-  /* The ID assigend to the publisher by the VMS core. */
   PUBLISHER_ID = 1,
 
-  /* The number of VMS layer dependencies. */
-  VMS_NUMBER_OF_LAYERS_DEPENDENCIES = 2,
+  NUMBER_OF_OFFERS = 2,
 
-  /* The first index that contain dependencies */
-  FIRST_DEPENDENCIES_INDEX = 3,
+  OFFERING_START = 3,
 };
 
 /**
- * A VMS subscription request only contains its message type. The format of a VMS subscription
- * response is described below.
+ * A subscriptions state is sent to the publishers in response to a change in the subscriptions
+ * as part of a VmsMessageType.SUBSCRIPTIONS_CHANGE, or in response to a
+ * VmsMessageType.SUBSCRIPTIONS_REQUEST message as part of VmsMessageType.SUBSCRIPTIONS_RESPONSE.
+ * The VMS service issues monotonically increasing sequence numbers, and in case a subscriber receives
+ * a smaller sequnce number it should ignore the message.
+ * The subscriptions are sent as a list of layers followed by a list of associated layers:
+ * {Sequence number, N, M, N x layer, M x associated layer}
+ * A subscribed layer is represented as three integers:
+ * - Layer type
+ * - Layer subtype
+ * - Layer version
+ * A subscribed associated layer is a layer with a list of publisher IDs. It is represented as:
+ * - Layer type
+ * - Layer subtype
+ * - Layer version
+ * - Number of publisher IDs (N)
+ * - N x publisher ID
  */
-enum VmsSubscriptionResponseFormat : VmsBaseMessageIntegerValuesIndex {
-  /**
-    * Recipients should ignore any packet with a sequence number that is less than the highest
-    * sequence number they have seen thus far.
-    */
+enum VmsSubscriptionsStateIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
   SEQUENCE_NUMBER = 1,
 
-  /** The number of VMS layers. Each layer has two integers: type and version. */
   NUMBER_OF_LAYERS = 2,
 
-  /** The first index that contains a layer. */
-  FIRST_LAYER = 3,
+  NUMBER_OF_ASSOCIATED_LAYERS = 3,
+
+  SUBSCRIPTIONS_START = 4,
+};
+
+/**
+ * An availability state is sent to the subscribers in response to a change in the available
+ * layers as part of a VmsMessageType.AVAILABILITY_CHANGE message, or in response to a
+ * VmsMessageType.AVAILABILITY_REQUEST message as part of a VmsMessageType.AVAILABILITY_RESPONSE.
+ * The VMS service issues monotonically increasing sequence numbers, and in case a subscriber receives
+ * a smaller sequnce number, it should ignore the message.
+ * An available associated layer is a layer with a list of publisher IDs:
+ * - Layer type
+ * - Layer subtype
+ * - Layer version
+ * - Number of publisher IDs (N)
+ * - N x publisher ID
+*/
+enum VmsAvailabilityStateIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
+  SEQUENCE_NUMBER = 1,
+
+  NUMBER_OF_ASSOCIATED_LAYERS = 2,
+
+  LAYERS_START = 3,
 };
