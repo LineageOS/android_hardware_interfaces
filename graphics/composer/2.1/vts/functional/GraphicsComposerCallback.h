@@ -51,7 +51,7 @@ class GraphicsComposerCallback : public IComposerCallback {
   // the set of all currently connected displays
   std::unordered_set<Display> mDisplays;
   // true only when vsync is enabled
-  bool mVsyncAllowed = false;
+  bool mVsyncAllowed = true;
 
   // track invalid callbacks
   int mInvalidHotplugCount = 0;

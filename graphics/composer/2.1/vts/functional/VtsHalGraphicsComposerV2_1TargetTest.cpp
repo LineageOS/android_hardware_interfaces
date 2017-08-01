@@ -61,6 +61,10 @@ class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
     // assume the first display is primary and is never removed
     mPrimaryDisplay = waitForFirstDisplay();
+
+    // explicitly disable vsync
+    mComposerClient->setVsyncEnabled(mPrimaryDisplay, false);
+    mComposerCallback->setVsyncAllowed(false);
   }
 
   void TearDown() override {
