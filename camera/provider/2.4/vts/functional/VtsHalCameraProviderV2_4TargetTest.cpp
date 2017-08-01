@@ -1122,6 +1122,10 @@ TEST_F(CameraHidlTest, setCallback) {
         auto status = provider.second->setCallback(cb);
         ASSERT_TRUE(status.isOk());
         ASSERT_EQ(Status::OK, status);
+        // Reset callback since cb will go out of scope
+        status = provider.second->setCallback(nullptr);
+        ASSERT_TRUE(status.isOk());
+        ASSERT_EQ(Status::OK, status);
     }
 }
 
