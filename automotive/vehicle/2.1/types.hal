@@ -328,7 +328,7 @@ enum Obd2CompressionIgnitionMonitors : Obd2CommonIgnitionMonitors {
   BOOST_PRESSURE_AVAILABLE = 0x1 << 12,
   BOOST_PRESSURE_INCOMPLETE = 0x1 << 13,
 
-  NOx_SCR__AVAILABLE = 0x1 << 14,
+  NOx_SCR_AVAILABLE = 0x1 << 14,
   NOx_SCR_INCOMPLETE = 0x1 << 15,
 
   NMHC_CATALYST_AVAILABLE = 0x1 << 16,
