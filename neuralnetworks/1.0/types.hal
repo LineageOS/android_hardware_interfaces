@@ -1,0 +1,174 @@
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* This HAL is a work in progress */
+
+package android.hardware.neuralnetworks@1.0;
+
+// The types an operand can have.
+// These values are the same as found in the NeuralNetworks.h file.
+// When modifying, be sure to update HAL_NUM_OPERAND_TYPES in HalIntefaces.h.
+enum OperandType : uint32_t {
+    FLOAT16                   = 0,
+    FLOAT32                   = 1,
+    INT8                      = 2,
+    UINT8                     = 3,
+    INT16                     = 4,
+    UINT16                    = 5,
+    INT32                     = 6,
+    UINT32                    = 7,
+    TENSOR_FLOAT16            = 8,
+    TENSOR_FLOAT32            = 9,
+    TENSOR_SYMMETRICAL_QUANT8 = 10,
+};
+
+// The type of operations.  Unlike the operation types found in
+// NeuralNetworks.h file, these specify the data type they operate on.
+// This is done to simplify the work of drivers.
+// TODO: Currently they are the same.  Add a conversion when finalizing the model.
+// When modifying, be sure to update HAL_NUM_OPERATION_TYPES in HalIntefaces.h.
+enum OperationType : uint32_t {
+    AVERAGE_POOL_FLOAT32                 = 0,
+    CONCATENATION_FLOAT32                = 1,
+    CONV_FLOAT32                         = 2,
+    DEPTHWISE_CONV_FLOAT32               = 3,
+    MAX_POOL_FLOAT32                     = 4,
+    L2_POOL_FLOAT32                      = 5,
+    DEPTH_TO_SPACE_FLOAT32               = 6,
+    SPACE_TO_DEPTH_FLOAT32               = 7,
+    LOCAL_RESPONSE_NORMALIZATION_FLOAT32 = 8,
+    SOFTMAX_FLOAT32                      = 9,
+    RESHAPE_FLOAT32                      = 10,
+    SPLIT_FLOAT32                        = 11,
+    FAKE_QUANT_FLOAT32                   = 12,
+    ADD_FLOAT32                          = 13,
+    FULLY_CONNECTED_FLOAT32              = 14,
+    CAST_FLOAT32                         = 15,
+    MUL_FLOAT32                          = 16,
+    L2_NORMALIZATION_FLOAT32             = 17,
+    LOGISTIC_FLOAT32                     = 18,
+    RELU_FLOAT32                         = 19,
+    RELU6_FLOAT32                        = 20,
+    RELU1_FLOAT32                        = 21,
+    TANH_FLOAT32                         = 22,
+    DEQUANTIZE_FLOAT32                   = 23,
+    FLOOR_FLOAT32                        = 24,
+    GATHER_FLOAT32                       = 25,
+    RESIZE_BILINEAR_FLOAT32              = 26,
+    LSH_PROJECTION_FLOAT32               = 27,
+    LSTM_FLOAT32                         = 28,
+    SVDF_FLOAT32                         = 29,
+    RNN_FLOAT32                          = 30,
+    N_GRAM_FLOAT32                       = 31,
+    LOOKUP_FLOAT32                       = 32,
+};
+
+// Two special values that can be used instead of a regular poolIndex.
+enum LocationValues : uint32_t {
+    // The location will be specified at runtime. It's either a temporary
+    // variable, an input, or an output.
+    LOCATION_AT_RUN_TIME = 0xFFFFFFFF,
+    // The operand's value is stored in the
+    // TODO: Only for old
+    LOCATION_SAME_BLOCK = 0xFFFFFFFE
+};
+
+// Status of a device.
+enum DeviceStatus : uint32_t {
+    AVAILABLE,
+    BUSY,
+    OFFLINE,
+    UNKNOWN  // Do we need this?
+};
+
+// For the reference workload
+// Used by a driver to report its performance characteristics.
+// TODO revisit the data types and scales.
+struct PerformanceInfo {
+    float execTime;    // in nanoseconds
+    float powerUsage;  // in picoJoules
+};
+
+// The capabilities of a driver.
+struct Capabilities {
+    vec<OperationType> supportedOperationTypes;
+    // TODO Do the same for baseline model IDs
+    bool cachesCompilation;
+    // TODO revisit the data types and scales.
+    float bootupTime;  // in nanoseconds
+    PerformanceInfo float16Performance;
+    PerformanceInfo float32Performance;
+    PerformanceInfo quantized8Performance;
+};
+
+// Describes the location of a data object.
+struct DataLocation {
+    // The index of the memory pool where this location is found.
+    // Two special values can also be used.  See the LOCATION_* constants above.
+    uint32_t poolIndex;
+    // Offset in bytes from the start of the pool.
+    uint32_t offset;
+    // The length of the data, in bytes.
+    uint32_t length;
+};
+
+struct Operand {
+    OperandType type;
+    vec<uint32_t> dimensions;
+
+    // The number of operations that uses this operand as input.
+    // TODO It would be nice to track the actual consumers, e.g. vec<uint32_t> consumers;
+    uint32_t numberOfConsumers;
+
+    float scale;
+    int32_t zeroPoint;
+
+    // Where to find the data for this operand.
+    DataLocation location;
+};
+
+// Describes one operation of the graph.
+struct Operation {
+    // The type of operation.
+    OperationType type;
+    // Describes the table that contains the indexes of the inputs of the
+    // operation. The offset is the index in the operandIndexes table.
+    vec<uint32_t> inputs;
+    // Describes the table that contains the indexes of the outputs of the
+    // operation. The offset is the index in the operandIndexes table.
+    vec<uint32_t> outputs;
+};
+
+struct InputOutputInfo {
+    DataLocation location;
+    // If dimensions.size() > 0, we have updated dimensions.
+    vec<uint32_t> dimensions;
+};
+
+struct Model {
+    vec<Operand> operands;
+    vec<Operation> operations;
+    vec<uint32_t> inputIndexes;
+    vec<uint32_t> outputIndexes;
+    vec<uint8_t> operandValues;
+    vec<memory> pools;
+};
+
+struct Request {
+    vec<InputOutputInfo> inputs;
+    vec<InputOutputInfo> outputs;
+    vec<memory> pools;
+};
