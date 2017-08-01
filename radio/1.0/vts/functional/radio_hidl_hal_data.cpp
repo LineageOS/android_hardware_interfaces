@@ -79,7 +79,7 @@ TEST_F(RadioHidlTest, setupDataCall) {
                     radioRsp->rspInfo.error == RadioError::RADIO_NOT_AVAILABLE ||
                     radioRsp->rspInfo.error == RadioError::OP_NOT_ALLOWED_BEFORE_REG_TO_NW ||
                     radioRsp->rspInfo.error == RadioError::OP_NOT_ALLOWED_DURING_VOICE_CALL ||
-                    CheckOEMError());
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT || CheckOEMError());
     }
 }
 
@@ -119,7 +119,8 @@ TEST_F(RadioHidlTest, getDataCallList) {
 
     if (cardStatus.cardState == CardState::ABSENT) {
         ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE ||
-                    radioRsp->rspInfo.error == RadioError::RADIO_NOT_AVAILABLE);
+                    radioRsp->rspInfo.error == RadioError::RADIO_NOT_AVAILABLE ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
     }
 }
 
