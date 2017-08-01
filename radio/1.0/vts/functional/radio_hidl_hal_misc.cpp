@@ -763,8 +763,7 @@ TEST_F(RadioHidlTest, setAllowedCarriers) {
 
     if (cardStatus.cardState == CardState::ABSENT) {
         ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE ||
-                    radioRsp->rspInfo.error ==
-                        RadioError::REQUEST_NOT_SUPPORTED);
+                    radioRsp->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED);
     }
 
     /* Reset back to no carrier restriction */
@@ -779,8 +778,7 @@ TEST_F(RadioHidlTest, setAllowedCarriers) {
 
     if (cardStatus.cardState == CardState::ABSENT) {
         ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE ||
-                    radioRsp->rspInfo.error ==
-                        RadioError::REQUEST_NOT_SUPPORTED);
+                    radioRsp->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED);
     }
 }
 
