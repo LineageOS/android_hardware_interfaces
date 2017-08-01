@@ -16,7 +16,7 @@
 
 cc_test {
     name: "VtsHalRadioV1_0TargetTest",
-    defaults: ["hidl_defaults"],
+    defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["radio_hidl_hal_cell_broadcast.cpp",
            "radio_hidl_hal_data.cpp",
            "radio_hidl_hal_icc.cpp",
@@ -30,45 +30,21 @@ cc_test {
            "radio_response.cpp",
            "VtsHalRadioV1_0TargetTest.cpp",
            "vts_test_util.cpp"],
-    shared_libs: [
-        "libbase",
-        "liblog",
-        "libcutils",
-        "libhidlbase",
-        "libhidltransport",
-        "libnativehelper",
-        "libutils",
+    static_libs: [
         "android.hardware.radio@1.0",
-    ],
-    static_libs: ["VtsHalHidlTargetTestBase"],
-    cflags: [
-        "-O0",
-        "-g",
     ],
 }
 
 cc_test {
     name: "VtsHalSapV1_0TargetTest",
-    defaults: ["hidl_defaults"],
+    defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["sap_callback.cpp",
            "sap_hidl_hal_api.cpp",
            "sap_hidl_hal_test.cpp",
            "VtsHalSapV1_0TargetTest.cpp",
            "vts_test_util.cpp"],
-    shared_libs: [
-        "libbase",
-        "liblog",
-        "libcutils",
-        "libhidlbase",
-        "libhidltransport",
-        "libnativehelper",
-        "libutils",
+    static_libs: [
         "android.hardware.radio@1.0",
-    ],
-    static_libs: ["VtsHalHidlTargetTestBase"],
-    cflags: [
-        "-O0",
-        "-g",
     ],
 }
 
