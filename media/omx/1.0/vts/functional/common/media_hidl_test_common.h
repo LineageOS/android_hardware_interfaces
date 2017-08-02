@@ -131,6 +131,12 @@ struct CodecObserver : public IOmxObserver {
                     android::hardware::media::omx::V1_0::Message::Type::EVENT) {
                     *msg = *it;
                     msgQueue.erase(it);
+                    // OMX_EventBufferFlag event is sent when the component has
+                    // processed a buffer with its EOS flag set. This event is
+                    // not sent by soft omx components. Vendor components can
+                    // send this. From IOMX point of view, we will ignore this
+                    // event.
+                    if (msg->data.eventData.event == OMX_EventBufferFlag) break;
                     return ::android::hardware::media::omx::V1_0::Status::OK;
                 } else if (it->type == android::hardware::media::omx::V1_0::
                                            Message::Type::FILL_BUFFER_DONE) {
