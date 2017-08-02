@@ -560,9 +560,6 @@ void testEOS(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                     // something unexpected happened
                     EXPECT_TRUE(false);
                 }
-            } else if (msg.data.eventData.event == OMX_EventBufferFlag) {
-                // soft omx components donot send this, we will just ignore it
-                // for now
             } else {
                 // something unexpected happened
                 EXPECT_TRUE(false);
