@@ -130,7 +130,7 @@ genrule {
     ],
 }
 
-cc_library_shared {
+cc_library {
     name: "android.hardware.audio.effect@2.0",
     defaults: ["hidl-module-defaults"],
     generated_sources: ["android.hardware.audio.effect@2.0_genc++"],
