@@ -84,7 +84,7 @@ struct TunerCallbackMock : public ITunerCallback {
     MOCK_METHOD1(backgroundScanAvailable, Return<void>(bool));
     MOCK_TIMEOUT_METHOD1(backgroundScanComplete, Return<void>(ProgramListResult));
     MOCK_METHOD0(programListChanged, Return<void>());
-    MOCK_METHOD0(programInfoChanged, Return<void>());
+    MOCK_METHOD0(currentProgramInfoChanged, Return<void>());
 };
 
 class BroadcastRadioHalTest : public ::testing::VtsHalHidlTargetTestBase,
@@ -315,7 +315,7 @@ TEST_P(BroadcastRadioHalTest, OpenTunerTwice) {
  *  - getProgramList either succeeds or returns NOT_STARTED/NOT_READY status;
  *  - if the program list is NOT_STARTED, startBackgroundScan makes it completed
  *    within a full scan timeout and the next getProgramList call succeeds;
- *  - if the program list is not empty, tune_1_1 call succeeds.
+ *  - if the program list is not empty, tuneByProgramSelector call succeeds.
  */
 TEST_P(BroadcastRadioHalTest, TuneFromProgramList) {
     if (skipped) return;
@@ -340,7 +340,7 @@ TEST_P(BroadcastRadioHalTest, TuneFromProgramList) {
     EXPECT_CALL(*mCallback, tuneComplete(_, _)).Times(0);
     EXPECT_TIMEOUT_CALL(*mCallback, tuneComplete_1_1, Result::OK, _)
         .WillOnce(DoAll(SaveArg<1>(&selCb), testing::Return(ByMove(Void()))));
-    auto tuneResult = mTuner->tune_1_1(firstProgram.selector);
+    auto tuneResult = mTuner->tuneByProgramSelector(firstProgram.selector);
     ASSERT_EQ(Result::OK, tuneResult);
     EXPECT_TIMEOUT_CALL_WAIT(*mCallback, tuneComplete_1_1, kTuneTimeout);
     EXPECT_EQ(firstProgram.selector.primaryId, selCb.primaryId);
