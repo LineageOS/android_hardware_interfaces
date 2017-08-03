@@ -42,7 +42,7 @@ genrule {
     ],
 }
 
-cc_library_shared {
+cc_library {
     name: "android.hardware.thermal@1.1",
     defaults: ["hidl-module-defaults"],
     generated_sources: ["android.hardware.thermal@1.1_genc++"],
