@@ -44,6 +44,8 @@ using ::android::sp;
   { 0x20, 0x04, 0x02, 0x01, 0x00 }
 #define CORE_INIT_CMD \
     { 0x20, 0x01, 0x00 }
+#define CORE_INIT_CMD_NCI20 \
+    { 0x20, 0x01, 0x02, 0x00, 0x00 }
 #define INVALID_COMMAND \
   { 0x20, 0x00, 0x00 }
 
@@ -290,16 +292,23 @@ TEST_F(NfcHidlTest, WriteInvalidAndThenValidCommand) {
         // Wait for CORE_RESET_NTF
         res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
         EXPECT_TRUE(res.no_timeout);
+        cmd = CORE_INIT_CMD_NCI20;
+    } else {
+        cmd = CORE_INIT_CMD;
     }
-
-    cmd = CORE_INIT_CMD;
     data = cmd;
+
     EXPECT_EQ(data.size(), nfc_->write(data));
     // Wait for CORE_INIT_RSP
     res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
     EXPECT_TRUE(res.no_timeout);
     EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
-
+    if (nci_version == NCI_VERSION_2 && res.args->last_data_.size() > 13 &&
+        res.args->last_data_[13] == 0x00) {
+        // Wait for CORE_CONN_CREDITS_NTF
+        res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
+        EXPECT_TRUE(res.no_timeout);
+    }
     // Send an Error Data Packet
     cmd = INVALID_COMMAND;
     data = cmd;
@@ -347,15 +356,23 @@ TEST_F(NfcHidlTest, Bandwidth) {
         // Wait for CORE_RESET_NTF
         res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
         EXPECT_TRUE(res.no_timeout);
+        cmd = CORE_INIT_CMD_NCI20;
+    } else {
+        cmd = CORE_INIT_CMD;
     }
-
-    cmd = CORE_INIT_CMD;
     data = cmd;
+
     EXPECT_EQ(data.size(), nfc_->write(data));
     // Wait for CORE_INIT_RSP
     res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
     EXPECT_TRUE(res.no_timeout);
     EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
+    if (nci_version == NCI_VERSION_2 && res.args->last_data_.size() > 13 &&
+        res.args->last_data_[13] == 0x00) {
+        // Wait for CORE_CONN_CREDITS_NTF
+        res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
+        EXPECT_TRUE(res.no_timeout);
+    }
 
     cmd = CORE_CONN_CREATE_CMD;
     data = cmd;
