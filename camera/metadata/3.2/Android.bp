@@ -32,7 +32,7 @@ genrule {
     ],
 }
 
-cc_library_shared {
+cc_library {
     name: "android.hardware.camera.metadata@3.2",
     defaults: ["hidl-module-defaults"],
     generated_sources: ["android.hardware.camera.metadata@3.2_genc++"],

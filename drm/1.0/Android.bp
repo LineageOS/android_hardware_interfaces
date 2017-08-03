@@ -67,7 +67,7 @@ genrule {
     ],
 }
 
-cc_library_shared {
+cc_library {
     name: "android.hardware.drm@1.0",
     defaults: ["hidl-module-defaults"],
     generated_sources: ["android.hardware.drm@1.0_genc++"],
@@ -89,5 +89,3 @@ cc_library_shared {
         "libutils",
     ],
 }
-
-subdirs = ["default"]

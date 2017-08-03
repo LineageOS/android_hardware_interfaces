@@ -53,7 +53,7 @@ genrule {
     ],
 }
 
-cc_library_shared {
+cc_library {
     name: "android.hardware.graphics.composer@2.1",
     defaults: ["hidl-module-defaults"],
     generated_sources: ["android.hardware.graphics.composer@2.1_genc++"],
