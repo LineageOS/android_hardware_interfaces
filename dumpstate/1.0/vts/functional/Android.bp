@@ -15,18 +15,7 @@
 
 cc_test {
     name: "VtsHalDumpstateV1_0TargetTest",
-    defaults: ["hidl_defaults"],
+    defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["VtsHalDumpstateV1_0TargetTest.cpp"],
-    shared_libs: [
-        "android.hardware.dumpstate@1.0",
-        "libcutils",
-        "libhidlbase",
-        "liblog",
-        "libutils",
-    ],
-    static_libs: ["VtsHalHidlTargetTestBase"],
-    cflags: [
-        "-O0",
-        "-g",
-    ]
+    static_libs: ["android.hardware.dumpstate@1.0"],
 }
