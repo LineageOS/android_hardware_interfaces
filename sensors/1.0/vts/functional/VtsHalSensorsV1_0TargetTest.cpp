@@ -1294,6 +1294,11 @@ void SensorsHidlTest::testDirectReportOperation(
 
   SensorInfo sensor = defaultSensorByType(type);
 
+  if (!isValidType(sensor.type)) {
+    // no default sensor of this type
+    return;
+  }
+
   if (!isDirectReportRateSupported(sensor, rate)) {
     return;
   }
