@@ -45,7 +45,7 @@ struct Tuner : public ITuner {
     virtual Return<void> getProgramInformation(getProgramInformation_cb _hidl_cb) override;
     virtual Return<void> getProgramInformation_1_1(getProgramInformation_1_1_cb _hidl_cb) override;
     virtual Return<ProgramListResult> startBackgroundScan() override;
-    virtual Return<void> getProgramList(const hidl_string& filter,
+    virtual Return<void> getProgramList(const hidl_vec<VendorKeyValue>& filter,
                                         getProgramList_cb _hidl_cb) override;
     virtual Return<Result> setAnalogForced(bool isForced) override;
     virtual Return<void> isAnalogForced(isAnalogForced_cb _hidl_cb) override;
