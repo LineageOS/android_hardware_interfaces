@@ -50,16 +50,11 @@ enum VehicleProperty: @2.0::VehicleProperty {
      *  configArray[3] = micrometers per rear right wheel tick
      *  configArray[4] = micrometers per rear left wheel tick
      *
-     * NOTE:  If a wheel is not supported, its value shall always be set to
-     *          LONG_MAX = 9223372036854775807.
+     * NOTE:  If a wheel is not supported, its value shall always be set to 0.
      *
      * VehiclePropValue.timestamp must be correctly filled in.
      *
-     * Vendors must specify wheels that support this sensor in
-     * VehiclePropConfig.configFlags. The format of this field is a bitset of
-     * values from Wheel enum.
-     *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE |VehiclePropertyChangeMode:CONTINUOUS
+     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
      * @access VehiclePropertyAccess:READ
      */
     WHEEL_TICK = (
@@ -95,9 +90,8 @@ enum VehicleProperty: @2.0::VehicleProperty {
     /**
      * Automatic re-circulation on/off
      *
-     * IVehicle#set may return StatusCode::NOT_AVAILABLE and IVehicle#get is not
-     * guaranteed to work if HVAC unit is off.  See HVAC_POWER_ON property for
-     * details.
+     * IVehicle#set and IVehicle#get must return StatusCode::NOT_AVAILABLE when HVAC unit is off.
+     * See HVAC_POWER_ON property for details.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
