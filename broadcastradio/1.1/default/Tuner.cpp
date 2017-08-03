@@ -248,10 +248,10 @@ Return<Result> Tuner::tune(uint32_t channel, uint32_t subChannel) {
         lock_guard<mutex> lk(mMut);
         band = mAmfmConfig.type;
     }
-    return tune_1_1(utils::make_selector(band, channel, subChannel));
+    return tuneByProgramSelector(utils::make_selector(band, channel, subChannel));
 }
 
-Return<Result> Tuner::tune_1_1(const ProgramSelector& sel) {
+Return<Result> Tuner::tuneByProgramSelector(const ProgramSelector& sel) {
     ALOGV("%s(%s)", __func__, toString(sel).c_str());
     lock_guard<mutex> lk(mMut);
     if (mIsClosed) return Result::NOT_INITIALIZED;
@@ -336,6 +336,15 @@ Return<void> Tuner::getProgramList(const hidl_string& filter, getProgramList_cb 
     return {};
 }
 
+Return<Result> Tuner::setAnalogForced(bool isForced) {
+    ALOGV("%s", __func__);
+    lock_guard<mutex> lk(mMut);
+    if (mIsClosed) return Result::NOT_INITIALIZED;
+
+    mIsAnalogForced = isForced;
+    return Result::OK;
+}
+
 Return<void> Tuner::isAnalogForced(isAnalogForced_cb _hidl_cb) {
     ALOGV("%s", __func__);
     lock_guard<mutex> lk(mMut);
@@ -346,15 +355,6 @@ Return<void> Tuner::isAnalogForced(isAnalogForced_cb _hidl_cb) {
         _hidl_cb(Result::OK, mIsAnalogForced);
     }
     return {};
-}
-
-Return<Result> Tuner::setAnalogForced(bool isForced) {
-    ALOGV("%s", __func__);
-    lock_guard<mutex> lk(mMut);
-    if (mIsClosed) return Result::NOT_INITIALIZED;
-
-    mIsAnalogForced = isForced;
-    return Result::OK;
 }
 
 }  // namespace implementation
