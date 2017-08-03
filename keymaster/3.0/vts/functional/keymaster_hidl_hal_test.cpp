@@ -1774,7 +1774,7 @@ TEST_F(SigningOperationsTest, EcdsaNoDigestHugeData) {
                                              .Authorization(TAG_NO_AUTH_REQUIRED)
                                              .EcdsaSigningKey(224)
                                              .Digest(Digest::NONE)));
-    string message(64 * 1024, 'a');
+    string message(2 * 1024, 'a');
     SignMessage(message, AuthorizationSetBuilder().Digest(Digest::NONE));
 }
 
@@ -2605,7 +2605,7 @@ TEST_F(EncryptionOperationsTest, RsaNoPaddingTooLong) {
 }
 
 /*
- * EncryptionOperationsTest.RsaNoPaddingTooLong
+ * EncryptionOperationsTest.RsaNoPaddingTooLarge
  *
  * Verifies that raw RSA encryption of too-large (numerically) messages fails in the expected way.
  */
