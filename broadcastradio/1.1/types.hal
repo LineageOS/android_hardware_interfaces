@@ -56,6 +56,24 @@ enum ProgramInfoFlags : uint32_t {
     TRAFFIC_ANNOUNCEMENT = 1 << 3,
 };
 
+/**
+ * A key-value pair for vendor-specific information to be passed as-is through
+ * Android framework to the front-end application.
+ */
+struct VendorKeyValue {
+    /**
+     * Key must be prefixed with unique vendor Java-style namespace,
+     * eg. 'com.somecompany.parameter1'.
+     */
+    string key;
+
+    /**
+     * Value must be passed through the framework without any changes.
+     * Format of this string can vary across vendors.
+     */
+    string value;
+};
+
 struct Properties {
     @1.0::Properties base;
 
@@ -89,16 +107,12 @@ struct Properties {
     vec<uint32_t> supportedIdentifierTypes;
 
     /**
-     * Opaque vendor-specific string, to be passed to front-end without changes.
-     * Format of this string can vary across vendors.
+     * Vendor-specific information.
      *
-     * It may be used for extra features, that's not supported by a platform,
-     * for example: "preset-slots=6;ultra-hd-capable=false".
-     *
-     * Front-end application MUST verify vendor/product name from the
-     * @1.0::Properties struct before doing any interpretation of this value.
+     * It may be used for extra features, not supported by the platform,
+     * for example: com.me.preset-slots=6; com.me.ultra-hd-capable=false.
      */
-    string vendorInfo;
+    vec<VendorKeyValue> vendorInfo;
 };
 
 /**
@@ -276,14 +290,10 @@ struct ProgramInfo {
     bitfield<ProgramInfoFlags> flags;
 
     /**
-     * Opaque vendor-specific string, to be passed to front-end without changes.
-     * Format of this string can vary across vendors.
+     * Vendor-specific information.
      *
-     * It may be used for extra features, that's not supported by a platform,
-     * for example: "paid-service=true;bitrate=320kbps".
-     *
-     * Front-end application MUST verify vendor/product name from the
-     * @1.0::Properties struct before doing any interpretation of this value.
+     * It may be used for extra features, not supported by the platform,
+     * for example: paid-service=true; bitrate=320kbps.
      */
-    string vendorInfo;
+    vec<VendorKeyValue> vendorInfo;
 };

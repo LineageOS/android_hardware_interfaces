@@ -274,7 +274,7 @@ bool BroadcastRadioHalTest::getProgramList(
     // first try...
     EXPECT_TIMEOUT_CALL(*mCallback, backgroundScanComplete, ProgramListResult::OK)
         .Times(AnyNumber());
-    auto hidlResult = mTuner->getProgramList("", getListCb);
+    auto hidlResult = mTuner->getProgramList({}, getListCb);
     EXPECT_TRUE(hidlResult.isOk());
     if (!hidlResult.isOk()) return false;
 
@@ -287,7 +287,7 @@ bool BroadcastRadioHalTest::getProgramList(
         EXPECT_TIMEOUT_CALL_WAIT(*mCallback, backgroundScanComplete, kFullScanTimeout);
 
         // second (last) try...
-        hidlResult = mTuner->getProgramList("", getListCb);
+        hidlResult = mTuner->getProgramList({}, getListCb);
         EXPECT_TRUE(hidlResult.isOk());
         if (!hidlResult.isOk()) return false;
         EXPECT_EQ(ProgramListResult::OK, getListResult);
