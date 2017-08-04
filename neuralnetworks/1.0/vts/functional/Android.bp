@@ -17,21 +17,11 @@
 cc_test {
     name: "VtsHalNeuralnetworksV1_0TargetTest",
     srcs: ["VtsHalNeuralnetworksV1_0TargetTest.cpp"],
-    defaults: ["hidl_defaults"],
-    shared_libs: [
-        "libbase",
-        "libhidlbase",
-        "libhidlmemory",
-        "libhidltransport",
-        "liblog",
-        "libutils",
+    defaults: ["VtsHalTargetTestDefaults"],
+    static_libs: [
         "android.hardware.neuralnetworks@1.0",
         "android.hidl.allocator@1.0",
         "android.hidl.memory@1.0",
-    ],
-    static_libs: ["VtsHalHidlTargetTestBase"],
-    cflags: [
-        "-O0",
-        "-g",
+        "libhidlmemory",
     ],
 }
