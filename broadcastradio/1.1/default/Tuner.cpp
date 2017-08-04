@@ -144,6 +144,7 @@ void Tuner::tuneInternalLocked(const ProgramSelector& sel) {
         mCallback->tuneComplete(Result::OK, mCurrentProgramInfo.base);
     } else {
         mCallback1_1->tuneComplete_1_1(Result::OK, mCurrentProgramInfo.selector);
+        mCallback1_1->currentProgramInfoChanged();
     }
 }
 
@@ -214,8 +215,10 @@ Return<Result> Tuner::step(Direction direction, bool skipSubChannel) {
         return Result::NOT_INITIALIZED;
     }
 
-    ALOGW_IF(!mIsAmfmConfigSet, "AM/FM config not set");
-    if (!mIsAmfmConfigSet) return Result::INVALID_STATE;
+    if (!mIsAmfmConfigSet) {
+        ALOGW("AM/FM config not set");
+        return Result::INVALID_STATE;
+    }
     mIsTuneCompleted = false;
 
     auto task = [this, direction]() {
@@ -256,14 +259,26 @@ Return<Result> Tuner::tuneByProgramSelector(const ProgramSelector& sel) {
     lock_guard<mutex> lk(mMut);
     if (mIsClosed) return Result::NOT_INITIALIZED;
 
-    if (utils::isAmFm(utils::getType(mCurrentProgram))) {
-        ALOGW_IF(!mIsAmfmConfigSet, "AM/FM config not set");
-        if (!mIsAmfmConfigSet) return Result::INVALID_STATE;
+    // checking if ProgramSelector is valid
+    auto programType = utils::getType(sel);
+    if (utils::isAmFm(programType)) {
+        if (!mIsAmfmConfigSet) {
+            ALOGW("AM/FM config not set");
+            return Result::INVALID_STATE;
+        }
 
         auto freq = utils::getId(sel, IdentifierType::AMFM_FREQUENCY);
         if (freq < mAmfmConfig.lowerLimit || freq > mAmfmConfig.upperLimit) {
             return Result::INVALID_ARGUMENTS;
         }
+    } else if (programType == ProgramType::DAB) {
+        if (!utils::hasId(sel, IdentifierType::DAB_SIDECC)) return Result::INVALID_ARGUMENTS;
+    } else if (programType == ProgramType::DRMO) {
+        if (!utils::hasId(sel, IdentifierType::DRMO_SERVICE_ID)) return Result::INVALID_ARGUMENTS;
+    } else if (programType == ProgramType::SXM) {
+        if (!utils::hasId(sel, IdentifierType::SXM_SERVICE_ID)) return Result::INVALID_ARGUMENTS;
+    } else {
+        return Result::INVALID_ARGUMENTS;
     }
 
     mIsTuneCompleted = false;
