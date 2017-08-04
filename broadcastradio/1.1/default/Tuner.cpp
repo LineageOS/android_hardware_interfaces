@@ -337,8 +337,9 @@ Return<ProgramListResult> Tuner::startBackgroundScan() {
     return ProgramListResult::UNAVAILABLE;
 }
 
-Return<void> Tuner::getProgramList(const hidl_string& filter, getProgramList_cb _hidl_cb) {
-    ALOGV("%s(%s)", __func__, filter.c_str());
+Return<void> Tuner::getProgramList(const hidl_vec<VendorKeyValue>& vendorFilter,
+                                   getProgramList_cb _hidl_cb) {
+    ALOGV("%s(%s)", __func__, toString(vendorFilter).substr(0, 100).c_str());
     lock_guard<mutex> lk(mMut);
     if (mIsClosed) {
         _hidl_cb(ProgramListResult::NOT_INITIALIZED, {});
