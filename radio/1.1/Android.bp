@@ -7,6 +7,7 @@ filegroup {
         "IRadio.hal",
         "IRadioIndication.hal",
         "IRadioResponse.hal",
+        "ISap.hal",
     ],
 }
 
@@ -22,6 +23,7 @@ genrule {
         "android/hardware/radio/1.1/RadioAll.cpp",
         "android/hardware/radio/1.1/RadioIndicationAll.cpp",
         "android/hardware/radio/1.1/RadioResponseAll.cpp",
+        "android/hardware/radio/1.1/SapAll.cpp",
     ],
 }
 
@@ -50,6 +52,11 @@ genrule {
         "android/hardware/radio/1.1/BnHwRadioResponse.h",
         "android/hardware/radio/1.1/BpHwRadioResponse.h",
         "android/hardware/radio/1.1/BsRadioResponse.h",
+        "android/hardware/radio/1.1/ISap.h",
+        "android/hardware/radio/1.1/IHwSap.h",
+        "android/hardware/radio/1.1/BnHwSap.h",
+        "android/hardware/radio/1.1/BpHwSap.h",
+        "android/hardware/radio/1.1/BsSap.h",
     ],
 }
 
