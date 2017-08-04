@@ -588,6 +588,7 @@ enum StaRoamingState : uint8_t {
 /**
  * Size limits for parameters used in the NAN interface.
  */
+@export
 enum NanParamSizeLimits : uint32_t {
   /** Minimum length of Passphrase argument for data-path configuration */
   MIN_PASSPHRASE_LENGTH = 8,
