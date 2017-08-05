@@ -85,7 +85,6 @@ struct TunerCallbackMock : public ITunerCallback {
     MOCK_METHOD2(tuneComplete, Return<void>(Result, const V1_0::ProgramInfo&));
     MOCK_TIMEOUT_METHOD2(tuneComplete_1_1, Return<void>(Result, const ProgramSelector&));
     MOCK_METHOD1(afSwitch, Return<void>(const V1_0::ProgramInfo&));
-    MOCK_METHOD1(afSwitch_1_1, Return<void>(const ProgramSelector&));
     MOCK_METHOD1(antennaStateChange, Return<void>(bool connected));
     MOCK_METHOD1(trafficAnnouncement, Return<void>(bool active));
     MOCK_METHOD1(emergencyAnnouncement, Return<void>(bool active));
@@ -93,7 +92,7 @@ struct TunerCallbackMock : public ITunerCallback {
     MOCK_METHOD1(backgroundScanAvailable, Return<void>(bool));
     MOCK_TIMEOUT_METHOD1(backgroundScanComplete, Return<void>(ProgramListResult));
     MOCK_METHOD0(programListChanged, Return<void>());
-    MOCK_TIMEOUT_METHOD0(currentProgramInfoChanged, Return<void>());
+    MOCK_TIMEOUT_METHOD1(currentProgramInfoChanged, Return<void>(const ProgramInfo&));
 };
 
 class BroadcastRadioHalTest : public ::testing::VtsHalHidlTargetTestBase,
@@ -346,16 +345,19 @@ TEST_P(BroadcastRadioHalTest, TuneFromProgramList) {
         return;
     }
 
+    ProgramInfo infoCb;
     ProgramSelector selCb;
     EXPECT_CALL(*mCallback, tuneComplete(_, _)).Times(0);
     EXPECT_TIMEOUT_CALL(*mCallback, tuneComplete_1_1, Result::OK, _)
         .WillOnce(DoAll(SaveArg<1>(&selCb), testing::Return(ByMove(Void()))));
-    EXPECT_TIMEOUT_CALL(*mCallback, currentProgramInfoChanged);
+    EXPECT_TIMEOUT_CALL(*mCallback, currentProgramInfoChanged, _)
+        .WillOnce(DoAll(SaveArg<0>(&infoCb), testing::Return(ByMove(Void()))));
     auto tuneResult = mTuner->tuneByProgramSelector(firstProgram.selector);
     ASSERT_EQ(Result::OK, tuneResult);
     EXPECT_TIMEOUT_CALL_WAIT(*mCallback, tuneComplete_1_1, kTuneTimeout);
     EXPECT_TIMEOUT_CALL_WAIT(*mCallback, currentProgramInfoChanged, kEventPropagationTimeout);
     EXPECT_EQ(firstProgram.selector.primaryId, selCb.primaryId);
+    EXPECT_EQ(infoCb.selector, selCb);
 
     bool called = false;
     auto getResult = mTuner->getProgramInformation_1_1([&](Result result, ProgramInfo info) {
