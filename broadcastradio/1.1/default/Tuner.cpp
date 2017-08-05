@@ -144,7 +144,7 @@ void Tuner::tuneInternalLocked(const ProgramSelector& sel) {
         mCallback->tuneComplete(Result::OK, mCurrentProgramInfo.base);
     } else {
         mCallback1_1->tuneComplete_1_1(Result::OK, mCurrentProgramInfo.selector);
-        mCallback1_1->currentProgramInfoChanged();
+        mCallback1_1->currentProgramInfoChanged(mCurrentProgramInfo);
     }
 }
 
