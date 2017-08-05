@@ -39,6 +39,10 @@ cc_library {
     generated_headers: ["android.hardware.graphics.common@1.0_genc++_headers"],
     export_generated_headers: ["android.hardware.graphics.common@1.0_genc++_headers"],
     vendor_available: true,
+    vndk: {
+        enabled: true,
+        support_system_process: true,
+    },
     shared_libs: [
         "libhidlbase",
         "libhidltransport",
