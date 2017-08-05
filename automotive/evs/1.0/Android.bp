@@ -67,6 +67,9 @@ cc_library {
     generated_headers: ["android.hardware.automotive.evs@1.0_genc++_headers"],
     export_generated_headers: ["android.hardware.automotive.evs@1.0_genc++_headers"],
     vendor_available: true,
+    vndk: {
+        enabled: true,
+    },
     shared_libs: [
         "libhidlbase",
         "libhidltransport",

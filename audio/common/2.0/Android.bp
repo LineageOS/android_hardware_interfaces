@@ -39,6 +39,9 @@ cc_library {
     generated_headers: ["android.hardware.audio.common@2.0_genc++_headers"],
     export_generated_headers: ["android.hardware.audio.common@2.0_genc++_headers"],
     vendor_available: true,
+    vndk: {
+        enabled: true,
+    },
     shared_libs: [
         "libhidlbase",
         "libhidltransport",
