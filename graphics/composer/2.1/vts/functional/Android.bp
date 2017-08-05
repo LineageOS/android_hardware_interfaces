@@ -44,33 +44,21 @@ cc_library_static {
 
 cc_test {
     name: "VtsHalGraphicsComposerV2_1TargetTest",
-    defaults: ["hidl_defaults"],
+    defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["VtsHalGraphicsComposerV2_1TargetTest.cpp"],
+
+    // TODO(b/64437680): Assume these libs are always available on the device.
     shared_libs: [
+        "libfmq",
+        "libsync",
+    ],
+    static_libs: [
         "android.hardware.graphics.allocator@2.0",
         "android.hardware.graphics.composer@2.1",
         "android.hardware.graphics.mapper@2.0",
-        "libbase",
-        "libcutils",
-        "libfmq",
-        "libhidlbase",
-        "libhidltransport",
-        "liblog",
-        "libnativehelper",
-        "libsync",
-        "libutils",
-    ],
-    static_libs: [
-        "libhwcomposer-command-buffer",
         "libVtsHalGraphicsComposerTestUtils",
         "libVtsHalGraphicsMapperTestUtils",
-        "VtsHalHidlTargetTestBase",
+        "libhwcomposer-command-buffer",
+        "libnativehelper",
     ],
-    cflags: [
-        "-Wall",
-        "-Wextra",
-        "-Werror",
-        "-O0",
-        "-g",
-    ]
 }
