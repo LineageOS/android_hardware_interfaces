@@ -44,6 +44,14 @@
     return ret;
 
 /**
+ * Gmock MOCK_METHOD0 timeout-capable extension.
+ */
+#define MOCK_TIMEOUT_METHOD0(Method, ...)       \
+    MOCK_METHOD0(egmock_##Method, __VA_ARGS__); \
+    EGMOCK_TIMEOUT_METHOD_DEF_(Method);         \
+    virtual GMOCK_RESULT_(, __VA_ARGS__) Method() { EGMOCK_TIMEOUT_METHOD_BODY_(Method); }
+
+/**
  * Gmock MOCK_METHOD1 timeout-capable extension.
  */
 #define MOCK_TIMEOUT_METHOD1(Method, ...)                                                 \

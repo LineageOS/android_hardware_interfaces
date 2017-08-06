@@ -1,7 +1,3 @@
-subdirs = [
-    "libhealthd",
-]
-
 cc_library_static {
     name: "android.hardware.health@1.0-convert",
     vendor_available: true,

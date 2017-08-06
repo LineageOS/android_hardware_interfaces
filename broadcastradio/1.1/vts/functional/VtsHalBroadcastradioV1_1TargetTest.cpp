@@ -62,7 +62,16 @@ using std::this_thread::sleep_for;
 static constexpr auto kConfigTimeout = 10s;
 static constexpr auto kConnectModuleTimeout = 1s;
 static constexpr auto kTuneTimeout = 30s;
+static constexpr auto kEventPropagationTimeout = 1s;
 static constexpr auto kFullScanTimeout = 1min;
+
+static constexpr ProgramType kStandardProgramTypes[] = {
+    ProgramType::AM,  ProgramType::FM,   ProgramType::AM_HD, ProgramType::FM_HD,
+    ProgramType::DAB, ProgramType::DRMO, ProgramType::SXM};
+
+static constexpr IdentifierType kVendorPrimartIds[] = {
+    IdentifierType::VENDOR1_PRIMARY, IdentifierType::VENDOR2_PRIMARY,
+    IdentifierType::VENDOR3_PRIMARY, IdentifierType::VENDOR4_PRIMARY};
 
 static void printSkipped(std::string msg) {
     std::cout << "[  SKIPPED ] " << msg << std::endl;
@@ -76,7 +85,6 @@ struct TunerCallbackMock : public ITunerCallback {
     MOCK_METHOD2(tuneComplete, Return<void>(Result, const V1_0::ProgramInfo&));
     MOCK_TIMEOUT_METHOD2(tuneComplete_1_1, Return<void>(Result, const ProgramSelector&));
     MOCK_METHOD1(afSwitch, Return<void>(const V1_0::ProgramInfo&));
-    MOCK_METHOD1(afSwitch_1_1, Return<void>(const ProgramSelector&));
     MOCK_METHOD1(antennaStateChange, Return<void>(bool connected));
     MOCK_METHOD1(trafficAnnouncement, Return<void>(bool active));
     MOCK_METHOD1(emergencyAnnouncement, Return<void>(bool active));
@@ -84,7 +92,7 @@ struct TunerCallbackMock : public ITunerCallback {
     MOCK_METHOD1(backgroundScanAvailable, Return<void>(bool));
     MOCK_TIMEOUT_METHOD1(backgroundScanComplete, Return<void>(ProgramListResult));
     MOCK_METHOD0(programListChanged, Return<void>());
-    MOCK_METHOD0(programInfoChanged, Return<void>());
+    MOCK_TIMEOUT_METHOD1(currentProgramInfoChanged, Return<void>(const ProgramInfo&));
 };
 
 class BroadcastRadioHalTest : public ::testing::VtsHalHidlTargetTestBase,
@@ -265,7 +273,7 @@ bool BroadcastRadioHalTest::getProgramList(
     // first try...
     EXPECT_TIMEOUT_CALL(*mCallback, backgroundScanComplete, ProgramListResult::OK)
         .Times(AnyNumber());
-    auto hidlResult = mTuner->getProgramList("", getListCb);
+    auto hidlResult = mTuner->getProgramList({}, getListCb);
     EXPECT_TRUE(hidlResult.isOk());
     if (!hidlResult.isOk()) return false;
 
@@ -278,7 +286,7 @@ bool BroadcastRadioHalTest::getProgramList(
         EXPECT_TIMEOUT_CALL_WAIT(*mCallback, backgroundScanComplete, kFullScanTimeout);
 
         // second (last) try...
-        hidlResult = mTuner->getProgramList("", getListCb);
+        hidlResult = mTuner->getProgramList({}, getListCb);
         EXPECT_TRUE(hidlResult.isOk());
         if (!hidlResult.isOk()) return false;
         EXPECT_EQ(ProgramListResult::OK, getListResult);
@@ -315,7 +323,8 @@ TEST_P(BroadcastRadioHalTest, OpenTunerTwice) {
  *  - getProgramList either succeeds or returns NOT_STARTED/NOT_READY status;
  *  - if the program list is NOT_STARTED, startBackgroundScan makes it completed
  *    within a full scan timeout and the next getProgramList call succeeds;
- *  - if the program list is not empty, tune_1_1 call succeeds.
+ *  - if the program list is not empty, tuneByProgramSelector call succeeds;
+ *  - getProgramInformation_1_1 returns the same selector as returned in tuneComplete_1_1 call.
  */
 TEST_P(BroadcastRadioHalTest, TuneFromProgramList) {
     if (skipped) return;
@@ -336,16 +345,77 @@ TEST_P(BroadcastRadioHalTest, TuneFromProgramList) {
         return;
     }
 
+    ProgramInfo infoCb;
     ProgramSelector selCb;
     EXPECT_CALL(*mCallback, tuneComplete(_, _)).Times(0);
     EXPECT_TIMEOUT_CALL(*mCallback, tuneComplete_1_1, Result::OK, _)
         .WillOnce(DoAll(SaveArg<1>(&selCb), testing::Return(ByMove(Void()))));
-    auto tuneResult = mTuner->tune_1_1(firstProgram.selector);
+    EXPECT_TIMEOUT_CALL(*mCallback, currentProgramInfoChanged, _)
+        .WillOnce(DoAll(SaveArg<0>(&infoCb), testing::Return(ByMove(Void()))));
+    auto tuneResult = mTuner->tuneByProgramSelector(firstProgram.selector);
     ASSERT_EQ(Result::OK, tuneResult);
     EXPECT_TIMEOUT_CALL_WAIT(*mCallback, tuneComplete_1_1, kTuneTimeout);
+    EXPECT_TIMEOUT_CALL_WAIT(*mCallback, currentProgramInfoChanged, kEventPropagationTimeout);
     EXPECT_EQ(firstProgram.selector.primaryId, selCb.primaryId);
+    EXPECT_EQ(infoCb.selector, selCb);
+
+    bool called = false;
+    auto getResult = mTuner->getProgramInformation_1_1([&](Result result, ProgramInfo info) {
+        called = true;
+        EXPECT_EQ(Result::OK, result);
+        EXPECT_EQ(selCb, info.selector);
+    });
+    ASSERT_TRUE(getResult.isOk());
+    ASSERT_TRUE(called);
 }
 
+/**
+ * Test that primary vendor identifier isn't used for standard program types.
+ *
+ * Verifies that:
+ *  - tuneByProgramSelector fails when VENDORn_PRIMARY is set as a primary
+ *    identifier for program types other than VENDORn.
+ */
+TEST_P(BroadcastRadioHalTest, TuneFailsForPrimaryVendor) {
+    if (skipped) return;
+    ASSERT_TRUE(openTuner());
+
+    for (auto ptype : kStandardProgramTypes) {
+        ALOGD("Checking %s...", toString(ptype).c_str());
+        for (auto idtype : kVendorPrimartIds) {
+            ALOGD("...with %s", toString(idtype).c_str());
+            ProgramSelector sel = {};
+            sel.programType = static_cast<uint32_t>(ptype);
+            sel.primaryId.type = static_cast<uint32_t>(idtype);
+
+            auto tuneResult = mTuner->tuneByProgramSelector(sel);
+            ASSERT_NE(Result::OK, tuneResult);
+        }
+    }
+}
+
+/**
+ * Test that tune with unknown program type fails.
+ *
+ * Verifies that:
+ *  - tuneByProgramSelector fails with INVALID_ARGUMENT when unknown program type is passed.
+ */
+TEST_P(BroadcastRadioHalTest, TuneFailsForUnknownProgram) {
+    if (skipped) return;
+    ASSERT_TRUE(openTuner());
+
+    // Program type is 1-based, so 0 will be always invalid.
+    ProgramSelector sel = {};
+    auto tuneResult = mTuner->tuneByProgramSelector(sel);
+    ASSERT_EQ(Result::INVALID_ARGUMENTS, tuneResult);
+}
+
+/**
+ * Test cancelling announcement.
+ *
+ * Verifies that:
+ *  - cancelAnnouncement succeeds either when there is an announcement or there is none.
+ */
 TEST_P(BroadcastRadioHalTest, CancelAnnouncement) {
     if (skipped) return;
     ASSERT_TRUE(openTuner());
@@ -358,7 +428,7 @@ TEST_P(BroadcastRadioHalTest, CancelAnnouncement) {
  * Test getImage call with invalid image ID.
  *
  * Verifies that:
- * - getImage call handles argument 0 gracefully
+ * - getImage call handles argument 0 gracefully.
  */
 TEST_P(BroadcastRadioHalTest, GetNoImage) {
     if (skipped) return;
@@ -375,8 +445,8 @@ TEST_P(BroadcastRadioHalTest, GetNoImage) {
  * Test proper image format in metadata.
  *
  * Verifies that:
- * - all images in metadata are provided out-of-band (by id, not as a binary blob)
- * - images are available for getImage call
+ * - all images in metadata are provided out-of-band (by id, not as a binary blob);
+ * - images are available for getImage call.
  */
 TEST_P(BroadcastRadioHalTest, OobImagesOnly) {
     if (skipped) return;
@@ -420,7 +490,7 @@ TEST_P(BroadcastRadioHalTest, OobImagesOnly) {
  * Test AnalogForced switch.
  *
  * Verifies that:
- * - setAnalogForced results either with INVALID_STATE, or isAnalogForced replying the same
+ * - setAnalogForced results either with INVALID_STATE, or isAnalogForced replying the same.
  */
 TEST_P(BroadcastRadioHalTest, AnalogForcedSwitch) {
     if (skipped) return;

@@ -61,6 +61,11 @@ ProgramInfo VirtualProgram::getProgramInfo(HalRevision halRev) const {
         createDemoBitmap(MetadataKey::ART, halRev),
     });
 
+    info11.vendorInfo = hidl_vec<VendorKeyValue>({
+        {"com.google.dummy", "dummy"},
+        {"com.google.dummy.VirtualProgram", std::to_string(reinterpret_cast<uintptr_t>(this))},
+    });
+
     return info11;
 }
 
