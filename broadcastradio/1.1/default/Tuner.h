@@ -39,16 +39,16 @@ struct Tuner : public ITuner {
     virtual Return<Result> scan(V1_0::Direction direction, bool skipSubChannel) override;
     virtual Return<Result> step(V1_0::Direction direction, bool skipSubChannel) override;
     virtual Return<Result> tune(uint32_t channel, uint32_t subChannel) override;
-    virtual Return<Result> tune_1_1(const ProgramSelector& program) override;
+    virtual Return<Result> tuneByProgramSelector(const ProgramSelector& program) override;
     virtual Return<Result> cancel() override;
     virtual Return<Result> cancelAnnouncement() override;
     virtual Return<void> getProgramInformation(getProgramInformation_cb _hidl_cb) override;
     virtual Return<void> getProgramInformation_1_1(getProgramInformation_1_1_cb _hidl_cb) override;
     virtual Return<ProgramListResult> startBackgroundScan() override;
-    virtual Return<void> getProgramList(const hidl_string& filter,
+    virtual Return<void> getProgramList(const hidl_vec<VendorKeyValue>& filter,
                                         getProgramList_cb _hidl_cb) override;
-    virtual Return<void> isAnalogForced(isAnalogForced_cb _hidl_cb) override;
     virtual Return<Result> setAnalogForced(bool isForced) override;
+    virtual Return<void> isAnalogForced(isAnalogForced_cb _hidl_cb) override;
 
    private:
     std::mutex mMut;

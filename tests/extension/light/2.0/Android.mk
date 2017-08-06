@@ -16,6 +16,8 @@ LOCAL_JAVA_LIBRARIES := \
     android.hardware.light-V2.0-java \
     android.hidl.base-V1.0-java \
 
+LOCAL_NO_STANDARD_LIBRARIES := true
+LOCAL_JAVA_LIBRARIES += core-oj hwbinder
 
 #
 # Build types.hal (Default)
@@ -111,6 +113,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     android.hardware.light-V2.0-java-static \
     android.hidl.base-V1.0-java-static \
 
+LOCAL_NO_STANDARD_LIBRARIES := true
+LOCAL_JAVA_LIBRARIES := core-oj hwbinder
 
 #
 # Build types.hal (Default)

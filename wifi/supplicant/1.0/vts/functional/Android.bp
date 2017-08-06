@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2016 The Android Open Source Project
+// Copyright (C) 2017 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,10 +15,23 @@
 //
 
 cc_test {
-    name: "VtsHalIrV1_0TargetTest",
+    name: "VtsHalWifiSupplicantV1_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
-    srcs: ["VtsHalIrV1_0TargetTest.cpp"],
+    srcs: [
+        "VtsHalWifiSupplicantV1_0TargetTest.cpp",
+        "supplicant_hidl_test.cpp",
+        "supplicant_hidl_test_utils.cpp",
+        "supplicant_p2p_iface_hidl_test.cpp",
+        "supplicant_sta_iface_hidl_test.cpp",
+        "supplicant_sta_network_hidl_test.cpp",
+    ],
     static_libs: [
-        "android.hardware.ir@1.0",
+        "VtsHalWifiV1_0TargetTestUtil",
+        "android.hardware.wifi.supplicant@1.0",
+        "android.hardware.wifi@1.0",
+        "libcrypto",
+        "libgmock",
+        "libwifi-system",
+        "libwifi-system-iface",
     ],
 }

@@ -16,30 +16,18 @@
 
 cc_test {
     name: "VtsHalRadioV1_1TargetTest",
-    defaults: ["hidl_defaults"],
+    defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["radio_hidl_hal_api.cpp",
            "radio_hidl_hal_test.cpp",
            "radio_indication.cpp",
            "radio_response.cpp",
            "VtsHalRadioV1_1TargetTest.cpp"],
-    shared_libs: [
-        "libbase",
-        "liblog",
-        "libcutils",
-        "libhidlbase",
-        "libhidltransport",
-        "libnativehelper",
-        "libutils",
+    static_libs: [
+        "RadioVtsTestUtilBase",
         "android.hardware.radio@1.1",
         "android.hardware.radio@1.0",
     ],
-    static_libs: ["VtsHalHidlTargetTestBase",
-                  "RadioVtsTestUtilBase"],
     header_libs: [
         "radio.util.header@1.0",
-    ],
-    cflags: [
-        "-O0",
-        "-g",
     ],
 }

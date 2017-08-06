@@ -144,6 +144,7 @@ void Tuner::tuneInternalLocked(const ProgramSelector& sel) {
         mCallback->tuneComplete(Result::OK, mCurrentProgramInfo.base);
     } else {
         mCallback1_1->tuneComplete_1_1(Result::OK, mCurrentProgramInfo.selector);
+        mCallback1_1->currentProgramInfoChanged(mCurrentProgramInfo);
     }
 }
 
@@ -214,8 +215,10 @@ Return<Result> Tuner::step(Direction direction, bool skipSubChannel) {
         return Result::NOT_INITIALIZED;
     }
 
-    ALOGW_IF(!mIsAmfmConfigSet, "AM/FM config not set");
-    if (!mIsAmfmConfigSet) return Result::INVALID_STATE;
+    if (!mIsAmfmConfigSet) {
+        ALOGW("AM/FM config not set");
+        return Result::INVALID_STATE;
+    }
     mIsTuneCompleted = false;
 
     auto task = [this, direction]() {
@@ -248,22 +251,34 @@ Return<Result> Tuner::tune(uint32_t channel, uint32_t subChannel) {
         lock_guard<mutex> lk(mMut);
         band = mAmfmConfig.type;
     }
-    return tune_1_1(utils::make_selector(band, channel, subChannel));
+    return tuneByProgramSelector(utils::make_selector(band, channel, subChannel));
 }
 
-Return<Result> Tuner::tune_1_1(const ProgramSelector& sel) {
+Return<Result> Tuner::tuneByProgramSelector(const ProgramSelector& sel) {
     ALOGV("%s(%s)", __func__, toString(sel).c_str());
     lock_guard<mutex> lk(mMut);
     if (mIsClosed) return Result::NOT_INITIALIZED;
 
-    if (utils::isAmFm(utils::getType(mCurrentProgram))) {
-        ALOGW_IF(!mIsAmfmConfigSet, "AM/FM config not set");
-        if (!mIsAmfmConfigSet) return Result::INVALID_STATE;
+    // checking if ProgramSelector is valid
+    auto programType = utils::getType(sel);
+    if (utils::isAmFm(programType)) {
+        if (!mIsAmfmConfigSet) {
+            ALOGW("AM/FM config not set");
+            return Result::INVALID_STATE;
+        }
 
         auto freq = utils::getId(sel, IdentifierType::AMFM_FREQUENCY);
         if (freq < mAmfmConfig.lowerLimit || freq > mAmfmConfig.upperLimit) {
             return Result::INVALID_ARGUMENTS;
         }
+    } else if (programType == ProgramType::DAB) {
+        if (!utils::hasId(sel, IdentifierType::DAB_SIDECC)) return Result::INVALID_ARGUMENTS;
+    } else if (programType == ProgramType::DRMO) {
+        if (!utils::hasId(sel, IdentifierType::DRMO_SERVICE_ID)) return Result::INVALID_ARGUMENTS;
+    } else if (programType == ProgramType::SXM) {
+        if (!utils::hasId(sel, IdentifierType::SXM_SERVICE_ID)) return Result::INVALID_ARGUMENTS;
+    } else {
+        return Result::INVALID_ARGUMENTS;
     }
 
     mIsTuneCompleted = false;
@@ -322,8 +337,9 @@ Return<ProgramListResult> Tuner::startBackgroundScan() {
     return ProgramListResult::UNAVAILABLE;
 }
 
-Return<void> Tuner::getProgramList(const hidl_string& filter, getProgramList_cb _hidl_cb) {
-    ALOGV("%s(%s)", __func__, filter.c_str());
+Return<void> Tuner::getProgramList(const hidl_vec<VendorKeyValue>& vendorFilter,
+                                   getProgramList_cb _hidl_cb) {
+    ALOGV("%s(%s)", __func__, toString(vendorFilter).substr(0, 100).c_str());
     lock_guard<mutex> lk(mMut);
     if (mIsClosed) {
         _hidl_cb(ProgramListResult::NOT_INITIALIZED, {});
@@ -336,6 +352,15 @@ Return<void> Tuner::getProgramList(const hidl_string& filter, getProgramList_cb 
     return {};
 }
 
+Return<Result> Tuner::setAnalogForced(bool isForced) {
+    ALOGV("%s", __func__);
+    lock_guard<mutex> lk(mMut);
+    if (mIsClosed) return Result::NOT_INITIALIZED;
+
+    mIsAnalogForced = isForced;
+    return Result::OK;
+}
+
 Return<void> Tuner::isAnalogForced(isAnalogForced_cb _hidl_cb) {
     ALOGV("%s", __func__);
     lock_guard<mutex> lk(mMut);
@@ -346,15 +371,6 @@ Return<void> Tuner::isAnalogForced(isAnalogForced_cb _hidl_cb) {
         _hidl_cb(Result::OK, mIsAnalogForced);
     }
     return {};
-}
-
-Return<Result> Tuner::setAnalogForced(bool isForced) {
-    ALOGV("%s", __func__);
-    lock_guard<mutex> lk(mMut);
-    if (mIsClosed) return Result::NOT_INITIALIZED;
-
-    mIsAnalogForced = isForced;
-    return Result::OK;
 }
 
 }  // namespace implementation

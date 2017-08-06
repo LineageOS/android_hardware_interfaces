@@ -39,7 +39,7 @@ interface ITuner extends @1.0::ITuner {
      *                INVALID_ARGUMENTS if invalid arguments are passed.
      *                NOT_INITIALIZED if another error occurs.
      */
-    tune_1_1(ProgramSelector program) generates (Result result);
+    tuneByProgramSelector(ProgramSelector program) generates (Result result);
 
     /**
      * Cancels announcement.
@@ -106,10 +106,8 @@ interface ITuner extends @1.0::ITuner {
      * This call does not trigger actual scan, but operates on the list cached
      * internally at the driver level.
      *
-     * @param filter vendor-specific filter for the stations to be retrieved.
-     *               An empty string MUST result in full list.
-     *               Client application MUST verify vendor/product name
-     *               before setting this parameter to anything else.
+     * @param vendorFilter vendor-specific filter for the stations to be retrieved.
+     *               An empty vector MUST result in full list for a given tuner.
      * @return result OK if the list was successfully retrieved.
      *                INVALID_ARGUMENTS if invalid arguments are passed
      *                NOT_READY if the scan is in progress.
@@ -118,21 +116,8 @@ interface ITuner extends @1.0::ITuner {
      *                NOT_INITIALIZED if any other error occurs.
      * @return programList List of stations available for user.
      */
-    getProgramList(string filter)
+    getProgramList(vec<VendorKeyValue> vendorFilter)
         generates (ProgramListResult result, vec<ProgramInfo> programList);
-
-    /**
-     * Checks, if the analog playback is forced, see setAnalogForced.
-     *
-     * The isForced value is only valid if result was OK.
-     *
-     * @return result OK if the call succeeded and isForced is valid.
-     *                INVALID_STATE if the switch is not supported at current
-     *                configuration.
-     *                NOT_INITIALIZED if any other error occurs.
-     * @return isForced true if analog is forced, false otherwise.
-     */
-    isAnalogForced() generates (Result result, bool isForced);
 
     /**
      * Forces the analog playback for the supporting radio technology.
@@ -150,4 +135,17 @@ interface ITuner extends @1.0::ITuner {
      *                NOT_INITIALIZED if any other error occurs.
      */
     setAnalogForced(bool isForced) generates (Result result);
+
+    /**
+     * Checks, if the analog playback is forced, see setAnalogForced.
+     *
+     * The isForced value is only valid if result was OK.
+     *
+     * @return result OK if the call succeeded and isForced is valid.
+     *                INVALID_STATE if the switch is not supported at current
+     *                configuration.
+     *                NOT_INITIALIZED if any other error occurs.
+     * @return isForced true if analog is forced, false otherwise.
+     */
+    isAnalogForced() generates (Result result, bool isForced);
 };

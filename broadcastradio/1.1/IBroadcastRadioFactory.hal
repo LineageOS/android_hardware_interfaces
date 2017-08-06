@@ -19,8 +19,10 @@ package android.hardware.broadcastradio@1.1;
 import @1.0::IBroadcastRadioFactory;
 
 /**
- * To use 1.1 features you must cast specific interfaces after being returned from 1.0 HAL,
- * for example V1_1::ITuner::castFrom() after retrieving it from IBroadcastRadio::openTuner().
+ * To use 1.1 features you must cast specific interfaces returned from the
+ * 1.0 HAL. For example V1_0::IBroadcastRadio::openTuner() returns V1_0::ITuner,
+ * which can be cast with V1_1::ITuner::castFrom() call.
+ *
  * The 1.1 server must always return the 1.1 version of specific interface.
  */
 interface IBroadcastRadioFactory extends @1.0::IBroadcastRadioFactory {

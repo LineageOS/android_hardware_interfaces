@@ -29,25 +29,18 @@ interface ITunerCallback extends @1.0::ITunerCallback {
      * Method called by the HAL when a tuning operation completes
      * following a step(), scan() or tune() command.
      *
-     * This callback supersedes V1_0::tuneComplete. For performance reasons,
-     * the 1.0 callback may not be called when HAL implementation detects 1.1
-     * client (by casting V1_0::ITunerCallback to V1_1::ITunerCallback).
+     * This callback supersedes V1_0::tuneComplete.
+     * The 1.0 callback must not be called when HAL implementation detects
+     * 1.1 client (by casting V1_0::ITunerCallback to V1_1::ITunerCallback).
+     *
+     * In case of success, currentProgramInfoChanged must be called too.
+     * It means the success case may (or may not) be handled by the client in
+     * currentProgramInfoChanged, instead of here.
      *
      * @param result OK if tune succeeded or TIMEOUT in case of time out.
      * @param selector A ProgramSelector structure describing the tuned station.
      */
     oneway tuneComplete_1_1(Result result, ProgramSelector selector);
-
-    /**
-     * Method called by the HAL when a frequency switch occurs.
-     *
-     * This callback supersedes V1_0::afSwitch. For performance reasons,
-     * the 1.0 callback may not be called when HAL implementation detects 1.1
-     * client (by casting V1_0::ITunerCallback to V1_1::ITunerCallback).
-     *
-     * @param selector A ProgramSelector structure describing the tuned station.
-     */
-    oneway afSwitch_1_1(ProgramSelector selector);
 
     /**
      * Called by the HAL when background scan feature becomes available or not.
@@ -73,6 +66,9 @@ interface ITunerCallback extends @1.0::ITunerCallback {
      * call it immediately, ie. it may wait for a short time to accumulate
      * multiple list change notifications into a single event.
      *
+     * This callback is only for notifying about insertions and deletions,
+     * not about metadata changes.
+     *
      * It may be triggered either by an explicitly issued background scan,
      * or a scan issued by the device internally.
      *
@@ -89,10 +85,12 @@ interface ITunerCallback extends @1.0::ITunerCallback {
      *
      * This may be called together with tuneComplete_1_1 or afSwitch_1_1.
      *
-     * This callback supersedes V1_0::tuneComplete, V1_0::afSwitch and
-     * newMetadata. For performance reasons, these callbacks may not be called
-     * when HAL implementation detects 1.1 client (by casting
-     * V1_0::ITunerCallback to V1_1::ITunerCallback).
+     * This callback supersedes V1_0::newMetadata and V1_0::afSwitch;
+     * partly V1_0::tuneComplete.
+     * 1.0 callbacks must not be called when HAL implementation detects
+     * 1.1 client (by casting V1_0::ITunerCallback to V1_1::ITunerCallback).
+     *
+     * @param info current program information
      */
-    oneway programInfoChanged();
+    oneway currentProgramInfoChanged(ProgramInfo info);
 };

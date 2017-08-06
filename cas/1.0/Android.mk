@@ -5,7 +5,7 @@ LOCAL_PATH := $(call my-dir)
 ################################################################################
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := android.hardware.vibrator-V1.0-java
+LOCAL_MODULE := android.hardware.cas-V1.0-java
 LOCAL_MODULE_CLASS := JAVA_LIBRARIES
 
 intermediates := $(call local-generated-sources-dir, COMMON)
@@ -19,9 +19,9 @@ LOCAL_NO_STANDARD_LIBRARIES := true
 LOCAL_JAVA_LIBRARIES += core-oj hwbinder
 
 #
-# Build types.hal (Effect)
+# Build types.hal (HidlCasPluginDescriptor)
 #
-GEN := $(intermediates)/android/hardware/vibrator/V1_0/Effect.java
+GEN := $(intermediates)/android/hardware/cas/V1_0/HidlCasPluginDescriptor.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -31,26 +31,7 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         -Ljava \
         -randroid.hardware:hardware/interfaces \
         -randroid.hidl:system/libhidl/transport \
-        android.hardware.vibrator@1.0::types.Effect
-
-$(GEN): $(LOCAL_PATH)/types.hal
-	$(transform-generated-source)
-LOCAL_GENERATED_SOURCES += $(GEN)
-
-#
-# Build types.hal (EffectStrength)
-#
-GEN := $(intermediates)/android/hardware/vibrator/V1_0/EffectStrength.java
-$(GEN): $(HIDL)
-$(GEN): PRIVATE_HIDL := $(HIDL)
-$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
-$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
-$(GEN): PRIVATE_CUSTOM_TOOL = \
-        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava \
-        -randroid.hardware:hardware/interfaces \
-        -randroid.hidl:system/libhidl/transport \
-        android.hardware.vibrator@1.0::types.EffectStrength
+        android.hardware.cas@1.0::types.HidlCasPluginDescriptor
 
 $(GEN): $(LOCAL_PATH)/types.hal
 	$(transform-generated-source)
@@ -59,7 +40,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Status)
 #
-GEN := $(intermediates)/android/hardware/vibrator/V1_0/Status.java
+GEN := $(intermediates)/android/hardware/cas/V1_0/Status.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -69,19 +50,19 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         -Ljava \
         -randroid.hardware:hardware/interfaces \
         -randroid.hidl:system/libhidl/transport \
-        android.hardware.vibrator@1.0::types.Status
+        android.hardware.cas@1.0::types.Status
 
 $(GEN): $(LOCAL_PATH)/types.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
 
 #
-# Build IVibrator.hal
+# Build ICas.hal
 #
-GEN := $(intermediates)/android/hardware/vibrator/V1_0/IVibrator.java
+GEN := $(intermediates)/android/hardware/cas/V1_0/ICas.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
-$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IVibrator.hal
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ICas.hal
 $(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/types.hal
 $(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
@@ -90,9 +71,76 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         -Ljava \
         -randroid.hardware:hardware/interfaces \
         -randroid.hidl:system/libhidl/transport \
-        android.hardware.vibrator@1.0::IVibrator
+        android.hardware.cas@1.0::ICas
 
-$(GEN): $(LOCAL_PATH)/IVibrator.hal
+$(GEN): $(LOCAL_PATH)/ICas.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build ICasListener.hal
+#
+GEN := $(intermediates)/android/hardware/cas/V1_0/ICasListener.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ICasListener.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.cas@1.0::ICasListener
+
+$(GEN): $(LOCAL_PATH)/ICasListener.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build IDescramblerBase.hal
+#
+GEN := $(intermediates)/android/hardware/cas/V1_0/IDescramblerBase.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IDescramblerBase.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/types.hal
+$(GEN): $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.cas@1.0::IDescramblerBase
+
+$(GEN): $(LOCAL_PATH)/IDescramblerBase.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build IMediaCasService.hal
+#
+GEN := $(intermediates)/android/hardware/cas/V1_0/IMediaCasService.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IMediaCasService.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/ICas.hal
+$(GEN): $(LOCAL_PATH)/ICas.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/ICasListener.hal
+$(GEN): $(LOCAL_PATH)/ICasListener.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/IDescramblerBase.hal
+$(GEN): $(LOCAL_PATH)/IDescramblerBase.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/types.hal
+$(GEN): $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.cas@1.0::IMediaCasService
+
+$(GEN): $(LOCAL_PATH)/IMediaCasService.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
 include $(BUILD_JAVA_LIBRARY)
@@ -101,7 +149,7 @@ include $(BUILD_JAVA_LIBRARY)
 ################################################################################
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := android.hardware.vibrator-V1.0-java-static
+LOCAL_MODULE := android.hardware.cas-V1.0-java-static
 LOCAL_MODULE_CLASS := JAVA_LIBRARIES
 
 intermediates := $(call local-generated-sources-dir, COMMON)
@@ -115,9 +163,9 @@ LOCAL_NO_STANDARD_LIBRARIES := true
 LOCAL_JAVA_LIBRARIES := core-oj hwbinder
 
 #
-# Build types.hal (Effect)
+# Build types.hal (HidlCasPluginDescriptor)
 #
-GEN := $(intermediates)/android/hardware/vibrator/V1_0/Effect.java
+GEN := $(intermediates)/android/hardware/cas/V1_0/HidlCasPluginDescriptor.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -127,26 +175,7 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         -Ljava \
         -randroid.hardware:hardware/interfaces \
         -randroid.hidl:system/libhidl/transport \
-        android.hardware.vibrator@1.0::types.Effect
-
-$(GEN): $(LOCAL_PATH)/types.hal
-	$(transform-generated-source)
-LOCAL_GENERATED_SOURCES += $(GEN)
-
-#
-# Build types.hal (EffectStrength)
-#
-GEN := $(intermediates)/android/hardware/vibrator/V1_0/EffectStrength.java
-$(GEN): $(HIDL)
-$(GEN): PRIVATE_HIDL := $(HIDL)
-$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
-$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
-$(GEN): PRIVATE_CUSTOM_TOOL = \
-        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava \
-        -randroid.hardware:hardware/interfaces \
-        -randroid.hidl:system/libhidl/transport \
-        android.hardware.vibrator@1.0::types.EffectStrength
+        android.hardware.cas@1.0::types.HidlCasPluginDescriptor
 
 $(GEN): $(LOCAL_PATH)/types.hal
 	$(transform-generated-source)
@@ -155,7 +184,7 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 #
 # Build types.hal (Status)
 #
-GEN := $(intermediates)/android/hardware/vibrator/V1_0/Status.java
+GEN := $(intermediates)/android/hardware/cas/V1_0/Status.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
 $(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/types.hal
@@ -165,19 +194,19 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         -Ljava \
         -randroid.hardware:hardware/interfaces \
         -randroid.hidl:system/libhidl/transport \
-        android.hardware.vibrator@1.0::types.Status
+        android.hardware.cas@1.0::types.Status
 
 $(GEN): $(LOCAL_PATH)/types.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
 
 #
-# Build IVibrator.hal
+# Build ICas.hal
 #
-GEN := $(intermediates)/android/hardware/vibrator/V1_0/IVibrator.java
+GEN := $(intermediates)/android/hardware/cas/V1_0/ICas.java
 $(GEN): $(HIDL)
 $(GEN): PRIVATE_HIDL := $(HIDL)
-$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IVibrator.hal
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ICas.hal
 $(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/types.hal
 $(GEN): $(LOCAL_PATH)/types.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
@@ -186,45 +215,78 @@ $(GEN): PRIVATE_CUSTOM_TOOL = \
         -Ljava \
         -randroid.hardware:hardware/interfaces \
         -randroid.hidl:system/libhidl/transport \
-        android.hardware.vibrator@1.0::IVibrator
+        android.hardware.cas@1.0::ICas
 
-$(GEN): $(LOCAL_PATH)/IVibrator.hal
+$(GEN): $(LOCAL_PATH)/ICas.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
-include $(BUILD_STATIC_JAVA_LIBRARY)
 
-
-################################################################################
-
-include $(CLEAR_VARS)
-LOCAL_MODULE := android.hardware.vibrator-V1.0-java-constants
-LOCAL_MODULE_CLASS := JAVA_LIBRARIES
-
-intermediates := $(call local-generated-sources-dir, COMMON)
-
-HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
 #
-GEN := $(intermediates)/android/hardware/vibrator/V1_0/Constants.java
+# Build ICasListener.hal
+#
+GEN := $(intermediates)/android/hardware/cas/V1_0/ICasListener.java
 $(GEN): $(HIDL)
-$(GEN): $(LOCAL_PATH)/types.hal
-$(GEN): $(LOCAL_PATH)/IVibrator.hal
-
 $(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/ICasListener.hal
 $(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
 $(GEN): PRIVATE_CUSTOM_TOOL = \
         $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
-        -Ljava-constants \
+        -Ljava \
         -randroid.hardware:hardware/interfaces \
         -randroid.hidl:system/libhidl/transport \
-        android.hardware.vibrator@1.0
+        android.hardware.cas@1.0::ICasListener
 
-$(GEN):
+$(GEN): $(LOCAL_PATH)/ICasListener.hal
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
-# Avoid dependency cycle of framework.jar -> this-library -> framework.jar
-LOCAL_NO_STANDARD_LIBRARIES := true
-LOCAL_JAVA_LIBRARIES := core-oj
 
+#
+# Build IDescramblerBase.hal
+#
+GEN := $(intermediates)/android/hardware/cas/V1_0/IDescramblerBase.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IDescramblerBase.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/types.hal
+$(GEN): $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.cas@1.0::IDescramblerBase
+
+$(GEN): $(LOCAL_PATH)/IDescramblerBase.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build IMediaCasService.hal
+#
+GEN := $(intermediates)/android/hardware/cas/V1_0/IMediaCasService.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IMediaCasService.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/ICas.hal
+$(GEN): $(LOCAL_PATH)/ICas.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/ICasListener.hal
+$(GEN): $(LOCAL_PATH)/ICasListener.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/IDescramblerBase.hal
+$(GEN): $(LOCAL_PATH)/IDescramblerBase.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/types.hal
+$(GEN): $(LOCAL_PATH)/types.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.cas@1.0::IMediaCasService
+
+$(GEN): $(LOCAL_PATH)/IMediaCasService.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
 

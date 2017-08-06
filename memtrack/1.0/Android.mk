@@ -15,6 +15,8 @@ HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
 LOCAL_JAVA_LIBRARIES := \
     android.hidl.base-V1.0-java \
 
+LOCAL_NO_STANDARD_LIBRARIES := true
+LOCAL_JAVA_LIBRARIES += core-oj hwbinder
 
 #
 # Build types.hal (MemtrackFlag)
@@ -128,6 +130,8 @@ HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android.hidl.base-V1.0-java-static \
 
+LOCAL_NO_STANDARD_LIBRARIES := true
+LOCAL_JAVA_LIBRARIES := core-oj hwbinder
 
 #
 # Build types.hal (MemtrackFlag)
