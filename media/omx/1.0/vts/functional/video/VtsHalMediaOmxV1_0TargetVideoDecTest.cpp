@@ -485,8 +485,9 @@ void portReconfiguration(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                          android::Vector<BufferInfo>* iBuffer,
                          android::Vector<BufferInfo>* oBuffer,
                          OMX_U32 kPortIndexInput, OMX_U32 kPortIndexOutput,
-                         Message msg, PortMode oPortMode) {
+                         Message msg, PortMode oPortMode, void* args) {
     android::hardware::media::omx::V1_0::Status status;
+    (void)args;
 
     if (msg.data.eventData.event == OMX_EventPortSettingsChanged) {
         ASSERT_EQ(msg.data.eventData.data1, kPortIndexOutput);
@@ -586,9 +587,6 @@ void portReconfiguration(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         std::cout << "[          ] Warning ! OMX_EventError/ "
                      "Decode Frame Call might be failed \n";
         return;
-    } else if (msg.data.eventData.event == OMX_EventBufferFlag) {
-        // soft omx components donot send this, we will just ignore it
-        // for now
     } else {
         // something unexpected happened
         ASSERT_TRUE(false);
@@ -613,7 +611,7 @@ void waitOnInputConsumption(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
             EXPECT_EQ(msg.type, Message::Type::EVENT);
             portReconfiguration(omxNode, observer, iBuffer, oBuffer,
                                 kPortIndexInput, kPortIndexOutput, msg,
-                                oPortMode);
+                                oPortMode, nullptr);
         }
         // status == TIMED_OUT, it could be due to process time being large
         // than DEFAULT_TIMEOUT or component needs output buffers to start
@@ -679,7 +677,7 @@ void decodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
             msg.type == Message::Type::EVENT) {
             portReconfiguration(omxNode, observer, iBuffer, oBuffer,
                                 kPortIndexInput, kPortIndexOutput, msg,
-                                oPortMode);
+                                oPortMode, nullptr);
         }
 
         if (frameID == (int)Info->size() || frameID == (offset + range)) break;
@@ -845,7 +843,8 @@ TEST_F(VideoDecHidlTest, DecodeTest) {
     eleStream.close();
     waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
                            kPortIndexInput, kPortIndexOutput, portMode[1]);
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag, portMode);
+    testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag, portMode,
+            portReconfiguration, kPortIndexInput, kPortIndexOutput, nullptr);
     EXPECT_EQ(timestampUslist.empty(), true);
     // set state to idle
     changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
@@ -895,7 +894,8 @@ TEST_F(VideoDecHidlTest, EOSTest_M) {
     changeStateIdletoExecute(omxNode, observer);
 
     // request EOS at the start
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, portMode);
+    testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, portMode,
+            portReconfiguration, kPortIndexInput, kPortIndexOutput, nullptr);
     flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
                kPortIndexOutput);
     EXPECT_GE(framesReceived, 0U);
@@ -979,7 +979,8 @@ TEST_F(VideoDecHidlTest, ThumbnailTest) {
     eleStream.close();
     waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
                            kPortIndexInput, kPortIndexOutput, portMode[1]);
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag, portMode);
+    testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag, portMode,
+            portReconfiguration, kPortIndexInput, kPortIndexOutput, nullptr);
     flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
                kPortIndexOutput);
     EXPECT_GE(framesReceived, 1U);
@@ -994,7 +995,8 @@ TEST_F(VideoDecHidlTest, ThumbnailTest) {
     eleStream.close();
     waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
                            kPortIndexInput, kPortIndexOutput, portMode[1]);
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, portMode);
+    testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, portMode,
+            portReconfiguration, kPortIndexInput, kPortIndexOutput, nullptr);
     flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
                kPortIndexOutput);
     EXPECT_GE(framesReceived, 1U);
@@ -1077,7 +1079,8 @@ TEST_F(VideoDecHidlTest, SimpleEOSTest) {
     eleStream.close();
     waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
                            kPortIndexInput, kPortIndexOutput, portMode[1]);
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, portMode);
+    testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, portMode,
+            portReconfiguration, kPortIndexInput, kPortIndexOutput, nullptr);
     flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
                kPortIndexOutput);
     framesReceived = 0;
