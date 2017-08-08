@@ -113,6 +113,12 @@ struct CodecObserver : public IOmxObserver {
                     android::hardware::media::omx::V1_0::Message::Type::EVENT) {
                     *msg = *it;
                     msgQueue.erase(it);
+                    // OMX_EventBufferFlag event is sent when the component has
+                    // processed a buffer with its EOS flag set. This event is
+                    // not sent by soft omx components. Vendor components can
+                    // send this. From IOMX point of view, we will ignore this
+                    // event.
+                    if (msg->data.eventData.event == OMX_EventBufferFlag) break;
                     return ::android::hardware::media::omx::V1_0::Status::OK;
                 } else if (it->type == android::hardware::media::omx::V1_0::
                                            Message::Type::FILL_BUFFER_DONE) {
@@ -299,9 +305,16 @@ void flushPorts(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                 android::Vector<BufferInfo>* oBuffer, OMX_U32 kPortIndexInput,
                 OMX_U32 kPortIndexOutput, int64_t timeoutUs = DEFAULT_TIMEOUT);
 
+typedef void (*portreconfig)(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
+                             android::Vector<BufferInfo>* iBuffer,
+                             android::Vector<BufferInfo>* oBuffer,
+                             OMX_U32 kPortIndexInput, OMX_U32 kPortIndexOutput,
+                             Message msg, PortMode oPortMode, void* args);
 void testEOS(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
              android::Vector<BufferInfo>* iBuffer,
              android::Vector<BufferInfo>* oBuffer, bool signalEOS,
-             bool& eosFlag, PortMode* portMode = nullptr);
+             bool& eosFlag, PortMode* portMode = nullptr,
+             portreconfig fptr = nullptr, OMX_U32 kPortIndexInput = 0,
+             OMX_U32 kPortIndexOutput = 1, void* args = nullptr);
 
 #endif  // MEDIA_HIDL_TEST_COMMON_H
