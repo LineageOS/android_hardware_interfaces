@@ -1,0 +1,18 @@
+cc_test {
+    name: "VtsHalTetheroffloadConfigV1_0TargetTest",
+    defaults: ["hidl_defaults"],
+    srcs: ["VtsHalTetheroffloadConfigV1_0TargetTest.cpp"],
+    shared_libs: [
+        "android.hardware.tetheroffload.config@1.0",
+        "libcutils",
+        "libhidlbase",
+        "libhidltransport",
+        "liblog",
+        "libutils",
+    ],
+    static_libs: ["VtsHalHidlTargetTestBase"],
+    cflags: [
+        "-O0",
+        "-g",
+    ],
+}
