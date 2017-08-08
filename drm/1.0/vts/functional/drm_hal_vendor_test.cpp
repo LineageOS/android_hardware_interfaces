@@ -1406,8 +1406,6 @@ void DrmHalVendorDecryptTest::aes_cbc_decrypt(uint8_t* dest, uint8_t* src,
     AES_set_encrypt_key(&key[0], 128, &decryptionKey);
 
     size_t offset = 0;
-    size_t num = 0;
-    size_t ecount_buf = 0;
     for (size_t i = 0; i < subSamples.size(); i++) {
         const SubSample& subSample = subSamples[i];
 
