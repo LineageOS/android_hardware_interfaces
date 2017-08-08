@@ -18,12 +18,15 @@
 
 #include "Hwc.h"
 
+#include <chrono>
 #include <type_traits>
 #include <log/log.h>
 
 #include "ComposerClient.h"
 #include "hardware/hwcomposer.h"
 #include "hwc2on1adapter/HWC2On1Adapter.h"
+
+using namespace std::chrono_literals;
 
 namespace android {
 namespace hardware {
@@ -218,7 +221,24 @@ Return<void> HwcHal::createClient(createClient_cb hidl_cb)
     sp<ComposerClient> client;
 
     {
-        std::lock_guard<std::mutex> lock(mClientMutex);
+        std::unique_lock<std::mutex> lock(mClientMutex);
+
+        if (mClient != nullptr) {
+            // In surface flinger we delete a composer client on one thread and
+            // then create a new client on another thread. Although surface
+            // flinger ensures the calls are made in that sequence (destroy and
+            // then create), sometimes the calls land in the composer service
+            // inverted (create and then destroy). Wait for a brief period to
+            // see if the existing client is destroyed.
+            ALOGI("HwcHal::createClient: Client already exists. Waiting for"
+                    " it to be destroyed.");
+            mClientDestroyedWait.wait_for(lock, 1s,
+                    [this] { return mClient == nullptr; });
+            std::string doneMsg = mClient == nullptr ?
+                    "Existing client was destroyed." :
+                    "Existing client was never destroyed!";
+            ALOGI("HwcHal::createClient: Done waiting. %s", doneMsg.c_str());
+        }
 
         // only one client is allowed
         if (mClient == nullptr) {
@@ -245,6 +265,7 @@ void HwcHal::removeClient()
 {
     std::lock_guard<std::mutex> lock(mClientMutex);
     mClient = nullptr;
+    mClientDestroyedWait.notify_all();
 }
 
 void HwcHal::hotplugHook(hwc2_callback_data_t callbackData,

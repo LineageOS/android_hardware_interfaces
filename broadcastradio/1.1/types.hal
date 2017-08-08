@@ -128,11 +128,14 @@ enum Modulation : uint32_t {
 /**
  * Type of a radio technology.
  *
+ * VENDOR program types must be opaque to the framework.
+ *
  * There are multiple VENDOR program types just to make vendor implementation
  * easier with multiple properitary radio technologies. They are treated the
  * same by the framework.
  *
  * All other values are reserved for future use.
+ * Values not matching any enumerated constant must be ignored.
  */
 enum ProgramType : uint32_t {
     AM = 1,  // analogue AM radio (with or without RDS)
@@ -142,10 +145,10 @@ enum ProgramType : uint32_t {
     DAB,     // Digital audio broadcasting
     DRMO,    // Digital Radio Mondiale
     SXM,     // SiriusXM Satellite Radio
-    VENDOR1, // Vendor-specific, not synced across devices.
-    VENDOR2, // Vendor-specific, not synced across devices.
-    VENDOR3, // Vendor-specific, not synced across devices.
-    VENDOR4, // Vendor-specific, not synced across devices.
+
+    // Vendor-specific, not synced across devices.
+    VENDOR_START = 1000,
+    VENDOR_END = 1999,
 };
 
 /**
@@ -155,10 +158,13 @@ enum ProgramType : uint32_t {
  * it for secondary IDs. For example, a satellite program may set AM/FM fallback
  * frequency, if a station broadcasts both via satellite and AM/FM.
  *
+ * VENDOR identifier types must be opaque to the framework.
+ *
  * The value format for each (but VENDOR_PRIMARY) identifier is strictly defined
  * to maintain interoperability between devices made by different vendors.
  *
  * All other values are reserved for future use.
+ * Values not matching any enumerated constant must be ignored.
  */
 enum IdentifierType : uint32_t {
     AMFM_FREQUENCY = 1,  // kHz
@@ -208,12 +214,12 @@ enum IdentifierType : uint32_t {
      * Primary identifier for vendor-specific radio technology.
      * The value format is determined by a vendor.
      *
-     * It must not be used in any other programType than VENDORx.
+     * It must not be used in any other programType than corresponding VENDOR
+     * type between VENDOR_START and VENDOR_END (eg. identifier type 1015 must
+     * not be used in any program type other than 1015).
      */
-    VENDOR1_PRIMARY,
-    VENDOR2_PRIMARY,
-    VENDOR3_PRIMARY,
-    VENDOR4_PRIMARY,
+    VENDOR_PRIMARY_START = ProgramType:VENDOR_START,
+    VENDOR_PRIMARY_END = ProgramType:VENDOR_END,
 };
 
 /**
