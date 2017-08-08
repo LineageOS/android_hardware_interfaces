@@ -444,7 +444,7 @@ TEST_F(OffloadControlHidlTest, SetUpstreamParametersIPv4v6Ok) {
     const hidl_string iface("rmnet_data0");
     const hidl_string v4Addr("192.0.2.2");
     const hidl_string v4Gw("192.0.2.1");
-    const vector<hidl_string> v6Gws{hidl_string("fe80::db8:1"), hidl_string("fe80::db8::2")};
+    const vector<hidl_string> v6Gws{hidl_string("fe80::db8:1"), hidl_string("fe80::db8:2")};
     const Return<void> ret =
         control->setUpstreamParameters(iface, v4Addr, v4Gw, v6Gws, ASSERT_TRUE_CALLBACK);
     EXPECT_TRUE(ret.isOk());
