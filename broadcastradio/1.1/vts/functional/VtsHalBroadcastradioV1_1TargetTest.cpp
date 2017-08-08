@@ -69,10 +69,6 @@ static constexpr ProgramType kStandardProgramTypes[] = {
     ProgramType::AM,  ProgramType::FM,   ProgramType::AM_HD, ProgramType::FM_HD,
     ProgramType::DAB, ProgramType::DRMO, ProgramType::SXM};
 
-static constexpr IdentifierType kVendorPrimartIds[] = {
-    IdentifierType::VENDOR1_PRIMARY, IdentifierType::VENDOR2_PRIMARY,
-    IdentifierType::VENDOR3_PRIMARY, IdentifierType::VENDOR4_PRIMARY};
-
 static void printSkipped(std::string msg) {
     std::cout << "[  SKIPPED ] " << msg << std::endl;
 }
@@ -382,15 +378,12 @@ TEST_P(BroadcastRadioHalTest, TuneFailsForPrimaryVendor) {
 
     for (auto ptype : kStandardProgramTypes) {
         ALOGD("Checking %s...", toString(ptype).c_str());
-        for (auto idtype : kVendorPrimartIds) {
-            ALOGD("...with %s", toString(idtype).c_str());
-            ProgramSelector sel = {};
-            sel.programType = static_cast<uint32_t>(ptype);
-            sel.primaryId.type = static_cast<uint32_t>(idtype);
+        ProgramSelector sel = {};
+        sel.programType = static_cast<uint32_t>(ptype);
+        sel.primaryId.type = static_cast<uint32_t>(IdentifierType::VENDOR_PRIMARY_START);
 
-            auto tuneResult = mTuner->tuneByProgramSelector(sel);
-            ASSERT_NE(Result::OK, tuneResult);
-        }
+        auto tuneResult = mTuner->tuneByProgramSelector(sel);
+        ASSERT_NE(Result::OK, tuneResult);
     }
 }
 
