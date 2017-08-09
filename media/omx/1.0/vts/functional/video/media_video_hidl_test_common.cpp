@@ -52,68 +52,6 @@ using ::android::sp;
 #include <media_video_hidl_test_common.h>
 #include <memory>
 
-Return<android::hardware::media::omx::V1_0::Status> setVideoPortFormat(
-    sp<IOmxNode> omxNode, OMX_U32 portIndex,
-    OMX_VIDEO_CODINGTYPE eCompressionFormat, OMX_COLOR_FORMATTYPE eColorFormat,
-    OMX_U32 xFramerate) {
-    OMX_U32 index = 0;
-    OMX_VIDEO_PARAM_PORTFORMATTYPE portFormat;
-    std::vector<OMX_COLOR_FORMATTYPE> arrColorFormat;
-    std::vector<OMX_VIDEO_CODINGTYPE> arrCompressionFormat;
-    android::hardware::media::omx::V1_0::Status status;
-
-    while (1) {
-        portFormat.nIndex = index;
-        status = getPortParam(omxNode, OMX_IndexParamVideoPortFormat, portIndex,
-                              &portFormat);
-        if (status != ::android::hardware::media::omx::V1_0::Status::OK) break;
-        if (eCompressionFormat == OMX_VIDEO_CodingUnused)
-            arrColorFormat.push_back(portFormat.eColorFormat);
-        else
-            arrCompressionFormat.push_back(portFormat.eCompressionFormat);
-        index++;
-        if (index == 512) {
-            // enumerated way too many formats, highly unusual for this to
-            // happen.
-            EXPECT_LE(index, 512U)
-                << "Expecting OMX_ErrorNoMore but not received";
-            break;
-        }
-    }
-    if (!index) return status;
-    if (eCompressionFormat == OMX_VIDEO_CodingUnused) {
-        for (index = 0; index < arrColorFormat.size(); index++) {
-            if (arrColorFormat[index] == eColorFormat) {
-                portFormat.eColorFormat = arrColorFormat[index];
-                break;
-            }
-        }
-        if (index == arrColorFormat.size()) {
-            ALOGE("setting default color format %x", (int)arrColorFormat[0]);
-            portFormat.eColorFormat = arrColorFormat[0];
-        }
-        portFormat.eCompressionFormat = OMX_VIDEO_CodingUnused;
-    } else {
-        for (index = 0; index < arrCompressionFormat.size(); index++) {
-            if (arrCompressionFormat[index] == eCompressionFormat) {
-                portFormat.eCompressionFormat = arrCompressionFormat[index];
-                break;
-            }
-        }
-        if (index == arrCompressionFormat.size()) {
-            ALOGE("setting default compression format %x",
-                  (int)arrCompressionFormat[0]);
-            portFormat.eCompressionFormat = arrCompressionFormat[0];
-        }
-        portFormat.eColorFormat = OMX_COLOR_FormatUnused;
-    }
-    portFormat.nIndex = 0;
-    portFormat.xFramerate = xFramerate;
-    status = setPortParam(omxNode, OMX_IndexParamVideoPortFormat, portIndex,
-                          &portFormat);
-    return status;
-}
-
 void enumerateProfileAndLevel(sp<IOmxNode> omxNode, OMX_U32 portIndex,
                               std::vector<int32_t>* arrProfile,
                               std::vector<int32_t>* arrLevel) {
