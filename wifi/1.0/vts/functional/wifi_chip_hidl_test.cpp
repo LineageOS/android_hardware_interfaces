@@ -182,6 +182,8 @@ TEST_F(WifiChipHidlTest, ConfigureChip) {
         EXPECT_EQ(WifiStatusCode::SUCCESS,
                   HIDL_INVOKE(wifi_chip_, configureChip, mode.id).code);
         stopWifi();
+        // Sleep for 5 milliseconds between each wifi state toggle.
+        usleep(5000);
     }
 }
 
