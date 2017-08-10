@@ -61,10 +61,12 @@ TEST_F(RadioHidlTest_v1_1, startNetworkScan) {
     EXPECT_EQ(serial, radioRsp_v1_1->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
+        ALOGI("startNetworkScan, rspInfo.error = %d\n", (int32_t)radioRsp_v1_1->rspInfo.error);
         ASSERT_TRUE(radioRsp_v1_1->rspInfo.error == RadioError::NONE ||
                     radioRsp_v1_1->rspInfo.error == RadioError::SIM_ABSENT ||
                     radioRsp_v1_1->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
-                    radioRsp_v1_1->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED);
+                    radioRsp_v1_1->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED ||
+                    radioRsp_v1_1->rspInfo.error == RadioError::OPERATION_NOT_ALLOWED);
     }
 }
 
@@ -84,6 +86,8 @@ TEST_F(RadioHidlTest_v1_1, startNetworkScan_InvalidArgument) {
     EXPECT_EQ(serial, radioRsp_v1_1->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
+        ALOGI("startNetworkScan_InvalidArgument, rspInfo.error = %d\n",
+              (int32_t)radioRsp_v1_1->rspInfo.error);
         ASSERT_TRUE(radioRsp_v1_1->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
                     radioRsp_v1_1->rspInfo.error == RadioError::SIM_ABSENT ||
                     radioRsp_v1_1->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED);
@@ -102,6 +106,7 @@ TEST_F(RadioHidlTest_v1_1, stopNetworkScan) {
     EXPECT_EQ(serial, radioRsp_v1_1->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
+        ALOGI("stopNetworkScan rspInfo.error = %d\n", (int32_t)radioRsp_v1_1->rspInfo.error);
         ASSERT_TRUE(radioRsp_v1_1->rspInfo.error == RadioError::NONE ||
                     radioRsp_v1_1->rspInfo.error == RadioError::SIM_ABSENT ||
                     radioRsp_v1_1->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED);
