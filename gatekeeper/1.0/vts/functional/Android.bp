@@ -16,21 +16,7 @@
 
 cc_test {
     name: "VtsHalGatekeeperV1_0TargetTest",
-    defaults: ["hidl_defaults"],
+    defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["VtsHalGatekeeperV1_0TargetTest.cpp"],
-    shared_libs: [
-        "libbase",
-        "liblog",
-        "libcutils",
-        "libhidlbase",
-        "libhidltransport",
-        "libnativehelper",
-        "libutils",
-        "android.hardware.gatekeeper@1.0",
-    ],
-    static_libs: ["VtsHalHidlTargetTestBase"],
-    cflags: [
-        "-O0",
-        "-g",
-    ]
+    static_libs: ["android.hardware.gatekeeper@1.0"],
 }
