@@ -16,17 +16,7 @@
 
 cc_test {
     name: "VtsHalVrV1_0TargetTest",
-    defaults: ["hidl_defaults"],
+    defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["VtsHalVrV1_0TargetTest.cpp"],
-    shared_libs: [
-        "liblog",
-        "libhidlbase",
-        "libutils",
-        "android.hardware.vr@1.0",
-    ],
-    static_libs: ["VtsHalHidlTargetTestBase"],
-    cflags: [
-       "-O0",
-        "-g",
-    ]
+    static_libs: ["android.hardware.vr@1.0"],
 }
