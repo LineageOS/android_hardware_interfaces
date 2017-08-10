@@ -226,6 +226,11 @@ bool VendorInterface::Open(InitializeCompleteCallback initialize_complete_cb,
   int fd_list[CH_MAX] = {0};
   int fd_count = lib_interface_->op(BT_VND_OP_USERIAL_OPEN, &fd_list);
 
+  if (fd_count < 1 || fd_count > CH_MAX - 1) {
+    ALOGE("%s: fd_count %d is invalid!", __func__, fd_count);
+    return false;
+  }
+
   for (int i = 0; i < fd_count; i++) {
     if (fd_list[i] == INVALID_FD) {
       ALOGE("%s: fd %d is invalid!", __func__, fd_list[i]);
