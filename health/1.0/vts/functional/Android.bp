@@ -16,17 +16,7 @@
 
 cc_test {
     name: "VtsHalHealthV1_0TargetTest",
-    defaults: ["hidl_defaults"],
+    defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["VtsHalHealthV1_0TargetTest.cpp"],
-    shared_libs: [
-        "libhidlbase",
-        "liblog",
-        "libutils",
-        "android.hardware.health@1.0",
-    ],
-    static_libs: ["VtsHalHidlTargetTestBase"],
-    cflags: [
-        "-O0",
-        "-g",
-    ]
+    static_libs: ["android.hardware.health@1.0"],
 }
