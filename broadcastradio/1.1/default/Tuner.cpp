@@ -83,7 +83,7 @@ Return<Result> Tuner::setConfiguration(const BandConfig& config) {
         mAmfmConfig.antennaConnected = true;
         mCurrentProgram = utils::make_selector(mAmfmConfig.type, mAmfmConfig.lowerLimit);
 
-        if (mAmfmConfig.type == Band::FM_HD || mAmfmConfig.type == Band::FM) {
+        if (utils::isFm(mAmfmConfig.type)) {
             mVirtualRadio = std::ref(getFmRadio());
         } else {
             mVirtualRadio = std::ref(getAmRadio());

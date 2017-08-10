@@ -48,6 +48,9 @@ bool tunesTo(const ProgramSelector& pointer, const ProgramSelector& channel);
 ProgramType getType(const ProgramSelector& sel);
 bool isAmFm(const ProgramType type);
 
+bool isAm(const V1_0::Band band);
+bool isFm(const V1_0::Band band);
+
 bool hasId(const ProgramSelector& sel, const IdentifierType type);
 
 /**
