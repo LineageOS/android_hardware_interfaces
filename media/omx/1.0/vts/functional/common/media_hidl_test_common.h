@@ -123,20 +123,21 @@ struct CodecObserver : public IOmxObserver {
         android::Vector<BufferInfo>* iBuffers = nullptr,
         android::Vector<BufferInfo>* oBuffers = nullptr) {
         int64_t finishBy = android::ALooper::GetNowUs() + timeoutUs;
+        android::Mutex::Autolock autoLock(msgLock);
         for (;;) {
-            android::Mutex::Autolock autoLock(msgLock);
             android::List<Message>::iterator it = msgQueue.begin();
             while (it != msgQueue.end()) {
                 if (it->type ==
                     android::hardware::media::omx::V1_0::Message::Type::EVENT) {
                     *msg = *it;
-                    msgQueue.erase(it);
+                    it = msgQueue.erase(it);
                     // OMX_EventBufferFlag event is sent when the component has
                     // processed a buffer with its EOS flag set. This event is
                     // not sent by soft omx components. Vendor components can
                     // send this. From IOMX point of view, we will ignore this
                     // event.
-                    if (msg->data.eventData.event == OMX_EventBufferFlag) break;
+                    if (msg->data.eventData.event == OMX_EventBufferFlag)
+                        continue;
                     return ::android::hardware::media::omx::V1_0::Status::OK;
                 } else if (it->type == android::hardware::media::omx::V1_0::
                                            Message::Type::FILL_BUFFER_DONE) {
@@ -147,7 +148,7 @@ struct CodecObserver : public IOmxObserver {
                                 it->data.bufferData.buffer) {
                                 if (callBack) callBack(*it, &(*oBuffers)[i]);
                                 oBuffers->editItemAt(i).owner = client;
-                                msgQueue.erase(it);
+                                it = msgQueue.erase(it);
                                 break;
                             }
                         }
@@ -162,24 +163,22 @@ struct CodecObserver : public IOmxObserver {
                                 it->data.bufferData.buffer) {
                                 if (callBack) callBack(*it, &(*iBuffers)[i]);
                                 iBuffers->editItemAt(i).owner = client;
-                                msgQueue.erase(it);
+                                it = msgQueue.erase(it);
                                 break;
                             }
                         }
                         EXPECT_LE(i, iBuffers->size());
                     }
+                } else {
+                    EXPECT_TRUE(false) << "Received unexpected message";
+                    ++it;
                 }
-                ++it;
             }
-            if (finishBy - android::ALooper::GetNowUs() < 0)
-                return toStatus(android::TIMED_OUT);
-            android::status_t err =
-                (timeoutUs < 0)
-                    ? msgCondition.wait(msgLock)
-                    : msgCondition.waitRelative(
-                          msgLock,
-                          (finishBy - android::ALooper::GetNowUs()) * 1000ll);
-            if (err == android::TIMED_OUT) return toStatus(err);
+            int64_t delayUs = finishBy - android::ALooper::GetNowUs();
+            if (delayUs < 0) return toStatus(android::TIMED_OUT);
+            (timeoutUs < 0)
+                ? msgCondition.wait(msgLock)
+                : msgCondition.waitRelative(msgLock, delayUs * 1000ll);
         }
     }
 
