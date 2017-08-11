@@ -100,5 +100,103 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 include $(BUILD_JAVA_LIBRARY)
 
 
+################################################################################
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := android.hardware.tests.baz-V1.0-java-static
+LOCAL_MODULE_CLASS := JAVA_LIBRARIES
+
+intermediates := $(call local-generated-sources-dir, COMMON)
+
+HIDL := $(HOST_OUT_EXECUTABLES)/hidl-gen$(HOST_EXECUTABLE_SUFFIX)
+
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    android.hidl.base-V1.0-java-static \
+
+LOCAL_NO_STANDARD_LIBRARIES := true
+LOCAL_JAVA_LIBRARIES := core-oj hwbinder
+
+#
+# Build IBase.hal
+#
+GEN := $(intermediates)/android/hardware/tests/baz/V1_0/IBase.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBase.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.tests.baz@1.0::IBase
+
+$(GEN): $(LOCAL_PATH)/IBase.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build IBaz.hal
+#
+GEN := $(intermediates)/android/hardware/tests/baz/V1_0/IBaz.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBaz.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/IBase.hal
+$(GEN): $(LOCAL_PATH)/IBase.hal
+$(GEN): PRIVATE_DEPS += $(LOCAL_PATH)/IBazCallback.hal
+$(GEN): $(LOCAL_PATH)/IBazCallback.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.tests.baz@1.0::IBaz
+
+$(GEN): $(LOCAL_PATH)/IBaz.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build IBazCallback.hal
+#
+GEN := $(intermediates)/android/hardware/tests/baz/V1_0/IBazCallback.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IBazCallback.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.tests.baz@1.0::IBazCallback
+
+$(GEN): $(LOCAL_PATH)/IBazCallback.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
+#
+# Build IQuux.hal
+#
+GEN := $(intermediates)/android/hardware/tests/baz/V1_0/IQuux.java
+$(GEN): $(HIDL)
+$(GEN): PRIVATE_HIDL := $(HIDL)
+$(GEN): PRIVATE_DEPS := $(LOCAL_PATH)/IQuux.hal
+$(GEN): PRIVATE_OUTPUT_DIR := $(intermediates)
+$(GEN): PRIVATE_CUSTOM_TOOL = \
+        $(PRIVATE_HIDL) -o $(PRIVATE_OUTPUT_DIR) \
+        -Ljava \
+        -randroid.hardware:hardware/interfaces \
+        -randroid.hidl:system/libhidl/transport \
+        android.hardware.tests.baz@1.0::IQuux
+
+$(GEN): $(LOCAL_PATH)/IQuux.hal
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+include $(BUILD_STATIC_JAVA_LIBRARY)
+
+
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
