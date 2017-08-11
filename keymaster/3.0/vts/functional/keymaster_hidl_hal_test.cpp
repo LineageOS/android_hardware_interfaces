@@ -3864,7 +3864,7 @@ TEST_F(AddEntropyTest, AddEmptyEntropy) {
  * Verifies that the addRngEntropy method doesn't blow up when given a largish amount of data.
  */
 TEST_F(AddEntropyTest, AddLargeEntropy) {
-    EXPECT_EQ(ErrorCode::OK, keymaster().addRngEntropy(HidlBuf(string(16 * 1024, 'a'))));
+    EXPECT_EQ(ErrorCode::OK, keymaster().addRngEntropy(HidlBuf(string(2 * 1024, 'a'))));
 }
 
 typedef KeymasterHidlTest AttestationTest;
