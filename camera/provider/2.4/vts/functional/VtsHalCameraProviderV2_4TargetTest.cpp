@@ -1417,8 +1417,8 @@ TEST_F(CameraHidlTest, cancelPicture) {
     }
 }
 
-// Image capture cancel should fail when image capture is not running.
-TEST_F(CameraHidlTest, cancelPictureFail) {
+// Image capture cancel is a no-op when image capture is not running.
+TEST_F(CameraHidlTest, cancelPictureNOP) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
 
     for (const auto& name : cameraDeviceNames) {
@@ -1433,7 +1433,7 @@ TEST_F(CameraHidlTest, cancelPictureFail) {
 
             Return<Status> returnStatus = device1->cancelPicture();
             ASSERT_TRUE(returnStatus.isOk());
-            ASSERT_NE(Status::OK, returnStatus);
+            ASSERT_EQ(Status::OK, returnStatus);
 
             stopPreviewAndClose(device1);
         }
