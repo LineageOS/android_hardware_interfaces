@@ -31,7 +31,7 @@ struct AmFmBandConfig {
     V1_0::Band type;
     uint32_t lowerLimit;  // kHz
     uint32_t upperLimit;  // kHz
-    uint32_t spacing;     // kHz
+    std::vector<uint32_t> spacings;  // kHz
 };
 
 struct ModuleConfig {
