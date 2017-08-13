@@ -115,6 +115,14 @@ bool isAmFm(const ProgramType type) {
     }
 }
 
+bool isAm(const Band band) {
+    return band == Band::AM || band == Band::AM_HD;
+}
+
+bool isFm(const Band band) {
+    return band == Band::FM || band == Band::FM_HD;
+}
+
 bool hasId(const ProgramSelector& sel, const IdentifierType type) {
     auto itype = static_cast<uint32_t>(type);
     if (sel.primaryId.type == itype) return true;
@@ -149,17 +157,12 @@ ProgramSelector make_selector(Band band, uint32_t channel, uint32_t subChannel) 
 
     // we can't use ProgramType::AM_HD or FM_HD, because we don't know HD station ID
     ProgramType type;
-    switch (band) {
-        case Band::AM:
-        case Band::AM_HD:
-            type = ProgramType::AM;
-            break;
-        case Band::FM:
-        case Band::FM_HD:
-            type = ProgramType::FM;
-            break;
-        default:
-            LOG_ALWAYS_FATAL("Unsupported band: %s", toString(band).c_str());
+    if (isAm(band)) {
+        type = ProgramType::AM;
+    } else if (isFm(band)) {
+        type = ProgramType::FM;
+    } else {
+        LOG_ALWAYS_FATAL("Unsupported band: %s", toString(band).c_str());
     }
 
     sel.programType = static_cast<uint32_t>(type);
@@ -215,9 +218,9 @@ bool operator==(const BandConfig& l, const BandConfig& r) {
     if (l.lowerLimit != r.lowerLimit) return false;
     if (l.upperLimit != r.upperLimit) return false;
     if (l.spacings != r.spacings) return false;
-    if (l.type == Band::AM || l.type == Band::AM_HD) {
+    if (V1_1::utils::isAm(l.type)) {
         return l.ext.am == r.ext.am;
-    } else if (l.type == Band::FM || l.type == Band::FM_HD) {
+    } else if (V1_1::utils::isFm(l.type)) {
         return l.ext.fm == r.ext.fm;
     } else {
         ALOGW("Unsupported band config type: %s", toString(l.type).c_str());

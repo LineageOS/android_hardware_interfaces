@@ -16,20 +16,7 @@
 
 cc_test {
     name: "VtsHalMemtrackV1_0TargetTest",
-    defaults: ["hidl_defaults"],
+    defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["VtsHalMemtrackV1_0TargetTest.cpp"],
-    shared_libs: [
-        "libbase",
-        "liblog",
-        "libcutils",
-        "libhardware",
-        "libhidlbase",
-        "libutils",
-        "android.hardware.memtrack@1.0",
-    ],
-    static_libs: ["VtsHalHidlTargetTestBase"],
-    cflags: [
-        "-O0",
-        "-g",
-    ]
+    static_libs: ["android.hardware.memtrack@1.0"],
 }

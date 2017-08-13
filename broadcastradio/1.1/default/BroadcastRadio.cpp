@@ -45,16 +45,28 @@ static const map<Class, ModuleConfig> gModuleConfigs{
         "Digital radio mock",
         {  // amFmBands
             AmFmBandConfig({
+                Band::AM,
+                153,         // lowerLimit
+                26100,       // upperLimit
+                {5, 9, 10},  // spacings
+            }),
+            AmFmBandConfig({
+                Band::FM,
+                65800,           // lowerLimit
+                108000,          // upperLimit
+                {10, 100, 200},  // spacings
+            }),
+            AmFmBandConfig({
                 Band::AM_HD,
-                540,   // lowerLimit
-                1610,  // upperLimit
-                10,    // spacing
+                153,         // lowerLimit
+                26100,       // upperLimit
+                {5, 9, 10},  // spacings
             }),
             AmFmBandConfig({
                 Band::FM_HD,
                 87900,   // lowerLimit
                 107900,  // upperLimit
-                200,     // spacing
+                {200},   // spacings
             }),
         },
     })},
@@ -114,14 +126,14 @@ Return<void> BroadcastRadio::getProperties_1_1(getProperties_1_1_cb _hidl_cb) {
         dst.antennaConnected = true;
         dst.lowerLimit = src.lowerLimit;
         dst.upperLimit = src.upperLimit;
-        dst.spacings = vector<uint32_t>({src.spacing});
+        dst.spacings = src.spacings;
 
-        if (src.type == Band::AM) {
+        if (utils::isAm(src.type)) {
             dst.ext.am.stereo = true;
-        } else if (src.type == Band::FM) {
-            dst.ext.fm.deemphasis = Deemphasis::D75;
+        } else if (utils::isFm(src.type)) {
+            dst.ext.fm.deemphasis = static_cast<Deemphasis>(Deemphasis::D50 | Deemphasis::D75);
             dst.ext.fm.stereo = true;
-            dst.ext.fm.rds = Rds::US;
+            dst.ext.fm.rds = static_cast<Rds>(Rds::WORLD | Rds::US);
             dst.ext.fm.ta = true;
             dst.ext.fm.af = true;
             dst.ext.fm.ea = true;
