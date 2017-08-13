@@ -16,19 +16,8 @@
 
 cc_test {
     name: "VtsHalLightV2_0TargetTest",
-    defaults: ["hidl_defaults"],
+    defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["VtsHalLightV2_0TargetTest.cpp"],
-    shared_libs: [
-        "libbase",
-        "libhidlbase",
-        "liblog",
-        "libutils",
-        "android.hardware.light@2.0",
-    ],
-    static_libs: ["VtsHalHidlTargetTestBase"],
-    cflags: [
-        "-O0",
-        "-g",
-    ]
+    static_libs: ["android.hardware.light@2.0"],
 }
 

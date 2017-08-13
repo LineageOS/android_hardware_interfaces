@@ -16,19 +16,8 @@
 
 cc_test {
     name: "VtsHalSensorsV1_0TargetTest",
-    defaults: ["hidl_defaults"],
+    defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["VtsHalSensorsV1_0TargetTest.cpp"],
-    shared_libs: [
-        "android.hardware.sensors@1.0",
-        "libcutils",
-        "libhidlbase",
-        "liblog",
-        "libutils",
-    ],
-    static_libs: ["VtsHalHidlTargetTestBase"],
-    cflags: [
-        "-O0",
-        "-g",
-    ],
+    static_libs: ["android.hardware.sensors@1.0"],
 }
 

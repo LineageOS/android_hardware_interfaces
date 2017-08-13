@@ -15,8 +15,18 @@
 //
 
 cc_test {
-    name: "VtsHalWeaverV1_0TargetTest",
+    name: "VtsHalKeymasterV3_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
-    srcs: ["VtsHalWeaverV1_0TargetTest.cpp"],
-    static_libs: ["android.hardware.weaver@1.0"],
+    srcs: [
+        "authorization_set.cpp",
+        "attestation_record.cpp",
+        "key_param_output.cpp",
+        "keymaster_hidl_hal_test.cpp",
+        "keystore_tags_utils.cpp",
+    ],
+    static_libs: [
+        "android.hardware.keymaster@3.0",
+        "libcrypto",
+        "libsoftkeymasterdevice",
+    ],
 }

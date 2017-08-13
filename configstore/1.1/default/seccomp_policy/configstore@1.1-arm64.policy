@@ -12,28 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH := $(call my-dir)
-
-include $(CLEAR_VARS)
-LOCAL_MODULE := VtsHalKeymasterV3_0TargetTest
-LOCAL_SRC_FILES := \
-        authorization_set.cpp \
-        attestation_record.cpp \
-        key_param_output.cpp \
-        keymaster_hidl_hal_test.cpp \
-        keystore_tags_utils.cpp \
-
-LOCAL_SHARED_LIBRARIES := \
-        android.hardware.keymaster@3.0 \
-        libcrypto \
-        libhidlbase \
-        liblog \
-        libsoftkeymasterdevice \
-        libutils \
-
-LOCAL_STATIC_LIBRARIES := \
-        VtsHalHidlTargetTestBase \
-
-LOCAL_CFLAGS := -Wall -Werror
-
-include $(BUILD_NATIVE_TEST)
+futex: 1
+# ioctl: arg1 == BINDER_WRITE_READ
+ioctl: arg1 == 0xc0306201
+ioctl: 1
+# prctl: arg0 == PR_SET_NAME || arg0 == PR_SET_VMA || arg0 == PR_SET_TIMERSLACK
+prctl: arg0 == 15 || arg0 == 0x53564d41 || arg0 == 29
+openat: 1
+mmap: 1
+mprotect: 1
+close: 1
+getuid: 1
+read: 1
+faccessat: 1
+write: 1
+fstat: 1
+clone: 1
+munmap: 1
+lseek: 1
+sigaltstack: 1
+writev: 1
+setpriority: 1
+restart_syscall: 1
+exit: 1
+exit_group: 1
+rt_sigreturn: 1
+getrlimit: 1

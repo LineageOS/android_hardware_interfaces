@@ -14,9 +14,17 @@
 // limitations under the License.
 //
 
-cc_test {
-    name: "VtsHalWeaverV1_0TargetTest",
-    defaults: ["VtsHalTargetTestDefaults"],
-    srcs: ["VtsHalWeaverV1_0TargetTest.cpp"],
-    static_libs: ["android.hardware.weaver@1.0"],
-}
+#ifndef ANDROID_HARDWARE_CONFIGSTORE_MINIJAIL_H
+#define ANDROID_HARDWARE_CONFIGSTORE_MINIJAIL_H
+
+#include <string>
+
+namespace android {
+namespace hardware {
+
+void SetupMinijail(const std::string& seccomp_policy_path);
+
+}  // namespace hardware
+}  // namespace android
+
+#endif  // ANDROID_HARDWARE_CONFIGSTORE_UTILS_H
