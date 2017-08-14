@@ -39,13 +39,16 @@ genrule {
     ],
 }
 
-cc_library_shared {
+cc_library {
     name: "android.hardware.sensors@1.0",
     defaults: ["hidl-module-defaults"],
     generated_sources: ["android.hardware.sensors@1.0_genc++"],
     generated_headers: ["android.hardware.sensors@1.0_genc++_headers"],
     export_generated_headers: ["android.hardware.sensors@1.0_genc++_headers"],
     vendor_available: true,
+    vndk: {
+        enabled: true,
+    },
     shared_libs: [
         "libhidlbase",
         "libhidltransport",
