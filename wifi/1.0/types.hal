@@ -1355,8 +1355,8 @@ struct NanCapabilities {
    */
   uint32_t maxNdiInterfaces;
   /**
-   * Maximum number of data paths (NDP) which can be created concurrently on each individual
-   * data interface (NDI).
+   * Maximum number of data paths (NDP) which can be created concurrently on the device, across all
+   * data interfaces (NDI).
    */
   uint32_t maxNdpSessions;
   /**
