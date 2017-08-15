@@ -196,6 +196,7 @@ e822cb7f4a1bdd45689c5e92ccd19a2201c20b771bd4b2ec1ae627e324591f9d android.hardwar
 6e69adb24d7c0b0ca3a54a38c49a5625b161b3f5d5f7d6fda0befdbbfc8e9e06 android.hardware.radio@1.0::IRadioResponse
 28e929b453df3d9f5060af2764e6cdb123ddb893e3e86923c877f6ff7e5f02c9 android.hardware.wifi@1.0::types
 bfd81bcafa3c97519cd56ad29e9fa48e23d1d323b89dbcc85899282a8c628194 android.hardware.automotive.vehicle@2.0::types
+df1d7b27e644bfed0a4f606a8c44d35d45cafce82c7c648494c8a25c7cd4a949 android.hardware.wifi@1.0::types
 
 # HALs released in Android O MR1
 
