@@ -60,6 +60,25 @@ Return<android::hardware::media::omx::V1_0::Status> setRole(
     return setParam(omxNode, OMX_IndexParamStandardComponentRole, &params);
 }
 
+Return<android::hardware::media::omx::V1_0::Status> setPortBufferSize(
+    sp<IOmxNode> omxNode, OMX_U32 portIndex, OMX_U32 size) {
+    android::hardware::media::omx::V1_0::Status status;
+    OMX_PARAM_PORTDEFINITIONTYPE portDef;
+
+    status = getPortParam(omxNode, OMX_IndexParamPortDefinition, portIndex,
+                          &portDef);
+    if (status != ::android::hardware::media::omx::V1_0::Status::OK)
+        return status;
+    if (portDef.nBufferSize < size) {
+        portDef.nBufferSize = size;
+        status = setPortParam(omxNode, OMX_IndexParamPortDefinition, portIndex,
+                              &portDef);
+        if (status != ::android::hardware::media::omx::V1_0::Status::OK)
+            return status;
+    }
+    return status;
+}
+
 // get/set video component port format
 Return<android::hardware::media::omx::V1_0::Status> setVideoPortFormat(
     sp<IOmxNode> omxNode, OMX_U32 portIndex,
