@@ -1361,6 +1361,7 @@ TEST_F(VideoDecHidlTest, FlushTest) {
                       kPortIndexOutput, eleStream, &Info, index,
                       Info.size() - index, portMode[1], false);
     }
+    eleStream.close();
     flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
                kPortIndexOutput);
     framesReceived = 0;
