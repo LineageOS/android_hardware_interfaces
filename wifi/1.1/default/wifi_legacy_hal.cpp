@@ -1284,7 +1284,7 @@ WifiLegacyHal::getGscanCachedResults() {
     for (int i = 0; i < num_scan_results; i++) {
       auto& scan_result = cached_scan_result.results[i];
       if (scan_result.ie_length > 0) {
-        LOG(ERROR) << "Cached scan result has non-zero IE length "
+        LOG(DEBUG) << "Cached scan result has non-zero IE length "
                    << scan_result.ie_length;
         scan_result.ie_length = 0;
       }
