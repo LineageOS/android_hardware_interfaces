@@ -2224,6 +2224,9 @@ enum VehicleAudioContextFlag : int32_t {
 
     /** Ext source is played. This is for tagging generic ext sources. */
     EXT_SOURCE_FLAG = 0x1000,
+
+    /** The phone ring tone is played */
+    RINGTONE_FLAG = 0x2000
 };
 
 /**
