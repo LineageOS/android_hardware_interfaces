@@ -16,29 +16,18 @@
 
 cc_test {
     name: "VtsHalAudioV2_0TargetTest",
-    defaults: ["hidl_defaults"],
-    srcs: ["AudioPrimaryHidlHalTest.cpp",
-           "ValidateAudioConfiguration.cpp"],
-    shared_libs: [
-        "libbase",
-        "liblog",
-        "libhidlbase",
-        "libhidltransport",
-        "libutils",
-        "libcutils",
-        "libxml2",
-        "android.hardware.audio@2.0",
-        "android.hardware.audio.common@2.0",
+    defaults: ["VtsHalTargetTestDefaults"],
+    srcs: [
+        "AudioPrimaryHidlHalTest.cpp",
+        "ValidateAudioConfiguration.cpp"
     ],
     static_libs: [
-        "VtsHalHidlTargetTestBase",
         "android.hardware.audio.common.test.utility",
+        "android.hardware.audio@2.0",
+        "android.hardware.audio.common@2.0",
+        "libxml2",
     ],
-    cflags: [
-        "-O0",
-        "-g",
-        "-Wall",
-        "-Wextra",
-        "-Werror",
+    shared_libs: [
+        "libicuuc",
     ],
 }
