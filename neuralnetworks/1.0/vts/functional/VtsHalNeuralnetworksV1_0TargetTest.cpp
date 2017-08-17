@@ -66,8 +66,8 @@ TEST_F(NeuralnetworksHidlTest, StatusTest) {
 // initialization
 TEST_F(NeuralnetworksHidlTest, InitializeTest) {
     Return<void> ret = device->initialize([](const Capabilities& capabilities) {
-        EXPECT_NE(nullptr, capabilities.supportedOperationTypes.data());
-        EXPECT_NE(0ull, capabilities.supportedOperationTypes.size());
+        EXPECT_NE(nullptr, capabilities.supportedOperationTuples.data());
+        EXPECT_NE(0ull, capabilities.supportedOperationTuples.size());
         EXPECT_EQ(0u, static_cast<uint32_t>(capabilities.cachesCompilation) & ~0x1);
         EXPECT_LT(0.0f, capabilities.bootupTime);
         EXPECT_LT(0.0f, capabilities.float16Performance.execTime);
@@ -92,7 +92,7 @@ Model createTestModel() {
 
     const std::vector<Operand> operands = {
         {
-            .type = OperandType::FLOAT32,
+            .type = OperandType::TENSOR_FLOAT32,
             .dimensions = {1, 2, 2, 1},
             .numberOfConsumers = 1,
             .scale = 0.0f,
@@ -102,7 +102,7 @@ Model createTestModel() {
                          .length = 0},
         },
         {
-            .type = OperandType::FLOAT32,
+            .type = OperandType::TENSOR_FLOAT32,
             .dimensions = {1, 2, 2, 1},
             .numberOfConsumers = 1,
             .scale = 0.0f,
@@ -112,7 +112,7 @@ Model createTestModel() {
                          .length = size},
         },
         {
-            .type = OperandType::FLOAT32,
+            .type = OperandType::TENSOR_FLOAT32,
             .dimensions = {1, 2, 2, 1},
             .numberOfConsumers = 0,
             .scale = 0.0f,
@@ -124,7 +124,9 @@ Model createTestModel() {
     };
 
     const std::vector<Operation> operations = {{
-        .type = OperationType::ADD_FLOAT32, .inputs = {operand1, operand2}, .outputs = {operand3},
+        .opTuple = {OperationType::ADD, OperandType::TENSOR_FLOAT32},
+        .inputs = {operand1, operand2},
+        .outputs = {operand3},
     }};
 
     const std::vector<uint32_t> inputIndexes = {operand1};
