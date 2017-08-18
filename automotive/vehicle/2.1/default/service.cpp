@@ -88,7 +88,7 @@ int main(int /* argc */, char* /* argv */ []) {
 
     Vehicle_V2_1 vehicle21(vehicleManager.get());
 
-    configureRpcThreadpool(1, true /* callerWillJoin */);
+    configureRpcThreadpool(4, true /* callerWillJoin */);
 
     ALOGI("Registering as service...");
     status_t status = vehicle21.registerAsService();
