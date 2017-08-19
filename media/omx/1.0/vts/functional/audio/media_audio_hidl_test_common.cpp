@@ -46,47 +46,6 @@ using ::android::sp;
 #include <media_hidl_test_common.h>
 #include <memory>
 
-Return<android::hardware::media::omx::V1_0::Status> setAudioPortFormat(
-    sp<IOmxNode> omxNode, OMX_U32 portIndex, OMX_AUDIO_CODINGTYPE eEncoding) {
-    OMX_U32 index = 0;
-    OMX_AUDIO_PARAM_PORTFORMATTYPE portFormat;
-    std::vector<OMX_AUDIO_CODINGTYPE> arrEncoding;
-    android::hardware::media::omx::V1_0::Status status;
-
-    while (1) {
-        portFormat.nIndex = index;
-        status = getPortParam(omxNode, OMX_IndexParamAudioPortFormat, portIndex,
-                              &portFormat);
-        if (status != ::android::hardware::media::omx::V1_0::Status::OK) break;
-        arrEncoding.push_back(portFormat.eEncoding);
-        index++;
-        if (index == 512) {
-            // enumerated way too many formats, highly unusual for this to
-            // happen.
-            EXPECT_LE(index, 512U)
-                << "Expecting OMX_ErrorNoMore but not received";
-            break;
-        }
-    }
-    if (!index) return status;
-    for (index = 0; index < arrEncoding.size(); index++) {
-        if (arrEncoding[index] == eEncoding) {
-            portFormat.eEncoding = arrEncoding[index];
-            break;
-        }
-    }
-    if (index == arrEncoding.size()) {
-        ALOGE("setting default Port format %x", (int)arrEncoding[0]);
-        portFormat.eEncoding = arrEncoding[0];
-    }
-    // In setParam call nIndex shall be ignored as per omx-il specification.
-    // see how this holds up by corrupting nIndex
-    portFormat.nIndex = RANDOM_INDEX;
-    status = setPortParam(omxNode, OMX_IndexParamAudioPortFormat, portIndex,
-                          &portFormat);
-    return status;
-}
-
 void enumerateProfile(sp<IOmxNode> omxNode, OMX_U32 portIndex,
                       std::vector<int32_t>* arrProfile) {
     android::hardware::media::omx::V1_0::Status status;
