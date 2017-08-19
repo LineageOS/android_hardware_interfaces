@@ -1180,16 +1180,17 @@ void SensorsHidlTest::testBatchingOperation(SensorType type) {
   usleep(batchingPeriodInNs / 1000 * 8 / 10);
 
   SensorsHidlEnvironment::Instance()->setCollection(true);
-  // 0.8 + 0.3 times the batching period
-  // plus some time for the event to deliver
-  events = collectEvents(
-      batchingPeriodInNs / 1000 * 3 / 10,
-        minFifoCount, true /*clearBeforeStart*/, false /*change collection*/);
+  // clean existing collections
+  collectEvents(0 /*timeLimitUs*/, 0/*nEventLimit*/,
+        true /*clearBeforeStart*/, false /*change collection*/);
 
+  // 0.8 + 0.2 times the batching period
+  usleep(batchingPeriodInNs / 1000 * 8 / 10);
   ASSERT_EQ(flush(handle), Result::OK);
 
+  // plus some time for the event to deliver
   events = collectEvents(allowedBatchDeliverTimeNs / 1000,
-        minFifoCount, true /*clearBeforeStart*/, false /*change collection*/);
+        minFifoCount, false /*clearBeforeStart*/, false /*change collection*/);
 
   SensorsHidlEnvironment::Instance()->setCollection(false);
   ASSERT_EQ(activate(handle, 0), Result::OK);
@@ -1202,7 +1203,7 @@ void SensorsHidlTest::testBatchingOperation(SensorType type) {
   }
 
   // at least reach 90% of advertised capacity
-  ASSERT_GT(nEvent, (size_t)(batchingPeriodInNs / minSamplingPeriodInNs * 9 / 10));
+  ASSERT_GT(nEvent, (size_t)(minFifoCount * 9 / 10));
 }
 
 // Test if sensor hal can do accelerometer batching properly
