@@ -27,9 +27,6 @@
 /*
  * Common audio utils
  */
-Return<android::hardware::media::omx::V1_0::Status> setAudioPortFormat(
-    sp<IOmxNode> omxNode, OMX_U32 portIndex, OMX_AUDIO_CODINGTYPE eEncoding);
-
 void enumerateProfile(sp<IOmxNode> omxNode, OMX_U32 portIndex,
                       std::vector<int32_t>* arrProfile);
 
