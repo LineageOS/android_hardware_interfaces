@@ -26,11 +26,6 @@
  * Common video utils
  */
 
-Return<android::hardware::media::omx::V1_0::Status> setVideoPortFormat(
-    sp<IOmxNode> omxNode, OMX_U32 portIndex,
-    OMX_VIDEO_CODINGTYPE eCompressionFormat, OMX_COLOR_FORMATTYPE eColorFormat,
-    OMX_U32 xFramerate);
-
 void enumerateProfileAndLevel(sp<IOmxNode> omxNode, OMX_U32 portIndex,
                               std::vector<int32_t>* arrProfile,
                               std::vector<int32_t>* arrLevel);
