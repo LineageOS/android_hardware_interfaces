@@ -768,7 +768,7 @@ TEST_F(VideoDecHidlTest, DecodeTest) {
     eleInfo.open(info);
     ASSERT_EQ(eleInfo.is_open(), true);
     android::Vector<FrameData> Info;
-    int bytesCount = 0;
+    int bytesCount = 0, maxBytesCount = 0;
     uint32_t flags = 0;
     uint32_t timestamp = 0;
     timestampDevTest = true;
@@ -779,8 +779,14 @@ TEST_F(VideoDecHidlTest, DecodeTest) {
         Info.push_back({bytesCount, flags, timestamp});
         if (flags != OMX_BUFFERFLAG_CODECCONFIG)
             timestampUslist.push_back(timestamp);
+        if (maxBytesCount < bytesCount) maxBytesCount = bytesCount;
     }
     eleInfo.close();
+
+    // As the frame sizes are known ahead, use it to configure i/p buffer size
+    maxBytesCount = ALIGN_POWER_OF_TWO(maxBytesCount, 10);
+    status = setPortBufferSize(omxNode, kPortIndexInput, maxBytesCount);
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 
     // set port mode
     portMode[0] = PortMode::PRESET_BYTE_BUFFER;
@@ -801,6 +807,8 @@ TEST_F(VideoDecHidlTest, DecodeTest) {
                         &xFramerate);
     setDefaultPortParam(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
                         eColorFormat, nFrameWidth, nFrameHeight, 0, xFramerate);
+
+    // disabling adaptive playback.
     omxNode->prepareForAdaptivePlayback(kPortIndexOutput, false, 1920, 1080);
 
     android::Vector<BufferInfo> iBuffer, oBuffer;
@@ -923,7 +931,7 @@ TEST_F(VideoDecHidlTest, ThumbnailTest) {
     eleInfo.open(info);
     ASSERT_EQ(eleInfo.is_open(), true);
     android::Vector<FrameData> Info;
-    int bytesCount = 0;
+    int bytesCount = 0, maxBytesCount = 0;
     uint32_t flags = 0;
     uint32_t timestamp = 0;
     while (1) {
@@ -931,8 +939,20 @@ TEST_F(VideoDecHidlTest, ThumbnailTest) {
         eleInfo >> flags;
         eleInfo >> timestamp;
         Info.push_back({bytesCount, flags, timestamp});
+        if (maxBytesCount < bytesCount) maxBytesCount = bytesCount;
     }
     eleInfo.close();
+
+    // As the frame sizes are known ahead, use it to configure i/p buffer size
+    maxBytesCount = ALIGN_POWER_OF_TWO(maxBytesCount, 10);
+    status = setPortBufferSize(omxNode, kPortIndexInput, maxBytesCount);
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+
+    // set port mode
+    status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 
     // set Port Params
     uint32_t nFrameWidth, nFrameHeight, xFramerate;
@@ -1024,7 +1044,7 @@ TEST_F(VideoDecHidlTest, SimpleEOSTest) {
     eleInfo.open(info);
     ASSERT_EQ(eleInfo.is_open(), true);
     android::Vector<FrameData> Info;
-    int bytesCount = 0;
+    int bytesCount = 0, maxBytesCount = 0;
     uint32_t flags = 0;
     uint32_t timestamp = 0;
     while (1) {
@@ -1032,8 +1052,20 @@ TEST_F(VideoDecHidlTest, SimpleEOSTest) {
         eleInfo >> flags;
         eleInfo >> timestamp;
         Info.push_back({bytesCount, flags, timestamp});
+        if (maxBytesCount < bytesCount) maxBytesCount = bytesCount;
     }
     eleInfo.close();
+
+    // As the frame sizes are known ahead, use it to configure i/p buffer size
+    maxBytesCount = ALIGN_POWER_OF_TWO(maxBytesCount, 10);
+    status = setPortBufferSize(omxNode, kPortIndexInput, maxBytesCount);
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+
+    // set port mode
+    status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 
     // set Port Params
     uint32_t nFrameWidth, nFrameHeight, xFramerate;
@@ -1107,7 +1139,7 @@ TEST_F(VideoDecHidlTest, FlushTest) {
     eleInfo.open(info);
     ASSERT_EQ(eleInfo.is_open(), true);
     android::Vector<FrameData> Info;
-    int bytesCount = 0;
+    int bytesCount = 0, maxBytesCount = 0;
     uint32_t flags = 0;
     uint32_t timestamp = 0;
     while (1) {
@@ -1115,8 +1147,20 @@ TEST_F(VideoDecHidlTest, FlushTest) {
         eleInfo >> flags;
         eleInfo >> timestamp;
         Info.push_back({bytesCount, flags, timestamp});
+        if (maxBytesCount < bytesCount) maxBytesCount = bytesCount;
     }
     eleInfo.close();
+
+    // As the frame sizes are known ahead, use it to configure i/p buffer size
+    maxBytesCount = ALIGN_POWER_OF_TWO(maxBytesCount, 10);
+    status = setPortBufferSize(omxNode, kPortIndexInput, maxBytesCount);
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+
+    // set port mode
+    status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 
     // set Port Params
     uint32_t nFrameWidth, nFrameHeight, xFramerate;

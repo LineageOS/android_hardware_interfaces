@@ -60,6 +60,132 @@ Return<android::hardware::media::omx::V1_0::Status> setRole(
     return setParam(omxNode, OMX_IndexParamStandardComponentRole, &params);
 }
 
+Return<android::hardware::media::omx::V1_0::Status> setPortBufferSize(
+    sp<IOmxNode> omxNode, OMX_U32 portIndex, OMX_U32 size) {
+    android::hardware::media::omx::V1_0::Status status;
+    OMX_PARAM_PORTDEFINITIONTYPE portDef;
+
+    status = getPortParam(omxNode, OMX_IndexParamPortDefinition, portIndex,
+                          &portDef);
+    if (status != ::android::hardware::media::omx::V1_0::Status::OK)
+        return status;
+    if (portDef.nBufferSize < size) {
+        portDef.nBufferSize = size;
+        status = setPortParam(omxNode, OMX_IndexParamPortDefinition, portIndex,
+                              &portDef);
+        if (status != ::android::hardware::media::omx::V1_0::Status::OK)
+            return status;
+    }
+    return status;
+}
+
+// get/set video component port format
+Return<android::hardware::media::omx::V1_0::Status> setVideoPortFormat(
+    sp<IOmxNode> omxNode, OMX_U32 portIndex,
+    OMX_VIDEO_CODINGTYPE eCompressionFormat, OMX_COLOR_FORMATTYPE eColorFormat,
+    OMX_U32 xFramerate) {
+    OMX_U32 index = 0;
+    OMX_VIDEO_PARAM_PORTFORMATTYPE portFormat;
+    std::vector<OMX_COLOR_FORMATTYPE> arrColorFormat;
+    std::vector<OMX_VIDEO_CODINGTYPE> arrCompressionFormat;
+    android::hardware::media::omx::V1_0::Status status;
+
+    while (1) {
+        portFormat.nIndex = index;
+        status = getPortParam(omxNode, OMX_IndexParamVideoPortFormat, portIndex,
+                              &portFormat);
+        if (status != ::android::hardware::media::omx::V1_0::Status::OK) break;
+        if (eCompressionFormat == OMX_VIDEO_CodingUnused)
+            arrColorFormat.push_back(portFormat.eColorFormat);
+        else
+            arrCompressionFormat.push_back(portFormat.eCompressionFormat);
+        index++;
+        if (index == 512) {
+            // enumerated way too many formats, highly unusual for this to
+            // happen.
+            EXPECT_LE(index, 512U)
+                << "Expecting OMX_ErrorNoMore but not received";
+            break;
+        }
+    }
+    if (!index) return status;
+    if (eCompressionFormat == OMX_VIDEO_CodingUnused) {
+        for (index = 0; index < arrColorFormat.size(); index++) {
+            if (arrColorFormat[index] == eColorFormat) {
+                portFormat.eColorFormat = arrColorFormat[index];
+                break;
+            }
+        }
+        if (index == arrColorFormat.size()) {
+            ALOGE("setting default color format %x", (int)arrColorFormat[0]);
+            portFormat.eColorFormat = arrColorFormat[0];
+        }
+        portFormat.eCompressionFormat = OMX_VIDEO_CodingUnused;
+    } else {
+        for (index = 0; index < arrCompressionFormat.size(); index++) {
+            if (arrCompressionFormat[index] == eCompressionFormat) {
+                portFormat.eCompressionFormat = arrCompressionFormat[index];
+                break;
+            }
+        }
+        if (index == arrCompressionFormat.size()) {
+            ALOGE("setting default compression format %x",
+                  (int)arrCompressionFormat[0]);
+            portFormat.eCompressionFormat = arrCompressionFormat[0];
+        }
+        portFormat.eColorFormat = OMX_COLOR_FormatUnused;
+    }
+    // In setParam call nIndex shall be ignored as per omx-il specification.
+    // see how this holds up by corrupting nIndex
+    portFormat.nIndex = RANDOM_INDEX;
+    portFormat.xFramerate = xFramerate;
+    status = setPortParam(omxNode, OMX_IndexParamVideoPortFormat, portIndex,
+                          &portFormat);
+    return status;
+}
+
+// get/set audio component port format
+Return<android::hardware::media::omx::V1_0::Status> setAudioPortFormat(
+    sp<IOmxNode> omxNode, OMX_U32 portIndex, OMX_AUDIO_CODINGTYPE eEncoding) {
+    OMX_U32 index = 0;
+    OMX_AUDIO_PARAM_PORTFORMATTYPE portFormat;
+    std::vector<OMX_AUDIO_CODINGTYPE> arrEncoding;
+    android::hardware::media::omx::V1_0::Status status;
+
+    while (1) {
+        portFormat.nIndex = index;
+        status = getPortParam(omxNode, OMX_IndexParamAudioPortFormat, portIndex,
+                              &portFormat);
+        if (status != ::android::hardware::media::omx::V1_0::Status::OK) break;
+        arrEncoding.push_back(portFormat.eEncoding);
+        index++;
+        if (index == 512) {
+            // enumerated way too many formats, highly unusual for this to
+            // happen.
+            EXPECT_LE(index, 512U)
+                << "Expecting OMX_ErrorNoMore but not received";
+            break;
+        }
+    }
+    if (!index) return status;
+    for (index = 0; index < arrEncoding.size(); index++) {
+        if (arrEncoding[index] == eEncoding) {
+            portFormat.eEncoding = arrEncoding[index];
+            break;
+        }
+    }
+    if (index == arrEncoding.size()) {
+        ALOGE("setting default Port format %x", (int)arrEncoding[0]);
+        portFormat.eEncoding = arrEncoding[0];
+    }
+    // In setParam call nIndex shall be ignored as per omx-il specification.
+    // see how this holds up by corrupting nIndex
+    portFormat.nIndex = RANDOM_INDEX;
+    status = setPortParam(omxNode, OMX_IndexParamAudioPortFormat, portIndex,
+                          &portFormat);
+    return status;
+}
+
 // allocate buffers needed on a component port
 void allocatePortBuffers(sp<IOmxNode> omxNode,
                          android::Vector<BufferInfo>* buffArray,
