@@ -32,7 +32,7 @@ enum OperandType : uint32_t {
     UINT32                    = 7,
     TENSOR_FLOAT16            = 8,
     TENSOR_FLOAT32            = 9,
-    TENSOR_SYMMETRICAL_QUANT8 = 10,
+    TENSOR_QUANT8_ASYMM       = 10,
 };
 
 // The type of operations.  Unlike the operation types found in
@@ -41,39 +41,39 @@ enum OperandType : uint32_t {
 // TODO: Currently they are the same.  Add a conversion when finalizing the model.
 // When modifying, be sure to update HAL_NUM_OPERATION_TYPES in HalIntefaces.h.
 enum OperationType : uint32_t {
-    AVERAGE_POOL_FLOAT32                 = 0,
-    CONCATENATION_FLOAT32                = 1,
-    CONV_FLOAT32                         = 2,
-    DEPTHWISE_CONV_FLOAT32               = 3,
-    MAX_POOL_FLOAT32                     = 4,
-    L2_POOL_FLOAT32                      = 5,
-    DEPTH_TO_SPACE_FLOAT32               = 6,
-    SPACE_TO_DEPTH_FLOAT32               = 7,
-    LOCAL_RESPONSE_NORMALIZATION_FLOAT32 = 8,
-    SOFTMAX_FLOAT32                      = 9,
-    RESHAPE_FLOAT32                      = 10,
-    SPLIT_FLOAT32                        = 11,
-    FAKE_QUANT_FLOAT32                   = 12,
-    ADD_FLOAT32                          = 13,
-    FULLY_CONNECTED_FLOAT32              = 14,
-    CAST_FLOAT32                         = 15,
-    MUL_FLOAT32                          = 16,
-    L2_NORMALIZATION_FLOAT32             = 17,
-    LOGISTIC_FLOAT32                     = 18,
-    RELU_FLOAT32                         = 19,
-    RELU6_FLOAT32                        = 20,
-    RELU1_FLOAT32                        = 21,
-    TANH_FLOAT32                         = 22,
-    DEQUANTIZE_FLOAT32                   = 23,
-    FLOOR_FLOAT32                        = 24,
-    GATHER_FLOAT32                       = 25,
-    RESIZE_BILINEAR_FLOAT32              = 26,
-    LSH_PROJECTION_FLOAT32               = 27,
-    LSTM_FLOAT32                         = 28,
-    SVDF_FLOAT32                         = 29,
-    RNN_FLOAT32                          = 30,
-    N_GRAM_FLOAT32                       = 31,
-    LOOKUP_FLOAT32                       = 32,
+    AVERAGE_POOL                 = 0,
+    CONCATENATION                = 1,
+    CONV                         = 2,
+    DEPTHWISE_CONV               = 3,
+    MAX_POOL                     = 4,
+    L2_POOL                      = 5,
+    DEPTH_TO_SPACE               = 6,
+    SPACE_TO_DEPTH               = 7,
+    LOCAL_RESPONSE_NORMALIZATION = 8,
+    SOFTMAX                      = 9,
+    RESHAPE                      = 10,
+    SPLIT                        = 11,
+    FAKE_QUANT                   = 12,
+    ADD                          = 13,
+    FULLY_CONNECTED              = 14,
+    CAST                         = 15,
+    MUL                          = 16,
+    L2_NORMALIZATION             = 17,
+    LOGISTIC                     = 18,
+    RELU                         = 19,
+    RELU6                        = 20,
+    RELU1                        = 21,
+    TANH                         = 22,
+    DEQUANTIZE                   = 23,
+    FLOOR                        = 24,
+    GATHER                       = 25,
+    RESIZE_BILINEAR              = 26,
+    LSH_PROJECTION               = 27,
+    LSTM                         = 28,
+    SVDF                         = 29,
+    RNN                          = 30,
+    N_GRAM                       = 31,
+    LOOKUP                       = 32,
 };
 
 // Two special values that can be used instead of a regular poolIndex.
@@ -102,9 +102,16 @@ struct PerformanceInfo {
     float powerUsage;  // in picoJoules
 };
 
+struct OperationTuple {
+    // The type of operation.
+    OperationType operationType;
+    // The input data type of operation.
+    OperandType operandType;
+};
+
 // The capabilities of a driver.
 struct Capabilities {
-    vec<OperationType> supportedOperationTypes;
+    vec<OperationTuple> supportedOperationTuples;
     // TODO Do the same for baseline model IDs
     bool cachesCompilation;
     // TODO revisit the data types and scales.
@@ -142,8 +149,8 @@ struct Operand {
 
 // Describes one operation of the graph.
 struct Operation {
-    // The type of operation.
-    OperationType type;
+    // The tuple describing the operation type and input type.
+    OperationTuple opTuple;
     // Describes the table that contains the indexes of the inputs of the
     // operation. The offset is the index in the operandIndexes table.
     vec<uint32_t> inputs;
