@@ -16,21 +16,7 @@
 
 cc_test {
     name: "VtsHalSoundtriggerV2_0TargetTest",
-    defaults: ["hidl_defaults"],
+    defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["VtsHalSoundtriggerV2_0TargetTest.cpp"],
-    shared_libs: [
-        "libbase",
-        "liblog",
-        "libcutils",
-        "libhidlbase",
-        "libhidltransport",
-        "libnativehelper",
-        "libutils",
-        "android.hardware.soundtrigger@2.0",
-    ],
-    static_libs: ["VtsHalHidlTargetTestBase"],
-    cflags: [
-        "-O0",
-        "-g",
-    ],
+    static_libs: ["android.hardware.soundtrigger@2.0"],
 }

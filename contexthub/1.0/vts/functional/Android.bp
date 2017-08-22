@@ -16,19 +16,8 @@
 
 cc_test {
     name: "VtsHalContexthubV1_0TargetTest",
-    defaults: ["hidl_defaults"],
+    defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["VtsHalContexthubV1_0TargetTest.cpp"],
-    shared_libs: [
-        "liblog",
-        "libhidlbase",
-        "libhidltransport",
-        "libutils",
-        "android.hardware.contexthub@1.0",
-    ],
-    static_libs: ["VtsHalHidlTargetTestBase"],
-    cflags: [
-        "-O0",
-        "-g",
-    ]
+    static_libs: ["android.hardware.contexthub@1.0"],
 }
 
