@@ -15,6 +15,7 @@
  */
 
 #define LOG_TAG "sensors_hidl_hal_test"
+#include "GrallocWrapper.h"
 #include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/sensors/1.0/ISensors.h>
@@ -36,6 +37,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+using ::android::GrallocWrapper;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::hidl_string;
@@ -230,6 +232,7 @@ class SensorsTestSharedMemory {
   native_handle_t* mNativeHandle;
   size_t mSize;
   char* mBuffer;
+  std::unique_ptr<GrallocWrapper> mGrallocWrapper;
 
   DISALLOW_COPY_AND_ASSIGN(SensorsTestSharedMemory);
 };
@@ -265,6 +268,7 @@ std::vector<Event> SensorsTestSharedMemory::parseEvents(int64_t lastCounter, siz
   while (offset + kEventSize <= mSize) {
     int64_t atomicCounter = *reinterpret_cast<uint32_t *>(mBuffer + offset + kOffsetAtomicCounter);
     if (atomicCounter <= lastCounter) {
+      ALOGV("atomicCounter = %" PRId64 ", lastCounter = %" PRId64, atomicCounter, lastCounter);
       break;
     }
 
@@ -324,7 +328,34 @@ SensorsTestSharedMemory::SensorsTestSharedMemory(SharedMemType type, size_t size
       break;
     }
     case SharedMemType::GRALLOC: {
+      mGrallocWrapper = std::make_unique<GrallocWrapper>();
+      if (mGrallocWrapper->getAllocator() == nullptr || mGrallocWrapper->getMapper() == nullptr) {
+        break;
+      }
+      using android::hardware::graphics::common::V1_0::BufferUsage;
+      using android::hardware::graphics::common::V1_0::PixelFormat;
+      mapper2::IMapper::BufferDescriptorInfo buf_desc_info = {
+        .width = static_cast<uint32_t>(size),
+        .height = 1,
+        .layerCount = 1,
+        .usage = static_cast<uint64_t> (BufferUsage::SENSOR_DIRECT_DATA |
+            BufferUsage::CPU_READ_OFTEN),
+        .format = PixelFormat::BLOB
+      };
 
+      handle = const_cast<native_handle_t *>(mGrallocWrapper->allocate(buf_desc_info));
+      if (handle != nullptr) {
+        mapper2::IMapper::Rect region{0, 0,
+            static_cast<int32_t>(buf_desc_info.width),
+            static_cast<int32_t>(buf_desc_info.height)};
+        buffer = static_cast<char *>
+                (mGrallocWrapper->lock(handle, buf_desc_info.usage, region, /*fence=*/-1));
+        if (buffer != nullptr) {
+          break;
+        }
+        mGrallocWrapper->freeBuffer(handle);
+        handle = nullptr;
+      }
       break;
     }
     default:
@@ -347,6 +378,16 @@ SensorsTestSharedMemory::~SensorsTestSharedMemory() {
 
         ::native_handle_close(mNativeHandle);
         ::native_handle_delete(mNativeHandle);
+
+        mNativeHandle = nullptr;
+        mSize = 0;
+      }
+      break;
+    }
+    case SharedMemType::GRALLOC: {
+      if (mSize != 0) {
+        mGrallocWrapper->unlock(mNativeHandle);
+        mGrallocWrapper->freeBuffer(mNativeHandle);
 
         mNativeHandle = nullptr;
         mSize = 0;
@@ -1223,7 +1264,7 @@ TEST_F(SensorsHidlTest, MagnetometerBatchingOperation) {
 void SensorsHidlTest::testDirectReportOperation(
     SensorType type, SharedMemType memType, RateLevel rate, const SensorEventsChecker &checker) {
   constexpr size_t kEventSize = static_cast<size_t>(SensorsEventFormatOffset::TOTAL_LENGTH);
-  constexpr size_t kNEvent = 500;
+  constexpr size_t kNEvent = 4096;
   constexpr size_t kMemSize = kEventSize * kNEvent;
 
   constexpr float kNormalNominal = 50;
@@ -1377,6 +1418,60 @@ TEST_F(SensorsHidlTest, MagnetometerAshmemDirectReportOperationFast) {
 TEST_F(SensorsHidlTest, MagnetometerAshmemDirectReportOperationVeryFast) {
   testDirectReportOperation(
       SensorType::MAGNETIC_FIELD, SharedMemType::ASHMEM, RateLevel::VERY_FAST, NullChecker());
+}
+
+// Test sensor event direct report with gralloc for accel sensor at normal rate
+TEST_F(SensorsHidlTest, AccelerometerGrallocDirectReportOperationNormal) {
+  testDirectReportOperation(SensorType::ACCELEROMETER, SharedMemType::GRALLOC, RateLevel::NORMAL,
+                            sAccelNormChecker);
+}
+
+// Test sensor event direct report with gralloc for accel sensor at fast rate
+TEST_F(SensorsHidlTest, AccelerometerGrallocDirectReportOperationFast) {
+  testDirectReportOperation(SensorType::ACCELEROMETER, SharedMemType::GRALLOC, RateLevel::FAST,
+                            sAccelNormChecker);
+}
+
+// Test sensor event direct report with gralloc for accel sensor at very fast rate
+TEST_F(SensorsHidlTest, AccelerometerGrallocDirectReportOperationVeryFast) {
+  testDirectReportOperation(SensorType::ACCELEROMETER, SharedMemType::GRALLOC, RateLevel::VERY_FAST,
+                            sAccelNormChecker);
+}
+
+// Test sensor event direct report with gralloc for gyro sensor at normal rate
+TEST_F(SensorsHidlTest, GyroscopeGrallocDirectReportOperationNormal) {
+  testDirectReportOperation(SensorType::GYROSCOPE, SharedMemType::GRALLOC, RateLevel::NORMAL,
+                            sGyroNormChecker);
+}
+
+// Test sensor event direct report with gralloc for gyro sensor at fast rate
+TEST_F(SensorsHidlTest, GyroscopeGrallocDirectReportOperationFast) {
+  testDirectReportOperation(SensorType::GYROSCOPE, SharedMemType::GRALLOC, RateLevel::FAST,
+                            sGyroNormChecker);
+}
+
+// Test sensor event direct report with gralloc for gyro sensor at very fast rate
+TEST_F(SensorsHidlTest, GyroscopeGrallocDirectReportOperationVeryFast) {
+  testDirectReportOperation(SensorType::GYROSCOPE, SharedMemType::GRALLOC, RateLevel::VERY_FAST,
+                            sGyroNormChecker);
+}
+
+// Test sensor event direct report with gralloc for mag sensor at normal rate
+TEST_F(SensorsHidlTest, MagnetometerGrallocDirectReportOperationNormal) {
+  testDirectReportOperation(SensorType::MAGNETIC_FIELD, SharedMemType::GRALLOC, RateLevel::NORMAL,
+                            NullChecker());
+}
+
+// Test sensor event direct report with gralloc for mag sensor at fast rate
+TEST_F(SensorsHidlTest, MagnetometerGrallocDirectReportOperationFast) {
+  testDirectReportOperation(SensorType::MAGNETIC_FIELD, SharedMemType::GRALLOC, RateLevel::FAST,
+                            NullChecker());
+}
+
+// Test sensor event direct report with gralloc for mag sensor at very fast rate
+TEST_F(SensorsHidlTest, MagnetometerGrallocDirectReportOperationVeryFast) {
+  testDirectReportOperation(
+      SensorType::MAGNETIC_FIELD, SharedMemType::GRALLOC, RateLevel::VERY_FAST, NullChecker());
 }
 
 int main(int argc, char **argv) {
