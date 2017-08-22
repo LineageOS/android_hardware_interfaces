@@ -30,6 +30,7 @@ cc_test {
         "libxml2",
     ],
     shared_libs: [
+        "libeffectsconfig",
         "libicuuc",
     ],
 }
