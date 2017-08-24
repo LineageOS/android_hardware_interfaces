@@ -296,6 +296,9 @@ Return<android::hardware::media::omx::V1_0::Status> setVideoPortFormat(
 Return<android::hardware::media::omx::V1_0::Status> setAudioPortFormat(
     sp<IOmxNode> omxNode, OMX_U32 portIndex, OMX_AUDIO_CODINGTYPE eEncoding);
 
+void allocateBuffer(sp<IOmxNode> omxNode, BufferInfo* buffer, OMX_U32 portIndex,
+                    OMX_U32 nBufferSize, PortMode portMode);
+
 void allocatePortBuffers(sp<IOmxNode> omxNode,
                          android::Vector<BufferInfo>* buffArray,
                          OMX_U32 portIndex,

@@ -187,6 +187,66 @@ Return<android::hardware::media::omx::V1_0::Status> setAudioPortFormat(
 }
 
 // allocate buffers needed on a component port
+void allocateBuffer(sp<IOmxNode> omxNode, BufferInfo* buffer, OMX_U32 portIndex,
+                    OMX_U32 nBufferSize, PortMode portMode) {
+    android::hardware::media::omx::V1_0::Status status;
+
+    if (portMode == PortMode::PRESET_SECURE_BUFFER) {
+        buffer->owner = client;
+        buffer->omxBuffer.type = CodecBuffer::Type::NATIVE_HANDLE;
+        omxNode->allocateSecureBuffer(
+            portIndex, nBufferSize,
+            [&status, &buffer](
+                android::hardware::media::omx::V1_0::Status _s, uint32_t id,
+                ::android::hardware::hidl_handle const& nativeHandle) {
+                status = _s;
+                buffer->id = id;
+                buffer->omxBuffer.nativeHandle = nativeHandle;
+            });
+        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    } else if (portMode == PortMode::PRESET_BYTE_BUFFER ||
+               portMode == PortMode::DYNAMIC_ANW_BUFFER) {
+        sp<IAllocator> allocator = IAllocator::getService("ashmem");
+        EXPECT_NE(allocator.get(), nullptr);
+
+        buffer->owner = client;
+        buffer->omxBuffer.type = CodecBuffer::Type::SHARED_MEM;
+        buffer->omxBuffer.attr.preset.rangeOffset = 0;
+        buffer->omxBuffer.attr.preset.rangeLength = 0;
+        bool success = false;
+        if (portMode != PortMode::PRESET_BYTE_BUFFER) {
+            nBufferSize = sizeof(android::VideoNativeMetadata);
+        }
+        allocator->allocate(
+            nBufferSize,
+            [&success, &buffer](bool _s,
+                                ::android::hardware::hidl_memory const& mem) {
+                success = _s;
+                buffer->omxBuffer.sharedMemory = mem;
+            });
+        ASSERT_EQ(success, true);
+        ASSERT_EQ(buffer->omxBuffer.sharedMemory.size(), nBufferSize);
+        buffer->mMemory = mapMemory(buffer->omxBuffer.sharedMemory);
+        ASSERT_NE(buffer->mMemory, nullptr);
+        if (portMode == PortMode::DYNAMIC_ANW_BUFFER) {
+            android::VideoNativeMetadata* metaData =
+                static_cast<android::VideoNativeMetadata*>(
+                    static_cast<void*>(buffer->mMemory->getPointer()));
+            metaData->nFenceFd = -1;
+            buffer->slot = -1;
+        }
+        omxNode->useBuffer(
+            portIndex, buffer->omxBuffer,
+            [&status, &buffer](android::hardware::media::omx::V1_0::Status _s,
+                               uint32_t id) {
+                status = _s;
+                buffer->id = id;
+            });
+        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    }
+}
+
+// allocate buffers needed on a component port
 void allocatePortBuffers(sp<IOmxNode> omxNode,
                          android::Vector<BufferInfo>* buffArray,
                          OMX_U32 portIndex, PortMode portMode) {
@@ -199,70 +259,11 @@ void allocatePortBuffers(sp<IOmxNode> omxNode,
                           &portDef);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 
-    if (portMode == PortMode::PRESET_SECURE_BUFFER) {
-        for (size_t i = 0; i < portDef.nBufferCountActual; i++) {
-            BufferInfo buffer;
-            buffer.owner = client;
-            buffer.omxBuffer.type = CodecBuffer::Type::NATIVE_HANDLE;
-            omxNode->allocateSecureBuffer(
-                portIndex, portDef.nBufferSize,
-                [&status, &buffer](
-                    android::hardware::media::omx::V1_0::Status _s, uint32_t id,
-                    ::android::hardware::hidl_handle const& nativeHandle) {
-                    status = _s;
-                    buffer.id = id;
-                    buffer.omxBuffer.nativeHandle = nativeHandle;
-                });
-            buffArray->push(buffer);
-            ASSERT_EQ(status,
-                      ::android::hardware::media::omx::V1_0::Status::OK);
-        }
-    } else if (portMode == PortMode::PRESET_BYTE_BUFFER ||
-               portMode == PortMode::DYNAMIC_ANW_BUFFER) {
-        sp<IAllocator> allocator = IAllocator::getService("ashmem");
-        EXPECT_NE(allocator.get(), nullptr);
-
-        for (size_t i = 0; i < portDef.nBufferCountActual; i++) {
-            BufferInfo buffer;
-            buffer.owner = client;
-            buffer.omxBuffer.type = CodecBuffer::Type::SHARED_MEM;
-            buffer.omxBuffer.attr.preset.rangeOffset = 0;
-            buffer.omxBuffer.attr.preset.rangeLength = 0;
-            bool success = false;
-            if (portMode != PortMode::PRESET_BYTE_BUFFER) {
-                portDef.nBufferSize = sizeof(android::VideoNativeMetadata);
-            }
-            allocator->allocate(
-                portDef.nBufferSize,
-                [&success, &buffer](
-                    bool _s, ::android::hardware::hidl_memory const& mem) {
-                    success = _s;
-                    buffer.omxBuffer.sharedMemory = mem;
-                });
-            ASSERT_EQ(success, true);
-            ASSERT_EQ(buffer.omxBuffer.sharedMemory.size(),
-                      portDef.nBufferSize);
-            buffer.mMemory = mapMemory(buffer.omxBuffer.sharedMemory);
-            ASSERT_NE(buffer.mMemory, nullptr);
-            if (portMode == PortMode::DYNAMIC_ANW_BUFFER) {
-                android::VideoNativeMetadata* metaData =
-                    static_cast<android::VideoNativeMetadata*>(
-                        static_cast<void*>(buffer.mMemory->getPointer()));
-                metaData->nFenceFd = -1;
-                buffer.slot = -1;
-            }
-            omxNode->useBuffer(
-                portIndex, buffer.omxBuffer,
-                [&status, &buffer](
-                    android::hardware::media::omx::V1_0::Status _s,
-                    uint32_t id) {
-                    status = _s;
-                    buffer.id = id;
-                });
-            buffArray->push(buffer);
-            ASSERT_EQ(status,
-                      ::android::hardware::media::omx::V1_0::Status::OK);
-        }
+    for (size_t i = 0; i < portDef.nBufferCountActual; i++) {
+        BufferInfo buffer;
+        allocateBuffer(omxNode, &buffer, portIndex, portDef.nBufferSize,
+                       portMode);
+        buffArray->push(buffer);
     }
 }
 
