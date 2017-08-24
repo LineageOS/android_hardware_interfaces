@@ -15,9 +15,9 @@
 futex: 1
 # ioctl: arg1 == BINDER_WRITE_READ
 ioctl: arg1 == 0xc0306201
-ioctl: 1
 # prctl: arg0 == PR_SET_NAME || arg0 == PR_SET_VMA || arg0 == PR_SET_TIMERSLACK
-prctl: arg0 == 15 || arg0 == 0x53564d41 || arg0 == 29
+# || arg0 == PR_GET_NO_NEW_PRIVS # used by crash_dump
+prctl: arg0 == 15 || arg0 == 0x53564d41 || arg0 == 29 || arg0 == 39
 openat: 1
 mmap: 1
 mprotect: 1
@@ -38,3 +38,13 @@ exit: 1
 exit_group: 1
 rt_sigreturn: 1
 getrlimit: 1
+madvise: 1
+
+# used during process crash by crash_dump to dump process info
+rt_sigprocmask: 1
+rt_sigaction: 1
+# socket: arg0 == AF_LOCAL
+socket: arg0 == 1
+connect: 1
+recvmsg: 1
+rt_tgsigqueueinfo: 1
