@@ -162,8 +162,10 @@ bool VendorInterface::Initialize(
     InitializeCompleteCallback initialize_complete_cb,
     PacketReadCallback event_cb, PacketReadCallback acl_cb,
     PacketReadCallback sco_cb) {
-  LOG_ALWAYS_FATAL_IF(g_vendor_interface, "%s: No previous Shutdown()?",
-                      __func__);
+  if (g_vendor_interface) {
+    ALOGE("%s: No previous Shutdown()?", __func__);
+    return false;
+  }
   g_vendor_interface = new VendorInterface();
   return g_vendor_interface->Open(initialize_complete_cb, event_cb, acl_cb,
                                   sco_cb);
