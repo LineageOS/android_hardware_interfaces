@@ -40,6 +40,7 @@ cc_library_static {
     vendor: true,
     defaults: ["vhal_v2_0_defaults"],
     srcs: [
+        "common/src/Obd2SensorStore.cpp",
         "common/src/SubscriptionManager.cpp",
         "common/src/VehicleHalManager.cpp",
         "common/src/VehicleObjectPool.cpp",
