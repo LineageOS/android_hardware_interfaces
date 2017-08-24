@@ -674,39 +674,16 @@ void decodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                    bool signalEOS = true) {
     android::hardware::media::omx::V1_0::Status status;
     Message msg;
-
-    // dispatch output buffers
-    for (size_t i = 0; i < oBuffer->size(); i++) {
-        dispatchOutputBuffer(omxNode, oBuffer, i, oPortMode);
-    }
-    // dispatch input buffers
+    size_t index;
     uint32_t flags = 0;
     int frameID = offset;
-    for (size_t i = 0; (i < iBuffer->size()) && (frameID < (int)Info->size()) &&
-                       (frameID < (offset + range));
-         i++) {
-        char* ipBuffer = static_cast<char*>(
-            static_cast<void*>((*iBuffer)[i].mMemory->getPointer()));
-        ASSERT_LE((*Info)[frameID].bytesCount,
-                  static_cast<int>((*iBuffer)[i].mMemory->getSize()));
-        eleStream.read(ipBuffer, (*Info)[frameID].bytesCount);
-        ASSERT_EQ(eleStream.gcount(), (*Info)[frameID].bytesCount);
-        flags = (*Info)[frameID].flags;
-        if (signalEOS && ((frameID == (int)Info->size() - 1) ||
-                          (frameID == (offset + range - 1))))
-            flags |= OMX_BUFFERFLAG_EOS;
-        dispatchInputBuffer(omxNode, iBuffer, i, (*Info)[frameID].bytesCount,
-                            flags, (*Info)[frameID].timestamp);
-        frameID++;
-    }
-
     int timeOut = TIMEOUT_COUNTER_Q;
     bool iQueued, oQueued;
+
     while (1) {
         iQueued = oQueued = false;
         status =
             observer->dequeueMessage(&msg, DEFAULT_TIMEOUT_Q, iBuffer, oBuffer);
-
         // Port Reconfiguration
         if (status == android::hardware::media::omx::V1_0::Status::OK &&
             msg.type == Message::Type::EVENT) {
@@ -718,7 +695,6 @@ void decodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         if (frameID == (int)Info->size() || frameID == (offset + range)) break;
 
         // Dispatch input buffer
-        size_t index = 0;
         if ((index = getEmptyBufferID(iBuffer)) < iBuffer->size()) {
             char* ipBuffer = static_cast<char*>(
                 static_cast<void*>((*iBuffer)[index].mMemory->getPointer()));
@@ -727,6 +703,11 @@ void decodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
             eleStream.read(ipBuffer, (*Info)[frameID].bytesCount);
             ASSERT_EQ(eleStream.gcount(), (*Info)[frameID].bytesCount);
             flags = (*Info)[frameID].flags;
+            // Indicate to omx core that the buffer contains a full frame worth
+            // of data
+            flags |= OMX_BUFFERFLAG_ENDOFFRAME;
+            // Indicate the omx core that this is the last buffer it needs to
+            // process
             if (signalEOS && ((frameID == (int)Info->size() - 1) ||
                               (frameID == (offset + range - 1))))
                 flags |= OMX_BUFFERFLAG_EOS;
@@ -736,10 +717,12 @@ void decodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
             frameID++;
             iQueued = true;
         }
+        // Dispatch output buffer
         if ((index = getEmptyBufferID(oBuffer)) < oBuffer->size()) {
             dispatchOutputBuffer(omxNode, oBuffer, index, oPortMode);
             oQueued = true;
         }
+        // Reset Counters when either input or output buffer is dispatched
         if (iQueued || oQueued)
             timeOut = TIMEOUT_COUNTER_Q;
         else
