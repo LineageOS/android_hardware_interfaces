@@ -14,38 +14,37 @@
  * limitations under the License.
  */
 
-#ifndef android_hardware_automotive_vehicle_V2_1_Obd2SensorStore_H_
-#define android_hardware_automotive_vehicle_V2_1_Obd2SensorStore_H_
+#ifndef android_hardware_automotive_vehicle_V2_0_Obd2SensorStore_H_
+#define android_hardware_automotive_vehicle_V2_0_Obd2SensorStore_H_
 
 #include <vector>
 
-#include <android/hardware/automotive/vehicle/2.1/types.h>
+#include <android/hardware/automotive/vehicle/2.0/types.h>
 
 namespace android {
 namespace hardware {
 namespace automotive {
 namespace vehicle {
-namespace V2_1 {
+namespace V2_0 {
 
 // This class wraps all the logic required to create an OBD2 frame.
 // It allows storing sensor values, setting appropriate bitmasks as needed,
 // and returning appropriately laid out storage of sensor values suitable
 // for being returned via a VehicleHal implementation.
 class Obd2SensorStore {
-public:
+   public:
     // Creates a sensor storage with a given number of vendor-specific sensors.
-    Obd2SensorStore(size_t numVendorIntegerSensors,
-                    size_t numVendorFloatSensors);
+    Obd2SensorStore(size_t numVendorIntegerSensors, size_t numVendorFloatSensors);
 
     // Stores an integer-valued sensor.
-    V2_0::StatusCode setIntegerSensor(DiagnosticIntegerSensorIndex index, int32_t value);
+    StatusCode setIntegerSensor(DiagnosticIntegerSensorIndex index, int32_t value);
     // Stores an integer-valued sensor.
-    V2_0::StatusCode setIntegerSensor(size_t index, int32_t value);
+    StatusCode setIntegerSensor(size_t index, int32_t value);
 
     // Stores a float-valued sensor.
-    V2_0::StatusCode setFloatSensor(DiagnosticFloatSensorIndex index, float value);
+    StatusCode setFloatSensor(DiagnosticFloatSensorIndex index, float value);
     // Stores a float-valued sensor.
-    V2_0::StatusCode setFloatSensor(size_t index, float value);
+    StatusCode setFloatSensor(size_t index, float value);
 
     // Returns a vector that contains all integer sensors stored.
     const std::vector<int32_t>& getIntegerSensors() const;
@@ -55,11 +54,11 @@ public:
     const std::vector<uint8_t>& getSensorsBitmask() const;
 
     // Given a stringValue, fill in a VehiclePropValue
-    void fillPropValue(const std::string& dtc, V2_0::VehiclePropValue *propValue) const;
+    void fillPropValue(const std::string& dtc, VehiclePropValue* propValue) const;
 
-private:
+   private:
     class BitmaskInVector {
-    public:
+       public:
         BitmaskInVector(size_t numBits = 0);
         void resize(size_t numBits);
         bool get(size_t index) const;
@@ -67,7 +66,7 @@ private:
 
         const std::vector<uint8_t>& getBitmask() const;
 
-    private:
+       private:
         std::vector<uint8_t> mStorage;
     };
 
@@ -76,7 +75,7 @@ private:
     BitmaskInVector mSensorsBitmask;
 };
 
-}  // namespace V2_1
+}  // namespace V2_0
 }  // namespace vehicle
 }  // namespace automotive
 }  // namespace hardware
