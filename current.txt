@@ -189,6 +189,7 @@ fe3c3c2f572b72f15f8594c538b0577bd5c28722c31879cfe6231330cddb6747 android.hardwar
 
 # ABI preserving changes to HALs released in Android O
 
+05e0edf31db5b3ae19047d87059545cc2f836023edf8f9d969319e15e3485158 android.hardware.automotive.vehicle@2.0::types
 150a338ce11fcec70757c9675d83cf6a5d7b40d0c812741b91671fecce59eac9 android.hardware.broadcastradio@1.0::types
 dc7e6d4f537b9943e27edc4f86c5a03bb643b18f18f866f8c3c71c0ac4ea8cbc android.hardware.broadcastradio@1.0::types
 760485232f6cce07f8bb05e3475509956996b702f77415ee5bff05e2ec5a5bcc android.hardware.dumpstate@1.0::IDumpstateDevice
@@ -224,4 +225,3 @@ c3354ab0d381a236c12dc486ad4b6bec28c979d26748b4661f12ede36f392808 android.hardwar
 b18caefefcc765092412285d776234fcf213b73bdf07ae1b67a5f71b2d2464e3 android.hardware.wifi.offload@1.0::types
 c26473e2e4a00af43e28a0ddf9002e5062a7d0940429e5efb6e5513a8abcb75c android.hardware.wifi@1.1::IWifi
 b056e1defab4071584214584057d0bc73a613081bf1152590549649d4582c13c android.hardware.wifi@1.1::IWifiChip
-05e0edf31db5b3ae19047d87059545cc2f836023edf8f9d969319e15e3485158 android.hardware.automotive.vehicle@2.0::types
