@@ -82,6 +82,12 @@ void H4Protocol::OnDataReady(int fd) {
       }
     }
     hci_packet_type_ = static_cast<HciPacketType>(buffer[0]);
+    if (hci_packet_type_ != HCI_PACKET_TYPE_ACL_DATA &&
+        hci_packet_type_ != HCI_PACKET_TYPE_SCO_DATA &&
+        hci_packet_type_ != HCI_PACKET_TYPE_EVENT) {
+      LOG_ALWAYS_FATAL("%s: Unimplemented packet type %d", __func__,
+                       static_cast<int>(hci_packet_type_));
+    }
   } else {
     hci_packetizer_.OnDataReady(fd, hci_packet_type_);
   }

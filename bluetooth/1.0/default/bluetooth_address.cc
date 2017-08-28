@@ -45,15 +45,12 @@ bool BluetoothAddress::string_to_bytes(const char* addr_str, uint8_t* addr) {
 
 bool BluetoothAddress::get_local_address(uint8_t* local_addr) {
   char property[PROPERTY_VALUE_MAX] = {0};
-  bool valid_bda = false;
 
   // Get local bdaddr storage path from a system property.
   if (property_get(PROPERTY_BT_BDADDR_PATH, property, NULL)) {
-    int addr_fd;
-
     ALOGD("%s: Trying %s", __func__, property);
 
-    addr_fd = open(property, O_RDONLY);
+    int addr_fd = open(property, O_RDONLY);
     if (addr_fd != -1) {
       char address[kStringLength + 1] = {0};
       int bytes_read = read(addr_fd, address, kStringLength);
@@ -70,8 +67,8 @@ bool BluetoothAddress::get_local_address(uint8_t* local_addr) {
       const uint8_t zero_bdaddr[kBytes] = {0, 0, 0, 0, 0, 0};
       if ((string_to_bytes(address, local_addr)) &&
           (memcmp(local_addr, zero_bdaddr, kBytes) != 0)) {
-        valid_bda = true;
         ALOGD("%s: Got Factory BDA %s", __func__, address);
+        return true;
       } else {
         ALOGE("%s: Got Invalid BDA '%s' from %s", __func__, address, property);
       }
@@ -79,46 +76,18 @@ bool BluetoothAddress::get_local_address(uint8_t* local_addr) {
   }
 
   // No BDADDR found in the file. Look for BDA in a factory property.
-  if (!valid_bda && property_get(FACTORY_BDADDR_PROPERTY, property, NULL) &&
+  if (property_get(FACTORY_BDADDR_PROPERTY, property, NULL) &&
       string_to_bytes(property, local_addr)) {
-    valid_bda = true;
+    return true;
   }
 
   // No factory BDADDR found. Look for a previously stored BDA.
-  if (!valid_bda && property_get(PERSIST_BDADDR_PROPERTY, property, NULL) &&
+  if (property_get(PERSIST_BDADDR_PROPERTY, property, NULL) &&
       string_to_bytes(property, local_addr)) {
-    valid_bda = true;
+    return true;
   }
 
-  /* Generate new BDA if necessary */
-  if (!valid_bda) {
-    char bdstr[kStringLength + 1];
-
-    /* No autogen BDA. Generate one now. */
-    local_addr[0] = 0x22;
-    local_addr[1] = 0x22;
-    local_addr[2] = (uint8_t)rand();
-    local_addr[3] = (uint8_t)rand();
-    local_addr[4] = (uint8_t)rand();
-    local_addr[5] = (uint8_t)rand();
-
-    /* Convert to ascii, and store as a persistent property */
-    bytes_to_string(local_addr, bdstr);
-
-    ALOGE("%s: No preset BDA! Generating BDA: %s for prop %s", __func__,
-          (char*)bdstr, PERSIST_BDADDR_PROPERTY);
-    ALOGE("%s: This is a bug in the platform!  Please fix!", __func__);
-
-    if (property_set(PERSIST_BDADDR_PROPERTY, (char*)bdstr) < 0) {
-      ALOGE("%s: Failed to set random BDA in prop %s", __func__,
-            PERSIST_BDADDR_PROPERTY);
-      valid_bda = false;
-    } else {
-      valid_bda = true;
-    }
-  }
-
-  return valid_bda;
+  return false;
 }
 
 }  // namespace implementation
