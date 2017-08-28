@@ -73,7 +73,7 @@
     </hal>
     <hal format="hidl" optional="false">
         <name>android.hardware.configstore</name>
-        <version>1.0-1</version>
+        <version>1.0</version>
         <interface>
             <name>ISurfaceFlingerConfigs</name>
             <instance>default</instance>
@@ -319,7 +319,4 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <kernel version="4.9.0" />
-    <kernel version="4.4.0" />
-    <kernel version="3.18.0" />
 </compatibility-matrix>

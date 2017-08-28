@@ -19,7 +19,7 @@
 namespace android {
 namespace hardware {
 namespace configstore {
-namespace V1_1 {
+namespace V1_0 {
 namespace implementation {
 
 // Methods from ::android::hardware::configstore::V1_0::ISurfaceFlingerConfigs
@@ -139,13 +139,10 @@ Return<void> SurfaceFlingerConfigs::startGraphicsAllocatorService(
     return Void();
 }
 
-// Methods from ::android::hardware::configstore::V1_1::ISurfaceFlingerConfigs
-// follow.
-
 // Methods from ::android::hidl::base::V1_0::IBase follow.
 
 }  // namespace implementation
-}  // namespace V1_1
+}  // namespace V1_0
 }  // namespace configstore
 }  // namespace hardware
 }  // namespace android

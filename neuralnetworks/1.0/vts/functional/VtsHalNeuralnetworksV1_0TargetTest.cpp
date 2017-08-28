@@ -89,6 +89,7 @@ Model createTestModel() {
     const uint32_t operand1 = 0;
     const uint32_t operand2 = 1;
     const uint32_t operand3 = 2;
+    const uint32_t operand4 = 3;
 
     const std::vector<Operand> operands = {
         {
@@ -112,6 +113,16 @@ Model createTestModel() {
                          .length = size},
         },
         {
+            .type = OperandType::INT32,
+            .dimensions = {},
+            .numberOfConsumers = 1,
+            .scale = 0.0f,
+            .zeroPoint = 0,
+            .location = {.poolIndex = static_cast<uint32_t>(LocationValues::LOCATION_SAME_BLOCK),
+                         .offset = size,
+                         .length = sizeof(int32_t)},
+        },
+        {
             .type = OperandType::TENSOR_FLOAT32,
             .dimensions = {1, 2, 2, 1},
             .numberOfConsumers = 0,
@@ -125,15 +136,19 @@ Model createTestModel() {
 
     const std::vector<Operation> operations = {{
         .opTuple = {OperationType::ADD, OperandType::TENSOR_FLOAT32},
-        .inputs = {operand1, operand2},
-        .outputs = {operand3},
+        .inputs = {operand1, operand2, operand3},
+        .outputs = {operand4},
     }};
 
     const std::vector<uint32_t> inputIndexes = {operand1};
-    const std::vector<uint32_t> outputIndexes = {operand3};
-    const std::vector<uint8_t> operandValues(reinterpret_cast<const uint8_t*>(operand2Data.data()),
-                                             reinterpret_cast<const uint8_t*>(operand2Data.data()) +
-                                                 operand2Data.size() * sizeof(float));
+    const std::vector<uint32_t> outputIndexes = {operand4};
+    std::vector<uint8_t> operandValues(
+        reinterpret_cast<const uint8_t*>(operand2Data.data()),
+        reinterpret_cast<const uint8_t*>(operand2Data.data()) + size);
+    int32_t activation[1] = {0};
+    operandValues.insert(operandValues.end(), reinterpret_cast<const uint8_t*>(&activation[0]),
+                         reinterpret_cast<const uint8_t*>(&activation[1]));
+
     const std::vector<hidl_memory> pools = {};
 
     return {
