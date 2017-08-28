@@ -185,9 +185,8 @@ WifiStatus Wifi::initializeLegacyHal() {
 WifiStatus Wifi::stopLegacyHalAndDeinitializeModeController(
     /* NONNULL */ std::unique_lock<std::recursive_mutex>* lock) {
   run_state_ = RunState::STOPPING;
-  const auto on_complete_callback_ = [&]() { run_state_ = RunState::STOPPED; };
   legacy_hal::wifi_error legacy_status =
-      legacy_hal_->stop(lock, on_complete_callback_);
+      legacy_hal_->stop(lock, [&]() { run_state_ = RunState::STOPPED; });
   if (legacy_status != legacy_hal::WIFI_SUCCESS) {
     LOG(ERROR) << "Failed to stop legacy HAL: "
                << legacyErrorToString(legacy_status);
