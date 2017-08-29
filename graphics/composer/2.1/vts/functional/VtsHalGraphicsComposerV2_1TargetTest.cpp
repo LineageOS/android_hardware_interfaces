@@ -51,8 +51,6 @@ using android::hardware::graphics::mapper::V2_0::IMapper;
 using android::hardware::graphics::mapper::V2_0::tests::Gralloc;
 using GrallocError = android::hardware::graphics::mapper::V2_0::Error;
 
-const char* kHalFQName = "android.hardware.graphics.composer@2.1::IComposer";
-
 // Test environment for graphics.composer
 class GraphicsComposerHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
    public:
@@ -62,7 +60,7 @@ class GraphicsComposerHidlEnvironment : public ::testing::VtsHalHidlTargetTestEn
         return instance;
     }
 
-    virtual void registerTestServices() override { registerTestService(kHalFQName); }
+    virtual void registerTestServices() override { registerTestService<IComposer>(); }
 
    private:
     GraphicsComposerHidlEnvironment() {}
@@ -75,7 +73,7 @@ class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
   void SetUp() override {
       ASSERT_NO_FATAL_FAILURE(
           mComposer = std::make_unique<Composer>(
-              GraphicsComposerHidlEnvironment::Instance()->getServiceName(kHalFQName)));
+              GraphicsComposerHidlEnvironment::Instance()->getServiceName<IComposer>()));
       ASSERT_NO_FATAL_FAILURE(mComposerClient = mComposer->createClient());
 
       mComposerCallback = new GraphicsComposerCallback;
