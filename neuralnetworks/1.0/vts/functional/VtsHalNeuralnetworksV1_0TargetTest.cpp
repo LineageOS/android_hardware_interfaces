@@ -40,13 +40,15 @@ NeuralnetworksHidlEnvironment* NeuralnetworksHidlEnvironment::getInstance() {
 }
 
 void NeuralnetworksHidlEnvironment::registerTestServices() {
-    registerTestService<IDevice>();
+    registerTestService("android.hardware.neuralnetworks", "1.0", "IDevice");
 }
 
 // The main test class for NEURALNETWORK HIDL HAL.
 void NeuralnetworksHidlTest::SetUp() {
-    device = ::testing::VtsHalHidlTargetTestBase::getService<IDevice>(
-        NeuralnetworksHidlEnvironment::getInstance());
+    std::string instance =
+        NeuralnetworksHidlEnvironment::getInstance()->getServiceName(IDevice::descriptor);
+    LOG(INFO) << "running vts test with instance: " << instance;
+    device = ::testing::VtsHalHidlTargetTestBase::getService<IDevice>(instance);
     ASSERT_NE(nullptr, device.get());
 }
 
