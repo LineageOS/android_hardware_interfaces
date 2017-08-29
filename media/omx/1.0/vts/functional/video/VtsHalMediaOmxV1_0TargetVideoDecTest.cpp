@@ -487,6 +487,21 @@ void portReconfiguration(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         ASSERT_EQ(msg.data.eventData.data1, kPortIndexOutput);
         if (msg.data.eventData.data2 == OMX_IndexParamPortDefinition ||
             msg.data.eventData.data2 == 0) {
+            // Components can send various kinds of port settings changed events
+            // all at once. Before committing to a full port reconfiguration,
+            // defer any events waiting in the queue to be addressed to a later
+            // point.
+            android::List<Message> msgQueueDefer;
+            while (1) {
+                status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT,
+                                                  iBuffer, oBuffer);
+                if (status !=
+                    android::hardware::media::omx::V1_0::Status::TIMED_OUT) {
+                    msgQueueDefer.push_back(msg);
+                    continue;
+                } else
+                    break;
+            }
             status = omxNode->sendCommand(
                 toRawCommandType(OMX_CommandPortDisable), kPortIndexOutput);
             ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
@@ -565,6 +580,16 @@ void portReconfiguration(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                 ASSERT_EQ(msg.type, Message::Type::EVENT);
                 ASSERT_EQ(msg.data.eventData.data1, OMX_CommandPortEnable);
                 ASSERT_EQ(msg.data.eventData.data2, kPortIndexOutput);
+
+                // Push back deferred messages to the list
+                android::List<Message>::iterator it = msgQueueDefer.begin();
+                while (it != msgQueueDefer.end()) {
+                    status = omxNode->dispatchMessage(*it);
+                    ASSERT_EQ(
+                        status,
+                        ::android::hardware::media::omx::V1_0::Status::OK);
+                    it++;
+                }
 
                 // dispatch output buffers
                 for (size_t i = 0; i < oBuffer->size(); i++) {
