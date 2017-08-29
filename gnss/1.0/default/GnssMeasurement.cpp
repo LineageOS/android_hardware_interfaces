@@ -182,7 +182,6 @@ void GnssMeasurement::gpsMeasurementCb(GpsData* gpsData) {
 
     auto clockVal = gpsData->clock;
     static uint32_t discontinuity_count_to_handle_old_clock_type = 0;
-    auto flags = clockVal.flags;
 
     gnssData.clock.leapSecond = clockVal.leap_second;
     /*
@@ -205,7 +204,7 @@ void GnssMeasurement::gpsMeasurementCb(GpsData* gpsData) {
             break;
         case GPS_CLOCK_TYPE_GPS_TIME:
             // GPS time, need to convert.
-            flags |= GPS_CLOCK_HAS_FULL_BIAS;
+            clockVal.flags |= GPS_CLOCK_HAS_FULL_BIAS;
             clockVal.full_bias_ns = clockVal.time_ns;
             clockVal.time_ns = 0;
             gnssData.clock.hwClockDiscontinuityCount =
