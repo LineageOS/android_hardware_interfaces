@@ -105,6 +105,9 @@ int AsyncFdWatcher::stopThread() {
     timeout_cb_ = nullptr;
   }
 
+  close(notification_listen_fd_);
+  close(notification_write_fd_);
+
   return 0;
 }
 
