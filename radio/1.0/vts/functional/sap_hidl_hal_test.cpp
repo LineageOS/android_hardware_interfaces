@@ -34,19 +34,19 @@ void SapHidlTest::notify() {
     std::unique_lock<std::mutex> lock(mtx);
     count++;
     cv.notify_one();
-    }
+}
 
-    std::cv_status SapHidlTest::wait() {
-        std::unique_lock<std::mutex> lock(mtx);
+std::cv_status SapHidlTest::wait() {
+    std::unique_lock<std::mutex> lock(mtx);
 
-        std::cv_status status = std::cv_status::no_timeout;
-        auto now = std::chrono::system_clock::now();
-        while (count == 0) {
-            status = cv.wait_until(lock, now + std::chrono::seconds(TIMEOUT_PERIOD));
-            if (status == std::cv_status::timeout) {
-                return status;
-            }
+    std::cv_status status = std::cv_status::no_timeout;
+    auto now = std::chrono::system_clock::now();
+    while (count == 0) {
+        status = cv.wait_until(lock, now + std::chrono::seconds(TIMEOUT_PERIOD));
+        if (status == std::cv_status::timeout) {
+            return status;
         }
-        count--;
-        return status;
     }
+    count--;
+    return status;
+}
