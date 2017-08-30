@@ -761,7 +761,7 @@ TEST_F(AudioDecHidlTest, DecodeTest) {
         eleInfo >> flags;
         eleInfo >> timestamp;
         Info.push_back({bytesCount, flags, timestamp});
-        if (flags != OMX_BUFFERFLAG_CODECCONFIG)
+        if (timestampDevTest && (flags != OMX_BUFFERFLAG_CODECCONFIG))
             timestampUslist.push_back(timestamp);
     }
     eleInfo.close();
@@ -803,7 +803,7 @@ TEST_F(AudioDecHidlTest, DecodeTest) {
     packedArgs audioArgs = {eEncoding, compName};
     testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag, nullptr,
             portReconfiguration, kPortIndexInput, kPortIndexOutput, &audioArgs);
-    EXPECT_EQ(timestampUslist.empty(), true);
+    if (timestampDevTest) EXPECT_EQ(timestampUslist.empty(), true);
     // set state to idle
     changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
     // set state to executing
