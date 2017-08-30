@@ -16,6 +16,7 @@
 package android.hardware.cas.native@1.0;
 
 import android.hardware.cas@1.0::IDescramblerBase;
+import android.hardware.cas@1.0::Status;
 
 /**
  * IDescrambler is the native plugin API for descrambling operations.

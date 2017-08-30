@@ -187,7 +187,7 @@ b12ef0bdd8a4d247a8a6e960b227ed32383f2b0241f55d67fcea6eff6a6737fa android.hardwar
 d8f0877ae1d321c1d884c7631dfe36cab0ec8a4b2863d4b687f85d3549a63bcc android.hardware.wifi.supplicant@1.0::ISupplicantStaNetworkCallback
 fe3c3c2f572b72f15f8594c538b0577bd5c28722c31879cfe6231330cddb6747 android.hardware.wifi.supplicant@1.0::types
 
-# ABI preserving changes to HALs released in Android O
+# ABI preserving changes to HALs during Android O MR1 (Initial Set)
 
 05e0edf31db5b3ae19047d87059545cc2f836023edf8f9d969319e15e3485158 android.hardware.automotive.vehicle@2.0::types
 150a338ce11fcec70757c9675d83cf6a5d7b40d0c812741b91671fecce59eac9 android.hardware.broadcastradio@1.0::types
@@ -227,8 +227,8 @@ b18caefefcc765092412285d776234fcf213b73bdf07ae1b67a5f71b2d2464e3 android.hardwar
 c26473e2e4a00af43e28a0ddf9002e5062a7d0940429e5efb6e5513a8abcb75c android.hardware.wifi@1.1::IWifi
 b056e1defab4071584214584057d0bc73a613081bf1152590549649d4582c13c android.hardware.wifi@1.1::IWifiChip
 
-# ABI preserving changes to HALs released in Android O MR1 (Initial Set)
-# None
+# ABI preserving changes to HALs during Android O MR1 (Final Set)
+05aa3de6130a9788fdb6f4d3cc57c3ea90f067e77a5e09d6a772ec7f6bca33d2 android.hardware.radio@1.1::IRadioResponse
 
 # HALs released in Android O MR1 (Final Set)
 044cb039378b8a0e36f40ff1e6ce04dc0d339da02095f968d5062a051e99d108 android.hardware.broadcastradio@1.1::types
@@ -243,10 +243,7 @@ bbcfc3f748b078f6a66c4e228084a679d30bd61bfde8bb7a91efd507b91c1bfd android.hardwar
 b80e1456b81f80032d0de7cb45652ac15af11e7474d520d757481ecaad796dff android.hardware.cas@1.0::ICasListener
 a432d6d9200248dc2126827bcd6cdea31dd65eff39b939f64585d27d915a5857 android.hardware.cas@1.0::IDescramblerBase
 86ba9c03978b79a742e990420bc5ced0673d25a939f82572996bef92621e2014 android.hardware.cas@1.0::IMediaCasService
-8ad23abc3f380c7f1d0f944a93a997417d7536b6a522dc88b2699ff5ef5db4ec android.hardware.cas.native@1.0::types
-71106c24093507954ce2aec243c8377e3ac54ebb9803c611e51620addf2af9a2 android.hardware.cas.native@1.0::IDescrambler
+503da837d1a67cbdb7c08a033e927e5430ae1b159d98bf72c6336b4dcc5e76f5 android.hardware.cas.native@1.0::types
+619600109232ed64b827c8a11beed8070b1827ae464547d7aa146cf0473b4bca android.hardware.cas.native@1.0::IDescrambler
 f4945e397b5dea41bb64518dfde59be71245d8a125fd1e0acffeb57ac7b08fed android.hardware.thermal@1.1::IThermal
 c8bc853546dd55584611def2a9fa1d99f657e3366c976d2f60fe6b8aa6d2cb87 android.hardware.thermal@1.1::IThermalCallback
-
-# ABI preserving changes to HALs released in Android O MR1 (Final Set)
-# None
