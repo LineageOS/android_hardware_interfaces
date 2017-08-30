@@ -62,6 +62,9 @@ Status toStatus(status_t legacyStatus) {
     case android::ERROR_CAS_DEVICE_REVOKED:
         status = Status::ERROR_CAS_DEVICE_REVOKED;
         break;
+    case android::ERROR_CAS_DECRYPT_UNIT_NOT_INITIALIZED:
+        status = Status::ERROR_CAS_DECRYPT_UNIT_NOT_INITIALIZED;
+        break;
     case android::ERROR_CAS_DECRYPT:
         status = Status::ERROR_CAS_DECRYPT;
         break;
