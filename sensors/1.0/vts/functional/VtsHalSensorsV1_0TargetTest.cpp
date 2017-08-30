@@ -561,7 +561,7 @@ class SensorsHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                               std::chrono::nanoseconds samplingPeriod,
                               std::chrono::seconds duration,
                               const SensorEventsChecker &checker);
-  void testSamplingRateHotSwitchOperation(SensorType type);
+  void testSamplingRateHotSwitchOperation(SensorType type, bool fastToSlow = true);
   void testBatchingOperation(SensorType type);
   void testDirectReportOperation(
       SensorType type, SharedMemType memType, RateLevel rate, const SensorEventsChecker &checker);
@@ -1081,10 +1081,11 @@ TEST_F(SensorsHidlTest, MagnetometerStreamingOperationFast) {
                          NullChecker());
 }
 
-void SensorsHidlTest::testSamplingRateHotSwitchOperation(SensorType type) {
+void SensorsHidlTest::testSamplingRateHotSwitchOperation(SensorType type, bool fastToSlow) {
   std::vector<Event> events1, events2;
 
   constexpr int64_t batchingPeriodInNs = 0; // no batching
+  constexpr int64_t collectionTimeoutUs = 60000000; // 60s
   constexpr size_t minNEvent = 50;
 
   SensorInfo sensor = defaultSensorByType(type);
@@ -1103,17 +1104,23 @@ void SensorsHidlTest::testSamplingRateHotSwitchOperation(SensorType type) {
     return;
   }
 
-  ASSERT_EQ(batch(handle, minSamplingPeriodInNs, batchingPeriodInNs), Result::OK);
+  int64_t firstCollectionPeriod = fastToSlow ? minSamplingPeriodInNs : maxSamplingPeriodInNs;
+  int64_t secondCollectionPeriod = !fastToSlow ? minSamplingPeriodInNs : maxSamplingPeriodInNs;
+
+  // first collection
+  ASSERT_EQ(batch(handle, firstCollectionPeriod, batchingPeriodInNs), Result::OK);
   ASSERT_EQ(activate(handle, 1), Result::OK);
 
   usleep(500000); // sleep 0.5 sec to wait for change rate to happen
-  events1 = collectEvents(sensor.minDelay * minNEvent, minNEvent, true /*clearBeforeStart*/);
+  events1 = collectEvents(collectionTimeoutUs, minNEvent);
 
-  ASSERT_EQ(batch(handle, maxSamplingPeriodInNs, batchingPeriodInNs), Result::OK);
+  // second collection, without stop sensor
+  ASSERT_EQ(batch(handle, secondCollectionPeriod, batchingPeriodInNs), Result::OK);
 
   usleep(500000); // sleep 0.5 sec to wait for change rate to happen
-  events2 = collectEvents(sensor.maxDelay * minNEvent, minNEvent, true /*clearBeforeStart*/);
+  events2 = collectEvents(collectionTimeoutUs, minNEvent);
 
+  // end of collection, stop sensor
   ASSERT_EQ(activate(handle, 0), Result::OK);
 
   ALOGI("Collected %zu fast samples and %zu slow samples", events1.size(), events2.size());
@@ -1122,11 +1129,13 @@ void SensorsHidlTest::testSamplingRateHotSwitchOperation(SensorType type) {
   ASSERT_GT(events2.size(), 0u);
 
   int64_t minDelayAverageInterval, maxDelayAverageInterval;
+  std::vector<Event> &minDelayEvents(fastToSlow ? events1 : events2);
+  std::vector<Event> &maxDelayEvents(fastToSlow ? events2 : events1);
 
   size_t nEvent = 0;
   int64_t prevTimestamp = -1;
   int64_t timestampInterval = 0;
-  for (auto & e : events1) {
+  for (auto & e : minDelayEvents) {
     if (e.sensorType == type) {
       ASSERT_EQ(e.sensorHandle, handle);
       if (prevTimestamp > 0) {
@@ -1142,7 +1151,7 @@ void SensorsHidlTest::testSamplingRateHotSwitchOperation(SensorType type) {
   nEvent = 0;
   prevTimestamp = -1;
   timestampInterval = 0;
-  for (auto & e : events2) {
+  for (auto & e : maxDelayEvents) {
     if (e.sensorType == type) {
       ASSERT_EQ(e.sensorHandle, handle);
       if (prevTimestamp > 0) {
@@ -1156,27 +1165,35 @@ void SensorsHidlTest::testSamplingRateHotSwitchOperation(SensorType type) {
   maxDelayAverageInterval = timestampInterval / (nEvent - 1);
 
   // change of rate is significant.
+  ALOGI("min/maxDelayAverageInterval = %" PRId64 " %" PRId64,
+      minDelayAverageInterval, maxDelayAverageInterval);
   EXPECT_GT((maxDelayAverageInterval - minDelayAverageInterval), minDelayAverageInterval / 10);
 
   // fastest rate sampling time is close to spec
-  ALOGI("minDelayAverageInterval = %" PRId64, minDelayAverageInterval);
   EXPECT_LT(std::abs(minDelayAverageInterval - minSamplingPeriodInNs),
       minSamplingPeriodInNs / 10);
+
+  // slowest rate sampling time is close to spec
+  EXPECT_LT(std::abs(maxDelayAverageInterval - maxSamplingPeriodInNs),
+      maxSamplingPeriodInNs / 10);
 }
 
 // Test if sensor hal can do accelerometer sampling rate switch properly when sensor is active
 TEST_F(SensorsHidlTest, AccelerometerSamplingPeriodHotSwitchOperation) {
   testSamplingRateHotSwitchOperation(SensorType::ACCELEROMETER);
+  testSamplingRateHotSwitchOperation(SensorType::ACCELEROMETER, false /*fastToSlow*/);
 }
 
 // Test if sensor hal can do gyroscope sampling rate switch properly when sensor is active
 TEST_F(SensorsHidlTest, GyroscopeSamplingPeriodHotSwitchOperation) {
   testSamplingRateHotSwitchOperation(SensorType::GYROSCOPE);
+  testSamplingRateHotSwitchOperation(SensorType::GYROSCOPE, false /*fastToSlow*/);
 }
 
 // Test if sensor hal can do magnetometer sampling rate switch properly when sensor is active
 TEST_F(SensorsHidlTest, MagnetometerSamplingPeriodHotSwitchOperation) {
   testSamplingRateHotSwitchOperation(SensorType::MAGNETIC_FIELD);
+  testSamplingRateHotSwitchOperation(SensorType::MAGNETIC_FIELD, false /*fastToSlow*/);
 }
 
 void SensorsHidlTest::testBatchingOperation(SensorType type) {
