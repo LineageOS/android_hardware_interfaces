@@ -101,7 +101,6 @@ using ::android::hardware::kSynchronizedReadWrite;
 using ResultMetadataQueue = MessageQueue<uint8_t, kSynchronizedReadWrite>;
 using ::android::hidl::manager::V1_0::IServiceManager;
 
-const char *kProviderFQName = "android.hardware.camera.provider@2.4::ICameraProvider";
 const uint32_t kMaxPreviewWidth = 1920;
 const uint32_t kMaxPreviewHeight = 1080;
 const uint32_t kMaxVideoWidth = 4096;
@@ -243,9 +242,7 @@ class CameraHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
 
     virtual void HidlTearDown() override { ALOGI("TearDown CameraHidlEnvironment"); }
 
-    virtual void registerTestServices() override {
-        registerTestService("android.hardware.camera.provider", "2.4", "ICameraProvider");
-    }
+    virtual void registerTestServices() override { registerTestService<ICameraProvider>(); }
 
    private:
     CameraHidlEnvironment() {}
@@ -496,7 +493,7 @@ Return<Status> PreviewWindowCb::setTimestamp(int64_t timestamp) {
 class CameraHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 public:
  virtual void SetUp() override {
-     string service_name = CameraHidlEnvironment::Instance()->getServiceName(kProviderFQName);
+     string service_name = CameraHidlEnvironment::Instance()->getServiceName<ICameraProvider>();
      ALOGI("get service with name: %s", service_name.c_str());
      mProvider = ::testing::VtsHalHidlTargetTestBase::getService<ICameraProvider>(service_name);
      ASSERT_NE(mProvider, nullptr);
