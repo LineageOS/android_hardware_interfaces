@@ -122,6 +122,10 @@ interface IFoo {
         bitfield<BitField> bf;
     };
 
+    typedef int32_t[5][6][7] multidimArrayOne;
+    typedef multidimArrayOne[8][9][10] multidimArrayTwo;
+    typedef multidimArrayTwo[2][3][4] multidimArrayThree;
+
     doThis(float param);
     doThatAndReturnSomething(int64_t param) generates (int32_t result);
     doQuiteABit(int32_t a, int64_t b, float c, double d) generates (double something);
