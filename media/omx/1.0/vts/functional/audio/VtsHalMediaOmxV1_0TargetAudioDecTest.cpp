@@ -755,7 +755,7 @@ TEST_F(AudioDecHidlTest, DecodeTest) {
     int bytesCount = 0;
     uint32_t flags = 0;
     uint32_t timestamp = 0;
-    timestampDevTest = true;
+    timestampDevTest = false;
     while (1) {
         if (!(eleInfo >> bytesCount)) break;
         eleInfo >> flags;
