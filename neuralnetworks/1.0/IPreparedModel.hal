@@ -18,8 +18,9 @@
 
 package android.hardware.neuralnetworks@1.0;
 
+import IEvent;
+
 interface IPreparedModel {
-    // TODO: The execution is synchronous.  Change that to have a callback on completion.
     // Multiple threads can call this execute function concurrently.
-    execute(Request request) generates(bool success);
+    execute(Request request, IEvent event) generates(bool success);
 };
