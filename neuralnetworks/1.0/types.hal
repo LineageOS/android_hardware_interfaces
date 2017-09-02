@@ -181,3 +181,8 @@ struct Request {
     vec<InputOutputInfo> outputs;
     vec<memory> pools;
 };
+
+enum Status : uint32_t {
+    SUCCESS,
+    ERROR,
+};
