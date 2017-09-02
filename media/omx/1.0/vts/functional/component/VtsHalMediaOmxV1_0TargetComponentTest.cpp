@@ -371,7 +371,7 @@ TEST_F(ComponentHidlTest, DISABLED_SetDefaultPortParams) {
         kPortIndexOutput = kPortIndexInput + 1;
     }
 
-    for (size_t i = kPortIndexInput; i < kPortIndexOutput; i++) {
+    for (size_t i = kPortIndexInput; i <= kPortIndexOutput; i++) {
         OMX_PARAM_PORTDEFINITIONTYPE portDef;
         status =
             getPortParam(omxNode, OMX_IndexParamPortDefinition, i, &portDef);
@@ -406,10 +406,32 @@ TEST_F(ComponentHidlTest, DISABLED_SetDefaultPortParams) {
             setPortParam(omxNode, OMX_IndexParamPortDefinition, i, &mirror);
 
             portDef = mirror;
-            portDef.nBufferSize >>= 1;
+            OMX_U32 nBufferSize = portDef.nBufferSize >> 1;
+            if (nBufferSize != 0) {
+                if (!strncmp(gEnv->getComponent().c_str(), "OMX.google.", 11)) {
+                    portDef.nBufferSize = nBufferSize;
+                } else {
+                    // Probable alignment requirements of vendor component
+                    portDef.nBufferSize = ALIGN_POWER_OF_TWO(nBufferSize, 12);
+                    nBufferSize = portDef.nBufferSize;
+                }
+            } else {
+                ASSERT_TRUE(false) << "Unexpected buffer size";
+            }
             setPortParam(omxNode, OMX_IndexParamPortDefinition, i, &portDef);
             getPortParam(omxNode, OMX_IndexParamPortDefinition, i, &portDef);
-            EXPECT_EQ(portDef.nBufferSize, mirror.nBufferSize);
+            // SPECIAL CASE: For video decoder, allow configuration of input
+            // buffer size even if it is less than minimum requirement and
+            // similarly for encoder allow configuration of output port buffer
+            // size.
+            if ((compClass == video_encoder && i == kPortIndexOutput) ||
+                (compClass == video_decoder && i == kPortIndexInput)) {
+                double dev = (portDef.nBufferSize / (double)nBufferSize);
+                dev -= 1;
+                if (dev < 0 || dev > 0.1) EXPECT_TRUE(false);
+            } else {
+                EXPECT_EQ(portDef.nBufferSize, mirror.nBufferSize);
+            }
             setPortParam(omxNode, OMX_IndexParamPortDefinition, i, &mirror);
 
             portDef = mirror;
@@ -466,6 +488,11 @@ TEST_F(ComponentHidlTest, DISABLED_PopulatePort) {
         ASSERT_EQ(params.nPorts, 2U);
         portBase = params.nStartPortNumber;
     }
+
+    // set state to idle
+    status = omxNode->sendCommand(toRawCommandType(OMX_CommandStateSet),
+                                  OMX_StateIdle);
+    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
 
     OMX_PARAM_PORTDEFINITIONTYPE portDef;
     status =
