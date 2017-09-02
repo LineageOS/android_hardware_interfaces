@@ -59,15 +59,17 @@ class NeuralnetworksHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvB
     NeuralnetworksHidlEnvironment& operator=(NeuralnetworksHidlEnvironment&&) = delete;
 
    public:
+    ~NeuralnetworksHidlEnvironment() override;
     static NeuralnetworksHidlEnvironment* getInstance();
-    virtual void registerTestServices() override;
+    void registerTestServices() override;
 };
 
 // The main test class for NEURALNETWORKS HIDL HAL.
 class NeuralnetworksHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    public:
-    virtual void SetUp() override;
-    virtual void TearDown() override;
+    ~NeuralnetworksHidlTest() override;
+    void SetUp() override;
+    void TearDown() override;
 
     sp<IDevice> device;
 };
