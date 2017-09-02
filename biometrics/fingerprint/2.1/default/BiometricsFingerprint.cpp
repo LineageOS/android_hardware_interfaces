@@ -33,6 +33,7 @@ namespace V2_1 {
 namespace implementation {
 
 // Supported fingerprint HAL version
+static const uint16_t kVersionOld = HARDWARE_MODULE_API_VERSION(2, 0);
 static const uint16_t kVersion = HARDWARE_MODULE_API_VERSION(2, 1);
 
 using RequestStatus =
@@ -241,7 +242,10 @@ fingerprint_device_t* BiometricsFingerprint::openHal() {
     if (kVersion != device->version) {
         // enforce version on new devices because of HIDL@2.1 translation layer
         ALOGE("Wrong fp version. Expected %d, got %d", kVersion, device->version);
-        return nullptr;
+        // don't fail on HAL version 2.0, it works just fine
+        if (device->version < kVersionOld) {
+            return nullptr;
+        }
     }
 
     fingerprint_device_t* fp_device =
