@@ -16,7 +16,10 @@
 
 cc_test {
     name: "VtsHalNeuralnetworksV1_0TargetTest",
-    srcs: ["VtsHalNeuralnetworksV1_0TargetTest.cpp"],
+    srcs: [
+        "Event.cpp",
+        "VtsHalNeuralnetworksV1_0TargetTest.cpp",
+    ],
     defaults: ["VtsHalTargetTestDefaults"],
     static_libs: [
         "android.hardware.neuralnetworks@1.0",
