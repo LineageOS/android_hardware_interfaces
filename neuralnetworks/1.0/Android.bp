@@ -5,6 +5,7 @@ filegroup {
     srcs: [
         "types.hal",
         "IDevice.hal",
+        "IEvent.hal",
         "IPreparedModel.hal",
     ],
 }
@@ -19,6 +20,7 @@ genrule {
     out: [
         "android/hardware/neuralnetworks/1.0/types.cpp",
         "android/hardware/neuralnetworks/1.0/DeviceAll.cpp",
+        "android/hardware/neuralnetworks/1.0/EventAll.cpp",
         "android/hardware/neuralnetworks/1.0/PreparedModelAll.cpp",
     ],
 }
@@ -38,6 +40,11 @@ genrule {
         "android/hardware/neuralnetworks/1.0/BnHwDevice.h",
         "android/hardware/neuralnetworks/1.0/BpHwDevice.h",
         "android/hardware/neuralnetworks/1.0/BsDevice.h",
+        "android/hardware/neuralnetworks/1.0/IEvent.h",
+        "android/hardware/neuralnetworks/1.0/IHwEvent.h",
+        "android/hardware/neuralnetworks/1.0/BnHwEvent.h",
+        "android/hardware/neuralnetworks/1.0/BpHwEvent.h",
+        "android/hardware/neuralnetworks/1.0/BsEvent.h",
         "android/hardware/neuralnetworks/1.0/IPreparedModel.h",
         "android/hardware/neuralnetworks/1.0/IHwPreparedModel.h",
         "android/hardware/neuralnetworks/1.0/BnHwPreparedModel.h",
