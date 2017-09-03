@@ -32,7 +32,8 @@ enum OperandType : uint32_t {
     UINT32                    = 7,
     TENSOR_FLOAT16            = 8,
     TENSOR_FLOAT32            = 9,
-    TENSOR_QUANT8_ASYMM       = 10,
+    TENSOR_INT32              = 10,
+    TENSOR_QUANT8_ASYMM       = 11,
 };
 
 // The type of operations.  Unlike the operation types found in
@@ -41,39 +42,40 @@ enum OperandType : uint32_t {
 // TODO: Currently they are the same.  Add a conversion when finalizing the model.
 // When modifying, be sure to update HAL_NUM_OPERATION_TYPES in HalIntefaces.h.
 enum OperationType : uint32_t {
-    AVERAGE_POOL                 = 0,
-    CONCATENATION                = 1,
-    CONV                         = 2,
-    DEPTHWISE_CONV               = 3,
-    MAX_POOL                     = 4,
-    L2_POOL                      = 5,
-    DEPTH_TO_SPACE               = 6,
-    SPACE_TO_DEPTH               = 7,
-    LOCAL_RESPONSE_NORMALIZATION = 8,
-    SOFTMAX                      = 9,
-    RESHAPE                      = 10,
-    SPLIT                        = 11,
-    FAKE_QUANT                   = 12,
-    ADD                          = 13,
-    FULLY_CONNECTED              = 14,
-    CAST                         = 15,
-    MUL                          = 16,
-    L2_NORMALIZATION             = 17,
+    OEM_OPERATION                = 0,
+    ADD                          = 1,
+    AVERAGE_POOL                 = 2,
+    CAST                         = 3,
+    CONCATENATION                = 4,
+    CONV                         = 5,
+    DEPTHWISE_CONV               = 6,
+    DEPTH_TO_SPACE               = 7,
+    DEQUANTIZE                   = 8,
+    EMBEDDING_LOOKUP             = 9,
+    FAKE_QUANT                   = 10,
+    FLOOR                        = 11,
+    FULLY_CONNECTED              = 12,
+    GATHER                       = 13,
+    HASHTABLE_LOOKUP             = 14,
+    L2_NORMALIZATION             = 15,
+    L2_POOL                      = 16,
+    LOCAL_RESPONSE_NORMALIZATION = 17,
     LOGISTIC                     = 18,
-    RELU                         = 19,
-    RELU6                        = 20,
-    RELU1                        = 21,
-    TANH                         = 22,
-    DEQUANTIZE                   = 23,
-    FLOOR                        = 24,
-    GATHER                       = 25,
-    RESIZE_BILINEAR              = 26,
-    LSH_PROJECTION               = 27,
-    LSTM                         = 28,
-    SVDF                         = 29,
-    RNN                          = 30,
-    N_GRAM                       = 31,
-    LOOKUP                       = 32,
+    LSH_PROJECTION               = 19,
+    LSTM                         = 20,
+    MAX_POOL                     = 21,
+    MUL                          = 22,
+    RELU                         = 23,
+    RELU1                        = 24,
+    RELU6                        = 25,
+    RESHAPE                      = 26,
+    RESIZE_BILINEAR              = 27,
+    RNN                          = 28,
+    SOFTMAX                      = 29,
+    SPACE_TO_DEPTH               = 30,
+    SPLIT                        = 31,
+    SVDF                         = 32,
+    TANH                         = 33,
 };
 
 // Two special values that can be used instead of a regular poolIndex.
@@ -178,4 +180,9 @@ struct Request {
     vec<InputOutputInfo> inputs;
     vec<InputOutputInfo> outputs;
     vec<memory> pools;
+};
+
+enum Status : uint32_t {
+    SUCCESS,
+    ERROR,
 };
