@@ -1286,7 +1286,7 @@ TEST_F(VideoEncHidlTest, EncodeTest) {
     eleStream.close();
     waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer);
     testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag);
-    EXPECT_EQ(timestampUslist.empty(), true);
+    if (timestampDevTest) EXPECT_EQ(timestampUslist.empty(), true);
 
     // set state to idle
     changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);

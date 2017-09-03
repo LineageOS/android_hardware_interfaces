@@ -896,7 +896,7 @@ TEST_F(VideoDecHidlTest, DecodeTest) {
         eleInfo >> flags;
         eleInfo >> timestamp;
         Info.push_back({bytesCount, flags, timestamp});
-        if (flags != OMX_BUFFERFLAG_CODECCONFIG)
+        if (timestampDevTest && (flags != OMX_BUFFERFLAG_CODECCONFIG))
             timestampUslist.push_back(timestamp);
         if (maxBytesCount < bytesCount) maxBytesCount = bytesCount;
     }
@@ -970,7 +970,7 @@ TEST_F(VideoDecHidlTest, DecodeTest) {
                            kPortIndexInput, kPortIndexOutput, portMode[1]);
     testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag, portMode,
             portReconfiguration, kPortIndexInput, kPortIndexOutput, nullptr);
-    EXPECT_EQ(timestampUslist.empty(), true);
+    if (timestampDevTest) EXPECT_EQ(timestampUslist.empty(), true);
     // set state to idle
     changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
     // set state to executing
