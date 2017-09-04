@@ -359,29 +359,15 @@ CameraDevice::CameraHeapMemory::~CameraHeapMemory() {
 }
 
 // shared memory methods
-camera_memory_t* CameraDevice::sGetMemory(int fd, size_t buf_size, uint_t num_bufs, void *user) {
+camera_memory_t* CameraDevice::sGetMemory(int fd, size_t buf_size, uint_t num_bufs, void *user __attribute__((unused))) {
     ALOGV("%s", __FUNCTION__);
-    CameraDevice* object = static_cast<CameraDevice*>(user);
-    if (object->mDeviceCallback == nullptr) {
-        ALOGE("%s: camera HAL request memory while camera is not opened!", __FUNCTION__);
-        return nullptr;
-    }
-
-    CameraHeapMemory* mem;
+    CameraHeapMemory *mem;
     if (fd < 0) {
-        mem = new CameraHeapMemory(object->mAshmemAllocator, buf_size, num_bufs);
+        mem = new CameraHeapMemory(buf_size, num_bufs);
     } else {
         mem = new CameraHeapMemory(fd, buf_size, num_bufs);
     }
     mem->incStrong(mem);
-    hidl_handle hidlHandle = mem->mHidlHandle;
-    MemoryId id = object->mDeviceCallback->registerMemory(hidlHandle, buf_size, num_bufs);
-    mem->handle.mId = id;
-    if (object->mMemoryMap.count(id) != 0) {
-        ALOGE("%s: duplicate MemoryId %d returned by client!", __FUNCTION__, id);
-    }
-    object->mMemoryMap[id] = mem;
-    mem->handle.mDevice = object;
     return &mem->handle;
 }
 
@@ -389,16 +375,7 @@ void CameraDevice::sPutMemory(camera_memory_t *data) {
     if (!data)
         return;
 
-    CameraHeapMemory* mem = static_cast<CameraHeapMemory *>(data->handle);
-    CameraDevice* device = mem->handle.mDevice;
-    if (device == nullptr) {
-        ALOGE("%s: camera HAL return memory for a null device!", __FUNCTION__);
-    }
-    if (device->mDeviceCallback == nullptr) {
-        ALOGE("%s: camera HAL return memory while camera is not opened!", __FUNCTION__);
-    }
-    device->mDeviceCallback->unregisterMemory(mem->handle.mId);
-    device->mMemoryMap.erase(mem->handle.mId);
+    CameraHeapMemory *mem = static_cast<CameraHeapMemory *>(data->handle);
     mem->decStrong(mem);
 }
 
