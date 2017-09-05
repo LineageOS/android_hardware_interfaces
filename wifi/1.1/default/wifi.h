@@ -61,12 +61,13 @@ class Wifi : public V1_1::IWifi {
   WifiStatus registerEventCallbackInternal(
       const sp<IWifiEventCallback>& event_callback);
   WifiStatus startInternal();
-  WifiStatus stopInternal();
+  WifiStatus stopInternal(std::unique_lock<std::recursive_mutex>* lock);
   std::pair<WifiStatus, std::vector<ChipId>> getChipIdsInternal();
   std::pair<WifiStatus, sp<IWifiChip>> getChipInternal(ChipId chip_id);
 
   WifiStatus initializeLegacyHal();
-  WifiStatus stopLegacyHalAndDeinitializeModeController();
+  WifiStatus stopLegacyHalAndDeinitializeModeController(
+      std::unique_lock<std::recursive_mutex>* lock);
 
   // Instance is created in this root level |IWifi| HIDL interface object
   // and shared with all the child HIDL interface objects.
