@@ -30,6 +30,13 @@ cc_library_shared {
     include_dirs: [
         "frameworks/native/include/media/openmax"
     ],
+    product_variables: {
+        lineage: {
+            uses_non_trello_camera: {
+                cflags: ["-DTARGET_USES_NON_TRELLO_CAMERA"],
+            },
+       }
+    },
     export_include_dirs: ["."]
 }
 
