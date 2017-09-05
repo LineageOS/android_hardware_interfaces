@@ -36,6 +36,10 @@ using ::android::hardware::graphics::common::V1_0::PixelFormat;
 
 HandleImporter CameraDevice::sHandleImporter;
 
+#ifdef TARGET_USES_NON_TREBLE_CAMERA
+CameraDevice* sCameraDevice;
+#endif
+
 Status CameraDevice::getHidlStatus(const int& status) {
     switch (status) {
         case 0: return Status::OK;
@@ -361,7 +365,12 @@ CameraDevice::CameraHeapMemory::~CameraHeapMemory() {
 // shared memory methods
 camera_memory_t* CameraDevice::sGetMemory(int fd, size_t buf_size, uint_t num_bufs, void *user) {
     ALOGV("%s", __FUNCTION__);
+#ifndef TARGET_USES_NON_TREBLE_CAMERA
     CameraDevice* object = static_cast<CameraDevice*>(user);
+#else
+    CameraDevice* object = sCameraDevice;
+    (void)(user);
+#endif
     if (object->mDeviceCallback == nullptr) {
         ALOGE("%s: camera HAL request memory while camera is not opened!", __FUNCTION__);
         return nullptr;
@@ -405,7 +414,12 @@ void CameraDevice::sPutMemory(camera_memory_t *data) {
 // Callback forwarding methods
 void CameraDevice::sNotifyCb(int32_t msg_type, int32_t ext1, int32_t ext2, void *user) {
     ALOGV("%s", __FUNCTION__);
+#ifndef TARGET_USES_NON_TREBLE_CAMERA
     CameraDevice* object = static_cast<CameraDevice*>(user);
+#else
+    CameraDevice* object = sCameraDevice;
+    (void)(user);
+#endif
     if (object->mDeviceCallback != nullptr) {
         object->mDeviceCallback->notifyCallback((NotifyCallbackMsg) msg_type, ext1, ext2);
     }
@@ -414,7 +428,12 @@ void CameraDevice::sNotifyCb(int32_t msg_type, int32_t ext1, int32_t ext2, void 
 void CameraDevice::sDataCb(int32_t msg_type, const camera_memory_t *data, unsigned int index,
         camera_frame_metadata_t *metadata, void *user) {
     ALOGV("%s", __FUNCTION__);
+#ifndef TARGET_USES_NON_TREBLE_CAMERA
     CameraDevice* object = static_cast<CameraDevice*>(user);
+#else
+    CameraDevice* object = sCameraDevice;
+    (void)(user);
+#endif
     sp<CameraHeapMemory> mem(static_cast<CameraHeapMemory*>(data->handle));
     if (index >= mem->mNumBufs) {
         ALOGE("%s: invalid buffer index %d, max allowed is %d", __FUNCTION__,
@@ -484,7 +503,12 @@ void CameraDevice::handleCallbackTimestamp(
 void CameraDevice::sDataCbTimestamp(nsecs_t timestamp, int32_t msg_type,
         const camera_memory_t *data, unsigned index, void *user) {
     ALOGV("%s", __FUNCTION__);
+#ifndef TARGET_USES_NON_TREBLE_CAMERA
     CameraDevice* object = static_cast<CameraDevice*>(user);
+#else
+    CameraDevice* object = sCameraDevice;
+    (void)(user);
+#endif
     // Start refcounting the heap object from here on.  When the clients
     // drop all references, it will be destroyed (as well as the enclosed
     // MemoryHeapBase.
@@ -660,6 +684,10 @@ Return<Status> CameraDevice::open(const sp<ICameraDeviceCallback>& callback) {
 
     initHalPreviewWindow();
     mDeviceCallback = callback;
+
+#ifdef TARGET_USES_NON_TREBLE_CAMERA
+    sCameraDevice = this;
+#endif
 
     if (mDevice->ops->set_callbacks) {
         mDevice->ops->set_callbacks(mDevice,
