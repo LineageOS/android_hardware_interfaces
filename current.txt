@@ -189,7 +189,7 @@ fe3c3c2f572b72f15f8594c538b0577bd5c28722c31879cfe6231330cddb6747 android.hardwar
 
 # ABI preserving changes to HALs during Android O MR1 (Initial Set)
 
-d4f2b9c1ec923de301c344d2fc52e54a7db0b0a01bb40f49d844b95394f09cc0 android.hardware.automotive.vehicle@2.0::types
+26a4dd19a71f3a28249100af29be470f80e08355165fe6a7173aaa1ef264640d android.hardware.automotive.vehicle@2.0::types
 150a338ce11fcec70757c9675d83cf6a5d7b40d0c812741b91671fecce59eac9 android.hardware.broadcastradio@1.0::types
 dc7e6d4f537b9943e27edc4f86c5a03bb643b18f18f866f8c3c71c0ac4ea8cbc android.hardware.broadcastradio@1.0::types
 760485232f6cce07f8bb05e3475509956996b702f77415ee5bff05e2ec5a5bcc android.hardware.dumpstate@1.0::IDumpstateDevice
