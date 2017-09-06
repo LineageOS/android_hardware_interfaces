@@ -20,6 +20,7 @@
 #include <functional>
 #include <thread>
 #include <vector>
+#include <condition_variable>
 
 #include <wifi_system/interface_tool.h>
 
@@ -149,8 +150,10 @@ class WifiLegacyHal {
   wifi_error initialize();
   // Start the legacy HAL and the event looper thread.
   wifi_error start();
-  // Deinitialize the legacy HAL and stop the event looper thread.
-  wifi_error stop(const std::function<void()>& on_complete_callback);
+  // Deinitialize the legacy HAL and wait for the event loop thread to exit
+  // using a predefined timeout.
+  wifi_error stop(std::unique_lock<std::recursive_mutex>* lock,
+                  const std::function<void()>& on_complete_callback);
   // Wrappers for all the functions in the legacy HAL function table.
   std::pair<wifi_error, std::string> getDriverVersion();
   std::pair<wifi_error, std::string> getFirmwareVersion();
@@ -293,6 +296,7 @@ class WifiLegacyHal {
   wifi_interface_handle wlan_interface_handle_;
   // Flag to indicate if we have initiated the cleanup of legacy HAL.
   std::atomic<bool> awaiting_event_loop_termination_;
+  std::condition_variable_any stop_wait_cv_;
   // Flag to indicate if the legacy HAL has been started.
   bool is_started_;
   wifi_system::InterfaceTool iface_tool_;
