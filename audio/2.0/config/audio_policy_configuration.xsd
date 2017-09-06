@@ -365,10 +365,10 @@
         </xs:restriction>
     </xs:simpleType>
     <xs:complexType name="profile">
-        <xs:attribute name="name" type="xs:token" use="required"/>
-        <xs:attribute name="format" type="audioFormat" use="required"/>
-        <xs:attribute name="samplingRates" type="samplingRates" use="required"/>
-        <xs:attribute name="channelMasks" type="channelMask" use="required"/>
+        <xs:attribute name="name" type="xs:token" use="optional"/>
+        <xs:attribute name="format" type="audioFormat" use="optional"/>
+        <xs:attribute name="samplingRates" type="samplingRates" use="optional"/>
+        <xs:attribute name="channelMasks" type="channelMask" use="optional"/>
     </xs:complexType>
     <xs:simpleType name="gainMode">
         <xs:restriction base="xs:string">
