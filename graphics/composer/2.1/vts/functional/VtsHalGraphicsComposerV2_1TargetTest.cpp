@@ -23,6 +23,7 @@
 #include "VtsHalGraphicsMapperTestUtils.h"
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <VtsHalHidlTargetTestEnvBase.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -703,10 +704,11 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_Z_ORDER) {
 }  // namespace android
 
 int main(int argc, char** argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-
-  int status = RUN_ALL_TESTS();
-  LOG(INFO) << "Test result = " << status;
-
-  return status;
+    using android::hardware::graphics::composer::V2_1::tests::GraphicsComposerHidlEnvironment;
+    ::testing::AddGlobalTestEnvironment(GraphicsComposerHidlEnvironment::Instance());
+    ::testing::InitGoogleTest(&argc, argv);
+    GraphicsComposerHidlEnvironment::Instance()->init(&argc, argv);
+    int status = RUN_ALL_TESTS();
+    ALOGI("Test result = %d", status);
+    return status;
 }

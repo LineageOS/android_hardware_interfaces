@@ -31,6 +31,7 @@ namespace wifi {
 namespace V1_1 {
 namespace implementation {
 using hidl_return_util::validateAndCall;
+using hidl_return_util::validateAndCallWithLock;
 
 Wifi::Wifi()
     : legacy_hal_(new legacy_hal::WifiLegacyHal()),
@@ -64,8 +65,8 @@ Return<void> Wifi::start(start_cb hidl_status_cb) {
 }
 
 Return<void> Wifi::stop(stop_cb hidl_status_cb) {
-  return validateAndCall(
-      this, WifiStatusCode::ERROR_UNKNOWN, &Wifi::stopInternal, hidl_status_cb);
+  return validateAndCallWithLock(this, WifiStatusCode::ERROR_UNKNOWN,
+                                 &Wifi::stopInternal, hidl_status_cb);
 }
 
 Return<void> Wifi::getChipIds(getChipIds_cb hidl_status_cb) {
@@ -120,7 +121,8 @@ WifiStatus Wifi::startInternal() {
   return wifi_status;
 }
 
-WifiStatus Wifi::stopInternal() {
+WifiStatus Wifi::stopInternal(
+    /* NONNULL */ std::unique_lock<std::recursive_mutex>* lock) {
   if (run_state_ == RunState::STOPPED) {
     return createWifiStatus(WifiStatusCode::SUCCESS);
   } else if (run_state_ == RunState::STOPPING) {
@@ -133,7 +135,7 @@ WifiStatus Wifi::stopInternal() {
     chip_->invalidate();
     chip_.clear();
   }
-  WifiStatus wifi_status = stopLegacyHalAndDeinitializeModeController();
+  WifiStatus wifi_status = stopLegacyHalAndDeinitializeModeController(lock);
   if (wifi_status.code == WifiStatusCode::SUCCESS) {
     for (const auto& callback : event_cb_handler_.getCallbacks()) {
       if (!callback->onStop().isOk()) {
@@ -180,11 +182,11 @@ WifiStatus Wifi::initializeLegacyHal() {
   return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 
-WifiStatus Wifi::stopLegacyHalAndDeinitializeModeController() {
+WifiStatus Wifi::stopLegacyHalAndDeinitializeModeController(
+    /* NONNULL */ std::unique_lock<std::recursive_mutex>* lock) {
   run_state_ = RunState::STOPPING;
-  const auto on_complete_callback_ = [&]() { run_state_ = RunState::STOPPED; };
   legacy_hal::wifi_error legacy_status =
-      legacy_hal_->stop(on_complete_callback_);
+      legacy_hal_->stop(lock, [&]() { run_state_ = RunState::STOPPED; });
   if (legacy_status != legacy_hal::WIFI_SUCCESS) {
     LOG(ERROR) << "Failed to stop legacy HAL: "
                << legacyErrorToString(legacy_status);
