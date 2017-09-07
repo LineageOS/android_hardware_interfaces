@@ -785,7 +785,8 @@ enum VehicleProperty: int32_t {
      * requested by Android side. The focus has both per stream characteristics
      * and global characteristics.
      *
-     * Focus request (get of this property) must take the following form:
+     * Focus request (get of this property) must take the following form with indices defined
+     * by VehicleAudioFocusIndex:
      *   int32Values[0]: VehicleAudioFocusRequest type
      *   int32Values[1]: bit flags of streams requested by this focus request.
      *                   There can be up to 32 streams.
@@ -803,7 +804,7 @@ enum VehicleProperty: int32_t {
      *                   REQUEST_RELEASE). In that case, audio module must
      *                   maintain mute state until user's explicit action to
      *                   play some media.
-     *   int32Values[3]: Currently active audio contexts. Use combination of
+     *   int32Values[3]: Audio contexts wishing to be active. Use combination of
      *                   flags from VehicleAudioContextFlag.
      *                   This can be used as a hint to adjust audio policy or
      *                   other policy decision.
@@ -818,7 +819,7 @@ enum VehicleProperty: int32_t {
      * request.
      *
      * Focus response (set and subscription callback for this property) must
-     * take the following form:
+     * take the following form with indices defined by VehicleAudioFocusIndex:
      *   int32Values[0]: VehicleAudioFocusState type
      *   int32Values[1]: bit flags of streams allowed.
      *   int32Values[2]: External focus state: bit flags of currently active
@@ -847,9 +848,10 @@ enum VehicleProperty: int32_t {
      *                       side is playing something permanent.
      *                   LOSS_TRANSIENT: must always be
      *                       VehicleAudioExtFocusFlag#PERMANENT_FLAG
-     *   int32Values[3]: context requested by android side when responding to
-     *                   focus request. When car side is taking focus away,
-     *                   this must be zero.
+     *   int32Values[3]: Audio context(s) allowed to be active. When responding positively to a
+     *                   focus request from Android, the request's original context must be
+     *                   repeated here. When taking focus away, or denying a request, the
+     *                   rejected or stopped context would have its corresponding bit cleared.
      *
      * A focus response must be sent per each focus request even if there is
      * no change in focus state. This can happen in case like focus request
@@ -890,8 +892,8 @@ enum VehicleProperty: int32_t {
      *
      * VehiclePropConfig
      *   configArray[0] : bit flags of all supported audio contexts from
-     *                    VehicleAudioContextFlag. If this is 0, audio volume is
-     *                    controlled per physical stream.
+     *                    VehicleAudioContextFlag. If this is 0, audio volume
+     *                    is controlled per physical stream.
      *   configArray[1] : flags defined in VehicleAudioVolumeCapabilityFlag to
      *                    represent audio module's capability.
      *   configArray[2..3] : reserved
@@ -901,7 +903,7 @@ enum VehicleProperty: int32_t {
      *                         indicates mute state.
      *
      * Data type looks like:
-     *   int32Values[0] : stream context as defined in VehicleAudioContextFlag.
+     *   int32Values[0] : audio context as defined in VehicleAudioContextFlag.
      *                    If only physical stream is supported
      *                    (configArray[0] == 0), this must represent physical
      *                    stream number.
@@ -909,8 +911,8 @@ enum VehicleProperty: int32_t {
      *                    defined in the config.
      *   int32Values[2] : One of VehicleAudioVolumeState.
      *
-     * This property requires per stream based get. HAL implementation must
-     * check stream number in get call to return the right volume.
+     * HAL implementations must check the incoming value of audio context
+     * field in get call to return the right volume.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
@@ -949,18 +951,18 @@ enum VehicleProperty: int32_t {
      *                    to represent audio module's capability.
      *
      * Data type looks like:
-     *   int32Values[0] : stream context as defined in VehicleAudioContextFlag.
+     *   int32Values[0] : audio context as defined in VehicleAudioContextFlag.
      *                    If only physical stream is supported
      *                    (configArray[0] == 0), this must represent physical
      *                    stream number.
      *   int32Values[1] : maximum volume set to the stream. If there is no
-     *                    restriction, this value must be bigger than
+     *                    restriction, this value must be equal to
      *                    AUDIO_VOLUME's max value.
      *
      * If car does not support this feature, this property must not be
      * populated by HAL.
-     * This property requires per stream based get. HAL implementation must
-     * check stream number in get call to return the right volume.
+     * HAL implementations must check the incoming value of audio context
+     * field in get call to return the right volume.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
@@ -974,10 +976,8 @@ enum VehicleProperty: int32_t {
 
     /**
      * Property to share audio routing policy of android side. This property is
-     * set at the beginning to pass audio policy in android side down to
+     * set at startup to pass audio policy in android side down to
      * vehicle HAL and car audio module.
-     * This can be used as a hint to adjust audio policy or other policy
-     * decision.
      *
      *   int32Values[0] : audio stream where the audio for the application
      *                    context must be routed by default. Note that this is
@@ -1001,11 +1001,11 @@ enum VehicleProperty: int32_t {
         | VehicleArea:GLOBAL),
 
     /**
-     * Property to return audio H/W variant type used in this car. This allows
-     * android side to support different audio policy based on H/W variant used.
-     * Note that other components like CarService may need overlay update to
-     * support additional variants. If this property does not
-     * exist, default audio policy must be used.
+     * Property to return audio H/W variant type used in this car. This is a
+     * zero based index into the set of audio routing policies defined in
+     * R.array.audioRoutingPolicy on CarService, which  may be overlaid to
+     * support multiple variants. If this property does not exist, the default
+     * audio policy must be used.
      *
      * @change_mode VehiclePropertyChangeMode:STATIC
      * @access VehiclePropertyAccess:READ
@@ -2235,23 +2235,23 @@ enum VehicleAudioContextFlag : int32_t {
  */
 enum VehicleAudioVolumeCapabilityFlag : int32_t {
     /**
-     * External audio module or vehicle hal has persistent storage
-     * to keep the volume level. This must be set only when per context
-     * volume level is supported. When this is set, audio volume level per
-     * each context will be retrieved from the property when system starts up.
+     * External audio module or vehicle hal has persistent storage to keep the
+     * volume level. When this is set, the audio volume level for each context
+     * will be retrieved from the property when the system starts up.
      * And external audio module is also expected to adjust volume automatically
      * whenever there is an audio context change.
      * When this flag is not set, android side will assume that there is no
-     * persistent storage and stored value in android side will be used to
-     * initialize the volume level. And android side will set volume level
-     * of each physical streams whenever there is an audio context change.
+     * persistent storage and the value stored in the android side will be used to
+     * initialize the volume level, and android side will set volume level
+     * of each physical stream whenever there is an audio context change.
      */
     PERSISTENT_STORAGE = 0x1,
 
     /**
+     * [DEPRECATED]
      * When this flag is set, the H/W can support only single master volume for
-     * all streams.
-     * There is no way to set volume level differently per each stream or context.
+     * all streams. There is no way to set volume level differently for each stream
+     * or context.
      */
     MASTER_VOLUME_ONLY = 0x2,
 };
@@ -2267,16 +2267,16 @@ enum VehicleAudioVolumeState : int32_t {
      * VehicleProperty#AUDIO_VOLUME_LIMIT and user's request to increase volume
      * further is not allowed.
      */
-    LIMIT_REACHED = 1,
+    STATE_LIMIT_REACHED = 1,
 };
 
 /**
  * Index in int32Values for VehicleProperty#AUDIO_VOLUME property.
  */
 enum VehicleAudioVolumeIndex : int32_t {
-    INDEX_STREAM = 0,
-    INDEX_VOLUME = 1,
-    INDEX_STATE = 2,
+    STREAM = 0,
+    VOLUME = 1,
+    STATE = 2,
 };
 
 /**
