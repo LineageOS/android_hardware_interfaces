@@ -388,10 +388,12 @@ void SoundTriggerHalImpl::convertTriggerPhraseToHal(
     halTriggerPhrase->id = triggerPhrase->id;
     halTriggerPhrase->recognition_mode = triggerPhrase->recognitionModes;
     unsigned int i;
-    for (i = 0; i < triggerPhrase->users.size(); i++) {
+
+    halTriggerPhrase->num_users =
+        std::min((int)triggerPhrase->users.size(), SOUND_TRIGGER_MAX_USERS);
+    for (i = 0; i < halTriggerPhrase->num_users; i++) {
         halTriggerPhrase->users[i] = triggerPhrase->users[i];
     }
-    halTriggerPhrase->num_users = i;
 
     strlcpy(halTriggerPhrase->locale,
             triggerPhrase->locale.c_str(), SOUND_TRIGGER_MAX_LOCALE_LEN);
