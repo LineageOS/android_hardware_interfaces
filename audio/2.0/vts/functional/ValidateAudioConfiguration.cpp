@@ -24,13 +24,9 @@ TEST(CheckConfig, audioPolicyConfigurationValidation) {
     const char* possibleConfigLocations[] = {"/odm/etc", "/vendor/etc", "/system/etc"};
     const char* configSchemaPath = "/data/local/tmp/audio_policy_configuration.xsd";
 
-    bool found = false;
     for (std::string folder : possibleConfigLocations) {
         const auto configPath = folder + '/' + configName;
         if (access(configPath.c_str(), R_OK) == 0) {
-            ASSERT_FALSE(found) << "Multiple " << configName << " found in "
-                                << ::testing::PrintToString(possibleConfigLocations);
-            found = true;
             ASSERT_VALID_XML(configPath.c_str(), configSchemaPath);
         }
     }
