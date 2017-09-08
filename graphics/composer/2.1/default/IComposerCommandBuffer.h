@@ -92,6 +92,23 @@ public:
     bool writeQueue(bool* outQueueChanged, uint32_t* outCommandLength,
             hidl_vec<hidl_handle>* outCommandHandles)
     {
+        // After data are written to the queue, it may not be read by the
+        // remote reader when
+        //
+        //  - the writer does not send them (because of other errors)
+        //  - the hwbinder transaction fails
+        //  - the reader does not read them (because of other errors)
+        //
+        // Discard the stale data here.
+        size_t staleDataSize = mQueue ? mQueue->availableToRead() : 0;
+        if (staleDataSize > 0) {
+            ALOGW("discarding stale data from message queue");
+            CommandQueueType::MemTransaction tx;
+            if (mQueue->beginRead(staleDataSize, &tx)) {
+                mQueue->commitRead(staleDataSize);
+            }
+        }
+
         // write data to queue, optionally resizing it
         if (mQueue && (mDataMaxSize <= mQueue->getQuantumCount())) {
             if (!mQueue->write(mData.get(), mDataWritten)) {
