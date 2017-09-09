@@ -150,7 +150,7 @@ Model createTestModel() {
     std::vector<uint8_t> operandValues(
         reinterpret_cast<const uint8_t*>(operand2Data.data()),
         reinterpret_cast<const uint8_t*>(operand2Data.data()) + size);
-    int32_t activation[1] = {0};
+    int32_t activation[1] = {static_cast<int32_t>(FusedActivationFunc::NONE)};
     operandValues.insert(operandValues.end(), reinterpret_cast<const uint8_t*>(&activation[0]),
                          reinterpret_cast<const uint8_t*>(&activation[1]));
 
