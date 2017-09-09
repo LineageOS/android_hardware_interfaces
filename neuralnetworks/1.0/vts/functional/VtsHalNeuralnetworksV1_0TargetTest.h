@@ -31,6 +31,7 @@ using ::android::hardware::neuralnetworks::V1_0::IDevice;
 using ::android::hardware::neuralnetworks::V1_0::IPreparedModel;
 using ::android::hardware::neuralnetworks::V1_0::Capabilities;
 using ::android::hardware::neuralnetworks::V1_0::DeviceStatus;
+using ::android::hardware::neuralnetworks::V1_0::FusedActivationFunc;
 using ::android::hardware::neuralnetworks::V1_0::Model;
 using ::android::hardware::neuralnetworks::V1_0::OperationType;
 using ::android::hardware::neuralnetworks::V1_0::PerformanceInfo;
