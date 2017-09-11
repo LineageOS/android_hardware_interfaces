@@ -19,7 +19,7 @@
 #include <android/hardware/drm/1.0/IDrmFactory.h>
 #include <hidl/Status.h>
 #include <media/drm/DrmAPI.h>
-#include <media/PluginLoader.h>
+#include <PluginLoader.h>
 #include <media/SharedLibrary.h>
 
 namespace android {
@@ -28,6 +28,7 @@ namespace drm {
 namespace V1_0 {
 namespace implementation {
 
+using ::android::hardware::drm::V1_0::helper::PluginLoader;
 using ::android::hardware::drm::V1_0::IDrmFactory;
 using ::android::hardware::drm::V1_0::IDrmPlugin;
 using ::android::hardware::hidl_array;
@@ -53,7 +54,7 @@ struct DrmFactory : public IDrmFactory {
             const hidl_string& appPackageName, createPlugin_cb _hidl_cb) override;
 
 private:
-    android::PluginLoader<android::DrmFactory> loader;
+    PluginLoader<android::DrmFactory> loader;
 
     DrmFactory(const DrmFactory &) = delete;
     void operator=(const DrmFactory &) = delete;

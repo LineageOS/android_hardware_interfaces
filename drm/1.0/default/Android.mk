@@ -36,6 +36,9 @@ LOCAL_SHARED_LIBRARIES := \
   libutils \
   libbinder \
 
+LOCAL_STATIC_LIBRARIES := \
+  android.hardware.drm@1.0-helper \
+
 LOCAL_C_INCLUDES := \
   hardware/interfaces/drm
 
@@ -71,9 +74,11 @@ LOCAL_SHARED_LIBRARIES := \
     libhidlmemory \
     libhidltransport \
     liblog \
-    libmediadrm \
     libstagefright_foundation \
     libutils \
+
+LOCAL_STATIC_LIBRARIES := \
+    android.hardware.drm@1.0-helper \
 
 LOCAL_C_INCLUDES := \
     frameworks/native/include \
