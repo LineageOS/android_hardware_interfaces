@@ -92,3 +92,5 @@ cc_library {
         "libutils",
     ],
 }
+
+subdirs = ["default"]
