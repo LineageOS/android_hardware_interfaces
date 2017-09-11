@@ -18,6 +18,7 @@
 
 package android.hardware.neuralnetworks@1.0;
 
+import IEvent;
 import IPreparedModel;
 
 interface IDevice {
@@ -25,7 +26,7 @@ interface IDevice {
 
     getSupportedSubgraph(Model model) generates(vec<bool> supported);
 
-    prepareModel(Model model) generates(IPreparedModel preparedModel);
+    prepareModel(Model model, IEvent event) generates(IPreparedModel preparedModel);
 
     getStatus() generates(DeviceStatus status);
 };
