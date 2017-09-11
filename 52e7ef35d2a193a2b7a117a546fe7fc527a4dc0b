@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c548729a_a702909d",
+        "filename": "nfc/1.0/default/Nfc.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 2936
+      },
+      "writtenOn": "2017-09-11T14:46:01Z",
+      "side": 1,
+      "message": "Maybe make this a configurable parameter instead?",
+      "range": {
+        "startLine": 85,
+        "startChar": 25,
+        "endLine": 85,
+        "endChar": 51
+      },
+      "revId": "52e7ef35d2a193a2b7a117a546fe7fc527a4dc0b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "787b1b2b_d71feeb6",
+        "filename": "nfc/1.0/default/Nfc.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 2936
+      },
+      "writtenOn": "2017-09-11T14:46:01Z",
+      "side": 1,
+      "message": "tabs",
+      "revId": "52e7ef35d2a193a2b7a117a546fe7fc527a4dc0b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
