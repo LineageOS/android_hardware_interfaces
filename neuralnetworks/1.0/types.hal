@@ -44,48 +44,59 @@ enum OperandType : uint32_t {
 enum OperationType : uint32_t {
     OEM_OPERATION                = 0,
     ADD                          = 1,
-    AVERAGE_POOL                 = 2,
-    CAST                         = 3,
-    CONCATENATION                = 4,
-    CONV                         = 5,
-    DEPTHWISE_CONV               = 6,
-    DEPTH_TO_SPACE               = 7,
-    DEQUANTIZE                   = 8,
-    EMBEDDING_LOOKUP             = 9,
-    FAKE_QUANT                   = 10,
-    FLOOR                        = 11,
-    FULLY_CONNECTED              = 12,
-    GATHER                       = 13,
-    HASHTABLE_LOOKUP             = 14,
-    L2_NORMALIZATION             = 15,
-    L2_POOL                      = 16,
-    LOCAL_RESPONSE_NORMALIZATION = 17,
-    LOGISTIC                     = 18,
-    LSH_PROJECTION               = 19,
-    LSTM                         = 20,
-    MAX_POOL                     = 21,
-    MUL                          = 22,
-    RELU                         = 23,
-    RELU1                        = 24,
-    RELU6                        = 25,
-    RESHAPE                      = 26,
-    RESIZE_BILINEAR              = 27,
-    RNN                          = 28,
-    SOFTMAX                      = 29,
-    SPACE_TO_DEPTH               = 30,
-    SPLIT                        = 31,
-    SVDF                         = 32,
-    TANH                         = 33,
+    AVERAGE_POOL_2D              = 2,
+    CONCATENATION                = 3,
+    CONV_2D                      = 4,
+    DEPTHWISE_CONV_2D            = 5,
+    DEPTH_TO_SPACE               = 6,
+    DEQUANTIZE                   = 7,
+    EMBEDDING_LOOKUP             = 8,
+    FAKE_QUANT                   = 9,
+    FLOOR                        = 10,
+    FULLY_CONNECTED              = 11,
+    HASHTABLE_LOOKUP             = 12,
+    L2_NORMALIZATION             = 13,
+    L2_POOL_2D                   = 14,
+    LOCAL_RESPONSE_NORMALIZATION = 15,
+    LOGISTIC                     = 16,
+    LSH_PROJECTION               = 17,
+    LSTM                         = 18,
+    MAX_POOL_2D                  = 19,
+    MUL                          = 20,
+    RELU                         = 21,
+    RELU1                        = 22,
+    RELU6                        = 23,
+    RESHAPE                      = 24,
+    RESIZE_BILINEAR              = 25,
+    RNN                          = 26,
+    SOFTMAX                      = 27,
+    SPACE_TO_DEPTH               = 28,
+    SVDF                         = 29,
+    TANH                         = 30,
 };
 
-// Two special values that can be used instead of a regular poolIndex.
-enum LocationValues : uint32_t {
-    // The location will be specified at runtime. It's either a temporary
-    // variable, an input, or an output.
-    LOCATION_AT_RUN_TIME = 0xFFFFFFFF,
-    // The operand's value is stored in the
-    // TODO: Only for old
-    LOCATION_SAME_BLOCK = 0xFFFFFFFE
+// Fused activation functions
+enum FusedActivationFunc : int32_t {
+    NONE  = 0,
+    RELU  = 1,
+    RELU1 = 2,
+    RELU6 = 3,
+};
+
+// How an operand is used.
+enum OperandLifeTime : uint32_t {
+    // The operand is internal to the model.  It's created by an operation
+    // and consumed by other operations.
+    TEMPORARY_VARIABLE,
+    // The operand is an input of the model. An operand can't be both
+    // input and output of a model.
+    MODEL_INPUT,
+    // The operand is an output of the model.
+    MODEL_OUTPUT,
+    // The operand is a constant found in Model.operandValues.
+    CONSTANT_COPY,
+    // The operand is a constant that was specified via a Memory object.
+    CONSTANT_REFERENCE
 };
 
 // Status of a device.
@@ -145,7 +156,20 @@ struct Operand {
     float scale;
     int32_t zeroPoint;
 
+    // How the operand is used.
+    OperandLifeTime lifetime;
+
     // Where to find the data for this operand.
+    // If the lifetime is TEMPORARY_VARIABLE, MODEL_INPUT, or MODEL_OUTPUT:
+    // - All the fields will be 0.
+    // If the lifetime is CONSTANT_COPY:
+    // - location.poolIndex is 0.
+    // - location.offset is the offset in bytes into Model.operandValues.
+    // - location.length is set.
+    // If the lifetime is CONSTANT_REFERENCE:
+    // - location.poolIndex is set.
+    // - location.offset is the offset in bytes into the specified pool.
+    // - location.length is set.
     DataLocation location;
 };
 
@@ -161,12 +185,6 @@ struct Operation {
     vec<uint32_t> outputs;
 };
 
-struct InputOutputInfo {
-    DataLocation location;
-    // If dimensions.size() > 0, we have updated dimensions.
-    vec<uint32_t> dimensions;
-};
-
 struct Model {
     vec<Operand> operands;
     vec<Operation> operations;
@@ -176,9 +194,19 @@ struct Model {
     vec<memory> pools;
 };
 
+struct RequestArgument {
+    // The location within one of the memory pools
+    DataLocation location;
+    // If dimensions.size() > 0, dimension information was provided along with the
+    // argument.  This can be the case for models that accept inputs of varying size.
+    // This can't change the rank, just the value of the dimensions that were
+    // unspecified in the model.
+    vec<uint32_t> dimensions;
+};
+
 struct Request {
-    vec<InputOutputInfo> inputs;
-    vec<InputOutputInfo> outputs;
+    vec<RequestArgument> inputs;
+    vec<RequestArgument> outputs;
     vec<memory> pools;
 };
 

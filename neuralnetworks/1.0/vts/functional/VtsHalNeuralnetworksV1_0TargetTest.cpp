@@ -103,7 +103,8 @@ Model createTestModel() {
             .numberOfConsumers = 1,
             .scale = 0.0f,
             .zeroPoint = 0,
-            .location = {.poolIndex = static_cast<uint32_t>(LocationValues::LOCATION_AT_RUN_TIME),
+            .lifetime = OperandLifeTime::MODEL_INPUT,
+            .location = {.poolIndex = 0,
                          .offset = 0,
                          .length = 0},
         },
@@ -113,7 +114,8 @@ Model createTestModel() {
             .numberOfConsumers = 1,
             .scale = 0.0f,
             .zeroPoint = 0,
-            .location = {.poolIndex = static_cast<uint32_t>(LocationValues::LOCATION_SAME_BLOCK),
+            .lifetime = OperandLifeTime::CONSTANT_COPY,
+            .location = {.poolIndex = 0,
                          .offset = 0,
                          .length = size},
         },
@@ -123,7 +125,8 @@ Model createTestModel() {
             .numberOfConsumers = 1,
             .scale = 0.0f,
             .zeroPoint = 0,
-            .location = {.poolIndex = static_cast<uint32_t>(LocationValues::LOCATION_SAME_BLOCK),
+            .lifetime = OperandLifeTime::CONSTANT_COPY,
+            .location = {.poolIndex = 0,
                          .offset = size,
                          .length = sizeof(int32_t)},
         },
@@ -133,7 +136,8 @@ Model createTestModel() {
             .numberOfConsumers = 0,
             .scale = 0.0f,
             .zeroPoint = 0,
-            .location = {.poolIndex = static_cast<uint32_t>(LocationValues::LOCATION_AT_RUN_TIME),
+            .lifetime = OperandLifeTime::MODEL_OUTPUT,
+            .location = {.poolIndex = 0,
                          .offset = 0,
                          .length = 0},
         },
@@ -150,7 +154,7 @@ Model createTestModel() {
     std::vector<uint8_t> operandValues(
         reinterpret_cast<const uint8_t*>(operand2Data.data()),
         reinterpret_cast<const uint8_t*>(operand2Data.data()) + size);
-    int32_t activation[1] = {0};
+    int32_t activation[1] = {static_cast<int32_t>(FusedActivationFunc::NONE)};
     operandValues.insert(operandValues.end(), reinterpret_cast<const uint8_t*>(&activation[0]),
                          reinterpret_cast<const uint8_t*>(&activation[1]));
 
@@ -213,10 +217,10 @@ TEST_F(NeuralnetworksHidlTest, SimpleExecuteGraphTest) {
     // prepare inputs
     uint32_t inputSize = static_cast<uint32_t>(inputData.size() * sizeof(float));
     uint32_t outputSize = static_cast<uint32_t>(outputData.size() * sizeof(float));
-    std::vector<InputOutputInfo> inputs = {{
+    std::vector<RequestArgument> inputs = {{
         .location = {.poolIndex = INPUT, .offset = 0, .length = inputSize}, .dimensions = {},
     }};
-    std::vector<InputOutputInfo> outputs = {{
+    std::vector<RequestArgument> outputs = {{
         .location = {.poolIndex = OUTPUT, .offset = 0, .length = outputSize}, .dimensions = {},
     }};
     std::vector<hidl_memory> pools = {allocateSharedMemory(inputSize),

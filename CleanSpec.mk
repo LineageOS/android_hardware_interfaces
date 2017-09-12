@@ -61,3 +61,5 @@ $(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/lib/hw/android.hardware.auto
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/lib64/hw/android.hardware.automotive*)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/etc/init/android.hardware.automotive*)
 $(call add-clean-step, find $(PRODUCT_OUT)/system $(PRODUCT_OUT)/vendor -type f -name "android\.hardware\.configstore\@1\.1*" -print0 | xargs -0 rm -f)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/lib/android.hardware.tests*)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/lib/vndk/android.hardware.tests*)
