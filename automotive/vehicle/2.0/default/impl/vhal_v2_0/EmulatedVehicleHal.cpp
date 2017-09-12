@@ -162,11 +162,28 @@ StatusCode EmulatedVehicleHal::set(const VehiclePropValue& propValue) {
     return StatusCode::OK;
 }
 
+static bool isDiagnosticProperty(VehiclePropConfig propConfig) {
+    switch (propConfig.prop) {
+        case OBD2_LIVE_FRAME:
+        case OBD2_FREEZE_FRAME:
+        case OBD2_FREEZE_FRAME_CLEAR:
+        case OBD2_FREEZE_FRAME_INFO:
+            return true;
+    }
+    return false;
+}
+
 // Parse supported properties list and generate vector of property values to hold current values.
 void EmulatedVehicleHal::onCreate() {
     for (auto& it : kVehicleProperties) {
         VehiclePropConfig cfg = it.config;
         int32_t supportedAreas = cfg.supportedAreas;
+
+        if (isDiagnosticProperty(cfg)) {
+            // do not write an initial empty value for the diagnostic properties
+            // as we will initialize those separately.
+            continue;
+        }
 
         //  A global property will have supportedAreas = 0
         if (isGlobalProp(cfg.prop)) {
