@@ -136,12 +136,21 @@ struct Event : public IEvent {
      * TODO: What if notify has already been called before on_finish?
      * TODO: Why does the return value of the callback matter?
      */
-     bool on_finish(std::function<bool(void)> callback);
+    bool on_finish(std::function<bool(void)> callback);
 
     /**
-     * Event::bind_thread binds a thread to the event ensuring that the thread
-     * has fully finished and cleaned its resources before the event is
-     * destroyed. The thread should be bound using std::move.
+     * Event::bind_thread binds a thread to the event for later use by
+     * Event::join_thread.
+     *
+     * The thread must be passed using std::move.
+     *
+     * Once a thread is bound with Event::bind_thread, the client code
+     * should ensure that one of the following occurs before the event is
+     * destroyed:
+     * - Event::join_thread has been called.
+     * - Event::wait has been called.
+     * - Event::wait_for has been called and returned other than TIMEOUT.
+     * - Event::wait_until has been called and returned other than TIMEOUT.
      *
      * The bound thread shall not call any Event method with the exception of
      * IEvent::notify, which it will call when the thread has finished its
@@ -154,9 +163,20 @@ struct Event : public IEvent {
      *                    asyncThread.joinable() must be true.
      * @return bool True if successful, false if thread was not properly bound.
      */
-     bool bind_thread(std::thread&& asyncThread);
+    bool bind_thread(std::thread&& asyncThread);
+
+    /**
+     * Event::join_thread ensures that the thread (if any) bound to
+     * this event with Event::bind_thread has fully finished and
+     * cleaned its resources. It is legal to call this function
+     * multiple times, concurrently or sequentially.
+     */
+    void join_thread();
 
  private:
+    // Same as Event::join_thread but assumes we already hold a lock on mMutex.
+    void join_thread_locked();
+
     Status                    mStatus;
     std::mutex                mMutex;
     std::condition_variable   mCondition;
@@ -172,6 +192,9 @@ Event::Status Event::wait_for(const std::chrono::duration<Rep,Period>& timeout_d
     std::unique_lock<std::mutex> lock(mMutex);
     std::cv_status status = mCondition.wait_for(lock, timeout_duration,
                                                 [this]{return mStatus != Status::WAITING;});
+    if (status != std::cv_status::timeout) {
+        join_thread_locked();
+    }
     return status != std::cv_status::timeout ? mStatus : Status::TIMEOUT;
 }
 
@@ -180,6 +203,9 @@ Event::Status Event::wait_until(const std::chrono::time_point<Clock,Duration>& t
     std::unique_lock<std::mutex> lock(mMutex);
     std::cv_status status = mCondition.wait_until(lock, timeout_time,
                                                   [this]{return mStatus != Status::WAITING;});
+    if (status != std::cv_status::timeout) {
+        join_thread_locked();
+    }
     return status != std::cv_status::timeout ? mStatus : Status::TIMEOUT;
 }
 
