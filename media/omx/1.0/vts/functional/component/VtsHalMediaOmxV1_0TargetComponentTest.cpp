@@ -583,6 +583,67 @@ TEST_F(ComponentHidlTest, Flush) {
                             kPortIndexInput, kPortIndexOutput);
 }
 
+// test port mode configuration when the component is in various states
+TEST_F(ComponentHidlTest, PortModeConfig) {
+    description("Test Port Mode Configuration");
+    if (disableTest) return;
+    android::hardware::media::omx::V1_0::Status status;
+    uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
+    Message msg;
+
+    status = setRole(omxNode, gEnv->getRole().c_str());
+    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    OMX_PORT_PARAM_TYPE params;
+    if (compClass == audio_decoder || compClass == audio_encoder) {
+        status = getParam(omxNode, OMX_IndexParamAudioInit, &params);
+    } else {
+        status = getParam(omxNode, OMX_IndexParamVideoInit, &params);
+    }
+    if (status == ::android::hardware::media::omx::V1_0::Status::OK) {
+        ASSERT_EQ(params.nPorts, 2U);
+        kPortIndexInput = params.nStartPortNumber;
+        kPortIndexOutput = kPortIndexInput + 1;
+    }
+
+    android::Vector<BufferInfo> iBuffer, oBuffer;
+
+    // set port mode
+    PortMode portMode[2];
+    initPortMode(portMode, isSecure, compClass);
+    status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
+    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
+    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+
+    // set state to idle
+    changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
+                            kPortIndexInput, kPortIndexOutput, portMode);
+    // Only Allow Port Mode configuration in loaded state
+    status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
+    EXPECT_NE(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
+    EXPECT_NE(status, ::android::hardware::media::omx::V1_0::Status::OK);
+
+    // set state to executing
+    changeStateIdletoExecute(omxNode, observer);
+    // Only Allow Port Mode configuration in loaded state
+    status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
+    EXPECT_NE(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
+    EXPECT_NE(status, ::android::hardware::media::omx::V1_0::Status::OK);
+
+    // set state to idle
+    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+    // set state to loaded
+    changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
+                            kPortIndexInput, kPortIndexOutput);
+
+    status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
+    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
+    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+}
+
 // state transitions test
 TEST_F(ComponentHidlTest, StateTransitions) {
     description("Test State Transitions Loaded<->Idle<->Execute");
