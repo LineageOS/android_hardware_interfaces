@@ -21,10 +21,10 @@ Event::~Event() {
     //     thread::join failed: Resource deadlock would occur
 }
 
-Return<void> Event::notify(ReturnedStatus status) {
+Return<void> Event::notify(ErrorStatus status) {
     {
         std::lock_guard<std::mutex> lock(mMutex);
-        mStatus = status == ReturnedStatus::SUCCESS ? Status::SUCCESS : Status::ERROR;
+        mStatus = status == ErrorStatus::NONE ? Status::SUCCESS : Status::ERROR;
         if (mStatus == Status::SUCCESS && mCallback != nullptr) {
             bool success = mCallback();
             if (!success) {
