@@ -377,10 +377,14 @@ camera_memory_t* CameraDevice::sGetMemory(int fd, size_t buf_size, uint_t num_bu
     hidl_handle hidlHandle = mem->mHidlHandle;
     MemoryId id = object->mDeviceCallback->registerMemory(hidlHandle, buf_size, num_bufs);
     mem->handle.mId = id;
-    if (object->mMemoryMap.count(id) != 0) {
-        ALOGE("%s: duplicate MemoryId %d returned by client!", __FUNCTION__, id);
+
+    {
+        Mutex::Autolock _l(object->mMemoryMapLock);
+        if (object->mMemoryMap.count(id) != 0) {
+            ALOGE("%s: duplicate MemoryId %d returned by client!", __FUNCTION__, id);
+        }
+        object->mMemoryMap[id] = mem;
     }
-    object->mMemoryMap[id] = mem;
     mem->handle.mDevice = object;
     return &mem->handle;
 }
@@ -398,7 +402,10 @@ void CameraDevice::sPutMemory(camera_memory_t *data) {
         ALOGE("%s: camera HAL return memory while camera is not opened!", __FUNCTION__);
     }
     device->mDeviceCallback->unregisterMemory(mem->handle.mId);
-    device->mMemoryMap.erase(mem->handle.mId);
+    {
+        Mutex::Autolock _l(device->mMemoryMapLock);
+        device->mMemoryMap.erase(mem->handle.mId);
+    }
     mem->decStrong(mem);
 }
 
@@ -826,7 +833,16 @@ void CameraDevice::releaseRecordingFrameLocked(
         return;
     }
     if (mDevice->ops->release_recording_frame) {
-        CameraHeapMemory* camMemory = mMemoryMap.at(memId);
+        CameraHeapMemory* camMemory;
+        {
+            Mutex::Autolock _l(mMemoryMapLock);
+            auto it = mMemoryMap.find(memId);
+            if (it == mMemoryMap.end() || it->second == nullptr) {
+                ALOGE("%s unknown memoryId %d", __FUNCTION__, memId);
+                return;
+            }
+            camMemory = it->second;
+        }
         if (bufferIndex >= camMemory->mNumBufs) {
             ALOGE("%s: bufferIndex %d exceeds number of buffers %d",
                     __FUNCTION__, bufferIndex, camMemory->mNumBufs);
