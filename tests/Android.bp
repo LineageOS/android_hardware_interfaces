@@ -25,4 +25,6 @@ subdirs = [
     "pointer/1.0",
     "pointer/1.0/default",
     "pointer/1.0/default/lib",
+    "trie/1.0",
+    "trie/1.0/default",
 ]
