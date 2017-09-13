@@ -6,9 +6,12 @@ cc_library_shared {
         "ScheduleTest.cpp",
     ],
     shared_libs: [
+        "libcutils",
         "libhidlbase",
         "libhidltransport",
+        "libhwbinder",
+        "liblog",
         "libutils",
-        "android.hardware.tests.libhwbinder@1.0",
     ],
+    static_libs: ["android.hardware.tests.libhwbinder@1.0"],
 }
