@@ -1,4 +1,4 @@
-service drm-hal-1-0 /vendor/bin/hw/android.hardware.drm@1.0-service
+service vendor.drm-hal-1-0 /vendor/bin/hw/android.hardware.drm@1.0-service
     class hal
     user media
     group mediadrm drmrpc
