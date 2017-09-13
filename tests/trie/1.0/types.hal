@@ -16,14 +16,14 @@
 
 package android.hardware.tests.trie@1.0;
 
+struct TrieEdge {
+    int8_t character;
+    TrieNode node; // Requires reordering.
+};
+
 struct TrieNode {
     vec<TrieEdge> next;
     bool isTerminal;
-};
-
-struct TrieEdge {
-    int8_t character;
-    TrieNode node;
 };
 
 // Some forward reference tests.
@@ -41,11 +41,11 @@ struct S {
     refS f;
 };
 
+enum E2 : E1 {
+    ACCEPT,
+};
+
 enum E1 : int32_t {
     OK = E2:ACCEPT + ANOTHER,
     ANOTHER = 100,
-};
-
-enum E2 : E1 {
-    ACCEPT,
 };
