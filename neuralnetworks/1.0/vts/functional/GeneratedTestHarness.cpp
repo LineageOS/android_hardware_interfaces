@@ -172,7 +172,7 @@ void Execute(const sp<IDevice>& device, std::function<Model(void)> create_model,
             auto& test_float = test_float_operands[index];
             for (unsigned int i = 0; i < golden_float.size(); i++) {
                 SCOPED_TRACE(i);
-                EXPECT_FLOAT_EQ(golden_float[i], test_float[i]);
+                EXPECT_NEAR(golden_float[i], test_float[i], 1.e-5);
             }
         });
 
