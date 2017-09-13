@@ -83,9 +83,6 @@ TEST_F(NeuralnetworksHidlTest, GetCapabilitiesTest) {
             EXPECT_NE(nullptr, capabilities.supportedOperationTuples.data());
             EXPECT_NE(0ull, capabilities.supportedOperationTuples.size());
             EXPECT_EQ(0u, static_cast<uint32_t>(capabilities.cachesCompilation) & ~0x1);
-            EXPECT_LT(0.0f, capabilities.bootupTime);
-            EXPECT_LT(0.0f, capabilities.float16Performance.execTime);
-            EXPECT_LT(0.0f, capabilities.float16Performance.powerUsage);
             EXPECT_LT(0.0f, capabilities.float32Performance.execTime);
             EXPECT_LT(0.0f, capabilities.float32Performance.powerUsage);
             EXPECT_LT(0.0f, capabilities.quantized8Performance.execTime);
