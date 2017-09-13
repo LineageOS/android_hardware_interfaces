@@ -22,11 +22,13 @@ import IEvent;
 import IPreparedModel;
 
 interface IDevice {
-    initialize() generates(Capabilities capabilities);
+    getCapabilities() generates (ErrorStatus status, Capabilities capabilities);
 
-    getSupportedSubgraph(Model model) generates(vec<bool> supported);
+    getSupportedOperations(Model model)
+            generates (ErrorStatus status, vec<bool> supportedOperations);
 
-    prepareModel(Model model, IEvent event) generates(IPreparedModel preparedModel);
+    prepareModel(Model model, IEvent event)
+            generates (ErrorStatus status, IPreparedModel preparedModel);
 
-    getStatus() generates(DeviceStatus status);
+    getStatus() generates (DeviceStatus status);
 };

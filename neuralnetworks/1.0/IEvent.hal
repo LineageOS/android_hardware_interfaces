@@ -44,6 +44,6 @@ interface IEvent {
      * @param status Status of the execution associated with the Event.
      *               Should be SUCCESS or ERROR.
      */
-    oneway notify(Status status);
+    oneway notify(ErrorStatus status);
 
 };
