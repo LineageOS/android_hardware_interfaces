@@ -237,7 +237,7 @@ class VideoEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                         ".secure");
         }
         if (isSecure) disableTest = true;
-        if (disableTest) std::cerr << "[          ] Warning !  Test Disabled\n";
+        if (disableTest) std::cout << "[   WARN   ] Test Disabled \n";
     }
 
     virtual void TearDown() override {
@@ -278,9 +278,8 @@ class VideoEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                             EXPECT_EQ(tsHit, true)
                                 << "TimeStamp not recognized";
                         } else {
-                            std::cerr
-                                << "[          ] Warning ! Received non-zero "
-                                   "output / TimeStamp not recognized \n";
+                            std::cout << "[   INFO   ] Received non-zero "
+                                         "output / TimeStamp not recognized \n";
                         }
                     }
                 }
@@ -442,7 +441,7 @@ void requestIDR(sp<IOmxNode> omxNode, OMX_U32 portIndex) {
     status = setPortConfig(omxNode, OMX_IndexConfigVideoIntraVOPRefresh,
                            portIndex, &param);
     if (status != ::android::hardware::media::omx::V1_0::Status::OK)
-        std::cerr << "[          ] Warning ! unable to request IDR \n";
+        std::cout << "[   INFO   ] unable to request IDR \n";
 }
 
 // modify bitrate
@@ -453,7 +452,7 @@ void changeBitrate(sp<IOmxNode> omxNode, OMX_U32 portIndex, uint32_t nBitrate) {
     status =
         setPortConfig(omxNode, OMX_IndexConfigVideoBitrate, portIndex, &param);
     if (status != ::android::hardware::media::omx::V1_0::Status::OK)
-        std::cerr << "[          ] Warning ! unable to change Bitrate \n";
+        std::cout << "[   INFO   ] unable to change Bitrate \n";
 }
 
 // modify framerate
@@ -465,7 +464,7 @@ Return<android::hardware::media::omx::V1_0::Status> changeFrameRate(
     status = setPortConfig(omxNode, OMX_IndexConfigVideoFramerate, portIndex,
                            &param);
     if (status != ::android::hardware::media::omx::V1_0::Status::OK)
-        std::cerr << "[          ] Warning ! unable to change Framerate \n";
+        std::cout << "[   INFO   ] unable to change Framerate \n";
     return status;
 }
 
@@ -479,7 +478,7 @@ void changeRefreshPeriod(sp<IOmxNode> omxNode, OMX_U32 portIndex,
                            (OMX_INDEXTYPE)OMX_IndexConfigAndroidIntraRefresh,
                            portIndex, &param);
     if (status != ::android::hardware::media::omx::V1_0::Status::OK)
-        std::cerr << "[          ] Warning ! unable to change Refresh Period\n";
+        std::cout << "[   INFO   ] unable to change Refresh Period\n";
 }
 
 // set intra refresh interval
@@ -505,7 +504,7 @@ void setRefreshPeriod(sp<IOmxNode> omxNode, OMX_U32 portIndex,
     status = setPortParam(omxNode, OMX_IndexParamVideoIntraRefresh, portIndex,
                           &param);
     if (status != ::android::hardware::media::omx::V1_0::Status::OK)
-        std::cerr << "[          ] Warning ! unable to set Refresh Period \n";
+        std::cout << "[   INFO   ] unable to set Refresh Period \n";
 }
 
 void setLatency(sp<IOmxNode> omxNode, OMX_U32 portIndex, uint32_t latency) {
@@ -515,7 +514,7 @@ void setLatency(sp<IOmxNode> omxNode, OMX_U32 portIndex, uint32_t latency) {
     status = setPortConfig(omxNode, (OMX_INDEXTYPE)OMX_IndexConfigLatency,
                            portIndex, &param);
     if (status != ::android::hardware::media::omx::V1_0::Status::OK)
-        std::cerr << "[          ] Warning ! unable to set latency\n";
+        std::cout << "[   INFO   ] unable to set latency\n";
 }
 
 void getLatency(sp<IOmxNode> omxNode, OMX_U32 portIndex, uint32_t* latency) {
@@ -524,7 +523,7 @@ void getLatency(sp<IOmxNode> omxNode, OMX_U32 portIndex, uint32_t* latency) {
     status = getPortConfig(omxNode, (OMX_INDEXTYPE)OMX_IndexConfigLatency,
                            portIndex, &param);
     if (status != ::android::hardware::media::omx::V1_0::Status::OK)
-        std::cerr << "[          ] Warning ! unable to get latency\n";
+        std::cout << "[   INFO   ] unable to get latency\n";
     else
         *latency = param.nU32;
 }
@@ -1046,7 +1045,7 @@ void encodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                 break;
             } else if (msg.data.eventData.event == OMX_EventDataSpaceChanged) {
                 // TODO: how am i supposed to respond now?
-                std::cout << "[          ] Info ! OMX_EventDataSpaceChanged \n";
+                std::cout << "[   INFO   ] OMX_EventDataSpaceChanged \n";
             } else {
                 ASSERT_TRUE(false);
             }
@@ -1266,8 +1265,7 @@ TEST_F(VideoEncHidlTest, EncodeTest) {
         status = setParam(omxNode, static_cast<OMX_INDEXTYPE>(index), &param);
     }
     if (status != ::android::hardware::media::omx::V1_0::Status::OK)
-        std::cerr
-            << "[          ] Warning ! unable to prependSPSPPSToIDRFrames\n";
+        std::cout << "[   INFO   ] unable to prependSPSPPSToIDRFrames\n";
     else
         prependSPSPPS = true;
 

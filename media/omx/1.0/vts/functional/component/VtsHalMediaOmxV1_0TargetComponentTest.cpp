@@ -181,7 +181,7 @@ class ComponentHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                             strlen(gEnv->getComponent().c_str()) - suffixLen,
                         ".secure");
         }
-        if (disableTest) std::cerr << "[          ] Warning !  Test Disabled\n";
+        if (disableTest) std::cout << "[   WARN   ] Test Disabled \n";
     }
 
     virtual void TearDown() override {
@@ -290,7 +290,7 @@ TEST_F(ComponentHidlTest, DISABLED_GetPortIndices) {
 }
 
 // port format enumeration
-TEST_F(ComponentHidlTest, DISABLED_EnumeratePortFormat) {
+TEST_F(ComponentHidlTest, EnumeratePortFormat) {
     description("Test Component on Mandatory Port Parameters (Port Format)");
     if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
@@ -397,14 +397,44 @@ TEST_F(ComponentHidlTest, DISABLED_SetDefaultPortParams) {
             EXPECT_NE(status,
                       ::android::hardware::media::omx::V1_0::Status::OK);
 
-            // Edit Read-Only fields.
+            // Port Direction - Read Only
             portDef = mirror;
             portDef.eDir = static_cast<OMX_DIRTYPE>(RANDOM_INDEX);
             setPortParam(omxNode, OMX_IndexParamPortDefinition, i, &portDef);
             getPortParam(omxNode, OMX_IndexParamPortDefinition, i, &portDef);
-            EXPECT_EQ(portDef.eDir, mirror.eDir);
+            if (portDef.eDir != mirror.eDir) {
+                std::cerr << "[   ERROR   ] port direction has to be read only "
+                             "but is changeable \n";
+            }
             setPortParam(omxNode, OMX_IndexParamPortDefinition, i, &mirror);
 
+            // Port Min BufferCount - Read Only
+            portDef = mirror;
+            portDef.nBufferCountMin += 1;
+            setPortParam(omxNode, OMX_IndexParamPortDefinition, i, &portDef);
+            getPortParam(omxNode, OMX_IndexParamPortDefinition, i, &portDef);
+            if (portDef.nBufferCountMin != mirror.nBufferCountMin) {
+                std::cerr << "[   ERROR   ] port Min BufferCount has to be "
+                             "read only  but is changeable \n";
+            }
+            EXPECT_EQ(portDef.nBufferCountMin, mirror.nBufferCountMin);
+            setPortParam(omxNode, OMX_IndexParamPortDefinition, i, &mirror);
+
+            // Port Actual BufferCount
+            portDef = mirror;
+            portDef.nBufferCountActual += 1;
+            status = setPortParam(omxNode, OMX_IndexParamPortDefinition, i,
+                                  &portDef);
+            if (status == ::android::hardware::media::omx::V1_0::Status::OK) {
+                status = getPortParam(omxNode, OMX_IndexParamPortDefinition, i,
+                                      &portDef);
+                EXPECT_EQ(portDef.nBufferCountActual,
+                          mirror.nBufferCountActual + 1);
+            }
+
+            // Port BufferSize is although read only as per OMX-IL 1.2, android
+            // doesnt abide by this.
+            // Decrease buffer size
             portDef = mirror;
             OMX_U32 nBufferSize = portDef.nBufferSize >> 1;
             if (nBufferSize != 0) {
@@ -428,43 +458,21 @@ TEST_F(ComponentHidlTest, DISABLED_SetDefaultPortParams) {
                 (compClass == video_decoder && i == kPortIndexInput)) {
                 double dev = (portDef.nBufferSize / (double)nBufferSize);
                 dev -= 1;
-                if (dev < 0 || dev > 0.1) EXPECT_TRUE(false);
+                if (dev < 0 || dev > 0.1) {
+                    std::cerr << "[   ERROR   ] port buffer size deviation "
+                                 "larger than expected \n";
+                }
             } else {
                 EXPECT_EQ(portDef.nBufferSize, mirror.nBufferSize);
             }
             setPortParam(omxNode, OMX_IndexParamPortDefinition, i, &mirror);
 
-            portDef = mirror;
-            portDef.nBufferCountMin += 1;
-            setPortParam(omxNode, OMX_IndexParamPortDefinition, i, &portDef);
-            getPortParam(omxNode, OMX_IndexParamPortDefinition, i, &portDef);
-            EXPECT_EQ(portDef.nBufferCountMin, mirror.nBufferCountMin);
-            setPortParam(omxNode, OMX_IndexParamPortDefinition, i, &mirror);
-
-            portDef = mirror;
-            portDef.nBufferCountActual += 1;
-            status = setPortParam(omxNode, OMX_IndexParamPortDefinition, i,
-                                  &portDef);
-            if (status == ::android::hardware::media::omx::V1_0::Status::OK) {
-                status = getPortParam(omxNode, OMX_IndexParamPortDefinition, i,
-                                      &portDef);
-                EXPECT_EQ(portDef.nBufferCountActual,
-                          mirror.nBufferCountActual + 1);
-            }
-
+            // Increase buffer size
             portDef = mirror;
             portDef.nBufferSize = mirror.nBufferSize << 1;
-            status = setPortParam(omxNode, OMX_IndexParamPortDefinition, i,
-                                  &portDef);
-            if (status == ::android::hardware::media::omx::V1_0::Status::OK) {
-                status = getPortParam(omxNode, OMX_IndexParamPortDefinition, i,
-                                      &portDef);
-                if (portDef.nBufferSize != mirror.nBufferSize) {
-                    std::cout
-                        << "[          ] Warning ! Component input port does "
-                           "not  preserve Read-Only fields \n";
-                }
-            }
+            setPortParam(omxNode, OMX_IndexParamPortDefinition, i, &portDef);
+            getPortParam(omxNode, OMX_IndexParamPortDefinition, i, &portDef);
+            EXPECT_EQ(portDef.nBufferSize, (mirror.nBufferSize << 1));
         }
     }
 }

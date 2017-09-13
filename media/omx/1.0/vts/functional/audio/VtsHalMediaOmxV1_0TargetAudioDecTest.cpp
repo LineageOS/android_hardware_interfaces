@@ -219,7 +219,7 @@ class AudioDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         framesReceived = 0;
         timestampUs = 0;
         timestampDevTest = false;
-        if (disableTest) std::cerr << "[          ] Warning !  Test Disabled\n";
+        if (disableTest) std::cout << "[   WARN   ] Test Disabled \n";
     }
 
     virtual void TearDown() override {
@@ -263,9 +263,8 @@ class AudioDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                             EXPECT_EQ(tsHit, true)
                                 << "TimeStamp not recognized";
                         } else {
-                            std::cerr
-                                << "[          ] Warning ! Received non-zero "
-                                   "output / TimeStamp not recognized \n";
+                            std::cout << "[   INFO   ] Received non-zero "
+                                         "output / TimeStamp not recognized \n";
                         }
                     }
                 }
@@ -716,7 +715,7 @@ TEST_F(AudioDecHidlTest, SetRole) {
 }
 
 // port format enumeration
-TEST_F(AudioDecHidlTest, DISABLED_EnumeratePortFormat) {
+TEST_F(AudioDecHidlTest, EnumeratePortFormat) {
     description("Test Component on Mandatory Port Parameters (Port Format)");
     if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
@@ -822,11 +821,7 @@ TEST_F(AudioDecHidlTest, DecodeTest) {
 }
 
 // end of sequence test
-// SPECIAL CASE; Sending Empty input EOS buffer is not supported across all
-// components. For instance soft vorbis and soft opus expects CSD buffers at
-// the start. Disabling this test for now. We shall revisit this at a later
-// stage
-TEST_F(AudioDecHidlTest, DISABLED_EOSTest_M) {
+TEST_F(AudioDecHidlTest, EOSTest_M) {
     description("Test end of stream monkeying");
     if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;

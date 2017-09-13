@@ -206,7 +206,7 @@ class AudioEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         }
         if (i == kNumCompToCoding) disableTest = true;
         eosFlag = false;
-        if (disableTest) std::cerr << "[          ] Warning !  Test Disabled\n";
+        if (disableTest) std::cout << "[   WARN   ] Test Disabled \n";
     }
 
     virtual void TearDown() override {
@@ -454,7 +454,7 @@ TEST_F(AudioEncHidlTest, SetRole) {
 }
 
 // port format enumeration
-TEST_F(AudioEncHidlTest, DISABLED_EnumeratePortFormat) {
+TEST_F(AudioEncHidlTest, EnumeratePortFormat) {
     description("Test Component on Mandatory Port Parameters (Port Format)");
     if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
