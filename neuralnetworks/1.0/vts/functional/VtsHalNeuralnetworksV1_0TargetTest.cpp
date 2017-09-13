@@ -209,10 +209,14 @@ TEST_F(NeuralnetworksHidlTest, SimpleExecuteGraphTest) {
     const uint32_t INPUT = 0;
     const uint32_t OUTPUT = 1;
 
-    // prpeare request
+    // prepare request
     Model model = createTestModel();
-    sp<IPreparedModel> preparedModel = device->prepareModel(model);
+    sp<Event> preparationEvent = new Event();
+    ASSERT_NE(nullptr, preparationEvent.get());
+    sp<IPreparedModel> preparedModel = device->prepareModel(model, preparationEvent);
     ASSERT_NE(nullptr, preparedModel.get());
+    Event::Status preparationStatus = preparationEvent->wait();
+    EXPECT_EQ(Event::Status::SUCCESS, preparationStatus);
 
     // prepare inputs
     uint32_t inputSize = static_cast<uint32_t>(inputData.size() * sizeof(float));
@@ -245,13 +249,13 @@ TEST_F(NeuralnetworksHidlTest, SimpleExecuteGraphTest) {
     outputMemory->commit();
 
     // execute request
-    sp<Event> event = sp<Event>(new Event());
-    ASSERT_NE(nullptr, event.get());
+    sp<Event> executionEvent = new Event();
+    ASSERT_NE(nullptr, executionEvent.get());
     bool success = preparedModel->execute({.inputs = inputs, .outputs = outputs, .pools = pools},
-                                          event);
+                                          executionEvent);
     EXPECT_TRUE(success);
-    Event::Status status = event->wait();
-    EXPECT_EQ(Event::Status::SUCCESS, status);
+    Event::Status executionStatus = executionEvent->wait();
+    EXPECT_EQ(Event::Status::SUCCESS, executionStatus);
 
     // validate results { 1+5, 2+6, 3+7, 4+8 }
     outputMemory->read();
