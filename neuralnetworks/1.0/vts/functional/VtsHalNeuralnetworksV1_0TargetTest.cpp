@@ -64,24 +64,27 @@ TEST_F(NeuralnetworksHidlTest, CreateDevice) {}
 
 // status test
 TEST_F(NeuralnetworksHidlTest, StatusTest) {
-    DeviceStatus status = device->getStatus();
-    EXPECT_EQ(DeviceStatus::AVAILABLE, status);
+    Return<DeviceStatus> status = device->getStatus();
+    ASSERT_TRUE(status.isOk());
+    EXPECT_EQ(DeviceStatus::AVAILABLE, static_cast<DeviceStatus>(status));
 }
 
 // initialization
-TEST_F(NeuralnetworksHidlTest, InitializeTest) {
-    Return<void> ret = device->initialize([](const Capabilities& capabilities) {
-        EXPECT_NE(nullptr, capabilities.supportedOperationTuples.data());
-        EXPECT_NE(0ull, capabilities.supportedOperationTuples.size());
-        EXPECT_EQ(0u, static_cast<uint32_t>(capabilities.cachesCompilation) & ~0x1);
-        EXPECT_LT(0.0f, capabilities.bootupTime);
-        EXPECT_LT(0.0f, capabilities.float16Performance.execTime);
-        EXPECT_LT(0.0f, capabilities.float16Performance.powerUsage);
-        EXPECT_LT(0.0f, capabilities.float32Performance.execTime);
-        EXPECT_LT(0.0f, capabilities.float32Performance.powerUsage);
-        EXPECT_LT(0.0f, capabilities.quantized8Performance.execTime);
-        EXPECT_LT(0.0f, capabilities.quantized8Performance.powerUsage);
-    });
+TEST_F(NeuralnetworksHidlTest, GetCapabilitiesTest) {
+    Return<void> ret =
+        device->getCapabilities([](ErrorStatus status, const Capabilities& capabilities) {
+            EXPECT_EQ(ErrorStatus::NONE, status);
+            EXPECT_NE(nullptr, capabilities.supportedOperationTuples.data());
+            EXPECT_NE(0ull, capabilities.supportedOperationTuples.size());
+            EXPECT_EQ(0u, static_cast<uint32_t>(capabilities.cachesCompilation) & ~0x1);
+            EXPECT_LT(0.0f, capabilities.bootupTime);
+            EXPECT_LT(0.0f, capabilities.float16Performance.execTime);
+            EXPECT_LT(0.0f, capabilities.float16Performance.powerUsage);
+            EXPECT_LT(0.0f, capabilities.float32Performance.execTime);
+            EXPECT_LT(0.0f, capabilities.float32Performance.powerUsage);
+            EXPECT_LT(0.0f, capabilities.quantized8Performance.execTime);
+            EXPECT_LT(0.0f, capabilities.quantized8Performance.powerUsage);
+        });
     EXPECT_TRUE(ret.isOk());
 }
 
@@ -192,13 +195,14 @@ hidl_memory allocateSharedMemory(int64_t size, const std::string& type = "ashmem
 }  // anonymous namespace
 
 // supported subgraph test
-TEST_F(NeuralnetworksHidlTest, SupportedSubgraphTest) {
+TEST_F(NeuralnetworksHidlTest, SupportedOperationsTest) {
     Model model = createTestModel();
-    std::vector<bool> supported;
-    Return<void> ret = device->getSupportedSubgraph(
-        model, [&](const hidl_vec<bool>& hidl_supported) { supported = hidl_supported; });
-    ASSERT_TRUE(ret.isOk());
-    EXPECT_EQ(/*model.operations.size()*/ 0ull, supported.size());
+    Return<void> ret = device->getSupportedOperations(
+        model, [&](ErrorStatus status, const hidl_vec<bool>& supported) {
+            EXPECT_EQ(ErrorStatus::NONE, status);
+            EXPECT_EQ(model.operations.size(), supported.size());
+        });
+    EXPECT_TRUE(ret.isOk());
 }
 
 // execute simple graph
@@ -211,9 +215,15 @@ TEST_F(NeuralnetworksHidlTest, SimpleExecuteGraphTest) {
 
     // prepare request
     Model model = createTestModel();
+    sp<IPreparedModel> preparedModel;
     sp<Event> preparationEvent = new Event();
     ASSERT_NE(nullptr, preparationEvent.get());
-    sp<IPreparedModel> preparedModel = device->prepareModel(model, preparationEvent);
+    Return<void> prepareRet = device->prepareModel(
+        model, preparationEvent, [&](ErrorStatus status, const sp<IPreparedModel>& prepared) {
+            EXPECT_EQ(ErrorStatus::NONE, status);
+            preparedModel = prepared;
+        });
+    ASSERT_TRUE(prepareRet.isOk());
     ASSERT_NE(nullptr, preparedModel.get());
     Event::Status preparationStatus = preparationEvent->wait();
     EXPECT_EQ(Event::Status::SUCCESS, preparationStatus);
@@ -251,11 +261,12 @@ TEST_F(NeuralnetworksHidlTest, SimpleExecuteGraphTest) {
     // execute request
     sp<Event> executionEvent = new Event();
     ASSERT_NE(nullptr, executionEvent.get());
-    bool success = preparedModel->execute({.inputs = inputs, .outputs = outputs, .pools = pools},
-                                          executionEvent);
-    EXPECT_TRUE(success);
-    Event::Status executionStatus = executionEvent->wait();
-    EXPECT_EQ(Event::Status::SUCCESS, executionStatus);
+    Return<ErrorStatus> executeStatus = preparedModel->execute(
+        {.inputs = inputs, .outputs = outputs, .pools = pools}, executionEvent);
+    ASSERT_TRUE(executeStatus.isOk());
+    EXPECT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(executeStatus));
+    Event::Status eventStatus = executionEvent->wait();
+    EXPECT_EQ(Event::Status::SUCCESS, eventStatus);
 
     // validate results { 1+5, 2+6, 3+7, 4+8 }
     outputMemory->read();
