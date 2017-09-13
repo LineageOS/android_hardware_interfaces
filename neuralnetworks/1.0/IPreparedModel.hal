@@ -22,5 +22,5 @@ import IEvent;
 
 interface IPreparedModel {
     // Multiple threads can call this execute function concurrently.
-    execute(Request request, IEvent event) generates(bool success);
+    execute(Request request, IEvent event) generates (ErrorStatus status);
 };
