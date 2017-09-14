@@ -126,6 +126,24 @@ interface IFoo {
     typedef multidimArrayOne[8][9][10] multidimArrayTwo;
     typedef multidimArrayTwo[2][3][4] multidimArrayThree;
 
+    struct InnerTestStruct {};
+    typedef InnerTestStruct InnerTestStructTypedef;
+    struct S1 {
+        struct InnerTestStruct {};
+        InnerTestStructTypedef foo;
+    };
+
+    enum InnerTestEnum : int32_t {
+        VALUE = 0
+    };
+    typedef InnerTestEnum InnerTestEnumTypedef;
+    struct S2 {
+        enum InnerTestEnum : int32_t {
+            VALUE = 1
+        };
+        InnerTestEnumTypedef foo;
+    };
+
     doThis(float param);
     doThatAndReturnSomething(int64_t param) generates (int32_t result);
     doQuiteABit(int32_t a, int64_t b, float c, double d) generates (double something);
