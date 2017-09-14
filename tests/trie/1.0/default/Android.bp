@@ -1,0 +1,16 @@
+cc_library_shared {
+    name: "android.hardware.tests.trie@1.0-impl",
+    defaults: ["hidl_defaults"],
+    relative_install_path: "hw",
+    srcs: [
+        "Trie.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "libhidlbase",
+        "libhidltransport",
+        "liblog",
+        "libutils",
+        "android.hardware.tests.trie@1.0",
+    ],
+}
