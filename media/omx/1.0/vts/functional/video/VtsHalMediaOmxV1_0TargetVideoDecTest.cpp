@@ -17,9 +17,6 @@
 #define LOG_TAG "media_omx_hidl_video_dec_test"
 #include <android-base/logging.h>
 
-#include <android/hardware/graphics/allocator/2.0/IAllocator.h>
-#include <android/hardware/graphics/mapper/2.0/IMapper.h>
-#include <android/hardware/graphics/mapper/2.0/types.h>
 #include <android/hardware/media/omx/1.0/IOmx.h>
 #include <android/hardware/media/omx/1.0/IOmxNode.h>
 #include <android/hardware/media/omx/1.0/IOmxObserver.h>
@@ -27,10 +24,7 @@
 #include <android/hidl/allocator/1.0/IAllocator.h>
 #include <android/hidl/memory/1.0/IMapper.h>
 #include <android/hidl/memory/1.0/IMemory.h>
-#include <cutils/atomic.h>
 
-using ::android::hardware::graphics::common::V1_0::BufferUsage;
-using ::android::hardware::graphics::common::V1_0::PixelFormat;
 using ::android::hardware::media::omx::V1_0::IOmx;
 using ::android::hardware::media::omx::V1_0::IOmxObserver;
 using ::android::hardware::media::omx::V1_0::IOmxNode;
@@ -433,82 +427,6 @@ void GetURLForComponent(VideoDecHidlTest::standardComp comp, char* mURL,
     }
 }
 
-void allocateGraphicBuffers(sp<IOmxNode> omxNode, OMX_U32 portIndex,
-                            android::Vector<BufferInfo>* buffArray,
-                            uint32_t nFrameWidth, uint32_t nFrameHeight,
-                            int32_t* nStride, int format, uint32_t count) {
-    android::hardware::media::omx::V1_0::Status status;
-    sp<android::hardware::graphics::allocator::V2_0::IAllocator> allocator =
-        android::hardware::graphics::allocator::V2_0::IAllocator::getService();
-    ASSERT_NE(nullptr, allocator.get());
-
-    sp<android::hardware::graphics::mapper::V2_0::IMapper> mapper =
-        android::hardware::graphics::mapper::V2_0::IMapper::getService();
-    ASSERT_NE(mapper.get(), nullptr);
-
-    android::hardware::graphics::mapper::V2_0::IMapper::BufferDescriptorInfo
-        descriptorInfo;
-    uint32_t usage;
-
-    descriptorInfo.width = nFrameWidth;
-    descriptorInfo.height = nFrameHeight;
-    descriptorInfo.layerCount = 1;
-    descriptorInfo.format = static_cast<PixelFormat>(format);
-    descriptorInfo.usage = static_cast<uint64_t>(BufferUsage::CPU_READ_OFTEN);
-    omxNode->getGraphicBufferUsage(
-        portIndex,
-        [&status, &usage](android::hardware::media::omx::V1_0::Status _s,
-                          uint32_t _n1) {
-            status = _s;
-            usage = _n1;
-        });
-    if (status == android::hardware::media::omx::V1_0::Status::OK) {
-        descriptorInfo.usage |= usage;
-    }
-
-    ::android::hardware::hidl_vec<uint32_t> descriptor;
-    android::hardware::graphics::mapper::V2_0::Error error;
-    mapper->createDescriptor(
-        descriptorInfo, [&error, &descriptor](
-                            android::hardware::graphics::mapper::V2_0::Error _s,
-                            ::android::hardware::hidl_vec<uint32_t> _n1) {
-            error = _s;
-            descriptor = _n1;
-        });
-    EXPECT_EQ(error, android::hardware::graphics::mapper::V2_0::Error::NONE);
-
-    EXPECT_EQ(buffArray->size(), count);
-
-    static volatile int32_t nextId = 0;
-    uint64_t id = static_cast<uint64_t>(getpid()) << 32;
-    allocator->allocate(
-        descriptor, count,
-        [&](android::hardware::graphics::mapper::V2_0::Error _s, uint32_t _n1,
-            const ::android::hardware::hidl_vec<
-                ::android::hardware::hidl_handle>& _n2) {
-            ASSERT_EQ(android::hardware::graphics::mapper::V2_0::Error::NONE,
-                      _s);
-            *nStride = _n1;
-            ASSERT_EQ(count, _n2.size());
-            for (uint32_t i = 0; i < count; i++) {
-                buffArray->editItemAt(i).omxBuffer.nativeHandle = _n2[i];
-                buffArray->editItemAt(i).omxBuffer.attr.anwBuffer.width =
-                    nFrameWidth;
-                buffArray->editItemAt(i).omxBuffer.attr.anwBuffer.height =
-                    nFrameHeight;
-                buffArray->editItemAt(i).omxBuffer.attr.anwBuffer.stride = _n1;
-                buffArray->editItemAt(i).omxBuffer.attr.anwBuffer.format =
-                    descriptorInfo.format;
-                buffArray->editItemAt(i).omxBuffer.attr.anwBuffer.usage =
-                    descriptorInfo.usage;
-                buffArray->editItemAt(i).omxBuffer.attr.anwBuffer.layerCount =
-                    descriptorInfo.layerCount;
-                buffArray->editItemAt(i).omxBuffer.attr.anwBuffer.id =
-                    id | static_cast<uint32_t>(android_atomic_inc(&nextId));
-            }
-        });
-}
-
 // port settings reconfiguration during runtime. reconfigures frame dimensions
 void portReconfiguration(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                          android::Vector<BufferInfo>* iBuffer,
@@ -592,22 +510,7 @@ void portReconfiguration(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                     android::hardware::media::omx::V1_0::Status::TIMED_OUT);
 
                 allocatePortBuffers(omxNode, oBuffer, kPortIndexOutput,
-                                    oPortMode);
-                if (oPortMode != PortMode::PRESET_BYTE_BUFFER) {
-                    OMX_PARAM_PORTDEFINITIONTYPE portDef;
-
-                    status = getPortParam(omxNode, OMX_IndexParamPortDefinition,
-                                          kPortIndexOutput, &portDef);
-                    ASSERT_EQ(
-                        status,
-                        ::android::hardware::media::omx::V1_0::Status::OK);
-                    allocateGraphicBuffers(omxNode, kPortIndexOutput, oBuffer,
-                                           portDef.format.video.nFrameWidth,
-                                           portDef.format.video.nFrameHeight,
-                                           &portDef.format.video.nStride,
-                                           portDef.format.video.eColorFormat,
-                                           portDef.nBufferCountActual);
-                }
+                                    oPortMode, true);
                 status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT,
                                                   iBuffer, oBuffer);
                 ASSERT_EQ(status,
@@ -1000,22 +903,9 @@ TEST_F(VideoDecHidlTest, DecodeTest) {
 
     // set state to idle
     changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput, portMode);
+                            kPortIndexInput, kPortIndexOutput, portMode, true);
     // set state to executing
     changeStateIdletoExecute(omxNode, observer);
-
-    if (portMode[1] != PortMode::PRESET_BYTE_BUFFER) {
-        OMX_PARAM_PORTDEFINITIONTYPE portDef;
-
-        status = getPortParam(omxNode, OMX_IndexParamPortDefinition,
-                              kPortIndexOutput, &portDef);
-        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-        allocateGraphicBuffers(
-            omxNode, kPortIndexOutput, &oBuffer,
-            portDef.format.video.nFrameWidth, portDef.format.video.nFrameHeight,
-            &portDef.format.video.nStride, portDef.format.video.eColorFormat,
-            portDef.nBufferCountActual);
-    }
 
     // Port Reconfiguration
     eleStream.open(mURL, std::ifstream::binary);
@@ -1101,7 +991,7 @@ TEST_F(VideoDecHidlTest, AdaptivePlaybackTest) {
 
     // set state to idle
     changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput, portMode);
+                            kPortIndexInput, kPortIndexOutput, portMode, true);
     // set state to executing
     changeStateIdletoExecute(omxNode, observer);
 
@@ -1211,7 +1101,7 @@ TEST_F(VideoDecHidlTest, EOSTest_M) {
 
     // set state to idle
     changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput, portMode);
+                            kPortIndexInput, kPortIndexOutput, portMode, true);
     // set state to executing
     changeStateIdletoExecute(omxNode, observer);
 
@@ -1299,7 +1189,7 @@ TEST_F(VideoDecHidlTest, ThumbnailTest) {
 
     // set state to idle
     changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput, portMode);
+                            kPortIndexInput, kPortIndexOutput, portMode, true);
     // set state to executing
     changeStateIdletoExecute(omxNode, observer);
 
@@ -1412,7 +1302,7 @@ TEST_F(VideoDecHidlTest, SimpleEOSTest) {
 
     // set state to idle
     changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput, portMode);
+                            kPortIndexInput, kPortIndexOutput, portMode, true);
     // set state to executing
     changeStateIdletoExecute(omxNode, observer);
 
@@ -1507,7 +1397,7 @@ TEST_F(VideoDecHidlTest, FlushTest) {
 
     // set state to idle
     changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput, portMode);
+                            kPortIndexInput, kPortIndexOutput, portMode, true);
     // set state to executing
     changeStateIdletoExecute(omxNode, observer);
 
