@@ -946,10 +946,16 @@ TEST_F(VideoDecHidlTest, AdaptivePlaybackTest) {
     }
 
     // set port mode
+    portMode[0] = PortMode::PRESET_BYTE_BUFFER;
+    portMode[1] = PortMode::DYNAMIC_ANW_BUFFER;
     status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
-    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    if (status != ::android::hardware::media::omx::V1_0::Status::OK) {
+        portMode[1] = PortMode::PRESET_BYTE_BUFFER;
+        status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
+        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    }
 
     // prepare for adaptive playback
     uint32_t adaptiveMaxWidth = 320;
@@ -961,7 +967,10 @@ TEST_F(VideoDecHidlTest, AdaptivePlaybackTest) {
         // support for adaptive play back is mandatory in Byte Buffer mode
         ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     } else {
-        return;
+        // for vendor codecs, support for adaptive play back is optional
+        // in byte buffer mode.
+        if (portMode[1] == PortMode::PRESET_BYTE_BUFFER) return;
+        if (status != ::android::hardware::media::omx::V1_0::Status::OK) return;
     }
 
     // TODO: Handle this better !!!
