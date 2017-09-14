@@ -28,6 +28,7 @@ TEST(CheckConfig, audioPolicyConfigurationValidation) {
         const auto configPath = folder + '/' + configName;
         if (access(configPath.c_str(), R_OK) == 0) {
             ASSERT_VALID_XML(configPath.c_str(), configSchemaPath);
+            return; // The framework does not read past the first config file found
         }
     }
 }
