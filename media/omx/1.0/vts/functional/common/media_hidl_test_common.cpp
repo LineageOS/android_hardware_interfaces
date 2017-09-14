@@ -316,6 +316,25 @@ void allocateBuffer(sp<IOmxNode> omxNode, BufferInfo* buffer, OMX_U32 portIndex,
                 buffer->id = id;
             });
         ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    } else if (portMode == PortMode::PRESET_ANW_BUFFER) {
+        OMX_PARAM_PORTDEFINITIONTYPE portDef;
+        status = getPortParam(omxNode, OMX_IndexParamPortDefinition, portIndex,
+                              &portDef);
+        int32_t nStride;
+        buffer->owner = client;
+        buffer->omxBuffer.type = CodecBuffer::Type::ANW_BUFFER;
+        allocateGraphicBuffers(omxNode, portIndex, buffer,
+                               portDef.format.video.nFrameWidth,
+                               portDef.format.video.nFrameHeight, &nStride,
+                               portDef.format.video.eColorFormat);
+        omxNode->useBuffer(
+            portIndex, buffer->omxBuffer,
+            [&status, &buffer](android::hardware::media::omx::V1_0::Status _s,
+                               uint32_t id) {
+                status = _s;
+                buffer->id = id;
+            });
+        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     }
 }
 
@@ -520,6 +539,7 @@ void dispatchOutputBuffer(sp<IOmxNode> omxNode,
             status =
                 omxNode->fillBuffer((*buffArray)[bufferIndex].id, t, fenceNh);
             break;
+        case PortMode::PRESET_ANW_BUFFER:
         case PortMode::PRESET_SECURE_BUFFER:
         case PortMode::PRESET_BYTE_BUFFER:
             t.sharedMemory = android::hardware::hidl_memory();
