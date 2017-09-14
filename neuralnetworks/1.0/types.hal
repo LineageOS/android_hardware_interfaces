@@ -19,56 +19,55 @@
 package android.hardware.neuralnetworks@1.0;
 
 // The types an operand can have.
-// These values are the same as found in the NeuralNetworks.h file.
-// When modifying, be sure to update HAL_NUM_OPERAND_TYPES in HalIntefaces.h.
+// These values are the same as found in the NeuralNetworks.h and NeuralNetworksOEM.h files.
 enum OperandType : uint32_t {
-    OEM                       = 0,
-    FLOAT32                   = 1,
-    INT32                     = 2, // TODO: is this needed?
-    UINT32                    = 3,
-    TENSOR_OEM_BYTE           = 4,
-    TENSOR_FLOAT32            = 5,
-    TENSOR_INT32              = 6,
-    TENSOR_QUANT8_ASYMM       = 7,
+    FLOAT32                   = 0,
+    INT32                     = 1,
+    UINT32                    = 2,
+    TENSOR_FLOAT32            = 3,
+    TENSOR_INT32              = 4,
+    TENSOR_QUANT8_ASYMM       = 5,
+
+    OEM                       = 10000,
+    TENSOR_OEM_BYTE           = 10001,
 };
 
-// The type of operations.  Unlike the operation types found in
-// NeuralNetworks.h file, these specify the data type they operate on.
+// The type of operations.  Unlike the operation types found in the
+// NeuralNetworks.h and NeuralNetworksOEM.h files, these specify the data type they operate on.
 // This is done to simplify the work of drivers.
 // TODO: Currently they are the same.  Add a conversion when finalizing the model.
-// When modifying, be sure to update HAL_NUM_OPERATION_TYPES in HalIntefaces.h.
 enum OperationType : uint32_t {
-    OEM_OPERATION                = 0,
-    ADD                          = 1,
-    AVERAGE_POOL_2D              = 2,
-    CONCATENATION                = 3,
-    CONV_2D                      = 4,
-    DEPTHWISE_CONV_2D            = 5,
-    DEPTH_TO_SPACE               = 6,
-    DEQUANTIZE                   = 7,
-    EMBEDDING_LOOKUP             = 8,
-    FAKE_QUANT                   = 9,
-    FLOOR                        = 10,
-    FULLY_CONNECTED              = 11,
-    HASHTABLE_LOOKUP             = 12,
-    L2_NORMALIZATION             = 13,
-    L2_POOL_2D                   = 14,
-    LOCAL_RESPONSE_NORMALIZATION = 15,
-    LOGISTIC                     = 16,
-    LSH_PROJECTION               = 17,
-    LSTM                         = 18,
-    MAX_POOL_2D                  = 19,
-    MUL                          = 20,
-    RELU                         = 21,
-    RELU1                        = 22,
-    RELU6                        = 23,
-    RESHAPE                      = 24,
-    RESIZE_BILINEAR              = 25,
-    RNN                          = 26,
-    SOFTMAX                      = 27,
-    SPACE_TO_DEPTH               = 28,
-    SVDF                         = 29,
-    TANH                         = 30,
+    ADD                          = 0,
+    AVERAGE_POOL_2D              = 1,
+    CONCATENATION                = 2,
+    CONV_2D                      = 3,
+    DEPTHWISE_CONV_2D            = 4,
+    DEPTH_TO_SPACE               = 5,
+    DEQUANTIZE                   = 6,
+    EMBEDDING_LOOKUP             = 7,
+    FLOOR                        = 8,
+    FULLY_CONNECTED              = 9,
+    HASHTABLE_LOOKUP             = 10,
+    L2_NORMALIZATION             = 11,
+    L2_POOL_2D                   = 12,
+    LOCAL_RESPONSE_NORMALIZATION = 13,
+    LOGISTIC                     = 14,
+    LSH_PROJECTION               = 15,
+    LSTM                         = 16,
+    MAX_POOL_2D                  = 17,
+    MUL                          = 18,
+    RELU                         = 19,
+    RELU1                        = 20,
+    RELU6                        = 21,
+    RESHAPE                      = 22,
+    RESIZE_BILINEAR              = 23,
+    RNN                          = 24,
+    SOFTMAX                      = 25,
+    SPACE_TO_DEPTH               = 26,
+    SVDF                         = 27,
+    TANH                         = 28,
+
+    OEM_OPERATION                = 10000,
 };
 
 // Fused activation functions
