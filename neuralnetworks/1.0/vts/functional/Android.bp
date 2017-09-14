@@ -18,6 +18,7 @@ cc_test {
     name: "VtsHalNeuralnetworksV1_0TargetTest",
     srcs: [
         "Event.cpp",
+        "GeneratedTestHarness.cpp",
         "VtsHalNeuralnetworksV1_0TargetTest.cpp",
     ],
     defaults: ["VtsHalTargetTestDefaults"],
@@ -26,5 +27,9 @@ cc_test {
         "android.hidl.allocator@1.0",
         "android.hidl.memory@1.0",
         "libhidlmemory",
+    ],
+    header_libs: [
+        "libneuralnetworks_generated_test_harness_headers",
+        "libneuralnetworks_generated_tests",
     ],
 }

@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-/* This HAL is a work in progress */
+package android.hardware.tests.trie@1.0;
 
-package android.hardware.neuralnetworks@1.0;
-
-import IEvent;
-
-interface IPreparedModel {
-    // Multiple threads can call this execute function concurrently.
-    execute(Request request, IEvent event) generates (ErrorStatus status);
+interface ITrie {
+    newTrie() generates (TrieNode trie);
+    addStrings(TrieNode trie, vec<string> strings) generates (TrieNode trie);
+    containsStrings(TrieNode trie, vec<string> strings) generates (vec<bool> contains);
 };

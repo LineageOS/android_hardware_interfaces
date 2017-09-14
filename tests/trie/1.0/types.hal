@@ -14,13 +14,38 @@
  * limitations under the License.
  */
 
-/* This HAL is a work in progress */
+package android.hardware.tests.trie@1.0;
 
-package android.hardware.neuralnetworks@1.0;
+struct TrieNode {
+    vec<TrieEdge> next;
+    bool isTerminal;
+};
 
-import IEvent;
+struct TrieEdge {
+    int8_t character;
+    TrieNode node;
+};
 
-interface IPreparedModel {
-    // Multiple threads can call this execute function concurrently.
-    execute(Request request, IEvent event) generates (ErrorStatus status);
+// Some forward reference tests.
+
+struct A {
+    ref<B> b;
+};
+
+struct B {
+    ref<A> a;
+};
+
+typedef ref<S> refS;
+struct S {
+    refS f;
+};
+
+enum E1 : int32_t {
+    OK = E2:ACCEPT + ANOTHER,
+    ANOTHER = 100,
+};
+
+enum E2 : E1 {
+    ACCEPT,
 };
