@@ -20,7 +20,7 @@ package android.hardware.neuralnetworks@1.0;
 
 // The types an operand can have.
 // These values are the same as found in the NeuralNetworks.h and NeuralNetworksOEM.h files.
-enum OperandType : uint32_t {
+enum OperandType : int32_t {
     FLOAT32                   = 0,
     INT32                     = 1,
     UINT32                    = 2,
@@ -36,7 +36,7 @@ enum OperandType : uint32_t {
 // NeuralNetworks.h and NeuralNetworksOEM.h files, these specify the data type they operate on.
 // This is done to simplify the work of drivers.
 // TODO: Currently they are the same.  Add a conversion when finalizing the model.
-enum OperationType : uint32_t {
+enum OperationType : int32_t {
     ADD                          = 0,
     AVERAGE_POOL_2D              = 1,
     CONCATENATION                = 2,
@@ -79,7 +79,7 @@ enum FusedActivationFunc : int32_t {
 };
 
 // How an operand is used.
-enum OperandLifeTime : uint32_t {
+enum OperandLifeTime : int32_t {
     // The operand is internal to the model.  It's created by an operation
     // and consumed by other operations.
     TEMPORARY_VARIABLE,
@@ -95,7 +95,7 @@ enum OperandLifeTime : uint32_t {
 };
 
 // Status of a device.
-enum DeviceStatus : uint32_t {
+enum DeviceStatus : int32_t {
     AVAILABLE,
     BUSY,
     OFFLINE,
@@ -120,11 +120,8 @@ struct OperationTuple {
 // The capabilities of a driver.
 struct Capabilities {
     vec<OperationTuple> supportedOperationTuples;
-    // TODO Do the same for baseline model IDs
     bool cachesCompilation;
     // TODO revisit the data types and scales.
-    float bootupTime;  // in nanoseconds
-    PerformanceInfo float16Performance;
     PerformanceInfo float32Performance;
     PerformanceInfo quantized8Performance;
 };
@@ -205,7 +202,7 @@ struct Request {
     vec<memory> pools;
 };
 
-enum ErrorStatus : uint32_t {
+enum ErrorStatus : int32_t {
     NONE,
     DEVICE_UNAVAILABLE,
     GENERAL_FAILURE,
