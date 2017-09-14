@@ -16,12 +16,13 @@
 
 #define LOG_TAG "neuralnetworks_hidl_hal_test"
 
-#include "Event.h"
 #include "VtsHalNeuralnetworksV1_0TargetTest.h"
+#include "Event.h"
+#include "TestHarness.h"
+
 #include <android-base/logging.h>
 #include <android/hidl/memory/1.0/IMemory.h>
 #include <hidlmemory/mapping.h>
-#include <string>
 
 namespace android {
 namespace hardware {
@@ -31,6 +32,11 @@ namespace vts {
 namespace functional {
 
 using ::android::hardware::neuralnetworks::V1_0::implementation::Event;
+using ::generated_tests::MixedTypedExampleType;
+namespace generated_tests {
+extern void Execute(const sp<IDevice>&, std::function<Model(void)>,
+                    const std::vector<MixedTypedExampleType>&);
+}
 
 // A class for test environment setup
 NeuralnetworksHidlEnvironment::NeuralnetworksHidlEnvironment() {}
@@ -107,9 +113,7 @@ Model createTestModel() {
             .scale = 0.0f,
             .zeroPoint = 0,
             .lifetime = OperandLifeTime::MODEL_INPUT,
-            .location = {.poolIndex = 0,
-                         .offset = 0,
-                         .length = 0},
+            .location = {.poolIndex = 0, .offset = 0, .length = 0},
         },
         {
             .type = OperandType::TENSOR_FLOAT32,
@@ -118,9 +122,7 @@ Model createTestModel() {
             .scale = 0.0f,
             .zeroPoint = 0,
             .lifetime = OperandLifeTime::CONSTANT_COPY,
-            .location = {.poolIndex = 0,
-                         .offset = 0,
-                         .length = size},
+            .location = {.poolIndex = 0, .offset = 0, .length = size},
         },
         {
             .type = OperandType::INT32,
@@ -129,9 +131,7 @@ Model createTestModel() {
             .scale = 0.0f,
             .zeroPoint = 0,
             .lifetime = OperandLifeTime::CONSTANT_COPY,
-            .location = {.poolIndex = 0,
-                         .offset = size,
-                         .length = sizeof(int32_t)},
+            .location = {.poolIndex = 0, .offset = size, .length = sizeof(int32_t)},
         },
         {
             .type = OperandType::TENSOR_FLOAT32,
@@ -140,9 +140,7 @@ Model createTestModel() {
             .scale = 0.0f,
             .zeroPoint = 0,
             .lifetime = OperandLifeTime::MODEL_OUTPUT,
-            .location = {.poolIndex = 0,
-                         .offset = 0,
-                         .length = 0},
+            .location = {.poolIndex = 0, .offset = 0, .length = 0},
         },
     };
 
@@ -172,6 +170,7 @@ Model createTestModel() {
         .pools = pools,
     };
 }
+}  // anonymous namespace
 
 // allocator helper
 hidl_memory allocateSharedMemory(int64_t size, const std::string& type = "ashmem") {
@@ -192,7 +191,6 @@ hidl_memory allocateSharedMemory(int64_t size, const std::string& type = "ashmem
 
     return memory;
 }
-}  // anonymous namespace
 
 // supported subgraph test
 TEST_F(NeuralnetworksHidlTest, SupportedOperationsTest) {
@@ -275,8 +273,15 @@ TEST_F(NeuralnetworksHidlTest, SimpleExecuteGraphTest) {
     EXPECT_EQ(expectedData, outputData);
 }
 
+// Mixed-typed examples
+typedef MixedTypedExampleType MixedTypedExample;
+
+// in frameworks/ml/nn/runtime/tests/generated/
+#include "all_generated_vts_tests.cpp"
+
 // TODO: Add tests for execution failure, or wait_for/wait_until timeout.
-//       Discussion: https://googleplex-android-review.git.corp.google.com/#/c/platform/hardware/interfaces/+/2654636/5/neuralnetworks/1.0/vts/functional/VtsHalNeuralnetworksV1_0TargetTest.cpp@222
+//       Discussion:
+//       https://googleplex-android-review.git.corp.google.com/#/c/platform/hardware/interfaces/+/2654636/5/neuralnetworks/1.0/vts/functional/VtsHalNeuralnetworksV1_0TargetTest.cpp@222
 
 }  // namespace functional
 }  // namespace vts
