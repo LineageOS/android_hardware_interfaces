@@ -190,3 +190,6 @@ fe3c3c2f572b72f15f8594c538b0577bd5c28722c31879cfe6231330cddb6747 android.hardwar
 # ABI preserving changes to HALs released in Android O
 
 28e929b453df3d9f5060af2764e6cdb123ddb893e3e86923c877f6ff7e5f02c9 android.hardware.wifi@1.0::types
+
+# HALs released in Android O MR1 (Final Set)
+0a159f81359cd4f71bbe00972ee8403ea79351fb7c0cd48be72ebb3e424dbaef android.hardware.radio@1.0::types
