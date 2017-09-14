@@ -64,7 +64,7 @@ static const map<Class, ModuleConfig> gModuleConfigs{
             }),
             AmFmBandConfig({
                 Band::FM_HD,
-                87900,   // lowerLimit
+                87700,   // lowerLimit
                 107900,  // upperLimit
                 {200},   // spacings
             }),
