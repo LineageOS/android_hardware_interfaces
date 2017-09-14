@@ -34,7 +34,7 @@ namespace functional {
 using ::android::hardware::neuralnetworks::V1_0::implementation::Event;
 using ::generated_tests::MixedTypedExampleType;
 namespace generated_tests {
-extern void Execute(const sp<IDevice>&, std::function<Model(void)>,
+extern void Execute(const sp<IDevice>&, std::function<Model(void)>, std::function<bool(int)>,
                     const std::vector<MixedTypedExampleType>&);
 }
 
