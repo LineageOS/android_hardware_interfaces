@@ -813,7 +813,7 @@ TEST_F(AudioDecHidlTest, DecodeTest) {
     if (timestampDevTest) EXPECT_EQ(timestampUslist.empty(), true);
     // set state to idle
     changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
-    // set state to executing
+    // set state to loaded
     changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
                             kPortIndexInput, kPortIndexOutput);
 }
@@ -872,7 +872,7 @@ TEST_F(AudioDecHidlTest, EOSTest_M) {
 
     // set state to idle
     changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
-    // set state to executing
+    // set state to loaded
     changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
                             kPortIndexInput, kPortIndexOutput);
 }
@@ -979,7 +979,7 @@ TEST_F(AudioDecHidlTest, ThumbnailTest) {
 
     // set state to idle
     changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
-    // set state to executing
+    // set state to loaded
     changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
                             kPortIndexInput, kPortIndexOutput);
 }
@@ -1065,7 +1065,7 @@ TEST_F(AudioDecHidlTest, SimpleEOSTest) {
 
     // set state to idle
     changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
-    // set state to executing
+    // set state to loaded
     changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
                             kPortIndexInput, kPortIndexOutput);
 }
@@ -1169,7 +1169,7 @@ TEST_F(AudioDecHidlTest, FlushTest) {
 
     // set state to idle
     changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
-    // set state to executing
+    // set state to loaded
     changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
                             kPortIndexInput, kPortIndexOutput);
 }
