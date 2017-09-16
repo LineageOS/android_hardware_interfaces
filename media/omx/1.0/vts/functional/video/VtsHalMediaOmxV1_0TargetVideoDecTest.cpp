@@ -839,7 +839,7 @@ void getDefaultColorFormat(sp<IOmxNode> omxNode, OMX_U32 kPortIndexOutput,
     OMX_VIDEO_PARAM_PORTFORMATTYPE portFormat;
     *eColorFormat = OMX_COLOR_FormatUnused;
     portFormat.nIndex = 0;
-    while (1) {
+    while (portFormat.nIndex < 512) {
         status = getPortParam(omxNode, OMX_IndexParamVideoPortFormat,
                               kPortIndexOutput, &portFormat);
         if (status != ::android::hardware::media::omx::V1_0::Status::OK) break;
@@ -853,7 +853,9 @@ void getDefaultColorFormat(sp<IOmxNode> omxNode, OMX_U32 kPortIndexOutput,
             break;
         }
         if (OMX_COLOR_FormatYUV420SemiPlanar == portFormat.eColorFormat ||
-            OMX_COLOR_FormatYUV420Planar == portFormat.eColorFormat) {
+            OMX_COLOR_FormatYUV420Planar == portFormat.eColorFormat ||
+            OMX_COLOR_FormatYUV420PackedPlanar == portFormat.eColorFormat ||
+            OMX_COLOR_FormatYUV420PackedSemiPlanar == portFormat.eColorFormat) {
             *eColorFormat = portFormat.eColorFormat;
             break;
         }
