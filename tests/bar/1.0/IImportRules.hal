@@ -30,6 +30,7 @@ interface IImportRules {
     rule0a(Outer o); // should be resolved to Outer above
     rule0a1(IImportRules.Outer o); // should be resolved to Outer above
     rule0b(@1.0::IImportRules.Outer o);
+    rule0b1(android.hardware.tests.bar@1.0::IImportRules.Outer o);
     rule0c(android.hardware.tests.foo@1.0::Outer o);
     rule0d(@1.0::Outer o); // android.hardware.tests.foo@1.0::Outer
     rule0e(Outer.Inner o); // should be resolved to Outer above
