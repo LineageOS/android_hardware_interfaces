@@ -46,9 +46,6 @@ cc_library {
     generated_headers: ["android.hardware.tests.trie@1.0_genc++_headers"],
     export_generated_headers: ["android.hardware.tests.trie@1.0_genc++_headers"],
     vendor_available: true,
-    vndk: {
-        enabled: true,
-    },
     shared_libs: [
         "libhidlbase",
         "libhidltransport",
