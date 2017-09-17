@@ -290,7 +290,7 @@ TEST_F(ComponentHidlTest, DISABLED_GetPortIndices) {
 }
 
 // port format enumeration
-TEST_F(ComponentHidlTest, EnumeratePortFormat) {
+TEST_F(ComponentHidlTest, DISABLED_EnumeratePortFormat) {
     description("Test Component on Mandatory Port Parameters (Port Format)");
     if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
@@ -350,7 +350,7 @@ TEST_F(ComponentHidlTest, EnumeratePortFormat) {
 }
 
 // get/set default port settings of a component
-TEST_F(ComponentHidlTest, SetDefaultPortParams) {
+TEST_F(ComponentHidlTest, DISABLED_SetDefaultPortParams) {
     description(
         "Test Component on Mandatory Port Parameters (Port Definition)");
     if (disableTest) return;
