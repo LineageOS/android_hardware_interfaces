@@ -92,8 +92,10 @@ interface IExpression {
     hexLong2 = 0xfffffffff,
     simpleArithmetic = 4 + 1,
     simpleArithmetic2 = 2 + 3 - 4,
+    simpleArithmetic3 = 2 - 3 + 4,
     simpleBoolExpr = 1 == 4,
     simpleLogical = 1 && 1,
+    simpleLogical2 = 1 || 1 && 0,  // && higher than ||
     simpleComp = 1 < 2,
     boolExpr1 = !((3 != 4 || (2 < 3 <= 3 > 4)) >= 0),
     boolExpr = 1 == 7 && !((3 != 4 || (2 < 3 <= 3 > 4)) >= 0),
@@ -102,6 +104,7 @@ interface IExpression {
     simpleBitShiftNeg = 4 << -1,
     simpleArithmeticRightShift = 1 << 31 >> 31,
     simpleBitExpr = 1 | 16 >> 2,
+    simpleBitExpr2 = 0x0f ^ 0x33 & 0x99, // & higher than ^
     bitExpr = ~42 & (1 << 3 | 16 >> 2) ^ 7,
     arithmeticExpr = 2 + 3 - 4 * -7 / (10 % 3),
     messyExpr = 2 + (-3&4 / 7),
