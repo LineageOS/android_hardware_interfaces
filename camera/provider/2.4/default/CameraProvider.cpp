@@ -15,11 +15,13 @@
  */
 
 #define LOG_TAG "CamProvider@2.4-impl"
+//#define LOG_NDEBUG 0
 #include <android/log.h>
 
 #include "CameraProvider.h"
 #include "CameraDevice_1_0.h"
-#include "CameraDevice_3_2.h"
+#include "CameraDevice_3_3.h"
+#include <cutils/properties.h>
 #include <string.h>
 #include <utils/Trace.h>
 
@@ -36,6 +38,7 @@ const char *kLegacyProviderName = "legacy/0";
 // "device@<version>/legacy/<id>"
 const std::regex kDeviceNameRE("device@([0-9]+\\.[0-9]+)/legacy/(.+)");
 const char *kHAL3_2 = "3.2";
+const char *kHAL3_3 = "3.3";
 const char *kHAL1_0 = "1.0";
 const int kMaxCameraDeviceNameLen = 128;
 const int kMaxCameraIdLen = 16;
@@ -140,8 +143,9 @@ int CameraProvider::getCameraDeviceVersion(const hidl_string& deviceName) {
     if (!match) {
         return -1;
     }
-    if (deviceVersion == kHAL3_2) {
-        // maybe switched to 3.4 or define the hidl version enum later
+    if (deviceVersion == kHAL3_3) {
+        return CAMERA_DEVICE_API_VERSION_3_3;
+    } else if (deviceVersion == kHAL3_2) {
         return CAMERA_DEVICE_API_VERSION_3_2;
     } else if (deviceVersion == kHAL1_0) {
         return CAMERA_DEVICE_API_VERSION_1_0;
@@ -158,10 +162,12 @@ std::string CameraProvider::getHidlDeviceName(
             deviceVersion != CAMERA_DEVICE_API_VERSION_3_4 ) {
         return hidl_string("");
     }
-    const char* versionStr = (deviceVersion == CAMERA_DEVICE_API_VERSION_1_0) ? kHAL1_0 : kHAL3_2;
+    bool isV1 = deviceVersion == CAMERA_DEVICE_API_VERSION_1_0;
+    int versionMajor = isV1 ? 1 : 3;
+    int versionMinor = isV1 ? 0 : mPreferredHal3MinorVersion;
     char deviceName[kMaxCameraDeviceNameLen];
-    snprintf(deviceName, sizeof(deviceName), "device@%s/legacy/%s",
-            versionStr, cameraId.c_str());
+    snprintf(deviceName, sizeof(deviceName), "device@%d.%d/legacy/%s",
+            versionMajor, versionMinor, cameraId.c_str());
     return deviceName;
 }
 
@@ -203,6 +209,19 @@ bool CameraProvider::initialize() {
         ALOGE("Could not set camera module callback: %d (%s)", err, strerror(-err));
         mModule.clear();
         return true;
+    }
+
+    mPreferredHal3MinorVersion = property_get_int32("ro.camera.wrapper.hal3TrebleMinorVersion", 3);
+    ALOGV("Preferred HAL 3 minor version is %d", mPreferredHal3MinorVersion);
+    switch(mPreferredHal3MinorVersion) {
+        case 2:
+        case 3:
+            // OK
+            break;
+        default:
+            ALOGW("Unknown minor camera device HAL version %d in property "
+                    "'camera.wrapper.hal3TrebleMinorVersion', defaulting to 3", mPreferredHal3MinorVersion);
+            mPreferredHal3MinorVersion = 3;
     }
 
     mNumberOfLegacyCameras = mModule->getNumberOfCameras();
@@ -461,23 +480,45 @@ Return<void> CameraProvider::getCameraDeviceInterface_V3_x(
         return Void();
     }
 
-    sp<android::hardware::camera::device::V3_2::implementation::CameraDevice> device =
-            new android::hardware::camera::device::V3_2::implementation::CameraDevice(
+    // Since some Treble HAL revisions can map to the same legacy HAL version(s), we default
+    // to the newest possible Treble HAL revision, but allow for override if needed via
+    // system property.
+    sp<android::hardware::camera::device::V3_2::ICameraDevice> device;
+    switch (mPreferredHal3MinorVersion) {
+        case 2: { // Map legacy camera device v3 HAL to Treble camera device HAL v3.2
+            ALOGV("Constructing v3.2 camera device");
+            sp<android::hardware::camera::device::V3_2::implementation::CameraDevice> deviceImpl =
+                    new android::hardware::camera::device::V3_2::implementation::CameraDevice(
                     mModule, cameraId, mCameraDeviceNames);
-
-    if (device == nullptr) {
-        ALOGE("%s: cannot allocate camera device for id %s", __FUNCTION__, cameraId.c_str());
-        _hidl_cb(Status::INTERNAL_ERROR, nullptr);
-        return Void();
+            if (deviceImpl == nullptr || deviceImpl->isInitFailed()) {
+                ALOGE("%s: camera device %s init failed!", __FUNCTION__, cameraId.c_str());
+                device = nullptr;
+                _hidl_cb(Status::INTERNAL_ERROR, nullptr);
+                return Void();
+            }
+            device = deviceImpl;
+            break;
+        }
+        case 3: { // Map legacy camera device v3 HAL to Treble camera device HAL v3.3
+            ALOGV("Constructing v3.3 camera device");
+            sp<android::hardware::camera::device::V3_2::implementation::CameraDevice> deviceImpl =
+                    new android::hardware::camera::device::V3_3::implementation::CameraDevice(
+                    mModule, cameraId, mCameraDeviceNames);
+            if (deviceImpl == nullptr || deviceImpl->isInitFailed()) {
+                ALOGE("%s: camera device %s init failed!", __FUNCTION__, cameraId.c_str());
+                device = nullptr;
+                _hidl_cb(Status::INTERNAL_ERROR, nullptr);
+                return Void();
+            }
+            device = deviceImpl;
+            break;
+        }
+        default:
+            ALOGE("%s: Unknown HAL minor version %d!", __FUNCTION__, mPreferredHal3MinorVersion);
+            device = nullptr;
+            _hidl_cb(Status::INTERNAL_ERROR, nullptr);
+            return Void();
     }
-
-    if (device->isInitFailed()) {
-        ALOGE("%s: camera device %s init failed!", __FUNCTION__, cameraId.c_str());
-        device = nullptr;
-        _hidl_cb(Status::INTERNAL_ERROR, nullptr);
-        return Void();
-    }
-
     _hidl_cb (Status::OK, device);
     return Void();
 }
