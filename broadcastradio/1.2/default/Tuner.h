@@ -49,6 +49,10 @@ struct Tuner : public ITuner {
                                         getProgramList_cb _hidl_cb) override;
     virtual Return<Result> setAnalogForced(bool isForced) override;
     virtual Return<void> isAnalogForced(isAnalogForced_cb _hidl_cb) override;
+    virtual Return<void> setParameters(const hidl_vec<V1_1::VendorKeyValue>& parameters,
+                                       setParameters_cb _hidl_cb) override;
+    virtual Return<void> getParameters(const hidl_vec<hidl_string>& keys,
+                                       getParameters_cb _hidl_cb) override;
 
    private:
     std::mutex mMut;

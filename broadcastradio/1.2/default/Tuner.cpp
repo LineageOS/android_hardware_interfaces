@@ -382,6 +382,22 @@ Return<void> Tuner::isAnalogForced(isAnalogForced_cb _hidl_cb) {
     return {};
 }
 
+Return<void> Tuner::setParameters(const hidl_vec<VendorKeyValue>& /* parameters */,
+        setParameters_cb _hidl_cb) {
+    ALOGV("%s", __func__);
+
+    _hidl_cb({});
+    return {};
+}
+
+Return<void> Tuner::getParameters(const hidl_vec<hidl_string>& /* keys */,
+        getParameters_cb _hidl_cb) {
+    ALOGV("%s", __func__);
+
+    _hidl_cb({});
+    return {};
+}
+
 }  // namespace implementation
 }  // namespace V1_2
 }  // namespace broadcastradio
