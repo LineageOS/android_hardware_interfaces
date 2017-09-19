@@ -39,7 +39,7 @@ interface IOmxStore {
      *   string:                arbitrary string
      *   size:                  <num>x<num>
      *   ratio:                 <num>:<num>
-     *   range<type>:           <type>-<type>
+     *   range<type>:           <type> | <type>-<type>
      *   list<type>:            <type> | <type>,<list<type>>
      */
     struct Attribute {
@@ -97,7 +97,7 @@ interface IOmxStore {
      *
      * Required node attributes for video nodes that are required by Android to
      * describe measured values for this device:
-     *   key: 'measured-frame-rate-<width>-<height>-range',
+     *   key: 'measured-frame-rate-<width>x<height>-range',
      *     value-type: range<num>; where width: num, height: num
      *
      * Optional node attributes for decoders to describe supported values:
@@ -111,7 +111,7 @@ interface IOmxStore {
      * Optional node attributes for encoders to describe supported values:
      *   key: 'complexity-default', value-type: num
      *   key: 'complexity-range', value-type: range<num>
-     *   key: 'feature-bitrate-control', value-type: list<enum<VBR,CBR,CQ>>
+     *   key: 'feature-bitrate-modes', value-type: list<enum<VBR,CBR,CQ>>
      *   key: 'feature-intra-refresh', value-type: enum<0,1>
      *   key: 'quality-default', value-type: num
      *   key: 'quality-range', value-type: range<num>
