@@ -21,10 +21,6 @@ cc_test {
         "VtsHalMediaOmxV1_0TargetVideoDecTest.cpp",
         "media_video_hidl_test_common.cpp"
     ],
-    static_libs: [
-        "android.hardware.graphics.allocator@2.0",
-        "android.hardware.graphics.mapper@2.0",
-    ],
 }
 
 cc_test {
@@ -36,6 +32,5 @@ cc_test {
     ],
     static_libs: [
         "libnativewindow",
-        "android.hardware.graphics.mapper@2.0",
     ],
 }
