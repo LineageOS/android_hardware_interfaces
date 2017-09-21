@@ -171,7 +171,7 @@ class AudioDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
             {"mp3", mp3}, {"amrnb", amrnb},       {"amrwb", amrwb},
             {"aac", aac}, {"vorbis", vorbis},     {"opus", opus},
             {"pcm", pcm}, {"g711alaw", g711alaw}, {"g711mlaw", g711mlaw},
-            {"gsm", gsm}, {"raw", raw},
+            {"gsm", gsm}, {"raw", raw},           {"flac", flac},
         };
         const size_t kNumStringToName =
             sizeof(kStringToName) / sizeof(kStringToName[0]);
@@ -204,6 +204,7 @@ class AudioDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
             {g711mlaw, OMX_AUDIO_CodingG711},
             {gsm, OMX_AUDIO_CodingGSMFR},
             {raw, OMX_AUDIO_CodingPCM},
+            {flac, OMX_AUDIO_CodingFLAC},
         };
         static const size_t kNumCompToCoding =
             sizeof(kCompToCoding) / sizeof(kCompToCoding[0]);
@@ -219,7 +220,7 @@ class AudioDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         framesReceived = 0;
         timestampUs = 0;
         timestampDevTest = false;
-        if (disableTest) std::cerr << "[          ] Warning !  Test Disabled\n";
+        if (disableTest) std::cout << "[   WARN   ] Test Disabled \n";
     }
 
     virtual void TearDown() override {
@@ -263,9 +264,8 @@ class AudioDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                             EXPECT_EQ(tsHit, true)
                                 << "TimeStamp not recognized";
                         } else {
-                            std::cerr
-                                << "[          ] Warning ! Received non-zero "
-                                   "output / TimeStamp not recognized \n";
+                            std::cout << "[   INFO   ] Received non-zero "
+                                         "output / TimeStamp not recognized \n";
                         }
                     }
                 }
@@ -301,6 +301,7 @@ class AudioDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         g711mlaw,
         gsm,
         raw,
+        flac,
         unknown_comp,
     };
 
@@ -431,6 +432,16 @@ void getInputChannelInfo(sp<IOmxNode> omxNode, OMX_U32 kPortIndexInput,
             *nSampleRate = param.nSampleRate;
             break;
         }
+        case OMX_AUDIO_CodingFLAC: {
+            OMX_AUDIO_PARAM_FLACTYPE param;
+            status = getPortParam(omxNode, OMX_IndexParamAudioFlac,
+                                  kPortIndexInput, &param);
+            ASSERT_EQ(status,
+                      ::android::hardware::media::omx::V1_0::Status::OK);
+            *nChannels = param.nChannels;
+            *nSampleRate = param.nSampleRate;
+            break;
+        }
         default:
             ASSERT_TRUE(false);
             break;
@@ -472,6 +483,9 @@ void GetURLForComponent(AudioDecHidlTest::standardComp comp, char* mURL,
          "bbb_gsm_1ch_8khz_13kbps.info"},
         {AudioDecHidlTest::standardComp::raw, "bbb_raw_1ch_8khz_s32le.raw",
          "bbb_raw_1ch_8khz_s32le.info"},
+        {AudioDecHidlTest::standardComp::flac,
+         "bbb_flac_stereo_680kbps_48000hz.flac",
+         "bbb_flac_stereo_680kbps_48000hz.info"},
     };
 
     for (size_t i = 0; i < sizeof(kCompToURL) / sizeof(kCompToURL[0]); ++i) {
@@ -628,39 +642,16 @@ void decodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                    AudioDecHidlTest::standardComp comp, bool signalEOS = true) {
     android::hardware::media::omx::V1_0::Status status;
     Message msg;
-
-    // dispatch output buffers
-    for (size_t i = 0; i < oBuffer->size(); i++) {
-        dispatchOutputBuffer(omxNode, oBuffer, i);
-    }
-    // dispatch input buffers
+    size_t index;
     uint32_t flags = 0;
     int frameID = offset;
-    for (size_t i = 0; (i < iBuffer->size()) && (frameID < (int)Info->size()) &&
-                       (frameID < (offset + range));
-         i++) {
-        char* ipBuffer = static_cast<char*>(
-            static_cast<void*>((*iBuffer)[i].mMemory->getPointer()));
-        ASSERT_LE((*Info)[frameID].bytesCount,
-                  static_cast<int>((*iBuffer)[i].mMemory->getSize()));
-        eleStream.read(ipBuffer, (*Info)[frameID].bytesCount);
-        ASSERT_EQ(eleStream.gcount(), (*Info)[frameID].bytesCount);
-        flags = (*Info)[frameID].flags;
-        if (signalEOS && ((frameID == (int)Info->size() - 1) ||
-                          (frameID == (offset + range - 1))))
-            flags |= OMX_BUFFERFLAG_EOS;
-        dispatchInputBuffer(omxNode, iBuffer, i, (*Info)[frameID].bytesCount,
-                            flags, (*Info)[frameID].timestamp);
-        frameID++;
-    }
-
     int timeOut = TIMEOUT_COUNTER_Q;
     bool iQueued, oQueued;
+
     while (1) {
         iQueued = oQueued = false;
         status =
             observer->dequeueMessage(&msg, DEFAULT_TIMEOUT_Q, iBuffer, oBuffer);
-
         // Port Reconfiguration
         if (status == android::hardware::media::omx::V1_0::Status::OK &&
             msg.type == Message::Type::EVENT) {
@@ -673,7 +664,6 @@ void decodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         if (frameID == (int)Info->size() || frameID == (offset + range)) break;
 
         // Dispatch input buffer
-        size_t index = 0;
         if ((index = getEmptyBufferID(iBuffer)) < iBuffer->size()) {
             char* ipBuffer = static_cast<char*>(
                 static_cast<void*>((*iBuffer)[index].mMemory->getPointer()));
@@ -682,6 +672,11 @@ void decodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
             eleStream.read(ipBuffer, (*Info)[frameID].bytesCount);
             ASSERT_EQ(eleStream.gcount(), (*Info)[frameID].bytesCount);
             flags = (*Info)[frameID].flags;
+            // Indicate to omx core that the buffer contains a full frame worth
+            // of data
+            flags |= OMX_BUFFERFLAG_ENDOFFRAME;
+            // Indicate the omx core that this is the last buffer it needs to
+            // process
             if (signalEOS && ((frameID == (int)Info->size() - 1) ||
                               (frameID == (offset + range - 1))))
                 flags |= OMX_BUFFERFLAG_EOS;
@@ -691,10 +686,12 @@ void decodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
             frameID++;
             iQueued = true;
         }
+        // Dispatch output buffer
         if ((index = getEmptyBufferID(oBuffer)) < oBuffer->size()) {
             dispatchOutputBuffer(omxNode, oBuffer, index);
             oQueued = true;
         }
+        // Reset Counters when either input or output buffer is dispatched
         if (iQueued || oQueued)
             timeOut = TIMEOUT_COUNTER_Q;
         else
@@ -716,7 +713,7 @@ TEST_F(AudioDecHidlTest, SetRole) {
 }
 
 // port format enumeration
-TEST_F(AudioDecHidlTest, DISABLED_EnumeratePortFormat) {
+TEST_F(AudioDecHidlTest, EnumeratePortFormat) {
     description("Test Component on Mandatory Port Parameters (Port Format)");
     if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
@@ -822,11 +819,7 @@ TEST_F(AudioDecHidlTest, DecodeTest) {
 }
 
 // end of sequence test
-// SPECIAL CASE; Sending Empty input EOS buffer is not supported across all
-// components. For instance soft vorbis and soft opus expects CSD buffers at
-// the start. Disabling this test for now. We shall revisit this at a later
-// stage
-TEST_F(AudioDecHidlTest, DISABLED_EOSTest_M) {
+TEST_F(AudioDecHidlTest, EOSTest_M) {
     description("Test end of stream monkeying");
     if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;

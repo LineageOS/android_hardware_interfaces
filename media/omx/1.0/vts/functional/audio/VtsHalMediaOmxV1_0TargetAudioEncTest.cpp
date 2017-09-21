@@ -206,7 +206,7 @@ class AudioEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         }
         if (i == kNumCompToCoding) disableTest = true;
         eosFlag = false;
-        if (disableTest) std::cerr << "[          ] Warning !  Test Disabled\n";
+        if (disableTest) std::cout << "[   WARN   ] Test Disabled \n";
     }
 
     virtual void TearDown() override {
@@ -376,44 +376,25 @@ void encodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                    bool signalEOS = true) {
     android::hardware::media::omx::V1_0::Status status;
     Message msg;
-
-    // dispatch output buffers
-    for (size_t i = 0; i < oBuffer->size(); i++) {
-        dispatchOutputBuffer(omxNode, oBuffer, i);
-    }
-    // dispatch input buffers
+    size_t index;
     int bytesCount = samplesPerFrame * nChannels * 2;
     int32_t timestampIncr =
         (int)(((float)samplesPerFrame / nSampleRate) * 1000000);
     uint64_t timestamp = 0;
     uint32_t flags = 0;
-    for (size_t i = 0; i < iBuffer->size() && nFrames != 0; i++) {
-        char* ipBuffer = static_cast<char*>(
-            static_cast<void*>((*iBuffer)[i].mMemory->getPointer()));
-        ASSERT_LE(bytesCount,
-                  static_cast<int>((*iBuffer)[i].mMemory->getSize()));
-        eleStream.read(ipBuffer, bytesCount);
-        if (eleStream.gcount() != bytesCount) break;
-        if (signalEOS && (nFrames == 1)) flags = OMX_BUFFERFLAG_EOS;
-        dispatchInputBuffer(omxNode, iBuffer, i, bytesCount, flags, timestamp);
-        timestamp += timestampIncr;
-        nFrames--;
-    }
-
     int timeOut = TIMEOUT_COUNTER_Q;
     bool iQueued, oQueued;
+
     while (1) {
         iQueued = oQueued = false;
         status =
             observer->dequeueMessage(&msg, DEFAULT_TIMEOUT_Q, iBuffer, oBuffer);
-
         if (status == android::hardware::media::omx::V1_0::Status::OK)
             ASSERT_TRUE(false);
 
         if (nFrames == 0) break;
 
         // Dispatch input buffer
-        size_t index = 0;
         if ((index = getEmptyBufferID(iBuffer)) < iBuffer->size()) {
             char* ipBuffer = static_cast<char*>(
                 static_cast<void*>((*iBuffer)[index].mMemory->getPointer()));
@@ -421,7 +402,8 @@ void encodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                       static_cast<int>((*iBuffer)[index].mMemory->getSize()));
             eleStream.read(ipBuffer, bytesCount);
             if (eleStream.gcount() != bytesCount) break;
-            if (signalEOS && (nFrames == 1)) flags = OMX_BUFFERFLAG_EOS;
+            flags = OMX_BUFFERFLAG_ENDOFFRAME;
+            if (signalEOS && (nFrames == 1)) flags |= OMX_BUFFERFLAG_EOS;
             dispatchInputBuffer(omxNode, iBuffer, index, bytesCount, flags,
                                 timestamp);
             timestamp += timestampIncr;
@@ -433,6 +415,7 @@ void encodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
             dispatchOutputBuffer(omxNode, oBuffer, index);
             oQueued = true;
         }
+        // Reset Counters when either input or output buffer is dispatched
         if (iQueued || oQueued)
             timeOut = TIMEOUT_COUNTER_Q;
         else
@@ -454,7 +437,7 @@ TEST_F(AudioEncHidlTest, SetRole) {
 }
 
 // port format enumeration
-TEST_F(AudioEncHidlTest, DISABLED_EnumeratePortFormat) {
+TEST_F(AudioEncHidlTest, EnumeratePortFormat) {
     description("Test Component on Mandatory Port Parameters (Port Format)");
     if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
