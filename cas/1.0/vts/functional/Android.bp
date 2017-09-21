@@ -18,6 +18,12 @@ cc_test {
     name: "VtsHalCasV1_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["VtsHalCasV1_0TargetTest.cpp"],
-    static_libs: ["android.hardware.cas@1.0"],
+    static_libs: [
+        "android.hardware.cas@1.0",
+        "android.hardware.cas.native@1.0",
+        "android.hidl.allocator@1.0",
+        "android.hidl.memory@1.0",
+        "libhidlmemory",
+    ],
 }
 
