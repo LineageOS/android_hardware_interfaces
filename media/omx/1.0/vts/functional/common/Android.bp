@@ -28,6 +28,7 @@ cc_library_static {
         "android.hidl.allocator@1.0",
         "android.hidl.memory@1.0",
         "android.hardware.media.omx@1.0",
+        "android.hardware.graphics.allocator@2.0",
     ],
 }
 
@@ -38,6 +39,8 @@ cc_defaults {
     // Link to these statically as they are not guaranteed to be on the device.
     static_libs: [
         "VtsHalMediaOmxV1_0CommonUtil",
+        "android.hardware.graphics.allocator@2.0",
+        "android.hardware.graphics.mapper@2.0",
         "android.hardware.graphics.bufferqueue@1.0",
         "android.hardware.graphics.common@1.0",
         "android.hardware.media.omx@1.0",
