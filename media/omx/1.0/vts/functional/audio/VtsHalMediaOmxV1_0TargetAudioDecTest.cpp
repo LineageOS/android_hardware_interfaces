@@ -171,7 +171,7 @@ class AudioDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
             {"mp3", mp3}, {"amrnb", amrnb},       {"amrwb", amrwb},
             {"aac", aac}, {"vorbis", vorbis},     {"opus", opus},
             {"pcm", pcm}, {"g711alaw", g711alaw}, {"g711mlaw", g711mlaw},
-            {"gsm", gsm}, {"raw", raw},
+            {"gsm", gsm}, {"raw", raw},           {"flac", flac},
         };
         const size_t kNumStringToName =
             sizeof(kStringToName) / sizeof(kStringToName[0]);
@@ -204,6 +204,7 @@ class AudioDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
             {g711mlaw, OMX_AUDIO_CodingG711},
             {gsm, OMX_AUDIO_CodingGSMFR},
             {raw, OMX_AUDIO_CodingPCM},
+            {flac, OMX_AUDIO_CodingFLAC},
         };
         static const size_t kNumCompToCoding =
             sizeof(kCompToCoding) / sizeof(kCompToCoding[0]);
@@ -301,6 +302,7 @@ class AudioDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         g711mlaw,
         gsm,
         raw,
+        flac,
         unknown_comp,
     };
 
@@ -431,6 +433,16 @@ void getInputChannelInfo(sp<IOmxNode> omxNode, OMX_U32 kPortIndexInput,
             *nSampleRate = param.nSampleRate;
             break;
         }
+        case OMX_AUDIO_CodingFLAC: {
+            OMX_AUDIO_PARAM_FLACTYPE param;
+            status = getPortParam(omxNode, OMX_IndexParamAudioFlac,
+                                  kPortIndexInput, &param);
+            ASSERT_EQ(status,
+                      ::android::hardware::media::omx::V1_0::Status::OK);
+            *nChannels = param.nChannels;
+            *nSampleRate = param.nSampleRate;
+            break;
+        }
         default:
             ASSERT_TRUE(false);
             break;
@@ -472,6 +484,9 @@ void GetURLForComponent(AudioDecHidlTest::standardComp comp, char* mURL,
          "bbb_gsm_1ch_8khz_13kbps.info"},
         {AudioDecHidlTest::standardComp::raw, "bbb_raw_1ch_8khz_s32le.raw",
          "bbb_raw_1ch_8khz_s32le.info"},
+        {AudioDecHidlTest::standardComp::flac,
+         "bbb_flac_stereo_680kbps_48000hz.flac",
+         "bbb_flac_stereo_680kbps_48000hz.info"},
     };
 
     for (size_t i = 0; i < sizeof(kCompToURL) / sizeof(kCompToURL[0]); ++i) {
