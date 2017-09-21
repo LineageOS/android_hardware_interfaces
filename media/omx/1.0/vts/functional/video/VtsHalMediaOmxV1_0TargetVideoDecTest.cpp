@@ -222,7 +222,7 @@ class VideoDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                         ".secure");
         }
         if (isSecure) disableTest = true;
-        if (disableTest) std::cout << "[          ] Warning !  Test Disabled\n";
+        if (disableTest) std::cout << "[   WARN   ] Test Disabled \n";
     }
 
     virtual void TearDown() override {
@@ -266,9 +266,8 @@ class VideoDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                             EXPECT_EQ(tsHit, true)
                                 << "TimeStamp not recognized";
                         } else {
-                            std::cout
-                                << "[          ] Warning ! Received non-zero "
-                                   "output / TimeStamp not recognized \n";
+                            std::cout << "[   INFO   ] Received non-zero "
+                                         "output / TimeStamp not recognized \n";
                         }
                     }
                 }
@@ -538,14 +537,14 @@ void portReconfiguration(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
             }
         } else if (msg.data.eventData.data2 ==
                    OMX_IndexConfigCommonOutputCrop) {
-            std::cout << "[          ] Warning ! OMX_EventPortSettingsChanged/ "
+            std::cout << "[   INFO   ] OMX_EventPortSettingsChanged/ "
                          "OMX_IndexConfigCommonOutputCrop not handled \n";
         } else if (msg.data.eventData.data2 == OMX_IndexVendorStartUnused + 3) {
-            std::cout << "[          ] Warning ! OMX_EventPortSettingsChanged/ "
+            std::cout << "[   INFO   ] OMX_EventPortSettingsChanged/ "
                          "kDescribeColorAspectsIndex not handled \n";
         }
     } else if (msg.data.eventData.event == OMX_EventError) {
-        std::cout << "[          ] Warning ! OMX_EventError/ "
+        std::cerr << "[   ERROR   ] OMX_EventError/ "
                      "Decode Frame Call might be failed \n";
         return;
     } else {
