@@ -16,12 +16,13 @@
 
 #define LOG_TAG "neuralnetworks_hidl_hal_test"
 
-#include "Event.h"
 #include "VtsHalNeuralnetworksV1_0TargetTest.h"
+#include "Event.h"
+#include "TestHarness.h"
+
 #include <android-base/logging.h>
 #include <android/hidl/memory/1.0/IMemory.h>
 #include <hidlmemory/mapping.h>
-#include <string>
 
 namespace android {
 namespace hardware {
@@ -31,6 +32,11 @@ namespace vts {
 namespace functional {
 
 using ::android::hardware::neuralnetworks::V1_0::implementation::Event;
+using ::generated_tests::MixedTypedExampleType;
+namespace generated_tests {
+extern void Execute(const sp<IDevice>&, std::function<Model(void)>, std::function<bool(int)>,
+                    const std::vector<MixedTypedExampleType>&);
+}
 
 // A class for test environment setup
 NeuralnetworksHidlEnvironment::NeuralnetworksHidlEnvironment() {}
@@ -64,24 +70,24 @@ TEST_F(NeuralnetworksHidlTest, CreateDevice) {}
 
 // status test
 TEST_F(NeuralnetworksHidlTest, StatusTest) {
-    DeviceStatus status = device->getStatus();
-    EXPECT_EQ(DeviceStatus::AVAILABLE, status);
+    Return<DeviceStatus> status = device->getStatus();
+    ASSERT_TRUE(status.isOk());
+    EXPECT_EQ(DeviceStatus::AVAILABLE, static_cast<DeviceStatus>(status));
 }
 
 // initialization
-TEST_F(NeuralnetworksHidlTest, InitializeTest) {
-    Return<void> ret = device->initialize([](const Capabilities& capabilities) {
-        EXPECT_NE(nullptr, capabilities.supportedOperationTuples.data());
-        EXPECT_NE(0ull, capabilities.supportedOperationTuples.size());
-        EXPECT_EQ(0u, static_cast<uint32_t>(capabilities.cachesCompilation) & ~0x1);
-        EXPECT_LT(0.0f, capabilities.bootupTime);
-        EXPECT_LT(0.0f, capabilities.float16Performance.execTime);
-        EXPECT_LT(0.0f, capabilities.float16Performance.powerUsage);
-        EXPECT_LT(0.0f, capabilities.float32Performance.execTime);
-        EXPECT_LT(0.0f, capabilities.float32Performance.powerUsage);
-        EXPECT_LT(0.0f, capabilities.quantized8Performance.execTime);
-        EXPECT_LT(0.0f, capabilities.quantized8Performance.powerUsage);
-    });
+TEST_F(NeuralnetworksHidlTest, GetCapabilitiesTest) {
+    Return<void> ret =
+        device->getCapabilities([](ErrorStatus status, const Capabilities& capabilities) {
+            EXPECT_EQ(ErrorStatus::NONE, status);
+            EXPECT_NE(nullptr, capabilities.supportedOperationTuples.data());
+            EXPECT_NE(0ull, capabilities.supportedOperationTuples.size());
+            EXPECT_EQ(0u, static_cast<uint32_t>(capabilities.cachesCompilation) & ~0x1);
+            EXPECT_LT(0.0f, capabilities.float32Performance.execTime);
+            EXPECT_LT(0.0f, capabilities.float32Performance.powerUsage);
+            EXPECT_LT(0.0f, capabilities.quantized8Performance.execTime);
+            EXPECT_LT(0.0f, capabilities.quantized8Performance.powerUsage);
+        });
     EXPECT_TRUE(ret.isOk());
 }
 
@@ -104,9 +110,7 @@ Model createTestModel() {
             .scale = 0.0f,
             .zeroPoint = 0,
             .lifetime = OperandLifeTime::MODEL_INPUT,
-            .location = {.poolIndex = 0,
-                         .offset = 0,
-                         .length = 0},
+            .location = {.poolIndex = 0, .offset = 0, .length = 0},
         },
         {
             .type = OperandType::TENSOR_FLOAT32,
@@ -115,9 +119,7 @@ Model createTestModel() {
             .scale = 0.0f,
             .zeroPoint = 0,
             .lifetime = OperandLifeTime::CONSTANT_COPY,
-            .location = {.poolIndex = 0,
-                         .offset = 0,
-                         .length = size},
+            .location = {.poolIndex = 0, .offset = 0, .length = size},
         },
         {
             .type = OperandType::INT32,
@@ -126,9 +128,7 @@ Model createTestModel() {
             .scale = 0.0f,
             .zeroPoint = 0,
             .lifetime = OperandLifeTime::CONSTANT_COPY,
-            .location = {.poolIndex = 0,
-                         .offset = size,
-                         .length = sizeof(int32_t)},
+            .location = {.poolIndex = 0, .offset = size, .length = sizeof(int32_t)},
         },
         {
             .type = OperandType::TENSOR_FLOAT32,
@@ -137,9 +137,7 @@ Model createTestModel() {
             .scale = 0.0f,
             .zeroPoint = 0,
             .lifetime = OperandLifeTime::MODEL_OUTPUT,
-            .location = {.poolIndex = 0,
-                         .offset = 0,
-                         .length = 0},
+            .location = {.poolIndex = 0, .offset = 0, .length = 0},
         },
     };
 
@@ -169,6 +167,7 @@ Model createTestModel() {
         .pools = pools,
     };
 }
+}  // anonymous namespace
 
 // allocator helper
 hidl_memory allocateSharedMemory(int64_t size, const std::string& type = "ashmem") {
@@ -189,16 +188,16 @@ hidl_memory allocateSharedMemory(int64_t size, const std::string& type = "ashmem
 
     return memory;
 }
-}  // anonymous namespace
 
 // supported subgraph test
-TEST_F(NeuralnetworksHidlTest, SupportedSubgraphTest) {
+TEST_F(NeuralnetworksHidlTest, SupportedOperationsTest) {
     Model model = createTestModel();
-    std::vector<bool> supported;
-    Return<void> ret = device->getSupportedSubgraph(
-        model, [&](const hidl_vec<bool>& hidl_supported) { supported = hidl_supported; });
-    ASSERT_TRUE(ret.isOk());
-    EXPECT_EQ(/*model.operations.size()*/ 0ull, supported.size());
+    Return<void> ret = device->getSupportedOperations(
+        model, [&](ErrorStatus status, const hidl_vec<bool>& supported) {
+            EXPECT_EQ(ErrorStatus::NONE, status);
+            EXPECT_EQ(model.operations.size(), supported.size());
+        });
+    EXPECT_TRUE(ret.isOk());
 }
 
 // execute simple graph
@@ -209,10 +208,20 @@ TEST_F(NeuralnetworksHidlTest, SimpleExecuteGraphTest) {
     const uint32_t INPUT = 0;
     const uint32_t OUTPUT = 1;
 
-    // prpeare request
+    // prepare request
     Model model = createTestModel();
-    sp<IPreparedModel> preparedModel = device->prepareModel(model);
+    sp<IPreparedModel> preparedModel;
+    sp<Event> preparationEvent = new Event();
+    ASSERT_NE(nullptr, preparationEvent.get());
+    Return<void> prepareRet = device->prepareModel(
+        model, preparationEvent, [&](ErrorStatus status, const sp<IPreparedModel>& prepared) {
+            EXPECT_EQ(ErrorStatus::NONE, status);
+            preparedModel = prepared;
+        });
+    ASSERT_TRUE(prepareRet.isOk());
     ASSERT_NE(nullptr, preparedModel.get());
+    Event::Status preparationStatus = preparationEvent->wait();
+    EXPECT_EQ(Event::Status::SUCCESS, preparationStatus);
 
     // prepare inputs
     uint32_t inputSize = static_cast<uint32_t>(inputData.size() * sizeof(float));
@@ -245,13 +254,14 @@ TEST_F(NeuralnetworksHidlTest, SimpleExecuteGraphTest) {
     outputMemory->commit();
 
     // execute request
-    sp<Event> event = sp<Event>(new Event());
-    ASSERT_NE(nullptr, event.get());
-    bool success = preparedModel->execute({.inputs = inputs, .outputs = outputs, .pools = pools},
-                                          event);
-    EXPECT_TRUE(success);
-    Event::Status status = event->wait();
-    EXPECT_EQ(Event::Status::SUCCESS, status);
+    sp<Event> executionEvent = new Event();
+    ASSERT_NE(nullptr, executionEvent.get());
+    Return<ErrorStatus> executeStatus = preparedModel->execute(
+        {.inputs = inputs, .outputs = outputs, .pools = pools}, executionEvent);
+    ASSERT_TRUE(executeStatus.isOk());
+    EXPECT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(executeStatus));
+    Event::Status eventStatus = executionEvent->wait();
+    EXPECT_EQ(Event::Status::SUCCESS, eventStatus);
 
     // validate results { 1+5, 2+6, 3+7, 4+8 }
     outputMemory->read();
@@ -260,8 +270,15 @@ TEST_F(NeuralnetworksHidlTest, SimpleExecuteGraphTest) {
     EXPECT_EQ(expectedData, outputData);
 }
 
+// Mixed-typed examples
+typedef MixedTypedExampleType MixedTypedExample;
+
+// in frameworks/ml/nn/runtime/tests/generated/
+#include "all_generated_vts_tests.cpp"
+
 // TODO: Add tests for execution failure, or wait_for/wait_until timeout.
-//       Discussion: https://googleplex-android-review.git.corp.google.com/#/c/platform/hardware/interfaces/+/2654636/5/neuralnetworks/1.0/vts/functional/VtsHalNeuralnetworksV1_0TargetTest.cpp@222
+//       Discussion:
+//       https://googleplex-android-review.git.corp.google.com/#/c/platform/hardware/interfaces/+/2654636/5/neuralnetworks/1.0/vts/functional/VtsHalNeuralnetworksV1_0TargetTest.cpp@222
 
 }  // namespace functional
 }  // namespace vts

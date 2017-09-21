@@ -18,14 +18,66 @@
 
 package android.hardware.neuralnetworks@1.0;
 
+import IEvent;
 import IPreparedModel;
 
+/**
+ * This interface represents a device driver.
+ */
 interface IDevice {
-    initialize() generates(Capabilities capabilities);
+    /**
+     * Gets the capabilities of a driver.
+     *
+     * @return status ErrorStatus::NONE if successful.
+     * @return capabilities Capabilities of the driver.
+     */
+    getCapabilities() generates (ErrorStatus status, Capabilities capabilities);
 
-    getSupportedSubgraph(Model model) generates(vec<bool> supported);
+    /**
+     * Gets the supported operations in a model.
+     *
+     * getSupportedSubgraph provides a more nuanced indication on whether a
+     * model is able to be compiled by the driver. Having the entire model
+     * allows for additional information such as tensor shapes to inputs or
+     * tensor strides, information which is not known in "initialize".
+     *
+     * @param model A model whose operations--and their corresponding
+     *              operands--are to be verified by the driver.
+     * @return status ErrorStatus::NONE if successful.
+     * @return supportedOperations A list of supported operations, where true
+     *                             indicates the operation is supported and
+     *                             false indicates the operation is not
+     *                             supported. The index of "supported"
+     *                             corresponds with the index of the operation
+     *                             it is describing.
+     */
+    getSupportedOperations(Model model)
+            generates (ErrorStatus status, vec<bool> supportedOperations);
 
-    prepareModel(Model model) generates(IPreparedModel preparedModel);
+    /**
+     * Prepares a model for execution.
+     *
+     * prepareModel is used to make any necessary transformations or alternative
+     * representations to a model for execution, possible including
+     * transformations on the constant data, optimization on the model's graph,
+     * or compilation into the device's native binary.
+     *
+     * The only information that may be unknown to the model at this stage is
+     * the shape of the tensors, which may only be known at execution time.
+     *
+     * @param model The model to be prepared for execution.
+     * @param event A synchronization callback that must be signaled once the
+     *              execution has finished.
+     * @return status ErrorStatus::NONE if successful.
+     * @return preparedModel A handle to the resultant prepared model.
+     */
+    prepareModel(Model model, IEvent event)
+            generates (ErrorStatus status, IPreparedModel preparedModel);
 
-    getStatus() generates(DeviceStatus status);
+    /**
+     * Returns the current status of a driver.
+     *
+     * @return status Status of the driver.
+     */
+    getStatus() generates (DeviceStatus status);
 };

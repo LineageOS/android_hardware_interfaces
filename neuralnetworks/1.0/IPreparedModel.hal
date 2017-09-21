@@ -14,13 +14,33 @@
  * limitations under the License.
  */
 
-/* This HAL is a work in progress */
-
 package android.hardware.neuralnetworks@1.0;
 
 import IEvent;
 
+/**
+ * IPreparedModel describes a model that has been prepared for execution and
+ * is used to launch executions.
+ */
 interface IPreparedModel {
-    // Multiple threads can call this execute function concurrently.
-    execute(Request request, IEvent event) generates(bool success);
+    /**
+     * Spawns an asynchronous execution on a prepared model.
+     *
+     * Executions are asynchronous with respect to the Neuralnetworks runtime.
+     * To support this, IPreparedModel::execute must spawn a new task and return
+     * whether the task was successfully launched. The asynchronous task which
+     * performs the execution must call event's IEvent::notify with the status
+     * of the execution immediately after the execution has finished.
+     *
+     * Multiple threads can call this execute function concurrently.
+     *
+     * @param request The input and output information on which the prepared
+     *                model is to be executed.
+     *                prepared model.
+     * @param event A callback used for synchronization that must be signaled
+     *              once the execution has finished.
+     * @return status ErrorStatus::NONE if the asynchronous task was
+     *                successfully launched.
+     */
+    execute(Request request, IEvent event) generates (ErrorStatus status);
 };

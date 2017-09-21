@@ -10,15 +10,21 @@ namespace implementation {
 Event::Event() : mStatus(Status::WAITING) {}
 
 Event::~Event() {
-    if (mThread.joinable()) {
-        mThread.join();
-    }
+    // Note that we cannot call Event::join_thread from here: Event is
+    // intended to be reference counted, and it is possible that the
+    // reference count drops to zero in the bound thread, causing the
+    // bound thread to call this destructor. If a thread tries to join
+    // itself, it throws an exception, producing a message like the
+    // following:
+    //
+    //     terminating with uncaught exception of type std::__1::system_error:
+    //     thread::join failed: Resource deadlock would occur
 }
 
-Return<void> Event::notify(ReturnedStatus status) {
+Return<void> Event::notify(ErrorStatus status) {
     {
         std::lock_guard<std::mutex> lock(mMutex);
-        mStatus = status == ReturnedStatus::SUCCESS ? Status::SUCCESS : Status::ERROR;
+        mStatus = status == ErrorStatus::NONE ? Status::SUCCESS : Status::ERROR;
         if (mStatus == Status::SUCCESS && mCallback != nullptr) {
             bool success = mCallback();
             if (!success) {
@@ -38,6 +44,7 @@ Event::Status Event::poll() {
 Event::Status Event::wait() {
     std::unique_lock<std::mutex> lock(mMutex);
     mCondition.wait(lock, [this]{return mStatus != Status::WAITING;});
+    join_thread_locked();
     return mStatus;
 }
 
@@ -67,6 +74,17 @@ bool Event::bind_thread(std::thread&& asyncThread) {
     }
     mThread = std::move(asyncThread);
     return true;
+}
+
+void Event::join_thread() {
+    std::lock_guard<std::mutex> lock(mMutex);
+    join_thread_locked();
+}
+
+void Event::join_thread_locked() {
+    if (mThread.joinable()) {
+        mThread.join();
+    }
 }
 
 }  // namespace implementation
