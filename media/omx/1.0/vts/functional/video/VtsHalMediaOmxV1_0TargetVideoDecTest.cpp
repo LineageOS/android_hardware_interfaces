@@ -1286,10 +1286,16 @@ TEST_F(VideoDecHidlTest, SimpleEOSTest) {
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 
     // set port mode
+    portMode[0] = PortMode::PRESET_BYTE_BUFFER;
+    portMode[1] = PortMode::PRESET_ANW_BUFFER;
     status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
-    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    if (status != ::android::hardware::media::omx::V1_0::Status::OK) {
+        portMode[1] = PortMode::PRESET_BYTE_BUFFER;
+        status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
+        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    }
 
     // set Port Params
     uint32_t nFrameWidth, nFrameHeight, xFramerate;
