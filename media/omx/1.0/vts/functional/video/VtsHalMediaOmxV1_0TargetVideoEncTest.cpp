@@ -983,58 +983,25 @@ void encodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                    sp<CodecProducerListener> listener = nullptr) {
     android::hardware::media::omx::V1_0::Status status;
     Message msg;
-    uint32_t ipCount = 0;
+    uint64_t timestamp = 0;
+    uint32_t flags = 0;
+    int timeOut = TIMEOUT_COUNTER_Q;
+    bool iQueued, oQueued;
 
+    uint32_t ipCount = 0;
     if (ipCount == 0) {
         status = changeFrameRate(omxNode, portIndexOutput, (24U << 16));
         if (status == ::android::hardware::media::omx::V1_0::Status::OK)
             xFramerate = (24U << 16);
     }
-
-    // dispatch output buffers
-    for (size_t i = 0; i < oBuffer->size(); i++) {
-        dispatchOutputBuffer(omxNode, oBuffer, i);
-    }
-    // dispatch input buffers
     int32_t timestampIncr = (int)((float)1000000 / (xFramerate >> 16));
-    // timestamp scale = Nano sec
-    if (inputDataIsMeta) timestampIncr *= 1000;
-    uint64_t timestamp = 0;
-    uint32_t flags = 0;
-    for (size_t i = 0; i < iBuffer->size() && nFrames != 0; i++) {
-        if (inputDataIsMeta) {
-            if (listener->freeBuffers > listener->minUnDequeuedCount) {
-                if (dispatchGraphicBuffer(omxNode, producer, listener, iBuffer,
-                                          portIndexInput, eleStream, timestamp))
-                    break;
-                timestamp += timestampIncr;
-                nFrames--;
-                ipCount++;
-            }
-        } else {
-            char* ipBuffer = static_cast<char*>(
-                static_cast<void*>((*iBuffer)[i].mMemory->getPointer()));
-            ASSERT_LE(bytesCount,
-                      static_cast<int>((*iBuffer)[i].mMemory->getSize()));
-            if (fillByteBuffer(omxNode, ipBuffer, portIndexInput, eleStream))
-                break;
-            if (signalEOS && (nFrames == 1)) flags = OMX_BUFFERFLAG_EOS;
-            dispatchInputBuffer(omxNode, iBuffer, i, bytesCount, flags,
-                                timestamp);
-            if (timestampUslist) timestampUslist->push_back(timestamp);
-            timestamp += timestampIncr;
-            nFrames--;
-            ipCount++;
-        }
-    }
+    if (inputDataIsMeta) timestampIncr *= 1000;  // timestamp scale: Nano sec
 
-    int timeOut = TIMEOUT_COUNTER_Q;
-    bool iQueued, oQueued;
     while (1) {
         iQueued = oQueued = false;
         status =
             observer->dequeueMessage(&msg, DEFAULT_TIMEOUT_Q, iBuffer, oBuffer);
-
+        // Port Reconfiguration
         if (status == android::hardware::media::omx::V1_0::Status::OK) {
             ASSERT_EQ(msg.type, Message::Type::EVENT);
             if (msg.data.eventData.event == OMX_EventPortSettingsChanged) {
@@ -1076,7 +1043,8 @@ void encodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                 if (fillByteBuffer(omxNode, ipBuffer, portIndexInput,
                                    eleStream))
                     break;
-                if (signalEOS && (nFrames == 1)) flags = OMX_BUFFERFLAG_EOS;
+                flags = OMX_BUFFERFLAG_ENDOFFRAME;
+                if (signalEOS && (nFrames == 1)) flags |= OMX_BUFFERFLAG_EOS;
                 dispatchInputBuffer(omxNode, iBuffer, index, bytesCount, flags,
                                     timestamp);
                 if (timestampUslist) timestampUslist->push_back(timestamp);
@@ -1086,10 +1054,12 @@ void encodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                 iQueued = true;
             }
         }
+        // Dispatch output buffer
         if ((index = getEmptyBufferID(oBuffer)) < oBuffer->size()) {
             dispatchOutputBuffer(omxNode, oBuffer, index);
             oQueued = true;
         }
+        // Reset Counters when either input or output buffer is dispatched
         if (iQueued || oQueued)
             timeOut = TIMEOUT_COUNTER_Q;
         else
@@ -1098,6 +1068,7 @@ void encodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
             EXPECT_TRUE(false) << "Wait on Input/Output is found indefinite";
             break;
         }
+        // Runtime Param Configuration
         if (ipCount == 15) {
             changeBitrate(omxNode, portIndexOutput, 768000);
             requestIDR(omxNode, portIndexOutput);
