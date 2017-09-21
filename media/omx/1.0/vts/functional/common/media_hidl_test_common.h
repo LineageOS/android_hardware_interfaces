@@ -133,6 +133,7 @@ struct CodecObserver : public IOmxObserver {
                 if (it->type ==
                     android::hardware::media::omx::V1_0::Message::Type::EVENT) {
                     *msg = *it;
+                    if (callBack) callBack(*it, nullptr);
                     it = msgQueue.erase(it);
                     // OMX_EventBufferFlag event is sent when the component has
                     // processed a buffer with its EOS flag set. This event is
