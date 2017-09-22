@@ -105,3 +105,97 @@ cc_library {
         "android.hardware.media@1.0",
     ],
 }
+
+genrule {
+    name: "android.hardware.media.omx@1.0-adapter-helper_genc++",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-sources -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.media.omx@1.0",
+    srcs: [
+        ":android.hardware.media.omx@1.0_hal",
+    ],
+    out: [
+        "android/hardware/media/omx/1.0/AGraphicBufferSource.cpp",
+        "android/hardware/media/omx/1.0/AOmx.cpp",
+        "android/hardware/media/omx/1.0/AOmxBufferSource.cpp",
+        "android/hardware/media/omx/1.0/AOmxNode.cpp",
+        "android/hardware/media/omx/1.0/AOmxObserver.cpp",
+        "android/hardware/media/omx/1.0/AOmxStore.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.media.omx@1.0-adapter-helper_genc++_headers",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-headers -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.media.omx@1.0",
+    srcs: [
+        ":android.hardware.media.omx@1.0_hal",
+    ],
+    out: [
+        "android/hardware/media/omx/1.0/AGraphicBufferSource.h",
+        "android/hardware/media/omx/1.0/AOmx.h",
+        "android/hardware/media/omx/1.0/AOmxBufferSource.h",
+        "android/hardware/media/omx/1.0/AOmxNode.h",
+        "android/hardware/media/omx/1.0/AOmxObserver.h",
+        "android/hardware/media/omx/1.0/AOmxStore.h",
+    ],
+}
+
+
+cc_library {
+    name: "android.hardware.media.omx@1.0-adapter-helper",
+    defaults: ["hidl-module-defaults"],
+    generated_sources: ["android.hardware.media.omx@1.0-adapter-helper_genc++"],
+    generated_headers: ["android.hardware.media.omx@1.0-adapter-helper_genc++_headers"],
+    export_generated_headers: ["android.hardware.media.omx@1.0-adapter-helper_genc++_headers"],
+    vendor_available: true,
+    shared_libs: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "liblog",
+        "libutils",
+        "libcutils",
+        "libhidladapter",
+        "android.hardware.graphics.bufferqueue@1.0",
+        "android.hardware.graphics.common@1.0",
+        "android.hardware.media.omx@1.0",
+        "android.hardware.media@1.0",
+        "android.hardware.graphics.bufferqueue@1.0-adapter-helper",
+        "android.hidl.base@1.0-adapter-helper",
+    ],
+    export_shared_lib_headers: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "libutils",
+        "libhidladapter",
+        "android.hardware.graphics.bufferqueue@1.0",
+        "android.hardware.graphics.common@1.0",
+        "android.hardware.media.omx@1.0",
+        "android.hardware.media@1.0",
+        "android.hardware.graphics.bufferqueue@1.0-adapter-helper",
+        "android.hidl.base@1.0-adapter-helper",
+    ],
+}
+
+genrule {
+    name: "android.hardware.media.omx@1.0-adapter_genc++",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-main -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.media.omx@1.0",
+    out: ["main.cpp"]}
+
+cc_test {
+    name: "android.hardware.media.omx@1.0-adapter",
+    shared_libs: [
+        "libhidladapter",
+        "libhidlbase",
+        "libhidltransport",
+        "libutils",
+        "android.hardware.graphics.bufferqueue@1.0",
+        "android.hardware.graphics.common@1.0",
+        "android.hardware.media.omx@1.0",
+        "android.hardware.media@1.0",
+        "android.hardware.media.omx@1.0-adapter-helper",
+    ],
+    generated_sources: ["android.hardware.media.omx@1.0-adapter_genc++"],
+}
