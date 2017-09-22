@@ -22,6 +22,9 @@
 
 #include <android-base/logging.h>
 
+#include <android/hardware/graphics/allocator/2.0/IAllocator.h>
+#include <android/hardware/graphics/mapper/2.0/IMapper.h>
+#include <android/hardware/graphics/mapper/2.0/types.h>
 #include <android/hardware/media/omx/1.0/IOmx.h>
 #include <android/hardware/media/omx/1.0/IOmxNode.h>
 #include <android/hardware/media/omx/1.0/IOmxObserver.h>
@@ -29,7 +32,10 @@
 #include <android/hidl/allocator/1.0/IAllocator.h>
 #include <android/hidl/memory/1.0/IMapper.h>
 #include <android/hidl/memory/1.0/IMemory.h>
+#include <cutils/atomic.h>
 
+using ::android::hardware::graphics::common::V1_0::BufferUsage;
+using ::android::hardware::graphics::common::V1_0::PixelFormat;
 using ::android::hardware::media::omx::V1_0::IOmx;
 using ::android::hardware::media::omx::V1_0::IOmxObserver;
 using ::android::hardware::media::omx::V1_0::IOmxNode;
@@ -186,6 +192,73 @@ Return<android::hardware::media::omx::V1_0::Status> setAudioPortFormat(
     return status;
 }
 
+void allocateGraphicBuffers(sp<IOmxNode> omxNode, OMX_U32 portIndex,
+                            BufferInfo* buffer, uint32_t nFrameWidth,
+                            uint32_t nFrameHeight, int32_t* nStride,
+                            int format) {
+    android::hardware::media::omx::V1_0::Status status;
+    sp<android::hardware::graphics::allocator::V2_0::IAllocator> allocator =
+        android::hardware::graphics::allocator::V2_0::IAllocator::getService();
+    ASSERT_NE(nullptr, allocator.get());
+
+    sp<android::hardware::graphics::mapper::V2_0::IMapper> mapper =
+        android::hardware::graphics::mapper::V2_0::IMapper::getService();
+    ASSERT_NE(mapper.get(), nullptr);
+
+    android::hardware::graphics::mapper::V2_0::IMapper::BufferDescriptorInfo
+        descriptorInfo;
+    uint32_t usage;
+
+    descriptorInfo.width = nFrameWidth;
+    descriptorInfo.height = nFrameHeight;
+    descriptorInfo.layerCount = 1;
+    descriptorInfo.format = static_cast<PixelFormat>(format);
+    descriptorInfo.usage = static_cast<uint64_t>(BufferUsage::CPU_READ_OFTEN);
+    omxNode->getGraphicBufferUsage(
+        portIndex,
+        [&status, &usage](android::hardware::media::omx::V1_0::Status _s,
+                          uint32_t _n1) {
+            status = _s;
+            usage = _n1;
+        });
+    if (status == android::hardware::media::omx::V1_0::Status::OK) {
+        descriptorInfo.usage |= usage;
+    }
+
+    ::android::hardware::hidl_vec<uint32_t> descriptor;
+    android::hardware::graphics::mapper::V2_0::Error error;
+    mapper->createDescriptor(
+        descriptorInfo, [&error, &descriptor](
+                            android::hardware::graphics::mapper::V2_0::Error _s,
+                            ::android::hardware::hidl_vec<uint32_t> _n1) {
+            error = _s;
+            descriptor = _n1;
+        });
+    EXPECT_EQ(error, android::hardware::graphics::mapper::V2_0::Error::NONE);
+
+    static volatile int32_t nextId = 0;
+    uint64_t id = static_cast<uint64_t>(getpid()) << 32;
+    allocator->allocate(
+        descriptor, 1,
+        [&](android::hardware::graphics::mapper::V2_0::Error _s, uint32_t _n1,
+            const ::android::hardware::hidl_vec<
+                ::android::hardware::hidl_handle>& _n2) {
+            ASSERT_EQ(android::hardware::graphics::mapper::V2_0::Error::NONE,
+                      _s);
+            *nStride = _n1;
+            buffer->omxBuffer.nativeHandle = _n2[0];
+            buffer->omxBuffer.attr.anwBuffer.width = nFrameWidth;
+            buffer->omxBuffer.attr.anwBuffer.height = nFrameHeight;
+            buffer->omxBuffer.attr.anwBuffer.stride = _n1;
+            buffer->omxBuffer.attr.anwBuffer.format = descriptorInfo.format;
+            buffer->omxBuffer.attr.anwBuffer.usage = descriptorInfo.usage;
+            buffer->omxBuffer.attr.anwBuffer.layerCount =
+                descriptorInfo.layerCount;
+            buffer->omxBuffer.attr.anwBuffer.id =
+                id | static_cast<uint32_t>(android_atomic_inc(&nextId));
+        });
+}
+
 // allocate buffers needed on a component port
 void allocateBuffer(sp<IOmxNode> omxNode, BufferInfo* buffer, OMX_U32 portIndex,
                     OMX_U32 nBufferSize, PortMode portMode) {
@@ -243,13 +316,32 @@ void allocateBuffer(sp<IOmxNode> omxNode, BufferInfo* buffer, OMX_U32 portIndex,
                 buffer->id = id;
             });
         ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    } else if (portMode == PortMode::PRESET_ANW_BUFFER) {
+        OMX_PARAM_PORTDEFINITIONTYPE portDef;
+        status = getPortParam(omxNode, OMX_IndexParamPortDefinition, portIndex,
+                              &portDef);
+        int32_t nStride;
+        buffer->owner = client;
+        buffer->omxBuffer.type = CodecBuffer::Type::ANW_BUFFER;
+        allocateGraphicBuffers(omxNode, portIndex, buffer,
+                               portDef.format.video.nFrameWidth,
+                               portDef.format.video.nFrameHeight, &nStride,
+                               portDef.format.video.eColorFormat);
+        omxNode->useBuffer(
+            portIndex, buffer->omxBuffer,
+            [&status, &buffer](android::hardware::media::omx::V1_0::Status _s,
+                               uint32_t id) {
+                status = _s;
+                buffer->id = id;
+            });
+        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     }
 }
 
 // allocate buffers needed on a component port
 void allocatePortBuffers(sp<IOmxNode> omxNode,
                          android::Vector<BufferInfo>* buffArray,
-                         OMX_U32 portIndex, PortMode portMode) {
+                         OMX_U32 portIndex, PortMode portMode, bool allocGrap) {
     android::hardware::media::omx::V1_0::Status status;
     OMX_PARAM_PORTDEFINITIONTYPE portDef;
 
@@ -263,6 +355,13 @@ void allocatePortBuffers(sp<IOmxNode> omxNode,
         BufferInfo buffer;
         allocateBuffer(omxNode, &buffer, portIndex, portDef.nBufferSize,
                        portMode);
+        if (allocGrap && portMode == PortMode::DYNAMIC_ANW_BUFFER) {
+            int32_t nStride;
+            allocateGraphicBuffers(omxNode, portIndex, &buffer,
+                                   portDef.format.video.nFrameWidth,
+                                   portDef.format.video.nFrameHeight, &nStride,
+                                   portDef.format.video.eColorFormat);
+        }
         buffArray->push(buffer);
     }
 }
@@ -274,7 +373,7 @@ void changeStateLoadedtoIdle(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                              android::Vector<BufferInfo>* iBuffer,
                              android::Vector<BufferInfo>* oBuffer,
                              OMX_U32 kPortIndexInput, OMX_U32 kPortIndexOutput,
-                             PortMode* portMode) {
+                             PortMode* portMode, bool allocGrap) {
     android::hardware::media::omx::V1_0::Status status;
     Message msg;
     PortMode defaultPortMode[2], *pm;
@@ -293,14 +392,14 @@ void changeStateLoadedtoIdle(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
     ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::TIMED_OUT);
 
     // allocate buffers on input port
-    allocatePortBuffers(omxNode, iBuffer, kPortIndexInput, pm[0]);
+    allocatePortBuffers(omxNode, iBuffer, kPortIndexInput, pm[0], allocGrap);
 
     // Dont switch states until the ports are populated
     status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
     ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::TIMED_OUT);
 
     // allocate buffers on output port
-    allocatePortBuffers(omxNode, oBuffer, kPortIndexOutput, pm[1]);
+    allocatePortBuffers(omxNode, oBuffer, kPortIndexOutput, pm[1], allocGrap);
 
     // As the ports are populated, check if the state transition is complete
     status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
@@ -440,6 +539,7 @@ void dispatchOutputBuffer(sp<IOmxNode> omxNode,
             status =
                 omxNode->fillBuffer((*buffArray)[bufferIndex].id, t, fenceNh);
             break;
+        case PortMode::PRESET_ANW_BUFFER:
         case PortMode::PRESET_SECURE_BUFFER:
         case PortMode::PRESET_BYTE_BUFFER:
             t.sharedMemory = android::hardware::hidl_memory();

@@ -15,22 +15,9 @@
 //
 
 cc_test {
-    name: "VtsHalMediaOmxV1_0TargetVideoDecTest",
-    defaults: ["VtsHalMediaOmxV1_0Defaults"],
-    srcs: [
-        "VtsHalMediaOmxV1_0TargetVideoDecTest.cpp",
-        "media_video_hidl_test_common.cpp"
-    ],
+    name: "VtsHalCasV1_0TargetTest",
+    defaults: ["VtsHalTargetTestDefaults"],
+    srcs: ["VtsHalCasV1_0TargetTest.cpp"],
+    static_libs: ["android.hardware.cas@1.0"],
 }
 
-cc_test {
-    name: "VtsHalMediaOmxV1_0TargetVideoEncTest",
-    defaults: ["VtsHalMediaOmxV1_0Defaults"],
-    srcs: [
-        "VtsHalMediaOmxV1_0TargetVideoEncTest.cpp",
-        "media_video_hidl_test_common.cpp"
-    ],
-    static_libs: [
-        "libnativewindow",
-    ],
-}

@@ -133,6 +133,7 @@ struct CodecObserver : public IOmxObserver {
                 if (it->type ==
                     android::hardware::media::omx::V1_0::Message::Type::EVENT) {
                     *msg = *it;
+                    if (callBack) callBack(*it, nullptr);
                     it = msgQueue.erase(it);
                     // OMX_EventBufferFlag event is sent when the component has
                     // processed a buffer with its EOS flag set. This event is
@@ -302,13 +303,15 @@ void allocateBuffer(sp<IOmxNode> omxNode, BufferInfo* buffer, OMX_U32 portIndex,
 void allocatePortBuffers(sp<IOmxNode> omxNode,
                          android::Vector<BufferInfo>* buffArray,
                          OMX_U32 portIndex,
-                         PortMode portMode = PortMode::PRESET_BYTE_BUFFER);
+                         PortMode portMode = PortMode::PRESET_BYTE_BUFFER,
+                         bool allocGrap = false);
 
 void changeStateLoadedtoIdle(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                              android::Vector<BufferInfo>* iBuffer,
                              android::Vector<BufferInfo>* oBuffer,
                              OMX_U32 kPortIndexInput, OMX_U32 kPortIndexOutput,
-                             PortMode* portMode = nullptr);
+                             PortMode* portMode = nullptr,
+                             bool allocGrap = false);
 
 void changeStateIdletoLoaded(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                              android::Vector<BufferInfo>* iBuffer,
