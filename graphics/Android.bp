@@ -10,4 +10,6 @@ subdirs = [
     "mapper/2.0",
     "mapper/2.0/default",
     "mapper/2.0/vts/functional",
+    "mapper/2.1",
+    "mapper/2.1/vts/functional",
 ]
