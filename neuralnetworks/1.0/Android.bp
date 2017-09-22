@@ -5,8 +5,9 @@ filegroup {
     srcs: [
         "types.hal",
         "IDevice.hal",
-        "IEvent.hal",
+        "IExecutionCallback.hal",
         "IPreparedModel.hal",
+        "IPreparedModelCallback.hal",
     ],
 }
 
@@ -20,8 +21,9 @@ genrule {
     out: [
         "android/hardware/neuralnetworks/1.0/types.cpp",
         "android/hardware/neuralnetworks/1.0/DeviceAll.cpp",
-        "android/hardware/neuralnetworks/1.0/EventAll.cpp",
+        "android/hardware/neuralnetworks/1.0/ExecutionCallbackAll.cpp",
         "android/hardware/neuralnetworks/1.0/PreparedModelAll.cpp",
+        "android/hardware/neuralnetworks/1.0/PreparedModelCallbackAll.cpp",
     ],
 }
 
@@ -40,16 +42,21 @@ genrule {
         "android/hardware/neuralnetworks/1.0/BnHwDevice.h",
         "android/hardware/neuralnetworks/1.0/BpHwDevice.h",
         "android/hardware/neuralnetworks/1.0/BsDevice.h",
-        "android/hardware/neuralnetworks/1.0/IEvent.h",
-        "android/hardware/neuralnetworks/1.0/IHwEvent.h",
-        "android/hardware/neuralnetworks/1.0/BnHwEvent.h",
-        "android/hardware/neuralnetworks/1.0/BpHwEvent.h",
-        "android/hardware/neuralnetworks/1.0/BsEvent.h",
+        "android/hardware/neuralnetworks/1.0/IExecutionCallback.h",
+        "android/hardware/neuralnetworks/1.0/IHwExecutionCallback.h",
+        "android/hardware/neuralnetworks/1.0/BnHwExecutionCallback.h",
+        "android/hardware/neuralnetworks/1.0/BpHwExecutionCallback.h",
+        "android/hardware/neuralnetworks/1.0/BsExecutionCallback.h",
         "android/hardware/neuralnetworks/1.0/IPreparedModel.h",
         "android/hardware/neuralnetworks/1.0/IHwPreparedModel.h",
         "android/hardware/neuralnetworks/1.0/BnHwPreparedModel.h",
         "android/hardware/neuralnetworks/1.0/BpHwPreparedModel.h",
         "android/hardware/neuralnetworks/1.0/BsPreparedModel.h",
+        "android/hardware/neuralnetworks/1.0/IPreparedModelCallback.h",
+        "android/hardware/neuralnetworks/1.0/IHwPreparedModelCallback.h",
+        "android/hardware/neuralnetworks/1.0/BnHwPreparedModelCallback.h",
+        "android/hardware/neuralnetworks/1.0/BpHwPreparedModelCallback.h",
+        "android/hardware/neuralnetworks/1.0/BsPreparedModelCallback.h",
     ],
 }
 

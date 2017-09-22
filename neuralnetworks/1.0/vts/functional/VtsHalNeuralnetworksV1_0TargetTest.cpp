@@ -17,7 +17,8 @@
 #define LOG_TAG "neuralnetworks_hidl_hal_test"
 
 #include "VtsHalNeuralnetworksV1_0TargetTest.h"
-#include "Event.h"
+
+#include "Callbacks.h"
 #include "Models.h"
 #include "TestHarness.h"
 
@@ -32,8 +33,10 @@ namespace V1_0 {
 namespace vts {
 namespace functional {
 
-using ::android::hardware::neuralnetworks::V1_0::implementation::Event;
+using ::android::hardware::neuralnetworks::V1_0::implementation::ExecutionCallback;
+using ::android::hardware::neuralnetworks::V1_0::implementation::PreparedModelCallback;
 using ::generated_tests::MixedTypedExampleType;
+
 namespace generated_tests {
 extern void Execute(const sp<IDevice>&, std::function<Model(void)>, std::function<bool(int)>,
                     const std::vector<MixedTypedExampleType>&);
@@ -66,26 +69,22 @@ void NeuralnetworksHidlTest::SetUp() {
 
 void NeuralnetworksHidlTest::TearDown() {}
 
-sp<IPreparedModel> NeuralnetworksHidlTest::doPrepareModelShortcut(const Model& model) {
-    sp<IPreparedModel> preparedModel;
-    ErrorStatus prepareStatus;
-    sp<Event> preparationEvent = new Event();
-    if (preparationEvent.get() == nullptr) {
+sp<IPreparedModel> NeuralnetworksHidlTest::doPrepareModelShortcut() {
+    Model model = createValidTestModel();
+
+    sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
+    if (preparedModelCallback == nullptr) {
+        return nullptr;
+    }
+    Return<ErrorStatus> prepareLaunchStatus = device->prepareModel(model, preparedModelCallback);
+    if (!prepareLaunchStatus.isOk() || prepareLaunchStatus != ErrorStatus::NONE) {
         return nullptr;
     }
 
-    Return<void> prepareRet = device->prepareModel(
-        model, preparationEvent, [&](ErrorStatus status, const sp<IPreparedModel>& prepared) {
-            prepareStatus = status;
-            preparedModel = prepared;
-        });
-
-    if (!prepareRet.isOk() || prepareStatus != ErrorStatus::NONE ||
-        preparedModel.get() == nullptr) {
-        return nullptr;
-    }
-    Event::Status eventStatus = preparationEvent->wait();
-    if (eventStatus != Event::Status::SUCCESS) {
+    preparedModelCallback->wait();
+    ErrorStatus prepareReturnStatus = preparedModelCallback->getStatus();
+    sp<IPreparedModel> preparedModel = preparedModelCallback->getPreparedModel();
+    if (prepareReturnStatus != ErrorStatus::NONE || preparedModel == nullptr) {
         return nullptr;
     }
 
@@ -151,99 +150,121 @@ TEST_F(NeuralnetworksHidlTest, SupportedOperationsNegativeTest2) {
 // prepare simple model positive test
 TEST_F(NeuralnetworksHidlTest, SimplePrepareModelPositiveTest) {
     Model model = createValidTestModel();
-    sp<Event> preparationEvent = new Event();
-    ASSERT_NE(nullptr, preparationEvent.get());
-    Return<void> prepareRet = device->prepareModel(
-        model, preparationEvent, [&](ErrorStatus status, const sp<IPreparedModel>& prepared) {
-            EXPECT_EQ(ErrorStatus::NONE, status);
-            (void)prepared;
-        });
-    ASSERT_TRUE(prepareRet.isOk());
+    sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
+    ASSERT_NE(nullptr, preparedModelCallback.get());
+    Return<ErrorStatus> prepareLaunchStatus = device->prepareModel(model, preparedModelCallback);
+    ASSERT_TRUE(prepareLaunchStatus.isOk());
+    EXPECT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(prepareLaunchStatus));
+
+    preparedModelCallback->wait();
+    ErrorStatus prepareReturnStatus = preparedModelCallback->getStatus();
+    EXPECT_EQ(ErrorStatus::NONE, prepareReturnStatus);
+    sp<IPreparedModel> preparedModel = preparedModelCallback->getPreparedModel();
+    EXPECT_NE(nullptr, preparedModel.get());
 }
 
 // prepare simple model negative test 1
 TEST_F(NeuralnetworksHidlTest, SimplePrepareModelNegativeTest1) {
     Model model = createInvalidTestModel1();
-    sp<Event> preparationEvent = new Event();
-    ASSERT_NE(nullptr, preparationEvent.get());
-    Return<void> prepareRet = device->prepareModel(
-        model, preparationEvent, [&](ErrorStatus status, const sp<IPreparedModel>& prepared) {
-            EXPECT_EQ(ErrorStatus::INVALID_ARGUMENT, status);
-            (void)prepared;
-        });
-    ASSERT_TRUE(prepareRet.isOk());
+    sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
+    ASSERT_NE(nullptr, preparedModelCallback.get());
+    Return<ErrorStatus> prepareLaunchStatus = device->prepareModel(model, preparedModelCallback);
+    ASSERT_TRUE(prepareLaunchStatus.isOk());
+    EXPECT_EQ(ErrorStatus::INVALID_ARGUMENT, static_cast<ErrorStatus>(prepareLaunchStatus));
+
+    preparedModelCallback->wait();
+    ErrorStatus prepareReturnStatus = preparedModelCallback->getStatus();
+    EXPECT_EQ(ErrorStatus::INVALID_ARGUMENT, prepareReturnStatus);
+    sp<IPreparedModel> preparedModel = preparedModelCallback->getPreparedModel();
+    EXPECT_EQ(nullptr, preparedModel.get());
 }
 
 // prepare simple model negative test 2
 TEST_F(NeuralnetworksHidlTest, SimplePrepareModelNegativeTest2) {
     Model model = createInvalidTestModel2();
-    sp<Event> preparationEvent = new Event();
-    ASSERT_NE(nullptr, preparationEvent.get());
-    Return<void> prepareRet = device->prepareModel(
-        model, preparationEvent, [&](ErrorStatus status, const sp<IPreparedModel>& prepared) {
-            EXPECT_EQ(ErrorStatus::INVALID_ARGUMENT, status);
-            (void)prepared;
-        });
-    ASSERT_TRUE(prepareRet.isOk());
+    sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
+    ASSERT_NE(nullptr, preparedModelCallback.get());
+    Return<ErrorStatus> prepareLaunchStatus = device->prepareModel(model, preparedModelCallback);
+    ASSERT_TRUE(prepareLaunchStatus.isOk());
+    EXPECT_EQ(ErrorStatus::INVALID_ARGUMENT, static_cast<ErrorStatus>(prepareLaunchStatus));
+
+    preparedModelCallback->wait();
+    ErrorStatus prepareReturnStatus = preparedModelCallback->getStatus();
+    EXPECT_EQ(ErrorStatus::INVALID_ARGUMENT, prepareReturnStatus);
+    sp<IPreparedModel> preparedModel = preparedModelCallback->getPreparedModel();
+    EXPECT_EQ(nullptr, preparedModel.get());
 }
 
 // execute simple graph positive test
 TEST_F(NeuralnetworksHidlTest, SimpleExecuteGraphPositiveTest) {
-    Model model = createValidTestModel();
-    sp<IPreparedModel> preparedModel = doPrepareModelShortcut(model);
-    ASSERT_NE(nullptr, preparedModel.get());
-    Request request = createValidTestRequest();
-
-    sp<Event> executionEvent = new Event();
-    ASSERT_NE(nullptr, executionEvent.get());
-    Return<ErrorStatus> executeStatus = preparedModel->execute(request, executionEvent);
-    ASSERT_TRUE(executeStatus.isOk());
-    EXPECT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(executeStatus));
-    Event::Status eventStatus = executionEvent->wait();
-    EXPECT_EQ(Event::Status::SUCCESS, eventStatus);
-
     std::vector<float> outputData = {-1.0f, -1.0f, -1.0f, -1.0f};
     std::vector<float> expectedData = {6.0f, 8.0f, 10.0f, 12.0f};
     const uint32_t OUTPUT = 1;
 
-    sp<IMemory> outputMemory = mapMemory(request.pools[OUTPUT]);
-    ASSERT_NE(nullptr, outputMemory.get());
-    float* outputPtr = reinterpret_cast<float*>(static_cast<void*>(outputMemory->getPointer()));
-    ASSERT_NE(nullptr, outputPtr);
-    outputMemory->read();
-    std::copy(outputPtr, outputPtr + outputData.size(), outputData.begin());
-    outputMemory->commit();
+    sp<IPreparedModel> preparedModel = doPrepareModelShortcut();
+    ASSERT_NE(nullptr, preparedModel.get());
+    Request request = createValidTestRequest();
+
+    auto postWork = [&] {
+        sp<IMemory> outputMemory = mapMemory(request.pools[OUTPUT]);
+        if (outputMemory == nullptr) {
+            return false;
+        }
+        float* outputPtr = reinterpret_cast<float*>(static_cast<void*>(outputMemory->getPointer()));
+        if (outputPtr == nullptr) {
+            return false;
+        }
+        outputMemory->read();
+        std::copy(outputPtr, outputPtr + outputData.size(), outputData.begin());
+        outputMemory->commit();
+        return true;
+    };
+
+    sp<ExecutionCallback> executionCallback = new ExecutionCallback();
+    ASSERT_NE(nullptr, executionCallback.get());
+    executionCallback->on_finish(postWork);
+    Return<ErrorStatus> executeLaunchStatus = preparedModel->execute(request, executionCallback);
+    ASSERT_TRUE(executeLaunchStatus.isOk());
+    EXPECT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(executeLaunchStatus));
+
+    executionCallback->wait();
+    ErrorStatus executionReturnStatus = executionCallback->getStatus();
+    EXPECT_EQ(ErrorStatus::NONE, executionReturnStatus);
     EXPECT_EQ(expectedData, outputData);
 }
 
 // execute simple graph negative test 1
 TEST_F(NeuralnetworksHidlTest, SimpleExecuteGraphNegativeTest1) {
-    Model model = createValidTestModel();
-    sp<IPreparedModel> preparedModel = doPrepareModelShortcut(model);
+    sp<IPreparedModel> preparedModel = doPrepareModelShortcut();
     ASSERT_NE(nullptr, preparedModel.get());
     Request request = createInvalidTestRequest1();
 
-    sp<Event> executionEvent = new Event();
-    ASSERT_NE(nullptr, executionEvent.get());
-    Return<ErrorStatus> executeStatus = preparedModel->execute(request, executionEvent);
-    ASSERT_TRUE(executeStatus.isOk());
-    EXPECT_EQ(ErrorStatus::INVALID_ARGUMENT, static_cast<ErrorStatus>(executeStatus));
-    executionEvent->wait();
+    sp<ExecutionCallback> executionCallback = new ExecutionCallback();
+    ASSERT_NE(nullptr, executionCallback.get());
+    Return<ErrorStatus> executeLaunchStatus = preparedModel->execute(request, executionCallback);
+    ASSERT_TRUE(executeLaunchStatus.isOk());
+    EXPECT_EQ(ErrorStatus::INVALID_ARGUMENT, static_cast<ErrorStatus>(executeLaunchStatus));
+
+    executionCallback->wait();
+    ErrorStatus executionReturnStatus = executionCallback->getStatus();
+    EXPECT_EQ(ErrorStatus::INVALID_ARGUMENT, executionReturnStatus);
 }
 
 // execute simple graph negative test 2
 TEST_F(NeuralnetworksHidlTest, SimpleExecuteGraphNegativeTest2) {
-    Model model = createValidTestModel();
-    sp<IPreparedModel> preparedModel = doPrepareModelShortcut(model);
+    sp<IPreparedModel> preparedModel = doPrepareModelShortcut();
     ASSERT_NE(nullptr, preparedModel.get());
     Request request = createInvalidTestRequest2();
 
-    sp<Event> executionEvent = new Event();
-    ASSERT_NE(nullptr, executionEvent.get());
-    Return<ErrorStatus> executeStatus = preparedModel->execute(request, executionEvent);
-    ASSERT_TRUE(executeStatus.isOk());
-    EXPECT_EQ(ErrorStatus::INVALID_ARGUMENT, static_cast<ErrorStatus>(executeStatus));
-    executionEvent->wait();
+    sp<ExecutionCallback> executionCallback = new ExecutionCallback();
+    ASSERT_NE(nullptr, executionCallback.get());
+    Return<ErrorStatus> executeLaunchStatus = preparedModel->execute(request, executionCallback);
+    ASSERT_TRUE(executeLaunchStatus.isOk());
+    EXPECT_EQ(ErrorStatus::INVALID_ARGUMENT, static_cast<ErrorStatus>(executeLaunchStatus));
+
+    executionCallback->wait();
+    ErrorStatus executionReturnStatus = executionCallback->getStatus();
+    EXPECT_EQ(ErrorStatus::INVALID_ARGUMENT, executionReturnStatus);
 }
 
 // Mixed-typed examples
