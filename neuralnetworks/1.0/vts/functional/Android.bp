@@ -19,6 +19,7 @@ cc_test {
     srcs: [
         "Event.cpp",
         "GeneratedTestHarness.cpp",
+        "Models.cpp",
         "VtsHalNeuralnetworksV1_0TargetTest.cpp",
     ],
     defaults: ["VtsHalTargetTestDefaults"],
