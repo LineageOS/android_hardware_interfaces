@@ -36,11 +36,16 @@ interface IPreparedModel {
      *
      * @param request The input and output information on which the prepared
      *                model is to be executed.
-     *                prepared model.
      * @param event A callback used for synchronization that must be signaled
      *              once the execution has finished.
-     * @return status ErrorStatus::NONE if the asynchronous task was
-     *                successfully launched.
+     * @return status Error status of the call, must be:
+     *                - NONE if task is successfully launched
+     *                - DEVICE_UNAVAILABLE if driver is offline or busy
+     *                - GENERAL_FAILURE if there is an unspecified error
+     *                - OUTPUT_INSUFFICIENT_SIZE if provided output buffer is
+     *                  not large enough to store the resultant values
+     *                - INVALID_ARGUMENT when one of the input arguments is
+     *                  invalid
      */
     execute(Request request, IEvent event) generates (ErrorStatus status);
 };

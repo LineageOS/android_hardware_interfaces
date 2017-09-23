@@ -218,7 +218,7 @@ enum OperationType : int32_t {
      *
      * Inputs:
      * 0: A 4-D tensor, of shape [batches, height, width, depth_in], specifying the input.
-     * 1: A 4-D tensor, of shape [depth_out, filter_height, filter_width, depth_in],
+     * 1: A 4-D tensor, of shape [1, filter_height, filter_width, depth_out],
      *    specifying the filter.
      * 2: A 1-D tensor, of shape [depth_out], specifying the bias.
      *    For input tensor of {@link OperandType::TENSOR_FLOAT32} type, the bias should
@@ -1105,14 +1105,16 @@ struct Operand {
     /**
      * Quantized scale of the operand.
      *
-     * Only applicable if the operand is of type TENSOR_QUANT8_ASYMM.
+     * Only applicable if the operand is of type TENSOR_QUANT8_ASYMM or
+     * TENSOR_INT32.
      */
     float scale;
 
     /**
      * Quantized zero-point offset of the operand.
      *
-     * Only applicable if the operand is of type TENSOR_QUANT8_ASYMM.
+     * Only applicable if the operand is of type TENSOR_QUANT8_ASYMM or
+     * TENSOR_INT32.
      */
     int32_t zeroPoint;
 
@@ -1195,12 +1197,18 @@ struct Model {
 
     /**
      * A byte buffer containing operand data that were copied into the model.
+     *
+     * An operand's value must be located here if and only if Operand::lifetime
+     * equals OperandLifeTime::CONSTANT_COPY.
      */
     vec<uint8_t> operandValues;
 
     /**
      * A collection of shared memory pools containing operand data that were
      * registered by the model.
+     *
+     * An operand's value must be located here if and only if Operand::lifetime
+     * equals OperandLifeTime::CONSTANT_REFERENCE.
      */
     vec<memory> pools;
 };
