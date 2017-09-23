@@ -78,9 +78,7 @@ Model createValidTestModel() {
     };
 
     const std::vector<Operation> operations = {{
-        .opTuple = {OperationType::ADD, OperandType::TENSOR_FLOAT32},
-        .inputs = {operand1, operand2, operand3},
-        .outputs = {operand4},
+        .type = OperationType::ADD, .inputs = {operand1, operand2, operand3}, .outputs = {operand4},
     }};
 
     const std::vector<uint32_t> inputIndexes = {operand1};
@@ -107,8 +105,7 @@ Model createValidTestModel() {
 // create first invalid model
 Model createInvalidTestModel1() {
     Model model = createValidTestModel();
-    model.operations[0].opTuple = {static_cast<OperationType>(0xDEADBEEF) /* INVALID */,
-                                   OperandType::TENSOR_FLOAT32};
+    model.operations[0].type = static_cast<OperationType>(0xDEADBEEF); /* INVALID */
     return model;
 }
 
