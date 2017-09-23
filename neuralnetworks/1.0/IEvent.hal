@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-/* This HAL is a work in progress */
-
 package android.hardware.neuralnetworks@1.0;
 
 /**
@@ -37,7 +35,11 @@ interface IEvent {
      * the work) to mark the event as completed so that any threads requiring
      * the corresponding output can continue executing.
      *
-     * @param status ErrorStatus::NONE if successful.
+     * @param status Error status returned from the asynchronous task, must be:
+     *               - NONE if asynchronous task was successful
+     *               - DEVICE_UNAVAILABLE if driver is offline or busy
+     *               - GENERAL_FAILURE if the asynchronous task resulted in an
+     *                 unspecified error
      */
     oneway notify(ErrorStatus status);
 };
