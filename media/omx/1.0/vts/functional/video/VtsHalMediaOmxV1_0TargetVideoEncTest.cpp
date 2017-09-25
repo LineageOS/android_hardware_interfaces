@@ -1161,7 +1161,7 @@ TEST_F(VideoEncHidlTest, BufferSourceCallBacks) {
     // set state to idle
     changeStateExecutetoIdle(omxNode, observer, &buffersource->iBuffer,
                              &buffersource->oBuffer);
-    // set state to executing
+    // set state to loaded
     changeStateIdletoLoaded(omxNode, observer, &buffersource->iBuffer,
                             &buffersource->oBuffer, kPortIndexInput,
                             kPortIndexOutput);
@@ -1273,7 +1273,7 @@ TEST_F(VideoEncHidlTest, EncodeTest) {
 
     // set state to idle
     changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
-    // set state to executing
+    // set state to loaded
     changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
                             kPortIndexInput, kPortIndexOutput);
 }
@@ -1432,7 +1432,7 @@ TEST_F(VideoEncHidlTest, EncodeTestBufferMetaModes) {
     // set state to idle
     changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
     EXPECT_EQ(portDef.nBufferCountActual, listener->freeBuffers);
-    // set state to executing
+    // set state to loaded
     changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
                             kPortIndexInput, kPortIndexOutput);
 
@@ -1543,7 +1543,7 @@ TEST_F(VideoEncHidlTest, EncodeTestEOS) {
     // set state to idle
     changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
     EXPECT_EQ(portDef.nBufferCountActual, listener->freeBuffers);
-    // set state to executing
+    // set state to loaded
     changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
                             kPortIndexInput, kPortIndexOutput);
 
