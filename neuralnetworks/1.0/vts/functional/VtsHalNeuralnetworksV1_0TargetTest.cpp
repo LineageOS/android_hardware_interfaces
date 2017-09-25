@@ -107,9 +107,6 @@ TEST_F(NeuralnetworksHidlTest, GetCapabilitiesTest) {
     Return<void> ret =
         device->getCapabilities([](ErrorStatus status, const Capabilities& capabilities) {
             EXPECT_EQ(ErrorStatus::NONE, status);
-            EXPECT_NE(nullptr, capabilities.supportedOperationTuples.data());
-            EXPECT_NE(0ull, capabilities.supportedOperationTuples.size());
-            EXPECT_EQ(0u, static_cast<uint32_t>(capabilities.cachesCompilation) & ~0x1);
             EXPECT_LT(0.0f, capabilities.float32Performance.execTime);
             EXPECT_LT(0.0f, capabilities.float32Performance.powerUsage);
             EXPECT_LT(0.0f, capabilities.quantized8Performance.execTime);
