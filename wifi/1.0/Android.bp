@@ -148,3 +148,100 @@ cc_library {
         "libutils",
     ],
 }
+
+genrule {
+    name: "android.hardware.wifi@1.0-adapter-helper_genc++",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-sources -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.wifi@1.0",
+    srcs: [
+        ":android.hardware.wifi@1.0_hal",
+    ],
+    out: [
+        "android/hardware/wifi/1.0/AWifi.cpp",
+        "android/hardware/wifi/1.0/AWifiApIface.cpp",
+        "android/hardware/wifi/1.0/AWifiChip.cpp",
+        "android/hardware/wifi/1.0/AWifiChipEventCallback.cpp",
+        "android/hardware/wifi/1.0/AWifiEventCallback.cpp",
+        "android/hardware/wifi/1.0/AWifiIface.cpp",
+        "android/hardware/wifi/1.0/AWifiNanIface.cpp",
+        "android/hardware/wifi/1.0/AWifiNanIfaceEventCallback.cpp",
+        "android/hardware/wifi/1.0/AWifiP2pIface.cpp",
+        "android/hardware/wifi/1.0/AWifiRttController.cpp",
+        "android/hardware/wifi/1.0/AWifiRttControllerEventCallback.cpp",
+        "android/hardware/wifi/1.0/AWifiStaIface.cpp",
+        "android/hardware/wifi/1.0/AWifiStaIfaceEventCallback.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.wifi@1.0-adapter-helper_genc++_headers",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-headers -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.wifi@1.0",
+    srcs: [
+        ":android.hardware.wifi@1.0_hal",
+    ],
+    out: [
+        "android/hardware/wifi/1.0/AWifi.h",
+        "android/hardware/wifi/1.0/AWifiApIface.h",
+        "android/hardware/wifi/1.0/AWifiChip.h",
+        "android/hardware/wifi/1.0/AWifiChipEventCallback.h",
+        "android/hardware/wifi/1.0/AWifiEventCallback.h",
+        "android/hardware/wifi/1.0/AWifiIface.h",
+        "android/hardware/wifi/1.0/AWifiNanIface.h",
+        "android/hardware/wifi/1.0/AWifiNanIfaceEventCallback.h",
+        "android/hardware/wifi/1.0/AWifiP2pIface.h",
+        "android/hardware/wifi/1.0/AWifiRttController.h",
+        "android/hardware/wifi/1.0/AWifiRttControllerEventCallback.h",
+        "android/hardware/wifi/1.0/AWifiStaIface.h",
+        "android/hardware/wifi/1.0/AWifiStaIfaceEventCallback.h",
+    ],
+}
+
+
+cc_library {
+    name: "android.hardware.wifi@1.0-adapter-helper",
+    defaults: ["hidl-module-defaults"],
+    generated_sources: ["android.hardware.wifi@1.0-adapter-helper_genc++"],
+    generated_headers: ["android.hardware.wifi@1.0-adapter-helper_genc++_headers"],
+    export_generated_headers: ["android.hardware.wifi@1.0-adapter-helper_genc++_headers"],
+    vendor_available: true,
+    shared_libs: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "liblog",
+        "libutils",
+        "libcutils",
+        "libhidladapter",
+        "android.hardware.wifi@1.0",
+        "android.hidl.base@1.0-adapter-helper",
+    ],
+    export_shared_lib_headers: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "libutils",
+        "libhidladapter",
+        "android.hardware.wifi@1.0",
+        "android.hidl.base@1.0-adapter-helper",
+    ],
+}
+
+genrule {
+    name: "android.hardware.wifi@1.0-adapter_genc++",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-main -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.wifi@1.0",
+    out: ["main.cpp"]}
+
+cc_test {
+    name: "android.hardware.wifi@1.0-adapter",
+    shared_libs: [
+        "libhidladapter",
+        "libhidlbase",
+        "libhidltransport",
+        "libutils",
+        "android.hardware.wifi@1.0",
+        "android.hardware.wifi@1.0-adapter-helper",
+    ],
+    generated_sources: ["android.hardware.wifi@1.0-adapter_genc++"],
+}
