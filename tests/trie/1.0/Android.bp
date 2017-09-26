@@ -120,7 +120,8 @@ genrule {
     name: "android.hardware.tests.trie@1.0-adapter_genc++",
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-main -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.tests.trie@1.0",
-    out: ["main.cpp"]}
+    out: ["main.cpp"]
+}
 
 cc_test {
     name: "android.hardware.tests.trie@1.0-adapter",
