@@ -671,8 +671,8 @@ android::DescribeColorFormatParams::DescribeColorFormatParams(
     bUsingNativeBuffers = params.bUsingNativeBuffers;
 };
 
-bool isColorFormatFlexibleYUV(sp<IOmxNode> omxNode,
-                              OMX_COLOR_FORMATTYPE eColorFormat) {
+bool isColorFormatFlexibleYUV420(sp<IOmxNode> omxNode,
+                                 OMX_COLOR_FORMATTYPE eColorFormat) {
     android::hardware::media::omx::V1_0::Status status;
     unsigned int index = OMX_IndexMax, index2 = OMX_IndexMax;
     omxNode->getExtensionIndex(
@@ -740,7 +740,11 @@ bool isColorFormatFlexibleYUV(sp<IOmxNode> omxNode,
     return false;
 }
 
-// get default color format for output port
+// get default color format for output port.
+// Recommended Order of Supported Color Formats :
+//   1. most efficient hardware format
+//   2. most efficient flexible YUV format
+//   3. other formats
 void getDefaultColorFormat(sp<IOmxNode> omxNode, OMX_U32 kPortIndexOutput,
                            PortMode oPortMode,
                            OMX_COLOR_FORMATTYPE* eColorFormat) {
@@ -754,13 +758,21 @@ void getDefaultColorFormat(sp<IOmxNode> omxNode, OMX_U32 kPortIndexOutput,
         if (status != ::android::hardware::media::omx::V1_0::Status::OK) break;
         EXPECT_EQ(portFormat.eCompressionFormat, OMX_VIDEO_CodingUnused);
         if (oPortMode != PortMode::PRESET_BYTE_BUFFER) {
+            // In GraphicBuffermode pick first format in the list as the desired
+            // format
             *eColorFormat = portFormat.eColorFormat;
             break;
         }
-        if (isColorFormatFlexibleYUV(omxNode, portFormat.eColorFormat)) {
+        // FlexibleYUV color format is supported in both graphic and shared mem
+        // mode
+        if (isColorFormatFlexibleYUV420(omxNode, portFormat.eColorFormat)) {
             *eColorFormat = portFormat.eColorFormat;
             break;
         }
+        // Video components must support either OMX_COLOR_FormatYUV420Planar
+        // or OMX_COLOR_FormatYUV420SemiPlanar format in shared memory mode.
+        // Android treats Packed formats identical to the unpacked version as
+        // as all raw video buffers must be packed (nSliceHeight = height)
         if (OMX_COLOR_FormatYUV420SemiPlanar == portFormat.eColorFormat ||
             OMX_COLOR_FormatYUV420Planar == portFormat.eColorFormat ||
             OMX_COLOR_FormatYUV420PackedPlanar == portFormat.eColorFormat ||
@@ -842,84 +854,102 @@ TEST_F(VideoDecHidlTest, DecodeTest) {
         eleInfo >> flags;
         eleInfo >> timestamp;
         Info.push_back({bytesCount, flags, timestamp});
-        if (timestampDevTest && (flags != OMX_BUFFERFLAG_CODECCONFIG))
-            timestampUslist.push_back(timestamp);
         if (maxBytesCount < bytesCount) maxBytesCount = bytesCount;
     }
+    maxBytesCount = ALIGN_POWER_OF_TWO(maxBytesCount, 10);
     eleInfo.close();
 
-    // As the frame sizes are known ahead, use it to configure i/p buffer size
-    maxBytesCount = ALIGN_POWER_OF_TWO(maxBytesCount, 10);
-    status = setPortBufferSize(omxNode, kPortIndexInput, maxBytesCount);
-    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-
-    // Change the port modes arbitrarily at the start before finialising on the
-    // desired values.
     PortMode dummyPM[] = {
         PortMode::PRESET_BYTE_BUFFER,    PortMode::PRESET_ANW_BUFFER,
         PortMode::PRESET_SECURE_BUFFER,  PortMode::DYNAMIC_ANW_BUFFER,
         PortMode::DYNAMIC_NATIVE_HANDLE,
     };
-    for (size_t k = 0; k < sizeof(dummyPM) / sizeof(dummyPM[0]); k++) {
-        // ports may or may not support these modes. These are not the final
-        // values. This init is done to test if causes any problems.
-        status = omxNode->setPortMode(kPortIndexInput, dummyPM[k]);
-        status = omxNode->setPortMode(kPortIndexOutput, dummyPM[k]);
-    }
+    PortMode pmArray[] = {PortMode::PRESET_BYTE_BUFFER,
+                          PortMode::DYNAMIC_ANW_BUFFER,
+                          PortMode::PRESET_ANW_BUFFER};
 
-    // set port mode
-    portMode[0] = PortMode::PRESET_BYTE_BUFFER;
-    portMode[1] = PortMode::DYNAMIC_ANW_BUFFER;
-    status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
-    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-    status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
-    if (status != ::android::hardware::media::omx::V1_0::Status::OK) {
-        portMode[1] = PortMode::PRESET_BYTE_BUFFER;
-        status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
+    for (size_t j = 0; j < sizeof(pmArray) / sizeof(pmArray[0]); j++) {
+        // Change the port modes arbitrarily at the start before finialising
+        // on the desired values.
+        for (size_t k = 0; k < sizeof(dummyPM) / sizeof(dummyPM[0]); k++) {
+            // ports may or may not support these modes. These are not the final
+            // values. This init is done to test if causes any problems.
+            status = omxNode->setPortMode(kPortIndexInput, dummyPM[k]);
+            status = omxNode->setPortMode(kPortIndexOutput, dummyPM[k]);
+        }
+        // set port mode
+        portMode[0] = PortMode::PRESET_BYTE_BUFFER;
+        portMode[1] = pmArray[j];
+        status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
         ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+        status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
+        if (status != ::android::hardware::media::omx::V1_0::Status::OK) {
+            continue;
+        }
+
+        // The input width and height information is necessary for the component
+        // to configure the size of the input buffer. But this is not available.
+        // As the frame sizes are known ahead, use it to configure i/p buffer
+        // size.
+        status = setPortBufferSize(omxNode, kPortIndexInput, maxBytesCount);
+        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+
+        // prepare list of input timestamps
+        for (size_t frameID = 0; frameID < Info.size(); frameID++) {
+            if (timestampDevTest &&
+                (Info[frameID].flags != OMX_BUFFERFLAG_CODECCONFIG))
+                timestampUslist.push_back(Info[frameID].timestamp);
+        }
+
+        // set Port Params
+        uint32_t nFrameWidth, nFrameHeight, xFramerate;
+        getInputChannelInfo(omxNode, kPortIndexInput, &nFrameWidth,
+                            &nFrameHeight, &xFramerate);
+        // get default color format
+        OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatUnused;
+        getDefaultColorFormat(omxNode, kPortIndexOutput, portMode[1],
+                              &eColorFormat);
+        ASSERT_NE(eColorFormat, OMX_COLOR_FormatUnused);
+        status = setVideoPortFormat(omxNode, kPortIndexOutput,
+                                    OMX_VIDEO_CodingUnused, eColorFormat,
+                                    xFramerate);
+        EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+        setDefaultPortParam(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
+                            eColorFormat, nFrameWidth, nFrameHeight, 0,
+                            xFramerate);
+
+        android::Vector<BufferInfo> iBuffer, oBuffer;
+
+        // set state to idle
+        changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
+                                kPortIndexInput, kPortIndexOutput, portMode,
+                                true);
+        // set state to executing
+        changeStateIdletoExecute(omxNode, observer);
+
+        // Port Reconfiguration
+        eleStream.open(mURL, std::ifstream::binary);
+        ASSERT_EQ(eleStream.is_open(), true);
+        decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
+                      kPortIndexOutput, eleStream, &Info, 0, (int)Info.size(),
+                      portMode[1]);
+        eleStream.close();
+        waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
+                               kPortIndexInput, kPortIndexOutput, portMode[1]);
+        testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag, portMode,
+                portReconfiguration, kPortIndexInput, kPortIndexOutput,
+                nullptr);
+        if (timestampDevTest) EXPECT_EQ(timestampUslist.empty(), true);
+        eosFlag = false;
+        timestampUslist.clear();
+        framesReceived = 0;
+        timestampUs = 0;
+        // set state to idle
+        changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+        // set state to loaded
+        changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
+                                kPortIndexInput, kPortIndexOutput);
     }
-
-    // set Port Params
-    uint32_t nFrameWidth, nFrameHeight, xFramerate;
-    getInputChannelInfo(omxNode, kPortIndexInput, &nFrameWidth, &nFrameHeight,
-                        &xFramerate);
-    // get default color format
-    OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatUnused;
-    getDefaultColorFormat(omxNode, kPortIndexOutput, portMode[1],
-                          &eColorFormat);
-    ASSERT_NE(eColorFormat, OMX_COLOR_FormatUnused);
-    status =
-        setVideoPortFormat(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
-                           eColorFormat, xFramerate);
-    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-    setDefaultPortParam(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
-                        eColorFormat, nFrameWidth, nFrameHeight, 0, xFramerate);
-
-    android::Vector<BufferInfo> iBuffer, oBuffer;
-
-    // set state to idle
-    changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput, portMode, true);
-    // set state to executing
-    changeStateIdletoExecute(omxNode, observer);
-
-    // Port Reconfiguration
-    eleStream.open(mURL, std::ifstream::binary);
-    ASSERT_EQ(eleStream.is_open(), true);
-    decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-                  kPortIndexOutput, eleStream, &Info, 0, (int)Info.size(),
-                  portMode[1]);
-    eleStream.close();
-    waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
-                           kPortIndexInput, kPortIndexOutput, portMode[1]);
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag, portMode,
-            portReconfiguration, kPortIndexInput, kPortIndexOutput, nullptr);
-    if (timestampDevTest) EXPECT_EQ(timestampUslist.empty(), true);
-    // set state to idle
-    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
-    // set state to executing
-    changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput);
 }
 
 // Test for adaptive playback support
@@ -941,127 +971,153 @@ TEST_F(VideoDecHidlTest, AdaptivePlaybackTest) {
         kPortIndexOutput = kPortIndexInput + 1;
     }
 
-    // set port mode
-    portMode[0] = PortMode::PRESET_BYTE_BUFFER;
-    portMode[1] = PortMode::DYNAMIC_ANW_BUFFER;
-    status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
-    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-    status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
-    if (status != ::android::hardware::media::omx::V1_0::Status::OK) {
-        portMode[1] = PortMode::PRESET_BYTE_BUFFER;
+    bool apbSupport = false;
+    PortMode pmArray[] = {
+        PortMode::PRESET_BYTE_BUFFER, PortMode::DYNAMIC_ANW_BUFFER,
+        PortMode::PRESET_ANW_BUFFER,
+    };
+    for (size_t j = 0; j < sizeof(pmArray) / sizeof(pmArray[0]); j++) {
+        // set port mode
+        portMode[0] = PortMode::PRESET_BYTE_BUFFER;
+        portMode[1] = pmArray[j];
+        status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
+        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
         status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
-        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-    }
-
-    // prepare for adaptive playback
-    uint32_t adaptiveMaxWidth = 320;
-    uint32_t adaptiveMaxHeight = 240;
-    status = omxNode->prepareForAdaptivePlayback(
-        kPortIndexOutput, true, adaptiveMaxWidth, adaptiveMaxHeight);
-    if (strncmp(gEnv->getComponent().c_str(), "OMX.google.", 11) == 0) {
-        // SoftOMX Decoders donot support graphic buffer modes. So for them
-        // support for adaptive play back is mandatory in Byte Buffer mode
-        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-    } else {
-        // for vendor codecs, support for adaptive play back is optional
-        // in byte buffer mode.
-        if (portMode[1] == PortMode::PRESET_BYTE_BUFFER) return;
-        if (status != ::android::hardware::media::omx::V1_0::Status::OK) return;
-    }
-
-    // TODO: Handle this better !!!
-    // Without the knowledge of the maximum resolution of the frame to be
-    // decoded it is not possible to choose the size of the input buffer.
-    // The value below is based on the info. files of clips in res folder.
-    status = setPortBufferSize(omxNode, kPortIndexInput, 482304);
-    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-
-    // set Port Params
-    uint32_t nFrameWidth, nFrameHeight, xFramerate;
-    getInputChannelInfo(omxNode, kPortIndexInput, &nFrameWidth, &nFrameHeight,
-                        &xFramerate);
-    // get default color format
-    OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatUnused;
-    getDefaultColorFormat(omxNode, kPortIndexOutput, portMode[1],
-                          &eColorFormat);
-    ASSERT_NE(eColorFormat, OMX_COLOR_FormatUnused);
-    status =
-        setVideoPortFormat(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
-                           eColorFormat, xFramerate);
-    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-    setDefaultPortParam(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
-                        eColorFormat, nFrameWidth, nFrameHeight, 0, xFramerate);
-
-    android::Vector<BufferInfo> iBuffer, oBuffer;
-
-    // set state to idle
-    changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput, portMode, true);
-    // set state to executing
-    changeStateIdletoExecute(omxNode, observer);
-
-    timestampDevTest = true;
-    uint32_t timestampOffset = 0;
-    for (uint32_t i = 0; i < STREAM_COUNT * 2; i++) {
-        std::ifstream eleStream, eleInfo;
-        char mURL[512], info[512];
-        android::Vector<FrameData> Info;
-        strcpy(mURL, gEnv->getRes().c_str());
-        strcpy(info, gEnv->getRes().c_str());
-        GetURLForComponent(compName, mURL, info, i % STREAM_COUNT);
-        eleInfo.open(info);
-        ASSERT_EQ(eleInfo.is_open(), true);
-        int bytesCount = 0;
-        uint32_t flags = 0;
-        uint32_t timestamp = 0;
-        uint32_t timestampMax = 0;
-        while (1) {
-            if (!(eleInfo >> bytesCount)) break;
-            eleInfo >> flags;
-            eleInfo >> timestamp;
-            timestamp += timestampOffset;
-            Info.push_back({bytesCount, flags, timestamp});
-            if (timestampDevTest && (flags != OMX_BUFFERFLAG_CODECCONFIG))
-                timestampUslist.push_back(timestamp);
-            if (timestampMax < timestamp) timestampMax = timestamp;
+        if (status != ::android::hardware::media::omx::V1_0::Status::OK) {
+            continue;
         }
-        timestampOffset = timestampMax;
-        eleInfo.close();
 
-        // Port Reconfiguration
-        eleStream.open(mURL, std::ifstream::binary);
-        ASSERT_EQ(eleStream.is_open(), true);
-        decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-                      kPortIndexOutput, eleStream, &Info, 0, (int)Info.size(),
-                      portMode[1], false);
-        eleStream.close();
+        // prepare for adaptive playback
+        uint32_t adaptiveMaxWidth = 320;
+        uint32_t adaptiveMaxHeight = 240;
+        status = omxNode->prepareForAdaptivePlayback(
+            kPortIndexOutput, true, adaptiveMaxWidth, adaptiveMaxHeight);
+        if (strncmp(gEnv->getComponent().c_str(), "OMX.google.", 11) == 0) {
+            // SoftOMX Decoders donot support graphic buffer modes. So for them
+            // support for adaptive play back is mandatory in Byte Buffer mode
+            ASSERT_EQ(status,
+                      ::android::hardware::media::omx::V1_0::Status::OK);
+        } else {
+            // Adaptive playback not supported
+            if (status != ::android::hardware::media::omx::V1_0::Status::OK)
+                continue;
+            // for vendor codecs, support for adaptive play back is optional
+            // in byte buffer mode. But they must be supported in atleast one
+            // graphic buffer mode
+            if (portMode[1] == PortMode::PRESET_BYTE_BUFFER ||
+                apbSupport == true)
+                continue;
+            else
+                apbSupport = true;
+        }
 
+        // TODO: Handle this better !!!
+        // Without the knowledge of the maximum resolution of the frame to be
+        // decoded it is not possible to choose the size of the input buffer.
+        // The value below is based on the info. files of clips in res folder.
+        status = setPortBufferSize(omxNode, kPortIndexInput, 482304);
+        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+
+        // set Port Params
+        uint32_t nFrameWidth, nFrameHeight, xFramerate;
         getInputChannelInfo(omxNode, kPortIndexInput, &nFrameWidth,
                             &nFrameHeight, &xFramerate);
-        if ((nFrameWidth > adaptiveMaxWidth) ||
-            (nFrameHeight > adaptiveMaxHeight)) {
-            if (nFrameWidth > adaptiveMaxWidth) adaptiveMaxWidth = nFrameWidth;
-            if (nFrameHeight > adaptiveMaxHeight)
-                adaptiveMaxHeight = nFrameHeight;
-            EXPECT_TRUE(portSettingsChange);
-        } else {
-            // In DynamicANW Buffer mode, its ok to do a complete
-            // reconfiguration even if a partial reconfiguration is sufficient.
-            if (portMode[1] != PortMode::DYNAMIC_ANW_BUFFER)
-                EXPECT_FALSE(portSettingsChange);
+        // get default color format
+        OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatUnused;
+        getDefaultColorFormat(omxNode, kPortIndexOutput, portMode[1],
+                              &eColorFormat);
+        ASSERT_NE(eColorFormat, OMX_COLOR_FormatUnused);
+        status = setVideoPortFormat(omxNode, kPortIndexOutput,
+                                    OMX_VIDEO_CodingUnused, eColorFormat,
+                                    xFramerate);
+        EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+        setDefaultPortParam(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
+                            eColorFormat, nFrameWidth, nFrameHeight, 0,
+                            xFramerate);
+
+        android::Vector<BufferInfo> iBuffer, oBuffer;
+
+        // set state to idle
+        changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
+                                kPortIndexInput, kPortIndexOutput, portMode,
+                                true);
+        // set state to executing
+        changeStateIdletoExecute(omxNode, observer);
+
+        timestampDevTest = true;
+        uint32_t timestampOffset = 0;
+        for (uint32_t i = 0; i < STREAM_COUNT * 2; i++) {
+            std::ifstream eleStream, eleInfo;
+            char mURL[512], info[512];
+            android::Vector<FrameData> Info;
+            strcpy(mURL, gEnv->getRes().c_str());
+            strcpy(info, gEnv->getRes().c_str());
+            GetURLForComponent(compName, mURL, info, i % STREAM_COUNT);
+            eleInfo.open(info);
+            ASSERT_EQ(eleInfo.is_open(), true);
+            int bytesCount = 0;
+            uint32_t flags = 0;
+            uint32_t timestamp = 0;
+            uint32_t timestampMax = 0;
+            while (1) {
+                if (!(eleInfo >> bytesCount)) break;
+                eleInfo >> flags;
+                eleInfo >> timestamp;
+                timestamp += timestampOffset;
+                Info.push_back({bytesCount, flags, timestamp});
+                if (timestampDevTest && (flags != OMX_BUFFERFLAG_CODECCONFIG))
+                    timestampUslist.push_back(timestamp);
+                if (timestampMax < timestamp) timestampMax = timestamp;
+            }
+            timestampOffset = timestampMax;
+            eleInfo.close();
+
+            // Port Reconfiguration
+            eleStream.open(mURL, std::ifstream::binary);
+            ASSERT_EQ(eleStream.is_open(), true);
+            decodeNFrames(omxNode, observer, &iBuffer, &oBuffer,
+                          kPortIndexInput, kPortIndexOutput, eleStream, &Info,
+                          0, (int)Info.size(), portMode[1], false);
+            eleStream.close();
+
+            getInputChannelInfo(omxNode, kPortIndexInput, &nFrameWidth,
+                                &nFrameHeight, &xFramerate);
+            if ((nFrameWidth > adaptiveMaxWidth) ||
+                (nFrameHeight > adaptiveMaxHeight)) {
+                if (nFrameWidth > adaptiveMaxWidth)
+                    adaptiveMaxWidth = nFrameWidth;
+                if (nFrameHeight > adaptiveMaxHeight)
+                    adaptiveMaxHeight = nFrameHeight;
+                EXPECT_TRUE(portSettingsChange);
+            } else {
+                // In DynamicANW Buffer mode, it is ok to do a complete
+                // reconfiguration even if a partial reconfiguration is
+                // sufficient.
+                if (portMode[1] != PortMode::DYNAMIC_ANW_BUFFER)
+                    EXPECT_FALSE(portSettingsChange);
+            }
+            portSettingsChange = false;
         }
-        portSettingsChange = false;
+        waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
+                               kPortIndexInput, kPortIndexOutput, portMode[1]);
+        testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, portMode,
+                portReconfiguration, kPortIndexInput, kPortIndexOutput,
+                nullptr);
+        if (timestampDevTest) EXPECT_EQ(timestampUslist.empty(), true);
+        eosFlag = false;
+        timestampUslist.clear();
+        framesReceived = 0;
+        timestampUs = 0;
+        // set state to idle
+        changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+        // set state to loaded
+        changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
+                                kPortIndexInput, kPortIndexOutput);
     }
-    waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
-                           kPortIndexInput, kPortIndexOutput, portMode[1]);
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, portMode,
-            portReconfiguration, kPortIndexInput, kPortIndexOutput, nullptr);
-    if (timestampDevTest) EXPECT_EQ(timestampUslist.empty(), true);
-    // set state to idle
-    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
-    // set state to executing
-    changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput);
+    // For Vendor components ensure apb is supported in atleast one graphic
+    // buffer mode
+    if (strncmp(gEnv->getComponent().c_str(), "OMX.google.", 11) != 0)
+        EXPECT_TRUE(apbSupport);
 }
 
 // end of sequence test
@@ -1080,50 +1136,62 @@ TEST_F(VideoDecHidlTest, EOSTest_M) {
         kPortIndexOutput = kPortIndexInput + 1;
     }
 
-    // set port mode
-    status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
-    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-    status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
-    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    PortMode pmArray[] = {PortMode::PRESET_BYTE_BUFFER,
+                          PortMode::DYNAMIC_ANW_BUFFER,
+                          PortMode::PRESET_ANW_BUFFER};
+    for (size_t j = 0; j < sizeof(pmArray) / sizeof(pmArray[0]); j++) {
+        // set port mode
+        portMode[0] = PortMode::PRESET_BYTE_BUFFER;
+        portMode[1] = pmArray[j];
+        status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
+        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+        status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
+        if (status != ::android::hardware::media::omx::V1_0::Status::OK) {
+            continue;
+        }
 
-    // set Port Params
-    uint32_t nFrameWidth, nFrameHeight, xFramerate;
-    getInputChannelInfo(omxNode, kPortIndexInput, &nFrameWidth, &nFrameHeight,
-                        &xFramerate);
-    // get default color format
-    OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatUnused;
-    getDefaultColorFormat(omxNode, kPortIndexOutput, portMode[1],
-                          &eColorFormat);
-    ASSERT_NE(eColorFormat, OMX_COLOR_FormatUnused);
-    status =
-        setVideoPortFormat(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
-                           eColorFormat, xFramerate);
-    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-    setDefaultPortParam(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
-                        eColorFormat, nFrameWidth, nFrameHeight, 0, xFramerate);
+        // set Port Params
+        uint32_t nFrameWidth, nFrameHeight, xFramerate;
+        getInputChannelInfo(omxNode, kPortIndexInput, &nFrameWidth,
+                            &nFrameHeight, &xFramerate);
+        // get default color format
+        OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatUnused;
+        getDefaultColorFormat(omxNode, kPortIndexOutput, portMode[1],
+                              &eColorFormat);
+        ASSERT_NE(eColorFormat, OMX_COLOR_FormatUnused);
+        status = setVideoPortFormat(omxNode, kPortIndexOutput,
+                                    OMX_VIDEO_CodingUnused, eColorFormat,
+                                    xFramerate);
+        EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+        setDefaultPortParam(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
+                            eColorFormat, nFrameWidth, nFrameHeight, 0,
+                            xFramerate);
 
-    android::Vector<BufferInfo> iBuffer, oBuffer;
+        android::Vector<BufferInfo> iBuffer, oBuffer;
 
-    // set state to idle
-    changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput, portMode, true);
-    // set state to executing
-    changeStateIdletoExecute(omxNode, observer);
-
-    // request EOS at the start
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, portMode,
-            portReconfiguration, kPortIndexInput, kPortIndexOutput, nullptr);
-    flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-               kPortIndexOutput);
-    EXPECT_GE(framesReceived, 0U);
-    framesReceived = 0;
-    timestampUs = 0;
-
-    // set state to idle
-    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
-    // set state to executing
-    changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput);
+        // set state to idle
+        changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
+                                kPortIndexInput, kPortIndexOutput, portMode,
+                                true);
+        // set state to executing
+        changeStateIdletoExecute(omxNode, observer);
+        // request EOS at the start
+        testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, portMode,
+                portReconfiguration, kPortIndexInput, kPortIndexOutput,
+                nullptr);
+        flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
+                   kPortIndexOutput);
+        EXPECT_GE(framesReceived, 0U);
+        eosFlag = false;
+        timestampUslist.clear();
+        framesReceived = 0;
+        timestampUs = 0;
+        // set state to idle
+        changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+        // set state to loaded
+        changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
+                                kPortIndexInput, kPortIndexOutput);
+    }
 }
 
 // end of sequence test
@@ -1161,82 +1229,101 @@ TEST_F(VideoDecHidlTest, ThumbnailTest) {
         Info.push_back({bytesCount, flags, timestamp});
         if (maxBytesCount < bytesCount) maxBytesCount = bytesCount;
     }
+    maxBytesCount = ALIGN_POWER_OF_TWO(maxBytesCount, 10);
     eleInfo.close();
 
-    // As the frame sizes are known ahead, use it to configure i/p buffer size
-    maxBytesCount = ALIGN_POWER_OF_TWO(maxBytesCount, 10);
-    status = setPortBufferSize(omxNode, kPortIndexInput, maxBytesCount);
-    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    PortMode pmArray[] = {PortMode::PRESET_BYTE_BUFFER,
+                          PortMode::DYNAMIC_ANW_BUFFER,
+                          PortMode::PRESET_ANW_BUFFER};
+    for (size_t j = 0; j < sizeof(pmArray) / sizeof(pmArray[0]); j++) {
+        // set port mode
+        portMode[0] = PortMode::PRESET_BYTE_BUFFER;
+        portMode[1] = pmArray[j];
+        status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
+        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+        status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
+        if (status != ::android::hardware::media::omx::V1_0::Status::OK) {
+            continue;
+        }
 
-    // set port mode
-    status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
-    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-    status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
-    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+        // As the frame sizes are known ahead, use it to configure i/p buffer
+        // size
+        status = setPortBufferSize(omxNode, kPortIndexInput, maxBytesCount);
+        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 
-    // set Port Params
-    uint32_t nFrameWidth, nFrameHeight, xFramerate;
-    getInputChannelInfo(omxNode, kPortIndexInput, &nFrameWidth, &nFrameHeight,
-                        &xFramerate);
-    // get default color format
-    OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatUnused;
-    getDefaultColorFormat(omxNode, kPortIndexOutput, portMode[1],
-                          &eColorFormat);
-    ASSERT_NE(eColorFormat, OMX_COLOR_FormatUnused);
-    status =
-        setVideoPortFormat(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
-                           eColorFormat, xFramerate);
-    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-    setDefaultPortParam(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
-                        eColorFormat, nFrameWidth, nFrameHeight, 0, xFramerate);
+        // set Port Params
+        uint32_t nFrameWidth, nFrameHeight, xFramerate;
+        getInputChannelInfo(omxNode, kPortIndexInput, &nFrameWidth,
+                            &nFrameHeight, &xFramerate);
+        // get default color format
+        OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatUnused;
+        getDefaultColorFormat(omxNode, kPortIndexOutput, portMode[1],
+                              &eColorFormat);
+        ASSERT_NE(eColorFormat, OMX_COLOR_FormatUnused);
+        status = setVideoPortFormat(omxNode, kPortIndexOutput,
+                                    OMX_VIDEO_CodingUnused, eColorFormat,
+                                    xFramerate);
+        EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+        setDefaultPortParam(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
+                            eColorFormat, nFrameWidth, nFrameHeight, 0,
+                            xFramerate);
 
-    android::Vector<BufferInfo> iBuffer, oBuffer;
+        android::Vector<BufferInfo> iBuffer, oBuffer;
 
-    // set state to idle
-    changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput, portMode, true);
-    // set state to executing
-    changeStateIdletoExecute(omxNode, observer);
+        // set state to idle
+        changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
+                                kPortIndexInput, kPortIndexOutput, portMode,
+                                true);
+        // set state to executing
+        changeStateIdletoExecute(omxNode, observer);
 
-    // request EOS for thumbnail
-    size_t i = 0;
-    while (!(Info[i].flags & OMX_BUFFERFLAG_SYNCFRAME)) i++;
-    eleStream.open(mURL, std::ifstream::binary);
-    ASSERT_EQ(eleStream.is_open(), true);
-    decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-                  kPortIndexOutput, eleStream, &Info, 0, i + 1, portMode[1]);
-    eleStream.close();
-    waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
-                           kPortIndexInput, kPortIndexOutput, portMode[1]);
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag, portMode,
-            portReconfiguration, kPortIndexInput, kPortIndexOutput, nullptr);
-    flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-               kPortIndexOutput);
-    EXPECT_GE(framesReceived, 1U);
-    framesReceived = 0;
-    timestampUs = 0;
+        // request EOS for thumbnail
+        size_t i = 0;
+        while (!(Info[i].flags & OMX_BUFFERFLAG_SYNCFRAME)) i++;
+        eleStream.open(mURL, std::ifstream::binary);
+        ASSERT_EQ(eleStream.is_open(), true);
+        decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
+                      kPortIndexOutput, eleStream, &Info, 0, i + 1,
+                      portMode[1]);
+        eleStream.close();
+        waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
+                               kPortIndexInput, kPortIndexOutput, portMode[1]);
+        testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag, portMode,
+                portReconfiguration, kPortIndexInput, kPortIndexOutput,
+                nullptr);
+        flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
+                   kPortIndexOutput);
+        EXPECT_GE(framesReceived, 1U);
+        eosFlag = false;
+        timestampUslist.clear();
+        framesReceived = 0;
+        timestampUs = 0;
 
-    eleStream.open(mURL, std::ifstream::binary);
-    ASSERT_EQ(eleStream.is_open(), true);
-    decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-                  kPortIndexOutput, eleStream, &Info, 0, i + 1, portMode[1],
-                  false);
-    eleStream.close();
-    waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
-                           kPortIndexInput, kPortIndexOutput, portMode[1]);
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, portMode,
-            portReconfiguration, kPortIndexInput, kPortIndexOutput, nullptr);
-    flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-               kPortIndexOutput);
-    EXPECT_GE(framesReceived, 1U);
-    framesReceived = 0;
-    timestampUs = 0;
+        eleStream.open(mURL, std::ifstream::binary);
+        ASSERT_EQ(eleStream.is_open(), true);
+        decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
+                      kPortIndexOutput, eleStream, &Info, 0, i + 1, portMode[1],
+                      false);
+        eleStream.close();
+        waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
+                               kPortIndexInput, kPortIndexOutput, portMode[1]);
+        testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, portMode,
+                portReconfiguration, kPortIndexInput, kPortIndexOutput,
+                nullptr);
+        flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
+                   kPortIndexOutput);
+        EXPECT_GE(framesReceived, 1U);
+        eosFlag = false;
+        timestampUslist.clear();
+        framesReceived = 0;
+        timestampUs = 0;
 
-    // set state to idle
-    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
-    // set state to executing
-    changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput);
+        // set state to idle
+        changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+        // set state to loaded
+        changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
+                                kPortIndexInput, kPortIndexOutput);
+    }
 }
 
 // end of sequence test
@@ -1274,70 +1361,79 @@ TEST_F(VideoDecHidlTest, SimpleEOSTest) {
         Info.push_back({bytesCount, flags, timestamp});
         if (maxBytesCount < bytesCount) maxBytesCount = bytesCount;
     }
+    maxBytesCount = ALIGN_POWER_OF_TWO(maxBytesCount, 10);
     eleInfo.close();
 
-    // As the frame sizes are known ahead, use it to configure i/p buffer size
-    maxBytesCount = ALIGN_POWER_OF_TWO(maxBytesCount, 10);
-    status = setPortBufferSize(omxNode, kPortIndexInput, maxBytesCount);
-    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-
-    // set port mode
-    portMode[0] = PortMode::PRESET_BYTE_BUFFER;
-    portMode[1] = PortMode::PRESET_ANW_BUFFER;
-    status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
-    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-    status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
-    if (status != ::android::hardware::media::omx::V1_0::Status::OK) {
-        portMode[1] = PortMode::PRESET_BYTE_BUFFER;
-        status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
+    PortMode pmArray[] = {PortMode::PRESET_BYTE_BUFFER,
+                          PortMode::DYNAMIC_ANW_BUFFER,
+                          PortMode::PRESET_ANW_BUFFER};
+    for (size_t j = 0; j < sizeof(pmArray) / sizeof(pmArray[0]); j++) {
+        // set port mode
+        portMode[0] = PortMode::PRESET_BYTE_BUFFER;
+        portMode[1] = pmArray[j];
+        status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
         ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+        status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
+        if (status != ::android::hardware::media::omx::V1_0::Status::OK) {
+            continue;
+        }
+
+        // As the frame sizes are known ahead, use it to configure i/p buffer
+        // size
+        status = setPortBufferSize(omxNode, kPortIndexInput, maxBytesCount);
+        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+
+        // set Port Params
+        uint32_t nFrameWidth, nFrameHeight, xFramerate;
+        getInputChannelInfo(omxNode, kPortIndexInput, &nFrameWidth,
+                            &nFrameHeight, &xFramerate);
+        // get default color format
+        OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatUnused;
+        getDefaultColorFormat(omxNode, kPortIndexOutput, portMode[1],
+                              &eColorFormat);
+        ASSERT_NE(eColorFormat, OMX_COLOR_FormatUnused);
+        status = setVideoPortFormat(omxNode, kPortIndexOutput,
+                                    OMX_VIDEO_CodingUnused, eColorFormat,
+                                    xFramerate);
+        EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+        setDefaultPortParam(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
+                            eColorFormat, nFrameWidth, nFrameHeight, 0,
+                            xFramerate);
+
+        android::Vector<BufferInfo> iBuffer, oBuffer;
+
+        // set state to idle
+        changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
+                                kPortIndexInput, kPortIndexOutput, portMode,
+                                true);
+        // set state to executing
+        changeStateIdletoExecute(omxNode, observer);
+
+        // request EOS at the end
+        eleStream.open(mURL, std::ifstream::binary);
+        ASSERT_EQ(eleStream.is_open(), true);
+        decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
+                      kPortIndexOutput, eleStream, &Info, 0, (int)Info.size(),
+                      portMode[1], false);
+        eleStream.close();
+        waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
+                               kPortIndexInput, kPortIndexOutput, portMode[1]);
+        testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, portMode,
+                portReconfiguration, kPortIndexInput, kPortIndexOutput,
+                nullptr);
+        flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
+                   kPortIndexOutput);
+        eosFlag = false;
+        timestampUslist.clear();
+        framesReceived = 0;
+        timestampUs = 0;
+
+        // set state to idle
+        changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+        // set state to loaded
+        changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
+                                kPortIndexInput, kPortIndexOutput);
     }
-
-    // set Port Params
-    uint32_t nFrameWidth, nFrameHeight, xFramerate;
-    getInputChannelInfo(omxNode, kPortIndexInput, &nFrameWidth, &nFrameHeight,
-                        &xFramerate);
-    // get default color format
-    OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatUnused;
-    getDefaultColorFormat(omxNode, kPortIndexOutput, portMode[1],
-                          &eColorFormat);
-    ASSERT_NE(eColorFormat, OMX_COLOR_FormatUnused);
-    status =
-        setVideoPortFormat(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
-                           eColorFormat, xFramerate);
-    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-    setDefaultPortParam(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
-                        eColorFormat, nFrameWidth, nFrameHeight, 0, xFramerate);
-
-    android::Vector<BufferInfo> iBuffer, oBuffer;
-
-    // set state to idle
-    changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput, portMode, true);
-    // set state to executing
-    changeStateIdletoExecute(omxNode, observer);
-
-    // request EOS at the end
-    eleStream.open(mURL, std::ifstream::binary);
-    ASSERT_EQ(eleStream.is_open(), true);
-    decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-                  kPortIndexOutput, eleStream, &Info, 0, (int)Info.size(),
-                  portMode[1], false);
-    eleStream.close();
-    waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
-                           kPortIndexInput, kPortIndexOutput, portMode[1]);
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, portMode,
-            portReconfiguration, kPortIndexInput, kPortIndexOutput, nullptr);
-    flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-               kPortIndexOutput);
-    framesReceived = 0;
-    timestampUs = 0;
-
-    // set state to idle
-    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
-    // set state to executing
-    changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput);
 }
 
 // test input/output port flush
@@ -1375,84 +1471,96 @@ TEST_F(VideoDecHidlTest, FlushTest) {
         Info.push_back({bytesCount, flags, timestamp});
         if (maxBytesCount < bytesCount) maxBytesCount = bytesCount;
     }
+    maxBytesCount = ALIGN_POWER_OF_TWO(maxBytesCount, 10);
     eleInfo.close();
 
-    // As the frame sizes are known ahead, use it to configure i/p buffer size
-    maxBytesCount = ALIGN_POWER_OF_TWO(maxBytesCount, 10);
-    status = setPortBufferSize(omxNode, kPortIndexInput, maxBytesCount);
-    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-
-    // set port mode
-    status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
-    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-    status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
-    ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-
-    // set Port Params
-    uint32_t nFrameWidth, nFrameHeight, xFramerate;
-    getInputChannelInfo(omxNode, kPortIndexInput, &nFrameWidth, &nFrameHeight,
-                        &xFramerate);
-    // get default color format
-    OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatUnused;
-    getDefaultColorFormat(omxNode, kPortIndexOutput, portMode[1],
-                          &eColorFormat);
-    ASSERT_NE(eColorFormat, OMX_COLOR_FormatUnused);
-    status =
-        setVideoPortFormat(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
-                           eColorFormat, xFramerate);
-    EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
-    setDefaultPortParam(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
-                        eColorFormat, nFrameWidth, nFrameHeight, 0, xFramerate);
-
-    android::Vector<BufferInfo> iBuffer, oBuffer;
-
-    // set state to idle
-    changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput, portMode, true);
-    // set state to executing
-    changeStateIdletoExecute(omxNode, observer);
-
-    // Decode 128 frames and flush. here 128 is chosen to ensure there is a key
-    // frame after this so that the below section can be convered for all
-    // components
-    int nFrames = 128;
-    eleStream.open(mURL, std::ifstream::binary);
-    ASSERT_EQ(eleStream.is_open(), true);
-    decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-                  kPortIndexOutput, eleStream, &Info, 0, nFrames, portMode[1],
-                  false);
-    flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-               kPortIndexOutput);
-    framesReceived = 0;
-
-    // Seek to next key frame and start decoding till the end
-    int index = nFrames;
-    bool keyFrame = false;
-    while (index < (int)Info.size()) {
-        if ((Info[index].flags & OMX_BUFFERFLAG_SYNCFRAME) ==
-            OMX_BUFFERFLAG_SYNCFRAME) {
-            timestampUs = Info[index - 1].timestamp;
-            keyFrame = true;
-            break;
+    PortMode pmArray[] = {PortMode::PRESET_BYTE_BUFFER,
+                          PortMode::DYNAMIC_ANW_BUFFER,
+                          PortMode::PRESET_ANW_BUFFER};
+    for (size_t j = 0; j < sizeof(pmArray) / sizeof(pmArray[0]); j++) {
+        // set port mode
+        portMode[0] = PortMode::PRESET_BYTE_BUFFER;
+        portMode[1] = pmArray[j];
+        status = omxNode->setPortMode(kPortIndexInput, portMode[0]);
+        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+        status = omxNode->setPortMode(kPortIndexOutput, portMode[1]);
+        if (status != ::android::hardware::media::omx::V1_0::Status::OK) {
+            continue;
         }
-        eleStream.ignore(Info[index].bytesCount);
-        index++;
-    }
-    if (keyFrame) {
-        decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-                      kPortIndexOutput, eleStream, &Info, index,
-                      Info.size() - index, portMode[1], false);
-    }
-    eleStream.close();
-    flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-               kPortIndexOutput);
-    framesReceived = 0;
 
-    // set state to idle
-    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
-    // set state to executing
-    changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput);
+        // As the frame sizes are known ahead, use it to configure i/p buffer
+        // size
+        status = setPortBufferSize(omxNode, kPortIndexInput, maxBytesCount);
+        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+
+        // set Port Params
+        uint32_t nFrameWidth, nFrameHeight, xFramerate;
+        getInputChannelInfo(omxNode, kPortIndexInput, &nFrameWidth,
+                            &nFrameHeight, &xFramerate);
+        // get default color format
+        OMX_COLOR_FORMATTYPE eColorFormat = OMX_COLOR_FormatUnused;
+        getDefaultColorFormat(omxNode, kPortIndexOutput, portMode[1],
+                              &eColorFormat);
+        ASSERT_NE(eColorFormat, OMX_COLOR_FormatUnused);
+        status = setVideoPortFormat(omxNode, kPortIndexOutput,
+                                    OMX_VIDEO_CodingUnused, eColorFormat,
+                                    xFramerate);
+        EXPECT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+        setDefaultPortParam(omxNode, kPortIndexOutput, OMX_VIDEO_CodingUnused,
+                            eColorFormat, nFrameWidth, nFrameHeight, 0,
+                            xFramerate);
+
+        android::Vector<BufferInfo> iBuffer, oBuffer;
+
+        // set state to idle
+        changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
+                                kPortIndexInput, kPortIndexOutput, portMode,
+                                true);
+        // set state to executing
+        changeStateIdletoExecute(omxNode, observer);
+
+        // Decode 128 frames and flush. here 128 is chosen to ensure there is a
+        // key frame after this so that the below section can be convered for
+        // all components
+        int nFrames = 128;
+        eleStream.open(mURL, std::ifstream::binary);
+        ASSERT_EQ(eleStream.is_open(), true);
+        decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
+                      kPortIndexOutput, eleStream, &Info, 0, nFrames,
+                      portMode[1], false);
+        flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
+                   kPortIndexOutput);
+        framesReceived = 0;
+
+        // Seek to next key frame and start decoding till the end
+        int index = nFrames;
+        bool keyFrame = false;
+        while (index < (int)Info.size()) {
+            if ((Info[index].flags & OMX_BUFFERFLAG_SYNCFRAME) ==
+                OMX_BUFFERFLAG_SYNCFRAME) {
+                timestampUs = Info[index - 1].timestamp;
+                keyFrame = true;
+                break;
+            }
+            eleStream.ignore(Info[index].bytesCount);
+            index++;
+        }
+        if (keyFrame) {
+            decodeNFrames(omxNode, observer, &iBuffer, &oBuffer,
+                          kPortIndexInput, kPortIndexOutput, eleStream, &Info,
+                          index, Info.size() - index, portMode[1], false);
+        }
+        eleStream.close();
+        flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
+                   kPortIndexOutput);
+        framesReceived = 0;
+
+        // set state to idle
+        changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+        // set state to loaded
+        changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
+                                kPortIndexInput, kPortIndexOutput);
+    }
 }
 
 int main(int argc, char** argv) {
