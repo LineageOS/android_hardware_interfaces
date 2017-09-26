@@ -156,7 +156,8 @@ genrule {
     name: "android.hardware.broadcastradio@1.1-adapter_genc++",
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-main -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.broadcastradio@1.1",
-    out: ["main.cpp"]}
+    out: ["main.cpp"]
+}
 
 cc_test {
     name: "android.hardware.broadcastradio@1.1-adapter",
