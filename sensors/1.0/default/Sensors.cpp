@@ -240,6 +240,7 @@ Return<Result> Sensors::batch(
                 mSensorDevice,
                 sensor_handle,
                 0, /*flags*/
+		0, /*MTK extra int*/
                 sampling_period_ns,
                 max_report_latency_ns));
 }
