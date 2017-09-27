@@ -181,7 +181,8 @@ genrule {
     name: "android.hardware.audio@2.0-adapter_genc++",
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-main -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.audio@2.0",
-    out: ["main.cpp"]}
+    out: ["main.cpp"]
+}
 
 cc_test {
     name: "android.hardware.audio@2.0-adapter",

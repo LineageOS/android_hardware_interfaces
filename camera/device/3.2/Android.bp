@@ -149,7 +149,8 @@ genrule {
     name: "android.hardware.camera.device@3.2-adapter_genc++",
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-main -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.camera.device@3.2",
-    out: ["main.cpp"]}
+    out: ["main.cpp"]
+}
 
 cc_test {
     name: "android.hardware.camera.device@3.2-adapter",
