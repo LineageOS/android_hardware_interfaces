@@ -165,6 +165,7 @@ class AudioEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                                this->omxNode = _nl;
                            })
                         .isOk());
+        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
         ASSERT_NE(omxNode, nullptr);
         ASSERT_NE(gEnv->getRole().empty(), true) << "Invalid Component Role";
         struct StringToName {
@@ -352,7 +353,7 @@ void waitOnInputConsumption(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         size_t i = 0;
         status =
             observer->dequeueMessage(&msg, DEFAULT_TIMEOUT_Q, iBuffer, oBuffer);
-        EXPECT_EQ(status,
+        ASSERT_EQ(status,
                   android::hardware::media::omx::V1_0::Status::TIMED_OUT);
         // status == TIMED_OUT, it could be due to process time being large
         // than DEFAULT_TIMEOUT or component needs output buffers to start
@@ -365,7 +366,8 @@ void waitOnInputConsumption(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         // Dispatch an output buffer assuming outQueue.empty() is true
         size_t index;
         if ((index = getEmptyBufferID(oBuffer)) < oBuffer->size()) {
-            dispatchOutputBuffer(omxNode, oBuffer, index);
+            ASSERT_NO_FATAL_FAILURE(
+                dispatchOutputBuffer(omxNode, oBuffer, index));
             timeOut = TIMEOUT_COUNTER_Q;
         }
     }
@@ -408,15 +410,16 @@ void encodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
             if (eleStream.gcount() != bytesCount) break;
             flags = OMX_BUFFERFLAG_ENDOFFRAME;
             if (signalEOS && (nFrames == 1)) flags |= OMX_BUFFERFLAG_EOS;
-            dispatchInputBuffer(omxNode, iBuffer, index, bytesCount, flags,
-                                timestamp);
+            ASSERT_NO_FATAL_FAILURE(dispatchInputBuffer(
+                omxNode, iBuffer, index, bytesCount, flags, timestamp));
             timestamp += timestampIncr;
             nFrames--;
             iQueued = true;
         }
         // Dispatch output buffer
         if ((index = getEmptyBufferID(oBuffer)) < oBuffer->size()) {
-            dispatchOutputBuffer(omxNode, oBuffer, index);
+            ASSERT_NO_FATAL_FAILURE(
+                dispatchOutputBuffer(omxNode, oBuffer, index));
             oQueued = true;
         }
         // Reset Counters when either input or output buffer is dispatched
@@ -425,8 +428,7 @@ void encodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         else
             timeOut--;
         if (timeOut == 0) {
-            EXPECT_TRUE(false) << "Wait on Input/Output is found indefinite";
-            break;
+            ASSERT_TRUE(false) << "Wait on Input/Output is found indefinite";
         }
     }
 }
@@ -517,31 +519,39 @@ TEST_F(AudioEncHidlTest, SimpleEncodeTest) {
     }
     setupPCMPort(omxNode, kPortIndexInput, nChannels, OMX_NumericalDataSigned,
                  16, nSampleRate, OMX_AUDIO_PCMModeLinear);
+
     // Configure output port
-    setDefaultPortParam(omxNode, kPortIndexOutput, eEncoding, compName,
-                        nChannels, nSampleRate, nBitRate);
+    ASSERT_NO_FATAL_FAILURE(setDefaultPortParam(omxNode, kPortIndexOutput,
+                                                eEncoding, compName, nChannels,
+                                                nSampleRate, nBitRate));
 
     android::Vector<BufferInfo> iBuffer, oBuffer;
 
     // set state to idle
-    changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(changeStateLoadedtoIdle(omxNode, observer, &iBuffer,
+                                                    &oBuffer, kPortIndexInput,
+                                                    kPortIndexOutput));
     // set state to executing
-    changeStateIdletoExecute(omxNode, observer);
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoExecute(omxNode, observer));
 
     eleStream.open(mURL, std::ifstream::binary);
     ASSERT_EQ(eleStream.is_open(), true);
-    encodeNFrames(omxNode, observer, &iBuffer, &oBuffer, 128, samplesPerFrame,
-                  nChannels, nSampleRate, eleStream);
+    ASSERT_NO_FATAL_FAILURE(encodeNFrames(omxNode, observer, &iBuffer, &oBuffer,
+                                          128, samplesPerFrame, nChannels,
+                                          nSampleRate, eleStream));
     eleStream.close();
-    waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer);
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag);
 
+    ASSERT_NO_FATAL_FAILURE(
+        waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer));
+    ASSERT_NO_FATAL_FAILURE(
+        testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag));
     // set state to idle
-    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+    ASSERT_NO_FATAL_FAILURE(
+        changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer));
     // set state to executing
-    changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoLoaded(omxNode, observer, &iBuffer,
+                                                    &oBuffer, kPortIndexInput,
+                                                    kPortIndexOutput));
 }
 
 int main(int argc, char** argv) {
