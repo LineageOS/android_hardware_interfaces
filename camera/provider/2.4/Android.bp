@@ -62,7 +62,6 @@ cc_library {
         "android.hardware.camera.common@1.0",
         "android.hardware.camera.device@1.0",
         "android.hardware.camera.device@3.2",
-        "android.hardware.graphics.common@1.0",
     ],
     export_shared_lib_headers: [
         "libhidlbase",
@@ -72,7 +71,6 @@ cc_library {
         "android.hardware.camera.common@1.0",
         "android.hardware.camera.device@1.0",
         "android.hardware.camera.device@3.2",
-        "android.hardware.graphics.common@1.0",
     ],
 }
 
@@ -122,7 +120,6 @@ cc_library {
         "android.hardware.camera.device@1.0",
         "android.hardware.camera.device@3.2",
         "android.hardware.camera.provider@2.4",
-        "android.hardware.graphics.common@1.0",
         "android.hardware.camera.device@1.0-adapter-helper",
         "android.hardware.camera.device@3.2-adapter-helper",
         "android.hidl.base@1.0-adapter-helper",
@@ -137,7 +134,6 @@ cc_library {
         "android.hardware.camera.device@1.0",
         "android.hardware.camera.device@3.2",
         "android.hardware.camera.provider@2.4",
-        "android.hardware.graphics.common@1.0",
         "android.hardware.camera.device@1.0-adapter-helper",
         "android.hardware.camera.device@3.2-adapter-helper",
         "android.hidl.base@1.0-adapter-helper",
@@ -162,7 +158,6 @@ cc_test {
         "android.hardware.camera.device@1.0",
         "android.hardware.camera.device@3.2",
         "android.hardware.camera.provider@2.4",
-        "android.hardware.graphics.common@1.0",
         "android.hardware.camera.provider@2.4-adapter-helper",
     ],
     generated_sources: ["android.hardware.camera.provider@2.4-adapter_genc++"],
