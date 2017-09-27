@@ -197,3 +197,115 @@ cc_library {
         "libutils",
     ],
 }
+
+genrule {
+    name: "android.hardware.gnss@1.0-adapter-helper_genc++",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-sources -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.gnss@1.0",
+    srcs: [
+        ":android.hardware.gnss@1.0_hal",
+    ],
+    out: [
+        "android/hardware/gnss/1.0/AAGnss.cpp",
+        "android/hardware/gnss/1.0/AAGnssCallback.cpp",
+        "android/hardware/gnss/1.0/AAGnssRil.cpp",
+        "android/hardware/gnss/1.0/AAGnssRilCallback.cpp",
+        "android/hardware/gnss/1.0/AGnss.cpp",
+        "android/hardware/gnss/1.0/AGnssBatching.cpp",
+        "android/hardware/gnss/1.0/AGnssBatchingCallback.cpp",
+        "android/hardware/gnss/1.0/AGnssCallback.cpp",
+        "android/hardware/gnss/1.0/AGnssConfiguration.cpp",
+        "android/hardware/gnss/1.0/AGnssDebug.cpp",
+        "android/hardware/gnss/1.0/AGnssGeofenceCallback.cpp",
+        "android/hardware/gnss/1.0/AGnssGeofencing.cpp",
+        "android/hardware/gnss/1.0/AGnssMeasurement.cpp",
+        "android/hardware/gnss/1.0/AGnssMeasurementCallback.cpp",
+        "android/hardware/gnss/1.0/AGnssNavigationMessage.cpp",
+        "android/hardware/gnss/1.0/AGnssNavigationMessageCallback.cpp",
+        "android/hardware/gnss/1.0/AGnssNi.cpp",
+        "android/hardware/gnss/1.0/AGnssNiCallback.cpp",
+        "android/hardware/gnss/1.0/AGnssXtra.cpp",
+        "android/hardware/gnss/1.0/AGnssXtraCallback.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.gnss@1.0-adapter-helper_genc++_headers",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-headers -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.gnss@1.0",
+    srcs: [
+        ":android.hardware.gnss@1.0_hal",
+    ],
+    out: [
+        "android/hardware/gnss/1.0/AAGnss.h",
+        "android/hardware/gnss/1.0/AAGnssCallback.h",
+        "android/hardware/gnss/1.0/AAGnssRil.h",
+        "android/hardware/gnss/1.0/AAGnssRilCallback.h",
+        "android/hardware/gnss/1.0/AGnss.h",
+        "android/hardware/gnss/1.0/AGnssBatching.h",
+        "android/hardware/gnss/1.0/AGnssBatchingCallback.h",
+        "android/hardware/gnss/1.0/AGnssCallback.h",
+        "android/hardware/gnss/1.0/AGnssConfiguration.h",
+        "android/hardware/gnss/1.0/AGnssDebug.h",
+        "android/hardware/gnss/1.0/AGnssGeofenceCallback.h",
+        "android/hardware/gnss/1.0/AGnssGeofencing.h",
+        "android/hardware/gnss/1.0/AGnssMeasurement.h",
+        "android/hardware/gnss/1.0/AGnssMeasurementCallback.h",
+        "android/hardware/gnss/1.0/AGnssNavigationMessage.h",
+        "android/hardware/gnss/1.0/AGnssNavigationMessageCallback.h",
+        "android/hardware/gnss/1.0/AGnssNi.h",
+        "android/hardware/gnss/1.0/AGnssNiCallback.h",
+        "android/hardware/gnss/1.0/AGnssXtra.h",
+        "android/hardware/gnss/1.0/AGnssXtraCallback.h",
+    ],
+}
+
+
+cc_library {
+    name: "android.hardware.gnss@1.0-adapter-helper",
+    defaults: ["hidl-module-defaults"],
+    generated_sources: ["android.hardware.gnss@1.0-adapter-helper_genc++"],
+    generated_headers: ["android.hardware.gnss@1.0-adapter-helper_genc++_headers"],
+    export_generated_headers: ["android.hardware.gnss@1.0-adapter-helper_genc++_headers"],
+    vendor_available: true,
+    shared_libs: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "liblog",
+        "libutils",
+        "libcutils",
+        "libhidladapter",
+        "android.hardware.gnss@1.0",
+        "android.hidl.base@1.0-adapter-helper",
+    ],
+    export_shared_lib_headers: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "libutils",
+        "libhidladapter",
+        "android.hardware.gnss@1.0",
+        "android.hidl.base@1.0-adapter-helper",
+    ],
+}
+
+genrule {
+    name: "android.hardware.gnss@1.0-adapter_genc++",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-main -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.gnss@1.0",
+    out: ["main.cpp"]
+}
+
+cc_test {
+    name: "android.hardware.gnss@1.0-adapter",
+    shared_libs: [
+        "libhidladapter",
+        "libhidlbase",
+        "libhidltransport",
+        "libutils",
+        "android.hardware.gnss@1.0",
+        "android.hardware.gnss@1.0-adapter-helper",
+    ],
+    generated_sources: ["android.hardware.gnss@1.0-adapter_genc++"],
+}

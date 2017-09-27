@@ -87,3 +87,88 @@ cc_library {
         "android.hardware.broadcastradio@1.0",
     ],
 }
+
+genrule {
+    name: "android.hardware.broadcastradio@1.1-adapter-helper_genc++",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-sources -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.broadcastradio@1.1",
+    srcs: [
+        ":android.hardware.broadcastradio@1.1_hal",
+    ],
+    out: [
+        "android/hardware/broadcastradio/1.1/ABroadcastRadio.cpp",
+        "android/hardware/broadcastradio/1.1/ABroadcastRadioFactory.cpp",
+        "android/hardware/broadcastradio/1.1/ATuner.cpp",
+        "android/hardware/broadcastradio/1.1/ATunerCallback.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.broadcastradio@1.1-adapter-helper_genc++_headers",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-headers -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.broadcastradio@1.1",
+    srcs: [
+        ":android.hardware.broadcastradio@1.1_hal",
+    ],
+    out: [
+        "android/hardware/broadcastradio/1.1/ABroadcastRadio.h",
+        "android/hardware/broadcastradio/1.1/ABroadcastRadioFactory.h",
+        "android/hardware/broadcastradio/1.1/ATuner.h",
+        "android/hardware/broadcastradio/1.1/ATunerCallback.h",
+    ],
+}
+
+
+cc_library {
+    name: "android.hardware.broadcastradio@1.1-adapter-helper",
+    defaults: ["hidl-module-defaults"],
+    generated_sources: ["android.hardware.broadcastradio@1.1-adapter-helper_genc++"],
+    generated_headers: ["android.hardware.broadcastradio@1.1-adapter-helper_genc++_headers"],
+    export_generated_headers: ["android.hardware.broadcastradio@1.1-adapter-helper_genc++_headers"],
+    vendor_available: true,
+    shared_libs: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "liblog",
+        "libutils",
+        "libcutils",
+        "libhidladapter",
+        "android.hardware.broadcastradio@1.0",
+        "android.hardware.broadcastradio@1.1",
+        "android.hardware.broadcastradio@1.0-adapter-helper",
+        "android.hidl.base@1.0-adapter-helper",
+    ],
+    export_shared_lib_headers: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "libutils",
+        "libhidladapter",
+        "android.hardware.broadcastradio@1.0",
+        "android.hardware.broadcastradio@1.1",
+        "android.hardware.broadcastradio@1.0-adapter-helper",
+        "android.hidl.base@1.0-adapter-helper",
+    ],
+}
+
+genrule {
+    name: "android.hardware.broadcastradio@1.1-adapter_genc++",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-main -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.broadcastradio@1.1",
+    out: ["main.cpp"]
+}
+
+cc_test {
+    name: "android.hardware.broadcastradio@1.1-adapter",
+    shared_libs: [
+        "libhidladapter",
+        "libhidlbase",
+        "libhidltransport",
+        "libutils",
+        "android.hardware.broadcastradio@1.0",
+        "android.hardware.broadcastradio@1.1",
+        "android.hardware.broadcastradio@1.1-adapter-helper",
+    ],
+    generated_sources: ["android.hardware.broadcastradio@1.1-adapter_genc++"],
+}

@@ -157,3 +157,106 @@ cc_library {
         "android.hardware.audio.common@2.0",
     ],
 }
+
+genrule {
+    name: "android.hardware.audio.effect@2.0-adapter-helper_genc++",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-sources -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.audio.effect@2.0",
+    srcs: [
+        ":android.hardware.audio.effect@2.0_hal",
+    ],
+    out: [
+        "android/hardware/audio/effect/2.0/AAcousticEchoCancelerEffect.cpp",
+        "android/hardware/audio/effect/2.0/AAutomaticGainControlEffect.cpp",
+        "android/hardware/audio/effect/2.0/ABassBoostEffect.cpp",
+        "android/hardware/audio/effect/2.0/ADownmixEffect.cpp",
+        "android/hardware/audio/effect/2.0/AEffect.cpp",
+        "android/hardware/audio/effect/2.0/AEffectBufferProviderCallback.cpp",
+        "android/hardware/audio/effect/2.0/AEffectsFactory.cpp",
+        "android/hardware/audio/effect/2.0/AEnvironmentalReverbEffect.cpp",
+        "android/hardware/audio/effect/2.0/AEqualizerEffect.cpp",
+        "android/hardware/audio/effect/2.0/ALoudnessEnhancerEffect.cpp",
+        "android/hardware/audio/effect/2.0/ANoiseSuppressionEffect.cpp",
+        "android/hardware/audio/effect/2.0/APresetReverbEffect.cpp",
+        "android/hardware/audio/effect/2.0/AVirtualizerEffect.cpp",
+        "android/hardware/audio/effect/2.0/AVisualizerEffect.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.audio.effect@2.0-adapter-helper_genc++_headers",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-headers -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.audio.effect@2.0",
+    srcs: [
+        ":android.hardware.audio.effect@2.0_hal",
+    ],
+    out: [
+        "android/hardware/audio/effect/2.0/AAcousticEchoCancelerEffect.h",
+        "android/hardware/audio/effect/2.0/AAutomaticGainControlEffect.h",
+        "android/hardware/audio/effect/2.0/ABassBoostEffect.h",
+        "android/hardware/audio/effect/2.0/ADownmixEffect.h",
+        "android/hardware/audio/effect/2.0/AEffect.h",
+        "android/hardware/audio/effect/2.0/AEffectBufferProviderCallback.h",
+        "android/hardware/audio/effect/2.0/AEffectsFactory.h",
+        "android/hardware/audio/effect/2.0/AEnvironmentalReverbEffect.h",
+        "android/hardware/audio/effect/2.0/AEqualizerEffect.h",
+        "android/hardware/audio/effect/2.0/ALoudnessEnhancerEffect.h",
+        "android/hardware/audio/effect/2.0/ANoiseSuppressionEffect.h",
+        "android/hardware/audio/effect/2.0/APresetReverbEffect.h",
+        "android/hardware/audio/effect/2.0/AVirtualizerEffect.h",
+        "android/hardware/audio/effect/2.0/AVisualizerEffect.h",
+    ],
+}
+
+
+cc_library {
+    name: "android.hardware.audio.effect@2.0-adapter-helper",
+    defaults: ["hidl-module-defaults"],
+    generated_sources: ["android.hardware.audio.effect@2.0-adapter-helper_genc++"],
+    generated_headers: ["android.hardware.audio.effect@2.0-adapter-helper_genc++_headers"],
+    export_generated_headers: ["android.hardware.audio.effect@2.0-adapter-helper_genc++_headers"],
+    vendor_available: true,
+    shared_libs: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "liblog",
+        "libutils",
+        "libcutils",
+        "libhidladapter",
+        "android.hardware.audio.common@2.0",
+        "android.hardware.audio.effect@2.0",
+        "android.hidl.base@1.0-adapter-helper",
+    ],
+    export_shared_lib_headers: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "libutils",
+        "libhidladapter",
+        "android.hardware.audio.common@2.0",
+        "android.hardware.audio.effect@2.0",
+        "android.hidl.base@1.0-adapter-helper",
+    ],
+}
+
+genrule {
+    name: "android.hardware.audio.effect@2.0-adapter_genc++",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-main -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.audio.effect@2.0",
+    out: ["main.cpp"]
+}
+
+cc_test {
+    name: "android.hardware.audio.effect@2.0-adapter",
+    shared_libs: [
+        "libhidladapter",
+        "libhidlbase",
+        "libhidltransport",
+        "libutils",
+        "android.hardware.audio.common@2.0",
+        "android.hardware.audio.effect@2.0",
+        "android.hardware.audio.effect@2.0-adapter-helper",
+    ],
+    generated_sources: ["android.hardware.audio.effect@2.0-adapter_genc++"],
+}
