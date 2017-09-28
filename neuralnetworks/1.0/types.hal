@@ -990,6 +990,12 @@ enum OperandLifeTime : int32_t {
      * The operand is a constant that was specified via a Memory object.
      */
     CONSTANT_REFERENCE,
+
+    /**
+     * The operand does not have a value. This is valid only for optional arguments
+     * of operations.
+     */
+    NO_VALUE,
 };
 
 /**
@@ -1084,8 +1090,7 @@ struct Operand {
     /**
      * Quantized zero-point offset of the operand.
      *
-     * Only applicable if the operand is of type TENSOR_QUANT8_ASYMM or
-     * TENSOR_INT32.
+     * Only applicable if the operand is of type TENSOR_QUANT8_ASYMM.
      */
     int32_t zeroPoint;
 
@@ -1096,7 +1101,7 @@ struct Operand {
 
     /**
      * Where to find the data for this operand.
-     * If the lifetime is TEMPORARY_VARIABLE, MODEL_INPUT, or MODEL_OUTPUT:
+     * If the lifetime is TEMPORARY_VARIABLE, MODEL_INPUT, MODEL_OUTPUT, or NO_VALUE:
      * - All the fields will be 0.
      * If the lifetime is CONSTANT_COPY:
      * - location.poolIndex is 0.
@@ -1189,6 +1194,13 @@ struct Model {
  * any updates to the input or output operand.
  */
 struct RequestArgument {
+    /**
+     * If true, the argument does not have a value. This can be used for operations
+     * that take optional arguments. If true, the fields of location are set to 0 and
+     * the dimensions vector is left empty.
+     */
+    bool hasNoValue;
+
     /**
      * The location within one of the memory pools passed in the Request.
      */
