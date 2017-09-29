@@ -70,3 +70,88 @@ cc_library {
         "android.hardware.graphics.common@1.0",
     ],
 }
+
+genrule {
+    name: "android.hardware.camera.device@3.3-adapter-helper_genc++",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-sources -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.camera.device@3.3",
+    srcs: [
+        ":android.hardware.camera.device@3.3_hal",
+    ],
+    out: [
+        "android/hardware/camera/device/3.3/ACameraDeviceSession.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.camera.device@3.3-adapter-helper_genc++_headers",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-headers -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.camera.device@3.3",
+    srcs: [
+        ":android.hardware.camera.device@3.3_hal",
+    ],
+    out: [
+        "android/hardware/camera/device/3.3/ACameraDeviceSession.h",
+    ],
+}
+
+
+cc_library {
+    name: "android.hardware.camera.device@3.3-adapter-helper",
+    defaults: ["hidl-module-defaults"],
+    generated_sources: ["android.hardware.camera.device@3.3-adapter-helper_genc++"],
+    generated_headers: ["android.hardware.camera.device@3.3-adapter-helper_genc++_headers"],
+    export_generated_headers: ["android.hardware.camera.device@3.3-adapter-helper_genc++_headers"],
+    vendor_available: true,
+    shared_libs: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "liblog",
+        "libutils",
+        "libcutils",
+        "libhidladapter",
+        "android.hardware.camera.common@1.0",
+        "android.hardware.camera.device@3.2",
+        "android.hardware.camera.device@3.3",
+        "android.hardware.graphics.common@1.0",
+        "android.hardware.camera.device@3.2-adapter-helper",
+        "android.hidl.base@1.0-adapter-helper",
+    ],
+    export_shared_lib_headers: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "libutils",
+        "libhidladapter",
+        "android.hardware.camera.common@1.0",
+        "android.hardware.camera.device@3.2",
+        "android.hardware.camera.device@3.3",
+        "android.hardware.graphics.common@1.0",
+        "android.hardware.camera.device@3.2-adapter-helper",
+        "android.hidl.base@1.0-adapter-helper",
+    ],
+}
+
+genrule {
+    name: "android.hardware.camera.device@3.3-adapter_genc++",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-main -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.camera.device@3.3",
+    out: ["main.cpp"]
+}
+
+cc_test {
+    name: "android.hardware.camera.device@3.3-adapter",
+    shared_libs: [
+        "libhidladapter",
+        "libhidlbase",
+        "libhidltransport",
+        "libutils",
+        "android.hardware.camera.common@1.0",
+        "android.hardware.camera.device@3.2",
+        "android.hardware.camera.device@3.3",
+        "android.hardware.graphics.common@1.0",
+        "android.hardware.camera.device@3.3-adapter-helper",
+    ],
+    generated_sources: ["android.hardware.camera.device@3.3-adapter_genc++"],
+}
