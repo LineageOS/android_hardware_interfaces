@@ -127,7 +127,8 @@ class OffloadControlHidlTestBase : public testing::VtsHalHidlTargetTestBase {
         }
         native_handle_t* const nativeHandle1 = native_handle_create(1, 0);
         nativeHandle1->data[0] = fd1.release();
-        hidl_handle h1 = hidl_handle(nativeHandle1);
+        hidl_handle h1;
+        h1.setTo(nativeHandle1, true);
 
         unique_fd fd2(conntrackSocket(NFNLGRP_CONNTRACK_UPDATE | NFNLGRP_CONNTRACK_DESTROY));
         if (fd2.get() < 0) {
@@ -136,7 +137,8 @@ class OffloadControlHidlTestBase : public testing::VtsHalHidlTargetTestBase {
         }
         native_handle_t* const nativeHandle2 = native_handle_create(1, 0);
         nativeHandle2->data[0] = fd2.release();
-        hidl_handle h2 = hidl_handle(nativeHandle2);
+        hidl_handle h2;
+        h2.setTo(nativeHandle2, true);
 
         const Return<void> ret = config->setHandles(h1, h2, ASSERT_TRUE_CALLBACK);
         ASSERT_TRUE(ret.isOk());
