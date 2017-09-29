@@ -1,5 +1,6 @@
 cc_library_shared {
     name: "libhwminijail",
+    defaults: ["hidl_defaults"],
     vendor: true,
     export_include_dirs: ["include"],
 
