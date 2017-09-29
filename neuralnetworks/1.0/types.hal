@@ -218,7 +218,7 @@ enum OperationType : int32_t {
      *
      * Inputs:
      * 0: A 4-D tensor, of shape [batches, height, width, depth_in], specifying the input.
-     * 1: A 4-D tensor, of shape [depth_out, filter_height, filter_width, depth_in],
+     * 1: A 4-D tensor, of shape [1, filter_height, filter_width, depth_out],
      *    specifying the filter.
      * 2: A 1-D tensor, of shape [depth_out], specifying the bias.
      *    For input tensor of {@link OperandType::TENSOR_FLOAT32} type, the bias should
@@ -1003,21 +1003,6 @@ enum DeviceStatus : int32_t {
 };
 
 /**
- * A typed operation.
- */
-struct OperationTuple {
-    /**
-     * The type of operation.
-     */
-    OperationType operationType;
-
-    /**
-     * The input data type of operation.
-     */
-    OperandType operandType;
-};
-
-/**
  * Performance information for the reference workload.
  *
  * Used by a driver to report its performance characteristics.
@@ -1038,20 +1023,6 @@ struct PerformanceInfo {
  * The capabilities of a driver.
  */
 struct Capabilities {
-    /**
-     * A collection of typed operations supported by the driver.
-     */
-    vec<OperationTuple> supportedOperationTuples;
-
-    /**
-     * Indicates whether a driver caches its prepared model for reuse the next
-     * time the application begins. This is useful because the model may have
-     * been prepared in a previous run.
-     *
-     * True if caching is supported, false otherwise.
-     */
-    bool cachesCompilation;
-
     /**
      * Driver performance when operating on float32 data.
      */
@@ -1105,14 +1076,16 @@ struct Operand {
     /**
      * Quantized scale of the operand.
      *
-     * Only applicable if the operand is of type TENSOR_QUANT8_ASYMM.
+     * Only applicable if the operand is of type TENSOR_QUANT8_ASYMM or
+     * TENSOR_INT32.
      */
     float scale;
 
     /**
      * Quantized zero-point offset of the operand.
      *
-     * Only applicable if the operand is of type TENSOR_QUANT8_ASYMM.
+     * Only applicable if the operand is of type TENSOR_QUANT8_ASYMM or
+     * TENSOR_INT32.
      */
     int32_t zeroPoint;
 
@@ -1142,9 +1115,9 @@ struct Operand {
  */
 struct Operation {
     /**
-     * The tuple describing the operation type and input type.
+     * The operation type.
      */
-    OperationTuple opTuple;
+    OperationType type;
 
     /**
      * Describes the table that contains the indexes of the inputs of the
@@ -1195,12 +1168,18 @@ struct Model {
 
     /**
      * A byte buffer containing operand data that were copied into the model.
+     *
+     * An operand's value must be located here if and only if Operand::lifetime
+     * equals OperandLifeTime::CONSTANT_COPY.
      */
     vec<uint8_t> operandValues;
 
     /**
      * A collection of shared memory pools containing operand data that were
      * registered by the model.
+     *
+     * An operand's value must be located here if and only if Operand::lifetime
+     * equals OperandLifeTime::CONSTANT_REFERENCE.
      */
     vec<memory> pools;
 };
