@@ -535,7 +535,7 @@ TEST_F(AudioEncHidlTest, SimpleEncodeTest) {
 
     // set state to idle
     changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
-    // set state to loaded
+    // set state to executing
     changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
                             kPortIndexInput, kPortIndexOutput);
 }
