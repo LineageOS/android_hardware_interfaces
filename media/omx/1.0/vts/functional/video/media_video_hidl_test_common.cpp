@@ -89,7 +89,7 @@ void setupRAWPort(sp<IOmxNode> omxNode, OMX_U32 portIndex, OMX_U32 nFrameWidth,
     portDef.format.video.nFrameWidth = nFrameWidth;
     portDef.format.video.nFrameHeight = nFrameHeight;
     portDef.format.video.nStride = (((nFrameWidth + 15) >> 4) << 4);
-    portDef.format.video.nSliceHeight = nFrameHeight;
+    portDef.format.video.nSliceHeight = (((nFrameHeight + 15) >> 4) << 4);
     portDef.format.video.nBitrate = nBitrate;
     portDef.format.video.xFramerate = xFramerate;
     portDef.format.video.bFlagErrorConcealment = OMX_TRUE;
