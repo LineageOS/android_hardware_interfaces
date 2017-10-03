@@ -7,6 +7,7 @@ subdirs = [
     "1.1/vts/functional",
     "1.2",
     "1.2/default",
+    "1.2/vts/functional",
     "common/tests",
     "common/utils",
     "common/vts/utils",
