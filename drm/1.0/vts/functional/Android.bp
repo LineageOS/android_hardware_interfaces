@@ -16,6 +16,7 @@
 
 cc_test {
     name: "VtsHalDrmV1_0TargetTest",
+    defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
         "drm_hal_clearkey_test.cpp",
         "drm_hal_vendor_test.cpp",
