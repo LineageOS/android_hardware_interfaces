@@ -1063,8 +1063,6 @@ void DrmHalClearkeyDecryptTest::aes_cbc_decrypt(uint8_t* dest, uint8_t* src,
     AES_set_encrypt_key(&key[0], 128, &decryptionKey);
 
     size_t offset = 0;
-    size_t num = 0;
-    size_t ecount_buf = 0;
     for (size_t i = 0; i < subSamples.size(); i++) {
         memcpy(dest + offset, src + offset, subSamples[i].numBytesOfClearData);
         offset += subSamples[i].numBytesOfClearData;
@@ -1105,7 +1103,6 @@ TEST_F(DrmHalClearkeyDecryptTest, ClearSegmentTest) {
     Status status = cryptoPlugin->setMediaDrmSession(sessionId);
     EXPECT_EQ(Status::OK, status);
 
-    const bool kNotSecure = false;
     uint32_t byteCount = decrypt(Mode::UNENCRYPTED, &iv[0], subSamples,
             noPattern, Status::OK);
     EXPECT_EQ(kByteCount, byteCount);
@@ -1132,7 +1129,6 @@ TEST_F(DrmHalClearkeyDecryptTest, EncryptedAesCtrSegmentTest) {
     Status status = cryptoPlugin->setMediaDrmSession(sessionId);
     EXPECT_EQ(Status::OK, status);
 
-    const bool kNotSecure = false;
     uint32_t byteCount = decrypt(Mode::AES_CTR, &iv[0], subSamples,
             noPattern, Status::OK);
     EXPECT_EQ(kClearBytes + kEncryptedBytes, byteCount);
@@ -1153,7 +1149,6 @@ TEST_F(DrmHalClearkeyDecryptTest, EncryptedAesCtrSegmentTestNoKeys) {
     Status status = cryptoPlugin->setMediaDrmSession(sessionId);
     EXPECT_EQ(Status::OK, status);
 
-    const bool kNotSecure = false;
     uint32_t byteCount = decrypt(Mode::AES_CTR, &iv[0], subSamples,
             noPattern, Status::ERROR_DRM_NO_LICENSE);
     EXPECT_EQ(0u, byteCount);
