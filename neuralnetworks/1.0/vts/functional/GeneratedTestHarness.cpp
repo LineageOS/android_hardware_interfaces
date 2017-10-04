@@ -21,6 +21,7 @@
 #include <android-base/logging.h>
 #include <android/hidl/memory/1.0/IMemory.h>
 #include <hidlmemory/mapping.h>
+#include <iostream>
 
 namespace android {
 namespace hardware {
@@ -70,6 +71,19 @@ void Execute(const sp<IDevice>& device, std::function<Model(void)> create_model,
     const uint32_t OUTPUT = 1;
     Model model = create_model();
 
+    // see if service can handle model
+    ErrorStatus supportedStatus;
+    bool fullySupportsModel = false;
+    Return<void> supportedCall = device->getSupportedOperations(
+        model, [&](ErrorStatus status, const hidl_vec<bool>& supported) {
+            supportedStatus = status;
+            ASSERT_NE(0ul, supported.size());
+            fullySupportsModel =
+                std::all_of(supported.begin(), supported.end(), [](bool valid) { return valid; });
+        });
+    ASSERT_TRUE(supportedCall.isOk());
+    ASSERT_EQ(ErrorStatus::NONE, supportedStatus);
+
     // launch prepare model
     sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
     ASSERT_NE(nullptr, preparedModelCallback.get());
@@ -79,8 +93,13 @@ void Execute(const sp<IDevice>& device, std::function<Model(void)> create_model,
     // retrieve prepared model
     preparedModelCallback->wait();
     ErrorStatus prepareReturnStatus = preparedModelCallback->getStatus();
-    EXPECT_EQ(ErrorStatus::NONE, prepareReturnStatus);
     sp<IPreparedModel> preparedModel = preparedModelCallback->getPreparedModel();
+    if (fullySupportsModel) {
+        EXPECT_EQ(ErrorStatus::NONE, prepareReturnStatus);
+    } else {
+        EXPECT_TRUE(prepareReturnStatus == ErrorStatus::NONE ||
+                    prepareReturnStatus == ErrorStatus::GENERAL_FAILURE);
+    }
     ASSERT_NE(nullptr, preparedModel.get());
 
     int example_no = 1;
@@ -173,6 +192,17 @@ void Execute(const sp<IDevice>& device, std::function<Model(void)> create_model,
         // retrieve execution status
         executionCallback->wait();
         ErrorStatus executionReturnStatus = executionCallback->getStatus();
+        if (!fullySupportsModel &&
+            static_cast<ErrorStatus>(executionReturnStatus) == ErrorStatus::GENERAL_FAILURE) {
+            LOG(INFO) << "Ignoring execution results from model that is not supported by the "
+                         "vendor service driver";
+            std::cout << "[          ]   Ignoring execution results from model that is not "
+                         "supported by the vendor service driver"
+                      << std::endl;
+            continue;
+        }
+        LOG(INFO) << "CONTINUING TO CHECK VALUE";
+        std::cout << "[          ]   CONTINUING TO CHECK VALUE" << std::endl;
         EXPECT_EQ(ErrorStatus::NONE, executionReturnStatus);
 
         // validate results
