@@ -131,6 +131,7 @@ genrule {
 
 cc_test {
     name: "android.hardware.tests.extension.light@2.0-adapter",
+    defaults: ["hidl-module-defaults"],
     shared_libs: [
         "libhidladapter",
         "libhidlbase",
