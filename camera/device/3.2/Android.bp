@@ -154,6 +154,7 @@ genrule {
 
 cc_test {
     name: "android.hardware.camera.device@3.2-adapter",
+    defaults: ["hidl-module-defaults"],
     shared_libs: [
         "libhidladapter",
         "libhidlbase",

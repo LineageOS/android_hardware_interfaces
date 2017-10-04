@@ -161,6 +161,7 @@ genrule {
 
 cc_test {
     name: "android.hardware.radio@1.1-adapter",
+    defaults: ["hidl-module-defaults"],
     shared_libs: [
         "libhidladapter",
         "libhidlbase",
