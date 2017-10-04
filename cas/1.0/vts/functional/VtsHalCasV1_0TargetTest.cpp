@@ -456,6 +456,8 @@ TEST_F(MediaCasHidlTest, TestClearKeyApis) {
     EXPECT_TRUE(returnStatus.isOk());
     EXPECT_EQ(Status::OK, returnStatus);
 
+    EXPECT_FALSE(mDescramblerBase->requiresSecureDecoderComponent("video/avc"));
+
     sp<IDescrambler> descrambler;
     descrambler = IDescrambler::castFrom(mDescramblerBase);
     ASSERT_NE(descrambler, nullptr);
@@ -474,6 +476,14 @@ TEST_F(MediaCasHidlTest, TestClearKeyApis) {
         memcmp(static_cast<const void*>(opBuffer), static_cast<const void*>(kOutRefBinaryBuffer),
                sizeof(kOutRefBinaryBuffer));
     EXPECT_EQ(0, compareResult);
+
+    returnStatus = mDescramblerBase->release();
+    EXPECT_TRUE(returnStatus.isOk());
+    EXPECT_EQ(Status::OK, returnStatus);
+
+    returnStatus = mMediaCas->release();
+    EXPECT_TRUE(returnStatus.isOk());
+    EXPECT_EQ(Status::OK, returnStatus);
 }
 
 TEST_F(MediaCasHidlTest, TestClearKeySessionClosedAfterRelease) {
@@ -584,6 +594,12 @@ TEST_F(MediaCasHidlTest, TestClearKeyErrors) {
 
     ASSERT_TRUE(descrambleTestInputBuffer(descrambler, &descrambleStatus, &hidlInMemory));
     EXPECT_EQ(Status::ERROR_CAS_DECRYPT, descrambleStatus);
+
+    // Verify that requiresSecureDecoderComponent handles empty mime
+    EXPECT_FALSE(mDescramblerBase->requiresSecureDecoderComponent(""));
+
+    // Verify that requiresSecureDecoderComponent handles invalid mime
+    EXPECT_FALSE(mDescramblerBase->requiresSecureDecoderComponent("bad"));
 }
 
 }  // anonymous namespace
