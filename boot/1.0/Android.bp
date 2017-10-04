@@ -128,6 +128,7 @@ genrule {
 
 cc_test {
     name: "android.hardware.boot@1.0-adapter",
+    defaults: ["hidl-module-defaults"],
     shared_libs: [
         "libhidladapter",
         "libhidlbase",
