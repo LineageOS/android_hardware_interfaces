@@ -16,6 +16,7 @@
 
 cc_library_static {
     name: "VtsHalWifiV1_0TargetTestUtil",
+    defaults: ["hidl_defaults"],
     srcs: [
 
         "wifi_hidl_call_util_selftest.cpp",

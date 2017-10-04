@@ -19,6 +19,7 @@ cc_library_shared {
 
 cc_binary {
     name: "android.hardware.nfc@1.0-service",
+    defaults: ["hidl_defaults"],
     relative_install_path: "hw",
     proprietary: true,
     init_rc: ["android.hardware.nfc@1.0-service.rc"],

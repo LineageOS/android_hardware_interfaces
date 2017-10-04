@@ -35,6 +35,7 @@ cc_library_shared {
 
 cc_test {
     name: "android.hardware.tests.msgq@1.0-service-benchmark",
+    defaults: ["hidl_defaults"],
     srcs: ["mq_benchmark_service.cpp"],
     gtest: false,
 
@@ -51,6 +52,7 @@ cc_test {
 
 cc_test {
     name: "android.hardware.tests.msgq@1.0-service-test",
+    defaults: ["hidl_defaults"],
     srcs: ["mq_test_service.cpp"],
     gtest: false,
 
