@@ -5,8 +5,9 @@ filegroup {
     srcs: [
         "types.hal",
         "IDevice.hal",
-        "IEvent.hal",
+        "IExecutionCallback.hal",
         "IPreparedModel.hal",
+        "IPreparedModelCallback.hal",
     ],
 }
 
@@ -20,8 +21,9 @@ genrule {
     out: [
         "android/hardware/neuralnetworks/1.0/types.cpp",
         "android/hardware/neuralnetworks/1.0/DeviceAll.cpp",
-        "android/hardware/neuralnetworks/1.0/EventAll.cpp",
+        "android/hardware/neuralnetworks/1.0/ExecutionCallbackAll.cpp",
         "android/hardware/neuralnetworks/1.0/PreparedModelAll.cpp",
+        "android/hardware/neuralnetworks/1.0/PreparedModelCallbackAll.cpp",
     ],
 }
 
@@ -40,16 +42,21 @@ genrule {
         "android/hardware/neuralnetworks/1.0/BnHwDevice.h",
         "android/hardware/neuralnetworks/1.0/BpHwDevice.h",
         "android/hardware/neuralnetworks/1.0/BsDevice.h",
-        "android/hardware/neuralnetworks/1.0/IEvent.h",
-        "android/hardware/neuralnetworks/1.0/IHwEvent.h",
-        "android/hardware/neuralnetworks/1.0/BnHwEvent.h",
-        "android/hardware/neuralnetworks/1.0/BpHwEvent.h",
-        "android/hardware/neuralnetworks/1.0/BsEvent.h",
+        "android/hardware/neuralnetworks/1.0/IExecutionCallback.h",
+        "android/hardware/neuralnetworks/1.0/IHwExecutionCallback.h",
+        "android/hardware/neuralnetworks/1.0/BnHwExecutionCallback.h",
+        "android/hardware/neuralnetworks/1.0/BpHwExecutionCallback.h",
+        "android/hardware/neuralnetworks/1.0/BsExecutionCallback.h",
         "android/hardware/neuralnetworks/1.0/IPreparedModel.h",
         "android/hardware/neuralnetworks/1.0/IHwPreparedModel.h",
         "android/hardware/neuralnetworks/1.0/BnHwPreparedModel.h",
         "android/hardware/neuralnetworks/1.0/BpHwPreparedModel.h",
         "android/hardware/neuralnetworks/1.0/BsPreparedModel.h",
+        "android/hardware/neuralnetworks/1.0/IPreparedModelCallback.h",
+        "android/hardware/neuralnetworks/1.0/IHwPreparedModelCallback.h",
+        "android/hardware/neuralnetworks/1.0/BnHwPreparedModelCallback.h",
+        "android/hardware/neuralnetworks/1.0/BpHwPreparedModelCallback.h",
+        "android/hardware/neuralnetworks/1.0/BsPreparedModelCallback.h",
     ],
 }
 
@@ -77,82 +84,4 @@ cc_library {
         "libhwbinder",
         "libutils",
     ],
-}
-
-genrule {
-    name: "android.hardware.neuralnetworks@1.0-adapter-helper_genc++",
-    tools: ["hidl-gen"],
-    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-sources -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.neuralnetworks@1.0",
-    srcs: [
-        ":android.hardware.neuralnetworks@1.0_hal",
-    ],
-    out: [
-        "android/hardware/neuralnetworks/1.0/ADevice.cpp",
-        "android/hardware/neuralnetworks/1.0/AEvent.cpp",
-        "android/hardware/neuralnetworks/1.0/APreparedModel.cpp",
-    ],
-}
-
-genrule {
-    name: "android.hardware.neuralnetworks@1.0-adapter-helper_genc++_headers",
-    tools: ["hidl-gen"],
-    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-headers -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.neuralnetworks@1.0",
-    srcs: [
-        ":android.hardware.neuralnetworks@1.0_hal",
-    ],
-    out: [
-        "android/hardware/neuralnetworks/1.0/ADevice.h",
-        "android/hardware/neuralnetworks/1.0/AEvent.h",
-        "android/hardware/neuralnetworks/1.0/APreparedModel.h",
-    ],
-}
-
-
-cc_library {
-    name: "android.hardware.neuralnetworks@1.0-adapter-helper",
-    defaults: ["hidl-module-defaults"],
-    generated_sources: ["android.hardware.neuralnetworks@1.0-adapter-helper_genc++"],
-    generated_headers: ["android.hardware.neuralnetworks@1.0-adapter-helper_genc++_headers"],
-    export_generated_headers: ["android.hardware.neuralnetworks@1.0-adapter-helper_genc++_headers"],
-    vendor_available: true,
-    shared_libs: [
-        "libhidlbase",
-        "libhidltransport",
-        "libhwbinder",
-        "liblog",
-        "libutils",
-        "libcutils",
-        "libhidladapter",
-        "android.hardware.neuralnetworks@1.0",
-        "android.hidl.base@1.0-adapter-helper",
-    ],
-    export_shared_lib_headers: [
-        "libhidlbase",
-        "libhidltransport",
-        "libhwbinder",
-        "libutils",
-        "libhidladapter",
-        "android.hardware.neuralnetworks@1.0",
-        "android.hidl.base@1.0-adapter-helper",
-    ],
-}
-
-genrule {
-    name: "android.hardware.neuralnetworks@1.0-adapter_genc++",
-    tools: ["hidl-gen"],
-    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-main -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.neuralnetworks@1.0",
-    out: ["main.cpp"]
-}
-
-cc_test {
-    name: "android.hardware.neuralnetworks@1.0-adapter",
-    shared_libs: [
-        "libhidladapter",
-        "libhidlbase",
-        "libhidltransport",
-        "libutils",
-        "android.hardware.neuralnetworks@1.0",
-        "android.hardware.neuralnetworks@1.0-adapter-helper",
-    ],
-    generated_sources: ["android.hardware.neuralnetworks@1.0-adapter_genc++"],
 }

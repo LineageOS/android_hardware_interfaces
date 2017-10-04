@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "Event.h"
+#include "Callbacks.h"
 #include "TestHarness.h"
 #include "VtsHalNeuralnetworksV1_0TargetTest.h"
 
@@ -32,7 +32,8 @@ namespace functional {
 hidl_memory allocateSharedMemory(int64_t size, const std::string& type = "ashmem");
 
 namespace generated_tests {
-using ::android::hardware::neuralnetworks::V1_0::implementation::Event;
+using ::android::hardware::neuralnetworks::V1_0::implementation::ExecutionCallback;
+using ::android::hardware::neuralnetworks::V1_0::implementation::PreparedModelCallback;
 using ::generated_tests::filter;
 using ::generated_tests::for_all;
 using ::generated_tests::for_each;
@@ -65,22 +66,22 @@ void copy_back(MixedTyped* dst, const std::vector<RequestArgument>& ra, char* sr
 void Execute(const sp<IDevice>& device, std::function<Model(void)> create_model,
              std::function<bool(int)> is_ignored,
              const std::vector<MixedTypedExampleType>& examples) {
-    Model model = create_model();
-    sp<IPreparedModel> preparedModel;
-    sp<Event> preparationEvent = new Event();
-    ASSERT_NE(nullptr, preparationEvent.get());
-    Return<void> prepareRet = device->prepareModel(
-        model, preparationEvent, [&](ErrorStatus status, const sp<IPreparedModel>& prepared) {
-            EXPECT_EQ(ErrorStatus::NONE, status);
-            preparedModel = prepared;
-        });
-    ASSERT_TRUE(prepareRet.isOk());
-    ASSERT_NE(nullptr, preparedModel.get());
-    Event::Status preparationStatus = preparationEvent->wait();
-    EXPECT_EQ(Event::Status::SUCCESS, preparationStatus);
-
     const uint32_t INPUT = 0;
     const uint32_t OUTPUT = 1;
+    Model model = create_model();
+
+    // launch prepare model
+    sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
+    ASSERT_NE(nullptr, preparedModelCallback.get());
+    Return<ErrorStatus> prepareLaunchStatus = device->prepareModel(model, preparedModelCallback);
+    ASSERT_TRUE(prepareLaunchStatus.isOk());
+
+    // retrieve prepared model
+    preparedModelCallback->wait();
+    ErrorStatus prepareReturnStatus = preparedModelCallback->getStatus();
+    EXPECT_EQ(ErrorStatus::NONE, prepareReturnStatus);
+    sp<IPreparedModel> preparedModel = preparedModelCallback->getPreparedModel();
+    ASSERT_NE(nullptr, preparedModel.get());
 
     int example_no = 1;
     for (auto& example : examples) {
@@ -160,15 +161,19 @@ void Execute(const sp<IDevice>& device, std::function<Model(void)> create_model,
 
         inputMemory->commit();
         outputMemory->commit();
-        // execute request
-        sp<Event> executionEvent = new Event();
-        ASSERT_NE(nullptr, executionEvent.get());
-        Return<ErrorStatus> executeStatus = preparedModel->execute(
-            {.inputs = inputs_info, .outputs = outputs_info, .pools = pools}, executionEvent);
-        ASSERT_TRUE(executeStatus.isOk());
-        EXPECT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(executeStatus));
-        Event::Status eventStatus = executionEvent->wait();
-        EXPECT_EQ(Event::Status::SUCCESS, eventStatus);
+
+        // launch execution
+        sp<ExecutionCallback> executionCallback = new ExecutionCallback();
+        ASSERT_NE(nullptr, executionCallback.get());
+        Return<ErrorStatus> executionLaunchStatus = preparedModel->execute(
+            {.inputs = inputs_info, .outputs = outputs_info, .pools = pools}, executionCallback);
+        ASSERT_TRUE(executionLaunchStatus.isOk());
+        EXPECT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(executionLaunchStatus));
+
+        // retrieve execution status
+        executionCallback->wait();
+        ErrorStatus executionReturnStatus = executionCallback->getStatus();
+        EXPECT_EQ(ErrorStatus::NONE, executionReturnStatus);
 
         // validate results
         outputMemory->read();

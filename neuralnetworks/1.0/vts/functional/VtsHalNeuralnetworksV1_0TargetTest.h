@@ -18,7 +18,9 @@
 #define VTS_HAL_NEURALNETWORKS_V1_0_TARGET_TESTS_H
 
 #include <android/hardware/neuralnetworks/1.0/IDevice.h>
+#include <android/hardware/neuralnetworks/1.0/IExecutionCallback.h>
 #include <android/hardware/neuralnetworks/1.0/IPreparedModel.h>
+#include <android/hardware/neuralnetworks/1.0/IPreparedModelCallback.h>
 #include <android/hardware/neuralnetworks/1.0/types.h>
 #include <android/hidl/allocator/1.0/IAllocator.h>
 
@@ -72,13 +74,28 @@ class NeuralnetworksHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     void SetUp() override;
     void TearDown() override;
 
-    sp<IPreparedModel> doPrepareModelShortcut(const Model& model);
+    sp<IPreparedModel> doPrepareModelShortcut();
 
     sp<IDevice> device;
 };
 
 }  // namespace functional
 }  // namespace vts
+
+// pretty-print values for error messages
+
+template<typename CharT, typename Traits>
+::std::basic_ostream<CharT, Traits>& operator<<(::std::basic_ostream<CharT, Traits>& os,
+                                                ErrorStatus errorStatus) {
+    return os << toString(errorStatus);
+}
+
+template<typename CharT, typename Traits>
+::std::basic_ostream<CharT, Traits>& operator<<(::std::basic_ostream<CharT, Traits>& os,
+                                                DeviceStatus deviceStatus) {
+    return os << toString(deviceStatus);
+}
+
 }  // namespace V1_0
 }  // namespace neuralnetworks
 }  // namespace hardware

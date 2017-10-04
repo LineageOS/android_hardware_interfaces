@@ -35,7 +35,7 @@ static constexpr uint32_t kMaxGscanFrequenciesForBand = 64;
 static constexpr uint32_t kLinkLayerStatsDataMpduSizeThreshold = 128;
 static constexpr uint32_t kMaxWakeReasonStatsArraySize = 32;
 static constexpr uint32_t kMaxRingBuffers = 10;
-static constexpr uint32_t kMaxStopCompleteWaitMs = 50;
+static constexpr uint32_t kMaxStopCompleteWaitMs = 100;
 
 // Helper function to create a non-const char* for legacy Hal API's.
 std::vector<char> makeCharVec(const std::string& str) {

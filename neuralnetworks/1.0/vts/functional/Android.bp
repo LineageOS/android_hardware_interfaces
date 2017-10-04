@@ -17,7 +17,7 @@
 cc_test {
     name: "VtsHalNeuralnetworksV1_0TargetTest",
     srcs: [
-        "Event.cpp",
+        "Callbacks.cpp",
         "GeneratedTestHarness.cpp",
         "Models.cpp",
         "VtsHalNeuralnetworksV1_0TargetTest.cpp",
