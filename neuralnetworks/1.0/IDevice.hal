@@ -16,8 +16,7 @@
 
 package android.hardware.neuralnetworks@1.0;
 
-import IEvent;
-import IPreparedModel;
+import IPreparedModelCallback;
 
 /**
  * This interface represents a device driver.
@@ -37,10 +36,9 @@ interface IDevice {
     /**
      * Gets the supported operations in a model.
      *
-     * getSupportedSubgraph provides a more nuanced indication on whether a
-     * model is able to be compiled by the driver. Having the entire model
-     * allows for additional information such as tensor shapes to inputs or
-     * tensor strides, information which is not known in "initialize".
+     * getSupportedSubgraph indicates which operations of a model are fully
+     * supported by the vendor driver. If an operation may not be supported for
+     * any reason, getSupportedOperations must return false for that operation.
      *
      * @param model A model whose operations--and their corresponding
      *              operands--are to be verified by the driver.
@@ -48,7 +46,7 @@ interface IDevice {
      *                - NONE if successful
      *                - DEVICE_UNAVAILABLE if driver is offline or busy
      *                - GENERAL_FAILURE if there is an unspecified error
-     *                - INVALID_ARGUMENT when provided model is invalid
+     *                - INVALID_ARGUMENT if provided model is invalid
      * @return supportedOperations A list of supported operations, where true
      *                             indicates the operation is supported and
      *                             false indicates the operation is not
@@ -60,29 +58,60 @@ interface IDevice {
                 generates (ErrorStatus status, vec<bool> supportedOperations);
 
     /**
-     * Prepares a model for execution.
+     * Creates a prepared model for execution.
      *
      * prepareModel is used to make any necessary transformations or alternative
-     * representations to a model for execution, possible including
+     * representations to a model for execution, possiblly including
      * transformations on the constant data, optimization on the model's graph,
-     * or compilation into the device's native binary format.
+     * or compilation into the device's native binary format. The model itself
+     * is not changed.
+     *
+     * The model is prepared asynchronously with respect to the caller. The
+     * prepareModel function must verify the inputs to the prepareModel function
+     * are correct. If there is an error, prepareModel must immediately invoke
+     * the callback with the appropriate ErrorStatus value and nullptr for the
+     * IPreparedModel, then return with the same ErrorStatus. If the inputs to
+     * the prepareModel function are valid and there is no error, prepareModel
+     * must launch an asynchronous task to prepare the model in the background,
+     * and immediately return from prepareModel with ErrorStatus::NONE. If the
+     * asynchronous task fails to launch, prepareModel must immediately invoke
+     * the callback with ErrorStatus::GENERAL_FAILURE and nullptr for the
+     * IPreparedModel, then return with ErrorStatus::GENERAL_FAILURE.
+     *
+     * When the asynchronous task has finished preparing the model, it must
+     * immediately invoke the callback function provided as an input to
+     * prepareModel. If the model was prepared successfully, the callback object
+     * must be invoked with an error status of ErrorStatus::NONE and the
+     * produced IPreparedModel object. If an error occurred preparing the model,
+     * the callback object must be invoked with the appropriate ErrorStatus
+     * value and nullptr for the IPreparedModel.
      *
      * The only information that may be unknown to the model at this stage is
-     * the shape of the tensors, which may only be known at execution time.
+     * the shape of the tensors, which may only be known at execution time. As
+     * such, some driver services may return partially prepared models, where
+     * the prepared model can only be finished when it is paired with a set of
+     * inputs to the model. Note that the same prepared model object can be
+     * used with different shapes of inputs on different (possibly concurrent)
+     * executions.
+     *
+     * Multiple threads can call prepareModel on the same model concurrently.
      *
      * @param model The model to be prepared for execution.
-     * @param event A synchronization callback that must be signaled once the
-     *              execution has finished.
-     * @return status Error status of the call, must be:
+     * @param callback A callback object used to return the error status of
+     *                 preparing the model for execution and the prepared model
+     *                 if successful, nullptr otherwise. The callback object's
+     *                 notify function must be called exactly once, even if the
+     *                 model could not be prepared.
+     * @return status Error status of launching a task which prepares the model
+     *                in the background; must be:
      *                - NONE if preparation task is successfully launched
      *                - DEVICE_UNAVAILABLE if driver is offline or busy
      *                - GENERAL_FAILURE if there is an unspecified error
-     *                - INVALID_ARGUMENT when one of the input arguments is
+     *                - INVALID_ARGUMENT if one of the input arguments is
      *                  invalid
-     * @return preparedModel A handle to the resultant prepared model.
      */
-    prepareModel(Model model, IEvent event)
-      generates (ErrorStatus status, IPreparedModel preparedModel);
+    prepareModel(Model model, IPreparedModelCallback callback)
+      generates (ErrorStatus status);
 
     /**
      * Returns the current status of a driver.
