@@ -131,14 +131,17 @@ void Execute(const sp<IDevice>& device, std::function<Model(void)> create_model,
                 .location = {.poolIndex = INPUT, .offset = 0, .length = static_cast<uint32_t>(s)},
                 .dimensions = {},
             };
-            inputs_info[index] = arg;
+            RequestArgument arg_empty = {
+                .hasNoValue = true,
+            };
+            inputs_info[index] = s ? arg : arg_empty;
             inputSize += s;
         });
         // Compute offset for inputs 1 and so on
         {
             size_t offset = 0;
             for (auto& i : inputs_info) {
-                i.location.offset = offset;
+                if (!i.hasNoValue) i.location.offset = offset;
                 offset += i.location.length;
             }
         }
