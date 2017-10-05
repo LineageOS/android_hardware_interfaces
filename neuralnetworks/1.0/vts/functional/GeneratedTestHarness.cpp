@@ -100,6 +100,17 @@ void Execute(const sp<IDevice>& device, std::function<Model(void)> create_model,
         EXPECT_TRUE(prepareReturnStatus == ErrorStatus::NONE ||
                     prepareReturnStatus == ErrorStatus::GENERAL_FAILURE);
     }
+
+    // early termination if vendor service cannot fully prepare model
+    if (!fullySupportsModel && prepareReturnStatus == ErrorStatus::GENERAL_FAILURE) {
+        ASSERT_EQ(nullptr, preparedModel.get());
+        LOG(INFO) << "NN VTS: Early termination of test because vendor service cannot "
+                     "prepare model that it does not support.";
+        std::cout << "[          ]   Early termination of test because vendor service cannot "
+                     "prepare model that it does not support."
+                  << std::endl;
+        return;
+    }
     ASSERT_NE(nullptr, preparedModel.get());
 
     int example_no = 1;
@@ -192,17 +203,6 @@ void Execute(const sp<IDevice>& device, std::function<Model(void)> create_model,
         // retrieve execution status
         executionCallback->wait();
         ErrorStatus executionReturnStatus = executionCallback->getStatus();
-        if (!fullySupportsModel &&
-            static_cast<ErrorStatus>(executionReturnStatus) == ErrorStatus::GENERAL_FAILURE) {
-            LOG(INFO) << "Ignoring execution results from model that is not supported by the "
-                         "vendor service driver";
-            std::cout << "[          ]   Ignoring execution results from model that is not "
-                         "supported by the vendor service driver"
-                      << std::endl;
-            continue;
-        }
-        LOG(INFO) << "CONTINUING TO CHECK VALUE";
-        std::cout << "[          ]   CONTINUING TO CHECK VALUE" << std::endl;
         EXPECT_EQ(ErrorStatus::NONE, executionReturnStatus);
 
         // validate results
