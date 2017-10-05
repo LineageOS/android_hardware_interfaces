@@ -1015,12 +1015,16 @@ enum DeviceStatus : int32_t {
  */
 struct PerformanceInfo {
     /**
-     * Execution time in nanoseconds.
+     * Ratio of the time taken by the driver to execute the
+     * workload compared to the time the CPU would take for the
+     * same workload. A lower number is better.
      */
     float execTime;
 
     /**
-     * Power usage in picoJoules.
+     * Ratio of the energy used by the driver compared to what
+     * the CPU would use for doing the same workload. A lower number
+     * is better.
      */
     float powerUsage;
 };
