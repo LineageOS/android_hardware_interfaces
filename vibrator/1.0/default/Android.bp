@@ -31,6 +31,7 @@ cc_library_shared {
 
 cc_binary {
     name: "android.hardware.vibrator@1.0-service",
+    defaults: ["hidl_defaults"],
     init_rc: ["android.hardware.vibrator@1.0-service.rc"],
     vendor: true,
     relative_install_path: "hw",

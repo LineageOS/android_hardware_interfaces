@@ -30,6 +30,8 @@ using android::hardware::tests::extension::light::V2_0::implementation::Light;
 int main() {
     android::sp<ILight> service = new Light();
     configureRpcThreadpool(1, true /*callerWillJoin*/);
-    service->registerAsService();
+    if (service->registerAsService() != android::OK) {
+        exit(1);
+    }
     joinRpcThreadpool();
 }
