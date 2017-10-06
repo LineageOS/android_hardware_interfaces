@@ -19,7 +19,6 @@
 #include <mutex>
 
 #include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/health/2.0/IHealth.h>
 #include <android/hardware/health/2.0/types.h>
