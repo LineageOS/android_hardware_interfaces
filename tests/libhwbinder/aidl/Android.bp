@@ -1,5 +1,6 @@
 cc_library_shared {
     name: "android.hardware.tests.libbinder",
+    defaults: ["hidl_defaults"],
 
     srcs: ["android/tests/binder/IBenchmark.aidl"],
 

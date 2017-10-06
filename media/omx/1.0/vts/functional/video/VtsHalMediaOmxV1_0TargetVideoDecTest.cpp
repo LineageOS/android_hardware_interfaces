@@ -857,20 +857,6 @@ TEST_F(VideoDecHidlTest, DecodeTest) {
     status = setPortBufferSize(omxNode, kPortIndexInput, maxBytesCount);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 
-    // Change the port modes arbitrarily at the start before finialising on the
-    // desired values.
-    PortMode dummyPM[] = {
-        PortMode::PRESET_BYTE_BUFFER,    PortMode::PRESET_ANW_BUFFER,
-        PortMode::PRESET_SECURE_BUFFER,  PortMode::DYNAMIC_ANW_BUFFER,
-        PortMode::DYNAMIC_NATIVE_HANDLE,
-    };
-    for (size_t k = 0; k < sizeof(dummyPM) / sizeof(dummyPM[0]); k++) {
-        // ports may or may not support these modes. These are not the final
-        // values. This init is done to test if causes any problems.
-        status = omxNode->setPortMode(kPortIndexInput, dummyPM[k]);
-        status = omxNode->setPortMode(kPortIndexOutput, dummyPM[k]);
-    }
-
     // set port mode
     portMode[0] = PortMode::PRESET_BYTE_BUFFER;
     portMode[1] = PortMode::DYNAMIC_ANW_BUFFER;

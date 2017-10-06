@@ -186,6 +186,7 @@ genrule {
 
 cc_test {
     name: "android.hardware.audio@2.0-adapter",
+    defaults: ["hidl-module-defaults"],
     shared_libs: [
         "libhidladapter",
         "libhidlbase",

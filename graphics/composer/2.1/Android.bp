@@ -150,6 +150,7 @@ genrule {
 
 cc_test {
     name: "android.hardware.graphics.composer@2.1-adapter",
+    defaults: ["hidl-module-defaults"],
     shared_libs: [
         "libhidladapter",
         "libhidlbase",
