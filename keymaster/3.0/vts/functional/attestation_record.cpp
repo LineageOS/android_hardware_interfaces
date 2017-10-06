@@ -274,10 +274,12 @@ ErrorCode parse_attestation_record(const uint8_t* asn1_key_desc, size_t asn1_key
     *keymaster_security_level =
         static_cast<SecurityLevel>(ASN1_ENUMERATED_get(record->keymaster_security_level));
 
-    attestation_challenge->setToExternal(record->attestation_challenge->data,
-                                         record->attestation_challenge->length);
-
-    unique_id->setToExternal(record->unique_id->data, record->unique_id->length);
+    auto& chall = record->attestation_challenge;
+    attestation_challenge->resize(chall->length);
+    memcpy(attestation_challenge->data(), chall->data, chall->length);
+    auto& uid = record->unique_id;
+    unique_id->resize(uid->length);
+    memcpy(unique_id->data(), uid->data, uid->length);
 
     ErrorCode error = extract_auth_list(record->software_enforced, software_enforced);
     if (error != ErrorCode::OK) return error;
