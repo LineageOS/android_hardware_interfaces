@@ -412,12 +412,12 @@ std::pair<WifiStatus, uint32_t> WifiChip::getCapabilitiesInternal() {
   uint32_t legacy_feature_set;
   uint32_t legacy_logger_feature_set;
   std::tie(legacy_status, legacy_feature_set) =
-      legacy_hal_.lock()->getSupportedFeatureSet();
+      legacy_hal_.lock()->getSupportedFeatureSet(getWlan0IfaceName());
   if (legacy_status != legacy_hal::WIFI_SUCCESS) {
     return {createWifiStatusFromLegacyError(legacy_status), 0};
   }
   std::tie(legacy_status, legacy_logger_feature_set) =
-      legacy_hal_.lock()->getLoggerSupportedFeatureSet();
+      legacy_hal_.lock()->getLoggerSupportedFeatureSet(getWlan0IfaceName());
   if (legacy_status != legacy_hal::WIFI_SUCCESS) {
     return {createWifiStatusFromLegacyError(legacy_status), 0};
   }
@@ -503,7 +503,8 @@ WifiChip::requestChipDebugInfoInternal() {
   IWifiChip::ChipDebugInfo result;
   legacy_hal::wifi_error legacy_status;
   std::string driver_desc;
-  std::tie(legacy_status, driver_desc) = legacy_hal_.lock()->getDriverVersion();
+  std::tie(legacy_status, driver_desc) =
+      legacy_hal_.lock()->getDriverVersion(getWlan0IfaceName());
   if (legacy_status != legacy_hal::WIFI_SUCCESS) {
     LOG(ERROR) << "Failed to get driver version: "
                << legacyErrorToString(legacy_status);
@@ -515,7 +516,7 @@ WifiChip::requestChipDebugInfoInternal() {
 
   std::string firmware_desc;
   std::tie(legacy_status, firmware_desc) =
-      legacy_hal_.lock()->getFirmwareVersion();
+      legacy_hal_.lock()->getFirmwareVersion(getWlan0IfaceName());
   if (legacy_status != legacy_hal::WIFI_SUCCESS) {
     LOG(ERROR) << "Failed to get firmware version: "
                << legacyErrorToString(legacy_status);
@@ -533,7 +534,7 @@ WifiChip::requestDriverDebugDumpInternal() {
   legacy_hal::wifi_error legacy_status;
   std::vector<uint8_t> driver_dump;
   std::tie(legacy_status, driver_dump) =
-      legacy_hal_.lock()->requestDriverMemoryDump();
+      legacy_hal_.lock()->requestDriverMemoryDump(getWlan0IfaceName());
   if (legacy_status != legacy_hal::WIFI_SUCCESS) {
     LOG(ERROR) << "Failed to get driver debug dump: "
                << legacyErrorToString(legacy_status);
@@ -548,7 +549,7 @@ WifiChip::requestFirmwareDebugDumpInternal() {
   legacy_hal::wifi_error legacy_status;
   std::vector<uint8_t> firmware_dump;
   std::tie(legacy_status, firmware_dump) =
-      legacy_hal_.lock()->requestFirmwareMemoryDump();
+      legacy_hal_.lock()->requestFirmwareMemoryDump(getWlan0IfaceName());
   if (legacy_status != legacy_hal::WIFI_SUCCESS) {
     LOG(ERROR) << "Failed to get firmware debug dump: "
                << legacyErrorToString(legacy_status);
@@ -751,7 +752,7 @@ WifiChip::getDebugRingBuffersStatusInternal() {
   std::vector<legacy_hal::wifi_ring_buffer_status>
       legacy_ring_buffer_status_vec;
   std::tie(legacy_status, legacy_ring_buffer_status_vec) =
-      legacy_hal_.lock()->getRingBuffersStatus();
+      legacy_hal_.lock()->getRingBuffersStatus(getWlan0IfaceName());
   if (legacy_status != legacy_hal::WIFI_SUCCESS) {
     return {createWifiStatusFromLegacyError(legacy_status), {}};
   }
@@ -775,6 +776,7 @@ WifiStatus WifiChip::startLoggingToDebugRingBufferInternal(
   }
   legacy_hal::wifi_error legacy_status =
       legacy_hal_.lock()->startRingBufferLogging(
+          getWlan0IfaceName(),
           ring_name,
           static_cast<
               std::underlying_type<WifiDebugRingBufferVerboseLevel>::type>(
@@ -791,13 +793,14 @@ WifiStatus WifiChip::forceDumpToDebugRingBufferInternal(
     return status;
   }
   legacy_hal::wifi_error legacy_status =
-      legacy_hal_.lock()->getRingBufferData(ring_name);
+      legacy_hal_.lock()->getRingBufferData(getWlan0IfaceName(), ring_name);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
 WifiStatus WifiChip::stopLoggingToDebugRingBufferInternal() {
   legacy_hal::wifi_error legacy_status =
-      legacy_hal_.lock()->deregisterRingBufferCallbackHandler();
+      legacy_hal_.lock()->deregisterRingBufferCallbackHandler(
+          getWlan0IfaceName());
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
@@ -806,7 +809,7 @@ WifiChip::getDebugHostWakeReasonStatsInternal() {
   legacy_hal::wifi_error legacy_status;
   legacy_hal::WakeReasonStats legacy_stats;
   std::tie(legacy_status, legacy_stats) =
-      legacy_hal_.lock()->getWakeReasonStats();
+      legacy_hal_.lock()->getWakeReasonStats(getWlan0IfaceName());
   if (legacy_status != legacy_hal::WIFI_SUCCESS) {
     return {createWifiStatusFromLegacyError(legacy_status), {}};
   }
@@ -835,22 +838,27 @@ WifiStatus WifiChip::enableDebugErrorAlertsInternal(bool enable) {
         }
       }
     };
-    legacy_status = legacy_hal_.lock()->registerErrorAlertCallbackHandler(
-        on_alert_callback);
+    legacy_status =
+        legacy_hal_.lock()->registerErrorAlertCallbackHandler(
+            getWlan0IfaceName(), on_alert_callback);
   } else {
-    legacy_status = legacy_hal_.lock()->deregisterErrorAlertCallbackHandler();
+    legacy_status =
+        legacy_hal_.lock()->deregisterErrorAlertCallbackHandler(
+            getWlan0IfaceName());
   }
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
 WifiStatus WifiChip::selectTxPowerScenarioInternal(TxPowerScenario scenario) {
   auto legacy_status = legacy_hal_.lock()->selectTxPowerScenario(
+      getWlan0IfaceName(),
       hidl_struct_util::convertHidlTxPowerScenarioToLegacy(scenario));
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
 WifiStatus WifiChip::resetTxPowerScenarioInternal() {
-  auto legacy_status = legacy_hal_.lock()->resetTxPowerScenario();
+  auto legacy_status =
+      legacy_hal_.lock()->resetTxPowerScenario(getWlan0IfaceName());
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
@@ -913,7 +921,7 @@ WifiStatus WifiChip::registerDebugRingBufferCallback() {
   };
   legacy_hal::wifi_error legacy_status =
       legacy_hal_.lock()->registerRingBufferCallbackHandler(
-          on_ring_buffer_data_callback);
+          getWlan0IfaceName(), on_ring_buffer_data_callback);
 
   if (legacy_status == legacy_hal::WIFI_SUCCESS) {
     debug_ring_buffer_cb_registered_ = true;

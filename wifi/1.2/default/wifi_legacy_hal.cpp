@@ -322,7 +322,6 @@ void onAysncNanEventRangeReport(NanRangeReportInd* event) {
 
 WifiLegacyHal::WifiLegacyHal()
     : global_handle_(nullptr),
-      wlan_interface_handle_(nullptr),
       awaiting_event_loop_termination_(false),
       is_started_(false) {}
 
@@ -344,7 +343,7 @@ wifi_error WifiLegacyHal::initialize() {
 wifi_error WifiLegacyHal::start() {
   // Ensure that we're starting in a good state.
   CHECK(global_func_table_.wifi_initialize && !global_handle_ &&
-        !wlan_interface_handle_ && !awaiting_event_loop_termination_);
+        iface_name_to_handle_.empty() && !awaiting_event_loop_termination_);
   if (is_started_) {
     LOG(DEBUG) << "Legacy HAL already started";
     return WIFI_SUCCESS;
@@ -360,8 +359,8 @@ wifi_error WifiLegacyHal::start() {
     return status;
   }
   std::thread(&WifiLegacyHal::runEventLoop, this).detach();
-  status = retrieveWlanInterfaceHandle();
-  if (status != WIFI_SUCCESS || !wlan_interface_handle_) {
+  status = retrieveIfaceHandles();
+  if (status != WIFI_SUCCESS || iface_name_to_handle_.empty()) {
     LOG(ERROR) << "Failed to retrieve wlan interface handle";
     return status;
   }
@@ -403,24 +402,27 @@ wifi_error WifiLegacyHal::stop(
   return WIFI_SUCCESS;
 }
 
-std::pair<wifi_error, std::string> WifiLegacyHal::getDriverVersion() {
+std::pair<wifi_error, std::string> WifiLegacyHal::getDriverVersion(
+    const std::string& iface_name) {
   std::array<char, kMaxVersionStringLength> buffer;
   buffer.fill(0);
   wifi_error status = global_func_table_.wifi_get_driver_version(
-      wlan_interface_handle_, buffer.data(), buffer.size());
+      getIfaceHandle(iface_name), buffer.data(), buffer.size());
   return {status, buffer.data()};
 }
 
-std::pair<wifi_error, std::string> WifiLegacyHal::getFirmwareVersion() {
+std::pair<wifi_error, std::string> WifiLegacyHal::getFirmwareVersion(
+    const std::string& iface_name) {
   std::array<char, kMaxVersionStringLength> buffer;
   buffer.fill(0);
   wifi_error status = global_func_table_.wifi_get_firmware_version(
-      wlan_interface_handle_, buffer.data(), buffer.size());
+      getIfaceHandle(iface_name), buffer.data(), buffer.size());
   return {status, buffer.data()};
 }
 
 std::pair<wifi_error, std::vector<uint8_t>>
-WifiLegacyHal::requestDriverMemoryDump() {
+WifiLegacyHal::requestDriverMemoryDump(
+    const std::string& iface_name) {
   std::vector<uint8_t> driver_dump;
   on_driver_memory_dump_internal_callback = [&driver_dump](char* buffer,
                                                            int buffer_size) {
@@ -429,13 +431,13 @@ WifiLegacyHal::requestDriverMemoryDump() {
                        reinterpret_cast<uint8_t*>(buffer) + buffer_size);
   };
   wifi_error status = global_func_table_.wifi_get_driver_memory_dump(
-      wlan_interface_handle_, {onSyncDriverMemoryDump});
+      getIfaceHandle(iface_name), {onSyncDriverMemoryDump});
   on_driver_memory_dump_internal_callback = nullptr;
   return {status, std::move(driver_dump)};
 }
 
 std::pair<wifi_error, std::vector<uint8_t>>
-WifiLegacyHal::requestFirmwareMemoryDump() {
+WifiLegacyHal::requestFirmwareMemoryDump(const std::string& iface_name) {
   std::vector<uint8_t> firmware_dump;
   on_firmware_memory_dump_internal_callback = [&firmware_dump](
       char* buffer, int buffer_size) {
@@ -444,42 +446,45 @@ WifiLegacyHal::requestFirmwareMemoryDump() {
                          reinterpret_cast<uint8_t*>(buffer) + buffer_size);
   };
   wifi_error status = global_func_table_.wifi_get_firmware_memory_dump(
-      wlan_interface_handle_, {onSyncFirmwareMemoryDump});
+      getIfaceHandle(iface_name), {onSyncFirmwareMemoryDump});
   on_firmware_memory_dump_internal_callback = nullptr;
   return {status, std::move(firmware_dump)};
 }
 
-std::pair<wifi_error, uint32_t> WifiLegacyHal::getSupportedFeatureSet() {
+std::pair<wifi_error, uint32_t> WifiLegacyHal::getSupportedFeatureSet(
+    const std::string& iface_name) {
   feature_set set;
   static_assert(sizeof(set) == sizeof(uint32_t),
                 "Some features can not be represented in output");
   wifi_error status = global_func_table_.wifi_get_supported_feature_set(
-      wlan_interface_handle_, &set);
+      getIfaceHandle(iface_name), &set);
   return {status, static_cast<uint32_t>(set)};
 }
 
 std::pair<wifi_error, PacketFilterCapabilities>
-WifiLegacyHal::getPacketFilterCapabilities() {
+WifiLegacyHal::getPacketFilterCapabilities(const std::string& iface_name) {
   PacketFilterCapabilities caps;
   wifi_error status = global_func_table_.wifi_get_packet_filter_capabilities(
-      wlan_interface_handle_, &caps.version, &caps.max_len);
+      getIfaceHandle(iface_name), &caps.version, &caps.max_len);
   return {status, caps};
 }
 
-wifi_error WifiLegacyHal::setPacketFilter(const std::vector<uint8_t>& program) {
+wifi_error WifiLegacyHal::setPacketFilter(
+    const std::string& iface_name, const std::vector<uint8_t>& program) {
   return global_func_table_.wifi_set_packet_filter(
-      wlan_interface_handle_, program.data(), program.size());
+      getIfaceHandle(iface_name), program.data(), program.size());
 }
 
 std::pair<wifi_error, wifi_gscan_capabilities>
-WifiLegacyHal::getGscanCapabilities() {
+WifiLegacyHal::getGscanCapabilities(const std::string& iface_name) {
   wifi_gscan_capabilities caps;
   wifi_error status = global_func_table_.wifi_get_gscan_capabilities(
-      wlan_interface_handle_, &caps);
+      getIfaceHandle(iface_name), &caps);
   return {status, caps};
 }
 
 wifi_error WifiLegacyHal::startGscan(
+    const std::string& iface_name,
     wifi_request_id id,
     const wifi_scan_cmd_params& params,
     const std::function<void(wifi_request_id)>& on_failure_user_callback,
@@ -494,7 +499,7 @@ wifi_error WifiLegacyHal::startGscan(
   // This callback will be used to either trigger |on_results_user_callback| or
   // |on_failure_user_callback|.
   on_gscan_event_internal_callback =
-      [on_failure_user_callback, on_results_user_callback, this](
+      [iface_name, on_failure_user_callback, on_results_user_callback, this](
           wifi_request_id id, wifi_scan_event event) {
         switch (event) {
           case WIFI_SCAN_RESULTS_AVAILABLE:
@@ -502,7 +507,8 @@ wifi_error WifiLegacyHal::startGscan(
           case WIFI_SCAN_THRESHOLD_PERCENT: {
             wifi_error status;
             std::vector<wifi_cached_scan_results> cached_scan_results;
-            std::tie(status, cached_scan_results) = getGscanCachedResults();
+            std::tie(status, cached_scan_results) =
+                getGscanCachedResults(iface_name);
             if (status == WIFI_SUCCESS) {
               on_results_user_callback(id, cached_scan_results);
               return;
@@ -529,7 +535,7 @@ wifi_error WifiLegacyHal::startGscan(
   wifi_scan_result_handler handler = {onAsyncGscanFullResult,
                                       onAsyncGscanEvent};
   wifi_error status = global_func_table_.wifi_start_gscan(
-      id, wlan_interface_handle_, params, handler);
+      id, getIfaceHandle(iface_name), params, handler);
   if (status != WIFI_SUCCESS) {
     on_gscan_event_internal_callback = nullptr;
     on_gscan_full_result_internal_callback = nullptr;
@@ -537,7 +543,8 @@ wifi_error WifiLegacyHal::startGscan(
   return status;
 }
 
-wifi_error WifiLegacyHal::stopGscan(wifi_request_id id) {
+wifi_error WifiLegacyHal::stopGscan(
+    const std::string& iface_name, wifi_request_id id) {
   // If there is no an ongoing background scan, reject stop requests.
   // TODO(b/32337212): This needs to be handled by the HIDL object because we
   // need to return the NOT_STARTED error code.
@@ -546,7 +553,7 @@ wifi_error WifiLegacyHal::stopGscan(wifi_request_id id) {
     return WIFI_ERROR_NOT_AVAILABLE;
   }
   wifi_error status =
-      global_func_table_.wifi_stop_gscan(id, wlan_interface_handle_);
+      global_func_table_.wifi_stop_gscan(id, getIfaceHandle(iface_name));
   // If the request Id is wrong, don't stop the ongoing background scan. Any
   // other error should be treated as the end of background scan.
   if (status != WIFI_ERROR_INVALID_REQUEST_ID) {
@@ -557,14 +564,15 @@ wifi_error WifiLegacyHal::stopGscan(wifi_request_id id) {
 }
 
 std::pair<wifi_error, std::vector<uint32_t>>
-WifiLegacyHal::getValidFrequenciesForBand(wifi_band band) {
+WifiLegacyHal::getValidFrequenciesForBand(
+    const std::string& iface_name, wifi_band band) {
   static_assert(sizeof(uint32_t) >= sizeof(wifi_channel),
                 "Wifi Channel cannot be represented in output");
   std::vector<uint32_t> freqs;
   freqs.resize(kMaxGscanFrequenciesForBand);
   int32_t num_freqs = 0;
   wifi_error status = global_func_table_.wifi_get_valid_channels(
-      wlan_interface_handle_,
+      getIfaceHandle(iface_name),
       band,
       freqs.size(),
       reinterpret_cast<wifi_channel*>(freqs.data()),
@@ -575,27 +583,31 @@ WifiLegacyHal::getValidFrequenciesForBand(wifi_band band) {
   return {status, std::move(freqs)};
 }
 
-wifi_error WifiLegacyHal::setDfsFlag(bool dfs_on) {
+wifi_error WifiLegacyHal::setDfsFlag(
+    const std::string& iface_name, bool dfs_on) {
   return global_func_table_.wifi_set_nodfs_flag(
-      wlan_interface_handle_, dfs_on ? 0 : 1);
+      getIfaceHandle(iface_name), dfs_on ? 0 : 1);
 }
 
-wifi_error WifiLegacyHal::enableLinkLayerStats(bool debug) {
+wifi_error WifiLegacyHal::enableLinkLayerStats(
+    const std::string& iface_name, bool debug) {
   wifi_link_layer_params params;
   params.mpdu_size_threshold = kLinkLayerStatsDataMpduSizeThreshold;
   params.aggressive_statistics_gathering = debug;
-  return global_func_table_.wifi_set_link_stats(wlan_interface_handle_, params);
+  return global_func_table_.wifi_set_link_stats(
+      getIfaceHandle(iface_name), params);
 }
 
-wifi_error WifiLegacyHal::disableLinkLayerStats() {
+wifi_error WifiLegacyHal::disableLinkLayerStats(const std::string& iface_name) {
   // TODO: Do we care about these responses?
   uint32_t clear_mask_rsp;
   uint8_t stop_rsp;
   return global_func_table_.wifi_clear_link_stats(
-      wlan_interface_handle_, 0xFFFFFFFF, &clear_mask_rsp, 1, &stop_rsp);
+      getIfaceHandle(iface_name), 0xFFFFFFFF, &clear_mask_rsp, 1, &stop_rsp);
 }
 
-std::pair<wifi_error, LinkLayerStats> WifiLegacyHal::getLinkLayerStats() {
+std::pair<wifi_error, LinkLayerStats> WifiLegacyHal::getLinkLayerStats(
+    const std::string& iface_name) {
   LinkLayerStats link_stats{};
   LinkLayerStats* link_stats_ptr = &link_stats;
 
@@ -632,12 +644,13 @@ std::pair<wifi_error, LinkLayerStats> WifiLegacyHal::getLinkLayerStats() {
       };
 
   wifi_error status = global_func_table_.wifi_get_link_stats(
-      0, wlan_interface_handle_, {onSyncLinkLayerStatsResult});
+      0, getIfaceHandle(iface_name), {onSyncLinkLayerStatsResult});
   on_link_layer_stats_result_internal_callback = nullptr;
   return {status, link_stats};
 }
 
 wifi_error WifiLegacyHal::startRssiMonitoring(
+    const std::string& iface_name,
     wifi_request_id id,
     int8_t max_rssi,
     int8_t min_rssi,
@@ -659,7 +672,7 @@ wifi_error WifiLegacyHal::startRssiMonitoring(
       };
   wifi_error status = global_func_table_.wifi_start_rssi_monitoring(
       id,
-      wlan_interface_handle_,
+      getIfaceHandle(iface_name),
       max_rssi,
       min_rssi,
       {onAsyncRssiThresholdBreached});
@@ -669,12 +682,14 @@ wifi_error WifiLegacyHal::startRssiMonitoring(
   return status;
 }
 
-wifi_error WifiLegacyHal::stopRssiMonitoring(wifi_request_id id) {
+wifi_error WifiLegacyHal::stopRssiMonitoring(
+    const std::string& iface_name, wifi_request_id id) {
   if (!on_rssi_threshold_breached_internal_callback) {
     return WIFI_ERROR_NOT_AVAILABLE;
   }
   wifi_error status =
-      global_func_table_.wifi_stop_rssi_monitoring(id, wlan_interface_handle_);
+      global_func_table_.wifi_stop_rssi_monitoring(
+          id, getIfaceHandle(iface_name));
   // If the request Id is wrong, don't stop the ongoing rssi monitoring. Any
   // other error should be treated as the end of background scan.
   if (status != WIFI_ERROR_INVALID_REQUEST_ID) {
@@ -684,30 +699,34 @@ wifi_error WifiLegacyHal::stopRssiMonitoring(wifi_request_id id) {
 }
 
 std::pair<wifi_error, wifi_roaming_capabilities>
-WifiLegacyHal::getRoamingCapabilities() {
+WifiLegacyHal::getRoamingCapabilities(const std::string& iface_name) {
   wifi_roaming_capabilities caps;
   wifi_error status = global_func_table_.wifi_get_roaming_capabilities(
-      wlan_interface_handle_, &caps);
+      getIfaceHandle(iface_name), &caps);
   return {status, caps};
 }
 
-wifi_error WifiLegacyHal::configureRoaming(const wifi_roaming_config& config) {
+wifi_error WifiLegacyHal::configureRoaming(
+    const std::string& iface_name, const wifi_roaming_config& config) {
   wifi_roaming_config config_internal = config;
-  return global_func_table_.wifi_configure_roaming(wlan_interface_handle_,
-                                                   &config_internal);
+  return global_func_table_.wifi_configure_roaming(
+      getIfaceHandle(iface_name), &config_internal);
 }
 
-wifi_error WifiLegacyHal::enableFirmwareRoaming(fw_roaming_state_t state) {
-  return global_func_table_.wifi_enable_firmware_roaming(wlan_interface_handle_,
-                                                         state);
+wifi_error WifiLegacyHal::enableFirmwareRoaming(
+    const std::string& iface_name, fw_roaming_state_t state) {
+  return global_func_table_.wifi_enable_firmware_roaming(
+      getIfaceHandle(iface_name), state);
 }
 
-wifi_error WifiLegacyHal::configureNdOffload(bool enable) {
-  return global_func_table_.wifi_configure_nd_offload(wlan_interface_handle_,
-                                                      enable);
+wifi_error WifiLegacyHal::configureNdOffload(
+    const std::string& iface_name, bool enable) {
+  return global_func_table_.wifi_configure_nd_offload(
+      getIfaceHandle(iface_name), enable);
 }
 
 wifi_error WifiLegacyHal::startSendingOffloadedPacket(
+    const std::string& iface_name,
     uint32_t cmd_id,
     const std::vector<uint8_t>& ip_packet_data,
     const std::array<uint8_t, 6>& src_address,
@@ -720,7 +739,7 @@ wifi_error WifiLegacyHal::startSendingOffloadedPacket(
       dst_address.data(), dst_address.data() + dst_address.size());
   return global_func_table_.wifi_start_sending_offloaded_packet(
       cmd_id,
-      wlan_interface_handle_,
+      getIfaceHandle(iface_name),
       ip_packet_data_internal.data(),
       ip_packet_data_internal.size(),
       src_address_internal.data(),
@@ -728,45 +747,51 @@ wifi_error WifiLegacyHal::startSendingOffloadedPacket(
       period_in_ms);
 }
 
-wifi_error WifiLegacyHal::stopSendingOffloadedPacket(uint32_t cmd_id) {
+wifi_error WifiLegacyHal::stopSendingOffloadedPacket(
+    const std::string& iface_name, uint32_t cmd_id) {
   return global_func_table_.wifi_stop_sending_offloaded_packet(
-      cmd_id, wlan_interface_handle_);
+      cmd_id, getIfaceHandle(iface_name));
 }
 
-wifi_error WifiLegacyHal::setScanningMacOui(const std::array<uint8_t, 3>& oui) {
+wifi_error WifiLegacyHal::setScanningMacOui(
+    const std::string& iface_name, const std::array<uint8_t, 3>& oui) {
   std::vector<uint8_t> oui_internal(oui.data(), oui.data() + oui.size());
-  return global_func_table_.wifi_set_scanning_mac_oui(wlan_interface_handle_,
-                                                      oui_internal.data());
+  return global_func_table_.wifi_set_scanning_mac_oui(
+      getIfaceHandle(iface_name), oui_internal.data());
 }
 
-wifi_error WifiLegacyHal::selectTxPowerScenario(wifi_power_scenario scenario) {
+wifi_error WifiLegacyHal::selectTxPowerScenario(
+    const std::string& iface_name, wifi_power_scenario scenario) {
   return global_func_table_.wifi_select_tx_power_scenario(
-      wlan_interface_handle_, scenario);
+      getIfaceHandle(iface_name), scenario);
 }
 
-wifi_error WifiLegacyHal::resetTxPowerScenario() {
-  return global_func_table_.wifi_reset_tx_power_scenario(wlan_interface_handle_);
+wifi_error WifiLegacyHal::resetTxPowerScenario(const std::string& iface_name) {
+  return global_func_table_.wifi_reset_tx_power_scenario(
+      getIfaceHandle(iface_name));
 }
 
-std::pair<wifi_error, uint32_t> WifiLegacyHal::getLoggerSupportedFeatureSet() {
+std::pair<wifi_error, uint32_t> WifiLegacyHal::getLoggerSupportedFeatureSet(
+    const std::string& iface_name) {
   uint32_t supported_features;
   wifi_error status = global_func_table_.wifi_get_logger_supported_feature_set(
-      wlan_interface_handle_, &supported_features);
+      getIfaceHandle(iface_name), &supported_features);
   return {status, supported_features};
 }
 
-wifi_error WifiLegacyHal::startPktFateMonitoring() {
+wifi_error WifiLegacyHal::startPktFateMonitoring(
+    const std::string& iface_name) {
   return global_func_table_.wifi_start_pkt_fate_monitoring(
-      wlan_interface_handle_);
+      getIfaceHandle(iface_name));
 }
 
 std::pair<wifi_error, std::vector<wifi_tx_report>>
-WifiLegacyHal::getTxPktFates() {
+WifiLegacyHal::getTxPktFates(const std::string& iface_name) {
   std::vector<wifi_tx_report> tx_pkt_fates;
   tx_pkt_fates.resize(MAX_FATE_LOG_LEN);
   size_t num_fates = 0;
   wifi_error status =
-      global_func_table_.wifi_get_tx_pkt_fates(wlan_interface_handle_,
+      global_func_table_.wifi_get_tx_pkt_fates(getIfaceHandle(iface_name),
                                                tx_pkt_fates.data(),
                                                tx_pkt_fates.size(),
                                                &num_fates);
@@ -776,12 +801,12 @@ WifiLegacyHal::getTxPktFates() {
 }
 
 std::pair<wifi_error, std::vector<wifi_rx_report>>
-WifiLegacyHal::getRxPktFates() {
+WifiLegacyHal::getRxPktFates(const std::string& iface_name) {
   std::vector<wifi_rx_report> rx_pkt_fates;
   rx_pkt_fates.resize(MAX_FATE_LOG_LEN);
   size_t num_fates = 0;
   wifi_error status =
-      global_func_table_.wifi_get_rx_pkt_fates(wlan_interface_handle_,
+      global_func_table_.wifi_get_rx_pkt_fates(getIfaceHandle(iface_name),
                                                rx_pkt_fates.data(),
                                                rx_pkt_fates.size(),
                                                &num_fates);
@@ -790,7 +815,8 @@ WifiLegacyHal::getRxPktFates() {
   return {status, std::move(rx_pkt_fates)};
 }
 
-std::pair<wifi_error, WakeReasonStats> WifiLegacyHal::getWakeReasonStats() {
+std::pair<wifi_error, WakeReasonStats> WifiLegacyHal::getWakeReasonStats(
+    const std::string& iface_name) {
   WakeReasonStats stats;
   stats.cmd_event_wake_cnt.resize(kMaxWakeReasonStatsArraySize);
   stats.driver_fw_local_wake_cnt.resize(kMaxWakeReasonStatsArraySize);
@@ -808,7 +834,7 @@ std::pair<wifi_error, WakeReasonStats> WifiLegacyHal::getWakeReasonStats() {
   stats.wake_reason_cnt.driver_fw_local_wake_cnt_used = 0;
 
   wifi_error status = global_func_table_.wifi_get_wake_reason_stats(
-      wlan_interface_handle_, &stats.wake_reason_cnt);
+      getIfaceHandle(iface_name), &stats.wake_reason_cnt);
 
   CHECK(stats.wake_reason_cnt.cmd_event_wake_cnt_used >= 0 &&
         static_cast<uint32_t>(stats.wake_reason_cnt.cmd_event_wake_cnt_used) <=
@@ -829,6 +855,7 @@ std::pair<wifi_error, WakeReasonStats> WifiLegacyHal::getWakeReasonStats() {
 }
 
 wifi_error WifiLegacyHal::registerRingBufferCallbackHandler(
+    const std::string& iface_name,
     const on_ring_buffer_data_callback& on_user_data_callback) {
   if (on_ring_buffer_data_internal_callback) {
     return WIFI_ERROR_NOT_AVAILABLE;
@@ -846,38 +873,38 @@ wifi_error WifiLegacyHal::registerRingBufferCallbackHandler(
     }
   };
   wifi_error status = global_func_table_.wifi_set_log_handler(
-      0, wlan_interface_handle_, {onAsyncRingBufferData});
+      0, getIfaceHandle(iface_name), {onAsyncRingBufferData});
   if (status != WIFI_SUCCESS) {
     on_ring_buffer_data_internal_callback = nullptr;
   }
   return status;
 }
 
-wifi_error WifiLegacyHal::deregisterRingBufferCallbackHandler() {
+wifi_error WifiLegacyHal::deregisterRingBufferCallbackHandler(
+    const std::string& iface_name) {
   if (!on_ring_buffer_data_internal_callback) {
     return WIFI_ERROR_NOT_AVAILABLE;
   }
   on_ring_buffer_data_internal_callback = nullptr;
-  return global_func_table_.wifi_reset_log_handler(0, wlan_interface_handle_);
+  return global_func_table_.wifi_reset_log_handler(0, getIfaceHandle(iface_name));
 }
 
 std::pair<wifi_error, std::vector<wifi_ring_buffer_status>>
-WifiLegacyHal::getRingBuffersStatus() {
+WifiLegacyHal::getRingBuffersStatus(const std::string& iface_name) {
   std::vector<wifi_ring_buffer_status> ring_buffers_status;
   ring_buffers_status.resize(kMaxRingBuffers);
   uint32_t num_rings = kMaxRingBuffers;
   wifi_error status = global_func_table_.wifi_get_ring_buffers_status(
-      wlan_interface_handle_, &num_rings, ring_buffers_status.data());
+      getIfaceHandle(iface_name), &num_rings, ring_buffers_status.data());
   CHECK(num_rings <= kMaxRingBuffers);
   ring_buffers_status.resize(num_rings);
   return {status, std::move(ring_buffers_status)};
 }
 
-wifi_error WifiLegacyHal::startRingBufferLogging(const std::string& ring_name,
-                                                 uint32_t verbose_level,
-                                                 uint32_t max_interval_sec,
-                                                 uint32_t min_data_size) {
-  return global_func_table_.wifi_start_logging(wlan_interface_handle_,
+wifi_error WifiLegacyHal::startRingBufferLogging(
+    const std::string& iface_name, const std::string& ring_name,
+    uint32_t verbose_level, uint32_t max_interval_sec, uint32_t min_data_size) {
+  return global_func_table_.wifi_start_logging(getIfaceHandle(iface_name),
                                                verbose_level,
                                                0,
                                                max_interval_sec,
@@ -885,12 +912,14 @@ wifi_error WifiLegacyHal::startRingBufferLogging(const std::string& ring_name,
                                                makeCharVec(ring_name).data());
 }
 
-wifi_error WifiLegacyHal::getRingBufferData(const std::string& ring_name) {
-  return global_func_table_.wifi_get_ring_data(wlan_interface_handle_,
+wifi_error WifiLegacyHal::getRingBufferData(
+    const std::string& iface_name, const std::string& ring_name) {
+  return global_func_table_.wifi_get_ring_data(getIfaceHandle(iface_name),
                                                makeCharVec(ring_name).data());
 }
 
 wifi_error WifiLegacyHal::registerErrorAlertCallbackHandler(
+    const std::string& iface_name,
     const on_error_alert_callback& on_user_alert_callback) {
   if (on_error_alert_internal_callback) {
     return WIFI_ERROR_NOT_AVAILABLE;
@@ -907,22 +936,24 @@ wifi_error WifiLegacyHal::registerErrorAlertCallbackHandler(
     }
   };
   wifi_error status = global_func_table_.wifi_set_alert_handler(
-      0, wlan_interface_handle_, {onAsyncErrorAlert});
+      0, getIfaceHandle(iface_name), {onAsyncErrorAlert});
   if (status != WIFI_SUCCESS) {
     on_error_alert_internal_callback = nullptr;
   }
   return status;
 }
 
-wifi_error WifiLegacyHal::deregisterErrorAlertCallbackHandler() {
+wifi_error WifiLegacyHal::deregisterErrorAlertCallbackHandler(
+    const std::string& iface_name) {
   if (!on_error_alert_internal_callback) {
     return WIFI_ERROR_NOT_AVAILABLE;
   }
   on_error_alert_internal_callback = nullptr;
-  return global_func_table_.wifi_reset_alert_handler(0, wlan_interface_handle_);
+  return global_func_table_.wifi_reset_alert_handler(0, getIfaceHandle(iface_name));
 }
 
 wifi_error WifiLegacyHal::startRttRangeRequest(
+    const std::string& iface_name,
     wifi_request_id id,
     const std::vector<wifi_rtt_config>& rtt_configs,
     const on_rtt_results_callback& on_results_user_callback) {
@@ -950,7 +981,7 @@ wifi_error WifiLegacyHal::startRttRangeRequest(
   std::vector<wifi_rtt_config> rtt_configs_internal(rtt_configs);
   wifi_error status =
       global_func_table_.wifi_rtt_range_request(id,
-                                                wlan_interface_handle_,
+                                                getIfaceHandle(iface_name),
                                                 rtt_configs.size(),
                                                 rtt_configs_internal.data(),
                                                 {onAsyncRttResults});
@@ -961,7 +992,8 @@ wifi_error WifiLegacyHal::startRttRangeRequest(
 }
 
 wifi_error WifiLegacyHal::cancelRttRangeRequest(
-    wifi_request_id id, const std::vector<std::array<uint8_t, 6>>& mac_addrs) {
+    const std::string& iface_name, wifi_request_id id,
+    const std::vector<std::array<uint8_t, 6>>& mac_addrs) {
   if (!on_rtt_results_internal_callback) {
     return WIFI_ERROR_NOT_AVAILABLE;
   }
@@ -972,7 +1004,7 @@ wifi_error WifiLegacyHal::cancelRttRangeRequest(
   std::vector<std::array<uint8_t, 6>> mac_addrs_internal(mac_addrs);
   wifi_error status = global_func_table_.wifi_rtt_range_cancel(
       id,
-      wlan_interface_handle_,
+      getIfaceHandle(iface_name),
       mac_addrs.size(),
       reinterpret_cast<mac_addr*>(mac_addrs_internal.data()));
   // If the request Id is wrong, don't stop the ongoing range request. Any
@@ -984,53 +1016,58 @@ wifi_error WifiLegacyHal::cancelRttRangeRequest(
 }
 
 std::pair<wifi_error, wifi_rtt_capabilities>
-WifiLegacyHal::getRttCapabilities() {
+WifiLegacyHal::getRttCapabilities(const std::string& iface_name) {
   wifi_rtt_capabilities rtt_caps;
   wifi_error status = global_func_table_.wifi_get_rtt_capabilities(
-      wlan_interface_handle_, &rtt_caps);
+      getIfaceHandle(iface_name), &rtt_caps);
   return {status, rtt_caps};
 }
 
-std::pair<wifi_error, wifi_rtt_responder> WifiLegacyHal::getRttResponderInfo() {
+std::pair<wifi_error, wifi_rtt_responder> WifiLegacyHal::getRttResponderInfo(
+    const std::string& iface_name) {
   wifi_rtt_responder rtt_responder;
   wifi_error status = global_func_table_.wifi_rtt_get_responder_info(
-      wlan_interface_handle_, &rtt_responder);
+      getIfaceHandle(iface_name), &rtt_responder);
   return {status, rtt_responder};
 }
 
 wifi_error WifiLegacyHal::enableRttResponder(
+    const std::string& iface_name,
     wifi_request_id id,
     const wifi_channel_info& channel_hint,
     uint32_t max_duration_secs,
     const wifi_rtt_responder& info) {
   wifi_rtt_responder info_internal(info);
   return global_func_table_.wifi_enable_responder(id,
-                                                  wlan_interface_handle_,
+                                                  getIfaceHandle(iface_name),
                                                   channel_hint,
                                                   max_duration_secs,
                                                   &info_internal);
 }
 
-wifi_error WifiLegacyHal::disableRttResponder(wifi_request_id id) {
-  return global_func_table_.wifi_disable_responder(id, wlan_interface_handle_);
+wifi_error WifiLegacyHal::disableRttResponder(
+    const std::string& iface_name, wifi_request_id id) {
+  return global_func_table_.wifi_disable_responder(id, getIfaceHandle(iface_name));
 }
 
-wifi_error WifiLegacyHal::setRttLci(wifi_request_id id,
-                                    const wifi_lci_information& info) {
+wifi_error WifiLegacyHal::setRttLci(
+    const std::string& iface_name, wifi_request_id id,
+    const wifi_lci_information& info) {
   wifi_lci_information info_internal(info);
   return global_func_table_.wifi_set_lci(
-      id, wlan_interface_handle_, &info_internal);
+      id, getIfaceHandle(iface_name), &info_internal);
 }
 
-wifi_error WifiLegacyHal::setRttLcr(wifi_request_id id,
-                                    const wifi_lcr_information& info) {
+wifi_error WifiLegacyHal::setRttLcr(
+    const std::string& iface_name, wifi_request_id id,
+    const wifi_lcr_information& info) {
   wifi_lcr_information info_internal(info);
   return global_func_table_.wifi_set_lcr(
-      id, wlan_interface_handle_, &info_internal);
+      id, getIfaceHandle(iface_name), &info_internal);
 }
 
 wifi_error WifiLegacyHal::nanRegisterCallbackHandlers(
-    const NanCallbackHandlers& user_callbacks) {
+    const std::string& iface_name, const NanCallbackHandlers& user_callbacks) {
   on_nan_notify_response_user_callback = user_callbacks.on_notify_response;
   on_nan_event_publish_terminated_user_callback =
       user_callbacks.on_event_publish_terminated;
@@ -1060,7 +1097,7 @@ wifi_error WifiLegacyHal::nanRegisterCallbackHandlers(
       user_callbacks.on_event_range_report;
 
   return global_func_table_.wifi_nan_register_handler(
-      wlan_interface_handle_,
+      getIfaceHandle(iface_name),
       {onAysncNanNotifyResponse,
        onAysncNanEventPublishReplied,
        onAysncNanEventPublishTerminated,
@@ -1080,79 +1117,90 @@ wifi_error WifiLegacyHal::nanRegisterCallbackHandlers(
        onAysncNanEventRangeReport});
 }
 
-wifi_error WifiLegacyHal::nanEnableRequest(transaction_id id,
-                                           const NanEnableRequest& msg) {
+wifi_error WifiLegacyHal::nanEnableRequest(
+    const std::string& iface_name, transaction_id id,
+    const NanEnableRequest& msg) {
   NanEnableRequest msg_internal(msg);
   return global_func_table_.wifi_nan_enable_request(
-      id, wlan_interface_handle_, &msg_internal);
+      id, getIfaceHandle(iface_name), &msg_internal);
 }
 
-wifi_error WifiLegacyHal::nanDisableRequest(transaction_id id) {
-  return global_func_table_.wifi_nan_disable_request(id,
-                                                     wlan_interface_handle_);
+wifi_error WifiLegacyHal::nanDisableRequest(
+    const std::string& iface_name, transaction_id id) {
+  return global_func_table_.wifi_nan_disable_request(
+      id, getIfaceHandle(iface_name));
 }
 
-wifi_error WifiLegacyHal::nanPublishRequest(transaction_id id,
-                                            const NanPublishRequest& msg) {
+wifi_error WifiLegacyHal::nanPublishRequest(
+    const std::string& iface_name, transaction_id id,
+    const NanPublishRequest& msg) {
   NanPublishRequest msg_internal(msg);
   return global_func_table_.wifi_nan_publish_request(
-      id, wlan_interface_handle_, &msg_internal);
+      id, getIfaceHandle(iface_name), &msg_internal);
 }
 
 wifi_error WifiLegacyHal::nanPublishCancelRequest(
-    transaction_id id, const NanPublishCancelRequest& msg) {
+    const std::string& iface_name, transaction_id id,
+    const NanPublishCancelRequest& msg) {
   NanPublishCancelRequest msg_internal(msg);
   return global_func_table_.wifi_nan_publish_cancel_request(
-      id, wlan_interface_handle_, &msg_internal);
+      id, getIfaceHandle(iface_name), &msg_internal);
 }
 
-wifi_error WifiLegacyHal::nanSubscribeRequest(transaction_id id,
-                                              const NanSubscribeRequest& msg) {
+wifi_error WifiLegacyHal::nanSubscribeRequest(
+    const std::string& iface_name, transaction_id id,
+    const NanSubscribeRequest& msg) {
   NanSubscribeRequest msg_internal(msg);
   return global_func_table_.wifi_nan_subscribe_request(
-      id, wlan_interface_handle_, &msg_internal);
+      id, getIfaceHandle(iface_name), &msg_internal);
 }
 
 wifi_error WifiLegacyHal::nanSubscribeCancelRequest(
-    transaction_id id, const NanSubscribeCancelRequest& msg) {
+    const std::string& iface_name, transaction_id id,
+    const NanSubscribeCancelRequest& msg) {
   NanSubscribeCancelRequest msg_internal(msg);
   return global_func_table_.wifi_nan_subscribe_cancel_request(
-      id, wlan_interface_handle_, &msg_internal);
+      id, getIfaceHandle(iface_name), &msg_internal);
 }
 
 wifi_error WifiLegacyHal::nanTransmitFollowupRequest(
-    transaction_id id, const NanTransmitFollowupRequest& msg) {
+    const std::string& iface_name, transaction_id id,
+    const NanTransmitFollowupRequest& msg) {
   NanTransmitFollowupRequest msg_internal(msg);
   return global_func_table_.wifi_nan_transmit_followup_request(
-      id, wlan_interface_handle_, &msg_internal);
+      id, getIfaceHandle(iface_name), &msg_internal);
 }
 
-wifi_error WifiLegacyHal::nanStatsRequest(transaction_id id,
-                                          const NanStatsRequest& msg) {
+wifi_error WifiLegacyHal::nanStatsRequest(
+    const std::string& iface_name, transaction_id id,
+    const NanStatsRequest& msg) {
   NanStatsRequest msg_internal(msg);
   return global_func_table_.wifi_nan_stats_request(
-      id, wlan_interface_handle_, &msg_internal);
+      id, getIfaceHandle(iface_name), &msg_internal);
 }
 
-wifi_error WifiLegacyHal::nanConfigRequest(transaction_id id,
-                                           const NanConfigRequest& msg) {
+wifi_error WifiLegacyHal::nanConfigRequest(
+    const std::string& iface_name, transaction_id id,
+    const NanConfigRequest& msg) {
   NanConfigRequest msg_internal(msg);
   return global_func_table_.wifi_nan_config_request(
-      id, wlan_interface_handle_, &msg_internal);
+      id, getIfaceHandle(iface_name), &msg_internal);
 }
 
-wifi_error WifiLegacyHal::nanTcaRequest(transaction_id id,
-                                        const NanTCARequest& msg) {
+wifi_error WifiLegacyHal::nanTcaRequest(
+    const std::string& iface_name, transaction_id id,
+    const NanTCARequest& msg) {
   NanTCARequest msg_internal(msg);
   return global_func_table_.wifi_nan_tca_request(
-      id, wlan_interface_handle_, &msg_internal);
+      id, getIfaceHandle(iface_name), &msg_internal);
 }
 
 wifi_error WifiLegacyHal::nanBeaconSdfPayloadRequest(
-    transaction_id id, const NanBeaconSdfPayloadRequest& msg) {
+    const std::string& iface_name, transaction_id id,
+    const NanBeaconSdfPayloadRequest& msg) {
   NanBeaconSdfPayloadRequest msg_internal(msg);
   return global_func_table_.wifi_nan_beacon_sdf_payload_request(
-      id, wlan_interface_handle_, &msg_internal);
+      id, getIfaceHandle(iface_name), &msg_internal);
 }
 
 std::pair<wifi_error, NanVersion> WifiLegacyHal::nanGetVersion() {
@@ -1162,35 +1210,40 @@ std::pair<wifi_error, NanVersion> WifiLegacyHal::nanGetVersion() {
   return {status, version};
 }
 
-wifi_error WifiLegacyHal::nanGetCapabilities(transaction_id id) {
-  return global_func_table_.wifi_nan_get_capabilities(id,
-                                                      wlan_interface_handle_);
+wifi_error WifiLegacyHal::nanGetCapabilities(
+    const std::string& iface_name, transaction_id id) {
+  return global_func_table_.wifi_nan_get_capabilities(
+      id, getIfaceHandle(iface_name));
 }
 
 wifi_error WifiLegacyHal::nanDataInterfaceCreate(
-    transaction_id id, const std::string& iface_name) {
+    const std::string& iface_name, transaction_id id,
+    const std::string& data_iface_name) {
   return global_func_table_.wifi_nan_data_interface_create(
-      id, wlan_interface_handle_, makeCharVec(iface_name).data());
+      id, getIfaceHandle(iface_name), makeCharVec(data_iface_name).data());
 }
 
 wifi_error WifiLegacyHal::nanDataInterfaceDelete(
-    transaction_id id, const std::string& iface_name) {
+    const std::string& iface_name, transaction_id id,
+    const std::string& data_iface_name) {
   return global_func_table_.wifi_nan_data_interface_delete(
-      id, wlan_interface_handle_, makeCharVec(iface_name).data());
+      id, getIfaceHandle(iface_name), makeCharVec(data_iface_name).data());
 }
 
 wifi_error WifiLegacyHal::nanDataRequestInitiator(
-    transaction_id id, const NanDataPathInitiatorRequest& msg) {
+    const std::string& iface_name, transaction_id id,
+    const NanDataPathInitiatorRequest& msg) {
   NanDataPathInitiatorRequest msg_internal(msg);
   return global_func_table_.wifi_nan_data_request_initiator(
-      id, wlan_interface_handle_, &msg_internal);
+      id, getIfaceHandle(iface_name), &msg_internal);
 }
 
 wifi_error WifiLegacyHal::nanDataIndicationResponse(
-    transaction_id id, const NanDataPathIndicationResponse& msg) {
+    const std::string& iface_name, transaction_id id,
+    const NanDataPathIndicationResponse& msg) {
   NanDataPathIndicationResponse msg_internal(msg);
   return global_func_table_.wifi_nan_data_indication_response(
-      id, wlan_interface_handle_, &msg_internal);
+      id, getIfaceHandle(iface_name), &msg_internal);
 }
 
 typedef struct {
@@ -1198,24 +1251,25 @@ typedef struct {
     NanDataPathId ndp_instance_id;
 } NanDataPathEndSingleNdpIdRequest;
 
-wifi_error WifiLegacyHal::nanDataEnd(transaction_id id,
-                                     uint32_t ndpInstanceId) {
+wifi_error WifiLegacyHal::nanDataEnd(
+    const std::string& iface_name, transaction_id id,
+    uint32_t ndpInstanceId) {
   NanDataPathEndSingleNdpIdRequest msg;
   msg.num_ndp_instances = 1;
   msg.ndp_instance_id = ndpInstanceId;
   wifi_error status = global_func_table_.wifi_nan_data_end(
-      id, wlan_interface_handle_, (NanDataPathEndRequest*)&msg);
+      id, getIfaceHandle(iface_name), (NanDataPathEndRequest*)&msg);
   return status;
 }
 
-wifi_error WifiLegacyHal::setCountryCode(std::array<int8_t, 2> code) {
+wifi_error WifiLegacyHal::setCountryCode(
+    const std::string& iface_name, std::array<int8_t, 2> code) {
   std::string code_str(code.data(), code.data() + code.size());
-  return global_func_table_.wifi_set_country_code(wlan_interface_handle_,
+  return global_func_table_.wifi_set_country_code(getIfaceHandle(iface_name),
                                                   code_str.c_str());
 }
 
-wifi_error WifiLegacyHal::retrieveWlanInterfaceHandle() {
-  const std::string& ifname_to_find = getStaIfaceName();
+wifi_error WifiLegacyHal::retrieveIfaceHandles() {
   wifi_interface_handle* iface_handles = nullptr;
   int num_iface_handles = 0;
   wifi_error status = global_func_table_.wifi_get_ifaces(
@@ -1225,20 +1279,30 @@ wifi_error WifiLegacyHal::retrieveWlanInterfaceHandle() {
     return status;
   }
   for (int i = 0; i < num_iface_handles; ++i) {
-    std::array<char, IFNAMSIZ> current_ifname;
-    current_ifname.fill(0);
+    std::array<char, IFNAMSIZ> iface_name_arr = {};
     status = global_func_table_.wifi_get_iface_name(
-        iface_handles[i], current_ifname.data(), current_ifname.size());
+        iface_handles[i], iface_name_arr.data(), iface_name_arr.size());
     if (status != WIFI_SUCCESS) {
       LOG(WARNING) << "Failed to get interface handle name";
       continue;
     }
-    if (ifname_to_find == current_ifname.data()) {
-      wlan_interface_handle_ = iface_handles[i];
-      return WIFI_SUCCESS;
-    }
+    // Assuming the interface name is null terminated since the legacy HAL
+    // API does not return a size.
+    std::string iface_name(iface_name_arr.data());
+    LOG(INFO) << "Adding interface handle for " << iface_name;
+    iface_name_to_handle_[iface_name] = iface_handles[i];
   }
-  return WIFI_ERROR_UNKNOWN;
+  return WIFI_SUCCESS;
+}
+
+wifi_interface_handle WifiLegacyHal::getIfaceHandle(
+    const std::string& iface_name) {
+  const auto iface_handle_iter = iface_name_to_handle_.find(iface_name);
+  if (iface_handle_iter == iface_name_to_handle_.end()) {
+    LOG(ERROR) << "Unknown iface name: " << iface_name;
+    return nullptr;
+  }
+  return iface_handle_iter->second;
 }
 
 void WifiLegacyHal::runEventLoop() {
@@ -1254,12 +1318,12 @@ void WifiLegacyHal::runEventLoop() {
 }
 
 std::pair<wifi_error, std::vector<wifi_cached_scan_results>>
-WifiLegacyHal::getGscanCachedResults() {
+WifiLegacyHal::getGscanCachedResults(const std::string& iface_name) {
   std::vector<wifi_cached_scan_results> cached_scan_results;
   cached_scan_results.resize(kMaxCachedGscanResults);
   int32_t num_results = 0;
   wifi_error status = global_func_table_.wifi_get_cached_gscan_results(
-      wlan_interface_handle_,
+      getIfaceHandle(iface_name),
       true /* always flush */,
       cached_scan_results.size(),
       cached_scan_results.data(),
@@ -1284,7 +1348,7 @@ WifiLegacyHal::getGscanCachedResults() {
 
 void WifiLegacyHal::invalidate() {
   global_handle_ = nullptr;
-  wlan_interface_handle_ = nullptr;
+  iface_name_to_handle_.clear();
   on_driver_memory_dump_internal_callback = nullptr;
   on_firmware_memory_dump_internal_callback = nullptr;
   on_gscan_event_internal_callback = nullptr;

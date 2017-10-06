@@ -194,7 +194,7 @@ WifiStatus WifiRttController::rangeRequestInternal(
   };
   legacy_hal::wifi_error legacy_status =
       legacy_hal_.lock()->startRttRangeRequest(
-          cmd_id, legacy_configs, on_results_callback);
+          ifname_, cmd_id, legacy_configs, on_results_callback);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
@@ -205,7 +205,7 @@ WifiStatus WifiRttController::rangeCancelInternal(
     legacy_addrs.push_back(addr);
   }
   legacy_hal::wifi_error legacy_status =
-      legacy_hal_.lock()->cancelRttRangeRequest(cmd_id, legacy_addrs);
+      legacy_hal_.lock()->cancelRttRangeRequest(ifname_, cmd_id, legacy_addrs);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
@@ -214,7 +214,7 @@ WifiRttController::getCapabilitiesInternal() {
   legacy_hal::wifi_error legacy_status;
   legacy_hal::wifi_rtt_capabilities legacy_caps;
   std::tie(legacy_status, legacy_caps) =
-      legacy_hal_.lock()->getRttCapabilities();
+      legacy_hal_.lock()->getRttCapabilities(ifname_);
   if (legacy_status != legacy_hal::WIFI_SUCCESS) {
     return {createWifiStatusFromLegacyError(legacy_status), {}};
   }
@@ -234,7 +234,7 @@ WifiStatus WifiRttController::setLciInternal(uint32_t cmd_id,
     return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
   }
   legacy_hal::wifi_error legacy_status =
-      legacy_hal_.lock()->setRttLci(cmd_id, legacy_lci);
+      legacy_hal_.lock()->setRttLci(ifname_, cmd_id, legacy_lci);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
@@ -246,7 +246,7 @@ WifiStatus WifiRttController::setLcrInternal(uint32_t cmd_id,
     return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
   }
   legacy_hal::wifi_error legacy_status =
-      legacy_hal_.lock()->setRttLcr(cmd_id, legacy_lcr);
+      legacy_hal_.lock()->setRttLcr(ifname_, cmd_id, legacy_lcr);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
@@ -255,7 +255,7 @@ WifiRttController::getResponderInfoInternal() {
   legacy_hal::wifi_error legacy_status;
   legacy_hal::wifi_rtt_responder legacy_responder;
   std::tie(legacy_status, legacy_responder) =
-      legacy_hal_.lock()->getRttResponderInfo();
+      legacy_hal_.lock()->getRttResponderInfo(ifname_);
   if (legacy_status != legacy_hal::WIFI_SUCCESS) {
     return {createWifiStatusFromLegacyError(legacy_status), {}};
   }
@@ -283,13 +283,14 @@ WifiStatus WifiRttController::enableResponderInternal(
     return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
   }
   legacy_hal::wifi_error legacy_status = legacy_hal_.lock()->enableRttResponder(
-      cmd_id, legacy_channel_info, max_duration_seconds, legacy_responder);
+      ifname_, cmd_id, legacy_channel_info, max_duration_seconds,
+      legacy_responder);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
 WifiStatus WifiRttController::disableResponderInternal(uint32_t cmd_id) {
   legacy_hal::wifi_error legacy_status =
-      legacy_hal_.lock()->disableRttResponder(cmd_id);
+      legacy_hal_.lock()->disableRttResponder(ifname_, cmd_id);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 }  // namespace implementation

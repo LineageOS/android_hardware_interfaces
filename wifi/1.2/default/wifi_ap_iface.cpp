@@ -85,7 +85,7 @@ std::pair<WifiStatus, IfaceType> WifiApIface::getTypeInternal() {
 WifiStatus WifiApIface::setCountryCodeInternal(
     const std::array<int8_t, 2>& code) {
   legacy_hal::wifi_error legacy_status =
-      legacy_hal_.lock()->setCountryCode(code);
+      legacy_hal_.lock()->setCountryCode(ifname_, code);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
@@ -96,7 +96,7 @@ WifiApIface::getValidFrequenciesForBandInternal(WifiBand band) {
   std::vector<uint32_t> valid_frequencies;
   std::tie(legacy_status, valid_frequencies) =
       legacy_hal_.lock()->getValidFrequenciesForBand(
-          hidl_struct_util::convertHidlWifiBandToLegacy(band));
+          ifname_, hidl_struct_util::convertHidlWifiBandToLegacy(band));
   return {createWifiStatusFromLegacyError(legacy_status), valid_frequencies};
 }
 }  // namespace implementation

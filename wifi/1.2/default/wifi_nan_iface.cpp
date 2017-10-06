@@ -412,7 +412,8 @@ WifiNanIface::WifiNanIface(
   };
 
   legacy_hal::wifi_error legacy_status =
-      legacy_hal_.lock()->nanRegisterCallbackHandlers(callback_handlers);
+      legacy_hal_.lock()->nanRegisterCallbackHandlers(
+          ifname_, callback_handlers);
   if (legacy_status != legacy_hal::WIFI_SUCCESS) {
     LOG(ERROR) << "Failed to register nan callbacks. Invalidating object";
     invalidate();
@@ -421,9 +422,9 @@ WifiNanIface::WifiNanIface(
 
 void WifiNanIface::invalidate() {
   // send commands to HAL to actually disable and destroy interfaces
-  legacy_hal_.lock()->nanDisableRequest(0xFFFF);
-  legacy_hal_.lock()->nanDataInterfaceDelete(0xFFFE, "aware_data0");
-  legacy_hal_.lock()->nanDataInterfaceDelete(0xFFFD, "aware_data1");
+  legacy_hal_.lock()->nanDisableRequest(ifname_, 0xFFFF);
+  legacy_hal_.lock()->nanDataInterfaceDelete(ifname_, 0xFFFE, "aware_data0");
+  legacy_hal_.lock()->nanDataInterfaceDelete(ifname_, 0xFFFD, "aware_data1");
 
   legacy_hal_.reset();
   event_cb_handler_.invalidate();
@@ -637,7 +638,7 @@ WifiStatus WifiNanIface::registerEventCallbackInternal(
 
 WifiStatus WifiNanIface::getCapabilitiesRequestInternal(uint16_t cmd_id) {
   legacy_hal::wifi_error legacy_status =
-        legacy_hal_.lock()->nanGetCapabilities(cmd_id);
+        legacy_hal_.lock()->nanGetCapabilities(ifname_, cmd_id);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
@@ -648,7 +649,7 @@ WifiStatus WifiNanIface::enableRequestInternal(uint16_t cmd_id,
     return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
   }
   legacy_hal::wifi_error legacy_status =
-      legacy_hal_.lock()->nanEnableRequest(cmd_id, legacy_msg);
+      legacy_hal_.lock()->nanEnableRequest(ifname_, cmd_id, legacy_msg);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
@@ -660,25 +661,25 @@ WifiStatus WifiNanIface::configRequestInternal(
     return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
   }
   legacy_hal::wifi_error legacy_status =
-      legacy_hal_.lock()->nanConfigRequest(cmd_id, legacy_msg);
+      legacy_hal_.lock()->nanConfigRequest(ifname_, cmd_id, legacy_msg);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
 WifiStatus WifiNanIface::disableRequestInternal(uint16_t cmd_id) {
   legacy_hal::wifi_error legacy_status =
-      legacy_hal_.lock()->nanDisableRequest(cmd_id);
+      legacy_hal_.lock()->nanDisableRequest(ifname_, cmd_id);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
-WifiStatus WifiNanIface::startPublishRequestInternal(uint16_t cmd_id,
-                                                     const NanPublishRequest& msg) {
+WifiStatus WifiNanIface::startPublishRequestInternal(
+    uint16_t cmd_id, const NanPublishRequest& msg) {
   legacy_hal::NanPublishRequest legacy_msg;
   if (!hidl_struct_util::convertHidlNanPublishRequestToLegacy(msg,
                                                               &legacy_msg)) {
     return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
   }
   legacy_hal::wifi_error legacy_status =
-      legacy_hal_.lock()->nanPublishRequest(cmd_id, legacy_msg);
+      legacy_hal_.lock()->nanPublishRequest(ifname_, cmd_id, legacy_msg);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
@@ -687,7 +688,7 @@ WifiStatus WifiNanIface::stopPublishRequestInternal(
   legacy_hal::NanPublishCancelRequest legacy_msg;
   legacy_msg.publish_id = sessionId;
   legacy_hal::wifi_error legacy_status =
-      legacy_hal_.lock()->nanPublishCancelRequest(cmd_id, legacy_msg);
+      legacy_hal_.lock()->nanPublishCancelRequest(ifname_, cmd_id, legacy_msg);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
@@ -699,7 +700,7 @@ WifiStatus WifiNanIface::startSubscribeRequestInternal(
     return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
   }
   legacy_hal::wifi_error legacy_status =
-      legacy_hal_.lock()->nanSubscribeRequest(cmd_id, legacy_msg);
+      legacy_hal_.lock()->nanSubscribeRequest(ifname_, cmd_id, legacy_msg);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
@@ -708,57 +709,63 @@ WifiStatus WifiNanIface::stopSubscribeRequestInternal(
   legacy_hal::NanSubscribeCancelRequest legacy_msg;
   legacy_msg.subscribe_id = sessionId;
   legacy_hal::wifi_error legacy_status =
-      legacy_hal_.lock()->nanSubscribeCancelRequest(cmd_id, legacy_msg);
+      legacy_hal_.lock()->nanSubscribeCancelRequest(
+          ifname_, cmd_id, legacy_msg);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
 WifiStatus WifiNanIface::transmitFollowupRequestInternal(
     uint16_t cmd_id, const NanTransmitFollowupRequest& msg) {
   legacy_hal::NanTransmitFollowupRequest legacy_msg;
-  if (!hidl_struct_util::convertHidlNanTransmitFollowupRequestToLegacy(msg, &legacy_msg)) {
+  if (!hidl_struct_util::convertHidlNanTransmitFollowupRequestToLegacy(
+      msg, &legacy_msg)) {
     return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
   }
   legacy_hal::wifi_error legacy_status =
-      legacy_hal_.lock()->nanTransmitFollowupRequest(cmd_id, legacy_msg);
+      legacy_hal_.lock()->nanTransmitFollowupRequest(
+          ifname_, cmd_id, legacy_msg);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
 WifiStatus WifiNanIface::createDataInterfaceRequestInternal(
     uint16_t cmd_id, const std::string& iface_name) {
   legacy_hal::wifi_error legacy_status =
-      legacy_hal_.lock()->nanDataInterfaceCreate(cmd_id, iface_name);
+      legacy_hal_.lock()->nanDataInterfaceCreate(ifname_, cmd_id, iface_name);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 WifiStatus WifiNanIface::deleteDataInterfaceRequestInternal(
     uint16_t cmd_id, const std::string& iface_name) {
   legacy_hal::wifi_error legacy_status =
-      legacy_hal_.lock()->nanDataInterfaceDelete(cmd_id, iface_name);
+      legacy_hal_.lock()->nanDataInterfaceDelete(ifname_, cmd_id, iface_name);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 WifiStatus WifiNanIface::initiateDataPathRequestInternal(
     uint16_t cmd_id, const NanInitiateDataPathRequest& msg) {
   legacy_hal::NanDataPathInitiatorRequest legacy_msg;
-  if (!hidl_struct_util::convertHidlNanDataPathInitiatorRequestToLegacy(msg, &legacy_msg)) {
+  if (!hidl_struct_util::convertHidlNanDataPathInitiatorRequestToLegacy(
+      msg, &legacy_msg)) {
     return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
   }
   legacy_hal::wifi_error legacy_status =
-      legacy_hal_.lock()->nanDataRequestInitiator(cmd_id, legacy_msg);
+      legacy_hal_.lock()->nanDataRequestInitiator(ifname_, cmd_id, legacy_msg);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 WifiStatus WifiNanIface::respondToDataPathIndicationRequestInternal(
     uint16_t cmd_id, const NanRespondToDataPathIndicationRequest& msg) {
   legacy_hal::NanDataPathIndicationResponse legacy_msg;
-  if (!hidl_struct_util::convertHidlNanDataPathIndicationResponseToLegacy(msg, &legacy_msg)) {
+  if (!hidl_struct_util::convertHidlNanDataPathIndicationResponseToLegacy(
+      msg, &legacy_msg)) {
     return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
   }
   legacy_hal::wifi_error legacy_status =
-      legacy_hal_.lock()->nanDataIndicationResponse(cmd_id, legacy_msg);
+      legacy_hal_.lock()->nanDataIndicationResponse(
+          ifname_, cmd_id, legacy_msg);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 WifiStatus WifiNanIface::terminateDataPathRequestInternal(
     uint16_t cmd_id, uint32_t ndpInstanceId) {
   legacy_hal::wifi_error legacy_status =
-      legacy_hal_.lock()->nanDataEnd(cmd_id, ndpInstanceId);
+      legacy_hal_.lock()->nanDataEnd(ifname_, cmd_id, ndpInstanceId);
   return createWifiStatusFromLegacyError(legacy_status);
 }
 
