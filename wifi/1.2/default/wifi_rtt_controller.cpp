@@ -29,9 +29,11 @@ namespace implementation {
 using hidl_return_util::validateAndCall;
 
 WifiRttController::WifiRttController(
+    const std::string& iface_name,
     const sp<IWifiIface>& bound_iface,
     const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal)
-    : bound_iface_(bound_iface), legacy_hal_(legacy_hal), is_valid_(true) {}
+    : ifname_(iface_name), bound_iface_(bound_iface), legacy_hal_(legacy_hal),
+      is_valid_(true) {}
 
 void WifiRttController::invalidate() {
   legacy_hal_.reset();

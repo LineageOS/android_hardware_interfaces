@@ -140,11 +140,6 @@ using on_error_alert_callback =
 class WifiLegacyHal {
  public:
   WifiLegacyHal();
-  // Names to use for the different types of iface.
-  std::string getApIfaceName();
-  std::string getNanIfaceName();
-  std::string getP2pIfaceName();
-  std::string getStaIfaceName();
 
   // Initialize the legacy HAL function table.
   wifi_error initialize();

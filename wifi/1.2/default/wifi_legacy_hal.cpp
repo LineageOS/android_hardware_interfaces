@@ -18,7 +18,6 @@
 #include <chrono>
 
 #include <android-base/logging.h>
-#include <cutils/properties.h>
 
 #include "hidl_sync_util.h"
 #include "wifi_legacy_hal.h"
@@ -402,30 +401,6 @@ wifi_error WifiLegacyHal::stop(
   }
   LOG(DEBUG) << "Legacy HAL stop complete";
   return WIFI_SUCCESS;
-}
-
-std::string WifiLegacyHal::getApIfaceName() {
-  // Fake name. This interface does not exist in legacy HAL
-  // API's.
-  return "ap0";
-}
-
-std::string WifiLegacyHal::getNanIfaceName() {
-  // Fake name. This interface does not exist in legacy HAL
-  // API's.
-  return "nan0";
-}
-
-std::string WifiLegacyHal::getP2pIfaceName() {
-  std::array<char, PROPERTY_VALUE_MAX> buffer;
-  property_get("wifi.direct.interface", buffer.data(), "p2p0");
-  return buffer.data();
-}
-
-std::string WifiLegacyHal::getStaIfaceName() {
-  std::array<char, PROPERTY_VALUE_MAX> buffer;
-  property_get("wifi.interface", buffer.data(), "wlan0");
-  return buffer.data();
 }
 
 std::pair<wifi_error, std::string> WifiLegacyHal::getDriverVersion() {
