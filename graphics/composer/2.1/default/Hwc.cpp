@@ -35,10 +35,8 @@ namespace composer {
 namespace V2_1 {
 namespace implementation {
 
-
 HwcHal::HwcHal(const hw_module_t* module)
-    : mDevice(nullptr), mDispatch(), mAdapter()
-{
+    : mDevice(nullptr), mDispatch(), mMustValidateDisplay(true), mAdapter() {
     // Determine what kind of module is available (HWC2 vs HWC1.X).
     hw_device_t* device = nullptr;
     int error = module->methods->open(module, HWC_HARDWARE_COMPOSER, &device);
@@ -283,6 +281,8 @@ void HwcHal::refreshHook(hwc2_callback_data_t callbackData,
         hwc2_display_t display)
 {
     auto hal = reinterpret_cast<HwcHal*>(callbackData);
+    hal->mMustValidateDisplay = true;
+
     auto client = hal->getClient();
     if (client != nullptr) {
         client->onRefresh(display);
@@ -302,6 +302,8 @@ void HwcHal::vsyncHook(hwc2_callback_data_t callbackData,
 void HwcHal::enableCallback(bool enable)
 {
     if (enable) {
+        mMustValidateDisplay = true;
+
         mDispatch.registerCallback(mDevice, HWC2_CALLBACK_HOTPLUG, this,
                 reinterpret_cast<hwc2_function_pointer_t>(hotplugHook));
         mDispatch.registerCallback(mDevice, HWC2_CALLBACK_REFRESH, this,
@@ -549,6 +551,8 @@ Error HwcHal::validateDisplay(Display display,
     uint32_t reqs_count = 0;
     int32_t err = mDispatch.validateDisplay(mDevice, display,
             &types_count, &reqs_count);
+    mMustValidateDisplay = false;
+
     if (err != HWC2_ERROR_NONE && err != HWC2_ERROR_HAS_CHANGES) {
         return static_cast<Error>(err);
     }
@@ -609,6 +613,10 @@ Error HwcHal::acceptDisplayChanges(Display display)
 Error HwcHal::presentDisplay(Display display, int32_t* outPresentFence,
         std::vector<Layer>* outLayers, std::vector<int32_t>* outReleaseFences)
 {
+    if (mMustValidateDisplay) {
+        return Error::NOT_VALIDATED;
+    }
+
     *outPresentFence = -1;
     int32_t err = mDispatch.presentDisplay(mDevice, display, outPresentFence);
     if (err != HWC2_ERROR_NONE) {
