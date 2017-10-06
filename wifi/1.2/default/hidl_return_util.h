@@ -41,18 +41,15 @@ using namespace android::hardware::wifi::V1_0;
 // Use for HIDL methods which return only an instance of WifiStatus.
 template <typename ObjT, typename WorkFuncT, typename... Args>
 Return<void> validateAndCall(
-    ObjT* obj,
-    WifiStatusCode status_code_if_invalid,
-    WorkFuncT&& work,
-    const std::function<void(const WifiStatus&)>& hidl_cb,
-    Args&&... args) {
-  const auto lock = hidl_sync_util::acquireGlobalLock();
-  if (obj->isValid()) {
-    hidl_cb((obj->*work)(std::forward<Args>(args)...));
-  } else {
-    hidl_cb(createWifiStatus(status_code_if_invalid));
-  }
-  return Void();
+    ObjT* obj, WifiStatusCode status_code_if_invalid, WorkFuncT&& work,
+    const std::function<void(const WifiStatus&)>& hidl_cb, Args&&... args) {
+    const auto lock = hidl_sync_util::acquireGlobalLock();
+    if (obj->isValid()) {
+        hidl_cb((obj->*work)(std::forward<Args>(args)...));
+    } else {
+        hidl_cb(createWifiStatus(status_code_if_invalid));
+    }
+    return Void();
 }
 
 // Use for HIDL methods which return only an instance of WifiStatus.
@@ -60,71 +57,61 @@ Return<void> validateAndCall(
 // Note: Only used by IWifi::stop() currently.
 template <typename ObjT, typename WorkFuncT, typename... Args>
 Return<void> validateAndCallWithLock(
-    ObjT* obj,
-    WifiStatusCode status_code_if_invalid,
-    WorkFuncT&& work,
-    const std::function<void(const WifiStatus&)>& hidl_cb,
-    Args&&... args) {
-  auto lock = hidl_sync_util::acquireGlobalLock();
-  if (obj->isValid()) {
-    hidl_cb((obj->*work)(&lock, std::forward<Args>(args)...));
-  } else {
-    hidl_cb(createWifiStatus(status_code_if_invalid));
-  }
-  return Void();
+    ObjT* obj, WifiStatusCode status_code_if_invalid, WorkFuncT&& work,
+    const std::function<void(const WifiStatus&)>& hidl_cb, Args&&... args) {
+    auto lock = hidl_sync_util::acquireGlobalLock();
+    if (obj->isValid()) {
+        hidl_cb((obj->*work)(&lock, std::forward<Args>(args)...));
+    } else {
+        hidl_cb(createWifiStatus(status_code_if_invalid));
+    }
+    return Void();
 }
 
 // Use for HIDL methods which return instance of WifiStatus and a single return
 // value.
 template <typename ObjT, typename WorkFuncT, typename ReturnT, typename... Args>
 Return<void> validateAndCall(
-    ObjT* obj,
-    WifiStatusCode status_code_if_invalid,
-    WorkFuncT&& work,
+    ObjT* obj, WifiStatusCode status_code_if_invalid, WorkFuncT&& work,
     const std::function<void(const WifiStatus&, ReturnT)>& hidl_cb,
     Args&&... args) {
-  const auto lock = hidl_sync_util::acquireGlobalLock();
-  if (obj->isValid()) {
-    const auto& ret_pair = (obj->*work)(std::forward<Args>(args)...);
-    const WifiStatus& status = std::get<0>(ret_pair);
-    const auto& ret_value = std::get<1>(ret_pair);
-    hidl_cb(status, ret_value);
-  } else {
-    hidl_cb(createWifiStatus(status_code_if_invalid),
-            typename std::remove_reference<ReturnT>::type());
-  }
-  return Void();
+    const auto lock = hidl_sync_util::acquireGlobalLock();
+    if (obj->isValid()) {
+        const auto& ret_pair = (obj->*work)(std::forward<Args>(args)...);
+        const WifiStatus& status = std::get<0>(ret_pair);
+        const auto& ret_value = std::get<1>(ret_pair);
+        hidl_cb(status, ret_value);
+    } else {
+        hidl_cb(createWifiStatus(status_code_if_invalid),
+                typename std::remove_reference<ReturnT>::type());
+    }
+    return Void();
 }
 
 // Use for HIDL methods which return instance of WifiStatus and 2 return
 // values.
-template <typename ObjT,
-          typename WorkFuncT,
-          typename ReturnT1,
-          typename ReturnT2,
-          typename... Args>
+template <typename ObjT, typename WorkFuncT, typename ReturnT1,
+          typename ReturnT2, typename... Args>
 Return<void> validateAndCall(
-    ObjT* obj,
-    WifiStatusCode status_code_if_invalid,
-    WorkFuncT&& work,
+    ObjT* obj, WifiStatusCode status_code_if_invalid, WorkFuncT&& work,
     const std::function<void(const WifiStatus&, ReturnT1, ReturnT2)>& hidl_cb,
     Args&&... args) {
-  const auto lock = hidl_sync_util::acquireGlobalLock();
-  if (obj->isValid()) {
-    const auto& ret_tuple = (obj->*work)(std::forward<Args>(args)...);
-    const WifiStatus& status = std::get<0>(ret_tuple);
-    const auto& ret_value1 = std::get<1>(ret_tuple);
-    const auto& ret_value2 = std::get<2>(ret_tuple);
-    hidl_cb(status, ret_value1, ret_value2);
-  } else {
-    hidl_cb(createWifiStatus(status_code_if_invalid),
-            typename std::remove_reference<ReturnT1>::type(),
-            typename std::remove_reference<ReturnT2>::type());
-  }
-  return Void();
+    const auto lock = hidl_sync_util::acquireGlobalLock();
+    if (obj->isValid()) {
+        const auto& ret_tuple = (obj->*work)(std::forward<Args>(args)...);
+        const WifiStatus& status = std::get<0>(ret_tuple);
+        const auto& ret_value1 = std::get<1>(ret_tuple);
+        const auto& ret_value2 = std::get<2>(ret_tuple);
+        hidl_cb(status, ret_value1, ret_value2);
+    } else {
+        hidl_cb(createWifiStatus(status_code_if_invalid),
+                typename std::remove_reference<ReturnT1>::type(),
+                typename std::remove_reference<ReturnT2>::type());
+    }
+    return Void();
 }
 
-}  // namespace hidl_util
+}  // namespace hidl_return_util
 }  // namespace implementation
 }  // namespace V1_2
 }  // namespace wifi

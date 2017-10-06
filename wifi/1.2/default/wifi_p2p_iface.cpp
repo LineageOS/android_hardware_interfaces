@@ -33,34 +33,28 @@ WifiP2pIface::WifiP2pIface(
     : ifname_(ifname), legacy_hal_(legacy_hal), is_valid_(true) {}
 
 void WifiP2pIface::invalidate() {
-  legacy_hal_.reset();
-  is_valid_ = false;
+    legacy_hal_.reset();
+    is_valid_ = false;
 }
 
-bool WifiP2pIface::isValid() {
-  return is_valid_;
-}
+bool WifiP2pIface::isValid() { return is_valid_; }
 
 Return<void> WifiP2pIface::getName(getName_cb hidl_status_cb) {
-  return validateAndCall(this,
-                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
-                         &WifiP2pIface::getNameInternal,
-                         hidl_status_cb);
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                           &WifiP2pIface::getNameInternal, hidl_status_cb);
 }
 
 Return<void> WifiP2pIface::getType(getType_cb hidl_status_cb) {
-  return validateAndCall(this,
-                         WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
-                         &WifiP2pIface::getTypeInternal,
-                         hidl_status_cb);
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                           &WifiP2pIface::getTypeInternal, hidl_status_cb);
 }
 
 std::pair<WifiStatus, std::string> WifiP2pIface::getNameInternal() {
-  return {createWifiStatus(WifiStatusCode::SUCCESS), ifname_};
+    return {createWifiStatus(WifiStatusCode::SUCCESS), ifname_};
 }
 
 std::pair<WifiStatus, IfaceType> WifiP2pIface::getTypeInternal() {
-  return {createWifiStatus(WifiStatusCode::SUCCESS), IfaceType::P2P};
+    return {createWifiStatus(WifiStatusCode::SUCCESS), IfaceType::P2P};
 }
 
 }  // namespace implementation
