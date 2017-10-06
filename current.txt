@@ -249,3 +249,6 @@ a432d6d9200248dc2126827bcd6cdea31dd65eff39b939f64585d27d915a5857 android.hardwar
 09342041e17c429fce0034b9096d17849122111436a5f0053e7e59500e1cb89c android.hardware.media.omx@1.0::IOmxStore
 f4945e397b5dea41bb64518dfde59be71245d8a125fd1e0acffeb57ac7b08fed android.hardware.thermal@1.1::IThermal
 c8bc853546dd55584611def2a9fa1d99f657e3366c976d2f60fe6b8aa6d2cb87 android.hardware.thermal@1.1::IThermalCallback
+
+# ABI preserving changes to HALs during Android P
+fb92e2b40f8e9d494e8fd3b4ac18499a3216342e7cff160714c3bbf3660b6e79 android.hardware.gnss@1.0::IGnssConfiguration
