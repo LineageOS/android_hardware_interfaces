@@ -150,6 +150,7 @@ TEST_F(MasterHidlTest, ListServiceAttr) {
                         attributes = _nl;
                     })
                     .isOk());
+    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
     if (attributes.size() == 0) ALOGV("Warning, Attribute list empty");
 }
 
@@ -186,6 +187,7 @@ TEST_F(MasterHidlTest, ListNodes) {
                nodeList = _nl;
            })
             .isOk());
+    ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
     if (nodeList.size() == 0)
         ALOGV("Warning, ComponentInfo list empty");
     else {
@@ -204,6 +206,7 @@ TEST_F(MasterHidlTest, ListNodes) {
                            omxNode = _nl;
                        })
                     .isOk());
+            ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
             if (omxNode == nullptr) {
                 isPass = false;
                 std::cerr << "[    !OK   ] " << nodeList[i].mName.c_str()

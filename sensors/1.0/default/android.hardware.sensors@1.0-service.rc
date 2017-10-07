@@ -2,4 +2,5 @@ service vendor.sensors-hal-1-0 /vendor/bin/hw/android.hardware.sensors@1.0-servi
     class hal
     user system
     group system wakelock
-    capabilities BLOCK_SUSPEND SYS_NICE
+    capabilities BLOCK_SUSPEND
+    rlimit rtprio 10 10
