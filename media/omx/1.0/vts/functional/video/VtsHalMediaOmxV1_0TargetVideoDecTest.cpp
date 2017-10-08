@@ -166,6 +166,7 @@ class VideoDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                                this->omxNode = _nl;
                            })
                         .isOk());
+        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
         ASSERT_NE(omxNode, nullptr);
         ASSERT_NE(gEnv->getRole().empty(), true) << "Invalid Component Role";
         struct StringToName {
@@ -498,8 +499,7 @@ void portReconfiguration(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                                     nFrameWidth, nFrameHeight, 0, xFramerate);
 
                 // If you can disable a port, then you should be able to
-                // enable
-                // it as well
+                // enable it as well
                 status = omxNode->sendCommand(
                     toRawCommandType(OMX_CommandPortEnable), kPortIndexOutput);
                 ASSERT_EQ(status,
@@ -512,8 +512,8 @@ void portReconfiguration(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                     status,
                     android::hardware::media::omx::V1_0::Status::TIMED_OUT);
 
-                allocatePortBuffers(omxNode, oBuffer, kPortIndexOutput,
-                                    oPortMode, true);
+                ASSERT_NO_FATAL_FAILURE(allocatePortBuffers(
+                    omxNode, oBuffer, kPortIndexOutput, oPortMode, true));
                 status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT,
                                                   iBuffer, oBuffer);
                 ASSERT_EQ(status,
@@ -534,7 +534,8 @@ void portReconfiguration(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
 
                 // dispatch output buffers
                 for (size_t i = 0; i < oBuffer->size(); i++) {
-                    dispatchOutputBuffer(omxNode, oBuffer, i, oPortMode);
+                    ASSERT_NO_FATAL_FAILURE(
+                        dispatchOutputBuffer(omxNode, oBuffer, i, oPortMode));
                 }
             } else {
                 ASSERT_TRUE(false);
@@ -550,7 +551,7 @@ void portReconfiguration(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
     } else if (msg.data.eventData.event == OMX_EventError) {
         std::cerr << "[   ERROR   ] OMX_EventError/ "
                      "Decode Frame Call might be failed \n";
-        return;
+        ASSERT_TRUE(false);
     } else {
         // something unexpected happened
         ASSERT_TRUE(false);
@@ -572,10 +573,10 @@ void waitOnInputConsumption(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         status =
             observer->dequeueMessage(&msg, DEFAULT_TIMEOUT_Q, iBuffer, oBuffer);
         if (status == android::hardware::media::omx::V1_0::Status::OK) {
-            EXPECT_EQ(msg.type, Message::Type::EVENT);
-            portReconfiguration(omxNode, observer, iBuffer, oBuffer,
-                                kPortIndexInput, kPortIndexOutput, msg,
-                                oPortMode, nullptr);
+            ASSERT_EQ(msg.type, Message::Type::EVENT);
+            ASSERT_NO_FATAL_FAILURE(portReconfiguration(
+                omxNode, observer, iBuffer, oBuffer, kPortIndexInput,
+                kPortIndexOutput, msg, oPortMode, nullptr));
         }
         // status == TIMED_OUT, it could be due to process time being large
         // than DEFAULT_TIMEOUT or component needs output buffers to start
@@ -588,7 +589,8 @@ void waitOnInputConsumption(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         // Dispatch an output buffer assuming outQueue.empty() is true
         size_t index;
         if ((index = getEmptyBufferID(oBuffer)) < oBuffer->size()) {
-            dispatchOutputBuffer(omxNode, oBuffer, index, oPortMode);
+            ASSERT_NO_FATAL_FAILURE(
+                dispatchOutputBuffer(omxNode, oBuffer, index, oPortMode));
             timeOut = TIMEOUT_COUNTER_Q;
         }
     }
@@ -617,9 +619,9 @@ void decodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         // Port Reconfiguration
         if (status == android::hardware::media::omx::V1_0::Status::OK &&
             msg.type == Message::Type::EVENT) {
-            portReconfiguration(omxNode, observer, iBuffer, oBuffer,
-                                kPortIndexInput, kPortIndexOutput, msg,
-                                oPortMode, nullptr);
+            ASSERT_NO_FATAL_FAILURE(portReconfiguration(
+                omxNode, observer, iBuffer, oBuffer, kPortIndexInput,
+                kPortIndexOutput, msg, oPortMode, nullptr));
         }
 
         if (frameID == (int)Info->size() || frameID == (offset + range)) break;
@@ -641,15 +643,16 @@ void decodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
             if (signalEOS && ((frameID == (int)Info->size() - 1) ||
                               (frameID == (offset + range - 1))))
                 flags |= OMX_BUFFERFLAG_EOS;
-            dispatchInputBuffer(omxNode, iBuffer, index,
-                                (*Info)[frameID].bytesCount, flags,
-                                (*Info)[frameID].timestamp);
+            ASSERT_NO_FATAL_FAILURE(dispatchInputBuffer(
+                omxNode, iBuffer, index, (*Info)[frameID].bytesCount, flags,
+                (*Info)[frameID].timestamp));
             frameID++;
             iQueued = true;
         }
         // Dispatch output buffer
         if ((index = getEmptyBufferID(oBuffer)) < oBuffer->size()) {
-            dispatchOutputBuffer(omxNode, oBuffer, index, oPortMode);
+            ASSERT_NO_FATAL_FAILURE(
+                dispatchOutputBuffer(omxNode, oBuffer, index, oPortMode));
             oQueued = true;
         }
         // Reset Counters when either input or output buffer is dispatched
@@ -658,8 +661,7 @@ void decodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         else
             timeOut--;
         if (timeOut == 0) {
-            EXPECT_TRUE(false) << "Wait on Input/Output is found indefinite";
-            break;
+            ASSERT_TRUE(false) << "Wait on Input/Output is found indefinite";
         }
     }
 }
@@ -888,28 +890,33 @@ TEST_F(VideoDecHidlTest, DecodeTest) {
     android::Vector<BufferInfo> iBuffer, oBuffer;
 
     // set state to idle
-    changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput, portMode, true);
+    ASSERT_NO_FATAL_FAILURE(changeStateLoadedtoIdle(
+        omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
+        kPortIndexOutput, portMode, true));
     // set state to executing
-    changeStateIdletoExecute(omxNode, observer);
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoExecute(omxNode, observer));
 
     // Port Reconfiguration
     eleStream.open(mURL, std::ifstream::binary);
     ASSERT_EQ(eleStream.is_open(), true);
-    decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-                  kPortIndexOutput, eleStream, &Info, 0, (int)Info.size(),
-                  portMode[1]);
+    ASSERT_NO_FATAL_FAILURE(decodeNFrames(
+        omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
+        kPortIndexOutput, eleStream, &Info, 0, (int)Info.size(), portMode[1]));
     eleStream.close();
-    waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
-                           kPortIndexInput, kPortIndexOutput, portMode[1]);
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag, portMode,
-            portReconfiguration, kPortIndexInput, kPortIndexOutput, nullptr);
+    ASSERT_NO_FATAL_FAILURE(
+        waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
+                               kPortIndexInput, kPortIndexOutput, portMode[1]));
+    ASSERT_NO_FATAL_FAILURE(testEOS(
+        omxNode, observer, &iBuffer, &oBuffer, false, eosFlag, portMode,
+        portReconfiguration, kPortIndexInput, kPortIndexOutput, nullptr));
     if (timestampDevTest) EXPECT_EQ(timestampUslist.empty(), true);
     // set state to idle
-    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+    ASSERT_NO_FATAL_FAILURE(
+        changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer));
     // set state to executing
-    changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoLoaded(omxNode, observer, &iBuffer,
+                                                    &oBuffer, kPortIndexInput,
+                                                    kPortIndexOutput));
 }
 
 // Test for adaptive playback support
@@ -985,10 +992,11 @@ TEST_F(VideoDecHidlTest, AdaptivePlaybackTest) {
     android::Vector<BufferInfo> iBuffer, oBuffer;
 
     // set state to idle
-    changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput, portMode, true);
+    ASSERT_NO_FATAL_FAILURE(changeStateLoadedtoIdle(
+        omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
+        kPortIndexOutput, portMode, true));
     // set state to executing
-    changeStateIdletoExecute(omxNode, observer);
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoExecute(omxNode, observer));
 
     timestampDevTest = true;
     uint32_t timestampOffset = 0;
@@ -1021,9 +1029,10 @@ TEST_F(VideoDecHidlTest, AdaptivePlaybackTest) {
         // Port Reconfiguration
         eleStream.open(mURL, std::ifstream::binary);
         ASSERT_EQ(eleStream.is_open(), true);
-        decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-                      kPortIndexOutput, eleStream, &Info, 0, (int)Info.size(),
-                      portMode[1], false);
+        ASSERT_NO_FATAL_FAILURE(
+            decodeNFrames(omxNode, observer, &iBuffer, &oBuffer,
+                          kPortIndexInput, kPortIndexOutput, eleStream, &Info,
+                          0, (int)Info.size(), portMode[1], false));
         eleStream.close();
 
         getInputChannelInfo(omxNode, kPortIndexInput, &nFrameWidth,
@@ -1042,16 +1051,20 @@ TEST_F(VideoDecHidlTest, AdaptivePlaybackTest) {
         }
         portSettingsChange = false;
     }
-    waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
-                           kPortIndexInput, kPortIndexOutput, portMode[1]);
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, portMode,
-            portReconfiguration, kPortIndexInput, kPortIndexOutput, nullptr);
+    ASSERT_NO_FATAL_FAILURE(
+        waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
+                               kPortIndexInput, kPortIndexOutput, portMode[1]));
+    ASSERT_NO_FATAL_FAILURE(testEOS(
+        omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, portMode,
+        portReconfiguration, kPortIndexInput, kPortIndexOutput, nullptr));
     if (timestampDevTest) EXPECT_EQ(timestampUslist.empty(), true);
     // set state to idle
-    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+    ASSERT_NO_FATAL_FAILURE(
+        changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer));
     // set state to executing
-    changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoLoaded(omxNode, observer, &iBuffer,
+                                                    &oBuffer, kPortIndexInput,
+                                                    kPortIndexOutput));
 }
 
 // end of sequence test
@@ -1095,25 +1108,29 @@ TEST_F(VideoDecHidlTest, EOSTest_M) {
     android::Vector<BufferInfo> iBuffer, oBuffer;
 
     // set state to idle
-    changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput, portMode, true);
+    ASSERT_NO_FATAL_FAILURE(changeStateLoadedtoIdle(
+        omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
+        kPortIndexOutput, portMode, true));
     // set state to executing
-    changeStateIdletoExecute(omxNode, observer);
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoExecute(omxNode, observer));
 
     // request EOS at the start
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, portMode,
-            portReconfiguration, kPortIndexInput, kPortIndexOutput, nullptr);
-    flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-               kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(testEOS(
+        omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, portMode,
+        portReconfiguration, kPortIndexInput, kPortIndexOutput, nullptr));
+    ASSERT_NO_FATAL_FAILURE(flushPorts(omxNode, observer, &iBuffer, &oBuffer,
+                                       kPortIndexInput, kPortIndexOutput));
     EXPECT_GE(framesReceived, 0U);
     framesReceived = 0;
     timestampUs = 0;
 
     // set state to idle
-    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+    ASSERT_NO_FATAL_FAILURE(
+        changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer));
     // set state to executing
-    changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoLoaded(omxNode, observer, &iBuffer,
+                                                    &oBuffer, kPortIndexInput,
+                                                    kPortIndexOutput));
 }
 
 // end of sequence test
@@ -1183,50 +1200,58 @@ TEST_F(VideoDecHidlTest, ThumbnailTest) {
     android::Vector<BufferInfo> iBuffer, oBuffer;
 
     // set state to idle
-    changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput, portMode, true);
+    ASSERT_NO_FATAL_FAILURE(changeStateLoadedtoIdle(
+        omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
+        kPortIndexOutput, portMode, true));
     // set state to executing
-    changeStateIdletoExecute(omxNode, observer);
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoExecute(omxNode, observer));
 
     // request EOS for thumbnail
     size_t i = 0;
     while (!(Info[i].flags & OMX_BUFFERFLAG_SYNCFRAME)) i++;
     eleStream.open(mURL, std::ifstream::binary);
     ASSERT_EQ(eleStream.is_open(), true);
-    decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-                  kPortIndexOutput, eleStream, &Info, 0, i + 1, portMode[1]);
+    ASSERT_NO_FATAL_FAILURE(decodeNFrames(
+        omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
+        kPortIndexOutput, eleStream, &Info, 0, i + 1, portMode[1]));
     eleStream.close();
-    waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
-                           kPortIndexInput, kPortIndexOutput, portMode[1]);
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag, portMode,
-            portReconfiguration, kPortIndexInput, kPortIndexOutput, nullptr);
-    flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-               kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(
+        waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
+                               kPortIndexInput, kPortIndexOutput, portMode[1]));
+    ASSERT_NO_FATAL_FAILURE(testEOS(
+        omxNode, observer, &iBuffer, &oBuffer, false, eosFlag, portMode,
+        portReconfiguration, kPortIndexInput, kPortIndexOutput, nullptr));
+    ASSERT_NO_FATAL_FAILURE(flushPorts(omxNode, observer, &iBuffer, &oBuffer,
+                                       kPortIndexInput, kPortIndexOutput));
     EXPECT_GE(framesReceived, 1U);
     framesReceived = 0;
     timestampUs = 0;
 
     eleStream.open(mURL, std::ifstream::binary);
     ASSERT_EQ(eleStream.is_open(), true);
-    decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-                  kPortIndexOutput, eleStream, &Info, 0, i + 1, portMode[1],
-                  false);
+    ASSERT_NO_FATAL_FAILURE(decodeNFrames(
+        omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
+        kPortIndexOutput, eleStream, &Info, 0, i + 1, portMode[1], false));
     eleStream.close();
-    waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
-                           kPortIndexInput, kPortIndexOutput, portMode[1]);
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, portMode,
-            portReconfiguration, kPortIndexInput, kPortIndexOutput, nullptr);
-    flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-               kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(
+        waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
+                               kPortIndexInput, kPortIndexOutput, portMode[1]));
+    ASSERT_NO_FATAL_FAILURE(testEOS(
+        omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, portMode,
+        portReconfiguration, kPortIndexInput, kPortIndexOutput, nullptr));
+    ASSERT_NO_FATAL_FAILURE(flushPorts(omxNode, observer, &iBuffer, &oBuffer,
+                                       kPortIndexInput, kPortIndexOutput));
     EXPECT_GE(framesReceived, 1U);
     framesReceived = 0;
     timestampUs = 0;
 
     // set state to idle
-    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+    ASSERT_NO_FATAL_FAILURE(
+        changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer));
     // set state to executing
-    changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoLoaded(omxNode, observer, &iBuffer,
+                                                    &oBuffer, kPortIndexInput,
+                                                    kPortIndexOutput));
 }
 
 // end of sequence test
@@ -1302,32 +1327,38 @@ TEST_F(VideoDecHidlTest, SimpleEOSTest) {
     android::Vector<BufferInfo> iBuffer, oBuffer;
 
     // set state to idle
-    changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput, portMode, true);
+    ASSERT_NO_FATAL_FAILURE(changeStateLoadedtoIdle(
+        omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
+        kPortIndexOutput, portMode, true));
     // set state to executing
-    changeStateIdletoExecute(omxNode, observer);
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoExecute(omxNode, observer));
 
     // request EOS at the end
     eleStream.open(mURL, std::ifstream::binary);
     ASSERT_EQ(eleStream.is_open(), true);
-    decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-                  kPortIndexOutput, eleStream, &Info, 0, (int)Info.size(),
-                  portMode[1], false);
+    ASSERT_NO_FATAL_FAILURE(decodeNFrames(omxNode, observer, &iBuffer, &oBuffer,
+                                          kPortIndexInput, kPortIndexOutput,
+                                          eleStream, &Info, 0, (int)Info.size(),
+                                          portMode[1], false));
     eleStream.close();
-    waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
-                           kPortIndexInput, kPortIndexOutput, portMode[1]);
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, portMode,
-            portReconfiguration, kPortIndexInput, kPortIndexOutput, nullptr);
-    flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-               kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(
+        waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer,
+                               kPortIndexInput, kPortIndexOutput, portMode[1]));
+    ASSERT_NO_FATAL_FAILURE(testEOS(
+        omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, portMode,
+        portReconfiguration, kPortIndexInput, kPortIndexOutput, nullptr));
+    ASSERT_NO_FATAL_FAILURE(flushPorts(omxNode, observer, &iBuffer, &oBuffer,
+                                       kPortIndexInput, kPortIndexOutput));
     framesReceived = 0;
     timestampUs = 0;
 
     // set state to idle
-    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+    ASSERT_NO_FATAL_FAILURE(
+        changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer));
     // set state to executing
-    changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoLoaded(omxNode, observer, &iBuffer,
+                                                    &oBuffer, kPortIndexInput,
+                                                    kPortIndexOutput));
 }
 
 // test input/output port flush
@@ -1397,10 +1428,11 @@ TEST_F(VideoDecHidlTest, FlushTest) {
     android::Vector<BufferInfo> iBuffer, oBuffer;
 
     // set state to idle
-    changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput, portMode, true);
+    ASSERT_NO_FATAL_FAILURE(changeStateLoadedtoIdle(
+        omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
+        kPortIndexOutput, portMode, true));
     // set state to executing
-    changeStateIdletoExecute(omxNode, observer);
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoExecute(omxNode, observer));
 
     // Decode 128 frames and flush. here 128 is chosen to ensure there is a key
     // frame after this so that the below section can be convered for all
@@ -1408,11 +1440,11 @@ TEST_F(VideoDecHidlTest, FlushTest) {
     int nFrames = 128;
     eleStream.open(mURL, std::ifstream::binary);
     ASSERT_EQ(eleStream.is_open(), true);
-    decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-                  kPortIndexOutput, eleStream, &Info, 0, nFrames, portMode[1],
-                  false);
-    flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-               kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(decodeNFrames(
+        omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
+        kPortIndexOutput, eleStream, &Info, 0, nFrames, portMode[1], false));
+    ASSERT_NO_FATAL_FAILURE(flushPorts(omxNode, observer, &iBuffer, &oBuffer,
+                                       kPortIndexInput, kPortIndexOutput));
     framesReceived = 0;
 
     // Seek to next key frame and start decoding till the end
@@ -1429,20 +1461,23 @@ TEST_F(VideoDecHidlTest, FlushTest) {
         index++;
     }
     if (keyFrame) {
-        decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-                      kPortIndexOutput, eleStream, &Info, index,
-                      Info.size() - index, portMode[1], false);
+        ASSERT_NO_FATAL_FAILURE(
+            decodeNFrames(omxNode, observer, &iBuffer, &oBuffer,
+                          kPortIndexInput, kPortIndexOutput, eleStream, &Info,
+                          index, Info.size() - index, portMode[1], false));
     }
     eleStream.close();
-    flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-               kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(flushPorts(omxNode, observer, &iBuffer, &oBuffer,
+                                       kPortIndexInput, kPortIndexOutput));
     framesReceived = 0;
 
     // set state to idle
-    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+    ASSERT_NO_FATAL_FAILURE(
+        changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer));
     // set state to executing
-    changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoLoaded(omxNode, observer, &iBuffer,
+                                                    &oBuffer, kPortIndexInput,
+                                                    kPortIndexOutput));
 }
 
 int main(int argc, char** argv) {

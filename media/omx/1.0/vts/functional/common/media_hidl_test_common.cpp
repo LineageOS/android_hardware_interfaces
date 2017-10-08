@@ -233,7 +233,7 @@ void allocateGraphicBuffers(sp<IOmxNode> omxNode, OMX_U32 portIndex,
             error = _s;
             descriptor = _n1;
         });
-    EXPECT_EQ(error, android::hardware::graphics::mapper::V2_0::Error::NONE);
+    ASSERT_EQ(error, android::hardware::graphics::mapper::V2_0::Error::NONE);
 
     static volatile int32_t nextId = 0;
     uint64_t id = static_cast<uint64_t>(getpid()) << 32;
@@ -279,7 +279,7 @@ void allocateBuffer(sp<IOmxNode> omxNode, BufferInfo* buffer, OMX_U32 portIndex,
     } else if (portMode == PortMode::PRESET_BYTE_BUFFER ||
                portMode == PortMode::DYNAMIC_ANW_BUFFER) {
         sp<IAllocator> allocator = IAllocator::getService("ashmem");
-        EXPECT_NE(allocator.get(), nullptr);
+        ASSERT_NE(allocator.get(), nullptr);
 
         buffer->owner = client;
         buffer->omxBuffer.type = CodecBuffer::Type::SHARED_MEM;
@@ -319,13 +319,14 @@ void allocateBuffer(sp<IOmxNode> omxNode, BufferInfo* buffer, OMX_U32 portIndex,
         OMX_PARAM_PORTDEFINITIONTYPE portDef;
         status = getPortParam(omxNode, OMX_IndexParamPortDefinition, portIndex,
                               &portDef);
+        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
         int32_t nStride;
         buffer->owner = client;
         buffer->omxBuffer.type = CodecBuffer::Type::ANW_BUFFER;
-        allocateGraphicBuffers(omxNode, portIndex, buffer,
-                               portDef.format.video.nFrameWidth,
-                               portDef.format.video.nFrameHeight, &nStride,
-                               portDef.format.video.eColorFormat);
+        ASSERT_NO_FATAL_FAILURE(allocateGraphicBuffers(
+            omxNode, portIndex, buffer, portDef.format.video.nFrameWidth,
+            portDef.format.video.nFrameHeight, &nStride,
+            portDef.format.video.eColorFormat));
         omxNode->useBuffer(
             portIndex, buffer->omxBuffer,
             [&status, &buffer](android::hardware::media::omx::V1_0::Status _s,
@@ -352,14 +353,14 @@ void allocatePortBuffers(sp<IOmxNode> omxNode,
 
     for (size_t i = 0; i < portDef.nBufferCountActual; i++) {
         BufferInfo buffer;
-        allocateBuffer(omxNode, &buffer, portIndex, portDef.nBufferSize,
-                       portMode);
+        ASSERT_NO_FATAL_FAILURE(allocateBuffer(omxNode, &buffer, portIndex,
+                                               portDef.nBufferSize, portMode));
         if (allocGrap && portMode == PortMode::DYNAMIC_ANW_BUFFER) {
             int32_t nStride;
-            allocateGraphicBuffers(omxNode, portIndex, &buffer,
-                                   portDef.format.video.nFrameWidth,
-                                   portDef.format.video.nFrameHeight, &nStride,
-                                   portDef.format.video.eColorFormat);
+            ASSERT_NO_FATAL_FAILURE(allocateGraphicBuffers(
+                omxNode, portIndex, &buffer, portDef.format.video.nFrameWidth,
+                portDef.format.video.nFrameHeight, &nStride,
+                portDef.format.video.eColorFormat));
         }
         buffArray->push(buffer);
     }
@@ -391,14 +392,16 @@ void changeStateLoadedtoIdle(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
     ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::TIMED_OUT);
 
     // allocate buffers on input port
-    allocatePortBuffers(omxNode, iBuffer, kPortIndexInput, pm[0], allocGrap);
+    ASSERT_NO_FATAL_FAILURE(allocatePortBuffers(
+        omxNode, iBuffer, kPortIndexInput, pm[0], allocGrap));
 
     // Dont switch states until the ports are populated
     status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
     ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::TIMED_OUT);
 
     // allocate buffers on output port
-    allocatePortBuffers(omxNode, oBuffer, kPortIndexOutput, pm[1], allocGrap);
+    ASSERT_NO_FATAL_FAILURE(allocatePortBuffers(
+        omxNode, oBuffer, kPortIndexOutput, pm[1], allocGrap));
 
     // As the ports are populated, check if the state transition is complete
     status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
@@ -645,7 +648,8 @@ void testEOS(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
     if (signalEOS) {
         if ((i = getEmptyBufferID(iBuffer)) < iBuffer->size()) {
             // signal an empty buffer with flag set to EOS
-            dispatchInputBuffer(omxNode, iBuffer, i, 0, OMX_BUFFERFLAG_EOS, 0);
+            ASSERT_NO_FATAL_FAILURE(dispatchInputBuffer(omxNode, iBuffer, i, 0,
+                                                        OMX_BUFFERFLAG_EOS, 0));
         } else {
             ASSERT_TRUE(false);
         }
@@ -656,7 +660,8 @@ void testEOS(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         // Dispatch all client owned output buffers to recover remaining frames
         while (1) {
             if ((i = getEmptyBufferID(oBuffer)) < oBuffer->size()) {
-                dispatchOutputBuffer(omxNode, oBuffer, i, pm[1]);
+                ASSERT_NO_FATAL_FAILURE(
+                    dispatchOutputBuffer(omxNode, oBuffer, i, pm[1]));
                 // if dispatch is successful, perhaps there is a latency
                 // in the component. Dont be in a haste to leave. reset timeout
                 // counter
@@ -672,16 +677,16 @@ void testEOS(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         if (status == android::hardware::media::omx::V1_0::Status::OK) {
             if (msg.data.eventData.event == OMX_EventPortSettingsChanged) {
                 if (fptr) {
-                    (*fptr)(omxNode, observer, iBuffer, oBuffer,
-                            kPortIndexInput, kPortIndexOutput, msg, pm[1],
-                            args);
+                    ASSERT_NO_FATAL_FAILURE((*fptr)(
+                        omxNode, observer, iBuffer, oBuffer, kPortIndexInput,
+                        kPortIndexOutput, msg, pm[1], args));
                 } else {
                     // something unexpected happened
-                    EXPECT_TRUE(false);
+                    ASSERT_TRUE(false);
                 }
             } else {
                 // something unexpected happened
-                EXPECT_TRUE(false);
+                ASSERT_TRUE(false);
             }
         }
         if (eosFlag == true) break;
