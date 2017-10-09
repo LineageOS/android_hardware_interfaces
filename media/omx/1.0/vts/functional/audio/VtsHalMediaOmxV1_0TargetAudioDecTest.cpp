@@ -15,6 +15,10 @@
  */
 
 #define LOG_TAG "media_omx_hidl_audio_dec_test"
+#ifdef __LP64__
+#define OMX_ANDROID_COMPILE_AS_32BIT_ON_64BIT_PLATFORMS
+#endif
+
 #include <android-base/logging.h>
 
 #include <android/hardware/media/omx/1.0/IOmx.h>
@@ -161,6 +165,7 @@ class AudioDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                                this->omxNode = _nl;
                            })
                         .isOk());
+        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
         ASSERT_NE(omxNode, nullptr);
         ASSERT_NE(gEnv->getRole().empty(), true) << "Invalid Component Role";
         struct StringToName {
@@ -419,6 +424,9 @@ void getInputChannelInfo(sp<IOmxNode> omxNode, OMX_U32 kPortIndexInput,
             ASSERT_EQ(status,
                       ::android::hardware::media::omx::V1_0::Status::OK);
             *nChannels = param.nChannels;
+            // NOTE: For amrnb sample rate is 8k and amrwb sample rate is 16k.
+            // There is no nSampleRate field in OMX_AUDIO_PARAM_AMRTYPE. Just
+            // return 8k to avoid returning uninit variable.
             *nSampleRate = 8000;
             break;
         }
@@ -544,13 +552,13 @@ void portReconfiguration(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
             // set Port Params
             int32_t nChannels;
             int32_t nSampleRate;
-            getInputChannelInfo(omxNode, kPortIndexInput, eEncoding, &nChannels,
-                                &nSampleRate);
+            ASSERT_NO_FATAL_FAILURE(getInputChannelInfo(
+                omxNode, kPortIndexInput, eEncoding, &nChannels, &nSampleRate));
             // Configure output port
             // SPECIAL CASE: Soft Vorbis, Opus and Raw Decoders do not offer way
-            // to
-            // configure output PCM port. The port undergoes auto configuration
-            // internally basing on parsed elementary stream information.
+            // to configure output PCM port. The port undergoes auto
+            // configuration internally basing on parsed elementary stream
+            // information.
             if (comp != AudioDecHidlTest::standardComp::vorbis &&
                 comp != AudioDecHidlTest::standardComp::opus &&
                 comp != AudioDecHidlTest::standardComp::raw) {
@@ -559,9 +567,8 @@ void portReconfiguration(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                                     nSampleRate);
             }
 
-            // If you can disable a port, then you should be able to
-            // enable
-            // it as well
+            // If you can disable a port, then you should be able to enable it
+            // as well
             status = omxNode->sendCommand(
                 toRawCommandType(OMX_CommandPortEnable), kPortIndexOutput);
             ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
@@ -572,7 +579,8 @@ void portReconfiguration(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
             ASSERT_EQ(status,
                       android::hardware::media::omx::V1_0::Status::TIMED_OUT);
 
-            allocatePortBuffers(omxNode, oBuffer, kPortIndexOutput);
+            ASSERT_NO_FATAL_FAILURE(
+                allocatePortBuffers(omxNode, oBuffer, kPortIndexOutput));
             status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer,
                                               oBuffer);
             ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
@@ -582,14 +590,14 @@ void portReconfiguration(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
 
             // dispatch output buffers
             for (size_t i = 0; i < oBuffer->size(); i++) {
-                dispatchOutputBuffer(omxNode, oBuffer, i);
+                ASSERT_NO_FATAL_FAILURE(
+                    dispatchOutputBuffer(omxNode, oBuffer, i));
             }
         } else {
             ASSERT_TRUE(false);
         }
     } else {
-        EXPECT_TRUE(false);
-        return;
+        ASSERT_TRUE(false);
     }
 }
 
@@ -609,11 +617,12 @@ void waitOnInputConsumption(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         status =
             observer->dequeueMessage(&msg, DEFAULT_TIMEOUT_Q, iBuffer, oBuffer);
         if (status == android::hardware::media::omx::V1_0::Status::OK) {
-            EXPECT_EQ(msg.type, Message::Type::EVENT);
+            ASSERT_EQ(msg.type, Message::Type::EVENT);
             packedArgs audioArgs = {eEncoding, comp};
-            portReconfiguration(omxNode, observer, iBuffer, oBuffer,
-                                kPortIndexInput, kPortIndexOutput, msg,
-                                PortMode::PRESET_BYTE_BUFFER, &audioArgs);
+            ASSERT_NO_FATAL_FAILURE(
+                portReconfiguration(omxNode, observer, iBuffer, oBuffer,
+                                    kPortIndexInput, kPortIndexOutput, msg,
+                                    PortMode::PRESET_BYTE_BUFFER, &audioArgs));
         }
         // status == TIMED_OUT, it could be due to process time being large
         // than DEFAULT_TIMEOUT or component needs output buffers to start
@@ -626,7 +635,8 @@ void waitOnInputConsumption(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         // Dispatch an output buffer assuming outQueue.empty() is true
         size_t index;
         if ((index = getEmptyBufferID(oBuffer)) < oBuffer->size()) {
-            dispatchOutputBuffer(omxNode, oBuffer, index);
+            ASSERT_NO_FATAL_FAILURE(
+                dispatchOutputBuffer(omxNode, oBuffer, index));
             timeOut = TIMEOUT_COUNTER_Q;
         }
     }
@@ -656,9 +666,10 @@ void decodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         if (status == android::hardware::media::omx::V1_0::Status::OK &&
             msg.type == Message::Type::EVENT) {
             packedArgs audioArgs = {eEncoding, comp};
-            portReconfiguration(omxNode, observer, iBuffer, oBuffer,
-                                kPortIndexInput, kPortIndexOutput, msg,
-                                PortMode::PRESET_BYTE_BUFFER, &audioArgs);
+            ASSERT_NO_FATAL_FAILURE(
+                portReconfiguration(omxNode, observer, iBuffer, oBuffer,
+                                    kPortIndexInput, kPortIndexOutput, msg,
+                                    PortMode::PRESET_BYTE_BUFFER, &audioArgs));
         }
 
         if (frameID == (int)Info->size() || frameID == (offset + range)) break;
@@ -680,15 +691,16 @@ void decodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
             if (signalEOS && ((frameID == (int)Info->size() - 1) ||
                               (frameID == (offset + range - 1))))
                 flags |= OMX_BUFFERFLAG_EOS;
-            dispatchInputBuffer(omxNode, iBuffer, index,
-                                (*Info)[frameID].bytesCount, flags,
-                                (*Info)[frameID].timestamp);
+            ASSERT_NO_FATAL_FAILURE(dispatchInputBuffer(
+                omxNode, iBuffer, index, (*Info)[frameID].bytesCount, flags,
+                (*Info)[frameID].timestamp));
             frameID++;
             iQueued = true;
         }
         // Dispatch output buffer
         if ((index = getEmptyBufferID(oBuffer)) < oBuffer->size()) {
-            dispatchOutputBuffer(omxNode, oBuffer, index);
+            ASSERT_NO_FATAL_FAILURE(
+                dispatchOutputBuffer(omxNode, oBuffer, index));
             oQueued = true;
         }
         // Reset Counters when either input or output buffer is dispatched
@@ -697,8 +709,7 @@ void decodeNFrames(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
         else
             timeOut--;
         if (timeOut == 0) {
-            EXPECT_TRUE(false) << "Wait on Input/Output is found indefinite";
-            break;
+            ASSERT_TRUE(false) << "Wait on Input/Output is found indefinite";
         }
     }
 }
@@ -780,8 +791,8 @@ TEST_F(AudioDecHidlTest, DecodeTest) {
         setDefaultPortParam(omxNode, kPortIndexInput, eEncoding, 1, 8000,
                             OMX_AUDIO_PCMModeLinear, OMX_NumericalDataSigned,
                             32);
-    getInputChannelInfo(omxNode, kPortIndexInput, eEncoding, &nChannels,
-                        &nSampleRate);
+    ASSERT_NO_FATAL_FAILURE(getInputChannelInfo(
+        omxNode, kPortIndexInput, eEncoding, &nChannels, &nSampleRate));
     // Configure output port
     // SPECIAL CASE: Soft Vorbis, Opus and Raw Decoders do not offer way to
     // configure output PCM port. The port undergoes auto configuration
@@ -794,28 +805,33 @@ TEST_F(AudioDecHidlTest, DecodeTest) {
     android::Vector<BufferInfo> iBuffer, oBuffer;
 
     // set state to idle
-    changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(changeStateLoadedtoIdle(omxNode, observer, &iBuffer,
+                                                    &oBuffer, kPortIndexInput,
+                                                    kPortIndexOutput));
     // set state to executing
-    changeStateIdletoExecute(omxNode, observer);
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoExecute(omxNode, observer));
     // Port Reconfiguration
     eleStream.open(mURL, std::ifstream::binary);
     ASSERT_EQ(eleStream.is_open(), true);
-    decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
-                  kPortIndexInput, kPortIndexOutput, eleStream, &Info, 0,
-                  (int)Info.size(), compName);
+    ASSERT_NO_FATAL_FAILURE(decodeNFrames(
+        omxNode, observer, &iBuffer, &oBuffer, eEncoding, kPortIndexInput,
+        kPortIndexOutput, eleStream, &Info, 0, (int)Info.size(), compName));
     eleStream.close();
-    waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
-                           kPortIndexInput, kPortIndexOutput, compName);
+    ASSERT_NO_FATAL_FAILURE(
+        waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
+                               kPortIndexInput, kPortIndexOutput, compName));
     packedArgs audioArgs = {eEncoding, compName};
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag, nullptr,
-            portReconfiguration, kPortIndexInput, kPortIndexOutput, &audioArgs);
+    ASSERT_NO_FATAL_FAILURE(testEOS(
+        omxNode, observer, &iBuffer, &oBuffer, false, eosFlag, nullptr,
+        portReconfiguration, kPortIndexInput, kPortIndexOutput, &audioArgs));
     if (timestampDevTest) EXPECT_EQ(timestampUslist.empty(), true);
     // set state to idle
-    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+    ASSERT_NO_FATAL_FAILURE(
+        changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer));
     // set state to executing
-    changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoLoaded(omxNode, observer, &iBuffer,
+                                                    &oBuffer, kPortIndexInput,
+                                                    kPortIndexOutput));
 }
 
 // end of sequence test
@@ -841,8 +857,8 @@ TEST_F(AudioDecHidlTest, EOSTest_M) {
         setDefaultPortParam(omxNode, kPortIndexInput, eEncoding, 1, 8000,
                             OMX_AUDIO_PCMModeLinear, OMX_NumericalDataSigned,
                             32);
-    getInputChannelInfo(omxNode, kPortIndexInput, eEncoding, &nChannels,
-                        &nSampleRate);
+    ASSERT_NO_FATAL_FAILURE(getInputChannelInfo(
+        omxNode, kPortIndexInput, eEncoding, &nChannels, &nSampleRate));
     // Configure output port
     // SPECIAL CASE: Soft Vorbis, Opus and Raw Decoders do not offer way to
     // configure output PCM port. The port undergoes auto configuration
@@ -855,26 +871,31 @@ TEST_F(AudioDecHidlTest, EOSTest_M) {
     android::Vector<BufferInfo> iBuffer, oBuffer;
 
     // set state to idle
-    changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(changeStateLoadedtoIdle(omxNode, observer, &iBuffer,
+                                                    &oBuffer, kPortIndexInput,
+                                                    kPortIndexOutput));
     // set state to executing
-    changeStateIdletoExecute(omxNode, observer);
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoExecute(omxNode, observer));
 
     // request EOS at the start
     packedArgs audioArgs = {eEncoding, compName};
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, nullptr,
-            portReconfiguration, kPortIndexInput, kPortIndexOutput, &audioArgs);
-    flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-               kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(testEOS(
+        omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, nullptr,
+        portReconfiguration, kPortIndexInput, kPortIndexOutput, &audioArgs));
+    ASSERT_NO_FATAL_FAILURE(flushPorts(omxNode, observer, &iBuffer, &oBuffer,
+                                       kPortIndexInput, kPortIndexOutput));
     EXPECT_GE(framesReceived, 0U);
     framesReceived = 0;
     timestampUs = 0;
 
     // set state to idle
-    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+    ASSERT_NO_FATAL_FAILURE(
+        changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer));
+
     // set state to executing
-    changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoLoaded(omxNode, observer, &iBuffer,
+                                                    &oBuffer, kPortIndexInput,
+                                                    kPortIndexOutput));
 }
 
 // end of sequence test
@@ -920,8 +941,8 @@ TEST_F(AudioDecHidlTest, ThumbnailTest) {
         setDefaultPortParam(omxNode, kPortIndexInput, eEncoding, 1, 8000,
                             OMX_AUDIO_PCMModeLinear, OMX_NumericalDataSigned,
                             32);
-    getInputChannelInfo(omxNode, kPortIndexInput, eEncoding, &nChannels,
-                        &nSampleRate);
+    ASSERT_NO_FATAL_FAILURE(getInputChannelInfo(
+        omxNode, kPortIndexInput, eEncoding, &nChannels, &nSampleRate));
     // Configure output port
     // SPECIAL CASE: Soft Vorbis, Opus and Raw Decoders do not offer way to
     // configure output PCM port. The port undergoes auto configuration
@@ -934,10 +955,11 @@ TEST_F(AudioDecHidlTest, ThumbnailTest) {
     android::Vector<BufferInfo> iBuffer, oBuffer;
 
     // set state to idle
-    changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(changeStateLoadedtoIdle(omxNode, observer, &iBuffer,
+                                                    &oBuffer, kPortIndexInput,
+                                                    kPortIndexOutput));
     // set state to executing
-    changeStateIdletoExecute(omxNode, observer);
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoExecute(omxNode, observer));
 
     // request EOS for thumbnail
     // signal EOS flag with last frame
@@ -945,17 +967,19 @@ TEST_F(AudioDecHidlTest, ThumbnailTest) {
     while (!(Info[i].flags & OMX_BUFFERFLAG_SYNCFRAME)) i++;
     eleStream.open(mURL, std::ifstream::binary);
     ASSERT_EQ(eleStream.is_open(), true);
-    decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
-                  kPortIndexInput, kPortIndexOutput, eleStream, &Info, 0, i + 1,
-                  compName);
+    ASSERT_NO_FATAL_FAILURE(decodeNFrames(
+        omxNode, observer, &iBuffer, &oBuffer, eEncoding, kPortIndexInput,
+        kPortIndexOutput, eleStream, &Info, 0, i + 1, compName));
     eleStream.close();
-    waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
-                           kPortIndexInput, kPortIndexOutput, compName);
+    ASSERT_NO_FATAL_FAILURE(
+        waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
+                               kPortIndexInput, kPortIndexOutput, compName));
     packedArgs audioArgs = {eEncoding, compName};
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, false, eosFlag, nullptr,
-            portReconfiguration, kPortIndexInput, kPortIndexOutput, &audioArgs);
-    flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-               kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(testEOS(
+        omxNode, observer, &iBuffer, &oBuffer, false, eosFlag, nullptr,
+        portReconfiguration, kPortIndexInput, kPortIndexOutput, &audioArgs));
+    ASSERT_NO_FATAL_FAILURE(flushPorts(omxNode, observer, &iBuffer, &oBuffer,
+                                       kPortIndexInput, kPortIndexOutput));
     EXPECT_GE(framesReceived, 1U);
     framesReceived = 0;
     timestampUs = 0;
@@ -963,25 +987,29 @@ TEST_F(AudioDecHidlTest, ThumbnailTest) {
     // signal EOS flag after last frame
     eleStream.open(mURL, std::ifstream::binary);
     ASSERT_EQ(eleStream.is_open(), true);
-    decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
-                  kPortIndexInput, kPortIndexOutput, eleStream, &Info, 0, i + 1,
-                  compName, false);
+    ASSERT_NO_FATAL_FAILURE(decodeNFrames(
+        omxNode, observer, &iBuffer, &oBuffer, eEncoding, kPortIndexInput,
+        kPortIndexOutput, eleStream, &Info, 0, i + 1, compName, false));
     eleStream.close();
-    waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
-                           kPortIndexInput, kPortIndexOutput, compName);
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, nullptr,
-            portReconfiguration, kPortIndexInput, kPortIndexOutput, &audioArgs);
-    flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-               kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(
+        waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
+                               kPortIndexInput, kPortIndexOutput, compName));
+    ASSERT_NO_FATAL_FAILURE(testEOS(
+        omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, nullptr,
+        portReconfiguration, kPortIndexInput, kPortIndexOutput, &audioArgs));
+    ASSERT_NO_FATAL_FAILURE(flushPorts(omxNode, observer, &iBuffer, &oBuffer,
+                                       kPortIndexInput, kPortIndexOutput));
     EXPECT_GE(framesReceived, 1U);
     framesReceived = 0;
     timestampUs = 0;
 
     // set state to idle
-    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+    ASSERT_NO_FATAL_FAILURE(
+        changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer));
     // set state to executing
-    changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoLoaded(omxNode, observer, &iBuffer,
+                                                    &oBuffer, kPortIndexInput,
+                                                    kPortIndexOutput));
 }
 
 // end of sequence test
@@ -1027,8 +1055,8 @@ TEST_F(AudioDecHidlTest, SimpleEOSTest) {
         setDefaultPortParam(omxNode, kPortIndexInput, eEncoding, 1, 8000,
                             OMX_AUDIO_PCMModeLinear, OMX_NumericalDataSigned,
                             32);
-    getInputChannelInfo(omxNode, kPortIndexInput, eEncoding, &nChannels,
-                        &nSampleRate);
+    ASSERT_NO_FATAL_FAILURE(getInputChannelInfo(
+        omxNode, kPortIndexInput, eEncoding, &nChannels, &nSampleRate));
     // Configure output port
     // SPECIAL CASE: Soft Vorbis, Opus and Raw Decoders do not offer way to
     // configure output PCM port. The port undergoes auto configuration
@@ -1041,33 +1069,39 @@ TEST_F(AudioDecHidlTest, SimpleEOSTest) {
     android::Vector<BufferInfo> iBuffer, oBuffer;
 
     // set state to idle
-    changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(changeStateLoadedtoIdle(omxNode, observer, &iBuffer,
+                                                    &oBuffer, kPortIndexInput,
+                                                    kPortIndexOutput));
     // set state to executing
-    changeStateIdletoExecute(omxNode, observer);
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoExecute(omxNode, observer));
 
     // request EOS at the end
     eleStream.open(mURL, std::ifstream::binary);
     ASSERT_EQ(eleStream.is_open(), true);
-    decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
-                  kPortIndexInput, kPortIndexOutput, eleStream, &Info, 0,
-                  (int)Info.size(), compName, false);
+    ASSERT_NO_FATAL_FAILURE(decodeNFrames(omxNode, observer, &iBuffer, &oBuffer,
+                                          eEncoding, kPortIndexInput,
+                                          kPortIndexOutput, eleStream, &Info, 0,
+                                          (int)Info.size(), compName, false));
     eleStream.close();
-    waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
-                           kPortIndexInput, kPortIndexOutput, compName);
+    ASSERT_NO_FATAL_FAILURE(
+        waitOnInputConsumption(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
+                               kPortIndexInput, kPortIndexOutput, compName));
     packedArgs audioArgs = {eEncoding, compName};
-    testEOS(omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, nullptr,
-            portReconfiguration, kPortIndexInput, kPortIndexOutput, &audioArgs);
-    flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-               kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(testEOS(
+        omxNode, observer, &iBuffer, &oBuffer, true, eosFlag, nullptr,
+        portReconfiguration, kPortIndexInput, kPortIndexOutput, &audioArgs));
+    ASSERT_NO_FATAL_FAILURE(flushPorts(omxNode, observer, &iBuffer, &oBuffer,
+                                       kPortIndexInput, kPortIndexOutput));
     framesReceived = 0;
     timestampUs = 0;
 
     // set state to idle
-    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+    ASSERT_NO_FATAL_FAILURE(
+        changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer));
     // set state to executing
-    changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoLoaded(omxNode, observer, &iBuffer,
+                                                    &oBuffer, kPortIndexInput,
+                                                    kPortIndexOutput));
 }
 
 // test input/output port flush
@@ -1113,8 +1147,8 @@ TEST_F(AudioDecHidlTest, FlushTest) {
         setDefaultPortParam(omxNode, kPortIndexInput, eEncoding, 1, 8000,
                             OMX_AUDIO_PCMModeLinear, OMX_NumericalDataSigned,
                             32);
-    getInputChannelInfo(omxNode, kPortIndexInput, eEncoding, &nChannels,
-                        &nSampleRate);
+    ASSERT_NO_FATAL_FAILURE(getInputChannelInfo(
+        omxNode, kPortIndexInput, eEncoding, &nChannels, &nSampleRate));
     // Configure output port
     // SPECIAL CASE: Soft Vorbis, Opus and Raw Decoders do not offer way to
     // configure output PCM port. The port undergoes auto configuration
@@ -1127,10 +1161,11 @@ TEST_F(AudioDecHidlTest, FlushTest) {
     android::Vector<BufferInfo> iBuffer, oBuffer;
 
     // set state to idle
-    changeStateLoadedtoIdle(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(changeStateLoadedtoIdle(omxNode, observer, &iBuffer,
+                                                    &oBuffer, kPortIndexInput,
+                                                    kPortIndexOutput));
     // set state to executing
-    changeStateIdletoExecute(omxNode, observer);
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoExecute(omxNode, observer));
 
     // Decode 128 frames and flush. here 128 is chosen to ensure there is a key
     // frame after this so that the below section can be convered for all
@@ -1138,11 +1173,11 @@ TEST_F(AudioDecHidlTest, FlushTest) {
     int nFrames = 128;
     eleStream.open(mURL, std::ifstream::binary);
     ASSERT_EQ(eleStream.is_open(), true);
-    decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
-                  kPortIndexInput, kPortIndexOutput, eleStream, &Info, 0,
-                  nFrames, compName, false);
-    flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-               kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(decodeNFrames(
+        omxNode, observer, &iBuffer, &oBuffer, eEncoding, kPortIndexInput,
+        kPortIndexOutput, eleStream, &Info, 0, nFrames, compName, false));
+    ASSERT_NO_FATAL_FAILURE(flushPorts(omxNode, observer, &iBuffer, &oBuffer,
+                                       kPortIndexInput, kPortIndexOutput));
     framesReceived = 0;
 
     // Seek to next key frame and start decoding till the end
@@ -1159,19 +1194,22 @@ TEST_F(AudioDecHidlTest, FlushTest) {
         index++;
     }
     if (keyFrame) {
-        decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
-                      kPortIndexInput, kPortIndexOutput, eleStream, &Info,
-                      index, Info.size() - index, compName, false);
+        ASSERT_NO_FATAL_FAILURE(
+            decodeNFrames(omxNode, observer, &iBuffer, &oBuffer, eEncoding,
+                          kPortIndexInput, kPortIndexOutput, eleStream, &Info,
+                          index, Info.size() - index, compName, false));
     }
-    flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
-               kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(flushPorts(omxNode, observer, &iBuffer, &oBuffer,
+                                       kPortIndexInput, kPortIndexOutput));
     framesReceived = 0;
 
     // set state to idle
-    changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer);
+    ASSERT_NO_FATAL_FAILURE(
+        changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer));
     // set state to executing
-    changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
-                            kPortIndexInput, kPortIndexOutput);
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoLoaded(omxNode, observer, &iBuffer,
+                                                    &oBuffer, kPortIndexInput,
+                                                    kPortIndexOutput));
 }
 
 int main(int argc, char** argv) {

@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-#include "Event.h"
+#include "Callbacks.h"
 #include "TestHarness.h"
 #include "VtsHalNeuralnetworksV1_0TargetTest.h"
 
 #include <android-base/logging.h>
 #include <android/hidl/memory/1.0/IMemory.h>
 #include <hidlmemory/mapping.h>
+#include <iostream>
 
 namespace android {
 namespace hardware {
@@ -32,7 +33,8 @@ namespace functional {
 hidl_memory allocateSharedMemory(int64_t size, const std::string& type = "ashmem");
 
 namespace generated_tests {
-using ::android::hardware::neuralnetworks::V1_0::implementation::Event;
+using ::android::hardware::neuralnetworks::V1_0::implementation::ExecutionCallback;
+using ::android::hardware::neuralnetworks::V1_0::implementation::PreparedModelCallback;
 using ::generated_tests::filter;
 using ::generated_tests::for_all;
 using ::generated_tests::for_each;
@@ -65,22 +67,51 @@ void copy_back(MixedTyped* dst, const std::vector<RequestArgument>& ra, char* sr
 void Execute(const sp<IDevice>& device, std::function<Model(void)> create_model,
              std::function<bool(int)> is_ignored,
              const std::vector<MixedTypedExampleType>& examples) {
-    Model model = create_model();
-    sp<IPreparedModel> preparedModel;
-    sp<Event> preparationEvent = new Event();
-    ASSERT_NE(nullptr, preparationEvent.get());
-    Return<void> prepareRet = device->prepareModel(
-        model, preparationEvent, [&](ErrorStatus status, const sp<IPreparedModel>& prepared) {
-            EXPECT_EQ(ErrorStatus::NONE, status);
-            preparedModel = prepared;
-        });
-    ASSERT_TRUE(prepareRet.isOk());
-    ASSERT_NE(nullptr, preparedModel.get());
-    Event::Status preparationStatus = preparationEvent->wait();
-    EXPECT_EQ(Event::Status::SUCCESS, preparationStatus);
-
     const uint32_t INPUT = 0;
     const uint32_t OUTPUT = 1;
+    Model model = create_model();
+
+    // see if service can handle model
+    ErrorStatus supportedStatus;
+    bool fullySupportsModel = false;
+    Return<void> supportedCall = device->getSupportedOperations(
+        model, [&](ErrorStatus status, const hidl_vec<bool>& supported) {
+            supportedStatus = status;
+            ASSERT_NE(0ul, supported.size());
+            fullySupportsModel =
+                std::all_of(supported.begin(), supported.end(), [](bool valid) { return valid; });
+        });
+    ASSERT_TRUE(supportedCall.isOk());
+    ASSERT_EQ(ErrorStatus::NONE, supportedStatus);
+
+    // launch prepare model
+    sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
+    ASSERT_NE(nullptr, preparedModelCallback.get());
+    Return<ErrorStatus> prepareLaunchStatus = device->prepareModel(model, preparedModelCallback);
+    ASSERT_TRUE(prepareLaunchStatus.isOk());
+
+    // retrieve prepared model
+    preparedModelCallback->wait();
+    ErrorStatus prepareReturnStatus = preparedModelCallback->getStatus();
+    sp<IPreparedModel> preparedModel = preparedModelCallback->getPreparedModel();
+    if (fullySupportsModel) {
+        EXPECT_EQ(ErrorStatus::NONE, prepareReturnStatus);
+    } else {
+        EXPECT_TRUE(prepareReturnStatus == ErrorStatus::NONE ||
+                    prepareReturnStatus == ErrorStatus::GENERAL_FAILURE);
+    }
+
+    // early termination if vendor service cannot fully prepare model
+    if (!fullySupportsModel && prepareReturnStatus == ErrorStatus::GENERAL_FAILURE) {
+        ASSERT_EQ(nullptr, preparedModel.get());
+        LOG(INFO) << "NN VTS: Early termination of test because vendor service cannot "
+                     "prepare model that it does not support.";
+        std::cout << "[          ]   Early termination of test because vendor service cannot "
+                     "prepare model that it does not support."
+                  << std::endl;
+        return;
+    }
+    ASSERT_NE(nullptr, preparedModel.get());
 
     int example_no = 1;
     for (auto& example : examples) {
@@ -100,14 +131,17 @@ void Execute(const sp<IDevice>& device, std::function<Model(void)> create_model,
                 .location = {.poolIndex = INPUT, .offset = 0, .length = static_cast<uint32_t>(s)},
                 .dimensions = {},
             };
-            inputs_info[index] = arg;
+            RequestArgument arg_empty = {
+                .hasNoValue = true,
+            };
+            inputs_info[index] = s ? arg : arg_empty;
             inputSize += s;
         });
         // Compute offset for inputs 1 and so on
         {
             size_t offset = 0;
             for (auto& i : inputs_info) {
-                i.location.offset = offset;
+                if (!i.hasNoValue) i.location.offset = offset;
                 offset += i.location.length;
             }
         }
@@ -160,15 +194,19 @@ void Execute(const sp<IDevice>& device, std::function<Model(void)> create_model,
 
         inputMemory->commit();
         outputMemory->commit();
-        // execute request
-        sp<Event> executionEvent = new Event();
-        ASSERT_NE(nullptr, executionEvent.get());
-        Return<ErrorStatus> executeStatus = preparedModel->execute(
-            {.inputs = inputs_info, .outputs = outputs_info, .pools = pools}, executionEvent);
-        ASSERT_TRUE(executeStatus.isOk());
-        EXPECT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(executeStatus));
-        Event::Status eventStatus = executionEvent->wait();
-        EXPECT_EQ(Event::Status::SUCCESS, eventStatus);
+
+        // launch execution
+        sp<ExecutionCallback> executionCallback = new ExecutionCallback();
+        ASSERT_NE(nullptr, executionCallback.get());
+        Return<ErrorStatus> executionLaunchStatus = preparedModel->execute(
+            {.inputs = inputs_info, .outputs = outputs_info, .pools = pools}, executionCallback);
+        ASSERT_TRUE(executionLaunchStatus.isOk());
+        EXPECT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(executionLaunchStatus));
+
+        // retrieve execution status
+        executionCallback->wait();
+        ErrorStatus executionReturnStatus = executionCallback->getStatus();
+        EXPECT_EQ(ErrorStatus::NONE, executionReturnStatus);
 
         // validate results
         outputMemory->read();
