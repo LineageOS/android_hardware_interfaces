@@ -1057,27 +1057,34 @@ TEST_P(InputStreamTest, SetGain) {
         "InputStream::setGain");
 }
 
-static void testPrepareForReading(IStreamIn* stream, uint32_t frameSize,
-                                  uint32_t framesCount) {
+static void testPrepareForReading(IStreamIn* stream, uint32_t frameSize, uint32_t framesCount,
+                                  bool allowSucceed) {
     Result res;
-    // Ignore output parameters as the call should fail
+    // Ignore output parameters.
     ASSERT_OK(stream->prepareForReading(
         frameSize, framesCount,
         [&res](auto r, auto&, auto&, auto&, auto&) { res = r; }));
-    EXPECT_RESULT(Result::INVALID_ARGUMENTS, res);
+    if (allowSucceed) {
+        auto status = {
+            Result::INVALID_ARGUMENTS, Result::OK,
+        };
+        EXPECT_RESULT(status, res);
+    } else {
+        EXPECT_RESULT(Result::INVALID_ARGUMENTS, res);
+    };
 }
 
 TEST_P(InputStreamTest, PrepareForReadingWithZeroBuffer) {
     doc::test(
         "Preparing a stream for reading with a 0 sized buffer should fail");
-    testPrepareForReading(stream.get(), 0, 0);
+    testPrepareForReading(stream.get(), 0, 0, false /*allowSucceed*/);
 }
 
 TEST_P(InputStreamTest, PrepareForReadingWithHugeBuffer) {
     doc::test(
         "Preparing a stream for reading with a 2^32 sized buffer should fail");
-    testPrepareForReading(stream.get(), 1,
-                          std::numeric_limits<uint32_t>::max());
+    testPrepareForReading(stream.get(), 1, std::numeric_limits<uint32_t>::max(),
+                          false /*allowSucceed*/);
 }
 
 TEST_P(InputStreamTest, PrepareForReadingCheckOverflow) {
@@ -1085,7 +1092,8 @@ TEST_P(InputStreamTest, PrepareForReadingCheckOverflow) {
         "Preparing a stream for reading with a overflowing sized buffer should "
         "fail");
     auto uintMax = std::numeric_limits<uint32_t>::max();
-    testPrepareForReading(stream.get(), uintMax, uintMax);
+    // In O, the test fails for 32-bit HAL, and succeeds for 64-bit HAL.
+    testPrepareForReading(stream.get(), uintMax, uintMax, true /*allowSucceed*/);
 }
 
 TEST_P(InputStreamTest, GetInputFramesLost) {
@@ -1125,27 +1133,34 @@ TEST_P(OutputStreamTest, setVolume) {
         "setVolume");
 }
 
-static void testPrepareForWriting(IStreamOut* stream, uint32_t frameSize,
-                                  uint32_t framesCount) {
+static void testPrepareForWriting(IStreamOut* stream, uint32_t frameSize, uint32_t framesCount,
+                                  bool allowSucceed) {
     Result res;
-    // Ignore output parameters as the call should fail
+    // Ignore output parameters.
     ASSERT_OK(stream->prepareForWriting(
         frameSize, framesCount,
         [&res](auto r, auto&, auto&, auto&, auto&) { res = r; }));
-    EXPECT_RESULT(Result::INVALID_ARGUMENTS, res);
+    if (allowSucceed) {
+        auto status = {
+            Result::INVALID_ARGUMENTS, Result::OK,
+        };
+        EXPECT_RESULT(status, res);
+    } else {
+        EXPECT_RESULT(Result::INVALID_ARGUMENTS, res);
+    };
 }
 
 TEST_P(OutputStreamTest, PrepareForWriteWithZeroBuffer) {
     doc::test(
         "Preparing a stream for writing with a 0 sized buffer should fail");
-    testPrepareForWriting(stream.get(), 0, 0);
+    testPrepareForWriting(stream.get(), 0, 0, false /*allowSucceed*/);
 }
 
 TEST_P(OutputStreamTest, PrepareForWriteWithHugeBuffer) {
     doc::test(
         "Preparing a stream for writing with a 2^32 sized buffer should fail");
-    testPrepareForWriting(stream.get(), 1,
-                          std::numeric_limits<uint32_t>::max());
+    testPrepareForWriting(stream.get(), 1, std::numeric_limits<uint32_t>::max(),
+                          false /*allowSucceed*/);
 }
 
 TEST_P(OutputStreamTest, PrepareForWritingCheckOverflow) {
@@ -1153,7 +1168,8 @@ TEST_P(OutputStreamTest, PrepareForWritingCheckOverflow) {
         "Preparing a stream for writing with a overflowing sized buffer should "
         "fail");
     auto uintMax = std::numeric_limits<uint32_t>::max();
-    testPrepareForWriting(stream.get(), uintMax, uintMax);
+    // In O, the test fails for 32-bit HAL, and succeeds for 64-bit HAL.
+    testPrepareForWriting(stream.get(), uintMax, uintMax, true /*allowSucceed*/);
 }
 
 struct Capability {
