@@ -49,6 +49,13 @@ using ::android::sp;
 struct Stream : public IStream, public ParametersUtil {
     explicit Stream(audio_stream_t* stream);
 
+    /** 1GiB is the maximum buffer size the HAL client is allowed to request.
+     * This value has been chosen to be under SIZE_MAX and still big enough
+     * for all audio use case.
+     * Keep private for 2.0, put in .hal in 2.1
+     */
+    static constexpr uint32_t MAX_BUFFER_SIZE = 2 << 30 /* == 1GiB */;
+
     // Methods from ::android::hardware::audio::V2_0::IStream follow.
     Return<uint64_t> getFrameSize()  override;
     Return<uint64_t> getFrameCount()  override;
