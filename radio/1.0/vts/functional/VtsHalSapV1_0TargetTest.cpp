@@ -17,8 +17,6 @@
 #include <sap_hidl_hal_utils.h>
 
 int main(int argc, char** argv) {
-    // Add Sim-access Profile Hidl Environment
-    ::testing::AddGlobalTestEnvironment(new SapHidlEnvironment);
     ::testing::InitGoogleTest(&argc, argv);
 
     // setup seed for rand function
