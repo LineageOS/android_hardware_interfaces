@@ -562,10 +562,3 @@ class RadioHidlTest_v1_1 : public ::testing::VtsHalHidlTargetTestBase {
     sp<RadioResponse_v1_1> radioRsp_v1_1;
     sp<RadioIndication_v1_1> radioInd_v1_1;
 };
-
-// A class for test environment setup
-class RadioHidlEnvironment : public ::testing::Environment {
-   public:
-    virtual void SetUp() {}
-    virtual void TearDown() {}
-};
