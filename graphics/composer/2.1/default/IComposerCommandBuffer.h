@@ -92,6 +92,13 @@ public:
     bool writeQueue(bool* outQueueChanged, uint32_t* outCommandLength,
             hidl_vec<hidl_handle>* outCommandHandles)
     {
+        if (mDataWritten == 0) {
+            *outQueueChanged = false;
+            *outCommandLength = 0;
+            outCommandHandles->setToExternal(nullptr, 0);
+            return true;
+        }
+
         // After data are written to the queue, it may not be read by the
         // remote reader when
         //
