@@ -46,11 +46,11 @@ using ::generated_tests::Int32Operands;
 using ::generated_tests::Quant8Operands;
 using ::generated_tests::compare;
 
-template <typename ty>
+template <typename T>
 void copy_back_(MixedTyped* dst, const std::vector<RequestArgument>& ra, char* src) {
     MixedTyped& test = *dst;
-    for_each(test, [&ra, src](int index, std::vector<ty>& m) {
-        ASSERT_EQ(m.size(), ra[index].location.length / sizeof(ty));
+    for_each<T>(test, [&ra, src](int index, std::vector<T>& m) {
+        ASSERT_EQ(m.size(), ra[index].location.length / sizeof(T));
         char* begin = src + ra[index].location.offset;
         memcpy(m.data(), begin, ra[index].location.length);
     });
@@ -213,10 +213,8 @@ void Execute(const sp<IDevice>& device, std::function<Model(void)> create_model,
         copy_back(&test, outputs_info, outputPtr);
         outputMemory->commit();
         // Filter out don't cares
-        MixedTyped filtered_golden;
-        MixedTyped filtered_test;
-        filter(golden, &filtered_golden, is_ignored);
-        filter(test, &filtered_test, is_ignored);
+        MixedTyped filtered_golden = filter(golden, is_ignored);
+        MixedTyped filtered_test = filter(test, is_ignored);
 
         // We want "close-enough" results for float
         compare(filtered_golden, filtered_test);
