@@ -103,10 +103,3 @@ class SapHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     /* Sap Callback object */
     sp<SapCallback> sapCb;
 };
-
-// A class for test environment setup
-class SapHidlEnvironment : public ::testing::Environment {
-   public:
-    virtual void SetUp() {}
-    virtual void TearDown() {}
-};

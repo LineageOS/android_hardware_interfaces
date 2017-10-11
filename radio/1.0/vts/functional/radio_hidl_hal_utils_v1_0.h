@@ -539,10 +539,3 @@ class RadioHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     sp<RadioResponse> radioRsp;
     sp<RadioIndication> radioInd;
 };
-
-// A class for test environment setup
-class RadioHidlEnvironment : public ::testing::Environment {
-   public:
-    virtual void SetUp() {}
-    virtual void TearDown() {}
-};
