@@ -65,6 +65,27 @@ cc_library {
     ],
 }
 
+// This package is not java compatible. Not creating java target.
+
+genrule {
+    name: "android.hardware.sensors-V1.0-java-constants_gen_java",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Ljava-constants -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.sensors@1.0",
+    srcs: [
+        ":android.hardware.sensors@1.0_hal",
+    ],
+    out: [
+        "android/hardware/sensors/V1_0/Constants.java",
+    ],
+}
+
+java_library {
+    name: "android.hardware.sensors-V1.0-java-constants",
+    no_framework_libs: true,
+    defaults: ["hidl-java-module-defaults"],
+    srcs: [":android.hardware.sensors-V1.0-java-constants_gen_java"],
+}
+
 genrule {
     name: "android.hardware.sensors@1.0-adapter-helper_genc++",
     tools: ["hidl-gen"],
@@ -88,7 +109,6 @@ genrule {
         "android/hardware/sensors/1.0/ASensors.h",
     ],
 }
-
 
 cc_library {
     name: "android.hardware.sensors@1.0-adapter-helper",

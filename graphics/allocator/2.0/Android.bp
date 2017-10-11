@@ -66,6 +66,11 @@ cc_library {
     ],
 }
 
+// This package is not java compatible. Not creating java target.
+
+// This package does not export any types. Not creating java constants export.
+
+
 genrule {
     name: "android.hardware.graphics.allocator@2.0-adapter-helper_genc++",
     tools: ["hidl-gen"],
@@ -89,7 +94,6 @@ genrule {
         "android/hardware/graphics/allocator/2.0/AAllocator.h",
     ],
 }
-
 
 cc_library {
     name: "android.hardware.graphics.allocator@2.0-adapter-helper",

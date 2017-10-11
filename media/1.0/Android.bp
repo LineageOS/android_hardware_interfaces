@@ -59,3 +59,9 @@ cc_library {
         "android.hardware.graphics.common@1.0",
     ],
 }
+
+// This package is not java compatible. Not creating java target.
+
+// This package does not export any types. Not creating java constants export.
+
+// This package has no interfaces. Not creating versioning adapter.
