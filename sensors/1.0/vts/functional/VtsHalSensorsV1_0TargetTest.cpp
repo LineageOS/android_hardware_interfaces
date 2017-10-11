@@ -1224,7 +1224,7 @@ TEST_F(SensorsHidlTest, MagnetometerBatchingOperation) {
 void SensorsHidlTest::testDirectReportOperation(
     SensorType type, SharedMemType memType, RateLevel rate, const SensorEventsChecker &checker) {
   constexpr size_t kEventSize = static_cast<size_t>(SensorsEventFormatOffset::TOTAL_LENGTH);
-  constexpr size_t kNEvent = 500;
+  constexpr size_t kNEvent = 4096;
   constexpr size_t kMemSize = kEventSize * kNEvent;
 
   constexpr float kNormalNominal = 50;
