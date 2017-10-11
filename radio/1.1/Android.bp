@@ -89,6 +89,51 @@ cc_library {
 }
 
 genrule {
+    name: "android.hardware.radio-V1.1-java_gen_java",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Ljava -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.radio@1.1",
+    srcs: [
+        ":android.hardware.radio@1.1_hal",
+    ],
+    out: [
+        "android/hardware/radio/V1_1/CardPowerState.java",
+        "android/hardware/radio/V1_1/EutranBands.java",
+        "android/hardware/radio/V1_1/GeranBands.java",
+        "android/hardware/radio/V1_1/ImsiEncryptionInfo.java",
+        "android/hardware/radio/V1_1/KeepaliveRequest.java",
+        "android/hardware/radio/V1_1/KeepaliveStatus.java",
+        "android/hardware/radio/V1_1/KeepaliveStatusCode.java",
+        "android/hardware/radio/V1_1/KeepaliveType.java",
+        "android/hardware/radio/V1_1/NetworkScanRequest.java",
+        "android/hardware/radio/V1_1/NetworkScanResult.java",
+        "android/hardware/radio/V1_1/RadioAccessNetworks.java",
+        "android/hardware/radio/V1_1/RadioAccessSpecifier.java",
+        "android/hardware/radio/V1_1/ScanStatus.java",
+        "android/hardware/radio/V1_1/ScanType.java",
+        "android/hardware/radio/V1_1/UtranBands.java",
+        "android/hardware/radio/V1_1/IRadio.java",
+        "android/hardware/radio/V1_1/IRadioIndication.java",
+        "android/hardware/radio/V1_1/IRadioResponse.java",
+        "android/hardware/radio/V1_1/ISap.java",
+    ],
+}
+
+java_library {
+    name: "android.hardware.radio-V1.1-java",
+    no_framework_libs: true,
+    defaults: ["hidl-java-module-defaults"],
+    srcs: [":android.hardware.radio-V1.1-java_gen_java"],
+    libs: [
+        "hwbinder",
+        "android.hardware.radio-V1.0-java",
+        "android.hidl.base-V1.0-java",
+    ]
+}
+
+// This package does not export any types. Not creating java constants export.
+
+
+genrule {
     name: "android.hardware.radio@1.1-adapter-helper_genc++",
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-sources -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.radio@1.1",
@@ -117,7 +162,6 @@ genrule {
         "android/hardware/radio/1.1/ASap.h",
     ],
 }
-
 
 cc_library {
     name: "android.hardware.radio@1.1-adapter-helper",

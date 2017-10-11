@@ -73,6 +73,51 @@ cc_library {
 }
 
 genrule {
+    name: "android.hardware.nfc-V1.0-java_gen_java",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Ljava -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.nfc@1.0",
+    srcs: [
+        ":android.hardware.nfc@1.0_hal",
+    ],
+    out: [
+        "android/hardware/nfc/V1_0/NfcEvent.java",
+        "android/hardware/nfc/V1_0/NfcStatus.java",
+        "android/hardware/nfc/V1_0/INfc.java",
+        "android/hardware/nfc/V1_0/INfcClientCallback.java",
+    ],
+}
+
+java_library {
+    name: "android.hardware.nfc-V1.0-java",
+    no_framework_libs: true,
+    defaults: ["hidl-java-module-defaults"],
+    srcs: [":android.hardware.nfc-V1.0-java_gen_java"],
+    libs: [
+        "hwbinder",
+        "android.hidl.base-V1.0-java",
+    ]
+}
+
+genrule {
+    name: "android.hardware.nfc-V1.0-java-constants_gen_java",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Ljava-constants -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.nfc@1.0",
+    srcs: [
+        ":android.hardware.nfc@1.0_hal",
+    ],
+    out: [
+        "android/hardware/nfc/V1_0/Constants.java",
+    ],
+}
+
+java_library {
+    name: "android.hardware.nfc-V1.0-java-constants",
+    no_framework_libs: true,
+    defaults: ["hidl-java-module-defaults"],
+    srcs: [":android.hardware.nfc-V1.0-java-constants_gen_java"],
+}
+
+genrule {
     name: "android.hardware.nfc@1.0-adapter-helper_genc++",
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-sources -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.nfc@1.0",
@@ -97,7 +142,6 @@ genrule {
         "android/hardware/nfc/1.0/ANfcClientCallback.h",
     ],
 }
-
 
 cc_library {
     name: "android.hardware.nfc@1.0-adapter-helper",

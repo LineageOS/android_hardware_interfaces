@@ -88,6 +88,11 @@ cc_library {
     ],
 }
 
+// This package is not java compatible. Not creating java target.
+
+// This package does not export any types. Not creating java constants export.
+
+
 genrule {
     name: "android.hardware.broadcastradio@1.1-adapter-helper_genc++",
     tools: ["hidl-gen"],
@@ -117,7 +122,6 @@ genrule {
         "android/hardware/broadcastradio/1.1/ATunerCallback.h",
     ],
 }
-
 
 cc_library {
     name: "android.hardware.broadcastradio@1.1-adapter-helper",
