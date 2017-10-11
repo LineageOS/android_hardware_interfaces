@@ -57,3 +57,37 @@ cc_library {
         "libutils",
     ],
 }
+
+genrule {
+    name: "android.hardware.camera.common-V1.0-java_gen_java",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Ljava -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.camera.common@1.0",
+    srcs: [
+        ":android.hardware.camera.common@1.0_hal",
+    ],
+    out: [
+        "android/hardware/camera/common/V1_0/CameraDeviceStatus.java",
+        "android/hardware/camera/common/V1_0/CameraMetadataType.java",
+        "android/hardware/camera/common/V1_0/CameraResourceCost.java",
+        "android/hardware/camera/common/V1_0/Status.java",
+        "android/hardware/camera/common/V1_0/TagBoundaryId.java",
+        "android/hardware/camera/common/V1_0/TorchMode.java",
+        "android/hardware/camera/common/V1_0/TorchModeStatus.java",
+        "android/hardware/camera/common/V1_0/VendorTag.java",
+        "android/hardware/camera/common/V1_0/VendorTagSection.java",
+    ],
+}
+
+java_library {
+    name: "android.hardware.camera.common-V1.0-java",
+    no_framework_libs: true,
+    defaults: ["hidl-java-module-defaults"],
+    srcs: [":android.hardware.camera.common-V1.0-java_gen_java"],
+    libs: [
+        "hwbinder",
+    ]
+}
+
+// This package does not export any types. Not creating java constants export.
+
+// This package has no interfaces. Not creating versioning adapter.

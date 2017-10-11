@@ -73,6 +73,34 @@ cc_library {
 }
 
 genrule {
+    name: "android.hardware.bluetooth-V1.0-java_gen_java",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Ljava -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.bluetooth@1.0",
+    srcs: [
+        ":android.hardware.bluetooth@1.0_hal",
+    ],
+    out: [
+        "android/hardware/bluetooth/V1_0/Status.java",
+        "android/hardware/bluetooth/V1_0/IBluetoothHci.java",
+        "android/hardware/bluetooth/V1_0/IBluetoothHciCallbacks.java",
+    ],
+}
+
+java_library {
+    name: "android.hardware.bluetooth-V1.0-java",
+    no_framework_libs: true,
+    defaults: ["hidl-java-module-defaults"],
+    srcs: [":android.hardware.bluetooth-V1.0-java_gen_java"],
+    libs: [
+        "hwbinder",
+        "android.hidl.base-V1.0-java",
+    ]
+}
+
+// This package does not export any types. Not creating java constants export.
+
+
+genrule {
     name: "android.hardware.bluetooth@1.0-adapter-helper_genc++",
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-sources -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.bluetooth@1.0",
@@ -97,7 +125,6 @@ genrule {
         "android/hardware/bluetooth/1.0/ABluetoothHciCallbacks.h",
     ],
 }
-
 
 cc_library {
     name: "android.hardware.bluetooth@1.0-adapter-helper",
