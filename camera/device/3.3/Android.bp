@@ -71,6 +71,11 @@ cc_library {
     ],
 }
 
+// This package is not java compatible. Not creating java target.
+
+// This package does not export any types. Not creating java constants export.
+
+
 genrule {
     name: "android.hardware.camera.device@3.3-adapter-helper_genc++",
     tools: ["hidl-gen"],
@@ -94,7 +99,6 @@ genrule {
         "android/hardware/camera/device/3.3/ACameraDeviceSession.h",
     ],
 }
-
 
 cc_library {
     name: "android.hardware.camera.device@3.3-adapter-helper",
@@ -142,6 +146,7 @@ genrule {
 
 cc_test {
     name: "android.hardware.camera.device@3.3-adapter",
+    defaults: ["hidl-module-defaults"],
     shared_libs: [
         "libhidladapter",
         "libhidlbase",

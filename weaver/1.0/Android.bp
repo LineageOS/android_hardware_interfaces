@@ -66,6 +66,36 @@ cc_library {
 }
 
 genrule {
+    name: "android.hardware.weaver-V1.0-java_gen_java",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Ljava -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.weaver@1.0",
+    srcs: [
+        ":android.hardware.weaver@1.0_hal",
+    ],
+    out: [
+        "android/hardware/weaver/V1_0/WeaverConfig.java",
+        "android/hardware/weaver/V1_0/WeaverReadResponse.java",
+        "android/hardware/weaver/V1_0/WeaverReadStatus.java",
+        "android/hardware/weaver/V1_0/WeaverStatus.java",
+        "android/hardware/weaver/V1_0/IWeaver.java",
+    ],
+}
+
+java_library {
+    name: "android.hardware.weaver-V1.0-java",
+    no_framework_libs: true,
+    defaults: ["hidl-java-module-defaults"],
+    srcs: [":android.hardware.weaver-V1.0-java_gen_java"],
+    libs: [
+        "hwbinder",
+        "android.hidl.base-V1.0-java",
+    ]
+}
+
+// This package does not export any types. Not creating java constants export.
+
+
+genrule {
     name: "android.hardware.weaver@1.0-adapter-helper_genc++",
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-sources -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.weaver@1.0",
@@ -88,7 +118,6 @@ genrule {
         "android/hardware/weaver/1.0/AWeaver.h",
     ],
 }
-
 
 cc_library {
     name: "android.hardware.weaver@1.0-adapter-helper",
@@ -128,6 +157,7 @@ genrule {
 
 cc_test {
     name: "android.hardware.weaver@1.0-adapter",
+    defaults: ["hidl-module-defaults"],
     shared_libs: [
         "libhidladapter",
         "libhidlbase",
