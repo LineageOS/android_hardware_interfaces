@@ -1,4 +1,4 @@
-cc_library_shared {
+cc_library {
     name: "libpointertest",
     defaults: ["hidl_defaults"],
     srcs: [
@@ -10,8 +10,9 @@ cc_library_shared {
         "libhidlbase",
         "libhidltransport",
         "liblog",
-        "android.hardware.tests.pointer@1.0",
     ],
+    static_libs: ["android.hardware.tests.pointer@1.0"],
+
     local_include_dirs: ["include/hidl-test"],
     export_include_dirs: ["include"],
 

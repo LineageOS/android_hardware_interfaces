@@ -1,4 +1,4 @@
-cc_library_shared {
+cc_library {
     name: "android.hardware.tests.hash@1.0-impl",
     defaults: ["hidl_defaults"],
     relative_install_path: "hw",
@@ -6,9 +6,15 @@ cc_library_shared {
         "Hash.cpp",
     ],
     shared_libs: [
+        "libcutils",
         "libhidlbase",
         "libhidltransport",
+        "libhwbinder",
+        "liblog",
         "libutils",
-        "android.hardware.tests.hash@1.0",
     ],
+
+    // These are static libs only for testing purposes and portability. Shared
+    // libs should be used on device.
+    static_libs: ["android.hardware.tests.hash@1.0"],
 }
