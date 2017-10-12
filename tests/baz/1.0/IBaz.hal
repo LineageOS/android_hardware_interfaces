@@ -68,7 +68,6 @@ interface IBaz extends IBase {
         bitfield<BitField> bf;
     };
 
-    @Fragile @NoReally(very="yes", array={"a","b","c"})
     oneway doThis(float param);
 
     doThatAndReturnSomething(int64_t param) generates (int32_t result);
