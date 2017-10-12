@@ -148,7 +148,7 @@ enum VehicleProperty: int32_t {
         | VehicleArea:GLOBAL),
 
     /**
-     * Fuel capacity of the vehicle
+     * Fuel capacity of the vehicle in milliliters
      *
      * @change_mode VehiclePropertyChangeMode:STATIC
      * @access VehiclePropertyAccess:READ
@@ -158,6 +158,45 @@ enum VehicleProperty: int32_t {
         0x0104
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:FLOAT
+        | VehicleArea:GLOBAL),
+
+    /**
+     * List of fuels the vehicle may use.  Uses enum FuelType
+     *
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:READ
+     * @unit VehicleUnit:MILLILITERS
+     */
+    INFO_FUEL_TYPE = (
+        0x0105
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32_VEC
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Battery capacity of the vehicle, if EV or hybrid.  This is the nominal
+     * battery capacity when the vehicle is new.
+     *
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:READ
+     * @unit VehicleUnit:WH
+     */
+    INFO_EV_BATTERY_CAPACITY = (
+        0x0106
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:FLOAT
+        | VehicleArea:GLOBAL),
+
+    /**
+     * List of connectors this EV may use.  Uses enum EvConnectorType
+     *
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:READ
+     */
+    INFO_EV_CONNECTOR_TYPE = (
+        0x0107
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32_VEC
         | VehicleArea:GLOBAL),
 
     /**
@@ -185,6 +224,19 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:FLOAT
         | VehicleArea:GLOBAL),
+
+    /**
+     * Engine on
+     *
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:READ
+     */
+    ENGINE_ON = (
+        0x0300
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:BOOLEAN
+        | VehicleArea:GLOBAL),
+
 
     /**
      * Temperature of engine coolant
@@ -259,8 +311,6 @@ enum VehicleProperty: int32_t {
      *
      * @change_mode VehiclePropertyChangeMode:CONTINUOUS
      * @access VehiclePropertyAccess:READ
-     *
-     * @since o.mr1
      */
     WHEEL_TICK = (
       0x0306
@@ -268,6 +318,88 @@ enum VehicleProperty: int32_t {
       | VehiclePropertyType:COMPLEX
       | VehicleArea:GLOBAL),
 
+
+    /**
+     * Fuel remaining in the the vehicle, in milliliters
+     *
+     * Value may not exceed INFO_FUEL_CAPACITY
+     *
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:READ
+     * @unit VehicleUnit:MILLILITER
+     */
+    FUEL_LEVEL = (
+        0x0307
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:FLOAT
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Fuel door open
+     *
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:READ
+     */
+    FUEL_DOOR_OPEN = (
+        0x0308
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:BOOLEAN
+        | VehicleArea:GLOBAL),
+
+    /**
+     * EV battery level in WH, if EV or hybrid
+     *
+     * Value may not exceed INFO_EV_BATTERY_CAPACITY
+     *
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:READ
+     * @unit VehicleUnit:WH
+     */
+    EV_BATTERY_LEVEL = (
+        0x0309
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:FLOAT
+        | VehicleArea:GLOBAL),
+
+    /**
+     * EV charge port open
+     *
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:READ
+     */
+    EV_CHARGE_PORT_OPEN = (
+        0x030A
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:BOOLEAN
+        | VehicleArea:GLOBAL),
+
+    /**
+     * EV charge port connected
+     *
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:READ
+     */
+    EV_CHARGE_PORT_CONNECTED = (
+        0x030B
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:BOOLEAN
+        | VehicleArea:GLOBAL),
+
+    /**
+     * EV instantaneous charge rate in milliwatts
+     *
+     * Positive value indicates battery is being charged.
+     * Negative value indicates battery being discharged.
+     *
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:READ
+     * @unit VehicleUnit:MW
+     */
+    EV_BATTERY_INSTANTANEOUS_CHARGE_RATE = (
+        0x030C
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:FLOAT
+        | VehicleArea:GLOBAL),
 
     /**
      * Currently selected gear
@@ -376,8 +508,6 @@ enum VehicleProperty: int32_t {
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ
-     *
-     * @since o.mr1
      */
     ABS_ACTIVE = (
         0x040A
@@ -390,8 +520,6 @@ enum VehicleProperty: int32_t {
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ
-     *
-     * @since o.mr1
      */
     TRACTION_CONTROL_ACTIVE = (
         0x040B
@@ -720,8 +848,6 @@ enum VehicleProperty: int32_t {
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
-     *
-     * @since o.mr1
      */
     HVAC_AUTO_RECIRC_ON = (
         0x0512
@@ -1899,8 +2025,6 @@ enum VehicleProperty: int32_t {
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
-     *
-     * @since o.mr1
      */
     VEHICLE_MAP_SERVICE = (
         0x0C00
@@ -1948,8 +2072,6 @@ enum VehicleProperty: int32_t {
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ
-     *
-     * @since o.mr1
      */
     OBD2_LIVE_FRAME = (
       0x0D00
@@ -1980,8 +2102,6 @@ enum VehicleProperty: int32_t {
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ
-     *
-     * @since o.mr1
      */
     OBD2_FREEZE_FRAME = (
       0x0D01
@@ -2003,8 +2123,6 @@ enum VehicleProperty: int32_t {
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ
-     *
-     * @since o.mr1
      */
     OBD2_FREEZE_FRAME_INFO = (
       0x0D02
@@ -2031,14 +2149,79 @@ enum VehicleProperty: int32_t {
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:WRITE
-     *
-     * @since o.mr1
      */
     OBD2_FREEZE_FRAME_CLEAR = (
       0x0D03
       | VehiclePropertyGroup:SYSTEM
       | VehiclePropertyType:COMPLEX
       | VehicleArea:GLOBAL),
+};
+
+/**
+ * Used by INFO_EV_CONNECTOR_TYPE to enumerate the type of connectors
+ * available to charge the vehicle.  Consistent with projection protocol.
+ */
+enum EvConnectorType : int32_t {
+    /**
+     * Default type if the vehicle does not know or report the EV connector
+     * type.
+     */
+    EV_CONNECTOR_TYPE_UNKNOWN = 0,
+    EV_CONNECTOR_TYPE_J1772 = 1,
+    EV_CONNECTOR_TYPE_MENNEKES = 2,
+    EV_CONNECTOR_TYPE_CHADEMO = 3,
+    EV_CONNECTOR_TYPE_COMBO_1 = 4,
+    EV_CONNECTOR_TYPE_COMBO_2 = 5,
+    EV_CONNECTOR_TYPE_TESLA_ROADSTER = 6,
+    EV_CONNECTOR_TYPE_TESLA_HPWC = 7,
+    EV_CONNECTOR_TYPE_TESLA_SUPERCHARGER = 8,
+    EV_CONNECTOR_TYPE_GBT = 9,
+
+    /**
+     * Connector type to use when no other types apply. Before using this
+     * value, work with Google to see if the EvConnectorType enum can be
+     * extended with an appropriate value.
+     */
+    EV_CONNECTOR_TYPE_OTHER = 101,
+};
+
+/**
+ * Used by INFO_FUEL_TYPE to enumerate the type of fuels this vehicle uses.
+ * Consistent with projection protocol.
+ */
+enum FuelType : int32_t {
+    /**
+     * Fuel type to use if the HU does not know on which types of fuel the vehicle
+     * runs. The use of this value is generally discouraged outside of aftermarket units.
+     */
+    FUEL_TYPE_UNKNOWN = 0,
+    /** Unleaded gasoline */
+    FUEL_TYPE_UNLEADED = 1,
+    /** Leaded gasoline */
+    FUEL_TYPE_LEADED = 2,
+    /** Diesel #1 */
+    FUEL_TYPE_DIESEL_1 = 3,
+    /** Diesel #2 */
+    FUEL_TYPE_DIESEL_2 = 4,
+    /** Biodiesel */
+    FUEL_TYPE_BIODIESEL = 5,
+    /** 85% ethanol/gasoline blend */
+    FUEL_TYPE_E85 = 6,
+    /** Liquified petroleum gas */
+    FUEL_TYPE_LPG = 7,
+    /** Compressed natural gas */
+    FUEL_TYPE_CNG = 8,
+    /** Liquified natural gas */
+    FUEL_TYPE_LNG = 9,
+    /** Electric */
+    FUEL_TYPE_ELECTRIC = 10,
+    /** Hydrogen fuel cell */
+    FUEL_TYPE_HYDROGEN = 11,
+    /**
+     * Fuel type to use when no other types apply. Before using this value, work with
+     * Google to see if the FuelType enum can be extended with an appropriate value.
+     */
+    FUEL_TYPE_OTHER = 12,
 };
 
 /**
@@ -2511,6 +2694,12 @@ enum VehicleUnit : int32_t {
     NANO_SECS      = 0x50,
     SECS           = 0x53,
     YEAR           = 0x59,
+
+    // Electrical Units
+    WATT_HOUR      = 0x60,
+    MILLIAMPERE    = 0x61,
+    MILLIVOLT      = 0x62,
+    MILLIWATTS     = 0x63,
 };
 
   /**

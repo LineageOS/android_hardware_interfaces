@@ -78,6 +78,38 @@ struct ConfigDeclaration {
 const ConfigDeclaration kVehicleProperties[]{
     {.config =
          {
+             .prop = toInt(VehicleProperty::INFO_FUEL_CAPACITY),
+             .access = VehiclePropertyAccess::READ,
+             .changeMode = VehiclePropertyChangeMode::STATIC,
+         },
+     .initialValue = {.floatValues = {15000}}},
+
+    {.config =
+         {
+             .prop = toInt(VehicleProperty::INFO_FUEL_TYPE),
+             .access = VehiclePropertyAccess::READ,
+             .changeMode = VehiclePropertyChangeMode::STATIC,
+         },
+     .initialValue = {.int32Values = {1}}},
+
+    {.config =
+         {
+             .prop = toInt(VehicleProperty::INFO_EV_BATTERY_CAPACITY),
+             .access = VehiclePropertyAccess::READ,
+             .changeMode = VehiclePropertyChangeMode::STATIC,
+         },
+     .initialValue = {.floatValues = {150000}}},
+
+    {.config =
+         {
+             .prop = toInt(VehicleProperty::INFO_EV_CONNECTOR_TYPE),
+             .access = VehiclePropertyAccess::READ,
+             .changeMode = VehiclePropertyChangeMode::STATIC,
+         },
+     .initialValue = {.int32Values = {1}}},
+
+    {.config =
+         {
              .prop = toInt(VehicleProperty::INFO_MAKE),
              .access = VehiclePropertyAccess::READ,
              .changeMode = VehiclePropertyChangeMode::STATIC,
@@ -89,7 +121,7 @@ const ConfigDeclaration kVehicleProperties[]{
              .access = VehiclePropertyAccess::READ,
              .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
              .minSampleRate = 1.0f,
-             .maxSampleRate = 1000.0f,
+             .maxSampleRate = 10.0f,
          },
      .initialValue = {.floatValues = {0.0f}}},
 
@@ -101,6 +133,14 @@ const ConfigDeclaration kVehicleProperties[]{
          },
      .initialValue = {.floatValues = {0.0f}}},
 
+    {.config =
+         {
+             .prop = toInt(VehicleProperty::ENGINE_ON),
+             .access = VehiclePropertyAccess::READ,
+             .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+         },
+     .initialValue = {.int32Values = {0}}},
+
     {
         .config =
             {
@@ -108,10 +148,58 @@ const ConfigDeclaration kVehicleProperties[]{
                 .access = VehiclePropertyAccess::READ,
                 .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
                 .minSampleRate = 1.0f,
-                .maxSampleRate = 1000.0f,
+                .maxSampleRate = 10.0f,
             },
         .initialValue = {.floatValues = {0.0f}},
     },
+
+    {.config =
+         {
+             .prop = toInt(VehicleProperty::FUEL_LEVEL),
+             .access = VehiclePropertyAccess::READ,
+             .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+         },
+     .initialValue = {.floatValues = {15000}}},
+
+    {.config =
+         {
+             .prop = toInt(VehicleProperty::FUEL_DOOR_OPEN),
+             .access = VehiclePropertyAccess::READ,
+             .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+         },
+     .initialValue = {.int32Values = {0}}},
+
+    {.config =
+         {
+             .prop = toInt(VehicleProperty::EV_BATTERY_LEVEL),
+             .access = VehiclePropertyAccess::READ,
+             .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+         },
+     .initialValue = {.floatValues = {150000}}},
+
+    {.config =
+         {
+             .prop = toInt(VehicleProperty::EV_CHARGE_PORT_OPEN),
+             .access = VehiclePropertyAccess::READ,
+             .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+         },
+     .initialValue = {.int32Values = {0}}},
+
+    {.config =
+         {
+             .prop = toInt(VehicleProperty::EV_CHARGE_PORT_CONNECTED),
+             .access = VehiclePropertyAccess::READ,
+             .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+         },
+     .initialValue = {.int32Values = {0}}},
+
+    {.config =
+         {
+             .prop = toInt(VehicleProperty::EV_BATTERY_INSTANTANEOUS_CHARGE_RATE),
+             .access = VehiclePropertyAccess::READ,
+             .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+         },
+     .initialValue = {.floatValues = {0}}},
 
     {.config =
          {
@@ -246,16 +334,6 @@ const ConfigDeclaration kVehicleProperties[]{
          },
      .initialValue = {.int32Values = {toInt(VehicleGear::GEAR_PARK)}}},
 
-    {
-        .config =
-            {
-                .prop = toInt(VehicleProperty::INFO_FUEL_CAPACITY),
-                .access = VehiclePropertyAccess::READ,
-                .changeMode = VehiclePropertyChangeMode::STATIC,
-            },
-        .initialValue = {.floatValues = {123000.0f}}  // In Milliliters
-    },
-
     {.config = {.prop = toInt(VehicleProperty::DISPLAY_BRIGHTNESS),
                 .access = VehiclePropertyAccess::READ_WRITE,
                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
@@ -297,17 +375,16 @@ const ConfigDeclaration kVehicleProperties[]{
          },
      .initialValue = {.int32Values = {1}}},
 
-    {
-        .config =
-            {
-                .prop = WHEEL_TICK,
-                .access = VehiclePropertyAccess::READ,
-                .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
-                .configArray = {ALL_WHEELS, 50000, 50000, 50000, 50000},
-                .minSampleRate = 1.0f,
-                .maxSampleRate = 100.0f,
-            },
-    },
+    {.config =
+         {
+             .prop = WHEEL_TICK,
+             .access = VehiclePropertyAccess::READ,
+             .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
+             .configArray = {ALL_WHEELS, 50000, 50000, 50000, 50000},
+             .minSampleRate = 1.0f,
+             .maxSampleRate = 10.0f,
+         },
+     .initialValue = {.int64Values = {0, 100000, 200000, 300000, 400000}}},
 
     {
         .config =
