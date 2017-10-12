@@ -17,7 +17,6 @@
 #include <radio_hidl_hal_utils_v1_0.h>
 
 int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(new RadioHidlEnvironment);
     ::testing::InitGoogleTest(&argc, argv);
 
     // setup seed for rand function
