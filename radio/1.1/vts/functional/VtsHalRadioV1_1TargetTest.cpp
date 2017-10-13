@@ -17,7 +17,6 @@
 #include <radio_hidl_hal_utils_v1_1.h>
 
 int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(new RadioHidlEnvironment);
     ::testing::InitGoogleTest(&argc, argv);
 
     int status = RUN_ALL_TESTS();

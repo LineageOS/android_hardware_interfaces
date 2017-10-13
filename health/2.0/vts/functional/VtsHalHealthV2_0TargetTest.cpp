@@ -35,7 +35,6 @@ namespace health {
 namespace V2_0 {
 
 using V1_0::BatteryStatus;
-using V1_0::HealthInfo;
 
 // Test environment for graphics.composer
 class HealthHidlEnvironment : public VtsHalHidlTargetTestEnvBase {

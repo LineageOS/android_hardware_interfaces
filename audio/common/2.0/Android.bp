@@ -57,3 +57,25 @@ cc_library {
         "libutils",
     ],
 }
+
+// This package is not java compatible. Not creating java target.
+
+genrule {
+    name: "android.hardware.audio.common-V2.0-java-constants_gen_java",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Ljava-constants -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.audio.common@2.0",
+    srcs: [
+        ":android.hardware.audio.common@2.0_hal",
+    ],
+    out: [
+        "android/hardware/audio/common/V2_0/Constants.java",
+    ],
+}
+
+java_library {
+    name: "android.hardware.audio.common-V2.0-java-constants",
+    no_framework_libs: true,
+    defaults: ["hidl-java-module-defaults"],
+    srcs: [":android.hardware.audio.common-V2.0-java-constants_gen_java"],
+}
+// This package has no interfaces. Not creating versioning adapter.

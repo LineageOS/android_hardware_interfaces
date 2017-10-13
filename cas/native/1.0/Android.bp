@@ -67,6 +67,11 @@ cc_library {
     ],
 }
 
+// This package is not java compatible. Not creating java target.
+
+// This package does not export any types. Not creating java constants export.
+
+
 genrule {
     name: "android.hardware.cas.native@1.0-adapter-helper_genc++",
     tools: ["hidl-gen"],
@@ -90,7 +95,6 @@ genrule {
         "android/hardware/cas/native/1.0/ADescrambler.h",
     ],
 }
-
 
 cc_library {
     name: "android.hardware.cas.native@1.0-adapter-helper",
@@ -134,6 +138,7 @@ genrule {
 
 cc_test {
     name: "android.hardware.cas.native@1.0-adapter",
+    defaults: ["hidl-module-defaults"],
     shared_libs: [
         "libhidladapter",
         "libhidlbase",

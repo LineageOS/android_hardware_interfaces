@@ -68,6 +68,35 @@ cc_library {
 }
 
 genrule {
+    name: "android.hardware.power-V1.1-java_gen_java",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Ljava -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.power@1.1",
+    srcs: [
+        ":android.hardware.power@1.1_hal",
+    ],
+    out: [
+        "android/hardware/power/V1_1/PowerStateSubsystem.java",
+        "android/hardware/power/V1_1/PowerStateSubsystemSleepState.java",
+        "android/hardware/power/V1_1/IPower.java",
+    ],
+}
+
+java_library {
+    name: "android.hardware.power-V1.1-java",
+    no_framework_libs: true,
+    defaults: ["hidl-java-module-defaults"],
+    srcs: [":android.hardware.power-V1.1-java_gen_java"],
+    libs: [
+        "hwbinder",
+        "android.hardware.power-V1.0-java",
+        "android.hidl.base-V1.0-java",
+    ]
+}
+
+// This package does not export any types. Not creating java constants export.
+
+
+genrule {
     name: "android.hardware.power@1.1-adapter-helper_genc++",
     tools: ["hidl-gen"],
     cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-sources -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.power@1.1",
@@ -90,7 +119,6 @@ genrule {
         "android/hardware/power/1.1/APower.h",
     ],
 }
-
 
 cc_library {
     name: "android.hardware.power@1.1-adapter-helper",
@@ -134,6 +162,7 @@ genrule {
 
 cc_test {
     name: "android.hardware.power@1.1-adapter",
+    defaults: ["hidl-module-defaults"],
     shared_libs: [
         "libhidladapter",
         "libhidlbase",
