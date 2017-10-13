@@ -51,23 +51,36 @@ GnssLocation convertToGnssLocation(GpsLocation* location) {
     return gnssLocation;
 }
 
-GnssLocation convertToGnssLocation(FlpLocation* location) {
+GnssLocation convertToGnssLocation(FlpLocation* flpLocation) {
     GnssLocation gnssLocation = {};
-    if (location != nullptr) {
-        gnssLocation = {
-            // Bit mask applied (and 0's below) for same reason as above with GpsLocation
-            .gnssLocationFlags = static_cast<uint16_t>(location->flags & 0x1f),
-            .latitudeDegrees = location->latitude,
-            .longitudeDegrees = location->longitude,
-            .altitudeMeters = location->altitude,
-            .speedMetersPerSec = location->speed,
-            .bearingDegrees = location->bearing,
-            .horizontalAccuracyMeters = location->accuracy,
-            .verticalAccuracyMeters = 0,
-            .speedAccuracyMetersPerSecond = 0,
-            .bearingAccuracyDegrees = 0,
-            .timestamp = location->timestamp
-        };
+    if (flpLocation != nullptr) {
+        gnssLocation = {.gnssLocationFlags = 0,  // clear here and set below
+                        .latitudeDegrees = flpLocation->latitude,
+                        .longitudeDegrees = flpLocation->longitude,
+                        .altitudeMeters = flpLocation->altitude,
+                        .speedMetersPerSec = flpLocation->speed,
+                        .bearingDegrees = flpLocation->bearing,
+                        .horizontalAccuracyMeters = flpLocation->accuracy,
+                        .verticalAccuracyMeters = 0,
+                        .speedAccuracyMetersPerSecond = 0,
+                        .bearingAccuracyDegrees = 0,
+                        .timestamp = flpLocation->timestamp};
+        // FlpLocation flags different from GnssLocation flags
+        if (flpLocation->flags & FLP_LOCATION_HAS_LAT_LONG) {
+            gnssLocation.gnssLocationFlags |= GPS_LOCATION_HAS_LAT_LONG;
+        }
+        if (flpLocation->flags & FLP_LOCATION_HAS_ALTITUDE) {
+            gnssLocation.gnssLocationFlags |= GPS_LOCATION_HAS_ALTITUDE;
+        }
+        if (flpLocation->flags & FLP_LOCATION_HAS_SPEED) {
+            gnssLocation.gnssLocationFlags |= GPS_LOCATION_HAS_SPEED;
+        }
+        if (flpLocation->flags & FLP_LOCATION_HAS_BEARING) {
+            gnssLocation.gnssLocationFlags |= GPS_LOCATION_HAS_BEARING;
+        }
+        if (flpLocation->flags & FLP_LOCATION_HAS_ACCURACY) {
+            gnssLocation.gnssLocationFlags |= GPS_LOCATION_HAS_HORIZONTAL_ACCURACY;
+        }
     }
 
     return gnssLocation;
