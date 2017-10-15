@@ -24,6 +24,9 @@
 #include <string>
 #include <vector>
 
+#include <fcntl.h>
+#include <unistd.h>
+
 #include <VtsHalHidlTargetTestBase.h>
 
 #include <android-base/logging.h>
@@ -473,19 +476,19 @@ TEST_F(AudioPrimaryHidlTest, getParameters) {
 
 template <class DebugDump>
 static void testDebugDump(DebugDump debugDump) {
-    // Dump in a temporary file
-    // Note that SELinux must be deactivate for this test to work
-    FILE* file = tmpfile();
-    ASSERT_NE(nullptr, file) << errno;
+    // File descriptors to our pipe. fds[0] corresponds to the read end and
+    // fds[1] to the write end.
+    int fds[2];
+    ASSERT_EQ(0, pipe2(fds, O_NONBLOCK)) << errno;
 
     // Wrap the temporary file file descriptor in a native handle
     auto* nativeHandle = native_handle_create(1, 0);
     ASSERT_NE(nullptr, nativeHandle);
-    nativeHandle->data[0] = fileno(file);
+    nativeHandle->data[0] = fds[1];
 
     // Wrap this native handle in a hidl handle
     hidl_handle handle;
-    handle.setTo(nativeHandle, true /*take ownership*/);
+    handle.setTo(nativeHandle, false /*take ownership*/);
 
     ASSERT_OK(debugDump(handle));
 
@@ -493,12 +496,12 @@ static void testDebugDump(DebugDump debugDump) {
     // TODO: debugDump does not return a Result.
     // This mean that the hal can not report that it not implementing the
     // function.
-    rewind(file);  // can not fail
     char buff;
-    if (fread(&buff, sizeof(buff), 1, file) != 1) {
+    if (read(fds[0], &buff, 1) != 1) {
         doc::note("debugDump does not seem implemented");
     }
-    EXPECT_EQ(0, fclose(file)) << errno;
+    EXPECT_EQ(0, close(fds[0])) << errno;
+    EXPECT_EQ(0, close(fds[1])) << errno;
 }
 
 TEST_F(AudioPrimaryHidlTest, DebugDump) {
