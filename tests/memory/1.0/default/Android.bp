@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_library_shared {
+cc_library {
     name: "android.hardware.tests.memory@1.0-impl",
     defaults: ["hidl_defaults"],
     relative_install_path: "hw",
@@ -20,12 +20,17 @@ cc_library_shared {
         "MemoryTest.cpp",
     ],
     shared_libs: [
+        "libcutils",
         "libhidlbase",
         "libhidltransport",
         "libhidlmemory",
+        "libhwbinder",
         "liblog",
         "libutils",
-        "android.hardware.tests.memory@1.0",
         "android.hidl.memory@1.0",
     ],
+
+    // These are static libs only for testing purposes and portability. Shared
+    // libs should be used on device.
+    static_libs: ["android.hardware.tests.memory@1.0"],
 }
