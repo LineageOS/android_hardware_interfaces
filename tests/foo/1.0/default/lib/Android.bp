@@ -1,4 +1,4 @@
-cc_library_shared {
+cc_library {
     name: "libfootest",
     defaults: ["hidl_defaults"],
     srcs: [
@@ -6,10 +6,14 @@ cc_library_shared {
     ],
 
     shared_libs: [
+        "libcutils",
         "libhidlbase",
         "libhidltransport",
-        "android.hardware.tests.foo@1.0",
+        "libhwbinder",
+        "liblog",
     ],
+    static_libs: ["android.hardware.tests.foo@1.0"],
+
     local_include_dirs: ["include/hidl-test"],
     export_include_dirs: ["include"],
 
