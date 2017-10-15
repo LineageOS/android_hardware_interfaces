@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_library_shared {
+cc_library {
     name: "android.hardware.tests.msgq@1.0-impl",
     defaults: ["hidl_defaults"],
     relative_install_path: "hw",
@@ -27,10 +27,16 @@ cc_library_shared {
         "libfmq",
         "libhidlbase",
         "libhidltransport",
+        "libhwbinder",
         "liblog",
         "libutils",
-        "android.hardware.tests.msgq@1.0",
     ],
+
+    // These are static libs only for testing purposes and portability. Shared
+    // libs should be used on device.
+    static_libs: [
+        "android.hardware.tests.msgq@1.0",
+    ]
 }
 
 cc_test {
@@ -59,10 +65,19 @@ cc_test {
     shared_libs: [
         "libbase",
         "libcutils",
+        "libfmq",
         "libhidlbase",
         "libhidltransport",
+        "libhwbinder",
         "liblog",
         "libutils",
-        "android.hardware.tests.msgq@1.0"
     ],
+
+    // Allow dlsym'ing self for statically linked passthrough implementations
+    ldflags: ["-rdynamic"],
+
+    // These are static libs only for testing purposes and portability. Shared
+    // libs should be used on device.
+    static_libs: ["android.hardware.tests.msgq@1.0"],
+    whole_static_libs: ["android.hardware.tests.msgq@1.0-impl"],
 }
