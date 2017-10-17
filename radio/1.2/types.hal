@@ -1,0 +1,99 @@
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.radio@1.2;
+
+import @1.0::RadioConst;
+import @1.1::RadioAccessSpecifier;
+import @1.1::ScanType;
+
+enum RadioConst : @1.0::RadioConst {
+    RADIO_ACCESS_SPEFICIER_MAX_SIZE = 8,
+};
+
+/**
+ * values are in seconds
+ */
+enum ScanIntervalRange : int32_t {
+    MIN = 5,
+    MAX = 300,
+};
+
+/**
+ * value are in seconds
+ */
+enum MaxSearchTimeRange : int32_t {
+    MIN = 60,
+    MAX = 3600,
+};
+
+/**
+ * values are in seconds
+ */
+enum IncrementalResultsPeriodicityRange : int32_t {
+    MIN = 1,
+    MAX = 10,
+};
+
+struct NetworkScanRequest {
+    ScanType type;
+
+    /**
+     * Time interval in seconds between periodic scans, only valid when type = PERIODIC
+     * Range: ScanIntervalRange:MIN to ScanIntervalRange:MAX
+     */
+    int32_t interval;
+
+    /**
+     * Networks with bands/channels to scan
+     * Maximum length of the vector is
+     * RadioConst:RADIO_ACCESS_SPEFICIER_MAX_SIZE
+     */
+    vec<RadioAccessSpecifier> specifiers;
+
+    /**
+     * Maximum duration of the periodic search (in seconds).
+     * Expected range for the input is [MaxSearchTimeRange:MIN - MaxSearchTimeRange:MAX]
+     * If the search lasts maxSearchTime, it must be terminated.
+     */
+    int32_t maxSearchTime;
+
+    /**
+     * Indicates whether the modem must report incremental results of the network scan
+     * to the client.
+     * FALSE – Incremental results must not be reported.
+     * TRUE  – Incremental must be reported.
+     */
+    bool incrementalResults;
+
+    /**
+     * Indicates the periodicity with which the modem must report incremental results to
+     * the client (in seconds).
+     * Expected range for the input is
+     * [IncrementalResultsPeriodicityRange:MIN - IncrementalResultsPeriodicityRange:MAX]
+     * This value must be less than or equal to maxSearchTime.
+     */
+    int32_t incrementalResultsPeriodicity;
+
+    /**
+     * Describes the List of PLMN ids (MCC-MNC)
+     * If any PLMN of this list is found, search must end at that point and results with all
+     * PLMN found until that point should be sent as response.
+     * If the list is not sent, search to be completed until end and all PLMNs found to be
+     * reported.
+     */
+    vec<string> mccMncs;
+};
