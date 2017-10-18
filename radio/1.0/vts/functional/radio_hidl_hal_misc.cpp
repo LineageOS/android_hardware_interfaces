@@ -265,7 +265,8 @@ TEST_F(RadioHidlTest, setLocationUpdates) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE);
+        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
     }
 }
 
@@ -282,7 +283,8 @@ TEST_F(RadioHidlTest, setCdmaRoamingPreference) {
 
     if (cardStatus.cardState == CardState::ABSENT) {
         ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE ||
-                    radioRsp->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED);
+                    radioRsp->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
     }
 }
 
@@ -299,7 +301,8 @@ TEST_F(RadioHidlTest, getCdmaRoamingPreference) {
 
     if (cardStatus.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckGeneralError() || radioRsp->rspInfo.error == RadioError::NONE ||
-                    radioRsp->rspInfo.error == RadioError::MODEM_ERR);
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
     }
 }
 
@@ -381,7 +384,9 @@ TEST_F(RadioHidlTest, getCDMASubscription) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE);
+        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE ||
+                    radioRsp->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
     }
 }
 
@@ -414,7 +419,9 @@ TEST_F(RadioHidlTest, exitEmergencyCallbackMode) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE);
+        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE ||
+                    radioRsp->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
     }
 }
 
@@ -430,7 +437,9 @@ TEST_F(RadioHidlTest, getCdmaSubscriptionSource) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE);
+        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE ||
+                    radioRsp->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
     }
 }
 
