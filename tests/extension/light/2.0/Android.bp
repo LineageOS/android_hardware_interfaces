@@ -4,7 +4,7 @@ filegroup {
     name: "android.hardware.tests.extension.light@2.0_hal",
     srcs: [
         "types.hal",
-        "IExtLight.hal",
+        "ILight.hal",
     ],
 }
 
@@ -17,7 +17,7 @@ genrule {
     ],
     out: [
         "android/hardware/tests/extension/light/2.0/types.cpp",
-        "android/hardware/tests/extension/light/2.0/ExtLightAll.cpp",
+        "android/hardware/tests/extension/light/2.0/LightAll.cpp",
     ],
 }
 
@@ -31,11 +31,11 @@ genrule {
     out: [
         "android/hardware/tests/extension/light/2.0/types.h",
         "android/hardware/tests/extension/light/2.0/hwtypes.h",
-        "android/hardware/tests/extension/light/2.0/IExtLight.h",
-        "android/hardware/tests/extension/light/2.0/IHwExtLight.h",
-        "android/hardware/tests/extension/light/2.0/BnHwExtLight.h",
-        "android/hardware/tests/extension/light/2.0/BpHwExtLight.h",
-        "android/hardware/tests/extension/light/2.0/BsExtLight.h",
+        "android/hardware/tests/extension/light/2.0/ILight.h",
+        "android/hardware/tests/extension/light/2.0/IHwLight.h",
+        "android/hardware/tests/extension/light/2.0/BnHwLight.h",
+        "android/hardware/tests/extension/light/2.0/BpHwLight.h",
+        "android/hardware/tests/extension/light/2.0/BsLight.h",
     ],
 }
 
@@ -72,10 +72,10 @@ genrule {
         ":android.hardware.tests.extension.light@2.0_hal",
     ],
     out: [
+        "android/hardware/tests/extension/light/V2_0/Brightness.java",
         "android/hardware/tests/extension/light/V2_0/Default.java",
-        "android/hardware/tests/extension/light/V2_0/ExtBrightness.java",
-        "android/hardware/tests/extension/light/V2_0/ExtLightState.java",
-        "android/hardware/tests/extension/light/V2_0/IExtLight.java",
+        "android/hardware/tests/extension/light/V2_0/LightState.java",
+        "android/hardware/tests/extension/light/V2_0/ILight.java",
     ],
 }
 
@@ -102,7 +102,7 @@ genrule {
         ":android.hardware.tests.extension.light@2.0_hal",
     ],
     out: [
-        "android/hardware/tests/extension/light/2.0/AExtLight.cpp",
+        "android/hardware/tests/extension/light/2.0/ALight.cpp",
     ],
 }
 
@@ -114,7 +114,7 @@ genrule {
         ":android.hardware.tests.extension.light@2.0_hal",
     ],
     out: [
-        "android/hardware/tests/extension/light/2.0/AExtLight.h",
+        "android/hardware/tests/extension/light/2.0/ALight.h",
     ],
 }
 
