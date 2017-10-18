@@ -16,7 +16,7 @@
 #ifndef ANDROID_HARDWARE_TESTS_EXTENSION_LIGHT_V2_0_LIGHT_H
 #define ANDROID_HARDWARE_TESTS_EXTENSION_LIGHT_V2_0_LIGHT_H
 
-#include <android/hardware/tests/extension/light/2.0/IExtLight.h>
+#include <android/hardware/tests/extension/light/2.0/ILight.h>
 #include <hidl/Status.h>
 
 #include <hidl/MQDescriptor.h>
@@ -28,26 +28,25 @@ namespace light {
 namespace V2_0 {
 namespace implementation {
 
-using ::android::hardware::tests::extension::light::V2_0::ExtLightState;
-using ::android::hardware::tests::extension::light::V2_0::IExtLight;
-using ::android::hardware::light::V2_0::ILight;
-using ::android::hardware::light::V2_0::LightState;
+using ::android::hardware::tests::extension::light::V2_0::LightState;
+using ::android::hardware::tests::extension::light::V2_0::ILight;
+// If using a minor version upgrade, we could just reference these as
+// V2_0::LightState vs. V2_1::LightState, but this makes things easier.
+using OldLightState = ::android::hardware::light::V2_0::LightState;
 using ::android::hardware::light::V2_0::Status;
 using ::android::hardware::light::V2_0::Type;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::hidl_vec;
-using ::android::hardware::hidl_string;
 using ::android::sp;
 
-struct Light : public IExtLight {
+struct Light : public ILight {
     // Methods from ::android::hardware::light::V2_0::ILight follow.
-    Return<Status> setLight(Type type, const LightState& state)  override;
+    Return<Status> setLight(Type type, const OldLightState& state) override;
     Return<void> getSupportedTypes(getSupportedTypes_cb _hidl_cb)  override;
 
     // Methods from ::android::hardware::example::extension::light::V2_0::ILight follow.
-    Return<Status> setExtLight(Type type, const ExtLightState& state)  override;
-
+    Return<Status> setLightExt(Type type, const LightState& state) override;
 };
 
 }  // namespace implementation
