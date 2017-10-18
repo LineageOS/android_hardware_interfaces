@@ -231,7 +231,6 @@ TEST_F(OffloadControlHidlTestBase, AdditionalInitsWithoutStopReturnFalse) {
     initOffload(false);
     initOffload(false);
     initOffload(false);
-    stopOffload(ExpectBoolean::True);  // balance out initOffload(true)
 }
 
 // Check that calling stopOffload() without first having called initOffload() returns false.
@@ -244,6 +243,14 @@ TEST_F(OffloadControlHidlTestBase, MultipleStopsWithoutInitReturnFalse) {
 // Check that calling stopOffload() after a complete init/stop cycle returns false.
 TEST_F(OffloadControlHidlTestBase, AdditionalStopsWithInitReturnFalse) {
     initOffload(true);
+    // Call setUpstreamParameters() so that "offload" can be reasonably said
+    // to be both requested and operational.
+    const hidl_string v4Addr("192.0.0.2");
+    const hidl_string v4Gw("192.0.0.1");
+    const vector<hidl_string> v6Gws{hidl_string("fe80::db8:1"), hidl_string("fe80::db8:2")};
+    const Return<void> upstream =
+        control->setUpstreamParameters("rmnet_data0", v4Addr, v4Gw, v6Gws, ASSERT_TRUE_CALLBACK);
+    EXPECT_TRUE(upstream.isOk());
     stopOffload(ExpectBoolean::True);  // balance out initOffload(true)
     stopOffload(ExpectBoolean::False);
     stopOffload(ExpectBoolean::False);

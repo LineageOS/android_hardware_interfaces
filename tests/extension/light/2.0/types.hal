@@ -16,7 +16,11 @@
 
 package android.hardware.tests.extension.light@2.0;
 
-import android.hardware.light@2.0;
+// If importing something from the same package, the preference is:
+// import @2.0::Foo. However, since this isn't a minor version upgrade
+// we have to use the fully-qualified names here.
+import android.hardware.light@2.0::Brightness;
+import android.hardware.light@2.0::LightState;
 
 enum Default : int32_t {
     // for calls to setLight from the framework that don't know about this
@@ -28,7 +32,7 @@ enum Default : int32_t {
  * One possibility is renaming an old type. Another possibility is taking
  * advantages of the different namespaces.
  */
-enum ExtBrightness : Brightness {
+enum Brightness : android.hardware.light@2.0::Brightness {
     /**
      * Say we're really going to use the phone as a heater.
      */
@@ -43,10 +47,10 @@ enum ExtBrightness : Brightness {
 /**
  * Structs can't inherit eachother in hidl. Use composition instead. In this
  * case, I won't use inheritence because I want to replace Brightness with
- * ExtBrightness.
+ * the new enumeration.
  */
-struct ExtLightState {
-    LightState state;
+struct LightState {
+    android.hardware.light@2.0::LightState state;
 
     /**
      * This is the secret sauce that will really make this extension shine.
@@ -64,5 +68,5 @@ struct ExtLightState {
     /**
      * Include new values.
      */
-    ExtBrightness brightness;
+    Brightness brightness;
 };
