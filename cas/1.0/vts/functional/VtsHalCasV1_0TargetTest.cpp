@@ -25,12 +25,10 @@
 #include <android/hardware/cas/1.0/types.h>
 #include <android/hardware/cas/native/1.0/IDescrambler.h>
 #include <android/hardware/cas/native/1.0/types.h>
-#include <android/hidl/allocator/1.0/IAllocator.h>
-#include <android/hidl/memory/1.0/IMapper.h>
+#include <binder/MemoryDealer.h>
 #include <hidl/HidlSupport.h>
 #include <hidl/HidlTransportSupport.h>
 #include <hidl/Status.h>
-#include <hidlmemory/mapping.h>
 #include <utils/Condition.h>
 #include <utils/Mutex.h>
 
@@ -69,9 +67,9 @@ using android::hardware::hidl_handle;
 using android::hardware::hidl_memory;
 using android::hardware::Return;
 using android::hardware::cas::V1_0::Status;
-using android::hidl::allocator::V1_0::IAllocator;
-using android::hidl::memory::V1_0::IMemory;
-using android::hidl::memory::V1_0::IMapper;
+using android::IMemory;
+using android::IMemoryHeap;
+using android::MemoryDealer;
 using android::Mutex;
 using android::sp;
 
@@ -230,7 +228,7 @@ class MediaCasHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     ::testing::AssertionResult openCasSession(std::vector<uint8_t>* sessionId);
     ::testing::AssertionResult descrambleTestInputBuffer(const sp<IDescrambler>& descrambler,
                                                          Status* descrambleStatus,
-                                                         hidl_memory* hidlInMemory);
+                                                         sp<IMemory>* hidlInMemory);
 };
 
 ::testing::AssertionResult MediaCasHidlTest::createCasPlugin(int32_t caSystemId) {
@@ -271,34 +269,48 @@ class MediaCasHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 }
 
 ::testing::AssertionResult MediaCasHidlTest::descrambleTestInputBuffer(
-    const sp<IDescrambler>& descrambler, Status* descrambleStatus, hidl_memory* hidlInMemory) {
+    const sp<IDescrambler>& descrambler, Status* descrambleStatus, sp<IMemory>* inMemory) {
     hidl_vec<SubSample> hidlSubSamples;
     hidlSubSamples.setToExternal(const_cast<SubSample*>(kSubSamples),
                                  (sizeof(kSubSamples) / sizeof(SubSample)), false /*own*/);
-    sp<IAllocator> allocator = IAllocator::getService("ashmem");
-    if (nullptr == allocator.get()) {
+
+    sp<MemoryDealer> dealer = new MemoryDealer(sizeof(kInBinaryBuffer), "vts-cas");
+    if (nullptr == dealer.get()) {
+        ALOGE("couldn't get MemoryDealer!");
         return ::testing::AssertionFailure();
     }
 
-    bool allocateStatus;
-    auto returnStatus =
-        allocator->allocate(sizeof(kInBinaryBuffer), [&](bool status, hidl_memory const& mem) {
-            allocateStatus = status;
-            *hidlInMemory = mem;
-        });
-    if (!returnStatus.isOk() || !allocateStatus) {
+    sp<IMemory> mem = dealer->allocate(sizeof(kInBinaryBuffer));
+    if (nullptr == mem.get()) {
+        ALOGE("couldn't allocate IMemory!");
         return ::testing::AssertionFailure();
     }
-    android::sp<IMemory> inMemory = mapMemory(*hidlInMemory);
-    if (nullptr == inMemory.get()) {
+    *inMemory = mem;
+
+    // build hidl_memory from memory heap
+    ssize_t offset;
+    size_t size;
+    sp<IMemoryHeap> heap = mem->getMemory(&offset, &size);
+    if (nullptr == heap.get()) {
+        ALOGE("couldn't get memory heap!");
         return ::testing::AssertionFailure();
     }
 
-    uint8_t* ipBuffer = static_cast<uint8_t*>(static_cast<void*>(inMemory->getPointer()));
+    native_handle_t* nativeHandle = native_handle_create(1, 0);
+    if (!nativeHandle) {
+        ALOGE("failed to create native handle!");
+        return ::testing::AssertionFailure();
+    }
+    nativeHandle->data[0] = heap->getHeapID();
+
+    uint8_t* ipBuffer = static_cast<uint8_t*>(static_cast<void*>(mem->pointer()));
     memcpy(ipBuffer, kInBinaryBuffer, sizeof(kInBinaryBuffer));
 
     SharedBuffer srcBuffer = {
-        .heapBase = *hidlInMemory, .offset = (uint64_t)0, .size = sizeof(kInBinaryBuffer)};
+            .heapBase = hidl_memory("ashmem", hidl_handle(nativeHandle), heap->getSize()),
+            .offset = (uint64_t) offset,
+            .size = (uint64_t) size
+    };
 
     DestinationBuffer dstBuffer;
     dstBuffer.type = BufferType::SHARED_MEMORY;
@@ -456,24 +468,33 @@ TEST_F(MediaCasHidlTest, TestClearKeyApis) {
     EXPECT_TRUE(returnStatus.isOk());
     EXPECT_EQ(Status::OK, returnStatus);
 
+    EXPECT_FALSE(mDescramblerBase->requiresSecureDecoderComponent("video/avc"));
+
     sp<IDescrambler> descrambler;
     descrambler = IDescrambler::castFrom(mDescramblerBase);
     ASSERT_NE(descrambler, nullptr);
 
     Status descrambleStatus = Status::OK;
-    hidl_memory hidlDataMemory;
+    sp<IMemory> dataMemory;
 
-    ASSERT_TRUE(descrambleTestInputBuffer(descrambler, &descrambleStatus, &hidlDataMemory));
+    ASSERT_TRUE(descrambleTestInputBuffer(descrambler, &descrambleStatus, &dataMemory));
     EXPECT_EQ(Status::OK, descrambleStatus);
 
-    android::sp<IMemory> outMemory = mapMemory(hidlDataMemory);
-    ASSERT_NE(nullptr, outMemory.get());
-    uint8_t* opBuffer = static_cast<uint8_t*>(static_cast<void*>(outMemory->getPointer()));
+    ASSERT_NE(nullptr, dataMemory.get());
+    uint8_t* opBuffer = static_cast<uint8_t*>(static_cast<void*>(dataMemory->pointer()));
 
     int compareResult =
         memcmp(static_cast<const void*>(opBuffer), static_cast<const void*>(kOutRefBinaryBuffer),
                sizeof(kOutRefBinaryBuffer));
     EXPECT_EQ(0, compareResult);
+
+    returnStatus = mDescramblerBase->release();
+    EXPECT_TRUE(returnStatus.isOk());
+    EXPECT_EQ(Status::OK, returnStatus);
+
+    returnStatus = mMediaCas->release();
+    EXPECT_TRUE(returnStatus.isOk());
+    EXPECT_EQ(Status::OK, returnStatus);
 }
 
 TEST_F(MediaCasHidlTest, TestClearKeySessionClosedAfterRelease) {
@@ -572,9 +593,9 @@ TEST_F(MediaCasHidlTest, TestClearKeyErrors) {
     ASSERT_NE(descrambler, nullptr);
 
     Status descrambleStatus = Status::OK;
-    hidl_memory hidlInMemory;
+    sp<IMemory> dataMemory;
 
-    ASSERT_TRUE(descrambleTestInputBuffer(descrambler, &descrambleStatus, &hidlInMemory));
+    ASSERT_TRUE(descrambleTestInputBuffer(descrambler, &descrambleStatus, &dataMemory));
     EXPECT_EQ(Status::ERROR_CAS_DECRYPT_UNIT_NOT_INITIALIZED, descrambleStatus);
 
     // Now set a valid session, should still fail because no valid ecm is processed
@@ -582,8 +603,14 @@ TEST_F(MediaCasHidlTest, TestClearKeyErrors) {
     EXPECT_TRUE(returnStatus.isOk());
     EXPECT_EQ(Status::OK, returnStatus);
 
-    ASSERT_TRUE(descrambleTestInputBuffer(descrambler, &descrambleStatus, &hidlInMemory));
+    ASSERT_TRUE(descrambleTestInputBuffer(descrambler, &descrambleStatus, &dataMemory));
     EXPECT_EQ(Status::ERROR_CAS_DECRYPT, descrambleStatus);
+
+    // Verify that requiresSecureDecoderComponent handles empty mime
+    EXPECT_FALSE(mDescramblerBase->requiresSecureDecoderComponent(""));
+
+    // Verify that requiresSecureDecoderComponent handles invalid mime
+    EXPECT_FALSE(mDescramblerBase->requiresSecureDecoderComponent("bad"));
 }
 
 }  // anonymous namespace
