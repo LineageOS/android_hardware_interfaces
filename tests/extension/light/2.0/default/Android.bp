@@ -16,6 +16,7 @@
 
 cc_binary {
     name: "android.hardware.tests.extension.light@2.0-service",
+    defaults: ["hidl_defaults"],
     init_rc: ["android.hardware.tests.extension.light@2.0-service.rc"],
     vendor: true,
     relative_install_path: "hw",
