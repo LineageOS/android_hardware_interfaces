@@ -19,17 +19,21 @@
 // vendor partition.
 package android.hardware.tests.extension.light@2.0;
 
-import android.hardware.light@2.0;
+import android.hardware.light@2.0::ILight;
+import android.hardware.light@2.0::Status;
+import android.hardware.light@2.0::Type;
 
-interface IExtLight extends android.hardware.light@2.0::ILight {
+interface ILight extends android.hardware.light@2.0::ILight {
 
     /**
      * Set the provided lights to the provided values.
+     *
+     * If this was a minor version extension, the recommended
+     * name would be setLight_2_1.
      *
      * @param type logical light to set
      * @param state describes what the light should look like.
      * @return status result of applying state transformation.
      */
-    setExtLight(Type type, ExtLightState state) generates (Status status);
-
+    setLightExt(Type type, LightState state) generates (Status status);
 };
