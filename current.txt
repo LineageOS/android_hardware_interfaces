@@ -190,3 +190,4 @@ fe3c3c2f572b72f15f8594c538b0577bd5c28722c31879cfe6231330cddb6747 android.hardwar
 # ABI preserving changes to HALs released in Android O
 
 78589343d8ee2e1b155acad3fbdc7fcbb6af94491aee968b2383c21627264f8b android.hardware.radio@1.0::IRadioResponse
+c2c50ec74c87a583c683b4493f8f9f2e454a8d41c57af5b3eb88823a999f0ea4 android.hardware.radio@1.0::IRadioResponse
