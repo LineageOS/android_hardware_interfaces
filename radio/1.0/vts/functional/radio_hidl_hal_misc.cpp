@@ -70,7 +70,7 @@ TEST_F(RadioHidlTest, getOperator) {
 TEST_F(RadioHidlTest, setRadioPower) {
     int serial = GetRandomSerialNumber();
 
-    radio->setRadioPower(serial, 0);
+    radio->setRadioPower(serial, 1);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
