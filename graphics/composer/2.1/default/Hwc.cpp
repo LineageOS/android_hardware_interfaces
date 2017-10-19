@@ -23,8 +23,10 @@
 #include <log/log.h>
 
 #include "ComposerClient.h"
+#include "hardware/fb.h"
 #include "hardware/hwcomposer.h"
 #include "hwc2on1adapter/HWC2On1Adapter.h"
+#include "hwc2onfbadapter/HWC2OnFbAdapter.h"
 
 using namespace std::chrono_literals;
 
@@ -37,6 +39,30 @@ namespace implementation {
 
 HwcHal::HwcHal(const hw_module_t* module)
     : mDevice(nullptr), mDispatch(), mMustValidateDisplay(true), mAdapter() {
+    uint32_t majorVersion;
+    if (module->id && strcmp(module->id, GRALLOC_HARDWARE_MODULE_ID) == 0) {
+        majorVersion = initWithFb(module);
+    } else {
+        majorVersion = initWithHwc(module);
+    }
+
+    initCapabilities();
+    if (majorVersion >= 2 &&
+        hasCapability(Capability::PRESENT_FENCE_IS_NOT_RELIABLE)) {
+        ALOGE("Present fence must be reliable from HWC2 on.");
+        abort();
+    }
+
+    initDispatch();
+}
+
+HwcHal::~HwcHal()
+{
+    hwc2_close(mDevice);
+}
+
+uint32_t HwcHal::initWithHwc(const hw_module_t* module)
+{
     // Determine what kind of module is available (HWC2 vs HWC1.X).
     hw_device_t* device = nullptr;
     int error = module->methods->open(module, HWC_HARDWARE_COMPOSER, &device);
@@ -65,19 +91,22 @@ HwcHal::HwcHal(const hw_module_t* module)
         mDevice = reinterpret_cast<hwc2_device_t*>(device);
     }
 
-    initCapabilities();
-    if (majorVersion >= 2 &&
-        hasCapability(Capability::PRESENT_FENCE_IS_NOT_RELIABLE)) {
-        ALOGE("Present fence must be reliable from HWC2 on.");
+    return majorVersion;
+}
+
+uint32_t HwcHal::initWithFb(const hw_module_t* module)
+{
+    framebuffer_device_t* fb_device;
+    int error = framebuffer_open(module, &fb_device);
+    if (error != 0) {
+        ALOGE("Failed to open FB device (%s), aborting", strerror(-error));
         abort();
     }
 
-    initDispatch();
-}
+    mFbAdapter = std::make_unique<HWC2OnFbAdapter>(fb_device);
+    mDevice = mFbAdapter.get();
 
-HwcHal::~HwcHal()
-{
-    hwc2_close(mDevice);
+    return 0;
 }
 
 void HwcHal::initCapabilities()
@@ -757,7 +786,11 @@ IComposer* HIDL_FETCH_IComposer(const char*)
     const hw_module_t* module = nullptr;
     int err = hw_get_module(HWC_HARDWARE_MODULE_ID, &module);
     if (err) {
-        ALOGE("failed to get hwcomposer module");
+        ALOGI("falling back to FB HAL");
+        err = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, &module);
+    }
+    if (err) {
+        ALOGE("failed to get hwcomposer or fb module");
         return nullptr;
     }
 

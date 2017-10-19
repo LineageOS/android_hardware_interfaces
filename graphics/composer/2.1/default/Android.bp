@@ -38,7 +38,8 @@ cc_library_shared {
         "liblog",
         "libsync",
         "libutils",
-        "libhwc2on1adapter"
+        "libhwc2on1adapter",
+        "libhwc2onfbadapter",
     ],
 }
 
