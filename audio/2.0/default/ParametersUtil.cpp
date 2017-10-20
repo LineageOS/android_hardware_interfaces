@@ -22,7 +22,9 @@ namespace audio {
 namespace V2_0 {
 namespace implementation {
 
-// Static method and not private method to avoid leaking status_t dependency
+/** Converts a status_t in Result according to the rules of AudioParameter::get*
+ * Note: Static method and not private method to avoid leaking status_t dependency
+ */
 static Result getHalStatusToResult(status_t status) {
     switch (status) {
         case OK:
@@ -141,12 +143,20 @@ Result ParametersUtil::setParametersImpl(
 
 Result ParametersUtil::setParams(const AudioParameter& param) {
     int halStatus = halSetParameters(param.toString().string());
-    if (halStatus == OK)
-        return Result::OK;
-    else if (halStatus == -ENOSYS)
-        return Result::INVALID_STATE;
-    else
-        return Result::INVALID_ARGUMENTS;
+    switch (halStatus) {
+        case OK: return Result::OK;
+        case -EINVAL: return Result::INVALID_ARGUMENTS;
+        case -ENODATA: return Result::INVALID_STATE;
+        case -ENODEV: return Result::NOT_INITIALIZED;
+        // The rest of the API (*::analyseStatus) returns NOT_SUPPORTED
+        // when the legacy API returns -ENOSYS
+        // However the legacy API explicitly state that for get_paramers,
+        // -ENOSYS should be returned if
+        // "the implementation does not accept a parameter change while the
+        //  output is active but the parameter is acceptable otherwise"
+        case -ENOSYS: return Result::INVALID_STATE;
+        default: return Result::INVALID_ARGUMENTS;
+    }
 }
 
 }  // namespace implementation
