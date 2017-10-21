@@ -46,6 +46,25 @@ GpsCallbacks Gnss::sGnssCb = {
     .gnss_sv_status_cb = gnssSvStatusCb,
 };
 
+/*
+ * AGnssRilCallback implements the callback methods required by the AGnssRil
+ * interface.
+ */
+struct AGnssRilCallback : IAGnssRilCallback {
+    Return<void> requestSetIdCb(uint32_t setIdFlag) override;
+    Return<void> requestRefLocCb() override;
+};
+
+Return<void> AGnssRilCallback::requestSetIdCb(uint32_t setIdFlag) {
+    ALOGI("%s: called with setIdFlag=%d", __func__, setIdFlag);
+    return Void();
+}
+
+Return<void> AGnssRilCallback::requestRefLocCb() {
+    ALOGI("%s: called", __func__);
+    return Void();
+}
+
 uint32_t Gnss::sCapabilitiesCached = 0;
 uint16_t Gnss::sYearOfHwCached = 0;
 
@@ -511,6 +530,12 @@ Return<sp<IAGnssRil>> Gnss::getExtensionAGnssRil()  {
             ALOGE("%s GnssRil interface not implemented by GNSS HAL", __func__);
         } else {
             mGnssRil = new AGnssRil(agpsRilIface);
+            sp<IAGnssRilCallback> aGnssRilCb = new AGnssRilCallback();
+            if (mGnssRil != nullptr) {
+                mGnssRil->setCallback(aGnssRilCb);
+            } else {
+                ALOGE("Unable to initialize AGnss Ril interface\n");
+            }
         }
     }
     return mGnssRil;
