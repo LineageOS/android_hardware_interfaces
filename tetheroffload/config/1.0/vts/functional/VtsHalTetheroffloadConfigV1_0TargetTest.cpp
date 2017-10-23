@@ -43,8 +43,8 @@ using android::sp;
 #define ASSERT_FALSE_CALLBACK \
     [&](bool success, const hidl_string& errMsg) { ASSERT_FALSE(success) << errMsg.c_str(); }
 
-const unsigned kFd1Groups = NFNLGRP_CONNTRACK_NEW | NFNLGRP_CONNTRACK_DESTROY;
-const unsigned kFd2Groups = NFNLGRP_CONNTRACK_UPDATE | NFNLGRP_CONNTRACK_DESTROY;
+const unsigned kFd1Groups = NF_NETLINK_CONNTRACK_NEW | NF_NETLINK_CONNTRACK_DESTROY;
+const unsigned kFd2Groups = NF_NETLINK_CONNTRACK_UPDATE | NF_NETLINK_CONNTRACK_DESTROY;
 
 inline const sockaddr* asSockaddr(const sockaddr_nl* nladdr) {
     return reinterpret_cast<const sockaddr*>(nladdr);
