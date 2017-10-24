@@ -17,7 +17,9 @@ futex: 1
 ioctl: arg1 == 0xc0306201
 # prctl: arg0 == PR_SET_NAME || arg0 == PR_SET_VMA || arg0 == PR_SET_TIMERSLACK
 # || arg0 == PR_GET_NO_NEW_PRIVS # used by crash_dump
-prctl: arg0 == 15 || arg0 == 0x53564d41 || arg0 == 29 || arg0 == 39
+# prctl: arg0 == 15 || arg0 == 0x53564d41 || arg0 == 29 || arg0 == 39
+# TODO(b/68162846) reduce scope of prctl() based on arguments
+prctl: 1
 openat: 1
 mmap: 1
 mprotect: 1
