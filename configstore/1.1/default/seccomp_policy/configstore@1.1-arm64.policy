@@ -28,6 +28,7 @@ faccessat: 1
 write: 1
 fstat: 1
 clone: 1
+sched_setscheduler: 1
 munmap: 1
 lseek: 1
 sigaltstack: 1
