@@ -131,7 +131,7 @@ class OffloadControlHidlTestBase : public testing::VtsHalHidlTargetTestBase {
         config = testing::VtsHalHidlTargetTestBase::getService<IOffloadConfig>();
         ASSERT_NE(nullptr, config.get()) << "Could not get HIDL instance";
 
-        unique_fd fd1(conntrackSocket(NFNLGRP_CONNTRACK_NEW | NFNLGRP_CONNTRACK_DESTROY));
+        unique_fd fd1(conntrackSocket(NF_NETLINK_CONNTRACK_NEW | NF_NETLINK_CONNTRACK_DESTROY));
         if (fd1.get() < 0) {
             ALOGE("Unable to create conntrack handles: %d/%s", errno, strerror(errno));
             FAIL();
@@ -141,7 +141,7 @@ class OffloadControlHidlTestBase : public testing::VtsHalHidlTargetTestBase {
         hidl_handle h1;
         h1.setTo(nativeHandle1, true);
 
-        unique_fd fd2(conntrackSocket(NFNLGRP_CONNTRACK_UPDATE | NFNLGRP_CONNTRACK_DESTROY));
+        unique_fd fd2(conntrackSocket(NF_NETLINK_CONNTRACK_UPDATE | NF_NETLINK_CONNTRACK_DESTROY));
         if (fd2.get() < 0) {
             ALOGE("Unable to create conntrack handles: %d/%s", errno, strerror(errno));
             FAIL();
