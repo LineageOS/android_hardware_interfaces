@@ -39,6 +39,7 @@ cc_binary {
     proprietary: true,
     init_rc: ["android.hardware.contexthub@1.0-service.rc"],
     srcs: ["service.cpp"],
+    cflags: ["-Wall", "-Werror"],
 
     shared_libs: [
         "libbase",
