@@ -20,15 +20,11 @@
 #include "utility/ValidateXml.h"
 
 TEST(CheckConfig, audioPolicyConfigurationValidation) {
-    const char* configName = "audio_policy_configuration.xml";
-    const char* possibleConfigLocations[] = {"/odm/etc", "/vendor/etc", "/system/etc"};
-    const char* configSchemaPath = "/data/local/tmp/audio_policy_configuration.xsd";
+    RecordProperty("description",
+                   "Verify that the audio policy configuration file "
+                   "is valid according to the schema");
 
-    for (std::string folder : possibleConfigLocations) {
-        const auto configPath = folder + '/' + configName;
-        if (access(configPath.c_str(), R_OK) == 0) {
-            ASSERT_VALID_XML(configPath.c_str(), configSchemaPath);
-            return; // The framework does not read past the first config file found
-        }
-    }
+    std::vector<const char*> locations = {"/odm/etc", "/vendor/etc", "/system/etc"};
+    EXPECT_ONE_VALID_XML_MULTIPLE_LOCATIONS("audio_policy_configuration.xml", locations,
+                                            "/data/local/tmp/audio_policy_configuration.xsd");
 }
