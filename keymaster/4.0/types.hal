@@ -27,7 +27,23 @@ import android.hardware.keymaster@3.0::KeyDerivationFunction;
 import android.hardware.keymaster@3.0::KeyFormat;
 import android.hardware.keymaster@3.0::KeyOrigin;
 import android.hardware.keymaster@3.0::PaddingMode;
+import android.hardware.keymaster@3.0::SecurityLevel;
 import android.hardware.keymaster@3.0::TagType;
+
+/**
+ * Time in milliseconds since some arbitrary point in time.  Time must be monotonically increasing,
+ * and a secure environment's notion of "current time" must not repeat until the Android device
+ * reboots, or until at least 50 million years have elapsed (note that this requirement is satisfied
+ * by setting the clock to zero during each boot, and then counting time accurately).
+ */
+typedef uint64_t Timestamp;
+
+/**
+ * A place to define any needed constants.
+ */
+enum Constants : uint32_t {
+    AUTH_TOKEN_MAC_LENGTH = 32,
+};
 
 enum Tag : uint32_t {
     INVALID = TagType:INVALID | 0,
@@ -65,6 +81,14 @@ enum Tag : uint32_t {
                                                    * If the implementation cannot provide rollback
                                                    * resistance, it must return
                                                    * ROLLBACK_RESISTANCE_UNAVAILABLE. */
+
+    /* HARDWARE_TYPE specifies the type of the secure hardware that is requested for the key
+     * generation / import.  See the SecurityLevel enum.  In the absence of this tag, keystore must
+     * use TRUSTED_ENVIRONMENT.  If this tag is present and the requested hardware type is not
+     * available, Keymaster returns HARDWARE_TYPE_UNAVAILABLE. This tag is not included in
+     * attestations, but hardware type must be reflected in the Keymaster SecurityLevel of the
+     * attestation header. */
+    HARDWARE_TYPE = TagType:ENUM | 304,
 
     /**
      * Tags that should be semantically enforced by hardware if possible and will otherwise be
@@ -151,6 +175,15 @@ enum Tag : uint32_t {
 };
 
 /**
+ * The origin of a key, i.e. where it was generated.
+ */
+enum KeyOrigin : @3.0::KeyOrigin {
+    /** Securely imported into Keymaster.  Was created elsewhere, and passed securely through
+     *  Android to secure hardware. */
+    SECURELY_IMPORTED = 4,
+};
+
+/**
  * Possible purposes of a key (or pair).
  */
 enum KeyPurpose : uint32_t {
@@ -160,6 +193,54 @@ enum KeyPurpose : uint32_t {
     VERIFY = 3,     /* Usable with RSA, EC and HMAC keys. */
     /* 4 is reserved */
     WRAP_KEY = 5,   /* Usable with wrapping keys. */
+};
+
+/**
+ * Keymaster error codes.
+ */
+enum ErrorCode : @3.0::ErrorCode {
+    ROLLBACK_RESISTANCE_UNAVAILABLE = -67,
+    HARDWARE_TYPE_UNAVAILABLE = -68,
+};
+
+/**
+ * Device security levels.
+ */
+enum SecurityLevel : @3.0::SecurityLevel {
+    /**
+     * STRONGBOX specifies that the secure hardware satisfies the following requirements:
+     *
+     *    a) Has a discrete CPU.  The StrongBox device must not be the same CPU that is used to run
+     *       the Android non-secure world, or any other untrusted code.  The StrongBox CPU must not
+     *       share cache, RAM or any other critical resources with any device that runs untrusted
+     *       code.
+     *
+     *    b) Has integral secure storage.  The StrongBox device must have its own non-volatile
+     *       storage that is not accessible by any other hardware component.
+     *
+     *    c) Has a high-quality True Random Number Generator.  The StrongBox device must have sole
+     *       control of and access to a high-quality TRNG which it uses for generating necessary
+     *       random bits.  It must combine the output of this TRNG with caller-provided entropy in a
+     *       strong CPRNG, as do non-Strongbox Keymaster implementations.
+     *
+     *    d) Is enclosed in tamper-resistant packaging.  The StrongBox device must have
+     *       tamper-resistant packaging which provides obstacles to physical penetration which are
+     *       higher than those provided by normal integrated circuit packages.
+     *
+     *    e) Provides side-channel resistance.  The StrongBox device must implement resistance
+     *       against common side-channel attacks, including power analysis, timing analysis, EM
+     *       snooping, etc.
+     *
+     * Devices with StrongBox Keymasters must also have a non-StrongBox Keymaster, which lives in
+     * the higher-performance TEE.  Keystore must load both StrongBox (if available) and
+     * non-StrongBox HALs and route key generation/import requests appropriately.  Callers that want
+     * StrongBox keys must add Tag::HARDWARE_TYPE with value SecurityLevel::STRONGBOX to the key
+     * description provided to generateKey or importKey.  Keytore must route the request to a
+     * StrongBox HAL (a HAL whose isStrongBox method returns true).  Keymaster implementations that
+     * receive a request for a Tag::HARDWARE_TYPE that is inappropriate must fail with
+     * ErrorCode::HARDWARE_TYPE_UNAVAILABLE.
+     */
+    STRONGBOX = 2,              /* See IKeymaster::isStrongBox */
 };
 
 struct KeyParameter {
@@ -179,6 +260,7 @@ struct KeyParameter {
         KeyPurpose purpose;
         KeyDerivationFunction keyDerivationFunction;
         HardwareAuthenticatorType hardwareAuthenticatorType;
+        SecurityLevel hardwareType;
 
         /** Other types */
         bool boolValue;  // Always true, if a boolean tag is present.
@@ -203,21 +285,100 @@ struct HardwareAuthToken {
     uint64_t userId;             // Secure User ID, not Android user ID.
     uint64_t authenticatorId;    // Secure authenticator ID.
     HardwareAuthenticatorType authenticatorType;
-    uint64_t timestamp;
+    Timestamp timestamp;
     /**
      * MACs are computed with a backward-compatible method, used by Keymaster 3.0, Gatekeeper 1.0
      * and Fingerprint 1.0, as well as pre-treble HALs.
      *
-     * The MAC is 32 bytes in length and is computed as follows:
+     * The MAC is Constants::AUTH_TOKEN_MAC_LENGTH bytes in length and is computed as follows:
      *
-     *     HMAC(H, 0 || challenge || user_id || authenticator_id || authenticator_type || timestamp)
+     *     HMAC_SHA256(
+     *         H, 0 || challenge || user_id || authenticator_id || authenticator_type || timestamp)
      *
      * where ``||'' represents concatenation, the leading zero is a single byte, and all integers
      * are represented as unsigned values, the full width of the type.  The challenge, userId and
      * authenticatorId values are in machine order, but authenticatorType and timestamp are in
      * network order.  This odd construction is compatible with the hw_auth_token_t structure,
+     *
+     * Note that mac is a vec rather than an array, not because it's actually variable-length but
+     * because it could be empty.  As documented in the IKeymasterDevice::begin,
+     * IKeymasterDevice::update and IKeymasterDevice::finish doc comments, an empty mac indicates
+     * that this auth token is empty.
      */
-    uint8_t[32] mac;
+    vec<uint8_t> mac;
 };
 
 typedef uint64_t OperationHandle;
+
+/**
+ * HmacSharingParameters holds the data used in the process of establishing a shared HMAC key
+ * between multiple Keymaster instances.  Sharing parameters are returned in this struct by
+ * getHmacSharingParameters() and send to computeSharedHmac().  See the named methods in IKeymaster
+ * for details of usage.
+ */
+struct HmacSharingParameters {
+    /**
+     * Either empty or contains a persistent value that is associated with the pre-shared HMAC
+     * agreement key (see documentation of computeSharedHmac in @4.0::IKeymaster).  It is either
+     * empty or 32 bytes in length.
+     */
+    vec<uint8_t> seed;
+
+    /**
+     * A 32-byte value which is guaranteed to be different each time
+     * getHmacSharingParameters() is called.  Probabilistic uniqueness (i.e. random) is acceptable,
+     * though a stronger uniqueness guarantee (e.g. counter) is recommended where possible.
+     */
+    uint8_t[32] nonce;
+};
+
+/**
+ * VerificationToken enables one Keymaster instance to validate authorizations for another.  See
+ * verifyAuthorizations() in IKeymaster for details.
+ */
+struct VerificationToken {
+    /**
+     * The operation handle, used to ensure freshness.
+     */
+    uint64_t challenge;
+
+    /**
+     * The current time of the secure environment that generates the VerificationToken.  This can be
+     * checked against auth tokens generated by the same secure environment, which avoids needing to
+     * synchronize clocks.
+     */
+    Timestamp timestamp;
+
+    /**
+     * A list of the parameters verified.  Empty if the only parameters verified are time-related.
+     * In that case the timestamp is the payload.
+     */
+    vec<KeyParameter> parametersVerified;
+
+    /**
+     * SecurityLevel of the secure environment that generated the token.
+     */
+    SecurityLevel securityLevel;
+
+    /**
+     * 32-byte HMAC of the above values, computed as:
+     *
+     *    HMAC(H,
+     *         "Auth Verification" || challenge || timestamp || securityLevel || parametersVerified)
+     *
+     * where:
+     *
+     *   ``HMAC'' is the shared HMAC key (see computeSharedHmac() in IKeymaster).
+     *
+     *   ``||'' represents concatenation
+     *
+     * The representation of challenge and timestamp is as 64-bit unsigned integers in big-endian
+     * order.  securityLevel is represented as a 32-bit unsigned integer in big-endian order.
+     *
+     * If parametersVerified is non-empty, the representation of parametersVerified is an ASN.1 DER
+     * encoded representation of the values.  The ASN.1 schema used is the AuthorizationList schema
+     * from the Keystore attestation documentation.  If parametersVerified is empty, it is simply
+     * omitted from the HMAC computation.
+     */
+    vec<uint8_t> mac;
+};
