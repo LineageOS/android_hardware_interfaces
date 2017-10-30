@@ -17,6 +17,8 @@
 #define LOG_TAG "ValidateAudioConfig"
 #include <utils/Log.h>
 
+#include <numeric>
+
 #define LIBXML_SCHEMAS_ENABLED
 #include <libxml/xmlschemastypes.h>
 #define LIBXML_XINCLUDE_ENABLED
@@ -94,9 +96,9 @@ struct Libxml2Global {
     Libxml2Global libxml2;
 
     auto context = [&]() {
-        return std::string() + "    While validating: " + xmlFilePathExpr +
+        return std::string() + "  While validating: " + xmlFilePathExpr +
                "\n          Which is: " + xmlFilePath + "\nAgainst the schema: " + xsdFilePathExpr +
-               "\n          Which is: " + xsdFilePath + "Libxml2 errors\n" + libxml2.getErrors();
+               "\n          Which is: " + xsdFilePath + "\nLibxml2 errors:\n" + libxml2.getErrors();
     };
 
     auto schemaParserCtxt = make_xmlUnique(xmlSchemaNewParserCtxt(xsdFilePath));
@@ -117,7 +119,7 @@ struct Libxml2Global {
     auto schemaCtxt = make_xmlUnique(xmlSchemaNewValidCtxt(schema.get()));
     int ret = xmlSchemaValidateDoc(schemaCtxt.get(), doc.get());
     if (ret > 0) {
-        return ::testing::AssertionFailure() << "xml is not valid according to the xsd.\n"
+        return ::testing::AssertionFailure() << "XML is not valid according to the xsd\n"
                                              << context();
     }
     if (ret < 0) {
@@ -125,6 +127,40 @@ struct Libxml2Global {
     }
 
     return ::testing::AssertionSuccess();
+}
+
+::testing::AssertionResult validateXmlMultipleLocations(
+    const char* xmlFileNameExpr, const char* xmlFileLocationsExpr, const char* xsdFilePathExpr,
+    const char* xmlFileName, std::vector<const char*> xmlFileLocations, const char* xsdFilePath) {
+    using namespace std::string_literals;
+
+    std::vector<std::string> errors;
+    std::vector<std::string> foundFiles;
+
+    for (const char* location : xmlFileLocations) {
+        std::string xmlFilePath = location + "/"s + xmlFileName;
+        if (access(xmlFilePath.c_str(), F_OK) != 0) {
+            // If the file does not exist ignore this location and fallback on the next one
+            continue;
+        }
+        foundFiles.push_back("    " + xmlFilePath + '\n');
+        auto result = validateXml("xmlFilePath", xsdFilePathExpr, xmlFilePath.c_str(), xsdFilePath);
+        if (!result) {
+            errors.push_back(result.message());
+        }
+    }
+
+    if (foundFiles.empty()) {
+        errors.push_back("No xml file found in provided locations.\n");
+    }
+
+    return ::testing::AssertionResult(errors.empty())
+           << errors.size() << " error" << (errors.size() == 1 ? " " : "s ")
+           << std::accumulate(begin(errors), end(errors), "occurred during xml validation:\n"s)
+           << "     While validating all: " << xmlFileNameExpr
+           << "\n                 Which is: " << xmlFileName
+           << "\n In the following folders: " << xmlFileLocationsExpr
+           << "\n                 Which is: " << ::testing::PrintToString(xmlFileLocations);
 }
 
 }  // utility

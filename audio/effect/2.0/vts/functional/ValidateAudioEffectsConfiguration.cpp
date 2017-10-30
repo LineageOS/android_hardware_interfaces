@@ -15,16 +15,18 @@
  */
 
 #include <unistd.h>
+#include <iterator>
+
+#include <media/EffectsConfig.h>
 
 #include "utility/ValidateXml.h"
 
 TEST(CheckConfig, audioEffectsConfigurationValidation) {
     RecordProperty("description",
                    "Verify that the effects configuration file is valid according to the schema");
-    const char* xmlConfigFile = "/vendor/etc/audio_effects.xml";
-    // Not every device uses XML configuration, so only validate
-    // if the XML configuration actually exists.
-    if (access(xmlConfigFile, F_OK) == 0) {
-        ASSERT_VALID_XML(xmlConfigFile, "/data/local/tmp/audio_effects_conf_V2_0.xsd");
-    }
+    using namespace android::effectsConfig;
+
+    std::vector<const char*> locations(std::begin(DEFAULT_LOCATIONS), std::end(DEFAULT_LOCATIONS));
+    EXPECT_ONE_VALID_XML_MULTIPLE_LOCATIONS(DEFAULT_NAME, locations,
+                                            "/data/local/tmp/audio_effects_conf_V2_0.xsd");
 }
