@@ -39,6 +39,7 @@ class WifiP2pIface : public V1_0::IWifiP2pIface {
     // Refer to |WifiChip::invalidate()|.
     void invalidate();
     bool isValid();
+    std::string getName();
 
     // HIDL methods exposed.
     Return<void> getName(getName_cb hidl_status_cb) override;

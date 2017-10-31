@@ -39,6 +39,8 @@ void WifiP2pIface::invalidate() {
 
 bool WifiP2pIface::isValid() { return is_valid_; }
 
+std::string WifiP2pIface::getName() { return ifname_; }
+
 Return<void> WifiP2pIface::getName(getName_cb hidl_status_cb) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
                            &WifiP2pIface::getNameInternal, hidl_status_cb);

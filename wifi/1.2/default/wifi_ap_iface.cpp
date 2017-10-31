@@ -40,6 +40,8 @@ void WifiApIface::invalidate() {
 
 bool WifiApIface::isValid() { return is_valid_; }
 
+std::string WifiApIface::getName() { return ifname_; }
+
 Return<void> WifiApIface::getName(getName_cb hidl_status_cb) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
                            &WifiApIface::getNameInternal, hidl_status_cb);

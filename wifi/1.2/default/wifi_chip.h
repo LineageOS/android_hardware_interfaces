@@ -193,10 +193,10 @@ class WifiChip : public V1_1::IWifiChip {
     ChipId chip_id_;
     std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
     std::weak_ptr<mode_controller::WifiModeController> mode_controller_;
-    sp<WifiApIface> ap_iface_;
-    sp<WifiNanIface> nan_iface_;
-    sp<WifiP2pIface> p2p_iface_;
-    sp<WifiStaIface> sta_iface_;
+    std::vector<sp<WifiApIface>> ap_ifaces_;
+    std::vector<sp<WifiNanIface>> nan_ifaces_;
+    std::vector<sp<WifiP2pIface>> p2p_ifaces_;
+    std::vector<sp<WifiStaIface>> sta_ifaces_;
     std::vector<sp<WifiRttController>> rtt_controllers_;
     bool is_valid_;
     uint32_t current_mode_id_;

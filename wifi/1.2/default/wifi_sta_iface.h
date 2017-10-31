@@ -42,6 +42,7 @@ class WifiStaIface : public V1_0::IWifiStaIface {
     void invalidate();
     bool isValid();
     std::set<sp<IWifiStaIfaceEventCallback>> getEventCallbacks();
+    std::string getName();
 
     // HIDL methods exposed.
     Return<void> getName(getName_cb hidl_status_cb) override;
