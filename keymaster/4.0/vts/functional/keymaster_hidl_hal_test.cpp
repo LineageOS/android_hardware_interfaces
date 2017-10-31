@@ -75,6 +75,7 @@ bool operator==(const KeyParameter& a, const KeyParameter& b) {
         case Tag::ALLOW_WHILE_ON_BODY:
         case Tag::ROLLBACK_RESISTANCE:
         case Tag::RESET_SINCE_ID_ROTATION:
+        case Tag::TRUSTED_USER_PRESENCE_REQUIRED:
             return true;
 
         /* Integer tags */
