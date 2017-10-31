@@ -140,6 +140,7 @@ DECLARE_TYPED_TAG(RESET_SINCE_ID_ROTATION);
 DECLARE_TYPED_TAG(ROLLBACK_RESISTANCE);
 DECLARE_TYPED_TAG(ROOT_OF_TRUST);
 DECLARE_TYPED_TAG(RSA_PUBLIC_EXPONENT);
+DECLARE_TYPED_TAG(TRUSTED_CONFIRMATION_REQUIRED);
 DECLARE_TYPED_TAG(UNIQUE_ID);
 DECLARE_TYPED_TAG(USAGE_EXPIRE_DATETIME);
 DECLARE_TYPED_TAG(USER_AUTH_TYPE);
@@ -344,6 +345,7 @@ inline bool operator==(const KeyParameter& a, const KeyParameter& b) {
         case Tag::ALLOW_WHILE_ON_BODY:
         case Tag::ROLLBACK_RESISTANCE:
         case Tag::RESET_SINCE_ID_ROTATION:
+        case Tag::TRUSTED_CONFIRMATION_REQUIRED:
         case Tag::TRUSTED_USER_PRESENCE_REQUIRED:
             return true;
 
@@ -386,6 +388,7 @@ inline bool operator==(const KeyParameter& a, const KeyParameter& b) {
         case Tag::ATTESTATION_ID_MANUFACTURER:
         case Tag::ATTESTATION_ID_MODEL:
         case Tag::ASSOCIATED_DATA:
+        case Tag::CONFIRMATION_TOKEN:
         case Tag::NONCE:
             return a.blob == b.blob;
 

@@ -181,6 +181,16 @@ enum Tag : uint32_t {
      */
     TRUSTED_USER_PRESENCE_REQUIRED = TagType:BOOL | 507,
 
+    /** TRUSTED_CONFIRMATION_REQUIRED is only applicable to keys with KeyPurpose SIGN, and specifies
+     *  that this key must not be usable unless the user provides confirmation of the data to be
+     *  signed. Confirmation is proven to keymaster via an approval token. See CONFIRMATION_TOKEN,
+     *  as well as the ConfirmatinUI HAL.
+     *
+     * If an attempt to use a key with this tag does not have a cryptographically valid
+     * CONFIRMATION_TOKEN provided to finish() or if the data provided to update()/finish() does not
+     * match the data described in the token, keymaster must return NO_USER_CONFIRMATION. */
+    TRUSTED_CONFIRMATION_REQUIRED = TagType:BOOL | 508,
+
     /* Application access control */
     APPLICATION_ID = TagType:BYTES | 601, /* Byte string identifying the authorized application. */
 
@@ -227,6 +237,13 @@ enum Tag : uint32_t {
     RESET_SINCE_ID_ROTATION = TagType:BOOL | 1004, /* Whether the device has beeen factory reset
                                                     * since the last unique ID rotation.  Used for
                                                     * key attestation. */
+
+    /**
+     * CONFIRMATION_TOKEN is used to deliver a cryptographic token proving that the user confirmed a
+     * signing request. The content is a full-length HMAC-SHA256 value. See the ConfirmationUI HAL
+     * for details of token computation.
+     */
+    CONFIRMATION_TOKEN = TagType:BYTES | 1005,
 };
 
 /**
@@ -429,6 +446,7 @@ enum ErrorCode : int32_t {
     HARDWARE_TYPE_UNAVAILABLE = -68,
     PROOF_OF_PRESENCE_REQUIRED = -69,
     CONCURRENT_PROOF_OF_PRESENCE_REQUESTED = -70,
+    NO_USER_CONFIRMATION = -71,
 
     UNIMPLEMENTED = -100,
     VERSION_MISMATCH = -101,

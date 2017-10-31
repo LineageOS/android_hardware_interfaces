@@ -712,6 +712,29 @@ TEST_F(SigningOperationsTest, RsaPaddingNoneDoesNotAllowOther) {
 }
 
 /*
+ * SigningOperationsTest.NoUserConfirmation
+ *
+ * Verifies that keymaster rejects signing operations for keys with
+ * TRUSTED_CONFIRMATION_REQUIRED and no valid confirmation token
+ * presented.
+ */
+TEST_F(SigningOperationsTest, NoUserConfirmation) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                             .RsaSigningKey(1024, 3)
+                                             .Digest(Digest::NONE)
+                                             .Padding(PaddingMode::NONE)
+                                             .Authorization(TAG_NO_AUTH_REQUIRED)
+                                             .Authorization(TAG_TRUSTED_CONFIRMATION_REQUIRED)));
+
+    const string message = "12345678901234567890123456789012";
+    EXPECT_EQ(ErrorCode::OK,
+              Begin(KeyPurpose::SIGN,
+                    AuthorizationSetBuilder().Digest(Digest::NONE).Padding(PaddingMode::NONE)));
+    string signature;
+    EXPECT_EQ(ErrorCode::NO_USER_CONFIRMATION, Finish(message, &signature));
+}
+
+/*
  * SigningOperationsTest.RsaPkcs1Sha256Success
  *
  * Verifies that digested RSA-PKCS1 signature operations succeed.
