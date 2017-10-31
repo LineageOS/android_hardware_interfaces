@@ -237,7 +237,8 @@ bool CameraProvider::initialize() {
                 mModule->isOpenLegacyDefined()) {
             // try open_legacy to see if it actually works
             struct hw_device_t* halDev = nullptr;
-            int ret = mModule->openLegacy(cameraId, CAMERA_DEVICE_API_VERSION_1_0, &halDev);
+            int ret = -EBUSY;  // mModule->openLegacy(cameraId,
+                               // CAMERA_DEVICE_API_VERSION_1_0, &halDev);
             if (ret == 0) {
                 mOpenLegacySupported[cameraIdStr] = true;
                 halDev->close(halDev);
