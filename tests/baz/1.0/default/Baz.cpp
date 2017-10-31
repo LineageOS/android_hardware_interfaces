@@ -199,6 +199,34 @@ Return<void> Baz::takeAMask(IBase::BitField bf,
     return Void();
 }
 
+Return<void> Baz::testArrays(
+        const IBase::LotsOfPrimitiveArrays &in,
+        testArrays_cb _hidl_cb) {
+    _hidl_cb(in);
+    return Void();
+}
+
+Return<void> Baz::testByteVecs(
+        const hidl_vec<IBase::ByteOneDim> &in,
+        testByteVecs_cb _hidl_cb) {
+    _hidl_cb(in);
+    return Void();
+}
+
+Return<void> Baz::testBooleanVecs(
+        const hidl_vec<IBase::BooleanOneDim> &in,
+        testBooleanVecs_cb _hidl_cb) {
+    _hidl_cb(in);
+    return Void();
+}
+
+Return<void> Baz::testDoubleVecs(
+        const hidl_vec<IBase::DoubleOneDim> &in,
+        testDoubleVecs_cb _hidl_cb) {
+    _hidl_cb(in);
+    return Void();
+}
+
 // Methods from ::android::hardware::tests::baz::V1_0::IBaz follow.
 
 Return<void> Baz::doThis(float param) {
