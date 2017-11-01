@@ -77,6 +77,30 @@ interface IBase {
 
     typedef bitfield<BitField> Mask;
 
+    typedef uint8_t[128] ByteOneDim;
+    typedef uint8_t[8][128] ByteTwoDim;
+    typedef uint8_t[8][16][128] ByteThreeDim;
+
+    typedef bool[128] BooleanOneDim;
+    typedef bool[8][128] BooleanTwoDim;
+    typedef bool[8][16][128] BooleanThreeDim;
+
+    typedef double[128] DoubleOneDim;
+    typedef double[8][128] DoubleTwoDim;
+    typedef double[8][16][128] DoubleThreeDim;
+
+    struct LotsOfPrimitiveArrays {
+        ByteOneDim byte1;
+        ByteTwoDim byte2;
+        ByteThreeDim byte3;
+        BooleanOneDim boolean1;
+        BooleanTwoDim boolean2;
+        BooleanThreeDim boolean3;
+        DoubleOneDim double1;
+        DoubleTwoDim double2;
+        DoubleThreeDim double3;
+    };
+
     someBaseMethod();
 
     someBoolMethod(bool x) generates (bool y);
@@ -97,4 +121,9 @@ interface IBase {
 
     takeAMask(BitField bf, bitfield<BitField> first, MyMask second, Mask third)
             generates (BitField out, uint8_t f, uint8_t s, uint8_t t);
+
+    testArrays(LotsOfPrimitiveArrays in) generates (LotsOfPrimitiveArrays out);
+    testByteVecs(vec<ByteOneDim> in) generates (vec<ByteOneDim> out);
+    testBooleanVecs(vec<BooleanOneDim> in) generates (vec<BooleanOneDim> out);
+    testDoubleVecs(vec<DoubleOneDim> in) generates (vec<DoubleOneDim> out);
 };
