@@ -141,15 +141,16 @@ using on_error_alert_callback =
 class WifiLegacyHal {
    public:
     WifiLegacyHal();
+    virtual ~WifiLegacyHal() = default;
 
     // Initialize the legacy HAL function table.
-    wifi_error initialize();
+    virtual wifi_error initialize();
     // Start the legacy HAL and the event looper thread.
-    wifi_error start();
+    virtual wifi_error start();
     // Deinitialize the legacy HAL and wait for the event loop thread to exit
     // using a predefined timeout.
-    wifi_error stop(std::unique_lock<std::recursive_mutex>* lock,
-                    const std::function<void()>& on_complete_callback);
+    virtual wifi_error stop(std::unique_lock<std::recursive_mutex>* lock,
+                            const std::function<void()>& on_complete_callback);
     // Wrappers for all the functions in the legacy HAL function table.
     std::pair<wifi_error, std::string> getDriverVersion(
         const std::string& iface_name);
@@ -189,7 +190,7 @@ class WifiLegacyHal {
     wifi_error stopGscan(const std::string& iface_name, wifi_request_id id);
     std::pair<wifi_error, std::vector<uint32_t>> getValidFrequenciesForBand(
         const std::string& iface_name, wifi_band band);
-    wifi_error setDfsFlag(const std::string& iface_name, bool dfs_on);
+    virtual wifi_error setDfsFlag(const std::string& iface_name, bool dfs_on);
     // Link layer stats functions.
     wifi_error enableLinkLayerStats(const std::string& iface_name, bool debug);
     wifi_error disableLinkLayerStats(const std::string& iface_name);
@@ -275,12 +276,12 @@ class WifiLegacyHal {
     wifi_error setRttLcr(const std::string& iface_name, wifi_request_id id,
                          const wifi_lcr_information& info);
     // NAN functions.
-    wifi_error nanRegisterCallbackHandlers(
+    virtual wifi_error nanRegisterCallbackHandlers(
         const std::string& iface_name, const NanCallbackHandlers& callbacks);
     wifi_error nanEnableRequest(const std::string& iface_name,
                                 transaction_id id, const NanEnableRequest& msg);
-    wifi_error nanDisableRequest(const std::string& iface_name,
-                                 transaction_id id);
+    virtual wifi_error nanDisableRequest(const std::string& iface_name,
+                                         transaction_id id);
     wifi_error nanPublishRequest(const std::string& iface_name,
                                  transaction_id id,
                                  const NanPublishRequest& msg);
@@ -311,9 +312,9 @@ class WifiLegacyHal {
     wifi_error nanDataInterfaceCreate(const std::string& iface_name,
                                       transaction_id id,
                                       const std::string& data_iface_name);
-    wifi_error nanDataInterfaceDelete(const std::string& iface_name,
-                                      transaction_id id,
-                                      const std::string& data_iface_name);
+    virtual wifi_error nanDataInterfaceDelete(
+        const std::string& iface_name, transaction_id id,
+        const std::string& data_iface_name);
     wifi_error nanDataRequestInitiator(const std::string& iface_name,
                                        transaction_id id,
                                        const NanDataPathInitiatorRequest& msg);

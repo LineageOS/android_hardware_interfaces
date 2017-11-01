@@ -24,6 +24,7 @@
 
 #include "hidl_callback_util.h"
 #include "wifi_ap_iface.h"
+#include "wifi_feature_flags.h"
 #include "wifi_legacy_hal.h"
 #include "wifi_mode_controller.h"
 #include "wifi_nan_iface.h"
@@ -45,10 +46,12 @@ using namespace android::hardware::wifi::V1_0;
  */
 class WifiChip : public V1_1::IWifiChip {
    public:
-    WifiChip(ChipId chip_id,
-             const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
-             const std::weak_ptr<mode_controller::WifiModeController>
-                 mode_controller);
+    WifiChip(
+        ChipId chip_id,
+        const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
+        const std::weak_ptr<mode_controller::WifiModeController>
+            mode_controller,
+        const std::weak_ptr<feature_flags::WifiFeatureFlags> feature_flags);
     // HIDL does not provide a built-in mechanism to let the server invalidate
     // a HIDL interface object after creation. If any client process holds onto
     // a reference to the object in their context, any method calls on that
@@ -193,6 +196,7 @@ class WifiChip : public V1_1::IWifiChip {
     ChipId chip_id_;
     std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
     std::weak_ptr<mode_controller::WifiModeController> mode_controller_;
+    std::weak_ptr<feature_flags::WifiFeatureFlags> feature_flags_;
     std::vector<sp<WifiApIface>> ap_ifaces_;
     std::vector<sp<WifiNanIface>> nan_ifaces_;
     std::vector<sp<WifiP2pIface>> p2p_ifaces_;

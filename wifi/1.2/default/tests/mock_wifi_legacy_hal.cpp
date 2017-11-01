@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,29 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef WIFI_FEATURE_FLAGS_H_
-#define WIFI_FEATURE_FLAGS_H_
+#include <android-base/logging.h>
+#include <android-base/macros.h>
+#include <gmock/gmock.h>
+
+#undef NAN  // This is weird, NAN is defined in bionic/libc/include/math.h:38
+#include "mock_wifi_legacy_hal.h"
 
 namespace android {
 namespace hardware {
 namespace wifi {
 namespace V1_2 {
 namespace implementation {
-namespace feature_flags {
+namespace legacy_hal {
 
-class WifiFeatureFlags {
-   public:
-    WifiFeatureFlags();
-    virtual ~WifiFeatureFlags() = default;
-
-    virtual bool isAwareSupported();
-};
-
-}  // namespace feature_flags
+MockWifiLegacyHal::MockWifiLegacyHal() : WifiLegacyHal() {}
+}  // namespace legacy_hal
 }  // namespace implementation
 }  // namespace V1_2
 }  // namespace wifi
 }  // namespace hardware
 }  // namespace android
-
-#endif  // WIFI_FEATURE_FLAGS_H_

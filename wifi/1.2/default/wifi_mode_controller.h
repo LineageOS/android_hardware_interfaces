@@ -37,15 +37,16 @@ using namespace android::hardware::wifi::V1_0;
 class WifiModeController {
    public:
     WifiModeController();
+    virtual ~WifiModeController() = default;
 
     // Checks if a firmware mode change is necessary to support the specified
     // iface type operations.
-    bool isFirmwareModeChangeNeeded(IfaceType type);
+    virtual bool isFirmwareModeChangeNeeded(IfaceType type);
     // Change the firmware mode to support the specified iface type operations.
-    bool changeFirmwareMode(IfaceType type);
+    virtual bool changeFirmwareMode(IfaceType type);
     // Unload the driver. This should be invoked whenever |IWifi.stop()| is
     // invoked.
-    bool deinitialize();
+    virtual bool deinitialize();
 
    private:
     std::unique_ptr<wifi_hal::DriverTool> driver_tool_;

@@ -20,7 +20,6 @@
 #include "hidl_return_util.h"
 #include "hidl_struct_util.h"
 #include "wifi_chip.h"
-#include "wifi_feature_flags.h"
 #include "wifi_status_util.h"
 
 namespace {
@@ -103,10 +102,12 @@ using hidl_return_util::validateAndCallWithLock;
 
 WifiChip::WifiChip(
     ChipId chip_id, const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
-    const std::weak_ptr<mode_controller::WifiModeController> mode_controller)
+    const std::weak_ptr<mode_controller::WifiModeController> mode_controller,
+    const std::weak_ptr<feature_flags::WifiFeatureFlags> feature_flags)
     : chip_id_(chip_id),
       legacy_hal_(legacy_hal),
       mode_controller_(mode_controller),
+      feature_flags_(feature_flags),
       is_valid_(true),
       current_mode_id_(kInvalidModeId),
       debug_ring_buffer_cb_registered_(false) {}
@@ -404,7 +405,7 @@ WifiChip::getAvailableModesInternal() {
     const IWifiChip::ChipIfaceCombinationLimit
         sta_chip_iface_combination_limit_1 = {{IfaceType::STA}, 1};
     IWifiChip::ChipIfaceCombinationLimit sta_chip_iface_combination_limit_2;
-    if (WifiFeatureFlags::wifiHidlFeatureAware) {
+    if (feature_flags_.lock()->isAwareSupported()) {
         sta_chip_iface_combination_limit_2 = {{IfaceType::P2P, IfaceType::NAN},
                                               1};
     } else {
@@ -572,7 +573,7 @@ WifiStatus WifiChip::removeApIfaceInternal(const std::string& ifname) {
 
 std::pair<WifiStatus, sp<IWifiNanIface>> WifiChip::createNanIfaceInternal() {
     // Only 1 of NAN or P2P iface can be active at a time.
-    if (WifiFeatureFlags::wifiHidlFeatureAware) {
+    if (feature_flags_.lock()->isAwareSupported()) {
         if (current_mode_id_ != kStaChipModeId || !nan_ifaces_.empty() ||
             !p2p_ifaces_.empty()) {
             return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};

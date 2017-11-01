@@ -14,8 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef WIFI_FEATURE_FLAGS_H_
-#define WIFI_FEATURE_FLAGS_H_
+#include "wifi_feature_flags.h"
+
+namespace {
+#ifdef WIFI_HIDL_FEATURE_AWARE
+static const bool wifiHidlFeatureAware = true;
+#else
+static const bool wifiHidlFeatureAware = false;
+#endif  // WIFI_HIDL_FEATURE_AWARE
+}  // namespace
 
 namespace android {
 namespace hardware {
@@ -24,13 +31,8 @@ namespace V1_2 {
 namespace implementation {
 namespace feature_flags {
 
-class WifiFeatureFlags {
-   public:
-    WifiFeatureFlags();
-    virtual ~WifiFeatureFlags() = default;
-
-    virtual bool isAwareSupported();
-};
+WifiFeatureFlags::WifiFeatureFlags() {}
+bool WifiFeatureFlags::isAwareSupported() { return wifiHidlFeatureAware; }
 
 }  // namespace feature_flags
 }  // namespace implementation
@@ -38,5 +40,3 @@ class WifiFeatureFlags {
 }  // namespace wifi
 }  // namespace hardware
 }  // namespace android
-
-#endif  // WIFI_FEATURE_FLAGS_H_

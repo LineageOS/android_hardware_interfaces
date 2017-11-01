@@ -446,7 +446,7 @@ std::pair<wifi_error, uint32_t> WifiLegacyHal::getSupportedFeatureSet(
     const std::string& iface_name) {
     feature_set set;
     static_assert(sizeof(set) == sizeof(uint32_t),
-                  "Some features can not be represented in output");
+                  "Some feature_flags can not be represented in output");
     wifi_error status = global_func_table_.wifi_get_supported_feature_set(
         getIfaceHandle(iface_name), &set);
     return {status, static_cast<uint32_t>(set)};
@@ -750,11 +750,11 @@ wifi_error WifiLegacyHal::resetTxPowerScenario(const std::string& iface_name) {
 
 std::pair<wifi_error, uint32_t> WifiLegacyHal::getLoggerSupportedFeatureSet(
     const std::string& iface_name) {
-    uint32_t supported_features;
+    uint32_t supported_feature_flags;
     wifi_error status =
         global_func_table_.wifi_get_logger_supported_feature_set(
-            getIfaceHandle(iface_name), &supported_features);
-    return {status, supported_features};
+            getIfaceHandle(iface_name), &supported_feature_flags);
+    return {status, supported_feature_flags};
 }
 
 wifi_error WifiLegacyHal::startPktFateMonitoring(

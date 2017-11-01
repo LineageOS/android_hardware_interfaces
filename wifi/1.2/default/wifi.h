@@ -25,6 +25,7 @@
 
 #include "hidl_callback_util.h"
 #include "wifi_chip.h"
+#include "wifi_feature_flags.h"
 #include "wifi_legacy_hal.h"
 #include "wifi_mode_controller.h"
 
@@ -39,7 +40,10 @@ namespace implementation {
  */
 class Wifi : public V1_2::IWifi {
    public:
-    Wifi();
+    Wifi(const std::shared_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
+         const std::shared_ptr<mode_controller::WifiModeController>
+             mode_controller,
+         const std::shared_ptr<feature_flags::WifiFeatureFlags> feature_flags);
 
     bool isValid();
 
@@ -72,6 +76,7 @@ class Wifi : public V1_2::IWifi {
     // and shared with all the child HIDL interface objects.
     std::shared_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
     std::shared_ptr<mode_controller::WifiModeController> mode_controller_;
+    std::shared_ptr<feature_flags::WifiFeatureFlags> feature_flags_;
     RunState run_state_;
     sp<WifiChip> chip_;
     hidl_callback_util::HidlCallbackHandler<IWifiEventCallback>
