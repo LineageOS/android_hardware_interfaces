@@ -53,6 +53,22 @@ struct Baz : public IBaz {
                            uint8_t third,
                            takeAMask_cb _hidl_cb) override;
 
+    Return<void> testArrays(
+            const IBase::LotsOfPrimitiveArrays &in,
+            testArrays_cb _hidl_cb) override;
+
+    Return<void> testByteVecs(
+            const hidl_vec<IBase::ByteOneDim> &in,
+            testByteVecs_cb _hidl_cb) override;
+
+    Return<void> testBooleanVecs(
+            const hidl_vec<IBase::BooleanOneDim> &in,
+            testBooleanVecs_cb _hidl_cb) override;
+
+    Return<void> testDoubleVecs(
+            const hidl_vec<IBase::DoubleOneDim> &in,
+            testDoubleVecs_cb _hidl_cb) override;
+
     // Methods from ::android::hardware::tests::baz::V1_0::IBaz follow.
     Return<void> doThis(float param) override;
     Return<int32_t> doThatAndReturnSomething(int64_t param) override;
