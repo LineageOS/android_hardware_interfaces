@@ -66,3 +66,126 @@ cc_library {
         "android.hardware.vibrator@1.0",
     ],
 }
+
+genrule {
+    name: "android.hardware.vibrator-V1.1-java_gen_java",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Ljava -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.vibrator@1.1",
+    srcs: [
+        ":android.hardware.vibrator@1.1_hal",
+    ],
+    out: [
+        "android/hardware/vibrator/V1_1/Effect_1_1.java",
+        "android/hardware/vibrator/V1_1/IVibrator.java",
+    ],
+}
+
+java_library {
+    name: "android.hardware.vibrator-V1.1-java",
+    no_framework_libs: true,
+    defaults: ["hidl-java-module-defaults"],
+    srcs: [":android.hardware.vibrator-V1.1-java_gen_java"],
+    libs: [
+        "hwbinder",
+        "android.hardware.vibrator-V1.0-java",
+        "android.hidl.base-V1.0-java",
+    ]
+}
+
+genrule {
+    name: "android.hardware.vibrator-V1.1-java-constants_gen_java",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Ljava-constants -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.vibrator@1.1",
+    srcs: [
+        ":android.hardware.vibrator@1.1_hal",
+    ],
+    out: [
+        "android/hardware/vibrator/V1_1/Constants.java",
+    ],
+}
+
+java_library {
+    name: "android.hardware.vibrator-V1.1-java-constants",
+    no_framework_libs: true,
+    defaults: ["hidl-java-module-defaults"],
+    srcs: [":android.hardware.vibrator-V1.1-java-constants_gen_java"],
+}
+
+genrule {
+    name: "android.hardware.vibrator@1.1-adapter-helper_genc++",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-sources -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.vibrator@1.1",
+    srcs: [
+        ":android.hardware.vibrator@1.1_hal",
+    ],
+    out: [
+        "android/hardware/vibrator/1.1/AVibrator.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.vibrator@1.1-adapter-helper_genc++_headers",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-headers -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.vibrator@1.1",
+    srcs: [
+        ":android.hardware.vibrator@1.1_hal",
+    ],
+    out: [
+        "android/hardware/vibrator/1.1/AVibrator.h",
+    ],
+}
+
+cc_library {
+    name: "android.hardware.vibrator@1.1-adapter-helper",
+    defaults: ["hidl-module-defaults"],
+    generated_sources: ["android.hardware.vibrator@1.1-adapter-helper_genc++"],
+    generated_headers: ["android.hardware.vibrator@1.1-adapter-helper_genc++_headers"],
+    export_generated_headers: ["android.hardware.vibrator@1.1-adapter-helper_genc++_headers"],
+    vendor_available: true,
+    shared_libs: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "liblog",
+        "libutils",
+        "libcutils",
+        "libhidladapter",
+        "android.hardware.vibrator@1.0",
+        "android.hardware.vibrator@1.1",
+        "android.hardware.vibrator@1.0-adapter-helper",
+        "android.hidl.base@1.0-adapter-helper",
+    ],
+    export_shared_lib_headers: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "libutils",
+        "libhidladapter",
+        "android.hardware.vibrator@1.0",
+        "android.hardware.vibrator@1.1",
+        "android.hardware.vibrator@1.0-adapter-helper",
+        "android.hidl.base@1.0-adapter-helper",
+    ],
+}
+
+genrule {
+    name: "android.hardware.vibrator@1.1-adapter_genc++",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-main -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.vibrator@1.1",
+    out: ["main.cpp"]
+}
+
+cc_test {
+    name: "android.hardware.vibrator@1.1-adapter",
+    defaults: ["hidl-module-defaults"],
+    shared_libs: [
+        "libhidladapter",
+        "libhidlbase",
+        "libhidltransport",
+        "libutils",
+        "android.hardware.vibrator@1.0",
+        "android.hardware.vibrator@1.1",
+        "android.hardware.vibrator@1.1-adapter-helper",
+    ],
+    generated_sources: ["android.hardware.vibrator@1.1-adapter_genc++"],
+}
