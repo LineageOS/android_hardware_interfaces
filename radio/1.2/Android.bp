@@ -5,6 +5,8 @@ filegroup {
     srcs: [
         "types.hal",
         "IRadio.hal",
+        "IRadioIndication.hal",
+        "IRadioResponse.hal",
         "ISap.hal",
     ],
 }
@@ -19,6 +21,8 @@ genrule {
     out: [
         "android/hardware/radio/1.2/types.cpp",
         "android/hardware/radio/1.2/RadioAll.cpp",
+        "android/hardware/radio/1.2/RadioIndicationAll.cpp",
+        "android/hardware/radio/1.2/RadioResponseAll.cpp",
         "android/hardware/radio/1.2/SapAll.cpp",
     ],
 }
@@ -38,6 +42,16 @@ genrule {
         "android/hardware/radio/1.2/BnHwRadio.h",
         "android/hardware/radio/1.2/BpHwRadio.h",
         "android/hardware/radio/1.2/BsRadio.h",
+        "android/hardware/radio/1.2/IRadioIndication.h",
+        "android/hardware/radio/1.2/IHwRadioIndication.h",
+        "android/hardware/radio/1.2/BnHwRadioIndication.h",
+        "android/hardware/radio/1.2/BpHwRadioIndication.h",
+        "android/hardware/radio/1.2/BsRadioIndication.h",
+        "android/hardware/radio/1.2/IRadioResponse.h",
+        "android/hardware/radio/1.2/IHwRadioResponse.h",
+        "android/hardware/radio/1.2/BnHwRadioResponse.h",
+        "android/hardware/radio/1.2/BpHwRadioResponse.h",
+        "android/hardware/radio/1.2/BsRadioResponse.h",
         "android/hardware/radio/1.2/ISap.h",
         "android/hardware/radio/1.2/IHwSap.h",
         "android/hardware/radio/1.2/BnHwSap.h",
@@ -84,12 +98,25 @@ genrule {
         ":android.hardware.radio@1.2_hal",
     ],
     out: [
+        "android/hardware/radio/V1_2/CellIdentityCdma.java",
+        "android/hardware/radio/V1_2/CellIdentityGsm.java",
+        "android/hardware/radio/V1_2/CellIdentityLte.java",
+        "android/hardware/radio/V1_2/CellIdentityOperatorNames.java",
+        "android/hardware/radio/V1_2/CellIdentityWcdma.java",
+        "android/hardware/radio/V1_2/CellInfo.java",
+        "android/hardware/radio/V1_2/CellInfoCdma.java",
+        "android/hardware/radio/V1_2/CellInfoGsm.java",
+        "android/hardware/radio/V1_2/CellInfoLte.java",
+        "android/hardware/radio/V1_2/CellInfoWcdma.java",
         "android/hardware/radio/V1_2/IncrementalResultsPeriodicityRange.java",
         "android/hardware/radio/V1_2/MaxSearchTimeRange.java",
         "android/hardware/radio/V1_2/NetworkScanRequest.java",
+        "android/hardware/radio/V1_2/NetworkScanResult.java",
         "android/hardware/radio/V1_2/RadioConst.java",
         "android/hardware/radio/V1_2/ScanIntervalRange.java",
         "android/hardware/radio/V1_2/IRadio.java",
+        "android/hardware/radio/V1_2/IRadioIndication.java",
+        "android/hardware/radio/V1_2/IRadioResponse.java",
         "android/hardware/radio/V1_2/ISap.java",
     ],
 }
@@ -119,6 +146,8 @@ genrule {
     ],
     out: [
         "android/hardware/radio/1.2/ARadio.cpp",
+        "android/hardware/radio/1.2/ARadioIndication.cpp",
+        "android/hardware/radio/1.2/ARadioResponse.cpp",
         "android/hardware/radio/1.2/ASap.cpp",
     ],
 }
@@ -132,6 +161,8 @@ genrule {
     ],
     out: [
         "android/hardware/radio/1.2/ARadio.h",
+        "android/hardware/radio/1.2/ARadioIndication.h",
+        "android/hardware/radio/1.2/ARadioResponse.h",
         "android/hardware/radio/1.2/ASap.h",
     ],
 }
