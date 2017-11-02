@@ -193,6 +193,17 @@ class WifiChip : public V1_1::IWifiChip {
         std::unique_lock<std::recursive_mutex>* lock, ChipModeId mode_id);
     WifiStatus registerDebugRingBufferCallback();
 
+    void populateModes();
+    std::vector<IWifiChip::ChipIfaceCombination>
+    getCurrentModeIfaceCombinations();
+    std::map<IfaceType, size_t> getCurrentIfaceCombination();
+    std::vector<std::map<IfaceType, size_t>> expandIfaceCombinations(
+        const IWifiChip::ChipIfaceCombination& combination);
+    bool canExpandedIfaceCombinationSupportIfaceOfType(
+        const std::map<IfaceType, size_t>& combo, IfaceType type);
+    bool canCurrentModeSupportIfaceOfType(IfaceType type);
+    bool isValidModeId(ChipModeId mode_id);
+
     ChipId chip_id_;
     std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
     std::weak_ptr<mode_controller::WifiModeController> mode_controller_;
@@ -203,7 +214,9 @@ class WifiChip : public V1_1::IWifiChip {
     std::vector<sp<WifiStaIface>> sta_ifaces_;
     std::vector<sp<WifiRttController>> rtt_controllers_;
     bool is_valid_;
+    // Members pertaining to chip configuration.
     uint32_t current_mode_id_;
+    std::vector<IWifiChip::ChipMode> modes_;
     // The legacy ring buffer callback API has only a global callback
     // registration mechanism. Use this to check if we have already
     // registered a callback.

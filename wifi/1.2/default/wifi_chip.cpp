@@ -30,9 +30,14 @@ using android::hardware::wifi::V1_0::IfaceType;
 using android::hardware::wifi::V1_0::IWifiChip;
 using android::sp;
 
-constexpr ChipModeId kStaChipModeId = 0;
-constexpr ChipModeId kApChipModeId = 1;
 constexpr ChipModeId kInvalidModeId = UINT32_MAX;
+// These mode ID's should be unique (even across combo versions). Refer to
+// handleChipConfiguration() for it's usage.
+// Mode ID's for V1
+constexpr ChipModeId kV1StaChipModeId = 0;
+constexpr ChipModeId kV1ApChipModeId = 1;
+// Mode ID for V2
+constexpr ChipModeId kV2ChipModeId = 2;
 
 template <typename Iface>
 void invalidateAndClear(std::vector<sp<Iface>>& ifaces, sp<Iface> iface) {
@@ -110,7 +115,9 @@ WifiChip::WifiChip(
       feature_flags_(feature_flags),
       is_valid_(true),
       current_mode_id_(kInvalidModeId),
-      debug_ring_buffer_cb_registered_(false) {}
+      debug_ring_buffer_cb_registered_(false) {
+    populateModes();
+}
 
 void WifiChip::invalidate() {
     invalidateAndRemoveAllIfaces();
@@ -394,43 +401,13 @@ std::pair<WifiStatus, uint32_t> WifiChip::getCapabilitiesInternal() {
 
 std::pair<WifiStatus, std::vector<IWifiChip::ChipMode>>
 WifiChip::getAvailableModesInternal() {
-    // The chip combination supported for current devices is fixed for now with
-    // 2 separate modes of operation:
-    // Mode 1 (STA mode): Will support 1 STA and 1 P2P or NAN iface operations
-    // concurrently [NAN conditional on wifiHidlFeatureAware]
-    // Mode 2 (AP mode): Will support 1 AP iface operations.
-    // TODO (b/32997844): Read this from some device specific flags in the
-    // makefile.
-    // STA mode iface combinations.
-    const IWifiChip::ChipIfaceCombinationLimit
-        sta_chip_iface_combination_limit_1 = {{IfaceType::STA}, 1};
-    IWifiChip::ChipIfaceCombinationLimit sta_chip_iface_combination_limit_2;
-    if (feature_flags_.lock()->isAwareSupported()) {
-        sta_chip_iface_combination_limit_2 = {{IfaceType::P2P, IfaceType::NAN},
-                                              1};
-    } else {
-        sta_chip_iface_combination_limit_2 = {{IfaceType::P2P}, 1};
-    }
-    const IWifiChip::ChipIfaceCombination sta_chip_iface_combination = {
-        {sta_chip_iface_combination_limit_1,
-         sta_chip_iface_combination_limit_2}};
-    const IWifiChip::ChipMode sta_chip_mode = {kStaChipModeId,
-                                               {sta_chip_iface_combination}};
-    // AP mode iface combinations.
-    const IWifiChip::ChipIfaceCombinationLimit ap_chip_iface_combination_limit =
-        {{IfaceType::AP}, 1};
-    const IWifiChip::ChipIfaceCombination ap_chip_iface_combination = {
-        {ap_chip_iface_combination_limit}};
-    const IWifiChip::ChipMode ap_chip_mode = {kApChipModeId,
-                                              {ap_chip_iface_combination}};
-    return {createWifiStatus(WifiStatusCode::SUCCESS),
-            {sta_chip_mode, ap_chip_mode}};
+    return {createWifiStatus(WifiStatusCode::SUCCESS), modes_};
 }
 
 WifiStatus WifiChip::configureChipInternal(
     /* NONNULL */ std::unique_lock<std::recursive_mutex>* lock,
     ChipModeId mode_id) {
-    if (mode_id != kStaChipModeId && mode_id != kApChipModeId) {
+    if (!isValidModeId(mode_id)) {
         return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
     }
     if (mode_id == current_mode_id_) {
@@ -458,7 +435,7 @@ WifiStatus WifiChip::configureChipInternal(
 }
 
 std::pair<WifiStatus, uint32_t> WifiChip::getModeInternal() {
-    if (current_mode_id_ == kInvalidModeId) {
+    if (!isValidModeId(current_mode_id_)) {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE),
                 current_mode_id_};
     }
@@ -526,7 +503,7 @@ WifiChip::requestFirmwareDebugDumpInternal() {
 }
 
 std::pair<WifiStatus, sp<IWifiApIface>> WifiChip::createApIfaceInternal() {
-    if (current_mode_id_ != kApChipModeId || !ap_ifaces_.empty()) {
+    if (!canCurrentModeSupportIfaceOfType(IfaceType::AP)) {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
     }
     std::string ifname = getWlan0IfaceName();
@@ -572,24 +549,18 @@ WifiStatus WifiChip::removeApIfaceInternal(const std::string& ifname) {
 }
 
 std::pair<WifiStatus, sp<IWifiNanIface>> WifiChip::createNanIfaceInternal() {
-    // Only 1 of NAN or P2P iface can be active at a time.
-    if (feature_flags_.lock()->isAwareSupported()) {
-        if (current_mode_id_ != kStaChipModeId || !nan_ifaces_.empty() ||
-            !p2p_ifaces_.empty()) {
-            return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
-        }
-        std::string ifname = getWlan0IfaceName();
-        sp<WifiNanIface> iface = new WifiNanIface(ifname, legacy_hal_);
-        nan_ifaces_.push_back(iface);
-        for (const auto& callback : event_cb_handler_.getCallbacks()) {
-            if (!callback->onIfaceAdded(IfaceType::NAN, ifname).isOk()) {
-                LOG(ERROR) << "Failed to invoke onIfaceAdded callback";
-            }
-        }
-        return {createWifiStatus(WifiStatusCode::SUCCESS), iface};
-    } else {
+    if (!canCurrentModeSupportIfaceOfType(IfaceType::NAN)) {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
     }
+    std::string ifname = getWlan0IfaceName();
+    sp<WifiNanIface> iface = new WifiNanIface(ifname, legacy_hal_);
+    nan_ifaces_.push_back(iface);
+    for (const auto& callback : event_cb_handler_.getCallbacks()) {
+        if (!callback->onIfaceAdded(IfaceType::NAN, ifname).isOk()) {
+            LOG(ERROR) << "Failed to invoke onIfaceAdded callback";
+        }
+    }
+    return {createWifiStatus(WifiStatusCode::SUCCESS), iface};
 }
 
 std::pair<WifiStatus, std::vector<hidl_string>>
@@ -624,9 +595,7 @@ WifiStatus WifiChip::removeNanIfaceInternal(const std::string& ifname) {
 }
 
 std::pair<WifiStatus, sp<IWifiP2pIface>> WifiChip::createP2pIfaceInternal() {
-    // Only 1 of NAN or P2P iface can be active at a time.
-    if (current_mode_id_ != kStaChipModeId || !p2p_ifaces_.empty() ||
-        !nan_ifaces_.empty()) {
+    if (!canCurrentModeSupportIfaceOfType(IfaceType::P2P)) {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
     }
     std::string ifname = getP2pIfaceName();
@@ -672,7 +641,7 @@ WifiStatus WifiChip::removeP2pIfaceInternal(const std::string& ifname) {
 }
 
 std::pair<WifiStatus, sp<IWifiStaIface>> WifiChip::createStaIfaceInternal() {
-    if (current_mode_id_ != kStaChipModeId || !sta_ifaces_.empty()) {
+    if (!canCurrentModeSupportIfaceOfType(IfaceType::STA)) {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
     }
     std::string ifname = getWlan0IfaceName();
@@ -842,7 +811,7 @@ WifiStatus WifiChip::handleChipConfiguration(
     ChipModeId mode_id) {
     // If the chip is already configured in a different mode, stop
     // the legacy HAL and then start it after firmware mode change.
-    if (current_mode_id_ != kInvalidModeId) {
+    if (isValidModeId(current_mode_id_)) {
         LOG(INFO) << "Reconfiguring chip from mode " << current_mode_id_
                   << " to mode " << mode_id;
         invalidateAndRemoveAllIfaces();
@@ -854,10 +823,11 @@ WifiStatus WifiChip::handleChipConfiguration(
             return createWifiStatusFromLegacyError(legacy_status);
         }
     }
-    bool success;
-    if (mode_id == kStaChipModeId) {
+    // Firmware mode change not needed for V2 devices.
+    bool success = true;
+    if (mode_id == kV1StaChipModeId) {
         success = mode_controller_.lock()->changeFirmwareMode(IfaceType::STA);
-    } else {
+    } else if (mode_id == kV1ApChipModeId) {
         success = mode_controller_.lock()->changeFirmwareMode(IfaceType::AP);
     }
     if (!success) {
@@ -910,6 +880,185 @@ WifiStatus WifiChip::registerDebugRingBufferCallback() {
         debug_ring_buffer_cb_registered_ = true;
     }
     return createWifiStatusFromLegacyError(legacy_status);
+}
+
+void WifiChip::populateModes() {
+    // The chip combination supported for current devices is fixed.
+    // They can be one of the following based on device features:
+    // a) 2 separate modes of operation with 1 interface combination each:
+    //    Mode 1 (STA mode): Will support 1 STA and 1 P2P or NAN(optional)
+    //                       concurrent iface operations.
+    //    Mode 2 (AP mode): Will support 1 AP iface operation.
+    //
+    // b) 1 mode of operation with 2 interface combinations
+    // (conditional on isDualInterfaceSupported()):
+    //    Interface Combination 1: Will support 1 STA and 1 P2P or NAN(optional)
+    //                             concurrent iface operations.
+    //    Interface Combination 2: Will support 1 STA and 1 STA or AP concurrent
+    //                             iface operations.
+    // If Aware is enabled (conditional on isAwareSupported()), the iface
+    // combination will be modified to support either P2P or NAN in place of
+    // just P2P.
+    if (feature_flags_.lock()->isDualInterfaceSupported()) {
+        // V2 Iface combinations for Mode Id = 2.
+        const IWifiChip::ChipIfaceCombinationLimit
+            chip_iface_combination_limit_1 = {{IfaceType::STA}, 1};
+        const IWifiChip::ChipIfaceCombinationLimit
+            chip_iface_combination_limit_2 = {{IfaceType::STA, IfaceType::AP},
+                                              1};
+        IWifiChip::ChipIfaceCombinationLimit chip_iface_combination_limit_3;
+        if (feature_flags_.lock()->isAwareSupported()) {
+            chip_iface_combination_limit_3 = {{IfaceType::P2P, IfaceType::NAN},
+                                              1};
+        } else {
+            chip_iface_combination_limit_3 = {{IfaceType::P2P}, 1};
+        }
+        const IWifiChip::ChipIfaceCombination chip_iface_combination_1 = {
+            {chip_iface_combination_limit_1, chip_iface_combination_limit_2}};
+        const IWifiChip::ChipIfaceCombination chip_iface_combination_2 = {
+            {chip_iface_combination_limit_1, chip_iface_combination_limit_3}};
+        const IWifiChip::ChipMode chip_mode = {
+            kV2ChipModeId,
+            {chip_iface_combination_1, chip_iface_combination_2}};
+        modes_ = {chip_mode};
+    } else {
+        // V1 Iface combinations for Mode Id = 0. (STA Mode)
+        const IWifiChip::ChipIfaceCombinationLimit
+            sta_chip_iface_combination_limit_1 = {{IfaceType::STA}, 1};
+        IWifiChip::ChipIfaceCombinationLimit sta_chip_iface_combination_limit_2;
+        if (feature_flags_.lock()->isAwareSupported()) {
+            sta_chip_iface_combination_limit_2 = {
+                {IfaceType::P2P, IfaceType::NAN}, 1};
+        } else {
+            sta_chip_iface_combination_limit_2 = {{IfaceType::P2P}, 1};
+        }
+        const IWifiChip::ChipIfaceCombination sta_chip_iface_combination = {
+            {sta_chip_iface_combination_limit_1,
+             sta_chip_iface_combination_limit_2}};
+        const IWifiChip::ChipMode sta_chip_mode = {
+            kV1StaChipModeId, {sta_chip_iface_combination}};
+        // Iface combinations for Mode Id = 1. (AP Mode)
+        const IWifiChip::ChipIfaceCombinationLimit
+            ap_chip_iface_combination_limit = {{IfaceType::AP}, 1};
+        const IWifiChip::ChipIfaceCombination ap_chip_iface_combination = {
+            {ap_chip_iface_combination_limit}};
+        const IWifiChip::ChipMode ap_chip_mode = {kV1ApChipModeId,
+                                                  {ap_chip_iface_combination}};
+        modes_ = {sta_chip_mode, ap_chip_mode};
+    }
+}
+
+std::vector<IWifiChip::ChipIfaceCombination>
+WifiChip::getCurrentModeIfaceCombinations() {
+    if (!isValidModeId(current_mode_id_)) {
+        LOG(ERROR) << "Chip not configured in a mode yet";
+        return {};
+    }
+    for (const auto& mode : modes_) {
+        if (mode.id == current_mode_id_) {
+            return mode.availableCombinations;
+        }
+    }
+    CHECK(0) << "Expected to find iface combinations for current mode!";
+    return {};
+}
+
+// Returns a map indexed by IfaceType with the number of ifaces currently
+// created of the corresponding type.
+std::map<IfaceType, size_t> WifiChip::getCurrentIfaceCombination() {
+    std::map<IfaceType, size_t> iface_counts;
+    iface_counts[IfaceType::AP] = ap_ifaces_.size();
+    iface_counts[IfaceType::NAN] = nan_ifaces_.size();
+    iface_counts[IfaceType::P2P] = p2p_ifaces_.size();
+    iface_counts[IfaceType::STA] = sta_ifaces_.size();
+    return iface_counts;
+}
+
+// This expands the provided iface combinations to a more parseable
+// form. Returns a vector of available combinations possible with the number
+// of ifaces of each type in the combination.
+// This method is a port of HalDeviceManager.expandIfaceCombos() from framework.
+std::vector<std::map<IfaceType, size_t>> WifiChip::expandIfaceCombinations(
+    const IWifiChip::ChipIfaceCombination& combination) {
+    uint32_t num_expanded_combos = 1;
+    for (const auto& limit : combination.limits) {
+        for (uint32_t i = 0; i < limit.maxIfaces; i++) {
+            num_expanded_combos *= limit.types.size();
+        }
+    }
+
+    // Allocate the vector of expanded combos and reset all iface counts to 0
+    // in each combo.
+    std::vector<std::map<IfaceType, size_t>> expanded_combos;
+    expanded_combos.resize(num_expanded_combos);
+    for (auto& expanded_combo : expanded_combos) {
+        for (const auto type :
+             {IfaceType::AP, IfaceType::NAN, IfaceType::P2P, IfaceType::STA}) {
+            expanded_combo[type] = 0;
+        }
+    }
+    uint32_t span = num_expanded_combos;
+    for (const auto& limit : combination.limits) {
+        for (uint32_t i = 0; i < limit.maxIfaces; i++) {
+            span /= limit.types.size();
+            for (uint32_t k = 0; k < num_expanded_combos; ++k) {
+                const auto iface_type =
+                    limit.types[(k / span) % limit.types.size()];
+                expanded_combos[k][iface_type]++;
+            }
+        }
+    }
+    return expanded_combos;
+}
+
+bool WifiChip::canExpandedIfaceCombinationSupportIfaceOfType(
+    const std::map<IfaceType, size_t>& combo, IfaceType requested_type) {
+    const auto current_combo = getCurrentIfaceCombination();
+
+    // Check if we have space for 1 more iface of |type| in this combo
+    for (const auto type :
+         {IfaceType::AP, IfaceType::NAN, IfaceType::P2P, IfaceType::STA}) {
+        size_t num_ifaces_needed = current_combo.at(type);
+        if (type == requested_type) {
+            num_ifaces_needed++;
+        }
+        size_t num_ifaces_allowed = combo.at(type);
+        if (num_ifaces_needed > num_ifaces_allowed) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// This method does the following:
+// a) Enumerate all possible iface combos by expanding the current
+//    ChipIfaceCombination.
+// b) Check if the requested iface type can be added to the current mode.
+bool WifiChip::canCurrentModeSupportIfaceOfType(IfaceType type) {
+    if (!isValidModeId(current_mode_id_)) {
+        LOG(ERROR) << "Chip not configured in a mode yet";
+        return false;
+    }
+    const auto combinations = getCurrentModeIfaceCombinations();
+    for (const auto& combination : combinations) {
+        const auto expanded_combos = expandIfaceCombinations(combination);
+        for (const auto& expanded_combo : expanded_combos) {
+            if (canExpandedIfaceCombinationSupportIfaceOfType(expanded_combo,
+                                                              type)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool WifiChip::isValidModeId(ChipModeId mode_id) {
+    for (const auto& mode : modes_) {
+        if (mode.id == mode_id) {
+            return true;
+        }
+    }
+    return false;
 }
 
 }  // namespace implementation

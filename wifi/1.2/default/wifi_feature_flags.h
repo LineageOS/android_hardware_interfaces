@@ -30,6 +30,7 @@ class WifiFeatureFlags {
     virtual ~WifiFeatureFlags() = default;
 
     virtual bool isAwareSupported();
+    virtual bool isDualInterfaceSupported();
 };
 
 }  // namespace feature_flags

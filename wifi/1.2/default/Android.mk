@@ -24,6 +24,9 @@ LOCAL_CPPFLAGS := -Wall -Werror -Wextra
 ifdef WIFI_HIDL_FEATURE_AWARE
 LOCAL_CPPFLAGS += -DWIFI_HIDL_FEATURE_AWARE
 endif
+ifdef WIFI_HIDL_FEATURE_DUAL_INTERFACE
+LOCAL_CPPFLAGS += -DWIFI_HIDL_FEATURE_DUAL_INTERFACE
+endif
 LOCAL_SRC_FILES := \
     hidl_struct_util.cpp \
     hidl_sync_util.cpp \

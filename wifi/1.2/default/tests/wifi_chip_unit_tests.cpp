@@ -46,24 +46,31 @@ class WifiChipTest : public Test {
     void setupV1IfaceCombination() {
         EXPECT_CALL(*feature_flags_, isAwareSupported())
             .WillRepeatedly(testing::Return(false));
-        chip_->getAvailableModes(
-            [](const WifiStatus& status,
-               const std::vector<WifiChip::ChipMode>& modes) {
-                ASSERT_EQ(WifiStatusCode::SUCCESS, status.code);
-                // V1 has 2 modes of operation.
-                ASSERT_EQ(2u, modes.size());
-            });
+        EXPECT_CALL(*feature_flags_, isDualInterfaceSupported())
+            .WillRepeatedly(testing::Return(false));
     }
 
-    void setupV2IfaceCombination() {
+    void setupV1_AwareIfaceCombination() {
         EXPECT_CALL(*feature_flags_, isAwareSupported())
             .WillRepeatedly(testing::Return(true));
+        EXPECT_CALL(*feature_flags_, isDualInterfaceSupported())
+            .WillRepeatedly(testing::Return(false));
+    }
+
+    void setupV2_AwareIfaceCombination() {
+        EXPECT_CALL(*feature_flags_, isAwareSupported())
+            .WillRepeatedly(testing::Return(true));
+        EXPECT_CALL(*feature_flags_, isDualInterfaceSupported())
+            .WillRepeatedly(testing::Return(true));
+    }
+
+    void assertNumberOfModes(uint32_t num_modes) {
         chip_->getAvailableModes(
-            [](const WifiStatus& status,
-               const std::vector<WifiChip::ChipMode>& modes) {
+            [num_modes](const WifiStatus& status,
+                        const std::vector<WifiChip::ChipMode>& modes) {
                 ASSERT_EQ(WifiStatusCode::SUCCESS, status.code);
-                // V2 has 2 modes of operation.
-                ASSERT_EQ(2u, modes.size());
+                // V2_Aware has 1 mode of operation.
+                ASSERT_EQ(num_modes, modes.size());
             });
     }
 
@@ -199,8 +206,10 @@ class WifiChipTest : public Test {
 class WifiChipV1IfaceCombinationTest : public WifiChipTest {
    public:
     void SetUp() override {
-        WifiChipTest::SetUp();
         setupV1IfaceCombination();
+        WifiChipTest::SetUp();
+        // V1 has 2 modes of operation.
+        assertNumberOfModes(2u);
     }
 };
 
@@ -250,57 +259,62 @@ TEST_F(WifiChipV1IfaceCombinationTest, ApMode_CreateNan_ShouldFail) {
     ASSERT_TRUE(createIface(IfaceType::NAN).empty());
 }
 
-////////// V2 Iface Combinations ////////////
+////////// V1 + Aware Iface Combinations ////////////
 // Mode 1 - STA + P2P/NAN
 // Mode 2 - AP
-class WifiChipV2IfaceCombinationTest : public WifiChipTest {
+class WifiChipV1_AwareIfaceCombinationTest : public WifiChipTest {
    public:
     void SetUp() override {
+        setupV1_AwareIfaceCombination();
         WifiChipTest::SetUp();
-        setupV2IfaceCombination();
+        // V1_Aware has 2 modes of operation.
+        assertNumberOfModes(2u);
     }
 };
 
-TEST_F(WifiChipV2IfaceCombinationTest, StaMode_CreateSta_ShouldSucceed) {
+TEST_F(WifiChipV1_AwareIfaceCombinationTest, StaMode_CreateSta_ShouldSucceed) {
     findModeAndConfigureForIfaceType(IfaceType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
 }
 
-TEST_F(WifiChipV2IfaceCombinationTest, StaMode_CreateP2p_ShouldSucceed) {
+TEST_F(WifiChipV1_AwareIfaceCombinationTest, StaMode_CreateP2p_ShouldSucceed) {
     findModeAndConfigureForIfaceType(IfaceType::STA);
     ASSERT_FALSE(createIface(IfaceType::P2P).empty());
 }
 
-TEST_F(WifiChipV2IfaceCombinationTest, StaMode_CreateNan_ShouldSucceed) {
+TEST_F(WifiChipV1_AwareIfaceCombinationTest, StaMode_CreateNan_ShouldSucceed) {
     findModeAndConfigureForIfaceType(IfaceType::STA);
     ASSERT_FALSE(createIface(IfaceType::NAN).empty());
 }
 
-TEST_F(WifiChipV2IfaceCombinationTest, StaMode_CreateAp_ShouldFail) {
+TEST_F(WifiChipV1_AwareIfaceCombinationTest, StaMode_CreateAp_ShouldFail) {
     findModeAndConfigureForIfaceType(IfaceType::STA);
     ASSERT_TRUE(createIface(IfaceType::AP).empty());
 }
 
-TEST_F(WifiChipV2IfaceCombinationTest, StaMode_CreateStaP2p_ShouldSucceed) {
+TEST_F(WifiChipV1_AwareIfaceCombinationTest,
+       StaMode_CreateStaP2p_ShouldSucceed) {
     findModeAndConfigureForIfaceType(IfaceType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     ASSERT_FALSE(createIface(IfaceType::P2P).empty());
 }
 
-TEST_F(WifiChipV2IfaceCombinationTest, StaMode_CreateStaNan_ShouldSucceed) {
+TEST_F(WifiChipV1_AwareIfaceCombinationTest,
+       StaMode_CreateStaNan_ShouldSucceed) {
     findModeAndConfigureForIfaceType(IfaceType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     ASSERT_FALSE(createIface(IfaceType::NAN).empty());
 }
 
-TEST_F(WifiChipV2IfaceCombinationTest, StaMode_CreateStaP2PNan_ShouldFail) {
+TEST_F(WifiChipV1_AwareIfaceCombinationTest,
+       StaMode_CreateStaP2PNan_ShouldFail) {
     findModeAndConfigureForIfaceType(IfaceType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     ASSERT_FALSE(createIface(IfaceType::P2P).empty());
     ASSERT_TRUE(createIface(IfaceType::NAN).empty());
 }
 
-TEST_F(WifiChipV2IfaceCombinationTest,
+TEST_F(WifiChipV1_AwareIfaceCombinationTest,
        StaMode_CreateStaNan_AfterP2pRemove_ShouldSucceed) {
     findModeAndConfigureForIfaceType(IfaceType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
@@ -313,7 +327,7 @@ TEST_F(WifiChipV2IfaceCombinationTest,
     ASSERT_FALSE(createIface(IfaceType::NAN).empty());
 }
 
-TEST_F(WifiChipV2IfaceCombinationTest,
+TEST_F(WifiChipV1_AwareIfaceCombinationTest,
        StaMode_CreateStaP2p_AfterNanRemove_ShouldSucceed) {
     findModeAndConfigureForIfaceType(IfaceType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
@@ -326,26 +340,186 @@ TEST_F(WifiChipV2IfaceCombinationTest,
     ASSERT_FALSE(createIface(IfaceType::P2P).empty());
 }
 
-TEST_F(WifiChipV2IfaceCombinationTest, ApMode_CreateAp_ShouldSucceed) {
+TEST_F(WifiChipV1_AwareIfaceCombinationTest, ApMode_CreateAp_ShouldSucceed) {
     findModeAndConfigureForIfaceType(IfaceType::AP);
     ASSERT_FALSE(createIface(IfaceType::AP).empty());
 }
 
-TEST_F(WifiChipV2IfaceCombinationTest, ApMode_CreateSta_ShouldFail) {
+TEST_F(WifiChipV1_AwareIfaceCombinationTest, ApMode_CreateSta_ShouldFail) {
     findModeAndConfigureForIfaceType(IfaceType::AP);
     ASSERT_TRUE(createIface(IfaceType::STA).empty());
 }
 
-TEST_F(WifiChipV2IfaceCombinationTest, ApMode_CreateP2p_ShouldFail) {
+TEST_F(WifiChipV1_AwareIfaceCombinationTest, ApMode_CreateP2p_ShouldFail) {
     findModeAndConfigureForIfaceType(IfaceType::AP);
     ASSERT_TRUE(createIface(IfaceType::STA).empty());
 }
 
-TEST_F(WifiChipV2IfaceCombinationTest, ApMode_CreateNan_ShouldFail) {
+TEST_F(WifiChipV1_AwareIfaceCombinationTest, ApMode_CreateNan_ShouldFail) {
     findModeAndConfigureForIfaceType(IfaceType::AP);
     ASSERT_TRUE(createIface(IfaceType::NAN).empty());
 }
 
+////////// V2 + Aware Iface Combinations ////////////
+// Mode 1 - STA + STA/AP
+//        - STA + P2P/NAN
+class WifiChipV2_AwareIfaceCombinationTest : public WifiChipTest {
+   public:
+    void SetUp() override {
+        setupV2_AwareIfaceCombination();
+        WifiChipTest::SetUp();
+        // V2_Aware has 1 mode of operation.
+        assertNumberOfModes(1u);
+    }
+};
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateSta_ShouldSucceed) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateP2p_ShouldSucceed) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_FALSE(createIface(IfaceType::P2P).empty());
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateNan_ShouldSucceed) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_FALSE(createIface(IfaceType::NAN).empty());
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateAp_ShouldSucceed) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_FALSE(createIface(IfaceType::AP).empty());
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateStaSta_ShouldSucceed) {
+    findModeAndConfigureForIfaceType(IfaceType::AP);
+    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateStaAp_ShouldSucceed) {
+    findModeAndConfigureForIfaceType(IfaceType::AP);
+    ASSERT_FALSE(createIface(IfaceType::AP).empty());
+    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateStaStaAp_ShouldFail) {
+    findModeAndConfigureForIfaceType(IfaceType::AP);
+    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+    ASSERT_TRUE(createIface(IfaceType::AP).empty());
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest,
+       CreateStaAp_AfterStaRemove_ShouldSucceed) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+    const auto sta_iface_name = createIface(IfaceType::STA);
+    ASSERT_FALSE(sta_iface_name.empty());
+    ASSERT_TRUE(createIface(IfaceType::AP).empty());
+
+    // After removing STA iface, AP iface creation should succeed.
+    removeIface(IfaceType::STA, sta_iface_name);
+    ASSERT_FALSE(createIface(IfaceType::AP).empty());
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest,
+       CreateStaSta_AfterApRemove_ShouldSucceed) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+    const auto ap_iface_name = createIface(IfaceType::AP);
+    ASSERT_FALSE(ap_iface_name.empty());
+    ASSERT_TRUE(createIface(IfaceType::STA).empty());
+
+    // After removing AP  iface, STA iface creation should succeed.
+    removeIface(IfaceType::AP, ap_iface_name);
+    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateStaP2p_ShouldSucceed) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+    ASSERT_FALSE(createIface(IfaceType::P2P).empty());
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateStaNan_ShouldSucceed) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+    ASSERT_FALSE(createIface(IfaceType::NAN).empty());
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateStaP2PNan_ShouldFail) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+    ASSERT_FALSE(createIface(IfaceType::P2P).empty());
+    ASSERT_TRUE(createIface(IfaceType::NAN).empty());
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest,
+       CreateStaNan_AfterP2pRemove_ShouldSucceed) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+    const auto p2p_iface_name = createIface(IfaceType::P2P);
+    ASSERT_FALSE(p2p_iface_name.empty());
+    ASSERT_TRUE(createIface(IfaceType::NAN).empty());
+
+    // After removing P2P iface, NAN iface creation should succeed.
+    removeIface(IfaceType::P2P, p2p_iface_name);
+    ASSERT_FALSE(createIface(IfaceType::NAN).empty());
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest,
+       CreateStaP2p_AfterNanRemove_ShouldSucceed) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+    const auto nan_iface_name = createIface(IfaceType::NAN);
+    ASSERT_FALSE(nan_iface_name.empty());
+    ASSERT_TRUE(createIface(IfaceType::P2P).empty());
+
+    // After removing NAN iface, P2P iface creation should succeed.
+    removeIface(IfaceType::NAN, nan_iface_name);
+    ASSERT_FALSE(createIface(IfaceType::P2P).empty());
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateApNan_ShouldFail) {
+    findModeAndConfigureForIfaceType(IfaceType::AP);
+    ASSERT_FALSE(createIface(IfaceType::AP).empty());
+    ASSERT_TRUE(createIface(IfaceType::NAN).empty());
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateApP2p_ShouldFail) {
+    findModeAndConfigureForIfaceType(IfaceType::AP);
+    ASSERT_FALSE(createIface(IfaceType::AP).empty());
+    ASSERT_TRUE(createIface(IfaceType::P2P).empty());
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest,
+       StaMode_CreateStaNan_AfterP2pRemove_ShouldSucceed) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+    const auto p2p_iface_name = createIface(IfaceType::P2P);
+    ASSERT_FALSE(p2p_iface_name.empty());
+    ASSERT_TRUE(createIface(IfaceType::NAN).empty());
+
+    // After removing P2P iface, NAN iface creation should succeed.
+    removeIface(IfaceType::P2P, p2p_iface_name);
+    ASSERT_FALSE(createIface(IfaceType::NAN).empty());
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest,
+       StaMode_CreateStaP2p_AfterNanRemove_ShouldSucceed) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+    const auto nan_iface_name = createIface(IfaceType::NAN);
+    ASSERT_FALSE(nan_iface_name.empty());
+    ASSERT_TRUE(createIface(IfaceType::P2P).empty());
+
+    // After removing NAN iface, P2P iface creation should succeed.
+    removeIface(IfaceType::NAN, nan_iface_name);
+    ASSERT_FALSE(createIface(IfaceType::P2P).empty());
+}
 }  // namespace implementation
 }  // namespace V1_2
 }  // namespace wifi

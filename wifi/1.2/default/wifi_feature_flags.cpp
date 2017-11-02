@@ -22,6 +22,11 @@ static const bool wifiHidlFeatureAware = true;
 #else
 static const bool wifiHidlFeatureAware = false;
 #endif  // WIFI_HIDL_FEATURE_AWARE
+#ifdef WIFI_HIDL_FEATURE_DUAL_INTERFACE
+static const bool wifiHidlFeatureDualInterface = true;
+#else
+static const bool wifiHidlFeatureDualInterface = false;
+#endif  // WIFI_HIDL_FEATURE_DUAL_INTERFACE
 }  // namespace
 
 namespace android {
@@ -33,6 +38,9 @@ namespace feature_flags {
 
 WifiFeatureFlags::WifiFeatureFlags() {}
 bool WifiFeatureFlags::isAwareSupported() { return wifiHidlFeatureAware; }
+bool WifiFeatureFlags::isDualInterfaceSupported() {
+    return wifiHidlFeatureDualInterface;
+}
 
 }  // namespace feature_flags
 }  // namespace implementation
