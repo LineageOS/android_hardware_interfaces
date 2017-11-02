@@ -16,8 +16,22 @@
 
 package android.hardware.radio@1.2;
 
+import @1.0::CdmaSignalStrength;
+import @1.0::CellIdentityCdma;
+import @1.0::CellIdentityGsm;
+import @1.0::CellIdentityLte;
+import @1.0::CellIdentityWcdma;
+import @1.0::CellInfoTdscdma;
+import @1.0::CellInfoType;
+import @1.0::EvdoSignalStrength;
+import @1.0::GsmSignalStrength;
+import @1.0::LteSignalStrength;
 import @1.0::RadioConst;
+import @1.0::TimeStampType;
+import @1.0::WcdmaSignalStrength;
 import @1.1::RadioAccessSpecifier;
+import @1.0::RadioError;
+import @1.1::ScanStatus;
 import @1.1::ScanType;
 
 enum RadioConst : @1.0::RadioConst {
@@ -96,4 +110,114 @@ struct NetworkScanRequest {
      * reported.
      */
     vec<string> mccMncs;
+};
+
+struct NetworkScanResult {
+    /**
+     * The status of the scan.
+     */
+    ScanStatus status;
+
+    /**
+     * The error code of the incremental result.
+     */
+    RadioError error;
+
+    /**
+     * List of network information as CellInfo.
+     */
+    vec<CellInfo> networkInfos;
+};
+
+struct CellIdentityOperatorNames {
+    /**
+     * Long alpha Operator Name String or Enhanced Operator Name String.
+     */
+    string alphaLong;
+
+    /**
+     * Short alpha Operator Name String or Enhanced Operator Name String
+     */
+    string alphaShort;
+};
+
+struct CellIdentityCdma {
+    @1.0::CellIdentityCdma base;
+    CellIdentityOperatorNames operatorNames;
+};
+
+struct CellIdentityGsm {
+    @1.0::CellIdentityGsm base;
+    CellIdentityOperatorNames operatorNames;
+};
+
+struct CellIdentityLte {
+    @1.0::CellIdentityLte base;
+    CellIdentityOperatorNames operatorNames;
+};
+
+struct CellIdentityWcdma {
+    @1.0::CellIdentityWcdma base;
+    CellIdentityOperatorNames operatorNames;
+};
+
+struct CellInfoGsm {
+    CellIdentityGsm cellIdentityGsm;
+    GsmSignalStrength signalStrengthGsm;
+};
+
+struct CellInfoWcdma {
+    CellIdentityWcdma cellIdentityWcdma;
+    WcdmaSignalStrength signalStrengthWcdma;
+};
+
+struct CellInfoCdma {
+    CellIdentityCdma cellIdentityCdma;
+    CdmaSignalStrength signalStrengthCdma;
+    EvdoSignalStrength signalStrengthEvdo;
+};
+
+struct CellInfoLte {
+    CellIdentityLte cellIdentityLte;
+    LteSignalStrength signalStrengthLte;
+};
+
+struct CellInfo {
+    /**
+     * Cell type for selecting from union CellInfo.
+     */
+    CellInfoType cellInfoType;
+    /*
+     * True if this cell is registered false if not registered.
+     */
+    bool registered;
+    /*
+     * Type of time stamp represented by timeStamp.
+     */
+    TimeStampType timeStampType;
+    /*
+     * Time in nanos as returned by ril_nano_time.
+     */
+    uint64_t timeStamp;
+    /*
+     * Only one of the below vectors must be of size 1 based on the CellInfoType and others must be
+     * of size 0.
+     */
+    vec<CellInfoGsm> gsm;
+    /*
+     * Valid only if type = cdma and size = 1 else must be empty.
+     */
+    vec<CellInfoCdma> cdma;
+    /*
+     * Valid only if type = lte and size = 1 else must be empty.
+     */
+    vec<CellInfoLte> lte;
+    /*
+     * Valid only if type = wcdma and size = 1 else must be empty.
+     */
+    vec<CellInfoWcdma> wcdma;
+    /*
+     * Valid only if type = tdscdma and size = 1 else must be empty.
+     */
+    vec<CellInfoTdscdma> tdscdma;
 };
