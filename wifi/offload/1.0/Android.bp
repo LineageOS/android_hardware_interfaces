@@ -71,3 +71,84 @@ cc_library {
         "libutils",
     ],
 }
+
+// This package is not java compatible. Not creating java target.
+
+// This package does not export any types. Not creating java constants export.
+
+
+genrule {
+    name: "android.hardware.wifi.offload@1.0-adapter-helper_genc++",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-sources -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.wifi.offload@1.0",
+    srcs: [
+        ":android.hardware.wifi.offload@1.0_hal",
+    ],
+    out: [
+        "android/hardware/wifi/offload/1.0/AOffload.cpp",
+        "android/hardware/wifi/offload/1.0/AOffloadCallback.cpp",
+    ],
+}
+
+genrule {
+    name: "android.hardware.wifi.offload@1.0-adapter-helper_genc++_headers",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-headers -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.wifi.offload@1.0",
+    srcs: [
+        ":android.hardware.wifi.offload@1.0_hal",
+    ],
+    out: [
+        "android/hardware/wifi/offload/1.0/AOffload.h",
+        "android/hardware/wifi/offload/1.0/AOffloadCallback.h",
+    ],
+}
+
+cc_library {
+    name: "android.hardware.wifi.offload@1.0-adapter-helper",
+    defaults: ["hidl-module-defaults"],
+    generated_sources: ["android.hardware.wifi.offload@1.0-adapter-helper_genc++"],
+    generated_headers: ["android.hardware.wifi.offload@1.0-adapter-helper_genc++_headers"],
+    export_generated_headers: ["android.hardware.wifi.offload@1.0-adapter-helper_genc++_headers"],
+    vendor_available: true,
+    shared_libs: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "liblog",
+        "libutils",
+        "libcutils",
+        "libhidladapter",
+        "android.hardware.wifi.offload@1.0",
+        "android.hidl.base@1.0-adapter-helper",
+    ],
+    export_shared_lib_headers: [
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "libutils",
+        "libhidladapter",
+        "android.hardware.wifi.offload@1.0",
+        "android.hidl.base@1.0-adapter-helper",
+    ],
+}
+
+genrule {
+    name: "android.hardware.wifi.offload@1.0-adapter_genc++",
+    tools: ["hidl-gen"],
+    cmd: "$(location hidl-gen) -o $(genDir) -Lc++-adapter-main -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.wifi.offload@1.0",
+    out: ["main.cpp"]
+}
+
+cc_test {
+    name: "android.hardware.wifi.offload@1.0-adapter",
+    defaults: ["hidl-module-defaults"],
+    shared_libs: [
+        "libhidladapter",
+        "libhidlbase",
+        "libhidltransport",
+        "libutils",
+        "android.hardware.wifi.offload@1.0",
+        "android.hardware.wifi.offload@1.0-adapter-helper",
+    ],
+    generated_sources: ["android.hardware.wifi.offload@1.0-adapter_genc++"],
+}
