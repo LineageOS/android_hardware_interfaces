@@ -88,6 +88,7 @@ include $(BUILD_EXECUTABLE)
 ###
 include $(CLEAR_VARS)
 LOCAL_MODULE := android.hardware.wifi@1.0-service-tests
+LOCAL_PROPRIETARY_MODULE := true
 LOCAL_SRC_FILES := \
     tests/main.cpp \
     tests/mock_wifi_feature_flags.cpp \
