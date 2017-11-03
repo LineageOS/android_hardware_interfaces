@@ -9,6 +9,7 @@ hidl_interface {
     srcs: [
         "IGnss.hal",
         "IGnssCallback.hal",
+        "IGnssMeasurement.hal",
     ],
     interfaces: [
         "android.hardware.gnss@1.0",
