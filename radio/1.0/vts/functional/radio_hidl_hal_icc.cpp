@@ -310,14 +310,10 @@ TEST_F(RadioHidlTest, supplyNetworkDepersonalization) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE ||
-                    radioRsp->rspInfo.error == RadioError::SYSTEM_ERR ||
-                    radioRsp->rspInfo.error == RadioError::NO_MEMORY ||
-                    radioRsp->rspInfo.error == RadioError::MODEM_ERR ||
-                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
-                    radioRsp->rspInfo.error == RadioError::INVALID_SIM_STATE ||
-                    radioRsp->rspInfo.error == RadioError::PASSWORD_INCORRECT ||
-                    radioRsp->rspInfo.error == RadioError::INTERNAL_ERR ||
-                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
+        ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp->rspInfo.error,
+            {RadioError::NONE, RadioError::INVALID_ARGUMENTS, RadioError::INTERNAL_ERR,
+             RadioError::INVALID_SIM_STATE, RadioError::MODEM_ERR, RadioError::NO_MEMORY,
+             RadioError::PASSWORD_INCORRECT, RadioError::SIM_ABSENT, RadioError::SYSTEM_ERR}));
     }
 }
