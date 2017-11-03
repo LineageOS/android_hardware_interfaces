@@ -81,13 +81,11 @@ std::string getWlan0IfaceName() {
     return buffer.data();
 }
 
-/** Not used yet.
 std::string getWlan1IfaceName() {
-  std::array<char, PROPERTY_VALUE_MAX> buffer;
-  property_get("wifi.concurrent.interface", buffer.data(), "wlan1");
-  return buffer.data();
+    std::array<char, PROPERTY_VALUE_MAX> buffer;
+    property_get("wifi.concurrent.interface", buffer.data(), "wlan1");
+    return buffer.data();
 }
-*/
 
 std::string getP2pIfaceName() {
     std::array<char, PROPERTY_VALUE_MAX> buffer;
@@ -506,7 +504,7 @@ std::pair<WifiStatus, sp<IWifiApIface>> WifiChip::createApIfaceInternal() {
     if (!canCurrentModeSupportIfaceOfType(IfaceType::AP)) {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
     }
-    std::string ifname = getWlan0IfaceName();
+    std::string ifname = allocateApOrStaIfaceName();
     sp<WifiApIface> iface = new WifiApIface(ifname, legacy_hal_);
     ap_ifaces_.push_back(iface);
     for (const auto& callback : event_cb_handler_.getCallbacks()) {
@@ -552,6 +550,7 @@ std::pair<WifiStatus, sp<IWifiNanIface>> WifiChip::createNanIfaceInternal() {
     if (!canCurrentModeSupportIfaceOfType(IfaceType::NAN)) {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
     }
+    // These are still assumed to be based on wlan0.
     std::string ifname = getWlan0IfaceName();
     sp<WifiNanIface> iface = new WifiNanIface(ifname, legacy_hal_);
     nan_ifaces_.push_back(iface);
@@ -644,7 +643,7 @@ std::pair<WifiStatus, sp<IWifiStaIface>> WifiChip::createStaIfaceInternal() {
     if (!canCurrentModeSupportIfaceOfType(IfaceType::STA)) {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
     }
-    std::string ifname = getWlan0IfaceName();
+    std::string ifname = allocateApOrStaIfaceName();
     sp<WifiStaIface> iface = new WifiStaIface(ifname, legacy_hal_);
     sta_ifaces_.push_back(iface);
     for (const auto& callback : event_cb_handler_.getCallbacks()) {
@@ -1059,6 +1058,25 @@ bool WifiChip::isValidModeId(ChipModeId mode_id) {
         }
     }
     return false;
+}
+
+// Return "wlan0", if "wlan0" is not already in use, else return "wlan1".
+// This is based on the assumption that we'll have a max of 2 concurrent
+// AP/STA ifaces.
+std::string WifiChip::allocateApOrStaIfaceName() {
+    auto ap_iface = findUsingName(ap_ifaces_, getWlan0IfaceName());
+    auto sta_iface = findUsingName(sta_ifaces_, getWlan0IfaceName());
+    if (!ap_iface.get() && !sta_iface.get()) {
+        return getWlan0IfaceName();
+    }
+    ap_iface = findUsingName(ap_ifaces_, getWlan1IfaceName());
+    sta_iface = findUsingName(sta_ifaces_, getWlan1IfaceName());
+    if (!ap_iface.get() && !sta_iface.get()) {
+        return getWlan1IfaceName();
+    }
+    // This should never happen. We screwed up somewhere if it did.
+    CHECK(0) << "wlan0 and wlan1 in use already!";
+    return {};
 }
 
 }  // namespace implementation

@@ -520,6 +520,26 @@ TEST_F(WifiChipV2_AwareIfaceCombinationTest,
     removeIface(IfaceType::NAN, nan_iface_name);
     ASSERT_FALSE(createIface(IfaceType::P2P).empty());
 }
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest,
+       CreateStaSta_EnsureDifferentIfaceNames) {
+    findModeAndConfigureForIfaceType(IfaceType::AP);
+    const auto sta1_iface_name = createIface(IfaceType::STA);
+    const auto sta2_iface_name = createIface(IfaceType::STA);
+    ASSERT_FALSE(sta1_iface_name.empty());
+    ASSERT_FALSE(sta2_iface_name.empty());
+    ASSERT_NE(sta1_iface_name, sta2_iface_name);
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest,
+       CreateStaAp_EnsureDifferentIfaceNames) {
+    findModeAndConfigureForIfaceType(IfaceType::AP);
+    const auto sta_iface_name = createIface(IfaceType::STA);
+    const auto ap_iface_name = createIface(IfaceType::AP);
+    ASSERT_FALSE(sta_iface_name.empty());
+    ASSERT_FALSE(ap_iface_name.empty());
+    ASSERT_NE(sta_iface_name, ap_iface_name);
+}
 }  // namespace implementation
 }  // namespace V1_2
 }  // namespace wifi

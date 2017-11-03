@@ -203,6 +203,7 @@ class WifiChip : public V1_1::IWifiChip {
         const std::map<IfaceType, size_t>& combo, IfaceType type);
     bool canCurrentModeSupportIfaceOfType(IfaceType type);
     bool isValidModeId(ChipModeId mode_id);
+    std::string allocateApOrStaIfaceName();
 
     ChipId chip_id_;
     std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
