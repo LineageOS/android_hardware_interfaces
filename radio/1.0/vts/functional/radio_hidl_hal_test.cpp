@@ -51,13 +51,13 @@ void RadioHidlTest::notify() {
     cv.notify_one();
 }
 
-std::cv_status RadioHidlTest::wait() {
+std::cv_status RadioHidlTest::wait(int sec) {
     std::unique_lock<std::mutex> lock(mtx);
 
     std::cv_status status = std::cv_status::no_timeout;
     auto now = std::chrono::system_clock::now();
     while (count == 0) {
-        status = cv.wait_until(lock, now + std::chrono::seconds(TIMEOUT_PERIOD));
+        status = cv.wait_until(lock, now + std::chrono::seconds(sec));
         if (status == std::cv_status::timeout) {
             return status;
         }
