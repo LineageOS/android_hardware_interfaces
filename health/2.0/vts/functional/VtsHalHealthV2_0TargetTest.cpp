@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "mHealthhidl_hal_test"
+#define LOG_TAG "health_hidl_hal_test"
 
 #include <mutex>
 
@@ -35,6 +35,7 @@ namespace health {
 namespace V2_0 {
 
 using V1_0::BatteryStatus;
+using V1_0::HealthInfo;
 
 // Test environment for graphics.composer
 class HealthHidlEnvironment : public VtsHalHidlTargetTestEnvBase {
