@@ -112,3 +112,23 @@ cc_test_host {
         "liblog",
     ],
 }
+
+cc_binary {
+    name: "android.hardware.bluetooth@1.0-service",
+    relative_install_path: "hw",
+    vendor: true,
+    init_rc: ["android.hardware.bluetooth@1.0-service.rc"],
+    srcs: ["service.cpp"],
+
+    shared_libs: [
+        "liblog",
+        "libcutils",
+        "libdl",
+        "libbase",
+        "libutils",
+        "libhardware",
+        "libhidlbase",
+        "libhidltransport",
+        "android.hardware.bluetooth@1.0",
+    ],
+}
