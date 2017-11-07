@@ -18,6 +18,12 @@
 
 #include <VtsHalHidlTargetTestBase.h>
 
+#include <android/hardware/gnss/1.1/IGnssConfiguration.h>
+
+using android::hardware::hidl_vec;
+
+using android::hardware::gnss::V1_0::GnssConstellationType;
+using android::hardware::gnss::V1_1::IGnssConfiguration;
 using android::hardware::gnss::V1_1::IGnssMeasurement;
 
 /*
@@ -70,43 +76,291 @@ TEST_F(GnssHalTest, TestGnssMeasurementCallback) {
 }
 
 /*
- * GetLocation:
+ * GetLocationLowPower:
  * Turns on location, waits for at least 5 locations allowing max of LOCATION_TIMEOUT_SUBSEQUENT_SEC
  * between one location and the next. Also ensure that MIN_INTERVAL_MSEC is respected by waiting
  * NO_LOCATION_PERIOD_SEC and verfiy that no location is received. Also perform validity checks on
  * each received location.
  */
 TEST_F(GnssHalTest, GetLocationLowPower) {
-#define MIN_INTERVAL_MSEC 5000
-#define PREFERRED_ACCURACY 0   // Ideally perfect (matches GnssLocationProvider)
-#define PREFERRED_TIME_MSEC 0  // Ideally immediate
+    const int kMinIntervalMsec = 5000;
+    const int kLocationTimeoutSubsequentSec = (kMinIntervalMsec / 1000) + 1;
+    const int kNoLocationPeriodSec = 2;
+    const int kLocationsToCheck = 5;
+    const bool kLowPowerMode = true;
 
-#define LOCATION_TIMEOUT_SUBSEQUENT_SEC (MIN_INTERVAL_MSEC + 1000) / 1000
-#define NO_LOCATION_PERIOD_SEC 2
-#define LOCATIONS_TO_CHECK 5
-#define LOW_POWER_MODE true
+    SetPositionMode(kMinIntervalMsec, kLowPowerMode);
 
-    bool checkMoreAccuracies = (info_called_count_ > 0 && last_info_.yearOfHw >= 2017);
+    EXPECT_TRUE(StartAndGetSingleLocation());
 
-    auto result = gnss_hal_->setPositionMode_1_1(
-        IGnss::GnssPositionMode::MS_BASED, IGnss::GnssPositionRecurrence::RECURRENCE_PERIODIC,
-        MIN_INTERVAL_MSEC, PREFERRED_ACCURACY, PREFERRED_TIME_MSEC, LOW_POWER_MODE);
-
-    ASSERT_TRUE(result.isOk());
-    EXPECT_TRUE(result);
-
-    EXPECT_TRUE(StartAndGetSingleLocation(checkMoreAccuracies));
-
-    for (int i = 1; i < LOCATIONS_TO_CHECK; i++) {
-        // Verify that MIN_INTERVAL_MSEC is respected by waiting NO_LOCATION_PERIOD_SEC and
+    for (int i = 1; i < kLocationsToCheck; i++) {
+        // Verify that kMinIntervalMsec is respected by waiting kNoLocationPeriodSec and
         // ensure that no location is received yet
-        wait(NO_LOCATION_PERIOD_SEC);
+        wait(kNoLocationPeriodSec);
         EXPECT_EQ(location_called_count_, i);
         EXPECT_EQ(std::cv_status::no_timeout,
-                  wait(LOCATION_TIMEOUT_SUBSEQUENT_SEC - NO_LOCATION_PERIOD_SEC));
+                  wait(kLocationTimeoutSubsequentSec - kNoLocationPeriodSec));
         EXPECT_EQ(location_called_count_, i + 1);
-        CheckLocation(last_location_, checkMoreAccuracies, true);
+        CheckLocation(last_location_, true);
     }
 
     StopAndClearLocations();
+}
+
+/*
+ * FindStrongFrequentSource:
+ *
+ * Search through a GnssSvStatus list for the strongest satellite observed enough times
+ *
+ * returns the strongest source,
+ *         or a source with constellation == UNKNOWN if none are found sufficient times
+ */
+
+IGnssConfiguration::BlacklistedSource FindStrongFrequentSource(
+    const list<IGnssCallback::GnssSvStatus> list_gnss_sv_status, const int min_observations) {
+    struct ComparableBlacklistedSource {
+        IGnssConfiguration::BlacklistedSource id;
+
+        bool operator<(const ComparableBlacklistedSource& compare) const {
+            return ((id.svid < compare.id.svid) || ((id.svid == compare.id.svid) &&
+                                                    (id.constellation < compare.id.constellation)));
+        }
+    };
+
+    struct SignalCounts {
+        int observations;
+        float max_cn0_dbhz;
+    };
+
+    std::map<ComparableBlacklistedSource, SignalCounts> mapSignals;
+
+    for (const auto& gnss_sv_status : list_gnss_sv_status) {
+        for (uint32_t iSv = 0; iSv < gnss_sv_status.numSvs; iSv++) {
+            const auto& gnss_sv = gnss_sv_status.gnssSvList[iSv];
+            if (gnss_sv.svFlag & IGnssCallback::GnssSvFlags::USED_IN_FIX) {
+                ComparableBlacklistedSource source;
+                source.id.svid = gnss_sv.svid;
+                source.id.constellation = gnss_sv.constellation;
+
+                const auto& itSignal = mapSignals.find(source);
+                if (itSignal == mapSignals.end()) {
+                    SignalCounts counts;
+                    counts.observations = 1;
+                    counts.max_cn0_dbhz = gnss_sv.cN0Dbhz;
+                    mapSignals.insert(
+                        std::pair<ComparableBlacklistedSource, SignalCounts>(source, counts));
+                } else {
+                    itSignal->second.observations++;
+                    if (itSignal->second.max_cn0_dbhz < gnss_sv.cN0Dbhz) {
+                        itSignal->second.max_cn0_dbhz = gnss_sv.cN0Dbhz;
+                    }
+                }
+            }
+        }
+    }
+
+    float max_cn0_dbhz_with_sufficient_count = 0.;
+    int total_observation_count = 0;
+    int blacklisted_source_count_observation = 0;
+
+    ComparableBlacklistedSource source_to_blacklist;  // initializes to zero = UNKNOWN constellation
+    for (auto const& pairSignal : mapSignals) {
+        total_observation_count += pairSignal.second.observations;
+        if ((pairSignal.second.observations >= min_observations) &&
+            (pairSignal.second.max_cn0_dbhz > max_cn0_dbhz_with_sufficient_count)) {
+            source_to_blacklist = pairSignal.first;
+            blacklisted_source_count_observation = pairSignal.second.observations;
+            max_cn0_dbhz_with_sufficient_count = pairSignal.second.max_cn0_dbhz;
+        }
+    }
+    ALOGD(
+        "Among %d observations, chose svid %d, constellation %d, "
+        "with %d observations at %.1f max CNo",
+        total_observation_count, source_to_blacklist.id.svid,
+        (int)source_to_blacklist.id.constellation, blacklisted_source_count_observation,
+        max_cn0_dbhz_with_sufficient_count);
+
+    return source_to_blacklist.id;
+}
+
+/*
+ * BlacklistIndividualSatellites:
+ *
+ * 1) Turns on location, waits for 3 locations, ensuring they are valid, and checks corresponding
+ * GnssStatus for common satellites (strongest and one other.)
+ * 2a & b) Turns off location, and blacklists common satellites.
+ * 3) Restart location, wait for 3 locations, ensuring they are valid, and checks corresponding
+ * GnssStatus does not use those satellites.
+ * 4a & b) Turns off location, and send in empty blacklist.
+ * 5) Restart location, wait for 3 locations, ensuring they are valid, and checks corresponding
+ * GnssStatus does re-use at least the previously strongest satellite
+ */
+TEST_F(GnssHalTest, BlacklistIndividualSatellites) {
+    const int kLocationsToAwait = 3;
+
+    StartAndCheckLocations(kLocationsToAwait);
+
+    EXPECT_GE((int)list_gnss_sv_status_.size(), kLocationsToAwait);
+    ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations", (int)list_gnss_sv_status_.size(),
+          kLocationsToAwait);
+
+    /*
+     * Identify strongest SV seen at least kLocationsToAwait -1 times
+     * Why -1?  To avoid test flakiness in case of (plausible) slight flakiness in strongest signal
+     * observability (one epoch RF null)
+     */
+
+    IGnssConfiguration::BlacklistedSource source_to_blacklist =
+        FindStrongFrequentSource(list_gnss_sv_status_, kLocationsToAwait - 1);
+    EXPECT_NE(source_to_blacklist.constellation, GnssConstellationType::UNKNOWN);
+
+    // Stop locations, blacklist the common SV
+    StopAndClearLocations();
+
+    auto gnss_configuration_hal_return = gnss_hal_->getExtensionGnssConfiguration_1_1();
+    ASSERT_TRUE(gnss_configuration_hal_return.isOk());
+    sp<IGnssConfiguration> gnss_configuration_hal = gnss_configuration_hal_return;
+    ASSERT_NE(gnss_configuration_hal, nullptr);
+
+    hidl_vec<IGnssConfiguration::BlacklistedSource> sources;
+    sources.resize(1);
+    sources[0] = source_to_blacklist;
+
+    auto result = gnss_configuration_hal->setBlacklist(sources);
+    ASSERT_TRUE(result.isOk());
+    EXPECT_TRUE(result);
+
+    // retry and ensure satellite not used
+    list_gnss_sv_status_.clear();
+
+    location_called_count_ = 0;
+    StartAndCheckLocations(kLocationsToAwait);
+
+    EXPECT_GE((int)list_gnss_sv_status_.size(), kLocationsToAwait);
+    ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations", (int)list_gnss_sv_status_.size(),
+          kLocationsToAwait);
+    for (const auto& gnss_sv_status : list_gnss_sv_status_) {
+        for (uint32_t iSv = 0; iSv < gnss_sv_status.numSvs; iSv++) {
+            const auto& gnss_sv = gnss_sv_status.gnssSvList[iSv];
+            EXPECT_FALSE((gnss_sv.svid == source_to_blacklist.svid) &&
+                         (gnss_sv.constellation == source_to_blacklist.constellation) &&
+                         (gnss_sv.svFlag & IGnssCallback::GnssSvFlags::USED_IN_FIX));
+        }
+    }
+
+    // clear blacklist and restart - this time updating the blacklist while location is still on
+    sources.resize(0);
+
+    result = gnss_configuration_hal->setBlacklist(sources);
+    ASSERT_TRUE(result.isOk());
+    EXPECT_TRUE(result);
+
+    location_called_count_ = 0;
+    StopAndClearLocations();
+    list_gnss_sv_status_.clear();
+
+    StartAndCheckLocations(kLocationsToAwait);
+
+    EXPECT_GE((int)list_gnss_sv_status_.size(), kLocationsToAwait);
+    ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations", (int)list_gnss_sv_status_.size(),
+          kLocationsToAwait);
+
+    bool strongest_sv_is_reobserved = false;
+    for (const auto& gnss_sv_status : list_gnss_sv_status_) {
+        for (uint32_t iSv = 0; iSv < gnss_sv_status.numSvs; iSv++) {
+            const auto& gnss_sv = gnss_sv_status.gnssSvList[iSv];
+            if ((gnss_sv.svid == source_to_blacklist.svid) &&
+                (gnss_sv.constellation == source_to_blacklist.constellation) &&
+                (gnss_sv.svFlag & IGnssCallback::GnssSvFlags::USED_IN_FIX)) {
+                strongest_sv_is_reobserved = true;
+                break;
+            }
+        }
+        if (strongest_sv_is_reobserved) break;
+    }
+    EXPECT_TRUE(strongest_sv_is_reobserved);
+}
+
+/*
+ * BlacklistConstellation:
+ *
+ * 1) Turns on location, waits for 3 locations, ensuring they are valid, and checks corresponding
+ * GnssStatus for any non-GPS constellations.
+ * 2a & b) Turns off location, and blacklist first non-GPS constellations.
+ * 3) Restart location, wait for 3 locations, ensuring they are valid, and checks corresponding
+ * GnssStatus does not use any constellation but GPS.
+ * 4a & b) Clean up by turning off location, and send in empty blacklist.
+ */
+TEST_F(GnssHalTest, BlacklistConstellation) {
+    const int kLocationsToAwait = 3;
+
+    StartAndCheckLocations(kLocationsToAwait);
+
+    EXPECT_GE((int)list_gnss_sv_status_.size(), kLocationsToAwait);
+    ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations", (int)list_gnss_sv_status_.size(),
+          kLocationsToAwait);
+
+    // Find first non-GPS constellation to blacklist
+    GnssConstellationType constellation_to_blacklist = GnssConstellationType::UNKNOWN;
+    for (const auto& gnss_sv_status : list_gnss_sv_status_) {
+        for (uint32_t iSv = 0; iSv < gnss_sv_status.numSvs; iSv++) {
+            const auto& gnss_sv = gnss_sv_status.gnssSvList[iSv];
+            if ((gnss_sv.svFlag & IGnssCallback::GnssSvFlags::USED_IN_FIX) &&
+                (gnss_sv.constellation != GnssConstellationType::UNKNOWN) &&
+                (gnss_sv.constellation != GnssConstellationType::GPS)) {
+                // found a non-GPS constellation
+                constellation_to_blacklist = gnss_sv.constellation;
+                break;
+            }
+        }
+        if (constellation_to_blacklist != GnssConstellationType::UNKNOWN) {
+            break;
+        }
+    }
+
+    if (constellation_to_blacklist == GnssConstellationType::UNKNOWN) {
+        ALOGI("No non-GPS constellations found, constellation blacklist test less effective.");
+        // Proceed functionally to blacklist something.
+        constellation_to_blacklist = GnssConstellationType::GLONASS;
+    }
+    IGnssConfiguration::BlacklistedSource source_to_blacklist;
+    source_to_blacklist.constellation = constellation_to_blacklist;
+    source_to_blacklist.svid = 0;  // documented wildcard for all satellites in this constellation
+
+    auto gnss_configuration_hal_return = gnss_hal_->getExtensionGnssConfiguration_1_1();
+    ASSERT_TRUE(gnss_configuration_hal_return.isOk());
+    sp<IGnssConfiguration> gnss_configuration_hal = gnss_configuration_hal_return;
+    ASSERT_NE(gnss_configuration_hal, nullptr);
+
+    hidl_vec<IGnssConfiguration::BlacklistedSource> sources;
+    sources.resize(1);
+    sources[0] = source_to_blacklist;
+
+    auto result = gnss_configuration_hal->setBlacklist(sources);
+    ASSERT_TRUE(result.isOk());
+    EXPECT_TRUE(result);
+
+    // retry and ensure constellation not used
+    list_gnss_sv_status_.clear();
+
+    location_called_count_ = 0;
+    StartAndCheckLocations(kLocationsToAwait);
+
+    EXPECT_GE((int)list_gnss_sv_status_.size(), kLocationsToAwait);
+    ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations", (int)list_gnss_sv_status_.size(),
+          kLocationsToAwait);
+    for (const auto& gnss_sv_status : list_gnss_sv_status_) {
+        for (uint32_t iSv = 0; iSv < gnss_sv_status.numSvs; iSv++) {
+            const auto& gnss_sv = gnss_sv_status.gnssSvList[iSv];
+            EXPECT_FALSE((gnss_sv.constellation == source_to_blacklist.constellation) &&
+                         (gnss_sv.svFlag & IGnssCallback::GnssSvFlags::USED_IN_FIX));
+        }
+    }
+
+    // clean up
+    StopAndClearLocations();
+    sources.resize(0);
+    result = gnss_configuration_hal->setBlacklist(sources);
+    ASSERT_TRUE(result.isOk());
+    EXPECT_TRUE(result);
 }
