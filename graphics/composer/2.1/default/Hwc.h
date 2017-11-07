@@ -34,6 +34,7 @@
 
 namespace android {
     class HWC2On1Adapter;
+    class HWC2OnFbAdapter;
 }
 
 namespace android {
@@ -147,6 +148,9 @@ public:
     Error setLayerZOrder(Display display, Layer layer, uint32_t z) override;
 
 private:
+    uint32_t initWithHwc(const hw_module_t* module);
+    uint32_t initWithFb(const hw_module_t* module);
+
     void initCapabilities();
 
     template<typename T>
@@ -221,6 +225,10 @@ private:
     // If the HWC implementation version is < 2.0, use an adapter to interface
     // between HWC 2.0 <-> HWC 1.X.
     std::unique_ptr<HWC2On1Adapter> mAdapter;
+
+    // If there is no HWC implementation, use an adapter to interface between
+    // HWC 2.0 <-> FB HAL.
+    std::unique_ptr<HWC2OnFbAdapter> mFbAdapter;
 };
 
 extern "C" IComposer* HIDL_FETCH_IComposer(const char* name);
