@@ -82,7 +82,6 @@ genrule {
         ":android.hardware.health@2.0_hal",
     ],
     out: [
-        "android/hardware/health/V2_0/HealthInfo.java",
         "android/hardware/health/V2_0/Result.java",
         "android/hardware/health/V2_0/IHealth.java",
         "android/hardware/health/V2_0/IHealthInfoCallback.java",
