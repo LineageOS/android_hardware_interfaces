@@ -155,6 +155,12 @@ Return<Result> Contexthub::sendMessageToHub(uint32_t hubId,
         .message = static_cast<const uint8_t *>(msg.msg.data()),
     };
 
+    // Use a dummy to prevent send_message with empty message from failing prematurely
+    static uint8_t dummy;
+    if (txMsg.message_len == 0 && txMsg.message == nullptr) {
+        txMsg.message = &dummy;
+    }
+
     ALOGI("Sending msg of type %" PRIu32 ", size %" PRIu32 " to app 0x%" PRIx64,
           txMsg.message_type,
           txMsg.message_len,
