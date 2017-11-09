@@ -259,3 +259,4 @@ c8bc853546dd55584611def2a9fa1d99f657e3366c976d2f60fe6b8aa6d2cb87 android.hardwar
 
 # ABI preserving changes to HALs during Android P
 fb92e2b40f8e9d494e8fd3b4ac18499a3216342e7cff160714c3bbf3660b6e79 android.hardware.gnss@1.0::IGnssConfiguration
+d4c10cb28318dba8efb22231a8c23e86ad8853f85775187c40b42a878a5ef4d5 android.hardware.automotive.vehicle@2.0::types
