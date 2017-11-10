@@ -14,9 +14,7 @@ namespace implementation {
 
 sp<INfcClientCallback> Nfc::mCallback = nullptr;
 
-Nfc::Nfc(nfc_nci_device_t* device) : mDevice(device),
-    mDeathRecipient(new NfcDeathRecipient(this)) {
-}
+Nfc::Nfc(nfc_nci_device_t* device) : mDevice(device) {}
 
 // Methods from ::android::hardware::nfc::V1_0::INfc follow.
 ::android::hardware::Return<NfcStatus> Nfc::open(const sp<INfcClientCallback>& clientCallback)  {
@@ -25,7 +23,7 @@ Nfc::Nfc(nfc_nci_device_t* device) : mDevice(device),
     if (mDevice == nullptr || mCallback == nullptr) {
         return NfcStatus::FAILED;
     }
-    mCallback->linkToDeath(mDeathRecipient, 0 /*cookie*/);
+    mCallback->linkToDeath(this, 0 /*cookie*/);
     int ret = mDevice->open(mDevice, eventCallback, dataCallback);
     return ret == 0 ? NfcStatus::OK : NfcStatus::FAILED;
 }
@@ -58,7 +56,7 @@ Nfc::Nfc(nfc_nci_device_t* device) : mDevice(device),
     if (mDevice == nullptr || mCallback == nullptr) {
         return NfcStatus::FAILED;
     }
-    mCallback->unlinkToDeath(mDeathRecipient);
+    mCallback->unlinkToDeath(this);
     return mDevice->close(mDevice) ? NfcStatus::FAILED : NfcStatus::OK;
 }
 
