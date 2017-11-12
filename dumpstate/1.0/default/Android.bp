@@ -7,6 +7,10 @@ cc_binary {
         "DumpstateDevice.cpp",
         "service.cpp",
     ],
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
 
     shared_libs: [
         "android.hardware.dumpstate@1.0",
