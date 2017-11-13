@@ -28,7 +28,7 @@ TEST_F(RadioHidlTest, getCurrentCalls) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
+        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE);
     }
 }
 
@@ -48,14 +48,18 @@ TEST_F(RadioHidlTest, dial) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp->rspInfo.error,
-            {RadioError::CANCELLED, RadioError::DEVICE_IN_USE, RadioError::FDN_CHECK_FAILURE,
-             RadioError::INVALID_ARGUMENTS, RadioError::INVALID_CALL_ID,
-             RadioError::INVALID_MODEM_STATE, RadioError::INVALID_STATE, RadioError::MODEM_ERR,
-             RadioError::NO_NETWORK_FOUND, RadioError::NO_SUBSCRIPTION,
-             RadioError::OPERATION_NOT_ALLOWED},
-            CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR ||
+                    radioRsp->rspInfo.error == RadioError::FDN_CHECK_FAILURE ||
+                    radioRsp->rspInfo.error == RadioError::NO_SUBSCRIPTION ||
+                    radioRsp->rspInfo.error == RadioError::NO_NETWORK_FOUND ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_CALL_ID ||
+                    radioRsp->rspInfo.error == RadioError::DEVICE_IN_USE ||
+                    radioRsp->rspInfo.error == RadioError::OPERATION_NOT_ALLOWED ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_MODEM_STATE ||
+                    radioRsp->rspInfo.error == RadioError::CANCELLED);
     }
 }
 
@@ -71,10 +75,10 @@ TEST_F(RadioHidlTest, hangup) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp->rspInfo.error,
-            {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::MODEM_ERR},
-            CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR);
     }
 }
 
@@ -90,9 +94,8 @@ TEST_F(RadioHidlTest, hangupWaitingOrBackground) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp->rspInfo.error,
-                                     {RadioError::INVALID_STATE, RadioError::MODEM_ERR},
-                                     CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() || radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR);
     }
 }
 
@@ -108,9 +111,8 @@ TEST_F(RadioHidlTest, hangupForegroundResumeBackground) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp->rspInfo.error,
-                                     {RadioError::INVALID_STATE, RadioError::MODEM_ERR},
-                                     CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() || radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR);
     }
 }
 
@@ -126,9 +128,8 @@ TEST_F(RadioHidlTest, switchWaitingOrHoldingAndActive) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp->rspInfo.error,
-                                     {RadioError::INVALID_STATE, RadioError::MODEM_ERR},
-                                     CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() || radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR);
     }
 }
 
@@ -144,9 +145,8 @@ TEST_F(RadioHidlTest, conference) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp->rspInfo.error,
-                                     {RadioError::INVALID_STATE, RadioError::MODEM_ERR},
-                                     CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() || radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR);
     }
 }
 
@@ -162,9 +162,8 @@ TEST_F(RadioHidlTest, rejectCall) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp->rspInfo.error,
-                                     {RadioError::INVALID_STATE, RadioError::MODEM_ERR},
-                                     CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() || radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR);
     }
 }
 
@@ -180,8 +179,7 @@ TEST_F(RadioHidlTest, getLastCallFailCause) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(
-            CheckAnyOfErrors(radioRsp->rspInfo.error, {RadioError::NONE}, CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() || radioRsp->rspInfo.error == RadioError::NONE);
     }
 }
 
@@ -196,10 +194,10 @@ TEST_F(RadioHidlTest, sendUssd) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp->rspInfo.error,
-            {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::MODEM_ERR},
-            CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR);
     }
 }
 
@@ -215,10 +213,9 @@ TEST_F(RadioHidlTest, cancelPendingUssd) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(
-            CheckAnyOfErrors(radioRsp->rspInfo.error,
-                             {RadioError::NONE, RadioError::INVALID_STATE, RadioError::MODEM_ERR},
-                             CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() || radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR ||
+                    radioRsp->rspInfo.error == RadioError::NONE);
     }
 }
 
@@ -237,10 +234,10 @@ TEST_F(RadioHidlTest, getCallForwardStatus) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp->rspInfo.error,
-            {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::MODEM_ERR},
-            CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR);
     }
 }
 
@@ -259,10 +256,10 @@ TEST_F(RadioHidlTest, setCallForward) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp->rspInfo.error,
-            {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::MODEM_ERR},
-            CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR);
     }
 }
 
@@ -278,10 +275,10 @@ TEST_F(RadioHidlTest, getCallWaiting) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp->rspInfo.error,
-            {RadioError::NONE, RadioError::INVALID_ARGUMENTS, RadioError::MODEM_ERR},
-            CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::NONE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR);
     }
 }
 
@@ -297,10 +294,10 @@ TEST_F(RadioHidlTest, setCallWaiting) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp->rspInfo.error,
-            {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::MODEM_ERR},
-            CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR);
     }
 }
 
@@ -316,9 +313,8 @@ TEST_F(RadioHidlTest, acceptCall) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp->rspInfo.error,
-                                     {RadioError::INVALID_STATE, RadioError::MODEM_ERR},
-                                     CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() || radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR);
     }
 }
 
@@ -334,10 +330,10 @@ TEST_F(RadioHidlTest, separateConnection) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp->rspInfo.error,
-            {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::MODEM_ERR},
-            CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR);
     }
 }
 
@@ -353,9 +349,8 @@ TEST_F(RadioHidlTest, explicitCallTransfer) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp->rspInfo.error,
-                                     {RadioError::INVALID_STATE, RadioError::MODEM_ERR},
-                                     CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() || radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR);
     }
 }
 
@@ -371,11 +366,14 @@ TEST_F(RadioHidlTest, sendCDMAFeatureCode) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp->rspInfo.error,
-                                     {RadioError::NONE, RadioError::INVALID_ARGUMENTS,
-                                      RadioError::INVALID_CALL_ID, RadioError::INVALID_MODEM_STATE,
-                                      RadioError::MODEM_ERR, RadioError::OPERATION_NOT_ALLOWED},
-                                     CHECK_GENERAL_ERROR));
+        std::cout << static_cast<int>(radioRsp->rspInfo.error) << std::endl;
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::NONE ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_CALL_ID ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_MODEM_STATE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR ||
+                    radioRsp->rspInfo.error == RadioError::OPERATION_NOT_ALLOWED);
     }
 }
 
@@ -391,11 +389,12 @@ TEST_F(RadioHidlTest, sendDtmf) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp->rspInfo.error,
-            {RadioError::NONE, RadioError::INVALID_ARGUMENTS, RadioError::INVALID_CALL_ID,
-             RadioError::INVALID_MODEM_STATE, RadioError::MODEM_ERR},
-            CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::NONE ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_CALL_ID ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_MODEM_STATE);
     }
 }
 
@@ -411,11 +410,12 @@ TEST_F(RadioHidlTest, startDtmf) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp->rspInfo.error,
-            {RadioError::NONE, RadioError::INVALID_ARGUMENTS, RadioError::INVALID_CALL_ID,
-             RadioError::INVALID_MODEM_STATE, RadioError::MODEM_ERR},
-            CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::NONE ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_CALL_ID ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_MODEM_STATE);
     }
 }
 
@@ -431,10 +431,10 @@ TEST_F(RadioHidlTest, stopDtmf) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp->rspInfo.error,
-                                     {RadioError::NONE, RadioError::INVALID_CALL_ID,
-                                      RadioError::INVALID_MODEM_STATE, RadioError::MODEM_ERR},
-                                     CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() || radioRsp->rspInfo.error == RadioError::NONE ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_CALL_ID ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_MODEM_STATE);
     }
 }
 
@@ -450,9 +450,9 @@ TEST_F(RadioHidlTest, setMute) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp->rspInfo.error,
-                                     {RadioError::NONE, RadioError::INVALID_ARGUMENTS},
-                                     CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::NONE);
     }
 }
 
@@ -468,7 +468,7 @@ TEST_F(RadioHidlTest, getMute) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
+        ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE);
     }
 }
 
@@ -484,9 +484,10 @@ TEST_F(RadioHidlTest, sendBurstDtmf) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp->rspInfo.error,
-                                     {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE,
-                                      RadioError::MODEM_ERR, RadioError::OPERATION_NOT_ALLOWED},
-                                     CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR ||
+                    radioRsp->rspInfo.error == RadioError::OPERATION_NOT_ALLOWED);
     }
 }
