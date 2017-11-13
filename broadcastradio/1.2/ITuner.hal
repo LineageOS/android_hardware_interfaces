@@ -28,8 +28,11 @@ interface ITuner extends @1.1::ITuner {
      * ones stated in VendorKeyValue documentation (a requirement of key
      * prefixes).
      *
-     * Results vector may not contain a result for each parameter being set,
-     * it can even be empty.
+     * For each pair in the result vector, the key must be one of the keys
+     * contained in the input (possibly with wildcards expanded), and the value
+     * must be a vendor-specific result status (i.e. the string "OK" or an error
+     * code). The implementation may choose to return an empty vector, or only
+     * return a status for a subset of the provided inputs, at its discretion.
      *
      * Application and HAL must not use keys with unknown prefix. In particular,
      * it must not place a key-value pair in results vector for unknown key from
@@ -40,7 +43,6 @@ interface ITuner extends @1.1::ITuner {
      *
      * @param parameters Vendor-specific key-value pairs.
      * @return results Operation completion status for parameters being set.
-     *                 Value format for result status is vendor-specific.
      */
     setParameters(vec<VendorKeyValue> parameters)
             generates (vec<VendorKeyValue> results);
