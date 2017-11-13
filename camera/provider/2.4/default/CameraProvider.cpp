@@ -21,6 +21,7 @@
 #include "CameraProvider.h"
 #include "CameraDevice_1_0.h"
 #include "CameraDevice_3_3.h"
+#include "CameraDevice_3_4.h"
 #include <cutils/properties.h>
 #include <string.h>
 #include <utils/Trace.h>
@@ -39,6 +40,7 @@ const char *kLegacyProviderName = "legacy/0";
 const std::regex kDeviceNameRE("device@([0-9]+\\.[0-9]+)/legacy/(.+)");
 const char *kHAL3_2 = "3.2";
 const char *kHAL3_3 = "3.3";
+const char *kHAL3_4 = "3.4";
 const char *kHAL1_0 = "1.0";
 const int kMaxCameraDeviceNameLen = 128;
 const int kMaxCameraIdLen = 16;
@@ -159,12 +161,16 @@ std::string CameraProvider::getHidlDeviceName(
     if (deviceVersion != CAMERA_DEVICE_API_VERSION_1_0 &&
             deviceVersion != CAMERA_DEVICE_API_VERSION_3_2 &&
             deviceVersion != CAMERA_DEVICE_API_VERSION_3_3 &&
-            deviceVersion != CAMERA_DEVICE_API_VERSION_3_4 ) {
+            deviceVersion != CAMERA_DEVICE_API_VERSION_3_4 &&
+            deviceVersion != CAMERA_DEVICE_API_VERSION_3_5) {
         return hidl_string("");
     }
     bool isV1 = deviceVersion == CAMERA_DEVICE_API_VERSION_1_0;
     int versionMajor = isV1 ? 1 : 3;
     int versionMinor = isV1 ? 0 : mPreferredHal3MinorVersion;
+    if (deviceVersion == CAMERA_DEVICE_API_VERSION_3_5) {
+        versionMinor = 4;
+    }
     char deviceName[kMaxCameraDeviceNameLen];
     snprintf(deviceName, sizeof(deviceName), "device@%d.%d/legacy/%s",
             versionMajor, versionMinor, cameraId.c_str());
@@ -220,7 +226,8 @@ bool CameraProvider::initialize() {
             break;
         default:
             ALOGW("Unknown minor camera device HAL version %d in property "
-                    "'camera.wrapper.hal3TrebleMinorVersion', defaulting to 3", mPreferredHal3MinorVersion);
+                    "'camera.wrapper.hal3TrebleMinorVersion', defaulting to 3",
+                    mPreferredHal3MinorVersion);
             mPreferredHal3MinorVersion = 3;
     }
 
@@ -292,6 +299,7 @@ int CameraProvider::checkCameraVersion(int id, camera_info info) {
             case CAMERA_DEVICE_API_VERSION_3_2:
             case CAMERA_DEVICE_API_VERSION_3_3:
             case CAMERA_DEVICE_API_VERSION_3_4:
+            case CAMERA_DEVICE_API_VERSION_3_5:
                 // in support
                 break;
             case CAMERA_DEVICE_API_VERSION_2_0:
@@ -480,10 +488,27 @@ Return<void> CameraProvider::getCameraDeviceInterface_V3_x(
         return Void();
     }
 
+    sp<android::hardware::camera::device::V3_2::ICameraDevice> device;
+    if (deviceVersion == kHAL3_4) {
+        ALOGV("Constructing v3.4 camera device");
+        sp<android::hardware::camera::device::V3_2::implementation::CameraDevice> deviceImpl =
+            new android::hardware::camera::device::V3_4::implementation::CameraDevice(
+                    mModule, cameraId, mCameraDeviceNames);
+        if (deviceImpl == nullptr || deviceImpl->isInitFailed()) {
+            ALOGE("%s: camera device %s init failed!", __FUNCTION__, cameraId.c_str());
+            device = nullptr;
+            _hidl_cb(Status::INTERNAL_ERROR, nullptr);
+            return Void();
+        }
+
+        device = deviceImpl;
+        _hidl_cb (Status::OK, device);
+        return Void();
+    }
+
     // Since some Treble HAL revisions can map to the same legacy HAL version(s), we default
     // to the newest possible Treble HAL revision, but allow for override if needed via
     // system property.
-    sp<android::hardware::camera::device::V3_2::ICameraDevice> device;
     switch (mPreferredHal3MinorVersion) {
         case 2: { // Map legacy camera device v3 HAL to Treble camera device HAL v3.2
             ALOGV("Constructing v3.2 camera device");

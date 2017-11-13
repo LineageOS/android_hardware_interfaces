@@ -27,6 +27,7 @@
 #include <android/hardware/camera/device/1.0/ICameraDevice.h>
 #include <android/hardware/camera/device/3.2/ICameraDevice.h>
 #include <android/hardware/camera/device/3.3/ICameraDeviceSession.h>
+#include <android/hardware/camera/device/3.4/ICameraDeviceSession.h>
 #include <android/hardware/camera/provider/2.4/ICameraProvider.h>
 #include <android/hidl/manager/1.0/IServiceManager.h>
 #include <binder/MemoryHeapBase.h>
@@ -128,9 +129,11 @@ struct AvailableZSLInputOutput {
 namespace {
     // "device@<version>/legacy/<id>"
     const char *kDeviceNameRE = "device@([0-9]+\\.[0-9]+)/%s/(.+)";
+    const int CAMERA_DEVICE_API_VERSION_3_4 = 0x304;
     const int CAMERA_DEVICE_API_VERSION_3_3 = 0x303;
     const int CAMERA_DEVICE_API_VERSION_3_2 = 0x302;
     const int CAMERA_DEVICE_API_VERSION_1_0 = 0x100;
+    const char *kHAL3_4 = "3.4";
     const char *kHAL3_3 = "3.3";
     const char *kHAL3_2 = "3.2";
     const char *kHAL1_0 = "1.0";
@@ -164,7 +167,9 @@ namespace {
             return -1;
         }
 
-        if (version.compare(kHAL3_3) == 0) {
+        if (version.compare(kHAL3_4) == 0) {
+            return CAMERA_DEVICE_API_VERSION_3_4;
+        } else if (version.compare(kHAL3_3) == 0) {
             return CAMERA_DEVICE_API_VERSION_3_3;
         } else if (version.compare(kHAL3_2) == 0) {
             return CAMERA_DEVICE_API_VERSION_3_2;
@@ -611,9 +616,11 @@ public:
     void openEmptyDeviceSession(const std::string &name,
             sp<ICameraProvider> provider,
             sp<ICameraDeviceSession> *session /*out*/,
-            sp<device::V3_3::ICameraDeviceSession> *session3_3 /*out*/,
             camera_metadata_t **staticMeta /*out*/);
-    void configurePreviewStream(const std::string &name,
+    void castSession(const sp<ICameraDeviceSession> &session, int32_t deviceVersion,
+            sp<device::V3_3::ICameraDeviceSession> *session3_3 /*out*/,
+            sp<device::V3_4::ICameraDeviceSession> *session3_4 /*out*/);
+    void configurePreviewStream(const std::string &name, int32_t deviceVersion,
             sp<ICameraProvider> provider,
             const AvailableStream *previewThreshold,
             sp<ICameraDeviceSession> *session /*out*/,
@@ -1100,6 +1107,7 @@ TEST_F(CameraHidlTest, getCameraDeviceInterface) {
     for (const auto& name : cameraDeviceNames) {
         int deviceVersion = getCameraDeviceVersion(name, mProviderType);
         switch (deviceVersion) {
+            case CAMERA_DEVICE_API_VERSION_3_4:
             case CAMERA_DEVICE_API_VERSION_3_3:
             case CAMERA_DEVICE_API_VERSION_3_2: {
                 Return<void> ret;
@@ -1140,6 +1148,7 @@ TEST_F(CameraHidlTest, getResourceCost) {
     for (const auto& name : cameraDeviceNames) {
         int deviceVersion = getCameraDeviceVersion(name, mProviderType);
         switch (deviceVersion) {
+            case CAMERA_DEVICE_API_VERSION_3_4:
             case CAMERA_DEVICE_API_VERSION_3_3:
             case CAMERA_DEVICE_API_VERSION_3_2: {
                 ::android::sp<::android::hardware::camera::device::V3_2::ICameraDevice> device3_x;
@@ -1879,6 +1888,7 @@ TEST_F(CameraHidlTest, getCameraCharacteristics) {
     for (const auto& name : cameraDeviceNames) {
         int deviceVersion = getCameraDeviceVersion(name, mProviderType);
         switch (deviceVersion) {
+            case CAMERA_DEVICE_API_VERSION_3_4:
             case CAMERA_DEVICE_API_VERSION_3_3:
             case CAMERA_DEVICE_API_VERSION_3_2: {
                 ::android::sp<::android::hardware::camera::device::V3_2::ICameraDevice> device3_x;
@@ -1943,6 +1953,7 @@ TEST_F(CameraHidlTest, setTorchMode) {
     for (const auto& name : cameraDeviceNames) {
         int deviceVersion = getCameraDeviceVersion(name, mProviderType);
         switch (deviceVersion) {
+            case CAMERA_DEVICE_API_VERSION_3_4:
             case CAMERA_DEVICE_API_VERSION_3_3:
             case CAMERA_DEVICE_API_VERSION_3_2: {
                 ::android::sp<::android::hardware::camera::device::V3_2::ICameraDevice> device3_x;
@@ -2067,6 +2078,7 @@ TEST_F(CameraHidlTest, dumpState) {
     for (const auto& name : cameraDeviceNames) {
         int deviceVersion = getCameraDeviceVersion(name, mProviderType);
         switch (deviceVersion) {
+            case CAMERA_DEVICE_API_VERSION_3_4:
             case CAMERA_DEVICE_API_VERSION_3_3:
             case CAMERA_DEVICE_API_VERSION_3_2: {
                 ::android::sp<ICameraDevice> device3_x;
@@ -2130,6 +2142,7 @@ TEST_F(CameraHidlTest, openClose) {
     for (const auto& name : cameraDeviceNames) {
         int deviceVersion = getCameraDeviceVersion(name, mProviderType);
         switch (deviceVersion) {
+            case CAMERA_DEVICE_API_VERSION_3_4:
             case CAMERA_DEVICE_API_VERSION_3_3:
             case CAMERA_DEVICE_API_VERSION_3_2: {
                 ::android::sp<::android::hardware::camera::device::V3_2::ICameraDevice> device3_x;
@@ -2152,12 +2165,14 @@ TEST_F(CameraHidlTest, openClose) {
                     session = newSession;
                 });
                 ASSERT_TRUE(ret.isOk());
-                // Ensure that a device labeling itself as 3.3 can have its session interface cast
-                // to the 3.3 interface, and that lower versions can't be cast to it.
-                auto castResult = device::V3_3::ICameraDeviceSession::castFrom(session);
-                ASSERT_TRUE(castResult.isOk());
-                sp<device::V3_3::ICameraDeviceSession> sessionV3_3 = castResult;
-                if (deviceVersion == CAMERA_DEVICE_API_VERSION_3_3) {
+                // Ensure that a device labeling itself as 3.3/3.4 can have its session interface
+                // cast the 3.3/3.4 interface, and that lower versions can't be cast to it.
+                sp<device::V3_3::ICameraDeviceSession> sessionV3_3;
+                sp<device::V3_4::ICameraDeviceSession> sessionV3_4;
+                castSession(session, deviceVersion, &sessionV3_3, &sessionV3_4);
+                if (deviceVersion == CAMERA_DEVICE_API_VERSION_3_4) {
+                    ASSERT_TRUE(sessionV3_4.get() != nullptr);
+                } else if (deviceVersion == CAMERA_DEVICE_API_VERSION_3_3) {
                     ASSERT_TRUE(sessionV3_3.get() != nullptr);
                 } else {
                     ASSERT_TRUE(sessionV3_3.get() == nullptr);
@@ -2213,6 +2228,7 @@ TEST_F(CameraHidlTest, constructDefaultRequestSettings) {
     for (const auto& name : cameraDeviceNames) {
         int deviceVersion = getCameraDeviceVersion(name, mProviderType);
         switch (deviceVersion) {
+            case CAMERA_DEVICE_API_VERSION_3_4:
             case CAMERA_DEVICE_API_VERSION_3_3:
             case CAMERA_DEVICE_API_VERSION_3_2: {
                 ::android::sp<::android::hardware::camera::device::V3_2::ICameraDevice> device3_x;
@@ -2301,66 +2317,69 @@ TEST_F(CameraHidlTest, configureStreamsAvailableOutputs) {
 
     for (const auto& name : cameraDeviceNames) {
         int deviceVersion = getCameraDeviceVersion(name, mProviderType);
-        switch (deviceVersion) {
-            case CAMERA_DEVICE_API_VERSION_3_3:
-            case CAMERA_DEVICE_API_VERSION_3_2: {
-                camera_metadata_t* staticMeta;
-                Return<void> ret;
-                sp<ICameraDeviceSession> session;
-                sp<device::V3_3::ICameraDeviceSession> session3_3;
-                openEmptyDeviceSession(name, mProvider,
-                        &session /*out*/, &session3_3 /*out*/, &staticMeta /*out*/);
-
-                outputStreams.clear();
-                ASSERT_EQ(Status::OK, getAvailableOutputStreams(staticMeta, outputStreams));
-                ASSERT_NE(0u, outputStreams.size());
-
-                int32_t streamId = 0;
-                for (auto& it : outputStreams) {
-                    Stream stream = {streamId,
-                                     StreamType::OUTPUT,
-                                     static_cast<uint32_t>(it.width),
-                                     static_cast<uint32_t>(it.height),
-                                     static_cast<PixelFormat>(it.format),
-                                     GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
-                                     0,
-                                     StreamRotation::ROTATION_0};
-                    ::android::hardware::hidl_vec<Stream> streams = {stream};
-                    StreamConfiguration config = {streams, StreamConfigurationMode::NORMAL_MODE};
-                    if (session3_3 == nullptr) {
-                        ret = session->configureStreams(config,
-                                [streamId](Status s, HalStreamConfiguration halConfig) {
-                                    ASSERT_EQ(Status::OK, s);
-                                    ASSERT_EQ(1u, halConfig.streams.size());
-                                    ASSERT_EQ(halConfig.streams[0].id, streamId);
-                                });
-                    } else {
-                        ret = session3_3->configureStreams_3_3(config,
-                                [streamId](Status s, device::V3_3::HalStreamConfiguration halConfig) {
-                                    ASSERT_EQ(Status::OK, s);
-                                    ASSERT_EQ(1u, halConfig.streams.size());
-                                    ASSERT_EQ(halConfig.streams[0].v3_2.id, streamId);
-                                });
-                    }
-                    ASSERT_TRUE(ret.isOk());
-                    streamId++;
-                }
-
-                free_camera_metadata(staticMeta);
-                ret = session->close();
-                ASSERT_TRUE(ret.isOk());
-            }
-            break;
-            case CAMERA_DEVICE_API_VERSION_1_0: {
-                //Not applicable
-            }
-            break;
-            default: {
-                ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
-                ADD_FAILURE();
-            }
-            break;
+        if (deviceVersion == CAMERA_DEVICE_API_VERSION_1_0) {
+            continue;
+        } else if (deviceVersion <= 0) {
+            ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
+            ADD_FAILURE();
+            return;
         }
+
+        camera_metadata_t* staticMeta;
+        Return<void> ret;
+        sp<ICameraDeviceSession> session;
+        sp<device::V3_3::ICameraDeviceSession> session3_3;
+        sp<device::V3_4::ICameraDeviceSession> session3_4;
+        openEmptyDeviceSession(name, mProvider,
+                &session /*out*/, &staticMeta /*out*/);
+        castSession(session, deviceVersion, &session3_3, &session3_4);
+
+        outputStreams.clear();
+        ASSERT_EQ(Status::OK, getAvailableOutputStreams(staticMeta, outputStreams));
+        ASSERT_NE(0u, outputStreams.size());
+
+        int32_t streamId = 0;
+        for (auto& it : outputStreams) {
+            Stream stream = {streamId,
+                             StreamType::OUTPUT,
+                             static_cast<uint32_t>(it.width),
+                             static_cast<uint32_t>(it.height),
+                             static_cast<PixelFormat>(it.format),
+                             GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
+                             0,
+                             StreamRotation::ROTATION_0};
+            ::android::hardware::hidl_vec<Stream> streams = {stream};
+            ::android::hardware::camera::device::V3_4::StreamConfiguration config;
+            config.v3_2 = {streams, StreamConfigurationMode::NORMAL_MODE};
+            if (session3_4 != nullptr) {
+                ret = session3_4->configureStreams_3_4(config,
+                        [streamId](Status s, device::V3_3::HalStreamConfiguration halConfig) {
+                            ASSERT_EQ(Status::OK, s);
+                            ASSERT_EQ(1u, halConfig.streams.size());
+                            ASSERT_EQ(halConfig.streams[0].v3_2.id, streamId);
+                        });
+            } else if (session3_3 != nullptr) {
+                ret = session3_3->configureStreams_3_3(config.v3_2,
+                        [streamId](Status s, device::V3_3::HalStreamConfiguration halConfig) {
+                            ASSERT_EQ(Status::OK, s);
+                            ASSERT_EQ(1u, halConfig.streams.size());
+                            ASSERT_EQ(halConfig.streams[0].v3_2.id, streamId);
+                        });
+            } else {
+                ret = session->configureStreams(config.v3_2,
+                        [streamId](Status s, HalStreamConfiguration halConfig) {
+                            ASSERT_EQ(Status::OK, s);
+                            ASSERT_EQ(1u, halConfig.streams.size());
+                            ASSERT_EQ(halConfig.streams[0].id, streamId);
+                        });
+            }
+            ASSERT_TRUE(ret.isOk());
+            streamId++;
+        }
+
+        free_camera_metadata(staticMeta);
+        ret = session->close();
+        ASSERT_TRUE(ret.isOk());
     }
 }
 
@@ -2371,132 +2390,148 @@ TEST_F(CameraHidlTest, configureStreamsInvalidOutputs) {
 
     for (const auto& name : cameraDeviceNames) {
         int deviceVersion = getCameraDeviceVersion(name, mProviderType);
-        switch (deviceVersion) {
-            case CAMERA_DEVICE_API_VERSION_3_3:
-            case CAMERA_DEVICE_API_VERSION_3_2: {
-                camera_metadata_t* staticMeta;
-                Return<void> ret;
-                sp<ICameraDeviceSession> session;
-                sp<device::V3_3::ICameraDeviceSession> session3_3;
-                openEmptyDeviceSession(name, mProvider,
-                        &session /*out*/, &session3_3 /*out*/, &staticMeta /*out*/);
-
-                outputStreams.clear();
-                ASSERT_EQ(Status::OK, getAvailableOutputStreams(staticMeta, outputStreams));
-                ASSERT_NE(0u, outputStreams.size());
-
-                int32_t streamId = 0;
-                Stream stream = {streamId++,
-                                 StreamType::OUTPUT,
-                                 static_cast<uint32_t>(0),
-                                 static_cast<uint32_t>(0),
-                                 static_cast<PixelFormat>(outputStreams[0].format),
-                                 GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
-                                 0,
-                                 StreamRotation::ROTATION_0};
-                ::android::hardware::hidl_vec<Stream> streams = {stream};
-                StreamConfiguration config = {streams, StreamConfigurationMode::NORMAL_MODE};
-                if(session3_3 == nullptr) {
-                    ret = session->configureStreams(config,
-                        [](Status s, HalStreamConfiguration) {
-                            ASSERT_TRUE((Status::ILLEGAL_ARGUMENT == s) ||
-                                    (Status::INTERNAL_ERROR == s));
-                        });
-                } else {
-                    ret = session3_3->configureStreams_3_3(config,
-                        [](Status s, device::V3_3::HalStreamConfiguration) {
-                            ASSERT_TRUE((Status::ILLEGAL_ARGUMENT == s) ||
-                                    (Status::INTERNAL_ERROR == s));
-                        });
-                }
-                ASSERT_TRUE(ret.isOk());
-
-                stream = {streamId++,
-                          StreamType::OUTPUT,
-                          static_cast<uint32_t>(UINT32_MAX),
-                          static_cast<uint32_t>(UINT32_MAX),
-                          static_cast<PixelFormat>(outputStreams[0].format),
-                          GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
-                          0,
-                          StreamRotation::ROTATION_0};
-                streams[0] = stream;
-                config = {streams, StreamConfigurationMode::NORMAL_MODE};
-                if(session3_3 == nullptr) {
-                    ret = session->configureStreams(config, [](Status s,
-                                HalStreamConfiguration) {
-                            ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
-                        });
-                } else {
-                    ret = session3_3->configureStreams_3_3(config, [](Status s,
-                                device::V3_3::HalStreamConfiguration) {
-                            ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
-                        });
-                }
-                ASSERT_TRUE(ret.isOk());
-
-                for (auto& it : outputStreams) {
-                    stream = {streamId++,
-                              StreamType::OUTPUT,
-                              static_cast<uint32_t>(it.width),
-                              static_cast<uint32_t>(it.height),
-                              static_cast<PixelFormat>(UINT32_MAX),
-                              GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
-                              0,
-                              StreamRotation::ROTATION_0};
-                    streams[0] = stream;
-                    config = {streams, StreamConfigurationMode::NORMAL_MODE};
-                    if(session3_3 == nullptr) {
-                        ret = session->configureStreams(config,
-                                [](Status s, HalStreamConfiguration) {
-                                    ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
-                                });
-                    } else {
-                        ret = session3_3->configureStreams_3_3(config,
-                                [](Status s, device::V3_3::HalStreamConfiguration) {
-                                    ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
-                                });
-                    }
-                    ASSERT_TRUE(ret.isOk());
-
-                    stream = {streamId++,
-                              StreamType::OUTPUT,
-                              static_cast<uint32_t>(it.width),
-                              static_cast<uint32_t>(it.height),
-                              static_cast<PixelFormat>(it.format),
-                              GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
-                              0,
-                              static_cast<StreamRotation>(UINT32_MAX)};
-                    streams[0] = stream;
-                    config = {streams, StreamConfigurationMode::NORMAL_MODE};
-                    if(session3_3 == nullptr) {
-                        ret = session->configureStreams(config,
-                                [](Status s, HalStreamConfiguration) {
-                                    ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
-                                });
-                    } else {
-                        ret = session3_3->configureStreams_3_3(config,
-                                [](Status s, device::V3_3::HalStreamConfiguration) {
-                                    ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
-                                });
-                    }
-                    ASSERT_TRUE(ret.isOk());
-                }
-
-                free_camera_metadata(staticMeta);
-                ret = session->close();
-                ASSERT_TRUE(ret.isOk());
-            }
-            break;
-            case CAMERA_DEVICE_API_VERSION_1_0: {
-                //Not applicable
-            }
-            break;
-            default: {
-                ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
-                ADD_FAILURE();
-            }
-            break;
+        if (deviceVersion == CAMERA_DEVICE_API_VERSION_1_0) {
+            continue;
+        } else if (deviceVersion <= 0) {
+            ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
+            ADD_FAILURE();
+            return;
         }
+
+        camera_metadata_t* staticMeta;
+        Return<void> ret;
+        sp<ICameraDeviceSession> session;
+        sp<device::V3_3::ICameraDeviceSession> session3_3;
+        sp<device::V3_4::ICameraDeviceSession> session3_4;
+        openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMeta /*out*/);
+        castSession(session, deviceVersion, &session3_3, &session3_4);
+
+        outputStreams.clear();
+        ASSERT_EQ(Status::OK, getAvailableOutputStreams(staticMeta, outputStreams));
+        ASSERT_NE(0u, outputStreams.size());
+
+        int32_t streamId = 0;
+        Stream stream = {streamId++,
+                         StreamType::OUTPUT,
+                         static_cast<uint32_t>(0),
+                         static_cast<uint32_t>(0),
+                         static_cast<PixelFormat>(outputStreams[0].format),
+                         GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
+                         0,
+                         StreamRotation::ROTATION_0};
+        ::android::hardware::hidl_vec<Stream> streams = {stream};
+        ::android::hardware::camera::device::V3_4::StreamConfiguration config;
+        config.v3_2 = {streams, StreamConfigurationMode::NORMAL_MODE};
+        if(session3_4 != nullptr) {
+            ret = session3_4->configureStreams_3_4(config,
+                [](Status s, device::V3_3::HalStreamConfiguration) {
+                    ASSERT_TRUE((Status::ILLEGAL_ARGUMENT == s) ||
+                            (Status::INTERNAL_ERROR == s));
+                });
+        } else if(session3_3 != nullptr) {
+            ret = session3_3->configureStreams_3_3(config.v3_2,
+                [](Status s, device::V3_3::HalStreamConfiguration) {
+                    ASSERT_TRUE((Status::ILLEGAL_ARGUMENT == s) ||
+                            (Status::INTERNAL_ERROR == s));
+                });
+        } else {
+            ret = session->configureStreams(config.v3_2,
+                [](Status s, HalStreamConfiguration) {
+                    ASSERT_TRUE((Status::ILLEGAL_ARGUMENT == s) ||
+                            (Status::INTERNAL_ERROR == s));
+                });
+        }
+        ASSERT_TRUE(ret.isOk());
+
+        stream = {streamId++,
+                  StreamType::OUTPUT,
+                  static_cast<uint32_t>(UINT32_MAX),
+                  static_cast<uint32_t>(UINT32_MAX),
+                  static_cast<PixelFormat>(outputStreams[0].format),
+                  GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
+                  0,
+                  StreamRotation::ROTATION_0};
+        streams[0] = stream;
+        config.v3_2 = {streams, StreamConfigurationMode::NORMAL_MODE};
+        if(session3_4 != nullptr) {
+            ret = session3_4->configureStreams_3_4(config, [](Status s,
+                        device::V3_3::HalStreamConfiguration) {
+                    ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
+                });
+        } else if(session3_3 != nullptr) {
+            ret = session3_3->configureStreams_3_3(config.v3_2, [](Status s,
+                        device::V3_3::HalStreamConfiguration) {
+                    ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
+                });
+        } else {
+            ret = session->configureStreams(config.v3_2, [](Status s,
+                        HalStreamConfiguration) {
+                    ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
+                });
+        }
+        ASSERT_TRUE(ret.isOk());
+
+        for (auto& it : outputStreams) {
+            stream = {streamId++,
+                      StreamType::OUTPUT,
+                      static_cast<uint32_t>(it.width),
+                      static_cast<uint32_t>(it.height),
+                      static_cast<PixelFormat>(UINT32_MAX),
+                      GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
+                      0,
+                      StreamRotation::ROTATION_0};
+            streams[0] = stream;
+            config.v3_2 = {streams, StreamConfigurationMode::NORMAL_MODE};
+            if(session3_4 != nullptr) {
+                ret = session3_4->configureStreams_3_4(config,
+                        [](Status s, device::V3_3::HalStreamConfiguration) {
+                            ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
+                        });
+            } else if(session3_3 != nullptr) {
+                ret = session3_3->configureStreams_3_3(config.v3_2,
+                        [](Status s, device::V3_3::HalStreamConfiguration) {
+                            ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
+                        });
+            } else {
+                ret = session->configureStreams(config.v3_2,
+                        [](Status s, HalStreamConfiguration) {
+                            ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
+                        });
+            }
+            ASSERT_TRUE(ret.isOk());
+
+            stream = {streamId++,
+                      StreamType::OUTPUT,
+                      static_cast<uint32_t>(it.width),
+                      static_cast<uint32_t>(it.height),
+                      static_cast<PixelFormat>(it.format),
+                      GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
+                      0,
+                      static_cast<StreamRotation>(UINT32_MAX)};
+            streams[0] = stream;
+            config.v3_2 = {streams, StreamConfigurationMode::NORMAL_MODE};
+            if(session3_4 != nullptr) {
+                ret = session3_4->configureStreams_3_4(config,
+                        [](Status s, device::V3_3::HalStreamConfiguration) {
+                            ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
+                        });
+            } else if(session3_3 != nullptr) {
+                ret = session3_3->configureStreams_3_3(config.v3_2,
+                        [](Status s, device::V3_3::HalStreamConfiguration) {
+                            ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
+                        });
+            } else {
+                ret = session->configureStreams(config.v3_2,
+                        [](Status s, HalStreamConfiguration) {
+                            ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
+                        });
+            }
+            ASSERT_TRUE(ret.isOk());
+        }
+
+        free_camera_metadata(staticMeta);
+        ret = session->close();
+        ASSERT_TRUE(ret.isOk());
     }
 }
 
@@ -2509,107 +2544,207 @@ TEST_F(CameraHidlTest, configureStreamsZSLInputOutputs) {
 
     for (const auto& name : cameraDeviceNames) {
         int deviceVersion = getCameraDeviceVersion(name, mProviderType);
-        switch (deviceVersion) {
-            case CAMERA_DEVICE_API_VERSION_3_3:
-            case CAMERA_DEVICE_API_VERSION_3_2: {
-                camera_metadata_t* staticMeta;
-                Return<void> ret;
-                sp<ICameraDeviceSession> session;
-                sp<device::V3_3::ICameraDeviceSession> session3_3;
-                openEmptyDeviceSession(name, mProvider,
-                        &session /*out*/, &session3_3 /*out*/, &staticMeta /*out*/);
+        if (deviceVersion == CAMERA_DEVICE_API_VERSION_1_0) {
+            continue;
+        } else if (deviceVersion <= 0) {
+            ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
+            ADD_FAILURE();
+            return;
+        }
 
-                Status rc = isZSLModeAvailable(staticMeta);
-                if (Status::METHOD_NOT_SUPPORTED == rc) {
-                    ret = session->close();
-                    ASSERT_TRUE(ret.isOk());
-                    continue;
+        camera_metadata_t* staticMeta;
+        Return<void> ret;
+        sp<ICameraDeviceSession> session;
+        sp<device::V3_3::ICameraDeviceSession> session3_3;
+        sp<device::V3_4::ICameraDeviceSession> session3_4;
+        openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMeta /*out*/);
+        castSession(session, deviceVersion, &session3_3, &session3_4);
+
+        Status rc = isZSLModeAvailable(staticMeta);
+        if (Status::METHOD_NOT_SUPPORTED == rc) {
+            ret = session->close();
+            ASSERT_TRUE(ret.isOk());
+            continue;
+        }
+        ASSERT_EQ(Status::OK, rc);
+
+        inputStreams.clear();
+        ASSERT_EQ(Status::OK, getAvailableOutputStreams(staticMeta, inputStreams));
+        ASSERT_NE(0u, inputStreams.size());
+
+        inputOutputMap.clear();
+        ASSERT_EQ(Status::OK, getZSLInputOutputMap(staticMeta, inputOutputMap));
+        ASSERT_NE(0u, inputOutputMap.size());
+
+        int32_t streamId = 0;
+        for (auto& inputIter : inputOutputMap) {
+            AvailableStream input;
+            ASSERT_EQ(Status::OK, findLargestSize(inputStreams, inputIter.inputFormat,
+                    input));
+            ASSERT_NE(0u, inputStreams.size());
+
+            AvailableStream outputThreshold = {INT32_MAX, INT32_MAX,
+                                               inputIter.outputFormat};
+            std::vector<AvailableStream> outputStreams;
+            ASSERT_EQ(Status::OK,
+                      getAvailableOutputStreams(staticMeta, outputStreams,
+                              &outputThreshold));
+            for (auto& outputIter : outputStreams) {
+                Stream zslStream = {streamId++,
+                                    StreamType::OUTPUT,
+                                    static_cast<uint32_t>(input.width),
+                                    static_cast<uint32_t>(input.height),
+                                    static_cast<PixelFormat>(input.format),
+                                    GRALLOC_USAGE_HW_CAMERA_ZSL,
+                                    0,
+                                    StreamRotation::ROTATION_0};
+                Stream inputStream = {streamId++,
+                                      StreamType::INPUT,
+                                      static_cast<uint32_t>(input.width),
+                                      static_cast<uint32_t>(input.height),
+                                      static_cast<PixelFormat>(input.format),
+                                      0,
+                                      0,
+                                      StreamRotation::ROTATION_0};
+                Stream outputStream = {streamId++,
+                                       StreamType::OUTPUT,
+                                       static_cast<uint32_t>(outputIter.width),
+                                       static_cast<uint32_t>(outputIter.height),
+                                       static_cast<PixelFormat>(outputIter.format),
+                                       GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
+                                       0,
+                                       StreamRotation::ROTATION_0};
+
+                ::android::hardware::hidl_vec<Stream> streams = {inputStream, zslStream,
+                                                                 outputStream};
+                ::android::hardware::camera::device::V3_4::StreamConfiguration config;
+                config.v3_2 = {streams, StreamConfigurationMode::NORMAL_MODE};
+                if (session3_4 != nullptr) {
+                    ret = session3_4->configureStreams_3_4(config,
+                            [](Status s, device::V3_3::HalStreamConfiguration halConfig) {
+                                ASSERT_EQ(Status::OK, s);
+                                ASSERT_EQ(3u, halConfig.streams.size());
+                            });
+                } else if (session3_3 != nullptr) {
+                    ret = session3_3->configureStreams_3_3(config.v3_2,
+                            [](Status s, device::V3_3::HalStreamConfiguration halConfig) {
+                                ASSERT_EQ(Status::OK, s);
+                                ASSERT_EQ(3u, halConfig.streams.size());
+                            });
+                } else {
+                    ret = session->configureStreams(config.v3_2,
+                            [](Status s, HalStreamConfiguration halConfig) {
+                                ASSERT_EQ(Status::OK, s);
+                                ASSERT_EQ(3u, halConfig.streams.size());
+                            });
                 }
-                ASSERT_EQ(Status::OK, rc);
-
-                inputStreams.clear();
-                ASSERT_EQ(Status::OK, getAvailableOutputStreams(staticMeta, inputStreams));
-                ASSERT_NE(0u, inputStreams.size());
-
-                inputOutputMap.clear();
-                ASSERT_EQ(Status::OK, getZSLInputOutputMap(staticMeta, inputOutputMap));
-                ASSERT_NE(0u, inputOutputMap.size());
-
-                int32_t streamId = 0;
-                for (auto& inputIter : inputOutputMap) {
-                    AvailableStream input;
-                    ASSERT_EQ(Status::OK, findLargestSize(inputStreams, inputIter.inputFormat,
-                            input));
-                    ASSERT_NE(0u, inputStreams.size());
-
-                    AvailableStream outputThreshold = {INT32_MAX, INT32_MAX,
-                                                       inputIter.outputFormat};
-                    std::vector<AvailableStream> outputStreams;
-                    ASSERT_EQ(Status::OK,
-                              getAvailableOutputStreams(staticMeta, outputStreams,
-                                      &outputThreshold));
-                    for (auto& outputIter : outputStreams) {
-                        Stream zslStream = {streamId++,
-                                            StreamType::OUTPUT,
-                                            static_cast<uint32_t>(input.width),
-                                            static_cast<uint32_t>(input.height),
-                                            static_cast<PixelFormat>(input.format),
-                                            GRALLOC_USAGE_HW_CAMERA_ZSL,
-                                            0,
-                                            StreamRotation::ROTATION_0};
-                        Stream inputStream = {streamId++,
-                                              StreamType::INPUT,
-                                              static_cast<uint32_t>(input.width),
-                                              static_cast<uint32_t>(input.height),
-                                              static_cast<PixelFormat>(input.format),
-                                              0,
-                                              0,
-                                              StreamRotation::ROTATION_0};
-                        Stream outputStream = {streamId++,
-                                               StreamType::OUTPUT,
-                                               static_cast<uint32_t>(outputIter.width),
-                                               static_cast<uint32_t>(outputIter.height),
-                                               static_cast<PixelFormat>(outputIter.format),
-                                               GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
-                                               0,
-                                               StreamRotation::ROTATION_0};
-
-                        ::android::hardware::hidl_vec<Stream> streams = {inputStream, zslStream,
-                                                                         outputStream};
-                        StreamConfiguration config = {streams,
-                                                      StreamConfigurationMode::NORMAL_MODE};
-                        if (session3_3 == nullptr) {
-                            ret = session->configureStreams(config,
-                                    [](Status s, HalStreamConfiguration halConfig) {
-                                        ASSERT_EQ(Status::OK, s);
-                                        ASSERT_EQ(3u, halConfig.streams.size());
-                                    });
-                        } else {
-                            ret = session3_3->configureStreams_3_3(config,
-                                    [](Status s, device::V3_3::HalStreamConfiguration halConfig) {
-                                        ASSERT_EQ(Status::OK, s);
-                                        ASSERT_EQ(3u, halConfig.streams.size());
-                                    });
-                        }
-                        ASSERT_TRUE(ret.isOk());
-                    }
-                }
-
-                free_camera_metadata(staticMeta);
-                ret = session->close();
                 ASSERT_TRUE(ret.isOk());
             }
-            break;
-            case CAMERA_DEVICE_API_VERSION_1_0: {
-                //Not applicable
-            }
-            break;
-            default: {
-                ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
-                ADD_FAILURE();
-            }
-            break;
         }
+
+        free_camera_metadata(staticMeta);
+        ret = session->close();
+        ASSERT_TRUE(ret.isOk());
+    }
+}
+
+// Check wehether session parameters are supported. If Hal support for them
+// exist, then try to configure a preview stream using them.
+TEST_F(CameraHidlTest, configureStreamsWithSessionParameters) {
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
+    std::vector<AvailableStream> outputPreviewStreams;
+    AvailableStream previewThreshold = {kMaxPreviewWidth, kMaxPreviewHeight,
+                                        static_cast<int32_t>(PixelFormat::IMPLEMENTATION_DEFINED)};
+
+    for (const auto& name : cameraDeviceNames) {
+        int deviceVersion = getCameraDeviceVersion(name, mProviderType);
+        if (deviceVersion <= 0) {
+            ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
+            ADD_FAILURE();
+            return;
+        } else if (deviceVersion < CAMERA_DEVICE_API_VERSION_3_4) {
+            continue;
+        }
+
+        camera_metadata_t* staticMetaBuffer;
+        Return<void> ret;
+        sp<ICameraDeviceSession> session;
+        sp<device::V3_3::ICameraDeviceSession> session3_3;
+        sp<device::V3_4::ICameraDeviceSession> session3_4;
+        openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMetaBuffer /*out*/);
+        castSession(session, deviceVersion, &session3_3, &session3_4);
+        ASSERT_NE(session3_4, nullptr);
+
+        const android::hardware::camera::common::V1_0::helper::CameraMetadata staticMeta(
+                staticMetaBuffer);
+        camera_metadata_ro_entry availableSessionKeys = staticMeta.find(
+                ANDROID_REQUEST_AVAILABLE_SESSION_KEYS);
+        if (availableSessionKeys.count == 0) {
+            ret = session->close();
+            ASSERT_TRUE(ret.isOk());
+            continue;
+        }
+
+        android::hardware::camera::common::V1_0::helper::CameraMetadata previewRequestSettings;
+        ret = session->constructDefaultRequestSettings(RequestTemplate::PREVIEW,
+                [&previewRequestSettings] (auto status, const auto& req) mutable {
+                    ASSERT_EQ(Status::OK, status);
+
+                    const camera_metadata_t *metadata = reinterpret_cast<const camera_metadata_t*> (
+                            req.data());
+                    size_t expectedSize = req.size();
+                    int result = validate_camera_metadata_structure(metadata, &expectedSize);
+                    ASSERT_TRUE((result == 0) || (result == CAMERA_METADATA_VALIDATION_SHIFTED));
+
+                    size_t entryCount = get_camera_metadata_entry_count(metadata);
+                    ASSERT_GT(entryCount, 0u);
+                    previewRequestSettings = metadata;
+                    });
+        ASSERT_TRUE(ret.isOk());
+        const android::hardware::camera::common::V1_0::helper::CameraMetadata &constSettings =
+            previewRequestSettings;
+        android::hardware::camera::common::V1_0::helper::CameraMetadata sessionParams;
+        for (size_t i = 0; i < availableSessionKeys.count; i++) {
+            camera_metadata_ro_entry entry = constSettings.find(availableSessionKeys.data.i32[i]);
+            if (entry.count > 0) {
+                sessionParams.update(entry);
+            }
+        }
+        if (sessionParams.isEmpty()) {
+            ret = session->close();
+            ASSERT_TRUE(ret.isOk());
+            continue;
+        }
+
+        ASSERT_EQ(Status::OK, getAvailableOutputStreams(staticMetaBuffer, outputPreviewStreams,
+                &previewThreshold));
+        ASSERT_NE(0u, outputPreviewStreams.size());
+
+        Stream previewStream = {0,
+                                StreamType::OUTPUT,
+                                static_cast<uint32_t>(outputPreviewStreams[0].width),
+                                static_cast<uint32_t>(outputPreviewStreams[0].height),
+                                static_cast<PixelFormat>(outputPreviewStreams[0].format),
+                                GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
+                                0,
+                                StreamRotation::ROTATION_0};
+        ::android::hardware::hidl_vec<Stream> streams = {previewStream};
+        ::android::hardware::camera::device::V3_4::StreamConfiguration config;
+        config.v3_2 = {streams, StreamConfigurationMode::NORMAL_MODE};
+        const camera_metadata_t *sessionParamsBuffer = sessionParams.getAndLock();
+        config.sessionParams.setToExternal(
+                reinterpret_cast<uint8_t *> (const_cast<camera_metadata_t *> (sessionParamsBuffer)),
+                get_camera_metadata_size(sessionParamsBuffer));
+        ret = session3_4->configureStreams_3_4(config,
+                [](Status s, device::V3_3::HalStreamConfiguration halConfig) {
+                    ASSERT_EQ(Status::OK, s);
+                    ASSERT_EQ(1u, halConfig.streams.size());
+                });
+        ASSERT_TRUE(ret.isOk());
+
+        sessionParams.unlock(sessionParamsBuffer);
+        ret = session->close();
+        ASSERT_TRUE(ret.isOk());
     }
 }
 
@@ -2626,82 +2761,82 @@ TEST_F(CameraHidlTest, configureStreamsPreviewStillOutputs) {
 
     for (const auto& name : cameraDeviceNames) {
         int deviceVersion = getCameraDeviceVersion(name, mProviderType);
-        switch (deviceVersion) {
-            case CAMERA_DEVICE_API_VERSION_3_3:
-            case CAMERA_DEVICE_API_VERSION_3_2: {
-                camera_metadata_t* staticMeta;
-                Return<void> ret;
-                sp<ICameraDeviceSession> session;
-                sp<device::V3_3::ICameraDeviceSession> session3_3;
-                openEmptyDeviceSession(name, mProvider,
-                        &session /*out*/, &session3_3 /*out*/, &staticMeta /*out*/);
+        if (deviceVersion == CAMERA_DEVICE_API_VERSION_1_0) {
+            continue;
+        } else if (deviceVersion <= 0) {
+            ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
+            ADD_FAILURE();
+            return;
+        }
 
-                outputBlobStreams.clear();
-                ASSERT_EQ(Status::OK,
-                          getAvailableOutputStreams(staticMeta, outputBlobStreams,
-                                  &blobThreshold));
-                ASSERT_NE(0u, outputBlobStreams.size());
+        camera_metadata_t* staticMeta;
+        Return<void> ret;
+        sp<ICameraDeviceSession> session;
+        sp<device::V3_3::ICameraDeviceSession> session3_3;
+        sp<device::V3_4::ICameraDeviceSession> session3_4;
+        openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMeta /*out*/);
+        castSession(session, deviceVersion, &session3_3, &session3_4);
 
-                outputPreviewStreams.clear();
-                ASSERT_EQ(Status::OK, getAvailableOutputStreams(staticMeta, outputPreviewStreams,
-                        &previewThreshold));
-                ASSERT_NE(0u, outputPreviewStreams.size());
+        outputBlobStreams.clear();
+        ASSERT_EQ(Status::OK,
+                  getAvailableOutputStreams(staticMeta, outputBlobStreams,
+                          &blobThreshold));
+        ASSERT_NE(0u, outputBlobStreams.size());
 
-                int32_t streamId = 0;
-                for (auto& blobIter : outputBlobStreams) {
-                    for (auto& previewIter : outputPreviewStreams) {
-                        Stream previewStream = {streamId++,
-                                                StreamType::OUTPUT,
-                                                static_cast<uint32_t>(previewIter.width),
-                                                static_cast<uint32_t>(previewIter.height),
-                                                static_cast<PixelFormat>(previewIter.format),
-                                                GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
-                                                0,
-                                                StreamRotation::ROTATION_0};
-                        Stream blobStream = {streamId++,
-                                             StreamType::OUTPUT,
-                                             static_cast<uint32_t>(blobIter.width),
-                                             static_cast<uint32_t>(blobIter.height),
-                                             static_cast<PixelFormat>(blobIter.format),
-                                             GRALLOC1_CONSUMER_USAGE_CPU_READ,
-                                             0,
-                                             StreamRotation::ROTATION_0};
-                        ::android::hardware::hidl_vec<Stream> streams = {previewStream,
-                                                                         blobStream};
-                        StreamConfiguration config = {streams,
-                                                      StreamConfigurationMode::NORMAL_MODE};
-                        if (session3_3 == nullptr) {
-                            ret = session->configureStreams(config,
-                                    [](Status s, HalStreamConfiguration halConfig) {
-                                        ASSERT_EQ(Status::OK, s);
-                                        ASSERT_EQ(2u, halConfig.streams.size());
-                                    });
-                        } else {
-                            ret = session3_3->configureStreams_3_3(config,
-                                    [](Status s, device::V3_3::HalStreamConfiguration halConfig) {
-                                        ASSERT_EQ(Status::OK, s);
-                                        ASSERT_EQ(2u, halConfig.streams.size());
-                                    });
-                        }
-                        ASSERT_TRUE(ret.isOk());
-                    }
+        outputPreviewStreams.clear();
+        ASSERT_EQ(Status::OK, getAvailableOutputStreams(staticMeta, outputPreviewStreams,
+                &previewThreshold));
+        ASSERT_NE(0u, outputPreviewStreams.size());
+
+        int32_t streamId = 0;
+        for (auto& blobIter : outputBlobStreams) {
+            for (auto& previewIter : outputPreviewStreams) {
+                Stream previewStream = {streamId++,
+                                        StreamType::OUTPUT,
+                                        static_cast<uint32_t>(previewIter.width),
+                                        static_cast<uint32_t>(previewIter.height),
+                                        static_cast<PixelFormat>(previewIter.format),
+                                        GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
+                                        0,
+                                        StreamRotation::ROTATION_0};
+                Stream blobStream = {streamId++,
+                                     StreamType::OUTPUT,
+                                     static_cast<uint32_t>(blobIter.width),
+                                     static_cast<uint32_t>(blobIter.height),
+                                     static_cast<PixelFormat>(blobIter.format),
+                                     GRALLOC1_CONSUMER_USAGE_CPU_READ,
+                                     0,
+                                     StreamRotation::ROTATION_0};
+                ::android::hardware::hidl_vec<Stream> streams = {previewStream,
+                                                                 blobStream};
+                ::android::hardware::camera::device::V3_4::StreamConfiguration config;
+                config.v3_2 = {streams, StreamConfigurationMode::NORMAL_MODE};
+                if (session3_4 != nullptr) {
+                    ret = session3_4->configureStreams_3_4(config,
+                            [](Status s, device::V3_3::HalStreamConfiguration halConfig) {
+                                ASSERT_EQ(Status::OK, s);
+                                ASSERT_EQ(2u, halConfig.streams.size());
+                            });
+                } else if (session3_3 != nullptr) {
+                    ret = session3_3->configureStreams_3_3(config.v3_2,
+                            [](Status s, device::V3_3::HalStreamConfiguration halConfig) {
+                                ASSERT_EQ(Status::OK, s);
+                                ASSERT_EQ(2u, halConfig.streams.size());
+                            });
+                } else {
+                    ret = session->configureStreams(config.v3_2,
+                            [](Status s, HalStreamConfiguration halConfig) {
+                                ASSERT_EQ(Status::OK, s);
+                                ASSERT_EQ(2u, halConfig.streams.size());
+                            });
                 }
-
-                free_camera_metadata(staticMeta);
-                ret = session->close();
                 ASSERT_TRUE(ret.isOk());
             }
-            break;
-            case CAMERA_DEVICE_API_VERSION_1_0: {
-                //Not applicable
-            }
-            break;
-            default: {
-                ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
-                ADD_FAILURE();
-            }
-            break;
         }
+
+        free_camera_metadata(staticMeta);
+        ret = session->close();
+        ASSERT_TRUE(ret.isOk());
     }
 }
 
@@ -2713,143 +2848,160 @@ TEST_F(CameraHidlTest, configureStreamsConstrainedOutputs) {
 
     for (const auto& name : cameraDeviceNames) {
         int deviceVersion = getCameraDeviceVersion(name, mProviderType);
-        switch (deviceVersion) {
-            case CAMERA_DEVICE_API_VERSION_3_3:
-            case CAMERA_DEVICE_API_VERSION_3_2: {
-                camera_metadata_t* staticMeta;
-                Return<void> ret;
-                sp<ICameraDeviceSession> session;
-                sp<device::V3_3::ICameraDeviceSession> session3_3;
-                openEmptyDeviceSession(name, mProvider,
-                        &session /*out*/, &session3_3 /*out*/, &staticMeta /*out*/);
-
-                Status rc = isConstrainedModeAvailable(staticMeta);
-                if (Status::METHOD_NOT_SUPPORTED == rc) {
-                    ret = session->close();
-                    ASSERT_TRUE(ret.isOk());
-                    continue;
-                }
-                ASSERT_EQ(Status::OK, rc);
-
-                AvailableStream hfrStream;
-                rc = pickConstrainedModeSize(staticMeta, hfrStream);
-                ASSERT_EQ(Status::OK, rc);
-
-                int32_t streamId = 0;
-                Stream stream = {streamId,
-                                 StreamType::OUTPUT,
-                                 static_cast<uint32_t>(hfrStream.width),
-                                 static_cast<uint32_t>(hfrStream.height),
-                                 static_cast<PixelFormat>(hfrStream.format),
-                                 GRALLOC1_CONSUMER_USAGE_VIDEO_ENCODER,
-                                 0,
-                                 StreamRotation::ROTATION_0};
-                ::android::hardware::hidl_vec<Stream> streams = {stream};
-                StreamConfiguration config = {streams,
-                                              StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE};
-                if (session3_3 == nullptr) {
-                    ret = session->configureStreams(config,
-                            [streamId](Status s, HalStreamConfiguration halConfig) {
-                                ASSERT_EQ(Status::OK, s);
-                                ASSERT_EQ(1u, halConfig.streams.size());
-                                ASSERT_EQ(halConfig.streams[0].id, streamId);
-                            });
-                } else {
-                    ret = session3_3->configureStreams_3_3(config,
-                            [streamId](Status s, device::V3_3::HalStreamConfiguration halConfig) {
-                                ASSERT_EQ(Status::OK, s);
-                                ASSERT_EQ(1u, halConfig.streams.size());
-                                ASSERT_EQ(halConfig.streams[0].v3_2.id, streamId);
-                            });
-                }
-                ASSERT_TRUE(ret.isOk());
-
-                stream = {streamId++,
-                          StreamType::OUTPUT,
-                          static_cast<uint32_t>(0),
-                          static_cast<uint32_t>(0),
-                          static_cast<PixelFormat>(hfrStream.format),
-                          GRALLOC1_CONSUMER_USAGE_VIDEO_ENCODER,
-                          0,
-                          StreamRotation::ROTATION_0};
-                streams[0] = stream;
-                config = {streams, StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE};
-                if (session3_3 == nullptr) {
-                    ret = session->configureStreams(config,
-                            [](Status s, HalStreamConfiguration) {
-                                ASSERT_TRUE((Status::ILLEGAL_ARGUMENT == s) ||
-                                        (Status::INTERNAL_ERROR == s));
-                            });
-                } else {
-                    ret = session3_3->configureStreams_3_3(config,
-                            [](Status s, device::V3_3::HalStreamConfiguration) {
-                                ASSERT_TRUE((Status::ILLEGAL_ARGUMENT == s) ||
-                                        (Status::INTERNAL_ERROR == s));
-                            });
-                }
-                ASSERT_TRUE(ret.isOk());
-
-                stream = {streamId++,
-                          StreamType::OUTPUT,
-                          static_cast<uint32_t>(UINT32_MAX),
-                          static_cast<uint32_t>(UINT32_MAX),
-                          static_cast<PixelFormat>(hfrStream.format),
-                          GRALLOC1_CONSUMER_USAGE_VIDEO_ENCODER,
-                          0,
-                          StreamRotation::ROTATION_0};
-                streams[0] = stream;
-                config = {streams, StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE};
-                if (session3_3 == nullptr) {
-                    ret = session->configureStreams(config,
-                            [](Status s, HalStreamConfiguration) {
-                                ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
-                            });
-                } else {
-                    ret = session3_3->configureStreams_3_3(config,
-                            [](Status s, device::V3_3::HalStreamConfiguration) {
-                                ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
-                            });
-                }
-                ASSERT_TRUE(ret.isOk());
-
-                stream = {streamId++,
-                          StreamType::OUTPUT,
-                          static_cast<uint32_t>(hfrStream.width),
-                          static_cast<uint32_t>(hfrStream.height),
-                          static_cast<PixelFormat>(UINT32_MAX),
-                          GRALLOC1_CONSUMER_USAGE_VIDEO_ENCODER,
-                          0,
-                          StreamRotation::ROTATION_0};
-                streams[0] = stream;
-                config = {streams, StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE};
-                if (session3_3 == nullptr) {
-                    ret = session->configureStreams(config,
-                            [](Status s, HalStreamConfiguration) {
-                                ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
-                            });
-                } else {
-                    ret = session3_3->configureStreams_3_3(config,
-                            [](Status s, device::V3_3::HalStreamConfiguration) {
-                                ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
-                            });
-                }
-                ASSERT_TRUE(ret.isOk());
-
-                free_camera_metadata(staticMeta);
-                ret = session->close();
-                ASSERT_TRUE(ret.isOk());
-            }
-            break;
-            case CAMERA_DEVICE_API_VERSION_1_0: {
-                //Not applicable
-            }
-            break;
-            default: {
-                ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
-                ADD_FAILURE();
-            }
-            break;
+        if (deviceVersion == CAMERA_DEVICE_API_VERSION_1_0) {
+            continue;
+        } else if (deviceVersion <= 0) {
+            ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
+            ADD_FAILURE();
+            return;
         }
+
+        camera_metadata_t* staticMeta;
+        Return<void> ret;
+        sp<ICameraDeviceSession> session;
+        sp<device::V3_3::ICameraDeviceSession> session3_3;
+        sp<device::V3_4::ICameraDeviceSession> session3_4;
+        openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMeta /*out*/);
+        castSession(session, deviceVersion, &session3_3, &session3_4);
+
+        Status rc = isConstrainedModeAvailable(staticMeta);
+        if (Status::METHOD_NOT_SUPPORTED == rc) {
+            ret = session->close();
+            ASSERT_TRUE(ret.isOk());
+            continue;
+        }
+        ASSERT_EQ(Status::OK, rc);
+
+        AvailableStream hfrStream;
+        rc = pickConstrainedModeSize(staticMeta, hfrStream);
+        ASSERT_EQ(Status::OK, rc);
+
+        int32_t streamId = 0;
+        Stream stream = {streamId,
+                         StreamType::OUTPUT,
+                         static_cast<uint32_t>(hfrStream.width),
+                         static_cast<uint32_t>(hfrStream.height),
+                         static_cast<PixelFormat>(hfrStream.format),
+                         GRALLOC1_CONSUMER_USAGE_VIDEO_ENCODER,
+                         0,
+                         StreamRotation::ROTATION_0};
+        ::android::hardware::hidl_vec<Stream> streams = {stream};
+        ::android::hardware::camera::device::V3_4::StreamConfiguration config;
+        config.v3_2 = {streams, StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE};
+        if (session3_4 != nullptr) {
+            ret = session3_4->configureStreams_3_4(config,
+                    [streamId](Status s, device::V3_3::HalStreamConfiguration halConfig) {
+                        ASSERT_EQ(Status::OK, s);
+                        ASSERT_EQ(1u, halConfig.streams.size());
+                        ASSERT_EQ(halConfig.streams[0].v3_2.id, streamId);
+                    });
+        } else if (session3_3 != nullptr) {
+            ret = session3_3->configureStreams_3_3(config.v3_2,
+                    [streamId](Status s, device::V3_3::HalStreamConfiguration halConfig) {
+                        ASSERT_EQ(Status::OK, s);
+                        ASSERT_EQ(1u, halConfig.streams.size());
+                        ASSERT_EQ(halConfig.streams[0].v3_2.id, streamId);
+                    });
+        } else {
+            ret = session->configureStreams(config.v3_2,
+                    [streamId](Status s, HalStreamConfiguration halConfig) {
+                        ASSERT_EQ(Status::OK, s);
+                        ASSERT_EQ(1u, halConfig.streams.size());
+                        ASSERT_EQ(halConfig.streams[0].id, streamId);
+                    });
+        }
+        ASSERT_TRUE(ret.isOk());
+
+        stream = {streamId++,
+                  StreamType::OUTPUT,
+                  static_cast<uint32_t>(0),
+                  static_cast<uint32_t>(0),
+                  static_cast<PixelFormat>(hfrStream.format),
+                  GRALLOC1_CONSUMER_USAGE_VIDEO_ENCODER,
+                  0,
+                  StreamRotation::ROTATION_0};
+        streams[0] = stream;
+        config.v3_2 = {streams, StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE};
+        if (session3_4 != nullptr) {
+            ret = session3_4->configureStreams_3_4(config,
+                    [](Status s, device::V3_3::HalStreamConfiguration) {
+                        ASSERT_TRUE((Status::ILLEGAL_ARGUMENT == s) ||
+                                (Status::INTERNAL_ERROR == s));
+                    });
+        } else if (session3_3 != nullptr) {
+            ret = session3_3->configureStreams_3_3(config.v3_2,
+                    [](Status s, device::V3_3::HalStreamConfiguration) {
+                        ASSERT_TRUE((Status::ILLEGAL_ARGUMENT == s) ||
+                                (Status::INTERNAL_ERROR == s));
+                    });
+        } else {
+            ret = session->configureStreams(config.v3_2,
+                    [](Status s, HalStreamConfiguration) {
+                        ASSERT_TRUE((Status::ILLEGAL_ARGUMENT == s) ||
+                                (Status::INTERNAL_ERROR == s));
+                    });
+        }
+        ASSERT_TRUE(ret.isOk());
+
+        stream = {streamId++,
+                  StreamType::OUTPUT,
+                  static_cast<uint32_t>(UINT32_MAX),
+                  static_cast<uint32_t>(UINT32_MAX),
+                  static_cast<PixelFormat>(hfrStream.format),
+                  GRALLOC1_CONSUMER_USAGE_VIDEO_ENCODER,
+                  0,
+                  StreamRotation::ROTATION_0};
+        streams[0] = stream;
+        config.v3_2 = {streams, StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE};
+        if (session3_4 != nullptr) {
+            ret = session3_4->configureStreams_3_4(config,
+                    [](Status s, device::V3_3::HalStreamConfiguration) {
+                        ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
+                    });
+        } else if (session3_3 != nullptr) {
+            ret = session3_3->configureStreams_3_3(config.v3_2,
+                    [](Status s, device::V3_3::HalStreamConfiguration) {
+                        ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
+                    });
+        } else {
+            ret = session->configureStreams(config.v3_2,
+                    [](Status s, HalStreamConfiguration) {
+                        ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
+                    });
+        }
+        ASSERT_TRUE(ret.isOk());
+
+        stream = {streamId++,
+                  StreamType::OUTPUT,
+                  static_cast<uint32_t>(hfrStream.width),
+                  static_cast<uint32_t>(hfrStream.height),
+                  static_cast<PixelFormat>(UINT32_MAX),
+                  GRALLOC1_CONSUMER_USAGE_VIDEO_ENCODER,
+                  0,
+                  StreamRotation::ROTATION_0};
+        streams[0] = stream;
+        config.v3_2 = {streams, StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE};
+        if (session3_4 != nullptr) {
+            ret = session3_4->configureStreams_3_4(config,
+                    [](Status s, device::V3_3::HalStreamConfiguration) {
+                        ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
+                    });
+        } else if (session3_3 != nullptr) {
+            ret = session3_3->configureStreams_3_3(config.v3_2,
+                    [](Status s, device::V3_3::HalStreamConfiguration) {
+                        ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
+                    });
+        } else {
+            ret = session->configureStreams(config.v3_2,
+                    [](Status s, HalStreamConfiguration) {
+                        ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
+                    });
+        }
+        ASSERT_TRUE(ret.isOk());
+
+        free_camera_metadata(staticMeta);
+        ret = session->close();
+        ASSERT_TRUE(ret.isOk());
     }
 }
 
@@ -2866,82 +3018,82 @@ TEST_F(CameraHidlTest, configureStreamsVideoStillOutputs) {
 
     for (const auto& name : cameraDeviceNames) {
         int deviceVersion = getCameraDeviceVersion(name, mProviderType);
-        switch (deviceVersion) {
-            case CAMERA_DEVICE_API_VERSION_3_3:
-            case CAMERA_DEVICE_API_VERSION_3_2: {
-                camera_metadata_t* staticMeta;
-                Return<void> ret;
-                sp<ICameraDeviceSession> session;
-                sp<device::V3_3::ICameraDeviceSession> session3_3;
-                openEmptyDeviceSession(name, mProvider,
-                        &session /*out*/, &session3_3 /*out*/, &staticMeta /*out*/);
+        if (deviceVersion == CAMERA_DEVICE_API_VERSION_1_0) {
+            continue;
+        } else if (deviceVersion <= 0) {
+            ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
+            ADD_FAILURE();
+            return;
+        }
 
-                outputBlobStreams.clear();
-                ASSERT_EQ(Status::OK,
-                          getAvailableOutputStreams(staticMeta, outputBlobStreams,
-                                  &blobThreshold));
-                ASSERT_NE(0u, outputBlobStreams.size());
+        camera_metadata_t* staticMeta;
+        Return<void> ret;
+        sp<ICameraDeviceSession> session;
+        sp<device::V3_3::ICameraDeviceSession> session3_3;
+        sp<device::V3_4::ICameraDeviceSession> session3_4;
+        openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMeta /*out*/);
+        castSession(session, deviceVersion, &session3_3, &session3_4);
 
-                outputVideoStreams.clear();
-                ASSERT_EQ(Status::OK,
-                          getAvailableOutputStreams(staticMeta, outputVideoStreams,
-                                  &videoThreshold));
-                ASSERT_NE(0u, outputVideoStreams.size());
+        outputBlobStreams.clear();
+        ASSERT_EQ(Status::OK,
+                  getAvailableOutputStreams(staticMeta, outputBlobStreams,
+                          &blobThreshold));
+        ASSERT_NE(0u, outputBlobStreams.size());
 
-                int32_t streamId = 0;
-                for (auto& blobIter : outputBlobStreams) {
-                    for (auto& videoIter : outputVideoStreams) {
-                        Stream videoStream = {streamId++,
-                                              StreamType::OUTPUT,
-                                              static_cast<uint32_t>(videoIter.width),
-                                              static_cast<uint32_t>(videoIter.height),
-                                              static_cast<PixelFormat>(videoIter.format),
-                                              GRALLOC1_CONSUMER_USAGE_VIDEO_ENCODER,
-                                              0,
-                                              StreamRotation::ROTATION_0};
-                        Stream blobStream = {streamId++,
-                                             StreamType::OUTPUT,
-                                             static_cast<uint32_t>(blobIter.width),
-                                             static_cast<uint32_t>(blobIter.height),
-                                             static_cast<PixelFormat>(blobIter.format),
-                                             GRALLOC1_CONSUMER_USAGE_CPU_READ,
-                                             0,
-                                             StreamRotation::ROTATION_0};
-                        ::android::hardware::hidl_vec<Stream> streams = {videoStream, blobStream};
-                        StreamConfiguration config = {streams,
-                                                      StreamConfigurationMode::NORMAL_MODE};
-                        if (session3_3 == nullptr) {
-                            ret = session->configureStreams(config,
-                                    [](Status s, HalStreamConfiguration halConfig) {
-                                        ASSERT_EQ(Status::OK, s);
-                                        ASSERT_EQ(2u, halConfig.streams.size());
-                                    });
-                        } else {
-                            ret = session3_3->configureStreams_3_3(config,
-                                    [](Status s, device::V3_3::HalStreamConfiguration halConfig) {
-                                        ASSERT_EQ(Status::OK, s);
-                                        ASSERT_EQ(2u, halConfig.streams.size());
-                                    });
-                        }
-                        ASSERT_TRUE(ret.isOk());
-                    }
+        outputVideoStreams.clear();
+        ASSERT_EQ(Status::OK,
+                  getAvailableOutputStreams(staticMeta, outputVideoStreams,
+                          &videoThreshold));
+        ASSERT_NE(0u, outputVideoStreams.size());
+
+        int32_t streamId = 0;
+        for (auto& blobIter : outputBlobStreams) {
+            for (auto& videoIter : outputVideoStreams) {
+                Stream videoStream = {streamId++,
+                                      StreamType::OUTPUT,
+                                      static_cast<uint32_t>(videoIter.width),
+                                      static_cast<uint32_t>(videoIter.height),
+                                      static_cast<PixelFormat>(videoIter.format),
+                                      GRALLOC1_CONSUMER_USAGE_VIDEO_ENCODER,
+                                      0,
+                                      StreamRotation::ROTATION_0};
+                Stream blobStream = {streamId++,
+                                     StreamType::OUTPUT,
+                                     static_cast<uint32_t>(blobIter.width),
+                                     static_cast<uint32_t>(blobIter.height),
+                                     static_cast<PixelFormat>(blobIter.format),
+                                     GRALLOC1_CONSUMER_USAGE_CPU_READ,
+                                     0,
+                                     StreamRotation::ROTATION_0};
+                ::android::hardware::hidl_vec<Stream> streams = {videoStream, blobStream};
+                ::android::hardware::camera::device::V3_4::StreamConfiguration config;
+                config.v3_2 = {streams, StreamConfigurationMode::NORMAL_MODE};
+                if (session3_4 != nullptr) {
+                    ret = session3_4->configureStreams_3_4(config,
+                            [](Status s, device::V3_3::HalStreamConfiguration halConfig) {
+                                ASSERT_EQ(Status::OK, s);
+                                ASSERT_EQ(2u, halConfig.streams.size());
+                            });
+                } else if (session3_3 != nullptr) {
+                    ret = session3_3->configureStreams_3_3(config.v3_2,
+                            [](Status s, device::V3_3::HalStreamConfiguration halConfig) {
+                                ASSERT_EQ(Status::OK, s);
+                                ASSERT_EQ(2u, halConfig.streams.size());
+                            });
+                } else {
+                    ret = session->configureStreams(config.v3_2,
+                            [](Status s, HalStreamConfiguration halConfig) {
+                                ASSERT_EQ(Status::OK, s);
+                                ASSERT_EQ(2u, halConfig.streams.size());
+                            });
                 }
-
-                free_camera_metadata(staticMeta);
-                ret = session->close();
                 ASSERT_TRUE(ret.isOk());
             }
-            break;
-            case CAMERA_DEVICE_API_VERSION_1_0: {
-                //Not applicable
-            }
-            break;
-            default: {
-                ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
-                ADD_FAILURE();
-            }
-            break;
         }
+
+        free_camera_metadata(staticMeta);
+        ret = session->close();
+        ASSERT_TRUE(ret.isOk());
     }
 }
 
@@ -2956,152 +3108,145 @@ TEST_F(CameraHidlTest, processCaptureRequestPreview) {
 
     for (const auto& name : cameraDeviceNames) {
         int deviceVersion = getCameraDeviceVersion(name, mProviderType);
-        switch (deviceVersion) {
-            case CAMERA_DEVICE_API_VERSION_3_3:
-            case CAMERA_DEVICE_API_VERSION_3_2: {
-                Stream previewStream;
-                HalStreamConfiguration halStreamConfig;
-                sp<ICameraDeviceSession> session;
-                bool supportsPartialResults = false;
-                uint32_t partialResultCount = 0;
-                configurePreviewStream(name, mProvider, &previewThreshold, &session /*out*/,
-                                       &previewStream /*out*/, &halStreamConfig /*out*/,
-                                       &supportsPartialResults /*out*/,
-                                       &partialResultCount /*out*/);
-
-                std::shared_ptr<ResultMetadataQueue> resultQueue;
-                auto resultQueueRet =
-                    session->getCaptureResultMetadataQueue(
-                        [&resultQueue](const auto& descriptor) {
-                            resultQueue = std::make_shared<ResultMetadataQueue>(
-                                    descriptor);
-                            if (!resultQueue->isValid() ||
-                                    resultQueue->availableToWrite() <= 0) {
-                                ALOGE("%s: HAL returns empty result metadata fmq,"
-                                        " not use it", __func__);
-                                resultQueue = nullptr;
-                                // Don't use the queue onwards.
-                            }
-                        });
-                ASSERT_TRUE(resultQueueRet.isOk());
-
-                InFlightRequest inflightReq = {1, false, supportsPartialResults,
-                                               partialResultCount, resultQueue};
-
-                RequestTemplate reqTemplate = RequestTemplate::PREVIEW;
-                Return<void> ret;
-                ret = session->constructDefaultRequestSettings(reqTemplate,
-                                                               [&](auto status, const auto& req) {
-                                                                   ASSERT_EQ(Status::OK, status);
-                                                                   settings = req;
-                                                               });
-                ASSERT_TRUE(ret.isOk());
-
-                sp<GraphicBuffer> gb = new GraphicBuffer(
-                    previewStream.width, previewStream.height,
-                    static_cast<int32_t>(halStreamConfig.streams[0].overrideFormat), 1,
-                    android_convertGralloc1To0Usage(halStreamConfig.streams[0].producerUsage,
-                                                    halStreamConfig.streams[0].consumerUsage));
-                ASSERT_NE(nullptr, gb.get());
-                StreamBuffer outputBuffer = {halStreamConfig.streams[0].id,
-                                             bufferId,
-                                             hidl_handle(gb->getNativeBuffer()->handle),
-                                             BufferStatus::OK,
-                                             nullptr,
-                                             nullptr};
-                ::android::hardware::hidl_vec<StreamBuffer> outputBuffers = {outputBuffer};
-                StreamBuffer emptyInputBuffer = {-1, 0, nullptr, BufferStatus::ERROR, nullptr,
-                                                 nullptr};
-                CaptureRequest request = {frameNumber, 0 /* fmqSettingsSize */, settings,
-                                          emptyInputBuffer, outputBuffers};
-
-                {
-                    std::unique_lock<std::mutex> l(mLock);
-                    mInflightMap.clear();
-                    mInflightMap.add(frameNumber, &inflightReq);
-                }
-
-                Status status = Status::INTERNAL_ERROR;
-                uint32_t numRequestProcessed = 0;
-                hidl_vec<BufferCache> cachesToRemove;
-                Return<void> returnStatus = session->processCaptureRequest(
-                    {request}, cachesToRemove, [&status, &numRequestProcessed](auto s,
-                            uint32_t n) {
-                        status = s;
-                        numRequestProcessed = n;
-                    });
-                ASSERT_TRUE(returnStatus.isOk());
-                ASSERT_EQ(Status::OK, status);
-                ASSERT_EQ(numRequestProcessed, 1u);
-
-                {
-                    std::unique_lock<std::mutex> l(mLock);
-                    while (!inflightReq.errorCodeValid &&
-                           ((0 < inflightReq.numBuffersLeft) ||
-                                   (!inflightReq.haveResultMetadata))) {
-                        auto timeout = std::chrono::system_clock::now() +
-                                       std::chrono::seconds(kStreamBufferTimeoutSec);
-                        ASSERT_NE(std::cv_status::timeout,
-                                mResultCondition.wait_until(l, timeout));
-                    }
-
-                    ASSERT_FALSE(inflightReq.errorCodeValid);
-                    ASSERT_NE(inflightReq.resultOutputBuffers.size(), 0u);
-                    ASSERT_EQ(previewStream.id, inflightReq.resultOutputBuffers[0].streamId);
-
-                    request.frameNumber++;
-                    // Empty settings should be supported after the first call
-                    // for repeating requests.
-                    request.settings.setToExternal(nullptr, 0, true);
-                    // The buffer has been registered to HAL by bufferId, so per
-                    // API contract we should send a null handle for this buffer
-                    request.outputBuffers[0].buffer = nullptr;
-                    mInflightMap.clear();
-                    inflightReq = {1, false, supportsPartialResults, partialResultCount,
-                                   resultQueue};
-                    mInflightMap.add(request.frameNumber, &inflightReq);
-                }
-
-                returnStatus = session->processCaptureRequest(
-                    {request}, cachesToRemove, [&status, &numRequestProcessed](auto s,
-                            uint32_t n) {
-                        status = s;
-                        numRequestProcessed = n;
-                    });
-                ASSERT_TRUE(returnStatus.isOk());
-                ASSERT_EQ(Status::OK, status);
-                ASSERT_EQ(numRequestProcessed, 1u);
-
-                {
-                    std::unique_lock<std::mutex> l(mLock);
-                    while (!inflightReq.errorCodeValid &&
-                           ((0 < inflightReq.numBuffersLeft) ||
-                                   (!inflightReq.haveResultMetadata))) {
-                        auto timeout = std::chrono::system_clock::now() +
-                                       std::chrono::seconds(kStreamBufferTimeoutSec);
-                        ASSERT_NE(std::cv_status::timeout,
-                                mResultCondition.wait_until(l, timeout));
-                    }
-
-                    ASSERT_FALSE(inflightReq.errorCodeValid);
-                    ASSERT_NE(inflightReq.resultOutputBuffers.size(), 0u);
-                    ASSERT_EQ(previewStream.id, inflightReq.resultOutputBuffers[0].streamId);
-                }
-
-                ret = session->close();
-                ASSERT_TRUE(ret.isOk());
-            }
-            break;
-            case CAMERA_DEVICE_API_VERSION_1_0: {
-                //Not applicable
-            }
-            break;
-            default: {
-                ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
-                ADD_FAILURE();
-            }
-            break;
+        if (deviceVersion == CAMERA_DEVICE_API_VERSION_1_0) {
+            continue;
+        } else if (deviceVersion <= 0) {
+            ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
+            ADD_FAILURE();
+            return;
         }
+
+        Stream previewStream;
+        HalStreamConfiguration halStreamConfig;
+        sp<ICameraDeviceSession> session;
+        bool supportsPartialResults = false;
+        uint32_t partialResultCount = 0;
+        configurePreviewStream(name, deviceVersion, mProvider, &previewThreshold, &session /*out*/,
+                &previewStream /*out*/, &halStreamConfig /*out*/,
+                &supportsPartialResults /*out*/,
+                &partialResultCount /*out*/);
+
+        std::shared_ptr<ResultMetadataQueue> resultQueue;
+        auto resultQueueRet =
+            session->getCaptureResultMetadataQueue(
+                [&resultQueue](const auto& descriptor) {
+                    resultQueue = std::make_shared<ResultMetadataQueue>(
+                            descriptor);
+                    if (!resultQueue->isValid() ||
+                            resultQueue->availableToWrite() <= 0) {
+                        ALOGE("%s: HAL returns empty result metadata fmq,"
+                                " not use it", __func__);
+                        resultQueue = nullptr;
+                        // Don't use the queue onwards.
+                    }
+                });
+        ASSERT_TRUE(resultQueueRet.isOk());
+
+        InFlightRequest inflightReq = {1, false, supportsPartialResults,
+                                       partialResultCount, resultQueue};
+
+        RequestTemplate reqTemplate = RequestTemplate::PREVIEW;
+        Return<void> ret;
+        ret = session->constructDefaultRequestSettings(reqTemplate,
+                                                       [&](auto status, const auto& req) {
+                                                           ASSERT_EQ(Status::OK, status);
+                                                           settings = req;
+                                                       });
+        ASSERT_TRUE(ret.isOk());
+
+        sp<GraphicBuffer> gb = new GraphicBuffer(
+            previewStream.width, previewStream.height,
+            static_cast<int32_t>(halStreamConfig.streams[0].overrideFormat), 1,
+            android_convertGralloc1To0Usage(halStreamConfig.streams[0].producerUsage,
+                                            halStreamConfig.streams[0].consumerUsage));
+        ASSERT_NE(nullptr, gb.get());
+        StreamBuffer outputBuffer = {halStreamConfig.streams[0].id,
+                                     bufferId,
+                                     hidl_handle(gb->getNativeBuffer()->handle),
+                                     BufferStatus::OK,
+                                     nullptr,
+                                     nullptr};
+        ::android::hardware::hidl_vec<StreamBuffer> outputBuffers = {outputBuffer};
+        StreamBuffer emptyInputBuffer = {-1, 0, nullptr, BufferStatus::ERROR, nullptr,
+                                         nullptr};
+        CaptureRequest request = {frameNumber, 0 /* fmqSettingsSize */, settings,
+                                  emptyInputBuffer, outputBuffers};
+
+        {
+            std::unique_lock<std::mutex> l(mLock);
+            mInflightMap.clear();
+            mInflightMap.add(frameNumber, &inflightReq);
+        }
+
+        Status status = Status::INTERNAL_ERROR;
+        uint32_t numRequestProcessed = 0;
+        hidl_vec<BufferCache> cachesToRemove;
+        Return<void> returnStatus = session->processCaptureRequest(
+            {request}, cachesToRemove, [&status, &numRequestProcessed](auto s,
+                    uint32_t n) {
+                status = s;
+                numRequestProcessed = n;
+            });
+        ASSERT_TRUE(returnStatus.isOk());
+        ASSERT_EQ(Status::OK, status);
+        ASSERT_EQ(numRequestProcessed, 1u);
+
+        {
+            std::unique_lock<std::mutex> l(mLock);
+            while (!inflightReq.errorCodeValid &&
+                   ((0 < inflightReq.numBuffersLeft) ||
+                           (!inflightReq.haveResultMetadata))) {
+                auto timeout = std::chrono::system_clock::now() +
+                               std::chrono::seconds(kStreamBufferTimeoutSec);
+                ASSERT_NE(std::cv_status::timeout,
+                        mResultCondition.wait_until(l, timeout));
+            }
+
+            ASSERT_FALSE(inflightReq.errorCodeValid);
+            ASSERT_NE(inflightReq.resultOutputBuffers.size(), 0u);
+            ASSERT_EQ(previewStream.id, inflightReq.resultOutputBuffers[0].streamId);
+
+            request.frameNumber++;
+            // Empty settings should be supported after the first call
+            // for repeating requests.
+            request.settings.setToExternal(nullptr, 0, true);
+            // The buffer has been registered to HAL by bufferId, so per
+            // API contract we should send a null handle for this buffer
+            request.outputBuffers[0].buffer = nullptr;
+            mInflightMap.clear();
+            inflightReq = {1, false, supportsPartialResults, partialResultCount,
+                           resultQueue};
+            mInflightMap.add(request.frameNumber, &inflightReq);
+        }
+
+        returnStatus = session->processCaptureRequest(
+            {request}, cachesToRemove, [&status, &numRequestProcessed](auto s,
+                    uint32_t n) {
+                status = s;
+                numRequestProcessed = n;
+            });
+        ASSERT_TRUE(returnStatus.isOk());
+        ASSERT_EQ(Status::OK, status);
+        ASSERT_EQ(numRequestProcessed, 1u);
+
+        {
+            std::unique_lock<std::mutex> l(mLock);
+            while (!inflightReq.errorCodeValid &&
+                   ((0 < inflightReq.numBuffersLeft) ||
+                           (!inflightReq.haveResultMetadata))) {
+                auto timeout = std::chrono::system_clock::now() +
+                               std::chrono::seconds(kStreamBufferTimeoutSec);
+                ASSERT_NE(std::cv_status::timeout,
+                        mResultCondition.wait_until(l, timeout));
+            }
+
+            ASSERT_FALSE(inflightReq.errorCodeValid);
+            ASSERT_NE(inflightReq.resultOutputBuffers.size(), 0u);
+            ASSERT_EQ(previewStream.id, inflightReq.resultOutputBuffers[0].streamId);
+        }
+
+        ret = session->close();
+        ASSERT_TRUE(ret.isOk());
     }
 }
 
@@ -3118,65 +3263,58 @@ TEST_F(CameraHidlTest, processCaptureRequestInvalidSinglePreview) {
 
     for (const auto& name : cameraDeviceNames) {
         int deviceVersion = getCameraDeviceVersion(name, mProviderType);
-        switch (deviceVersion) {
-            case CAMERA_DEVICE_API_VERSION_3_3:
-            case CAMERA_DEVICE_API_VERSION_3_2: {
-                Stream previewStream;
-                HalStreamConfiguration halStreamConfig;
-                sp<ICameraDeviceSession> session;
-                bool supportsPartialResults = false;
-                uint32_t partialResultCount = 0;
-                configurePreviewStream(name, mProvider, &previewThreshold, &session /*out*/,
-                                       &previewStream /*out*/, &halStreamConfig /*out*/,
-                                       &supportsPartialResults /*out*/,
-                                       &partialResultCount /*out*/);
-
-                sp<GraphicBuffer> gb = new GraphicBuffer(
-                    previewStream.width, previewStream.height,
-                    static_cast<int32_t>(halStreamConfig.streams[0].overrideFormat), 1,
-                    android_convertGralloc1To0Usage(halStreamConfig.streams[0].producerUsage,
-                                                    halStreamConfig.streams[0].consumerUsage));
-
-                StreamBuffer outputBuffer = {halStreamConfig.streams[0].id,
-                                             bufferId,
-                                             hidl_handle(gb->getNativeBuffer()->handle),
-                                             BufferStatus::OK,
-                                             nullptr,
-                                             nullptr};
-                ::android::hardware::hidl_vec<StreamBuffer> outputBuffers = {outputBuffer};
-                StreamBuffer emptyInputBuffer = {-1, 0, nullptr, BufferStatus::ERROR, nullptr,
-                                                 nullptr};
-                CaptureRequest request = {frameNumber, 0 /* fmqSettingsSize */, settings,
-                                          emptyInputBuffer, outputBuffers};
-
-                // Settings were not correctly initialized, we should fail here
-                Status status = Status::OK;
-                uint32_t numRequestProcessed = 0;
-                hidl_vec<BufferCache> cachesToRemove;
-                Return<void> ret = session->processCaptureRequest(
-                    {request}, cachesToRemove, [&status, &numRequestProcessed](auto s,
-                            uint32_t n) {
-                        status = s;
-                        numRequestProcessed = n;
-                    });
-                ASSERT_TRUE(ret.isOk());
-                ASSERT_EQ(Status::ILLEGAL_ARGUMENT, status);
-                ASSERT_EQ(numRequestProcessed, 0u);
-
-                ret = session->close();
-                ASSERT_TRUE(ret.isOk());
-            }
-            break;
-            case CAMERA_DEVICE_API_VERSION_1_0: {
-                //Not applicable
-            }
-            break;
-            default: {
-                ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
-                ADD_FAILURE();
-            }
-            break;
+        if (deviceVersion == CAMERA_DEVICE_API_VERSION_1_0) {
+            continue;
+        } else if (deviceVersion <= 0) {
+            ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
+            ADD_FAILURE();
+            return;
         }
+
+        Stream previewStream;
+        HalStreamConfiguration halStreamConfig;
+        sp<ICameraDeviceSession> session;
+        bool supportsPartialResults = false;
+        uint32_t partialResultCount = 0;
+        configurePreviewStream(name, deviceVersion, mProvider, &previewThreshold, &session /*out*/,
+                &previewStream /*out*/, &halStreamConfig /*out*/,
+                &supportsPartialResults /*out*/,
+                &partialResultCount /*out*/);
+
+        sp<GraphicBuffer> gb = new GraphicBuffer(
+            previewStream.width, previewStream.height,
+            static_cast<int32_t>(halStreamConfig.streams[0].overrideFormat), 1,
+            android_convertGralloc1To0Usage(halStreamConfig.streams[0].producerUsage,
+                                            halStreamConfig.streams[0].consumerUsage));
+
+        StreamBuffer outputBuffer = {halStreamConfig.streams[0].id,
+                                     bufferId,
+                                     hidl_handle(gb->getNativeBuffer()->handle),
+                                     BufferStatus::OK,
+                                     nullptr,
+                                     nullptr};
+        ::android::hardware::hidl_vec<StreamBuffer> outputBuffers = {outputBuffer};
+        StreamBuffer emptyInputBuffer = {-1, 0, nullptr, BufferStatus::ERROR, nullptr,
+                                         nullptr};
+        CaptureRequest request = {frameNumber, 0 /* fmqSettingsSize */, settings,
+                                  emptyInputBuffer, outputBuffers};
+
+        // Settings were not correctly initialized, we should fail here
+        Status status = Status::OK;
+        uint32_t numRequestProcessed = 0;
+        hidl_vec<BufferCache> cachesToRemove;
+        Return<void> ret = session->processCaptureRequest(
+            {request}, cachesToRemove, [&status, &numRequestProcessed](auto s,
+                    uint32_t n) {
+                status = s;
+                numRequestProcessed = n;
+            });
+        ASSERT_TRUE(ret.isOk());
+        ASSERT_EQ(Status::ILLEGAL_ARGUMENT, status);
+        ASSERT_EQ(numRequestProcessed, 0u);
+
+        ret = session->close();
+        ASSERT_TRUE(ret.isOk());
     }
 }
 
@@ -3192,62 +3330,55 @@ TEST_F(CameraHidlTest, processCaptureRequestInvalidBuffer) {
 
     for (const auto& name : cameraDeviceNames) {
         int deviceVersion = getCameraDeviceVersion(name, mProviderType);
-        switch (deviceVersion) {
-            case CAMERA_DEVICE_API_VERSION_3_3:
-            case CAMERA_DEVICE_API_VERSION_3_2: {
-                Stream previewStream;
-                HalStreamConfiguration halStreamConfig;
-                sp<ICameraDeviceSession> session;
-                bool supportsPartialResults = false;
-                uint32_t partialResultCount = 0;
-                configurePreviewStream(name, mProvider, &previewThreshold, &session /*out*/,
-                                       &previewStream /*out*/, &halStreamConfig /*out*/,
-                                       &supportsPartialResults /*out*/,
-                                       &partialResultCount /*out*/);
-
-                RequestTemplate reqTemplate = RequestTemplate::PREVIEW;
-                Return<void> ret;
-                ret = session->constructDefaultRequestSettings(reqTemplate,
-                                                               [&](auto status, const auto& req) {
-                                                                   ASSERT_EQ(Status::OK, status);
-                                                                   settings = req;
-                                                               });
-                ASSERT_TRUE(ret.isOk());
-
-                ::android::hardware::hidl_vec<StreamBuffer> emptyOutputBuffers;
-                StreamBuffer emptyInputBuffer = {-1, 0, nullptr, BufferStatus::ERROR, nullptr,
-                                                 nullptr};
-                CaptureRequest request = {frameNumber, 0 /* fmqSettingsSize */, settings,
-                                          emptyInputBuffer, emptyOutputBuffers};
-
-                // Output buffers are missing, we should fail here
-                Status status = Status::OK;
-                uint32_t numRequestProcessed = 0;
-                hidl_vec<BufferCache> cachesToRemove;
-                ret = session->processCaptureRequest(
-                    {request}, cachesToRemove, [&status, &numRequestProcessed](auto s,
-                            uint32_t n) {
-                        status = s;
-                        numRequestProcessed = n;
-                    });
-                ASSERT_TRUE(ret.isOk());
-                ASSERT_EQ(Status::ILLEGAL_ARGUMENT, status);
-                ASSERT_EQ(numRequestProcessed, 0u);
-
-                ret = session->close();
-                ASSERT_TRUE(ret.isOk());
-            }
-            break;
-            case CAMERA_DEVICE_API_VERSION_1_0: {
-                //Not applicable
-            }
-            break;
-            default: {
-                ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
-                ADD_FAILURE();
-            }
-            break;
+        if (deviceVersion == CAMERA_DEVICE_API_VERSION_1_0) {
+            continue;
+        } else if (deviceVersion <= 0) {
+            ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
+            ADD_FAILURE();
+            return;
         }
+
+        Stream previewStream;
+        HalStreamConfiguration halStreamConfig;
+        sp<ICameraDeviceSession> session;
+        bool supportsPartialResults = false;
+        uint32_t partialResultCount = 0;
+        configurePreviewStream(name, deviceVersion, mProvider, &previewThreshold, &session /*out*/,
+                &previewStream /*out*/, &halStreamConfig /*out*/,
+                &supportsPartialResults /*out*/,
+                &partialResultCount /*out*/);
+
+        RequestTemplate reqTemplate = RequestTemplate::PREVIEW;
+        Return<void> ret;
+        ret = session->constructDefaultRequestSettings(reqTemplate,
+                                                       [&](auto status, const auto& req) {
+                                                           ASSERT_EQ(Status::OK, status);
+                                                           settings = req;
+                                                       });
+        ASSERT_TRUE(ret.isOk());
+
+        ::android::hardware::hidl_vec<StreamBuffer> emptyOutputBuffers;
+        StreamBuffer emptyInputBuffer = {-1, 0, nullptr, BufferStatus::ERROR, nullptr,
+                                         nullptr};
+        CaptureRequest request = {frameNumber, 0 /* fmqSettingsSize */, settings,
+                                  emptyInputBuffer, emptyOutputBuffers};
+
+        // Output buffers are missing, we should fail here
+        Status status = Status::OK;
+        uint32_t numRequestProcessed = 0;
+        hidl_vec<BufferCache> cachesToRemove;
+        ret = session->processCaptureRequest(
+            {request}, cachesToRemove, [&status, &numRequestProcessed](auto s,
+                    uint32_t n) {
+                status = s;
+                numRequestProcessed = n;
+            });
+        ASSERT_TRUE(ret.isOk());
+        ASSERT_EQ(Status::ILLEGAL_ARGUMENT, status);
+        ASSERT_EQ(numRequestProcessed, 0u);
+
+        ret = session->close();
+        ASSERT_TRUE(ret.isOk());
     }
 }
 
@@ -3263,130 +3394,123 @@ TEST_F(CameraHidlTest, flushPreviewRequest) {
 
     for (const auto& name : cameraDeviceNames) {
         int deviceVersion = getCameraDeviceVersion(name, mProviderType);
-        switch (deviceVersion) {
-            case CAMERA_DEVICE_API_VERSION_3_3:
-            case CAMERA_DEVICE_API_VERSION_3_2: {
-                Stream previewStream;
-                HalStreamConfiguration halStreamConfig;
-                sp<ICameraDeviceSession> session;
-                bool supportsPartialResults = false;
-                uint32_t partialResultCount = 0;
-                configurePreviewStream(name, mProvider, &previewThreshold, &session /*out*/,
-                                       &previewStream /*out*/, &halStreamConfig /*out*/,
-                                       &supportsPartialResults /*out*/,
-                                       &partialResultCount /*out*/);
+        if (deviceVersion == CAMERA_DEVICE_API_VERSION_1_0) {
+            continue;
+        } else if (deviceVersion <= 0) {
+            ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
+            ADD_FAILURE();
+            return;
+        }
 
-                std::shared_ptr<ResultMetadataQueue> resultQueue;
-                auto resultQueueRet =
-                    session->getCaptureResultMetadataQueue(
-                        [&resultQueue](const auto& descriptor) {
-                            resultQueue = std::make_shared<ResultMetadataQueue>(
-                                    descriptor);
-                            if (!resultQueue->isValid() ||
-                                    resultQueue->availableToWrite() <= 0) {
-                                ALOGE("%s: HAL returns empty result metadata fmq,"
-                                        " not use it", __func__);
-                                resultQueue = nullptr;
-                                // Don't use the queue onwards.
-                            }
-                        });
-                ASSERT_TRUE(resultQueueRet.isOk());
+        Stream previewStream;
+        HalStreamConfiguration halStreamConfig;
+        sp<ICameraDeviceSession> session;
+        bool supportsPartialResults = false;
+        uint32_t partialResultCount = 0;
+        configurePreviewStream(name, deviceVersion, mProvider, &previewThreshold, &session /*out*/,
+                &previewStream /*out*/, &halStreamConfig /*out*/,
+                &supportsPartialResults /*out*/,
+                &partialResultCount /*out*/);
 
-                InFlightRequest inflightReq = {1, false, supportsPartialResults,
-                                               partialResultCount, resultQueue};
-                RequestTemplate reqTemplate = RequestTemplate::PREVIEW;
-                Return<void> ret;
-                ret = session->constructDefaultRequestSettings(reqTemplate,
-                                                               [&](auto status, const auto& req) {
-                                                                   ASSERT_EQ(Status::OK, status);
-                                                                   settings = req;
-                                                               });
-                ASSERT_TRUE(ret.isOk());
-
-                sp<GraphicBuffer> gb = new GraphicBuffer(
-                    previewStream.width, previewStream.height,
-                    static_cast<int32_t>(halStreamConfig.streams[0].overrideFormat), 1,
-                    android_convertGralloc1To0Usage(halStreamConfig.streams[0].producerUsage,
-                                                    halStreamConfig.streams[0].consumerUsage));
-                ASSERT_NE(nullptr, gb.get());
-                StreamBuffer outputBuffer = {halStreamConfig.streams[0].id,
-                                             bufferId,
-                                             hidl_handle(gb->getNativeBuffer()->handle),
-                                             BufferStatus::OK,
-                                             nullptr,
-                                             nullptr};
-                ::android::hardware::hidl_vec<StreamBuffer> outputBuffers = {outputBuffer};
-                const StreamBuffer emptyInputBuffer = {-1, 0, nullptr,
-                                                       BufferStatus::ERROR, nullptr, nullptr};
-                CaptureRequest request = {frameNumber, 0 /* fmqSettingsSize */, settings,
-                                          emptyInputBuffer, outputBuffers};
-
-                {
-                    std::unique_lock<std::mutex> l(mLock);
-                    mInflightMap.clear();
-                    mInflightMap.add(frameNumber, &inflightReq);
-                }
-
-                Status status = Status::INTERNAL_ERROR;
-                uint32_t numRequestProcessed = 0;
-                hidl_vec<BufferCache> cachesToRemove;
-                ret = session->processCaptureRequest(
-                    {request}, cachesToRemove, [&status, &numRequestProcessed](auto s,
-                            uint32_t n) {
-                        status = s;
-                        numRequestProcessed = n;
-                    });
-
-                ASSERT_TRUE(ret.isOk());
-                ASSERT_EQ(Status::OK, status);
-                ASSERT_EQ(numRequestProcessed, 1u);
-                // Flush before waiting for request to complete.
-                Return<Status> returnStatus = session->flush();
-                ASSERT_TRUE(returnStatus.isOk());
-                ASSERT_EQ(Status::OK, returnStatus);
-
-                {
-                    std::unique_lock<std::mutex> l(mLock);
-                    while (!inflightReq.errorCodeValid &&
-                           ((0 < inflightReq.numBuffersLeft) ||
-                                   (!inflightReq.haveResultMetadata))) {
-                        auto timeout = std::chrono::system_clock::now() +
-                                       std::chrono::seconds(kStreamBufferTimeoutSec);
-                        ASSERT_NE(std::cv_status::timeout, mResultCondition.wait_until(l,
-                                timeout));
+        std::shared_ptr<ResultMetadataQueue> resultQueue;
+        auto resultQueueRet =
+            session->getCaptureResultMetadataQueue(
+                [&resultQueue](const auto& descriptor) {
+                    resultQueue = std::make_shared<ResultMetadataQueue>(
+                            descriptor);
+                    if (!resultQueue->isValid() ||
+                            resultQueue->availableToWrite() <= 0) {
+                        ALOGE("%s: HAL returns empty result metadata fmq,"
+                                " not use it", __func__);
+                        resultQueue = nullptr;
+                        // Don't use the queue onwards.
                     }
+                });
+        ASSERT_TRUE(resultQueueRet.isOk());
 
-                    if (!inflightReq.errorCodeValid) {
-                        ASSERT_NE(inflightReq.resultOutputBuffers.size(), 0u);
-                        ASSERT_EQ(previewStream.id, inflightReq.resultOutputBuffers[0].streamId);
-                    } else {
-                        switch (inflightReq.errorCode) {
-                            case ErrorCode::ERROR_REQUEST:
-                            case ErrorCode::ERROR_RESULT:
-                            case ErrorCode::ERROR_BUFFER:
-                                // Expected
-                                break;
-                            case ErrorCode::ERROR_DEVICE:
-                            default:
-                                FAIL() << "Unexpected error:"
-                                       << static_cast<uint32_t>(inflightReq.errorCode);
-                        }
-                    }
+        InFlightRequest inflightReq = {1, false, supportsPartialResults,
+                                       partialResultCount, resultQueue};
+        RequestTemplate reqTemplate = RequestTemplate::PREVIEW;
+        Return<void> ret;
+        ret = session->constructDefaultRequestSettings(reqTemplate,
+                                                       [&](auto status, const auto& req) {
+                                                           ASSERT_EQ(Status::OK, status);
+                                                           settings = req;
+                                                       });
+        ASSERT_TRUE(ret.isOk());
 
-                    ret = session->close();
-                    ASSERT_TRUE(ret.isOk());
+        sp<GraphicBuffer> gb = new GraphicBuffer(
+            previewStream.width, previewStream.height,
+            static_cast<int32_t>(halStreamConfig.streams[0].overrideFormat), 1,
+            android_convertGralloc1To0Usage(halStreamConfig.streams[0].producerUsage,
+                                            halStreamConfig.streams[0].consumerUsage));
+        ASSERT_NE(nullptr, gb.get());
+        StreamBuffer outputBuffer = {halStreamConfig.streams[0].id,
+                                     bufferId,
+                                     hidl_handle(gb->getNativeBuffer()->handle),
+                                     BufferStatus::OK,
+                                     nullptr,
+                                     nullptr};
+        ::android::hardware::hidl_vec<StreamBuffer> outputBuffers = {outputBuffer};
+        const StreamBuffer emptyInputBuffer = {-1, 0, nullptr,
+                                               BufferStatus::ERROR, nullptr, nullptr};
+        CaptureRequest request = {frameNumber, 0 /* fmqSettingsSize */, settings,
+                                  emptyInputBuffer, outputBuffers};
+
+        {
+            std::unique_lock<std::mutex> l(mLock);
+            mInflightMap.clear();
+            mInflightMap.add(frameNumber, &inflightReq);
+        }
+
+        Status status = Status::INTERNAL_ERROR;
+        uint32_t numRequestProcessed = 0;
+        hidl_vec<BufferCache> cachesToRemove;
+        ret = session->processCaptureRequest(
+            {request}, cachesToRemove, [&status, &numRequestProcessed](auto s,
+                    uint32_t n) {
+                status = s;
+                numRequestProcessed = n;
+            });
+
+        ASSERT_TRUE(ret.isOk());
+        ASSERT_EQ(Status::OK, status);
+        ASSERT_EQ(numRequestProcessed, 1u);
+        // Flush before waiting for request to complete.
+        Return<Status> returnStatus = session->flush();
+        ASSERT_TRUE(returnStatus.isOk());
+        ASSERT_EQ(Status::OK, returnStatus);
+
+        {
+            std::unique_lock<std::mutex> l(mLock);
+            while (!inflightReq.errorCodeValid &&
+                   ((0 < inflightReq.numBuffersLeft) ||
+                           (!inflightReq.haveResultMetadata))) {
+                auto timeout = std::chrono::system_clock::now() +
+                               std::chrono::seconds(kStreamBufferTimeoutSec);
+                ASSERT_NE(std::cv_status::timeout, mResultCondition.wait_until(l,
+                        timeout));
+            }
+
+            if (!inflightReq.errorCodeValid) {
+                ASSERT_NE(inflightReq.resultOutputBuffers.size(), 0u);
+                ASSERT_EQ(previewStream.id, inflightReq.resultOutputBuffers[0].streamId);
+            } else {
+                switch (inflightReq.errorCode) {
+                    case ErrorCode::ERROR_REQUEST:
+                    case ErrorCode::ERROR_RESULT:
+                    case ErrorCode::ERROR_BUFFER:
+                        // Expected
+                        break;
+                    case ErrorCode::ERROR_DEVICE:
+                    default:
+                        FAIL() << "Unexpected error:"
+                               << static_cast<uint32_t>(inflightReq.errorCode);
                 }
             }
-            break;
-            case CAMERA_DEVICE_API_VERSION_1_0: {
-                //Not applicable
-            }
-            break;
-            default: {
-                ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
-                ADD_FAILURE();
-            }
-            break;
+
+            ret = session->close();
+            ASSERT_TRUE(ret.isOk());
         }
     }
 }
@@ -3400,44 +3524,37 @@ TEST_F(CameraHidlTest, flushEmpty) {
 
     for (const auto& name : cameraDeviceNames) {
         int deviceVersion = getCameraDeviceVersion(name, mProviderType);
-        switch (deviceVersion) {
-            case CAMERA_DEVICE_API_VERSION_3_3:
-            case CAMERA_DEVICE_API_VERSION_3_2: {
-                Stream previewStream;
-                HalStreamConfiguration halStreamConfig;
-                sp<ICameraDeviceSession> session;
-                bool supportsPartialResults = false;
-                uint32_t partialResultCount = 0;
-                configurePreviewStream(name, mProvider, &previewThreshold, &session /*out*/,
-                                       &previewStream /*out*/, &halStreamConfig /*out*/,
-                                       &supportsPartialResults /*out*/,
-                                       &partialResultCount /*out*/);
-
-                Return<Status> returnStatus = session->flush();
-                ASSERT_TRUE(returnStatus.isOk());
-                ASSERT_EQ(Status::OK, returnStatus);
-
-                {
-                    std::unique_lock<std::mutex> l(mLock);
-                    auto timeout = std::chrono::system_clock::now() +
-                                   std::chrono::milliseconds(kEmptyFlushTimeoutMSec);
-                    ASSERT_EQ(std::cv_status::timeout, mResultCondition.wait_until(l, timeout));
-                }
-
-                Return<void> ret = session->close();
-                ASSERT_TRUE(ret.isOk());
-            }
-            break;
-            case CAMERA_DEVICE_API_VERSION_1_0: {
-                //Not applicable
-            }
-            break;
-            default: {
-                ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
-                ADD_FAILURE();
-            }
-            break;
+        if (deviceVersion == CAMERA_DEVICE_API_VERSION_1_0) {
+            continue;
+        } else if (deviceVersion <= 0) {
+            ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
+            ADD_FAILURE();
+            return;
         }
+
+        Stream previewStream;
+        HalStreamConfiguration halStreamConfig;
+        sp<ICameraDeviceSession> session;
+        bool supportsPartialResults = false;
+        uint32_t partialResultCount = 0;
+        configurePreviewStream(name, deviceVersion, mProvider, &previewThreshold, &session /*out*/,
+                &previewStream /*out*/, &halStreamConfig /*out*/,
+                &supportsPartialResults /*out*/,
+                &partialResultCount /*out*/);
+
+        Return<Status> returnStatus = session->flush();
+        ASSERT_TRUE(returnStatus.isOk());
+        ASSERT_EQ(Status::OK, returnStatus);
+
+        {
+            std::unique_lock<std::mutex> l(mLock);
+            auto timeout = std::chrono::system_clock::now() +
+                           std::chrono::milliseconds(kEmptyFlushTimeoutMSec);
+            ASSERT_EQ(std::cv_status::timeout, mResultCondition.wait_until(l, timeout));
+        }
+
+        Return<void> ret = session->close();
+        ASSERT_TRUE(ret.isOk());
     }
 }
 
@@ -3625,7 +3742,7 @@ Status CameraHidlTest::isAutoFocusModeAvailable(
 }
 
 // Open a device session and configure a preview stream.
-void CameraHidlTest::configurePreviewStream(const std::string &name,
+void CameraHidlTest::configurePreviewStream(const std::string &name, int32_t deviceVersion,
         sp<ICameraProvider> provider,
         const AvailableStream *previewThreshold,
         sp<ICameraDeviceSession> *session /*out*/,
@@ -3665,9 +3782,9 @@ void CameraHidlTest::configurePreviewStream(const std::string &name,
         });
     ASSERT_TRUE(ret.isOk());
 
-    auto castResult = device::V3_3::ICameraDeviceSession::castFrom(*session);
-    ASSERT_TRUE(castResult.isOk());
-    sp<device::V3_3::ICameraDeviceSession> session3_3 = castResult;
+    sp<device::V3_3::ICameraDeviceSession> session3_3;
+    sp<device::V3_4::ICameraDeviceSession> session3_4;
+    castSession(*session, deviceVersion, &session3_3, &session3_4);
 
     camera_metadata_t *staticMeta;
     ret = device3_x->getCameraCharacteristics([&] (Status s,
@@ -3700,17 +3817,10 @@ void CameraHidlTest::configurePreviewStream(const std::string &name,
             static_cast<PixelFormat> (outputPreviewStreams[0].format),
             GRALLOC1_CONSUMER_USAGE_HWCOMPOSER, 0, StreamRotation::ROTATION_0};
     ::android::hardware::hidl_vec<Stream> streams = {*previewStream};
-    StreamConfiguration config = {streams,
-            StreamConfigurationMode::NORMAL_MODE};
-    if (session3_3 == nullptr) {
-        ret = (*session)->configureStreams(config,
-                [&] (Status s, HalStreamConfiguration halConfig) {
-                    ASSERT_EQ(Status::OK, s);
-                    ASSERT_EQ(1u, halConfig.streams.size());
-                    *halStreamConfig = halConfig;
-                });
-    } else {
-        ret = session3_3->configureStreams_3_3(config,
+    ::android::hardware::camera::device::V3_4::StreamConfiguration config;
+    config.v3_2 = {streams, StreamConfigurationMode::NORMAL_MODE};
+    if (session3_4 != nullptr) {
+        ret = session3_4->configureStreams_3_4(config,
                 [&] (Status s, device::V3_3::HalStreamConfiguration halConfig) {
                     ASSERT_EQ(Status::OK, s);
                     ASSERT_EQ(1u, halConfig.streams.size());
@@ -3719,15 +3829,57 @@ void CameraHidlTest::configurePreviewStream(const std::string &name,
                         halStreamConfig->streams[i] = halConfig.streams[i].v3_2;
                     }
                 });
+    } else if (session3_3 != nullptr) {
+        ret = session3_3->configureStreams_3_3(config.v3_2,
+                [&] (Status s, device::V3_3::HalStreamConfiguration halConfig) {
+                    ASSERT_EQ(Status::OK, s);
+                    ASSERT_EQ(1u, halConfig.streams.size());
+                    halStreamConfig->streams.resize(halConfig.streams.size());
+                    for (size_t i = 0; i < halConfig.streams.size(); i++) {
+                        halStreamConfig->streams[i] = halConfig.streams[i].v3_2;
+                    }
+                });
+    } else {
+        ret = (*session)->configureStreams(config.v3_2,
+                [&] (Status s, HalStreamConfiguration halConfig) {
+                    ASSERT_EQ(Status::OK, s);
+                    ASSERT_EQ(1u, halConfig.streams.size());
+                    *halStreamConfig = halConfig;
+                });
     }
     ASSERT_TRUE(ret.isOk());
+}
+
+//Cast camera device session to corresponding version
+void CameraHidlTest::castSession(const sp<ICameraDeviceSession> &session, int32_t deviceVersion,
+        sp<device::V3_3::ICameraDeviceSession> *session3_3 /*out*/,
+        sp<device::V3_4::ICameraDeviceSession> *session3_4 /*out*/) {
+    ASSERT_NE(nullptr, session3_3);
+    ASSERT_NE(nullptr, session3_4);
+
+    switch (deviceVersion) {
+        case CAMERA_DEVICE_API_VERSION_3_4: {
+            auto castResult = device::V3_4::ICameraDeviceSession::castFrom(session);
+            ASSERT_TRUE(castResult.isOk());
+            *session3_4 = castResult;
+            break;
+        }
+        case CAMERA_DEVICE_API_VERSION_3_3: {
+            auto castResult = device::V3_3::ICameraDeviceSession::castFrom(session);
+            ASSERT_TRUE(castResult.isOk());
+            *session3_3 = castResult;
+            break;
+        }
+        default:
+            //no-op
+            return;
+    }
 }
 
 // Open a device session with empty callbacks and return static metadata.
 void CameraHidlTest::openEmptyDeviceSession(const std::string &name,
         sp<ICameraProvider> provider,
         sp<ICameraDeviceSession> *session /*out*/,
-        sp<device::V3_3::ICameraDeviceSession> *session3_3 /*out*/,
         camera_metadata_t **staticMeta /*out*/) {
     ASSERT_NE(nullptr, session);
     ASSERT_NE(nullptr, staticMeta);
@@ -3763,12 +3915,6 @@ void CameraHidlTest::openEmptyDeviceSession(const std::string &name,
         ASSERT_NE(nullptr, *staticMeta);
     });
     ASSERT_TRUE(ret.isOk());
-
-    if(session3_3 != nullptr) {
-        auto castResult = device::V3_3::ICameraDeviceSession::castFrom(*session);
-        ASSERT_TRUE(castResult.isOk());
-        *session3_3 = castResult;
-    }
 }
 
 // Open a particular camera device.
