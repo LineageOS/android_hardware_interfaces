@@ -34,10 +34,10 @@ TEST_F(RadioHidlTest, sendSms) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp->rspInfo.error,
-            {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::SIM_ABSENT},
-            CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
         EXPECT_EQ(0, radioRsp->sendSmsResult.errorCode);
     }
 }
@@ -61,10 +61,10 @@ TEST_F(RadioHidlTest, sendSMSExpectMore) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp->rspInfo.error,
-            {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::SIM_ABSENT},
-            CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
     }
 }
 
@@ -83,9 +83,9 @@ TEST_F(RadioHidlTest, acknowledgeLastIncomingGsmSms) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp->rspInfo.error,
-                                     {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE},
-                                     CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_STATE);
     }
 }
 
@@ -145,10 +145,10 @@ TEST_F(RadioHidlTest, sendCdmaSms) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp->rspInfo.error,
-            {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::SIM_ABSENT},
-            CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
     }
 }
 
@@ -170,9 +170,9 @@ TEST_F(RadioHidlTest, acknowledgeLastIncomingCdmaSms) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp->rspInfo.error,
-                                     {RadioError::INVALID_ARGUMENTS, RadioError::NO_SMS_TO_ACK},
-                                     CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::NO_SMS_TO_ACK);
     }
 }
 
@@ -221,8 +221,8 @@ TEST_F(RadioHidlTest, sendImsSms) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp->rspInfo.error, {RadioError::INVALID_ARGUMENTS},
-                                     CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS);
     }
 }
 
@@ -239,10 +239,9 @@ TEST_F(RadioHidlTest, getSmscAddress) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp->rspInfo.error,
-            {RadioError::INVALID_MODEM_STATE, RadioError::INVALID_STATE, RadioError::SIM_ABSENT},
-            CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() || radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_MODEM_STATE ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
     }
 }
 
@@ -260,10 +259,10 @@ TEST_F(RadioHidlTest, setSmscAddress) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp->rspInfo.error,
-            {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_SMS_FORMAT, RadioError::SIM_ABSENT},
-            CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_SMS_FORMAT ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
     }
 }
 
@@ -284,12 +283,15 @@ TEST_F(RadioHidlTest, writeSmsToSim) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp->rspInfo.error,
-            {RadioError::NONE, RadioError::ENCODING_ERR, RadioError::INVALID_ARGUMENTS,
-             RadioError::INVALID_SMSC_ADDRESS, RadioError::MODEM_ERR, RadioError::NETWORK_NOT_READY,
-             RadioError::NO_RESOURCES, RadioError::SIM_ABSENT},
-            CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::NONE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR ||
+                    radioRsp->rspInfo.error == RadioError::ENCODING_ERR ||
+                    radioRsp->rspInfo.error == RadioError::NO_RESOURCES ||
+                    radioRsp->rspInfo.error == RadioError::NETWORK_NOT_READY ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_SMSC_ADDRESS ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
     }
 }
 
@@ -307,12 +309,13 @@ TEST_F(RadioHidlTest, deleteSmsOnSim) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp->rspInfo.error,
-            {RadioError::NONE, RadioError::ENCODING_ERR, RadioError::INVALID_ARGUMENTS,
-             RadioError::INVALID_MODEM_STATE, RadioError::NO_SUCH_ENTRY, RadioError::MODEM_ERR,
-             RadioError::SIM_ABSENT},
-            CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::NONE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR ||
+                    radioRsp->rspInfo.error == RadioError::NO_SUCH_ENTRY ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_MODEM_STATE ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
     }
 }
 
@@ -358,12 +361,15 @@ TEST_F(RadioHidlTest, writeSmsToRuim) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp->rspInfo.error,
-            {RadioError::NONE, RadioError::INVALID_ARGUMENTS, RadioError::INVALID_SMS_FORMAT,
-             RadioError::INVALID_SMSC_ADDRESS, RadioError::INVALID_STATE, RadioError::MODEM_ERR,
-             RadioError::NO_SUCH_ENTRY, RadioError::SIM_ABSENT},
-            CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_SMS_FORMAT ||
+                    radioRsp->rspInfo.error == RadioError::NONE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR ||
+                    radioRsp->rspInfo.error == RadioError::NO_SUCH_ENTRY ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_SMSC_ADDRESS ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
     }
 }
 
@@ -410,11 +416,13 @@ TEST_F(RadioHidlTest, deleteSmsOnRuim) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp->rspInfo.error,
-            {RadioError::NONE, RadioError::INVALID_ARGUMENTS, RadioError::INVALID_MODEM_STATE,
-             RadioError::MODEM_ERR, RadioError::NO_SUCH_ENTRY, RadioError::SIM_ABSENT},
-            CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::NONE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR ||
+                    radioRsp->rspInfo.error == RadioError::NO_SUCH_ENTRY ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_MODEM_STATE ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
     }
 }
 
@@ -432,9 +440,10 @@ TEST_F(RadioHidlTest, reportSmsMemoryStatus) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp->rspInfo.error,
-                                     {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE,
-                                      RadioError::MODEM_ERR, RadioError::SIM_ABSENT},
-                                     CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckGeneralError() ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_ARGUMENTS ||
+                    radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
     }
 }

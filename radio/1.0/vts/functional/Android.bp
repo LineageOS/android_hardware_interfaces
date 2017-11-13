@@ -50,12 +50,9 @@ cc_test {
 
 cc_library_static {
     name: "RadioVtsTestUtilBase",
-    defaults: ["VtsHalTargetTestDefaults"],
+    defaults: ["hidl_defaults"],
     srcs : [
         "vts_test_util.cpp"
-    ],
-    shared_libs: [
-        "android.hardware.radio@1.0",
     ],
 }
 
