@@ -37,8 +37,6 @@ LOCAL_SRC_FILES := \
     wifi_sta_iface.cpp \
     wifi_status_util.cpp
 LOCAL_SHARED_LIBRARIES := \
-    android.hardware.wifi@1.0 \
-    android.hardware.wifi@1.1 \
     libbase \
     libcutils \
     libhidlbase \
@@ -47,6 +45,8 @@ LOCAL_SHARED_LIBRARIES := \
     libnl \
     libutils \
     libwifi-hal \
-    libwifi-system-iface
+    libwifi-system-iface \
+    android.hardware.wifi@1.0 \
+    android.hardware.wifi@1.1
 LOCAL_INIT_RC := android.hardware.wifi@1.0-service.rc
 include $(BUILD_EXECUTABLE)

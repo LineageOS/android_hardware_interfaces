@@ -13,13 +13,13 @@ LOCAL_SRC_FILES:= service.cpp
 include $(LOCAL_PATH)/surfaceflinger.mk
 
 LOCAL_SHARED_LIBRARIES := \
-    android.hardware.configstore@1.0 \
     libhidlbase \
     libhidltransport \
     libbase \
     libhwminijail \
     liblog \
     libutils \
+    android.hardware.configstore@1.0 \
 
 include $(BUILD_EXECUTABLE)
 
