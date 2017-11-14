@@ -51,10 +51,10 @@ TEST_F(SapHidlTest, apduReq) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(sapCb->sapResponseToken, token);
 
-    ASSERT_TRUE(SapResultCode::GENERIC_FAILURE == sapCb->sapResultCode ||
-                SapResultCode::CARD_NOT_ACCESSSIBLE == sapCb->sapResultCode ||
-                SapResultCode::CARD_ALREADY_POWERED_OFF == sapCb->sapResultCode ||
-                SapResultCode::CARD_REMOVED == sapCb->sapResultCode);
+    ASSERT_TRUE(
+        CheckAnyOfErrors(sapCb->sapResultCode,
+                         {SapResultCode::GENERIC_FAILURE, SapResultCode::CARD_ALREADY_POWERED_OFF,
+                          SapResultCode::CARD_NOT_ACCESSSIBLE, SapResultCode::CARD_REMOVED}));
 }
 
 /*
@@ -67,10 +67,10 @@ TEST_F(SapHidlTest, transferAtrReq) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(sapCb->sapResponseToken, token);
 
-    ASSERT_TRUE(SapResultCode::GENERIC_FAILURE == sapCb->sapResultCode ||
-                SapResultCode::DATA_NOT_AVAILABLE == sapCb->sapResultCode ||
-                SapResultCode::CARD_ALREADY_POWERED_OFF == sapCb->sapResultCode ||
-                SapResultCode::CARD_REMOVED == sapCb->sapResultCode);
+    ASSERT_TRUE(
+        CheckAnyOfErrors(sapCb->sapResultCode,
+                         {SapResultCode::GENERIC_FAILURE, SapResultCode::DATA_NOT_AVAILABLE,
+                          SapResultCode::CARD_ALREADY_POWERED_OFF, SapResultCode::CARD_REMOVED}));
 }
 
 /*
@@ -84,11 +84,10 @@ TEST_F(SapHidlTest, powerReq) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(sapCb->sapResponseToken, token);
 
-    ASSERT_TRUE(SapResultCode::GENERIC_FAILURE == sapCb->sapResultCode ||
-                SapResultCode::CARD_NOT_ACCESSSIBLE == sapCb->sapResultCode ||
-                SapResultCode::CARD_ALREADY_POWERED_OFF == sapCb->sapResultCode ||
-                SapResultCode::CARD_REMOVED == sapCb->sapResultCode ||
-                SapResultCode::CARD_ALREADY_POWERED_ON == sapCb->sapResultCode);
+    ASSERT_TRUE(CheckAnyOfErrors(
+        sapCb->sapResultCode, {SapResultCode::GENERIC_FAILURE, SapResultCode::CARD_NOT_ACCESSSIBLE,
+                               SapResultCode::CARD_ALREADY_POWERED_OFF, SapResultCode::CARD_REMOVED,
+                               SapResultCode::CARD_ALREADY_POWERED_ON}));
 }
 
 /*
@@ -101,10 +100,10 @@ TEST_F(SapHidlTest, resetSimReq) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(sapCb->sapResponseToken, token);
 
-    ASSERT_TRUE(SapResultCode::GENERIC_FAILURE == sapCb->sapResultCode ||
-                SapResultCode::CARD_NOT_ACCESSSIBLE == sapCb->sapResultCode ||
-                SapResultCode::CARD_ALREADY_POWERED_OFF == sapCb->sapResultCode ||
-                SapResultCode::CARD_REMOVED == sapCb->sapResultCode);
+    ASSERT_TRUE(
+        CheckAnyOfErrors(sapCb->sapResultCode,
+                         {SapResultCode::GENERIC_FAILURE, SapResultCode::CARD_NOT_ACCESSSIBLE,
+                          SapResultCode::CARD_ALREADY_POWERED_OFF, SapResultCode::CARD_REMOVED}));
 }
 
 /*
@@ -117,8 +116,8 @@ TEST_F(SapHidlTest, transferCardReaderStatusReq) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(sapCb->sapResponseToken, token);
 
-    ASSERT_TRUE(SapResultCode::GENERIC_FAILURE == sapCb->sapResultCode ||
-                SapResultCode::DATA_NOT_AVAILABLE == sapCb->sapResultCode);
+    ASSERT_TRUE(CheckAnyOfErrors(
+        sapCb->sapResultCode, {SapResultCode::GENERIC_FAILURE, SapResultCode::DATA_NOT_AVAILABLE}));
 }
 
 /*
