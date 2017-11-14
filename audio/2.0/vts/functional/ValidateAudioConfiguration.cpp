@@ -14,9 +14,21 @@
  * limitations under the License.
  */
 
+#include <string>
+#include <unistd.h>
+
 #include "utility/ValidateXml.h"
 
 TEST(CheckConfig, audioPolicyConfigurationValidation) {
-    ASSERT_VALID_XML("/vendor/etc/audio_policy_configuration.xml",
-                     "/data/local/tmp/audio_policy_configuration.xsd");
+    const char* configName = "audio_policy_configuration.xml";
+    const char* possibleConfigLocations[] = {"/odm/etc", "/vendor/etc", "/system/etc"};
+    const char* configSchemaPath = "/data/local/tmp/audio_policy_configuration.xsd";
+
+    for (std::string folder : possibleConfigLocations) {
+        const auto configPath = folder + '/' + configName;
+        if (access(configPath.c_str(), R_OK) == 0) {
+            ASSERT_VALID_XML(configPath.c_str(), configSchemaPath);
+            return; // The framework does not read past the first config file found
+        }
+    }
 }

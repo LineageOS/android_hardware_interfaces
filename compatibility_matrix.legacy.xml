@@ -57,7 +57,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.broadcastradio</name>
-        <version>1.0</version>
+        <version>1.0-1</version>
         <interface>
             <name>IBroadcastRadioFactory</name>
             <instance>default</instance>
@@ -71,9 +71,17 @@
             <instance>legacy/0</instance>
         </interface>
     </hal>
+    <hal format="hidl" optional="true">
+        <name>android.hardware.cas</name>
+        <version>1.0</version>
+        <interface>
+            <name>IMediaCasService</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
     <hal format="hidl" optional="false">
         <name>android.hardware.configstore</name>
-        <version>1.0-1</version>
+        <version>1.0</version>
         <interface>
             <name>ISurfaceFlingerConfigs</name>
             <instance>default</instance>
@@ -204,8 +212,16 @@
         </interface>
     </hal>
     <hal format="hidl" optional="true">
-        <name>android.hardware.power</name>
+        <name>android.hardware.oemlock</name>
         <version>1.0</version>
+        <interface>
+            <name>IOemLock</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
+        <name>android.hardware.power</name>
+        <version>1.0-1</version>
         <interface>
             <name>IPower</name>
             <instance>default</instance>
@@ -213,7 +229,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.radio</name>
-        <version>1.0</version>
+        <version>1.0-1</version>
         <interface>
             <name>IRadio</name>
             <instance>slot1</instance>
@@ -256,8 +272,24 @@
         </interface>
     </hal>
     <hal format="hidl" optional="true">
-        <name>android.hardware.thermal</name>
+        <name>android.hardware.tetheroffload.config</name>
         <version>1.0</version>
+        <interface>
+            <name>IOffloadConfig</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
+        <name>android.hardware.tetheroffload.control</name>
+        <version>1.0</version>
+        <interface>
+            <name>IOffloadControl</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
+        <name>android.hardware.thermal</name>
+        <version>1.0-1</version>
         <interface>
             <name>IThermal</name>
             <instance>default</instance>
@@ -281,7 +313,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.usb</name>
-        <version>1.0</version>
+        <version>1.0-1</version>
         <interface>
             <name>IUsb</name>
             <instance>default</instance>
@@ -289,7 +321,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.vibrator</name>
-        <version>1.0</version>
+        <version>1.0-1</version>
         <interface>
             <name>IVibrator</name>
             <instance>default</instance>
@@ -304,10 +336,26 @@
         </interface>
     </hal>
     <hal format="hidl" optional="true">
-        <name>android.hardware.wifi</name>
+        <name>android.hardware.weaver</name>
         <version>1.0</version>
         <interface>
+            <name>IWeaver</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
+        <name>android.hardware.wifi</name>
+        <version>1.0-1</version>
+        <interface>
             <name>IWifi</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
+        <name>android.hardware.wifi.offload</name>
+        <version>1.0</version>
+        <interface>
+            <name>IOffload</name>
             <instance>default</instance>
         </interface>
     </hal>
@@ -319,7 +367,4 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <kernel version="4.9.0" />
-    <kernel version="4.4.0" />
-    <kernel version="3.18.0" />
 </compatibility-matrix>

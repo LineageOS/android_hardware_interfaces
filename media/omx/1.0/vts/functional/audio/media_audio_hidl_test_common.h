@@ -20,11 +20,6 @@
 #include <media_hidl_test_common.h>
 
 /*
- * Random Index used for monkey testing while get/set parameters
- */
-#define RANDOM_INDEX 1729
-
-/*
  * Common audio utils
  */
 void enumerateProfile(sp<IOmxNode> omxNode, OMX_U32 portIndex,

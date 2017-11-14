@@ -15,13 +15,15 @@
  */
 
 #define LOG_TAG "media_omx_hidl_video_test_common"
-
 #ifdef __LP64__
 #define OMX_ANDROID_COMPILE_AS_32BIT_ON_64BIT_PLATFORMS
 #endif
 
 #include <android-base/logging.h>
 
+#include <android/hardware/graphics/allocator/2.0/IAllocator.h>
+#include <android/hardware/graphics/mapper/2.0/IMapper.h>
+#include <android/hardware/graphics/mapper/2.0/types.h>
 #include <android/hardware/media/omx/1.0/IOmx.h>
 #include <android/hardware/media/omx/1.0/IOmxNode.h>
 #include <android/hardware/media/omx/1.0/IOmxObserver.h>
@@ -29,7 +31,10 @@
 #include <android/hidl/allocator/1.0/IAllocator.h>
 #include <android/hidl/memory/1.0/IMapper.h>
 #include <android/hidl/memory/1.0/IMemory.h>
+#include <cutils/atomic.h>
 
+using ::android::hardware::graphics::common::V1_0::BufferUsage;
+using ::android::hardware::graphics::common::V1_0::PixelFormat;
 using ::android::hardware::media::omx::V1_0::IOmx;
 using ::android::hardware::media::omx::V1_0::IOmxObserver;
 using ::android::hardware::media::omx::V1_0::IOmxNode;
@@ -186,10 +191,157 @@ Return<android::hardware::media::omx::V1_0::Status> setAudioPortFormat(
     return status;
 }
 
+void allocateGraphicBuffers(sp<IOmxNode> omxNode, OMX_U32 portIndex,
+                            BufferInfo* buffer, uint32_t nFrameWidth,
+                            uint32_t nFrameHeight, int32_t* nStride,
+                            int format) {
+    android::hardware::media::omx::V1_0::Status status;
+    sp<android::hardware::graphics::allocator::V2_0::IAllocator> allocator =
+        android::hardware::graphics::allocator::V2_0::IAllocator::getService();
+    ASSERT_NE(nullptr, allocator.get());
+
+    sp<android::hardware::graphics::mapper::V2_0::IMapper> mapper =
+        android::hardware::graphics::mapper::V2_0::IMapper::getService();
+    ASSERT_NE(mapper.get(), nullptr);
+
+    android::hardware::graphics::mapper::V2_0::IMapper::BufferDescriptorInfo
+        descriptorInfo;
+    uint32_t usage;
+
+    descriptorInfo.width = nFrameWidth;
+    descriptorInfo.height = nFrameHeight;
+    descriptorInfo.layerCount = 1;
+    descriptorInfo.format = static_cast<PixelFormat>(format);
+    descriptorInfo.usage = static_cast<uint64_t>(BufferUsage::CPU_READ_OFTEN);
+    omxNode->getGraphicBufferUsage(
+        portIndex,
+        [&status, &usage](android::hardware::media::omx::V1_0::Status _s,
+                          uint32_t _n1) {
+            status = _s;
+            usage = _n1;
+        });
+    if (status == android::hardware::media::omx::V1_0::Status::OK) {
+        descriptorInfo.usage |= usage;
+    }
+
+    ::android::hardware::hidl_vec<uint32_t> descriptor;
+    android::hardware::graphics::mapper::V2_0::Error error;
+    mapper->createDescriptor(
+        descriptorInfo, [&error, &descriptor](
+                            android::hardware::graphics::mapper::V2_0::Error _s,
+                            ::android::hardware::hidl_vec<uint32_t> _n1) {
+            error = _s;
+            descriptor = _n1;
+        });
+    ASSERT_EQ(error, android::hardware::graphics::mapper::V2_0::Error::NONE);
+
+    static volatile int32_t nextId = 0;
+    uint64_t id = static_cast<uint64_t>(getpid()) << 32;
+    allocator->allocate(
+        descriptor, 1,
+        [&](android::hardware::graphics::mapper::V2_0::Error _s, uint32_t _n1,
+            const ::android::hardware::hidl_vec<
+                ::android::hardware::hidl_handle>& _n2) {
+            ASSERT_EQ(android::hardware::graphics::mapper::V2_0::Error::NONE,
+                      _s);
+            *nStride = _n1;
+            buffer->omxBuffer.nativeHandle = _n2[0];
+            buffer->omxBuffer.attr.anwBuffer.width = nFrameWidth;
+            buffer->omxBuffer.attr.anwBuffer.height = nFrameHeight;
+            buffer->omxBuffer.attr.anwBuffer.stride = _n1;
+            buffer->omxBuffer.attr.anwBuffer.format = descriptorInfo.format;
+            buffer->omxBuffer.attr.anwBuffer.usage = descriptorInfo.usage;
+            buffer->omxBuffer.attr.anwBuffer.layerCount =
+                descriptorInfo.layerCount;
+            buffer->omxBuffer.attr.anwBuffer.id =
+                id | static_cast<uint32_t>(android_atomic_inc(&nextId));
+        });
+}
+
+// allocate buffers needed on a component port
+void allocateBuffer(sp<IOmxNode> omxNode, BufferInfo* buffer, OMX_U32 portIndex,
+                    OMX_U32 nBufferSize, PortMode portMode) {
+    android::hardware::media::omx::V1_0::Status status;
+
+    if (portMode == PortMode::PRESET_SECURE_BUFFER) {
+        buffer->owner = client;
+        buffer->omxBuffer.type = CodecBuffer::Type::NATIVE_HANDLE;
+        omxNode->allocateSecureBuffer(
+            portIndex, nBufferSize,
+            [&status, &buffer](
+                android::hardware::media::omx::V1_0::Status _s, uint32_t id,
+                ::android::hardware::hidl_handle const& nativeHandle) {
+                status = _s;
+                buffer->id = id;
+                buffer->omxBuffer.nativeHandle = nativeHandle;
+            });
+        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    } else if (portMode == PortMode::PRESET_BYTE_BUFFER ||
+               portMode == PortMode::DYNAMIC_ANW_BUFFER) {
+        sp<IAllocator> allocator = IAllocator::getService("ashmem");
+        ASSERT_NE(allocator.get(), nullptr);
+
+        buffer->owner = client;
+        buffer->omxBuffer.type = CodecBuffer::Type::SHARED_MEM;
+        buffer->omxBuffer.attr.preset.rangeOffset = 0;
+        buffer->omxBuffer.attr.preset.rangeLength = 0;
+        bool success = false;
+        if (portMode != PortMode::PRESET_BYTE_BUFFER) {
+            nBufferSize = sizeof(android::VideoNativeMetadata);
+        }
+        allocator->allocate(
+            nBufferSize,
+            [&success, &buffer](bool _s,
+                                ::android::hardware::hidl_memory const& mem) {
+                success = _s;
+                buffer->omxBuffer.sharedMemory = mem;
+            });
+        ASSERT_EQ(success, true);
+        ASSERT_EQ(buffer->omxBuffer.sharedMemory.size(), nBufferSize);
+        buffer->mMemory = mapMemory(buffer->omxBuffer.sharedMemory);
+        ASSERT_NE(buffer->mMemory, nullptr);
+        if (portMode == PortMode::DYNAMIC_ANW_BUFFER) {
+            android::VideoNativeMetadata* metaData =
+                static_cast<android::VideoNativeMetadata*>(
+                    static_cast<void*>(buffer->mMemory->getPointer()));
+            metaData->nFenceFd = -1;
+            buffer->slot = -1;
+        }
+        omxNode->useBuffer(
+            portIndex, buffer->omxBuffer,
+            [&status, &buffer](android::hardware::media::omx::V1_0::Status _s,
+                               uint32_t id) {
+                status = _s;
+                buffer->id = id;
+            });
+        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    } else if (portMode == PortMode::PRESET_ANW_BUFFER) {
+        OMX_PARAM_PORTDEFINITIONTYPE portDef;
+        status = getPortParam(omxNode, OMX_IndexParamPortDefinition, portIndex,
+                              &portDef);
+        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+        int32_t nStride;
+        buffer->owner = client;
+        buffer->omxBuffer.type = CodecBuffer::Type::ANW_BUFFER;
+        ASSERT_NO_FATAL_FAILURE(allocateGraphicBuffers(
+            omxNode, portIndex, buffer, portDef.format.video.nFrameWidth,
+            portDef.format.video.nFrameHeight, &nStride,
+            portDef.format.video.eColorFormat));
+        omxNode->useBuffer(
+            portIndex, buffer->omxBuffer,
+            [&status, &buffer](android::hardware::media::omx::V1_0::Status _s,
+                               uint32_t id) {
+                status = _s;
+                buffer->id = id;
+            });
+        ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
+    }
+}
+
 // allocate buffers needed on a component port
 void allocatePortBuffers(sp<IOmxNode> omxNode,
                          android::Vector<BufferInfo>* buffArray,
-                         OMX_U32 portIndex, PortMode portMode) {
+                         OMX_U32 portIndex, PortMode portMode, bool allocGrap) {
     android::hardware::media::omx::V1_0::Status status;
     OMX_PARAM_PORTDEFINITIONTYPE portDef;
 
@@ -199,70 +351,18 @@ void allocatePortBuffers(sp<IOmxNode> omxNode,
                           &portDef);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 
-    if (portMode == PortMode::PRESET_SECURE_BUFFER) {
-        for (size_t i = 0; i < portDef.nBufferCountActual; i++) {
-            BufferInfo buffer;
-            buffer.owner = client;
-            buffer.omxBuffer.type = CodecBuffer::Type::NATIVE_HANDLE;
-            omxNode->allocateSecureBuffer(
-                portIndex, portDef.nBufferSize,
-                [&status, &buffer](
-                    android::hardware::media::omx::V1_0::Status _s, uint32_t id,
-                    ::android::hardware::hidl_handle const& nativeHandle) {
-                    status = _s;
-                    buffer.id = id;
-                    buffer.omxBuffer.nativeHandle = nativeHandle;
-                });
-            buffArray->push(buffer);
-            ASSERT_EQ(status,
-                      ::android::hardware::media::omx::V1_0::Status::OK);
+    for (size_t i = 0; i < portDef.nBufferCountActual; i++) {
+        BufferInfo buffer;
+        ASSERT_NO_FATAL_FAILURE(allocateBuffer(omxNode, &buffer, portIndex,
+                                               portDef.nBufferSize, portMode));
+        if (allocGrap && portMode == PortMode::DYNAMIC_ANW_BUFFER) {
+            int32_t nStride;
+            ASSERT_NO_FATAL_FAILURE(allocateGraphicBuffers(
+                omxNode, portIndex, &buffer, portDef.format.video.nFrameWidth,
+                portDef.format.video.nFrameHeight, &nStride,
+                portDef.format.video.eColorFormat));
         }
-    } else if (portMode == PortMode::PRESET_BYTE_BUFFER ||
-               portMode == PortMode::DYNAMIC_ANW_BUFFER) {
-        sp<IAllocator> allocator = IAllocator::getService("ashmem");
-        EXPECT_NE(allocator.get(), nullptr);
-
-        for (size_t i = 0; i < portDef.nBufferCountActual; i++) {
-            BufferInfo buffer;
-            buffer.owner = client;
-            buffer.omxBuffer.type = CodecBuffer::Type::SHARED_MEM;
-            buffer.omxBuffer.attr.preset.rangeOffset = 0;
-            buffer.omxBuffer.attr.preset.rangeLength = 0;
-            bool success = false;
-            if (portMode != PortMode::PRESET_BYTE_BUFFER) {
-                portDef.nBufferSize = sizeof(android::VideoNativeMetadata);
-            }
-            allocator->allocate(
-                portDef.nBufferSize,
-                [&success, &buffer](
-                    bool _s, ::android::hardware::hidl_memory const& mem) {
-                    success = _s;
-                    buffer.omxBuffer.sharedMemory = mem;
-                });
-            ASSERT_EQ(success, true);
-            ASSERT_EQ(buffer.omxBuffer.sharedMemory.size(),
-                      portDef.nBufferSize);
-            buffer.mMemory = mapMemory(buffer.omxBuffer.sharedMemory);
-            ASSERT_NE(buffer.mMemory, nullptr);
-            if (portMode == PortMode::DYNAMIC_ANW_BUFFER) {
-                android::VideoNativeMetadata* metaData =
-                    static_cast<android::VideoNativeMetadata*>(
-                        static_cast<void*>(buffer.mMemory->getPointer()));
-                metaData->nFenceFd = -1;
-                buffer.slot = -1;
-            }
-            omxNode->useBuffer(
-                portIndex, buffer.omxBuffer,
-                [&status, &buffer](
-                    android::hardware::media::omx::V1_0::Status _s,
-                    uint32_t id) {
-                    status = _s;
-                    buffer.id = id;
-                });
-            buffArray->push(buffer);
-            ASSERT_EQ(status,
-                      ::android::hardware::media::omx::V1_0::Status::OK);
-        }
+        buffArray->push(buffer);
     }
 }
 
@@ -273,7 +373,7 @@ void changeStateLoadedtoIdle(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                              android::Vector<BufferInfo>* iBuffer,
                              android::Vector<BufferInfo>* oBuffer,
                              OMX_U32 kPortIndexInput, OMX_U32 kPortIndexOutput,
-                             PortMode* portMode) {
+                             PortMode* portMode, bool allocGrap) {
     android::hardware::media::omx::V1_0::Status status;
     Message msg;
     PortMode defaultPortMode[2], *pm;
@@ -292,14 +392,16 @@ void changeStateLoadedtoIdle(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
     ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::TIMED_OUT);
 
     // allocate buffers on input port
-    allocatePortBuffers(omxNode, iBuffer, kPortIndexInput, pm[0]);
+    ASSERT_NO_FATAL_FAILURE(allocatePortBuffers(
+        omxNode, iBuffer, kPortIndexInput, pm[0], allocGrap));
 
     // Dont switch states until the ports are populated
     status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
     ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::TIMED_OUT);
 
     // allocate buffers on output port
-    allocatePortBuffers(omxNode, oBuffer, kPortIndexOutput, pm[1]);
+    ASSERT_NO_FATAL_FAILURE(allocatePortBuffers(
+        omxNode, oBuffer, kPortIndexOutput, pm[1], allocGrap));
 
     // As the ports are populated, check if the state transition is complete
     status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
@@ -439,6 +541,7 @@ void dispatchOutputBuffer(sp<IOmxNode> omxNode,
             status =
                 omxNode->fillBuffer((*buffArray)[bufferIndex].id, t, fenceNh);
             break;
+        case PortMode::PRESET_ANW_BUFFER:
         case PortMode::PRESET_SECURE_BUFFER:
         case PortMode::PRESET_BYTE_BUFFER:
             t.sharedMemory = android::hardware::hidl_memory();
@@ -545,43 +648,45 @@ void testEOS(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
     if (signalEOS) {
         if ((i = getEmptyBufferID(iBuffer)) < iBuffer->size()) {
             // signal an empty buffer with flag set to EOS
-            dispatchInputBuffer(omxNode, iBuffer, i, 0, OMX_BUFFERFLAG_EOS, 0);
+            ASSERT_NO_FATAL_FAILURE(dispatchInputBuffer(omxNode, iBuffer, i, 0,
+                                                        OMX_BUFFERFLAG_EOS, 0));
         } else {
             ASSERT_TRUE(false);
         }
     }
 
-    int timeOut = TIMEOUT_COUNTER;
+    int timeOut = TIMEOUT_COUNTER_PE;
     while (timeOut--) {
         // Dispatch all client owned output buffers to recover remaining frames
         while (1) {
             if ((i = getEmptyBufferID(oBuffer)) < oBuffer->size()) {
-                dispatchOutputBuffer(omxNode, oBuffer, i, pm[1]);
+                ASSERT_NO_FATAL_FAILURE(
+                    dispatchOutputBuffer(omxNode, oBuffer, i, pm[1]));
                 // if dispatch is successful, perhaps there is a latency
                 // in the component. Dont be in a haste to leave. reset timeout
                 // counter
-                timeOut = TIMEOUT_COUNTER;
+                timeOut = TIMEOUT_COUNTER_PE;
             } else {
                 break;
             }
         }
 
         Message msg;
-        status =
-            observer->dequeueMessage(&msg, DEFAULT_TIMEOUT, iBuffer, oBuffer);
+        status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT_PE, iBuffer,
+                                          oBuffer);
         if (status == android::hardware::media::omx::V1_0::Status::OK) {
             if (msg.data.eventData.event == OMX_EventPortSettingsChanged) {
                 if (fptr) {
-                    (*fptr)(omxNode, observer, iBuffer, oBuffer,
-                            kPortIndexInput, kPortIndexOutput, msg, pm[1],
-                            args);
+                    ASSERT_NO_FATAL_FAILURE((*fptr)(
+                        omxNode, observer, iBuffer, oBuffer, kPortIndexInput,
+                        kPortIndexOutput, msg, pm[1], args));
                 } else {
                     // something unexpected happened
-                    EXPECT_TRUE(false);
+                    ASSERT_TRUE(false);
                 }
             } else {
                 // something unexpected happened
-                EXPECT_TRUE(false);
+                ASSERT_TRUE(false);
             }
         }
         if (eosFlag == true) break;

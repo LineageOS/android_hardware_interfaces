@@ -226,6 +226,50 @@ enum VehicleProperty: int32_t {
         | VehicleArea:GLOBAL),
 
     /**
+     * Reports wheel ticks
+     *
+     * The first four elements represent ticks for individual wheels in the
+     * following order: front left, front right, rear right, rear left.  All
+     * tick counts are cumulative.  Tick counts increment when the vehicle
+     * moves forward, and decrement when vehicles moves in reverse.  The ticks
+     * should be reset to 0 when the vehicle is started by the user.
+     *
+     * The next element in the vector is a reset count.  A reset indicates
+     * previous tick counts are not comparable with this and future ones.  Some
+     * sort of discontinuity in tick counting has occurred.
+     *
+     *  int64Values[0] = reset count
+     *  int64Values[1] = front left ticks
+     *  int64Values[2] = front right ticks
+     *  int64Values[3] = rear right ticks
+     *  int64Values[4] = rear left ticks
+     *
+     * configArray is used to indicate the micrometers-per-wheel-tick value as well as
+     * which wheels are supported.  configArray is set as follows:
+     *
+     *  configArray[0], bits [0:3] = supported wheels.  Uses enum Wheel.
+     *  configArray[1] = micrometers per front left wheel tick
+     *  configArray[2] = micrometers per front right wheel tick
+     *  configArray[3] = micrometers per rear right wheel tick
+     *  configArray[4] = micrometers per rear left wheel tick
+     *
+     * NOTE:  If a wheel is not supported, its value shall always be set to 0.
+     *
+     * VehiclePropValue.timestamp must be correctly filled in.
+     *
+     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
+     * @access VehiclePropertyAccess:READ
+     *
+     * @since o.mr1
+     */
+    WHEEL_TICK = (
+      0x0306
+      | VehiclePropertyGroup:SYSTEM
+      | VehiclePropertyType:COMPLEX
+      | VehicleArea:GLOBAL),
+
+
+    /**
      * Currently selected gear
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
@@ -326,6 +370,34 @@ enum VehicleProperty: int32_t {
             | VehiclePropertyGroup:SYSTEM
             | VehiclePropertyType:INT32
             | VehicleArea:GLOBAL),
+
+    /**
+     * ABS is active.  Set to true whenever ABS is activated.  Reset to false when ABS is off.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     *
+     * @since o.mr1
+     */
+    ABS_ACTIVE = (
+        0x040A
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:BOOLEAN
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Traction Control is active.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     *
+     * @since o.mr1
+     */
+    TRACTION_CONTROL_ACTIVE = (
+        0x040B
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:BOOLEAN
+        | VehicleArea:GLOBAL),
 
     /**
      * Fan speed setting
@@ -604,6 +676,24 @@ enum VehicleProperty: int32_t {
         | VehicleArea:ZONE),
 
     /**
+     * Represents power state for HVAC. Some HVAC properties must require
+     * matching power to be turned on to get out of OFF state. For non-zoned
+     * HVAC properties, VEHICLE_ALL_ZONE corresponds to global power state.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     * @config_string list of HVAC properties whose power is controlled by this
+     *                property. Format is hexa-decimal number (0x...) separated
+     *                by comma like "0x500,0x503". All zones defined in these
+     *                affected properties must be available in the property.
+     */
+    HVAC_POWER_ON = (
+        0x0510
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:BOOLEAN
+        | VehicleArea:ZONE),
+
+    /**
      * Fan Positions Available
      *
      * This is a bit mask of fan positions available for the zone.  Each entry in
@@ -623,19 +713,18 @@ enum VehicleProperty: int32_t {
         | VehicleArea:ZONE),
 
     /**
-     * Represents power state for HVAC. Some HVAC properties must require
-     * matching power to be turned on to get out of OFF state. For non-zoned
-     * HVAC properties, VEHICLE_ALL_ZONE corresponds to global power state.
+     * Automatic re-circulation on/off
+     *
+     * IVehicle#set and IVehicle#get must return StatusCode::NOT_AVAILABLE when HVAC unit is off.
+     * See HVAC_POWER_ON property for details.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
-     * @config_string list of HVAC properties whose power is controlled by this
-     *                property. Format is hexa-decimal number (0x...) separated
-     *                by comma like "0x500,0x503". All zones defined in these
-     *                affected properties must be available in the property.
+     *
+     * @since o.mr1
      */
-    HVAC_POWER_ON = (
-        0x0510
+    HVAC_AUTO_RECIRC_ON = (
+        0x0512
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:BOOLEAN
         | VehicleArea:ZONE),
@@ -696,7 +785,8 @@ enum VehicleProperty: int32_t {
      * requested by Android side. The focus has both per stream characteristics
      * and global characteristics.
      *
-     * Focus request (get of this property) must take the following form:
+     * Focus request (get of this property) must take the following form with indices defined
+     * by VehicleAudioFocusIndex:
      *   int32Values[0]: VehicleAudioFocusRequest type
      *   int32Values[1]: bit flags of streams requested by this focus request.
      *                   There can be up to 32 streams.
@@ -714,7 +804,7 @@ enum VehicleProperty: int32_t {
      *                   REQUEST_RELEASE). In that case, audio module must
      *                   maintain mute state until user's explicit action to
      *                   play some media.
-     *   int32Values[3]: Currently active audio contexts. Use combination of
+     *   int32Values[3]: Audio contexts wishing to be active. Use combination of
      *                   flags from VehicleAudioContextFlag.
      *                   This can be used as a hint to adjust audio policy or
      *                   other policy decision.
@@ -729,7 +819,7 @@ enum VehicleProperty: int32_t {
      * request.
      *
      * Focus response (set and subscription callback for this property) must
-     * take the following form:
+     * take the following form with indices defined by VehicleAudioFocusIndex:
      *   int32Values[0]: VehicleAudioFocusState type
      *   int32Values[1]: bit flags of streams allowed.
      *   int32Values[2]: External focus state: bit flags of currently active
@@ -742,22 +832,26 @@ enum VehicleProperty: int32_t {
      *                   0 means no active audio focus holder outside Android.
      *                   The state must have following values for each
      *                   VehicleAudioFocusState:
-     *                   GAIN: 0 or VehicleAudioExtFocusFlag#PLAY_ONLY_FLAG
-     *                       when radio is active in Android side.
-     *                   GAIN_TRANSIENT: 0. Can be
+     *                   GAIN: VehicleAudioExtFocusFlag#PLAY_ONLY_FLAG
+     *                       when radio is active in Android side. Otherwise,
+     *                       VehicleAudioExtFocusFlag#NONE_FLAG.
+     *                   GAIN_TRANSIENT: Can be
      *                       VehicleAudioExtFocusFlag#PERMANENT_FLAG or
      *                       VehicleAudioExtFocusFlag#TRANSIENT_FLAG if android
      *                       side has requested
      *                       REQUEST_GAIN_TRANSIENT_MAY_DUCK and car side is
-     *                       ducking.
-     *                   LOSS: 0 when no focus is audio is active in car side.
+     *                       ducking. Otherwise
+     *                       VehicleAudioExtFocusFlag#NONE_FLAG.
+     *                   LOSS: VehicleAudioExtFocusFlag#NONE_FLAG when no focus
+     *                       is active in car side.
      *                       VehicleAudioExtFocusFlag#PERMANENT_FLAG when car
      *                       side is playing something permanent.
-     *                   LOSS_TRANSIENT: always must be
+     *                   LOSS_TRANSIENT: must always be
      *                       VehicleAudioExtFocusFlag#PERMANENT_FLAG
-     *   int32Values[3]: context requested by android side when responding to
-     *                   focus request. When car side is taking focus away,
-     *                   this must be zero.
+     *   int32Values[3]: Audio context(s) allowed to be active. When responding positively to a
+     *                   focus request from Android, the request's original context must be
+     *                   repeated here. When taking focus away, or denying a request, the
+     *                   rejected or stopped context would have its corresponding bit cleared.
      *
      * A focus response must be sent per each focus request even if there is
      * no change in focus state. This can happen in case like focus request
@@ -798,8 +892,8 @@ enum VehicleProperty: int32_t {
      *
      * VehiclePropConfig
      *   configArray[0] : bit flags of all supported audio contexts from
-     *                    VehicleAudioContextFlag. If this is 0, audio volume is
-     *                    controlled per physical stream.
+     *                    VehicleAudioContextFlag. If this is 0, audio volume
+     *                    is controlled per physical stream.
      *   configArray[1] : flags defined in VehicleAudioVolumeCapabilityFlag to
      *                    represent audio module's capability.
      *   configArray[2..3] : reserved
@@ -809,7 +903,7 @@ enum VehicleProperty: int32_t {
      *                         indicates mute state.
      *
      * Data type looks like:
-     *   int32Values[0] : stream context as defined in VehicleAudioContextFlag.
+     *   int32Values[0] : audio context as defined in VehicleAudioContextFlag.
      *                    If only physical stream is supported
      *                    (configArray[0] == 0), this must represent physical
      *                    stream number.
@@ -817,8 +911,8 @@ enum VehicleProperty: int32_t {
      *                    defined in the config.
      *   int32Values[2] : One of VehicleAudioVolumeState.
      *
-     * This property requires per stream based get. HAL implementation must
-     * check stream number in get call to return the right volume.
+     * HAL implementations must check the incoming value of audio context
+     * field in get call to return the right volume.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
@@ -857,18 +951,18 @@ enum VehicleProperty: int32_t {
      *                    to represent audio module's capability.
      *
      * Data type looks like:
-     *   int32Values[0] : stream context as defined in VehicleAudioFocusFlag.
+     *   int32Values[0] : audio context as defined in VehicleAudioContextFlag.
      *                    If only physical stream is supported
      *                    (configArray[0] == 0), this must represent physical
      *                    stream number.
      *   int32Values[1] : maximum volume set to the stream. If there is no
-     *                    restriction, this value must be  bigger than
+     *                    restriction, this value must be equal to
      *                    AUDIO_VOLUME's max value.
      *
      * If car does not support this feature, this property must not be
      * populated by HAL.
-     * This property requires per stream based get. HAL implementation must
-     * check stream number in get call to return the right volume.
+     * HAL implementations must check the incoming value of audio context
+     * field in get call to return the right volume.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
@@ -882,10 +976,8 @@ enum VehicleProperty: int32_t {
 
     /**
      * Property to share audio routing policy of android side. This property is
-     * set at the beginning to pass audio policy in android side down to
+     * set at startup to pass audio policy in android side down to
      * vehicle HAL and car audio module.
-     * This can be used as a hint to adjust audio policy or other policy
-     * decision.
      *
      *   int32Values[0] : audio stream where the audio for the application
      *                    context must be routed by default. Note that this is
@@ -893,7 +985,7 @@ enum VehicleProperty: int32_t {
      *                    still use different audio stream for whatever reason.
      *   int32Values[1] : All audio contexts that must be sent through the
      *                     physical stream. Flag is defined in
-     *                     VehicleAudioFocusFlag.
+     *                     VehicleAudioContextFlag.
 
      * Setting of this property must be done for all available physical streams
      * based on audio H/W variant information acquired from AUDIO_HW_VARIANT
@@ -909,11 +1001,11 @@ enum VehicleProperty: int32_t {
         | VehicleArea:GLOBAL),
 
     /**
-     * Property to return audio H/W variant type used in this car. This allows
-     * android side to support different audio policy based on H/W variant used.
-     * Note that other components like CarService may need overlay update to
-     * support additional variants. If this property does not
-     * exist, default audio policy must be used.
+     * Property to return audio H/W variant type used in this car. This is a
+     * zero based index into the set of audio routing policies defined in
+     * R.array.audioRoutingPolicy on CarService, which  may be overlaid to
+     * support multiple variants. If this property does not exist, the default
+     * audio policy must be used.
      *
      * @change_mode VehiclePropertyChangeMode:STATIC
      * @access VehiclePropertyAccess:READ
@@ -942,14 +1034,13 @@ enum VehicleProperty: int32_t {
      * for the routing.
      * This property can support up to 128 external routings.
      * To give full flexibility, there is no standard definition for each bit
-     * flag and assigning each big flag to specific routing type is decided by
+     * flag and assigning each bit flag to specific routing type is decided by
      * VehiclePropConfig#configString.  VehiclePropConfig#configString has
      * format of each entry separated by ',' and each entry has format of
      * bitFlagPositon:typeString[:physicalStreamNumber].
-     *  bitFlagPosition: represents which big flag will be set to enable this
-     *  routing. 0 means
-     *    LSB in int32Values[0]. 31 will be MSB in int32Values[0]. 127 will MSB
-     *    in int32Values[3].
+     *  bitFlagPosition: represents which bit flag will be set to enable this
+     *    routing. 0 means LSB in int32Values[0]. 31 will be MSB in
+     *    int32Values[0]. 127 will MSB in int32Values[3].
      *  typeString: string representation of external routing. Some types are
      *    already defined in AUDIO_EXT_ROUTING_SOURCE_* and use them first
      *    before adding something custom. Applications will find each routing
@@ -1126,10 +1217,11 @@ enum VehicleProperty: int32_t {
      *                    change. Instrument cluster still needs to send
      *                    event with new mode to trigger actual mode change.
      *   int32Values[1] : The current app context relevant for instrument
-     *                    cluster. Use the same flag with VehicleAudioFocusFlag
-     *                    but this context represents active apps, not
-     *                    active audio. Instrument cluster side may change mode
-     *                    depending on the currently active contexts.
+     *                    cluster. Use the same flag with
+     *                    VehicleAudioContextFlag but this context represents
+     *                    active apps, not active audio. Instrument cluster
+     *                    side may change mode depending on the currently
+     *                    active contexts.
      *  When system boots up, Android side will write {0, 0, 0, 0} when it is
      *  ready to render to instrument cluster. Before this message, rendering
      *  from android must not be visible in the cluster.
@@ -1790,85 +1882,240 @@ enum VehicleProperty: int32_t {
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:BOOLEAN
         | VehicleArea:GLOBAL),
+
+
+    /**
+     * Vehicle Maps Service (VMS) message
+     *
+     * This property uses COMPLEX data to communicate vms messages.
+     *
+     * Its contents are to be interpreted as follows:
+     * the indices defined in VmsMessageIntegerValuesIndex are to be used to
+     * read from int32Values;
+     * bytes is a serialized VMS message as defined in the vms protocol
+     * which is opaque to the framework;
+     *
+     * IVehicle#get must always return StatusCode::NOT_AVAILABLE.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     *
+     * @since o.mr1
+     */
+    VEHICLE_MAP_SERVICE = (
+        0x0C00
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:COMPLEX
+        | VehicleArea:GLOBAL),
+
+    /**
+     * OBD2 Live Sensor Data
+     *
+     * Reports a snapshot of the current (live) values of the OBD2 sensors available.
+     *
+     * The configArray is set as follows:
+     *   configArray[0] = number of vendor-specific integer-valued sensors
+     *   configArray[1] = number of vendor-specific float-valued sensors
+     *
+     * The values of this property are to be interpreted as in the following example.
+     * Considering a configArray = {2,3}
+     * int32Values must be a vector containing Obd2IntegerSensorIndex.LAST_SYSTEM_INDEX + 2
+     * elements (that is, 33 elements);
+     * floatValues must be a vector containing Obd2FloatSensorIndex.LAST_SYSTEM_INDEX + 3
+     * elements (that is, 73 elements);
+     *
+     * It is possible for each frame to contain a different subset of sensor values, both system
+     * provided sensors, and vendor-specific ones. In order to support that, the bytes element
+     * of the property value is used as a bitmask,.
+     *
+     * bytes must have a sufficient number of bytes to represent the total number of possible
+     * sensors (in this case, 14 bytes to represent 106 possible values); it is to be read as
+     * a contiguous bitmask such that each bit indicates the presence or absence of a sensor
+     * from the frame, starting with as many bits as the size of int32Values, immediately
+     * followed by as many bits as the size of floatValues.
+     *
+     * For example, should bytes[0] = 0x4C (0b01001100) it would mean that:
+     *   int32Values[0 and 1] are not valid sensor values
+     *   int32Values[2 and 3] are valid sensor values
+     *   int32Values[4 and 5] are not valid sensor values
+     *   int32Values[6] is a valid sensor value
+     *   int32Values[7] is not a valid sensor value
+     * Should bytes[5] = 0x61 (0b01100001) it would mean that:
+     *   int32Values[32] is a valid sensor value
+     *   floatValues[0 thru 3] are not valid sensor values
+     *   floatValues[4 and 5] are valid sensor values
+     *   floatValues[6] is not a valid sensor value
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     *
+     * @since o.mr1
+     */
+    OBD2_LIVE_FRAME = (
+      0x0D00
+      | VehiclePropertyGroup:SYSTEM
+      | VehiclePropertyType:COMPLEX
+      | VehicleArea:GLOBAL),
+
+    /**
+     * OBD2 Freeze Frame Sensor Data
+     *
+     * Reports a snapshot of the value of the OBD2 sensors available at the time that a fault
+     * occurred and was detected.
+     *
+     * A configArray must be provided with the same meaning as defined for OBD2_LIVE_FRAME.
+     *
+     * The values of this property are to be interpreted in a similar fashion as those for
+     * OBD2_LIVE_FRAME, with the exception that the stringValue field may contain a non-empty
+     * diagnostic troubleshooting code (DTC).
+     *
+     * A IVehicle#get request of this property must provide a value for int64Values[0].
+     * This will be interpreted as the timestamp of the freeze frame to retrieve. A list of
+     * timestamps can be obtained by a IVehicle#get of OBD2_FREEZE_FRAME_INFO.
+     *
+     * Should no freeze frame be available at the given timestamp, a response of NOT_AVAILABLE
+     * must be returned by the implementation. Because vehicles may have limited storage for
+     * freeze frames, it is possible for a frame request to respond with NOT_AVAILABLE even if
+     * the associated timestamp has been recently obtained via OBD2_FREEZE_FRAME_INFO.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     *
+     * @since o.mr1
+     */
+    OBD2_FREEZE_FRAME = (
+      0x0D01
+      | VehiclePropertyGroup:SYSTEM
+      | VehiclePropertyType:COMPLEX
+      | VehicleArea:GLOBAL),
+
+    /**
+     * OBD2 Freeze Frame Information
+     *
+     * This property describes the current freeze frames stored in vehicle
+     * memory and available for retrieval via OBD2_FREEZE_FRAME.
+     *
+     * The values are to be interpreted as follows:
+     * each element of int64Values must be the timestamp at which a a fault code
+     * has been detected and the corresponding freeze frame stored, and each
+     * such element can be used as the key to OBD2_FREEZE_FRAME to retrieve
+     * the corresponding freeze frame.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     *
+     * @since o.mr1
+     */
+    OBD2_FREEZE_FRAME_INFO = (
+      0x0D02
+      | VehiclePropertyGroup:SYSTEM
+      | VehiclePropertyType:COMPLEX
+      | VehicleArea:GLOBAL),
+
+    /**
+     * OBD2 Freeze Frame Clear
+     *
+     * This property allows deletion of any of the freeze frames stored in
+     * vehicle memory, as described by OBD2_FREEZE_FRAME_INFO.
+     *
+     * The configArray is set as follows:
+     *  configArray[0] = 1 if the implementation is able to clear individual freeze frames
+     *                   by timestamp, 0 otherwise
+     *
+     * IVehicle#set of this property is to be interpreted as follows:
+     *   if int64Values contains no elements, then all frames stored must be cleared;
+     *   if int64Values contains one or more elements, then frames at the timestamps
+     *   stored in int64Values must be cleared, and the others not cleared. Should the
+     *   vehicle not support selective clearing of freeze frames, this latter mode must
+     *   return NOT_AVAILABLE.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:WRITE
+     *
+     * @since o.mr1
+     */
+    OBD2_FREEZE_FRAME_CLEAR = (
+      0x0D03
+      | VehiclePropertyGroup:SYSTEM
+      | VehiclePropertyType:COMPLEX
+      | VehicleArea:GLOBAL),
 };
 
 /**
  * Bit flags for fan direction
  */
 enum VehicleHvacFanDirection : int32_t {
-  FACE = 0x1,
-  FLOOR = 0x2,
-  FACE_AND_FLOOR = 0x3,
-  DEFROST = 0x4,
-  DEFROST_AND_FLOOR = 0x5,
+    FACE = 0x1,
+    FLOOR = 0x2,
+    FACE_AND_FLOOR = 0x3,
+    DEFROST = 0x4,
+    DEFROST_AND_FLOOR = 0x5,
 };
 
 /**
  * Constants relevant to radio.
  */
 enum VehicleRadioConstants : int32_t {
-  /** Minimum value for the radio preset */
-  VEHICLE_RADIO_PRESET_MIN_VALUE = 1,
+    /** Minimum value for the radio preset */
+    VEHICLE_RADIO_PRESET_MIN_VALUE = 1,
 };
 
 enum VehicleAudioFocusRequest : int32_t {
-  REQUEST_GAIN = 0x1,
-  REQUEST_GAIN_TRANSIENT = 0x2,
-  REQUEST_GAIN_TRANSIENT_MAY_DUCK = 0x3,
-  /**
-   * This is for the case where android side plays sound like UI feedback
-   * and car side does not need to duck existing playback as long as
-   * requested stream is available.
-   */
-  REQUEST_GAIN_TRANSIENT_NO_DUCK = 0x4,
-  REQUEST_RELEASE = 0x5,
-
+    REQUEST_GAIN = 0x1,
+    REQUEST_GAIN_TRANSIENT = 0x2,
+    REQUEST_GAIN_TRANSIENT_MAY_DUCK = 0x3,
+    /**
+     * This is for the case where android side plays sound like UI feedback
+     * and car side does not need to duck existing playback as long as
+     * requested stream is available.
+     */
+    REQUEST_GAIN_TRANSIENT_NO_DUCK = 0x4,
+    REQUEST_RELEASE = 0x5,
 };
 
 enum VehicleAudioFocusState : int32_t {
-  /**
-   * Android side has permanent focus and can play allowed streams.
-   */
-  STATE_GAIN = 0x1,
+    /**
+     * Android side has permanent focus and can play allowed streams.
+     */
+    STATE_GAIN = 0x1,
 
-  /**
-   * Android side has transient focus and can play allowed streams.
-   */
-  STATE_GAIN_TRANSIENT = 0x2,
+    /**
+     * Android side has transient focus and can play allowed streams.
+     */
+    STATE_GAIN_TRANSIENT = 0x2,
 
-  /**
-   * Car audio module is playing guidance kind of sound outside Android.
-   * Android side can still play through allowed streams with ducking.
-   */
-  STATE_LOSS_TRANSIENT_CAN_DUCK = 0x3,
+    /**
+     * Car audio module is playing guidance kind of sound outside Android.
+     * Android side can still play through allowed streams with ducking.
+     */
+    STATE_LOSS_TRANSIENT_CAN_DUCK = 0x3,
 
-  /**
-   * Car audio module is playing transient sound outside Android. Android side
-   * must stop playing any sounds.
-   */
-  STATE_LOSS_TRANSIENT = 0x4,
+    /**
+     * Car audio module is playing transient sound outside Android. Android side
+     * must stop playing any sounds.
+     */
+    STATE_LOSS_TRANSIENT = 0x4,
 
-  /**
-   * Android side has lost focus and cannot play any sound.
-   */
-  STATE_LOSS = 0x5,
+    /**
+     * Android side has lost focus and cannot play any sound.
+     */
+    STATE_LOSS = 0x5,
 
-  /**
-   * car audio module is playing safety critical sound, and Android side cannot
-   * request focus until the current state is finished. car audio module
-   * restore it to the previous state when it can allow Android to play.
-   */
-  STATE_LOSS_TRANSIENT_EXLCUSIVE = 0x6,
-
+    /**
+     * car audio module is playing safety critical sound, and Android side cannot
+     * request focus until the current state is finished. car audio module
+     * restore it to the previous state when it can allow Android to play.
+     */
+    STATE_LOSS_TRANSIENT_EXLCUSIVE = 0x6,
 };
 
 /**
  * Flags to represent multiple streams by combining these.
  */
 enum VehicleAudioStreamFlag : int32_t {
-  STREAM0_FLAG = (0x1 << 0),
-  STREAM1_FLAG = (0x1 << 1),
-  STREAM2_FLAG = (0x1 << 2),
+    STREAM0_FLAG = (0x1 << 0),
+    STREAM1_FLAG = (0x1 << 1),
+    STREAM2_FLAG = (0x1 << 2),
 };
 
 /**
@@ -1876,107 +2123,110 @@ enum VehicleAudioStreamFlag : int32_t {
  * Can be used for audio related property expecting one stream.
  */
 enum VehicleAudioStream : int32_t {
-  STREAM0 = 0,
-  STREAM1 = 1,
+    STREAM0 = 0,
+    STREAM1 = 1,
 };
 
 /**
  * Flag to represent external focus state (outside Android).
  */
 enum VehicleAudioExtFocusFlag : int32_t {
-  /**
-   * No external focus holder.
-   */
-  NONE_FLAG = 0x0,
+    /**
+     * No external focus holder.
+     */
+    NONE_FLAG = 0x0,
 
-  /**
-   * Car side (outside Android) has component holding GAIN kind of focus state.
-   */
-  PERMANENT_FLAG = 0x1,
+    /**
+     * Car side (outside Android) has component holding GAIN kind of focus state.
+     */
+    PERMANENT_FLAG = 0x1,
 
-  /**
-   * Car side (outside Android) has component holding GAIN_TRANSIENT kind of
-   * focus state.
-   */
-  TRANSIENT_FLAG = 0x2,
+    /**
+     * Car side (outside Android) has component holding GAIN_TRANSIENT kind of
+     * focus state.
+     */
+    TRANSIENT_FLAG = 0x2,
 
-  /**
-   * Car side is expected to play something while focus is held by Android side.
-   * One example can be radio attached in car side. But Android's radio app
-   * still must have focus, and Android side must be in GAIN state, but
-   * media stream will not be allocated to Android side and car side can play
-   * radio any time while this flag is active.
-   */
-  PLAY_ONLY_FLAG = 0x4,
+    /**
+     * Car side is expected to play something while focus is held by Android side.
+     * One example can be radio attached in car side. But Android's radio app
+     * still must have focus, and Android side must be in GAIN state, but
+     * media stream will not be allocated to Android side and car side can play
+     * radio any time while this flag is active.
+     */
+    PLAY_ONLY_FLAG = 0x4,
 
-  /**
-   * Car side must mute any media including radio. This can be used with any
-   * focus request including GAIN* and RELEASE.
-   */
-  MUTE_MEDIA_FLAG = 0x8,
+    /**
+     * Car side must mute any media including radio. This can be used with any
+     * focus request including GAIN* and RELEASE.
+     */
+    MUTE_MEDIA_FLAG = 0x8,
 };
 
 /**
  * Index in int32Values for VehicleProperty#AUDIO_FOCUS property.
  */
 enum VehicleAudioFocusIndex : int32_t {
-  FOCUS = 0,
-  STREAMS = 1,
-  EXTERNAL_FOCUS_STATE = 2,
-  AUDIO_CONTEXTS = 3,
+    FOCUS = 0,
+    STREAMS = 1,
+    EXTERNAL_FOCUS_STATE = 2,
+    AUDIO_CONTEXTS = 3,
 };
 
 /**
  * Flags to tell the current audio context.
  */
 enum VehicleAudioContextFlag : int32_t {
-  /** Music playback is currently active. */
-  MUSIC_FLAG = 0x1,
+    /** Music playback is currently active. */
+    MUSIC_FLAG = 0x1,
 
-  /** Navigation is currently running. */
-  NAVIGATION_FLAG = 0x2,
+    /** Navigation is currently running. */
+    NAVIGATION_FLAG = 0x2,
 
-  /** Voice command session is currently running. */
-  VOICE_COMMAND_FLAG = 0x4,
+    /** Voice command session is currently running. */
+    VOICE_COMMAND_FLAG = 0x4,
 
-  /** Voice call is currently active. */
-  CALL_FLAG = 0x8,
+    /** Voice call is currently active. */
+    CALL_FLAG = 0x8,
 
-  /**
-   * Alarm is active.
-   * This must be only used in VehicleProperty#AUDIO_ROUTING_POLICY.
-   */
-  ALARM_FLAG = 0x10,
+    /**
+     * Alarm is active.
+     * This must be only used in VehicleProperty#AUDIO_ROUTING_POLICY.
+     */
+    ALARM_FLAG = 0x10,
 
-  /**
-   * Notification sound is active.
-   * This must be only used in VehicleProperty#AUDIO_ROUTING_POLICY.
-   */
-  NOTIFICATION_FLAG = 0x20,
+    /**
+     * Notification sound is active.
+     * This must be only used in VehicleProperty#AUDIO_ROUTING_POLICY.
+     */
+    NOTIFICATION_FLAG = 0x20,
 
-  /**
-   * Context unknown. Only used for VehicleProperty#AUDIO_ROUTING_POLICY to
-   * represent default stream for unknown contents.
-   */
-  UNKNOWN_FLAG = 0x40,
+    /**
+     * Context unknown. Only used for VehicleProperty#AUDIO_ROUTING_POLICY to
+     * represent default stream for unknown contents.
+     */
+    UNKNOWN_FLAG = 0x40,
 
-  /** Safety alert / warning is played. */
-  SAFETY_ALERT_FLAG = 0x80,
+    /** Safety alert / warning is played. */
+    SAFETY_ALERT_FLAG = 0x80,
 
-  /** CD / DVD kind of audio is played */
-  CD_ROM_FLAG = 0x100,
+    /** CD / DVD kind of audio is played */
+    CD_ROM_FLAG = 0x100,
 
-  /** Aux audio input is played */
-  AUX_AUDIO_FLAG = 0x200,
+    /** Aux audio input is played */
+    AUX_AUDIO_FLAG = 0x200,
 
-  /** system sound like UI feedback */
-  SYSTEM_SOUND_FLAG = 0x400,
+    /** system sound like UI feedback */
+    SYSTEM_SOUND_FLAG = 0x400,
 
-  /** Radio is played */
-  RADIO_FLAG = 0x800,
+    /** Radio is played */
+    RADIO_FLAG = 0x800,
 
-  /** Ext source is played. This is for tagging generic ext sources. */
-  EXT_SOURCE_FLAG = 0x1000,
+    /** Ext source is played. This is for tagging generic ext sources. */
+    EXT_SOURCE_FLAG = 0x1000,
+
+    /** The phone ring tone is played */
+    RINGTONE_FLAG = 0x2000
 };
 
 /**
@@ -1984,65 +2234,65 @@ enum VehicleAudioContextFlag : int32_t {
  * used in configArray[1] of VehiclePropConfig.
  */
 enum VehicleAudioVolumeCapabilityFlag : int32_t {
-  /**
-   * External audio module or vehicle hal has persistent storage
-   * to keep the volume level. This must be set only when per context
-   * volume level is supported. When this is set, audio volume level per
-   * each context will be retrieved from the property when system starts up.
-   * And external audio module is also expected to adjust volume automatically
-   * whenever there is an audio context change.
-   * When this flag is not set, android side will assume that there is no
-   * persistent storage and stored value in android side will be used to
-   * initialize the volume level. And android side will set volume level
-   * of each physical streams whenever there is an audio context change.
-   */
-  PERSISTENT_STORAGE = 0x1,
+    /**
+     * External audio module or vehicle hal has persistent storage to keep the
+     * volume level. When this is set, the audio volume level for each context
+     * will be retrieved from the property when the system starts up.
+     * And external audio module is also expected to adjust volume automatically
+     * whenever there is an audio context change.
+     * When this flag is not set, android side will assume that there is no
+     * persistent storage and the value stored in the android side will be used to
+     * initialize the volume level, and android side will set volume level
+     * of each physical stream whenever there is an audio context change.
+     */
+    PERSISTENT_STORAGE = 0x1,
 
-  /**
-   * When this flag is set, the H/W can support only single master volume for
-   * all streams.
-   * There is no way to set volume level differently per each stream or context.
-   */
-  MASTER_VOLUME_ONLY = 0x2,
+    /**
+     * [DEPRECATED]
+     * When this flag is set, the H/W can support only single master volume for
+     * all streams. There is no way to set volume level differently for each stream
+     * or context.
+     */
+    MASTER_VOLUME_ONLY = 0x2,
 };
 
 /**
  * enum to represent audio volume state.
  */
 enum VehicleAudioVolumeState : int32_t {
-  STATE_OK = 0,
+    STATE_OK = 0,
 
-  /**
-   * Audio volume has reached volume limit set in
-   * VehicleProperty#AUDIO_VOLUME_LIMIT and user's request to increase volume
-   * further is not allowed.
-   */
-  LIMIT_REACHED = 1,
+    /**
+     * Audio volume has reached volume limit set in
+     * VehicleProperty#AUDIO_VOLUME_LIMIT and user's request to increase volume
+     * further is not allowed.
+     */
+    STATE_LIMIT_REACHED = 1,
 };
 
 /**
  * Index in int32Values for VehicleProperty#AUDIO_VOLUME property.
  */
 enum VehicleAudioVolumeIndex : int32_t {
-  INDEX_STREAM = 0,
-  INDEX_VOLUME = 1,
-  INDEX_STATE = 2,
+    STREAM = 0,
+    VOLUME = 1,
+    STATE = 2,
 };
 
 /**
  * Index in int32Values for VehicleProperty#AUDIO_VOLUME_LIMIT property.
  */
 enum VehicleAudioVolumeLimitIndex : int32_t {
-  STREAM = 0,
-  MAX_VOLUME = 1,
+    STREAM = 0,
+    MAX_VOLUME = 1,
 };
 
 /**
  * Index in int32Values for VehicleProperty#AUDIO_ROUTING_POLICY property.
  */
 enum VehicleAudioRoutingPolicyIndex : int32_t {
-  STREAM = 0,
-  CONTEXTS = 1,
+    STREAM = 0,
+    CONTEXTS = 1,
 };
 
 /**
@@ -2054,172 +2304,172 @@ enum VehicleAudioHwVariantConfigFlag : int32_t {
    * Flag to tell that radio is internal to android and radio must
    * be treated like other android stream like media.
    * When this flag is not set or AUDIO_HW_VARIANT does not exist,
-   * radio is treated as external module. This brins some delta in audio focus
+   * radio is treated as external module. This may affect audio focus
    * handling as well.
    */
   INTERNAL_RADIO_FLAG = 0x1,
 };
 
 enum VehicleApPowerStateConfigFlag : int32_t /* NOTE: type is guessed */ {
-  /**
-   * AP can enter deep sleep state. If not set, AP will always shutdown from
-   * VehicleApPowerState#SHUTDOWN_PREPARE power state.
-   */
-  ENABLE_DEEP_SLEEP_FLAG = 0x1,
+    /**
+     * AP can enter deep sleep state. If not set, AP will always shutdown from
+     * VehicleApPowerState#SHUTDOWN_PREPARE power state.
+     */
+    ENABLE_DEEP_SLEEP_FLAG = 0x1,
 
-  /**
-   * The power controller can power on AP from off state after timeout
-   * specified in VehicleApPowerSet VEHICLE_AP_POWER_SET_SHUTDOWN_READY message.
-   */
-  CONFIG_SUPPORT_TIMER_POWER_ON_FLAG = 0x2,
+    /**
+     * The power controller can power on AP from off state after timeout
+     * specified in VehicleApPowerSet VEHICLE_AP_POWER_SET_SHUTDOWN_READY message.
+     */
+    CONFIG_SUPPORT_TIMER_POWER_ON_FLAG = 0x2,
 };
 
 enum VehicleApPowerState : int32_t /* NOTE: type is guessed */ {
-  /** vehicle HAL will never publish this state to AP */
-  OFF = 0,
+    /** vehicle HAL will never publish this state to AP */
+    OFF = 0,
 
-  /** vehicle HAL will never publish this state to AP */
-  DEEP_SLEEP = 1,
+    /** vehicle HAL will never publish this state to AP */
+    DEEP_SLEEP = 1,
 
-  /** AP is on but display must be off. */
-  ON_DISP_OFF = 2,
+    /** AP is on but display must be off. */
+    ON_DISP_OFF = 2,
 
-  /** AP is on with display on. This state allows full user interaction. */
-  ON_FULL = 3,
+    /** AP is on with display on. This state allows full user interaction. */
+    ON_FULL = 3,
 
-  /**
-   * The power controller has requested AP to shutdown. AP can either enter
-   * sleep state or start full shutdown. AP can also request postponing
-   * shutdown by sending VehicleApPowerSetState#SHUTDOWN_POSTPONE message. The
-   * power controller must change power state to this state to shutdown
-   * system.
-   *
-   * int32Values[1] : one of enum_vehicle_ap_power_state_shutdown_param_type
-   */
-  SHUTDOWN_PREPARE = 4,
+    /**
+     * The power controller has requested AP to shutdown. AP can either enter
+     * sleep state or start full shutdown. AP can also request postponing
+     * shutdown by sending VehicleApPowerSetState#SHUTDOWN_POSTPONE message. The
+     * power controller must change power state to this state to shutdown
+     * system.
+     *
+     * int32Values[1] : one of enum_vehicle_ap_power_state_shutdown_param_type
+     */
+    SHUTDOWN_PREPARE = 4,
 };
 
 enum VehicleApPowerStateShutdownParam : int32_t {
-  /** AP must shutdown immediately. Postponing is not allowed. */
-  SHUTDOWN_IMMEDIATELY = 1,
+    /** AP must shutdown immediately. Postponing is not allowed. */
+    SHUTDOWN_IMMEDIATELY = 1,
 
-  /** AP can enter deep sleep instead of shutting down completely. */
-  CAN_SLEEP = 2,
+    /** AP can enter deep sleep instead of shutting down completely. */
+    CAN_SLEEP = 2,
 
-  /** AP can only shutdown with postponing allowed. */
-  SHUTDOWN_ONLY = 3,
+    /** AP can only shutdown with postponing allowed. */
+    SHUTDOWN_ONLY = 3,
 };
 
 enum VehicleApPowerSetState : int32_t /* NOTE: type is guessed */ {
-  /**
-   * AP has finished boot up, and can start shutdown if requested by power
-   * controller.
-   */
-  BOOT_COMPLETE = 0x1,
+    /**
+     * AP has finished boot up, and can start shutdown if requested by power
+     * controller.
+     */
+    BOOT_COMPLETE = 0x1,
 
-  /**
-   * AP is entering deep sleep state. How this state is implemented may vary
-   * depending on each H/W, but AP's power must be kept in this state.
-   */
-  DEEP_SLEEP_ENTRY = 0x2,
+    /**
+     * AP is entering deep sleep state. How this state is implemented may vary
+     * depending on each H/W, but AP's power must be kept in this state.
+     */
+    DEEP_SLEEP_ENTRY = 0x2,
 
-  /**
-   * AP is exiting from deep sleep state, and is in
-   * VehicleApPowerState#SHUTDOWN_PREPARE state.
-   * The power controller may change state to other ON states based on the
-   * current state.
-   */
-  DEEP_SLEEP_EXIT = 0x3,
+    /**
+     * AP is exiting from deep sleep state, and is in
+     * VehicleApPowerState#SHUTDOWN_PREPARE state.
+     * The power controller may change state to other ON states based on the
+     * current state.
+     */
+    DEEP_SLEEP_EXIT = 0x3,
 
-  /**
-   * int32Values[1]: Time to postpone shutdown in ms. Maximum value can be
-   *                 5000 ms.
-   *                 If AP needs more time, it will send another POSTPONE
-   *                 message before the previous one expires.
-   */
-  SHUTDOWN_POSTPONE = 0x4,
+    /**
+     * int32Values[1]: Time to postpone shutdown in ms. Maximum value can be
+     *                 5000 ms.
+     *                 If AP needs more time, it will send another POSTPONE
+     *                 message before the previous one expires.
+     */
+    SHUTDOWN_POSTPONE = 0x4,
 
-  /**
-   * AP is starting shutting down. When system completes shutdown, everything
-   * will stop in AP as kernel will stop all other contexts. It is
-   * responsibility of vehicle HAL or lower level to synchronize that state
-   * with external power controller. As an example, some kind of ping
-   * with timeout in power controller can be a solution.
-   *
-   * int32Values[1]: Time to turn on AP in secs. Power controller may turn on
-   *                 AP after specified time so that AP can run tasks like
-   *                 update. If it is set to 0, there is no wake up, and power
-   *                 controller may not necessarily support wake-up. If power
-   *                 controller turns on AP due to timer, it must start with
-   *                 VehicleApPowerState#ON_DISP_OFF state, and after
-   *                 receiving VehicleApPowerSetState#BOOT_COMPLETE, it shall
-   *                 do state transition to
-   *                 VehicleApPowerState#SHUTDOWN_PREPARE.
-   */
-  SHUTDOWN_START = 0x5,
+    /**
+     * AP is starting shutting down. When system completes shutdown, everything
+     * will stop in AP as kernel will stop all other contexts. It is
+     * responsibility of vehicle HAL or lower level to synchronize that state
+     * with external power controller. As an example, some kind of ping
+     * with timeout in power controller can be a solution.
+     *
+     * int32Values[1]: Time to turn on AP in secs. Power controller may turn on
+     *                 AP after specified time so that AP can run tasks like
+     *                 update. If it is set to 0, there is no wake up, and power
+     *                 controller may not necessarily support wake-up. If power
+     *                 controller turns on AP due to timer, it must start with
+     *                 VehicleApPowerState#ON_DISP_OFF state, and after
+     *                 receiving VehicleApPowerSetState#BOOT_COMPLETE, it shall
+     *                 do state transition to
+     *                 VehicleApPowerState#SHUTDOWN_PREPARE.
+     */
+    SHUTDOWN_START = 0x5,
 
-  /**
-   * User has requested to turn off headunit's display, which is detected in
-   * android side.
-   * The power controller may change the power state to
-   * VehicleApPowerState#ON_DISP_OFF.
-   */
-  DISPLAY_OFF = 0x6,
+    /**
+     * User has requested to turn off headunit's display, which is detected in
+     * android side.
+     * The power controller may change the power state to
+     * VehicleApPowerState#ON_DISP_OFF.
+     */
+    DISPLAY_OFF = 0x6,
 
-  /**
-   * User has requested to turn on headunit's display, most probably from power
-   * key input which is attached to headunit. The power controller may change
-   * the power state to VehicleApPowerState#ON_FULL.
-   */
-  DISPLAY_ON = 0x7,
+    /**
+     * User has requested to turn on headunit's display, most probably from power
+     * key input which is attached to headunit. The power controller may change
+     * the power state to VehicleApPowerState#ON_FULL.
+     */
+    DISPLAY_ON = 0x7,
 };
 
 /**
  * Index in int32Values for VehicleProperty#AP_POWER_STATE property.
  */
 enum VehicleApPowerStateIndex : int32_t {
-  STATE = 0,
-  ADDITIONAL = 1,
+    STATE = 0,
+    ADDITIONAL = 1,
 };
 
 /**
  * Enum to represent bootup reason.
  */
 enum VehicleApPowerBootupReason : int32_t {
-  /**
-   * Power on due to user's pressing of power key or rotating of ignition
-   * switch.
-   */
-  USER_POWER_ON = 0,
+    /**
+     * Power on due to user's pressing of power key or rotating of ignition
+     * switch.
+     */
+    USER_POWER_ON = 0,
 
-  /**
-   * Automatic power on triggered by door unlock or any other kind of automatic
-   * user detection.
-   */
-  USER_UNLOCK = 1,
+    /**
+     * Automatic power on triggered by door unlock or any other kind of automatic
+     * user detection.
+     */
+    USER_UNLOCK = 1,
 
-  /**
-   * Automatic power on triggered by timer. This only happens when AP has asked
-   * wake-up after
-   * certain time through time specified in
-   * VehicleApPowerSetState#SHUTDOWN_START.
-   */
-  TIMER = 2,
+    /**
+     * Automatic power on triggered by timer. This only happens when AP has asked
+     * wake-up after
+     * certain time through time specified in
+     * VehicleApPowerSetState#SHUTDOWN_START.
+     */
+    TIMER = 2,
 };
 
 enum VehicleHwKeyInputAction : int32_t {
-  /** Key down */
-  ACTION_DOWN = 0,
+    /** Key down */
+    ACTION_DOWN = 0,
 
-  /** Key up */
-  ACTION_UP = 1,
+    /** Key up */
+    ACTION_UP = 1,
 };
 
 enum VehicleDisplay : int32_t {
-  /** center console */
-  MAIN = 0,
+    /** center console */
+    MAIN = 0,
 
-  INSTRUMENT_CLUSTER = 1,
+    INSTRUMENT_CLUSTER = 1,
 };
 
 /**
@@ -2312,11 +2562,11 @@ enum VehiclePropertyChangeMode : int32_t {
  * the expected output.
  */
 enum VehiclePropertyAccess : int32_t {
-  NONE = 0x00,
+    NONE = 0x00,
 
-  READ = 0x01,
-  WRITE = 0x02,
-  READ_WRITE = 0x03,
+    READ = 0x01,
+    WRITE = 0x02,
+    READ_WRITE = 0x03,
 };
 
 /**
@@ -2325,32 +2575,32 @@ enum VehiclePropertyAccess : int32_t {
  * The driving states determine what features of the UI will be accessible.
  */
 enum VehicleDrivingStatus : int32_t {
-  UNRESTRICTED = 0x00,
-  NO_VIDEO = 0x01,
-  NO_KEYBOARD_INPUT = 0x02,
-  NO_VOICE_INPUT = 0x04,
-  NO_CONFIG = 0x08,
-  LIMIT_MESSAGE_LEN = 0x10,
+    UNRESTRICTED = 0x00,
+    NO_VIDEO = 0x01,
+    NO_KEYBOARD_INPUT = 0x02,
+    NO_VOICE_INPUT = 0x04,
+    NO_CONFIG = 0x08,
+    LIMIT_MESSAGE_LEN = 0x10,
 };
 
 /**
  * Various gears which can be selected by user and chosen in system.
  */
 enum VehicleGear: int32_t {
-  GEAR_NEUTRAL = 0x0001,
-  GEAR_REVERSE = 0x0002,
-  GEAR_PARK = 0x0004,
-  GEAR_DRIVE = 0x0008,
-  GEAR_LOW = 0x0010,
-  GEAR_1 = 0x0010,
-  GEAR_2 = 0x0020,
-  GEAR_3 = 0x0040,
-  GEAR_4 = 0x0080,
-  GEAR_5 = 0x0100,
-  GEAR_6 = 0x0200,
-  GEAR_7 = 0x0400,
-  GEAR_8 = 0x0800,
-  GEAR_9 = 0x1000,
+    GEAR_NEUTRAL = 0x0001,
+    GEAR_REVERSE = 0x0002,
+    GEAR_PARK = 0x0004,
+    GEAR_DRIVE = 0x0008,
+    GEAR_LOW = 0x0010,
+    GEAR_1 = 0x0010,
+    GEAR_2 = 0x0020,
+    GEAR_3 = 0x0040,
+    GEAR_4 = 0x0080,
+    GEAR_5 = 0x0100,
+    GEAR_6 = 0x0200,
+    GEAR_7 = 0x0400,
+    GEAR_8 = 0x0800,
+    GEAR_9 = 0x1000,
 };
 
 /**
@@ -2610,73 +2860,73 @@ enum VehiclePropertyOperation : int32_t {
 
 
 enum SubscribeFlags : int32_t {
-  UNDEFINED = 0x0,
+    UNDEFINED = 0x0,
 
-  /**
-   * Subscribe to event that was originated in vehicle HAL
-   * (most likely this event came from the vehicle itself).
-   */
-  HAL_EVENT = 0x1,
+    /**
+     * Subscribe to event that was originated in vehicle HAL
+     * (most likely this event came from the vehicle itself).
+     */
+    HAL_EVENT = 0x1,
 
-  /**
-   * Use this flag to subscribe on events when IVehicle#set(...) was called by
-   * vehicle HAL's client (e.g. Car Service).
-   */
-  SET_CALL = 0x2,
+    /**
+     * Use this flag to subscribe on events when IVehicle#set(...) was called by
+     * vehicle HAL's client (e.g. Car Service).
+     */
+    SET_CALL = 0x2,
 
-  DEFAULT = HAL_EVENT,
+    DEFAULT = HAL_EVENT,
 };
 
 /**
  * Encapsulates information about subscription to vehicle property events.
  */
 struct SubscribeOptions {
-  /** Property to subscribe */
-  int32_t propId;
+    /** Property to subscribe */
+    int32_t propId;
 
-  /**
-   * Area ids - this must be a bit mask of areas to subscribe or 0 to subscribe
-   * to all areas.
-   */
-  int32_t vehicleAreas;
+    /**
+     * Area ids - this must be a bit mask of areas to subscribe or 0 to subscribe
+     * to all areas.
+     */
+    int32_t vehicleAreas;
 
-  /**
-   * Sample rate in Hz.
-   *
-   * Must be provided for properties with
-   * VehiclePropertyChangeMode::CONTINUOUS. The value must be within
-   * VehiclePropConfig#minSamplingRate .. VehiclePropConfig#maxSamplingRate
-   * for a given property.
-   * This value indicates how many updates per second client wants to receive.
-   */
-  float sampleRate;
+    /**
+     * Sample rate in Hz.
+     *
+     * Must be provided for properties with
+     * VehiclePropertyChangeMode::CONTINUOUS. The value must be within
+     * VehiclePropConfig#minSamplingRate .. VehiclePropConfig#maxSamplingRate
+     * for a given property.
+     * This value indicates how many updates per second client wants to receive.
+     */
+    float sampleRate;
 
-  /** Flags that indicate what kind of events listen to. */
-  SubscribeFlags flags;
+    /** Flags that indicate what kind of events listen to. */
+    SubscribeFlags flags;
 };
 
 /** Error codes used in vehicle HAL interface. */
 enum StatusCode : int32_t {
-  OK = 0,
+    OK = 0,
 
-  /** Try again. */
-  TRY_AGAIN = 1,
+    /** Try again. */
+    TRY_AGAIN = 1,
 
-  /** Invalid argument provided. */
-  INVALID_ARG = 2,
+    /** Invalid argument provided. */
+    INVALID_ARG = 2,
 
-  /**
-   * This code must be returned when device that associated with the vehicle
-   * property is not available. For example, when client tries to set HVAC
-   * temperature when the whole HVAC unit is turned OFF.
-   */
-  NOT_AVAILABLE = 3,
+    /**
+     * This code must be returned when device that associated with the vehicle
+     * property is not available. For example, when client tries to set HVAC
+     * temperature when the whole HVAC unit is turned OFF.
+     */
+    NOT_AVAILABLE = 3,
 
-  /** Access denied */
-  ACCESS_DENIED = 4,
+    /** Access denied */
+    ACCESS_DENIED = 4,
 
-  /** Something unexpected has happened in Vehicle HAL */
-  INTERNAL_ERROR = 5,
+    /** Something unexpected has happened in Vehicle HAL */
+    INTERNAL_ERROR = 5,
 };
 
 enum Wheel : int32_t {
@@ -2687,3 +2937,460 @@ enum Wheel : int32_t {
     LEFT_REAR = 0x4,
     RIGHT_REAR = 0x8,
 };
+
+/**
+ * The status of the vehicle's fuel system.
+ * These values come from the SAE J1979 standard.
+ */
+enum Obd2FuelSystemStatus : int32_t {
+    OPEN_INSUFFICIENT_ENGINE_TEMPERATURE = 1,
+    CLOSED_LOOP = 2,
+    OPEN_ENGINE_LOAD_OR_DECELERATION = 4,
+    OPEN_SYSTEM_FAILURE = 8,
+    CLOSED_LOOP_BUT_FEEDBACK_FAULT = 16,
+};
+
+/** Defines which ignition monitors are available to be read. */
+enum Obd2IgnitionMonitorKind : int32_t {
+    SPARK = 0,
+    COMPRESSION = 1,
+};
+
+/**
+ * Ignition monitors common to both SPARK and COMPRESSION.
+ * These values come from the SAE J1979 standard.
+ */
+enum Obd2CommonIgnitionMonitors : int32_t {
+    COMPONENTS_AVAILABLE = 0x1 << 0,
+    COMPONENTS_INCOMPLETE = 0x1 << 1,
+
+    FUEL_SYSTEM_AVAILABLE = 0x1 << 2,
+    FUEL_SYSTEM_INCOMPLETE = 0x1 << 3,
+
+    MISFIRE_AVAILABLE = 0x1 << 4,
+    MISFIRE_INCOMPLETE = 0x1 << 5,
+};
+
+/**
+ * Ignition monitors available for SPARK vehicles.
+ * These values come from the SAE J1979 standard.
+ */
+enum Obd2SparkIgnitionMonitors : Obd2CommonIgnitionMonitors {
+    EGR_AVAILABLE = 0x1 << 6,
+    EGR_INCOMPLETE = 0x1 << 7,
+
+    OXYGEN_SENSOR_HEATER_AVAILABLE = 0x1 << 8,
+    OXYGEN_SENSOR_HEATER_INCOMPLETE = 0x1 << 9,
+
+    OXYGEN_SENSOR_AVAILABLE = 0x1 << 10,
+    OXYGEN_SENSOR_INCOMPLETE = 0x1 << 11,
+
+    AC_REFRIGERANT_AVAILABLE = 0x1 << 12,
+    AC_REFRIGERANT_INCOMPLETE = 0x1 << 13,
+
+    SECONDARY_AIR_SYSTEM_AVAILABLE = 0x1 << 14,
+    SECONDARY_AIR_SYSTEM_INCOMPLETE = 0x1 << 15,
+
+    EVAPORATIVE_SYSTEM_AVAILABLE = 0x1 << 16,
+    EVAPORATIVE_SYSTEM_INCOMPLETE = 0x1 << 17,
+
+    HEATED_CATALYST_AVAILABLE = 0x1 << 18,
+    HEATED_CATALYST_INCOMPLETE = 0x1 << 19,
+
+    CATALYST_AVAILABLE = 0x1 << 20,
+    CATALYST_INCOMPLETE = 0x1 << 21,
+};
+
+/**
+ * Ignition monitors only available for COMPRESSION vehicles.
+ * These values come from the SAE J1979 standard.
+ */
+enum Obd2CompressionIgnitionMonitors : Obd2CommonIgnitionMonitors {
+    EGR_OR_VVT_AVAILABLE = 0x1 << 6,
+    EGR_OR_VVT_INCOMPLETE = 0x1 << 7,
+
+    PM_FILTER_AVAILABLE = 0x1 << 8,
+    PM_FILTER_INCOMPLETE = 0x1 << 9,
+
+    EXHAUST_GAS_SENSOR_AVAILABLE = 0x1 << 10,
+    EXHAUST_GAS_SENSOR_INCOMPLETE = 0x1 << 11,
+
+    BOOST_PRESSURE_AVAILABLE = 0x1 << 12,
+    BOOST_PRESSURE_INCOMPLETE = 0x1 << 13,
+
+    NOx_SCR_AVAILABLE = 0x1 << 14,
+    NOx_SCR_INCOMPLETE = 0x1 << 15,
+
+    NMHC_CATALYST_AVAILABLE = 0x1 << 16,
+    NMHC_CATALYST_INCOMPLETE = 0x1 << 17,
+};
+
+/**
+ * The status of the vehicle's secondary air system.
+ * These values come from the SAE J1979 standard.
+ */
+enum Obd2SecondaryAirStatus : int32_t {
+    UPSTREAM = 1,
+    DOWNSTREAM_OF_CATALYCIC_CONVERTER = 2,
+    FROM_OUTSIDE_OR_OFF = 4,
+    PUMP_ON_FOR_DIAGNOSTICS = 8,
+};
+
+/**
+ * The fuel type(s) supported by a vehicle.
+ * These values come from the SAE J1979 standard.
+ */
+enum Obd2FuelType : int32_t {
+    NOT_AVAILABLE = 0,
+    GASOLINE = 1,
+    METHANOL = 2,
+    ETHANOL = 3,
+    DIESEL = 4,
+    LPG = 5,
+    CNG = 6,
+    PROPANE = 7,
+    ELECTRIC = 8,
+    BIFUEL_RUNNING_GASOLINE = 9,
+    BIFUEL_RUNNING_METHANOL = 10,
+    BIFUEL_RUNNING_ETHANOL = 11,
+    BIFUEL_RUNNING_LPG = 12,
+    BIFUEL_RUNNING_CNG = 13,
+    BIFUEL_RUNNING_PROPANE = 14,
+    BIFUEL_RUNNING_ELECTRIC = 15,
+    BIFUEL_RUNNING_ELECTRIC_AND_COMBUSTION = 16,
+    HYBRID_GASOLINE = 17,
+    HYBRID_ETHANOL = 18,
+    HYBRID_DIESEL = 19,
+    HYBRID_ELECTRIC = 20,
+    HYBRID_RUNNING_ELECTRIC_AND_COMBUSTION = 21,
+    HYBRID_REGENERATIVE = 22,
+    BIFUEL_RUNNING_DIESEL = 23,
+};
+
+/**
+ * This enum provides the canonical mapping for sensor properties that have an integer value.
+ * The ordering of the values is taken from the OBD2 specification.
+ * Some of the properties are represented as an integer mapping to another enum. In those cases
+ * expect a comment by the property definition describing the enum to look at for the mapping.
+ * Any value greater than the last reserved index is available to vendors to map their extensions.
+ * While these values do not directly map to SAE J1979 PIDs, an equivalence is listed next
+ * to each one to aid implementors.
+ */
+enum DiagnosticIntegerSensorIndex : int32_t {
+    /** refer to FuelSystemStatus for a description of this value. */
+    FUEL_SYSTEM_STATUS = 0, /* PID 0x03 */
+    MALFUNCTION_INDICATOR_LIGHT_ON = 1, /* PID 0x01 */
+
+    /** refer to IgnitionMonitorKind for a description of this value. */
+    IGNITION_MONITORS_SUPPORTED = 2, /* PID 0x01 */
+
+    /**
+     * The value of this sensor is a bitmask that specifies whether ignition-specific
+     * tests are available and whether they are complete. The semantics of the individual
+     * bits in this value are given by, respectively, SparkIgnitionMonitors and
+     * CompressionIgnitionMonitors depending on the value of IGNITION_MONITORS_SUPPORTED.
+     */
+    IGNITION_SPECIFIC_MONITORS = 3, /* PID 0x01 */
+    INTAKE_AIR_TEMPERATURE = 4, /* PID 0x0F */
+
+    /** refer to SecondaryAirStatus for a description of this value. */
+    COMMANDED_SECONDARY_AIR_STATUS = 5, /* PID 0x12 */
+    NUM_OXYGEN_SENSORS_PRESENT = 6, /* PID 0x13 */
+    RUNTIME_SINCE_ENGINE_START = 7, /* PID 0x1F */
+    DISTANCE_TRAVELED_WITH_MALFUNCTION_INDICATOR_LIGHT_ON = 8, /* PID 0x21 */
+    WARMUPS_SINCE_CODES_CLEARED = 9, /* PID 0x30 */
+    DISTANCE_TRAVELED_SINCE_CODES_CLEARED = 10, /* PID 0x31 */
+    ABSOLUTE_BAROMETRIC_PRESSURE = 11, /* PID 0x33 */
+    CONTROL_MODULE_VOLTAGE = 12, /* PID 0x42 */
+    AMBIENT_AIR_TEMPERATURE = 13, /* PID 0x46 */
+    TIME_WITH_MALFUNCTION_LIGHT_ON = 14, /* PID 0x4D */
+    TIME_SINCE_TROUBLE_CODES_CLEARED = 15, /* PID 0x4E */
+    MAX_FUEL_AIR_EQUIVALENCE_RATIO = 16, /* PID 0x4F */
+    MAX_OXYGEN_SENSOR_VOLTAGE = 17, /* PID 0x4F */
+    MAX_OXYGEN_SENSOR_CURRENT = 18, /* PID 0x4F */
+    MAX_INTAKE_MANIFOLD_ABSOLUTE_PRESSURE = 19, /* PID 0x4F */
+    MAX_AIR_FLOW_RATE_FROM_MASS_AIR_FLOW_SENSOR = 20, /* PID 0x50 */
+
+    /** refer to FuelType for a description of this value. */
+    FUEL_TYPE = 21, /* PID 0x51 */
+    FUEL_RAIL_ABSOLUTE_PRESSURE = 22, /* PID 0x59 */
+    ENGINE_OIL_TEMPERATURE = 23, /* PID 0x5C */
+    DRIVER_DEMAND_PERCENT_TORQUE = 24, /* PID 0x61 */
+    ENGINE_ACTUAL_PERCENT_TORQUE = 25, /* PID 0x62 */
+    ENGINE_REFERENCE_PERCENT_TORQUE = 26, /* PID 0x63 */
+    ENGINE_PERCENT_TORQUE_DATA_IDLE = 27, /* PID 0x64 */
+    ENGINE_PERCENT_TORQUE_DATA_POINT1 = 28, /* PID 0x64 */
+    ENGINE_PERCENT_TORQUE_DATA_POINT2 = 29, /* PID 0x64 */
+    ENGINE_PERCENT_TORQUE_DATA_POINT3 = 30, /* PID 0x64 */
+    ENGINE_PERCENT_TORQUE_DATA_POINT4 = 31, /* PID 0x64 */
+    LAST_SYSTEM_INDEX = ENGINE_PERCENT_TORQUE_DATA_POINT4,
+};
+
+/**
+ * This enum provides the canonical mapping for sensor properties that have a floating-point value.
+ * The ordering of the values is taken from the OBD2 specification.
+ * Any value greater than the last reserved index is available to vendors to map their extensions.
+ * While these values do not directly map to SAE J1979 PIDs, an equivalence is listed next
+ * to each one to aid implementors.
+ */
+enum DiagnosticFloatSensorIndex : int32_t {
+    CALCULATED_ENGINE_LOAD = 0, /* PID 0x04 */
+    ENGINE_COOLANT_TEMPERATURE = 1, /* PID 0x05 */
+    SHORT_TERM_FUEL_TRIM_BANK1 = 2, /* PID 0x06 */
+    LONG_TERM_FUEL_TRIM_BANK1 = 3, /* PID 0x07 */
+    SHORT_TERM_FUEL_TRIM_BANK2 = 4, /* PID 0x08 */
+    LONG_TERM_FUEL_TRIM_BANK2 = 5, /* PID 0x09 */
+    FUEL_PRESSURE = 6, /* PID 0x0A */
+    INTAKE_MANIFOLD_ABSOLUTE_PRESSURE = 7, /* PID 0x0B */
+    ENGINE_RPM = 8, /* PID 0x0C */
+    VEHICLE_SPEED = 9, /* PID 0x0D */
+    TIMING_ADVANCE = 10, /* PID 0x0E */
+    MAF_AIR_FLOW_RATE = 11, /* PID 0x10 */
+    THROTTLE_POSITION = 12, /* PID 0x11 */
+    OXYGEN_SENSOR1_VOLTAGE = 13, /* PID 0x14 */
+    OXYGEN_SENSOR1_SHORT_TERM_FUEL_TRIM = 14, /* PID 0x14 */
+    OXYGEN_SENSOR1_FUEL_AIR_EQUIVALENCE_RATIO = 15, /* PID 0x24 */
+    OXYGEN_SENSOR2_VOLTAGE = 16, /* PID 0x15 */
+    OXYGEN_SENSOR2_SHORT_TERM_FUEL_TRIM = 17, /* PID 0x15 */
+    OXYGEN_SENSOR2_FUEL_AIR_EQUIVALENCE_RATIO = 18, /* PID 0x25 */
+    OXYGEN_SENSOR3_VOLTAGE = 19, /* PID 0x16 */
+    OXYGEN_SENSOR3_SHORT_TERM_FUEL_TRIM = 20, /* PID 0x16 */
+    OXYGEN_SENSOR3_FUEL_AIR_EQUIVALENCE_RATIO = 21, /* PID 0x26 */
+    OXYGEN_SENSOR4_VOLTAGE = 22, /* PID 0x17 */
+    OXYGEN_SENSOR4_SHORT_TERM_FUEL_TRIM = 23, /* PID 0x17 */
+    OXYGEN_SENSOR4_FUEL_AIR_EQUIVALENCE_RATIO = 24, /* PID 0x27 */
+    OXYGEN_SENSOR5_VOLTAGE = 25, /* PID 0x18 */
+    OXYGEN_SENSOR5_SHORT_TERM_FUEL_TRIM = 26, /* PID 0x18 */
+    OXYGEN_SENSOR5_FUEL_AIR_EQUIVALENCE_RATIO = 27, /* PID 0x28 */
+    OXYGEN_SENSOR6_VOLTAGE = 28, /* PID 0x19 */
+    OXYGEN_SENSOR6_SHORT_TERM_FUEL_TRIM = 29, /* PID 0x19 */
+    OXYGEN_SENSOR6_FUEL_AIR_EQUIVALENCE_RATIO = 30, /* PID 0x29 */
+    OXYGEN_SENSOR7_VOLTAGE = 31, /* PID 0x1A */
+    OXYGEN_SENSOR7_SHORT_TERM_FUEL_TRIM = 32, /* PID 0x1A */
+    OXYGEN_SENSOR7_FUEL_AIR_EQUIVALENCE_RATIO = 33, /* PID 0x2A */
+    OXYGEN_SENSOR8_VOLTAGE = 34, /* PID 0x1B */
+    OXYGEN_SENSOR8_SHORT_TERM_FUEL_TRIM = 35, /* PID 0x1B */
+    OXYGEN_SENSOR8_FUEL_AIR_EQUIVALENCE_RATIO = 36, /* PID 0x2B */
+    FUEL_RAIL_PRESSURE = 37, /* PID 0x22 */
+    FUEL_RAIL_GAUGE_PRESSURE = 38, /* PID 0x23 */
+    COMMANDED_EXHAUST_GAS_RECIRCULATION = 39, /* PID 0x2C */
+    EXHAUST_GAS_RECIRCULATION_ERROR = 40, /* PID 0x2D */
+    COMMANDED_EVAPORATIVE_PURGE = 41, /* PID 0x2E */
+    FUEL_TANK_LEVEL_INPUT = 42, /* PID 0x2F */
+    EVAPORATION_SYSTEM_VAPOR_PRESSURE = 43, /* PID 0x32 */
+    CATALYST_TEMPERATURE_BANK1_SENSOR1 = 44, /* PID 0x3C */
+    CATALYST_TEMPERATURE_BANK2_SENSOR1 = 45, /* PID 0x3D */
+    CATALYST_TEMPERATURE_BANK1_SENSOR2 = 46, /* PID 0x3E */
+    CATALYST_TEMPERATURE_BANK2_SENSOR2 = 47, /* PID 0x3F */
+    ABSOLUTE_LOAD_VALUE = 48, /* PID 0x43 */
+    FUEL_AIR_COMMANDED_EQUIVALENCE_RATIO = 49, /* PID 0x44 */
+    RELATIVE_THROTTLE_POSITION = 50, /* PID 0x45 */
+    ABSOLUTE_THROTTLE_POSITION_B = 51, /* PID 0x47 */
+    ABSOLUTE_THROTTLE_POSITION_C = 52, /* PID 0x48 */
+    ACCELERATOR_PEDAL_POSITION_D = 53, /* PID 0x49 */
+    ACCELERATOR_PEDAL_POSITION_E = 54, /* PID 0x4A */
+    ACCELERATOR_PEDAL_POSITION_F = 55, /* PID 0x4B */
+    COMMANDED_THROTTLE_ACTUATOR = 56, /* PID 0x4C */
+    ETHANOL_FUEL_PERCENTAGE = 57,/* PID 0x52 */
+    ABSOLUTE_EVAPORATION_SYSTEM_VAPOR_PRESSURE = 58, /* PID 0x53 */
+    SHORT_TERM_SECONDARY_OXYGEN_SENSOR_TRIM_BANK1 = 59, /* PID 0x55 */
+    SHORT_TERM_SECONDARY_OXYGEN_SENSOR_TRIM_BANK2 = 60, /* PID 0x57 */
+    SHORT_TERM_SECONDARY_OXYGEN_SENSOR_TRIM_BANK3 = 61,/* PID 0x55 */
+    SHORT_TERM_SECONDARY_OXYGEN_SENSOR_TRIM_BANK4 = 62, /* PID 0x57 */
+    LONG_TERM_SECONDARY_OXYGEN_SENSOR_TRIM_BANK1 = 63, /* PID 0x56 */
+    LONG_TERM_SECONDARY_OXYGEN_SENSOR_TRIM_BANK2 = 64, /* PID 0x58 */
+    LONG_TERM_SECONDARY_OXYGEN_SENSOR_TRIM_BANK3 = 65, /* PID 0x56 */
+    LONG_TERM_SECONDARY_OXYGEN_SENSOR_TRIM_BANK4 = 66, /* PID 0x58 */
+    RELATIVE_ACCELERATOR_PEDAL_POSITION = 67, /* PID 0x5A */
+    HYBRID_BATTERY_PACK_REMAINING_LIFE = 68, /* PID 0x5B */
+    FUEL_INJECTION_TIMING = 69, /* PID 0x5D */
+    ENGINE_FUEL_RATE = 70, /* PID 0x5E */
+    LAST_SYSTEM_INDEX = ENGINE_FUEL_RATE,
+};
+
+/**
+ * This enum lists the types of supported VMS messages. It is used as the first
+ * integer in the vehicle property integers array and determines how the rest of
+ * the message is decoded.
+ */
+enum VmsMessageType : int32_t {
+    /**
+     * A request from the subscribers to the VMS service to subscribe to a layer.
+     *
+     * This message type uses enum VmsMessageWithLayerIntegerValuesIndex.
+     */
+    SUBSCRIBE = 1,
+
+    /**
+     * A request from the subscribers to the VMS service to subscribe to a layer from a specific publisher.
+     *
+     * This message type uses enum VmsMessageWithLayerAndPublisherIdIntegerValuesIndex.
+     */
+    SUBSCRIBE_TO_PUBLISHER = 2,
+
+    /**
+     * A request from the subscribers to the VMS service to unsubscribes from a layer.
+     *
+     * This message type uses enum VmsMessageWithLayerIntegerValuesIndex.
+     */
+    UNSUBSCRIBE = 3,
+
+    /**
+     * A request from the subscribers to the VMS service to unsubscribes from a layer from a specific publisher.
+     *
+     * This message type uses enum VmsMessageWithLayerAndPublisherIdIntegerValuesIndex.
+     */
+    UNSUBSCRIBE_TO_PUBLISHER = 4,
+
+    /**
+     * Information from the publishers to the VMS service about the layers which the client can publish.
+     *
+     * This message type uses enum VmsOfferingMessageIntegerValuesIndex.
+     */
+    OFFERING = 5,
+
+    /**
+     * A request from the subscribers to the VMS service to get the available layers.
+     *
+     * This message type uses enum VmsBaseMessageIntegerValuesIndex.
+     */
+    AVAILABILITY_REQUEST = 6,
+
+    /**
+     * A request from the publishers to the VMS service to get the layers with subscribers.
+     *
+     * This message type uses enum VmsBaseMessageIntegerValuesIndex.
+     */
+    SUBSCRIPTIONS_REQUEST = 7,
+
+    /**
+     * A response from the VMS service to the subscribers to a VmsMessageType.AVAILABILITY_REQUEST
+     *
+     * This message type uses enum VmsAvailabilityStateIntegerValuesIndex.
+     */
+    AVAILABILITY_RESPONSE = 8,
+
+    /**
+     * A notification from the VMS service to the subscribers on a change in the available layers.
+     *
+     * This message type uses enum VmsAvailabilityStateIntegerValuesIndex.
+     */
+    AVAILABILITY_CHANGE = 9,
+
+    /**
+     * A response from the VMS service to the publishers to a VmsMessageType.SUBSCRIPTIONS_REQUEST
+     *
+     * This message type uses enum VmsSubscriptionsStateIntegerValuesIndex.
+     */
+    SUBSCRIPTIONS_RESPONSE = 10,
+
+    /**
+     * A notification from the VMS service to the publishers on a change in the layers with subscribers.
+     *
+     * This message type uses enum VmsSubscriptionsStateIntegerValuesIndex.
+     */
+    SUBSCRIPTIONS_CHANGE = 11,
+
+    /**
+     * A message from the VMS service to the subscribers or from the publishers to the VMS service
+     * with a serialized VMS data packet as defined in the VMS protocol.
+     *
+     * This message type uses enum VmsBaseMessageIntegerValuesIndex.
+     */
+    DATA = 12,
+};
+
+/**
+ * Every VMS message starts with the type of the message from the VmsMessageType enum.
+ * Messages with no parameters such as VmsMessageType.AVAILABILITY_REQUEST,
+ * VmsMessageType.SUBSCRIPTIONS_REQUEST and VmsMessageType.DATA are also based on this enum.
+ */
+enum VmsBaseMessageIntegerValuesIndex : int32_t {
+    /* The message type as enumerated by VmsMessageType enum. */
+    MESSAGE_TYPE = 0,
+};
+
+/*
+ * A VMS message with a layer is sent as part of a VmsMessageType.SUBSCRIBE or
+ * VmsMessageType.UNSUBSCRIBE messages.
+ *
+ * The layer type is defined in the VMS protocol, and the subtype and version are
+ * controlled by the implementer of the publisher.
+ */
+enum VmsMessageWithLayerIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
+    LAYER_TYPE = 1,
+    LAYER_SUBTYPE = 2,
+    LAYER_VERSION = 3,
+};
+
+/*
+ * A VMS message with a layer and publisher ID is sent as part of a
+ * VmsMessageType.SUBSCRIBE_TO_PUBLISHER and VmsMessageType.UNSUBSCRIBE_TO_PUBLISHER messages.
+ */
+enum VmsMessageWithLayerAndPublisherIdIntegerValuesIndex : VmsMessageWithLayerIntegerValuesIndex {
+    PUBLISHER_ID = 4,
+};
+
+/*
+ * An offering can be sent by publishers as part of VmsMessageType.OFFERING in order to
+ * advertise which layers they can publish and under which constraints: e.g., I can publish Layer X
+ * if someone else will publish Layer Y.
+ * The offering contains the publisher ID which was assigned to the publisher by the VMS service.
+ * A single offering is represented as:
+ * - Layer type
+ * - Layer subtype
+ * - Layer version
+ * - Number of dependencies (N)
+ * - N x (Layer type, Layer subtype, Layer version)
+ */
+enum VmsOfferingMessageIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
+    PUBLISHER_ID = 1,
+    NUMBER_OF_OFFERS = 2,
+    OFFERING_START = 3,
+};
+
+/**
+ * A subscriptions state is sent to the publishers in response to a change in the subscriptions
+ * as part of a VmsMessageType.SUBSCRIPTIONS_CHANGE, or in response to a
+ * VmsMessageType.SUBSCRIPTIONS_REQUEST message as part of VmsMessageType.SUBSCRIPTIONS_RESPONSE.
+ * The VMS service issues monotonically increasing sequence numbers, and in case a subscriber receives
+ * a smaller sequnce number it should ignore the message.
+ * The subscriptions are sent as a list of layers followed by a list of associated layers:
+ * {Sequence number, N, M, N x layer, M x associated layer}
+ * A subscribed layer is represented as three integers:
+ * - Layer type
+ * - Layer subtype
+ * - Layer version
+ * A subscribed associated layer is a layer with a list of publisher IDs. It is represented as:
+ * - Layer type
+ * - Layer subtype
+ * - Layer version
+ * - Number of publisher IDs (N)
+ * - N x publisher ID
+ */
+enum VmsSubscriptionsStateIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
+    SEQUENCE_NUMBER = 1,
+    NUMBER_OF_LAYERS = 2,
+    NUMBER_OF_ASSOCIATED_LAYERS = 3,
+    SUBSCRIPTIONS_START = 4,
+};
+
+/**
+ * An availability state is sent to the subscribers in response to a change in the available
+ * layers as part of a VmsMessageType.AVAILABILITY_CHANGE message, or in response to a
+ * VmsMessageType.AVAILABILITY_REQUEST message as part of a VmsMessageType.AVAILABILITY_RESPONSE.
+ * The VMS service issues monotonically increasing sequence numbers, and in case a subscriber receives
+ * a smaller sequnce number, it should ignore the message.
+ * An available associated layer is a layer with a list of publisher IDs:
+ * - Layer type
+ * - Layer subtype
+ * - Layer version
+ * - Number of publisher IDs (N)
+ * - N x publisher ID
+*/
+enum VmsAvailabilityStateIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
+    SEQUENCE_NUMBER = 1,
+    NUMBER_OF_ASSOCIATED_LAYERS = 2,
+    LAYERS_START = 3,
+};
+

@@ -7,4 +7,5 @@ subdirs = [
     "offload/1.0",
     "offload/1.0/vts/functional",
     "supplicant/1.0",
+    "supplicant/1.0/vts/functional",
 ]

@@ -16,9 +16,10 @@
 #ifndef ANDROID_HARDWARE_BROADCASTRADIO_V1_1_BROADCASTRADIO_H
 #define ANDROID_HARDWARE_BROADCASTRADIO_V1_1_BROADCASTRADIO_H
 
+#include "Tuner.h"
+
 #include <android/hardware/broadcastradio/1.1/IBroadcastRadio.h>
 #include <android/hardware/broadcastradio/1.1/types.h>
-#include <hardware/radio.h>
 
 namespace android {
 namespace hardware {
@@ -26,42 +27,49 @@ namespace broadcastradio {
 namespace V1_1 {
 namespace implementation {
 
-using V1_0::Class;
-using V1_0::BandConfig;
-using V1_0::Properties;
+struct AmFmBandConfig {
+    V1_0::Band type;
+    uint32_t lowerLimit;  // kHz
+    uint32_t upperLimit;  // kHz
+    std::vector<uint32_t> spacings;  // kHz
+};
+
+struct ModuleConfig {
+    std::string productName;
+    std::vector<AmFmBandConfig> amFmBands;
+};
 
 struct BroadcastRadio : public V1_1::IBroadcastRadio {
+    /**
+     * Constructs new broadcast radio module.
+     *
+     * Before calling a constructor with a given classId, it must be checked with isSupported
+     * method first. Otherwise it results in undefined behaviour.
+     *
+     * @param classId type of a radio.
+     */
+    BroadcastRadio(V1_0::Class classId);
 
-    BroadcastRadio(Class classId);
+    /**
+     * Checks, if a given radio type is supported.
+     *
+     * @param classId type of a radio.
+     */
+    static bool isSupported(V1_0::Class classId);
 
-    // Methods from ::android::hardware::broadcastradio::V1_1::IBroadcastRadio follow.
+    // V1_1::IBroadcastRadio methods
     Return<void> getProperties(getProperties_cb _hidl_cb) override;
     Return<void> getProperties_1_1(getProperties_1_1_cb _hidl_cb) override;
-    Return<void> openTuner(const BandConfig& config, bool audio,
-            const sp<V1_0::ITunerCallback>& callback, openTuner_cb _hidl_cb) override;
+    Return<void> openTuner(const V1_0::BandConfig& config, bool audio,
+                           const sp<V1_0::ITunerCallback>& callback,
+                           openTuner_cb _hidl_cb) override;
+    Return<void> getImage(int32_t id, getImage_cb _hidl_cb);
 
-    // RefBase
-    virtual void onFirstRef() override;
-
-    Result initCheck() { return mStatus; }
-    int closeHalTuner(const struct radio_tuner *halTuner);
-
-private:
-    virtual ~BroadcastRadio();
-
-    static const char * sClassModuleNames[];
-
-    Result convertHalResult(int rc);
-    void convertBandConfigFromHal(BandConfig *config,
-            const radio_hal_band_config_t *halConfig);
-    void convertPropertiesFromHal(Properties *properties,
-            const radio_hal_properties_t *halProperties);
-    void convertBandConfigToHal(radio_hal_band_config_t *halConfig,
-            const BandConfig *config);
-
-    Result mStatus;
-    Class mClassId;
-    struct radio_hw_device *mHwDevice;
+   private:
+    std::mutex mMut;
+    V1_0::Class mClassId;
+    ModuleConfig mConfig;
+    wp<Tuner> mTuner;
 };
 
 }  // namespace implementation

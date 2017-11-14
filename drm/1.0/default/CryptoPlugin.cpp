@@ -51,7 +51,11 @@ namespace implementation {
 
     Return<void> CryptoPlugin::setSharedBufferBase(const hidl_memory& base,
             uint32_t bufferId) {
-        mSharedBufferMap[bufferId] = mapMemory(base);
+        sp<IMemory> hidlMemory = mapMemory(base);
+        ALOGE_IF(hidlMemory == nullptr, "mapMemory returns nullptr");
+
+        // allow mapMemory to return nullptr
+        mSharedBufferMap[bufferId] = hidlMemory;
         return Void();
     }
 
@@ -107,6 +111,10 @@ namespace implementation {
 
         AString detailMessage;
         sp<IMemory> sourceBase = mSharedBufferMap[source.bufferId];
+        if (sourceBase == nullptr) {
+            _hidl_cb(Status::ERROR_DRM_CANNOT_HANDLE, 0, "source is a nullptr");
+            return Void();
+        }
 
         if (source.offset + offset + source.size > sourceBase->getSize()) {
             _hidl_cb(Status::ERROR_DRM_CANNOT_HANDLE, 0, "invalid buffer size");
@@ -121,6 +129,11 @@ namespace implementation {
         if (destination.type == BufferType::SHARED_MEMORY) {
             const SharedBuffer& destBuffer = destination.nonsecureMemory;
             sp<IMemory> destBase = mSharedBufferMap[destBuffer.bufferId];
+            if (destBase == nullptr) {
+                _hidl_cb(Status::ERROR_DRM_CANNOT_HANDLE, 0, "destination is a nullptr");
+                return Void();
+            }
+
             if (destBuffer.offset + destBuffer.size > destBase->getSize()) {
                 _hidl_cb(Status::ERROR_DRM_CANNOT_HANDLE, 0, "invalid buffer size");
                 return Void();

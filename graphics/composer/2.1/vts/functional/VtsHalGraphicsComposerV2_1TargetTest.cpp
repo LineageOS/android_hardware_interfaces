@@ -23,6 +23,7 @@
 #include "VtsHalGraphicsMapperTestUtils.h"
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <VtsHalHidlTargetTestEnvBase.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -50,21 +51,40 @@ using android::hardware::graphics::mapper::V2_0::IMapper;
 using android::hardware::graphics::mapper::V2_0::tests::Gralloc;
 using GrallocError = android::hardware::graphics::mapper::V2_0::Error;
 
+// Test environment for graphics.composer
+class GraphicsComposerHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    // get the test environment singleton
+    static GraphicsComposerHidlEnvironment* Instance() {
+        static GraphicsComposerHidlEnvironment* instance = new GraphicsComposerHidlEnvironment;
+        return instance;
+    }
+
+    virtual void registerTestServices() override { registerTestService<IComposer>(); }
+
+   private:
+    GraphicsComposerHidlEnvironment() {}
+
+    GTEST_DISALLOW_COPY_AND_ASSIGN_(GraphicsComposerHidlEnvironment);
+};
+
 class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  protected:
   void SetUp() override {
-    ASSERT_NO_FATAL_FAILURE(mComposer = std::make_unique<Composer>());
-    ASSERT_NO_FATAL_FAILURE(mComposerClient = mComposer->createClient());
+      ASSERT_NO_FATAL_FAILURE(
+          mComposer = std::make_unique<Composer>(
+              GraphicsComposerHidlEnvironment::Instance()->getServiceName<IComposer>()));
+      ASSERT_NO_FATAL_FAILURE(mComposerClient = mComposer->createClient());
 
-    mComposerCallback = new GraphicsComposerCallback;
-    mComposerClient->registerCallback(mComposerCallback);
+      mComposerCallback = new GraphicsComposerCallback;
+      mComposerClient->registerCallback(mComposerCallback);
 
-    // assume the first display is primary and is never removed
-    mPrimaryDisplay = waitForFirstDisplay();
+      // assume the first display is primary and is never removed
+      mPrimaryDisplay = waitForFirstDisplay();
 
-    // explicitly disable vsync
-    mComposerClient->setVsyncEnabled(mPrimaryDisplay, false);
-    mComposerCallback->setVsyncAllowed(false);
+      // explicitly disable vsync
+      mComposerClient->setVsyncEnabled(mPrimaryDisplay, false);
+      mComposerCallback->setVsyncAllowed(false);
   }
 
   void TearDown() override {
@@ -684,10 +704,11 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_Z_ORDER) {
 }  // namespace android
 
 int main(int argc, char** argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-
-  int status = RUN_ALL_TESTS();
-  LOG(INFO) << "Test result = " << status;
-
-  return status;
+    using android::hardware::graphics::composer::V2_1::tests::GraphicsComposerHidlEnvironment;
+    ::testing::AddGlobalTestEnvironment(GraphicsComposerHidlEnvironment::Instance());
+    ::testing::InitGoogleTest(&argc, argv);
+    GraphicsComposerHidlEnvironment::Instance()->init(&argc, argv);
+    int status = RUN_ALL_TESTS();
+    ALOGI("Test result = %d", status);
+    return status;
 }

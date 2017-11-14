@@ -16,24 +16,20 @@
 
 cc_test {
     name: "VtsHalAudioEffectV2_0TargetTest",
-    defaults: ["hidl_defaults"],
-    srcs: ["VtsHalAudioEffectV2_0TargetTest.cpp"],
-    shared_libs: [
-        "libbase",
-        "liblog",
-        "libcutils",
-        "libhidlbase",
-        "libhidltransport",
-        "libnativehelper",
-        "libutils",
+    defaults: ["VtsHalTargetTestDefaults"],
+    srcs: [
+        "VtsHalAudioEffectV2_0TargetTest.cpp",
+        "ValidateAudioEffectsConfiguration.cpp"
+    ],
+    static_libs: [
+        "android.hardware.audio.common.test.utility",
         "android.hardware.audio.common@2.0",
         "android.hardware.audio.effect@2.0",
         "android.hidl.allocator@1.0",
         "android.hidl.memory@1.0",
+        "libxml2",
     ],
-    static_libs: ["VtsHalHidlTargetTestBase"],
-    cflags: [
-        "-O0",
-        "-g",
+    shared_libs: [
+        "libicuuc",
     ],
 }

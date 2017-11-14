@@ -38,6 +38,9 @@ cc_library_static {
         "android.hardware.sensors@1.0",
     ],
     local_include_dirs: ["include/sensors"],
+    export_shared_lib_headers: [
+        "libhardware",
+    ],
 }
 
 cc_binary {

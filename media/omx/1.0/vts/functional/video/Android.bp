@@ -16,70 +16,21 @@
 
 cc_test {
     name: "VtsHalMediaOmxV1_0TargetVideoDecTest",
-    defaults: ["hidl_defaults"],
-    srcs: ["VtsHalMediaOmxV1_0TargetVideoDecTest.cpp",
-           "media_video_hidl_test_common.cpp"],
-    shared_libs: [
-        "libbase",
-        "liblog",
-        "libcutils",
-        "libhidlbase",
-        "libhidlmemory",
-        "libhidltransport",
-        "libhwbinder",
-        "libnativehelper",
-        "libutils",
-        "libstagefright_foundation",
-        "android.hidl.allocator@1.0",
-        "android.hidl.memory@1.0",
-        "android.hardware.media.omx@1.0",
-        "android.hardware.graphics.allocator@2.0",
-        "android.hardware.graphics.mapper@2.0",
-        "android.hardware.graphics.common@1.0",
-    ],
-    static_libs: ["VtsHalHidlTargetTestBase",
-                  "VtsHalMediaOmxV1_0CommonUtil"],
-    cflags: [
-        "-O0",
-        "-g",
-    ],
-    include_dirs: [
-        "frameworks/native/include/media/openmax/",
-        "hardware/interfaces/media/omx/1.0/vts/functional/common",
+    defaults: ["VtsHalMediaOmxV1_0Defaults"],
+    srcs: [
+        "VtsHalMediaOmxV1_0TargetVideoDecTest.cpp",
+        "media_video_hidl_test_common.cpp"
     ],
 }
 
 cc_test {
     name: "VtsHalMediaOmxV1_0TargetVideoEncTest",
-    defaults: ["hidl_defaults"],
-    srcs: ["VtsHalMediaOmxV1_0TargetVideoEncTest.cpp",
-           "media_video_hidl_test_common.cpp"],
-    shared_libs: [
-        "libbase",
-        "liblog",
-        "libcutils",
-        "libhidlbase",
-        "libhidlmemory",
-        "libhidltransport",
-        "libhwbinder",
-        "libnativehelper",
+    defaults: ["VtsHalMediaOmxV1_0Defaults"],
+    srcs: [
+        "VtsHalMediaOmxV1_0TargetVideoEncTest.cpp",
+        "media_video_hidl_test_common.cpp"
+    ],
+    static_libs: [
         "libnativewindow",
-        "libutils",
-        "libstagefright_foundation",
-        "android.hidl.allocator@1.0",
-        "android.hidl.memory@1.0",
-        "android.hardware.media.omx@1.0",
-        "android.hardware.graphics.bufferqueue@1.0",
-        "android.hardware.graphics.mapper@2.0",
-    ],
-    static_libs: ["VtsHalHidlTargetTestBase",
-                  "VtsHalMediaOmxV1_0CommonUtil"],
-    cflags: [
-        "-O0",
-        "-g",
-    ],
-    include_dirs: [
-        "frameworks/native/include/media/openmax/",
-        "hardware/interfaces/media/omx/1.0/vts/functional/common",
     ],
 }

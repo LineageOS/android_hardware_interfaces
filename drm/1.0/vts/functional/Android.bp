@@ -21,29 +21,15 @@ cc_test {
         "drm_hal_clearkey_test.cpp",
         "drm_hal_vendor_test.cpp",
         "vendor_modules.cpp"
-        ],
-    shared_libs: [
+    ],
+    static_libs: [
         "android.hardware.drm@1.0",
+        "android.hardware.drm@1.0-helper",
         "android.hidl.allocator@1.0",
         "android.hidl.memory@1.0",
-        "libbase",
-        "libcutils",
-        "libhidlbase",
         "libhidlmemory",
-        "libhidltransport",
-        "libhwbinder",
-        "liblog",
         "libnativehelper",
         "libssl",
         "libcrypto",
-        "libutils",
-    ],
-    static_libs: [
-        "VtsHalHidlTargetTestBase",
-        "android.hardware.drm@1.0-helper",
-    ],
-    cflags: [
-        "-O0",
-        "-g",
     ],
 }

@@ -42,6 +42,9 @@ LOCAL_STATIC_LIBRARIES := \
 LOCAL_C_INCLUDES := \
   hardware/interfaces/drm
 
+LOCAL_HEADER_LIBRARIES := \
+  media_plugin_headers
+
 # TODO(b/18948909) Some legacy DRM plugins only support 32-bit. They need to be
 # migrated to 64-bit. Once all of a device's legacy DRM plugins support 64-bit,
 # that device can turn on TARGET_ENABLE_MEDIADRM_64 to build this service as

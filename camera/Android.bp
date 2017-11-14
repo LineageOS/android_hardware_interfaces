@@ -6,6 +6,8 @@ subdirs = [
     "device/1.0/default",
     "device/3.2",
     "device/3.2/default",
+    "device/3.3",
+    "device/3.3/default",
     "metadata/3.2",
     "provider/2.4",
     "provider/2.4/default",

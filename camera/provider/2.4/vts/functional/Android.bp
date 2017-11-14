@@ -16,30 +16,28 @@
 
 cc_test {
     name: "VtsHalCameraProviderV2_4TargetTest",
-    defaults: ["hidl_defaults"],
+    defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["VtsHalCameraProviderV2_4TargetTest.cpp"],
+
+    // TODO(b/64437680): Assume these are always available on the device.
     shared_libs: [
-        "liblog",
-        "libhidlbase",
-        "libhidltransport",
-        "libcutils",
-        "libutils",
-        "android.hardware.camera.provider@2.4",
-        "android.hardware.camera.device@3.2",
-        "android.hardware.camera.device@1.0",
-        "libcamera_metadata",
         "libbinder",
+        "libcamera_metadata",
+        "libfmq",
         "libgui",
         "libui",
-        "libfmq",
     ],
+
+    // Statically link to libs not guaranteed to be present on the device.
     static_libs: [
-        "VtsHalHidlTargetTestBase",
-        "libgrallocusage",
+        "android.hardware.camera.common@1.0",
         "android.hardware.camera.common@1.0-helper",
-    ],
-    cflags: [
-        "-O0",
-        "-g",
+        "android.hardware.camera.device@1.0",
+        "android.hardware.camera.device@3.2",
+        "android.hardware.camera.device@3.3",
+        "android.hardware.camera.provider@2.4",
+        "android.hardware.graphics.common@1.0",
+        "android.hardware.graphics.mapper@2.0",
+        "libgrallocusage",
     ],
 }

@@ -20,7 +20,6 @@
 #include <hidl/Status.h>
 #include <media/hardware/CryptoAPI.h>
 #include <PluginLoader.h>
-#include <media/SharedLibrary.h>
 
 namespace android {
 namespace hardware {

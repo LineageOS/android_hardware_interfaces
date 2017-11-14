@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, The Android Open Source Project
+ * Copyright 2017, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,21 @@
 #include <media/openmax/OMX_AudioExt.h>
 #include <media/openmax/OMX_VideoExt.h>
 
+/* TIME OUTS (Wait time in dequeueMessage()) */
+
+/* As component is switching states (loaded<->idle<->execute), dequeueMessage()
+ * expects the events to be received within this duration */
 #define DEFAULT_TIMEOUT 100000
-#define TIMEOUT_COUNTER (10000000 / DEFAULT_TIMEOUT)
+/* Time interval between successive Input/Output enqueues */
+#define DEFAULT_TIMEOUT_Q 2000
+/* While the component is amidst a process call, asynchronous commands like
+ * flush, change states can get delayed (at max by process call time). Instead
+ * of waiting on DEFAULT_TIMEOUT, we give an additional leeway. */
+#define DEFAULT_TIMEOUT_PE 500000
+
+/* Breakout Timeout :: 5 sec*/
+#define TIMEOUT_COUNTER_Q (5000000 / DEFAULT_TIMEOUT_Q)
+#define TIMEOUT_COUNTER_PE (5000000 / DEFAULT_TIMEOUT_PE)
 
 /*
  * Random Index used for monkey testing while get/set parameters
@@ -120,13 +133,15 @@ struct CodecObserver : public IOmxObserver {
                 if (it->type ==
                     android::hardware::media::omx::V1_0::Message::Type::EVENT) {
                     *msg = *it;
-                    msgQueue.erase(it);
+                    if (callBack) callBack(*it, nullptr);
+                    it = msgQueue.erase(it);
                     // OMX_EventBufferFlag event is sent when the component has
                     // processed a buffer with its EOS flag set. This event is
                     // not sent by soft omx components. Vendor components can
                     // send this. From IOMX point of view, we will ignore this
                     // event.
-                    if (msg->data.eventData.event == OMX_EventBufferFlag) break;
+                    if (msg->data.eventData.event == OMX_EventBufferFlag)
+                        continue;
                     return ::android::hardware::media::omx::V1_0::Status::OK;
                 } else if (it->type == android::hardware::media::omx::V1_0::
                                            Message::Type::FILL_BUFFER_DONE) {
@@ -137,7 +152,7 @@ struct CodecObserver : public IOmxObserver {
                                 it->data.bufferData.buffer) {
                                 if (callBack) callBack(*it, &(*oBuffers)[i]);
                                 oBuffers->editItemAt(i).owner = client;
-                                msgQueue.erase(it);
+                                it = msgQueue.erase(it);
                                 break;
                             }
                         }
@@ -152,24 +167,22 @@ struct CodecObserver : public IOmxObserver {
                                 it->data.bufferData.buffer) {
                                 if (callBack) callBack(*it, &(*iBuffers)[i]);
                                 iBuffers->editItemAt(i).owner = client;
-                                msgQueue.erase(it);
+                                it = msgQueue.erase(it);
                                 break;
                             }
                         }
                         EXPECT_LE(i, iBuffers->size());
                     }
+                } else {
+                    EXPECT_TRUE(false) << "Received unexpected message";
+                    ++it;
                 }
-                ++it;
             }
-            if (finishBy - android::ALooper::GetNowUs() < 0)
-                return toStatus(android::TIMED_OUT);
-            android::status_t err =
-                (timeoutUs < 0)
-                    ? msgCondition.wait(msgLock)
-                    : msgCondition.waitRelative(
-                          msgLock,
-                          (finishBy - android::ALooper::GetNowUs()) * 1000ll);
-            if (err == android::TIMED_OUT) return toStatus(err);
+            int64_t delayUs = finishBy - android::ALooper::GetNowUs();
+            if (delayUs < 0) return toStatus(android::TIMED_OUT);
+            (timeoutUs < 0)
+                ? msgCondition.wait(msgLock)
+                : msgCondition.waitRelative(msgLock, delayUs * 1000ll);
         }
     }
 
@@ -284,16 +297,21 @@ Return<android::hardware::media::omx::V1_0::Status> setVideoPortFormat(
 Return<android::hardware::media::omx::V1_0::Status> setAudioPortFormat(
     sp<IOmxNode> omxNode, OMX_U32 portIndex, OMX_AUDIO_CODINGTYPE eEncoding);
 
+void allocateBuffer(sp<IOmxNode> omxNode, BufferInfo* buffer, OMX_U32 portIndex,
+                    OMX_U32 nBufferSize, PortMode portMode);
+
 void allocatePortBuffers(sp<IOmxNode> omxNode,
                          android::Vector<BufferInfo>* buffArray,
                          OMX_U32 portIndex,
-                         PortMode portMode = PortMode::PRESET_BYTE_BUFFER);
+                         PortMode portMode = PortMode::PRESET_BYTE_BUFFER,
+                         bool allocGrap = false);
 
 void changeStateLoadedtoIdle(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                              android::Vector<BufferInfo>* iBuffer,
                              android::Vector<BufferInfo>* oBuffer,
                              OMX_U32 kPortIndexInput, OMX_U32 kPortIndexOutput,
-                             PortMode* portMode = nullptr);
+                             PortMode* portMode = nullptr,
+                             bool allocGrap = false);
 
 void changeStateIdletoLoaded(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                              android::Vector<BufferInfo>* iBuffer,
@@ -322,7 +340,8 @@ void dispatchInputBuffer(sp<IOmxNode> omxNode,
 void flushPorts(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                 android::Vector<BufferInfo>* iBuffer,
                 android::Vector<BufferInfo>* oBuffer, OMX_U32 kPortIndexInput,
-                OMX_U32 kPortIndexOutput, int64_t timeoutUs = DEFAULT_TIMEOUT);
+                OMX_U32 kPortIndexOutput,
+                int64_t timeoutUs = DEFAULT_TIMEOUT_PE);
 
 typedef void (*portreconfig)(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                              android::Vector<BufferInfo>* iBuffer,

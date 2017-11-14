@@ -16,6 +16,7 @@
 #ifndef ANDROID_HARDWARE_BROADCASTRADIO_V1_1_BROADCASTRADIOFACTORY_H
 #define ANDROID_HARDWARE_BROADCASTRADIO_V1_1_BROADCASTRADIOFACTORY_H
 
+#include <android/hardware/broadcastradio/1.1/IBroadcastRadio.h>
 #include <android/hardware/broadcastradio/1.1/IBroadcastRadioFactory.h>
 #include <android/hardware/broadcastradio/1.1/types.h>
 
@@ -25,14 +26,17 @@ namespace broadcastradio {
 namespace V1_1 {
 namespace implementation {
 
-using V1_0::Class;
+extern "C" IBroadcastRadioFactory* HIDL_FETCH_IBroadcastRadioFactory(const char* name);
 
 struct BroadcastRadioFactory : public IBroadcastRadioFactory {
-    // Methods from ::android::hardware::broadcastradio::V1_0::IBroadcastRadioFactory follow.
-    Return<void> connectModule(Class classId, connectModule_cb _hidl_cb) override;
-};
+    BroadcastRadioFactory();
 
-extern "C" IBroadcastRadioFactory* HIDL_FETCH_IBroadcastRadioFactory(const char* name);
+    // V1_0::IBroadcastRadioFactory methods
+    Return<void> connectModule(V1_0::Class classId, connectModule_cb _hidl_cb) override;
+
+   private:
+    std::map<V1_0::Class, sp<IBroadcastRadio>> mRadioModules;
+};
 
 }  // namespace implementation
 }  // namespace V1_1

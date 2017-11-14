@@ -27,6 +27,18 @@ namespace vehicle {
 namespace V2_0 {
 
 namespace impl {
+//
+// Some handy constants to avoid conversions from enum to int.
+constexpr int ABS_ACTIVE = (int)VehicleProperty::ABS_ACTIVE;
+constexpr int OBD2_LIVE_FRAME = (int)VehicleProperty::OBD2_LIVE_FRAME;
+constexpr int OBD2_FREEZE_FRAME = (int)VehicleProperty::OBD2_FREEZE_FRAME;
+constexpr int OBD2_FREEZE_FRAME_INFO = (int)VehicleProperty::OBD2_FREEZE_FRAME_INFO;
+constexpr int OBD2_FREEZE_FRAME_CLEAR = (int)VehicleProperty::OBD2_FREEZE_FRAME_CLEAR;
+constexpr int TRACTION_CONTROL_ACTIVE = (int)VehicleProperty::TRACTION_CONTROL_ACTIVE;
+constexpr int VEHICLE_MAP_SERVICE = (int)VehicleProperty::VEHICLE_MAP_SERVICE;
+constexpr int WHEEL_TICK = (int)VehicleProperty::WHEEL_TICK;
+constexpr int ALL_WHEELS =
+    (int)(Wheel::LEFT_FRONT | Wheel::RIGHT_FRONT | Wheel::LEFT_REAR | Wheel::RIGHT_REAR);
 
 /*
  * This property is used for test purpose to generate fake events.
@@ -283,8 +295,68 @@ const ConfigDeclaration kVehicleProperties[]{
              .access = VehiclePropertyAccess::READ,
              .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
          },
-     .initialValue = {.int32Values = {1}}}
+     .initialValue = {.int32Values = {1}}},
 
+    {
+        .config =
+            {
+                .prop = WHEEL_TICK,
+                .access = VehiclePropertyAccess::READ,
+                .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
+                .configArray = {ALL_WHEELS, 50000, 50000, 50000, 50000},
+                .minSampleRate = 1.0f,
+                .maxSampleRate = 100.0f,
+            },
+    },
+
+    {
+        .config =
+            {
+                .prop = ABS_ACTIVE,
+                .access = VehiclePropertyAccess::READ,
+                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+            },
+    },
+
+    {
+        .config =
+            {
+                .prop = TRACTION_CONTROL_ACTIVE,
+                .access = VehiclePropertyAccess::READ,
+                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+            },
+    },
+
+    {
+        .config = {.prop = OBD2_LIVE_FRAME,
+                   .access = VehiclePropertyAccess::READ,
+                   .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                   .configArray = {0, 0}},
+    },
+
+    {
+        .config = {.prop = OBD2_FREEZE_FRAME,
+                   .access = VehiclePropertyAccess::READ,
+                   .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                   .configArray = {0, 0}},
+    },
+
+    {
+        .config = {.prop = OBD2_FREEZE_FRAME_INFO,
+                   .access = VehiclePropertyAccess::READ,
+                   .changeMode = VehiclePropertyChangeMode::ON_CHANGE},
+    },
+
+    {
+        .config = {.prop = OBD2_FREEZE_FRAME_CLEAR,
+                   .access = VehiclePropertyAccess::WRITE,
+                   .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                   .configArray = {1}},
+    },
+
+    {.config = {.prop = VEHICLE_MAP_SERVICE,
+                .access = VehiclePropertyAccess::READ_WRITE,
+                .changeMode = VehiclePropertyChangeMode::ON_CHANGE}},
 };
 
 }  // impl

@@ -16,18 +16,43 @@
 
 cc_library_static {
     name: "VtsHalMediaOmxV1_0CommonUtil",
-    defaults: ["hidl_defaults"],
     srcs: ["media_hidl_test_common.cpp"],
-    shared_libs: [
-        "liblog",
+
+    header_libs: ["media_plugin_headers"],
+    export_header_lib_headers: ["media_plugin_headers"],
+    export_include_dirs: ["."],
+
+    static_libs: [
+        "VtsHalHidlTargetTestBase",
         "libhidlmemory",
         "android.hidl.allocator@1.0",
         "android.hidl.memory@1.0",
         "android.hardware.media.omx@1.0",
+        "android.hardware.graphics.allocator@2.0",
     ],
-    static_libs: ["VtsHalHidlTargetTestBase"],
-    cflags: [ "-O0", "-g", ],
-    include_dirs: [
-        "frameworks/native/include/media/openmax/",
+}
+
+cc_defaults {
+    name: "VtsHalMediaOmxV1_0Defaults",
+    defaults: ["VtsHalTargetTestDefaults"],
+
+    // Link to these statically as they are not guaranteed to be on the device.
+    static_libs: [
+        "VtsHalMediaOmxV1_0CommonUtil",
+        "android.hardware.graphics.allocator@2.0",
+        "android.hardware.graphics.mapper@2.0",
+        "android.hardware.graphics.bufferqueue@1.0",
+        "android.hardware.graphics.common@1.0",
+        "android.hardware.media.omx@1.0",
+        "android.hardware.media@1.0",
+        "android.hidl.allocator@1.0",
+        "android.hidl.memory@1.0",
+        "libhidlmemory",
+        "libnativehelper",
+    ],
+
+    // TODO(b/64437680): Assume these libs are always available on the device.
+    shared_libs: [
+        "libstagefright_foundation",
     ],
 }

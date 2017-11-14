@@ -1,4 +1,0 @@
-service vehicle-hal-2.1 /vendor/bin/hw/android.hardware.automotive.vehicle@2.1-service
-    class hal
-    user vehicle_network
-    group system inet
