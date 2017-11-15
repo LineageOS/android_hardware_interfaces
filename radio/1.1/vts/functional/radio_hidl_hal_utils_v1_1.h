@@ -550,7 +550,7 @@ class RadioHidlTest_v1_1 : public ::testing::VtsHalHidlTargetTestBase {
     void notify();
 
     /* Test code calls this function to wait for response */
-    std::cv_status wait();
+    std::cv_status wait(int sec = TIMEOUT_PERIOD);
 
     /* Used for checking General Errors */
     bool CheckGeneralError();
