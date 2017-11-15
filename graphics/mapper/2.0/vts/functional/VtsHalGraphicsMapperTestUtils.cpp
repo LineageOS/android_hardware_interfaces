@@ -30,10 +30,12 @@ Gralloc::Gralloc() {
 }
 
 void Gralloc::init() {
-    mAllocator = ::testing::VtsHalHidlTargetTestBase::getService<IAllocator>();
+    mAllocator = ::testing::VtsHalHidlTargetTestBase::getService<IAllocator>(
+        GraphicsMapperHidlEnvironment::Instance()->getServiceName<IAllocator>());
     ASSERT_NE(nullptr, mAllocator.get()) << "failed to get allocator service";
 
-    mMapper = ::testing::VtsHalHidlTargetTestBase::getService<IMapper>();
+    mMapper = ::testing::VtsHalHidlTargetTestBase::getService<IMapper>(
+        GraphicsMapperHidlEnvironment::Instance()->getServiceName<IMapper>());
     ASSERT_NE(nullptr, mMapper.get()) << "failed to get mapper service";
     ASSERT_FALSE(mMapper->isRemote()) << "mapper is not in passthrough mode";
 }

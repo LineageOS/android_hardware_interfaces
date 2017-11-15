@@ -19,6 +19,7 @@
 
 #include <unordered_set>
 
+#include <VtsHalHidlTargetTestEnvBase.h>
 #include <android/hardware/graphics/allocator/2.0/IAllocator.h>
 #include <android/hardware/graphics/mapper/2.0/IMapper.h>
 #include <utils/StrongPointer.h>
@@ -86,6 +87,21 @@ class Gralloc {
     // ASSERT_*, the destructor will free the handles for the test.
     std::unordered_set<const native_handle_t*> mClonedBuffers;
     std::unordered_set<const native_handle_t*> mImportedBuffers;
+};
+
+// Test environment for graphics.mapper.
+class GraphicsMapperHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    // get the test environment singleton
+    static GraphicsMapperHidlEnvironment* Instance() {
+        static GraphicsMapperHidlEnvironment* instance = new GraphicsMapperHidlEnvironment;
+        return instance;
+    }
+
+    virtual void registerTestServices() override {
+        registerTestService<IAllocator>();
+        registerTestService<IMapper>();
+    }
 };
 
 }  // namespace tests
