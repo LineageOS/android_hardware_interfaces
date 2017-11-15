@@ -527,7 +527,7 @@ class RadioHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     void notify();
 
     /* Test code calls this function to wait for response */
-    std::cv_status wait();
+    std::cv_status wait(int sec = TIMEOUT_PERIOD);
 
     sp<IRadio> radio;
     sp<RadioResponse> radioRsp;
