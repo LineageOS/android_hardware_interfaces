@@ -403,10 +403,11 @@ TEST_F(GraphicsMapperHidlTest, UnlockNegative) {
 }  // namespace android
 
 int main(int argc, char** argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-
-  int status = RUN_ALL_TESTS();
-  LOG(INFO) << "Test result = " << status;
-
-  return status;
+    using android::hardware::graphics::mapper::V2_0::tests::GraphicsMapperHidlEnvironment;
+    ::testing::AddGlobalTestEnvironment(GraphicsMapperHidlEnvironment::Instance());
+    ::testing::InitGoogleTest(&argc, argv);
+    GraphicsMapperHidlEnvironment::Instance()->init(&argc, argv);
+    int status = RUN_ALL_TESTS();
+    LOG(INFO) << "Test result = " << status;
+    return status;
 }
