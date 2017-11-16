@@ -197,6 +197,7 @@ dc7e6d4f537b9943e27edc4f86c5a03bb643b18f18f866f8c3c71c0ac4ea8cbc android.hardwar
 e822cb7f4a1bdd45689c5e92ccd19a2201c20b771bd4b2ec1ae627e324591f9d android.hardware.radio@1.0::IRadioResponse
 6e69adb24d7c0b0ca3a54a38c49a5625b161b3f5d5f7d6fda0befdbbfc8e9e06 android.hardware.radio@1.0::IRadioResponse
 c2c50ec74c87a583c683b4493f8f9f2e454a8d41c57af5b3eb88823a999f0ea4 android.hardware.radio@1.0::IRadioResponse # Added for b/65230472 for Android O
+4922dd58e89a03181ed1c48a6e118e47633b73b11090bdfed5aa920d25a7592b android.hardware.radio@1.0::IRadioResponse # Added for b/65230472 for Android O DR
 28e929b453df3d9f5060af2764e6cdb123ddb893e3e86923c877f6ff7e5f02c9 android.hardware.wifi@1.0::types
 df1d7b27e644bfed0a4f606a8c44d35d45cafce82c7c648494c8a25c7cd4a949 android.hardware.wifi@1.0::types
 
