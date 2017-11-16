@@ -25,6 +25,7 @@
 #include <android/hardware/renderscript/1.0/types.h>
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <VtsHalHidlTargetTestEnvBase.h>
 #include <gtest/gtest.h>
 
 using ::android::hardware::renderscript::V1_0::Allocation;
@@ -97,6 +98,18 @@ public:
 
 private:
     sp<IDevice>    device;
+};
+
+// Test environment for RENDERSCRIPT HIDL HAL.
+class RenderscriptHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    // get the test environment singleton
+    static RenderscriptHidlEnvironment* Instance() {
+        static RenderscriptHidlEnvironment* instance = new RenderscriptHidlEnvironment;
+        return instance;
+    }
+
+    virtual void registerTestServices() override { registerTestService<IDevice>(); }
 };
 
 #endif // VTS_HAL_RENDERSCRIPT_V1_0_TARGET_TESTS_H
