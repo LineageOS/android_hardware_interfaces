@@ -302,7 +302,7 @@ Return<void> StreamOut::prepareForWriting(uint32_t frameSize,
     ThreadInfo threadInfo = {0, 0};
 
     // Wrap the _hidl_cb to return an error
-    auto sendError = [this, &threadInfo, &_hidl_cb](Result result) {
+    auto sendError = [&threadInfo, &_hidl_cb](Result result) {
         _hidl_cb(result, CommandMQ::Descriptor(), DataMQ::Descriptor(),
                  StatusMQ::Descriptor(), threadInfo);
 

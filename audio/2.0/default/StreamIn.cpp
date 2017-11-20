@@ -87,7 +87,6 @@ void ReadThread::doRead() {
     }
     ssize_t readResult = mStream->read(mStream, &mBuffer[0], requestedToRead);
     mStatus.retval = Result::OK;
-    uint64_t read = 0;
     if (readResult >= 0) {
         mStatus.reply.read = readResult;
         if (!mDataMQ->write(&mBuffer[0], readResult)) {
@@ -326,7 +325,7 @@ Return<void> StreamIn::prepareForReading(uint32_t frameSize,
     ThreadInfo threadInfo = {0, 0};
 
     // Wrap the _hidl_cb to return an error
-    auto sendError = [this, &threadInfo, &_hidl_cb](Result result) {
+    auto sendError = [&threadInfo, &_hidl_cb](Result result) {
         _hidl_cb(result, CommandMQ::Descriptor(), DataMQ::Descriptor(),
                  StatusMQ::Descriptor(), threadInfo);
 
