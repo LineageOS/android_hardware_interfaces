@@ -28,6 +28,8 @@ LOCAL_SRC_FILES := \
     common/src/VehiclePropertyStore.cpp \
     common/src/VehicleUtils.cpp \
 
+LOCAL_CFLAGS := -Wall -Werror
+
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/common/include/vhal_v2_0
 
@@ -52,6 +54,8 @@ LOCAL_SRC_FILES := \
     common/src/VehicleObjectPool.cpp \
     common/src/VehiclePropertyStore.cpp \
     common/src/VehicleUtils.cpp \
+
+LOCAL_CFLAGS := -Wall -Werror
 
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/common/include/vhal_v2_0

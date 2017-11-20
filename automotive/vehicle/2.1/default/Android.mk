@@ -25,6 +25,8 @@ LOCAL_MODULE := $(vhal_v2_1)-manager-lib
 LOCAL_SRC_FILES := \
     common/src/Obd2SensorStore.cpp
 
+LOCAL_CFLAGS := -Wall -Werror
+
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/common/include/vhal_v2_1 \
     $(LOCAL_PATH)/../../2.0/default/common/include/vhal_v2_0 \
