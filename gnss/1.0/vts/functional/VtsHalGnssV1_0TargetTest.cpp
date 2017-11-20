@@ -208,10 +208,13 @@ TEST_F(GnssHalTest, SetCallbackCapabilitiesCleanup) {}
  * CheckLocation:
  * Helper function to vet Location fields
  */
-void CheckLocation(GnssLocation& location, bool checkAccuracies) {
+void CheckLocation(GnssLocation& location, bool checkAccuracies,
+                   bool checkSpeed) {
   EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_LAT_LONG);
   EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_ALTITUDE);
-  EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_SPEED);
+  if (checkSpeed) {
+    EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_SPEED);
+  }
   EXPECT_TRUE(location.gnssLocationFlags &
               GnssLocationFlags::HAS_HORIZONTAL_ACCURACY);
   // New uncertainties available in O must be provided,
@@ -232,12 +235,15 @@ void CheckLocation(GnssLocation& location, bool checkAccuracies) {
   EXPECT_LE(location.longitudeDegrees, 180.0);
   EXPECT_GE(location.altitudeMeters, -1000.0);
   EXPECT_LE(location.altitudeMeters, 30000.0);
-  EXPECT_GE(location.speedMetersPerSec, 0.0);
-  EXPECT_LE(location.speedMetersPerSec, 5.0);  // VTS tests are stationary.
+  if (checkSpeed) {
+    // VTS tests are stationary.  5.0m/s max allows for measurement noise.
+    EXPECT_GE(location.speedMetersPerSec, 0.0);
+    EXPECT_LE(location.speedMetersPerSec, 5.0);
 
-  // Non-zero speeds must be reported with an associated bearing
-  if (location.speedMetersPerSec > 0.0) {
-    EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING);
+    // Non-zero speeds must be reported with an associated bearing
+    if (location.speedMetersPerSec > 0.0) {
+      EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING);
+    }
   }
 
   /*
@@ -299,7 +305,8 @@ bool StartAndGetSingleLocation(GnssHalTest* test, bool checkAccuracies) {
     EXPECT_EQ(test->location_called_count_, 1);
   }
   if (test->location_called_count_ > 0) {
-    CheckLocation(test->last_location_, checkAccuracies);
+    // don't require speed on first fix
+    CheckLocation(test->last_location_, checkAccuracies, false /* checkSpeed */ );
     return true;
   }
   return false;
@@ -340,7 +347,7 @@ TEST_F(GnssHalTest, GetLocation) {
       EXPECT_EQ(std::cv_status::no_timeout,
           wait(LOCATION_TIMEOUT_SUBSEQUENT_SEC));
       EXPECT_EQ(location_called_count_, i + 1);
-      CheckLocation(last_location_, checkMoreAccuracies);
+      CheckLocation(last_location_, checkMoreAccuracies, true /* checkSpeed */);
     }
   }
 
