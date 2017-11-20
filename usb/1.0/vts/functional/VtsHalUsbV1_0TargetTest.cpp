@@ -160,7 +160,7 @@ class UsbHidlTest : public ::testing::VtsHalHidlTargetTestBase {
   // and the callback thread.
   std::mutex usb_mtx;
   std::condition_variable usb_cv;
-  int usb_count;
+  int usb_count = 0;
 };
 
 /*
