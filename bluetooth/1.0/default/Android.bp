@@ -115,6 +115,7 @@ cc_test_host {
 
 cc_binary {
     name: "android.hardware.bluetooth@1.0-service",
+    defaults: ["hidl_defaults"],
     relative_install_path: "hw",
     vendor: true,
     init_rc: ["android.hardware.bluetooth@1.0-service.rc"],
