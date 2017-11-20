@@ -19,6 +19,11 @@
 void RadioHidlTest::SetUp() {
     radio =
         ::testing::VtsHalHidlTargetTestBase::getService<IRadio>(hidl_string(RADIO_SERVICE_NAME));
+    if (radio == NULL) {
+        sleep(60);
+        radio = ::testing::VtsHalHidlTargetTestBase::getService<IRadio>(
+            hidl_string(RADIO_SERVICE_NAME));
+    }
     ASSERT_NE(nullptr, radio.get());
 
     radioRsp = new (std::nothrow) RadioResponse(*this);
