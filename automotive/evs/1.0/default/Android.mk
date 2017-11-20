@@ -24,6 +24,6 @@ LOCAL_SHARED_LIBRARIES := \
     liblog \
     libutils \
 
-LOCAL_CFLAGS := -O0 -g
+LOCAL_CFLAGS := -O0 -g -Wall -Werror
 
 include $(BUILD_EXECUTABLE)
