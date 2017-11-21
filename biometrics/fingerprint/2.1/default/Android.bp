@@ -1,5 +1,6 @@
 cc_binary {
     name: "android.hardware.biometrics.fingerprint@2.1-service",
+    defaults: ["hidl_defaults"],
     init_rc: ["android.hardware.biometrics.fingerprint@2.1-service.rc"],
     vendor: true,
     relative_install_path: "hw",
