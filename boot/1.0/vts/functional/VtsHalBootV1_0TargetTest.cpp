@@ -22,6 +22,7 @@
 #include <android/hardware/boot/1.0/IBootControl.h>
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <VtsHalHidlTargetTestEnvBase.h>
 
 using ::android::hardware::boot::V1_0::IBootControl;
 using ::android::hardware::boot::V1_0::CommandResult;
@@ -33,12 +34,25 @@ using ::android::sp;
 using std::string;
 using std::vector;
 
+// Test environment for Boot HIDL HAL.
+class BootHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    // get the test environment singleton
+    static BootHidlEnvironment* Instance() {
+        static BootHidlEnvironment* instance = new BootHidlEnvironment;
+        return instance;
+    }
+
+    virtual void registerTestServices() override { registerTestService<IBootControl>(); }
+};
+
 // The main test class for the Boot HIDL HAL.
 class BootHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  public:
   virtual void SetUp() override {
-    boot = ::testing::VtsHalHidlTargetTestBase::getService<IBootControl>();
-    ASSERT_NE(boot, nullptr);
+      boot = ::testing::VtsHalHidlTargetTestBase::getService<IBootControl>(
+          BootHidlEnvironment::Instance()->getServiceName<IBootControl>());
+      ASSERT_NE(boot, nullptr);
   }
 
   virtual void TearDown() override {}
@@ -171,8 +185,10 @@ TEST_F(BootHidlTest, GetSuffix) {
 }
 
 int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  int status = RUN_ALL_TESTS();
-  LOG(INFO) << "Test result = " << status;
-  return status;
+    ::testing::AddGlobalTestEnvironment(BootHidlEnvironment::Instance());
+    ::testing::InitGoogleTest(&argc, argv);
+    BootHidlEnvironment::Instance()->init(&argc, argv);
+    int status = RUN_ALL_TESTS();
+    LOG(INFO) << "Test result = " << status;
+    return status;
 }
