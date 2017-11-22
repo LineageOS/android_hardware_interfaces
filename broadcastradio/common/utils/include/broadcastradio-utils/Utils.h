@@ -16,7 +16,7 @@
 #ifndef ANDROID_HARDWARE_BROADCASTRADIO_COMMON_UTILS_H
 #define ANDROID_HARDWARE_BROADCASTRADIO_COMMON_UTILS_H
 
-#include <android/hardware/broadcastradio/1.1/types.h>
+#include <android/hardware/broadcastradio/1.2/types.h>
 #include <chrono>
 #include <queue>
 #include <thread>
@@ -50,21 +50,21 @@ bool isAmFm(const V1_1::ProgramType type);
 bool isAm(const V1_0::Band band);
 bool isFm(const V1_0::Band band);
 
-bool hasId(const V1_1::ProgramSelector& sel, const V1_1::IdentifierType type);
+bool hasId(const V1_1::ProgramSelector& sel, const V1_2::IdentifierType type);
 
 /**
  * Returns ID (either primary or secondary) for a given program selector.
  *
  * If the selector does not contain given type, returns 0 and emits a warning.
  */
-uint64_t getId(const V1_1::ProgramSelector& sel, const V1_1::IdentifierType type);
+uint64_t getId(const V1_1::ProgramSelector& sel, const V1_2::IdentifierType type);
 
 /**
  * Returns ID (either primary or secondary) for a given program selector.
  *
  * If the selector does not contain given type, returns default value.
  */
-uint64_t getId(const V1_1::ProgramSelector& sel, const V1_1::IdentifierType type, uint64_t defval);
+uint64_t getId(const V1_1::ProgramSelector& sel, const V1_2::IdentifierType type, uint64_t defval);
 
 V1_1::ProgramSelector make_selector(V1_0::Band band, uint32_t channel, uint32_t subChannel = 0);
 

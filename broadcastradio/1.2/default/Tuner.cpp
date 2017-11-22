@@ -35,13 +35,13 @@ using V1_0::Band;
 using V1_0::BandConfig;
 using V1_0::Class;
 using V1_0::Direction;
-using V1_1::IdentifierType;
 using V1_1::ProgramInfo;
 using V1_1::ProgramInfoFlags;
 using V1_1::ProgramListResult;
 using V1_1::ProgramSelector;
 using V1_1::ProgramType;
 using V1_1::VendorKeyValue;
+using V1_2::IdentifierType;
 using utils::HalRevision;
 
 using std::chrono::milliseconds;
@@ -282,7 +282,7 @@ Return<Result> Tuner::tuneByProgramSelector(const ProgramSelector& sel) {
             return Result::INVALID_ARGUMENTS;
         }
     } else if (programType == ProgramType::DAB) {
-        if (!utils::hasId(sel, IdentifierType::DAB_SIDECC)) return Result::INVALID_ARGUMENTS;
+        if (!utils::hasId(sel, IdentifierType::DAB_SID_EXT)) return Result::INVALID_ARGUMENTS;
     } else if (programType == ProgramType::DRMO) {
         if (!utils::hasId(sel, IdentifierType::DRMO_SERVICE_ID)) return Result::INVALID_ARGUMENTS;
     } else if (programType == ProgramType::SXM) {

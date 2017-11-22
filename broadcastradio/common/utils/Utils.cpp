@@ -26,10 +26,10 @@ namespace broadcastradio {
 namespace utils {
 
 using V1_0::Band;
-using V1_1::IdentifierType;
 using V1_1::ProgramIdentifier;
 using V1_1::ProgramSelector;
 using V1_1::ProgramType;
+using V1_2::IdentifierType;
 
 static bool isCompatibleProgramType(const uint32_t ia, const uint32_t ib) {
     auto a = static_cast<ProgramType>(ia);
@@ -88,7 +88,7 @@ bool tunesTo(const ProgramSelector& a, const ProgramSelector& b) {
 
             return haveEqualIds(a, b, IdentifierType::AMFM_FREQUENCY);
         case ProgramType::DAB:
-            return haveEqualIds(a, b, IdentifierType::DAB_SIDECC);
+            return haveEqualIds(a, b, IdentifierType::DAB_SID_EXT);
         case ProgramType::DRMO:
             return haveEqualIds(a, b, IdentifierType::DRMO_SERVICE_ID);
         case ProgramType::SXM:
@@ -126,23 +126,50 @@ bool isFm(const Band band) {
     return band == Band::FM || band == Band::FM_HD;
 }
 
-bool hasId(const ProgramSelector& sel, const IdentifierType type) {
+static bool maybeGetId(const ProgramSelector& sel, const IdentifierType type, uint64_t* val) {
     auto itype = static_cast<uint32_t>(type);
-    if (sel.primaryId.type == itype) return true;
-    // not optimal, but we don't care in default impl
-    for (auto&& id : sel.secondaryIds) {
-        if (id.type == itype) return true;
+    auto itypeAlt = itype;
+    if (type == IdentifierType::DAB_SIDECC) {
+        itypeAlt = static_cast<uint32_t>(IdentifierType::DAB_SID_EXT);
     }
-    return false;
+    if (type == IdentifierType::DAB_SID_EXT) {
+        itypeAlt = static_cast<uint32_t>(IdentifierType::DAB_SIDECC);
+    }
+
+    if (sel.primaryId.type == itype || sel.primaryId.type == itypeAlt) {
+        if (val) *val = sel.primaryId.value;
+        return true;
+    }
+
+    // not optimal, but we don't care in default impl
+    bool gotAlt = false;
+    for (auto&& id : sel.secondaryIds) {
+        if (id.type == itype) {
+            if (val) *val = id.value;
+            return true;
+        }
+        // alternative identifier is a backup, we prefer original value
+        if (id.type == itypeAlt) {
+            if (val) *val = id.value;
+            gotAlt = true;
+            continue;
+        }
+    }
+
+    return gotAlt;
+}
+
+bool hasId(const ProgramSelector& sel, const IdentifierType type) {
+    return maybeGetId(sel, type, nullptr);
 }
 
 uint64_t getId(const ProgramSelector& sel, const IdentifierType type) {
-    auto itype = static_cast<uint32_t>(type);
-    if (sel.primaryId.type == itype) return sel.primaryId.value;
-    // not optimal, but we don't care in default impl
-    for (auto&& id : sel.secondaryIds) {
-        if (id.type == itype) return id.value;
+    uint64_t val;
+
+    if (maybeGetId(sel, type, &val)) {
+        return val;
     }
+
     ALOGW("Identifier %s not found", toString(type).c_str());
     return 0;
 }
