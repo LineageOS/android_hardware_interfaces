@@ -68,23 +68,24 @@ class HealthHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 };
 
 class Callback : public IHealthInfoCallback {
-    using Function = std::function<void(const HealthInfo&)>;
-
    public:
-    Callback(const Function& f) : mInternal(f) {}
-    Return<void> healthInfoChanged(const HealthInfo& info) override {
-        std::unique_lock<std::mutex> lock(mMutex);
-        if (mInternal) mInternal(info);
+    Return<void> healthInfoChanged(const HealthInfo&) override {
+        std::lock_guard<std::mutex> lock(mMutex);
+        mInvoked = true;
+        mInvokedNotify.notify_all();
         return Void();
     }
-    void clear() {
+    template <typename R, typename P>
+    bool waitInvoke(std::chrono::duration<R, P> duration) {
         std::unique_lock<std::mutex> lock(mMutex);
-        mInternal = nullptr;
+        bool r = mInvokedNotify.wait_for(lock, duration, [this] { return this->mInvoked; });
+        mInvoked = false;
+        return r;
     }
-
    private:
     std::mutex mMutex;
-    Function mInternal;
+    std::condition_variable mInvokedNotify;
+    bool mInvoked = false;
 };
 
 #define ASSERT_OK(r) ASSERT_TRUE(isOk(r))
@@ -112,71 +113,42 @@ AssertionResult isAllOk(const Return<Result>& r) {
  */
 TEST_F(HealthHidlTest, Callbacks) {
     using namespace std::chrono_literals;
-
-    std::mutex mutex;
-    std::condition_variable cv;
-    bool firstCallbackInvoked = false;
-    bool secondCallbackInvoked = false;
-
-    sp<Callback> firstCallback = new Callback([&](const auto&) {
-        std::unique_lock<std::mutex> lk(mutex);
-        firstCallbackInvoked = true;
-    });
-
-    sp<Callback> secondCallback = new Callback([&](const auto&) {
-        std::unique_lock<std::mutex> lk(mutex);
-        secondCallbackInvoked = true;
-        cv.notify_all();
-    });
+    sp<Callback> firstCallback = new Callback();
+    sp<Callback> secondCallback = new Callback();
 
     ASSERT_ALL_OK(mHealth->registerCallback(firstCallback));
     ASSERT_ALL_OK(mHealth->registerCallback(secondCallback));
 
-    // assert that the first callback is invoked when update is called.
-    {
-        std::unique_lock<std::mutex> lk(mutex);
-        firstCallbackInvoked = false;
-        secondCallbackInvoked = false;
-    }
+    // registerCallback may or may not invoke the callback immediately, so the test needs
+    // to wait for the invocation. If the implementation chooses not to invoke the callback
+    // immediately, just wait for some time.
+    firstCallback->waitInvoke(200ms);
+    secondCallback->waitInvoke(200ms);
 
+    // assert that the first callback is invoked when update is called.
     ASSERT_ALL_OK(mHealth->update());
 
-    {
-        std::unique_lock<std::mutex> lk(mutex);
-        EXPECT_TRUE(cv.wait_for(lk, 1s, [&] {
-            return firstCallbackInvoked && secondCallbackInvoked;
-        })) << "Timeout.";
-        ASSERT_TRUE(firstCallbackInvoked);
-        ASSERT_TRUE(secondCallbackInvoked);
-    }
+    ASSERT_TRUE(firstCallback->waitInvoke(1s));
+    ASSERT_TRUE(secondCallback->waitInvoke(1s));
 
     ASSERT_ALL_OK(mHealth->unregisterCallback(firstCallback));
 
-    // assert that the second callback is still invoked even though the first is unregistered.
-    {
-        std::unique_lock<std::mutex> lk(mutex);
-        firstCallbackInvoked = false;
-        secondCallbackInvoked = false;
-    }
+    // clear any potentially pending callbacks result from wakealarm / kernel events
+    // If there is none, just wait for some time.
+    firstCallback->waitInvoke(200ms);
+    secondCallback->waitInvoke(200ms);
 
+    // assert that the second callback is still invoked even though the first is unregistered.
     ASSERT_ALL_OK(mHealth->update());
 
-    {
-        std::unique_lock<std::mutex> lk(mutex);
-        EXPECT_TRUE(cv.wait_for(lk, 1s, [&] { return secondCallbackInvoked; })) << "Timeout.";
-        ASSERT_FALSE(firstCallbackInvoked);
-        ASSERT_TRUE(secondCallbackInvoked);
-    }
+    ASSERT_FALSE(firstCallback->waitInvoke(200ms));
+    ASSERT_TRUE(secondCallback->waitInvoke(1s));
 
     ASSERT_ALL_OK(mHealth->unregisterCallback(secondCallback));
-
-    // avoid reference to lambda function that goes out of scope.
-    firstCallback->clear();
-    secondCallback->clear();
 }
 
 TEST_F(HealthHidlTest, UnregisterNonExistentCallback) {
-    sp<Callback> callback = new Callback([](const auto&) {});
+    sp<Callback> callback = new Callback();
     auto ret = mHealth->unregisterCallback(callback);
     ASSERT_OK(ret);
     ASSERT_EQ(Result::NOT_FOUND, static_cast<Result>(ret)) << "Actual: " << toString(ret);
