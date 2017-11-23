@@ -81,11 +81,14 @@
                 </xs:restriction>
             </xs:simpleType>
             <xs:simpleType>
-                <!-- Vendor eXtension names must be in the vx namespace.
-                     Vendor are encouraged to namespace their module names.
-                     Example for an hypothetical Google virtual reality HAL:
-                        <module name="vx_google_vr" halVersion="3.0">
-                -->
+                <xs:annotation>
+                    <xs:documentation xml:lang="en">
+                        Vendor eXtension names must be in the vx namespace.
+                        Vendor are encouraged to namespace their module names.
+                        Example for an hypothetical Google virtual reality HAL:
+                            <module name="vx_google_vr" halVersion="3.0"/>
+                    </xs:documentation>
+                </xs:annotation>
                 <xs:restriction base="xs:string">
                     <xs:pattern value="vx_[_a-zA-Z0-9]+"/>
                 </xs:restriction>
@@ -205,6 +208,22 @@
                     <xs:attribute name="name" type="xs:token" use="required"/>
                     <xs:attribute name="role" type="role" use="required"/>
                     <xs:attribute name="flags" type="audioInOutFlags"/>
+                    <xs:attribute name="maxOpenCount" type="xs:unsignedInt"/>
+                    <xs:attribute name="maxActiveCount" type="xs:unsignedInt"/>
+                    <xs:attribute name="preferredUsage" type="audioUsageList">
+                        <xs:annotation>
+                            <xs:documentation xml:lang="en">
+                                When choosing the mixPort of an audio track, the audioPolicy
+                                first considers the mixPorts with a preferredUsage including
+                                the track AudioUsage preferred .
+                                If non support the track format, the other mixPorts are considered.
+                                Eg: a <mixPort preferredUsage="AUDIO_USAGE_MEDIA" /> will receive
+                                    the audio of all apps playing with a MEDIA usage.
+                                    It may receive audio from ALARM if there are no audio compatible
+                                    <mixPort preferredUsage="AUDIO_USAGE_ALARM" />.
+                             </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
                 </xs:complexType>
                 <xs:unique name="mixPortProfileUniqueness">
                     <xs:selector xpath="profile"/>
@@ -358,6 +377,28 @@
             <xs:enumeration value="AUDIO_FORMAT_LDAC"/>
         </xs:restriction>
     </xs:simpleType>
+    <!-- Enum values of audio::common::4_0::AudioUsage
+         TODO: generate from HIDL to avoid manual sync. -->
+    <xs:simpleType name="audioUsage">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="AUDIO_USAGE_UNKNOWN" />
+            <xs:enumeration value="AUDIO_USAGE_MEDIA" />
+            <xs:enumeration value="AUDIO_USAGE_VOICE_COMMUNICATION" />
+            <xs:enumeration value="AUDIO_USAGE_VOICE_COMMUNICATION_SIGNALLING" />
+            <xs:enumeration value="AUDIO_USAGE_ALARM" />
+            <xs:enumeration value="AUDIO_USAGE_NOTIFICATION" />
+            <xs:enumeration value="AUDIO_USAGE_NOTIFICATION_TELEPHONY_RINGTONE" />
+            <xs:enumeration value="AUDIO_USAGE_ASSISTANCE_ACCESSIBILITY" />
+            <xs:enumeration value="AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE" />
+            <xs:enumeration value="AUDIO_USAGE_ASSISTANCE_SONIFICATION" />
+            <xs:enumeration value="AUDIO_USAGE_GAME" />
+            <xs:enumeration value="AUDIO_USAGE_VIRTUAL_SOURCE" />
+            <xs:enumeration value="AUDIO_USAGE_ASSISTANT" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="audioUsageList">
+        <xs:list itemType="audioUsage"/>
+    </xs:simpleType>
     <!-- TODO: Change to a space separated list to xsd enforce correctness. -->
     <xs:simpleType name="samplingRates">
         <xs:restriction base="xs:string">
@@ -418,6 +459,16 @@
                     <xs:attribute name="type" type="audioDevice" use="required"/>
                     <xs:attribute name="role" type="role" use="required"/>
                     <xs:attribute name="address" type="xs:string" use="optional" default=""/>
+                    <!-- Note that XSD 1.0 can not check that a type only has one default. -->
+                    <xs:attribute name="default" type="xs:boolean" use="optional">
+                        <xs:annotation>
+                            <xs:documentation xml:lang="en">
+                                The default device will be used if multiple have the same type
+                                and no explicit route request exists for a specific device of
+                                that type.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
                 </xs:complexType>
                 <xs:unique name="devicePortProfileUniqueness">
                     <xs:selector xpath="profile"/>
