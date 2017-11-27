@@ -38,3 +38,30 @@ struct Outer {
 struct Unrelated {
     Outer.Inner great;
 };
+
+// structs to test enum iterators in hidl_test
+struct EnumIterators {
+    enum Empty : uint32_t {};
+
+    enum Parent : uint32_t {
+        A,
+    };
+    enum EmptyChild : Parent {};
+    enum Grandchild : EmptyChild {
+        B,
+    };
+
+    enum SkipsValues : uint32_t {
+        A = 7,
+        B,
+        C = 100,
+        D,
+        E
+    };
+    enum MultipleValues : uint32_t {
+        A = 7,
+        B = 7,
+        C = 8,
+        D = 7,
+    };
+};
