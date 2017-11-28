@@ -610,10 +610,8 @@ Return<void> Effect::getSupportedAuxChannelsConfigs(
 }
 
 Return<void> Effect::getAuxChannelsConfig(getAuxChannelsConfig_cb _hidl_cb)  {
-    uint32_t halCmd = EFFECT_FEATURE_AUX_CHANNELS;
     uint32_t halResult[alignedSizeIn<uint32_t>(sizeof(uint32_t) + sizeof(channel_config_t))];
     memset(halResult, 0, sizeof(halResult));
-    uint32_t halResultSize = 0;
     EffectAuxChannelsConfig result;
     Result retval = getCurrentConfigImpl(
             EFFECT_FEATURE_AUX_CHANNELS,
