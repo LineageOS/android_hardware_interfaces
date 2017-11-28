@@ -30,6 +30,8 @@ LOCAL_SRC_FILES := \
     StreamIn.cpp \
     StreamOut.cpp \
 
+LOCAL_CFLAGS := -Wall -Werror
+
 LOCAL_SHARED_LIBRARIES := \
     libbase \
     libcutils \
@@ -64,6 +66,8 @@ LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_PROPRIETARY_MODULE := true
 LOCAL_SRC_FILES := \
     service.cpp
+
+LOCAL_CFLAGS := -Wall -Werror
 
 LOCAL_SHARED_LIBRARIES := \
     libhidlbase \
