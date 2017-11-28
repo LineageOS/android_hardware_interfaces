@@ -1,5 +1,6 @@
 cc_library_shared {
     name: "android.hardware.audio.effect@2.0-impl",
+    defaults: ["hidl_defaults"],
     vendor: true,
     relative_install_path: "hw",
     srcs: [
