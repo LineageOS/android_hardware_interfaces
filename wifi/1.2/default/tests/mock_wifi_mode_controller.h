@@ -31,6 +31,7 @@ namespace mode_controller {
 class MockWifiModeController : public WifiModeController {
    public:
     MockWifiModeController();
+    MOCK_METHOD0(initialize, bool());
     MOCK_METHOD1(changeFirmwareMode, bool(IfaceType));
     MOCK_METHOD1(isFirmwareModeChangeNeeded, bool(IfaceType));
     MOCK_METHOD0(deinitialize, bool());

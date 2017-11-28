@@ -42,6 +42,7 @@ class WifiModeController {
     // Checks if a firmware mode change is necessary to support the specified
     // iface type operations.
     virtual bool isFirmwareModeChangeNeeded(IfaceType type);
+    virtual bool initialize();
     // Change the firmware mode to support the specified iface type operations.
     virtual bool changeFirmwareMode(IfaceType type);
     // Unload the driver. This should be invoked whenever |IWifi.stop()| is

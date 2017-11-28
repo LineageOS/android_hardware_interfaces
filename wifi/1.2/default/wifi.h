@@ -68,7 +68,7 @@ class Wifi : public V1_2::IWifi {
     std::pair<WifiStatus, std::vector<ChipId>> getChipIdsInternal();
     std::pair<WifiStatus, sp<IWifiChip>> getChipInternal(ChipId chip_id);
 
-    WifiStatus initializeLegacyHal();
+    WifiStatus initializeModeControllerAndLegacyHal();
     WifiStatus stopLegacyHalAndDeinitializeModeController(
         std::unique_lock<std::recursive_mutex>* lock);
 
