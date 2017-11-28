@@ -64,6 +64,46 @@ bool matchDeviceName(const hidl_string& deviceName, std::string* deviceVersion,
 using ::android::hardware::camera::common::V1_0::CameraMetadataType;
 using ::android::hardware::camera::common::V1_0::Status;
 
+void CameraProvider::addDeviceNames(int camera_id, CameraDeviceStatus status, bool cam_new)
+{
+    char cameraId[kMaxCameraIdLen];
+    snprintf(cameraId, sizeof(cameraId), "%d", camera_id);
+    std::string cameraIdStr(cameraId);
+
+    mCameraIds.add(cameraIdStr);
+
+    // initialize mCameraDeviceNames and mOpenLegacySupported
+    mOpenLegacySupported[cameraIdStr] = false;
+    int deviceVersion = mModule->getDeviceVersion(camera_id);
+    auto deviceNamePair = std::make_pair(cameraIdStr,
+                                         getHidlDeviceName(cameraIdStr, deviceVersion));
+    mCameraDeviceNames.add(deviceNamePair);
+    if (cam_new) {
+        mCallbacks->cameraDeviceStatusChange(deviceNamePair.second, status);
+    }
+    if (deviceVersion >= CAMERA_DEVICE_API_VERSION_3_2 &&
+            mModule->isOpenLegacyDefined()) {
+        // try open_legacy to see if it actually works
+        struct hw_device_t* halDev = nullptr;
+        int ret = mModule->openLegacy(cameraId, CAMERA_DEVICE_API_VERSION_1_0, &halDev);
+        if (ret == 0) {
+            mOpenLegacySupported[cameraIdStr] = true;
+            halDev->close(halDev);
+            deviceNamePair = std::make_pair(cameraIdStr,
+                            getHidlDeviceName(cameraIdStr, CAMERA_DEVICE_API_VERSION_1_0));
+            mCameraDeviceNames.add(deviceNamePair);
+            if (cam_new) {
+                mCallbacks->cameraDeviceStatusChange(deviceNamePair.second, status);
+            }
+        } else if (ret == -EBUSY || ret == -EUSERS) {
+            // Looks like this provider instance is not initialized during
+            // system startup and there are other camera users already.
+            // Not a good sign but not fatal.
+            ALOGW("%s: open_legacy try failed!", __FUNCTION__);
+        }
+    }
+}
+
 /**
  * static callback forwarding methods from HAL to instance
  */
@@ -73,6 +113,7 @@ void CameraProvider::sCameraDeviceStatusChange(
         int new_status) {
     CameraProvider* cp = const_cast<CameraProvider*>(
             static_cast<const CameraProvider*>(callbacks));
+    bool found = false;
 
     if (cp == nullptr) {
         ALOGE("%s: callback ops is null", __FUNCTION__);
@@ -90,7 +131,12 @@ void CameraProvider::sCameraDeviceStatusChange(
             if (cameraIdStr.compare(deviceNamePair.first) == 0) {
                 cp->mCallbacks->cameraDeviceStatusChange(
                         deviceNamePair.second, status);
+                found = true;
             }
+        }
+
+        if (!found) {
+            cp->addDeviceNames(camera_id, status, true);
         }
     }
 }
@@ -244,32 +290,8 @@ bool CameraProvider::initialize() {
         snprintf(cameraId, sizeof(cameraId), "%d", i);
         std::string cameraIdStr(cameraId);
         mCameraStatusMap[cameraIdStr] = CAMERA_DEVICE_STATUS_PRESENT;
-        mCameraIds.add(cameraIdStr);
 
-        // initialize mCameraDeviceNames and mOpenLegacySupported
-        mOpenLegacySupported[cameraIdStr] = false;
-        int deviceVersion = mModule->getDeviceVersion(i);
-        mCameraDeviceNames.add(
-                std::make_pair(cameraIdStr,
-                               getHidlDeviceName(cameraIdStr, deviceVersion)));
-        if (deviceVersion >= CAMERA_DEVICE_API_VERSION_3_2 &&
-                mModule->isOpenLegacyDefined()) {
-            // try open_legacy to see if it actually works
-            struct hw_device_t* halDev = nullptr;
-            int ret = mModule->openLegacy(cameraId, CAMERA_DEVICE_API_VERSION_1_0, &halDev);
-            if (ret == 0) {
-                mOpenLegacySupported[cameraIdStr] = true;
-                halDev->close(halDev);
-                mCameraDeviceNames.add(
-                        std::make_pair(cameraIdStr,
-                                getHidlDeviceName(cameraIdStr, CAMERA_DEVICE_API_VERSION_1_0)));
-            } else if (ret == -EBUSY || ret == -EUSERS) {
-                // Looks like this provider instance is not initialized during
-                // system startup and there are other camera users already.
-                // Not a good sign but not fatal.
-                ALOGW("%s: open_legacy try failed!", __FUNCTION__);
-            }
-        }
+        addDeviceNames(i);
     }
 
     return false; // mInitFailed
