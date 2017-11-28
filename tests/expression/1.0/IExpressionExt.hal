@@ -26,7 +26,9 @@ interface IExpressionExt {
         ENUM_BEST = android.hardware.tests.expression@1.0::IExpression.Constants:CONST_BAR,
     };
 
-    typedef Color[((Constants:MAX_ARRAY_SIZE << 1) - (Constants:CONST_FOO + 1)*8) >> 1] SixteenColors;
+    typedef Constants AlsoConstants;
+
+    typedef Color[((Constants:MAX_ARRAY_SIZE << 1) - (AlsoConstants:CONST_FOO + 1)*8) >> 1] SixteenColors;
     struct ArrayOfColors {
         Color[(Constants:MAX_ARRAY_SIZE << 1) - (Constants:CONST_FOO + 1)*8] my32Colors; // 32
     };
