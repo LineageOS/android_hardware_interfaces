@@ -1,5 +1,6 @@
 cc_library_shared {
     name: "android.hardware.gnss@1.0-impl",
+    defaults: ["hidl_defaults"],
     vendor: true,
     relative_install_path: "hw",
     srcs: [
@@ -27,14 +28,13 @@ cc_library_shared {
         "libhardware",
     ],
 
-    cflags: ["-Werror"],
-
 }
 
 cc_binary {
     relative_install_path: "hw",
     vendor: true,
     name: "android.hardware.gnss@1.0-service",
+    defaults: ["hidl_defaults"],
     init_rc: ["android.hardware.gnss@1.0-service.rc"],
     srcs: ["service.cpp"],
 
