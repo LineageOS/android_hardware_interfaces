@@ -7,6 +7,8 @@ LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_SRC_FILES := \
     Light.cpp \
 
+LOCAL_CFLAGS := -Wall -Werror
+
 LOCAL_SHARED_LIBRARIES := \
     libhidlbase \
     libhidltransport \
@@ -27,6 +29,8 @@ LOCAL_MODULE := android.hardware.light@2.0-service
 LOCAL_INIT_RC := android.hardware.light@2.0-service.rc
 LOCAL_SRC_FILES := \
     service.cpp \
+
+LOCAL_CFLAGS := -Wall -Werror
 
 LOCAL_SHARED_LIBRARIES := \
     liblog \
