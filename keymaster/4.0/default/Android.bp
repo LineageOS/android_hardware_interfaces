@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2016 The Android Open Source Project
+// Copyright (C) 2017 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,43 +12,26 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
-cc_library_shared {
-    name: "android.hardware.thermal@1.0-impl",
-    defaults: ["hidl_defaults"],
-    vendor: true,
-    relative_install_path: "hw",
-    srcs: ["Thermal.cpp"],
-    shared_libs: [
-        "liblog",
-        "libcutils",
-        "libhardware",
-        "libbase",
-        "libcutils",
-        "libutils",
-        "libhidlbase",
-        "libhidltransport",
-        "android.hardware.thermal@1.0",
-    ],
-}
+//
 
 cc_binary {
-    name: "android.hardware.thermal@1.0-service",
+    name: "android.hardware.keymaster@4.0-service",
     defaults: ["hidl_defaults"],
     relative_install_path: "hw",
     vendor: true,
-    init_rc: ["android.hardware.thermal@1.0-service.rc"],
+    init_rc: ["android.hardware.keymaster@4.0-service.rc"],
     srcs: ["service.cpp"],
 
     shared_libs: [
-        "liblog",
-        "libcutils",
-        "libdl",
+        "android.hardware.keymaster@4.0",
         "libbase",
-        "libutils",
+        "libcutils",
         "libhardware",
         "libhidlbase",
         "libhidltransport",
-        "android.hardware.thermal@1.0",
+        "libkeymaster4",
+        "liblog",
+        "libutils",
     ],
+
 }

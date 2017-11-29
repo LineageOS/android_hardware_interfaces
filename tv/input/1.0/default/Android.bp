@@ -1,5 +1,6 @@
 cc_library_shared {
     name: "android.hardware.tv.input@1.0-impl",
+    defaults: ["hidl_defaults"],
     vendor: true,
     relative_install_path: "hw",
     srcs: ["TvInput.cpp"],
@@ -19,6 +20,7 @@ cc_library_shared {
 
 cc_binary {
     name: "android.hardware.tv.input@1.0-service",
+    defaults: ["hidl_defaults"],
     relative_install_path: "hw",
     vendor: true,
     init_rc: ["android.hardware.tv.input@1.0-service.rc"],

@@ -1,0 +1,223 @@
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.keymaster@4.0;
+
+import android.hardware.keymaster@3.0::Algorithm;
+import android.hardware.keymaster@3.0::BlockMode;
+import android.hardware.keymaster@3.0::Digest;
+import android.hardware.keymaster@3.0::EcCurve;
+import android.hardware.keymaster@3.0::ErrorCode;
+import android.hardware.keymaster@3.0::HardwareAuthenticatorType;
+import android.hardware.keymaster@3.0::KeyBlobUsageRequirements;
+import android.hardware.keymaster@3.0::KeyDerivationFunction;
+import android.hardware.keymaster@3.0::KeyFormat;
+import android.hardware.keymaster@3.0::KeyOrigin;
+import android.hardware.keymaster@3.0::PaddingMode;
+import android.hardware.keymaster@3.0::TagType;
+
+enum Tag : uint32_t {
+    INVALID = TagType:INVALID | 0,
+
+    /**
+     * Tags that must be semantically enforced by hardware and software implementations.
+     */
+
+    /** Crypto parameters */
+    PURPOSE = TagType:ENUM_REP | 1,    /* KeyPurpose. */
+    ALGORITHM = TagType:ENUM | 2,      /* Algorithm. */
+    KEY_SIZE = TagType:UINT | 3,       /* Key size in bits. */
+    BLOCK_MODE = TagType:ENUM_REP | 4, /* BlockMode. */
+    DIGEST = TagType:ENUM_REP | 5,     /* Digest. */
+    PADDING = TagType:ENUM_REP | 6,    /* PaddingMode. */
+    CALLER_NONCE = TagType:BOOL | 7,   /* Allow caller to specify nonce or IV. */
+    MIN_MAC_LENGTH = TagType:UINT | 8, /* Minimum length of MAC or AEAD authentication tag in
+                                        * bits. */
+    // 9 reserved
+    EC_CURVE = TagType:ENUM | 10,      /* EcCurve. */
+
+    /** Algorithm-specific. */
+    RSA_PUBLIC_EXPONENT = TagType:ULONG | 200,
+    // 201 reserved for ECIES
+    INCLUDE_UNIQUE_ID = TagType:BOOL | 202, /* If true, attestation certificates for this key must
+                                             * contain an application-scoped and time-bounded
+                                             * device-unique ID.*/
+
+    /** Other hardware-enforced. */
+    BLOB_USAGE_REQUIREMENTS = TagType:ENUM | 301, /* KeyBlobUsageRequirements. */
+    BOOTLOADER_ONLY = TagType:BOOL | 302,         /* Usable only by bootloader. */
+    ROLLBACK_RESISTANCE = TagType:BOOL | 303,     /* Whether key is rollback-resistant.  Specified
+                                                   * in the key description provided to generateKey
+                                                   * or importKey if rollback resistance is desired.
+                                                   * If the implementation cannot provide rollback
+                                                   * resistance, it must return
+                                                   * ROLLBACK_RESISTANCE_UNAVAILABLE. */
+
+    /**
+     * Tags that should be semantically enforced by hardware if possible and will otherwise be
+     * enforced by software (keystore).
+     */
+
+    /** Key validity period */
+    ACTIVE_DATETIME = TagType:DATE | 400,             /* Start of validity. */
+    ORIGINATION_EXPIRE_DATETIME = TagType:DATE | 401, /* Date when new "messages" should no longer
+                                                       * be created. */
+    USAGE_EXPIRE_DATETIME = TagType:DATE | 402,       /* Date when existing "messages" should no
+                                                       * longer be trusted. */
+    MIN_SECONDS_BETWEEN_OPS = TagType:UINT | 403,     /* Minimum elapsed time between
+                                                       * cryptographic operations with the key. */
+    MAX_USES_PER_BOOT = TagType:UINT | 404,           /* Number of times the key can be used per
+                                                       * boot. */
+
+    /** User authentication */
+    // 500-501 reserved
+    USER_SECURE_ID = TagType:ULONG_REP | 502, /* Secure ID of authorized user or authenticator(s).
+                                               * Disallowed if ALL_USERS or NO_AUTH_REQUIRED is
+                                               * present. */
+    NO_AUTH_REQUIRED = TagType:BOOL | 503,    /* If key is usable without authentication. */
+    USER_AUTH_TYPE = TagType:ENUM | 504,      /* Bitmask of authenticator types allowed when
+                                               * USER_SECURE_ID contains a secure user ID, rather
+                                               * than a secure authenticator ID.  Defined in
+                                               * HardwareAuthenticatorType. */
+    AUTH_TIMEOUT = TagType:UINT | 505,        /* Required freshness of user authentication for
+                                               * private/secret key operations, in seconds.  Public
+                                               * key operations require no authentication.  If
+                                               * absent, authentication is required for every use.
+                                               * Authentication state is lost when the device is
+                                               * powered off. */
+    ALLOW_WHILE_ON_BODY =  TagType:BOOL | 506, /* Allow key to be used after authentication timeout
+                                                * if device is still on-body (requires secure
+                                                * on-body sensor. */
+
+    /** Application access control */
+    APPLICATION_ID = TagType:BYTES | 601, /* Byte string identifying the authorized application. */
+
+    /**
+     * Semantically unenforceable tags, either because they have no specific meaning or because
+     * they're informational only.
+     */
+    APPLICATION_DATA = TagType:BYTES | 700, /* Data provided by authorized application. */
+    CREATION_DATETIME = TagType:DATE | 701, /* Key creation time */
+    ORIGIN = TagType:ENUM | 702,            /* keymaster_key_origin_t. */
+    // 703 is unused.
+    ROOT_OF_TRUST = TagType:BYTES | 704,         /* Root of trust ID. */
+    OS_VERSION = TagType:UINT | 705,             /* Version of system (keymaster2) */
+    OS_PATCHLEVEL = TagType:UINT | 706,          /* Patch level of system (keymaster2) */
+    UNIQUE_ID = TagType:BYTES | 707,             /* Used to provide unique ID in attestation */
+    ATTESTATION_CHALLENGE = TagType:BYTES | 708, /* Used to provide challenge in attestation */
+    ATTESTATION_APPLICATION_ID = TagType:BYTES | 709, /* Used to identify the set of possible
+                                                       * applications of which one has initiated a
+                                                       * key attestation */
+    ATTESTATION_ID_BRAND = TagType:BYTES | 710,   /* Used to provide the device's brand name to be
+                                                   * included in attestation */
+    ATTESTATION_ID_DEVICE = TagType:BYTES | 711,  /* Used to provide the device's device name to
+                                                   * be included in attestation */
+    ATTESTATION_ID_PRODUCT = TagType:BYTES | 712, /* Used to provide the device's product name to
+                                                   * be included in attestation */
+    ATTESTATION_ID_SERIAL =
+    TagType:BYTES | 713,                       /* Used to provide the device's serial number to be
+                                                * included in attestation */
+    ATTESTATION_ID_IMEI = TagType:BYTES | 714, /* Used to provide the device's IMEI to be included
+                                                * in attestation */
+    ATTESTATION_ID_MEID = TagType:BYTES | 715, /* Used to provide the device's MEID to be included
+                                                * in attestation */
+    ATTESTATION_ID_MANUFACTURER =
+    TagType:BYTES | 716,                        /* Used to provide the device's manufacturer
+                                                 * name to be included in attestation */
+    ATTESTATION_ID_MODEL = TagType:BYTES | 717, /* Used to provide the device's model name to be
+                                                 * included in attestation */
+
+    /** Tags used only to provide data to or receive data from operations */
+    ASSOCIATED_DATA = TagType:BYTES | 1000, /* Used to provide associated data for AEAD modes. */
+    NONCE = TagType:BYTES | 1001,           /* Nonce or Initialization Vector */
+    MAC_LENGTH = TagType:UINT | 1003,       /* MAC or AEAD authentication tag length in bits. */
+
+    RESET_SINCE_ID_ROTATION = TagType:BOOL | 1004, /* Whether the device has beeen factory reset
+                                                    * since the last unique ID rotation.  Used for
+                                                    * key attestation. */
+};
+
+/**
+ * Possible purposes of a key (or pair).
+ */
+enum KeyPurpose : uint32_t {
+    ENCRYPT = 0,    /* Usable with RSA, EC and AES keys. */
+    DECRYPT = 1,    /* Usable with RSA, EC and AES keys. */
+    SIGN = 2,       /* Usable with RSA, EC and HMAC keys. */
+    VERIFY = 3,     /* Usable with RSA, EC and HMAC keys. */
+    /* 4 is reserved */
+    WRAP_KEY = 5,   /* Usable with wrapping keys. */
+};
+
+struct KeyParameter {
+    /**
+     * Discriminates the uinon/blob field used.  The blob cannot be coincided with the union, but
+     * only one of "f" and "blob" is ever used at a time. */
+    Tag tag;
+    union IntegerParams {
+        /** Enum types */
+        Algorithm algorithm;
+        BlockMode blockMode;
+        PaddingMode paddingMode;
+        Digest digest;
+        EcCurve ecCurve;
+        KeyOrigin origin;
+        KeyBlobUsageRequirements keyBlobUsageRequirements;
+        KeyPurpose purpose;
+        KeyDerivationFunction keyDerivationFunction;
+        HardwareAuthenticatorType hardwareAuthenticatorType;
+
+        /** Other types */
+        bool boolValue;  // Always true, if a boolean tag is present.
+        uint32_t integer;
+        uint64_t longInteger;
+        uint64_t dateTime;
+    };
+    IntegerParams f;  // Hidl does not support anonymous unions, so we have to name it.
+    vec<uint8_t> blob;
+};
+
+struct KeyCharacteristics {
+    vec<KeyParameter> softwareEnforced;
+    vec<KeyParameter> hardwareEnforced;
+};
+
+/**
+ * Data used to prove successful authentication.
+ */
+struct HardwareAuthToken {
+    uint64_t challenge;
+    uint64_t userId;             // Secure User ID, not Android user ID.
+    uint64_t authenticatorId;    // Secure authenticator ID.
+    HardwareAuthenticatorType authenticatorType;
+    uint64_t timestamp;
+    /**
+     * MACs are computed with a backward-compatible method, used by Keymaster 3.0, Gatekeeper 1.0
+     * and Fingerprint 1.0, as well as pre-treble HALs.
+     *
+     * The MAC is 32 bytes in length and is computed as follows:
+     *
+     *     HMAC(H, 0 || challenge || user_id || authenticator_id || authenticator_type || timestamp)
+     *
+     * where ``||'' represents concatenation, the leading zero is a single byte, and all integers
+     * are represented as unsigned values, the full width of the type.  The challenge, userId and
+     * authenticatorId values are in machine order, but authenticatorType and timestamp are in
+     * network order.  This odd construction is compatible with the hw_auth_token_t structure,
+     */
+    uint8_t[32] mac;
+};
+
+typedef uint64_t OperationHandle;

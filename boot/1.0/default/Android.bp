@@ -1,5 +1,6 @@
 cc_library_shared {
     name: "android.hardware.boot@1.0-impl",
+    defaults: ["hidl_defaults"],
     relative_install_path: "hw",
     vendor: true,
     srcs: ["BootControl.cpp"],
@@ -17,6 +18,7 @@ cc_library_shared {
 
 cc_binary {
     name: "android.hardware.boot@1.0-service",
+    defaults: ["hidl_defaults"],
     relative_install_path: "hw",
     vendor: true,
     init_rc: ["android.hardware.boot@1.0-service.rc"],
