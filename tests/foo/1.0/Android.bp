@@ -17,6 +17,7 @@ hidl_interface {
     types: [
         "Abc",
         "Def",
+        "EnumIterators",
         "Outer",
         "Unrelated",
     ],
