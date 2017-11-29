@@ -72,4 +72,20 @@ interface IRadioResponse extends @1.1::IRadioResponse {
      *   RadioError:INTERNAL_ERR
      */
     oneway setLinkCapacityReportingCriteriaResponse(RadioResponseInfo info);
+
+    /**
+     * @param calls Current call list
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:NO_MEMORY
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:SYSTEM_ERR
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:NO_RESOURCES
+     *   RadioError:CANCELLED
+     */
+    oneway getCurrentCallsResponse_1_2(RadioResponseInfo info, vec<Call> calls);
 };

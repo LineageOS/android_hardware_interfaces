@@ -16,6 +16,7 @@
 
 package android.hardware.radio@1.2;
 
+import @1.0::Call;
 import @1.0::CdmaSignalStrength;
 import @1.0::CardState;
 import @1.0::CardStatus;
@@ -123,6 +124,33 @@ enum IndicationFilter : int32_t {
      * recommended that this be reported whenever link capacity or signal strength is reported.
      */
     PHYSICAL_CHANNEL_CONFIG = 1 << 4,
+};
+
+/**
+ * Audio codec which is used on GSM, UMTS, and CDMA. These values must be opaque
+ * to the Android framework. Only for display.
+ */
+enum AudioQuality : int32_t {
+    /** Unspecified audio codec */
+    UNSPECIFIED,
+    /** AMR (Narrowband) audio codec */
+    AMR,
+    /** AMR (Wideband) audio codec */
+    AMR_WB,
+    /** GSM Enhanced Full-Rate audio codec */
+    GSM_EFR,
+    /** GSM Full-Rate audio codec */
+    GSM_FR,
+    /** GSM Half-Rate audio codec */
+    GSM_HR,
+    /** Enhanced Variable rate codec */
+    EVRC,
+    /** Enhanced Variable rate codec revision B */
+    EVRC_B,
+    /** Enhanced Variable rate codec (Wideband) */
+    EVRC_WB,
+    /** Enhanced Variable rate codec (Narrowband) */
+    EVRC_NW,
 };
 
 struct NetworkScanRequest {
@@ -363,4 +391,9 @@ enum DataRequestReason : int32_t {
      * (e.g. from cellular to wifi or vise versa)
      */
     HANDOVER  = 0x03,
+};
+
+struct Call {
+    @1.0::Call base;
+    AudioQuality audioQuality;
 };
