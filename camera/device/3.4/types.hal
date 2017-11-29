@@ -16,19 +16,68 @@
 
 package android.hardware.camera.device@3.4;
 
-import @3.2::StreamConfiguration;
 import @3.2::types;
+import @3.2::StreamConfigurationMode;
+import @3.2::Stream;
+import @3.3::HalStream;
+import @3.2::CameraMetadata;
+
+/**
+ * Stream:
+ *
+ * A descriptor for a single camera input or output stream. A stream is defined
+ * by the framework by its buffer resolution and format, and additionally by the
+ * HAL with the gralloc usage flags and the maximum in-flight buffer count.
+ *
+ * This version extends the @3.2 Stream with the physicalCameraId field.
+ */
+struct Stream {
+    /**
+     * The definition of Stream from the prior version
+     */
+    @3.2::Stream v3_2;
+
+    /**
+     * The physical camera id this stream belongs to.
+     *
+     * If the camera device is not a logical multi camera, or if the camera is a logical
+     * multi camera but the stream is not a physical output stream, this field will point to a
+     * 0-length string.
+     *
+     * A logical multi camera is a camera device backed by multiple physical cameras that
+     * are also exposed to the application. And for a logical multi camera, a physical output
+     * stream is an output stream specifically requested on an underlying physical camera.
+     *
+     * A logical camera is a camera device backed by multiple physical camera
+     * devices. And a physical stream is a stream specifically requested on a
+     * underlying physical camera device.
+     *
+     * For an input stream, this field is guaranteed to be a 0-length string.
+     *
+     * When not empty, this field is the <id> field of one of the full-qualified device
+     * instance names returned by getCameraIdList().
+     */
+    string physicalCameraId;
+};
 
 /**
  * StreamConfiguration:
  *
- * Identical to @3.2::StreamConfiguration, except that it contains session parameters.
+ * Identical to @3.2::StreamConfiguration, except that it contains session
+ * parameters, and the streams vector contains @3.4::Stream.
  */
 struct StreamConfiguration {
     /**
-     * The definition of StreamConfiguration from the prior version.
+     * An array of camera stream pointers, defining the input/output
+     * configuration for the camera HAL device.
      */
-    @3.2::StreamConfiguration v3_2;
+    vec<Stream> streams;
+
+    /**
+     * The definition of operation mode from prior version.
+     *
+     */
+    StreamConfigurationMode operationMode;
 
     /**
      * Session wide camera parameters.
@@ -43,4 +92,44 @@ struct StreamConfiguration {
      * their values and configure the internal camera pipeline accordingly.
      */
     CameraMetadata sessionParams;
+};
+
+/**
+ * HalStream:
+ *
+ * The camera HAL's response to each requested stream configuration.
+ *
+ * This version extends the @3.3 HalStream with the physicalCameraId
+ * field
+ */
+struct HalStream {
+    /**
+     * The definition of HalStream from the prior version.
+     */
+    @3.3::HalStream v3_3;
+
+    /**
+     * The physical camera id the current Hal stream belongs to.
+     *
+     * If current camera device isn't a logical camera, or the Hal stream isn't
+     * from a physical camera of the logical camera, this must be an empty
+     * string.
+     *
+     * A logical camera is a camera device backed by multiple physical camera
+     * devices.
+     *
+     * When not empty, this field is the <id> field of one of the full-qualified device
+     * instance names returned by getCameraIdList().
+     */
+    string physicalCameraId;
+};
+
+/**
+ * HalStreamConfiguration:
+ *
+ * Identical to @3.3::HalStreamConfiguration, except that it contains @3.4::HalStream entries.
+ *
+ */
+struct HalStreamConfiguration {
+    vec<HalStream> streams;
 };

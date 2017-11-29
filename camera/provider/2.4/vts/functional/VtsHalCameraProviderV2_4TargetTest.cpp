@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2016-2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@
 #include <VtsHalHidlTargetTestBase.h>
 #include <VtsHalHidlTargetTestEnvBase.h>
 
+using namespace ::android::hardware::camera::device;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::hidl_handle;
@@ -78,7 +79,6 @@ using ::android::hardware::camera::device::V3_2::ICameraDeviceCallback;
 using ::android::hardware::camera::device::V3_2::ICameraDeviceSession;
 using ::android::hardware::camera::device::V3_2::NotifyMsg;
 using ::android::hardware::camera::device::V3_2::RequestTemplate;
-using ::android::hardware::camera::device::V3_2::Stream;
 using ::android::hardware::camera::device::V3_2::StreamType;
 using ::android::hardware::camera::device::V3_2::StreamRotation;
 using ::android::hardware::camera::device::V3_2::StreamConfiguration;
@@ -620,11 +620,16 @@ public:
     void castSession(const sp<ICameraDeviceSession> &session, int32_t deviceVersion,
             sp<device::V3_3::ICameraDeviceSession> *session3_3 /*out*/,
             sp<device::V3_4::ICameraDeviceSession> *session3_4 /*out*/);
+    void createStreamConfiguration(const ::android::hardware::hidl_vec<V3_2::Stream>& streams3_2,
+            StreamConfigurationMode configMode,
+            ::android::hardware::camera::device::V3_2::StreamConfiguration *config3_2,
+            ::android::hardware::camera::device::V3_4::StreamConfiguration *config3_4);
+
     void configurePreviewStream(const std::string &name, int32_t deviceVersion,
             sp<ICameraProvider> provider,
             const AvailableStream *previewThreshold,
             sp<ICameraDeviceSession> *session /*out*/,
-            Stream *previewStream /*out*/,
+            V3_2::Stream *previewStream /*out*/,
             HalStreamConfiguration *halStreamConfig /*out*/,
             bool *supportsPartialResults /*out*/,
             uint32_t *partialResultCount /*out*/);
@@ -2353,7 +2358,8 @@ TEST_F(CameraHidlTest, configureStreamsAvailableOutputs) {
 
         int32_t streamId = 0;
         for (auto& it : outputStreams) {
-            Stream stream = {streamId,
+            V3_2::Stream stream3_2;
+            stream3_2 = {streamId,
                              StreamType::OUTPUT,
                              static_cast<uint32_t>(it.width),
                              static_cast<uint32_t>(it.height),
@@ -2361,25 +2367,27 @@ TEST_F(CameraHidlTest, configureStreamsAvailableOutputs) {
                              GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
                              0,
                              StreamRotation::ROTATION_0};
-            ::android::hardware::hidl_vec<Stream> streams = {stream};
-            ::android::hardware::camera::device::V3_4::StreamConfiguration config;
-            config.v3_2 = {streams, StreamConfigurationMode::NORMAL_MODE};
+            ::android::hardware::hidl_vec<V3_2::Stream> streams3_2 = {stream3_2};
+            ::android::hardware::camera::device::V3_4::StreamConfiguration config3_4;
+            ::android::hardware::camera::device::V3_2::StreamConfiguration config3_2;
+            createStreamConfiguration(streams3_2, StreamConfigurationMode::NORMAL_MODE,
+                                      &config3_2, &config3_4);
             if (session3_4 != nullptr) {
-                ret = session3_4->configureStreams_3_4(config,
-                        [streamId](Status s, device::V3_3::HalStreamConfiguration halConfig) {
+                ret = session3_4->configureStreams_3_4(config3_4,
+                        [streamId](Status s, device::V3_4::HalStreamConfiguration halConfig) {
                             ASSERT_EQ(Status::OK, s);
                             ASSERT_EQ(1u, halConfig.streams.size());
-                            ASSERT_EQ(halConfig.streams[0].v3_2.id, streamId);
+                            ASSERT_EQ(halConfig.streams[0].v3_3.v3_2.id, streamId);
                         });
             } else if (session3_3 != nullptr) {
-                ret = session3_3->configureStreams_3_3(config.v3_2,
+                ret = session3_3->configureStreams_3_3(config3_2,
                         [streamId](Status s, device::V3_3::HalStreamConfiguration halConfig) {
                             ASSERT_EQ(Status::OK, s);
                             ASSERT_EQ(1u, halConfig.streams.size());
                             ASSERT_EQ(halConfig.streams[0].v3_2.id, streamId);
                         });
             } else {
-                ret = session->configureStreams(config.v3_2,
+                ret = session->configureStreams(config3_2,
                         [streamId](Status s, HalStreamConfiguration halConfig) {
                             ASSERT_EQ(Status::OK, s);
                             ASSERT_EQ(1u, halConfig.streams.size());
@@ -2424,7 +2432,7 @@ TEST_F(CameraHidlTest, configureStreamsInvalidOutputs) {
         ASSERT_NE(0u, outputStreams.size());
 
         int32_t streamId = 0;
-        Stream stream = {streamId++,
+        V3_2::Stream stream3_2 = {streamId++,
                          StreamType::OUTPUT,
                          static_cast<uint32_t>(0),
                          static_cast<uint32_t>(0),
@@ -2432,23 +2440,25 @@ TEST_F(CameraHidlTest, configureStreamsInvalidOutputs) {
                          GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
                          0,
                          StreamRotation::ROTATION_0};
-        ::android::hardware::hidl_vec<Stream> streams = {stream};
-        ::android::hardware::camera::device::V3_4::StreamConfiguration config;
-        config.v3_2 = {streams, StreamConfigurationMode::NORMAL_MODE};
+        ::android::hardware::hidl_vec<V3_2::Stream> streams = {stream3_2};
+        ::android::hardware::camera::device::V3_4::StreamConfiguration config3_4;
+        ::android::hardware::camera::device::V3_2::StreamConfiguration config3_2;
+        createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE,
+                                  &config3_2, &config3_4);
         if(session3_4 != nullptr) {
-            ret = session3_4->configureStreams_3_4(config,
-                [](Status s, device::V3_3::HalStreamConfiguration) {
+            ret = session3_4->configureStreams_3_4(config3_4,
+                [](Status s, device::V3_4::HalStreamConfiguration) {
                     ASSERT_TRUE((Status::ILLEGAL_ARGUMENT == s) ||
                             (Status::INTERNAL_ERROR == s));
                 });
         } else if(session3_3 != nullptr) {
-            ret = session3_3->configureStreams_3_3(config.v3_2,
+            ret = session3_3->configureStreams_3_3(config3_2,
                 [](Status s, device::V3_3::HalStreamConfiguration) {
                     ASSERT_TRUE((Status::ILLEGAL_ARGUMENT == s) ||
                             (Status::INTERNAL_ERROR == s));
                 });
         } else {
-            ret = session->configureStreams(config.v3_2,
+            ret = session->configureStreams(config3_2,
                 [](Status s, HalStreamConfiguration) {
                     ASSERT_TRUE((Status::ILLEGAL_ARGUMENT == s) ||
                             (Status::INTERNAL_ERROR == s));
@@ -2456,7 +2466,7 @@ TEST_F(CameraHidlTest, configureStreamsInvalidOutputs) {
         }
         ASSERT_TRUE(ret.isOk());
 
-        stream = {streamId++,
+        stream3_2 = {streamId++,
                   StreamType::OUTPUT,
                   static_cast<uint32_t>(UINT32_MAX),
                   static_cast<uint32_t>(UINT32_MAX),
@@ -2464,20 +2474,21 @@ TEST_F(CameraHidlTest, configureStreamsInvalidOutputs) {
                   GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
                   0,
                   StreamRotation::ROTATION_0};
-        streams[0] = stream;
-        config.v3_2 = {streams, StreamConfigurationMode::NORMAL_MODE};
+        streams[0] = stream3_2;
+        createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE,
+                &config3_2, &config3_4);
         if(session3_4 != nullptr) {
-            ret = session3_4->configureStreams_3_4(config, [](Status s,
-                        device::V3_3::HalStreamConfiguration) {
+            ret = session3_4->configureStreams_3_4(config3_4, [](Status s,
+                        device::V3_4::HalStreamConfiguration) {
                     ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
                 });
         } else if(session3_3 != nullptr) {
-            ret = session3_3->configureStreams_3_3(config.v3_2, [](Status s,
+            ret = session3_3->configureStreams_3_3(config3_2, [](Status s,
                         device::V3_3::HalStreamConfiguration) {
                     ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
                 });
         } else {
-            ret = session->configureStreams(config.v3_2, [](Status s,
+            ret = session->configureStreams(config3_2, [](Status s,
                         HalStreamConfiguration) {
                     ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
                 });
@@ -2485,7 +2496,7 @@ TEST_F(CameraHidlTest, configureStreamsInvalidOutputs) {
         ASSERT_TRUE(ret.isOk());
 
         for (auto& it : outputStreams) {
-            stream = {streamId++,
+            stream3_2 = {streamId++,
                       StreamType::OUTPUT,
                       static_cast<uint32_t>(it.width),
                       static_cast<uint32_t>(it.height),
@@ -2493,27 +2504,28 @@ TEST_F(CameraHidlTest, configureStreamsInvalidOutputs) {
                       GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
                       0,
                       StreamRotation::ROTATION_0};
-            streams[0] = stream;
-            config.v3_2 = {streams, StreamConfigurationMode::NORMAL_MODE};
+            streams[0] = stream3_2;
+            createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE,
+                    &config3_2, &config3_4);
             if(session3_4 != nullptr) {
-                ret = session3_4->configureStreams_3_4(config,
-                        [](Status s, device::V3_3::HalStreamConfiguration) {
+                ret = session3_4->configureStreams_3_4(config3_4,
+                        [](Status s, device::V3_4::HalStreamConfiguration) {
                             ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
                         });
             } else if(session3_3 != nullptr) {
-                ret = session3_3->configureStreams_3_3(config.v3_2,
+                ret = session3_3->configureStreams_3_3(config3_2,
                         [](Status s, device::V3_3::HalStreamConfiguration) {
                             ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
                         });
             } else {
-                ret = session->configureStreams(config.v3_2,
+                ret = session->configureStreams(config3_2,
                         [](Status s, HalStreamConfiguration) {
                             ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
                         });
             }
             ASSERT_TRUE(ret.isOk());
 
-            stream = {streamId++,
+            stream3_2 = {streamId++,
                       StreamType::OUTPUT,
                       static_cast<uint32_t>(it.width),
                       static_cast<uint32_t>(it.height),
@@ -2521,20 +2533,21 @@ TEST_F(CameraHidlTest, configureStreamsInvalidOutputs) {
                       GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
                       0,
                       static_cast<StreamRotation>(UINT32_MAX)};
-            streams[0] = stream;
-            config.v3_2 = {streams, StreamConfigurationMode::NORMAL_MODE};
+            streams[0] = stream3_2;
+            createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE,
+                    &config3_2, &config3_4);
             if(session3_4 != nullptr) {
-                ret = session3_4->configureStreams_3_4(config,
-                        [](Status s, device::V3_3::HalStreamConfiguration) {
+                ret = session3_4->configureStreams_3_4(config3_4,
+                        [](Status s, device::V3_4::HalStreamConfiguration) {
                             ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
                         });
             } else if(session3_3 != nullptr) {
-                ret = session3_3->configureStreams_3_3(config.v3_2,
+                ret = session3_3->configureStreams_3_3(config3_2,
                         [](Status s, device::V3_3::HalStreamConfiguration) {
                             ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
                         });
             } else {
-                ret = session->configureStreams(config.v3_2,
+                ret = session->configureStreams(config3_2,
                         [](Status s, HalStreamConfiguration) {
                             ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
                         });
@@ -2603,7 +2616,7 @@ TEST_F(CameraHidlTest, configureStreamsZSLInputOutputs) {
                       getAvailableOutputStreams(staticMeta, outputStreams,
                               &outputThreshold));
             for (auto& outputIter : outputStreams) {
-                Stream zslStream = {streamId++,
+                V3_2::Stream zslStream = {streamId++,
                                     StreamType::OUTPUT,
                                     static_cast<uint32_t>(input.width),
                                     static_cast<uint32_t>(input.height),
@@ -2611,7 +2624,7 @@ TEST_F(CameraHidlTest, configureStreamsZSLInputOutputs) {
                                     GRALLOC_USAGE_HW_CAMERA_ZSL,
                                     0,
                                     StreamRotation::ROTATION_0};
-                Stream inputStream = {streamId++,
+                V3_2::Stream inputStream = {streamId++,
                                       StreamType::INPUT,
                                       static_cast<uint32_t>(input.width),
                                       static_cast<uint32_t>(input.height),
@@ -2619,7 +2632,7 @@ TEST_F(CameraHidlTest, configureStreamsZSLInputOutputs) {
                                       0,
                                       0,
                                       StreamRotation::ROTATION_0};
-                Stream outputStream = {streamId++,
+                V3_2::Stream outputStream = {streamId++,
                                        StreamType::OUTPUT,
                                        static_cast<uint32_t>(outputIter.width),
                                        static_cast<uint32_t>(outputIter.height),
@@ -2628,24 +2641,26 @@ TEST_F(CameraHidlTest, configureStreamsZSLInputOutputs) {
                                        0,
                                        StreamRotation::ROTATION_0};
 
-                ::android::hardware::hidl_vec<Stream> streams = {inputStream, zslStream,
+                ::android::hardware::hidl_vec<V3_2::Stream> streams = {inputStream, zslStream,
                                                                  outputStream};
-                ::android::hardware::camera::device::V3_4::StreamConfiguration config;
-                config.v3_2 = {streams, StreamConfigurationMode::NORMAL_MODE};
+                ::android::hardware::camera::device::V3_4::StreamConfiguration config3_4;
+                ::android::hardware::camera::device::V3_2::StreamConfiguration config3_2;
+                createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE,
+                                          &config3_2, &config3_4);
                 if (session3_4 != nullptr) {
-                    ret = session3_4->configureStreams_3_4(config,
-                            [](Status s, device::V3_3::HalStreamConfiguration halConfig) {
+                    ret = session3_4->configureStreams_3_4(config3_4,
+                            [](Status s, device::V3_4::HalStreamConfiguration halConfig) {
                                 ASSERT_EQ(Status::OK, s);
                                 ASSERT_EQ(3u, halConfig.streams.size());
                             });
                 } else if (session3_3 != nullptr) {
-                    ret = session3_3->configureStreams_3_3(config.v3_2,
+                    ret = session3_3->configureStreams_3_3(config3_2,
                             [](Status s, device::V3_3::HalStreamConfiguration halConfig) {
                                 ASSERT_EQ(Status::OK, s);
                                 ASSERT_EQ(3u, halConfig.streams.size());
                             });
                 } else {
-                    ret = session->configureStreams(config.v3_2,
+                    ret = session->configureStreams(config3_2,
                             [](Status s, HalStreamConfiguration halConfig) {
                                 ASSERT_EQ(Status::OK, s);
                                 ASSERT_EQ(3u, halConfig.streams.size());
@@ -2733,7 +2748,8 @@ TEST_F(CameraHidlTest, configureStreamsWithSessionParameters) {
                 &previewThreshold));
         ASSERT_NE(0u, outputPreviewStreams.size());
 
-        Stream previewStream = {0,
+        V3_4::Stream previewStream;
+        previewStream.v3_2 = {0,
                                 StreamType::OUTPUT,
                                 static_cast<uint32_t>(outputPreviewStreams[0].width),
                                 static_cast<uint32_t>(outputPreviewStreams[0].height),
@@ -2741,15 +2757,16 @@ TEST_F(CameraHidlTest, configureStreamsWithSessionParameters) {
                                 GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
                                 0,
                                 StreamRotation::ROTATION_0};
-        ::android::hardware::hidl_vec<Stream> streams = {previewStream};
+        ::android::hardware::hidl_vec<V3_4::Stream> streams = {previewStream};
         ::android::hardware::camera::device::V3_4::StreamConfiguration config;
-        config.v3_2 = {streams, StreamConfigurationMode::NORMAL_MODE};
+        config.streams = streams;
+        config.operationMode = StreamConfigurationMode::NORMAL_MODE;
         const camera_metadata_t *sessionParamsBuffer = sessionParams.getAndLock();
         config.sessionParams.setToExternal(
                 reinterpret_cast<uint8_t *> (const_cast<camera_metadata_t *> (sessionParamsBuffer)),
                 get_camera_metadata_size(sessionParamsBuffer));
         ret = session3_4->configureStreams_3_4(config,
-                [](Status s, device::V3_3::HalStreamConfiguration halConfig) {
+                [](Status s, device::V3_4::HalStreamConfiguration halConfig) {
                     ASSERT_EQ(Status::OK, s);
                     ASSERT_EQ(1u, halConfig.streams.size());
                 });
@@ -2804,7 +2821,7 @@ TEST_F(CameraHidlTest, configureStreamsPreviewStillOutputs) {
         int32_t streamId = 0;
         for (auto& blobIter : outputBlobStreams) {
             for (auto& previewIter : outputPreviewStreams) {
-                Stream previewStream = {streamId++,
+                V3_2::Stream previewStream = {streamId++,
                                         StreamType::OUTPUT,
                                         static_cast<uint32_t>(previewIter.width),
                                         static_cast<uint32_t>(previewIter.height),
@@ -2812,7 +2829,7 @@ TEST_F(CameraHidlTest, configureStreamsPreviewStillOutputs) {
                                         GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
                                         0,
                                         StreamRotation::ROTATION_0};
-                Stream blobStream = {streamId++,
+                V3_2::Stream blobStream = {streamId++,
                                      StreamType::OUTPUT,
                                      static_cast<uint32_t>(blobIter.width),
                                      static_cast<uint32_t>(blobIter.height),
@@ -2820,24 +2837,26 @@ TEST_F(CameraHidlTest, configureStreamsPreviewStillOutputs) {
                                      GRALLOC1_CONSUMER_USAGE_CPU_READ,
                                      0,
                                      StreamRotation::ROTATION_0};
-                ::android::hardware::hidl_vec<Stream> streams = {previewStream,
+                ::android::hardware::hidl_vec<V3_2::Stream> streams = {previewStream,
                                                                  blobStream};
-                ::android::hardware::camera::device::V3_4::StreamConfiguration config;
-                config.v3_2 = {streams, StreamConfigurationMode::NORMAL_MODE};
+                ::android::hardware::camera::device::V3_4::StreamConfiguration config3_4;
+                ::android::hardware::camera::device::V3_2::StreamConfiguration config3_2;
+                createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE,
+                                          &config3_2, &config3_4);
                 if (session3_4 != nullptr) {
-                    ret = session3_4->configureStreams_3_4(config,
-                            [](Status s, device::V3_3::HalStreamConfiguration halConfig) {
+                    ret = session3_4->configureStreams_3_4(config3_4,
+                            [](Status s, device::V3_4::HalStreamConfiguration halConfig) {
                                 ASSERT_EQ(Status::OK, s);
                                 ASSERT_EQ(2u, halConfig.streams.size());
                             });
                 } else if (session3_3 != nullptr) {
-                    ret = session3_3->configureStreams_3_3(config.v3_2,
+                    ret = session3_3->configureStreams_3_3(config3_2,
                             [](Status s, device::V3_3::HalStreamConfiguration halConfig) {
                                 ASSERT_EQ(Status::OK, s);
                                 ASSERT_EQ(2u, halConfig.streams.size());
                             });
                 } else {
-                    ret = session->configureStreams(config.v3_2,
+                    ret = session->configureStreams(config3_2,
                             [](Status s, HalStreamConfiguration halConfig) {
                                 ASSERT_EQ(Status::OK, s);
                                 ASSERT_EQ(2u, halConfig.streams.size());
@@ -2890,7 +2909,7 @@ TEST_F(CameraHidlTest, configureStreamsConstrainedOutputs) {
         ASSERT_EQ(Status::OK, rc);
 
         int32_t streamId = 0;
-        Stream stream = {streamId,
+        V3_2::Stream stream = {streamId,
                          StreamType::OUTPUT,
                          static_cast<uint32_t>(hfrStream.width),
                          static_cast<uint32_t>(hfrStream.height),
@@ -2898,25 +2917,27 @@ TEST_F(CameraHidlTest, configureStreamsConstrainedOutputs) {
                          GRALLOC1_CONSUMER_USAGE_VIDEO_ENCODER,
                          0,
                          StreamRotation::ROTATION_0};
-        ::android::hardware::hidl_vec<Stream> streams = {stream};
-        ::android::hardware::camera::device::V3_4::StreamConfiguration config;
-        config.v3_2 = {streams, StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE};
+        ::android::hardware::hidl_vec<V3_2::Stream> streams = {stream};
+        ::android::hardware::camera::device::V3_4::StreamConfiguration config3_4;
+        ::android::hardware::camera::device::V3_2::StreamConfiguration config3_2;
+        createStreamConfiguration(streams, StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE,
+                                  &config3_2, &config3_4);
         if (session3_4 != nullptr) {
-            ret = session3_4->configureStreams_3_4(config,
-                    [streamId](Status s, device::V3_3::HalStreamConfiguration halConfig) {
+            ret = session3_4->configureStreams_3_4(config3_4,
+                    [streamId](Status s, device::V3_4::HalStreamConfiguration halConfig) {
                         ASSERT_EQ(Status::OK, s);
                         ASSERT_EQ(1u, halConfig.streams.size());
-                        ASSERT_EQ(halConfig.streams[0].v3_2.id, streamId);
+                        ASSERT_EQ(halConfig.streams[0].v3_3.v3_2.id, streamId);
                     });
         } else if (session3_3 != nullptr) {
-            ret = session3_3->configureStreams_3_3(config.v3_2,
+            ret = session3_3->configureStreams_3_3(config3_2,
                     [streamId](Status s, device::V3_3::HalStreamConfiguration halConfig) {
                         ASSERT_EQ(Status::OK, s);
                         ASSERT_EQ(1u, halConfig.streams.size());
                         ASSERT_EQ(halConfig.streams[0].v3_2.id, streamId);
                     });
         } else {
-            ret = session->configureStreams(config.v3_2,
+            ret = session->configureStreams(config3_2,
                     [streamId](Status s, HalStreamConfiguration halConfig) {
                         ASSERT_EQ(Status::OK, s);
                         ASSERT_EQ(1u, halConfig.streams.size());
@@ -2934,21 +2955,22 @@ TEST_F(CameraHidlTest, configureStreamsConstrainedOutputs) {
                   0,
                   StreamRotation::ROTATION_0};
         streams[0] = stream;
-        config.v3_2 = {streams, StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE};
+        createStreamConfiguration(streams, StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE,
+                                  &config3_2, &config3_4);
         if (session3_4 != nullptr) {
-            ret = session3_4->configureStreams_3_4(config,
-                    [](Status s, device::V3_3::HalStreamConfiguration) {
+            ret = session3_4->configureStreams_3_4(config3_4,
+                    [](Status s, device::V3_4::HalStreamConfiguration) {
                         ASSERT_TRUE((Status::ILLEGAL_ARGUMENT == s) ||
                                 (Status::INTERNAL_ERROR == s));
                     });
         } else if (session3_3 != nullptr) {
-            ret = session3_3->configureStreams_3_3(config.v3_2,
+            ret = session3_3->configureStreams_3_3(config3_2,
                     [](Status s, device::V3_3::HalStreamConfiguration) {
                         ASSERT_TRUE((Status::ILLEGAL_ARGUMENT == s) ||
                                 (Status::INTERNAL_ERROR == s));
                     });
         } else {
-            ret = session->configureStreams(config.v3_2,
+            ret = session->configureStreams(config3_2,
                     [](Status s, HalStreamConfiguration) {
                         ASSERT_TRUE((Status::ILLEGAL_ARGUMENT == s) ||
                                 (Status::INTERNAL_ERROR == s));
@@ -2965,19 +2987,20 @@ TEST_F(CameraHidlTest, configureStreamsConstrainedOutputs) {
                   0,
                   StreamRotation::ROTATION_0};
         streams[0] = stream;
-        config.v3_2 = {streams, StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE};
+        createStreamConfiguration(streams, StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE,
+                                  &config3_2, &config3_4);
         if (session3_4 != nullptr) {
-            ret = session3_4->configureStreams_3_4(config,
-                    [](Status s, device::V3_3::HalStreamConfiguration) {
+            ret = session3_4->configureStreams_3_4(config3_4,
+                    [](Status s, device::V3_4::HalStreamConfiguration) {
                         ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
                     });
         } else if (session3_3 != nullptr) {
-            ret = session3_3->configureStreams_3_3(config.v3_2,
+            ret = session3_3->configureStreams_3_3(config3_2,
                     [](Status s, device::V3_3::HalStreamConfiguration) {
                         ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
                     });
         } else {
-            ret = session->configureStreams(config.v3_2,
+            ret = session->configureStreams(config3_2,
                     [](Status s, HalStreamConfiguration) {
                         ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
                     });
@@ -2993,19 +3016,20 @@ TEST_F(CameraHidlTest, configureStreamsConstrainedOutputs) {
                   0,
                   StreamRotation::ROTATION_0};
         streams[0] = stream;
-        config.v3_2 = {streams, StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE};
+        createStreamConfiguration(streams, StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE,
+                                  &config3_2, &config3_4);
         if (session3_4 != nullptr) {
-            ret = session3_4->configureStreams_3_4(config,
-                    [](Status s, device::V3_3::HalStreamConfiguration) {
+            ret = session3_4->configureStreams_3_4(config3_4,
+                    [](Status s, device::V3_4::HalStreamConfiguration) {
                         ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
                     });
         } else if (session3_3 != nullptr) {
-            ret = session3_3->configureStreams_3_3(config.v3_2,
+            ret = session3_3->configureStreams_3_3(config3_2,
                     [](Status s, device::V3_3::HalStreamConfiguration) {
                         ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
                     });
         } else {
-            ret = session->configureStreams(config.v3_2,
+            ret = session->configureStreams(config3_2,
                     [](Status s, HalStreamConfiguration) {
                         ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
                     });
@@ -3062,7 +3086,7 @@ TEST_F(CameraHidlTest, configureStreamsVideoStillOutputs) {
         int32_t streamId = 0;
         for (auto& blobIter : outputBlobStreams) {
             for (auto& videoIter : outputVideoStreams) {
-                Stream videoStream = {streamId++,
+                V3_2::Stream videoStream = {streamId++,
                                       StreamType::OUTPUT,
                                       static_cast<uint32_t>(videoIter.width),
                                       static_cast<uint32_t>(videoIter.height),
@@ -3070,7 +3094,7 @@ TEST_F(CameraHidlTest, configureStreamsVideoStillOutputs) {
                                       GRALLOC1_CONSUMER_USAGE_VIDEO_ENCODER,
                                       0,
                                       StreamRotation::ROTATION_0};
-                Stream blobStream = {streamId++,
+                V3_2::Stream blobStream = {streamId++,
                                      StreamType::OUTPUT,
                                      static_cast<uint32_t>(blobIter.width),
                                      static_cast<uint32_t>(blobIter.height),
@@ -3078,23 +3102,25 @@ TEST_F(CameraHidlTest, configureStreamsVideoStillOutputs) {
                                      GRALLOC1_CONSUMER_USAGE_CPU_READ,
                                      0,
                                      StreamRotation::ROTATION_0};
-                ::android::hardware::hidl_vec<Stream> streams = {videoStream, blobStream};
-                ::android::hardware::camera::device::V3_4::StreamConfiguration config;
-                config.v3_2 = {streams, StreamConfigurationMode::NORMAL_MODE};
+                ::android::hardware::hidl_vec<V3_2::Stream> streams = {videoStream, blobStream};
+                ::android::hardware::camera::device::V3_4::StreamConfiguration config3_4;
+                ::android::hardware::camera::device::V3_2::StreamConfiguration config3_2;
+                createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE,
+                                          &config3_2, &config3_4);
                 if (session3_4 != nullptr) {
-                    ret = session3_4->configureStreams_3_4(config,
-                            [](Status s, device::V3_3::HalStreamConfiguration halConfig) {
+                    ret = session3_4->configureStreams_3_4(config3_4,
+                            [](Status s, device::V3_4::HalStreamConfiguration halConfig) {
                                 ASSERT_EQ(Status::OK, s);
                                 ASSERT_EQ(2u, halConfig.streams.size());
                             });
                 } else if (session3_3 != nullptr) {
-                    ret = session3_3->configureStreams_3_3(config.v3_2,
+                    ret = session3_3->configureStreams_3_3(config3_2,
                             [](Status s, device::V3_3::HalStreamConfiguration halConfig) {
                                 ASSERT_EQ(Status::OK, s);
                                 ASSERT_EQ(2u, halConfig.streams.size());
                             });
                 } else {
-                    ret = session->configureStreams(config.v3_2,
+                    ret = session->configureStreams(config3_2,
                             [](Status s, HalStreamConfiguration halConfig) {
                                 ASSERT_EQ(Status::OK, s);
                                 ASSERT_EQ(2u, halConfig.streams.size());
@@ -3129,7 +3155,7 @@ TEST_F(CameraHidlTest, processCaptureRequestPreview) {
             return;
         }
 
-        Stream previewStream;
+        V3_2::Stream previewStream;
         HalStreamConfiguration halStreamConfig;
         sp<ICameraDeviceSession> session;
         bool supportsPartialResults = false;
@@ -3284,7 +3310,7 @@ TEST_F(CameraHidlTest, processCaptureRequestInvalidSinglePreview) {
             return;
         }
 
-        Stream previewStream;
+        V3_2::Stream previewStream;
         HalStreamConfiguration halStreamConfig;
         sp<ICameraDeviceSession> session;
         bool supportsPartialResults = false;
@@ -3351,7 +3377,7 @@ TEST_F(CameraHidlTest, processCaptureRequestInvalidBuffer) {
             return;
         }
 
-        Stream previewStream;
+        V3_2::Stream previewStream;
         HalStreamConfiguration halStreamConfig;
         sp<ICameraDeviceSession> session;
         bool supportsPartialResults = false;
@@ -3415,7 +3441,7 @@ TEST_F(CameraHidlTest, flushPreviewRequest) {
             return;
         }
 
-        Stream previewStream;
+        V3_2::Stream previewStream;
         HalStreamConfiguration halStreamConfig;
         sp<ICameraDeviceSession> session;
         bool supportsPartialResults = false;
@@ -3545,7 +3571,7 @@ TEST_F(CameraHidlTest, flushEmpty) {
             return;
         }
 
-        Stream previewStream;
+        V3_2::Stream previewStream;
         HalStreamConfiguration halStreamConfig;
         sp<ICameraDeviceSession> session;
         bool supportsPartialResults = false;
@@ -3754,12 +3780,31 @@ Status CameraHidlTest::isAutoFocusModeAvailable(
     return Status::METHOD_NOT_SUPPORTED;
 }
 
+void CameraHidlTest::createStreamConfiguration(
+        const ::android::hardware::hidl_vec<V3_2::Stream>& streams3_2,
+        StreamConfigurationMode configMode,
+        ::android::hardware::camera::device::V3_2::StreamConfiguration *config3_2 /*out*/,
+        ::android::hardware::camera::device::V3_4::StreamConfiguration *config3_4 /*out*/) {
+    ASSERT_NE(nullptr, config3_2);
+    ASSERT_NE(nullptr, config3_4);
+
+    ::android::hardware::hidl_vec<V3_4::Stream> streams3_4(streams3_2.size());
+    size_t idx = 0;
+    for (auto& stream3_2 : streams3_2) {
+        V3_4::Stream stream;
+        stream.v3_2 = stream3_2;
+        streams3_4[idx++] = stream;
+    }
+    *config3_4 = {streams3_4, configMode, {}};
+    *config3_2 = {streams3_2, configMode};
+}
+
 // Open a device session and configure a preview stream.
 void CameraHidlTest::configurePreviewStream(const std::string &name, int32_t deviceVersion,
         sp<ICameraProvider> provider,
         const AvailableStream *previewThreshold,
         sp<ICameraDeviceSession> *session /*out*/,
-        Stream *previewStream /*out*/,
+        V3_2::Stream *previewStream /*out*/,
         HalStreamConfiguration *halStreamConfig /*out*/,
         bool *supportsPartialResults /*out*/,
         uint32_t *partialResultCount /*out*/) {
@@ -3824,33 +3869,35 @@ void CameraHidlTest::configurePreviewStream(const std::string &name, int32_t dev
     ASSERT_EQ(Status::OK, rc);
     ASSERT_FALSE(outputPreviewStreams.empty());
 
-    *previewStream = {0, StreamType::OUTPUT,
+    V3_2::Stream stream3_2 = {0, StreamType::OUTPUT,
             static_cast<uint32_t> (outputPreviewStreams[0].width),
             static_cast<uint32_t> (outputPreviewStreams[0].height),
             static_cast<PixelFormat> (outputPreviewStreams[0].format),
             GRALLOC1_CONSUMER_USAGE_HWCOMPOSER, 0, StreamRotation::ROTATION_0};
-    ::android::hardware::hidl_vec<Stream> streams = {*previewStream};
-    ::android::hardware::camera::device::V3_4::StreamConfiguration config;
-    config.v3_2 = {streams, StreamConfigurationMode::NORMAL_MODE};
+    ::android::hardware::hidl_vec<V3_2::Stream> streams3_2 = {stream3_2};
+    ::android::hardware::camera::device::V3_2::StreamConfiguration config3_2;
+    ::android::hardware::camera::device::V3_4::StreamConfiguration config3_4;
+    createStreamConfiguration(streams3_2, StreamConfigurationMode::NORMAL_MODE,
+                              &config3_2, &config3_4);
     if (session3_4 != nullptr) {
         RequestTemplate reqTemplate = RequestTemplate::PREVIEW;
         ret = session3_4->constructDefaultRequestSettings(reqTemplate,
-                                                       [&config](auto status, const auto& req) {
+                                                       [&config3_4](auto status, const auto& req) {
                                                            ASSERT_EQ(Status::OK, status);
-                                                           config.sessionParams = req;
+                                                           config3_4.sessionParams = req;
                                                        });
         ASSERT_TRUE(ret.isOk());
-        ret = session3_4->configureStreams_3_4(config,
-                [&] (Status s, device::V3_3::HalStreamConfiguration halConfig) {
+        ret = session3_4->configureStreams_3_4(config3_4,
+                [&] (Status s, device::V3_4::HalStreamConfiguration halConfig) {
                     ASSERT_EQ(Status::OK, s);
                     ASSERT_EQ(1u, halConfig.streams.size());
                     halStreamConfig->streams.resize(halConfig.streams.size());
                     for (size_t i = 0; i < halConfig.streams.size(); i++) {
-                        halStreamConfig->streams[i] = halConfig.streams[i].v3_2;
+                        halStreamConfig->streams[i] = halConfig.streams[i].v3_3.v3_2;
                     }
                 });
     } else if (session3_3 != nullptr) {
-        ret = session3_3->configureStreams_3_3(config.v3_2,
+        ret = session3_3->configureStreams_3_3(config3_2,
                 [&] (Status s, device::V3_3::HalStreamConfiguration halConfig) {
                     ASSERT_EQ(Status::OK, s);
                     ASSERT_EQ(1u, halConfig.streams.size());
@@ -3860,13 +3907,14 @@ void CameraHidlTest::configurePreviewStream(const std::string &name, int32_t dev
                     }
                 });
     } else {
-        ret = (*session)->configureStreams(config.v3_2,
+        ret = (*session)->configureStreams(config3_2,
                 [&] (Status s, HalStreamConfiguration halConfig) {
                     ASSERT_EQ(Status::OK, s);
                     ASSERT_EQ(1u, halConfig.streams.size());
                     *halStreamConfig = halConfig;
                 });
     }
+    *previewStream = stream3_2;
     ASSERT_TRUE(ret.isOk());
 }
 

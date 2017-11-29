@@ -25,7 +25,30 @@ package android.hardware.camera.metadata@3.3;
 /* Include definitions from all prior minor HAL metadata revisions */
 import android.hardware.camera.metadata@3.2;
 
-// No new metadata sections added in this revision
+/**
+ * Top level hierarchy definitions for camera metadata. *_INFO sections are for
+ * the static metadata that can be retrived without opening the camera device.
+ */
+enum CameraMetadataSection : @3.2::CameraMetadataSection {
+    ANDROID_LOGICAL_MULTI_CAMERA =
+        android.hardware.camera.metadata@3.2::CameraMetadataSection:ANDROID_SECTION_COUNT,
+
+    ANDROID_SECTION_COUNT_3_3,
+
+    VENDOR_SECTION_3_3 = 0x8000,
+
+};
+
+/**
+ * Hierarchy positions in enum space. All vendor extension sections must be
+ * defined with tag >= VENDOR_SECTION_START
+ */
+enum CameraMetadataSectionStart : android.hardware.camera.metadata@3.2::CameraMetadataSectionStart {
+    ANDROID_LOGICAL_MULTI_CAMERA_START = CameraMetadataSection:ANDROID_LOGICAL_MULTI_CAMERA << 16,
+
+    VENDOR_SECTION_START_3_3 = CameraMetadataSection:VENDOR_SECTION_3_3 << 16,
+
+};
 
 /**
  * Main enumeration for defining camera metadata tags added in this revision
@@ -71,6 +94,20 @@ enum CameraMetadataTag : @3.2::CameraMetadataTag {
 
     ANDROID_INFO_END_3_3,
 
+    /** android.logicalMultiCamera.physicalIds [static, byte[], hidden]
+     *
+     * <p>String containing the ids of the underlying physical cameras.</p>
+     */
+    ANDROID_LOGICAL_MULTI_CAMERA_PHYSICAL_IDS = CameraMetadataSectionStart:ANDROID_LOGICAL_MULTI_CAMERA_START,
+
+    /** android.logicalMultiCamera.sensorSyncType [static, enum, public]
+     *
+     * <p>The accuracy of frame timestamp synchronization between physical cameras</p>
+     */
+    ANDROID_LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE,
+
+    ANDROID_LOGICAL_MULTI_CAMERA_END_3_3,
+
 };
 
 /*
@@ -115,4 +152,13 @@ enum CameraMetadataEnumAndroidLensPoseReference : uint32_t {
 enum CameraMetadataEnumAndroidRequestAvailableCapabilities :
         @3.2::CameraMetadataEnumAndroidRequestAvailableCapabilities {
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MOTION_TRACKING,
+    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA,
+};
+
+/** android.logicalMultiCamera.sensorSyncType enumeration values
+ * @see ANDROID_LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE
+ */
+enum CameraMetadataEnumAndroidLogicalMultiCameraSensorSyncType : uint32_t {
+    ANDROID_LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE_APPROXIMATE,
+    ANDROID_LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE_CALIBRATED,
 };
