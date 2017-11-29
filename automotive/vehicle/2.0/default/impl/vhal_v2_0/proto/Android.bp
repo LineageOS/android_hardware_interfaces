@@ -23,5 +23,9 @@ cc_library_static {
     strip: {
         keep_symbols: true,
     },
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
     srcs: ["VehicleHalProto.proto"]
 }
