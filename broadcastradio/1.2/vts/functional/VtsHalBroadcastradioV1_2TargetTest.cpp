@@ -295,6 +295,9 @@ TEST_P(BroadcastRadioHalTest, UnknownParameters) {
     ASSERT_EQ(0u, halResults.size());
 }
 
+// TODO(b/69860743): implement VerifyIdentifiersFormat test when
+// the new program list fetching mechanism is implemented
+
 INSTANTIATE_TEST_CASE_P(BroadcastRadioHalTestCases, BroadcastRadioHalTest,
                         ::testing::Values(Class::AM_FM, Class::SAT, Class::DT));
 
