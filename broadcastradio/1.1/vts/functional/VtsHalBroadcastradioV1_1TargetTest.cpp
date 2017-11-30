@@ -525,6 +525,98 @@ TEST_P(BroadcastRadioHalTest, AnalogForcedSwitch) {
     ASSERT_FALSE(forced);
 }
 
+static void verifyIdentifier(const ProgramIdentifier& id) {
+    EXPECT_NE(id.type, 0u);
+    auto val = id.value;
+
+    switch (static_cast<IdentifierType>(id.type)) {
+        case IdentifierType::AMFM_FREQUENCY:
+        case IdentifierType::DAB_FREQUENCY:
+        case IdentifierType::DRMO_FREQUENCY:
+            EXPECT_GT(val, 100u) << "Expected f > 100kHz";
+            EXPECT_LT(val, 10000000u) << "Expected f < 10GHz";
+            break;
+        case IdentifierType::RDS_PI:
+            EXPECT_GT(val, 0u);
+            EXPECT_LE(val, 0xFFFFu) << "Expected 16bit id";
+            break;
+        case IdentifierType::HD_STATION_ID_EXT: {
+            auto stationId = val & 0xFFFFFFFF;  // 32bit
+            val >>= 32;
+            auto subchannel = val & 0xF;  // 4bit
+            val >>= 4;
+            auto freq = val & 0x3FFFF;  // 18bit
+            EXPECT_GT(stationId, 0u);
+            EXPECT_LT(subchannel, 8u) << "Expected ch < 8";
+            EXPECT_GT(freq, 100u) << "Expected f > 100kHz";
+            EXPECT_LT(freq, 10000000u) << "Expected f < 10GHz";
+            break;
+        }
+        case IdentifierType::HD_SUBCHANNEL:
+            EXPECT_LT(val, 8u) << "Expected ch < 8";
+            break;
+        case IdentifierType::DAB_SIDECC: {
+            auto sid = val & 0xFFFF;  // 16bit
+            val >>= 16;
+            auto ecc = val & 0xFF;  // 8bit
+            EXPECT_NE(sid, 0u);
+            EXPECT_GE(ecc, 0xA0u) << "Invalid ECC, see ETSI TS 101 756 V2.1.1";
+            EXPECT_LE(ecc, 0xF6u) << "Invalid ECC, see ETSI TS 101 756 V2.1.1";
+            break;
+        }
+        case IdentifierType::DAB_ENSEMBLE:
+            EXPECT_GT(val, 0u);
+            EXPECT_LE(val, 0xFFFFu) << "Expected 16bit id";
+            break;
+        case IdentifierType::DAB_SCID:
+            EXPECT_GT(val, 0xFu) << "Expected 12bit SCId (not 4bit SCIdS)";
+            EXPECT_LE(val, 0xFFFu) << "Expected 12bit id";
+            break;
+        case IdentifierType::DRMO_SERVICE_ID:
+            EXPECT_GT(val, 0u);
+            EXPECT_LE(val, 0xFFFFFFu) << "Expected 24bit id";
+            break;
+        case IdentifierType::DRMO_MODULATION:
+            EXPECT_GE(val, static_cast<uint32_t>(Modulation::AM));
+            EXPECT_LE(val, static_cast<uint32_t>(Modulation::FM));
+            break;
+        case IdentifierType::SXM_SERVICE_ID:
+            EXPECT_GT(val, 0u);
+            EXPECT_LE(val, 0xFFFFFFFFu) << "Expected 32bit id";
+            break;
+        case IdentifierType::SXM_CHANNEL:
+            EXPECT_LT(val, 1000u);
+            break;
+        case IdentifierType::VENDOR_PRIMARY_START:
+        case IdentifierType::VENDOR_PRIMARY_END:
+            // skip
+            break;
+    }
+}
+
+/**
+ * Test ProgramIdentifier format.
+ *
+ * Verifies that:
+ * - values of ProgramIdentifier match their definitions at IdentifierType.
+ */
+TEST_P(BroadcastRadioHalTest, VerifyIdentifiersFormat) {
+    if (skipped) return;
+    ASSERT_TRUE(openTuner());
+
+    do {
+        auto getCb = [&](const hidl_vec<ProgramInfo>& list) {
+            for (auto&& program : list) {
+                verifyIdentifier(program.selector.primaryId);
+                for (auto&& id : program.selector.secondaryIds) {
+                    verifyIdentifier(id);
+                }
+            }
+        };
+        getProgramList(getCb);
+    } while (nextBand());
+}
+
 INSTANTIATE_TEST_CASE_P(BroadcastRadioHalTestCases, BroadcastRadioHalTest,
                         ::testing::Values(Class::AM_FM, Class::SAT, Class::DT));
 
