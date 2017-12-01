@@ -16,13 +16,13 @@
 */
 
 #include <android-base/logging.h>
-#include <android/hardware/keymaster/4.0/IKeymaster.h>
+#include <android/hardware/keymaster/4.0/IKeymasterDevice.h>
 #include <hidl/HidlTransportSupport.h>
 
-#include <AndroidKeymaster4.h>
+#include <AndroidKeymaster4Device.h>
 
 int main() {
-    auto keymaster = ::keymaster::V4_0::ng::CreateKeymaster();
+    auto keymaster = ::keymaster::V4_0::ng::CreateKeymasterDevice();
     auto status = keymaster->registerAsService();
     if (status != android::OK) {
         LOG(FATAL) << "Could not register service for Keymaster 4.0 (" << status << ")";
