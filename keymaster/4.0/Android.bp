@@ -8,7 +8,7 @@ hidl_interface {
     },
     srcs: [
         "types.hal",
-        "IKeymaster.hal",
+        "IKeymasterDevice.hal",
     ],
     interfaces: [
         "android.hardware.keymaster@3.0",

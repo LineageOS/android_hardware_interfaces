@@ -59,7 +59,7 @@
  * value1.isOk() yields false, but value2.isOk() yields true, thus value2.value() is save to access.
  */
 
-#include <android/hardware/keymaster/4.0/IKeymaster.h>
+#include <android/hardware/keymaster/4.0/IKeymasterDevice.h>
 
 #include <type_traits>
 
