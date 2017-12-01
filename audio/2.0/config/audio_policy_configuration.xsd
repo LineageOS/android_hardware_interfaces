@@ -49,10 +49,6 @@
             <xs:selector xpath="modules/module"/>
             <xs:field xpath="@name"/>
         </xs:key>
-        <xs:key name="devicePortNameGlobalKey">
-            <xs:selector xpath="modules/module/devicePorts/devicePort"/>
-            <xs:field xpath="@tagName"/>
-        </xs:key>
         <xs:unique name="volumeTargetUniqueness">
             <xs:selector xpath="volumes/volume"/>
             <xs:field xpath="@stream"/>
@@ -141,9 +137,6 @@
                     <xs:selector xpath="mixPorts/mixPort"/>
                     <xs:field xpath="@name"/>
                 </xs:unique>
-                <!-- Although this key constraint is redundant with devicePortNameGlobalKey,
-                     the set is used to constraint defaultOutputDevice and attachedDevice
-                     to reference a devicePort of the same module. -->
                 <xs:key name="devicePortNameKey">
                     <xs:selector xpath="devicePorts/devicePort"/>
                     <xs:field xpath="@tagName"/>
