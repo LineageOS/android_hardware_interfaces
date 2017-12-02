@@ -795,7 +795,13 @@ static void testCapabilityGetter(const string& name, IStream* stream,
 
     // Check that all declared supported values are indeed supported
     for (auto capability : capabilities) {
-        ASSERT_OK((stream->*setter)(capability));
+        auto ret = (stream->*setter)(capability);
+        ASSERT_TRUE(ret.isOk());
+        if (ret == Result::NOT_SUPPORTED) {
+            doc::partialTest("Setter is not supported");
+            return;
+        }
+        ASSERT_OK(ret);
         ASSERT_EQ(capability, extract((stream->*getter)()));
     }
 }
