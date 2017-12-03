@@ -31,8 +31,9 @@ using android::hardware::gnss::V1_0::GnssLocation;
 
 using android::hardware::gnss::V1_1::IGnss;
 using android::hardware::gnss::V1_1::IGnssCallback;
-
+using android::hardware::gnss::V1_0::GnssLocationFlags;
 using android::sp;
+#define TIMEOUT_SEC 2  // for basic commands/responses
 
 // The main test class for GNSS HAL.
 class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
@@ -72,12 +73,133 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
         Return<void> gnssAcquireWakelockCb() override { return Void(); }
         Return<void> gnssReleaseWakelockCb() override { return Void(); }
         Return<void> gnssRequestTimeCb() override { return Void(); }
-        Return<void> gnssLocationCb(const GnssLocation& /* location */) override { return Void(); }
-        Return<void> gnssSetCapabilitesCb(uint32_t /* capabilities */) override { return Void(); }
         // Actual (test) callback handlers
+        Return<void> gnssLocationCb(const GnssLocation& location) override;
+        Return<void> gnssSetCapabilitesCb(uint32_t capabilities) override;
         Return<void> gnssSetSystemInfoCb(const IGnssCallback::GnssSystemInfo& info) override;
         Return<void> gnssNameCb(const android::hardware::hidl_string& name) override;
     };
+
+    /*
+     * StartAndGetSingleLocation:
+     * Helper function to get one Location and check fields
+     *
+     * returns  true if a location was successfully generated
+     */
+    bool StartAndGetSingleLocation(bool checkAccuracies) {
+        auto result = gnss_hal_->start();
+
+        EXPECT_TRUE(result.isOk());
+        EXPECT_TRUE(result);
+
+        /*
+         * GPS signals initially optional for this test, so don't expect fast fix,
+         * or no timeout, unless signal is present
+         */
+        int firstGnssLocationTimeoutSeconds = 15;
+
+        wait(firstGnssLocationTimeoutSeconds);
+        EXPECT_EQ(location_called_count_, 1);
+
+        if (location_called_count_ > 0) {
+            // don't require speed on first fix
+            CheckLocation(last_location_, checkAccuracies, false);
+            return true;
+        }
+        return false;
+    }
+
+    /*
+     * CheckLocation:
+     *   Helper function to vet Location fields when calling setPositionMode_1_1()
+     */
+    void CheckLocation(GnssLocation& location, bool checkAccuracies, bool checkSpeed) {
+        EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_LAT_LONG);
+        EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_ALTITUDE);
+        if (checkSpeed) {
+            EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_SPEED);
+        }
+        EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_HORIZONTAL_ACCURACY);
+        // New uncertainties available in O must be provided,
+        // at least when paired with modern hardware (2017+)
+        if (checkAccuracies) {
+            EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_VERTICAL_ACCURACY);
+            if (checkSpeed) {
+                EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_SPEED_ACCURACY);
+                if (location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING) {
+                    EXPECT_TRUE(location.gnssLocationFlags &
+                                GnssLocationFlags::HAS_BEARING_ACCURACY);
+                }
+            }
+        }
+        EXPECT_GE(location.latitudeDegrees, -90.0);
+        EXPECT_LE(location.latitudeDegrees, 90.0);
+        EXPECT_GE(location.longitudeDegrees, -180.0);
+        EXPECT_LE(location.longitudeDegrees, 180.0);
+        EXPECT_GE(location.altitudeMeters, -1000.0);
+        EXPECT_LE(location.altitudeMeters, 30000.0);
+        if (checkSpeed) {
+            EXPECT_GE(location.speedMetersPerSec, 0.0);
+            EXPECT_LE(location.speedMetersPerSec, 5.0);  // VTS tests are stationary.
+
+            // Non-zero speeds must be reported with an associated bearing
+            if (location.speedMetersPerSec > 0.0) {
+                EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING);
+            }
+        }
+
+        /*
+         * Tolerating some especially high values for accuracy estimate, in case of
+         * first fix with especially poor geometry (happens occasionally)
+         */
+        EXPECT_GT(location.horizontalAccuracyMeters, 0.0);
+        EXPECT_LE(location.horizontalAccuracyMeters, 250.0);
+
+        /*
+         * Some devices may define bearing as -180 to +180, others as 0 to 360.
+         * Both are okay & understandable.
+         */
+        if (location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING) {
+            EXPECT_GE(location.bearingDegrees, -180.0);
+            EXPECT_LE(location.bearingDegrees, 360.0);
+        }
+        if (location.gnssLocationFlags & GnssLocationFlags::HAS_VERTICAL_ACCURACY) {
+            EXPECT_GT(location.verticalAccuracyMeters, 0.0);
+            EXPECT_LE(location.verticalAccuracyMeters, 500.0);
+        }
+        if (location.gnssLocationFlags & GnssLocationFlags::HAS_SPEED_ACCURACY) {
+            EXPECT_GT(location.speedAccuracyMetersPerSecond, 0.0);
+            EXPECT_LE(location.speedAccuracyMetersPerSecond, 50.0);
+        }
+        if (location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING_ACCURACY) {
+            EXPECT_GT(location.bearingAccuracyDegrees, 0.0);
+            EXPECT_LE(location.bearingAccuracyDegrees, 360.0);
+        }
+
+        // Check timestamp > 1.48e12 (47 years in msec - 1970->2017+)
+        EXPECT_GT(location.timestamp, 1.48e12);
+    }
+
+    /*
+     * StopAndClearLocations:
+     * Helper function to stop locations
+     *
+     * returns  true if a location was successfully generated
+     */
+    void StopAndClearLocations() {
+        auto result = gnss_hal_->stop();
+
+        EXPECT_TRUE(result.isOk());
+        EXPECT_TRUE(result);
+
+        /*
+         * Clear notify/waiting counter, allowing up till the timeout after
+         * the last reply for final startup messages to arrive (esp. system
+         * info.)
+         */
+        while (wait(TIMEOUT_SEC) == std::cv_status::no_timeout) {
+        }
+    }
 
     sp<IGnss> gnss_hal_;         // GNSS HAL to call into
     sp<IGnssCallback> gnss_cb_;  // Primary callback interface
@@ -87,6 +209,10 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
      */
     int info_called_count_;
     IGnssCallback::GnssSystemInfo last_info_;
+    uint32_t last_capabilities_;
+    int capabilities_called_count_;
+    int location_called_count_;
+    GnssLocation last_location_;
 
     int name_called_count_;
     android::hardware::hidl_string last_name_;

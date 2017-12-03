@@ -22,7 +22,12 @@
 #include <chrono>
 
 // Implementations for the main test class for GNSS HAL
-GnssHalTest::GnssHalTest() : info_called_count_(0), name_called_count_(0), notify_count_(0) {}
+GnssHalTest::GnssHalTest()
+    : info_called_count_(0),
+      capabilities_called_count_(0),
+      location_called_count_(0),
+      name_called_count_(0),
+      notify_count_(0) {}
 
 void GnssHalTest::SetUp() {
     gnss_hal_ = ::testing::VtsHalHidlTargetTestBase::getService<IGnss>();
@@ -56,7 +61,6 @@ std::cv_status GnssHalTest::wait(int timeoutSeconds) {
     return status;
 }
 
-// Actual (test) callback handlers
 Return<void> GnssHalTest::GnssCallback::gnssSetSystemInfoCb(
     const IGnssCallback::GnssSystemInfo& info) {
     ALOGI("Info received, year %d", info.yearOfHw);
@@ -66,11 +70,26 @@ Return<void> GnssHalTest::GnssCallback::gnssSetSystemInfoCb(
     return Void();
 }
 
-// Actual (test) callback handlers
+Return<void> GnssHalTest::GnssCallback::gnssSetCapabilitesCb(uint32_t capabilities) {
+    ALOGI("Capabilities received %d", capabilities);
+    parent_.capabilities_called_count_++;
+    parent_.last_capabilities_ = capabilities;
+    parent_.notify();
+    return Void();
+}
+
 Return<void> GnssHalTest::GnssCallback::gnssNameCb(const android::hardware::hidl_string& name) {
     ALOGI("Name received: %s", name.c_str());
     parent_.name_called_count_++;
     parent_.last_name_ = name;
+    parent_.notify();
+    return Void();
+}
+
+Return<void> GnssHalTest::GnssCallback::gnssLocationCb(const GnssLocation& location) {
+    ALOGI("Location received");
+    parent_.location_called_count_++;
+    parent_.last_location_ = location;
     parent_.notify();
     return Void();
 }

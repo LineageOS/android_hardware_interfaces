@@ -28,6 +28,7 @@ cc_library {
         "liblog",
         "libutils",
         "android.hidl.memory@1.0",
+        "android.hidl.memory.token@1.0",
     ],
 
     // These are static libs only for testing purposes and portability. Shared

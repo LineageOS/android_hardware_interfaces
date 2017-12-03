@@ -22,7 +22,7 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 
-#include <android/hardware/keymaster/4.0/IKeymaster.h>
+#include <android/hardware/keymaster/4.0/IKeymasterDevice.h>
 #include <android/hardware/keymaster/4.0/types.h>
 #include <cutils/properties.h>
 #include <keymaster/keymaster_configuration.h>
@@ -409,7 +409,7 @@ class KeymasterHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
         return instance;
     }
 
-    void registerTestServices() override { registerTestService<IKeymaster>(); }
+    void registerTestServices() override { registerTestService<IKeymasterDevice>(); }
 
    private:
     KeymasterHidlEnvironment(){};
@@ -428,8 +428,10 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
     // SetUpTestCase runs only once per test case, not once per test.
     static void SetUpTestCase() {
-        string service_name = KeymasterHidlEnvironment::Instance()->getServiceName<IKeymaster>();
-        keymaster_ = ::testing::VtsHalHidlTargetTestBase::getService<IKeymaster>(service_name);
+        string service_name =
+            KeymasterHidlEnvironment::Instance()->getServiceName<IKeymasterDevice>();
+        keymaster_ =
+            ::testing::VtsHalHidlTargetTestBase::getService<IKeymasterDevice>(service_name);
         ASSERT_NE(keymaster_, nullptr);
 
         ASSERT_TRUE(keymaster_
@@ -447,7 +449,7 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
     static void TearDownTestCase() { keymaster_.clear(); }
 
-    static IKeymaster& keymaster() { return *keymaster_; }
+    static IKeymasterDevice& keymaster() { return *keymaster_; }
     static uint32_t os_version() { return os_version_; }
     static uint32_t os_patch_level() { return os_patch_level_; }
 
@@ -874,7 +876,7 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     OperationHandle op_handle_ = kOpHandleSentinel;
 
    private:
-    static sp<IKeymaster> keymaster_;
+    static sp<IKeymasterDevice> keymaster_;
     static uint32_t os_version_;
     static uint32_t os_patch_level_;
 
@@ -942,7 +944,7 @@ bool verify_attestation_record(const string& challenge, const string& app_id,
     return true;
 }
 
-sp<IKeymaster> KeymasterHidlTest::keymaster_;
+sp<IKeymasterDevice> KeymasterHidlTest::keymaster_;
 uint32_t KeymasterHidlTest::os_version_;
 uint32_t KeymasterHidlTest::os_patch_level_;
 bool KeymasterHidlTest::is_secure_;

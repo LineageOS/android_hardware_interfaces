@@ -23,7 +23,7 @@ import android.hardware.keymaster@3.0::KeyFormat;
  * Keymaster device definition.  For thorough documentation see the implementer's reference, at
  * https://source.android.com/security/keystore/implementer-ref.html
  */
-interface IKeymaster {
+interface IKeymasterDevice {
 
     /**
      * Returns information about the underlying keymaster hardware.

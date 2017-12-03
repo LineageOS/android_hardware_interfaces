@@ -17,7 +17,7 @@
 #ifndef HARDWARE_INTERFACES_KEYMASTER_40_VTS_FUNCTIONAL_ATTESTATION_RECORD_H_
 #define HARDWARE_INTERFACES_KEYMASTER_40_VTS_FUNCTIONAL_ATTESTATION_RECORD_H_
 
-#include <android/hardware/keymaster/4.0/IKeymaster.h>
+#include <android/hardware/keymaster/4.0/IKeymasterDevice.h>
 
 namespace android {
 namespace hardware {
