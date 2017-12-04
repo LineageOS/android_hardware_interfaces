@@ -20,7 +20,7 @@
 #include "BroadcastRadio.h"
 #include "Tuner.h"
 
-#include <broadcastradio-utils/Utils.h>
+#include <broadcastradio-utils-1x/Utils.h>
 #include <log/log.h>
 
 namespace android {

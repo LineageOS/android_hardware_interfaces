@@ -23,7 +23,6 @@
 #include <android/hardware/broadcastradio/1.2/ITunerCallback.h>
 #include <android/hardware/broadcastradio/1.2/types.h>
 #include <android-base/logging.h>
-#include <broadcastradio-utils/Utils.h>
 #include <broadcastradio-vts-utils/call-barrier.h>
 #include <broadcastradio-vts-utils/mock-timeout.h>
 #include <cutils/native_handle.h>
