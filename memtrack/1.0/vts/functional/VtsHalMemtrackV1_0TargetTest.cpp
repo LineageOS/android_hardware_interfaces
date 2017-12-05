@@ -21,6 +21,7 @@
 #include <android/hardware/memtrack/1.0/IMemtrack.h>
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <VtsHalHidlTargetTestEnvBase.h>
 
 #include <fcntl.h>
 #include <algorithm>
@@ -38,11 +39,24 @@ using ::android::base::unique_fd;
 using std::vector;
 using std::count_if;
 
+// Test environment for Memtrack HIDL HAL.
+class MemtrackHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    // get the test environment singleton
+    static MemtrackHidlEnvironment* Instance() {
+        static MemtrackHidlEnvironment* instance = new MemtrackHidlEnvironment;
+        return instance;
+    }
+
+    virtual void registerTestServices() override { registerTestService<IMemtrack>(); }
+};
+
 class MemtrackHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  public:
   virtual void SetUp() override {
-    memtrack = ::testing::VtsHalHidlTargetTestBase::getService<IMemtrack>();
-    ASSERT_NE(memtrack, nullptr);
+      memtrack = ::testing::VtsHalHidlTargetTestBase::getService<IMemtrack>(
+          MemtrackHidlEnvironment::Instance()->getServiceName<IMemtrack>());
+      ASSERT_NE(memtrack, nullptr);
   }
 
   virtual void TearDown() override {}
@@ -159,8 +173,10 @@ TEST_F(MemtrackHidlTest, GetMemoryTest) {
 }
 
 int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  int status = RUN_ALL_TESTS();
-  LOG(INFO) << "Test result = " << status;
-  return status;
+    ::testing::AddGlobalTestEnvironment(MemtrackHidlEnvironment::Instance());
+    ::testing::InitGoogleTest(&argc, argv);
+    MemtrackHidlEnvironment::Instance()->init(&argc, argv);
+    int status = RUN_ALL_TESTS();
+    LOG(INFO) << "Test result = " << status;
+    return status;
 }
