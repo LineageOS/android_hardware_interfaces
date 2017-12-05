@@ -23,6 +23,7 @@
 #include <android/hardware/power/1.0/IPower.h>
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <VtsHalHidlTargetTestEnvBase.h>
 
 #include <fcntl.h>
 #include <algorithm>
@@ -44,11 +45,24 @@ using std::vector;
 #define AVAILABLE_GOVERNORS_PATH \
   "/sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors"
 
+// Test environment for Power HIDL HAL.
+class PowerHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    // get the test environment singleton
+    static PowerHidlEnvironment* Instance() {
+        static PowerHidlEnvironment* instance = new PowerHidlEnvironment;
+        return instance;
+    }
+
+    virtual void registerTestServices() override { registerTestService<IPower>(); }
+};
+
 class PowerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  public:
   virtual void SetUp() override {
-    power = ::testing::VtsHalHidlTargetTestBase::getService<IPower>();
-    ASSERT_NE(power, nullptr);
+      power = ::testing::VtsHalHidlTargetTestBase::getService<IPower>(
+          PowerHidlEnvironment::Instance()->getServiceName<IPower>());
+      ASSERT_NE(power, nullptr);
   }
 
   virtual void TearDown() override {}
@@ -178,8 +192,10 @@ TEST_F(PowerHidlTest, GetPlatformLowPowerStats) {
 }
 
 int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  int status = RUN_ALL_TESTS();
-  LOG(INFO) << "Test result = " << status;
-  return status;
+    ::testing::AddGlobalTestEnvironment(PowerHidlEnvironment::Instance());
+    ::testing::InitGoogleTest(&argc, argv);
+    PowerHidlEnvironment::Instance()->init(&argc, argv);
+    int status = RUN_ALL_TESTS();
+    LOG(INFO) << "Test result = " << status;
+    return status;
 }
