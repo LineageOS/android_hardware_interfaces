@@ -57,6 +57,11 @@ uint64_t getId(const V2_0::ProgramSelector& sel, const V2_0::IdentifierType type
 uint64_t getId(const V2_0::ProgramSelector& sel, const V2_0::IdentifierType type, uint64_t defval);
 
 /**
+ * Returns all IDs of a given type.
+ */
+std::vector<uint64_t> getAllIds(const V2_0::ProgramSelector& sel, const V2_0::IdentifierType type);
+
+/**
  * Checks, if a given selector is supported by the radio module.
  *
  * @param prop Module description.
