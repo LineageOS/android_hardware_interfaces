@@ -118,7 +118,8 @@ enum Tag : uint32_t {
                                                        * boot. */
 
     /* User authentication */
-    // 500-501 reserved
+    // 500 reserved
+    USER_ID = TagType:UINT | 501,             /* Android ID of authorized user or authenticator(s), */
     USER_SECURE_ID = TagType:ULONG_REP | 502, /* Secure ID of authorized user or authenticator(s).
                                                * Disallowed if NO_AUTH_REQUIRED is present. */
     NO_AUTH_REQUIRED = TagType:BOOL | 503,    /* If key is usable without authentication. */
@@ -190,6 +191,9 @@ enum Tag : uint32_t {
      * CONFIRMATION_TOKEN provided to finish() or if the data provided to update()/finish() does not
      * match the data described in the token, keymaster must return NO_USER_CONFIRMATION. */
     TRUSTED_CONFIRMATION_REQUIRED = TagType:BOOL | 508,
+
+    UNLOCKED_DEVICE_REQUIRED = TagType:BOOL | 509, /* Require the device screen to be unlocked if
+                                                    * the key is used. */
 
     /* Application access control */
     APPLICATION_ID = TagType:BYTES | 601, /* Byte string identifying the authorized application. */
@@ -471,6 +475,7 @@ enum ErrorCode : int32_t {
     PROOF_OF_PRESENCE_REQUIRED = -69,
     CONCURRENT_PROOF_OF_PRESENCE_REQUESTED = -70,
     NO_USER_CONFIRMATION = -71,
+    DEVICE_LOCKED = -72,
 
     UNIMPLEMENTED = -100,
     VERSION_MISMATCH = -101,
