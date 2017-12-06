@@ -768,11 +768,12 @@ TEST_IO_STREAM(GetBufferSize,
                ASSERT_GE(extract(stream->getBufferSize()),
                          extract(stream->getFrameSize())));
 
-template <class Property, class CapabilityGetter, class Getter, class Setter>
+template <class Property, class CapabilityGetter>
 static void testCapabilityGetter(const string& name, IStream* stream,
-                                 Property currentValue,
                                  CapabilityGetter capablityGetter,
-                                 Getter getter, Setter setter) {
+                                 Return<Property> (IStream::*getter)(),
+                                 Return<Result> (IStream::*setter)(Property),
+                                 bool currentMustBeSupported = true) {
     hidl_vec<Property> capabilities;
     ASSERT_OK((stream->*capablityGetter)(returnIn(capabilities)));
     if (capabilities.size() == 0) {
@@ -783,16 +784,24 @@ static void testCapabilityGetter(const string& name, IStream* stream,
         doc::partialTest(name + " is not supported");
         return;
     };
-    // TODO: This code has never been tested on a hal that supports
-    // getSupportedSampleRates
-    EXPECT_NE(std::find(capabilities.begin(), capabilities.end(), currentValue),
-              capabilities.end())
-        << "current " << name << " is not in the list of the supported ones "
-        << toString(capabilities);
+
+    if (currentMustBeSupported) {
+        Property currentValue = extract((stream->*getter)());
+        EXPECT_NE(std::find(capabilities.begin(), capabilities.end(), currentValue),
+                  capabilities.end())
+            << "current " << name << " is not in the list of the supported ones "
+            << toString(capabilities);
+    }
 
     // Check that all declared supported values are indeed supported
     for (auto capability : capabilities) {
-        ASSERT_OK((stream->*setter)(capability));
+        auto ret = (stream->*setter)(capability);
+        ASSERT_TRUE(ret.isOk());
+        if (ret == Result::NOT_SUPPORTED) {
+            doc::partialTest("Setter is not supported");
+            return;
+        }
+        ASSERT_OK(ret);
         ASSERT_EQ(capability, extract((stream->*getter)()));
     }
 }
@@ -800,15 +809,17 @@ static void testCapabilityGetter(const string& name, IStream* stream,
 TEST_IO_STREAM(SupportedSampleRate,
                "Check that the stream sample rate is declared as supported",
                testCapabilityGetter("getSupportedSampleRate", stream.get(),
-                                    extract(stream->getSampleRate()),
                                     &IStream::getSupportedSampleRates,
                                     &IStream::getSampleRate,
-                                    &IStream::setSampleRate))
+                                    &IStream::setSampleRate,
+                                    // getSupportedSampleRate returns the native sampling rates,
+                                    // (the sampling rates that can be played without resampling)
+                                    // but other sampling rates can be supported by the HAL.
+                                    false))
 
 TEST_IO_STREAM(SupportedChannelMask,
                "Check that the stream channel mask is declared as supported",
                testCapabilityGetter("getSupportedChannelMask", stream.get(),
-                                    extract(stream->getChannelMask()),
                                     &IStream::getSupportedChannelMasks,
                                     &IStream::getChannelMask,
                                     &IStream::setChannelMask))
@@ -816,7 +827,6 @@ TEST_IO_STREAM(SupportedChannelMask,
 TEST_IO_STREAM(SupportedFormat,
                "Check that the stream format is declared as supported",
                testCapabilityGetter("getSupportedFormat", stream.get(),
-                                    extract(stream->getFormat()),
                                     &IStream::getSupportedFormats,
                                     &IStream::getFormat, &IStream::setFormat))
 
