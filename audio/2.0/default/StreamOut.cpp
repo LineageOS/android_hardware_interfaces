@@ -323,14 +323,9 @@ Return<void> StreamOut::prepareForWriting(uint32_t frameSize,
         sendError(Result::INVALID_ARGUMENTS);
         return Void();
     }
-    // A message queue asserts if it can not handle the requested buffer,
-    // thus the client has to guess the maximum size it can handle
-    size_t metadataOverhead =
-        100000;  // Arbitrary margin for the overhead of a message queue
-    if (frameSize >
-        (std::numeric_limits<size_t>::max() - metadataOverhead) / framesCount) {
-        ALOGE("Buffer too big: %u*%u bytes can not fit in a message queue",
-              frameSize, framesCount);
+    if (frameSize > Stream::MAX_BUFFER_SIZE / framesCount) {
+        ALOGE("Buffer too big: %u*%u bytes > MAX_BUFFER_SIZE (%u)", frameSize, framesCount,
+              Stream::MAX_BUFFER_SIZE);
         sendError(Result::INVALID_ARGUMENTS);
         return Void();
     }

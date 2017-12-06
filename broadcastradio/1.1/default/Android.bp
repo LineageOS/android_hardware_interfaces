@@ -14,8 +14,9 @@
 // limitations under the License.
 //
 
-cc_library_shared {
-    name: "android.hardware.broadcastradio@1.1-impl",
+cc_binary {
+    name: "android.hardware.broadcastradio@1.1-service",
+    init_rc: ["android.hardware.broadcastradio@1.1-service.rc"],
     vendor: true,
     relative_install_path: "hw",
     cflags: [
@@ -27,16 +28,20 @@ cc_library_shared {
         "BroadcastRadio.cpp",
         "BroadcastRadioFactory.cpp",
         "Tuner.cpp",
-        "Utils.cpp",
+        "VirtualProgram.cpp",
+        "VirtualRadio.cpp",
+        "service.cpp"
+    ],
+    static_libs: [
+        "android.hardware.broadcastradio@1.1-utils-lib",
     ],
     shared_libs: [
-        "libhidlbase",
-        "libhidltransport",
-        "libutils",
-        "liblog",
-        "libhardware",
         "android.hardware.broadcastradio@1.0",
         "android.hardware.broadcastradio@1.1",
-        "libradio_metadata",
+        "libbase",
+        "libhidlbase",
+        "libhidltransport",
+        "liblog",
+        "libutils",
     ],
 }

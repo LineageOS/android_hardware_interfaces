@@ -82,6 +82,8 @@ private:
     // (cameraId string, hidl device name) pairs
     SortedVector<std::pair<std::string, std::string>> mCameraDeviceNames;
 
+    int mPreferredHal3MinorVersion;
+
     // Must be queried before using any APIs.
     // APIs will only work when this returns true
     bool mInitFailed;
@@ -91,12 +93,12 @@ private:
     bool setUpVendorTags();
     int checkCameraVersion(int id, camera_info info);
 
+    // create HIDL device name from camera ID and legacy device version
+    std::string getHidlDeviceName(std::string cameraId, int deviceVersion);
+
     // extract legacy camera ID/device version from a HIDL device name
     static std::string getLegacyCameraId(const hidl_string& deviceName);
     static int getCameraDeviceVersion(const hidl_string& deviceName);
-
-    // create HIDL device name from camera ID and device version
-    static std::string getHidlDeviceName(std::string cameraId, int deviceVersion);
 
     // convert conventional HAL status to HIDL Status
     static Status getHidlStatus(int);

@@ -28,16 +28,19 @@ interface ITunerCallback extends @1.0::ITunerCallback {
     /**
      * Method called by the HAL when a tuning operation completes
      * following a step(), scan() or tune() command.
+     *
+     * This callback supersedes V1_0::tuneComplete.
+     * The 1.0 callback must not be called when HAL implementation detects
+     * 1.1 client (by casting V1_0::ITunerCallback to V1_1::ITunerCallback).
+     *
+     * In case of success, currentProgramInfoChanged must be called too.
+     * It means the success case may (or may not) be handled by the client in
+     * currentProgramInfoChanged, instead of here.
+     *
      * @param result OK if tune succeeded or TIMEOUT in case of time out.
-     * @param info A ProgramInfo structure describing the tuned station.
+     * @param selector A ProgramSelector structure describing the tuned station.
      */
-    oneway tuneComplete_1_1(Result result, ProgramInfo info);
-
-    /**
-     * Method called by the HAL when a frequency switch occurs.
-     * @param info A ProgramInfo structure describing the new tuned station.
-     */
-    oneway afSwitch_1_1(ProgramInfo info);
+    oneway tuneComplete_1_1(Result result, ProgramSelector selector);
 
     /**
      * Called by the HAL when background scan feature becomes available or not.
@@ -63,10 +66,31 @@ interface ITunerCallback extends @1.0::ITunerCallback {
      * call it immediately, ie. it may wait for a short time to accumulate
      * multiple list change notifications into a single event.
      *
+     * This callback is only for notifying about insertions and deletions,
+     * not about metadata changes.
+     *
      * It may be triggered either by an explicitly issued background scan,
      * or a scan issued by the device internally.
      *
      * Client may retrieve the actual list with ITuner::getProgramList.
      */
     oneway programListChanged();
+
+    /**
+     * Method called by the HAL when current program information (including
+     * metadata) is updated.
+     *
+     * Client may retrieve the actual program info with
+     * ITuner::getProgramInformation_1_1.
+     *
+     * This may be called together with tuneComplete_1_1 or afSwitch_1_1.
+     *
+     * This callback supersedes V1_0::newMetadata and V1_0::afSwitch;
+     * partly V1_0::tuneComplete.
+     * 1.0 callbacks must not be called when HAL implementation detects
+     * 1.1 client (by casting V1_0::ITunerCallback to V1_1::ITunerCallback).
+     *
+     * @param info current program information
+     */
+    oneway currentProgramInfoChanged(ProgramInfo info);
 };

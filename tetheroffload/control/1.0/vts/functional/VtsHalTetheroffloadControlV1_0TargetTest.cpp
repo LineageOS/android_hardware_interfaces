@@ -46,6 +46,12 @@ using android::hardware::tetheroffload::control::V1_0::NetworkProtocol;
 using android::hardware::Void;
 using android::sp;
 
+enum class ExpectBoolean {
+    Ignored = -1,
+    False = 0,
+    True = 1,
+};
+
 // We use #defines here so as to get local lamba captures and error message line numbers
 #define ASSERT_TRUE_CALLBACK                            \
     [&](bool success, std::string errMsg) {             \
@@ -112,7 +118,12 @@ class OffloadControlHidlTestBase : public testing::VtsHalHidlTargetTestBase {
         prepareControlHal();
     }
 
-    virtual void TearDown() override { stopOffload(false); }
+    virtual void TearDown() override {
+        // For good measure, we should try stopOffload() once more. Since we
+        // don't know where we are in HAL call test cycle we don't know what
+        // return code to actually expect, so we just ignore it.
+        stopOffload(ExpectBoolean::Ignored);
+    }
 
     // The IOffloadConfig HAL is tested more thoroughly elsewhere. He we just
     // setup everything correctly and verify basic readiness.
@@ -127,7 +138,8 @@ class OffloadControlHidlTestBase : public testing::VtsHalHidlTargetTestBase {
         }
         native_handle_t* const nativeHandle1 = native_handle_create(1, 0);
         nativeHandle1->data[0] = fd1.release();
-        hidl_handle h1 = hidl_handle(nativeHandle1);
+        hidl_handle h1;
+        h1.setTo(nativeHandle1, true);
 
         unique_fd fd2(conntrackSocket(NFNLGRP_CONNTRACK_UPDATE | NFNLGRP_CONNTRACK_DESTROY));
         if (fd2.get() < 0) {
@@ -136,7 +148,8 @@ class OffloadControlHidlTestBase : public testing::VtsHalHidlTargetTestBase {
         }
         native_handle_t* const nativeHandle2 = native_handle_create(1, 0);
         nativeHandle2->data[0] = fd2.release();
-        hidl_handle h2 = hidl_handle(nativeHandle2);
+        hidl_handle h2;
+        h2.setTo(nativeHandle2, true);
 
         const Return<void> ret = config->setHandles(h1, h2, ASSERT_TRUE_CALLBACK);
         ASSERT_TRUE(ret.isOk());
@@ -166,12 +179,21 @@ class OffloadControlHidlTestBase : public testing::VtsHalHidlTargetTestBase {
         initOffload(true);
     }
 
-    void stopOffload(const bool expected_result) {
+    void stopOffload(const ExpectBoolean value) {
         auto cb = [&](bool success, const hidl_string& errMsg) {
             if (!success) {
                 ALOGI("Error message: %s", errMsg.c_str());
             }
-            ASSERT_EQ(expected_result, success);
+            switch (value) {
+                case ExpectBoolean::False:
+                    ASSERT_EQ(false, success);
+                    break;
+                case ExpectBoolean::True:
+                    ASSERT_EQ(true, success);
+                    break;
+                case ExpectBoolean::Ignored:
+                    break;
+            }
         };
         const Return<void> ret = control->stopOffload(cb);
         ASSERT_TRUE(ret.isOk());
@@ -209,22 +231,29 @@ TEST_F(OffloadControlHidlTestBase, AdditionalInitsWithoutStopReturnFalse) {
     initOffload(false);
     initOffload(false);
     initOffload(false);
-    stopOffload(true);  // balance out initOffload(true)
 }
 
 // Check that calling stopOffload() without first having called initOffload() returns false.
 TEST_F(OffloadControlHidlTestBase, MultipleStopsWithoutInitReturnFalse) {
-    stopOffload(false);
-    stopOffload(false);
-    stopOffload(false);
+    stopOffload(ExpectBoolean::False);
+    stopOffload(ExpectBoolean::False);
+    stopOffload(ExpectBoolean::False);
 }
 
 // Check that calling stopOffload() after a complete init/stop cycle returns false.
 TEST_F(OffloadControlHidlTestBase, AdditionalStopsWithInitReturnFalse) {
     initOffload(true);
-    stopOffload(true);  // balance out initOffload(true)
-    stopOffload(false);
-    stopOffload(false);
+    // Call setUpstreamParameters() so that "offload" can be reasonably said
+    // to be both requested and operational.
+    const hidl_string v4Addr("192.0.0.2");
+    const hidl_string v4Gw("192.0.0.1");
+    const vector<hidl_string> v6Gws{hidl_string("fe80::db8:1"), hidl_string("fe80::db8:2")};
+    const Return<void> upstream =
+        control->setUpstreamParameters("rmnet_data0", v4Addr, v4Gw, v6Gws, ASSERT_TRUE_CALLBACK);
+    EXPECT_TRUE(upstream.isOk());
+    stopOffload(ExpectBoolean::True);  // balance out initOffload(true)
+    stopOffload(ExpectBoolean::False);
+    stopOffload(ExpectBoolean::False);
 }
 
 // Check that calling setLocalPrefixes() without first having called initOffload() returns false.
@@ -305,7 +334,12 @@ class OffloadControlHidlTest : public OffloadControlHidlTestBase {
         setupControlHal();
     }
 
-    virtual void TearDown() override { stopOffload(true); }
+    virtual void TearDown() override {
+        // For good measure, we should try stopOffload() once more. Since we
+        // don't know where we are in HAL call test cycle we don't know what
+        // return code to actually expect, so we just ignore it.
+        stopOffload(ExpectBoolean::Ignored);
+    }
 };
 
 /*
@@ -575,16 +609,24 @@ TEST_F(OffloadControlHidlTest, AddDownstreamBogusPrefixFails) {
 TEST_F(OffloadControlHidlTest, RemoveDownstreamIPv4) {
     const hidl_string iface("dummy0");
     const hidl_string prefix("192.0.2.0/24");
-    const Return<void> ret = control->removeDownstream(iface, prefix, ASSERT_TRUE_CALLBACK);
-    EXPECT_TRUE(ret.isOk());
+    // First add the downstream, otherwise removeDownstream logic can reasonably
+    // return false for downstreams not previously added.
+    const Return<void> add = control->addDownstream(iface, prefix, ASSERT_TRUE_CALLBACK);
+    EXPECT_TRUE(add.isOk());
+    const Return<void> del = control->removeDownstream(iface, prefix, ASSERT_TRUE_CALLBACK);
+    EXPECT_TRUE(del.isOk());
 }
 
 // Test removeDownstream() works given an IPv6 prefix.
 TEST_F(OffloadControlHidlTest, RemoveDownstreamIPv6) {
     const hidl_string iface("dummy0");
     const hidl_string prefix("2001:db8::/64");
-    const Return<void> ret = control->removeDownstream(iface, prefix, ASSERT_TRUE_CALLBACK);
-    EXPECT_TRUE(ret.isOk());
+    // First add the downstream, otherwise removeDownstream logic can reasonably
+    // return false for downstreams not previously added.
+    const Return<void> add = control->addDownstream(iface, prefix, ASSERT_TRUE_CALLBACK);
+    EXPECT_TRUE(add.isOk());
+    const Return<void> del = control->removeDownstream(iface, prefix, ASSERT_TRUE_CALLBACK);
+    EXPECT_TRUE(del.isOk());
 }
 
 // Test removeDownstream() fails given all empty parameters.

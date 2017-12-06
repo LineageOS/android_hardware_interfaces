@@ -16,6 +16,7 @@
 
 package android.hardware.radio@1.1;
 
+import @1.0::RadioResponseInfo;
 import @1.0::IRadioResponse;
 
 /**

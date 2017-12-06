@@ -18,14 +18,8 @@
 #define MEDIA_VIDEO_HIDL_TEST_COMMON_H
 
 /*
- * Random Index used for monkey testing while get/set parameters
- */
-#define RANDOM_INDEX 1729
-
-/*
  * Common video utils
  */
-
 void enumerateProfileAndLevel(sp<IOmxNode> omxNode, OMX_U32 portIndex,
                               std::vector<int32_t>* arrProfile,
                               std::vector<int32_t>* arrLevel);

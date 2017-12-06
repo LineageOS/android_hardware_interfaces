@@ -5,6 +5,7 @@ hidl_interface {
     root: "android.hardware",
     vndk: {
         enabled: true,
+        support_system_process: true,
     },
     srcs: [
         "IAllocator.hal",

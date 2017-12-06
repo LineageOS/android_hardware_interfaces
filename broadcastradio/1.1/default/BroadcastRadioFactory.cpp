@@ -13,8 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define LOG_TAG "BroadcastRadioDefault.factory"
+#define LOG_NDEBUG 0
+
 #include "BroadcastRadioFactory.h"
+
 #include "BroadcastRadio.h"
+
+#include <log/log.h>
 
 namespace android {
 namespace hardware {
@@ -22,20 +28,36 @@ namespace broadcastradio {
 namespace V1_1 {
 namespace implementation {
 
-// Methods from ::android::hardware::broadcastradio::V1_0::IBroadcastRadioFactory follow.
-Return<void> BroadcastRadioFactory::connectModule(Class classId, connectModule_cb _hidl_cb)  {
-    sp<BroadcastRadio> impl = new BroadcastRadio(classId);
-    Result retval = Result::NOT_INITIALIZED;
-    if (impl != 0) {
-        retval = impl->initCheck();
-    }
-    _hidl_cb(retval, impl);
-    return Void();
+using V1_0::Class;
+
+using std::vector;
+
+static const vector<Class> gAllClasses = {
+    Class::AM_FM, Class::SAT, Class::DT,
+};
+
+IBroadcastRadioFactory* HIDL_FETCH_IBroadcastRadioFactory(const char* name __unused) {
+    return new BroadcastRadioFactory();
 }
 
+BroadcastRadioFactory::BroadcastRadioFactory() {
+    for (auto&& classId : gAllClasses) {
+        if (!BroadcastRadio::isSupported(classId)) continue;
+        mRadioModules[classId] = new BroadcastRadio(classId);
+    }
+}
 
-IBroadcastRadioFactory* HIDL_FETCH_IBroadcastRadioFactory(const char* /* name */) {
-    return new BroadcastRadioFactory();
+Return<void> BroadcastRadioFactory::connectModule(Class classId, connectModule_cb _hidl_cb) {
+    ALOGV("%s(%s)", __func__, toString(classId).c_str());
+
+    auto moduleIt = mRadioModules.find(classId);
+    if (moduleIt == mRadioModules.end()) {
+        _hidl_cb(Result::INVALID_ARGUMENTS, nullptr);
+    } else {
+        _hidl_cb(Result::OK, moduleIt->second);
+    }
+
+    return Void();
 }
 
 }  // namespace implementation

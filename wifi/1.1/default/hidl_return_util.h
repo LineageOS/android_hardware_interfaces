@@ -55,6 +55,25 @@ Return<void> validateAndCall(
   return Void();
 }
 
+// Use for HIDL methods which return only an instance of WifiStatus.
+// This version passes the global lock acquired to the body of the method.
+// Note: Only used by IWifi::stop() currently.
+template <typename ObjT, typename WorkFuncT, typename... Args>
+Return<void> validateAndCallWithLock(
+    ObjT* obj,
+    WifiStatusCode status_code_if_invalid,
+    WorkFuncT&& work,
+    const std::function<void(const WifiStatus&)>& hidl_cb,
+    Args&&... args) {
+  auto lock = hidl_sync_util::acquireGlobalLock();
+  if (obj->isValid()) {
+    hidl_cb((obj->*work)(&lock, std::forward<Args>(args)...));
+  } else {
+    hidl_cb(createWifiStatus(status_code_if_invalid));
+  }
+  return Void();
+}
+
 // Use for HIDL methods which return instance of WifiStatus and a single return
 // value.
 template <typename ObjT, typename WorkFuncT, typename ReturnT, typename... Args>

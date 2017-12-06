@@ -70,8 +70,15 @@ private:
 
     void onContinuousPropertyTimer(const std::vector<int32_t>& properties);
     bool isContinuousProperty(int32_t propId) const;
+    void initStaticConfig();
+    void initObd2LiveFrame(const VehiclePropConfig& propConfig);
+    void initObd2FreezeFrame(const VehiclePropConfig& propConfig);
+    StatusCode fillObd2FreezeFrame(const VehiclePropValue& requestedPropValue,
+                                   VehiclePropValue* outValue);
+    StatusCode fillObd2DtcInfo(VehiclePropValue* outValue);
+    StatusCode clearObd2FreezeFrames(const VehiclePropValue& propValue);
 
-private:
+    /* Private members */
     VehiclePropertyStore* mPropStore;
     std::unordered_set<int32_t> mHvacPowerProps;
     RecurrentTimer mRecurrentTimer;

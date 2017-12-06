@@ -15,6 +15,7 @@
  */
 
 #include <array>
+#include <chrono>
 
 #include <android-base/logging.h>
 #include <cutils/properties.h>
@@ -34,6 +35,7 @@ static constexpr uint32_t kMaxGscanFrequenciesForBand = 64;
 static constexpr uint32_t kLinkLayerStatsDataMpduSizeThreshold = 128;
 static constexpr uint32_t kMaxWakeReasonStatsArraySize = 32;
 static constexpr uint32_t kMaxRingBuffers = 10;
+static constexpr uint32_t kMaxStopCompleteWaitMs = 100;
 
 // Helper function to create a non-const char* for legacy Hal API's.
 std::vector<char> makeCharVec(const std::string& str) {
@@ -53,7 +55,8 @@ namespace legacy_hal {
 // Legacy HAL functions accept "C" style function pointers, so use global
 // functions to pass to the legacy HAL function and store the corresponding
 // std::function methods to be invoked.
-// Callback to be invoked once |stop| is complete.
+//
+// Callback to be invoked once |stop| is complete
 std::function<void(wifi_handle handle)> on_stop_complete_internal_callback;
 void onAsyncStopComplete(wifi_handle handle) {
   const auto lock = hidl_sync_util::acquireGlobalLock();
@@ -369,6 +372,7 @@ wifi_error WifiLegacyHal::start() {
 }
 
 wifi_error WifiLegacyHal::stop(
+    /* NONNULL */ std::unique_lock<std::recursive_mutex>* lock,
     const std::function<void()>& on_stop_complete_user_callback) {
   if (!is_started_) {
     LOG(DEBUG) << "Legacy HAL already stopped";
@@ -376,19 +380,27 @@ wifi_error WifiLegacyHal::stop(
     return WIFI_SUCCESS;
   }
   LOG(DEBUG) << "Stopping legacy HAL";
-  on_stop_complete_internal_callback = [on_stop_complete_user_callback,
-                                        this](wifi_handle handle) {
+  on_stop_complete_internal_callback =
+      [on_stop_complete_user_callback, this](wifi_handle handle) {
     CHECK_EQ(global_handle_, handle) << "Handle mismatch";
+    LOG(INFO) << "Legacy HAL stop complete callback received";
     // Invalidate all the internal pointers now that the HAL is
     // stopped.
     invalidate();
     iface_tool_.SetWifiUpState(false);
     on_stop_complete_user_callback();
+    is_started_ = false;
   };
   awaiting_event_loop_termination_ = true;
   global_func_table_.wifi_cleanup(global_handle_, onAsyncStopComplete);
+  const auto status = stop_wait_cv_.wait_for(
+      *lock, std::chrono::milliseconds(kMaxStopCompleteWaitMs),
+      [this] { return !awaiting_event_loop_termination_; });
+  if (!status) {
+    LOG(ERROR) << "Legacy HAL stop failed or timed out";
+    return WIFI_ERROR_UNKNOWN;
+  }
   LOG(DEBUG) << "Legacy HAL stop complete";
-  is_started_ = false;
   return WIFI_SUCCESS;
 }
 
@@ -1257,11 +1269,13 @@ wifi_error WifiLegacyHal::retrieveWlanInterfaceHandle() {
 void WifiLegacyHal::runEventLoop() {
   LOG(DEBUG) << "Starting legacy HAL event loop";
   global_func_table_.wifi_event_loop(global_handle_);
+  const auto lock = hidl_sync_util::acquireGlobalLock();
   if (!awaiting_event_loop_termination_) {
     LOG(FATAL) << "Legacy HAL event loop terminated, but HAL was not stopping";
   }
   LOG(DEBUG) << "Legacy HAL event loop terminated";
   awaiting_event_loop_termination_ = false;
+  stop_wait_cv_.notify_one();
 }
 
 std::pair<wifi_error, std::vector<wifi_cached_scan_results>>
@@ -1284,7 +1298,7 @@ WifiLegacyHal::getGscanCachedResults() {
     for (int i = 0; i < num_scan_results; i++) {
       auto& scan_result = cached_scan_result.results[i];
       if (scan_result.ie_length > 0) {
-        LOG(ERROR) << "Cached scan result has non-zero IE length "
+        LOG(DEBUG) << "Cached scan result has non-zero IE length "
                    << scan_result.ie_length;
         scan_result.ie_length = 0;
       }

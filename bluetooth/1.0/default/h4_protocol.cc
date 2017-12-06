@@ -22,6 +22,7 @@
 #include <fcntl.h>
 #include <log/log.h>
 #include <sys/uio.h>
+#include <unistd.h>
 
 namespace android {
 namespace hardware {

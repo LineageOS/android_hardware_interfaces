@@ -161,6 +161,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:SIM_ABSENT
      */
     oneway supplyNetworkDepersonalizationResponse(RadioResponseInfo info, int32_t remainingRetries);
 
@@ -544,6 +545,7 @@ interface IRadioResponse {
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
+     *   RadioError:SIM_ABSENT
      */
     oneway sendSmsResponse(RadioResponseInfo info, SendSmsResult sms);
 
@@ -574,6 +576,7 @@ interface IRadioResponse {
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
+     *   RadioError:SIM_ABSENT
      */
     oneway sendSMSExpectMoreResponse(RadioResponseInfo info, SendSmsResult sms);
 
@@ -594,6 +597,7 @@ interface IRadioResponse {
      *   RadioError:NO_MEMORY
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
+     *   RadioError:SIM_ABSENT
      */
     oneway setupDataCallResponse(RadioResponseInfo info, SetupDataCallResult dcResponse);
 
@@ -860,6 +864,7 @@ interface IRadioResponse {
      *   RadioError:NO_MEMORY
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
+     *   RadioError:SIM_ABSENT
      */
     oneway deactivateDataCallResponse(RadioResponseInfo info);
 
@@ -1166,6 +1171,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:SIM_ABSENT
      */
     oneway getDataCallListResponse(RadioResponseInfo info, vec<SetupDataCallResult> dcResponse);
 
@@ -1184,6 +1190,7 @@ interface IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
+     *   RadioError:SIM_ABSENT
      */
     oneway setSuppServiceNotificationsResponse(RadioResponseInfo info);
 
@@ -1210,6 +1217,7 @@ interface IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
+     *   RadioError:SIM_ABSENT
      */
     oneway writeSmsToSimResponse(RadioResponseInfo info, int32_t index);
 
@@ -1231,6 +1239,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
+     *   RadioError:SIM_ABSENT
      */
     oneway deleteSmsOnSimResponse(RadioResponseInfo info);
 
@@ -1287,6 +1296,7 @@ interface IRadioResponse {
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:MODEM_ERR
      *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:SIM_ABSENT
      */
     oneway sendEnvelopeResponse(RadioResponseInfo info, string commandResponse);
 
@@ -1304,6 +1314,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
      *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:SIM_ABSENT
      */
     oneway sendTerminalResponseToSimResponse(RadioResponseInfo info);
 
@@ -1321,6 +1332,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:SIM_ABSENT
      */
     oneway handleStkCallSetupRequestFromSimResponse(RadioResponseInfo info);
 
@@ -1417,6 +1429,7 @@ interface IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
+     *   RadioError:SIM_ABSENT
      */
     oneway setLocationUpdatesResponse(RadioResponseInfo info);
 
@@ -1451,6 +1464,7 @@ interface IRadioResponse {
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
+     *   RadioError:SIM_ABSENT
      */
     oneway setCdmaRoamingPreferenceResponse(RadioResponseInfo info);
 
@@ -1469,6 +1483,7 @@ interface IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
+     *   RadioError:SIM_ABSENT
      */
     oneway getCdmaRoamingPreferenceResponse(RadioResponseInfo info, CdmaRoamingType type);
 
@@ -1615,6 +1630,7 @@ interface IRadioResponse {
      *   RadioError:ENCODING_ERR
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
+     *   RadioError:SIM_ABSENT
      */
     oneway sendCdmaSmsResponse(RadioResponseInfo info, SendSmsResult sms);
 
@@ -1792,6 +1808,7 @@ interface IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
+     *   RadioError:SIM_ABSENT
      */
     oneway getCDMASubscriptionResponse(RadioResponseInfo info, string mdn, string hSid,
             string hNid, string min, string prl);
@@ -1819,6 +1836,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
+     *   RadioError:SIM_ABSENT
      */
     oneway writeSmsToRuimResponse(RadioResponseInfo info, uint32_t index);
 
@@ -1839,6 +1857,8 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
+     *   RadioError:OPERATION_NOT_ALLOWED
+     *   RadioError:SIM_ABSENT
      */
     oneway deleteSmsOnRuimResponse(RadioResponseInfo info);
 
@@ -1884,6 +1904,7 @@ interface IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
+     *   RadioError:SIM_ABSENT
      */
     oneway exitEmergencyCallbackModeResponse(RadioResponseInfo info);
 
@@ -1906,6 +1927,7 @@ interface IRadioResponse {
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
+     *   RadioError:SIM_ABSENT
      */
     oneway getSmscAddressResponse(RadioResponseInfo info, string smsc);
 
@@ -1927,6 +1949,7 @@ interface IRadioResponse {
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
+     *   RadioError:SIM_ABSENT
      */
     oneway setSmscAddressResponse(RadioResponseInfo info);
 
@@ -1946,6 +1969,7 @@ interface IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
+     *   RadioError:SIM_ABSENT
      */
     oneway reportSmsMemoryStatusResponse(RadioResponseInfo info);
 
@@ -1976,6 +2000,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:SIM_ABSENT
      */
     oneway getCdmaSubscriptionSourceResponse(RadioResponseInfo info, CdmaSubscriptionSource source);
 
@@ -1993,6 +2018,7 @@ interface IRadioResponse {
      *   RadioError:INVALID_MODEM_STATE
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:SIM_ABSENT
      */
     oneway requestIsimAuthenticationResponse(RadioResponseInfo info, string response);
 
@@ -2024,6 +2050,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:SIM_ABSENT
      */
     oneway sendEnvelopeWithStatusResponse(RadioResponseInfo info, IccIoResult iccIo);
 
@@ -2328,6 +2355,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:SIM_ABSENT
      */
     oneway setDataProfileResponse(RadioResponseInfo info);
 
@@ -2414,6 +2442,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:SIM_ABSENT
      */
     oneway stopLceServiceResponse(RadioResponseInfo info, LceStatusInfo statusInfo);
 
@@ -2430,6 +2459,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:SIM_ABSENT
      */
     oneway pullLceDataResponse(RadioResponseInfo info, LceDataInfo lceInfo);
 
