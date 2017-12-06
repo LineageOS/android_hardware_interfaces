@@ -25,20 +25,20 @@ using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
 
 int main(int /*argc*/, char** argv) {
-  android::base::InitLogging(argv,
-                             android::base::LogdLogger(android::base::SYSTEM));
-  LOG(INFO) << "Wifi Hal is booting up...";
+    android::base::InitLogging(
+        argv, android::base::LogdLogger(android::base::SYSTEM));
+    LOG(INFO) << "Wifi Hal is booting up...";
 
-  configureRpcThreadpool(1, true /* callerWillJoin */);
+    configureRpcThreadpool(1, true /* callerWillJoin */);
 
-  // Setup hwbinder service
-  android::sp<android::hardware::wifi::V1_2::IWifi> service =
-      new android::hardware::wifi::V1_2::implementation::Wifi();
-  CHECK_EQ(service->registerAsService(), android::NO_ERROR)
-      << "Failed to register wifi HAL";
+    // Setup hwbinder service
+    android::sp<android::hardware::wifi::V1_2::IWifi> service =
+        new android::hardware::wifi::V1_2::implementation::Wifi();
+    CHECK_EQ(service->registerAsService(), android::NO_ERROR)
+        << "Failed to register wifi HAL";
 
-  joinRpcThreadpool();
+    joinRpcThreadpool();
 
-  LOG(INFO) << "Wifi Hal is terminating...";
-  return 0;
+    LOG(INFO) << "Wifi Hal is terminating...";
+    return 0;
 }

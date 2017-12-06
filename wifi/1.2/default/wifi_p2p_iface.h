@@ -33,27 +33,27 @@ using namespace android::hardware::wifi::V1_0;
  * HIDL interface object used to control a P2P Iface instance.
  */
 class WifiP2pIface : public V1_0::IWifiP2pIface {
- public:
-  WifiP2pIface(const std::string& ifname,
-               const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal);
-  // Refer to |WifiChip::invalidate()|.
-  void invalidate();
-  bool isValid();
+   public:
+    WifiP2pIface(const std::string& ifname,
+                 const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal);
+    // Refer to |WifiChip::invalidate()|.
+    void invalidate();
+    bool isValid();
 
-  // HIDL methods exposed.
-  Return<void> getName(getName_cb hidl_status_cb) override;
-  Return<void> getType(getType_cb hidl_status_cb) override;
+    // HIDL methods exposed.
+    Return<void> getName(getName_cb hidl_status_cb) override;
+    Return<void> getType(getType_cb hidl_status_cb) override;
 
- private:
-  // Corresponding worker functions for the HIDL methods.
-  std::pair<WifiStatus, std::string> getNameInternal();
-  std::pair<WifiStatus, IfaceType> getTypeInternal();
+   private:
+    // Corresponding worker functions for the HIDL methods.
+    std::pair<WifiStatus, std::string> getNameInternal();
+    std::pair<WifiStatus, IfaceType> getTypeInternal();
 
-  std::string ifname_;
-  std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
-  bool is_valid_;
+    std::string ifname_;
+    std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
+    bool is_valid_;
 
-  DISALLOW_COPY_AND_ASSIGN(WifiP2pIface);
+    DISALLOW_COPY_AND_ASSIGN(WifiP2pIface);
 };
 
 }  // namespace implementation

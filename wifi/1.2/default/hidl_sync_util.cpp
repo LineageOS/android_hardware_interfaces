@@ -28,7 +28,7 @@ namespace implementation {
 namespace hidl_sync_util {
 
 std::unique_lock<std::recursive_mutex> acquireGlobalLock() {
-  return std::unique_lock<std::recursive_mutex>{g_mutex};
+    return std::unique_lock<std::recursive_mutex>{g_mutex};
 }
 
 }  // namespace hidl_sync_util

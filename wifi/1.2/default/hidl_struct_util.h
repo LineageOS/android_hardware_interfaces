@@ -19,8 +19,8 @@
 
 #include <vector>
 
-#include <android/hardware/wifi/1.0/types.h>
 #include <android/hardware/wifi/1.0/IWifiChip.h>
+#include <android/hardware/wifi/1.0/types.h>
 #include <android/hardware/wifi/1.1/IWifiChip.h>
 
 #include "wifi_legacy_hal.h"
@@ -41,8 +41,7 @@ using namespace android::hardware::wifi::V1_0;
 
 // Chip conversion methods.
 bool convertLegacyFeaturesToHidlChipCapabilities(
-    uint32_t legacy_feature_set,
-    uint32_t legacy_logger_feature_set,
+    uint32_t legacy_feature_set, uint32_t legacy_logger_feature_set,
     uint32_t* hidl_caps);
 bool convertLegacyDebugRingBufferStatusToHidl(
     const legacy_hal::wifi_ring_buffer_status& legacy_status,
@@ -58,8 +57,7 @@ legacy_hal::wifi_power_scenario convertHidlTxPowerScenarioToLegacy(
 
 // STA iface conversion methods.
 bool convertLegacyFeaturesToHidlStaCapabilities(
-    uint32_t legacy_feature_set,
-    uint32_t legacy_logger_feature_set,
+    uint32_t legacy_feature_set, uint32_t legacy_logger_feature_set,
     uint32_t* hidl_caps);
 bool convertLegacyApfCapabilitiesToHidl(
     const legacy_hal::PacketFilterCapabilities& legacy_caps,
@@ -74,8 +72,7 @@ bool convertHidlGscanParamsToLegacy(
 // |has_ie_data| indicates whether or not the wifi_scan_result includes 802.11
 // Information Elements (IEs)
 bool convertLegacyGscanResultToHidl(
-    const legacy_hal::wifi_scan_result& legacy_scan_result,
-    bool has_ie_data,
+    const legacy_hal::wifi_scan_result& legacy_scan_result, bool has_ie_data,
     StaScanResult* hidl_scan_result);
 // |cached_results| is assumed to not include IEs.
 bool convertLegacyVectorOfCachedGscanResultsToHidl(
@@ -101,8 +98,8 @@ bool convertLegacyVectorOfDebugRxPacketFateToHidl(
     std::vector<WifiDebugRxPacketFateReport>* hidl_fates);
 
 // NAN iface conversion methods.
-void convertToWifiNanStatus(legacy_hal::NanStatusType type, const char* str, size_t max_len,
-    WifiNanStatus* wifiNanStatus);
+void convertToWifiNanStatus(legacy_hal::NanStatusType type, const char* str,
+                            size_t max_len, WifiNanStatus* wifiNanStatus);
 bool convertHidlNanEnableRequestToLegacy(
     const NanEnableRequest& hidl_request,
     legacy_hal::NanEnableRequest* legacy_request);
@@ -133,7 +130,8 @@ bool convertLegacyNanCapabilitiesResponseToHidl(
 bool convertLegacyNanMatchIndToHidl(const legacy_hal::NanMatchInd& legacy_ind,
                                     NanMatchInd* hidl_ind);
 bool convertLegacyNanFollowupIndToHidl(
-    const legacy_hal::NanFollowupInd& legacy_ind, NanFollowupReceivedInd* hidl_ind);
+    const legacy_hal::NanFollowupInd& legacy_ind,
+    NanFollowupReceivedInd* hidl_ind);
 bool convertLegacyNanDataPathRequestIndToHidl(
     const legacy_hal::NanDataPathRequestInd& legacy_ind,
     NanDataPathRequestInd* hidl_ind);

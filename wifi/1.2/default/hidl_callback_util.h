@@ -29,22 +29,23 @@ using on_death_cb_function = std::function<void(uint64_t)>;
 // callbacks stored in HidlCallbackHandler.
 template <typename CallbackType>
 class HidlDeathHandler : public android::hardware::hidl_death_recipient {
- public:
-  HidlDeathHandler(const on_death_cb_function& user_cb_function)
-      : cb_function_(user_cb_function) {}
-  ~HidlDeathHandler() = default;
+   public:
+    HidlDeathHandler(const on_death_cb_function& user_cb_function)
+        : cb_function_(user_cb_function) {}
+    ~HidlDeathHandler() = default;
 
-  // Death notification for callbacks.
-  void serviceDied(
-      uint64_t cookie,
-      const android::wp<android::hidl::base::V1_0::IBase>& /* who */) override {
-    cb_function_(cookie);
-  }
+    // Death notification for callbacks.
+    void serviceDied(
+        uint64_t cookie,
+        const android::wp<android::hidl::base::V1_0::IBase>& /* who */)
+        override {
+        cb_function_(cookie);
+    }
 
- private:
-  on_death_cb_function cb_function_;
+   private:
+    on_death_cb_function cb_function_;
 
-  DISALLOW_COPY_AND_ASSIGN(HidlDeathHandler);
+    DISALLOW_COPY_AND_ASSIGN(HidlDeathHandler);
 };
 }  // namespace
 
@@ -58,58 +59,60 @@ template <typename CallbackType>
 // Provides a class to manage callbacks for the various HIDL interfaces and
 // handle the death of the process hosting each callback.
 class HidlCallbackHandler {
- public:
-  HidlCallbackHandler()
-      : death_handler_(new HidlDeathHandler<CallbackType>(
-            std::bind(&HidlCallbackHandler::onObjectDeath,
-                      this,
-                      std::placeholders::_1))) {}
-  ~HidlCallbackHandler() = default;
+   public:
+    HidlCallbackHandler()
+        : death_handler_(new HidlDeathHandler<CallbackType>(
+              std::bind(&HidlCallbackHandler::onObjectDeath, this,
+                        std::placeholders::_1))) {}
+    ~HidlCallbackHandler() = default;
 
-  bool addCallback(const sp<CallbackType>& cb) {
-    // TODO(b/33818800): Can't compare proxies yet. So, use the cookie
-    // (callback proxy's raw pointer) to track the death of individual clients.
-    uint64_t cookie = reinterpret_cast<uint64_t>(cb.get());
-    if (cb_set_.find(cb) != cb_set_.end()) {
-      LOG(WARNING) << "Duplicate death notification registration";
-      return true;
+    bool addCallback(const sp<CallbackType>& cb) {
+        // TODO(b/33818800): Can't compare proxies yet. So, use the cookie
+        // (callback proxy's raw pointer) to track the death of individual
+        // clients.
+        uint64_t cookie = reinterpret_cast<uint64_t>(cb.get());
+        if (cb_set_.find(cb) != cb_set_.end()) {
+            LOG(WARNING) << "Duplicate death notification registration";
+            return true;
+        }
+        if (!cb->linkToDeath(death_handler_, cookie)) {
+            LOG(ERROR) << "Failed to register death notification";
+            return false;
+        }
+        cb_set_.insert(cb);
+        return true;
     }
-    if (!cb->linkToDeath(death_handler_, cookie)) {
-      LOG(ERROR) << "Failed to register death notification";
-      return false;
+
+    const std::set<android::sp<CallbackType>>& getCallbacks() {
+        return cb_set_;
     }
-    cb_set_.insert(cb);
-    return true;
-  }
 
-  const std::set<android::sp<CallbackType>>& getCallbacks() { return cb_set_; }
-
-  // Death notification for callbacks.
-  void onObjectDeath(uint64_t cookie) {
-    CallbackType* cb = reinterpret_cast<CallbackType*>(cookie);
-    const auto& iter = cb_set_.find(cb);
-    if (iter == cb_set_.end()) {
-      LOG(ERROR) << "Unknown callback death notification received";
-      return;
+    // Death notification for callbacks.
+    void onObjectDeath(uint64_t cookie) {
+        CallbackType* cb = reinterpret_cast<CallbackType*>(cookie);
+        const auto& iter = cb_set_.find(cb);
+        if (iter == cb_set_.end()) {
+            LOG(ERROR) << "Unknown callback death notification received";
+            return;
+        }
+        cb_set_.erase(iter);
+        LOG(DEBUG) << "Dead callback removed from list";
     }
-    cb_set_.erase(iter);
-    LOG(DEBUG) << "Dead callback removed from list";
-  }
 
-  void invalidate() {
-    for (const sp<CallbackType>& cb : cb_set_) {
-      if (!cb->unlinkToDeath(death_handler_)) {
-        LOG(ERROR) << "Failed to deregister death notification";
-      }
+    void invalidate() {
+        for (const sp<CallbackType>& cb : cb_set_) {
+            if (!cb->unlinkToDeath(death_handler_)) {
+                LOG(ERROR) << "Failed to deregister death notification";
+            }
+        }
+        cb_set_.clear();
     }
-    cb_set_.clear();
-  }
 
- private:
-  std::set<sp<CallbackType>> cb_set_;
-  sp<HidlDeathHandler<CallbackType>> death_handler_;
+   private:
+    std::set<sp<CallbackType>> cb_set_;
+    sp<HidlDeathHandler<CallbackType>> death_handler_;
 
-  DISALLOW_COPY_AND_ASSIGN(HidlCallbackHandler);
+    DISALLOW_COPY_AND_ASSIGN(HidlCallbackHandler);
 };
 
 }  // namespace hidl_callback_util

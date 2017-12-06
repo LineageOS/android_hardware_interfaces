@@ -24,12 +24,12 @@ namespace V1_2 {
 namespace implementation {
 
 class WifiFeatureFlags {
- public:
+   public:
 #ifdef WIFI_HIDL_FEATURE_AWARE
-  static const bool wifiHidlFeatureAware = true;
+    static const bool wifiHidlFeatureAware = true;
 #else
-  static const bool wifiHidlFeatureAware = false;
-#endif // WIFI_HIDL_FEATURE_AWARE
+    static const bool wifiHidlFeatureAware = false;
+#endif  // WIFI_HIDL_FEATURE_AWARE
 };
 
 }  // namespace implementation
