@@ -25,25 +25,25 @@ using android::wifi_hal::DriverTool;
 
 namespace {
 int convertIfaceTypeToFirmwareMode(IfaceType type) {
-  int mode;
-  switch (type) {
-    case IfaceType::AP:
-      mode = DriverTool::kFirmwareModeAp;
-      break;
-    case IfaceType::P2P:
-      mode = DriverTool::kFirmwareModeP2p;
-      break;
-    case IfaceType::NAN:
-      // NAN is exposed in STA mode currently.
-      mode = DriverTool::kFirmwareModeSta;
-      break;
-    case IfaceType::STA:
-      mode = DriverTool::kFirmwareModeSta;
-      break;
-  }
-  return mode;
+    int mode;
+    switch (type) {
+        case IfaceType::AP:
+            mode = DriverTool::kFirmwareModeAp;
+            break;
+        case IfaceType::P2P:
+            mode = DriverTool::kFirmwareModeP2p;
+            break;
+        case IfaceType::NAN:
+            // NAN is exposed in STA mode currently.
+            mode = DriverTool::kFirmwareModeSta;
+            break;
+        case IfaceType::STA:
+            mode = DriverTool::kFirmwareModeSta;
+            break;
+    }
+    return mode;
 }
-}
+}  // namespace
 
 namespace android {
 namespace hardware {
@@ -55,28 +55,29 @@ namespace mode_controller {
 WifiModeController::WifiModeController() : driver_tool_(new DriverTool) {}
 
 bool WifiModeController::isFirmwareModeChangeNeeded(IfaceType type) {
-  return driver_tool_->IsFirmwareModeChangeNeeded(
-      convertIfaceTypeToFirmwareMode(type));
+    return driver_tool_->IsFirmwareModeChangeNeeded(
+        convertIfaceTypeToFirmwareMode(type));
 }
 
 bool WifiModeController::changeFirmwareMode(IfaceType type) {
-  if (!driver_tool_->LoadDriver()) {
-    LOG(ERROR) << "Failed to load WiFi driver";
-    return false;
-  }
-  if (!driver_tool_->ChangeFirmwareMode(convertIfaceTypeToFirmwareMode(type))) {
-    LOG(ERROR) << "Failed to change firmware mode";
-    return false;
-  }
-  return true;
+    if (!driver_tool_->LoadDriver()) {
+        LOG(ERROR) << "Failed to load WiFi driver";
+        return false;
+    }
+    if (!driver_tool_->ChangeFirmwareMode(
+            convertIfaceTypeToFirmwareMode(type))) {
+        LOG(ERROR) << "Failed to change firmware mode";
+        return false;
+    }
+    return true;
 }
 
 bool WifiModeController::deinitialize() {
-  if (!driver_tool_->UnloadDriver()) {
-    LOG(ERROR) << "Failed to unload WiFi driver";
-    return false;
-  }
-  return true;
+    if (!driver_tool_->UnloadDriver()) {
+        LOG(ERROR) << "Failed to unload WiFi driver";
+        return false;
+    }
+    return true;
 }
 }  // namespace mode_controller
 }  // namespace implementation

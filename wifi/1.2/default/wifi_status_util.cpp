@@ -23,80 +23,80 @@ namespace V1_2 {
 namespace implementation {
 
 std::string legacyErrorToString(legacy_hal::wifi_error error) {
-  switch (error) {
-    case legacy_hal::WIFI_SUCCESS:
-      return "SUCCESS";
-    case legacy_hal::WIFI_ERROR_UNINITIALIZED:
-      return "UNINITIALIZED";
-    case legacy_hal::WIFI_ERROR_NOT_AVAILABLE:
-      return "NOT_AVAILABLE";
-    case legacy_hal::WIFI_ERROR_NOT_SUPPORTED:
-      return "NOT_SUPPORTED";
-    case legacy_hal::WIFI_ERROR_INVALID_ARGS:
-      return "INVALID_ARGS";
-    case legacy_hal::WIFI_ERROR_INVALID_REQUEST_ID:
-      return "INVALID_REQUEST_ID";
-    case legacy_hal::WIFI_ERROR_TIMED_OUT:
-      return "TIMED_OUT";
-    case legacy_hal::WIFI_ERROR_TOO_MANY_REQUESTS:
-      return "TOO_MANY_REQUESTS";
-    case legacy_hal::WIFI_ERROR_OUT_OF_MEMORY:
-      return "OUT_OF_MEMORY";
-    case legacy_hal::WIFI_ERROR_BUSY:
-      return "BUSY";
-    case legacy_hal::WIFI_ERROR_UNKNOWN:
-      return "UNKNOWN";
-  }
+    switch (error) {
+        case legacy_hal::WIFI_SUCCESS:
+            return "SUCCESS";
+        case legacy_hal::WIFI_ERROR_UNINITIALIZED:
+            return "UNINITIALIZED";
+        case legacy_hal::WIFI_ERROR_NOT_AVAILABLE:
+            return "NOT_AVAILABLE";
+        case legacy_hal::WIFI_ERROR_NOT_SUPPORTED:
+            return "NOT_SUPPORTED";
+        case legacy_hal::WIFI_ERROR_INVALID_ARGS:
+            return "INVALID_ARGS";
+        case legacy_hal::WIFI_ERROR_INVALID_REQUEST_ID:
+            return "INVALID_REQUEST_ID";
+        case legacy_hal::WIFI_ERROR_TIMED_OUT:
+            return "TIMED_OUT";
+        case legacy_hal::WIFI_ERROR_TOO_MANY_REQUESTS:
+            return "TOO_MANY_REQUESTS";
+        case legacy_hal::WIFI_ERROR_OUT_OF_MEMORY:
+            return "OUT_OF_MEMORY";
+        case legacy_hal::WIFI_ERROR_BUSY:
+            return "BUSY";
+        case legacy_hal::WIFI_ERROR_UNKNOWN:
+            return "UNKNOWN";
+    }
 }
 
 WifiStatus createWifiStatus(WifiStatusCode code,
                             const std::string& description) {
-  return {code, description};
+    return {code, description};
 }
 
 WifiStatus createWifiStatus(WifiStatusCode code) {
-  return createWifiStatus(code, "");
+    return createWifiStatus(code, "");
 }
 
 WifiStatus createWifiStatusFromLegacyError(legacy_hal::wifi_error error,
                                            const std::string& desc) {
-  switch (error) {
-    case legacy_hal::WIFI_ERROR_UNINITIALIZED:
-    case legacy_hal::WIFI_ERROR_NOT_AVAILABLE:
-      return createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE, desc);
+    switch (error) {
+        case legacy_hal::WIFI_ERROR_UNINITIALIZED:
+        case legacy_hal::WIFI_ERROR_NOT_AVAILABLE:
+            return createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE, desc);
 
-    case legacy_hal::WIFI_ERROR_NOT_SUPPORTED:
-      return createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED, desc);
+        case legacy_hal::WIFI_ERROR_NOT_SUPPORTED:
+            return createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED, desc);
 
-    case legacy_hal::WIFI_ERROR_INVALID_ARGS:
-    case legacy_hal::WIFI_ERROR_INVALID_REQUEST_ID:
-      return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS, desc);
+        case legacy_hal::WIFI_ERROR_INVALID_ARGS:
+        case legacy_hal::WIFI_ERROR_INVALID_REQUEST_ID:
+            return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS, desc);
 
-    case legacy_hal::WIFI_ERROR_TIMED_OUT:
-      return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN,
-                              desc + ", timed out");
+        case legacy_hal::WIFI_ERROR_TIMED_OUT:
+            return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN,
+                                    desc + ", timed out");
 
-    case legacy_hal::WIFI_ERROR_TOO_MANY_REQUESTS:
-      return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN,
-                              desc + ", too many requests");
+        case legacy_hal::WIFI_ERROR_TOO_MANY_REQUESTS:
+            return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN,
+                                    desc + ", too many requests");
 
-    case legacy_hal::WIFI_ERROR_OUT_OF_MEMORY:
-      return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN,
-                              desc + ", out of memory");
+        case legacy_hal::WIFI_ERROR_OUT_OF_MEMORY:
+            return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN,
+                                    desc + ", out of memory");
 
-    case legacy_hal::WIFI_ERROR_BUSY:
-      return createWifiStatus(WifiStatusCode::ERROR_BUSY);
+        case legacy_hal::WIFI_ERROR_BUSY:
+            return createWifiStatus(WifiStatusCode::ERROR_BUSY);
 
-    case legacy_hal::WIFI_ERROR_NONE:
-      return createWifiStatus(WifiStatusCode::SUCCESS, desc);
+        case legacy_hal::WIFI_ERROR_NONE:
+            return createWifiStatus(WifiStatusCode::SUCCESS, desc);
 
-    case legacy_hal::WIFI_ERROR_UNKNOWN:
-      return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN, "unknown");
-  }
+        case legacy_hal::WIFI_ERROR_UNKNOWN:
+            return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN, "unknown");
+    }
 }
 
 WifiStatus createWifiStatusFromLegacyError(legacy_hal::wifi_error error) {
-  return createWifiStatusFromLegacyError(error, "");
+    return createWifiStatusFromLegacyError(error, "");
 }
 
 }  // namespace implementation

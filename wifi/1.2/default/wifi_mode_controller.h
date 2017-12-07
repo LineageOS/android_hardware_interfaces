@@ -35,20 +35,20 @@ using namespace android::hardware::wifi::V1_0;
  * required state (essentially a wrapper over DriverTool).
  */
 class WifiModeController {
- public:
-  WifiModeController();
+   public:
+    WifiModeController();
 
-  // Checks if a firmware mode change is necessary to support the specified
-  // iface type operations.
-  bool isFirmwareModeChangeNeeded(IfaceType type);
-  // Change the firmware mode to support the specified iface type operations.
-  bool changeFirmwareMode(IfaceType type);
-  // Unload the driver. This should be invoked whenever |IWifi.stop()| is
-  // invoked.
-  bool deinitialize();
+    // Checks if a firmware mode change is necessary to support the specified
+    // iface type operations.
+    bool isFirmwareModeChangeNeeded(IfaceType type);
+    // Change the firmware mode to support the specified iface type operations.
+    bool changeFirmwareMode(IfaceType type);
+    // Unload the driver. This should be invoked whenever |IWifi.stop()| is
+    // invoked.
+    bool deinitialize();
 
- private:
-  std::unique_ptr<wifi_hal::DriverTool> driver_tool_;
+   private:
+    std::unique_ptr<wifi_hal::DriverTool> driver_tool_;
 };
 
 }  // namespace mode_controller
