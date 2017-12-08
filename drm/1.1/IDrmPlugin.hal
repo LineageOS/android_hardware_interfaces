@@ -1,0 +1,109 @@
+/**
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package android.hardware.drm@1.1;
+
+import @1.0::IDrmPlugin;
+import @1.0::IDrmPluginListener;
+import @1.0::Status;
+import @1.1::HdcpLevel;
+import @1.1::SecurityLevel;
+
+/**
+ * IDrmPlugin is used to interact with a specific drm plugin that was created by
+ * IDrm::createPlugin. A drm plugin provides methods for obtaining drm keys that
+ * may be used by a codec to decrypt protected video content.
+ */
+interface IDrmPlugin extends @1.0::IDrmPlugin {
+    /**
+     * Return the currently negotiated and max supported HDCP levels.
+     *
+     * The current level is based on the display(s) the device is connected to.
+     * If multiple HDCP-capable displays are simultaneously connected to
+     * separate interfaces, this method returns the lowest negotiated HDCP level
+     * of all interfaces.
+     *
+     * The maximum HDCP level is the highest level that can potentially be
+     * negotiated. It is a constant for any device, i.e. it does not depend on
+     * downstream receiving devices that could be connected. For example, if
+     * the device has HDCP 1.x keys and is capable of negotiating HDCP 1.x, but
+     * does not have HDCP 2.x keys, then the maximum HDCP capability would be
+     * reported as 1.x. If multiple HDCP-capable interfaces are present, it
+     * indicates the highest of the maximum HDCP levels of all interfaces.
+     *
+     * This method should only be used for informational purposes, not for
+     * enforcing compliance with HDCP requirements. Trusted enforcement of HDCP
+     * policies must be handled by the DRM system.
+     *
+     * @return status the status of the call. The status must be OK or
+     *         ERROR_DRM_INVALID_STATE if the HAL is in a state where the HDCP
+     *         level cannot be queried.
+     * @return connectedLevel the lowest HDCP level for any connected
+     *         displays
+     * @return maxLevel the highest HDCP level that can be supported
+     *         by the device
+     */
+    getHdcpLevels() generates (Status status, HdcpLevel connectedLevel,
+            HdcpLevel maxLevel);
+
+    /**
+     * Return the current number of open sessions and the maximum number of
+     * sessions that may be opened simultaneosly among all DRM instances for the
+     * active DRM scheme.
+     *
+     * @return status the status of the call. The status must be OK or
+     *         ERROR_DRM_INVALID_STATE if the HAL is in a state where number of
+     *         sessions cannot be queried.
+     * @return currentSessions the number of currently opened sessions
+     * @return maxSessions the maximum number of sessions that the device
+     *         can support
+     */
+    getNumberOfSessions() generates (Status status, uint32_t currentSessions,
+             uint32_t maxSessions);
+
+    /**
+     * Return the current security level of a session. A session has an initial
+     * security level determined by the robustness of the DRM system's
+     * implementation on the device.
+     *
+     * @param sessionId the session id the call applies to
+     * @return status the status of the call. The status must be OK or one of
+     *         the following errors: ERROR_DRM_SESSION_NOT_OPENED if the
+     *         session is not opened, BAD_VALUE if the sessionId is invalid or
+     *         ERROR_DRM_INVALID_STATE if the HAL is in a state where the
+     *         security level cannot be queried.
+     * @return level the current security level for the session
+     */
+    getSecurityLevel(vec<uint8_t> sessionId) generates(Status status,
+            SecurityLevel level);
+
+    /**
+     * Set the security level of a session. This can be useful if specific
+     * attributes of a lower security level are needed by an application, such
+     * as image manipulation or compositing which requires non-secure decoded
+     * frames. Reducing the security level may limit decryption to lower content
+     * resolutions, depending on the license policy.
+     *
+     * @param sessionId the session id the call applies to
+     * @param level the requested security level
+     * @return status the status of the call. The status must be OK or one of
+     *         the following errors: ERROR_DRM_SESSION_NOT_OPENED if the session
+     *         is not opened, BAD_VALUE if the sessionId or security level is
+     *         invalid or ERROR_DRM_INVALID_STATE if the HAL is in a state where
+     *         the security level cannot be set.
+     */
+    setSecurityLevel(vec<uint8_t> sessionId, SecurityLevel level)
+            generates(Status status);
+};
