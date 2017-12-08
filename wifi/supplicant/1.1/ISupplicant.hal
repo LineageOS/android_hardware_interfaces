@@ -17,6 +17,8 @@
 package android.hardware.wifi.supplicant@1.1;
 
 import @1.0::ISupplicant;
+import @1.0::ISupplicantIface;
+import @1.0::SupplicantStatus;
 
 /**
  * Interface exposed by the supplicant HIDL service registered
@@ -24,4 +26,32 @@ import @1.0::ISupplicant;
  * This is the root level object for any the supplicant interactions.
  */
 interface ISupplicant extends @1.0::ISupplicant {
+    /**
+     * Registers a wireless interface in supplicant.
+     *
+     * @param ifaceInfo Combination of the interface type and name(e.g wlan0).
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_EXISTS|
+     * @return iface HIDL interface object representing the interface if
+     *         successful, null otherwise.
+     */
+    addInterface(IfaceInfo ifaceInfo)
+        generates (SupplicantStatus status, ISupplicantIface iface);
+
+    /**
+     * Deregisters a wireless interface from supplicant.
+     *
+     * @param ifaceInfo Combination of the interface type and name(e.g wlan0).
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_UNKOWN|
+     */
+    removeInterface(IfaceInfo ifaceInfo) generates (SupplicantStatus status);
 };
