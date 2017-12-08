@@ -71,6 +71,7 @@ namespace wifi {
 namespace V1_2 {
 namespace implementation {
 using hidl_return_util::validateAndCall;
+using hidl_return_util::validateAndCallWithLock;
 
 WifiChip::WifiChip(
     ChipId chip_id, const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
@@ -121,9 +122,9 @@ Return<void> WifiChip::getAvailableModes(getAvailableModes_cb hidl_status_cb) {
 
 Return<void> WifiChip::configureChip(ChipModeId mode_id,
                                      configureChip_cb hidl_status_cb) {
-    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
-                           &WifiChip::configureChipInternal, hidl_status_cb,
-                           mode_id);
+    return validateAndCallWithLock(
+        this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+        &WifiChip::configureChipInternal, hidl_status_cb, mode_id);
 }
 
 Return<void> WifiChip::getMode(getMode_cb hidl_status_cb) {
@@ -397,7 +398,9 @@ WifiChip::getAvailableModesInternal() {
             {sta_chip_mode, ap_chip_mode}};
 }
 
-WifiStatus WifiChip::configureChipInternal(ChipModeId mode_id) {
+WifiStatus WifiChip::configureChipInternal(
+    /* NONNULL */ std::unique_lock<std::recursive_mutex>* lock,
+    ChipModeId mode_id) {
     if (mode_id != kStaChipModeId && mode_id != kApChipModeId) {
         return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
     }
@@ -405,7 +408,7 @@ WifiStatus WifiChip::configureChipInternal(ChipModeId mode_id) {
         LOG(DEBUG) << "Already in the specified mode " << mode_id;
         return createWifiStatus(WifiStatusCode::SUCCESS);
     }
-    WifiStatus status = handleChipConfiguration(mode_id);
+    WifiStatus status = handleChipConfiguration(lock, mode_id);
     if (status.code != WifiStatusCode::SUCCESS) {
         for (const auto& callback : event_cb_handler_.getCallbacks()) {
             if (!callback->onChipReconfigureFailure(status).isOk()) {
@@ -421,6 +424,7 @@ WifiStatus WifiChip::configureChipInternal(ChipModeId mode_id) {
         }
     }
     current_mode_id_ = mode_id;
+    LOG(INFO) << "Configured chip in mode " << mode_id;
     return status;
 }
 
@@ -792,15 +796,22 @@ WifiStatus WifiChip::resetTxPowerScenarioInternal() {
     return createWifiStatusFromLegacyError(legacy_status);
 }
 
-WifiStatus WifiChip::handleChipConfiguration(ChipModeId mode_id) {
+WifiStatus WifiChip::handleChipConfiguration(
+    /* NONNULL */ std::unique_lock<std::recursive_mutex>* lock,
+    ChipModeId mode_id) {
     // If the chip is already configured in a different mode, stop
     // the legacy HAL and then start it after firmware mode change.
-    // Currently the underlying implementation has a deadlock issue.
-    // We should return ERROR_NOT_SUPPORTED if chip is already configured in
-    // a different mode.
     if (current_mode_id_ != kInvalidModeId) {
-        // TODO(b/37446050): Fix the deadlock.
-        return createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED);
+        LOG(INFO) << "Reconfiguring chip from mode " << current_mode_id_
+                  << " to mode " << mode_id;
+        invalidateAndRemoveAllIfaces();
+        legacy_hal::wifi_error legacy_status =
+            legacy_hal_.lock()->stop(lock, []() {});
+        if (legacy_status != legacy_hal::WIFI_SUCCESS) {
+            LOG(ERROR) << "Failed to stop legacy HAL: "
+                       << legacyErrorToString(legacy_status);
+            return createWifiStatusFromLegacyError(legacy_status);
+        }
     }
     bool success;
     if (mode_id == kStaChipModeId) {

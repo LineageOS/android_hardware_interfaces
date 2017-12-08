@@ -141,7 +141,8 @@ class WifiChip : public V1_1::IWifiChip {
         const sp<IWifiChipEventCallback>& event_callback);
     std::pair<WifiStatus, uint32_t> getCapabilitiesInternal();
     std::pair<WifiStatus, std::vector<ChipMode>> getAvailableModesInternal();
-    WifiStatus configureChipInternal(ChipModeId mode_id);
+    WifiStatus configureChipInternal(
+        std::unique_lock<std::recursive_mutex>* lock, ChipModeId mode_id);
     std::pair<WifiStatus, uint32_t> getModeInternal();
     std::pair<WifiStatus, IWifiChip::ChipDebugInfo>
     requestChipDebugInfoInternal();
@@ -185,7 +186,8 @@ class WifiChip : public V1_1::IWifiChip {
     WifiStatus selectTxPowerScenarioInternal(TxPowerScenario scenario);
     WifiStatus resetTxPowerScenarioInternal();
 
-    WifiStatus handleChipConfiguration(ChipModeId mode_id);
+    WifiStatus handleChipConfiguration(
+        std::unique_lock<std::recursive_mutex>* lock, ChipModeId mode_id);
     WifiStatus registerDebugRingBufferCallback();
 
     ChipId chip_id_;
