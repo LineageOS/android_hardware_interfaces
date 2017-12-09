@@ -383,6 +383,7 @@ int Contexthub::contextHubCb(uint32_t hubId,
 
         msg.appName = rxMsg->app_name.id;
         msg.msgType = rxMsg->message_type;
+        msg.hostEndPoint = static_cast<uint16_t>(HostEndPoint::BROADCAST);
         msg.msg = std::vector<uint8_t>(static_cast<const uint8_t *>(rxMsg->message),
                                        static_cast<const uint8_t *>(rxMsg->message) +
                                        rxMsg->message_len);
