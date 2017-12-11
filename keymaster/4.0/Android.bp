@@ -16,12 +16,10 @@ hidl_interface {
     ],
     types: [
         "HardwareAuthToken",
-        "HardwareAuthTokenMacMethod",
         "KeyCharacteristics",
         "KeyParameter",
         "KeyPurpose",
         "Tag",
-        "TagType",
     ],
     gen_java: false,
 }
