@@ -223,12 +223,26 @@ class MediaCasHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     sp<ICas> mMediaCas;
     sp<IDescramblerBase> mDescramblerBase;
     sp<MediaCasListener> mCasListener;
+    typedef struct _OobInputTestParams {
+        const SubSample* subSamples;
+        uint32_t numSubSamples;
+        size_t imemSizeActual;
+        uint64_t imemOffset;
+        uint64_t imemSize;
+        uint64_t srcOffset;
+        uint64_t dstOffset;
+    } OobInputTestParams;
 
     ::testing::AssertionResult createCasPlugin(int32_t caSystemId);
     ::testing::AssertionResult openCasSession(std::vector<uint8_t>* sessionId);
-    ::testing::AssertionResult descrambleTestInputBuffer(const sp<IDescrambler>& descrambler,
-                                                         Status* descrambleStatus,
-                                                         sp<IMemory>* hidlInMemory);
+    ::testing::AssertionResult descrambleTestInputBuffer(
+            const sp<IDescrambler>& descrambler,
+            Status* descrambleStatus,
+            sp<IMemory>* hidlInMemory);
+    ::testing::AssertionResult descrambleTestOobInput(
+            const sp<IDescrambler>& descrambler,
+            Status* descrambleStatus,
+            const OobInputTestParams& params);
 };
 
 ::testing::AssertionResult MediaCasHidlTest::createCasPlugin(int32_t caSystemId) {
@@ -320,6 +334,72 @@ class MediaCasHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     hidl_string detailedError;
     auto returnVoid = descrambler->descramble(
         ScramblingControl::EVENKEY /*2*/, hidlSubSamples, srcBuffer, 0, dstBuffer, 0,
+        [&](Status status, uint32_t bytesWritten, const hidl_string& detailedErr) {
+            *descrambleStatus = status;
+            outBytes = bytesWritten;
+            detailedError = detailedErr;
+        });
+    if (!returnVoid.isOk() || *descrambleStatus != Status::OK) {
+        ALOGI("descramble failed, trans=%s, status=%d, outBytes=%u, error=%s",
+              returnVoid.description().c_str(), *descrambleStatus, outBytes, detailedError.c_str());
+    }
+    return ::testing::AssertionResult(returnVoid.isOk());
+}
+
+::testing::AssertionResult MediaCasHidlTest::descrambleTestOobInput(
+        const sp<IDescrambler>& descrambler,
+        Status* descrambleStatus,
+        const OobInputTestParams& params) {
+    hidl_vec<SubSample> hidlSubSamples;
+    hidlSubSamples.setToExternal(
+            const_cast<SubSample*>(params.subSamples), params.numSubSamples, false /*own*/);
+
+    sp<MemoryDealer> dealer = new MemoryDealer(params.imemSizeActual, "vts-cas");
+    if (nullptr == dealer.get()) {
+        ALOGE("couldn't get MemoryDealer!");
+        return ::testing::AssertionFailure();
+    }
+
+    sp<IMemory> mem = dealer->allocate(params.imemSizeActual);
+    if (nullptr == mem.get()) {
+        ALOGE("couldn't allocate IMemory!");
+        return ::testing::AssertionFailure();
+    }
+
+    // build hidl_memory from memory heap
+    ssize_t offset;
+    size_t size;
+    sp<IMemoryHeap> heap = mem->getMemory(&offset, &size);
+    if (nullptr == heap.get()) {
+        ALOGE("couldn't get memory heap!");
+        return ::testing::AssertionFailure();
+    }
+
+    native_handle_t* nativeHandle = native_handle_create(1, 0);
+    if (!nativeHandle) {
+        ALOGE("failed to create native handle!");
+        return ::testing::AssertionFailure();
+    }
+    nativeHandle->data[0] = heap->getHeapID();
+
+    SharedBuffer srcBuffer = {
+            .heapBase = hidl_memory("ashmem", hidl_handle(nativeHandle), heap->getSize()),
+            .offset = (uint64_t) offset + params.imemOffset,
+            .size = (uint64_t) params.imemSize,
+    };
+
+    DestinationBuffer dstBuffer;
+    dstBuffer.type = BufferType::SHARED_MEMORY;
+    dstBuffer.nonsecureMemory = srcBuffer;
+
+    uint32_t outBytes;
+    hidl_string detailedError;
+    auto returnVoid = descrambler->descramble(
+        ScramblingControl::EVENKEY /*2*/, hidlSubSamples,
+        srcBuffer,
+        params.srcOffset,
+        dstBuffer,
+        params.dstOffset,
         [&](Status status, uint32_t bytesWritten, const hidl_string& detailedErr) {
             *descrambleStatus = status;
             outBytes = bytesWritten;
@@ -611,6 +691,153 @@ TEST_F(MediaCasHidlTest, TestClearKeyErrors) {
 
     // Verify that requiresSecureDecoderComponent handles invalid mime
     EXPECT_FALSE(mDescramblerBase->requiresSecureDecoderComponent("bad"));
+}
+
+TEST_F(MediaCasHidlTest, TestClearKeyOobFails) {
+    description("Test that oob descramble request fails with expected error");
+
+    ASSERT_TRUE(createCasPlugin(CLEAR_KEY_SYSTEM_ID));
+
+    auto returnStatus = mMediaCas->provision(hidl_string(PROVISION_STR));
+    EXPECT_TRUE(returnStatus.isOk());
+    EXPECT_EQ(Status::OK, returnStatus);
+
+    std::vector<uint8_t> sessionId;
+    ASSERT_TRUE(openCasSession(&sessionId));
+
+    returnStatus = mDescramblerBase->setMediaCasSession(sessionId);
+    EXPECT_TRUE(returnStatus.isOk());
+    EXPECT_EQ(Status::OK, returnStatus);
+
+    hidl_vec<uint8_t> hidlEcm;
+    hidlEcm.setToExternal(const_cast<uint8_t*>(kEcmBinaryBuffer), sizeof(kEcmBinaryBuffer));
+    returnStatus = mMediaCas->processEcm(sessionId, hidlEcm);
+    EXPECT_TRUE(returnStatus.isOk());
+    EXPECT_EQ(Status::OK, returnStatus);
+
+    sp<IDescrambler> descrambler = IDescrambler::castFrom(mDescramblerBase);
+    ASSERT_NE(nullptr, descrambler.get());
+
+    Status descrambleStatus = Status::OK;
+
+    // test invalid src buffer offset
+    ASSERT_TRUE(descrambleTestOobInput(
+            descrambler,
+            &descrambleStatus,
+            {
+                .subSamples     = kSubSamples,
+                .numSubSamples  = sizeof(kSubSamples)/sizeof(SubSample),
+                .imemSizeActual = sizeof(kInBinaryBuffer),
+                .imemOffset     = 0xcccccc,
+                .imemSize       = sizeof(kInBinaryBuffer),
+                .srcOffset      = 0,
+                .dstOffset      = 0
+            }));
+    EXPECT_EQ(Status::BAD_VALUE, descrambleStatus);
+
+    // test invalid src buffer size
+    ASSERT_TRUE(descrambleTestOobInput(
+            descrambler,
+            &descrambleStatus,
+            {
+                .subSamples     = kSubSamples,
+                .numSubSamples  = sizeof(kSubSamples)/sizeof(SubSample),
+                .imemSizeActual = sizeof(kInBinaryBuffer),
+                .imemOffset     = 0,
+                .imemSize       = 0xcccccc,
+                .srcOffset      = 0,
+                .dstOffset      = 0
+            }));
+    EXPECT_EQ(Status::BAD_VALUE, descrambleStatus);
+
+    // test invalid src buffer size
+    ASSERT_TRUE(descrambleTestOobInput(
+            descrambler,
+            &descrambleStatus,
+            {
+                .subSamples     = kSubSamples,
+                .numSubSamples  = sizeof(kSubSamples)/sizeof(SubSample),
+                .imemSizeActual = sizeof(kInBinaryBuffer),
+                .imemOffset     = 1,
+                .imemSize       = (uint64_t)-1,
+                .srcOffset      = 0,
+                .dstOffset      = 0
+            }));
+    EXPECT_EQ(Status::BAD_VALUE, descrambleStatus);
+
+    // test invalid srcOffset
+    ASSERT_TRUE(descrambleTestOobInput(
+            descrambler,
+            &descrambleStatus,
+            {
+                .subSamples     = kSubSamples,
+                .numSubSamples  = sizeof(kSubSamples)/sizeof(SubSample),
+                .imemSizeActual = sizeof(kInBinaryBuffer),
+                .imemOffset     = 0,
+                .imemSize       = sizeof(kInBinaryBuffer),
+                .srcOffset      = 0xcccccc,
+                .dstOffset      = 0
+            }));
+    EXPECT_EQ(Status::BAD_VALUE, descrambleStatus);
+
+    // test invalid dstOffset
+    ASSERT_TRUE(descrambleTestOobInput(
+            descrambler,
+            &descrambleStatus,
+            {
+                .subSamples     = kSubSamples,
+                .numSubSamples  = sizeof(kSubSamples)/sizeof(SubSample),
+                .imemSizeActual = sizeof(kInBinaryBuffer),
+                .imemOffset     = 0,
+                .imemSize       = sizeof(kInBinaryBuffer),
+                .srcOffset      = 0,
+                .dstOffset      = 0xcccccc
+            }));
+    EXPECT_EQ(Status::BAD_VALUE, descrambleStatus);
+
+    // test detection of oob subsample sizes
+    const SubSample invalidSubSamples1[] =
+        {{162, 0}, {0, 184}, {0, 0xdddddd}};
+
+    ASSERT_TRUE(descrambleTestOobInput(
+            descrambler,
+            &descrambleStatus,
+            {
+                .subSamples     = invalidSubSamples1,
+                .numSubSamples  = sizeof(invalidSubSamples1)/sizeof(SubSample),
+                .imemSizeActual = sizeof(kInBinaryBuffer),
+                .imemOffset     = 0,
+                .imemSize       = sizeof(kInBinaryBuffer),
+                .srcOffset      = 0,
+                .dstOffset      = 0
+            }));
+    EXPECT_EQ(Status::BAD_VALUE, descrambleStatus);
+
+    // test detection of overflowing subsample sizes
+    const SubSample invalidSubSamples2[] =
+        {{162, 0}, {0, 184}, {2, (uint32_t)-1}};
+
+    ASSERT_TRUE(descrambleTestOobInput(
+            descrambler,
+            &descrambleStatus,
+            {
+                .subSamples     = invalidSubSamples2,
+                .numSubSamples  = sizeof(invalidSubSamples2)/sizeof(SubSample),
+                .imemSizeActual = sizeof(kInBinaryBuffer),
+                .imemOffset     = 0,
+                .imemSize       = sizeof(kInBinaryBuffer),
+                .srcOffset      = 0,
+                .dstOffset      = 0
+            }));
+    EXPECT_EQ(Status::BAD_VALUE, descrambleStatus);
+
+    returnStatus = mDescramblerBase->release();
+    EXPECT_TRUE(returnStatus.isOk());
+    EXPECT_EQ(Status::OK, returnStatus);
+
+    returnStatus = mMediaCas->release();
+    EXPECT_TRUE(returnStatus.isOk());
+    EXPECT_EQ(Status::OK, returnStatus);
 }
 
 }  // anonymous namespace
