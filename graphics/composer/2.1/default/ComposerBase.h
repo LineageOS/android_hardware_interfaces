@@ -38,6 +38,8 @@ class ComposerBase {
 public:
     virtual ~ComposerBase() {};
 
+    virtual bool hasCapability(hwc2_capability_t capability) = 0;
+
     virtual void removeClient() = 0;
     virtual void enableCallback(bool enable) = 0;
     virtual uint32_t getMaxVirtualDisplayCount() = 0;
