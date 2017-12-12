@@ -50,13 +50,13 @@ inline ::std::ostream& operator<<(::std::ostream& os, PaddingMode value) {
     return os << toString(value);
 }
 
-inline ::std::ostream& operator<<(::std::ostream& os, KeyOrigin value) {
-    return os << toString(value);
-}
-
 }  // namespace V3_0
 
 namespace V4_0 {
+
+inline ::std::ostream& operator<<(::std::ostream& os, KeyOrigin value) {
+    return os << toString(value);
+}
 
 template <typename ValueT>
 ::std::ostream& operator<<(::std::ostream& os, const NullOr<ValueT>& value) {

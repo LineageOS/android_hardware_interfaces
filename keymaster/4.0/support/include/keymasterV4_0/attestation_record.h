@@ -24,9 +24,6 @@ namespace hardware {
 namespace keymaster {
 namespace V4_0 {
 
-using V3_0::ErrorCode;
-using V3_0::SecurityLevel;
-
 class AuthorizationSet;
 
 /**

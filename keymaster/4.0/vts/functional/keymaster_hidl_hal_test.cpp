@@ -138,6 +138,8 @@ bool operator==(const KeyParameter& a, const KeyParameter& b) {
             return a.f.integer == b.f.integer;
         case Tag::ORIGIN:
             return a.f.origin == b.f.origin;
+        case Tag::HARDWARE_TYPE:
+            return a.f.hardwareType == b.f.hardwareType;
     }
 
     return false;
@@ -435,9 +437,9 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         ASSERT_NE(keymaster_, nullptr);
 
         ASSERT_TRUE(keymaster_
-                        ->getHardwareInfo([&](bool is_secure, const hidl_string& name,
+                        ->getHardwareInfo([&](SecurityLevel securityLevel, const hidl_string& name,
                                               const hidl_string& author) {
-                            is_secure_ = is_secure;
+                            securityLevel_ = securityLevel;
                             name_ = name;
                             author_ = author;
                         })
@@ -617,7 +619,7 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         ErrorCode error;
         EXPECT_TRUE(keymaster_
                         ->update(op_handle, in_params.hidl_data(), HidlBuf(input),
-                                 HardwareAuthToken(),
+                                 HardwareAuthToken(), VerificationToken(),
                                  [&](ErrorCode hidl_error, uint32_t hidl_input_consumed,
                                      const hidl_vec<KeyParameter>& hidl_out_params,
                                      const HidlBuf& hidl_output) {
@@ -647,7 +649,7 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         EXPECT_TRUE(
             keymaster_
                 ->finish(op_handle, in_params.hidl_data(), HidlBuf(input), HidlBuf(signature),
-                         HardwareAuthToken(),
+                         HardwareAuthToken(), VerificationToken(),
                          [&](ErrorCode hidl_error, const hidl_vec<KeyParameter>& hidl_out_params,
                              const HidlBuf& hidl_output) {
                              error = hidl_error;
@@ -869,7 +871,7 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         return retval;
     }
 
-    static bool IsSecure() { return is_secure_; }
+    static bool IsSecure() { return securityLevel_ != SecurityLevel::SOFTWARE; }
 
     HidlBuf key_blob_;
     KeyCharacteristics key_characteristics_;
@@ -880,7 +882,7 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     static uint32_t os_version_;
     static uint32_t os_patch_level_;
 
-    static bool is_secure_;
+    static SecurityLevel securityLevel_;
     static hidl_string name_;
     static hidl_string author_;
 };
@@ -947,7 +949,7 @@ bool verify_attestation_record(const string& challenge, const string& app_id,
 sp<IKeymasterDevice> KeymasterHidlTest::keymaster_;
 uint32_t KeymasterHidlTest::os_version_;
 uint32_t KeymasterHidlTest::os_patch_level_;
-bool KeymasterHidlTest::is_secure_;
+SecurityLevel KeymasterHidlTest::securityLevel_;
 hidl_string KeymasterHidlTest::name_;
 hidl_string KeymasterHidlTest::author_;
 

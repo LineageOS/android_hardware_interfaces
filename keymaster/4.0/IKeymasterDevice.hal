@@ -26,22 +26,147 @@ import android.hardware.keymaster@3.0::KeyFormat;
 interface IKeymasterDevice {
 
     /**
-     * Returns information about the underlying keymaster hardware.
+     * Returns information about the underlying Keymaster hardware.
      *
-     * @return isSecure Indicates whether this keymaster implementation is in some sort of secure
-     *         hardware.
+     * @return security level of the Keymaster implementation accessed through this HAL.
      *
-     * @return keymasterName is the name of the keymaster implementation.
+     * @return keymasterName is the name of the Keymaster implementation.
      *
-     * @return keymasterAuthorName is the name of the author of the keymaster implementation
+     * @return keymasterAuthorName is the name of the author of the Keymaster implementation
      *         (organization name, not individual).
      */
-    getHardwareInfo() generates (bool isSecure, string keymasterName, string keymasterAuthorName);
+    getHardwareInfo()
+        generates (SecurityLevel securityLevel, string keymasterName, string keymasterAuthorName);
 
     /**
-     * Adds entropy to the RNG used by keymaster.  Entropy added through this method must not be the
-     * only source of entropy used.  The keymaster implementation must securely mix entropy provided
-     * through this method with internally-generated entropy.
+     * Start the creation of an HMAC key, shared with another Keymaster implementation.  Any device
+     * with a StrongBox Keymaster has two Keymaster instances, because there must be a TEE Keymaster
+     * as well.  The HMAC key used to MAC and verify authentication tokens must be shared between
+     * TEE and StrongBox so they can each validate tokens produced by the other.  This method is the
+     * first step in the process for for agreeing on a shared key.  It is called by Keystore during
+     * startup if and only if Keystore loads multiple Keymaster HALs.  Keystore calls it on each of
+     * the HAL instances and collects the results in preparation for the second step.
+     */
+    getHmacSharingParameters() generates (ErrorCode error, HmacSharingParameters params);
+
+    /**
+     * Complete the creation of an HMAC key, shared with another Keymaster implementation.  Any
+     * device with a StrongBox Keymaster has two Keymasters instances, because there must be a TEE
+     * Keymaster as well.  The HMAC key used to MAC and verify authentication tokens must be shared
+     * between TEE and StrongBox so they can each validate tokens produced by the other.  This
+     * method is the second and final step in the process for for agreeing on a shared key.  It is
+     * called by Keystore during startup if and only if Keystore loads multiple Keymaster HALs.
+     * Keystore calls it on each of the HAL instances, and sends to it all of the
+     * HmacSharingParameters returned by all HALs.
+     *
+     * This method computes the shared 32-byte HMAC ``H'' as follows (all Keymaster instances
+     * perform the same computation to arrive at the same result):
+     *
+     *     H = CKDF(key = K,
+     *              context = P1 || P2 || ... || Pn,
+     *              label = "KeymasterSharedMac")
+     *
+     * where:
+     *
+     *     ``CKDF'' is the standard AES-CMAC KDF from NIST SP 800-108 in counter mode (see Section
+     *           5.1 of the referenced publication).  ``key'', ``context'', and ``label'' are
+     *           defined in the standard.  The counter is prefixed, as shown in the construction on
+     *           page 12 of the standard.  The label string is UTF-8 encoded.
+     *
+     *     ``K'' is a pre-established shared secret, set up during factory reset.  The mechanism for
+     *           establishing this shared secret is implementation-defined, but see below for a
+     *           recommended approach, which assumes that the TEE Keymaster does not have storage
+     *           available to it, but the StrongBox Keymaster does.
+     *
+     *           <b>CRITICAL SECURITY REQUIREMENT</b>: All keys created by a Keymaster instance must
+     *           be cryptographically bound to the value of K, such that establishing a new K
+     *           permanently destroys them.
+     *
+     *     ``||'' represents concatenation.
+     *
+     *     ``Pi'' is the i'th HmacSharingParameters value in the params vector.  Note that at
+     *           present only two Keymaster implementations are supported, but this mechanism
+     *           extends without modification to any number of implementations.  Encoding of an
+     *           HmacSharingParameters is the concatenation of its two fields, i.e. seed || nonce.
+     *
+     * Process for establishing K:
+     *
+     *     Any method of securely establishing K that ensures that an attacker cannot obtain or
+     *     derive its value is acceptable.  What follows is a recommended approach, to be executed
+     *     during each factory reset.  It relies on use of the factory-installed attestation keys to
+     *     mitigate man-in-the-middle attacks.  This protocol requires that one of the instancess
+     *     have secure persistent storage.  This model was chosen because StrongBox has secure
+     *     persistent storage (by definition), but the TEE may not.  The instance without storage is
+     *     assumed to be able to derive a unique hardware-bound key (HBK) which is used only for
+     *     this purpose, and is not derivable outside of the secure environment..
+     *
+     *     In what follows, T is the Keymaster instance without storage, S is the Keymaster instance
+     *     with storage:
+     *
+     *     1. T generates an ephemeral EC P-256 key pair K1
+     *     2. T sends K1_pub to S, signed with T's attestation key.
+     *     3. S validates the signature on K1_pub.
+     *     4. S generates an ephemeral EC P-256 key pair K2.
+     *     5. S sends {K1_pub, K2_pub}, to T, signed with S's attestation key.
+     *     6. T validates the signature on {K1_pub, K2_pub}
+     *     7. T uses {K1_priv, K2_pub} with ECDH to compute session secret Q.
+     *     8. T generates a random seed S
+     *     9. T computes K = KDF(HBK, S), where KDF is some secure key derivation function.
+     *     10. T sends M = AES-GCM-ENCRYPT(Q, {S || K}) to S.
+     *     10. S uses {K2_priv, K1_pub} with ECDH to compute session secret Q.
+     *     11. S computes S || K = AES-GCM-DECRYPT(Q, M) and stores S and K.
+     *
+     *     When S receives the getHmacSharingParameters call, it returns the stored S as the seed
+     *     and a nonce.  When T receives the same call, it returns an empty seed and a nonce.  When
+     *     T receives the computeSharedHmac call, it uses the seed provided by S to compute K.  S,
+     *     of course, has K stored.
+     *
+     * @param params The HmacSharingParameters data returned by all Keymaster instances when
+     *        getHmacSharingParameters was called.
+     *
+     * @return sharingCheck A 32-byte value used to verify that all Keymaster instances have
+     *         computed the same shared HMAC key.  The sharingCheck value is computed as follows:
+     *
+     *             sharingCheck = HMAC(H, "Keymaster HMAC Verification")
+     *
+     *         The string is UTF-8 encoded.  If the returned values of all Keymaster instances don't
+     *         match, Keystore will assume that HMAC agreement failed.
+     */
+    computeSharedHmac(vec<HmacSharingParameters> params)
+        generates (ErrorCode error, vec<uint8_t> sharingCheck);
+
+    /**
+     * Verify authorizations for another Keymaster instance.
+     *
+     * On systems with both a StrongBox and a TEE Keymaster instance it is sometimes useful to ask
+     * the TEE Keymaster to verify authorizations for a key hosted in StrongBox.
+     *
+     * For every StrongBox operation, Keystore is required to call this method on the TEE Keymaster,
+     * passing in the StrongBox key's hardwareEnforced authorization list and the operation handle
+     * returned by StrongBox begin().  The TEE Keymaster must validate all of the authorizations it
+     * can and return those it validated in the VerificationToken.  If it cannot verify any, the
+     * parametersVerified field of the VerificationToken must be empty.  Keystore must then pass the
+     * VerificationToken to the subsequent invocations of StrongBox update() and finish().
+     *
+     * StrongBox implementations must return ErrorCode::UNIMPLEMENTED.
+     *
+     * @param operationHandle the operation handle returned by StrongBox Keymaster's begin().
+     *
+     * @param parametersToVerify Set of authorizations to verify.
+     *
+     * @param authToken A HardwareAuthToken if needed to authorize key usage.
+     */
+    verifyAuthorization(uint64_t operationHandle, vec<KeyParameter> parametersToVerify,
+                        HardwareAuthToken authToken)
+        generates (ErrorCode error, VerificationToken token);
+
+
+    /**
+     * Adds entropy to the RNG used by Keymaster.  Entropy added through this method is guaranteed
+     * not to be the only source of entropy used, and the mixing function is required to be secure,
+     * in the sense that if the RNG is seeded (from any source) with any data the attacker cannot
+     * predict (or control), then the RNG output is indistinguishable from random.  Thus, if the
+     * entropy from any source is good, the output must be good.
      *
      * @param data Bytes to be mixed into the RNG.
      *
@@ -52,7 +177,7 @@ interface IKeymasterDevice {
     /**
      * Generates a key, or key pair, returning a key blob and a description of the key.
      *
-     * @param keyParams Key generation parameters are defined as keymaster tag/value pairs, provided
+     * @param keyParams Key generation parameters are defined as Keymaster tag/value pairs, provided
      *        in params.  See Tag in types.hal for the full list.
      *
      * @return error See the ErrorCode enum in types.hal.
@@ -70,7 +195,7 @@ interface IKeymasterDevice {
     /**
      * Imports a key, or key pair, returning a key blob and/or a description of the key.
      *
-     * @param keyParams Key generation parameters are defined as keymaster tag/value pairs, provided
+     * @param keyParams Key generation parameters are defined as Keymaster tag/value pairs, provided
      *        in params.  See Tag for the full list.
      *
      * @param keyFormat The format of the key material to import.
@@ -86,6 +211,77 @@ interface IKeymasterDevice {
      * @return keyCharacteristics Decription of the generated key.
      */
     importKey(vec<KeyParameter> keyParams, KeyFormat keyFormat, vec<uint8_t> keyData)
+        generates (ErrorCode error, vec<uint8_t> keyBlob, KeyCharacteristics keyCharacteristics);
+
+    /**
+     * Securely imports a key, or key pair, returning a key blob and a description of the imported
+     * key.
+     *
+     * @param wrappedKeyData The wrapped key material to import.  The wrapped key is in DER-encoded
+     * ASN.1 format, specified by the following schema:
+     *
+     *     KeyDescription ::= SEQUENCE(
+     *         keyFormat INTEGER,                   # Values from KeyFormat enum.
+     *         keyParams AuthorizationList,
+     *     )
+     *
+     *     SecureKeyWrapper ::= SEQUENCE(
+     *         version INTEGER,                     # Contains value 0
+     *         encryptedTransportKey OCTET_STRING,
+     *         initializationVector OCTET_STRING,
+     *         keyDescription KeyDescription,
+     *         encryptedKey OCTET_STRING,
+     *         tag OCTET_STRING
+     *     )
+     *
+     *     Where:
+     *
+     *     o keyFormat is an integer from the KeyFormat enum, defining the format of the plaintext
+     *       key material.
+     *     o keyParams is the characteristics of the key to be imported (as with generateKey or
+     *       importKey).  If the secure import is successful, these characteristics must be
+     *       associated with the key exactly as if the key material had been insecurely imported
+     *       with the @3.0::IKeymasterDevice::importKey.
+     *     o encryptedTransportKey is a 256-bit AES key, XORed with a masking key and then encrypted
+     *       in RSA-OAEP mode (SHA-256 digest, SHA-1 MGF1 digest) with the wrapping key specified by
+     *       wrappingKeyBlob.
+     *     o keyDescription is a KeyDescription, above.
+     *     o encryptedKey is the key material of the key to be imported, in format keyFormat, and
+     *       encrypted with encryptedEphemeralKey in AES-GCM mode, with the DER-encoded
+     *       representation of keyDescription provided as additional authenticated data.
+     *     o tag is the tag produced by the AES-GCM encryption of encryptedKey.
+     *
+     * So, importWrappedKey does the following:
+     *
+     *     1. Get the private key material for wrappingKeyBlob, verifying that the wrapping key has
+     *        purpose KEY_WRAP, padding mode RSA_OAEP, and digest SHA_2_256, returning the
+     *        appropriate error if any of those requirements fail.
+     *     2. Extract the encryptedTransportKey field from the SecureKeyWrapper, and decrypt
+     *        it with the wrapping key.
+     *     3. XOR the result of step 2 with maskingKey.
+     *     4. Use the result of step 3 as an AES-GCM key to decrypt encryptedKey, using the encoded
+     *        value of keyDescription as the additional authenticated data.  Call the result
+     *        "keyData" for the next step.
+     *     5. Perform the equivalent of calling importKey(keyParams, keyFormat, keyData), except
+     *        that the origin tag should be set to SECURELY_IMPORTED.
+     *
+     * @param wrappingKeyBlob The opaque key descriptor returned by generateKey() or importKey().
+     *        This key must have been created with Purpose::WRAP_KEY, and must be a key algorithm
+     *        that supports encryption and must be at least as strong (in key size) as the key to be
+     *        imported (per NIST key length recommendations: 112 bits symmetric is equivalent to
+     *        2048-bit RSA or 224-bit EC, 128 bits symmetric ~ 3072-bit RSA or 256-bit EC, etc.).
+     *
+     * @param maskingKey The 32-byte value XOR'd with the transport key in the SecureWrappedKey
+     *        structure.
+     *
+     * @return error See the ErrorCode enum.
+     *
+     * @return keyBlob Opaque descriptor of the imported key.  It is recommended that the keyBlob
+     *         contain a copy of the key material, wrapped in a key unavailable outside secure
+     *         hardware.
+     */
+    importWrappedKey(vec<uint8_t> wrappedKeyData, vec<uint8_t> wrappingKeyBlob,
+                     vec<uint8_t> maskingKey)
         generates (ErrorCode error, vec<uint8_t> keyBlob, KeyCharacteristics keyCharacteristics);
 
     /**
@@ -139,7 +335,7 @@ interface IKeymasterDevice {
 
     /**
      * Generates a signed X.509 certificate chain attesting to the presence of keyToAttest in
-     * keymaster.  The certificate must contain an extension with OID 1.3.6.1.4.1.11129.2.1.17 and
+     * Keymaster.  The certificate must contain an extension with OID 1.3.6.1.4.1.11129.2.1.17 and
      * value defined in:
      *
      *     https://developer.android.com/training/articles/security-key-attestation.html.
@@ -161,7 +357,7 @@ interface IKeymasterDevice {
      * Upgrades an old key blob.  Keys can become "old" in two ways: Keymaster can be upgraded to a
      * new version with an incompatible key blob format, or the system can be updated to invalidate
      * the OS version and/or patch level.  In either case, attempts to use an old key blob with
-     * getKeyCharacteristics(), exportKey(), attestKey() or begin() must result in keymaster
+     * getKeyCharacteristics(), exportKey(), attestKey() or begin() must result in Keymaster
      * returning ErrorCode::KEY_REQUIRES_UPGRADE.  The caller must use this method to upgrade the
      * key blob.
      *
@@ -221,7 +417,7 @@ interface IKeymasterDevice {
      * to update(), finish() or abort().
      *
      * It is critical that each call to begin() be paired with a subsequent call to finish() or
-     * abort(), to allow the keymaster implementation to clean up any internal operation state.  The
+     * abort(), to allow the Keymaster implementation to clean up any internal operation state.  The
      * caller's failure to do this may leak internal state space or other internal resources and may
      * eventually cause begin() to return ErrorCode::TOO_MANY_OPERATIONS when it runs out of space
      * for operations.  Any result other than ErrorCode::OK from begin(), update() or finish()
@@ -282,6 +478,10 @@ interface IKeymasterDevice {
      * @param authToken Authentication token.  Callers that provide no token must set all numeric
      *        fields to zero and the MAC must be an empty vector.
      *
+     * @param verificationToken Verification token, used to prove that another Keymaster HAL has
+     *        verified some parameters, and to deliver the other HAL's current timestamp, if needed.
+     *        If not provided, all fields must be initialized to zero and vectors empty.
+     *
      * @return error See the ErrorCode enum in types.hal.
      *
      * @return inputConsumed Amount of data that was consumed by update().  If this is less than the
@@ -294,7 +494,7 @@ interface IKeymasterDevice {
      * @return output The output data, if any.
      */
     update(OperationHandle operationHandle, vec<KeyParameter> inParams, vec<uint8_t> input,
-           HardwareAuthToken authToken)
+           HardwareAuthToken authToken, VerificationToken verificationToken)
         generates (ErrorCode error, uint32_t inputConsumed, vec<KeyParameter> outParams,
                    vec<uint8_t> output);
 
@@ -316,6 +516,10 @@ interface IKeymasterDevice {
      * @param authToken Authentication token.  Callers that provide no token must set all numeric
      *        fields to zero and the MAC must be an empty vector.
      *
+     * @param verificationToken Verification token, used to prove that another Keymaster HAL has
+     *        verified some parameters, and to deliver the other HAL's current timestamp, if needed.
+     *        If not provided, all fields must be initialized to zero and vectors empty.
+     *
      * @return error See the ErrorCode enum in types.hal.
      *
      * @return outParams Any output parameters generated by finish().
@@ -323,7 +527,7 @@ interface IKeymasterDevice {
      * @return output The output data, if any.
      */
     finish(OperationHandle operationHandle, vec<KeyParameter> inParams, vec<uint8_t> input,
-           vec<uint8_t> signature, HardwareAuthToken authToken)
+           vec<uint8_t> signature, HardwareAuthToken authToken, VerificationToken verificationToken)
         generates (ErrorCode error, vec<KeyParameter> outParams, vec<uint8_t> output);
 
     /**
