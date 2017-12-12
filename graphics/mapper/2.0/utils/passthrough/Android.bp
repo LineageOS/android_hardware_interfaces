@@ -13,25 +13,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_library_shared {
-    name: "android.hardware.graphics.mapper@2.0-impl",
+cc_library_headers {
+    name: "android.hardware.graphics.mapper@2.0-passthrough",
     defaults: ["hidl_defaults"],
     vendor: true,
-    relative_install_path: "hw",
-    srcs: ["passthrough.cpp"],
-    header_libs: [
-        "android.hardware.graphics.mapper@2.0-passthrough"
-    ],
     shared_libs: [
         "android.hardware.graphics.mapper@2.0",
-        "libbase",
-        "libcutils",
         "libhardware",
-        "libhidlbase",
-        "libhidltransport",
-        "liblog",
         "libsync",
-        "libutils",
     ],
-    cflags: ["-DLOG_TAG=\"MapperHal\""],
+    export_shared_lib_headers: [
+        "android.hardware.graphics.mapper@2.0",
+        "libhardware",
+        "libsync",
+    ],
+    header_libs: [
+        "android.hardware.graphics.mapper@2.0-hal",
+    ],
+    export_header_lib_headers: [
+        "android.hardware.graphics.mapper@2.0-hal",
+    ],
+    export_include_dirs: ["include"],
+}
+
+cc_library_headers {
+    name: "android.hardware.graphics.mapper@2.0-passthrough_headers",
+    vendor: true,
+    export_include_dirs: ["include"],
 }

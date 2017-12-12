@@ -22,10 +22,10 @@
 
 #include <cstring>  // for strerror
 
-#include <GrallocBufferDescriptor.h>
 #include <allocator-hal/2.0/AllocatorHal.h>
 #include <hardware/gralloc.h>
 #include <log/log.h>
+#include <mapper-passthrough/2.0/GrallocBufferDescriptor.h>
 
 namespace android {
 namespace hardware {
@@ -38,7 +38,7 @@ namespace detail {
 
 using mapper::V2_0::BufferDescriptor;
 using mapper::V2_0::Error;
-using mapper::V2_0::implementation::grallocDecodeBufferDescriptor;
+using mapper::V2_0::passthrough::grallocDecodeBufferDescriptor;
 
 // Gralloc0HalImpl implements V2_*::hal::AllocatorHal on top of gralloc0
 template <typename Hal>
