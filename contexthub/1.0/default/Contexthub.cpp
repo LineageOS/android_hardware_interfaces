@@ -281,11 +281,11 @@ int Contexthub::handleOsMessage(sp<IContexthubCallback> cb,
                 result = TransactionResult::FAILURE;
             }
 
+            mIsTransactionPending = false;
             if (cb != nullptr) {
                 cb->handleTxnResult(mTransactionId, result);
             }
             retVal = 0;
-            mIsTransactionPending = false;
             break;
         }
 
