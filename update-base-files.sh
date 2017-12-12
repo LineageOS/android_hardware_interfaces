@@ -31,8 +31,11 @@ hidl-gen $options \
 
 # system/core
 hidl-gen $options \
-         -o $ANDROID_BUILD_TOP/system/core/include/system/graphics-base.h \
+         -o $ANDROID_BUILD_TOP/system/core/include/system/graphics-base-v1.0.h \
          android.hardware.graphics.common@1.0
+hidl-gen $options \
+         -o $ANDROID_BUILD_TOP/system/core/include/system/graphics-base-v1.1.h \
+         android.hardware.graphics.common@1.1
 
 # system/media
 hidl-gen $options \
