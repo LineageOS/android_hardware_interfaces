@@ -1,0 +1,28 @@
+cc_library_static {
+    name: "android.hardware.health@2.0-impl",
+    vendor_available: true,
+    srcs: [
+        "Health.cpp",
+        "healthd_common.cpp",
+    ],
+
+    cflags: ["-DHEALTHD_USE_HEALTH_2_0"],
+
+    export_include_dirs: ["include"],
+
+    shared_libs: [
+        "libbase",
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "liblog",
+        "libutils",
+        "libcutils",
+        "android.hardware.health@2.0",
+    ],
+
+    static_libs: [
+        "libbatterymonitor",
+        "android.hardware.health@1.0-convert",
+    ],
+}
