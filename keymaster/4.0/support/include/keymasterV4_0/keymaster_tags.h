@@ -72,8 +72,8 @@ using ::android::hardware::keymaster::V3_0::Algorithm;
 using ::android::hardware::keymaster::V3_0::BlockMode;
 using ::android::hardware::keymaster::V3_0::Digest;
 using ::android::hardware::keymaster::V3_0::EcCurve;
+using ::android::hardware::keymaster::V3_0::HardwareAuthenticatorType;
 using ::android::hardware::keymaster::V3_0::KeyFormat;
-using ::android::hardware::keymaster::V3_0::KeyOrigin;
 using ::android::hardware::keymaster::V3_0::PaddingMode;
 using ::android::hardware::keymaster::V3_0::TagType;
 
