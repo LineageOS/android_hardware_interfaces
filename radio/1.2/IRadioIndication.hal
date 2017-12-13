@@ -37,4 +37,20 @@ interface IRadioIndication extends @1.1::IRadioIndication {
      * @param records Current cell information known to radio
      */
      oneway cellInfoList_1_2(RadioIndicationType type, vec<CellInfo> records);
+
+    /**
+     * Indicates current link capacity estimate.
+     *
+     * This replaces @1.0::IRadioIndication.lceData(). The framework must be able to handle
+     * either this function or @1.0::IRadioIndication.lceData(). Implementations supporting
+     * v1.2 must call this function instead of lceData().
+     *
+     * This indication is sent whenever the reporting criteria, as set by
+     * @1.2::IRadio.setLinkCapacityReportingCriteria, are met and the indication is not
+     * suppressed by @1.2::IRadio.setIndicationFilter_1_2().
+     *
+     * @param type Type of radio indication
+     * @param lce LinkCapacityEstimate information as defined in types.hal
+     */
+    oneway currentLinkCapacityEstimate(RadioIndicationType type, LinkCapacityEstimate lce);
 };

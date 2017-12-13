@@ -50,4 +50,26 @@ interface IRadioResponse extends @1.1::IRadioResponse {
      *   RadioError:NONE
      */
     oneway getIccCardStatusResponse_1_2(RadioResponseInfo info, CardStatus cardStatus);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     */
+    oneway setSignalStrengthReportingCriteriaResponse(RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     */
+    oneway setLinkCapacityReportingCriteriaResponse(RadioResponseInfo info);
 };
