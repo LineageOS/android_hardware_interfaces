@@ -27,3 +27,24 @@ cc_test {
     ],
     static_libs: ["android.hardware.broadcastradio@common-utils-lib"],
 }
+
+cc_test {
+    name: "android.hardware.broadcastradio@common-utils-xx-tests",
+    vendor: true,
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+    ],
+    srcs: [
+        "CommonXX_test.cpp",
+    ],
+    static_libs: [
+        "android.hardware.broadcastradio@common-utils-1x-lib",
+        "android.hardware.broadcastradio@common-utils-2x-lib",
+    ],
+    shared_libs: [
+        "android.hardware.broadcastradio@1.2",
+        "android.hardware.broadcastradio@2.0",
+    ],
+}

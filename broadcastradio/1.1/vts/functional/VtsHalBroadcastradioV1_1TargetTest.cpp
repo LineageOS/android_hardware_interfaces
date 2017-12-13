@@ -17,13 +17,13 @@
 #define LOG_TAG "broadcastradio.vts"
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <android-base/logging.h>
 #include <android/hardware/broadcastradio/1.1/IBroadcastRadio.h>
 #include <android/hardware/broadcastradio/1.1/IBroadcastRadioFactory.h>
 #include <android/hardware/broadcastradio/1.1/ITuner.h>
 #include <android/hardware/broadcastradio/1.1/ITunerCallback.h>
 #include <android/hardware/broadcastradio/1.1/types.h>
-#include <android-base/logging.h>
-#include <broadcastradio-utils/Utils.h>
+#include <broadcastradio-utils-1x/Utils.h>
 #include <broadcastradio-vts-utils/call-barrier.h>
 #include <broadcastradio-vts-utils/mock-timeout.h>
 #include <cutils/native_handle.h>

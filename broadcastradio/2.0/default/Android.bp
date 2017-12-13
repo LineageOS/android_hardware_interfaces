@@ -14,9 +14,10 @@
 // limitations under the License.
 //
 
-cc_library_static {
-    name: "android.hardware.broadcastradio@common-utils-lib",
-    vendor_available: true,
+cc_binary {
+    name: "android.hardware.broadcastradio@2.0-service",
+    init_rc: ["android.hardware.broadcastradio@2.0-service.rc"],
+    vendor: true,
     relative_install_path: "hw",
     cflags: [
         "-Wall",
@@ -24,7 +25,22 @@ cc_library_static {
         "-Werror",
     ],
     srcs: [
-        "WorkerThread.cpp",
+        "BroadcastRadio.cpp",
+        "TunerSession.cpp",
+        "VirtualProgram.cpp",
+        "VirtualRadio.cpp",
+        "service.cpp"
     ],
-    export_include_dirs: ["include"],
+    static_libs: [
+        "android.hardware.broadcastradio@common-utils-2x-lib",
+        "android.hardware.broadcastradio@common-utils-lib",
+    ],
+    shared_libs: [
+        "android.hardware.broadcastradio@2.0",
+        "libbase",
+        "libhidlbase",
+        "libhidltransport",
+        "liblog",
+        "libutils",
+    ],
 }

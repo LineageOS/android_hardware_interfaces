@@ -22,7 +22,6 @@ cc_test {
         "android.hardware.broadcastradio@1.0",
         "android.hardware.broadcastradio@1.1",
         "android.hardware.broadcastradio@1.2",
-        "android.hardware.broadcastradio@common-utils-lib",
         "android.hardware.broadcastradio@vts-utils-lib",
         "libgmock",
     ],
