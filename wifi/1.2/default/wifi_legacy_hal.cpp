@@ -309,6 +309,15 @@ void onAysncNanEventRangeReport(NanRangeReportInd* event) {
         on_nan_event_range_report_user_callback(*event);
     }
 }
+
+std::function<void(const NanDataPathScheduleUpdateInd&)>
+    on_nan_event_schedule_update_user_callback;
+void onAsyncNanEventScheduleUpdate(NanDataPathScheduleUpdateInd* event) {
+    const auto lock = hidl_sync_util::acquireGlobalLock();
+    if (on_nan_event_schedule_update_user_callback && event) {
+        on_nan_event_schedule_update_user_callback(*event);
+    }
+}
 // End of the free-standing "C" style callbacks.
 
 WifiLegacyHal::WifiLegacyHal()
@@ -1061,6 +1070,8 @@ wifi_error WifiLegacyHal::nanRegisterCallbackHandlers(
         user_callbacks.on_event_range_request;
     on_nan_event_range_report_user_callback =
         user_callbacks.on_event_range_report;
+    on_nan_event_schedule_update_user_callback =
+        user_callbacks.on_event_schedule_update;
 
     return global_func_table_.wifi_nan_register_handler(
         getIfaceHandle(iface_name),
@@ -1072,7 +1083,7 @@ wifi_error WifiLegacyHal::nanRegisterCallbackHandlers(
          onAysncNanEventBeaconSdfPayload, onAysncNanEventDataPathRequest,
          onAysncNanEventDataPathConfirm, onAysncNanEventDataPathEnd,
          onAysncNanEventTransmitFollowUp, onAysncNanEventRangeRequest,
-         onAysncNanEventRangeReport});
+         onAysncNanEventRangeReport, onAsyncNanEventScheduleUpdate});
 }
 
 wifi_error WifiLegacyHal::nanEnableRequest(const std::string& iface_name,
@@ -1330,6 +1341,7 @@ void WifiLegacyHal::invalidate() {
     on_nan_event_transmit_follow_up_user_callback = nullptr;
     on_nan_event_range_request_user_callback = nullptr;
     on_nan_event_range_report_user_callback = nullptr;
+    on_nan_event_schedule_update_user_callback = nullptr;
 }
 
 }  // namespace legacy_hal

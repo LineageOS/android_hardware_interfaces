@@ -467,6 +467,11 @@ WifiNanIface::WifiNanIface(
             LOG(ERROR) << "on_event_range_report - should not be called";
         };
 
+    callback_handlers.on_event_schedule_update =
+        [weak_ptr_this](const legacy_hal::NanDataPathScheduleUpdateInd& /* msg */) {
+            LOG(ERROR) << "on_event_schedule_update - should not be called";
+        };
+
     legacy_hal::wifi_error legacy_status =
         legacy_hal_.lock()->nanRegisterCallbackHandlers(ifname_,
                                                         callback_handlers);
