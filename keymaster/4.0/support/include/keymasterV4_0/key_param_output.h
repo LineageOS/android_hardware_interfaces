@@ -23,8 +23,7 @@
 namespace android {
 namespace hardware {
 namespace keymaster {
-
-namespace V3_0 {
+namespace V4_0 {
 
 inline ::std::ostream& operator<<(::std::ostream& os, Algorithm value) {
     return os << toString(value);
@@ -46,15 +45,11 @@ inline ::std::ostream& operator<<(::std::ostream& os, ErrorCode value) {
     return os << toString(value);
 }
 
-inline ::std::ostream& operator<<(::std::ostream& os, PaddingMode value) {
+inline ::std::ostream& operator<<(::std::ostream& os, KeyOrigin value) {
     return os << toString(value);
 }
 
-}  // namespace V3_0
-
-namespace V4_0 {
-
-inline ::std::ostream& operator<<(::std::ostream& os, KeyOrigin value) {
+inline ::std::ostream& operator<<(::std::ostream& os, PaddingMode value) {
     return os << toString(value);
 }
 

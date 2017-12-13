@@ -16,20 +16,6 @@
 
 package android.hardware.keymaster@4.0;
 
-import android.hardware.keymaster@3.0::Algorithm;
-import android.hardware.keymaster@3.0::BlockMode;
-import android.hardware.keymaster@3.0::Digest;
-import android.hardware.keymaster@3.0::EcCurve;
-import android.hardware.keymaster@3.0::ErrorCode;
-import android.hardware.keymaster@3.0::HardwareAuthenticatorType;
-import android.hardware.keymaster@3.0::KeyBlobUsageRequirements;
-import android.hardware.keymaster@3.0::KeyDerivationFunction;
-import android.hardware.keymaster@3.0::KeyFormat;
-import android.hardware.keymaster@3.0::KeyOrigin;
-import android.hardware.keymaster@3.0::PaddingMode;
-import android.hardware.keymaster@3.0::SecurityLevel;
-import android.hardware.keymaster@3.0::TagType;
-
 /**
  * Time in milliseconds since some arbitrary point in time.  Time must be monotonically increasing,
  * and a secure environment's notion of "current time" must not repeat until the Android device
@@ -45,14 +31,39 @@ enum Constants : uint32_t {
     AUTH_TOKEN_MAC_LENGTH = 32,
 };
 
+enum TagType : uint32_t {
+    /** Invalid type, used to designate a tag as uninitialized. */
+    INVALID = 0 << 28,
+    /** Enumeration value. */
+    ENUM = 1 << 28,
+    /** Repeatable enumeration value. */
+    ENUM_REP = 2 << 28,
+    /** 32-bit unsigned integer. */
+    UINT = 3 << 28,
+    /** Repeatable 32-bit unsigned integer. */
+    UINT_REP = 4 << 28,
+    /** 64-bit unsigned integer. */
+    ULONG = 5 << 28,
+    /** 64-bit unsigned integer representing a date and time, in milliseconds since 1 Jan 1970. */
+    DATE = 6 << 28,
+    /** Boolean.  If a tag with this type is present, the value is "true".  If absent, "false". */
+    BOOL = 7 << 28,
+    /** Byte string containing an arbitrary-length integer, big-endian ordering. */
+    BIGNUM = 8 << 28,
+    /** Byte string */
+    BYTES = 9 << 28,
+    /** Repeatable 64-bit unsigned integer */
+    ULONG_REP = 10 << 28,
+};
+
 enum Tag : uint32_t {
     INVALID = TagType:INVALID | 0,
 
-    /**
+    /*
      * Tags that must be semantically enforced by hardware and software implementations.
      */
 
-    /** Crypto parameters */
+    /* Crypto parameters */
     PURPOSE = TagType:ENUM_REP | 1,    /* KeyPurpose. */
     ALGORITHM = TagType:ENUM | 2,      /* Algorithm. */
     KEY_SIZE = TagType:UINT | 3,       /* Key size in bits. */
@@ -65,14 +76,14 @@ enum Tag : uint32_t {
     // 9 reserved
     EC_CURVE = TagType:ENUM | 10,      /* EcCurve. */
 
-    /** Algorithm-specific. */
+    /* Algorithm-specific. */
     RSA_PUBLIC_EXPONENT = TagType:ULONG | 200,
     // 201 reserved for ECIES
     INCLUDE_UNIQUE_ID = TagType:BOOL | 202, /* If true, attestation certificates for this key must
                                              * contain an application-scoped and time-bounded
                                              * device-unique ID.*/
 
-    /** Other hardware-enforced. */
+    /* Other hardware-enforced. */
     BLOB_USAGE_REQUIREMENTS = TagType:ENUM | 301, /* KeyBlobUsageRequirements. */
     BOOTLOADER_ONLY = TagType:BOOL | 302,         /* Usable only by bootloader. */
     ROLLBACK_RESISTANCE = TagType:BOOL | 303,     /* Whether key is rollback-resistant.  Specified
@@ -90,12 +101,12 @@ enum Tag : uint32_t {
      * attestation header. */
     HARDWARE_TYPE = TagType:ENUM | 304,
 
-    /**
+    /*
      * Tags that should be semantically enforced by hardware if possible and will otherwise be
      * enforced by software (keystore).
      */
 
-    /** Key validity period */
+    /* Key validity period */
     ACTIVE_DATETIME = TagType:DATE | 400,             /* Start of validity. */
     ORIGINATION_EXPIRE_DATETIME = TagType:DATE | 401, /* Date when new "messages" should no longer
                                                        * be created. */
@@ -106,11 +117,10 @@ enum Tag : uint32_t {
     MAX_USES_PER_BOOT = TagType:UINT | 404,           /* Number of times the key can be used per
                                                        * boot. */
 
-    /** User authentication */
+    /* User authentication */
     // 500-501 reserved
     USER_SECURE_ID = TagType:ULONG_REP | 502, /* Secure ID of authorized user or authenticator(s).
-                                               * Disallowed if ALL_USERS or NO_AUTH_REQUIRED is
-                                               * present. */
+                                               * Disallowed if NO_AUTH_REQUIRED is present. */
     NO_AUTH_REQUIRED = TagType:BOOL | 503,    /* If key is usable without authentication. */
     USER_AUTH_TYPE = TagType:ENUM | 504,      /* Bitmask of authenticator types allowed when
                                                * USER_SECURE_ID contains a secure user ID, rather
@@ -126,10 +136,10 @@ enum Tag : uint32_t {
                                                 * if device is still on-body (requires secure
                                                 * on-body sensor. */
 
-    /** Application access control */
+    /* Application access control */
     APPLICATION_ID = TagType:BYTES | 601, /* Byte string identifying the authorized application. */
 
-    /**
+    /*
      * Semantically unenforceable tags, either because they have no specific meaning or because
      * they're informational only.
      */
@@ -164,7 +174,7 @@ enum Tag : uint32_t {
     ATTESTATION_ID_MODEL = TagType:BYTES | 717, /* Used to provide the device's model name to be
                                                  * included in attestation */
 
-    /** Tags used only to provide data to or receive data from operations */
+    /* Tags used only to provide data to or receive data from operations */
     ASSOCIATED_DATA = TagType:BYTES | 1000, /* Used to provide associated data for AEAD modes. */
     NONCE = TagType:BYTES | 1001,           /* Nonce or Initialization Vector */
     MAC_LENGTH = TagType:UINT | 1003,       /* MAC or AEAD authentication tag length in bits. */
@@ -175,12 +185,117 @@ enum Tag : uint32_t {
 };
 
 /**
- * The origin of a key, i.e. where it was generated.
+ * Algorithms provided by keymaser implementations.
  */
-enum KeyOrigin : @3.0::KeyOrigin {
-    /** Securely imported into Keymaster.  Was created elsewhere, and passed securely through
-     *  Android to secure hardware. */
+enum Algorithm : uint32_t {
+    /** Asymmetric algorithms. */
+    RSA = 1,
+    // DSA = 2, -- Removed, do not re-use value 2.
+    EC = 3,
+
+    /** Block ciphers algorithms */
+    AES = 32,
+
+    /** MAC algorithms */
+    HMAC = 128,
+};
+
+/**
+ * Symmetric block cipher modes provided by keymaster implementations.
+ */
+enum BlockMode : uint32_t {
+    /*
+     * Unauthenticated modes, usable only for encryption/decryption and not generally recommended
+     * except for compatibility with existing other protocols.
+     */
+    ECB = 1,
+    CBC = 2,
+    CTR = 3,
+
+    /*
+     * Authenticated modes, usable for encryption/decryption and signing/verification.  Recommended
+     * over unauthenticated modes for all purposes.
+     */
+    GCM = 32,
+};
+
+/**
+ * Padding modes that may be applied to plaintext for encryption operations.  This list includes
+ * padding modes for both symmetric and asymmetric algorithms.  Note that implementations should not
+ * provide all possible combinations of algorithm and padding, only the
+ * cryptographically-appropriate pairs.
+ */
+enum PaddingMode : uint32_t {
+    NONE = 1, /* deprecated */
+    RSA_OAEP = 2,
+    RSA_PSS = 3,
+    RSA_PKCS1_1_5_ENCRYPT = 4,
+    RSA_PKCS1_1_5_SIGN = 5,
+    PKCS7 = 64,
+};
+
+/**
+ * Digests provided by keymaster implementations.
+ */
+enum Digest : uint32_t {
+    NONE = 0,
+    MD5 = 1,
+    SHA1 = 2,
+    SHA_2_224 = 3,
+    SHA_2_256 = 4,
+    SHA_2_384 = 5,
+    SHA_2_512 = 6,
+};
+
+/**
+ * Supported EC curves, used in ECDSA
+ */
+enum EcCurve : uint32_t {
+    P_224 = 0,
+    P_256 = 1,
+    P_384 = 2,
+    P_521 = 3,
+};
+
+/**
+ * The origin of a key (or pair), i.e. where it was generated.  Note that ORIGIN can be found in
+ * either the hardware-enforced or software-enforced list for a key, indicating whether the key is
+ * hardware or software-based.  Specifically, a key with GENERATED in the hardware-enforced list
+ * must be guaranteed never to have existed outide the secure hardware.
+ */
+enum KeyOrigin : uint32_t {
+    /** Generated in keymaster.  Should not exist outside the TEE. */
+    GENERATED = 0,
+
+    /** Derived inside keymaster.  Likely exists off-device. */
+    DERIVED = 1,
+
+    /** Imported into keymaster.  Existed as cleartext in Android. */
+    IMPORTED = 2,
+
+    /**
+     * Keymaster did not record origin.  This value can only be seen on keys in a keymaster0
+     * implementation.  The keymaster0 adapter uses this value to document the fact that it is
+     * unkown whether the key was generated inside or imported into keymaster.
+     */
+    UNKNOWN = 3,
+
+    /**
+     * Securely imported into Keymaster.  Was created elsewhere, and passed securely through Android
+     * to secure hardware.
+     */
     SECURELY_IMPORTED = 4,
+};
+
+/**
+ * Usability requirements of key blobs.  This defines what system functionality must be available
+ * for the key to function.  For example, key "blobs" which are actually handles referencing
+ * encrypted key material stored in the file system cannot be used until the file system is
+ * available, and should have BLOB_REQUIRES_FILE_SYSTEM.
+ */
+enum KeyBlobUsageRequirements : uint32_t {
+    STANDALONE = 0,
+    REQUIRES_FILE_SYSTEM = 1,
 };
 
 /**
@@ -198,15 +313,118 @@ enum KeyPurpose : uint32_t {
 /**
  * Keymaster error codes.
  */
-enum ErrorCode : @3.0::ErrorCode {
+enum ErrorCode : int32_t {
+    OK = 0,
+    ROOT_OF_TRUST_ALREADY_SET = -1,
+    UNSUPPORTED_PURPOSE = -2,
+    INCOMPATIBLE_PURPOSE = -3,
+    UNSUPPORTED_ALGORITHM = -4,
+    INCOMPATIBLE_ALGORITHM = -5,
+    UNSUPPORTED_KEY_SIZE = -6,
+    UNSUPPORTED_BLOCK_MODE = -7,
+    INCOMPATIBLE_BLOCK_MODE = -8,
+    UNSUPPORTED_MAC_LENGTH = -9,
+    UNSUPPORTED_PADDING_MODE = -10,
+    INCOMPATIBLE_PADDING_MODE = -11,
+    UNSUPPORTED_DIGEST = -12,
+    INCOMPATIBLE_DIGEST = -13,
+    INVALID_EXPIRATION_TIME = -14,
+    INVALID_USER_ID = -15,
+    INVALID_AUTHORIZATION_TIMEOUT = -16,
+    UNSUPPORTED_KEY_FORMAT = -17,
+    INCOMPATIBLE_KEY_FORMAT = -18,
+    UNSUPPORTED_KEY_ENCRYPTION_ALGORITHM = -19,   /** For PKCS8 & PKCS12 */
+    UNSUPPORTED_KEY_VERIFICATION_ALGORITHM = -20, /** For PKCS8 & PKCS12 */
+    INVALID_INPUT_LENGTH = -21,
+    KEY_EXPORT_OPTIONS_INVALID = -22,
+    DELEGATION_NOT_ALLOWED = -23,
+    KEY_NOT_YET_VALID = -24,
+    KEY_EXPIRED = -25,
+    KEY_USER_NOT_AUTHENTICATED = -26,
+    OUTPUT_PARAMETER_NULL = -27,
+    INVALID_OPERATION_HANDLE = -28,
+    INSUFFICIENT_BUFFER_SPACE = -29,
+    VERIFICATION_FAILED = -30,
+    TOO_MANY_OPERATIONS = -31,
+    UNEXPECTED_NULL_POINTER = -32,
+    INVALID_KEY_BLOB = -33,
+    IMPORTED_KEY_NOT_ENCRYPTED = -34,
+    IMPORTED_KEY_DECRYPTION_FAILED = -35,
+    IMPORTED_KEY_NOT_SIGNED = -36,
+    IMPORTED_KEY_VERIFICATION_FAILED = -37,
+    INVALID_ARGUMENT = -38,
+    UNSUPPORTED_TAG = -39,
+    INVALID_TAG = -40,
+    MEMORY_ALLOCATION_FAILED = -41,
+    IMPORT_PARAMETER_MISMATCH = -44,
+    SECURE_HW_ACCESS_DENIED = -45,
+    OPERATION_CANCELLED = -46,
+    CONCURRENT_ACCESS_CONFLICT = -47,
+    SECURE_HW_BUSY = -48,
+    SECURE_HW_COMMUNICATION_FAILED = -49,
+    UNSUPPORTED_EC_FIELD = -50,
+    MISSING_NONCE = -51,
+    INVALID_NONCE = -52,
+    MISSING_MAC_LENGTH = -53,
+    KEY_RATE_LIMIT_EXCEEDED = -54,
+    CALLER_NONCE_PROHIBITED = -55,
+    KEY_MAX_OPS_EXCEEDED = -56,
+    INVALID_MAC_LENGTH = -57,
+    MISSING_MIN_MAC_LENGTH = -58,
+    UNSUPPORTED_MIN_MAC_LENGTH = -59,
+    UNSUPPORTED_KDF = -60,
+    UNSUPPORTED_EC_CURVE = -61,
+    KEY_REQUIRES_UPGRADE = -62,
+    ATTESTATION_CHALLENGE_MISSING = -63,
+    KEYMASTER_NOT_CONFIGURED = -64,
+    ATTESTATION_APPLICATION_ID_MISSING = -65,
+    CANNOT_ATTEST_IDS = -66,
     ROLLBACK_RESISTANCE_UNAVAILABLE = -67,
     HARDWARE_TYPE_UNAVAILABLE = -68,
+
+    UNIMPLEMENTED = -100,
+    VERSION_MISMATCH = -101,
+
+    UNKNOWN_ERROR = -1000,
+};
+
+/**
+ * Key derivation functions, mostly used in ECIES.
+ */
+enum KeyDerivationFunction : uint32_t {
+    /** Do not apply a key derivation function; use the raw agreed key */
+    NONE = 0,
+    /** HKDF defined in RFC 5869 with SHA256 */
+    RFC5869_SHA256 = 1,
+    /** KDF1 defined in ISO 18033-2 with SHA1 */
+    ISO18033_2_KDF1_SHA1 = 2,
+    /** KDF1 defined in ISO 18033-2 with SHA256 */
+    ISO18033_2_KDF1_SHA256 = 3,
+    /** KDF2 defined in ISO 18033-2 with SHA1 */
+    ISO18033_2_KDF2_SHA1 = 4,
+    /** KDF2 defined in ISO 18033-2 with SHA256 */
+    ISO18033_2_KDF2_SHA256 = 5,
+};
+
+/**
+ * Hardware authentication type, used by HardwareAuthTokens to specify the mechanism used to
+ * authentiate the user, and in KeyCharacteristics to specify the allowable mechanisms for
+ * authenticating to activate a key.
+ */
+enum HardwareAuthenticatorType : uint32_t {
+    NONE = 0,
+    PASSWORD = 1 << 0,
+    FINGERPRINT = 1 << 1,
+    // Additional entries must be powers of 2.
+    ANY = 0xFFFFFFFF,
 };
 
 /**
  * Device security levels.
  */
-enum SecurityLevel : @3.0::SecurityLevel {
+enum SecurityLevel : uint32_t {
+    SOFTWARE = 0,
+    TRUSTED_ENVIRONMENT = 1,
     /**
      * STRONGBOX specifies that the secure hardware satisfies the following requirements:
      *
@@ -241,6 +459,18 @@ enum SecurityLevel : @3.0::SecurityLevel {
      * ErrorCode::HARDWARE_TYPE_UNAVAILABLE.
      */
     STRONGBOX = 2,              /* See IKeymaster::isStrongBox */
+};
+
+/**
+ * Formats for key import and export.
+ */
+enum KeyFormat : uint32_t {
+    /** X.509 certificate format, for public key export. */
+    X509 = 0,
+    /** PCKS#8 format, asymmetric key pair import. */
+    PKCS8 = 1,
+    /** Raw bytes, for symmetric key import and export. */
+    RAW = 3,
 };
 
 struct KeyParameter {
