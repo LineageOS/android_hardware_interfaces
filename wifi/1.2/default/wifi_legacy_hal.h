@@ -100,6 +100,7 @@ struct NanCallbackHandlers {
         on_event_transmit_follow_up;
     std::function<void(const NanRangeRequestInd&)> on_event_range_request;
     std::function<void(const NanRangeReportInd&)> on_event_range_report;
+    std::function<void(const NanDataPathScheduleUpdateInd&)> on_event_schedule_update;
 };
 
 // Full scan results contain IE info and are hence passed by reference, to
