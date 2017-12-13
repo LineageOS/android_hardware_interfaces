@@ -32,6 +32,7 @@ using V2_0::ProgramIdentifier;
 using V2_0::ProgramSelector;
 
 using std::string;
+using std::vector;
 
 IdentifierType getType(const ProgramIdentifier& id) {
     return static_cast<IdentifierType>(id.type);
@@ -116,6 +117,19 @@ uint64_t getId(const ProgramSelector& sel, const IdentifierType type) {
 uint64_t getId(const ProgramSelector& sel, const IdentifierType type, uint64_t defval) {
     if (!hasId(sel, type)) return defval;
     return getId(sel, type);
+}
+
+vector<uint64_t> getAllIds(const ProgramSelector& sel, const IdentifierType type) {
+    vector<uint64_t> ret;
+    auto itype = static_cast<uint32_t>(type);
+
+    if (sel.primaryId.type == itype) ret.push_back(sel.primaryId.value);
+
+    for (auto&& id : sel.secondaryIds) {
+        if (id.type == itype) ret.push_back(id.value);
+    }
+
+    return ret;
 }
 
 bool isSupported(const V2_0::Properties& prop, const V2_0::ProgramSelector& sel) {
