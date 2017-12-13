@@ -675,6 +675,8 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         return error;
     }
 
+    ErrorCode Finish(string* output) { return Finish(string(), output); }
+
     ErrorCode Finish(const string& message, const string& signature, string* output) {
         SCOPED_TRACE("Finish");
         AuthorizationSet out_params;
@@ -804,6 +806,24 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         EXPECT_EQ(expected_ciphertext, ciphertext);
     }
 
+    void CheckTripleDesTestVector(KeyPurpose purpose, BlockMode block_mode,
+                                  PaddingMode padding_mode, const string& key, const string& iv,
+                                  const string& input, const string& expected_output) {
+        auto authset = AuthorizationSetBuilder()
+                           .TripleDesEncryptionKey(key.size() * 7)
+                           .BlockMode(block_mode)
+                           .Padding(padding_mode);
+        if (iv.size()) authset.Authorization(TAG_CALLER_NONCE);
+
+        ASSERT_EQ(ErrorCode::OK, ImportKey(authset, KeyFormat::RAW, key));
+
+        auto begin_params = AuthorizationSetBuilder().BlockMode(block_mode).Padding(padding_mode);
+        if (iv.size()) begin_params.Authorization(TAG_NONCE, iv.data(), iv.size());
+        AuthorizationSet output_params;
+        string output = ProcessMessage(key_blob_, purpose, input, begin_params, &output_params);
+        EXPECT_EQ(expected_output, output);
+    }
+
     void VerifyMessage(const HidlBuf& key_blob, const string& message, const string& signature,
                        const AuthorizationSet& params) {
         SCOPED_TRACE("VerifyMessage");
@@ -848,6 +868,41 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         return ciphertext;
     }
 
+    string EncryptMessage(const string& message, BlockMode block_mode, PaddingMode padding) {
+        SCOPED_TRACE("EncryptMessage");
+        auto params = AuthorizationSetBuilder().BlockMode(block_mode).Padding(padding);
+        AuthorizationSet out_params;
+        string ciphertext = EncryptMessage(message, params, &out_params);
+        EXPECT_TRUE(out_params.empty())
+            << "Output params should be empty. Contained: " << out_params;
+        return ciphertext;
+    }
+
+    string EncryptMessage(const string& message, BlockMode block_mode, PaddingMode padding,
+                          HidlBuf* iv) {
+        SCOPED_TRACE("EncryptMessage");
+        auto params = AuthorizationSetBuilder().BlockMode(block_mode).Padding(padding);
+        AuthorizationSet out_params;
+        string ciphertext = EncryptMessage(message, params, &out_params);
+        EXPECT_EQ(1U, out_params.size());
+        auto ivVal = out_params.GetTagValue(TAG_NONCE);
+        EXPECT_TRUE(ivVal.isOk());
+        *iv = ivVal.value();
+        return ciphertext;
+    }
+
+    string EncryptMessage(const string& message, BlockMode block_mode, PaddingMode padding,
+                          const HidlBuf& iv) {
+        SCOPED_TRACE("EncryptMessage");
+        auto params = AuthorizationSetBuilder()
+                          .BlockMode(block_mode)
+                          .Padding(padding)
+                          .Authorization(TAG_NONCE, iv);
+        AuthorizationSet out_params;
+        string ciphertext = EncryptMessage(message, params, &out_params);
+        return ciphertext;
+    }
+
     string DecryptMessage(const HidlBuf& key_blob, const string& ciphertext,
                           const AuthorizationSet& params) {
         SCOPED_TRACE("DecryptMessage");
@@ -860,6 +915,16 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
     string DecryptMessage(const string& ciphertext, const AuthorizationSet& params) {
         SCOPED_TRACE("DecryptMessage");
+        return DecryptMessage(key_blob_, ciphertext, params);
+    }
+
+    string DecryptMessage(const string& ciphertext, BlockMode block_mode, PaddingMode padding_mode,
+                          const HidlBuf& iv) {
+        SCOPED_TRACE("DecryptMessage");
+        auto params = AuthorizationSetBuilder()
+                          .BlockMode(block_mode)
+                          .Padding(padding_mode)
+                          .Authorization(TAG_NONCE, iv);
         return DecryptMessage(key_blob_, ciphertext, params);
     }
 
@@ -3711,6 +3776,535 @@ TEST_F(EncryptionOperationsTest, AesGcmCorruptTag) {
               Finish(op_handle_, finish_params, ciphertext, "" /* signature */, &finish_out_params,
                      &plaintext));
     EXPECT_TRUE(finish_out_params.empty());
+}
+
+/*
+ * EncryptionOperationsTest.TripleDesEcbRoundTripSuccess
+ *
+ * Verifies that 3DES is basically functional.
+ */
+TEST_F(EncryptionOperationsTest, TripleDesEcbRoundTripSuccess) {
+    std::cout << "Hello" << std::endl;
+
+    auto auths = AuthorizationSetBuilder()
+                     .TripleDesEncryptionKey(112)
+                     .BlockMode(BlockMode::ECB)
+                     .Padding(PaddingMode::NONE);
+
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(auths));
+    // Two-block message.
+    string message = "1234567890123456";
+    auto inParams = AuthorizationSetBuilder().BlockMode(BlockMode::ECB).Padding(PaddingMode::NONE);
+    string ciphertext1 = EncryptMessage(message, inParams);
+    EXPECT_EQ(message.size(), ciphertext1.size());
+
+    string ciphertext2 = EncryptMessage(string(message), inParams);
+    EXPECT_EQ(message.size(), ciphertext2.size());
+
+    // ECB is deterministic.
+    EXPECT_EQ(ciphertext1, ciphertext2);
+
+    string plaintext = DecryptMessage(ciphertext1, inParams);
+    EXPECT_EQ(message, plaintext);
+}
+
+/*
+ * EncryptionOperationsTest.TripleDesEcbNotAuthorized
+ *
+ * Verifies that CBC keys reject ECB usage.
+ */
+TEST_F(EncryptionOperationsTest, TripleDesEcbNotAuthorized) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                             .TripleDesEncryptionKey(112)
+                                             .BlockMode(BlockMode::CBC)
+                                             .Padding(PaddingMode::NONE)));
+
+    auto inParams = AuthorizationSetBuilder().BlockMode(BlockMode::ECB).Padding(PaddingMode::NONE);
+    EXPECT_EQ(ErrorCode::INCOMPATIBLE_BLOCK_MODE, Begin(KeyPurpose::ENCRYPT, inParams));
+}
+
+/*
+ * EncryptionOperationsTest.TripleDesEcbPkcs7Padding
+ *
+ * Tests ECB mode with PKCS#7 padding, various message sizes.
+ */
+TEST_F(EncryptionOperationsTest, TripleDesEcbPkcs7Padding) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                             .TripleDesEncryptionKey(112)
+                                             .BlockMode(BlockMode::ECB)
+                                             .Padding(PaddingMode::PKCS7)));
+
+    for (size_t i = 0; i < 32; ++i) {
+        string message(i, 'a');
+        auto inParams =
+            AuthorizationSetBuilder().BlockMode(BlockMode::ECB).Padding(PaddingMode::PKCS7);
+        string ciphertext = EncryptMessage(message, inParams);
+        EXPECT_EQ(i + 8 - (i % 8), ciphertext.size());
+        string plaintext = DecryptMessage(ciphertext, inParams);
+        EXPECT_EQ(message, plaintext);
+    }
+}
+
+/*
+ * EncryptionOperationsTest.TripleDesEcbNoPaddingKeyWithPkcs7Padding
+ *
+ * Verifies that keys configured for no padding reject PKCS7 padding
+ */
+TEST_F(EncryptionOperationsTest, TripleDesEcbNoPaddingKeyWithPkcs7Padding) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                             .TripleDesEncryptionKey(112)
+                                             .BlockMode(BlockMode::ECB)
+                                             .Padding(PaddingMode::NONE)));
+    for (size_t i = 0; i < 32; ++i) {
+        auto inParams =
+            AuthorizationSetBuilder().BlockMode(BlockMode::ECB).Padding(PaddingMode::PKCS7);
+        EXPECT_EQ(ErrorCode::INCOMPATIBLE_PADDING_MODE, Begin(KeyPurpose::ENCRYPT, inParams));
+    }
+}
+
+/*
+ * EncryptionOperationsTest.TripleDesEcbPkcs7PaddingCorrupted
+ *
+ * Verifies that corrupted padding is detected.
+ */
+TEST_F(EncryptionOperationsTest, TripleDesEcbPkcs7PaddingCorrupted) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                             .TripleDesEncryptionKey(112)
+                                             .BlockMode(BlockMode::ECB)
+                                             .Padding(PaddingMode::PKCS7)));
+
+    string message = "a";
+    string ciphertext = EncryptMessage(message, BlockMode::ECB, PaddingMode::PKCS7);
+    EXPECT_EQ(8U, ciphertext.size());
+    EXPECT_NE(ciphertext, message);
+    ++ciphertext[ciphertext.size() / 2];
+
+    AuthorizationSetBuilder begin_params;
+    begin_params.push_back(TAG_BLOCK_MODE, BlockMode::ECB);
+    begin_params.push_back(TAG_PADDING, PaddingMode::PKCS7);
+    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, begin_params));
+    string plaintext;
+    size_t input_consumed;
+    EXPECT_EQ(ErrorCode::OK, Update(ciphertext, &plaintext, &input_consumed));
+    EXPECT_EQ(ciphertext.size(), input_consumed);
+    EXPECT_EQ(ErrorCode::INVALID_ARGUMENT, Finish(&plaintext));
+}
+
+struct TripleDesTestVector {
+    const char* name;
+    const KeyPurpose purpose;
+    const BlockMode block_mode;
+    const PaddingMode padding_mode;
+    const char* key;
+    const char* iv;
+    const char* input;
+    const char* output;
+};
+
+// These test vectors are from NIST CAVP, plus a few custom variants to test padding, since all of
+// the NIST vectors are multiples of the block size.
+static const TripleDesTestVector kTripleDesTestVectors[] = {
+    {
+        "TECBMMT2 Encrypt 0", KeyPurpose::ENCRYPT, BlockMode::ECB, PaddingMode::NONE,
+        "ad192fd064b5579e7a4fb3c8f794f22a",  // key
+        "",                                  // IV
+        "13bad542f3652d67",                  // input
+        "908e543cf2cb254f",                  // output
+    },
+    {
+        "TECBMMT2 Encrypt 0 PKCS7", KeyPurpose::ENCRYPT, BlockMode::ECB, PaddingMode::PKCS7,
+        "ad192fd064b5579e7a4fb3c8f794f22a",  // key
+        "",                                  // IV
+        "13bad542f3652d6700",                // input
+        "908e543cf2cb254fc40165289a89008c",  // output
+    },
+    {
+        "TECBMMT2 Encrypt 0 PKCS7 decrypted", KeyPurpose::DECRYPT, BlockMode::ECB,
+        PaddingMode::PKCS7,
+        "ad192fd064b5579e7a4fb3c8f794f22a",  // key
+        "",                                  // IV
+        "908e543cf2cb254fc40165289a89008c",  // input
+        "13bad542f3652d6700",                // output
+    },
+    {
+        "TECBMMT2 Encrypt 1", KeyPurpose::ENCRYPT, BlockMode::ECB, PaddingMode::NONE,
+        "259df16e7af804fe83b90e9bf7c7e557",  // key
+        "",                                  // IV
+        "a4619c433bbd6787c07c81728f9ac9fa",  // input
+        "9e06de155c483c6bcfd834dbc8bd5830",  // output
+    },
+    {
+        "TECBMMT2 Decrypt 0", KeyPurpose::DECRYPT, BlockMode::ECB, PaddingMode::NONE,
+        "b32ff42092024adf2076b9d3d9f19e6d",  // key
+        "",                                  // IV
+        "2f3f2a49bba807a5",                  // input
+        "2249973fa135fb52",                  // output
+    },
+    {
+        "TECBMMT2 Decrypt 1", KeyPurpose::DECRYPT, BlockMode::ECB, PaddingMode::NONE,
+        "023dfbe6621aa17cc219eae9cdecd923",  // key
+        "",                                  // IV
+        "54045dc71d8d565b227ec19f06fef912",  // input
+        "9b071622181e6412de6066429401410d",  // output
+    },
+    {
+        "TECBMMT3 Encrypt 0", KeyPurpose::ENCRYPT, BlockMode::ECB, PaddingMode::NONE,
+        "a2b5bc67da13dc92cd9d344aa238544a0e1fa79ef76810cd",  // key
+        "",                                                  // IV
+        "329d86bdf1bc5af4",                                  // input
+        "d946c2756d78633f",                                  // output
+    },
+    {
+        "TECBMMT3 Encrypt 1", KeyPurpose::ENCRYPT, BlockMode::ECB, PaddingMode::NONE,
+        "49e692290d2a5e46bace79b9648a4c5d491004c262dc9d49",  // key
+        "",                                                  // IV
+        "6b1540781b01ce1997adae102dbf3c5b",                  // input
+        "4d0dc182d6e481ac4a3dc6ab6976ccae",                  // output
+    },
+    {
+        "TECBMMT3 Decrypt 0", KeyPurpose::DECRYPT, BlockMode::ECB, PaddingMode::NONE,
+        "52daec2ac7dc1958377392682f37860b2cc1ea2304bab0e9",  // key
+        "",                                                  // IV
+        "6daad94ce08acfe7",                                  // input
+        "660e7d32dcc90e79",                                  // output
+    },
+    {
+        "TECBMMT3 Decrypt 1", KeyPurpose::DECRYPT, BlockMode::ECB, PaddingMode::NONE,
+        "7f8fe3d3f4a48394fb682c2919926d6ddfce8932529229ce",  // key
+        "",                                                  // IV
+        "e9653a0a1f05d31b9acd12d73aa9879d",                  // input
+        "9b2ae9d998efe62f1b592e7e1df8ff38",                  // output
+    },
+    {
+        "TCBCMMT2 Encrypt 0", KeyPurpose::ENCRYPT, BlockMode::CBC, PaddingMode::NONE,
+        "34a41a8c293176c1b30732ecfe38ae8a",  // key
+        "f55b4855228bd0b4",                  // IV
+        "7dd880d2a9ab411c",                  // input
+        "c91892948b6cadb4",                  // output
+    },
+    {
+        "TCBCMMT2 Encrypt 1", KeyPurpose::ENCRYPT, BlockMode::CBC, PaddingMode::NONE,
+        "70a88fa1dfb9942fa77f40157ffef2ad",  // key
+        "ece08ce2fdc6ce80",                  // IV
+        "bc225304d5a3a5c9918fc5006cbc40cc",  // input
+        "27f67dc87af7ddb4b68f63fa7c2d454a",  // output
+    },
+    {
+        "TCBCMMT2 Decrypt 0", KeyPurpose::DECRYPT, BlockMode::CBC, PaddingMode::NONE,
+        "4ff47fda89209bda8c85f7fe80192007",  // key
+        "d5bc4891dabe48b9",                  // IV
+        "7e154b28c353adef",                  // input
+        "712b961ea9a1d0af",                  // output
+    },
+    {
+        "TCBCMMT2 Decrypt 1", KeyPurpose::DECRYPT, BlockMode::CBC, PaddingMode::NONE,
+        "464092cdbf736d38fb1fe6a12a94ae0e",  // key
+        "5423455f00023b01",                  // IV
+        "3f6050b74ed64416bc23d53b0469ed7a",  // input
+        "9cbe7d1b5cdd1864c3095ba810575960",  // output
+    },
+    {
+        "TCBCMMT3 Encrypt 0", KeyPurpose::ENCRYPT, BlockMode::CBC, PaddingMode::NONE,
+        "b5cb1504802326c73df186e3e352a20de643b0d63ee30e37",  // key
+        "43f791134c5647ba",                                  // IV
+        "dcc153cef81d6f24",                                  // input
+        "92538bd8af18d3ba",                                  // output
+    },
+    {
+        "TCBCMMT3 Encrypt 1", KeyPurpose::ENCRYPT, BlockMode::CBC, PaddingMode::NONE,
+        "a49d7564199e97cb529d2c9d97bf2f98d35edf57ba1f7358",  // key
+        "c2e999cb6249023c",                                  // IV
+        "c689aee38a301bb316da75db36f110b5",                  // input
+        "e9afaba5ec75ea1bbe65506655bb4ecb",                  // output
+    },
+    {
+        "TCBCMMT3 Encrypt 1 PKCS7 variant", KeyPurpose::ENCRYPT, BlockMode::CBC, PaddingMode::PKCS7,
+        "a49d7564199e97cb529d2c9d97bf2f98d35edf57ba1f7358",  // key
+        "c2e999cb6249023c",                                  // IV
+        "c689aee38a301bb316da75db36f110b500",                // input
+        "e9afaba5ec75ea1bbe65506655bb4ecb825aa27ec0656156",  // output
+    },
+    {
+        "TCBCMMT3 Encrypt 1 PKCS7 decrypted", KeyPurpose::DECRYPT, BlockMode::CBC,
+        PaddingMode::PKCS7,
+        "a49d7564199e97cb529d2c9d97bf2f98d35edf57ba1f7358",  // key
+        "c2e999cb6249023c",                                  // IV
+        "e9afaba5ec75ea1bbe65506655bb4ecb825aa27ec0656156",  // input
+        "c689aee38a301bb316da75db36f110b500",                // output
+    },
+    {
+        "TCBCMMT3 Decrypt 0", KeyPurpose::DECRYPT, BlockMode::CBC, PaddingMode::NONE,
+        "5eb6040d46082c7aa7d06dfd08dfeac8c18364c1548c3ba1",  // key
+        "41746c7e442d3681",                                  // IV
+        "c53a7b0ec40600fe",                                  // input
+        "d4f00eb455de1034",                                  // output
+    },
+    {
+        "TCBCMMT3 Decrypt 1", KeyPurpose::DECRYPT, BlockMode::CBC, PaddingMode::NONE,
+        "5b1cce7c0dc1ec49130dfb4af45785ab9179e567f2c7d549",  // key
+        "3982bc02c3727d45",                                  // IV
+        "6006f10adef52991fcc777a1238bbb65",                  // input
+        "edae09288e9e3bc05746d872b48e3b29",                  // output
+    },
+};
+
+/*
+ * EncryptionOperationsTest.TripleDesTestVector
+ *
+ * Verifies that NIST (plus a few extra) test vectors produce the correct results.
+ */
+TEST_F(EncryptionOperationsTest, TripleDesTestVector) {
+    constexpr size_t num_tests = sizeof(kTripleDesTestVectors) / sizeof(TripleDesTestVector);
+    for (auto* test = kTripleDesTestVectors; test < kTripleDesTestVectors + num_tests; ++test) {
+        SCOPED_TRACE(test->name);
+        CheckTripleDesTestVector(test->purpose, test->block_mode, test->padding_mode,
+                                 hex2str(test->key), hex2str(test->iv), hex2str(test->input),
+                                 hex2str(test->output));
+    }
+}
+
+/*
+ * EncryptionOperationsTest.TripleDesCbcRoundTripSuccess
+ *
+ * Validates CBC mode functionality.
+ */
+TEST_F(EncryptionOperationsTest, TripleDesCbcRoundTripSuccess) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                             .TripleDesEncryptionKey(112)
+                                             .BlockMode(BlockMode::CBC)
+                                             .Padding(PaddingMode::NONE)));
+    // Two-block message.
+    string message = "1234567890123456";
+    HidlBuf iv1;
+    string ciphertext1 = EncryptMessage(message, BlockMode::CBC, PaddingMode::NONE, &iv1);
+    EXPECT_EQ(message.size(), ciphertext1.size());
+
+    HidlBuf iv2;
+    string ciphertext2 = EncryptMessage(message, BlockMode::CBC, PaddingMode::NONE, &iv2);
+    EXPECT_EQ(message.size(), ciphertext2.size());
+
+    // IVs should be random, so ciphertexts should differ.
+    EXPECT_NE(iv1, iv2);
+    EXPECT_NE(ciphertext1, ciphertext2);
+
+    string plaintext = DecryptMessage(ciphertext1, BlockMode::CBC, PaddingMode::NONE, iv1);
+    EXPECT_EQ(message, plaintext);
+}
+
+/*
+ * EncryptionOperationsTest.TripleDesCallerIv
+ *
+ * Validates that 3DES keys can allow caller-specified IVs, and use them correctly.
+ */
+TEST_F(EncryptionOperationsTest, TripleDesCallerIv) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                             .TripleDesEncryptionKey(112)
+                                             .BlockMode(BlockMode::CBC)
+                                             .Authorization(TAG_CALLER_NONCE)
+                                             .Padding(PaddingMode::NONE)));
+    string message = "1234567890123456";
+    HidlBuf iv;
+    // Don't specify IV, should get a random one.
+    string ciphertext1 = EncryptMessage(message, BlockMode::CBC, PaddingMode::NONE, &iv);
+    EXPECT_EQ(message.size(), ciphertext1.size());
+    EXPECT_EQ(8U, iv.size());
+
+    string plaintext = DecryptMessage(ciphertext1, BlockMode::CBC, PaddingMode::NONE, iv);
+    EXPECT_EQ(message, plaintext);
+
+    // Now specify an IV, should also work.
+    iv = HidlBuf("abcdefgh");
+    string ciphertext2 = EncryptMessage(message, BlockMode::CBC, PaddingMode::NONE, iv);
+
+    // Decrypt with correct IV.
+    plaintext = DecryptMessage(ciphertext2, BlockMode::CBC, PaddingMode::NONE, iv);
+    EXPECT_EQ(message, plaintext);
+
+    // Now try with wrong IV.
+    plaintext = DecryptMessage(ciphertext2, BlockMode::CBC, PaddingMode::NONE, HidlBuf("aaaaaaaa"));
+    EXPECT_NE(message, plaintext);
+}
+
+/*
+ * EncryptionOperationsTest, TripleDesCallerNonceProhibited.
+ *
+ * Verifies that 3DES keys without TAG_CALLER_NONCE do not allow caller-specified IVS.
+ */
+TEST_F(EncryptionOperationsTest, TripleDesCallerNonceProhibited) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                             .TripleDesEncryptionKey(112)
+                                             .BlockMode(BlockMode::CBC)
+                                             .Padding(PaddingMode::NONE)));
+
+    string message = "12345678901234567890123456789012";
+    HidlBuf iv;
+    // Don't specify nonce, should get a random one.
+    string ciphertext1 = EncryptMessage(message, BlockMode::CBC, PaddingMode::NONE, &iv);
+    EXPECT_EQ(message.size(), ciphertext1.size());
+    EXPECT_EQ(8U, iv.size());
+
+    string plaintext = DecryptMessage(ciphertext1, BlockMode::CBC, PaddingMode::NONE, iv);
+    EXPECT_EQ(message, plaintext);
+
+    // Now specify a nonce, should fail.
+    auto input_params = AuthorizationSetBuilder()
+                            .Authorization(TAG_NONCE, HidlBuf("abcdefgh"))
+                            .BlockMode(BlockMode::CBC)
+                            .Padding(PaddingMode::NONE);
+    AuthorizationSet output_params;
+    EXPECT_EQ(ErrorCode::CALLER_NONCE_PROHIBITED,
+              Begin(KeyPurpose::ENCRYPT, input_params, &output_params));
+}
+
+/*
+ * EncryptionOperationsTest.TripleDesCbcNotAuthorized
+ *
+ * Verifies that 3DES ECB-only keys do not allow CBC usage.
+ */
+TEST_F(EncryptionOperationsTest, TripleDesCbcNotAuthorized) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                             .TripleDesEncryptionKey(112)
+                                             .BlockMode(BlockMode::ECB)
+                                             .Padding(PaddingMode::NONE)));
+    // Two-block message.
+    string message = "1234567890123456";
+    auto begin_params =
+        AuthorizationSetBuilder().BlockMode(BlockMode::CBC).Padding(PaddingMode::NONE);
+    EXPECT_EQ(ErrorCode::INCOMPATIBLE_BLOCK_MODE, Begin(KeyPurpose::ENCRYPT, begin_params));
+}
+
+/*
+ * EncryptionOperationsTest.TripleDesCbcNoPaddingWrongInputSize
+ *
+ * Verifies that unpadded CBC operations reject inputs that are not a multiple of block size.
+ */
+TEST_F(EncryptionOperationsTest, TripleDesCbcNoPaddingWrongInputSize) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                             .TripleDesEncryptionKey(112)
+                                             .BlockMode(BlockMode::CBC)
+                                             .Padding(PaddingMode::NONE)));
+    // Message is slightly shorter than two blocks.
+    string message = "123456789012345";
+
+    auto begin_params =
+        AuthorizationSetBuilder().BlockMode(BlockMode::CBC).Padding(PaddingMode::NONE);
+    AuthorizationSet output_params;
+    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, begin_params, &output_params));
+    string ciphertext;
+    EXPECT_EQ(ErrorCode::INVALID_INPUT_LENGTH, Finish(message, "", &ciphertext));
+}
+
+/*
+ * EncryptionOperationsTest, TripleDesCbcPkcs7Padding.
+ *
+ * Verifies that PKCS7 padding works correctly in CBC mode.
+ */
+TEST_F(EncryptionOperationsTest, TripleDesCbcPkcs7Padding) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                             .TripleDesEncryptionKey(112)
+                                             .BlockMode(BlockMode::CBC)
+                                             .Padding(PaddingMode::PKCS7)));
+
+    // Try various message lengths; all should work.
+    for (size_t i = 0; i < 32; ++i) {
+        string message(i, 'a');
+        HidlBuf iv;
+        string ciphertext = EncryptMessage(message, BlockMode::CBC, PaddingMode::PKCS7, &iv);
+        EXPECT_EQ(i + 8 - (i % 8), ciphertext.size());
+        string plaintext = DecryptMessage(ciphertext, BlockMode::CBC, PaddingMode::PKCS7, iv);
+        EXPECT_EQ(message, plaintext);
+    }
+}
+
+/*
+ * EncryptionOperationsTest.TripleDesCbcNoPaddingKeyWithPkcs7Padding
+ *
+ * Verifies that a key that requires PKCS7 padding cannot be used in unpadded mode.
+ */
+TEST_F(EncryptionOperationsTest, TripleDesCbcNoPaddingKeyWithPkcs7Padding) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                             .TripleDesEncryptionKey(112)
+                                             .BlockMode(BlockMode::CBC)
+                                             .Padding(PaddingMode::NONE)));
+
+    // Try various message lengths; all should fail.
+    for (size_t i = 0; i < 32; ++i) {
+        auto begin_params =
+            AuthorizationSetBuilder().BlockMode(BlockMode::CBC).Padding(PaddingMode::PKCS7);
+        EXPECT_EQ(ErrorCode::INCOMPATIBLE_PADDING_MODE, Begin(KeyPurpose::ENCRYPT, begin_params));
+    }
+}
+
+/*
+ * EncryptionOperationsTest.TripleDesCbcPkcs7PaddingCorrupted
+ *
+ * Verifies that corrupted PKCS7 padding is rejected during decryption.
+ */
+TEST_F(EncryptionOperationsTest, TripleDesCbcPkcs7PaddingCorrupted) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                             .TripleDesEncryptionKey(112)
+                                             .BlockMode(BlockMode::CBC)
+                                             .Padding(PaddingMode::PKCS7)));
+
+    string message = "a";
+    HidlBuf iv;
+    string ciphertext = EncryptMessage(message, BlockMode::CBC, PaddingMode::PKCS7, &iv);
+    EXPECT_EQ(8U, ciphertext.size());
+    EXPECT_NE(ciphertext, message);
+    ++ciphertext[ciphertext.size() / 2];
+
+    auto begin_params = AuthorizationSetBuilder()
+                            .BlockMode(BlockMode::CBC)
+                            .Padding(PaddingMode::PKCS7)
+                            .Authorization(TAG_NONCE, iv);
+    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, begin_params));
+    string plaintext;
+    size_t input_consumed;
+    EXPECT_EQ(ErrorCode::OK, Update(ciphertext, &plaintext, &input_consumed));
+    EXPECT_EQ(ciphertext.size(), input_consumed);
+    EXPECT_EQ(ErrorCode::INVALID_ARGUMENT, Finish(&plaintext));
+}
+
+/*
+ * EncryptionOperationsTest, TripleDesCbcIncrementalNoPadding.
+ *
+ * Verifies that 3DES CBC works with many different input sizes.
+ */
+TEST_F(EncryptionOperationsTest, TripleDesCbcIncrementalNoPadding) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                             .TripleDesEncryptionKey(112)
+                                             .BlockMode(BlockMode::CBC)
+                                             .Padding(PaddingMode::NONE)));
+
+    int increment = 7;
+    string message(240, 'a');
+    AuthorizationSet input_params =
+        AuthorizationSetBuilder().BlockMode(BlockMode::CBC).Padding(PaddingMode::NONE);
+    AuthorizationSet output_params;
+    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, input_params, &output_params));
+
+    string ciphertext;
+    size_t input_consumed;
+    for (size_t i = 0; i < message.size(); i += increment)
+        EXPECT_EQ(ErrorCode::OK,
+                  Update(message.substr(i, increment), &ciphertext, &input_consumed));
+    EXPECT_EQ(ErrorCode::OK, Finish(&ciphertext));
+    EXPECT_EQ(message.size(), ciphertext.size());
+
+    // Move TAG_NONCE into input_params
+    input_params = output_params;
+    input_params.push_back(TAG_BLOCK_MODE, BlockMode::CBC);
+    input_params.push_back(TAG_PADDING, PaddingMode::NONE);
+    output_params.Clear();
+
+    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, input_params, &output_params));
+    string plaintext;
+    for (size_t i = 0; i < ciphertext.size(); i += increment)
+        EXPECT_EQ(ErrorCode::OK,
+                  Update(ciphertext.substr(i, increment), &plaintext, &input_consumed));
+    EXPECT_EQ(ErrorCode::OK, Finish(&plaintext));
+    EXPECT_EQ(ciphertext.size(), plaintext.size());
+    EXPECT_EQ(message, plaintext);
 }
 
 typedef KeymasterHidlTest MaxOperationsTest;
