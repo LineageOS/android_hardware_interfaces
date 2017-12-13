@@ -16,6 +16,8 @@ LOCAL_SHARED_LIBRARIES := \
     libhidltransport \
     liblog \
     libutils \
+    libbase \
+    libpng \
     android.hardware.health@1.0 \
 
 LOCAL_STATIC_LIBRARIES := android.hardware.health@1.0-convert
