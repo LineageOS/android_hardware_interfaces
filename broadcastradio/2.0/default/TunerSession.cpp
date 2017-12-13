@@ -185,7 +185,7 @@ Return<Result> TunerSession::step(bool directionUp) {
 #endif
 
     auto task = [this, stepTo]() {
-        ALOGI("Performing step to %lu", stepTo);
+        ALOGI("Performing step to %s", std::to_string(stepTo).c_str());
 
         lock_guard<mutex> lk(mMut);
 

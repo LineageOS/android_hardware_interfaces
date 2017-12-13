@@ -27,4 +27,9 @@ cc_library_static {
         "WorkerThread.cpp",
     ],
     export_include_dirs: ["include"],
+    shared_libs: [
+        "libbase",
+        "liblog",
+        "libutils",
+    ],
 }
