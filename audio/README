@@ -1,0 +1,47 @@
+Directory structure of the audio HIDL related code.
+
+audio
+|-- 2.0              <== legacy 2.0 device HIDL (.hal) can not be moved to fit
+|                        the directory structure because already published
+|
+|-- common           <== code common to audio device and effect API
+|   |-- 2.0
+|   |   |-- default  <== code that wraps the legacy API
+|   |   `-- vts      <== vts of 2.0 device and effect API common code
+|   |-- 4.0
+|   |   |-- default
+|   |   `-- vts
+|   |-- ...          <== The future versions should continue this structure
+|   |   |-- default
+|   |   `-- vts
+|   `-- all_versions <== code common to all version of both device and effect API
+|       |-- default
+|       `-- vts      <== vts of device and effect API common version independent code
+|
+|-- device           <== code relative to the device API
+|   |-- 2.0          <== 2.0 device API code (except .hal, see audio/2.0)
+|   |   |-- default
+|   |   `-- vts
+|   |-- 4.0
+|   |   |-- default  <== default implementation of the device 4.0 api
+|   |   `-- vts      <== vts code of the 4.0 API
+|   |-- ...
+|   |   |-- default
+|   |   `-- vts
+|   `-- all_versions
+|       |-- default
+|       `-- vts      <== vts of device API common version independent code
+|
+`-- effect           <== idem for the effect API
+    |-- 2.0
+    |   |-- default
+    |   `-- vts
+    |-- 4.0
+    |   |-- default
+    |   `-- vts
+    |-- ...
+    |   |-- default
+    |   `-- vts
+    `-- all_versions
+        |-- default
+        `-- vts
