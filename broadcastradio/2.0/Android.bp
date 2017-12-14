@@ -16,6 +16,7 @@ hidl_interface {
         "android.hidl.base@1.0",
     ],
     types: [
+        "ConfigFlag",
         "Constants",
         "IdentifierType",
         "Metadata",
