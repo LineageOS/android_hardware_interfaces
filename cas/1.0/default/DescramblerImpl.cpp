@@ -18,8 +18,9 @@
 #define LOG_TAG "android.hardware.cas@1.0-DescramblerImpl"
 
 #include <hidlmemory/mapping.h>
-#include <media/hardware/CryptoAPI.h>
 #include <media/cas/DescramblerAPI.h>
+#include <media/hardware/CryptoAPI.h>
+#include <media/stagefright/foundation/AUtils.h>
 #include <utils/Log.h>
 
 #include "DescramblerImpl.h"
@@ -70,6 +71,11 @@ Return<bool> DescramblerImpl::requiresSecureDecoderComponent(
     return mPlugin->requiresSecureDecoderComponent(String8(mime.c_str()));
 }
 
+static inline bool validateRangeForSize(
+        uint64_t offset, uint64_t length, uint64_t size) {
+    return isInRange<uint64_t, uint64_t>(0, size, offset, length);
+}
+
 Return<void> DescramblerImpl::descramble(
         ScramblingControl scramblingControl,
         const hidl_vec<SubSample>& subSamples,
@@ -81,12 +87,57 @@ Return<void> DescramblerImpl::descramble(
     ALOGV("%s", __FUNCTION__);
 
     sp<IMemory> srcMem = mapMemory(srcBuffer.heapBase);
+
+    // Validate if the offset and size in the SharedBuffer is consistent with the
+    // mapped ashmem, since the offset and size is controlled by client.
+    if (srcMem == NULL) {
+        ALOGE("Failed to map src buffer.");
+        _hidl_cb(toStatus(BAD_VALUE), 0, NULL);
+        return Void();
+    }
+    if (!validateRangeForSize(
+            srcBuffer.offset, srcBuffer.size, (uint64_t)srcMem->getSize())) {
+        ALOGE("Invalid src buffer range: offset %llu, size %llu, srcMem size %llu",
+                srcBuffer.offset, srcBuffer.size, (uint64_t)srcMem->getSize());
+        android_errorWriteLog(0x534e4554, "67962232");
+        _hidl_cb(toStatus(BAD_VALUE), 0, NULL);
+        return Void();
+    }
+
+    // use 64-bit here to catch bad subsample size that might be overflowing.
+    uint64_t totalBytesInSubSamples = 0;
+    for (size_t i = 0; i < subSamples.size(); i++) {
+        totalBytesInSubSamples += (uint64_t)subSamples[i].numBytesOfClearData +
+                subSamples[i].numBytesOfEncryptedData;
+    }
+    // Further validate if the specified srcOffset and requested total subsample size
+    // is consistent with the source shared buffer size.
+    if (!validateRangeForSize(srcOffset, totalBytesInSubSamples, srcBuffer.size)) {
+        ALOGE("Invalid srcOffset and subsample size: "
+                "srcOffset %llu, totalBytesInSubSamples %llu, srcBuffer size %llu",
+                srcOffset, totalBytesInSubSamples, srcBuffer.size);
+        android_errorWriteLog(0x534e4554, "67962232");
+        _hidl_cb(toStatus(BAD_VALUE), 0, NULL);
+        return Void();
+    }
+
     void *srcPtr = (uint8_t *)(void *)srcMem->getPointer() + srcBuffer.offset;
     void *dstPtr = NULL;
     if (dstBuffer.type == BufferType::SHARED_MEMORY) {
         // When using shared memory, src buffer is also used as dst,
         // we don't map it again here.
         dstPtr = srcPtr;
+
+        // In this case the dst and src would be the same buffer, need to validate
+        // dstOffset against the buffer size too.
+        if (!validateRangeForSize(dstOffset, totalBytesInSubSamples, srcBuffer.size)) {
+            ALOGE("Invalid dstOffset and subsample size: "
+                    "dstOffset %llu, totalBytesInSubSamples %llu, srcBuffer size %llu",
+                    dstOffset, totalBytesInSubSamples, srcBuffer.size);
+            android_errorWriteLog(0x534e4554, "67962232");
+            _hidl_cb(toStatus(BAD_VALUE), 0, NULL);
+            return Void();
+        }
     } else {
         native_handle_t *handle = const_cast<native_handle_t *>(
                 dstBuffer.secureMemory.getNativeHandle());
