@@ -22,9 +22,14 @@ using ::android::hardware::Void;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::hidl_string;
 using ::android::sp;
+using ContainsUnion = ::android::hardware::tests::foo::V1_0::IFoo::ContainsUnion;
+using Discriminator = ::android::hardware::tests::foo::V1_0::IFoo::Discriminator;
+using Union = ::android::hardware::tests::foo::V1_0::IFoo::Union;
 
 struct Foo : public IFoo {
     // Methods from ::android::hardware::tests::foo::V1_0::IFoo follow.
+    virtual Return<void> convertToBoolIfSmall(Discriminator d, const hidl_vec<Union>& u,
+                                              convertToBoolIfSmall_cb _hidl_cb) override;
     virtual Return<void> doThis(float param)  override;
     virtual Return<int32_t> doThatAndReturnSomething(int64_t param)  override;
     virtual Return<double> doQuiteABit(int32_t a, int64_t b, float c, double d)  override;
