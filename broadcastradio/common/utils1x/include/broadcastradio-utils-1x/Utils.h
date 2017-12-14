@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ANDROID_HARDWARE_BROADCASTRADIO_COMMON_UTILS_H
-#define ANDROID_HARDWARE_BROADCASTRADIO_COMMON_UTILS_H
+#ifndef ANDROID_HARDWARE_BROADCASTRADIO_COMMON_UTILS_1X_H
+#define ANDROID_HARDWARE_BROADCASTRADIO_COMMON_UTILS_1X_H
 
 #include <android/hardware/broadcastradio/1.2/types.h>
 #include <chrono>
@@ -68,8 +68,8 @@ uint64_t getId(const V1_1::ProgramSelector& sel, const V1_2::IdentifierType type
 
 V1_1::ProgramSelector make_selector(V1_0::Band band, uint32_t channel, uint32_t subChannel = 0);
 
-bool getLegacyChannel(const V1_1::ProgramSelector& sel,
-        uint32_t* channelOut, uint32_t* subChannelOut);
+bool getLegacyChannel(const V1_1::ProgramSelector& sel, uint32_t* channelOut,
+                      uint32_t* subChannelOut);
 
 bool isDigital(const V1_1::ProgramSelector& sel);
 
@@ -85,4 +85,4 @@ bool operator==(const BandConfig& l, const BandConfig& r);
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_BROADCASTRADIO_COMMON_UTILS_H
+#endif  // ANDROID_HARDWARE_BROADCASTRADIO_COMMON_UTILS_1X_H

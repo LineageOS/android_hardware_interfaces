@@ -16,7 +16,7 @@
 #define LOG_TAG "BroadcastRadioDefault.utils"
 //#define LOG_NDEBUG 0
 
-#include <broadcastradio-utils/Utils.h>
+#include <broadcastradio-utils-1x/Utils.h>
 
 #include <log/log.h>
 
@@ -59,9 +59,7 @@ static bool haveEqualIds(const ProgramSelector& a, const ProgramSelector& b,
     /* We should check all Ids of a given type (ie. other AF),
      * but it doesn't matter for default implementation.
      */
-    auto aId = getId(a, type);
-    auto bId = getId(b, type);
-    return aId == bId;
+    return getId(a, type) == getId(b, type);
 }
 
 bool tunesTo(const ProgramSelector& a, const ProgramSelector& b) {
@@ -242,14 +240,16 @@ bool isDigital(const ProgramSelector& sel) {
 namespace V1_0 {
 
 bool operator==(const BandConfig& l, const BandConfig& r) {
+    using namespace utils;
+
     if (l.type != r.type) return false;
     if (l.antennaConnected != r.antennaConnected) return false;
     if (l.lowerLimit != r.lowerLimit) return false;
     if (l.upperLimit != r.upperLimit) return false;
     if (l.spacings != r.spacings) return false;
-    if (utils::isAm(l.type)) {
+    if (isAm(l.type)) {
         return l.ext.am == r.ext.am;
-    } else if (utils::isFm(l.type)) {
+    } else if (isFm(l.type)) {
         return l.ext.fm == r.ext.fm;
     } else {
         ALOGW("Unsupported band config type: %s", toString(l.type).c_str());

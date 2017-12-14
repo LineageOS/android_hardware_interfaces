@@ -17,15 +17,16 @@
 #define LOG_TAG "broadcastradio.vts"
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <android-base/logging.h>
 #include <android/hardware/broadcastradio/1.1/IBroadcastRadio.h>
 #include <android/hardware/broadcastradio/1.1/IBroadcastRadioFactory.h>
 #include <android/hardware/broadcastradio/1.1/ITuner.h>
 #include <android/hardware/broadcastradio/1.1/ITunerCallback.h>
 #include <android/hardware/broadcastradio/1.1/types.h>
-#include <android-base/logging.h>
-#include <broadcastradio-utils/Utils.h>
+#include <broadcastradio-utils-1x/Utils.h>
 #include <broadcastradio-vts-utils/call-barrier.h>
 #include <broadcastradio-vts-utils/mock-timeout.h>
+#include <broadcastradio-vts-utils/pointer-utils.h>
 #include <cutils/native_handle.h>
 #include <cutils/properties.h>
 #include <gmock/gmock.h>
@@ -56,8 +57,7 @@ using V1_0::MetaData;
 using V1_0::MetadataKey;
 using V1_0::MetadataType;
 
-using std::chrono::steady_clock;
-using std::this_thread::sleep_for;
+using broadcastradio::vts::clearAndWait;
 
 static constexpr auto kConfigTimeout = 10s;
 static constexpr auto kConnectModuleTimeout = 1s;
@@ -114,27 +114,6 @@ class BroadcastRadioHalTest : public ::testing::VtsHalHidlTargetTestBase,
     unsigned currentBandIndex = 0;
     hidl_vec<BandConfig> mBands;
 };
-
-/**
- * Clears strong pointer and waits until the object gets destroyed.
- *
- * @param ptr The pointer to get cleared.
- * @param timeout Time to wait for other references.
- */
-template <typename T>
-static void clearAndWait(sp<T>& ptr, std::chrono::milliseconds timeout) {
-    wp<T> wptr = ptr;
-    ptr.clear();
-    auto limit = steady_clock::now() + timeout;
-    while (wptr.promote() != nullptr) {
-        constexpr auto step = 10ms;
-        if (steady_clock::now() + step > limit) {
-            FAIL() << "Pointer was not released within timeout";
-            break;
-        }
-        sleep_for(step);
-    }
-}
 
 void BroadcastRadioHalTest::SetUp() {
     radioClass = GetParam();

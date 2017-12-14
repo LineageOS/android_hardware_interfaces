@@ -33,6 +33,7 @@ cc_binary {
         "service.cpp"
     ],
     static_libs: [
+        "android.hardware.broadcastradio@common-utils-1x-lib",
         "android.hardware.broadcastradio@common-utils-lib",
     ],
     shared_libs: [

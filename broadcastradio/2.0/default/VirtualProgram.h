@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ANDROID_HARDWARE_BROADCASTRADIO_V1_2_VIRTUALPROGRAM_H
-#define ANDROID_HARDWARE_BROADCASTRADIO_V1_2_VIRTUALPROGRAM_H
+#ifndef ANDROID_HARDWARE_BROADCASTRADIO_V2_0_VIRTUALPROGRAM_H
+#define ANDROID_HARDWARE_BROADCASTRADIO_V2_0_VIRTUALPROGRAM_H
 
-#include <android/hardware/broadcastradio/1.2/types.h>
-#include <broadcastradio-utils-1x/Utils.h>
+#include <android/hardware/broadcastradio/2.0/types.h>
 
 namespace android {
 namespace hardware {
 namespace broadcastradio {
-namespace V1_2 {
+namespace V2_0 {
 namespace implementation {
 
 /**
@@ -32,24 +31,27 @@ namespace implementation {
  * not an entry for a captured station in the radio tuner memory.
  */
 struct VirtualProgram {
-    V1_1::ProgramSelector selector;
+    ProgramSelector selector;
 
     std::string programName = "";
     std::string songArtist = "";
     std::string songTitle = "";
 
-    V1_1::ProgramInfo getProgramInfo(utils::HalRevision halRev) const;
+    operator ProgramInfo() const;
 
+    /**
+     * Defines order on how virtual programs appear on the "air" with
+     * ITunerSession::scan operation.
+     *
+     * It's for default implementation purposes, may not be complete or correct.
+     */
     friend bool operator<(const VirtualProgram& lhs, const VirtualProgram& rhs);
 };
 
-std::vector<V1_1::ProgramInfo> getProgramInfoVector(const std::vector<VirtualProgram>& vec,
-                                                    utils::HalRevision halRev);
-
 }  // namespace implementation
-}  // namespace V1_2
+}  // namespace V2_0
 }  // namespace broadcastradio
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_BROADCASTRADIO_V1_2_VIRTUALPROGRAM_H
+#endif  // ANDROID_HARDWARE_BROADCASTRADIO_V2_0_VIRTUALPROGRAM_H

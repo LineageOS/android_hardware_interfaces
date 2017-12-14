@@ -1,4 +1,4 @@
-<compatibility-matrix version="1.0" type="framework">
+<compatibility-matrix version="1.0" type="framework" level="2">
     <hal format="hidl" optional="false">
         <name>android.hardware.audio</name>
         <version>2.0</version>
@@ -81,7 +81,7 @@
     </hal>
     <hal format="hidl" optional="false">
         <name>android.hardware.configstore</name>
-        <version>1.0-1</version>
+        <version>1.0</version>
         <interface>
             <name>ISurfaceFlingerConfigs</name>
             <instance>default</instance>
@@ -158,14 +158,6 @@
     <hal format="hidl" optional="true">
         <name>android.hardware.health</name>
         <version>1.0</version>
-        <interface>
-            <name>IHealth</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.health</name>
-        <version>2.0</version>
         <interface>
             <name>IHealth</name>
             <instance>default</instance>

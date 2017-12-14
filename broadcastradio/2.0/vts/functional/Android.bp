@@ -15,14 +15,13 @@
 //
 
 cc_test {
-    name: "VtsHalBroadcastradioV1_1TargetTest",
+    name: "VtsHalBroadcastradioV2_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
-    srcs: ["VtsHalBroadcastradioV1_1TargetTest.cpp"],
+    srcs: ["VtsHalBroadcastradioV2_0TargetTest.cpp"],
     static_libs: [
-        "android.hardware.broadcastradio@1.0",
-        "android.hardware.broadcastradio@1.1",
-        "android.hardware.broadcastradio@1.2",  // common-utils-lib dependency
-        "android.hardware.broadcastradio@common-utils-1x-lib",
+        "android.hardware.broadcastradio@2.0",
+        "android.hardware.broadcastradio@common-utils-2x-lib",
+        "android.hardware.broadcastradio@vts-utils-lib",
         "android.hardware.broadcastradio@vts-utils-lib",
         "libgmock",
     ],
