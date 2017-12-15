@@ -35,7 +35,7 @@ import @1.1::ScanStatus;
 import @1.1::ScanType;
 
 enum RadioConst : @1.0::RadioConst {
-    RADIO_ACCESS_SPEFICIER_MAX_SIZE = 8,
+    RADIO_ACCESS_SPECIFIER_MAX_SIZE = 8,
 };
 
 /**
@@ -74,7 +74,7 @@ struct NetworkScanRequest {
     /**
      * Networks with bands/channels to scan
      * Maximum length of the vector is
-     * RadioConst:RADIO_ACCESS_SPEFICIER_MAX_SIZE
+     * RadioConst:RADIO_ACCESS_SPECIFIER_MAX_SIZE
      */
     vec<RadioAccessSpecifier> specifiers;
 
