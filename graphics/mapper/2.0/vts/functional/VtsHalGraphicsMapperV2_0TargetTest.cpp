@@ -33,22 +33,22 @@ using android::hardware::graphics::common::V1_0::BufferUsage;
 using android::hardware::graphics::common::V1_0::PixelFormat;
 
 class GraphicsMapperHidlTest : public ::testing::VtsHalHidlTargetTestBase {
- protected:
-  void SetUp() override {
-      ASSERT_NO_FATAL_FAILURE(mGralloc = std::make_unique<Gralloc>());
+   protected:
+    void SetUp() override {
+        ASSERT_NO_FATAL_FAILURE(mGralloc = std::make_unique<Gralloc>());
 
-      mDummyDescriptorInfo.width = 64;
-      mDummyDescriptorInfo.height = 64;
-      mDummyDescriptorInfo.layerCount = 1;
-      mDummyDescriptorInfo.format = PixelFormat::RGBA_8888;
-      mDummyDescriptorInfo.usage = static_cast<uint64_t>(
-          BufferUsage::CPU_WRITE_OFTEN | BufferUsage::CPU_READ_OFTEN);
-  }
+        mDummyDescriptorInfo.width = 64;
+        mDummyDescriptorInfo.height = 64;
+        mDummyDescriptorInfo.layerCount = 1;
+        mDummyDescriptorInfo.format = PixelFormat::RGBA_8888;
+        mDummyDescriptorInfo.usage =
+            static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN | BufferUsage::CPU_READ_OFTEN);
+    }
 
-  void TearDown() override {}
+    void TearDown() override {}
 
-  std::unique_ptr<Gralloc> mGralloc;
-  IMapper::BufferDescriptorInfo mDummyDescriptorInfo{};
+    std::unique_ptr<Gralloc> mGralloc;
+    IMapper::BufferDescriptorInfo mDummyDescriptorInfo{};
 };
 
 /**
@@ -63,18 +63,16 @@ TEST_F(GraphicsMapperHidlTest, AllocatorDumpDebugInfo) {
  */
 TEST_F(GraphicsMapperHidlTest, AllocatorAllocate) {
     BufferDescriptor descriptor;
-    ASSERT_NO_FATAL_FAILURE(
-        descriptor = mGralloc->createDescriptor(mDummyDescriptorInfo));
+    ASSERT_NO_FATAL_FAILURE(descriptor = mGralloc->createDescriptor(mDummyDescriptorInfo));
 
     for (uint32_t count = 0; count < 5; count++) {
         std::vector<const native_handle_t*> bufferHandles;
         uint32_t stride;
-        ASSERT_NO_FATAL_FAILURE(bufferHandles = mGralloc->allocate(
-                                    descriptor, count, false, &stride));
+        ASSERT_NO_FATAL_FAILURE(bufferHandles =
+                                    mGralloc->allocate(descriptor, count, false, &stride));
 
         if (count >= 1) {
-            EXPECT_LE(mDummyDescriptorInfo.width, stride)
-                << "invalid buffer stride";
+            EXPECT_LE(mDummyDescriptorInfo.width, stride) << "invalid buffer stride";
         }
 
         for (auto bufferHandle : bufferHandles) {
@@ -89,10 +87,10 @@ TEST_F(GraphicsMapperHidlTest, AllocatorAllocate) {
 TEST_F(GraphicsMapperHidlTest, AllocatorAllocateNegative) {
     // this assumes any valid descriptor is non-empty
     BufferDescriptor descriptor;
-    mGralloc->getAllocator()->allocate(
-        descriptor, 1, [&](const auto& tmpError, const auto&, const auto&) {
-            EXPECT_EQ(Error::BAD_DESCRIPTOR, tmpError);
-        });
+    mGralloc->getAllocator()->allocate(descriptor, 1,
+                                       [&](const auto& tmpError, const auto&, const auto&) {
+                                           EXPECT_EQ(Error::BAD_DESCRIPTOR, tmpError);
+                                       });
 }
 
 /**
@@ -122,11 +120,9 @@ TEST_F(GraphicsMapperHidlTest, CreateDescriptorBasic) {
 TEST_F(GraphicsMapperHidlTest, CreateDescriptorNegative) {
     auto info = mDummyDescriptorInfo;
     info.width = 0;
-    mGralloc->getMapper()->createDescriptor(
-        info, [&](const auto& tmpError, const auto&) {
-            EXPECT_EQ(Error::BAD_VALUE, tmpError)
-                << "createDescriptor did not fail with BAD_VALUE";
-        });
+    mGralloc->getMapper()->createDescriptor(info, [&](const auto& tmpError, const auto&) {
+        EXPECT_EQ(Error::BAD_VALUE, tmpError) << "createDescriptor did not fail with BAD_VALUE";
+    });
 }
 
 /**
@@ -134,8 +130,7 @@ TEST_F(GraphicsMapperHidlTest, CreateDescriptorNegative) {
  */
 TEST_F(GraphicsMapperHidlTest, ImportFreeBufferBasic) {
     const native_handle_t* bufferHandle;
-    ASSERT_NO_FATAL_FAILURE(bufferHandle =
-                                mGralloc->allocate(mDummyDescriptorInfo, true));
+    ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(mDummyDescriptorInfo, true));
     ASSERT_NO_FATAL_FAILURE(mGralloc->freeBuffer(bufferHandle));
 }
 
@@ -144,16 +139,13 @@ TEST_F(GraphicsMapperHidlTest, ImportFreeBufferBasic) {
  */
 TEST_F(GraphicsMapperHidlTest, ImportFreeBufferClone) {
     const native_handle_t* clonedBufferHandle;
-    ASSERT_NO_FATAL_FAILURE(
-        clonedBufferHandle = mGralloc->allocate(mDummyDescriptorInfo, false));
+    ASSERT_NO_FATAL_FAILURE(clonedBufferHandle = mGralloc->allocate(mDummyDescriptorInfo, false));
 
     // A cloned handle is a raw handle. Check that we can import it multiple
     // times.
     const native_handle_t* importedBufferHandles[2];
-    ASSERT_NO_FATAL_FAILURE(importedBufferHandles[0] =
-                                mGralloc->importBuffer(clonedBufferHandle));
-    ASSERT_NO_FATAL_FAILURE(importedBufferHandles[1] =
-                                mGralloc->importBuffer(clonedBufferHandle));
+    ASSERT_NO_FATAL_FAILURE(importedBufferHandles[0] = mGralloc->importBuffer(clonedBufferHandle));
+    ASSERT_NO_FATAL_FAILURE(importedBufferHandles[1] = mGralloc->importBuffer(clonedBufferHandle));
     ASSERT_NO_FATAL_FAILURE(mGralloc->freeBuffer(importedBufferHandles[0]));
     ASSERT_NO_FATAL_FAILURE(mGralloc->freeBuffer(importedBufferHandles[1]));
 
@@ -165,15 +157,13 @@ TEST_F(GraphicsMapperHidlTest, ImportFreeBufferClone) {
  */
 TEST_F(GraphicsMapperHidlTest, ImportFreeBufferSingleton) {
     const native_handle_t* rawHandle;
-    ASSERT_NO_FATAL_FAILURE(
-        rawHandle = mGralloc->allocate(mDummyDescriptorInfo, false));
+    ASSERT_NO_FATAL_FAILURE(rawHandle = mGralloc->allocate(mDummyDescriptorInfo, false));
 
     native_handle_t* importedHandle = nullptr;
-    mGralloc->getMapper()->importBuffer(
-        rawHandle, [&](const auto& tmpError, const auto& buffer) {
-            ASSERT_EQ(Error::NONE, tmpError);
-            importedHandle = static_cast<native_handle_t*>(buffer);
-        });
+    mGralloc->getMapper()->importBuffer(rawHandle, [&](const auto& tmpError, const auto& buffer) {
+        ASSERT_EQ(Error::NONE, tmpError);
+        importedHandle = static_cast<native_handle_t*>(buffer);
+    });
 
     // free the imported handle with another mapper
     std::unique_ptr<Gralloc> anotherGralloc;
@@ -203,15 +193,13 @@ TEST_F(GraphicsMapperHidlTest, ImportFreeBufferNoLeak) {
  */
 TEST_F(GraphicsMapperHidlTest, ImportBufferNegative) {
     native_handle_t* invalidHandle = nullptr;
-    mGralloc->getMapper()->importBuffer(
-        invalidHandle, [&](const auto& tmpError, const auto&) {
-            EXPECT_EQ(Error::BAD_BUFFER, tmpError)
-                << "importBuffer with nullptr did not fail with BAD_BUFFER";
-        });
+    mGralloc->getMapper()->importBuffer(invalidHandle, [&](const auto& tmpError, const auto&) {
+        EXPECT_EQ(Error::BAD_BUFFER, tmpError)
+            << "importBuffer with nullptr did not fail with BAD_BUFFER";
+    });
 
     invalidHandle = native_handle_create(0, 0);
-    mGralloc->getMapper()->importBuffer(invalidHandle, [&](const auto& tmpError,
-                                                           const auto&) {
+    mGralloc->getMapper()->importBuffer(invalidHandle, [&](const auto& tmpError, const auto&) {
         EXPECT_EQ(Error::BAD_BUFFER, tmpError)
             << "importBuffer with invalid handle did not fail with BAD_BUFFER";
     });
@@ -224,8 +212,7 @@ TEST_F(GraphicsMapperHidlTest, ImportBufferNegative) {
 TEST_F(GraphicsMapperHidlTest, FreeBufferNegative) {
     native_handle_t* invalidHandle = nullptr;
     Error error = mGralloc->getMapper()->freeBuffer(invalidHandle);
-    EXPECT_EQ(Error::BAD_BUFFER, error)
-        << "freeBuffer with nullptr did not fail with BAD_BUFFER";
+    EXPECT_EQ(Error::BAD_BUFFER, error) << "freeBuffer with nullptr did not fail with BAD_BUFFER";
 
     invalidHandle = native_handle_create(0, 0);
     error = mGralloc->getMapper()->freeBuffer(invalidHandle);
@@ -234,8 +221,7 @@ TEST_F(GraphicsMapperHidlTest, FreeBufferNegative) {
     native_handle_delete(invalidHandle);
 
     const native_handle_t* clonedBufferHandle;
-    ASSERT_NO_FATAL_FAILURE(
-        clonedBufferHandle = mGralloc->allocate(mDummyDescriptorInfo, false));
+    ASSERT_NO_FATAL_FAILURE(clonedBufferHandle = mGralloc->allocate(mDummyDescriptorInfo, false));
     error = mGralloc->getMapper()->freeBuffer(invalidHandle);
     EXPECT_EQ(Error::BAD_BUFFER, error)
         << "freeBuffer with un-imported handle did not fail with BAD_BUFFER";
@@ -251,16 +237,15 @@ TEST_F(GraphicsMapperHidlTest, LockUnlockBasic) {
 
     const native_handle_t* bufferHandle;
     uint32_t stride;
-    ASSERT_NO_FATAL_FAILURE(bufferHandle =
-                                mGralloc->allocate(info, true, &stride));
+    ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(info, true, &stride));
 
     // lock buffer for writing
     const IMapper::Rect region{0, 0, static_cast<int32_t>(info.width),
                                static_cast<int32_t>(info.height)};
     int fence = -1;
     uint8_t* data;
-    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(mGralloc->lock(
-                                bufferHandle, info.usage, region, fence)));
+    ASSERT_NO_FATAL_FAILURE(
+        data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage, region, fence)));
 
     // RGBA_8888
     size_t strideInBytes = stride * 4;
@@ -274,8 +259,8 @@ TEST_F(GraphicsMapperHidlTest, LockUnlockBasic) {
     ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(bufferHandle));
 
     // lock again for reading
-    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(mGralloc->lock(
-                                bufferHandle, info.usage, region, fence)));
+    ASSERT_NO_FATAL_FAILURE(
+        data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage, region, fence)));
     for (uint32_t y = 0; y < info.height; y++) {
         for (size_t i = 0; i < writeInBytes; i++) {
             EXPECT_EQ(static_cast<uint8_t>(y), data[i]);
@@ -299,16 +284,14 @@ TEST_F(GraphicsMapperHidlTest, LockYCbCrBasic) {
 
     const native_handle_t* bufferHandle;
     uint32_t stride;
-    ASSERT_NO_FATAL_FAILURE(bufferHandle =
-                                mGralloc->allocate(info, true, &stride));
+    ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(info, true, &stride));
 
     // lock buffer for writing
     const IMapper::Rect region{0, 0, static_cast<int32_t>(info.width),
                                static_cast<int32_t>(info.height)};
     int fence = -1;
     YCbCrLayout layout;
-    ASSERT_NO_FATAL_FAILURE(
-        layout = mGralloc->lockYCbCr(bufferHandle, info.usage, region, fence));
+    ASSERT_NO_FATAL_FAILURE(layout = mGralloc->lockYCbCr(bufferHandle, info.usage, region, fence));
 
     auto yData = static_cast<uint8_t*>(layout.y);
     auto cbData = static_cast<uint8_t*>(layout.cb);
@@ -328,8 +311,7 @@ TEST_F(GraphicsMapperHidlTest, LockYCbCrBasic) {
     ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(bufferHandle));
 
     // lock again for reading
-    ASSERT_NO_FATAL_FAILURE(
-        layout = mGralloc->lockYCbCr(bufferHandle, info.usage, region, fence));
+    ASSERT_NO_FATAL_FAILURE(layout = mGralloc->lockYCbCr(bufferHandle, info.usage, region, fence));
 
     yData = static_cast<uint8_t*>(layout.y);
     cbData = static_cast<uint8_t*>(layout.cb);
@@ -357,25 +339,21 @@ TEST_F(GraphicsMapperHidlTest, LockYCbCrBasic) {
  */
 TEST_F(GraphicsMapperHidlTest, UnlockNegative) {
     native_handle_t* invalidHandle = nullptr;
-    mGralloc->getMapper()->unlock(
-        invalidHandle, [&](const auto& tmpError, const auto&) {
-            EXPECT_EQ(Error::BAD_BUFFER, tmpError)
-                << "unlock with nullptr did not fail with BAD_BUFFER";
-        });
+    mGralloc->getMapper()->unlock(invalidHandle, [&](const auto& tmpError, const auto&) {
+        EXPECT_EQ(Error::BAD_BUFFER, tmpError)
+            << "unlock with nullptr did not fail with BAD_BUFFER";
+    });
 
     invalidHandle = native_handle_create(0, 0);
-    mGralloc->getMapper()->unlock(
-        invalidHandle, [&](const auto& tmpError, const auto&) {
-            EXPECT_EQ(Error::BAD_BUFFER, tmpError)
-                << "unlock with invalid handle did not fail with BAD_BUFFER";
-        });
+    mGralloc->getMapper()->unlock(invalidHandle, [&](const auto& tmpError, const auto&) {
+        EXPECT_EQ(Error::BAD_BUFFER, tmpError)
+            << "unlock with invalid handle did not fail with BAD_BUFFER";
+    });
     native_handle_delete(invalidHandle);
 
-    ASSERT_NO_FATAL_FAILURE(invalidHandle =
-                                const_cast<native_handle_t*>(mGralloc->allocate(
-                                    mDummyDescriptorInfo, false)));
-    mGralloc->getMapper()->unlock(invalidHandle, [&](const auto& tmpError,
-                                                     const auto&) {
+    ASSERT_NO_FATAL_FAILURE(invalidHandle = const_cast<native_handle_t*>(
+                                mGralloc->allocate(mDummyDescriptorInfo, false)));
+    mGralloc->getMapper()->unlock(invalidHandle, [&](const auto& tmpError, const auto&) {
         EXPECT_EQ(Error::BAD_BUFFER, tmpError)
             << "unlock with un-imported handle did not fail with BAD_BUFFER";
     });
