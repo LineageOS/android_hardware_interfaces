@@ -31,11 +31,9 @@ using android::hardware::cas::V1_0::IMediaCasService;
 int main() {
     ALOGD("android.hardware.cas@1.0-service starting...");
 
-#ifdef USE_VNDBINDER
     // The CAS HAL may communicate to other vendor components via
     // /dev/vndbinder
     android::ProcessState::initWithDriver("/dev/vndbinder");
-#endif // USE_VNDBINDER
 
     configureRpcThreadpool(8, true /* callerWillJoin */);
 
