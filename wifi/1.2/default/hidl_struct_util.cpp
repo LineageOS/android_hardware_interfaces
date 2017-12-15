@@ -1250,10 +1250,10 @@ bool convertHidlNanPublishRequestToLegacy(
         hidl_request.baseConfigs.rangingIntervalMsec;
     legacy_request->ranging_cfg.config_ranging_indications =
         hidl_request.baseConfigs.configRangingIndications;
-    legacy_request->ranging_cfg.distance_ingress_cm =
-        hidl_request.baseConfigs.distanceIngressCm;
-    legacy_request->ranging_cfg.distance_egress_cm =
-        hidl_request.baseConfigs.distanceEgressCm;
+    legacy_request->ranging_cfg.distance_ingress_mm =
+        hidl_request.baseConfigs.distanceIngressCm * 10;
+    legacy_request->ranging_cfg.distance_egress_mm =
+        hidl_request.baseConfigs.distanceEgressCm * 10;
     legacy_request->ranging_auto_response =
         hidl_request.baseConfigs.rangingRequired
             ? legacy_hal::NAN_RANGING_AUTO_RESPONSE_ENABLE
@@ -1402,10 +1402,10 @@ bool convertHidlNanSubscribeRequestToLegacy(
         hidl_request.baseConfigs.rangingIntervalMsec;
     legacy_request->ranging_cfg.config_ranging_indications =
         hidl_request.baseConfigs.configRangingIndications;
-    legacy_request->ranging_cfg.distance_ingress_cm =
-        hidl_request.baseConfigs.distanceIngressCm;
-    legacy_request->ranging_cfg.distance_egress_cm =
-        hidl_request.baseConfigs.distanceEgressCm;
+    legacy_request->ranging_cfg.distance_ingress_mm =
+        hidl_request.baseConfigs.distanceIngressCm * 10;
+    legacy_request->ranging_cfg.distance_egress_mm =
+        hidl_request.baseConfigs.distanceEgressCm * 10;
     legacy_request->ranging_auto_response =
         hidl_request.baseConfigs.rangingRequired
             ? legacy_hal::NAN_RANGING_AUTO_RESPONSE_ENABLE
@@ -1847,7 +1847,7 @@ bool convertLegacyNanMatchIndToHidl(const legacy_hal::NanMatchInd& legacy_ind,
     hidl_ind->peerRequiresRanging = legacy_ind.peer_sdea_params.ranging_state ==
                                     legacy_hal::NAN_RANGING_ENABLE;
     hidl_ind->rangingMeasurementInCm =
-        legacy_ind.range_info.range_measurement_cm;
+        legacy_ind.range_info.range_measurement_mm / 10;
     hidl_ind->rangingIndicationType = legacy_ind.range_info.ranging_event_type;
 
     return true;
