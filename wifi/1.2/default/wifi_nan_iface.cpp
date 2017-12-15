@@ -494,6 +494,8 @@ void WifiNanIface::invalidate() {
 
 bool WifiNanIface::isValid() { return is_valid_; }
 
+std::string WifiNanIface::getName() { return ifname_; }
+
 std::set<sp<IWifiNanIfaceEventCallback>> WifiNanIface::getEventCallbacks() {
     return event_cb_handler_.getCallbacks();
 }

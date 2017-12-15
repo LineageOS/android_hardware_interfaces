@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,30 +14,33 @@
  * limitations under the License.
  */
 
-#ifndef WIFI_FEATURE_FLAGS_H_
-#define WIFI_FEATURE_FLAGS_H_
+#ifndef MOCK_WIFI_MODE_CONTROLLER_H_
+#define MOCK_WIFI_MODE_CONTROLLER_H_
+
+#include <gmock/gmock.h>
+
+#include "wifi_mode_controller.h"
 
 namespace android {
 namespace hardware {
 namespace wifi {
 namespace V1_2 {
 namespace implementation {
-namespace feature_flags {
+namespace mode_controller {
 
-class WifiFeatureFlags {
+class MockWifiModeController : public WifiModeController {
    public:
-    WifiFeatureFlags();
-    virtual ~WifiFeatureFlags() = default;
-
-    virtual bool isAwareSupported();
-    virtual bool isDualInterfaceSupported();
+    MockWifiModeController();
+    MOCK_METHOD0(initialize, bool());
+    MOCK_METHOD1(changeFirmwareMode, bool(IfaceType));
+    MOCK_METHOD1(isFirmwareModeChangeNeeded, bool(IfaceType));
+    MOCK_METHOD0(deinitialize, bool());
 };
-
-}  // namespace feature_flags
+}  // namespace mode_controller
 }  // namespace implementation
 }  // namespace V1_2
 }  // namespace wifi
 }  // namespace hardware
 }  // namespace android
 
-#endif  // WIFI_FEATURE_FLAGS_H_
+#endif  // MOCK_WIFI_MODE_CONTROLLER_H_
