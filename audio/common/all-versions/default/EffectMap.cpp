@@ -16,7 +16,7 @@
 
 #include <atomic>
 
-#include "EffectMap.h"
+#include "common/all-versions/default/EffectMap.h"
 
 namespace android {
 

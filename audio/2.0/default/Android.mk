@@ -44,6 +44,7 @@ LOCAL_SHARED_LIBRARIES := \
     android.hardware.audio@2.0 \
     android.hardware.audio.common@2.0 \
     android.hardware.audio.common@2.0-util \
+    android.hardware.audio.common-util \
 
 LOCAL_HEADER_LIBRARIES := \
     libaudioclient_headers \

@@ -14,24 +14,28 @@
  * limitations under the License.
  */
 
-#ifndef android_hardware_audio_V2_0_Hidl_Utils_H_
-#define android_hardware_audio_V2_0_Hidl_Utils_H_
+#ifndef AUDIO_HAL_VERSION
+#error "AUDIO_HAL_VERSION must be set before including this file."
+#endif
 
 #include <memory>
 
-#include <android/hardware/audio/common/2.0/types.h>
 #include <system/audio.h>
 
-using ::android::hardware::audio::common::V2_0::AudioConfig;
-using ::android::hardware::audio::common::V2_0::AudioGain;
-using ::android::hardware::audio::common::V2_0::AudioGainConfig;
-using ::android::hardware::audio::common::V2_0::AudioOffloadInfo;
-using ::android::hardware::audio::common::V2_0::AudioPort;
-using ::android::hardware::audio::common::V2_0::AudioPortConfig;
-using ::android::hardware::audio::common::V2_0::Uuid;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioConfig;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioGain;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioGainConfig;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioOffloadInfo;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioPort;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioPortConfig;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::Uuid;
 using ::android::hardware::hidl_vec;
 
 namespace android {
+namespace hardware {
+namespace audio {
+namespace common {
+namespace AUDIO_HAL_VERSION {
 
 class HidlUtils {
    public:
@@ -62,6 +66,8 @@ class HidlUtils {
     static void uuidToHal(const Uuid& uuid, audio_uuid_t* halUuid);
 };
 
+}  // namespace AUDIO_HAL_VERSION
+}  // namespace common
+}  // namespace audio
+}  // namespace hardware
 }  // namespace android
-
-#endif  // android_hardware_audio_V2_0_Hidl_Utils_H_

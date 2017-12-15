@@ -20,6 +20,8 @@
 #include "Conversions.h"
 #include "HidlUtils.h"
 
+using ::android::hardware::audio::common::V2_0::HidlUtils;
+
 namespace android {
 namespace hardware {
 namespace audio {

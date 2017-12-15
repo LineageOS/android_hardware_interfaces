@@ -34,17 +34,19 @@
 #include "BassBoostEffect.h"
 #include "Conversions.h"
 #include "DownmixEffect.h"
-#include "EffectsFactory.h"
-#include "HidlUtils.h"
 #include "Effect.h"
-#include "EffectMap.h"
+#include "EffectsFactory.h"
 #include "EnvironmentalReverbEffect.h"
 #include "EqualizerEffect.h"
+#include "HidlUtils.h"
 #include "LoudnessEnhancerEffect.h"
 #include "NoiseSuppressionEffect.h"
 #include "PresetReverbEffect.h"
 #include "VirtualizerEffect.h"
 #include "VisualizerEffect.h"
+#include "common/all-versions/default/EffectMap.h"
+
+using ::android::hardware::audio::common::V2_0::HidlUtils;
 
 namespace android {
 namespace hardware {

@@ -14,23 +14,29 @@
  * limitations under the License.
  */
 
+#ifndef AUDIO_HAL_VERSION
+#error "AUDIO_HAL_VERSION must be set before including this file."
+#endif
+
 #include <string.h>
 
-#include "HidlUtils.h"
-
-using ::android::hardware::audio::common::V2_0::AudioChannelMask;
-using ::android::hardware::audio::common::V2_0::AudioDevice;
-using ::android::hardware::audio::common::V2_0::AudioFormat;
-using ::android::hardware::audio::common::V2_0::AudioGainMode;
-using ::android::hardware::audio::common::V2_0::AudioMixLatencyClass;
-using ::android::hardware::audio::common::V2_0::AudioPortConfigMask;
-using ::android::hardware::audio::common::V2_0::AudioPortRole;
-using ::android::hardware::audio::common::V2_0::AudioPortType;
-using ::android::hardware::audio::common::V2_0::AudioSource;
-using ::android::hardware::audio::common::V2_0::AudioStreamType;
-using ::android::hardware::audio::common::V2_0::AudioUsage;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioChannelMask;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioDevice;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioFormat;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioGainMode;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioMixLatencyClass;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioPortConfigMask;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioPortRole;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioPortType;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioSource;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioStreamType;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioUsage;
 
 namespace android {
+namespace hardware {
+namespace audio {
+namespace common {
+namespace AUDIO_HAL_VERSION {
 
 void HidlUtils::audioConfigFromHal(const audio_config_t& halConfig, AudioConfig* config) {
     config->sampleRateHz = halConfig.sample_rate;
@@ -333,4 +339,8 @@ void HidlUtils::uuidToHal(const Uuid& uuid, audio_uuid_t* halUuid) {
     memcpy(halUuid->node, uuid.node.data(), uuid.node.size());
 }
 
+}  // namespace AUDIO_HAL_VERSION
+}  // namespace common
+}  // namespace audio
+}  // namespace hardware
 }  // namespace android

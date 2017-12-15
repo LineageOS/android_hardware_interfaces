@@ -30,6 +30,8 @@
 #include "StreamOut.h"
 #include "Util.h"
 
+using ::android::hardware::audio::common::V2_0::HidlUtils;
+
 namespace android {
 namespace hardware {
 namespace audio {

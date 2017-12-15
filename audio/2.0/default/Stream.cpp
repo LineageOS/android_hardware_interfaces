@@ -26,8 +26,8 @@
 #include <utils/Vector.h>
 
 #include "Conversions.h"
-#include "EffectMap.h"
 #include "Stream.h"
+#include "common/all-versions/default/EffectMap.h"
 
 namespace android {
 namespace hardware {

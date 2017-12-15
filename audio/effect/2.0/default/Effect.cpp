@@ -25,7 +25,7 @@
 
 #include "Conversions.h"
 #include "Effect.h"
-#include "EffectMap.h"
+#include "common/all-versions/default/EffectMap.h"
 
 namespace android {
 namespace hardware {

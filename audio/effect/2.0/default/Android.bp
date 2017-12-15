@@ -31,6 +31,7 @@ cc_library_shared {
         "libhidltransport",
         "liblog",
         "libutils",
+        "android.hardware.audio.common-util",
         "android.hardware.audio.common@2.0",
         "android.hardware.audio.common@2.0-util",
         "android.hardware.audio.effect@2.0",

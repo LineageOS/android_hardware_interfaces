@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef android_hardware_audio_V2_0_EffectMap_H_
-#define android_hardware_audio_V2_0_EffectMap_H_
+#ifndef android_hardware_audio_common_EffectMap_H_
+#define android_hardware_audio_common_EffectMap_H_
 
 #include <mutex>
 
@@ -43,4 +43,4 @@ class EffectMap : public Singleton<EffectMap> {
 
 }  // namespace android
 
-#endif  // android_hardware_audio_V2_0_EffectMap_H_
+#endif  // android_hardware_audio_common_EffectMap_H_
