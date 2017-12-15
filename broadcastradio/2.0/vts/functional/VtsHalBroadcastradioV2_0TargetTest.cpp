@@ -57,6 +57,12 @@ static constexpr auto tune = 30s;
 
 }  // namespace timeout
 
+static const ConfigFlag gConfigFlagValues[] = {
+    ConfigFlag::FORCE_MONO,       ConfigFlag::FORCE_ANALOG,     ConfigFlag::FORCE_DIGITAL,
+    ConfigFlag::RDS_AF,           ConfigFlag::RDS_REG,          ConfigFlag::DAB_IMPLICIT_LINKING,
+    ConfigFlag::DAB_HARD_LINKING, ConfigFlag::DAB_SOFT_LINKING,
+};
+
 struct TunerCallbackMock : public ITunerCallback {
     TunerCallbackMock() {
         // we expect the antenna is connected through the whole test
@@ -376,6 +382,85 @@ TEST_F(BroadcastRadioHalTest, GetNoImage) {
 
     ASSERT_TRUE(result.isOk());
     ASSERT_EQ(0u, len);
+}
+
+/**
+ * Test getting config flags.
+ *
+ * Verifies that:
+ * - getConfigFlag either succeeds or ends with NOT_SUPPORTED or INVALID_STATE;
+ * - call success or failure is consistent with setConfigFlag.
+ */
+TEST_F(BroadcastRadioHalTest, GetConfigFlags) {
+    ASSERT_TRUE(openSession());
+
+    for (auto flag : gConfigFlagValues) {
+        auto halResult = Result::UNKNOWN_ERROR;
+        auto cb = [&](Result result, bool) { halResult = result; };
+        auto hidlResult = mSession->getConfigFlag(flag, cb);
+        EXPECT_TRUE(hidlResult.isOk());
+
+        if (halResult != Result::NOT_SUPPORTED && halResult != Result::INVALID_STATE) {
+            ASSERT_EQ(Result::OK, halResult);
+        }
+
+        // set must fail or succeed the same way as get
+        auto setResult = mSession->setConfigFlag(flag, false);
+        EXPECT_EQ(halResult, setResult);
+        setResult = mSession->setConfigFlag(flag, true);
+        EXPECT_EQ(halResult, setResult);
+    }
+}
+
+/**
+ * Test setting config flags.
+ *
+ * Verifies that:
+ * - setConfigFlag either succeeds or ends with NOT_SUPPORTED or INVALID_STATE;
+ * - getConfigFlag reflects the state requested immediately after the set call.
+ */
+TEST_F(BroadcastRadioHalTest, SetConfigFlags) {
+    ASSERT_TRUE(openSession());
+
+    auto get = [&](ConfigFlag flag) {
+        auto halResult = Result::UNKNOWN_ERROR;
+        bool gotValue = false;
+        auto cb = [&](Result result, bool value) {
+            halResult = result;
+            gotValue = value;
+        };
+        auto hidlResult = mSession->getConfigFlag(flag, cb);
+        EXPECT_TRUE(hidlResult.isOk());
+        EXPECT_EQ(Result::OK, halResult);
+        return gotValue;
+    };
+
+    for (auto flag : gConfigFlagValues) {
+        auto result = mSession->setConfigFlag(flag, false);
+        if (result == Result::NOT_SUPPORTED || result == Result::INVALID_STATE) {
+            // setting to true must result in the same error as false
+            auto secondResult = mSession->setConfigFlag(flag, true);
+            EXPECT_EQ(result, secondResult);
+            continue;
+        }
+        ASSERT_EQ(Result::OK, result);
+
+        // verify false is set
+        auto value = get(flag);
+        EXPECT_FALSE(value);
+
+        // try setting true this time
+        result = mSession->setConfigFlag(flag, true);
+        ASSERT_EQ(Result::OK, result);
+        value = get(flag);
+        EXPECT_TRUE(value);
+
+        // false again
+        result = mSession->setConfigFlag(flag, false);
+        ASSERT_EQ(Result::OK, result);
+        value = get(flag);
+        EXPECT_FALSE(value);
+    }
 }
 
 }  // namespace vts
