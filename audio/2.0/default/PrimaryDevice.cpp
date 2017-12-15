@@ -25,9 +25,7 @@ namespace audio {
 namespace V2_0 {
 namespace implementation {
 
-PrimaryDevice::PrimaryDevice(audio_hw_device_t* device)
-        : mDevice(new Device(device)) {
-}
+PrimaryDevice::PrimaryDevice(audio_hw_device_t* device) : mDevice(new Device(device)) {}
 
 PrimaryDevice::~PrimaryDevice() {}
 
@@ -65,28 +63,25 @@ Return<void> PrimaryDevice::getInputBufferSize(const AudioConfig& config,
     return mDevice->getInputBufferSize(config, _hidl_cb);
 }
 
-Return<void> PrimaryDevice::openOutputStream(int32_t ioHandle,
-                                             const DeviceAddress& device,
-                                             const AudioConfig& config,
-                                             AudioOutputFlag flags,
+Return<void> PrimaryDevice::openOutputStream(int32_t ioHandle, const DeviceAddress& device,
+                                             const AudioConfig& config, AudioOutputFlag flags,
                                              openOutputStream_cb _hidl_cb) {
     return mDevice->openOutputStream(ioHandle, device, config, flags, _hidl_cb);
 }
 
-Return<void> PrimaryDevice::openInputStream(
-    int32_t ioHandle, const DeviceAddress& device, const AudioConfig& config,
-    AudioInputFlag flags, AudioSource source, openInputStream_cb _hidl_cb) {
-    return mDevice->openInputStream(ioHandle, device, config, flags, source,
-                                    _hidl_cb);
+Return<void> PrimaryDevice::openInputStream(int32_t ioHandle, const DeviceAddress& device,
+                                            const AudioConfig& config, AudioInputFlag flags,
+                                            AudioSource source, openInputStream_cb _hidl_cb) {
+    return mDevice->openInputStream(ioHandle, device, config, flags, source, _hidl_cb);
 }
 
 Return<bool> PrimaryDevice::supportsAudioPatches() {
     return mDevice->supportsAudioPatches();
 }
 
-Return<void> PrimaryDevice::createAudioPatch(
-    const hidl_vec<AudioPortConfig>& sources,
-    const hidl_vec<AudioPortConfig>& sinks, createAudioPatch_cb _hidl_cb) {
+Return<void> PrimaryDevice::createAudioPatch(const hidl_vec<AudioPortConfig>& sources,
+                                             const hidl_vec<AudioPortConfig>& sinks,
+                                             createAudioPatch_cb _hidl_cb) {
     return mDevice->createAudioPatch(sources, sinks, _hidl_cb);
 }
 
@@ -94,13 +89,11 @@ Return<Result> PrimaryDevice::releaseAudioPatch(int32_t patch) {
     return mDevice->releaseAudioPatch(patch);
 }
 
-Return<void> PrimaryDevice::getAudioPort(const AudioPort& port,
-                                         getAudioPort_cb _hidl_cb) {
+Return<void> PrimaryDevice::getAudioPort(const AudioPort& port, getAudioPort_cb _hidl_cb) {
     return mDevice->getAudioPort(port, _hidl_cb);
 }
 
-Return<Result> PrimaryDevice::setAudioPortConfig(
-    const AudioPortConfig& config) {
+Return<Result> PrimaryDevice::setAudioPortConfig(const AudioPortConfig& config) {
     return mDevice->setAudioPortConfig(config);
 }
 
@@ -117,8 +110,7 @@ Return<void> PrimaryDevice::getParameters(const hidl_vec<hidl_string>& keys,
     return mDevice->getParameters(keys, _hidl_cb);
 }
 
-Return<Result> PrimaryDevice::setParameters(
-    const hidl_vec<ParameterValue>& parameters) {
+Return<Result> PrimaryDevice::setParameters(const hidl_vec<ParameterValue>& parameters) {
     return mDevice->setParameters(parameters);
 }
 
@@ -132,9 +124,8 @@ Return<Result> PrimaryDevice::setVoiceVolume(float volume) {
         ALOGW("Can not set a voice volume (%f) outside [0,1]", volume);
         return Result::INVALID_ARGUMENTS;
     }
-    return mDevice->analyzeStatus(
-        "set_voice_volume",
-        mDevice->device()->set_voice_volume(mDevice->device(), volume));
+    return mDevice->analyzeStatus("set_voice_volume",
+                                  mDevice->device()->set_voice_volume(mDevice->device(), volume));
 }
 
 Return<Result> PrimaryDevice::setMode(AudioMode mode) {
@@ -151,12 +142,11 @@ Return<Result> PrimaryDevice::setMode(AudioMode mode) {
     };
 
     return mDevice->analyzeStatus(
-        "set_mode", mDevice->device()->set_mode(
-                        mDevice->device(), static_cast<audio_mode_t>(mode)));
+        "set_mode",
+        mDevice->device()->set_mode(mDevice->device(), static_cast<audio_mode_t>(mode)));
 }
 
-Return<void> PrimaryDevice::getBtScoNrecEnabled(
-    getBtScoNrecEnabled_cb _hidl_cb) {
+Return<void> PrimaryDevice::getBtScoNrecEnabled(getBtScoNrecEnabled_cb _hidl_cb) {
     bool enabled;
     Result retval = mDevice->getParam(AudioParameter::keyBtNrec, &enabled);
     _hidl_cb(retval, enabled);
@@ -167,8 +157,7 @@ Return<Result> PrimaryDevice::setBtScoNrecEnabled(bool enabled) {
     return mDevice->setParam(AudioParameter::keyBtNrec, enabled);
 }
 
-Return<void> PrimaryDevice::getBtScoWidebandEnabled(
-    getBtScoWidebandEnabled_cb _hidl_cb) {
+Return<void> PrimaryDevice::getBtScoWidebandEnabled(getBtScoWidebandEnabled_cb _hidl_cb) {
     bool enabled;
     Result retval = mDevice->getParam(AUDIO_PARAMETER_KEY_BT_SCO_WB, &enabled);
     _hidl_cb(retval, enabled);
@@ -188,8 +177,7 @@ Return<void> PrimaryDevice::getTtyMode(getTtyMode_cb _hidl_cb) {
 }
 
 Return<Result> PrimaryDevice::setTtyMode(IPrimaryDevice::TtyMode mode) {
-    return mDevice->setParam(AUDIO_PARAMETER_KEY_TTY_MODE,
-                             static_cast<int>(mode));
+    return mDevice->setParam(AUDIO_PARAMETER_KEY_TTY_MODE, static_cast<int>(mode));
 }
 
 Return<void> PrimaryDevice::getHacEnabled(getHacEnabled_cb _hidl_cb) {

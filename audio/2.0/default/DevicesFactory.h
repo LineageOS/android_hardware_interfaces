@@ -40,12 +40,11 @@ using ::android::sp;
 
 struct DevicesFactory : public IDevicesFactory {
     // Methods from ::android::hardware::audio::V2_0::IDevicesFactory follow.
-    Return<void> openDevice(IDevicesFactory::Device device, openDevice_cb _hidl_cb)  override;
+    Return<void> openDevice(IDevicesFactory::Device device, openDevice_cb _hidl_cb) override;
 
-  private:
+   private:
     static const char* deviceToString(IDevicesFactory::Device device);
-    static int loadAudioInterface(const char *if_name, audio_hw_device_t **dev);
-
+    static int loadAudioInterface(const char* if_name, audio_hw_device_t** dev);
 };
 
 extern "C" IDevicesFactory* HIDL_FETCH_IDevicesFactory(const char* name);

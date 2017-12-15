@@ -54,56 +54,48 @@ struct PrimaryDevice : public IPrimaryDevice {
     explicit PrimaryDevice(audio_hw_device_t* device);
 
     // Methods from ::android::hardware::audio::V2_0::IDevice follow.
-    Return<Result> initCheck()  override;
-    Return<Result> setMasterVolume(float volume)  override;
-    Return<void> getMasterVolume(getMasterVolume_cb _hidl_cb)  override;
-    Return<Result> setMicMute(bool mute)  override;
-    Return<void> getMicMute(getMicMute_cb _hidl_cb)  override;
-    Return<Result> setMasterMute(bool mute)  override;
-    Return<void> getMasterMute(getMasterMute_cb _hidl_cb)  override;
-    Return<void> getInputBufferSize(
-            const AudioConfig& config, getInputBufferSize_cb _hidl_cb)  override;
-    Return<void> openOutputStream(
-            int32_t ioHandle,
-            const DeviceAddress& device,
-            const AudioConfig& config,
-            AudioOutputFlag flags,
-            openOutputStream_cb _hidl_cb)  override;
-    Return<void> openInputStream(
-            int32_t ioHandle,
-            const DeviceAddress& device,
-            const AudioConfig& config,
-            AudioInputFlag flags,
-            AudioSource source,
-            openInputStream_cb _hidl_cb)  override;
-    Return<bool> supportsAudioPatches()  override;
-    Return<void> createAudioPatch(
-            const hidl_vec<AudioPortConfig>& sources,
-            const hidl_vec<AudioPortConfig>& sinks,
-            createAudioPatch_cb _hidl_cb)  override;
-    Return<Result> releaseAudioPatch(int32_t patch)  override;
-    Return<void> getAudioPort(const AudioPort& port, getAudioPort_cb _hidl_cb)  override;
-    Return<Result> setAudioPortConfig(const AudioPortConfig& config)  override;
-    Return<AudioHwSync> getHwAvSync()  override;
-    Return<Result> setScreenState(bool turnedOn)  override;
-    Return<void> getParameters(
-            const hidl_vec<hidl_string>& keys, getParameters_cb _hidl_cb)  override;
-    Return<Result> setParameters(const hidl_vec<ParameterValue>& parameters)  override;
-    Return<void> debugDump(const hidl_handle& fd)  override;
+    Return<Result> initCheck() override;
+    Return<Result> setMasterVolume(float volume) override;
+    Return<void> getMasterVolume(getMasterVolume_cb _hidl_cb) override;
+    Return<Result> setMicMute(bool mute) override;
+    Return<void> getMicMute(getMicMute_cb _hidl_cb) override;
+    Return<Result> setMasterMute(bool mute) override;
+    Return<void> getMasterMute(getMasterMute_cb _hidl_cb) override;
+    Return<void> getInputBufferSize(const AudioConfig& config,
+                                    getInputBufferSize_cb _hidl_cb) override;
+    Return<void> openOutputStream(int32_t ioHandle, const DeviceAddress& device,
+                                  const AudioConfig& config, AudioOutputFlag flags,
+                                  openOutputStream_cb _hidl_cb) override;
+    Return<void> openInputStream(int32_t ioHandle, const DeviceAddress& device,
+                                 const AudioConfig& config, AudioInputFlag flags,
+                                 AudioSource source, openInputStream_cb _hidl_cb) override;
+    Return<bool> supportsAudioPatches() override;
+    Return<void> createAudioPatch(const hidl_vec<AudioPortConfig>& sources,
+                                  const hidl_vec<AudioPortConfig>& sinks,
+                                  createAudioPatch_cb _hidl_cb) override;
+    Return<Result> releaseAudioPatch(int32_t patch) override;
+    Return<void> getAudioPort(const AudioPort& port, getAudioPort_cb _hidl_cb) override;
+    Return<Result> setAudioPortConfig(const AudioPortConfig& config) override;
+    Return<AudioHwSync> getHwAvSync() override;
+    Return<Result> setScreenState(bool turnedOn) override;
+    Return<void> getParameters(const hidl_vec<hidl_string>& keys,
+                               getParameters_cb _hidl_cb) override;
+    Return<Result> setParameters(const hidl_vec<ParameterValue>& parameters) override;
+    Return<void> debugDump(const hidl_handle& fd) override;
 
     // Methods from ::android::hardware::audio::V2_0::IPrimaryDevice follow.
-    Return<Result> setVoiceVolume(float volume)  override;
-    Return<Result> setMode(AudioMode mode)  override;
-    Return<void> getBtScoNrecEnabled(getBtScoNrecEnabled_cb _hidl_cb)  override;
-    Return<Result> setBtScoNrecEnabled(bool enabled)  override;
-    Return<void> getBtScoWidebandEnabled(getBtScoWidebandEnabled_cb _hidl_cb)  override;
-    Return<Result> setBtScoWidebandEnabled(bool enabled)  override;
-    Return<void> getTtyMode(getTtyMode_cb _hidl_cb)  override;
-    Return<Result> setTtyMode(IPrimaryDevice::TtyMode mode)  override;
-    Return<void> getHacEnabled(getHacEnabled_cb _hidl_cb)  override;
-    Return<Result> setHacEnabled(bool enabled)  override;
+    Return<Result> setVoiceVolume(float volume) override;
+    Return<Result> setMode(AudioMode mode) override;
+    Return<void> getBtScoNrecEnabled(getBtScoNrecEnabled_cb _hidl_cb) override;
+    Return<Result> setBtScoNrecEnabled(bool enabled) override;
+    Return<void> getBtScoWidebandEnabled(getBtScoWidebandEnabled_cb _hidl_cb) override;
+    Return<Result> setBtScoWidebandEnabled(bool enabled) override;
+    Return<void> getTtyMode(getTtyMode_cb _hidl_cb) override;
+    Return<Result> setTtyMode(IPrimaryDevice::TtyMode mode) override;
+    Return<void> getHacEnabled(getHacEnabled_cb _hidl_cb) override;
+    Return<Result> setHacEnabled(bool enabled) override;
 
-  private:
+   private:
     sp<Device> mDevice;
 
     virtual ~PrimaryDevice();

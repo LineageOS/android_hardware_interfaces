@@ -33,31 +33,35 @@ namespace implementation {
 // static
 const char* DevicesFactory::deviceToString(IDevicesFactory::Device device) {
     switch (device) {
-        case IDevicesFactory::Device::PRIMARY: return AUDIO_HARDWARE_MODULE_ID_PRIMARY;
-        case IDevicesFactory::Device::A2DP: return AUDIO_HARDWARE_MODULE_ID_A2DP;
-        case IDevicesFactory::Device::USB: return AUDIO_HARDWARE_MODULE_ID_USB;
-        case IDevicesFactory::Device::R_SUBMIX: return AUDIO_HARDWARE_MODULE_ID_REMOTE_SUBMIX;
-        case IDevicesFactory::Device::STUB: return AUDIO_HARDWARE_MODULE_ID_STUB;
+        case IDevicesFactory::Device::PRIMARY:
+            return AUDIO_HARDWARE_MODULE_ID_PRIMARY;
+        case IDevicesFactory::Device::A2DP:
+            return AUDIO_HARDWARE_MODULE_ID_A2DP;
+        case IDevicesFactory::Device::USB:
+            return AUDIO_HARDWARE_MODULE_ID_USB;
+        case IDevicesFactory::Device::R_SUBMIX:
+            return AUDIO_HARDWARE_MODULE_ID_REMOTE_SUBMIX;
+        case IDevicesFactory::Device::STUB:
+            return AUDIO_HARDWARE_MODULE_ID_STUB;
     }
     return nullptr;
 }
 
 // static
-int DevicesFactory::loadAudioInterface(const char *if_name, audio_hw_device_t **dev)
-{
-    const hw_module_t *mod;
+int DevicesFactory::loadAudioInterface(const char* if_name, audio_hw_device_t** dev) {
+    const hw_module_t* mod;
     int rc;
 
     rc = hw_get_module_by_class(AUDIO_HARDWARE_MODULE_ID, if_name, &mod);
     if (rc) {
-        ALOGE("%s couldn't load audio hw module %s.%s (%s)", __func__,
-                AUDIO_HARDWARE_MODULE_ID, if_name, strerror(-rc));
+        ALOGE("%s couldn't load audio hw module %s.%s (%s)", __func__, AUDIO_HARDWARE_MODULE_ID,
+              if_name, strerror(-rc));
         goto out;
     }
     rc = audio_hw_device_open(mod, dev);
     if (rc) {
-        ALOGE("%s couldn't open audio hw device in %s.%s (%s)", __func__,
-                AUDIO_HARDWARE_MODULE_ID, if_name, strerror(-rc));
+        ALOGE("%s couldn't open audio hw device in %s.%s (%s)", __func__, AUDIO_HARDWARE_MODULE_ID,
+              if_name, strerror(-rc));
         goto out;
     }
     if ((*dev)->common.version < AUDIO_DEVICE_API_VERSION_MIN) {
@@ -74,8 +78,8 @@ out:
 }
 
 // Methods from ::android::hardware::audio::V2_0::IDevicesFactory follow.
-Return<void> DevicesFactory::openDevice(IDevicesFactory::Device device, openDevice_cb _hidl_cb)  {
-    audio_hw_device_t *halDevice;
+Return<void> DevicesFactory::openDevice(IDevicesFactory::Device device, openDevice_cb _hidl_cb) {
+    audio_hw_device_t* halDevice;
     Result retval(Result::INVALID_ARGUMENTS);
     sp<IDevice> result;
     const char* moduleName = deviceToString(device);
@@ -85,8 +89,7 @@ Return<void> DevicesFactory::openDevice(IDevicesFactory::Device device, openDevi
             if (device == IDevicesFactory::Device::PRIMARY) {
                 result = new PrimaryDevice(halDevice);
             } else {
-                result = new ::android::hardware::audio::V2_0::implementation::
-                    Device(halDevice);
+                result = new ::android::hardware::audio::V2_0::implementation::Device(halDevice);
             }
             retval = Result::OK;
         } else if (halStatus == -EINVAL) {

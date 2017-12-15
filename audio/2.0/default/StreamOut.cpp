@@ -89,9 +89,9 @@ void WriteThread::doWrite() {
 }
 
 void WriteThread::doGetPresentationPosition() {
-    mStatus.retval = StreamOut::getPresentationPositionImpl(
-        mStream, &mStatus.reply.presentationPosition.frames,
-        &mStatus.reply.presentationPosition.timeStamp);
+    mStatus.retval =
+        StreamOut::getPresentationPositionImpl(mStream, &mStatus.reply.presentationPosition.frames,
+                                               &mStatus.reply.presentationPosition.timeStamp);
 }
 
 void WriteThread::doGetLatency() {
@@ -105,10 +105,8 @@ bool WriteThread::threadLoop() {
     // as the Thread uses mutexes, and this can lead to priority inversion.
     while (!std::atomic_load_explicit(mStop, std::memory_order_acquire)) {
         uint32_t efState = 0;
-        mEfGroup->wait(static_cast<uint32_t>(MessageQueueFlagBits::NOT_EMPTY),
-                       &efState);
-        if (!(efState &
-              static_cast<uint32_t>(MessageQueueFlagBits::NOT_EMPTY))) {
+        mEfGroup->wait(static_cast<uint32_t>(MessageQueueFlagBits::NOT_EMPTY), &efState);
+        if (!(efState & static_cast<uint32_t>(MessageQueueFlagBits::NOT_EMPTY))) {
             continue;  // Nothing to do.
         }
         if (!mCommandMQ->read(&mStatus.replyTo)) {
@@ -159,8 +157,7 @@ StreamOut::~StreamOut() {
     }
     if (mEfGroup) {
         status_t status = EventFlag::deleteEventFlag(&mEfGroup);
-        ALOGE_IF(status, "write MQ event flag deletion error: %s",
-                 strerror(-status));
+        ALOGE_IF(status, "write MQ event flag deletion error: %s", strerror(-status));
     }
     mCallback.clear();
     mDevice->closeOutputStream(mStream);
@@ -187,8 +184,7 @@ Return<uint32_t> StreamOut::getSampleRate() {
     return mStreamCommon->getSampleRate();
 }
 
-Return<void> StreamOut::getSupportedSampleRates(
-    getSupportedSampleRates_cb _hidl_cb) {
+Return<void> StreamOut::getSupportedSampleRates(getSupportedSampleRates_cb _hidl_cb) {
     return mStreamCommon->getSupportedSampleRates(_hidl_cb);
 }
 
@@ -200,8 +196,7 @@ Return<AudioChannelMask> StreamOut::getChannelMask() {
     return mStreamCommon->getChannelMask();
 }
 
-Return<void> StreamOut::getSupportedChannelMasks(
-    getSupportedChannelMasks_cb _hidl_cb) {
+Return<void> StreamOut::getSupportedChannelMasks(getSupportedChannelMasks_cb _hidl_cb) {
     return mStreamCommon->getSupportedChannelMasks(_hidl_cb);
 }
 
@@ -245,8 +240,7 @@ Return<Result> StreamOut::setDevice(const DeviceAddress& address) {
     return mStreamCommon->setDevice(address);
 }
 
-Return<Result> StreamOut::setConnectedState(const DeviceAddress& address,
-                                            bool connected) {
+Return<Result> StreamOut::setConnectedState(const DeviceAddress& address, bool connected) {
     return mStreamCommon->setConnectedState(address, connected);
 }
 
@@ -259,8 +253,7 @@ Return<void> StreamOut::getParameters(const hidl_vec<hidl_string>& keys,
     return mStreamCommon->getParameters(keys, _hidl_cb);
 }
 
-Return<Result> StreamOut::setParameters(
-    const hidl_vec<ParameterValue>& parameters) {
+Return<Result> StreamOut::setParameters(const hidl_vec<ParameterValue>& parameters) {
     return mStreamCommon->setParameters(parameters);
 }
 
@@ -290,24 +283,21 @@ Return<Result> StreamOut::setVolume(float left, float right) {
         return Result::NOT_SUPPORTED;
     }
     if (!isGainNormalized(left)) {
-        ALOGW("Can not set a stream output volume {%f, %f} outside [0,1]", left,
-              right);
+        ALOGW("Can not set a stream output volume {%f, %f} outside [0,1]", left, right);
         return Result::INVALID_ARGUMENTS;
     }
-    return Stream::analyzeStatus("set_volume",
-                                 mStream->set_volume(mStream, left, right));
+    return Stream::analyzeStatus("set_volume", mStream->set_volume(mStream, left, right));
 }
 
-Return<void> StreamOut::prepareForWriting(uint32_t frameSize,
-                                          uint32_t framesCount,
+Return<void> StreamOut::prepareForWriting(uint32_t frameSize, uint32_t framesCount,
                                           prepareForWriting_cb _hidl_cb) {
     status_t status;
     ThreadInfo threadInfo = {0, 0};
 
     // Wrap the _hidl_cb to return an error
     auto sendError = [&threadInfo, &_hidl_cb](Result result) {
-        _hidl_cb(result, CommandMQ::Descriptor(), DataMQ::Descriptor(),
-                 StatusMQ::Descriptor(), threadInfo);
+        _hidl_cb(result, CommandMQ::Descriptor(), DataMQ::Descriptor(), StatusMQ::Descriptor(),
+                 threadInfo);
 
     };
 
@@ -321,8 +311,7 @@ Return<void> StreamOut::prepareForWriting(uint32_t frameSize,
 
     // Check frameSize and framesCount
     if (frameSize == 0 || framesCount == 0) {
-        ALOGE("Null frameSize (%u) or framesCount (%u)", frameSize,
-              framesCount);
+        ALOGE("Null frameSize (%u) or framesCount (%u)", frameSize, framesCount);
         sendError(Result::INVALID_ARGUMENTS);
         return Void();
     }
@@ -332,12 +321,10 @@ Return<void> StreamOut::prepareForWriting(uint32_t frameSize,
         sendError(Result::INVALID_ARGUMENTS);
         return Void();
     }
-    std::unique_ptr<DataMQ> tempDataMQ(
-        new DataMQ(frameSize * framesCount, true /* EventFlag */));
+    std::unique_ptr<DataMQ> tempDataMQ(new DataMQ(frameSize * framesCount, true /* EventFlag */));
 
     std::unique_ptr<StatusMQ> tempStatusMQ(new StatusMQ(1));
-    if (!tempCommandMQ->isValid() || !tempDataMQ->isValid() ||
-        !tempStatusMQ->isValid()) {
+    if (!tempCommandMQ->isValid() || !tempDataMQ->isValid() || !tempStatusMQ->isValid()) {
         ALOGE_IF(!tempCommandMQ->isValid(), "command MQ is invalid");
         ALOGE_IF(!tempDataMQ->isValid(), "data MQ is invalid");
         ALOGE_IF(!tempStatusMQ->isValid(), "status MQ is invalid");
@@ -345,8 +332,7 @@ Return<void> StreamOut::prepareForWriting(uint32_t frameSize,
         return Void();
     }
     EventFlag* tempRawEfGroup{};
-    status = EventFlag::createEventFlag(tempDataMQ->getEventFlagWord(),
-                                        &tempRawEfGroup);
+    status = EventFlag::createEventFlag(tempDataMQ->getEventFlagWord(), &tempRawEfGroup);
     std::unique_ptr<EventFlag, void (*)(EventFlag*)> tempElfGroup(
         tempRawEfGroup, [](auto* ef) { EventFlag::deleteEventFlag(&ef); });
     if (status != OK || !tempElfGroup) {
@@ -356,9 +342,9 @@ Return<void> StreamOut::prepareForWriting(uint32_t frameSize,
     }
 
     // Create and launch the thread.
-    auto tempWriteThread = std::make_unique<WriteThread>(
-        &mStopWriteThread, mStream, tempCommandMQ.get(), tempDataMQ.get(),
-        tempStatusMQ.get(), tempElfGroup.get());
+    auto tempWriteThread =
+        std::make_unique<WriteThread>(&mStopWriteThread, mStream, tempCommandMQ.get(),
+                                      tempDataMQ.get(), tempStatusMQ.get(), tempElfGroup.get());
     if (!tempWriteThread->init()) {
         ALOGW("failed to start writer thread: %s", strerror(-status));
         sendError(Result::INVALID_ARGUMENTS);
@@ -378,28 +364,25 @@ Return<void> StreamOut::prepareForWriting(uint32_t frameSize,
     mEfGroup = tempElfGroup.release();
     threadInfo.pid = getpid();
     threadInfo.tid = mWriteThread->getTid();
-    _hidl_cb(Result::OK, *mCommandMQ->getDesc(), *mDataMQ->getDesc(),
-             *mStatusMQ->getDesc(), threadInfo);
+    _hidl_cb(Result::OK, *mCommandMQ->getDesc(), *mDataMQ->getDesc(), *mStatusMQ->getDesc(),
+             threadInfo);
     return Void();
 }
 
 Return<void> StreamOut::getRenderPosition(getRenderPosition_cb _hidl_cb) {
     uint32_t halDspFrames;
-    Result retval = Stream::analyzeStatus(
-        "get_render_position",
-        mStream->get_render_position(mStream, &halDspFrames));
+    Result retval = Stream::analyzeStatus("get_render_position",
+                                          mStream->get_render_position(mStream, &halDspFrames));
     _hidl_cb(retval, halDspFrames);
     return Void();
 }
 
-Return<void> StreamOut::getNextWriteTimestamp(
-    getNextWriteTimestamp_cb _hidl_cb) {
+Return<void> StreamOut::getNextWriteTimestamp(getNextWriteTimestamp_cb _hidl_cb) {
     Result retval(Result::NOT_SUPPORTED);
     int64_t timestampUs = 0;
     if (mStream->get_next_write_timestamp != NULL) {
-        retval = Stream::analyzeStatus(
-            "get_next_write_timestamp",
-            mStream->get_next_write_timestamp(mStream, &timestampUs));
+        retval = Stream::analyzeStatus("get_next_write_timestamp",
+                                       mStream->get_next_write_timestamp(mStream, &timestampUs));
     }
     _hidl_cb(retval, timestampUs);
     return Void();
@@ -423,14 +406,13 @@ Return<Result> StreamOut::clearCallback() {
 }
 
 // static
-int StreamOut::asyncCallback(stream_callback_event_t event, void*,
-                             void* cookie) {
+int StreamOut::asyncCallback(stream_callback_event_t event, void*, void* cookie) {
     // It is guaranteed that the callback thread is joined prior
     // to exiting from StreamOut's destructor. Must *not* use sp<StreamOut>
     // here because it can make this code the last owner of StreamOut,
     // and an attempt to run the destructor on the callback thread
     // will cause a deadlock in the legacy HAL code.
-    StreamOut *self = reinterpret_cast<StreamOut*>(cookie);
+    StreamOut* self = reinterpret_cast<StreamOut*>(cookie);
     // It's correct to hold an sp<> to callback because the reference
     // in the StreamOut instance can be cleared in the meantime. There is
     // no difference on which thread to run IStreamOutCallback's destructor.
@@ -454,22 +436,19 @@ int StreamOut::asyncCallback(stream_callback_event_t event, void*,
     return 0;
 }
 
-Return<void> StreamOut::supportsPauseAndResume(
-    supportsPauseAndResume_cb _hidl_cb) {
+Return<void> StreamOut::supportsPauseAndResume(supportsPauseAndResume_cb _hidl_cb) {
     _hidl_cb(mStream->pause != NULL, mStream->resume != NULL);
     return Void();
 }
 
 Return<Result> StreamOut::pause() {
-    return mStream->pause != NULL
-               ? Stream::analyzeStatus("pause", mStream->pause(mStream))
-               : Result::NOT_SUPPORTED;
+    return mStream->pause != NULL ? Stream::analyzeStatus("pause", mStream->pause(mStream))
+                                  : Result::NOT_SUPPORTED;
 }
 
 Return<Result> StreamOut::resume() {
-    return mStream->resume != NULL
-               ? Stream::analyzeStatus("resume", mStream->resume(mStream))
-               : Result::NOT_SUPPORTED;
+    return mStream->resume != NULL ? Stream::analyzeStatus("resume", mStream->resume(mStream))
+                                   : Result::NOT_SUPPORTED;
 }
 
 Return<bool> StreamOut::supportsDrain() {
@@ -479,21 +458,17 @@ Return<bool> StreamOut::supportsDrain() {
 Return<Result> StreamOut::drain(AudioDrain type) {
     return mStream->drain != NULL
                ? Stream::analyzeStatus(
-                     "drain",
-                     mStream->drain(mStream,
-                                    static_cast<audio_drain_type_t>(type)))
+                     "drain", mStream->drain(mStream, static_cast<audio_drain_type_t>(type)))
                : Result::NOT_SUPPORTED;
 }
 
 Return<Result> StreamOut::flush() {
-    return mStream->flush != NULL
-               ? Stream::analyzeStatus("flush", mStream->flush(mStream))
-               : Result::NOT_SUPPORTED;
+    return mStream->flush != NULL ? Stream::analyzeStatus("flush", mStream->flush(mStream))
+                                  : Result::NOT_SUPPORTED;
 }
 
 // static
-Result StreamOut::getPresentationPositionImpl(audio_stream_out_t* stream,
-                                              uint64_t* frames,
+Result StreamOut::getPresentationPositionImpl(audio_stream_out_t* stream, uint64_t* frames,
                                               TimeSpec* timeStamp) {
     // Don't logspam on EINVAL--it's normal for get_presentation_position
     // to return it sometimes. EAGAIN may be returned by A2DP audio HAL
@@ -513,8 +488,7 @@ Result StreamOut::getPresentationPositionImpl(audio_stream_out_t* stream,
     return retval;
 }
 
-Return<void> StreamOut::getPresentationPosition(
-    getPresentationPosition_cb _hidl_cb) {
+Return<void> StreamOut::getPresentationPosition(getPresentationPosition_cb _hidl_cb) {
     uint64_t frames = 0;
     TimeSpec timeStamp = {0, 0};
     Result retval = getPresentationPositionImpl(mStream, &frames, &timeStamp);
@@ -530,10 +504,9 @@ Return<Result> StreamOut::stop() {
     return mStreamMmap->stop();
 }
 
-Return<void> StreamOut::createMmapBuffer(int32_t minSizeFrames,
-                                         createMmapBuffer_cb _hidl_cb) {
-    return mStreamMmap->createMmapBuffer(
-        minSizeFrames, audio_stream_out_frame_size(mStream), _hidl_cb);
+Return<void> StreamOut::createMmapBuffer(int32_t minSizeFrames, createMmapBuffer_cb _hidl_cb) {
+    return mStreamMmap->createMmapBuffer(minSizeFrames, audio_stream_out_frame_size(mStream),
+                                         _hidl_cb);
 }
 
 Return<void> StreamOut::getMmapPosition(getMmapPosition_cb _hidl_cb) {

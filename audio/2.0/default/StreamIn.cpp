@@ -41,9 +41,8 @@ namespace {
 class ReadThread : public Thread {
    public:
     // ReadThread's lifespan never exceeds StreamIn's lifespan.
-    ReadThread(std::atomic<bool>* stop, audio_stream_in_t* stream,
-               StreamIn::CommandMQ* commandMQ, StreamIn::DataMQ* dataMQ,
-               StreamIn::StatusMQ* statusMQ, EventFlag* efGroup)
+    ReadThread(std::atomic<bool>* stop, audio_stream_in_t* stream, StreamIn::CommandMQ* commandMQ,
+               StreamIn::DataMQ* dataMQ, StreamIn::StatusMQ* statusMQ, EventFlag* efGroup)
         : Thread(false /*canCallJava*/),
           mStop(stop),
           mStream(stream),
@@ -99,8 +98,7 @@ void ReadThread::doRead() {
 
 void ReadThread::doGetCapturePosition() {
     mStatus.retval = StreamIn::getCapturePositionImpl(
-        mStream, &mStatus.reply.capturePosition.frames,
-        &mStatus.reply.capturePosition.time);
+        mStream, &mStatus.reply.capturePosition.frames, &mStatus.reply.capturePosition.time);
 }
 
 bool ReadThread::threadLoop() {
@@ -109,10 +107,8 @@ bool ReadThread::threadLoop() {
     // as the Thread uses mutexes, and this can lead to priority inversion.
     while (!std::atomic_load_explicit(mStop, std::memory_order_acquire)) {
         uint32_t efState = 0;
-        mEfGroup->wait(static_cast<uint32_t>(MessageQueueFlagBits::NOT_FULL),
-                       &efState);
-        if (!(efState &
-              static_cast<uint32_t>(MessageQueueFlagBits::NOT_FULL))) {
+        mEfGroup->wait(static_cast<uint32_t>(MessageQueueFlagBits::NOT_FULL), &efState);
+        if (!(efState & static_cast<uint32_t>(MessageQueueFlagBits::NOT_FULL))) {
             continue;  // Nothing to do.
         }
         if (!mCommandMQ->read(&mParameters)) {
@@ -127,8 +123,7 @@ bool ReadThread::threadLoop() {
                 doGetCapturePosition();
                 break;
             default:
-                ALOGE("Unknown read thread command code %d",
-                      mParameters.command);
+                ALOGE("Unknown read thread command code %d", mParameters.command);
                 mStatus.retval = Result::NOT_SUPPORTED;
                 break;
         }
@@ -162,8 +157,7 @@ StreamIn::~StreamIn() {
     }
     if (mEfGroup) {
         status_t status = EventFlag::deleteEventFlag(&mEfGroup);
-        ALOGE_IF(status, "read MQ event flag deletion error: %s",
-                 strerror(-status));
+        ALOGE_IF(status, "read MQ event flag deletion error: %s", strerror(-status));
     }
     mDevice->closeInputStream(mStream);
     mStream = nullptr;
@@ -186,8 +180,7 @@ Return<uint32_t> StreamIn::getSampleRate() {
     return mStreamCommon->getSampleRate();
 }
 
-Return<void> StreamIn::getSupportedSampleRates(
-    getSupportedSampleRates_cb _hidl_cb) {
+Return<void> StreamIn::getSupportedSampleRates(getSupportedSampleRates_cb _hidl_cb) {
     return mStreamCommon->getSupportedSampleRates(_hidl_cb);
 }
 
@@ -199,8 +192,7 @@ Return<AudioChannelMask> StreamIn::getChannelMask() {
     return mStreamCommon->getChannelMask();
 }
 
-Return<void> StreamIn::getSupportedChannelMasks(
-    getSupportedChannelMasks_cb _hidl_cb) {
+Return<void> StreamIn::getSupportedChannelMasks(getSupportedChannelMasks_cb _hidl_cb) {
     return mStreamCommon->getSupportedChannelMasks(_hidl_cb);
 }
 
@@ -244,8 +236,7 @@ Return<Result> StreamIn::setDevice(const DeviceAddress& address) {
     return mStreamCommon->setDevice(address);
 }
 
-Return<Result> StreamIn::setConnectedState(const DeviceAddress& address,
-                                           bool connected) {
+Return<Result> StreamIn::setConnectedState(const DeviceAddress& address, bool connected) {
     return mStreamCommon->setConnectedState(address, connected);
 }
 
@@ -253,13 +244,11 @@ Return<Result> StreamIn::setHwAvSync(uint32_t hwAvSync) {
     return mStreamCommon->setHwAvSync(hwAvSync);
 }
 
-Return<void> StreamIn::getParameters(const hidl_vec<hidl_string>& keys,
-                                     getParameters_cb _hidl_cb) {
+Return<void> StreamIn::getParameters(const hidl_vec<hidl_string>& keys, getParameters_cb _hidl_cb) {
     return mStreamCommon->getParameters(keys, _hidl_cb);
 }
 
-Return<Result> StreamIn::setParameters(
-    const hidl_vec<ParameterValue>& parameters) {
+Return<Result> StreamIn::setParameters(const hidl_vec<ParameterValue>& parameters) {
     return mStreamCommon->setParameters(parameters);
 }
 
@@ -275,10 +264,9 @@ Return<Result> StreamIn::stop() {
     return mStreamMmap->stop();
 }
 
-Return<void> StreamIn::createMmapBuffer(int32_t minSizeFrames,
-                                        createMmapBuffer_cb _hidl_cb) {
-    return mStreamMmap->createMmapBuffer(
-        minSizeFrames, audio_stream_in_frame_size(mStream), _hidl_cb);
+Return<void> StreamIn::createMmapBuffer(int32_t minSizeFrames, createMmapBuffer_cb _hidl_cb) {
+    return mStreamMmap->createMmapBuffer(minSizeFrames, audio_stream_in_frame_size(mStream),
+                                         _hidl_cb);
 }
 
 Return<void> StreamIn::getMmapPosition(getMmapPosition_cb _hidl_cb) {
@@ -300,8 +288,7 @@ Return<Result> StreamIn::close() {
 // Methods from ::android::hardware::audio::V2_0::IStreamIn follow.
 Return<void> StreamIn::getAudioSource(getAudioSource_cb _hidl_cb) {
     int halSource;
-    Result retval =
-        mStreamCommon->getParam(AudioParameter::keyInputSource, &halSource);
+    Result retval = mStreamCommon->getParam(AudioParameter::keyInputSource, &halSource);
     AudioSource source(AudioSource::DEFAULT);
     if (retval == Result::OK) {
         source = AudioSource(halSource);
@@ -318,16 +305,15 @@ Return<Result> StreamIn::setGain(float gain) {
     return Stream::analyzeStatus("set_gain", mStream->set_gain(mStream, gain));
 }
 
-Return<void> StreamIn::prepareForReading(uint32_t frameSize,
-                                         uint32_t framesCount,
+Return<void> StreamIn::prepareForReading(uint32_t frameSize, uint32_t framesCount,
                                          prepareForReading_cb _hidl_cb) {
     status_t status;
     ThreadInfo threadInfo = {0, 0};
 
     // Wrap the _hidl_cb to return an error
     auto sendError = [&threadInfo, &_hidl_cb](Result result) {
-        _hidl_cb(result, CommandMQ::Descriptor(), DataMQ::Descriptor(),
-                 StatusMQ::Descriptor(), threadInfo);
+        _hidl_cb(result, CommandMQ::Descriptor(), DataMQ::Descriptor(), StatusMQ::Descriptor(),
+                 threadInfo);
 
     };
 
@@ -341,8 +327,7 @@ Return<void> StreamIn::prepareForReading(uint32_t frameSize,
 
     // Check frameSize and framesCount
     if (frameSize == 0 || framesCount == 0) {
-        ALOGE("Null frameSize (%u) or framesCount (%u)", frameSize,
-              framesCount);
+        ALOGE("Null frameSize (%u) or framesCount (%u)", frameSize, framesCount);
         sendError(Result::INVALID_ARGUMENTS);
         return Void();
     }
@@ -353,12 +338,10 @@ Return<void> StreamIn::prepareForReading(uint32_t frameSize,
         sendError(Result::INVALID_ARGUMENTS);
         return Void();
     }
-    std::unique_ptr<DataMQ> tempDataMQ(
-        new DataMQ(frameSize * framesCount, true /* EventFlag */));
+    std::unique_ptr<DataMQ> tempDataMQ(new DataMQ(frameSize * framesCount, true /* EventFlag */));
 
     std::unique_ptr<StatusMQ> tempStatusMQ(new StatusMQ(1));
-    if (!tempCommandMQ->isValid() || !tempDataMQ->isValid() ||
-        !tempStatusMQ->isValid()) {
+    if (!tempCommandMQ->isValid() || !tempDataMQ->isValid() || !tempStatusMQ->isValid()) {
         ALOGE_IF(!tempCommandMQ->isValid(), "command MQ is invalid");
         ALOGE_IF(!tempDataMQ->isValid(), "data MQ is invalid");
         ALOGE_IF(!tempStatusMQ->isValid(), "status MQ is invalid");
@@ -366,8 +349,7 @@ Return<void> StreamIn::prepareForReading(uint32_t frameSize,
         return Void();
     }
     EventFlag* tempRawEfGroup{};
-    status = EventFlag::createEventFlag(tempDataMQ->getEventFlagWord(),
-                                        &tempRawEfGroup);
+    status = EventFlag::createEventFlag(tempDataMQ->getEventFlagWord(), &tempRawEfGroup);
     std::unique_ptr<EventFlag, void (*)(EventFlag*)> tempElfGroup(
         tempRawEfGroup, [](auto* ef) { EventFlag::deleteEventFlag(&ef); });
     if (status != OK || !tempElfGroup) {
@@ -377,9 +359,9 @@ Return<void> StreamIn::prepareForReading(uint32_t frameSize,
     }
 
     // Create and launch the thread.
-    auto tempReadThread = std::make_unique<ReadThread>(
-        &mStopReadThread, mStream, tempCommandMQ.get(), tempDataMQ.get(),
-        tempStatusMQ.get(), tempElfGroup.get());
+    auto tempReadThread =
+        std::make_unique<ReadThread>(&mStopReadThread, mStream, tempCommandMQ.get(),
+                                     tempDataMQ.get(), tempStatusMQ.get(), tempElfGroup.get());
     if (!tempReadThread->init()) {
         ALOGW("failed to start reader thread: %s", strerror(-status));
         sendError(Result::INVALID_ARGUMENTS);
@@ -399,8 +381,8 @@ Return<void> StreamIn::prepareForReading(uint32_t frameSize,
     mEfGroup = tempElfGroup.release();
     threadInfo.pid = getpid();
     threadInfo.tid = mReadThread->getTid();
-    _hidl_cb(Result::OK, *mCommandMQ->getDesc(), *mDataMQ->getDesc(),
-             *mStatusMQ->getDesc(), threadInfo);
+    _hidl_cb(Result::OK, *mCommandMQ->getDesc(), *mDataMQ->getDesc(), *mStatusMQ->getDesc(),
+             threadInfo);
     return Void();
 }
 
@@ -409,8 +391,8 @@ Return<uint32_t> StreamIn::getInputFramesLost() {
 }
 
 // static
-Result StreamIn::getCapturePositionImpl(audio_stream_in_t* stream,
-                                        uint64_t* frames, uint64_t* time) {
+Result StreamIn::getCapturePositionImpl(audio_stream_in_t* stream, uint64_t* frames,
+                                        uint64_t* time) {
     // HAL may have a stub function, always returning ENOSYS, don't
     // spam the log in this case.
     static const std::vector<int> ignoredErrors{ENOSYS};

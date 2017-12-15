@@ -21,9 +21,9 @@
 #include <memory>
 
 #include <android/hardware/audio/2.0/IStreamIn.h>
-#include <hidl/MQDescriptor.h>
 #include <fmq/EventFlag.h>
 #include <fmq/MessageQueue.h>
+#include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
 #include <utils/Thread.h>
 
@@ -59,51 +59,51 @@ struct StreamIn : public IStreamIn {
     StreamIn(const sp<Device>& device, audio_stream_in_t* stream);
 
     // Methods from ::android::hardware::audio::V2_0::IStream follow.
-    Return<uint64_t> getFrameSize()  override;
-    Return<uint64_t> getFrameCount()  override;
-    Return<uint64_t> getBufferSize()  override;
-    Return<uint32_t> getSampleRate()  override;
-    Return<void> getSupportedSampleRates(getSupportedSampleRates_cb _hidl_cb)  override;
-    Return<Result> setSampleRate(uint32_t sampleRateHz)  override;
-    Return<AudioChannelMask> getChannelMask()  override;
-    Return<void> getSupportedChannelMasks(getSupportedChannelMasks_cb _hidl_cb)  override;
-    Return<Result> setChannelMask(AudioChannelMask mask)  override;
-    Return<AudioFormat> getFormat()  override;
-    Return<void> getSupportedFormats(getSupportedFormats_cb _hidl_cb)  override;
-    Return<Result> setFormat(AudioFormat format)  override;
-    Return<void> getAudioProperties(getAudioProperties_cb _hidl_cb)  override;
-    Return<Result> addEffect(uint64_t effectId)  override;
-    Return<Result> removeEffect(uint64_t effectId)  override;
-    Return<Result> standby()  override;
-    Return<AudioDevice> getDevice()  override;
-    Return<Result> setDevice(const DeviceAddress& address)  override;
-    Return<Result> setConnectedState(const DeviceAddress& address, bool connected)  override;
-    Return<Result> setHwAvSync(uint32_t hwAvSync)  override;
-    Return<void> getParameters(
-            const hidl_vec<hidl_string>& keys, getParameters_cb _hidl_cb)  override;
-    Return<Result> setParameters(const hidl_vec<ParameterValue>& parameters)  override;
-    Return<void> debugDump(const hidl_handle& fd)  override;
-    Return<Result> close()  override;
+    Return<uint64_t> getFrameSize() override;
+    Return<uint64_t> getFrameCount() override;
+    Return<uint64_t> getBufferSize() override;
+    Return<uint32_t> getSampleRate() override;
+    Return<void> getSupportedSampleRates(getSupportedSampleRates_cb _hidl_cb) override;
+    Return<Result> setSampleRate(uint32_t sampleRateHz) override;
+    Return<AudioChannelMask> getChannelMask() override;
+    Return<void> getSupportedChannelMasks(getSupportedChannelMasks_cb _hidl_cb) override;
+    Return<Result> setChannelMask(AudioChannelMask mask) override;
+    Return<AudioFormat> getFormat() override;
+    Return<void> getSupportedFormats(getSupportedFormats_cb _hidl_cb) override;
+    Return<Result> setFormat(AudioFormat format) override;
+    Return<void> getAudioProperties(getAudioProperties_cb _hidl_cb) override;
+    Return<Result> addEffect(uint64_t effectId) override;
+    Return<Result> removeEffect(uint64_t effectId) override;
+    Return<Result> standby() override;
+    Return<AudioDevice> getDevice() override;
+    Return<Result> setDevice(const DeviceAddress& address) override;
+    Return<Result> setConnectedState(const DeviceAddress& address, bool connected) override;
+    Return<Result> setHwAvSync(uint32_t hwAvSync) override;
+    Return<void> getParameters(const hidl_vec<hidl_string>& keys,
+                               getParameters_cb _hidl_cb) override;
+    Return<Result> setParameters(const hidl_vec<ParameterValue>& parameters) override;
+    Return<void> debugDump(const hidl_handle& fd) override;
+    Return<Result> close() override;
 
     // Methods from ::android::hardware::audio::V2_0::IStreamIn follow.
-    Return<void> getAudioSource(getAudioSource_cb _hidl_cb)  override;
-    Return<Result> setGain(float gain)  override;
-    Return<void> prepareForReading(
-            uint32_t frameSize, uint32_t framesCount, prepareForReading_cb _hidl_cb)  override;
-    Return<uint32_t> getInputFramesLost()  override;
-    Return<void> getCapturePosition(getCapturePosition_cb _hidl_cb)  override;
+    Return<void> getAudioSource(getAudioSource_cb _hidl_cb) override;
+    Return<Result> setGain(float gain) override;
+    Return<void> prepareForReading(uint32_t frameSize, uint32_t framesCount,
+                                   prepareForReading_cb _hidl_cb) override;
+    Return<uint32_t> getInputFramesLost() override;
+    Return<void> getCapturePosition(getCapturePosition_cb _hidl_cb) override;
     Return<Result> start() override;
     Return<Result> stop() override;
     Return<void> createMmapBuffer(int32_t minSizeFrames, createMmapBuffer_cb _hidl_cb) override;
     Return<void> getMmapPosition(getMmapPosition_cb _hidl_cb) override;
 
-    static Result getCapturePositionImpl(
-            audio_stream_in_t *stream, uint64_t *frames, uint64_t *time);
+    static Result getCapturePositionImpl(audio_stream_in_t* stream, uint64_t* frames,
+                                         uint64_t* time);
 
-  private:
+   private:
     bool mIsClosed;
     const sp<Device> mDevice;
-    audio_stream_in_t *mStream;
+    audio_stream_in_t* mStream;
     const sp<Stream> mStreamCommon;
     const sp<StreamMmap<audio_stream_in_t>> mStreamMmap;
     std::unique_ptr<CommandMQ> mCommandMQ;

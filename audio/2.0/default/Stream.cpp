@@ -18,10 +18,10 @@
 
 #define LOG_TAG "StreamHAL"
 
+#include <android/log.h>
 #include <hardware/audio.h>
 #include <hardware/audio_effect.h>
 #include <media/TypeConverter.h>
-#include <android/log.h>
 #include <utils/SortedVector.h>
 #include <utils/Vector.h>
 
@@ -35,9 +35,7 @@ namespace audio {
 namespace V2_0 {
 namespace implementation {
 
-Stream::Stream(audio_stream_t* stream)
-        : mStream(stream) {
-}
+Stream::Stream(audio_stream_t* stream) : mStream(stream) {}
 
 Stream::~Stream() {
     mStream = nullptr;
@@ -61,12 +59,18 @@ Result Stream::analyzeStatus(const char* funcName, int status,
         ALOGW("Error from HAL stream in function %s: %s", funcName, strerror(-status));
     }
     switch (status) {
-        case 0: return Result::OK;
-        case -EINVAL: return Result::INVALID_ARGUMENTS;
-        case -ENODATA: return Result::INVALID_STATE;
-        case -ENODEV: return Result::NOT_INITIALIZED;
-        case -ENOSYS: return Result::NOT_SUPPORTED;
-        default: return Result::INVALID_STATE;
+        case 0:
+            return Result::OK;
+        case -EINVAL:
+            return Result::INVALID_ARGUMENTS;
+        case -ENODATA:
+            return Result::INVALID_STATE;
+        case -ENODEV:
+            return Result::NOT_INITIALIZED;
+        case -ENOSYS:
+            return Result::NOT_SUPPORTED;
+        default:
+            return Result::INVALID_STATE;
     }
 }
 
@@ -79,75 +83,75 @@ int Stream::halSetParameters(const char* keysAndValues) {
 }
 
 // Methods from ::android::hardware::audio::V2_0::IStream follow.
-Return<uint64_t> Stream::getFrameSize()  {
+Return<uint64_t> Stream::getFrameSize() {
     // Needs to be implemented by interface subclasses. But can't be declared as pure virtual,
     // since interface subclasses implementation do not inherit from this class.
     LOG_ALWAYS_FATAL("Stream::getFrameSize is pure abstract");
-    return uint64_t {};
+    return uint64_t{};
 }
 
-Return<uint64_t> Stream::getFrameCount()  {
+Return<uint64_t> Stream::getFrameCount() {
     int halFrameCount;
     Result retval = getParam(AudioParameter::keyFrameCount, &halFrameCount);
     return retval == Result::OK ? halFrameCount : 0;
 }
 
-Return<uint64_t> Stream::getBufferSize()  {
+Return<uint64_t> Stream::getBufferSize() {
     return mStream->get_buffer_size(mStream);
 }
 
-Return<uint32_t> Stream::getSampleRate()  {
+Return<uint32_t> Stream::getSampleRate() {
     return mStream->get_sample_rate(mStream);
 }
 
-Return<void> Stream::getSupportedSampleRates(getSupportedSampleRates_cb _hidl_cb)  {
+Return<void> Stream::getSupportedSampleRates(getSupportedSampleRates_cb _hidl_cb) {
     String8 halListValue;
     Result result = getParam(AudioParameter::keyStreamSupportedSamplingRates, &halListValue);
     hidl_vec<uint32_t> sampleRates;
     SortedVector<uint32_t> halSampleRates;
     if (result == Result::OK) {
-        halSampleRates = samplingRatesFromString(
-                halListValue.string(), AudioParameter::valueListSeparator);
+        halSampleRates =
+            samplingRatesFromString(halListValue.string(), AudioParameter::valueListSeparator);
         sampleRates.setToExternal(halSampleRates.editArray(), halSampleRates.size());
     }
     _hidl_cb(sampleRates);
     return Void();
 }
 
-Return<Result> Stream::setSampleRate(uint32_t sampleRateHz)  {
+Return<Result> Stream::setSampleRate(uint32_t sampleRateHz) {
     return setParam(AudioParameter::keySamplingRate, static_cast<int>(sampleRateHz));
 }
 
-Return<AudioChannelMask> Stream::getChannelMask()  {
+Return<AudioChannelMask> Stream::getChannelMask() {
     return AudioChannelMask(mStream->get_channels(mStream));
 }
 
-Return<void> Stream::getSupportedChannelMasks(getSupportedChannelMasks_cb _hidl_cb)  {
+Return<void> Stream::getSupportedChannelMasks(getSupportedChannelMasks_cb _hidl_cb) {
     String8 halListValue;
     Result result = getParam(AudioParameter::keyStreamSupportedChannels, &halListValue);
     hidl_vec<AudioChannelMask> channelMasks;
     SortedVector<audio_channel_mask_t> halChannelMasks;
     if (result == Result::OK) {
-        halChannelMasks = channelMasksFromString(
-                halListValue.string(), AudioParameter::valueListSeparator);
+        halChannelMasks =
+            channelMasksFromString(halListValue.string(), AudioParameter::valueListSeparator);
         channelMasks.resize(halChannelMasks.size());
         for (size_t i = 0; i < halChannelMasks.size(); ++i) {
             channelMasks[i] = AudioChannelMask(halChannelMasks[i]);
         }
     }
-     _hidl_cb(channelMasks);
+    _hidl_cb(channelMasks);
     return Void();
 }
 
-Return<Result> Stream::setChannelMask(AudioChannelMask mask)  {
+Return<Result> Stream::setChannelMask(AudioChannelMask mask) {
     return setParam(AudioParameter::keyChannels, static_cast<int>(mask));
 }
 
-Return<AudioFormat> Stream::getFormat()  {
+Return<AudioFormat> Stream::getFormat() {
     return AudioFormat(mStream->get_format(mStream));
 }
 
-Return<void> Stream::getSupportedFormats(getSupportedFormats_cb _hidl_cb)  {
+Return<void> Stream::getSupportedFormats(getSupportedFormats_cb _hidl_cb) {
     String8 halListValue;
     Result result = getParam(AudioParameter::keyStreamSupportedFormats, &halListValue);
     hidl_vec<AudioFormat> formats;
@@ -159,15 +163,15 @@ Return<void> Stream::getSupportedFormats(getSupportedFormats_cb _hidl_cb)  {
             formats[i] = AudioFormat(halFormats[i]);
         }
     }
-     _hidl_cb(formats);
+    _hidl_cb(formats);
     return Void();
 }
 
-Return<Result> Stream::setFormat(AudioFormat format)  {
+Return<Result> Stream::setFormat(AudioFormat format) {
     return setParam(AudioParameter::keyFormat, static_cast<int>(format));
 }
 
-Return<void> Stream::getAudioProperties(getAudioProperties_cb _hidl_cb)  {
+Return<void> Stream::getAudioProperties(getAudioProperties_cb _hidl_cb) {
     uint32_t halSampleRate = mStream->get_sample_rate(mStream);
     audio_channel_mask_t halMask = mStream->get_channels(mStream);
     audio_format_t halFormat = mStream->get_format(mStream);
@@ -175,7 +179,7 @@ Return<void> Stream::getAudioProperties(getAudioProperties_cb _hidl_cb)  {
     return Void();
 }
 
-Return<Result> Stream::addEffect(uint64_t effectId)  {
+Return<Result> Stream::addEffect(uint64_t effectId) {
     effect_handle_t halEffect = EffectMap::getInstance().get(effectId);
     if (halEffect != NULL) {
         return analyzeStatus("add_audio_effect", mStream->add_audio_effect(mStream, halEffect));
@@ -185,93 +189,91 @@ Return<Result> Stream::addEffect(uint64_t effectId)  {
     }
 }
 
-Return<Result> Stream::removeEffect(uint64_t effectId)  {
+Return<Result> Stream::removeEffect(uint64_t effectId) {
     effect_handle_t halEffect = EffectMap::getInstance().get(effectId);
     if (halEffect != NULL) {
-        return analyzeStatus(
-                "remove_audio_effect", mStream->remove_audio_effect(mStream, halEffect));
+        return analyzeStatus("remove_audio_effect",
+                             mStream->remove_audio_effect(mStream, halEffect));
     } else {
         ALOGW("Invalid effect ID passed from client: %" PRIu64, effectId);
         return Result::INVALID_ARGUMENTS;
     }
 }
 
-Return<Result> Stream::standby()  {
+Return<Result> Stream::standby() {
     return analyzeStatus("standby", mStream->standby(mStream));
 }
 
-Return<AudioDevice> Stream::getDevice()  {
+Return<AudioDevice> Stream::getDevice() {
     int device;
     Result retval = getParam(AudioParameter::keyRouting, &device);
     return retval == Result::OK ? static_cast<AudioDevice>(device) : AudioDevice::NONE;
 }
 
-Return<Result> Stream::setDevice(const DeviceAddress& address)  {
-    char* halDeviceAddress =
-            audio_device_address_to_parameter(
-                    static_cast<audio_devices_t>(address.device),
-                    deviceAddressToHal(address).c_str());
+Return<Result> Stream::setDevice(const DeviceAddress& address) {
+    char* halDeviceAddress = audio_device_address_to_parameter(
+        static_cast<audio_devices_t>(address.device), deviceAddressToHal(address).c_str());
     AudioParameter params((String8(halDeviceAddress)));
     free(halDeviceAddress);
-    params.addInt(
-            String8(AudioParameter::keyRouting), static_cast<audio_devices_t>(address.device));
+    params.addInt(String8(AudioParameter::keyRouting),
+                  static_cast<audio_devices_t>(address.device));
     return setParams(params);
 }
 
-Return<Result> Stream::setConnectedState(const DeviceAddress& address, bool connected)  {
+Return<Result> Stream::setConnectedState(const DeviceAddress& address, bool connected) {
     return setParam(
-            connected ? AudioParameter::keyStreamConnect : AudioParameter::keyStreamDisconnect,
-            deviceAddressToHal(address).c_str());
+        connected ? AudioParameter::keyStreamConnect : AudioParameter::keyStreamDisconnect,
+        deviceAddressToHal(address).c_str());
 }
 
-Return<Result> Stream::setHwAvSync(uint32_t hwAvSync)  {
+Return<Result> Stream::setHwAvSync(uint32_t hwAvSync) {
     return setParam(AudioParameter::keyStreamHwAvSync, static_cast<int>(hwAvSync));
 }
 
-Return<void> Stream::getParameters(const hidl_vec<hidl_string>& keys, getParameters_cb _hidl_cb)  {
+Return<void> Stream::getParameters(const hidl_vec<hidl_string>& keys, getParameters_cb _hidl_cb) {
     getParametersImpl(keys, _hidl_cb);
     return Void();
 }
 
-Return<Result> Stream::setParameters(const hidl_vec<ParameterValue>& parameters)  {
+Return<Result> Stream::setParameters(const hidl_vec<ParameterValue>& parameters) {
     return setParametersImpl(parameters);
 }
 
-Return<void> Stream::debugDump(const hidl_handle& fd)  {
+Return<void> Stream::debugDump(const hidl_handle& fd) {
     if (fd.getNativeHandle() != nullptr && fd->numFds == 1) {
         analyzeStatus("dump", mStream->dump(mStream, fd->data[0]));
     }
     return Void();
 }
 
-Return<Result>  Stream::start() {
+Return<Result> Stream::start() {
     return Result::NOT_SUPPORTED;
 }
 
-Return<Result>  Stream::stop() {
+Return<Result> Stream::stop() {
     return Result::NOT_SUPPORTED;
 }
 
-Return<void>  Stream::createMmapBuffer(int32_t minSizeFrames __unused,
-                                       createMmapBuffer_cb _hidl_cb) {
+Return<void> Stream::createMmapBuffer(int32_t minSizeFrames __unused,
+                                      createMmapBuffer_cb _hidl_cb) {
     Result retval(Result::NOT_SUPPORTED);
     MmapBufferInfo info;
     _hidl_cb(retval, info);
     return Void();
 }
 
-Return<void>  Stream::getMmapPosition(getMmapPosition_cb _hidl_cb) {
+Return<void> Stream::getMmapPosition(getMmapPosition_cb _hidl_cb) {
     Result retval(Result::NOT_SUPPORTED);
     MmapPosition position;
     _hidl_cb(retval, position);
     return Void();
 }
 
-Return<Result> Stream::close()  {
+Return<Result> Stream::close() {
     return Result::NOT_SUPPORTED;
 }
 
-} // namespace implementation
+}  // namespace implementation
 }  // namespace V2_0
 }  // namespace audio
 }  // namespace hardware

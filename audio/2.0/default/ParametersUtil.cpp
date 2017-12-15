@@ -72,17 +72,14 @@ Result ParametersUtil::getParam(const char* name, String8* value) {
 
 void ParametersUtil::getParametersImpl(
     const hidl_vec<hidl_string>& keys,
-    std::function<void(Result retval,
-                       const hidl_vec<ParameterValue>& parameters)>
-        cb) {
+    std::function<void(Result retval, const hidl_vec<ParameterValue>& parameters)> cb) {
     AudioParameter halKeys;
     for (size_t i = 0; i < keys.size(); ++i) {
         halKeys.addKey(String8(keys[i].c_str()));
     }
     std::unique_ptr<AudioParameter> halValues = getParams(halKeys);
-    Result retval = (keys.size() == 0 || halValues->size() != 0)
-                        ? Result::OK
-                        : Result::NOT_SUPPORTED;
+    Result retval =
+        (keys.size() == 0 || halValues->size() != 0) ? Result::OK : Result::NOT_SUPPORTED;
     hidl_vec<ParameterValue> result;
     result.resize(halValues->size());
     String8 halKey, halValue;
@@ -99,8 +96,7 @@ void ParametersUtil::getParametersImpl(
     cb(retval, result);
 }
 
-std::unique_ptr<AudioParameter> ParametersUtil::getParams(
-    const AudioParameter& keys) {
+std::unique_ptr<AudioParameter> ParametersUtil::getParams(const AudioParameter& keys) {
     String8 paramsAndValues;
     char* halValues = halGetParameters(keys.keysToString().string());
     if (halValues != NULL) {
@@ -114,8 +110,7 @@ std::unique_ptr<AudioParameter> ParametersUtil::getParams(
 
 Result ParametersUtil::setParam(const char* name, bool value) {
     AudioParameter param;
-    param.add(String8(name), String8(value ? AudioParameter::valueOn
-                                           : AudioParameter::valueOff));
+    param.add(String8(name), String8(value ? AudioParameter::valueOn : AudioParameter::valueOff));
     return setParams(param);
 }
 
@@ -131,12 +126,10 @@ Result ParametersUtil::setParam(const char* name, const char* value) {
     return setParams(param);
 }
 
-Result ParametersUtil::setParametersImpl(
-    const hidl_vec<ParameterValue>& parameters) {
+Result ParametersUtil::setParametersImpl(const hidl_vec<ParameterValue>& parameters) {
     AudioParameter params;
     for (size_t i = 0; i < parameters.size(); ++i) {
-        params.add(String8(parameters[i].key.c_str()),
-                   String8(parameters[i].value.c_str()));
+        params.add(String8(parameters[i].key.c_str()), String8(parameters[i].value.c_str()));
     }
     return setParams(params);
 }
@@ -144,18 +137,24 @@ Result ParametersUtil::setParametersImpl(
 Result ParametersUtil::setParams(const AudioParameter& param) {
     int halStatus = halSetParameters(param.toString().string());
     switch (halStatus) {
-        case OK: return Result::OK;
-        case -EINVAL: return Result::INVALID_ARGUMENTS;
-        case -ENODATA: return Result::INVALID_STATE;
-        case -ENODEV: return Result::NOT_INITIALIZED;
+        case OK:
+            return Result::OK;
+        case -EINVAL:
+            return Result::INVALID_ARGUMENTS;
+        case -ENODATA:
+            return Result::INVALID_STATE;
+        case -ENODEV:
+            return Result::NOT_INITIALIZED;
         // The rest of the API (*::analyseStatus) returns NOT_SUPPORTED
         // when the legacy API returns -ENOSYS
         // However the legacy API explicitly state that for get_paramers,
         // -ENOSYS should be returned if
         // "the implementation does not accept a parameter change while the
         //  output is active but the parameter is acceptable otherwise"
-        case -ENOSYS: return Result::INVALID_STATE;
-        default: return Result::INVALID_ARGUMENTS;
+        case -ENOSYS:
+            return Result::INVALID_STATE;
+        default:
+            return Result::INVALID_ARGUMENTS;
     }
 }
 

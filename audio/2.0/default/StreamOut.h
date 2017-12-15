@@ -21,10 +21,10 @@
 #include <memory>
 
 #include <android/hardware/audio/2.0/IStreamOut.h>
-#include <hidl/MQDescriptor.h>
-#include <hidl/Status.h>
 #include <fmq/EventFlag.h>
 #include <fmq/MessageQueue.h>
+#include <hidl/MQDescriptor.h>
+#include <hidl/Status.h>
 #include <utils/Thread.h>
 
 #include "Device.h"
@@ -61,60 +61,60 @@ struct StreamOut : public IStreamOut {
     StreamOut(const sp<Device>& device, audio_stream_out_t* stream);
 
     // Methods from ::android::hardware::audio::V2_0::IStream follow.
-    Return<uint64_t> getFrameSize()  override;
-    Return<uint64_t> getFrameCount()  override;
-    Return<uint64_t> getBufferSize()  override;
-    Return<uint32_t> getSampleRate()  override;
-    Return<void> getSupportedSampleRates(getSupportedSampleRates_cb _hidl_cb)  override;
-    Return<Result> setSampleRate(uint32_t sampleRateHz)  override;
-    Return<AudioChannelMask> getChannelMask()  override;
-    Return<void> getSupportedChannelMasks(getSupportedChannelMasks_cb _hidl_cb)  override;
-    Return<Result> setChannelMask(AudioChannelMask mask)  override;
-    Return<AudioFormat> getFormat()  override;
-    Return<void> getSupportedFormats(getSupportedFormats_cb _hidl_cb)  override;
-    Return<Result> setFormat(AudioFormat format)  override;
-    Return<void> getAudioProperties(getAudioProperties_cb _hidl_cb)  override;
-    Return<Result> addEffect(uint64_t effectId)  override;
-    Return<Result> removeEffect(uint64_t effectId)  override;
-    Return<Result> standby()  override;
-    Return<AudioDevice> getDevice()  override;
-    Return<Result> setDevice(const DeviceAddress& address)  override;
-    Return<Result> setConnectedState(const DeviceAddress& address, bool connected)  override;
-    Return<Result> setHwAvSync(uint32_t hwAvSync)  override;
-    Return<void> getParameters(
-            const hidl_vec<hidl_string>& keys, getParameters_cb _hidl_cb)  override;
-    Return<Result> setParameters(const hidl_vec<ParameterValue>& parameters)  override;
-    Return<void> debugDump(const hidl_handle& fd)  override;
-    Return<Result> close()  override;
+    Return<uint64_t> getFrameSize() override;
+    Return<uint64_t> getFrameCount() override;
+    Return<uint64_t> getBufferSize() override;
+    Return<uint32_t> getSampleRate() override;
+    Return<void> getSupportedSampleRates(getSupportedSampleRates_cb _hidl_cb) override;
+    Return<Result> setSampleRate(uint32_t sampleRateHz) override;
+    Return<AudioChannelMask> getChannelMask() override;
+    Return<void> getSupportedChannelMasks(getSupportedChannelMasks_cb _hidl_cb) override;
+    Return<Result> setChannelMask(AudioChannelMask mask) override;
+    Return<AudioFormat> getFormat() override;
+    Return<void> getSupportedFormats(getSupportedFormats_cb _hidl_cb) override;
+    Return<Result> setFormat(AudioFormat format) override;
+    Return<void> getAudioProperties(getAudioProperties_cb _hidl_cb) override;
+    Return<Result> addEffect(uint64_t effectId) override;
+    Return<Result> removeEffect(uint64_t effectId) override;
+    Return<Result> standby() override;
+    Return<AudioDevice> getDevice() override;
+    Return<Result> setDevice(const DeviceAddress& address) override;
+    Return<Result> setConnectedState(const DeviceAddress& address, bool connected) override;
+    Return<Result> setHwAvSync(uint32_t hwAvSync) override;
+    Return<void> getParameters(const hidl_vec<hidl_string>& keys,
+                               getParameters_cb _hidl_cb) override;
+    Return<Result> setParameters(const hidl_vec<ParameterValue>& parameters) override;
+    Return<void> debugDump(const hidl_handle& fd) override;
+    Return<Result> close() override;
 
     // Methods from ::android::hardware::audio::V2_0::IStreamOut follow.
-    Return<uint32_t> getLatency()  override;
-    Return<Result> setVolume(float left, float right)  override;
-    Return<void> prepareForWriting(
-            uint32_t frameSize, uint32_t framesCount, prepareForWriting_cb _hidl_cb)  override;
-    Return<void> getRenderPosition(getRenderPosition_cb _hidl_cb)  override;
-    Return<void> getNextWriteTimestamp(getNextWriteTimestamp_cb _hidl_cb)  override;
-    Return<Result> setCallback(const sp<IStreamOutCallback>& callback)  override;
-    Return<Result> clearCallback()  override;
-    Return<void> supportsPauseAndResume(supportsPauseAndResume_cb _hidl_cb)  override;
-    Return<Result> pause()  override;
-    Return<Result> resume()  override;
-    Return<bool> supportsDrain()  override;
-    Return<Result> drain(AudioDrain type)  override;
-    Return<Result> flush()  override;
-    Return<void> getPresentationPosition(getPresentationPosition_cb _hidl_cb)  override;
+    Return<uint32_t> getLatency() override;
+    Return<Result> setVolume(float left, float right) override;
+    Return<void> prepareForWriting(uint32_t frameSize, uint32_t framesCount,
+                                   prepareForWriting_cb _hidl_cb) override;
+    Return<void> getRenderPosition(getRenderPosition_cb _hidl_cb) override;
+    Return<void> getNextWriteTimestamp(getNextWriteTimestamp_cb _hidl_cb) override;
+    Return<Result> setCallback(const sp<IStreamOutCallback>& callback) override;
+    Return<Result> clearCallback() override;
+    Return<void> supportsPauseAndResume(supportsPauseAndResume_cb _hidl_cb) override;
+    Return<Result> pause() override;
+    Return<Result> resume() override;
+    Return<bool> supportsDrain() override;
+    Return<Result> drain(AudioDrain type) override;
+    Return<Result> flush() override;
+    Return<void> getPresentationPosition(getPresentationPosition_cb _hidl_cb) override;
     Return<Result> start() override;
     Return<Result> stop() override;
     Return<void> createMmapBuffer(int32_t minSizeFrames, createMmapBuffer_cb _hidl_cb) override;
     Return<void> getMmapPosition(getMmapPosition_cb _hidl_cb) override;
 
-    static Result getPresentationPositionImpl(
-            audio_stream_out_t *stream, uint64_t *frames, TimeSpec *timeStamp);
+    static Result getPresentationPositionImpl(audio_stream_out_t* stream, uint64_t* frames,
+                                              TimeSpec* timeStamp);
 
-  private:
+   private:
     bool mIsClosed;
     const sp<Device> mDevice;
-    audio_stream_out_t *mStream;
+    audio_stream_out_t* mStream;
     const sp<Stream> mStreamCommon;
     const sp<StreamMmap<audio_stream_out_t>> mStreamMmap;
     sp<IStreamOutCallback> mCallback;
@@ -127,7 +127,7 @@ struct StreamOut : public IStreamOut {
 
     virtual ~StreamOut();
 
-    static int asyncCallback(stream_callback_event_t event, void *param, void *cookie);
+    static int asyncCallback(stream_callback_event_t event, void* param, void* cookie);
 };
 
 }  // namespace implementation
