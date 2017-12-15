@@ -122,6 +122,19 @@ interface IFoo {
         bitfield<BitField> bf;
     };
 
+    enum Discriminator : uint8_t {
+        BOOL,
+        INT,
+    };
+    union Union {
+        bool boolValue;
+        int64_t intValue;
+    };
+    struct ContainsUnion {
+        Discriminator discriminator;
+        Union value;
+    };
+
     typedef int32_t[5][6][7] multidimArrayOne;
     typedef multidimArrayOne[8][9][10] multidimArrayTwo;
     typedef multidimArrayTwo[2][3][4] multidimArrayThree;
@@ -143,6 +156,16 @@ interface IFoo {
         };
         InnerTestEnumTypedef foo;
     };
+
+    /**
+     * If d is INT, converts all values to bools which are small enough (0 or 1).
+     * If d is BOOL, should leave all values as BOOLs.
+     *
+     * @param d discriminator for all values in u
+     * @param u values to be expanded
+     * @return c must have same length as u unless there is an error in which case it will be empty.
+     */
+    convertToBoolIfSmall(Discriminator d, vec<Union> u) generates (vec<ContainsUnion> c);
 
     doThis(float param);
     doThatAndReturnSomething(int64_t param) generates (int32_t result);

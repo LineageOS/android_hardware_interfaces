@@ -19,6 +19,11 @@ Bar::Bar() {
 }
 
 // Methods from ::android::hardware::tests::foo::V1_0::IFoo follow.
+Return<void> Bar::convertToBoolIfSmall(Discriminator d, const hidl_vec<Union>& u,
+                                       convertToBoolIfSmall_cb _hidl_cb) {
+    return mFoo->convertToBoolIfSmall(d, u, _hidl_cb);
+}
+
 Return<void> Bar::doThis(float param) {
     return mFoo->doThis(param);
 }
