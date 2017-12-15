@@ -20,6 +20,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
+#include <initializer_list>
 #include <limits>
 #include <string>
 #include <vector>
@@ -40,9 +41,11 @@
 #include "utility/AssertOk.h"
 #include "utility/Documentation.h"
 #include "utility/EnvironmentTearDown.h"
+#define AUDIO_HAL_VERSION V2_0
 #include "utility/PrettyPrintAudioTypes.h"
 #include "utility/ReturnIn.h"
 
+using std::initializer_list;
 using std::string;
 using std::to_string;
 using std::vector;
@@ -856,7 +859,7 @@ TEST_IO_STREAM(GetHwAvSync, "Get hardware sync can not fail",
                ASSERT_IS_OK(device->getHwAvSync()));
 
 static void checkGetNoParameter(IStream* stream, hidl_vec<hidl_string> keys,
-                                vector<Result> expectedResults) {
+                                initializer_list<Result> expectedResults) {
     hidl_vec<ParameterValue> parameters;
     Result res;
     ASSERT_OK(stream->getParameters(keys, returnIn(res, parameters)));
@@ -924,8 +927,7 @@ TEST_IO_STREAM(RemoveNonExistingEffect,
 TEST_IO_STREAM(standby, "Make sure the stream can be put in stanby",
                ASSERT_OK(stream->standby()))  // can not fail
 
-static vector<Result> invalidStateOrNotSupported = {Result::INVALID_STATE,
-                                                    Result::NOT_SUPPORTED};
+static constexpr auto invalidStateOrNotSupported = {Result::INVALID_STATE, Result::NOT_SUPPORTED};
 
 TEST_IO_STREAM(startNoMmap,
                "Starting a mmaped stream before mapping it should fail",

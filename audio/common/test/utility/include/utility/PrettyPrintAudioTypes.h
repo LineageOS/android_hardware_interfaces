@@ -14,57 +14,46 @@
  * limitations under the License.
  */
 
+#ifndef AUDIO_HAL_VERSION
+#error "AUDIO_HAL_VERSION must be set before including this file."
+#endif
+
 #ifndef ANDROID_HARDWARE_AUDIO_COMMON_TEST_UTILITY_PRETTY_PRINT_AUDIO_TYPES_H
 #define ANDROID_HARDWARE_AUDIO_COMMON_TEST_UTILITY_PRETTY_PRINT_AUDIO_TYPES_H
 
 #include <iosfwd>
-#include <type_traits>
+#include <utility>
 
-#include <android/hardware/audio/2.0/types.h>
-#include <android/hardware/audio/common/2.0/types.h>
-
-/** @file Use HIDL generated toString methods to pretty print gtest errors */
-
-namespace prettyPrintAudioTypesDetail {
-
-// Print the value of an enum as hex
-template <class Enum>
-inline void printUnderlyingValue(Enum value, ::std::ostream* os) {
-    *os << std::hex << " (0x" << static_cast<std::underlying_type_t<Enum>>(value) << ")";
-}
-
-}  // namespace detail
+/** @file Use HIDL generated toString methods to pretty print gtest errors
+ *        Unfortunately Gtest does not offer a template to specialize, only
+ *        overloading PrintTo.
+ *  @note that this overload can NOT be template because
+ *        the fallback is already template, resulting in ambiguity.
+ *  @note that the overload MUST be in the exact namespace
+ *        the type is declared in, as per the ADL rules.
+ */
 
 namespace android {
 namespace hardware {
 namespace audio {
-namespace V2_0 {
 
-inline void PrintTo(const Result& result, ::std::ostream* os) {
-    *os << toString(result);
-    prettyPrintAudioTypesDetail::printUnderlyingValue(result, os);
-}
+#define DEFINE_GTEST_PRINT_TO(T) \
+    inline void PrintTo(const T& val, ::std::ostream* os) { *os << toString(val); }
 
-}  // namespace V2_0
+namespace AUDIO_HAL_VERSION {
+DEFINE_GTEST_PRINT_TO(Result)
+}  // namespace AUDIO_HAL_VERSION
+
 namespace common {
-namespace V2_0 {
-
-inline void PrintTo(const AudioConfig& config, ::std::ostream* os) {
-    *os << toString(config);
-}
-
-inline void PrintTo(const AudioDevice& device, ::std::ostream* os) {
-    *os << toString(device);
-    prettyPrintAudioTypesDetail::printUnderlyingValue(device, os);
-}
-
-inline void PrintTo(const AudioChannelMask& channelMask, ::std::ostream* os) {
-    *os << toString(channelMask);
-    prettyPrintAudioTypesDetail::printUnderlyingValue(channelMask, os);
-}
-
-}  // namespace V2_0
+namespace AUDIO_HAL_VERSION {
+DEFINE_GTEST_PRINT_TO(AudioConfig)
+DEFINE_GTEST_PRINT_TO(AudioDevice)
+DEFINE_GTEST_PRINT_TO(AudioChannelMask)
+}  // namespace AUDIO_HAL_VERSION
 }  // namespace common
+
+#undef DEFINE_GTEST_PRINT_TO
+
 }  // namespace audio
 }  // namespace hardware
 }  // namespace android

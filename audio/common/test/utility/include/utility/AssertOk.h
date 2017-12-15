@@ -17,7 +17,7 @@
 #define ANDROID_HARDWARE_AUDIO_COMMON_TEST_UTILITY_ASSERTOK_H
 
 #include <algorithm>
-#include <vector>
+#include <initializer_list>
 
 #include <hidl/Status.h>
 
@@ -33,7 +33,6 @@ namespace detail {
 // This is a detail namespace, thus it is OK to import a class as nobody else is
 // allowed to use it
 using ::android::hardware::Return;
-using ::android::hardware::audio::V2_0::Result;
 
 template <class T>
 inline ::testing::AssertionResult assertIsOk(const char* expr, const Return<T>& ret) {
@@ -50,6 +49,7 @@ inline ::testing::AssertionResult continueIfIsOk(const char* expr, const Return<
 }
 
 // Expect two equal Results
+template <class Result>
 inline ::testing::AssertionResult assertResult(const char* e_expr, const char* r_expr,
                                                Result expected, Result result) {
     return ::testing::AssertionResult(expected == result)
@@ -58,6 +58,7 @@ inline ::testing::AssertionResult assertResult(const char* e_expr, const char* r
 }
 
 // Expect two equal Results one being wrapped in an OK Return
+template <class Result>
 inline ::testing::AssertionResult assertResult(const char* e_expr, const char* r_expr,
                                                Result expected, const Return<Result>& ret) {
     return continueIfIsOk(r_expr, ret,
@@ -65,8 +66,10 @@ inline ::testing::AssertionResult assertResult(const char* e_expr, const char* r
 }
 
 // Expect a Result to be part of a list of Results
+template <class Result>
 inline ::testing::AssertionResult assertResult(const char* e_expr, const char* r_expr,
-                                               const std::vector<Result>& expected, Result result) {
+                                               const std::initializer_list<Result>& expected,
+                                               Result result) {
     if (std::find(expected.begin(), expected.end(), result) != expected.end()) {
         return ::testing::AssertionSuccess();  // result is in expected
     }
@@ -77,8 +80,9 @@ inline ::testing::AssertionResult assertResult(const char* e_expr, const char* r
 }
 
 // Expect a Result wrapped in an OK Return to be part of a list of Results
+template <class Result>
 inline ::testing::AssertionResult assertResult(const char* e_expr, const char* r_expr,
-                                               const std::vector<Result>& expected,
+                                               const std::initializer_list<Result>& expected,
                                                const Return<Result>& ret) {
     return continueIfIsOk(r_expr, ret,
                           [&] { return assertResult(e_expr, r_expr, expected, Result{ret}); });
@@ -88,11 +92,13 @@ inline ::testing::AssertionResult assertOk(const char* expr, const Return<void>&
     return assertIsOk(expr, ret);
 }
 
+template <class Result>
 inline ::testing::AssertionResult assertOk(const char* expr, Result result) {
     return ::testing::AssertionResult(result == Result::OK)
            << "Expected success: " << expr << "\nActual: " << ::testing::PrintToString(result);
 }
 
+template <class Result>
 inline ::testing::AssertionResult assertOk(const char* expr, const Return<Result>& ret) {
     return continueIfIsOk(expr, ret, [&] { return assertOk(expr, Result{ret}); });
 }
