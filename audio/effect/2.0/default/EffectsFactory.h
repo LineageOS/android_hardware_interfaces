@@ -43,15 +43,15 @@ using ::android::sp;
 
 struct EffectsFactory : public IEffectsFactory {
     // Methods from ::android::hardware::audio::effect::V2_0::IEffectsFactory follow.
-    Return<void> getAllDescriptors(getAllDescriptors_cb _hidl_cb)  override;
-    Return<void> getDescriptor(const Uuid& uid, getDescriptor_cb _hidl_cb)  override;
-    Return<void> createEffect(
-            const Uuid& uid, int32_t session, int32_t ioHandle, createEffect_cb _hidl_cb)  override;
-    Return<void> debugDump(const hidl_handle& fd)  override;
+    Return<void> getAllDescriptors(getAllDescriptors_cb _hidl_cb) override;
+    Return<void> getDescriptor(const Uuid& uid, getDescriptor_cb _hidl_cb) override;
+    Return<void> createEffect(const Uuid& uid, int32_t session, int32_t ioHandle,
+                              createEffect_cb _hidl_cb) override;
+    Return<void> debugDump(const hidl_handle& fd) override;
 
-  private:
-    static sp<IEffect> dispatchEffectInstanceCreation(
-            const effect_descriptor_t& halDescriptor, effect_handle_t handle);
+   private:
+    static sp<IEffect> dispatchEffectInstanceCreation(const effect_descriptor_t& halDescriptor,
+                                                      effect_handle_t handle);
 };
 
 extern "C" IEffectsFactory* HIDL_FETCH_IEffectsFactory(const char* name);

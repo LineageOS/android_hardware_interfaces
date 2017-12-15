@@ -15,6 +15,7 @@
  */
 
 #define LOG_TAG "EffectFactoryHAL"
+#include <android/log.h>
 #include <media/EffectsFactoryApi.h>
 #include <system/audio_effects/effect_aec.h>
 #include <system/audio_effects/effect_agc.h>
@@ -27,7 +28,6 @@
 #include <system/audio_effects/effect_presetreverb.h>
 #include <system/audio_effects/effect_virtualizer.h>
 #include <system/audio_effects/effect_visualizer.h>
-#include <android/log.h>
 
 #include "AcousticEchoCancelerEffect.h"
 #include "AutomaticGainControlEffect.h"
@@ -56,9 +56,9 @@ namespace V2_0 {
 namespace implementation {
 
 // static
-sp<IEffect> EffectsFactory::dispatchEffectInstanceCreation(
-        const effect_descriptor_t& halDescriptor, effect_handle_t handle) {
-    const effect_uuid_t *halUuid = &halDescriptor.type;
+sp<IEffect> EffectsFactory::dispatchEffectInstanceCreation(const effect_descriptor_t& halDescriptor,
+                                                           effect_handle_t handle) {
+    const effect_uuid_t* halUuid = &halDescriptor.type;
     if (memcmp(halUuid, FX_IID_AEC, sizeof(effect_uuid_t)) == 0) {
         return new AcousticEchoCancelerEffect(handle);
     } else if (memcmp(halUuid, FX_IID_AGC, sizeof(effect_uuid_t)) == 0) {
@@ -86,7 +86,7 @@ sp<IEffect> EffectsFactory::dispatchEffectInstanceCreation(
 }
 
 // Methods from ::android::hardware::audio::effect::V2_0::IEffectsFactory follow.
-Return<void> EffectsFactory::getAllDescriptors(getAllDescriptors_cb _hidl_cb)  {
+Return<void> EffectsFactory::getAllDescriptors(getAllDescriptors_cb _hidl_cb) {
     Result retval(Result::OK);
     hidl_vec<EffectDescriptor> result;
     uint32_t numEffects;
@@ -107,8 +107,8 @@ restart:
         if (status == OK) {
             effectDescriptorFromHal(halDescriptor, &result[i]);
         } else {
-            ALOGE("Error querying effect at position %d / %d: %s",
-                    i, numEffects, strerror(-status));
+            ALOGE("Error querying effect at position %d / %d: %s", i, numEffects,
+                  strerror(-status));
             switch (status) {
                 case -ENOSYS: {
                     // Effect list has changed.
@@ -132,7 +132,7 @@ exit:
     return Void();
 }
 
-Return<void> EffectsFactory::getDescriptor(const Uuid& uid, getDescriptor_cb _hidl_cb)  {
+Return<void> EffectsFactory::getDescriptor(const Uuid& uid, getDescriptor_cb _hidl_cb) {
     effect_uuid_t halUuid;
     HidlUtils::uuidToHal(uid, &halUuid);
     effect_descriptor_t halDescriptor;
@@ -141,8 +141,8 @@ Return<void> EffectsFactory::getDescriptor(const Uuid& uid, getDescriptor_cb _hi
     effectDescriptorFromHal(halDescriptor, &descriptor);
     Result retval(Result::OK);
     if (status != OK) {
-        ALOGE("Error querying effect descriptor for %s: %s",
-                uuidToString(halUuid).c_str(), strerror(-status));
+        ALOGE("Error querying effect descriptor for %s: %s", uuidToString(halUuid).c_str(),
+              strerror(-status));
         if (status == -ENOENT) {
             retval = Result::INVALID_ARGUMENTS;
         } else {
@@ -153,8 +153,8 @@ Return<void> EffectsFactory::getDescriptor(const Uuid& uid, getDescriptor_cb _hi
     return Void();
 }
 
-Return<void> EffectsFactory::createEffect(
-        const Uuid& uid, int32_t session, int32_t ioHandle, createEffect_cb _hidl_cb)  {
+Return<void> EffectsFactory::createEffect(const Uuid& uid, int32_t session, int32_t ioHandle,
+                                          createEffect_cb _hidl_cb) {
     effect_uuid_t halUuid;
     HidlUtils::uuidToHal(uid, &halUuid);
     effect_handle_t handle;
@@ -170,8 +170,8 @@ Return<void> EffectsFactory::createEffect(
             effect = dispatchEffectInstanceCreation(halDescriptor, handle);
             effectId = EffectMap::getInstance().add(handle);
         } else {
-            ALOGE("Error querying effect descriptor for %s: %s",
-                    uuidToString(halUuid).c_str(), strerror(-status));
+            ALOGE("Error querying effect descriptor for %s: %s", uuidToString(halUuid).c_str(),
+                  strerror(-status));
             EffectRelease(handle);
         }
     }
@@ -187,19 +187,18 @@ Return<void> EffectsFactory::createEffect(
     return Void();
 }
 
-Return<void> EffectsFactory::debugDump(const hidl_handle& fd)  {
+Return<void> EffectsFactory::debugDump(const hidl_handle& fd) {
     if (fd.getNativeHandle() != nullptr && fd->numFds == 1) {
         EffectDumpEffects(fd->data[0]);
     }
     return Void();
 }
 
-
 IEffectsFactory* HIDL_FETCH_IEffectsFactory(const char* /* name */) {
     return new EffectsFactory();
 }
 
-} // namespace implementation
+}  // namespace implementation
 }  // namespace V2_0
 }  // namespace effect
 }  // namespace audio

@@ -29,35 +29,27 @@ namespace effect {
 namespace V2_0 {
 namespace implementation {
 
-void effectDescriptorFromHal(
-        const effect_descriptor_t& halDescriptor, EffectDescriptor* descriptor) {
+void effectDescriptorFromHal(const effect_descriptor_t& halDescriptor,
+                             EffectDescriptor* descriptor) {
     HidlUtils::uuidFromHal(halDescriptor.type, &descriptor->type);
     HidlUtils::uuidFromHal(halDescriptor.uuid, &descriptor->uuid);
     descriptor->flags = EffectFlags(halDescriptor.flags);
     descriptor->cpuLoad = halDescriptor.cpuLoad;
     descriptor->memoryUsage = halDescriptor.memoryUsage;
     memcpy(descriptor->name.data(), halDescriptor.name, descriptor->name.size());
-    memcpy(descriptor->implementor.data(),
-            halDescriptor.implementor, descriptor->implementor.size());
+    memcpy(descriptor->implementor.data(), halDescriptor.implementor,
+           descriptor->implementor.size());
 }
 
 std::string uuidToString(const effect_uuid_t& halUuid) {
     char str[64];
-    snprintf(str, sizeof(str), "%08x-%04x-%04x-%04x-%02x%02x%02x%02x%02x%02x",
-            halUuid.timeLow,
-            halUuid.timeMid,
-            halUuid.timeHiAndVersion,
-            halUuid.clockSeq,
-            halUuid.node[0],
-            halUuid.node[1],
-            halUuid.node[2],
-            halUuid.node[3],
-            halUuid.node[4],
-            halUuid.node[5]);
+    snprintf(str, sizeof(str), "%08x-%04x-%04x-%04x-%02x%02x%02x%02x%02x%02x", halUuid.timeLow,
+             halUuid.timeMid, halUuid.timeHiAndVersion, halUuid.clockSeq, halUuid.node[0],
+             halUuid.node[1], halUuid.node[2], halUuid.node[3], halUuid.node[4], halUuid.node[5]);
     return str;
 }
 
-} // namespace implementation
+}  // namespace implementation
 }  // namespace V2_0
 }  // namespace effect
 }  // namespace audio

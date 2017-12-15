@@ -56,9 +56,8 @@ namespace effect {
 namespace V2_0 {
 namespace implementation {
 
-AudioBufferWrapper::AudioBufferWrapper(const AudioBuffer& buffer) :
-        mHidlBuffer(buffer), mHalBuffer{ 0, { nullptr } } {
-}
+AudioBufferWrapper::AudioBufferWrapper(const AudioBuffer& buffer)
+    : mHidlBuffer(buffer), mHalBuffer{0, {nullptr}} {}
 
 AudioBufferWrapper::~AudioBufferWrapper() {
     AudioBufferManager::getInstance().removeEntry(mHidlBuffer.id);

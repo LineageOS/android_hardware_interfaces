@@ -53,73 +53,62 @@ struct VisualizerEffect : public IVisualizerEffect {
     explicit VisualizerEffect(effect_handle_t handle);
 
     // Methods from ::android::hardware::audio::effect::V2_0::IEffect follow.
-    Return<Result> init()  override;
+    Return<Result> init() override;
     Return<Result> setConfig(
-            const EffectConfig& config,
-            const sp<IEffectBufferProviderCallback>& inputBufferProvider,
-            const sp<IEffectBufferProviderCallback>& outputBufferProvider)  override;
-    Return<Result> reset()  override;
-    Return<Result> enable()  override;
-    Return<Result> disable()  override;
-    Return<Result> setDevice(AudioDevice device)  override;
-    Return<void> setAndGetVolume(
-            const hidl_vec<uint32_t>& volumes, setAndGetVolume_cb _hidl_cb)  override;
-    Return<Result> volumeChangeNotification(const hidl_vec<uint32_t>& volumes)  override;
-    Return<Result> setAudioMode(AudioMode mode)  override;
+        const EffectConfig& config, const sp<IEffectBufferProviderCallback>& inputBufferProvider,
+        const sp<IEffectBufferProviderCallback>& outputBufferProvider) override;
+    Return<Result> reset() override;
+    Return<Result> enable() override;
+    Return<Result> disable() override;
+    Return<Result> setDevice(AudioDevice device) override;
+    Return<void> setAndGetVolume(const hidl_vec<uint32_t>& volumes,
+                                 setAndGetVolume_cb _hidl_cb) override;
+    Return<Result> volumeChangeNotification(const hidl_vec<uint32_t>& volumes) override;
+    Return<Result> setAudioMode(AudioMode mode) override;
     Return<Result> setConfigReverse(
-            const EffectConfig& config,
-            const sp<IEffectBufferProviderCallback>& inputBufferProvider,
-            const sp<IEffectBufferProviderCallback>& outputBufferProvider)  override;
-    Return<Result> setInputDevice(AudioDevice device)  override;
-    Return<void> getConfig(getConfig_cb _hidl_cb)  override;
-    Return<void> getConfigReverse(getConfigReverse_cb _hidl_cb)  override;
+        const EffectConfig& config, const sp<IEffectBufferProviderCallback>& inputBufferProvider,
+        const sp<IEffectBufferProviderCallback>& outputBufferProvider) override;
+    Return<Result> setInputDevice(AudioDevice device) override;
+    Return<void> getConfig(getConfig_cb _hidl_cb) override;
+    Return<void> getConfigReverse(getConfigReverse_cb _hidl_cb) override;
     Return<void> getSupportedAuxChannelsConfigs(
-            uint32_t maxConfigs, getSupportedAuxChannelsConfigs_cb _hidl_cb)  override;
-    Return<void> getAuxChannelsConfig(getAuxChannelsConfig_cb _hidl_cb)  override;
-    Return<Result> setAuxChannelsConfig(const EffectAuxChannelsConfig& config)  override;
-    Return<Result> setAudioSource(AudioSource source)  override;
-    Return<Result> offload(const EffectOffloadParameter& param)  override;
-    Return<void> getDescriptor(getDescriptor_cb _hidl_cb)  override;
-    Return<void> prepareForProcessing(prepareForProcessing_cb _hidl_cb)  override;
-    Return<Result> setProcessBuffers(
-            const AudioBuffer& inBuffer, const AudioBuffer& outBuffer)  override;
-    Return<void> command(
-            uint32_t commandId,
-            const hidl_vec<uint8_t>& data,
-            uint32_t resultMaxSize,
-            command_cb _hidl_cb)  override;
-    Return<Result> setParameter(
-            const hidl_vec<uint8_t>& parameter, const hidl_vec<uint8_t>& value)  override;
-    Return<void> getParameter(
-            const hidl_vec<uint8_t>& parameter,
-            uint32_t valueMaxSize,
-            getParameter_cb _hidl_cb)  override;
-    Return<void> getSupportedConfigsForFeature(
-            uint32_t featureId,
-            uint32_t maxConfigs,
-            uint32_t configSize,
-            getSupportedConfigsForFeature_cb _hidl_cb)  override;
-    Return<void> getCurrentConfigForFeature(
-            uint32_t featureId,
-            uint32_t configSize,
-            getCurrentConfigForFeature_cb _hidl_cb)  override;
-    Return<Result> setCurrentConfigForFeature(
-            uint32_t featureId, const hidl_vec<uint8_t>& configData)  override;
-    Return<Result> close()  override;
+        uint32_t maxConfigs, getSupportedAuxChannelsConfigs_cb _hidl_cb) override;
+    Return<void> getAuxChannelsConfig(getAuxChannelsConfig_cb _hidl_cb) override;
+    Return<Result> setAuxChannelsConfig(const EffectAuxChannelsConfig& config) override;
+    Return<Result> setAudioSource(AudioSource source) override;
+    Return<Result> offload(const EffectOffloadParameter& param) override;
+    Return<void> getDescriptor(getDescriptor_cb _hidl_cb) override;
+    Return<void> prepareForProcessing(prepareForProcessing_cb _hidl_cb) override;
+    Return<Result> setProcessBuffers(const AudioBuffer& inBuffer,
+                                     const AudioBuffer& outBuffer) override;
+    Return<void> command(uint32_t commandId, const hidl_vec<uint8_t>& data, uint32_t resultMaxSize,
+                         command_cb _hidl_cb) override;
+    Return<Result> setParameter(const hidl_vec<uint8_t>& parameter,
+                                const hidl_vec<uint8_t>& value) override;
+    Return<void> getParameter(const hidl_vec<uint8_t>& parameter, uint32_t valueMaxSize,
+                              getParameter_cb _hidl_cb) override;
+    Return<void> getSupportedConfigsForFeature(uint32_t featureId, uint32_t maxConfigs,
+                                               uint32_t configSize,
+                                               getSupportedConfigsForFeature_cb _hidl_cb) override;
+    Return<void> getCurrentConfigForFeature(uint32_t featureId, uint32_t configSize,
+                                            getCurrentConfigForFeature_cb _hidl_cb) override;
+    Return<Result> setCurrentConfigForFeature(uint32_t featureId,
+                                              const hidl_vec<uint8_t>& configData) override;
+    Return<Result> close() override;
 
     // Methods from ::android::hardware::audio::effect::V2_0::IVisualizerEffect follow.
-    Return<Result> setCaptureSize(uint16_t captureSize)  override;
-    Return<void> getCaptureSize(getCaptureSize_cb _hidl_cb)  override;
-    Return<Result> setScalingMode(IVisualizerEffect::ScalingMode scalingMode)  override;
-    Return<void> getScalingMode(getScalingMode_cb _hidl_cb)  override;
-    Return<Result> setLatency(uint32_t latencyMs)  override;
-    Return<void> getLatency(getLatency_cb _hidl_cb)  override;
-    Return<Result> setMeasurementMode(IVisualizerEffect::MeasurementMode measurementMode)  override;
-    Return<void> getMeasurementMode(getMeasurementMode_cb _hidl_cb)  override;
-    Return<void> capture(capture_cb _hidl_cb)  override;
-    Return<void> measure(measure_cb _hidl_cb)  override;
+    Return<Result> setCaptureSize(uint16_t captureSize) override;
+    Return<void> getCaptureSize(getCaptureSize_cb _hidl_cb) override;
+    Return<Result> setScalingMode(IVisualizerEffect::ScalingMode scalingMode) override;
+    Return<void> getScalingMode(getScalingMode_cb _hidl_cb) override;
+    Return<Result> setLatency(uint32_t latencyMs) override;
+    Return<void> getLatency(getLatency_cb _hidl_cb) override;
+    Return<Result> setMeasurementMode(IVisualizerEffect::MeasurementMode measurementMode) override;
+    Return<void> getMeasurementMode(getMeasurementMode_cb _hidl_cb) override;
+    Return<void> capture(capture_cb _hidl_cb) override;
+    Return<void> measure(measure_cb _hidl_cb) override;
 
-  private:
+   private:
     sp<Effect> mEffect;
     uint16_t mCaptureSize;
     MeasurementMode mMeasurementMode;

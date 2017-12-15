@@ -41,26 +41,22 @@ using ::android::hardware::audio::effect::V2_0::MessageQueueFlagBits;
 namespace {
 
 class ProcessThread : public Thread {
-  public:
+   public:
     // ProcessThread's lifespan never exceeds Effect's lifespan.
-    ProcessThread(std::atomic<bool>* stop,
-            effect_handle_t effect,
-            std::atomic<audio_buffer_t*>* inBuffer,
-            std::atomic<audio_buffer_t*>* outBuffer,
-            Effect::StatusMQ* statusMQ,
-            EventFlag* efGroup)
-            : Thread(false /*canCallJava*/),
-              mStop(stop),
-              mEffect(effect),
-              mHasProcessReverse((*mEffect)->process_reverse != NULL),
-              mInBuffer(inBuffer),
-              mOutBuffer(outBuffer),
-              mStatusMQ(statusMQ),
-              mEfGroup(efGroup) {
-    }
+    ProcessThread(std::atomic<bool>* stop, effect_handle_t effect,
+                  std::atomic<audio_buffer_t*>* inBuffer, std::atomic<audio_buffer_t*>* outBuffer,
+                  Effect::StatusMQ* statusMQ, EventFlag* efGroup)
+        : Thread(false /*canCallJava*/),
+          mStop(stop),
+          mEffect(effect),
+          mHasProcessReverse((*mEffect)->process_reverse != NULL),
+          mInBuffer(inBuffer),
+          mOutBuffer(outBuffer),
+          mStatusMQ(statusMQ),
+          mEfGroup(efGroup) {}
     virtual ~ProcessThread() {}
 
-  private:
+   private:
     std::atomic<bool>* mStop;
     effect_handle_t mEffect;
     bool mHasProcessReverse;
@@ -75,16 +71,16 @@ class ProcessThread : public Thread {
 bool ProcessThread::threadLoop() {
     // This implementation doesn't return control back to the Thread until it decides to stop,
     // as the Thread uses mutexes, and this can lead to priority inversion.
-    while(!std::atomic_load_explicit(mStop, std::memory_order_acquire)) {
+    while (!std::atomic_load_explicit(mStop, std::memory_order_acquire)) {
         uint32_t efState = 0;
         mEfGroup->wait(static_cast<uint32_t>(MessageQueueFlagBits::REQUEST_PROCESS_ALL), &efState);
-        if (!(efState & static_cast<uint32_t>(MessageQueueFlagBits::REQUEST_PROCESS_ALL))
-                || (efState & static_cast<uint32_t>(MessageQueueFlagBits::REQUEST_QUIT))) {
+        if (!(efState & static_cast<uint32_t>(MessageQueueFlagBits::REQUEST_PROCESS_ALL)) ||
+            (efState & static_cast<uint32_t>(MessageQueueFlagBits::REQUEST_QUIT))) {
             continue;  // Nothing to do or time to quit.
         }
         Result retval = Result::OK;
-        if (efState & static_cast<uint32_t>(MessageQueueFlagBits::REQUEST_PROCESS_REVERSE)
-                && !mHasProcessReverse) {
+        if (efState & static_cast<uint32_t>(MessageQueueFlagBits::REQUEST_PROCESS_REVERSE) &&
+            !mHasProcessReverse) {
             retval = Result::NOT_SUPPORTED;
         }
 
@@ -93,9 +89,9 @@ bool ProcessThread::threadLoop() {
             std::atomic_thread_fence(std::memory_order_acquire);
             int32_t processResult;
             audio_buffer_t* inBuffer =
-                    std::atomic_load_explicit(mInBuffer, std::memory_order_relaxed);
+                std::atomic_load_explicit(mInBuffer, std::memory_order_relaxed);
             audio_buffer_t* outBuffer =
-                    std::atomic_load_explicit(mOutBuffer, std::memory_order_relaxed);
+                std::atomic_load_explicit(mOutBuffer, std::memory_order_relaxed);
             if (inBuffer != nullptr && outBuffer != nullptr) {
                 if (efState & static_cast<uint32_t>(MessageQueueFlagBits::REQUEST_PROCESS)) {
                     processResult = (*mEffect)->process(mEffect, inBuffer, outBuffer);
@@ -107,11 +103,18 @@ bool ProcessThread::threadLoop() {
                 ALOGE("processing buffers were not set before calling 'process'");
                 processResult = -ENODEV;
             }
-            switch(processResult) {
-                case 0: retval = Result::OK; break;
-                case -ENODATA: retval = Result::INVALID_STATE; break;
-                case -EINVAL: retval = Result::INVALID_ARGUMENTS; break;
-                default: retval = Result::NOT_INITIALIZED;
+            switch (processResult) {
+                case 0:
+                    retval = Result::OK;
+                    break;
+                case -ENODATA:
+                    retval = Result::INVALID_STATE;
+                    break;
+                case -EINVAL:
+                    retval = Result::INVALID_ARGUMENTS;
+                    break;
+                default:
+                    retval = Result::NOT_INITIALIZED;
             }
         }
         if (!mStatusMQ->write(&retval)) {
@@ -126,13 +129,12 @@ bool ProcessThread::threadLoop() {
 }  // namespace
 
 // static
-const char *Effect::sContextResultOfCommand = "returned status";
-const char *Effect::sContextCallToCommand = "error";
-const char *Effect::sContextCallFunction = sContextCallToCommand;
+const char* Effect::sContextResultOfCommand = "returned status";
+const char* Effect::sContextCallToCommand = "error";
+const char* Effect::sContextCallFunction = sContextCallToCommand;
 
 Effect::Effect(effect_handle_t handle)
-        : mIsClosed(false), mHandle(handle), mEfGroup(nullptr), mStopProcessThread(false) {
-}
+    : mIsClosed(false), mHandle(handle), mEfGroup(nullptr), mStopProcessThread(false) {}
 
 Effect::~Effect() {
     ATRACE_CALL();
@@ -155,13 +157,14 @@ Effect::~Effect() {
 }
 
 // static
-template<typename T> size_t Effect::alignedSizeIn(size_t s) {
+template <typename T>
+size_t Effect::alignedSizeIn(size_t s) {
     return (s + sizeof(T) - 1) / sizeof(T);
 }
 
 // static
-template<typename T> std::unique_ptr<uint8_t[]> Effect::hidlVecToHal(
-        const hidl_vec<T>& vec, uint32_t* halDataSize) {
+template <typename T>
+std::unique_ptr<uint8_t[]> Effect::hidlVecToHal(const hidl_vec<T>& vec, uint32_t* halDataSize) {
     // Due to bugs in HAL, they may attempt to write into the provided
     // input buffer. The original binder buffer is r/o, thus it is needed
     // to create a r/w version.
@@ -172,22 +175,22 @@ template<typename T> std::unique_ptr<uint8_t[]> Effect::hidlVecToHal(
 }
 
 // static
-void Effect::effectAuxChannelsConfigFromHal(
-        const channel_config_t& halConfig, EffectAuxChannelsConfig* config) {
+void Effect::effectAuxChannelsConfigFromHal(const channel_config_t& halConfig,
+                                            EffectAuxChannelsConfig* config) {
     config->mainChannels = AudioChannelMask(halConfig.main_channels);
     config->auxChannels = AudioChannelMask(halConfig.aux_channels);
 }
 
 // static
-void Effect::effectAuxChannelsConfigToHal(
-        const EffectAuxChannelsConfig& config, channel_config_t* halConfig) {
+void Effect::effectAuxChannelsConfigToHal(const EffectAuxChannelsConfig& config,
+                                          channel_config_t* halConfig) {
     halConfig->main_channels = static_cast<audio_channel_mask_t>(config.mainChannels);
     halConfig->aux_channels = static_cast<audio_channel_mask_t>(config.auxChannels);
 }
 
 // static
-void Effect::effectBufferConfigFromHal(
-        const buffer_config_t& halConfig, EffectBufferConfig* config) {
+void Effect::effectBufferConfigFromHal(const buffer_config_t& halConfig,
+                                       EffectBufferConfig* config) {
     config->buffer.id = 0;
     config->buffer.frameCount = 0;
     config->samplingRateHz = halConfig.samplingRate;
@@ -227,22 +230,19 @@ void Effect::effectConfigToHal(const EffectConfig& config, effect_config_t* halC
 }
 
 // static
-void Effect::effectOffloadParamToHal(
-        const EffectOffloadParameter& offload, effect_offload_param_t* halOffload) {
+void Effect::effectOffloadParamToHal(const EffectOffloadParameter& offload,
+                                     effect_offload_param_t* halOffload) {
     halOffload->isOffload = offload.isOffload;
     halOffload->ioHandle = offload.ioHandle;
 }
 
 // static
-std::vector<uint8_t> Effect::parameterToHal(
-        uint32_t paramSize,
-        const void* paramData,
-        uint32_t valueSize,
-        const void** valueData) {
+std::vector<uint8_t> Effect::parameterToHal(uint32_t paramSize, const void* paramData,
+                                            uint32_t valueSize, const void** valueData) {
     size_t valueOffsetFromData = alignedSizeIn<uint32_t>(paramSize) * sizeof(uint32_t);
     size_t halParamBufferSize = sizeof(effect_param_t) + valueOffsetFromData + valueSize;
     std::vector<uint8_t> halParamBuffer(halParamBufferSize, 0);
-    effect_param_t *halParam = reinterpret_cast<effect_param_t*>(&halParamBuffer[0]);
+    effect_param_t* halParam = reinterpret_cast<effect_param_t*>(&halParamBuffer[0]);
     halParam->psize = paramSize;
     halParam->vsize = valueSize;
     memcpy(halParam->data, paramData, paramSize);
@@ -262,31 +262,35 @@ Result Effect::analyzeCommandStatus(const char* commandName, const char* context
     return analyzeStatus("command", commandName, context, status);
 }
 
-Result Effect::analyzeStatus(
-        const char* funcName,
-        const char* subFuncName,
-        const char* contextDescription,
-        status_t status) {
+Result Effect::analyzeStatus(const char* funcName, const char* subFuncName,
+                             const char* contextDescription, status_t status) {
     if (status != OK) {
-        ALOGW("Effect %p %s %s %s: %s",
-                mHandle, funcName, subFuncName, contextDescription, strerror(-status));
+        ALOGW("Effect %p %s %s %s: %s", mHandle, funcName, subFuncName, contextDescription,
+              strerror(-status));
     }
     switch (status) {
-        case OK: return Result::OK;
-        case -EINVAL: return Result::INVALID_ARGUMENTS;
-        case -ENODATA: return Result::INVALID_STATE;
-        case -ENODEV: return Result::NOT_INITIALIZED;
-        case -ENOMEM: return Result::RESULT_TOO_BIG;
-        case -ENOSYS: return Result::NOT_SUPPORTED;
-        default: return Result::INVALID_STATE;
+        case OK:
+            return Result::OK;
+        case -EINVAL:
+            return Result::INVALID_ARGUMENTS;
+        case -ENODATA:
+            return Result::INVALID_STATE;
+        case -ENODEV:
+            return Result::NOT_INITIALIZED;
+        case -ENOMEM:
+            return Result::RESULT_TOO_BIG;
+        case -ENOSYS:
+            return Result::NOT_SUPPORTED;
+        default:
+            return Result::INVALID_STATE;
     }
 }
 
 void Effect::getConfigImpl(int commandCode, const char* commandName, GetConfigCallback cb) {
     uint32_t halResultSize = sizeof(effect_config_t);
     effect_config_t halConfig{};
-    status_t status = (*mHandle)->command(
-            mHandle, commandCode, 0, NULL, &halResultSize, &halConfig);
+    status_t status =
+        (*mHandle)->command(mHandle, commandCode, 0, NULL, &halResultSize, &halConfig);
     EffectConfig config;
     if (status == OK) {
         effectConfigFromHal(halConfig, &config);
@@ -294,66 +298,51 @@ void Effect::getConfigImpl(int commandCode, const char* commandName, GetConfigCa
     cb(analyzeCommandStatus(commandName, sContextCallToCommand, status), config);
 }
 
-Result Effect::getCurrentConfigImpl(
-        uint32_t featureId, uint32_t configSize, GetCurrentConfigSuccessCallback onSuccess) {
+Result Effect::getCurrentConfigImpl(uint32_t featureId, uint32_t configSize,
+                                    GetCurrentConfigSuccessCallback onSuccess) {
     uint32_t halCmd = featureId;
     uint32_t halResult[alignedSizeIn<uint32_t>(sizeof(uint32_t) + configSize)];
     memset(halResult, 0, sizeof(halResult));
     uint32_t halResultSize = 0;
-    return sendCommandReturningStatusAndData(
-            EFFECT_CMD_GET_FEATURE_CONFIG, "GET_FEATURE_CONFIG",
-            sizeof(uint32_t), &halCmd,
-            &halResultSize, halResult,
-            sizeof(uint32_t),
-            [&]{ onSuccess(&halResult[1]); });
+    return sendCommandReturningStatusAndData(EFFECT_CMD_GET_FEATURE_CONFIG, "GET_FEATURE_CONFIG",
+                                             sizeof(uint32_t), &halCmd, &halResultSize, halResult,
+                                             sizeof(uint32_t), [&] { onSuccess(&halResult[1]); });
 }
 
-Result Effect::getParameterImpl(
-        uint32_t paramSize,
-        const void* paramData,
-        uint32_t requestValueSize,
-        uint32_t replyValueSize,
-        GetParameterSuccessCallback onSuccess) {
+Result Effect::getParameterImpl(uint32_t paramSize, const void* paramData,
+                                uint32_t requestValueSize, uint32_t replyValueSize,
+                                GetParameterSuccessCallback onSuccess) {
     // As it is unknown what method HAL uses for copying the provided parameter data,
     // it is safer to make sure that input and output buffers do not overlap.
     std::vector<uint8_t> halCmdBuffer =
-            parameterToHal(paramSize, paramData, requestValueSize, nullptr);
-    const void *valueData = nullptr;
+        parameterToHal(paramSize, paramData, requestValueSize, nullptr);
+    const void* valueData = nullptr;
     std::vector<uint8_t> halParamBuffer =
-            parameterToHal(paramSize, paramData, replyValueSize, &valueData);
+        parameterToHal(paramSize, paramData, replyValueSize, &valueData);
     uint32_t halParamBufferSize = halParamBuffer.size();
 
     return sendCommandReturningStatusAndData(
-            EFFECT_CMD_GET_PARAM, "GET_PARAM",
-            halCmdBuffer.size(), &halCmdBuffer[0],
-            &halParamBufferSize, &halParamBuffer[0],
-            sizeof(effect_param_t),
-            [&]{
-                effect_param_t *halParam = reinterpret_cast<effect_param_t*>(&halParamBuffer[0]);
-                onSuccess(halParam->vsize, valueData);
-            });
+        EFFECT_CMD_GET_PARAM, "GET_PARAM", halCmdBuffer.size(), &halCmdBuffer[0],
+        &halParamBufferSize, &halParamBuffer[0], sizeof(effect_param_t), [&] {
+            effect_param_t* halParam = reinterpret_cast<effect_param_t*>(&halParamBuffer[0]);
+            onSuccess(halParam->vsize, valueData);
+        });
 }
 
-Result Effect::getSupportedConfigsImpl(
-        uint32_t featureId,
-        uint32_t maxConfigs,
-        uint32_t configSize,
-        GetSupportedConfigsSuccessCallback onSuccess) {
-    uint32_t halCmd[2] = { featureId, maxConfigs };
+Result Effect::getSupportedConfigsImpl(uint32_t featureId, uint32_t maxConfigs, uint32_t configSize,
+                                       GetSupportedConfigsSuccessCallback onSuccess) {
+    uint32_t halCmd[2] = {featureId, maxConfigs};
     uint32_t halResultSize = 2 * sizeof(uint32_t) + maxConfigs * sizeof(configSize);
     uint8_t halResult[halResultSize];
     memset(&halResult[0], 0, halResultSize);
     return sendCommandReturningStatusAndData(
-            EFFECT_CMD_GET_FEATURE_SUPPORTED_CONFIGS, "GET_FEATURE_SUPPORTED_CONFIGS",
-            sizeof(halCmd), halCmd,
-            &halResultSize, &halResult[0],
-            2 * sizeof(uint32_t),
-            [&]{
-                uint32_t *halResult32 = reinterpret_cast<uint32_t*>(&halResult[0]);
-                uint32_t supportedConfigs = *(++halResult32); // skip status field
-                if (supportedConfigs > maxConfigs) supportedConfigs = maxConfigs;
-                onSuccess(supportedConfigs, ++halResult32);
-            });
+        EFFECT_CMD_GET_FEATURE_SUPPORTED_CONFIGS, "GET_FEATURE_SUPPORTED_CONFIGS", sizeof(halCmd),
+        halCmd, &halResultSize, &halResult[0], 2 * sizeof(uint32_t), [&] {
+            uint32_t* halResult32 = reinterpret_cast<uint32_t*>(&halResult[0]);
+            uint32_t supportedConfigs = *(++halResult32);  // skip status field
+            if (supportedConfigs > maxConfigs) supportedConfigs = maxConfigs;
+            onSuccess(supportedConfigs, ++halResult32);
+        });
 }
 
 Return<void> Effect::prepareForProcessing(prepareForProcessing_cb _hidl_cb) {
@@ -378,13 +367,8 @@ Return<void> Effect::prepareForProcessing(prepareForProcessing_cb _hidl_cb) {
     }
 
     // Create and launch the thread.
-    mProcessThread = new ProcessThread(
-            &mStopProcessThread,
-            mHandle,
-            &mHalInBufferPtr,
-            &mHalOutBufferPtr,
-            tempStatusMQ.get(),
-            mEfGroup);
+    mProcessThread = new ProcessThread(&mStopProcessThread, mHandle, &mHalInBufferPtr,
+                                       &mHalOutBufferPtr, tempStatusMQ.get(), mEfGroup);
     status = mProcessThread->run("effect", PRIORITY_URGENT_AUDIO);
     if (status != OK) {
         ALOGW("failed to start effect processing thread: %s", strerror(-status));
@@ -397,8 +381,8 @@ Return<void> Effect::prepareForProcessing(prepareForProcessing_cb _hidl_cb) {
     return Void();
 }
 
-Return<Result> Effect::setProcessBuffers(
-        const AudioBuffer& inBuffer, const AudioBuffer& outBuffer) {
+Return<Result> Effect::setProcessBuffers(const AudioBuffer& inBuffer,
+                                         const AudioBuffer& outBuffer) {
     AudioBufferManager& manager = AudioBufferManager::getInstance();
     sp<AudioBufferWrapper> tempInBuffer, tempOutBuffer;
     if (!manager.wrap(inBuffer, &tempInBuffer)) {
@@ -422,22 +406,18 @@ Result Effect::sendCommand(int commandCode, const char* commandName) {
     return sendCommand(commandCode, commandName, 0, NULL);
 }
 
-Result Effect::sendCommand(
-        int commandCode, const char* commandName, uint32_t size, void* data) {
+Result Effect::sendCommand(int commandCode, const char* commandName, uint32_t size, void* data) {
     status_t status = (*mHandle)->command(mHandle, commandCode, size, data, 0, NULL);
     return analyzeCommandStatus(commandName, sContextCallToCommand, status);
 }
 
-Result Effect::sendCommandReturningData(
-        int commandCode, const char* commandName,
-        uint32_t* replySize, void* replyData) {
+Result Effect::sendCommandReturningData(int commandCode, const char* commandName,
+                                        uint32_t* replySize, void* replyData) {
     return sendCommandReturningData(commandCode, commandName, 0, NULL, replySize, replyData);
 }
 
-Result Effect::sendCommandReturningData(
-        int commandCode, const char* commandName,
-        uint32_t size, void* data,
-        uint32_t* replySize, void* replyData) {
+Result Effect::sendCommandReturningData(int commandCode, const char* commandName, uint32_t size,
+                                        void* data, uint32_t* replySize, void* replyData) {
     uint32_t expectedReplySize = *replySize;
     status_t status = (*mHandle)->command(mHandle, commandCode, size, data, replySize, replyData);
     if (status == OK && *replySize != expectedReplySize) {
@@ -450,22 +430,19 @@ Result Effect::sendCommandReturningStatus(int commandCode, const char* commandNa
     return sendCommandReturningStatus(commandCode, commandName, 0, NULL);
 }
 
-Result Effect::sendCommandReturningStatus(
-        int commandCode, const char* commandName, uint32_t size, void* data) {
+Result Effect::sendCommandReturningStatus(int commandCode, const char* commandName, uint32_t size,
+                                          void* data) {
     uint32_t replyCmdStatus;
     uint32_t replySize = sizeof(uint32_t);
-    return sendCommandReturningStatusAndData(
-            commandCode, commandName, size, data, &replySize, &replyCmdStatus, replySize, []{});
+    return sendCommandReturningStatusAndData(commandCode, commandName, size, data, &replySize,
+                                             &replyCmdStatus, replySize, [] {});
 }
 
-Result Effect::sendCommandReturningStatusAndData(
-        int commandCode, const char* commandName,
-        uint32_t size, void* data,
-        uint32_t* replySize, void* replyData,
-        uint32_t minReplySize,
-        CommandSuccessCallback onSuccess) {
-    status_t status =
-            (*mHandle)->command(mHandle, commandCode, size, data, replySize, replyData);
+Result Effect::sendCommandReturningStatusAndData(int commandCode, const char* commandName,
+                                                 uint32_t size, void* data, uint32_t* replySize,
+                                                 void* replyData, uint32_t minReplySize,
+                                                 CommandSuccessCallback onSuccess) {
+    status_t status = (*mHandle)->command(mHandle, commandCode, size, data, replySize, replyData);
     Result retval;
     if (status == OK && minReplySize >= sizeof(uint32_t) && *replySize >= minReplySize) {
         uint32_t commandStatus = *reinterpret_cast<uint32_t*>(replyData);
@@ -479,11 +456,9 @@ Result Effect::sendCommandReturningStatusAndData(
     return retval;
 }
 
-Result Effect::setConfigImpl(
-        int commandCode, const char* commandName,
-        const EffectConfig& config,
-        const sp<IEffectBufferProviderCallback>& inputBufferProvider,
-        const sp<IEffectBufferProviderCallback>& outputBufferProvider) {
+Result Effect::setConfigImpl(int commandCode, const char* commandName, const EffectConfig& config,
+                             const sp<IEffectBufferProviderCallback>& inputBufferProvider,
+                             const sp<IEffectBufferProviderCallback>& outputBufferProvider) {
     effect_config_t halConfig;
     effectConfigToHal(config, &halConfig);
     if (inputBufferProvider != 0) {
@@ -492,59 +467,55 @@ Result Effect::setConfigImpl(
     if (outputBufferProvider != 0) {
         LOG_FATAL("Using output buffer provider is not supported");
     }
-    return sendCommandReturningStatus(
-            commandCode, commandName, sizeof(effect_config_t), &halConfig);
+    return sendCommandReturningStatus(commandCode, commandName, sizeof(effect_config_t),
+                                      &halConfig);
 }
 
-
-Result Effect::setParameterImpl(
-        uint32_t paramSize, const void* paramData, uint32_t valueSize, const void* valueData) {
-    std::vector<uint8_t> halParamBuffer = parameterToHal(
-            paramSize, paramData, valueSize, &valueData);
-    return sendCommandReturningStatus(
-            EFFECT_CMD_SET_PARAM, "SET_PARAM", halParamBuffer.size(), &halParamBuffer[0]);
+Result Effect::setParameterImpl(uint32_t paramSize, const void* paramData, uint32_t valueSize,
+                                const void* valueData) {
+    std::vector<uint8_t> halParamBuffer =
+        parameterToHal(paramSize, paramData, valueSize, &valueData);
+    return sendCommandReturningStatus(EFFECT_CMD_SET_PARAM, "SET_PARAM", halParamBuffer.size(),
+                                      &halParamBuffer[0]);
 }
 
 // Methods from ::android::hardware::audio::effect::V2_0::IEffect follow.
-Return<Result> Effect::init()  {
+Return<Result> Effect::init() {
     return sendCommandReturningStatus(EFFECT_CMD_INIT, "INIT");
 }
 
-Return<Result> Effect::setConfig(
-        const EffectConfig& config,
-        const sp<IEffectBufferProviderCallback>& inputBufferProvider,
-        const sp<IEffectBufferProviderCallback>& outputBufferProvider)  {
-    return setConfigImpl(
-            EFFECT_CMD_SET_CONFIG, "SET_CONFIG", config, inputBufferProvider, outputBufferProvider);
+Return<Result> Effect::setConfig(const EffectConfig& config,
+                                 const sp<IEffectBufferProviderCallback>& inputBufferProvider,
+                                 const sp<IEffectBufferProviderCallback>& outputBufferProvider) {
+    return setConfigImpl(EFFECT_CMD_SET_CONFIG, "SET_CONFIG", config, inputBufferProvider,
+                         outputBufferProvider);
 }
 
-Return<Result> Effect::reset()  {
+Return<Result> Effect::reset() {
     return sendCommand(EFFECT_CMD_RESET, "RESET");
 }
 
-Return<Result> Effect::enable()  {
+Return<Result> Effect::enable() {
     return sendCommandReturningStatus(EFFECT_CMD_ENABLE, "ENABLE");
 }
 
-Return<Result> Effect::disable()  {
+Return<Result> Effect::disable() {
     return sendCommandReturningStatus(EFFECT_CMD_DISABLE, "DISABLE");
 }
 
-Return<Result> Effect::setDevice(AudioDevice device)  {
+Return<Result> Effect::setDevice(AudioDevice device) {
     uint32_t halDevice = static_cast<uint32_t>(device);
     return sendCommand(EFFECT_CMD_SET_DEVICE, "SET_DEVICE", sizeof(uint32_t), &halDevice);
 }
 
-Return<void> Effect::setAndGetVolume(
-        const hidl_vec<uint32_t>& volumes, setAndGetVolume_cb _hidl_cb)  {
+Return<void> Effect::setAndGetVolume(const hidl_vec<uint32_t>& volumes,
+                                     setAndGetVolume_cb _hidl_cb) {
     uint32_t halDataSize;
     std::unique_ptr<uint8_t[]> halData = hidlVecToHal(volumes, &halDataSize);
     uint32_t halResultSize = halDataSize;
     uint32_t halResult[volumes.size()];
-    Result retval = sendCommandReturningData(
-            EFFECT_CMD_SET_VOLUME, "SET_VOLUME",
-            halDataSize, &halData[0],
-            &halResultSize, halResult);
+    Result retval = sendCommandReturningData(EFFECT_CMD_SET_VOLUME, "SET_VOLUME", halDataSize,
+                                             &halData[0], &halResultSize, halResult);
     hidl_vec<uint32_t> result;
     if (retval == Result::OK) {
         result.setToExternal(&halResult[0], halResultSize);
@@ -553,99 +524,91 @@ Return<void> Effect::setAndGetVolume(
     return Void();
 }
 
-Return<Result> Effect::volumeChangeNotification(const hidl_vec<uint32_t>& volumes)  {
+Return<Result> Effect::volumeChangeNotification(const hidl_vec<uint32_t>& volumes) {
     uint32_t halDataSize;
     std::unique_ptr<uint8_t[]> halData = hidlVecToHal(volumes, &halDataSize);
-    return sendCommand(
-            EFFECT_CMD_SET_VOLUME, "SET_VOLUME",
-            halDataSize, &halData[0]);
+    return sendCommand(EFFECT_CMD_SET_VOLUME, "SET_VOLUME", halDataSize, &halData[0]);
 }
 
-Return<Result> Effect::setAudioMode(AudioMode mode)  {
+Return<Result> Effect::setAudioMode(AudioMode mode) {
     uint32_t halMode = static_cast<uint32_t>(mode);
-    return sendCommand(
-            EFFECT_CMD_SET_AUDIO_MODE, "SET_AUDIO_MODE", sizeof(uint32_t), &halMode);
+    return sendCommand(EFFECT_CMD_SET_AUDIO_MODE, "SET_AUDIO_MODE", sizeof(uint32_t), &halMode);
 }
 
 Return<Result> Effect::setConfigReverse(
-        const EffectConfig& config,
-        const sp<IEffectBufferProviderCallback>& inputBufferProvider,
-        const sp<IEffectBufferProviderCallback>& outputBufferProvider)  {
-    return setConfigImpl(EFFECT_CMD_SET_CONFIG_REVERSE, "SET_CONFIG_REVERSE",
-            config, inputBufferProvider, outputBufferProvider);
+    const EffectConfig& config, const sp<IEffectBufferProviderCallback>& inputBufferProvider,
+    const sp<IEffectBufferProviderCallback>& outputBufferProvider) {
+    return setConfigImpl(EFFECT_CMD_SET_CONFIG_REVERSE, "SET_CONFIG_REVERSE", config,
+                         inputBufferProvider, outputBufferProvider);
 }
 
-Return<Result> Effect::setInputDevice(AudioDevice device)  {
+Return<Result> Effect::setInputDevice(AudioDevice device) {
     uint32_t halDevice = static_cast<uint32_t>(device);
-    return sendCommand(
-            EFFECT_CMD_SET_INPUT_DEVICE, "SET_INPUT_DEVICE", sizeof(uint32_t), &halDevice);
+    return sendCommand(EFFECT_CMD_SET_INPUT_DEVICE, "SET_INPUT_DEVICE", sizeof(uint32_t),
+                       &halDevice);
 }
 
-Return<void> Effect::getConfig(getConfig_cb _hidl_cb)  {
+Return<void> Effect::getConfig(getConfig_cb _hidl_cb) {
     getConfigImpl(EFFECT_CMD_GET_CONFIG, "GET_CONFIG", _hidl_cb);
     return Void();
 }
 
-Return<void> Effect::getConfigReverse(getConfigReverse_cb _hidl_cb)  {
+Return<void> Effect::getConfigReverse(getConfigReverse_cb _hidl_cb) {
     getConfigImpl(EFFECT_CMD_GET_CONFIG_REVERSE, "GET_CONFIG_REVERSE", _hidl_cb);
     return Void();
 }
 
-Return<void> Effect::getSupportedAuxChannelsConfigs(
-        uint32_t maxConfigs, getSupportedAuxChannelsConfigs_cb _hidl_cb)  {
+Return<void> Effect::getSupportedAuxChannelsConfigs(uint32_t maxConfigs,
+                                                    getSupportedAuxChannelsConfigs_cb _hidl_cb) {
     hidl_vec<EffectAuxChannelsConfig> result;
     Result retval = getSupportedConfigsImpl(
-            EFFECT_FEATURE_AUX_CHANNELS,
-            maxConfigs,
-            sizeof(channel_config_t),
-            [&] (uint32_t supportedConfigs, void* configsData) {
-                result.resize(supportedConfigs);
-                channel_config_t *config = reinterpret_cast<channel_config_t*>(configsData);
-                for (size_t i = 0; i < result.size(); ++i) {
-                    effectAuxChannelsConfigFromHal(*config++, &result[i]);
-                }
-            });
+        EFFECT_FEATURE_AUX_CHANNELS, maxConfigs, sizeof(channel_config_t),
+        [&](uint32_t supportedConfigs, void* configsData) {
+            result.resize(supportedConfigs);
+            channel_config_t* config = reinterpret_cast<channel_config_t*>(configsData);
+            for (size_t i = 0; i < result.size(); ++i) {
+                effectAuxChannelsConfigFromHal(*config++, &result[i]);
+            }
+        });
     _hidl_cb(retval, result);
     return Void();
 }
 
-Return<void> Effect::getAuxChannelsConfig(getAuxChannelsConfig_cb _hidl_cb)  {
+Return<void> Effect::getAuxChannelsConfig(getAuxChannelsConfig_cb _hidl_cb) {
     uint32_t halResult[alignedSizeIn<uint32_t>(sizeof(uint32_t) + sizeof(channel_config_t))];
     memset(halResult, 0, sizeof(halResult));
     EffectAuxChannelsConfig result;
     Result retval = getCurrentConfigImpl(
-            EFFECT_FEATURE_AUX_CHANNELS,
-            sizeof(channel_config_t),
-            [&] (void* configData) {
-                effectAuxChannelsConfigFromHal(
-                        *reinterpret_cast<channel_config_t*>(configData), &result);
-            });
+        EFFECT_FEATURE_AUX_CHANNELS, sizeof(channel_config_t), [&](void* configData) {
+            effectAuxChannelsConfigFromHal(*reinterpret_cast<channel_config_t*>(configData),
+                                           &result);
+        });
     _hidl_cb(retval, result);
     return Void();
 }
 
-Return<Result> Effect::setAuxChannelsConfig(const EffectAuxChannelsConfig& config)  {
+Return<Result> Effect::setAuxChannelsConfig(const EffectAuxChannelsConfig& config) {
     uint32_t halCmd[alignedSizeIn<uint32_t>(sizeof(uint32_t) + sizeof(channel_config_t))];
     halCmd[0] = EFFECT_FEATURE_AUX_CHANNELS;
     effectAuxChannelsConfigToHal(config, reinterpret_cast<channel_config_t*>(&halCmd[1]));
     return sendCommandReturningStatus(EFFECT_CMD_SET_FEATURE_CONFIG,
-            "SET_FEATURE_CONFIG AUX_CHANNELS", sizeof(halCmd), halCmd);
+                                      "SET_FEATURE_CONFIG AUX_CHANNELS", sizeof(halCmd), halCmd);
 }
 
-Return<Result> Effect::setAudioSource(AudioSource source)  {
+Return<Result> Effect::setAudioSource(AudioSource source) {
     uint32_t halSource = static_cast<uint32_t>(source);
-    return sendCommand(
-            EFFECT_CMD_SET_AUDIO_SOURCE, "SET_AUDIO_SOURCE", sizeof(uint32_t), &halSource);
+    return sendCommand(EFFECT_CMD_SET_AUDIO_SOURCE, "SET_AUDIO_SOURCE", sizeof(uint32_t),
+                       &halSource);
 }
 
-Return<Result> Effect::offload(const EffectOffloadParameter& param)  {
+Return<Result> Effect::offload(const EffectOffloadParameter& param) {
     effect_offload_param_t halParam;
     effectOffloadParamToHal(param, &halParam);
-    return sendCommandReturningStatus(
-            EFFECT_CMD_OFFLOAD, "OFFLOAD", sizeof(effect_offload_param_t), &halParam);
+    return sendCommandReturningStatus(EFFECT_CMD_OFFLOAD, "OFFLOAD", sizeof(effect_offload_param_t),
+                                      &halParam);
 }
 
-Return<void> Effect::getDescriptor(getDescriptor_cb _hidl_cb)  {
+Return<void> Effect::getDescriptor(getDescriptor_cb _hidl_cb) {
     effect_descriptor_t halDescriptor;
     memset(&halDescriptor, 0, sizeof(effect_descriptor_t));
     status_t status = (*mHandle)->get_descriptor(mHandle, &halDescriptor);
@@ -657,11 +620,8 @@ Return<void> Effect::getDescriptor(getDescriptor_cb _hidl_cb)  {
     return Void();
 }
 
-Return<void> Effect::command(
-        uint32_t commandId,
-        const hidl_vec<uint8_t>& data,
-        uint32_t resultMaxSize,
-        command_cb _hidl_cb)  {
+Return<void> Effect::command(uint32_t commandId, const hidl_vec<uint8_t>& data,
+                             uint32_t resultMaxSize, command_cb _hidl_cb) {
     uint32_t halDataSize;
     std::unique_ptr<uint8_t[]> halData = hidlVecToHal(data, &halDataSize);
     uint32_t halResultSize = resultMaxSize;
@@ -670,8 +630,8 @@ Return<void> Effect::command(
 
     void* dataPtr = halDataSize > 0 ? &halData[0] : NULL;
     void* resultPtr = halResultSize > 0 ? &halResult[0] : NULL;
-    status_t status = (*mHandle)->command(
-            mHandle, commandId, halDataSize, dataPtr, &halResultSize, resultPtr);
+    status_t status =
+        (*mHandle)->command(mHandle, commandId, halDataSize, dataPtr, &halResultSize, resultPtr);
     hidl_vec<uint8_t> result;
     if (status == OK && resultPtr != NULL) {
         result.setToExternal(&halResult[0], halResultSize);
@@ -680,68 +640,58 @@ Return<void> Effect::command(
     return Void();
 }
 
-Return<Result> Effect::setParameter(
-        const hidl_vec<uint8_t>& parameter, const hidl_vec<uint8_t>& value)  {
+Return<Result> Effect::setParameter(const hidl_vec<uint8_t>& parameter,
+                                    const hidl_vec<uint8_t>& value) {
     return setParameterImpl(parameter.size(), &parameter[0], value.size(), &value[0]);
 }
 
-Return<void> Effect::getParameter(
-        const hidl_vec<uint8_t>& parameter, uint32_t valueMaxSize, getParameter_cb _hidl_cb)  {
+Return<void> Effect::getParameter(const hidl_vec<uint8_t>& parameter, uint32_t valueMaxSize,
+                                  getParameter_cb _hidl_cb) {
     hidl_vec<uint8_t> value;
     Result retval = getParameterImpl(
-            parameter.size(),
-            &parameter[0],
-            valueMaxSize,
-            [&] (uint32_t valueSize, const void* valueData) {
-                value.setToExternal(
-                        reinterpret_cast<uint8_t*>(const_cast<void*>(valueData)), valueSize);
-            });
+        parameter.size(), &parameter[0], valueMaxSize,
+        [&](uint32_t valueSize, const void* valueData) {
+            value.setToExternal(reinterpret_cast<uint8_t*>(const_cast<void*>(valueData)),
+                                valueSize);
+        });
     _hidl_cb(retval, value);
     return Void();
 }
 
-Return<void> Effect::getSupportedConfigsForFeature(
-        uint32_t featureId,
-        uint32_t maxConfigs,
-        uint32_t configSize,
-        getSupportedConfigsForFeature_cb _hidl_cb)  {
+Return<void> Effect::getSupportedConfigsForFeature(uint32_t featureId, uint32_t maxConfigs,
+                                                   uint32_t configSize,
+                                                   getSupportedConfigsForFeature_cb _hidl_cb) {
     uint32_t configCount = 0;
     hidl_vec<uint8_t> result;
-    Result retval = getSupportedConfigsImpl(
-            featureId,
-            maxConfigs,
-            configSize,
-            [&] (uint32_t supportedConfigs, void* configsData) {
-                configCount = supportedConfigs;
-                result.resize(configCount * configSize);
-                memcpy(&result[0], configsData, result.size());
-            });
+    Result retval = getSupportedConfigsImpl(featureId, maxConfigs, configSize,
+                                            [&](uint32_t supportedConfigs, void* configsData) {
+                                                configCount = supportedConfigs;
+                                                result.resize(configCount * configSize);
+                                                memcpy(&result[0], configsData, result.size());
+                                            });
     _hidl_cb(retval, configCount, result);
     return Void();
 }
 
-Return<void> Effect::getCurrentConfigForFeature(
-        uint32_t featureId, uint32_t configSize, getCurrentConfigForFeature_cb _hidl_cb)  {
+Return<void> Effect::getCurrentConfigForFeature(uint32_t featureId, uint32_t configSize,
+                                                getCurrentConfigForFeature_cb _hidl_cb) {
     hidl_vec<uint8_t> result;
-    Result retval = getCurrentConfigImpl(
-            featureId,
-            configSize,
-            [&] (void* configData) {
-                result.resize(configSize);
-                memcpy(&result[0], configData, result.size());
-            });
+    Result retval = getCurrentConfigImpl(featureId, configSize, [&](void* configData) {
+        result.resize(configSize);
+        memcpy(&result[0], configData, result.size());
+    });
     _hidl_cb(retval, result);
     return Void();
 }
 
-Return<Result> Effect::setCurrentConfigForFeature(
-        uint32_t featureId, const hidl_vec<uint8_t>& configData)  {
+Return<Result> Effect::setCurrentConfigForFeature(uint32_t featureId,
+                                                  const hidl_vec<uint8_t>& configData) {
     uint32_t halCmd[alignedSizeIn<uint32_t>(sizeof(uint32_t) + configData.size())];
     memset(halCmd, 0, sizeof(halCmd));
     halCmd[0] = featureId;
     memcpy(&halCmd[1], &configData[0], configData.size());
-    return sendCommandReturningStatus(
-            EFFECT_CMD_SET_FEATURE_CONFIG, "SET_FEATURE_CONFIG", sizeof(halCmd), halCmd);
+    return sendCommandReturningStatus(EFFECT_CMD_SET_FEATURE_CONFIG, "SET_FEATURE_CONFIG",
+                                      sizeof(halCmd), halCmd);
 }
 
 Return<Result> Effect::close() {
@@ -756,7 +706,7 @@ Return<Result> Effect::close() {
     return Result::OK;
 }
 
-} // namespace implementation
+}  // namespace implementation
 }  // namespace V2_0
 }  // namespace effect
 }  // namespace audio

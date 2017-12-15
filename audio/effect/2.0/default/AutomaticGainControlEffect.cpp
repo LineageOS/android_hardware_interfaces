@@ -27,22 +27,19 @@ namespace V2_0 {
 namespace implementation {
 
 AutomaticGainControlEffect::AutomaticGainControlEffect(effect_handle_t handle)
-        : mEffect(new Effect(handle)) {
-}
+    : mEffect(new Effect(handle)) {}
 
 AutomaticGainControlEffect::~AutomaticGainControlEffect() {}
 
 void AutomaticGainControlEffect::propertiesFromHal(
-        const t_agc_settings& halProperties,
-        IAutomaticGainControlEffect::AllProperties* properties) {
+    const t_agc_settings& halProperties, IAutomaticGainControlEffect::AllProperties* properties) {
     properties->targetLevelMb = halProperties.targetLevel;
     properties->compGainMb = halProperties.compGain;
     properties->limiterEnabled = halProperties.limiterEnabled;
 }
 
 void AutomaticGainControlEffect::propertiesToHal(
-        const IAutomaticGainControlEffect::AllProperties& properties,
-        t_agc_settings* halProperties) {
+    const IAutomaticGainControlEffect::AllProperties& properties, t_agc_settings* halProperties) {
     halProperties->targetLevel = properties.targetLevelMb;
     halProperties->compGain = properties.compGainMb;
     halProperties->limiterEnabled = properties.limiterEnabled;
@@ -54,9 +51,8 @@ Return<Result> AutomaticGainControlEffect::init() {
 }
 
 Return<Result> AutomaticGainControlEffect::setConfig(
-        const EffectConfig& config,
-        const sp<IEffectBufferProviderCallback>& inputBufferProvider,
-        const sp<IEffectBufferProviderCallback>& outputBufferProvider) {
+    const EffectConfig& config, const sp<IEffectBufferProviderCallback>& inputBufferProvider,
+    const sp<IEffectBufferProviderCallback>& outputBufferProvider) {
     return mEffect->setConfig(config, inputBufferProvider, outputBufferProvider);
 }
 
@@ -76,13 +72,13 @@ Return<Result> AutomaticGainControlEffect::setDevice(AudioDevice device) {
     return mEffect->setDevice(device);
 }
 
-Return<void> AutomaticGainControlEffect::setAndGetVolume(
-        const hidl_vec<uint32_t>& volumes, setAndGetVolume_cb _hidl_cb) {
+Return<void> AutomaticGainControlEffect::setAndGetVolume(const hidl_vec<uint32_t>& volumes,
+                                                         setAndGetVolume_cb _hidl_cb) {
     return mEffect->setAndGetVolume(volumes, _hidl_cb);
 }
 
 Return<Result> AutomaticGainControlEffect::volumeChangeNotification(
-        const hidl_vec<uint32_t>& volumes) {
+    const hidl_vec<uint32_t>& volumes) {
     return mEffect->volumeChangeNotification(volumes);
 }
 
@@ -91,9 +87,8 @@ Return<Result> AutomaticGainControlEffect::setAudioMode(AudioMode mode) {
 }
 
 Return<Result> AutomaticGainControlEffect::setConfigReverse(
-        const EffectConfig& config,
-        const sp<IEffectBufferProviderCallback>& inputBufferProvider,
-        const sp<IEffectBufferProviderCallback>& outputBufferProvider) {
+    const EffectConfig& config, const sp<IEffectBufferProviderCallback>& inputBufferProvider,
+    const sp<IEffectBufferProviderCallback>& outputBufferProvider) {
     return mEffect->setConfigReverse(config, inputBufferProvider, outputBufferProvider);
 }
 
@@ -110,7 +105,7 @@ Return<void> AutomaticGainControlEffect::getConfigReverse(getConfigReverse_cb _h
 }
 
 Return<void> AutomaticGainControlEffect::getSupportedAuxChannelsConfigs(
-        uint32_t maxConfigs, getSupportedAuxChannelsConfigs_cb _hidl_cb) {
+    uint32_t maxConfigs, getSupportedAuxChannelsConfigs_cb _hidl_cb) {
     return mEffect->getSupportedAuxChannelsConfigs(maxConfigs, _hidl_cb);
 }
 
@@ -119,7 +114,7 @@ Return<void> AutomaticGainControlEffect::getAuxChannelsConfig(getAuxChannelsConf
 }
 
 Return<Result> AutomaticGainControlEffect::setAuxChannelsConfig(
-        const EffectAuxChannelsConfig& config) {
+    const EffectAuxChannelsConfig& config) {
     return mEffect->setAuxChannelsConfig(config);
 }
 
@@ -135,53 +130,44 @@ Return<void> AutomaticGainControlEffect::getDescriptor(getDescriptor_cb _hidl_cb
     return mEffect->getDescriptor(_hidl_cb);
 }
 
-Return<void> AutomaticGainControlEffect::prepareForProcessing(
-        prepareForProcessing_cb _hidl_cb) {
+Return<void> AutomaticGainControlEffect::prepareForProcessing(prepareForProcessing_cb _hidl_cb) {
     return mEffect->prepareForProcessing(_hidl_cb);
 }
 
-Return<Result> AutomaticGainControlEffect::setProcessBuffers(
-        const AudioBuffer& inBuffer, const AudioBuffer& outBuffer) {
+Return<Result> AutomaticGainControlEffect::setProcessBuffers(const AudioBuffer& inBuffer,
+                                                             const AudioBuffer& outBuffer) {
     return mEffect->setProcessBuffers(inBuffer, outBuffer);
 }
 
-Return<void> AutomaticGainControlEffect::command(
-        uint32_t commandId,
-        const hidl_vec<uint8_t>& data,
-        uint32_t resultMaxSize,
-        command_cb _hidl_cb) {
+Return<void> AutomaticGainControlEffect::command(uint32_t commandId, const hidl_vec<uint8_t>& data,
+                                                 uint32_t resultMaxSize, command_cb _hidl_cb) {
     return mEffect->command(commandId, data, resultMaxSize, _hidl_cb);
 }
 
-Return<Result> AutomaticGainControlEffect::setParameter(
-        const hidl_vec<uint8_t>& parameter, const hidl_vec<uint8_t>& value) {
+Return<Result> AutomaticGainControlEffect::setParameter(const hidl_vec<uint8_t>& parameter,
+                                                        const hidl_vec<uint8_t>& value) {
     return mEffect->setParameter(parameter, value);
 }
 
-Return<void> AutomaticGainControlEffect::getParameter(
-        const hidl_vec<uint8_t>& parameter,
-        uint32_t valueMaxSize,
-        getParameter_cb _hidl_cb) {
+Return<void> AutomaticGainControlEffect::getParameter(const hidl_vec<uint8_t>& parameter,
+                                                      uint32_t valueMaxSize,
+                                                      getParameter_cb _hidl_cb) {
     return mEffect->getParameter(parameter, valueMaxSize, _hidl_cb);
 }
 
 Return<void> AutomaticGainControlEffect::getSupportedConfigsForFeature(
-        uint32_t featureId,
-        uint32_t maxConfigs,
-        uint32_t configSize,
-        getSupportedConfigsForFeature_cb _hidl_cb) {
+    uint32_t featureId, uint32_t maxConfigs, uint32_t configSize,
+    getSupportedConfigsForFeature_cb _hidl_cb) {
     return mEffect->getSupportedConfigsForFeature(featureId, maxConfigs, configSize, _hidl_cb);
 }
 
 Return<void> AutomaticGainControlEffect::getCurrentConfigForFeature(
-        uint32_t featureId,
-        uint32_t configSize,
-        getCurrentConfigForFeature_cb _hidl_cb) {
+    uint32_t featureId, uint32_t configSize, getCurrentConfigForFeature_cb _hidl_cb) {
     return mEffect->getCurrentConfigForFeature(featureId, configSize, _hidl_cb);
 }
 
 Return<Result> AutomaticGainControlEffect::setCurrentConfigForFeature(
-        uint32_t featureId, const hidl_vec<uint8_t>& configData) {
+    uint32_t featureId, const hidl_vec<uint8_t>& configData) {
     return mEffect->setCurrentConfigForFeature(featureId, configData);
 }
 
@@ -190,37 +176,38 @@ Return<Result> AutomaticGainControlEffect::close() {
 }
 
 // Methods from ::android::hardware::audio::effect::V2_0::IAutomaticGainControlEffect follow.
-Return<Result> AutomaticGainControlEffect::setTargetLevel(int16_t targetLevelMb)  {
+Return<Result> AutomaticGainControlEffect::setTargetLevel(int16_t targetLevelMb) {
     return mEffect->setParam(AGC_PARAM_TARGET_LEVEL, targetLevelMb);
 }
 
-Return<void> AutomaticGainControlEffect::getTargetLevel(getTargetLevel_cb _hidl_cb)  {
+Return<void> AutomaticGainControlEffect::getTargetLevel(getTargetLevel_cb _hidl_cb) {
     return mEffect->getIntegerParam(AGC_PARAM_TARGET_LEVEL, _hidl_cb);
 }
 
-Return<Result> AutomaticGainControlEffect::setCompGain(int16_t compGainMb)  {
+Return<Result> AutomaticGainControlEffect::setCompGain(int16_t compGainMb) {
     return mEffect->setParam(AGC_PARAM_COMP_GAIN, compGainMb);
 }
 
-Return<void> AutomaticGainControlEffect::getCompGain(getCompGain_cb _hidl_cb)  {
+Return<void> AutomaticGainControlEffect::getCompGain(getCompGain_cb _hidl_cb) {
     return mEffect->getIntegerParam(AGC_PARAM_COMP_GAIN, _hidl_cb);
 }
 
-Return<Result> AutomaticGainControlEffect::setLimiterEnabled(bool enabled)  {
+Return<Result> AutomaticGainControlEffect::setLimiterEnabled(bool enabled) {
     return mEffect->setParam(AGC_PARAM_LIMITER_ENA, enabled);
 }
 
-Return<void> AutomaticGainControlEffect::isLimiterEnabled(isLimiterEnabled_cb _hidl_cb)  {
+Return<void> AutomaticGainControlEffect::isLimiterEnabled(isLimiterEnabled_cb _hidl_cb) {
     return mEffect->getIntegerParam(AGC_PARAM_LIMITER_ENA, _hidl_cb);
 }
 
-Return<Result> AutomaticGainControlEffect::setAllProperties(const IAutomaticGainControlEffect::AllProperties& properties)  {
+Return<Result> AutomaticGainControlEffect::setAllProperties(
+    const IAutomaticGainControlEffect::AllProperties& properties) {
     t_agc_settings halProperties;
     propertiesToHal(properties, &halProperties);
     return mEffect->setParam(AGC_PARAM_PROPERTIES, halProperties);
 }
 
-Return<void> AutomaticGainControlEffect::getAllProperties(getAllProperties_cb _hidl_cb)  {
+Return<void> AutomaticGainControlEffect::getAllProperties(getAllProperties_cb _hidl_cb) {
     t_agc_settings halProperties;
     Result retval = mEffect->getParam(AGC_PARAM_PROPERTIES, halProperties);
     AllProperties properties;
@@ -229,7 +216,7 @@ Return<void> AutomaticGainControlEffect::getAllProperties(getAllProperties_cb _h
     return Void();
 }
 
-} // namespace implementation
+}  // namespace implementation
 }  // namespace V2_0
 }  // namespace effect
 }  // namespace audio
