@@ -496,7 +496,7 @@ interface IGnssMeasurementCallback {
          * to L1 must be filled, and in the other all of the values related to
          * L5 must be filled.
          *
-         * If the data is available, gnssClockFlags must contain
+         * If the data is available, gnssMeasurementFlags must contain
          * HAS_CARRIER_FREQUENCY.
          */
         float carrierFrequencyHz;
@@ -508,7 +508,7 @@ interface IGnssMeasurementCallback {
          * resets in the accumulation of this value can be inferred from the
          * accumulatedDeltaRangeState flags.
          *
-         * If the data is available, gnssClockFlags must contain
+         * If the data is available, gnssMeasurementFlags must contain
          * HAS_CARRIER_CYCLES.
          */
         int64_t carrierCycles;
@@ -521,14 +521,14 @@ interface IGnssMeasurementCallback {
          * The reference frequency is given by the field 'carrierFrequencyHz'.
          * The value contains the 'carrier-phase uncertainty' in it.
          *
-         * If the data is available, gnssClockFlags must contain
+         * If the data is available, gnssMeasurementFlags must contain
          * HAS_CARRIER_PHASE.
          */
         double carrierPhase;
 
         /**
          * 1-Sigma uncertainty of the carrier-phase.
-         * If the data is available, gnssClockFlags must contain
+         * If the data is available, gnssMeasurementFlags must contain
          * HAS_CARRIER_PHASE_UNCERTAINTY.
          */
         double carrierPhaseUncertainty;

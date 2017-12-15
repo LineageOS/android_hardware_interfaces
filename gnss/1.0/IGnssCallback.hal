@@ -76,9 +76,9 @@ interface IGnssCallback {
 
     struct GnssSvInfo {
         /**
-         * Pseudo-random number for the SV, or FCN/OSN number for Glonass. The
-         * distinction is made by looking at constellation field. Values must be
-         * in the range of:
+         * Pseudo-random or satellite ID number for the satellite, a.k.a. Space Vehicle (SV), or
+         * FCN/OSN number for Glonass. The distinction is made by looking at constellation field.
+         * Values must be in the range of:
          *
          * - GNSS:    1-32
          * - SBAS:    120-151, 183-192
