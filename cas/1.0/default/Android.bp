@@ -12,12 +12,6 @@ cc_binary {
       "TypeConvert.cpp",
     ],
 
-    product_variables: {
-        treble: {
-            cflags: ["-DUSE_VNDBINDER"],
-        },
-    },
-
     compile_multilib: "32",
     init_rc: ["android.hardware.cas@1.0-service.rc"],
 
