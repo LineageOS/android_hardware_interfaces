@@ -163,9 +163,9 @@ struct Libxml2Global {
            << "\n                 Which is: " << ::testing::PrintToString(xmlFileLocations);
 }
 
-}  // utility
-}  // test
-}  // common
-}  // audio
-}  // test
-}  // utility
+}  // namespace utility
+}  // namespace test
+}  // namespace common
+}  // namespace audio
+}  // namespace hardware
+}  // namespace android

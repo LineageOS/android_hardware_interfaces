@@ -27,14 +27,14 @@ namespace android {
 
 // This class needs to be in 'android' ns because Singleton macros require that.
 class EffectMap : public Singleton<EffectMap> {
-  public:
+   public:
     static const uint64_t INVALID_ID;
 
     uint64_t add(effect_handle_t handle);
     effect_handle_t get(const uint64_t& id);
     void remove(effect_handle_t handle);
 
-  private:
+   private:
     static uint64_t makeUniqueId();
 
     std::mutex mLock;

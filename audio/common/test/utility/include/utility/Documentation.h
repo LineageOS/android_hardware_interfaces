@@ -60,11 +60,11 @@ void note(const std::string& note) {
 }
 }  // namespace doc
 
-}  // utility
-}  // test
-}  // common
-}  // audio
-}  // test
-}  // utility
+}  // namespace utility
+}  // namespace test
+}  // namespace common
+}  // namespace audio
+}  // namespace hardware
+}  // namespace android
 
 #endif  // ANDROID_HARDWARE_AUDIO_COMMON_TEST_UTILITY_ENVIRONMENT_TEARDOWN

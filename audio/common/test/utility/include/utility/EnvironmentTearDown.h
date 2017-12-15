@@ -48,11 +48,11 @@ class Environment : public ::testing::Environment {
     std::list<TearDownFunc> tearDowns;
 };
 
-}  // utility
-}  // test
-}  // common
-}  // audio
-}  // test
-}  // utility
+}  // namespace utility
+}  // namespace test
+}  // namespace common
+}  // namespace audio
+}  // namespace hardware
+}  // namespace android
 
 #endif  // ANDROID_HARDWARE_AUDIO_COMMON_TEST_UTILITY_ENVIRONMENT_TEARDOWN_H

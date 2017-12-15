@@ -96,7 +96,7 @@ inline ::testing::AssertionResult assertOk(const char* expr, Result result) {
 inline ::testing::AssertionResult assertOk(const char* expr, const Return<Result>& ret) {
     return continueIfIsOk(expr, ret, [&] { return assertOk(expr, Result{ret}); });
 }
-}
+}  // namespace detail
 
 #define ASSERT_IS_OK(ret) ASSERT_PRED_FORMAT1(detail::assertIsOk, ret)
 #define EXPECT_IS_OK(ret) EXPECT_PRED_FORMAT1(detail::assertIsOk, ret)
@@ -108,11 +108,11 @@ inline ::testing::AssertionResult assertOk(const char* expr, const Return<Result
 #define ASSERT_RESULT(expected, ret) ASSERT_PRED_FORMAT2(detail::assertResult, expected, ret)
 #define EXPECT_RESULT(expected, ret) EXPECT_PRED_FORMAT2(detail::assertResult, expected, ret)
 
-}  // utility
-}  // test
-}  // common
-}  // audio
-}  // test
-}  // utility
+}  // namespace utility
+}  // namespace test
+}  // namespace common
+}  // namespace audio
+}  // namespace hardware
+}  // namespace android
 
 #endif  // ANDROID_HARDWARE_AUDIO_COMMON_TEST_UTILITY_ASSERTOK_H

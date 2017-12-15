@@ -34,28 +34,28 @@ using ::android::hardware::hidl_vec;
 namespace android {
 
 class HidlUtils {
-  public:
+   public:
     static void audioConfigFromHal(const audio_config_t& halConfig, AudioConfig* config);
     static void audioConfigToHal(const AudioConfig& config, audio_config_t* halConfig);
-    static void audioGainConfigFromHal(
-            const struct audio_gain_config& halConfig, AudioGainConfig* config);
-    static void audioGainConfigToHal(
-            const AudioGainConfig& config, struct audio_gain_config* halConfig);
+    static void audioGainConfigFromHal(const struct audio_gain_config& halConfig,
+                                       AudioGainConfig* config);
+    static void audioGainConfigToHal(const AudioGainConfig& config,
+                                     struct audio_gain_config* halConfig);
     static void audioGainFromHal(const struct audio_gain& halGain, AudioGain* gain);
     static void audioGainToHal(const AudioGain& gain, struct audio_gain* halGain);
-    static void audioOffloadInfoFromHal(
-            const audio_offload_info_t& halOffload, AudioOffloadInfo* offload);
-    static void audioOffloadInfoToHal(
-            const AudioOffloadInfo& offload, audio_offload_info_t* halOffload);
-    static void audioPortConfigFromHal(
-            const struct audio_port_config& halConfig, AudioPortConfig* config);
-    static void audioPortConfigToHal(
-            const AudioPortConfig& config, struct audio_port_config* halConfig);
-    static void audioPortConfigsFromHal(
-            unsigned int numHalConfigs, const struct audio_port_config *halConfigs,
-            hidl_vec<AudioPortConfig> *configs);
+    static void audioOffloadInfoFromHal(const audio_offload_info_t& halOffload,
+                                        AudioOffloadInfo* offload);
+    static void audioOffloadInfoToHal(const AudioOffloadInfo& offload,
+                                      audio_offload_info_t* halOffload);
+    static void audioPortConfigFromHal(const struct audio_port_config& halConfig,
+                                       AudioPortConfig* config);
+    static void audioPortConfigToHal(const AudioPortConfig& config,
+                                     struct audio_port_config* halConfig);
+    static void audioPortConfigsFromHal(unsigned int numHalConfigs,
+                                        const struct audio_port_config* halConfigs,
+                                        hidl_vec<AudioPortConfig>* configs);
     static std::unique_ptr<audio_port_config[]> audioPortConfigsToHal(
-            const hidl_vec<AudioPortConfig>& configs);
+        const hidl_vec<AudioPortConfig>& configs);
     static void audioPortFromHal(const struct audio_port& halPort, AudioPort* port);
     static void audioPortToHal(const AudioPort& port, struct audio_port* halPort);
     static void uuidFromHal(const audio_uuid_t& halUuid, Uuid* uuid);

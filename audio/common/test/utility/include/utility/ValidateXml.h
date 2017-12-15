@@ -70,11 +70,11 @@ namespace utility {
         ::android::hardware::audio::common::test::utility::validateXmlMultipleLocations,    \
         xmlFileName, xmlFileLocations, xsdFilePath)
 
-}  // utility
-}  // test
-}  // common
-}  // audio
-}  // test
-}  // utility
+}  // namespace utility
+}  // namespace test
+}  // namespace common
+}  // namespace audio
+}  // namespace hardware
+}  // namespace android
 
 #endif  // ANDROID_HARDWARE_AUDIO_COMMON_TEST_UTILITY_VALIDATE_XML_H

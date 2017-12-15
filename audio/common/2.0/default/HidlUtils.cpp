@@ -49,8 +49,8 @@ void HidlUtils::audioConfigToHal(const AudioConfig& config, audio_config_t* halC
     halConfig->frame_count = config.frameCount;
 }
 
-void HidlUtils::audioGainConfigFromHal(
-        const struct audio_gain_config& halConfig, AudioGainConfig* config) {
+void HidlUtils::audioGainConfigFromHal(const struct audio_gain_config& halConfig,
+                                       AudioGainConfig* config) {
     config->index = halConfig.index;
     config->mode = AudioGainMode(halConfig.mode);
     config->channelMask = AudioChannelMask(halConfig.channel_mask);
@@ -60,8 +60,8 @@ void HidlUtils::audioGainConfigFromHal(
     config->rampDurationMs = halConfig.ramp_duration_ms;
 }
 
-void HidlUtils::audioGainConfigToHal(
-        const AudioGainConfig& config, struct audio_gain_config* halConfig) {
+void HidlUtils::audioGainConfigToHal(const AudioGainConfig& config,
+                                     struct audio_gain_config* halConfig) {
     halConfig->index = config.index;
     halConfig->mode = static_cast<audio_gain_mode_t>(config.mode);
     halConfig->channel_mask = static_cast<audio_channel_mask_t>(config.channelMask);
@@ -94,8 +94,8 @@ void HidlUtils::audioGainToHal(const AudioGain& gain, struct audio_gain* halGain
     halGain->max_ramp_ms = gain.maxRampMs;
 }
 
-void HidlUtils::audioOffloadInfoFromHal(
-        const audio_offload_info_t& halOffload, AudioOffloadInfo* offload) {
+void HidlUtils::audioOffloadInfoFromHal(const audio_offload_info_t& halOffload,
+                                        AudioOffloadInfo* offload) {
     offload->sampleRateHz = halOffload.sample_rate;
     offload->channelMask = AudioChannelMask(halOffload.channel_mask);
     offload->format = AudioFormat(halOffload.format);
@@ -109,8 +109,8 @@ void HidlUtils::audioOffloadInfoFromHal(
     offload->usage = static_cast<AudioUsage>(halOffload.usage);
 }
 
-void HidlUtils::audioOffloadInfoToHal(
-        const AudioOffloadInfo& offload, audio_offload_info_t* halOffload) {
+void HidlUtils::audioOffloadInfoToHal(const AudioOffloadInfo& offload,
+                                      audio_offload_info_t* halOffload) {
     *halOffload = AUDIO_INFO_INITIALIZER;
     halOffload->sample_rate = offload.sampleRateHz;
     halOffload->channel_mask = static_cast<audio_channel_mask_t>(offload.channelMask);
@@ -125,8 +125,8 @@ void HidlUtils::audioOffloadInfoToHal(
     halOffload->usage = static_cast<audio_usage_t>(offload.usage);
 }
 
-void HidlUtils::audioPortConfigFromHal(
-        const struct audio_port_config& halConfig, AudioPortConfig* config) {
+void HidlUtils::audioPortConfigFromHal(const struct audio_port_config& halConfig,
+                                       AudioPortConfig* config) {
     config->id = halConfig.id;
     config->role = AudioPortRole(halConfig.role);
     config->type = AudioPortType(halConfig.type);
@@ -136,13 +136,13 @@ void HidlUtils::audioPortConfigFromHal(
     config->format = AudioFormat(halConfig.format);
     audioGainConfigFromHal(halConfig.gain, &config->gain);
     switch (halConfig.type) {
-        case AUDIO_PORT_TYPE_NONE: break;
+        case AUDIO_PORT_TYPE_NONE:
+            break;
         case AUDIO_PORT_TYPE_DEVICE: {
             config->ext.device.hwModule = halConfig.ext.device.hw_module;
             config->ext.device.type = AudioDevice(halConfig.ext.device.type);
-            memcpy(config->ext.device.address.data(),
-                    halConfig.ext.device.address,
-                    AUDIO_DEVICE_MAX_ADDRESS_LEN);
+            memcpy(config->ext.device.address.data(), halConfig.ext.device.address,
+                   AUDIO_DEVICE_MAX_ADDRESS_LEN);
             break;
         }
         case AUDIO_PORT_TYPE_MIX: {
@@ -162,8 +162,8 @@ void HidlUtils::audioPortConfigFromHal(
     }
 }
 
-void HidlUtils::audioPortConfigToHal(
-        const AudioPortConfig& config, struct audio_port_config* halConfig) {
+void HidlUtils::audioPortConfigToHal(const AudioPortConfig& config,
+                                     struct audio_port_config* halConfig) {
     memset(halConfig, 0, sizeof(audio_port_config));
     halConfig->id = config.id;
     halConfig->role = static_cast<audio_port_role_t>(config.role);
@@ -174,13 +174,13 @@ void HidlUtils::audioPortConfigToHal(
     halConfig->format = static_cast<audio_format_t>(config.format);
     audioGainConfigToHal(config.gain, &halConfig->gain);
     switch (config.type) {
-        case AudioPortType::NONE: break;
+        case AudioPortType::NONE:
+            break;
         case AudioPortType::DEVICE: {
             halConfig->ext.device.hw_module = config.ext.device.hwModule;
             halConfig->ext.device.type = static_cast<audio_devices_t>(config.ext.device.type);
-            memcpy(halConfig->ext.device.address,
-                    config.ext.device.address.data(),
-                    AUDIO_DEVICE_MAX_ADDRESS_LEN);
+            memcpy(halConfig->ext.device.address, config.ext.device.address.data(),
+                   AUDIO_DEVICE_MAX_ADDRESS_LEN);
             break;
         }
         case AudioPortType::MIX: {
@@ -188,24 +188,24 @@ void HidlUtils::audioPortConfigToHal(
             halConfig->ext.mix.handle = config.ext.mix.ioHandle;
             if (config.role == AudioPortRole::SOURCE) {
                 halConfig->ext.mix.usecase.source =
-                        static_cast<audio_source_t>(config.ext.mix.useCase.source);
+                    static_cast<audio_source_t>(config.ext.mix.useCase.source);
             } else if (config.role == AudioPortRole::SINK) {
                 halConfig->ext.mix.usecase.stream =
-                        static_cast<audio_stream_type_t>(config.ext.mix.useCase.stream);
+                    static_cast<audio_stream_type_t>(config.ext.mix.useCase.stream);
             }
             break;
         }
         case AudioPortType::SESSION: {
             halConfig->ext.session.session =
-                    static_cast<audio_session_t>(config.ext.session.session);
+                static_cast<audio_session_t>(config.ext.session.session);
             break;
         }
     }
 }
 
-void HidlUtils::audioPortConfigsFromHal(
-        unsigned int numHalConfigs, const struct audio_port_config *halConfigs,
-        hidl_vec<AudioPortConfig> *configs) {
+void HidlUtils::audioPortConfigsFromHal(unsigned int numHalConfigs,
+                                        const struct audio_port_config* halConfigs,
+                                        hidl_vec<AudioPortConfig>* configs) {
     configs->resize(numHalConfigs);
     for (unsigned int i = 0; i < numHalConfigs; ++i) {
         audioPortConfigFromHal(halConfigs[i], &(*configs)[i]);
@@ -213,7 +213,7 @@ void HidlUtils::audioPortConfigsFromHal(
 }
 
 std::unique_ptr<audio_port_config[]> HidlUtils::audioPortConfigsToHal(
-        const hidl_vec<AudioPortConfig>& configs) {
+    const hidl_vec<AudioPortConfig>& configs) {
     std::unique_ptr<audio_port_config[]> halConfigs(new audio_port_config[configs.size()]);
     for (size_t i = 0; i < configs.size(); ++i) {
         audioPortConfigToHal(configs[i], &halConfigs[i]);
@@ -244,13 +244,13 @@ void HidlUtils::audioPortFromHal(const struct audio_port& halPort, AudioPort* po
     }
     audioPortConfigFromHal(halPort.active_config, &port->activeConfig);
     switch (halPort.type) {
-        case AUDIO_PORT_TYPE_NONE: break;
+        case AUDIO_PORT_TYPE_NONE:
+            break;
         case AUDIO_PORT_TYPE_DEVICE: {
             port->ext.device.hwModule = halPort.ext.device.hw_module;
             port->ext.device.type = AudioDevice(halPort.ext.device.type);
-            memcpy(port->ext.device.address.data(),
-                    halPort.ext.device.address,
-                    AUDIO_DEVICE_MAX_ADDRESS_LEN);
+            memcpy(port->ext.device.address.data(), halPort.ext.device.address,
+                   AUDIO_DEVICE_MAX_ADDRESS_LEN);
             break;
         }
         case AUDIO_PORT_TYPE_MIX: {
@@ -271,21 +271,20 @@ void HidlUtils::audioPortToHal(const AudioPort& port, struct audio_port* halPort
     halPort->id = port.id;
     halPort->role = static_cast<audio_port_role_t>(port.role);
     halPort->type = static_cast<audio_port_type_t>(port.type);
-    memcpy(halPort->name,
-            port.name.c_str(),
-            std::min(port.name.size(), static_cast<size_t>(AUDIO_PORT_MAX_NAME_LEN)));
+    memcpy(halPort->name, port.name.c_str(),
+           std::min(port.name.size(), static_cast<size_t>(AUDIO_PORT_MAX_NAME_LEN)));
     halPort->num_sample_rates =
-            std::min(port.sampleRates.size(), static_cast<size_t>(AUDIO_PORT_MAX_SAMPLING_RATES));
+        std::min(port.sampleRates.size(), static_cast<size_t>(AUDIO_PORT_MAX_SAMPLING_RATES));
     for (size_t i = 0; i < halPort->num_sample_rates; ++i) {
         halPort->sample_rates[i] = port.sampleRates[i];
     }
     halPort->num_channel_masks =
-            std::min(port.channelMasks.size(), static_cast<size_t>(AUDIO_PORT_MAX_CHANNEL_MASKS));
+        std::min(port.channelMasks.size(), static_cast<size_t>(AUDIO_PORT_MAX_CHANNEL_MASKS));
     for (size_t i = 0; i < halPort->num_channel_masks; ++i) {
         halPort->channel_masks[i] = static_cast<audio_channel_mask_t>(port.channelMasks[i]);
     }
     halPort->num_formats =
-            std::min(port.formats.size(), static_cast<size_t>(AUDIO_PORT_MAX_FORMATS));
+        std::min(port.formats.size(), static_cast<size_t>(AUDIO_PORT_MAX_FORMATS));
     for (size_t i = 0; i < halPort->num_formats; ++i) {
         halPort->formats[i] = static_cast<audio_format_t>(port.formats[i]);
     }
@@ -295,20 +294,20 @@ void HidlUtils::audioPortToHal(const AudioPort& port, struct audio_port* halPort
     }
     audioPortConfigToHal(port.activeConfig, &halPort->active_config);
     switch (port.type) {
-        case AudioPortType::NONE: break;
+        case AudioPortType::NONE:
+            break;
         case AudioPortType::DEVICE: {
             halPort->ext.device.hw_module = port.ext.device.hwModule;
             halPort->ext.device.type = static_cast<audio_devices_t>(port.ext.device.type);
-            memcpy(halPort->ext.device.address,
-                    port.ext.device.address.data(),
-                    AUDIO_DEVICE_MAX_ADDRESS_LEN);
+            memcpy(halPort->ext.device.address, port.ext.device.address.data(),
+                   AUDIO_DEVICE_MAX_ADDRESS_LEN);
             break;
         }
         case AudioPortType::MIX: {
             halPort->ext.mix.hw_module = port.ext.mix.hwModule;
             halPort->ext.mix.handle = port.ext.mix.ioHandle;
             halPort->ext.mix.latency_class =
-                    static_cast<audio_mix_latency_class_t>(port.ext.mix.latencyClass);
+                static_cast<audio_mix_latency_class_t>(port.ext.mix.latencyClass);
             break;
         }
         case AudioPortType::SESSION: {
