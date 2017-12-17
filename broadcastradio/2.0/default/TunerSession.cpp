@@ -205,6 +205,19 @@ Return<void> TunerSession::cancel() {
     return {};
 }
 
+Return<void> TunerSession::getConfigFlag(ConfigFlag flag, getConfigFlag_cb _hidl_cb) {
+    ALOGV("%s(%s)", __func__, toString(flag).c_str());
+
+    _hidl_cb(Result::NOT_SUPPORTED, false);
+    return {};
+}
+
+Return<Result> TunerSession::setConfigFlag(ConfigFlag flag, bool value) {
+    ALOGV("%s(%s, %d)", __func__, toString(flag).c_str(), value);
+
+    return Result::NOT_SUPPORTED;
+}
+
 Return<void> TunerSession::setParameters(const hidl_vec<VendorKeyValue>& /* parameters */,
                                          setParameters_cb _hidl_cb) {
     ALOGV("%s", __func__);

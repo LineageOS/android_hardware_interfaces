@@ -37,6 +37,73 @@ enum Result : int32_t {
 };
 
 /**
+ * Configuration flags to be used with getConfigFlag and setConfigFlag methods
+ * of ITunerSession.
+ */
+enum ConfigFlag : uint32_t {
+    /**
+     * Forces mono audio stream reception.
+     *
+     * Analog broadcasts can recover poor reception conditions by jointing
+     * stereo channels into one. Mainly for, but not limited to AM/FM.
+     */
+    FORCE_MONO = 1,
+
+    /**
+     * Forces the analog playback for the supporting radio technology.
+     *
+     * User may disable digital playback for FM HD Radio or hybrid FM/DAB with
+     * this option. This is purely user choice, ie. does not reflect digital-
+     * analog handover state managed from the HAL implementation side.
+     *
+     * Some radio technologies may not support this, ie. DAB.
+     */
+    FORCE_ANALOG,
+
+    /**
+     * Forces the digital playback for the supporting radio technology.
+     *
+     * User may disable digital-analog handover that happens with poor
+     * receiption conditions. With digital forced, the radio will remain silent
+     * instead of switching to analog channel if it's available. This is purely
+     * user choice, it does not reflect the actual state of handover.
+     */
+    FORCE_DIGITAL,
+
+    /**
+     * RDS Alternative Frequencies.
+     *
+     * If set, radio tuner automatically switches to the best available
+     * frequency that currently listened RDS station broadcasts.
+     */
+    RDS_AF,
+
+    /**
+     * RDS region-specific program lock-down.
+     *
+     * Allows user to lock to the current region as they move into the
+     * other region.
+     */
+    RDS_REG,
+
+    /**
+     * Enables DAB implicit linking, based on program identifiers
+     * (DAB SId, RDS PI).
+     */
+    DAB_IMPLICIT_LINKING,
+
+    /**
+     * Enables DAB hard linking (the same content).
+     */
+    DAB_HARD_LINKING,
+
+    /**
+     * Enables DAB hard linking (related content).
+     */
+    DAB_SOFT_LINKING,
+};
+
+/**
  * A key-value pair for vendor-specific information to be passed as-is through
  * Android framework to the front-end application.
  */

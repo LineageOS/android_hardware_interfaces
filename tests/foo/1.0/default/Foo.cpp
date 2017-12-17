@@ -15,6 +15,30 @@ namespace V1_0 {
 namespace implementation {
 
 // Methods from ::android::hardware::tests::foo::V1_0::IFoo follow.
+Return<void> Foo::convertToBoolIfSmall(Discriminator d, const hidl_vec<Union>& u,
+                                       convertToBoolIfSmall_cb _hidl_cb) {
+    hidl_vec<ContainsUnion> res(u.size());
+    for (size_t i = 0; i < u.size(); i++) {
+        ContainsUnion& outValue = res[i];
+
+        if (d == Discriminator::BOOL) {
+            outValue.discriminator = Discriminator::BOOL;
+            outValue.value.boolValue = u[i].boolValue;
+        } else {
+            uint64_t value = u[i].intValue;
+            if (value == 0 || value == 1) {
+                outValue.discriminator = Discriminator::BOOL;
+                outValue.value.boolValue = static_cast<bool>(value);
+            } else {
+                outValue.discriminator = Discriminator::INT;
+                outValue.value.intValue = value;
+            }
+        }
+    }
+    _hidl_cb(res);
+    return Void();
+}
+
 Return<void> Foo::doThis(float param) {
     LOG(INFO) << "SERVER(Foo) doThis(" << param << ")";
 

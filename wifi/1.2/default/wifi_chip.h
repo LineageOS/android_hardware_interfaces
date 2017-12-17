@@ -24,6 +24,7 @@
 
 #include "hidl_callback_util.h"
 #include "wifi_ap_iface.h"
+#include "wifi_feature_flags.h"
 #include "wifi_legacy_hal.h"
 #include "wifi_mode_controller.h"
 #include "wifi_nan_iface.h"
@@ -45,10 +46,12 @@ using namespace android::hardware::wifi::V1_0;
  */
 class WifiChip : public V1_1::IWifiChip {
    public:
-    WifiChip(ChipId chip_id,
-             const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
-             const std::weak_ptr<mode_controller::WifiModeController>
-                 mode_controller);
+    WifiChip(
+        ChipId chip_id,
+        const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
+        const std::weak_ptr<mode_controller::WifiModeController>
+            mode_controller,
+        const std::weak_ptr<feature_flags::WifiFeatureFlags> feature_flags);
     // HIDL does not provide a built-in mechanism to let the server invalidate
     // a HIDL interface object after creation. If any client process holds onto
     // a reference to the object in their context, any method calls on that
@@ -190,16 +193,31 @@ class WifiChip : public V1_1::IWifiChip {
         std::unique_lock<std::recursive_mutex>* lock, ChipModeId mode_id);
     WifiStatus registerDebugRingBufferCallback();
 
+    void populateModes();
+    std::vector<IWifiChip::ChipIfaceCombination>
+    getCurrentModeIfaceCombinations();
+    std::map<IfaceType, size_t> getCurrentIfaceCombination();
+    std::vector<std::map<IfaceType, size_t>> expandIfaceCombinations(
+        const IWifiChip::ChipIfaceCombination& combination);
+    bool canExpandedIfaceCombinationSupportIfaceOfType(
+        const std::map<IfaceType, size_t>& combo, IfaceType type);
+    bool canCurrentModeSupportIfaceOfType(IfaceType type);
+    bool isValidModeId(ChipModeId mode_id);
+    std::string allocateApOrStaIfaceName();
+
     ChipId chip_id_;
     std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
     std::weak_ptr<mode_controller::WifiModeController> mode_controller_;
-    sp<WifiApIface> ap_iface_;
-    sp<WifiNanIface> nan_iface_;
-    sp<WifiP2pIface> p2p_iface_;
-    sp<WifiStaIface> sta_iface_;
+    std::weak_ptr<feature_flags::WifiFeatureFlags> feature_flags_;
+    std::vector<sp<WifiApIface>> ap_ifaces_;
+    std::vector<sp<WifiNanIface>> nan_ifaces_;
+    std::vector<sp<WifiP2pIface>> p2p_ifaces_;
+    std::vector<sp<WifiStaIface>> sta_ifaces_;
     std::vector<sp<WifiRttController>> rtt_controllers_;
     bool is_valid_;
+    // Members pertaining to chip configuration.
     uint32_t current_mode_id_;
+    std::vector<IWifiChip::ChipMode> modes_;
     // The legacy ring buffer callback API has only a global callback
     // registration mechanism. Use this to check if we have already
     // registered a callback.

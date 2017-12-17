@@ -33,9 +33,13 @@ namespace implementation {
 using hidl_return_util::validateAndCall;
 using hidl_return_util::validateAndCallWithLock;
 
-Wifi::Wifi()
-    : legacy_hal_(new legacy_hal::WifiLegacyHal()),
-      mode_controller_(new mode_controller::WifiModeController()),
+Wifi::Wifi(
+    const std::shared_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
+    const std::shared_ptr<mode_controller::WifiModeController> mode_controller,
+    const std::shared_ptr<feature_flags::WifiFeatureFlags> feature_flags)
+    : legacy_hal_(legacy_hal),
+      mode_controller_(mode_controller),
+      feature_flags_(feature_flags),
       run_state_(RunState::STOPPED) {}
 
 bool Wifi::isValid() {
@@ -88,10 +92,11 @@ WifiStatus Wifi::startInternal() {
         return createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE,
                                 "HAL is stopping");
     }
-    WifiStatus wifi_status = initializeLegacyHal();
+    WifiStatus wifi_status = initializeModeControllerAndLegacyHal();
     if (wifi_status.code == WifiStatusCode::SUCCESS) {
         // Create the chip instance once the HAL is started.
-        chip_ = new WifiChip(kChipId, legacy_hal_, mode_controller_);
+        chip_ = new WifiChip(kChipId, legacy_hal_, mode_controller_,
+                             feature_flags_);
         run_state_ = RunState::STARTED;
         for (const auto& callback : event_cb_handler_.getCallbacks()) {
             if (!callback->onStart().isOk()) {
@@ -161,7 +166,11 @@ std::pair<WifiStatus, sp<IWifiChip>> Wifi::getChipInternal(ChipId chip_id) {
     return {createWifiStatus(WifiStatusCode::SUCCESS), chip_};
 }
 
-WifiStatus Wifi::initializeLegacyHal() {
+WifiStatus Wifi::initializeModeControllerAndLegacyHal() {
+    if (!mode_controller_->initialize()) {
+        LOG(ERROR) << "Failed to initialize firmware mode controller";
+        return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
+    }
     legacy_hal::wifi_error legacy_status = legacy_hal_->initialize();
     if (legacy_status != legacy_hal::WIFI_SUCCESS) {
         LOG(ERROR) << "Failed to initialize legacy HAL: "

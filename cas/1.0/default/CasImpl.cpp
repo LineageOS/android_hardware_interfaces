@@ -103,6 +103,7 @@ Return<void> CasImpl::openSession(openSession_cb _hidl_cb) {
     status_t err = INVALID_OPERATION;
     if (holder != NULL) {
         err = holder->get()->openSession(&sessionId);
+        holder.clear();
     }
 
     _hidl_cb(toStatus(err), sessionId);

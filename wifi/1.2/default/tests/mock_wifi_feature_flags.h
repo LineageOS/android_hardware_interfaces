@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef WIFI_FEATURE_FLAGS_H_
-#define WIFI_FEATURE_FLAGS_H_
+#ifndef MOCK_WIFI_FEATURE_FLAGS_H_
+#define MOCK_WIFI_FEATURE_FLAGS_H_
+
+#include <gmock/gmock.h>
+
+#include "wifi_feature_flags.h"
 
 namespace android {
 namespace hardware {
@@ -24,13 +28,12 @@ namespace V1_2 {
 namespace implementation {
 namespace feature_flags {
 
-class WifiFeatureFlags {
+class MockWifiFeatureFlags : public WifiFeatureFlags {
    public:
-    WifiFeatureFlags();
-    virtual ~WifiFeatureFlags() = default;
+    MockWifiFeatureFlags();
 
-    virtual bool isAwareSupported();
-    virtual bool isDualInterfaceSupported();
+    MOCK_METHOD0(isAwareSupported, bool());
+    MOCK_METHOD0(isDualInterfaceSupported, bool());
 };
 
 }  // namespace feature_flags
@@ -40,4 +43,4 @@ class WifiFeatureFlags {
 }  // namespace hardware
 }  // namespace android
 
-#endif  // WIFI_FEATURE_FLAGS_H_
+#endif  // MOCK_WIFI_FEATURE_FLAGS_H_
