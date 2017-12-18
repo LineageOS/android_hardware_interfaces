@@ -38,6 +38,8 @@ struct TunerSession : public ITunerSession {
     virtual Return<Result> scan(bool directionUp, bool skipSubChannel) override;
     virtual Return<Result> step(bool directionUp) override;
     virtual Return<void> cancel() override;
+    virtual Return<Result> startProgramListUpdates(const ProgramFilter& filter);
+    virtual Return<void> stopProgramListUpdates();
     virtual Return<void> getConfigFlag(ConfigFlag flag, getConfigFlag_cb _hidl_cb);
     virtual Return<Result> setConfigFlag(ConfigFlag flag, bool value);
     virtual Return<void> setParameters(const hidl_vec<VendorKeyValue>& parameters,
