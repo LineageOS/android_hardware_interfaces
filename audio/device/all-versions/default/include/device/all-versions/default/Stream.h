@@ -14,32 +14,28 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_AUDIO_V2_0_STREAM_H
-#define ANDROID_HARDWARE_AUDIO_V2_0_STREAM_H
+#include <common/all-versions/IncludeGuard.h>
 
 #include <vector>
 
-#include <android/hardware/audio/2.0/IStream.h>
 #include <hardware/audio.h>
 #include <hidl/Status.h>
 
 #include <hidl/MQDescriptor.h>
 
-#include "ParametersUtil.h"
-
 namespace android {
 namespace hardware {
 namespace audio {
-namespace V2_0 {
+namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
-using ::android::hardware::audio::common::V2_0::AudioChannelMask;
-using ::android::hardware::audio::common::V2_0::AudioDevice;
-using ::android::hardware::audio::common::V2_0::AudioFormat;
-using ::android::hardware::audio::V2_0::DeviceAddress;
-using ::android::hardware::audio::V2_0::IStream;
-using ::android::hardware::audio::V2_0::ParameterValue;
-using ::android::hardware::audio::V2_0::Result;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioChannelMask;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioDevice;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioFormat;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::DeviceAddress;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::IStream;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::ParameterValue;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::Result;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::hidl_vec;
@@ -56,7 +52,7 @@ struct Stream : public IStream, public ParametersUtil {
      */
     static constexpr uint32_t MAX_BUFFER_SIZE = 2 << 30 /* == 1GiB */;
 
-    // Methods from ::android::hardware::audio::V2_0::IStream follow.
+    // Methods from ::android::hardware::audio::AUDIO_HAL_VERSION::IStream follow.
     Return<uint64_t> getFrameSize() override;
     Return<uint64_t> getFrameCount() override;
     Return<uint64_t> getBufferSize() override;
@@ -178,9 +174,7 @@ Return<void> StreamMmap<T>::getMmapPosition(IStream::getMmapPosition_cb _hidl_cb
 }
 
 }  // namespace implementation
-}  // namespace V2_0
+}  // namespace AUDIO_HAL_VERSION
 }  // namespace audio
 }  // namespace hardware
 }  // namespace android
-
-#endif  // ANDROID_HARDWARE_AUDIO_V2_0_STREAM_H

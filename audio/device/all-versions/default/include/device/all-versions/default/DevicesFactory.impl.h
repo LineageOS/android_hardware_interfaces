@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "DevicesFactoryHAL"
+#include <common/all-versions/IncludeGuard.h>
 
 #include <string.h>
 
 #include <android/log.h>
 
-#include "Device.h"
-#include "DevicesFactory.h"
-#include "PrimaryDevice.h"
-
 namespace android {
 namespace hardware {
 namespace audio {
-namespace V2_0 {
+namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
 // static
@@ -77,7 +73,7 @@ out:
     return rc;
 }
 
-// Methods from ::android::hardware::audio::V2_0::IDevicesFactory follow.
+// Methods from ::android::hardware::audio::AUDIO_HAL_VERSION::IDevicesFactory follow.
 Return<void> DevicesFactory::openDevice(IDevicesFactory::Device device, openDevice_cb _hidl_cb) {
     audio_hw_device_t* halDevice;
     Result retval(Result::INVALID_ARGUMENTS);
@@ -89,7 +85,8 @@ Return<void> DevicesFactory::openDevice(IDevicesFactory::Device device, openDevi
             if (device == IDevicesFactory::Device::PRIMARY) {
                 result = new PrimaryDevice(halDevice);
             } else {
-                result = new ::android::hardware::audio::V2_0::implementation::Device(halDevice);
+                result = new ::android::hardware::audio::AUDIO_HAL_VERSION::implementation::Device(
+                    halDevice);
             }
             retval = Result::OK;
         } else if (halStatus == -EINVAL) {
@@ -105,7 +102,7 @@ IDevicesFactory* HIDL_FETCH_IDevicesFactory(const char* /* name */) {
 }
 
 }  // namespace implementation
-}  // namespace V2_0
+}  // namespace AUDIO_HAL_VERSION
 }  // namespace audio
 }  // namespace hardware
 }  // namespace android

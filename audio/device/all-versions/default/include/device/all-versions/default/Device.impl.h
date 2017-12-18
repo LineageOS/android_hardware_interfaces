@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "DeviceHAL"
+#include <common/all-versions/IncludeGuard.h>
+
 //#define LOG_NDEBUG 0
 
 #include <memory.h>
@@ -23,19 +24,13 @@
 
 #include <android/log.h>
 
-#include "Conversions.h"
-#include "Device.h"
-#include "HidlUtils.h"
-#include "StreamIn.h"
-#include "StreamOut.h"
-#include "Util.h"
-
-using ::android::hardware::audio::common::V2_0::HidlUtils;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::HidlUtils;
+using ::android::hardware::audio::all_versions::implementation::isGainNormalized;
 
 namespace android {
 namespace hardware {
 namespace audio {
-namespace V2_0 {
+namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
 Device::Device(audio_hw_device_t* device) : mDevice(device) {}
@@ -82,7 +77,7 @@ int Device::halSetParameters(const char* keysAndValues) {
     return mDevice->set_parameters(mDevice, keysAndValues);
 }
 
-// Methods from ::android::hardware::audio::V2_0::IDevice follow.
+// Methods from ::android::hardware::audio::AUDIO_HAL_VERSION::IDevice follow.
 Return<Result> Device::initCheck() {
     return analyzeStatus("init_check", mDevice->init_check(mDevice));
 }
@@ -288,7 +283,7 @@ Return<void> Device::debugDump(const hidl_handle& fd) {
 }
 
 }  // namespace implementation
-}  // namespace V2_0
+}  // namespace AUDIO_HAL_VERSION
 }  // namespace audio
 }  // namespace hardware
 }  // namespace android

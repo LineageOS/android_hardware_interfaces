@@ -14,24 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_AUDIO_V2_0_DEVICESFACTORY_H
-#define ANDROID_HARDWARE_AUDIO_V2_0_DEVICESFACTORY_H
+#include <common/all-versions/IncludeGuard.h>
 
 #include <hardware/audio.h>
 
-#include <android/hardware/audio/2.0/IDevicesFactory.h>
 #include <hidl/Status.h>
 
 #include <hidl/MQDescriptor.h>
 namespace android {
 namespace hardware {
 namespace audio {
-namespace V2_0 {
+namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
-using ::android::hardware::audio::V2_0::IDevice;
-using ::android::hardware::audio::V2_0::IDevicesFactory;
-using ::android::hardware::audio::V2_0::Result;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::IDevice;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::IDevicesFactory;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::Result;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::hidl_vec;
@@ -39,7 +37,7 @@ using ::android::hardware::hidl_string;
 using ::android::sp;
 
 struct DevicesFactory : public IDevicesFactory {
-    // Methods from ::android::hardware::audio::V2_0::IDevicesFactory follow.
+    // Methods from ::android::hardware::audio::AUDIO_HAL_VERSION::IDevicesFactory follow.
     Return<void> openDevice(IDevicesFactory::Device device, openDevice_cb _hidl_cb) override;
 
    private:
@@ -50,9 +48,7 @@ struct DevicesFactory : public IDevicesFactory {
 extern "C" IDevicesFactory* HIDL_FETCH_IDevicesFactory(const char* name);
 
 }  // namespace implementation
-}  // namespace V2_0
+}  // namespace AUDIO_HAL_VERSION
 }  // namespace audio
 }  // namespace hardware
 }  // namespace android
-
-#endif  // ANDROID_HARDWARE_AUDIO_V2_0_DEVICESFACTORY_H

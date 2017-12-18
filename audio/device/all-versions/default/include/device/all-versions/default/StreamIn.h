@@ -14,37 +14,32 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_AUDIO_V2_0_STREAMIN_H
-#define ANDROID_HARDWARE_AUDIO_V2_0_STREAMIN_H
+#include <common/all-versions/IncludeGuard.h>
 
 #include <atomic>
 #include <memory>
 
-#include <android/hardware/audio/2.0/IStreamIn.h>
 #include <fmq/EventFlag.h>
 #include <fmq/MessageQueue.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
 #include <utils/Thread.h>
 
-#include "Device.h"
-#include "Stream.h"
-
 namespace android {
 namespace hardware {
 namespace audio {
-namespace V2_0 {
+namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
-using ::android::hardware::audio::common::V2_0::AudioChannelMask;
-using ::android::hardware::audio::common::V2_0::AudioDevice;
-using ::android::hardware::audio::common::V2_0::AudioFormat;
-using ::android::hardware::audio::common::V2_0::AudioSource;
-using ::android::hardware::audio::V2_0::DeviceAddress;
-using ::android::hardware::audio::V2_0::IStream;
-using ::android::hardware::audio::V2_0::IStreamIn;
-using ::android::hardware::audio::V2_0::ParameterValue;
-using ::android::hardware::audio::V2_0::Result;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioChannelMask;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioDevice;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioFormat;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioSource;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::DeviceAddress;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::IStream;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::IStreamIn;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::ParameterValue;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::Result;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::hidl_vec;
@@ -58,7 +53,7 @@ struct StreamIn : public IStreamIn {
 
     StreamIn(const sp<Device>& device, audio_stream_in_t* stream);
 
-    // Methods from ::android::hardware::audio::V2_0::IStream follow.
+    // Methods from ::android::hardware::audio::AUDIO_HAL_VERSION::IStream follow.
     Return<uint64_t> getFrameSize() override;
     Return<uint64_t> getFrameCount() override;
     Return<uint64_t> getBufferSize() override;
@@ -85,7 +80,7 @@ struct StreamIn : public IStreamIn {
     Return<void> debugDump(const hidl_handle& fd) override;
     Return<Result> close() override;
 
-    // Methods from ::android::hardware::audio::V2_0::IStreamIn follow.
+    // Methods from ::android::hardware::audio::AUDIO_HAL_VERSION::IStreamIn follow.
     Return<void> getAudioSource(getAudioSource_cb _hidl_cb) override;
     Return<Result> setGain(float gain) override;
     Return<void> prepareForReading(uint32_t frameSize, uint32_t framesCount,
@@ -117,9 +112,7 @@ struct StreamIn : public IStreamIn {
 };
 
 }  // namespace implementation
-}  // namespace V2_0
+}  // namespace AUDIO_HAL_VERSION
 }  // namespace audio
 }  // namespace hardware
 }  // namespace android
-
-#endif  // ANDROID_HARDWARE_AUDIO_V2_0_STREAMIN_H

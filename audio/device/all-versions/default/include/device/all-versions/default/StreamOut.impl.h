@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "StreamOutHAL"
+#include <common/all-versions/IncludeGuard.h>
+
 //#define LOG_NDEBUG 0
 #define ATRACE_TAG ATRACE_TAG_AUDIO
 
@@ -24,16 +25,14 @@
 #include <hardware/audio.h>
 #include <utils/Trace.h>
 
-#include "StreamOut.h"
-#include "Util.h"
-
 namespace android {
 namespace hardware {
 namespace audio {
-namespace V2_0 {
+namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
-using ::android::hardware::audio::common::V2_0::ThreadInfo;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::ThreadInfo;
+using ::android::hardware::audio::all_versions::implementation::isGainNormalized;
 
 namespace {
 
@@ -167,7 +166,7 @@ StreamOut::~StreamOut() {
     mStream = nullptr;
 }
 
-// Methods from ::android::hardware::audio::V2_0::IStream follow.
+// Methods from ::android::hardware::audio::AUDIO_HAL_VERSION::IStream follow.
 Return<uint64_t> StreamOut::getFrameSize() {
     return audio_stream_out_frame_size(mStream);
 }
@@ -273,7 +272,7 @@ Return<Result> StreamOut::close() {
     return Result::OK;
 }
 
-// Methods from ::android::hardware::audio::V2_0::IStreamOut follow.
+// Methods from ::android::hardware::audio::AUDIO_HAL_VERSION::IStreamOut follow.
 Return<uint32_t> StreamOut::getLatency() {
     return mStream->get_latency(mStream);
 }
@@ -514,7 +513,7 @@ Return<void> StreamOut::getMmapPosition(getMmapPosition_cb _hidl_cb) {
 }
 
 }  // namespace implementation
-}  // namespace V2_0
+}  // namespace AUDIO_HAL_VERSION
 }  // namespace audio
 }  // namespace hardware
 }  // namespace android

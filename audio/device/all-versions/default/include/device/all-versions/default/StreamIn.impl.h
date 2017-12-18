@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "StreamInHAL"
+#include <common/all-versions/IncludeGuard.h>
+
 //#define LOG_NDEBUG 0
 #define ATRACE_TAG ATRACE_TAG_AUDIO
 
@@ -23,18 +24,16 @@
 #include <utils/Trace.h>
 #include <memory>
 
-#include "StreamIn.h"
-#include "Util.h"
-
-using ::android::hardware::audio::V2_0::MessageQueueFlagBits;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::MessageQueueFlagBits;
+using ::android::hardware::audio::all_versions::implementation::isGainNormalized;
 
 namespace android {
 namespace hardware {
 namespace audio {
-namespace V2_0 {
+namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
-using ::android::hardware::audio::common::V2_0::ThreadInfo;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::ThreadInfo;
 
 namespace {
 
@@ -163,7 +162,7 @@ StreamIn::~StreamIn() {
     mStream = nullptr;
 }
 
-// Methods from ::android::hardware::audio::V2_0::IStream follow.
+// Methods from ::android::hardware::audio::AUDIO_HAL_VERSION::IStream follow.
 Return<uint64_t> StreamIn::getFrameSize() {
     return audio_stream_in_frame_size(mStream);
 }
@@ -285,7 +284,7 @@ Return<Result> StreamIn::close() {
     return Result::OK;
 }
 
-// Methods from ::android::hardware::audio::V2_0::IStreamIn follow.
+// Methods from ::android::hardware::audio::AUDIO_HAL_VERSION::IStreamIn follow.
 Return<void> StreamIn::getAudioSource(getAudioSource_cb _hidl_cb) {
     int halSource;
     Result retval = mStreamCommon->getParam(AudioParameter::keyInputSource, &halSource);
@@ -417,7 +416,7 @@ Return<void> StreamIn::getCapturePosition(getCapturePosition_cb _hidl_cb) {
 }
 
 }  // namespace implementation
-}  // namespace V2_0
+}  // namespace AUDIO_HAL_VERSION
 }  // namespace audio
 }  // namespace hardware
 }  // namespace android

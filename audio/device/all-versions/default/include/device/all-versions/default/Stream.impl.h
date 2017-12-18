@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include <inttypes.h>
+#include <common/all-versions/IncludeGuard.h>
 
-#define LOG_TAG "StreamHAL"
+#include <inttypes.h>
 
 #include <android/log.h>
 #include <hardware/audio.h>
@@ -25,14 +25,10 @@
 #include <utils/SortedVector.h>
 #include <utils/Vector.h>
 
-#include "Conversions.h"
-#include "Stream.h"
-#include "common/all-versions/default/EffectMap.h"
-
 namespace android {
 namespace hardware {
 namespace audio {
-namespace V2_0 {
+namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
 Stream::Stream(audio_stream_t* stream) : mStream(stream) {}
@@ -82,7 +78,7 @@ int Stream::halSetParameters(const char* keysAndValues) {
     return mStream->set_parameters(mStream, keysAndValues);
 }
 
-// Methods from ::android::hardware::audio::V2_0::IStream follow.
+// Methods from ::android::hardware::audio::AUDIO_HAL_VERSION::IStream follow.
 Return<uint64_t> Stream::getFrameSize() {
     // Needs to be implemented by interface subclasses. But can't be declared as pure virtual,
     // since interface subclasses implementation do not inherit from this class.
@@ -274,7 +270,7 @@ Return<Result> Stream::close() {
 }
 
 }  // namespace implementation
-}  // namespace V2_0
+}  // namespace AUDIO_HAL_VERSION
 }  // namespace audio
 }  // namespace hardware
 }  // namespace android

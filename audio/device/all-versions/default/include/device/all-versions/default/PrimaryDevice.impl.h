@@ -14,22 +14,19 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "PrimaryDeviceHAL"
-
-#include "PrimaryDevice.h"
-#include "Util.h"
+#include <common/all-versions/IncludeGuard.h>
 
 namespace android {
 namespace hardware {
 namespace audio {
-namespace V2_0 {
+namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
 PrimaryDevice::PrimaryDevice(audio_hw_device_t* device) : mDevice(new Device(device)) {}
 
 PrimaryDevice::~PrimaryDevice() {}
 
-// Methods from ::android::hardware::audio::V2_0::IDevice follow.
+// Methods from ::android::hardware::audio::AUDIO_HAL_VERSION::IDevice follow.
 Return<Result> PrimaryDevice::initCheck() {
     return mDevice->initCheck();
 }
@@ -118,9 +115,9 @@ Return<void> PrimaryDevice::debugDump(const hidl_handle& fd) {
     return mDevice->debugDump(fd);
 }
 
-// Methods from ::android::hardware::audio::V2_0::IPrimaryDevice follow.
+// Methods from ::android::hardware::audio::AUDIO_HAL_VERSION::IPrimaryDevice follow.
 Return<Result> PrimaryDevice::setVoiceVolume(float volume) {
-    if (!isGainNormalized(volume)) {
+    if (!all_versions::implementation::isGainNormalized(volume)) {
         ALOGW("Can not set a voice volume (%f) outside [0,1]", volume);
         return Result::INVALID_ARGUMENTS;
     }
@@ -192,7 +189,7 @@ Return<Result> PrimaryDevice::setHacEnabled(bool enabled) {
 }
 
 }  // namespace implementation
-}  // namespace V2_0
+}  // namespace AUDIO_HAL_VERSION
 }  // namespace audio
 }  // namespace hardware
 }  // namespace android

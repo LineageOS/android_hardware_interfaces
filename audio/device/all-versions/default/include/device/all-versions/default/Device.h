@@ -14,46 +14,47 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_AUDIO_V2_0_PRIMARYDEVICE_H
-#define ANDROID_HARDWARE_AUDIO_V2_0_PRIMARYDEVICE_H
+#include <common/all-versions/IncludeGuard.h>
 
-#include <android/hardware/audio/2.0/IPrimaryDevice.h>
+#include <memory>
+
+#include <hardware/audio.h>
+#include <media/AudioParameter.h>
+
 #include <hidl/Status.h>
 
 #include <hidl/MQDescriptor.h>
 
-#include "Device.h"
-
 namespace android {
 namespace hardware {
 namespace audio {
-namespace V2_0 {
+namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
-using ::android::hardware::audio::common::V2_0::AudioConfig;
-using ::android::hardware::audio::common::V2_0::AudioInputFlag;
-using ::android::hardware::audio::common::V2_0::AudioMode;
-using ::android::hardware::audio::common::V2_0::AudioOutputFlag;
-using ::android::hardware::audio::common::V2_0::AudioPort;
-using ::android::hardware::audio::common::V2_0::AudioPortConfig;
-using ::android::hardware::audio::common::V2_0::AudioSource;
-using ::android::hardware::audio::V2_0::DeviceAddress;
-using ::android::hardware::audio::V2_0::IDevice;
-using ::android::hardware::audio::V2_0::IPrimaryDevice;
-using ::android::hardware::audio::V2_0::IStreamIn;
-using ::android::hardware::audio::V2_0::IStreamOut;
-using ::android::hardware::audio::V2_0::ParameterValue;
-using ::android::hardware::audio::V2_0::Result;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioConfig;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioHwSync;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioInputFlag;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioOutputFlag;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioPatchHandle;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioPort;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioPortConfig;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioSource;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::DeviceAddress;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::IDevice;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::IStreamIn;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::IStreamOut;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::ParameterValue;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::Result;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::hidl_string;
 using ::android::sp;
 
-struct PrimaryDevice : public IPrimaryDevice {
-    explicit PrimaryDevice(audio_hw_device_t* device);
+struct Device : public IDevice, public ParametersUtil {
+    explicit Device(audio_hw_device_t* device);
 
-    // Methods from ::android::hardware::audio::V2_0::IDevice follow.
+    // Methods from ::android::hardware::audio::AUDIO_HAL_VERSION::IDevice follow.
     Return<Result> initCheck() override;
     Return<Result> setMasterVolume(float volume) override;
     Return<void> getMasterVolume(getMasterVolume_cb _hidl_cb) override;
@@ -83,28 +84,26 @@ struct PrimaryDevice : public IPrimaryDevice {
     Return<Result> setParameters(const hidl_vec<ParameterValue>& parameters) override;
     Return<void> debugDump(const hidl_handle& fd) override;
 
-    // Methods from ::android::hardware::audio::V2_0::IPrimaryDevice follow.
-    Return<Result> setVoiceVolume(float volume) override;
-    Return<Result> setMode(AudioMode mode) override;
-    Return<void> getBtScoNrecEnabled(getBtScoNrecEnabled_cb _hidl_cb) override;
-    Return<Result> setBtScoNrecEnabled(bool enabled) override;
-    Return<void> getBtScoWidebandEnabled(getBtScoWidebandEnabled_cb _hidl_cb) override;
-    Return<Result> setBtScoWidebandEnabled(bool enabled) override;
-    Return<void> getTtyMode(getTtyMode_cb _hidl_cb) override;
-    Return<Result> setTtyMode(IPrimaryDevice::TtyMode mode) override;
-    Return<void> getHacEnabled(getHacEnabled_cb _hidl_cb) override;
-    Return<Result> setHacEnabled(bool enabled) override;
+    // Utility methods for extending interfaces.
+    Result analyzeStatus(const char* funcName, int status);
+    void closeInputStream(audio_stream_in_t* stream);
+    void closeOutputStream(audio_stream_out_t* stream);
+    audio_hw_device_t* device() const { return mDevice; }
 
    private:
-    sp<Device> mDevice;
+    audio_hw_device_t* mDevice;
 
-    virtual ~PrimaryDevice();
+    virtual ~Device();
+
+    // Methods from ParametersUtil.
+    char* halGetParameters(const char* keys) override;
+    int halSetParameters(const char* keysAndValues) override;
+
+    uint32_t version() const { return mDevice->common.version; }
 };
 
 }  // namespace implementation
-}  // namespace V2_0
+}  // namespace AUDIO_HAL_VERSION
 }  // namespace audio
 }  // namespace hardware
 }  // namespace android
-
-#endif  // ANDROID_HARDWARE_AUDIO_V2_0_PRIMARYDEVICE_H

@@ -1,20 +1,12 @@
-cc_library_shared {
-    name: "android.hardware.audio@2.0-impl",
+cc_library_headers {
+    name: "android.hardware.audio@all-versions-impl",
     relative_install_path: "hw",
     proprietary: true,
     vendor: true,
-    srcs: [
-        "Conversions.cpp",
-        "Device.cpp",
-        "DevicesFactory.cpp",
-        "ParametersUtil.cpp",
-        "PrimaryDevice.cpp",
-        "Stream.cpp",
-        "StreamIn.cpp",
-        "StreamOut.cpp",
-    ],
 
     defaults: ["hidl_defaults"],
+
+    export_include_dirs: ["include"],
 
     shared_libs: [
         "libbase",
@@ -25,9 +17,6 @@ cc_library_shared {
         "libhidltransport",
         "liblog",
         "libutils",
-        "android.hardware.audio@2.0",
-        "android.hardware.audio.common@2.0",
-        "android.hardware.audio.common@2.0-util",
         "android.hardware.audio.common-util",
     ],
 
@@ -36,10 +25,6 @@ cc_library_shared {
         "libaudio_system_headers",
         "libhardware_headers",
         "libmedia_headers",
+         "android.hardware.audio.common.util@all-versions",
     ],
-
-    whole_static_libs: [
-        "libmedia_helper",
-    ],
-
 }

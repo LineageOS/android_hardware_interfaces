@@ -14,24 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_AUDIO_V2_0_UTIL_H
-#define ANDROID_HARDWARE_AUDIO_V2_0_UTIL_H
+#define LOG_TAG "StreamOutHAL"
 
-namespace android {
-namespace hardware {
-namespace audio {
-namespace V2_0 {
-namespace implementation {
+#include "device/2.0/default/StreamOut.h"
+#include "device/all-versions/default/Util.h"
 
-/** @return true if gain is between 0 and 1 included. */
-constexpr bool isGainNormalized(float gain) {
-    return gain >= 0.0 && gain <= 1.0;
-}
-
-}  // namespace implementation
-}  // namespace V2_0
-}  // namespace audio
-}  // namespace hardware
-}  // namespace android
-
-#endif  // ANDROID_HARDWARE_AUDIO_V2_0_UTIL_H
+#define AUDIO_HAL_VERSION V2_0
+#include <device/all-versions/default/StreamOut.impl.h>
+#undef AUDIO_HAL_VERSION

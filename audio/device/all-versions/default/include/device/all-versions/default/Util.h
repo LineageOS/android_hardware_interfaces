@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef android_hardware_audio_V2_0_Conversions_H_
-#define android_hardware_audio_V2_0_Conversions_H_
-
-#include <string>
-
-#include <android/hardware/audio/2.0/types.h>
-#include <system/audio.h>
+#ifndef ANDROID_HARDWARE_AUDIO_DEVICE_ALL_VERSIONS_UTIL_H
+#define ANDROID_HARDWARE_AUDIO_DEVICE_ALL_VERSIONS_UTIL_H
 
 namespace android {
 namespace hardware {
 namespace audio {
-namespace V2_0 {
+namespace all_versions {
 namespace implementation {
 
-using ::android::hardware::audio::V2_0::DeviceAddress;
-
-std::string deviceAddressToHal(const DeviceAddress& address);
+/** @return true if gain is between 0 and 1 included. */
+constexpr bool isGainNormalized(float gain) {
+    return gain >= 0.0 && gain <= 1.0;
+}
 
 }  // namespace implementation
-}  // namespace V2_0
+}  // namespace all_versions
 }  // namespace audio
 }  // namespace hardware
 }  // namespace android
 
-#endif  // android_hardware_audio_V2_0_Conversions_H_
+#endif  // ANDROID_HARDWARE_AUDIO_DEVICE_ALL_VERSIONS_UTIL_H

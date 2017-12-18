@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "ParametersUtil.h"
+#include <common/all-versions/IncludeGuard.h>
 
 namespace android {
 namespace hardware {
 namespace audio {
-namespace V2_0 {
+namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
 /** Converts a status_t in Result according to the rules of AudioParameter::get*
@@ -159,7 +159,7 @@ Result ParametersUtil::setParams(const AudioParameter& param) {
 }
 
 }  // namespace implementation
-}  // namespace V2_0
+}  // namespace AUDIO_HAL_VERSION
 }  // namespace audio
 }  // namespace hardware
 }  // namespace android

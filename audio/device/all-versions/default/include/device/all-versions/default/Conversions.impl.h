@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
+#include <common/all-versions/IncludeGuard.h>
 
-#include "Conversions.h"
+#include <stdio.h>
 
 namespace android {
 namespace hardware {
 namespace audio {
-namespace V2_0 {
+namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
 std::string deviceAddressToHal(const DeviceAddress& address) {
@@ -55,7 +55,7 @@ std::string deviceAddressToHal(const DeviceAddress& address) {
 }
 
 }  // namespace implementation
-}  // namespace V2_0
+}  // namespace AUDIO_HAL_VERSION
 }  // namespace audio
 }  // namespace hardware
 }  // namespace android

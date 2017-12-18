@@ -14,39 +14,34 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_AUDIO_V2_0_STREAMOUT_H
-#define ANDROID_HARDWARE_AUDIO_V2_0_STREAMOUT_H
+#include <common/all-versions/IncludeGuard.h>
 
 #include <atomic>
 #include <memory>
 
-#include <android/hardware/audio/2.0/IStreamOut.h>
 #include <fmq/EventFlag.h>
 #include <fmq/MessageQueue.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
 #include <utils/Thread.h>
 
-#include "Device.h"
-#include "Stream.h"
-
 namespace android {
 namespace hardware {
 namespace audio {
-namespace V2_0 {
+namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
-using ::android::hardware::audio::common::V2_0::AudioChannelMask;
-using ::android::hardware::audio::common::V2_0::AudioDevice;
-using ::android::hardware::audio::common::V2_0::AudioFormat;
-using ::android::hardware::audio::V2_0::AudioDrain;
-using ::android::hardware::audio::V2_0::DeviceAddress;
-using ::android::hardware::audio::V2_0::IStream;
-using ::android::hardware::audio::V2_0::IStreamOut;
-using ::android::hardware::audio::V2_0::IStreamOutCallback;
-using ::android::hardware::audio::V2_0::ParameterValue;
-using ::android::hardware::audio::V2_0::Result;
-using ::android::hardware::audio::V2_0::TimeSpec;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioChannelMask;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioDevice;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioFormat;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::AudioDrain;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::DeviceAddress;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::IStream;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::IStreamOut;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::IStreamOutCallback;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::ParameterValue;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::Result;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::TimeSpec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::hidl_vec;
@@ -60,7 +55,7 @@ struct StreamOut : public IStreamOut {
 
     StreamOut(const sp<Device>& device, audio_stream_out_t* stream);
 
-    // Methods from ::android::hardware::audio::V2_0::IStream follow.
+    // Methods from ::android::hardware::audio::AUDIO_HAL_VERSION::IStream follow.
     Return<uint64_t> getFrameSize() override;
     Return<uint64_t> getFrameCount() override;
     Return<uint64_t> getBufferSize() override;
@@ -87,7 +82,7 @@ struct StreamOut : public IStreamOut {
     Return<void> debugDump(const hidl_handle& fd) override;
     Return<Result> close() override;
 
-    // Methods from ::android::hardware::audio::V2_0::IStreamOut follow.
+    // Methods from ::android::hardware::audio::AUDIO_HAL_VERSION::IStreamOut follow.
     Return<uint32_t> getLatency() override;
     Return<Result> setVolume(float left, float right) override;
     Return<void> prepareForWriting(uint32_t frameSize, uint32_t framesCount,
@@ -131,9 +126,7 @@ struct StreamOut : public IStreamOut {
 };
 
 }  // namespace implementation
-}  // namespace V2_0
+}  // namespace AUDIO_HAL_VERSION
 }  // namespace audio
 }  // namespace hardware
 }  // namespace android
-
-#endif  // ANDROID_HARDWARE_AUDIO_V2_0_STREAMOUT_H

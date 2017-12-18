@@ -14,24 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef android_hardware_audio_V2_0_ParametersUtil_H_
-#define android_hardware_audio_V2_0_ParametersUtil_H_
+#include <common/all-versions/IncludeGuard.h>
 
 #include <functional>
 #include <memory>
 
-#include <android/hardware/audio/2.0/types.h>
 #include <hidl/HidlSupport.h>
 #include <media/AudioParameter.h>
 
 namespace android {
 namespace hardware {
 namespace audio {
-namespace V2_0 {
+namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
-using ::android::hardware::audio::V2_0::ParameterValue;
-using ::android::hardware::audio::V2_0::Result;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::ParameterValue;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::Result;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 
@@ -58,9 +56,7 @@ class ParametersUtil {
 };
 
 }  // namespace implementation
-}  // namespace V2_0
+}  // namespace AUDIO_HAL_VERSION
 }  // namespace audio
 }  // namespace hardware
 }  // namespace android
-
-#endif  // android_hardware_audio_V2_0_ParametersUtil_H_
