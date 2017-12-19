@@ -15,7 +15,7 @@
 cc_library_shared {
     name: "android.hardware.light@2.0-impl",
     defaults: ["hidl_defaults"],
-    proprietary: true,
+    vendor: true,
     relative_install_path: "hw",
     srcs: ["Light.cpp"],
 
@@ -32,10 +32,10 @@ cc_library_shared {
 }
 
 cc_binary {
+    name: "android.hardware.light@2.0-service",
     relative_install_path: "hw",
     defaults: ["hidl_defaults"],
-    proprietary: true,
-    name: "android.hardware.light@2.0-service",
+    vendor: true,
     init_rc: ["android.hardware.light@2.0-service.rc"],
     srcs: ["service.cpp"],
 
