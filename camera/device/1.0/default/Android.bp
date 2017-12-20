@@ -29,9 +29,6 @@ cc_library_shared {
     header_libs: [
         "media_plugin_headers",
     ],
-    include_dirs: [
-        "frameworks/native/include/media/openmax"
-    ],
     export_include_dirs: ["."]
 }
 
