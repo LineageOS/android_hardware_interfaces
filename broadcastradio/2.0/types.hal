@@ -86,21 +86,17 @@ enum ConfigFlag : uint32_t {
      */
     RDS_REG,
 
-    /**
-     * Enables DAB implicit linking, based on program identifiers
-     * (DAB SId, RDS PI).
-     */
-    DAB_IMPLICIT_LINKING,
+    /** Enables DAB-DAB hard- and implicit-linking (the same content). */
+    DAB_DAB_LINKING,
 
-    /**
-     * Enables DAB hard linking (the same content).
-     */
-    DAB_HARD_LINKING,
+    /** Enables DAB-FM hard- and implicit-linking (the same content). */
+    DAB_FM_LINKING,
 
-    /**
-     * Enables DAB hard linking (related content).
-     */
-    DAB_SOFT_LINKING,
+    /** Enables DAB-DAB soft-linking (related content). */
+    DAB_DAB_SOFT_LINKING,
+
+    /** Enables DAB-FM soft-linking (related content). */
+    DAB_FM_SOFT_LINKING,
 };
 
 /**
