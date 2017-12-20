@@ -137,4 +137,27 @@ interface IHealth {
      * @return value charge status, or UNKNOWN if not successful.
      */
     getChargeStatus() generates (Result result, BatteryStatus value);
+
+    /**
+     * Get storage info.
+     *
+     * @return result SUCCESS if successful,
+     *                NOT_SUPPORTED if this property is not supported,
+     *                UNKNOWN other errors.
+     * @return value vector of StorageInfo structs, to be ignored if result is not
+     *               SUCCESS.
+     */
+    getStorageInfo() generates (Result result, vec<StorageInfo> value);
+
+    /**
+     * Gets disk statistics (number of reads/writes processed, number of I/O
+     * operations in flight etc).
+     *
+     * @return result SUCCESS if successful,
+     *                NOT_SUPPORTED if this property is not supported,
+     *                UNKNOWN other errors.
+     * @return value vector of disk statistics, to be ignored if result is not SUCCESS.
+     *               The mapping is index 0->sda, 1->sdb and so on.
+     */
+    getDiskStats() generates (Result result, vec<DiskStats> value);
 };

@@ -17,6 +17,9 @@ hidl_interface {
     ],
     types: [
         "Result",
+        "DiskStats",
+        "StorageAttribute",
+        "StorageInfo",
     ],
     gen_java: true,
 }
