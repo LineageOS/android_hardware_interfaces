@@ -180,6 +180,29 @@ AssertionResult isPropertyOk(Result res, const std::string& valueStr, bool pred,
     return AssertionFailure() << "Result is not SUCCESS or NOT_SUPPORTED: " << toString(res);
 }
 
+bool verifyStorageInfo(const hidl_vec<struct StorageInfo>& info) {
+    for (size_t i = 0; i < info.size(); i++) {
+        if (!(0 <= info[i].eol && info[i].eol <= 3 && 0 <= info[i].lifetimeA &&
+              info[i].lifetimeA <= 0x0B && 0 <= info[i].lifetimeB && info[i].lifetimeB <= 0x0B)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool verifyDiskStats(const hidl_vec<struct DiskStats>& stats) {
+    for (size_t i = 0; i < stats.size(); i++) {
+        if (!(stats[i].reads > 0 && stats[i].readMerges > 0 && stats[i].readSectors > 0 &&
+              stats[i].readTicks > 0 && stats[i].writes > 0 && stats[i].writeMerges > 0 &&
+              stats[i].writeSectors > 0 && stats[i].writeTicks > 0 && stats[i].ioTicks > 0)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 TEST_F(HealthHidlTest, Properties) {
     EXPECT_OK(mHealth->getChargeCounter([](auto result, auto value) {
         EXPECT_VALID_OR_UNSUPPORTED_PROP(result, std::to_string(value), value > 0);
@@ -201,6 +224,12 @@ TEST_F(HealthHidlTest, Properties) {
             result, toString(value),
             value == BatteryStatus::CHARGING || value == BatteryStatus::DISCHARGING ||
                 value == BatteryStatus::NOT_CHARGING || value == BatteryStatus::FULL);
+    }));
+    EXPECT_OK(mHealth->getStorageInfo([](auto result, auto& value) {
+        EXPECT_VALID_OR_UNSUPPORTED_PROP(result, toString(value), (verifyStorageInfo(value)));
+    }));
+    EXPECT_OK(mHealth->getDiskStats([](auto result, auto& value) {
+        EXPECT_VALID_OR_UNSUPPORTED_PROP(result, toString(value), verifyDiskStats(value));
     }));
 }
 
