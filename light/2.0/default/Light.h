@@ -42,11 +42,12 @@ using ::android::sp;
 struct Light : public ILight {
     Light(std::map<Type, light_device_t*> &&lights);
 
-    // Methods from ::android::hardware::light::V2_0::ILight follow.
     Return<Status> setLight(Type type, const LightState& state)  override;
     Return<void> getSupportedTypes(getSupportedTypes_cb _hidl_cb)  override;
 
-private:
+    Return<void> debug(const hidl_handle& handle, const hidl_vec<hidl_string>& options) override;
+
+   private:
     std::map<Type, light_device_t*> mLights;
 };
 
