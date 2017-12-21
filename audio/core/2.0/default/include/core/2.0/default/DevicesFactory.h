@@ -20,7 +20,7 @@
 #include <android/hardware/audio/2.0/IDevicesFactory.h>
 
 #define AUDIO_HAL_VERSION V2_0
-#include <device/all-versions/default/DevicesFactory.h>
+#include <core/all-versions/default/DevicesFactory.h>
 #undef AUDIO_HAL_VERSION
 
 #endif  // ANDROID_HARDWARE_AUDIO_V2_0_DEVICESFACTORY_H

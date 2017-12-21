@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "DevicesFactoryHAL"
+#define LOG_TAG "StreamHAL"
 
-#include "device/2.0/default/DevicesFactory.h"
-#include "device/2.0/default/Device.h"
-#include "device/2.0/default/PrimaryDevice.h"
+#include "core/2.0/default/Stream.h"
+#include "common/all-versions/default/EffectMap.h"
+#include "core/2.0/default/Conversions.h"
 
 #define AUDIO_HAL_VERSION V2_0
-#include <device/all-versions/default/DevicesFactory.impl.h>
+#include <core/all-versions/default/Stream.impl.h>
 #undef AUDIO_HAL_VERSION

@@ -14,11 +14,8 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "PrimaryDeviceHAL"
-
-#include "device/2.0/default/PrimaryDevice.h"
-#include "device/all-versions/default/Util.h"
+#include "core/2.0/default/ParametersUtil.h"
 
 #define AUDIO_HAL_VERSION V2_0
-#include <device/all-versions/default/PrimaryDevice.impl.h>
+#include <core/all-versions/default/ParametersUtil.impl.h>
 #undef AUDIO_HAL_VERSION

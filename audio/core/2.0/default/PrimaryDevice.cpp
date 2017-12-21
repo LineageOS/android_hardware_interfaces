@@ -14,15 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_AUDIO_V2_0_PRIMARYDEVICE_H
-#define ANDROID_HARDWARE_AUDIO_V2_0_PRIMARYDEVICE_H
+#define LOG_TAG "PrimaryDeviceHAL"
 
-#include <android/hardware/audio/2.0/IPrimaryDevice.h>
-
-#include "Device.h"
+#include "core/2.0/default/PrimaryDevice.h"
+#include "core/all-versions/default/Util.h"
 
 #define AUDIO_HAL_VERSION V2_0
-#include <device/all-versions/default/PrimaryDevice.h>
+#include <core/all-versions/default/PrimaryDevice.impl.h>
 #undef AUDIO_HAL_VERSION
-
-#endif  // ANDROID_HARDWARE_AUDIO_V2_0_PRIMARYDEVICE_H

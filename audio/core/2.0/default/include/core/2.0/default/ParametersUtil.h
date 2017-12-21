@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_AUDIO_V2_0_STREAM_H
-#define ANDROID_HARDWARE_AUDIO_V2_0_STREAM_H
+#ifndef ANDROID_HARDWARE_AUDIO_V2_0_PARAMETERS_UTIL_H_
+#define ANDROID_HARDWARE_AUDIO_V2_0_PARAMETERS_UTIL_H_
 
-#include <android/hardware/audio/2.0/IStream.h>
-
-#include "ParametersUtil.h"
+#include <android/hardware/audio/2.0/types.h>
 
 #define AUDIO_HAL_VERSION V2_0
-#include <device/all-versions/default/Stream.h>
+#include <core/all-versions/default/ParametersUtil.h>
 #undef AUDIO_HAL_VERSION
 
-#endif  // ANDROID_HARDWARE_AUDIO_V2_0_STREAM_H
+#endif  // ANDROID_HARDWARE_AUDIO_V2_0_PARAMETERS_UTIL_H_

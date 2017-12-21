@@ -1,5 +1,5 @@
 cc_library_headers {
-    name: "android.hardware.audio@all-versions-impl",
+    name: "android.hardware.audio.core@all-versions-impl",
     relative_install_path: "hw",
     proprietary: true,
     vendor: true,

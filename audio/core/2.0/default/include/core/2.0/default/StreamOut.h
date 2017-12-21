@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_AUDIO_V2_0_DEVICE_H
-#define ANDROID_HARDWARE_AUDIO_V2_0_DEVICE_H
+#ifndef ANDROID_HARDWARE_AUDIO_V2_0_STREAMOUT_H
+#define ANDROID_HARDWARE_AUDIO_V2_0_STREAMOUT_H
 
-#include <android/hardware/audio/2.0/IDevice.h>
+#include <android/hardware/audio/2.0/IStreamOut.h>
 
-#include "ParametersUtil.h"
+#include "Device.h"
+#include "Stream.h"
 
 #define AUDIO_HAL_VERSION V2_0
-#include <device/all-versions/default/Device.h>
+#include <core/all-versions/default/StreamOut.h>
 #undef AUDIO_HAL_VERSION
 
-#endif  // ANDROID_HARDWARE_AUDIO_V2_0_DEVICE_H
+#endif  // ANDROID_HARDWARE_AUDIO_V2_0_STREAMOUT_H

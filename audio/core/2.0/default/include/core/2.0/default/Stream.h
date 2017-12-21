@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "StreamHAL"
+#ifndef ANDROID_HARDWARE_AUDIO_V2_0_STREAM_H
+#define ANDROID_HARDWARE_AUDIO_V2_0_STREAM_H
 
-#include "device/2.0/default/Stream.h"
-#include "common/all-versions/default/EffectMap.h"
-#include "device/2.0/default/Conversions.h"
+#include <android/hardware/audio/2.0/IStream.h>
+
+#include "ParametersUtil.h"
 
 #define AUDIO_HAL_VERSION V2_0
-#include <device/all-versions/default/Stream.impl.h>
+#include <core/all-versions/default/Stream.h>
 #undef AUDIO_HAL_VERSION
+
+#endif  // ANDROID_HARDWARE_AUDIO_V2_0_STREAM_H

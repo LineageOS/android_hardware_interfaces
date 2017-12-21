@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "StreamOutHAL"
+#define LOG_TAG "DeviceHAL"
 
-#include "device/2.0/default/StreamOut.h"
-#include "device/all-versions/default/Util.h"
+#include "core/2.0/default/Device.h"
+#include <HidlUtils.h>
+#include "core/2.0/default/Conversions.h"
+#include "core/2.0/default/StreamIn.h"
+#include "core/2.0/default/StreamOut.h"
+#include "core/all-versions/default/Util.h"
 
 #define AUDIO_HAL_VERSION V2_0
-#include <device/all-versions/default/StreamOut.impl.h>
+#include <core/all-versions/default/Device.impl.h>
 #undef AUDIO_HAL_VERSION

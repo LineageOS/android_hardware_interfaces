@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "StreamInHAL"
+#ifndef ANDROID_HARDWARE_AUDIO_V2_0_PRIMARYDEVICE_H
+#define ANDROID_HARDWARE_AUDIO_V2_0_PRIMARYDEVICE_H
 
-#include "device/2.0/default/StreamIn.h"
-#include "device/all-versions/default/Util.h"
+#include <android/hardware/audio/2.0/IPrimaryDevice.h>
+
+#include "Device.h"
 
 #define AUDIO_HAL_VERSION V2_0
-#include <device/all-versions/default/StreamIn.impl.h>
+#include <core/all-versions/default/PrimaryDevice.h>
 #undef AUDIO_HAL_VERSION
+
+#endif  // ANDROID_HARDWARE_AUDIO_V2_0_PRIMARYDEVICE_H

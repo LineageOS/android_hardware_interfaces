@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_AUDIO_V2_0_CONVERSIONS_H_
-#define ANDROID_HARDWARE_AUDIO_V2_0_CONVERSIONS_H_
+#define LOG_TAG "DevicesFactoryHAL"
 
-#include <android/hardware/audio/2.0/types.h>
+#include "core/2.0/default/DevicesFactory.h"
+#include "core/2.0/default/Device.h"
+#include "core/2.0/default/PrimaryDevice.h"
 
 #define AUDIO_HAL_VERSION V2_0
-#include <device/all-versions/default/Conversions.h>
+#include <core/all-versions/default/DevicesFactory.impl.h>
 #undef AUDIO_HAL_VERSION
-
-#endif  // ANDROID_HARDWARE_AUDIO_V2_0_CONVERSIONS_H_
