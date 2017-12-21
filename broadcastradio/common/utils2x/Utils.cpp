@@ -206,6 +206,9 @@ static bool isValid(const ProgramIdentifier& id) {
     };
 
     switch (getType(id)) {
+        case IdentifierType::INVALID:
+            expect(false, "IdentifierType::INVALID");
+            break;
         case IdentifierType::AMFM_FREQUENCY:
         case IdentifierType::DAB_FREQUENCY:
         case IdentifierType::DRMO_FREQUENCY:
