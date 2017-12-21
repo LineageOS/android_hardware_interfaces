@@ -33,6 +33,28 @@ interface IBroadcastRadio {
     getProperties() generates (Properties properties);
 
     /**
+     * Fetches current or possible AM/FM region configuration.
+     *
+     * @param full If true, returns full hardware capabilities.
+     *             If false, returns current regional configuration.
+     * @return result OK in case of success.
+     *                NOT_SUPPORTED if the tuner doesn't support AM/FM.
+     * @return config Hardware capabilities (full=true) or
+     *                current configuration (full=false).
+     */
+    getAmFmRegionConfig(bool full)
+            generates (Result result, AmFmRegionConfig config);
+
+    /**
+     * Fetches current DAB region configuration.
+     *
+     * @return result OK in case of success.
+     *                NOT_SUPPORTED if the tuner doesn't support DAB.
+     * @return config Current configuration.
+     */
+    getDabRegionConfig() generates (Result result, vec<DabTableEntry> config);
+
+    /**
      * Opens a new tuner session.
      *
      * There may be only one session active at a time. If the new session was

@@ -26,9 +26,11 @@
 #include <broadcastradio-vts-utils/call-barrier.h>
 #include <broadcastradio-vts-utils/mock-timeout.h>
 #include <broadcastradio-vts-utils/pointer-utils.h>
+#include <cutils/bitops.h>
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <regex>
 
 namespace android {
 namespace hardware {
@@ -93,6 +95,7 @@ class BroadcastRadioHalTest : public ::testing::VtsHalHidlTargetTestBase {
     virtual void TearDown() override;
 
     bool openSession();
+    bool getAmFmRegionConfig(bool full, AmFmRegionConfig* config);
 
     sp<IBroadcastRadio> mModule;
     Properties mProperties;
@@ -159,6 +162,22 @@ bool BroadcastRadioHalTest::openSession() {
     return nullptr != mSession.get();
 }
 
+bool BroadcastRadioHalTest::getAmFmRegionConfig(bool full, AmFmRegionConfig* config) {
+    auto halResult = Result::UNKNOWN_ERROR;
+    auto cb = [&](Result result, AmFmRegionConfig configCb) {
+        halResult = result;
+        if (config) *config = configCb;
+    };
+
+    auto hidlResult = mModule->getAmFmRegionConfig(full, cb);
+    EXPECT_TRUE(hidlResult.isOk());
+
+    if (halResult == Result::NOT_SUPPORTED) return false;
+
+    EXPECT_EQ(Result::OK, halResult);
+    return halResult == Result::OK;
+}
+
 /**
  * Test session opening.
  *
@@ -179,6 +198,127 @@ TEST_F(BroadcastRadioHalTest, OpenSession) {
     auto secondSession = mSession;
     mSession.clear();
     ASSERT_TRUE(openSession());
+}
+
+static bool isValidAmFmFreq(uint64_t freq) {
+    auto id = utils::make_identifier(IdentifierType::AMFM_FREQUENCY, freq);
+    return utils::isValid(id);
+}
+
+static void validateRange(const AmFmBandRange& range) {
+    EXPECT_TRUE(isValidAmFmFreq(range.lowerBound));
+    EXPECT_TRUE(isValidAmFmFreq(range.upperBound));
+    EXPECT_LT(range.lowerBound, range.upperBound);
+    EXPECT_GT(range.spacing, 0u);
+    EXPECT_EQ(0u, (range.upperBound - range.lowerBound) % range.spacing);
+}
+
+static bool supportsFM(const AmFmRegionConfig& config) {
+    for (auto&& range : config.ranges) {
+        if (utils::getBand(range.lowerBound) == utils::FrequencyBand::FM) return true;
+    }
+    return false;
+}
+
+/**
+ * Test fetching AM/FM regional configuration.
+ *
+ * Verifies that:
+ *  - AM/FM regional configuration is either set at startup or not supported at all by the hardware;
+ *  - there is at least one AM/FM band configured;
+ *  - FM Deemphasis and RDS are correctly configured for FM-capable radio;
+ *  - all channel grids (frequency ranges and spacings) are valid;
+ *  - scan spacing is a multiply of manual spacing value.
+ */
+TEST_F(BroadcastRadioHalTest, GetAmFmRegionConfig) {
+    AmFmRegionConfig config;
+    bool supported = getAmFmRegionConfig(false, &config);
+    if (!supported) {
+        printSkipped("AM/FM not supported");
+        return;
+    }
+
+    EXPECT_GT(config.ranges.size(), 0u);
+    EXPECT_LE(popcountll(config.fmDeemphasis), 1);
+    EXPECT_LE(popcountll(config.fmRds), 1);
+
+    for (auto&& range : config.ranges) {
+        validateRange(range);
+        EXPECT_EQ(0u, range.scanSpacing % range.spacing);
+        EXPECT_GE(range.scanSpacing, range.spacing);
+    }
+
+    if (supportsFM(config)) {
+        EXPECT_EQ(popcountll(config.fmDeemphasis), 1);
+    }
+}
+
+/**
+ * Test fetching AM/FM regional capabilities.
+ *
+ * Verifies that:
+ *  - AM/FM regional capabilities are either available or not supported at all by the hardware;
+ *  - there is at least one AM/FM range supported;
+ *  - there is at least one de-emphasis filter mode supported for FM-capable radio;
+ *  - all channel grids (frequency ranges and spacings) are valid;
+ *  - scan spacing is not set.
+ */
+TEST_F(BroadcastRadioHalTest, GetAmFmRegionConfigCapabilities) {
+    AmFmRegionConfig config;
+    bool supported = getAmFmRegionConfig(true, &config);
+    if (!supported) {
+        printSkipped("AM/FM not supported");
+        return;
+    }
+
+    EXPECT_GT(config.ranges.size(), 0u);
+
+    for (auto&& range : config.ranges) {
+        validateRange(range);
+        EXPECT_EQ(0u, range.scanSpacing);
+    }
+
+    if (supportsFM(config)) {
+        EXPECT_GE(popcountll(config.fmDeemphasis), 1);
+    }
+}
+
+/**
+ * Test fetching DAB regional configuration.
+ *
+ * Verifies that:
+ *  - DAB regional configuration is either set at startup or not supported at all by the hardware;
+ *  - all channel labels match correct format;
+ *  - all channel frequencies are in correct range.
+ */
+TEST_F(BroadcastRadioHalTest, GetDabRegionConfig) {
+    Result halResult;
+    hidl_vec<DabTableEntry> config;
+    auto cb = [&](Result result, hidl_vec<DabTableEntry> configCb) {
+        halResult = result;
+        config = configCb;
+    };
+    auto hidlResult = mModule->getDabRegionConfig(cb);
+    ASSERT_TRUE(hidlResult.isOk());
+
+    if (halResult == Result::NOT_SUPPORTED) {
+        printSkipped("DAB not supported");
+        return;
+    }
+    ASSERT_EQ(Result::OK, halResult);
+
+    std::regex re("^[A-Z0-9]{2,5}$");
+    // double-check correctness of the test
+    ASSERT_TRUE(std::regex_match("5A", re));
+    ASSERT_FALSE(std::regex_match("5a", re));
+    ASSERT_FALSE(std::regex_match("123ABC", re));
+
+    for (auto&& entry : config) {
+        EXPECT_TRUE(std::regex_match(std::string(entry.label), re));
+
+        auto id = utils::make_identifier(IdentifierType::DAB_FREQUENCY, entry.frequency);
+        EXPECT_TRUE(utils::isValid(id));
+    }
 }
 
 /**

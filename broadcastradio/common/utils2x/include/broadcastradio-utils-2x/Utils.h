@@ -27,6 +27,14 @@ namespace hardware {
 namespace broadcastradio {
 namespace utils {
 
+enum class FrequencyBand {
+    UNKNOWN,
+    FM,
+    AM_LW,
+    AM_MW,
+    AM_SW,
+};
+
 V2_0::IdentifierType getType(uint32_t typeAsInt);
 V2_0::IdentifierType getType(const V2_0::ProgramIdentifier& id);
 
@@ -62,6 +70,16 @@ class IdentifierIterator
 
 IdentifierIterator begin(const V2_0::ProgramSelector& sel);
 IdentifierIterator end(const V2_0::ProgramSelector& sel);
+
+/**
+ * Guesses band from the frequency value.
+ *
+ * The band bounds are not exact to cover multiple regions.
+ * The function is biased towards success, i.e. it never returns
+ * FrequencyBand::UNKNOWN for correct frequency, but a result for
+ * incorrect one is undefined (it doesn't have to return UNKNOWN).
+ */
+FrequencyBand getBand(uint64_t frequency);
 
 /**
  * Checks, if {@code pointer} tunes to {@channel}.
@@ -105,6 +123,7 @@ std::vector<uint64_t> getAllIds(const V2_0::ProgramSelector& sel, const V2_0::Id
  */
 bool isSupported(const V2_0::Properties& prop, const V2_0::ProgramSelector& sel);
 
+bool isValid(const V2_0::ProgramIdentifier& id);
 bool isValid(const V2_0::ProgramSelector& sel);
 
 V2_0::ProgramIdentifier make_identifier(V2_0::IdentifierType type, uint64_t value);

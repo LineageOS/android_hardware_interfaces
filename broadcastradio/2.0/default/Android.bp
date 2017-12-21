@@ -24,6 +24,9 @@ cc_binary {
         "-Wextra",
         "-Werror",
     ],
+    cppflags: [
+        "-std=c++1z",
+    ],
     srcs: [
         "BroadcastRadio.cpp",
         "TunerSession.cpp",
