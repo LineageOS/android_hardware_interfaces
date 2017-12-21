@@ -12,7 +12,6 @@ LOCAL_SHARED_LIBRARIES := \
     libsoftkeymasterdevice \
     libcrypto \
     libkeymaster_portable \
-    libkeymaster_staging \
     libpuresoftkeymasterdevice \
     libkeymaster3device \
     libhidlbase \
