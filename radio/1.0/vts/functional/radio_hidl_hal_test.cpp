@@ -43,8 +43,6 @@ void RadioHidlTest::SetUp() {
     EXPECT_EQ(CardState::ABSENT, cardStatus.cardState);
 }
 
-void RadioHidlTest::TearDown() {}
-
 void RadioHidlTest::notify() {
     std::unique_lock<std::mutex> lock(mtx);
     count++;
