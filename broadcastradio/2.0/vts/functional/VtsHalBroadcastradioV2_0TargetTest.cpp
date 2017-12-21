@@ -58,9 +58,15 @@ static constexpr auto tune = 30s;
 }  // namespace timeout
 
 static const ConfigFlag gConfigFlagValues[] = {
-    ConfigFlag::FORCE_MONO,       ConfigFlag::FORCE_ANALOG,     ConfigFlag::FORCE_DIGITAL,
-    ConfigFlag::RDS_AF,           ConfigFlag::RDS_REG,          ConfigFlag::DAB_IMPLICIT_LINKING,
-    ConfigFlag::DAB_HARD_LINKING, ConfigFlag::DAB_SOFT_LINKING,
+    ConfigFlag::FORCE_MONO,
+    ConfigFlag::FORCE_ANALOG,
+    ConfigFlag::FORCE_DIGITAL,
+    ConfigFlag::RDS_AF,
+    ConfigFlag::RDS_REG,
+    ConfigFlag::DAB_DAB_LINKING,
+    ConfigFlag::DAB_FM_LINKING,
+    ConfigFlag::DAB_DAB_SOFT_LINKING,
+    ConfigFlag::DAB_FM_SOFT_LINKING,
 };
 
 struct TunerCallbackMock : public ITunerCallback {
