@@ -748,15 +748,17 @@ bool ComposerClient::CommandReader::parsePresentOrValidateDisplay(uint16_t lengt
     }
 
     // First try to Present as is.
-    int presentFence = -1;
-    std::vector<Layer> layers;
-    std::vector<int> fences;
-    auto err = mHal.presentDisplay(mDisplay, &presentFence, &layers, &fences);
-    if (err == Error::NONE) {
-        mWriter.setPresentOrValidateResult(1);
-        mWriter.setPresentFence(presentFence);
-        mWriter.setReleaseFences(layers, fences);
-        return true;
+    if (mHal.hasCapability(HWC2_CAPABILITY_SKIP_VALIDATE)) {
+        int presentFence = -1;
+        std::vector<Layer> layers;
+        std::vector<int> fences;
+        auto err = mHal.presentDisplay(mDisplay, &presentFence, &layers, &fences);
+        if (err == Error::NONE) {
+            mWriter.setPresentOrValidateResult(1);
+            mWriter.setPresentFence(presentFence);
+            mWriter.setReleaseFences(layers, fences);
+            return true;
+        }
     }
 
     // Present has failed. We need to fallback to validate
@@ -766,9 +768,8 @@ bool ComposerClient::CommandReader::parsePresentOrValidateDisplay(uint16_t lengt
     std::vector<Layer> requestedLayers;
     std::vector<uint32_t> requestMasks;
 
-    err = mHal.validateDisplay(mDisplay, &changedLayers,
-                               &compositionTypes, &displayRequestMask,
-                               &requestedLayers, &requestMasks);
+    auto err = mHal.validateDisplay(mDisplay, &changedLayers, &compositionTypes,
+                                    &displayRequestMask, &requestedLayers, &requestMasks);
     if (err == Error::NONE) {
         mWriter.setPresentOrValidateResult(0);
         mWriter.setChangedCompositionTypes(changedLayers,
