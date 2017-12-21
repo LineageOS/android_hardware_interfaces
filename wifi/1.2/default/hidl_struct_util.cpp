@@ -1118,6 +1118,33 @@ bool convertHidlNanEnableRequestToLegacy(
     return true;
 }
 
+bool convertHidlNanEnableRequest_1_2ToLegacy(
+    const NanEnableRequest& hidl_request1,
+    const NanConfigRequestSupplemental& hidl_request2,
+    legacy_hal::NanEnableRequest* legacy_request) {
+    if (!legacy_request) {
+        LOG(ERROR)
+            << "convertHidlNanEnableRequest_1_2ToLegacy: null legacy_request";
+        return false;
+    }
+
+    *legacy_request = {};
+    if (!convertHidlNanEnableRequestToLegacy(hidl_request1, legacy_request)) {
+        return false;
+    }
+
+    legacy_request->config_discovery_beacon_int = 1;
+    legacy_request->discovery_beacon_interval =
+        hidl_request2.discoveryBeaconIntervalMs;
+    legacy_request->config_nss = 1;
+    legacy_request->nss = hidl_request2.numberOfSpatialStreamsInDiscovery;
+    legacy_request->config_dw_early_termination = 1;
+    legacy_request->enable_dw_termination =
+        hidl_request2.enableDiscoveryWindowEarlyTermination;
+
+    return true;
+}
+
 bool convertHidlNanPublishRequestToLegacy(
     const NanPublishRequest& hidl_request,
     legacy_hal::NanPublishRequest* legacy_request) {
@@ -1596,6 +1623,33 @@ bool convertHidlNanConfigRequestToLegacy(
     legacy_request->config_dw.dw_5g_interval_val =
         hidl_request.bandSpecificConfig[(size_t)NanBandIndex::NAN_BAND_5GHZ]
             .discoveryWindowIntervalVal;
+
+    return true;
+}
+
+bool convertHidlNanConfigRequest_1_2ToLegacy(
+    const NanConfigRequest& hidl_request1,
+    const NanConfigRequestSupplemental& hidl_request2,
+    legacy_hal::NanConfigRequest* legacy_request) {
+    if (!legacy_request) {
+        LOG(ERROR) << "convertHidlNanConfigRequest_1_2ToLegacy: legacy_request "
+                      "is null";
+        return false;
+    }
+
+    *legacy_request = {};
+    if (!convertHidlNanConfigRequestToLegacy(hidl_request1, legacy_request)) {
+        return false;
+    }
+
+    legacy_request->config_discovery_beacon_int = 1;
+    legacy_request->discovery_beacon_interval =
+        hidl_request2.discoveryBeaconIntervalMs;
+    legacy_request->config_nss = 1;
+    legacy_request->nss = hidl_request2.numberOfSpatialStreamsInDiscovery;
+    legacy_request->config_dw_early_termination = 1;
+    legacy_request->enable_dw_termination =
+        hidl_request2.enableDiscoveryWindowEarlyTermination;
 
     return true;
 }

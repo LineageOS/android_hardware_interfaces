@@ -117,8 +117,10 @@ class WifiChipTest : public Test {
             });
         } else if (type == IfaceType::NAN) {
             chip_->createNanIface(
-                [&iface_name](const WifiStatus& status,
-                              const sp<IWifiNanIface>& iface) {
+                [&iface_name](
+                    const WifiStatus& status,
+                    const sp<android::hardware::wifi::V1_0::IWifiNanIface>&
+                        iface) {
                     if (WifiStatusCode::SUCCESS == status.code) {
                         ASSERT_NE(iface.get(), nullptr);
                         iface->getName([&iface_name](const WifiStatus& status,
