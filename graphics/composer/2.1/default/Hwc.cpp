@@ -47,8 +47,7 @@ HwcHal::HwcHal(const hw_module_t* module)
     }
 
     initCapabilities();
-    if (majorVersion >= 2 &&
-        hasCapability(Capability::PRESENT_FENCE_IS_NOT_RELIABLE)) {
+    if (majorVersion >= 2 && hasCapability(HWC2_CAPABILITY_PRESENT_FENCE_IS_NOT_RELIABLE)) {
         ALOGE("Present fence must be reliable from HWC2 on.");
         abort();
     }
@@ -114,12 +113,14 @@ void HwcHal::initCapabilities()
     uint32_t count = 0;
     mDevice->getCapabilities(mDevice, &count, nullptr);
 
-    std::vector<Capability> caps(count);
-    mDevice->getCapabilities(mDevice, &count, reinterpret_cast<
-              std::underlying_type<Capability>::type*>(caps.data()));
+    std::vector<int32_t> caps(count);
+    mDevice->getCapabilities(mDevice, &count, caps.data());
     caps.resize(count);
 
-    mCapabilities.insert(caps.cbegin(), caps.cend());
+    mCapabilities.reserve(count);
+    for (auto cap : caps) {
+        mCapabilities.insert(static_cast<hwc2_capability_t>(cap));
+    }
 }
 
 template<typename T>
@@ -188,7 +189,7 @@ void HwcHal::initDispatch()
     initDispatch(HWC2_FUNCTION_SET_LAYER_PLANE_ALPHA,
             &mDispatch.setLayerPlaneAlpha);
 
-    if (hasCapability(Capability::SIDEBAND_STREAM)) {
+    if (hasCapability(HWC2_CAPABILITY_SIDEBAND_STREAM)) {
         initDispatch(HWC2_FUNCTION_SET_LAYER_SIDEBAND_STREAM,
                 &mDispatch.setLayerSidebandStream);
     }
@@ -208,15 +209,26 @@ void HwcHal::initDispatch()
     initDispatch(HWC2_FUNCTION_VALIDATE_DISPLAY, &mDispatch.validateDisplay);
 }
 
-bool HwcHal::hasCapability(Capability capability) const
-{
+bool HwcHal::hasCapability(hwc2_capability_t capability) {
     return (mCapabilities.count(capability) > 0);
 }
 
 Return<void> HwcHal::getCapabilities(getCapabilities_cb hidl_cb)
 {
-    std::vector<Capability> caps(
-            mCapabilities.cbegin(), mCapabilities.cend());
+    std::vector<Capability> caps;
+    caps.reserve(mCapabilities.size());
+    for (auto cap : mCapabilities) {
+        switch (cap) {
+            case HWC2_CAPABILITY_SIDEBAND_STREAM:
+            case HWC2_CAPABILITY_SKIP_CLIENT_COLOR_TRANSFORM:
+            case HWC2_CAPABILITY_PRESENT_FENCE_IS_NOT_RELIABLE:
+                caps.push_back(static_cast<Capability>(cap));
+                break;
+            default:
+                // not all HWC2 caps are defined in HIDL
+                break;
+        }
+    }
 
     hidl_vec<Capability> caps_reply;
     caps_reply.setToExternal(caps.data(), caps.size());

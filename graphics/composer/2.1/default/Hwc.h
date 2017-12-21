@@ -58,14 +58,13 @@ public:
     HwcHal(const hw_module_t* module);
     virtual ~HwcHal();
 
-    bool hasCapability(Capability capability) const;
-
     // IComposer interface
     Return<void> getCapabilities(getCapabilities_cb hidl_cb) override;
     Return<void> dumpDebugInfo(dumpDebugInfo_cb hidl_cb) override;
     Return<void> createClient(createClient_cb hidl_cb) override;
 
     // ComposerBase interface
+    bool hasCapability(hwc2_capability_t capability) override;
     void removeClient() override;
     void enableCallback(bool enable) override;
     uint32_t getMaxVirtualDisplayCount() override;
@@ -168,7 +167,7 @@ private:
 
     hwc2_device_t* mDevice;
 
-    std::unordered_set<Capability> mCapabilities;
+    std::unordered_set<hwc2_capability_t> mCapabilities;
 
     struct {
         HWC2_PFN_ACCEPT_DISPLAY_CHANGES acceptDisplayChanges;
