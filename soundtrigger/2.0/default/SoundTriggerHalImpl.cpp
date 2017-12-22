@@ -39,17 +39,13 @@ void SoundTriggerHalImpl::soundModelCallback(struct sound_trigger_model_event* h
         ALOGW("soundModelCallback called on stale client");
         return;
     }
-    if (halEvent->model != client->mHalHandle) {
+    if (halEvent->model != client->getHalHandle()) {
         ALOGW("soundModelCallback call with wrong handle %d on client with handle %d",
-              (int)halEvent->model, (int)client->mHalHandle);
+              (int)halEvent->model, (int)client->getHalHandle());
         return;
     }
 
-    ISoundTriggerHwCallback::ModelEvent event;
-    convertSoundModelEventFromHal(&event, halEvent);
-    event.model = client->mId;
-
-    client->mCallback->soundModelCallback(event, client->mCookie);
+    client->soundModelCallback(halEvent);
 }
 
 // static
@@ -66,20 +62,10 @@ void SoundTriggerHalImpl::recognitionCallback(struct sound_trigger_recognition_e
         return;
     }
 
-    ISoundTriggerHwCallback::RecognitionEvent* event = convertRecognitionEventFromHal(halEvent);
-    event->model = client->mId;
-    if (halEvent->type == SOUND_MODEL_TYPE_KEYPHRASE) {
-        client->mCallback->phraseRecognitionCallback(
-            *(reinterpret_cast<ISoundTriggerHwCallback::PhraseRecognitionEvent*>(event)),
-            client->mCookie);
-    } else {
-        client->mCallback->recognitionCallback(*event, client->mCookie);
-    }
-    delete event;
+    client->recognitionCallback(halEvent);
 }
 
-// Methods from ::android::hardware::soundtrigger::V2_0::ISoundTriggerHw follow.
-Return<void> SoundTriggerHalImpl::getProperties(getProperties_cb _hidl_cb) {
+Return<void> SoundTriggerHalImpl::getProperties(ISoundTriggerHw::getProperties_cb _hidl_cb) {
     ALOGV("getProperties() mHwDevice %p", mHwDevice);
     int ret;
     struct sound_trigger_properties halProperties;
@@ -103,13 +89,9 @@ exit:
 }
 
 int SoundTriggerHalImpl::doLoadSoundModel(const ISoundTriggerHw::SoundModel& soundModel,
-                                          const sp<ISoundTriggerHwCallback>& callback,
-                                          ISoundTriggerHwCallback::CallbackCookie cookie,
-                                          uint32_t* modelId) {
+                                          sp<SoundModelClient> client) {
     int32_t ret = 0;
     struct sound_trigger_sound_model* halSoundModel;
-    *modelId = 0;
-    sp<SoundModelClient> client;
 
     ALOGV("doLoadSoundModel() data size %zu", soundModel.data.size());
 
@@ -124,19 +106,9 @@ int SoundTriggerHalImpl::doLoadSoundModel(const ISoundTriggerHw::SoundModel& sou
         goto exit;
     }
 
-    {
-        AutoMutex lock(mLock);
-        do {
-            *modelId = nextUniqueId();
-        } while (mClients.valueFor(*modelId) != 0 && *modelId != 0);
-    }
-    LOG_ALWAYS_FATAL_IF(*modelId == 0, "wrap around in sound model IDs, num loaded models %zu",
-                        mClients.size());
-
-    client = new SoundModelClient(*modelId, callback, cookie);
-
+    sound_model_handle_t halHandle;
     ret = mHwDevice->load_sound_model(mHwDevice, halSoundModel, soundModelCallback, client.get(),
-                                      &client->mHalHandle);
+                                      &halHandle);
 
     free(halSoundModel);
 
@@ -144,9 +116,10 @@ int SoundTriggerHalImpl::doLoadSoundModel(const ISoundTriggerHw::SoundModel& sou
         goto exit;
     }
 
+    client->setHalHandle(halHandle);
     {
         AutoMutex lock(mLock);
-        mClients.add(*modelId, client);
+        mClients.add(client->getId(), client);
     }
 
 exit:
@@ -156,11 +129,9 @@ exit:
 Return<void> SoundTriggerHalImpl::loadSoundModel(const ISoundTriggerHw::SoundModel& soundModel,
                                                  const sp<ISoundTriggerHwCallback>& callback,
                                                  ISoundTriggerHwCallback::CallbackCookie cookie,
-                                                 loadSoundModel_cb _hidl_cb) {
-    uint32_t modelId = 0;
-    int32_t ret = doLoadSoundModel(soundModel, callback, cookie, &modelId);
-
-    _hidl_cb(ret, modelId);
+                                                 ISoundTriggerHw::loadSoundModel_cb _hidl_cb) {
+    sp<SoundModelClient> client = new SoundModelClient_2_0(nextUniqueModelId(), cookie, callback);
+    _hidl_cb(doLoadSoundModel(soundModel, client), client->getId());
     return Void();
 }
 
@@ -168,11 +139,9 @@ Return<void> SoundTriggerHalImpl::loadPhraseSoundModel(
     const ISoundTriggerHw::PhraseSoundModel& soundModel,
     const sp<ISoundTriggerHwCallback>& callback, ISoundTriggerHwCallback::CallbackCookie cookie,
     ISoundTriggerHw::loadPhraseSoundModel_cb _hidl_cb) {
-    uint32_t modelId = 0;
-    int32_t ret = doLoadSoundModel((const ISoundTriggerHw::SoundModel&)soundModel, callback, cookie,
-                                   &modelId);
-
-    _hidl_cb(ret, modelId);
+    sp<SoundModelClient> client = new SoundModelClient_2_0(nextUniqueModelId(), cookie, callback);
+    _hidl_cb(doLoadSoundModel((const ISoundTriggerHw::SoundModel&)soundModel, client),
+             client->getId());
     return Void();
 }
 
@@ -194,7 +163,7 @@ Return<int32_t> SoundTriggerHalImpl::unloadSoundModel(SoundModelHandle modelHand
         }
     }
 
-    ret = mHwDevice->unload_sound_model(mHwDevice, client->mHalHandle);
+    ret = mHwDevice->unload_sound_model(mHwDevice, client->getHalHandle());
 
     mClients.removeItem(modelHandle);
 
@@ -203,9 +172,7 @@ exit:
 }
 
 Return<int32_t> SoundTriggerHalImpl::startRecognition(
-    SoundModelHandle modelHandle, const ISoundTriggerHw::RecognitionConfig& config,
-    const sp<ISoundTriggerHwCallback>& callback __unused,
-    ISoundTriggerHwCallback::CallbackCookie cookie __unused) {
+    SoundModelHandle modelHandle, const ISoundTriggerHw::RecognitionConfig& config) {
     int32_t ret;
     sp<SoundModelClient> client;
     struct sound_trigger_recognition_config* halConfig;
@@ -230,7 +197,7 @@ Return<int32_t> SoundTriggerHalImpl::startRecognition(
         ret = -EINVAL;
         goto exit;
     }
-    ret = mHwDevice->start_recognition(mHwDevice, client->mHalHandle, halConfig,
+    ret = mHwDevice->start_recognition(mHwDevice, client->getHalHandle(), halConfig,
                                        recognitionCallback, client.get());
 
     free(halConfig);
@@ -256,7 +223,7 @@ Return<int32_t> SoundTriggerHalImpl::stopRecognition(SoundModelHandle modelHandl
         }
     }
 
-    ret = mHwDevice->stop_recognition(mHwDevice, client->mHalHandle);
+    ret = mHwDevice->stop_recognition(mHwDevice, client->getHalHandle());
 
 exit:
     return ret;
@@ -316,9 +283,18 @@ SoundTriggerHalImpl::~SoundTriggerHalImpl() {
     }
 }
 
-uint32_t SoundTriggerHalImpl::nextUniqueId() {
-    return (uint32_t)atomic_fetch_add_explicit(&mNextModelId, (uint_fast32_t)1,
-                                               memory_order_acq_rel);
+uint32_t SoundTriggerHalImpl::nextUniqueModelId() {
+    uint32_t modelId = 0;
+    {
+        AutoMutex lock(mLock);
+        do {
+            modelId =
+                atomic_fetch_add_explicit(&mNextModelId, (uint_fast32_t)1, memory_order_acq_rel);
+        } while (mClients.valueFor(modelId) != 0 && modelId != 0);
+    }
+    LOG_ALWAYS_FATAL_IF(modelId == 0, "wrap around in sound model IDs, num loaded models %zu",
+                        mClients.size());
+    return modelId;
 }
 
 void SoundTriggerHalImpl::convertUuidFromHal(Uuid* uuid, const sound_trigger_uuid_t* halUuid) {
@@ -464,31 +440,20 @@ void SoundTriggerHalImpl::convertSoundModelEventFromHal(
 }
 
 // static
-ISoundTriggerHwCallback::RecognitionEvent* SoundTriggerHalImpl::convertRecognitionEventFromHal(
-    const struct sound_trigger_recognition_event* halEvent) {
-    ISoundTriggerHwCallback::RecognitionEvent* event;
-
-    if (halEvent->type == SOUND_MODEL_TYPE_KEYPHRASE) {
-        const struct sound_trigger_phrase_recognition_event* halPhraseEvent =
-            reinterpret_cast<const struct sound_trigger_phrase_recognition_event*>(halEvent);
-        ISoundTriggerHwCallback::PhraseRecognitionEvent* phraseEvent =
-            new ISoundTriggerHwCallback::PhraseRecognitionEvent();
-
-        PhraseRecognitionExtra* phraseExtras =
-            new PhraseRecognitionExtra[halPhraseEvent->num_phrases];
-        for (unsigned int i = 0; i < halPhraseEvent->num_phrases; i++) {
-            convertPhraseRecognitionExtraFromHal(&phraseExtras[i],
-                                                 &halPhraseEvent->phrase_extras[i]);
-        }
-        phraseEvent->phraseExtras.setToExternal(phraseExtras, halPhraseEvent->num_phrases);
-        // FIXME: transfer buffer ownership. should have a method for that in hidl_vec
-        phraseEvent->phraseExtras.resize(halPhraseEvent->num_phrases);
-        delete[] phraseExtras;
-        event = reinterpret_cast<ISoundTriggerHwCallback::RecognitionEvent*>(phraseEvent);
-    } else {
-        event = new ISoundTriggerHwCallback::RecognitionEvent();
+void SoundTriggerHalImpl::convertPhaseRecognitionEventFromHal(
+    ISoundTriggerHwCallback::PhraseRecognitionEvent* event,
+    const struct sound_trigger_phrase_recognition_event* halEvent) {
+    event->phraseExtras.resize(halEvent->num_phrases);
+    for (unsigned int i = 0; i < halEvent->num_phrases; i++) {
+        convertPhraseRecognitionExtraFromHal(&event->phraseExtras[i], &halEvent->phrase_extras[i]);
     }
+    convertRecognitionEventFromHal(&event->common, &halEvent->common);
+}
 
+// static
+void SoundTriggerHalImpl::convertRecognitionEventFromHal(
+    ISoundTriggerHwCallback::RecognitionEvent* event,
+    const struct sound_trigger_recognition_event* halEvent) {
     event->status = static_cast<ISoundTriggerHwCallback::RecognitionStatus>(halEvent->status);
     event->type = static_cast<SoundModelType>(halEvent->type);
     // event->model to be remapped by called
@@ -504,8 +469,6 @@ ISoundTriggerHwCallback::RecognitionEvent* SoundTriggerHalImpl::convertRecogniti
     event->data.setToExternal(
         const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(halEvent)) + halEvent->data_offset,
         halEvent->data_size);
-
-    return event;
 }
 
 // static
@@ -515,20 +478,37 @@ void SoundTriggerHalImpl::convertPhraseRecognitionExtraFromHal(
     extra->recognitionModes = halExtra->recognition_modes;
     extra->confidenceLevel = halExtra->confidence_level;
 
-    ConfidenceLevel* levels = new ConfidenceLevel[halExtra->num_levels];
-    for (unsigned int i = 0; i < halExtra->num_levels; i++) {
-        levels[i].userId = halExtra->levels[i].user_id;
-        levels[i].levelPercent = halExtra->levels[i].level;
-    }
-    extra->levels.setToExternal(levels, halExtra->num_levels);
-    // FIXME: transfer buffer ownership. should have a method for that in hidl_vec
     extra->levels.resize(halExtra->num_levels);
-    delete[] levels;
+    for (unsigned int i = 0; i < halExtra->num_levels; i++) {
+        extra->levels[i].userId = halExtra->levels[i].user_id;
+        extra->levels[i].levelPercent = halExtra->levels[i].level;
+    }
 }
 
-ISoundTriggerHw* HIDL_FETCH_ISoundTriggerHw(const char* /* name */) {
-    return new SoundTriggerHalImpl();
+void SoundTriggerHalImpl::SoundModelClient_2_0::recognitionCallback(
+    struct sound_trigger_recognition_event* halEvent) {
+    if (halEvent->type == SOUND_MODEL_TYPE_KEYPHRASE) {
+        ISoundTriggerHwCallback::PhraseRecognitionEvent event;
+        convertPhaseRecognitionEventFromHal(
+            &event, reinterpret_cast<sound_trigger_phrase_recognition_event*>(halEvent));
+        event.common.model = mId;
+        mCallback->phraseRecognitionCallback(event, mCookie);
+    } else {
+        ISoundTriggerHwCallback::RecognitionEvent event;
+        convertRecognitionEventFromHal(&event, halEvent);
+        event.model = mId;
+        mCallback->recognitionCallback(event, mCookie);
+    }
 }
+
+void SoundTriggerHalImpl::SoundModelClient_2_0::soundModelCallback(
+    struct sound_trigger_model_event* halEvent) {
+    ISoundTriggerHwCallback::ModelEvent event;
+    convertSoundModelEventFromHal(&event, halEvent);
+    event.model = mId;
+    mCallback->soundModelCallback(event, mCookie);
+}
+
 }  // namespace implementation
 }  // namespace V2_0
 }  // namespace soundtrigger
