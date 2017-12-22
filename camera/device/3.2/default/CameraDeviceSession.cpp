@@ -803,6 +803,89 @@ android_dataspace CameraDeviceSession::mapToLegacyDataspace(
    return dataSpace;
 }
 
+bool CameraDeviceSession::preProcessConfigurationLocked(
+        const StreamConfiguration& requestedConfiguration,
+        camera3_stream_configuration_t *stream_list /*out*/,
+        hidl_vec<camera3_stream_t*> *streams /*out*/) {
+
+    if ((stream_list == nullptr) || (streams == nullptr)) {
+        return false;
+    }
+
+    stream_list->operation_mode = (uint32_t) requestedConfiguration.operationMode;
+    stream_list->num_streams = requestedConfiguration.streams.size();
+    streams->resize(stream_list->num_streams);
+    stream_list->streams = streams->data();
+
+    for (uint32_t i = 0; i < stream_list->num_streams; i++) {
+        int id = requestedConfiguration.streams[i].id;
+
+        if (mStreamMap.count(id) == 0) {
+            Camera3Stream stream;
+            convertFromHidl(requestedConfiguration.streams[i], &stream);
+            mStreamMap[id] = stream;
+            mStreamMap[id].data_space = mapToLegacyDataspace(
+                    mStreamMap[id].data_space);
+            mCirculatingBuffers.emplace(stream.mId, CirculatingBuffers{});
+        } else {
+            // width/height/format must not change, but usage/rotation might need to change
+            if (mStreamMap[id].stream_type !=
+                    (int) requestedConfiguration.streams[i].streamType ||
+                    mStreamMap[id].width != requestedConfiguration.streams[i].width ||
+                    mStreamMap[id].height != requestedConfiguration.streams[i].height ||
+                    mStreamMap[id].format != (int) requestedConfiguration.streams[i].format ||
+                    mStreamMap[id].data_space !=
+                            mapToLegacyDataspace( static_cast<android_dataspace_t> (
+                                    requestedConfiguration.streams[i].dataSpace))) {
+                ALOGE("%s: stream %d configuration changed!", __FUNCTION__, id);
+                return false;
+            }
+            mStreamMap[id].rotation = (int) requestedConfiguration.streams[i].rotation;
+            mStreamMap[id].usage = (uint32_t) requestedConfiguration.streams[i].usage;
+        }
+        (*streams)[i] = &mStreamMap[id];
+    }
+
+    return true;
+}
+
+void CameraDeviceSession::postProcessConfigurationLocked(
+        const StreamConfiguration& requestedConfiguration) {
+    // delete unused streams, note we do this after adding new streams to ensure new stream
+    // will not have the same address as deleted stream, and HAL has a chance to reference
+    // the to be deleted stream in configure_streams call
+    for(auto it = mStreamMap.begin(); it != mStreamMap.end();) {
+        int id = it->first;
+        bool found = false;
+        for (const auto& stream : requestedConfiguration.streams) {
+            if (id == stream.id) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            // Unmap all buffers of deleted stream
+            // in case the configuration call succeeds and HAL
+            // is able to release the corresponding resources too.
+            cleanupBuffersLocked(id);
+            it = mStreamMap.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    // Track video streams
+    mVideoStreamIds.clear();
+    for (const auto& stream : requestedConfiguration.streams) {
+        if (stream.streamType == StreamType::OUTPUT &&
+            stream.usage &
+                graphics::common::V1_0::BufferUsage::VIDEO_ENCODER) {
+            mVideoStreamIds.push_back(stream.id);
+        }
+    }
+    mResultBatcher.setBatchedStreams(mVideoStreamIds);
+}
+
 Return<void> CameraDeviceSession::configureStreams(
         const StreamConfiguration& requestedConfiguration,
         ICameraDeviceSession::configureStreams_cb _hidl_cb)  {
@@ -840,42 +923,11 @@ Return<void> CameraDeviceSession::configureStreams(
         return Void();
     }
 
-    camera3_stream_configuration_t stream_list;
+    camera3_stream_configuration_t stream_list{};
     hidl_vec<camera3_stream_t*> streams;
-
-    stream_list.operation_mode = (uint32_t) requestedConfiguration.operationMode;
-    stream_list.num_streams = requestedConfiguration.streams.size();
-    streams.resize(stream_list.num_streams);
-    stream_list.streams = streams.data();
-
-    for (uint32_t i = 0; i < stream_list.num_streams; i++) {
-        int id = requestedConfiguration.streams[i].id;
-
-        if (mStreamMap.count(id) == 0) {
-            Camera3Stream stream;
-            convertFromHidl(requestedConfiguration.streams[i], &stream);
-            mStreamMap[id] = stream;
-            mStreamMap[id].data_space = mapToLegacyDataspace(
-                    mStreamMap[id].data_space);
-            mCirculatingBuffers.emplace(stream.mId, CirculatingBuffers{});
-        } else {
-            // width/height/format must not change, but usage/rotation might need to change
-            if (mStreamMap[id].stream_type !=
-                    (int) requestedConfiguration.streams[i].streamType ||
-                    mStreamMap[id].width != requestedConfiguration.streams[i].width ||
-                    mStreamMap[id].height != requestedConfiguration.streams[i].height ||
-                    mStreamMap[id].format != (int) requestedConfiguration.streams[i].format ||
-                    mStreamMap[id].data_space !=
-                            mapToLegacyDataspace( static_cast<android_dataspace_t> (
-                                    requestedConfiguration.streams[i].dataSpace))) {
-                ALOGE("%s: stream %d configuration changed!", __FUNCTION__, id);
-                _hidl_cb(Status::INTERNAL_ERROR, outStreams);
-                return Void();
-            }
-            mStreamMap[id].rotation = (int) requestedConfiguration.streams[i].rotation;
-            mStreamMap[id].usage = (uint32_t) requestedConfiguration.streams[i].usage;
-        }
-        streams[i] = &mStreamMap[id];
+    if (!preProcessConfigurationLocked(requestedConfiguration, &stream_list, &streams)) {
+        _hidl_cb(Status::INTERNAL_ERROR, outStreams);
+        return Void();
     }
 
     ATRACE_BEGIN("camera3->configure_streams");
@@ -885,39 +937,7 @@ Return<void> CameraDeviceSession::configureStreams(
     // In case Hal returns error most likely it was not able to release
     // the corresponding resources of the deleted streams.
     if (ret == OK) {
-        // delete unused streams, note we do this after adding new streams to ensure new stream
-        // will not have the same address as deleted stream, and HAL has a chance to reference
-        // the to be deleted stream in configure_streams call
-        for(auto it = mStreamMap.begin(); it != mStreamMap.end();) {
-            int id = it->first;
-            bool found = false;
-            for (const auto& stream : requestedConfiguration.streams) {
-                if (id == stream.id) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                // Unmap all buffers of deleted stream
-                // in case the configuration call succeeds and HAL
-                // is able to release the corresponding resources too.
-                cleanupBuffersLocked(id);
-                it = mStreamMap.erase(it);
-            } else {
-                ++it;
-            }
-        }
-
-        // Track video streams
-        mVideoStreamIds.clear();
-        for (const auto& stream : requestedConfiguration.streams) {
-            if (stream.streamType == StreamType::OUTPUT &&
-                stream.usage &
-                    graphics::common::V1_0::BufferUsage::VIDEO_ENCODER) {
-                mVideoStreamIds.push_back(stream.id);
-            }
-        }
-        mResultBatcher.setBatchedStreams(mVideoStreamIds);
+        postProcessConfigurationLocked(requestedConfiguration);
     }
 
     if (ret == -EINVAL) {

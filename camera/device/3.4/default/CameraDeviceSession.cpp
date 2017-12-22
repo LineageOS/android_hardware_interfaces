@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "CamDevSession@3.3-impl"
+#define LOG_TAG "CamDevSession@3.4-impl"
 #include <android/log.h>
 
 #include <set>
@@ -27,21 +27,21 @@ namespace android {
 namespace hardware {
 namespace camera {
 namespace device {
-namespace V3_3 {
+namespace V3_4 {
 namespace implementation {
 
 CameraDeviceSession::CameraDeviceSession(
     camera3_device_t* device,
     const camera_metadata_t* deviceInfo,
     const sp<V3_2::ICameraDeviceCallback>& callback) :
-        V3_2::implementation::CameraDeviceSession(device, deviceInfo, callback) {
+        V3_3::implementation::CameraDeviceSession(device, deviceInfo, callback) {
 }
 
 CameraDeviceSession::~CameraDeviceSession() {
 }
 
-Return<void> CameraDeviceSession::configureStreams_3_3(
-        const StreamConfiguration& requestedConfiguration,
+Return<void> CameraDeviceSession::configureStreams_3_4(
+        const V3_4::StreamConfiguration& requestedConfiguration,
         ICameraDeviceSession::configureStreams_3_3_cb _hidl_cb)  {
     Status status = initStatus();
     HalStreamConfiguration outStreams;
@@ -77,9 +77,16 @@ Return<void> CameraDeviceSession::configureStreams_3_3(
         return Void();
     }
 
+    const camera_metadata_t *paramBuffer = nullptr;
+    if (0 < requestedConfiguration.sessionParams.size()) {
+        ::android::hardware::camera::common::V1_0::helper::CameraMetadata sessionParams;
+        V3_2::implementation::convertFromHidl(requestedConfiguration.sessionParams, &paramBuffer);
+    }
+
     camera3_stream_configuration_t stream_list{};
     hidl_vec<camera3_stream_t*> streams;
-    if (!preProcessConfigurationLocked(requestedConfiguration, &stream_list, &streams)) {
+    stream_list.session_parameters = paramBuffer;
+    if (!preProcessConfigurationLocked(requestedConfiguration.v3_2, &stream_list, &streams)) {
         _hidl_cb(Status::INTERNAL_ERROR, outStreams);
         return Void();
     }
@@ -91,7 +98,7 @@ Return<void> CameraDeviceSession::configureStreams_3_3(
     // In case Hal returns error most likely it was not able to release
     // the corresponding resources of the deleted streams.
     if (ret == OK) {
-        postProcessConfigurationLocked(requestedConfiguration);
+        postProcessConfigurationLocked(requestedConfiguration.v3_2);
     }
 
     if (ret == -EINVAL) {
@@ -99,7 +106,7 @@ Return<void> CameraDeviceSession::configureStreams_3_3(
     } else if (ret != OK) {
         status = Status::INTERNAL_ERROR;
     } else {
-        convertToHidl(stream_list, &outStreams);
+        V3_3::implementation::convertToHidl(stream_list, &outStreams);
         mFirstRequest = true;
     }
 
@@ -108,7 +115,7 @@ Return<void> CameraDeviceSession::configureStreams_3_3(
 }
 
 } // namespace implementation
-}  // namespace V3_3
+}  // namespace V3_4
 }  // namespace device
 }  // namespace camera
 }  // namespace hardware

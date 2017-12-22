@@ -87,3 +87,11 @@ A minor revision to the ICameraDevice.hal@3.2.
     supported in the legacy camera HAL.
 
 Added in Android 8.1.
+
+### ICameraDevice.hal@3.4:
+
+A minor revision to the ICameraDevice.hal@3.3.
+
+  - Adds support for session parameters during stream configuration.
+
+Added in Android 9

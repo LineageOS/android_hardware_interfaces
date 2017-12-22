@@ -112,6 +112,12 @@ protected:
     Return<Status> flush();
     Return<void> close();
 
+    //Helper methods
+    bool preProcessConfigurationLocked(const StreamConfiguration& requestedConfiguration,
+            camera3_stream_configuration_t *stream_list /*out*/,
+            hidl_vec<camera3_stream_t*> *streams /*out*/);
+    void postProcessConfigurationLocked(const StreamConfiguration& requestedConfiguration);
+
 protected:
 
     // protecting mClosed/mDisconnected/mInitFail
