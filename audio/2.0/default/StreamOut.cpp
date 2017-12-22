@@ -164,6 +164,9 @@ StreamOut::~StreamOut() {
     }
     mCallback.clear();
     mDevice->closeOutputStream(mStream);
+    // Closing the output stream in the HAL waits for the callback to finish,
+    // and joins the callback thread. Thus is it guaranteed that the callback
+    // thread will not be accessing our object anymore.
     mStream = nullptr;
 }
 
@@ -404,6 +407,8 @@ Return<void> StreamOut::getNextWriteTimestamp(
 
 Return<Result> StreamOut::setCallback(const sp<IStreamOutCallback>& callback) {
     if (mStream->set_callback == NULL) return Result::NOT_SUPPORTED;
+    // Safe to pass 'this' because it is guaranteed that the callback thread
+    // is joined prior to exit from StreamOut's destructor.
     int result = mStream->set_callback(mStream, StreamOut::asyncCallback, this);
     if (result == 0) {
         mCallback = callback;
@@ -420,19 +425,27 @@ Return<Result> StreamOut::clearCallback() {
 // static
 int StreamOut::asyncCallback(stream_callback_event_t event, void*,
                              void* cookie) {
-    wp<StreamOut> weakSelf(reinterpret_cast<StreamOut*>(cookie));
-    sp<StreamOut> self = weakSelf.promote();
-    if (self == nullptr || self->mCallback == nullptr) return 0;
+    // It is guaranteed that the callback thread is joined prior
+    // to exiting from StreamOut's destructor. Must *not* use sp<StreamOut>
+    // here because it can make this code the last owner of StreamOut,
+    // and an attempt to run the destructor on the callback thread
+    // will cause a deadlock in the legacy HAL code.
+    StreamOut *self = reinterpret_cast<StreamOut*>(cookie);
+    // It's correct to hold an sp<> to callback because the reference
+    // in the StreamOut instance can be cleared in the meantime. There is
+    // no difference on which thread to run IStreamOutCallback's destructor.
+    sp<IStreamOutCallback> callback = self->mCallback;
+    if (callback.get() == nullptr) return 0;
     ALOGV("asyncCallback() event %d", event);
     switch (event) {
         case STREAM_CBK_EVENT_WRITE_READY:
-            self->mCallback->onWriteReady();
+            callback->onWriteReady();
             break;
         case STREAM_CBK_EVENT_DRAIN_READY:
-            self->mCallback->onDrainReady();
+            callback->onDrainReady();
             break;
         case STREAM_CBK_EVENT_ERROR:
-            self->mCallback->onError();
+            callback->onError();
             break;
         default:
             ALOGW("asyncCallback() unknown event %d", event);
