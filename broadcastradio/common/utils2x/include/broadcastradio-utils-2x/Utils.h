@@ -20,13 +20,48 @@
 #include <chrono>
 #include <queue>
 #include <thread>
+#include <unordered_set>
 
 namespace android {
 namespace hardware {
 namespace broadcastradio {
 namespace utils {
 
+V2_0::IdentifierType getType(uint32_t typeAsInt);
 V2_0::IdentifierType getType(const V2_0::ProgramIdentifier& id);
+
+class IdentifierIterator
+    : public std::iterator<std::random_access_iterator_tag, V2_0::ProgramIdentifier, ssize_t,
+                           const V2_0::ProgramIdentifier*, const V2_0::ProgramIdentifier&> {
+    using traits = std::iterator_traits<IdentifierIterator>;
+    using ptr_type = typename traits::pointer;
+    using ref_type = typename traits::reference;
+    using diff_type = typename traits::difference_type;
+
+   public:
+    explicit IdentifierIterator(const V2_0::ProgramSelector& sel);
+
+    IdentifierIterator operator++(int);
+    IdentifierIterator& operator++();
+    ref_type operator*() const;
+    inline ptr_type operator->() const { return &operator*(); }
+    IdentifierIterator operator+(diff_type v) const { return IdentifierIterator(mSel, mPos + v); }
+    bool operator==(const IdentifierIterator& rhs) const;
+    inline bool operator!=(const IdentifierIterator& rhs) const { return !operator==(rhs); };
+
+   private:
+    explicit IdentifierIterator(const V2_0::ProgramSelector& sel, size_t pos);
+
+    std::reference_wrapper<const V2_0::ProgramSelector> mSel;
+
+    const V2_0::ProgramSelector& sel() const { return mSel.get(); }
+
+    /** 0 is the primary identifier, 1-n are secondary identifiers. */
+    size_t mPos = 0;
+};
+
+IdentifierIterator begin(const V2_0::ProgramSelector& sel);
+IdentifierIterator end(const V2_0::ProgramSelector& sel);
 
 /**
  * Checks, if {@code pointer} tunes to {@channel}.
@@ -76,6 +111,21 @@ V2_0::ProgramIdentifier make_identifier(V2_0::IdentifierType type, uint64_t valu
 V2_0::ProgramSelector make_selector_amfm(uint32_t frequency);
 V2_0::Metadata make_metadata(V2_0::MetadataKey key, int64_t value);
 V2_0::Metadata make_metadata(V2_0::MetadataKey key, std::string value);
+
+bool satisfies(const V2_0::ProgramFilter& filter, const V2_0::ProgramSelector& sel);
+
+struct ProgramInfoHasher {
+    size_t operator()(const V2_0::ProgramInfo& info) const;
+};
+
+struct ProgramInfoKeyEqual {
+    bool operator()(const V2_0::ProgramInfo& info1, const V2_0::ProgramInfo& info2) const;
+};
+
+typedef std::unordered_set<V2_0::ProgramInfo, ProgramInfoHasher, ProgramInfoKeyEqual>
+    ProgramInfoSet;
+
+void updateProgramList(ProgramInfoSet& list, const V2_0::ProgramListChunk& chunk);
 
 }  // namespace utils
 }  // namespace broadcastradio

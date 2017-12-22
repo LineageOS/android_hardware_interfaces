@@ -45,6 +45,7 @@ namespace delay {
 static constexpr auto scan = 200ms;
 static constexpr auto step = 100ms;
 static constexpr auto tune = 150ms;
+static constexpr auto list = 1s;
 
 }  // namespace delay
 
@@ -202,6 +203,38 @@ Return<void> TunerSession::cancel() {
     if (mIsClosed) return {};
 
     mThread.cancelAll();
+    return {};
+}
+
+Return<Result> TunerSession::startProgramListUpdates(const ProgramFilter& filter) {
+    ALOGV("%s(%s)", __func__, toString(filter).c_str());
+    lock_guard<mutex> lk(mMut);
+    if (mIsClosed) return Result::INVALID_STATE;
+
+    auto list = virtualRadio().getProgramList();
+    vector<VirtualProgram> filteredList;
+    auto filterCb = [&filter](const VirtualProgram& program) {
+        return utils::satisfies(filter, program.selector);
+    };
+    std::copy_if(list.begin(), list.end(), std::back_inserter(filteredList), filterCb);
+
+    auto task = [this, list]() {
+        lock_guard<mutex> lk(mMut);
+
+        ProgramListChunk chunk = {};
+        chunk.purge = true;
+        chunk.complete = true;
+        chunk.modified = hidl_vec<ProgramInfo>(list.begin(), list.end());
+
+        mCallback->onProgramListUpdated(chunk);
+    };
+    mThread.schedule(task, delay::list);
+
+    return Result::OK;
+}
+
+Return<void> TunerSession::stopProgramListUpdates() {
+    ALOGV("%s", __func__);
     return {};
 }
 

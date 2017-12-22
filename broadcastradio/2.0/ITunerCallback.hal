@@ -39,6 +39,21 @@ interface ITunerCallback {
     oneway onCurrentProgramInfoChanged(ProgramInfo info);
 
     /**
+     * A delta update of the program list, called whenever there's a change in
+     * the list.
+     *
+     * If there are frequent changes, HAL implementation must throttle the rate
+     * of the updates.
+     *
+     * There is a hard limit on binder transaction buffer, and the list must
+     * not exceed it. For large lists, HAL implementation must split them to
+     * multiple chunks, no larger than 500kiB each.
+     *
+     * @param chunk A chunk of the program list update.
+     */
+    oneway onProgramListUpdated(ProgramListChunk chunk);
+
+    /**
      * Method called by the HAL when the antenna gets connected or disconnected.
      *
      * For a new tuner session, client must assume the antenna is connected.
