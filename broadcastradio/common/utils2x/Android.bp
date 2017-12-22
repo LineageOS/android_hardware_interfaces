@@ -23,6 +23,9 @@ cc_library_static {
         "-Wextra",
         "-Werror",
     ],
+    cppflags: [
+        "-std=c++1z",
+    ],
     srcs: [
         "Utils.cpp",
     ],
