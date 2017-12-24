@@ -12,9 +12,11 @@ cc_library_shared {
         "android.hardware.camera.device@1.0",
         "android.hardware.camera.device@3.2",
         "android.hardware.camera.device@3.3",
+        "android.hardware.camera.device@3.4",
         "camera.device@1.0-impl",
         "camera.device@3.2-impl",
         "camera.device@3.3-impl",
+        "camera.device@3.4-impl",
         "android.hardware.camera.provider@2.4",
         "android.hardware.camera.common@1.0",
         "android.hardware.graphics.mapper@2.0",
@@ -22,11 +24,14 @@ cc_library_shared {
         "android.hidl.memory@1.0",
         "liblog",
         "libhardware",
-        "libcamera_metadata"
+        "libcamera_metadata",
+    ],
+    header_libs: [
+        "camera.device@3.4-impl_headers",
     ],
     static_libs: [
-        "android.hardware.camera.common@1.0-helper"
-    ]
+        "android.hardware.camera.common@1.0-helper",
+    ],
 }
 
 cc_binary {
@@ -46,6 +51,7 @@ cc_binary {
         "android.hardware.camera.device@1.0",
         "android.hardware.camera.device@3.2",
         "android.hardware.camera.device@3.3",
+        "android.hardware.camera.device@3.4",
         "android.hardware.camera.provider@2.4",
         "android.hardware.camera.common@1.0",
     ],

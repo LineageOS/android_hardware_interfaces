@@ -30,18 +30,41 @@
     std::condition_variable egmock_cond_##Method;
 
 /**
+ * Function similar to comma operator, to make it possible to return any value returned by mocked
+ * function (which may be void) and discard the result of the other operation (notification about
+ * a call).
+ *
+ * We need to invoke the mocked function (which result is returned) before the notification (which
+ * result is dropped) - that's exactly the opposite of comma operator.
+ *
+ * INTERNAL IMPLEMENTATION - don't use in user code.
+ */
+template <typename T>
+static T EGMockFlippedComma_(std::function<T()> returned, std::function<void()> discarded) {
+    auto ret = returned();
+    discarded();
+    return ret;
+}
+
+template <>
+inline void EGMockFlippedComma_(std::function<void()> returned, std::function<void()> discarded) {
+    returned();
+    discarded();
+}
+
+/**
  * Common method body for gmock timeout extension.
  *
  * INTERNAL IMPLEMENTATION - don't use in user code.
  */
-#define EGMOCK_TIMEOUT_METHOD_BODY_(Method, ...)             \
-    auto ret = egmock_##Method(__VA_ARGS__);                 \
-    {                                                        \
-        std::lock_guard<std::mutex> lk(egmock_mut_##Method); \
-        egmock_called_##Method = true;                       \
-        egmock_cond_##Method.notify_all();                   \
-    }                                                        \
-    return ret;
+#define EGMOCK_TIMEOUT_METHOD_BODY_(Method, ...)                      \
+    auto invokeMock = [&]() { return egmock_##Method(__VA_ARGS__); }; \
+    auto notify = [&]() {                                             \
+        std::lock_guard<std::mutex> lk(egmock_mut_##Method);          \
+        egmock_called_##Method = true;                                \
+        egmock_cond_##Method.notify_all();                            \
+    };                                                                \
+    return EGMockFlippedComma_<decltype(invokeMock())>(invokeMock, notify);
 
 /**
  * Gmock MOCK_METHOD0 timeout-capable extension.

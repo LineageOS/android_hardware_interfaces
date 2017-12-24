@@ -18,6 +18,7 @@
 
 #include <broadcastradio-utils-2x/Utils.h>
 
+#include <android-base/logging.h>
 #include <log/log.h>
 
 namespace android {
@@ -28,14 +29,64 @@ namespace utils {
 using V2_0::IdentifierType;
 using V2_0::Metadata;
 using V2_0::MetadataKey;
+using V2_0::ProgramFilter;
 using V2_0::ProgramIdentifier;
+using V2_0::ProgramInfo;
+using V2_0::ProgramListChunk;
 using V2_0::ProgramSelector;
+using V2_0::Properties;
 
 using std::string;
 using std::vector;
 
+IdentifierType getType(uint32_t typeAsInt) {
+    return static_cast<IdentifierType>(typeAsInt);
+}
+
 IdentifierType getType(const ProgramIdentifier& id) {
-    return static_cast<IdentifierType>(id.type);
+    return getType(id.type);
+}
+
+IdentifierIterator::IdentifierIterator(const V2_0::ProgramSelector& sel)
+    : IdentifierIterator(sel, 0) {}
+
+IdentifierIterator::IdentifierIterator(const V2_0::ProgramSelector& sel, size_t pos)
+    : mSel(sel), mPos(pos) {}
+
+IdentifierIterator IdentifierIterator::operator++(int) {
+    auto i = *this;
+    mPos++;
+    return i;
+}
+
+IdentifierIterator& IdentifierIterator::operator++() {
+    ++mPos;
+    return *this;
+}
+
+IdentifierIterator::ref_type IdentifierIterator::operator*() const {
+    if (mPos == 0) return sel().primaryId;
+
+    // mPos is 1-based for secondary identifiers
+    DCHECK(mPos <= sel().secondaryIds.size());
+    return sel().secondaryIds[mPos - 1];
+}
+
+bool IdentifierIterator::operator==(const IdentifierIterator& rhs) const {
+    // Check, if both iterators points at the same selector.
+    if (reinterpret_cast<uintptr_t>(&sel()) != reinterpret_cast<uintptr_t>(&rhs.sel())) {
+        return false;
+    }
+
+    return mPos == rhs.mPos;
+}
+
+IdentifierIterator begin(const V2_0::ProgramSelector& sel) {
+    return IdentifierIterator(sel);
+}
+
+IdentifierIterator end(const V2_0::ProgramSelector& sel) {
+    return IdentifierIterator(sel) + 1 /* primary id */ + sel.secondaryIds.size();
 }
 
 static bool bothHaveId(const ProgramSelector& a, const ProgramSelector& b,
@@ -88,6 +139,7 @@ static bool maybeGetId(const ProgramSelector& sel, const IdentifierType type, ui
         return true;
     }
 
+    // TODO(twasilczyk): use IdentifierIterator
     // not optimal, but we don't care in default impl
     for (auto&& id : sel.secondaryIds) {
         if (id.type == itype) {
@@ -125,6 +177,7 @@ vector<uint64_t> getAllIds(const ProgramSelector& sel, const IdentifierType type
 
     if (sel.primaryId.type == itype) ret.push_back(sel.primaryId.value);
 
+    // TODO(twasilczyk): use IdentifierIterator
     for (auto&& id : sel.secondaryIds) {
         if (id.type == itype) ret.push_back(id.value);
     }
@@ -132,11 +185,11 @@ vector<uint64_t> getAllIds(const ProgramSelector& sel, const IdentifierType type
     return ret;
 }
 
-bool isSupported(const V2_0::Properties& prop, const V2_0::ProgramSelector& sel) {
+bool isSupported(const Properties& prop, const ProgramSelector& sel) {
+    // TODO(twasilczyk): use IdentifierIterator
     // Not optimal, but it doesn't matter for default impl nor VTS tests.
-    for (auto&& idTypeI : prop.supportedIdentifierTypes) {
-        auto idType = static_cast<IdentifierType>(idTypeI);
-        if (hasId(sel, idType)) return true;
+    for (auto&& idType : prop.supportedIdentifierTypes) {
+        if (hasId(sel, getType(idType))) return true;
     }
     return false;
 }
@@ -152,7 +205,7 @@ static bool isValid(const ProgramIdentifier& id) {
         }
     };
 
-    switch (static_cast<IdentifierType>(id.type)) {
+    switch (getType(id)) {
         case IdentifierType::AMFM_FREQUENCY:
         case IdentifierType::DAB_FREQUENCY:
         case IdentifierType::DRMO_FREQUENCY:
@@ -211,8 +264,9 @@ static bool isValid(const ProgramIdentifier& id) {
     return valid;
 }
 
-bool isValid(const V2_0::ProgramSelector& sel) {
+bool isValid(const ProgramSelector& sel) {
     if (!isValid(sel.primaryId)) return false;
+    // TODO(twasilczyk): use IdentifierIterator
     for (auto&& id : sel.secondaryIds) {
         if (!isValid(id)) return false;
     }
@@ -241,6 +295,59 @@ Metadata make_metadata(MetadataKey key, string value) {
     meta.key = static_cast<uint32_t>(key);
     meta.stringValue = value;
     return meta;
+}
+
+bool satisfies(const ProgramFilter& filter, const ProgramSelector& sel) {
+    if (filter.identifierTypes.size() > 0) {
+        auto typeEquals = [](const V2_0::ProgramIdentifier& id, uint32_t type) {
+            return id.type == type;
+        };
+        auto it = std::find_first_of(begin(sel), end(sel), filter.identifierTypes.begin(),
+                                     filter.identifierTypes.end(), typeEquals);
+        if (it == end(sel)) return false;
+    }
+
+    if (filter.identifiers.size() > 0) {
+        auto it = std::find_first_of(begin(sel), end(sel), filter.identifiers.begin(),
+                                     filter.identifiers.end());
+        if (it == end(sel)) return false;
+    }
+
+    if (!filter.includeCategories) {
+        if (getType(sel.primaryId) == IdentifierType::DAB_ENSEMBLE) return false;
+    }
+
+    return true;
+}
+
+size_t ProgramInfoHasher::operator()(const ProgramInfo& info) const {
+    auto& id = info.selector.primaryId;
+
+    /* This is not the best hash implementation, but good enough for default HAL
+     * implementation and tests. */
+    auto h = std::hash<uint32_t>{}(id.type);
+    h += 0x9e3779b9;
+    h ^= std::hash<uint64_t>{}(id.value);
+
+    return h;
+}
+
+bool ProgramInfoKeyEqual::operator()(const ProgramInfo& info1, const ProgramInfo& info2) const {
+    auto& id1 = info1.selector.primaryId;
+    auto& id2 = info2.selector.primaryId;
+    return id1.type == id2.type && id1.value == id2.value;
+}
+
+void updateProgramList(ProgramInfoSet& list, const ProgramListChunk& chunk) {
+    if (chunk.purge) list.clear();
+
+    list.insert(chunk.modified.begin(), chunk.modified.end());
+
+    for (auto&& id : chunk.removed) {
+        ProgramInfo info = {};
+        info.selector.primaryId = id;
+        list.erase(info);
+    }
 }
 
 }  // namespace utils

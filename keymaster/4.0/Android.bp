@@ -15,11 +15,17 @@ hidl_interface {
         "android.hidl.base@1.0",
     ],
     types: [
+        "Constants",
+        "ErrorCode",
         "HardwareAuthToken",
+        "HmacSharingParameters",
         "KeyCharacteristics",
+        "KeyOrigin",
         "KeyParameter",
         "KeyPurpose",
+        "SecurityLevel",
         "Tag",
+        "VerificationToken",
     ],
     gen_java: false,
 }

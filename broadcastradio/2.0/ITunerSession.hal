@@ -77,6 +77,32 @@ interface ITunerSession {
     cancel();
 
     /**
+     * Applies a filter to the program list and starts sending program list
+     * updates over onProgramListUpdated callback.
+     *
+     * There may be only one updates stream active at the moment. Calling this
+     * method again must result in cancelling the previous update request.
+     *
+     * This call clears the program list on the client side, the HAL must send
+     * the whole list again.
+     *
+     * If the program list scanning hardware (i.e. background tuner) is
+     * unavailable at the moment, the call must succeed and start updates
+     * when it becomes available.
+     *
+     * @param filter Filter to apply on the fetched program list.
+     * @return result OK successfully started fetching list updates.
+     *                NOT_SUPPORTED program list scanning is not supported
+     *                by the hardware.
+     */
+    startProgramListUpdates(ProgramFilter filter) generates (Result result);
+
+    /**
+     * Stops sending program list updates.
+     */
+    stopProgramListUpdates();
+
+    /**
      * Fetches the current setting of a given config flag.
      *
      * The success/failure result must be consistent with setConfigFlag.

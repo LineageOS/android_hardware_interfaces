@@ -38,6 +38,7 @@ namespace vts {
 
 using namespace std::chrono_literals;
 
+using std::unordered_set;
 using std::vector;
 using testing::_;
 using testing::AnyNumber;
@@ -54,25 +55,36 @@ using utils::make_selector_amfm;
 namespace timeout {
 
 static constexpr auto tune = 30s;
+static constexpr auto programListScan = 5min;
 
 }  // namespace timeout
 
 static const ConfigFlag gConfigFlagValues[] = {
-    ConfigFlag::FORCE_MONO,       ConfigFlag::FORCE_ANALOG,     ConfigFlag::FORCE_DIGITAL,
-    ConfigFlag::RDS_AF,           ConfigFlag::RDS_REG,          ConfigFlag::DAB_IMPLICIT_LINKING,
-    ConfigFlag::DAB_HARD_LINKING, ConfigFlag::DAB_SOFT_LINKING,
+    ConfigFlag::FORCE_MONO,
+    ConfigFlag::FORCE_ANALOG,
+    ConfigFlag::FORCE_DIGITAL,
+    ConfigFlag::RDS_AF,
+    ConfigFlag::RDS_REG,
+    ConfigFlag::DAB_DAB_LINKING,
+    ConfigFlag::DAB_FM_LINKING,
+    ConfigFlag::DAB_DAB_SOFT_LINKING,
+    ConfigFlag::DAB_FM_SOFT_LINKING,
 };
 
-struct TunerCallbackMock : public ITunerCallback {
-    TunerCallbackMock() {
-        // we expect the antenna is connected through the whole test
-        EXPECT_CALL(*this, onAntennaStateChange(false)).Times(0);
-    }
+class TunerCallbackMock : public ITunerCallback {
+   public:
+    TunerCallbackMock();
 
     MOCK_METHOD2(onTuneFailed, Return<void>(Result, const ProgramSelector&));
     MOCK_TIMEOUT_METHOD1(onCurrentProgramInfoChanged, Return<void>(const ProgramInfo&));
+    Return<void> onProgramListUpdated(const ProgramListChunk& chunk);
     MOCK_METHOD1(onAntennaStateChange, Return<void>(bool connected));
     MOCK_METHOD1(onParametersUpdated, Return<void>(const hidl_vec<VendorKeyValue>& parameters));
+
+    MOCK_TIMEOUT_METHOD0(onProgramListReady, void());
+
+    std::mutex mLock;
+    utils::ProgramInfoSet mProgramList;
 };
 
 class BroadcastRadioHalTest : public ::testing::VtsHalHidlTargetTestBase {
@@ -87,6 +99,25 @@ class BroadcastRadioHalTest : public ::testing::VtsHalHidlTargetTestBase {
     sp<ITunerSession> mSession;
     sp<TunerCallbackMock> mCallback = new TunerCallbackMock();
 };
+
+static void printSkipped(std::string msg) {
+    std::cout << "[  SKIPPED ] " << msg << std::endl;
+}
+
+TunerCallbackMock::TunerCallbackMock() {
+    // we expect the antenna is connected through the whole test
+    EXPECT_CALL(*this, onAntennaStateChange(false)).Times(0);
+}
+
+Return<void> TunerCallbackMock::onProgramListUpdated(const ProgramListChunk& chunk) {
+    std::lock_guard<std::mutex> lk(mLock);
+
+    updateProgramList(mProgramList, chunk);
+
+    if (chunk.complete) onProgramListReady();
+
+    return {};
+}
 
 void BroadcastRadioHalTest::SetUp() {
     EXPECT_EQ(nullptr, mModule.get()) << "Module is already open";
@@ -461,6 +492,32 @@ TEST_F(BroadcastRadioHalTest, SetConfigFlags) {
         value = get(flag);
         EXPECT_FALSE(value);
     }
+}
+
+/**
+ * Test getting program list.
+ *
+ * Verifies that:
+ * - startProgramListUpdates either succeeds or returns NOT_SUPPORTED;
+ * - the complete list is fetched within timeout::programListScan;
+ * - stopProgramListUpdates does not crash.
+ */
+TEST_F(BroadcastRadioHalTest, GetProgramList) {
+    ASSERT_TRUE(openSession());
+
+    EXPECT_TIMEOUT_CALL(*mCallback, onProgramListReady).Times(AnyNumber());
+
+    auto startResult = mSession->startProgramListUpdates({});
+    if (startResult == Result::NOT_SUPPORTED) {
+        printSkipped("Program list not supported");
+        return;
+    }
+    ASSERT_EQ(Result::OK, startResult);
+
+    EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onProgramListReady, timeout::programListScan);
+
+    auto stopResult = mSession->stopProgramListUpdates();
+    EXPECT_TRUE(stopResult.isOk());
 }
 
 }  // namespace vts

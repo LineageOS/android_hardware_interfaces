@@ -20,7 +20,7 @@
 #include <map>
 
 #include <android-base/macros.h>
-#include <android/hardware/wifi/1.1/IWifiChip.h>
+#include <android/hardware/wifi/1.2/IWifiChip.h>
 
 #include "hidl_callback_util.h"
 #include "wifi_ap_iface.h"
@@ -44,7 +44,7 @@ using namespace android::hardware::wifi::V1_0;
  * Since there is only a single chip instance used today, there is no
  * identifying handle information stored here.
  */
-class WifiChip : public V1_1::IWifiChip {
+class WifiChip : public V1_2::IWifiChip {
    public:
     WifiChip(
         ChipId chip_id,

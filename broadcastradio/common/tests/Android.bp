@@ -15,20 +15,6 @@
 //
 
 cc_test {
-    name: "android.hardware.broadcastradio@common-utils-tests",
-    vendor: true,
-    cflags: [
-        "-Wall",
-        "-Wextra",
-        "-Werror",
-    ],
-    srcs: [
-        "WorkerThread_test.cpp",
-    ],
-    static_libs: ["android.hardware.broadcastradio@common-utils-lib"],
-}
-
-cc_test {
     name: "android.hardware.broadcastradio@common-utils-xx-tests",
     vendor: true,
     cflags: [
@@ -47,4 +33,37 @@ cc_test {
         "android.hardware.broadcastradio@1.2",
         "android.hardware.broadcastradio@2.0",
     ],
+}
+
+cc_test {
+    name: "android.hardware.broadcastradio@common-utils-2x-tests",
+    vendor: true,
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+    ],
+    srcs: [
+        "IdentifierIterator_test.cpp",
+    ],
+    static_libs: [
+        "android.hardware.broadcastradio@common-utils-2x-lib",
+    ],
+    shared_libs: [
+        "android.hardware.broadcastradio@2.0",
+    ],
+}
+
+cc_test {
+    name: "android.hardware.broadcastradio@common-utils-tests",
+    vendor: true,
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+    ],
+    srcs: [
+        "WorkerThread_test.cpp",
+    ],
+    static_libs: ["android.hardware.broadcastradio@common-utils-lib"],
 }
