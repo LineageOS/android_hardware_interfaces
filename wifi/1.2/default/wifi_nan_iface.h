@@ -47,7 +47,7 @@ class WifiNanIface : public V1_2::IWifiNanIface {
     Return<void> getName(getName_cb hidl_status_cb) override;
     Return<void> getType(getType_cb hidl_status_cb) override;
     Return<void> registerEventCallback(
-        const sp<IWifiNanIfaceEventCallback>& callback,
+        const sp<V1_0::IWifiNanIfaceEventCallback>& callback,
         registerEventCallback_cb hidl_status_cb) override;
     Return<void> getCapabilitiesRequest(
         uint16_t cmd_id, getCapabilitiesRequest_cb hidl_status_cb) override;
@@ -88,6 +88,9 @@ class WifiNanIface : public V1_2::IWifiNanIface {
         uint16_t cmd_id, uint32_t ndpInstanceId,
         terminateDataPathRequest_cb hidl_status_cb) override;
 
+    Return<void> registerEventCallback_1_2(
+        const sp<IWifiNanIfaceEventCallback>& callback,
+        registerEventCallback_1_2_cb hidl_status_cb) override;
     Return<void> enableRequest_1_2(
         uint16_t cmd_id, const NanEnableRequest& msg1,
         const NanConfigRequestSupplemental& msg2,
@@ -102,7 +105,7 @@ class WifiNanIface : public V1_2::IWifiNanIface {
     std::pair<WifiStatus, std::string> getNameInternal();
     std::pair<WifiStatus, IfaceType> getTypeInternal();
     WifiStatus registerEventCallbackInternal(
-        const sp<IWifiNanIfaceEventCallback>& callback);
+        const sp<V1_0::IWifiNanIfaceEventCallback>& callback);
     WifiStatus getCapabilitiesRequestInternal(uint16_t cmd_id);
     WifiStatus enableRequestInternal(uint16_t cmd_id,
                                      const NanEnableRequest& msg);
@@ -128,6 +131,8 @@ class WifiNanIface : public V1_2::IWifiNanIface {
     WifiStatus terminateDataPathRequestInternal(uint16_t cmd_id,
                                                 uint32_t ndpInstanceId);
 
+    WifiStatus registerEventCallback_1_2Internal(
+        const sp<IWifiNanIfaceEventCallback>& callback);
     WifiStatus enableRequest_1_2Internal(
         uint16_t cmd_id, const NanEnableRequest& msg1,
         const NanConfigRequestSupplemental& msg2);

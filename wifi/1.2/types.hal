@@ -16,6 +16,10 @@
 
 package android.hardware.wifi@1.2;
 
+import @1.0::MacAddress;
+import @1.0::NanDataPathConfirmInd;
+import @1.0::WifiChannelInMhz;
+
 /**
  * NAN configuration request parameters added in the 1.2 HAL. These are supplemental to previous
  * versions.
@@ -47,3 +51,60 @@ struct NanConfigRequestSupplemental {
     bool enableDiscoveryWindowEarlyTermination;
 };
 
+/**
+ * NAN data path channel information provided to the framework.
+ */
+struct NanDataPathChannelInfo {
+    /**
+     * Channel frequency in MHz.
+     */
+    WifiChannelInMhz channelFreq;
+    /**
+     * Channel bandwidth in MHz.
+     */
+    uint32_t channelBandwidth;
+    /**
+     * Number of spatial streams used in the channel.
+     */
+    uint32_t numSpatialStreams;
+};
+
+/**
+ * NAN Data path confirmation Indication structure.
+ * Event indication is received on both initiator and responder side when negotiation for a
+ * data-path finish: on success or failure.
+ */
+struct NanDataPathConfirmInd {
+    /**
+     * Baseline information as defined in HAL 1.0.
+     */
+    @1.0::NanDataPathConfirmInd V1_0;
+    /**
+     * The channel(s) on which the NDP is scheduled to operate.
+     * Updates to the operational channels are provided using the |eventDataPathScheduleUpdate|
+     * event.
+     */
+    vec<NanDataPathChannelInfo> channelInfo;
+};
+
+/**
+ * NAN data path channel information update indication structure.
+ * Event indication is received by all NDP owners whenever the channels on which the NDP operates
+ * are updated.
+ * Note: multiple NDPs may share the same schedule, the indication specifies all NDPs to which it
+ * applies.
+ */
+struct NanDataPathScheduleUpdateInd {
+    /**
+     * The discovery address (NMI) of the peer to which the NDP is connected.
+     */
+    MacAddress peerDiscoveryAddress;
+    /**
+     * The updated channel(s) information.
+     */
+    vec<NanDataPathChannelInfo> channelInfo;
+    /**
+     * The list of NDPs to which this update applies.
+     */
+    vec<uint32_t> ndpInstanceIds;
+};

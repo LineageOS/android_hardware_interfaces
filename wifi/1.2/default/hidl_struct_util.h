@@ -147,6 +147,9 @@ bool convertLegacyNanDataPathRequestIndToHidl(
 bool convertLegacyNanDataPathConfirmIndToHidl(
     const legacy_hal::NanDataPathConfirmInd& legacy_ind,
     NanDataPathConfirmInd* hidl_ind);
+bool convertLegacyNanDataPathScheduleUpdateIndToHidl(
+    const legacy_hal::NanDataPathScheduleUpdateInd& legacy_ind,
+    NanDataPathScheduleUpdateInd* hidl_ind);
 
 // RTT controller conversion methods.
 bool convertHidlVectorOfRttConfigToLegacy(

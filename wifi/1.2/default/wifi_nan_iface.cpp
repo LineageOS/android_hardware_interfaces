@@ -428,7 +428,7 @@ WifiNanIface::WifiNanIface(
             }
 
             for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
-                if (!callback->eventDataPathConfirm(hidl_struct).isOk()) {
+                if (!callback->eventDataPathConfirm_1_2(hidl_struct).isOk()) {
                     LOG(ERROR) << "Failed to invoke the callback";
                 }
             }
@@ -467,10 +467,28 @@ WifiNanIface::WifiNanIface(
             LOG(ERROR) << "on_event_range_report - should not be called";
         };
 
-    callback_handlers.on_event_schedule_update =
-        [weak_ptr_this](const legacy_hal::NanDataPathScheduleUpdateInd& /* msg */) {
-            LOG(ERROR) << "on_event_schedule_update - should not be called";
-        };
+    callback_handlers
+        .on_event_schedule_update = [weak_ptr_this](
+                                        const legacy_hal::
+                                            NanDataPathScheduleUpdateInd& msg) {
+        const auto shared_ptr_this = weak_ptr_this.promote();
+        if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+            LOG(ERROR) << "Callback invoked on an invalid object";
+            return;
+        }
+        NanDataPathScheduleUpdateInd hidl_struct;
+        if (!hidl_struct_util::convertLegacyNanDataPathScheduleUpdateIndToHidl(
+                msg, &hidl_struct)) {
+            LOG(ERROR) << "Failed to convert nan capabilities response";
+            return;
+        }
+
+        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+            if (!callback->eventDataPathScheduleUpdate(hidl_struct).isOk()) {
+                LOG(ERROR) << "Failed to invoke the callback";
+            }
+        }
+    };
 
     legacy_hal::wifi_error legacy_status =
         legacy_hal_.lock()->nanRegisterCallbackHandlers(ifname_,
@@ -511,7 +529,7 @@ Return<void> WifiNanIface::getType(getType_cb hidl_status_cb) {
 }
 
 Return<void> WifiNanIface::registerEventCallback(
-    const sp<IWifiNanIfaceEventCallback>& callback,
+    const sp<V1_0::IWifiNanIfaceEventCallback>& callback,
     registerEventCallback_cb hidl_status_cb) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
                            &WifiNanIface::registerEventCallbackInternal,
@@ -628,6 +646,14 @@ Return<void> WifiNanIface::terminateDataPathRequest(
                            hidl_status_cb, cmd_id, ndpInstanceId);
 }
 
+Return<void> WifiNanIface::registerEventCallback_1_2(
+    const sp<IWifiNanIfaceEventCallback>& callback,
+    registerEventCallback_1_2_cb hidl_status_cb) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                           &WifiNanIface::registerEventCallback_1_2Internal,
+                           hidl_status_cb, callback);
+}
+
 Return<void> WifiNanIface::enableRequest_1_2(
     uint16_t cmd_id, const NanEnableRequest& msg1,
     const NanConfigRequestSupplemental& msg2,
@@ -655,11 +681,8 @@ std::pair<WifiStatus, IfaceType> WifiNanIface::getTypeInternal() {
 }
 
 WifiStatus WifiNanIface::registerEventCallbackInternal(
-    const sp<IWifiNanIfaceEventCallback>& callback) {
-    if (!event_cb_handler_.addCallback(callback)) {
-        return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
-    }
-    return createWifiStatus(WifiStatusCode::SUCCESS);
+    const sp<V1_0::IWifiNanIfaceEventCallback>& /*callback*/) {
+    return createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED);
 }
 
 WifiStatus WifiNanIface::getCapabilitiesRequestInternal(uint16_t cmd_id) {
@@ -782,6 +805,14 @@ WifiStatus WifiNanIface::terminateDataPathRequestInternal(
     legacy_hal::wifi_error legacy_status =
         legacy_hal_.lock()->nanDataEnd(ifname_, cmd_id, ndpInstanceId);
     return createWifiStatusFromLegacyError(legacy_status);
+}
+
+WifiStatus WifiNanIface::registerEventCallback_1_2Internal(
+    const sp<IWifiNanIfaceEventCallback>& callback) {
+    if (!event_cb_handler_.addCallback(callback)) {
+        return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
+    }
+    return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 
 WifiStatus WifiNanIface::enableRequest_1_2Internal(
