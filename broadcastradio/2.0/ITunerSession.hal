@@ -154,7 +154,7 @@ interface ITunerSession {
      * @return results Operation completion status for parameters being set.
      */
     setParameters(vec<VendorKeyValue> parameters)
-            generates (vec<VendorKeyValue> results);
+        generates (vec<VendorKeyValue> results);
 
     /**
      * Generic method for retrieving vendor-specific parameter values.

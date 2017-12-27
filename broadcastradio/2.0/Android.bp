@@ -8,7 +8,9 @@ hidl_interface {
     },
     srcs: [
         "types.hal",
+        "IAnnouncementObserver.hal",
         "IBroadcastRadio.hal",
+        "ICloseHandle.hal",
         "ITunerCallback.hal",
         "ITunerSession.hal",
     ],
@@ -18,6 +20,8 @@ hidl_interface {
     types: [
         "AmFmBandRange",
         "AmFmRegionConfig",
+        "Announcement",
+        "AnnouncementType",
         "ConfigFlag",
         "Constants",
         "DabTableEntry",
