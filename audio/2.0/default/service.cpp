@@ -16,11 +16,11 @@
 
 #define LOG_TAG "audiohalservice"
 
-#include <hidl/HidlTransportSupport.h>
-#include <hidl/LegacySupport.h>
 #include <android/hardware/audio/2.0/IDevicesFactory.h>
 #include <android/hardware/audio/effect/2.0/IEffectsFactory.h>
-#include <android/hardware/soundtrigger/2.0/ISoundTriggerHw.h>
+#include <android/hardware/soundtrigger/2.1/ISoundTriggerHw.h>
+#include <hidl/HidlTransportSupport.h>
+#include <hidl/LegacySupport.h>
 
 using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
@@ -28,7 +28,7 @@ using android::hardware::registerPassthroughServiceImplementation;
 
 using android::hardware::audio::effect::V2_0::IEffectsFactory;
 using android::hardware::audio::V2_0::IDevicesFactory;
-using android::hardware::soundtrigger::V2_0::ISoundTriggerHw;
+using android::hardware::soundtrigger::V2_1::ISoundTriggerHw;
 using android::hardware::registerPassthroughServiceImplementation;
 
 using android::OK;

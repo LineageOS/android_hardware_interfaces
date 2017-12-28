@@ -78,7 +78,7 @@ LOCAL_SHARED_LIBRARIES := \
     android.hardware.audio@2.0 \
     android.hardware.audio.common@2.0 \
     android.hardware.audio.effect@2.0 \
-    android.hardware.soundtrigger@2.0 \
+    android.hardware.soundtrigger@2.1 \
     android.hardware.broadcastradio@1.0 \
     android.hardware.broadcastradio@1.1
 
