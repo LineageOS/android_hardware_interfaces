@@ -1942,7 +1942,7 @@ enum VehicleProperty: int32_t {
         0x0BC0
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:INT32
-        | VehicleArea:GLOBAL),
+        | VehicleArea:WINDOW),
 
     /**
      * Window Move
@@ -1959,7 +1959,7 @@ enum VehicleProperty: int32_t {
         0x0BC1
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:INT32
-        | VehicleArea:GLOBAL),
+        | VehicleArea:WINDOW),
 
     /**
      * Window Vent Position
@@ -1976,7 +1976,7 @@ enum VehicleProperty: int32_t {
         0x0BC2
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:INT32
-        | VehicleArea:GLOBAL),
+        | VehicleArea:WINDOW),
 
     /**
      * Window Vent Move
@@ -1993,7 +1993,7 @@ enum VehicleProperty: int32_t {
         0x0BC3
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:INT32
-        | VehicleArea:GLOBAL),
+        | VehicleArea:WINDOW),
 
     /**
      * Window Lock
@@ -2007,7 +2007,7 @@ enum VehicleProperty: int32_t {
         0x0BC4
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:BOOLEAN
-        | VehicleArea:GLOBAL),
+        | VehicleArea:WINDOW),
 
 
     /**
