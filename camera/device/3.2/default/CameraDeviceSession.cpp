@@ -1198,26 +1198,19 @@ Return<void> CameraDeviceSession::close()  {
     return Void();
 }
 
-/**
- * Static callback forwarding methods from HAL to instance
- */
-void CameraDeviceSession::sProcessCaptureResult(
-        const camera3_callback_ops *cb,
-        const camera3_capture_result *hal_result) {
-    CameraDeviceSession *d =
-            const_cast<CameraDeviceSession*>(static_cast<const CameraDeviceSession*>(cb));
-
+void CameraDeviceSession::constructCaptureResult(CaptureResult& result,
+                                                 const camera3_capture_result *hal_result) {
     uint32_t frameNumber = hal_result->frame_number;
     bool hasInputBuf = (hal_result->input_buffer != nullptr);
     size_t numOutputBufs = hal_result->num_output_buffers;
     size_t numBufs = numOutputBufs + (hasInputBuf ? 1 : 0);
     if (numBufs > 0) {
-        Mutex::Autolock _l(d->mInflightLock);
+        Mutex::Autolock _l(mInflightLock);
         if (hasInputBuf) {
             int streamId = static_cast<Camera3Stream*>(hal_result->input_buffer->stream)->mId;
             // validate if buffer is inflight
             auto key = std::make_pair(streamId, frameNumber);
-            if (d->mInflightBuffers.count(key) != 1) {
+            if (mInflightBuffers.count(key) != 1) {
                 ALOGE("%s: input buffer for stream %d frame %d is not inflight!",
                         __FUNCTION__, streamId, frameNumber);
                 return;
@@ -1228,7 +1221,7 @@ void CameraDeviceSession::sProcessCaptureResult(
             int streamId = static_cast<Camera3Stream*>(hal_result->output_buffers[i].stream)->mId;
             // validate if buffer is inflight
             auto key = std::make_pair(streamId, frameNumber);
-            if (d->mInflightBuffers.count(key) != 1) {
+            if (mInflightBuffers.count(key) != 1) {
                 ALOGE("%s: output buffer for stream %d frame %d is not inflight!",
                         __FUNCTION__, streamId, frameNumber);
                 return;
@@ -1237,64 +1230,63 @@ void CameraDeviceSession::sProcessCaptureResult(
     }
     // We don't need to validate/import fences here since we will be passing them to camera service
     // within the scope of this function
-    CaptureResult result;
     result.frameNumber = frameNumber;
     result.fmqResultSize = 0;
     result.partialResult = hal_result->partial_result;
     convertToHidl(hal_result->result, &result.result);
     if (nullptr != hal_result->result) {
         bool resultOverriden = false;
-        Mutex::Autolock _l(d->mInflightLock);
+        Mutex::Autolock _l(mInflightLock);
 
         // Derive some new keys for backward compatibility
-        if (d->mDerivePostRawSensKey) {
+        if (mDerivePostRawSensKey) {
             camera_metadata_ro_entry entry;
             if (find_camera_metadata_ro_entry(hal_result->result,
                     ANDROID_CONTROL_POST_RAW_SENSITIVITY_BOOST, &entry) == 0) {
-                d->mInflightRawBoostPresent[frameNumber] = true;
+                mInflightRawBoostPresent[frameNumber] = true;
             } else {
-                auto entry = d->mInflightRawBoostPresent.find(frameNumber);
-                if (d->mInflightRawBoostPresent.end() == entry) {
-                    d->mInflightRawBoostPresent[frameNumber] = false;
+                auto entry = mInflightRawBoostPresent.find(frameNumber);
+                if (mInflightRawBoostPresent.end() == entry) {
+                    mInflightRawBoostPresent[frameNumber] = false;
                 }
             }
 
-            if ((hal_result->partial_result == d->mNumPartialResults)) {
-                if (!d->mInflightRawBoostPresent[frameNumber]) {
+            if ((hal_result->partial_result == mNumPartialResults)) {
+                if (!mInflightRawBoostPresent[frameNumber]) {
                     if (!resultOverriden) {
-                        d->mOverridenResult.clear();
-                        d->mOverridenResult.append(hal_result->result);
+                        mOverridenResult.clear();
+                        mOverridenResult.append(hal_result->result);
                         resultOverriden = true;
                     }
                     int32_t defaultBoost[1] = {100};
-                    d->mOverridenResult.update(
+                    mOverridenResult.update(
                             ANDROID_CONTROL_POST_RAW_SENSITIVITY_BOOST,
                             defaultBoost, 1);
                 }
 
-                d->mInflightRawBoostPresent.erase(frameNumber);
+                mInflightRawBoostPresent.erase(frameNumber);
             }
         }
 
-        auto entry = d->mInflightAETriggerOverrides.find(frameNumber);
-        if (d->mInflightAETriggerOverrides.end() != entry) {
+        auto entry = mInflightAETriggerOverrides.find(frameNumber);
+        if (mInflightAETriggerOverrides.end() != entry) {
             if (!resultOverriden) {
-                d->mOverridenResult.clear();
-                d->mOverridenResult.append(hal_result->result);
+                mOverridenResult.clear();
+                mOverridenResult.append(hal_result->result);
                 resultOverriden = true;
             }
-            d->overrideResultForPrecaptureCancelLocked(entry->second,
-                    &d->mOverridenResult);
-            if (hal_result->partial_result == d->mNumPartialResults) {
-                d->mInflightAETriggerOverrides.erase(frameNumber);
+            overrideResultForPrecaptureCancelLocked(entry->second,
+                    &mOverridenResult);
+            if (hal_result->partial_result == mNumPartialResults) {
+                mInflightAETriggerOverrides.erase(frameNumber);
             }
         }
 
         if (resultOverriden) {
             const camera_metadata_t *metaBuffer =
-                    d->mOverridenResult.getAndLock();
+                    mOverridenResult.getAndLock();
             convertToHidl(metaBuffer, &result.result);
-            d->mOverridenResult.unlock(metaBuffer);
+            mOverridenResult.unlock(metaBuffer);
         }
     }
     if (hasInputBuf) {
@@ -1335,23 +1327,37 @@ void CameraDeviceSession::sProcessCaptureResult(
     // configure_streams right after the processCaptureResult call so we need to finish
     // updating inflight queues first
     if (numBufs > 0) {
-        Mutex::Autolock _l(d->mInflightLock);
+        Mutex::Autolock _l(mInflightLock);
         if (hasInputBuf) {
             int streamId = static_cast<Camera3Stream*>(hal_result->input_buffer->stream)->mId;
             auto key = std::make_pair(streamId, frameNumber);
-            d->mInflightBuffers.erase(key);
+            mInflightBuffers.erase(key);
         }
 
         for (size_t i = 0; i < numOutputBufs; i++) {
             int streamId = static_cast<Camera3Stream*>(hal_result->output_buffers[i].stream)->mId;
             auto key = std::make_pair(streamId, frameNumber);
-            d->mInflightBuffers.erase(key);
+            mInflightBuffers.erase(key);
         }
 
-        if (d->mInflightBuffers.empty()) {
+        if (mInflightBuffers.empty()) {
             ALOGV("%s: inflight buffer queue is now empty!", __FUNCTION__);
         }
     }
+
+}
+
+/**
+ * Static callback forwarding methods from HAL to instance
+ */
+void CameraDeviceSession::sProcessCaptureResult(
+        const camera3_callback_ops *cb,
+        const camera3_capture_result *hal_result) {
+    CameraDeviceSession *d =
+            const_cast<CameraDeviceSession*>(static_cast<const CameraDeviceSession*>(cb));
+
+    CaptureResult result;
+    d->constructCaptureResult(result, hal_result);
 
     d->mResultBatcher.processCaptureResult(result);
 }

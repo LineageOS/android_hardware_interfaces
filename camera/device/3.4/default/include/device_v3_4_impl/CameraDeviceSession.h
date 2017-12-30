@@ -19,6 +19,7 @@
 
 #include <android/hardware/camera/device/3.2/ICameraDevice.h>
 #include <android/hardware/camera/device/3.4/ICameraDeviceSession.h>
+#include <android/hardware/camera/device/3.4/ICameraDeviceCallback.h>
 #include <../../3.3/default/CameraDeviceSession.h>
 #include <../../3.3/default/include/convert.h>
 #include <fmq/MessageQueue.h>
@@ -46,6 +47,7 @@ using ::android::hardware::camera::device::V3_2::StreamType;
 using ::android::hardware::camera::device::V3_4::StreamConfiguration;
 using ::android::hardware::camera::device::V3_4::HalStreamConfiguration;
 using ::android::hardware::camera::device::V3_4::ICameraDeviceSession;
+using ::android::hardware::camera::device::V3_4::ICameraDeviceCallback;
 using ::android::hardware::camera::common::V1_0::Status;
 using ::android::hardware::camera::common::V1_0::helper::HandleImporter;
 using ::android::hardware::kSynchronizedReadWrite;
@@ -94,6 +96,25 @@ protected:
     Status processOneCaptureRequest_3_4(const V3_4::CaptureRequest& request);
 
     std::map<int, std::string> mPhysicalCameraIdMap;
+
+    static V3_2::implementation::callbacks_process_capture_result_t sProcessCaptureResult_3_4;
+    static V3_2::implementation::callbacks_notify_t sNotify_3_4;
+
+    class ResultBatcher_3_4 : public V3_3::implementation::CameraDeviceSession::ResultBatcher {
+    public:
+        ResultBatcher_3_4(const sp<V3_2::ICameraDeviceCallback>& callback);
+        void processCaptureResult_3_4(CaptureResult& result);
+    private:
+        void freeReleaseFences_3_4(hidl_vec<CaptureResult>&);
+        void processOneCaptureResult_3_4(CaptureResult& result);
+        void invokeProcessCaptureResultCallback_3_4(hidl_vec<CaptureResult> &results,
+                bool tryWriteFmq);
+
+        sp<ICameraDeviceCallback> mCallback_3_4;
+    } mResultBatcher_3_4;
+
+    // Whether this camera device session is created with version 3.4 callback.
+    bool mHasCallback_3_4;
 private:
 
     struct TrampolineSessionInterface_3_4 : public ICameraDeviceSession {
