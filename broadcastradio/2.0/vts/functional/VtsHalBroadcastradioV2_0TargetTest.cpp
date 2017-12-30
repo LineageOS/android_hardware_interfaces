@@ -520,6 +520,9 @@ TEST_F(BroadcastRadioHalTest, GetProgramList) {
     EXPECT_TRUE(stopResult.isOk());
 }
 
+// TODO(b/70939328): test ProgramInfo's currentlyTunedId and
+// currentlyTunedChannel once the program list is implemented.
+
 }  // namespace vts
 }  // namespace V2_0
 }  // namespace broadcastradio

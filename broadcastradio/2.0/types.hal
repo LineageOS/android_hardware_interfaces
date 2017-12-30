@@ -185,6 +185,69 @@ struct ProgramInfo {
      */
     ProgramSelector selector;
 
+    /**
+     * Identifier currently used for program selection.
+     *
+     * It allows to determine which technology is currently used for reception.
+     *
+     * Some program selectors contain tuning information for different radio
+     * technologies (i.e. FM RDS and DAB). For example, user may tune using
+     * a ProgramSelector with RDS_PI primary identifier, but the tuner hardware
+     * may choose to use DAB technology to make actual tuning. This identifier
+     * must reflect that.
+     *
+     * This field is optional, but must be set for currently tuned program.
+     * If it's not set, its value must be initialized to all-zeros.
+     *
+     * Only primary identifiers for a given radio technology are valid:
+     *  - AMFM_FREQUENCY for analog AM/FM;
+     *  - RDS_PI for FM RDS;
+     *  - HD_STATION_ID_EXT;
+     *  - DAB_SID_EXT;
+     *  - DRMO_SERVICE_ID;
+     *  - SXM_SERVICE_ID;
+     *  - VENDOR_*;
+     *  - more might come in next minor versions of this HAL.
+     */
+    ProgramIdentifier logicallyTunedTo;
+
+    /**
+     * Identifier currently used by hardware to physically tune to a channel.
+     *
+     * Some radio technologies broadcast the same program on multiple channels,
+     * i.e. with RDS AF the same program may be broadcasted on multiple
+     * alternative frequencies; the same DAB program may be broadcast on
+     * multiple ensembles. This identifier points to the channel to which the
+     * radio hardware is physically tuned to.
+     *
+     * This field is optional, but must be set for currently tuned program.
+     * If it's not set, its type field must be initialized to
+     * IdentifierType::INVALID.
+     *
+     * Only physical identifiers are valid:
+     *  - AMFM_FREQUENCY;
+     *  - DAB_ENSEMBLE;
+     *  - DRMO_FREQUENCY;
+     *  - SXM_CHANNEL;
+     *  - VENDOR_*;
+     *  - more might come in next minor versions of this HAL.
+     */
+    ProgramIdentifier physicallyTunedTo;
+
+    /**
+     * Primary identifiers of related contents.
+     *
+     * Some radio technologies provide pointers to other programs that carry
+     * related content (i.e. DAB soft-links). This field is a list of pointers
+     * to other programs on the program list.
+     *
+     * Please note, that these identifiers does not have to exist on the program
+     * list - i.e. DAB tuner may provide information on FM RDS alternatives
+     * despite not supporting FM RDS. If the system has multiple tuners, another
+     * one may have it on its list.
+     */
+    vec<ProgramIdentifier> relatedContent;
+
     bitfield<ProgramInfoFlags> infoFlags;
 
     /**
@@ -275,6 +338,8 @@ enum IdentifierType : uint32_t {
     /** See VENDOR_START */
     VENDOR_END = 1999,
 
+    INVALID = 0,
+
     /**
      * Primary identifier for analogue (without RDS) AM/FM stations:
      * frequency in kHz.
@@ -285,7 +350,7 @@ enum IdentifierType : uint32_t {
      *  - 1.71MHz - 30MHz: AM SW;
      *  - >60MHz: FM.
      */
-    AMFM_FREQUENCY = 1,
+    AMFM_FREQUENCY,
 
     /**
      * 16bit primary identifier for FM RDS station.
