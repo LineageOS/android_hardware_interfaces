@@ -56,6 +56,9 @@ TunerSession::TunerSession(BroadcastRadio& module, const sp<ITunerCallback>& cal
 static ProgramInfo makeDummyProgramInfo(const ProgramSelector& selector) {
     ProgramInfo info = {};
     info.selector = selector;
+    info.logicallyTunedTo = utils::make_identifier(
+        IdentifierType::AMFM_FREQUENCY, utils::getId(selector, IdentifierType::AMFM_FREQUENCY));
+    info.physicallyTunedTo = info.logicallyTunedTo;
     return info;
 }
 

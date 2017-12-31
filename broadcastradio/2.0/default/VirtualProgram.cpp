@@ -13,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define LOG_TAG "BcRadioDef.VirtualProgram"
+
 #include "VirtualProgram.h"
 
 #include "resources.h"
 
+#include <android-base/logging.h>
 #include <broadcastradio-utils-2x/Utils.h>
+#include <log/log.h>
 
 namespace android {
 namespace hardware {
@@ -37,6 +41,39 @@ VirtualProgram::operator ProgramInfo() const {
 
     auto pType = getType(selector.primaryId);
     auto isDigital = (pType != IdentifierType::AMFM_FREQUENCY && pType != IdentifierType::RDS_PI);
+
+    auto selectId = [&info](IdentifierType type) {
+        return utils::make_identifier(type, utils::getId(info.selector, type));
+    };
+
+    switch (pType) {
+        case IdentifierType::AMFM_FREQUENCY:
+            info.logicallyTunedTo = info.physicallyTunedTo =
+                selectId(IdentifierType::AMFM_FREQUENCY);
+            break;
+        case IdentifierType::RDS_PI:
+            info.logicallyTunedTo = selectId(IdentifierType::RDS_PI);
+            info.physicallyTunedTo = selectId(IdentifierType::AMFM_FREQUENCY);
+            break;
+        case IdentifierType::HD_STATION_ID_EXT:
+            info.logicallyTunedTo = selectId(IdentifierType::HD_STATION_ID_EXT);
+            info.physicallyTunedTo = selectId(IdentifierType::AMFM_FREQUENCY);
+            break;
+        case IdentifierType::DAB_SID_EXT:
+            info.logicallyTunedTo = selectId(IdentifierType::DAB_SID_EXT);
+            info.physicallyTunedTo = selectId(IdentifierType::DAB_ENSEMBLE);
+            break;
+        case IdentifierType::DRMO_SERVICE_ID:
+            info.logicallyTunedTo = selectId(IdentifierType::DRMO_SERVICE_ID);
+            info.physicallyTunedTo = selectId(IdentifierType::DRMO_FREQUENCY);
+            break;
+        case IdentifierType::SXM_SERVICE_ID:
+            info.logicallyTunedTo = selectId(IdentifierType::SXM_SERVICE_ID);
+            info.physicallyTunedTo = selectId(IdentifierType::SXM_CHANNEL);
+            break;
+        default:
+            LOG(FATAL) << "Unsupported program type: " << toString(pType);
+    }
 
     info.infoFlags |= ProgramInfoFlags::TUNED;
     info.infoFlags |= ProgramInfoFlags::STEREO;
