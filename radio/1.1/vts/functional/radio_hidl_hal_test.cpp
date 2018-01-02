@@ -66,17 +66,3 @@ std::cv_status RadioHidlTest_v1_1::wait(int sec) {
     count--;
     return status;
 }
-
-bool RadioHidlTest_v1_1::CheckGeneralError() {
-    return (radioRsp_v1_1->rspInfo.error == RadioError::RADIO_NOT_AVAILABLE ||
-            radioRsp_v1_1->rspInfo.error == RadioError::NO_MEMORY ||
-            radioRsp_v1_1->rspInfo.error == RadioError::INTERNAL_ERR ||
-            radioRsp_v1_1->rspInfo.error == RadioError::SYSTEM_ERR ||
-            radioRsp_v1_1->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED ||
-            radioRsp_v1_1->rspInfo.error == RadioError::CANCELLED);
-}
-
-bool RadioHidlTest_v1_1::CheckOEMError() {
-    return (radioRsp_v1_1->rspInfo.error >= RadioError::OEM_ERROR_1 &&
-            radioRsp_v1_1->rspInfo.error <= RadioError::OEM_ERROR_25);
-}
