@@ -41,4 +41,42 @@ interface IRadioResponse extends @1.1::IRadioResponse {
      *   RadioError:CANCELLED
      */
     oneway getCellInfoListResponse_1_2(RadioResponseInfo info, vec<CellInfo> cellInfo);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param cardStatus ICC card status as defined by CardStatus in types.hal
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     */
+    oneway getIccCardStatusResponse_1_2(RadioResponseInfo info, CardStatus cardStatus);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param slotStatus Sim slot struct containing all the physical SIM slots info with size
+      *       equals to the number of physical slots on the device
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:NO_MEMORY
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:MODEM_ERR
+     *   RadioError:INVALID_ARGUMENTS
+     */
+    oneway getSimSlotsStatusResponse(RadioResponseInfo info, vec<SimSlotStatus> slotStatus);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:NO_MEMORY
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:MODEM_ERR
+     */
+    oneway setSimSlotsMappingResponse(RadioResponseInfo info);
 };
