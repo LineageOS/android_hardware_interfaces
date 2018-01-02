@@ -37,4 +37,46 @@ interface IRadio extends @1.1::IRadio {
      * Response function is IRadioResponse.startNetworkScanResponse()
      */
     oneway startNetworkScan_1_2(int32_t serial, NetworkScanRequest request);
+
+    /**
+     * Get SIM Slot status.
+     *
+     * Request provides the slot status of all active and inactive SIM slots and whether card is
+     * present in the slots or not.
+     *
+     * @param serial Serial number of request.
+     *
+     * Response callback is IRadioResponse.getSimSlotsStatusResponse()
+     */
+    oneway getSimSlotsStatus(int32_t serial);
+
+    /**
+     * Set SIM Slot mapping.
+
+     * Maps the logical slots to the physical slots. Logical slot is the slot that is seen by modem.
+     * Physical slot is the actual physical slot. Request maps the physical slot to logical slot.
+     * Logical slots that are already mapped to the requested physical slot are not impacted.
+     *
+     * Example no. of logical slots 1 and physical slots 2:
+     * The only logical slot (index 0) can be mapped to first physical slot (value 0) or second
+     * physical slot(value 1), while the other physical slot remains unmapped and inactive.
+     * slotMap[0] = 1 or slotMap[0] = 0
+     *
+     * Example no. of logical slots 2 and physical slots 2:
+     * First logical slot (index 0) can be mapped to physical slot 1 or 2 and other logical slot
+     * can be mapped to other physical slot. Each logical slot must be mapped to a physical slot.
+     * slotMap[0] = 0 and slotMap[1] = 1 or slotMap[0] = 1 and slotMap[1] = 0
+     *
+     * @param serial Serial number of request
+     * @param slotMap Logical to physical slot mapping, size == no. of radio instances. Index is
+     *        mapping to logical slot and value to physical slot, need to provide all the slots
+     *        mapping when sending request in case of multi slot device.
+     *        EX: uint32_t slotMap[logical slot] = physical slot
+     *        index 0 is the first logical_slot number of logical slots is equal to number of Radio
+     *        instances and number of physical slots is equal to size of slotStatus in
+     *        getSimSlotsStatusResponse
+     *
+     * Response callback is IRadioResponse.setSimSlotsMappingResponse()
+     */
+    oneway setSimSlotsMapping(int32_t serial, vec<uint32_t> slotMap);
 };

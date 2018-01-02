@@ -17,6 +17,8 @@
 package android.hardware.radio@1.2;
 
 import @1.0::CdmaSignalStrength;
+import @1.0::CardState;
+import @1.0::CardStatus;
 import @1.0::CellIdentityCdma;
 import @1.0::CellIdentityGsm;
 import @1.0::CellIdentityLte;
@@ -187,37 +189,97 @@ struct CellInfo {
      * Cell type for selecting from union CellInfo.
      */
     CellInfoType cellInfoType;
-    /*
+    /**
      * True if this cell is registered false if not registered.
      */
     bool registered;
-    /*
+    /**
      * Type of time stamp represented by timeStamp.
      */
     TimeStampType timeStampType;
-    /*
+    /**
      * Time in nanos as returned by ril_nano_time.
      */
     uint64_t timeStamp;
-    /*
+    /**
      * Only one of the below vectors must be of size 1 based on the CellInfoType and others must be
      * of size 0.
      */
     vec<CellInfoGsm> gsm;
-    /*
+    /**
      * Valid only if type = cdma and size = 1 else must be empty.
      */
     vec<CellInfoCdma> cdma;
-    /*
+    /**
      * Valid only if type = lte and size = 1 else must be empty.
      */
     vec<CellInfoLte> lte;
-    /*
+    /**
      * Valid only if type = wcdma and size = 1 else must be empty.
      */
     vec<CellInfoWcdma> wcdma;
-    /*
+    /**
      * Valid only if type = tdscdma and size = 1 else must be empty.
      */
     vec<CellInfoTdscdma> tdscdma;
+};
+
+enum SlotState : int32_t {
+    /**
+     * Physical slot is inactive
+     */
+    INACTIVE  = 0x00,
+    /**
+     * Physical slot is active
+     */
+    ACTIVE    = 0x01,
+};
+
+struct CardStatus {
+    @1.0::CardStatus base;
+    uint32_t physicalSlotId;
+    /**
+     * An Answer To Reset (ATR) is a message output by a Smart Card conforming to ISO/IEC 7816
+     * standards, following electrical reset of the card's chip. The ATR conveys information about
+     * the communication parameters proposed by the card, and the card's nature and state.
+     *
+     * This data is applicable only when cardState is CardState:PRESENT.
+     */
+    string atr;
+    /**
+     * Integrated Circuit Card IDentifier (ICCID) is Unique Identifier of the SIM CARD. File is
+     * located in the SIM card at EFiccid (0x2FE2) as per ETSI 102.221. The ICCID is defined by
+     * the ITU-T recommendation E.118 ISO/IEC 7816.
+     *
+     * This data is applicable only when cardState is CardState:PRESENT.
+     */
+    string iccid;
+};
+
+struct SimSlotStatus {
+    /**
+     * Card state in the physical slot
+     */
+    CardState cardState;
+    /**
+     * Slot state Active/Inactive
+     */
+    SlotState slotState;
+    /**
+     * An Answer To Reset (ATR) is a message output by a Smart Card conforming to ISO/IEC 7816
+     * standards, following electrical reset of the card's chip. The ATR conveys information about
+     * the communication parameters proposed by the card, and the card's nature and state.
+     *
+     * This data is applicable only when cardState is CardState:PRESENT.
+     */
+    string atr;
+    uint32_t logicalSlotId;
+    /**
+     * Integrated Circuit Card IDentifier (ICCID) is Unique Identifier of the SIM CARD. File is
+     * located in the SIM card at EFiccid (0x2FE2) as per ETSI 102.221. The ICCID is defined by
+     * the ITU-T recommendation E.118 ISO/IEC 7816.
+     *
+     * This data is applicable only when cardState is CardState:PRESENT.
+     */
+    string iccid;
 };
