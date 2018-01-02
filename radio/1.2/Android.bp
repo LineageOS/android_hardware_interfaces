@@ -19,6 +19,7 @@ hidl_interface {
         "android.hidl.base@1.0",
     ],
     types: [
+        "CardStatus",
         "CellIdentityCdma",
         "CellIdentityGsm",
         "CellIdentityLte",
@@ -35,6 +36,8 @@ hidl_interface {
         "NetworkScanResult",
         "RadioConst",
         "ScanIntervalRange",
+        "SimSlotStatus",
+        "SlotState",
     ],
     gen_java: true,
 }
