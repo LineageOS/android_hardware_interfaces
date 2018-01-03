@@ -89,6 +89,10 @@ class TunerCallbackMock : public ITunerCallback {
     utils::ProgramInfoSet mProgramList;
 };
 
+struct AnnouncementObserverMock : public IAnnouncementObserver {
+    MOCK_METHOD1(onListUpdated, Return<void>(const hidl_vec<Announcement>&));
+};
+
 class BroadcastRadioHalTest : public ::testing::VtsHalHidlTargetTestBase {
    protected:
     virtual void SetUp() override;
@@ -658,6 +662,40 @@ TEST_F(BroadcastRadioHalTest, GetProgramList) {
 
     auto stopResult = mSession->stopProgramListUpdates();
     EXPECT_TRUE(stopResult.isOk());
+}
+
+/**
+ * Test announcement observer registration.
+ *
+ * Verifies that:
+ *  - registerAnnouncementObserver either succeeds or returns NOT_SUPPORTED;
+ *  - if it succeeds, it returns a valid close handle (which is a nullptr otherwise);
+ *  - closing handle does not crash.
+ */
+TEST_F(BroadcastRadioHalTest, AnnouncementObserverRegistration) {
+    sp<AnnouncementObserverMock> observer = new AnnouncementObserverMock();
+
+    Result halResult = Result::UNKNOWN_ERROR;
+    sp<ICloseHandle> closeHandle = nullptr;
+    auto cb = [&](Result result, const sp<ICloseHandle>& closeHandle_) {
+        halResult = result;
+        closeHandle = closeHandle_;
+    };
+
+    auto hidlResult =
+        mModule->registerAnnouncementObserver({AnnouncementType::EMERGENCY}, observer, cb);
+    ASSERT_TRUE(hidlResult.isOk());
+
+    if (halResult == Result::NOT_SUPPORTED) {
+        ASSERT_EQ(nullptr, closeHandle.get());
+        printSkipped("Announcements not supported");
+        return;
+    }
+
+    ASSERT_EQ(Result::OK, halResult);
+    ASSERT_NE(nullptr, closeHandle.get());
+
+    closeHandle->close();
 }
 
 // TODO(b/70939328): test ProgramInfo's currentlyTunedId and

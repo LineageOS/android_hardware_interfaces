@@ -777,3 +777,55 @@ struct ProgramFilter {
      */
     bool excludeModifications;
 };
+
+/**
+ * Type of an announcement.
+ *
+ * It maps to different announcement types per each radio technology.
+ */
+enum AnnouncementType : uint8_t {
+    /** DAB alarm, RDS emergency program type (PTY 31). */
+    EMERGENCY = 1,
+
+    /** DAB warning. */
+    WARNING,
+
+    /** DAB road traffic, RDS TA, HD Radio transportation. */
+    TRAFFIC,
+
+    /** Weather. */
+    WEATHER,
+
+    /** News. */
+    NEWS,
+
+    /** DAB event, special event. */
+    EVENT,
+
+    /** DAB sport report, RDS sports. */
+    SPORT,
+
+    /** All others. */
+    MISC,
+};
+
+/**
+ * A pointer to a station broadcasting active announcement.
+ */
+struct Announcement {
+    /**
+     * Program selector to tune to the announcement.
+     */
+    ProgramSelector selector;
+
+    /** Announcement type. */
+    AnnouncementType type;
+
+    /**
+     * Vendor-specific information.
+     *
+     * It may be used for extra features, not supported by the platform,
+     * for example: com.me.hdradio.urgency=100; com.me.hdradio.certainity=50.
+     */
+    vec<VendorKeyValue> vendorInfo;
+};

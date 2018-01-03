@@ -141,6 +141,15 @@ Return<void> BroadcastRadio::getImage(uint32_t id, getImage_cb _hidl_cb) {
     return {};
 }
 
+Return<void> BroadcastRadio::registerAnnouncementObserver(
+    const hidl_vec<AnnouncementType>& enabled, const sp<IAnnouncementObserver>& /* cb */,
+    registerAnnouncementObserver_cb _hidl_cb) {
+    ALOGV("%s(%s)", __func__, toString(enabled).c_str());
+
+    _hidl_cb(Result::NOT_SUPPORTED, nullptr);
+    return {};
+}
+
 }  // namespace implementation
 }  // namespace V2_0
 }  // namespace broadcastradio

@@ -15,6 +15,8 @@
 
 package android.hardware.broadcastradio@2.0;
 
+import IAnnouncementObserver;
+import ICloseHandle;
 import ITunerCallback;
 import ITunerSession;
 
@@ -66,7 +68,7 @@ interface IBroadcastRadio {
      * @return session The session interface.
      */
     openSession(ITunerCallback callback)
-            generates (Result result, ITunerSession session);
+        generates (Result result, ITunerSession session);
 
     /**
      * Fetch image from radio module cache.
@@ -100,4 +102,28 @@ interface IBroadcastRadio {
      *               or a zero-length vector if identifier doesn't exist.
      */
     getImage(uint32_t id) generates (vec<uint8_t> image);
+
+    /**
+     * Registers announcement observer.
+     *
+     * If there is at least one observer registered, HAL implementation must
+     * notify about announcements even if no sessions are active.
+     *
+     * If the observer dies, the HAL implementation must unregister observer
+     * automatically.
+     *
+     * @param enabled The list of announcement types to watch for.
+     * @param cb The callback interface.
+     * @return result OK in case of success.
+     *                NOT_SUPPORTED if the tuner doesn't support announcements.
+     * @return closeHandle A handle to unregister observer,
+     *                     nullptr if result was not OK.
+     */
+    registerAnnouncementObserver(
+            vec<AnnouncementType> enabled,
+            IAnnouncementObserver cb
+        ) generates (
+            Result result,
+            ICloseHandle closeHandle
+        );
 };
