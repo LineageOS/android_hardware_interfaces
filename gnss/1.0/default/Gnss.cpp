@@ -121,7 +121,7 @@ void Gnss::gnssSvStatusCb(GnssSvStatus* status) {
     svStatus.numSvs = status->num_svs;
 
     if (svStatus.numSvs > static_cast<uint32_t>(GnssMax::SVS_COUNT)) {
-        ALOGW("Too many satellites %zd. Clamps to %d.", svStatus.numSvs, GnssMax::SVS_COUNT);
+        ALOGW("Too many satellites %u. Clamps to %d.", svStatus.numSvs, GnssMax::SVS_COUNT);
         svStatus.numSvs = static_cast<uint32_t>(GnssMax::SVS_COUNT);
     }
 
@@ -191,7 +191,7 @@ void Gnss::gpsSvStatusCb(GpsSvStatus* svInfo) {
      * GnssMax::SVS_COUNT entries.
      */
     if (svStatus.numSvs > static_cast<uint32_t>(GnssMax::SVS_COUNT)) {
-        ALOGW("Too many satellites %zd. Clamps to %d.", svStatus.numSvs, GnssMax::SVS_COUNT);
+        ALOGW("Too many satellites %u. Clamps to %d.", svStatus.numSvs, GnssMax::SVS_COUNT);
         svStatus.numSvs = static_cast<uint32_t>(GnssMax::SVS_COUNT);
     }
 
