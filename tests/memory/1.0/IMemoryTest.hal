@@ -23,6 +23,6 @@ interface IMemoryTest {
     haveSomeMemory(memory mem) generates(memory mem);
     fillMemory(memory memory_in, uint8_t filler);
     haveSomeMemoryBlock(MemoryBlock blk) generates(MemoryBlock blk);
-    set(memory mem) generates();
+    set(memory mem);
     get()generates(IMemoryToken token);
 };
