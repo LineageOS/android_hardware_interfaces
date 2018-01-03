@@ -54,7 +54,7 @@ interface IKeymasterDevice {
      * device with a StrongBox Keymaster has two Keymasters instances, because there must be a TEE
      * Keymaster as well.  The HMAC key used to MAC and verify authentication tokens must be shared
      * between TEE and StrongBox so they can each validate tokens produced by the other.  This
-     * method is the second and final step in the process for for agreeing on a shared key.  It is
+     * method is the second and final step in the process for agreeing on a shared key.  It is
      * called by Keystore during startup if and only if Keystore loads multiple Keymaster HALs.
      * Keystore calls it on each of the HAL instances, and sends to it all of the
      * HmacSharingParameters returned by all HALs.
@@ -94,7 +94,7 @@ interface IKeymasterDevice {
      *     Any method of securely establishing K that ensures that an attacker cannot obtain or
      *     derive its value is acceptable.  What follows is a recommended approach, to be executed
      *     during each factory reset.  It relies on use of the factory-installed attestation keys to
-     *     mitigate man-in-the-middle attacks.  This protocol requires that one of the instancess
+     *     mitigate man-in-the-middle attacks.  This protocol requires that one of the instances
      *     have secure persistent storage.  This model was chosen because StrongBox has secure
      *     persistent storage (by definition), but the TEE may not.  The instance without storage is
      *     assumed to be able to derive a unique hardware-bound key (HBK) which is used only for
