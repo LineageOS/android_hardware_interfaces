@@ -32,6 +32,7 @@ enum Constants : int32_t {
 enum Result : int32_t {
     OK,
     UNKNOWN_ERROR,
+    INTERNAL_ERROR,
     INVALID_ARGUMENTS,
     INVALID_STATE,
     NOT_SUPPORTED,
@@ -117,6 +118,108 @@ struct VendorKeyValue {
      * Format of this string can vary across vendors.
      */
     string value;
+};
+
+/**
+ * A supported or configured RDS variant.
+ *
+ * Both might be set for hardware capabilities check (with full=true when
+ * calling getAmFmRegionConfig), but only one (or none) for specific
+ * region settings.
+ */
+enum Rds : uint8_t {
+    /** Standard variant, used everywhere except North America. */
+    RDS = 1 << 0,
+
+    /** Variant used in North America. */
+    RBDS = 1 << 1,
+};
+
+/**
+ * FM de-emphasis filter supported or configured.
+ *
+ * Both might be set for hardware capabilities check (with full=true when
+ * calling getAmFmRegionConfig), but exactly one for specific region settings.
+ */
+enum Deemphasis : uint8_t {
+    D50 = 1 << 0,
+    D75 = 1 << 1,
+};
+
+/**
+ * Regional configuration for AM/FM.
+ *
+ * For hardware capabilities check (with full=true when calling
+ * getAmFmRegionConfig), HAL implementation fills entire supported range of
+ * frequencies and features.
+ *
+ * When checking current configuration, at most one bit in each bitfield
+ * can be set.
+ */
+struct AmFmRegionConfig {
+    /**
+     * All supported or configured AM/FM bands.
+     *
+     * AM/FM bands are identified by frequency value
+     * (see IdentifierType::AMFM_FREQUENCY).
+     *
+     * With typical configuration, it's expected to have two frequency ranges
+     * for capabilities check (AM and FM) and four ranges for specific region
+     * configuration (AM LW, AM MW, AM SW, FM).
+     */
+    vec<AmFmBandRange> ranges;
+
+    /** De-emphasis filter supported/configured. */
+    bitfield<Deemphasis> fmDeemphasis;
+
+    /** RDS/RBDS variant supported/configured. */
+    bitfield<Rds> fmRds;
+};
+
+/**
+ * AM/FM band range for region configuration.
+ *
+ * Defines channel grid: each possible channel is set at
+ * lowerBound + channelNumber * spacing, up to upperBound.
+ */
+struct AmFmBandRange {
+    /** The frequency of the first channel within the range. */
+    uint32_t lowerBound;
+
+    /** The frequency of the last channel within the range. */
+    uint32_t upperBound;
+
+    /** Channel grid resolution, how far apart are the channels. */
+    uint32_t spacing;
+
+    /**
+     * Spacing used when scanning for channels. It's a multiply of spacing and
+     * allows to skip some channels when scanning to make it faster.
+     *
+     * Tuner may first quickly check every n-th channel and if it detects echo
+     * from a station, it fine-tunes to find the exact frequency.
+     *
+     * It's ignored for capabilities check (with full=true when calling
+     * getAmFmRegionConfig).
+     */
+    uint32_t scanSpacing;
+};
+
+/**
+ * An entry in regional configuration for DAB.
+ *
+ * Defines a frequency table row for ensembles.
+ */
+struct DabTableEntry {
+    /**
+     * Channel name, i.e. 5A, 7B.
+     *
+     * It must match the following regular expression: /^[A-Z0-9]{2,5}$/.
+     */
+    string label;
+
+    /** Frequency, in kHz. */
+    uint32_t frequency;
 };
 
 /**

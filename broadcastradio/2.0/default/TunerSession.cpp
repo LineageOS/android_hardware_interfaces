@@ -77,8 +77,12 @@ void TunerSession::tuneInternalLocked(const ProgramSelector& sel) {
     mCallback->onCurrentProgramInfoChanged(programInfo);
 }
 
+const BroadcastRadio& TunerSession::module() const {
+    return mModule.get();
+}
+
 const VirtualRadio& TunerSession::virtualRadio() const {
-    return mModule.get().mVirtualRadio;
+    return module().mVirtualRadio;
 }
 
 Return<Result> TunerSession::tune(const ProgramSelector& sel) {
@@ -86,7 +90,7 @@ Return<Result> TunerSession::tune(const ProgramSelector& sel) {
     lock_guard<mutex> lk(mMut);
     if (mIsClosed) return Result::INVALID_STATE;
 
-    if (!utils::isSupported(mModule.get().mProperties, sel)) {
+    if (!utils::isSupported(module().mProperties, sel)) {
         ALOGW("Selector not supported");
         return Result::NOT_SUPPORTED;
     }
@@ -170,23 +174,19 @@ Return<Result> TunerSession::step(bool directionUp) {
     mIsTuneCompleted = false;
 
     auto stepTo = utils::getId(mCurrentProgram, IdentifierType::AMFM_FREQUENCY);
-#if 0
-    // TODO(b/69958423): handle regions
-    if (directionUp) {
-        stepTo += mAmfmConfig.spacings[0];
-    } else {
-        stepTo -= mAmfmConfig.spacings[0];
+    auto range = getAmFmRangeLocked();
+    if (!range) {
+        ALOGE("Can't find current band");
+        return Result::INTERNAL_ERROR;
     }
 
-    if (stepTo > mAmfmConfig.upperLimit) stepTo = mAmfmConfig.lowerLimit;
-    if (stepTo < mAmfmConfig.lowerLimit) stepTo = mAmfmConfig.upperLimit;
-#else
     if (directionUp) {
-        stepTo += 100;
+        stepTo += range->spacing;
     } else {
-        stepTo -= 100;
+        stepTo -= range->spacing;
     }
-#endif
+    if (stepTo > range->upperBound) stepTo = range->lowerBound;
+    if (stepTo < range->lowerBound) stepTo = range->upperBound;
 
     auto task = [this, stepTo]() {
         ALOGI("Performing step to %s", std::to_string(stepTo).c_str());
@@ -277,6 +277,18 @@ Return<void> TunerSession::close() {
 
     mIsClosed = true;
     mThread.cancelAll();
+    return {};
+}
+
+std::optional<AmFmBandRange> TunerSession::getAmFmRangeLocked() const {
+    if (!mIsTuneCompleted) return {};
+    if (!utils::hasId(mCurrentProgram, IdentifierType::AMFM_FREQUENCY)) return {};
+
+    auto freq = utils::getId(mCurrentProgram, IdentifierType::AMFM_FREQUENCY);
+    for (auto&& range : module().getAmFmConfig().ranges) {
+        if (range.lowerBound <= freq && range.upperBound >= freq) return range;
+    }
+
     return {};
 }
 

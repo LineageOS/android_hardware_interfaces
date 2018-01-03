@@ -89,6 +89,18 @@ IdentifierIterator end(const V2_0::ProgramSelector& sel) {
     return IdentifierIterator(sel) + 1 /* primary id */ + sel.secondaryIds.size();
 }
 
+FrequencyBand getBand(uint64_t freq) {
+    // keep in sync with
+    // frameworks/base/services/core/java/com/android/server/broadcastradio/hal2/Utils.java
+    if (freq < 30) return FrequencyBand::UNKNOWN;
+    if (freq < 500) return FrequencyBand::AM_LW;
+    if (freq < 1705) return FrequencyBand::AM_MW;
+    if (freq < 30000) return FrequencyBand::AM_SW;
+    if (freq < 60000) return FrequencyBand::UNKNOWN;
+    if (freq < 110000) return FrequencyBand::FM;
+    return FrequencyBand::UNKNOWN;
+}
+
 static bool bothHaveId(const ProgramSelector& a, const ProgramSelector& b,
                        const IdentifierType type) {
     return hasId(a, type) && hasId(b, type);
@@ -194,7 +206,7 @@ bool isSupported(const Properties& prop, const ProgramSelector& sel) {
     return false;
 }
 
-static bool isValid(const ProgramIdentifier& id) {
+bool isValid(const ProgramIdentifier& id) {
     auto val = id.value;
     bool valid = true;
 
@@ -209,8 +221,10 @@ static bool isValid(const ProgramIdentifier& id) {
         case IdentifierType::INVALID:
             expect(false, "IdentifierType::INVALID");
             break;
-        case IdentifierType::AMFM_FREQUENCY:
         case IdentifierType::DAB_FREQUENCY:
+            expect(val > 100000u, "f > 100MHz");
+        // fallthrough
+        case IdentifierType::AMFM_FREQUENCY:
         case IdentifierType::DRMO_FREQUENCY:
             expect(val > 100u, "f > 100kHz");
             expect(val < 10000000u, "f < 10GHz");

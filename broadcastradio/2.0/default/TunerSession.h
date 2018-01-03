@@ -22,6 +22,8 @@
 #include <android/hardware/broadcastradio/2.0/ITunerSession.h>
 #include <broadcastradio-utils/WorkerThread.h>
 
+#include <optional>
+
 namespace android {
 namespace hardware {
 namespace broadcastradio {
@@ -48,6 +50,8 @@ struct TunerSession : public ITunerSession {
                                        getParameters_cb _hidl_cb) override;
     virtual Return<void> close() override;
 
+    std::optional<AmFmBandRange> getAmFmRangeLocked() const;
+
    private:
     std::mutex mMut;
     WorkerThread mThread;
@@ -61,6 +65,7 @@ struct TunerSession : public ITunerSession {
 
     void tuneInternalLocked(const ProgramSelector& sel);
     const VirtualRadio& virtualRadio() const;
+    const BroadcastRadio& module() const;
 };
 
 }  // namespace implementation
