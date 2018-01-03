@@ -43,6 +43,15 @@ enum CameraMetadataTag : @3.2::CameraMetadataTag {
 
     ANDROID_CONTROL_END_3_3,
 
+    /** android.info.version [static, byte, public]
+     *
+     * <p>A short string for manufacturer version information about the camera device, such as
+     * ISP hardware, sensors, etc.</p>
+     */
+    ANDROID_INFO_VERSION = android.hardware.camera.metadata@3.2::CameraMetadataTag:ANDROID_INFO_END,
+
+    ANDROID_INFO_END_3_3,
+
 };
 
 /*
