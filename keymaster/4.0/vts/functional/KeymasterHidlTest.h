@@ -101,6 +101,7 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     }
 
     static IKeymasterDevice& keymaster() { return *keymaster_; }
+    static const std::vector<sp<IKeymasterDevice>>& all_keymasters() { return all_keymasters_; }
     static uint32_t os_version() { return os_version_; }
     static uint32_t os_patch_level() { return os_patch_level_; }
 
