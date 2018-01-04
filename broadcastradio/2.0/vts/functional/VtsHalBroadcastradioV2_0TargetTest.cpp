@@ -30,6 +30,7 @@
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <optional>
 #include <regex>
 
 namespace android {
@@ -100,6 +101,7 @@ class BroadcastRadioHalTest : public ::testing::VtsHalHidlTargetTestBase {
 
     bool openSession();
     bool getAmFmRegionConfig(bool full, AmFmRegionConfig* config);
+    std::optional<utils::ProgramInfoSet> getProgramList();
 
     sp<IBroadcastRadio> mModule;
     Properties mProperties;
@@ -180,6 +182,25 @@ bool BroadcastRadioHalTest::getAmFmRegionConfig(bool full, AmFmRegionConfig* con
 
     EXPECT_EQ(Result::OK, halResult);
     return halResult == Result::OK;
+}
+
+std::optional<utils::ProgramInfoSet> BroadcastRadioHalTest::getProgramList() {
+    EXPECT_TIMEOUT_CALL(*mCallback, onProgramListReady).Times(AnyNumber());
+
+    auto startResult = mSession->startProgramListUpdates({});
+    if (startResult == Result::NOT_SUPPORTED) {
+        printSkipped("Program list not supported");
+        return nullopt;
+    }
+    EXPECT_EQ(Result::OK, startResult);
+    if (startResult != Result::OK) return nullopt;
+
+    EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onProgramListReady, timeout::programListScan);
+
+    auto stopResult = mSession->stopProgramListUpdates();
+    EXPECT_TRUE(stopResult.isOk());
+
+    return mCallback->mProgramList;
 }
 
 /**
@@ -649,19 +670,35 @@ TEST_F(BroadcastRadioHalTest, SetConfigFlags) {
 TEST_F(BroadcastRadioHalTest, GetProgramList) {
     ASSERT_TRUE(openSession());
 
-    EXPECT_TIMEOUT_CALL(*mCallback, onProgramListReady).Times(AnyNumber());
+    getProgramList();
+}
 
-    auto startResult = mSession->startProgramListUpdates({});
-    if (startResult == Result::NOT_SUPPORTED) {
-        printSkipped("Program list not supported");
-        return;
+/**
+ * Test HD_STATION_NAME correctness.
+ *
+ * Verifies that if a program on the list contains HD_STATION_NAME identifier:
+ *  - the program provides station name in its metadata;
+ *  - the identifier matches the name;
+ *  - there is only one identifier of that type.
+ */
+TEST_F(BroadcastRadioHalTest, HdRadioStationNameId) {
+    ASSERT_TRUE(openSession());
+
+    auto list = getProgramList();
+    if (!list) return;
+
+    for (auto&& program : *list) {
+        auto nameIds = utils::getAllIds(program.selector, IdentifierType::HD_STATION_NAME);
+        EXPECT_LE(nameIds.size(), 1u);
+        if (nameIds.size() == 0) continue;
+
+        auto name = utils::getMetadataString(program, MetadataKey::PROGRAM_NAME);
+        if (!name) name = utils::getMetadataString(program, MetadataKey::RDS_PS);
+        ASSERT_TRUE(name.has_value());
+
+        auto expectedId = utils::make_hdradio_station_name(*name);
+        EXPECT_EQ(expectedId.value, nameIds[0]);
     }
-    ASSERT_EQ(Result::OK, startResult);
-
-    EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onProgramListReady, timeout::programListScan);
-
-    auto stopResult = mSession->stopProgramListUpdates();
-    EXPECT_TRUE(stopResult.isOk());
 }
 
 /**

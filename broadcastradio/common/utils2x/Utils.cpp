@@ -245,6 +245,15 @@ bool isValid(const ProgramIdentifier& id) {
             expect(freq < 10000000u, "f < 10GHz");
             break;
         }
+        case IdentifierType::HD_STATION_NAME: {
+            while (val > 0) {
+                auto ch = static_cast<char>(val & 0xFF);
+                val >>= 8;
+                expect((ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'Z'),
+                       "HD_STATION_NAME does not match [A-Z0-9]+");
+            }
+            break;
+        }
         case IdentifierType::DAB_SID_EXT: {
             auto sid = val & 0xFFFF;  // 16bit
             val >>= 16;
@@ -365,6 +374,40 @@ void updateProgramList(ProgramInfoSet& list, const ProgramListChunk& chunk) {
         info.selector.primaryId = id;
         list.erase(info);
     }
+}
+
+std::optional<std::string> getMetadataString(const V2_0::ProgramInfo& info,
+                                             const V2_0::MetadataKey key) {
+    auto isKey = [key](const V2_0::Metadata& item) {
+        return static_cast<V2_0::MetadataKey>(item.key) == key;
+    };
+
+    auto it = std::find_if(info.metadata.begin(), info.metadata.end(), isKey);
+    if (it == info.metadata.end()) return std::nullopt;
+
+    return it->stringValue;
+}
+
+V2_0::ProgramIdentifier make_hdradio_station_name(const std::string& name) {
+    constexpr size_t maxlen = 8;
+
+    std::string shortName;
+    shortName.reserve(maxlen);
+
+    auto&& loc = std::locale::classic();
+    for (char ch : name) {
+        if (!std::isalnum(ch, loc)) continue;
+        shortName.push_back(std::toupper(ch, loc));
+        if (shortName.length() >= maxlen) break;
+    }
+
+    uint64_t val = 0;
+    for (auto rit = shortName.rbegin(); rit != shortName.rend(); ++rit) {
+        val <<= 8;
+        val |= static_cast<uint8_t>(*rit);
+    }
+
+    return make_identifier(IdentifierType::HD_STATION_NAME, val);
 }
 
 }  // namespace utils

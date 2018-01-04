@@ -22,6 +22,9 @@ cc_test {
         "-Wextra",
         "-Werror",
     ],
+    cppflags: [
+        "-std=c++1z",
+    ],
     srcs: [
         "CommonXX_test.cpp",
     ],
@@ -43,8 +46,12 @@ cc_test {
         "-Wextra",
         "-Werror",
     ],
+    cppflags: [
+        "-std=c++1z",
+    ],
     srcs: [
         "IdentifierIterator_test.cpp",
+        "ProgramIdentifier_test.cpp",
     ],
     static_libs: [
         "android.hardware.broadcastradio@common-utils-2x-lib",
