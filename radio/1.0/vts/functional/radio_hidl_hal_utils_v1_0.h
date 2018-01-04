@@ -521,8 +521,6 @@ class RadioHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    public:
     virtual void SetUp() override;
 
-    virtual void TearDown() override;
-
     /* Used as a mechanism to inform the test about data/event callback */
     void notify();
 
