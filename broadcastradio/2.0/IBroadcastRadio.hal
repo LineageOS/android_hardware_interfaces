@@ -15,6 +15,8 @@
 
 package android.hardware.broadcastradio@2.0;
 
+import IAnnouncementObserver;
+import ICloseHandle;
 import ITunerCallback;
 import ITunerSession;
 
@@ -33,6 +35,28 @@ interface IBroadcastRadio {
     getProperties() generates (Properties properties);
 
     /**
+     * Fetches current or possible AM/FM region configuration.
+     *
+     * @param full If true, returns full hardware capabilities.
+     *             If false, returns current regional configuration.
+     * @return result OK in case of success.
+     *                NOT_SUPPORTED if the tuner doesn't support AM/FM.
+     * @return config Hardware capabilities (full=true) or
+     *                current configuration (full=false).
+     */
+    getAmFmRegionConfig(bool full)
+            generates (Result result, AmFmRegionConfig config);
+
+    /**
+     * Fetches current DAB region configuration.
+     *
+     * @return result OK in case of success.
+     *                NOT_SUPPORTED if the tuner doesn't support DAB.
+     * @return config Current configuration.
+     */
+    getDabRegionConfig() generates (Result result, vec<DabTableEntry> config);
+
+    /**
      * Opens a new tuner session.
      *
      * There may be only one session active at a time. If the new session was
@@ -44,7 +68,7 @@ interface IBroadcastRadio {
      * @return session The session interface.
      */
     openSession(ITunerCallback callback)
-            generates (Result result, ITunerSession session);
+        generates (Result result, ITunerSession session);
 
     /**
      * Fetch image from radio module cache.
@@ -78,4 +102,28 @@ interface IBroadcastRadio {
      *               or a zero-length vector if identifier doesn't exist.
      */
     getImage(uint32_t id) generates (vec<uint8_t> image);
+
+    /**
+     * Registers announcement observer.
+     *
+     * If there is at least one observer registered, HAL implementation must
+     * notify about announcements even if no sessions are active.
+     *
+     * If the observer dies, the HAL implementation must unregister observer
+     * automatically.
+     *
+     * @param enabled The list of announcement types to watch for.
+     * @param cb The callback interface.
+     * @return result OK in case of success.
+     *                NOT_SUPPORTED if the tuner doesn't support announcements.
+     * @return closeHandle A handle to unregister observer,
+     *                     nullptr if result was not OK.
+     */
+    registerAnnouncementObserver(
+            vec<AnnouncementType> enabled,
+            IAnnouncementObserver cb
+        ) generates (
+            Result result,
+            ICloseHandle closeHandle
+        );
 };
