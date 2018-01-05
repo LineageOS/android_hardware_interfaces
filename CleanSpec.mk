@@ -63,3 +63,4 @@ $(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/etc/init/android.hardware.au
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/lib/android.hardware.tests*)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/lib/vndk/android.hardware.tests*)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/lib/vndk-sp/android.hardware.graphics.allocator*)
+$(call add-clean-step, find $(PRODUCT_OUT)/system $(PRODUCT_OUT)/vendor -type f -name "android\.hardware\.configstore\@1\.1*" -print0 | xargs -0 rm -f)
