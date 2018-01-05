@@ -3,7 +3,10 @@ LOCAL_PATH := $(call my-dir)
 ################################################################################
 include $(CLEAR_VARS)
 LOCAL_MODULE := android.hardware.configstore@1.0-service
+# seccomp is not required for coverage build.
+ifneq ($(NATIVE_COVERAGE),true)
 LOCAL_REQUIRED_MODULES_arm64 := configstore@1.0.policy
+endif
 LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE_CLASS := EXECUTABLES
 LOCAL_MODULE_RELATIVE_PATH := hw
