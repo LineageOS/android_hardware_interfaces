@@ -205,6 +205,7 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     std::pair<ErrorCode, HidlBuf> UpgradeKey(const HidlBuf& key_blob);
 
     static bool IsSecure() { return securityLevel_ != SecurityLevel::SOFTWARE; }
+    static SecurityLevel SecLevel() { return securityLevel_; }
 
     HidlBuf key_blob_;
     KeyCharacteristics key_characteristics_;
