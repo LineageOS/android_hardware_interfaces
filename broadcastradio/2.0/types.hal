@@ -67,7 +67,7 @@ enum ConfigFlag : uint32_t {
      * Forces the digital playback for the supporting radio technology.
      *
      * User may disable digital-analog handover that happens with poor
-     * receiption conditions. With digital forced, the radio will remain silent
+     * reception conditions. With digital forced, the radio will remain silent
      * instead of switching to analog channel if it's available. This is purely
      * user choice, it does not reflect the actual state of handover.
      */
@@ -76,8 +76,9 @@ enum ConfigFlag : uint32_t {
     /**
      * RDS Alternative Frequencies.
      *
-     * If set, radio tuner automatically switches to the best available
-     * frequency that currently listened RDS station broadcasts.
+     * If set and the currently tuned RDS station broadcasts on multiple
+     * channels, radio tuner automatically switches to the best available
+     * alternative.
      */
     RDS_AF,
 
