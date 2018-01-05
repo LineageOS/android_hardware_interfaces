@@ -394,6 +394,12 @@ Return<void> Baz::getNestedStructs(getNestedStructs_cb _hidl_cb) {
     _hidl_cb(result);
     return Void();
 }
+
+Return<void> Baz::haveSomeStructWithInterface(const StructWithInterface& swi,
+                                              haveSomeStructWithInterface_cb _hidl_cb) {
+    _hidl_cb(swi);
+    return Void();
+}
 // Methods from ::android::hidl::base::V1_0::IBase follow.
 
 IBaz* HIDL_FETCH_IBaz(const char* /* name */) {

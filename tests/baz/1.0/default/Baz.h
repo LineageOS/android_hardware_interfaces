@@ -91,6 +91,8 @@ struct Baz : public IBaz {
     Return<uint32_t> size(uint32_t size) override;
     Return<void> getNestedStructs(getNestedStructs_cb _hidl_cb) override;
 
+    Return<void> haveSomeStructWithInterface(const StructWithInterface& swi,
+                                             haveSomeStructWithInterface_cb _hidl_cb) override;
     // Methods from ::android::hidl::base::V1_0::IBase follow.
  private:
     sp<IBazCallback> mStoredCallback;

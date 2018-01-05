@@ -68,6 +68,10 @@ interface IBaz extends IBase {
         bitfield<BitField> bf;
     };
 
+    struct StructWithInterface {
+        int32_t number;
+        IBase dummy;
+    };
     oneway doThis(float param);
 
     doThatAndReturnSomething(int64_t param) generates (int32_t result);
@@ -93,4 +97,6 @@ interface IBaz extends IBase {
     size(uint32_t size) generates (uint32_t size);
 
     getNestedStructs() generates(vec<NestedStruct> data);
+
+    haveSomeStructWithInterface(StructWithInterface swi) generates(StructWithInterface swi);
 };
