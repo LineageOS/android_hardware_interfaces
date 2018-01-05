@@ -68,15 +68,6 @@ namespace hardware {
 namespace keymaster {
 namespace V4_0 {
 
-using ::android::hardware::keymaster::V3_0::Algorithm;
-using ::android::hardware::keymaster::V3_0::BlockMode;
-using ::android::hardware::keymaster::V3_0::Digest;
-using ::android::hardware::keymaster::V3_0::EcCurve;
-using ::android::hardware::keymaster::V3_0::HardwareAuthenticatorType;
-using ::android::hardware::keymaster::V3_0::KeyFormat;
-using ::android::hardware::keymaster::V3_0::PaddingMode;
-using ::android::hardware::keymaster::V3_0::TagType;
-
 // The following create the numeric values that KM_TAG_PADDING and KM_TAG_DIGEST used to have.  We
 // need these old values to be able to support old keys that use them.
 static const int32_t KM_TAG_DIGEST_OLD = static_cast<int32_t>(TagType::ENUM) | 5;
