@@ -18,6 +18,7 @@
 
 #include <android/hardware/broadcastradio/2.0/types.h>
 #include <chrono>
+#include <optional>
 #include <queue>
 #include <thread>
 #include <unordered_set>
@@ -145,6 +146,11 @@ typedef std::unordered_set<V2_0::ProgramInfo, ProgramInfoHasher, ProgramInfoKeyE
     ProgramInfoSet;
 
 void updateProgramList(ProgramInfoSet& list, const V2_0::ProgramListChunk& chunk);
+
+std::optional<std::string> getMetadataString(const V2_0::ProgramInfo& info,
+                                             const V2_0::MetadataKey key);
+
+V2_0::ProgramIdentifier make_hdradio_station_name(const std::string& name);
 
 }  // namespace utils
 }  // namespace broadcastradio

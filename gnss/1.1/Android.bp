@@ -9,6 +9,7 @@ hidl_interface {
     srcs: [
         "IGnss.hal",
         "IGnssCallback.hal",
+        "IGnssConfiguration.hal",
         "IGnssMeasurement.hal",
     ],
     interfaces: [
