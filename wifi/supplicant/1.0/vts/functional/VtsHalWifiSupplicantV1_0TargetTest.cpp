@@ -25,8 +25,7 @@ class SupplicantHidlEnvironment : public ::testing::Environment {
     virtual void SetUp() override {
         stopSupplicant();
     }
-    virtual void TearDown() override {
-    }
+    virtual void TearDown() override { startSupplicantAndWaitForHidlService(); }
 };
 
 int main(int argc, char** argv) {
