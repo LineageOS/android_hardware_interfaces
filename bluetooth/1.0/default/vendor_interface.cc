@@ -49,6 +49,7 @@ uint32_t lpm_timeout_ms;
 bool recent_activity_flag;
 
 VendorInterface* g_vendor_interface = nullptr;
+std::mutex wakeup_mutex_;
 
 HC_BT_HDR* WrapPacketAndCopy(uint16_t event, const hidl_vec<uint8_t>& data) {
   size_t packet_size = data.size() + sizeof(HC_BT_HDR);
@@ -308,6 +309,7 @@ void VendorInterface::Close() {
 }
 
 size_t VendorInterface::Send(uint8_t type, const uint8_t* data, size_t length) {
+  std::unique_lock<std::mutex> lock(wakeup_mutex_);
   recent_activity_flag = true;
 
   if (lpm_wake_deasserted == true) {
@@ -350,6 +352,7 @@ void VendorInterface::OnFirmwareConfigured(uint8_t result) {
 
 void VendorInterface::OnTimeout() {
   ALOGV("%s", __func__);
+  std::unique_lock<std::mutex> lock(wakeup_mutex_);
   if (recent_activity_flag == false) {
     lpm_wake_deasserted = true;
     bt_vendor_lpm_wake_state_t wakeState = BT_VND_LPM_WAKE_DEASSERT;
