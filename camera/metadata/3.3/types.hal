@@ -43,6 +43,16 @@ enum CameraMetadataTag : @3.2::CameraMetadataTag {
 
     ANDROID_CONTROL_END_3_3,
 
+    /** android.lens.poseReference [static, enum, public]
+     *
+     * <p>The origin for ANDROID_LENS_POSE_TRANSLATION.</p>
+     *
+     * @see ANDROID_LENS_POSE_TRANSLATION
+     */
+    ANDROID_LENS_POSE_REFERENCE = android.hardware.camera.metadata@3.2::CameraMetadataTag:ANDROID_LENS_END,
+
+    ANDROID_LENS_END_3_3,
+
     /** android.info.version [static, byte, public]
      *
      * <p>A short string for manufacturer version information about the camera device, such as
@@ -58,10 +68,34 @@ enum CameraMetadataTag : @3.2::CameraMetadataTag {
  * Enumeration definitions for the various entries that need them
  */
 
+/** android.control.captureIntent enumeration values added since v3.2
+ * @see ANDROID_CONTROL_CAPTURE_INTENT
+ */
+enum CameraMetadataEnumAndroidControlCaptureIntent :
+        @3.2::CameraMetadataEnumAndroidControlCaptureIntent {
+    ANDROID_CONTROL_CAPTURE_INTENT_MOTION_TRACKING,
+};
+
 /** android.control.afSceneChange enumeration values
  * @see ANDROID_CONTROL_AF_SCENE_CHANGE
  */
 enum CameraMetadataEnumAndroidControlAfSceneChange : uint32_t {
     ANDROID_CONTROL_AF_SCENE_CHANGE_NOT_DETECTED,
     ANDROID_CONTROL_AF_SCENE_CHANGE_DETECTED,
+};
+
+/** android.lens.poseReference enumeration values
+ * @see ANDROID_LENS_POSE_REFERENCE
+ */
+enum CameraMetadataEnumAndroidLensPoseReference : uint32_t {
+    ANDROID_LENS_POSE_REFERENCE_PRIMARY_CAMERA,
+    ANDROID_LENS_POSE_REFERENCE_GYROSCOPE,
+};
+
+/** android.request.availableCapabilities enumeration values added since v3.2
+ * @see ANDROID_REQUEST_AVAILABLE_CAPABILITIES
+ */
+enum CameraMetadataEnumAndroidRequestAvailableCapabilities :
+        @3.2::CameraMetadataEnumAndroidRequestAvailableCapabilities {
+    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MOTION_TRACKING,
 };
