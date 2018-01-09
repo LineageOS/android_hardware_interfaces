@@ -343,7 +343,11 @@ Return<ProgramListResult> Tuner::startBackgroundScan() {
     lock_guard<mutex> lk(mMut);
     if (mIsClosed) return ProgramListResult::NOT_INITIALIZED;
 
-    return ProgramListResult::UNAVAILABLE;
+    if (mCallback1_1 != nullptr) {
+        mCallback1_1->backgroundScanComplete(ProgramListResult::OK);
+    }
+
+    return ProgramListResult::OK;
 }
 
 Return<void> Tuner::getProgramList(const hidl_vec<VendorKeyValue>& vendorFilter,
