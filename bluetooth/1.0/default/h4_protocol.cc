@@ -71,8 +71,10 @@ void H4Protocol::OnDataReady(int fd) {
     ssize_t bytes_read = TEMP_FAILURE_RETRY(read(fd, buffer, 1));
     if (bytes_read != 1) {
       if (bytes_read == 0) {
-        LOG_ALWAYS_FATAL("%s: Unexpected EOF reading the packet type!",
-                         __func__);
+        // This is only expected if the UART got closed when shutting down.
+        ALOGE("%s: Unexpected EOF reading the packet type!", __func__);
+        sleep(5);  // Expect to be shut down within 5 seconds.
+        return;
       } else if (bytes_read < 0) {
         LOG_ALWAYS_FATAL("%s: Read packet type error: %s", __func__,
                          strerror(errno));
