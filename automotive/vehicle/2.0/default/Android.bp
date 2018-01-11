@@ -46,6 +46,7 @@ cc_library_static {
         "common/src/VehicleObjectPool.cpp",
         "common/src/VehiclePropertyStore.cpp",
         "common/src/VehicleUtils.cpp",
+        "common/src/VmsUtils.cpp",
     ],
     local_include_dirs: ["common/include/vhal_v2_0"],
     export_include_dirs: ["common/include"],
@@ -93,6 +94,7 @@ cc_test {
         "tests/VehicleHalManager_test.cpp",
         "tests/VehicleObjectPool_test.cpp",
         "tests/VehiclePropConfigIndex_test.cpp",
+        "tests/VmsUtils_test.cpp",
     ],
     header_libs: ["libbase_headers"],
 }
