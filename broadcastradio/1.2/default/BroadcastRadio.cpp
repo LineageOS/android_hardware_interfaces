@@ -107,7 +107,7 @@ Return<void> BroadcastRadio::getProperties_1_1(getProperties_1_1_cb _hidl_cb) {
     prop10.numTuners = 1;
     prop10.numAudioSources = 1;
     prop10.supportsCapture = false;
-    prop11.supportsBackgroundScanning = false;
+    prop11.supportsBackgroundScanning = true;
     prop11.supportedProgramTypes = hidl_vec<uint32_t>({
         static_cast<uint32_t>(ProgramType::AM), static_cast<uint32_t>(ProgramType::FM),
         static_cast<uint32_t>(ProgramType::AM_HD), static_cast<uint32_t>(ProgramType::FM_HD),

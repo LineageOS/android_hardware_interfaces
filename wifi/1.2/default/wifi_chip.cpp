@@ -387,7 +387,8 @@ std::pair<WifiStatus, uint32_t> WifiChip::getCapabilitiesInternal() {
     std::tie(legacy_status, legacy_logger_feature_set) =
         legacy_hal_.lock()->getLoggerSupportedFeatureSet(getWlan0IfaceName());
     if (legacy_status != legacy_hal::WIFI_SUCCESS) {
-        return {createWifiStatusFromLegacyError(legacy_status), 0};
+        // some devices don't support querying logger feature set
+        legacy_logger_feature_set = 0;
     }
     uint32_t hidl_caps;
     if (!hidl_struct_util::convertLegacyFeaturesToHidlChipCapabilities(
