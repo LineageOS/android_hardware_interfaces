@@ -18,6 +18,8 @@ package android.hardware.radio@1.2;
 
 import @1.1::IRadio;
 import @1.1::RadioAccessNetworks;
+import @1.0::DataProfileInfo;
+import @1.0::RadioTechnology;
 
 /**
  * This interface is used by telephony and telecom to talk to cellular radio.
@@ -106,4 +108,67 @@ interface IRadio extends @1.1::IRadio {
     oneway setLinkCapacityReportingCriteria(int32_t serial, int32_t hysteresisMs,
             int32_t hysteresisDlKbps, int32_t hysteresisUlKbps, vec<int32_t> thresholdsDownlinkKbps,
             vec<int32_t> thresholdsUplinkKbps, RadioAccessNetworks ran);
+
+    /**
+     * Setup a packet data connection. If DataCallResponse.status returns DataCallFailCause:NONE,
+     * the data connection must be added to data calls and a unsolDataCallListChanged() must be
+     * sent. The call remains until removed by subsequent unsolDataCallIstChanged(). It may be
+     * lost due to many factors, including deactivateDataCall() being issued, the radio powered
+     * off, reception lost or even transient factors like congestion. This data call list is
+     * returned by getDataCallList() and dataCallListChanged().
+     *
+     * The Radio is expected to:
+     *   - Create one data call context.
+     *   - Create and configure a dedicated interface for the context.
+     *   - The interface must be point to point.
+     *   - The interface is configured with one or more addresses and is capable of sending and
+     *     receiving packets. The prefix length of the addresses must be /32 for IPv4 and /128
+     *     for IPv6.
+     *   - Must not modify routing configuration related to this interface; routing management is
+     *     exclusively within the purview of the Android OS.
+     *   - Support simultaneous data call contexts up to DataRegStateResult.maxDataCalls specified
+     *     in the response of getDataRegistrationState.
+     *
+     * @param serial Serial number of request.
+     * @param accessNetwork The access network to setup the data call. If the data connection cannot
+     *     be established on the specified access network, the setup request must be failed.
+     * @param dataProfileInfo Data profile info.
+     * @param modemCognitive Indicates that the requested profile has previously been provided via
+     *     setDataProfile().
+     * @param roamingAllowed Indicates whether or not data roaming is allowed by the user.
+     * @param isRoaming Indicates whether or not the framework has requested this setupDataCall for
+     *     a roaming network. The 'protocol' parameter in the old RIL API must be filled
+     *     accordingly based on the roaming condition. Note this is for backward compatibility with
+     *     the old radio modem. The modem must not use this param for any other reason.
+     * @param reason The request reason. Must be DataRequestReason.NORMAL or
+     *     DataRequestReason.HANDOVER.
+     * @param addresses If the reason is DataRequestReason.HANDOVER, this indicates the list of link
+     *     addresses of the existing data connection. The format is IP address with optional "/"
+     *     prefix length (The format is defined in RFC-4291 section 2.3). For example, "192.0.1.3",
+     *     "192.0.1.11/16", or "2001:db8::1/64". Typically one IPv4 or one IPv6 or one of each. If
+     *     the prefix length is absent, then the addresses are assumed to be point to point with
+     *     IPv4 with prefix length 32 or IPv6 with prefix length 128. This parameter must be ignored
+     *     unless reason is DataRequestReason.HANDOVER.
+     * @param dnses If the reason is DataRequestReason.HANDOVER, this indicates the list of DNS
+     *     addresses of the existing data connection. The format is defined in RFC-4291 section
+     *     2.2. For example, "192.0.1.3" or "2001:db8::1". This parameter must be ignored unless
+     *     reason is DataRequestReason.HANDOVER.
+     *
+     * Response function is IRadioResponse.setupDataCallResponse()
+     */
+    oneway setupDataCall_1_2(int32_t serial, AccessNetwork accessNetwork,
+            DataProfileInfo dataProfileInfo, bool modemCognitive, bool roamingAllowed,
+            bool isRoaming, DataRequestReason reason, vec<string> addresses, vec<string> dnses);
+
+    /**
+     * Deactivate packet data connection and remove from the data call list. An
+     * unsolDataCallListChanged() must be sent when data connection is deactivated.
+     *
+     * @param serial Serial number of request.
+     * @param cid Data call id.
+     * @param reason The request reason. Must be normal, handover, or shutdown.
+     *
+     * Response function is IRadioResponse.deactivateDataCallResponse()
+     */
+    oneway deactivateDataCall_1_2(int32_t serial, int32_t cid, DataRequestReason reason);
 };
