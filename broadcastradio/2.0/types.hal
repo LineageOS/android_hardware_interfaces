@@ -40,7 +40,7 @@ enum Result : int32_t {
 };
 
 /**
- * Configuration flags to be used with getConfigFlag and setConfigFlag methods
+ * Configuration flags to be used with isConfigFlagSet and setConfigFlag methods
  * of ITunerSession.
  */
 enum ConfigFlag : uint32_t {
