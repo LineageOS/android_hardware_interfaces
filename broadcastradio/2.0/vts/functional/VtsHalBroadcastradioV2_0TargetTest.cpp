@@ -332,11 +332,13 @@ TEST_F(BroadcastRadioHalTest, GetDabRegionConfig) {
     }
     ASSERT_EQ(Result::OK, halResult);
 
-    std::regex re("^[A-Z0-9]{2,5}$");
+    std::regex re("^[A-Z0-9][A-Z0-9 ]{0,5}[A-Z0-9]$");
     // double-check correctness of the test
     ASSERT_TRUE(std::regex_match("5A", re));
     ASSERT_FALSE(std::regex_match("5a", re));
-    ASSERT_FALSE(std::regex_match("123ABC", re));
+    ASSERT_FALSE(std::regex_match("1234ABCD", re));
+    ASSERT_TRUE(std::regex_match("CN 12D", re));
+    ASSERT_FALSE(std::regex_match(" 5A", re));
 
     for (auto&& entry : config) {
         EXPECT_TRUE(std::regex_match(std::string(entry.label), re));
