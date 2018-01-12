@@ -23,8 +23,8 @@
 #include <unordered_set>
 #include <vector>
 
-#include <IComposerCommandBuffer.h>
 #include <android/hardware/graphics/composer/2.1/IComposer.h>
+#include <composer-command-buffer/2.1/ComposerCommandBuffer.h>
 #include <utils/StrongPointer.h>
 
 #include "TestCommandReader.h"

@@ -28,8 +28,10 @@ cc_library_static {
         "libsync",
     ],
     static_libs: [
-        "libhwcomposer-command-buffer",
         "VtsHalHidlTargetTestBase",
+    ],
+    header_libs: [
+        "android.hardware.graphics.composer@2.1-command-buffer",
     ],
     cflags: [
         "-Wall",
@@ -58,7 +60,9 @@ cc_test {
         "android.hardware.graphics.mapper@2.0",
         "libVtsHalGraphicsComposerTestUtils",
         "libVtsHalGraphicsMapperTestUtils",
-        "libhwcomposer-command-buffer",
         "libnativehelper",
+    ],
+    header_libs: [
+        "android.hardware.graphics.composer@2.1-command-buffer",
     ],
 }

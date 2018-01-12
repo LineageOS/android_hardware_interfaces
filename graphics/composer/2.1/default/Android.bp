@@ -17,6 +17,9 @@ cc_library_static {
         "libsync",
         "libutils",
     ],
+    header_libs: [
+        "android.hardware.graphics.composer@2.1-command-buffer",
+    ],
 }
 
 cc_library_shared {
@@ -41,6 +44,9 @@ cc_library_shared {
         "libhwc2on1adapter",
         "libhwc2onfbadapter",
     ],
+    header_libs: [
+        "android.hardware.graphics.composer@2.1-command-buffer",
+    ],
 }
 
 cc_binary {
@@ -64,11 +70,4 @@ cc_binary {
         "libsync",
         "libutils",
     ],
-}
-
-cc_library_static {
-    name: "libhwcomposer-command-buffer",
-    defaults: ["hidl_defaults"],
-    shared_libs: ["android.hardware.graphics.composer@2.1"],
-    export_include_dirs: ["."],
 }

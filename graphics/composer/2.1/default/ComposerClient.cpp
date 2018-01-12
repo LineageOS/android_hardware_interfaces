@@ -19,9 +19,8 @@
 #include <android/hardware/graphics/mapper/2.0/IMapper.h>
 #include <log/log.h>
 
-#include "ComposerClient.h"
 #include "ComposerBase.h"
-#include "IComposerCommandBuffer.h"
+#include "ComposerClient.h"
 
 namespace android {
 namespace hardware {
