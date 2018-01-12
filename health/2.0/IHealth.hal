@@ -160,4 +160,15 @@ interface IHealth {
      *               The mapping is index 0->sda, 1->sdb and so on.
      */
     getDiskStats() generates (Result result, vec<DiskStats> value);
+
+    /**
+     * Get Health Information.
+     *
+     * @return result SUCCESS if successful,
+     *                NOT_SUPPORTED if this API is not supported,
+     *                UNKNOWN for other errors.
+     * @return value  Health information, to be ignored if result is not
+     *                SUCCESS.
+     */
+    getHealthInfo() generates (Result result, @2.0::HealthInfo value);
 };

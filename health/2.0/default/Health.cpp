@@ -18,6 +18,7 @@
 
 #include <health2/Health.h>
 
+#include <hal_conversion.h>
 #include <hidl/HidlTransportSupport.h>
 
 extern void healthd_battery_update_internal(bool);
@@ -196,6 +197,39 @@ Return<void> Health::getDiskStats(getDiskStats_cb _hidl_cb) {
     } else {
         _hidl_cb(Result::SUCCESS, stats_vec);
     }
+    return Void();
+}
+
+Return<void> Health::getHealthInfo(getHealthInfo_cb _hidl_cb) {
+    using android::hardware::health::V1_0::hal_conversion::convertToHealthInfo;
+
+    update();
+    struct android::BatteryProperties p = getBatteryProperties(battery_monitor_.get());
+
+    V1_0::HealthInfo batteryInfo;
+    convertToHealthInfo(&p, batteryInfo);
+
+    std::vector<StorageInfo> info;
+    get_storage_info(info);
+
+    std::vector<DiskStats> stats;
+    get_disk_stats(stats);
+
+    int32_t currentAvg = 0;
+
+    struct BatteryProperty prop;
+    status_t ret = battery_monitor_->getProperty(BATTERY_PROP_CURRENT_AVG, &prop);
+    if (ret == OK) {
+        currentAvg = static_cast<int32_t>(prop.valueInt64);
+    }
+
+    V2_0::HealthInfo healthInfo = {};
+    healthInfo.legacy = std::move(batteryInfo);
+    healthInfo.batteryCurrentAverage = currentAvg;
+    healthInfo.diskStats = stats;
+    healthInfo.storageInfos = info;
+
+    _hidl_cb(Result::SUCCESS, healthInfo);
     return Void();
 }
 
