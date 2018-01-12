@@ -1,0 +1,11 @@
+// Copyright 2018 The Android Open Source Project
+
+cc_library_static {
+    srcs: ["StorageHealthDefault.cpp"],
+    name: "libhealthstoragedefault",
+    vendor_available: true,
+    cflags: ["-Werror"],
+    shared_libs: [
+        "android.hardware.health@2.0",
+    ],
+}
