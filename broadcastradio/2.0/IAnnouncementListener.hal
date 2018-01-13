@@ -16,11 +16,11 @@
 package android.hardware.broadcastradio@2.0;
 
 /**
- * Callback interface for announcement observer.
+ * Callback interface for announcement listener.
  *
- * For typical configuration, the observer is a broadcast radio service.
+ * For typical configuration, the listener is a broadcast radio service.
  */
-interface IAnnouncementObserver {
+interface IAnnouncementListener {
     /**
      * Called whenever announcement list has changed.
      *

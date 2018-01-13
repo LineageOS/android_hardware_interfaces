@@ -90,7 +90,7 @@ class TunerCallbackMock : public ITunerCallback {
     utils::ProgramInfoSet mProgramList;
 };
 
-struct AnnouncementObserverMock : public IAnnouncementObserver {
+struct AnnouncementListenerMock : public IAnnouncementListener {
     MOCK_METHOD1(onListUpdated, Return<void>(const hidl_vec<Announcement>&));
 };
 
@@ -702,15 +702,15 @@ TEST_F(BroadcastRadioHalTest, HdRadioStationNameId) {
 }
 
 /**
- * Test announcement observer registration.
+ * Test announcement listener registration.
  *
  * Verifies that:
- *  - registerAnnouncementObserver either succeeds or returns NOT_SUPPORTED;
+ *  - registerAnnouncementListener either succeeds or returns NOT_SUPPORTED;
  *  - if it succeeds, it returns a valid close handle (which is a nullptr otherwise);
  *  - closing handle does not crash.
  */
-TEST_F(BroadcastRadioHalTest, AnnouncementObserverRegistration) {
-    sp<AnnouncementObserverMock> observer = new AnnouncementObserverMock();
+TEST_F(BroadcastRadioHalTest, AnnouncementListenerRegistration) {
+    sp<AnnouncementListenerMock> listener = new AnnouncementListenerMock();
 
     Result halResult = Result::UNKNOWN_ERROR;
     sp<ICloseHandle> closeHandle = nullptr;
@@ -720,7 +720,7 @@ TEST_F(BroadcastRadioHalTest, AnnouncementObserverRegistration) {
     };
 
     auto hidlResult =
-        mModule->registerAnnouncementObserver({AnnouncementType::EMERGENCY}, observer, cb);
+        mModule->registerAnnouncementListener({AnnouncementType::EMERGENCY}, listener, cb);
     ASSERT_TRUE(hidlResult.isOk());
 
     if (halResult == Result::NOT_SUPPORTED) {
