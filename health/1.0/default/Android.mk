@@ -20,6 +20,16 @@ LOCAL_SHARED_LIBRARIES := \
 
 LOCAL_STATIC_LIBRARIES := android.hardware.health@1.0-convert
 
+ifneq ($(strip $(LOCAL_CHARGER_NO_UI)),true)
+LOCAL_STATIC_LIBRARIES += \
+    libbase \
+    libpng \
+    libz
+
+LOCAL_WHOLE_STATIC_LIBRARIES := \
+    libminui
+endif
+
 LOCAL_HAL_STATIC_LIBRARIES := libhealthd
 
 include $(BUILD_SHARED_LIBRARY)
