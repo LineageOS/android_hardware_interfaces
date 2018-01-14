@@ -26,3 +26,101 @@ enum Result : @1.0::Result {
     NOT_FOUND,
     CALLBACK_DIED,
 };
+
+/*
+ * Identification attributes for a storage device.
+ */
+struct StorageAttribute {
+    /**
+     * Set to true if internal storage
+     */
+    bool isInternal;
+    /**
+     * Set to true if this is the boot device.
+     */
+    bool isBootDevice;
+    /**
+     * Name of the storage device.
+     */
+    string name;
+};
+
+/*
+ * Information on storage device including life time estimates, end of life
+ * information and other attributes.
+ */
+struct StorageInfo {
+    /**
+     * Attributes of the storage device whose info is contained by the struct.
+     */
+    StorageAttribute attr;
+    /**
+     * pre-eol (end of life) information. Follows JEDEC standard No.84-B50.
+     */
+    uint16_t eol;
+    /**
+     * device life time estimation (type A). Follows JEDEC standard No.84-B50.
+     */
+    uint16_t lifetimeA;
+    /**
+     * device life time estimation (type B). Follows JEDEC standard No.84-B50.
+     */
+    uint16_t lifetimeB;
+    /**
+     * version string
+     */
+    string version;
+};
+/*
+ * Disk statistics since boot.
+ */
+struct DiskStats {
+    /**
+     * Number of reads processed.
+     */
+    uint64_t reads;
+    /**
+     * number of read I/Os merged with in-queue I/Os.
+     */
+    uint64_t readMerges;
+    /**
+     * number of sectors read.
+     */
+    uint64_t readSectors;
+    /**
+     * total wait time for read requests.
+     */
+    uint64_t readTicks;
+    /**
+     * number of writes processed.
+     */
+    uint64_t writes;
+    /**
+     * number of writes merged with in-queue I/Os.
+     */
+    uint64_t writeMerges;
+    /**
+     * number of sectors written.
+     */
+    uint64_t writeSectors;
+    /**
+     * total wait time for write requests.
+     */
+    uint64_t writeTicks;
+    /**
+     * number of I/Os currently in flight.
+     */
+    uint64_t ioInFlight;
+    /**
+     * total time this block device has been active.
+     */
+    uint64_t ioTicks;
+    /**
+     * total wait time for all requests.
+     */
+    uint64_t ioInQueue;
+    /**
+     * Attributes of the memory device.
+     */
+    StorageAttribute attr;
+};

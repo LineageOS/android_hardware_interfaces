@@ -36,9 +36,9 @@ struct BroadcastRadio : public IBroadcastRadio {
     Return<void> getDabRegionConfig(getDabRegionConfig_cb _hidl_cb);
     Return<void> openSession(const sp<ITunerCallback>& callback, openSession_cb _hidl_cb) override;
     Return<void> getImage(uint32_t id, getImage_cb _hidl_cb);
-    Return<void> registerAnnouncementObserver(const hidl_vec<AnnouncementType>& enabled,
-                                              const sp<IAnnouncementObserver>& cb,
-                                              registerAnnouncementObserver_cb _hidl_cb);
+    Return<void> registerAnnouncementListener(const hidl_vec<AnnouncementType>& enabled,
+                                              const sp<IAnnouncementListener>& listener,
+                                              registerAnnouncementListener_cb _hidl_cb);
 
     std::reference_wrapper<const VirtualRadio> mVirtualRadio;
     Properties mProperties;

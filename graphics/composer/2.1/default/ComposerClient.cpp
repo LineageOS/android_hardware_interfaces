@@ -299,10 +299,17 @@ Return<void> ComposerClient::createLayer(Display display,
     Error err = mHal.createLayer(display, &layer);
     if (err == Error::NONE) {
         std::lock_guard<std::mutex> lock(mDisplayDataMutex);
-
         auto dpy = mDisplayData.find(display);
-        auto ly = dpy->second.Layers.emplace(layer, LayerBuffers()).first;
-        ly->second.Buffers.resize(bufferSlotCount);
+        // The display entry may have already been removed by onHotplug.
+        if (dpy != mDisplayData.end()) {
+            auto ly = dpy->second.Layers.emplace(layer, LayerBuffers()).first;
+            ly->second.Buffers.resize(bufferSlotCount);
+        } else {
+            err = Error::BAD_DISPLAY;
+            // Note: We do not destroy the layer on this error as the hotplug
+            // disconnect invalidates the display id. The implementation should
+            // ensure all layers for the display are destroyed.
+        }
     }
 
     hidl_cb(err, layer);
@@ -316,7 +323,10 @@ Return<Error> ComposerClient::destroyLayer(Display display, Layer layer)
         std::lock_guard<std::mutex> lock(mDisplayDataMutex);
 
         auto dpy = mDisplayData.find(display);
-        dpy->second.Layers.erase(layer);
+        // The display entry may have already been removed by onHotplug.
+        if (dpy != mDisplayData.end()) {
+            dpy->second.Layers.erase(layer);
+        }
     }
 
     return err;

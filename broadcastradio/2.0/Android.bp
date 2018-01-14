@@ -8,7 +8,7 @@ hidl_interface {
     },
     srcs: [
         "types.hal",
-        "IAnnouncementObserver.hal",
+        "IAnnouncementListener.hal",
         "IBroadcastRadio.hal",
         "ICloseHandle.hal",
         "ITunerCallback.hal",

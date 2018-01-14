@@ -9,6 +9,12 @@
 #include <healthd/BatteryMonitor.h>
 #include <hidl/Status.h>
 
+using android::hardware::health::V2_0::StorageInfo;
+using android::hardware::health::V2_0::DiskStats;
+
+void get_storage_info(std::vector<struct StorageInfo>& info);
+void get_disk_stats(std::vector<struct DiskStats>& stats);
+
 namespace android {
 namespace hardware {
 namespace health {
@@ -44,6 +50,8 @@ struct Health : public IHealth, hidl_death_recipient {
     Return<void> getCapacity(getCapacity_cb _hidl_cb) override;
     Return<void> getEnergyCounter(getEnergyCounter_cb _hidl_cb) override;
     Return<void> getChargeStatus(getChargeStatus_cb _hidl_cb) override;
+    Return<void> getStorageInfo(getStorageInfo_cb _hidl_cb) override;
+    Return<void> getDiskStats(getDiskStats_cb _hidl_cb) override;
 
     // Methods from ::android::hidl::base::V1_0::IBase follow.
     Return<void> debug(const hidl_handle& fd, const hidl_vec<hidl_string>& args) override;
