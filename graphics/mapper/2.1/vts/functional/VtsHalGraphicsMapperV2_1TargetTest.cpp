@@ -19,22 +19,21 @@
 #include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/graphics/mapper/2.1/IMapper.h>
-#include <sync/sync.h>
-#include "VtsHalGraphicsMapperTestUtils.h"
+#include <mapper-vts/2.0/MapperVts.h>
 
 namespace android {
 namespace hardware {
 namespace graphics {
 namespace mapper {
 namespace V2_1 {
-namespace tests {
+namespace vts {
 namespace {
 
-using android::hardware::graphics::mapper::V2_0::BufferDescriptor;
-using android::hardware::graphics::mapper::V2_0::Error;
-
+using android::hardware::graphics::allocator::V2_0::IAllocator;
 using android::hardware::graphics::common::V1_1::BufferUsage;
 using android::hardware::graphics::common::V1_1::PixelFormat;
+using V2_0::BufferDescriptor;
+using V2_0::Error;
 
 // abuse VTS to check binary compatibility between BufferDescriptorInfos
 using OldBufferDescriptorInfo =
@@ -52,9 +51,25 @@ static_assert(sizeof(OldBufferDescriptorInfo) == sizeof(IMapper::BufferDescripto
                       offsetof(IMapper::BufferDescriptorInfo, usage),
               "");
 
-class Gralloc : public V2_0::tests::Gralloc {
+// Test environment for graphics.mapper.
+class GraphicsMapperHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
    public:
-    Gralloc() : V2_0::tests::Gralloc() {
+    // get the test environment singleton
+    static GraphicsMapperHidlEnvironment* Instance() {
+        static GraphicsMapperHidlEnvironment* instance = new GraphicsMapperHidlEnvironment;
+        return instance;
+    }
+
+    virtual void registerTestServices() override {
+        registerTestService<IAllocator>();
+        registerTestService<IMapper>();
+    }
+};
+
+class Gralloc : public V2_0::vts::Gralloc {
+   public:
+    Gralloc(const std::string& allocatorServiceName, const std::string& mapperServiceName)
+        : V2_0::vts::Gralloc(allocatorServiceName, mapperServiceName) {
         if (::testing::Test::HasFatalFailure()) {
             return;
         }
@@ -107,7 +122,7 @@ class Gralloc : public V2_0::tests::Gralloc {
             return nullptr;
         }
 
-        auto buffers = V2_0::tests::Gralloc::allocate(descriptor, 1, import, outStride);
+        auto buffers = V2_0::vts::Gralloc::allocate(descriptor, 1, import, outStride);
         if (::testing::Test::HasFatalFailure()) {
             return nullptr;
         }
@@ -117,7 +132,7 @@ class Gralloc : public V2_0::tests::Gralloc {
 
    private:
     void init() {
-        mMapper = IMapper::castFrom(V2_0::tests::Gralloc::getMapper());
+        mMapper = IMapper::castFrom(V2_0::vts::Gralloc::getMapper());
         ASSERT_NE(nullptr, mMapper.get()) << "failed to find IMapper 2.1";
     }
 
@@ -127,7 +142,10 @@ class Gralloc : public V2_0::tests::Gralloc {
 class GraphicsMapperHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    protected:
     void SetUp() override {
-        ASSERT_NO_FATAL_FAILURE(mGralloc = std::make_unique<Gralloc>());
+        ASSERT_NO_FATAL_FAILURE(
+            mGralloc = std::make_unique<Gralloc>(
+                GraphicsMapperHidlEnvironment::Instance()->getServiceName<IAllocator>(),
+                GraphicsMapperHidlEnvironment::Instance()->getServiceName<IMapper>()));
 
         mDummyDescriptorInfo.width = 64;
         mDummyDescriptorInfo.height = 64;
@@ -291,7 +309,7 @@ TEST_F(GraphicsMapperHidlTest, CreateDescriptor_2_1Negative) {
 }
 
 }  // namespace
-}  // namespace tests
+}  // namespace vts
 }  // namespace V2_1
 }  // namespace mapper
 }  // namespace graphics
@@ -299,7 +317,7 @@ TEST_F(GraphicsMapperHidlTest, CreateDescriptor_2_1Negative) {
 }  // namespace android
 
 int main(int argc, char** argv) {
-    using android::hardware::graphics::mapper::V2_0::tests::GraphicsMapperHidlEnvironment;
+    using android::hardware::graphics::mapper::V2_1::vts::GraphicsMapperHidlEnvironment;
     ::testing::AddGlobalTestEnvironment(GraphicsMapperHidlEnvironment::Instance());
     ::testing::InitGoogleTest(&argc, argv);
     GraphicsMapperHidlEnvironment::Instance()->init(&argc, argv);

@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef VTS_HAL_GRAPHICS_MAPPER_UTILS
-#define VTS_HAL_GRAPHICS_MAPPER_UTILS
+#pragma once
 
+#include <string>
 #include <unordered_set>
+#include <vector>
 
-#include <VtsHalHidlTargetTestEnvBase.h>
 #include <android/hardware/graphics/allocator/2.0/IAllocator.h>
 #include <android/hardware/graphics/mapper/2.0/IMapper.h>
 #include <utils/StrongPointer.h>
@@ -29,14 +29,15 @@ namespace hardware {
 namespace graphics {
 namespace mapper {
 namespace V2_0 {
-namespace tests {
+namespace vts {
 
 using android::hardware::graphics::allocator::V2_0::IAllocator;
 
 // A wrapper to IAllocator and IMapper.
 class Gralloc {
    public:
-    Gralloc();
+    Gralloc(const std::string& allocatorServiceName = "default",
+            const std::string& mapperServiceName = "default");
     ~Gralloc();
 
     // IAllocator methods
@@ -73,7 +74,7 @@ class Gralloc {
     int unlock(const native_handle_t* bufferHandle);
 
    private:
-    void init();
+    void init(const std::string& allocatorServiceName, const std::string& mapperServiceName);
     const native_handle_t* cloneBuffer(const hidl_handle& rawHandle);
 
     sp<IAllocator> mAllocator;
@@ -85,26 +86,9 @@ class Gralloc {
     std::unordered_set<const native_handle_t*> mImportedBuffers;
 };
 
-// Test environment for graphics.mapper.
-class GraphicsMapperHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
-   public:
-    // get the test environment singleton
-    static GraphicsMapperHidlEnvironment* Instance() {
-        static GraphicsMapperHidlEnvironment* instance = new GraphicsMapperHidlEnvironment;
-        return instance;
-    }
-
-    virtual void registerTestServices() override {
-        registerTestService<IAllocator>();
-        registerTestService<IMapper>();
-    }
-};
-
-}  // namespace tests
+}  // namespace vts
 }  // namespace V2_0
 }  // namespace mapper
 }  // namespace graphics
 }  // namespace hardware
 }  // namespace android
-
-#endif  // VTS_HAL_GRAPHICS_MAPPER_UTILS

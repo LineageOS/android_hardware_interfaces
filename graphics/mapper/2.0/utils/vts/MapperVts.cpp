@@ -14,28 +14,26 @@
  * limitations under the License.
  */
 
-#include <VtsHalHidlTargetTestBase.h>
+#include <mapper-vts/2.0/MapperVts.h>
 
-#include "VtsHalGraphicsMapperTestUtils.h"
+#include <VtsHalHidlTargetTestBase.h>
 
 namespace android {
 namespace hardware {
 namespace graphics {
 namespace mapper {
 namespace V2_0 {
-namespace tests {
+namespace vts {
 
-Gralloc::Gralloc() {
-    init();
+Gralloc::Gralloc(const std::string& allocatorServiceName, const std::string& mapperServiceName) {
+    init(allocatorServiceName, mapperServiceName);
 }
 
-void Gralloc::init() {
-    mAllocator = ::testing::VtsHalHidlTargetTestBase::getService<IAllocator>(
-        GraphicsMapperHidlEnvironment::Instance()->getServiceName<IAllocator>());
+void Gralloc::init(const std::string& allocatorServiceName, const std::string& mapperServiceName) {
+    mAllocator = ::testing::VtsHalHidlTargetTestBase::getService<IAllocator>(allocatorServiceName);
     ASSERT_NE(nullptr, mAllocator.get()) << "failed to get allocator service";
 
-    mMapper = ::testing::VtsHalHidlTargetTestBase::getService<IMapper>(
-        GraphicsMapperHidlEnvironment::Instance()->getServiceName<IMapper>());
+    mMapper = ::testing::VtsHalHidlTargetTestBase::getService<IMapper>(mapperServiceName);
     ASSERT_NE(nullptr, mMapper.get()) << "failed to get mapper service";
     ASSERT_FALSE(mMapper->isRemote()) << "mapper is not in passthrough mode";
 }
@@ -240,7 +238,7 @@ int Gralloc::unlock(const native_handle_t* bufferHandle) {
     return releaseFence;
 }
 
-}  // namespace tests
+}  // namespace vts
 }  // namespace V2_0
 }  // namespace mapper
 }  // namespace graphics
