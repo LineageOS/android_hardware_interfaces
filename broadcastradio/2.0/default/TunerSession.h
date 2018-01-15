@@ -63,6 +63,7 @@ struct TunerSession : public ITunerSession {
     bool mIsTuneCompleted = false;
     ProgramSelector mCurrentProgram = {};
 
+    void cancelLocked();
     void tuneInternalLocked(const ProgramSelector& sel);
     const VirtualRadio& virtualRadio() const;
     const BroadcastRadio& module() const;
