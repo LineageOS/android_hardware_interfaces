@@ -49,9 +49,9 @@ IAllocator* HIDL_FETCH_IAllocator(const char* /* name */) {
     }
 }
 
-} // namespace implementation
-} // namespace V2_0
-} // namespace allocator
-} // namespace graphics
-} // namespace hardware
-} // namespace android
+}  // namespace implementation
+}  // namespace V2_0
+}  // namespace allocator
+}  // namespace graphics
+}  // namespace hardware
+}  // namespace android

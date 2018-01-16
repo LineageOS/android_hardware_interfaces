@@ -28,9 +28,9 @@ namespace allocator {
 namespace V2_0 {
 namespace implementation {
 
-using android::hardware::graphics::mapper::V2_0::IMapper;
 using android::hardware::graphics::mapper::V2_0::BufferDescriptor;
 using android::hardware::graphics::mapper::V2_0::Error;
+using android::hardware::graphics::mapper::V2_0::IMapper;
 
 class Gralloc0Allocator : public IAllocator {
    public:
@@ -43,8 +43,8 @@ class Gralloc0Allocator : public IAllocator {
                           allocate_cb hidl_cb) override;
 
    private:
-    Error allocateOne(const IMapper::BufferDescriptorInfo& info,
-                      buffer_handle_t* outBuffer, uint32_t* outStride);
+    Error allocateOne(const IMapper::BufferDescriptorInfo& info, buffer_handle_t* outBuffer,
+                      uint32_t* outStride);
 
     alloc_device_t* mDevice;
 };

@@ -33,15 +33,13 @@ namespace V2_0 {
 namespace implementation {
 
 using android::hardware::graphics::common::V1_0::BufferUsage;
-using android::hardware::graphics::mapper::V2_0::implementation::
-    grallocDecodeBufferDescriptor;
+using android::hardware::graphics::mapper::V2_0::implementation::grallocDecodeBufferDescriptor;
 
 Gralloc1Allocator::Gralloc1Allocator(const hw_module_t* module)
     : mDevice(nullptr), mCapabilities(), mDispatch() {
     int result = gralloc1_open(module, &mDevice);
     if (result) {
-        LOG_ALWAYS_FATAL("failed to open gralloc1 device: %s",
-                         strerror(-result));
+        LOG_ALWAYS_FATAL("failed to open gralloc1 device: %s", strerror(-result));
     }
 
     initCapabilities();
@@ -69,8 +67,7 @@ void Gralloc1Allocator::initCapabilities() {
 }
 
 template <typename T>
-void Gralloc1Allocator::initDispatch(gralloc1_function_descriptor_t desc,
-                                     T* outPfn) {
+void Gralloc1Allocator::initDispatch(gralloc1_function_descriptor_t desc, T* outPfn) {
     auto pfn = mDevice->getFunction(mDevice, desc);
     if (!pfn) {
         LOG_ALWAYS_FATAL("failed to get gralloc1 function %d", desc);
@@ -81,20 +78,15 @@ void Gralloc1Allocator::initDispatch(gralloc1_function_descriptor_t desc,
 
 void Gralloc1Allocator::initDispatch() {
     initDispatch(GRALLOC1_FUNCTION_DUMP, &mDispatch.dump);
-    initDispatch(GRALLOC1_FUNCTION_CREATE_DESCRIPTOR,
-                 &mDispatch.createDescriptor);
-    initDispatch(GRALLOC1_FUNCTION_DESTROY_DESCRIPTOR,
-                 &mDispatch.destroyDescriptor);
+    initDispatch(GRALLOC1_FUNCTION_CREATE_DESCRIPTOR, &mDispatch.createDescriptor);
+    initDispatch(GRALLOC1_FUNCTION_DESTROY_DESCRIPTOR, &mDispatch.destroyDescriptor);
     initDispatch(GRALLOC1_FUNCTION_SET_DIMENSIONS, &mDispatch.setDimensions);
     initDispatch(GRALLOC1_FUNCTION_SET_FORMAT, &mDispatch.setFormat);
     if (mCapabilities.layeredBuffers) {
-        initDispatch(GRALLOC1_FUNCTION_SET_LAYER_COUNT,
-                     &mDispatch.setLayerCount);
+        initDispatch(GRALLOC1_FUNCTION_SET_LAYER_COUNT, &mDispatch.setLayerCount);
     }
-    initDispatch(GRALLOC1_FUNCTION_SET_CONSUMER_USAGE,
-                 &mDispatch.setConsumerUsage);
-    initDispatch(GRALLOC1_FUNCTION_SET_PRODUCER_USAGE,
-                 &mDispatch.setProducerUsage);
+    initDispatch(GRALLOC1_FUNCTION_SET_CONSUMER_USAGE, &mDispatch.setConsumerUsage);
+    initDispatch(GRALLOC1_FUNCTION_SET_PRODUCER_USAGE, &mDispatch.setProducerUsage);
     initDispatch(GRALLOC1_FUNCTION_GET_STRIDE, &mDispatch.getStride);
     initDispatch(GRALLOC1_FUNCTION_ALLOCATE, &mDispatch.allocate);
     initDispatch(GRALLOC1_FUNCTION_RELEASE, &mDispatch.release);
@@ -116,8 +108,8 @@ Return<void> Gralloc1Allocator::dumpDebugInfo(dumpDebugInfo_cb hidl_cb) {
     return Void();
 }
 
-Return<void> Gralloc1Allocator::allocate(const BufferDescriptor& descriptor,
-                                         uint32_t count, allocate_cb hidl_cb) {
+Return<void> Gralloc1Allocator::allocate(const BufferDescriptor& descriptor, uint32_t count,
+                                         allocate_cb hidl_cb) {
     IMapper::BufferDescriptorInfo descriptorInfo;
     if (!grallocDecodeBufferDescriptor(descriptor, &descriptorInfo)) {
         hidl_cb(Error::BAD_DESCRIPTOR, 0, hidl_vec<hidl_handle>());
@@ -199,9 +191,8 @@ uint64_t Gralloc1Allocator::toProducerUsage(uint64_t usage) {
     // this is potentially broken as we have no idea which private flags
     // should be filtered out
     uint64_t producerUsage =
-        usage &
-        ~static_cast<uint64_t>(BufferUsage::CPU_READ_MASK | BufferUsage::CPU_WRITE_MASK |
-                               BufferUsage::GPU_DATA_BUFFER);
+        usage & ~static_cast<uint64_t>(BufferUsage::CPU_READ_MASK | BufferUsage::CPU_WRITE_MASK |
+                                       BufferUsage::GPU_DATA_BUFFER);
 
     switch (usage & BufferUsage::CPU_WRITE_MASK) {
         case static_cast<uint64_t>(BufferUsage::CPU_WRITE_RARELY):
@@ -258,36 +249,30 @@ uint64_t Gralloc1Allocator::toConsumerUsage(uint64_t usage) {
     return consumerUsage;
 }
 
-Error Gralloc1Allocator::createDescriptor(
-    const IMapper::BufferDescriptorInfo& info,
-    gralloc1_buffer_descriptor_t* outDescriptor) {
+Error Gralloc1Allocator::createDescriptor(const IMapper::BufferDescriptorInfo& info,
+                                          gralloc1_buffer_descriptor_t* outDescriptor) {
     gralloc1_buffer_descriptor_t descriptor;
 
     int32_t error = mDispatch.createDescriptor(mDevice, &descriptor);
 
     if (error == GRALLOC1_ERROR_NONE) {
-        error = mDispatch.setDimensions(mDevice, descriptor, info.width,
-                                        info.height);
+        error = mDispatch.setDimensions(mDevice, descriptor, info.width, info.height);
     }
     if (error == GRALLOC1_ERROR_NONE) {
-        error = mDispatch.setFormat(mDevice, descriptor,
-                                    static_cast<int32_t>(info.format));
+        error = mDispatch.setFormat(mDevice, descriptor, static_cast<int32_t>(info.format));
     }
     if (error == GRALLOC1_ERROR_NONE) {
         if (mCapabilities.layeredBuffers) {
-            error =
-                mDispatch.setLayerCount(mDevice, descriptor, info.layerCount);
+            error = mDispatch.setLayerCount(mDevice, descriptor, info.layerCount);
         } else if (info.layerCount > 1) {
             error = GRALLOC1_ERROR_UNSUPPORTED;
         }
     }
     if (error == GRALLOC1_ERROR_NONE) {
-        error = mDispatch.setProducerUsage(mDevice, descriptor,
-                                           toProducerUsage(info.usage));
+        error = mDispatch.setProducerUsage(mDevice, descriptor, toProducerUsage(info.usage));
     }
     if (error == GRALLOC1_ERROR_NONE) {
-        error = mDispatch.setConsumerUsage(mDevice, descriptor,
-                                           toConsumerUsage(info.usage));
+        error = mDispatch.setConsumerUsage(mDevice, descriptor, toConsumerUsage(info.usage));
     }
 
     if (error == GRALLOC1_ERROR_NONE) {
@@ -300,8 +285,7 @@ Error Gralloc1Allocator::createDescriptor(
 }
 
 Error Gralloc1Allocator::allocateOne(gralloc1_buffer_descriptor_t descriptor,
-                                     buffer_handle_t* outBuffer,
-                                     uint32_t* outStride) {
+                                     buffer_handle_t* outBuffer, uint32_t* outStride) {
     buffer_handle_t buffer = nullptr;
     int32_t error = mDispatch.allocate(mDevice, 1, &descriptor, &buffer);
     if (error != GRALLOC1_ERROR_NONE && error != GRALLOC1_ERROR_NOT_SHARED) {
