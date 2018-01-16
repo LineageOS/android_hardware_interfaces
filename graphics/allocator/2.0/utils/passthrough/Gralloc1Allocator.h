@@ -28,9 +28,9 @@ namespace allocator {
 namespace V2_0 {
 namespace implementation {
 
-using android::hardware::graphics::mapper::V2_0::IMapper;
 using android::hardware::graphics::mapper::V2_0::BufferDescriptor;
 using android::hardware::graphics::mapper::V2_0::Error;
+using android::hardware::graphics::mapper::V2_0::IMapper;
 
 class Gralloc1Allocator : public IAllocator {
    public:
@@ -55,8 +55,8 @@ class Gralloc1Allocator : public IAllocator {
 
     Error createDescriptor(const IMapper::BufferDescriptorInfo& info,
                            gralloc1_buffer_descriptor_t* outDescriptor);
-    Error allocateOne(gralloc1_buffer_descriptor_t descriptor,
-                      buffer_handle_t* outBuffer, uint32_t* outStride);
+    Error allocateOne(gralloc1_buffer_descriptor_t descriptor, buffer_handle_t* outBuffer,
+                      uint32_t* outStride);
 
     gralloc1_device_t* mDevice;
 

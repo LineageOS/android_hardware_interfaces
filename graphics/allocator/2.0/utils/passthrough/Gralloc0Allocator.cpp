@@ -32,14 +32,12 @@ namespace allocator {
 namespace V2_0 {
 namespace implementation {
 
-using android::hardware::graphics::mapper::V2_0::implementation::
-    grallocDecodeBufferDescriptor;
+using android::hardware::graphics::mapper::V2_0::implementation::grallocDecodeBufferDescriptor;
 
 Gralloc0Allocator::Gralloc0Allocator(const hw_module_t* module) {
     int result = gralloc_open(module, &mDevice);
     if (result) {
-        LOG_ALWAYS_FATAL("failed to open gralloc0 device: %s",
-                         strerror(-result));
+        LOG_ALWAYS_FATAL("failed to open gralloc0 device: %s", strerror(-result));
     }
 }
 
@@ -59,8 +57,8 @@ Return<void> Gralloc0Allocator::dumpDebugInfo(dumpDebugInfo_cb hidl_cb) {
     return Void();
 }
 
-Return<void> Gralloc0Allocator::allocate(const BufferDescriptor& descriptor,
-                                         uint32_t count, allocate_cb hidl_cb) {
+Return<void> Gralloc0Allocator::allocate(const BufferDescriptor& descriptor, uint32_t count,
+                                         allocate_cb hidl_cb) {
     IMapper::BufferDescriptorInfo descriptorInfo;
     if (!grallocDecodeBufferDescriptor(descriptor, &descriptorInfo)) {
         hidl_cb(Error::BAD_DESCRIPTOR, 0, hidl_vec<hidl_handle>());
@@ -110,17 +108,15 @@ Return<void> Gralloc0Allocator::allocate(const BufferDescriptor& descriptor,
 }
 
 Error Gralloc0Allocator::allocateOne(const IMapper::BufferDescriptorInfo& info,
-                                     buffer_handle_t* outBuffer,
-                                     uint32_t* outStride) {
+                                     buffer_handle_t* outBuffer, uint32_t* outStride) {
     if (info.layerCount > 1 || (info.usage >> 32) != 0) {
         return Error::BAD_VALUE;
     }
 
     buffer_handle_t buffer = nullptr;
     int stride = 0;
-    int result = mDevice->alloc(mDevice, info.width, info.height,
-                                static_cast<int>(info.format), info.usage,
-                                &buffer, &stride);
+    int result = mDevice->alloc(mDevice, info.width, info.height, static_cast<int>(info.format),
+                                info.usage, &buffer, &stride);
     if (result) {
         switch (result) {
             case -EINVAL:

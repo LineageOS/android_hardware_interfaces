@@ -28,11 +28,11 @@ namespace implementation {
 
 extern "C" IAllocator* HIDL_FETCH_IAllocator(const char* name);
 
-} // namespace implementation
-} // namespace V2_0
-} // namespace allocator
-} // namespace graphics
-} // namespace hardware
-} // namespace android
+}  // namespace implementation
+}  // namespace V2_0
+}  // namespace allocator
+}  // namespace graphics
+}  // namespace hardware
+}  // namespace android
 
-#endif // ANDROID_HARDWARE_GRAPHICS_ALLOCATOR_V2_0_GRALLOC_H
+#endif  // ANDROID_HARDWARE_GRAPHICS_ALLOCATOR_V2_0_GRALLOC_H
