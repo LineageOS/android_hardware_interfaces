@@ -38,6 +38,8 @@ LOCAL_SHARED_LIBRARIES := \
         android.hidl.allocator@1.0 \
         android.hidl.memory@1.0
 
+LOCAL_HEADER_LIBRARIES := android.hardware.soundtrigger.legacy@2.0
+
 LOCAL_C_INCLUDE_DIRS := $(LOCAL_PATH)
 
 ifeq ($(strip $(AUDIOSERVER_MULTILIB)),)

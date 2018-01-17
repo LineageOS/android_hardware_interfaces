@@ -7,15 +7,18 @@ audio
 |-- common           <== code common to audio core and effect API
 |   |-- 2.0
 |   |   |-- default  <== code that wraps the legacy API
+|   |   |-- legacy   <== legacy API compatible with 2.0
 |   |   `-- vts      <== vts of 2.0 core and effect API common code
 |   |-- 4.0
 |   |   |-- default
+|   |   |-- legacy
 |   |   `-- vts
 |   |-- ...          <== The future versions should continue this structure
 |   |   |-- default
 |   |   `-- vts
 |   `-- all_versions <== code common to all version of both core and effect API
 |       |-- default
+|   |   |-- legacy   <== legacy API compatible with all versions
 |       `-- vts      <== vts of core and effect API common version independent code
 |
 |-- core           <== code relative to the core API
@@ -35,13 +38,17 @@ audio
 `-- effect           <== idem for the effect API
     |-- 2.0
     |   |-- default
+    |   |-- legacy   <== legacy effect API compatible with 2.0
     |   `-- vts
     |-- 4.0
     |   |-- default
+    |   |-- legacy
     |   `-- vts
     |-- ...
+    |   |-- default
     |   |-- default
     |   `-- vts
     `-- all_versions
         |-- default
+        |-- legacy
         `-- vts

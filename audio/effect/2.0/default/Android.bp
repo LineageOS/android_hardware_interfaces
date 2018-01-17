@@ -41,9 +41,9 @@ cc_library_shared {
     header_libs: [
         "android.hardware.audio.common.util@all-versions",
         "android.hardware.audio.effect@all-versions-impl",
-        "libaudio_system_headers",
+        "android.hardware.audio.common.legacy@2.0",
+        "android.hardware.audio.effect.legacy@2.0",
         "libaudioclient_headers",
-        "libeffects_headers",
         "libhardware_headers",
         "libmedia_headers",
     ],

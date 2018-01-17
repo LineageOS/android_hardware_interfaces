@@ -9,7 +9,6 @@ cc_library_headers {
     shared_libs: [
         "libbase",
         "libcutils",
-        "libeffects",
         "libfmq",
         "libhidlbase",
         "libhidlmemory",
@@ -21,9 +20,7 @@ cc_library_headers {
     ],
 
     header_libs: [
-        "libaudio_system_headers",
         "libaudioclient_headers",
-        "libeffects_headers",
         "libhardware_headers",
         "libmedia_headers",
         "android.hardware.audio.common.util@all-versions",

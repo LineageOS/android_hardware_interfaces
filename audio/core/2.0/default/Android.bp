@@ -37,13 +37,13 @@ cc_library_shared {
         "android.hardware.audio.common.util@all-versions",
         "android.hardware.audio.core@all-versions-impl",
         "libaudioclient_headers",
-        "libaudio_system_headers",
+        "android.hardware.audio.common.legacy@2.0",
         "libhardware_headers",
         "libmedia_headers",
     ],
 
     whole_static_libs: [
-        "libmedia_helper",
+        "libmedia_helper@2.0",
     ],
 
 }

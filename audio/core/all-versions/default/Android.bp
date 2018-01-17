@@ -22,7 +22,7 @@ cc_library_headers {
 
     header_libs: [
         "libaudioclient_headers",
-        "libaudio_system_headers",
+        "android.hardware.audio.common.legacy@2.0",
         "libhardware_headers",
         "libmedia_headers",
          "android.hardware.audio.common.util@all-versions",

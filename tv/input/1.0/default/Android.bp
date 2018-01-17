@@ -16,6 +16,9 @@ cc_library_shared {
         "android.hardware.tv.input@1.0",
     ],
 
+    header_libs: [
+        "android.hardware.audio.common.legacy@2.0",
+    ],
 }
 
 cc_binary {

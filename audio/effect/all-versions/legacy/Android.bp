@@ -1,0 +1,11 @@
+cc_library_headers {
+    name: "android.hardware.audio.effect.legacy@all-versions",
+    vendor: true,
+    export_include_dirs: ["include"],
+    header_libs: [
+        "android.hardware.audio.common.legacy@all-versions",
+    ],
+    export_header_lib_headers: [
+        "android.hardware.audio.common.legacy@all-versions",
+    ],
+}
