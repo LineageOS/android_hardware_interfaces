@@ -108,27 +108,27 @@ void getProperty(const std::unique_ptr<BatteryMonitor>& monitor, int id, T defau
 }
 
 Return<void> Health::getChargeCounter(getChargeCounter_cb _hidl_cb) {
-    getProperty(battery_monitor_, BATTERY_PROP_CHARGE_COUNTER, INT32_MIN, _hidl_cb);
+    getProperty<int32_t>(battery_monitor_, BATTERY_PROP_CHARGE_COUNTER, 0, _hidl_cb);
     return Void();
 }
 
 Return<void> Health::getCurrentNow(getCurrentNow_cb _hidl_cb) {
-    getProperty(battery_monitor_, BATTERY_PROP_CURRENT_NOW, INT32_MIN, _hidl_cb);
+    getProperty<int32_t>(battery_monitor_, BATTERY_PROP_CURRENT_NOW, 0, _hidl_cb);
     return Void();
 }
 
 Return<void> Health::getCurrentAverage(getCurrentAverage_cb _hidl_cb) {
-    getProperty(battery_monitor_, BATTERY_PROP_CURRENT_AVG, INT32_MIN, _hidl_cb);
+    getProperty<int32_t>(battery_monitor_, BATTERY_PROP_CURRENT_AVG, 0, _hidl_cb);
     return Void();
 }
 
 Return<void> Health::getCapacity(getCapacity_cb _hidl_cb) {
-    getProperty(battery_monitor_, BATTERY_PROP_CAPACITY, INT32_MIN, _hidl_cb);
+    getProperty<int32_t>(battery_monitor_, BATTERY_PROP_CAPACITY, 0, _hidl_cb);
     return Void();
 }
 
 Return<void> Health::getEnergyCounter(getEnergyCounter_cb _hidl_cb) {
-    getProperty(battery_monitor_, BATTERY_PROP_ENERGY_COUNTER, INT64_MIN, _hidl_cb);
+    getProperty<int64_t>(battery_monitor_, BATTERY_PROP_ENERGY_COUNTER, 0, _hidl_cb);
     return Void();
 }
 
