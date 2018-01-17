@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_GRAPHICS_ALLOCATOR_V2_0_GRALLOC1ALLOCATOR_H
-#define ANDROID_HARDWARE_GRAPHICS_ALLOCATOR_V2_0_GRALLOC1ALLOCATOR_H
+#pragma once
 
-#include <android/hardware/graphics/allocator/2.0/IAllocator.h>
-#include <android/hardware/graphics/mapper/2.0/IMapper.h>
+#include <allocator-hal/2.0/AllocatorHal.h>
 #include <hardware/gralloc1.h>
 
 namespace android {
@@ -26,43 +24,54 @@ namespace hardware {
 namespace graphics {
 namespace allocator {
 namespace V2_0 {
-namespace implementation {
+namespace passthrough {
 
-using android::hardware::graphics::mapper::V2_0::IMapper;
-using android::hardware::graphics::mapper::V2_0::BufferDescriptor;
-using android::hardware::graphics::mapper::V2_0::Error;
+using mapper::V2_0::BufferDescriptor;
+using mapper::V2_0::Error;
 
-class Gralloc1Allocator : public IAllocator {
+class Gralloc1Hal : public virtual hal::AllocatorHal {
    public:
-    Gralloc1Allocator(const hw_module_t* module);
-    virtual ~Gralloc1Allocator();
+    ~Gralloc1Hal();
+    bool initWithModule(const hw_module_t* module);
 
-    // IAllocator interface
-    Return<void> dumpDebugInfo(dumpDebugInfo_cb hidl_cb) override;
-    Return<void> allocate(const BufferDescriptor& descriptor, uint32_t count,
-                          allocate_cb hidl_cb) override;
+    std::string dumpDebugInfo() override;
 
-   private:
-    void initCapabilities();
+    Error allocateBuffers(const BufferDescriptor& descriptor, uint32_t count, uint32_t* outStride,
+                          std::vector<const native_handle_t*>* outBuffers) override;
 
+    void freeBuffers(const std::vector<const native_handle_t*>& buffers) override;
+
+   protected:
     template <typename T>
-    void initDispatch(gralloc1_function_descriptor_t desc, T* outPfn);
-    void initDispatch();
+    bool initDispatchFunction(gralloc1_function_descriptor_t desc, T* outPfn) {
+        auto pfn = getDispatchFunction(desc);
+        if (pfn) {
+            *outPfn = reinterpret_cast<T>(pfn);
+            return true;
+        } else {
+            return false;
+        }
+    }
+    gralloc1_function_pointer_t getDispatchFunction(gralloc1_function_descriptor_t desc) const;
+
+    virtual void initCapabilities();
+    virtual bool initDispatch();
 
     static Error toError(int32_t error);
     static uint64_t toProducerUsage(uint64_t usage);
     static uint64_t toConsumerUsage(uint64_t usage);
 
-    Error createDescriptor(const IMapper::BufferDescriptorInfo& info,
+    Error createDescriptor(const mapper::V2_0::IMapper::BufferDescriptorInfo& info,
                            gralloc1_buffer_descriptor_t* outDescriptor);
-    Error allocateOne(gralloc1_buffer_descriptor_t descriptor,
-                      buffer_handle_t* outBuffer, uint32_t* outStride);
 
-    gralloc1_device_t* mDevice;
+    Error allocateOneBuffer(gralloc1_buffer_descriptor_t descriptor,
+                            const native_handle_t** outBuffer, uint32_t* outStride);
+
+    gralloc1_device_t* mDevice = nullptr;
 
     struct {
         bool layeredBuffers;
-    } mCapabilities;
+    } mCapabilities = {};
 
     struct {
         GRALLOC1_PFN_DUMP dump;
@@ -76,14 +85,12 @@ class Gralloc1Allocator : public IAllocator {
         GRALLOC1_PFN_GET_STRIDE getStride;
         GRALLOC1_PFN_ALLOCATE allocate;
         GRALLOC1_PFN_RELEASE release;
-    } mDispatch;
+    } mDispatch = {};
 };
 
-}  // namespace implementation
+}  // namespace passthrough
 }  // namespace V2_0
 }  // namespace allocator
 }  // namespace graphics
 }  // namespace hardware
 }  // namespace android
-
-#endif  // ANDROID_HARDWARE_GRAPHICS_ALLOCATOR_V2_0_GRALLOC1ALLOCATOR_H
