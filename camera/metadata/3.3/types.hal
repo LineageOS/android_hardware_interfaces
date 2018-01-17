@@ -53,6 +53,15 @@ enum CameraMetadataTag : @3.2::CameraMetadataTag {
 
     ANDROID_LENS_END_3_3,
 
+    /** android.request.availableSessionKeys [static, int32[], ndk_public]
+     *
+     * <p>A subset of the available request keys that the camera device
+     * can pass as part of the capture session initialization.</p>
+     */
+    ANDROID_REQUEST_AVAILABLE_SESSION_KEYS = android.hardware.camera.metadata@3.2::CameraMetadataTag:ANDROID_REQUEST_END,
+
+    ANDROID_REQUEST_END_3_3,
+
     /** android.info.version [static, byte, public]
      *
      * <p>A short string for manufacturer version information about the camera device, such as
