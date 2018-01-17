@@ -18,6 +18,7 @@ package android.hardware.drm@1.1;
 import @1.0::IDrmPlugin;
 import @1.0::IDrmPluginListener;
 import @1.0::Status;
+import @1.1::DrmMetricGroup;
 import @1.1::HdcpLevel;
 import @1.1::SecurityLevel;
 
@@ -106,4 +107,17 @@ interface IDrmPlugin extends @1.0::IDrmPlugin {
      */
     setSecurityLevel(vec<uint8_t> sessionId, SecurityLevel level)
             generates(Status status);
+
+    /**
+     * Returns the plugin-specific metrics. Multiple metric groups may be
+     * returned in one call to getMetrics(). The scope and definition of the
+     * metrics is defined by the plugin.
+     *
+     * @return status the status of the call. The status must be OK or
+     *         ERROR_DRM_INVALID_STATE if the metrics are not available to be
+     *         returned.
+     * @return metric_groups the collection of metric groups provided by the
+     *         plugin.
+     */
+    getMetrics() generates (Status status, vec<DrmMetricGroup> metric_groups);
 };
