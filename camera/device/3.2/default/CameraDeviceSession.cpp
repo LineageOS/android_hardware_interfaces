@@ -333,11 +333,10 @@ void CameraDeviceSession::ResultBatcher::setResultMetadataQueue(
     mResultMetadataQueue = q;
 }
 
-void CameraDeviceSession::ResultBatcher::registerBatch(
-        const hidl_vec<CaptureRequest>& requests) {
+void CameraDeviceSession::ResultBatcher::registerBatch(uint32_t frameNumber, uint32_t batchSize) {
     auto batch = std::make_shared<InflightBatch>();
-    batch->mFirstFrame = requests[0].frameNumber;
-    batch->mBatchSize = requests.size();
+    batch->mFirstFrame = frameNumber;
+    batch->mBatchSize = batchSize;
     batch->mLastFrame = batch->mFirstFrame + batch->mBatchSize - 1;
     batch->mNumPartialResults = mNumPartialResults;
     for (int id : mStreamsToBatch) {
@@ -1010,7 +1009,7 @@ Return<void> CameraDeviceSession::processCaptureRequest(
     }
 
     if (s == Status::OK && requests.size() > 1) {
-        mResultBatcher.registerBatch(requests);
+        mResultBatcher.registerBatch(requests[0].frameNumber, requests.size());
     }
 
     _hidl_cb(s, numRequestProcessed);
@@ -1111,6 +1110,7 @@ Status CameraDeviceSession::processOneCaptureRequest(const CaptureRequest& reque
             halRequest.settings = settingsOverride.getAndLock();
         }
     }
+    halRequest.num_physcam_settings = 0;
 
     ATRACE_ASYNC_BEGIN("frame capture", request.frameNumber);
     ATRACE_BEGIN("camera3->process_capture_request");

@@ -85,10 +85,10 @@ protected:
     void postProcessConfigurationLocked_3_4(const StreamConfiguration& requestedConfiguration);
 
     Return<void> processCaptureRequest_3_4(
-            const hidl_vec<CaptureRequest>& requests,
+            const hidl_vec<V3_4::CaptureRequest>& requests,
             const hidl_vec<V3_2::BufferCache>& cachesToRemove,
-            ICameraDeviceSession::processCaptureRequest_cb _hidl_cb);
-    Status processOneCaptureRequest_3_4(const CaptureRequest& request);
+            ICameraDeviceSession::processCaptureRequest_3_4_cb _hidl_cb);
+    Status processOneCaptureRequest_3_4(const V3_4::CaptureRequest& request);
 
     std::map<int, std::string> mPhysicalCameraIdMap;
 private:
@@ -109,10 +109,16 @@ private:
             return mParent->configureStreams(requestedConfiguration, _hidl_cb);
         }
 
+        virtual Return<void> processCaptureRequest_3_4(const hidl_vec<V3_4::CaptureRequest>& requests,
+                const hidl_vec<V3_2::BufferCache>& cachesToRemove,
+                ICameraDeviceSession::processCaptureRequest_3_4_cb _hidl_cb) override {
+            return mParent->processCaptureRequest_3_4(requests, cachesToRemove, _hidl_cb);
+        }
+
         virtual Return<void> processCaptureRequest(const hidl_vec<V3_2::CaptureRequest>& requests,
                 const hidl_vec<V3_2::BufferCache>& cachesToRemove,
                 V3_3::ICameraDeviceSession::processCaptureRequest_cb _hidl_cb) override {
-            return mParent->processCaptureRequest_3_4(requests, cachesToRemove, _hidl_cb);
+            return mParent->processCaptureRequest(requests, cachesToRemove, _hidl_cb);
         }
 
         virtual Return<void> getCaptureRequestMetadataQueue(
