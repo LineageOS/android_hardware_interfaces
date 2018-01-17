@@ -3484,9 +3484,42 @@ enum VmsMessageType : int32_t {
      * A message from the VMS service to the subscribers or from the publishers to the VMS service
      * with a serialized VMS data packet as defined in the VMS protocol.
      *
-     * This message type uses enum VmsBaseMessageIntegerValuesIndex.
+     * This message type uses enum VmsMessageWithLayerAndPublisherIdIntegerValuesIndex.
      */
     DATA = 12,
+
+    /**
+     * A request from the publishers to the VMS service to get a Publisher ID for a serialized VMS
+     * provider description packet as defined in the VMS protocol.
+     *
+     * This message type uses enum VmsBaseMessageIntegerValuesIndex.
+     */
+    PUBLISHER_ID_REQUEST = 13,
+
+    /**
+     * A response from the VMS service to the publisher that contains a provider description packet
+     * and the publisher ID assigned to it.
+     *
+     * This message type uses enum VmsPublisherInformationIntegerValuesIndex.
+     */
+    PUBLISHER_ID_RESPONSE = 14,
+
+    /**
+     * A request from the subscribers to the VMS service to get information for a Publisher ID.
+     *
+     * This message type uses enum VmsPublisherInformationIntegerValuesIndex.
+     */
+    PUBLISHER_INFORMATION_REQUEST = 15,
+
+    /**
+     * A response from the VMS service to the subscribers that contains a provider description packet
+     * and the publisher ID assigned to it.
+     *
+     * This message type uses enum VmsPublisherInformationIntegerValuesIndex.
+     */
+    PUBLISHER_INFORMATION_RESPONSE = 16,
+
+    LAST_VMS_MESSAGE_TYPE = PUBLISHER_INFORMATION_RESPONSE,
 };
 
 /**
@@ -3514,7 +3547,8 @@ enum VmsMessageWithLayerIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
 
 /*
  * A VMS message with a layer and publisher ID is sent as part of a
- * VmsMessageType.SUBSCRIBE_TO_PUBLISHER and VmsMessageType.UNSUBSCRIBE_TO_PUBLISHER messages.
+ * VmsMessageType.SUBSCRIBE_TO_PUBLISHER, VmsMessageType.UNSUBSCRIBE_TO_PUBLISHER messages and
+ * VmsMessageType.DATA .
  */
 enum VmsMessageWithLayerAndPublisherIdIntegerValuesIndex : VmsMessageWithLayerIntegerValuesIndex {
     PUBLISHER_ID = 4,
@@ -3581,5 +3615,13 @@ enum VmsAvailabilityStateIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
     SEQUENCE_NUMBER = 1,
     NUMBER_OF_ASSOCIATED_LAYERS = 2,
     LAYERS_START = 3,
+};
+
+/*
+ * Publishers send the VMS service their information and assigned in response a publisher ID.
+ * Subscribers can request the publisher information for a publisher ID they received in other messages.
+ */
+enum VmsPublisherInformationIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
+    PUBLISHER_ID = 1,
 };
 
