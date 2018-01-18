@@ -136,6 +136,51 @@ enum Tag : uint32_t {
                                                 * if device is still on-body (requires secure
                                                 * on-body sensor. */
 
+    /**
+     * TRUSTED_USER_PRESENCE_REQUIRED is an optional feature that specifies that this key must be
+     * unusable except when the user has provided proof of physical presence.  Proof of physical
+     * presence must be a signal that cannot be triggered by an attacker who doesn't have one of:
+     *
+     *    a) Physical control of the device or
+     *
+     *    b) Control of the secure environment that holds the key.
+     *
+     * For instance, proof of user identity may be considered proof of presence if it meets the
+     * requirements.  However, proof of identity established in one security domain (e.g. TEE) does
+     * not constitute proof of presence in another security domain (e.g. StrongBox), and no
+     * mechanism analogous to the authentication token is defined for communicating proof of
+     * presence across security domains.
+     *
+     * Some examples:
+     *
+     *     A hardware button hardwired to a pin on a StrongBox device in such a way that nothing
+     *     other than a button press can trigger the signal constitutes proof of physical presence
+     *     for StrongBox keys.
+     *
+     *     Fingerprint authentication provides proof of presence (and identity) for TEE keys if the
+     *     TEE has exclusive control of the fingerprint scanner and performs fingerprint matching.
+     *
+     *     Password authentication does not provide proof of presence to either TEE or StrongBox,
+     *     even if TEE or StrongBox does the password matching, because password input is handled by
+     *     the non-secure world, which means an attacker who has compromised Android can spoof
+     *     password authentication.
+     *
+     * Note that no mechanism is defined for delivering proof of presence to Keymaster,
+     * except perhaps as implied by an auth token.  This means that Keymaster must be able to check
+     * proof of presence some other way.  Further, the proof of presence must be performed between
+     * begin() and the first call to update() or finish().  If the first update() or the finish()
+     * call is made without proof of presence, the keymaster method must return
+     * ErrorCode::PROOF_OF_PRESENCE_REQUIRED and abort the operation.  The caller must delay the
+     * update() or finish() call until proof of presence has been provided, which means the caller
+     * must also have some mechanism for verifying that the proof has been provided.
+     *
+     * Only one operation requiring TUP may be in flight at a time.  If begin() has already been
+     * called on one key with TRUSTED_USER_PRESENCE_REQUIRED, and another begin() comes in for that
+     * key or another with TRUSTED_USER_PRESENCE_REQUIRED, Keymaster must return
+     * ErrorCode::CONCURRENT_PROOF_OF_PRESENCE_REQUESTED.
+     */
+    TRUSTED_USER_PRESENCE_REQUIRED = TagType:BOOL | 507,
+
     /* Application access control */
     APPLICATION_ID = TagType:BYTES | 601, /* Byte string identifying the authorized application. */
 
@@ -195,6 +240,7 @@ enum Algorithm : uint32_t {
 
     /** Block ciphers algorithms */
     AES = 32,
+    TRIPLE_DES = 33,
 
     /** MAC algorithms */
     HMAC = 128,
@@ -381,6 +427,8 @@ enum ErrorCode : int32_t {
     CANNOT_ATTEST_IDS = -66,
     ROLLBACK_RESISTANCE_UNAVAILABLE = -67,
     HARDWARE_TYPE_UNAVAILABLE = -68,
+    PROOF_OF_PRESENCE_REQUIRED = -69,
+    CONCURRENT_PROOF_OF_PRESENCE_REQUESTED = -70,
 
     UNIMPLEMENTED = -100,
     VERSION_MISMATCH = -101,

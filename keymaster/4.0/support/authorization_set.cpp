@@ -441,6 +441,11 @@ AuthorizationSetBuilder& AuthorizationSetBuilder::AesKey(uint32_t key_size) {
     return Authorization(TAG_KEY_SIZE, key_size);
 }
 
+AuthorizationSetBuilder& AuthorizationSetBuilder::TripleDesKey(uint32_t key_size) {
+    Authorization(TAG_ALGORITHM, Algorithm::TRIPLE_DES);
+    return Authorization(TAG_KEY_SIZE, key_size);
+}
+
 AuthorizationSetBuilder& AuthorizationSetBuilder::HmacKey(uint32_t key_size) {
     Authorization(TAG_ALGORITHM, Algorithm::HMAC);
     Authorization(TAG_KEY_SIZE, key_size);
@@ -471,6 +476,11 @@ AuthorizationSetBuilder& AuthorizationSetBuilder::EcdsaSigningKey(EcCurve curve)
 
 AuthorizationSetBuilder& AuthorizationSetBuilder::AesEncryptionKey(uint32_t key_size) {
     AesKey(key_size);
+    return EncryptionKey();
+}
+
+AuthorizationSetBuilder& AuthorizationSetBuilder::TripleDesEncryptionKey(uint32_t key_size) {
+    TripleDesKey(key_size);
     return EncryptionKey();
 }
 
