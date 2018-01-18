@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016 The Android Open Source Project
+# Copyright (C) 2018 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,19 +17,26 @@
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := android.hardware.soundtrigger@2.0-impl
+LOCAL_MODULE := android.hardware.soundtrigger@2.1-impl
 LOCAL_VENDOR_MODULE := true
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_SRC_FILES := \
-    FetchISoundTriggerHw.cpp
+    SoundTriggerHw.cpp
 
 LOCAL_CFLAGS := -Wall -Werror
 
 LOCAL_SHARED_LIBRARIES := \
         libhardware \
+        libhidlbase \
+        libhidlmemory \
+        libhidltransport \
+        liblog \
         libutils \
+        android.hardware.soundtrigger@2.1 \
         android.hardware.soundtrigger@2.0 \
-        android.hardware.soundtrigger@2.0-core
+        android.hardware.soundtrigger@2.0-core \
+        android.hidl.allocator@1.0 \
+        android.hidl.memory@1.0
 
 LOCAL_C_INCLUDE_DIRS := $(LOCAL_PATH)
 
