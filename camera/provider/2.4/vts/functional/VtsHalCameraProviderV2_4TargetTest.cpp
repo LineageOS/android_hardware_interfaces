@@ -3833,6 +3833,13 @@ void CameraHidlTest::configurePreviewStream(const std::string &name, int32_t dev
     ::android::hardware::camera::device::V3_4::StreamConfiguration config;
     config.v3_2 = {streams, StreamConfigurationMode::NORMAL_MODE};
     if (session3_4 != nullptr) {
+        RequestTemplate reqTemplate = RequestTemplate::PREVIEW;
+        ret = session3_4->constructDefaultRequestSettings(reqTemplate,
+                                                       [&config](auto status, const auto& req) {
+                                                           ASSERT_EQ(Status::OK, status);
+                                                           config.sessionParams = req;
+                                                       });
+        ASSERT_TRUE(ret.isOk());
         ret = session3_4->configureStreams_3_4(config,
                 [&] (Status s, device::V3_3::HalStreamConfiguration halConfig) {
                     ASSERT_EQ(Status::OK, s);
