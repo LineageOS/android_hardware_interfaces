@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+// Convenience library for (hwbinder) clients to choose the correct health
+// service instance.
 cc_library_static {
     name: "libhealthhalutils",
     srcs: ["HealthHalUtils.cpp"],
