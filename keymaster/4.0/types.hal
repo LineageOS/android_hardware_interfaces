@@ -240,6 +240,7 @@ enum Algorithm : uint32_t {
 
     /** Block ciphers algorithms */
     AES = 32,
+    TRIPLE_DES = 33,
 
     /** MAC algorithms */
     HMAC = 128,
