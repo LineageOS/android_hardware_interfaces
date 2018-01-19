@@ -141,7 +141,7 @@ struct HealthInfo {
     /**
      * Average battery current in uA. Will be 0 if unsupported.
      */
-    int64_t batteryCurrentAverage;
+    int32_t batteryCurrentAverage;
     /**
      * Disk Statistics. Will be an empty vector if unsupported.
      */

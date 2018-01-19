@@ -68,7 +68,7 @@ class HealthHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
 class Callback : public IHealthInfoCallback {
    public:
-    Return<void> healthInfoChanged(const V1_0::HealthInfo&) override {
+    Return<void> healthInfoChanged(const HealthInfo&) override {
         std::lock_guard<std::mutex> lock(mMutex);
         mInvoked = true;
         mInvokedNotify.notify_all();

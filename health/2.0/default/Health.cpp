@@ -155,10 +155,28 @@ Return<Result> Health::update() {
     return Result::SUCCESS;
 }
 
-void Health::notifyListeners(const HealthInfo& info) {
+void Health::notifyListeners(HealthInfo* healthInfo) {
+    std::vector<StorageInfo> info;
+    get_storage_info(info);
+
+    std::vector<DiskStats> stats;
+    get_disk_stats(stats);
+
+    int32_t currentAvg = 0;
+
+    struct BatteryProperty prop;
+    status_t ret = battery_monitor_->getProperty(BATTERY_PROP_CURRENT_AVG, &prop);
+    if (ret == OK) {
+        currentAvg = static_cast<int32_t>(prop.valueInt64);
+    }
+
+    healthInfo->batteryCurrentAverage = currentAvg;
+    healthInfo->diskStats = stats;
+    healthInfo->storageInfos = info;
+
     std::lock_guard<std::mutex> _lock(callbacks_lock_);
     for (auto it = callbacks_.begin(); it != callbacks_.end();) {
-        auto ret = (*it)->healthInfoChanged(info);
+        auto ret = (*it)->healthInfoChanged(*healthInfo);
         if (!ret.isOk() && ret.isDeadObject()) {
             it = callbacks_.erase(it);
         } else {

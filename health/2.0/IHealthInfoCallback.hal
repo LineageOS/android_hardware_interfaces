@@ -16,8 +16,6 @@
 
 package android.hardware.health@2.0;
 
-import @1.0::HealthInfo;
-
 /**
  * IHealthInfoCallback is the callback interface to
  * {@link IHealthInfoBus.registerCallback}.
@@ -28,5 +26,5 @@ interface IHealthInfoCallback {
      * registered callbacks after health info changes.
      * @param info the updated HealthInfo
      */
-    oneway healthInfoChanged(@1.0::HealthInfo info);
+    oneway healthInfoChanged(HealthInfo info);
 };
