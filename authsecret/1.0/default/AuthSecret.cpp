@@ -29,16 +29,12 @@ Return<void> AuthSecret::primaryUserCredential(const hidl_vec<uint8_t>& secret) 
     return Void();
 }
 
-Return<void> AuthSecret::factoryReset() {
-    // Clear all dependency on the secret.
-    //
-    // With the example of updating a security module, the stored value must be
-    // cleared so that the new primary user enrolled as the approver of updates.
-    //
-    // This implementation does nothing as there is no dependence on the secret.
-
-    return Void();
-}
+// Note: on factory reset, clear all dependency on the secret.
+//
+// With the example of updating a security module, the stored value must be
+// cleared so that the new primary user enrolled as the approver of updates.
+//
+// This implementation does nothing as there is no dependence on the secret.
 
 }  // namespace implementation
 }  // namespace V1_0
