@@ -116,3 +116,11 @@ enum CameraMetadataEnumAndroidRequestAvailableCapabilities :
         @3.2::CameraMetadataEnumAndroidRequestAvailableCapabilities {
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MOTION_TRACKING,
 };
+
+/** android.info.supportedHardwareLevel enumeration values added since v3.2
+ * @see ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL
+ */
+enum CameraMetadataEnumAndroidInfoSupportedHardwareLevel :
+        @3.2::CameraMetadataEnumAndroidInfoSupportedHardwareLevel {
+    ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL,
+};
