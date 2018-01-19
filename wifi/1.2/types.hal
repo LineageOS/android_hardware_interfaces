@@ -49,6 +49,11 @@ struct NanConfigRequestSupplemental {
      * lower power consumption, but may result in some missed messages and hence increased latency.
      */
     bool enableDiscoveryWindowEarlyTermination;
+    /**
+     * Controls whether NAN RTT (ranging) is permitted. Global flag on any NAN RTT operations are
+     * allowed. Controls ranging in the context of discovery as well as direct RTT.
+     */
+    bool enableRanging;
 };
 
 /**

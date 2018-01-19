@@ -1141,6 +1141,8 @@ bool convertHidlNanEnableRequest_1_2ToLegacy(
     legacy_request->config_dw_early_termination = 1;
     legacy_request->enable_dw_termination =
         hidl_request2.enableDiscoveryWindowEarlyTermination;
+    legacy_request->config_enable_ranging = 1;
+    legacy_request->enable_ranging = hidl_request2.enableRanging;
 
     return true;
 }
@@ -1650,6 +1652,8 @@ bool convertHidlNanConfigRequest_1_2ToLegacy(
     legacy_request->config_dw_early_termination = 1;
     legacy_request->enable_dw_termination =
         hidl_request2.enableDiscoveryWindowEarlyTermination;
+    legacy_request->config_enable_ranging = 1;
+    legacy_request->enable_ranging = hidl_request2.enableRanging;
 
     return true;
 }
