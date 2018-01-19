@@ -1411,7 +1411,8 @@ struct NanMatchInd {
   vec<uint8_t> extendedServiceSpecificInfo;
   /**
    * The match filter from the discovery packet (publish or subscribe) which caused service
-   * discovery. Matches the peer's |NanDiscoveryCommonConfig.txMatchFilter|.
+   * discovery. Matches the |NanDiscoveryCommonConfig.txMatchFilter| of the peer's Unsolicited
+   * publish message or of the local device's Active subscribe message.
    * Max length: |NanCapabilities.maxMatchFilterLen|.
    * NAN Spec: Service Descriptor Attribute (SDA) / Matching Filter
    */
