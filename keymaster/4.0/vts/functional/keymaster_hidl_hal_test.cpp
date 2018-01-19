@@ -513,6 +513,26 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         return ImportKey(key_desc, format, key_material, &key_blob_, &key_characteristics_);
     }
 
+    ErrorCode ImportWrappedKey(string wrapped_key, string wrapping_key,
+                               const AuthorizationSet& wrapping_key_desc, string masking_key) {
+        ErrorCode error;
+
+        ImportKey(wrapping_key_desc, KeyFormat::PKCS8, wrapping_key);
+
+        EXPECT_TRUE(keymaster_
+                        ->importWrappedKey(HidlBuf(wrapped_key), key_blob_, HidlBuf(masking_key),
+                                           [&](ErrorCode hidl_error, const HidlBuf& hidl_key_blob,
+                                               const KeyCharacteristics& hidl_key_characteristics) {
+                                               error = hidl_error;
+                                               key_blob_ = hidl_key_blob;
+                                               key_characteristics_ = hidl_key_characteristics;
+
+                                           })
+                        .isOk());
+
+        return error;
+    }
+
     ErrorCode ExportKey(KeyFormat format, const HidlBuf& key_blob, const HidlBuf& client_id,
                         const HidlBuf& app_data, HidlBuf* key_material) {
         ErrorCode error;
@@ -2485,6 +2505,111 @@ TEST_F(ImportKeyTest, HmacKeySuccess) {
     string message = "Hello World!";
     string signature = MacMessage(message, Digest::SHA_2_256, 256);
     VerifyMessage(message, signature, AuthorizationSetBuilder().Digest(Digest::SHA_2_256));
+}
+
+auto wrapped_key = hex2str(
+    "30820173020100048201006F5C273914D9E7EAB667FE62456A57DE64BED4A57DB3EFBB77E6907C82CC36B0BD12CB8A"
+    "85F3F8BC08A26C58186DB5C35636063388A04AE5579D3BDC057F9BB0EB6FDDA5E836DBB1F18A4546A64BA06E3D0132"
+    "AAA3306676638C786FAF0722E6E4145E0C91B009C422691F9F42F9F179DA93E16E7793DE5960E77A387433F0B43E49"
+    "3A7CF77ECA25BA724CC02F916D5792CAA76BC0756D3DB5D110D209B8B30285E9653D91FD89E953F351D82ACE1422CC"
+    "A146F8BD0C2F4CC32D1F81D894F4650043DB46109869696319A1A011BB003F2EBD8FA20B4A43F3226C1F182A39AE81"
+    "A35B9B7590A48B6A6874C9CC0EE0CD9528FB908688B4111932DF478CD7A92B50040CD796B02C370F1FA4CC0124F130"
+    "280201033023A1083106020100020101A203020120A30402020100A4053103020101A60531030201400420CCD54085"
+    "5F833A5E1480BFD2D36FAF3AEEE15DF5BEABE2691BC82DDE2A7AA91004107CB81BDDCD09E8F4DF575726279F3229");
+
+auto wrapped_key_masked = hex2str(
+    "30820173020100048201009059BB6E48F8036ABE1800D9C74F3DB5F20448F035C2C78AFBCC28AF26581061298CAC78"
+    "A8CA5B79721B60B74490555168488ED696C8930D00463C6FC81BF0B6E4E26C93E018D0E3DC8754C6B261E0A7C3A6DA"
+    "1A223EB59ACA8E13348F14B9E944AF3C224906C1ABFE21ADDEE81FC641D45E092C6B0A75A9BA56C05529AE47ECA0D5"
+    "CD3568501CF04D47391FC695EDE19A3022B347D1BDC6C792A08AA014F87DD4BBD44777B14D7D2273191DDCFE4E8512"
+    "EFA677A14E68E5D820C5513331D687C08B6317FA64D404231D05C74CDD9AEB89D253FBE07154B2080CF4ACA5E1EFCB"
+    "53EB193E8A01DD5F9634B65EF9B49899003E245FDA6A3B137FAC1263E55A6E1D040C6D9721D08589581AB49204A330"
+    "280201033023A1083106020100020101A203020120A30402020100A4053103020101A60531030201400420A61C6E24"
+    "7E25B3E6E69AA78EB03C2D4AC20D1F99A9A024A76F35C8E2CAB9B68D04101FF7A0E793B9EE4AECEBB9AC4C545254");
+
+auto wrapping_key = hex2str(
+    "308204be020100300d06092a864886f70d0101010500048204a8308204a40201000282010100aec367931d8900ce56"
+    "b0067f7d70e1fc653f3f34d194c1fed50018fb43db937b06e673a837313d56b1c725150a3fef86acbddc41bb759c28"
+    "54eae32d35841efb5c18d82bc90a1cb5c1d55adf245b02911f0b7cda88c421ff0ebafe7c0d23be312d7bd5921ffaea"
+    "1347c157406fef718f682643e4e5d33c6703d61c0cf7ac0bf4645c11f5c1374c3886427411c449796792e0bef75dec"
+    "858a2123c36753e02a95a96d7c454b504de385a642e0dfc3e60ac3a7ee4991d0d48b0172a95f9536f02ba13cecccb9"
+    "2b727db5c27e5b2f5cec09600b286af5cf14c42024c61ddfe71c2a8d7458f185234cb00e01d282f10f8fc6721d2aed"
+    "3f4833cca2bd8fa62821dd55020301000102820100431447b6251908112b1ee76f99f3711a52b6630960046c2de70d"
+    "e188d833f8b8b91e4d785caeeeaf4f0f74414e2cda40641f7fe24f14c67a88959bdb27766df9e710b630a03adc683b"
+    "5d2c43080e52bee71e9eaeb6de297a5fea1072070d181c822bccff087d63c940ba8a45f670feb29fb4484d1c95e6d2"
+    "579ba02aae0a00900c3ebf490e3d2cd7ee8d0e20c536e4dc5a5097272888cddd7e91f228b1c4d7474c55b8fcd618c4"
+    "a957bbddd5ad7407cc312d8d98a5caf7e08f4a0d6b45bb41c652659d5a5ba05b663737a8696281865ba20fbdd7f851"
+    "e6c56e8cbe0ddbbf24dc03b2d2cb4c3d540fb0af52e034a2d06698b128e5f101e3b51a34f8d8b4f8618102818100de"
+    "392e18d682c829266cc3454e1d6166242f32d9a1d10577753e904ea7d08bff841be5bac82a164c5970007047b8c517"
+    "db8f8f84e37bd5988561bdf503d4dc2bdb38f885434ae42c355f725c9a60f91f0788e1f1a97223b524b5357fdf72e2"
+    "f696bab7d78e32bf92ba8e1864eab1229e91346130748a6e3c124f9149d71c743502818100c95387c0f9d35f137b57"
+    "d0d65c397c5e21cc251e47008ed62a542409c8b6b6ac7f8967b3863ca645fcce49582a9aa17349db6c4a95affdae0d"
+    "ae612e1afac99ed39a2d934c880440aed8832f9843163a47f27f392199dc1202f9a0f9bd08308007cb1e4e7f583093"
+    "66a7de25f7c3c9b880677c068e1be936e81288815252a8a102818057ff8ca1895080b2cae486ef0adfd791fb0235c0"
+    "b8b36cd6c136e52e4085f4ea5a063212a4f105a3764743e53281988aba073f6e0027298e1c4378556e0efca0e14ece"
+    "1af76ad0b030f27af6f0ab35fb73a060d8b1a0e142fa2647e93b32e36d8282ae0a4de50ab7afe85500a16f43a64719"
+    "d6e2b9439823719cd08bcd03178102818100ba73b0bb28e3f81e9bd1c568713b101241acc607976c4ddccc90e65b65"
+    "56ca31516058f92b6e09f3b160ff0e374ec40d78ae4d4979fde6ac06a1a400c61dd31254186af30b22c10582a8a43e"
+    "34fe949c5f3b9755bae7baa7b7b7a6bd03b38cef55c86885fc6c1978b9cee7ef33da507c9df6b9277cff1e6aaa5d57"
+    "aca528466102818100c931617c77829dfb1270502be9195c8f2830885f57dba869536811e6864236d0c4736a0008a1"
+    "45af36b8357a7c3d139966d04c4e00934ea1aede3bb6b8ec841dc95e3f579751e2bfdfe27ae778983f959356210723"
+    "287b0affcc9f727044d48c373f1babde0724fa17a4fd4da0902c7c9b9bf27ba61be6ad02dfddda8f4e6822");
+
+string zero_masking_key =
+    hex2str("0000000000000000000000000000000000000000000000000000000000000000");
+string masking_key = hex2str("D796B02C370F1FA4CC0124F14EC8CBEBE987E825246265050F399A51FD477DFC");
+
+class ImportWrappedKeyTest : public KeymasterHidlTest {};
+
+TEST_F(ImportWrappedKeyTest, Success) {
+    auto wrapping_key_desc = AuthorizationSetBuilder()
+                                 .RsaEncryptionKey(2048, 65537)
+                                 .Digest(Digest::SHA1)
+                                 .Padding(PaddingMode::RSA_OAEP)
+                                 .Authorization(TAG_PURPOSE, KeyPurpose::WRAP_KEY);
+
+    ASSERT_EQ(ErrorCode::OK,
+              ImportWrappedKey(wrapped_key, wrapping_key, wrapping_key_desc, zero_masking_key));
+
+    string message = "Hello World!";
+    auto params = AuthorizationSetBuilder().BlockMode(BlockMode::ECB).Padding(PaddingMode::PKCS7);
+    string ciphertext = EncryptMessage(message, params);
+    string plaintext = DecryptMessage(ciphertext, params);
+    EXPECT_EQ(message, plaintext);
+}
+
+TEST_F(ImportWrappedKeyTest, SuccessMasked) {
+    auto wrapping_key_desc = AuthorizationSetBuilder()
+                                 .RsaEncryptionKey(2048, 65537)
+                                 .Digest(Digest::SHA1)
+                                 .Padding(PaddingMode::RSA_OAEP)
+                                 .Authorization(TAG_PURPOSE, KeyPurpose::WRAP_KEY);
+
+    ASSERT_EQ(ErrorCode::OK,
+              ImportWrappedKey(wrapped_key_masked, wrapping_key, wrapping_key_desc, masking_key));
+}
+
+TEST_F(ImportWrappedKeyTest, WrongMask) {
+    auto wrapping_key_desc = AuthorizationSetBuilder()
+                                 .RsaEncryptionKey(2048, 65537)
+                                 .Digest(Digest::SHA1)
+                                 .Padding(PaddingMode::RSA_OAEP)
+                                 .Authorization(TAG_PURPOSE, KeyPurpose::WRAP_KEY);
+
+    ASSERT_EQ(
+        ErrorCode::VERIFICATION_FAILED,
+        ImportWrappedKey(wrapped_key_masked, wrapping_key, wrapping_key_desc, zero_masking_key));
+}
+
+TEST_F(ImportWrappedKeyTest, WrongPurpose) {
+    auto wrapping_key_desc = AuthorizationSetBuilder()
+                                 .RsaEncryptionKey(2048, 65537)
+                                 .Digest(Digest::SHA1)
+                                 .Padding(PaddingMode::RSA_OAEP);
+
+    ASSERT_EQ(
+        ErrorCode::INCOMPATIBLE_PURPOSE,
+        ImportWrappedKey(wrapped_key_masked, wrapping_key, wrapping_key_desc, zero_masking_key));
 }
 
 typedef KeymasterHidlTest EncryptionOperationsTest;
