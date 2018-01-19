@@ -77,6 +77,14 @@ enum CameraMetadataTag : @3.2::CameraMetadataTag {
  * Enumeration definitions for the various entries that need them
  */
 
+/** android.control.aeMode enumeration values added since v3.2
+ * @see ANDROID_CONTROL_AE_MODE
+ */
+enum CameraMetadataEnumAndroidControlAeMode :
+        @3.2::CameraMetadataEnumAndroidControlAeMode {
+    ANDROID_CONTROL_AE_MODE_ON_EXTERNAL_FLASH,
+};
+
 /** android.control.captureIntent enumeration values added since v3.2
  * @see ANDROID_CONTROL_CAPTURE_INTENT
  */
