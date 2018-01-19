@@ -18,6 +18,8 @@ cc_test {
     name: "VtsHalKeymasterV4_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
+        "HmacKeySharingTest.cpp",
+        "KeymasterHidlTest.cpp",
         "keymaster_hidl_hal_test.cpp",
     ],
     static_libs: [
