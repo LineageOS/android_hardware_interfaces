@@ -11,6 +11,7 @@ hidl_interface {
         "IWifi.hal",
         "IWifiChip.hal",
         "IWifiNanIface.hal",
+        "IWifiNanIfaceEventCallback.hal",
     ],
     interfaces: [
         "android.hardware.wifi@1.0",
@@ -19,6 +20,9 @@ hidl_interface {
     ],
     types: [
         "NanConfigRequestSupplemental",
+        "NanDataPathChannelInfo",
+        "NanDataPathConfirmInd",
+        "NanDataPathScheduleUpdateInd",
     ],
     gen_java: true,
 }

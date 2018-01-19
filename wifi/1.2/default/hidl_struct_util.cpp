@@ -1956,6 +1956,22 @@ bool convertLegacyNanDataPathRequestIndToHidl(
     return true;
 }
 
+bool convertLegacyNdpChannelInfoToHidl(
+    const legacy_hal::NanChannelInfo& legacy_struct,
+    NanDataPathChannelInfo* hidl_struct) {
+    if (!hidl_struct) {
+        LOG(ERROR) << "convertLegacyNdpChannelInfoToHidl: hidl_struct is null";
+        return false;
+    }
+    *hidl_struct = {};
+
+    hidl_struct->channelFreq = legacy_struct.channel;
+    hidl_struct->channelBandwidth = legacy_struct.bandwidth;
+    hidl_struct->numSpatialStreams = legacy_struct.nss;
+
+    return true;
+}
+
 bool convertLegacyNanDataPathConfirmIndToHidl(
     const legacy_hal::NanDataPathConfirmInd& legacy_ind,
     NanDataPathConfirmInd* hidl_ind) {
@@ -1966,18 +1982,60 @@ bool convertLegacyNanDataPathConfirmIndToHidl(
     }
     *hidl_ind = {};
 
-    hidl_ind->ndpInstanceId = legacy_ind.ndp_instance_id;
-    hidl_ind->dataPathSetupSuccess =
+    hidl_ind->V1_0.ndpInstanceId = legacy_ind.ndp_instance_id;
+    hidl_ind->V1_0.dataPathSetupSuccess =
         legacy_ind.rsp_code == legacy_hal::NAN_DP_REQUEST_ACCEPT;
-    hidl_ind->peerNdiMacAddr =
+    hidl_ind->V1_0.peerNdiMacAddr =
         hidl_array<uint8_t, 6>(legacy_ind.peer_ndi_mac_addr);
-    hidl_ind->appInfo =
+    hidl_ind->V1_0.appInfo =
         std::vector<uint8_t>(legacy_ind.app_info.ndp_app_info,
                              legacy_ind.app_info.ndp_app_info +
                                  legacy_ind.app_info.ndp_app_info_len);
-    hidl_ind->status.status =
+    hidl_ind->V1_0.status.status =
         convertLegacyNanStatusTypeToHidl(legacy_ind.reason_code);
-    hidl_ind->status.description = "";  // TODO: b/34059183
+    hidl_ind->V1_0.status.description = "";  // TODO: b/34059183
+
+    std::vector<NanDataPathChannelInfo> channelInfo;
+    for (unsigned int i = 0; i < legacy_ind.num_channels; ++i) {
+        NanDataPathChannelInfo hidl_struct;
+        if (!convertLegacyNdpChannelInfoToHidl(legacy_ind.channel_info[i],
+                                               &hidl_struct)) {
+            return false;
+        }
+        channelInfo.push_back(hidl_struct);
+    }
+    hidl_ind->channelInfo = channelInfo;
+
+    return true;
+}
+
+bool convertLegacyNanDataPathScheduleUpdateIndToHidl(
+    const legacy_hal::NanDataPathScheduleUpdateInd& legacy_ind,
+    NanDataPathScheduleUpdateInd* hidl_ind) {
+    if (!hidl_ind) {
+        LOG(ERROR) << "convertLegacyNanDataPathScheduleUpdateIndToHidl: "
+                      "hidl_ind is null";
+        return false;
+    }
+    *hidl_ind = {};
+
+    hidl_ind->peerDiscoveryAddress =
+        hidl_array<uint8_t, 6>(legacy_ind.peer_mac_addr);
+    std::vector<NanDataPathChannelInfo> channelInfo;
+    for (unsigned int i = 0; i < legacy_ind.num_channels; ++i) {
+        NanDataPathChannelInfo hidl_struct;
+        if (!convertLegacyNdpChannelInfoToHidl(legacy_ind.channel_info[i],
+                                               &hidl_struct)) {
+            return false;
+        }
+        channelInfo.push_back(hidl_struct);
+    }
+    hidl_ind->channelInfo = channelInfo;
+    std::vector<uint32_t> ndpInstanceIds;
+    for (unsigned int i = 0; i < legacy_ind.num_ndp_instances; ++i) {
+        ndpInstanceIds.push_back(legacy_ind.ndp_instance_id[i]);
+    }
+    hidl_ind->ndpInstanceIds = ndpInstanceIds;
 
     return true;
 }

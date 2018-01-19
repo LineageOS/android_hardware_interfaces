@@ -21,6 +21,7 @@ import @1.0::IWifiNanIface;
 import @1.0::NanConfigRequest;
 import @1.0::NanEnableRequest;
 import @1.0::WifiStatus;
+import IWifiNanIfaceEventCallback;
 
 /**
  * Interface used to represent a single NAN (Neighbour Aware Network) iface.
@@ -29,6 +30,24 @@ import @1.0::WifiStatus;
  * Networking (NAN) Technical Specification".
  */
 interface IWifiNanIface extends @1.0::IWifiNanIface {
+    /**
+     * Requests notifications of significant events on this iface. Multiple calls
+     * to this must register multiple callbacks each of which must receive all
+     * events.
+     *
+     * Note: supersedes the @1.0::IWifiNanIface.registerEventCallback() method which is deprecated
+     * as of HAL version 1.2.
+     *
+     * @param callback An instance of the |IWifiNanIfaceEventCallback| HIDL interface
+     *        object.
+     * @return status WifiStatus of the operation.
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|
+     */
+    registerEventCallback_1_2(IWifiNanIfaceEventCallback callback)
+        generates (WifiStatus status);
+
     /**
      * Enable NAN: configures and activates NAN clustering (does not start
      * a discovery session or set up data-interfaces or data-paths). Use the
