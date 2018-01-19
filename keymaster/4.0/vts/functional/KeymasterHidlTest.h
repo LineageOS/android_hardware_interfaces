@@ -116,7 +116,8 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                         const string& key_material);
 
     ErrorCode ImportWrappedKey(string wrapped_key, string wrapping_key,
-                               const AuthorizationSet& wrapping_key_desc, string masking_key);
+                               const AuthorizationSet& wrapping_key_desc, string masking_key,
+                               const AuthorizationSet& unwrapping_params);
 
     ErrorCode ExportKey(KeyFormat format, const HidlBuf& key_blob, const HidlBuf& client_id,
                         const HidlBuf& app_data, HidlBuf* key_material);

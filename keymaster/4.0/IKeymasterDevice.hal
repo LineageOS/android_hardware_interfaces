@@ -274,6 +274,23 @@ interface IKeymasterDevice {
      * @param maskingKey The 32-byte value XOR'd with the transport key in the SecureWrappedKey
      *        structure.
      *
+     * @param unwrappingParams must contain any parameters needed to perform the unwrapping
+     *        operation.  For example, if the wrapping key is an AES key the block and padding modes
+     *        must be specified in this argument.
+     *
+     * @param passwordSid specifies the password secure ID (SID) of the user that owns the key being
+     *        installed.  If the authorization list in wrappedKeyData contains a Tag::USER_SECURE_ID
+     *        with a value that has the HardwareAuthenticatorType::PASSWORD bit set, the constructed
+     *        key must be bound to the SID value provided by this argument.  If the wrappedKeyData
+     *        does not contain such a tag and value, this argument must be ignored.
+     *
+     * @param biometricSid specifies the biometric secure ID (SID) of the user that owns the key
+     *        being installed.  If the authorization list in wrappedKeyData contains a
+     *        Tag::USER_SECURE_ID with a value that has the HardwareAuthenticatorType::FINGERPRINT
+     *        bit set, the constructed key must be bound to the SID value provided by this argument.
+     *        If the wrappedKeyData does not contain such a tag and value, this argument must be
+     *        ignored.
+     *
      * @return error See the ErrorCode enum.
      *
      * @return keyBlob Opaque descriptor of the imported key.  It is recommended that the keyBlob
@@ -281,8 +298,9 @@ interface IKeymasterDevice {
      *         hardware.
      */
     importWrappedKey(vec<uint8_t> wrappedKeyData, vec<uint8_t> wrappingKeyBlob,
-                     vec<uint8_t> maskingKey)
-        generates (ErrorCode error, vec<uint8_t> keyBlob, KeyCharacteristics keyCharacteristics);
+                     vec<uint8_t> maskingKey, vec<KeyParameter> unwrappingParams,
+                     uint64_t passwordSid, uint64_t biometricSid)
+        generates(ErrorCode error, vec<uint8_t> keyBlob, KeyCharacteristics keyCharacteristics);
 
     /**
      * Returns the characteristics of the specified key, if the keyBlob is valid (implementations
