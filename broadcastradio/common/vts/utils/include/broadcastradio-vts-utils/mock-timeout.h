@@ -13,11 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ANDROID_HARDWARE_BROADCASTRADIO_V1_1_MOCK_TIMEOUT
-#define ANDROID_HARDWARE_BROADCASTRADIO_V1_1_MOCK_TIMEOUT
+#ifndef ANDROID_HARDWARE_BROADCASTRADIO_VTS_MOCK_TIMEOUT
+#define ANDROID_HARDWARE_BROADCASTRADIO_VTS_MOCK_TIMEOUT
 
 #include <gmock/gmock.h>
 #include <thread>
+
+#ifndef EGMOCK_VERBOSE
+#define EGMOCK_VERBOSE 0
+#endif
+
+/**
+ * Print log message.
+ *
+ * INTERNAL IMPLEMENTATION - don't use in user code.
+ */
+#if EGMOCK_VERBOSE
+#define EGMOCK_LOG_(...) ALOGV("egmock: " __VA_ARGS__)
+#else
+#define EGMOCK_LOG_(...)
+#endif
 
 /**
  * Common helper objects for gmock timeout extension.
@@ -61,6 +76,7 @@ inline void EGMockFlippedComma_(std::function<void()> returned, std::function<vo
     auto invokeMock = [&]() { return egmock_##Method(__VA_ARGS__); }; \
     auto notify = [&]() {                                             \
         std::lock_guard<std::mutex> lk(egmock_mut_##Method);          \
+        EGMOCK_LOG_(#Method " called");                               \
         egmock_called_##Method = true;                                \
         egmock_cond_##Method.notify_all();                            \
     };                                                                \
@@ -105,6 +121,7 @@ inline void EGMockFlippedComma_(std::function<void()> returned, std::function<vo
  *     EXPECT_TIMEOUT_CALL(account, charge, 100, Currency::USD);
  */
 #define EXPECT_TIMEOUT_CALL(obj, Method, ...) \
+    EGMOCK_LOG_(#Method " expected to call"); \
     (obj).egmock_called_##Method = false;     \
     EXPECT_CALL(obj, egmock_##Method(__VA_ARGS__))
 
@@ -124,6 +141,7 @@ inline void EGMockFlippedComma_(std::function<void()> returned, std::function<vo
  */
 #define EXPECT_TIMEOUT_CALL_WAIT(obj, Method, timeout)                      \
     {                                                                       \
+        EGMOCK_LOG_("waiting for " #Method " call");                        \
         std::unique_lock<std::mutex> lk((obj).egmock_mut_##Method);         \
         if (!(obj).egmock_called_##Method) {                                \
             auto status = (obj).egmock_cond_##Method.wait_for(lk, timeout); \
@@ -131,4 +149,4 @@ inline void EGMockFlippedComma_(std::function<void()> returned, std::function<vo
         }                                                                   \
     }
 
-#endif  // ANDROID_HARDWARE_BROADCASTRADIO_V1_1_MOCK_TIMEOUT
+#endif  // ANDROID_HARDWARE_BROADCASTRADIO_VTS_MOCK_TIMEOUT

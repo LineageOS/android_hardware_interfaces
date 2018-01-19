@@ -112,6 +112,12 @@ Return<void> BroadcastRadio::getDabRegionConfig(getDabRegionConfig_cb _hidl_cb) 
 Return<void> BroadcastRadio::openSession(const sp<ITunerCallback>& callback,
                                          openSession_cb _hidl_cb) {
     ALOGV("%s", __func__);
+
+    /* For the needs of default implementation it's fine to instantiate new session object
+     * out of the lock scope. If your implementation needs it, use reentrant lock.
+     */
+    sp<TunerSession> newSession = new TunerSession(*this, callback);
+
     lock_guard<mutex> lk(mMut);
 
     auto oldSession = mSession.promote();
@@ -121,7 +127,6 @@ Return<void> BroadcastRadio::openSession(const sp<ITunerCallback>& callback,
         mSession = nullptr;
     }
 
-    sp<TunerSession> newSession = new TunerSession(*this, callback);
     mSession = newSession;
 
     _hidl_cb(Result::OK, newSession);
