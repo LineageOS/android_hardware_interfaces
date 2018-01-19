@@ -21,8 +21,10 @@
 
 #include <AndroidKeymaster4Device.h>
 
+using android::hardware::keymaster::V4_0::SecurityLevel;
+
 int main() {
-    auto keymaster = ::keymaster::V4_0::ng::CreateKeymasterDevice();
+    auto keymaster = ::keymaster::V4_0::ng::CreateKeymasterDevice(SecurityLevel::SOFTWARE);
     auto status = keymaster->registerAsService();
     if (status != android::OK) {
         LOG(FATAL) << "Could not register service for Keymaster 4.0 (" << status << ")";
