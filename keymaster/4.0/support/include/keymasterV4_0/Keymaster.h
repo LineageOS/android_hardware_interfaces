@@ -37,16 +37,37 @@ namespace support {
  */
 class Keymaster : public IKeymasterDevice {
    public:
+    Keymaster(const hidl_string& descriptor, const hidl_string& instanceName)
+        : descriptor_(descriptor), instanceName_(instanceName) {}
     virtual ~Keymaster() {}
 
     struct VersionResult {
-        ErrorCode error;
+        hidl_string keymasterName;
+        hidl_string authorName;
         uint8_t majorVersion;
         SecurityLevel securityLevel;
         bool supportsEc;
+
+        bool operator>(const VersionResult& other) const {
+            auto lhs = std::tie(securityLevel, majorVersion, supportsEc);
+            auto rhs = std::tie(other.securityLevel, other.majorVersion, other.supportsEc);
+            return lhs > rhs;
+        }
     };
 
-    virtual VersionResult halVersion() = 0;
+    virtual const VersionResult& halVersion() = 0;
+    const hidl_string& descriptor() { return descriptor_; }
+    const hidl_string& instanceName() { return instanceName_; }
+
+    /**
+     * Returns all available Keymaster3 and Keymaster4 instances, in order of most secure to least
+     * secure (as defined by VersionResult::operator<).
+     */
+    static std::vector<std::unique_ptr<Keymaster>> enumerateAvailableDevices();
+
+   private:
+    hidl_string descriptor_;
+    hidl_string instanceName_;
 };
 
 }  // namespace support

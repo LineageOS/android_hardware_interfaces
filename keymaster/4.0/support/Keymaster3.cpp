@@ -18,7 +18,7 @@
 #include <keymasterV4_0/Keymaster3.h>
 
 #include <android-base/logging.h>
-#include <hardware/hw_auth_token.h>
+#include <keymasterV4_0/keymaster_utils.h>
 
 namespace android {
 namespace hardware {
@@ -82,35 +82,6 @@ inline static OutIter copy_bytes_to_iterator(const T& value, OutIter dest) {
     return std::copy(value_ptr, value_ptr + sizeof(value), dest);
 }
 
-constexpr size_t kHmacSize = 32;
-
-inline static hidl_vec<uint8_t> authToken2HidlVec(const HardwareAuthToken& token) {
-    static_assert(1 /* version size */ + sizeof(token.challenge) + sizeof(token.userId) +
-                          sizeof(token.authenticatorId) + sizeof(token.authenticatorType) +
-                          sizeof(token.timestamp) + kHmacSize ==
-                      sizeof(hw_auth_token_t),
-                  "HardwareAuthToken content size does not match hw_auth_token_t size");
-
-    hidl_vec<uint8_t> result;
-    result.resize(sizeof(hw_auth_token_t));
-    auto pos = result.begin();
-    *pos++ = 0;  // Version byte
-    pos = copy_bytes_to_iterator(token.challenge, pos);
-    pos = copy_bytes_to_iterator(token.userId, pos);
-    pos = copy_bytes_to_iterator(token.authenticatorId, pos);
-    auto auth_type = htonl(static_cast<uint32_t>(token.authenticatorType));
-    pos = copy_bytes_to_iterator(auth_type, pos);
-    auto timestamp = htonq(token.timestamp);
-    pos = copy_bytes_to_iterator(timestamp, pos);
-    if (token.mac.size() != kHmacSize) {
-        std::fill(pos, pos + kHmacSize, 0);
-    } else {
-        std::copy(token.mac.begin(), token.mac.end(), pos);
-    }
-
-    return result;
-}
-
 hidl_vec<V3_0::KeyParameter> convertAndAddAuthToken(const hidl_vec<KeyParameter>& params,
                                                     const HardwareAuthToken& authToken) {
     hidl_vec<V3_0::KeyParameter> converted(params.size() + 1);
@@ -139,37 +110,32 @@ void Keymaster3::getVersionIfNeeded() {
         [&](bool isSecure, bool supportsEllipticCurve, bool supportsSymmetricCryptography,
             bool supportsAttestation, bool supportsAllDigests, const hidl_string& keymasterName,
             const hidl_string& keymasterAuthorName) {
-            securityLevel_ =
-                isSecure ? SecurityLevel::TRUSTED_ENVIRONMENT : SecurityLevel::SOFTWARE;
-            supportsEllipticCurve_ = supportsEllipticCurve;
+            version_ = {keymasterName, keymasterAuthorName, 0 /* major version, filled below */,
+                        isSecure ? SecurityLevel::TRUSTED_ENVIRONMENT : SecurityLevel::SOFTWARE,
+                        supportsEllipticCurve};
             supportsSymmetricCryptography_ = supportsSymmetricCryptography;
             supportsAttestation_ = supportsAttestation;
             supportsAllDigests_ = supportsAllDigests;
-            keymasterName_ = keymasterName;
-            authorName_ = keymasterAuthorName;
         });
 
     CHECK(rc.isOk()) << "Got error " << rc.description() << " trying to get hardware features";
 
-    if (securityLevel_ == SecurityLevel::SOFTWARE) {
-        majorVersion_ = 3;
+    if (version_.securityLevel == SecurityLevel::SOFTWARE) {
+        version_.majorVersion = 3;
     } else if (supportsAttestation_) {
-        majorVersion_ = 3;  // Could be 2, doesn't matter.
+        version_.majorVersion = 3;  // Could be 2, doesn't matter.
     } else if (supportsSymmetricCryptography_) {
-        majorVersion_ = 1;
+        version_.majorVersion = 1;
     } else {
-        majorVersion_ = 0;
+        version_.majorVersion = 0;
     }
-}
-
-Keymaster::VersionResult Keymaster3::halVersion() {
-    getVersionIfNeeded();
-    return {ErrorCode::OK, majorVersion_, securityLevel_, supportsEllipticCurve_};
 }
 
 Return<void> Keymaster3::getHardwareInfo(Keymaster3::getHardwareInfo_cb _hidl_cb) {
     getVersionIfNeeded();
-    _hidl_cb(securityLevel_, keymasterName_ + " (wrapped by keystore::Keymaster3)", authorName_);
+    _hidl_cb(version_.securityLevel,
+             std::string(version_.keymasterName) + " (wrapped by keystore::Keymaster3)",
+             version_.authorName);
     return Void();
 }
 

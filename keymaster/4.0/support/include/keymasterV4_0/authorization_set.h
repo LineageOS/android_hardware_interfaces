@@ -270,11 +270,16 @@ class AuthorizationSetBuilder : public AuthorizationSet {
 
     AuthorizationSetBuilder& SigningKey();
     AuthorizationSetBuilder& EncryptionKey();
+
     AuthorizationSetBuilder& NoDigestOrPadding();
+
     AuthorizationSetBuilder& EcbMode();
+    AuthorizationSetBuilder& GcmModeMinMacLen(uint32_t minMacLength);
+    AuthorizationSetBuilder& GcmModeMacLen(uint32_t macLength);
 
     AuthorizationSetBuilder& BlockMode(std::initializer_list<BlockMode> blockModes);
     AuthorizationSetBuilder& Digest(std::initializer_list<Digest> digests);
+    AuthorizationSetBuilder& Padding(std::initializer_list<PaddingMode> paddings);
 
     template <typename... T>
     AuthorizationSetBuilder& BlockMode(T&&... a) {
@@ -287,10 +292,6 @@ class AuthorizationSetBuilder : public AuthorizationSet {
     template <typename... T>
     AuthorizationSetBuilder& Padding(T&&... a) {
         return Padding({std::forward<T>(a)...});
-    }
-
-    AuthorizationSetBuilder& Padding(PaddingMode padding) {
-        return Authorization(TAG_PADDING, padding);
     }
 };
 
