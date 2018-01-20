@@ -30,6 +30,9 @@
 #define HAVE_JPEG // required for libyuv.h to export MJPEG decode APIs
 #include <libyuv.h>
 
+#include <jpeglib.h>
+
+
 namespace android {
 namespace hardware {
 namespace camera {
@@ -73,7 +76,9 @@ ExternalCameraDeviceSession::ExternalCameraDeviceSession(
         mV4l2Fd(std::move(v4l2Fd)),
         mSupportedFormats(sortFormats(supportedFormats)),
         mCroppingType(initCroppingType(mSupportedFormats)),
-        mOutputThread(new OutputThread(this, mCroppingType)) {
+        mOutputThread(new OutputThread(this, mCroppingType)),
+        mMaxThumbResolution(getMaxThumbResolution()),
+        mMaxJpegResolution(getMaxJpegResolution()) {
     mInitFail = initialize();
 }
 
@@ -779,9 +784,9 @@ int ExternalCameraDeviceSession::OutputThread::getCropRect(
 }
 
 int ExternalCameraDeviceSession::OutputThread::cropAndScaleLocked(
-        sp<AllocatedFrame>& in, const HalStreamBuffer& halBuf, YCbCrLayout* out) {
+        sp<AllocatedFrame>& in, const Size& outSz, YCbCrLayout* out) {
     Size inSz = {in->mWidth, in->mHeight};
-    Size outSz = {halBuf.width, halBuf.height};
+
     int ret;
     if (inSz == outSz) {
         ret = in->getLayout(out);
@@ -869,6 +874,152 @@ int ExternalCameraDeviceSession::OutputThread::cropAndScaleLocked(
     return 0;
 }
 
+
+int ExternalCameraDeviceSession::OutputThread::cropAndScaleThumbLocked(
+        sp<AllocatedFrame>& in, const Size &outSz, YCbCrLayout* out) {
+    Size inSz  {in->mWidth, in->mHeight};
+
+    if ((outSz.width * outSz.height) >
+        (mYu12ThumbFrame->mWidth * mYu12ThumbFrame->mHeight)) {
+        ALOGE("%s: Requested thumbnail size too big (%d,%d) > (%d,%d)",
+              __FUNCTION__, outSz.width, outSz.height,
+              mYu12ThumbFrame->mWidth, mYu12ThumbFrame->mHeight);
+        return -1;
+    }
+
+    int ret;
+
+    /* This will crop-and-zoom the input YUV frame to the thumbnail size
+     * Based on the following logic:
+     *  1) Square pixels come in, square pixels come out, therefore single
+     *  scale factor is computed to either make input bigger or smaller
+     *  depending on if we are upscaling or downscaling
+     *  2) That single scale factor would either make height too tall or width
+     *  too wide so we need to crop the input either horizontally or vertically
+     *  but not both
+     */
+
+    /* Convert the input and output dimensions into floats for ease of math */
+    float fWin = static_cast<float>(inSz.width);
+    float fHin = static_cast<float>(inSz.height);
+    float fWout = static_cast<float>(outSz.width);
+    float fHout = static_cast<float>(outSz.height);
+
+    /* Compute the one scale factor from (1) above, it will be the smaller of
+     * the two possibilities. */
+    float scaleFactor = std::min( fHin / fHout, fWin / fWout );
+
+    /* Since we are crop-and-zooming (as opposed to letter/pillar boxing) we can
+     * simply multiply the output by our scaleFactor to get the cropped input
+     * size. Note that at least one of {fWcrop, fHcrop} is going to wind up
+     * being {fWin, fHin} respectively because fHout or fWout cancels out the
+     * scaleFactor calculation above.
+     *
+     * Specifically:
+     *  if ( fHin / fHout ) < ( fWin / fWout ) we crop the sides off
+     * input, in which case
+     *    scaleFactor = fHin / fHout
+     *    fWcrop = fHin / fHout * fWout
+     *    fHcrop = fHin
+     *
+     * Note that fWcrop <= fWin ( because ( fHin / fHout ) * fWout < fWin, which
+     * is just the inequality above with both sides multiplied by fWout
+     *
+     * on the other hand if ( fWin / fWout ) < ( fHin / fHout) we crop the top
+     * and the bottom off of input, and
+     *    scaleFactor = fWin / fWout
+     *    fWcrop = fWin
+     *    fHCrop = fWin / fWout * fHout
+     */
+    float fWcrop = scaleFactor * fWout;
+    float fHcrop = scaleFactor * fHout;
+
+    /* Convert to integer and truncate to an even number */
+    Size cropSz = { 2*static_cast<uint32_t>(fWcrop/2.0f),
+                    2*static_cast<uint32_t>(fHcrop/2.0f) };
+
+    /* Convert to a centered rectange with even top/left */
+    IMapper::Rect inputCrop {
+        2*static_cast<int32_t>((inSz.width - cropSz.width)/4),
+        2*static_cast<int32_t>((inSz.height - cropSz.height)/4),
+        static_cast<int32_t>(cropSz.width),
+        static_cast<int32_t>(cropSz.height) };
+
+    if ((inputCrop.top < 0) ||
+        (inputCrop.top >= static_cast<int32_t>(inSz.height)) ||
+        (inputCrop.left < 0) ||
+        (inputCrop.left >= static_cast<int32_t>(inSz.width)) ||
+        (inputCrop.width <= 0) ||
+        (inputCrop.width + inputCrop.left > static_cast<int32_t>(inSz.width)) ||
+        (inputCrop.height <= 0) ||
+        (inputCrop.height + inputCrop.top > static_cast<int32_t>(inSz.height)))
+    {
+        ALOGE("%s: came up with really wrong crop rectangle",__FUNCTION__);
+        ALOGE("%s: input layout %dx%d to for output size %dx%d",
+             __FUNCTION__, inSz.width, inSz.height, outSz.width, outSz.height);
+        ALOGE("%s: computed input crop +%d,+%d %dx%d",
+             __FUNCTION__, inputCrop.left, inputCrop.top,
+             inputCrop.width, inputCrop.height);
+        return -1;
+    }
+
+    YCbCrLayout inputLayout;
+    ret = in->getCroppedLayout(inputCrop, &inputLayout);
+    if (ret != 0) {
+        ALOGE("%s: failed to crop input layout %dx%d to for output size %dx%d",
+             __FUNCTION__, inSz.width, inSz.height, outSz.width, outSz.height);
+        ALOGE("%s: computed input crop +%d,+%d %dx%d",
+             __FUNCTION__, inputCrop.left, inputCrop.top,
+             inputCrop.width, inputCrop.height);
+        return ret;
+    }
+    ALOGV("%s: crop input layout %dx%d to for output size %dx%d",
+          __FUNCTION__, inSz.width, inSz.height, outSz.width, outSz.height);
+    ALOGV("%s: computed input crop +%d,+%d %dx%d",
+          __FUNCTION__, inputCrop.left, inputCrop.top,
+          inputCrop.width, inputCrop.height);
+
+
+    // Scale
+    YCbCrLayout outFullLayout;
+
+    ret = mYu12ThumbFrame->getLayout(&outFullLayout);
+    if (ret != 0) {
+        ALOGE("%s: failed to get output buffer layout", __FUNCTION__);
+        return ret;
+    }
+
+
+    ret = libyuv::I420Scale(
+            static_cast<uint8_t*>(inputLayout.y),
+            inputLayout.yStride,
+            static_cast<uint8_t*>(inputLayout.cb),
+            inputLayout.cStride,
+            static_cast<uint8_t*>(inputLayout.cr),
+            inputLayout.cStride,
+            inputCrop.width,
+            inputCrop.height,
+            static_cast<uint8_t*>(outFullLayout.y),
+            outFullLayout.yStride,
+            static_cast<uint8_t*>(outFullLayout.cb),
+            outFullLayout.cStride,
+            static_cast<uint8_t*>(outFullLayout.cr),
+            outFullLayout.cStride,
+            outSz.width,
+            outSz.height,
+            libyuv::FilterMode::kFilterNone);
+
+    if (ret != 0) {
+        ALOGE("%s: failed to scale buffer from %dx%d to %dx%d. Ret %d",
+                __FUNCTION__, inputCrop.width, inputCrop.height,
+                outSz.width, outSz.height, ret);
+        return ret;
+    }
+
+    *out = outFullLayout;
+    return 0;
+}
+
 int ExternalCameraDeviceSession::OutputThread::formatConvertLocked(
         const YCbCrLayout& in, const YCbCrLayout& out, Size sz, uint32_t format) {
     int ret = 0;
@@ -948,6 +1099,436 @@ int ExternalCameraDeviceSession::OutputThread::formatConvertLocked(
             ALOGE("%s: unknown YUV format 0x%x!", __FUNCTION__, format);
             return -1;
     }
+    return 0;
+}
+
+int ExternalCameraDeviceSession::OutputThread::encodeJpegYU12(
+        const Size & inSz, const YCbCrLayout& inLayout,
+        int jpegQuality, const void *app1Buffer, size_t app1Size,
+        void *out, const size_t maxOutSize, size_t &actualCodeSize)
+{
+    /* libjpeg is a C library so we use C-style "inheritance" by
+     * putting libjpeg's jpeg_destination_mgr first in our custom
+     * struct. This allows us to cast jpeg_destination_mgr* to
+     * CustomJpegDestMgr* when we get it passed to us in a callback */
+    struct CustomJpegDestMgr {
+        struct jpeg_destination_mgr mgr;
+        JOCTET *mBuffer;
+        size_t mBufferSize;
+        size_t mEncodedSize;
+        bool mSuccess;
+    } dmgr;
+
+    jpeg_compress_struct cinfo = {};
+    jpeg_error_mgr jerr;
+
+    /* Initialize error handling with standard callbacks, but
+     * then override output_message (to print to ALOG) and
+     * error_exit to set a flag and print a message instead
+     * of killing the whole process */
+    cinfo.err = jpeg_std_error(&jerr);
+
+    cinfo.err->output_message = [](j_common_ptr cinfo) {
+        char buffer[JMSG_LENGTH_MAX];
+
+        /* Create the message */
+        (*cinfo->err->format_message)(cinfo, buffer);
+        ALOGE("libjpeg error: %s", buffer);
+    };
+    cinfo.err->error_exit = [](j_common_ptr cinfo) {
+        (*cinfo->err->output_message)(cinfo);
+        if(cinfo->client_data) {
+            auto & dmgr =
+                *reinterpret_cast<CustomJpegDestMgr*>(cinfo->client_data);
+            dmgr.mSuccess = false;
+        }
+    };
+    /* Now that we initialized some callbacks, let's create our compressor */
+    jpeg_create_compress(&cinfo);
+
+    /* Initialize our destination manager */
+    dmgr.mBuffer = static_cast<JOCTET*>(out);
+    dmgr.mBufferSize = maxOutSize;
+    dmgr.mEncodedSize = 0;
+    dmgr.mSuccess = true;
+    cinfo.client_data = static_cast<void*>(&dmgr);
+
+    /* These lambdas become C-style function pointers and as per C++11 spec
+     * may not capture anything */
+    dmgr.mgr.init_destination = [](j_compress_ptr cinfo) {
+        auto & dmgr = reinterpret_cast<CustomJpegDestMgr&>(*cinfo->dest);
+        dmgr.mgr.next_output_byte = dmgr.mBuffer;
+        dmgr.mgr.free_in_buffer = dmgr.mBufferSize;
+        ALOGV("%s:%d jpeg start: %p [%zu]",
+              __FUNCTION__, __LINE__, dmgr.mBuffer, dmgr.mBufferSize);
+    };
+
+    dmgr.mgr.empty_output_buffer = [](j_compress_ptr cinfo __unused) {
+        ALOGV("%s:%d Out of buffer", __FUNCTION__, __LINE__);
+        return 0;
+    };
+
+    dmgr.mgr.term_destination = [](j_compress_ptr cinfo) {
+        auto & dmgr = reinterpret_cast<CustomJpegDestMgr&>(*cinfo->dest);
+        dmgr.mEncodedSize = dmgr.mBufferSize - dmgr.mgr.free_in_buffer;
+        ALOGV("%s:%d Done with jpeg: %zu", __FUNCTION__, __LINE__, dmgr.mEncodedSize);
+    };
+    cinfo.dest = reinterpret_cast<struct jpeg_destination_mgr*>(&dmgr);
+
+    /* We are going to be using JPEG in raw data mode, so we are passing
+     * straight subsampled planar YCbCr and it will not touch our pixel
+     * data or do any scaling or anything */
+    cinfo.image_width = inSz.width;
+    cinfo.image_height = inSz.height;
+    cinfo.input_components = 3;
+    cinfo.in_color_space = JCS_YCbCr;
+
+    /* Initialize defaults and then override what we want */
+    jpeg_set_defaults(&cinfo);
+
+    jpeg_set_quality(&cinfo, jpegQuality, 1);
+    jpeg_set_colorspace(&cinfo, JCS_YCbCr);
+    cinfo.raw_data_in = 1;
+    cinfo.dct_method = JDCT_IFAST;
+
+    /* Configure sampling factors. The sampling factor is JPEG subsampling 420
+     * because the source format is YUV420. Note that libjpeg sampling factors
+     * are... a little weird. Sampling of Y=2,U=1,V=1 means there is 1 U and
+     * 1 V value for each 2 Y values */
+    cinfo.comp_info[0].h_samp_factor = 2;
+    cinfo.comp_info[0].v_samp_factor = 2;
+    cinfo.comp_info[1].h_samp_factor = 1;
+    cinfo.comp_info[1].v_samp_factor = 1;
+    cinfo.comp_info[2].h_samp_factor = 1;
+    cinfo.comp_info[2].v_samp_factor = 1;
+
+    /* Let's not hardcode YUV420 in 6 places... 5 was enough */
+    int maxVSampFactor = std::max( {
+        cinfo.comp_info[0].v_samp_factor,
+        cinfo.comp_info[1].v_samp_factor,
+        cinfo.comp_info[2].v_samp_factor
+    });
+    int cVSubSampling = cinfo.comp_info[0].v_samp_factor /
+                        cinfo.comp_info[1].v_samp_factor;
+
+    /* Start the compressor */
+    jpeg_start_compress(&cinfo, TRUE);
+
+    /* Compute our macroblock height, so we can pad our input to be vertically
+     * macroblock aligned.
+     * TODO: Does it need to be horizontally MCU aligned too? */
+
+    size_t mcuV = DCTSIZE*maxVSampFactor;
+    size_t paddedHeight = mcuV * ((inSz.height + mcuV - 1) / mcuV);
+
+    /* libjpeg uses arrays of row pointers, which makes it really easy to pad
+     * data vertically (unfortunately doesn't help horizontally) */
+    std::vector<JSAMPROW> yLines (paddedHeight);
+    std::vector<JSAMPROW> cbLines(paddedHeight/cVSubSampling);
+    std::vector<JSAMPROW> crLines(paddedHeight/cVSubSampling);
+
+    uint8_t *py = static_cast<uint8_t*>(inLayout.y);
+    uint8_t *pcr = static_cast<uint8_t*>(inLayout.cr);
+    uint8_t *pcb = static_cast<uint8_t*>(inLayout.cb);
+
+    for(uint32_t i = 0; i < paddedHeight; i++)
+    {
+        /* Once we are in the padding territory we still point to the last line
+         * effectively replicating it several times ~ CLAMP_TO_EDGE */
+        int li = std::min(i, inSz.height - 1);
+        yLines[i]  = static_cast<JSAMPROW>(py + li * inLayout.yStride);
+        if(i < paddedHeight / cVSubSampling)
+        {
+            crLines[i] = static_cast<JSAMPROW>(pcr + li * inLayout.cStride);
+            cbLines[i] = static_cast<JSAMPROW>(pcb + li * inLayout.cStride);
+        }
+    }
+
+    /* If APP1 data was passed in, use it */
+    if(app1Buffer && app1Size)
+    {
+        jpeg_write_marker(&cinfo, JPEG_APP0 + 1,
+             static_cast<const JOCTET*>(app1Buffer), app1Size);
+    }
+
+    /* While we still have padded height left to go, keep giving it one
+     * macroblock at a time. */
+    while (cinfo.next_scanline < cinfo.image_height) {
+        const uint32_t batchSize = DCTSIZE * maxVSampFactor;
+        const uint32_t nl = cinfo.next_scanline;
+        JSAMPARRAY planes[3]{ &yLines[nl],
+                              &cbLines[nl/cVSubSampling],
+                              &crLines[nl/cVSubSampling] };
+
+        uint32_t done = jpeg_write_raw_data(&cinfo, planes, batchSize);
+
+        if (done != batchSize) {
+            ALOGE("%s: compressed %u lines, expected %u (total %u/%u)",
+              __FUNCTION__, done, batchSize, cinfo.next_scanline,
+              cinfo.image_height);
+            return -1;
+        }
+    }
+
+    /* This will flush everything */
+    jpeg_finish_compress(&cinfo);
+
+    /* Grab the actual code size and set it */
+    actualCodeSize = dmgr.mEncodedSize;
+
+    return 0;
+}
+
+/*
+ * TODO: There needs to be a mechanism to discover allocated buffer size
+ * in the HAL.
+ *
+ * This is very fragile because it is duplicated computation from:
+ * frameworks/av/services/camera/libcameraservice/device3/Camera3Device.cpp
+ *
+ */
+
+/* This assumes mSupportedFormats have all been declared as supporting
+ * HAL_PIXEL_FORMAT_BLOB to the framework */
+Size ExternalCameraDeviceSession::getMaxJpegResolution() const {
+    Size ret { 0, 0 };
+    for(auto & fmt : mSupportedFormats) {
+        if(fmt.width * fmt.height > ret.width * ret.height) {
+            ret = Size { fmt.width, fmt.height };
+        }
+    }
+    return ret;
+}
+
+Size ExternalCameraDeviceSession::getMaxThumbResolution() const {
+    Size thumbSize { 0, 0 };
+    camera_metadata_ro_entry entry =
+        mCameraCharacteristics.find(ANDROID_JPEG_AVAILABLE_THUMBNAIL_SIZES);
+    for(uint32_t i = 0; i < entry.count; i += 2) {
+        Size sz { static_cast<uint32_t>(entry.data.i32[i]),
+                  static_cast<uint32_t>(entry.data.i32[i+1]) };
+        if(sz.width * sz.height > thumbSize.width * thumbSize.height) {
+            thumbSize = sz;
+        }
+    }
+
+    if (thumbSize.width * thumbSize.height == 0) {
+        ALOGW("%s: non-zero thumbnail size not available", __FUNCTION__);
+    }
+
+    return thumbSize;
+}
+
+
+ssize_t ExternalCameraDeviceSession::getJpegBufferSize(
+        uint32_t width, uint32_t height) const {
+    // Constant from camera3.h
+    const ssize_t kMinJpegBufferSize = 256 * 1024 + sizeof(CameraBlob);
+    // Get max jpeg size (area-wise).
+    if (mMaxJpegResolution.width == 0) {
+        ALOGE("%s: Do not have a single supported JPEG stream",
+                __FUNCTION__);
+        return BAD_VALUE;
+    }
+
+    // Get max jpeg buffer size
+    ssize_t maxJpegBufferSize = 0;
+    camera_metadata_ro_entry jpegBufMaxSize =
+            mCameraCharacteristics.find(ANDROID_JPEG_MAX_SIZE);
+    if (jpegBufMaxSize.count == 0) {
+        ALOGE("%s: Can't find maximum JPEG size in static metadata!",
+              __FUNCTION__);
+        return BAD_VALUE;
+    }
+    maxJpegBufferSize = jpegBufMaxSize.data.i32[0];
+
+    if (maxJpegBufferSize <= kMinJpegBufferSize) {
+        ALOGE("%s: ANDROID_JPEG_MAX_SIZE (%zd) <= kMinJpegBufferSize (%zd)",
+              __FUNCTION__, maxJpegBufferSize, kMinJpegBufferSize);
+        return BAD_VALUE;
+    }
+
+    // Calculate final jpeg buffer size for the given resolution.
+    float scaleFactor = ((float) (width * height)) /
+            (mMaxJpegResolution.width * mMaxJpegResolution.height);
+    ssize_t jpegBufferSize = scaleFactor * (maxJpegBufferSize - kMinJpegBufferSize) +
+            kMinJpegBufferSize;
+    if (jpegBufferSize > maxJpegBufferSize) {
+        jpegBufferSize = maxJpegBufferSize;
+    }
+
+    return jpegBufferSize;
+}
+
+int ExternalCameraDeviceSession::OutputThread::createJpegLocked(
+        HalStreamBuffer &halBuf,
+        HalRequest &req)
+{
+    int ret;
+    auto lfail = [&](auto... args) {
+        ALOGE(args...);
+
+        return 1;
+    };
+    auto parent = mParent.promote();
+    if (parent == nullptr) {
+       ALOGE("%s: session has been disconnected!", __FUNCTION__);
+       return 1;
+    }
+
+    ALOGV("%s: HAL buffer sid: %d bid: %" PRIu64 " w: %u h: %u",
+          __FUNCTION__, halBuf.streamId, static_cast<uint64_t>(halBuf.bufferId),
+          halBuf.width, halBuf.height);
+    ALOGV("%s: HAL buffer fmt: %x usage: %" PRIx64 " ptr: %p",
+          __FUNCTION__, halBuf.format, static_cast<uint64_t>(halBuf.usage),
+          halBuf.bufPtr);
+    ALOGV("%s: YV12 buffer %d x %d",
+          __FUNCTION__,
+          mYu12Frame->mWidth, mYu12Frame->mHeight);
+
+    int jpegQuality, thumbQuality;
+    Size thumbSize;
+
+    if (req.setting.exists(ANDROID_JPEG_QUALITY)) {
+        camera_metadata_entry entry =
+            req.setting.find(ANDROID_JPEG_QUALITY);
+        jpegQuality = entry.data.u8[0];
+    } else {
+        return lfail("%s: ANDROID_JPEG_QUALITY not set",__FUNCTION__);
+    }
+
+    if (req.setting.exists(ANDROID_JPEG_THUMBNAIL_QUALITY)) {
+        camera_metadata_entry entry =
+            req.setting.find(ANDROID_JPEG_THUMBNAIL_QUALITY);
+        thumbQuality = entry.data.u8[0];
+    } else {
+        return lfail(
+            "%s: ANDROID_JPEG_THUMBNAIL_QUALITY not set",
+            __FUNCTION__);
+    }
+
+    if (req.setting.exists(ANDROID_JPEG_THUMBNAIL_SIZE)) {
+        camera_metadata_entry entry =
+            req.setting.find(ANDROID_JPEG_THUMBNAIL_SIZE);
+        thumbSize = Size { static_cast<uint32_t>(entry.data.i32[0]),
+                           static_cast<uint32_t>(entry.data.i32[1])
+        };
+    } else {
+        return lfail(
+            "%s: ANDROID_JPEG_THUMBNAIL_SIZE not set", __FUNCTION__);
+    }
+
+    /* Cropped and scaled YU12 buffer for main and thumbnail */
+    YCbCrLayout yu12Main;
+    Size jpegSize { halBuf.width, halBuf.height };
+
+    /* Compute temporary buffer sizes accounting for the following:
+     * thumbnail can't exceed APP1 size of 64K
+     * main image needs to hold APP1, headers, and at most a poorly
+     * compressed image */
+    const ssize_t maxThumbCodeSize = 64 * 1024;
+    const ssize_t maxJpegCodeSize = parent->getJpegBufferSize(jpegSize.width,
+                                                             jpegSize.height);
+
+    /* Check that getJpegBufferSize did not return an error */
+    if (maxJpegCodeSize < 0) {
+        return lfail(
+            "%s: getJpegBufferSize returned %zd",__FUNCTION__,maxJpegCodeSize);
+    }
+
+
+    /* Hold actual thumbnail and main image code sizes */
+    size_t thumbCodeSize = 0, jpegCodeSize = 0;
+    /* Temporary thumbnail code buffer */
+    std::vector<uint8_t> thumbCode(maxThumbCodeSize);
+
+    YCbCrLayout yu12Thumb;
+    ret = cropAndScaleThumbLocked(mYu12Frame, thumbSize, &yu12Thumb);
+
+    if (ret != 0) {
+        return lfail(
+            "%s: crop and scale thumbnail failed!", __FUNCTION__);
+    }
+
+    /* Scale and crop main jpeg */
+    ret = cropAndScaleLocked(mYu12Frame, jpegSize, &yu12Main);
+
+    if (ret != 0) {
+        return lfail("%s: crop and scale main failed!", __FUNCTION__);
+    }
+
+    /* Encode the thumbnail image */
+    ret = encodeJpegYU12(thumbSize, yu12Thumb,
+            thumbQuality, 0, 0,
+            &thumbCode[0], maxThumbCodeSize, thumbCodeSize);
+
+    if (ret != 0) {
+        return lfail("%s: encodeJpegYU12 failed with %d",__FUNCTION__, ret);
+    }
+
+    /* Combine camera characteristics with request settings to form EXIF
+     * metadata */
+    common::V1_0::helper::CameraMetadata meta(parent->mCameraCharacteristics);
+    meta.append(req.setting);
+
+    /* Generate EXIF object */
+    std::unique_ptr<ExifUtils> utils(ExifUtils::create());
+    /* Make sure it's initialized */
+    utils->initialize();
+
+    utils->setFromMetadata(meta, jpegSize.width, jpegSize.height);
+
+    /* Check if we made a non-zero-sized thumbnail. Currently not possible
+     * that we got this far and the code is size 0, but if this code moves
+     * around it might become relevant again */
+
+    ret = utils->generateApp1(thumbCodeSize ? &thumbCode[0] : 0, thumbCodeSize);
+
+    if (!ret) {
+        return lfail("%s: generating APP1 failed", __FUNCTION__);
+    }
+
+    /* Get internal buffer */
+    size_t exifDataSize = utils->getApp1Length();
+    const uint8_t* exifData = utils->getApp1Buffer();
+
+    /* Lock the HAL jpeg code buffer */
+    void *bufPtr = sHandleImporter.lock(
+            *(halBuf.bufPtr), halBuf.usage, maxJpegCodeSize);
+
+    if (!bufPtr) {
+        return lfail("%s: could not lock %zu bytes", __FUNCTION__, maxJpegCodeSize);
+    }
+
+    /* Encode the main jpeg image */
+    ret = encodeJpegYU12(jpegSize, yu12Main,
+            jpegQuality, exifData, exifDataSize,
+            bufPtr, maxJpegCodeSize, jpegCodeSize);
+
+    /* TODO: Not sure this belongs here, maybe better to pass jpegCodeSize out
+     * and do this when returning buffer to parent */
+    CameraBlob blob { CameraBlobId::JPEG, static_cast<uint32_t>(jpegCodeSize) };
+    void *blobDst =
+        reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(bufPtr) +
+                           maxJpegCodeSize -
+                           sizeof(CameraBlob));
+    memcpy(blobDst, &blob, sizeof(CameraBlob));
+
+    /* Unlock the HAL jpeg code buffer */
+    int relFence = sHandleImporter.unlock(*(halBuf.bufPtr));
+    if (relFence > 0) {
+        halBuf.acquireFence = relFence;
+    }
+
+    /* Check if our JPEG actually succeeded */
+    if (ret != 0) {
+        return lfail(
+            "%s: encodeJpegYU12 failed with %d",__FUNCTION__, ret);
+    }
+
+    ALOGV("%s: encoded JPEG (ret:%d) with Q:%d max size: %zu",
+          __FUNCTION__, ret, jpegQuality, maxJpegCodeSize);
+
     return 0;
 }
 
@@ -1031,9 +1612,21 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
 
         // Gralloc lockYCbCr the buffer
         switch (halBuf.format) {
-            case PixelFormat::BLOB:
-                // TODO: b/72261675 implement JPEG output path
-                break;
+            case PixelFormat::BLOB: {
+                int ret = createJpegLocked(halBuf, req);
+
+                if(ret != 0) {
+                    ALOGE("%s: createJpegLocked failed with %d",
+                          __FUNCTION__, ret);
+                    lk.unlock();
+                    parent->notifyError(
+                            /*frameNum*/req.frameNumber,
+                            /*stream*/-1,
+                            ErrorCode::ERROR_DEVICE);
+
+                    return false;
+                }
+            } break;
             case PixelFormat::YCBCR_420_888:
             case PixelFormat::YV12: {
                 IMapper::Rect outRect {0, 0,
@@ -1055,7 +1648,9 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
 
                 YCbCrLayout cropAndScaled;
                 int ret = cropAndScaleLocked(
-                        mYu12Frame, halBuf, &cropAndScaled);
+                        mYu12Frame,
+                        Size { halBuf.width, halBuf.height },
+                        &cropAndScaled);
                 if (ret != 0) {
                     ALOGE("%s: crop and scale failed!", __FUNCTION__);
                     lk.unlock();
@@ -1101,7 +1696,8 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
 }
 
 Status ExternalCameraDeviceSession::OutputThread::allocateIntermediateBuffers(
-        const Size& v4lSize, const hidl_vec<Stream>& streams) {
+        const Size& v4lSize, const Size& thumbSize,
+        const hidl_vec<Stream>& streams) {
     std::lock_guard<std::mutex> lk(mLock);
     if (mScaledYu12Frames.size() != 0) {
         ALOGE("%s: intermediate buffer pool has %zu inflight buffers! (expect 0)",
@@ -1117,6 +1713,19 @@ Status ExternalCameraDeviceSession::OutputThread::allocateIntermediateBuffers(
         int ret = mYu12Frame->allocate(&mYu12FrameLayout);
         if (ret != 0) {
             ALOGE("%s: allocating YU12 frame failed!", __FUNCTION__);
+            return Status::INTERNAL_ERROR;
+        }
+    }
+
+    // Allocating intermediate YU12 thumbnail frame
+    if (mYu12ThumbFrame == nullptr ||
+        mYu12ThumbFrame->mWidth != thumbSize.width ||
+        mYu12ThumbFrame->mHeight != thumbSize.height) {
+        mYu12ThumbFrame.clear();
+        mYu12ThumbFrame = new AllocatedFrame(thumbSize.width, thumbSize.height);
+        int ret = mYu12ThumbFrame->allocate(&mYu12ThumbFrameLayout);
+        if (ret != 0) {
+            ALOGE("%s: allocating YU12 thumb frame failed!", __FUNCTION__);
             return Status::INTERNAL_ERROR;
         }
     }
@@ -1660,7 +2269,24 @@ Status ExternalCameraDeviceSession::configureStreams(
     }
 
     Size v4lSize = {v4l2Fmt.width, v4l2Fmt.height};
-    status = mOutputThread->allocateIntermediateBuffers(v4lSize, config.streams);
+    Size thumbSize { 0, 0 };
+    camera_metadata_ro_entry entry =
+        mCameraCharacteristics.find(ANDROID_JPEG_AVAILABLE_THUMBNAIL_SIZES);
+    for(uint32_t i = 0; i < entry.count; i += 2) {
+        Size sz { static_cast<uint32_t>(entry.data.i32[i]),
+                  static_cast<uint32_t>(entry.data.i32[i+1]) };
+        if(sz.width * sz.height > thumbSize.width * thumbSize.height) {
+            thumbSize = sz;
+        }
+    }
+
+    if (thumbSize.width * thumbSize.height == 0) {
+        ALOGE("%s: non-zero thumbnail size not available", __FUNCTION__);
+        return Status::INTERNAL_ERROR;
+    }
+
+    status = mOutputThread->allocateIntermediateBuffers(v4lSize,
+                mMaxThumbResolution, config.streams);
     if (status != Status::OK) {
         ALOGE("%s: allocating intermediate buffers failed!", __FUNCTION__);
         return status;
