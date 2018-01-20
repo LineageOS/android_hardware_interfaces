@@ -102,26 +102,6 @@ struct SoundTriggerHw : public V2_0::implementation::SoundTriggerHalImpl {
                                              int32_t /*cookie*/) override {
             return mImpl->startRecognition_2_1(modelHandle, config);
         }
-        Return<void> getParameters(const hidl_vec<hidl_string>& /*keys*/,
-                                   getParameters_cb _hidl_cb) override {
-            _hidl_cb(-ENOSYS, hidl_vec<ParameterValue>());
-            return Void();
-        }
-        Return<int32_t> setParameters(
-            const hidl_vec<V2_1::ISoundTriggerHw::ParameterValue>& /*parameters*/) override {
-            return -ENOSYS;
-        }
-        Return<void> getSoundModelParameters(int32_t /*modelHandle*/,
-                                             const hidl_vec<hidl_string>& /*keys*/,
-                                             getSoundModelParameters_cb _hidl_cb) override {
-            _hidl_cb(-ENOSYS, hidl_vec<ParameterValue>());
-            return Void();
-        }
-        Return<int32_t> setSoundModelParameters(
-            int32_t /*modelHandle*/,
-            const hidl_vec<V2_1::ISoundTriggerHw::ParameterValue>& /*parameters*/) override {
-            return -ENOSYS;
-        }
 
        private:
         sp<SoundTriggerHw> mImpl;
