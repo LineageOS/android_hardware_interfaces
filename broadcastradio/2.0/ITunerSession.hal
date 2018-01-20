@@ -113,12 +113,12 @@ interface ITunerSession {
      *                NOT_SUPPORTED if the flag is not supported at all.
      * @return value The current value of the flag, if result is OK.
      */
-    getConfigFlag(ConfigFlag flag) generates (Result result, bool value);
+    isConfigFlagSet(ConfigFlag flag) generates (Result result, bool value);
 
     /**
      * Sets the config flag.
      *
-     * The success/failure result must be consistent with getConfigFlag.
+     * The success/failure result must be consistent with isConfigFlagSet.
      *
      * @param flag Flag to set.
      * @param value The new value of a given flag.

@@ -263,7 +263,7 @@ Return<void> TunerSession::stopProgramListUpdates() {
     return {};
 }
 
-Return<void> TunerSession::getConfigFlag(ConfigFlag flag, getConfigFlag_cb _hidl_cb) {
+Return<void> TunerSession::isConfigFlagSet(ConfigFlag flag, isConfigFlagSet_cb _hidl_cb) {
     ALOGV("%s(%s)", __func__, toString(flag).c_str());
 
     _hidl_cb(Result::NOT_SUPPORTED, false);

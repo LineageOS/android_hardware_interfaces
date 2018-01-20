@@ -617,16 +617,16 @@ TEST_F(BroadcastRadioHalTest, GetNoImage) {
  * Test getting config flags.
  *
  * Verifies that:
- * - getConfigFlag either succeeds or ends with NOT_SUPPORTED or INVALID_STATE;
+ * - isConfigFlagSet either succeeds or ends with NOT_SUPPORTED or INVALID_STATE;
  * - call success or failure is consistent with setConfigFlag.
  */
-TEST_F(BroadcastRadioHalTest, GetConfigFlags) {
+TEST_F(BroadcastRadioHalTest, FetchConfigFlags) {
     ASSERT_TRUE(openSession());
 
     for (auto flag : gConfigFlagValues) {
         auto halResult = Result::UNKNOWN_ERROR;
         auto cb = [&](Result result, bool) { halResult = result; };
-        auto hidlResult = mSession->getConfigFlag(flag, cb);
+        auto hidlResult = mSession->isConfigFlagSet(flag, cb);
         EXPECT_TRUE(hidlResult.isOk());
 
         if (halResult != Result::NOT_SUPPORTED && halResult != Result::INVALID_STATE) {
@@ -646,7 +646,7 @@ TEST_F(BroadcastRadioHalTest, GetConfigFlags) {
  *
  * Verifies that:
  * - setConfigFlag either succeeds or ends with NOT_SUPPORTED or INVALID_STATE;
- * - getConfigFlag reflects the state requested immediately after the set call.
+ * - isConfigFlagSet reflects the state requested immediately after the set call.
  */
 TEST_F(BroadcastRadioHalTest, SetConfigFlags) {
     ASSERT_TRUE(openSession());
@@ -658,7 +658,7 @@ TEST_F(BroadcastRadioHalTest, SetConfigFlags) {
             halResult = result;
             gotValue = value;
         };
-        auto hidlResult = mSession->getConfigFlag(flag, cb);
+        auto hidlResult = mSession->isConfigFlagSet(flag, cb);
         EXPECT_TRUE(hidlResult.isOk());
         EXPECT_EQ(Result::OK, halResult);
         return gotValue;
