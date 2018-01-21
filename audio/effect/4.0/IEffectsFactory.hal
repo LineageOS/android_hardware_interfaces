@@ -59,8 +59,12 @@ interface IEffectsFactory {
     /**
      * Dumps information about effects into the provided file descriptor.
      * This is used for the dumpsys facility.
+     * The implementation should not block as the caller might have time
+     * constraint on the dump.
+     * A back to back dump of all HAL Device and Stream should take under 100ms.
      *
      * @param fd dump file descriptor.
+     * @return retval operation completion status: OK or NOT_SUPPORTED.
      */
-    debugDump(handle fd);
+    debugDump(handle fd) generates (Result retval);
 };

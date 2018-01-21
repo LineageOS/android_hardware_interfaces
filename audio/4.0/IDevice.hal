@@ -200,14 +200,17 @@ interface IDevice {
     /**
      * Gets the HW synchronization source of the device. Calling this method is
      * equivalent to getting AUDIO_PARAMETER_HW_AV_SYNC on the legacy HAL.
+     * Optional method
      *
+     * @return retval operation completion status: OK or NOT_SUPPORTED.
      * @return hwAvSync HW synchronization source
      */
-    getHwAvSync() generates (AudioHwSync hwAvSync);
+    getHwAvSync() generates (Result retval, AudioHwSync hwAvSync);
 
     /**
      * Sets whether the screen is on. Calling this method is equivalent to
      * setting AUDIO_PARAMETER_KEY_SCREEN_STATE on the legacy HAL.
+     * Optional method
      *
      * @param turnedOn whether the screen is turned on.
      * @return retval operation completion status.
@@ -219,11 +222,19 @@ interface IDevice {
      * The framework does not interpret the parameters, they are passed
      * in an opaque manner between a vendor application and HAL.
      *
-     * @param keys parameter keys.
+     * Multiple parameters can be retrieved at the same time.
+     * The implementation should return as many requested parameters
+     * as possible, even if one or more is not supported
+     *
+     * @param context provides more information about the request
+     * @param keys keys of the requested parameters
      * @return retval operation completion status.
+     *         OK must be returned if keys is empty.
+     *         NOT_SUPPORTED must be returned if at least one key is unknown.
      * @return parameters parameter key value pairs.
+     *         Must contain the value of all requested keys if retval == OK
      */
-    getParameters(vec<string> keys)
+    getParameters(vec<ParameterValue> context, vec<string> keys)
             generates (Result retval, vec<ParameterValue> parameters);
 
     /**
@@ -231,16 +242,28 @@ interface IDevice {
      * The framework does not interpret the parameters, they are passed
      * in an opaque manner between a vendor application and HAL.
      *
+     * Multiple parameters can be set at the same time though this is
+     * discouraged as it make failure analysis harder.
+     *
+     * If possible, a failed setParameters should not impact the platform state.
+     *
+     * @param context provides more information about the request
      * @param parameters parameter key value pairs.
      * @return retval operation completion status.
+     *         All parameters must be successfully set for OK to be returned
      */
-    setParameters(vec<ParameterValue> parameters) generates (Result retval);
+    setParameters(vec<ParameterValue> context, vec<ParameterValue> parameters)
+            generates (Result retval);
 
     /**
-     * Dumps information about the stream into the provided file descriptor.
+     * Dumps information about the device into the provided file descriptor.
      * This is used for the dumpsys facility.
+     * The implementation should not block as the caller might have time
+     * constraint on the dump.
+     * A back to back dump of all HAL Device and Stream should take under 100ms.
      *
      * @param fd dump file descriptor.
+     * @return retval operation completion status: OK or NOT_SUPPORTED.
      */
-    debugDump(handle fd);
+    debugDump(handle fd) generates (Result retval);
 };

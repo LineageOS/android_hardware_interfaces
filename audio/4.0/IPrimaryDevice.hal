@@ -52,6 +52,7 @@ interface IPrimaryDevice extends IDevice {
      * Sets whether BT SCO Noise Reduction and Echo Cancellation are enabled.
      * Calling this method is equivalent to setting AUDIO_PARAMETER_KEY_BT_NREC
      * on the legacy HAL.
+     * Optional method
      *
      * @param enabled whether BT SCO NR + EC are enabled.
      * @return retval operation completion status.
@@ -70,6 +71,7 @@ interface IPrimaryDevice extends IDevice {
     /**
      * Sets whether BT SCO Wideband mode is enabled. Calling this method is
      * equivalent to setting AUDIO_PARAMETER_KEY_BT_SCO_WB on the legacy HAL.
+     * Optional method
      *
      * @param enabled whether BT Wideband is enabled.
      * @return retval operation completion status.
@@ -115,6 +117,7 @@ interface IPrimaryDevice extends IDevice {
      * Sets whether Hearing Aid Compatibility - Telecoil (HAC-T) mode is
      * enabled. Calling this method is equivalent to setting
      * AUDIO_PARAMETER_KEY_HAC on the legacy HAL.
+     * Optional method
      *
      * @param enabled whether HAC mode is enabled.
      * @return retval operation completion status.

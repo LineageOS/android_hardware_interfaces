@@ -83,7 +83,7 @@ struct Uuid {
  */
 
 /**
- * Audio stream type describing the intented use case of a stream.
+ * Audio stream type describing the intended use case of a stream.
  */
 @export(name="audio_stream_type_t", value_prefix="AUDIO_STREAM_")
 enum AudioStreamType : int32_t {

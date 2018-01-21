@@ -26,6 +26,7 @@ interface IStreamIn extends IStream {
      * Returns the source descriptor of the input stream. Calling this method is
      * equivalent to getting AUDIO_PARAMETER_STREAM_INPUT_SOURCE on the legacy
      * HAL.
+     * Optional method
      *
      * @return retval operation completion status.
      * @return source audio source.
@@ -34,6 +35,7 @@ interface IStreamIn extends IStream {
 
     /**
      * Set the input gain for the audio driver.
+     * Optional method
      *
      * @param gain 1.0f is unity, 0.0f is zero.
      * @result retval operation completion status.

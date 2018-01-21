@@ -36,10 +36,12 @@ interface IStreamOut extends IStream {
      * allowing to directly set the volume as apposed to via the framework.
      * This method might produce multiple PCM outputs or hardware accelerated
      * codecs, such as MP3 or AAC.
+     * Optional method
      *
      * @param left left channel attenuation, 1.0f is unity, 0.0f is zero.
      * @param right right channel attenuation, 1.0f is unity, 0.0f is zero.
      * @return retval operation completion status.
+     *        If a volume is outside [0,1], return INVALID_ARGUMENTS
      */
     setVolume(float left, float right) generates (Result retval);
 
@@ -115,6 +117,7 @@ interface IStreamOut extends IStream {
     /**
      * Return the number of audio frames written by the audio DSP to DAC since
      * the output has exited standby.
+     * Optional method
      *
      * @return retval operation completion status.
      * @return dspFrames number of audio frames written.
@@ -125,6 +128,7 @@ interface IStreamOut extends IStream {
      * Get the local time at which the next write to the audio driver will be
      * presented. The units are microseconds, where the epoch is decided by the
      * local audio HAL.
+     * Optional method
      *
      * @return retval operation completion status.
      * @return timestampUs time of the next write.
@@ -151,6 +155,9 @@ interface IStreamOut extends IStream {
      *
      * Warning: failure to call this method results in callback implementation
      * on the client side being held until the HAL server termination.
+     *
+     * If no callback was previously set, the method should be a no-op
+     * and return OK.
      *
      * @return retval operation completion status: OK or NOT_SUPPORTED.
      */
@@ -223,6 +230,7 @@ interface IStreamOut extends IStream {
     /**
      * Notifies to the audio driver to flush the queued data. Stream must
      * already be paused before calling 'flush'.
+     * Optional method
      *
      * Implementation of this function is mandatory for offloaded playback.
      *
@@ -243,6 +251,8 @@ interface IStreamOut extends IStream {
      * number. Then it is permissible to return N instead of N+M, and the
      * timestamp must correspond to N rather than N+M. The terms 'recent' and
      * 'small' are not defined. They reflect the quality of the implementation.
+     *
+     * Optional method
      *
      * @return retval operation completion status.
      * @return frames count of presented audio frames.

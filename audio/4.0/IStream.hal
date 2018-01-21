@@ -53,17 +53,30 @@ interface IStream {
     getSampleRate() generates (uint32_t sampleRateHz);
 
     /**
-     * Return supported sampling rates of the stream. Calling this method is
-     * equivalent to getting AUDIO_PARAMETER_STREAM_SUP_SAMPLING_RATES on the
-     * legacy HAL.
+     * Return supported native sampling rates of the stream for a given format.
+     * A supported native sample rate is a sample rate that can be efficiently
+     * played by the hardware (typically without sample-rate conversions).
      *
+     * This function is only called for dynamic profile. If called for
+     * non-dynamic profile is should return NOT_SUPPORTED or the same list
+     * as in audio_policy_configuration.xml.
+     *
+     * Calling this method is equivalent to getting
+     * AUDIO_PARAMETER_STREAM_SUP_SAMPLING_RATES on the legacy HAL.
+     *
+     *
+     * @param format audio format for which the sample rates are supported.
+     * @return retval operation completion status.
+     *                Must be OK if the format is supported.
      * @return sampleRateHz supported sample rates.
      */
-    getSupportedSampleRates() generates (vec<uint32_t> sampleRates);
+    getSupportedSampleRates(AudioFormat format)
+            generates (Result retval, vec<uint32_t> sampleRates);
 
     /**
      * Sets the sampling rate of the stream. Calling this method is equivalent
      * to setting AUDIO_PARAMETER_STREAM_SAMPLING_RATE on the legacy HAL.
+     * Optional method. If implemented, only called on a stopped stream.
      *
      * @param sampleRateHz sample rate in Hz.
      * @return retval operation completion status.
@@ -82,13 +95,18 @@ interface IStream {
      * equivalent to getting AUDIO_PARAMETER_STREAM_SUP_CHANNELS on the legacy
      * HAL.
      *
+     * @param format audio format for which the channel masks are supported.
+     * @return retval operation completion status.
+     *                Must be OK if the format is supported.
      * @return masks supported audio masks.
      */
-    getSupportedChannelMasks() generates (vec<AudioChannelMask> masks);
+    getSupportedChannelMasks(AudioFormat format)
+            generates (Result retval, vec<AudioChannelMask> masks);
 
     /**
      * Sets the channel mask of the stream. Calling this method is equivalent to
      * setting AUDIO_PARAMETER_STREAM_CHANNELS on the legacy HAL.
+     * Optional method
      *
      * @param format audio format.
      * @return retval operation completion status.
@@ -114,6 +132,7 @@ interface IStream {
     /**
      * Sets the audio format of the stream. Calling this method is equivalent to
      * setting AUDIO_PARAMETER_STREAM_FORMAT on the legacy HAL.
+     * Optional method
      *
      * @param format audio format.
      * @return retval operation completion status.
@@ -159,10 +178,12 @@ interface IStream {
 
     /**
      * Return the set of device(s) which this stream is connected to.
+     * Optional method
      *
+     * @return retval operation completion status: OK or NOT_SUPPORTED.
      * @return device set of device(s) which this stream is connected to.
      */
-    getDevice() generates (AudioDevice device);
+    getDevice() generates (Result retval, AudioDevice device);
 
     /**
      * Connects the stream to the device.
@@ -192,6 +213,7 @@ interface IStream {
     /**
      * Sets the HW synchronization source. Calling this method is equivalent to
      * setting AUDIO_PARAMETER_STREAM_HW_AV_SYNC on the legacy HAL.
+     * Optional method
      *
      * @param hwAvSync HW synchronization source
      * @return retval operation completion status.
@@ -203,11 +225,19 @@ interface IStream {
      * The framework does not interpret the parameters, they are passed
      * in an opaque manner between a vendor application and HAL.
      *
-     * @param keys parameter keys.
+     * Multiple parameters can be retrieved at the same time.
+     * The implementation should return as many requested parameters
+     * as possible, even if one or more is not supported
+     *
+     * @param context provides more information about the request
+     * @param keys keys of the requested parameters
      * @return retval operation completion status.
+     *         OK must be returned if keys is empty.
+     *         NOT_SUPPORTED must be returned if at least one key is unknown.
      * @return parameters parameter key value pairs.
+     *         Must contain the value of all requested keys if retval == OK
      */
-    getParameters(vec<string> keys)
+    getParameters(vec<ParameterValue> context, vec<string> keys)
             generates (Result retval, vec<ParameterValue> parameters);
 
     /**
@@ -215,18 +245,30 @@ interface IStream {
      * The framework does not interpret the parameters, they are passed
      * in an opaque manner between a vendor application and HAL.
      *
+     * Multiple parameters can be set at the same time though this is
+     * discouraged as it make failure analysis harder.
+     *
+     * If possible, a failed setParameters should not impact the platform state.
+     *
+     * @param context provides more information about the request
      * @param parameters parameter key value pairs.
      * @return retval operation completion status.
+     *         All parameters must be successfully set for OK to be returned
      */
-    setParameters(vec<ParameterValue> parameters) generates (Result retval);
+    setParameters(vec<ParameterValue> context, vec<ParameterValue> parameters)
+            generates (Result retval);
 
     /**
      * Dumps information about the stream into the provided file descriptor.
      * This is used for the dumpsys facility.
+     * The implementation should not block as the caller might have time
+     * constraint on the dump.
+     * A back to back dump of all HAL Device and Stream should take under 100ms.
      *
      * @param fd dump file descriptor.
+     * @return retval operation completion status: OK or NOT_SUPPORTED.
      */
-    debugDump(handle fd);
+    debugDump(handle fd) generates (Result retval);
 
     /**
      * Called by the framework to start a stream operating in mmap mode.
