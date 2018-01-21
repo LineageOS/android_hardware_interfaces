@@ -1,0 +1,93 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.graphics.common@1.1;
+
+import @1.0::PixelFormat;
+import @1.0::BufferUsage;
+
+/**
+ * Pixel formats for graphics buffers.
+ */
+@export(name="android_pixel_format_v1_1_t", value_prefix="HAL_PIXEL_FORMAT_",
+        export_parent="false")
+enum PixelFormat : @1.0::PixelFormat {
+    /**
+     * 16-bit format that has a single 16-bit depth component.
+     *
+     * The component values are unsigned normalized to the range [0, 1], whose
+     * interpretation is defined by the dataspace.
+     */
+    DEPTH_16           = 0x30,
+
+    /**
+     * 32-bit format that has a single 24-bit depth component and, optionally,
+     * 8 bits that are unused.
+     *
+     * The component values are unsigned normalized to the range [0, 1], whose
+     * interpretation is defined by the dataspace.
+     */
+    DEPTH_24           = 0x31,
+
+    /**
+     * 32-bit format that has a 24-bit depth component and an 8-bit stencil
+     * component packed into 32-bits.
+     *
+     * The depth component values are unsigned normalized to the range [0, 1],
+     * whose interpretation is defined by the dataspace. The stencil values are
+     * unsigned integers, whose interpretation is defined by the dataspace.
+     */
+    DEPTH_24_STENCIL_8  = 0x32,
+
+    /**
+     * 32-bit format that has a single 32-bit depth component.
+     *
+     * The component values are signed floats, whose interpretation is defined
+     * by the dataspace.
+     */
+    DEPTH_32F           = 0x33,
+
+    /**
+     * Two-component format that has a 32-bit depth component, an 8-bit stencil
+     * component, and optionally 24-bits unused.
+     *
+     * The depth component values are signed floats, whose interpretation is
+     * defined by the dataspace. The stencil bits are unsigned integers, whose
+     * interpretation is defined by the dataspace.
+     */
+    DEPTH_32F_STENCIL_8 = 0x34,
+
+    /**
+     * 8-bit format that has a single 8-bit stencil component.
+     *
+     * The component values are unsigned integers, whose interpretation is
+     * defined by the dataspace.
+     */
+    STENCIL_8           = 0x35,
+};
+
+/**
+ * Buffer usage definitions.
+ */
+enum BufferUsage : @1.0::BufferUsage {
+    /** buffer is used as a cube map texture */
+    GPU_CUBE_MAP          = 1ULL << 25,
+
+    /** buffer contains a complete mipmap hierarchy */
+    GPU_MIPMAP_COMPLETE   = 1ULL << 26,
+
+    /** bits 27 and 32-47 must be zero and are reserved for future versions */
+};

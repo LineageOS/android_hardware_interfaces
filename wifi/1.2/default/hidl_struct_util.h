@@ -22,6 +22,7 @@
 #include <android/hardware/wifi/1.0/IWifiChip.h>
 #include <android/hardware/wifi/1.0/types.h>
 #include <android/hardware/wifi/1.1/IWifiChip.h>
+#include <android/hardware/wifi/1.2/types.h>
 
 #include "wifi_legacy_hal.h"
 
@@ -106,6 +107,14 @@ bool convertHidlNanEnableRequestToLegacy(
 bool convertHidlNanConfigRequestToLegacy(
     const NanConfigRequest& hidl_request,
     legacy_hal::NanConfigRequest* legacy_request);
+bool convertHidlNanEnableRequest_1_2ToLegacy(
+    const NanEnableRequest& hidl_request1,
+    const NanConfigRequestSupplemental& hidl_request2,
+    legacy_hal::NanEnableRequest* legacy_request);
+bool convertHidlNanConfigRequest_1_2ToLegacy(
+    const NanConfigRequest& hidl_request1,
+    const NanConfigRequestSupplemental& hidl_request2,
+    legacy_hal::NanConfigRequest* legacy_request);
 bool convertHidlNanPublishRequestToLegacy(
     const NanPublishRequest& hidl_request,
     legacy_hal::NanPublishRequest* legacy_request);
@@ -138,6 +147,9 @@ bool convertLegacyNanDataPathRequestIndToHidl(
 bool convertLegacyNanDataPathConfirmIndToHidl(
     const legacy_hal::NanDataPathConfirmInd& legacy_ind,
     NanDataPathConfirmInd* hidl_ind);
+bool convertLegacyNanDataPathScheduleUpdateIndToHidl(
+    const legacy_hal::NanDataPathScheduleUpdateInd& legacy_ind,
+    NanDataPathScheduleUpdateInd* hidl_ind);
 
 // RTT controller conversion methods.
 bool convertHidlVectorOfRttConfigToLegacy(

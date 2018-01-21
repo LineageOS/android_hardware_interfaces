@@ -35,7 +35,6 @@ namespace health {
 namespace V2_0 {
 
 using V1_0::BatteryStatus;
-using V1_0::HealthInfo;
 
 // Test environment for graphics.composer
 class HealthHidlEnvironment : public VtsHalHidlTargetTestEnvBase {
@@ -203,6 +202,43 @@ bool verifyDiskStats(const hidl_vec<struct DiskStats>& stats) {
     return true;
 }
 
+template <typename T>
+bool verifyEnum(T value) {
+    for (auto it : hidl_enum_iterator<T>()) {
+        if (it == value) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool verifyHealthInfo(const HealthInfo& health_info) {
+    if (!verifyStorageInfo(health_info.storageInfos) || !verifyDiskStats(health_info.diskStats)) {
+        return false;
+    }
+
+    using V1_0::BatteryStatus;
+    using V1_0::BatteryHealth;
+
+    if (!((health_info.legacy.batteryChargeCounter > 0) &&
+          (health_info.legacy.batteryCurrent != INT32_MIN) &&
+          (0 <= health_info.legacy.batteryLevel && health_info.legacy.batteryLevel <= 100) &&
+          verifyEnum<BatteryHealth>(health_info.legacy.batteryHealth) &&
+          (health_info.legacy.batteryStatus != BatteryStatus::UNKNOWN) &&
+          verifyEnum<BatteryStatus>(health_info.legacy.batteryStatus))) {
+        return false;
+    }
+
+    return true;
+}
+
+/*
+ * Tests the values returned by getChargeCounter(),
+ * getCurrentNow(), getCurrentAverage(), getCapacity(), getEnergyCounter(),
+ * getChargeStatus(), getStorageInfo(), getDiskStats() and getHealthInfo() from
+ * interface IHealth.
+ */
 TEST_F(HealthHidlTest, Properties) {
     EXPECT_OK(mHealth->getChargeCounter([](auto result, auto value) {
         EXPECT_VALID_OR_UNSUPPORTED_PROP(result, std::to_string(value), value > 0);
@@ -222,14 +258,16 @@ TEST_F(HealthHidlTest, Properties) {
     EXPECT_OK(mHealth->getChargeStatus([](auto result, auto value) {
         EXPECT_VALID_OR_UNSUPPORTED_PROP(
             result, toString(value),
-            value == BatteryStatus::CHARGING || value == BatteryStatus::DISCHARGING ||
-                value == BatteryStatus::NOT_CHARGING || value == BatteryStatus::FULL);
+            value != BatteryStatus::UNKNOWN && verifyEnum<BatteryStatus>(value));
     }));
     EXPECT_OK(mHealth->getStorageInfo([](auto result, auto& value) {
-        EXPECT_VALID_OR_UNSUPPORTED_PROP(result, toString(value), (verifyStorageInfo(value)));
+        EXPECT_VALID_OR_UNSUPPORTED_PROP(result, toString(value), verifyStorageInfo(value));
     }));
     EXPECT_OK(mHealth->getDiskStats([](auto result, auto& value) {
         EXPECT_VALID_OR_UNSUPPORTED_PROP(result, toString(value), verifyDiskStats(value));
+    }));
+    EXPECT_OK(mHealth->getHealthInfo([](auto result, auto& value) {
+        EXPECT_VALID_OR_UNSUPPORTED_PROP(result, toString(value), verifyHealthInfo(value));
     }));
 }
 

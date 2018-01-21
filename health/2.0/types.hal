@@ -124,3 +124,31 @@ struct DiskStats {
      */
     StorageAttribute attr;
 };
+
+/**
+ * Combined Health Information.
+ */
+struct HealthInfo {
+    /**
+     * V1.0 HealthInfo.
+     * If a member is unsupported, it is filled with:
+     * - 0 (for integers);
+     * - false (for booleans);
+     * - empty string (for strings);
+     * - UNKNOWN (for BatteryStatus and BatteryHealth).
+     */
+    @1.0::HealthInfo legacy;
+    /**
+     * Average battery current in uA. Will be 0 if unsupported.
+     */
+    int32_t batteryCurrentAverage;
+    /**
+     * Disk Statistics. Will be an empty vector if unsupported.
+     */
+    vec<DiskStats> diskStats;
+    /**
+     * Information on storage devices. Will be an empty vector if
+     * unsupported.
+     */
+    vec<StorageInfo> storageInfos;
+};

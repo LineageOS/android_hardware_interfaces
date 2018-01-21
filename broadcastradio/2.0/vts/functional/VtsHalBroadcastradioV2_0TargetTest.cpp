@@ -15,6 +15,8 @@
  */
 
 #define LOG_TAG "BcRadio.vts"
+#define LOG_NDEBUG 0
+#define EGMOCK_VERBOSE 1
 
 #include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
@@ -113,7 +115,15 @@ static void printSkipped(std::string msg) {
     std::cout << "[  SKIPPED ] " << msg << std::endl;
 }
 
+MATCHER_P(InfoHasId, id,
+          std::string(negation ? "does not contain" : "contains") + " " + toString(id)) {
+    auto ids = utils::getAllIds(arg.selector, utils::getType(id));
+    return ids.end() != find(ids.begin(), ids.end(), id.value);
+}
+
 TunerCallbackMock::TunerCallbackMock() {
+    EXPECT_TIMEOUT_CALL(*this, onCurrentProgramInfoChanged, _).Times(AnyNumber());
+
     // we expect the antenna is connected through the whole test
     EXPECT_CALL(*this, onAntennaStateChange(false)).Times(0);
 }
@@ -332,11 +342,13 @@ TEST_F(BroadcastRadioHalTest, GetDabRegionConfig) {
     }
     ASSERT_EQ(Result::OK, halResult);
 
-    std::regex re("^[A-Z0-9]{2,5}$");
+    std::regex re("^[A-Z0-9][A-Z0-9 ]{0,5}[A-Z0-9]$");
     // double-check correctness of the test
     ASSERT_TRUE(std::regex_match("5A", re));
     ASSERT_FALSE(std::regex_match("5a", re));
-    ASSERT_FALSE(std::regex_match("123ABC", re));
+    ASSERT_FALSE(std::regex_match("1234ABCD", re));
+    ASSERT_TRUE(std::regex_match("CN 12D", re));
+    ASSERT_FALSE(std::regex_match(" 5A", re));
 
     for (auto&& entry : config) {
         EXPECT_TRUE(std::regex_match(std::string(entry.label), re));
@@ -362,9 +374,19 @@ TEST_F(BroadcastRadioHalTest, FmTune) {
     uint64_t freq = 100100;  // 100.1 FM
     auto sel = make_selector_amfm(freq);
 
+    /* TODO(b/69958777): there is a race condition between tune() and onCurrentProgramInfoChanged
+     * callback setting infoCb, because egmock cannot distinguish calls with different matchers
+     * (there is one here and one in callback constructor).
+     *
+     * This sleep workaround will fix default implementation, but the real HW tests will still be
+     * flaky. We probably need to implement egmock alternative based on actions.
+     */
+    std::this_thread::sleep_for(100ms);
+
     // try tuning
     ProgramInfo infoCb = {};
-    EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChanged, _)
+    EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChanged,
+                        InfoHasId(utils::make_identifier(IdentifierType::AMFM_FREQUENCY, freq)))
         .Times(AnyNumber())
         .WillOnce(DoAll(SaveArg<0>(&infoCb), testing::Return(ByMove(Void()))));
     auto result = mSession->tune(sel);
@@ -378,6 +400,8 @@ TEST_F(BroadcastRadioHalTest, FmTune) {
     // expect a callback if it succeeds
     EXPECT_EQ(Result::OK, result);
     EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onCurrentProgramInfoChanged, timeout::tune);
+
+    ALOGD("current program info: %s", toString(infoCb).c_str());
 
     // it should tune exactly to what was requested
     auto freqs = utils::getAllIds(infoCb.selector, IdentifierType::AMFM_FREQUENCY);
@@ -442,6 +466,9 @@ TEST_F(BroadcastRadioHalTest, TuneFailsWithEmpty) {
 TEST_F(BroadcastRadioHalTest, Scan) {
     ASSERT_TRUE(openSession());
 
+    // TODO(b/69958777): see FmTune workaround
+    std::this_thread::sleep_for(100ms);
+
     EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChanged, _);
     auto result = mSession->scan(true /* up */, true /* skip subchannel */);
     EXPECT_EQ(Result::OK, result);
@@ -464,9 +491,15 @@ TEST_F(BroadcastRadioHalTest, Scan) {
 TEST_F(BroadcastRadioHalTest, Step) {
     ASSERT_TRUE(openSession());
 
+    // TODO(b/69958777): see FmTune workaround
+    std::this_thread::sleep_for(100ms);
+
     EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChanged, _).Times(AnyNumber());
     auto result = mSession->step(true /* up */);
-    if (result == Result::NOT_SUPPORTED) return;
+    if (result == Result::NOT_SUPPORTED) {
+        printSkipped("step not supported");
+        return;
+    }
     EXPECT_EQ(Result::OK, result);
     EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onCurrentProgramInfoChanged, timeout::tune);
 
@@ -584,16 +617,16 @@ TEST_F(BroadcastRadioHalTest, GetNoImage) {
  * Test getting config flags.
  *
  * Verifies that:
- * - getConfigFlag either succeeds or ends with NOT_SUPPORTED or INVALID_STATE;
+ * - isConfigFlagSet either succeeds or ends with NOT_SUPPORTED or INVALID_STATE;
  * - call success or failure is consistent with setConfigFlag.
  */
-TEST_F(BroadcastRadioHalTest, GetConfigFlags) {
+TEST_F(BroadcastRadioHalTest, FetchConfigFlags) {
     ASSERT_TRUE(openSession());
 
     for (auto flag : gConfigFlagValues) {
         auto halResult = Result::UNKNOWN_ERROR;
         auto cb = [&](Result result, bool) { halResult = result; };
-        auto hidlResult = mSession->getConfigFlag(flag, cb);
+        auto hidlResult = mSession->isConfigFlagSet(flag, cb);
         EXPECT_TRUE(hidlResult.isOk());
 
         if (halResult != Result::NOT_SUPPORTED && halResult != Result::INVALID_STATE) {
@@ -613,7 +646,7 @@ TEST_F(BroadcastRadioHalTest, GetConfigFlags) {
  *
  * Verifies that:
  * - setConfigFlag either succeeds or ends with NOT_SUPPORTED or INVALID_STATE;
- * - getConfigFlag reflects the state requested immediately after the set call.
+ * - isConfigFlagSet reflects the state requested immediately after the set call.
  */
 TEST_F(BroadcastRadioHalTest, SetConfigFlags) {
     ASSERT_TRUE(openSession());
@@ -625,7 +658,7 @@ TEST_F(BroadcastRadioHalTest, SetConfigFlags) {
             halResult = result;
             gotValue = value;
         };
-        auto hidlResult = mSession->getConfigFlag(flag, cb);
+        auto hidlResult = mSession->isConfigFlagSet(flag, cb);
         EXPECT_TRUE(hidlResult.isOk());
         EXPECT_EQ(Result::OK, halResult);
         return gotValue;

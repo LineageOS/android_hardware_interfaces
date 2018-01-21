@@ -42,7 +42,7 @@ struct TunerSession : public ITunerSession {
     virtual Return<void> cancel() override;
     virtual Return<Result> startProgramListUpdates(const ProgramFilter& filter);
     virtual Return<void> stopProgramListUpdates();
-    virtual Return<void> getConfigFlag(ConfigFlag flag, getConfigFlag_cb _hidl_cb);
+    virtual Return<void> isConfigFlagSet(ConfigFlag flag, isConfigFlagSet_cb _hidl_cb);
     virtual Return<Result> setConfigFlag(ConfigFlag flag, bool value);
     virtual Return<void> setParameters(const hidl_vec<VendorKeyValue>& parameters,
                                        setParameters_cb _hidl_cb) override;
@@ -63,6 +63,7 @@ struct TunerSession : public ITunerSession {
     bool mIsTuneCompleted = false;
     ProgramSelector mCurrentProgram = {};
 
+    void cancelLocked();
     void tuneInternalLocked(const ProgramSelector& sel);
     const VirtualRadio& virtualRadio() const;
     const BroadcastRadio& module() const;

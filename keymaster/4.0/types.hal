@@ -639,7 +639,7 @@ struct VerificationToken {
     SecurityLevel securityLevel;
 
     /**
-     * 32-byte HMAC of the above values, computed as:
+     * 32-byte HMAC-SHA256 of the above values, computed as:
      *
      *    HMAC(H,
      *         "Auth Verification" || challenge || timestamp || securityLevel || parametersVerified)

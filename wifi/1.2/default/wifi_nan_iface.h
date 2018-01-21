@@ -18,8 +18,8 @@
 #define WIFI_NAN_IFACE_H_
 
 #include <android-base/macros.h>
-#include <android/hardware/wifi/1.0/IWifiNanIface.h>
 #include <android/hardware/wifi/1.0/IWifiNanIfaceEventCallback.h>
+#include <android/hardware/wifi/1.2/IWifiNanIface.h>
 
 #include "hidl_callback_util.h"
 #include "wifi_legacy_hal.h"
@@ -34,7 +34,7 @@ using namespace android::hardware::wifi::V1_0;
 /**
  * HIDL interface object used to control a NAN Iface instance.
  */
-class WifiNanIface : public V1_0::IWifiNanIface {
+class WifiNanIface : public V1_2::IWifiNanIface {
    public:
     WifiNanIface(const std::string& ifname,
                  const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal);
@@ -47,7 +47,7 @@ class WifiNanIface : public V1_0::IWifiNanIface {
     Return<void> getName(getName_cb hidl_status_cb) override;
     Return<void> getType(getType_cb hidl_status_cb) override;
     Return<void> registerEventCallback(
-        const sp<IWifiNanIfaceEventCallback>& callback,
+        const sp<V1_0::IWifiNanIfaceEventCallback>& callback,
         registerEventCallback_cb hidl_status_cb) override;
     Return<void> getCapabilitiesRequest(
         uint16_t cmd_id, getCapabilitiesRequest_cb hidl_status_cb) override;
@@ -88,12 +88,24 @@ class WifiNanIface : public V1_0::IWifiNanIface {
         uint16_t cmd_id, uint32_t ndpInstanceId,
         terminateDataPathRequest_cb hidl_status_cb) override;
 
+    Return<void> registerEventCallback_1_2(
+        const sp<IWifiNanIfaceEventCallback>& callback,
+        registerEventCallback_1_2_cb hidl_status_cb) override;
+    Return<void> enableRequest_1_2(
+        uint16_t cmd_id, const NanEnableRequest& msg1,
+        const NanConfigRequestSupplemental& msg2,
+        enableRequest_1_2_cb hidl_status_cb) override;
+    Return<void> configRequest_1_2(
+        uint16_t cmd_id, const NanConfigRequest& msg1,
+        const NanConfigRequestSupplemental& msg2,
+        configRequest_1_2_cb hidl_status_cb) override;
+
    private:
     // Corresponding worker functions for the HIDL methods.
     std::pair<WifiStatus, std::string> getNameInternal();
     std::pair<WifiStatus, IfaceType> getTypeInternal();
     WifiStatus registerEventCallbackInternal(
-        const sp<IWifiNanIfaceEventCallback>& callback);
+        const sp<V1_0::IWifiNanIfaceEventCallback>& callback);
     WifiStatus getCapabilitiesRequestInternal(uint16_t cmd_id);
     WifiStatus enableRequestInternal(uint16_t cmd_id,
                                      const NanEnableRequest& msg);
@@ -118,6 +130,15 @@ class WifiNanIface : public V1_0::IWifiNanIface {
         uint16_t cmd_id, const NanRespondToDataPathIndicationRequest& msg);
     WifiStatus terminateDataPathRequestInternal(uint16_t cmd_id,
                                                 uint32_t ndpInstanceId);
+
+    WifiStatus registerEventCallback_1_2Internal(
+        const sp<IWifiNanIfaceEventCallback>& callback);
+    WifiStatus enableRequest_1_2Internal(
+        uint16_t cmd_id, const NanEnableRequest& msg1,
+        const NanConfigRequestSupplemental& msg2);
+    WifiStatus configRequest_1_2Internal(
+        uint16_t cmd_id, const NanConfigRequest& msg,
+        const NanConfigRequestSupplemental& msg2);
 
     std::set<sp<IWifiNanIfaceEventCallback>> getEventCallbacks();
 

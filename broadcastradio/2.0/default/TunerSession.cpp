@@ -50,7 +50,12 @@ static constexpr auto list = 1s;
 }  // namespace delay
 
 TunerSession::TunerSession(BroadcastRadio& module, const sp<ITunerCallback>& callback)
-    : mCallback(callback), mModule(module) {}
+    : mCallback(callback), mModule(module) {
+    auto&& ranges = module.getAmFmConfig().ranges;
+    if (ranges.size() > 0) {
+        tuneInternalLocked(utils::make_selector_amfm(ranges[0].lowerBound));
+    }
+}
 
 // makes ProgramInfo that points to no program
 static ProgramInfo makeDummyProgramInfo(const ProgramSelector& selector) {
@@ -63,6 +68,8 @@ static ProgramInfo makeDummyProgramInfo(const ProgramSelector& selector) {
 }
 
 void TunerSession::tuneInternalLocked(const ProgramSelector& sel) {
+    ALOGV("%s(%s)", __func__, toString(sel).c_str());
+
     VirtualProgram virtualProgram;
     ProgramInfo programInfo;
     if (virtualRadio().getProgram(sel, virtualProgram)) {
@@ -100,6 +107,8 @@ Return<Result> TunerSession::tune(const ProgramSelector& sel) {
         return Result::INVALID_ARGUMENTS;
     }
 
+    cancelLocked();
+
     mIsTuneCompleted = false;
     auto task = [this, sel]() {
         lock_guard<mutex> lk(mMut);
@@ -114,6 +123,8 @@ Return<Result> TunerSession::scan(bool directionUp, bool /* skipSubChannel */) {
     ALOGV("%s", __func__);
     lock_guard<mutex> lk(mMut);
     if (mIsClosed) return Result::INVALID_STATE;
+
+    cancelLocked();
 
     auto list = virtualRadio().getProgramList();
 
@@ -166,12 +177,12 @@ Return<Result> TunerSession::step(bool directionUp) {
     lock_guard<mutex> lk(mMut);
     if (mIsClosed) return Result::INVALID_STATE;
 
+    cancelLocked();
+
     if (!utils::hasId(mCurrentProgram, IdentifierType::AMFM_FREQUENCY)) {
         ALOGE("Can't step in anything else than AM/FM");
         return Result::NOT_SUPPORTED;
     }
-
-    mIsTuneCompleted = false;
 
     auto stepTo = utils::getId(mCurrentProgram, IdentifierType::AMFM_FREQUENCY);
     auto range = getAmFmRangeLocked();
@@ -188,6 +199,7 @@ Return<Result> TunerSession::step(bool directionUp) {
     if (stepTo > range->upperBound) stepTo = range->lowerBound;
     if (stepTo < range->lowerBound) stepTo = range->upperBound;
 
+    mIsTuneCompleted = false;
     auto task = [this, stepTo]() {
         ALOGI("Performing step to %s", std::to_string(stepTo).c_str());
 
@@ -200,12 +212,22 @@ Return<Result> TunerSession::step(bool directionUp) {
     return Result::OK;
 }
 
+void TunerSession::cancelLocked() {
+    ALOGV("%s", __func__);
+
+    mThread.cancelAll();
+    if (utils::getType(mCurrentProgram.primaryId) != IdentifierType::INVALID) {
+        mIsTuneCompleted = true;
+    }
+}
+
 Return<void> TunerSession::cancel() {
     ALOGV("%s", __func__);
     lock_guard<mutex> lk(mMut);
     if (mIsClosed) return {};
 
-    mThread.cancelAll();
+    cancelLocked();
+
     return {};
 }
 
@@ -241,7 +263,7 @@ Return<void> TunerSession::stopProgramListUpdates() {
     return {};
 }
 
-Return<void> TunerSession::getConfigFlag(ConfigFlag flag, getConfigFlag_cb _hidl_cb) {
+Return<void> TunerSession::isConfigFlagSet(ConfigFlag flag, isConfigFlagSet_cb _hidl_cb) {
     ALOGV("%s(%s)", __func__, toString(flag).c_str());
 
     _hidl_cb(Result::NOT_SUPPORTED, false);
@@ -281,7 +303,10 @@ Return<void> TunerSession::close() {
 }
 
 std::optional<AmFmBandRange> TunerSession::getAmFmRangeLocked() const {
-    if (!mIsTuneCompleted) return {};
+    if (!mIsTuneCompleted) {
+        ALOGW("tune operation in process");
+        return {};
+    }
     if (!utils::hasId(mCurrentProgram, IdentifierType::AMFM_FREQUENCY)) return {};
 
     auto freq = utils::getId(mCurrentProgram, IdentifierType::AMFM_FREQUENCY);

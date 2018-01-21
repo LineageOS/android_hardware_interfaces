@@ -18,6 +18,7 @@ hidl_interface {
     types: [
         "Result",
         "DiskStats",
+        "HealthInfo",
         "StorageAttribute",
         "StorageInfo",
     ],
