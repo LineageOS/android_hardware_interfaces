@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,32 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef android_hardware_audio_effect_V2_0_Conversions_H_
-#define android_hardware_audio_effect_V2_0_Conversions_H_
-
-#include <string>
+#ifndef ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_CONVERSIONS_H_
+#define ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_CONVERSIONS_H_
 
 #include <android/hardware/audio/effect/2.0/types.h>
-#include <system/audio_effect.h>
 
-namespace android {
-namespace hardware {
-namespace audio {
-namespace effect {
-namespace V2_0 {
-namespace implementation {
+#define AUDIO_HAL_VERSION V2_0
+#include <effect/all-versions/default/Conversions.h>
+#undef AUDIO_HAL_VERSION
 
-using ::android::hardware::audio::effect::V2_0::EffectDescriptor;
-
-void effectDescriptorFromHal(
-        const effect_descriptor_t& halDescriptor, EffectDescriptor* descriptor);
-std::string uuidToString(const effect_uuid_t& halUuid);
-
-} // namespace implementation
-}  // namespace V2_0
-}  // namespace effect
-}  // namespace audio
-}  // namespace hardware
-}  // namespace android
-
-#endif  // android_hardware_audio_effect_V2_0_Conversions_H_
+#endif  // ANDROID_HARDWARE_AUDIO_EFFECT_V2_0_CONVERSIONS_H_

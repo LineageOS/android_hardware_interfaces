@@ -16,45 +16,6 @@
 
 LOCAL_PATH := $(call my-dir)
 
-include $(CLEAR_VARS)
-LOCAL_MODULE := android.hardware.audio@2.0-impl
-LOCAL_MODULE_RELATIVE_PATH := hw
-LOCAL_PROPRIETARY_MODULE := true
-LOCAL_SRC_FILES := \
-    Conversions.cpp \
-    Device.cpp \
-    DevicesFactory.cpp \
-    ParametersUtil.cpp \
-    PrimaryDevice.cpp \
-    Stream.cpp \
-    StreamIn.cpp \
-    StreamOut.cpp \
-
-LOCAL_CFLAGS := -Wall -Werror
-
-LOCAL_SHARED_LIBRARIES := \
-    libbase \
-    libcutils \
-    libfmq \
-    libhardware \
-    libhidlbase \
-    libhidltransport \
-    liblog \
-    libutils \
-    android.hardware.audio@2.0 \
-    android.hardware.audio.common@2.0 \
-    android.hardware.audio.common@2.0-util \
-
-LOCAL_HEADER_LIBRARIES := \
-    libaudioclient_headers \
-    libaudio_system_headers \
-    libhardware_headers \
-    libmedia_headers \
-
-LOCAL_WHOLE_STATIC_LIBRARIES := libmedia_helper
-
-include $(BUILD_SHARED_LIBRARY)
-
 #
 # Service
 #
@@ -82,6 +43,8 @@ LOCAL_SHARED_LIBRARIES := \
     android.hardware.broadcastradio@1.0 \
     android.hardware.broadcastradio@1.1
 
+# Can not switch to Android.bp until AUDIOSERVER_MULTILIB
+# is deprecated as build config variable are not supported
 ifeq ($(strip $(AUDIOSERVER_MULTILIB)),)
 LOCAL_MULTILIB := 32
 else
