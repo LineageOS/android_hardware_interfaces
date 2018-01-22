@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2017-2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,8 @@ CameraDeviceSession::~CameraDeviceSession() {
 }
 
 Return<void> CameraDeviceSession::configureStreams_3_4(
-        const V3_4::StreamConfiguration& requestedConfiguration,
-        ICameraDeviceSession::configureStreams_3_3_cb _hidl_cb)  {
+        const StreamConfiguration& requestedConfiguration,
+        ICameraDeviceSession::configureStreams_3_4_cb _hidl_cb)  {
     Status status = initStatus();
     HalStreamConfiguration outStreams;
 
@@ -86,7 +86,7 @@ Return<void> CameraDeviceSession::configureStreams_3_4(
     camera3_stream_configuration_t stream_list{};
     hidl_vec<camera3_stream_t*> streams;
     stream_list.session_parameters = paramBuffer;
-    if (!preProcessConfigurationLocked(requestedConfiguration.v3_2, &stream_list, &streams)) {
+    if (!preProcessConfigurationLocked_3_4(requestedConfiguration, &stream_list, &streams)) {
         _hidl_cb(Status::INTERNAL_ERROR, outStreams);
         return Void();
     }
@@ -98,7 +98,7 @@ Return<void> CameraDeviceSession::configureStreams_3_4(
     // In case Hal returns error most likely it was not able to release
     // the corresponding resources of the deleted streams.
     if (ret == OK) {
-        postProcessConfigurationLocked(requestedConfiguration.v3_2);
+        postProcessConfigurationLocked_3_4(requestedConfiguration);
     }
 
     if (ret == -EINVAL) {
@@ -106,12 +106,250 @@ Return<void> CameraDeviceSession::configureStreams_3_4(
     } else if (ret != OK) {
         status = Status::INTERNAL_ERROR;
     } else {
-        V3_3::implementation::convertToHidl(stream_list, &outStreams);
+        V3_4::implementation::convertToHidl(stream_list, &outStreams);
         mFirstRequest = true;
     }
 
     _hidl_cb(status, outStreams);
     return Void();
+}
+
+bool CameraDeviceSession::preProcessConfigurationLocked_3_4(
+        const StreamConfiguration& requestedConfiguration,
+        camera3_stream_configuration_t *stream_list /*out*/,
+        hidl_vec<camera3_stream_t*> *streams /*out*/) {
+
+    if ((stream_list == nullptr) || (streams == nullptr)) {
+        return false;
+    }
+
+    stream_list->operation_mode = (uint32_t) requestedConfiguration.operationMode;
+    stream_list->num_streams = requestedConfiguration.streams.size();
+    streams->resize(stream_list->num_streams);
+    stream_list->streams = streams->data();
+
+    for (uint32_t i = 0; i < stream_list->num_streams; i++) {
+        int id = requestedConfiguration.streams[i].v3_2.id;
+
+        if (mStreamMap.count(id) == 0) {
+            Camera3Stream stream;
+            convertFromHidl(requestedConfiguration.streams[i], &stream);
+            mStreamMap[id] = stream;
+            mPhysicalCameraIdMap[id] = requestedConfiguration.streams[i].physicalCameraId;
+            mStreamMap[id].data_space = mapToLegacyDataspace(
+                    mStreamMap[id].data_space);
+            mStreamMap[id].physical_camera_id = mPhysicalCameraIdMap[id].c_str();
+            mCirculatingBuffers.emplace(stream.mId, CirculatingBuffers{});
+        } else {
+            // width/height/format must not change, but usage/rotation might need to change
+            if (mStreamMap[id].stream_type !=
+                    (int) requestedConfiguration.streams[i].v3_2.streamType ||
+                    mStreamMap[id].width != requestedConfiguration.streams[i].v3_2.width ||
+                    mStreamMap[id].height != requestedConfiguration.streams[i].v3_2.height ||
+                    mStreamMap[id].format != (int) requestedConfiguration.streams[i].v3_2.format ||
+                    mStreamMap[id].data_space !=
+                            mapToLegacyDataspace( static_cast<android_dataspace_t> (
+                                    requestedConfiguration.streams[i].v3_2.dataSpace)) ||
+                    mPhysicalCameraIdMap[id] != requestedConfiguration.streams[i].physicalCameraId) {
+                ALOGE("%s: stream %d configuration changed!", __FUNCTION__, id);
+                return false;
+            }
+            mStreamMap[id].rotation = (int) requestedConfiguration.streams[i].v3_2.rotation;
+            mStreamMap[id].usage = (uint32_t) requestedConfiguration.streams[i].v3_2.usage;
+        }
+        (*streams)[i] = &mStreamMap[id];
+    }
+
+    return true;
+}
+
+void CameraDeviceSession::postProcessConfigurationLocked_3_4(
+        const StreamConfiguration& requestedConfiguration) {
+    // delete unused streams, note we do this after adding new streams to ensure new stream
+    // will not have the same address as deleted stream, and HAL has a chance to reference
+    // the to be deleted stream in configure_streams call
+    for(auto it = mStreamMap.begin(); it != mStreamMap.end();) {
+        int id = it->first;
+        bool found = false;
+        for (const auto& stream : requestedConfiguration.streams) {
+            if (id == stream.v3_2.id) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            // Unmap all buffers of deleted stream
+            // in case the configuration call succeeds and HAL
+            // is able to release the corresponding resources too.
+            cleanupBuffersLocked(id);
+            it = mStreamMap.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    // Track video streams
+    mVideoStreamIds.clear();
+    for (const auto& stream : requestedConfiguration.streams) {
+        if (stream.v3_2.streamType == StreamType::OUTPUT &&
+            stream.v3_2.usage &
+                graphics::common::V1_0::BufferUsage::VIDEO_ENCODER) {
+            mVideoStreamIds.push_back(stream.v3_2.id);
+        }
+    }
+    mResultBatcher.setBatchedStreams(mVideoStreamIds);
+}
+
+Return<void> CameraDeviceSession::processCaptureRequest_3_4(
+        const hidl_vec<CaptureRequest>& requests,
+        const hidl_vec<V3_2::BufferCache>& cachesToRemove,
+        ICameraDeviceSession::processCaptureRequest_cb _hidl_cb)  {
+    updateBufferCaches(cachesToRemove);
+
+    uint32_t numRequestProcessed = 0;
+    Status s = Status::OK;
+    for (size_t i = 0; i < requests.size(); i++, numRequestProcessed++) {
+        s = processOneCaptureRequest_3_4(requests[i]);
+        if (s != Status::OK) {
+            break;
+        }
+    }
+
+    if (s == Status::OK && requests.size() > 1) {
+        mResultBatcher.registerBatch(requests);
+    }
+
+    _hidl_cb(s, numRequestProcessed);
+    return Void();
+}
+
+Status CameraDeviceSession::processOneCaptureRequest_3_4(const CaptureRequest& request)  {
+    Status status = initStatus();
+    if (status != Status::OK) {
+        ALOGE("%s: camera init failed or disconnected", __FUNCTION__);
+        return status;
+    }
+
+    camera3_capture_request_t halRequest;
+    halRequest.frame_number = request.frameNumber;
+
+    bool converted = true;
+    V3_2::CameraMetadata settingsFmq;  // settings from FMQ
+    if (request.fmqSettingsSize > 0) {
+        // non-blocking read; client must write metadata before calling
+        // processOneCaptureRequest
+        settingsFmq.resize(request.fmqSettingsSize);
+        bool read = mRequestMetadataQueue->read(settingsFmq.data(), request.fmqSettingsSize);
+        if (read) {
+            converted = V3_2::implementation::convertFromHidl(settingsFmq, &halRequest.settings);
+        } else {
+            ALOGE("%s: capture request settings metadata couldn't be read from fmq!", __FUNCTION__);
+            converted = false;
+        }
+    } else {
+        converted = V3_2::implementation::convertFromHidl(request.settings, &halRequest.settings);
+    }
+
+    if (!converted) {
+        ALOGE("%s: capture request settings metadata is corrupt!", __FUNCTION__);
+        return Status::ILLEGAL_ARGUMENT;
+    }
+
+    if (mFirstRequest && halRequest.settings == nullptr) {
+        ALOGE("%s: capture request settings must not be null for first request!",
+                __FUNCTION__);
+        return Status::ILLEGAL_ARGUMENT;
+    }
+
+    hidl_vec<buffer_handle_t*> allBufPtrs;
+    hidl_vec<int> allFences;
+    bool hasInputBuf = (request.inputBuffer.streamId != -1 &&
+            request.inputBuffer.bufferId != 0);
+    size_t numOutputBufs = request.outputBuffers.size();
+    size_t numBufs = numOutputBufs + (hasInputBuf ? 1 : 0);
+
+    if (numOutputBufs == 0) {
+        ALOGE("%s: capture request must have at least one output buffer!", __FUNCTION__);
+        return Status::ILLEGAL_ARGUMENT;
+    }
+
+    status = importRequest(request, allBufPtrs, allFences);
+    if (status != Status::OK) {
+        return status;
+    }
+
+    hidl_vec<camera3_stream_buffer_t> outHalBufs;
+    outHalBufs.resize(numOutputBufs);
+    bool aeCancelTriggerNeeded = false;
+    ::android::hardware::camera::common::V1_0::helper::CameraMetadata settingsOverride;
+    {
+        Mutex::Autolock _l(mInflightLock);
+        if (hasInputBuf) {
+            auto streamId = request.inputBuffer.streamId;
+            auto key = std::make_pair(request.inputBuffer.streamId, request.frameNumber);
+            auto& bufCache = mInflightBuffers[key] = camera3_stream_buffer_t{};
+            convertFromHidl(
+                    allBufPtrs[numOutputBufs], request.inputBuffer.status,
+                    &mStreamMap[request.inputBuffer.streamId], allFences[numOutputBufs],
+                    &bufCache);
+            bufCache.stream->physical_camera_id = mPhysicalCameraIdMap[streamId].c_str();
+            halRequest.input_buffer = &bufCache;
+        } else {
+            halRequest.input_buffer = nullptr;
+        }
+
+        halRequest.num_output_buffers = numOutputBufs;
+        for (size_t i = 0; i < numOutputBufs; i++) {
+            auto streamId = request.outputBuffers[i].streamId;
+            auto key = std::make_pair(streamId, request.frameNumber);
+            auto& bufCache = mInflightBuffers[key] = camera3_stream_buffer_t{};
+            convertFromHidl(
+                    allBufPtrs[i], request.outputBuffers[i].status,
+                    &mStreamMap[streamId], allFences[i],
+                    &bufCache);
+            bufCache.stream->physical_camera_id = mPhysicalCameraIdMap[streamId].c_str();
+            outHalBufs[i] = bufCache;
+        }
+        halRequest.output_buffers = outHalBufs.data();
+
+        AETriggerCancelOverride triggerOverride;
+        aeCancelTriggerNeeded = handleAePrecaptureCancelRequestLocked(
+                halRequest, &settingsOverride /*out*/, &triggerOverride/*out*/);
+        if (aeCancelTriggerNeeded) {
+            mInflightAETriggerOverrides[halRequest.frame_number] =
+                    triggerOverride;
+            halRequest.settings = settingsOverride.getAndLock();
+        }
+    }
+
+    ATRACE_ASYNC_BEGIN("frame capture", request.frameNumber);
+    ATRACE_BEGIN("camera3->process_capture_request");
+    status_t ret = mDevice->ops->process_capture_request(mDevice, &halRequest);
+    ATRACE_END();
+    if (aeCancelTriggerNeeded) {
+        settingsOverride.unlock(halRequest.settings);
+    }
+    if (ret != OK) {
+        Mutex::Autolock _l(mInflightLock);
+        ALOGE("%s: HAL process_capture_request call failed!", __FUNCTION__);
+
+        cleanupInflightFences(allFences, numBufs);
+        if (hasInputBuf) {
+            auto key = std::make_pair(request.inputBuffer.streamId, request.frameNumber);
+            mInflightBuffers.erase(key);
+        }
+        for (size_t i = 0; i < numOutputBufs; i++) {
+            auto key = std::make_pair(request.outputBuffers[i].streamId, request.frameNumber);
+            mInflightBuffers.erase(key);
+        }
+        if (aeCancelTriggerNeeded) {
+            mInflightAETriggerOverrides.erase(request.frameNumber);
+        }
+        return Status::INTERNAL_ERROR;
+    }
+
+    mFirstRequest = false;
+    return Status::OK;
 }
 
 } // namespace implementation

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2017-2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 #define ANDROID_HARDWARE_CAMERA_DEVICE_V3_4_CAMERADEVICE3SESSION_H
 
 #include <android/hardware/camera/device/3.2/ICameraDevice.h>
-#include <android/hardware/camera/device/3.3/ICameraDeviceSession.h>
 #include <android/hardware/camera/device/3.4/ICameraDeviceSession.h>
 #include <../../3.3/default/CameraDeviceSession.h>
 #include <../../3.3/default/include/convert.h>
@@ -43,8 +42,9 @@ namespace implementation {
 
 using namespace ::android::hardware::camera::device;
 using ::android::hardware::camera::device::V3_2::CaptureRequest;
-using ::android::hardware::camera::device::V3_2::StreamConfiguration;
-using ::android::hardware::camera::device::V3_3::HalStreamConfiguration;
+using ::android::hardware::camera::device::V3_2::StreamType;
+using ::android::hardware::camera::device::V3_4::StreamConfiguration;
+using ::android::hardware::camera::device::V3_4::HalStreamConfiguration;
 using ::android::hardware::camera::device::V3_4::ICameraDeviceSession;
 using ::android::hardware::camera::common::V1_0::Status;
 using ::android::hardware::camera::common::V1_0::helper::HandleImporter;
@@ -75,8 +75,22 @@ protected:
     // New methods for v3.4
 
     Return<void> configureStreams_3_4(
-            const V3_4::StreamConfiguration& requestedConfiguration,
-            ICameraDeviceSession::configureStreams_3_3_cb _hidl_cb);
+            const StreamConfiguration& requestedConfiguration,
+            ICameraDeviceSession::configureStreams_3_4_cb _hidl_cb);
+
+    bool preProcessConfigurationLocked_3_4(
+            const StreamConfiguration& requestedConfiguration,
+            camera3_stream_configuration_t *stream_list /*out*/,
+            hidl_vec<camera3_stream_t*> *streams /*out*/);
+    void postProcessConfigurationLocked_3_4(const StreamConfiguration& requestedConfiguration);
+
+    Return<void> processCaptureRequest_3_4(
+            const hidl_vec<CaptureRequest>& requests,
+            const hidl_vec<V3_2::BufferCache>& cachesToRemove,
+            ICameraDeviceSession::processCaptureRequest_cb _hidl_cb);
+    Status processOneCaptureRequest_3_4(const CaptureRequest& request);
+
+    std::map<int, std::string> mPhysicalCameraIdMap;
 private:
 
     struct TrampolineSessionInterface_3_4 : public ICameraDeviceSession {
@@ -90,7 +104,7 @@ private:
         }
 
         virtual Return<void> configureStreams(
-                const StreamConfiguration& requestedConfiguration,
+                const V3_2::StreamConfiguration& requestedConfiguration,
                 V3_3::ICameraDeviceSession::configureStreams_cb _hidl_cb) override {
             return mParent->configureStreams(requestedConfiguration, _hidl_cb);
         }
@@ -98,7 +112,7 @@ private:
         virtual Return<void> processCaptureRequest(const hidl_vec<V3_2::CaptureRequest>& requests,
                 const hidl_vec<V3_2::BufferCache>& cachesToRemove,
                 V3_3::ICameraDeviceSession::processCaptureRequest_cb _hidl_cb) override {
-            return mParent->processCaptureRequest(requests, cachesToRemove, _hidl_cb);
+            return mParent->processCaptureRequest_3_4(requests, cachesToRemove, _hidl_cb);
         }
 
         virtual Return<void> getCaptureRequestMetadataQueue(
@@ -120,14 +134,14 @@ private:
         }
 
         virtual Return<void> configureStreams_3_3(
-                const StreamConfiguration& requestedConfiguration,
+                const V3_2::StreamConfiguration& requestedConfiguration,
                 configureStreams_3_3_cb _hidl_cb) override {
             return mParent->configureStreams_3_3(requestedConfiguration, _hidl_cb);
         }
 
         virtual Return<void> configureStreams_3_4(
-                const V3_4::StreamConfiguration& requestedConfiguration,
-                configureStreams_3_3_cb _hidl_cb) override {
+                const StreamConfiguration& requestedConfiguration,
+                configureStreams_3_4_cb _hidl_cb) override {
             return mParent->configureStreams_3_4(requestedConfiguration, _hidl_cb);
         }
 

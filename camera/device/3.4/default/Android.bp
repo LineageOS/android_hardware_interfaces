@@ -28,6 +28,7 @@ cc_library_shared {
     srcs: [
         "CameraDevice.cpp",
         "CameraDeviceSession.cpp",
+        "convert.cpp",
     ],
     shared_libs: [
         "libhidlbase",
