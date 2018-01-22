@@ -35,7 +35,7 @@ cc_library_headers {
 }
 
 // Vehicle reference implementation lib
-cc_library_static {
+cc_library {
     name: "android.hardware.automotive.vehicle@2.0-manager-lib",
     vendor: true,
     defaults: ["vhal_v2_0_defaults"],
@@ -50,13 +50,6 @@ cc_library_static {
     ],
     local_include_dirs: ["common/include/vhal_v2_0"],
     export_include_dirs: ["common/include"],
-}
-
-cc_library_shared {
-    name: "android.hardware.automotive.vehicle@2.0-manager-lib-shared",
-    vendor: true,
-    static_libs: ["android.hardware.automotive.vehicle@2.0-manager-lib"],
-    export_static_lib_headers: ["android.hardware.automotive.vehicle@2.0-manager-lib"],
 }
 
 // Vehicle default VehicleHAL implementation
