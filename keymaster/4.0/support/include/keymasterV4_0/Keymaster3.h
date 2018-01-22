@@ -74,8 +74,12 @@ class Keymaster3 : public Keymaster {
     Return<void> importKey(const hidl_vec<KeyParameter>& params, KeyFormat keyFormat,
                            const hidl_vec<uint8_t>& keyData, importKey_cb _hidl_cb) override;
 
-    Return<void> importWrappedKey(const hidl_vec<uint8_t>&, const hidl_vec<uint8_t>&,
-                                  const hidl_vec<uint8_t>&, importWrappedKey_cb _hidl_cb) {
+    Return<void> importWrappedKey(const hidl_vec<uint8_t>& /* wrappedKeyData */,
+                                  const hidl_vec<uint8_t>& /* wrappingKeyBlob */,
+                                  const hidl_vec<uint8_t>& /* maskingKey */,
+                                  const hidl_vec<KeyParameter>& /* unwrappingParams */,
+                                  uint64_t /* passwordSid */, uint64_t /* biometricSid */,
+                                  importWrappedKey_cb _hidl_cb) {
         _hidl_cb(ErrorCode::UNIMPLEMENTED, {}, {});
         return Void();
     }
