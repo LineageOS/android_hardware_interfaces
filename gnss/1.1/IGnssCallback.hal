@@ -35,4 +35,17 @@ interface IGnssCallback extends @1.0::IGnssCallback {
      * @param name String providing the name of the GNSS HAL implementation
      */
     gnssNameCb(string name);
+
+    /**
+     * Callback for requesting Location.
+     *
+     * HAL implementation shall call this when it wants the framework to provide location to assist
+     * with GNSS HAL operation. For example, to assist with time to first fix, and/or error
+     * recovery, it may ask for a location that is independent from GNSS (e.g. from the "network"
+     * LocationProvier), or to provide a Device-Based-Hybrid location to supplement A-GPS/GNSS
+     * emergency call flows managed by the GNSS HAL.
+     *
+     * @param independentFromGnss True if requesting a location that is independent from GNSS.
+     */
+    gnssRequestLocationCb(bool independentFromGnss);
 };

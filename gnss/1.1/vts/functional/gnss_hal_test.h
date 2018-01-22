@@ -74,6 +74,9 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
         }
         Return<void> gnssAcquireWakelockCb() override { return Void(); }
         Return<void> gnssReleaseWakelockCb() override { return Void(); }
+        Return<void> gnssRequestLocationCb(bool /* independentFromGnss */) override {
+            return Void();
+        }
         Return<void> gnssRequestTimeCb() override { return Void(); }
         // Actual (test) callback handlers
         Return<void> gnssNameCb(const android::hardware::hidl_string& name) override;

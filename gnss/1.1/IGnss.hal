@@ -17,6 +17,7 @@
 package android.hardware.gnss@1.1;
 
 import @1.0::IGnss;
+import @1.0::GnssLocation;
 
 import IGnssCallback;
 import IGnssConfiguration;
@@ -78,4 +79,16 @@ interface IGnss extends @1.0::IGnss {
     * @return gnssMeasurementIface Handle to the IGnssMeasurement interface.
     */
     getExtensionGnssMeasurement_1_1() generates (IGnssMeasurement gnssMeasurementIface);
+
+    /**
+     * Injects current location from the best available location provider.
+     *
+     * Unlike injectLocation, this method may inject a recent GNSS location from the HAL
+     * implementation, if that is the best available location known to the framework.
+     *
+     * @param location Location information from the best available location provider.
+     *
+     * @return success Returns true if successful.
+     */
+    injectBestLocation(GnssLocation location) generates (bool success);
 };
