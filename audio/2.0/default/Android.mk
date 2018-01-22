@@ -39,9 +39,8 @@ LOCAL_SHARED_LIBRARIES := \
     android.hardware.audio@2.0 \
     android.hardware.audio.common@2.0 \
     android.hardware.audio.effect@2.0 \
-    android.hardware.soundtrigger@2.1 \
-    android.hardware.broadcastradio@1.0 \
-    android.hardware.broadcastradio@1.1
+    android.hardware.soundtrigger@2.0 \
+    android.hardware.soundtrigger@2.1
 
 # Can not switch to Android.bp until AUDIOSERVER_MULTILIB
 # is deprecated as build config variable are not supported
