@@ -104,8 +104,8 @@ TEST_F(RadioHidlTest, deactivateDataCall) {
     if (cardStatus.cardState == CardState::ABSENT) {
         ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE ||
                     radioRsp->rspInfo.error == RadioError::INVALID_CALL_ID ||
-                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT ||
-                    CheckOEMError());
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT || CheckOEMError() ||
+                    radioRsp->rspInfo.error == RadioError::RADIO_NOT_AVAILABLE);
     }
 }
 
@@ -230,8 +230,8 @@ TEST_F(RadioHidlTest, setDataProfile) {
 
     if (cardStatus.cardState == CardState::ABSENT) {
         ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::NONE ||
-                    radioRsp->rspInfo.error ==
-                        RadioError::RADIO_NOT_AVAILABLE ||
-                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
+                    radioRsp->rspInfo.error == RadioError::RADIO_NOT_AVAILABLE ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT ||
+                    radioRsp->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED);
     }
 }
