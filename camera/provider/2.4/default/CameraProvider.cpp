@@ -19,6 +19,7 @@
 #include <android/log.h>
 
 #include "CameraProvider.h"
+#include "ExternalCameraProvider.h"
 #include "CameraDevice_1_0.h"
 #include "CameraDevice_3_3.h"
 #include "CameraDevice_3_4.h"
@@ -36,6 +37,7 @@ namespace implementation {
 
 namespace {
 const char *kLegacyProviderName = "legacy/0";
+const char *kExternalProviderName = "external/0";
 // "device@<version>/legacy/<id>"
 const std::regex kDeviceNameRE("device@([0-9]+\\.[0-9]+)/legacy/(.+)");
 const char *kHAL3_2 = "3.2";
@@ -604,20 +606,24 @@ Return<void> CameraProvider::getCameraDeviceInterface_V3_x(
 }
 
 ICameraProvider* HIDL_FETCH_ICameraProvider(const char* name) {
-    if (strcmp(name, kLegacyProviderName) != 0) {
-        return nullptr;
+    if (strcmp(name, kLegacyProviderName) == 0) {
+        CameraProvider* provider = new CameraProvider();
+        if (provider == nullptr) {
+            ALOGE("%s: cannot allocate camera provider!", __FUNCTION__);
+            return nullptr;
+        }
+        if (provider->isInitFailed()) {
+            ALOGE("%s: camera provider init failed!", __FUNCTION__);
+            delete provider;
+            return nullptr;
+        }
+        return provider;
+    } else if (strcmp(name, kExternalProviderName) == 0) {
+        ExternalCameraProvider* provider = new ExternalCameraProvider();
+        return provider;
     }
-    CameraProvider* provider = new CameraProvider();
-    if (provider == nullptr) {
-        ALOGE("%s: cannot allocate camera provider!", __FUNCTION__);
-        return nullptr;
-    }
-    if (provider->isInitFailed()) {
-        ALOGE("%s: camera provider init failed!", __FUNCTION__);
-        delete provider;
-        return nullptr;
-    }
-    return provider;
+    ALOGE("%s: unknown instance name: %s", __FUNCTION__, name);
+    return nullptr;
 }
 
 } // namespace implementation
