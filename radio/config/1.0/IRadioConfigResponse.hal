@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,40 +14,39 @@
  * limitations under the License.
  */
 
-package android.hardware.radio@1.2;
+package android.hardware.radio.config@1.0;
 
-import @1.0::RadioResponseInfo;
-import @1.1::IRadioResponse;
+import android.hardware.radio@1.0::RadioResponseInfo;
 
 /**
- * Interface declaring response functions to solicited radio requests.
+ * Interface declaring response functions to solicited radio config requests.
  */
-interface IRadioResponse extends @1.1::IRadioResponse {
+interface IRadioConfigResponse {
 
     /**
      * @param info Response info struct containing response type, serial no. and error
-     * @param cellInfo List of current cell information known to radio
+     * @param slotStatus Sim slot struct containing all the physical SIM slots info with size
+      *       equals to the number of physical slots on the device
      *
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:NO_MEMORY
      *   RadioError:INTERNAL_ERR
-     *   RadioError:SYSTEM_ERR
      *   RadioError:MODEM_ERR
-     *   RadioError:NO_NETWORK_FOUND
-     *   RadioError:REQUEST_NOT_SUPPORTED
-     *   RadioError:NO_RESOURCES
-     *   RadioError:CANCELLED
      */
-    oneway getCellInfoListResponse_1_2(RadioResponseInfo info, vec<CellInfo> cellInfo);
+    oneway getSimSlotsStatusResponse(RadioResponseInfo info, vec<SimSlotStatus> slotStatus);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
-     * @param cardStatus ICC card status as defined by CardStatus in types.hal
      *
      * Valid errors returned:
      *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:NO_MEMORY
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:MODEM_ERR
+     *   RadioError:INVALID_ARGUMENTS
      */
-    oneway getIccCardStatusResponse_1_2(RadioResponseInfo info, CardStatus cardStatus);
+    oneway setSimSlotsMappingResponse(RadioResponseInfo info);
 };

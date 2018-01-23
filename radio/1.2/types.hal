@@ -224,17 +224,6 @@ struct CellInfo {
     vec<CellInfoTdscdma> tdscdma;
 };
 
-enum SlotState : int32_t {
-    /**
-     * Physical slot is inactive
-     */
-    INACTIVE  = 0x00,
-    /**
-     * Physical slot is active
-     */
-    ACTIVE    = 0x01,
-};
-
 struct CardStatus {
     @1.0::CardStatus base;
     uint32_t physicalSlotId;
@@ -246,34 +235,6 @@ struct CardStatus {
      * This data is applicable only when cardState is CardState:PRESENT.
      */
     string atr;
-    /**
-     * Integrated Circuit Card IDentifier (ICCID) is Unique Identifier of the SIM CARD. File is
-     * located in the SIM card at EFiccid (0x2FE2) as per ETSI 102.221. The ICCID is defined by
-     * the ITU-T recommendation E.118 ISO/IEC 7816.
-     *
-     * This data is applicable only when cardState is CardState:PRESENT.
-     */
-    string iccid;
-};
-
-struct SimSlotStatus {
-    /**
-     * Card state in the physical slot
-     */
-    CardState cardState;
-    /**
-     * Slot state Active/Inactive
-     */
-    SlotState slotState;
-    /**
-     * An Answer To Reset (ATR) is a message output by a Smart Card conforming to ISO/IEC 7816
-     * standards, following electrical reset of the card's chip. The ATR conveys information about
-     * the communication parameters proposed by the card, and the card's nature and state.
-     *
-     * This data is applicable only when cardState is CardState:PRESENT.
-     */
-    string atr;
-    uint32_t logicalSlotId;
     /**
      * Integrated Circuit Card IDentifier (ICCID) is Unique Identifier of the SIM CARD. File is
      * located in the SIM card at EFiccid (0x2FE2) as per ETSI 102.221. The ICCID is defined by
