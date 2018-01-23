@@ -106,7 +106,6 @@ public:
     }
 
     StatusCode subscribe(int32_t /* property */,
-                         int32_t /* areas */,
                          float /* sampleRate */) override {
         return StatusCode::OK;
     }
@@ -286,6 +285,7 @@ TEST_F(VehicleHalManagerTest, subscribe) {
 
     cb->reset();
     VehiclePropValue actualValue(*subscribedValue.get());
+    actualValue.status = VehiclePropertyStatus::AVAILABLE;
     hal->sendPropEvent(std::move(subscribedValue));
 
     ASSERT_TRUE(cb->waitForExpectedEvents(1)) << "Events received: "

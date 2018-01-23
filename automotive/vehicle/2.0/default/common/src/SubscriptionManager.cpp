@@ -34,23 +34,12 @@ namespace V2_0 {
 bool mergeSubscribeOptions(const SubscribeOptions &oldOpts,
                            const SubscribeOptions &newOpts,
                            SubscribeOptions *outResult) {
-
-    int32_t updatedAreas = oldOpts.vehicleAreas;
-    if (updatedAreas != kAllSupportedAreas) {
-        updatedAreas = newOpts.vehicleAreas != kAllSupportedAreas
-            ? updatedAreas | newOpts.vehicleAreas
-            : kAllSupportedAreas;
-    }
-
     float updatedRate = std::max(oldOpts.sampleRate, newOpts.sampleRate);
     SubscribeFlags updatedFlags = SubscribeFlags(oldOpts.flags | newOpts.flags);
 
-    bool updated = updatedRate > oldOpts.sampleRate
-                   || updatedAreas != oldOpts.vehicleAreas
-                   || updatedFlags != oldOpts.flags;
+    bool updated = (updatedRate > oldOpts.sampleRate) || (updatedFlags != oldOpts.flags);
     if (updated) {
         *outResult = oldOpts;
-        outResult->vehicleAreas = updatedAreas;
         outResult->sampleRate = updatedRate;
         outResult->flags = updatedFlags;
     }
@@ -75,15 +64,13 @@ void HalClient::addOrUpdateSubscription(const SubscribeOptions &opts)  {
 }
 
 bool HalClient::isSubscribed(int32_t propId,
-                             int32_t areaId,
                              SubscribeFlags flags) {
     auto it = mSubscriptions.find(propId);
     if (it == mSubscriptions.end()) {
         return false;
     }
     const SubscribeOptions& opts = it->second;
-    bool res = (opts.flags & flags)
-           && (opts.vehicleAreas == 0 || areaId == 0 || opts.vehicleAreas & areaId);
+    bool res = (opts.flags & flags);
     return res;
 }
 
@@ -139,8 +126,7 @@ std::list<HalClientValues> SubscriptionManager::distributeValuesToClients(
         MuxGuard g(mLock);
         for (const auto& propValue: propValues) {
             VehiclePropValue* v = propValue.get();
-            auto clients = getSubscribedClientsLocked(
-                v->prop, v->areaId, flags);
+            auto clients = getSubscribedClientsLocked(v->prop, flags);
             for (const auto& client : clients) {
                 clientValuesMap[client].push_back(v);
             }
@@ -158,21 +144,21 @@ std::list<HalClientValues> SubscriptionManager::distributeValuesToClients(
     return clientValues;
 }
 
-std::list<sp<HalClient>> SubscriptionManager::getSubscribedClients(
-    int32_t propId, int32_t area, SubscribeFlags flags) const {
+std::list<sp<HalClient>> SubscriptionManager::getSubscribedClients(int32_t propId,
+                                                                   SubscribeFlags flags) const {
     MuxGuard g(mLock);
-    return getSubscribedClientsLocked(propId, area, flags);
+    return getSubscribedClientsLocked(propId, flags);
 }
 
 std::list<sp<HalClient>> SubscriptionManager::getSubscribedClientsLocked(
-        int32_t propId, int32_t area, SubscribeFlags flags) const {
+    int32_t propId, SubscribeFlags flags) const {
     std::list<sp<HalClient>> subscribedClients;
 
     sp<HalClientVector> propClients = getClientsForPropertyLocked(propId);
     if (propClients.get() != nullptr) {
         for (size_t i = 0; i < propClients->size(); i++) {
             const auto& client = propClients->itemAt(i);
-            if (client->isSubscribed(propId, area, flags)) {
+            if (client->isSubscribed(propId, flags)) {
                 subscribedClients.push_back(client);
             }
         }

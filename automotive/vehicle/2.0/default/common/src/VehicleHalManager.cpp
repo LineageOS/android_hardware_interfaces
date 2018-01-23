@@ -142,15 +142,6 @@ Return<StatusCode> VehicleHalManager::subscribe(const sp<IVehicleCallback> &call
             return StatusCode::INVALID_ARG;
         }
 
-        int32_t areas = isGlobalProp(prop) ? 0 : ops.vehicleAreas;
-        if (areas != 0 && ((areas & config->supportedAreas) != areas)) {
-            ALOGE("Failed to subscribe property 0x%x. Requested areas 0x%x are "
-                  "out of supported range of 0x%x", prop, ops.vehicleAreas,
-                  config->supportedAreas);
-            return StatusCode::INVALID_ARG;
-        }
-
-        ops.vehicleAreas = areas;
         ops.sampleRate = checkSampleRate(*config, ops.sampleRate);
     }
 
@@ -164,7 +155,7 @@ Return<StatusCode> VehicleHalManager::subscribe(const sp<IVehicleCallback> &call
     }
 
     for (auto opt : updatedOptions) {
-        mHal->subscribe(opt.propId, opt.vehicleAreas, opt.sampleRate);
+        mHal->subscribe(opt.propId, opt.sampleRate);
     }
 
     return StatusCode::OK;
@@ -224,8 +215,8 @@ void VehicleHalManager::onHalEvent(VehiclePropValuePtr v) {
 void VehicleHalManager::onHalPropertySetError(StatusCode errorCode,
                                               int32_t property,
                                               int32_t areaId) {
-    const auto& clients = mSubscriptionManager.getSubscribedClients(
-            property, 0, SubscribeFlags::HAL_EVENT);
+    const auto& clients =
+        mSubscriptionManager.getSubscribedClients(property, SubscribeFlags::HAL_EVENT);
 
     for (auto client : clients) {
         client->getCallback()->onPropertySetError(errorCode, property, areaId);
@@ -326,8 +317,7 @@ bool VehicleHalManager::checkReadPermission(const VehiclePropConfig &config) con
 }
 
 void VehicleHalManager::handlePropertySetEvent(const VehiclePropValue& value) {
-    auto clients = mSubscriptionManager.getSubscribedClients(
-            value.prop, value.areaId, SubscribeFlags::SET_CALL);
+    auto clients = mSubscriptionManager.getSubscribedClients(value.prop, SubscribeFlags::SET_CALL);
     for (auto client : clients) {
         client->getCallback()->onPropertySet(value);
     }

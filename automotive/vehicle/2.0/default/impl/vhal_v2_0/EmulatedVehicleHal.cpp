@@ -138,8 +138,9 @@ StatusCode EmulatedVehicleHal::set(const VehiclePropValue& propValue) {
             return status;
         }
     } else if (mHvacPowerProps.count(propValue.prop)) {
-        auto hvacPowerOn = mPropStore->readValueOrNull(toInt(VehicleProperty::HVAC_POWER_ON),
-                                                      toInt(VehicleAreaZone::ROW_1));
+        auto hvacPowerOn = mPropStore->readValueOrNull(
+            toInt(VehicleProperty::HVAC_POWER_ON),
+            (VehicleAreaZone::ROW_1_LEFT | VehicleAreaZone::ROW_1_RIGHT));
 
         if (hvacPowerOn && hvacPowerOn->value.int32Values.size() == 1
                 && hvacPowerOn->value.int32Values[0] == 0) {
@@ -177,7 +178,7 @@ static bool isDiagnosticProperty(VehiclePropConfig propConfig) {
 void EmulatedVehicleHal::onCreate() {
     for (auto& it : kVehicleProperties) {
         VehiclePropConfig cfg = it.config;
-        int32_t supportedAreas = cfg.supportedAreas;
+        int32_t numAreas = cfg.areaConfigs.size();
 
         if (isDiagnosticProperty(cfg)) {
             // do not write an initial empty value for the diagnostic properties
@@ -185,22 +186,26 @@ void EmulatedVehicleHal::onCreate() {
             continue;
         }
 
-        //  A global property will have supportedAreas = 0
+        // A global property will have only a single area
         if (isGlobalProp(cfg.prop)) {
-            supportedAreas = 0;
+            numAreas = 1;
         }
 
-        // This loop is a do-while so it executes at least once to handle global properties
-        do {
-            int32_t curArea = supportedAreas;
-            supportedAreas &= supportedAreas - 1;  // Clear the right-most bit of supportedAreas.
-            curArea ^= supportedAreas;  // Set curArea to the previously cleared bit.
+        for (int i = 0; i < numAreas; i++) {
+            int32_t curArea;
+
+            if (isGlobalProp(cfg.prop)) {
+                curArea = 0;
+            } else {
+                curArea = cfg.areaConfigs[i].areaId;
+            }
 
             // Create a separate instance for each individual zone
             VehiclePropValue prop = {
                 .prop = cfg.prop,
                 .areaId = curArea,
             };
+
             if (it.initialAreaValues.size() > 0) {
                 auto valueForAreaIt = it.initialAreaValues.find(curArea);
                 if (valueForAreaIt != it.initialAreaValues.end()) {
@@ -213,8 +218,7 @@ void EmulatedVehicleHal::onCreate() {
                 prop.value = it.initialValue;
             }
             mPropStore->writeValue(prop);
-
-        } while (supportedAreas != 0);
+        }
     }
     initObd2LiveFrame(*mPropStore->getConfigOrDie(OBD2_LIVE_FRAME));
     initObd2FreezeFrame(*mPropStore->getConfigOrDie(OBD2_FREEZE_FRAME));
@@ -246,8 +250,7 @@ void EmulatedVehicleHal::onContinuousPropertyTimer(const std::vector<int32_t>& p
     }
 }
 
-StatusCode EmulatedVehicleHal::subscribe(int32_t property, int32_t,
-                                        float sampleRate) {
+StatusCode EmulatedVehicleHal::subscribe(int32_t property, float sampleRate) {
     ALOGI("%s propId: 0x%x, sampleRate: %f", __func__, property, sampleRate);
 
     if (isContinuousProperty(property)) {
@@ -389,7 +392,7 @@ void EmulatedVehicleHal::initStaticConfig() {
 }
 
 void EmulatedVehicleHal::initObd2LiveFrame(const VehiclePropConfig& propConfig) {
-    auto liveObd2Frame = createVehiclePropValue(VehiclePropertyType::COMPLEX, 0);
+    auto liveObd2Frame = createVehiclePropValue(VehiclePropertyType::MIXED, 0);
     auto sensorStore = fillDefaultObd2Frame(static_cast<size_t>(propConfig.configArray[0]),
                                             static_cast<size_t>(propConfig.configArray[1]));
     sensorStore->fillPropValue("", liveObd2Frame.get());
@@ -406,7 +409,7 @@ void EmulatedVehicleHal::initObd2FreezeFrame(const VehiclePropConfig& propConfig
                                                   "P0102"
                                                   "P0123"};
     for (auto&& dtc : sampleDtcs) {
-        auto freezeFrame = createVehiclePropValue(VehiclePropertyType::COMPLEX, 0);
+        auto freezeFrame = createVehiclePropValue(VehiclePropertyType::MIXED, 0);
         sensorStore->fillPropValue(dtc, freezeFrame.get());
         freezeFrame->prop = OBD2_FREEZE_FRAME;
 

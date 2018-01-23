@@ -54,10 +54,8 @@ constexpr int ALL_WHEELS =
  *   floatValues[1] - dispersion defines min and max range relative to initial value
  *   floatValues[2] - increment, with every timer tick the value will be incremented by this amount
  */
-const int32_t kGenerateFakeDataControllingProperty = 0x0666
-        | VehiclePropertyGroup::VENDOR
-        | VehicleArea::GLOBAL
-        | VehiclePropertyType::COMPLEX;
+const int32_t kGenerateFakeDataControllingProperty =
+    0x0666 | VehiclePropertyGroup::VENDOR | VehicleArea::GLOBAL | VehiclePropertyType::MIXED;
 
 const int32_t kHvacPowerProperties[] = {
     toInt(VehicleProperty::HVAC_FAN_SPEED),
@@ -238,7 +236,8 @@ const ConfigDeclaration kVehicleProperties[]{
              .prop = toInt(VehicleProperty::HVAC_POWER_ON),
              .access = VehiclePropertyAccess::READ_WRITE,
              .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-             .supportedAreas = toInt(VehicleAreaZone::ROW_1),
+             .areaConfigs = {VehicleAreaConfig{
+                 .areaId = (VehicleAreaZone::ROW_1_LEFT | VehicleAreaZone::ROW_1_RIGHT)}},
              // TODO(bryaneyler): Ideally, this is generated dynamically from
              // kHvacPowerProperties.
              .configString = "0x12400500,0x12400501"  // HVAC_FAN_SPEED,HVAC_FAN_DIRECTION
@@ -249,51 +248,52 @@ const ConfigDeclaration kVehicleProperties[]{
         .config = {.prop = toInt(VehicleProperty::HVAC_DEFROSTER),
                    .access = VehiclePropertyAccess::READ_WRITE,
                    .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-                   .supportedAreas =
-                       VehicleAreaWindow::FRONT_WINDSHIELD | VehicleAreaWindow::REAR_WINDSHIELD},
+                   .areaConfigs =
+                       {VehicleAreaConfig{.areaId = toInt(VehicleAreaWindow::FRONT_WINDSHIELD)},
+                        VehicleAreaConfig{.areaId = toInt(VehicleAreaWindow::REAR_WINDSHIELD)}}},
         .initialValue = {.int32Values = {0}}  // Will be used for all areas.
     },
 
     {.config = {.prop = toInt(VehicleProperty::HVAC_RECIRC_ON),
                 .access = VehiclePropertyAccess::READ_WRITE,
                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-                .supportedAreas = toInt(VehicleAreaZone::ROW_1)},
+                .areaConfigs = {VehicleAreaConfig{
+                    .areaId = (VehicleAreaZone::ROW_1_LEFT | VehicleAreaZone::ROW_1_RIGHT)}}},
      .initialValue = {.int32Values = {1}}},
 
     {.config = {.prop = toInt(VehicleProperty::HVAC_AC_ON),
                 .access = VehiclePropertyAccess::READ_WRITE,
                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-                .supportedAreas = toInt(VehicleAreaZone::ROW_1)},
+                .areaConfigs = {VehicleAreaConfig{
+                    .areaId = (VehicleAreaZone::ROW_1_LEFT | VehicleAreaZone::ROW_1_RIGHT)}}},
      .initialValue = {.int32Values = {1}}},
 
     {.config = {.prop = toInt(VehicleProperty::HVAC_AUTO_ON),
                 .access = VehiclePropertyAccess::READ_WRITE,
                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-                .supportedAreas = toInt(VehicleAreaZone::ROW_1)},
+                .areaConfigs = {VehicleAreaConfig{
+                    .areaId = (VehicleAreaZone::ROW_1_LEFT | VehicleAreaZone::ROW_1_RIGHT)}}},
      .initialValue = {.int32Values = {1}}},
 
     {.config = {.prop = toInt(VehicleProperty::HVAC_FAN_SPEED),
                 .access = VehiclePropertyAccess::READ_WRITE,
                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-                .supportedAreas = toInt(VehicleAreaZone::ROW_1),
-                .areaConfigs = {VehicleAreaConfig{.areaId = toInt(VehicleAreaZone::ROW_1),
-                                                  .minInt32Value = 1,
-                                                  .maxInt32Value = 7}}},
+                .areaConfigs = {VehicleAreaConfig{
+                    .areaId = (VehicleAreaZone::ROW_1_LEFT | VehicleAreaZone::ROW_1_RIGHT),
+                    .minInt32Value = 1,
+                    .maxInt32Value = 7}}},
      .initialValue = {.int32Values = {3}}},
 
-    {.config =
-         {
-             .prop = toInt(VehicleProperty::HVAC_FAN_DIRECTION),
-             .access = VehiclePropertyAccess::READ_WRITE,
-             .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-             .supportedAreas = toInt(VehicleAreaZone::ROW_1),
-         },
+    {.config = {.prop = toInt(VehicleProperty::HVAC_FAN_DIRECTION),
+                .access = VehiclePropertyAccess::READ_WRITE,
+                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                .areaConfigs = {VehicleAreaConfig{
+                    .areaId = (VehicleAreaZone::ROW_1_LEFT | VehicleAreaZone::ROW_1_RIGHT)}}},
      .initialValue = {.int32Values = {toInt(VehicleHvacFanDirection::FACE)}}},
 
     {.config = {.prop = toInt(VehicleProperty::HVAC_TEMPERATURE_SET),
                 .access = VehiclePropertyAccess::READ_WRITE,
                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-                .supportedAreas = VehicleAreaZone::ROW_1_LEFT | VehicleAreaZone::ROW_1_RIGHT,
                 .areaConfigs = {VehicleAreaConfig{
                                     .areaId = toInt(VehicleAreaZone::ROW_1_LEFT),
                                     .minFloatValue = 16,
