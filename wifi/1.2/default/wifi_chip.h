@@ -201,6 +201,7 @@ class WifiChip : public V1_2::IWifiChip {
     WifiStatus handleChipConfiguration(
         std::unique_lock<std::recursive_mutex>* lock, ChipModeId mode_id);
     WifiStatus registerDebugRingBufferCallback();
+    WifiStatus registerRadioModeChangeCallback();
 
     void populateModes();
     std::vector<IWifiChip::ChipIfaceCombination>

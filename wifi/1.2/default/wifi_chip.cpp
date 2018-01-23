@@ -1044,6 +1044,13 @@ WifiStatus WifiChip::handleChipConfiguration(
                    << legacyErrorToString(legacy_status);
         return createWifiStatusFromLegacyError(legacy_status);
     }
+    // Every time the HAL is restarted, we need to register the
+    // radio mode change callback.
+    WifiStatus status = registerRadioModeChangeCallback();
+    if (status.code != WifiStatusCode::SUCCESS) {
+        // This probably is not a critical failure?
+        LOG(ERROR) << "Failed to register radio mode change callback";
+    }
     return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 
@@ -1084,6 +1091,36 @@ WifiStatus WifiChip::registerDebugRingBufferCallback() {
     if (legacy_status == legacy_hal::WIFI_SUCCESS) {
         debug_ring_buffer_cb_registered_ = true;
     }
+    return createWifiStatusFromLegacyError(legacy_status);
+}
+
+WifiStatus WifiChip::registerRadioModeChangeCallback() {
+    android::wp<WifiChip> weak_ptr_this(this);
+    const auto& on_radio_mode_change_callback =
+        [weak_ptr_this](const std::vector<legacy_hal::WifiMacInfo>& mac_infos) {
+            const auto shared_ptr_this = weak_ptr_this.promote();
+            if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+                LOG(ERROR) << "Callback invoked on an invalid object";
+                return;
+            }
+            std::vector<IWifiChipEventCallback::RadioModeInfo>
+                hidl_radio_mode_infos;
+            if (!hidl_struct_util::convertLegacyWifiMacInfosToHidl(
+                    mac_infos, &hidl_radio_mode_infos)) {
+                LOG(ERROR) << "Error converting wifi mac info";
+                return;
+            }
+            for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+                if (!callback->onRadioModeChange(hidl_radio_mode_infos)
+                         .isOk()) {
+                    LOG(ERROR) << "Failed to invoke onRadioModeChange"
+                               << " callback on: " << toString(callback);
+                }
+            }
+        };
+    legacy_hal::wifi_error legacy_status =
+        legacy_hal_.lock()->registerRadioModeChangeCallbackHandler(
+            getWlan0IfaceName(), on_radio_mode_change_callback);
     return createWifiStatusFromLegacyError(legacy_status);
 }
 
