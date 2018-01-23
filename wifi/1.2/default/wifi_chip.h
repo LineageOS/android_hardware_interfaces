@@ -74,7 +74,7 @@ class WifiChip : public V1_2::IWifiChip {
     // HIDL methods exposed.
     Return<void> getId(getId_cb hidl_status_cb) override;
     Return<void> registerEventCallback(
-        const sp<IWifiChipEventCallback>& event_callback,
+        const sp<V1_0::IWifiChipEventCallback>& event_callback,
         registerEventCallback_cb hidl_status_cb) override;
     Return<void> getCapabilities(getCapabilities_cb hidl_status_cb) override;
     Return<void> getAvailableModes(
@@ -138,6 +138,9 @@ class WifiChip : public V1_2::IWifiChip {
         resetTxPowerScenario_cb hidl_status_cb) override;
     Return<void> debug(const hidl_handle& handle,
                        const hidl_vec<hidl_string>& options) override;
+    Return<void> registerEventCallback_1_2(
+        const sp<IWifiChipEventCallback>& event_callback,
+        registerEventCallback_1_2_cb hidl_status_cb) override;
 
    private:
     void invalidateAndRemoveAllIfaces();
@@ -145,7 +148,7 @@ class WifiChip : public V1_2::IWifiChip {
     // Corresponding worker functions for the HIDL methods.
     std::pair<WifiStatus, ChipId> getIdInternal();
     WifiStatus registerEventCallbackInternal(
-        const sp<IWifiChipEventCallback>& event_callback);
+        const sp<V1_0::IWifiChipEventCallback>& event_callback);
     std::pair<WifiStatus, uint32_t> getCapabilitiesInternal();
     std::pair<WifiStatus, std::vector<ChipMode>> getAvailableModesInternal();
     WifiStatus configureChipInternal(
@@ -192,6 +195,8 @@ class WifiChip : public V1_2::IWifiChip {
     WifiStatus enableDebugErrorAlertsInternal(bool enable);
     WifiStatus selectTxPowerScenarioInternal(TxPowerScenario scenario);
     WifiStatus resetTxPowerScenarioInternal();
+    WifiStatus registerEventCallbackInternal_1_2(
+        const sp<IWifiChipEventCallback>& event_callback);
 
     WifiStatus handleChipConfiguration(
         std::unique_lock<std::recursive_mutex>* lock, ChipModeId mode_id);

@@ -16,7 +16,9 @@
 
 package android.hardware.wifi@1.2;
 
+import @1.0::WifiStatus;
 import @1.1::IWifiChip;
+import IWifiChipEventCallback;
 
 /**
  * Interface that represents a chip that must be configured as a single unit.
@@ -24,4 +26,18 @@ import @1.1::IWifiChip;
  * to perform operations like NAN, RTT, etc.
  */
 interface IWifiChip extends @1.1::IWifiChip {
+    /**
+     * Requests notifications of significant events on this chip. Multiple calls
+     * to this must register multiple callbacks each of which must receive all
+     * events.
+     *
+     * @param callback An instance of the |IWifiChipEventCallback| HIDL interface
+     *        object.
+     * @return status WifiStatus of the operation.
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|
+     */
+    registerEventCallback_1_2(IWifiChipEventCallback callback)
+        generates (WifiStatus status);
 };

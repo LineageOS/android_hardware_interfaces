@@ -306,7 +306,7 @@ Return<void> WifiChip::getId(getId_cb hidl_status_cb) {
 }
 
 Return<void> WifiChip::registerEventCallback(
-    const sp<IWifiChipEventCallback>& event_callback,
+    const sp<V1_0::IWifiChipEventCallback>& event_callback,
     registerEventCallback_cb hidl_status_cb) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
                            &WifiChip::registerEventCallbackInternal,
@@ -520,6 +520,14 @@ Return<void> WifiChip::resetTxPowerScenario(
                            hidl_status_cb);
 }
 
+Return<void> WifiChip::registerEventCallback_1_2(
+    const sp<IWifiChipEventCallback>& event_callback,
+    registerEventCallback_cb hidl_status_cb) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                           &WifiChip::registerEventCallbackInternal_1_2,
+                           hidl_status_cb, event_callback);
+}
+
 Return<void> WifiChip::debug(const hidl_handle& handle,
                              const hidl_vec<hidl_string>&) {
     if (handle != nullptr && handle->numFds >= 1) {
@@ -556,11 +564,9 @@ std::pair<WifiStatus, ChipId> WifiChip::getIdInternal() {
 }
 
 WifiStatus WifiChip::registerEventCallbackInternal(
-    const sp<IWifiChipEventCallback>& event_callback) {
-    if (!event_cb_handler_.addCallback(event_callback)) {
-        return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
-    }
-    return createWifiStatus(WifiStatusCode::SUCCESS);
+    const sp<V1_0::IWifiChipEventCallback>& /* event_callback */) {
+    // Deprecated support for this callback.
+    return createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED);
 }
 
 std::pair<WifiStatus, uint32_t> WifiChip::getCapabilitiesInternal() {
@@ -995,6 +1001,14 @@ WifiStatus WifiChip::resetTxPowerScenarioInternal() {
     auto legacy_status =
         legacy_hal_.lock()->resetTxPowerScenario(getWlan0IfaceName());
     return createWifiStatusFromLegacyError(legacy_status);
+}
+
+WifiStatus WifiChip::registerEventCallbackInternal_1_2(
+    const sp<IWifiChipEventCallback>& event_callback) {
+    if (!event_cb_handler_.addCallback(event_callback)) {
+        return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
+    }
+    return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 
 WifiStatus WifiChip::handleChipConfiguration(
