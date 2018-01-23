@@ -106,6 +106,30 @@ void CameraProvider::addDeviceNames(int camera_id, CameraDeviceStatus status, bo
     }
 }
 
+void CameraProvider::removeDeviceNames(int camera_id)
+{
+    std::string cameraIdStr = std::to_string(camera_id);
+
+    mCameraIds.remove(cameraIdStr);
+
+    int deviceVersion = mModule->getDeviceVersion(camera_id);
+    auto deviceNamePair = std::make_pair(cameraIdStr,
+                                         getHidlDeviceName(cameraIdStr, deviceVersion));
+    mCameraDeviceNames.remove(deviceNamePair);
+    mCallbacks->cameraDeviceStatusChange(deviceNamePair.second, CameraDeviceStatus::NOT_PRESENT);
+    if (deviceVersion >= CAMERA_DEVICE_API_VERSION_3_2 &&
+        mModule->isOpenLegacyDefined() && mOpenLegacySupported[cameraIdStr]) {
+
+        deviceNamePair = std::make_pair(cameraIdStr,
+                            getHidlDeviceName(cameraIdStr, CAMERA_DEVICE_API_VERSION_1_0));
+        mCameraDeviceNames.remove(deviceNamePair);
+        mCallbacks->cameraDeviceStatusChange(deviceNamePair.second,
+                                             CameraDeviceStatus::NOT_PRESENT);
+    }
+
+    mModule->removeCamera(camera_id);
+}
+
 /**
  * static callback forwarding methods from HAL to instance
  */
@@ -137,8 +161,17 @@ void CameraProvider::sCameraDeviceStatusChange(
             }
         }
 
-        if (!found) {
-            cp->addDeviceNames(camera_id, status, true);
+        switch (status) {
+        case CameraDeviceStatus::PRESENT:
+        case CameraDeviceStatus::ENUMERATING:
+            if (!found) {
+                cp->addDeviceNames(camera_id, status, true);
+            }
+            break;
+        case CameraDeviceStatus::NOT_PRESENT:
+            if (found) {
+                cp->removeDeviceNames(camera_id);
+            }
         }
     }
 }
