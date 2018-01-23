@@ -227,8 +227,7 @@ do {                                               \
 
 status_t ExternalCameraDevice::initDefaultCharsKeys(
         ::android::hardware::camera::common::V1_0::helper::CameraMetadata* metadata) {
-    // TODO: changed to HARDWARELEVEL_EXTERNAL later
-    const uint8_t hardware_level = ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED;
+    const uint8_t hardware_level = ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL;
     UPDATE(ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL, &hardware_level, 1);
 
     // android.colorCorrection

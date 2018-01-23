@@ -57,8 +57,9 @@ const float kMinAspectRatio = 1.f;
 HandleImporter ExternalCameraDeviceSession::sHandleImporter;
 
 bool isAspectRatioClose(float ar1, float ar2) {
-    const float kAspectRatioMatchThres = 0.01f; // This threshold is good enough to distinguish
+    const float kAspectRatioMatchThres = 0.025f; // This threshold is good enough to distinguish
                                                 // 4:3/16:9/20:9
+                                                // 1.33 / 1.78 / 2
     return (std::abs(ar1 - ar2) < kAspectRatioMatchThres);
 }
 
@@ -93,8 +94,8 @@ CroppingType ExternalCameraDeviceSession::initCroppingType(
         const std::vector<SupportedV4L2Format>& sortedFmts) {
     const auto& maxSize = sortedFmts[sortedFmts.size() - 1];
     float maxSizeAr = ASPECT_RATIO(maxSize);
-    float minAr = kMinAspectRatio;
-    float maxAr = kMaxAspectRatio;
+    float minAr = kMaxAspectRatio;
+    float maxAr = kMinAspectRatio;
     for (const auto& fmt : sortedFmts) {
         float ar = ASPECT_RATIO(fmt);
         if (ar < minAr) {
@@ -724,10 +725,23 @@ int ExternalCameraDeviceSession::OutputThread::getCropRect(
         ALOGE("%s: out is null", __FUNCTION__);
         return -1;
     }
+
     uint32_t inW = inSize.width;
     uint32_t inH = inSize.height;
     uint32_t outW = outSize.width;
     uint32_t outH = outSize.height;
+
+    // Handle special case where aspect ratio is close to input but scaled
+    // dimension is slightly larger than input
+    float arIn = ASPECT_RATIO(inSize);
+    float arOut = ASPECT_RATIO(outSize);
+    if (isAspectRatioClose(arIn, arOut)) {
+        out->left = 0;
+        out->top = 0;
+        out->width = inW;
+        out->height = inH;
+        return 0;
+    }
 
     if (ct == VERTICAL) {
         uint64_t scaledOutH = static_cast<uint64_t>(outH) * inW / outW;
