@@ -73,14 +73,31 @@ struct DeviceAddress {
     string rSubmixAddress;  // used for REMOTE_SUBMIX
 };
 
+enum MmapBufferFlag : uint32_t {
+    NONE    = 0x0,
+    /**
+     * If the buffer can be securely shared to untrusted applications
+     * through the AAudio exclusive mode.
+     * Only set this flag if applications are restricted from accessing the
+     * memory surrounding the audio data buffer by a kernel mechanism.
+     * See Linux kernel's dma_buf.
+     */
+    APPLICATION_SHAREABLE    = 0x1,
+};
+
 /**
  * Mmap buffer descriptor returned by IStream.createMmapBuffer().
  * Used by streams opened in mmap mode.
  */
 struct MmapBufferInfo {
-    memory  sharedMemory;         // mmap memory buffer
-    int32_t bufferSizeFrames;     // total buffer size in frames
-    int32_t burstSizeFrames;      // transfer size granularity in frames
+    /** Mmap memory buffer */
+    memory  sharedMemory;
+    /** Total buffer size in frames */
+    int32_t bufferSizeFrames;
+    /** Transfer size granularity in frames */
+    int32_t burstSizeFrames;
+    /** Attributes describing the buffer. */
+    bitfield<MmapBufferFlag> flags;
 };
 
 /**

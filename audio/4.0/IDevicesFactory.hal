@@ -22,12 +22,26 @@ import IDevice;
 interface IDevicesFactory {
     typedef android.hardware.audio@4.0::Result Result;
 
+    /** Allows a HAL implementation to be split in multiple independent
+     *  devices (called module in the pre-treble API).
+     *  Note that this division is arbitrary and implementation are free
+     *  to only have a Primary.
+     *  The framework will query the devices according to audio_policy_configuration.xml
+     *
+     *  Each Device value is interchangeable with any other and the framework
+     *  does not differentiate between values with the following exceptions:
+     *  - the Primary device must always be present
+     *  - the R_SUBMIX that is used to forward audio of REMOTE_SUBMIX DEVICES
+     */
     enum Device : int32_t {
         PRIMARY,
         A2DP,
         USB,
         R_SUBMIX,
-        STUB
+        STUB,
+        CODEC_OFFLOAD,
+        SECONDARY,
+        AUXILIARY
     };
 
     /**

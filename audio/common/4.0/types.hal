@@ -248,6 +248,7 @@ enum AudioFormat : uint32_t {
     AAC_SUB_LD            = 0x80,
     AAC_SUB_HE_V2         = 0x100,
     AAC_SUB_ELD           = 0x200,
+    AAC_SUB_XHE           = 0x300,
 
     VORBIS_SUB_NONE       = 0x0,
 
@@ -270,6 +271,7 @@ enum AudioFormat : uint32_t {
     AAC_LD              = (AAC | AAC_SUB_LD),
     AAC_HE_V2           = (AAC | AAC_SUB_HE_V2),
     AAC_ELD             = (AAC | AAC_SUB_ELD),
+    AAC_XHE             = (AAC | AAC_SUB_XHE),
     AAC_ADTS_MAIN       = (AAC_ADTS | AAC_SUB_MAIN),
     AAC_ADTS_LC         = (AAC_ADTS | AAC_SUB_LC),
     AAC_ADTS_SSR        = (AAC_ADTS | AAC_SUB_SSR),
@@ -279,7 +281,8 @@ enum AudioFormat : uint32_t {
     AAC_ADTS_ERLC       = (AAC_ADTS | AAC_SUB_ERLC),
     AAC_ADTS_LD         = (AAC_ADTS | AAC_SUB_LD),
     AAC_ADTS_HE_V2      = (AAC_ADTS | AAC_SUB_HE_V2),
-    AAC_ADTS_ELD        = (AAC_ADTS | AAC_SUB_ELD)
+    AAC_ADTS_ELD        = (AAC_ADTS | AAC_SUB_ELD),
+    AAC_ADTS_XHE        = (AAC_ADTS | AAC_SUB_XHE),
 };
 
 /**
@@ -466,7 +469,7 @@ enum AudioMode : int32_t {
 };
 
 @export(name="", value_prefix="AUDIO_DEVICE_")
-enum AudioDevice : uint32_t {
+enum AudioDevice : uint64_t {
     NONE                          = 0x0,
     /** reserved bits */
     BIT_IN                        = 0x80000000,
@@ -546,6 +549,7 @@ enum AudioDevice : uint32_t {
     IN_BUS                   = BIT_IN | 0x100000,
     IN_PROXY                 = BIT_IN | 0x1000000,
     IN_USB_HEADSET           = BIT_IN | 0x2000000,
+    IN_BLUETOOTH_BLE         = BIT_IN | 0x4000000,
     IN_DEFAULT               = BIT_IN | BIT_DEFAULT,
 
     // Note that the 2.0 IN_ALL* have been moved to helper functions
@@ -590,6 +594,8 @@ enum AudioOutputFlag : int32_t {
                              // to pass through compress path for DSP post proc.
     MMAP_NOIRQ = 0x4000, // output operates in MMAP no IRQ mode.
     VOIP_RX = 0x8000,    // preferred output for VoIP calls.
+    /** preferred output for call music */
+    INCALL_MUSIC = 0x10000,
 };
 
 /**
