@@ -148,6 +148,17 @@ void onAsyncErrorAlert(wifi_request_id id, char* buffer, int buffer_size,
     }
 }
 
+// Callback to be invoked for radio mode change indication.
+std::function<void(wifi_request_id, uint32_t, wifi_mac_info*)>
+    on_radio_mode_change_internal_callback;
+void onAsyncRadioModeChange(wifi_request_id id, uint32_t num_macs,
+                            wifi_mac_info* mac_infos) {
+    const auto lock = hidl_sync_util::acquireGlobalLock();
+    if (on_radio_mode_change_internal_callback) {
+        on_radio_mode_change_internal_callback(id, num_macs, mac_infos);
+    }
+}
+
 // Callback to be invoked for rtt results results.
 std::function<void(wifi_request_id, unsigned num_results,
                    wifi_rtt_result* rtt_results[])>
@@ -937,6 +948,41 @@ wifi_error WifiLegacyHal::deregisterErrorAlertCallbackHandler(
         0, getIfaceHandle(iface_name));
 }
 
+wifi_error WifiLegacyHal::registerRadioModeChangeCallbackHandler(
+    const std::string& iface_name,
+    const on_radio_mode_change_callback& on_user_change_callback) {
+    if (on_radio_mode_change_internal_callback) {
+        return WIFI_ERROR_NOT_AVAILABLE;
+    }
+    on_radio_mode_change_internal_callback = [on_user_change_callback](
+                                                 wifi_request_id /* id */,
+                                                 uint32_t num_macs,
+                                                 wifi_mac_info* mac_infos_arr) {
+        if (num_macs > 0 && mac_infos_arr) {
+            std::vector<WifiMacInfo> mac_infos_vec;
+            for (uint32_t i = 0; i < num_macs; i++) {
+                WifiMacInfo mac_info;
+                mac_info.wlan_mac_id = mac_infos_arr[i].wlan_mac_id;
+                mac_info.mac_band = mac_infos_arr[i].mac_band;
+                for (int32_t j = 0; j < mac_infos_arr[i].num_iface; j++) {
+                    WifiIfaceInfo iface_info;
+                    iface_info.name = mac_infos_arr[i].iface_info[j].iface_name;
+                    iface_info.channel = mac_infos_arr[i].iface_info[j].channel;
+                    mac_info.iface_infos.push_back(iface_info);
+                }
+                mac_infos_vec.push_back(mac_info);
+            }
+            on_user_change_callback(mac_infos_vec);
+        }
+    };
+    wifi_error status = global_func_table_.wifi_set_radio_mode_change_handler(
+        0, getIfaceHandle(iface_name), {onAsyncRadioModeChange});
+    if (status != WIFI_SUCCESS) {
+        on_radio_mode_change_internal_callback = nullptr;
+    }
+    return status;
+}
+
 wifi_error WifiLegacyHal::startRttRangeRequest(
     const std::string& iface_name, wifi_request_id id,
     const std::vector<wifi_rtt_config>& rtt_configs,
@@ -1324,6 +1370,7 @@ void WifiLegacyHal::invalidate() {
     on_rssi_threshold_breached_internal_callback = nullptr;
     on_ring_buffer_data_internal_callback = nullptr;
     on_error_alert_internal_callback = nullptr;
+    on_radio_mode_change_internal_callback = nullptr;
     on_rtt_results_internal_callback = nullptr;
     on_nan_notify_response_user_callback = nullptr;
     on_nan_event_publish_terminated_user_callback = nullptr;
