@@ -30,15 +30,6 @@ interface IRadioIndication extends @1.1::IRadioIndication {
     oneway networkScanResult_1_2(RadioIndicationType type, NetworkScanResult result);
 
     /**
-     * Indicates SIM slot status change.
-     *
-     * @param type Type of radio indication
-     * @param slotStatus new slot status info with size equals to the number of physical slots on
-     *        the device
-     */
-    oneway simSlotsStatusChanged(RadioIndicationType type, vec<SimSlotStatus> slotStatus);
-
-    /**
      * Request all of the current cell information known to the radio.
      * Same information as returned by getCellInfoList() in 1.0::IRadio.
      *

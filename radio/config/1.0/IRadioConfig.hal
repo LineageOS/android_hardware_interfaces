@@ -1,0 +1,82 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.radio.config@1.0;
+
+import IRadioConfigResponse;
+import IRadioConfigIndication;
+
+/**
+ * This interface is used by telephony and telecom to talk to cellular radio for the purpose of
+ * radio configuration, and it is not associated with any specific modem or slot.
+ * All the functions have minimum one parameter:
+ * serial: which corresponds to serial no. of request. Serial numbers must only be memorized for the
+ * duration of a method call. If clients provide colliding serials (including passing the same
+ * serial to different methods), multiple responses (one for each method call) must still be served.
+ */
+interface IRadioConfig {
+
+    /**
+     * Set response functions for radio config requests & radio config indications.
+     *
+     * @param radioConfigResponse Object containing radio config response functions
+     * @param radioConfigIndication Object containing radio config indications
+     */
+    setResponseFunctions(IRadioConfigResponse radioConfigResponse,
+            IRadioConfigIndication radioConfigIndication);
+
+    /**
+     * Get SIM Slot status.
+     *
+     * Request provides the slot status of all active and inactive SIM slots and whether card is
+     * present in the slots or not.
+     *
+     * @param serial Serial number of request.
+     *
+     * Response callback is IRadioConfigResponse.getSimSlotsStatusResponse()
+     */
+    oneway getSimSlotsStatus(int32_t serial);
+
+    /**
+     * Set SIM Slot mapping.
+
+     * Maps the logical slots to the physical slots. Logical slot is the slot that is seen by modem.
+     * Physical slot is the actual physical slot. Request maps the physical slot to logical slot.
+     * Logical slots that are already mapped to the requested physical slot are not impacted.
+     *
+     * Example no. of logical slots 1 and physical slots 2:
+     * The only logical slot (index 0) can be mapped to first physical slot (value 0) or second
+     * physical slot(value 1), while the other physical slot remains unmapped and inactive.
+     * slotMap[0] = 1 or slotMap[0] = 0
+     *
+     * Example no. of logical slots 2 and physical slots 2:
+     * First logical slot (index 0) can be mapped to physical slot 1 or 2 and other logical slot
+     * can be mapped to other physical slot. Each logical slot must be mapped to a physical slot.
+     * slotMap[0] = 0 and slotMap[1] = 1 or slotMap[0] = 1 and slotMap[1] = 0
+     *
+     * @param serial Serial number of request
+     * @param slotMap Logical to physical slot mapping, size == no. of radio instances. Index is
+     *        mapping to logical slot and value to physical slot, need to provide all the slots
+     *        mapping when sending request in case of multi slot device.
+     *        EX: uint32_t slotMap[logical slot] = physical slot
+     *        index 0 is the first logical_slot number of logical slots is equal to number of Radio
+     *        instances and number of physical slots is equal to size of slotStatus in
+     *        getSimSlotsStatusResponse
+     *
+     * Response callback is IRadioConfigResponse.setSimSlotsMappingResponse()
+     */
+    oneway setSimSlotsMapping(int32_t serial, vec<uint32_t> slotMap);
+};
