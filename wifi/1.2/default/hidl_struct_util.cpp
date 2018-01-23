@@ -266,6 +266,57 @@ legacy_hal::wifi_power_scenario convertHidlTxPowerScenarioToLegacy(
     CHECK(false);
 }
 
+bool convertLegacyWifiMacInfoToHidl(
+    const legacy_hal::WifiMacInfo& legacy_mac_info,
+    IWifiChipEventCallback::RadioModeInfo* hidl_radio_mode_info) {
+    if (!hidl_radio_mode_info) {
+        return false;
+    }
+    *hidl_radio_mode_info = {};
+
+    hidl_radio_mode_info->radioId = legacy_mac_info.wlan_mac_id;
+    // Convert from bitmask of bands in the legacy HAL to enum value in
+    // the HIDL interface.
+    if (legacy_mac_info.mac_band & legacy_hal::WLAN_MAC_2_4_BAND &&
+        legacy_mac_info.mac_band & legacy_hal::WLAN_MAC_5_0_BAND) {
+        hidl_radio_mode_info->bandInfo = WifiBand::BAND_24GHZ_5GHZ;
+    } else if (legacy_mac_info.mac_band & legacy_hal::WLAN_MAC_2_4_BAND) {
+        hidl_radio_mode_info->bandInfo = WifiBand::BAND_24GHZ;
+    } else if (legacy_mac_info.mac_band & legacy_hal::WLAN_MAC_5_0_BAND) {
+        hidl_radio_mode_info->bandInfo = WifiBand::BAND_5GHZ;
+    } else {
+        hidl_radio_mode_info->bandInfo = WifiBand::BAND_UNSPECIFIED;
+    }
+    std::vector<IWifiChipEventCallback::IfaceInfo> iface_info_vec;
+    for (const auto& legacy_iface_info : legacy_mac_info.iface_infos) {
+        IWifiChipEventCallback::IfaceInfo iface_info;
+        iface_info.name = legacy_iface_info.name;
+        iface_info.channel = legacy_iface_info.channel;
+        iface_info_vec.push_back(iface_info);
+    }
+    hidl_radio_mode_info->ifaceInfos = iface_info_vec;
+    return true;
+}
+
+bool convertLegacyWifiMacInfosToHidl(
+    const std::vector<legacy_hal::WifiMacInfo>& legacy_mac_infos,
+    std::vector<IWifiChipEventCallback::RadioModeInfo>* hidl_radio_mode_infos) {
+    if (!hidl_radio_mode_infos) {
+        return false;
+    }
+    *hidl_radio_mode_infos = {};
+
+    for (const auto& legacy_mac_info : legacy_mac_infos) {
+        IWifiChipEventCallback::RadioModeInfo hidl_radio_mode_info;
+        if (!convertLegacyWifiMacInfoToHidl(legacy_mac_info,
+                                            &hidl_radio_mode_info)) {
+            return false;
+        }
+        hidl_radio_mode_infos->push_back(hidl_radio_mode_info);
+    }
+    return true;
+}
+
 bool convertLegacyFeaturesToHidlStaCapabilities(
     uint32_t legacy_feature_set, uint32_t legacy_logger_feature_set,
     uint32_t* hidl_caps) {
