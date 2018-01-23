@@ -201,9 +201,9 @@ void CameraDeviceSession::postProcessConfigurationLocked_3_4(
 }
 
 Return<void> CameraDeviceSession::processCaptureRequest_3_4(
-        const hidl_vec<CaptureRequest>& requests,
+        const hidl_vec<V3_4::CaptureRequest>& requests,
         const hidl_vec<V3_2::BufferCache>& cachesToRemove,
-        ICameraDeviceSession::processCaptureRequest_cb _hidl_cb)  {
+        ICameraDeviceSession::processCaptureRequest_3_4_cb _hidl_cb)  {
     updateBufferCaches(cachesToRemove);
 
     uint32_t numRequestProcessed = 0;
@@ -216,14 +216,14 @@ Return<void> CameraDeviceSession::processCaptureRequest_3_4(
     }
 
     if (s == Status::OK && requests.size() > 1) {
-        mResultBatcher.registerBatch(requests);
+        mResultBatcher.registerBatch(requests[0].v3_2.frameNumber, requests.size());
     }
 
     _hidl_cb(s, numRequestProcessed);
     return Void();
 }
 
-Status CameraDeviceSession::processOneCaptureRequest_3_4(const CaptureRequest& request)  {
+Status CameraDeviceSession::processOneCaptureRequest_3_4(const V3_4::CaptureRequest& request)  {
     Status status = initStatus();
     if (status != Status::OK) {
         ALOGE("%s: camera init failed or disconnected", __FUNCTION__);
@@ -231,15 +231,15 @@ Status CameraDeviceSession::processOneCaptureRequest_3_4(const CaptureRequest& r
     }
 
     camera3_capture_request_t halRequest;
-    halRequest.frame_number = request.frameNumber;
+    halRequest.frame_number = request.v3_2.frameNumber;
 
     bool converted = true;
     V3_2::CameraMetadata settingsFmq;  // settings from FMQ
-    if (request.fmqSettingsSize > 0) {
+    if (request.v3_2.fmqSettingsSize > 0) {
         // non-blocking read; client must write metadata before calling
         // processOneCaptureRequest
-        settingsFmq.resize(request.fmqSettingsSize);
-        bool read = mRequestMetadataQueue->read(settingsFmq.data(), request.fmqSettingsSize);
+        settingsFmq.resize(request.v3_2.fmqSettingsSize);
+        bool read = mRequestMetadataQueue->read(settingsFmq.data(), request.v3_2.fmqSettingsSize);
         if (read) {
             converted = V3_2::implementation::convertFromHidl(settingsFmq, &halRequest.settings);
         } else {
@@ -247,7 +247,8 @@ Status CameraDeviceSession::processOneCaptureRequest_3_4(const CaptureRequest& r
             converted = false;
         }
     } else {
-        converted = V3_2::implementation::convertFromHidl(request.settings, &halRequest.settings);
+        converted = V3_2::implementation::convertFromHidl(request.v3_2.settings,
+                &halRequest.settings);
     }
 
     if (!converted) {
@@ -263,9 +264,9 @@ Status CameraDeviceSession::processOneCaptureRequest_3_4(const CaptureRequest& r
 
     hidl_vec<buffer_handle_t*> allBufPtrs;
     hidl_vec<int> allFences;
-    bool hasInputBuf = (request.inputBuffer.streamId != -1 &&
-            request.inputBuffer.bufferId != 0);
-    size_t numOutputBufs = request.outputBuffers.size();
+    bool hasInputBuf = (request.v3_2.inputBuffer.streamId != -1 &&
+            request.v3_2.inputBuffer.bufferId != 0);
+    size_t numOutputBufs = request.v3_2.outputBuffers.size();
     size_t numBufs = numOutputBufs + (hasInputBuf ? 1 : 0);
 
     if (numOutputBufs == 0) {
@@ -273,7 +274,7 @@ Status CameraDeviceSession::processOneCaptureRequest_3_4(const CaptureRequest& r
         return Status::ILLEGAL_ARGUMENT;
     }
 
-    status = importRequest(request, allBufPtrs, allFences);
+    status = importRequest(request.v3_2, allBufPtrs, allFences);
     if (status != Status::OK) {
         return status;
     }
@@ -285,12 +286,12 @@ Status CameraDeviceSession::processOneCaptureRequest_3_4(const CaptureRequest& r
     {
         Mutex::Autolock _l(mInflightLock);
         if (hasInputBuf) {
-            auto streamId = request.inputBuffer.streamId;
-            auto key = std::make_pair(request.inputBuffer.streamId, request.frameNumber);
+            auto streamId = request.v3_2.inputBuffer.streamId;
+            auto key = std::make_pair(request.v3_2.inputBuffer.streamId, request.v3_2.frameNumber);
             auto& bufCache = mInflightBuffers[key] = camera3_stream_buffer_t{};
             convertFromHidl(
-                    allBufPtrs[numOutputBufs], request.inputBuffer.status,
-                    &mStreamMap[request.inputBuffer.streamId], allFences[numOutputBufs],
+                    allBufPtrs[numOutputBufs], request.v3_2.inputBuffer.status,
+                    &mStreamMap[request.v3_2.inputBuffer.streamId], allFences[numOutputBufs],
                     &bufCache);
             bufCache.stream->physical_camera_id = mPhysicalCameraIdMap[streamId].c_str();
             halRequest.input_buffer = &bufCache;
@@ -300,11 +301,11 @@ Status CameraDeviceSession::processOneCaptureRequest_3_4(const CaptureRequest& r
 
         halRequest.num_output_buffers = numOutputBufs;
         for (size_t i = 0; i < numOutputBufs; i++) {
-            auto streamId = request.outputBuffers[i].streamId;
-            auto key = std::make_pair(streamId, request.frameNumber);
+            auto streamId = request.v3_2.outputBuffers[i].streamId;
+            auto key = std::make_pair(streamId, request.v3_2.frameNumber);
             auto& bufCache = mInflightBuffers[key] = camera3_stream_buffer_t{};
             convertFromHidl(
-                    allBufPtrs[i], request.outputBuffers[i].status,
+                    allBufPtrs[i], request.v3_2.outputBuffers[i].status,
                     &mStreamMap[streamId], allFences[i],
                     &bufCache);
             bufCache.stream->physical_camera_id = mPhysicalCameraIdMap[streamId].c_str();
@@ -322,7 +323,47 @@ Status CameraDeviceSession::processOneCaptureRequest_3_4(const CaptureRequest& r
         }
     }
 
-    ATRACE_ASYNC_BEGIN("frame capture", request.frameNumber);
+    std::vector<const char *> physicalCameraIds;
+    std::vector<const camera_metadata_t *> physicalCameraSettings;
+    std::vector<V3_2::CameraMetadata> physicalFmq;
+    size_t settingsCount = request.physicalCameraSettings.size();
+    if (settingsCount > 0) {
+        physicalCameraIds.reserve(settingsCount);
+        physicalCameraSettings.reserve(settingsCount);
+        physicalFmq.reserve(settingsCount);
+
+        for (size_t i = 0; i < settingsCount; i++) {
+            uint64_t settingsSize = request.physicalCameraSettings[i].fmqSettingsSize;
+            const camera_metadata_t *settings;
+            if (settingsSize > 0) {
+                physicalFmq.push_back(V3_2::CameraMetadata(settingsSize));
+                bool read = mRequestMetadataQueue->read(physicalFmq[i].data(), settingsSize);
+                if (read) {
+                    converted = V3_2::implementation::convertFromHidl(physicalFmq[i], &settings);
+                    physicalCameraSettings.push_back(settings);
+                } else {
+                    ALOGE("%s: physical camera settings metadata couldn't be read from fmq!",
+                            __FUNCTION__);
+                    converted = false;
+                }
+            } else {
+                converted = V3_2::implementation::convertFromHidl(
+                        request.physicalCameraSettings[i].settings, &settings);
+                physicalCameraSettings.push_back(settings);
+            }
+
+            if (!converted) {
+                ALOGE("%s: physical camera settings metadata is corrupt!", __FUNCTION__);
+                return Status::ILLEGAL_ARGUMENT;
+            }
+            physicalCameraIds.push_back(request.physicalCameraSettings[i].physicalCameraId.c_str());
+        }
+    }
+    halRequest.num_physcam_settings = settingsCount;
+    halRequest.physcam_id = physicalCameraIds.data();
+    halRequest.physcam_settings = physicalCameraSettings.data();
+
+    ATRACE_ASYNC_BEGIN("frame capture", request.v3_2.frameNumber);
     ATRACE_BEGIN("camera3->process_capture_request");
     status_t ret = mDevice->ops->process_capture_request(mDevice, &halRequest);
     ATRACE_END();
@@ -335,17 +376,23 @@ Status CameraDeviceSession::processOneCaptureRequest_3_4(const CaptureRequest& r
 
         cleanupInflightFences(allFences, numBufs);
         if (hasInputBuf) {
-            auto key = std::make_pair(request.inputBuffer.streamId, request.frameNumber);
+            auto key = std::make_pair(request.v3_2.inputBuffer.streamId, request.v3_2.frameNumber);
             mInflightBuffers.erase(key);
         }
         for (size_t i = 0; i < numOutputBufs; i++) {
-            auto key = std::make_pair(request.outputBuffers[i].streamId, request.frameNumber);
+            auto key = std::make_pair(request.v3_2.outputBuffers[i].streamId,
+                    request.v3_2.frameNumber);
             mInflightBuffers.erase(key);
         }
         if (aeCancelTriggerNeeded) {
-            mInflightAETriggerOverrides.erase(request.frameNumber);
+            mInflightAETriggerOverrides.erase(request.v3_2.frameNumber);
         }
-        return Status::INTERNAL_ERROR;
+
+        if (ret == BAD_VALUE) {
+            return Status::ILLEGAL_ARGUMENT;
+        } else {
+            return Status::INTERNAL_ERROR;
+        }
     }
 
     mFirstRequest = false;

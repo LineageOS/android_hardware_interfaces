@@ -21,6 +21,7 @@ import @3.2::StreamConfigurationMode;
 import @3.2::Stream;
 import @3.3::HalStream;
 import @3.2::CameraMetadata;
+import @3.2::CaptureRequest;
 
 /**
  * Stream:
@@ -132,4 +133,66 @@ struct HalStream {
  */
 struct HalStreamConfiguration {
     vec<HalStream> streams;
+};
+
+/**
+ * PhysicalCameraSetting:
+ *
+ * Individual camera settings for logical camera backed by multiple physical devices.
+ * Clients are allowed to pass separate settings for each physical device.
+ */
+struct PhysicalCameraSetting {
+    /**
+     * If non-zero, read settings from request queue instead
+     * (see ICameraDeviceSession.getCaptureRequestMetadataQueue).
+     * If zero, read settings from .settings field.
+     */
+    uint64_t fmqSettingsSize;
+
+    /**
+     * Contains the physical device camera id. Any settings passed by client here
+     * should be applied for this physical device. In case the physical id is invalid
+     * Hal should fail the process request and return Status::ILLEGAL_ARGUMENT.
+     */
+    string physicalCameraId;
+
+    /**
+     * If fmqSettingsSize is zero, the settings buffer contains the capture and
+     * processing parameters for the physical device with id 'phyCamId'.
+     * In case the individual settings are empty or missing, Hal should fail the
+     * request and return Status::ILLEGAL_ARGUMENT.
+     */
+    CameraMetadata settings;
+};
+
+/**
+ * CaptureRequest:
+ *
+ * A single request for image capture/buffer reprocessing, sent to the Camera
+ * HAL device by the framework in processCaptureRequest().
+ *
+ * The request contains the settings to be used for this capture, and the set of
+ * output buffers to write the resulting image data in. It may optionally
+ * contain an input buffer, in which case the request is for reprocessing that
+ * input buffer instead of capturing a new image with the camera sensor. The
+ * capture is identified by the frameNumber.
+ *
+ * In response, the camera HAL device must send a CaptureResult
+ * structure asynchronously to the framework, using the processCaptureResult()
+ * callback.
+ *
+ * Identical to @3.2::CaptureRequest, except that it contains @3.4::physCamSettings vector.
+ *
+ */
+struct CaptureRequest {
+    /**
+     * The definition of CaptureRequest from prior version.
+     */
+    @3.2::CaptureRequest v3_2;
+
+    /**
+     * A vector containing individual camera settings for logical camera backed by multiple physical
+     * devices. In case the vector is empty, Hal should use the settings field in 'v3_2'.
+     */
+    vec<PhysicalCameraSetting> physicalCameraSettings;
 };
