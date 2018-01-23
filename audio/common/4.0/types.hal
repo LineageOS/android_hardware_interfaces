@@ -16,7 +16,7 @@
 
 package android.hardware.audio.common@4.0;
 
-/**
+/*
  *
  *  IDs and Handles
  *
@@ -76,7 +76,7 @@ struct Uuid {
 };
 
 
-/**
+/*
  *
  *  Audio streams
  *
@@ -196,20 +196,22 @@ enum AudioSessionConsts : int32_t {
 enum AudioFormat : uint32_t {
     INVALID             = 0xFFFFFFFFUL,
     DEFAULT             = 0,
-    PCM                 = 0x00000000UL, /** DO NOT CHANGE */
+    PCM                 = 0x00000000UL,
     MP3                 = 0x01000000UL,
     AMR_NB              = 0x02000000UL,
     AMR_WB              = 0x03000000UL,
     AAC                 = 0x04000000UL,
-    HE_AAC_V1           = 0x05000000UL, /** Deprecated, Use AAC_HE_V1 */
-    HE_AAC_V2           = 0x06000000UL, /** Deprecated, Use AAC_HE_V2 */
+    /** Deprecated, Use AAC_HE_V1 */
+    HE_AAC_V1           = 0x05000000UL,
+    /** Deprecated, Use AAC_HE_V2 */
+    HE_AAC_V2           = 0x06000000UL,
     VORBIS              = 0x07000000UL,
     OPUS                = 0x08000000UL,
     AC3                 = 0x09000000UL,
     E_AC3               = 0x0A000000UL,
     DTS                 = 0x0B000000UL,
     DTS_HD              = 0x0C000000UL,
-    // IEC61937 is encoded audio wrapped in 16-bit PCM.
+    /** IEC61937 is encoded audio wrapped in 16-bit PCM. */
     IEC61937            = 0x0D000000UL,
     DOLBY_TRUEHD        = 0x0E000000UL,
     EVRC                = 0x10000000UL,
@@ -232,10 +234,11 @@ enum AudioFormat : uint32_t {
     APTX_HD             = 0x21000000UL,
     AC4                 = 0x22000000UL,
     LDAC                = 0x23000000UL,
-    MAIN_MASK           = 0xFF000000UL, /** Deprecated */
+    /** Deprecated */
+    MAIN_MASK           = 0xFF000000UL,
     SUB_MASK            = 0x00FFFFFFUL,
 
-    /** Subformats */
+    /* Subformats */
     PCM_SUB_16_BIT        = 0x1, // PCM signed 16 bits
     PCM_SUB_8_BIT         = 0x2, // PCM unsigned 8 bits
     PCM_SUB_32_BIT        = 0x3, // PCM signed .31 fixed point
@@ -260,7 +263,7 @@ enum AudioFormat : uint32_t {
 
     VORBIS_SUB_NONE       = 0x0,
 
-    /** Aliases */
+    /* Aliases */
     /** note != AudioFormat.ENCODING_PCM_16BIT */
     PCM_16_BIT          = (PCM | PCM_SUB_16_BIT),
     /** note != AudioFormat.ENCODING_PCM_8BIT */
@@ -335,16 +338,17 @@ enum FixedChannelCount : int32_t {
  */
 @export(name="", value_prefix="AUDIO_CHANNEL_")
 enum AudioChannelMask : uint32_t {
-    REPRESENTATION_POSITION = 0, /** must be 0 for compatibility */
+    /** must be 0 for compatibility */
+    REPRESENTATION_POSITION = 0,
     /** 1 is reserved for future use */
     REPRESENTATION_INDEX    = 2,
-    /** 3 is reserved for future use */
+    /* 3 is reserved for future use */
 
     /** These can be a complete value of AudioChannelMask */
     NONE                      = 0x0,
     INVALID                   = 0xC0000000,
 
-   /**
+   /*
     * These can be the bits portion of an AudioChannelMask
     * with representation REPRESENTATION_POSITION.
     */
@@ -408,7 +412,7 @@ enum AudioChannelMask : uint32_t {
             OUT_TOP_FRONT_LEFT | OUT_TOP_FRONT_CENTER | OUT_TOP_FRONT_RIGHT |
             OUT_TOP_BACK_LEFT | OUT_TOP_BACK_CENTER | OUT_TOP_BACK_RIGHT),
 
-    /** These are bits only, not complete values */
+    /* These are bits only, not complete values */
 
     /** input channels */
     IN_LEFT            = 0x4,
@@ -746,7 +750,7 @@ struct AudioConfig {
 };
 
 
-/**
+/*
  *
  *  Volume control
  *
@@ -797,13 +801,13 @@ struct AudioGainConfig {
 };
 
 
-/**
+/*
  *
  *  Routing control
  *
  */
 
-/**
+/*
  * Types defined here are used to describe an audio source or sink at internal
  * framework interfaces (audio policy, patch panel) or at the audio HAL.
  * Sink and sources are grouped in a concept of “audio port” representing an
