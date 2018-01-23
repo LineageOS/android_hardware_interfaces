@@ -17,7 +17,7 @@
 #ifndef TEST_COMMAND_READER_H
 #define TEST_COMMAND_READER_H
 
-#include <IComposerCommandBuffer.h>
+#include <composer-command-buffer/2.1/ComposerCommandBuffer.h>
 
 namespace android {
 namespace hardware {

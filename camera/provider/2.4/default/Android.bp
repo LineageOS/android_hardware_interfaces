@@ -3,7 +3,8 @@ cc_library_shared {
     defaults: ["hidl_defaults"],
     proprietary: true,
     relative_install_path: "hw",
-    srcs: ["CameraProvider.cpp"],
+    srcs: ["CameraProvider.cpp",
+           "ExternalCameraProvider.cpp"],
     shared_libs: [
         "libhidlbase",
         "libhidltransport",
@@ -17,6 +18,7 @@ cc_library_shared {
         "camera.device@3.2-impl",
         "camera.device@3.3-impl",
         "camera.device@3.4-impl",
+        "camera.device@3.4-external-impl",
         "android.hardware.camera.provider@2.4",
         "android.hardware.camera.common@1.0",
         "android.hardware.graphics.mapper@2.0",
@@ -28,6 +30,7 @@ cc_library_shared {
     ],
     header_libs: [
         "camera.device@3.4-impl_headers",
+        "camera.device@3.4-external-impl_headers"
     ],
     static_libs: [
         "android.hardware.camera.common@1.0-helper",
@@ -52,6 +55,28 @@ cc_binary {
         "android.hardware.camera.device@3.2",
         "android.hardware.camera.device@3.3",
         "android.hardware.camera.device@3.4",
+        "android.hardware.camera.provider@2.4",
+        "android.hardware.camera.common@1.0",
+    ],
+}
+
+cc_binary {
+    name: "android.hardware.camera.provider@2.4-external-service",
+    defaults: ["hidl_defaults"],
+    proprietary: true,
+    relative_install_path: "hw",
+    srcs: ["external-service.cpp"],
+    compile_multilib: "32",
+    init_rc: ["android.hardware.camera.provider@2.4-external-service.rc"],
+    shared_libs: [
+        "libhidlbase",
+        "libhidltransport",
+        "libbinder",
+        "liblog",
+        "libutils",
+        "android.hardware.camera.device@1.0",
+        "android.hardware.camera.device@3.2",
+        "android.hardware.camera.device@3.3",
         "android.hardware.camera.provider@2.4",
         "android.hardware.camera.common@1.0",
     ],

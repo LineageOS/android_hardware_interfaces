@@ -184,7 +184,7 @@ protected:
         void setBatchedStreams(const std::vector<int>& streamsToBatch);
         void setResultMetadataQueue(std::shared_ptr<ResultMetadataQueue> q);
 
-        void registerBatch(const hidl_vec<CaptureRequest>& requests);
+        void registerBatch(uint32_t frameNumber, uint32_t batchSize);
         void notify(NotifyMsg& msg);
         void processCaptureResult(CaptureResult& result);
 

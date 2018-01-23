@@ -19,6 +19,7 @@
 #include <android/log.h>
 
 #include "CameraProvider.h"
+#include "ExternalCameraProvider.h"
 #include "CameraDevice_1_0.h"
 #include "CameraDevice_3_3.h"
 #include "CameraDevice_3_4.h"
@@ -36,6 +37,7 @@ namespace implementation {
 
 namespace {
 const char *kLegacyProviderName = "legacy/0";
+const char *kExternalProviderName = "external/0";
 // "device@<version>/legacy/<id>"
 const std::regex kDeviceNameRE("device@([0-9]+\\.[0-9]+)/legacy/(.+)");
 const char *kHAL3_2 = "3.2";
@@ -106,6 +108,30 @@ void CameraProvider::addDeviceNames(int camera_id, CameraDeviceStatus status, bo
     }
 }
 
+void CameraProvider::removeDeviceNames(int camera_id)
+{
+    std::string cameraIdStr = std::to_string(camera_id);
+
+    mCameraIds.remove(cameraIdStr);
+
+    int deviceVersion = mModule->getDeviceVersion(camera_id);
+    auto deviceNamePair = std::make_pair(cameraIdStr,
+                                         getHidlDeviceName(cameraIdStr, deviceVersion));
+    mCameraDeviceNames.remove(deviceNamePair);
+    mCallbacks->cameraDeviceStatusChange(deviceNamePair.second, CameraDeviceStatus::NOT_PRESENT);
+    if (deviceVersion >= CAMERA_DEVICE_API_VERSION_3_2 &&
+        mModule->isOpenLegacyDefined() && mOpenLegacySupported[cameraIdStr]) {
+
+        deviceNamePair = std::make_pair(cameraIdStr,
+                            getHidlDeviceName(cameraIdStr, CAMERA_DEVICE_API_VERSION_1_0));
+        mCameraDeviceNames.remove(deviceNamePair);
+        mCallbacks->cameraDeviceStatusChange(deviceNamePair.second,
+                                             CameraDeviceStatus::NOT_PRESENT);
+    }
+
+    mModule->removeCamera(camera_id);
+}
+
 /**
  * static callback forwarding methods from HAL to instance
  */
@@ -137,8 +163,17 @@ void CameraProvider::sCameraDeviceStatusChange(
             }
         }
 
-        if (!found) {
-            cp->addDeviceNames(camera_id, status, true);
+        switch (status) {
+        case CameraDeviceStatus::PRESENT:
+        case CameraDeviceStatus::ENUMERATING:
+            if (!found) {
+                cp->addDeviceNames(camera_id, status, true);
+            }
+            break;
+        case CameraDeviceStatus::NOT_PRESENT:
+            if (found) {
+                cp->removeDeviceNames(camera_id);
+            }
         }
     }
 }
@@ -571,20 +606,24 @@ Return<void> CameraProvider::getCameraDeviceInterface_V3_x(
 }
 
 ICameraProvider* HIDL_FETCH_ICameraProvider(const char* name) {
-    if (strcmp(name, kLegacyProviderName) != 0) {
-        return nullptr;
+    if (strcmp(name, kLegacyProviderName) == 0) {
+        CameraProvider* provider = new CameraProvider();
+        if (provider == nullptr) {
+            ALOGE("%s: cannot allocate camera provider!", __FUNCTION__);
+            return nullptr;
+        }
+        if (provider->isInitFailed()) {
+            ALOGE("%s: camera provider init failed!", __FUNCTION__);
+            delete provider;
+            return nullptr;
+        }
+        return provider;
+    } else if (strcmp(name, kExternalProviderName) == 0) {
+        ExternalCameraProvider* provider = new ExternalCameraProvider();
+        return provider;
     }
-    CameraProvider* provider = new CameraProvider();
-    if (provider == nullptr) {
-        ALOGE("%s: cannot allocate camera provider!", __FUNCTION__);
-        return nullptr;
-    }
-    if (provider->isInitFailed()) {
-        ALOGE("%s: camera provider init failed!", __FUNCTION__);
-        delete provider;
-        return nullptr;
-    }
-    return provider;
+    ALOGE("%s: unknown instance name: %s", __FUNCTION__, name);
+    return nullptr;
 }
 
 } // namespace implementation

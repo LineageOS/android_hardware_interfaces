@@ -36,8 +36,6 @@ hidl_interface {
         "NetworkScanResult",
         "RadioConst",
         "ScanIntervalRange",
-        "SimSlotStatus",
-        "SlotState",
     ],
     gen_java: true,
 }

@@ -137,11 +137,14 @@ ErrorCode KeymasterHidlTest::ImportKey(const AuthorizationSet& key_desc, KeyForm
 
 ErrorCode KeymasterHidlTest::ImportWrappedKey(string wrapped_key, string wrapping_key,
                                               const AuthorizationSet& wrapping_key_desc,
-                                              string masking_key) {
+                                              string masking_key,
+                                              const AuthorizationSet& unwrapping_params) {
     ErrorCode error;
     ImportKey(wrapping_key_desc, KeyFormat::PKCS8, wrapping_key);
     EXPECT_TRUE(keymaster_
                     ->importWrappedKey(HidlBuf(wrapped_key), key_blob_, HidlBuf(masking_key),
+                                       unwrapping_params.hidl_data(), 0 /* passwordSid */,
+                                       0 /* biometricSid */,
                                        [&](ErrorCode hidl_error, const HidlBuf& hidl_key_blob,
                                            const KeyCharacteristics& hidl_key_characteristics) {
                                            error = hidl_error;

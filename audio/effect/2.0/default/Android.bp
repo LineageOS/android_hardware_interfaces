@@ -31,6 +31,7 @@ cc_library_shared {
         "libhidltransport",
         "liblog",
         "libutils",
+        "android.hardware.audio.common-util",
         "android.hardware.audio.common@2.0",
         "android.hardware.audio.common@2.0-util",
         "android.hardware.audio.effect@2.0",
@@ -38,6 +39,8 @@ cc_library_shared {
     ],
 
     header_libs: [
+        "android.hardware.audio.common.util@all-versions",
+        "android.hardware.audio.effect@all-versions-impl",
         "libaudio_system_headers",
         "libaudioclient_headers",
         "libeffects_headers",

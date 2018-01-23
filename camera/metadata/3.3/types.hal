@@ -25,7 +25,30 @@ package android.hardware.camera.metadata@3.3;
 /* Include definitions from all prior minor HAL metadata revisions */
 import android.hardware.camera.metadata@3.2;
 
-// No new metadata sections added in this revision
+/**
+ * Top level hierarchy definitions for camera metadata. *_INFO sections are for
+ * the static metadata that can be retrived without opening the camera device.
+ */
+enum CameraMetadataSection : @3.2::CameraMetadataSection {
+    ANDROID_LOGICAL_MULTI_CAMERA =
+        android.hardware.camera.metadata@3.2::CameraMetadataSection:ANDROID_SECTION_COUNT,
+
+    ANDROID_SECTION_COUNT_3_3,
+
+    VENDOR_SECTION_3_3 = 0x8000,
+
+};
+
+/**
+ * Hierarchy positions in enum space. All vendor extension sections must be
+ * defined with tag >= VENDOR_SECTION_START
+ */
+enum CameraMetadataSectionStart : android.hardware.camera.metadata@3.2::CameraMetadataSectionStart {
+    ANDROID_LOGICAL_MULTI_CAMERA_START = CameraMetadataSection:ANDROID_LOGICAL_MULTI_CAMERA << 16,
+
+    VENDOR_SECTION_START_3_3 = CameraMetadataSection:VENDOR_SECTION_3_3 << 16,
+
+};
 
 /**
  * Main enumeration for defining camera metadata tags added in this revision
@@ -60,7 +83,52 @@ enum CameraMetadataTag : @3.2::CameraMetadataTag {
      */
     ANDROID_REQUEST_AVAILABLE_SESSION_KEYS = android.hardware.camera.metadata@3.2::CameraMetadataTag:ANDROID_REQUEST_END,
 
+    /** android.request.availablePhysicalCameraRequestKeys [static, int32[], hidden]
+     *
+     * <p>A subset of the available request keys that can be overriden for
+     * physical devices backing a logical multi-camera.</p>
+     */
+    ANDROID_REQUEST_AVAILABLE_PHYSICAL_CAMERA_REQUEST_KEYS,
+
     ANDROID_REQUEST_END_3_3,
+
+    /** android.statistics.oisDataMode [dynamic, enum, public]
+     *
+     * <p>Whether the camera device outputs the OIS data in output
+     * result metadata.</p>
+     */
+    ANDROID_STATISTICS_OIS_DATA_MODE = android.hardware.camera.metadata@3.2::CameraMetadataTag:ANDROID_STATISTICS_END,
+
+    /** android.statistics.oisTimestamps [dynamic, int64[], public]
+     *
+     * <p>An array of timestamps of OIS samples, in nanoseconds.</p>
+     */
+    ANDROID_STATISTICS_OIS_TIMESTAMPS,
+
+    /** android.statistics.oisXShifts [dynamic, float[], public]
+     *
+     * <p>An array of shifts of OIS samples, in x direction.</p>
+     */
+    ANDROID_STATISTICS_OIS_X_SHIFTS,
+
+    /** android.statistics.oisYShifts [dynamic, float[], public]
+     *
+     * <p>An array of shifts of OIS samples, in y direction.</p>
+     */
+    ANDROID_STATISTICS_OIS_Y_SHIFTS,
+
+    ANDROID_STATISTICS_END_3_3,
+
+    /** android.statistics.info.availableOisDataModes [static, byte[], public]
+     *
+     * <p>List of OIS data output modes for ANDROID_STATISTICS_OIS_DATA_MODE that
+     * are supported by this camera device.</p>
+     *
+     * @see ANDROID_STATISTICS_OIS_DATA_MODE
+     */
+    ANDROID_STATISTICS_INFO_AVAILABLE_OIS_DATA_MODES = android.hardware.camera.metadata@3.2::CameraMetadataTag:ANDROID_STATISTICS_INFO_END,
+
+    ANDROID_STATISTICS_INFO_END_3_3,
 
     /** android.info.version [static, byte, public]
      *
@@ -70,6 +138,20 @@ enum CameraMetadataTag : @3.2::CameraMetadataTag {
     ANDROID_INFO_VERSION = android.hardware.camera.metadata@3.2::CameraMetadataTag:ANDROID_INFO_END,
 
     ANDROID_INFO_END_3_3,
+
+    /** android.logicalMultiCamera.physicalIds [static, byte[], hidden]
+     *
+     * <p>String containing the ids of the underlying physical cameras.</p>
+     */
+    ANDROID_LOGICAL_MULTI_CAMERA_PHYSICAL_IDS = CameraMetadataSectionStart:ANDROID_LOGICAL_MULTI_CAMERA_START,
+
+    /** android.logicalMultiCamera.sensorSyncType [static, enum, public]
+     *
+     * <p>The accuracy of frame timestamp synchronization between physical cameras</p>
+     */
+    ANDROID_LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE,
+
+    ANDROID_LOGICAL_MULTI_CAMERA_END_3_3,
 
 };
 
@@ -115,4 +197,29 @@ enum CameraMetadataEnumAndroidLensPoseReference : uint32_t {
 enum CameraMetadataEnumAndroidRequestAvailableCapabilities :
         @3.2::CameraMetadataEnumAndroidRequestAvailableCapabilities {
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MOTION_TRACKING,
+    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA,
+};
+
+/** android.logicalMultiCamera.sensorSyncType enumeration values
+ * @see ANDROID_LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE
+ */
+enum CameraMetadataEnumAndroidLogicalMultiCameraSensorSyncType : uint32_t {
+    ANDROID_LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE_APPROXIMATE,
+    ANDROID_LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE_CALIBRATED,
+};
+
+/** android.info.supportedHardwareLevel enumeration values added since v3.2
+ * @see ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL
+ */
+enum CameraMetadataEnumAndroidInfoSupportedHardwareLevel :
+        @3.2::CameraMetadataEnumAndroidInfoSupportedHardwareLevel {
+    ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL,
+};
+
+/** android.statistics.oisDataMode enumeration values
+ * @see ANDROID_STATISTICS_OIS_DATA_MODE
+ */
+enum CameraMetadataEnumAndroidStatisticsOisDataMode : uint32_t {
+    ANDROID_STATISTICS_OIS_DATA_MODE_OFF,
+    ANDROID_STATISTICS_OIS_DATA_MODE_ON,
 };

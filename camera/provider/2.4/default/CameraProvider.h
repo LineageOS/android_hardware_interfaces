@@ -115,6 +115,7 @@ private:
 
     void addDeviceNames(int camera_id, CameraDeviceStatus status = CameraDeviceStatus::PRESENT,
                         bool cam_new = false);
+    void removeDeviceNames(int camera_id);
 };
 
 extern "C" ICameraProvider* HIDL_FETCH_ICameraProvider(const char* name);

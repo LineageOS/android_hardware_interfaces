@@ -81,8 +81,11 @@ class Keymaster4 : public Keymaster {
     Return<void> importWrappedKey(const hidl_vec<uint8_t>& wrappedKeyData,
                                   const hidl_vec<uint8_t>& wrappingKeyBlob,
                                   const hidl_vec<uint8_t>& maskingKey,
+                                  const hidl_vec<KeyParameter>& unwrappingParams,
+                                  uint64_t passwordSid, uint64_t biometricSid,
                                   importWrappedKey_cb _hidl_cb) {
-        return dev_->importWrappedKey(wrappedKeyData, wrappingKeyBlob, maskingKey, _hidl_cb);
+        return dev_->importWrappedKey(wrappedKeyData, wrappingKeyBlob, maskingKey, unwrappingParams,
+                                      passwordSid, biometricSid, _hidl_cb);
     }
 
     Return<void> exportKey(KeyFormat exportFormat, const hidl_vec<uint8_t>& keyBlob,
