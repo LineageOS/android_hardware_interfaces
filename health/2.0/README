@@ -1,0 +1,99 @@
+Upgrading from health@1.0 HAL
+
+0. Remove android.hardware.health@1.0* from PRDOUCT_PACKAGES
+   in device/<manufacturer>/<device>/device.mk
+
+1. If the device does not have a vendor-specific libhealthd AND does not
+   implement storage-related APIs, just add the following to PRODUCT_PACKAGES:
+   android.hardware.health@2.0-service
+   Otherwise, continue to Step 2.
+
+2. Create directory
+   device/<manufacturer>/<device>/health
+
+3. Create device/<manufacturer>/<device>/health/Android.bp
+   (or equivalent device/<manufacturer>/<device>/health/Android.mk)
+
+cc_binary {
+    name: "android.hardware.health@2.0-service.<device>",
+    init_rc: ["android.hardware.health@2.0-service.<device>.rc"],
+    proprietary: true,
+    relative_install_path: "hw",
+    srcs: [
+        "HealthService.cpp",
+    ],
+
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+
+    static_libs: [
+        "android.hardware.health@2.0-impl",
+        "android.hardware.health@1.0-convert",
+        "libhealthservice",
+        "libbatterymonitor",
+    ],
+
+    shared_libs: [
+        "libbase",
+        "libcutils",
+        "libhidlbase",
+        "libhidltransport",
+        "libutils",
+        "android.hardware.health@2.0",
+    ],
+
+    header_libs: ["libhealthd_headers"],
+}
+
+4. Create device/<manufacturer>/<device>/health/android.hardware.health@2.0-service.<device>.rc
+
+service vendor.health-hal-2-0 /vendor/bin/hw/android.hardware.health@2.0-service.<device>
+    class hal
+    user system
+    group system
+
+5. Create device/<manufacturer>/<device>/health/HealthService.cpp:
+
+#include <health2/service.h>
+int main() { return health_service_main(); }
+
+6. libhealthd dependency:
+
+6.1 If the device has a vendor-specific libhealthd.<soc>, add it to static_libs.
+
+6.2 If the device does not have a vendor-specific libhealthd, add the following
+    lines to HealthService.cpp:
+
+#include <healthd/healthd.h>
+void healthd_board_init(struct healthd_config*) {}
+
+int healthd_board_battery_update(struct android::BatteryProperties*) {
+    // return 0 to log periodic polled battery status to kernel log
+    return 0;
+}
+
+7. Storage related APIs:
+
+7.1 If the device does not implement IHealth.getDiskStats and
+    IHealth.getStorageInfo, add libstoragehealthdefault to static_libs.
+
+7.2 If the device implements one of these two APIs, add and implement the
+    following functions in HealthService.cpp:
+
+void get_storage_info(std::vector<struct StorageInfo>& info) {
+    // ...
+}
+void get_disk_stats(std::vector<struct DiskStats>& stats) {
+    // ...
+}
+
+8. Update necessary SELinux permissions. For example,
+
+# device/<manufacturer>/<device>/sepolicy/vendor/file_contexts
+/vendor/bin/hw/android\.hardware\.health@2\.0-service.<device> u:object_r:hal_health_default_exec:s0
+
+# device/<manufacturer>/<device>/sepolicy/vendor/hal_health_default.te
+# Add device specific permissions to hal_health_default domain, especially
+# if Step 6.2 or Step 7.2 is done.
