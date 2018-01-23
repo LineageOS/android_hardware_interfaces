@@ -132,16 +132,18 @@ class WifiChip : public V1_2::IWifiChip {
     Return<void> enableDebugErrorAlerts(
         bool enable, enableDebugErrorAlerts_cb hidl_status_cb) override;
     Return<void> selectTxPowerScenario(
-        TxPowerScenario scenario,
+        V1_1::IWifiChip::TxPowerScenario scenario,
         selectTxPowerScenario_cb hidl_status_cb) override;
     Return<void> resetTxPowerScenario(
         resetTxPowerScenario_cb hidl_status_cb) override;
-    Return<void> debug(const hidl_handle& handle,
-                       const hidl_vec<hidl_string>& options) override;
     Return<void> registerEventCallback_1_2(
         const sp<IWifiChipEventCallback>& event_callback,
         registerEventCallback_1_2_cb hidl_status_cb) override;
-
+    Return<void> selectTxPowerScenario_1_2(
+        TxPowerScenario scenario,
+        selectTxPowerScenario_cb hidl_status_cb) override;
+    Return<void> debug(const hidl_handle& handle,
+                       const hidl_vec<hidl_string>& options) override;
    private:
     void invalidateAndRemoveAllIfaces();
 
@@ -193,11 +195,11 @@ class WifiChip : public V1_2::IWifiChip {
     std::pair<WifiStatus, WifiDebugHostWakeReasonStats>
     getDebugHostWakeReasonStatsInternal();
     WifiStatus enableDebugErrorAlertsInternal(bool enable);
-    WifiStatus selectTxPowerScenarioInternal(TxPowerScenario scenario);
+    WifiStatus selectTxPowerScenarioInternal(V1_1::IWifiChip::TxPowerScenario scenario);
     WifiStatus resetTxPowerScenarioInternal();
     WifiStatus registerEventCallbackInternal_1_2(
         const sp<IWifiChipEventCallback>& event_callback);
-
+    WifiStatus selectTxPowerScenarioInternal_1_2(TxPowerScenario scenario);
     WifiStatus handleChipConfiguration(
         std::unique_lock<std::recursive_mutex>* lock, ChipModeId mode_id);
     WifiStatus registerDebugRingBufferCallback();
