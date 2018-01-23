@@ -425,6 +425,13 @@ status_t CameraModule::filterOpenErrorCode(status_t err) {
     return -ENODEV;
 }
 
+void CameraModule::removeCamera(int cameraId) {
+    free_camera_metadata(
+        const_cast<camera_metadata_t*>(mCameraInfoMap[cameraId].static_camera_characteristics));
+    mCameraInfoMap.removeItem(cameraId);
+    mDeviceVersionMap.removeItem(cameraId);
+}
+
 uint16_t CameraModule::getModuleApiVersion() const {
     return mModule->common.module_api_version;
 }
