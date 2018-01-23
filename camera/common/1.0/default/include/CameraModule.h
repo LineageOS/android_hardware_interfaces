@@ -63,6 +63,8 @@ public:
     const char* getModuleAuthor() const;
     // Only used by CameraModuleFixture native test. Do NOT use elsewhere.
     void *getDso();
+    // Only used by CameraProvider
+    void removeCamera(int cameraId);
 
 private:
     // Derive camera characteristics keys defined after HAL device version
