@@ -106,10 +106,6 @@ enum AudioStreamType : int32_t {
     ACCESSIBILITY    = 10, // For accessibility talk back prompts
     REROUTING        = 11, // For dynamic policy output mixes
     PATCH            = 12, // For internal audio flinger tracks.  Fixed volume
-    PUBLIC_CNT       = ACCESSIBILITY + 1,
-    // Number of streams considered by audio policy for volume and routing
-    FOR_POLICY_CNT   = PATCH,
-    CNT              = PATCH + 1
 };
 
 @export(name="audio_source_t", value_prefix="AUDIO_SOURCE_")
@@ -138,15 +134,7 @@ enum AudioSource : int32_t {
      */
     UNPROCESSED         = 9,
 
-    CNT,
-    MAX                 = CNT - 1,
     FM_TUNER            = 1998,
-    /**
-     * A low-priority, preemptible audio source for for background software
-     * hotword detection. Same tuning as VOICE_RECOGNITION.  Used only
-     * internally by the framework.
-     */
-    HOTWORD             = 1999
 };
 
 typedef int32_t AudioSession;
@@ -402,15 +390,7 @@ enum AudioChannelMask : uint32_t {
             OUT_FRONT_CENTER | OUT_LOW_FREQUENCY |
             OUT_BACK_LEFT | OUT_BACK_RIGHT |
             OUT_SIDE_LEFT | OUT_SIDE_RIGHT),
-    OUT_ALL      = (OUT_FRONT_LEFT | OUT_FRONT_RIGHT |
-            OUT_FRONT_CENTER | OUT_LOW_FREQUENCY |
-            OUT_BACK_LEFT | OUT_BACK_RIGHT |
-            OUT_FRONT_LEFT_OF_CENTER | OUT_FRONT_RIGHT_OF_CENTER |
-            OUT_BACK_CENTER |
-            OUT_SIDE_LEFT | OUT_SIDE_RIGHT |
-            OUT_TOP_CENTER |
-            OUT_TOP_FRONT_LEFT | OUT_TOP_FRONT_CENTER | OUT_TOP_FRONT_RIGHT |
-            OUT_TOP_BACK_LEFT | OUT_TOP_BACK_CENTER | OUT_TOP_BACK_RIGHT),
+    // Note that the 2.0 OUT_ALL* have been moved to helper functions
 
     /* These are bits only, not complete values */
 
@@ -440,12 +420,7 @@ enum AudioChannelMask : uint32_t {
     IN_VOICE_DNLINK_MONO = (IN_VOICE_DNLINK | IN_MONO),
     IN_VOICE_CALL_MONO   = (IN_VOICE_UPLINK_MONO |
             IN_VOICE_DNLINK_MONO),
-    IN_ALL    = (IN_LEFT | IN_RIGHT | IN_FRONT | IN_BACK|
-            IN_LEFT_PROCESSED | IN_RIGHT_PROCESSED |
-            IN_FRONT_PROCESSED | IN_BACK_PROCESSED|
-            IN_PRESSURE |
-            IN_X_AXIS | IN_Y_AXIS | IN_Z_AXIS |
-            IN_VOICE_UPLINK | IN_VOICE_DNLINK),
+    // Note that the 2.0 IN_ALL* have been moved to helper functions
 
     COUNT_MAX    = 30,
     INDEX_HDR    = REPRESENTATION_INDEX << COUNT_MAX,
@@ -488,9 +463,6 @@ enum AudioMode : int32_t {
     RINGTONE         = 1,
     IN_CALL          = 2,
     IN_COMMUNICATION = 3,
-
-    CNT,
-    MAX              = CNT - 1,
 };
 
 @export(name="", value_prefix="AUDIO_DEVICE_")
@@ -540,41 +512,8 @@ enum AudioDevice : uint32_t {
     OUT_PROXY                     = 0x2000000,
     OUT_USB_HEADSET               = 0x4000000,
     OUT_DEFAULT                   = BIT_DEFAULT,
-    OUT_ALL      = (OUT_EARPIECE |
-            OUT_SPEAKER |
-            OUT_WIRED_HEADSET |
-            OUT_WIRED_HEADPHONE |
-            OUT_BLUETOOTH_SCO |
-            OUT_BLUETOOTH_SCO_HEADSET |
-            OUT_BLUETOOTH_SCO_CARKIT |
-            OUT_BLUETOOTH_A2DP |
-            OUT_BLUETOOTH_A2DP_HEADPHONES |
-            OUT_BLUETOOTH_A2DP_SPEAKER |
-            OUT_HDMI |
-            OUT_ANLG_DOCK_HEADSET |
-            OUT_DGTL_DOCK_HEADSET |
-            OUT_USB_ACCESSORY |
-            OUT_USB_DEVICE |
-            OUT_REMOTE_SUBMIX |
-            OUT_TELEPHONY_TX |
-            OUT_LINE |
-            OUT_HDMI_ARC |
-            OUT_SPDIF |
-            OUT_FM |
-            OUT_AUX_LINE |
-            OUT_SPEAKER_SAFE |
-            OUT_IP |
-            OUT_BUS |
-            OUT_PROXY |
-            OUT_USB_HEADSET |
-            OUT_DEFAULT),
-    OUT_ALL_A2DP = (OUT_BLUETOOTH_A2DP |
-            OUT_BLUETOOTH_A2DP_HEADPHONES |
-            OUT_BLUETOOTH_A2DP_SPEAKER),
-    OUT_ALL_SCO  = (OUT_BLUETOOTH_SCO |
-            OUT_BLUETOOTH_SCO_HEADSET |
-            OUT_BLUETOOTH_SCO_CARKIT),
-    OUT_ALL_USB  = (OUT_USB_ACCESSORY | OUT_USB_DEVICE | OUT_USB_HEADSET),
+    // Note that the 2.0 OUT_ALL* have been moved to helper functions
+
     /** input devices */
     IN_COMMUNICATION         = BIT_IN | 0x1,
     IN_AMBIENT               = BIT_IN | 0x2,
@@ -609,32 +548,7 @@ enum AudioDevice : uint32_t {
     IN_USB_HEADSET           = BIT_IN | 0x2000000,
     IN_DEFAULT               = BIT_IN | BIT_DEFAULT,
 
-    IN_ALL     = (IN_COMMUNICATION |
-            IN_AMBIENT |
-            IN_BUILTIN_MIC |
-            IN_BLUETOOTH_SCO_HEADSET |
-            IN_WIRED_HEADSET |
-            IN_HDMI |
-            IN_TELEPHONY_RX |
-            IN_BACK_MIC |
-            IN_REMOTE_SUBMIX |
-            IN_ANLG_DOCK_HEADSET |
-            IN_DGTL_DOCK_HEADSET |
-            IN_USB_ACCESSORY |
-            IN_USB_DEVICE |
-            IN_FM_TUNER |
-            IN_TV_TUNER |
-            IN_LINE |
-            IN_SPDIF |
-            IN_BLUETOOTH_A2DP |
-            IN_LOOPBACK |
-            IN_IP |
-            IN_BUS |
-            IN_PROXY |
-            IN_USB_HEADSET |
-            IN_DEFAULT),
-    IN_ALL_SCO = IN_BLUETOOTH_SCO_HEADSET,
-    IN_ALL_USB  = (IN_USB_ACCESSORY | IN_USB_DEVICE | IN_USB_HEADSET),
+    // Note that the 2.0 IN_ALL* have been moved to helper functions
 };
 
 /**
@@ -716,9 +630,6 @@ enum AudioUsage : int32_t {
     GAME                               = 14,
     VIRTUAL_SOURCE                     = 15,
     ASSISTANT                          = 16,
-
-    CNT,
-    MAX                                = CNT - 1,
 };
 
 /**
@@ -862,7 +773,6 @@ enum AudioPortConfigMask : uint32_t {
     CHANNEL_MASK =  0x2,
     FORMAT = 0x4,
     GAIN = 0x8,
-    ALL = SAMPLE_RATE | CHANNEL_MASK | FORMAT | GAIN
 };
 
 /**
