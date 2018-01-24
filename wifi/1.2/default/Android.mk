@@ -30,6 +30,7 @@ endif
 LOCAL_SRC_FILES := \
     hidl_struct_util.cpp \
     hidl_sync_util.cpp \
+    ringbuffer.cpp \
     wifi.cpp \
     wifi_ap_iface.cpp \
     wifi_chip.cpp \
@@ -97,6 +98,7 @@ LOCAL_SRC_FILES := \
     tests/mock_wifi_feature_flags.cpp \
     tests/mock_wifi_legacy_hal.cpp \
     tests/mock_wifi_mode_controller.cpp \
+    tests/ringbuffer_unit_tests.cpp \
     tests/wifi_chip_unit_tests.cpp
 LOCAL_STATIC_LIBRARIES := \
     libgmock \
