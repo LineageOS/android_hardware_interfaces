@@ -92,7 +92,7 @@ interface ISoundTriggerHw extends @2.0::ISoundTriggerHw {
      * @return modelHandle A unique handle assigned by the HAL for use by the
      *     framework when controlling activity for this sound model.
      */
-    @callflow(next={"startRecognition_2_1", "setSoundModelParameters", "unloadSoundModel"})
+    @callflow(next={"startRecognition_2_1", "unloadSoundModel"})
     loadSoundModel_2_1(SoundModel soundModel,
                    ISoundTriggerHwCallback callback,
                    CallbackCookie cookie)
@@ -126,7 +126,7 @@ interface ISoundTriggerHw extends @2.0::ISoundTriggerHw {
      * @return modelHandle A unique handle assigned by the HAL for use by the
      *     framework when controlling activity for this sound model.
      */
-    @callflow(next={"startRecognition_2_1", "setSoundModelParameters", "unloadSoundModel"})
+    @callflow(next={"startRecognition_2_1", "unloadSoundModel"})
     loadPhraseSoundModel_2_1(PhraseSoundModel soundModel,
                    ISoundTriggerHwCallback callback,
                    CallbackCookie cookie)
@@ -160,75 +160,5 @@ interface ISoundTriggerHw extends @2.0::ISoundTriggerHw {
                      RecognitionConfig config,
                      ISoundTriggerHwCallback callback,
                      CallbackCookie cookie)
-            generates (int32_t retval);
-
-
-    struct ParameterValue {
-        string key;
-        string value;
-    };
-
-    /**
-     * Generic method for retrieving vendor-specific parameter values.
-     * The framework does not interpret the parameters, they are passed
-     * in an opaque manner between a vendor application and HAL.
-     *
-     * @param keys parameter keys.
-     * @return retval Operation completion status: 0 in case of success,
-     *     -EINVAL in case of invalid keys,
-     *     -ENOSYS in case if this operation is not supported,
-     *     -ENOMEM in case of memory allocation failure,
-     *     -ENODEV in case of initialization error.
-     * @return parameters parameter key value pairs.
-     */
-    getParameters(vec<string> keys)
-            generates (int32_t retval, vec<ParameterValue> parameters);
-
-    /**
-     * Generic method for setting vendor-specific parameter values.
-     * The framework does not interpret the parameters, they are passed
-     * in an opaque manner between a vendor application and HAL.
-     *
-     * @param parameters parameter key value pairs.
-     * @return retval Operation completion status: 0 in case of success,
-     *     -EINVAL in case of invalid keys,
-     *     -ENOSYS in case if this operation is not supported,
-     *     -ENOMEM in case of memory allocation failure,
-     *     -ENODEV in case of initialization error.
-     */
-    setParameters(vec<ParameterValue> parameters) generates (int32_t retval);
-
-    /**
-     * Generic method for retrieving vendor-specific parameter values.
-     * The framework does not interpret the parameters, they are passed
-     * in an opaque manner between a vendor application and HAL.
-     *
-     * @param modelHandle the handle of the sound model to get parameters about.
-     * @param keys parameter keys.
-     * @return retval Operation completion status: 0 in case of success,
-     *     -EINVAL in case of invalid keys,
-     *     -ENOSYS in case if this operation is not supported,
-     *     -ENOMEM in case of memory allocation failure,
-     *     -ENODEV in case of initialization error.
-     * @return parameters parameter key value pairs.
-     */
-    getSoundModelParameters(SoundModelHandle modelHandle, vec<string> keys)
-            generates (int32_t retval, vec<ParameterValue> parameters);
-
-    /**
-     * Generic method for setting vendor-specific parameter values.
-     * The framework does not interpret the parameters, they are passed
-     * in an opaque manner between a vendor application and HAL.
-     *
-     * @param modelHandle the handle of the sound model to set parameters for.
-     * @param parameters parameter key value pairs.
-     * @return retval Operation completion status: 0 in case of success,
-     *     -EINVAL in case of invalid keys,
-     *     -ENOSYS in case if this operation is not supported,
-     *     -ENOMEM in case of memory allocation failure,
-     *     -ENODEV in case of initialization error.
-     */
-    setSoundModelParameters(
-            SoundModelHandle modelHandle, vec<ParameterValue> parameters)
             generates (int32_t retval);
 };

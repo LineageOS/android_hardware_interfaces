@@ -51,7 +51,6 @@ using V2_0_ISoundTriggerHw = ::android::hardware::soundtrigger::V2_0::ISoundTrig
 using V2_0_ISoundTriggerHwCallback =
     ::android::hardware::soundtrigger::V2_0::ISoundTriggerHwCallback;
 using ::android::hardware::soundtrigger::V2_1::ISoundTriggerHw;
-using ParameterValue = ::android::hardware::soundtrigger::V2_1::ISoundTriggerHw::ParameterValue;
 using ::android::hardware::soundtrigger::V2_1::ISoundTriggerHwCallback;
 using ::android::hidl::allocator::V1_0::IAllocator;
 using ::android::hidl::memory::V1_0::IMemory;
@@ -480,79 +479,4 @@ TEST_F(SoundTriggerHidlTest, stopAllRecognitions) {
 
     EXPECT_TRUE(hidlReturn.isOk());
     EXPECT_TRUE(hidlReturn == 0 || hidlReturn == -ENOSYS);
-}
-
-/**
- * Test ISoundTriggerHw::getParameters() and setParameters() methods
- *
- * Verifies that:
- *  - the implementation implements these optional methods or indicates it is not supported by
- *  returning -ENOSYS
- */
-TEST_F(SoundTriggerHidlTest, getAndSetParameters) {
-    hidl_vec<hidl_string> keys;
-    hidl_vec<ParameterValue> values;
-
-    int32_t ret = -ENODEV;
-    Return<void> hidlReturn =
-        mSoundTriggerHal->getParameters(keys, [&](int32_t retval, auto params) {
-            ret = retval;
-            values = params;
-        });
-    EXPECT_TRUE(hidlReturn.isOk());
-    EXPECT_TRUE(ret == 0 || ret == -ENOSYS);
-    if (ret == 0) {
-        Return<int32_t> hidlReturn = mSoundTriggerHal->setParameters(values);
-        EXPECT_TRUE(hidlReturn.isOk());
-        EXPECT_EQ(0, hidlReturn);
-    }
-}
-
-/**
- * Test ISoundTriggerHw::setParameters() method
- *
- * Verifies that:
- *  - the implementation accepts empty parameters to be set or indicates it is not supported by
- *  returning -ENOSYS
- */
-TEST_F(SoundTriggerHidlTest, setParameters) {
-    hidl_vec<ParameterValue> values;
-    Return<int32_t> hidlReturn = mSoundTriggerHal->setParameters(values);
-    EXPECT_TRUE(hidlReturn.isOk());
-    EXPECT_TRUE(hidlReturn == 0 || hidlReturn == -ENOSYS);
-}
-
-/**
- * Test ISoundTriggerHw::getSoundModelParameters() and setSoundModelParameters() methods
- *
- * Verifies that:
- *  - the implementation implements these optional methods or indicates it is not supported by
- *  returning -ENOSYS;
- *  - if the methods are supported, the implementation returns an error when called without
- *  an active recognition running.
- *
- */
-TEST_F(SoundTriggerHidlTest, getAndSetSoundModelParameters) {
-    SoundModelHandle handle = 0;
-    hidl_vec<hidl_string> keys;
-    hidl_vec<ParameterValue> values;
-
-    {
-        int32_t ret = 0;
-        Return<void> hidlReturn = mSoundTriggerHal->getSoundModelParameters(
-            handle, keys, [&](int32_t retval, auto params) {
-                ret = retval;
-                values = params;
-            });
-        EXPECT_TRUE(hidlReturn.isOk());
-        EXPECT_NE(0, ret);
-        EXPECT_EQ(0u, values.size());
-    }
-
-    values.resize(0);
-    {
-        Return<int32_t> hidlReturn = mSoundTriggerHal->setSoundModelParameters(handle, values);
-        EXPECT_TRUE(hidlReturn.isOk());
-        EXPECT_NE(0, hidlReturn);
-    }
 }

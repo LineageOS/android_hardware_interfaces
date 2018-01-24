@@ -17,6 +17,7 @@
 package android.hardware.camera.device@3.4;
 
 import android.hardware.camera.common@1.0::Status;
+import @3.2::CameraMetadata;
 import @3.3::ICameraDeviceSession;
 import @3.3::HalStreamConfiguration;
 import @3.2::BufferCache;
@@ -28,6 +29,43 @@ import @3.2::BufferCache;
  * configure and request captures from an active camera device.
  */
 interface ICameraDeviceSession extends @3.3::ICameraDeviceSession {
+
+    /**
+     * constructDefaultRequestSettings_3_4:
+     *
+     * Create capture settings for standard camera use cases. Supports the
+     * new template enums added in @3.4.
+     *
+     * The device must return a settings buffer that is configured to meet the
+     * requested use case, which must be one of the CAMERA3_TEMPLATE_*
+     * enums. All request control fields must be included.
+     *
+     * Performance requirements:
+     *
+     * This must be a non-blocking call. The HAL should return from this call
+     * in 1ms, and must return from this call in 5ms.
+     *
+     * Return values:
+     * @return status Status code for the operation, one of:
+     *     OK:
+     *         On a successful construction of default settings.
+     *     INTERNAL_ERROR:
+     *         An unexpected internal error occurred, and the default settings
+     *         are not available.
+     *     ILLEGAL_ARGUMENT:
+     *         The camera HAL does not support the input template type
+     *     CAMERA_DISCONNECTED:
+     *         An external camera device has been disconnected, and is no longer
+     *         available. This camera device interface is now stale, and a new
+     *         instance must be acquired if the device is reconnected. All
+     *         subsequent calls on this interface must return
+     *         CAMERA_DISCONNECTED.
+     * @return requestTemplate The default capture request settings for the requested
+     *     use case, or an empty metadata structure if status is not OK.
+     *
+     */
+    constructDefaultRequestSettings_3_4(RequestTemplate type) generates
+            (Status status, @3.2::CameraMetadata requestTemplate);
 
     /**
      * configureStreams_3_4:

@@ -356,6 +356,8 @@ inline bool operator==(const KeyParameter& a, const KeyParameter& b) {
         case Tag::OS_PATCHLEVEL:
         case Tag::MAC_LENGTH:
         case Tag::AUTH_TIMEOUT:
+        case Tag::VENDOR_PATCHLEVEL:
+        case Tag::BOOT_PATCHLEVEL:
             return a.f.integer == b.f.integer;
 
         /* Long integer tags */

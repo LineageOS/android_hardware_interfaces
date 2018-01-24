@@ -77,6 +77,12 @@ Return<void> Wifi::getChip(ChipId chip_id, getChip_cb hidl_status_cb) {
                            &Wifi::getChipInternal, hidl_status_cb, chip_id);
 }
 
+Return<void> Wifi::debug(const hidl_handle& handle,
+                         const hidl_vec<hidl_string>&) {
+    LOG(INFO) << "-----------Debug is called----------------";
+    return chip_->debug(handle, {});
+}
+
 WifiStatus Wifi::registerEventCallbackInternal(
     const sp<IWifiEventCallback>& event_callback) {
     if (!event_cb_handler_.addCallback(event_callback)) {

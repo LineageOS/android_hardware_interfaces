@@ -374,10 +374,27 @@ interface IKeymasterDevice {
     /**
      * Upgrades an old key blob.  Keys can become "old" in two ways: Keymaster can be upgraded to a
      * new version with an incompatible key blob format, or the system can be updated to invalidate
-     * the OS version and/or patch level.  In either case, attempts to use an old key blob with
-     * getKeyCharacteristics(), exportKey(), attestKey() or begin() must result in Keymaster
-     * returning ErrorCode::KEY_REQUIRES_UPGRADE.  The caller must use this method to upgrade the
-     * key blob.
+     * the OS version (OS_VERSION tag), system patch level (OS_PATCHLEVEL tag), vendor patch level
+     * (VENDOR_PATCH_LEVEL tag), boot patch level (BOOT_PATCH_LEVEL tag) or other,
+     * implementation-defined patch level (keymaster implementers are encouraged to extend this HAL
+     * with a minor version extension to define validatable patch levels for other images; tags
+     * must be defined in the implemeter's namespace, starting at 10000).  In either case,
+     * attempts to use an old key blob with getKeyCharacteristics(), exportKey(), attestKey() or
+     * begin() must result in Keymaster returning ErrorCode::KEY_REQUIRES_UPGRADE.  The caller must
+     * use this method to upgrade the key blob.
+     *
+     * If upgradeKey is asked to update a key with any version or patch level that is higher than
+     * the current system version or patch level, it must return ErrorCode::INVALID_ARGUMENT.  There
+     * is one exception: it is always permissible to "upgrade" from any OS_VERSION number to
+     * OS_VERSION 0.  For example, if the key has OS_VERSION 080001, it is permisible to upgrade the
+     * key if the current system version is 080100, because the new version is larger, or if the
+     * current system version is 0, because upgrades to 0 are always allowed.  If the system version
+     * were 080000, however, keymaster must return ErrorCode::INVALID_ARGUMENT because that value is
+     * smaller than 080001.
+     *
+     * Note that Keymaster versions 2 and 3 required that the system and boot images have the same
+     * patch level and OS version.  This requirement is relaxed for Keymaster 4, and the OS version
+     * in the boot image footer is no longer used.
      *
      * @param keyBlobToUpgrade The opaque descriptor returned by generateKey() or importKey();
      *

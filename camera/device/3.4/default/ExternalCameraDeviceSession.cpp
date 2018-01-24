@@ -178,33 +178,53 @@ void ExternalCameraDeviceSession::dumpState(const native_handle_t*) {
 }
 
 Return<void> ExternalCameraDeviceSession::constructDefaultRequestSettings(
+        V3_2::RequestTemplate type,
+        V3_2::ICameraDeviceSession::constructDefaultRequestSettings_cb _hidl_cb) {
+    V3_2::CameraMetadata outMetadata;
+    Status status = constructDefaultRequestSettingsRaw(
+            static_cast<RequestTemplate>(type), &outMetadata);
+    _hidl_cb(status, outMetadata);
+    return Void();
+}
+
+Return<void> ExternalCameraDeviceSession::constructDefaultRequestSettings_3_4(
         RequestTemplate type,
-        ICameraDeviceSession::constructDefaultRequestSettings_cb _hidl_cb) {
+        ICameraDeviceSession::constructDefaultRequestSettings_cb _hidl_cb)  {
+    V3_2::CameraMetadata outMetadata;
+    Status status = constructDefaultRequestSettingsRaw(type, &outMetadata);
+    _hidl_cb(status, outMetadata);
+    return Void();
+}
+
+Status ExternalCameraDeviceSession::constructDefaultRequestSettingsRaw(RequestTemplate type,
+        V3_2::CameraMetadata *outMetadata) {
     CameraMetadata emptyMd;
     Status status = initStatus();
     if (status != Status::OK) {
-        _hidl_cb(status, emptyMd);
-        return Void();
+        return status;
     }
 
     switch (type) {
         case RequestTemplate::PREVIEW:
         case RequestTemplate::STILL_CAPTURE:
         case RequestTemplate::VIDEO_RECORD:
-        case RequestTemplate::VIDEO_SNAPSHOT:
-            _hidl_cb(Status::OK, mDefaultRequests[static_cast<int>(type)]);
+        case RequestTemplate::VIDEO_SNAPSHOT: {
+            *outMetadata = mDefaultRequests[type];
             break;
+        }
         case RequestTemplate::MANUAL:
         case RequestTemplate::ZERO_SHUTTER_LAG:
-            // Don't support MANUAL or ZSL template
-            _hidl_cb(Status::ILLEGAL_ARGUMENT, emptyMd);
+        case RequestTemplate::MOTION_TRACKING_PREVIEW:
+        case RequestTemplate::MOTION_TRACKING_BEST:
+            // Don't support MANUAL, ZSL, MOTION_TRACKING_* templates
+            status = Status::ILLEGAL_ARGUMENT;
             break;
         default:
             ALOGE("%s: unknown request template type %d", __FUNCTION__, static_cast<int>(type));
-            _hidl_cb(Status::ILLEGAL_ARGUMENT, emptyMd);
+            status = Status::ILLEGAL_ARGUMENT;
             break;
     }
-    return Void();
+    return status;
 }
 
 Return<void> ExternalCameraDeviceSession::configureStreams(
@@ -1767,21 +1787,21 @@ status_t ExternalCameraDeviceSession::initDefaultRequests() {
     const uint8_t controlMode = ANDROID_CONTROL_MODE_AUTO;
     UPDATE(md, ANDROID_CONTROL_MODE, &controlMode, 1);
 
-    for (int type = static_cast<int>(RequestTemplate::PREVIEW);
-            type <= static_cast<int>(RequestTemplate::VIDEO_SNAPSHOT); type++) {
+    auto requestTemplates = hidl_enum_iterator<RequestTemplate>();
+    for (RequestTemplate type : requestTemplates) {
         ::android::hardware::camera::common::V1_0::helper::CameraMetadata mdCopy = md;
         uint8_t intent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
         switch (type) {
-            case static_cast<int>(RequestTemplate::PREVIEW):
+            case RequestTemplate::PREVIEW:
                 intent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
                 break;
-            case static_cast<int>(RequestTemplate::STILL_CAPTURE):
+            case RequestTemplate::STILL_CAPTURE:
                 intent = ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE;
                 break;
-            case static_cast<int>(RequestTemplate::VIDEO_RECORD):
+            case RequestTemplate::VIDEO_RECORD:
                 intent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD;
                 break;
-            case static_cast<int>(RequestTemplate::VIDEO_SNAPSHOT):
+            case RequestTemplate::VIDEO_SNAPSHOT:
                 intent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT;
                 break;
             default:
@@ -1987,4 +2007,3 @@ int AllocatedFrame::getCroppedLayout(const IMapper::Rect& rect, YCbCrLayout* out
 }  // namespace camera
 }  // namespace hardware
 }  // namespace android
-

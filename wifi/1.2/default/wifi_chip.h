@@ -17,12 +17,14 @@
 #ifndef WIFI_CHIP_H_
 #define WIFI_CHIP_H_
 
+#include <list>
 #include <map>
 
 #include <android-base/macros.h>
 #include <android/hardware/wifi/1.2/IWifiChip.h>
 
 #include "hidl_callback_util.h"
+#include "ringbuffer.h"
 #include "wifi_ap_iface.h"
 #include "wifi_feature_flags.h"
 #include "wifi_legacy_hal.h"
@@ -134,6 +136,8 @@ class WifiChip : public V1_2::IWifiChip {
         selectTxPowerScenario_cb hidl_status_cb) override;
     Return<void> resetTxPowerScenario(
         resetTxPowerScenario_cb hidl_status_cb) override;
+    Return<void> debug(const hidl_handle& handle,
+                       const hidl_vec<hidl_string>& options) override;
 
    private:
     void invalidateAndRemoveAllIfaces();
@@ -204,6 +208,7 @@ class WifiChip : public V1_2::IWifiChip {
     bool canCurrentModeSupportIfaceOfType(IfaceType type);
     bool isValidModeId(ChipModeId mode_id);
     std::string allocateApOrStaIfaceName();
+    bool writeRingbufferFilesInternal();
 
     ChipId chip_id_;
     std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
@@ -214,6 +219,7 @@ class WifiChip : public V1_2::IWifiChip {
     std::vector<sp<WifiP2pIface>> p2p_ifaces_;
     std::vector<sp<WifiStaIface>> sta_ifaces_;
     std::vector<sp<WifiRttController>> rtt_controllers_;
+    std::map<std::string, Ringbuffer> ringbuffer_map_;
     bool is_valid_;
     // Members pertaining to chip configuration.
     uint32_t current_mode_id_;

@@ -56,6 +56,8 @@ class Wifi : public V1_2::IWifi {
     Return<void> stop(stop_cb hidl_status_cb) override;
     Return<void> getChipIds(getChipIds_cb hidl_status_cb) override;
     Return<void> getChip(ChipId chip_id, getChip_cb hidl_status_cb) override;
+    Return<void> debug(const hidl_handle& handle,
+                       const hidl_vec<hidl_string>& options) override;
 
    private:
     enum class RunState { STOPPED, STARTED, STOPPING };

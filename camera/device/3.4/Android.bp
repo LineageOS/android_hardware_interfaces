@@ -18,8 +18,11 @@ hidl_interface {
         "android.hidl.base@1.0",
     ],
     types: [
+        "CaptureRequest",
         "HalStream",
         "HalStreamConfiguration",
+        "PhysicalCameraSetting",
+        "RequestTemplate",
         "Stream",
         "StreamConfiguration",
     ],

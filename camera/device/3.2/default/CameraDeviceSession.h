@@ -112,7 +112,9 @@ protected:
     Return<Status> flush();
     Return<void> close();
 
-    //Helper methods
+    // Helper methods
+    Status constructDefaultRequestSettingsRaw(int type, CameraMetadata *outMetadata);
+
     bool preProcessConfigurationLocked(const StreamConfiguration& requestedConfiguration,
             camera3_stream_configuration_t *stream_list /*out*/,
             hidl_vec<camera3_stream_t*> *streams /*out*/);
