@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <android-base/logging.h>
+
 #include "ringbuffer.h"
 
 namespace android {
@@ -26,6 +28,11 @@ Ringbuffer::Ringbuffer(size_t maxSize) : size_(0), maxSize_(maxSize) {}
 
 void Ringbuffer::append(const std::vector<uint8_t>& input) {
     if (input.size() == 0) {
+        return;
+    }
+    if (input.size() > maxSize_) {
+        LOG(INFO) << "Oversized message of " << input.size()
+                  << " bytes is dropped";
         return;
     }
     data_.push_back(input);

@@ -81,6 +81,15 @@ TEST_F(RingbufferTest, OversizedAppendIsDropped) {
     buffer_.append(input);
     ASSERT_TRUE(buffer_.getData().empty());
 }
+
+TEST_F(RingbufferTest, OversizedAppendDoesNotDropExistingData) {
+    const std::vector<uint8_t> input(maxBufferSize_, '0');
+    const std::vector<uint8_t> input2(maxBufferSize_ + 1, '1');
+    buffer_.append(input);
+    buffer_.append(input2);
+    ASSERT_EQ(1u, buffer_.getData().size());
+    EXPECT_EQ(input, buffer_.getData().front());
+}
 }  // namespace implementation
 }  // namespace V1_2
 }  // namespace wifi
