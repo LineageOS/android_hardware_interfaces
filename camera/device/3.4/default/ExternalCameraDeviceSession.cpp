@@ -1647,6 +1647,7 @@ Status ExternalCameraDeviceSession::configureStreams(
         switch (config.streams[i].format) {
             case PixelFormat::BLOB:
             case PixelFormat::YCBCR_420_888:
+            case PixelFormat::YV12: // Used by SurfaceTexture
                 // No override
                 out->streams[i].v3_2.overrideFormat = config.streams[i].format;
                 break;
@@ -1659,7 +1660,7 @@ Status ExternalCameraDeviceSession::configureStreams(
                 mStreamMap[config.streams[i].id].format = out->streams[i].v3_2.overrideFormat;
                 break;
             default:
-                ALOGE("%s: unsupported format %x", __FUNCTION__, config.streams[i].format);
+                ALOGE("%s: unsupported format 0x%x", __FUNCTION__, config.streams[i].format);
                 return Status::ILLEGAL_ARGUMENT;
         }
     }
@@ -1813,15 +1814,14 @@ status_t ExternalCameraDeviceSession::fillCaptureResult(
     const uint8_t ae_lock = ANDROID_CONTROL_AE_LOCK_OFF;
     UPDATE(md, ANDROID_CONTROL_AE_LOCK, &ae_lock, 1);
 
-
-    // TODO: b/72261912 AF should stay LOCKED until cancel is seen
-    bool afTrigger = false;
+    bool afTrigger = mAfTrigger;
     if (md.exists(ANDROID_CONTROL_AF_TRIGGER)) {
+        Mutex::Autolock _l(mLock);
         camera_metadata_entry entry = md.find(ANDROID_CONTROL_AF_TRIGGER);
         if (entry.data.u8[0] == ANDROID_CONTROL_AF_TRIGGER_START) {
-            afTrigger = true;
+            mAfTrigger = afTrigger = true;
         } else if (entry.data.u8[0] == ANDROID_CONTROL_AF_TRIGGER_CANCEL) {
-            afTrigger = false;
+            mAfTrigger = afTrigger = false;
         }
     }
 
@@ -1850,6 +1850,9 @@ status_t ExternalCameraDeviceSession::fillCaptureResult(
         ALOGE("%s: cannot find active array size!", __FUNCTION__);
         return -EINVAL;
     }
+
+    const uint8_t flashState = ANDROID_FLASH_STATE_UNAVAILABLE;
+    UPDATE(md, ANDROID_FLASH_STATE, &flashState, 1);
 
     // android.scaler
     const int32_t crop_region[] = {
