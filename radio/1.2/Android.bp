@@ -20,6 +20,7 @@ hidl_interface {
     ],
     types: [
         "CardStatus",
+        "CellConnectionStatus",
         "CellIdentityCdma",
         "CellIdentityGsm",
         "CellIdentityLte",
@@ -36,6 +37,7 @@ hidl_interface {
         "MaxSearchTimeRange",
         "NetworkScanRequest",
         "NetworkScanResult",
+        "PhysicalChannelConfig",
         "RadioConst",
         "ScanIntervalRange",
     ],
