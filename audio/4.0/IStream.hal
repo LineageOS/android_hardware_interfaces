@@ -88,7 +88,7 @@ interface IStream {
      *
      * @return mask channel mask.
      */
-    getChannelMask() generates (AudioChannelMask mask);
+    getChannelMask() generates (bitfield<AudioChannelMask> mask);
 
     /**
      * Return supported channel masks of the stream. Calling this method is
@@ -101,7 +101,7 @@ interface IStream {
      * @return masks supported audio masks.
      */
     getSupportedChannelMasks(AudioFormat format)
-            generates (Result retval, vec<AudioChannelMask> masks);
+            generates (Result retval, vec<bitfield<AudioChannelMask>> masks);
 
     /**
      * Sets the channel mask of the stream. Calling this method is equivalent to
@@ -111,7 +111,7 @@ interface IStream {
      * @param format audio format.
      * @return retval operation completion status.
      */
-    setChannelMask(AudioChannelMask mask) generates (Result retval);
+    setChannelMask(bitfield<AudioChannelMask> mask) generates (Result retval);
 
     /**
      * Return the audio format of the stream.
@@ -148,7 +148,7 @@ interface IStream {
      * @return format audio format.
      */
     getAudioProperties() generates (
-            uint32_t sampleRateHz, AudioChannelMask mask, AudioFormat format);
+            uint32_t sampleRateHz, bitfield<AudioChannelMask> mask, AudioFormat format);
 
     /**
      * Applies audio effect to the stream.
@@ -183,7 +183,7 @@ interface IStream {
      * @return retval operation completion status: OK or NOT_SUPPORTED.
      * @return device set of device(s) which this stream is connected to.
      */
-    getDevice() generates (Result retval, AudioDevice device);
+    getDevice() generates (Result retval, bitfield<AudioDevice> device);
 
     /**
      * Connects the stream to the device.

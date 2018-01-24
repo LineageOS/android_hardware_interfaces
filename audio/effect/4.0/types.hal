@@ -255,7 +255,7 @@ enum EffectConfigParameters : int32_t {
 struct EffectBufferConfig {
     AudioBuffer buffer;
     uint32_t samplingRateHz;
-    AudioChannelMask channels;
+    bitfield<AudioChannelMask> channels;
     AudioFormat format;
     EffectBufferAccess accessMode;
     EffectConfigParameters mask;
@@ -274,8 +274,8 @@ enum EffectFeature : int32_t {
 };
 
 struct EffectAuxChannelsConfig {
-    AudioChannelMask mainChannels;  // channel mask for main channels
-    AudioChannelMask auxChannels;   // channel mask for auxiliary channels
+    bitfield<AudioChannelMask> mainChannels;  // channel mask for main channels
+    bitfield<AudioChannelMask> auxChannels;   // channel mask for auxiliary channels
 };
 
 struct EffectOffloadParameter {

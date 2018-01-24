@@ -82,7 +82,7 @@ interface IEffect {
      * @return retval operation completion status.
      */
     @callflow(next={"*"})
-    setDevice(AudioDevice device) generates (Result retval);
+    setDevice(bitfield<AudioDevice> device) generates (Result retval);
 
     /**
      * Set and get volume. Used by audio framework to delegate volume control to
@@ -155,7 +155,7 @@ interface IEffect {
      * @return retval operation completion status.
      */
     @callflow(next={"*"})
-    setInputDevice(AudioDevice device) generates (Result retval);
+    setInputDevice(bitfield<AudioDevice> device) generates (Result retval);
 
     /**
      * Read audio parameters configurations for input and output buffers.
