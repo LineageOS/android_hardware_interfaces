@@ -217,6 +217,10 @@ struct CellIdentityGsm {
 struct CellIdentityLte {
     @1.0::CellIdentityLte base;
     CellIdentityOperatorNames operatorNames;
+    /**
+     * Cell bandwidth, in kHz.
+     */
+    int32_t bandwidth;
 };
 
 struct CellIdentityWcdma {
@@ -283,6 +287,10 @@ struct CellInfo {
      * Valid only if type = tdscdma and size = 1 else must be empty.
      */
     vec<CellInfoTdscdma> tdscdma;
+    /**
+     * Connection status for the cell.
+     */
+    CellConnectionStatus connectionStatus;
 };
 
 struct CardStatus {
