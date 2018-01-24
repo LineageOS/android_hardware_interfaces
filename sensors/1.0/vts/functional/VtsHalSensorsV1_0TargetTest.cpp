@@ -15,8 +15,8 @@
  */
 
 #define LOG_TAG "sensors_hidl_hal_test"
-#include "GrallocWrapper.h"
 #include <VtsHalHidlTargetTestBase.h>
+#include <VtsHalHidlTargetTestEnvBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/sensors/1.0/ISensors.h>
 #include <android/hardware/sensors/1.0/types.h>
@@ -24,6 +24,7 @@
 #include <hardware/sensors.h>  // for sensor type strings
 #include <log/log.h>
 #include <utils/SystemClock.h>
+#include "GrallocWrapper.h"
 
 #include <algorithm>
 #include <cinttypes>
@@ -46,63 +47,65 @@ using namespace ::android::hardware::sensors::V1_0;
 
 // Test environment for sensors
 class SensorsHidlTest;
-class SensorsHidlEnvironment : public ::testing::Environment {
- public:
-  // get the test environment singleton
-  static SensorsHidlEnvironment* Instance() {
-    static SensorsHidlEnvironment* instance = new SensorsHidlEnvironment;
-    return instance;
-  }
+class SensorsHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    // get the test environment singleton
+    static SensorsHidlEnvironment* Instance() {
+        static SensorsHidlEnvironment* instance = new SensorsHidlEnvironment;
+        return instance;
+    }
 
-  virtual void SetUp();
-  virtual void TearDown();
+    virtual void HidlSetUp() override;
+    virtual void HidlTearDown() override;
 
-  // Get and clear all events collected so far (like "cat" shell command).
-  // If output is nullptr, it clears all collected events.
-  void catEvents(std::vector<Event>* output);
+    virtual void registerTestServices() override { registerTestService<ISensors>(); }
 
-  // set sensor event collection status
-  void setCollection(bool enable);
+    // Get and clear all events collected so far (like "cat" shell command).
+    // If output is nullptr, it clears all collected events.
+    void catEvents(std::vector<Event>* output);
 
- private:
-  friend SensorsHidlTest;
-  // sensors hidl service
-  sp<ISensors> sensors;
+    // set sensor event collection status
+    void setCollection(bool enable);
 
-  SensorsHidlEnvironment() {}
+   private:
+    friend SensorsHidlTest;
+    // sensors hidl service
+    sp<ISensors> sensors;
 
-  void addEvent(const Event& ev);
-  void startPollingThread();
-  void resetHal();
-  static void pollingThread(SensorsHidlEnvironment* env, std::shared_ptr<bool> stop);
+    SensorsHidlEnvironment() {}
 
-  bool collectionEnabled;
-  std::shared_ptr<bool> stopThread;
-  std::thread pollThread;
-  std::vector<Event> events;
-  std::mutex events_mutex;
+    void addEvent(const Event& ev);
+    void startPollingThread();
+    void resetHal();
+    static void pollingThread(SensorsHidlEnvironment* env, std::shared_ptr<bool> stop);
 
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(SensorsHidlEnvironment);
+    bool collectionEnabled;
+    std::shared_ptr<bool> stopThread;
+    std::thread pollThread;
+    std::vector<Event> events;
+    std::mutex events_mutex;
+
+    GTEST_DISALLOW_COPY_AND_ASSIGN_(SensorsHidlEnvironment);
 };
 
-void SensorsHidlEnvironment::SetUp() {
-  resetHal();
+void SensorsHidlEnvironment::HidlSetUp() {
+    resetHal();
 
-  ASSERT_NE(sensors, nullptr) << "sensors is nullptr, cannot get hidl service";
+    ASSERT_NE(sensors, nullptr) << "sensors is nullptr, cannot get hidl service";
 
-  collectionEnabled = false;
-  startPollingThread();
+    collectionEnabled = false;
+    startPollingThread();
 
-  // In case framework just stopped for test and there is sensor events in the pipe,
-  // wait some time for those events to be cleared to avoid them messing up the test.
-  std::this_thread::sleep_for(std::chrono::seconds(3));
+    // In case framework just stopped for test and there is sensor events in the pipe,
+    // wait some time for those events to be cleared to avoid them messing up the test.
+    std::this_thread::sleep_for(std::chrono::seconds(3));
 }
 
-void SensorsHidlEnvironment::TearDown() {
-  if (stopThread) {
-    *stopThread = true;
-  }
-  pollThread.detach();
+void SensorsHidlEnvironment::HidlTearDown() {
+    if (stopThread) {
+        *stopThread = true;
+    }
+    pollThread.detach();
 }
 
 void SensorsHidlEnvironment::resetHal() {
@@ -115,7 +118,8 @@ void SensorsHidlEnvironment::resetHal() {
     // this do ... while is for easy error handling
     do {
       step = "getService()";
-      sensors = ISensors::getService();
+      sensors = ISensors::getService(
+          SensorsHidlEnvironment::Instance()->getServiceName<ISensors>());
       if (sensors == nullptr) {
         break;
       }
@@ -1500,6 +1504,7 @@ TEST_F(SensorsHidlTest, MagnetometerGrallocDirectReportOperationVeryFast) {
 int main(int argc, char **argv) {
   ::testing::AddGlobalTestEnvironment(SensorsHidlEnvironment::Instance());
   ::testing::InitGoogleTest(&argc, argv);
+  SensorsHidlEnvironment::Instance()->init(&argc, argv);
   int status = RUN_ALL_TESTS();
   ALOGI("Test result = %d", status);
   return status;
