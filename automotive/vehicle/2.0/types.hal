@@ -988,41 +988,6 @@ enum VehicleProperty: int32_t {
         | VehicleArea:GLOBAL),
 
     /**
-     * Property to define instrument cluster information.
-     * For VehicleInstrumentClusterType:EXTERNAL_DISPLAY:
-     *  READ:
-     *   int32Values[0] : The current screen mode index. Screen mode is defined
-     *                    as a configuration in car service and represents
-     *                    which area of screen is renderable.
-     *   int32Values[1] : Android can render to instrument cluster (=1) or
-     *                    not(=0). When this is 0, instrument cluster may be
-     *                    rendering some information in the area allocated for
-     *                    android and android side rendering is invisible.
-     *  WRITE from android:
-     *   int32Values[0] : Preferred mode for android side. Depending on the app
-     *                    rendering to instrument cluster, preferred mode can
-     *                    change. Instrument cluster still needs to send
-     *                    event with new mode to trigger actual mode change.
-     *   int32Values[1] : The current app context relevant for instrument
-     *                    cluster. Use the same flag with
-     *                    VehicleAudioContextFlag but this context represents
-     *                    active apps, not active audio. Instrument cluster
-     *                    side may change mode depending on the currently
-     *                    active contexts.
-     *  When system boots up, Android side will write {0, 0, 0, 0} when it is
-     *  ready to render to instrument cluster. Before this message, rendering
-     *  from android must not be visible in the cluster.
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
-     * @configArray 0:VehicleInstrumentClusterType 1:hw type
-     */
-    INSTRUMENT_CLUSTER_INFO = (
-        0x0A20
-        | VehiclePropertyGroup:SYSTEM
-        | VehiclePropertyType:INT32_VEC
-        | VehicleArea:GLOBAL),
-
-    /**
      * Current date and time, encoded as Unix time.
      * This value denotes the number of seconds that have elapsed since
      * 1/1/1970.
@@ -2064,25 +2029,6 @@ enum VehicleDisplay : int32_t {
     MAIN = 0,
 
     INSTRUMENT_CLUSTER = 1,
-};
-
-/**
- * Represents instrument cluster type available in system
- */
-enum VehicleInstrumentClusterType : int32_t {
-  /** Android has no access to instument cluster */
-  NONE = 0,
-
-  /**
-   * Instrument cluster can communicate through vehicle hal with additional
-   * properties to exchange meta-data
-   */
-  HAL_INTERFACE = 1,
-
-  /**
-   * Instrument cluster is external display where android can render contents
-   */
-  EXTERNAL_DISPLAY = 2,
 };
 
 /**
