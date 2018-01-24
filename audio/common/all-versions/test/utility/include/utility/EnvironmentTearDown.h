@@ -20,6 +20,7 @@
 #include <functional>
 #include <list>
 
+#include <VtsHalHidlTargetTestEnvBase.h>
 #include <gtest/gtest.h>
 
 namespace android {
@@ -33,13 +34,13 @@ namespace utility {
  * Avoid destroying static objects after main return.
  * Post main return destruction leads to incorrect gtest timing measurements as
  * well as harder debuging if anything goes wrong during destruction. */
-class Environment : public ::testing::Environment {
+class Environment : public ::testing::VtsHalHidlTargetTestEnvBase {
    public:
     using TearDownFunc = std::function<void()>;
     void registerTearDown(TearDownFunc&& tearDown) { tearDowns.push_back(std::move(tearDown)); }
 
    private:
-    void TearDown() override {
+    void HidlTearDown() override {
         // Call the tear downs in reverse order of insertion
         for (auto& tearDown : tearDowns) {
             tearDown();
