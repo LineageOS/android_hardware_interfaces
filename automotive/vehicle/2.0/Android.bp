@@ -66,6 +66,7 @@ hidl_interface {
         "VmsMessageWithLayerAndPublisherIdIntegerValuesIndex",
         "VmsMessageWithLayerIntegerValuesIndex",
         "VmsOfferingMessageIntegerValuesIndex",
+        "VmsPublisherInformationIntegerValuesIndex",
         "VmsSubscriptionsStateIntegerValuesIndex",
         "Wheel",
     ],
