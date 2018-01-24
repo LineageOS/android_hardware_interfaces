@@ -15,6 +15,7 @@ hidl_interface {
     ],
     types: [
         "BufferUsage",
+        "Dataspace",
         "PixelFormat",
     ],
     gen_java: true,
