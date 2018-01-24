@@ -1,8 +1,0 @@
-cc_library_headers {
-    name: "android.hardware.audio.common.legacy@all-versions",
-    vendor: true,
-    export_include_dirs: ["include"],
-    header_libs: ["libcutils_headers"],
-    export_header_lib_headers: ["libcutils_headers"],
-}
-

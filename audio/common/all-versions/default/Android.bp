@@ -16,7 +16,10 @@
 cc_library_shared {
     name: "android.hardware.audio.common-util",
     defaults: ["hidl_defaults"],
-    vendor: true,
+    vendor_available: true,
+    vndk: {
+        enabled: true,
+    },
     srcs: [
         "EffectMap.cpp",
     ],
@@ -30,7 +33,7 @@ cc_library_shared {
     ],
 
     header_libs: [
-        "android.hardware.audio.common.legacy@2.0",
+        "libaudio_system_headers",
         "libhardware_headers",
     ],
 }
