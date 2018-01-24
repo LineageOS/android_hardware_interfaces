@@ -222,6 +222,8 @@ enum AudioFormat : uint32_t {
     APTX_HD             = 0x21000000UL,
     AC4                 = 0x22000000UL,
     LDAC                = 0x23000000UL,
+    /** Dolby Metadata-enhanced Audio Transmission */
+    MAT                 = 0x24000000UL,
     /** Deprecated */
     MAIN_MASK           = 0xFF000000UL,
     SUB_MASK            = 0x00FFFFFFUL,
@@ -251,6 +253,12 @@ enum AudioFormat : uint32_t {
     AAC_SUB_XHE           = 0x300,
 
     VORBIS_SUB_NONE       = 0x0,
+
+    E_AC3_SUB_JOC         = 0x1,
+
+    MAT_SUB_1_0           = 0x1,
+    MAT_SUB_2_0           = 0x2,
+    MAT_SUB_2_1           = 0x3,
 
     /* Aliases */
     /** note != AudioFormat.ENCODING_PCM_16BIT */
@@ -283,6 +291,10 @@ enum AudioFormat : uint32_t {
     AAC_ADTS_HE_V2      = (AAC_ADTS | AAC_SUB_HE_V2),
     AAC_ADTS_ELD        = (AAC_ADTS | AAC_SUB_ELD),
     AAC_ADTS_XHE        = (AAC_ADTS | AAC_SUB_XHE),
+    E_AC3_JOC           = (E_AC3 | E_AC3_SUB_JOC),
+    MAT_1_0             = (MAT | MAT_SUB_1_0),
+    MAT_2_0             = (MAT | MAT_SUB_2_0),
+    MAT_2_1             = (MAT | MAT_SUB_2_1),
 };
 
 /**
@@ -363,10 +375,22 @@ enum AudioChannelMask : uint32_t {
     OUT_TOP_BACK_LEFT         = 0x8000,
     OUT_TOP_BACK_CENTER       = 0x10000,
     OUT_TOP_BACK_RIGHT        = 0x20000,
+    OUT_TOP_CENTER_LEFT       = 0x40000,
+    OUT_TOP_CENTER_RIGHT      = 0x80000,
 
     OUT_MONO     = OUT_FRONT_LEFT,
     OUT_STEREO   = (OUT_FRONT_LEFT | OUT_FRONT_RIGHT),
     OUT_2POINT1  = (OUT_FRONT_LEFT | OUT_FRONT_RIGHT | OUT_LOW_FREQUENCY),
+    OUT_2POINT0POINT2 = (OUT_FRONT_LEFT | OUT_FRONT_RIGHT |
+                         OUT_TOP_CENTER_LEFT | OUT_TOP_CENTER_RIGHT),
+    OUT_2POINT1POINT2 = (OUT_FRONT_LEFT | OUT_FRONT_RIGHT |
+                         OUT_TOP_CENTER_LEFT | OUT_TOP_CENTER_RIGHT |
+                         OUT_LOW_FREQUENCY),
+    OUT_3POINT0POINT2 = (OUT_FRONT_LEFT | OUT_FRONT_CENTER | OUT_FRONT_RIGHT |
+                         OUT_TOP_CENTER_LEFT | OUT_TOP_CENTER_RIGHT),
+    OUT_3POINT1POINT2 = (OUT_FRONT_LEFT | OUT_FRONT_CENTER | OUT_FRONT_RIGHT |
+                        OUT_TOP_CENTER_LEFT | OUT_TOP_CENTER_RIGHT |
+                        OUT_LOW_FREQUENCY),
     OUT_QUAD     = (OUT_FRONT_LEFT | OUT_FRONT_RIGHT |
             OUT_BACK_LEFT | OUT_BACK_RIGHT),
     OUT_QUAD_BACK = OUT_QUAD,
@@ -410,6 +434,13 @@ enum AudioChannelMask : uint32_t {
     IN_X_AXIS          = 0x800,
     IN_Y_AXIS          = 0x1000,
     IN_Z_AXIS          = 0x2000,
+    IN_BACK_LEFT       = 0x10000,
+    IN_BACK_RIGHT      = 0x20000,
+    IN_CENTER          = 0x40000,
+    IN_LOW_FREQUENCY   = 0x100000,
+    IN_TOP_LEFT        = 0x200000,
+    IN_TOP_RIGHT       = 0x400000,
+
     IN_VOICE_UPLINK    = 0x4000,
     IN_VOICE_DNLINK    = 0x8000,
 
@@ -419,6 +450,8 @@ enum AudioChannelMask : uint32_t {
     IN_6 = (IN_LEFT | IN_RIGHT |
             IN_FRONT | IN_BACK |
             IN_LEFT_PROCESSED | IN_RIGHT_PROCESSED),
+    IN_5POINT1 = (IN_LEFT | IN_CENTER | IN_RIGHT |
+                  IN_BACK_LEFT | IN_BACK_RIGHT | IN_LOW_FREQUENCY),
     IN_VOICE_UPLINK_MONO = (IN_VOICE_UPLINK | IN_MONO),
     IN_VOICE_DNLINK_MONO = (IN_VOICE_DNLINK | IN_MONO),
     IN_VOICE_CALL_MONO   = (IN_VOICE_UPLINK_MONO |
@@ -514,6 +547,7 @@ enum AudioDevice : uint64_t {
     OUT_BUS                       = 0x1000000,
     OUT_PROXY                     = 0x2000000,
     OUT_USB_HEADSET               = 0x4000000,
+    OUT_ECHO_CANCELLER            = 0x10000000,
     OUT_DEFAULT                   = BIT_DEFAULT,
     // Note that the 2.0 OUT_ALL* have been moved to helper functions
 
@@ -613,6 +647,7 @@ enum AudioInputFlag : int32_t {
     SYNC         = 0x8,  // synchronize I/O streams
     MMAP_NOIRQ   = 0x10, // input operates in MMAP no IRQ mode.
     VOIP_TX      = 0x20, // preferred input for VoIP calls.
+    HW_AV_SYNC   = 0x40, // input connected to an output that uses a hardware A/V sync
 };
 
 @export(name="audio_usage_t", value_prefix="AUDIO_USAGE_")

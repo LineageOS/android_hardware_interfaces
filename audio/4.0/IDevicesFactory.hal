@@ -41,7 +41,9 @@ interface IDevicesFactory {
         STUB,
         CODEC_OFFLOAD,
         SECONDARY,
-        AUXILIARY
+        AUXILIARY,
+        /** Multi Stream Decoder */
+        MSD
     };
 
     /**
