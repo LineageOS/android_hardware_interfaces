@@ -16,7 +16,10 @@
 cc_library_shared {
     name: "android.hardware.soundtrigger@2.0-core",
     defaults: ["hidl_defaults"],
-    vendor: true,
+    vendor_available: true,
+    vndk: {
+        enabled: true,
+    },
     srcs: [
         "SoundTriggerHalImpl.cpp",
     ],
@@ -34,7 +37,7 @@ cc_library_shared {
     ],
 
     header_libs: [
-        "android.hardware.soundtrigger.legacy@2.0",
+        "libaudio_system_headers",
         "libhardware_headers",
     ],
 }
