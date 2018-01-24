@@ -738,8 +738,14 @@ void CameraDeviceSession::ResultBatcher::processCaptureResult(CaptureResult& res
 // Methods from ::android::hardware::camera::device::V3_2::ICameraDeviceSession follow.
 Return<void> CameraDeviceSession::constructDefaultRequestSettings(
         RequestTemplate type, ICameraDeviceSession::constructDefaultRequestSettings_cb _hidl_cb)  {
-    Status status = initStatus();
     CameraMetadata outMetadata;
+    Status status = constructDefaultRequestSettingsRaw( (int) type, &outMetadata);
+    _hidl_cb(status, outMetadata);
+    return Void();
+}
+
+Status CameraDeviceSession::constructDefaultRequestSettingsRaw(int type, CameraMetadata *outMetadata) {
+    Status status = initStatus();
     const camera_metadata_t *rawRequest;
     if (status == Status::OK) {
         ATRACE_BEGIN("camera3->construct_default_request_settings");
@@ -761,15 +767,14 @@ Return<void> CameraDeviceSession::constructDefaultRequestSettings(
                         defaultBoost, 1);
                 const camera_metadata_t *metaBuffer =
                         mOverridenRequest.getAndLock();
-                convertToHidl(metaBuffer, &outMetadata);
+                convertToHidl(metaBuffer, outMetadata);
                 mOverridenRequest.unlock(metaBuffer);
             } else {
-                convertToHidl(rawRequest, &outMetadata);
+                convertToHidl(rawRequest, outMetadata);
             }
         }
     }
-    _hidl_cb(status, outMetadata);
-    return Void();
+    return status;
 }
 
 /**

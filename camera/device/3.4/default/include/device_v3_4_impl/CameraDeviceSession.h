@@ -73,6 +73,9 @@ protected:
     // Methods from v3.3 and earlier will trampoline to inherited implementation
 
     // New methods for v3.4
+    Return<void> constructDefaultRequestSettings_3_4(
+            RequestTemplate type,
+            ICameraDeviceSession::constructDefaultRequestSettings_cb _hidl_cb);
 
     Return<void> configureStreams_3_4(
             const StreamConfiguration& requestedConfiguration,
@@ -137,6 +140,12 @@ private:
 
         virtual Return<void> close() override {
             return mParent->close();
+        }
+
+        virtual Return<void> constructDefaultRequestSettings_3_4(
+                RequestTemplate type,
+                ICameraDeviceSession::constructDefaultRequestSettings_cb _hidl_cb) override {
+            return mParent->constructDefaultRequestSettings_3_4(type, _hidl_cb);
         }
 
         virtual Return<void> configureStreams_3_3(
