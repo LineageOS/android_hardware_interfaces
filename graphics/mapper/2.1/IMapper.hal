@@ -16,10 +16,47 @@
 
 package android.hardware.graphics.mapper@2.1;
 
-import android.hardware.graphics.mapper@2.0::Error;
-import android.hardware.graphics.mapper@2.0::IMapper;
+import android.hardware.graphics.common@1.1::BufferUsage;
+import android.hardware.graphics.common@1.1::PixelFormat;
+import @2.0::BufferDescriptor;
+import @2.0::Error;
+import @2.0::IMapper;
 
-interface IMapper extends android.hardware.graphics.mapper@2.0::IMapper {
+interface IMapper extends @2.0::IMapper {
+    /**
+     * This is the same as @2.0::IMapper::BufferDescriptorInfo except that it
+     * accepts @1.1::PixelFormat and @1.1::BufferUsage.
+     */
+    struct BufferDescriptorInfo {
+        /**
+         * The width specifies how many columns of pixels must be in the
+         * allocated buffer, but does not necessarily represent the offset in
+         * columns between the same column in adjacent rows. The rows may be
+         * padded.
+         */
+        uint32_t width;
+
+       /**
+        * The height specifies how many rows of pixels must be in the
+        * allocated buffer.
+        */
+        uint32_t height;
+
+       /**
+        * The number of image layers that must be in the allocated buffer.
+        */
+        uint32_t layerCount;
+
+        /** Buffer pixel format. */
+        PixelFormat format;
+
+        /**
+         * Buffer usage mask; valid flags can be found in the definition of
+         * BufferUsage.
+         */
+        bitfield<BufferUsage> usage;
+    };
+
     /**
      * Validate that the buffer can be safely accessed by a caller who assumes
      * the specified descriptorInfo and stride. This must at least validate
@@ -58,4 +95,30 @@ interface IMapper extends android.hardware.graphics.mapper@2.0::IMapper {
             generates (Error error,
                        uint32_t numFds,
                        uint32_t numInts);
+
+    /**
+     * This is the same as @2.0::IMapper::createDescriptor except that it
+     * accepts @2.1::IMapper::BufferDescriptorInfo.
+     *
+     * Creates a buffer descriptor. The descriptor can be used with IAllocator
+     * to allocate buffers.
+     *
+     * Since the buffer descriptor fully describes a buffer, any device
+     * dependent or device independent checks must be performed here whenever
+     * possible. Specifically, when layered buffers are not supported, this
+     * function must return UNSUPPORTED if layerCount is great than 1.
+     *
+     * @param descriptorInfo specifies the attributes of the descriptor.
+     * @return error is NONE upon success. Otherwise,
+     *                  BAD_VALUE when any of the specified attributes is
+     *                            invalid or conflicting.
+     *                  NO_RESOURCES when the creation cannot be fullfilled at
+     *                               this time.
+     *                  UNSUPPORTED when any of the specified attributes is
+     *                              not supported.
+     * @return descriptor is the newly created buffer descriptor.
+     */
+    createDescriptor_2_1(BufferDescriptorInfo descriptorInfo)
+              generates (Error error,
+                         BufferDescriptor descriptor);
 };
