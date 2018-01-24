@@ -16,6 +16,8 @@
 
 package android.hardware.drm@1.1;
 
+import @1.0::KeyRequestType;
+
 /**
  * HDCP specifications are defined by Digital Content Protection LLC (DCP).
  *   "HDCP Specification Rev. 2.2 Interface Independent Adaptation"
@@ -56,6 +58,23 @@ enum HdcpLevel : uint32_t {
      * No digital output, implicitly secure
      */
     HDCP_NO_OUTPUT
+};
+
+/**
+ * KeyRequestTypes (in addition to those from 1.0) which allow an app
+ * to determine the type of a key request returned from getKeyRequest.
+ */
+enum KeyRequestType : @1.0::KeyRequestType {
+    /**
+     * Keys are already loaded. No key request is needed.
+     */
+    NONE,
+
+    /**
+     * Keys have previously been loaded. An additional (non-renewal) license
+     * request is needed.
+     */
+    UPDATE,
 };
 
 enum SecurityLevel : uint32_t {

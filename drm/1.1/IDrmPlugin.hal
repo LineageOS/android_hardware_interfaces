@@ -17,8 +17,11 @@ package android.hardware.drm@1.1;
 
 import @1.0::IDrmPlugin;
 import @1.0::IDrmPluginListener;
+import @1.0::KeyedVector;
+import @1.0::KeyType;
 import @1.0::Status;
 import @1.1::HdcpLevel;
+import @1.1::KeyRequestType;
 import @1.1::SecurityLevel;
 
 /**
@@ -27,6 +30,59 @@ import @1.1::SecurityLevel;
  * may be used by a codec to decrypt protected video content.
  */
 interface IDrmPlugin extends @1.0::IDrmPlugin {
+    /**
+     * A key request/response exchange occurs between the app and a License
+     * Server to obtain the keys required to decrypt the content.
+     * getKeyRequest_1_1() is used to obtain an opaque key request blob that is
+     * delivered to the license server.
+     *
+     * getKeyRequest_1_1() only differs from getKeyRequest() in that additional
+     * values are returned in 1.1::KeyRequestType as compared to
+     * 1.0::KeyRequestType
+     *
+     * @param scope may be a sessionId or a keySetId, depending on the
+     *        specified keyType. When the keyType is OFFLINE or STREAMING,
+     *        scope should be set to the sessionId the keys will be provided
+     *        to. When the keyType is RELEASE, scope should be set to the
+     *        keySetId of the keys being released.
+     * @param initData container-specific data, its meaning is interpreted
+     *        based on the mime type provided in the mimeType parameter.
+     *        It could contain, for example, the content ID, key ID or
+     *        other data obtained from the content metadata that is
+     *        required to generate the key request. initData may be empty
+     *        when keyType is RELEASE.
+     * @param mimeType identifies the mime type of the content
+     * @param keyType specifies if the keys are to be used for streaming,
+     *        offline or a release
+     * @param optionalParameters included in the key request message to
+     *        allow a client application to provide additional message
+     *        parameters to the server.
+     * @return status the status of the call. The status must be OK or one of
+     *         the following errors: ERROR_DRM_SESSION_NOT_OPENED if the
+     *         session is not opened, ERROR_DRM_NOT_PROVISIONED if the device
+     *         requires provisioning before it can generate a key request,
+     *         ERROR_DRM_CANNOT_HANDLE if getKeyRequest is not supported
+     *         at the time of the call, BAD_VALUE if any parameters are
+     *         invalid or ERROR_DRM_INVALID_STATE if the HAL is in a
+     *         state where a key request cannot be generated.
+     * @return request if successful, the opaque key request blob is returned
+     * @return requestType indicates type information about the returned
+     *         request. The type may be one of INITIAL, RENEWAL, RELEASE,
+     *         NONE or UPDATE. An INITIAL request is the first key request
+     *         for a license. RENEWAL is a subsequent key request used to
+     *         refresh the keys in a license. RELEASE corresponds to a
+     *         keyType of RELEASE, which indicates keys are being released.
+     *         NONE indicates that no request is needed because the keys are
+     *         already loaded. UPDATE indicates that the keys need to be
+     *         refetched after the initial license request.
+     * @return defaultUrl the URL that the request may be sent to, if
+     *         provided by the drm HAL. The app may choose to override this URL.
+     */
+    getKeyRequest_1_1(vec<uint8_t> scope, vec<uint8_t> initData,
+            string mimeType, KeyType keyType, KeyedVector optionalParameters)
+        generates (Status status, vec<uint8_t> request,
+                KeyRequestType requestType, string defaultUrl);
+
     /**
      * Return the currently negotiated and max supported HDCP levels.
      *
