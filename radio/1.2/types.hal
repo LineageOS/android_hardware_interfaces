@@ -64,6 +64,21 @@ enum IncrementalResultsPeriodicityRange : int32_t {
     MAX = 10,
 };
 
+enum CellConnectionStatus : int32_t {
+    /**
+     * Cell is not a serving cell.
+     */
+    NONE = 0,
+    /**
+     * UE has connection to cell for signalling and possibly data (3GPP 36.331, 25.331).
+     */
+    PRIMARY_SERVING,
+    /**
+     * UE has connection to cell for data (3GPP 36.331, 25.331).
+     */
+    SECONDARY_SERVING,
+};
+
 /**
  * Overwritten from @1.0::IndicationFilter in order to redefine ALL. In the future, this should
  * be extended instead of overwritten.
@@ -102,6 +117,12 @@ enum IndicationFilter : int32_t {
      * IRadio.setLinkCapacityReportingCriteria() are met.
      */
     LINK_CAPACITY_ESTIMATE = 1 << 3,
+    /**
+     * When this bit is set, the modem must send the physical channel configuration update through
+     * IRadioIndication.currentPhysicalChannelConfigs() when the configuration has changed. It is
+     * recommended that this be reported whenever link capacity or signal strength is reported.
+     */
+    PHYSICAL_CHANNEL_CONFIG = 1 << 4,
 };
 
 struct NetworkScanRequest {
@@ -294,4 +315,15 @@ struct LinkCapacityEstimate {
      * Estimated uplink capacity in kbps.
      */
     uint32_t uplinkCapacityKbps;
+};
+
+struct PhysicalChannelConfig {
+    /**
+     * Connection status for cell. Valid values are PRIMARY_SERVING and SECONDARY_SERVING.
+     */
+    CellConnectionStatus status;
+    /**
+     * Cell bandwidth, in kHz.
+     */
+    int32_t cellBandwidthDownlink;
 };
