@@ -1378,6 +1378,7 @@ TEST_F(VideoDecHidlTest, FlushTest) {
                       Info.size() - index, portMode[1], false);
     }
     // Note: Assumes 200 ms is enough to end any decode call that started
+    eleStream.close();
     flushPorts(omxNode, observer, &iBuffer, &oBuffer, kPortIndexInput,
                kPortIndexOutput, 200000);
     framesReceived = 0;
