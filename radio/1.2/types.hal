@@ -64,6 +64,46 @@ enum IncrementalResultsPeriodicityRange : int32_t {
     MAX = 10,
 };
 
+/**
+ * Overwritten from @1.0::IndicationFilter in order to redefine ALL. In the future, this should
+ * be extended instead of overwritten.
+ */
+enum IndicationFilter : int32_t {
+    NONE = 0,
+    ALL = ~0,
+    /**
+     * When this bit is set, modem must send the signal strength update through
+     * IRadioIndication.currentSignalStrength() when all criteria specified by
+     * IRadio.setSignalStrengthReportingCriteria() are met.
+     */
+    SIGNAL_STRENGTH = 1 << 0,
+    /**
+     * When this bit is set, modem must invoke IRadioIndication.networkStateChanged() when any field
+     * in VoiceRegStateResult or DataRegStateResult changes. When this bit is not set, modem must
+     * suppress IRadioIndication.networkStateChanged() when there are only changes from
+     * insignificant fields. Modem must invoke IRadioIndication.networkStateChanged() when
+     * significant fields are updated regardless of whether this bit is set.
+     *
+     * The following fields are considered significant: VoiceRegStateResult.regState,
+     * VoiceRegStateResult.rat, DataRegStateResult.regState, DataRegStateResult.rat.
+     */
+    FULL_NETWORK_STATE = 1 << 1,
+    /**
+     * When this bit is set, modem must send IRadioIndication.dataCallListChanged() whenever any
+     * field in ITypes.SetupDataCallResult changes. When this bit is not set, modem must suppress
+     * the indication when the only changed field is 'active' (for data dormancy). For all other
+     * field changes, the modem must send IRadioIndication.dataCallListChanged() regardless of
+     * whether this bit is set.
+     */
+    DATA_CALL_DORMANCY_CHANGED = 1 << 2,
+    /**
+     * When this bit is set, modem must send the link capacity update through
+     * IRadioIndication.currentLinkCapacityEstimate() when all criteria specified by
+     * IRadio.setLinkCapacityReportingCriteria() are met.
+     */
+    LINK_CAPACITY_ESTIMATE = 1 << 3,
+};
+
 struct NetworkScanRequest {
     ScanType type;
 
@@ -243,4 +283,15 @@ struct CardStatus {
      * This data is applicable only when cardState is CardState:PRESENT.
      */
     string iccid;
+};
+
+struct LinkCapacityEstimate {
+    /**
+     * Estimated downlink capacity in kbps.
+     */
+    uint32_t downlinkCapacityKbps;
+    /**
+     * Estimated uplink capacity in kbps.
+     */
+    uint32_t uplinkCapacityKbps;
 };
