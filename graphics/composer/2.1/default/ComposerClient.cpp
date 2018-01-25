@@ -28,117 +28,23 @@ namespace composer {
 namespace V2_1 {
 namespace implementation {
 
-namespace {
-
-using MapperError = android::hardware::graphics::mapper::V2_0::Error;
-using android::hardware::graphics::mapper::V2_0::IMapper;
-
-class HandleImporter {
-public:
-    bool initialize()
-    {
-        // allow only one client
-        if (mInitialized) {
-            return false;
-        }
-
-        mMapper = IMapper::getService();
-
-        mInitialized = true;
-        return true;
-    }
-
-    void cleanup()
-    {
-        mMapper.clear();
-        mInitialized = false;
-    }
-
-    // In IComposer, any buffer_handle_t is owned by the caller and we need to
-    // make a clone for hwcomposer2.  We also need to translate empty handle
-    // to nullptr.  This function does that, in-place.
-    bool importBuffer(buffer_handle_t& handle)
-    {
-        if (!handle) {
-            return true;
-        }
-
-        if (!handle->numFds && !handle->numInts) {
-            handle = nullptr;
-            return true;
-        }
-
-        MapperError error;
-        buffer_handle_t importedHandle;
-        mMapper->importBuffer(
-            hidl_handle(handle),
-            [&](const auto& tmpError, const auto& tmpBufferHandle) {
-                error = tmpError;
-                importedHandle = static_cast<buffer_handle_t>(tmpBufferHandle);
-            });
-        if (error != MapperError::NONE) {
-            return false;
-        }
-
-        handle = importedHandle;
-
-        return true;
-    }
-
-    void freeBuffer(buffer_handle_t handle)
-    {
-        if (!handle) {
-            return;
-        }
-
-        mMapper->freeBuffer(const_cast<native_handle_t*>(handle));
-    }
-
-private:
- bool mInitialized = false;
- sp<IMapper> mMapper;
-};
-
-HandleImporter sHandleImporter;
-
-} // anonymous namespace
-
-BufferCacheEntry::BufferCacheEntry()
-    : mHandle(nullptr)
-{
-}
-
-BufferCacheEntry::BufferCacheEntry(BufferCacheEntry&& other)
-{
-    mHandle = other.mHandle;
-    other.mHandle = nullptr;
-}
-
-BufferCacheEntry& BufferCacheEntry::operator=(buffer_handle_t handle)
-{
-    clear();
-    mHandle = handle;
-    return *this;
-}
-
-BufferCacheEntry::~BufferCacheEntry()
-{
-    clear();
-}
-
-void BufferCacheEntry::clear()
-{
-    if (mHandle) {
-        sHandleImporter.freeBuffer(mHandle);
-    }
-}
-
 ComposerClient::ComposerClient(ComposerHal& hal)
     : mHal(hal), mWriter(kWriterInitialSize)
 {
 }
 
 ComposerClient::~ComposerClient()
+{
+    ALOGD("destroying composer client");
+
+    mHal.enableCallback(false);
+    destroyResources();
+    mHal.removeClient();
+
+    ALOGD("removed composer client");
+}
+
+void ComposerClient::destroyResources()
 {
     // We want to call hwc2_close here (and move hwc2_open to the
     // constructor), with the assumption that hwc2_close would
@@ -153,21 +59,15 @@ ComposerClient::~ComposerClient()
     //
     // Below we manually clean all resources (layers and virtual
     // displays), and perform a presentDisplay afterwards.
-    ALOGW("destroying composer client");
+    mResources->clear([this](Display display, bool isVirtual, const std::vector<Layer> layers) {
+        ALOGW("destroying client resources for display %" PRIu64, display);
 
-    mHal.enableCallback(false);
-
-    // no need to grab the mutex as any in-flight hwbinder call would have
-    // kept the client alive
-    for (const auto& dpy : mDisplayData) {
-        ALOGW("destroying client resources for display %" PRIu64, dpy.first);
-
-        for (const auto& ly : dpy.second.Layers) {
-            mHal.destroyLayer(dpy.first, ly.first);
+        for (auto layer : layers) {
+            mHal.destroyLayer(display, layer);
         }
 
-        if (dpy.second.IsVirtual) {
-            mHal.destroyVirtualDisplay(dpy.first);
+        if (isVirtual) {
+            mHal.destroyVirtualDisplay(display);
         } else {
             ALOGW("performing a final presentDisplay");
 
@@ -176,15 +76,15 @@ ComposerClient::~ComposerClient()
             uint32_t displayRequestMask = 0;
             std::vector<Layer> requestedLayers;
             std::vector<uint32_t> requestMasks;
-            mHal.validateDisplay(dpy.first, &changedLayers, &compositionTypes,
-                    &displayRequestMask, &requestedLayers, &requestMasks);
+            mHal.validateDisplay(display, &changedLayers, &compositionTypes, &displayRequestMask,
+                                 &requestedLayers, &requestMasks);
 
-            mHal.acceptDisplayChanges(dpy.first);
+            mHal.acceptDisplayChanges(display);
 
             int32_t presentFence = -1;
             std::vector<Layer> releasedLayers;
             std::vector<int32_t> releaseFences;
-            mHal.presentDisplay(dpy.first, &presentFence, &releasedLayers, &releaseFences);
+            mHal.presentDisplay(display, &presentFence, &releasedLayers, &releaseFences);
             if (presentFence >= 0) {
                 close(presentFence);
             }
@@ -194,36 +94,28 @@ ComposerClient::~ComposerClient()
                 }
             }
         }
-    }
+    });
 
-    mDisplayData.clear();
-
-    sHandleImporter.cleanup();
-
-    mHal.removeClient();
-
-    ALOGW("removed composer client");
+    mResources.reset();
 }
 
 void ComposerClient::initialize()
 {
-    mReader = createCommandReader();
-    if (!sHandleImporter.initialize()) {
-        LOG_ALWAYS_FATAL("failed to initialize handle importer");
+    mResources = createResources();
+    if (!mResources) {
+        LOG_ALWAYS_FATAL("failed to create resources");
     }
+
+    mReader = createCommandReader();
 }
 
 void ComposerClient::onHotplug(Display display,
         IComposerCallback::Connection connected)
 {
-    {
-        std::lock_guard<std::mutex> lock(mDisplayDataMutex);
-
-        if (connected == IComposerCallback::Connection::CONNECTED) {
-            mDisplayData.emplace(display, DisplayData(false));
-        } else if (connected == IComposerCallback::Connection::DISCONNECTED) {
-            mDisplayData.erase(display);
-        }
+    if (connected == IComposerCallback::Connection::CONNECTED) {
+        mResources->addPhysicalDisplay(display);
+    } else if (connected == IComposerCallback::Connection::DISCONNECTED) {
+        mResources->removeDisplay(display);
     }
 
     auto ret = mCallback->onHotplug(display, connected);
@@ -268,10 +160,7 @@ Return<void> ComposerClient::createVirtualDisplay(uint32_t width,
     Error err = mHal.createVirtualDisplay(width, height,
             &formatHint, &display);
     if (err == Error::NONE) {
-        std::lock_guard<std::mutex> lock(mDisplayDataMutex);
-
-        auto dpy = mDisplayData.emplace(display, DisplayData(true)).first;
-        dpy->second.OutputBuffers.resize(outputBufferSlotCount);
+        mResources->addVirtualDisplay(display, outputBufferSlotCount);
     }
 
     hidl_cb(err, display, formatHint);
@@ -282,9 +171,7 @@ Return<Error> ComposerClient::destroyVirtualDisplay(Display display)
 {
     Error err = mHal.destroyVirtualDisplay(display);
     if (err == Error::NONE) {
-        std::lock_guard<std::mutex> lock(mDisplayDataMutex);
-
-        mDisplayData.erase(display);
+        mResources->removeDisplay(display);
     }
 
     return err;
@@ -296,14 +183,9 @@ Return<void> ComposerClient::createLayer(Display display,
     Layer layer = 0;
     Error err = mHal.createLayer(display, &layer);
     if (err == Error::NONE) {
-        std::lock_guard<std::mutex> lock(mDisplayDataMutex);
-        auto dpy = mDisplayData.find(display);
-        // The display entry may have already been removed by onHotplug.
-        if (dpy != mDisplayData.end()) {
-            auto ly = dpy->second.Layers.emplace(layer, LayerBuffers()).first;
-            ly->second.Buffers.resize(bufferSlotCount);
-        } else {
-            err = Error::BAD_DISPLAY;
+        err = mResources->addLayer(display, layer, bufferSlotCount);
+        if (err != Error::NONE) {
+            // The display entry may have already been removed by onHotplug.
             // Note: We do not destroy the layer on this error as the hotplug
             // disconnect invalidates the display id. The implementation should
             // ensure all layers for the display are destroyed.
@@ -318,13 +200,7 @@ Return<Error> ComposerClient::destroyLayer(Display display, Layer layer)
 {
     Error err = mHal.destroyLayer(display, layer);
     if (err == Error::NONE) {
-        std::lock_guard<std::mutex> lock(mDisplayDataMutex);
-
-        auto dpy = mDisplayData.find(display);
-        // The display entry may have already been removed by onHotplug.
-        if (dpy != mDisplayData.end()) {
-            dpy->second.Layers.erase(layer);
-        }
+        mResources->removeLayer(display, layer);
     }
 
     return err;
@@ -427,16 +303,7 @@ Return<void> ComposerClient::getHdrCapabilities(Display display,
 Return<Error> ComposerClient::setClientTargetSlotCount(Display display,
         uint32_t clientTargetSlotCount)
 {
-    std::lock_guard<std::mutex> lock(mDisplayDataMutex);
-
-    auto dpy = mDisplayData.find(display);
-    if (dpy == mDisplayData.end()) {
-        return Error::BAD_DISPLAY;
-    }
-
-    dpy->second.ClientTargets.resize(clientTargetSlotCount);
-
-    return Error::NONE;
+    return mResources->setDisplayClientTargetCacheSize(display, clientTargetSlotCount);
 }
 
 Return<Error> ComposerClient::setActiveConfig(Display display, Config config)
@@ -516,6 +383,11 @@ Return<void> ComposerClient::executeCommands(uint32_t inLength,
     return Void();
 }
 
+std::unique_ptr<ComposerResources> ComposerClient::createResources()
+{
+    return ComposerResources::create();
+}
+
 std::unique_ptr<ComposerClient::CommandReader>
 ComposerClient::createCommandReader()
 {
@@ -524,7 +396,7 @@ ComposerClient::createCommandReader()
 }
 
 ComposerClient::CommandReader::CommandReader(ComposerClient& client)
-    : mClient(client), mHal(client.mHal), mWriter(client.mWriter)
+    : mHal(client.mHal), mResources(client.mResources.get()), mWriter(client.mWriter)
 {
 }
 
@@ -661,22 +533,21 @@ bool ComposerClient::CommandReader::parseSetClientTarget(uint16_t length)
 
     bool useCache = false;
     auto slot = read();
-    auto clientTarget = readHandle(&useCache);
+    auto rawHandle = readHandle(&useCache);
     auto fence = readFence();
     auto dataspace = readSigned();
     auto damage = readRegion((length - 4) / 4);
     bool closeFence = true;
 
-    auto err = lookupBuffer(BufferCache::CLIENT_TARGETS,
-            slot, useCache, clientTarget, &clientTarget);
+    const native_handle_t* clientTarget;
+    ComposerResources::ReplacedBufferHandle replacedClientTarget;
+    auto err = mResources->getDisplayClientTarget(mDisplay,
+            slot, useCache, rawHandle, &clientTarget, &replacedClientTarget);
     if (err == Error::NONE) {
         err = mHal.setClientTarget(mDisplay, clientTarget, fence,
                 dataspace, damage);
-        auto updateBufErr = updateBuffer(BufferCache::CLIENT_TARGETS, slot,
-                useCache, clientTarget);
         if (err == Error::NONE) {
             closeFence = false;
-            err = updateBufErr;
         }
     }
     if (closeFence) {
@@ -697,19 +568,18 @@ bool ComposerClient::CommandReader::parseSetOutputBuffer(uint16_t length)
 
     bool useCache = false;
     auto slot = read();
-    auto outputBuffer = readHandle(&useCache);
+    auto rawhandle = readHandle(&useCache);
     auto fence = readFence();
     bool closeFence = true;
 
-    auto err = lookupBuffer(BufferCache::OUTPUT_BUFFERS,
-            slot, useCache, outputBuffer, &outputBuffer);
+    const native_handle_t* outputBuffer;
+    ComposerResources::ReplacedBufferHandle replacedOutputBuffer;
+    auto err = mResources->getDisplayOutputBuffer(mDisplay,
+            slot, useCache, rawhandle, &outputBuffer, &replacedOutputBuffer);
     if (err == Error::NONE) {
         err = mHal.setOutputBuffer(mDisplay, outputBuffer, fence);
-        auto updateBufErr = updateBuffer(BufferCache::OUTPUT_BUFFERS,
-                slot, useCache, outputBuffer);
         if (err == Error::NONE) {
             closeFence = false;
-            err = updateBufErr;
         }
     }
     if (closeFence) {
@@ -848,19 +718,18 @@ bool ComposerClient::CommandReader::parseSetLayerBuffer(uint16_t length)
 
     bool useCache = false;
     auto slot = read();
-    auto buffer = readHandle(&useCache);
+    auto rawHandle = readHandle(&useCache);
     auto fence = readFence();
     bool closeFence = true;
 
-    auto err = lookupBuffer(BufferCache::LAYER_BUFFERS,
-            slot, useCache, buffer, &buffer);
+    const native_handle_t* buffer;
+    ComposerResources::ReplacedBufferHandle replacedBuffer;
+    auto err = mResources->getLayerBuffer(mDisplay, mLayer,
+            slot, useCache, rawHandle, &buffer, &replacedBuffer);
     if (err == Error::NONE) {
         err = mHal.setLayerBuffer(mDisplay, mLayer, buffer, fence);
-        auto updateBufErr = updateBuffer(BufferCache::LAYER_BUFFERS, slot,
-                useCache, buffer);
         if (err == Error::NONE) {
             closeFence = false;
-            err = updateBufErr;
         }
     }
     if (closeFence) {
@@ -980,15 +849,14 @@ bool ComposerClient::CommandReader::parseSetLayerSidebandStream(uint16_t length)
         return false;
     }
 
-    auto stream = readHandle();
+    auto rawHandle = readHandle();
 
-    auto err = lookupLayerSidebandStream(stream, &stream);
+    const native_handle_t* stream;
+    ComposerResources::ReplacedStreamHandle replacedStream;
+    auto err = mResources->getLayerSidebandStream(mDisplay, mLayer,
+            rawHandle, &stream, &replacedStream);
     if (err == Error::NONE) {
         err = mHal.setLayerSidebandStream(mDisplay, mLayer, stream);
-        auto updateErr = updateLayerSidebandStream(stream);
-        if (err == Error::NONE) {
-            err = updateErr;
-        }
     }
     if (err != Error::NONE) {
         mWriter.setError(getCommandLoc(), err);
@@ -1085,115 +953,6 @@ hwc_frect_t ComposerClient::CommandReader::readFRect()
         readFloat(),
         readFloat(),
     };
-}
-
-Error ComposerClient::CommandReader::lookupBufferCacheEntryLocked(
-        BufferCache cache, uint32_t slot, BufferCacheEntry** outEntry)
-{
-    auto dpy = mClient.mDisplayData.find(mDisplay);
-    if (dpy == mClient.mDisplayData.end()) {
-        return Error::BAD_DISPLAY;
-    }
-
-    BufferCacheEntry* entry = nullptr;
-    switch (cache) {
-    case BufferCache::CLIENT_TARGETS:
-        if (slot < dpy->second.ClientTargets.size()) {
-            entry = &dpy->second.ClientTargets[slot];
-        }
-        break;
-    case BufferCache::OUTPUT_BUFFERS:
-        if (slot < dpy->second.OutputBuffers.size()) {
-            entry = &dpy->second.OutputBuffers[slot];
-        }
-        break;
-    case BufferCache::LAYER_BUFFERS:
-        {
-            auto ly = dpy->second.Layers.find(mLayer);
-            if (ly == dpy->second.Layers.end()) {
-                return Error::BAD_LAYER;
-            }
-            if (slot < ly->second.Buffers.size()) {
-                entry = &ly->second.Buffers[slot];
-            }
-        }
-        break;
-    case BufferCache::LAYER_SIDEBAND_STREAMS:
-        {
-            auto ly = dpy->second.Layers.find(mLayer);
-            if (ly == dpy->second.Layers.end()) {
-                return Error::BAD_LAYER;
-            }
-            if (slot == 0) {
-                entry = &ly->second.SidebandStream;
-            }
-        }
-        break;
-    default:
-        break;
-    }
-
-    if (!entry) {
-        ALOGW("invalid buffer slot %" PRIu32, slot);
-        return Error::BAD_PARAMETER;
-    }
-
-    *outEntry = entry;
-
-    return Error::NONE;
-}
-
-Error ComposerClient::CommandReader::lookupBuffer(BufferCache cache,
-        uint32_t slot, bool useCache, buffer_handle_t handle,
-        buffer_handle_t* outHandle)
-{
-    if (useCache) {
-        std::lock_guard<std::mutex> lock(mClient.mDisplayDataMutex);
-
-        BufferCacheEntry* entry;
-        Error error = lookupBufferCacheEntryLocked(cache, slot, &entry);
-        if (error != Error::NONE) {
-            return error;
-        }
-
-        // input handle is ignored
-        *outHandle = entry->getHandle();
-    } else if (cache == BufferCache::LAYER_SIDEBAND_STREAMS) {
-        if (handle) {
-            *outHandle = native_handle_clone(handle);
-            if (*outHandle == nullptr) {
-                return Error::NO_RESOURCES;
-            }
-        }
-    } else {
-        if (!sHandleImporter.importBuffer(handle)) {
-            return Error::NO_RESOURCES;
-        }
-
-        *outHandle = handle;
-    }
-
-    return Error::NONE;
-}
-
-Error ComposerClient::CommandReader::updateBuffer(BufferCache cache,
-        uint32_t slot, bool useCache, buffer_handle_t handle)
-{
-    // handle was looked up from cache
-    if (useCache) {
-        return Error::NONE;
-    }
-
-    std::lock_guard<std::mutex> lock(mClient.mDisplayDataMutex);
-
-    BufferCacheEntry* entry = nullptr;
-    Error error = lookupBufferCacheEntryLocked(cache, slot, &entry);
-    if (error != Error::NONE) {
-      return error;
-    }
-
-    *entry = handle;
-    return Error::NONE;
 }
 
 } // namespace implementation

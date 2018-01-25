@@ -23,6 +23,7 @@
 
 #include <composer-command-buffer/2.1/ComposerCommandBuffer.h>
 #include <composer-hal/2.1/ComposerHal.h>
+#include <composer-hal/2.1/ComposerResources.h>
 #include <hardware/hwcomposer2.h>
 
 namespace android {
@@ -33,25 +34,6 @@ namespace V2_1 {
 namespace implementation {
 
 using namespace hal;
-
-class BufferCacheEntry {
-public:
-    BufferCacheEntry();
-    BufferCacheEntry(BufferCacheEntry&& other);
-
-    BufferCacheEntry(const BufferCacheEntry& other) = delete;
-    BufferCacheEntry& operator=(const BufferCacheEntry& other) = delete;
-
-    BufferCacheEntry& operator=(buffer_handle_t handle);
-    ~BufferCacheEntry();
-
-    buffer_handle_t getHandle() const { return mHandle; }
-
-private:
-    void clear();
-
-    buffer_handle_t mHandle;
-};
 
 class ComposerClient : public IComposerClient {
 public:
@@ -110,23 +92,6 @@ public:
             executeCommands_cb hidl_cb) override;
 
 protected:
-    struct LayerBuffers {
-        std::vector<BufferCacheEntry> Buffers;
-        // the handle is a sideband stream handle, not a buffer handle
-        BufferCacheEntry SidebandStream;
-    };
-
-    struct DisplayData {
-        bool IsVirtual;
-
-        std::vector<BufferCacheEntry> ClientTargets;
-        std::vector<BufferCacheEntry> OutputBuffers;
-
-        std::unordered_map<Layer, LayerBuffers> Layers;
-
-        DisplayData(bool isVirtual) : IsVirtual(isVirtual) {}
-    };
-
     class CommandReader : public CommandReaderBase {
     public:
         CommandReader(ComposerClient& client);
@@ -166,43 +131,22 @@ protected:
         std::vector<hwc_rect_t> readRegion(size_t count);
         hwc_frect_t readFRect();
 
-        enum class BufferCache {
-            CLIENT_TARGETS,
-            OUTPUT_BUFFERS,
-            LAYER_BUFFERS,
-            LAYER_SIDEBAND_STREAMS,
-        };
-        Error lookupBufferCacheEntryLocked(BufferCache cache, uint32_t slot,
-                BufferCacheEntry** outEntry);
-        Error lookupBuffer(BufferCache cache, uint32_t slot,
-                bool useCache, buffer_handle_t handle,
-                buffer_handle_t* outHandle);
-        Error updateBuffer(BufferCache cache, uint32_t slot,
-                bool useCache, buffer_handle_t handle);
-
-        Error lookupLayerSidebandStream(buffer_handle_t handle,
-                buffer_handle_t* outHandle)
-        {
-            return lookupBuffer(BufferCache::LAYER_SIDEBAND_STREAMS,
-                    0, false, handle, outHandle);
-        }
-        Error updateLayerSidebandStream(buffer_handle_t handle)
-        {
-            return updateBuffer(BufferCache::LAYER_SIDEBAND_STREAMS,
-                    0, false, handle);
-        }
-
-        ComposerClient& mClient;
         ComposerHal& mHal;
+        ComposerResources* mResources;
         CommandWriterBase& mWriter;
 
         Display mDisplay;
         Layer mLayer;
     };
 
+    void destroyResources();
+
+    virtual std::unique_ptr<ComposerResources> createResources();
     virtual std::unique_ptr<CommandReader> createCommandReader();
 
     ComposerHal& mHal;
+
+    std::unique_ptr<ComposerResources> mResources;
 
     // 64KiB minus a small space for metadata such as read/write pointers
     static constexpr size_t kWriterInitialSize =
@@ -212,9 +156,6 @@ protected:
     CommandWriterBase mWriter;
 
     sp<IComposerCallback> mCallback;
-
-    std::mutex mDisplayDataMutex;
-    std::unordered_map<Display, DisplayData> mDisplayData;
 };
 
 } // namespace implementation
