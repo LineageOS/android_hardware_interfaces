@@ -132,6 +132,26 @@ using on_ring_buffer_data_callback =
 // Callback for alerts.
 using on_error_alert_callback =
     std::function<void(int32_t, const std::vector<uint8_t>&)>;
+
+// Struct for the mac info from the legacy HAL. This is a cleaner version
+// of the |wifi_mac_info| & |wifi_iface_info|.
+typedef struct {
+    std::string name;
+    wifi_channel channel;
+} WifiIfaceInfo;
+
+typedef struct {
+    uint32_t wlan_mac_id;
+    /* BIT MASK of BIT(WLAN_MAC*) as represented by wlan_mac_band */
+    uint32_t mac_band;
+    /* Represents the connected Wi-Fi interfaces associated with each MAC */
+    std::vector<WifiIfaceInfo> iface_infos;
+} WifiMacInfo;
+
+// Callback for radio mode change
+using on_radio_mode_change_callback =
+    std::function<void(const std::vector<WifiMacInfo>&)>;
+
 /**
  * Class that encapsulates all legacy HAL interactions.
  * This class manages the lifetime of the event loop thread used by legacy HAL.
@@ -253,6 +273,10 @@ class WifiLegacyHal {
         const on_error_alert_callback& on_alert_callback);
     wifi_error deregisterErrorAlertCallbackHandler(
         const std::string& iface_name);
+    // Radio mode functions.
+    wifi_error registerRadioModeChangeCallbackHandler(
+        const std::string& iface_name,
+        const on_radio_mode_change_callback& on_user_change_callback);
     // RTT functions.
     wifi_error startRttRangeRequest(
         const std::string& iface_name, wifi_request_id id,

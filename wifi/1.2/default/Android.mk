@@ -94,6 +94,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := android.hardware.wifi@1.0-service-tests
 LOCAL_PROPRIETARY_MODULE := true
 LOCAL_SRC_FILES := \
+    tests/hidl_struct_util_unit_tests.cpp \
     tests/main.cpp \
     tests/mock_wifi_feature_flags.cpp \
     tests/mock_wifi_legacy_hal.cpp \
