@@ -22,6 +22,7 @@ import @3.2::Stream;
 import @3.3::HalStream;
 import @3.2::CameraMetadata;
 import @3.2::CaptureRequest;
+import @3.2::CaptureResult;
 
 /**
  * Stream:
@@ -225,4 +226,67 @@ struct CaptureRequest {
      * devices. In case the vector is empty, Hal should use the settings field in 'v3_2'.
      */
     vec<PhysicalCameraSetting> physicalCameraSettings;
+};
+
+/**
+ * PhysicalCameraMetadata:
+ *
+ * Individual camera metadata for a physical camera as part of a logical
+ * multi-camera. Camera HAL should return one such metadata for each physical
+ * camera being requested on.
+ */
+struct PhysicalCameraMetadata {
+    /**
+     * If non-zero, read metadata from result metadata queue instead
+     * (see ICameraDeviceSession.getCaptureResultMetadataQueue).
+     * If zero, read metadata from .metadata field.
+     */
+    uint64_t fmqMetadataSize;
+
+    /**
+     * Contains the physical device camera id. As long as the corresponding
+     * processCaptureRequest requests on a particular physical camera stream,
+     * the metadata for that physical camera should be generated for the capture
+     * result. */
+    string physicalCameraId;
+
+    /**
+     * If fmqMetadataSize is zero, the metadata buffer contains the metadata
+     * for the physical device with physicalCameraId.
+     *
+     * The v3_2 CaptureResult metadata is read first from the FMQ, followed by
+     * the physical cameras' metadata starting from index 0.
+     */
+    CameraMetadata metadata;
+};
+
+/**
+ * CaptureResult:
+ *
+ * Identical to @3.2::CaptureResult, except that it contains a list of
+ * physical camera metadata.
+ *
+ * Physical camera metadata needs to be generated if and only if a
+ * request is pending on a stream from that physical camera. For example,
+ * if the processCaptureRequest call doesn't request on physical camera
+ * streams, the physicalCameraMetadata field of the CaptureResult being returned
+ * should be an 0-size vector. If the processCaptureRequest call requests on
+ * streams from one of the physical camera, the physicalCameraMetadata field
+ * should contain one metadata describing the capture from that physical camera.
+ *
+ * For a CaptureResult that contains physical camera metadata, its
+ * partialResult field must be android.request.partialResultCount. In other
+ * words, the physicalCameraMetadata must only be contained in a final capture
+ * result.
+ */
+struct CaptureResult {
+    /**
+     * The definition of CaptureResult from the prior version.
+     */
+    @3.2::CaptureResult v3_2;
+
+    /**
+     * The physical metadata for logical multi-camera.
+     */
+    vec<PhysicalCameraMetadata> physicalCameraMetadata;
 };

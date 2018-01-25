@@ -8,6 +8,7 @@ hidl_interface {
     },
     srcs: [
         "types.hal",
+        "ICameraDeviceCallback.hal",
         "ICameraDeviceSession.hal",
     ],
     interfaces: [
@@ -19,8 +20,10 @@ hidl_interface {
     ],
     types: [
         "CaptureRequest",
+        "CaptureResult",
         "HalStream",
         "HalStreamConfiguration",
+        "PhysicalCameraMetadata",
         "PhysicalCameraSetting",
         "RequestTemplate",
         "Stream",

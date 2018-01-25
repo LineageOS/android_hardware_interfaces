@@ -190,7 +190,7 @@ protected:
         void notify(NotifyMsg& msg);
         void processCaptureResult(CaptureResult& result);
 
-    private:
+    protected:
         struct InflightBatch {
             // Protect access to entire struct. Acquire this lock before read/write any data or
             // calling any methods. processCaptureResult and notify will compete for this lock
@@ -235,7 +235,6 @@ protected:
             bool mRemoved = false;
         };
 
-        static const int NOT_BATCHED = -1;
 
         // Get the batch index and pointer to InflightBatch (nullptrt if the frame is not batched)
         // Caller must acquire the InflightBatch::mLock before accessing the InflightBatch
@@ -244,6 +243,16 @@ protected:
         // caller must check InflightBatch::mRemoved flag after the lock is acquried.
         // This method will hold ResultBatcher::mLock briefly
         std::pair<int, std::shared_ptr<InflightBatch>> getBatch(uint32_t frameNumber);
+
+        static const int NOT_BATCHED = -1;
+
+        // move/push function avoids "hidl_handle& operator=(hidl_handle&)", which clones native
+        // handle
+        void moveStreamBuffer(StreamBuffer&& src, StreamBuffer& dst);
+        void pushStreamBuffer(StreamBuffer&& src, std::vector<StreamBuffer>& dst);
+
+        void sendBatchMetadataLocked(
+                std::shared_ptr<InflightBatch> batch, uint32_t lastPartialResultIdx);
 
         // Check if the first batch in mInflightBatches is ready to be removed, and remove it if so
         // This method will hold ResultBatcher::mLock briefly
@@ -257,20 +266,13 @@ protected:
         // send buffers for specified streams
         void sendBatchBuffersLocked(
                 std::shared_ptr<InflightBatch> batch, const std::vector<int>& streams);
-        void sendBatchMetadataLocked(
-                std::shared_ptr<InflightBatch> batch, uint32_t lastPartialResultIdx);
-        // End of sendXXXX methods
+       // End of sendXXXX methods
 
         // helper methods
         void freeReleaseFences(hidl_vec<CaptureResult>&);
         void notifySingleMsg(NotifyMsg& msg);
         void processOneCaptureResult(CaptureResult& result);
         void invokeProcessCaptureResultCallback(hidl_vec<CaptureResult> &results, bool tryWriteFmq);
-
-        // move/push function avoids "hidl_handle& operator=(hidl_handle&)", which clones native
-        // handle
-        void moveStreamBuffer(StreamBuffer&& src, StreamBuffer& dst);
-        void pushStreamBuffer(StreamBuffer&& src, std::vector<StreamBuffer>& dst);
 
         // Protect access to mInflightBatches, mNumPartialResults and mStreamsToBatch
         // processCaptureRequest, processCaptureResult, notify will compete for this lock
@@ -325,6 +327,8 @@ protected:
     static callbacks_process_capture_result_t sProcessCaptureResult;
     static callbacks_notify_t sNotify;
 
+    void constructCaptureResult(CaptureResult& result,
+                                const camera3_capture_result *hal_result);
 private:
 
     struct TrampolineSessionInterface_3_2 : public ICameraDeviceSession {
