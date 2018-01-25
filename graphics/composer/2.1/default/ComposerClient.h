@@ -22,8 +22,8 @@
 #include <vector>
 
 #include <composer-command-buffer/2.1/ComposerCommandBuffer.h>
+#include <composer-hal/2.1/ComposerHal.h>
 #include <hardware/hwcomposer2.h>
-#include "ComposerBase.h"
 
 namespace android {
 namespace hardware {
@@ -31,6 +31,8 @@ namespace graphics {
 namespace composer {
 namespace V2_1 {
 namespace implementation {
+
+using namespace hal;
 
 class BufferCacheEntry {
 public:
@@ -53,7 +55,7 @@ private:
 
 class ComposerClient : public IComposerClient {
 public:
-    ComposerClient(ComposerBase& hal);
+    ComposerClient(ComposerHal& hal);
     virtual ~ComposerClient();
 
     void initialize();
@@ -191,7 +193,7 @@ protected:
         }
 
         ComposerClient& mClient;
-        ComposerBase& mHal;
+        ComposerHal& mHal;
         CommandWriterBase& mWriter;
 
         Display mDisplay;
@@ -200,7 +202,7 @@ protected:
 
     virtual std::unique_ptr<CommandReader> createCommandReader();
 
-    ComposerBase& mHal;
+    ComposerHal& mHal;
 
     // 64KiB minus a small space for metadata such as read/write pointers
     static constexpr size_t kWriterInitialSize =

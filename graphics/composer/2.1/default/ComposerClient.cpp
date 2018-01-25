@@ -19,7 +19,6 @@
 #include <android/hardware/graphics/mapper/2.0/IMapper.h>
 #include <log/log.h>
 
-#include "ComposerBase.h"
 #include "ComposerClient.h"
 
 namespace android {
@@ -134,7 +133,7 @@ void BufferCacheEntry::clear()
     }
 }
 
-ComposerClient::ComposerClient(ComposerBase& hal)
+ComposerClient::ComposerClient(ComposerHal& hal)
     : mHal(hal), mWriter(kWriterInitialSize)
 {
 }

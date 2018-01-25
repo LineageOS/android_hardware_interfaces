@@ -30,7 +30,7 @@
 #include <hardware/hwcomposer2.h>
 #undef HWC2_INCLUDE_STRINGIFICATION
 #undef HWC2_USE_CPP11
-#include "ComposerBase.h"
+#include <composer-hal/2.1/ComposerHal.h>
 
 namespace android {
     class HWC2On1Adapter;
@@ -44,6 +44,8 @@ namespace composer {
 namespace V2_1 {
 namespace implementation {
 
+using namespace hal;
+
 using android::hardware::graphics::common::V1_0::PixelFormat;
 using android::hardware::graphics::common::V1_0::Transform;
 using android::hardware::graphics::common::V1_0::Dataspace;
@@ -53,7 +55,7 @@ using android::hardware::graphics::common::V1_0::Hdr;
 
 class ComposerClient;
 
-class HwcHal : public IComposer, public ComposerBase {
+class HwcHal : public IComposer, public ComposerHal {
 public:
     HwcHal(const hw_module_t* module);
     virtual ~HwcHal();
@@ -63,7 +65,7 @@ public:
     Return<void> dumpDebugInfo(dumpDebugInfo_cb hidl_cb) override;
     Return<void> createClient(createClient_cb hidl_cb) override;
 
-    // ComposerBase interface
+    // ComposerHal interface
     bool hasCapability(hwc2_capability_t capability) override;
     void removeClient() override;
     void enableCallback(bool enable) override;
