@@ -27,6 +27,7 @@ enum VehiclePropertyType : int32_t {
     INT32          = 0x00400000,
     INT32_VEC      = 0x00410000,
     INT64          = 0x00500000,
+    INT64_VEC      = 0x00510000,
     FLOAT          = 0x00600000,
     FLOAT_VEC      = 0x00610000,
     BYTES          = 0x00700000,
@@ -35,7 +36,7 @@ enum VehiclePropertyType : int32_t {
      * Any combination of scalar or vector types. The exact format must be
      * provided in the description of the property.
      */
-    COMPLEX        = 0x00e00000,
+    MIXED          = 0x00e00000,
 
     MASK           = 0x00ff0000
 };
@@ -315,7 +316,7 @@ enum VehicleProperty: int32_t {
     WHEEL_TICK = (
       0x0306
       | VehiclePropertyGroup:SYSTEM
-      | VehiclePropertyType:COMPLEX
+      | VehiclePropertyType:MIXED
       | VehicleArea:GLOBAL),
 
 
@@ -1673,7 +1674,7 @@ enum VehicleProperty: int32_t {
     /**
      * Vehicle Maps Service (VMS) message
      *
-     * This property uses COMPLEX data to communicate vms messages.
+     * This property uses MIXED data to communicate vms messages.
      *
      * Its contents are to be interpreted as follows:
      * the indices defined in VmsMessageIntegerValuesIndex are to be used to
@@ -1689,7 +1690,7 @@ enum VehicleProperty: int32_t {
     VEHICLE_MAP_SERVICE = (
         0x0C00
         | VehiclePropertyGroup:SYSTEM
-        | VehiclePropertyType:COMPLEX
+        | VehiclePropertyType:MIXED
         | VehicleArea:GLOBAL),
 
     /**
@@ -1736,7 +1737,7 @@ enum VehicleProperty: int32_t {
     OBD2_LIVE_FRAME = (
       0x0D00
       | VehiclePropertyGroup:SYSTEM
-      | VehiclePropertyType:COMPLEX
+      | VehiclePropertyType:MIXED
       | VehicleArea:GLOBAL),
 
     /**
@@ -1766,7 +1767,7 @@ enum VehicleProperty: int32_t {
     OBD2_FREEZE_FRAME = (
       0x0D01
       | VehiclePropertyGroup:SYSTEM
-      | VehiclePropertyType:COMPLEX
+      | VehiclePropertyType:MIXED
       | VehicleArea:GLOBAL),
 
     /**
@@ -1787,7 +1788,7 @@ enum VehicleProperty: int32_t {
     OBD2_FREEZE_FRAME_INFO = (
       0x0D02
       | VehiclePropertyGroup:SYSTEM
-      | VehiclePropertyType:COMPLEX
+      | VehiclePropertyType:MIXED
       | VehicleArea:GLOBAL),
 
     /**
@@ -1813,7 +1814,7 @@ enum VehicleProperty: int32_t {
     OBD2_FREEZE_FRAME_CLEAR = (
       0x0D03
       | VehiclePropertyGroup:SYSTEM
-      | VehiclePropertyType:COMPLEX
+      | VehiclePropertyType:MIXED
       | VehicleArea:GLOBAL),
 };
 
@@ -2169,6 +2170,21 @@ enum VehiclePropertyAccess : int32_t {
 };
 
 /**
+ * Property status is a dynamic value that may change based on the vehicle state.
+ */
+enum VehiclePropertyStatus : int32_t {
+    /** Property is available and behaving normally */
+    AVAILABLE   = 0x00,
+    /**
+     * Property is not available, for read and/or write.  This is a transient state, as the
+     *  property is expected to be available at a later time.
+     */
+    UNAVAILABLE = 0x01,
+    /** There is an error with this property. */
+    ERROR       = 0x02,
+};
+
+/**
  * Car states.
  *
  * The driving states determine what features of the UI will be accessible.
@@ -2212,20 +2228,15 @@ enum VehicleAreaZone : int32_t {
   ROW_1_LEFT = 0x00000001,
   ROW_1_CENTER = 0x00000002,
   ROW_1_RIGHT = 0x00000004,
-  ROW_1 = 0x00000008,
   ROW_2_LEFT = 0x00000010,
   ROW_2_CENTER = 0x00000020,
   ROW_2_RIGHT = 0x00000040,
-  ROW_2 = 0x00000080,
   ROW_3_LEFT = 0x00000100,
   ROW_3_CENTER = 0x00000200,
   ROW_3_RIGHT = 0x00000400,
-  ROW_3 = 0x00000800,
   ROW_4_LEFT = 0x00001000,
   ROW_4_CENTER = 0x00002000,
   ROW_4_RIGHT = 0x00004000,
-  ROW_4 = 0x00008000,
-  WHOLE_CABIN = 0x80000000,
 };
 
 /**
@@ -2313,13 +2324,6 @@ struct VehiclePropConfig {
     VehiclePropertyChangeMode changeMode;
 
     /**
-     * Some of the properties may have associated areas (for example, some hvac
-     * properties are associated with VehicleAreaZone), in these
-     * cases the config may contain an ORed value for the associated areas.
-     */
-    int32_t supportedAreas;
-
-    /**
      * Contains per-area configuration.
      */
     vec<VehicleAreaConfig> areaConfigs;
@@ -2371,6 +2375,9 @@ struct VehiclePropValue {
      * VehicleArea* enums or 0 for global properties.
      */
     int32_t areaId;
+
+    /** Status of the property */
+    VehiclePropertyStatus status;
 
     /**
      * Contains value for a single property. Depending on property data type of
@@ -2482,12 +2489,6 @@ enum SubscribeFlags : int32_t {
 struct SubscribeOptions {
     /** Property to subscribe */
     int32_t propId;
-
-    /**
-     * Area ids - this must be a bit mask of areas to subscribe or 0 to subscribe
-     * to all areas.
-     */
-    int32_t vehicleAreas;
 
     /**
      * Sample rate in Hz.
@@ -2894,9 +2895,42 @@ enum VmsMessageType : int32_t {
      * A message from the VMS service to the subscribers or from the publishers to the VMS service
      * with a serialized VMS data packet as defined in the VMS protocol.
      *
-     * This message type uses enum VmsBaseMessageIntegerValuesIndex.
+     * This message type uses enum VmsMessageWithLayerAndPublisherIdIntegerValuesIndex.
      */
     DATA = 12,
+
+    /**
+     * A request from the publishers to the VMS service to get a Publisher ID for a serialized VMS
+     * provider description packet as defined in the VMS protocol.
+     *
+     * This message type uses enum VmsBaseMessageIntegerValuesIndex.
+     */
+    PUBLISHER_ID_REQUEST = 13,
+
+    /**
+     * A response from the VMS service to the publisher that contains a provider description packet
+     * and the publisher ID assigned to it.
+     *
+     * This message type uses enum VmsPublisherInformationIntegerValuesIndex.
+     */
+    PUBLISHER_ID_RESPONSE = 14,
+
+    /**
+     * A request from the subscribers to the VMS service to get information for a Publisher ID.
+     *
+     * This message type uses enum VmsPublisherInformationIntegerValuesIndex.
+     */
+    PUBLISHER_INFORMATION_REQUEST = 15,
+
+    /**
+     * A response from the VMS service to the subscribers that contains a provider description packet
+     * and the publisher ID assigned to it.
+     *
+     * This message type uses enum VmsPublisherInformationIntegerValuesIndex.
+     */
+    PUBLISHER_INFORMATION_RESPONSE = 16,
+
+    LAST_VMS_MESSAGE_TYPE = PUBLISHER_INFORMATION_RESPONSE,
 };
 
 /**
@@ -2924,7 +2958,8 @@ enum VmsMessageWithLayerIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
 
 /*
  * A VMS message with a layer and publisher ID is sent as part of a
- * VmsMessageType.SUBSCRIBE_TO_PUBLISHER and VmsMessageType.UNSUBSCRIBE_TO_PUBLISHER messages.
+ * VmsMessageType.SUBSCRIBE_TO_PUBLISHER, VmsMessageType.UNSUBSCRIBE_TO_PUBLISHER messages and
+ * VmsMessageType.DATA .
  */
 enum VmsMessageWithLayerAndPublisherIdIntegerValuesIndex : VmsMessageWithLayerIntegerValuesIndex {
     PUBLISHER_ID = 4,
@@ -2991,5 +3026,13 @@ enum VmsAvailabilityStateIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
     SEQUENCE_NUMBER = 1,
     NUMBER_OF_ASSOCIATED_LAYERS = 2,
     LAYERS_START = 3,
+};
+
+/*
+ * Publishers send the VMS service their information and assigned in response a publisher ID.
+ * Subscribers can request the publisher information for a publisher ID they received in other messages.
+ */
+enum VmsPublisherInformationIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
+    PUBLISHER_ID = 1,
 };
 

@@ -80,6 +80,9 @@ Return<void> Wifi::getChip(ChipId chip_id, getChip_cb hidl_status_cb) {
 Return<void> Wifi::debug(const hidl_handle& handle,
                          const hidl_vec<hidl_string>&) {
     LOG(INFO) << "-----------Debug is called----------------";
+    if (!chip_.get()) {
+        return Void();
+    }
     return chip_->debug(handle, {});
 }
 

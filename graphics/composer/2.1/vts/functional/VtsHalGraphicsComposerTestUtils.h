@@ -58,10 +58,12 @@ class Composer {
   std::string dumpDebugInfo();
   std::unique_ptr<ComposerClient> createClient();
 
+ protected:
+  sp<IComposer> mComposer;
+
  private:
   void init();
 
-  sp<IComposer> mComposer;
   std::unordered_set<IComposer::Capability> mCapabilities;
 };
 

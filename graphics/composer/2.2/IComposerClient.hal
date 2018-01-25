@@ -1,0 +1,243 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.graphics.composer@2.2;
+
+import android.hardware.graphics.common@1.0::PixelFormat;
+import android.hardware.graphics.common@1.0::Dataspace;
+import @2.1::IComposerClient;
+import @2.1::Display;
+import @2.1::Error;
+
+interface IComposerClient extends @2.1::IComposerClient {
+
+    enum PowerMode : @2.1::IComposerClient.PowerMode {
+        /**
+         * The display is configured as in ON but may stop applying display
+         * updates from the client. This is effectively a hint to the device
+         * that drawing to the display has been suspended and that the the
+         * device must remain on and continue displaying its current contents
+         * indefinitely until the power mode changes.
+         *
+         * This mode may also be used as a signal to enable hardware-based
+         * functionality to take over the display and manage it autonomously
+         * to implement a low power always-on display.
+         */
+        ON_SUSPEND = 4
+    };
+
+    /**
+     * Following enums define keys for metadata defined by SMPTE ST 2086:2014
+     * and CTA 861.3.
+     */
+    enum PerFrameMetadataKey : int32_t {
+        /** SMPTE ST 2084:2014.
+         * Coordinates defined in CIE 1931 xy chromaticity space
+         */
+        /** SMPTE ST 2084:2014 */
+        DISPLAY_RED_PRIMARY_X,
+        /** SMPTE ST 2084:2014 */
+        DISPLAY_RED_PRIMARY_Y,
+        /** SMPTE ST 2084:2014 */
+        DISPLAY_GREEN_PRIMARY_X,
+        /** SMPTE ST 2084:2014 */
+        DISPLAY_GREEN_PRIMARY_Y,
+        /** SMPTE ST 2084:2014 */
+        DISPLAY_BLUE_PRIMARY_X,
+        /** SMPTE ST 2084:2014 */
+        DISPLAY_BLUE_PRIMARY_Y,
+        /** SMPTE ST 2084:2014 */
+        WHITE_POINT_X,
+        /** SMPTE ST 2084:2014 */
+        WHITE_POINT_Y,
+        /** SMPTE ST 2084:2014.
+         * Units: nits
+         * max as defined by ST 2048: 10,000 nits
+         */
+        MAX_LUMINANCE,
+        /** SMPTE ST 2084:2014 */
+        MIN_LUMINANCE,
+        /** CTA 861.3 */
+        MAX_CONTENT_LIGHT_LEVEL,
+        /** CTA 861.3 */
+        MAX_FRAME_AVERAGE_LIGHT_LEVEL,
+    };
+
+    struct PerFrameMetadata {
+        PerFrameMetadataKey key;
+        float value;
+    };
+
+    /**
+     * setPerFrameMetadata(Display display, vec<PerFrameMetadata> data)
+     * Sets the PerFrameMetadata for the display. This metadata must be used
+     * by the implementation to better tone map content to that display.
+     *
+     * This is a method that may be called every frame. Thus it's
+     * implemented using buffered transport.
+     * SET_PER_FRAME_METADATA is the command used by the buffered transport
+     * mechanism.
+     */
+    enum Command : @2.1::IComposerClient.Command {
+        SET_PER_FRAME_METADATA = 0x207 << @2.1::IComposerClient.Command:OPCODE_SHIFT,
+    };
+
+    /**
+     * Returns the PerFrameMetadataKeys that are supported by this device.
+     *
+     * @param display is the display on which to create the layer.
+     * @return keys is the vector of PerFrameMetadataKey keys that are
+     *        supported by this device.
+     * @return error is NONE upon success. Otherwise,
+     *         UNSUPPORTED if not supported on underlying HAL
+     */
+    getPerFrameMetadataKeys(Display display)
+        generates (Error error,
+                   vec<PerFrameMetadataKey> keys);
+
+    /**
+     * getReadbackBufferAttributes
+     * Returns the format which should be used when allocating a buffer for use by
+     * device readback as well as the dataspace in which its contents should be
+     * interpreted.
+     *
+     * The width and height of this buffer must be those of the currently-active
+     * display configuration, and the usage flags must consist of the following:
+     *   BufferUsage::CPU_READ | BufferUsage::GPU_TEXTURE |
+     *   BufferUsage::COMPOSER_OUTPUT
+     *
+     * The format and dataspace provided must be sufficient such that if a
+     * correctly-configured buffer is passed into setReadbackBuffer, filled by
+     * the device, and then displayed by the client as a full-screen buffer, the
+     * output of the display remains the same (subject to the note about protected
+     * content in the description of setReadbackBuffer).
+     *
+     * Parameters:
+     * @param display - the display on which to create the layer.
+     *
+     * @return format - the format the client should use when allocating a device
+     *       readback buffer
+     * @return dataspace - the dataspace to use when interpreting the
+     *       contents of a device readback buffer
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         UNSUPPORTED if not supported on underlying HAL
+     *
+     * See also:
+     *   setReadbackBuffer
+     *   getReadbackBufferFence
+     */
+    getReadbackBufferAttributes(Display display)
+        generates (Error error,
+                   PixelFormat format,
+                   Dataspace dataspace);
+
+    /**
+     * getReadbackBufferFence
+     * Returns an acquire sync fence file descriptor which must signal when the
+     * buffer provided to setReadbackBuffer has been filled by the device and is
+     * safe for the client to read.
+     *
+     * If it is already safe to read from this buffer, -1 may be returned instead.
+     * The client takes ownership of this file descriptor and is responsible for
+     * closing it when it is no longer needed.
+     *
+     * This function must be called immediately after the composition cycle being
+     * captured into the readback buffer. The complete ordering of a readback buffer
+     * capture is as follows:
+     *
+     *   getReadbackBufferAttributes
+     *   // Readback buffer is allocated
+     *   // Many frames may pass
+     *
+     *   setReadbackBuffer
+     *   validateDisplay
+     *   presentDisplay
+     *   getReadbackBufferFence
+     *   // Implicitly wait on the acquire fence before accessing the buffer
+     *
+     * Parameters:
+     * @param display - the display on which to create the layer.
+     *
+     * @return acquireFence - a sync fence file descriptor as described above; pointer
+     *       must be non-NULL
+     * @return error - is HWC2_ERROR_NONE or one of the following errors:
+     *         BAD_DISPLAY - an invalid display handle was passed in
+     *         UNSUPPORTED if not supported on underlying HAL
+     *
+     * See also:
+     *   getReadbackBufferAttributes
+     *   setReadbackBuffer
+     */
+    getReadbackBufferFence(Display display)
+                generates (Error error,
+                           handle acquireFence);
+
+    /**
+     * setReadbackBuffer
+     * Sets the readback buffer to be filled with the contents of the next
+     * composition performed for this display (i.e., the contents present at the
+     * time of the next validateDisplay/presentDisplay cycle).
+     *
+     * This buffer must have been allocated as described in
+     * getReadbackBufferAttributes and is in the dataspace provided by the same.
+     *
+     * If there is hardware protected content on the display at the time of the next
+     * composition, the area of the readback buffer covered by such content must be
+     * completely black. Any areas of the buffer not covered by such content may
+     * optionally be black as well.
+     *
+     * The release fence file descriptor provided works identically to the one
+     * described for setOutputBuffer.
+     *
+     * This function must not be called between any call to validateDisplay and a
+     * subsequent call to presentDisplay.
+     *
+     * Parameters:
+     * @param display - the display on which to create the layer.
+     * @param buffer - the new readback buffer
+     * @param releaseFence - a sync fence file descriptor as described in setOutputBuffer
+     *
+     * @return error - is HWC2_ERROR_NONE or one of the following errors:
+     *   HWC2_ERROR_BAD_DISPLAY - an invalid display handle was passed in
+     *   HWC2_ERROR_BAD_PARAMETER - the new readback buffer handle was invalid
+     *
+     * See also:
+     *   getReadbackBufferAttributes
+     *   getReadbackBufferFence
+     */
+    setReadbackBuffer(Display display, handle buffer, handle releaseFence) generates (Error error);
+
+    /**
+     * setPowerMode_2_2
+     * Sets the power mode of the given display. The transition must be
+     * complete when this function returns. It is valid to call this function
+     * multiple times with the same power mode.
+     *
+     * All displays must support PowerMode::ON and PowerMode::OFF.  Whether a
+     * display supports PowerMode::DOZE or PowerMode::DOZE_SUSPEND may be
+     * queried using getDozeSupport.
+     *
+     * @param display is the display to which the power mode is set.
+     * @param mode is the new power mode.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_PARAMETER when mode was not a valid power mode.
+     *         UNSUPPORTED when mode is not supported on this display.
+     */
+    setPowerMode_2_2(Display display, PowerMode mode) generates (Error error);
+
+};

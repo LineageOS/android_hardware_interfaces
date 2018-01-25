@@ -64,6 +64,67 @@ enum IncrementalResultsPeriodicityRange : int32_t {
     MAX = 10,
 };
 
+enum CellConnectionStatus : int32_t {
+    /**
+     * Cell is not a serving cell.
+     */
+    NONE = 0,
+    /**
+     * UE has connection to cell for signalling and possibly data (3GPP 36.331, 25.331).
+     */
+    PRIMARY_SERVING,
+    /**
+     * UE has connection to cell for data (3GPP 36.331, 25.331).
+     */
+    SECONDARY_SERVING,
+};
+
+/**
+ * Overwritten from @1.0::IndicationFilter in order to redefine ALL. In the future, this should
+ * be extended instead of overwritten.
+ */
+enum IndicationFilter : int32_t {
+    NONE = 0,
+    ALL = ~0,
+    /**
+     * When this bit is set, modem must send the signal strength update through
+     * IRadioIndication.currentSignalStrength() when all criteria specified by
+     * IRadio.setSignalStrengthReportingCriteria() are met.
+     */
+    SIGNAL_STRENGTH = 1 << 0,
+    /**
+     * When this bit is set, modem must invoke IRadioIndication.networkStateChanged() when any field
+     * in VoiceRegStateResult or DataRegStateResult changes. When this bit is not set, modem must
+     * suppress IRadioIndication.networkStateChanged() when there are only changes from
+     * insignificant fields. Modem must invoke IRadioIndication.networkStateChanged() when
+     * significant fields are updated regardless of whether this bit is set.
+     *
+     * The following fields are considered significant: VoiceRegStateResult.regState,
+     * VoiceRegStateResult.rat, DataRegStateResult.regState, DataRegStateResult.rat.
+     */
+    FULL_NETWORK_STATE = 1 << 1,
+    /**
+     * When this bit is set, modem must send IRadioIndication.dataCallListChanged() whenever any
+     * field in ITypes.SetupDataCallResult changes. When this bit is not set, modem must suppress
+     * the indication when the only changed field is 'active' (for data dormancy). For all other
+     * field changes, the modem must send IRadioIndication.dataCallListChanged() regardless of
+     * whether this bit is set.
+     */
+    DATA_CALL_DORMANCY_CHANGED = 1 << 2,
+    /**
+     * When this bit is set, modem must send the link capacity update through
+     * IRadioIndication.currentLinkCapacityEstimate() when all criteria specified by
+     * IRadio.setLinkCapacityReportingCriteria() are met.
+     */
+    LINK_CAPACITY_ESTIMATE = 1 << 3,
+    /**
+     * When this bit is set, the modem must send the physical channel configuration update through
+     * IRadioIndication.currentPhysicalChannelConfigs() when the configuration has changed. It is
+     * recommended that this be reported whenever link capacity or signal strength is reported.
+     */
+    PHYSICAL_CHANNEL_CONFIG = 1 << 4,
+};
+
 struct NetworkScanRequest {
     ScanType type;
 
@@ -156,6 +217,10 @@ struct CellIdentityGsm {
 struct CellIdentityLte {
     @1.0::CellIdentityLte base;
     CellIdentityOperatorNames operatorNames;
+    /**
+     * Cell bandwidth, in kHz.
+     */
+    int32_t bandwidth;
 };
 
 struct CellIdentityWcdma {
@@ -222,6 +287,10 @@ struct CellInfo {
      * Valid only if type = tdscdma and size = 1 else must be empty.
      */
     vec<CellInfoTdscdma> tdscdma;
+    /**
+     * Connection status for the cell.
+     */
+    CellConnectionStatus connectionStatus;
 };
 
 struct CardStatus {
@@ -243,4 +312,26 @@ struct CardStatus {
      * This data is applicable only when cardState is CardState:PRESENT.
      */
     string iccid;
+};
+
+struct LinkCapacityEstimate {
+    /**
+     * Estimated downlink capacity in kbps.
+     */
+    uint32_t downlinkCapacityKbps;
+    /**
+     * Estimated uplink capacity in kbps.
+     */
+    uint32_t uplinkCapacityKbps;
+};
+
+struct PhysicalChannelConfig {
+    /**
+     * Connection status for cell. Valid values are PRIMARY_SERVING and SECONDARY_SERVING.
+     */
+    CellConnectionStatus status;
+    /**
+     * Cell bandwidth, in kHz.
+     */
+    int32_t cellBandwidthDownlink;
 };

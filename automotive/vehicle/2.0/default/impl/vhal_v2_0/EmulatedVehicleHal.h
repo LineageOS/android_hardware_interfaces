@@ -53,7 +53,7 @@ public:
     VehiclePropValuePtr get(const VehiclePropValue& requestedPropValue,
                             StatusCode* outStatus) override;
     StatusCode set(const VehiclePropValue& propValue) override;
-    StatusCode subscribe(int32_t property, int32_t areas, float sampleRate) override;
+    StatusCode subscribe(int32_t property, float sampleRate) override;
     StatusCode unsubscribe(int32_t property) override;
 
     //  Methods from EmulatedVehicleHalIface

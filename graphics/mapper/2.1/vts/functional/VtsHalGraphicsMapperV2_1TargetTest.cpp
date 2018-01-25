@@ -30,10 +30,27 @@ namespace V2_1 {
 namespace tests {
 namespace {
 
+using android::hardware::graphics::mapper::V2_0::BufferDescriptor;
 using android::hardware::graphics::mapper::V2_0::Error;
 
-using android::hardware::graphics::common::V1_0::BufferUsage;
-using android::hardware::graphics::common::V1_0::PixelFormat;
+using android::hardware::graphics::common::V1_1::BufferUsage;
+using android::hardware::graphics::common::V1_1::PixelFormat;
+
+// abuse VTS to check binary compatibility between BufferDescriptorInfos
+using OldBufferDescriptorInfo =
+    android::hardware::graphics::mapper::V2_0::IMapper::BufferDescriptorInfo;
+static_assert(sizeof(OldBufferDescriptorInfo) == sizeof(IMapper::BufferDescriptorInfo) &&
+                  offsetof(OldBufferDescriptorInfo, width) ==
+                      offsetof(IMapper::BufferDescriptorInfo, width) &&
+                  offsetof(OldBufferDescriptorInfo, height) ==
+                      offsetof(IMapper::BufferDescriptorInfo, height) &&
+                  offsetof(OldBufferDescriptorInfo, layerCount) ==
+                      offsetof(IMapper::BufferDescriptorInfo, layerCount) &&
+                  offsetof(OldBufferDescriptorInfo, format) ==
+                      offsetof(IMapper::BufferDescriptorInfo, format) &&
+                  offsetof(OldBufferDescriptorInfo, usage) ==
+                      offsetof(IMapper::BufferDescriptorInfo, usage),
+              "");
 
 class Gralloc : public V2_0::tests::Gralloc {
    public:
@@ -70,6 +87,32 @@ class Gralloc : public V2_0::tests::Gralloc {
             *numFds = tmpNumFds;
             *numInts = tmpNumInts;
         });
+    }
+
+    BufferDescriptor createDescriptor(const IMapper::BufferDescriptorInfo& descriptorInfo) {
+        BufferDescriptor descriptor;
+        mMapper->createDescriptor_2_1(
+            descriptorInfo, [&](const auto& tmpError, const auto& tmpDescriptor) {
+                ASSERT_EQ(Error::NONE, tmpError) << "failed to create descriptor";
+                descriptor = tmpDescriptor;
+            });
+
+        return descriptor;
+    }
+
+    const native_handle_t* allocate(const IMapper::BufferDescriptorInfo& descriptorInfo,
+                                    bool import, uint32_t* outStride = nullptr) {
+        BufferDescriptor descriptor = createDescriptor(descriptorInfo);
+        if (::testing::Test::HasFatalFailure()) {
+            return nullptr;
+        }
+
+        auto buffers = V2_0::tests::Gralloc::allocate(descriptor, 1, import, outStride);
+        if (::testing::Test::HasFatalFailure()) {
+            return nullptr;
+        }
+
+        return buffers[0];
     }
 
    private:
@@ -229,6 +272,24 @@ TEST_F(GraphicsMapperHidlTest, GetTransportSizeBadBuffer) {
     native_handle_delete(rawBufferHandle);
 }
 
+/**
+ * Test IMapper::createDescriptor with valid descriptor info.
+ */
+TEST_F(GraphicsMapperHidlTest, CreateDescriptor_2_1Basic) {
+    ASSERT_NO_FATAL_FAILURE(mGralloc->createDescriptor(mDummyDescriptorInfo));
+}
+
+/**
+ * Test IMapper::createDescriptor with invalid descriptor info.
+ */
+TEST_F(GraphicsMapperHidlTest, CreateDescriptor_2_1Negative) {
+    auto info = mDummyDescriptorInfo;
+    info.width = 0;
+    mGralloc->getMapper()->createDescriptor_2_1(info, [&](const auto& tmpError, const auto&) {
+        EXPECT_EQ(Error::BAD_VALUE, tmpError) << "createDescriptor did not fail with BAD_VALUE";
+    });
+}
+
 }  // namespace
 }  // namespace tests
 }  // namespace V2_1
@@ -238,7 +299,10 @@ TEST_F(GraphicsMapperHidlTest, GetTransportSizeBadBuffer) {
 }  // namespace android
 
 int main(int argc, char** argv) {
+    using android::hardware::graphics::mapper::V2_0::tests::GraphicsMapperHidlEnvironment;
+    ::testing::AddGlobalTestEnvironment(GraphicsMapperHidlEnvironment::Instance());
     ::testing::InitGoogleTest(&argc, argv);
+    GraphicsMapperHidlEnvironment::Instance()->init(&argc, argv);
 
     int status = RUN_ALL_TESTS();
     LOG(INFO) << "Test result = " << status;

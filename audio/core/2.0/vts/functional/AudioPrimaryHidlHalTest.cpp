@@ -88,8 +88,13 @@ using ::android::hardware::audio::common::V2_0::ThreadInfo;
 
 using namespace ::android::hardware::audio::common::test::utility;
 
+class AudioHidlTestEnvironment : public ::Environment {
+   public:
+    virtual void registerTestServices() override { registerTestService<IDevicesFactory>(); }
+};
+
 // Instance to register global tearDown
-static Environment* environment;
+static AudioHidlTestEnvironment* environment;
 
 class HidlTest : public ::testing::VtsHalHidlTargetTestBase {
    protected:
@@ -109,7 +114,8 @@ class AudioHidlTest : public HidlTest {
 
         if (devicesFactory == nullptr) {
             environment->registerTearDown([] { devicesFactory.clear(); });
-            devicesFactory = ::testing::VtsHalHidlTargetTestBase::getService<IDevicesFactory>();
+            devicesFactory = ::testing::VtsHalHidlTargetTestBase::getService<IDevicesFactory>(
+                environment->getServiceName<IDevicesFactory>("default"));
         }
         ASSERT_TRUE(devicesFactory != nullptr);
     }
@@ -1265,9 +1271,10 @@ TEST_F(BoolAccessorPrimaryHidlTest, setGetHac) {
 //////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char** argv) {
-    environment = new Environment;
+    environment = new AudioHidlTestEnvironment;
     ::testing::AddGlobalTestEnvironment(environment);
     ::testing::InitGoogleTest(&argc, argv);
+    environment->init(&argc, argv);
     int status = RUN_ALL_TESTS();
     return status;
 }

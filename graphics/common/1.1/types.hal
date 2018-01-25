@@ -18,6 +18,7 @@ package android.hardware.graphics.common@1.1;
 
 import @1.0::PixelFormat;
 import @1.0::BufferUsage;
+import @1.0::Dataspace;
 
 /**
  * Pixel formats for graphics buffers.
@@ -77,6 +78,39 @@ enum PixelFormat : @1.0::PixelFormat {
      * defined by the dataspace.
      */
     STENCIL_8           = 0x35,
+
+    /**
+     * P010 is a 4:2:0 YCbCr semiplanar format comprised of a WxH Y plane
+     * followed immediately by a Wx(H/2) CbCr plane. Each sample is
+     * represented by a 16-bit little-endian value, with the lower 6 bits set
+     * to zero.
+     *
+     * This format assumes
+     * - an even height
+     * - a vertical stride equal to the height
+     *
+     *   stride_in_bytes = stride * 2
+     *   y_size = stride_in_bytes * height
+     *   cbcr_size = stride_in_bytes * (height / 2)
+     *   cb_offset = y_size
+     *   cr_offset = cb_offset + 2
+     *
+     * This format must be accepted by the allocator when used with the
+     * following usage flags:
+     *
+     *    - BufferUsage::VIDEO_*
+     *    - BufferUsage::CPU_*
+     *    - BufferUsage::GPU_TEXTURE
+     *
+     * The component values are unsigned normalized to the range [0, 1], whose
+     * interpretation is defined by the dataspace.
+     *
+     * This format is appropriate for 10bit video content.
+     *
+     * Buffers with this format must be locked with IMapper::lockYCbCr
+     * or with IMapper::lock.
+     */
+    YCBCR_P010          = 0x36,
 };
 
 /**
@@ -90,4 +124,20 @@ enum BufferUsage : @1.0::BufferUsage {
     GPU_MIPMAP_COMPLETE   = 1ULL << 26,
 
     /** bits 27 and 32-47 must be zero and are reserved for future versions */
+};
+
+@export(name="android_dataspace_v1_1_t", value_prefix="HAL_DATASPACE_",
+        export_parent="false")
+enum Dataspace : @1.0::Dataspace {
+    /**
+     * ITU-R Recommendation 2020 (BT.2020)
+     *
+     * Ultra High-definition television
+     *
+     * Use limited range, SMPTE 2084 (PQ) transfer and BT2020 standard
+     * limited range is the preferred / normative definition for BT.2020
+     */
+    BT2020_ITU = STANDARD_BT2020 | TRANSFER_SMPTE_170M | RANGE_LIMITED,
+
+    BT2020_ITU_PQ = STANDARD_BT2020 | TRANSFER_ST2084 | RANGE_LIMITED,
 };
