@@ -26,32 +26,32 @@ namespace V2_1 {
 namespace tests {
 
 void TestCommandReader::parse() {
-  while (!isEmpty()) {
-    IComposerClient::Command command;
-    uint16_t length;
-    ASSERT_TRUE(beginCommand(&command, &length));
+    while (!isEmpty()) {
+        IComposerClient::Command command;
+        uint16_t length;
+        ASSERT_TRUE(beginCommand(&command, &length));
 
-    switch (command) {
-      case IComposerClient::Command::SET_ERROR: {
-        ASSERT_EQ(2, length);
-        auto loc = read();
-        auto err = readSigned();
-        GTEST_FAIL() << "unexpected error " << err << " at location " << loc;
-      } break;
-      case IComposerClient::Command::SELECT_DISPLAY:
-      case IComposerClient::Command::SET_CHANGED_COMPOSITION_TYPES:
-      case IComposerClient::Command::SET_DISPLAY_REQUESTS:
-      case IComposerClient::Command::SET_PRESENT_FENCE:
-      case IComposerClient::Command::SET_RELEASE_FENCES:
-        break;
-      default:
-        GTEST_FAIL() << "unexpected return command " << std::hex
-                     << static_cast<int>(command);
-        break;
+        switch (command) {
+            case IComposerClient::Command::SET_ERROR: {
+                ASSERT_EQ(2, length);
+                auto loc = read();
+                auto err = readSigned();
+                GTEST_FAIL() << "unexpected error " << err << " at location " << loc;
+            } break;
+            case IComposerClient::Command::SELECT_DISPLAY:
+            case IComposerClient::Command::SET_CHANGED_COMPOSITION_TYPES:
+            case IComposerClient::Command::SET_DISPLAY_REQUESTS:
+            case IComposerClient::Command::SET_PRESENT_FENCE:
+            case IComposerClient::Command::SET_RELEASE_FENCES:
+                break;
+            default:
+                GTEST_FAIL() << "unexpected return command " << std::hex
+                             << static_cast<int>(command);
+                break;
+        }
+
+        endCommand();
     }
-
-    endCommand();
-  }
 }
 
 }  // namespace tests

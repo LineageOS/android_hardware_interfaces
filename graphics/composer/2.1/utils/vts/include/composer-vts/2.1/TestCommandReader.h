@@ -29,10 +29,10 @@ namespace tests {
 // A command parser that checks that no error nor unexpected commands are
 // returned.
 class TestCommandReader : public CommandReaderBase {
- public:
-  // Parse all commands in the return command queue.  Call GTEST_FAIL() for
-  // unexpected errors or commands.
-  void parse();
+   public:
+    // Parse all commands in the return command queue.  Call GTEST_FAIL() for
+    // unexpected errors or commands.
+    void parse();
 };
 
 }  // namespace tests

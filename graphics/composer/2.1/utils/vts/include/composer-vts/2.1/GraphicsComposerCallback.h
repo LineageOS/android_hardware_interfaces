@@ -31,32 +31,32 @@ namespace tests {
 
 // IComposerCallback to be installed with IComposerClient::registerCallback.
 class GraphicsComposerCallback : public IComposerCallback {
- public:
-  void setVsyncAllowed(bool allowed);
+   public:
+    void setVsyncAllowed(bool allowed);
 
-  std::vector<Display> getDisplays() const;
+    std::vector<Display> getDisplays() const;
 
-  int getInvalidHotplugCount() const;
+    int getInvalidHotplugCount() const;
 
-  int getInvalidRefreshCount() const;
+    int getInvalidRefreshCount() const;
 
-  int getInvalidVsyncCount() const;
+    int getInvalidVsyncCount() const;
 
- private:
-  Return<void> onHotplug(Display display, Connection connection) override;
-  Return<void> onRefresh(Display display) override;
-  Return<void> onVsync(Display display, int64_t) override;
+   private:
+    Return<void> onHotplug(Display display, Connection connection) override;
+    Return<void> onRefresh(Display display) override;
+    Return<void> onVsync(Display display, int64_t) override;
 
-  mutable std::mutex mMutex;
-  // the set of all currently connected displays
-  std::unordered_set<Display> mDisplays;
-  // true only when vsync is enabled
-  bool mVsyncAllowed = true;
+    mutable std::mutex mMutex;
+    // the set of all currently connected displays
+    std::unordered_set<Display> mDisplays;
+    // true only when vsync is enabled
+    bool mVsyncAllowed = true;
 
-  // track invalid callbacks
-  int mInvalidHotplugCount = 0;
-  int mInvalidRefreshCount = 0;
-  int mInvalidVsyncCount = 0;
+    // track invalid callbacks
+    int mInvalidHotplugCount = 0;
+    int mInvalidRefreshCount = 0;
+    int mInvalidVsyncCount = 0;
 };
 
 }  // namespace tests

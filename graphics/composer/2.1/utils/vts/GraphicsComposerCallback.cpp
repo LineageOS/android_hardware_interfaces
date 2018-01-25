@@ -24,65 +24,64 @@ namespace V2_1 {
 namespace tests {
 
 void GraphicsComposerCallback::setVsyncAllowed(bool allowed) {
-  std::lock_guard<std::mutex> lock(mMutex);
-  mVsyncAllowed = allowed;
+    std::lock_guard<std::mutex> lock(mMutex);
+    mVsyncAllowed = allowed;
 }
 
 std::vector<Display> GraphicsComposerCallback::getDisplays() const {
-  std::lock_guard<std::mutex> lock(mMutex);
-  return std::vector<Display>(mDisplays.begin(), mDisplays.end());
+    std::lock_guard<std::mutex> lock(mMutex);
+    return std::vector<Display>(mDisplays.begin(), mDisplays.end());
 }
 
 int GraphicsComposerCallback::getInvalidHotplugCount() const {
-  std::lock_guard<std::mutex> lock(mMutex);
-  return mInvalidHotplugCount;
+    std::lock_guard<std::mutex> lock(mMutex);
+    return mInvalidHotplugCount;
 }
 
 int GraphicsComposerCallback::getInvalidRefreshCount() const {
-  std::lock_guard<std::mutex> lock(mMutex);
-  return mInvalidRefreshCount;
+    std::lock_guard<std::mutex> lock(mMutex);
+    return mInvalidRefreshCount;
 }
 
 int GraphicsComposerCallback::getInvalidVsyncCount() const {
-  std::lock_guard<std::mutex> lock(mMutex);
-  return mInvalidVsyncCount;
+    std::lock_guard<std::mutex> lock(mMutex);
+    return mInvalidVsyncCount;
 }
 
-Return<void> GraphicsComposerCallback::onHotplug(Display display,
-                                                 Connection connection) {
-  std::lock_guard<std::mutex> lock(mMutex);
+Return<void> GraphicsComposerCallback::onHotplug(Display display, Connection connection) {
+    std::lock_guard<std::mutex> lock(mMutex);
 
-  if (connection == Connection::CONNECTED) {
-    if (!mDisplays.insert(display).second) {
-      mInvalidHotplugCount++;
+    if (connection == Connection::CONNECTED) {
+        if (!mDisplays.insert(display).second) {
+            mInvalidHotplugCount++;
+        }
+    } else if (connection == Connection::DISCONNECTED) {
+        if (!mDisplays.erase(display)) {
+            mInvalidHotplugCount++;
+        }
     }
-  } else if (connection == Connection::DISCONNECTED) {
-    if (!mDisplays.erase(display)) {
-      mInvalidHotplugCount++;
-    }
-  }
 
-  return Void();
+    return Void();
 }
 
 Return<void> GraphicsComposerCallback::onRefresh(Display display) {
-  std::lock_guard<std::mutex> lock(mMutex);
+    std::lock_guard<std::mutex> lock(mMutex);
 
-  if (mDisplays.count(display) == 0) {
-    mInvalidRefreshCount++;
-  }
+    if (mDisplays.count(display) == 0) {
+        mInvalidRefreshCount++;
+    }
 
-  return Void();
+    return Void();
 }
 
 Return<void> GraphicsComposerCallback::onVsync(Display display, int64_t) {
-  std::lock_guard<std::mutex> lock(mMutex);
+    std::lock_guard<std::mutex> lock(mMutex);
 
-  if (!mVsyncAllowed || mDisplays.count(display) == 0) {
-    mInvalidVsyncCount++;
-  }
+    if (!mVsyncAllowed || mDisplays.count(display) == 0) {
+        mInvalidVsyncCount++;
+    }
 
-  return Void();
+    return Void();
 }
 
 }  // namespace tests

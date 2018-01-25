@@ -27,9 +27,9 @@ namespace composer {
 namespace V2_2 {
 namespace tests {
 
-using android::hardware::graphics::composer::V2_2::IComposerClient;
-using android::hardware::details::getDescriptor;
 using android::hardware::details::canCastInterface;
+using android::hardware::details::getDescriptor;
+using android::hardware::graphics::composer::V2_2::IComposerClient;
 
 std::unique_ptr<ComposerClient_v2_2> Composer_v2_2::createClient_v2_2() {
     std::unique_ptr<ComposerClient_v2_2> client;
