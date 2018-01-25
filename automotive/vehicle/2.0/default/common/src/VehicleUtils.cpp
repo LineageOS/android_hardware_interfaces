@@ -42,13 +42,14 @@ std::unique_ptr<VehiclePropValue> createVehiclePropValue(
             val->value.floatValues.resize(vecSize);
             break;
         case VehiclePropertyType::INT64:
+        case VehiclePropertyType::INT64_VEC:
             val->value.int64Values.resize(vecSize);
             break;
         case VehiclePropertyType::BYTES:
             val->value.bytes.resize(vecSize);
             break;
         case VehiclePropertyType::STRING:
-        case VehiclePropertyType::COMPLEX:
+        case VehiclePropertyType::MIXED:
             break; // Valid, but nothing to do.
         default:
             ALOGE("createVehiclePropValue: unknown type: %d", type);
@@ -68,6 +69,7 @@ size_t getVehicleRawValueVectorSize(
         case VehiclePropertyType::FLOAT_VEC:
             return value.floatValues.size();
         case VehiclePropertyType::INT64:
+        case VehiclePropertyType::INT64_VEC:
             return value.int64Values.size();
         case VehiclePropertyType::BYTES:
             return value.bytes.size();

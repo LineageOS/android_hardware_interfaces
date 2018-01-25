@@ -29,10 +29,8 @@ namespace automotive {
 namespace vehicle {
 namespace V2_0 {
 
-constexpr int32_t kCustomComplexProperty = 0xbeef
-        | VehiclePropertyGroup::VENDOR
-        | VehiclePropertyType::COMPLEX
-        | VehicleArea::GLOBAL;
+constexpr int32_t kCustomComplexProperty =
+    0xbeef | VehiclePropertyGroup::VENDOR | VehiclePropertyType::MIXED | VehicleArea::GLOBAL;
 
 const VehiclePropConfig kVehicleProperties[] = {
     {
@@ -46,8 +44,6 @@ const VehiclePropConfig kVehicleProperties[] = {
         .prop = toInt(VehicleProperty::HVAC_FAN_SPEED),
         .access = VehiclePropertyAccess::READ_WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-        .supportedAreas = static_cast<int32_t>(
-            VehicleAreaZone::ROW_1_LEFT | VehicleAreaZone::ROW_1_RIGHT),
         .areaConfigs = {
             VehicleAreaConfig {
                 .areaId = toInt(VehicleAreaZone::ROW_1_LEFT),
@@ -66,8 +62,6 @@ const VehiclePropConfig kVehicleProperties[] = {
         .prop = toInt(VehicleProperty::HVAC_SEAT_TEMPERATURE),
         .access = VehiclePropertyAccess::WRITE,
         .changeMode = VehiclePropertyChangeMode::ON_SET,
-        .supportedAreas = static_cast<int32_t>(
-            VehicleAreaZone::ROW_1_LEFT | VehicleAreaZone::ROW_1_RIGHT),
         .areaConfigs = {
             VehicleAreaConfig {
                 .areaId = toInt(VehicleAreaZone::ROW_1_LEFT),

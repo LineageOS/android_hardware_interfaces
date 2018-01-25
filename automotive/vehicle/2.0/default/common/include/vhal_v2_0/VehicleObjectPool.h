@@ -191,9 +191,8 @@ public:
     VehiclePropValuePool& operator=(VehiclePropValuePool&) = delete;
 private:
     bool isDisposable(VehiclePropertyType type, size_t vecSize) const {
-        return vecSize > mMaxRecyclableVectorSize ||
-               VehiclePropertyType::STRING == type ||
-               VehiclePropertyType::COMPLEX == type;
+        return vecSize > mMaxRecyclableVectorSize || VehiclePropertyType::STRING == type ||
+               VehiclePropertyType::MIXED == type;
     }
 
     RecyclableType obtainDisposable(VehiclePropertyType valueType,
