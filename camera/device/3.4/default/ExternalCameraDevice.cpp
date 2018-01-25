@@ -47,7 +47,7 @@ const std::array<uint32_t, /*size*/1> kSupportedFourCCs {{
 //       Also make sure that can be done without editing source code
 
 // TODO: b/72261675: make it dynamic since this affects memory usage
-const int kMaxJpegSize = {13 * 1024 * 1024};  // 13MB
+const int kMaxJpegSize = {5 * 1024 * 1024};  // 5MB
 } // anonymous namespace
 
 ExternalCameraDevice::ExternalCameraDevice(const std::string& cameraId) :
