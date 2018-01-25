@@ -335,3 +335,32 @@ struct PhysicalChannelConfig {
      */
     int32_t cellBandwidthDownlink;
 };
+
+enum AccessNetwork : int32_t {
+    /** GSM EDGE Radio Access Network */
+    GERAN       = 1,
+    /** Universal Terrestrial Radio Access Network */
+    UTRAN       = 2,
+    /** Evolved Universal Terrestrial Radio Access Network */
+    EUTRAN      = 3,
+    /** CDMA 2000 network */
+    CDMA2000    = 4,
+    /** Interworking Wireless LAN */
+    IWLAN       = 5
+};
+
+enum DataRequestReason : int32_t {
+    /**
+     * The reason of the data request is normal
+     */
+    NORMAL    = 0x01,
+    /**
+     * The reason of the data request is device shutdown
+     */
+    SHUTDOWN  = 0x02,
+    /**
+     * The reason of the data request is IWLAN data handover to another transport
+     * (e.g. from cellular to wifi or vise versa)
+     */
+    HANDOVER  = 0x03,
+};
