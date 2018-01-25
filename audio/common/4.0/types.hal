@@ -493,8 +493,6 @@ enum AudioInterleave : int32_t {
  */
 @export(name="audio_mode_t", value_prefix="AUDIO_MODE_")
 enum AudioMode : int32_t {
-    INVALID          = -2,
-    CURRENT          = -1,
     NORMAL           = 0,
     RINGTONE         = 1,
     IN_CALL          = 2,
