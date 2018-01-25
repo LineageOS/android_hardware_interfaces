@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef VTS_HAL_GRAPHICS_COMPOSER_UTILS
-#define VTS_HAL_GRAPHICS_COMPOSER_UTILS
+#pragma once
 
 #include <memory>
 #include <string>
@@ -25,16 +24,15 @@
 
 #include <android/hardware/graphics/composer/2.1/IComposer.h>
 #include <composer-command-buffer/2.1/ComposerCommandBuffer.h>
+#include <composer-vts/2.1/TestCommandReader.h>
 #include <utils/StrongPointer.h>
-
-#include "TestCommandReader.h"
 
 namespace android {
 namespace hardware {
 namespace graphics {
 namespace composer {
 namespace V2_1 {
-namespace tests {
+namespace vts {
 
 using android::hardware::graphics::common::V1_0::ColorMode;
 using android::hardware::graphics::common::V1_0::Dataspace;
@@ -120,11 +118,9 @@ class ComposerClient {
     std::unordered_map<Display, DisplayResource> mDisplayResources;
 };
 
-}  // namespace tests
+}  // namespace vts
 }  // namespace V2_1
 }  // namespace composer
 }  // namespace graphics
 }  // namespace hardware
 }  // namespace android
-
-#endif  // VTS_HAL_GRAPHICS_COMPOSER_UTILS

@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-#include <VtsHalHidlTargetTestBase.h>
+#include <composer-vts/2.1/ComposerVts.h>
 
-#include "VtsHalGraphicsComposerTestUtils.h"
+#include <VtsHalHidlTargetTestBase.h>
 
 namespace android {
 namespace hardware {
 namespace graphics {
 namespace composer {
 namespace V2_1 {
-namespace tests {
+namespace vts {
 
 Composer::Composer() {
     mComposer = ::testing::VtsHalHidlTargetTestBase::getService<IComposer>();
@@ -316,7 +316,7 @@ void ComposerClient::execute(TestCommandReader* reader, CommandWriterBase* write
                              });
 }
 
-}  // namespace tests
+}  // namespace vts
 }  // namespace V2_1
 }  // namespace composer
 }  // namespace graphics

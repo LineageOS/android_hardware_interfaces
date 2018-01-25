@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef TEST_COMMAND_READER_H
-#define TEST_COMMAND_READER_H
+#pragma once
 
 #include <composer-command-buffer/2.1/ComposerCommandBuffer.h>
 
@@ -24,7 +23,7 @@ namespace hardware {
 namespace graphics {
 namespace composer {
 namespace V2_1 {
-namespace tests {
+namespace vts {
 
 // A command parser that checks that no error nor unexpected commands are
 // returned.
@@ -35,11 +34,9 @@ class TestCommandReader : public CommandReaderBase {
     void parse();
 };
 
-}  // namespace tests
+}  // namespace vts
 }  // namespace V2_1
 }  // namespace composer
 }  // namespace graphics
 }  // namespace hardware
 }  // namespace android
-
-#endif  // TEST_COMMAND_READER_H

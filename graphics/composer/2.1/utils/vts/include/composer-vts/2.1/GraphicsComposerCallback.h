@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef GRAPHICS_COMPOSER_CALLBACK_H
-#define GRAPHICS_COMPOSER_CALLBACK_H
+#pragma once
 
 #include <android/hardware/graphics/composer/2.1/IComposerCallback.h>
 
@@ -27,7 +26,7 @@ namespace hardware {
 namespace graphics {
 namespace composer {
 namespace V2_1 {
-namespace tests {
+namespace vts {
 
 // IComposerCallback to be installed with IComposerClient::registerCallback.
 class GraphicsComposerCallback : public IComposerCallback {
@@ -59,11 +58,9 @@ class GraphicsComposerCallback : public IComposerCallback {
     int mInvalidVsyncCount = 0;
 };
 
-}  // namespace tests
+}  // namespace vts
 }  // namespace V2_1
 }  // namespace composer
 }  // namespace graphics
 }  // namespace hardware
 }  // namespace android
-
-#endif  // GRAPHICS_COMPOSER_CALLBACK_H

@@ -17,10 +17,10 @@
 #define LOG_TAG "graphics_composer_hidl_hal_test"
 
 #include <android-base/logging.h>
+#include <composer-vts/2.1/ComposerVts.h>
+#include <composer-vts/2.1/GraphicsComposerCallback.h>
+#include <composer-vts/2.1/TestCommandReader.h>
 #include <mapper-vts/2.0/MapperVts.h>
-#include "GraphicsComposerCallback.h"
-#include "TestCommandReader.h"
-#include "VtsHalGraphicsComposerTestUtils.h"
 
 #include <VtsHalHidlTargetTestBase.h>
 #include <VtsHalHidlTargetTestEnvBase.h>
@@ -38,7 +38,7 @@ namespace hardware {
 namespace graphics {
 namespace composer {
 namespace V2_1 {
-namespace tests {
+namespace vts {
 namespace {
 
 using android::hardware::graphics::common::V1_0::BufferUsage;
@@ -685,7 +685,7 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_Z_ORDER) {
 }
 
 }  // namespace
-}  // namespace tests
+}  // namespace vts
 }  // namespace V2_1
 }  // namespace composer
 }  // namespace graphics
@@ -693,7 +693,7 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_Z_ORDER) {
 }  // namespace android
 
 int main(int argc, char** argv) {
-    using android::hardware::graphics::composer::V2_1::tests::GraphicsComposerHidlEnvironment;
+    using android::hardware::graphics::composer::V2_1::vts::GraphicsComposerHidlEnvironment;
     ::testing::AddGlobalTestEnvironment(GraphicsComposerHidlEnvironment::Instance());
     ::testing::InitGoogleTest(&argc, argv);
     GraphicsComposerHidlEnvironment::Instance()->init(&argc, argv);

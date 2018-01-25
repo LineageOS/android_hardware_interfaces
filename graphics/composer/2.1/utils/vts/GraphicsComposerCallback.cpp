@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "GraphicsComposerCallback.h"
+#include <composer-vts/2.1/GraphicsComposerCallback.h>
 
 namespace android {
 namespace hardware {
 namespace graphics {
 namespace composer {
 namespace V2_1 {
-namespace tests {
+namespace vts {
 
 void GraphicsComposerCallback::setVsyncAllowed(bool allowed) {
     std::lock_guard<std::mutex> lock(mMutex);
@@ -84,7 +84,7 @@ Return<void> GraphicsComposerCallback::onVsync(Display display, int64_t) {
     return Void();
 }
 
-}  // namespace tests
+}  // namespace vts
 }  // namespace V2_1
 }  // namespace composer
 }  // namespace graphics

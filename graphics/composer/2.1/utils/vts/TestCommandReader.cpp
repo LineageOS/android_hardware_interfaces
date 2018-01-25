@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "TestCommandReader.h"
+#include <composer-vts/2.1/TestCommandReader.h>
 
 #include <gtest/gtest.h>
 
@@ -23,7 +23,7 @@ namespace hardware {
 namespace graphics {
 namespace composer {
 namespace V2_1 {
-namespace tests {
+namespace vts {
 
 void TestCommandReader::parse() {
     while (!isEmpty()) {
@@ -54,7 +54,7 @@ void TestCommandReader::parse() {
     }
 }
 
-}  // namespace tests
+}  // namespace vts
 }  // namespace V2_1
 }  // namespace composer
 }  // namespace graphics

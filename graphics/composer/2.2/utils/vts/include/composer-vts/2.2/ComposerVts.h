@@ -22,11 +22,11 @@
 #include <unordered_set>
 #include <vector>
 
-#include <VtsHalGraphicsComposerTestUtils.h>
 #include <VtsHalHidlTargetTestBase.h>
 #include <android/hardware/graphics/composer/2.2/IComposer.h>
 #include <android/hardware/graphics/composer/2.2/IComposerClient.h>
 #include <composer-command-buffer/2.2/ComposerCommandBuffer.h>
+#include <composer-vts/2.1/ComposerVts.h>
 #include <utils/StrongPointer.h>
 
 namespace android {
@@ -34,7 +34,7 @@ namespace hardware {
 namespace graphics {
 namespace composer {
 namespace V2_2 {
-namespace tests {
+namespace vts {
 
 using android::hardware::graphics::common::V1_0::ColorMode;
 using android::hardware::graphics::common::V1_0::Dataspace;
@@ -47,22 +47,22 @@ class ComposerClient_v2_2;
 
 // Only thing I need for Composer_v2_2 is to create a v2_2 ComposerClient
 // Everything else is the same
-class Composer_v2_2 : public V2_1::tests::Composer {
+class Composer_v2_2 : public V2_1::vts::Composer {
    public:
-    Composer_v2_2() : V2_1::tests::Composer(){};
-    explicit Composer_v2_2(const std::string& name) : V2_1::tests::Composer(name){};
+    Composer_v2_2() : V2_1::vts::Composer(){};
+    explicit Composer_v2_2(const std::string& name) : V2_1::vts::Composer(name){};
 
     std::unique_ptr<ComposerClient_v2_2> createClient_v2_2();
 };
 
 // A wrapper to IComposerClient.
 class ComposerClient_v2_2
-    : public android::hardware::graphics::composer::V2_1::tests::ComposerClient {
+    : public android::hardware::graphics::composer::V2_1::vts::ComposerClient {
    public:
     ComposerClient_v2_2(const sp<IComposerClient>& client)
-        : V2_1::tests::ComposerClient(client), mClient_v2_2(client){};
+        : V2_1::vts::ComposerClient(client), mClient_v2_2(client){};
 
-    void execute_v2_2(V2_1::tests::TestCommandReader* reader, V2_2::CommandWriterBase* writer);
+    void execute_v2_2(V2_1::vts::TestCommandReader* reader, V2_2::CommandWriterBase* writer);
 
     std::vector<IComposerClient::PerFrameMetadataKey> getPerFrameMetadataKeys(Display display);
 
@@ -76,7 +76,7 @@ class ComposerClient_v2_2
     sp<V2_2::IComposerClient> mClient_v2_2;
 };
 
-}  // namespace tests
+}  // namespace vts
 }  // namespace V2_2
 }  // namespace composer
 }  // namespace graphics

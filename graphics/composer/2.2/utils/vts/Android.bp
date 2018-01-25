@@ -15,32 +15,25 @@
 //
 
 cc_library_static {
-    name: "libVtsHalGraphicsComposerTestUtils@2.2",
+    name: "android.hardware.graphics.composer@2.2-vts",
     defaults: ["hidl_defaults"],
     srcs: [
-        "VtsHalGraphicsComposerTestUtils.cpp",
-    ],
-    shared_libs: [
-        "android.hardware.graphics.composer@2.1",
-        "android.hardware.graphics.composer@2.2",
-        "libfmq",
-        "libsync",
+        "ComposerVts.cpp",
     ],
     static_libs: [
-        "libVtsHalGraphicsComposerTestUtils",
         "VtsHalHidlTargetTestBase",
+        "android.hardware.graphics.composer@2.1",
+        "android.hardware.graphics.composer@2.1-vts",
+        "android.hardware.graphics.composer@2.2",
     ],
     header_libs: [
         "android.hardware.graphics.composer@2.1-command-buffer",
         "android.hardware.graphics.composer@2.2-command-buffer",
     ],
     cflags: [
-        "-Wall",
-        "-Wextra",
-        "-Werror",
         "-O0",
         "-g",
-        "-DLOG_TAG=\"GraphicsComposerTestUtils@2.2\"",
+        "-DLOG_TAG=\"ComposerVts\"",
     ],
-    export_include_dirs: ["include/composer-vts"],
+    export_include_dirs: ["include"],
 }

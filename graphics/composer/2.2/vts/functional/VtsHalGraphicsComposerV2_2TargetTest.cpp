@@ -16,23 +16,20 @@
 
 #define LOG_TAG "graphics_composer_hidl_hal_test@2.2"
 
+#include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/graphics/mapper/2.1/IMapper.h>
+#include <composer-vts/2.1/GraphicsComposerCallback.h>
+#include <composer-vts/2.1/TestCommandReader.h>
+#include <composer-vts/2.2/ComposerVts.h>
 #include <mapper-vts/2.0/MapperVts.h>
-#include <sync/sync.h>
-#include "2.2/VtsHalGraphicsComposerTestUtils.h"
-#include "GraphicsComposerCallback.h"
-#include "TestCommandReader.h"
-#include "VtsHalGraphicsComposerTestUtils.h"
-
-#include <VtsHalHidlTargetTestBase.h>
 
 namespace android {
 namespace hardware {
 namespace graphics {
 namespace composer {
 namespace V2_2 {
-namespace tests {
+namespace vts {
 namespace {
 
 using android::hardware::graphics::common::V1_0::BufferUsage;
@@ -71,7 +68,7 @@ class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                 GraphicsComposerHidlEnvironment::Instance()->getServiceName<IComposer>()));
         ASSERT_NO_FATAL_FAILURE(mComposerClient = mComposer->createClient_v2_2());
 
-        mComposerCallback = new V2_1::tests::GraphicsComposerCallback;
+        mComposerCallback = new V2_1::vts::GraphicsComposerCallback;
         mComposerClient->registerCallback(mComposerCallback);
 
         // assume the first display is primary and is never removed
@@ -95,7 +92,7 @@ class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
     std::unique_ptr<Composer_v2_2> mComposer;
     std::unique_ptr<ComposerClient_v2_2> mComposerClient;
-    sp<V2_1::tests::GraphicsComposerCallback> mComposerCallback;
+    sp<V2_1::vts::GraphicsComposerCallback> mComposerCallback;
     // the first display and is assumed never to be removed
     Display mPrimaryDisplay;
 
@@ -122,7 +119,7 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
         ASSERT_NO_FATAL_FAILURE(mGralloc = std::make_unique<Gralloc>());
 
         mWriter = std::make_unique<V2_2::CommandWriterBase>(1024);
-        mReader = std::make_unique<V2_1::tests::TestCommandReader>();
+        mReader = std::make_unique<V2_1::vts::TestCommandReader>();
     }
 
     void TearDown() override { ASSERT_NO_FATAL_FAILURE(GraphicsComposerHidlTest::TearDown()); }
@@ -142,7 +139,7 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
     void execute() { mComposerClient->execute_v2_2(mReader.get(), mWriter.get()); }
 
     std::unique_ptr<V2_2::CommandWriterBase> mWriter;
-    std::unique_ptr<V2_1::tests::TestCommandReader> mReader;
+    std::unique_ptr<V2_1::vts::TestCommandReader> mReader;
 
    private:
     std::unique_ptr<Gralloc> mGralloc;
@@ -239,7 +236,7 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_FLOAT_COLOR) {
 }
 
 }  // namespace
-}  // namespace tests
+}  // namespace vts
 }  // namespace V2_2
 }  // namespace composer
 }  // namespace graphics
@@ -247,7 +244,7 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_FLOAT_COLOR) {
 }  // namespace android
 
 int main(int argc, char** argv) {
-    using android::hardware::graphics::composer::V2_2::tests::GraphicsComposerHidlEnvironment;
+    using android::hardware::graphics::composer::V2_2::vts::GraphicsComposerHidlEnvironment;
     ::testing::AddGlobalTestEnvironment(GraphicsComposerHidlEnvironment::Instance());
     ::testing::InitGoogleTest(&argc, argv);
     GraphicsComposerHidlEnvironment::Instance()->init(&argc, argv);

@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-#include <VtsHalHidlTargetTestBase.h>
-#include <hidl/HidlTransportUtils.h>
+#include <composer-vts/2.2/ComposerVts.h>
 
+#include <VtsHalHidlTargetTestBase.h>
 #include <composer-command-buffer/2.2/ComposerCommandBuffer.h>
-#include "2.2/VtsHalGraphicsComposerTestUtils.h"
+#include <hidl/HidlTransportUtils.h>
 
 namespace android {
 namespace hardware {
 namespace graphics {
 namespace composer {
 namespace V2_2 {
-namespace tests {
+namespace vts {
 
 using android::hardware::details::canCastInterface;
 using android::hardware::details::getDescriptor;
@@ -56,7 +56,7 @@ std::vector<IComposerClient::PerFrameMetadataKey> ComposerClient_v2_2::getPerFra
     return keys;
 }
 
-void ComposerClient_v2_2::execute_v2_2(V2_1::tests::TestCommandReader* reader,
+void ComposerClient_v2_2::execute_v2_2(V2_1::vts::TestCommandReader* reader,
                                        V2_2::CommandWriterBase* writer) {
     bool queueChanged = false;
     uint32_t commandLength = 0;
@@ -119,7 +119,7 @@ void ComposerClient_v2_2::getReadbackBufferFence(Display display, int32_t* outFe
     *outFence = 0;
 }
 
-}  // namespace tests
+}  // namespace vts
 }  // namespace V2_2
 }  // namespace composer
 }  // namespace graphics
