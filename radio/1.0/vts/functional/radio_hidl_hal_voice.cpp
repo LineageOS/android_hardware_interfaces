@@ -214,7 +214,8 @@ TEST_F(RadioHidlTest, cancelPendingUssd) {
 
     if (cardStatus.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckGeneralError() || radioRsp->rspInfo.error == RadioError::INVALID_STATE ||
-                    radioRsp->rspInfo.error == RadioError::MODEM_ERR);
+                    radioRsp->rspInfo.error == RadioError::MODEM_ERR ||
+                    radioRsp->rspInfo.error == RadioError::NONE);
     }
 }
 
