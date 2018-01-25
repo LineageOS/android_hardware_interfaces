@@ -84,6 +84,12 @@ interface IStreamIn extends IStream {
     };
 
     /**
+     * Called when the metadata of the stream's sink has been changed.
+     * @param sinkMetadata Description of the audio that is suggested by the clients.
+     */
+    updateSinkMetadata(SinkMetadata sinkMetadata);
+
+    /**
      * Set up required transports for receiving audio buffers from the driver.
      *
      * The transport consists of three message queues:

@@ -78,6 +78,12 @@ interface IStreamOut extends IStream {
     };
 
     /**
+     * Called when the metadata of the stream's source has been changed.
+     * @param sourceMetadata Description of the audio that is played by the clients.
+     */
+    updateSourceMetadata(SourceMetadata sourceMetadata);
+
+    /**
      * Set up required transports for passing audio buffers to the driver.
      *
      * The transport consists of three message queues:

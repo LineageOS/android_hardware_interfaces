@@ -109,6 +109,8 @@ interface IDevice {
      * @param device device type and (if needed) address.
      * @param config stream configuration.
      * @param flags additional flags.
+     * @param sourceMetadata Description of the audio that will be played.
+                             May be used by implementations to configure hardware effects.
      * @return retval operation completion status.
      * @return outStream created output stream.
      * @return suggestedConfig in case of invalid parameters, suggested config.
@@ -117,7 +119,8 @@ interface IDevice {
             AudioIoHandle ioHandle,
             DeviceAddress device,
             AudioConfig config,
-            bitfield<AudioOutputFlag> flags) generates (
+            bitfield<AudioOutputFlag> flags,
+            SourceMetadata sourceMetadata) generates (
                     Result retval,
                     IStreamOut outStream,
                     AudioConfig suggestedConfig);
@@ -132,6 +135,8 @@ interface IDevice {
      * @param config stream configuration.
      * @param flags additional flags.
      * @param source source specification.
+     * @param sinkMetadata Description of the audio that is suggested by the client.
+     *                     May be used by implementations to configure hardware effects.
      * @return retval operation completion status.
      * @return inStream in case of success, created input stream.
      * @return suggestedConfig in case of invalid parameters, suggested config.
@@ -141,7 +146,7 @@ interface IDevice {
             DeviceAddress device,
             AudioConfig config,
             bitfield<AudioInputFlag> flags,
-            AudioSource source) generates (
+            SinkMetadata sinkMetadata) generates (
                     Result retval,
                     IStreamIn inStream,
                     AudioConfig suggestedConfig);
