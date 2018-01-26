@@ -47,6 +47,7 @@ VehiclePropValuePool::RecyclableType VehiclePropValuePool::obtain(
 
     dest->prop = src.prop;
     dest->areaId = src.areaId;
+    dest->status = src.status;
     dest->timestamp = src.timestamp;
     copyVehicleRawValue(&dest->value, src.value);
 

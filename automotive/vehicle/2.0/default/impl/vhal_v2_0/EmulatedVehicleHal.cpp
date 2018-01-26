@@ -363,6 +363,7 @@ void EmulatedVehicleHal::onFakeValueGenerated(int32_t propId, float value) {
         updatedPropValue->prop = propId;
         updatedPropValue->areaId = 0;  // Add area support if necessary.
         updatedPropValue->timestamp = elapsedRealtimeNano();
+        updatedPropValue->status = VehiclePropertyStatus::AVAILABLE;
         mPropStore->writeValue(*updatedPropValue);
         auto changeMode = mPropStore->getConfigOrDie(propId)->changeMode;
         if (VehiclePropertyChangeMode::ON_CHANGE == changeMode) {
