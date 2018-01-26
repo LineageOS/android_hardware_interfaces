@@ -1,4 +1,4 @@
-service vendor.evs-hal-mock /vendor/bin/hw/android.hardware.automotive.audiocontrol@1.0-service
+service vendor.audiocontrol-hal-1.0 /vendor/bin/hw/android.hardware.automotive.audiocontrol@1.0-service
     class hal
     user audioserver
     group system
