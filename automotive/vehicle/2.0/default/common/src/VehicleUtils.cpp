@@ -114,6 +114,7 @@ void shallowCopyHidlStr(hidl_string* dest, const hidl_string& src) {
 void shallowCopy(VehiclePropValue* dest, const VehiclePropValue& src) {
     dest->prop = src.prop;
     dest->areaId = src.areaId;
+    dest->status = src.status;
     dest->timestamp = src.timestamp;
     shallowCopyHidlVec(&dest->value.int32Values, src.value.int32Values);
     shallowCopyHidlVec(&dest->value.int64Values, src.value.int64Values);
