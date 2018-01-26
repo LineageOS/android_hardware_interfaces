@@ -28,17 +28,15 @@ namespace support {
 void Keymaster4::getVersionIfNeeded() {
     if (haveVersion_) return;
 
-    auto rc = dev_->getHardwareInfo([&](SecurityLevel securityLevel, auto...) {
-        securityLevel_ = securityLevel;
-        haveVersion_ = true;
-    });
+    auto rc =
+        dev_->getHardwareInfo([&](SecurityLevel securityLevel, const hidl_string& keymasterName,
+                                  const hidl_string& authorName) {
+            version_ = {keymasterName, authorName, 4 /* major version */, securityLevel,
+                        true /* supportsEc */};
+            haveVersion_ = true;
+        });
 
     CHECK(rc.isOk()) << "Got error " << rc.description() << " trying to get hardware info";
-}
-
-Keymaster::VersionResult Keymaster4::halVersion() {
-    getVersionIfNeeded();
-    return {ErrorCode::OK, halMajorVersion(), securityLevel_, true};
 }
 
 }  // namespace support

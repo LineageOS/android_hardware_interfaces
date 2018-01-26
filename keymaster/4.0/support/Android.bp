@@ -26,6 +26,8 @@ cc_library {
         "attestation_record.cpp",
         "authorization_set.cpp",
         "key_param_output.cpp",
+        "keymaster_utils.cpp",
+        "Keymaster.cpp",
         "Keymaster3.cpp",
         "Keymaster4.cpp",
     ],

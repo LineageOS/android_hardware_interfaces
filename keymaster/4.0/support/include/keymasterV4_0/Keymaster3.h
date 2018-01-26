@@ -40,9 +40,15 @@ using ::android::hardware::details::return_status;
 class Keymaster3 : public Keymaster {
    public:
     using WrappedIKeymasterDevice = IKeymaster3Device;
-    Keymaster3(sp<IKeymaster3Device> km3_dev) : km3_dev_(km3_dev), haveVersion_(false) {}
+    Keymaster3(sp<IKeymaster3Device> km3_dev, const hidl_string& instanceName)
+        : Keymaster(IKeymaster3Device::descriptor, instanceName),
+          km3_dev_(km3_dev),
+          haveVersion_(false) {}
 
-    VersionResult halVersion() override;
+    const VersionResult& halVersion() override {
+        getVersionIfNeeded();
+        return version_;
+    }
 
     Return<void> getHardwareInfo(getHardwareInfo_cb _hidl_cb);
 
@@ -114,14 +120,10 @@ class Keymaster3 : public Keymaster {
     sp<IKeymaster3Device> km3_dev_;
 
     bool haveVersion_;
-    uint8_t majorVersion_;
-    SecurityLevel securityLevel_;
-    bool supportsEllipticCurve_;
+    VersionResult version_;
     bool supportsSymmetricCryptography_;
     bool supportsAttestation_;
     bool supportsAllDigests_;
-    std::string keymasterName_;
-    std::string authorName_;
 };
 
 }  // namespace support
