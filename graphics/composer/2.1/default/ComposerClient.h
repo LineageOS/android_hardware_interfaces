@@ -22,6 +22,7 @@
 #include <vector>
 
 #include <composer-command-buffer/2.1/ComposerCommandBuffer.h>
+#include <composer-hal/2.1/ComposerCommandEngine.h>
 #include <composer-hal/2.1/ComposerHal.h>
 #include <composer-hal/2.1/ComposerResources.h>
 #include <hardware/hwcomposer2.h>
@@ -92,68 +93,17 @@ public:
             executeCommands_cb hidl_cb) override;
 
 protected:
-    class CommandReader : public CommandReaderBase {
-    public:
-        CommandReader(ComposerClient& client);
-        virtual ~CommandReader();
-
-        Error parse();
-
-    protected:
-        virtual bool parseCommand(IComposerClient::Command command,
-                uint16_t length);
-
-        bool parseSelectDisplay(uint16_t length);
-        bool parseSelectLayer(uint16_t length);
-        bool parseSetColorTransform(uint16_t length);
-        bool parseSetClientTarget(uint16_t length);
-        bool parseSetOutputBuffer(uint16_t length);
-        bool parseValidateDisplay(uint16_t length);
-        bool parsePresentOrValidateDisplay(uint16_t length);
-        bool parseAcceptDisplayChanges(uint16_t length);
-        bool parsePresentDisplay(uint16_t length);
-        bool parseSetLayerCursorPosition(uint16_t length);
-        bool parseSetLayerBuffer(uint16_t length);
-        bool parseSetLayerSurfaceDamage(uint16_t length);
-        bool parseSetLayerBlendMode(uint16_t length);
-        bool parseSetLayerColor(uint16_t length);
-        bool parseSetLayerCompositionType(uint16_t length);
-        bool parseSetLayerDataspace(uint16_t length);
-        bool parseSetLayerDisplayFrame(uint16_t length);
-        bool parseSetLayerPlaneAlpha(uint16_t length);
-        bool parseSetLayerSidebandStream(uint16_t length);
-        bool parseSetLayerSourceCrop(uint16_t length);
-        bool parseSetLayerTransform(uint16_t length);
-        bool parseSetLayerVisibleRegion(uint16_t length);
-        bool parseSetLayerZOrder(uint16_t length);
-
-        hwc_rect_t readRect();
-        std::vector<hwc_rect_t> readRegion(size_t count);
-        hwc_frect_t readFRect();
-
-        ComposerHal& mHal;
-        ComposerResources* mResources;
-        CommandWriterBase& mWriter;
-
-        Display mDisplay;
-        Layer mLayer;
-    };
+    virtual std::unique_ptr<ComposerResources> createResources();
+    virtual std::unique_ptr<ComposerCommandEngine> createCommandEngine();
 
     void destroyResources();
-
-    virtual std::unique_ptr<ComposerResources> createResources();
-    virtual std::unique_ptr<CommandReader> createCommandReader();
 
     ComposerHal& mHal;
 
     std::unique_ptr<ComposerResources> mResources;
 
-    // 64KiB minus a small space for metadata such as read/write pointers
-    static constexpr size_t kWriterInitialSize =
-        64 * 1024 / sizeof(uint32_t) - 16;
-    std::mutex mCommandMutex;
-    std::unique_ptr<CommandReader> mReader;
-    CommandWriterBase mWriter;
+    std::mutex mCommandEngineMutex;
+    std::unique_ptr<ComposerCommandEngine> mCommandEngine;
 
     sp<IComposerCallback> mCallback;
 };
