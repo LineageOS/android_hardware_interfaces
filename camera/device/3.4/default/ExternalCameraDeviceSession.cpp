@@ -1820,8 +1820,8 @@ status_t ExternalCameraDeviceSession::initDefaultRequests() {
                 intent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT;
                 break;
             default:
-                ALOGE("%s: unknown template type %d", __FUNCTION__, type);
-                return BAD_VALUE;
+                ALOGV("%s: unsupported RequestTemplate type %d", __FUNCTION__, type);
+                continue;
         }
         UPDATE(mdCopy, ANDROID_CONTROL_CAPTURE_INTENT, &intent, 1);
 
