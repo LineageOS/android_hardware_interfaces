@@ -507,7 +507,7 @@ Return<void> WifiChip::enableDebugErrorAlerts(
 }
 
 Return<void> WifiChip::selectTxPowerScenario(
-    TxPowerScenario scenario, selectTxPowerScenario_cb hidl_status_cb) {
+    V1_1::IWifiChip::TxPowerScenario scenario, selectTxPowerScenario_cb hidl_status_cb) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
                            &WifiChip::selectTxPowerScenarioInternal,
                            hidl_status_cb, scenario);
@@ -526,6 +526,12 @@ Return<void> WifiChip::registerEventCallback_1_2(
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
                            &WifiChip::registerEventCallbackInternal_1_2,
                            hidl_status_cb, event_callback);
+}
+
+Return<void> WifiChip::selectTxPowerScenario_1_2(
+        TxPowerScenario scenario, selectTxPowerScenario_cb hidl_status_cb) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+            &WifiChip::selectTxPowerScenarioInternal_1_2, hidl_status_cb, scenario);
 }
 
 Return<void> WifiChip::debug(const hidl_handle& handle,
@@ -990,7 +996,8 @@ WifiStatus WifiChip::enableDebugErrorAlertsInternal(bool enable) {
     return createWifiStatusFromLegacyError(legacy_status);
 }
 
-WifiStatus WifiChip::selectTxPowerScenarioInternal(TxPowerScenario scenario) {
+WifiStatus WifiChip::selectTxPowerScenarioInternal(
+        V1_1::IWifiChip::TxPowerScenario scenario) {
     auto legacy_status = legacy_hal_.lock()->selectTxPowerScenario(
         getWlan0IfaceName(),
         hidl_struct_util::convertHidlTxPowerScenarioToLegacy(scenario));
@@ -1009,6 +1016,13 @@ WifiStatus WifiChip::registerEventCallbackInternal_1_2(
         return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
     }
     return createWifiStatus(WifiStatusCode::SUCCESS);
+}
+
+WifiStatus WifiChip::selectTxPowerScenarioInternal_1_2(TxPowerScenario scenario) {
+    auto legacy_status = legacy_hal_.lock()->selectTxPowerScenario(
+        getWlan0IfaceName(),
+        hidl_struct_util::convertHidlTxPowerScenarioToLegacy_1_2(scenario));
+    return createWifiStatusFromLegacyError(legacy_status);
 }
 
 WifiStatus WifiChip::handleChipConfiguration(

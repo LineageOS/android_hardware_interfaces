@@ -66,12 +66,14 @@ convertLegacyLoggerFeatureToHidlStaIfaceCapability(uint32_t feature) {
     return {};
 }
 
-V1_1::IWifiChip::ChipCapabilityMask convertLegacyFeatureToHidlChipCapability(
+IWifiChip::ChipCapabilityMask convertLegacyFeatureToHidlChipCapability(
     uint32_t feature) {
-    using HidlChipCaps = V1_1::IWifiChip::ChipCapabilityMask;
+    using HidlChipCaps = IWifiChip::ChipCapabilityMask;
     switch (feature) {
         case WIFI_FEATURE_SET_TX_POWER_LIMIT:
             return HidlChipCaps::SET_TX_POWER_LIMIT;
+        case WIFI_FEATURE_USE_BODY_HEAD_SAR:
+            return HidlChipCaps::USE_BODY_HEAD_SAR;
         case WIFI_FEATURE_D2D_RTT:
             return HidlChipCaps::D2D_RTT;
         case WIFI_FEATURE_D2AP_RTT:
@@ -135,6 +137,7 @@ bool convertLegacyFeaturesToHidlChipCapabilities(
         }
     }
     for (const auto feature : {WIFI_FEATURE_SET_TX_POWER_LIMIT,
+                               WIFI_FEATURE_USE_BODY_HEAD_SAR,
                                WIFI_FEATURE_D2D_RTT, WIFI_FEATURE_D2AP_RTT}) {
         if (feature & legacy_feature_set) {
             *hidl_caps |= convertLegacyFeatureToHidlChipCapability(feature);
@@ -260,8 +263,28 @@ bool convertLegacyWakeReasonStatsToHidl(
 legacy_hal::wifi_power_scenario convertHidlTxPowerScenarioToLegacy(
     V1_1::IWifiChip::TxPowerScenario hidl_scenario) {
     switch (hidl_scenario) {
-        case V1_1::IWifiChip::TxPowerScenario::VOICE_CALL:
+        // This is the only supported scenario for V1_1
+      case V1_1::IWifiChip::TxPowerScenario::VOICE_CALL:
             return legacy_hal::WIFI_POWER_SCENARIO_VOICE_CALL;
+    };
+    CHECK(false);
+}
+
+legacy_hal::wifi_power_scenario convertHidlTxPowerScenarioToLegacy_1_2(
+    IWifiChip::TxPowerScenario hidl_scenario) {
+    switch (hidl_scenario) {
+        // This is the only supported scenario for V1_1
+        case IWifiChip::TxPowerScenario::VOICE_CALL:
+            return legacy_hal::WIFI_POWER_SCENARIO_VOICE_CALL;
+        // Those are the supported scenarios for V1_2
+        case IWifiChip::TxPowerScenario::ON_HEAD_CELL_OFF:
+            return legacy_hal::WIFI_POWER_SCENARIO_ON_HEAD_CELL_OFF;
+        case IWifiChip::TxPowerScenario::ON_HEAD_CELL_ON:
+            return legacy_hal::WIFI_POWER_SCENARIO_ON_HEAD_CELL_ON;
+        case IWifiChip::TxPowerScenario::ON_BODY_CELL_OFF:
+            return legacy_hal::WIFI_POWER_SCENARIO_ON_BODY_CELL_OFF;
+        case IWifiChip::TxPowerScenario::ON_BODY_CELL_ON:
+            return legacy_hal::WIFI_POWER_SCENARIO_ON_BODY_CELL_ON;
     };
     CHECK(false);
 }
