@@ -6,7 +6,6 @@ cc_library_shared {
     shared_libs: [
         "android.hardware.camera.common@1.0",
         "android.hardware.camera.device@1.0",
-        "vendor.qti.hardware.camera.device@1.0",
         "android.hardware.camera.device@3.2",
         "android.hardware.camera.device@3.3",
         "android.hardware.camera.device@3.4",
@@ -41,6 +40,7 @@ cc_library_shared {
 
 cc_library_shared {
     name: "android.hardware.camera.provider@2.4-external",
+    defaults: ["qti_camera_device_defaults"],
     proprietary: true,
     srcs: ["ExternalCameraProviderImpl_2_4.cpp"],
     shared_libs: [
@@ -91,7 +91,6 @@ cc_library_shared {
     shared_libs: [
         "android.hardware.camera.common@1.0",
         "android.hardware.camera.device@1.0",
-        "vendor.qti.hardware.camera.device@1.0",
         "android.hardware.camera.device@3.2",
         "android.hardware.camera.device@3.3",
         "android.hardware.camera.device@3.4",
@@ -202,7 +201,10 @@ cc_binary {
 
 cc_binary {
     name: "android.hardware.camera.provider@2.4-external-service",
-    defaults: ["hidl_defaults"],
+    defaults: [
+        "hidl_defaults",
+        "qti_camera_device_defaults",
+    ],
     proprietary: true,
     relative_install_path: "hw",
     srcs: ["external-service.cpp"],
