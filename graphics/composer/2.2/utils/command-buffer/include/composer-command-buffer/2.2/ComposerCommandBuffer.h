@@ -64,8 +64,16 @@ class CommandWriterBase : public V2_1::CommandWriterBase {
    public:
     CommandWriterBase(uint32_t initialMaxSize) : V2_1::CommandWriterBase(initialMaxSize) {}
 
+    static constexpr uint16_t kSetLayerFloatColorLength = 4;
+    void setLayerFloatColor(IComposerClient::FloatColor color) {
+        beginCommand_2_2(IComposerClient::Command::SET_LAYER_FLOAT_COLOR,
+                         kSetLayerFloatColorLength);
+        writeFloatColor(color);
+        endCommand();
+    }
+
     void setPerFrameMetadata(const hidl_vec<IComposerClient::PerFrameMetadata>& metadataVec) {
-        beginCommand2_2(IComposerClient::Command::SET_PER_FRAME_METADATA, metadataVec.size() * 2);
+        beginCommand_2_2(IComposerClient::Command::SET_PER_FRAME_METADATA, metadataVec.size() * 2);
         for (const auto& metadata : metadataVec) {
             writeSigned(static_cast<int32_t>(metadata.key));
             writeFloat(metadata.value);
@@ -74,9 +82,16 @@ class CommandWriterBase : public V2_1::CommandWriterBase {
     }
 
    protected:
-    void beginCommand2_2(IComposerClient::Command command, uint16_t length) {
+    void beginCommand_2_2(IComposerClient::Command command, uint16_t length) {
         V2_1::CommandWriterBase::beginCommand(
             static_cast<V2_1::IComposerClient::Command>(static_cast<int32_t>(command)), length);
+    }
+
+    void writeFloatColor(const IComposerClient::FloatColor& color) {
+        writeFloat(color.r);
+        writeFloat(color.g);
+        writeFloat(color.b);
+        writeFloat(color.a);
     }
 };
 
@@ -85,6 +100,15 @@ class CommandWriterBase : public V2_1::CommandWriterBase {
 class CommandReaderBase : public V2_1::CommandReaderBase {
    public:
     CommandReaderBase() : V2_1::CommandReaderBase(){};
+
+   protected:
+    IComposerClient::FloatColor readFloatColor() {
+        float r = readFloat();
+        float g = readFloat();
+        float b = readFloat();
+        float a = readFloat();
+        return IComposerClient::FloatColor{r, g, b, a};
+    }
 };
 
 }  // namespace V2_2

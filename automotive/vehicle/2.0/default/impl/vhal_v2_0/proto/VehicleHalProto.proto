@@ -46,6 +46,12 @@ enum Status {
     ERROR_INVALID_OPERATION             = 8;
 }
 
+enum VehiclePropStatus {
+    AVAILABLE                           = 0;
+    UNAVAILABLE                         = 1;
+    ERROR                               = 2;
+}
+
 message VehicleAreaConfig {
     required int32  area_id             = 1;
     optional sint32 min_int32_value     = 2;
@@ -61,7 +67,7 @@ message VehiclePropConfig {
     optional int32             access              = 2;
     optional int32             change_mode         = 3;
     optional int32             value_type          = 4;
-    optional int32             supported_areas     = 5;
+    optional int32             supported_areas     = 5;     // Deprecated - DO NOT USE
     repeated VehicleAreaConfig area_configs        = 6;
     optional int32             config_flags        = 7;
     repeated int32             config_array        = 8;
@@ -75,6 +81,7 @@ message VehiclePropValue {
     required int32  prop                = 1;
     optional int32  value_type          = 2;
     optional int64  timestamp           = 3;    // required for valid data from HAL, skipped for set
+    optional VehiclePropStatus  status  = 10;   // required for valid data from HAL, skipped for set
 
     // values
     optional int32  area_id             = 4;

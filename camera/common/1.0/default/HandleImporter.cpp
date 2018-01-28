@@ -134,6 +134,38 @@ void HandleImporter::closeFence(int fd) const {
     }
 }
 
+void* HandleImporter::lock(
+        buffer_handle_t& buf, uint64_t cpuUsage, size_t size) {
+    Mutex::Autolock lock(mLock);
+    void *ret = 0;
+    IMapper::Rect accessRegion { 0, 0, static_cast<int>(size), 1 };
+
+    if (!mInitialized) {
+        initializeLocked();
+    }
+
+    if (mMapper == nullptr) {
+        ALOGE("%s: mMapper is null!", __FUNCTION__);
+        return ret;
+    }
+
+    hidl_handle acquireFenceHandle;
+    auto buffer = const_cast<native_handle_t*>(buf);
+    mMapper->lock(buffer, cpuUsage, accessRegion, acquireFenceHandle,
+            [&](const auto& tmpError, const auto& tmpPtr) {
+                if (tmpError == MapperError::NONE) {
+                    ret = tmpPtr;
+                } else {
+                    ALOGE("%s: failed to lock error %d!",
+                          __FUNCTION__, tmpError);
+                }
+           });
+
+    ALOGV("%s: ptr %p size: %zu", __FUNCTION__, ret, size);
+    return ret;
+}
+
+
 YCbCrLayout HandleImporter::lockYCbCr(
         buffer_handle_t& buf, uint64_t cpuUsage,
         const IMapper::Rect& accessRegion) {

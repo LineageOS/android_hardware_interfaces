@@ -32,11 +32,15 @@ using IKeymaster4Device = ::android::hardware::keymaster::V4_0::IKeymasterDevice
 class Keymaster4 : public Keymaster {
    public:
     using WrappedIKeymasterDevice = IKeymaster4Device;
-    Keymaster4(sp<IKeymasterDevice> km4_dev) : haveVersion_(false), dev_(km4_dev) {}
+    Keymaster4(sp<IKeymasterDevice> km4_dev, const hidl_string& instanceName)
+        : Keymaster(IKeymaster4Device::descriptor, instanceName),
+          haveVersion_(false),
+          dev_(km4_dev) {}
 
-    uint8_t halMajorVersion() { return 4; }
-
-    VersionResult halVersion() override;
+    const VersionResult& halVersion() override {
+        getVersionIfNeeded();
+        return version_;
+    }
 
     Return<void> getHardwareInfo(getHardwareInfo_cb _hidl_cb) override {
         return dev_->getHardwareInfo(_hidl_cb);
@@ -143,7 +147,7 @@ class Keymaster4 : public Keymaster {
     void getVersionIfNeeded();
 
     bool haveVersion_;
-    SecurityLevel securityLevel_;
+    VersionResult version_;
     sp<IKeymaster4Device> dev_;
 };
 

@@ -81,18 +81,38 @@ interface IComposerClient extends @2.1::IComposerClient {
         float value;
     };
 
-    /**
-     * setPerFrameMetadata(Display display, vec<PerFrameMetadata> data)
-     * Sets the PerFrameMetadata for the display. This metadata must be used
-     * by the implementation to better tone map content to that display.
-     *
-     * This is a method that may be called every frame. Thus it's
-     * implemented using buffered transport.
-     * SET_PER_FRAME_METADATA is the command used by the buffered transport
-     * mechanism.
-     */
+    struct FloatColor {
+        float r;
+        float g;
+        float b;
+        float a;
+    };
+
     enum Command : @2.1::IComposerClient.Command {
+        /**
+         * setPerFrameMetadata(Display display, vec<PerFrameMetadata> data)
+         * Sets the PerFrameMetadata for the display. This metadata must be used
+         * by the implementation to better tone map content to that display.
+         *
+         * This is a method that may be called every frame. Thus it's
+         * implemented using buffered transport.
+         * SET_PER_FRAME_METADATA is the command used by the buffered transport
+         * mechanism.
+         */
         SET_PER_FRAME_METADATA = 0x207 << @2.1::IComposerClient.Command:OPCODE_SHIFT,
+
+        /**
+         * SET_LAYER_COLOR has this pseudo prototype
+         *
+         *   setLayerColor(FloatColor color);
+         *
+         * Sets the color of the given layer. If the composition type of the layer
+         * is not Composition::SOLID_COLOR, this call must succeed and have no
+         * other effect.
+         *
+         * @param color is the new color using float type.
+         */
+        SET_LAYER_FLOAT_COLOR = 0x40c << @2.1::IComposerClient.Command:OPCODE_SHIFT,
     };
 
     /**

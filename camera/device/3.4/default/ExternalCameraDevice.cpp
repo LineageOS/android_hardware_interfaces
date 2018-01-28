@@ -47,7 +47,7 @@ const std::array<uint32_t, /*size*/1> kSupportedFourCCs {{
 //       Also make sure that can be done without editing source code
 
 // TODO: b/72261675: make it dynamic since this affects memory usage
-const int kMaxJpegSize = {13 * 1024 * 1024};  // 13MB
+const int kMaxJpegSize = {5 * 1024 * 1024};  // 5MB
 } // anonymous namespace
 
 ExternalCameraDevice::ExternalCameraDevice(const std::string& cameraId) :
@@ -227,8 +227,7 @@ do {                                               \
 
 status_t ExternalCameraDevice::initDefaultCharsKeys(
         ::android::hardware::camera::common::V1_0::helper::CameraMetadata* metadata) {
-    // TODO: changed to HARDWARELEVEL_EXTERNAL later
-    const uint8_t hardware_level = ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED;
+    const uint8_t hardware_level = ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL;
     UPDATE(ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL, &hardware_level, 1);
 
     // android.colorCorrection

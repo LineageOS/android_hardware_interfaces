@@ -224,6 +224,20 @@ TEST_F(GraphicsComposerHidlTest, getReadbackBufferAttributes) {
     mComposerClient->getReadbackBufferAttributes(mPrimaryDisplay, &pixelFormat, &dataspace);
 }
 
+/**
+ * Test IComposerClient::Command::SET_LAYER_FLOAT_COLOR.
+ */
+TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_FLOAT_COLOR) {
+    V2_1::Layer layer;
+    ASSERT_NO_FATAL_FAILURE(layer =
+                                mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
+
+    mWriter->selectDisplay(mPrimaryDisplay);
+    mWriter->selectLayer(layer);
+    mWriter->setLayerFloatColor(IComposerClient::FloatColor{1.0, 1.0, 1.0, 1.0});
+    mWriter->setLayerFloatColor(IComposerClient::FloatColor{0.0, 0.0, 0.0, 0.0});
+}
+
 }  // namespace
 }  // namespace tests
 }  // namespace V2_2

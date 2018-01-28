@@ -359,6 +359,8 @@ protected:
     // Stream ID -> circulating buffers map
     std::map<int, CirculatingBuffers> mCirculatingBuffers;
 
+    bool mAfTrigger = false;
+
     static HandleImporter sHandleImporter;
 
     /* Beginning of members not changed after initialize() */

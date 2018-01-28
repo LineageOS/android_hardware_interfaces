@@ -23,6 +23,7 @@
 using android::hardware::hidl_vec;
 
 using android::hardware::gnss::V1_0::GnssConstellationType;
+using android::hardware::gnss::V1_0::GnssLocation;
 using android::hardware::gnss::V1_1::IGnssConfiguration;
 using android::hardware::gnss::V1_1::IGnssMeasurement;
 
@@ -361,6 +362,37 @@ TEST_F(GnssHalTest, BlacklistConstellation) {
     StopAndClearLocations();
     sources.resize(0);
     result = gnss_configuration_hal->setBlacklist(sources);
+    ASSERT_TRUE(result.isOk());
+    EXPECT_TRUE(result);
+}
+
+/*
+ * InjectBestLocation
+ *
+ * Ensure successfully injecting a location.
+ */
+TEST_F(GnssHalTest, InjectBestLocation) {
+    GnssLocation gnssLocation = {.gnssLocationFlags = 0,  // set below
+                                 .latitudeDegrees = 43.0,
+                                 .longitudeDegrees = -180,
+                                 .altitudeMeters = 1000,
+                                 .speedMetersPerSec = 0,
+                                 .bearingDegrees = 0,
+                                 .horizontalAccuracyMeters = 0.1,
+                                 .verticalAccuracyMeters = 0.1,
+                                 .speedAccuracyMetersPerSecond = 0.1,
+                                 .bearingAccuracyDegrees = 0.1,
+                                 .timestamp = 1534567890123L};
+    gnssLocation.gnssLocationFlags |=
+        GnssLocationFlags::HAS_LAT_LONG | GnssLocationFlags::HAS_ALTITUDE |
+        GnssLocationFlags::HAS_SPEED | GnssLocationFlags::HAS_HORIZONTAL_ACCURACY |
+        GnssLocationFlags::HAS_VERTICAL_ACCURACY | GnssLocationFlags::HAS_SPEED_ACCURACY |
+        GnssLocationFlags::HAS_BEARING | GnssLocationFlags::HAS_BEARING_ACCURACY;
+
+    CheckLocation(gnssLocation, true);
+
+    auto result = gnss_hal_->injectBestLocation(gnssLocation);
+
     ASSERT_TRUE(result.isOk());
     EXPECT_TRUE(result);
 }

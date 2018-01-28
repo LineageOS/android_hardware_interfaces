@@ -1,0 +1,100 @@
+/*
+ * Copyright 2016 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi.supplicant@1.1;
+
+import @1.0::ISupplicantNetwork;
+import @1.0::ISupplicantStaNetworkCallback;
+import @1.0::SupplicantStatus;
+import @1.0::ISupplicantStaNetwork;
+
+/**
+ * Interface exposed by the supplicant for each station mode network
+ * configuration it controls.
+ */
+interface ISupplicantStaNetwork extends @1.0::ISupplicantStaNetwork {
+    /**
+     * EAP IMSI Identity to be used for authentication to EAP SIM networks.
+     * The identity must be derived from the IMSI retrieved from the SIM card.
+     *
+     * See RFC4186 & RFC4187 & RFC5448 for EAP SIM protocols.
+     *
+     * Identity string is built from IMSI. Format is:
+     *       eapPrefix | IMSI | '@' | realm
+     * where:
+     * - "|" denotes concatenation
+     * - realm is the 3GPP network domain name derived from the given
+     *   MCC/MNC according to the 3GGP spec(TS23.003)
+     *
+     * eapPrefix value:
+     * '0' - EAP-AKA Identity
+     * '1' - EAP-SIM Identity
+     * '6' - EAP-AKA-PRIME Identity
+     */
+    typedef vec<uint8_t> EapSimIdentity;
+
+    /**
+     * Encrypted EAP IMSI Identity to be used for authentication to EAP SIM
+     * networks which supports encrypted IMSI.
+     * The identity must be derived from the IMSI retrieved from the SIM card.
+     * This identity is then encrypted using the public key of the carrier.
+     *
+     * See RFC4186 & RFC4187 & RFC5448 for EAP SIM protocols.
+     * See section 7.1 of RFC 2437 for RSA-OAEP encryption scheme.
+     *
+     * Identity string is built from encrypted IMSI. Format is:
+     *       '\0' | Base64{RSA-OAEP-SHA-256(eapPrefix | IMSI)}
+     *       | '@' | realm | {',' Key Identifier}
+     * where:
+     * - "|" denotes concatenation
+     * - "{}" denotes an optional value
+     * - realm is the 3GPP network domain name derived from the given
+     *   MCC/MNC according to the 3GGP spec(TS23.003)
+     * - Key Identifier is a null-terminated string of the form "<Key>=<Value>"
+     */
+    typedef vec<uint8_t> EapSimEncryptedIdentity;
+
+    /**
+     * Set EAP encrypted IMSI Identity for this network.
+     *
+     * @param identity Identity string built from the encrypted IMSI.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    setEapEncryptedImsiIdentity(EapSimEncryptedIdentity identity)
+        generates (SupplicantStatus status);
+
+    /**
+     * Used to send a response to the
+     * |ISupplicantNetworkCallback.onNetworkEapIdentityRequest| request.
+     *
+     * @param identity Identity string containing the IMSI.
+     * @param encryptedIdentity Identity string containing the encrypted IMSI.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    sendNetworkEapIdentityResponse_1_1(
+            EapSimIdentity identity,
+            EapSimEncryptedIdentity encryptedIdentity)
+        generates (SupplicantStatus status);
+};

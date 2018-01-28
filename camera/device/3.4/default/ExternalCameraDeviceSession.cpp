@@ -57,8 +57,9 @@ const float kMinAspectRatio = 1.f;
 HandleImporter ExternalCameraDeviceSession::sHandleImporter;
 
 bool isAspectRatioClose(float ar1, float ar2) {
-    const float kAspectRatioMatchThres = 0.01f; // This threshold is good enough to distinguish
+    const float kAspectRatioMatchThres = 0.025f; // This threshold is good enough to distinguish
                                                 // 4:3/16:9/20:9
+                                                // 1.33 / 1.78 / 2
     return (std::abs(ar1 - ar2) < kAspectRatioMatchThres);
 }
 
@@ -93,8 +94,8 @@ CroppingType ExternalCameraDeviceSession::initCroppingType(
         const std::vector<SupportedV4L2Format>& sortedFmts) {
     const auto& maxSize = sortedFmts[sortedFmts.size() - 1];
     float maxSizeAr = ASPECT_RATIO(maxSize);
-    float minAr = kMinAspectRatio;
-    float maxAr = kMaxAspectRatio;
+    float minAr = kMaxAspectRatio;
+    float maxAr = kMinAspectRatio;
     for (const auto& fmt : sortedFmts) {
         float ar = ASPECT_RATIO(fmt);
         if (ar < minAr) {
@@ -724,10 +725,23 @@ int ExternalCameraDeviceSession::OutputThread::getCropRect(
         ALOGE("%s: out is null", __FUNCTION__);
         return -1;
     }
+
     uint32_t inW = inSize.width;
     uint32_t inH = inSize.height;
     uint32_t outW = outSize.width;
     uint32_t outH = outSize.height;
+
+    // Handle special case where aspect ratio is close to input but scaled
+    // dimension is slightly larger than input
+    float arIn = ASPECT_RATIO(inSize);
+    float arOut = ASPECT_RATIO(outSize);
+    if (isAspectRatioClose(arIn, arOut)) {
+        out->left = 0;
+        out->top = 0;
+        out->width = inW;
+        out->height = inH;
+        return 0;
+    }
 
     if (ct == VERTICAL) {
         uint64_t scaledOutH = static_cast<uint64_t>(outH) * inW / outW;
@@ -1667,6 +1681,7 @@ Status ExternalCameraDeviceSession::configureStreams(
         switch (config.streams[i].format) {
             case PixelFormat::BLOB:
             case PixelFormat::YCBCR_420_888:
+            case PixelFormat::YV12: // Used by SurfaceTexture
                 // No override
                 out->streams[i].v3_2.overrideFormat = config.streams[i].format;
                 break;
@@ -1679,7 +1694,7 @@ Status ExternalCameraDeviceSession::configureStreams(
                 mStreamMap[config.streams[i].id].format = out->streams[i].v3_2.overrideFormat;
                 break;
             default:
-                ALOGE("%s: unsupported format %x", __FUNCTION__, config.streams[i].format);
+                ALOGE("%s: unsupported format 0x%x", __FUNCTION__, config.streams[i].format);
                 return Status::ILLEGAL_ARGUMENT;
         }
     }
@@ -1805,8 +1820,8 @@ status_t ExternalCameraDeviceSession::initDefaultRequests() {
                 intent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT;
                 break;
             default:
-                ALOGE("%s: unknown template type %d", __FUNCTION__, type);
-                return BAD_VALUE;
+                ALOGV("%s: unsupported RequestTemplate type %d", __FUNCTION__, type);
+                continue;
         }
         UPDATE(mdCopy, ANDROID_CONTROL_CAPTURE_INTENT, &intent, 1);
 
@@ -1833,15 +1848,14 @@ status_t ExternalCameraDeviceSession::fillCaptureResult(
     const uint8_t ae_lock = ANDROID_CONTROL_AE_LOCK_OFF;
     UPDATE(md, ANDROID_CONTROL_AE_LOCK, &ae_lock, 1);
 
-
-    // TODO: b/72261912 AF should stay LOCKED until cancel is seen
-    bool afTrigger = false;
+    bool afTrigger = mAfTrigger;
     if (md.exists(ANDROID_CONTROL_AF_TRIGGER)) {
+        Mutex::Autolock _l(mLock);
         camera_metadata_entry entry = md.find(ANDROID_CONTROL_AF_TRIGGER);
         if (entry.data.u8[0] == ANDROID_CONTROL_AF_TRIGGER_START) {
-            afTrigger = true;
+            mAfTrigger = afTrigger = true;
         } else if (entry.data.u8[0] == ANDROID_CONTROL_AF_TRIGGER_CANCEL) {
-            afTrigger = false;
+            mAfTrigger = afTrigger = false;
         }
     }
 
@@ -1870,6 +1884,9 @@ status_t ExternalCameraDeviceSession::fillCaptureResult(
         ALOGE("%s: cannot find active array size!", __FUNCTION__);
         return -EINVAL;
     }
+
+    const uint8_t flashState = ANDROID_FLASH_STATE_UNAVAILABLE;
+    UPDATE(md, ANDROID_FLASH_STATE, &flashState, 1);
 
     // android.scaler
     const int32_t crop_region[] = {
