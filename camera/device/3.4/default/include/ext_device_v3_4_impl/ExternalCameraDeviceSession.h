@@ -30,6 +30,7 @@
 #include <unordered_set>
 #include "CameraMetadata.h"
 #include "HandleImporter.h"
+#include "Exif.h"
 #include "utils/KeyedVector.h"
 #include "utils/Mutex.h"
 #include "utils/Thread.h"
@@ -58,10 +59,13 @@ using ::android::hardware::camera::device::V3_2::StreamConfigurationMode;
 using ::android::hardware::camera::device::V3_2::StreamRotation;
 using ::android::hardware::camera::device::V3_2::StreamType;
 using ::android::hardware::camera::device::V3_2::DataspaceFlags;
+using ::android::hardware::camera::device::V3_2::CameraBlob;
+using ::android::hardware::camera::device::V3_2::CameraBlobId;
 using ::android::hardware::camera::device::V3_4::HalStreamConfiguration;
 using ::android::hardware::camera::device::V3_4::ICameraDeviceSession;
 using ::android::hardware::camera::common::V1_0::Status;
 using ::android::hardware::camera::common::V1_0::helper::HandleImporter;
+using ::android::hardware::camera::common::V1_0::helper::ExifUtils;
 using ::android::hardware::graphics::common::V1_0::BufferUsage;
 using ::android::hardware::graphics::common::V1_0::Dataspace;
 using ::android::hardware::graphics::common::V1_0::PixelFormat;
@@ -272,13 +276,19 @@ protected:
             hidl_vec<CaptureResult> &results, bool tryWriteFmq);
     static void freeReleaseFences(hidl_vec<CaptureResult>&);
 
+    Size getMaxJpegResolution() const;
+    Size getMaxThumbResolution() const;
+
+    ssize_t getJpegBufferSize(uint32_t width, uint32_t height) const;
+
     class OutputThread : public android::Thread {
     public:
         OutputThread(wp<ExternalCameraDeviceSession> parent, CroppingType);
         ~OutputThread();
 
         Status allocateIntermediateBuffers(
-                const Size& v4lSize, const hidl_vec<Stream>& streams);
+                const Size& v4lSize, const Size& thumbSize,
+                const hidl_vec<Stream>& streams);
         Status submitRequest(const HalRequest&);
         void flush();
         virtual bool threadLoop() override;
@@ -296,11 +306,23 @@ protected:
 
         void waitForNextRequest(HalRequest* out);
         int cropAndScaleLocked(
-                sp<AllocatedFrame>& in, const HalStreamBuffer& halBuf,
+                sp<AllocatedFrame>& in, const Size& outSize,
+                YCbCrLayout* out);
+
+        int cropAndScaleThumbLocked(
+                sp<AllocatedFrame>& in, const Size& outSize,
                 YCbCrLayout* out);
 
         int formatConvertLocked(const YCbCrLayout& in, const YCbCrLayout& out,
                 Size sz, uint32_t format);
+
+        static int encodeJpegYU12(const Size &inSz,
+                const YCbCrLayout& inLayout, int jpegQuality,
+                const void *app1Buffer, size_t app1Size,
+                void *out, size_t maxOutSize,
+                size_t &actualCodeSize);
+
+        int createJpegLocked(HalStreamBuffer &halBuf, HalRequest &req);
 
         mutable std::mutex mLock;
         std::condition_variable mRequestCond;
@@ -312,9 +334,11 @@ protected:
         // (Scale)-> mScaledYu12Frames
         // (Format convert) -> output gralloc frames
         sp<AllocatedFrame> mYu12Frame;
+        sp<AllocatedFrame> mYu12ThumbFrame;
         std::unordered_map<Size, sp<AllocatedFrame>, SizeHasher> mIntermediateBuffers;
         std::unordered_map<Size, sp<AllocatedFrame>, SizeHasher> mScaledYu12Frames;
         YCbCrLayout mYu12FrameLayout;
+        YCbCrLayout mYu12ThumbFrameLayout;
     };
 
     // Protect (most of) HIDL interface methods from synchronized-entering
@@ -373,6 +397,9 @@ protected:
     Mutex mProcessCaptureResultLock;
 
     std::unordered_map<RequestTemplate, CameraMetadata> mDefaultRequests;
+
+    const Size mMaxThumbResolution;
+    const Size mMaxJpegResolution;
     /* End of members not changed after initialize() */
 
 private:

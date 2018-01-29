@@ -34,7 +34,7 @@ cc_library_shared {
     srcs: [
         "CameraDevice.cpp",
         "CameraDeviceSession.cpp",
-        "convert.cpp",
+        "convert.cpp"
     ],
     shared_libs: [
         "libhidlbase",
@@ -89,6 +89,8 @@ cc_library_shared {
         "libfmq",
         "libsync",
         "libyuv",
+        "libjpeg",
+        "libexif",
     ],
     static_libs: [
         "android.hardware.camera.common@1.0-helper",
