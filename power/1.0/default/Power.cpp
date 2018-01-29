@@ -47,12 +47,8 @@ Return<void> Power::setInteractive(bool interactive)  {
 
 Return<void> Power::powerHint(PowerHint hint, int32_t data)  {
     int32_t param = data;
-    if (mModule->powerHint) {
-        if (data)
-            mModule->powerHint(mModule, static_cast<power_hint_t>(hint), &param);
-        else
-            mModule->powerHint(mModule, static_cast<power_hint_t>(hint), NULL);
-    }
+    if (mModule->powerHint)
+        mModule->powerHint(mModule, static_cast<power_hint_t>(hint), &param);
     return Void();
 }
 
