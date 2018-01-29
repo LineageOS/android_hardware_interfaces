@@ -35,6 +35,7 @@
 #include "utils/Mutex.h"
 #include "utils/Thread.h"
 #include "android-base/unique_fd.h"
+#include "ExternalCameraUtils.h"
 
 namespace android {
 namespace hardware {
@@ -80,79 +81,12 @@ using ::android::sp;
 using ::android::Mutex;
 using ::android::base::unique_fd;
 
-// TODO: put V4L2 related structs into separate header?
-struct SupportedV4L2Format {
-    uint32_t width;
-    uint32_t height;
-    uint32_t fourcc;
-    // All supported frame rate for this w/h/fourcc combination
-    std::vector<float> frameRates;
-};
-
-// A class provide access to a dequeued V4L2 frame buffer (mostly in MJPG format)
-// Also contains necessary information to enqueue the buffer back to V4L2 buffer queue
-class V4L2Frame : public virtual VirtualLightRefBase {
-public:
-    V4L2Frame(uint32_t w, uint32_t h, uint32_t fourcc, int bufIdx, int fd, uint32_t dataSize);
-    ~V4L2Frame() override;
-    const uint32_t mWidth;
-    const uint32_t mHeight;
-    const uint32_t mFourcc;
-    const int mBufferIndex; // for later enqueue
-    int map(uint8_t** data, size_t* dataSize);
-    int unmap();
-private:
-    Mutex mLock;
-    const int mFd; // used for mmap but doesn't claim ownership
-    const size_t mDataSize;
-    uint8_t* mData = nullptr;
-    bool  mMapped = false;
-};
-
-// A RAII class representing a CPU allocated YUV frame used as intermeidate buffers
-// when generating output images.
-class AllocatedFrame : public virtual VirtualLightRefBase {
-public:
-    AllocatedFrame(uint32_t w, uint32_t h); // TODO: use Size?
-    ~AllocatedFrame() override;
-    const uint32_t mWidth;
-    const uint32_t mHeight;
-    const uint32_t mFourcc; // Only support YU12 format for now
-    int allocate(YCbCrLayout* out = nullptr);
-    int getLayout(YCbCrLayout* out);
-    int getCroppedLayout(const IMapper::Rect&, YCbCrLayout* out); // return non-zero for bad input
-private:
-    Mutex mLock;
-    std::vector<uint8_t> mData;
-};
-
-struct Size {
-    uint32_t width;
-    uint32_t height;
-
-    bool operator==(const Size& other) const {
-        return (width == other.width && height == other.height);
-    }
-};
-
-struct SizeHasher {
-    size_t operator()(const Size& sz) const {
-        size_t result = 1;
-        result = 31 * result + sz.width;
-        result = 31 * result + sz.height;
-        return result;
-    }
-};
-
-enum CroppingType {
-    HORIZONTAL = 0,
-    VERTICAL = 1
-};
-
 struct ExternalCameraDeviceSession : public virtual RefBase {
 
     ExternalCameraDeviceSession(const sp<ICameraDeviceCallback>&,
-            const std::vector<SupportedV4L2Format>& supportedFormats,
+            const ExternalCameraDeviceConfig& cfg,
+            const std::vector<SupportedV4L2Format>& sortedFormats,
+            const CroppingType& croppingType,
             const common::V1_0::helper::CameraMetadata& chars,
             unique_fd v4l2Fd);
     virtual ~ExternalCameraDeviceSession();
@@ -238,9 +172,6 @@ protected:
     Status constructDefaultRequestSettingsRaw(RequestTemplate type,
             V3_2::CameraMetadata *outMetadata);
 
-    static std::vector<SupportedV4L2Format> sortFormats(
-            const std::vector<SupportedV4L2Format>&);
-    static CroppingType initCroppingType(const std::vector<SupportedV4L2Format>&);
     bool initialize();
     Status initStatus() const;
     status_t initDefaultRequests();
@@ -346,7 +277,10 @@ protected:
 
     mutable Mutex mLock; // Protect all private members except otherwise noted
     const sp<ICameraDeviceCallback> mCallback;
+    const ExternalCameraDeviceConfig mCfg;
     const common::V1_0::helper::CameraMetadata mCameraCharacteristics;
+    const std::vector<SupportedV4L2Format> mSupportedFormats;
+    const CroppingType mCroppingType;
     unique_fd mV4l2Fd;
     // device is closed either
     //    - closed by user
@@ -366,8 +300,6 @@ protected:
     std::condition_variable mV4L2BufferReturned;
     size_t mNumDequeuedV4l2Buffers = 0;
 
-    const std::vector<SupportedV4L2Format> mSupportedFormats;
-    const CroppingType mCroppingType;
     sp<OutputThread> mOutputThread;
 
     // Stream ID -> Camera3Stream cache
