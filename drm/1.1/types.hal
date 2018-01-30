@@ -210,3 +210,10 @@ enum SecurityLevel : uint32_t {
     HW_SECURE_ALL,
 };
 
+/**
+ * Encapsulates a secure stop release opaque object
+ */
+struct SecureStopRelease {
+    vec<uint8_t> opaqueData;
+};
+
