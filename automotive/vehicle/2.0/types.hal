@@ -825,12 +825,14 @@ enum VehicleProperty: int32_t {
     /**
      * Fan Positions Available
      *
-     * This is a bit mask of fan positions available for the zone.  Each entry in
-     * vehicle_hvac_fan_direction is selected by bit position.  For instance, if
-     * only the FAN_DIRECTION_FACE (0x1) and FAN_DIRECTION_DEFROST (0x4) are available,
-     * then this value shall be set to 0x12.
-     *
-     * 0x12 = (1 << 1) | (1 << 4)
+     * This is a bit mask of fan positions available for the zone.  Each available fan direction is
+     * denoted by a separate entry in the vector.  A fan direction may have multiple bits from
+     * vehicle_hvac_fan_direction set.  For instance, a typical car may have the following setting:
+     *   - [0] = FAN_DIRECTION_FACE (0x1)
+     *   - [1] = FAN_DIRECTION_FLOOR (0x2)
+     *   - [2] = FAN_DIRECTION_FACE | FAN_DIRECTION_FLOOR (0x3)
+     *   - [3] = FAN_DIRECTION_DEFROST (0x4)
+     *   - [4] = FAN_DIRECTION_FLOOR | FAN_DIRECTION_DEFROST (0x6)
      *
      * @change_mode VehiclePropertyChangeMode:STATIC
      * @access VehiclePropertyAccess:READ
@@ -838,7 +840,7 @@ enum VehicleProperty: int32_t {
     HVAC_FAN_DIRECTION_AVAILABLE = (
         0x0511
         | VehiclePropertyGroup:SYSTEM
-        | VehiclePropertyType:INT32
+        | VehiclePropertyType:INT32_VEC
         | VehicleArea:ZONE),
 
     /**
@@ -1891,9 +1893,7 @@ enum FuelType : int32_t {
 enum VehicleHvacFanDirection : int32_t {
     FACE = 0x1,
     FLOOR = 0x2,
-    FACE_AND_FLOOR = 0x3,
     DEFROST = 0x4,
-    DEFROST_AND_FLOOR = 0x5,
 };
 
 /**
