@@ -9,13 +9,11 @@ hidl_interface {
     srcs: [
         "types.hal",
         "IAudioControl.hal",
-        "IAudioControlCallback.hal",
     ],
     interfaces: [
         "android.hidl.base@1.0",
     ],
     types: [
-        "AudioResult",
         "ContextNumber",
     ],
     gen_java: true,
