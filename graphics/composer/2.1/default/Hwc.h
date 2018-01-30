@@ -30,6 +30,7 @@
 #include <hardware/hwcomposer2.h>
 #undef HWC2_INCLUDE_STRINGIFICATION
 #undef HWC2_USE_CPP11
+#include <composer-hal/2.1/ComposerClient.h>
 #include <composer-hal/2.1/ComposerHal.h>
 
 namespace android {
@@ -52,8 +53,6 @@ using android::hardware::graphics::common::V1_0::Dataspace;
 using android::hardware::graphics::common::V1_0::ColorMode;
 using android::hardware::graphics::common::V1_0::ColorTransform;
 using android::hardware::graphics::common::V1_0::Hdr;
-
-class ComposerClient;
 
 class HwcHal : public IComposer, public ComposerHal {
 public:

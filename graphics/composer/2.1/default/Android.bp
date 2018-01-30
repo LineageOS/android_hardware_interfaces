@@ -1,35 +1,9 @@
-cc_library_static {
-    name: "libhwcomposer-client",
-    vendor_available: true,
-    defaults: ["hidl_defaults"],
-    export_include_dirs: ["."],
-    srcs: ["ComposerClient.cpp"],
-    shared_libs: [
-        "android.hardware.graphics.composer@2.1",
-        "android.hardware.graphics.mapper@2.0",
-        "libbase",
-        "libcutils",
-        "libfmq",
-        "libhardware",
-        "libhidlbase",
-        "libhidltransport",
-        "liblog",
-        "libsync",
-        "libutils",
-    ],
-    header_libs: [
-        "android.hardware.graphics.composer@2.1-command-buffer",
-        "android.hardware.graphics.composer@2.1-hal",
-    ],
-}
-
 cc_library_shared {
     name: "android.hardware.graphics.composer@2.1-impl",
     defaults: ["hidl_defaults"],
     proprietary: true,
     relative_install_path: "hw",
     srcs: ["Hwc.cpp"],
-    static_libs: ["libhwcomposer-client"],
     shared_libs: [
         "android.hardware.graphics.composer@2.1",
         "android.hardware.graphics.mapper@2.0",
@@ -58,7 +32,6 @@ cc_binary {
     relative_install_path: "hw",
     srcs: ["service.cpp"],
     init_rc: ["android.hardware.graphics.composer@2.1-service.rc"],
-    static_libs: ["libhwcomposer-client"],
     shared_libs: [
         "android.hardware.graphics.composer@2.1",
         "libbase",

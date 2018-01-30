@@ -22,7 +22,6 @@
 #include <type_traits>
 #include <log/log.h>
 
-#include "ComposerClient.h"
 #include "hardware/fb.h"
 #include "hardware/hwcomposer.h"
 #include "hwc2on1adapter/HWC2On1Adapter.h"
@@ -281,9 +280,14 @@ Return<void> HwcHal::createClient(createClient_cb hidl_cb)
 
         // only one client is allowed
         if (mClient == nullptr) {
-            client = new ComposerClient(*this);
-            client->initialize();
-            mClient = client;
+            // We assume Composer outlives ComposerClient here.  It is true
+            // only because Composer is binderized.
+            client = ComposerClient::create(this).release();
+            if (client) {
+                mClient = client;
+            } else {
+                err = Error::NO_RESOURCES;
+            }
         } else {
             err = Error::NO_RESOURCES;
         }
