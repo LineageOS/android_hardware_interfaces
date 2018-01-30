@@ -20,6 +20,8 @@
 
 #include <chrono>
 #include <type_traits>
+
+#include <composer-hal/2.1/Composer.h>
 #include <log/log.h>
 
 #include "hardware/fb.h"
@@ -212,32 +214,7 @@ bool HwcHal::hasCapability(hwc2_capability_t capability) {
     return (mCapabilities.count(capability) > 0);
 }
 
-Return<void> HwcHal::getCapabilities(getCapabilities_cb hidl_cb)
-{
-    std::vector<Capability> caps;
-    caps.reserve(mCapabilities.size());
-    for (auto cap : mCapabilities) {
-        switch (cap) {
-            case HWC2_CAPABILITY_SIDEBAND_STREAM:
-            case HWC2_CAPABILITY_SKIP_CLIENT_COLOR_TRANSFORM:
-            case HWC2_CAPABILITY_PRESENT_FENCE_IS_NOT_RELIABLE:
-                caps.push_back(static_cast<Capability>(cap));
-                break;
-            default:
-                // not all HWC2 caps are defined in HIDL
-                break;
-        }
-    }
-
-    hidl_vec<Capability> caps_reply;
-    caps_reply.setToExternal(caps.data(), caps.size());
-    hidl_cb(caps_reply);
-
-    return Void();
-}
-
-Return<void> HwcHal::dumpDebugInfo(dumpDebugInfo_cb hidl_cb)
-{
+std::string HwcHal::dumpDebugInfo() {
     uint32_t len = 0;
     mDispatch.dump(mDevice, &len, nullptr);
 
@@ -246,123 +223,56 @@ Return<void> HwcHal::dumpDebugInfo(dumpDebugInfo_cb hidl_cb)
     buf.resize(len + 1);
     buf[len] = '\0';
 
-    hidl_string buf_reply;
-    buf_reply.setToExternal(buf.data(), len);
-    hidl_cb(buf_reply);
-
-    return Void();
-}
-
-Return<void> HwcHal::createClient(createClient_cb hidl_cb)
-{
-    Error err = Error::NONE;
-    sp<ComposerClient> client;
-
-    {
-        std::unique_lock<std::mutex> lock(mClientMutex);
-
-        if (mClient != nullptr) {
-            // In surface flinger we delete a composer client on one thread and
-            // then create a new client on another thread. Although surface
-            // flinger ensures the calls are made in that sequence (destroy and
-            // then create), sometimes the calls land in the composer service
-            // inverted (create and then destroy). Wait for a brief period to
-            // see if the existing client is destroyed.
-            ALOGI("HwcHal::createClient: Client already exists. Waiting for"
-                    " it to be destroyed.");
-            mClientDestroyedWait.wait_for(lock, 1s,
-                    [this] { return mClient == nullptr; });
-            std::string doneMsg = mClient == nullptr ?
-                    "Existing client was destroyed." :
-                    "Existing client was never destroyed!";
-            ALOGI("HwcHal::createClient: Done waiting. %s", doneMsg.c_str());
-        }
-
-        // only one client is allowed
-        if (mClient == nullptr) {
-            // We assume Composer outlives ComposerClient here.  It is true
-            // only because Composer is binderized.
-            client = ComposerClient::create(this).release();
-            if (client) {
-                mClient = client;
-            } else {
-                err = Error::NO_RESOURCES;
-            }
-        } else {
-            err = Error::NO_RESOURCES;
-        }
-    }
-
-    hidl_cb(err, client);
-
-    return Void();
-}
-
-sp<ComposerClient> HwcHal::getClient()
-{
-    std::lock_guard<std::mutex> lock(mClientMutex);
-    return (mClient != nullptr) ? mClient.promote() : nullptr;
-}
-
-void HwcHal::removeClient()
-{
-    std::lock_guard<std::mutex> lock(mClientMutex);
-    mClient = nullptr;
-    mClientDestroyedWait.notify_all();
+    return buf.data();
 }
 
 void HwcHal::hotplugHook(hwc2_callback_data_t callbackData,
         hwc2_display_t display, int32_t connected)
 {
-    auto hal = reinterpret_cast<HwcHal*>(callbackData);
-    auto client = hal->getClient();
-    if (client != nullptr) {
-        client->onHotplug(display,
-                static_cast<IComposerCallback::Connection>(connected));
-    }
+    auto hal = static_cast<HwcHal*>(callbackData);
+    hal->mEventCallback->onHotplug(display, static_cast<IComposerCallback::Connection>(connected));
 }
 
 void HwcHal::refreshHook(hwc2_callback_data_t callbackData,
         hwc2_display_t display)
 {
-    auto hal = reinterpret_cast<HwcHal*>(callbackData);
+    auto hal = static_cast<HwcHal*>(callbackData);
     hal->mMustValidateDisplay = true;
-
-    auto client = hal->getClient();
-    if (client != nullptr) {
-        client->onRefresh(display);
-    }
+    hal->mEventCallback->onRefresh(display);
 }
 
 void HwcHal::vsyncHook(hwc2_callback_data_t callbackData,
         hwc2_display_t display, int64_t timestamp)
 {
-    auto hal = reinterpret_cast<HwcHal*>(callbackData);
-    auto client = hal->getClient();
-    if (client != nullptr) {
-        client->onVsync(display, timestamp);
-    }
+    auto hal = static_cast<HwcHal*>(callbackData);
+    hal->mEventCallback->onVsync(display, timestamp);
 }
 
-void HwcHal::enableCallback(bool enable)
-{
-    if (enable) {
-        mMustValidateDisplay = true;
+void HwcHal::registerEventCallback(EventCallback* callback) {
+    mMustValidateDisplay = true;
+    mEventCallback = callback;
 
-        mDispatch.registerCallback(mDevice, HWC2_CALLBACK_HOTPLUG, this,
-                reinterpret_cast<hwc2_function_pointer_t>(hotplugHook));
-        mDispatch.registerCallback(mDevice, HWC2_CALLBACK_REFRESH, this,
-                reinterpret_cast<hwc2_function_pointer_t>(refreshHook));
-        mDispatch.registerCallback(mDevice, HWC2_CALLBACK_VSYNC, this,
-                reinterpret_cast<hwc2_function_pointer_t>(vsyncHook));
-    } else {
-        mDispatch.registerCallback(mDevice, HWC2_CALLBACK_HOTPLUG, this,
-                nullptr);
-        mDispatch.registerCallback(mDevice, HWC2_CALLBACK_REFRESH, this,
-                nullptr);
-        mDispatch.registerCallback(mDevice, HWC2_CALLBACK_VSYNC, this,
-                nullptr);
-    }
+    mDispatch.registerCallback(mDevice, HWC2_CALLBACK_HOTPLUG, this,
+            reinterpret_cast<hwc2_function_pointer_t>(hotplugHook));
+    mDispatch.registerCallback(mDevice, HWC2_CALLBACK_REFRESH, this,
+            reinterpret_cast<hwc2_function_pointer_t>(refreshHook));
+    mDispatch.registerCallback(mDevice, HWC2_CALLBACK_VSYNC, this,
+            reinterpret_cast<hwc2_function_pointer_t>(vsyncHook));
+}
+
+void HwcHal::unregisterEventCallback() {
+    // we assume the callback functions
+    //
+    //  - can be unregistered
+    //  - can be in-flight
+    //  - will never be called afterward
+    //
+    // which is likely incorrect
+    mDispatch.registerCallback(mDevice, HWC2_CALLBACK_HOTPLUG, this, nullptr);
+    mDispatch.registerCallback(mDevice, HWC2_CALLBACK_REFRESH, this, nullptr);
+    mDispatch.registerCallback(mDevice, HWC2_CALLBACK_VSYNC, this, nullptr);
+
+    mEventCallback = nullptr;
 }
 
 uint32_t HwcHal::getMaxVirtualDisplayCount()
@@ -810,7 +720,7 @@ IComposer* HIDL_FETCH_IComposer(const char*)
         return nullptr;
     }
 
-    return new HwcHal(module);
+    return Composer::create(std::make_unique<HwcHal>(module)).release();
 }
 
 } // namespace implementation

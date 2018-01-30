@@ -58,9 +58,11 @@ class ComposerClientImpl : public Interface {
 
         ALOGD("destroying composer client");
 
-        mHal->enableCallback(false);
+        mHal->unregisterEventCallback();
         destroyResources();
-        mHal->removeClient();
+        if (mOnClientDestroyed) {
+            mOnClientDestroyed();
+        }
 
         ALOGD("removed composer client");
     }
@@ -77,34 +79,47 @@ class ComposerClientImpl : public Interface {
         return true;
     }
 
-    void onHotplug(Display display, IComposerCallback::Connection connected) {
-        if (connected == IComposerCallback::Connection::CONNECTED) {
-            mResources->addPhysicalDisplay(display);
-        } else if (connected == IComposerCallback::Connection::DISCONNECTED) {
-            mResources->removeDisplay(display);
-        }
-
-        auto ret = mCallback->onHotplug(display, connected);
-        ALOGE_IF(!ret.isOk(), "failed to send onHotplug: %s", ret.description().c_str());
-    }
-
-    void onRefresh(Display display) {
-        auto ret = mCallback->onRefresh(display);
-        ALOGE_IF(!ret.isOk(), "failed to send onRefresh: %s", ret.description().c_str());
-    }
-
-    void onVsync(Display display, int64_t timestamp) {
-        auto ret = mCallback->onVsync(display, timestamp);
-        ALOGE_IF(!ret.isOk(), "failed to send onVsync: %s", ret.description().c_str());
+    void setOnClientDestroyed(std::function<void()> onClientDestroyed) {
+        mOnClientDestroyed = onClientDestroyed;
     }
 
     // IComposerClient 2.1 interface
 
+    class HalEventCallback : public Hal::EventCallback {
+       public:
+        HalEventCallback(const sp<IComposerCallback> callback, ComposerResources* resources)
+            : mCallback(callback), mResources(resources) {}
+
+        void onHotplug(Display display, IComposerCallback::Connection connected) {
+            if (connected == IComposerCallback::Connection::CONNECTED) {
+                mResources->addPhysicalDisplay(display);
+            } else if (connected == IComposerCallback::Connection::DISCONNECTED) {
+                mResources->removeDisplay(display);
+            }
+
+            auto ret = mCallback->onHotplug(display, connected);
+            ALOGE_IF(!ret.isOk(), "failed to send onHotplug: %s", ret.description().c_str());
+        }
+
+        void onRefresh(Display display) {
+            auto ret = mCallback->onRefresh(display);
+            ALOGE_IF(!ret.isOk(), "failed to send onRefresh: %s", ret.description().c_str());
+        }
+
+        void onVsync(Display display, int64_t timestamp) {
+            auto ret = mCallback->onVsync(display, timestamp);
+            ALOGE_IF(!ret.isOk(), "failed to send onVsync: %s", ret.description().c_str());
+        }
+
+       protected:
+        const sp<IComposerCallback> mCallback;
+        ComposerResources* const mResources;
+    };
+
     Return<void> registerCallback(const sp<IComposerCallback>& callback) override {
         // no locking as we require this function to be called only once
-        mCallback = callback;
-        mHal->enableCallback(callback != nullptr);
-
+        mHalEventCallback = std::make_unique<HalEventCallback>(callback, mResources.get());
+        mHal->registerEventCallback(mHalEventCallback.get());
         return Void();
     }
 
@@ -365,7 +380,8 @@ class ComposerClientImpl : public Interface {
     std::mutex mCommandEngineMutex;
     std::unique_ptr<ComposerCommandEngine> mCommandEngine;
 
-    sp<IComposerCallback> mCallback;
+    std::function<void()> mOnClientDestroyed;
+    std::unique_ptr<HalEventCallback> mHalEventCallback;
 };
 
 }  // namespace detail

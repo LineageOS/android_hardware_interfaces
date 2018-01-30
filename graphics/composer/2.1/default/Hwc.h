@@ -54,20 +54,17 @@ using android::hardware::graphics::common::V1_0::ColorMode;
 using android::hardware::graphics::common::V1_0::ColorTransform;
 using android::hardware::graphics::common::V1_0::Hdr;
 
-class HwcHal : public IComposer, public ComposerHal {
+class HwcHal : public ComposerHal {
 public:
     HwcHal(const hw_module_t* module);
     virtual ~HwcHal();
 
-    // IComposer interface
-    Return<void> getCapabilities(getCapabilities_cb hidl_cb) override;
-    Return<void> dumpDebugInfo(dumpDebugInfo_cb hidl_cb) override;
-    Return<void> createClient(createClient_cb hidl_cb) override;
-
-    // ComposerHal interface
     bool hasCapability(hwc2_capability_t capability) override;
-    void removeClient() override;
-    void enableCallback(bool enable) override;
+
+    std::string dumpDebugInfo() override;
+    void registerEventCallback(EventCallback* callback) override;
+    void unregisterEventCallback() override;
+
     uint32_t getMaxVirtualDisplayCount() override;
     Error createVirtualDisplay(uint32_t width, uint32_t height,
         PixelFormat* format, Display* outDisplay) override;
@@ -157,8 +154,6 @@ private:
     void initDispatch(hwc2_function_descriptor_t desc, T* outPfn);
     void initDispatch();
 
-    sp<ComposerClient> getClient();
-
     static void hotplugHook(hwc2_callback_data_t callbackData,
         hwc2_display_t display, int32_t connected);
     static void refreshHook(hwc2_callback_data_t callbackData,
@@ -216,10 +211,6 @@ private:
         HWC2_PFN_VALIDATE_DISPLAY validateDisplay;
     } mDispatch;
 
-    std::mutex mClientMutex;
-    std::condition_variable mClientDestroyedWait;
-    wp<ComposerClient> mClient;
-
     std::atomic<bool> mMustValidateDisplay;
 
     // If the HWC implementation version is < 2.0, use an adapter to interface
@@ -229,6 +220,8 @@ private:
     // If there is no HWC implementation, use an adapter to interface between
     // HWC 2.0 <-> FB HAL.
     std::unique_ptr<HWC2OnFbAdapter> mFbAdapter;
+
+    EventCallback* mEventCallback = nullptr;
 };
 
 extern "C" IComposer* HIDL_FETCH_IComposer(const char* name);

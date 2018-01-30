@@ -16,6 +16,9 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include <android/hardware/graphics/composer/2.1/IComposer.h>
 #include <android/hardware/graphics/composer/2.1/IComposerClient.h>
 
@@ -40,15 +43,32 @@ using common::V1_0::Hdr;
 using common::V1_0::PixelFormat;
 using common::V1_0::Transform;
 
-// TODO remove removeClient and better support for callback
 class ComposerHal {
    public:
     virtual ~ComposerHal() = default;
 
     virtual bool hasCapability(hwc2_capability_t capability) = 0;
 
-    virtual void removeClient() = 0;
-    virtual void enableCallback(bool enable) = 0;
+    // dump the debug information
+    virtual std::string dumpDebugInfo() = 0;
+
+    class EventCallback {
+       public:
+        virtual ~EventCallback() = default;
+        virtual void onHotplug(Display display, IComposerCallback::Connection connected) = 0;
+        virtual void onRefresh(Display display) = 0;
+        virtual void onVsync(Display display, int64_t timestamp) = 0;
+    };
+
+    // Register the event callback object.  The event callback object is valid
+    // until it is unregistered.  A hotplug event must be generated for each
+    // connected physical display, before or after this function returns.
+    virtual void registerEventCallback(EventCallback* callback) = 0;
+
+    // Unregister the event callback object.  It must block if there is any
+    // callback in-flight.
+    virtual void unregisterEventCallback() = 0;
+
     virtual uint32_t getMaxVirtualDisplayCount() = 0;
     virtual Error createVirtualDisplay(uint32_t width, uint32_t height, PixelFormat* format,
                                        Display* outDisplay) = 0;
