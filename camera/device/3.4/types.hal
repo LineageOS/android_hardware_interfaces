@@ -31,7 +31,7 @@ import @3.2::CaptureResult;
  * by the framework by its buffer resolution and format, and additionally by the
  * HAL with the gralloc usage flags and the maximum in-flight buffer count.
  *
- * This version extends the @3.2 Stream with the physicalCameraId field.
+ * This version extends the @3.2 Stream with the physicalCameraId and bufferSize field.
  */
 struct Stream {
     /**
@@ -60,6 +60,21 @@ struct Stream {
      * instance names returned by getCameraIdList().
      */
     string physicalCameraId;
+
+    /**
+     * The size of a buffer from this Stream, in bytes.
+     *
+     * For non PixelFormat::BLOB formats, this entry must be 0 and HAL should use
+     * android.hardware.graphics.mapper lockYCbCr API to get buffer layout.
+     *
+     * For BLOB format with dataSpace Dataspace::DEPTH, this must be zero and and HAL must
+     * determine the buffer size based on ANDROID_DEPTH_MAX_DEPTH_SAMPLES.
+     *
+     * For BLOB format with dataSpace Dataspace::JFIF, this must be non-zero and represent the
+     * maximal size HAL can lock using android.hardware.graphics.mapper lock API.
+     *
+     */
+    uint32_t bufferSize;
 };
 
 /**

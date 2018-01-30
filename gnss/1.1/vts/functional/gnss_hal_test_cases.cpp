@@ -24,6 +24,7 @@ using android::hardware::hidl_vec;
 
 using android::hardware::gnss::V1_0::GnssConstellationType;
 using android::hardware::gnss::V1_0::GnssLocation;
+using android::hardware::gnss::V1_0::IGnssDebug;
 using android::hardware::gnss::V1_1::IGnssConfiguration;
 using android::hardware::gnss::V1_1::IGnssMeasurement;
 
@@ -395,4 +396,52 @@ TEST_F(GnssHalTest, InjectBestLocation) {
 
     ASSERT_TRUE(result.isOk());
     EXPECT_TRUE(result);
+}
+
+/*
+ * GnssDebugValuesSanityTest:
+ * Ensures that GnssDebug values make sense.
+ */
+TEST_F(GnssHalTest, GnssDebugValuesSanityTest) {
+    auto gnssDebug = gnss_hal_->getExtensionGnssDebug();
+    ASSERT_TRUE(gnssDebug.isOk());
+    if (info_called_count_ > 0 && last_info_.yearOfHw >= 2017) {
+        sp<IGnssDebug> iGnssDebug = gnssDebug;
+        EXPECT_NE(iGnssDebug, nullptr);
+
+        IGnssDebug::DebugData data;
+        iGnssDebug->getDebugData(
+            [&data](const IGnssDebug::DebugData& debugData) { data = debugData; });
+
+        if (data.position.valid) {
+            EXPECT_GE(data.position.latitudeDegrees, -90);
+            EXPECT_LE(data.position.latitudeDegrees, 90);
+
+            EXPECT_GE(data.position.longitudeDegrees, -180);
+            EXPECT_LE(data.position.longitudeDegrees, 180);
+
+            EXPECT_GE(data.position.altitudeMeters, -1000);  // Dead Sea: -414m
+            EXPECT_LE(data.position.altitudeMeters, 20000);  // Mount Everest: 8850m
+
+            EXPECT_GE(data.position.speedMetersPerSec, 0);
+            EXPECT_LE(data.position.speedMetersPerSec, 600);
+
+            EXPECT_GE(data.position.bearingDegrees, -360);
+            EXPECT_LE(data.position.bearingDegrees, 360);
+
+            EXPECT_GE(data.position.horizontalAccuracyMeters, 0);
+            EXPECT_LE(data.position.horizontalAccuracyMeters, 20000000);
+
+            EXPECT_GE(data.position.verticalAccuracyMeters, 0);
+            EXPECT_LE(data.position.verticalAccuracyMeters, 20000);
+
+            EXPECT_GE(data.position.speedAccuracyMetersPerSecond, 0);
+            EXPECT_LE(data.position.speedAccuracyMetersPerSecond, 500);
+
+            EXPECT_GE(data.position.bearingAccuracyDegrees, 0);
+            EXPECT_LE(data.position.bearingAccuracyDegrees, 180);
+
+            EXPECT_GE(data.position.ageSeconds, 0);
+        }
+    }
 }

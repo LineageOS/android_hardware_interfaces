@@ -23,6 +23,8 @@ import @1.0::Status;
 import @1.1::DrmMetricGroup;
 import @1.1::HdcpLevel;
 import @1.1::KeyRequestType;
+import @1.0::SecureStopId;
+import @1.1::SecureStopRelease;
 import @1.1::SecurityLevel;
 
 /**
@@ -176,4 +178,56 @@ interface IDrmPlugin extends @1.0::IDrmPlugin {
      *         plugin.
      */
     getMetrics() generates (Status status, vec<DrmMetricGroup> metric_groups);
+
+    /**
+     * Get the IDs of all secure stops on the device
+     *
+     * @return status the status of the call. The status must be OK or
+     * ERROR_DRM_INVALID_STATE if the HAL is in a state where the secure stop
+     * IDs cannot be returned.
+     * @return secureStopIds a list of the IDs
+     */
+    getSecureStopIds() generates
+        (Status status, vec<SecureStopId> secureStopIds);
+
+    /**
+     * Release secure stops given a release message from the key server
+     *
+     * @param ssRelease the secure stop release message identifying one or more
+     * secure stops to release. ssRelease is opaque, it is passed directly from
+     * a DRM license server through the app and media framework to the vendor
+     * HAL module. The format and content of ssRelease must be defined by the
+     * DRM scheme being implemented according to this HAL. The DRM scheme
+     * can be identified by its UUID which can be queried using
+     * IDrmFactory::isCryptoSchemeSupported.
+     *
+     * @return status the status of the call. The status must be OK or one of
+     * the following errors: BAD_VALUE if ssRelease is invalid or
+     * ERROR_DRM_INVALID_STATE if the HAL is in a state where the secure stop
+     * cannot be released.
+     */
+    releaseSecureStops(SecureStopRelease ssRelease) generates (Status status);
+
+    /**
+     * Remove a secure stop given its secure stop ID, without requiring
+     * a secure stop release response message from the key server.
+     *
+     * @param secureStopId the ID of the secure stop to release.
+     *
+     * @return status the status of the call. The status must be OK or one of
+     * the following errors: BAD_VALUE if the secureStopId is invalid or
+     * ERROR_DRM_INVALID_STATE if the HAL is in a state where the secure stop
+     * cannot be released.
+     */
+    removeSecureStop(SecureStopId secureStopId) generates (Status status);
+
+    /**
+     * Remove all secure stops on the device without requiring a secure
+     * stop release response message from the key server.
+     *
+     * @return status the status of the call. The status must be OK or
+     * ERROR_DRM_INVALID_STATE if the HAL is in a state where the secure
+     * stops cannot be removed.
+     */
+    removeAllSecureStops() generates (Status status);
 };
