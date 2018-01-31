@@ -652,6 +652,7 @@ enum AudioInputFlag : int32_t {
 enum AudioUsage : int32_t {
     // These values must kept in sync with
     //  frameworks/base/media/java/android/media/AudioAttributes.java
+    // Note that not all framework values are exposed
     UNKNOWN                            = 0,
     MEDIA                              = 1,
     VOICE_COMMUNICATION                = 2,
@@ -659,10 +660,6 @@ enum AudioUsage : int32_t {
     ALARM                              = 4,
     NOTIFICATION                       = 5,
     NOTIFICATION_TELEPHONY_RINGTONE    = 6,
-    NOTIFICATION_COMMUNICATION_REQUEST = 7,
-    NOTIFICATION_COMMUNICATION_INSTANT = 8,
-    NOTIFICATION_COMMUNICATION_DELAYED = 9,
-    NOTIFICATION_EVENT                 = 10,
     ASSISTANCE_ACCESSIBILITY           = 11,
     ASSISTANCE_NAVIGATION_GUIDANCE     = 12,
     ASSISTANCE_SONIFICATION            = 13,
