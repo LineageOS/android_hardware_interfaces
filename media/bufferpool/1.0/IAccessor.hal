@@ -1,0 +1,68 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.media.bufferpool@1.0;
+
+import IConnection;
+/**
+ * IAccessor creates IConnection which is used from IClientManager in order to
+ * use functionality of the specified buffer pool.
+ */
+interface IAccessor {
+
+    /**
+     * Registers a new client and creates IConnection to the buffer pool for
+     * the client. IConnection and FMQ are used by IClientManager in order to
+     * communicate with the buffer pool. Via FMQ IClientManager sends
+     * BufferStatusMesage(s) to the buffer pool.
+     *
+     * FMQ is used to send buffer ownership status changes to a buffer pool
+     * from a buffer pool client. A buffer pool synchronizes FMQ messages when
+     * there is a hidl request from the clients. Every client has its own
+     * connection and FMQ to communicate with the buffer pool. So sending an
+     * FMQ message on behalf of other clients is not possible.
+     *
+     * FMQ messages are sent when a buffer is acquired or released. Also, FMQ
+     * messages are sent when a buffer is transferred from a client to another
+     * client. FMQ has its own ID from a buffer pool. A client is specified
+     * with the ID.
+     *
+     * To transfer a buffer, a sender must send an FMQ message. The message
+     * must include a receiver's ID and a transaction ID. A receiver must send
+     * the transaction ID to fetch a buffer from a buffer pool. Since the
+     * sender already registered the receiver via an FMQ message, The buffer
+     * pool must verify the receiver with the transaction ID. In order to
+     * prevent faking a receiver, a connection to a buffer pool from client is
+     * made and kept private. Also part of transaction ID is a sender ID in
+     * order to prevent fake transactions from other clients. This must be
+     * verified with an FMQ message from a buffer pool.
+     *
+     * @return status The status of the call.
+     *     OK               - A connection is made successfully.
+     *     NO_MEMORY        - Memory allocation failure occurred.
+     *     ALREADY_EXISTS   - A connection was already made.
+     *     CRITICAL_ERROR   - Other errors.
+     * @return connection The IConnection have interfaces
+     *     to get shared buffers from the buffer pool.
+     * @return connectionId Id of IConnection. The Id identifies
+     *     sender and receiver in FMQ messages during buffer transfer.
+     * @return mqDesc FMQ descriptor. The descriptor can be used to
+     *     send/receive FMQ messages.
+     */
+    connect()
+        generates (ResultStatus status, IConnection connection,
+                   int64_t connectionId, fmq_sync<BufferStatusMessage> mqDesc);
+};

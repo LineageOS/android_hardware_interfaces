@@ -1,0 +1,93 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.media.bufferpool@1.0;
+
+enum ResultStatus : int32_t {
+    OK                  = 0,
+
+    NO_MEMORY           = 1,
+    ALREADY_EXISTS      = 2,
+    NOT_FOUND           = 3,
+    CRITICAL_ERROR      = 4,
+};
+
+/**
+ * Generic buffer for fast recycling for media/stagefright.
+ *
+ * During media pipeline buffer references are created, shared and
+ * destroyed frequently. The underlying buffers are allocated on demand
+ * by a buffer pool, and are recycled to the buffer pool when they are
+ * no longer referenced by the clients.
+ *
+ * E.g. ion or gralloc buffer
+ */
+struct Buffer {
+    uint32_t id;
+    handle buffer;
+};
+
+/**
+ * Buffer ownership status for the specified client.
+ * Buffer transfer status for the specified buffer transafer transaction.
+ * BufferStatus is posted along with BufferStatusMessage from a client to
+ * the buffer pool for synchronization after status change.
+ */
+enum BufferStatus : int32_t {
+    /** No longer used by the specified client. */
+    NOT_USED            = 0,
+    /** Buffer is acquired by the specified client. */
+    USED                = 1,
+    /** Buffer is sent by the specified client. */
+    TRANSFER_TO         = 2,
+    /** Buffer transfer is acked by the receiver client. */
+    TRANSFER_FROM       = 3,
+    /** Buffer transfer is timed out by receiver client. */
+    TRANSFER_TIMEOUT    = 4,
+    /** Buffer transfer is not acked by the receiver. */
+    TRANSFER_LOST       = 5,
+    /** Buffer fetch request from the client. */
+    TRANSFER_FETCH      = 6,
+    /** Buffer transaction succeeded. */
+    TRANSFER_OK         = 7,
+    /** Buffer transaction failure. */
+    TRANSFER_ERROR      = 8,
+};
+
+/**
+ * Buffer ownership status change message. This message is
+ * sent via fmq to the buffer pool from client processes.
+ */
+struct BufferStatusMessage {
+    /**
+     * Transaction Id = (SenderId : sender local transaction Id)
+     * Transaction Id is created from sender and posted via fmq within
+     * TRANSFER_TO message.
+     */
+    uint64_t transactionId;
+    uint32_t bufferId;
+    BufferStatus newStatus;
+    /** Used by the buffer pool. not by client. */
+    int64_t connectionId;
+    /** Valid only when TRANSFER_TO is posted. */
+    int64_t targetConnectionId;
+    /**
+     * Used by the buffer pool, not by client.
+     * Monotonic timestamp in Us since fixed point in time as decided
+     * by the sender of the message
+     */
+    int64_t timestampUs;
+};
