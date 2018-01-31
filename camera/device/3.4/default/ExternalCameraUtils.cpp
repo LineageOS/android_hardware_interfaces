@@ -40,9 +40,9 @@ const char* ExternalCameraDeviceConfig::kDefaultCfgPath = "/vendor/etc/external_
 
 V4L2Frame::V4L2Frame(
         uint32_t w, uint32_t h, uint32_t fourcc,
-        int bufIdx, int fd, uint32_t dataSize) :
+        int bufIdx, int fd, uint32_t dataSize, uint64_t offset) :
         mWidth(w), mHeight(h), mFourcc(fourcc),
-        mBufferIndex(bufIdx), mFd(fd), mDataSize(dataSize) {}
+        mBufferIndex(bufIdx), mFd(fd), mDataSize(dataSize), mOffset(offset) {}
 
 int V4L2Frame::map(uint8_t** data, size_t* dataSize) {
     if (data == nullptr || dataSize == nullptr) {
@@ -53,7 +53,7 @@ int V4L2Frame::map(uint8_t** data, size_t* dataSize) {
 
     std::lock_guard<std::mutex> lk(mLock);
     if (!mMapped) {
-        void* addr = mmap(NULL, mDataSize, PROT_READ, MAP_SHARED, mFd, 0);
+        void* addr = mmap(NULL, mDataSize, PROT_READ, MAP_SHARED, mFd, mOffset);
         if (addr == MAP_FAILED) {
             ALOGE("%s: V4L2 buffer map failed: %s", __FUNCTION__, strerror(errno));
             return -EINVAL;

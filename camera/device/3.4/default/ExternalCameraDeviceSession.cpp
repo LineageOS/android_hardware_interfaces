@@ -611,7 +611,12 @@ void ExternalCameraDeviceSession::invokeProcessCaptureResultCallback(
             }
         }
     }
-    mCallback->processCaptureResult(results);
+    auto status = mCallback->processCaptureResult(results);
+    if (!status.isOk()) {
+        ALOGE("%s: processCaptureResult ERROR : %s", __FUNCTION__,
+              status.description().c_str());
+    }
+
     mProcessCaptureResultLock.unlock();
 }
 
@@ -1835,7 +1840,7 @@ int ExternalCameraDeviceSession::v4l2StreamOffLocked() {
             return -1;
         }
     }
-    mV4l2Buffers.clear(); // VIDIOC_REQBUFS will fail if FDs are not clear first
+    mV4L2BufferCount = 0;
 
     // VIDIOC_STREAMOFF
     v4l2_buf_type capture_type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -1955,23 +1960,19 @@ int ExternalCameraDeviceSession::configureV4l2StreamLocked(const SupportedV4L2Fo
         return NO_MEMORY;
     }
 
-    // VIDIOC_EXPBUF:  export buffers as FD
+    // VIDIOC_QUERYBUF:  get buffer offset in the V4L2 fd
     // VIDIOC_QBUF: send buffer to driver
-    mV4l2Buffers.resize(req_buffers.count);
+    mV4L2BufferCount = req_buffers.count;
     for (uint32_t i = 0; i < req_buffers.count; i++) {
-        v4l2_exportbuffer expbuf {};
-        expbuf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        expbuf.index = i;
-        if (TEMP_FAILURE_RETRY(ioctl(mV4l2Fd.get(), VIDIOC_EXPBUF, &expbuf)) < 0) {
-            ALOGE("%s: EXPBUF %d failed: %s", __FUNCTION__, i,  strerror(errno));
-            return -errno;
-        }
-        mV4l2Buffers[i].reset(expbuf.fd);
-
         v4l2_buffer buffer = {
             .type = V4L2_BUF_TYPE_VIDEO_CAPTURE,
             .index = i,
             .memory = V4L2_MEMORY_MMAP};
+
+        if (TEMP_FAILURE_RETRY(ioctl(mV4l2Fd.get(), VIDIOC_QUERYBUF, &buffer)) < 0) {
+            ALOGE("%s: QUERYBUF %d failed: %s", __FUNCTION__, i,  strerror(errno));
+            return -errno;
+        }
 
         if (TEMP_FAILURE_RETRY(ioctl(mV4l2Fd.get(), VIDIOC_QBUF, &buffer)) < 0) {
             ALOGE("%s: QBUF %d failed: %s", __FUNCTION__, i,  strerror(errno));
@@ -2012,7 +2013,7 @@ sp<V4L2Frame> ExternalCameraDeviceSession::dequeueV4l2FrameLocked() {
 
     {
         std::unique_lock<std::mutex> lk(mV4l2BufferLock);
-        if (mNumDequeuedV4l2Buffers == mV4l2Buffers.size()) {
+        if (mNumDequeuedV4l2Buffers == mV4L2BufferCount) {
             std::chrono::seconds timeout = std::chrono::seconds(kBufferWaitTimeoutSec);
             mLock.unlock();
             auto st = mV4L2BufferReturned.wait_for(lk, timeout);
@@ -2032,7 +2033,7 @@ sp<V4L2Frame> ExternalCameraDeviceSession::dequeueV4l2FrameLocked() {
         return ret;
     }
 
-    if (buffer.index >= mV4l2Buffers.size()) {
+    if (buffer.index >= mV4L2BufferCount) {
         ALOGE("%s: Invalid buffer id: %d", __FUNCTION__, buffer.index);
         return ret;
     }
@@ -2048,7 +2049,7 @@ sp<V4L2Frame> ExternalCameraDeviceSession::dequeueV4l2FrameLocked() {
     }
     return new V4L2Frame(
             mV4l2StreamingFmt.width, mV4l2StreamingFmt.height, mV4l2StreamingFmt.fourcc,
-            buffer.index, mV4l2Buffers[buffer.index].get(), buffer.bytesused);
+            buffer.index, mV4l2Fd.get(), buffer.bytesused, buffer.m.offset);
 }
 
 void ExternalCameraDeviceSession::enqueueV4l2Frame(const sp<V4L2Frame>& frame) {
@@ -2243,7 +2244,7 @@ Status ExternalCameraDeviceSession::configureStreams(
                 BufferUsage::CPU_WRITE_OFTEN |
                 BufferUsage::CAMERA_OUTPUT;
         out->streams[i].v3_2.consumerUsage = 0;
-        out->streams[i].v3_2.maxBuffers  = mV4l2Buffers.size();
+        out->streams[i].v3_2.maxBuffers  = mV4L2BufferCount;
 
         switch (config.streams[i].format) {
             case PixelFormat::BLOB:

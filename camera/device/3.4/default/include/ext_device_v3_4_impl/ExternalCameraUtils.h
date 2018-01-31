@@ -45,7 +45,8 @@ struct SupportedV4L2Format {
 // Also contains necessary information to enqueue the buffer back to V4L2 buffer queue
 class V4L2Frame : public virtual VirtualLightRefBase {
 public:
-    V4L2Frame(uint32_t w, uint32_t h, uint32_t fourcc, int bufIdx, int fd, uint32_t dataSize);
+    V4L2Frame(uint32_t w, uint32_t h, uint32_t fourcc, int bufIdx, int fd,
+              uint32_t dataSize, uint64_t offset);
     ~V4L2Frame() override;
     const uint32_t mWidth;
     const uint32_t mHeight;
@@ -57,6 +58,7 @@ private:
     std::mutex mLock;
     const int mFd; // used for mmap but doesn't claim ownership
     const size_t mDataSize;
+    const uint64_t mOffset; // used for mmap
     uint8_t* mData = nullptr;
     bool  mMapped = false;
 };

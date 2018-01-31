@@ -293,7 +293,7 @@ protected:
 
     bool mV4l2Streaming = false;
     SupportedV4L2Format mV4l2StreamingFmt;
-    std::vector<unique_fd> mV4l2Buffers;
+    size_t mV4L2BufferCount;
 
     static const int kBufferWaitTimeoutSec = 3; // TODO: handle long exposure (or not allowing)
     std::mutex mV4l2BufferLock; // protect the buffer count and condition below
