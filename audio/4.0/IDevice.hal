@@ -259,4 +259,15 @@ interface IDevice {
      */
     setParameters(vec<ParameterValue> context, vec<ParameterValue> parameters)
             generates (Result retval);
+
+    /**
+     * Returns an array with available microphones in device.
+     *
+     * @return retval INVALID_STATE if the call is not successful,
+     *                OK otherwise.
+     *
+     * @return microphones array with microphones info
+     */
+    getMicrophones()
+         generates(Result retval, vec<MicrophoneInfo> microphones);
 };

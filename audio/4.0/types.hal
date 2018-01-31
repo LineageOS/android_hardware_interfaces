@@ -150,3 +150,126 @@ struct RecordTrackMetadata {
 struct SinkMetadata {
     vec<RecordTrackMetadata> tracks;
 };
+
+/*
+ * Microphone information
+ *
+ */
+
+/**
+ * A 3D point used to represent position or orientation of a microphone.
+ *
+ * Position: Coordinates of the microphone's capsule, in meters, from the
+ * bottom-left-back corner of the bounding box of android device in natural
+ * orientation (PORTRAIT for phones, LANDSCAPE for tablets, tvs, etc).
+ * The orientation musth match the reported by the api Display.getRotation().
+ *
+ * Orientation: Normalized vector to signal the main orientation of the
+ * microphone's capsule. Magnitude = sqrt(x^2 + y^2 + z^2) = 1
+ */
+struct AudioMicrophoneCoordinate {
+    float x;
+    float y;
+    float z;
+};
+
+/**
+ * Enum to identify the type of channel mapping for active microphones.
+ * Used channels further identify if the microphone has any significative
+ * process (e.g. High Pass Filtering, dynamic compression)
+ * Simple processing as constant gain adjustment must be DIRECT.
+ */
+enum AudioMicrophoneChannelMapping : uint32_t {
+    UNUSED      = 0, /** Channel not used */
+    DIRECT      = 1, /** Channel used and signal not processed */
+    PROCESSED   = 2, /** Channel used and signal has some process */
+};
+
+/**
+ * Enum to identify locations of microphones in regards to the body of the
+ * android device.
+ */
+enum AudioMicrophoneLocation : uint32_t {
+    UNKNOWN             = 0,
+    MAINBODY            = 1,
+    MAINBODY_MOVABLE    = 2,
+    PERIPHERAL          = 3,
+};
+
+/**
+ * Identifier to help group related microphones together
+ * e.g. microphone arrays should belong to the same group
+ */
+typedef int32_t AudioMicrophoneGroup;
+
+/**
+ * Enum with standard polar patterns of microphones
+ */
+enum AudioMicrophoneDirectionality : uint32_t {
+    UNKNOWN         = 0,
+    OMNI            = 1,
+    BI_DIRECTIONAL  = 2,
+    CARDIOID        = 3,
+    HYPER_CARDIOID  = 4,
+    SUPER_CARDIOID  = 5,
+};
+
+/**
+ * A (frequency, level) pair. Used to represent frequency response.
+ */
+struct AudioFrequencyResponsePoint {
+    /** In Hz */
+    float frequency;
+    /** In dB */
+    float level;
+};
+
+/**
+ * Structure used by the HAL to describe microphone's characteristics
+ * Used by StreamIn and Device
+ */
+struct MicrophoneInfo {
+    /** Unique alphanumeric id for microphone. Guaranteed to be the same
+     * even after rebooting.
+     */
+    string                                  deviceId;
+    /**
+     * Device specific information
+     */
+    DeviceAddress                           deviceAddress;
+    /** Each element of the vector must describe the channel with the same
+     *  index.
+     */
+    vec<AudioMicrophoneChannelMapping>      channelMapping;
+    /** Location of the microphone in regard to the body of the device */
+    AudioMicrophoneLocation                 location;
+    /** Identifier to help group related microphones together
+     *  e.g. microphone arrays should belong to the same group
+     */
+    AudioMicrophoneGroup                    group;
+    /** Index of this microphone within the group.
+     *  (group, index) must be unique within the same device.
+     */
+    uint32_t                                indexInTheGroup;
+    /** Level in dBFS produced by a 1000 Hz tone at 94 dB SPL */
+    float                                   sensitivity;
+    /** Level in dB of the max SPL supported at 1000 Hz */
+    float                                   maxSpl;
+    /** Level in dB of the min SPL supported at 1000 Hz */
+    float                                   minSpl;
+    /** Standard polar pattern of the microphone */
+    AudioMicrophoneDirectionality           directionality;
+    /** Vector with ordered frequency responses (from low to high frequencies)
+     *  with the frequency response of the microphone.
+     *  Levels are in dB, relative to level at 1000 Hz
+     */
+    vec<AudioFrequencyResponsePoint>        frequencyResponse;
+    /** Position of the microphone's capsule in meters, from the
+     *  bottom-left-back corner of the bounding box of device.
+     */
+    AudioMicrophoneCoordinate               position;
+    /** Normalized point to signal the main orientation of the microphone's
+     *  capsule. sqrt(x^2 + y^2 + z^2) = 1
+     */
+    AudioMicrophoneCoordinate               orientation;
+};

@@ -156,4 +156,15 @@ interface IStreamIn extends IStream {
      */
     getCapturePosition()
             generates (Result retval, uint64_t frames, uint64_t time);
+
+    /**
+     * Returns an array with active microphones in the stream.
+     *
+     * @return retval INVALID_STATE if the call is not successful,
+     *                OK otherwise.
+     *
+     * @return microphones array with microphones info
+     */
+    getActiveMicrophones()
+               generates(Result retval, vec<MicrophoneInfo> microphones);
 };
