@@ -96,4 +96,4 @@ void get_disk_stats(std::vector<struct DiskStats>& stats) {
 
 # device/<manufacturer>/<device>/sepolicy/vendor/hal_health_default.te
 # Add device specific permissions to hal_health_default domain, especially
-# if Step 6.2 or Step 7.2 is done.
+# if Step 6.1 or Step 7.2 is done.
