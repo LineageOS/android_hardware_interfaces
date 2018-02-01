@@ -4,11 +4,8 @@ cc_library_shared {
     vendor: true,
     relative_install_path: "hw",
     srcs: ["passthrough.cpp"],
-    static_libs: [
-        "android.hardware.graphics.allocator@2.0-passthrough",
-    ],
     header_libs: [
-        "android.hardware.graphics.allocator@2.0-hal",
+        "android.hardware.graphics.allocator@2.0-passthrough",
     ],
     shared_libs: [
         "android.hardware.graphics.allocator@2.0",
@@ -20,6 +17,7 @@ cc_library_shared {
         "liblog",
         "libutils",
     ],
+    cflags: ["-DLOG_TAG=\"AllocatorHal\""],
 }
 
 cc_binary {

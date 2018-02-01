@@ -49,19 +49,16 @@ class Gralloc {
     // is true, the returned buffers are also imported into the mapper.
     //
     // Either case, the returned buffers must be freed with freeBuffer.
-    std::vector<const native_handle_t*> allocate(
-        const BufferDescriptor& descriptor, uint32_t count, bool import = true,
-        uint32_t* outStride = nullptr);
-    const native_handle_t* allocate(
-        const IMapper::BufferDescriptorInfo& descriptorInfo, bool import = true,
-        uint32_t* outStride = nullptr);
+    std::vector<const native_handle_t*> allocate(const BufferDescriptor& descriptor, uint32_t count,
+                                                 bool import = true, uint32_t* outStride = nullptr);
+    const native_handle_t* allocate(const IMapper::BufferDescriptorInfo& descriptorInfo,
+                                    bool import = true, uint32_t* outStride = nullptr);
 
     // IMapper methods
 
     sp<IMapper> getMapper() const;
 
-    BufferDescriptor createDescriptor(
-        const IMapper::BufferDescriptorInfo& descriptorInfo);
+    BufferDescriptor createDescriptor(const IMapper::BufferDescriptorInfo& descriptorInfo);
 
     const native_handle_t* importBuffer(const hidl_handle& rawHandle);
     void freeBuffer(const native_handle_t* bufferHandle);
@@ -71,9 +68,8 @@ class Gralloc {
     // with each of these functions.
     void* lock(const native_handle_t* bufferHandle, uint64_t cpuUsage,
                const IMapper::Rect& accessRegion, int acquireFence);
-    YCbCrLayout lockYCbCr(const native_handle_t* bufferHandle,
-                          uint64_t cpuUsage, const IMapper::Rect& accessRegion,
-                          int acquireFence);
+    YCbCrLayout lockYCbCr(const native_handle_t* bufferHandle, uint64_t cpuUsage,
+                          const IMapper::Rect& accessRegion, int acquireFence);
     int unlock(const native_handle_t* bufferHandle);
 
    private:

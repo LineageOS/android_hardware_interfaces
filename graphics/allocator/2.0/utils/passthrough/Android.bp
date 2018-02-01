@@ -1,12 +1,7 @@
-cc_library_static {
+cc_library_headers {
     name: "android.hardware.graphics.allocator@2.0-passthrough",
     defaults: ["hidl_defaults"],
     vendor: true,
-    srcs: [
-        "Gralloc0Hal.cpp",
-        "Gralloc1Hal.cpp",
-        "GrallocLoader.cpp",
-    ],
     shared_libs: [
         "android.hardware.graphics.allocator@2.0",
         "android.hardware.graphics.mapper@2.0",
@@ -19,11 +14,11 @@ cc_library_static {
     ],
     header_libs: [
         "android.hardware.graphics.allocator@2.0-hal",
-        "libgrallocmapperincludes",
+        "android.hardware.graphics.mapper@2.0-passthrough_headers",
     ],
     export_header_lib_headers: [
         "android.hardware.graphics.allocator@2.0-hal",
+        "android.hardware.graphics.mapper@2.0-passthrough_headers",
     ],
     export_include_dirs: ["include"],
-    cflags: ["-DLOG_TAG=\"AllocatorHal\""],
 }
