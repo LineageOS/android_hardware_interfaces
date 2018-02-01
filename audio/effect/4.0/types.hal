@@ -245,7 +245,7 @@ enum EffectConfigParameters : int32_t {
     CHANNELS = 0x0004,  // channels
     FORMAT = 0x0008,    // format
     ACC_MODE = 0x0010,  // accessMode
-    ALL = BUFFER | SMP_RATE | CHANNELS | FORMAT | ACC_MODE
+    // Note that the 2.0 ALL have been moved to an helper function
 };
 
 /**
@@ -258,7 +258,7 @@ struct EffectBufferConfig {
     bitfield<AudioChannelMask> channels;
     AudioFormat format;
     EffectBufferAccess accessMode;
-    EffectConfigParameters mask;
+    bitfield<EffectConfigParameters> mask;
 };
 
 struct EffectConfig {

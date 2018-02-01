@@ -21,8 +21,6 @@ import IStreamIn;
 import IStreamOut;
 
 interface IDevice {
-    typedef android.hardware.audio@4.0::Result Result;
-
     /**
      * Returns whether the audio hardware interface has been initialized.
      *

@@ -20,8 +20,6 @@ import android.hardware.audio.common@4.0;
 import android.hardware.audio.effect@4.0::IEffect;
 
 interface IStream {
-    typedef android.hardware.audio@4.0::Result Result;
-
     /**
      * Return the frame size (number of bytes per sample).
      *

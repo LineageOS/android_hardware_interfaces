@@ -21,8 +21,6 @@ import IStream;
 import IStreamOutCallback;
 
 interface IStreamOut extends IStream {
-    typedef android.hardware.audio@4.0::Result Result;
-
     /**
      * Return the audio hardware driver estimated latency in milliseconds.
      *

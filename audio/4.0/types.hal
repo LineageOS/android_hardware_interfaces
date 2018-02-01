@@ -93,9 +93,9 @@ struct MmapBufferInfo {
     /** Mmap memory buffer */
     memory  sharedMemory;
     /** Total buffer size in frames */
-    int32_t bufferSizeFrames;
+    uint32_t bufferSizeFrames;
     /** Transfer size granularity in frames */
-    int32_t burstSizeFrames;
+    uint32_t burstSizeFrames;
     /** Attributes describing the buffer. */
     bitfield<MmapBufferFlag> flags;
 };

@@ -20,8 +20,6 @@ import android.hardware.audio.common@4.0;
 import IDevice;
 
 interface IPrimaryDevice extends IDevice {
-    typedef android.hardware.audio@4.0::Result Result;
-
     /**
      * Sets the audio volume of a voice call.
      *

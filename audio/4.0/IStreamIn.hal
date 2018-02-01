@@ -20,8 +20,6 @@ import android.hardware.audio.common@4.0;
 import IStream;
 
 interface IStreamIn extends IStream {
-    typedef android.hardware.audio@4.0::Result Result;
-
     /**
      * Returns the source descriptor of the input stream. Calling this method is
      * equivalent to getting AUDIO_PARAMETER_STREAM_INPUT_SOURCE on the legacy

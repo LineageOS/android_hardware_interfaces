@@ -470,23 +470,6 @@ enum AudioChannelMask : uint32_t {
     INDEX_MASK_8 = INDEX_HDR | ((1 << 8) - 1)
 };
 
-
-/**
- * Expresses the convention when stereo audio samples are stored interleaved
- * in an array.  This should improve readability by allowing code to use
- * symbolic indices instead of hard-coded [0] and [1].
- *
- * For multi-channel beyond stereo, the platform convention is that channels
- * are interleaved in order from least significant channel mask bit to most
- * significant channel mask bit, with unused bits skipped.  Any exceptions
- * to this convention will be noted at the appropriate API.
- */
-@export(name="", value_prefix="AUDIO_INTERLEAVE_")
-enum AudioInterleave : int32_t {
-    LEFT   = 0,
-    RIGHT  = 1,
-};
-
 /**
  * Major modes for a mobile device. The current mode setting affects audio
  * routing.
@@ -495,7 +478,9 @@ enum AudioInterleave : int32_t {
 enum AudioMode : int32_t {
     NORMAL           = 0,
     RINGTONE         = 1,
+    /** Calls handled by the telephony stack (Eg: PSTN). */
     IN_CALL          = 2,
+    /** Calls handled by apps (Eg: Hangout). */
     IN_COMMUNICATION = 3,
 };
 
@@ -854,6 +839,7 @@ struct AudioPortConfig {
 struct AudioPortDeviceExt {
     AudioModuleHandle hwModule;    // module the device is attached to
     AudioDevice type;
+    /** 32 byte string identifying the port. */
     uint8_t[32] address;
 };
 
@@ -864,7 +850,7 @@ struct AudioPortDeviceExt {
 enum AudioMixLatencyClass : int32_t {
     LOW,
     NORMAL
-} ;
+};
 
 struct AudioPortMixExt {
     AudioModuleHandle hwModule;     // module the stream is attached to
