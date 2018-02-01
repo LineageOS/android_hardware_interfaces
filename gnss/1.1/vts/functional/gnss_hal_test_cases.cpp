@@ -443,5 +443,9 @@ TEST_F(GnssHalTest, GnssDebugValuesSanityTest) {
 
             EXPECT_GE(data.position.ageSeconds, 0);
         }
+
+        EXPECT_GE(data.time.timeEstimate, 1514764800000);  // Jan 01 2018 00:00:00
+        EXPECT_GT(data.time.timeUncertaintyNs, 0);
+        EXPECT_GT(data.time.frequencyUncertaintyNsPerSec, 0);
     }
 }
