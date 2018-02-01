@@ -19,6 +19,8 @@ hidl_interface {
         "android.hidl.base@1.0",
     ],
     types: [
+        "AudioQuality",
+        "Call",
         "CardStatus",
         "CellConnectionStatus",
         "CellIdentityCdma",
