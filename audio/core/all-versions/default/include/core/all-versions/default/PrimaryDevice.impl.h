@@ -208,16 +208,56 @@ Return<Result> PrimaryDevice::setBtScoWidebandEnabled(bool enabled) {
     return mDevice->setParam(AUDIO_PARAMETER_KEY_BT_SCO_WB, enabled);
 }
 
+static const char* convertTtyModeFromHIDL(IPrimaryDevice::TtyMode mode) {
+    switch (mode) {
+        case IPrimaryDevice::TtyMode::OFF:
+            return AUDIO_PARAMETER_VALUE_TTY_OFF;
+        case IPrimaryDevice::TtyMode::VCO:
+            return AUDIO_PARAMETER_VALUE_TTY_VCO;
+        case IPrimaryDevice::TtyMode::HCO:
+            return AUDIO_PARAMETER_VALUE_TTY_HCO;
+        case IPrimaryDevice::TtyMode::FULL:
+            return AUDIO_PARAMETER_VALUE_TTY_FULL;
+        default:
+            return nullptr;
+    }
+}
+static IPrimaryDevice::TtyMode convertTtyModeToHIDL(const char* halMode) {
+    if (strcmp(halMode, AUDIO_PARAMETER_VALUE_TTY_OFF) == 0)
+        return IPrimaryDevice::TtyMode::OFF;
+    else if (strcmp(halMode, AUDIO_PARAMETER_VALUE_TTY_VCO) == 0)
+        return IPrimaryDevice::TtyMode::VCO;
+    else if (strcmp(halMode, AUDIO_PARAMETER_VALUE_TTY_HCO) == 0)
+        return IPrimaryDevice::TtyMode::HCO;
+    else if (strcmp(halMode, AUDIO_PARAMETER_VALUE_TTY_FULL) == 0)
+        return IPrimaryDevice::TtyMode::FULL;
+    return IPrimaryDevice::TtyMode(-1);
+}
+
 Return<void> PrimaryDevice::getTtyMode(getTtyMode_cb _hidl_cb) {
-    int halMode;
+    String8 halMode;
     Result retval = mDevice->getParam(AUDIO_PARAMETER_KEY_TTY_MODE, &halMode);
-    TtyMode mode = retval == Result::OK ? TtyMode(halMode) : TtyMode::OFF;
-    _hidl_cb(retval, mode);
+    if (retval != Result::OK) {
+        _hidl_cb(retval, TtyMode::OFF);
+        return Void();
+    }
+    TtyMode mode = convertTtyModeToHIDL(halMode);
+    if (mode == TtyMode(-1)) {
+        ALOGE("HAL returned invalid TTY value: %s", halMode.c_str());
+        _hidl_cb(Result::INVALID_STATE, TtyMode::OFF);
+        return Void();
+    }
+    _hidl_cb(Result::OK, mode);
     return Void();
 }
 
 Return<Result> PrimaryDevice::setTtyMode(IPrimaryDevice::TtyMode mode) {
-    return mDevice->setParam(AUDIO_PARAMETER_KEY_TTY_MODE, static_cast<int>(mode));
+    const char* modeStr = convertTtyModeFromHIDL(mode);
+    if (modeStr == nullptr) {
+        ALOGW("Can not set an invalid TTY value: %d", mode);
+        return Result::INVALID_ARGUMENTS;
+    }
+    return mDevice->setParam(AUDIO_PARAMETER_KEY_TTY_MODE, modeStr);
 }
 
 Return<void> PrimaryDevice::getHacEnabled(getHacEnabled_cb _hidl_cb) {
