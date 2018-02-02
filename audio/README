@@ -1,8 +1,9 @@
 Directory structure of the audio HIDL related code.
 
 audio
-|-- 2.0              <== legacy 2.0 core HIDL (.hal) can not be moved to fit
-|                        the directory structure because already published
+|-- 2.0              <== HIDL (.hal) can not be moved to fit the directory structure
+|                        because that would create a separate HAL
+|-- 4.0              <== Version 4.0 of the core API
 |
 |-- common           <== code common to audio core and effect API
 |   |-- 2.0

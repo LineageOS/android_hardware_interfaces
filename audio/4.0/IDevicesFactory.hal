@@ -1,0 +1,59 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.audio@4.0;
+
+import android.hardware.audio.common@4.0;
+import IDevice;
+
+interface IDevicesFactory {
+    /** Allows a HAL implementation to be split in multiple independent
+     *  devices (called module in the pre-treble API).
+     *  Note that this division is arbitrary and implementation are free
+     *  to only have a Primary.
+     *  The framework will query the devices according to audio_policy_configuration.xml
+     *
+     *  Each Device value is interchangeable with any other and the framework
+     *  does not differentiate between values with the following exceptions:
+     *  - the Primary device must always be present
+     *  - the R_SUBMIX that is used to forward audio of REMOTE_SUBMIX DEVICES
+     */
+    enum Device : int32_t {
+        PRIMARY,
+        A2DP,
+        USB,
+        R_SUBMIX,
+        STUB,
+        CODEC_OFFLOAD,
+        SECONDARY,
+        AUXILIARY,
+        /** Multi Stream Decoder */
+        MSD
+    };
+
+    /**
+     * Opens an audio device. To close the device, it is necessary to release
+     * references to the returned device object.
+     *
+     * @param device device type.
+     * @return retval operation completion status. Returns INVALID_ARGUMENTS
+     *         if there is no corresponding hardware module found,
+     *         NOT_INITIALIZED if an error occured while opening the hardware
+     *         module.
+     * @return result the interface for the created device.
+     */
+    openDevice(Device device) generates (Result retval, IDevice result);
+};
