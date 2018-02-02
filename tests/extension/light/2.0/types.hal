@@ -41,7 +41,7 @@ enum Brightness : android.hardware.light@2.0::Brightness {
     /**
      * Sometimes at night, we need it to be day.
      */
-     THE_SUN,
+    THE_SUN,
 };
 
 /**
