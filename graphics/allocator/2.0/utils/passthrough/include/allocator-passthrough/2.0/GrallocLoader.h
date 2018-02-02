@@ -16,11 +16,18 @@
 
 #pragma once
 
+#ifndef LOG_TAG
+#warning "GrallocLoader.h included without LOG_TAG"
+#endif
+
 #include <memory>
 
-#include <allocator-hal/2.0/AllocatorHal.h>
-
-struct hw_module_t;
+#include <allocator-hal/2.0/Allocator.h>
+#include <allocator-passthrough/2.0/Gralloc0Hal.h>
+#include <allocator-passthrough/2.0/Gralloc1Hal.h>
+#include <hardware/gralloc.h>
+#include <hardware/hardware.h>
+#include <log/log.h>
 
 namespace android {
 namespace hardware {
@@ -44,16 +51,45 @@ class GrallocLoader {
     }
 
     // load the gralloc module
-    static const hw_module_t* loadModule();
+    static const hw_module_t* loadModule() {
+        const hw_module_t* module;
+        int error = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, &module);
+        if (error) {
+            ALOGE("failed to get gralloc module");
+            return nullptr;
+        }
+
+        return module;
+    }
 
     // return the major api version of the module
-    static int getModuleMajorApiVersion(const hw_module_t* module);
+    static int getModuleMajorApiVersion(const hw_module_t* module) {
+        return (module->module_api_version >> 8) & 0xff;
+    }
 
     // create an AllocatorHal instance
-    static std::unique_ptr<hal::AllocatorHal> createHal(const hw_module_t* module);
+    static std::unique_ptr<hal::AllocatorHal> createHal(const hw_module_t* module) {
+        int major = getModuleMajorApiVersion(module);
+        switch (major) {
+            case 1: {
+                auto hal = std::make_unique<Gralloc1Hal>();
+                return hal->initWithModule(module) ? std::move(hal) : nullptr;
+            }
+            case 0: {
+                auto hal = std::make_unique<Gralloc0Hal>();
+                return hal->initWithModule(module) ? std::move(hal) : nullptr;
+            }
+            default:
+                ALOGE("unknown gralloc module major version %d", major);
+                return nullptr;
+        }
+    }
 
     // create an IAllocator instance
-    static IAllocator* createAllocator(std::unique_ptr<hal::AllocatorHal> hal);
+    static IAllocator* createAllocator(std::unique_ptr<hal::AllocatorHal> hal) {
+        auto allocator = std::make_unique<hal::Allocator>();
+        return allocator->init(std::move(hal)) ? allocator.release() : nullptr;
+    }
 };
 
 }  // namespace passthrough
