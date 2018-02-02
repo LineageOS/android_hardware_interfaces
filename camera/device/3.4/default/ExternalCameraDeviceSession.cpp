@@ -576,7 +576,7 @@ Status ExternalCameraDeviceSession::processCaptureRequestError(HalRequest& req) 
         if (req.buffers[i].acquireFence >= 0) {
             native_handle_t* handle = native_handle_create(/*numFds*/1, /*numInts*/0);
             handle->data[0] = req.buffers[i].acquireFence;
-            result.outputBuffers[i].releaseFence.setTo(handle, /*shouldOwn*/true);
+            result.outputBuffers[i].releaseFence.setTo(handle, /*shouldOwn*/false);
         }
     }
 
@@ -614,7 +614,7 @@ Status ExternalCameraDeviceSession::processCaptureResult(HalRequest& req) {
             result.outputBuffers[i].status = BufferStatus::ERROR;
             native_handle_t* handle = native_handle_create(/*numFds*/1, /*numInts*/0);
             handle->data[0] = req.buffers[i].acquireFence;
-            result.outputBuffers[i].releaseFence.setTo(handle, /*shouldOwn*/true);
+            result.outputBuffers[i].releaseFence.setTo(handle, /*shouldOwn*/false);
             notifyError(req.frameNumber, req.buffers[i].streamId, ErrorCode::ERROR_BUFFER);
         } else {
             result.outputBuffers[i].status = BufferStatus::OK;
@@ -622,7 +622,7 @@ Status ExternalCameraDeviceSession::processCaptureResult(HalRequest& req) {
             if (req.buffers[i].acquireFence > 0) {
                 native_handle_t* handle = native_handle_create(/*numFds*/1, /*numInts*/0);
                 handle->data[0] = req.buffers[i].acquireFence;
-                result.outputBuffers[i].releaseFence.setTo(handle, /*shouldOwn*/true);
+                result.outputBuffers[i].releaseFence.setTo(handle, /*shouldOwn*/false);
             }
         }
     }
@@ -1603,6 +1603,7 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
                 halBuf.fenceTimeout = true;
             } else {
                 ::close(halBuf.acquireFence);
+                halBuf.acquireFence = -1;
             }
         }
 
