@@ -39,11 +39,11 @@ using mapper::V2_0::Error;
 
 namespace detail {
 
-// AllocatorImpl implements IAllocator on top of AllocatorHal
-template <typename IALLOCATOR, typename ALLOCATOR_HAL>
-class AllocatorImpl : public IALLOCATOR {
+// AllocatorImpl implements V2_*::IAllocator on top of V2_*::hal::AllocatorHal
+template <typename Interface, typename Hal>
+class AllocatorImpl : public Interface {
    public:
-    bool init(std::unique_ptr<ALLOCATOR_HAL> hal) {
+    bool init(std::unique_ptr<Hal> hal) {
         mHal = std::move(hal);
         return true;
     }
@@ -74,7 +74,7 @@ class AllocatorImpl : public IALLOCATOR {
     }
 
    protected:
-    std::unique_ptr<ALLOCATOR_HAL> mHal;
+    std::unique_ptr<Hal> mHal;
 };
 
 }  // namespace detail
