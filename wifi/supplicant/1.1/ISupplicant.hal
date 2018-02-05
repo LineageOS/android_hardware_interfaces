@@ -54,4 +54,12 @@ interface ISupplicant extends @1.0::ISupplicant {
      *         |SupplicantStatusCode.FAILURE_IFACE_UNKOWN|
      */
     removeInterface(IfaceInfo ifaceInfo) generates (SupplicantStatus status);
+
+    /**
+     * Terminate the service.
+     * This must de-register the service and clear all state. If this HAL
+     * supports the lazy HAL protocol, then this may trigger daemon to exit and
+     * wait to be restarted.
+     */
+    oneway terminate();
 };

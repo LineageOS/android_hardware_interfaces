@@ -157,4 +157,12 @@ interface IHostapd {
      *         |HostapdStatusCode.FAILURE_IFACE_UNKNOWN|
      */
     removeAccessPoint(string ifaceName) generates(HostapdStatus status);
+
+    /**
+     * Terminate the service.
+     * This must de-register the service and clear all state. If this HAL
+     * supports the lazy HAL protocol, then this may trigger daemon to exit and
+     * wait to be restarted.
+     */
+    oneway terminate();
 };

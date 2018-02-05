@@ -58,8 +58,8 @@ cc_test {
         "android.hardware.graphics.allocator@2.0",
         "android.hardware.graphics.composer@2.1",
         "android.hardware.graphics.mapper@2.0",
+        "android.hardware.graphics.mapper@2.0-vts",
         "libVtsHalGraphicsComposerTestUtils",
-        "libVtsHalGraphicsMapperTestUtils",
         "libnativehelper",
     ],
     header_libs: [

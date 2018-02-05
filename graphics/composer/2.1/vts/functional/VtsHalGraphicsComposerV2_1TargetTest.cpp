@@ -17,10 +17,10 @@
 #define LOG_TAG "graphics_composer_hidl_hal_test"
 
 #include <android-base/logging.h>
+#include <mapper-vts/2.0/MapperVts.h>
 #include "GraphicsComposerCallback.h"
 #include "TestCommandReader.h"
 #include "VtsHalGraphicsComposerTestUtils.h"
-#include "VtsHalGraphicsMapperTestUtils.h"
 
 #include <VtsHalHidlTargetTestBase.h>
 #include <VtsHalHidlTargetTestEnvBase.h>
@@ -48,7 +48,7 @@ using android::hardware::graphics::common::V1_0::Dataspace;
 using android::hardware::graphics::common::V1_0::PixelFormat;
 using android::hardware::graphics::common::V1_0::Transform;
 using android::hardware::graphics::mapper::V2_0::IMapper;
-using android::hardware::graphics::mapper::V2_0::tests::Gralloc;
+using android::hardware::graphics::mapper::V2_0::vts::Gralloc;
 using GrallocError = android::hardware::graphics::mapper::V2_0::Error;
 
 // Test environment for graphics.composer

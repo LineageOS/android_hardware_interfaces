@@ -19,115 +19,43 @@
 #include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/graphics/mapper/2.1/IMapper.h>
-#include <sync/sync.h>
-#include "VtsHalGraphicsMapperTestUtils.h"
+#include <mapper-vts/2.1/MapperVts.h>
 
 namespace android {
 namespace hardware {
 namespace graphics {
 namespace mapper {
 namespace V2_1 {
-namespace tests {
+namespace vts {
 namespace {
 
-using android::hardware::graphics::mapper::V2_0::BufferDescriptor;
-using android::hardware::graphics::mapper::V2_0::Error;
-
+using android::hardware::graphics::allocator::V2_0::IAllocator;
 using android::hardware::graphics::common::V1_1::BufferUsage;
 using android::hardware::graphics::common::V1_1::PixelFormat;
+using V2_0::Error;
 
-// abuse VTS to check binary compatibility between BufferDescriptorInfos
-using OldBufferDescriptorInfo =
-    android::hardware::graphics::mapper::V2_0::IMapper::BufferDescriptorInfo;
-static_assert(sizeof(OldBufferDescriptorInfo) == sizeof(IMapper::BufferDescriptorInfo) &&
-                  offsetof(OldBufferDescriptorInfo, width) ==
-                      offsetof(IMapper::BufferDescriptorInfo, width) &&
-                  offsetof(OldBufferDescriptorInfo, height) ==
-                      offsetof(IMapper::BufferDescriptorInfo, height) &&
-                  offsetof(OldBufferDescriptorInfo, layerCount) ==
-                      offsetof(IMapper::BufferDescriptorInfo, layerCount) &&
-                  offsetof(OldBufferDescriptorInfo, format) ==
-                      offsetof(IMapper::BufferDescriptorInfo, format) &&
-                  offsetof(OldBufferDescriptorInfo, usage) ==
-                      offsetof(IMapper::BufferDescriptorInfo, usage),
-              "");
-
-class Gralloc : public V2_0::tests::Gralloc {
+// Test environment for graphics.mapper.
+class GraphicsMapperHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
    public:
-    Gralloc() : V2_0::tests::Gralloc() {
-        if (::testing::Test::HasFatalFailure()) {
-            return;
-        }
-
-        init();
+    // get the test environment singleton
+    static GraphicsMapperHidlEnvironment* Instance() {
+        static GraphicsMapperHidlEnvironment* instance = new GraphicsMapperHidlEnvironment;
+        return instance;
     }
 
-    sp<IMapper> getMapper() const { return mMapper; }
-
-    bool validateBufferSize(const native_handle_t* bufferHandle,
-                            const IMapper::BufferDescriptorInfo& descriptorInfo, uint32_t stride) {
-        auto buffer = const_cast<native_handle_t*>(bufferHandle);
-
-        Error error = mMapper->validateBufferSize(buffer, descriptorInfo, stride);
-        return error == Error::NONE;
+    virtual void registerTestServices() override {
+        registerTestService<IAllocator>();
+        registerTestService<IMapper>();
     }
-
-    void getTransportSize(const native_handle_t* bufferHandle, uint32_t* numFds,
-                          uint32_t* numInts) {
-        auto buffer = const_cast<native_handle_t*>(bufferHandle);
-
-        *numFds = 0;
-        *numInts = 0;
-        mMapper->getTransportSize(buffer, [&](const auto& tmpError, const auto& tmpNumFds,
-                                              const auto& tmpNumInts) {
-            ASSERT_EQ(Error::NONE, tmpError) << "failed to get transport size";
-            ASSERT_GE(bufferHandle->numFds, int(tmpNumFds)) << "invalid numFds " << tmpNumFds;
-            ASSERT_GE(bufferHandle->numInts, int(tmpNumInts)) << "invalid numInts " << tmpNumInts;
-
-            *numFds = tmpNumFds;
-            *numInts = tmpNumInts;
-        });
-    }
-
-    BufferDescriptor createDescriptor(const IMapper::BufferDescriptorInfo& descriptorInfo) {
-        BufferDescriptor descriptor;
-        mMapper->createDescriptor_2_1(
-            descriptorInfo, [&](const auto& tmpError, const auto& tmpDescriptor) {
-                ASSERT_EQ(Error::NONE, tmpError) << "failed to create descriptor";
-                descriptor = tmpDescriptor;
-            });
-
-        return descriptor;
-    }
-
-    const native_handle_t* allocate(const IMapper::BufferDescriptorInfo& descriptorInfo,
-                                    bool import, uint32_t* outStride = nullptr) {
-        BufferDescriptor descriptor = createDescriptor(descriptorInfo);
-        if (::testing::Test::HasFatalFailure()) {
-            return nullptr;
-        }
-
-        auto buffers = V2_0::tests::Gralloc::allocate(descriptor, 1, import, outStride);
-        if (::testing::Test::HasFatalFailure()) {
-            return nullptr;
-        }
-
-        return buffers[0];
-    }
-
-   private:
-    void init() {
-        mMapper = IMapper::castFrom(V2_0::tests::Gralloc::getMapper());
-        ASSERT_NE(nullptr, mMapper.get()) << "failed to find IMapper 2.1";
-    }
-
-    sp<IMapper> mMapper;
 };
 
 class GraphicsMapperHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    protected:
     void SetUp() override {
-        ASSERT_NO_FATAL_FAILURE(mGralloc = std::make_unique<Gralloc>());
+        ASSERT_NO_FATAL_FAILURE(
+            mGralloc = std::make_unique<Gralloc>(
+                GraphicsMapperHidlEnvironment::Instance()->getServiceName<IAllocator>(),
+                GraphicsMapperHidlEnvironment::Instance()->getServiceName<IMapper>()));
 
         mDummyDescriptorInfo.width = 64;
         mDummyDescriptorInfo.height = 64;
@@ -291,7 +219,7 @@ TEST_F(GraphicsMapperHidlTest, CreateDescriptor_2_1Negative) {
 }
 
 }  // namespace
-}  // namespace tests
+}  // namespace vts
 }  // namespace V2_1
 }  // namespace mapper
 }  // namespace graphics
@@ -299,7 +227,7 @@ TEST_F(GraphicsMapperHidlTest, CreateDescriptor_2_1Negative) {
 }  // namespace android
 
 int main(int argc, char** argv) {
-    using android::hardware::graphics::mapper::V2_0::tests::GraphicsMapperHidlEnvironment;
+    using android::hardware::graphics::mapper::V2_1::vts::GraphicsMapperHidlEnvironment;
     ::testing::AddGlobalTestEnvironment(GraphicsMapperHidlEnvironment::Instance());
     ::testing::InitGoogleTest(&argc, argv);
     GraphicsMapperHidlEnvironment::Instance()->init(&argc, argv);
