@@ -655,6 +655,13 @@ public:
     static Status isLogicalMultiCamera(camera_metadata_t *staticMeta);
     static Status getPhysicalCameraIds(camera_metadata_t *staticMeta,
             std::unordered_set<std::string> *physicalIds/*out*/);
+    static Status getSupportedKeys(camera_metadata_t *staticMeta,
+            uint32_t tagId, std::unordered_set<int32_t> *requestIDs/*out*/);
+    static void constructFilteredSettings(const sp<ICameraDeviceSession>& session,
+            const std::unordered_set<int32_t>& availableKeys, RequestTemplate reqTemplate,
+            android::hardware::camera::common::V1_0::helper::CameraMetadata* defaultSettings/*out*/,
+            android::hardware::camera::common::V1_0::helper::CameraMetadata* filteredSettings
+            /*out*/);
     static Status pickConstrainedModeSize(camera_metadata_t *staticMeta,
             AvailableStream &hfrStream);
     static Status isZSLModeAvailable(camera_metadata_t *staticMeta);
@@ -2748,42 +2755,23 @@ TEST_F(CameraHidlTest, configureStreamsWithSessionParameters) {
         castSession(session, deviceVersion, &session3_3, &session3_4);
         ASSERT_NE(session3_4, nullptr);
 
-        const android::hardware::camera::common::V1_0::helper::CameraMetadata staticMeta(
-                staticMetaBuffer);
-        camera_metadata_ro_entry availableSessionKeys = staticMeta.find(
-                ANDROID_REQUEST_AVAILABLE_SESSION_KEYS);
-        if (availableSessionKeys.count == 0) {
+        std::unordered_set<int32_t> availableSessionKeys;
+        auto rc = getSupportedKeys(staticMetaBuffer, ANDROID_REQUEST_AVAILABLE_SESSION_KEYS,
+                &availableSessionKeys);
+        ASSERT_TRUE(Status::OK == rc);
+        if (availableSessionKeys.empty()) {
+            free_camera_metadata(staticMetaBuffer);
             ret = session->close();
             ASSERT_TRUE(ret.isOk());
             continue;
         }
 
         android::hardware::camera::common::V1_0::helper::CameraMetadata previewRequestSettings;
-        ret = session->constructDefaultRequestSettings(RequestTemplate::PREVIEW,
-                [&previewRequestSettings] (auto status, const auto& req) mutable {
-                    ASSERT_EQ(Status::OK, status);
-
-                    const camera_metadata_t *metadata = reinterpret_cast<const camera_metadata_t*> (
-                            req.data());
-                    size_t expectedSize = req.size();
-                    int result = validate_camera_metadata_structure(metadata, &expectedSize);
-                    ASSERT_TRUE((result == 0) || (result == CAMERA_METADATA_VALIDATION_SHIFTED));
-
-                    size_t entryCount = get_camera_metadata_entry_count(metadata);
-                    ASSERT_GT(entryCount, 0u);
-                    previewRequestSettings = metadata;
-                    });
-        ASSERT_TRUE(ret.isOk());
-        const android::hardware::camera::common::V1_0::helper::CameraMetadata &constSettings =
-            previewRequestSettings;
         android::hardware::camera::common::V1_0::helper::CameraMetadata sessionParams;
-        for (size_t i = 0; i < availableSessionKeys.count; i++) {
-            camera_metadata_ro_entry entry = constSettings.find(availableSessionKeys.data.i32[i]);
-            if (entry.count > 0) {
-                sessionParams.update(entry);
-            }
-        }
+        constructFilteredSettings(session, availableSessionKeys, RequestTemplate::PREVIEW,
+                &previewRequestSettings, &sessionParams);
         if (sessionParams.isEmpty()) {
+            free_camera_metadata(staticMetaBuffer);
             ret = session->close();
             ASSERT_TRUE(ret.isOk());
             continue;
@@ -2817,7 +2805,7 @@ TEST_F(CameraHidlTest, configureStreamsWithSessionParameters) {
                 });
         ASSERT_TRUE(ret.isOk());
 
-        sessionParams.unlock(sessionParamsBuffer);
+        free_camera_metadata(staticMetaBuffer);
         ret = session->close();
         ASSERT_TRUE(ret.isOk());
     }
@@ -3350,6 +3338,8 @@ TEST_F(CameraHidlTest, processMultiCaptureRequestPreview) {
         if (deviceVersion < CAMERA_DEVICE_API_VERSION_3_4) {
             continue;
         }
+        std::string version, deviceId;
+        ASSERT_TRUE(::matchDeviceName(name, mProviderType, &version, &deviceId));
         camera_metadata_t* staticMeta;
         Return<void> ret;
         sp<ICameraDeviceSession> session;
@@ -3357,6 +3347,7 @@ TEST_F(CameraHidlTest, processMultiCaptureRequestPreview) {
 
         Status rc = isLogicalMultiCamera(staticMeta);
         if (Status::METHOD_NOT_SUPPORTED == rc) {
+            free_camera_metadata(staticMeta);
             ret = session->close();
             ASSERT_TRUE(ret.isOk());
             continue;
@@ -3366,13 +3357,45 @@ TEST_F(CameraHidlTest, processMultiCaptureRequestPreview) {
         ASSERT_TRUE(Status::OK == rc);
         ASSERT_TRUE(physicalIds.size() > 1);
 
+        std::unordered_set<int32_t> physicalRequestKeyIDs;
+        rc = getSupportedKeys(staticMeta,
+                ANDROID_REQUEST_AVAILABLE_PHYSICAL_CAMERA_REQUEST_KEYS, &physicalRequestKeyIDs);
+        ASSERT_TRUE(Status::OK == rc);
+        if (physicalRequestKeyIDs.empty()) {
+            free_camera_metadata(staticMeta);
+            ret = session->close();
+            ASSERT_TRUE(ret.isOk());
+            // The logical camera doesn't support any individual physical requests.
+            continue;
+        }
+
+        android::hardware::camera::common::V1_0::helper::CameraMetadata defaultPreviewSettings;
+        android::hardware::camera::common::V1_0::helper::CameraMetadata filteredSettings;
+        constructFilteredSettings(session, physicalRequestKeyIDs, RequestTemplate::PREVIEW,
+                &defaultPreviewSettings, &filteredSettings);
+        if (filteredSettings.isEmpty()) {
+            // No physical device settings in default request.
+            free_camera_metadata(staticMeta);
+            ret = session->close();
+            ASSERT_TRUE(ret.isOk());
+            continue;
+        }
+
+        const camera_metadata_t *settingsBuffer = defaultPreviewSettings.getAndLock();
+        settings.setToExternal(
+                reinterpret_cast<uint8_t *> (const_cast<camera_metadata_t *> (settingsBuffer)),
+                get_camera_metadata_size(settingsBuffer));
+
         free_camera_metadata(staticMeta);
         ret = session->close();
         ASSERT_TRUE(ret.isOk());
 
-        // Leave only 2 physical devices in the id set.
-        auto it = physicalIds.begin(); it++; it++;
-        physicalIds.erase(it, physicalIds.end());
+        auto it = physicalIds.begin();
+        string physicalDeviceId = *it;
+        // Leave only the first physical device in the id set and insert the logical device.
+        physicalIds.erase(++it, physicalIds.end());
+        physicalIds.emplace(deviceId);
+        ASSERT_EQ(physicalIds.size(), 2u);
 
         V3_4::HalStreamConfiguration halStreamConfig;
         bool supportsPartialResults = false;
@@ -3400,38 +3423,34 @@ TEST_F(CameraHidlTest, processMultiCaptureRequestPreview) {
                 });
         ASSERT_TRUE(resultQueueRet.isOk());
 
-        InFlightRequest inflightReq = {static_cast<ssize_t> (physicalIds.size()), false,
+        InFlightRequest inflightReq = {static_cast<ssize_t> (halStreamConfig.streams.size()), false,
             supportsPartialResults, partialResultCount, resultQueue};
 
-        RequestTemplate reqTemplate = RequestTemplate::PREVIEW;
-        ret = session3_4->constructDefaultRequestSettings(reqTemplate,
-                                                       [&](auto status, const auto& req) {
-                                                           ASSERT_EQ(Status::OK, status);
-                                                           settings = req;
-                                                       });
-        ASSERT_TRUE(ret.isOk());
-        ASSERT_TRUE(settings.size() > 0);
-
         std::vector<sp<GraphicBuffer>> graphicBuffers;
-        graphicBuffers.reserve(physicalIds.size());
+        graphicBuffers.reserve(halStreamConfig.streams.size());
         ::android::hardware::hidl_vec<StreamBuffer> outputBuffers;
-        outputBuffers.resize(physicalIds.size());
-        hidl_vec<V3_4::PhysicalCameraSetting> camSettings;
-        camSettings.resize(physicalIds.size());
+        outputBuffers.resize(halStreamConfig.streams.size());
         size_t k = 0;
-        for (const auto physicalIdIt : physicalIds) {
+        for (const auto& halStream : halStreamConfig.streams) {
             sp<GraphicBuffer> gb = new GraphicBuffer(previewStream.width, previewStream.height,
-                    static_cast<int32_t>(halStreamConfig.streams[k].v3_3.v3_2.overrideFormat), 1,
+                    static_cast<int32_t>(halStream.v3_3.v3_2.overrideFormat), 1,
                     android_convertGralloc1To0Usage(
-                        halStreamConfig.streams[k].v3_3.v3_2.producerUsage,
-                        halStreamConfig.streams[k].v3_3.v3_2.consumerUsage));
+                        halStream.v3_3.v3_2.producerUsage, halStream.v3_3.v3_2.consumerUsage));
             ASSERT_NE(nullptr, gb.get());
-            outputBuffers[k] = {halStreamConfig.streams[k].v3_3.v3_2.id, bufferId,
-                hidl_handle(gb->getNativeBuffer()->handle), BufferStatus::OK, nullptr, nullptr};
             graphicBuffers.push_back(gb);
-            camSettings[k] = {0, hidl_string(physicalIdIt), settings};
+            outputBuffers[k] = {halStream.v3_3.v3_2.id, bufferId,
+                hidl_handle(gb->getNativeBuffer()->handle), BufferStatus::OK, nullptr, nullptr};
+            bufferId++;
             k++;
         }
+        hidl_vec<V3_4::PhysicalCameraSetting> camSettings(1);
+        const camera_metadata_t *filteredSettingsBuffer = filteredSettings.getAndLock();
+        camSettings[0].settings.setToExternal(
+                reinterpret_cast<uint8_t *> (const_cast<camera_metadata_t *> (
+                        filteredSettingsBuffer)),
+                get_camera_metadata_size(filteredSettingsBuffer));
+        camSettings[0].fmqSettingsSize = 0;
+        camSettings[0].physicalCameraId = physicalDeviceId;
 
         StreamBuffer emptyInputBuffer = {-1, 0, nullptr, BufferStatus::ERROR, nullptr, nullptr};
         V3_4::CaptureRequest request = {{frameNumber, 0 /* fmqSettingsSize */, settings,
@@ -3468,24 +3487,49 @@ TEST_F(CameraHidlTest, processMultiCaptureRequestPreview) {
 
             ASSERT_FALSE(inflightReq.errorCodeValid);
             ASSERT_NE(inflightReq.resultOutputBuffers.size(), 0u);
+
+            request.v3_2.frameNumber++;
+            // Empty settings should be supported after the first call
+            // for repeating requests.
+            request.v3_2.settings.setToExternal(nullptr, 0, true);
+            request.physicalCameraSettings[0].settings.setToExternal(nullptr, 0, true);
+            // The buffer has been registered to HAL by bufferId, so per
+            // API contract we should send a null handle for this buffer
+            request.v3_2.outputBuffers[0].buffer = nullptr;
+            mInflightMap.clear();
+            inflightReq = {static_cast<ssize_t> (physicalIds.size()), false,
+                supportsPartialResults, partialResultCount, resultQueue};
+            mInflightMap.add(request.v3_2.frameNumber, &inflightReq);
         }
 
-        // Empty physical camera settings should fail process requests
-        camSettings[1].settings = emptySettings;
-        frameNumber++;
-        request = {{frameNumber, 0 /* fmqSettingsSize */, settings,
-            emptyInputBuffer, outputBuffers}, camSettings};
         returnStatus = session3_4->processCaptureRequest_3_4(
             {request}, cachesToRemove, [&stat, &numRequestProcessed](auto s, uint32_t n) {
                 stat = s;
                 numRequestProcessed = n;
             });
         ASSERT_TRUE(returnStatus.isOk());
-        ASSERT_EQ(Status::ILLEGAL_ARGUMENT, stat);
+        ASSERT_EQ(Status::OK, stat);
+        ASSERT_EQ(numRequestProcessed, 1u);
+
+        {
+            std::unique_lock<std::mutex> l(mLock);
+            while (!inflightReq.errorCodeValid &&
+                    ((0 < inflightReq.numBuffersLeft) ||
+                     (!inflightReq.haveResultMetadata))) {
+                auto timeout = std::chrono::system_clock::now() +
+                    std::chrono::seconds(kStreamBufferTimeoutSec);
+                ASSERT_NE(std::cv_status::timeout,
+                        mResultCondition.wait_until(l, timeout));
+            }
+
+            ASSERT_FALSE(inflightReq.errorCodeValid);
+            ASSERT_NE(inflightReq.resultOutputBuffers.size(), 0u);
+        }
 
         // Invalid physical camera id should fail process requests
-        camSettings[1].physicalCameraId = invalidPhysicalId;
-        camSettings[1].settings = settings;
+        frameNumber++;
+        camSettings[0].physicalCameraId = invalidPhysicalId;
+        camSettings[0].settings = settings;
         request = {{frameNumber, 0 /* fmqSettingsSize */, settings,
             emptyInputBuffer, outputBuffers}, camSettings};
         returnStatus = session3_4->processCaptureRequest_3_4(
@@ -3496,6 +3540,8 @@ TEST_F(CameraHidlTest, processMultiCaptureRequestPreview) {
         ASSERT_TRUE(returnStatus.isOk());
         ASSERT_EQ(Status::ILLEGAL_ARGUMENT, stat);
 
+        defaultPreviewSettings.unlock(settingsBuffer);
+        filteredSettings.unlock(filteredSettingsBuffer);
         ret = session3_4->close();
         ASSERT_TRUE(ret.isOk());
     }
@@ -3899,6 +3945,56 @@ Status CameraHidlTest::getPhysicalCameraIds(camera_metadata_t *staticMeta,
     }
 
     return Status::OK;
+}
+
+// Generate a set of suported camera key ids.
+Status CameraHidlTest::getSupportedKeys(camera_metadata_t *staticMeta,
+        uint32_t tagId, std::unordered_set<int32_t> *requestIDs) {
+    if ((nullptr == staticMeta) || (nullptr == requestIDs)) {
+        return Status::ILLEGAL_ARGUMENT;
+    }
+
+    camera_metadata_ro_entry entry;
+    int rc = find_camera_metadata_ro_entry(staticMeta, tagId, &entry);
+    if ((0 != rc) || (entry.count == 0)) {
+        return Status::OK;
+    }
+
+    requestIDs->insert(entry.data.i32, entry.data.i32 + entry.count);
+
+    return Status::OK;
+}
+
+void CameraHidlTest::constructFilteredSettings(const sp<ICameraDeviceSession>& session,
+        const std::unordered_set<int32_t>& availableKeys, RequestTemplate reqTemplate,
+        android::hardware::camera::common::V1_0::helper::CameraMetadata* defaultSettings,
+        android::hardware::camera::common::V1_0::helper::CameraMetadata* filteredSettings) {
+    ASSERT_NE(defaultSettings, nullptr);
+    ASSERT_NE(filteredSettings, nullptr);
+
+    auto ret = session->constructDefaultRequestSettings(reqTemplate,
+            [&defaultSettings] (auto status, const auto& req) mutable {
+                ASSERT_EQ(Status::OK, status);
+
+                const camera_metadata_t *metadata = reinterpret_cast<const camera_metadata_t*> (
+                        req.data());
+                size_t expectedSize = req.size();
+                int result = validate_camera_metadata_structure(metadata, &expectedSize);
+                ASSERT_TRUE((result == 0) || (result == CAMERA_METADATA_VALIDATION_SHIFTED));
+
+                size_t entryCount = get_camera_metadata_entry_count(metadata);
+                ASSERT_GT(entryCount, 0u);
+                *defaultSettings = metadata;
+                });
+    ASSERT_TRUE(ret.isOk());
+    const android::hardware::camera::common::V1_0::helper::CameraMetadata &constSettings =
+        *defaultSettings;
+    for (const auto& keyIt : availableKeys) {
+        camera_metadata_ro_entry entry = constSettings.find(keyIt);
+        if (entry.count > 0) {
+            filteredSettings->update(entry);
+        }
+    }
 }
 
 // Check if constrained mode is supported by using the static

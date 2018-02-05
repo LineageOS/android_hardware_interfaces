@@ -207,9 +207,14 @@ struct PhysicalCameraSetting {
 
     /**
      * If fmqSettingsSize is zero, the settings buffer contains the capture and
-     * processing parameters for the physical device with id 'phyCamId'.
-     * In case the individual settings are empty or missing, Hal should fail the
-     * request and return Status::ILLEGAL_ARGUMENT.
+     * processing parameters for the physical device with id 'physicalCameraId'.
+     * As a special case, an empty settings buffer indicates that the
+     * settings are identical to the most-recently submitted capture request.
+     * An empty buffer cannot be used as the first submitted request after
+     * a configureStreams() call.
+     *
+     * This field must be used if fmqSettingsSize is zero. It must not be used
+     * if fmqSettingsSize is non-zero.
      */
     CameraMetadata settings;
 };
