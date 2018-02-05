@@ -185,7 +185,9 @@ struct HalStreamConfiguration {
  * PhysicalCameraSetting:
  *
  * Individual camera settings for logical camera backed by multiple physical devices.
- * Clients are allowed to pass separate settings for each physical device.
+ * Clients are allowed to pass separate settings for each physical device that has
+ * corresponding configured HalStream and the respective stream id is present in the
+ * output buffers of the capture request.
  */
 struct PhysicalCameraSetting {
     /**
@@ -197,8 +199,9 @@ struct PhysicalCameraSetting {
 
     /**
      * Contains the physical device camera id. Any settings passed by client here
-     * should be applied for this physical device. In case the physical id is invalid
-     * Hal should fail the process request and return Status::ILLEGAL_ARGUMENT.
+     * should be applied for this physical device. In case the physical id is invalid or
+     * it is not present among the last configured streams, Hal should fail the process
+     * request and return Status::ILLEGAL_ARGUMENT.
      */
     string physicalCameraId;
 
@@ -238,7 +241,12 @@ struct CaptureRequest {
 
     /**
      * A vector containing individual camera settings for logical camera backed by multiple physical
-     * devices. In case the vector is empty, Hal should use the settings field in 'v3_2'.
+     * devices. In case the vector is empty, Hal should use the settings field in 'v3_2'. The
+     * individual settings should only be honored for physical devices that have respective Hal
+     * stream. Physical devices that have a corresponding Hal stream but don't have attached
+     * settings here should use the settings field in 'v3_2'.
+     * If any of the physical settings in the array are applied on one or more devices, then the
+     * visual effect on any Hal streams attached to the logical camera is undefined.
      */
     vec<PhysicalCameraSetting> physicalCameraSettings;
 };
