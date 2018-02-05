@@ -429,23 +429,26 @@ TEST_F(GnssHalTest, GnssDebugValuesSanityTest) {
             EXPECT_GE(data.position.bearingDegrees, -360);
             EXPECT_LE(data.position.bearingDegrees, 360);
 
-            EXPECT_GE(data.position.horizontalAccuracyMeters, 0);
+            EXPECT_GT(data.position.horizontalAccuracyMeters, 0);
             EXPECT_LE(data.position.horizontalAccuracyMeters, 20000000);
 
-            EXPECT_GE(data.position.verticalAccuracyMeters, 0);
+            EXPECT_GT(data.position.verticalAccuracyMeters, 0);
             EXPECT_LE(data.position.verticalAccuracyMeters, 20000);
 
-            EXPECT_GE(data.position.speedAccuracyMetersPerSecond, 0);
+            EXPECT_GT(data.position.speedAccuracyMetersPerSecond, 0);
             EXPECT_LE(data.position.speedAccuracyMetersPerSecond, 500);
 
-            EXPECT_GE(data.position.bearingAccuracyDegrees, 0);
+            EXPECT_GT(data.position.bearingAccuracyDegrees, 0);
             EXPECT_LE(data.position.bearingAccuracyDegrees, 180);
 
             EXPECT_GE(data.position.ageSeconds, 0);
         }
 
         EXPECT_GE(data.time.timeEstimate, 1514764800000);  // Jan 01 2018 00:00:00
+
         EXPECT_GT(data.time.timeUncertaintyNs, 0);
+
         EXPECT_GT(data.time.frequencyUncertaintyNsPerSec, 0);
+        EXPECT_LE(data.time.frequencyUncertaintyNsPerSec, 2.0e5);  // 200 ppm
     }
 }
