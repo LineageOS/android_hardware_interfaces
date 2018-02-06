@@ -17,19 +17,22 @@
 #define LOG_TAG "neuralnetworks_hidl_hal_test"
 
 #include "Models.h"
+#include "Utils.h"
+
+#include <android-base/logging.h>
+#include <android/hidl/allocator/1.0/IAllocator.h>
 #include <android/hidl/memory/1.0/IMemory.h>
 #include <hidlmemory/mapping.h>
 #include <vector>
 
+using ::android::sp;
+
 namespace android {
 namespace hardware {
 namespace neuralnetworks {
-namespace V1_0 {
-namespace vts {
-namespace functional {
 
 // create a valid model
-Model createValidTestModel() {
+V1_1::Model createValidTestModel_1_1() {
     const std::vector<float> operand2Data = {5.0f, 6.0f, 7.0f, 8.0f};
     const uint32_t size = operand2Data.size() * sizeof(float);
 
@@ -103,39 +106,34 @@ Model createValidTestModel() {
 }
 
 // create first invalid model
-Model createInvalidTestModel1() {
-    Model model = createValidTestModel();
+V1_1::Model createInvalidTestModel1_1_1() {
+    Model model = createValidTestModel_1_1();
     model.operations[0].type = static_cast<OperationType>(0xDEADBEEF); /* INVALID */
     return model;
 }
 
 // create second invalid model
-Model createInvalidTestModel2() {
-    Model model = createValidTestModel();
+V1_1::Model createInvalidTestModel2_1_1() {
+    Model model = createValidTestModel_1_1();
     const uint32_t operand1 = 0;
     const uint32_t operand5 = 4;  // INVALID OPERAND
     model.inputIndexes = std::vector<uint32_t>({operand1, operand5 /* INVALID OPERAND */});
     return model;
 }
 
-// allocator helper
-hidl_memory allocateSharedMemory(int64_t size, const std::string& type = "ashmem") {
-    hidl_memory memory;
+V1_0::Model createValidTestModel_1_0() {
+    V1_1::Model model = createValidTestModel_1_1();
+    return nn::convertToV1_0(model);
+}
 
-    sp<IAllocator> allocator = IAllocator::getService(type);
-    if (!allocator.get()) {
-        return {};
-    }
+V1_0::Model createInvalidTestModel1_1_0() {
+    V1_1::Model model = createInvalidTestModel1_1_1();
+    return nn::convertToV1_0(model);
+}
 
-    Return<void> ret = allocator->allocate(size, [&](bool success, const hidl_memory& mem) {
-        ASSERT_TRUE(success);
-        memory = mem;
-    });
-    if (!ret.isOk()) {
-        return {};
-    }
-
-    return memory;
+V1_0::Model createInvalidTestModel2_1_0() {
+    V1_1::Model model = createInvalidTestModel2_1_1();
+    return nn::convertToV1_0(model);
 }
 
 // create a valid request
@@ -154,8 +152,8 @@ Request createValidTestRequest() {
     std::vector<RequestArgument> outputs = {{
         .location = {.poolIndex = OUTPUT, .offset = 0, .length = outputSize}, .dimensions = {},
     }};
-    std::vector<hidl_memory> pools = {allocateSharedMemory(inputSize),
-                                      allocateSharedMemory(outputSize)};
+    std::vector<hidl_memory> pools = {nn::allocateSharedMemory(inputSize),
+                                      nn::allocateSharedMemory(outputSize)};
     if (pools[INPUT].size() == 0 || pools[OUTPUT].size() == 0) {
         return {};
     }
@@ -199,9 +197,6 @@ Request createInvalidTestRequest2() {
     return request;
 }
 
-}  // namespace functional
-}  // namespace vts
-}  // namespace V1_0
 }  // namespace neuralnetworks
 }  // namespace hardware
 }  // namespace android
