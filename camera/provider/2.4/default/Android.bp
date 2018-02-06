@@ -27,6 +27,7 @@ cc_library_shared {
         "liblog",
         "libhardware",
         "libcamera_metadata",
+        "libtinyxml2"
     ],
     header_libs: [
         "camera.device@3.4-impl_headers",
