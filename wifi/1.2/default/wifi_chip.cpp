@@ -123,34 +123,118 @@ bool removeOldFilesInternal() {
         std::string cur_file_name(dp->d_name);
         struct stat cur_file_stat;
         std::string cur_file_path = kTombstoneFolderPath + cur_file_name;
-        if (stat(cur_file_path.c_str(), &cur_file_stat) != -1) {
-            if (cur_file_stat.st_mtime < delete_files_before) {
-                if (unlink(cur_file_path.c_str()) != 0) {
-                    LOG(ERROR) << "Error deleting file " << strerror(errno);
-                    success = false;
-                }
-            }
-        } else {
+        if (stat(cur_file_path.c_str(), &cur_file_stat) == -1) {
             LOG(ERROR) << "Failed to get file stat for " << cur_file_path
                        << ": " << strerror(errno);
+            success = false;
+            continue;
+        }
+        if (cur_file_stat.st_mtime >= delete_files_before) {
+            continue;
+        }
+        if (unlink(cur_file_path.c_str()) != 0) {
+            LOG(ERROR) << "Error deleting file " << strerror(errno);
             success = false;
         }
     }
     return success;
 }
 
+// Helper function for |cpioArchiveFilesInDir|
+bool cpioWriteHeader(int out_fd, struct stat& st, const char* file_name,
+                     size_t file_name_len) {
+    std::array<char, 32 * 1024> read_buf;
+    ssize_t llen =
+        sprintf(read_buf.data(),
+                "%s%08X%08X%08X%08X%08X%08X%08X%08X%08X%08X%08X%08X%08X",
+                kCpioMagic, static_cast<int>(st.st_ino), st.st_mode, st.st_uid,
+                st.st_gid, static_cast<int>(st.st_nlink),
+                static_cast<int>(st.st_mtime), static_cast<int>(st.st_size),
+                major(st.st_dev), minor(st.st_dev), major(st.st_rdev),
+                minor(st.st_rdev), static_cast<uint32_t>(file_name_len), 0);
+    if (write(out_fd, read_buf.data(), llen) == -1) {
+        LOG(ERROR) << "Error writing cpio header to file " << file_name << " "
+                   << strerror(errno);
+        return false;
+    }
+    if (write(out_fd, file_name, file_name_len) == -1) {
+        LOG(ERROR) << "Error writing filename to file " << file_name << " "
+                   << strerror(errno);
+        return false;
+    }
+
+    // NUL Pad header up to 4 multiple bytes.
+    llen = (llen + file_name_len) % 4;
+    if (llen != 0) {
+        const uint32_t zero = 0;
+        if (write(out_fd, &zero, 4 - llen) == -1) {
+            LOG(ERROR) << "Error padding 0s to file " << file_name << " "
+                       << strerror(errno);
+            return false;
+        }
+    }
+    return true;
+}
+
+// Helper function for |cpioArchiveFilesInDir|
+size_t cpioWriteFileContent(int fd_read, int out_fd, struct stat& st) {
+    // writing content of file
+    std::array<char, 32 * 1024> read_buf;
+    ssize_t llen = st.st_size;
+    size_t n_error = 0;
+    while (llen > 0) {
+        ssize_t bytes_read = read(fd_read, read_buf.data(), read_buf.size());
+        if (bytes_read == -1) {
+            LOG(ERROR) << "Error reading file " << strerror(errno);
+            return ++n_error;
+        }
+        llen -= bytes_read;
+        if (write(out_fd, read_buf.data(), bytes_read) == -1) {
+            LOG(ERROR) << "Error writing data to file " << strerror(errno);
+            return ++n_error;
+        }
+        if (bytes_read == 0) {  // this should never happen, but just in case
+                                // to unstuck from while loop
+            LOG(ERROR) << "Unexpected read result for " << strerror(errno);
+            n_error++;
+            break;
+        }
+    }
+    llen = st.st_size % 4;
+    if (llen != 0) {
+        const uint32_t zero = 0;
+        if (write(out_fd, &zero, 4 - llen) == -1) {
+            LOG(ERROR) << "Error padding 0s to file " << strerror(errno);
+            return ++n_error;
+        }
+    }
+    return n_error;
+}
+
+// Helper function for |cpioArchiveFilesInDir|
+bool cpioWriteFileTrailer(int out_fd) {
+    std::array<char, 4096> read_buf;
+    read_buf.fill(0);
+    if (write(out_fd, read_buf.data(),
+              sprintf(read_buf.data(), "070701%040X%056X%08XTRAILER!!!", 1,
+                      0x0b, 0) +
+                  4) == -1) {
+        LOG(ERROR) << "Error writing trailing bytes " << strerror(errno);
+        return false;
+    }
+    return true;
+}
+
 // Archives all files in |input_dir| and writes result into |out_fd|
 // Logic obtained from //external/toybox/toys/posix/cpio.c "Output cpio archive"
 // portion
-size_t cpioFilesInDir(int out_fd, const char* input_dir) {
+size_t cpioArchiveFilesInDir(int out_fd, const char* input_dir) {
     struct dirent* dp;
     size_t n_error = 0;
-    char read_buf[32 * 1024];
     DIR* dir_dump = opendir(input_dir);
     if (!dir_dump) {
         LOG(ERROR) << "Failed to open directory: " << strerror(errno);
-        n_error++;
-        return n_error;
+        return ++n_error;
     }
     unique_fd dir_auto_closer(dirfd(dir_dump));
     while ((dp = readdir(dir_dump))) {
@@ -158,99 +242,36 @@ size_t cpioFilesInDir(int out_fd, const char* input_dir) {
             continue;
         }
         std::string cur_file_name(dp->d_name);
-        const size_t file_name_len =
-            cur_file_name.size() + 1;  // string.size() does not include the
-                                       // null terminator. The cpio FreeBSD file
-                                       // header expects the null character to
-                                       // be included in the length.
+        // string.size() does not include the null terminator. The cpio FreeBSD
+        // file header expects the null character to be included in the length.
+        const size_t file_name_len = cur_file_name.size() + 1;
         struct stat st;
-        ssize_t llen;
         const std::string cur_file_path = kTombstoneFolderPath + cur_file_name;
-        if (stat(cur_file_path.c_str(), &st) != -1) {
-            const int fd_read = open(cur_file_path.c_str(), O_RDONLY);
-            unique_fd file_auto_closer(fd_read);
-            if (fd_read == -1) {
-                LOG(ERROR) << "Failed to read file " << cur_file_path << " "
-                           << strerror(errno);
-                n_error++;
-                continue;
-            }
-            llen = sprintf(
-                read_buf,
-                "%s%08X%08X%08X%08X%08X%08X%08X%08X%08X%08X%08X%08X%08X",
-                kCpioMagic, static_cast<int>(st.st_ino), st.st_mode, st.st_uid,
-                st.st_gid, static_cast<int>(st.st_nlink),
-                static_cast<int>(st.st_mtime), static_cast<int>(st.st_size),
-                major(st.st_dev), minor(st.st_dev), major(st.st_rdev),
-                minor(st.st_rdev), static_cast<uint32_t>(file_name_len), 0);
-            if (write(out_fd, read_buf, llen) == -1) {
-                LOG(ERROR) << "Error writing cpio header to file "
-                           << cur_file_path << " " << strerror(errno);
-                n_error++;
-                return n_error;
-            }
-            if (write(out_fd, cur_file_name.c_str(), file_name_len) == -1) {
-                LOG(ERROR) << "Error writing filename to file " << cur_file_path
-                           << " " << strerror(errno);
-                n_error++;
-                return n_error;
-            }
-
-            // NUL Pad header up to 4 multiple bytes.
-            llen = (llen + file_name_len) % 4;
-            if (llen != 0) {
-                const uint32_t zero = 0;
-                if (write(out_fd, &zero, 4 - llen) == -1) {
-                    LOG(ERROR) << "Error padding 0s to file " << cur_file_path
-                               << " " << strerror(errno);
-                    n_error++;
-                    return n_error;
-                }
-            }
-
-            // writing content of file
-            llen = st.st_size;
-            while (llen > 0) {
-                ssize_t bytes_read = read(fd_read, read_buf, sizeof(read_buf));
-                if (bytes_read == -1) {
-                    LOG(ERROR) << "Error reading file " << cur_file_path << " "
-                               << strerror(errno);
-                    n_error++;
-                    return n_error;
-                }
-                llen -= bytes_read;
-                if (write(out_fd, read_buf, bytes_read) == -1) {
-                    LOG(ERROR) << "Error writing data to file " << cur_file_path
-                               << " " << strerror(errno);
-                    n_error++;
-                    return n_error;
-                }
-                if (bytes_read ==
-                    0) {  // this should never happen, but just in case
-                          // to unstuck from while loop
-                    LOG(ERROR) << "Unexpected file size for " << cur_file_path
-                               << " " << strerror(errno);
-                    n_error++;
-                    break;
-                }
-            }
-            llen = st.st_size % 4;
-            if (llen != 0) {
-                const uint32_t zero = 0;
-                write(out_fd, &zero, 4 - llen);
-            }
-        } else {
+        if (stat(cur_file_path.c_str(), &st) == -1) {
             LOG(ERROR) << "Failed to get file stat for " << cur_file_path
                        << ": " << strerror(errno);
             n_error++;
+            continue;
+        }
+        const int fd_read = open(cur_file_path.c_str(), O_RDONLY);
+        if (fd_read == -1) {
+            LOG(ERROR) << "Failed to open file " << cur_file_path << " "
+                       << strerror(errno);
+            n_error++;
+            continue;
+        }
+        unique_fd file_auto_closer(fd_read);
+        if (!cpioWriteHeader(out_fd, st, cur_file_name.c_str(),
+                             file_name_len)) {
+            return ++n_error;
+        }
+        size_t write_error = cpioWriteFileContent(fd_read, out_fd, st);
+        if (write_error) {
+            return n_error + write_error;
         }
     }
-    memset(read_buf, 0, sizeof(read_buf));
-    if (write(out_fd, read_buf,
-              sprintf(read_buf, "070701%040X%056X%08XTRAILER!!!", 1, 0x0b, 0) +
-                  4) == -1) {
-        LOG(ERROR) << "Error writing trailing bytes " << strerror(errno);
-        n_error++;
+    if (!cpioWriteFileTrailer(out_fd)) {
+        return ++n_error;
     }
     return n_error;
 }
@@ -541,7 +562,7 @@ Return<void> WifiChip::debug(const hidl_handle& handle,
         if (!writeRingbufferFilesInternal()) {
             LOG(ERROR) << "Error writing files to flash";
         }
-        uint32_t n_error = cpioFilesInDir(fd, kTombstoneFolderPath);
+        uint32_t n_error = cpioArchiveFilesInDir(fd, kTombstoneFolderPath);
         if (n_error != 0) {
             LOG(ERROR) << n_error << " errors occured in cpio function";
         }

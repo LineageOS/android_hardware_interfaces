@@ -55,6 +55,7 @@ using ::android::hardware::drm::V1_0::Status;
 using ::android::hardware::drm::V1_0::SubSample;
 using ::android::hardware::drm::V1_0::SubSample;
 
+using ::android::hardware::drm::V1_1::DrmMetricGroup;
 using ::android::hardware::drm::V1_1::HdcpLevel;
 using ::android::hardware::drm::V1_1::ICryptoFactory;
 using ::android::hardware::drm::V1_1::IDrmFactory;
@@ -199,10 +200,63 @@ public:
     }
 
 protected:
-    sp<IDrmPlugin> drmPlugin;
-    sp<ICryptoPlugin> cryptoPlugin;
-};
+ template <typename CT>
+ bool ValueEquals(DrmMetricGroup::ValueType type, const std::string& expected, const CT& actual) {
+     return type == DrmMetricGroup::ValueType::STRING_TYPE && expected == actual.stringValue;
+ }
 
+ template <typename CT>
+ bool ValueEquals(DrmMetricGroup::ValueType type, const int64_t expected, const CT& actual) {
+     return type == DrmMetricGroup::ValueType::INT64_TYPE && expected == actual.int64Value;
+ }
+
+ template <typename CT>
+ bool ValueEquals(DrmMetricGroup::ValueType type, const double expected, const CT& actual) {
+     return type == DrmMetricGroup::ValueType::DOUBLE_TYPE && expected == actual.doubleValue;
+ }
+
+ template <typename AT, typename VT>
+ bool ValidateMetricAttributeAndValue(const DrmMetricGroup::Metric& metric,
+                                      const std::string& attributeName, const AT& attributeValue,
+                                      const std::string& componentName, const VT& componentValue) {
+     bool validAttribute = false;
+     bool validComponent = false;
+     for (DrmMetricGroup::Attribute attribute : metric.attributes) {
+         if (attribute.name == attributeName &&
+             ValueEquals(attribute.type, attributeValue, attribute)) {
+             validAttribute = true;
+         }
+     }
+     for (DrmMetricGroup::Value value : metric.values) {
+         if (value.componentName == componentName &&
+             ValueEquals(value.type, componentValue, value)) {
+             validComponent = true;
+         }
+     }
+     return validAttribute && validComponent;
+ }
+
+ template <typename AT, typename VT>
+ bool ValidateMetricAttributeAndValue(const hidl_vec<DrmMetricGroup>& metricGroups,
+                                      const std::string& metricName,
+                                      const std::string& attributeName, const AT& attributeValue,
+                                      const std::string& componentName, const VT& componentValue) {
+     bool foundMetric = false;
+     for (const auto& group : metricGroups) {
+         for (const auto& metric : group.metrics) {
+             if (metric.name == metricName) {
+                 foundMetric = foundMetric || ValidateMetricAttributeAndValue(
+                                                  metric, attributeName, attributeValue,
+                                                  componentName, componentValue);
+             }
+         }
+     }
+     return foundMetric;
+ }
+
+ sp<IDrmPlugin> drmPlugin;
+ sp<ICryptoPlugin> cryptoPlugin;
+};
 
 
 /**
@@ -330,6 +384,32 @@ TEST_F(DrmHalClearkeyTest, SetSecurityLevelInvalidSessionId) {
     SessionId session;
     SecurityLevel level = SecurityLevel::SW_SECURE_CRYPTO;
     EXPECT_EQ(Status::BAD_VALUE, drmPlugin->setSecurityLevel(session, level));
+}
+
+/**
+ * Test metrics are set appropriately for open and close operations.
+ */
+TEST_F(DrmHalClearkeyTest, GetMetricsSuccess) {
+    SessionId sessionId = openSession();
+    // The first close should be successful.
+    closeSession(sessionId);
+    // The second close should fail (not opened).
+    EXPECT_EQ(Status::ERROR_DRM_SESSION_NOT_OPENED, drmPlugin->closeSession(sessionId));
+
+    auto res = drmPlugin->getMetrics([this](Status status, hidl_vec<DrmMetricGroup> metricGroups) {
+        EXPECT_EQ(Status::OK, status);
+
+        // Verify the open_session metric.
+        EXPECT_TRUE(ValidateMetricAttributeAndValue(metricGroups, "open_session", "status",
+                                                    (int64_t)0, "count", (int64_t)1));
+        // Verify the close_session - success metric.
+        EXPECT_TRUE(ValidateMetricAttributeAndValue(metricGroups, "close_session", "status",
+                                                    (int64_t)0, "count", (int64_t)1));
+        // Verify the close_session - error metric.
+        EXPECT_TRUE(ValidateMetricAttributeAndValue(metricGroups, "close_session", "status",
+                                                    (int64_t)Status::ERROR_DRM_SESSION_NOT_OPENED,
+                                                    "count", (int64_t)1));
+    });
 }
 
 int main(int argc, char** argv) {
