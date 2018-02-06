@@ -94,7 +94,7 @@ enum CameraMetadataTag : @3.2::CameraMetadataTag {
 
     /** android.statistics.oisDataMode [dynamic, enum, public]
      *
-     * <p>Whether the camera device outputs the OIS data in output
+     * <p>A control for selecting whether OIS position information is included in output
      * result metadata.</p>
      */
     ANDROID_STATISTICS_OIS_DATA_MODE = android.hardware.camera.metadata@3.2::CameraMetadataTag:ANDROID_STATISTICS_END,
@@ -200,12 +200,12 @@ enum CameraMetadataEnumAndroidRequestAvailableCapabilities :
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA,
 };
 
-/** android.logicalMultiCamera.sensorSyncType enumeration values
- * @see ANDROID_LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE
+/** android.statistics.oisDataMode enumeration values
+ * @see ANDROID_STATISTICS_OIS_DATA_MODE
  */
-enum CameraMetadataEnumAndroidLogicalMultiCameraSensorSyncType : uint32_t {
-    ANDROID_LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE_APPROXIMATE,
-    ANDROID_LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE_CALIBRATED,
+enum CameraMetadataEnumAndroidStatisticsOisDataMode : uint32_t {
+    ANDROID_STATISTICS_OIS_DATA_MODE_OFF,
+    ANDROID_STATISTICS_OIS_DATA_MODE_ON,
 };
 
 /** android.info.supportedHardwareLevel enumeration values added since v3.2
@@ -216,10 +216,10 @@ enum CameraMetadataEnumAndroidInfoSupportedHardwareLevel :
     ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL,
 };
 
-/** android.statistics.oisDataMode enumeration values
- * @see ANDROID_STATISTICS_OIS_DATA_MODE
+/** android.logicalMultiCamera.sensorSyncType enumeration values
+ * @see ANDROID_LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE
  */
-enum CameraMetadataEnumAndroidStatisticsOisDataMode : uint32_t {
-    ANDROID_STATISTICS_OIS_DATA_MODE_OFF,
-    ANDROID_STATISTICS_OIS_DATA_MODE_ON,
+enum CameraMetadataEnumAndroidLogicalMultiCameraSensorSyncType : uint32_t {
+    ANDROID_LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE_APPROXIMATE,
+    ANDROID_LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE_CALIBRATED,
 };

@@ -56,14 +56,6 @@ CameraDeviceSession::CameraDeviceSession(
 CameraDeviceSession::~CameraDeviceSession() {
 }
 
-Return<void> CameraDeviceSession::constructDefaultRequestSettings_3_4(
-        RequestTemplate type, ICameraDeviceSession::constructDefaultRequestSettings_cb _hidl_cb)  {
-    V3_2::CameraMetadata outMetadata;
-    Status status = constructDefaultRequestSettingsRaw( (int) type, &outMetadata);
-    _hidl_cb(status, outMetadata);
-    return Void();
-}
-
 Return<void> CameraDeviceSession::configureStreams_3_4(
         const StreamConfiguration& requestedConfiguration,
         ICameraDeviceSession::configureStreams_3_4_cb _hidl_cb)  {
