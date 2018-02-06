@@ -36,15 +36,6 @@ AudioControl::AudioControl() {
 };
 
 
-// Methods from ::android::hardware::automotive::audiocontrol::V1_0::IAudioControl follow.
-Return<AudioResult> AudioControl::setCallback(const sp<IAudioControlCallback>& notificationObject) {
-    // Hang onto the provided callback object for future use
-    callback = notificationObject;
-
-    return AudioResult::OK;
-}
-
-
 Return<int32_t> AudioControl::getBusForContext(uint32_t contextNumber) {
     if (contextNumber > sContextNumberMax) {
         ALOGE("Unexpected context number %d (max expected is %d)", contextNumber, sContextCount);

@@ -16,22 +16,11 @@
 
 package android.hardware.automotive.audiocontrol@1.0;
 
-import IAudioControlCallback;
-
 
 /**
  * Interacts with the car's audio subsystem to manage audio sources and volumes
  */
 interface IAudioControl {
-
-    /**
-     * Registers the required callback object so that we can be notified when the state
-     * of the car's audio system changes. This call must be made when the interface is
-     * initialized.
-     */
-    setCallback(IAudioControlCallback notificationObject)
-        generates (AudioResult result);
-
 
     /**
      * Called at startup once per context to get the mapping from ContextNumber to

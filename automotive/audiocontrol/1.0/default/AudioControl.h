@@ -23,16 +23,12 @@ using ::android::sp;
 struct AudioControl : public IAudioControl {
 public:
     // Methods from ::android::hardware::automotive::audiocontrol::V1_0::IAudioControl follow.
-    Return<AudioResult> setCallback(const sp<IAudioControlCallback>& notificationObject) override;
     Return<int32_t> getBusForContext(uint32_t contextNumber) override;
     Return<void> setBalanceTowardRight(float value) override;
     Return<void> setFadeTowardFront(float value) override;
 
     // Implementation details
     AudioControl();
-
-private:
-    sp<IAudioControlCallback> callback;
 };
 
 }  // namespace implementation

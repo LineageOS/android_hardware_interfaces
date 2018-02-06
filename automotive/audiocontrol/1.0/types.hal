@@ -33,12 +33,3 @@ enum ContextNumber : uint32_t {
     NOTIFICATION,   /* Notifications */
     SYSTEM_SOUND,   /* User interaction sounds (button clicks, etc) */
 };
-
-
-/** Error codes used in AudioControl HAL interface. */
-enum AudioResult : uint32_t {
-    OK = 0,
-    NOT_AVAILABLE,
-    INVALID_ARGUMENT,
-    UNDERLYING_SERVICE_ERROR,
-};
