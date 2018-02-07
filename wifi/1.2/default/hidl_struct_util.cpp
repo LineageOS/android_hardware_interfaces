@@ -26,6 +26,9 @@ namespace V1_2 {
 namespace implementation {
 namespace hidl_struct_util {
 
+WifiChannelWidthInMhz convertLegacyWifiChannelWidthToHidl(
+    legacy_hal::wifi_channel_width type);
+
 hidl_string safeConvertChar(const char* str, size_t max_len) {
     const char* c = str;
     size_t size = 0;
@@ -2044,7 +2047,8 @@ bool convertLegacyNdpChannelInfoToHidl(
     *hidl_struct = {};
 
     hidl_struct->channelFreq = legacy_struct.channel;
-    hidl_struct->channelBandwidth = legacy_struct.bandwidth;
+    hidl_struct->channelBandwidth = convertLegacyWifiChannelWidthToHidl(
+        (legacy_hal::wifi_channel_width)legacy_struct.bandwidth);
     hidl_struct->numSpatialStreams = legacy_struct.nss;
 
     return true;

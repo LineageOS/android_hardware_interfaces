@@ -19,6 +19,7 @@ package android.hardware.wifi@1.2;
 import @1.0::MacAddress;
 import @1.0::NanDataPathConfirmInd;
 import @1.0::WifiChannelInMhz;
+import @1.0::WifiChannelWidthInMhz;
 
 /**
  * NAN configuration request parameters added in the 1.2 HAL. These are supplemental to previous
@@ -67,7 +68,7 @@ struct NanDataPathChannelInfo {
     /**
      * Channel bandwidth in MHz.
      */
-    uint32_t channelBandwidth;
+    WifiChannelWidthInMhz channelBandwidth;
     /**
      * Number of spatial streams used in the channel.
      */
