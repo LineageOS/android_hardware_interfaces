@@ -1,0 +1,99 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.bluetooth.a2dp@1.0;
+
+enum Status : uint8_t {
+    SUCCESS,
+    FAILURE,
+    /** codec configuration not supported by the audio platform */
+    UNSUPPORTED_CODEC_CONFIGURATION ,
+    /** operation is pending */
+    PENDING,
+};
+
+enum CodecType : uint32_t {
+    UNKNOWN = 0x00,
+    SBC = 0x01,
+    AAC = 0x02,
+    APTX = 0x04,
+    APTX_HD = 0x08,
+    LDAC = 0x10,
+};
+enum SampleRate : uint32_t {
+    RATE_UNKNOWN = 0x00,
+    RATE_44100 = 0x01,
+    RATE_48000 = 0x02,
+    RATE_88200 = 0x04,
+    RATE_96000 = 0x08,
+    RATE_176400 = 0x10,
+    RATE_192000 = 0x20,
+};
+enum BitsPerSample : uint8_t {
+    BITS_UNKNOWN = 0x00,
+    BITS_16 = 0x01,
+    BITS_24 = 0x02,
+    BITS_32 = 0x04,
+};
+enum ChannelMode : uint8_t {
+    UNKNOWN = 0x00,
+    MONO = 0x01,
+    STEREO = 0x02,
+};
+struct CodecConfiguration {
+    /** Bluetooth A2DP codec */
+    CodecType codecType;
+    /** Sampling rate for encoder */
+    SampleRate sampleRate;
+    /** Bits per sample for encoder */
+    BitsPerSample bitsPerSample;
+    /** Channel mode for encoder */
+    ChannelMode channelMode;
+    /**
+     * The encoded audio bitrate in bits / second.
+     * 0x00000000 - The audio bitrate is not specified / unused
+     * 0x00000001 - 0x00FFFFFF - Encoded audio bitrate in bits/second
+     * 0x01000000 - 0xFFFFFFFF - Reserved
+     */
+    uint32_t encodedAudioBitrate;
+    /** Peer MTU (in octets) */
+    uint16_t peerMtu;
+    union CodecSpecific {
+        /**
+         * SBC Codec specific information
+         * Refer to SBC Codec specific information elements in A2DP v1.3
+         * Profile Specification.
+         */
+        struct SbcData {
+            /** Block length: 4 bits | Subbands: 2 bits | Allocation Method: 2 bits */
+            uint8_t codecParameters;
+            /** Minimum bitpool value */
+            uint8_t minBitpool;
+            /** Maximum bitpool value */
+            uint8_t maxBitpool;
+        } sbcData;
+        struct LdacData {
+            /**
+             * LDAC bitrate index value:
+             * 0x00 - High
+             * 0x01 - Mid
+             * 0x02 - Low
+             * 0x7F - ABR (Adaptive Bit Rate)
+             */
+            uint8_t bitrateIndex;
+        } ldacData;
+    } codecSpecific;
+};
