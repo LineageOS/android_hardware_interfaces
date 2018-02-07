@@ -17,7 +17,9 @@
 #ifndef ANDROID_HARDWARE_CAMERA_PROVIDER_V2_4_EXTCAMERAPROVIDER_H
 #define ANDROID_HARDWARE_CAMERA_PROVIDER_V2_4_EXTCAMERAPROVIDER_H
 
+#include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include "utils/Mutex.h"
 #include "utils/Thread.h"
 #include <android/hardware/camera/provider/2.4/ICameraProvider.h>
@@ -79,15 +81,19 @@ private:
         virtual bool threadLoop() override;
 
     private:
+        static std::unordered_set<std::string> initInternalDevices();
+
         ExternalCameraProvider* mParent = nullptr;
+        const std::unordered_set<std::string> mInternalDevices;
 
         int mINotifyFD = -1;
         int mWd = -1;
-    } mHotPlugThread;
+    };
 
     Mutex mLock;
     sp<ICameraProviderCallback> mCallbacks = nullptr;
     std::unordered_map<std::string, CameraDeviceStatus> mCameraStatusMap; // camera id -> status
+    HotplugThread mHotPlugThread;
 };
 
 

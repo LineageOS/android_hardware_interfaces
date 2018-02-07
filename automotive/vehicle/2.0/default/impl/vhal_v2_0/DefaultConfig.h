@@ -358,6 +358,14 @@ const ConfigDeclaration kVehicleProperties[]{
 
     {.config =
          {
+             .prop = toInt(VehicleProperty::ENGINE_OIL_LEVEL),
+             .access = VehiclePropertyAccess::READ,
+             .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+         },
+     .initialValue = {.int32Values = {toInt(VehicleOilLevel::NORMAL)}}},
+
+    {.config =
+         {
              .prop = toInt(VehicleProperty::ENGINE_OIL_TEMP),
              .access = VehiclePropertyAccess::READ,
              .changeMode = VehiclePropertyChangeMode::CONTINUOUS,

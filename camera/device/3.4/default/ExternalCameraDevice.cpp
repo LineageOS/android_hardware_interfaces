@@ -15,16 +15,16 @@
  */
 
 #define LOG_TAG "ExtCamDev@3.4"
-#define LOG_NDEBUG 0
+//#define LOG_NDEBUG 0
 #include <log/log.h>
 
+#include <algorithm>
 #include <array>
 #include <linux/videodev2.h>
 #include "android-base/macros.h"
 #include "CameraMetadata.h"
 #include "../../3.2/default/include/convert.h"
 #include "ExternalCameraDevice_3_4.h"
-
 
 namespace android {
 namespace hardware {
@@ -42,16 +42,12 @@ const std::array<uint32_t, /*size*/1> kSupportedFourCCs {{
     V4L2_PIX_FMT_MJPEG
 }}; // double braces required in C++11
 
-// TODO: b/72261897
-//       Define max size/fps this Android device can advertise (and streaming at reasonable speed)
-//       Also make sure that can be done without editing source code
-
-// TODO: b/72261675: make it dynamic since this affects memory usage
-const int kMaxJpegSize = {5 * 1024 * 1024};  // 5MB
 } // anonymous namespace
 
 ExternalCameraDevice::ExternalCameraDevice(const std::string& cameraId) :
-        mCameraId(cameraId) {
+        mCameraId(cameraId),
+        mCfg(ExternalCameraDeviceConfig::loadFromCfg()) {
+
     status_t ret = initCameraCharacteristics();
     if (ret != OK) {
         ALOGE("%s: init camera characteristics failed: errorno %d", __FUNCTION__, ret);
@@ -133,7 +129,8 @@ Return<void> ExternalCameraDevice::open(
     }
 
     session = new ExternalCameraDeviceSession(
-            callback, mSupportedFormats, mCameraCharacteristics, std::move(fd));
+            callback, mCfg, mSupportedFormats, mCroppingType,
+            mCameraCharacteristics, std::move(fd));
     if (session == nullptr) {
         ALOGE("%s: camera device session allocation failed", __FUNCTION__);
         mLock.unlock();
@@ -283,7 +280,7 @@ status_t ExternalCameraDevice::initDefaultCharsKeys(
     UPDATE(ANDROID_JPEG_AVAILABLE_THUMBNAIL_SIZES, jpegAvailableThumbnailSizes,
            ARRAY_SIZE(jpegAvailableThumbnailSizes));
 
-    const int32_t jpegMaxSize = kMaxJpegSize;
+    const int32_t jpegMaxSize = mCfg.maxJpegBufSize;
     UPDATE(ANDROID_JPEG_MAX_SIZE, &jpegMaxSize, 1);
 
     const uint8_t jpegQuality = 90;
@@ -692,7 +689,7 @@ status_t ExternalCameraDevice::initOutputCharsKeys(int fd,
 #undef UPDATE
 
 void ExternalCameraDevice::getFrameRateList(
-        int fd, SupportedV4L2Format* format) {
+        int fd, float fpsUpperBound, SupportedV4L2Format* format) {
     format->frameRates.clear();
 
     v4l2_frmivalenum frameInterval {
@@ -709,7 +706,10 @@ void ExternalCameraDevice::getFrameRateList(
             if (frameInterval.discrete.numerator != 0) {
                 float framerate = frameInterval.discrete.denominator /
                         static_cast<float>(frameInterval.discrete.numerator);
-                ALOGV("index:%d, format:%c%c%c%c, w %d, h %d, framerate %f",
+                if (framerate > fpsUpperBound) {
+                    continue;
+                }
+                ALOGI("index:%d, format:%c%c%c%c, w %d, h %d, framerate %f",
                     frameInterval.index,
                     frameInterval.pixel_format & 0xFF,
                     (frameInterval.pixel_format >> 8) & 0xFF,
@@ -730,6 +730,63 @@ void ExternalCameraDevice::getFrameRateList(
                 (frameInterval.pixel_format >> 24) & 0xFF,
                 frameInterval.width, frameInterval.height);
     }
+}
+
+CroppingType ExternalCameraDevice::initCroppingType(
+        /*inout*/std::vector<SupportedV4L2Format>* pSortedFmts) {
+    std::vector<SupportedV4L2Format>& sortedFmts = *pSortedFmts;
+    const auto& maxSize = sortedFmts[sortedFmts.size() - 1];
+    float maxSizeAr = ASPECT_RATIO(maxSize);
+    float minAr = kMaxAspectRatio;
+    float maxAr = kMinAspectRatio;
+    for (const auto& fmt : sortedFmts) {
+        float ar = ASPECT_RATIO(fmt);
+        if (ar < minAr) {
+            minAr = ar;
+        }
+        if (ar > maxAr) {
+            maxAr = ar;
+        }
+    }
+
+    CroppingType ct = VERTICAL;
+    if (isAspectRatioClose(maxSizeAr, maxAr)) {
+        // Ex: 16:9 sensor, cropping horizontally to get to 4:3
+        ct = HORIZONTAL;
+    } else if (isAspectRatioClose(maxSizeAr, minAr)) {
+        // Ex: 4:3 sensor, cropping vertically to get to 16:9
+        ct = VERTICAL;
+    } else {
+        ALOGI("%s: camera maxSizeAr %f is not close to minAr %f or maxAr %f",
+                __FUNCTION__, maxSizeAr, minAr, maxAr);
+        if ((maxSizeAr - minAr) < (maxAr - maxSizeAr)) {
+            ct = VERTICAL;
+        } else {
+            ct = HORIZONTAL;
+        }
+
+        // Remove formats that has aspect ratio not croppable from largest size
+        std::vector<SupportedV4L2Format> out;
+        for (const auto& fmt : sortedFmts) {
+            float ar = ASPECT_RATIO(fmt);
+            if (isAspectRatioClose(ar, maxSizeAr)) {
+                out.push_back(fmt);
+            } else if (ct == HORIZONTAL && ar < maxSizeAr) {
+                out.push_back(fmt);
+            } else if (ct == VERTICAL && ar > maxSizeAr) {
+                out.push_back(fmt);
+            } else {
+                ALOGD("%s: size (%d,%d) is removed due to unable to crop %s from (%d,%d)",
+                    __FUNCTION__, fmt.width, fmt.height,
+                    ct == VERTICAL ? "vertically" : "horizontally",
+                    maxSize.width, maxSize.height);
+            }
+        }
+        sortedFmts = out;
+    }
+    ALOGI("%s: camera croppingType is %s", __FUNCTION__,
+            ct == VERTICAL ? "VERTICAL" : "HORIZONTAL");
+    return ct;
 }
 
 void ExternalCameraDevice::initSupportedFormatsLocked(int fd) {
@@ -755,7 +812,7 @@ void ExternalCameraDevice::initSupportedFormatsLocked(int fd) {
                 for (; TEMP_FAILURE_RETRY(ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frameSize)) == 0;
                         ++frameSize.index) {
                     if (frameSize.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
-                        ALOGD("index:%d, format:%c%c%c%c, w %d, h %d", frameSize.index,
+                        ALOGV("index:%d, format:%c%c%c%c, w %d, h %d", frameSize.index,
                             fmtdesc.pixelformat & 0xFF,
                             (fmtdesc.pixelformat >> 8) & 0xFF,
                             (fmtdesc.pixelformat >> 16) & 0xFF,
@@ -771,7 +828,20 @@ void ExternalCameraDevice::initSupportedFormatsLocked(int fd) {
                             .height = frameSize.discrete.height,
                             .fourcc = fmtdesc.pixelformat
                         };
-                        getFrameRateList(fd, &format);
+
+                        float fpsUpperBound = -1.0;
+                        for (const auto& limit : mCfg.fpsLimits) {
+                            if (format.width <= limit.size.width &&
+                                    format.height <= limit.size.height) {
+                                fpsUpperBound = limit.fpsUpperBound;
+                                break;
+                            }
+                        }
+                        if (fpsUpperBound < 0.f) {
+                            continue;
+                        }
+
+                        getFrameRateList(fd, fpsUpperBound, &format);
                         if (!format.frameRates.empty()) {
                             mSupportedFormats.push_back(format);
                         }
@@ -781,6 +851,16 @@ void ExternalCameraDevice::initSupportedFormatsLocked(int fd) {
         }
         fmtdesc.index++;
     }
+
+    std::sort(mSupportedFormats.begin(), mSupportedFormats.end(),
+            [](const SupportedV4L2Format& a, const SupportedV4L2Format& b) -> bool {
+                if (a.width == b.width) {
+                    return a.height < b.height;
+                }
+                return a.width < b.width;
+            });
+
+    mCroppingType = initCroppingType(&mSupportedFormats);
 }
 
 }  // namespace implementation

@@ -69,7 +69,8 @@ cc_library_shared {
     vendor: true,
     srcs: [
         "ExternalCameraDevice.cpp",
-        "ExternalCameraDeviceSession.cpp"
+        "ExternalCameraDeviceSession.cpp",
+        "ExternalCameraUtils.cpp",
     ],
     shared_libs: [
         "libhidlbase",
@@ -91,6 +92,7 @@ cc_library_shared {
         "libyuv",
         "libjpeg",
         "libexif",
+        "libtinyxml2"
     ],
     static_libs: [
         "android.hardware.camera.common@1.0-helper",

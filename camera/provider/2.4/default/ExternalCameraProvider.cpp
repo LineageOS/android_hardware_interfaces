@@ -24,6 +24,7 @@
 #include <linux/videodev2.h>
 #include "ExternalCameraProvider.h"
 #include "ExternalCameraDevice_3_4.h"
+#include "tinyxml2.h" // XML parsing
 
 namespace android {
 namespace hardware {
@@ -56,7 +57,8 @@ bool matchDeviceName(const hidl_string& deviceName, std::string* deviceVersion,
 
 } // anonymous namespace
 
-ExternalCameraProvider::ExternalCameraProvider() : mHotPlugThread(this) {
+ExternalCameraProvider::ExternalCameraProvider() :
+        mHotPlugThread(this) {
     mHotPlugThread.run("ExtCamHotPlug", PRIORITY_BACKGROUND);
 }
 
@@ -143,7 +145,7 @@ Return<void> ExternalCameraProvider::getCameraDeviceInterface_V3_x(
 }
 
 void ExternalCameraProvider::addExternalCamera(const char* devName) {
-    ALOGE("ExtCam: adding %s to External Camera HAL!", devName);
+    ALOGI("ExtCam: adding %s to External Camera HAL!", devName);
     Mutex::Autolock _l(mLock);
     std::string deviceName = std::string("device@3.4/external/") + devName;
     mCameraStatusMap[deviceName] = CameraDeviceStatus::PRESENT;
@@ -192,8 +194,59 @@ void ExternalCameraProvider::deviceRemoved(const char* devName) {
     }
 }
 
+std::unordered_set<std::string>
+ExternalCameraProvider::HotplugThread::initInternalDevices() {
+    std::unordered_set<std::string> ret;
+    using device::V3_4::implementation::ExternalCameraDeviceConfig;
+    const char* configPath = ExternalCameraDeviceConfig::kDefaultCfgPath;
+
+    using namespace tinyxml2;
+
+    XMLDocument configXml;
+    XMLError err = configXml.LoadFile(configPath);
+    if (err != XML_SUCCESS) {
+        ALOGE("%s: Unable to load external camera config file '%s'. Error: %s",
+                __FUNCTION__, configPath, XMLDocument::ErrorIDToName(err));
+    } else {
+        ALOGI("%s: load external camera config succeed!", __FUNCTION__);
+    }
+
+    XMLElement *extCam = configXml.FirstChildElement("ExternalCamera");
+    if (extCam == nullptr) {
+        ALOGI("%s: no external camera config specified", __FUNCTION__);
+        return ret;
+    }
+
+    XMLElement *providerCfg = extCam->FirstChildElement("Provider");
+    if (providerCfg == nullptr) {
+        ALOGI("%s: no external camera provider config specified", __FUNCTION__);
+        return ret;
+    }
+
+    XMLElement *ignore = providerCfg->FirstChildElement("ignore");
+    if (ignore == nullptr) {
+        ALOGI("%s: no internal ignored device specified", __FUNCTION__);
+        return ret;
+    }
+
+    XMLElement *id = ignore->FirstChildElement("id");
+    while (id != nullptr) {
+        const char* text = id->GetText();
+        if (text != nullptr) {
+            ret.insert(text);
+            ALOGI("%s: device %s will be ignored by external camera provider",
+                    __FUNCTION__, text);
+        }
+        id = id->NextSiblingElement("id");
+    }
+
+    return ret;
+}
+
 ExternalCameraProvider::HotplugThread::HotplugThread(ExternalCameraProvider* parent) :
-        Thread(/*canCallJava*/false), mParent(parent) {}
+        Thread(/*canCallJava*/false),
+        mParent(parent),
+        mInternalDevices(initInternalDevices()) {}
 
 ExternalCameraProvider::HotplugThread::~HotplugThread() {}
 
@@ -206,14 +259,13 @@ bool ExternalCameraProvider::HotplugThread::threadLoop() {
     }
 
     struct dirent* de;
-    // This list is device dependent. TODO: b/72261897 allow setting it from setprop/device boot
-    std::string internalDevices = "0,1";
     while ((de = readdir(devdir)) != 0) {
         // Find external v4l devices that's existing before we start watching and add them
         if (!strncmp("video", de->d_name, 5)) {
             // TODO: This might reject some valid devices. Ex: internal is 33 and a device named 3
             //       is added.
-            if (internalDevices.find(de->d_name + 5) == std::string::npos) {
+            std::string deviceId(de->d_name + 5);
+            if (mInternalDevices.count(deviceId) == 0) {
                 ALOGV("Non-internal v4l device %s found", de->d_name);
                 char v4l2DevicePath[kMaxDevicePathLen];
                 snprintf(v4l2DevicePath, kMaxDevicePathLen,
@@ -249,14 +301,17 @@ bool ExternalCameraProvider::HotplugThread::threadLoop() {
                 struct inotify_event* event = (struct inotify_event*)&eventBuf[offset];
                 if (event->wd == mWd) {
                     if (!strncmp("video", event->name, 5)) {
-                        char v4l2DevicePath[kMaxDevicePathLen];
-                        snprintf(v4l2DevicePath, kMaxDevicePathLen,
-                                "%s%s", kDevicePath, event->name);
-                        if (event->mask & IN_CREATE) {
-                            mParent->deviceAdded(v4l2DevicePath);
-                        }
-                        if (event->mask & IN_DELETE) {
-                            mParent->deviceRemoved(v4l2DevicePath);
+                        std::string deviceId(event->name + 5);
+                        if (mInternalDevices.count(deviceId) == 0) {
+                            char v4l2DevicePath[kMaxDevicePathLen];
+                            snprintf(v4l2DevicePath, kMaxDevicePathLen,
+                                    "%s%s", kDevicePath, event->name);
+                            if (event->mask & IN_CREATE) {
+                                mParent->deviceAdded(v4l2DevicePath);
+                            }
+                            if (event->mask & IN_DELETE) {
+                                mParent->deviceRemoved(v4l2DevicePath);
+                            }
                         }
                     }
                 }

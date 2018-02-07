@@ -21,9 +21,7 @@
 #include "ExternalCameraDeviceSession.h"
 
 #include "android-base/macros.h"
-#include "algorithm"
 #include <utils/Timers.h>
-#include <cmath>
 #include <linux/videodev2.h>
 #include <sync/sync.h>
 
@@ -40,97 +38,39 @@ namespace device {
 namespace V3_4 {
 namespace implementation {
 
+namespace {
 // Size of request/result metadata fast message queue. Change to 0 to always use hwbinder buffer.
-static constexpr size_t kMetadataMsgQueueSize = 1 << 20 /* 1MB */;
-const int ExternalCameraDeviceSession::kMaxProcessedStream;
-const int ExternalCameraDeviceSession::kMaxStallStream;
-const Size kMaxVideoSize = {1920, 1088}; // Maybe this should be programmable
-const int kNumVideoBuffers = 4; // number of v4l2 buffers when streaming <= kMaxVideoSize
-const int kNumStillBuffers = 2; // number of v4l2 buffers when streaming > kMaxVideoSize
+static constexpr size_t kMetadataMsgQueueSize = 1 << 18 /* 256kB */;
+
 const int kBadFramesAfterStreamOn = 1; // drop x frames after streamOn to get rid of some initial
                                        // bad frames. TODO: develop a better bad frame detection
                                        // method
 
-// Aspect ratio is defined as width/height here and ExternalCameraDevice
-// will guarantee all supported sizes has width >= height (so aspect ratio >= 1.0)
-#define ASPECT_RATIO(sz) (static_cast<float>((sz).width) / (sz).height)
-const float kMaxAspectRatio = std::numeric_limits<float>::max();
-const float kMinAspectRatio = 1.f;
+} // Anonymous namespace
 
+// Static instances
+const int ExternalCameraDeviceSession::kMaxProcessedStream;
+const int ExternalCameraDeviceSession::kMaxStallStream;
 HandleImporter ExternalCameraDeviceSession::sHandleImporter;
-
-bool isAspectRatioClose(float ar1, float ar2) {
-    const float kAspectRatioMatchThres = 0.025f; // This threshold is good enough to distinguish
-                                                // 4:3/16:9/20:9
-                                                // 1.33 / 1.78 / 2
-    return (std::abs(ar1 - ar2) < kAspectRatioMatchThres);
-}
 
 ExternalCameraDeviceSession::ExternalCameraDeviceSession(
         const sp<ICameraDeviceCallback>& callback,
-        const std::vector<SupportedV4L2Format>& supportedFormats,
+        const ExternalCameraDeviceConfig& cfg,
+        const std::vector<SupportedV4L2Format>& sortedFormats,
+        const CroppingType& croppingType,
         const common::V1_0::helper::CameraMetadata& chars,
         unique_fd v4l2Fd) :
         mCallback(callback),
+        mCfg(cfg),
         mCameraCharacteristics(chars),
+        mSupportedFormats(sortedFormats),
+        mCroppingType(croppingType),
         mV4l2Fd(std::move(v4l2Fd)),
-        mSupportedFormats(sortFormats(supportedFormats)),
-        mCroppingType(initCroppingType(mSupportedFormats)),
         mOutputThread(new OutputThread(this, mCroppingType)),
         mMaxThumbResolution(getMaxThumbResolution()),
         mMaxJpegResolution(getMaxJpegResolution()) {
     mInitFail = initialize();
 }
-
-std::vector<SupportedV4L2Format> ExternalCameraDeviceSession::sortFormats(
-            const std::vector<SupportedV4L2Format>& inFmts) {
-    std::vector<SupportedV4L2Format> fmts = inFmts;
-    std::sort(fmts.begin(), fmts.end(),
-            [](const SupportedV4L2Format& a, const SupportedV4L2Format& b) -> bool {
-                if (a.width == b.width) {
-                    return a.height < b.height;
-                }
-                return a.width < b.width;
-            });
-    return fmts;
-}
-
-CroppingType ExternalCameraDeviceSession::initCroppingType(
-        const std::vector<SupportedV4L2Format>& sortedFmts) {
-    const auto& maxSize = sortedFmts[sortedFmts.size() - 1];
-    float maxSizeAr = ASPECT_RATIO(maxSize);
-    float minAr = kMaxAspectRatio;
-    float maxAr = kMinAspectRatio;
-    for (const auto& fmt : sortedFmts) {
-        float ar = ASPECT_RATIO(fmt);
-        if (ar < minAr) {
-            minAr = ar;
-        }
-        if (ar > maxAr) {
-            maxAr = ar;
-        }
-    }
-
-    CroppingType ct = VERTICAL;
-    if (isAspectRatioClose(maxSizeAr, maxAr)) {
-        // Ex: 16:9 sensor, cropping horizontally to get to 4:3
-        ct = HORIZONTAL;
-    } else if (isAspectRatioClose(maxSizeAr, minAr)) {
-        // Ex: 4:3 sensor, cropping vertically to get to 16:9
-        ct = VERTICAL;
-    } else {
-        ALOGI("%s: camera maxSizeAr %f is not close to minAr %f or maxAr %f",
-                __FUNCTION__, maxSizeAr, minAr, maxAr);
-        if ((maxSizeAr - minAr) < (maxAr - maxSizeAr)) {
-            ct = VERTICAL;
-        } else {
-            ct = HORIZONTAL;
-        }
-    }
-    ALOGI("%s: camera croppingType is %d", __FUNCTION__, ct);
-    return ct;
-}
-
 
 bool ExternalCameraDeviceSession::initialize() {
     if (mV4l2Fd.get() < 0) {
@@ -671,7 +611,12 @@ void ExternalCameraDeviceSession::invokeProcessCaptureResultCallback(
             }
         }
     }
-    mCallback->processCaptureResult(results);
+    auto status = mCallback->processCaptureResult(results);
+    if (!status.isOk()) {
+        ALOGE("%s: processCaptureResult ERROR : %s", __FUNCTION__,
+              status.description().c_str());
+    }
+
     mProcessCaptureResultLock.unlock();
 }
 
@@ -1895,7 +1840,7 @@ int ExternalCameraDeviceSession::v4l2StreamOffLocked() {
             return -1;
         }
     }
-    mV4l2Buffers.clear(); // VIDIOC_REQBUFS will fail if FDs are not clear first
+    mV4L2BufferCount = 0;
 
     // VIDIOC_STREAMOFF
     v4l2_buf_type capture_type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -1996,8 +1941,8 @@ int ExternalCameraDeviceSession::configureV4l2StreamLocked(const SupportedV4L2Fo
         return BAD_VALUE;
     }
 
-    uint32_t v4lBufferCount = (v4l2Fmt.width <= kMaxVideoSize.width &&
-            v4l2Fmt.height <= kMaxVideoSize.height) ? kNumVideoBuffers : kNumStillBuffers;
+    uint32_t v4lBufferCount = (fps >= kDefaultFps) ?
+            mCfg.numVideoBuffers : mCfg.numStillBuffers;
     // VIDIOC_REQBUFS: create buffers
     v4l2_requestbuffers req_buffers{};
     req_buffers.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -2015,23 +1960,19 @@ int ExternalCameraDeviceSession::configureV4l2StreamLocked(const SupportedV4L2Fo
         return NO_MEMORY;
     }
 
-    // VIDIOC_EXPBUF:  export buffers as FD
+    // VIDIOC_QUERYBUF:  get buffer offset in the V4L2 fd
     // VIDIOC_QBUF: send buffer to driver
-    mV4l2Buffers.resize(req_buffers.count);
+    mV4L2BufferCount = req_buffers.count;
     for (uint32_t i = 0; i < req_buffers.count; i++) {
-        v4l2_exportbuffer expbuf {};
-        expbuf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        expbuf.index = i;
-        if (TEMP_FAILURE_RETRY(ioctl(mV4l2Fd.get(), VIDIOC_EXPBUF, &expbuf)) < 0) {
-            ALOGE("%s: EXPBUF %d failed: %s", __FUNCTION__, i,  strerror(errno));
-            return -errno;
-        }
-        mV4l2Buffers[i].reset(expbuf.fd);
-
         v4l2_buffer buffer = {
             .type = V4L2_BUF_TYPE_VIDEO_CAPTURE,
             .index = i,
             .memory = V4L2_MEMORY_MMAP};
+
+        if (TEMP_FAILURE_RETRY(ioctl(mV4l2Fd.get(), VIDIOC_QUERYBUF, &buffer)) < 0) {
+            ALOGE("%s: QUERYBUF %d failed: %s", __FUNCTION__, i,  strerror(errno));
+            return -errno;
+        }
 
         if (TEMP_FAILURE_RETRY(ioctl(mV4l2Fd.get(), VIDIOC_QBUF, &buffer)) < 0) {
             ALOGE("%s: QBUF %d failed: %s", __FUNCTION__, i,  strerror(errno));
@@ -2072,7 +2013,7 @@ sp<V4L2Frame> ExternalCameraDeviceSession::dequeueV4l2FrameLocked() {
 
     {
         std::unique_lock<std::mutex> lk(mV4l2BufferLock);
-        if (mNumDequeuedV4l2Buffers == mV4l2Buffers.size()) {
+        if (mNumDequeuedV4l2Buffers == mV4L2BufferCount) {
             std::chrono::seconds timeout = std::chrono::seconds(kBufferWaitTimeoutSec);
             mLock.unlock();
             auto st = mV4L2BufferReturned.wait_for(lk, timeout);
@@ -2092,7 +2033,7 @@ sp<V4L2Frame> ExternalCameraDeviceSession::dequeueV4l2FrameLocked() {
         return ret;
     }
 
-    if (buffer.index >= mV4l2Buffers.size()) {
+    if (buffer.index >= mV4L2BufferCount) {
         ALOGE("%s: Invalid buffer id: %d", __FUNCTION__, buffer.index);
         return ret;
     }
@@ -2108,7 +2049,7 @@ sp<V4L2Frame> ExternalCameraDeviceSession::dequeueV4l2FrameLocked() {
     }
     return new V4L2Frame(
             mV4l2StreamingFmt.width, mV4l2StreamingFmt.height, mV4l2StreamingFmt.fourcc,
-            buffer.index, mV4l2Buffers[buffer.index].get(), buffer.bytesused);
+            buffer.index, mV4l2Fd.get(), buffer.bytesused, buffer.m.offset);
 }
 
 void ExternalCameraDeviceSession::enqueueV4l2Frame(const sp<V4L2Frame>& frame) {
@@ -2303,7 +2244,7 @@ Status ExternalCameraDeviceSession::configureStreams(
                 BufferUsage::CPU_WRITE_OFTEN |
                 BufferUsage::CAMERA_OUTPUT;
         out->streams[i].v3_2.consumerUsage = 0;
-        out->streams[i].v3_2.maxBuffers  = mV4l2Buffers.size();
+        out->streams[i].v3_2.maxBuffers  = mV4L2BufferCount;
 
         switch (config.streams[i].format) {
             case PixelFormat::BLOB:
@@ -2537,113 +2478,6 @@ status_t ExternalCameraDeviceSession::fillCaptureResult(
 
 #undef ARRAY_SIZE
 #undef UPDATE
-
-V4L2Frame::V4L2Frame(
-        uint32_t w, uint32_t h, uint32_t fourcc,
-        int bufIdx, int fd, uint32_t dataSize) :
-        mWidth(w), mHeight(h), mFourcc(fourcc),
-        mBufferIndex(bufIdx), mFd(fd), mDataSize(dataSize) {}
-
-int V4L2Frame::map(uint8_t** data, size_t* dataSize) {
-    if (data == nullptr || dataSize == nullptr) {
-        ALOGI("%s: V4L2 buffer map bad argument: data %p, dataSize %p",
-                __FUNCTION__, data, dataSize);
-        return -EINVAL;
-    }
-
-    Mutex::Autolock _l(mLock);
-    if (!mMapped) {
-        void* addr = mmap(NULL, mDataSize, PROT_READ, MAP_SHARED, mFd, 0);
-        if (addr == MAP_FAILED) {
-            ALOGE("%s: V4L2 buffer map failed: %s", __FUNCTION__, strerror(errno));
-            return -EINVAL;
-        }
-        mData = static_cast<uint8_t*>(addr);
-        mMapped = true;
-    }
-    *data = mData;
-    *dataSize = mDataSize;
-    ALOGV("%s: V4L map FD %d, data %p size %zu", __FUNCTION__, mFd, mData, mDataSize);
-    return 0;
-}
-
-int V4L2Frame::unmap() {
-    Mutex::Autolock _l(mLock);
-    if (mMapped) {
-        ALOGV("%s: V4L unmap data %p size %zu", __FUNCTION__, mData, mDataSize);
-        if (munmap(mData, mDataSize) != 0) {
-            ALOGE("%s: V4L2 buffer unmap failed: %s", __FUNCTION__, strerror(errno));
-            return -EINVAL;
-        }
-        mMapped = false;
-    }
-    return 0;
-}
-
-V4L2Frame::~V4L2Frame() {
-    unmap();
-}
-
-AllocatedFrame::AllocatedFrame(
-        uint32_t w, uint32_t h) :
-        mWidth(w), mHeight(h), mFourcc(V4L2_PIX_FMT_YUV420) {};
-
-AllocatedFrame::~AllocatedFrame() {}
-
-int AllocatedFrame::allocate(YCbCrLayout* out) {
-    if ((mWidth % 2) || (mHeight % 2)) {
-        ALOGE("%s: bad dimension %dx%d (not multiple of 2)", __FUNCTION__, mWidth, mHeight);
-        return -EINVAL;
-    }
-
-    uint32_t dataSize = mWidth * mHeight * 3 / 2; // YUV420
-    if (mData.size() != dataSize) {
-        mData.resize(dataSize);
-    }
-
-    if (out != nullptr) {
-        out->y = mData.data();
-        out->yStride = mWidth;
-        uint8_t* cbStart = mData.data() + mWidth * mHeight;
-        uint8_t* crStart = cbStart + mWidth * mHeight / 4;
-        out->cb = cbStart;
-        out->cr = crStart;
-        out->cStride = mWidth / 2;
-        out->chromaStep = 1;
-    }
-    return 0;
-}
-
-int AllocatedFrame::getLayout(YCbCrLayout* out) {
-    IMapper::Rect noCrop = {0, 0,
-            static_cast<int32_t>(mWidth),
-            static_cast<int32_t>(mHeight)};
-    return getCroppedLayout(noCrop, out);
-}
-
-int AllocatedFrame::getCroppedLayout(const IMapper::Rect& rect, YCbCrLayout* out) {
-    if (out == nullptr) {
-        ALOGE("%s: null out", __FUNCTION__);
-        return -1;
-    }
-    if ((rect.left + rect.width) > static_cast<int>(mWidth) ||
-        (rect.top + rect.height) > static_cast<int>(mHeight) ||
-            (rect.left % 2) || (rect.top % 2) || (rect.width % 2) || (rect.height % 2)) {
-        ALOGE("%s: bad rect left %d top %d w %d h %d", __FUNCTION__,
-                rect.left, rect.top, rect.width, rect.height);
-        return -1;
-    }
-
-    out->y = mData.data() + mWidth * rect.top + rect.left;
-    out->yStride = mWidth;
-    uint8_t* cbStart = mData.data() + mWidth * mHeight;
-    uint8_t* crStart = cbStart + mWidth * mHeight / 4;
-    out->cb = cbStart + mWidth * rect.top / 4 + rect.left / 2;
-    out->cr = crStart + mWidth * rect.top / 4 + rect.left / 2;
-    out->cStride = mWidth / 2;
-    out->chromaStep = 1;
-    return 0;
-}
 
 }  // namespace implementation
 }  // namespace V3_4

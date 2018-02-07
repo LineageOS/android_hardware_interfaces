@@ -19,7 +19,6 @@ cc_binary {
     relative_install_path: "hw",
     srcs: [
         "AudioControl.cpp",
-        "AudioControlCallback.cpp",
         "service.cpp"
     ],
     init_rc: ["android.hardware.automotive.audiocontrol@1.0-service.rc"],

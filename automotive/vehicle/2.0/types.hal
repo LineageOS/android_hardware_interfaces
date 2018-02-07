@@ -253,6 +253,19 @@ enum VehicleProperty: int32_t {
         | VehicleArea:GLOBAL),
 
     /**
+     * Engine oil level
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     * @data_enum VehicleOilLevel
+     */
+    ENGINE_OIL_LEVEL = (
+        0x0303
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32
+        | VehicleArea:GLOBAL),
+
+    /**
      * Temperature of engine oil
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE|VehiclePropertyChangeMode:CONTINUOUS
@@ -433,10 +446,22 @@ enum VehicleProperty: int32_t {
      * Parking brake state.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @access VehiclePropertyAccess:READ_WRITE
      */
     PARKING_BRAKE_ON = (
         0x0402
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:BOOLEAN
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Auto-apply parking brake.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    PARKING_BRAKE_AUTO_APPLY = (
+        0x0403
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:BOOLEAN
         | VehicleArea:GLOBAL),
@@ -1859,6 +1884,17 @@ enum VehicleHvacFanDirection : int32_t {
     FACE = 0x1,
     FLOOR = 0x2,
     DEFROST = 0x4,
+};
+
+enum VehicleOilLevel : int32_t {
+    /**
+     * Oil level values
+     */
+    CRITICALLY_LOW = 0,
+    LOW = 1,
+    NORMAL = 2,
+    HIGH = 3,
+    ERROR = 4,
 };
 
 /**
