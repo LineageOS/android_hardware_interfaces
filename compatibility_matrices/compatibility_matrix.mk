@@ -78,7 +78,7 @@ my_matrix_src_files := \
 
 $(GEN): PRIVATE_SRC_FILES := $(my_matrix_src_files)
 $(GEN): $(my_matrix_src_files) $(HOST_OUT_EXECUTABLES)/assemble_vintf
-	$(foreach varname,$(PRIVATE_ENV_VARS),$(varname)=$($(varname))) \
+	$(foreach varname,$(PRIVATE_ENV_VARS),$(varname)="$($(varname))") \
 		$(HOST_OUT_EXECUTABLES)/assemble_vintf \
 		-i $(call normalize-path-list,$(PRIVATE_SRC_FILES)) \
 		-o $@ \
