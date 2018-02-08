@@ -29,7 +29,6 @@ namespace utils {
 enum class HalRevision : uint32_t {
     V1_0 = 1,
     V1_1,
-    V1_2,  // TODO(b/62945293): remove
 };
 
 /**
