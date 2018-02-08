@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ANDROID_HARDWARE_BROADCASTRADIO_V1_2_VIRTUALPROGRAM_H
-#define ANDROID_HARDWARE_BROADCASTRADIO_V1_2_VIRTUALPROGRAM_H
+#ifndef ANDROID_HARDWARE_BROADCASTRADIO_V1_1_VIRTUALPROGRAM_H
+#define ANDROID_HARDWARE_BROADCASTRADIO_V1_1_VIRTUALPROGRAM_H
 
-#include <android/hardware/broadcastradio/1.2/types.h>
+#include <android/hardware/broadcastradio/1.1/types.h>
 #include <broadcastradio-utils-1x/Utils.h>
 
 namespace android {
 namespace hardware {
 namespace broadcastradio {
-namespace V1_2 {
+namespace V1_1 {
 namespace implementation {
 
 /**
@@ -47,9 +47,9 @@ std::vector<V1_1::ProgramInfo> getProgramInfoVector(const std::vector<VirtualPro
                                                     utils::HalRevision halRev);
 
 }  // namespace implementation
-}  // namespace V1_2
+}  // namespace V1_1
 }  // namespace broadcastradio
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_BROADCASTRADIO_V1_2_VIRTUALPROGRAM_H
+#endif  // ANDROID_HARDWARE_BROADCASTRADIO_V1_1_VIRTUALPROGRAM_H

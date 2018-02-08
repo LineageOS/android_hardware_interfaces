@@ -26,10 +26,10 @@ namespace broadcastradio {
 namespace utils {
 
 using V1_0::Band;
+using V1_1::IdentifierType;
 using V1_1::ProgramIdentifier;
 using V1_1::ProgramSelector;
 using V1_1::ProgramType;
-using V1_2::IdentifierType;
 
 static bool isCompatibleProgramType(const uint32_t ia, const uint32_t ib) {
     auto a = static_cast<ProgramType>(ia);
@@ -86,7 +86,7 @@ bool tunesTo(const ProgramSelector& a, const ProgramSelector& b) {
 
             return haveEqualIds(a, b, IdentifierType::AMFM_FREQUENCY);
         case ProgramType::DAB:
-            return haveEqualIds(a, b, IdentifierType::DAB_SID_EXT);
+            return haveEqualIds(a, b, IdentifierType::DAB_SIDECC);
         case ProgramType::DRMO:
             return haveEqualIds(a, b, IdentifierType::DRMO_SERVICE_ID);
         case ProgramType::SXM:
@@ -126,35 +126,21 @@ bool isFm(const Band band) {
 
 static bool maybeGetId(const ProgramSelector& sel, const IdentifierType type, uint64_t* val) {
     auto itype = static_cast<uint32_t>(type);
-    auto itypeAlt = itype;
-    if (type == IdentifierType::DAB_SIDECC) {
-        itypeAlt = static_cast<uint32_t>(IdentifierType::DAB_SID_EXT);
-    }
-    if (type == IdentifierType::DAB_SID_EXT) {
-        itypeAlt = static_cast<uint32_t>(IdentifierType::DAB_SIDECC);
-    }
 
-    if (sel.primaryId.type == itype || sel.primaryId.type == itypeAlt) {
+    if (sel.primaryId.type == itype) {
         if (val) *val = sel.primaryId.value;
         return true;
     }
 
     // not optimal, but we don't care in default impl
-    bool gotAlt = false;
     for (auto&& id : sel.secondaryIds) {
         if (id.type == itype) {
             if (val) *val = id.value;
             return true;
         }
-        // alternative identifier is a backup, we prefer original value
-        if (id.type == itypeAlt) {
-            if (val) *val = id.value;
-            gotAlt = true;
-            continue;
-        }
     }
 
-    return gotAlt;
+    return false;
 }
 
 bool hasId(const ProgramSelector& sel, const IdentifierType type) {

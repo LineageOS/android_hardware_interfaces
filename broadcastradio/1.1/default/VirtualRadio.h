@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ANDROID_HARDWARE_BROADCASTRADIO_V1_2_VIRTUALRADIO_H
-#define ANDROID_HARDWARE_BROADCASTRADIO_V1_2_VIRTUALRADIO_H
+#ifndef ANDROID_HARDWARE_BROADCASTRADIO_V1_1_VIRTUALRADIO_H
+#define ANDROID_HARDWARE_BROADCASTRADIO_V1_1_VIRTUALRADIO_H
 
 #include "VirtualProgram.h"
 
@@ -24,7 +24,7 @@
 namespace android {
 namespace hardware {
 namespace broadcastradio {
-namespace V1_2 {
+namespace V1_1 {
 namespace implementation {
 
 /**
@@ -72,9 +72,9 @@ VirtualRadio& getSatRadio();
 VirtualRadio& getDigitalRadio();
 
 }  // namespace implementation
-}  // namespace V1_2
+}  // namespace V1_1
 }  // namespace broadcastradio
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_BROADCASTRADIO_V1_2_VIRTUALRADIO_H
+#endif  // ANDROID_HARDWARE_BROADCASTRADIO_V1_1_VIRTUALRADIO_H

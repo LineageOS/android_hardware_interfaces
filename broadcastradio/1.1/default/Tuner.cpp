@@ -17,8 +17,8 @@
 #define LOG_TAG "BroadcastRadioDefault.tuner"
 #define LOG_NDEBUG 0
 
-#include "BroadcastRadio.h"
 #include "Tuner.h"
+#include "BroadcastRadio.h"
 
 #include <broadcastradio-utils-1x/Utils.h>
 #include <log/log.h>
@@ -26,7 +26,7 @@
 namespace android {
 namespace hardware {
 namespace broadcastradio {
-namespace V1_2 {
+namespace V1_1 {
 namespace implementation {
 
 using namespace std::chrono_literals;
@@ -35,13 +35,13 @@ using V1_0::Band;
 using V1_0::BandConfig;
 using V1_0::Class;
 using V1_0::Direction;
+using V1_1::IdentifierType;
 using V1_1::ProgramInfo;
 using V1_1::ProgramInfoFlags;
 using V1_1::ProgramListResult;
 using V1_1::ProgramSelector;
 using V1_1::ProgramType;
 using V1_1::VendorKeyValue;
-using V1_2::IdentifierType;
 using utils::HalRevision;
 
 using std::chrono::milliseconds;
@@ -62,7 +62,6 @@ Tuner::Tuner(V1_0::Class classId, const sp<V1_0::ITunerCallback>& callback)
     : mClassId(classId),
       mCallback(callback),
       mCallback1_1(V1_1::ITunerCallback::castFrom(callback).withDefault(nullptr)),
-      mCallback1_2(V1_2::ITunerCallback::castFrom(callback).withDefault(nullptr)),
       mVirtualRadio(getRadio(classId)),
       mIsAnalogForced(false) {}
 
@@ -130,9 +129,7 @@ static ProgramInfo makeDummyProgramInfo(const ProgramSelector& selector) {
 }
 
 HalRevision Tuner::getHalRev() const {
-    if (mCallback1_2 != nullptr) {
-        return HalRevision::V1_2;
-    } else if (mCallback1_1 != nullptr) {
+    if (mCallback1_1 != nullptr) {
         return HalRevision::V1_1;
     } else {
         return HalRevision::V1_0;
@@ -282,7 +279,7 @@ Return<Result> Tuner::tuneByProgramSelector(const ProgramSelector& sel) {
             return Result::INVALID_ARGUMENTS;
         }
     } else if (programType == ProgramType::DAB) {
-        if (!utils::hasId(sel, IdentifierType::DAB_SID_EXT)) return Result::INVALID_ARGUMENTS;
+        if (!utils::hasId(sel, IdentifierType::DAB_SIDECC)) return Result::INVALID_ARGUMENTS;
     } else if (programType == ProgramType::DRMO) {
         if (!utils::hasId(sel, IdentifierType::DRMO_SERVICE_ID)) return Result::INVALID_ARGUMENTS;
     } else if (programType == ProgramType::SXM) {
@@ -386,24 +383,8 @@ Return<void> Tuner::isAnalogForced(isAnalogForced_cb _hidl_cb) {
     return {};
 }
 
-Return<void> Tuner::setParameters(const hidl_vec<VendorKeyValue>& /* parameters */,
-        setParameters_cb _hidl_cb) {
-    ALOGV("%s", __func__);
-
-    _hidl_cb({});
-    return {};
-}
-
-Return<void> Tuner::getParameters(const hidl_vec<hidl_string>& /* keys */,
-        getParameters_cb _hidl_cb) {
-    ALOGV("%s", __func__);
-
-    _hidl_cb({});
-    return {};
-}
-
 }  // namespace implementation
-}  // namespace V1_2
+}  // namespace V1_1
 }  // namespace broadcastradio
 }  // namespace hardware
 }  // namespace android
