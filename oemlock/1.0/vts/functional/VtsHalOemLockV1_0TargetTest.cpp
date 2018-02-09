@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include <android/hardware/oemlock/1.0/IOemLock.h>
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <VtsHalHidlTargetTestEnvBase.h>
 
 using ::android::hardware::oemlock::V1_0::IOemLock;
 using ::android::hardware::oemlock::V1_0::OemLockStatus;
@@ -25,9 +25,22 @@ using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::sp;
 
+// Test environment for OemLock HIDL HAL.
+class OemLockHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    // get the test environment singleton
+    static OemLockHidlEnvironment* Instance() {
+        static OemLockHidlEnvironment* instance = new OemLockHidlEnvironment;
+        return instance;
+    }
+
+    virtual void registerTestServices() override { registerTestService<IOemLock>(); }
+};
+
 struct OemLockHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     virtual void SetUp() override {
-        oemlock = ::testing::VtsHalHidlTargetTestBase::getService<IOemLock>();
+        oemlock = ::testing::VtsHalHidlTargetTestBase::getService<IOemLock>(
+            OemLockHidlEnvironment::Instance()->getServiceName<IOemLock>());
         ASSERT_NE(oemlock, nullptr);
     }
 
@@ -187,3 +200,12 @@ TEST_F(OemLockHidlTest, CarrierUnlock) {
     ASSERT_EQ(status, OemLockStatus::OK);
     ASSERT_EQ(allowed, originallyAllowed);
 };
+
+int main(int argc, char** argv) {
+    ::testing::AddGlobalTestEnvironment(OemLockHidlEnvironment::Instance());
+    ::testing::InitGoogleTest(&argc, argv);
+    OemLockHidlEnvironment::Instance()->init(&argc, argv);
+    int status = RUN_ALL_TESTS();
+    ALOGI("Test result = %d", status);
+    return status;
+}
