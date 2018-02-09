@@ -22,6 +22,8 @@
 #include <android/hardware/wifi/supplicant/1.0/ISupplicantStaIface.h>
 #include <android/hardware/wifi/supplicant/1.0/ISupplicantStaNetwork.h>
 
+#include <VtsHalHidlTargetTestEnvBase.h>
+
 // Used to stop the android wifi framework before every test.
 void stopWifiFramework();
 void startWifiFramework();
@@ -44,5 +46,14 @@ android::sp<android::hardware::wifi::supplicant::V1_0::ISupplicantP2pIface>
 getSupplicantP2pIface();
 
 bool turnOnExcessiveLogging();
+
+class WifiSupplicantHidlEnvironment
+    : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    virtual void HidlSetUp() override { stopSupplicant(); }
+    virtual void HidlTearDown() override {
+        startSupplicantAndWaitForHidlService();
+    }
+};
 
 #endif /* SUPPLICANT_HIDL_TEST_UTILS_H */

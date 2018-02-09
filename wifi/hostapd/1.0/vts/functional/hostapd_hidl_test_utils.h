@@ -19,6 +19,8 @@
 
 #include <android/hardware/wifi/hostapd/1.0/IHostapd.h>
 
+#include <VtsHalHidlTargetTestEnvBase.h>
+
 // Used to stop the android wifi framework before every test.
 void stopWifiFramework();
 void startWifiFramework();
@@ -32,5 +34,14 @@ void startHostapdAndWaitForHidlService();
 // These helper functions should be modified to return vectors if we support
 // multiple instances.
 android::sp<android::hardware::wifi::hostapd::V1_0::IHostapd> getHostapd();
+
+class WifiHostapdHidlEnvironment
+    : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    virtual void HidlSetUp() override { stopHostapd(); }
+    virtual void HidlTearDown() override {
+        startHostapdAndWaitForHidlService();
+    }
+};
 
 #endif /* HOSTAPD_HIDL_TEST_UTILS_H */
