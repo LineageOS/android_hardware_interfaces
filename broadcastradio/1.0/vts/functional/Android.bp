@@ -18,5 +18,8 @@ cc_test {
     name: "VtsHalBroadcastradioV1_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["VtsHalBroadcastradioV1_0TargetTest.cpp"],
-    static_libs: ["android.hardware.broadcastradio@1.0"],
+    static_libs: [
+        "android.hardware.broadcastradio@1.0",
+        "android.hardware.broadcastradio@vts-utils-lib",
+    ],
 }
