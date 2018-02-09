@@ -33,6 +33,7 @@
 #include <hidlmemory/mapping.h>
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <VtsHalHidlTargetTestEnvBase.h>
 
 #define SHORT_TIMEOUT_PERIOD (1)
 
@@ -93,11 +94,27 @@ class Monitor {
     int mCount;
 };
 
+// Test environment for SoundTrigger HIDL HAL.
+class SoundTriggerHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    // get the test environment singleton
+    static SoundTriggerHidlEnvironment* Instance() {
+        static SoundTriggerHidlEnvironment* instance = new SoundTriggerHidlEnvironment;
+        return instance;
+    }
+
+    virtual void registerTestServices() override { registerTestService<ISoundTriggerHw>(); }
+
+   private:
+    SoundTriggerHidlEnvironment() {}
+};
+
 // The main test class for Sound Trigger HIDL HAL.
 class SoundTriggerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    public:
     virtual void SetUp() override {
-        mSoundTriggerHal = ::testing::VtsHalHidlTargetTestBase::getService<ISoundTriggerHw>();
+        mSoundTriggerHal = ::testing::VtsHalHidlTargetTestBase::getService<ISoundTriggerHw>(
+            SoundTriggerHidlEnvironment::Instance()->getServiceName<ISoundTriggerHw>());
         ASSERT_NE(nullptr, mSoundTriggerHal.get());
         mCallback = new SoundTriggerHwCallback(*this);
         ASSERT_NE(nullptr, mCallback.get());
@@ -479,4 +496,13 @@ TEST_F(SoundTriggerHidlTest, stopAllRecognitions) {
 
     EXPECT_TRUE(hidlReturn.isOk());
     EXPECT_TRUE(hidlReturn == 0 || hidlReturn == -ENOSYS);
+}
+
+int main(int argc, char** argv) {
+    ::testing::AddGlobalTestEnvironment(SoundTriggerHidlEnvironment::Instance());
+    ::testing::InitGoogleTest(&argc, argv);
+    SoundTriggerHidlEnvironment::Instance()->init(&argc, argv);
+    int status = RUN_ALL_TESTS();
+    ALOGI("Test result = %d", status);
+    return status;
 }
