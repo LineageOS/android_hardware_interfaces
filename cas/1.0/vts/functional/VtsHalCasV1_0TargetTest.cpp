@@ -17,6 +17,7 @@
 #define LOG_TAG "mediacas_hidl_hal_test"
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <VtsHalHidlTargetTestEnvBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/cas/1.0/ICas.h>
 #include <android/hardware/cas/1.0/ICasListener.h>
@@ -206,10 +207,23 @@ void MediaCasListener::testEventEcho(sp<ICas>& mediaCas, int32_t& event, int32_t
     EXPECT_TRUE(mEventData == eventData);
 }
 
+// Test environment for Cas HIDL HAL.
+class CasHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    // get the test environment singleton
+    static CasHidlEnvironment* Instance() {
+        static CasHidlEnvironment* instance = new CasHidlEnvironment;
+        return instance;
+    }
+
+    virtual void registerTestServices() override { registerTestService<IMediaCasService>(); }
+};
+
 class MediaCasHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    public:
     virtual void SetUp() override {
-        mService = ::testing::VtsHalHidlTargetTestBase::getService<IMediaCasService>();
+        mService = ::testing::VtsHalHidlTargetTestBase::getService<IMediaCasService>(
+            CasHidlEnvironment::Instance()->getServiceName<IMediaCasService>());
         ASSERT_NE(mService, nullptr);
     }
 
@@ -616,7 +630,9 @@ TEST_F(MediaCasHidlTest, TestClearKeyErrors) {
 }  // anonymous namespace
 
 int main(int argc, char** argv) {
+    ::testing::AddGlobalTestEnvironment(CasHidlEnvironment::Instance());
     ::testing::InitGoogleTest(&argc, argv);
+    CasHidlEnvironment::Instance()->init(&argc, argv);
     int status = RUN_ALL_TESTS();
     LOG(INFO) << "Test result = " << status;
     return status;
