@@ -20,7 +20,8 @@ cc_library_static {
     srcs: [
         "wifi_hidl_call_util_selftest.cpp",
         "wifi_hidl_test.cpp",
-        "wifi_hidl_test_utils.cpp"],
+        "wifi_hidl_test_utils.cpp",
+    ],
     export_include_dirs: [
         "."
     ],
