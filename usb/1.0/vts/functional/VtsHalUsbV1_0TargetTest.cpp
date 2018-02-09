@@ -22,6 +22,7 @@
 #include <android/hardware/usb/1.0/types.h>
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <VtsHalHidlTargetTestEnvBase.h>
 #include <log/log.h>
 #include <stdlib.h>
 #include <chrono>
@@ -47,6 +48,18 @@ using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::sp;
+
+// Test environment for Usb HIDL HAL.
+class UsbHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+ public:
+  // get the test environment singleton
+  static UsbHidlEnvironment* Instance() {
+    static UsbHidlEnvironment* instance = new UsbHidlEnvironment;
+    return instance;
+  }
+
+  virtual void registerTestServices() override { registerTestService<IUsb>(); }
+};
 
 // The main test class for the USB hidl HAL
 class UsbHidlTest : public ::testing::VtsHalHidlTargetTestBase {
@@ -96,7 +109,8 @@ class UsbHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
   virtual void SetUp() override {
     ALOGI("Setup");
-    usb = ::testing::VtsHalHidlTargetTestBase::getService<IUsb>();
+    usb = ::testing::VtsHalHidlTargetTestBase::getService<IUsb>(
+        UsbHidlEnvironment::Instance()->getServiceName<IUsb>());
     ASSERT_NE(usb, nullptr);
 
     usb_cb_2 = new UsbCallback(*this, 2);
@@ -343,7 +357,9 @@ TEST_F(UsbHidlTest, switchDataRole) {
 }
 
 int main(int argc, char** argv) {
+  ::testing::AddGlobalTestEnvironment(UsbHidlEnvironment::Instance());
   ::testing::InitGoogleTest(&argc, argv);
+  UsbHidlEnvironment::Instance()->init(&argc, argv);
   int status = RUN_ALL_TESTS();
   ALOGI("Test result = %d", status);
   return status;
