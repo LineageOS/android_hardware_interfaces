@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ANDROID_HARDWARE_BROADCASTRADIO_V1_2_BROADCASTRADIO_H
-#define ANDROID_HARDWARE_BROADCASTRADIO_V1_2_BROADCASTRADIO_H
+#ifndef ANDROID_HARDWARE_BROADCASTRADIO_V1_1_BROADCASTRADIO_H
+#define ANDROID_HARDWARE_BROADCASTRADIO_V1_1_BROADCASTRADIO_H
 
 #include "Tuner.h"
 
 #include <android/hardware/broadcastradio/1.1/IBroadcastRadio.h>
-#include <android/hardware/broadcastradio/1.2/types.h>
+#include <android/hardware/broadcastradio/1.1/types.h>
 
 namespace android {
 namespace hardware {
 namespace broadcastradio {
-namespace V1_2 {
+namespace V1_1 {
 namespace implementation {
 
 struct AmFmBandConfig {
     V1_0::Band type;
-    uint32_t lowerLimit;  // kHz
-    uint32_t upperLimit;  // kHz
+    uint32_t lowerLimit;             // kHz
+    uint32_t upperLimit;             // kHz
     std::vector<uint32_t> spacings;  // kHz
 };
 
@@ -73,9 +73,9 @@ struct BroadcastRadio : public V1_1::IBroadcastRadio {
 };
 
 }  // namespace implementation
-}  // namespace V1_2
+}  // namespace V1_1
 }  // namespace broadcastradio
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_BROADCASTRADIO_V1_2_BROADCASTRADIO_H
+#endif  // ANDROID_HARDWARE_BROADCASTRADIO_V1_1_BROADCASTRADIO_H

@@ -22,7 +22,7 @@
 namespace android {
 namespace hardware {
 namespace broadcastradio {
-namespace V1_2 {
+namespace V1_1 {
 namespace implementation {
 
 using std::vector;
@@ -30,9 +30,9 @@ using std::vector;
 using V1_0::MetaData;
 using V1_0::MetadataKey;
 using V1_0::MetadataType;
+using V1_1::IdentifierType;
 using V1_1::ProgramInfo;
 using V1_1::VendorKeyValue;
-using V1_2::IdentifierType;
 using utils::HalRevision;
 
 static MetaData createDemoBitmap(MetadataKey key, HalRevision halRev) {
@@ -96,7 +96,7 @@ vector<ProgramInfo> getProgramInfoVector(const vector<VirtualProgram>& vec, HalR
 }
 
 }  // namespace implementation
-}  // namespace V1_2
+}  // namespace V1_1
 }  // namespace broadcastradio
 }  // namespace hardware
 }  // namespace android

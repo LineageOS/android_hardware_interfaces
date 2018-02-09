@@ -33,7 +33,7 @@ cc_test {
         "android.hardware.broadcastradio@common-utils-2x-lib",
     ],
     shared_libs: [
-        "android.hardware.broadcastradio@1.2",
+        "android.hardware.broadcastradio@1.1",
         "android.hardware.broadcastradio@2.0",
     ],
 }

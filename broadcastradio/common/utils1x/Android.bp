@@ -28,6 +28,6 @@ cc_library_static {
     ],
     export_include_dirs: ["include"],
     shared_libs: [
-        "android.hardware.broadcastradio@1.2",
+        "android.hardware.broadcastradio@1.1",
     ],
 }
