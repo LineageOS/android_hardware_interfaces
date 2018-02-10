@@ -23,6 +23,7 @@ import @1.0::CdmaSignalStrength;
 import @1.0::CellIdentityCdma;
 import @1.0::CellIdentityGsm;
 import @1.0::CellIdentityLte;
+import @1.0::CellIdentityTdscdma;
 import @1.0::CellIdentityWcdma;
 import @1.0::CellInfoTdscdma;
 import @1.0::CellInfoType;
@@ -253,6 +254,15 @@ struct CellIdentityLte {
     int32_t bandwidth;
 };
 
+struct CellIdentityTdscdma {
+    @1.0::CellIdentityTdscdma base;
+    /**
+     * 16-bit UMTS Absolute RF Channel Number defined in TS 25.102 5.4.4; this value must be valid.
+     */
+    int32_t uarfcn;
+    CellIdentityOperatorNames operatorNames;
+};
+
 struct CellIdentityWcdma {
     @1.0::CellIdentityWcdma base;
     CellIdentityOperatorNames operatorNames;
@@ -277,6 +287,11 @@ struct CellInfoCdma {
 struct CellInfoLte {
     CellIdentityLte cellIdentityLte;
     LteSignalStrength signalStrengthLte;
+};
+
+struct CellInfoTdscdma {
+    CellIdentityTdscdma cellIdentityTdscdma;
+    TdscdmaSignalStrength signalStrengthTdscdma;
 };
 
 struct CellInfo {
@@ -413,6 +428,24 @@ struct WcdmaSignalStrength {
      */
     uint32_t ecno;
 
+};
+
+struct TdscdmaSignalStrength {
+    /**
+     * UTRA carrier RSSI as defined in TS 25.225 5.1.4
+     * Valid values are (0-96, 99) as defined in TS 27.007 8.69
+     */
+    uint32_t signalStrength;
+    /**
+     * Transport Channel BER as defined in TS 25.225 5.2.5
+     * Valid values are (0-49, 99) as defined in TS 27.007 8.69
+     */
+    uint32_t bitErrorRate;
+    /**
+     * P-CCPCH RSCP as defined in TS 25.225 5.1.1
+     * Valid values are (0-96, 255) as defined in TS 27.007 8.69
+     */
+    uint32_t rscp;
 };
 
 struct SignalStrength {
