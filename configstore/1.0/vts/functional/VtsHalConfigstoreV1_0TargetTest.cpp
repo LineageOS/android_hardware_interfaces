@@ -17,6 +17,7 @@
 #define LOG_TAG "ConfigstoreHidlHalTest"
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <VtsHalHidlTargetTestEnvBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/configstore/1.0/ISurfaceFlingerConfigs.h>
 #include <android/hardware/configstore/1.0/types.h>
@@ -34,13 +35,25 @@ using ::android::sp;
 #define ASSERT_OK(ret) ASSERT_TRUE(ret.isOk())
 #define EXPECT_OK(ret) EXPECT_TRUE(ret.isOk())
 
+// Test environment for Configstore HIDL HAL.
+class ConfigstoreHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    // get the test environment singleton
+    static ConfigstoreHidlEnvironment* Instance() {
+        static ConfigstoreHidlEnvironment* instance = new ConfigstoreHidlEnvironment;
+        return instance;
+    }
+
+    virtual void registerTestServices() override { registerTestService<ISurfaceFlingerConfigs>(); }
+};
+
 class ConfigstoreHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    public:
     sp<ISurfaceFlingerConfigs> sfConfigs;
 
     virtual void SetUp() override {
-        sfConfigs = ::testing::VtsHalHidlTargetTestBase::getService<
-            ISurfaceFlingerConfigs>();
+        sfConfigs = ::testing::VtsHalHidlTargetTestBase::getService<ISurfaceFlingerConfigs>(
+            ConfigstoreHidlEnvironment::Instance()->getServiceName<ISurfaceFlingerConfigs>());
         ASSERT_NE(sfConfigs, nullptr);
     }
 
@@ -119,7 +132,9 @@ TEST_F(ConfigstoreHidlTest, TestSameReturnValue) {
 }
 
 int main(int argc, char** argv) {
+    ::testing::AddGlobalTestEnvironment(ConfigstoreHidlEnvironment::Instance());
     ::testing::InitGoogleTest(&argc, argv);
+    ConfigstoreHidlEnvironment::Instance()->init(&argc, argv);
     int status = RUN_ALL_TESTS();
     LOG(INFO) << "Test result = " << status;
     return status;
