@@ -15,8 +15,8 @@
 //
 
 cc_binary {
-    name: "android.hardware.broadcastradio@1.2-service",
-    init_rc: ["android.hardware.broadcastradio@1.2-service.rc"],
+    name: "android.hardware.broadcastradio@1.1-service",
+    init_rc: ["android.hardware.broadcastradio@1.1-service.rc"],
     vendor: true,
     relative_install_path: "hw",
     cflags: [
@@ -39,7 +39,6 @@ cc_binary {
     shared_libs: [
         "android.hardware.broadcastradio@1.0",
         "android.hardware.broadcastradio@1.1",
-        "android.hardware.broadcastradio@1.2",
         "libbase",
         "libhidlbase",
         "libhidltransport",

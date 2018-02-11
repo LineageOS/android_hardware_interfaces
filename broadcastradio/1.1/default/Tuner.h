@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ANDROID_HARDWARE_BROADCASTRADIO_V1_2_TUNER_H
-#define ANDROID_HARDWARE_BROADCASTRADIO_V1_2_TUNER_H
+#ifndef ANDROID_HARDWARE_BROADCASTRADIO_V1_1_TUNER_H
+#define ANDROID_HARDWARE_BROADCASTRADIO_V1_1_TUNER_H
 
 #include "VirtualRadio.h"
 
-#include <android/hardware/broadcastradio/1.2/ITuner.h>
-#include <android/hardware/broadcastradio/1.2/ITunerCallback.h>
+#include <android/hardware/broadcastradio/1.1/ITuner.h>
+#include <android/hardware/broadcastradio/1.1/ITunerCallback.h>
 #include <broadcastradio-utils/WorkerThread.h>
 
 namespace android {
 namespace hardware {
 namespace broadcastradio {
-namespace V1_2 {
+namespace V1_1 {
 namespace implementation {
 
 struct Tuner : public ITuner {
@@ -33,7 +33,7 @@ struct Tuner : public ITuner {
 
     void forceClose();
 
-    // V1_2::ITuner methods
+    // V1_1::ITuner methods
     virtual Return<Result> setConfiguration(const V1_0::BandConfig& config) override;
     virtual Return<void> getConfiguration(getConfiguration_cb _hidl_cb) override;
     virtual Return<Result> scan(V1_0::Direction direction, bool skipSubChannel) override;
@@ -49,10 +49,6 @@ struct Tuner : public ITuner {
                                         getProgramList_cb _hidl_cb) override;
     virtual Return<Result> setAnalogForced(bool isForced) override;
     virtual Return<void> isAnalogForced(isAnalogForced_cb _hidl_cb) override;
-    virtual Return<void> setParameters(const hidl_vec<V1_1::VendorKeyValue>& parameters,
-                                       setParameters_cb _hidl_cb) override;
-    virtual Return<void> getParameters(const hidl_vec<hidl_string>& keys,
-                                       getParameters_cb _hidl_cb) override;
 
    private:
     std::mutex mMut;
@@ -62,7 +58,6 @@ struct Tuner : public ITuner {
     V1_0::Class mClassId;
     const sp<V1_0::ITunerCallback> mCallback;
     const sp<V1_1::ITunerCallback> mCallback1_1;
-    const sp<V1_2::ITunerCallback> mCallback1_2;
 
     std::reference_wrapper<VirtualRadio> mVirtualRadio;
     bool mIsAmfmConfigSet = false;
@@ -77,9 +72,9 @@ struct Tuner : public ITuner {
 };
 
 }  // namespace implementation
-}  // namespace V1_2
+}  // namespace V1_1
 }  // namespace broadcastradio
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_BROADCASTRADIO_V1_2_TUNER_H
+#endif  // ANDROID_HARDWARE_BROADCASTRADIO_V1_1_TUNER_H

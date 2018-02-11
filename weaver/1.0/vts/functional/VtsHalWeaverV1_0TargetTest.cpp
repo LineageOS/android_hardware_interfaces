@@ -19,6 +19,7 @@
 #include <limits>
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <VtsHalHidlTargetTestEnvBase.h>
 
 using ::android::hardware::weaver::V1_0::IWeaver;
 using ::android::hardware::weaver::V1_0::WeaverConfig;
@@ -33,9 +34,22 @@ const std::vector<uint8_t> WRONG_KEY{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 const std::vector<uint8_t> VALUE{16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
 const std::vector<uint8_t> OTHER_VALUE{0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 255, 255};
 
+// Test environment for Weaver HIDL HAL.
+class WeaverHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    // get the test environment singleton
+    static WeaverHidlEnvironment* Instance() {
+        static WeaverHidlEnvironment* instance = new WeaverHidlEnvironment;
+        return instance;
+    }
+
+    virtual void registerTestServices() override { registerTestService<IWeaver>(); }
+};
+
 struct WeaverHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     virtual void SetUp() override {
-        weaver = ::testing::VtsHalHidlTargetTestBase::getService<IWeaver>();
+        weaver = ::testing::VtsHalHidlTargetTestBase::getService<IWeaver>(
+            WeaverHidlEnvironment::Instance()->getServiceName<IWeaver>());
         ASSERT_NE(weaver, nullptr);
     }
 
@@ -333,4 +347,13 @@ TEST_F(WeaverHidlTest, ReadWithTooLargeKeyFails) {
     ASSERT_EQ(readStatus, WeaverReadStatus::FAILED);
     EXPECT_TRUE(readValue.empty());
     EXPECT_EQ(timeout, 0u);
+}
+
+int main(int argc, char** argv) {
+    ::testing::AddGlobalTestEnvironment(WeaverHidlEnvironment::Instance());
+    ::testing::InitGoogleTest(&argc, argv);
+    WeaverHidlEnvironment::Instance()->init(&argc, argv);
+    int status = RUN_ALL_TESTS();
+    ALOGI("Test result = %d", status);
+    return status;
 }

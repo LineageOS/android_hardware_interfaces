@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ANDROID_HARDWARE_BROADCASTRADIO_V1_2_BROADCASTRADIOFACTORY_H
-#define ANDROID_HARDWARE_BROADCASTRADIO_V1_2_BROADCASTRADIOFACTORY_H
+#ifndef ANDROID_HARDWARE_BROADCASTRADIO_V1_1_BROADCASTRADIOFACTORY_H
+#define ANDROID_HARDWARE_BROADCASTRADIO_V1_1_BROADCASTRADIOFACTORY_H
 
 #include <android/hardware/broadcastradio/1.1/IBroadcastRadio.h>
-#include <android/hardware/broadcastradio/1.2/IBroadcastRadioFactory.h>
-#include <android/hardware/broadcastradio/1.2/types.h>
+#include <android/hardware/broadcastradio/1.1/IBroadcastRadioFactory.h>
+#include <android/hardware/broadcastradio/1.1/types.h>
 
 namespace android {
 namespace hardware {
 namespace broadcastradio {
-namespace V1_2 {
+namespace V1_1 {
 namespace implementation {
 
 struct BroadcastRadioFactory : public IBroadcastRadioFactory {
@@ -37,9 +37,9 @@ struct BroadcastRadioFactory : public IBroadcastRadioFactory {
 };
 
 }  // namespace implementation
-}  // namespace V1_2
+}  // namespace V1_1
 }  // namespace broadcastradio
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_BROADCASTRADIO_V1_2_BROADCASTRADIOFACTORY_H
+#endif  // ANDROID_HARDWARE_BROADCASTRADIO_V1_1_BROADCASTRADIOFACTORY_H

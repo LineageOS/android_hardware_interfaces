@@ -158,6 +158,7 @@ public:
     virtual void TearDown() override {}
 
     SessionId openSession();
+    SessionId openSession(SecurityLevel level);
     void closeSession(const SessionId& sessionId);
     hidl_vec<uint8_t> loadKeys(const SessionId& sessionId, const KeyType& type);
     sp<IMemory> getDecryptMemory(size_t size, size_t index);
@@ -277,6 +278,23 @@ SessionId DrmHalClearkeyTest::openSession() {
 }
 
 /**
+ * Helper method to open as session using V1.1 API
+ */
+SessionId DrmHalClearkeyTest::openSession(SecurityLevel level) {
+    SessionId sessionId;
+
+    auto res = drmPlugin->openSession_1_1(level,
+            [&sessionId](Status status, const SessionId& id) {
+                EXPECT_EQ(Status::OK, status);
+                EXPECT_NE(0u, id.size());
+                sessionId = id;
+            });
+    EXPECT_OK(res);
+    return sessionId;
+}
+
+
+/**
  * Helper method to close a session
  */
 void DrmHalClearkeyTest::closeSession(const SessionId& sessionId) {
@@ -298,14 +316,14 @@ TEST_F(DrmHalClearkeyTest, GetHdcpLevels) {
 }
 
 /**
- * Test that the plugin returns valid open and max session counts
+ * Test that the plugin returns default open and max session counts
  */
-TEST_F(DrmHalClearkeyTest, GetSessionCounts) {
+TEST_F(DrmHalClearkeyTest, GetDefaultSessionCounts) {
     auto res = drmPlugin->getNumberOfSessions(
             [&](Status status, uint32_t currentSessions,
                     uint32_t maxSessions) {
                 EXPECT_EQ(Status::OK, status);
-                EXPECT_GT(maxSessions, (uint32_t)0);
+                EXPECT_GE(maxSessions, (uint32_t)8);
                 EXPECT_GE(currentSessions, (uint32_t)0);
                 EXPECT_LE(currentSessions, maxSessions);
             });
@@ -313,16 +331,76 @@ TEST_F(DrmHalClearkeyTest, GetSessionCounts) {
 }
 
 /**
- * Test that the plugin returns a valid security level for
- * a valid session
+ * Test that the plugin returns valid open and max session counts
+ * after a session is opened.
  */
-TEST_F(DrmHalClearkeyTest, GetSecurityLevel) {
+TEST_F(DrmHalClearkeyTest, GetOpenSessionCounts) {
+    uint32_t initialSessions = 0;
+    auto res = drmPlugin->getNumberOfSessions(
+            [&](Status status, uint32_t currentSessions,
+                    uint32_t maxSessions) {
+                EXPECT_EQ(Status::OK, status);
+                EXPECT_GE(maxSessions, (uint32_t)8);
+                EXPECT_GE(currentSessions, (uint32_t)0);
+                EXPECT_LE(currentSessions, maxSessions);
+                initialSessions = currentSessions;
+            });
+    EXPECT_OK(res);
+
     SessionId session = openSession();
+    res = drmPlugin->getNumberOfSessions(
+            [&](Status status, uint32_t currentSessions,
+                    uint32_t /*maxSessions*/) {
+                EXPECT_EQ(Status::OK, status);
+                EXPECT_EQ(currentSessions, initialSessions + 1);
+            });
+    EXPECT_OK(res);
+
+    closeSession(session);
+    res = drmPlugin->getNumberOfSessions(
+            [&](Status status, uint32_t currentSessions,
+                    uint32_t /*maxSessions*/) {
+                EXPECT_EQ(Status::OK, status);
+                EXPECT_EQ(currentSessions, initialSessions);
+            });
+    EXPECT_OK(res);
+}
+
+/**
+ * Test that the plugin returns the same security level
+ * by default as when it is requested explicitly
+ */
+TEST_F(DrmHalClearkeyTest, GetDefaultSecurityLevel) {
+    SessionId session = openSession();
+    SecurityLevel defaultLevel;
     auto res = drmPlugin->getSecurityLevel(session,
             [&](Status status, SecurityLevel level) {
                 EXPECT_EQ(Status::OK, status);
-                EXPECT_GE(level, SecurityLevel::SW_SECURE_CRYPTO);
-                EXPECT_LE(level, SecurityLevel::HW_SECURE_ALL);
+                defaultLevel = level;
+            });
+    EXPECT_OK(res);
+    closeSession(session);
+
+    session = openSession(defaultLevel);
+    res = drmPlugin->getSecurityLevel(session,
+            [&](Status status, SecurityLevel level) {
+                EXPECT_EQ(Status::OK, status);
+                EXPECT_EQ(level, defaultLevel);
+            });
+    EXPECT_OK(res);
+    closeSession(session);
+}
+
+/**
+ * Test that the plugin returns the lowest security level
+ * when it is requested
+ */
+TEST_F(DrmHalClearkeyTest, GetSecurityLevel) {
+    SessionId session = openSession(SecurityLevel::SW_SECURE_CRYPTO);
+    auto res = drmPlugin->getSecurityLevel(session,
+            [&](Status status, SecurityLevel level) {
+                EXPECT_EQ(Status::OK, status);
+                EXPECT_EQ(level, SecurityLevel::SW_SECURE_CRYPTO);
             });
     EXPECT_OK(res);
     closeSession(session);
@@ -339,51 +417,6 @@ TEST_F(DrmHalClearkeyTest, GetSecurityLevelInvalidSessionId) {
                 EXPECT_EQ(Status::BAD_VALUE, status);
             });
     EXPECT_OK(res);
-}
-
-/**
- * Test that setting all valid security levels on a valid sessionId
- * is supported
- */
-TEST_F(DrmHalClearkeyTest, SetSecurityLevel) {
-    SessionId session = openSession();
-    for (uint32_t level = static_cast<uint32_t>(SecurityLevel::SW_SECURE_CRYPTO);
-         level <= static_cast<uint32_t>(SecurityLevel::HW_SECURE_ALL); level++) {
-        EXPECT_EQ(Status::OK, drmPlugin->setSecurityLevel(session, static_cast<SecurityLevel>(level)));
-
-        // check that the level got set
-        auto res = drmPlugin->getSecurityLevel(session,
-                [&](Status status, SecurityLevel readLevel) {
-                    EXPECT_EQ(Status::OK, status);
-                    EXPECT_EQ(level, static_cast<uint32_t>(readLevel));
-                });
-        EXPECT_OK(res);
-    }
-    closeSession(session);
-}
-
-/**
- * Test that setting an invalid security level on a valid
- * sessionId is prohibited with the documented error code.
- */
-TEST_F(DrmHalClearkeyTest, SetInvalidSecurityLevel) {
-    SessionId session = openSession();
-    SecurityLevel level = static_cast<SecurityLevel>(
-            static_cast<uint32_t>(SecurityLevel::HW_SECURE_ALL) + 1);
-    Status status = drmPlugin->setSecurityLevel(session, level);
-    EXPECT_EQ(Status::BAD_VALUE, status);
-    closeSession(session);
-}
-
-/**
- * Test that attempting to set security level on an invalid
- * (empty) sessionId is prohibited with the documented error
- * code.
- */
-TEST_F(DrmHalClearkeyTest, SetSecurityLevelInvalidSessionId) {
-    SessionId session;
-    SecurityLevel level = SecurityLevel::SW_SECURE_CRYPTO;
-    EXPECT_EQ(Status::BAD_VALUE, drmPlugin->setSecurityLevel(session, level));
 }
 
 /**

@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ANDROID_HARDWARE_BROADCASTRADIO_V1_2_RESOURCES_H
-#define ANDROID_HARDWARE_BROADCASTRADIO_V1_2_RESOURCES_H
+#ifndef ANDROID_HARDWARE_BROADCASTRADIO_V1_1_RESOURCES_H
+#define ANDROID_HARDWARE_BROADCASTRADIO_V1_1_RESOURCES_H
 
 namespace android {
 namespace hardware {
 namespace broadcastradio {
-namespace V1_2 {
+namespace V1_1 {
 namespace implementation {
 namespace resources {
 
@@ -38,9 +38,9 @@ constexpr uint8_t demoPng[] = {
 
 }  // namespace resources
 }  // namespace implementation
-}  // namespace V1_2
+}  // namespace V1_1
 }  // namespace broadcastradio
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_BROADCASTRADIO_V1_2_RESOURCES_H
+#endif  // ANDROID_HARDWARE_BROADCASTRADIO_V1_1_RESOURCES_H

@@ -25,7 +25,7 @@
 namespace android {
 namespace hardware {
 namespace broadcastradio {
-namespace V1_2 {
+namespace V1_1 {
 namespace implementation {
 
 using V1_0::Class;
@@ -57,7 +57,7 @@ Return<void> BroadcastRadioFactory::connectModule(Class classId, connectModule_c
 }
 
 }  // namespace implementation
-}  // namespace V1_2
+}  // namespace V1_1
 }  // namespace broadcastradio
 }  // namespace hardware
 }  // namespace android

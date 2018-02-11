@@ -24,15 +24,29 @@
 #include <log/log.h>
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <VtsHalHidlTargetTestEnvBase.h>
 
 using ::android::hardware::dumpstate::V1_0::IDumpstateDevice;
 using ::android::hardware::Return;
 using ::android::sp;
 
+// Test environment for Dumpstate HIDL HAL.
+class DumpstateHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    // get the test environment singleton
+    static DumpstateHidlEnvironment* Instance() {
+        static DumpstateHidlEnvironment* instance = new DumpstateHidlEnvironment;
+        return instance;
+    }
+
+    virtual void registerTestServices() override { registerTestService<IDumpstateDevice>(); }
+};
+
 class DumpstateHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    public:
     virtual void SetUp() override {
-        dumpstate = ::testing::VtsHalHidlTargetTestBase::getService<IDumpstateDevice>();
+        dumpstate = ::testing::VtsHalHidlTargetTestBase::getService<IDumpstateDevice>(
+            DumpstateHidlEnvironment::Instance()->getServiceName<IDumpstateDevice>());
         ASSERT_NE(dumpstate, nullptr) << "Could not get HIDL instance";
     }
 
@@ -98,7 +112,9 @@ TEST_F(DumpstateHidlTest, TestHandleWithTwoFds) {
 }
 
 int main(int argc, char** argv) {
+    ::testing::AddGlobalTestEnvironment(DumpstateHidlEnvironment::Instance());
     ::testing::InitGoogleTest(&argc, argv);
+    DumpstateHidlEnvironment::Instance()->init(&argc, argv);
     int status = RUN_ALL_TESTS();
     ALOGI("Test result = %d", status);
     return status;

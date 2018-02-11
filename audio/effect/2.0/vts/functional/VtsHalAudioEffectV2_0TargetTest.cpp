@@ -27,6 +27,7 @@
 #include <android/hidl/memory/1.0/IMemory.h>
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <VtsHalHidlTargetTestEnvBase.h>
 
 using android::hardware::audio::common::V2_0::AudioDevice;
 using android::hardware::audio::common::V2_0::AudioHandleConsts;
@@ -59,13 +60,26 @@ using android::sp;
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
 #endif
 
+// Test environment for Audio Effects Factory HIDL HAL.
+class AudioEffectsFactoryHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    // get the test environment singleton
+    static AudioEffectsFactoryHidlEnvironment* Instance() {
+        static AudioEffectsFactoryHidlEnvironment* instance =
+            new AudioEffectsFactoryHidlEnvironment;
+        return instance;
+    }
+
+    virtual void registerTestServices() override { registerTestService<IEffectsFactory>(); }
+};
+
 // The main test class for Audio Effects Factory HIDL HAL.
 class AudioEffectsFactoryHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  public:
   void SetUp() override {
-    effectsFactory =
-        ::testing::VtsHalHidlTargetTestBase::getService<IEffectsFactory>();
-    ASSERT_NE(effectsFactory, nullptr);
+      effectsFactory = ::testing::VtsHalHidlTargetTestBase::getService<IEffectsFactory>(
+          AudioEffectsFactoryHidlEnvironment::Instance()->getServiceName<IEffectsFactory>());
+      ASSERT_NE(effectsFactory, nullptr);
   }
 
   void TearDown() override { effectsFactory.clear(); }
@@ -823,4 +837,13 @@ TEST_F(LoudnessEnhancerAudioEffectHidlTest, GetSetTargetGain) {
   EXPECT_TRUE(ret2.isOk());
   EXPECT_EQ(Result::OK, retval);
   EXPECT_EQ(gain, actualGain);
+}
+
+int main(int argc, char** argv) {
+    ::testing::AddGlobalTestEnvironment(AudioEffectsFactoryHidlEnvironment::Instance());
+    ::testing::InitGoogleTest(&argc, argv);
+    AudioEffectsFactoryHidlEnvironment::Instance()->init(&argc, argv);
+    int status = RUN_ALL_TESTS();
+    LOG(INFO) << "Test result = " << status;
+    return status;
 }

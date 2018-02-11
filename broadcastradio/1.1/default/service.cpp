@@ -22,7 +22,7 @@
 
 using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
-using android::hardware::broadcastradio::V1_2::implementation::BroadcastRadioFactory;
+using android::hardware::broadcastradio::V1_1::implementation::BroadcastRadioFactory;
 
 int main(int /* argc */, char** /* argv */) {
     configureRpcThreadpool(4, true);

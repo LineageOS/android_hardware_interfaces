@@ -25,7 +25,7 @@
 namespace android {
 namespace hardware {
 namespace broadcastradio {
-namespace V1_2 {
+namespace V1_1 {
 namespace implementation {
 
 using V1_0::Band;
@@ -190,7 +190,7 @@ Return<void> BroadcastRadio::getImage(int32_t id, getImage_cb _hidl_cb) {
 }
 
 }  // namespace implementation
-}  // namespace V1_2
+}  // namespace V1_1
 }  // namespace broadcastradio
 }  // namespace hardware
 }  // namespace android
