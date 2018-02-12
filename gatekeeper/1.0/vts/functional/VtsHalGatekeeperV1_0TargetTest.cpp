@@ -33,6 +33,7 @@
 #include <log/log.h>
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <VtsHalHidlTargetTestEnvBase.h>
 
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
@@ -76,6 +77,20 @@ static const hw_auth_token_t *toAuthToken(GatekeeperResponse &rsp) {
   }
   return auth_token;
 }
+
+// Test environment for Gatekeeper HIDL HAL.
+class GatekeeperHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+ public:
+  // get the test environment singleton
+  static GatekeeperHidlEnvironment* Instance() {
+    static GatekeeperHidlEnvironment* instance = new GatekeeperHidlEnvironment;
+    return instance;
+  }
+
+  virtual void registerTestServices() override { registerTestService<IGatekeeper>(); }
+ private:
+  GatekeeperHidlEnvironment() {}
+};
 
 // The main test class for Gatekeeper HIDL HAL.
 class GatekeeperHidlTest : public ::testing::VtsHalHidlTargetTestBase {
@@ -189,7 +204,8 @@ class GatekeeperHidlTest : public ::testing::VtsHalHidlTargetTestBase {
   GatekeeperHidlTest() : uid_(0) {}
   virtual void SetUp() override {
     GatekeeperResponse rsp;
-    gatekeeper_ = ::testing::VtsHalHidlTargetTestBase::getService<IGatekeeper>();
+    gatekeeper_ = ::testing::VtsHalHidlTargetTestBase::getService<IGatekeeper>(
+        GatekeeperHidlEnvironment::Instance()->getServiceName<IGatekeeper>());
     ASSERT_NE(nullptr, gatekeeper_.get());
     doDeleteAllUsers(rsp);
   }
@@ -433,7 +449,9 @@ TEST_F(GatekeeperHidlTest, DeleteAllUsersTest) {
 }
 
 int main(int argc, char **argv) {
+  ::testing::AddGlobalTestEnvironment(GatekeeperHidlEnvironment::Instance());
   ::testing::InitGoogleTest(&argc, argv);
+  GatekeeperHidlEnvironment::Instance()->init(&argc, argv);
   int status = RUN_ALL_TESTS();
   ALOGI("Test result = %d", status);
   return status;
