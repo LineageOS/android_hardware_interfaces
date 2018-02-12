@@ -19,6 +19,7 @@ hidl_interface {
         "android.hidl.base@1.0",
     ],
     types: [
+        "AccessNetwork",
         "AudioQuality",
         "Call",
         "CardStatus",
@@ -33,6 +34,7 @@ hidl_interface {
         "CellInfoGsm",
         "CellInfoLte",
         "CellInfoWcdma",
+        "DataRequestReason",
         "IncrementalResultsPeriodicityRange",
         "IndicationFilter",
         "LinkCapacityEstimate",
