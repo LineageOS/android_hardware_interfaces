@@ -18,6 +18,7 @@
 
 #include <VtsHalHidlTargetCallbackBase.h>
 #include <VtsHalHidlTargetTestBase.h>
+#include <VtsHalHidlTargetTestEnvBase.h>
 #include <android-base/stringprintf.h>
 #include <android-base/unique_fd.h>
 #include <android/hardware/tetheroffload/config/1.0/IOffloadConfig.h>
@@ -114,6 +115,23 @@ class TetheringOffloadCallbackArgs {
     NatTimeoutUpdate last_params;
 };
 
+// Test environment for OffloadControl HIDL HAL.
+class OffloadControlHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    // get the test environment singleton
+    static OffloadControlHidlEnvironment* Instance() {
+        static OffloadControlHidlEnvironment* instance = new OffloadControlHidlEnvironment;
+        return instance;
+    }
+
+    virtual void registerTestServices() override {
+        registerTestService<IOffloadConfig>();
+        registerTestService<IOffloadControl>();
+    }
+   private:
+    OffloadControlHidlEnvironment() {}
+};
+
 class OffloadControlHidlTestBase : public testing::VtsHalHidlTargetTestBase {
    public:
     virtual void SetUp() override {
@@ -131,7 +149,8 @@ class OffloadControlHidlTestBase : public testing::VtsHalHidlTargetTestBase {
     // The IOffloadConfig HAL is tested more thoroughly elsewhere. He we just
     // setup everything correctly and verify basic readiness.
     void setupConfigHal() {
-        config = testing::VtsHalHidlTargetTestBase::getService<IOffloadConfig>();
+        config = testing::VtsHalHidlTargetTestBase::getService<IOffloadConfig>(
+            OffloadControlHidlEnvironment::Instance()->getServiceName<IOffloadConfig>());
         ASSERT_NE(nullptr, config.get()) << "Could not get HIDL instance";
 
         unique_fd fd1(conntrackSocket(NF_NETLINK_CONNTRACK_NEW | NF_NETLINK_CONNTRACK_DESTROY));
@@ -159,7 +178,8 @@ class OffloadControlHidlTestBase : public testing::VtsHalHidlTargetTestBase {
     }
 
     void prepareControlHal() {
-        control = testing::VtsHalHidlTargetTestBase::getService<IOffloadControl>();
+        control = testing::VtsHalHidlTargetTestBase::getService<IOffloadControl>(
+            OffloadControlHidlEnvironment::Instance()->getServiceName<IOffloadControl>());
         ASSERT_NE(nullptr, control.get()) << "Could not get HIDL instance";
 
         control_cb = new TetheringOffloadCallback();
@@ -678,7 +698,9 @@ TEST_F(OffloadControlHidlTest, RemoveDownstreamBogusPrefixFails) {
 }
 
 int main(int argc, char** argv) {
-    testing::InitGoogleTest(&argc, argv);
+    ::testing::AddGlobalTestEnvironment(OffloadControlHidlEnvironment::Instance());
+    ::testing::InitGoogleTest(&argc, argv);
+    OffloadControlHidlEnvironment::Instance()->init(&argc, argv);
     int status = RUN_ALL_TESTS();
     ALOGE("Test result with status=%d", status);
     return status;

@@ -17,6 +17,7 @@
 #define LOG_TAG "VtsOffloadConfigV1_0TargetTest"
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <VtsHalHidlTargetTestEnvBase.h>
 #include <android-base/stringprintf.h>
 #include <android-base/unique_fd.h>
 #include <android/hardware/tetheroffload/config/1.0/IOffloadConfig.h>
@@ -77,10 +78,25 @@ int netlinkSocket(unsigned groups) {
     return netlinkSocket(NETLINK_NETFILTER, groups);
 }
 
+// Test environment for OffloadConfig HIDL HAL.
+class OffloadConfigHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    // get the test environment singleton
+    static OffloadConfigHidlEnvironment* Instance() {
+        static OffloadConfigHidlEnvironment* instance = new OffloadConfigHidlEnvironment;
+        return instance;
+    }
+
+    virtual void registerTestServices() override { registerTestService<IOffloadConfig>(); }
+   private:
+    OffloadConfigHidlEnvironment() {}
+};
+
 class OffloadConfigHidlTest : public testing::VtsHalHidlTargetTestBase {
    public:
     virtual void SetUp() override {
-        config = testing::VtsHalHidlTargetTestBase::getService<IOffloadConfig>();
+        config = testing::VtsHalHidlTargetTestBase::getService<IOffloadConfig>(
+            OffloadConfigHidlEnvironment::Instance()->getServiceName<IOffloadConfig>());
         ASSERT_NE(nullptr, config.get()) << "Could not get HIDL instance";
     }
 
@@ -175,7 +191,9 @@ TEST_F(OffloadConfigHidlTest, TestSetHandle2OnlyNotOk) {
 }
 
 int main(int argc, char** argv) {
-    testing::InitGoogleTest(&argc, argv);
+    ::testing::AddGlobalTestEnvironment(OffloadConfigHidlEnvironment::Instance());
+    ::testing::InitGoogleTest(&argc, argv);
+    OffloadConfigHidlEnvironment::Instance()->init(&argc, argv);
     int status = RUN_ALL_TESTS();
     ALOGE("Test result with status=%d", status);
     return status;
