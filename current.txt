@@ -251,6 +251,7 @@ c8bc853546dd55584611def2a9fa1d99f657e3366c976d2f60fe6b8aa6d2cb87 android.hardwar
 
 # ABI preserving changes to HALs during Android P
 cf72ff5a52bfa4d08e9e1000cf3ab5952a2d280c7f13cdad5ab7905c08050766 android.hardware.camera.metadata@3.2::types
+7b4723305354193b889a24153e1292fec62d5a5127bdfba08a5a27440f092de9 android.hardware.camera.provider@2.4::ICameraProvider
 6fa9804a17a8bb7923a56bd10493a5483c20007e4c9026fd04287bee7c945a8c android.hardware.gnss@1.0::IGnssCallback
 fb92e2b40f8e9d494e8fd3b4ac18499a3216342e7cff160714c3bbf3660b6e79 android.hardware.gnss@1.0::IGnssConfiguration
 251594ea9b27447bfa005ebd806e58fb0ae4aad84a69938129c9800ec0c64eda android.hardware.gnss@1.0::IGnssMeasurementCallback
