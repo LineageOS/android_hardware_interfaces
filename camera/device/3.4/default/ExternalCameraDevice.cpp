@@ -595,16 +595,19 @@ status_t ExternalCameraDevice::initOutputCharsKeys(int fd,
                     ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT);
         }
 
-        int64_t min_frame_duration = std::numeric_limits<int64_t>::max();
-        for (const auto& frameRate : supportedFormat.frameRates) {
-            int64_t frame_duration = 1000000000LL / frameRate;
-            if (frame_duration < min_frame_duration) {
-                min_frame_duration = frame_duration;
+        int64_t minFrameDuration = std::numeric_limits<int64_t>::max();
+        for (const auto& fr : supportedFormat.frameRates) {
+            // 1000000000LL < (2^32 - 1) and
+            // fr.durationNumerator is uint32_t, so no overflow here
+            int64_t frameDuration = 1000000000LL * fr.durationNumerator /
+                    fr.durationDenominator;
+            if (frameDuration < minFrameDuration) {
+                minFrameDuration = frameDuration;
             }
-            if (frame_duration > maxFrameDuration) {
-                maxFrameDuration = frame_duration;
+            if (frameDuration > maxFrameDuration) {
+                maxFrameDuration = frameDuration;
             }
-            int32_t frameRateInt = static_cast<int32_t>(frameRate);
+            int32_t frameRateInt = static_cast<int32_t>(fr.getDouble());
             if (minFps > frameRateInt) {
                 minFps = frameRateInt;
             }
@@ -618,7 +621,7 @@ status_t ExternalCameraDevice::initOutputCharsKeys(int fd,
             minFrameDurations.push_back(format);
             minFrameDurations.push_back(supportedFormat.width);
             minFrameDurations.push_back(supportedFormat.height);
-            minFrameDurations.push_back(min_frame_duration);
+            minFrameDurations.push_back(minFrameDuration);
         }
 
         // The stall duration is 0 for non-jpeg formats. For JPEG format, stall
@@ -705,8 +708,10 @@ void ExternalCameraDevice::getFrameRateList(
             ++frameInterval.index) {
         if (frameInterval.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
             if (frameInterval.discrete.numerator != 0) {
-                float framerate = frameInterval.discrete.denominator /
-                        static_cast<float>(frameInterval.discrete.numerator);
+                SupportedV4L2Format::FrameRate fr = {
+                        frameInterval.discrete.numerator,
+                        frameInterval.discrete.denominator};
+                double framerate = fr.getDouble();
                 if (framerate > fpsUpperBound) {
                     continue;
                 }
@@ -717,7 +722,7 @@ void ExternalCameraDevice::getFrameRateList(
                     (frameInterval.pixel_format >> 16) & 0xFF,
                     (frameInterval.pixel_format >> 24) & 0xFF,
                     frameInterval.width, frameInterval.height, framerate);
-                format->frameRates.push_back(framerate);
+                format->frameRates.push_back(fr);
             }
         }
     }

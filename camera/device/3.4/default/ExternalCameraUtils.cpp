@@ -147,6 +147,10 @@ bool isAspectRatioClose(float ar1, float ar2) {
     return (std::abs(ar1 - ar2) < kAspectRatioMatchThres);
 }
 
+double SupportedV4L2Format::FrameRate::getDouble() const {
+    return durationDenominator / static_cast<double>(durationNumerator);
+}
+
 }  // namespace implementation
 }  // namespace V3_4
 }  // namespace device
@@ -247,7 +251,7 @@ ExternalCameraConfig ExternalCameraConfig::loadFromCfg(const char* cfgPath) {
             limit.size = {
                 row->UnsignedAttribute("width", /*Default*/0),
                 row->UnsignedAttribute("height", /*Default*/0)};
-            limit.fpsUpperBound = row->FloatAttribute("fpsBound", /*Default*/1000.0);
+            limit.fpsUpperBound = row->DoubleAttribute("fpsBound", /*Default*/1000.0);
             if (limit.size.width <= prevLimit.size.width ||
                     limit.size.height <= prevLimit.size.height ||
                     limit.fpsUpperBound >= prevLimit.fpsUpperBound) {
