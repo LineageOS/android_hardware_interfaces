@@ -37,6 +37,17 @@ interface IPrimaryDevice extends IDevice {
     setMode(AudioMode mode) generates (Result retval);
 
     /**
+     * Sets the name of the current BT SCO headset. Calling this method
+     * is equivalent to setting legacy "bt_headset_name" parameter.
+     * The BT SCO headset name must only be used for debugging purposes.
+     * Optional method
+     *
+     * @param name the name of the current BT SCO headset (can be empty).
+     * @return retval operation completion status.
+     */
+    setBtScoHeadsetDebugName(string name) generates (Result retval);
+
+    /**
      * Gets whether BT SCO Noise Reduction and Echo Cancellation are enabled.
      * Calling this method is equivalent to getting AUDIO_PARAMETER_KEY_BT_NREC
      * on the legacy HAL.
