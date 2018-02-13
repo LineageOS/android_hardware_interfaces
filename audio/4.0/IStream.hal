@@ -197,18 +197,6 @@ interface IStream {
     setDevice(DeviceAddress address) generates (Result retval);
 
     /**
-     * Notifies the stream about device connection state. Calling this method is
-     * equivalent to setting AUDIO_PARAMETER_DEVICE_[DIS]CONNECT on the legacy
-     * HAL.
-     *
-     * @param address audio device specification.
-     * @param connected whether the device is connected.
-     * @return retval operation completion status.
-     */
-    setConnectedState(DeviceAddress address, bool connected)
-            generates (Result retval);
-
-    /**
      * Sets the HW synchronization source. Calling this method is equivalent to
      * setting AUDIO_PARAMETER_STREAM_HW_AV_SYNC on the legacy HAL.
      * Optional method
