@@ -27,7 +27,8 @@ GnssHalTest::GnssHalTest()
       notify_count_(0) {}
 
 void GnssHalTest::SetUp() {
-    gnss_hal_ = ::testing::VtsHalHidlTargetTestBase::getService<IGnss>();
+    gnss_hal_ = ::testing::VtsHalHidlTargetTestBase::getService<IGnss>(
+        GnssHidlEnvironment::Instance()->getServiceName<IGnss>());
     list_gnss_sv_status_.clear();
     ASSERT_NE(gnss_hal_, nullptr);
 }

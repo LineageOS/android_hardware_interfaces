@@ -26,6 +26,7 @@ import @1.1::KeyRequestType;
 import @1.0::SecureStopId;
 import @1.1::SecureStopRelease;
 import @1.1::SecurityLevel;
+import @1.0::SessionId;
 
 /**
  * IDrmPlugin is used to interact with a specific drm plugin that was created by
@@ -33,6 +34,34 @@ import @1.1::SecurityLevel;
  * may be used by a codec to decrypt protected video content.
  */
 interface IDrmPlugin extends @1.0::IDrmPlugin {
+    /**
+     * Open a new session at a requested security level. The security level
+     * represents the robustness of the device's DRM implementation. By default,
+     * sessions are opened at the native security level of the device which is
+     * the maximum level that can be supported. Overriding the security level is
+     * necessary when the decrypted frames need to be manipulated, such as for
+     * image compositing. The security level parameter must be equal to or lower
+     * than the native level. If the requested level is not supported, the next
+     * lower supported security level must be set. The level can be queried
+     * using {@link #getSecurityLevel}. A session ID is returned.  When the
+     * drm@1.0 openSession is called, which has no securityLevel parameter, the
+     * security level is defaulted to the native security level of the device.
+     *
+     * @return status the status of the call. The status must be OK or one of
+     *     the following errors: ERROR_DRM_NOT_PROVISIONED if the device
+     *     requires provisioning before it can open a session,
+     *     ERROR_DRM_RESOURCE_BUSY if there are insufficent resources available
+     *     to open a session, ERROR_DRM_CANNOT_HANDLE if the requested security
+     *     level is higher than the native level or lower than the lowest
+     *     supported level or if openSession is not supported at the time of
+     *     the call, or ERROR_DRM_INVALID_STATE if the HAL is in a state where
+     *     a session cannot be opened.
+     * @param level the requested security level
+     * @return sessionId the session ID for the newly opened session
+     */
+    openSession_1_1(SecurityLevel securityLevel) generates (Status status,
+            SessionId sessionId);
+
     /**
      * A key request/response exchange occurs between the app and a License
      * Server to obtain the keys required to decrypt the content.
@@ -147,24 +176,6 @@ interface IDrmPlugin extends @1.0::IDrmPlugin {
      */
     getSecurityLevel(vec<uint8_t> sessionId) generates(Status status,
             SecurityLevel level);
-
-    /**
-     * Set the security level of a session. This can be useful if specific
-     * attributes of a lower security level are needed by an application, such
-     * as image manipulation or compositing which requires non-secure decoded
-     * frames. Reducing the security level may limit decryption to lower content
-     * resolutions, depending on the license policy.
-     *
-     * @param sessionId the session id the call applies to
-     * @param level the requested security level
-     * @return status the status of the call. The status must be OK or one of
-     *         the following errors: ERROR_DRM_SESSION_NOT_OPENED if the session
-     *         is not opened, BAD_VALUE if the sessionId or security level is
-     *         invalid or ERROR_DRM_INVALID_STATE if the HAL is in a state where
-     *         the security level cannot be set.
-     */
-    setSecurityLevel(vec<uint8_t> sessionId, SecurityLevel level)
-            generates(Status status);
 
     /**
      * Returns the plugin-specific metrics. Multiple metric groups may be

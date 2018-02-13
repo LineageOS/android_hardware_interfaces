@@ -81,7 +81,8 @@ class TunerCallbackMock : public ITunerCallback {
     TunerCallbackMock();
 
     MOCK_METHOD2(onTuneFailed, Return<void>(Result, const ProgramSelector&));
-    MOCK_TIMEOUT_METHOD1(onCurrentProgramInfoChanged, Return<void>(const ProgramInfo&));
+    MOCK_TIMEOUT_METHOD1(onCurrentProgramInfoChanged_, Return<void>(const ProgramInfo&));
+    virtual Return<void> onCurrentProgramInfoChanged(const ProgramInfo& info);
     Return<void> onProgramListUpdated(const ProgramListChunk& chunk);
     MOCK_METHOD1(onAntennaStateChange, Return<void>(bool connected));
     MOCK_METHOD1(onParametersUpdated, Return<void>(const hidl_vec<VendorKeyValue>& parameters));
@@ -122,10 +123,38 @@ MATCHER_P(InfoHasId, id,
 }
 
 TunerCallbackMock::TunerCallbackMock() {
-    EXPECT_TIMEOUT_CALL(*this, onCurrentProgramInfoChanged, _).Times(AnyNumber());
+    EXPECT_TIMEOUT_CALL(*this, onCurrentProgramInfoChanged_, _).Times(AnyNumber());
 
     // we expect the antenna is connected through the whole test
     EXPECT_CALL(*this, onAntennaStateChange(false)).Times(0);
+}
+
+Return<void> TunerCallbackMock::onCurrentProgramInfoChanged(const ProgramInfo& info) {
+    auto logically = utils::getType(info.logicallyTunedTo);
+    if (logically != IdentifierType::INVALID) {
+        EXPECT_TRUE(logically == IdentifierType::AMFM_FREQUENCY ||
+                    logically == IdentifierType::RDS_PI ||
+                    logically == IdentifierType::HD_STATION_ID_EXT ||
+                    logically == IdentifierType::DAB_SID_EXT ||
+                    logically == IdentifierType::DRMO_SERVICE_ID ||
+                    logically == IdentifierType::SXM_SERVICE_ID ||
+                    (logically >= IdentifierType::VENDOR_START &&
+                     logically <= IdentifierType::VENDOR_END) ||
+                    logically > IdentifierType::SXM_CHANNEL);
+    }
+
+    auto physically = utils::getType(info.physicallyTunedTo);
+    if (physically != IdentifierType::INVALID) {
+        EXPECT_TRUE(physically == IdentifierType::AMFM_FREQUENCY ||
+                    physically == IdentifierType::DAB_ENSEMBLE ||
+                    physically == IdentifierType::DRMO_FREQUENCY ||
+                    physically == IdentifierType::SXM_CHANNEL ||
+                    (physically >= IdentifierType::VENDOR_START &&
+                     physically <= IdentifierType::VENDOR_END) ||
+                    physically > IdentifierType::SXM_CHANNEL);
+    }
+
+    return onCurrentProgramInfoChanged_(info);
 }
 
 Return<void> TunerCallbackMock::onProgramListUpdated(const ProgramListChunk& chunk) {
@@ -385,7 +414,7 @@ TEST_F(BroadcastRadioHalTest, FmTune) {
 
     // try tuning
     ProgramInfo infoCb = {};
-    EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChanged,
+    EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChanged_,
                         InfoHasId(utils::make_identifier(IdentifierType::AMFM_FREQUENCY, freq)))
         .Times(AnyNumber())
         .WillOnce(DoAll(SaveArg<0>(&infoCb), testing::Return(ByMove(Void()))));
@@ -399,7 +428,7 @@ TEST_F(BroadcastRadioHalTest, FmTune) {
 
     // expect a callback if it succeeds
     EXPECT_EQ(Result::OK, result);
-    EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onCurrentProgramInfoChanged, timeout::tune);
+    EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onCurrentProgramInfoChanged_, timeout::tune);
 
     ALOGD("current program info: %s", toString(infoCb).c_str());
 
@@ -469,15 +498,15 @@ TEST_F(BroadcastRadioHalTest, Scan) {
     // TODO(b/69958777): see FmTune workaround
     std::this_thread::sleep_for(100ms);
 
-    EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChanged, _);
+    EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChanged_, _);
     auto result = mSession->scan(true /* up */, true /* skip subchannel */);
     EXPECT_EQ(Result::OK, result);
-    EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onCurrentProgramInfoChanged, timeout::tune);
+    EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onCurrentProgramInfoChanged_, timeout::tune);
 
-    EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChanged, _);
+    EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChanged_, _);
     result = mSession->scan(false /* down */, false /* don't skip subchannel */);
     EXPECT_EQ(Result::OK, result);
-    EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onCurrentProgramInfoChanged, timeout::tune);
+    EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onCurrentProgramInfoChanged_, timeout::tune);
 }
 
 /**
@@ -494,19 +523,19 @@ TEST_F(BroadcastRadioHalTest, Step) {
     // TODO(b/69958777): see FmTune workaround
     std::this_thread::sleep_for(100ms);
 
-    EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChanged, _).Times(AnyNumber());
+    EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChanged_, _).Times(AnyNumber());
     auto result = mSession->step(true /* up */);
     if (result == Result::NOT_SUPPORTED) {
         printSkipped("step not supported");
         return;
     }
     EXPECT_EQ(Result::OK, result);
-    EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onCurrentProgramInfoChanged, timeout::tune);
+    EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onCurrentProgramInfoChanged_, timeout::tune);
 
-    EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChanged, _);
+    EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChanged_, _);
     result = mSession->step(false /* down */);
     EXPECT_EQ(Result::OK, result);
-    EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onCurrentProgramInfoChanged, timeout::tune);
+    EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onCurrentProgramInfoChanged_, timeout::tune);
 }
 
 /**
@@ -767,9 +796,6 @@ TEST_F(BroadcastRadioHalTest, AnnouncementListenerRegistration) {
 
     closeHandle->close();
 }
-
-// TODO(b/70939328): test ProgramInfo's currentlyTunedId and
-// currentlyTunedChannel once the program list is implemented.
 
 }  // namespace vts
 }  // namespace V2_0

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <radio_hidl_hal_utils_v1_1.h>
+#include <radio_hidl_hal_utils_v1_2.h>
 
 int main(int argc, char** argv) {
     ::testing::AddGlobalTestEnvironment(RadioHidlEnvironment::Instance());

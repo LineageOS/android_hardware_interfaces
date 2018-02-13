@@ -53,7 +53,7 @@ using ::android::hardware::camera::device::V3_2::ErrorCode;
 using ::android::hardware::camera::device::V3_2::ICameraDeviceCallback;
 using ::android::hardware::camera::device::V3_2::MsgType;
 using ::android::hardware::camera::device::V3_2::NotifyMsg;
-using ::android::hardware::camera::device::V3_4::RequestTemplate;
+using ::android::hardware::camera::device::V3_2::RequestTemplate;
 using ::android::hardware::camera::device::V3_2::Stream;
 using ::android::hardware::camera::device::V3_4::StreamConfiguration;
 using ::android::hardware::camera::device::V3_2::StreamConfigurationMode;
@@ -110,11 +110,7 @@ protected:
     // Methods from ::android::hardware::camera::device::V3_2::ICameraDeviceSession follow
 
     Return<void> constructDefaultRequestSettings(
-            V3_2::RequestTemplate,
-            ICameraDeviceSession::constructDefaultRequestSettings_cb _hidl_cb);
-
-    Return<void> constructDefaultRequestSettings_3_4(
-            RequestTemplate type,
+            RequestTemplate,
             ICameraDeviceSession::constructDefaultRequestSettings_cb _hidl_cb);
 
     Return<void> configureStreams(
@@ -341,7 +337,7 @@ private:
                 mParent(parent) {}
 
         virtual Return<void> constructDefaultRequestSettings(
-                V3_2::RequestTemplate type,
+                RequestTemplate type,
                 V3_3::ICameraDeviceSession::constructDefaultRequestSettings_cb _hidl_cb) override {
             return mParent->constructDefaultRequestSettings(type, _hidl_cb);
         }
@@ -374,12 +370,6 @@ private:
 
         virtual Return<void> close() override {
             return mParent->close();
-        }
-
-        virtual Return<void> constructDefaultRequestSettings_3_4(
-                RequestTemplate type,
-                ICameraDeviceSession::constructDefaultRequestSettings_cb _hidl_cb) override {
-            return mParent->constructDefaultRequestSettings_3_4(type, _hidl_cb);
         }
 
         virtual Return<void> configureStreams_3_3(

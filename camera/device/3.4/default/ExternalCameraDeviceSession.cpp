@@ -133,15 +133,6 @@ Return<void> ExternalCameraDeviceSession::constructDefaultRequestSettings(
     return Void();
 }
 
-Return<void> ExternalCameraDeviceSession::constructDefaultRequestSettings_3_4(
-        RequestTemplate type,
-        ICameraDeviceSession::constructDefaultRequestSettings_cb _hidl_cb)  {
-    V3_2::CameraMetadata outMetadata;
-    Status status = constructDefaultRequestSettingsRaw(type, &outMetadata);
-    _hidl_cb(status, outMetadata);
-    return Void();
-}
-
 Status ExternalCameraDeviceSession::constructDefaultRequestSettingsRaw(RequestTemplate type,
         V3_2::CameraMetadata *outMetadata) {
     CameraMetadata emptyMd;
@@ -160,9 +151,7 @@ Status ExternalCameraDeviceSession::constructDefaultRequestSettingsRaw(RequestTe
         }
         case RequestTemplate::MANUAL:
         case RequestTemplate::ZERO_SHUTTER_LAG:
-        case RequestTemplate::MOTION_TRACKING_PREVIEW:
-        case RequestTemplate::MOTION_TRACKING_BEST:
-            // Don't support MANUAL, ZSL, MOTION_TRACKING_* templates
+            // Don't support MANUAL, ZSL templates
             status = Status::ILLEGAL_ARGUMENT;
             break;
         default:

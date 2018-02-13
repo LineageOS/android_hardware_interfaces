@@ -33,18 +33,13 @@
 #include "key_param_output.h"
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <VtsHalHidlTargetTestEnvBase.h>
 
 #include "attestation_record.h"
 #include "openssl_utils.h"
 
 using ::android::sp;
-
 using ::std::string;
-
-// This service_name will be passed to getService when retrieving the keymaster service to test.  To
-// change it from "default" specify the selected service name on the command line.  The first
-// non-gtest argument will be used as the service name.
-string service_name = "default";
 
 static bool arm_deleteAllKeys = false;
 static bool dump_Attestations = false;
@@ -417,6 +412,20 @@ constexpr uint64_t kOpHandleSentinel = 0xFFFFFFFFFFFFFFFF;
 
 }  // namespace
 
+// Test environment for Keymaster HIDL HAL.
+class KeymasterHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    // get the test environment singleton
+    static KeymasterHidlEnvironment* Instance() {
+        static KeymasterHidlEnvironment* instance = new KeymasterHidlEnvironment;
+        return instance;
+    }
+
+    virtual void registerTestServices() override { registerTestService<IKeymasterDevice>(); }
+   private:
+    KeymasterHidlEnvironment() {}
+};
+
 class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
   public:
     void TearDown() override {
@@ -428,7 +437,8 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
     // SetUpTestCase runs only once per test case, not once per test.
     static void SetUpTestCase() {
-        keymaster_ = IKeymasterDevice::getService(service_name);
+        keymaster_ = ::testing::VtsHalHidlTargetTestBase::getService<IKeymasterDevice>(
+            KeymasterHidlEnvironment::Instance()->getServiceName<IKeymasterDevice>());
         ASSERT_NE(keymaster_, nullptr);
 
         ASSERT_TRUE(
@@ -4203,8 +4213,10 @@ TEST_F(KeyDeletionTest, DeleteAllKeys) {
 }  // namespace android
 
 int main(int argc, char** argv) {
+    using android::hardware::keymaster::V3_0::test::KeymasterHidlEnvironment;
+    ::testing::AddGlobalTestEnvironment(KeymasterHidlEnvironment::Instance());
     ::testing::InitGoogleTest(&argc, argv);
-    std::vector<std::string> positional_args;
+    KeymasterHidlEnvironment::Instance()->init(&argc, argv);
     for (int i = 1; i < argc; ++i) {
         if (argv[i][0] == '-') {
             if (std::string(argv[i]) == "--arm_deleteAllKeys") {
@@ -4213,13 +4225,7 @@ int main(int argc, char** argv) {
             if (std::string(argv[i]) == "--dump_attestations") {
                 dump_Attestations = true;
             }
-        } else {
-            positional_args.push_back(argv[i]);
         }
-    }
-    if (positional_args.size()) {
-        ALOGI("Running keymaster VTS against service \"%s\"", positional_args[0].c_str());
-        service_name = positional_args[0];
     }
     int status = RUN_ALL_TESTS();
     ALOGI("Test result = %d", status);
