@@ -87,6 +87,48 @@ interface IPrimaryDevice extends IDevice {
      */
     setBtScoWidebandEnabled(bool enabled) generates (Result retval);
 
+    /**
+     * Gets whether BT HFP (Hands-Free Profile) is enabled. Calling this method
+     * is equivalent to getting "hfp_enable" parameter value on the legacy HAL.
+     *
+     * @return retval operation completion status.
+     * @return enabled whether BT HFP is enabled.
+     */
+    getBtHfpEnabled() generates (Result retval, bool enabled);
+
+    /**
+     * Sets whether BT HFP (Hands-Free Profile) is enabled. Calling this method
+     * is equivalent to setting "hfp_enable" parameter on the legacy HAL.
+     * Optional method
+     *
+     * @param enabled whether BT HFP is enabled.
+     * @return retval operation completion status.
+     */
+    setBtHfpEnabled(bool enabled) generates (Result retval);
+
+    /**
+     * Sets the sampling rate of BT HFP (Hands-Free Profile). Calling this
+     * method is equivalent to setting "hfp_set_sampling_rate" parameter
+     * on the legacy HAL.
+     * Optional method
+     *
+     * @param sampleRateHz sample rate in Hz.
+     * @return retval operation completion status.
+     */
+    setBtHfpSampleRate(uint32_t sampleRateHz) generates (Result retval);
+
+    /**
+     * Sets the current output volume Hz for BT HFP (Hands-Free Profile).
+     * Calling this method is equivalent to setting "hfp_volume" parameter value
+     * on the legacy HAL (except that legacy HAL implementations expect
+     * an integer value in the range from 0 to 15.)
+     * Optional method
+     *
+     * @param volume 1.0f means unity, 0.0f is zero.
+     * @return retval operation completion status.
+     */
+    setBtHfpVolume(float volume) generates (Result retval);
+
     enum TtyMode : int32_t {
         OFF,
         VCO,
