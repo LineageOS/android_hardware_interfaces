@@ -23,6 +23,10 @@ enum Result : int32_t {
     NOT_INITIALIZED,
     INVALID_ARGUMENTS,
     INVALID_STATE,
+    /**
+     * Methods marked as "Optional method" must return this result value
+     * if the operation is not supported by HAL.
+     */
     NOT_SUPPORTED
 };
 
