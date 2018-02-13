@@ -17,7 +17,8 @@
 #include <sap_hidl_hal_utils.h>
 
 void SapHidlTest::SetUp() {
-    sap = ::testing::VtsHalHidlTargetTestBase::getService<ISap>(hidl_string(SAP_SERVICE_NAME));
+    sap = ::testing::VtsHalHidlTargetTestBase::getService<ISap>(
+        SapHidlEnvironment::Instance()->getServiceName<ISap>(hidl_string(SAP_SERVICE_NAME)));
     ASSERT_NE(sap, nullptr);
 
     sapCb = new SapCallback(*this);
