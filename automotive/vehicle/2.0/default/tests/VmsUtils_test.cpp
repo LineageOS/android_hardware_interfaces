@@ -35,7 +35,6 @@ TEST(VmsUtilsTest, subscribeMessage) {
     ASSERT_NE(message, nullptr);
     EXPECT_TRUE(isValidVmsMessage(*message));
     EXPECT_EQ(message->prop, toInt(VehicleProperty::VEHICLE_MAP_SERVICE));
-    EXPECT_EQ(message->areaId, toInt(VehicleArea::GLOBAL));
     EXPECT_EQ(message->value.int32Values.size(), 0x4ul);
     EXPECT_EQ(parseMessageType(*message), VmsMessageType::SUBSCRIBE);
 
@@ -51,7 +50,6 @@ TEST(VmsUtilsTest, unsubscribeMessage) {
     ASSERT_NE(message, nullptr);
     EXPECT_TRUE(isValidVmsMessage(*message));
     EXPECT_EQ(message->prop, toInt(VehicleProperty::VEHICLE_MAP_SERVICE));
-    EXPECT_EQ(message->areaId, toInt(VehicleArea::GLOBAL));
     EXPECT_EQ(message->value.int32Values.size(), 0x4ul);
     EXPECT_EQ(parseMessageType(*message), VmsMessageType::UNSUBSCRIBE);
 
@@ -67,7 +65,6 @@ TEST(VmsUtilsTest, singleOfferingMessage) {
     ASSERT_NE(message, nullptr);
     EXPECT_TRUE(isValidVmsMessage(*message));
     EXPECT_EQ(message->prop, toInt(VehicleProperty::VEHICLE_MAP_SERVICE));
-    EXPECT_EQ(message->areaId, toInt(VehicleArea::GLOBAL));
     EXPECT_EQ(message->value.int32Values.size(), 0x6ul);
     EXPECT_EQ(parseMessageType(*message), VmsMessageType::OFFERING);
 
@@ -91,7 +88,6 @@ TEST(VmsUtilsTest, offeringWithDependencies) {
     ASSERT_NE(message, nullptr);
     EXPECT_TRUE(isValidVmsMessage(*message));
     EXPECT_EQ(message->prop, toInt(VehicleProperty::VEHICLE_MAP_SERVICE));
-    EXPECT_EQ(message->areaId, toInt(VehicleArea::GLOBAL));
     EXPECT_EQ(message->value.int32Values.size(), 0x9ul);
     EXPECT_EQ(parseMessageType(*message), VmsMessageType::OFFERING);
 
@@ -117,7 +113,6 @@ TEST(VmsUtilsTest, availabilityMessage) {
     ASSERT_NE(message, nullptr);
     EXPECT_TRUE(isValidVmsMessage(*message));
     EXPECT_EQ(message->prop, toInt(VehicleProperty::VEHICLE_MAP_SERVICE));
-    EXPECT_EQ(message->areaId, toInt(VehicleArea::GLOBAL));
     EXPECT_EQ(message->value.int32Values.size(), 0x1ul);
     EXPECT_EQ(parseMessageType(*message), VmsMessageType::AVAILABILITY_REQUEST);
 }
@@ -127,7 +122,6 @@ TEST(VmsUtilsTest, subscriptionsMessage) {
     ASSERT_NE(message, nullptr);
     EXPECT_TRUE(isValidVmsMessage(*message));
     EXPECT_EQ(message->prop, toInt(VehicleProperty::VEHICLE_MAP_SERVICE));
-    EXPECT_EQ(message->areaId, toInt(VehicleArea::GLOBAL));
     EXPECT_EQ(message->value.int32Values.size(), 0x1ul);
     EXPECT_EQ(parseMessageType(*message), VmsMessageType::SUBSCRIPTIONS_REQUEST);
 }
@@ -138,7 +132,6 @@ TEST(VmsUtilsTest, dataMessage) {
     ASSERT_NE(message, nullptr);
     EXPECT_TRUE(isValidVmsMessage(*message));
     EXPECT_EQ(message->prop, toInt(VehicleProperty::VEHICLE_MAP_SERVICE));
-    EXPECT_EQ(message->areaId, toInt(VehicleArea::GLOBAL));
     EXPECT_EQ(message->value.int32Values.size(), 0x1ul);
     EXPECT_EQ(parseMessageType(*message), VmsMessageType::DATA);
     EXPECT_EQ(message->value.bytes.size(), bytes.size());
