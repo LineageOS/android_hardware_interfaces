@@ -97,6 +97,27 @@ static const uint8_t kInvalidUUID[16] = {
 
 static drm_vts::VendorModules* gVendorModules = nullptr;
 
+// Test environment for drm
+class DrmHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    // get the test environment singleton
+    static DrmHidlEnvironment* Instance() {
+        static DrmHidlEnvironment* instance = new DrmHidlEnvironment;
+        return instance;
+    }
+
+    void registerTestServices() override {
+        registerTestService<ICryptoFactory>();
+        registerTestService<IDrmFactory>();
+        setServiceCombMode(::testing::HalServiceCombMode::NO_COMBINATION);
+    }
+
+   private:
+    DrmHidlEnvironment() {}
+
+    GTEST_DISALLOW_COPY_AND_ASSIGN_(DrmHidlEnvironment);
+};
+
 class DrmHalVendorFactoryTest : public testing::TestWithParam<std::string> {
    public:
     DrmHalVendorFactoryTest()
@@ -1598,6 +1619,10 @@ int main(int argc, char** argv) {
         std::cerr << "WARNING: No vendor modules found in " << kModulePath <<
                 ", all vendor tests will be skipped" << std::endl;
     }
+    ::testing::AddGlobalTestEnvironment(DrmHidlEnvironment::Instance());
     ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+    DrmHidlEnvironment::Instance()->init(&argc, argv);
+    int status = RUN_ALL_TESTS();
+    ALOGI("Test result = %d", status);
+    return status;
 }
