@@ -55,7 +55,7 @@ HandleImporter ExternalCameraDeviceSession::sHandleImporter;
 
 ExternalCameraDeviceSession::ExternalCameraDeviceSession(
         const sp<ICameraDeviceCallback>& callback,
-        const ExternalCameraDeviceConfig& cfg,
+        const ExternalCameraConfig& cfg,
         const std::vector<SupportedV4L2Format>& sortedFormats,
         const CroppingType& croppingType,
         const common::V1_0::helper::CameraMetadata& chars,

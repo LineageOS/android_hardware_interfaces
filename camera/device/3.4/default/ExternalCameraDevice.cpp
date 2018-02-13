@@ -44,9 +44,10 @@ const std::array<uint32_t, /*size*/1> kSupportedFourCCs {{
 
 } // anonymous namespace
 
-ExternalCameraDevice::ExternalCameraDevice(const std::string& cameraId) :
+ExternalCameraDevice::ExternalCameraDevice(
+            const std::string& cameraId, const ExternalCameraConfig& cfg) :
         mCameraId(cameraId),
-        mCfg(ExternalCameraDeviceConfig::loadFromCfg()) {
+        mCfg(cfg) {
 
     status_t ret = initCameraCharacteristics();
     if (ret != OK) {

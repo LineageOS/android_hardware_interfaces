@@ -30,14 +30,6 @@ namespace device {
 namespace V3_4 {
 namespace implementation {
 
-namespace {
-    const int  kDefaultJpegBufSize = 5 << 20; // 5MB
-    const int  kDefaultNumVideoBuffer = 4;
-    const int  kDefaultNumStillBuffer = 2;
-} // anonymous namespace
-
-const char* ExternalCameraDeviceConfig::kDefaultCfgPath = "/vendor/etc/external_camera_config.xml";
-
 V4L2Frame::V4L2Frame(
         uint32_t w, uint32_t h, uint32_t fourcc,
         int bufIdx, int fd, uint32_t dataSize, uint64_t offset) :
@@ -148,10 +140,32 @@ int AllocatedFrame::getCroppedLayout(const IMapper::Rect& rect, YCbCrLayout* out
     return 0;
 }
 
+bool isAspectRatioClose(float ar1, float ar2) {
+    const float kAspectRatioMatchThres = 0.025f; // This threshold is good enough to distinguish
+                                                // 4:3/16:9/20:9
+                                                // 1.33 / 1.78 / 2
+    return (std::abs(ar1 - ar2) < kAspectRatioMatchThres);
+}
 
-ExternalCameraDeviceConfig ExternalCameraDeviceConfig::loadFromCfg(const char* cfgPath) {
+}  // namespace implementation
+}  // namespace V3_4
+}  // namespace device
+
+
+namespace external {
+namespace common {
+
+namespace {
+    const int  kDefaultJpegBufSize = 5 << 20; // 5MB
+    const int  kDefaultNumVideoBuffer = 4;
+    const int  kDefaultNumStillBuffer = 2;
+} // anonymous namespace
+
+const char* ExternalCameraConfig::kDefaultCfgPath = "/vendor/etc/external_camera_config.xml";
+
+ExternalCameraConfig ExternalCameraConfig::loadFromCfg(const char* cfgPath) {
     using namespace tinyxml2;
-    ExternalCameraDeviceConfig ret;
+    ExternalCameraConfig ret;
 
     XMLDocument configXml;
     XMLError err = configXml.LoadFile(cfgPath);
@@ -167,6 +181,29 @@ ExternalCameraDeviceConfig ExternalCameraDeviceConfig::loadFromCfg(const char* c
     if (extCam == nullptr) {
         ALOGI("%s: no external camera config specified", __FUNCTION__);
         return ret;
+    }
+
+    XMLElement *providerCfg = extCam->FirstChildElement("Provider");
+    if (providerCfg == nullptr) {
+        ALOGI("%s: no external camera provider config specified", __FUNCTION__);
+        return ret;
+    }
+
+    XMLElement *ignore = providerCfg->FirstChildElement("ignore");
+    if (ignore == nullptr) {
+        ALOGI("%s: no internal ignored device specified", __FUNCTION__);
+        return ret;
+    }
+
+    XMLElement *id = ignore->FirstChildElement("id");
+    while (id != nullptr) {
+        const char* text = id->GetText();
+        if (text != nullptr) {
+            ret.mInternalDevices.insert(text);
+            ALOGI("%s: device %s will be ignored by external camera provider",
+                    __FUNCTION__, text);
+        }
+        id = id->NextSiblingElement("id");
     }
 
     XMLElement *deviceCfg = extCam->FirstChildElement("Device");
@@ -226,7 +263,7 @@ ExternalCameraDeviceConfig ExternalCameraDeviceConfig::loadFromCfg(const char* c
         ret.fpsLimits = limits;
     }
 
-    ALOGI("%s: external camera cfd loaded: maxJpgBufSize %d,"
+    ALOGI("%s: external camera cfg loaded: maxJpgBufSize %d,"
             " num video buffers %d, num still buffers %d",
             __FUNCTION__, ret.maxJpegBufSize,
             ret.numVideoBuffers, ret.numStillBuffers);
@@ -237,7 +274,7 @@ ExternalCameraDeviceConfig ExternalCameraDeviceConfig::loadFromCfg(const char* c
     return ret;
 }
 
-ExternalCameraDeviceConfig::ExternalCameraDeviceConfig() :
+ExternalCameraConfig::ExternalCameraConfig() :
         maxJpegBufSize(kDefaultJpegBufSize),
         numVideoBuffers(kDefaultNumVideoBuffer),
         numStillBuffers(kDefaultNumStillBuffer) {
@@ -247,16 +284,9 @@ ExternalCameraDeviceConfig::ExternalCameraDeviceConfig() :
     fpsLimits.push_back({/*Size*/{4096, 3072}, /*FPS upper bound*/5.0});
 }
 
-bool isAspectRatioClose(float ar1, float ar2) {
-    const float kAspectRatioMatchThres = 0.025f; // This threshold is good enough to distinguish
-                                                // 4:3/16:9/20:9
-                                                // 1.33 / 1.78 / 2
-    return (std::abs(ar1 - ar2) < kAspectRatioMatchThres);
-}
 
-}  // namespace implementation
-}  // namespace V3_4
-}  // namespace device
+}  // namespace common
+}  // namespace external
 }  // namespace camera
 }  // namespace hardware
 }  // namespace android
