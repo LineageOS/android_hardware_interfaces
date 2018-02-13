@@ -17,6 +17,7 @@
 #define LOG_TAG "vibrator_hidl_hal_test"
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <VtsHalHidlTargetTestEnvBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/vibrator/1.0/types.h>
 #include <android/hardware/vibrator/1.2/IVibrator.h>
@@ -32,11 +33,27 @@ using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::sp;
 
+// Test environment for Vibrator HIDL HAL.
+class VibratorHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    // get the test environment singleton
+    static VibratorHidlEnvironment* Instance() {
+        static VibratorHidlEnvironment* instance = new VibratorHidlEnvironment;
+        return instance;
+    }
+
+    virtual void registerTestServices() override { registerTestService<IVibrator>(); }
+
+   private:
+    VibratorHidlEnvironment() {}
+};
+
 // The main test class for VIBRATOR HIDL HAL 1.2.
 class VibratorHidlTest_1_2 : public ::testing::VtsHalHidlTargetTestBase {
    public:
     virtual void SetUp() override {
-        vibrator = ::testing::VtsHalHidlTargetTestBase::getService<IVibrator>();
+        vibrator = ::testing::VtsHalHidlTargetTestBase::getService<IVibrator>(
+            VibratorHidlEnvironment::Instance()->getServiceName<IVibrator>());
         ASSERT_NE(vibrator, nullptr);
     }
 
@@ -65,7 +82,9 @@ TEST_F(VibratorHidlTest_1_2, PerformEffect_1_2) {
 }
 
 int main(int argc, char** argv) {
+    ::testing::AddGlobalTestEnvironment(VibratorHidlEnvironment::Instance());
     ::testing::InitGoogleTest(&argc, argv);
+    VibratorHidlEnvironment::Instance()->init(&argc, argv);
     int status = RUN_ALL_TESTS();
     LOG(INFO) << "Test result = " << status;
     return status;
