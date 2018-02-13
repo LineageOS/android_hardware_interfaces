@@ -132,4 +132,22 @@ interface IPrimaryDevice extends IDevice {
      * @return retval operation completion status.
      */
     setHacEnabled(bool enabled) generates (Result retval);
+
+    enum Rotation : int32_t {
+        DEG_0,
+        DEG_90,
+        DEG_180,
+        DEG_270
+    };
+
+    /**
+     * Updates HAL on the current rotation of the device relative to natural
+     * orientation. Calling this method is equivalent to setting legacy
+     * parameter "rotation".
+     *
+     * @param rotation rotation in degrees relative to natural device
+     *     orientation.
+     * @return retval operation completion status.
+     */
+    updateRotation(Rotation rotation) generates (Result retval);
 };
