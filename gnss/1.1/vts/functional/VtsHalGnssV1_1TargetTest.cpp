@@ -13,11 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define LOG_TAG "VtsHalGnssV1_1TargetTest"
 
 #include <VtsHalHidlTargetTestBase.h>
 
+#include "gnss_hal_test.h"
+
 int main(int argc, char** argv) {
+    ::testing::AddGlobalTestEnvironment(GnssHidlEnvironment::Instance());
     ::testing::InitGoogleTest(&argc, argv);
+    GnssHidlEnvironment::Instance()->init(&argc, argv);
     int status = RUN_ALL_TESTS();
     ALOGI("Test result = %d", status);
     return status;

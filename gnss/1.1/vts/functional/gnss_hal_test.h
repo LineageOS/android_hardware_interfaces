@@ -17,11 +17,10 @@
 #ifndef GNSS_HAL_TEST_H_
 #define GNSS_HAL_TEST_H_
 
-#define LOG_TAG "VtsHalGnssV1_1TargetTest"
-
 #include <android/hardware/gnss/1.1/IGnss.h>
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <VtsHalHidlTargetTestEnvBase.h>
 
 #include <condition_variable>
 #include <list>
@@ -39,6 +38,21 @@ using android::hardware::gnss::V1_0::GnssLocationFlags;
 using android::sp;
 
 #define TIMEOUT_SEC 2  // for basic commands/responses
+
+// Test environment for GNSS HIDL HAL.
+class GnssHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    // get the test environment singleton
+    static GnssHidlEnvironment* Instance() {
+        static GnssHidlEnvironment* instance = new GnssHidlEnvironment;
+        return instance;
+    }
+
+    virtual void registerTestServices() override { registerTestService<IGnss>(); }
+
+   private:
+    GnssHidlEnvironment() {}
+};
 
 // The main test class for GNSS HAL.
 class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
