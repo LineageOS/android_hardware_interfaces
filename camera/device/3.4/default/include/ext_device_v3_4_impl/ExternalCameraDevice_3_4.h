@@ -38,6 +38,8 @@ using ::android::hardware::camera::device::V3_2::ICameraDeviceCallback;
 using ::android::hardware::camera::common::V1_0::CameraResourceCost;
 using ::android::hardware::camera::common::V1_0::TorchMode;
 using ::android::hardware::camera::common::V1_0::Status;
+using ::android::hardware::camera::external::common::ExternalCameraConfig;
+using ::android::hardware::camera::external::common::Size;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::hidl_vec;
@@ -54,7 +56,7 @@ struct ExternalCameraDevice : public ICameraDevice {
     // be multiple CameraDevice trying to access the same physical camera.  Also, provider will have
     // to keep track of all CameraDevice objects in order to notify CameraDevice when the underlying
     // camera is detached.
-    ExternalCameraDevice(const std::string& cameraId);
+    ExternalCameraDevice(const std::string& cameraId, const ExternalCameraConfig& cfg);
     ~ExternalCameraDevice();
 
     // Caller must use this method to check if CameraDevice ctor failed
@@ -95,7 +97,7 @@ protected:
     Mutex mLock;
     bool mInitFailed = false;
     std::string mCameraId;
-    const ExternalCameraDeviceConfig mCfg;
+    const ExternalCameraConfig& mCfg;
     std::vector<SupportedV4L2Format> mSupportedFormats;
     CroppingType mCroppingType;
 

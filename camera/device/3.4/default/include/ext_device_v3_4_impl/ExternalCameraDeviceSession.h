@@ -67,6 +67,9 @@ using ::android::hardware::camera::device::V3_4::ICameraDeviceSession;
 using ::android::hardware::camera::common::V1_0::Status;
 using ::android::hardware::camera::common::V1_0::helper::HandleImporter;
 using ::android::hardware::camera::common::V1_0::helper::ExifUtils;
+using ::android::hardware::camera::external::common::ExternalCameraConfig;
+using ::android::hardware::camera::external::common::Size;
+using ::android::hardware::camera::external::common::SizeHasher;
 using ::android::hardware::graphics::common::V1_0::BufferUsage;
 using ::android::hardware::graphics::common::V1_0::Dataspace;
 using ::android::hardware::graphics::common::V1_0::PixelFormat;
@@ -84,7 +87,7 @@ using ::android::base::unique_fd;
 struct ExternalCameraDeviceSession : public virtual RefBase {
 
     ExternalCameraDeviceSession(const sp<ICameraDeviceCallback>&,
-            const ExternalCameraDeviceConfig& cfg,
+            const ExternalCameraConfig& cfg,
             const std::vector<SupportedV4L2Format>& sortedFormats,
             const CroppingType& croppingType,
             const common::V1_0::helper::CameraMetadata& chars,
@@ -273,7 +276,7 @@ protected:
 
     mutable Mutex mLock; // Protect all private members except otherwise noted
     const sp<ICameraDeviceCallback> mCallback;
-    const ExternalCameraDeviceConfig mCfg;
+    const ExternalCameraConfig& mCfg;
     const common::V1_0::helper::CameraMetadata mCameraCharacteristics;
     const std::vector<SupportedV4L2Format> mSupportedFormats;
     const CroppingType mCroppingType;
@@ -289,7 +292,7 @@ protected:
 
     bool mV4l2Streaming = false;
     SupportedV4L2Format mV4l2StreamingFmt;
-    size_t mV4L2BufferCount;
+    size_t mV4L2BufferCount = 0;
 
     static const int kBufferWaitTimeoutSec = 3; // TODO: handle long exposure (or not allowing)
     std::mutex mV4l2BufferLock; // protect the buffer count and condition below

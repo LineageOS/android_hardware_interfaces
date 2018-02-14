@@ -25,6 +25,7 @@
 #include <android/hardware/camera/provider/2.4/ICameraProvider.h>
 #include <hidl/Status.h>
 #include <hidl/MQDescriptor.h>
+#include "ExternalCameraUtils.h"
 
 namespace android {
 namespace hardware {
@@ -36,6 +37,7 @@ namespace implementation {
 using ::android::hardware::camera::common::V1_0::CameraDeviceStatus;
 using ::android::hardware::camera::common::V1_0::Status;
 using ::android::hardware::camera::common::V1_0::VendorTagSection;
+using ::android::hardware::camera::external::common::ExternalCameraConfig;
 using ::android::hardware::camera::provider::V2_4::ICameraProvider;
 using ::android::hardware::camera::provider::V2_4::ICameraProviderCallback;
 using ::android::hardware::Return;
@@ -81,8 +83,6 @@ private:
         virtual bool threadLoop() override;
 
     private:
-        static std::unordered_set<std::string> initInternalDevices();
-
         ExternalCameraProvider* mParent = nullptr;
         const std::unordered_set<std::string> mInternalDevices;
 
@@ -93,6 +93,7 @@ private:
     Mutex mLock;
     sp<ICameraProviderCallback> mCallbacks = nullptr;
     std::unordered_map<std::string, CameraDeviceStatus> mCameraStatusMap; // camera id -> status
+    const ExternalCameraConfig mCfg;
     HotplugThread mHotPlugThread;
 };
 

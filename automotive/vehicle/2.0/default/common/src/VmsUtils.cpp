@@ -126,19 +126,18 @@ std::unique_ptr<VehiclePropValue> createDataMessage(const std::string& bytes) {
     return result;
 }
 
-bool verifyPropertyAndArea(const VehiclePropValue& value) {
-    return (value.prop == toInt(VehicleProperty::VEHICLE_MAP_SERVICE) &&
-            value.areaId == toInt(VehicleArea::GLOBAL));
+bool isValidVmsProperty(const VehiclePropValue& value) {
+    return (value.prop == toInt(VehicleProperty::VEHICLE_MAP_SERVICE));
 }
 
-bool verifyMessageType(const VehiclePropValue& value) {
+bool isValidVmsMessageType(const VehiclePropValue& value) {
     return (value.value.int32Values.size() > 0 &&
             value.value.int32Values[kMessageIndex] >= kFirstMessageType &&
             value.value.int32Values[kMessageIndex] <= kLastMessageType);
 }
 
 bool isValidVmsMessage(const VehiclePropValue& value) {
-    return (verifyPropertyAndArea(value) && verifyMessageType(value));
+    return (isValidVmsProperty(value) && isValidVmsMessageType(value));
 }
 
 VmsMessageType parseMessageType(const VehiclePropValue& value) {

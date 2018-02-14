@@ -21,6 +21,7 @@
 #include "utils/LightRefBase.h"
 #include <mutex>
 #include <vector>
+#include <unordered_set>
 #include <android/hardware/graphics/mapper/2.0/IMapper.h>
 
 using android::hardware::graphics::mapper::V2_0::IMapper;
@@ -29,6 +30,60 @@ using android::hardware::graphics::mapper::V2_0::YCbCrLayout;
 namespace android {
 namespace hardware {
 namespace camera {
+
+namespace external {
+namespace common {
+
+struct Size {
+    uint32_t width;
+    uint32_t height;
+
+    bool operator==(const Size& other) const {
+        return (width == other.width && height == other.height);
+    }
+};
+
+struct SizeHasher {
+    size_t operator()(const Size& sz) const {
+        size_t result = 1;
+        result = 31 * result + sz.width;
+        result = 31 * result + sz.height;
+        return result;
+    }
+};
+
+struct ExternalCameraConfig {
+    static const char* kDefaultCfgPath;
+    static ExternalCameraConfig loadFromCfg(const char* cfgPath = kDefaultCfgPath);
+
+    // List of internal V4L2 video nodes external camera HAL must ignore.
+    std::unordered_set<std::string> mInternalDevices;
+
+    // Maximal size of a JPEG buffer, in bytes
+    uint32_t maxJpegBufSize;
+
+    // Maximum Size that can sustain 30fps streaming
+    Size maxVideoSize;
+
+    // Size of v4l2 buffer queue when streaming <= kMaxVideoSize
+    uint32_t numVideoBuffers;
+
+    // Size of v4l2 buffer queue when streaming > kMaxVideoSize
+    uint32_t numStillBuffers;
+
+    struct FpsLimitation {
+        Size size;
+        float fpsUpperBound;
+    };
+    std::vector<FpsLimitation> fpsLimits;
+
+private:
+    ExternalCameraConfig();
+};
+
+} // common
+} // external
+
 namespace device {
 namespace V3_4 {
 namespace implementation {
@@ -83,50 +138,6 @@ private:
 enum CroppingType {
     HORIZONTAL = 0,
     VERTICAL = 1
-};
-
-struct Size {
-    uint32_t width;
-    uint32_t height;
-
-    bool operator==(const Size& other) const {
-        return (width == other.width && height == other.height);
-    }
-};
-
-struct SizeHasher {
-    size_t operator()(const Size& sz) const {
-        size_t result = 1;
-        result = 31 * result + sz.width;
-        result = 31 * result + sz.height;
-        return result;
-    }
-};
-
-struct ExternalCameraDeviceConfig {
-    static const char* kDefaultCfgPath;
-    static ExternalCameraDeviceConfig loadFromCfg(const char* cfgPath = kDefaultCfgPath);
-
-    // Maximal size of a JPEG buffer, in bytes
-    uint32_t maxJpegBufSize;
-
-    // Maximum Size that can sustain 30fps streaming
-    Size maxVideoSize;
-
-    // Size of v4l2 buffer queue when streaming <= kMaxVideoSize
-    uint32_t numVideoBuffers;
-
-    // Size of v4l2 buffer queue when streaming > kMaxVideoSize
-    uint32_t numStillBuffers;
-
-    struct FpsLimitation {
-        Size size;
-        float fpsUpperBound;
-    };
-    std::vector<FpsLimitation> fpsLimits;
-
-private:
-    ExternalCameraDeviceConfig();
 };
 
 // Aspect ratio is defined as width/height here and ExternalCameraDevice
