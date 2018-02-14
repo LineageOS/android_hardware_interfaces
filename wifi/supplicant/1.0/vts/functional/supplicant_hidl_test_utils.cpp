@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include <android-base/logging.h>
 #include <VtsHalHidlTargetTestBase.h>
+#include <android-base/logging.h>
 
 #include <android/hidl/manager/1.0/IServiceManager.h>
 #include <android/hidl/manager/1.0/IServiceNotification.h>
@@ -49,8 +49,9 @@ using ::android::hidl::manager::V1_0::IServiceNotification;
 using ::android::wifi_system::InterfaceTool;
 using ::android::wifi_system::SupplicantManager;
 
+extern WifiSupplicantHidlEnvironment* gEnv;
+
 namespace {
-const char kSupplicantServiceName[] = "default";
 
 // Helper function to initialize the driver and firmware to STA mode
 // using the vendor HAL HIDL interface.
@@ -153,19 +154,20 @@ void startSupplicantAndWaitForHidlService() {
 
     android::sp<ServiceNotificationListener> notification_listener =
         new ServiceNotificationListener();
+    string service_name = gEnv->getServiceName<ISupplicant>();
     ASSERT_TRUE(notification_listener->registerForHidlServiceNotifications(
-        kSupplicantServiceName));
+        service_name));
 
     SupplicantManager supplicant_manager;
     ASSERT_TRUE(supplicant_manager.StartSupplicant());
     ASSERT_TRUE(supplicant_manager.IsSupplicantRunning());
 
-    ASSERT_TRUE(
-        notification_listener->waitForHidlService(200, kSupplicantServiceName));
+    ASSERT_TRUE(notification_listener->waitForHidlService(200, service_name));
 }
 
 sp<ISupplicant> getSupplicant() {
-    return ::testing::VtsHalHidlTargetTestBase::getService<ISupplicant>();
+    return ::testing::VtsHalHidlTargetTestBase::getService<ISupplicant>(
+        gEnv->getServiceName<ISupplicant>());
 }
 
 sp<ISupplicantStaIface> getSupplicantStaIface() {

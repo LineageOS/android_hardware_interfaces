@@ -15,20 +15,37 @@
  */
 
 #include <android-base/logging.h>
-
-#include <VtsHalHidlTargetTestBase.h>
+#include <android/hardware/wifi/1.1/IWifi.h>
+#include <android/hardware/wifi/supplicant/1.1/ISupplicant.h>
 
 #include "supplicant_hidl_test_utils.h"
+#include "wifi_hidl_test_utils.h"
 
-class SupplicantHidlEnvironment : public ::testing::Environment {
+class WifiSupplicantHidlEnvironment_1_1 : public WifiSupplicantHidlEnvironment {
    public:
-    virtual void SetUp() override { stopSupplicant(); }
-    virtual void TearDown() override { startSupplicantAndWaitForHidlService(); }
+    // get the test environment singleton
+    static WifiSupplicantHidlEnvironment_1_1* Instance() {
+        static WifiSupplicantHidlEnvironment_1_1* instance =
+            new WifiSupplicantHidlEnvironment_1_1;
+        return instance;
+    }
+    virtual void registerTestServices() override {
+        registerTestService<::android::hardware::wifi::V1_1::IWifi>();
+        registerTestService<
+            ::android::hardware::wifi::supplicant::V1_1::ISupplicant>();
+    }
+
+   private:
+    WifiSupplicantHidlEnvironment_1_1() {}
 };
 
+WifiSupplicantHidlEnvironment* gEnv =
+    WifiSupplicantHidlEnvironment_1_1::Instance();
+
 int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(new SupplicantHidlEnvironment);
+    ::testing::AddGlobalTestEnvironment(gEnv);
     ::testing::InitGoogleTest(&argc, argv);
+    gEnv->init(&argc, argv);
     int status = RUN_ALL_TESTS();
     LOG(INFO) << "Test result = " << status;
     return status;
