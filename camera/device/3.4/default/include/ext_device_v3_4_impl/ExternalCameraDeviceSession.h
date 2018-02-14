@@ -91,6 +91,7 @@ struct ExternalCameraDeviceSession : public virtual RefBase {
             const std::vector<SupportedV4L2Format>& sortedFormats,
             const CroppingType& croppingType,
             const common::V1_0::helper::CameraMetadata& chars,
+            const std::string& cameraId,
             unique_fd v4l2Fd);
     virtual ~ExternalCameraDeviceSession();
     // Call by CameraDevice to dump active device states
@@ -184,7 +185,7 @@ protected:
     int v4l2StreamOffLocked();
 
     // TODO: change to unique_ptr for better tracking
-    sp<V4L2Frame> dequeueV4l2FrameLocked(); // Called with mLock hold
+    sp<V4L2Frame> dequeueV4l2FrameLocked(/*out*/nsecs_t* shutterTs); // Called with mLock hold
     void enqueueV4l2Frame(const sp<V4L2Frame>&);
 
     // Check if input Stream is one of supported stream setting on this device
@@ -225,6 +226,7 @@ protected:
                 const hidl_vec<Stream>& streams);
         Status submitRequest(const HalRequest&);
         void flush();
+        void dump(int fd);
         virtual bool threadLoop() override;
 
     private:
@@ -236,7 +238,9 @@ protected:
         static int getCropRect(
                 CroppingType ct, const Size& inSize, const Size& outSize, IMapper::Rect* out);
 
-        static const int kReqWaitTimeoutSec = 3;
+        static const int kFlushWaitTimeoutSec = 3; // 3 sec
+        static const int kReqWaitTimeoutMs = 33;   // 33ms
+        static const int kReqWaitTimesMax = 90;    // 33ms * 90 ~= 3 sec
 
         void waitForNextRequest(HalRequest* out);
         void signalRequestDone();
@@ -268,6 +272,7 @@ protected:
         std::condition_variable mRequestDoneCond; // signaled when a request is done processing
         std::list<HalRequest> mRequestList;
         bool mProcessingRequest = false;
+        uint32_t mProcessingFrameNumer = 0;
 
         // V4L2 frameIn
         // (MJPG decode)-> mYu12Frame
@@ -291,7 +296,9 @@ protected:
     const common::V1_0::helper::CameraMetadata mCameraCharacteristics;
     const std::vector<SupportedV4L2Format> mSupportedFormats;
     const CroppingType mCroppingType;
+    const std::string& mCameraId;
     unique_fd mV4l2Fd;
+
     // device is closed either
     //    - closed by user
     //    - init failed

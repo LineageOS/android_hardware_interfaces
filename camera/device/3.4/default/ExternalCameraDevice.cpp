@@ -131,7 +131,7 @@ Return<void> ExternalCameraDevice::open(
 
     session = new ExternalCameraDeviceSession(
             callback, mCfg, mSupportedFormats, mCroppingType,
-            mCameraCharacteristics, std::move(fd));
+            mCameraCharacteristics, mCameraId, std::move(fd));
     if (session == nullptr) {
         ALOGE("%s: camera device session allocation failed", __FUNCTION__);
         mLock.unlock();
