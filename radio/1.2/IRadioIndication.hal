@@ -34,7 +34,7 @@ interface IRadioIndication extends @1.1::IRadioIndication {
      * Same information as returned by getCellInfoList() in 1.0::IRadio.
      *
      * @param type Type of radio indication
-     * @param records Current cell information known to radio
+     * @param records Current cell information
      */
      oneway cellInfoList_1_2(RadioIndicationType type, vec<CellInfo> records);
 
@@ -50,7 +50,7 @@ interface IRadioIndication extends @1.1::IRadioIndication {
      * suppressed by @1.2::IRadio.setIndicationFilter_1_2().
      *
      * @param type Type of radio indication
-     * @param lce LinkCapacityEstimate information as defined in types.hal
+     * @param lce LinkCapacityEstimate
      */
     oneway currentLinkCapacityEstimate(RadioIndicationType type, LinkCapacityEstimate lce);
 
@@ -58,8 +58,16 @@ interface IRadioIndication extends @1.1::IRadioIndication {
      * Indicates physical channel configurations.
      *
      * @param type Type of radio indication
-     * @param configs List of PhysicalChannelConfigs as defined in types.hal
+     * @param configs Vector of PhysicalChannelConfigs
      */
     oneway currentPhysicalChannelConfigs(RadioIndicationType type,
             vec<PhysicalChannelConfig> configs);
+
+    /**
+     * Indicates current signal strength of the radio.
+     *
+     * @param type Type of radio indication
+     * @param signalStrength SignalStrength information
+     */
+    oneway currentSignalStrength_1_2(RadioIndicationType type, SignalStrength signalStrength);
 };
