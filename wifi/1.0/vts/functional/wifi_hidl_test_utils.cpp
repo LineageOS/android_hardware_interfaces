@@ -35,6 +35,8 @@ using ::android::sp;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 
+extern WifiHidlEnvironment* gEnv;
+
 namespace {
 constexpr uint32_t kHalStartRetryMaxCount = 5;
 constexpr uint32_t kHalStartRetryIntervalInMs = 2;
@@ -86,7 +88,8 @@ bool configureChipToSupportIfaceTypeInternal(const sp<IWifiChip>& wifi_chip,
 }  // namespace
 
 sp<IWifi> getWifi() {
-    sp<IWifi> wifi = ::testing::VtsHalHidlTargetTestBase::getService<IWifi>();
+    sp<IWifi> wifi = ::testing::VtsHalHidlTargetTestBase::getService<IWifi>(
+        gEnv->getServiceName<IWifi>());
     return wifi;
 }
 

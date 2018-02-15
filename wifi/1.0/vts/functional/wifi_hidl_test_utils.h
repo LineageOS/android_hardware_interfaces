@@ -26,6 +26,7 @@
 
 #include <getopt.h>
 
+#include <VtsHalHidlTargetTestEnvBase.h>
 // Helper functions to obtain references to the various HIDL interface objects.
 // Note: We only have a single instance of each of these objects currently.
 // These helper functions should be modified to return vectors if we support
@@ -47,9 +48,9 @@ bool configureChipToSupportIfaceType(
 // Used to trigger IWifi.stop() at the end of every test.
 void stopWifi();
 
-class WifiHidlEnvironment : public ::testing::Environment {
+class WifiHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
    protected:
-    virtual void SetUp() override {
+    virtual void HidlSetUp() override {
         stopWifi();
         sleep(5);
     }
