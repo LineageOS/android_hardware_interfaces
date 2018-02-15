@@ -1893,7 +1893,8 @@ int ExternalCameraDeviceSession::configureV4l2StreamLocked(const SupportedV4L2Fo
     float fps = 1000.f;
     const float kDefaultFps = 30.f;
     // Try to pick the slowest fps that is at least 30
-    for (const auto& f : v4l2Fmt.frameRates) {
+    for (const auto& fr : v4l2Fmt.frameRates) {
+        double f = fr.getDouble();
         if (maxFps < f) {
             maxFps = f;
         }
@@ -2335,8 +2336,8 @@ status_t ExternalCameraDeviceSession::initDefaultRequests() {
     bool support30Fps = false;
     int32_t maxFps = std::numeric_limits<int32_t>::min();
     for (const auto& supportedFormat : mSupportedFormats) {
-        for (const auto& frameRate : supportedFormat.frameRates) {
-            int32_t framerateInt = static_cast<int32_t>(frameRate);
+        for (const auto& fr : supportedFormat.frameRates) {
+            int32_t framerateInt = static_cast<int32_t>(fr.getDouble());
             if (maxFps < framerateInt) {
                 maxFps = framerateInt;
             }

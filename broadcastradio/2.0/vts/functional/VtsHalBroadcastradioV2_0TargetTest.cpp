@@ -26,6 +26,7 @@
 #include <android/hardware/broadcastradio/2.0/types.h>
 #include <broadcastradio-utils-2x/Utils.h>
 #include <broadcastradio-vts-utils/call-barrier.h>
+#include <broadcastradio-vts-utils/environment-utils.h>
 #include <broadcastradio-vts-utils/mock-timeout.h>
 #include <broadcastradio-vts-utils/pointer-utils.h>
 #include <cutils/bitops.h>
@@ -52,6 +53,7 @@ using testing::DoAll;
 using testing::Invoke;
 using testing::SaveArg;
 
+using broadcastradio::vts::BroadcastRadioHidlEnvironment;
 using broadcastradio::vts::CallBarrier;
 using broadcastradio::vts::clearAndWait;
 using utils::make_identifier;
@@ -96,6 +98,8 @@ class TunerCallbackMock : public ITunerCallback {
 struct AnnouncementListenerMock : public IAnnouncementListener {
     MOCK_METHOD1(onListUpdated, Return<void>(const hidl_vec<Announcement>&));
 };
+
+static BroadcastRadioHidlEnvironment<IBroadcastRadio>* gEnv = nullptr;
 
 class BroadcastRadioHalTest : public ::testing::VtsHalHidlTargetTestBase {
    protected:
@@ -171,7 +175,7 @@ void BroadcastRadioHalTest::SetUp() {
     EXPECT_EQ(nullptr, mModule.get()) << "Module is already open";
 
     // lookup HIDL service (radio module)
-    mModule = getService<IBroadcastRadio>();
+    mModule = getService<IBroadcastRadio>(gEnv->getServiceName<IBroadcastRadio>());
     ASSERT_NE(nullptr, mModule.get()) << "Couldn't find broadcast radio HAL implementation";
 
     // get module properties
@@ -804,7 +808,13 @@ TEST_F(BroadcastRadioHalTest, AnnouncementListenerRegistration) {
 }  // namespace android
 
 int main(int argc, char** argv) {
+    using android::hardware::broadcastradio::V2_0::vts::gEnv;
+    using android::hardware::broadcastradio::V2_0::IBroadcastRadio;
+    using android::hardware::broadcastradio::vts::BroadcastRadioHidlEnvironment;
+    gEnv = new BroadcastRadioHidlEnvironment<IBroadcastRadio>;
+    ::testing::AddGlobalTestEnvironment(gEnv);
     ::testing::InitGoogleTest(&argc, argv);
+    gEnv->init(&argc, argv);
     int status = RUN_ALL_TESTS();
     ALOGI("Test result = %d", status);
     return status;

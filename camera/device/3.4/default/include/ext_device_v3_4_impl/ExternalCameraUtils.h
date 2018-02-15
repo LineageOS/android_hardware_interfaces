@@ -73,7 +73,7 @@ struct ExternalCameraConfig {
 
     struct FpsLimitation {
         Size size;
-        float fpsUpperBound;
+        double fpsUpperBound;
     };
     std::vector<FpsLimitation> fpsLimits;
 
@@ -93,7 +93,12 @@ struct SupportedV4L2Format {
     uint32_t height;
     uint32_t fourcc;
     // All supported frame rate for this w/h/fourcc combination
-    std::vector<float> frameRates;
+    struct FrameRate {
+        uint32_t durationNumerator;   // frame duration numerator.   Ex: 1
+        uint32_t durationDenominator; // frame duration denominator. Ex: 30
+        double getDouble() const;     // FrameRate in double.        Ex: 30.0
+    };
+    std::vector<FrameRate> frameRates;
 };
 
 // A class provide access to a dequeued V4L2 frame buffer (mostly in MJPG format)
