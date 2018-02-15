@@ -44,6 +44,8 @@ hidl_interface {
         "PhysicalChannelConfig",
         "RadioConst",
         "ScanIntervalRange",
+        "SignalStrength",
+        "WcdmaSignalStrength",
     ],
     gen_java: true,
 }

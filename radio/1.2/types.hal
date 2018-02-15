@@ -17,9 +17,9 @@
 package android.hardware.radio@1.2;
 
 import @1.0::Call;
-import @1.0::CdmaSignalStrength;
 import @1.0::CardState;
 import @1.0::CardStatus;
+import @1.0::CdmaSignalStrength;
 import @1.0::CellIdentityCdma;
 import @1.0::CellIdentityGsm;
 import @1.0::CellIdentityLte;
@@ -30,10 +30,12 @@ import @1.0::EvdoSignalStrength;
 import @1.0::GsmSignalStrength;
 import @1.0::LteSignalStrength;
 import @1.0::RadioConst;
+import @1.0::RadioError;
+import @1.0::SignalStrength;
+import @1.0::TdScdmaSignalStrength;
 import @1.0::TimeStampType;
 import @1.0::WcdmaSignalStrength;
 import @1.1::RadioAccessSpecifier;
-import @1.0::RadioError;
 import @1.1::ScanStatus;
 import @1.1::ScanType;
 
@@ -396,4 +398,28 @@ enum DataRequestReason : int32_t {
 struct Call {
     @1.0::Call base;
     AudioQuality audioQuality;
+};
+
+struct WcdmaSignalStrength {
+    @1.0::WcdmaSignalStrength base;
+    /**
+     * CPICH RSCP as defined in TS 25.215 5.1.1
+     * Valid values are (0-96, 255) as defined in TS 27.007 8.69
+     */
+    uint32_t rscp;
+    /**
+     * Ec/No value as defined in TS 25.215 5.1.5
+     * Valid values are (0-49, 255) as defined in TS 27.007 8.69
+     */
+    uint32_t ecno;
+
+};
+
+struct SignalStrength {
+    GsmSignalStrength gsm;
+    CdmaSignalStrength cdma;
+    EvdoSignalStrength evdo;
+    LteSignalStrength lte;
+    TdScdmaSignalStrength tdScdma;
+    WcdmaSignalStrength wcdma;
 };
