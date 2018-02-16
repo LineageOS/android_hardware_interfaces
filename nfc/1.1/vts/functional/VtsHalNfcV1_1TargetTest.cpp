@@ -25,6 +25,7 @@
 
 #include <VtsHalHidlTargetCallbackBase.h>
 #include <VtsHalHidlTargetTestBase.h>
+#include <VtsHalHidlTargetTestEnvBase.h>
 
 using ::android::hardware::nfc::V1_1::INfc;
 using ::android::hardware::nfc::V1_1::INfcClientCallback;
@@ -78,6 +79,20 @@ class NfcClientCallback : public ::testing::VtsHalHidlTargetCallbackBase<NfcClie
     };
 };
 
+// Test environment for Nfc HIDL HAL.
+class NfcHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    // get the test environment singleton
+    static NfcHidlEnvironment* Instance() {
+        static NfcHidlEnvironment* instance = new NfcHidlEnvironment;
+        return instance;
+    }
+
+    virtual void registerTestServices() override { registerTestService<INfc>(); }
+   private:
+    NfcHidlEnvironment() {}
+};
+
 // The main test class for NFC HIDL HAL.
 class NfcHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    public:
@@ -125,15 +140,6 @@ class NfcHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
     sp<INfc> nfc_;
     sp<NfcClientCallback> nfc_cb_;
-};
-
-// A class for test environment setup (kept since this file is a template).
-class NfcHidlEnvironment : public ::testing::Environment {
-   public:
-    virtual void SetUp() {}
-    virtual void TearDown() {}
-
-   private:
 };
 
 /*
@@ -204,8 +210,9 @@ TEST_F(NfcHidlTest, CloseForPowerCaseOffAfterClose) {
 }
 
 int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(new NfcHidlEnvironment);
+    ::testing::AddGlobalTestEnvironment(NfcHidlEnvironment::Instance());
     ::testing::InitGoogleTest(&argc, argv);
+    NfcHidlEnvironment::Instance()->init(&argc, argv);
 
     std::system("svc nfc disable"); /* Turn off NFC */
     sleep(5);
