@@ -74,10 +74,10 @@ interface IRadio extends @1.1::IRadio {
      *                     interval value of 0 disables hysteresis.
      * @param thresholdsDbm A vector of trigger thresholds in dBm. A vector size of 0 disables the
      *                      use of thresholds for reporting.
-     * @param ran The type of network for which to apply these thresholds.
+     * @param accessNetwork The type of network for which to apply these thresholds.
      */
     oneway setSignalStrengthReportingCriteria(int32_t serial, int32_t hysteresisMs,
-            int32_t hysteresisDb, vec<int32_t> thresholdsDbm, RadioAccessNetworks ran);
+            int32_t hysteresisDb, vec<int32_t> thresholdsDbm, AccessNetwork accessNetwork);
 
     /**
      * Sets the link capacity reporting criteria.
@@ -103,11 +103,11 @@ interface IRadio extends @1.1::IRadio {
      *                               reporting.
      * @param thresholdsUplinkKbps A vector of trigger thresholds in kbps for uplink reports. A
      *                             vector size of 0 disables the use of UL thresholds for reporting.
-     * @param ran The type of network for which to apply these thresholds.
+     * @param accessNetwork The type of network for which to apply these thresholds.
      */
     oneway setLinkCapacityReportingCriteria(int32_t serial, int32_t hysteresisMs,
             int32_t hysteresisDlKbps, int32_t hysteresisUlKbps, vec<int32_t> thresholdsDownlinkKbps,
-            vec<int32_t> thresholdsUplinkKbps, RadioAccessNetworks ran);
+            vec<int32_t> thresholdsUplinkKbps, AccessNetwork accessNetwork);
 
     /**
      * Setup a packet data connection. If DataCallResponse.status returns DataCallFailCause:NONE,
