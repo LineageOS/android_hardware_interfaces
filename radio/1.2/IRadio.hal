@@ -50,7 +50,7 @@ interface IRadio extends @1.1::IRadio {
      *
      * @param serial Serial number of request.
      * @param indicationFilter 32-bit bitmap of IndicationFilter. Bits set to 1 indicate the
-     *        indications are enabled. See @1.2::IndicationFilter for the definition of each bit.
+     *     indications are enabled. See @1.2::IndicationFilter for the definition of each bit.
      *
      * Response callback is IRadioResponse.setIndicationFilterResponse()
      */
@@ -68,12 +68,12 @@ interface IRadio extends @1.1::IRadio {
      *
      * @param serial Serial number of request.
      * @param hysteresisMs A hysteresis time in milliseconds to prevent flapping. A value of 0
-     *                     disables hysteresis.
+     *     disables hysteresis.
      * @param hysteresisDb An interval in dB defining the required magnitude change between reports.
-     *                     hysteresisDb must be smaller than the smallest threshold delta. An
-     *                     interval value of 0 disables hysteresis.
+     *     hysteresisDb must be smaller than the smallest threshold delta. An
+     *     interval value of 0 disables hysteresis.
      * @param thresholdsDbm A vector of trigger thresholds in dBm. A vector size of 0 disables the
-     *                      use of thresholds for reporting.
+     *     use of thresholds for reporting.
      * @param accessNetwork The type of network for which to apply these thresholds.
      */
     oneway setSignalStrengthReportingCriteria(int32_t serial, int32_t hysteresisMs,
@@ -91,18 +91,17 @@ interface IRadio extends @1.1::IRadio {
      *
      * @param serial Serial number of request.
      * @param hysteresisMs A hysteresis time in milliseconds to prevent flapping. A value of 0
-     *                     disables hysteresis.
+     *     disables hysteresis.
      * @param hysteresisDlKbps An interval in kbps defining the required magnitude change between DL
-     *                         reports. hysteresisDlKbps must be smaller than the smallest threshold
-     *                         delta. A value of 0 disables hysteresis.
+     *     reports. hysteresisDlKbps must be smaller than the smallest threshold delta. A value of 0
+     *     disables hysteresis.
      * @param hysteresisUlKbps An interval in kbps defining the required magnitude change between UL
-     *                         reports. hysteresisUlKbps must be smaller than the smallest threshold
-     *                         delta. A value of 0 disables hysteresis.
+     *     reports. hysteresisUlKbps must be smaller than the smallest threshold delta. A value of 0
+     *     disables hysteresis.
      * @param thresholdsDownlinkKbps A vector of trigger thresholds in kbps for downlink reports. A
-     *                               vector size of 0 disables the use of DL thresholds for
-     *                               reporting.
+     *     vector size of 0 disables the use of DL thresholds for reporting.
      * @param thresholdsUplinkKbps A vector of trigger thresholds in kbps for uplink reports. A
-     *                             vector size of 0 disables the use of UL thresholds for reporting.
+     *     vector size of 0 disables the use of UL thresholds for reporting.
      * @param accessNetwork The type of network for which to apply these thresholds.
      */
     oneway setLinkCapacityReportingCriteria(int32_t serial, int32_t hysteresisMs,
