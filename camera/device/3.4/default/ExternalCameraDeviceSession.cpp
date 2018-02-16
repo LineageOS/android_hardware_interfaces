@@ -270,6 +270,12 @@ Return<void> ExternalCameraDeviceSession::processCaptureRequest_3_4(
 }
 
 Return<Status> ExternalCameraDeviceSession::flush() {
+    Mutex::Autolock _il(mInterfaceLock);
+    Status status = initStatus();
+    if (status != Status::OK) {
+        return status;
+    }
+    mOutputThread->flush();
     return Status::OK;
 }
 
@@ -481,7 +487,7 @@ void ExternalCameraDeviceSession::notifyError(
 }
 
 //TODO: refactor with processCaptureResult
-Status ExternalCameraDeviceSession::processCaptureRequestError(HalRequest& req) {
+Status ExternalCameraDeviceSession::processCaptureRequestError(const HalRequest& req) {
     // Return V4L2 buffer to V4L2 buffer queue
     enqueueV4l2Frame(req.frameIn);
 
@@ -1483,19 +1489,23 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
         return true;
     }
 
+    auto onDeviceError = [&](auto... args) {
+        ALOGE(args...);
+        parent->notifyError(
+                req.frameNumber, /*stream*/-1, ErrorCode::ERROR_DEVICE);
+        signalRequestDone();
+        return false;
+    };
+
     if (req.frameIn->mFourcc != V4L2_PIX_FMT_MJPEG) {
-        ALOGE("%s: do not support V4L2 format %c%c%c%c", __FUNCTION__,
+        return onDeviceError("%s: do not support V4L2 format %c%c%c%c", __FUNCTION__,
                 req.frameIn->mFourcc & 0xFF,
                 (req.frameIn->mFourcc >> 8) & 0xFF,
                 (req.frameIn->mFourcc >> 16) & 0xFF,
                 (req.frameIn->mFourcc >> 24) & 0xFF);
-        parent->notifyError(
-                /*frameNum*/req.frameNumber, /*stream*/-1, ErrorCode::ERROR_DEVICE);
-        return false;
     }
 
-    std::unique_lock<std::mutex> lk(mLock);
-
+    std::unique_lock<std::mutex> lk(mBufferLock);
     // Convert input V4L2 frame to YU12 of the same size
     // TODO: see if we can save some computation by converting to YV12 here
     uint8_t* inData;
@@ -1520,11 +1530,9 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
         lk.unlock();
         Status st = parent->processCaptureRequestError(req);
         if (st != Status::OK) {
-            ALOGE("%s: failed to process capture request error!", __FUNCTION__);
-            parent->notifyError(
-                    /*frameNum*/req.frameNumber, /*stream*/-1, ErrorCode::ERROR_DEVICE);
-            return false;
+            return onDeviceError("%s: failed to process capture request error!", __FUNCTION__);
         }
+        signalRequestDone();
         return true;
     }
 
@@ -1551,15 +1559,9 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
                 int ret = createJpegLocked(halBuf, req);
 
                 if(ret != 0) {
-                    ALOGE("%s: createJpegLocked failed with %d",
-                          __FUNCTION__, ret);
                     lk.unlock();
-                    parent->notifyError(
-                            /*frameNum*/req.frameNumber,
-                            /*stream*/-1,
-                            ErrorCode::ERROR_DEVICE);
-
-                    return false;
+                    return onDeviceError("%s: createJpegLocked failed with %d",
+                          __FUNCTION__, ret);
                 }
             } break;
             case PixelFormat::YCBCR_420_888:
@@ -1587,21 +1589,15 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
                         Size { halBuf.width, halBuf.height },
                         &cropAndScaled);
                 if (ret != 0) {
-                    ALOGE("%s: crop and scale failed!", __FUNCTION__);
                     lk.unlock();
-                    parent->notifyError(
-                            /*frameNum*/req.frameNumber, /*stream*/-1, ErrorCode::ERROR_DEVICE);
-                    return false;
+                    return onDeviceError("%s: crop and scale failed!", __FUNCTION__);
                 }
 
                 Size sz {halBuf.width, halBuf.height};
                 ret = formatConvertLocked(cropAndScaled, outLayout, sz, outputFourcc);
                 if (ret != 0) {
-                    ALOGE("%s: format coversion failed!", __FUNCTION__);
                     lk.unlock();
-                    parent->notifyError(
-                            /*frameNum*/req.frameNumber, /*stream*/-1, ErrorCode::ERROR_DEVICE);
-                    return false;
+                    return onDeviceError("%s: format coversion failed!", __FUNCTION__);
                 }
                 int relFence = sHandleImporter.unlock(*(halBuf.bufPtr));
                 if (relFence > 0) {
@@ -1609,11 +1605,8 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
                 }
             } break;
             default:
-                ALOGE("%s: unknown output format %x", __FUNCTION__, halBuf.format);
                 lk.unlock();
-                parent->notifyError(
-                        /*frameNum*/req.frameNumber, /*stream*/-1, ErrorCode::ERROR_DEVICE);
-                return false;
+                return onDeviceError("%s: unknown output format %x", __FUNCTION__, halBuf.format);
         }
     } // for each buffer
     mScaledYu12Frames.clear();
@@ -1622,18 +1615,16 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
     lk.unlock();
     Status st = parent->processCaptureResult(req);
     if (st != Status::OK) {
-        ALOGE("%s: failed to process capture result!", __FUNCTION__);
-        parent->notifyError(
-                /*frameNum*/req.frameNumber, /*stream*/-1, ErrorCode::ERROR_DEVICE);
-        return false;
+        return onDeviceError("%s: failed to process capture result!", __FUNCTION__);
     }
+    signalRequestDone();
     return true;
 }
 
 Status ExternalCameraDeviceSession::OutputThread::allocateIntermediateBuffers(
         const Size& v4lSize, const Size& thumbSize,
         const hidl_vec<Stream>& streams) {
-    std::lock_guard<std::mutex> lk(mLock);
+    std::lock_guard<std::mutex> lk(mBufferLock);
     if (mScaledYu12Frames.size() != 0) {
         ALOGE("%s: intermediate buffer pool has %zu inflight buffers! (expect 0)",
                 __FUNCTION__, mScaledYu12Frames.size());
@@ -1705,17 +1696,36 @@ Status ExternalCameraDeviceSession::OutputThread::allocateIntermediateBuffers(
 }
 
 Status ExternalCameraDeviceSession::OutputThread::submitRequest(const HalRequest& req) {
-    std::lock_guard<std::mutex> lk(mLock);
+    std::unique_lock<std::mutex> lk(mRequestListLock);
     // TODO: reduce object copy in this path
     mRequestList.push_back(req);
+    lk.unlock();
     mRequestCond.notify_one();
     return Status::OK;
 }
 
 void ExternalCameraDeviceSession::OutputThread::flush() {
-    std::lock_guard<std::mutex> lk(mLock);
-    // TODO: send buffer/request errors back to framework
+    auto parent = mParent.promote();
+    if (parent == nullptr) {
+       ALOGE("%s: session has been disconnected!", __FUNCTION__);
+       return;
+    }
+
+    std::unique_lock<std::mutex> lk(mRequestListLock);
+    std::list<HalRequest> reqs = mRequestList;
     mRequestList.clear();
+    if (mProcessingRequest) {
+        std::chrono::seconds timeout = std::chrono::seconds(kReqWaitTimeoutSec);
+        auto st = mRequestDoneCond.wait_for(lk, timeout);
+        if (st == std::cv_status::timeout) {
+            ALOGE("%s: wait for inflight request finish timeout!", __FUNCTION__);
+        }
+    }
+
+    lk.unlock();
+    for (const auto& req : reqs) {
+        parent->processCaptureRequestError(req);
+    }
 }
 
 void ExternalCameraDeviceSession::OutputThread::waitForNextRequest(HalRequest* out) {
@@ -1724,7 +1734,7 @@ void ExternalCameraDeviceSession::OutputThread::waitForNextRequest(HalRequest* o
         return;
     }
 
-    std::unique_lock<std::mutex> lk(mLock);
+    std::unique_lock<std::mutex> lk(mRequestListLock);
     while (mRequestList.empty()) {
         std::chrono::seconds timeout = std::chrono::seconds(kReqWaitTimeoutSec);
         auto st = mRequestCond.wait_for(lk, timeout);
@@ -1735,6 +1745,14 @@ void ExternalCameraDeviceSession::OutputThread::waitForNextRequest(HalRequest* o
     }
     *out = mRequestList.front();
     mRequestList.pop_front();
+    mProcessingRequest = true;
+}
+
+void ExternalCameraDeviceSession::OutputThread::signalRequestDone() {
+    std::unique_lock<std::mutex> lk(mRequestListLock);
+    mProcessingRequest = false;
+    lk.unlock();
+    mRequestDoneCond.notify_one();
 }
 
 void ExternalCameraDeviceSession::cleanupBuffersLocked(int id) {
@@ -2057,8 +2075,8 @@ void ExternalCameraDeviceSession::enqueueV4l2Frame(const sp<V4L2Frame>& frame) {
     {
         std::lock_guard<std::mutex> lk(mV4l2BufferLock);
         mNumDequeuedV4l2Buffers--;
-        mV4L2BufferReturned.notify_one();
     }
+    mV4L2BufferReturned.notify_one();
 }
 
 Status ExternalCameraDeviceSession::configureStreams(

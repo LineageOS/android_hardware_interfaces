@@ -199,7 +199,7 @@ protected:
     Status processOneCaptureRequest(const CaptureRequest& request);
 
     Status processCaptureResult(HalRequest&);
-    Status processCaptureRequestError(HalRequest&);
+    Status processCaptureRequestError(const HalRequest&);
     void notifyShutter(uint32_t frameNumber, nsecs_t shutterTs);
     void notifyError(uint32_t frameNumber, int32_t streamId, ErrorCode ec);
     void invokeProcessCaptureResultCallback(
@@ -235,6 +235,8 @@ protected:
         static const int kReqWaitTimeoutSec = 3;
 
         void waitForNextRequest(HalRequest* out);
+        void signalRequestDone();
+
         int cropAndScaleLocked(
                 sp<AllocatedFrame>& in, const Size& outSize,
                 YCbCrLayout* out);
@@ -254,15 +256,20 @@ protected:
 
         int createJpegLocked(HalStreamBuffer &halBuf, HalRequest &req);
 
-        mutable std::mutex mLock;
-        std::condition_variable mRequestCond;
-        wp<ExternalCameraDeviceSession> mParent;
-        CroppingType mCroppingType;
+        const wp<ExternalCameraDeviceSession> mParent;
+        const CroppingType mCroppingType;
+
+        mutable std::mutex mRequestListLock;      // Protect acccess to mRequestList
+        std::condition_variable mRequestCond;     // signaled when a new request is submitted
+        std::condition_variable mRequestDoneCond; // signaled when a request is done processing
         std::list<HalRequest> mRequestList;
+        bool mProcessingRequest = false;
+
         // V4L2 frameIn
         // (MJPG decode)-> mYu12Frame
         // (Scale)-> mScaledYu12Frames
         // (Format convert) -> output gralloc frames
+        mutable std::mutex mBufferLock; // Protect access to intermediate buffers
         sp<AllocatedFrame> mYu12Frame;
         sp<AllocatedFrame> mYu12ThumbFrame;
         std::unordered_map<Size, sp<AllocatedFrame>, SizeHasher> mIntermediateBuffers;
@@ -299,6 +306,7 @@ protected:
     std::condition_variable mV4L2BufferReturned;
     size_t mNumDequeuedV4l2Buffers = 0;
 
+    // Not protected by mLock (but might be used when mLock is locked)
     sp<OutputThread> mOutputThread;
 
     // Stream ID -> Camera3Stream cache
