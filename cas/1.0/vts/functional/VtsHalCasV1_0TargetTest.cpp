@@ -30,6 +30,7 @@
 #include <hidl/HidlSupport.h>
 #include <hidl/HidlTransportSupport.h>
 #include <hidl/Status.h>
+#include <hidlmemory/FrameworkUtils.h>
 #include <utils/Condition.h>
 #include <utils/Mutex.h>
 
@@ -53,6 +54,7 @@ using android::Condition;
 using android::hardware::cas::V1_0::ICas;
 using android::hardware::cas::V1_0::ICasListener;
 using android::hardware::cas::V1_0::IDescramblerBase;
+using android::hardware::cas::V1_0::Status;
 using android::hardware::cas::native::V1_0::IDescrambler;
 using android::hardware::cas::native::V1_0::SubSample;
 using android::hardware::cas::native::V1_0::SharedBuffer;
@@ -61,13 +63,12 @@ using android::hardware::cas::native::V1_0::BufferType;
 using android::hardware::cas::native::V1_0::ScramblingControl;
 using android::hardware::cas::V1_0::IMediaCasService;
 using android::hardware::cas::V1_0::HidlCasPluginDescriptor;
-using android::hardware::Void;
+using android::hardware::fromHeap;
 using android::hardware::hidl_vec;
 using android::hardware::hidl_string;
-using android::hardware::hidl_handle;
-using android::hardware::hidl_memory;
+using android::hardware::HidlMemory;
 using android::hardware::Return;
-using android::hardware::cas::V1_0::Status;
+using android::hardware::Void;
 using android::IMemory;
 using android::IMemoryHeap;
 using android::MemoryDealer;
@@ -315,7 +316,7 @@ class MediaCasHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     }
     *inMemory = mem;
 
-    // build hidl_memory from memory heap
+    // build HidlMemory from memory heap
     ssize_t offset;
     size_t size;
     sp<IMemoryHeap> heap = mem->getMemory(&offset, &size);
@@ -324,18 +325,14 @@ class MediaCasHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         return ::testing::AssertionFailure();
     }
 
-    native_handle_t* nativeHandle = native_handle_create(1, 0);
-    if (!nativeHandle) {
-        ALOGE("failed to create native handle!");
-        return ::testing::AssertionFailure();
-    }
-    nativeHandle->data[0] = heap->getHeapID();
-
     uint8_t* ipBuffer = static_cast<uint8_t*>(static_cast<void*>(mem->pointer()));
     memcpy(ipBuffer, kInBinaryBuffer, sizeof(kInBinaryBuffer));
 
+    // hidlMemory is not to be passed out of scope!
+    sp<HidlMemory> hidlMemory = fromHeap(heap);
+
     SharedBuffer srcBuffer = {
-            .heapBase = hidl_memory("ashmem", hidl_handle(nativeHandle), heap->getSize()),
+            .heapBase = *hidlMemory,
             .offset = (uint64_t) offset,
             .size = (uint64_t) size
     };
@@ -380,7 +377,7 @@ class MediaCasHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         return ::testing::AssertionFailure();
     }
 
-    // build hidl_memory from memory heap
+    // build HidlMemory from memory heap
     ssize_t offset;
     size_t size;
     sp<IMemoryHeap> heap = mem->getMemory(&offset, &size);
@@ -389,15 +386,11 @@ class MediaCasHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         return ::testing::AssertionFailure();
     }
 
-    native_handle_t* nativeHandle = native_handle_create(1, 0);
-    if (!nativeHandle) {
-        ALOGE("failed to create native handle!");
-        return ::testing::AssertionFailure();
-    }
-    nativeHandle->data[0] = heap->getHeapID();
+    // hidlMemory is not to be passed out of scope!
+    sp<HidlMemory> hidlMemory = fromHeap(heap);
 
     SharedBuffer srcBuffer = {
-            .heapBase = hidl_memory("ashmem", hidl_handle(nativeHandle), heap->getSize()),
+            .heapBase = *hidlMemory,
             .offset = (uint64_t) offset + params.imemOffset,
             .size = (uint64_t) params.imemSize,
     };
