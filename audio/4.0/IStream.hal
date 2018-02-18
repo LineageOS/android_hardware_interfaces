@@ -175,38 +175,26 @@ interface IStream {
     standby() generates (Result retval);
 
     /**
-     * Return the set of device(s) which this stream is connected to.
+     * Return the set of devices which this stream is connected to.
      * Optional method
      *
      * @return retval operation completion status: OK or NOT_SUPPORTED.
-     * @return device set of device(s) which this stream is connected to.
+     * @return device set of devices which this stream is connected to.
      */
-    getDevice() generates (Result retval, bitfield<AudioDevice> device);
+    getDevices() generates (Result retval, vec<DeviceAddress> devices);
 
     /**
-     * Connects the stream to the device.
+     * Connects the stream to one or multiple devices.
      *
      * This method must only be used for HALs that do not support
      * 'IDevice.createAudioPatch' method. Calling this method is
-     * equivalent to setting AUDIO_PARAMETER_STREAM_ROUTING in the legacy HAL
-     * interface.
+     * equivalent to setting AUDIO_PARAMETER_STREAM_ROUTING preceeded
+     * with a device address in the legacy HAL interface.
      *
      * @param address device to connect the stream to.
      * @return retval operation completion status.
      */
-    setDevice(DeviceAddress address) generates (Result retval);
-
-    /**
-     * Notifies the stream about device connection state. Calling this method is
-     * equivalent to setting AUDIO_PARAMETER_DEVICE_[DIS]CONNECT on the legacy
-     * HAL.
-     *
-     * @param address audio device specification.
-     * @param connected whether the device is connected.
-     * @return retval operation completion status.
-     */
-    setConnectedState(DeviceAddress address, bool connected)
-            generates (Result retval);
+    setDevices(vec<DeviceAddress> devices) generates (Result retval);
 
     /**
      * Sets the HW synchronization source. Calling this method is equivalent to

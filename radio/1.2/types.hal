@@ -17,12 +17,13 @@
 package android.hardware.radio@1.2;
 
 import @1.0::Call;
-import @1.0::CdmaSignalStrength;
 import @1.0::CardState;
 import @1.0::CardStatus;
+import @1.0::CdmaSignalStrength;
 import @1.0::CellIdentityCdma;
 import @1.0::CellIdentityGsm;
 import @1.0::CellIdentityLte;
+import @1.0::CellIdentityTdscdma;
 import @1.0::CellIdentityWcdma;
 import @1.0::CellInfoTdscdma;
 import @1.0::CellInfoType;
@@ -30,10 +31,12 @@ import @1.0::EvdoSignalStrength;
 import @1.0::GsmSignalStrength;
 import @1.0::LteSignalStrength;
 import @1.0::RadioConst;
+import @1.0::RadioError;
+import @1.0::SignalStrength;
+import @1.0::TdScdmaSignalStrength;
 import @1.0::TimeStampType;
 import @1.0::WcdmaSignalStrength;
 import @1.1::RadioAccessSpecifier;
-import @1.0::RadioError;
 import @1.1::ScanStatus;
 import @1.1::ScanType;
 
@@ -251,6 +254,15 @@ struct CellIdentityLte {
     int32_t bandwidth;
 };
 
+struct CellIdentityTdscdma {
+    @1.0::CellIdentityTdscdma base;
+    /**
+     * 16-bit UMTS Absolute RF Channel Number defined in TS 25.102 5.4.4; this value must be valid.
+     */
+    int32_t uarfcn;
+    CellIdentityOperatorNames operatorNames;
+};
+
 struct CellIdentityWcdma {
     @1.0::CellIdentityWcdma base;
     CellIdentityOperatorNames operatorNames;
@@ -275,6 +287,11 @@ struct CellInfoCdma {
 struct CellInfoLte {
     CellIdentityLte cellIdentityLte;
     LteSignalStrength signalStrengthLte;
+};
+
+struct CellInfoTdscdma {
+    CellIdentityTdscdma cellIdentityTdscdma;
+    TdscdmaSignalStrength signalStrengthTdscdma;
 };
 
 struct CellInfo {
@@ -344,11 +361,17 @@ struct CardStatus {
 
 struct LinkCapacityEstimate {
     /**
-     * Estimated downlink capacity in kbps.
+     * Estimated downlink capacity in kbps. This bandwidth estimate shall be the estimated
+     * maximum sustainable link bandwidth (as would be measured at the Upper PDCP or SNDCP SAP).
+     * If the DL Aggregate Maximum Bit Rate is known, this value shall not exceed the DL-AMBR
+     * for the Internet PDN connection.
      */
     uint32_t downlinkCapacityKbps;
     /**
-     * Estimated uplink capacity in kbps.
+     * Estimated uplink capacity in kbps. This bandwidth estimate shall be the estimated
+     * maximum sustainable link bandwidth (as would be measured at the Upper PDCP or SNDCP SAP).
+     * If the UL Aggregate Maximum Bit Rate is known, this value shall not exceed the UL-AMBR
+     * for the Internet PDN connection.
      */
     uint32_t uplinkCapacityKbps;
 };
@@ -396,4 +419,46 @@ enum DataRequestReason : int32_t {
 struct Call {
     @1.0::Call base;
     AudioQuality audioQuality;
+};
+
+struct WcdmaSignalStrength {
+    @1.0::WcdmaSignalStrength base;
+    /**
+     * CPICH RSCP as defined in TS 25.215 5.1.1
+     * Valid values are (0-96, 255) as defined in TS 27.007 8.69
+     */
+    uint32_t rscp;
+    /**
+     * Ec/No value as defined in TS 25.215 5.1.5
+     * Valid values are (0-49, 255) as defined in TS 27.007 8.69
+     */
+    uint32_t ecno;
+
+};
+
+struct TdscdmaSignalStrength {
+    /**
+     * UTRA carrier RSSI as defined in TS 25.225 5.1.4
+     * Valid values are (0-96, 99) as defined in TS 27.007 8.69
+     */
+    uint32_t signalStrength;
+    /**
+     * Transport Channel BER as defined in TS 25.225 5.2.5
+     * Valid values are (0-49, 99) as defined in TS 27.007 8.69
+     */
+    uint32_t bitErrorRate;
+    /**
+     * P-CCPCH RSCP as defined in TS 25.225 5.1.1
+     * Valid values are (0-96, 255) as defined in TS 27.007 8.69
+     */
+    uint32_t rscp;
+};
+
+struct SignalStrength {
+    GsmSignalStrength gsm;
+    CdmaSignalStrength cdma;
+    EvdoSignalStrength evdo;
+    LteSignalStrength lte;
+    TdScdmaSignalStrength tdScdma;
+    WcdmaSignalStrength wcdma;
 };

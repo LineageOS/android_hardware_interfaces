@@ -88,4 +88,14 @@ interface IRadioResponse extends @1.1::IRadioResponse {
      *   RadioError:CANCELLED
      */
     oneway getCurrentCallsResponse_1_2(RadioResponseInfo info, vec<Call> calls);
+
+    /**
+     * @param signalStrength Current signal strength
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     */
+    oneway getSignalStrengthResponse_1_2(RadioResponseInfo info, SignalStrength signalStrength);
 };

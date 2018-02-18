@@ -268,4 +268,16 @@ interface IDevice {
      */
     getMicrophones()
          generates(Result retval, vec<MicrophoneInfo> microphones);
+
+    /**
+     * Notifies the device module about the connection state of an input/output
+     * device attached to it. Calling this method is equivalent to setting
+     * AUDIO_PARAMETER_DEVICE_[DIS]CONNECT on the legacy HAL.
+     *
+     * @param address audio device specification.
+     * @param connected whether the device is connected.
+     * @return retval operation completion status.
+     */
+    setConnectedState(DeviceAddress address, bool connected)
+            generates (Result retval);
 };

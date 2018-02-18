@@ -2918,6 +2918,28 @@ TEST_F(EncryptionOperationsTest, AesEcbRoundTripSuccess) {
 }
 
 /*
+ * EncryptionOperationsTest.AesEcbWithUserId
+ *
+ * Verifies that AES ECB mode works when Tag::USER_ID is specified.
+ */
+TEST_F(EncryptionOperationsTest, AesEcbWithUserId) {
+    string key = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    ASSERT_EQ(ErrorCode::OK, ImportKey(AuthorizationSetBuilder()
+                                           .Authorization(TAG_NO_AUTH_REQUIRED)
+                                           .Authorization(TAG_USER_ID, 0)
+                                           .AesEncryptionKey(key.size() * 8)
+                                           .EcbMode()
+                                           .Padding(PaddingMode::PKCS7),
+                                       KeyFormat::RAW, key));
+
+    string message = "Hello World!";
+    auto params = AuthorizationSetBuilder().BlockMode(BlockMode::ECB).Padding(PaddingMode::PKCS7);
+    string ciphertext = EncryptMessage(message, params);
+    string plaintext = DecryptMessage(ciphertext, params);
+    EXPECT_EQ(message, plaintext);
+}
+
+/*
  * EncryptionOperationsTest.AesEcbRoundTripSuccess
  *
  * Verifies that AES encryption fails in the correct way when an unauthorized mode is specified.

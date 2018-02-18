@@ -485,7 +485,7 @@ enum AudioMode : int32_t {
 };
 
 @export(name="", value_prefix="AUDIO_DEVICE_")
-enum AudioDevice : uint64_t {
+enum AudioDevice : uint32_t {
     NONE                          = 0x0,
     /** reserved bits */
     BIT_IN                        = 0x80000000,
@@ -530,6 +530,7 @@ enum AudioDevice : uint64_t {
     OUT_BUS                       = 0x1000000,
     OUT_PROXY                     = 0x2000000,
     OUT_USB_HEADSET               = 0x4000000,
+    OUT_HEARING_AID               = 0x8000000,
     OUT_ECHO_CANCELLER            = 0x10000000,
     OUT_DEFAULT                   = BIT_DEFAULT,
     // Note that the 2.0 OUT_ALL* have been moved to helper functions

@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2018 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,19 +15,25 @@
 //
 
 cc_test {
-    name: "VtsHalCasV1_0TargetTest",
+    name: "VtsHalNeuralnetworksV1_1TargetTest",
+    srcs: [
+        "VtsHalNeuralnetworksV1_1.cpp",
+        "VtsHalNeuralnetworksV1_1BasicTest.cpp",
+        "VtsHalNeuralnetworksV1_1GeneratedTest.cpp",
+    ],
     defaults: ["VtsHalTargetTestDefaults"],
-    srcs: ["VtsHalCasV1_0TargetTest.cpp"],
     static_libs: [
-        "android.hardware.cas@1.0",
-        "android.hardware.cas.native@1.0",
+        "android.hardware.neuralnetworks@1.0",
+        "android.hardware.neuralnetworks@1.1",
         "android.hidl.allocator@1.0",
         "android.hidl.memory@1.0",
-        "libhidlallocatorutils",
         "libhidlmemory",
+        "libneuralnetworks_utils",
+        "VtsHalNeuralnetworksTest_utils",
     ],
-    shared_libs: [
-        "libbinder",
+    header_libs: [
+        "libneuralnetworks_headers",
+        "libneuralnetworks_generated_test_harness_headers",
+        "libneuralnetworks_generated_tests",
     ],
 }
-

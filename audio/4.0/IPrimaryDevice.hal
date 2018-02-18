@@ -37,6 +37,17 @@ interface IPrimaryDevice extends IDevice {
     setMode(AudioMode mode) generates (Result retval);
 
     /**
+     * Sets the name of the current BT SCO headset. Calling this method
+     * is equivalent to setting legacy "bt_headset_name" parameter.
+     * The BT SCO headset name must only be used for debugging purposes.
+     * Optional method
+     *
+     * @param name the name of the current BT SCO headset (can be empty).
+     * @return retval operation completion status.
+     */
+    setBtScoHeadsetDebugName(string name) generates (Result retval);
+
+    /**
      * Gets whether BT SCO Noise Reduction and Echo Cancellation are enabled.
      * Calling this method is equivalent to getting AUDIO_PARAMETER_KEY_BT_NREC
      * on the legacy HAL.
@@ -75,6 +86,48 @@ interface IPrimaryDevice extends IDevice {
      * @return retval operation completion status.
      */
     setBtScoWidebandEnabled(bool enabled) generates (Result retval);
+
+    /**
+     * Gets whether BT HFP (Hands-Free Profile) is enabled. Calling this method
+     * is equivalent to getting "hfp_enable" parameter value on the legacy HAL.
+     *
+     * @return retval operation completion status.
+     * @return enabled whether BT HFP is enabled.
+     */
+    getBtHfpEnabled() generates (Result retval, bool enabled);
+
+    /**
+     * Sets whether BT HFP (Hands-Free Profile) is enabled. Calling this method
+     * is equivalent to setting "hfp_enable" parameter on the legacy HAL.
+     * Optional method
+     *
+     * @param enabled whether BT HFP is enabled.
+     * @return retval operation completion status.
+     */
+    setBtHfpEnabled(bool enabled) generates (Result retval);
+
+    /**
+     * Sets the sampling rate of BT HFP (Hands-Free Profile). Calling this
+     * method is equivalent to setting "hfp_set_sampling_rate" parameter
+     * on the legacy HAL.
+     * Optional method
+     *
+     * @param sampleRateHz sample rate in Hz.
+     * @return retval operation completion status.
+     */
+    setBtHfpSampleRate(uint32_t sampleRateHz) generates (Result retval);
+
+    /**
+     * Sets the current output volume Hz for BT HFP (Hands-Free Profile).
+     * Calling this method is equivalent to setting "hfp_volume" parameter value
+     * on the legacy HAL (except that legacy HAL implementations expect
+     * an integer value in the range from 0 to 15.)
+     * Optional method
+     *
+     * @param volume 1.0f means unity, 0.0f is zero.
+     * @return retval operation completion status.
+     */
+    setBtHfpVolume(float volume) generates (Result retval);
 
     enum TtyMode : int32_t {
         OFF,
@@ -121,4 +174,22 @@ interface IPrimaryDevice extends IDevice {
      * @return retval operation completion status.
      */
     setHacEnabled(bool enabled) generates (Result retval);
+
+    enum Rotation : int32_t {
+        DEG_0,
+        DEG_90,
+        DEG_180,
+        DEG_270
+    };
+
+    /**
+     * Updates HAL on the current rotation of the device relative to natural
+     * orientation. Calling this method is equivalent to setting legacy
+     * parameter "rotation".
+     *
+     * @param rotation rotation in degrees relative to natural device
+     *     orientation.
+     * @return retval operation completion status.
+     */
+    updateRotation(Rotation rotation) generates (Result retval);
 };

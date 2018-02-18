@@ -14,22 +14,49 @@
 // limitations under the License.
 //
 
+cc_library_static {
+    name: "VtsHalNeuralnetworksTest_utils",
+    srcs: [
+        "Callbacks.cpp",
+        "Models.cpp",
+        "GeneratedTestHarness.cpp",
+    ],
+    defaults: ["VtsHalTargetTestDefaults"],
+    export_include_dirs: ["."],
+    static_libs: [
+        "android.hardware.neuralnetworks@1.0",
+        "android.hardware.neuralnetworks@1.1",
+        "android.hidl.allocator@1.0",
+        "android.hidl.memory@1.0",
+        "libhidlmemory",
+        "libneuralnetworks_utils",
+    ],
+    header_libs: [
+        "libneuralnetworks_headers",
+        "libneuralnetworks_generated_test_harness_headers",
+        "libneuralnetworks_generated_tests",
+    ],
+}
+
 cc_test {
     name: "VtsHalNeuralnetworksV1_0TargetTest",
     srcs: [
-        "Callbacks.cpp",
-        "GeneratedTestHarness.cpp",
-        "Models.cpp",
-        "VtsHalNeuralnetworksV1_0TargetTest.cpp",
+        "VtsHalNeuralnetworksV1_0.cpp",
+        "VtsHalNeuralnetworksV1_0BasicTest.cpp",
+        "VtsHalNeuralnetworksV1_0GeneratedTest.cpp",
     ],
     defaults: ["VtsHalTargetTestDefaults"],
     static_libs: [
         "android.hardware.neuralnetworks@1.0",
+        "android.hardware.neuralnetworks@1.1",
         "android.hidl.allocator@1.0",
         "android.hidl.memory@1.0",
         "libhidlmemory",
+        "libneuralnetworks_utils",
+        "VtsHalNeuralnetworksTest_utils",
     ],
     header_libs: [
+        "libneuralnetworks_headers",
         "libneuralnetworks_generated_test_harness_headers",
         "libneuralnetworks_generated_tests",
     ],

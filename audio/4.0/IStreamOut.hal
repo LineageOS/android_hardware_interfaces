@@ -264,4 +264,16 @@ interface IStreamOut extends IStream {
      */
     getPresentationPosition()
             generates (Result retval, uint64_t frames, TimeSpec timeStamp);
+
+    /**
+     * Selects a presentation for decoding from a next generation media stream
+     * (as defined per ETSI TS 103 190-2) and a program within the presentation.
+     * Optional method
+     *
+     * @param presentationId selected audio presentation.
+     * @param programId refinement for the presentation.
+     * @return retval operation completion status.
+     */
+    selectPresentation(int32_t presentationId, int32_t programId)
+            generates (Result retval);
 };
