@@ -106,6 +106,12 @@ class DrmHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
 
     virtual void HidlTearDown() override { ALOGI("TearDown DrmHidlEnvironment"); }
 
+    void registerTestServices() override {
+        registerTestService<ICryptoFactory>();
+        registerTestService<IDrmFactory>();
+        setServiceCombMode(::testing::HalServiceCombMode::NO_COMBINATION);
+    }
+
    private:
     DrmHidlEnvironment() {}
 
