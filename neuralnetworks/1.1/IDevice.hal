@@ -25,6 +25,20 @@ import @1.0::IPreparedModelCallback;
  */
 interface IDevice extends @1.0::IDevice {
     /**
+     * Gets the capabilities of a driver.
+     *
+     * Note that @1.1::Capabilities provides performance information
+     * on relaxed calculations, whereas @1.0::Capabilities does not.
+     *
+     * @return status Error status of the call, must be:
+     *                - NONE if successful
+     *                - DEVICE_UNAVAILABLE if driver is offline or busy
+     *                - GENERAL_FAILURE if there is an unspecified error
+     * @return capabilities Capabilities of the driver.
+     */
+    getCapabilities_1_1() generates (ErrorStatus status, Capabilities capabilities);
+
+    /**
      * Gets the supported operations in a model.
      *
      * getSupportedSubgraph indicates which operations of a model are fully
