@@ -146,12 +146,23 @@ StatusCode EmulatedVehicleHal::set(const VehiclePropValue& propValue) {
                 && hvacPowerOn->value.int32Values[0] == 0) {
             return StatusCode::NOT_AVAILABLE;
         }
-    } else if (propValue.prop == OBD2_FREEZE_FRAME_CLEAR) {
-        return clearObd2FreezeFrames(propValue);
-    } else if (propValue.prop == VEHICLE_MAP_SERVICE) {
-        // Placeholder for future implementation of VMS property in the default hal. For now, just
-        // returns OK; otherwise, hal clients crash with property not supported.
-        return StatusCode::OK;
+    } else {
+        // Handle property specific code
+        switch (propValue.prop) {
+            case OBD2_FREEZE_FRAME_CLEAR:
+                return clearObd2FreezeFrames(propValue);
+            case VEHICLE_MAP_SERVICE:
+                // Placeholder for future implementation of VMS property in the default hal. For
+                // now, just returns OK; otherwise, hal clients crash with property not supported.
+                return StatusCode::OK;
+            case AP_POWER_STATE:
+                // This property has different behavior between get/set.  When it is set, the value
+                //  goes to the vehicle but is NOT updated in the property store back to Android.
+                // Commented out for now, because it may mess up automated testing that use the
+                //  emulator interface.
+                // getEmulatorOrDie()->doSetValueFromClient(propValue);
+                return StatusCode::OK;
+        }
     }
 
     if (!mPropStore->writeValue(propValue)) {
