@@ -54,7 +54,7 @@ static const float kNanoToSeconds = 0.000000001f;
 #include <android/hardware/automotive/evs/1.0/IEvsDisplay.h>
 
 #include <VtsHalHidlTargetTestBase.h>
-
+#include <VtsHalHidlTargetTestEnvBase.h>
 
 using namespace ::android::hardware::automotive::evs::V1_0;
 using ::android::hardware::Return;
@@ -64,13 +64,28 @@ using ::android::hardware::hidl_handle;
 using ::android::hardware::hidl_string;
 using ::android::sp;
 
+// Test environment for Evs HIDL HAL.
+class EvsHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    // get the test environment singleton
+    static EvsHidlEnvironment* Instance() {
+        static EvsHidlEnvironment* instance = new EvsHidlEnvironment;
+        return instance;
+    }
+
+    virtual void registerTestServices() override { registerTestService<IEvsEnumerator>(); }
+
+   private:
+    EvsHidlEnvironment() {}
+};
 
 // The main test class for EVS
 class EvsHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 public:
     virtual void SetUp() override {
         // Make sure we can connect to the enumerator
-        pEnumerator = IEvsEnumerator::getService(kEnumeratorName);
+        pEnumerator = getService<IEvsEnumerator>(
+            EvsHidlEnvironment::Instance()->getServiceName<IEvsEnumerator>(kEnumeratorName));
         ASSERT_NE(pEnumerator.get(), nullptr);
     }
 
@@ -479,4 +494,13 @@ TEST_F(EvsHidlTest, CameraToDisplayRoundTrip) {
 
     // Explicitly release the display
     pEnumerator->closeDisplay(pDisplay);
+}
+
+int main(int argc, char** argv) {
+    ::testing::AddGlobalTestEnvironment(EvsHidlEnvironment::Instance());
+    ::testing::InitGoogleTest(&argc, argv);
+    EvsHidlEnvironment::Instance()->init(&argc, argv);
+    int status = RUN_ALL_TESTS();
+    ALOGI("Test result = %d", status);
+    return status;
 }
