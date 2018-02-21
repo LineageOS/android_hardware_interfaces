@@ -199,8 +199,8 @@ protected:
 
     Status processOneCaptureRequest(const CaptureRequest& request);
 
-    Status processCaptureResult(HalRequest&);
-    Status processCaptureRequestError(const HalRequest&);
+    Status processCaptureResult(std::shared_ptr<HalRequest>&);
+    Status processCaptureRequestError(const std::shared_ptr<HalRequest>&);
     void notifyShutter(uint32_t frameNumber, nsecs_t shutterTs);
     void notifyError(uint32_t frameNumber, int32_t streamId, ErrorCode ec);
     void invokeProcessCaptureResultCallback(
@@ -220,7 +220,7 @@ protected:
         Status allocateIntermediateBuffers(
                 const Size& v4lSize, const Size& thumbSize,
                 const hidl_vec<Stream>& streams);
-        Status submitRequest(const HalRequest&);
+        Status submitRequest(const std::shared_ptr<HalRequest>&);
         void flush();
         void dump(int fd);
         virtual bool threadLoop() override;
@@ -238,7 +238,7 @@ protected:
         static const int kReqWaitTimeoutMs = 33;   // 33ms
         static const int kReqWaitTimesMax = 90;    // 33ms * 90 ~= 3 sec
 
-        void waitForNextRequest(HalRequest* out);
+        void waitForNextRequest(std::shared_ptr<HalRequest>* out);
         void signalRequestDone();
 
         int cropAndScaleLocked(
@@ -258,15 +258,16 @@ protected:
                 void *out, size_t maxOutSize,
                 size_t &actualCodeSize);
 
-        int createJpegLocked(HalStreamBuffer &halBuf, HalRequest &req);
+        int createJpegLocked(HalStreamBuffer &halBuf, const std::shared_ptr<HalRequest>& req);
 
         const wp<ExternalCameraDeviceSession> mParent;
         const CroppingType mCroppingType;
 
-        mutable std::mutex mRequestListLock;      // Protect acccess to mRequestList
+        mutable std::mutex mRequestListLock;      // Protect acccess to mRequestList,
+                                                  // mProcessingRequest and mProcessingFrameNumer
         std::condition_variable mRequestCond;     // signaled when a new request is submitted
         std::condition_variable mRequestDoneCond; // signaled when a request is done processing
-        std::list<HalRequest> mRequestList;
+        std::list<std::shared_ptr<HalRequest>> mRequestList;
         bool mProcessingRequest = false;
         uint32_t mProcessingFrameNumer = 0;
 
