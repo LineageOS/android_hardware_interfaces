@@ -31,6 +31,7 @@ LOCAL_SRC_FILES := \
 LOCAL_CFLAGS := -Wall -Werror
 
 LOCAL_SHARED_LIBRARIES := \
+    libbinder \
     libhidlbase \
     libhidltransport \
     liblog \
