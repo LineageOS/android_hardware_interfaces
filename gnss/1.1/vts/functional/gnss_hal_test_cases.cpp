@@ -396,6 +396,10 @@ TEST_F(GnssHalTest, InjectBestLocation) {
 
     ASSERT_TRUE(result.isOk());
     EXPECT_TRUE(result);
+
+    auto resultVoid = gnss_hal_->deleteAidingData(IGnss::GnssAidingData::DELETE_ALL);
+
+    ASSERT_TRUE(resultVoid.isOk());
 }
 
 /*
