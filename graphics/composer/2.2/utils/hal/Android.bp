@@ -12,31 +12,24 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
-cc_test {
-    name: "VtsHalGraphicsComposerV2_2TargetTest",
-    defaults: ["VtsHalTargetTestDefaults"],
-    srcs: ["VtsHalGraphicsComposerV2_2TargetTest.cpp"],
-
-    // TODO(b/64437680): Assume these libs are always available on the device.
+cc_library_headers {
+    name: "android.hardware.graphics.composer@2.2-hal",
+    defaults: ["hidl_defaults"],
+    vendor_available: true,
     shared_libs: [
-        "libfmq",
-	"libhidltransport",
-        "libsync",
-    ],
-    static_libs: [
-        "android.hardware.graphics.allocator@2.0",
-        "android.hardware.graphics.composer@2.1",
-        "android.hardware.graphics.composer@2.1-vts",
         "android.hardware.graphics.composer@2.2",
-        "android.hardware.graphics.composer@2.2-vts",
-        "android.hardware.graphics.mapper@2.0",
-        "android.hardware.graphics.mapper@2.0-vts",
-        "android.hardware.graphics.mapper@2.1",
+    ],
+    export_shared_lib_headers: [
+        "android.hardware.graphics.composer@2.2",
     ],
     header_libs: [
-        "android.hardware.graphics.composer@2.1-command-buffer",
         "android.hardware.graphics.composer@2.2-command-buffer",
+        "android.hardware.graphics.composer@2.1-hal",
     ],
+    export_header_lib_headers: [
+        "android.hardware.graphics.composer@2.2-command-buffer",
+        "android.hardware.graphics.composer@2.1-hal",
+    ],
+    export_include_dirs: ["include"],
 }
