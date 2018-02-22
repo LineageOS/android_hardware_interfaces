@@ -14,37 +14,6 @@
 // limitations under the License.
 //
 
-cc_library_static {
-    name: "libVtsHalGraphicsComposerTestUtils@2.2",
-    defaults: ["hidl_defaults"],
-    srcs: [
-        "VtsHalGraphicsComposerTestUtils.cpp",
-    ],
-    shared_libs: [
-        "android.hardware.graphics.composer@2.1",
-        "android.hardware.graphics.composer@2.2",
-        "libfmq",
-        "libsync",
-    ],
-    static_libs: [
-        "libVtsHalGraphicsComposerTestUtils",
-        "VtsHalHidlTargetTestBase",
-    ],
-    header_libs: [
-        "android.hardware.graphics.composer@2.1-command-buffer",
-        "android.hardware.graphics.composer@2.2-command-buffer",
-    ],
-    cflags: [
-        "-Wall",
-        "-Wextra",
-        "-Werror",
-        "-O0",
-        "-g",
-        "-DLOG_TAG=\"GraphicsComposerTestUtils@2.2\"",
-    ],
-    export_include_dirs: ["include"],
-}
-
 cc_test {
     name: "VtsHalGraphicsComposerV2_2TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
@@ -58,14 +27,13 @@ cc_test {
     ],
     static_libs: [
         "android.hardware.graphics.allocator@2.0",
-        "android.hardware.graphics.composer@2.2",
         "android.hardware.graphics.composer@2.1",
+        "android.hardware.graphics.composer@2.1-vts",
+        "android.hardware.graphics.composer@2.2",
+        "android.hardware.graphics.composer@2.2-vts",
         "android.hardware.graphics.mapper@2.0",
         "android.hardware.graphics.mapper@2.0-vts",
         "android.hardware.graphics.mapper@2.1",
-        "libVtsHalGraphicsComposerTestUtils",
-        "libVtsHalGraphicsComposerTestUtils@2.2",
-        "libnativehelper",
     ],
     header_libs: [
         "android.hardware.graphics.composer@2.1-command-buffer",

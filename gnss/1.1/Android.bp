@@ -11,6 +11,7 @@ hidl_interface {
         "IGnssCallback.hal",
         "IGnssConfiguration.hal",
         "IGnssMeasurement.hal",
+        "IGnssMeasurementCallback.hal",
     ],
     interfaces: [
         "android.hardware.gnss@1.0",

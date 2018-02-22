@@ -1,0 +1,80 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.gnss@1.1;
+
+import @1.0::IGnssMeasurementCallback;
+
+/** The callback interface to report measurements from the HAL. */
+interface IGnssMeasurementCallback extends @1.0::IGnssMeasurementCallback {
+    /**
+     * Flags indicating the Accumulated Delta Range's states.
+     */
+    enum GnssAccumulatedDeltaRangeState
+            : @1.0::IGnssMeasurementCallback.GnssAccumulatedDeltaRangeState {
+        ADR_STATE_HALF_CYCLE_RESOLVED = 1 << 3, // Carrier-phase half-cycle ambiguity resolved
+    };
+
+    /**
+     * Extends a GNSS Measurement, adding the new enum.
+     */
+    struct GnssMeasurement {
+        /**
+         * GNSS measurement information for a single satellite and frequency, as in the 1.0
+         * version of the HAL.
+         *
+         * In this version of the HAL, these fields of the
+         * @1.0::IGnssMeasurementCallback.GnssMeasurement v1_0 struct are deprecated, and
+         * are no longer used by the framework:
+         *   carrierCycles
+         *   carrierPhase
+         *   carrierPhaseUncertainty
+         *
+         * Similar information about carrier phase signal tracking is still reported in these
+         * fields of @1.0::IGnssMeasurementCallback.GnssMeasurement v1_0:
+         *   accumulatedDeltaRangeM
+         *   accumulatedDeltaRangeUncertaintyM
+         */
+        @1.0::IGnssMeasurementCallback.GnssMeasurement v1_0;
+
+        /**
+         * Provides the state of Accumulated Delta Range values, including additional information
+         * beyond version 1.0 of the HAL.  See GnssAccumulatedDeltaRangeState.
+         *
+         * In this (1.1) version of the HAL, this value is used by the framework, not the
+         * value provided by v1_0.accumulatedDeltaRangeState.
+         */
+        bitfield<GnssAccumulatedDeltaRangeState> accumulatedDeltaRangeState;
+    };
+
+    /**
+     * Complete set of GNSS Measurement data, same as 1.0 with additional enum in measurements.
+     */
+    struct GnssData {
+        /** The full set of satellite measurement observations. */
+        vec<GnssMeasurement> measurements;
+
+        /** The GNSS clock time reading. */
+        GnssClock clock;
+    };
+
+    /**
+     * Callback for the hal to pass a GnssData structure back to the client.
+     *
+     * @param data Contains a reading of GNSS measurements.
+     */
+    gnssMeasurementCb(GnssData data);
+};

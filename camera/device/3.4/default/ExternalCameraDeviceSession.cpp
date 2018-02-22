@@ -46,6 +46,21 @@ const int kBadFramesAfterStreamOn = 1; // drop x frames after streamOn to get ri
                                        // bad frames. TODO: develop a better bad frame detection
                                        // method
 
+bool tryLock(Mutex& mutex)
+{
+    static const int kDumpLockRetries = 50;
+    static const int kDumpLockSleep = 60000;
+    bool locked = false;
+    for (int i = 0; i < kDumpLockRetries; ++i) {
+        if (mutex.tryLock() == NO_ERROR) {
+            locked = true;
+            break;
+        }
+        usleep(kDumpLockSleep);
+    }
+    return locked;
+}
+
 } // Anonymous namespace
 
 // Static instances
@@ -59,12 +74,14 @@ ExternalCameraDeviceSession::ExternalCameraDeviceSession(
         const std::vector<SupportedV4L2Format>& sortedFormats,
         const CroppingType& croppingType,
         const common::V1_0::helper::CameraMetadata& chars,
+        const std::string& cameraId,
         unique_fd v4l2Fd) :
         mCallback(callback),
         mCfg(cfg),
         mCameraCharacteristics(chars),
         mSupportedFormats(sortedFormats),
         mCroppingType(croppingType),
+        mCameraId(cameraId),
         mV4l2Fd(std::move(v4l2Fd)),
         mOutputThread(new OutputThread(this, mCroppingType)),
         mMaxThumbResolution(getMaxThumbResolution()),
@@ -119,8 +136,79 @@ ExternalCameraDeviceSession::~ExternalCameraDeviceSession() {
     }
 }
 
-void ExternalCameraDeviceSession::dumpState(const native_handle_t*) {
-    // TODO: b/72261676 dump more runtime information
+
+void ExternalCameraDeviceSession::dumpState(const native_handle_t* handle) {
+    if (handle->numFds != 1 || handle->numInts != 0) {
+        ALOGE("%s: handle must contain 1 FD and 0 integers! Got %d FDs and %d ints",
+                __FUNCTION__, handle->numFds, handle->numInts);
+        return;
+    }
+    int fd = handle->data[0];
+
+    bool intfLocked = tryLock(mInterfaceLock);
+    if (!intfLocked) {
+        dprintf(fd, "!! ExternalCameraDeviceSession interface may be deadlocked !!\n");
+    }
+
+    if (isClosed()) {
+        dprintf(fd, "External camera %s is closed\n", mCameraId.c_str());
+        return;
+    }
+
+    bool streaming = false;
+    size_t v4L2BufferCount = 0;
+    SupportedV4L2Format streamingFmt;
+    std::unordered_set<uint32_t>  inflightFrames;
+    {
+        Mutex::Autolock _l(mLock);
+        bool sessionLocked = tryLock(mLock);
+        if (!sessionLocked) {
+            dprintf(fd, "!! ExternalCameraDeviceSession mLock may be deadlocked !!\n");
+        }
+        streaming = mV4l2Streaming;
+        streamingFmt = mV4l2StreamingFmt;
+        v4L2BufferCount = mV4L2BufferCount;
+        inflightFrames = mInflightFrames;
+        if (sessionLocked) {
+            mLock.unlock();
+        }
+    }
+
+    dprintf(fd, "External camera %s V4L2 FD %d, cropping type %s, %s\n",
+            mCameraId.c_str(), mV4l2Fd.get(),
+            (mCroppingType == VERTICAL) ? "vertical" : "horizontal",
+            streaming ? "streaming" : "not streaming");
+    if (streaming) {
+        // TODO: dump fps later
+        dprintf(fd, "Current V4L2 format %c%c%c%c %dx%d\n",
+                streamingFmt.fourcc & 0xFF,
+                (streamingFmt.fourcc >> 8) & 0xFF,
+                (streamingFmt.fourcc >> 16) & 0xFF,
+                (streamingFmt.fourcc >> 24) & 0xFF,
+                streamingFmt.width, streamingFmt.height);
+
+        size_t numDequeuedV4l2Buffers = 0;
+        {
+            std::lock_guard<std::mutex> lk(mV4l2BufferLock);
+            numDequeuedV4l2Buffers = mNumDequeuedV4l2Buffers;
+        }
+        dprintf(fd, "V4L2 buffer queue size %zu, dequeued %zu\n",
+                v4L2BufferCount, numDequeuedV4l2Buffers);
+    }
+
+    dprintf(fd, "In-flight frames (not sorted):");
+    for (const auto& frameNumber : inflightFrames) {
+        dprintf(fd, "%d, ", frameNumber);
+    }
+    dprintf(fd, "\n");
+    mOutputThread->dump(fd);
+    dprintf(fd, "\n");
+
+    if (intfLocked) {
+        mInterfaceLock.unlock();
+    }
+
+    return;
 }
 
 Return<void> ExternalCameraDeviceSession::constructDefaultRequestSettings(
@@ -281,21 +369,20 @@ Return<Status> ExternalCameraDeviceSession::flush() {
 
 Return<void> ExternalCameraDeviceSession::close() {
     Mutex::Autolock _il(mInterfaceLock);
-    Mutex::Autolock _l(mLock);
-    if (!mClosed) {
-        // TODO: b/72261676 Cleanup inflight buffers/V4L2 buffer queue
+    bool closed = isClosed();
+    if (!closed) {
+        mOutputThread->flush();
+        mOutputThread->requestExit();
+        mOutputThread->join();
+
+        Mutex::Autolock _l(mLock);
+        // free all buffers
+        for(auto pair : mStreamMap) {
+            cleanupBuffersLocked(/*Stream ID*/pair.first);
+        }
+        v4l2StreamOffLocked();
         ALOGV("%s: closing V4L2 camera FD %d", __FUNCTION__, mV4l2Fd.get());
         mV4l2Fd.reset();
-        mOutputThread->requestExit(); // TODO: join?
-
-        // free all imported buffers
-        for(auto& pair : mCirculatingBuffers) {
-            CirculatingBuffers& buffers = pair.second;
-            for (auto& p2 : buffers) {
-                sHandleImporter.freeBuffer(p2.second);
-            }
-        }
-
         mClosed = true;
     }
     return Void();
@@ -431,25 +518,22 @@ Status ExternalCameraDeviceSession::processOneCaptureRequest(const CaptureReques
     // TODO: program fps range per capture request here
     //       or limit the set of availableFpsRange
 
-    sp<V4L2Frame> frameIn = dequeueV4l2FrameLocked();
+
+    nsecs_t shutterTs = 0;
+    sp<V4L2Frame> frameIn = dequeueV4l2FrameLocked(&shutterTs);
     if ( frameIn == nullptr) {
         ALOGE("%s: V4L2 deque frame failed!", __FUNCTION__);
         return Status::INTERNAL_ERROR;
     }
-    // TODO: This can probably be replaced by use v4lbuffer timestamp
-    //       if the device supports it
-    nsecs_t shutterTs = systemTime(SYSTEM_TIME_MONOTONIC);
 
-
-    // TODO: reduce object copy in this path
-    HalRequest halReq = {
-            .frameNumber = request.frameNumber,
-            .setting = mLatestReqSetting,
-            .frameIn = frameIn,
-            .shutterTs = shutterTs};
-    halReq.buffers.resize(numOutputBufs);
+    std::shared_ptr<HalRequest> halReq = std::make_shared<HalRequest>();
+    halReq->frameNumber = request.frameNumber;
+    halReq->setting = mLatestReqSetting;
+    halReq->frameIn = frameIn;
+    halReq->shutterTs = shutterTs;
+    halReq->buffers.resize(numOutputBufs);
     for (size_t i = 0; i < numOutputBufs; i++) {
-        HalStreamBuffer& halBuf = halReq.buffers[i];
+        HalStreamBuffer& halBuf = halReq->buffers[i];
         int streamId = halBuf.streamId = request.outputBuffers[i].streamId;
         halBuf.bufferId = request.outputBuffers[i].bufferId;
         const Stream& stream = mStreamMap[streamId];
@@ -461,7 +545,7 @@ Status ExternalCameraDeviceSession::processOneCaptureRequest(const CaptureReques
         halBuf.acquireFence = allFences[i];
         halBuf.fenceTimeout = false;
     }
-    mInflightFrames.insert(halReq.frameNumber);
+    mInflightFrames.insert(halReq->frameNumber);
     // Send request to OutputThread for the rest of processing
     mOutputThread->submitRequest(halReq);
     mFirstRequest = false;
@@ -487,30 +571,31 @@ void ExternalCameraDeviceSession::notifyError(
 }
 
 //TODO: refactor with processCaptureResult
-Status ExternalCameraDeviceSession::processCaptureRequestError(const HalRequest& req) {
+Status ExternalCameraDeviceSession::processCaptureRequestError(
+        const std::shared_ptr<HalRequest>& req) {
     // Return V4L2 buffer to V4L2 buffer queue
-    enqueueV4l2Frame(req.frameIn);
+    enqueueV4l2Frame(req->frameIn);
 
     // NotifyShutter
-    notifyShutter(req.frameNumber, req.shutterTs);
+    notifyShutter(req->frameNumber, req->shutterTs);
 
-    notifyError(/*frameNum*/req.frameNumber, /*stream*/-1, ErrorCode::ERROR_REQUEST);
+    notifyError(/*frameNum*/req->frameNumber, /*stream*/-1, ErrorCode::ERROR_REQUEST);
 
     // Fill output buffers
     hidl_vec<CaptureResult> results;
     results.resize(1);
     CaptureResult& result = results[0];
-    result.frameNumber = req.frameNumber;
+    result.frameNumber = req->frameNumber;
     result.partialResult = 1;
     result.inputBuffer.streamId = -1;
-    result.outputBuffers.resize(req.buffers.size());
-    for (size_t i = 0; i < req.buffers.size(); i++) {
-        result.outputBuffers[i].streamId = req.buffers[i].streamId;
-        result.outputBuffers[i].bufferId = req.buffers[i].bufferId;
+    result.outputBuffers.resize(req->buffers.size());
+    for (size_t i = 0; i < req->buffers.size(); i++) {
+        result.outputBuffers[i].streamId = req->buffers[i].streamId;
+        result.outputBuffers[i].bufferId = req->buffers[i].bufferId;
         result.outputBuffers[i].status = BufferStatus::ERROR;
-        if (req.buffers[i].acquireFence >= 0) {
+        if (req->buffers[i].acquireFence >= 0) {
             native_handle_t* handle = native_handle_create(/*numFds*/1, /*numInts*/0);
-            handle->data[0] = req.buffers[i].acquireFence;
+            handle->data[0] = req->buffers[i].acquireFence;
             result.outputBuffers[i].releaseFence.setTo(handle, /*shouldOwn*/false);
         }
     }
@@ -518,7 +603,7 @@ Status ExternalCameraDeviceSession::processCaptureRequestError(const HalRequest&
     // update inflight records
     {
         Mutex::Autolock _l(mLock);
-        mInflightFrames.erase(req.frameNumber);
+        mInflightFrames.erase(req->frameNumber);
     }
 
     // Callback into framework
@@ -527,51 +612,51 @@ Status ExternalCameraDeviceSession::processCaptureRequestError(const HalRequest&
     return Status::OK;
 }
 
-Status ExternalCameraDeviceSession::processCaptureResult(HalRequest& req) {
+Status ExternalCameraDeviceSession::processCaptureResult(std::shared_ptr<HalRequest>& req) {
     // Return V4L2 buffer to V4L2 buffer queue
-    enqueueV4l2Frame(req.frameIn);
+    enqueueV4l2Frame(req->frameIn);
 
     // NotifyShutter
-    notifyShutter(req.frameNumber, req.shutterTs);
+    notifyShutter(req->frameNumber, req->shutterTs);
 
     // Fill output buffers
     hidl_vec<CaptureResult> results;
     results.resize(1);
     CaptureResult& result = results[0];
-    result.frameNumber = req.frameNumber;
+    result.frameNumber = req->frameNumber;
     result.partialResult = 1;
     result.inputBuffer.streamId = -1;
-    result.outputBuffers.resize(req.buffers.size());
-    for (size_t i = 0; i < req.buffers.size(); i++) {
-        result.outputBuffers[i].streamId = req.buffers[i].streamId;
-        result.outputBuffers[i].bufferId = req.buffers[i].bufferId;
-        if (req.buffers[i].fenceTimeout) {
+    result.outputBuffers.resize(req->buffers.size());
+    for (size_t i = 0; i < req->buffers.size(); i++) {
+        result.outputBuffers[i].streamId = req->buffers[i].streamId;
+        result.outputBuffers[i].bufferId = req->buffers[i].bufferId;
+        if (req->buffers[i].fenceTimeout) {
             result.outputBuffers[i].status = BufferStatus::ERROR;
             native_handle_t* handle = native_handle_create(/*numFds*/1, /*numInts*/0);
-            handle->data[0] = req.buffers[i].acquireFence;
+            handle->data[0] = req->buffers[i].acquireFence;
             result.outputBuffers[i].releaseFence.setTo(handle, /*shouldOwn*/false);
-            notifyError(req.frameNumber, req.buffers[i].streamId, ErrorCode::ERROR_BUFFER);
+            notifyError(req->frameNumber, req->buffers[i].streamId, ErrorCode::ERROR_BUFFER);
         } else {
             result.outputBuffers[i].status = BufferStatus::OK;
             // TODO: refactor
-            if (req.buffers[i].acquireFence > 0) {
+            if (req->buffers[i].acquireFence > 0) {
                 native_handle_t* handle = native_handle_create(/*numFds*/1, /*numInts*/0);
-                handle->data[0] = req.buffers[i].acquireFence;
+                handle->data[0] = req->buffers[i].acquireFence;
                 result.outputBuffers[i].releaseFence.setTo(handle, /*shouldOwn*/false);
             }
         }
     }
 
     // Fill capture result metadata
-    fillCaptureResult(req.setting, req.shutterTs);
-    const camera_metadata_t *rawResult = req.setting.getAndLock();
+    fillCaptureResult(req->setting, req->shutterTs);
+    const camera_metadata_t *rawResult = req->setting.getAndLock();
     V3_2::implementation::convertToHidl(rawResult, &result.result);
-    req.setting.unlock(rawResult);
+    req->setting.unlock(rawResult);
 
     // update inflight records
     {
         Mutex::Autolock _l(mLock);
-        mInflightFrames.erase(req.frameNumber);
+        mInflightFrames.erase(req->frameNumber);
     }
 
     // Callback into framework
@@ -1302,7 +1387,7 @@ ssize_t ExternalCameraDeviceSession::getJpegBufferSize(
 
 int ExternalCameraDeviceSession::OutputThread::createJpegLocked(
         HalStreamBuffer &halBuf,
-        HalRequest &req)
+        const std::shared_ptr<HalRequest>& req)
 {
     int ret;
     auto lfail = [&](auto... args) {
@@ -1329,17 +1414,17 @@ int ExternalCameraDeviceSession::OutputThread::createJpegLocked(
     int jpegQuality, thumbQuality;
     Size thumbSize;
 
-    if (req.setting.exists(ANDROID_JPEG_QUALITY)) {
+    if (req->setting.exists(ANDROID_JPEG_QUALITY)) {
         camera_metadata_entry entry =
-            req.setting.find(ANDROID_JPEG_QUALITY);
+            req->setting.find(ANDROID_JPEG_QUALITY);
         jpegQuality = entry.data.u8[0];
     } else {
         return lfail("%s: ANDROID_JPEG_QUALITY not set",__FUNCTION__);
     }
 
-    if (req.setting.exists(ANDROID_JPEG_THUMBNAIL_QUALITY)) {
+    if (req->setting.exists(ANDROID_JPEG_THUMBNAIL_QUALITY)) {
         camera_metadata_entry entry =
-            req.setting.find(ANDROID_JPEG_THUMBNAIL_QUALITY);
+            req->setting.find(ANDROID_JPEG_THUMBNAIL_QUALITY);
         thumbQuality = entry.data.u8[0];
     } else {
         return lfail(
@@ -1347,9 +1432,9 @@ int ExternalCameraDeviceSession::OutputThread::createJpegLocked(
             __FUNCTION__);
     }
 
-    if (req.setting.exists(ANDROID_JPEG_THUMBNAIL_SIZE)) {
+    if (req->setting.exists(ANDROID_JPEG_THUMBNAIL_SIZE)) {
         camera_metadata_entry entry =
-            req.setting.find(ANDROID_JPEG_THUMBNAIL_SIZE);
+            req->setting.find(ANDROID_JPEG_THUMBNAIL_SIZE);
         thumbSize = Size { static_cast<uint32_t>(entry.data.i32[0]),
                            static_cast<uint32_t>(entry.data.i32[1])
         };
@@ -1409,7 +1494,7 @@ int ExternalCameraDeviceSession::OutputThread::createJpegLocked(
     /* Combine camera characteristics with request settings to form EXIF
      * metadata */
     common::V1_0::helper::CameraMetadata meta(parent->mCameraCharacteristics);
-    meta.append(req.setting);
+    meta.append(req->setting);
 
     /* Generate EXIF object */
     std::unique_ptr<ExifUtils> utils(ExifUtils::create());
@@ -1473,7 +1558,7 @@ int ExternalCameraDeviceSession::OutputThread::createJpegLocked(
 }
 
 bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
-    HalRequest req;
+    std::shared_ptr<HalRequest> req;
     auto parent = mParent.promote();
     if (parent == nullptr) {
        ALOGE("%s: session has been disconnected!", __FUNCTION__);
@@ -1484,7 +1569,7 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
     //       regularly to prevent v4l buffer queue filled with stale buffers
     //       when app doesn't program a preveiw request
     waitForNextRequest(&req);
-    if (req.frameIn == nullptr) {
+    if (req == nullptr) {
         // No new request, wait again
         return true;
     }
@@ -1492,17 +1577,17 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
     auto onDeviceError = [&](auto... args) {
         ALOGE(args...);
         parent->notifyError(
-                req.frameNumber, /*stream*/-1, ErrorCode::ERROR_DEVICE);
+                req->frameNumber, /*stream*/-1, ErrorCode::ERROR_DEVICE);
         signalRequestDone();
         return false;
     };
 
-    if (req.frameIn->mFourcc != V4L2_PIX_FMT_MJPEG) {
+    if (req->frameIn->mFourcc != V4L2_PIX_FMT_MJPEG) {
         return onDeviceError("%s: do not support V4L2 format %c%c%c%c", __FUNCTION__,
-                req.frameIn->mFourcc & 0xFF,
-                (req.frameIn->mFourcc >> 8) & 0xFF,
-                (req.frameIn->mFourcc >> 16) & 0xFF,
-                (req.frameIn->mFourcc >> 24) & 0xFF);
+                req->frameIn->mFourcc & 0xFF,
+                (req->frameIn->mFourcc >> 8) & 0xFF,
+                (req->frameIn->mFourcc >> 16) & 0xFF,
+                (req->frameIn->mFourcc >> 24) & 0xFF);
     }
 
     std::unique_lock<std::mutex> lk(mBufferLock);
@@ -1510,7 +1595,7 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
     // TODO: see if we can save some computation by converting to YV12 here
     uint8_t* inData;
     size_t inDataSize;
-    req.frameIn->map(&inData, &inDataSize);
+    req->frameIn->map(&inData, &inDataSize);
     // TODO: profile
     // TODO: in some special case maybe we can decode jpg directly to gralloc output?
     int res = libyuv::MJPGToI420(
@@ -1538,7 +1623,7 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
 
     ALOGV("%s processing new request", __FUNCTION__);
     const int kSyncWaitTimeoutMs = 500;
-    for (auto& halBuf : req.buffers) {
+    for (auto& halBuf : req->buffers) {
         if (halBuf.acquireFence != -1) {
             int ret = sync_wait(halBuf.acquireFence, kSyncWaitTimeoutMs);
             if (ret) {
@@ -1695,9 +1780,9 @@ Status ExternalCameraDeviceSession::OutputThread::allocateIntermediateBuffers(
     return Status::OK;
 }
 
-Status ExternalCameraDeviceSession::OutputThread::submitRequest(const HalRequest& req) {
+Status ExternalCameraDeviceSession::OutputThread::submitRequest(
+        const std::shared_ptr<HalRequest>& req) {
     std::unique_lock<std::mutex> lk(mRequestListLock);
-    // TODO: reduce object copy in this path
     mRequestList.push_back(req);
     lk.unlock();
     mRequestCond.notify_one();
@@ -1712,10 +1797,10 @@ void ExternalCameraDeviceSession::OutputThread::flush() {
     }
 
     std::unique_lock<std::mutex> lk(mRequestListLock);
-    std::list<HalRequest> reqs = mRequestList;
+    std::list<std::shared_ptr<HalRequest>> reqs = std::move(mRequestList);
     mRequestList.clear();
     if (mProcessingRequest) {
-        std::chrono::seconds timeout = std::chrono::seconds(kReqWaitTimeoutSec);
+        std::chrono::seconds timeout = std::chrono::seconds(kFlushWaitTimeoutSec);
         auto st = mRequestDoneCond.wait_for(lk, timeout);
         if (st == std::cv_status::timeout) {
             ALOGE("%s: wait for inflight request finish timeout!", __FUNCTION__);
@@ -1728,31 +1813,55 @@ void ExternalCameraDeviceSession::OutputThread::flush() {
     }
 }
 
-void ExternalCameraDeviceSession::OutputThread::waitForNextRequest(HalRequest* out) {
+void ExternalCameraDeviceSession::OutputThread::waitForNextRequest(
+        std::shared_ptr<HalRequest>* out) {
     if (out == nullptr) {
         ALOGE("%s: out is null", __FUNCTION__);
         return;
     }
 
     std::unique_lock<std::mutex> lk(mRequestListLock);
+    int waitTimes = 0;
     while (mRequestList.empty()) {
-        std::chrono::seconds timeout = std::chrono::seconds(kReqWaitTimeoutSec);
+        if (exitPending()) {
+            return;
+        }
+        std::chrono::milliseconds timeout = std::chrono::milliseconds(kReqWaitTimeoutMs);
         auto st = mRequestCond.wait_for(lk, timeout);
         if (st == std::cv_status::timeout) {
-            // no new request, return
-            return;
+            waitTimes++;
+            if (waitTimes == kReqWaitTimesMax) {
+                // no new request, return
+                return;
+            }
         }
     }
     *out = mRequestList.front();
     mRequestList.pop_front();
     mProcessingRequest = true;
+    mProcessingFrameNumer = (*out)->frameNumber;
 }
 
 void ExternalCameraDeviceSession::OutputThread::signalRequestDone() {
     std::unique_lock<std::mutex> lk(mRequestListLock);
     mProcessingRequest = false;
+    mProcessingFrameNumer = 0;
     lk.unlock();
     mRequestDoneCond.notify_one();
+}
+
+void ExternalCameraDeviceSession::OutputThread::dump(int fd) {
+    std::lock_guard<std::mutex> lk(mRequestListLock);
+    if (mProcessingRequest) {
+        dprintf(fd, "OutputThread processing frame %d\n", mProcessingFrameNumer);
+    } else {
+        dprintf(fd, "OutputThread not processing any frames\n");
+    }
+    dprintf(fd, "OutputThread request list contains frame: ");
+    for (const auto& req : mRequestList) {
+        dprintf(fd, "%d, ", req->frameNumber);
+    }
+    dprintf(fd, "\n");
 }
 
 void ExternalCameraDeviceSession::cleanupBuffersLocked(int id) {
@@ -2016,8 +2125,13 @@ int ExternalCameraDeviceSession::configureV4l2StreamLocked(const SupportedV4L2Fo
     return OK;
 }
 
-sp<V4L2Frame> ExternalCameraDeviceSession::dequeueV4l2FrameLocked() {
+sp<V4L2Frame> ExternalCameraDeviceSession::dequeueV4l2FrameLocked(/*out*/nsecs_t* shutterTs) {
     sp<V4L2Frame> ret = nullptr;
+
+    if (shutterTs == nullptr) {
+        ALOGE("%s: shutterTs must not be null!", __FUNCTION__);
+        return ret;
+    }
 
     {
         std::unique_lock<std::mutex> lk(mV4l2BufferLock);
@@ -2025,6 +2139,11 @@ sp<V4L2Frame> ExternalCameraDeviceSession::dequeueV4l2FrameLocked() {
             std::chrono::seconds timeout = std::chrono::seconds(kBufferWaitTimeoutSec);
             mLock.unlock();
             auto st = mV4L2BufferReturned.wait_for(lk, timeout);
+            // Here we introduce a case where mV4l2BufferLock is acquired before mLock, while
+            // the normal lock acquisition order is reversed, but this is fine because in most of
+            // cases we are protected by mInterfaceLock. The only thread that can compete these
+            // locks are the OutputThread, where we do need to make sure we don't acquire mLock then
+            // mV4l2BufferLock
             mLock.lock();
             if (st == std::cv_status::timeout) {
                 ALOGE("%s: wait for V4L2 buffer return timeout!", __FUNCTION__);
@@ -2051,6 +2170,15 @@ sp<V4L2Frame> ExternalCameraDeviceSession::dequeueV4l2FrameLocked() {
         // TODO: try to dequeue again
     }
 
+    if (buffer.flags & V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC) {
+        // Ideally we should also check for V4L2_BUF_FLAG_TSTAMP_SRC_SOE, but
+        // even V4L2_BUF_FLAG_TSTAMP_SRC_EOF is better than capture a timestamp now
+        *shutterTs = static_cast<nsecs_t>(buffer.timestamp.tv_sec)*1000000000LL +
+                buffer.timestamp.tv_usec * 1000LL;
+    } else {
+        *shutterTs = systemTime(SYSTEM_TIME_MONOTONIC);
+    }
+
     {
         std::lock_guard<std::mutex> lk(mV4l2BufferLock);
         mNumDequeuedV4l2Buffers++;
@@ -2061,15 +2189,20 @@ sp<V4L2Frame> ExternalCameraDeviceSession::dequeueV4l2FrameLocked() {
 }
 
 void ExternalCameraDeviceSession::enqueueV4l2Frame(const sp<V4L2Frame>& frame) {
-    Mutex::Autolock _l(mLock);
-    frame->unmap();
-    v4l2_buffer buffer{};
-    buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    buffer.memory = V4L2_MEMORY_MMAP;
-    buffer.index = frame->mBufferIndex;
-    if (TEMP_FAILURE_RETRY(ioctl(mV4l2Fd.get(), VIDIOC_QBUF, &buffer)) < 0) {
-        ALOGE("%s: QBUF index %d fails: %s", __FUNCTION__, frame->mBufferIndex, strerror(errno));
-        return;
+    {
+        // Release mLock before acquiring mV4l2BufferLock to avoid potential
+        // deadlock
+        Mutex::Autolock _l(mLock);
+        frame->unmap();
+        v4l2_buffer buffer{};
+        buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        buffer.memory = V4L2_MEMORY_MMAP;
+        buffer.index = frame->mBufferIndex;
+        if (TEMP_FAILURE_RETRY(ioctl(mV4l2Fd.get(), VIDIOC_QBUF, &buffer)) < 0) {
+            ALOGE("%s: QBUF index %d fails: %s", __FUNCTION__,
+                    frame->mBufferIndex, strerror(errno));
+            return;
+        }
     }
 
     {
