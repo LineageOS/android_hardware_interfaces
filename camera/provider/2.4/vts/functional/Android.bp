@@ -23,6 +23,7 @@ cc_test {
     shared_libs: [
         "libbinder",
         "libcamera_metadata",
+        "libcutils",
         "libfmq",
         "libgui",
         "libui",
