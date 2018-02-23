@@ -52,8 +52,14 @@ class HMacImplementation {
         const uint8_t key[32], std::initializer_list<support::ByteBufferProxy> buffers);
 };
 
-using MyOperation = generic::Operation<sp<IConfirmationResultCallback>, MonotonicClockTimeStamper,
-                                       HMacImplementation>;
+class MyOperation : public generic::Operation<sp<IConfirmationResultCallback>,
+                                              MonotonicClockTimeStamper, HMacImplementation> {
+   public:
+    static MyOperation& get() {
+        static MyOperation op;
+        return op;
+    }
+};
 
 }  // namespace implementation
 }  // namespace V1_0
