@@ -61,12 +61,9 @@ KeyParameter convert(const V3_0::KeyParameter& param) {
 }
 
 hidl_vec<V3_0::KeyParameter> convert(const hidl_vec<KeyParameter>& params) {
-    std::vector<V3_0::KeyParameter> converted;
-    converted.reserve(params.size());
-    for (const auto& param : params) {
-        // Qualcomm's Keymaster3 implementation behaves oddly if Tag::USER_ID is provided. Filter it
-        // out.  Revert this change when b/73286437 is fixed.
-        if (param.tag != Tag::USER_ID) converted.push_back(convert(param));
+    hidl_vec<V3_0::KeyParameter> converted(params.size());
+    for (size_t i = 0; i < params.size(); ++i) {
+        converted[i] = convert(params[i]);
     }
     return converted;
 }
