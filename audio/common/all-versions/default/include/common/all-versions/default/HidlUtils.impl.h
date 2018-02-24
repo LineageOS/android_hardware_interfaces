@@ -100,6 +100,22 @@ void HidlUtils::audioGainToHal(const AudioGain& gain, struct audio_gain* halGain
     halGain->max_ramp_ms = gain.maxRampMs;
 }
 
+AudioUsage HidlUtils::audioUsageFromHal(const audio_usage_t halUsage) {
+    switch (halUsage) {
+        case AUDIO_USAGE_NOTIFICATION_COMMUNICATION_REQUEST:
+        case AUDIO_USAGE_NOTIFICATION_COMMUNICATION_INSTANT:
+        case AUDIO_USAGE_NOTIFICATION_COMMUNICATION_DELAYED:
+        case AUDIO_USAGE_NOTIFICATION_EVENT:
+            return AudioUsage::NOTIFICATION;
+        default:
+            return static_cast<AudioUsage>(halUsage);
+    }
+}
+
+audio_usage_t HidlUtils::audioUsageToHal(const AudioUsage usage) {
+    return static_cast<audio_usage_t>(usage);
+}
+
 void HidlUtils::audioOffloadInfoFromHal(const audio_offload_info_t& halOffload,
                                         AudioOffloadInfo* offload) {
     offload->sampleRateHz = halOffload.sample_rate;
@@ -112,7 +128,7 @@ void HidlUtils::audioOffloadInfoFromHal(const audio_offload_info_t& halOffload,
     offload->isStreaming = halOffload.is_streaming;
     offload->bitWidth = halOffload.bit_width;
     offload->bufferSize = halOffload.offload_buffer_size;
-    offload->usage = static_cast<AudioUsage>(halOffload.usage);
+    offload->usage = audioUsageFromHal(halOffload.usage);
 }
 
 void HidlUtils::audioOffloadInfoToHal(const AudioOffloadInfo& offload,
@@ -128,7 +144,7 @@ void HidlUtils::audioOffloadInfoToHal(const AudioOffloadInfo& offload,
     halOffload->is_streaming = offload.isStreaming;
     halOffload->bit_width = offload.bitWidth;
     halOffload->offload_buffer_size = offload.bufferSize;
-    halOffload->usage = static_cast<audio_usage_t>(offload.usage);
+    halOffload->usage = audioUsageToHal(offload.usage);
 }
 
 void HidlUtils::audioPortConfigFromHal(const struct audio_port_config& halConfig,
