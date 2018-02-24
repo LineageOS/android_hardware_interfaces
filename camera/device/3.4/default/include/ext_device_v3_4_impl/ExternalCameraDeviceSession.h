@@ -177,8 +177,11 @@ protected:
     status_t initDefaultRequests();
     status_t fillCaptureResult(common::V1_0::helper::CameraMetadata& md, nsecs_t timestamp);
     Status configureStreams(const V3_2::StreamConfiguration&, V3_3::HalStreamConfiguration* out);
-    int configureV4l2StreamLocked(const SupportedV4L2Format& fmt);
+    // fps = 0.0 means default, which is
+    // slowest fps that is at least 30, or fastest fps if 30 is not supported
+    int configureV4l2StreamLocked(const SupportedV4L2Format& fmt, double fps = 0.0);
     int v4l2StreamOffLocked();
+    int setV4l2FpsLocked(double fps);
 
     // TODO: change to unique_ptr for better tracking
     sp<V4L2Frame> dequeueV4l2FrameLocked(/*out*/nsecs_t* shutterTs); // Called with mLock hold
@@ -211,6 +214,8 @@ protected:
     Size getMaxThumbResolution() const;
 
     ssize_t getJpegBufferSize(uint32_t width, uint32_t height) const;
+
+    int waitForV4L2BufferReturnLocked(std::unique_lock<std::mutex>& lk);
 
     class OutputThread : public android::Thread {
     public:
@@ -307,6 +312,7 @@ protected:
 
     bool mV4l2Streaming = false;
     SupportedV4L2Format mV4l2StreamingFmt;
+    double mV4l2StreamingFps = 0.0;
     size_t mV4L2BufferCount = 0;
 
     static const int kBufferWaitTimeoutSec = 3; // TODO: handle long exposure (or not allowing)

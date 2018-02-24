@@ -78,7 +78,6 @@ struct ExternalCameraDevice : public ICameraDevice {
     /* End of Methods from ::android::hardware::camera::device::V3_2::ICameraDevice */
 
 protected:
-    void getFrameRateList(int fd, float fpsUpperBound, SupportedV4L2Format* format);
     // Init supported w/h/format/fps in mSupportedFormats. Caller still owns fd
     void initSupportedFormatsLocked(int fd);
 
@@ -92,7 +91,15 @@ protected:
     status_t initOutputCharsKeys(int fd,
             ::android::hardware::camera::common::V1_0::helper::CameraMetadata*);
 
-    static CroppingType initCroppingType(/*inout*/std::vector<SupportedV4L2Format>*);
+    static void getFrameRateList(int fd, double fpsUpperBound, SupportedV4L2Format* format);
+
+    // Get candidate supported formats list of input cropping type.
+    static std::vector<SupportedV4L2Format> getCandidateSupportedFormatsLocked(
+            int fd, CroppingType cropType,
+            const std::vector<ExternalCameraConfig::FpsLimitation>& fpsLimits);
+    // Trim supported format list by the cropping type. Also sort output formats by width/height
+    static void trimSupportedFormats(CroppingType cropType,
+            /*inout*/std::vector<SupportedV4L2Format>* pFmts);
 
     Mutex mLock;
     bool mInitFailed = false;
