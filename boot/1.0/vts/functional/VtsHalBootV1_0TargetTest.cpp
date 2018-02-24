@@ -24,6 +24,8 @@
 #include <VtsHalHidlTargetTestBase.h>
 #include <VtsHalHidlTargetTestEnvBase.h>
 
+#include <unordered_set>
+
 using ::android::hardware::boot::V1_0::IBootControl;
 using ::android::hardware::boot::V1_0::CommandResult;
 using ::android::hardware::boot::V1_0::BoolResult;
@@ -32,6 +34,7 @@ using ::android::hardware::hidl_string;
 using ::android::hardware::Return;
 using ::android::sp;
 using std::string;
+using std::unordered_set;
 using std::vector;
 
 // Test environment for Boot HIDL HAL.
@@ -168,14 +171,18 @@ TEST_F(BootHidlTest, IsSlotMarkedSuccessful) {
 // Sanity check Boot::getSuffix() on good and bad inputs.
 TEST_F(BootHidlTest, GetSuffix) {
     string suffixStr;
-    vector<string> correctSuffixes = {"_a", "_b"};
+    unordered_set<string> suffixes;
     auto cb = [&](hidl_string suffix) { suffixStr = suffix.c_str(); };
-    for (Slot i = 0; i < 2; i++) {
+    for (Slot i = 0; i < boot->getNumberSlots(); i++) {
         CommandResult cr;
         Return<void> result = boot->getSuffix(i, cb);
         EXPECT_TRUE(result.isOk());
-        ASSERT_EQ(0, suffixStr.compare(correctSuffixes[i]));
+        ASSERT_EQ('_', suffixStr[0]);
+        ASSERT_LE((unsigned)2, suffixStr.size());
+        suffixes.insert(suffixStr);
     }
+    // All suffixes should be unique
+    ASSERT_EQ(boot->getNumberSlots(), suffixes.size());
     {
         string emptySuffix = "";
         Return<void> result = boot->getSuffix(boot->getNumberSlots(), cb);
