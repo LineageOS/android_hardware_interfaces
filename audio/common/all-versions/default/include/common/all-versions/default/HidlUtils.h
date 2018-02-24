@@ -47,6 +47,8 @@ class HidlUtils {
                                      struct audio_gain_config* halConfig);
     static void audioGainFromHal(const struct audio_gain& halGain, AudioGain* gain);
     static void audioGainToHal(const AudioGain& gain, struct audio_gain* halGain);
+    static AudioUsage audioUsageFromHal(const audio_usage_t halUsage);
+    static audio_usage_t audioUsageToHal(const AudioUsage usage);
     static void audioOffloadInfoFromHal(const audio_offload_info_t& halOffload,
                                         AudioOffloadInfo* offload);
     static void audioOffloadInfoToHal(const AudioOffloadInfo& offload,
