@@ -35,6 +35,7 @@
 #include <binder/MemoryHeapBase.h>
 #include <CameraMetadata.h>
 #include <CameraParameters.h>
+#include <cutils/properties.h>
 #include <fmq/MessageQueue.h>
 #include <grallocusage/GrallocUsageConversion.h>
 #include <gui/BufferItemConsumer.h>
@@ -1100,6 +1101,22 @@ hidl_vec<hidl_string> CameraHidlTest::getCameraDeviceNames(sp<ICameraProvider> p
     return cameraDeviceNames;
 }
 
+// Test devices with first_api_level >= P does not advertise device@1.0
+TEST_F(CameraHidlTest, noHal1AfterP) {
+    constexpr int32_t HAL1_PHASE_OUT_API_LEVEL = 28;
+    int32_t firstApiLevel = property_get_int32("ro.product.first_api_level", /*default*/-1);
+    ASSERT_GT(firstApiLevel, 0); // first_api_level must exist
+
+    if (firstApiLevel >= HAL1_PHASE_OUT_API_LEVEL) {
+        hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
+        for (const auto& name : cameraDeviceNames) {
+            int deviceVersion = getCameraDeviceVersion(name, mProviderType);
+            ASSERT_NE(deviceVersion, 0); // Must be a valid device version
+            ASSERT_NE(deviceVersion, CAMERA_DEVICE_API_VERSION_1_0); // Must not be device@1.0
+        }
+    }
+}
+
 // Test if ICameraProvider::isTorchModeSupported returns Status::OK
 TEST_F(CameraHidlTest, isTorchModeSupported) {
     Return<void> ret;
@@ -1119,9 +1136,6 @@ TEST_F(CameraHidlTest, getCameraIdList) {
             ALOGI("Camera Id[%zu] is %s", i, idList[i].c_str());
         }
         ASSERT_EQ(Status::OK, status);
-        // This is true for internal camera provider.
-        // Not necessary hold for external cameras providers
-        ASSERT_GT(idList.size(), 0u);
     });
     ASSERT_TRUE(ret.isOk());
 }

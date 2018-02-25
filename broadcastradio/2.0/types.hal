@@ -288,6 +288,9 @@ struct Properties {
 struct ProgramInfo {
     /**
      * An identifier used to point at the program (primarily to tune to it).
+     *
+     * This field is required - its type field must not be set to
+     * IdentifierType::INVALID.
      */
     ProgramSelector selector;
 
@@ -302,8 +305,9 @@ struct ProgramInfo {
      * may choose to use DAB technology to make actual tuning. This identifier
      * must reflect that.
      *
-     * This field is optional, but must be set for currently tuned program.
-     * If it's not set, its value must be initialized to all-zeros.
+     * This field is required for currently tuned program only.
+     * For all other items on the program list, its type field must be
+     * initialized to IdentifierType::INVALID.
      *
      * Only primary identifiers for a given radio technology are valid:
      *  - AMFM_FREQUENCY for analog AM/FM;
@@ -326,9 +330,9 @@ struct ProgramInfo {
      * multiple ensembles. This identifier points to the channel to which the
      * radio hardware is physically tuned to.
      *
-     * This field is optional, but must be set for currently tuned program.
-     * If it's not set, its type field must be initialized to
-     * IdentifierType::INVALID.
+     * This field is required for currently tuned program only.
+     * For all other items on the program list, its type field must be
+     * initialized to IdentifierType::INVALID.
      *
      * Only physical identifiers are valid:
      *  - AMFM_FREQUENCY;
@@ -408,6 +412,8 @@ enum ProgramInfoFlags : uint32_t {
      * Tuned to a program (not playing a static).
      *
      * It's the same condition that would stop scan() operation.
+     *
+     * By definition, this flag must be set for all items on the program list.
      */
     TUNED = 1 << 4,
 

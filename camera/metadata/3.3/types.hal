@@ -99,19 +99,19 @@ enum CameraMetadataTag : @3.2::CameraMetadataTag {
      */
     ANDROID_STATISTICS_OIS_DATA_MODE = android.hardware.camera.metadata@3.2::CameraMetadataTag:ANDROID_STATISTICS_END,
 
-    /** android.statistics.oisTimestamps [dynamic, int64[], public]
+    /** android.statistics.oisTimestamps [dynamic, int64[], ndk_public]
      *
      * <p>An array of timestamps of OIS samples, in nanoseconds.</p>
      */
     ANDROID_STATISTICS_OIS_TIMESTAMPS,
 
-    /** android.statistics.oisXShifts [dynamic, float[], public]
+    /** android.statistics.oisXShifts [dynamic, float[], ndk_public]
      *
      * <p>An array of shifts of OIS samples, in x direction.</p>
      */
     ANDROID_STATISTICS_OIS_X_SHIFTS,
 
-    /** android.statistics.oisYShifts [dynamic, float[], public]
+    /** android.statistics.oisYShifts [dynamic, float[], ndk_public]
      *
      * <p>An array of shifts of OIS samples, in y direction.</p>
      */
