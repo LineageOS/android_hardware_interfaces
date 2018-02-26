@@ -59,27 +59,52 @@ namespace functional {
 using ::android::hardware::neuralnetworks::V1_0::implementation::ExecutionCallback;
 using ::android::hardware::neuralnetworks::V1_0::implementation::PreparedModelCallback;
 
-inline sp<IPreparedModel> doPrepareModelShortcut(sp<IDevice>& device) {
+static void doPrepareModelShortcut(const sp<IDevice>& device, sp<IPreparedModel>* preparedModel) {
+    ASSERT_NE(nullptr, preparedModel);
     Model model = createValidTestModel_1_1();
 
+    // see if service can handle model
+    bool fullySupportsModel = false;
+    Return<void> supportedOpsLaunchStatus = device->getSupportedOperations_1_1(
+        model, [&fullySupportsModel](ErrorStatus status, const hidl_vec<bool>& supported) {
+            ASSERT_EQ(ErrorStatus::NONE, status);
+            ASSERT_NE(0ul, supported.size());
+            fullySupportsModel =
+                std::all_of(supported.begin(), supported.end(), [](bool valid) { return valid; });
+        });
+    ASSERT_TRUE(supportedOpsLaunchStatus.isOk());
+
+    // launch prepare model
     sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
-    if (preparedModelCallback == nullptr) {
-        return nullptr;
-    }
+    ASSERT_NE(nullptr, preparedModelCallback.get());
     Return<ErrorStatus> prepareLaunchStatus =
         device->prepareModel_1_1(model, preparedModelCallback);
-    if (!prepareLaunchStatus.isOk() || prepareLaunchStatus != ErrorStatus::NONE) {
-        return nullptr;
-    }
+    ASSERT_TRUE(prepareLaunchStatus.isOk());
+    ASSERT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(prepareLaunchStatus));
 
+    // retrieve prepared model
     preparedModelCallback->wait();
     ErrorStatus prepareReturnStatus = preparedModelCallback->getStatus();
-    sp<IPreparedModel> preparedModel = preparedModelCallback->getPreparedModel();
-    if (prepareReturnStatus != ErrorStatus::NONE || preparedModel == nullptr) {
-        return nullptr;
-    }
+    *preparedModel = preparedModelCallback->getPreparedModel();
 
-    return preparedModel;
+    // The getSupportedOperations call returns a list of operations that are
+    // guaranteed not to fail if prepareModel is called, and
+    // 'fullySupportsModel' is true i.f.f. the entire model is guaranteed.
+    // If a driver has any doubt that it can prepare an operation, it must
+    // return false. So here, if a driver isn't sure if it can support an
+    // operation, but reports that it successfully prepared the model, the test
+    // can continue.
+    if (!fullySupportsModel && prepareReturnStatus != ErrorStatus::NONE) {
+        ASSERT_EQ(nullptr, preparedModel->get());
+        LOG(INFO) << "NN VTS: Early termination of test because vendor service cannot "
+                     "prepare model that it does not support.";
+        std::cout << "[          ]   Early termination of test because vendor service cannot "
+                     "prepare model that it does not support."
+                  << std::endl;
+        return;
+    }
+    ASSERT_EQ(ErrorStatus::NONE, prepareReturnStatus);
+    ASSERT_NE(nullptr, preparedModel->get());
 }
 
 // create device test
@@ -142,19 +167,8 @@ TEST_F(NeuralnetworksHidlTest, SupportedOperationsNegativeTest2) {
 
 // prepare simple model positive test
 TEST_F(NeuralnetworksHidlTest, SimplePrepareModelPositiveTest) {
-    Model model = createValidTestModel_1_1();
-    sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
-    ASSERT_NE(nullptr, preparedModelCallback.get());
-    Return<ErrorStatus> prepareLaunchStatus =
-        device->prepareModel_1_1(model, preparedModelCallback);
-    ASSERT_TRUE(prepareLaunchStatus.isOk());
-    EXPECT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(prepareLaunchStatus));
-
-    preparedModelCallback->wait();
-    ErrorStatus prepareReturnStatus = preparedModelCallback->getStatus();
-    EXPECT_EQ(ErrorStatus::NONE, prepareReturnStatus);
-    sp<IPreparedModel> preparedModel = preparedModelCallback->getPreparedModel();
-    EXPECT_NE(nullptr, preparedModel.get());
+    sp<IPreparedModel> preparedModel;
+    doPrepareModelShortcut(device, &preparedModel);
 }
 
 // prepare simple model negative test 1
@@ -197,8 +211,11 @@ TEST_F(NeuralnetworksHidlTest, SimpleExecuteGraphPositiveTest) {
     std::vector<float> expectedData = {6.0f, 8.0f, 10.0f, 12.0f};
     const uint32_t OUTPUT = 1;
 
-    sp<IPreparedModel> preparedModel = doPrepareModelShortcut(device);
-    ASSERT_NE(nullptr, preparedModel.get());
+    sp<IPreparedModel> preparedModel;
+    ASSERT_NO_FATAL_FAILURE(doPrepareModelShortcut(device, &preparedModel));
+    if (preparedModel == nullptr) {
+        return;
+    }
     Request request = createValidTestRequest();
 
     auto postWork = [&] {
@@ -231,8 +248,11 @@ TEST_F(NeuralnetworksHidlTest, SimpleExecuteGraphPositiveTest) {
 
 // execute simple graph negative test 1
 TEST_F(NeuralnetworksHidlTest, SimpleExecuteGraphNegativeTest1) {
-    sp<IPreparedModel> preparedModel = doPrepareModelShortcut(device);
-    ASSERT_NE(nullptr, preparedModel.get());
+    sp<IPreparedModel> preparedModel;
+    ASSERT_NO_FATAL_FAILURE(doPrepareModelShortcut(device, &preparedModel));
+    if (preparedModel == nullptr) {
+        return;
+    }
     Request request = createInvalidTestRequest1();
 
     sp<ExecutionCallback> executionCallback = new ExecutionCallback();
@@ -248,8 +268,11 @@ TEST_F(NeuralnetworksHidlTest, SimpleExecuteGraphNegativeTest1) {
 
 // execute simple graph negative test 2
 TEST_F(NeuralnetworksHidlTest, SimpleExecuteGraphNegativeTest2) {
-    sp<IPreparedModel> preparedModel = doPrepareModelShortcut(device);
-    ASSERT_NE(nullptr, preparedModel.get());
+    sp<IPreparedModel> preparedModel;
+    ASSERT_NO_FATAL_FAILURE(doPrepareModelShortcut(device, &preparedModel));
+    if (preparedModel == nullptr) {
+        return;
+    }
     Request request = createInvalidTestRequest2();
 
     sp<ExecutionCallback> executionCallback = new ExecutionCallback();
