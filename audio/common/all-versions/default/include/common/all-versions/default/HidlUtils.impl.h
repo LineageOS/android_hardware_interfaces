@@ -296,8 +296,8 @@ void HidlUtils::audioPortToHal(const AudioPort& port, struct audio_port* halPort
     halPort->id = port.id;
     halPort->role = static_cast<audio_port_role_t>(port.role);
     halPort->type = static_cast<audio_port_type_t>(port.type);
-    memcpy(halPort->name, port.name.c_str(),
-           std::min(port.name.size(), static_cast<size_t>(AUDIO_PORT_MAX_NAME_LEN)));
+    strncpy(halPort->name, port.name.c_str(), AUDIO_PORT_MAX_NAME_LEN);
+    halPort->name[AUDIO_PORT_MAX_NAME_LEN - 1] = '\0';
     halPort->num_sample_rates =
         std::min(port.sampleRates.size(), static_cast<size_t>(AUDIO_PORT_MAX_SAMPLING_RATES));
     for (size_t i = 0; i < halPort->num_sample_rates; ++i) {
