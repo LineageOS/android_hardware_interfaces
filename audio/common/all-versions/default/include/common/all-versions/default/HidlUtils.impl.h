@@ -18,6 +18,7 @@
 #error "AUDIO_HAL_VERSION must be set before including this file."
 #endif
 
+#include <common/all-versions/VersionUtils.h>
 #include <string.h>
 
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioChannelMask;
@@ -32,6 +33,8 @@ using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioSource;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioStreamType;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioUsage;
 
+using ::android::hardware::audio::common::utils::mkEnumConverter;
+
 namespace android {
 namespace hardware {
 namespace audio {
@@ -40,7 +43,7 @@ namespace AUDIO_HAL_VERSION {
 
 void HidlUtils::audioConfigFromHal(const audio_config_t& halConfig, AudioConfig* config) {
     config->sampleRateHz = halConfig.sample_rate;
-    config->channelMask = AudioChannelMask(halConfig.channel_mask);
+    config->channelMask = mkEnumConverter<AudioChannelMask>(halConfig.channel_mask);
     config->format = AudioFormat(halConfig.format);
     audioOffloadInfoFromHal(halConfig.offload_info, &config->offloadInfo);
     config->frameCount = halConfig.frame_count;
@@ -58,8 +61,8 @@ void HidlUtils::audioConfigToHal(const AudioConfig& config, audio_config_t* halC
 void HidlUtils::audioGainConfigFromHal(const struct audio_gain_config& halConfig,
                                        AudioGainConfig* config) {
     config->index = halConfig.index;
-    config->mode = AudioGainMode(halConfig.mode);
-    config->channelMask = AudioChannelMask(halConfig.channel_mask);
+    config->mode = mkEnumConverter<AudioGainMode>(halConfig.mode);
+    config->channelMask = mkEnumConverter<AudioChannelMask>(halConfig.channel_mask);
     for (size_t i = 0; i < sizeof(audio_channel_mask_t) * 8; ++i) {
         config->values[i] = halConfig.values[i];
     }
@@ -79,8 +82,8 @@ void HidlUtils::audioGainConfigToHal(const AudioGainConfig& config,
 }
 
 void HidlUtils::audioGainFromHal(const struct audio_gain& halGain, AudioGain* gain) {
-    gain->mode = AudioGainMode(halGain.mode);
-    gain->channelMask = AudioChannelMask(halGain.channel_mask);
+    gain->mode = mkEnumConverter<AudioGainMode>(halGain.mode);
+    gain->channelMask = mkEnumConverter<AudioChannelMask>(halGain.channel_mask);
     gain->minValue = halGain.min_value;
     gain->maxValue = halGain.max_value;
     gain->defaultValue = halGain.default_value;
@@ -119,7 +122,7 @@ audio_usage_t HidlUtils::audioUsageToHal(const AudioUsage usage) {
 void HidlUtils::audioOffloadInfoFromHal(const audio_offload_info_t& halOffload,
                                         AudioOffloadInfo* offload) {
     offload->sampleRateHz = halOffload.sample_rate;
-    offload->channelMask = AudioChannelMask(halOffload.channel_mask);
+    offload->channelMask = mkEnumConverter<AudioChannelMask>(halOffload.channel_mask);
     offload->format = AudioFormat(halOffload.format);
     offload->streamType = AudioStreamType(halOffload.stream_type);
     offload->bitRatePerSecond = halOffload.bit_rate;
@@ -152,9 +155,9 @@ void HidlUtils::audioPortConfigFromHal(const struct audio_port_config& halConfig
     config->id = halConfig.id;
     config->role = AudioPortRole(halConfig.role);
     config->type = AudioPortType(halConfig.type);
-    config->configMask = AudioPortConfigMask(halConfig.config_mask);
+    config->configMask = mkEnumConverter<AudioPortConfigMask>(halConfig.config_mask);
     config->sampleRateHz = halConfig.sample_rate;
-    config->channelMask = AudioChannelMask(halConfig.channel_mask);
+    config->channelMask = mkEnumConverter<AudioChannelMask>(halConfig.channel_mask);
     config->format = AudioFormat(halConfig.format);
     audioGainConfigFromHal(halConfig.gain, &config->gain);
     switch (halConfig.type) {
@@ -254,7 +257,7 @@ void HidlUtils::audioPortFromHal(const struct audio_port& halPort, AudioPort* po
     }
     port->channelMasks.resize(halPort.num_channel_masks);
     for (size_t i = 0; i < halPort.num_channel_masks; ++i) {
-        port->channelMasks[i] = AudioChannelMask(halPort.channel_masks[i]);
+        port->channelMasks[i] = mkEnumConverter<AudioChannelMask>(halPort.channel_masks[i]);
     }
     port->formats.resize(halPort.num_formats);
     for (size_t i = 0; i < halPort.num_formats; ++i) {
