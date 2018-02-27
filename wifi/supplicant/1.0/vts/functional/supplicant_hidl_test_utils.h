@@ -21,6 +21,7 @@
 #include <android/hardware/wifi/supplicant/1.0/ISupplicantP2pIface.h>
 #include <android/hardware/wifi/supplicant/1.0/ISupplicantStaIface.h>
 #include <android/hardware/wifi/supplicant/1.0/ISupplicantStaNetwork.h>
+#include <android/hardware/wifi/supplicant/1.1/ISupplicant.h>
 
 #include <VtsHalHidlTargetTestEnvBase.h>
 
