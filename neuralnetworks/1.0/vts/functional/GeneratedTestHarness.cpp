@@ -186,35 +186,29 @@ void Execute(sp<V1_0::IDevice>& device, std::function<V1_0::Model(void)> create_
 
     // see if service can handle model
     bool fullySupportsModel = false;
-    ErrorStatus supportedStatus;
-    sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
-    ASSERT_NE(nullptr, preparedModelCallback.get());
-
     Return<void> supportedCall = device->getSupportedOperations(
-        model, [&](ErrorStatus status, const hidl_vec<bool>& supported) {
-            supportedStatus = status;
+        model, [&fullySupportsModel](ErrorStatus status, const hidl_vec<bool>& supported) {
+            ASSERT_EQ(ErrorStatus::NONE, status);
             ASSERT_NE(0ul, supported.size());
             fullySupportsModel =
                 std::all_of(supported.begin(), supported.end(), [](bool valid) { return valid; });
         });
     ASSERT_TRUE(supportedCall.isOk());
-    ASSERT_EQ(ErrorStatus::NONE, supportedStatus);
+
+    // launch prepare model
+    sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
+    ASSERT_NE(nullptr, preparedModelCallback.get());
     Return<ErrorStatus> prepareLaunchStatus = device->prepareModel(model, preparedModelCallback);
     ASSERT_TRUE(prepareLaunchStatus.isOk());
+    ASSERT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(prepareLaunchStatus));
 
     // retrieve prepared model
     preparedModelCallback->wait();
     ErrorStatus prepareReturnStatus = preparedModelCallback->getStatus();
     sp<IPreparedModel> preparedModel = preparedModelCallback->getPreparedModel();
-    if (fullySupportsModel) {
-        EXPECT_EQ(ErrorStatus::NONE, prepareReturnStatus);
-    } else {
-        EXPECT_TRUE(prepareReturnStatus == ErrorStatus::NONE ||
-                    prepareReturnStatus == ErrorStatus::GENERAL_FAILURE);
-    }
 
     // early termination if vendor service cannot fully prepare model
-    if (!fullySupportsModel && prepareReturnStatus == ErrorStatus::GENERAL_FAILURE) {
+    if (!fullySupportsModel && prepareReturnStatus != ErrorStatus::NONE) {
         ASSERT_EQ(nullptr, preparedModel.get());
         LOG(INFO) << "NN VTS: Early termination of test because vendor service cannot "
                      "prepare model that it does not support.";
@@ -223,6 +217,7 @@ void Execute(sp<V1_0::IDevice>& device, std::function<V1_0::Model(void)> create_
                   << std::endl;
         return;
     }
+    EXPECT_EQ(ErrorStatus::NONE, prepareReturnStatus);
     ASSERT_NE(nullptr, preparedModel.get());
 
     EvaluatePreparedModel(preparedModel, is_ignored, examples);
@@ -235,36 +230,30 @@ void Execute(sp<V1_1::IDevice>& device, std::function<V1_1::Model(void)> create_
 
     // see if service can handle model
     bool fullySupportsModel = false;
-    ErrorStatus supportedStatus;
-    sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
-    ASSERT_NE(nullptr, preparedModelCallback.get());
-
     Return<void> supportedCall = device->getSupportedOperations_1_1(
-        model, [&](ErrorStatus status, const hidl_vec<bool>& supported) {
-            supportedStatus = status;
+        model, [&fullySupportsModel](ErrorStatus status, const hidl_vec<bool>& supported) {
+            ASSERT_EQ(ErrorStatus::NONE, status);
             ASSERT_NE(0ul, supported.size());
             fullySupportsModel =
                 std::all_of(supported.begin(), supported.end(), [](bool valid) { return valid; });
         });
     ASSERT_TRUE(supportedCall.isOk());
-    ASSERT_EQ(ErrorStatus::NONE, supportedStatus);
+
+    // launch prepare model
+    sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
+    ASSERT_NE(nullptr, preparedModelCallback.get());
     Return<ErrorStatus> prepareLaunchStatus =
         device->prepareModel_1_1(model, preparedModelCallback);
     ASSERT_TRUE(prepareLaunchStatus.isOk());
+    ASSERT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(prepareLaunchStatus));
 
     // retrieve prepared model
     preparedModelCallback->wait();
     ErrorStatus prepareReturnStatus = preparedModelCallback->getStatus();
     sp<IPreparedModel> preparedModel = preparedModelCallback->getPreparedModel();
-    if (fullySupportsModel) {
-        EXPECT_EQ(ErrorStatus::NONE, prepareReturnStatus);
-    } else {
-        EXPECT_TRUE(prepareReturnStatus == ErrorStatus::NONE ||
-                    prepareReturnStatus == ErrorStatus::GENERAL_FAILURE);
-    }
 
     // early termination if vendor service cannot fully prepare model
-    if (!fullySupportsModel && prepareReturnStatus == ErrorStatus::GENERAL_FAILURE) {
+    if (!fullySupportsModel && prepareReturnStatus != ErrorStatus::NONE) {
         ASSERT_EQ(nullptr, preparedModel.get());
         LOG(INFO) << "NN VTS: Early termination of test because vendor service cannot "
                      "prepare model that it does not support.";
@@ -273,6 +262,7 @@ void Execute(sp<V1_1::IDevice>& device, std::function<V1_1::Model(void)> create_
                   << std::endl;
         return;
     }
+    EXPECT_EQ(ErrorStatus::NONE, prepareReturnStatus);
     ASSERT_NE(nullptr, preparedModel.get());
 
     // If in relaxed mode, set the error range to be 5ULP of FP16.
