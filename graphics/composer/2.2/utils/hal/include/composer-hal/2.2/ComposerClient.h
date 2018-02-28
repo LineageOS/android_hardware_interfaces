@@ -103,6 +103,64 @@ class ComposerClientImpl : public V2_1::hal::detail::ComposerClientImpl<Interfac
         return mHal->setPowerMode_2_2(display, mode);
     }
 
+    Return<void> getColorModes_2_2(Display display,
+                                   IComposerClient::getColorModes_2_2_cb hidl_cb) override {
+        hidl_vec<ColorMode> modes;
+        Error err = mHal->getColorModes_2_2(display, &modes);
+        hidl_cb(err, modes);
+        return Void();
+    }
+
+    Return<void> getRenderIntents(Display display, ColorMode mode,
+                                  IComposerClient::getRenderIntents_cb hidl_cb) override {
+#ifdef USES_DISPLAY_RENDER_INTENTS
+        std::vector<RenderIntent> intents;
+        Error err = mHal->getRenderIntents(display, mode, &intents);
+        hidl_cb(err, intents);
+#else
+        (void)display;
+        (void)mode;
+        hidl_cb(Error::NONE, hidl_vec<RenderIntent>({RenderIntent::COLORIMETRIC}));
+#endif
+        return Void();
+    }
+
+    Return<Error> setColorMode_2_2(Display display, ColorMode mode, RenderIntent intent) override {
+#ifndef USES_DISPLAY_RENDER_INTENTS
+        if (intent != RenderIntent::COLORIMETRIC) {
+            return Error::BAD_PARAMETER;
+        }
+#endif
+        return mHal->setColorMode_2_2(display, mode, intent);
+    }
+
+    Return<void> getDataspaceSaturationMatrix(
+        Dataspace dataspace, IComposerClient::getDataspaceSaturationMatrix_cb hidl_cb) override {
+        if (dataspace != Dataspace::SRGB_LINEAR) {
+            hidl_cb(Error::BAD_PARAMETER, std::array<float, 16>{0.0f}.data());
+            return Void();
+        }
+
+        hidl_cb(Error::NONE, mHal->getDataspaceSaturationMatrix(dataspace).data());
+        return Void();
+    }
+
+    Return<void> executeCommands_2_2(uint32_t inLength, const hidl_vec<hidl_handle>& inHandles,
+                                     IComposerClient::executeCommands_2_2_cb hidl_cb) override {
+        std::lock_guard<std::mutex> lock(mCommandEngineMutex);
+        bool outChanged = false;
+        uint32_t outLength = 0;
+        hidl_vec<hidl_handle> outHandles;
+        Error error =
+            mCommandEngine->execute(inLength, inHandles, &outChanged, &outLength, &outHandles);
+
+        hidl_cb(error, outChanged, outLength, outHandles);
+
+        mCommandEngine->reset();
+
+        return Void();
+    }
+
    protected:
     std::unique_ptr<V2_1::hal::ComposerResources> createResources() override {
         return ComposerResources::create();
@@ -146,6 +204,8 @@ class ComposerClientImpl : public V2_1::hal::detail::ComposerClientImpl<Interfac
 
    private:
     using BaseType2_1 = V2_1::hal::detail::ComposerClientImpl<Interface, Hal>;
+    using BaseType2_1::mCommandEngine;
+    using BaseType2_1::mCommandEngineMutex;
     using BaseType2_1::mHal;
     using BaseType2_1::mResources;
 };
