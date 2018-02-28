@@ -66,35 +66,6 @@
     <xs:complexType name="globalConfiguration">
         <xs:attribute name="speaker_drc_enabled" type="xs:boolean" use="required"/>
     </xs:complexType>
-    <!-- Enum values of IDevicesFactory::Device
-         TODO: generate from hidl to avoid manual sync. -->
-    <xs:simpleType name="halName">
-        <xs:union>
-            <xs:simpleType>
-                <xs:restriction base="xs:string">
-                    <xs:enumeration value="primary"/>
-                    <xs:enumeration value="a2dp"/>
-                    <xs:enumeration value="usb"/>
-                    <xs:enumeration value="r_submix"/>
-                    <xs:enumeration value="codec_offload"/>
-                    <xs:enumeration value="stub"/>
-                </xs:restriction>
-            </xs:simpleType>
-            <xs:simpleType>
-                <xs:annotation>
-                    <xs:documentation xml:lang="en">
-                        Vendor eXtension names must be in the vx namespace.
-                        Vendor are encouraged to namespace their module names.
-                        Example for an hypothetical Google virtual reality HAL:
-                            <module name="vx_google_vr" halVersion="3.0"/>
-                    </xs:documentation>
-                </xs:annotation>
-                <xs:restriction base="xs:string">
-                    <xs:pattern value="vx_[_a-zA-Z0-9]+"/>
-                </xs:restriction>
-            </xs:simpleType>
-        </xs:union>
-    </xs:simpleType>
     <xs:complexType name="modules">
         <xs:annotation>
             <xs:documentation xml:lang="en">
@@ -133,7 +104,7 @@
                         <xs:element name="devicePorts" type="devicePorts" minOccurs="0"/>
                         <xs:element name="routes" type="routes" minOccurs="0"/>
                     </xs:sequence>
-                    <xs:attribute name="name" type="halName" use="required"/>
+                    <xs:attribute name="name" type="xsd:string" use="required"/>
                     <xs:attribute name="halVersion" type="halVersion" use="required"/>
                 </xs:complexType>
                 <xs:unique name="mixPortNameUniqueness">
