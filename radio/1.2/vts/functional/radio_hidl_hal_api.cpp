@@ -362,3 +362,208 @@ TEST_F(RadioHidlTest_v1_2, startNetworkScan_GoodRequest2) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_2->rspInfo.error, {RadioError::NONE}));
     }
 }
+
+/*
+ * Test IRadio.setIndicationFilter_1_2()
+ */
+TEST_F(RadioHidlTest_v1_2, setIndicationFilter_1_2) {
+    const int serial = GetRandomSerialNumber();
+
+    Return<void> res =
+        radio_v1_2->setIndicationFilter_1_2(serial, static_cast<int>(IndicationFilter::ALL));
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_2->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_2->rspInfo.serial);
+
+    ALOGI("setIndicationFilter_1_2, rspInfo.error = %s\n",
+          toString(radioRsp_v1_2->rspInfo.error).c_str());
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_2->rspInfo.error, {RadioError::NONE}));
+}
+
+/*
+ * Test IRadio.setSignalStrengthReportingCriteria() with invalid hysteresisDb
+ */
+TEST_F(RadioHidlTest_v1_2, setSignalStrengthReportingCriteria_invalidHysteresisDb) {
+    const int serial = GetRandomSerialNumber();
+
+    Return<void> res = radio_v1_2->setSignalStrengthReportingCriteria(
+        serial, 5000,
+        10,  // hysteresisDb too large given threshold list deltas
+        {-109, -103, -97, -89}, V1_2::AccessNetwork::GERAN);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_2->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_2->rspInfo.serial);
+
+    ALOGI("setSignalStrengthReportingCriteria_invalidHysteresisDb, rspInfo.error = %s\n",
+          toString(radioRsp_v1_2->rspInfo.error).c_str());
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_2->rspInfo.error, {RadioError::INVALID_ARGUMENTS}));
+}
+
+/*
+ * Test IRadio.setSignalStrengthReportingCriteria() with empty parameters
+ */
+TEST_F(RadioHidlTest_v1_2, setSignalStrengthReportingCriteria_EmptyParams) {
+    const int serial = GetRandomSerialNumber();
+
+    Return<void> res = radio_v1_2->setSignalStrengthReportingCriteria(serial, 0, 0, {},
+                                                                      V1_2::AccessNetwork::GERAN);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_2->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_2->rspInfo.serial);
+
+    ALOGI("setSignalStrengthReportingCriteria_EmptyParams, rspInfo.error = %s\n",
+          toString(radioRsp_v1_2->rspInfo.error).c_str());
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_2->rspInfo.error, {RadioError::NONE}));
+}
+
+/*
+ * Test IRadio.setSignalStrengthReportingCriteria() for GERAN
+ */
+TEST_F(RadioHidlTest_v1_2, setSignalStrengthReportingCriteria_Geran) {
+    const int serial = GetRandomSerialNumber();
+
+    Return<void> res = radio_v1_2->setSignalStrengthReportingCriteria(
+        serial, 5000, 2, {-109, -103, -97, -89}, V1_2::AccessNetwork::GERAN);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_2->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_2->rspInfo.serial);
+
+    ALOGI("setSignalStrengthReportingCriteria_Geran, rspInfo.error = %s\n",
+          toString(radioRsp_v1_2->rspInfo.error).c_str());
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_2->rspInfo.error, {RadioError::NONE}));
+}
+
+/*
+ * Test IRadio.setSignalStrengthReportingCriteria() for UTRAN
+ */
+TEST_F(RadioHidlTest_v1_2, setSignalStrengthReportingCriteria_Utran) {
+    const int serial = GetRandomSerialNumber();
+
+    Return<void> res = radio_v1_2->setSignalStrengthReportingCriteria(
+        serial, 5000, 2, {-110, -97, -73, -49, -25}, V1_2::AccessNetwork::UTRAN);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_2->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_2->rspInfo.serial);
+
+    ALOGI("setSignalStrengthReportingCriteria_Utran, rspInfo.error = %s\n",
+          toString(radioRsp_v1_2->rspInfo.error).c_str());
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_2->rspInfo.error, {RadioError::NONE}));
+}
+
+/*
+ * Test IRadio.setSignalStrengthReportingCriteria() for EUTRAN
+ */
+TEST_F(RadioHidlTest_v1_2, setSignalStrengthReportingCriteria_Eutran) {
+    const int serial = GetRandomSerialNumber();
+
+    Return<void> res = radio_v1_2->setSignalStrengthReportingCriteria(
+        serial, 5000, 2, {-140, -128, -118, -108, -98, -44}, V1_2::AccessNetwork::EUTRAN);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_2->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_2->rspInfo.serial);
+
+    ALOGI("setSignalStrengthReportingCriteria_Eutran, rspInfo.error = %s\n",
+          toString(radioRsp_v1_2->rspInfo.error).c_str());
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_2->rspInfo.error, {RadioError::NONE}));
+}
+
+/*
+ * Test IRadio.setSignalStrengthReportingCriteria() for CDMA2000
+ */
+TEST_F(RadioHidlTest_v1_2, setSignalStrengthReportingCriteria_Cdma2000) {
+    const int serial = GetRandomSerialNumber();
+
+    Return<void> res = radio_v1_2->setSignalStrengthReportingCriteria(
+        serial, 5000, 2, {-105, -90, -75, -65}, V1_2::AccessNetwork::CDMA2000);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_2->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_2->rspInfo.serial);
+
+    ALOGI("setSignalStrengthReportingCriteria_Cdma2000, rspInfo.error = %s\n",
+          toString(radioRsp_v1_2->rspInfo.error).c_str());
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_2->rspInfo.error, {RadioError::NONE}));
+}
+
+/*
+ * Test IRadio.setLinkCapacityReportingCriteria() invalid hysteresisDlKbps
+ */
+TEST_F(RadioHidlTest_v1_2, setLinkCapacityReportingCriteria_invalidHysteresisDlKbps) {
+    const int serial = GetRandomSerialNumber();
+
+    Return<void> res = radio_v1_2->setLinkCapacityReportingCriteria(
+        serial, 5000,
+        5000,  // hysteresisDlKbps too big for thresholds delta
+        100, {1000, 5000, 10000, 20000}, {500, 1000, 5000, 10000}, V1_2::AccessNetwork::GERAN);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_2->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_2->rspInfo.serial);
+
+    ALOGI("setLinkCapacityReportingCriteria_invalidHysteresisDlKbps, rspInfo.error = %s\n",
+          toString(radioRsp_v1_2->rspInfo.error).c_str());
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_2->rspInfo.error, {RadioError::INVALID_ARGUMENTS}));
+}
+
+/*
+ * Test IRadio.setLinkCapacityReportingCriteria() invalid hysteresisUlKbps
+ */
+TEST_F(RadioHidlTest_v1_2, setLinkCapacityReportingCriteria_invalidHysteresisUlKbps) {
+    const int serial = GetRandomSerialNumber();
+
+    Return<void> res = radio_v1_2->setLinkCapacityReportingCriteria(
+        serial, 5000, 500,
+        1000,  // hysteresisUlKbps too big for thresholds delta
+        {1000, 5000, 10000, 20000}, {500, 1000, 5000, 10000}, V1_2::AccessNetwork::GERAN);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_2->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_2->rspInfo.serial);
+
+    ALOGI("setLinkCapacityReportingCriteria_invalidHysteresisUlKbps, rspInfo.error = %s\n",
+          toString(radioRsp_v1_2->rspInfo.error).c_str());
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_2->rspInfo.error, {RadioError::INVALID_ARGUMENTS}));
+}
+
+/*
+ * Test IRadio.setLinkCapacityReportingCriteria() empty params
+ */
+TEST_F(RadioHidlTest_v1_2, setLinkCapacityReportingCriteria_emptyParams) {
+    const int serial = GetRandomSerialNumber();
+
+    Return<void> res = radio_v1_2->setLinkCapacityReportingCriteria(serial, 0, 0, 0, {}, {},
+                                                                    V1_2::AccessNetwork::GERAN);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_2->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_2->rspInfo.serial);
+
+    ALOGI("setLinkCapacityReportingCriteria_emptyParams, rspInfo.error = %s\n",
+          toString(radioRsp_v1_2->rspInfo.error).c_str());
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_2->rspInfo.error, {RadioError::NONE}));
+}
+
+/*
+ * Test IRadio.setLinkCapacityReportingCriteria() GERAN
+ */
+TEST_F(RadioHidlTest_v1_2, setLinkCapacityReportingCriteria_Geran) {
+    const int serial = GetRandomSerialNumber();
+
+    Return<void> res = radio_v1_2->setLinkCapacityReportingCriteria(
+        serial, 5000, 500, 100, {1000, 5000, 10000, 20000}, {500, 1000, 5000, 10000},
+        V1_2::AccessNetwork::GERAN);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_2->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_2->rspInfo.serial);
+
+    ALOGI("setLinkCapacityReportingCriteria_invalidHysteresisUlKbps, rspInfo.error = %s\n",
+          toString(radioRsp_v1_2->rspInfo.error).c_str());
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_2->rspInfo.error, {RadioError::NONE}));
+}
