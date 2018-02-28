@@ -92,6 +92,10 @@ class SecureElementHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
         se_cb_ = new SecureElementHalCallback();
         ASSERT_NE(se_cb_, nullptr);
+        se_->init(se_cb_);
+        auto res = se_cb_->WaitForCallback(kCallbackNameOnStateChange);
+        EXPECT_TRUE(res.no_timeout);
+        EXPECT_TRUE(res.args->state_);
     }
 
     sp<ISecureElement> se_;
