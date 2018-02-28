@@ -47,6 +47,9 @@ static constexpr size_t kMetadataMsgQueueSize = 1 << 18 /* 256kB */;
 const int kBadFramesAfterStreamOn = 1; // drop x frames after streamOn to get rid of some initial
                                        // bad frames. TODO: develop a better bad frame detection
                                        // method
+constexpr int MAX_RETRY = 15; // Allow retry some ioctl failures a few times to account for some
+                             // webcam showing temporarily ioctl failures.
+constexpr int IOCTL_RETRY_SLEEP_US = 33000; // 33ms * MAX_RETRY = 5 seconds
 
 bool tryLock(Mutex& mutex)
 {
@@ -1480,6 +1483,7 @@ int ExternalCameraDeviceSession::OutputThread::createJpegLocked(
 
     int jpegQuality, thumbQuality;
     Size thumbSize;
+    bool outputThumbnail = true;
 
     if (req->setting.exists(ANDROID_JPEG_QUALITY)) {
         camera_metadata_entry entry =
@@ -1505,6 +1509,9 @@ int ExternalCameraDeviceSession::OutputThread::createJpegLocked(
         thumbSize = Size { static_cast<uint32_t>(entry.data.i32[0]),
                            static_cast<uint32_t>(entry.data.i32[1])
         };
+        if (thumbSize.width == 0 && thumbSize.height == 0) {
+            outputThumbnail = false;
+        }
     } else {
         return lfail(
             "%s: ANDROID_JPEG_THUMBNAIL_SIZE not set", __FUNCTION__);
@@ -1532,14 +1539,16 @@ int ExternalCameraDeviceSession::OutputThread::createJpegLocked(
     /* Hold actual thumbnail and main image code sizes */
     size_t thumbCodeSize = 0, jpegCodeSize = 0;
     /* Temporary thumbnail code buffer */
-    std::vector<uint8_t> thumbCode(maxThumbCodeSize);
+    std::vector<uint8_t> thumbCode(outputThumbnail ? maxThumbCodeSize : 0);
 
     YCbCrLayout yu12Thumb;
-    ret = cropAndScaleThumbLocked(mYu12Frame, thumbSize, &yu12Thumb);
+    if (outputThumbnail) {
+        ret = cropAndScaleThumbLocked(mYu12Frame, thumbSize, &yu12Thumb);
 
-    if (ret != 0) {
-        return lfail(
-            "%s: crop and scale thumbnail failed!", __FUNCTION__);
+        if (ret != 0) {
+            return lfail(
+                "%s: crop and scale thumbnail failed!", __FUNCTION__);
+        }
     }
 
     /* Scale and crop main jpeg */
@@ -1550,12 +1559,14 @@ int ExternalCameraDeviceSession::OutputThread::createJpegLocked(
     }
 
     /* Encode the thumbnail image */
-    ret = encodeJpegYU12(thumbSize, yu12Thumb,
-            thumbQuality, 0, 0,
-            &thumbCode[0], maxThumbCodeSize, thumbCodeSize);
+    if (outputThumbnail) {
+        ret = encodeJpegYU12(thumbSize, yu12Thumb,
+                thumbQuality, 0, 0,
+                &thumbCode[0], maxThumbCodeSize, thumbCodeSize);
 
-    if (ret != 0) {
-        return lfail("%s: encodeJpegYU12 failed with %d",__FUNCTION__, ret);
+        if (ret != 0) {
+            return lfail("%s: thumbnail encodeJpegYU12 failed with %d",__FUNCTION__, ret);
+        }
     }
 
     /* Combine camera characteristics with request settings to form EXIF
@@ -1570,11 +1581,7 @@ int ExternalCameraDeviceSession::OutputThread::createJpegLocked(
 
     utils->setFromMetadata(meta, jpegSize.width, jpegSize.height);
 
-    /* Check if we made a non-zero-sized thumbnail. Currently not possible
-     * that we got this far and the code is size 0, but if this code moves
-     * around it might become relevant again */
-
-    ret = utils->generateApp1(thumbCodeSize ? &thumbCode[0] : 0, thumbCodeSize);
+    ret = utils->generateApp1(outputThumbnail ? &thumbCode[0] : 0, thumbCodeSize);
 
     if (!ret) {
         return lfail("%s: generating APP1 failed", __FUNCTION__);
@@ -2109,8 +2116,20 @@ int ExternalCameraDeviceSession::configureV4l2StreamLocked(
     fmt.fmt.pix.pixelformat = v4l2Fmt.fourcc;
     ret = TEMP_FAILURE_RETRY(ioctl(mV4l2Fd.get(), VIDIOC_S_FMT, &fmt));
     if (ret < 0) {
-        ALOGE("%s: S_FMT ioctl failed: %s", __FUNCTION__, strerror(errno));
-        return -errno;
+        int numAttempt = 0;
+        while (ret < 0) {
+            ALOGW("%s: VIDIOC_S_FMT failed, wait 33ms and try again", __FUNCTION__);
+            usleep(IOCTL_RETRY_SLEEP_US); // sleep 100 ms and try again
+            ret = TEMP_FAILURE_RETRY(ioctl(mV4l2Fd.get(), VIDIOC_S_FMT, &fmt));
+            if (numAttempt == MAX_RETRY) {
+                break;
+            }
+            numAttempt++;
+        }
+        if (ret < 0) {
+            ALOGE("%s: S_FMT ioctl failed: %s", __FUNCTION__, strerror(errno));
+            return -errno;
+        }
     }
 
     if (v4l2Fmt.width != fmt.fmt.pix.width || v4l2Fmt.height != fmt.fmt.pix.height ||
@@ -2199,9 +2218,22 @@ int ExternalCameraDeviceSession::configureV4l2StreamLocked(
 
     // VIDIOC_STREAMON: start streaming
     v4l2_buf_type capture_type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    if (TEMP_FAILURE_RETRY(ioctl(mV4l2Fd.get(), VIDIOC_STREAMON, &capture_type)) < 0) {
-        ALOGE("%s: VIDIOC_STREAMON failed: %s", __FUNCTION__, strerror(errno));
-        return -errno;
+    ret = TEMP_FAILURE_RETRY(ioctl(mV4l2Fd.get(), VIDIOC_STREAMON, &capture_type));
+    if (ret < 0) {
+        int numAttempt = 0;
+        while (ret < 0) {
+            ALOGW("%s: VIDIOC_STREAMON failed, wait 33ms and try again", __FUNCTION__);
+            usleep(IOCTL_RETRY_SLEEP_US); // sleep 100 ms and try again
+            ret = TEMP_FAILURE_RETRY(ioctl(mV4l2Fd.get(), VIDIOC_STREAMON, &capture_type));
+            if (numAttempt == MAX_RETRY) {
+                break;
+            }
+            numAttempt++;
+        }
+        if (ret < 0) {
+            ALOGE("%s: VIDIOC_STREAMON ioctl failed: %s", __FUNCTION__, strerror(errno));
+            return -errno;
+        }
     }
 
     // Swallow first few frames after streamOn to account for bad frames from some devices
@@ -2220,6 +2252,8 @@ int ExternalCameraDeviceSession::configureV4l2StreamLocked(
         }
     }
 
+    ALOGI("%s: start V4L2 streaming %dx%d@%ffps",
+                __FUNCTION__, v4l2Fmt.width, v4l2Fmt.height, fps);
     mV4l2StreamingFmt = v4l2Fmt;
     mV4l2Streaming = true;
     return OK;

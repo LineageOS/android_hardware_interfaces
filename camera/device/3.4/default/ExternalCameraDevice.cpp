@@ -639,14 +639,14 @@ status_t ExternalCameraDevice::initOutputCharsKeys(int fd,
     }
 
     std::vector<int32_t> fpsRanges;
-    // Variable range
-    fpsRanges.push_back(minFps);
-    fpsRanges.push_back(maxFps);
-    // Fixed ranges
+    // FPS ranges
     for (const auto& framerate : framerates) {
-        fpsRanges.push_back(framerate);
+        // Empirical: webcams often have close to 2x fps error and cannot support fixed fps range
+        fpsRanges.push_back(framerate / 2);
         fpsRanges.push_back(framerate);
     }
+    maxFrameDuration *= 2;
+
     UPDATE(ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES, fpsRanges.data(),
            fpsRanges.size());
 
