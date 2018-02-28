@@ -18,6 +18,34 @@
 
 RadioIndication_v1_2::RadioIndication_v1_2(RadioHidlTest_v1_2& parent) : parent_v1_2(parent) {}
 
+/* 1.2 Apis */
+Return<void> RadioIndication_v1_2::networkScanResult_1_2(
+    RadioIndicationType /*type*/, const V1_2::NetworkScanResult& /*result*/) {
+    return Void();
+}
+
+Return<void> RadioIndication_v1_2::cellInfoList_1_2(
+    RadioIndicationType /*type*/,
+    const ::android::hardware::hidl_vec<V1_2::CellInfo>& /*records*/) {
+    return Void();
+}
+
+Return<void> RadioIndication_v1_2::currentLinkCapacityEstimate(
+    RadioIndicationType /*type*/, const V1_2::LinkCapacityEstimate& /*lce*/) {
+    return Void();
+}
+
+Return<void> RadioIndication_v1_2::currentPhysicalChannelConfigs(
+    RadioIndicationType /*type*/,
+    const ::android::hardware::hidl_vec<V1_2::PhysicalChannelConfig>& /*configs*/) {
+    return Void();
+}
+
+Return<void> RadioIndication_v1_2::currentSignalStrength_1_2(
+    RadioIndicationType /*type*/, const V1_2::SignalStrength& /*signalStrength*/) {
+    return Void();
+}
+
 /* 1.1 Apis */
 Return<void> RadioIndication_v1_2::carrierInfoForImsiEncryption(RadioIndicationType /*info*/) {
     return Void();

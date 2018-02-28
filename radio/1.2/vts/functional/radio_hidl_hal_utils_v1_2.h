@@ -32,6 +32,7 @@ using namespace ::android::hardware::radio;
 using namespace ::android::hardware::radio::V1_1;
 using namespace ::android::hardware::radio::V1_0;
 
+using ::android::hardware::hidl_bitfield;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
@@ -398,6 +399,11 @@ class RadioResponse_v1_2 : public V1_1::IRadioResponse {
                                         const KeepaliveStatus& status);
 
     Return<void> stopKeepaliveResponse(const RadioResponseInfo& info);
+
+    /* 1.2 Api */
+    Return<void> setSignalStrengthReportingCriteriaResponse(const RadioResponseInfo& info);
+
+    Return<void> setLinkCapacityReportingCriteriaResponse(const RadioResponseInfo& info);
 };
 
 /* Callback class for radio indication */
@@ -408,6 +414,23 @@ class RadioIndication_v1_2 : public V1_1::IRadioIndication {
    public:
     RadioIndication_v1_2(RadioHidlTest_v1_2& parent_v1_2);
     virtual ~RadioIndication_v1_2() = default;
+
+    /* 1.2 Api */
+    Return<void> networkScanResult_1_2(RadioIndicationType type,
+                                       const V1_2::NetworkScanResult& result);
+
+    Return<void> cellInfoList_1_2(RadioIndicationType type,
+                                  const ::android::hardware::hidl_vec<V1_2::CellInfo>& records);
+
+    Return<void> currentLinkCapacityEstimate(RadioIndicationType type,
+                                             const V1_2::LinkCapacityEstimate& lce);
+
+    Return<void> currentPhysicalChannelConfigs(
+        RadioIndicationType type,
+        const ::android::hardware::hidl_vec<V1_2::PhysicalChannelConfig>& configs);
+
+    Return<void> currentSignalStrength_1_2(RadioIndicationType type,
+                                           const V1_2::SignalStrength& signalStrength);
 
     /* 1.1 Api */
     Return<void> carrierInfoForImsiEncryption(RadioIndicationType info);
