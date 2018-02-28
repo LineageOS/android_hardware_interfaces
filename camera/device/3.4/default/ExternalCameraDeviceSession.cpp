@@ -15,6 +15,7 @@
  */
 #define LOG_TAG "ExtCamDevSsn@3.4"
 //#define LOG_NDEBUG 0
+#define ATRACE_TAG ATRACE_TAG_CAMERA
 #include <log/log.h>
 
 #include <inttypes.h>
@@ -22,6 +23,7 @@
 
 #include "android-base/macros.h"
 #include <utils/Timers.h>
+#include <utils/Trace.h>
 #include <linux/videodev2.h>
 #include <sync/sync.h>
 
@@ -357,6 +359,7 @@ Return<void> ExternalCameraDeviceSession::processCaptureRequest_3_4(
 }
 
 Return<Status> ExternalCameraDeviceSession::flush() {
+    ATRACE_CALL();
     Mutex::Autolock _il(mInterfaceLock);
     Status status = initStatus();
     if (status != Status::OK) {
@@ -468,6 +471,7 @@ int ExternalCameraDeviceSession::waitForV4L2BufferReturnLocked(std::unique_lock<
 }
 
 Status ExternalCameraDeviceSession::processOneCaptureRequest(const CaptureRequest& request)  {
+    ATRACE_CALL();
     Status status = initStatus();
     if (status != Status::OK) {
         return status;
@@ -633,6 +637,7 @@ void ExternalCameraDeviceSession::notifyError(
 //TODO: refactor with processCaptureResult
 Status ExternalCameraDeviceSession::processCaptureRequestError(
         const std::shared_ptr<HalRequest>& req) {
+    ATRACE_CALL();
     // Return V4L2 buffer to V4L2 buffer queue
     enqueueV4l2Frame(req->frameIn);
 
@@ -673,6 +678,7 @@ Status ExternalCameraDeviceSession::processCaptureRequestError(
 }
 
 Status ExternalCameraDeviceSession::processCaptureResult(std::shared_ptr<HalRequest>& req) {
+    ATRACE_CALL();
     // Return V4L2 buffer to V4L2 buffer queue
     enqueueV4l2Frame(req->frameIn);
 
@@ -1449,6 +1455,7 @@ int ExternalCameraDeviceSession::OutputThread::createJpegLocked(
         HalStreamBuffer &halBuf,
         const std::shared_ptr<HalRequest>& req)
 {
+    ATRACE_CALL();
     int ret;
     auto lfail = [&](auto... args) {
         ALOGE(args...);
@@ -1656,8 +1663,8 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
     uint8_t* inData;
     size_t inDataSize;
     req->frameIn->map(&inData, &inDataSize);
-    // TODO: profile
     // TODO: in some special case maybe we can decode jpg directly to gralloc output?
+    ATRACE_BEGIN("MJPGtoI420");
     int res = libyuv::MJPGToI420(
             inData, inDataSize,
             static_cast<uint8_t*>(mYu12FrameLayout.y),
@@ -1668,6 +1675,7 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
             mYu12FrameLayout.cStride,
             mYu12Frame->mWidth, mYu12Frame->mHeight,
             mYu12Frame->mWidth, mYu12Frame->mHeight);
+    ATRACE_END();
 
     if (res != 0) {
         // For some webcam, the first few V4L2 frames might be malformed...
@@ -1729,17 +1737,21 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
                         (outputFourcc >> 24) & 0xFF);
 
                 YCbCrLayout cropAndScaled;
+                ATRACE_BEGIN("cropAndScaleLocked");
                 int ret = cropAndScaleLocked(
                         mYu12Frame,
                         Size { halBuf.width, halBuf.height },
                         &cropAndScaled);
+                ATRACE_END();
                 if (ret != 0) {
                     lk.unlock();
                     return onDeviceError("%s: crop and scale failed!", __FUNCTION__);
                 }
 
                 Size sz {halBuf.width, halBuf.height};
+                ATRACE_BEGIN("formatConvertLocked");
                 ret = formatConvertLocked(cropAndScaled, outLayout, sz, outputFourcc);
+                ATRACE_END();
                 if (ret != 0) {
                     lk.unlock();
                     return onDeviceError("%s: format coversion failed!", __FUNCTION__);
@@ -1850,6 +1862,7 @@ Status ExternalCameraDeviceSession::OutputThread::submitRequest(
 }
 
 void ExternalCameraDeviceSession::OutputThread::flush() {
+    ATRACE_CALL();
     auto parent = mParent.promote();
     if (parent == nullptr) {
        ALOGE("%s: session has been disconnected!", __FUNCTION__);
@@ -1867,6 +1880,7 @@ void ExternalCameraDeviceSession::OutputThread::flush() {
         }
     }
 
+    ALOGV("%s: flusing inflight requests", __FUNCTION__);
     lk.unlock();
     for (const auto& req : reqs) {
         parent->processCaptureRequestError(req);
@@ -1875,6 +1889,7 @@ void ExternalCameraDeviceSession::OutputThread::flush() {
 
 void ExternalCameraDeviceSession::OutputThread::waitForNextRequest(
         std::shared_ptr<HalRequest>* out) {
+    ATRACE_CALL();
     if (out == nullptr) {
         ALOGE("%s: out is null", __FUNCTION__);
         return;
@@ -2079,6 +2094,7 @@ int ExternalCameraDeviceSession::setV4l2FpsLocked(double fps) {
 
 int ExternalCameraDeviceSession::configureV4l2StreamLocked(
         const SupportedV4L2Format& v4l2Fmt, double requestFps) {
+    ATRACE_CALL();
     int ret = v4l2StreamOffLocked();
     if (ret != OK) {
         ALOGE("%s: stop v4l2 streaming failed: ret %d", __FUNCTION__, ret);
@@ -2210,6 +2226,7 @@ int ExternalCameraDeviceSession::configureV4l2StreamLocked(
 }
 
 sp<V4L2Frame> ExternalCameraDeviceSession::dequeueV4l2FrameLocked(/*out*/nsecs_t* shutterTs) {
+    ATRACE_CALL();
     sp<V4L2Frame> ret = nullptr;
 
     if (shutterTs == nullptr) {
@@ -2264,6 +2281,7 @@ sp<V4L2Frame> ExternalCameraDeviceSession::dequeueV4l2FrameLocked(/*out*/nsecs_t
 }
 
 void ExternalCameraDeviceSession::enqueueV4l2Frame(const sp<V4L2Frame>& frame) {
+    ATRACE_CALL();
     {
         // Release mLock before acquiring mV4l2BufferLock to avoid potential
         // deadlock
@@ -2289,6 +2307,7 @@ void ExternalCameraDeviceSession::enqueueV4l2Frame(const sp<V4L2Frame>& frame) {
 
 Status ExternalCameraDeviceSession::configureStreams(
         const V3_2::StreamConfiguration& config, V3_3::HalStreamConfiguration* out) {
+    ATRACE_CALL();
     if (config.operationMode != StreamConfigurationMode::NORMAL_MODE) {
         ALOGE("%s: unsupported operation mode: %d", __FUNCTION__, config.operationMode);
         return Status::ILLEGAL_ARGUMENT;
