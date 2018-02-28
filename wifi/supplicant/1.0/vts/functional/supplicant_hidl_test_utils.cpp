@@ -16,6 +16,7 @@
 
 #include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
+#include <cutils/properties.h>
 
 #include <android/hidl/manager/1.0/IServiceManager.h>
 #include <android/hidl/manager/1.0/IServiceNotification.h>
@@ -89,6 +90,18 @@ bool findIfaceOfType(sp<ISupplicant> supplicant, IfaceType desired_type,
         }
     }
     return false;
+}
+
+std::string getStaIfaceName() {
+    std::array<char, PROPERTY_VALUE_MAX> buffer;
+    property_get("wifi.interface", buffer.data(), "wlan0");
+    return buffer.data();
+}
+
+std::string getP2pIfaceName() {
+    std::array<char, PROPERTY_VALUE_MAX> buffer;
+    property_get("wifi.direct.interface", buffer.data(), "p2p0");
+    return buffer.data();
 }
 }  // namespace
 
@@ -165,9 +178,56 @@ void startSupplicantAndWaitForHidlService() {
     ASSERT_TRUE(notification_listener->waitForHidlService(200, service_name));
 }
 
+bool is_1_1(const sp<ISupplicant>& supplicant) {
+    sp<::android::hardware::wifi::supplicant::V1_1::ISupplicant>
+        supplicant_1_1 =
+            ::android::hardware::wifi::supplicant::V1_1::ISupplicant::castFrom(
+                supplicant);
+    return supplicant_1_1.get() != nullptr;
+}
+
+void addSupplicantStaIface_1_1(const sp<ISupplicant>& supplicant) {
+    sp<::android::hardware::wifi::supplicant::V1_1::ISupplicant>
+        supplicant_1_1 =
+            ::android::hardware::wifi::supplicant::V1_1::ISupplicant::castFrom(
+                supplicant);
+    ASSERT_TRUE(supplicant_1_1.get());
+    ISupplicant::IfaceInfo info = {IfaceType::STA, getStaIfaceName()};
+    supplicant_1_1->addInterface(
+        info, [&](const SupplicantStatus& status,
+                  const sp<ISupplicantIface>& /* iface */) {
+            ASSERT_TRUE(
+                (SupplicantStatusCode::SUCCESS == status.code) ||
+                (SupplicantStatusCode::FAILURE_IFACE_EXISTS == status.code));
+        });
+}
+
+void addSupplicantP2pIface_1_1(const sp<ISupplicant>& supplicant) {
+    sp<::android::hardware::wifi::supplicant::V1_1::ISupplicant>
+        supplicant_1_1 =
+            ::android::hardware::wifi::supplicant::V1_1::ISupplicant::castFrom(
+                supplicant);
+    ASSERT_TRUE(supplicant_1_1.get());
+    ISupplicant::IfaceInfo info = {IfaceType::P2P, getP2pIfaceName()};
+    supplicant_1_1->addInterface(
+        info, [&](const SupplicantStatus& status,
+                  const sp<ISupplicantIface>& /* iface */) {
+            ASSERT_TRUE(
+                (SupplicantStatusCode::SUCCESS == status.code) ||
+                (SupplicantStatusCode::FAILURE_IFACE_EXISTS == status.code));
+        });
+}
+
 sp<ISupplicant> getSupplicant() {
-    return ::testing::VtsHalHidlTargetTestBase::getService<ISupplicant>(
-        gEnv->getServiceName<ISupplicant>());
+    sp<ISupplicant> supplicant =
+        ::testing::VtsHalHidlTargetTestBase::getService<ISupplicant>(
+            gEnv->getServiceName<ISupplicant>());
+    // For 1.1 supplicant, we need to add interfaces at initialization.
+    if (is_1_1(supplicant)) {
+        addSupplicantStaIface_1_1(supplicant);
+        addSupplicantP2pIface_1_1(supplicant);
+    }
+    return supplicant;
 }
 
 sp<ISupplicantStaIface> getSupplicantStaIface() {
