@@ -1,5 +1,5 @@
 cc_library_shared {
-    name: "android.hardware.audio@2.0-impl",
+    name: "android.hardware.audio@4.0-impl",
     relative_install_path: "hw",
     proprietary: true,
     vendor: true,
@@ -15,7 +15,7 @@ cc_library_shared {
     ],
 
     cflags: [
-        "-DAUDIO_HAL_VERSION_2_0",
+        "-DAUDIO_HAL_VERSION_4_0",
     ],
 
     defaults: ["hidl_defaults"],
@@ -31,9 +31,9 @@ cc_library_shared {
         "libhidltransport",
         "liblog",
         "libutils",
-        "android.hardware.audio@2.0",
-        "android.hardware.audio.common@2.0",
-        "android.hardware.audio.common@2.0-util",
+        "android.hardware.audio@4.0",
+        "android.hardware.audio.common@4.0",
+        "android.hardware.audio.common@4.0-util",
         "android.hardware.audio.common-util",
     ],
 

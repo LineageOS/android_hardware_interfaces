@@ -17,7 +17,7 @@
 #ifndef ANDROID_HARDWARE_AUDIO_EFFECT_VERSION_UTILS_H
 #define ANDROID_HARDWARE_AUDIO_EFFECT_VERSION_UTILS_H
 
-#include <android/hardware/audio/4.0/types.h>
+#include <android/hardware/audio/common/4.0/types.h>
 
 namespace android {
 namespace hardware {
@@ -28,6 +28,8 @@ namespace implementation {
 
 typedef hidl_bitfield<common::V4_0::AudioDevice> AudioDeviceBitfield;
 typedef hidl_bitfield<common::V4_0::AudioChannelMask> AudioChannelBitfield;
+typedef hidl_bitfield<common::V4_0::AudioOutputFlag> AudioOutputFlagBitfield;
+typedef hidl_bitfield<common::V4_0::AudioInputFlag> AudioInputFlagBitfield;
 
 }  // namespace implementation
 }  // namespace V4_0

@@ -28,6 +28,8 @@ namespace implementation {
 
 typedef common::V2_0::AudioDevice AudioDeviceBitfield;
 typedef common::V2_0::AudioChannelMask AudioChannelBitfield;
+typedef common::V2_0::AudioOutputFlag AudioOutputFlagBitfield;
+typedef common::V2_0::AudioInputFlag AudioInputFlagBitfield;
 
 }  // namespace implementation
 }  // namespace V2_0
