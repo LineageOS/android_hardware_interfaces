@@ -18,6 +18,8 @@
 
 #include <android/log.h>
 
+#include "VersionUtils.h"
+
 namespace android {
 namespace hardware {
 namespace audio {
@@ -81,7 +83,7 @@ Return<Result> EnvironmentalReverbEffect::disable() {
     return mEffect->disable();
 }
 
-Return<Result> EnvironmentalReverbEffect::setDevice(AudioDevice device) {
+Return<Result> EnvironmentalReverbEffect::setDevice(AudioDeviceBitfield device) {
     return mEffect->setDevice(device);
 }
 
@@ -105,7 +107,7 @@ Return<Result> EnvironmentalReverbEffect::setConfigReverse(
     return mEffect->setConfigReverse(config, inputBufferProvider, outputBufferProvider);
 }
 
-Return<Result> EnvironmentalReverbEffect::setInputDevice(AudioDevice device) {
+Return<Result> EnvironmentalReverbEffect::setInputDevice(AudioDeviceBitfield device) {
     return mEffect->setInputDevice(device);
 }
 
