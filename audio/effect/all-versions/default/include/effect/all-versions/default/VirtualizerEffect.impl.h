@@ -21,6 +21,8 @@
 #include <android/log.h>
 #include <system/audio_effects/effect_virtualizer.h>
 
+#include "VersionUtils.h"
+
 namespace android {
 namespace hardware {
 namespace audio {
@@ -36,7 +38,7 @@ void VirtualizerEffect::speakerAnglesFromHal(const int32_t* halAngles, uint32_t 
                                              hidl_vec<SpeakerAngle>& speakerAngles) {
     speakerAngles.resize(channelCount);
     for (uint32_t i = 0; i < channelCount; ++i) {
-        speakerAngles[i].mask = AudioChannelMask(*halAngles++);
+        speakerAngles[i].mask = AudioChannelBitfield(*halAngles++);
         speakerAngles[i].azimuth = *halAngles++;
         speakerAngles[i].elevation = *halAngles++;
     }
@@ -65,7 +67,7 @@ Return<Result> VirtualizerEffect::disable() {
     return mEffect->disable();
 }
 
-Return<Result> VirtualizerEffect::setDevice(AudioDevice device) {
+Return<Result> VirtualizerEffect::setDevice(AudioDeviceBitfield device) {
     return mEffect->setDevice(device);
 }
 
@@ -88,7 +90,7 @@ Return<Result> VirtualizerEffect::setConfigReverse(
     return mEffect->setConfigReverse(config, inputBufferProvider, outputBufferProvider);
 }
 
-Return<Result> VirtualizerEffect::setInputDevice(AudioDevice device) {
+Return<Result> VirtualizerEffect::setInputDevice(AudioDeviceBitfield device) {
     return mEffect->setInputDevice(device);
 }
 
@@ -184,7 +186,8 @@ Return<void> VirtualizerEffect::getStrength(getStrength_cb _hidl_cb) {
     return mEffect->getIntegerParam(VIRTUALIZER_PARAM_STRENGTH, _hidl_cb);
 }
 
-Return<void> VirtualizerEffect::getVirtualSpeakerAngles(AudioChannelMask mask, AudioDevice device,
+Return<void> VirtualizerEffect::getVirtualSpeakerAngles(AudioChannelBitfield mask,
+                                                        AudioDevice device,
                                                         getVirtualSpeakerAngles_cb _hidl_cb) {
     uint32_t channelCount =
         audio_channel_count_from_out_mask(static_cast<audio_channel_mask_t>(mask));

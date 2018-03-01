@@ -21,6 +21,8 @@
 #include <android/log.h>
 #include <system/audio_effects/effect_aec.h>
 
+#include "VersionUtils.h"
+
 namespace android {
 namespace hardware {
 namespace audio {
@@ -56,7 +58,7 @@ Return<Result> LoudnessEnhancerEffect::disable() {
     return mEffect->disable();
 }
 
-Return<Result> LoudnessEnhancerEffect::setDevice(AudioDevice device) {
+Return<Result> LoudnessEnhancerEffect::setDevice(AudioDeviceBitfield device) {
     return mEffect->setDevice(device);
 }
 
@@ -79,7 +81,7 @@ Return<Result> LoudnessEnhancerEffect::setConfigReverse(
     return mEffect->setConfigReverse(config, inputBufferProvider, outputBufferProvider);
 }
 
-Return<Result> LoudnessEnhancerEffect::setInputDevice(AudioDevice device) {
+Return<Result> LoudnessEnhancerEffect::setInputDevice(AudioDeviceBitfield device) {
     return mEffect->setInputDevice(device);
 }
 
