@@ -657,6 +657,7 @@ Return<void> RadioResponse_v1_2::acknowledgeRequest(int32_t /*serial*/) {
     return Void();
 }
 
+/* 1.1 Apis */
 Return<void> RadioResponse_v1_2::setCarrierInfoForImsiEncryptionResponse(
     const RadioResponseInfo& /*info*/) {
     return Void();
@@ -684,5 +685,20 @@ Return<void> RadioResponse_v1_2::startKeepaliveResponse(const RadioResponseInfo&
 }
 
 Return<void> RadioResponse_v1_2::stopKeepaliveResponse(const RadioResponseInfo& /*info*/) {
+    return Void();
+}
+
+/* 1.2 Apis */
+Return<void> RadioResponse_v1_2::setSignalStrengthReportingCriteriaResponse(
+    const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_v1_2.notify();
+    return Void();
+}
+
+Return<void> RadioResponse_v1_2::setLinkCapacityReportingCriteriaResponse(
+    const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_v1_2.notify();
     return Void();
 }
