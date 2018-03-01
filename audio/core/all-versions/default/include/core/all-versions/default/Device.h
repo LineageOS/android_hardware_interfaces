@@ -25,6 +25,8 @@
 
 #include <hidl/MQDescriptor.h>
 
+#include <VersionUtils.h>
+
 namespace android {
 namespace hardware {
 namespace audio {
@@ -39,6 +41,9 @@ using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioPatchHandle;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioPort;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioPortConfig;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioSource;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::implementation::AudioInputFlagBitfield;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::implementation::
+    AudioOutputFlagBitfield;
 using ::android::hardware::audio::AUDIO_HAL_VERSION::DeviceAddress;
 using ::android::hardware::audio::AUDIO_HAL_VERSION::IDevice;
 using ::android::hardware::audio::AUDIO_HAL_VERSION::IStreamIn;
@@ -50,6 +55,11 @@ using ::android::hardware::Void;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::hidl_string;
 using ::android::sp;
+
+#ifdef AUDIO_HAL_VERSION_4_0
+using ::android::hardware::audio::AUDIO_HAL_VERSION::SourceMetadata;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::SinkMetadata;
+#endif
 
 struct Device : public IDevice, public ParametersUtil {
     explicit Device(audio_hw_device_t* device);
@@ -64,12 +74,26 @@ struct Device : public IDevice, public ParametersUtil {
     Return<void> getMasterMute(getMasterMute_cb _hidl_cb) override;
     Return<void> getInputBufferSize(const AudioConfig& config,
                                     getInputBufferSize_cb _hidl_cb) override;
+
+    // V2 openInputStream is called by V4 input stream thus present in both versions
+    Return<void> openInputStream(int32_t ioHandle, const DeviceAddress& device,
+                                 const AudioConfig& config, AudioInputFlagBitfield flags,
+                                 AudioSource source, openInputStream_cb _hidl_cb);
+#ifdef AUDIO_HAL_VERSION_2_0
     Return<void> openOutputStream(int32_t ioHandle, const DeviceAddress& device,
-                                  const AudioConfig& config, AudioOutputFlag flags,
+                                  const AudioConfig& config, AudioOutputFlagBitfield flags,
+                                  openOutputStream_cb _hidl_cb) override;
+#elif defined(AUDIO_HAL_VERSION_4_0)
+    Return<void> openOutputStream(int32_t ioHandle, const DeviceAddress& device,
+                                  const AudioConfig& config, AudioOutputFlagBitfield flags,
+                                  const SourceMetadata& sourceMetadata,
                                   openOutputStream_cb _hidl_cb) override;
     Return<void> openInputStream(int32_t ioHandle, const DeviceAddress& device,
-                                 const AudioConfig& config, AudioInputFlag flags,
-                                 AudioSource source, openInputStream_cb _hidl_cb) override;
+                                 const AudioConfig& config, AudioInputFlagBitfield flags,
+                                 const SinkMetadata& sinkMetadata,
+                                 openInputStream_cb _hidl_cb) override;
+#endif
+
     Return<bool> supportsAudioPatches() override;
     Return<void> createAudioPatch(const hidl_vec<AudioPortConfig>& sources,
                                   const hidl_vec<AudioPortConfig>& sinks,
@@ -77,12 +101,27 @@ struct Device : public IDevice, public ParametersUtil {
     Return<Result> releaseAudioPatch(int32_t patch) override;
     Return<void> getAudioPort(const AudioPort& port, getAudioPort_cb _hidl_cb) override;
     Return<Result> setAudioPortConfig(const AudioPortConfig& config) override;
-    Return<AudioHwSync> getHwAvSync() override;
+
     Return<Result> setScreenState(bool turnedOn) override;
+
+#ifdef AUDIO_HAL_VERSION_2_0
+    Return<AudioHwSync> getHwAvSync() override;
     Return<void> getParameters(const hidl_vec<hidl_string>& keys,
                                getParameters_cb _hidl_cb) override;
     Return<Result> setParameters(const hidl_vec<ParameterValue>& parameters) override;
     Return<void> debugDump(const hidl_handle& fd) override;
+#elif defined(AUDIO_HAL_VERSION_4_0)
+    Return<void> getHwAvSync(getHwAvSync_cb _hidl_cb) override;
+    Return<void> getParameters(const hidl_vec<ParameterValue>& context,
+                               const hidl_vec<hidl_string>& keys,
+                               getParameters_cb _hidl_cb) override;
+    Return<Result> setParameters(const hidl_vec<ParameterValue>& context,
+                                 const hidl_vec<ParameterValue>& parameters) override;
+    Return<void> getMicrophones(getMicrophones_cb _hidl_cb) override;
+    Return<Result> setConnectedState(const DeviceAddress& address, bool connected) override;
+#endif
+
+    Return<void> debug(const hidl_handle& fd, const hidl_vec<hidl_string>& options) override;
 
     // Utility methods for extending interfaces.
     Result analyzeStatus(const char* funcName, int status);

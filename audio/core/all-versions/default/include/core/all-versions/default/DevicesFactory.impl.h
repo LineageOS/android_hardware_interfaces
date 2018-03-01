@@ -26,21 +26,54 @@ namespace audio {
 namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
-// static
-const char* DevicesFactory::deviceToString(IDevicesFactory::Device device) {
+#ifdef AUDIO_HAL_VERSION_2_0
+Return<void> DevicesFactory::openDevice(IDevicesFactory::Device device, openDevice_cb _hidl_cb) {
     switch (device) {
         case IDevicesFactory::Device::PRIMARY:
-            return AUDIO_HARDWARE_MODULE_ID_PRIMARY;
+            return openDevice<PrimaryDevice>(AUDIO_HARDWARE_MODULE_ID_PRIMARY, _hidl_cb);
         case IDevicesFactory::Device::A2DP:
-            return AUDIO_HARDWARE_MODULE_ID_A2DP;
+            return openDevice(AUDIO_HARDWARE_MODULE_ID_A2DP, _hidl_cb);
         case IDevicesFactory::Device::USB:
-            return AUDIO_HARDWARE_MODULE_ID_USB;
+            return openDevice(AUDIO_HARDWARE_MODULE_ID_USB, _hidl_cb);
         case IDevicesFactory::Device::R_SUBMIX:
-            return AUDIO_HARDWARE_MODULE_ID_REMOTE_SUBMIX;
+            return openDevice(AUDIO_HARDWARE_MODULE_ID_REMOTE_SUBMIX, _hidl_cb);
         case IDevicesFactory::Device::STUB:
-            return AUDIO_HARDWARE_MODULE_ID_STUB;
+            return openDevice(AUDIO_HARDWARE_MODULE_ID_STUB, _hidl_cb);
     }
-    return nullptr;
+    _hidl_cb(Result::INVALID_ARGUMENTS, nullptr);
+    return Void();
+}
+#endif
+#ifdef AUDIO_HAL_VERSION_4_0
+Return<void> DevicesFactory::openDevice(const hidl_string& moduleName, openDevice_cb _hidl_cb) {
+    if (moduleName == AUDIO_HARDWARE_MODULE_ID_PRIMARY) {
+        return openDevice<PrimaryDevice>(moduleName.c_str(), _hidl_cb);
+    }
+    return openDevice(moduleName.c_str(), _hidl_cb);
+}
+Return<void> DevicesFactory::openPrimaryDevice(openPrimaryDevice_cb _hidl_cb) {
+    return openDevice<PrimaryDevice>(AUDIO_HARDWARE_MODULE_ID_PRIMARY, _hidl_cb);
+}
+#endif
+
+Return<void> DevicesFactory::openDevice(const char* moduleName, openDevice_cb _hidl_cb) {
+    return openDevice<implementation::Device>(moduleName, _hidl_cb);
+}
+
+template <class DeviceShim, class Callback>
+Return<void> DevicesFactory::openDevice(const char* moduleName, Callback _hidl_cb) {
+    audio_hw_device_t* halDevice;
+    Result retval(Result::INVALID_ARGUMENTS);
+    sp<DeviceShim> result;
+    int halStatus = loadAudioInterface(moduleName, &halDevice);
+    if (halStatus == OK) {
+        result = new DeviceShim(halDevice);
+        retval = Result::OK;
+    } else if (halStatus == -EINVAL) {
+        retval = Result::NOT_INITIALIZED;
+    }
+    _hidl_cb(retval, result);
+    return Void();
 }
 
 // static
@@ -71,30 +104,6 @@ int DevicesFactory::loadAudioInterface(const char* if_name, audio_hw_device_t** 
 out:
     *dev = NULL;
     return rc;
-}
-
-// Methods from ::android::hardware::audio::AUDIO_HAL_VERSION::IDevicesFactory follow.
-Return<void> DevicesFactory::openDevice(IDevicesFactory::Device device, openDevice_cb _hidl_cb) {
-    audio_hw_device_t* halDevice;
-    Result retval(Result::INVALID_ARGUMENTS);
-    sp<IDevice> result;
-    const char* moduleName = deviceToString(device);
-    if (moduleName != nullptr) {
-        int halStatus = loadAudioInterface(moduleName, &halDevice);
-        if (halStatus == OK) {
-            if (device == IDevicesFactory::Device::PRIMARY) {
-                result = new PrimaryDevice(halDevice);
-            } else {
-                result = new ::android::hardware::audio::AUDIO_HAL_VERSION::implementation::Device(
-                    halDevice);
-            }
-            retval = Result::OK;
-        } else if (halStatus == -EINVAL) {
-            retval = Result::NOT_INITIALIZED;
-        }
-    }
-    _hidl_cb(retval, result);
-    return Void();
 }
 
 IDevicesFactory* HIDL_FETCH_IDevicesFactory(const char* /* name */) {

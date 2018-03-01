@@ -37,11 +37,19 @@ using ::android::hardware::hidl_string;
 using ::android::sp;
 
 struct DevicesFactory : public IDevicesFactory {
-    // Methods from ::android::hardware::audio::AUDIO_HAL_VERSION::IDevicesFactory follow.
+#ifdef AUDIO_HAL_VERSION_2_0
     Return<void> openDevice(IDevicesFactory::Device device, openDevice_cb _hidl_cb) override;
+#endif
+#ifdef AUDIO_HAL_VERSION_4_0
+    Return<void> openDevice(const hidl_string& device, openDevice_cb _hidl_cb) override;
+    Return<void> openPrimaryDevice(openPrimaryDevice_cb _hidl_cb) override;
+#endif
 
    private:
-    static const char* deviceToString(IDevicesFactory::Device device);
+    template <class DeviceShim, class Callback>
+    Return<void> openDevice(const char* moduleName, Callback _hidl_cb);
+    Return<void> openDevice(const char* moduleName, openDevice_cb _hidl_cb);
+
     static int loadAudioInterface(const char* if_name, audio_hw_device_t** dev);
 };
 

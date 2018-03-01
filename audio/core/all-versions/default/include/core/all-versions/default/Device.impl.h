@@ -147,7 +147,10 @@ Return<void> Device::getInputBufferSize(const AudioConfig& config, getInputBuffe
 }
 
 Return<void> Device::openOutputStream(int32_t ioHandle, const DeviceAddress& device,
-                                      const AudioConfig& config, AudioOutputFlag flags,
+                                      const AudioConfig& config, AudioOutputFlagBitfield flags,
+#ifdef AUDIO_HAL_VERSION_4_0
+                                      const SourceMetadata& /* sourceMetadata */,
+#endif
                                       openOutputStream_cb _hidl_cb) {
     audio_config_t halConfig;
     HidlUtils::audioConfigToHal(config, &halConfig);
@@ -174,7 +177,7 @@ Return<void> Device::openOutputStream(int32_t ioHandle, const DeviceAddress& dev
 }
 
 Return<void> Device::openInputStream(int32_t ioHandle, const DeviceAddress& device,
-                                     const AudioConfig& config, AudioInputFlag flags,
+                                     const AudioConfig& config, AudioInputFlagBitfield flags,
                                      AudioSource source, openInputStream_cb _hidl_cb) {
     audio_config_t halConfig;
     HidlUtils::audioConfigToHal(config, &halConfig);
@@ -200,6 +203,24 @@ Return<void> Device::openInputStream(int32_t ioHandle, const DeviceAddress& devi
     _hidl_cb(analyzeStatus("open_input_stream", status), streamIn, suggestedConfig);
     return Void();
 }
+
+#ifdef AUDIO_HAL_VERSION_4_0
+Return<void> Device::openInputStream(int32_t ioHandle, const DeviceAddress& device,
+                                     const AudioConfig& config, AudioInputFlagBitfield flags,
+                                     const SinkMetadata& sinkMetadata,
+                                     openInputStream_cb _hidl_cb) {
+    if (sinkMetadata.tracks.size() == 0) {
+        // This should never happen, the framework must not create as stream
+        // if there is no client
+        ALOGE("openInputStream called without tracks connected");
+        _hidl_cb(Result::INVALID_ARGUMENTS, nullptr, AudioConfig());
+        return Void();
+    }
+    // Pick the first one as the main until the legacy API is update
+    AudioSource source = sinkMetadata.tracks[0].source;
+    return openInputStream(ioHandle, device, config, flags, source, _hidl_cb);
+}
+#endif
 
 Return<bool> Device::supportsAudioPatches() {
     return version() >= AUDIO_DEVICE_API_VERSION_3_0;
@@ -256,31 +277,71 @@ Return<Result> Device::setAudioPortConfig(const AudioPortConfig& config) {
     return Result::NOT_SUPPORTED;
 }
 
+#ifdef AUDIO_HAL_VERSION_2_0
 Return<AudioHwSync> Device::getHwAvSync() {
     int halHwAvSync;
     Result retval = getParam(AudioParameter::keyHwAvSync, &halHwAvSync);
     return retval == Result::OK ? halHwAvSync : AUDIO_HW_SYNC_INVALID;
 }
+#elif defined(AUDIO_HAL_VERSION_4_0)
+Return<void> Device::getHwAvSync(getHwAvSync_cb _hidl_cb) {
+    int halHwAvSync;
+    Result retval = getParam(AudioParameter::keyHwAvSync, &halHwAvSync);
+    _hidl_cb(retval, halHwAvSync);
+    return Void();
+}
+#endif
 
 Return<Result> Device::setScreenState(bool turnedOn) {
     return setParam(AudioParameter::keyScreenState, turnedOn);
 }
 
+#ifdef AUDIO_HAL_VERSION_2_0
 Return<void> Device::getParameters(const hidl_vec<hidl_string>& keys, getParameters_cb _hidl_cb) {
-    getParametersImpl(keys, _hidl_cb);
+    getParametersImpl({}, keys, _hidl_cb);
     return Void();
 }
 
 Return<Result> Device::setParameters(const hidl_vec<ParameterValue>& parameters) {
-    return setParametersImpl(parameters);
+    return setParametersImpl({} /* context */, parameters);
 }
+#elif defined(AUDIO_HAL_VERSION_4_0)
+Return<void> Device::getParameters(const hidl_vec<ParameterValue>& context,
+                                   const hidl_vec<hidl_string>& keys, getParameters_cb _hidl_cb) {
+    getParametersImpl(context, keys, _hidl_cb);
+    return Void();
+}
+Return<Result> Device::setParameters(const hidl_vec<ParameterValue>& context,
+                                     const hidl_vec<ParameterValue>& parameters) {
+    return setParametersImpl(context, parameters);
+}
+#endif
 
+#ifdef AUDIO_HAL_VERSION_2_0
 Return<void> Device::debugDump(const hidl_handle& fd) {
+    return debug(fd, {});
+}
+#endif
+
+Return<void> Device::debug(const hidl_handle& fd, const hidl_vec<hidl_string>& /* options */) {
     if (fd.getNativeHandle() != nullptr && fd->numFds == 1) {
         analyzeStatus("dump", mDevice->dump(mDevice, fd->data[0]));
     }
     return Void();
 }
+
+#ifdef AUDIO_HAL_VERSION_4_0
+Return<void> Device::getMicrophones(getMicrophones_cb _hidl_cb) {
+    // TODO return device microphones
+    _hidl_cb(Result::NOT_SUPPORTED, {});
+    return Void();
+}
+
+Return<Result> Device::setConnectedState(const DeviceAddress& address, bool connected) {
+    auto key = connected ? AudioParameter::keyStreamConnect : AudioParameter::keyStreamDisconnect;
+    return setParam(key, address);
+}
+#endif
 
 }  // namespace implementation
 }  // namespace AUDIO_HAL_VERSION
