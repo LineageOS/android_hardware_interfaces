@@ -150,8 +150,10 @@ Return<void> RadioResponse_v1_2::sendSMSExpectMoreResponse(const RadioResponseIn
     return Void();
 }
 
-Return<void> RadioResponse_v1_2::setupDataCallResponse(const RadioResponseInfo& /*info*/,
+Return<void> RadioResponse_v1_2::setupDataCallResponse(const RadioResponseInfo& info,
                                                        const SetupDataCallResult& /*dcResponse*/) {
+    rspInfo = info;
+    parent_v1_2.notify();
     return Void();
 }
 
@@ -205,7 +207,9 @@ Return<void> RadioResponse_v1_2::acceptCallResponse(const RadioResponseInfo& /*i
     return Void();
 }
 
-Return<void> RadioResponse_v1_2::deactivateDataCallResponse(const RadioResponseInfo& /*info*/) {
+Return<void> RadioResponse_v1_2::deactivateDataCallResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_v1_2.notify();
     return Void();
 }
 
