@@ -17,10 +17,26 @@
 #include <android/hardware/authsecret/1.0/IAuthSecret.h>
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <VtsHalHidlTargetTestEnvBase.h>
 
 using ::android::hardware::hidl_vec;
 using ::android::hardware::authsecret::V1_0::IAuthSecret;
 using ::android::sp;
+
+// Test environment for Boot HIDL HAL.
+class AuthSecretHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    // get the test environment singleton
+    static AuthSecretHidlEnvironment* Instance() {
+        static AuthSecretHidlEnvironment* instance = new AuthSecretHidlEnvironment;
+        return instance;
+    }
+
+    virtual void registerTestServices() override { registerTestService<IAuthSecret>(); }
+
+   private:
+    AuthSecretHidlEnvironment() {}
+};
 
 /**
  * There is no expected behaviour that can be tested so these tests check the
@@ -28,7 +44,8 @@ using ::android::sp;
  */
 struct AuthSecretHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     virtual void SetUp() override {
-        authsecret = ::testing::VtsHalHidlTargetTestBase::getService<IAuthSecret>();
+        authsecret = ::testing::VtsHalHidlTargetTestBase::getService<IAuthSecret>(
+            AuthSecretHidlEnvironment::Instance()->getServiceName<IAuthSecret>());
         ASSERT_NE(authsecret, nullptr);
 
         // All tests must enroll the correct secret first as this cannot be changed
@@ -68,4 +85,13 @@ TEST_F(AuthSecretHidlTest, provisionPrimaryUserCredentialAndPassAgainMultipleTim
 TEST_F(AuthSecretHidlTest, provisionPrimaryUserCredentialAndWrongSecret) {
     // Secret provisioned by SetUp()
     authsecret->primaryUserCredential(WRONG_SECRET);
+}
+
+int main(int argc, char** argv) {
+    ::testing::AddGlobalTestEnvironment(AuthSecretHidlEnvironment::Instance());
+    ::testing::InitGoogleTest(&argc, argv);
+    AuthSecretHidlEnvironment::Instance()->init(&argc, argv);
+    int status = RUN_ALL_TESTS();
+    ALOGI("Test result = %d", status);
+    return status;
 }
