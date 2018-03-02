@@ -4,6 +4,9 @@
 #include <android/hardware/gnss/1.1/IGnss.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
+#include <atomic>
+#include <mutex>
+#include <thread>
 
 namespace android {
 namespace hardware {
@@ -19,7 +22,13 @@ using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::sp;
 
+/**
+ * Unlike the gnss/1.0/default implementation, which is a shim layer to the legacy gps.h, this
+ * default implementation serves as a mock implementation for emulators
+ */
 struct Gnss : public IGnss {
+    Gnss();
+    ~Gnss();
     // Methods from ::android::hardware::gnss::V1_0::IGnss follow.
     Return<bool> setCallback(
         const sp<::android::hardware::gnss::V1_0::IGnssCallback>& callback) override;
@@ -68,6 +77,15 @@ struct Gnss : public IGnss {
         const ::android::hardware::gnss::V1_0::GnssLocation& location) override;
 
     // Methods from ::android::hidl::base::V1_0::IBase follow.
+   private:
+    Return<V1_0::GnssLocation> getMockLocation();
+    Return<void> reportLocation(const V1_0::GnssLocation& location);
+
+    static sp<::android::hardware::gnss::V1_1::IGnssCallback> sGnssCallback;
+    std::atomic<bool> mIsActive;
+    std::thread mThread;
+    std::mutex mMutex;
+    std::atomic<long> mMinIntervalMs;
 };
 
 }  // namespace implementation
