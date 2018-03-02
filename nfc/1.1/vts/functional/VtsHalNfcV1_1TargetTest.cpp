@@ -30,12 +30,16 @@
 using ::android::hardware::nfc::V1_1::INfc;
 using ::android::hardware::nfc::V1_1::INfcClientCallback;
 using ::android::hardware::nfc::V1_1::NfcEvent;
+using ::android::hardware::nfc::V1_1::NfcConfig;
 using ::android::hardware::nfc::V1_0::NfcStatus;
 using ::android::hardware::nfc::V1_0::NfcData;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::hidl_vec;
 using ::android::sp;
+
+// 261 bytes is the default and minimum transceive length
+constexpr unsigned int MIN_ISO_DEP_TRANSCEIVE_LENGTH = 261;
 
 constexpr char kCallbackNameSendEvent[] = "sendEvent";
 constexpr char kCallbackNameSendData[] = "sendData";
@@ -207,6 +211,17 @@ TEST_F(NfcHidlTest, CloseForPowerCaseOffAfterClose) {
     EXPECT_TRUE(res.no_timeout);
     EXPECT_EQ(NfcEvent::OPEN_CPLT, res.args->last_event_);
     EXPECT_EQ(NfcStatus::OK, res.args->last_status_);
+}
+
+/*
+ * getConfig:
+ * Calls getConfig()
+ * checks if fields in NfcConfig are populated correctly
+ */
+TEST_F(NfcHidlTest, GetConfig) {
+    nfc_->getConfig([](NfcConfig config) {
+        EXPECT_GE(config.maxIsoDepTransceiveLength, MIN_ISO_DEP_TRANSCEIVE_LENGTH);
+    });
 }
 
 int main(int argc, char** argv) {
