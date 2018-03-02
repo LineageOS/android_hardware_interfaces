@@ -655,3 +655,21 @@ TEST_F(RadioHidlTest_v1_2, deactivateDataCall_1_2) {
              RadioError::REQUEST_NOT_SUPPORTED, RadioError::CANCELLED}));
     }
 }
+
+/*
+ * Test IRadio.getCellInfoList() for the response returned.
+ */
+TEST_F(RadioHidlTest_v1_2, getCellInfoList_1_2) {
+    int serial = GetRandomSerialNumber();
+
+    Return<void> res = radio_v1_2->getCellInfoList(serial);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_2->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_2->rspInfo.serial);
+
+    ALOGI("getCellInfoList_1_2, rspInfo.error = %s\n",
+          toString(radioRsp_v1_2->rspInfo.error).c_str());
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_2->rspInfo.error,
+                                 {RadioError::NONE, RadioError::NO_NETWORK_FOUND}));
+}
