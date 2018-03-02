@@ -2422,6 +2422,7 @@ Status ExternalCameraDeviceSession::configureStreams(
     uint32_t maxDim = 0;
     for (const auto& stream : config.streams) {
         float aspectRatio = ASPECT_RATIO(stream);
+        ALOGI("%s: request stream %dx%d", __FUNCTION__, stream.width, stream.height);
         if ((mCroppingType == VERTICAL && aspectRatio < desiredAr) ||
                 (mCroppingType == HORIZONTAL && aspectRatio > desiredAr)) {
             desiredAr = aspectRatio;
@@ -2606,6 +2607,9 @@ status_t ExternalCameraDeviceSession::initDefaultRequests() {
     const uint8_t nrMode = ANDROID_NOISE_REDUCTION_MODE_OFF;
     UPDATE(md, ANDROID_NOISE_REDUCTION_MODE, &nrMode, 1);
 
+    const int32_t testPatternModes = ANDROID_SENSOR_TEST_PATTERN_MODE_OFF;
+    UPDATE(md, ANDROID_SENSOR_TEST_PATTERN_MODE, &testPatternModes, 1);
+
     const uint8_t fdMode = ANDROID_STATISTICS_FACE_DETECT_MODE_OFF;
     UPDATE(md, ANDROID_STATISTICS_FACE_DETECT_MODE, &fdMode, 1);
 
@@ -2630,7 +2634,7 @@ status_t ExternalCameraDeviceSession::initDefaultRequests() {
         }
     }
     int32_t defaultFramerate = support30Fps ? 30 : maxFps;
-    int32_t defaultFpsRange[] = {defaultFramerate, defaultFramerate};
+    int32_t defaultFpsRange[] = {defaultFramerate / 2, defaultFramerate};
     UPDATE(md, ANDROID_CONTROL_AE_TARGET_FPS_RANGE, defaultFpsRange, ARRAY_SIZE(defaultFpsRange));
 
     uint8_t antibandingMode = ANDROID_CONTROL_AE_ANTIBANDING_MODE_AUTO;
@@ -2724,6 +2728,10 @@ status_t ExternalCameraDeviceSession::fillCaptureResult(
 
     const uint8_t flashState = ANDROID_FLASH_STATE_UNAVAILABLE;
     UPDATE(md, ANDROID_FLASH_STATE, &flashState, 1);
+
+    // This means pipeline latency of X frame intervals. The maximum number is 4.
+    const uint8_t requestPipelineMaxDepth = 4;
+    UPDATE(md, ANDROID_REQUEST_PIPELINE_DEPTH, &requestPipelineMaxDepth, 1);
 
     // android.scaler
     const int32_t crop_region[] = {
