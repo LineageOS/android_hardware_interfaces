@@ -404,6 +404,18 @@ class RadioResponse_v1_2 : public V1_1::IRadioResponse {
     Return<void> setSignalStrengthReportingCriteriaResponse(const RadioResponseInfo& info);
 
     Return<void> setLinkCapacityReportingCriteriaResponse(const RadioResponseInfo& info);
+
+    Return<void> getIccCardStatusResponse_1_2(const RadioResponseInfo& info,
+                                              const CardStatus& card_status);
+
+    Return<void> getCurrentCallsResponse_1_2(const RadioResponseInfo& info,
+                                             const ::android::hardware::hidl_vec<Call>& calls);
+
+    Return<void> getSignalStrengthResponse_1_2(const RadioResponseInfo& info,
+                                               const SignalStrength& sig_strength);
+
+    Return<void> getCellInfoListResponse_1_2(
+        const RadioResponseInfo& info, const ::android::hardware::hidl_vec<CellInfo>& cellInfo);
 };
 
 /* Callback class for radio indication */
