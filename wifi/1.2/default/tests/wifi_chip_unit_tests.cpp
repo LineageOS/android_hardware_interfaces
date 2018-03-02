@@ -395,10 +395,10 @@ TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateAp_ShouldSucceed) {
     ASSERT_FALSE(createIface(IfaceType::AP).empty());
 }
 
-TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateStaSta_ShouldSucceed) {
+TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateStaSta_ShouldFail) {
     findModeAndConfigureForIfaceType(IfaceType::AP);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
-    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+    ASSERT_TRUE(createIface(IfaceType::STA).empty());
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateStaAp_ShouldSucceed) {
@@ -407,35 +407,18 @@ TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateStaAp_ShouldSucceed) {
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
 }
 
-TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateStaStaAp_ShouldFail) {
-    findModeAndConfigureForIfaceType(IfaceType::AP);
-    ASSERT_FALSE(createIface(IfaceType::STA).empty());
-    ASSERT_FALSE(createIface(IfaceType::STA).empty());
-    ASSERT_TRUE(createIface(IfaceType::AP).empty());
-}
-
 TEST_F(WifiChipV2_AwareIfaceCombinationTest,
-       CreateStaAp_AfterStaRemove_ShouldSucceed) {
+       CreateSta_AfterStaApRemove_ShouldSucceed) {
     findModeAndConfigureForIfaceType(IfaceType::STA);
-    ASSERT_FALSE(createIface(IfaceType::STA).empty());
     const auto sta_iface_name = createIface(IfaceType::STA);
     ASSERT_FALSE(sta_iface_name.empty());
-    ASSERT_TRUE(createIface(IfaceType::AP).empty());
-
-    // After removing STA iface, AP iface creation should succeed.
-    removeIface(IfaceType::STA, sta_iface_name);
-    ASSERT_FALSE(createIface(IfaceType::AP).empty());
-}
-
-TEST_F(WifiChipV2_AwareIfaceCombinationTest,
-       CreateStaSta_AfterApRemove_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
-    ASSERT_FALSE(createIface(IfaceType::STA).empty());
     const auto ap_iface_name = createIface(IfaceType::AP);
     ASSERT_FALSE(ap_iface_name.empty());
+
     ASSERT_TRUE(createIface(IfaceType::STA).empty());
 
-    // After removing AP  iface, STA iface creation should succeed.
+    // After removing AP & STA iface, STA iface creation should succeed.
+    removeIface(IfaceType::STA, sta_iface_name);
     removeIface(IfaceType::AP, ap_iface_name);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
 }
@@ -521,16 +504,6 @@ TEST_F(WifiChipV2_AwareIfaceCombinationTest,
     // After removing NAN iface, P2P iface creation should succeed.
     removeIface(IfaceType::NAN, nan_iface_name);
     ASSERT_FALSE(createIface(IfaceType::P2P).empty());
-}
-
-TEST_F(WifiChipV2_AwareIfaceCombinationTest,
-       CreateStaSta_EnsureDifferentIfaceNames) {
-    findModeAndConfigureForIfaceType(IfaceType::AP);
-    const auto sta1_iface_name = createIface(IfaceType::STA);
-    const auto sta2_iface_name = createIface(IfaceType::STA);
-    ASSERT_FALSE(sta1_iface_name.empty());
-    ASSERT_FALSE(sta2_iface_name.empty());
-    ASSERT_NE(sta1_iface_name, sta2_iface_name);
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest,

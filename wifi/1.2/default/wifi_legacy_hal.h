@@ -274,7 +274,7 @@ class WifiLegacyHal {
     wifi_error deregisterErrorAlertCallbackHandler(
         const std::string& iface_name);
     // Radio mode functions.
-    wifi_error registerRadioModeChangeCallbackHandler(
+    virtual wifi_error registerRadioModeChangeCallbackHandler(
         const std::string& iface_name,
         const on_radio_mode_change_callback& on_user_change_callback);
     // RTT functions.

@@ -36,6 +36,9 @@ class MockWifiLegacyHal : public WifiLegacyHal {
     MOCK_METHOD2(stop, wifi_error(std::unique_lock<std::recursive_mutex>*,
                                   const std::function<void()>&));
     MOCK_METHOD2(setDfsFlag, wifi_error(const std::string&, bool));
+    MOCK_METHOD2(registerRadioModeChangeCallbackHandler,
+                 wifi_error(const std::string&,
+                            const on_radio_mode_change_callback&));
     MOCK_METHOD2(nanRegisterCallbackHandlers,
                  wifi_error(const std::string&, const NanCallbackHandlers&));
     MOCK_METHOD2(nanDisableRequest,
