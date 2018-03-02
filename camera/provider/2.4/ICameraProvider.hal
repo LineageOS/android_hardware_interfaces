@@ -35,7 +35,8 @@ import android.hardware.camera.device@3.2::ICameraDevice;
  * where
  *   - <major>/<minor> is the provider HAL HIDL version,
  *   - <type> is the type of devices this provider knows about, such as
- *     "internal", "legacy", "external", or "remote"
+ *     "internal", "legacy", "external", "remote" etc. The camera framework
+ *     must not differentiate or chage its behavior based on the specific type.
  *   - <instance> is a non-negative integer starting from 0 to disambiguate
  *     between multiple HALs of the same type.
  *
