@@ -470,7 +470,7 @@ void changeStateIdletoExecute(sp<IOmxNode> omxNode,
     status = omxNode->sendCommand(toRawCommandType(OMX_CommandStateSet),
                                   OMX_StateExecuting);
     ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    status = observer->dequeueMessage(&msg, DEFAULT_TIMEOUT);
+    status = observer->dequeueMessage(&msg, RELAXED_TIMEOUT);
     ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
     ASSERT_EQ(msg.type, Message::Type::EVENT);
     ASSERT_EQ(msg.data.eventData.event, OMX_EventCmdComplete);
