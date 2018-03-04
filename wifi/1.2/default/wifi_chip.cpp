@@ -1171,7 +1171,7 @@ void WifiChip::populateModes() {
     // (conditional on isDualInterfaceSupported()):
     //    Interface Combination 1: Will support 1 STA and 1 P2P or NAN(optional)
     //                             concurrent iface operations.
-    //    Interface Combination 2: Will support 1 STA and 1 STA or AP concurrent
+    //    Interface Combination 2: Will support 1 STA and 1 AP concurrent
     //                             iface operations.
     // If Aware is enabled (conditional on isAwareSupported()), the iface
     // combination will be modified to support either P2P or NAN in place of
@@ -1181,8 +1181,7 @@ void WifiChip::populateModes() {
         const IWifiChip::ChipIfaceCombinationLimit
             chip_iface_combination_limit_1 = {{IfaceType::STA}, 1};
         const IWifiChip::ChipIfaceCombinationLimit
-            chip_iface_combination_limit_2 = {{IfaceType::STA, IfaceType::AP},
-                                              1};
+            chip_iface_combination_limit_2 = {{IfaceType::AP}, 1};
         IWifiChip::ChipIfaceCombinationLimit chip_iface_combination_limit_3;
         if (feature_flags_.lock()->isAwareSupported()) {
             chip_iface_combination_limit_3 = {{IfaceType::P2P, IfaceType::NAN},

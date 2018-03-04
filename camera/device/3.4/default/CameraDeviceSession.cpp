@@ -107,7 +107,6 @@ Return<void> CameraDeviceSession::configureStreams_3_4(
 
     const camera_metadata_t *paramBuffer = nullptr;
     if (0 < requestedConfiguration.sessionParams.size()) {
-        ::android::hardware::camera::common::V1_0::helper::CameraMetadata sessionParams;
         V3_2::implementation::convertFromHidl(requestedConfiguration.sessionParams, &paramBuffer);
     }
 

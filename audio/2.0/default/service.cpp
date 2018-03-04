@@ -20,6 +20,7 @@
 #include <android/hardware/audio/effect/2.0/IEffectsFactory.h>
 #include <android/hardware/soundtrigger/2.0/ISoundTriggerHw.h>
 #include <android/hardware/soundtrigger/2.1/ISoundTriggerHw.h>
+#include <binder/ProcessState.h>
 #include <hidl/HidlTransportSupport.h>
 #include <hidl/LegacySupport.h>
 
@@ -36,6 +37,9 @@ using android::hardware::registerPassthroughServiceImplementation;
 using android::OK;
 
 int main(int /* argc */, char* /* argv */ []) {
+    android::ProcessState::initWithDriver("/dev/vndbinder");
+    // start a threadpool for vndbinder interactions
+    android::ProcessState::self()->startThreadPool();
     configureRpcThreadpool(16, true /*callerWillJoin*/);
     android::status_t status;
     status = registerPassthroughServiceImplementation<IDevicesFactory>();

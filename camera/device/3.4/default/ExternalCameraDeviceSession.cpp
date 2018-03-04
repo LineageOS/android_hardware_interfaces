@@ -15,6 +15,7 @@
  */
 #define LOG_TAG "ExtCamDevSsn@3.4"
 //#define LOG_NDEBUG 0
+#define ATRACE_TAG ATRACE_TAG_CAMERA
 #include <log/log.h>
 
 #include <inttypes.h>
@@ -22,6 +23,7 @@
 
 #include "android-base/macros.h"
 #include <utils/Timers.h>
+#include <utils/Trace.h>
 #include <linux/videodev2.h>
 #include <sync/sync.h>
 
@@ -160,7 +162,6 @@ void ExternalCameraDeviceSession::dumpState(const native_handle_t* handle) {
     SupportedV4L2Format streamingFmt;
     std::unordered_set<uint32_t>  inflightFrames;
     {
-        Mutex::Autolock _l(mLock);
         bool sessionLocked = tryLock(mLock);
         if (!sessionLocked) {
             dprintf(fd, "!! ExternalCameraDeviceSession mLock may be deadlocked !!\n");
@@ -180,12 +181,13 @@ void ExternalCameraDeviceSession::dumpState(const native_handle_t* handle) {
             streaming ? "streaming" : "not streaming");
     if (streaming) {
         // TODO: dump fps later
-        dprintf(fd, "Current V4L2 format %c%c%c%c %dx%d\n",
+        dprintf(fd, "Current V4L2 format %c%c%c%c %dx%d @ %ffps\n",
                 streamingFmt.fourcc & 0xFF,
                 (streamingFmt.fourcc >> 8) & 0xFF,
                 (streamingFmt.fourcc >> 16) & 0xFF,
                 (streamingFmt.fourcc >> 24) & 0xFF,
-                streamingFmt.width, streamingFmt.height);
+                streamingFmt.width, streamingFmt.height,
+                mV4l2StreamingFps);
 
         size_t numDequeuedV4l2Buffers = 0;
         {
@@ -291,7 +293,6 @@ Return<void> ExternalCameraDeviceSession::configureStreams_3_4(
         config_v32.streams[i] = requestedConfiguration.streams[i].v3_2;
     }
 
-    // Ignore requestedConfiguration.sessionParams. External camera does not support it
     Status status = configureStreams(config_v32, &outStreams_v33);
 
     V3_4::HalStreamConfiguration outStreams;
@@ -358,6 +359,7 @@ Return<void> ExternalCameraDeviceSession::processCaptureRequest_3_4(
 }
 
 Return<Status> ExternalCameraDeviceSession::flush() {
+    ATRACE_CALL();
     Mutex::Autolock _il(mInterfaceLock);
     Status status = initStatus();
     if (status != Status::OK) {
@@ -451,7 +453,25 @@ void ExternalCameraDeviceSession::cleanupInflightFences(
     }
 }
 
+int ExternalCameraDeviceSession::waitForV4L2BufferReturnLocked(std::unique_lock<std::mutex>& lk) {
+    std::chrono::seconds timeout = std::chrono::seconds(kBufferWaitTimeoutSec);
+    mLock.unlock();
+    auto st = mV4L2BufferReturned.wait_for(lk, timeout);
+    // Here we introduce a order where mV4l2BufferLock is acquired before mLock, while
+    // the normal lock acquisition order is reversed. This is fine because in most of
+    // cases we are protected by mInterfaceLock. The only thread that can cause deadlock
+    // is the OutputThread, where we do need to make sure we don't acquire mLock then
+    // mV4l2BufferLock
+    mLock.lock();
+    if (st == std::cv_status::timeout) {
+        ALOGE("%s: wait for V4L2 buffer return timeout!", __FUNCTION__);
+        return -1;
+    }
+    return 0;
+}
+
 Status ExternalCameraDeviceSession::processOneCaptureRequest(const CaptureRequest& request)  {
+    ATRACE_CALL();
     Status status = initStatus();
     if (status != Status::OK) {
         return status;
@@ -510,14 +530,58 @@ Status ExternalCameraDeviceSession::processOneCaptureRequest(const CaptureReques
         return Status::ILLEGAL_ARGUMENT;
     }
 
+    camera_metadata_entry fpsRange = mLatestReqSetting.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE);
+    if (fpsRange.count == 2) {
+        double requestFpsMax = fpsRange.data.i32[1];
+        double closestFps = 0.0;
+        double fpsError = 1000.0;
+        bool fpsSupported = false;
+        for (const auto& fr : mV4l2StreamingFmt.frameRates) {
+            double f = fr.getDouble();
+            if (std::fabs(requestFpsMax - f) < 1.0) {
+                fpsSupported = true;
+                break;
+            }
+            if (std::fabs(requestFpsMax - f) < fpsError) {
+                fpsError = std::fabs(requestFpsMax - f);
+                closestFps = f;
+            }
+        }
+        if (!fpsSupported) {
+            /* This can happen in a few scenarios:
+             * 1. The application is sending a FPS range not supported by the configured outputs.
+             * 2. The application is sending a valid FPS range for all cofigured outputs, but
+             *    the selected V4L2 size can only run at slower speed. This should be very rare
+             *    though: for this to happen a sensor needs to support at least 3 different aspect
+             *    ratio outputs, and when (at least) two outputs are both not the main aspect ratio
+             *    of the webcam, a third size that's larger might be picked and runs into this
+             *    issue.
+             */
+            ALOGW("%s: cannot reach fps %d! Will do %f instead",
+                    __FUNCTION__, fpsRange.data.i32[1], closestFps);
+            requestFpsMax = closestFps;
+        }
+
+        if (requestFpsMax != mV4l2StreamingFps) {
+            {
+                std::unique_lock<std::mutex> lk(mV4l2BufferLock);
+                while (mNumDequeuedV4l2Buffers != 0) {
+                    // Wait until pipeline is idle before reconfigure stream
+                    int waitRet = waitForV4L2BufferReturnLocked(lk);
+                    if (waitRet != 0) {
+                        ALOGE("%s: wait for pipeline idle failed!", __FUNCTION__);
+                        return Status::INTERNAL_ERROR;
+                    }
+                }
+            }
+            configureV4l2StreamLocked(mV4l2StreamingFmt, requestFpsMax);
+        }
+    }
+
     status = importRequest(request, allBufPtrs, allFences);
     if (status != Status::OK) {
         return status;
     }
-
-    // TODO: program fps range per capture request here
-    //       or limit the set of availableFpsRange
-
 
     nsecs_t shutterTs = 0;
     sp<V4L2Frame> frameIn = dequeueV4l2FrameLocked(&shutterTs);
@@ -573,6 +637,7 @@ void ExternalCameraDeviceSession::notifyError(
 //TODO: refactor with processCaptureResult
 Status ExternalCameraDeviceSession::processCaptureRequestError(
         const std::shared_ptr<HalRequest>& req) {
+    ATRACE_CALL();
     // Return V4L2 buffer to V4L2 buffer queue
     enqueueV4l2Frame(req->frameIn);
 
@@ -613,6 +678,7 @@ Status ExternalCameraDeviceSession::processCaptureRequestError(
 }
 
 Status ExternalCameraDeviceSession::processCaptureResult(std::shared_ptr<HalRequest>& req) {
+    ATRACE_CALL();
     // Return V4L2 buffer to V4L2 buffer queue
     enqueueV4l2Frame(req->frameIn);
 
@@ -1389,6 +1455,7 @@ int ExternalCameraDeviceSession::OutputThread::createJpegLocked(
         HalStreamBuffer &halBuf,
         const std::shared_ptr<HalRequest>& req)
 {
+    ATRACE_CALL();
     int ret;
     auto lfail = [&](auto... args) {
         ALOGE(args...);
@@ -1596,8 +1663,8 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
     uint8_t* inData;
     size_t inDataSize;
     req->frameIn->map(&inData, &inDataSize);
-    // TODO: profile
     // TODO: in some special case maybe we can decode jpg directly to gralloc output?
+    ATRACE_BEGIN("MJPGtoI420");
     int res = libyuv::MJPGToI420(
             inData, inDataSize,
             static_cast<uint8_t*>(mYu12FrameLayout.y),
@@ -1608,6 +1675,7 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
             mYu12FrameLayout.cStride,
             mYu12Frame->mWidth, mYu12Frame->mHeight,
             mYu12Frame->mWidth, mYu12Frame->mHeight);
+    ATRACE_END();
 
     if (res != 0) {
         // For some webcam, the first few V4L2 frames might be malformed...
@@ -1669,17 +1737,21 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
                         (outputFourcc >> 24) & 0xFF);
 
                 YCbCrLayout cropAndScaled;
+                ATRACE_BEGIN("cropAndScaleLocked");
                 int ret = cropAndScaleLocked(
                         mYu12Frame,
                         Size { halBuf.width, halBuf.height },
                         &cropAndScaled);
+                ATRACE_END();
                 if (ret != 0) {
                     lk.unlock();
                     return onDeviceError("%s: crop and scale failed!", __FUNCTION__);
                 }
 
                 Size sz {halBuf.width, halBuf.height};
+                ATRACE_BEGIN("formatConvertLocked");
                 ret = formatConvertLocked(cropAndScaled, outLayout, sz, outputFourcc);
+                ATRACE_END();
                 if (ret != 0) {
                     lk.unlock();
                     return onDeviceError("%s: format coversion failed!", __FUNCTION__);
@@ -1790,6 +1862,7 @@ Status ExternalCameraDeviceSession::OutputThread::submitRequest(
 }
 
 void ExternalCameraDeviceSession::OutputThread::flush() {
+    ATRACE_CALL();
     auto parent = mParent.promote();
     if (parent == nullptr) {
        ALOGE("%s: session has been disconnected!", __FUNCTION__);
@@ -1807,6 +1880,7 @@ void ExternalCameraDeviceSession::OutputThread::flush() {
         }
     }
 
+    ALOGV("%s: flusing inflight requests", __FUNCTION__);
     lk.unlock();
     for (const auto& req : reqs) {
         parent->processCaptureRequestError(req);
@@ -1815,6 +1889,7 @@ void ExternalCameraDeviceSession::OutputThread::flush() {
 
 void ExternalCameraDeviceSession::OutputThread::waitForNextRequest(
         std::shared_ptr<HalRequest>* out) {
+    ATRACE_CALL();
     if (out == nullptr) {
         ALOGE("%s: out is null", __FUNCTION__);
         return;
@@ -1979,7 +2054,47 @@ int ExternalCameraDeviceSession::v4l2StreamOffLocked() {
     return OK;
 }
 
-int ExternalCameraDeviceSession::configureV4l2StreamLocked(const SupportedV4L2Format& v4l2Fmt) {
+int ExternalCameraDeviceSession::setV4l2FpsLocked(double fps) {
+    // VIDIOC_G_PARM/VIDIOC_S_PARM: set fps
+    v4l2_streamparm streamparm = { .type = V4L2_BUF_TYPE_VIDEO_CAPTURE };
+    // The following line checks that the driver knows about framerate get/set.
+    int ret = TEMP_FAILURE_RETRY(ioctl(mV4l2Fd.get(), VIDIOC_G_PARM, &streamparm));
+    if (ret != 0) {
+        if (errno == -EINVAL) {
+            ALOGW("%s: device does not support VIDIOC_G_PARM", __FUNCTION__);
+        }
+        return -errno;
+    }
+    // Now check if the device is able to accept a capture framerate set.
+    if (!(streamparm.parm.capture.capability & V4L2_CAP_TIMEPERFRAME)) {
+        ALOGW("%s: device does not support V4L2_CAP_TIMEPERFRAME", __FUNCTION__);
+        return -EINVAL;
+    }
+
+    // fps is float, approximate by a fraction.
+    const int kFrameRatePrecision = 10000;
+    streamparm.parm.capture.timeperframe.numerator = kFrameRatePrecision;
+    streamparm.parm.capture.timeperframe.denominator =
+        (fps * kFrameRatePrecision);
+
+    if (TEMP_FAILURE_RETRY(ioctl(mV4l2Fd.get(), VIDIOC_S_PARM, &streamparm)) < 0) {
+        ALOGE("%s: failed to set framerate to %f: %s", __FUNCTION__, fps, strerror(errno));
+        return -1;
+    }
+
+    double retFps = streamparm.parm.capture.timeperframe.denominator /
+            static_cast<double>(streamparm.parm.capture.timeperframe.numerator);
+    if (std::fabs(fps - retFps) > 1.0) {
+        ALOGE("%s: expect fps %f, got %f instead", __FUNCTION__, fps, retFps);
+        return -1;
+    }
+    mV4l2StreamingFps = fps;
+    return 0;
+}
+
+int ExternalCameraDeviceSession::configureV4l2StreamLocked(
+        const SupportedV4L2Format& v4l2Fmt, double requestFps) {
+    ATRACE_CALL();
     int ret = v4l2StreamOffLocked();
     if (ret != OK) {
         ALOGE("%s: stop v4l2 streaming failed: ret %d", __FUNCTION__, ret);
@@ -2016,46 +2131,31 @@ int ExternalCameraDeviceSession::configureV4l2StreamLocked(const SupportedV4L2Fo
     uint32_t bufferSize = fmt.fmt.pix.sizeimage;
     ALOGI("%s: V4L2 buffer size is %d", __FUNCTION__, bufferSize);
 
-    float maxFps = -1.f;
-    float fps = 1000.f;
-    const float kDefaultFps = 30.f;
-    // Try to pick the slowest fps that is at least 30
-    for (const auto& fr : v4l2Fmt.frameRates) {
-        double f = fr.getDouble();
-        if (maxFps < f) {
-            maxFps = f;
-        }
-        if (f >= kDefaultFps && f < fps) {
-            fps = f;
-        }
-    }
-    if (fps == 1000.f) {
-        fps = maxFps;
-    }
-
-    // VIDIOC_G_PARM/VIDIOC_S_PARM: set fps
-    v4l2_streamparm streamparm = { .type = V4L2_BUF_TYPE_VIDEO_CAPTURE };
-    // The following line checks that the driver knows about framerate get/set.
-    if (TEMP_FAILURE_RETRY(ioctl(mV4l2Fd.get(), VIDIOC_G_PARM, &streamparm)) >= 0) {
-        // Now check if the device is able to accept a capture framerate set.
-        if (streamparm.parm.capture.capability & V4L2_CAP_TIMEPERFRAME) {
-            // |frame_rate| is float, approximate by a fraction.
-            const int kFrameRatePrecision = 10000;
-            streamparm.parm.capture.timeperframe.numerator = kFrameRatePrecision;
-            streamparm.parm.capture.timeperframe.denominator =
-                (fps * kFrameRatePrecision);
-
-            if (TEMP_FAILURE_RETRY(ioctl(mV4l2Fd.get(), VIDIOC_S_PARM, &streamparm)) < 0) {
-                ALOGE("%s: failed to set framerate to %f", __FUNCTION__, fps);
-                return UNKNOWN_ERROR;
+    const double kDefaultFps = 30.0;
+    double fps = 1000.0;
+    if (requestFps != 0.0) {
+        fps = requestFps;
+    } else {
+        double maxFps = -1.0;
+        // Try to pick the slowest fps that is at least 30
+        for (const auto& fr : v4l2Fmt.frameRates) {
+            double f = fr.getDouble();
+            if (maxFps < f) {
+                maxFps = f;
+            }
+            if (f >= kDefaultFps && f < fps) {
+                fps = f;
             }
         }
+        if (fps == 1000.0) {
+            fps = maxFps;
+        }
     }
-    float retFps = streamparm.parm.capture.timeperframe.denominator /
-                streamparm.parm.capture.timeperframe.numerator;
-    if (std::fabs(fps - retFps) > std::numeric_limits<float>::epsilon()) {
-        ALOGE("%s: expect fps %f, got %f instead", __FUNCTION__, fps, retFps);
-        return BAD_VALUE;
+
+    int fpsRet = setV4l2FpsLocked(fps);
+    if (fpsRet != 0 && fpsRet != -EINVAL) {
+        ALOGE("%s: set fps failed: %s", __FUNCTION__, strerror(fpsRet));
+        return fpsRet;
     }
 
     uint32_t v4lBufferCount = (fps >= kDefaultFps) ?
@@ -2126,6 +2226,7 @@ int ExternalCameraDeviceSession::configureV4l2StreamLocked(const SupportedV4L2Fo
 }
 
 sp<V4L2Frame> ExternalCameraDeviceSession::dequeueV4l2FrameLocked(/*out*/nsecs_t* shutterTs) {
+    ATRACE_CALL();
     sp<V4L2Frame> ret = nullptr;
 
     if (shutterTs == nullptr) {
@@ -2136,17 +2237,8 @@ sp<V4L2Frame> ExternalCameraDeviceSession::dequeueV4l2FrameLocked(/*out*/nsecs_t
     {
         std::unique_lock<std::mutex> lk(mV4l2BufferLock);
         if (mNumDequeuedV4l2Buffers == mV4L2BufferCount) {
-            std::chrono::seconds timeout = std::chrono::seconds(kBufferWaitTimeoutSec);
-            mLock.unlock();
-            auto st = mV4L2BufferReturned.wait_for(lk, timeout);
-            // Here we introduce a case where mV4l2BufferLock is acquired before mLock, while
-            // the normal lock acquisition order is reversed, but this is fine because in most of
-            // cases we are protected by mInterfaceLock. The only thread that can compete these
-            // locks are the OutputThread, where we do need to make sure we don't acquire mLock then
-            // mV4l2BufferLock
-            mLock.lock();
-            if (st == std::cv_status::timeout) {
-                ALOGE("%s: wait for V4L2 buffer return timeout!", __FUNCTION__);
+            int waitRet = waitForV4L2BufferReturnLocked(lk);
+            if (waitRet != 0) {
                 return ret;
             }
         }
@@ -2189,6 +2281,7 @@ sp<V4L2Frame> ExternalCameraDeviceSession::dequeueV4l2FrameLocked(/*out*/nsecs_t
 }
 
 void ExternalCameraDeviceSession::enqueueV4l2Frame(const sp<V4L2Frame>& frame) {
+    ATRACE_CALL();
     {
         // Release mLock before acquiring mV4l2BufferLock to avoid potential
         // deadlock
@@ -2214,6 +2307,7 @@ void ExternalCameraDeviceSession::enqueueV4l2Frame(const sp<V4L2Frame>& frame) {
 
 Status ExternalCameraDeviceSession::configureStreams(
         const V3_2::StreamConfiguration& config, V3_3::HalStreamConfiguration* out) {
+    ATRACE_CALL();
     if (config.operationMode != StreamConfigurationMode::NORMAL_MODE) {
         ALOGE("%s: unsupported operation mode: %d", __FUNCTION__, config.operationMode);
         return Status::ILLEGAL_ARGUMENT;
