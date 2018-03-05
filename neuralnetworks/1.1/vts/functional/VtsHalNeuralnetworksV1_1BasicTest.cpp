@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,79 +16,95 @@
 
 #define LOG_TAG "neuralnetworks_hidl_hal_test"
 
-#include "VtsHalNeuralnetworksV1_0TargetTest.h"
+#include "VtsHalNeuralnetworksV1_1.h"
 
 #include "Callbacks.h"
 #include "Models.h"
 #include "TestHarness.h"
 
 #include <android-base/logging.h>
+#include <android/hardware/neuralnetworks/1.1/IDevice.h>
+#include <android/hardware/neuralnetworks/1.1/types.h>
 #include <android/hidl/memory/1.0/IMemory.h>
 #include <hidlmemory/mapping.h>
+
+using ::android::hardware::neuralnetworks::V1_0::IPreparedModel;
+using ::android::hardware::neuralnetworks::V1_0::DeviceStatus;
+using ::android::hardware::neuralnetworks::V1_0::ErrorStatus;
+using ::android::hardware::neuralnetworks::V1_0::FusedActivationFunc;
+using ::android::hardware::neuralnetworks::V1_0::Operand;
+using ::android::hardware::neuralnetworks::V1_0::OperandLifeTime;
+using ::android::hardware::neuralnetworks::V1_0::OperandType;
+using ::android::hardware::neuralnetworks::V1_0::Request;
+using ::android::hardware::neuralnetworks::V1_1::Capabilities;
+using ::android::hardware::neuralnetworks::V1_1::IDevice;
+using ::android::hardware::neuralnetworks::V1_1::Model;
+using ::android::hardware::neuralnetworks::V1_1::Operation;
+using ::android::hardware::neuralnetworks::V1_1::OperationType;
+using ::android::hardware::Return;
+using ::android::hardware::Void;
+using ::android::hardware::hidl_memory;
+using ::android::hardware::hidl_string;
+using ::android::hardware::hidl_vec;
+using ::android::hidl::allocator::V1_0::IAllocator;
+using ::android::hidl::memory::V1_0::IMemory;
+using ::android::sp;
 
 namespace android {
 namespace hardware {
 namespace neuralnetworks {
-namespace V1_0 {
+namespace V1_1 {
 namespace vts {
 namespace functional {
-
 using ::android::hardware::neuralnetworks::V1_0::implementation::ExecutionCallback;
 using ::android::hardware::neuralnetworks::V1_0::implementation::PreparedModelCallback;
-using ::generated_tests::MixedTypedExampleType;
 
-namespace generated_tests {
-extern void Execute(const sp<IDevice>&, std::function<Model(void)>, std::function<bool(int)>,
-                    const std::vector<MixedTypedExampleType>&);
-}
+static void doPrepareModelShortcut(const sp<IDevice>& device, sp<IPreparedModel>* preparedModel) {
+    ASSERT_NE(nullptr, preparedModel);
+    Model model = createValidTestModel_1_1();
 
-// A class for test environment setup
-NeuralnetworksHidlEnvironment::NeuralnetworksHidlEnvironment() {}
+    // see if service can handle model
+    bool fullySupportsModel = false;
+    Return<void> supportedOpsLaunchStatus = device->getSupportedOperations_1_1(
+        model, [&fullySupportsModel](ErrorStatus status, const hidl_vec<bool>& supported) {
+            ASSERT_EQ(ErrorStatus::NONE, status);
+            ASSERT_NE(0ul, supported.size());
+            fullySupportsModel =
+                std::all_of(supported.begin(), supported.end(), [](bool valid) { return valid; });
+        });
+    ASSERT_TRUE(supportedOpsLaunchStatus.isOk());
 
-NeuralnetworksHidlEnvironment::~NeuralnetworksHidlEnvironment() {}
-
-NeuralnetworksHidlEnvironment* NeuralnetworksHidlEnvironment::getInstance() {
-    // This has to return a "new" object because it is freed inside
-    // ::testing::AddGlobalTestEnvironment when the gtest is being torn down
-    static NeuralnetworksHidlEnvironment* instance = new NeuralnetworksHidlEnvironment();
-    return instance;
-}
-
-void NeuralnetworksHidlEnvironment::registerTestServices() {
-    registerTestService<IDevice>();
-}
-
-// The main test class for NEURALNETWORK HIDL HAL.
-NeuralnetworksHidlTest::~NeuralnetworksHidlTest() {}
-
-void NeuralnetworksHidlTest::SetUp() {
-    device = ::testing::VtsHalHidlTargetTestBase::getService<IDevice>(
-        NeuralnetworksHidlEnvironment::getInstance());
-    ASSERT_NE(nullptr, device.get());
-}
-
-void NeuralnetworksHidlTest::TearDown() {}
-
-sp<IPreparedModel> NeuralnetworksHidlTest::doPrepareModelShortcut() {
-    Model model = createValidTestModel();
-
+    // launch prepare model
     sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
-    if (preparedModelCallback == nullptr) {
-        return nullptr;
-    }
-    Return<ErrorStatus> prepareLaunchStatus = device->prepareModel(model, preparedModelCallback);
-    if (!prepareLaunchStatus.isOk() || prepareLaunchStatus != ErrorStatus::NONE) {
-        return nullptr;
-    }
+    ASSERT_NE(nullptr, preparedModelCallback.get());
+    Return<ErrorStatus> prepareLaunchStatus =
+        device->prepareModel_1_1(model, preparedModelCallback);
+    ASSERT_TRUE(prepareLaunchStatus.isOk());
+    ASSERT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(prepareLaunchStatus));
 
+    // retrieve prepared model
     preparedModelCallback->wait();
     ErrorStatus prepareReturnStatus = preparedModelCallback->getStatus();
-    sp<IPreparedModel> preparedModel = preparedModelCallback->getPreparedModel();
-    if (prepareReturnStatus != ErrorStatus::NONE || preparedModel == nullptr) {
-        return nullptr;
-    }
+    *preparedModel = preparedModelCallback->getPreparedModel();
 
-    return preparedModel;
+    // The getSupportedOperations call returns a list of operations that are
+    // guaranteed not to fail if prepareModel is called, and
+    // 'fullySupportsModel' is true i.f.f. the entire model is guaranteed.
+    // If a driver has any doubt that it can prepare an operation, it must
+    // return false. So here, if a driver isn't sure if it can support an
+    // operation, but reports that it successfully prepared the model, the test
+    // can continue.
+    if (!fullySupportsModel && prepareReturnStatus != ErrorStatus::NONE) {
+        ASSERT_EQ(nullptr, preparedModel->get());
+        LOG(INFO) << "NN VTS: Early termination of test because vendor service cannot "
+                     "prepare model that it does not support.";
+        std::cout << "[          ]   Early termination of test because vendor service cannot "
+                     "prepare model that it does not support."
+                  << std::endl;
+        return;
+    }
+    ASSERT_EQ(ErrorStatus::NONE, prepareReturnStatus);
+    ASSERT_NE(nullptr, preparedModel->get());
 }
 
 // create device test
@@ -104,20 +120,22 @@ TEST_F(NeuralnetworksHidlTest, StatusTest) {
 // initialization
 TEST_F(NeuralnetworksHidlTest, GetCapabilitiesTest) {
     Return<void> ret =
-        device->getCapabilities([](ErrorStatus status, const Capabilities& capabilities) {
+        device->getCapabilities_1_1([](ErrorStatus status, const Capabilities& capabilities) {
             EXPECT_EQ(ErrorStatus::NONE, status);
             EXPECT_LT(0.0f, capabilities.float32Performance.execTime);
             EXPECT_LT(0.0f, capabilities.float32Performance.powerUsage);
             EXPECT_LT(0.0f, capabilities.quantized8Performance.execTime);
             EXPECT_LT(0.0f, capabilities.quantized8Performance.powerUsage);
+            EXPECT_LT(0.0f, capabilities.relaxedFloat32toFloat16Performance.execTime);
+            EXPECT_LT(0.0f, capabilities.relaxedFloat32toFloat16Performance.powerUsage);
         });
     EXPECT_TRUE(ret.isOk());
 }
 
 // supported operations positive test
 TEST_F(NeuralnetworksHidlTest, SupportedOperationsPositiveTest) {
-    Model model = createValidTestModel();
-    Return<void> ret = device->getSupportedOperations(
+    Model model = createValidTestModel_1_1();
+    Return<void> ret = device->getSupportedOperations_1_1(
         model, [&](ErrorStatus status, const hidl_vec<bool>& supported) {
             EXPECT_EQ(ErrorStatus::NONE, status);
             EXPECT_EQ(model.operations.size(), supported.size());
@@ -127,8 +145,8 @@ TEST_F(NeuralnetworksHidlTest, SupportedOperationsPositiveTest) {
 
 // supported operations negative test 1
 TEST_F(NeuralnetworksHidlTest, SupportedOperationsNegativeTest1) {
-    Model model = createInvalidTestModel1();
-    Return<void> ret = device->getSupportedOperations(
+    Model model = createInvalidTestModel1_1_1();
+    Return<void> ret = device->getSupportedOperations_1_1(
         model, [&](ErrorStatus status, const hidl_vec<bool>& supported) {
             EXPECT_EQ(ErrorStatus::INVALID_ARGUMENT, status);
             (void)supported;
@@ -138,8 +156,8 @@ TEST_F(NeuralnetworksHidlTest, SupportedOperationsNegativeTest1) {
 
 // supported operations negative test 2
 TEST_F(NeuralnetworksHidlTest, SupportedOperationsNegativeTest2) {
-    Model model = createInvalidTestModel2();
-    Return<void> ret = device->getSupportedOperations(
+    Model model = createInvalidTestModel2_1_1();
+    Return<void> ret = device->getSupportedOperations_1_1(
         model, [&](ErrorStatus status, const hidl_vec<bool>& supported) {
             EXPECT_EQ(ErrorStatus::INVALID_ARGUMENT, status);
             (void)supported;
@@ -149,26 +167,17 @@ TEST_F(NeuralnetworksHidlTest, SupportedOperationsNegativeTest2) {
 
 // prepare simple model positive test
 TEST_F(NeuralnetworksHidlTest, SimplePrepareModelPositiveTest) {
-    Model model = createValidTestModel();
-    sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
-    ASSERT_NE(nullptr, preparedModelCallback.get());
-    Return<ErrorStatus> prepareLaunchStatus = device->prepareModel(model, preparedModelCallback);
-    ASSERT_TRUE(prepareLaunchStatus.isOk());
-    EXPECT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(prepareLaunchStatus));
-
-    preparedModelCallback->wait();
-    ErrorStatus prepareReturnStatus = preparedModelCallback->getStatus();
-    EXPECT_EQ(ErrorStatus::NONE, prepareReturnStatus);
-    sp<IPreparedModel> preparedModel = preparedModelCallback->getPreparedModel();
-    EXPECT_NE(nullptr, preparedModel.get());
+    sp<IPreparedModel> preparedModel;
+    doPrepareModelShortcut(device, &preparedModel);
 }
 
 // prepare simple model negative test 1
 TEST_F(NeuralnetworksHidlTest, SimplePrepareModelNegativeTest1) {
-    Model model = createInvalidTestModel1();
+    Model model = createInvalidTestModel1_1_1();
     sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
     ASSERT_NE(nullptr, preparedModelCallback.get());
-    Return<ErrorStatus> prepareLaunchStatus = device->prepareModel(model, preparedModelCallback);
+    Return<ErrorStatus> prepareLaunchStatus =
+        device->prepareModel_1_1(model, preparedModelCallback);
     ASSERT_TRUE(prepareLaunchStatus.isOk());
     EXPECT_EQ(ErrorStatus::INVALID_ARGUMENT, static_cast<ErrorStatus>(prepareLaunchStatus));
 
@@ -181,10 +190,11 @@ TEST_F(NeuralnetworksHidlTest, SimplePrepareModelNegativeTest1) {
 
 // prepare simple model negative test 2
 TEST_F(NeuralnetworksHidlTest, SimplePrepareModelNegativeTest2) {
-    Model model = createInvalidTestModel2();
+    Model model = createInvalidTestModel2_1_1();
     sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
     ASSERT_NE(nullptr, preparedModelCallback.get());
-    Return<ErrorStatus> prepareLaunchStatus = device->prepareModel(model, preparedModelCallback);
+    Return<ErrorStatus> prepareLaunchStatus =
+        device->prepareModel_1_1(model, preparedModelCallback);
     ASSERT_TRUE(prepareLaunchStatus.isOk());
     EXPECT_EQ(ErrorStatus::INVALID_ARGUMENT, static_cast<ErrorStatus>(prepareLaunchStatus));
 
@@ -201,8 +211,11 @@ TEST_F(NeuralnetworksHidlTest, SimpleExecuteGraphPositiveTest) {
     std::vector<float> expectedData = {6.0f, 8.0f, 10.0f, 12.0f};
     const uint32_t OUTPUT = 1;
 
-    sp<IPreparedModel> preparedModel = doPrepareModelShortcut();
-    ASSERT_NE(nullptr, preparedModel.get());
+    sp<IPreparedModel> preparedModel;
+    ASSERT_NO_FATAL_FAILURE(doPrepareModelShortcut(device, &preparedModel));
+    if (preparedModel == nullptr) {
+        return;
+    }
     Request request = createValidTestRequest();
 
     auto postWork = [&] {
@@ -235,8 +248,11 @@ TEST_F(NeuralnetworksHidlTest, SimpleExecuteGraphPositiveTest) {
 
 // execute simple graph negative test 1
 TEST_F(NeuralnetworksHidlTest, SimpleExecuteGraphNegativeTest1) {
-    sp<IPreparedModel> preparedModel = doPrepareModelShortcut();
-    ASSERT_NE(nullptr, preparedModel.get());
+    sp<IPreparedModel> preparedModel;
+    ASSERT_NO_FATAL_FAILURE(doPrepareModelShortcut(device, &preparedModel));
+    if (preparedModel == nullptr) {
+        return;
+    }
     Request request = createInvalidTestRequest1();
 
     sp<ExecutionCallback> executionCallback = new ExecutionCallback();
@@ -252,8 +268,11 @@ TEST_F(NeuralnetworksHidlTest, SimpleExecuteGraphNegativeTest1) {
 
 // execute simple graph negative test 2
 TEST_F(NeuralnetworksHidlTest, SimpleExecuteGraphNegativeTest2) {
-    sp<IPreparedModel> preparedModel = doPrepareModelShortcut();
-    ASSERT_NE(nullptr, preparedModel.get());
+    sp<IPreparedModel> preparedModel;
+    ASSERT_NO_FATAL_FAILURE(doPrepareModelShortcut(device, &preparedModel));
+    if (preparedModel == nullptr) {
+        return;
+    }
     Request request = createInvalidTestRequest2();
 
     sp<ExecutionCallback> executionCallback = new ExecutionCallback();
@@ -267,24 +286,14 @@ TEST_F(NeuralnetworksHidlTest, SimpleExecuteGraphNegativeTest2) {
     EXPECT_EQ(ErrorStatus::INVALID_ARGUMENT, executionReturnStatus);
 }
 
-// Mixed-typed examples
-typedef MixedTypedExampleType MixedTypedExample;
-
-// in frameworks/ml/nn/runtime/tests/generated/
-#include "all_generated_vts_tests.cpp"
-
-// TODO: Add tests for execution failure, or wait_for/wait_until timeout.
-//       Discussion:
-//       https://googleplex-android-review.git.corp.google.com/#/c/platform/hardware/interfaces/+/2654636/5/neuralnetworks/1.0/vts/functional/VtsHalNeuralnetworksV1_0TargetTest.cpp@222
-
 }  // namespace functional
 }  // namespace vts
-}  // namespace V1_0
+}  // namespace V1_1
 }  // namespace neuralnetworks
 }  // namespace hardware
 }  // namespace android
 
-using android::hardware::neuralnetworks::V1_0::vts::functional::NeuralnetworksHidlEnvironment;
+using android::hardware::neuralnetworks::V1_1::vts::functional::NeuralnetworksHidlEnvironment;
 
 int main(int argc, char** argv) {
     ::testing::AddGlobalTestEnvironment(NeuralnetworksHidlEnvironment::getInstance());

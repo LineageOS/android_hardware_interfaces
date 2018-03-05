@@ -18,6 +18,7 @@ package android.hardware.neuralnetworks@1.1;
 
 import @1.0::Operand;
 import @1.0::OperationType;
+import @1.0::PerformanceInfo;
 
 /**
  * Operation types.
@@ -259,6 +260,28 @@ enum OperationType : @1.0::OperationType {
 };
 
 /**
+ * The capabilities of a driver.
+ */
+struct Capabilities {
+    /**
+     * Driver performance when operating on float32 data.
+     */
+    PerformanceInfo float32Performance;
+
+    /**
+     * Driver performance when operating on asymmetric 8-bit quantized data.
+     */
+    PerformanceInfo quantized8Performance;
+
+    /**
+     * Driver performance when operating on float32 data but performing
+     * calculations with range and/or precision as low as that of the IEEE
+     * 754 16-bit floating-point format.
+     */
+    PerformanceInfo relaxedFloat32toFloat16Performance;
+};
+
+/**
  * Describes one operation of the model's graph.
  */
 struct Operation {
@@ -330,4 +353,12 @@ struct Model {
      * equals OperandLifeTime::CONSTANT_REFERENCE.
      */
     vec<memory> pools;
+
+    /**
+     * 'true' indicates TENSOR_FLOAT32 may be calculated with range and/or
+     * precision as low as that of the IEEE 754 16-bit floating-point format.
+     * 'false' indicates TENSOR_FLOAT32 must be calculated using at least the
+     * range and precision of the IEEE 754 32-bit floating-point format.
+     */
+    bool relaxComputationFloat32toFloat16;
 };

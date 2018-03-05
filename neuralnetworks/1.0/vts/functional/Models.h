@@ -16,28 +16,27 @@
 
 #define LOG_TAG "neuralnetworks_hidl_hal_test"
 
-#include "VtsHalNeuralnetworksV1_0TargetTest.h"
+#include <android/hardware/neuralnetworks/1.1/types.h>
 
 namespace android {
 namespace hardware {
 namespace neuralnetworks {
-namespace V1_0 {
-namespace vts {
-namespace functional {
 
-// create the model
-Model createValidTestModel();
-Model createInvalidTestModel1();
-Model createInvalidTestModel2();
+// create V1_1 model
+V1_1::Model createValidTestModel_1_1();
+V1_1::Model createInvalidTestModel1_1_1();
+V1_1::Model createInvalidTestModel2_1_1();
+
+// create V1_0 model
+V1_0::Model createValidTestModel_1_0();
+V1_0::Model createInvalidTestModel1_1_0();
+V1_0::Model createInvalidTestModel2_1_0();
 
 // create the request
-Request createValidTestRequest();
-Request createInvalidTestRequest1();
-Request createInvalidTestRequest2();
+V1_0::Request createValidTestRequest();
+V1_0::Request createInvalidTestRequest1();
+V1_0::Request createInvalidTestRequest2();
 
-}  // namespace functional
-}  // namespace vts
-}  // namespace V1_0
 }  // namespace neuralnetworks
 }  // namespace hardware
 }  // namespace android
