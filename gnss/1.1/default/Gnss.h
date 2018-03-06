@@ -7,6 +7,7 @@
 #include <atomic>
 #include <mutex>
 #include <thread>
+#include "GnssConfiguration.h"
 
 namespace android {
 namespace hardware {
@@ -21,6 +22,11 @@ using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::sp;
+
+using GnssConstellationType = V1_0::GnssConstellationType;
+using GnssLocation = V1_0::GnssLocation;
+using GnssSvInfo = V1_0::IGnssCallback::GnssSvInfo;
+using GnssSvStatus = V1_0::IGnssCallback::GnssSvStatus;
 
 /**
  * Unlike the gnss/1.0/default implementation, which is a shim layer to the legacy gps.h, this
@@ -78,14 +84,19 @@ struct Gnss : public IGnss {
 
     // Methods from ::android::hidl::base::V1_0::IBase follow.
    private:
-    Return<V1_0::GnssLocation> getMockLocation();
-    Return<void> reportLocation(const V1_0::GnssLocation& location);
+    Return<GnssLocation> getMockLocation() const;
+    Return<GnssSvStatus> getMockSvStatus() const;
+    Return<GnssSvInfo> getSvInfo(int16_t svid, GnssConstellationType type, float cN0DbHz,
+                                 float elevationDegress, float azimuthDegress) const;
+    Return<void> reportLocation(const GnssLocation&) const;
+    Return<void> reportSvStatus(const GnssSvStatus&) const;
 
-    static sp<::android::hardware::gnss::V1_1::IGnssCallback> sGnssCallback;
+    static sp<IGnssCallback> sGnssCallback;
+    std::atomic<long> mMinIntervalMs;
+    sp<GnssConfiguration> mGnssConfiguration;
     std::atomic<bool> mIsActive;
     std::thread mThread;
-    std::mutex mMutex;
-    std::atomic<long> mMinIntervalMs;
+    mutable std::mutex mMutex;
 };
 
 }  // namespace implementation

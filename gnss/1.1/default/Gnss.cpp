@@ -1,9 +1,11 @@
 #define LOG_TAG "Gnss"
 
+#include <android/hardware/gnss/1.0/types.h>
 #include <log/log.h>
 
 #include "Gnss.h"
-#include "GnssConfiguration.h"
+#include "GnssConstants.h"
+#include "GnssDebug.h"
 #include "GnssMeasurement.h"
 
 namespace android {
@@ -12,10 +14,12 @@ namespace gnss {
 namespace V1_1 {
 namespace implementation {
 
+using GnssSvFlags = IGnssCallback::GnssSvFlags;
+
 const uint32_t MIN_INTERVAL_MILLIS = 100;
 sp<::android::hardware::gnss::V1_1::IGnssCallback> Gnss::sGnssCallback = nullptr;
 
-Gnss::Gnss() : mMinIntervalMs(1000) {}
+Gnss::Gnss() : mMinIntervalMs(1000), mGnssConfiguration{new GnssConfiguration()} {}
 
 Gnss::~Gnss() {
     stop();
@@ -36,7 +40,10 @@ Return<bool> Gnss::start() {
     mIsActive = true;
     mThread = std::thread([this]() {
         while (mIsActive == true) {
-            V1_0::GnssLocation location = this->getMockLocation();
+            auto svStatus = this->getMockSvStatus();
+            this->reportSvStatus(svStatus);
+
+            auto location = this->getMockLocation();
             this->reportLocation(location);
 
             std::this_thread::sleep_for(std::chrono::milliseconds(mMinIntervalMs));
@@ -70,7 +77,6 @@ Return<bool> Gnss::injectLocation(double, double, float) {
 }
 
 Return<void> Gnss::deleteAidingData(::android::hardware::gnss::V1_0::IGnss::GnssAidingData) {
-    // TODO implement
     return Void();
 }
 
@@ -124,8 +130,7 @@ Gnss::getExtensionGnssConfiguration() {
 }
 
 Return<sp<::android::hardware::gnss::V1_0::IGnssDebug>> Gnss::getExtensionGnssDebug() {
-    // TODO implement
-    return ::android::sp<::android::hardware::gnss::V1_0::IGnssDebug>{};
+    return new GnssDebug();
 }
 
 Return<sp<::android::hardware::gnss::V1_0::IGnssBatching>> Gnss::getExtensionGnssBatching() {
@@ -175,8 +180,7 @@ Return<bool> Gnss::setPositionMode_1_1(
 
 Return<sp<::android::hardware::gnss::V1_1::IGnssConfiguration>>
 Gnss::getExtensionGnssConfiguration_1_1() {
-    // TODO implement
-    return new GnssConfiguration();
+    return mGnssConfiguration;
 }
 
 Return<sp<::android::hardware::gnss::V1_1::IGnssMeasurement>>
@@ -185,33 +189,82 @@ Gnss::getExtensionGnssMeasurement_1_1() {
     return new GnssMeasurement();
 }
 
-Return<bool> Gnss::injectBestLocation(const ::android::hardware::gnss::V1_0::GnssLocation&) {
-    // TODO implement
-    return bool{};
+Return<bool> Gnss::injectBestLocation(const GnssLocation&) {
+    return true;
 }
 
-Return<V1_0::GnssLocation> Gnss::getMockLocation() {
-    V1_0::GnssLocation location = {.gnssLocationFlags = 0xFF,
-                                   .latitudeDegrees = 37.4219999,
-                                   .longitudeDegrees = -122.0840575,
-                                   .altitudeMeters = 1.60062531,
-                                   .speedMetersPerSec = 0,
-                                   .bearingDegrees = 0,
-                                   .horizontalAccuracyMeters = 5,
-                                   .verticalAccuracyMeters = 5,
-                                   .speedAccuracyMetersPerSecond = 1,
-                                   .bearingAccuracyDegrees = 90,
-                                   .timestamp = 1519930775453L};
+Return<GnssLocation> Gnss::getMockLocation() const {
+    GnssLocation location = {.gnssLocationFlags = 0xFF,
+                             .latitudeDegrees = kMockLatitudeDegrees,
+                             .longitudeDegrees = kMockLongitudeDegrees,
+                             .altitudeMeters = kMockAltitudeMeters,
+                             .speedMetersPerSec = kMockSpeedMetersPerSec,
+                             .bearingDegrees = kMockBearingDegrees,
+                             .horizontalAccuracyMeters = kMockHorizontalAccuracyMeters,
+                             .verticalAccuracyMeters = kMockVerticalAccuracyMeters,
+                             .speedAccuracyMetersPerSecond = kMockSpeedAccuracyMetersPerSecond,
+                             .bearingAccuracyDegrees = kMockBearingAccuracyDegrees,
+                             .timestamp = kMockTimestamp};
     return location;
 }
 
-Return<void> Gnss::reportLocation(const V1_0::GnssLocation& location) {
+Return<GnssSvInfo> Gnss::getSvInfo(int16_t svid, GnssConstellationType type, float cN0DbHz,
+                                   float elevationDegrees, float azimuthDegrees) const {
+    GnssSvInfo svInfo = {.svid = svid,
+                         .constellation = type,
+                         .cN0Dbhz = cN0DbHz,
+                         .elevationDegrees = elevationDegrees,
+                         .azimuthDegrees = azimuthDegrees,
+                         .svFlag = GnssSvFlags::USED_IN_FIX | GnssSvFlags::HAS_EPHEMERIS_DATA |
+                                   GnssSvFlags::HAS_ALMANAC_DATA};
+    return svInfo;
+}
+
+Return<GnssSvStatus> Gnss::getMockSvStatus() const {
+    std::unique_lock<std::recursive_mutex> lock(mGnssConfiguration->getMutex());
+    GnssSvInfo mockGnssSvInfoList[] = {
+        getSvInfo(3, GnssConstellationType::GPS, 32.5, 59.1, 166.5),
+        getSvInfo(5, GnssConstellationType::GPS, 27.0, 29.0, 56.5),
+        getSvInfo(17, GnssConstellationType::GPS, 30.5, 71.0, 77.0),
+        getSvInfo(26, GnssConstellationType::GPS, 24.1, 28.0, 253.0),
+        getSvInfo(30, GnssConstellationType::GPS, 20.5, 11.5, 116.0),
+        getSvInfo(10, GnssConstellationType::GLONASS, 25.0, 66.0, 247.0)};
+
+    GnssSvStatus svStatus = {.numSvs = sizeof(mockGnssSvInfoList) / sizeof(GnssSvInfo)};
+    for (uint32_t i = 0; i < svStatus.numSvs; i++) {
+        if (mGnssConfiguration->isBlacklisted(mockGnssSvInfoList[i])) {
+            /**
+             * Note well, this is a simple, mock emulation of not using a satellite by changing the
+             * used bit.  Simply blanking the used bit, as is done here, is *not* an acceptable
+             * actual device implementation - actual devices *must not* use the satellite in the
+             * position calculation, as specified in IGnssConfiguration.hal.
+             */
+            mockGnssSvInfoList[i].svFlag &=
+                ~static_cast<uint8_t>(IGnssCallback::GnssSvFlags::USED_IN_FIX);
+        }
+        svStatus.gnssSvList[i] = mockGnssSvInfoList[i];
+    }
+
+    return svStatus;
+}
+
+Return<void> Gnss::reportLocation(const GnssLocation& location) const {
     std::unique_lock<std::mutex> lock(mMutex);
     if (sGnssCallback == nullptr) {
         ALOGE("%s: sGnssCallback is null.", __func__);
         return Void();
     }
     sGnssCallback->gnssLocationCb(location);
+    return Void();
+}
+
+Return<void> Gnss::reportSvStatus(const GnssSvStatus& svStatus) const {
+    std::unique_lock<std::mutex> lock(mMutex);
+    if (sGnssCallback == nullptr) {
+        ALOGE("%s: sGnssCallback is null.", __func__);
+        return Void();
+    }
+    sGnssCallback->gnssSvStatusCb(svStatus);
     return Void();
 }
 
