@@ -29,7 +29,6 @@
 #include <hidlmemory/mapping.h>
 
 using ::android::hardware::neuralnetworks::V1_0::IPreparedModel;
-using ::android::hardware::neuralnetworks::V1_0::Capabilities;
 using ::android::hardware::neuralnetworks::V1_0::DeviceStatus;
 using ::android::hardware::neuralnetworks::V1_0::ErrorStatus;
 using ::android::hardware::neuralnetworks::V1_0::FusedActivationFunc;
@@ -37,6 +36,7 @@ using ::android::hardware::neuralnetworks::V1_0::Operand;
 using ::android::hardware::neuralnetworks::V1_0::OperandLifeTime;
 using ::android::hardware::neuralnetworks::V1_0::OperandType;
 using ::android::hardware::neuralnetworks::V1_0::Request;
+using ::android::hardware::neuralnetworks::V1_1::Capabilities;
 using ::android::hardware::neuralnetworks::V1_1::IDevice;
 using ::android::hardware::neuralnetworks::V1_1::Model;
 using ::android::hardware::neuralnetworks::V1_1::Operation;
@@ -95,12 +95,14 @@ TEST_F(NeuralnetworksHidlTest, StatusTest) {
 // initialization
 TEST_F(NeuralnetworksHidlTest, GetCapabilitiesTest) {
     Return<void> ret =
-        device->getCapabilities([](ErrorStatus status, const Capabilities& capabilities) {
+        device->getCapabilities_1_1([](ErrorStatus status, const Capabilities& capabilities) {
             EXPECT_EQ(ErrorStatus::NONE, status);
             EXPECT_LT(0.0f, capabilities.float32Performance.execTime);
             EXPECT_LT(0.0f, capabilities.float32Performance.powerUsage);
             EXPECT_LT(0.0f, capabilities.quantized8Performance.execTime);
             EXPECT_LT(0.0f, capabilities.quantized8Performance.powerUsage);
+            EXPECT_LT(0.0f, capabilities.relaxedFloat32toFloat16Performance.execTime);
+            EXPECT_LT(0.0f, capabilities.relaxedFloat32toFloat16Performance.powerUsage);
         });
     EXPECT_TRUE(ret.isOk());
 }
