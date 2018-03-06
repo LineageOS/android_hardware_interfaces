@@ -156,7 +156,7 @@ using on_radio_mode_change_callback =
  * Class that encapsulates all legacy HAL interactions.
  * This class manages the lifetime of the event loop thread used by legacy HAL.
  *
- * Note: aThere will only be a single instance of this class created in the Wifi
+ * Note: There will only be a single instance of this class created in the Wifi
  * object and will be valid for the lifetime of the process.
  */
 class WifiLegacyHal {
@@ -188,6 +188,8 @@ class WifiLegacyHal {
         const std::string& iface_name);
     wifi_error setPacketFilter(const std::string& iface_name,
                                const std::vector<uint8_t>& program);
+    std::pair<wifi_error, std::vector<uint8_t>> readApfPacketFilterData(
+        const std::string& iface_name);
     // Gscan functions.
     std::pair<wifi_error, wifi_gscan_capabilities> getGscanCapabilities(
         const std::string& iface_name);

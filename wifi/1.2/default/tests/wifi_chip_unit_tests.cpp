@@ -146,7 +146,7 @@ class WifiChipTest : public Test {
         } else if (type == IfaceType::STA) {
             chip_->createStaIface(
                 [&iface_name](const WifiStatus& status,
-                              const sp<IWifiStaIface>& iface) {
+                              const sp<V1_0::IWifiStaIface>& iface) {
                     if (WifiStatusCode::SUCCESS == status.code) {
                         ASSERT_NE(iface.get(), nullptr);
                         iface->getName([&iface_name](const WifiStatus& status,
