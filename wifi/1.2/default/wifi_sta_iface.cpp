@@ -94,6 +94,13 @@ Return<void> WifiStaIface::installApfPacketFilter(
                            hidl_status_cb, cmd_id, program);
 }
 
+Return<void> WifiStaIface::readApfPacketFilterData(
+    readApfPacketFilterData_cb hidl_status_cb) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                           &WifiStaIface::readApfPacketFilterDataInternal,
+                           hidl_status_cb);
+}
+
 Return<void> WifiStaIface::getBackgroundScanCapabilities(
     getBackgroundScanCapabilities_cb hidl_status_cb) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
@@ -295,6 +302,15 @@ WifiStatus WifiStaIface::installApfPacketFilterInternal(
     legacy_hal::wifi_error legacy_status =
         legacy_hal_.lock()->setPacketFilter(ifname_, program);
     return createWifiStatusFromLegacyError(legacy_status);
+}
+
+std::pair<WifiStatus, std::vector<uint8_t>>
+WifiStaIface::readApfPacketFilterDataInternal() {
+    const std::pair<legacy_hal::wifi_error, std::vector<uint8_t>>
+        legacy_status_and_data =
+            legacy_hal_.lock()->readApfPacketFilterData(ifname_);
+    return {createWifiStatusFromLegacyError(legacy_status_and_data.first),
+            std::move(legacy_status_and_data.second)};
 }
 
 std::pair<WifiStatus, StaBackgroundScanCapabilities>
