@@ -19,6 +19,8 @@
 #include <android/log.h>
 #include <system/audio_effects/effect_downmix.h>
 
+#include "VersionUtils.h"
+
 namespace android {
 namespace hardware {
 namespace audio {
@@ -53,7 +55,7 @@ Return<Result> DownmixEffect::disable() {
     return mEffect->disable();
 }
 
-Return<Result> DownmixEffect::setDevice(AudioDevice device) {
+Return<Result> DownmixEffect::setDevice(AudioDeviceBitfield device) {
     return mEffect->setDevice(device);
 }
 
@@ -76,7 +78,7 @@ Return<Result> DownmixEffect::setConfigReverse(
     return mEffect->setConfigReverse(config, inputBufferProvider, outputBufferProvider);
 }
 
-Return<Result> DownmixEffect::setInputDevice(AudioDevice device) {
+Return<Result> DownmixEffect::setInputDevice(AudioDeviceBitfield device) {
     return mEffect->setInputDevice(device);
 }
 

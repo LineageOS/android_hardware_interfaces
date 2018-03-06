@@ -33,7 +33,11 @@ cc_library_shared {
     ],
 
     header_libs: [
+        "android.hardware.audio.common.util@all-versions",
         "libaudio_system_headers",
         "libhardware_headers",
     ],
+    export_header_lib_headers: [
+        "android.hardware.audio.common.util@all-versions",
+    ]
 }

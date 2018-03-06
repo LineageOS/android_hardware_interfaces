@@ -19,6 +19,8 @@
 #include <android/log.h>
 #include <system/audio_effects/effect_bassboost.h>
 
+#include "VersionUtils.h"
+
 namespace android {
 namespace hardware {
 namespace audio {
@@ -53,7 +55,7 @@ Return<Result> BassBoostEffect::disable() {
     return mEffect->disable();
 }
 
-Return<Result> BassBoostEffect::setDevice(AudioDevice device) {
+Return<Result> BassBoostEffect::setDevice(AudioDeviceBitfield device) {
     return mEffect->setDevice(device);
 }
 
@@ -76,7 +78,7 @@ Return<Result> BassBoostEffect::setConfigReverse(
     return mEffect->setConfigReverse(config, inputBufferProvider, outputBufferProvider);
 }
 
-Return<Result> BassBoostEffect::setInputDevice(AudioDevice device) {
+Return<Result> BassBoostEffect::setInputDevice(AudioDeviceBitfield device) {
     return mEffect->setInputDevice(device);
 }
 

@@ -17,23 +17,16 @@
 #define LOG_TAG "audiohalservice"
 
 #include <android/hardware/audio/2.0/IDevicesFactory.h>
+#include <android/hardware/audio/4.0/IDevicesFactory.h>
 #include <android/hardware/audio/effect/2.0/IEffectsFactory.h>
+#include <android/hardware/audio/effect/4.0/IEffectsFactory.h>
 #include <android/hardware/soundtrigger/2.0/ISoundTriggerHw.h>
 #include <android/hardware/soundtrigger/2.1/ISoundTriggerHw.h>
 #include <binder/ProcessState.h>
 #include <hidl/HidlTransportSupport.h>
 #include <hidl/LegacySupport.h>
 
-using android::hardware::configureRpcThreadpool;
-using android::hardware::joinRpcThreadpool;
-using android::hardware::registerPassthroughServiceImplementation;
-
-using android::hardware::audio::effect::V2_0::IEffectsFactory;
-using android::hardware::audio::V2_0::IDevicesFactory;
-using V2_0_ISoundTriggerHw = android::hardware::soundtrigger::V2_0::ISoundTriggerHw;
-using V2_1_ISoundTriggerHw = android::hardware::soundtrigger::V2_1::ISoundTriggerHw;
-using android::hardware::registerPassthroughServiceImplementation;
-
+using namespace android::hardware;
 using android::OK;
 
 int main(int /* argc */, char* /* argv */ []) {
@@ -41,16 +34,18 @@ int main(int /* argc */, char* /* argv */ []) {
     // start a threadpool for vndbinder interactions
     android::ProcessState::self()->startThreadPool();
     configureRpcThreadpool(16, true /*callerWillJoin*/);
-    android::status_t status;
-    status = registerPassthroughServiceImplementation<IDevicesFactory>();
-    LOG_ALWAYS_FATAL_IF(status != OK, "Error while registering audio service: %d", status);
-    status = registerPassthroughServiceImplementation<IEffectsFactory>();
-    LOG_ALWAYS_FATAL_IF(status != OK, "Error while registering audio effects service: %d", status);
-    // Soundtrigger might be not present.
-    status = registerPassthroughServiceImplementation<V2_1_ISoundTriggerHw>();
-    ALOGW_IF(status != OK, "Registering soundtrigger V2.1 service was unsuccessful: %d", status);
-    status = registerPassthroughServiceImplementation<V2_0_ISoundTriggerHw>();
-    ALOGW_IF(status != OK, "Registering soundtrigger V2.0 service was unsuccessful: %d", status);
+
+    bool fail = registerPassthroughServiceImplementation<audio::V4_0::IDevicesFactory>() != OK &&
+                registerPassthroughServiceImplementation<audio::V2_0::IDevicesFactory>() != OK;
+    LOG_ALWAYS_FATAL_IF(fail, "Could not register audio core API 2.0 nor 4.0");
+
+    fail = registerPassthroughServiceImplementation<audio::effect::V4_0::IEffectsFactory>() != OK &&
+           registerPassthroughServiceImplementation<audio::effect::V2_0::IEffectsFactory>() != OK,
+    LOG_ALWAYS_FATAL_IF(fail, "Could not register audio effect API 2.0 nor 4.0");
+
+    fail = registerPassthroughServiceImplementation<soundtrigger::V2_1::ISoundTriggerHw>() != OK &&
+           registerPassthroughServiceImplementation<soundtrigger::V2_0::ISoundTriggerHw>() != OK,
+    ALOGW_IF(fail, "Could not register soundtrigger API 2.0 nor 2.1");
+
     joinRpcThreadpool();
-    return status;
 }
