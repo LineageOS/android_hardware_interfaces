@@ -24,6 +24,8 @@
 
 #include <hidl/MQDescriptor.h>
 
+#include "VersionUtils.h"
+
 namespace android {
 namespace hardware {
 namespace audio {
@@ -60,7 +62,7 @@ struct EqualizerEffect : public IEqualizerEffect {
     Return<Result> reset() override;
     Return<Result> enable() override;
     Return<Result> disable() override;
-    Return<Result> setDevice(AudioDevice device) override;
+    Return<Result> setDevice(AudioDeviceBitfield device) override;
     Return<void> setAndGetVolume(const hidl_vec<uint32_t>& volumes,
                                  setAndGetVolume_cb _hidl_cb) override;
     Return<Result> volumeChangeNotification(const hidl_vec<uint32_t>& volumes) override;
@@ -68,7 +70,7 @@ struct EqualizerEffect : public IEqualizerEffect {
     Return<Result> setConfigReverse(
         const EffectConfig& config, const sp<IEffectBufferProviderCallback>& inputBufferProvider,
         const sp<IEffectBufferProviderCallback>& outputBufferProvider) override;
-    Return<Result> setInputDevice(AudioDevice device) override;
+    Return<Result> setInputDevice(AudioDeviceBitfield device) override;
     Return<void> getConfig(getConfig_cb _hidl_cb) override;
     Return<void> getConfigReverse(getConfigReverse_cb _hidl_cb) override;
     Return<void> getSupportedAuxChannelsConfigs(

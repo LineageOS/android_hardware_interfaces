@@ -18,6 +18,8 @@
 
 #include <android/log.h>
 
+#include "VersionUtils.h"
+
 namespace android {
 namespace hardware {
 namespace audio {
@@ -67,7 +69,7 @@ Return<Result> AutomaticGainControlEffect::disable() {
     return mEffect->disable();
 }
 
-Return<Result> AutomaticGainControlEffect::setDevice(AudioDevice device) {
+Return<Result> AutomaticGainControlEffect::setDevice(AudioDeviceBitfield device) {
     return mEffect->setDevice(device);
 }
 
@@ -91,7 +93,7 @@ Return<Result> AutomaticGainControlEffect::setConfigReverse(
     return mEffect->setConfigReverse(config, inputBufferProvider, outputBufferProvider);
 }
 
-Return<Result> AutomaticGainControlEffect::setInputDevice(AudioDevice device) {
+Return<Result> AutomaticGainControlEffect::setInputDevice(AudioDeviceBitfield device) {
     return mEffect->setInputDevice(device);
 }
 

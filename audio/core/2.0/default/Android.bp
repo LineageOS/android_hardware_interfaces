@@ -14,6 +14,10 @@ cc_library_shared {
         "StreamOut.cpp",
     ],
 
+    cflags: [
+        "-DAUDIO_HAL_VERSION_2_0",
+    ],
+
     defaults: ["hidl_defaults"],
 
     export_include_dirs: ["include"],

@@ -28,6 +28,8 @@
 
 #include <hardware/audio_effect.h>
 
+#include "VersionUtils.h"
+
 namespace android {
 namespace hardware {
 namespace audio {
@@ -39,6 +41,7 @@ using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioDevice;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioMode;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioSource;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::Uuid;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::implementation::AudioDeviceBitfield;
 using ::android::hardware::audio::effect::AUDIO_HAL_VERSION::AudioBuffer;
 using ::android::hardware::audio::effect::AUDIO_HAL_VERSION::EffectAuxChannelsConfig;
 using ::android::hardware::audio::effect::AUDIO_HAL_VERSION::EffectConfig;
@@ -69,7 +72,7 @@ struct Effect : public IEffect {
     Return<Result> reset() override;
     Return<Result> enable() override;
     Return<Result> disable() override;
-    Return<Result> setDevice(AudioDevice device) override;
+    Return<Result> setDevice(AudioDeviceBitfield device) override;
     Return<void> setAndGetVolume(const hidl_vec<uint32_t>& volumes,
                                  setAndGetVolume_cb _hidl_cb) override;
     Return<Result> volumeChangeNotification(const hidl_vec<uint32_t>& volumes) override;
@@ -77,7 +80,7 @@ struct Effect : public IEffect {
     Return<Result> setConfigReverse(
         const EffectConfig& config, const sp<IEffectBufferProviderCallback>& inputBufferProvider,
         const sp<IEffectBufferProviderCallback>& outputBufferProvider) override;
-    Return<Result> setInputDevice(AudioDevice device) override;
+    Return<Result> setInputDevice(AudioDeviceBitfield device) override;
     Return<void> getConfig(getConfig_cb _hidl_cb) override;
     Return<void> getConfigReverse(getConfigReverse_cb _hidl_cb) override;
     Return<void> getSupportedAuxChannelsConfigs(
