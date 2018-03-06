@@ -45,6 +45,7 @@ bool initHalFuncTableWithStubs(wifi_hal_fn* hal_fn) {
         return false;
     }
     populateStubFor(&hal_fn->wifi_initialize);
+    populateStubFor(&hal_fn->wifi_wait_for_driver_ready);
     populateStubFor(&hal_fn->wifi_cleanup);
     populateStubFor(&hal_fn->wifi_event_loop);
     populateStubFor(&hal_fn->wifi_get_error_info);
