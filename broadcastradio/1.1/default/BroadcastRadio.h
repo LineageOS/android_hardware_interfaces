@@ -65,6 +65,8 @@ struct BroadcastRadio : public V1_1::IBroadcastRadio {
                            openTuner_cb _hidl_cb) override;
     Return<void> getImage(int32_t id, getImage_cb _hidl_cb);
 
+    std::vector<V1_0::BandConfig> getAmFmBands() const;
+
    private:
     std::mutex mMut;
     V1_0::Class mClassId;
