@@ -19,6 +19,8 @@
 #include <android/log.h>
 #include <system/audio_effects/effect_presetreverb.h>
 
+#include "VersionUtils.h"
+
 namespace android {
 namespace hardware {
 namespace audio {
@@ -53,7 +55,7 @@ Return<Result> PresetReverbEffect::disable() {
     return mEffect->disable();
 }
 
-Return<Result> PresetReverbEffect::setDevice(AudioDevice device) {
+Return<Result> PresetReverbEffect::setDevice(AudioDeviceBitfield device) {
     return mEffect->setDevice(device);
 }
 
@@ -76,7 +78,7 @@ Return<Result> PresetReverbEffect::setConfigReverse(
     return mEffect->setConfigReverse(config, inputBufferProvider, outputBufferProvider);
 }
 
-Return<Result> PresetReverbEffect::setInputDevice(AudioDevice device) {
+Return<Result> PresetReverbEffect::setInputDevice(AudioDeviceBitfield device) {
     return mEffect->setInputDevice(device);
 }
 
