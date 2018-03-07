@@ -19,6 +19,8 @@
 #include <android/log.h>
 #include <system/audio_effects/effect_visualizer.h>
 
+#include "VersionUtils.h"
+
 namespace android {
 namespace hardware {
 namespace audio {
@@ -54,7 +56,7 @@ Return<Result> VisualizerEffect::disable() {
     return mEffect->disable();
 }
 
-Return<Result> VisualizerEffect::setDevice(AudioDevice device) {
+Return<Result> VisualizerEffect::setDevice(AudioDeviceBitfield device) {
     return mEffect->setDevice(device);
 }
 
@@ -77,7 +79,7 @@ Return<Result> VisualizerEffect::setConfigReverse(
     return mEffect->setConfigReverse(config, inputBufferProvider, outputBufferProvider);
 }
 
-Return<Result> VisualizerEffect::setInputDevice(AudioDevice device) {
+Return<Result> VisualizerEffect::setInputDevice(AudioDeviceBitfield device) {
     return mEffect->setInputDevice(device);
 }
 

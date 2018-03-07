@@ -20,6 +20,8 @@
 
 #include <android/log.h>
 
+#include "VersionUtils.h"
+
 namespace android {
 namespace hardware {
 namespace audio {
@@ -76,7 +78,7 @@ Return<Result> EqualizerEffect::disable() {
     return mEffect->disable();
 }
 
-Return<Result> EqualizerEffect::setDevice(AudioDevice device) {
+Return<Result> EqualizerEffect::setDevice(AudioDeviceBitfield device) {
     return mEffect->setDevice(device);
 }
 
@@ -99,7 +101,7 @@ Return<Result> EqualizerEffect::setConfigReverse(
     return mEffect->setConfigReverse(config, inputBufferProvider, outputBufferProvider);
 }
 
-Return<Result> EqualizerEffect::setInputDevice(AudioDevice device) {
+Return<Result> EqualizerEffect::setInputDevice(AudioDeviceBitfield device) {
     return mEffect->setInputDevice(device);
 }
 

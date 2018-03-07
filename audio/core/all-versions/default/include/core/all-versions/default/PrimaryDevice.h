@@ -59,12 +59,24 @@ struct PrimaryDevice : public IPrimaryDevice {
     Return<void> getMasterMute(getMasterMute_cb _hidl_cb) override;
     Return<void> getInputBufferSize(const AudioConfig& config,
                                     getInputBufferSize_cb _hidl_cb) override;
+
     Return<void> openOutputStream(int32_t ioHandle, const DeviceAddress& device,
-                                  const AudioConfig& config, AudioOutputFlag flags,
+                                  const AudioConfig& config, AudioOutputFlagBitfield flags,
+#ifdef AUDIO_HAL_VERSION_4_0
+                                  const SourceMetadata& sourceMetadata,
+#endif
                                   openOutputStream_cb _hidl_cb) override;
+
     Return<void> openInputStream(int32_t ioHandle, const DeviceAddress& device,
-                                 const AudioConfig& config, AudioInputFlag flags,
-                                 AudioSource source, openInputStream_cb _hidl_cb) override;
+                                 const AudioConfig& config, AudioInputFlagBitfield flags,
+                                 AudioSource source, openInputStream_cb _hidl_cb);
+#ifdef AUDIO_HAL_VERSION_4_0
+    Return<void> openInputStream(int32_t ioHandle, const DeviceAddress& device,
+                                 const AudioConfig& config, AudioInputFlagBitfield flags,
+                                 const SinkMetadata& sinkMetadata,
+                                 openInputStream_cb _hidl_cb) override;
+#endif
+
     Return<bool> supportsAudioPatches() override;
     Return<void> createAudioPatch(const hidl_vec<AudioPortConfig>& sources,
                                   const hidl_vec<AudioPortConfig>& sinks,
@@ -72,12 +84,27 @@ struct PrimaryDevice : public IPrimaryDevice {
     Return<Result> releaseAudioPatch(int32_t patch) override;
     Return<void> getAudioPort(const AudioPort& port, getAudioPort_cb _hidl_cb) override;
     Return<Result> setAudioPortConfig(const AudioPortConfig& config) override;
-    Return<AudioHwSync> getHwAvSync() override;
+
     Return<Result> setScreenState(bool turnedOn) override;
+
+#ifdef AUDIO_HAL_VERSION_2_0
+    Return<AudioHwSync> getHwAvSync() override;
     Return<void> getParameters(const hidl_vec<hidl_string>& keys,
                                getParameters_cb _hidl_cb) override;
     Return<Result> setParameters(const hidl_vec<ParameterValue>& parameters) override;
     Return<void> debugDump(const hidl_handle& fd) override;
+#elif defined(AUDIO_HAL_VERSION_4_0)
+    Return<void> getHwAvSync(getHwAvSync_cb _hidl_cb) override;
+    Return<void> getParameters(const hidl_vec<ParameterValue>& context,
+                               const hidl_vec<hidl_string>& keys,
+                               getParameters_cb _hidl_cb) override;
+    Return<Result> setParameters(const hidl_vec<ParameterValue>& context,
+                                 const hidl_vec<ParameterValue>& parameters) override;
+    Return<void> getMicrophones(getMicrophones_cb _hidl_cb) override;
+    Return<Result> setConnectedState(const DeviceAddress& address, bool connected) override;
+#endif
+
+    Return<void> debug(const hidl_handle& fd, const hidl_vec<hidl_string>& options) override;
 
     // Methods from ::android::hardware::audio::AUDIO_HAL_VERSION::IPrimaryDevice follow.
     Return<Result> setVoiceVolume(float volume) override;
@@ -90,6 +117,15 @@ struct PrimaryDevice : public IPrimaryDevice {
     Return<Result> setTtyMode(IPrimaryDevice::TtyMode mode) override;
     Return<void> getHacEnabled(getHacEnabled_cb _hidl_cb) override;
     Return<Result> setHacEnabled(bool enabled) override;
+
+#ifdef AUDIO_HAL_VERSION_4_0
+    Return<Result> setBtScoHeadsetDebugName(const hidl_string& name) override;
+    Return<void> getBtHfpEnabled(getBtHfpEnabled_cb _hidl_cb) override;
+    Return<Result> setBtHfpEnabled(bool enabled) override;
+    Return<Result> setBtHfpSampleRate(uint32_t sampleRateHz) override;
+    Return<Result> setBtHfpVolume(float volume) override;
+    Return<Result> updateRotation(IPrimaryDevice::Rotation rotation) override;
+#endif
 
    private:
     sp<Device> mDevice;

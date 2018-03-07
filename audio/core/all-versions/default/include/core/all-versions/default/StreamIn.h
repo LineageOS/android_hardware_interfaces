@@ -58,11 +58,15 @@ struct StreamIn : public IStreamIn {
     Return<uint64_t> getFrameCount() override;
     Return<uint64_t> getBufferSize() override;
     Return<uint32_t> getSampleRate() override;
+#ifdef AUDIO_HAL_VERSION_2_0
     Return<void> getSupportedSampleRates(getSupportedSampleRates_cb _hidl_cb) override;
-    Return<Result> setSampleRate(uint32_t sampleRateHz) override;
-    Return<AudioChannelMask> getChannelMask() override;
     Return<void> getSupportedChannelMasks(getSupportedChannelMasks_cb _hidl_cb) override;
-    Return<Result> setChannelMask(AudioChannelMask mask) override;
+#endif
+    Return<void> getSupportedSampleRates(AudioFormat format, getSupportedSampleRates_cb _hidl_cb);
+    Return<void> getSupportedChannelMasks(AudioFormat format, getSupportedChannelMasks_cb _hidl_cb);
+    Return<Result> setSampleRate(uint32_t sampleRateHz) override;
+    Return<AudioChannelBitfield> getChannelMask() override;
+    Return<Result> setChannelMask(AudioChannelBitfield mask) override;
     Return<AudioFormat> getFormat() override;
     Return<void> getSupportedFormats(getSupportedFormats_cb _hidl_cb) override;
     Return<Result> setFormat(AudioFormat format) override;
@@ -70,15 +74,29 @@ struct StreamIn : public IStreamIn {
     Return<Result> addEffect(uint64_t effectId) override;
     Return<Result> removeEffect(uint64_t effectId) override;
     Return<Result> standby() override;
+#ifdef AUDIO_HAL_VERSION_2_0
     Return<AudioDevice> getDevice() override;
     Return<Result> setDevice(const DeviceAddress& address) override;
-    Return<Result> setConnectedState(const DeviceAddress& address, bool connected) override;
-    Return<Result> setHwAvSync(uint32_t hwAvSync) override;
     Return<void> getParameters(const hidl_vec<hidl_string>& keys,
                                getParameters_cb _hidl_cb) override;
     Return<Result> setParameters(const hidl_vec<ParameterValue>& parameters) override;
-    Return<void> debugDump(const hidl_handle& fd) override;
+    Return<Result> setConnectedState(const DeviceAddress& address, bool connected) override;
+#elif defined(AUDIO_HAL_VERSION_4_0)
+    Return<void> getDevices(getDevices_cb _hidl_cb) override;
+    Return<Result> setDevices(const hidl_vec<DeviceAddress>& devices) override;
+    Return<void> getParameters(const hidl_vec<ParameterValue>& context,
+                               const hidl_vec<hidl_string>& keys,
+                               getParameters_cb _hidl_cb) override;
+    Return<Result> setParameters(const hidl_vec<ParameterValue>& context,
+                                 const hidl_vec<ParameterValue>& parameters) override;
+#endif
+    Return<Result> setHwAvSync(uint32_t hwAvSync) override;
     Return<Result> close() override;
+
+    Return<void> debug(const hidl_handle& fd, const hidl_vec<hidl_string>& options) override;
+#ifdef AUDIO_HAL_VERSION_2_0
+    Return<void> debugDump(const hidl_handle& fd) override;
+#endif
 
     // Methods from ::android::hardware::audio::AUDIO_HAL_VERSION::IStreamIn follow.
     Return<void> getAudioSource(getAudioSource_cb _hidl_cb) override;
@@ -91,6 +109,10 @@ struct StreamIn : public IStreamIn {
     Return<Result> stop() override;
     Return<void> createMmapBuffer(int32_t minSizeFrames, createMmapBuffer_cb _hidl_cb) override;
     Return<void> getMmapPosition(getMmapPosition_cb _hidl_cb) override;
+#ifdef AUDIO_HAL_VERSION_4_0
+    Return<void> updateSinkMetadata(const SinkMetadata& sinkMetadata) override;
+    Return<void> getActiveMicrophones(getActiveMicrophones_cb _hidl_cb) override;
+#endif
 
     static Result getCapturePositionImpl(audio_stream_in_t* stream, uint64_t* frames,
                                          uint64_t* time);

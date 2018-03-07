@@ -19,6 +19,8 @@
 #include <android/log.h>
 #include <system/audio_effects/effect_aec.h>
 
+#include "VersionUtils.h"
+
 namespace android {
 namespace hardware {
 namespace audio {
@@ -54,7 +56,7 @@ Return<Result> AcousticEchoCancelerEffect::disable() {
     return mEffect->disable();
 }
 
-Return<Result> AcousticEchoCancelerEffect::setDevice(AudioDevice device) {
+Return<Result> AcousticEchoCancelerEffect::setDevice(AudioDeviceBitfield device) {
     return mEffect->setDevice(device);
 }
 
@@ -78,7 +80,7 @@ Return<Result> AcousticEchoCancelerEffect::setConfigReverse(
     return mEffect->setConfigReverse(config, inputBufferProvider, outputBufferProvider);
 }
 
-Return<Result> AcousticEchoCancelerEffect::setInputDevice(AudioDevice device) {
+Return<Result> AcousticEchoCancelerEffect::setInputDevice(AudioDeviceBitfield device) {
     return mEffect->setInputDevice(device);
 }
 

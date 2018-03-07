@@ -15,6 +15,8 @@
  */
 
 #include <common/all-versions/IncludeGuard.h>
+#include <core/all-versions/default/Conversions.h>
+#include <system/audio.h>
 
 namespace android {
 namespace hardware {
@@ -62,18 +64,20 @@ Result ParametersUtil::getParam(const char* name, int* value) {
     return getHalStatusToResult(params->getInt(halName, *value));
 }
 
-Result ParametersUtil::getParam(const char* name, String8* value) {
+Result ParametersUtil::getParam(const char* name, String8* value, AudioParameter context) {
     const String8 halName(name);
-    AudioParameter keys;
-    keys.addKey(halName);
-    std::unique_ptr<AudioParameter> params = getParams(keys);
+    context.addKey(halName);
+    std::unique_ptr<AudioParameter> params = getParams(context);
     return getHalStatusToResult(params->get(halName, *value));
 }
 
 void ParametersUtil::getParametersImpl(
-    const hidl_vec<hidl_string>& keys,
+    const hidl_vec<ParameterValue>& context, const hidl_vec<hidl_string>& keys,
     std::function<void(Result retval, const hidl_vec<ParameterValue>& parameters)> cb) {
     AudioParameter halKeys;
+    for (auto& pair : context) {
+        halKeys.add(String8(pair.key.c_str()), String8(pair.value.c_str()));
+    }
     for (size_t i = 0; i < keys.size(); ++i) {
         halKeys.addKey(String8(keys[i].c_str()));
     }
@@ -120,17 +124,26 @@ Result ParametersUtil::setParam(const char* name, int value) {
     return setParams(param);
 }
 
-Result ParametersUtil::setParam(const char* name, const char* value) {
+Result ParametersUtil::setParam(const char* name, float value) {
     AudioParameter param;
-    param.add(String8(name), String8(value));
+    param.addFloat(String8(name), value);
     return setParams(param);
 }
 
-Result ParametersUtil::setParametersImpl(const hidl_vec<ParameterValue>& parameters) {
+Result ParametersUtil::setParametersImpl(const hidl_vec<ParameterValue>& context,
+                                         const hidl_vec<ParameterValue>& parameters) {
     AudioParameter params;
+    for (auto& pair : context) {
+        params.add(String8(pair.key.c_str()), String8(pair.value.c_str()));
+    }
     for (size_t i = 0; i < parameters.size(); ++i) {
         params.add(String8(parameters[i].key.c_str()), String8(parameters[i].value.c_str()));
     }
+    return setParams(params);
+}
+Result ParametersUtil::setParam(const char* name, const DeviceAddress& address) {
+    AudioParameter params(String8(deviceAddressToHal(address).c_str()));
+    params.addInt(String8(name), int(address.device));
     return setParams(params);
 }
 
