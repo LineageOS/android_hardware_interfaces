@@ -51,13 +51,28 @@ constexpr int MAX_RETRY = 15; // Allow retry some ioctl failures a few times to 
                              // webcam showing temporarily ioctl failures.
 constexpr int IOCTL_RETRY_SLEEP_US = 33000; // 33ms * MAX_RETRY = 5 seconds
 
+// Constants for tryLock during dumpstate
+static constexpr int kDumpLockRetries = 50;
+static constexpr int kDumpLockSleep = 60000;
+
 bool tryLock(Mutex& mutex)
 {
-    static const int kDumpLockRetries = 50;
-    static const int kDumpLockSleep = 60000;
     bool locked = false;
     for (int i = 0; i < kDumpLockRetries; ++i) {
         if (mutex.tryLock() == NO_ERROR) {
+            locked = true;
+            break;
+        }
+        usleep(kDumpLockSleep);
+    }
+    return locked;
+}
+
+bool tryLock(std::mutex& mutex)
+{
+    bool locked = false;
+    for (int i = 0; i < kDumpLockRetries; ++i) {
+        if (mutex.try_lock()) {
             locked = true;
             break;
         }
@@ -163,7 +178,6 @@ void ExternalCameraDeviceSession::dumpState(const native_handle_t* handle) {
     bool streaming = false;
     size_t v4L2BufferCount = 0;
     SupportedV4L2Format streamingFmt;
-    std::unordered_set<uint32_t>  inflightFrames;
     {
         bool sessionLocked = tryLock(mLock);
         if (!sessionLocked) {
@@ -172,9 +186,22 @@ void ExternalCameraDeviceSession::dumpState(const native_handle_t* handle) {
         streaming = mV4l2Streaming;
         streamingFmt = mV4l2StreamingFmt;
         v4L2BufferCount = mV4L2BufferCount;
-        inflightFrames = mInflightFrames;
+
         if (sessionLocked) {
             mLock.unlock();
+        }
+    }
+
+    std::unordered_set<uint32_t>  inflightFrames;
+    {
+        bool iffLocked = tryLock(mInflightFramesLock);
+        if (!iffLocked) {
+            dprintf(fd,
+                    "!! ExternalCameraDeviceSession mInflightFramesLock may be deadlocked !!\n");
+        }
+        inflightFrames = mInflightFrames;
+        if (iffLocked) {
+            mInflightFramesLock.unlock();
         }
     }
 
@@ -457,6 +484,7 @@ void ExternalCameraDeviceSession::cleanupInflightFences(
 }
 
 int ExternalCameraDeviceSession::waitForV4L2BufferReturnLocked(std::unique_lock<std::mutex>& lk) {
+    ATRACE_CALL();
     std::chrono::seconds timeout = std::chrono::seconds(kBufferWaitTimeoutSec);
     mLock.unlock();
     auto st = mV4L2BufferReturned.wait_for(lk, timeout);
@@ -612,7 +640,10 @@ Status ExternalCameraDeviceSession::processOneCaptureRequest(const CaptureReques
         halBuf.acquireFence = allFences[i];
         halBuf.fenceTimeout = false;
     }
-    mInflightFrames.insert(halReq->frameNumber);
+    {
+        std::lock_guard<std::mutex> lk(mInflightFramesLock);
+        mInflightFrames.insert(halReq->frameNumber);
+    }
     // Send request to OutputThread for the rest of processing
     mOutputThread->submitRequest(halReq);
     mFirstRequest = false;
@@ -670,7 +701,7 @@ Status ExternalCameraDeviceSession::processCaptureRequestError(
 
     // update inflight records
     {
-        Mutex::Autolock _l(mLock);
+        std::lock_guard<std::mutex> lk(mInflightFramesLock);
         mInflightFrames.erase(req->frameNumber);
     }
 
@@ -724,7 +755,7 @@ Status ExternalCameraDeviceSession::processCaptureResult(std::shared_ptr<HalRequ
 
     // update inflight records
     {
-        Mutex::Autolock _l(mLock);
+        std::lock_guard<std::mutex> lk(mInflightFramesLock);
         mInflightFrames.erase(req->frameNumber);
     }
 
@@ -2278,6 +2309,7 @@ sp<V4L2Frame> ExternalCameraDeviceSession::dequeueV4l2FrameLocked(/*out*/nsecs_t
         }
     }
 
+    ATRACE_BEGIN("VIDIOC_DQBUF");
     v4l2_buffer buffer{};
     buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     buffer.memory = V4L2_MEMORY_MMAP;
@@ -2285,6 +2317,7 @@ sp<V4L2Frame> ExternalCameraDeviceSession::dequeueV4l2FrameLocked(/*out*/nsecs_t
         ALOGE("%s: DQBUF fails: %s", __FUNCTION__, strerror(errno));
         return ret;
     }
+    ATRACE_END();
 
     if (buffer.index >= mV4L2BufferCount) {
         ALOGE("%s: Invalid buffer id: %d", __FUNCTION__, buffer.index);
@@ -2316,21 +2349,18 @@ sp<V4L2Frame> ExternalCameraDeviceSession::dequeueV4l2FrameLocked(/*out*/nsecs_t
 
 void ExternalCameraDeviceSession::enqueueV4l2Frame(const sp<V4L2Frame>& frame) {
     ATRACE_CALL();
-    {
-        // Release mLock before acquiring mV4l2BufferLock to avoid potential
-        // deadlock
-        Mutex::Autolock _l(mLock);
-        frame->unmap();
-        v4l2_buffer buffer{};
-        buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        buffer.memory = V4L2_MEMORY_MMAP;
-        buffer.index = frame->mBufferIndex;
-        if (TEMP_FAILURE_RETRY(ioctl(mV4l2Fd.get(), VIDIOC_QBUF, &buffer)) < 0) {
-            ALOGE("%s: QBUF index %d fails: %s", __FUNCTION__,
-                    frame->mBufferIndex, strerror(errno));
-            return;
-        }
+    frame->unmap();
+    ATRACE_BEGIN("VIDIOC_QBUF");
+    v4l2_buffer buffer{};
+    buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    buffer.memory = V4L2_MEMORY_MMAP;
+    buffer.index = frame->mBufferIndex;
+    if (TEMP_FAILURE_RETRY(ioctl(mV4l2Fd.get(), VIDIOC_QBUF, &buffer)) < 0) {
+        ALOGE("%s: QBUF index %d fails: %s", __FUNCTION__,
+                frame->mBufferIndex, strerror(errno));
+        return;
     }
+    ATRACE_END();
 
     {
         std::lock_guard<std::mutex> lk(mV4l2BufferLock);
@@ -2383,13 +2413,17 @@ Status ExternalCameraDeviceSession::configureStreams(
         return status;
     }
 
-    Mutex::Autolock _l(mLock);
-    if (!mInflightFrames.empty()) {
-        ALOGE("%s: trying to configureStreams while there are still %zu inflight frames!",
-                __FUNCTION__, mInflightFrames.size());
-        return Status::INTERNAL_ERROR;
+
+    {
+        std::lock_guard<std::mutex> lk(mInflightFramesLock);
+        if (!mInflightFrames.empty()) {
+            ALOGE("%s: trying to configureStreams while there are still %zu inflight frames!",
+                    __FUNCTION__, mInflightFrames.size());
+            return Status::INTERNAL_ERROR;
+        }
     }
 
+    Mutex::Autolock _l(mLock);
     // Add new streams
     for (const auto& stream : config.streams) {
         if (mStreamMap.count(stream.id) == 0) {
@@ -2689,14 +2723,17 @@ status_t ExternalCameraDeviceSession::fillCaptureResult(
     const uint8_t ae_lock = ANDROID_CONTROL_AE_LOCK_OFF;
     UPDATE(md, ANDROID_CONTROL_AE_LOCK, &ae_lock, 1);
 
-    bool afTrigger = mAfTrigger;
-    if (md.exists(ANDROID_CONTROL_AF_TRIGGER)) {
-        Mutex::Autolock _l(mLock);
-        camera_metadata_entry entry = md.find(ANDROID_CONTROL_AF_TRIGGER);
-        if (entry.data.u8[0] == ANDROID_CONTROL_AF_TRIGGER_START) {
-            mAfTrigger = afTrigger = true;
-        } else if (entry.data.u8[0] == ANDROID_CONTROL_AF_TRIGGER_CANCEL) {
-            mAfTrigger = afTrigger = false;
+    bool afTrigger = false;
+    {
+        std::lock_guard<std::mutex> lk(mAfTriggerLock);
+        afTrigger = mAfTrigger;
+        if (md.exists(ANDROID_CONTROL_AF_TRIGGER)) {
+            camera_metadata_entry entry = md.find(ANDROID_CONTROL_AF_TRIGGER);
+            if (entry.data.u8[0] == ANDROID_CONTROL_AF_TRIGGER_START) {
+                mAfTrigger = afTrigger = true;
+            } else if (entry.data.u8[0] == ANDROID_CONTROL_AF_TRIGGER_CANCEL) {
+                mAfTrigger = afTrigger = false;
+            }
         }
     }
 
