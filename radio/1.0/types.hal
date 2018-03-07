@@ -1237,9 +1237,9 @@ struct GsmSignalStrength {
 };
 
 struct WcdmaSignalStrength{
-    int32_t signalStrength;               // Valid values are (0-96, 99) as defined in
-                                          // TS 27.007 8.69
-    int32_t bitErrorRate;                 // bit error rate (0-49, 99) as defined in TS 27.007 8.69
+    int32_t signalStrength;               // Valid values are (0-31, 99) as defined in
+                                          // TS 27.007 8.5
+    int32_t bitErrorRate;                 // bit error rate (0-7, 99) as defined in TS 27.007 8.5
 };
 
 struct CdmaSignalStrength {
