@@ -60,17 +60,35 @@ Return<void> PrimaryDevice::getInputBufferSize(const AudioConfig& config,
     return mDevice->getInputBufferSize(config, _hidl_cb);
 }
 
+#ifdef AUDIO_HAL_VERSION_2_0
 Return<void> PrimaryDevice::openOutputStream(int32_t ioHandle, const DeviceAddress& device,
-                                             const AudioConfig& config, AudioOutputFlag flags,
+                                             const AudioConfig& config,
+                                             AudioOutputFlagBitfield flags,
                                              openOutputStream_cb _hidl_cb) {
     return mDevice->openOutputStream(ioHandle, device, config, flags, _hidl_cb);
 }
 
 Return<void> PrimaryDevice::openInputStream(int32_t ioHandle, const DeviceAddress& device,
-                                            const AudioConfig& config, AudioInputFlag flags,
+                                            const AudioConfig& config, AudioInputFlagBitfield flags,
                                             AudioSource source, openInputStream_cb _hidl_cb) {
     return mDevice->openInputStream(ioHandle, device, config, flags, source, _hidl_cb);
 }
+#elif defined(AUDIO_HAL_VERSION_4_0)
+Return<void> PrimaryDevice::openOutputStream(int32_t ioHandle, const DeviceAddress& device,
+                                             const AudioConfig& config,
+                                             AudioOutputFlagBitfield flags,
+                                             const SourceMetadata& sourceMetadata,
+                                             openOutputStream_cb _hidl_cb) {
+    return mDevice->openOutputStream(ioHandle, device, config, flags, sourceMetadata, _hidl_cb);
+}
+
+Return<void> PrimaryDevice::openInputStream(int32_t ioHandle, const DeviceAddress& device,
+                                            const AudioConfig& config, AudioInputFlagBitfield flags,
+                                            const SinkMetadata& sinkMetadata,
+                                            openInputStream_cb _hidl_cb) {
+    return mDevice->openInputStream(ioHandle, device, config, flags, sinkMetadata, _hidl_cb);
+}
+#endif
 
 Return<bool> PrimaryDevice::supportsAudioPatches() {
     return mDevice->supportsAudioPatches();
@@ -94,12 +112,13 @@ Return<Result> PrimaryDevice::setAudioPortConfig(const AudioPortConfig& config) 
     return mDevice->setAudioPortConfig(config);
 }
 
-Return<AudioHwSync> PrimaryDevice::getHwAvSync() {
-    return mDevice->getHwAvSync();
-}
-
 Return<Result> PrimaryDevice::setScreenState(bool turnedOn) {
     return mDevice->setScreenState(turnedOn);
+}
+
+#ifdef AUDIO_HAL_VERSION_2_0
+Return<AudioHwSync> PrimaryDevice::getHwAvSync() {
+    return mDevice->getHwAvSync();
 }
 
 Return<void> PrimaryDevice::getParameters(const hidl_vec<hidl_string>& keys,
@@ -114,6 +133,26 @@ Return<Result> PrimaryDevice::setParameters(const hidl_vec<ParameterValue>& para
 Return<void> PrimaryDevice::debugDump(const hidl_handle& fd) {
     return mDevice->debugDump(fd);
 }
+#elif defined(AUDIO_HAL_VERSION_4_0)
+Return<void> PrimaryDevice::getHwAvSync(getHwAvSync_cb _hidl_cb) {
+    return mDevice->getHwAvSync(_hidl_cb);
+}
+Return<void> PrimaryDevice::getParameters(const hidl_vec<ParameterValue>& context,
+                                          const hidl_vec<hidl_string>& keys,
+                                          getParameters_cb _hidl_cb) {
+    return mDevice->getParameters(context, keys, _hidl_cb);
+}
+Return<Result> PrimaryDevice::setParameters(const hidl_vec<ParameterValue>& context,
+                                            const hidl_vec<ParameterValue>& parameters) {
+    return mDevice->setParameters(context, parameters);
+}
+Return<void> PrimaryDevice::getMicrophones(getMicrophones_cb _hidl_cb) {
+    return mDevice->getMicrophones(_hidl_cb);
+}
+Return<Result> PrimaryDevice::setConnectedState(const DeviceAddress& address, bool connected) {
+    return mDevice->setConnectedState(address, connected);
+}
+#endif
 
 // Methods from ::android::hardware::audio::AUDIO_HAL_VERSION::IPrimaryDevice follow.
 Return<Result> PrimaryDevice::setVoiceVolume(float volume) {
@@ -186,6 +225,35 @@ Return<void> PrimaryDevice::getHacEnabled(getHacEnabled_cb _hidl_cb) {
 
 Return<Result> PrimaryDevice::setHacEnabled(bool enabled) {
     return mDevice->setParam(AUDIO_PARAMETER_KEY_HAC, enabled);
+}
+
+#ifdef AUDIO_HAL_VERSION_4_0
+Return<Result> PrimaryDevice::setBtScoHeadsetDebugName(const hidl_string& name) {
+    return mDevice->setParam(AUDIO_PARAMETER_KEY_BT_SCO_HEADSET_NAME, name.c_str());
+}
+Return<void> PrimaryDevice::getBtHfpEnabled(getBtHfpEnabled_cb _hidl_cb) {
+    bool enabled;
+    Result retval = mDevice->getParam(AUDIO_PARAMETER_KEY_HFP_ENABLE, &enabled);
+    _hidl_cb(retval, enabled);
+    return Void();
+}
+Return<Result> PrimaryDevice::setBtHfpEnabled(bool enabled) {
+    return mDevice->setParam(AUDIO_PARAMETER_KEY_HFP_ENABLE, enabled);
+}
+Return<Result> PrimaryDevice::setBtHfpSampleRate(uint32_t sampleRateHz) {
+    return mDevice->setParam(AUDIO_PARAMETER_KEY_HFP_SET_SAMPLING_RATE, int(sampleRateHz));
+}
+Return<Result> PrimaryDevice::setBtHfpVolume(float volume) {
+    return mDevice->setParam(AUDIO_PARAMETER_KEY_HFP_VOLUME, volume);
+}
+Return<Result> PrimaryDevice::updateRotation(IPrimaryDevice::Rotation rotation) {
+    // legacy API expects the rotation in degree
+    return mDevice->setParam(AUDIO_PARAMETER_KEY_ROTATION, int(rotation) * 90);
+}
+#endif
+
+Return<void> PrimaryDevice::debug(const hidl_handle& fd, const hidl_vec<hidl_string>& options) {
+    return mDevice->debug(fd, options);
 }
 
 }  // namespace implementation

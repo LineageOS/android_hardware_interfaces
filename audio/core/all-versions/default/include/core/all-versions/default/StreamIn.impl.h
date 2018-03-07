@@ -179,23 +179,33 @@ Return<uint32_t> StreamIn::getSampleRate() {
     return mStreamCommon->getSampleRate();
 }
 
+#ifdef AUDIO_HAL_VERSION_2_0
+Return<void> StreamIn::getSupportedChannelMasks(getSupportedChannelMasks_cb _hidl_cb) {
+    return mStreamCommon->getSupportedChannelMasks(_hidl_cb);
+}
 Return<void> StreamIn::getSupportedSampleRates(getSupportedSampleRates_cb _hidl_cb) {
     return mStreamCommon->getSupportedSampleRates(_hidl_cb);
+}
+#endif
+
+Return<void> StreamIn::getSupportedChannelMasks(AudioFormat format,
+                                                getSupportedChannelMasks_cb _hidl_cb) {
+    return mStreamCommon->getSupportedChannelMasks(format, _hidl_cb);
+}
+Return<void> StreamIn::getSupportedSampleRates(AudioFormat format,
+                                               getSupportedSampleRates_cb _hidl_cb) {
+    return mStreamCommon->getSupportedSampleRates(format, _hidl_cb);
 }
 
 Return<Result> StreamIn::setSampleRate(uint32_t sampleRateHz) {
     return mStreamCommon->setSampleRate(sampleRateHz);
 }
 
-Return<AudioChannelMask> StreamIn::getChannelMask() {
+Return<AudioChannelBitfield> StreamIn::getChannelMask() {
     return mStreamCommon->getChannelMask();
 }
 
-Return<void> StreamIn::getSupportedChannelMasks(getSupportedChannelMasks_cb _hidl_cb) {
-    return mStreamCommon->getSupportedChannelMasks(_hidl_cb);
-}
-
-Return<Result> StreamIn::setChannelMask(AudioChannelMask mask) {
+Return<Result> StreamIn::setChannelMask(AudioChannelBitfield mask) {
     return mStreamCommon->setChannelMask(mask);
 }
 
@@ -227,20 +237,21 @@ Return<Result> StreamIn::standby() {
     return mStreamCommon->standby();
 }
 
+Return<Result> StreamIn::setHwAvSync(uint32_t hwAvSync) {
+    return mStreamCommon->setHwAvSync(hwAvSync);
+}
+
+#ifdef AUDIO_HAL_VERSION_2_0
+Return<Result> StreamIn::setConnectedState(const DeviceAddress& address, bool connected) {
+    return mStreamCommon->setConnectedState(address, connected);
+}
+
 Return<AudioDevice> StreamIn::getDevice() {
     return mStreamCommon->getDevice();
 }
 
 Return<Result> StreamIn::setDevice(const DeviceAddress& address) {
     return mStreamCommon->setDevice(address);
-}
-
-Return<Result> StreamIn::setConnectedState(const DeviceAddress& address, bool connected) {
-    return mStreamCommon->setConnectedState(address, connected);
-}
-
-Return<Result> StreamIn::setHwAvSync(uint32_t hwAvSync) {
-    return mStreamCommon->setHwAvSync(hwAvSync);
 }
 
 Return<void> StreamIn::getParameters(const hidl_vec<hidl_string>& keys, getParameters_cb _hidl_cb) {
@@ -254,6 +265,24 @@ Return<Result> StreamIn::setParameters(const hidl_vec<ParameterValue>& parameter
 Return<void> StreamIn::debugDump(const hidl_handle& fd) {
     return mStreamCommon->debugDump(fd);
 }
+#elif defined(AUDIO_HAL_VERSION_4_0)
+Return<void> StreamIn::getDevices(getDevices_cb _hidl_cb) {
+    return mStreamCommon->getDevices(_hidl_cb);
+}
+
+Return<Result> StreamIn::setDevices(const hidl_vec<DeviceAddress>& devices) {
+    return mStreamCommon->setDevices(devices);
+}
+Return<void> StreamIn::getParameters(const hidl_vec<ParameterValue>& context,
+                                     const hidl_vec<hidl_string>& keys, getParameters_cb _hidl_cb) {
+    return mStreamCommon->getParameters(context, keys, _hidl_cb);
+}
+
+Return<Result> StreamIn::setParameters(const hidl_vec<ParameterValue>& context,
+                                       const hidl_vec<ParameterValue>& parameters) {
+    return mStreamCommon->setParameters(context, parameters);
+}
+#endif
 
 Return<Result> StreamIn::start() {
     return mStreamMmap->start();
@@ -414,6 +443,21 @@ Return<void> StreamIn::getCapturePosition(getCapturePosition_cb _hidl_cb) {
     _hidl_cb(retval, frames, time);
     return Void();
 }
+
+Return<void> StreamIn::debug(const hidl_handle& fd, const hidl_vec<hidl_string>& options) {
+    return mStreamCommon->debug(fd, options);
+}
+
+#ifdef AUDIO_HAL_VERSION_4_0
+Return<void> StreamIn::updateSinkMetadata(const SinkMetadata& /*sinkMetadata*/) {
+    return Void();  // TODO: propagate to legacy
+}
+
+Return<void> StreamIn::getActiveMicrophones(getActiveMicrophones_cb _hidl_cb) {
+    _hidl_cb(Result::NOT_SUPPORTED, {});  // TODO: retrieve from legacy
+    return Void();
+}
+#endif
 
 }  // namespace implementation
 }  // namespace AUDIO_HAL_VERSION
