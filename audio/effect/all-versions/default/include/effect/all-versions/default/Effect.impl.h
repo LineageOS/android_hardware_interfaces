@@ -24,6 +24,8 @@
 #include <media/EffectsFactoryApi.h>
 #include <utils/Trace.h>
 
+#include "VersionUtils.h"
+
 namespace android {
 namespace hardware {
 namespace audio {
@@ -33,6 +35,7 @@ namespace implementation {
 
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioChannelMask;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioFormat;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::implementation::AudioChannelBitfield;
 using ::android::hardware::audio::effect::AUDIO_HAL_VERSION::MessageQueueFlagBits;
 
 namespace {
@@ -174,8 +177,8 @@ std::unique_ptr<uint8_t[]> Effect::hidlVecToHal(const hidl_vec<T>& vec, uint32_t
 // static
 void Effect::effectAuxChannelsConfigFromHal(const channel_config_t& halConfig,
                                             EffectAuxChannelsConfig* config) {
-    config->mainChannels = AudioChannelMask(halConfig.main_channels);
-    config->auxChannels = AudioChannelMask(halConfig.aux_channels);
+    config->mainChannels = AudioChannelBitfield(halConfig.main_channels);
+    config->auxChannels = AudioChannelBitfield(halConfig.aux_channels);
 }
 
 // static
@@ -191,10 +194,10 @@ void Effect::effectBufferConfigFromHal(const buffer_config_t& halConfig,
     config->buffer.id = 0;
     config->buffer.frameCount = 0;
     config->samplingRateHz = halConfig.samplingRate;
-    config->channels = AudioChannelMask(halConfig.channels);
+    config->channels = AudioChannelBitfield(halConfig.channels);
     config->format = AudioFormat(halConfig.format);
     config->accessMode = EffectBufferAccess(halConfig.accessMode);
-    config->mask = EffectConfigParameters(halConfig.mask);
+    config->mask = static_cast<decltype(config->mask)>(halConfig.mask);
 }
 
 // static
@@ -500,7 +503,7 @@ Return<Result> Effect::disable() {
     return sendCommandReturningStatus(EFFECT_CMD_DISABLE, "DISABLE");
 }
 
-Return<Result> Effect::setDevice(AudioDevice device) {
+Return<Result> Effect::setDevice(AudioDeviceBitfield device) {
     uint32_t halDevice = static_cast<uint32_t>(device);
     return sendCommand(EFFECT_CMD_SET_DEVICE, "SET_DEVICE", sizeof(uint32_t), &halDevice);
 }
@@ -539,7 +542,7 @@ Return<Result> Effect::setConfigReverse(
                          inputBufferProvider, outputBufferProvider);
 }
 
-Return<Result> Effect::setInputDevice(AudioDevice device) {
+Return<Result> Effect::setInputDevice(AudioDeviceBitfield device) {
     uint32_t halDevice = static_cast<uint32_t>(device);
     return sendCommand(EFFECT_CMD_SET_INPUT_DEVICE, "SET_INPUT_DEVICE", sizeof(uint32_t),
                        &halDevice);

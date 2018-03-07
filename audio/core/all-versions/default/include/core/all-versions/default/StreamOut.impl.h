@@ -183,23 +183,33 @@ Return<uint32_t> StreamOut::getSampleRate() {
     return mStreamCommon->getSampleRate();
 }
 
+#ifdef AUDIO_HAL_VERSION_2_0
+Return<void> StreamOut::getSupportedChannelMasks(getSupportedChannelMasks_cb _hidl_cb) {
+    return mStreamCommon->getSupportedChannelMasks(_hidl_cb);
+}
 Return<void> StreamOut::getSupportedSampleRates(getSupportedSampleRates_cb _hidl_cb) {
     return mStreamCommon->getSupportedSampleRates(_hidl_cb);
+}
+#endif
+
+Return<void> StreamOut::getSupportedChannelMasks(AudioFormat format,
+                                                 getSupportedChannelMasks_cb _hidl_cb) {
+    return mStreamCommon->getSupportedChannelMasks(format, _hidl_cb);
+}
+Return<void> StreamOut::getSupportedSampleRates(AudioFormat format,
+                                                getSupportedSampleRates_cb _hidl_cb) {
+    return mStreamCommon->getSupportedSampleRates(format, _hidl_cb);
 }
 
 Return<Result> StreamOut::setSampleRate(uint32_t sampleRateHz) {
     return mStreamCommon->setSampleRate(sampleRateHz);
 }
 
-Return<AudioChannelMask> StreamOut::getChannelMask() {
+Return<AudioChannelBitfield> StreamOut::getChannelMask() {
     return mStreamCommon->getChannelMask();
 }
 
-Return<void> StreamOut::getSupportedChannelMasks(getSupportedChannelMasks_cb _hidl_cb) {
-    return mStreamCommon->getSupportedChannelMasks(_hidl_cb);
-}
-
-Return<Result> StreamOut::setChannelMask(AudioChannelMask mask) {
+Return<Result> StreamOut::setChannelMask(AudioChannelBitfield mask) {
     return mStreamCommon->setChannelMask(mask);
 }
 
@@ -231,20 +241,21 @@ Return<Result> StreamOut::standby() {
     return mStreamCommon->standby();
 }
 
+Return<Result> StreamOut::setHwAvSync(uint32_t hwAvSync) {
+    return mStreamCommon->setHwAvSync(hwAvSync);
+}
+
+#ifdef AUDIO_HAL_VERSION_2_0
+Return<Result> StreamOut::setConnectedState(const DeviceAddress& address, bool connected) {
+    return mStreamCommon->setConnectedState(address, connected);
+}
+
 Return<AudioDevice> StreamOut::getDevice() {
     return mStreamCommon->getDevice();
 }
 
 Return<Result> StreamOut::setDevice(const DeviceAddress& address) {
     return mStreamCommon->setDevice(address);
-}
-
-Return<Result> StreamOut::setConnectedState(const DeviceAddress& address, bool connected) {
-    return mStreamCommon->setConnectedState(address, connected);
-}
-
-Return<Result> StreamOut::setHwAvSync(uint32_t hwAvSync) {
-    return mStreamCommon->setHwAvSync(hwAvSync);
 }
 
 Return<void> StreamOut::getParameters(const hidl_vec<hidl_string>& keys,
@@ -259,6 +270,25 @@ Return<Result> StreamOut::setParameters(const hidl_vec<ParameterValue>& paramete
 Return<void> StreamOut::debugDump(const hidl_handle& fd) {
     return mStreamCommon->debugDump(fd);
 }
+#elif defined(AUDIO_HAL_VERSION_4_0)
+Return<void> StreamOut::getDevices(getDevices_cb _hidl_cb) {
+    return mStreamCommon->getDevices(_hidl_cb);
+}
+
+Return<Result> StreamOut::setDevices(const hidl_vec<DeviceAddress>& devices) {
+    return mStreamCommon->setDevices(devices);
+}
+Return<void> StreamOut::getParameters(const hidl_vec<ParameterValue>& context,
+                                      const hidl_vec<hidl_string>& keys,
+                                      getParameters_cb _hidl_cb) {
+    return mStreamCommon->getParameters(context, keys, _hidl_cb);
+}
+
+Return<Result> StreamOut::setParameters(const hidl_vec<ParameterValue>& context,
+                                        const hidl_vec<ParameterValue>& parameters) {
+    return mStreamCommon->setParameters(context, parameters);
+}
+#endif
 
 Return<Result> StreamOut::close() {
     if (mIsClosed) return Result::INVALID_STATE;
@@ -511,6 +541,19 @@ Return<void> StreamOut::createMmapBuffer(int32_t minSizeFrames, createMmapBuffer
 Return<void> StreamOut::getMmapPosition(getMmapPosition_cb _hidl_cb) {
     return mStreamMmap->getMmapPosition(_hidl_cb);
 }
+
+Return<void> StreamOut::debug(const hidl_handle& fd, const hidl_vec<hidl_string>& options) {
+    return mStreamCommon->debug(fd, options);
+}
+
+#ifdef AUDIO_HAL_VERSION_4_0
+Return<void> StreamOut::updateSourceMetadata(const SourceMetadata& /*sourceMetadata*/) {
+    return Void();  // TODO: propagate to legacy
+}
+Return<Result> StreamOut::selectPresentation(int32_t /*presentationId*/, int32_t /*programId*/) {
+    return Result::NOT_SUPPORTED;  // TODO: propagate to legacy
+}
+#endif
 
 }  // namespace implementation
 }  // namespace AUDIO_HAL_VERSION

@@ -132,7 +132,6 @@ interface IDevice {
      * @param device device type and (if needed) address.
      * @param config stream configuration.
      * @param flags additional flags.
-     * @param source source specification.
      * @param sinkMetadata Description of the audio that is suggested by the client.
      *                     May be used by implementations to configure hardware effects.
      * @return retval operation completion status.

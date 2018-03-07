@@ -137,3 +137,11 @@ TEST_F(SupplicantHidlTest, RemoveP2pInterface) {
             EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
         });
 }
+
+/*
+ * Terminate
+ * This terminates the service.
+ */
+TEST_F(SupplicantHidlTest, Terminate) {
+    supplicant_->terminate();
+}

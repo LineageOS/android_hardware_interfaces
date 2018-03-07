@@ -360,12 +360,18 @@ wifi_error WifiLegacyHal::start() {
         LOG(DEBUG) << "Legacy HAL already started";
         return WIFI_SUCCESS;
     }
+    LOG(DEBUG) << "Waiting for the driver ready";
+    wifi_error status = global_func_table_.wifi_wait_for_driver_ready();
+    if (status == WIFI_ERROR_TIMED_OUT) {
+        LOG(ERROR) << "Timed out awaiting driver ready";
+        return status;
+    }
     LOG(DEBUG) << "Starting legacy HAL";
     if (!iface_tool_.SetWifiUpState(true)) {
         LOG(ERROR) << "Failed to set WiFi interface up";
         return WIFI_ERROR_UNKNOWN;
     }
-    wifi_error status = global_func_table_.wifi_initialize(&global_handle_);
+    status = global_func_table_.wifi_initialize(&global_handle_);
     if (status != WIFI_SUCCESS || !global_handle_) {
         LOG(ERROR) << "Failed to retrieve global handle";
         return status;

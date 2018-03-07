@@ -18,6 +18,8 @@
 
 #include <android/log.h>
 
+#include "VersionUtils.h"
+
 namespace android {
 namespace hardware {
 namespace audio {
@@ -65,7 +67,7 @@ Return<Result> NoiseSuppressionEffect::disable() {
     return mEffect->disable();
 }
 
-Return<Result> NoiseSuppressionEffect::setDevice(AudioDevice device) {
+Return<Result> NoiseSuppressionEffect::setDevice(AudioDeviceBitfield device) {
     return mEffect->setDevice(device);
 }
 
@@ -88,7 +90,7 @@ Return<Result> NoiseSuppressionEffect::setConfigReverse(
     return mEffect->setConfigReverse(config, inputBufferProvider, outputBufferProvider);
 }
 
-Return<Result> NoiseSuppressionEffect::setInputDevice(AudioDevice device) {
+Return<Result> NoiseSuppressionEffect::setInputDevice(AudioDeviceBitfield device) {
     return mEffect->setInputDevice(device);
 }
 
