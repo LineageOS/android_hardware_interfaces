@@ -28,8 +28,11 @@ namespace broadcastradio {
 namespace V1_1 {
 namespace implementation {
 
+struct BroadcastRadio;
+
 struct Tuner : public ITuner {
-    Tuner(V1_0::Class classId, const sp<V1_0::ITunerCallback>& callback);
+    Tuner(const sp<BroadcastRadio> module, V1_0::Class classId,
+          const sp<V1_0::ITunerCallback>& callback);
 
     void forceClose();
 
@@ -55,6 +58,7 @@ struct Tuner : public ITuner {
     WorkerThread mThread;
     bool mIsClosed = false;
 
+    const sp<BroadcastRadio> mModule;
     V1_0::Class mClassId;
     const sp<V1_0::ITunerCallback> mCallback;
     const sp<V1_1::ITunerCallback> mCallback1_1;
@@ -68,7 +72,9 @@ struct Tuner : public ITuner {
     std::atomic<bool> mIsAnalogForced;
 
     utils::HalRevision getHalRev() const;
+    void setConfigurationInternalLocked(const V1_0::BandConfig& config);
     void tuneInternalLocked(const V1_1::ProgramSelector& sel);
+    bool autoConfigureLocked(uint64_t frequency);
 };
 
 }  // namespace implementation
