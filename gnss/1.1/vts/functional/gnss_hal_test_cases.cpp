@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#define LOG_TAG "GnssHalTestCases"
+
 #include <gnss_hal_test.h>
 
 #include <VtsHalHidlTargetTestBase.h>
