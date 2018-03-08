@@ -1,7 +1,8 @@
 #define LOG_TAG "Gnss"
 
-#include "Gnss.h"
 #include <log/log.h>
+
+#include "Gnss.h"
 #include "GnssConfiguration.h"
 #include "GnssMeasurement.h"
 
@@ -11,20 +12,46 @@ namespace gnss {
 namespace V1_1 {
 namespace implementation {
 
+const uint32_t MIN_INTERVAL_MILLIS = 100;
+sp<::android::hardware::gnss::V1_1::IGnssCallback> Gnss::sGnssCallback = nullptr;
+
+Gnss::Gnss() : mMinIntervalMs(1000) {}
+
+Gnss::~Gnss() {
+    stop();
+}
+
 // Methods from ::android::hardware::gnss::V1_0::IGnss follow.
 Return<bool> Gnss::setCallback(const sp<::android::hardware::gnss::V1_0::IGnssCallback>&) {
-    // TODO implement
-    return bool{};
+    // Mock handles only new callback (see setCallback1_1) coming from Android P+
+    return false;
 }
 
 Return<bool> Gnss::start() {
-    // TODO implement
-    return bool{};
+    if (mIsActive) {
+        ALOGW("Gnss has started. Restarting...");
+        stop();
+    }
+
+    mIsActive = true;
+    mThread = std::thread([this]() {
+        while (mIsActive == true) {
+            V1_0::GnssLocation location = this->getMockLocation();
+            this->reportLocation(location);
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(mMinIntervalMs));
+        }
+    });
+
+    return true;
 }
 
 Return<bool> Gnss::stop() {
-    // TODO implement
-    return bool{};
+    mIsActive = false;
+    if (mThread.joinable()) {
+        mThread.join();
+    }
+    return true;
 }
 
 Return<void> Gnss::cleanup() {
@@ -107,18 +134,43 @@ Return<sp<::android::hardware::gnss::V1_0::IGnssBatching>> Gnss::getExtensionGns
 }
 
 // Methods from ::android::hardware::gnss::V1_1::IGnss follow.
-Return<bool> Gnss::setCallback_1_1(const sp<::android::hardware::gnss::V1_1::IGnssCallback>&) {
-    ALOGI("Gnss::setCallback_1_1");
-    // TODO implement
-    return bool{};
+Return<bool> Gnss::setCallback_1_1(
+    const sp<::android::hardware::gnss::V1_1::IGnssCallback>& callback) {
+    if (callback == nullptr) {
+        ALOGE("%s: Null callback ignored", __func__);
+        return false;
+    }
+
+    sGnssCallback = callback;
+
+    uint32_t capabilities = 0x0;
+    auto ret = sGnssCallback->gnssSetCapabilitesCb(capabilities);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
+
+    IGnssCallback::GnssSystemInfo gnssInfo = {.yearOfHw = 2018};
+
+    ret = sGnssCallback->gnssSetSystemInfoCb(gnssInfo);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
+
+    auto gnssName = "Google Mock GNSS Implementation v1.1";
+    ret = sGnssCallback->gnssNameCb(gnssName);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
+
+    return true;
 }
 
 Return<bool> Gnss::setPositionMode_1_1(
     ::android::hardware::gnss::V1_0::IGnss::GnssPositionMode,
-    ::android::hardware::gnss::V1_0::IGnss::GnssPositionRecurrence, uint32_t, uint32_t, uint32_t,
-    bool) {
-    // TODO implement
-    return bool{};
+    ::android::hardware::gnss::V1_0::IGnss::GnssPositionRecurrence, uint32_t minIntervalMs,
+    uint32_t, uint32_t, bool) {
+    mMinIntervalMs = (minIntervalMs < MIN_INTERVAL_MILLIS) ? MIN_INTERVAL_MILLIS : minIntervalMs;
+    return true;
 }
 
 Return<sp<::android::hardware::gnss::V1_1::IGnssConfiguration>>
@@ -138,7 +190,30 @@ Return<bool> Gnss::injectBestLocation(const ::android::hardware::gnss::V1_0::Gns
     return bool{};
 }
 
-// Methods from ::android::hidl::base::V1_0::IBase follow.
+Return<V1_0::GnssLocation> Gnss::getMockLocation() {
+    V1_0::GnssLocation location = {.gnssLocationFlags = 0xFF,
+                                   .latitudeDegrees = 37.4219999,
+                                   .longitudeDegrees = -122.0840575,
+                                   .altitudeMeters = 1.60062531,
+                                   .speedMetersPerSec = 0,
+                                   .bearingDegrees = 0,
+                                   .horizontalAccuracyMeters = 5,
+                                   .verticalAccuracyMeters = 5,
+                                   .speedAccuracyMetersPerSecond = 1,
+                                   .bearingAccuracyDegrees = 90,
+                                   .timestamp = 1519930775453L};
+    return location;
+}
+
+Return<void> Gnss::reportLocation(const V1_0::GnssLocation& location) {
+    std::unique_lock<std::mutex> lock(mMutex);
+    if (sGnssCallback == nullptr) {
+        ALOGE("%s: sGnssCallback is null.", __func__);
+        return Void();
+    }
+    sGnssCallback->gnssLocationCb(location);
+    return Void();
+}
 
 }  // namespace implementation
 }  // namespace V1_1
