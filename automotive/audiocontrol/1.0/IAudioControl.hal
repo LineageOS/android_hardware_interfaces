@@ -29,10 +29,8 @@ interface IAudioControl {
      *
      * For every context, a valid bus number (0 - num busses-1) must be returned. If an
      * unrecognized contextNumber is encountered, then -1 shall be returned.
-     *
-     * Any context for which an invalid busNumber is returned must be routed to bus 0.
      */
-    getBusForContext(uint32_t contextNumber)
+    getBusForContext(ContextNumber contextNumber)
         generates (int32_t busNumber);
 
 

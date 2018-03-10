@@ -23,7 +23,7 @@ using ::android::sp;
 struct AudioControl : public IAudioControl {
 public:
     // Methods from ::android::hardware::automotive::audiocontrol::V1_0::IAudioControl follow.
-    Return<int32_t> getBusForContext(uint32_t contextNumber) override;
+    Return<int32_t> getBusForContext(ContextNumber contextNumber) override;
     Return<void> setBalanceTowardRight(float value) override;
     Return<void> setFadeTowardFront(float value) override;
 
