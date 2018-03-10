@@ -36,7 +36,8 @@ AudioControl::AudioControl() {
 };
 
 
-Return<int32_t> AudioControl::getBusForContext(uint32_t contextNumber) {
+Return<int32_t> AudioControl::getBusForContext(ContextNumber ctxt) {
+    unsigned contextNumber = static_cast<unsigned>(ctxt);
     if (contextNumber > sContextNumberMax) {
         ALOGE("Unexpected context number %d (max expected is %d)", contextNumber, sContextCount);
         return -1;
