@@ -49,4 +49,11 @@ interface INfc extends @1.0::INfc {
      *                NfcStatus::SUCCESS otherwise.
      */
     open_1_1(INfcClientCallback clientCallback) generates (NfcStatus status);
+
+    /**
+     * Fetches vendor specific configurations.
+     * @return config indicates support for certain features and
+     *     populates the vendor specific configs
+     */
+    getConfig() generates (NfcConfig config);
 };
