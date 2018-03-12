@@ -1198,7 +1198,7 @@ Return<void> CameraDeviceSession::close()  {
     return Void();
 }
 
-void CameraDeviceSession::constructCaptureResult(CaptureResult& result,
+status_t CameraDeviceSession::constructCaptureResult(CaptureResult& result,
                                                  const camera3_capture_result *hal_result) {
     uint32_t frameNumber = hal_result->frame_number;
     bool hasInputBuf = (hal_result->input_buffer != nullptr);
@@ -1213,7 +1213,7 @@ void CameraDeviceSession::constructCaptureResult(CaptureResult& result,
             if (mInflightBuffers.count(key) != 1) {
                 ALOGE("%s: input buffer for stream %d frame %d is not inflight!",
                         __FUNCTION__, streamId, frameNumber);
-                return;
+                return -EINVAL;
             }
         }
 
@@ -1224,7 +1224,7 @@ void CameraDeviceSession::constructCaptureResult(CaptureResult& result,
             if (mInflightBuffers.count(key) != 1) {
                 ALOGE("%s: output buffer for stream %d frame %d is not inflight!",
                         __FUNCTION__, streamId, frameNumber);
-                return;
+                return -EINVAL;
             }
         }
     }
@@ -1344,7 +1344,7 @@ void CameraDeviceSession::constructCaptureResult(CaptureResult& result,
             ALOGV("%s: inflight buffer queue is now empty!", __FUNCTION__);
         }
     }
-
+    return OK;
 }
 
 /**
@@ -1356,10 +1356,11 @@ void CameraDeviceSession::sProcessCaptureResult(
     CameraDeviceSession *d =
             const_cast<CameraDeviceSession*>(static_cast<const CameraDeviceSession*>(cb));
 
-    CaptureResult result;
-    d->constructCaptureResult(result, hal_result);
-
-    d->mResultBatcher.processCaptureResult(result);
+    CaptureResult result = {};
+    status_t ret = d->constructCaptureResult(result, hal_result);
+    if (ret == OK) {
+        d->mResultBatcher.processCaptureResult(result);
+    }
 }
 
 void CameraDeviceSession::sNotify(

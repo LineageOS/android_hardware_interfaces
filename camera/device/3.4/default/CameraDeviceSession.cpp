@@ -450,8 +450,12 @@ void CameraDeviceSession::sProcessCaptureResult_3_4(
     CameraDeviceSession *d =
             const_cast<CameraDeviceSession*>(static_cast<const CameraDeviceSession*>(cb));
 
-    CaptureResult result;
-    d->constructCaptureResult(result.v3_2, hal_result);
+    CaptureResult result = {};
+    status_t ret = d->constructCaptureResult(result.v3_2, hal_result);
+    if (ret != OK) {
+        return;
+    }
+
     result.physicalCameraMetadata.resize(hal_result->num_physcam_metadata);
     for (uint32_t i = 0; i < hal_result->num_physcam_metadata; i++) {
         std::string physicalId = hal_result->physcam_ids[i];
