@@ -23,8 +23,8 @@ cc_test {
     ],
     static_libs: [
         "android.hardware.audio.common.test.utility",
-        "android.hardware.audio.common@2.0",
-        "android.hardware.audio.effect@2.0",
+        "android.hardware.audio.common@4.0",
+        "android.hardware.audio.effect@4.0",
         "android.hidl.allocator@1.0",
         "android.hidl.memory@1.0",
         "libxml2",
@@ -32,5 +32,8 @@ cc_test {
     shared_libs: [
         "libeffectsconfig",
         "libicuuc",
+    ],
+    header_libs: [
+        "android.hardware.audio.common.util@all-versions",
     ],
 }

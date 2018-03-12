@@ -28,5 +28,5 @@ TEST(CheckConfig, audioEffectsConfigurationValidation) {
 
     std::vector<const char*> locations(std::begin(DEFAULT_LOCATIONS), std::end(DEFAULT_LOCATIONS));
     EXPECT_ONE_VALID_XML_MULTIPLE_LOCATIONS(DEFAULT_NAME, locations,
-                                            "/data/local/tmp/audio_effects_conf_V2_0.xsd");
+                                            "/data/local/tmp/audio_effects_conf_V4_0.xsd");
 }

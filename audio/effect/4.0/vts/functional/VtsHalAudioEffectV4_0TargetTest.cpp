@@ -18,33 +18,36 @@
 #include <android-base/logging.h>
 #include <system/audio.h>
 
-#include <android/hardware/audio/effect/2.0/IEffect.h>
-#include <android/hardware/audio/effect/2.0/IEffectsFactory.h>
-#include <android/hardware/audio/effect/2.0/IEqualizerEffect.h>
-#include <android/hardware/audio/effect/2.0/ILoudnessEnhancerEffect.h>
-#include <android/hardware/audio/effect/2.0/types.h>
+#include <android/hardware/audio/effect/4.0/IEffect.h>
+#include <android/hardware/audio/effect/4.0/IEffectsFactory.h>
+#include <android/hardware/audio/effect/4.0/IEqualizerEffect.h>
+#include <android/hardware/audio/effect/4.0/ILoudnessEnhancerEffect.h>
+#include <android/hardware/audio/effect/4.0/types.h>
 #include <android/hidl/allocator/1.0/IAllocator.h>
 #include <android/hidl/memory/1.0/IMemory.h>
+
+#include <common/all-versions/VersionUtils.h>
 
 #include <VtsHalHidlTargetTestBase.h>
 #include <VtsHalHidlTargetTestEnvBase.h>
 
-using android::hardware::audio::common::V2_0::AudioDevice;
-using android::hardware::audio::common::V2_0::AudioHandleConsts;
-using android::hardware::audio::common::V2_0::AudioMode;
-using android::hardware::audio::common::V2_0::AudioSource;
-using android::hardware::audio::common::V2_0::Uuid;
-using android::hardware::audio::effect::V2_0::AudioBuffer;
-using android::hardware::audio::effect::V2_0::EffectAuxChannelsConfig;
-using android::hardware::audio::effect::V2_0::EffectBufferConfig;
-using android::hardware::audio::effect::V2_0::EffectConfig;
-using android::hardware::audio::effect::V2_0::EffectDescriptor;
-using android::hardware::audio::effect::V2_0::EffectOffloadParameter;
-using android::hardware::audio::effect::V2_0::IEffect;
-using android::hardware::audio::effect::V2_0::IEffectsFactory;
-using android::hardware::audio::effect::V2_0::IEqualizerEffect;
-using android::hardware::audio::effect::V2_0::ILoudnessEnhancerEffect;
-using android::hardware::audio::effect::V2_0::Result;
+using android::hardware::audio::common::V4_0::AudioDevice;
+using android::hardware::audio::common::V4_0::AudioHandleConsts;
+using android::hardware::audio::common::V4_0::AudioMode;
+using android::hardware::audio::common::V4_0::AudioSource;
+using android::hardware::audio::common::V4_0::Uuid;
+using android::hardware::audio::common::utils::mkBitfield;
+using android::hardware::audio::effect::V4_0::AudioBuffer;
+using android::hardware::audio::effect::V4_0::EffectAuxChannelsConfig;
+using android::hardware::audio::effect::V4_0::EffectBufferConfig;
+using android::hardware::audio::effect::V4_0::EffectConfig;
+using android::hardware::audio::effect::V4_0::EffectDescriptor;
+using android::hardware::audio::effect::V4_0::EffectOffloadParameter;
+using android::hardware::audio::effect::V4_0::IEffect;
+using android::hardware::audio::effect::V4_0::IEffectsFactory;
+using android::hardware::audio::effect::V4_0::IEqualizerEffect;
+using android::hardware::audio::effect::V4_0::ILoudnessEnhancerEffect;
+using android::hardware::audio::effect::V4_0::Result;
 using android::hardware::MQDescriptorSync;
 using android::hardware::Return;
 using android::hardware::Void;
@@ -159,7 +162,7 @@ TEST_F(AudioEffectsFactoryHidlTest, GetDescriptor) {
 
 TEST_F(AudioEffectsFactoryHidlTest, DebugDumpInvalidArgument) {
     description("Verify that debugDump doesn't crash on invalid arguments");
-    Return<void> ret = effectsFactory->debugDump(hidl_handle());
+    Return<void> ret = effectsFactory->debug(hidl_handle(), {});
     ASSERT_TRUE(ret.isOk());
 }
 
@@ -340,7 +343,7 @@ namespace android {
 namespace hardware {
 namespace audio {
 namespace effect {
-namespace V2_0 {
+namespace V4_0 {
 inline bool operator==(const AudioBuffer& lhs, const AudioBuffer& rhs) {
   return lhs.id == rhs.id && lhs.frameCount == rhs.frameCount &&
          lhs.data.handle() == nullptr && rhs.data.handle() == nullptr;
@@ -356,7 +359,7 @@ inline bool operator==(const EffectBufferConfig& lhs,
 inline bool operator==(const EffectConfig& lhs, const EffectConfig& rhs) {
   return lhs.inputCfg == rhs.inputCfg && lhs.outputCfg == rhs.outputCfg;
 }
-}  // namespace V2_0
+}  // namespace V4_0
 }  // namespace effect
 }  // namespace audio
 }  // namespace hardware
@@ -402,7 +405,7 @@ TEST_F(AudioEffectHidlTest, DisableEnableDisable) {
 
 TEST_F(AudioEffectHidlTest, SetDevice) {
   description("Verify that SetDevice works for an output chain effect");
-  Return<Result> ret = effect->setDevice(AudioDevice::OUT_SPEAKER);
+  Return<Result> ret = effect->setDevice(mkBitfield(AudioDevice::OUT_SPEAKER));
   EXPECT_TRUE(ret.isOk());
   EXPECT_EQ(Result::OK, ret);
 }
@@ -453,7 +456,7 @@ TEST_F(AudioEffectHidlTest, SetConfigReverse) {
 
 TEST_F(AudioEffectHidlTest, SetInputDevice) {
   description("Verify that SetInputDevice does not crash");
-  Return<Result> ret = effect->setInputDevice(AudioDevice::IN_BUILTIN_MIC);
+  Return<Result> ret = effect->setInputDevice(mkBitfield(AudioDevice::IN_BUILTIN_MIC));
   EXPECT_TRUE(ret.isOk());
 }
 
@@ -758,7 +761,7 @@ TEST_F(EqualizerAudioEffectHidlTest, GetSetAllProperties) {
       "Verify that setting band levels and presets works via Get / "
       "SetAllProperties for Equalizer effect");
   using AllProperties =
-      android::hardware::audio::effect::V2_0::IEqualizerEffect::AllProperties;
+      android::hardware::audio::effect::V4_0::IEqualizerEffect::AllProperties;
   uint16_t numBands = 0;
   getNumBands(&numBands);
   ASSERT_GT(numBands, 0);
