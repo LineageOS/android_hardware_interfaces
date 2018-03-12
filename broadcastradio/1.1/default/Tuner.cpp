@@ -58,8 +58,10 @@ const struct {
     milliseconds tune = 150ms;
 } gDefaultDelay;
 
-Tuner::Tuner(V1_0::Class classId, const sp<V1_0::ITunerCallback>& callback)
-    : mClassId(classId),
+Tuner::Tuner(const sp<BroadcastRadio> module, V1_0::Class classId,
+             const sp<V1_0::ITunerCallback>& callback)
+    : mModule(module),
+      mClassId(classId),
       mCallback(callback),
       mCallback1_1(V1_1::ITunerCallback::castFrom(callback).withDefault(nullptr)),
       mVirtualRadio(getRadio(classId)),
@@ -69,6 +71,33 @@ void Tuner::forceClose() {
     lock_guard<mutex> lk(mMut);
     mIsClosed = true;
     mThread.cancelAll();
+}
+
+void Tuner::setConfigurationInternalLocked(const BandConfig& config) {
+    mAmfmConfig = config;
+    mAmfmConfig.antennaConnected = true;
+    mCurrentProgram = utils::make_selector(mAmfmConfig.type, mAmfmConfig.lowerLimit);
+
+    if (utils::isFm(mAmfmConfig.type)) {
+        mVirtualRadio = std::ref(getFmRadio());
+    } else {
+        mVirtualRadio = std::ref(getAmRadio());
+    }
+
+    mIsAmfmConfigSet = true;
+    mCallback->configChange(Result::OK, mAmfmConfig);
+}
+
+bool Tuner::autoConfigureLocked(uint64_t frequency) {
+    for (auto&& config : mModule->getAmFmBands()) {
+        // The check here is rather poor, but it's enough for default implementation.
+        if (config.lowerLimit <= frequency && config.upperLimit >= frequency) {
+            ALOGI("Auto-switching band to %s", toString(config).c_str());
+            setConfigurationInternalLocked(config);
+            return true;
+        }
+    }
+    return false;
 }
 
 Return<Result> Tuner::setConfiguration(const BandConfig& config) {
@@ -85,19 +114,7 @@ Return<Result> Tuner::setConfiguration(const BandConfig& config) {
     auto task = [this, config]() {
         ALOGI("Setting AM/FM config");
         lock_guard<mutex> lk(mMut);
-
-        mAmfmConfig = move(config);
-        mAmfmConfig.antennaConnected = true;
-        mCurrentProgram = utils::make_selector(mAmfmConfig.type, mAmfmConfig.lowerLimit);
-
-        if (utils::isFm(mAmfmConfig.type)) {
-            mVirtualRadio = std::ref(getFmRadio());
-        } else {
-            mVirtualRadio = std::ref(getAmRadio());
-        }
-
-        mIsAmfmConfigSet = true;
-        mCallback->configChange(Result::OK, mAmfmConfig);
+        setConfigurationInternalLocked(config);
     };
     mThread.schedule(task, gDefaultDelay.config);
 
@@ -276,7 +293,7 @@ Return<Result> Tuner::tuneByProgramSelector(const ProgramSelector& sel) {
 
         auto freq = utils::getId(sel, IdentifierType::AMFM_FREQUENCY);
         if (freq < mAmfmConfig.lowerLimit || freq > mAmfmConfig.upperLimit) {
-            return Result::INVALID_ARGUMENTS;
+            if (!autoConfigureLocked(freq)) return Result::INVALID_ARGUMENTS;
         }
     } else if (programType == ProgramType::DAB) {
         if (!utils::hasId(sel, IdentifierType::DAB_SIDECC)) return Result::INVALID_ARGUMENTS;

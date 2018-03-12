@@ -2342,6 +2342,10 @@ RttStatus convertLegacyRttStatusToHidl(legacy_hal::wifi_rtt_status status) {
             return RttStatus::NO_WIFI;
         case legacy_hal::RTT_STATUS_FAIL_FTM_PARAM_OVERRIDE:
             return RttStatus::FAIL_FTM_PARAM_OVERRIDE;
+        case legacy_hal::RTT_STATUS_NAN_RANGING_PROTOCOL_FAILURE:
+            return RttStatus::FAILURE;  // TODO: add HIDL enumeration
+        case legacy_hal::RTT_STATUS_NAN_RANGING_CONCURRENCY_NOT_SUPPORTED:
+            return RttStatus::FAILURE;  // TODO: add HIDL enumeration
     };
     CHECK(false) << "Unknown legacy status: " << status;
 }

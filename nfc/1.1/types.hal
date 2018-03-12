@@ -21,3 +21,78 @@ enum NfcEvent : @1.0::NfcEvent {
     /** In case of an error, HCI network needs to be re-initialized */
     HCI_NETWORK_RESET = 7
 };
+
+enum Constant : uint8_t {
+    UNSUPPORTED_CONFIG = 0xFF,
+};
+
+/**
+ * Vendor Specific Proprietary Protocol & Discovery Configuration.
+ * Set to UNSUPPORTED_CONFIG if not supported.
+ * discovery* fields map to "RF Technology and Mode" in NCI Spec
+ * protocol* fields map to "RF protocols" in NCI Spec
+ */
+struct ProtocolDiscoveryConfig {
+    uint8_t protocol18092Active;
+    uint8_t protocolBPrime;
+    uint8_t protocolDual;
+    uint8_t protocol15693;
+    uint8_t protocolKovio;
+    uint8_t protocolMifare;
+    uint8_t discoveryPollKovio;
+    uint8_t discoveryPollBPrime;
+    uint8_t discoveryListenBPrime;
+};
+
+/* Presence Check Algorithm as per ISO/IEC 14443-4 */
+enum PresenceCheckAlgorithm : uint8_t {
+    /** Lets the stack select an algorithm */
+    DEFAULT = 0,
+    /** ISO-DEP protocol's empty I-block */
+    I_BLOCK = 1,
+    /**
+     * Type - 4 tag protocol iso-dep nak presence check command is sent waiting for
+     * response and notification.
+     */
+    ISO_DEP_NAK = 2
+};
+
+struct NfcConfig {
+    /** If true, NFCC is using bail out mode for either Type A or Type B poll. */
+    bool nfaPollBailOutMode;
+
+    PresenceCheckAlgorithm presenceCheckAlgorithm;
+
+    ProtocolDiscoveryConfig nfaProprietaryCfg;
+
+    /** Default off-host route. 0x00 if there aren't any. Refer to NCI spec. */
+    uint8_t defaultOffHostRoute;
+
+    /**
+     * Default off-host route for Felica. 0x00 if there aren't any. Refer to
+     * NCI spec.
+     */
+    uint8_t defaultOffHostRouteFelica;
+
+    /** Default system code route. 0x00 if there aren't any. Refer NCI spec */
+    uint8_t defaultSystemCodeRoute;
+
+    /**
+     * Default route for all remaining protocols and technology which haven't
+     * been configured.
+     * Device Host(0x00) is the default. Refer to NCI spec.
+     * */
+    uint8_t defaultRoute;
+
+    /** Pipe ID for eSE. 0x00 if there aren't any. */
+    uint8_t offHostESEPipeId;
+
+    /** Pipe ID for UICC. 0x00 if there aren't any. */
+    uint8_t offHostSIMPipeId;
+
+    /** Extended APDU length for ISO_DEP. If not supported default length is 261 */
+    uint32_t maxIsoDepTransceiveLength;
+
+    /** list of white listed host ids, as per ETSI TS 102 622 */
+    vec<uint8_t> hostWhitelist;
+};
