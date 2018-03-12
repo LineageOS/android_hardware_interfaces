@@ -327,7 +327,7 @@ protected:
     static callbacks_process_capture_result_t sProcessCaptureResult;
     static callbacks_notify_t sNotify;
 
-    void constructCaptureResult(CaptureResult& result,
+    status_t constructCaptureResult(CaptureResult& result,
                                 const camera3_capture_result *hal_result);
 private:
 
