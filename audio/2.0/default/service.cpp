@@ -16,11 +16,12 @@
 
 #define LOG_TAG "audiohalservice"
 
-#include <hidl/HidlTransportSupport.h>
-#include <hidl/LegacySupport.h>
 #include <android/hardware/audio/2.0/IDevicesFactory.h>
 #include <android/hardware/audio/effect/2.0/IEffectsFactory.h>
+#include <android/hardware/bluetooth/a2dp/1.0/IBluetoothAudioOffload.h>
 #include <android/hardware/soundtrigger/2.0/ISoundTriggerHw.h>
+#include <hidl/HidlTransportSupport.h>
+#include <hidl/LegacySupport.h>
 
 using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
@@ -30,6 +31,7 @@ using android::hardware::audio::effect::V2_0::IEffectsFactory;
 using android::hardware::audio::V2_0::IDevicesFactory;
 using android::hardware::soundtrigger::V2_0::ISoundTriggerHw;
 using android::hardware::registerPassthroughServiceImplementation;
+using android::hardware::bluetooth::a2dp::V1_0::IBluetoothAudioOffload;
 
 using android::OK;
 
@@ -43,6 +45,8 @@ int main(int /* argc */, char* /* argv */ []) {
     // Soundtrigger might be not present.
     status = registerPassthroughServiceImplementation<ISoundTriggerHw>();
     ALOGE_IF(status != OK, "Error while registering soundtrigger service: %d", status);
+    status = registerPassthroughServiceImplementation<IBluetoothAudioOffload>();
+    ALOGE_IF(status != OK, "Error while registering bluetooth_audio service: %d", status);
     joinRpcThreadpool();
     return status;
 }
