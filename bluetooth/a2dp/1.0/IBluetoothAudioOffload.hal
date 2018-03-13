@@ -1,0 +1,85 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.bluetooth.a2dp@1.0;
+
+import IBluetoothAudioHost;
+
+/**
+ * HAL interface for Bluetooth A2DP Offload functionality where
+ * the encoding of the A2DP data packets is offloaded to platform
+ * specific encoders. The A2DP control path is maintained in the
+ * Bluetooth stack.
+ *
+ * This interface is from HAL client to HAL server.
+ *
+ * The HAL client must provide the handle of IBluetoothAudioHost as well
+ * as codec configuration to the HAL server, when its connected to an
+ * active A2DP Sink device. HAL Server, based on the feedback from the Audio
+ * framework must call into the commands provided by the IBluetoothAudioHost.
+ * HAL client must call into IBluetoothAudioOffload to provide the status of
+ * these commands. Once the device becomes inactive, the HAL client must
+ * call the endSession to terminate the session with the HAL server.
+ */
+interface IBluetoothAudioOffload {
+
+    /**
+     * Indicates that the HAL client is connected to an A2DP Sink device
+     * and is ready to stream audio. This function is also used to register
+     * the BluetoothAudioHost interface and the provide the current negotiated
+     * codec.
+     *
+     * |endSession| must be called to unregister the interface.
+     *
+     * @param hostIf interface used to request stream control
+     * @param codecConfig Codec configuration as negotiated with the A2DP Sink
+     *    device
+     * @return status one of the following
+     *    SUCCESS if HAL server successfully initializes the platform with the
+     *        given codec configuration
+     *    UNSUPPORTED_CODEC_CONFIGURATION if HAL server cannot initialize the
+     *        platform with the given codec configuration
+     *    FAILURE if HAL server cannot initialize the platform for any other
+     *        reason
+     */
+    startSession(IBluetoothAudioHost hostIf, CodecConfiguration codecConfig) generates (Status status);
+
+    /**
+     * Updates status for start stream request. The HAL client may need
+     * to communicate to Bluetooth Controller and remote Sink device, in which
+     * case it must update with PENDING status. Once the operation is
+     * completed, it must return with either SUCCESS or FAILURE.
+     *
+     * @param status SUCCESS, FAILURE or PENDING
+     */
+    oneway streamStarted(Status status);
+
+    /**
+     * Updates status for suspend stream request. The HAL client may need
+     * to communicate to Bluetooth Controller and remote device, in which case
+     * it must update with PENDING status. Once the operation is completed, it
+     * must return with either SUCCESS or FAILURE.
+     *
+     * @param status SUCCESS, FAILURE or PENDING
+     */
+    oneway streamSuspended(Status status);
+
+    /**
+     * Ends the current A2DP offload session and unregisters the
+     * BluetoothAudioHost interface.
+     */
+    oneway endSession();
+};
