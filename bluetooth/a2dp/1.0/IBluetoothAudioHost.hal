@@ -1,0 +1,61 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.bluetooth.a2dp@1.0;
+
+/**
+ * HAL interface for Bluetooth A2DP Offload functionality where
+ * the encoding of the A2DP data packets is offloaded to platform
+ * specific encoders. The A2DP control path is maintained in the
+ * Bluetooth stack.
+ *
+ * This interface is from HAL server to HAL client.
+ *
+ * The HAL server must call into the IBluetoothAudioHost to initiate
+ * the start, suspend and stop of the streaming operation. These
+ * calls return immediately and the results, if any, are send over
+ * the IBluetoothAudioOffload interface.
+ */
+
+interface IBluetoothAudioHost {
+    /**
+     * Invoked when the start stream is requested from HAL server
+     * to HAL client. This indicates that the HAL server
+     * has initialized the platform for streaming use case, and the
+     * HAL client can proceed with the streaming procedure. The
+     * result of the operation must be provided by the HAL
+     * client using the IBluetoothAudioOffload interface.
+     */
+    oneway startStream();
+
+    /**
+     * Invoked when the suspend stream is requested from HAL server
+     * to HAL client. This indicates that the HAL server
+     * wants to suspend the streaming procedure. The result of the
+     * operation must be provided by the HAL client using the
+     * IBluetoothAudioOffload interface.
+     */
+    oneway suspendStream();
+
+    /**
+     * Invoked when the stop stream is requested from HAL server
+     * to HAL client. This indicates that the HAL server wants to
+     * stop and reset the streaming procedure. There is no result
+     * provided by the HAL client for this call.
+     */
+    oneway stopStream();
+
+};
