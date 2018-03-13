@@ -16,6 +16,7 @@
 
 #define LOG_TAG "camera_hidl_hal_test"
 
+#include <algorithm>
 #include <chrono>
 #include <mutex>
 #include <regex>
@@ -65,6 +66,7 @@ using ::android::BufferQueue;
 using ::android::BufferItemConsumer;
 using ::android::Surface;
 using ::android::hardware::graphics::common::V1_0::BufferUsage;
+using ::android::hardware::graphics::common::V1_0::Dataspace;
 using ::android::hardware::graphics::common::V1_0::PixelFormat;
 using ::android::hardware::camera::common::V1_0::Status;
 using ::android::hardware::camera::common::V1_0::CameraDeviceStatus;
@@ -1084,7 +1086,7 @@ Return<void> CameraHidlTest::DeviceCb::notify(
 }
 
 hidl_vec<hidl_string> CameraHidlTest::getCameraDeviceNames(sp<ICameraProvider> provider) {
-    hidl_vec<hidl_string> cameraDeviceNames;
+    std::vector<std::string> cameraDeviceNames;
     Return<void> ret;
     ret = provider->getCameraIdList(
         [&](auto status, const auto& idList) {
@@ -1093,12 +1095,50 @@ hidl_vec<hidl_string> CameraHidlTest::getCameraDeviceNames(sp<ICameraProvider> p
                 ALOGI("Camera Id[%zu] is %s", i, idList[i].c_str());
             }
             ASSERT_EQ(Status::OK, status);
-            cameraDeviceNames = idList;
+            for (const auto& id : idList) {
+                cameraDeviceNames.push_back(id);
+            }
         });
     if (!ret.isOk()) {
         ADD_FAILURE();
     }
-    return cameraDeviceNames;
+
+    // External camera devices are reported through cameraDeviceStatusChange
+    struct ProviderCb : public ICameraProviderCallback {
+        virtual Return<void> cameraDeviceStatusChange(
+                const hidl_string& devName,
+                CameraDeviceStatus newStatus) override {
+            ALOGI("camera device status callback name %s, status %d",
+                    devName.c_str(), (int) newStatus);
+            if (newStatus == CameraDeviceStatus::PRESENT) {
+                externalCameraDeviceNames.push_back(devName);
+
+            }
+            return Void();
+        }
+
+        virtual Return<void> torchModeStatusChange(
+                const hidl_string&, TorchModeStatus) override {
+            return Void();
+        }
+
+        std::vector<std::string> externalCameraDeviceNames;
+    };
+    sp<ProviderCb> cb = new ProviderCb;
+    auto status = mProvider->setCallback(cb);
+
+    for (const auto& devName : cb->externalCameraDeviceNames) {
+        if (cameraDeviceNames.end() == std::find(
+                cameraDeviceNames.begin(), cameraDeviceNames.end(), devName)) {
+            cameraDeviceNames.push_back(devName);
+        }
+    }
+
+    hidl_vec<hidl_string> retList(cameraDeviceNames.size());
+    for (size_t i = 0; i < cameraDeviceNames.size(); i++) {
+        retList[i] = cameraDeviceNames[i];
+    }
+    return retList;
 }
 
 // Test devices with first_api_level >= P does not advertise device@1.0
@@ -2010,7 +2050,8 @@ TEST_F(CameraHidlTest, getCameraCharacteristics) {
                         ASSERT_TRUE(
                                 hardwareLevel == ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED ||
                                 hardwareLevel == ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_FULL ||
-                                hardwareLevel == ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_3);
+                                hardwareLevel == ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_3 ||
+                                hardwareLevel == ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL);
                     } else {
                         ADD_FAILURE() << "Get camera hardware level failed!";
                     }
@@ -2440,13 +2481,14 @@ TEST_F(CameraHidlTest, configureStreamsAvailableOutputs) {
         int32_t streamId = 0;
         for (auto& it : outputStreams) {
             V3_2::Stream stream3_2;
+            bool isJpeg = static_cast<PixelFormat>(it.format) == PixelFormat::BLOB;
             stream3_2 = {streamId,
                              StreamType::OUTPUT,
                              static_cast<uint32_t>(it.width),
                              static_cast<uint32_t>(it.height),
                              static_cast<PixelFormat>(it.format),
                              GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
-                             0,
+                             (isJpeg) ? static_cast<V3_2::DataspaceFlags>(Dataspace::V0_JFIF) : 0,
                              StreamRotation::ROTATION_0};
             ::android::hardware::hidl_vec<V3_2::Stream> streams3_2 = {stream3_2};
             ::android::hardware::camera::device::V3_4::StreamConfiguration config3_4;
@@ -2897,7 +2939,7 @@ TEST_F(CameraHidlTest, configureStreamsPreviewStillOutputs) {
                                      static_cast<uint32_t>(blobIter.height),
                                      static_cast<PixelFormat>(blobIter.format),
                                      GRALLOC1_CONSUMER_USAGE_CPU_READ,
-                                     0,
+                                     static_cast<V3_2::DataspaceFlags>(Dataspace::V0_JFIF),
                                      StreamRotation::ROTATION_0};
                 ::android::hardware::hidl_vec<V3_2::Stream> streams = {previewStream,
                                                                  blobStream};
@@ -3162,7 +3204,7 @@ TEST_F(CameraHidlTest, configureStreamsVideoStillOutputs) {
                                      static_cast<uint32_t>(blobIter.height),
                                      static_cast<PixelFormat>(blobIter.format),
                                      GRALLOC1_CONSUMER_USAGE_CPU_READ,
-                                     0,
+                                     static_cast<V3_2::DataspaceFlags>(Dataspace::V0_JFIF),
                                      StreamRotation::ROTATION_0};
                 ::android::hardware::hidl_vec<V3_2::Stream> streams = {videoStream, blobStream};
                 ::android::hardware::camera::device::V3_4::StreamConfiguration config3_4;
@@ -3603,8 +3645,9 @@ TEST_F(CameraHidlTest, processCaptureRequestBurstISO) {
 
         camera_metadata_entry_t hwLevel = staticMeta.find(ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL);
         ASSERT_TRUE(0 < hwLevel.count);
-        if (ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED == hwLevel.data.u8[0]) {
-            //Limited devices can skip this test
+        if (ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED == hwLevel.data.u8[0] ||
+                ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL == hwLevel.data.u8[0]) {
+            //Limited/External devices can skip this test
             ret = session->close();
             ASSERT_TRUE(ret.isOk());
             continue;
