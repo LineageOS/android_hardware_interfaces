@@ -75,6 +75,9 @@ Return<Status> ExternalCameraProvider::setCallback(
         Mutex::Autolock _l(mLock);
         mCallbacks = callback;
     }
+    if (mCallbacks == nullptr) {
+        return Status::OK;
+    }
     // Send a callback for all devices to initialize
     {
         for (const auto& pair : mCameraStatusMap) {
