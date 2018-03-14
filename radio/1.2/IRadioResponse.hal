@@ -98,4 +98,31 @@ interface IRadioResponse extends @1.1::IRadioResponse {
      *   RadioError:INTERNAL_ERR
      */
     oneway getSignalStrengthResponse_1_2(RadioResponseInfo info, SignalStrength signalStrength);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param voiceRegResponse Current Voice registration response as defined by VoiceRegStateResult
+     *        in types.hal
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     */
+    oneway getVoiceRegistrationStateResponse_1_2(RadioResponseInfo info,
+            VoiceRegStateResult voiceRegResponse);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param dataRegResponse Current Data registration response as defined by DataRegStateResult in
+     *        types.hal
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:NOT_PROVISIONED
+     */
+    oneway getDataRegistrationStateResponse_1_2(RadioResponseInfo info,
+            DataRegStateResult dataRegResponse);
 };
