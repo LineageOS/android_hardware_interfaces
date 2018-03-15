@@ -18,7 +18,6 @@
 #define android_hardware_gnss_V1_1_GnssDebug_H_
 
 #include <android/hardware/gnss/1.0/IGnssDebug.h>
-#include <hardware/gps.h>
 #include <hidl/Status.h>
 
 namespace android {
