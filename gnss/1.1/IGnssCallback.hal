@@ -30,6 +30,9 @@ interface IGnssCallback extends @1.0::IGnssCallback {
      * This is a user-visible string that identifies the model and version of the GNSS HAL.
      * For example "ABC Co., Baseband Part 1234, RF Part 567, Software version 3.14.159"
      *
+     * For privacy reasons, this string must not contain any device-specific serial number or other
+     * identifier that uniquely identifies an individual device.
+     *
      * This must be called in response to IGnss::setCallback
      *
      * @param name String providing the name of the GNSS HAL implementation
