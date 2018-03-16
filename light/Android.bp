@@ -2,4 +2,5 @@
 subdirs = [
     "2.0",
     "2.0/vts/functional",
+    "utils",
 ]
