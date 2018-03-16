@@ -17,6 +17,7 @@
 package android.hardware.wifi@1.2;
 
 import @1.0::WifiStatus;
+import @1.0::MacAddress;
 import @1.0::IWifiStaIface;
 
 /**
@@ -51,4 +52,17 @@ interface IWifiStaIface extends @1.0::IWifiStaIface {
      * @see installApfPacketFilter()
      */
     readApfPacketFilterData() generates (WifiStatus status, vec<uint8_t> data);
+
+    /**
+     * Changes the MAC address of the Sta Interface to the given
+     * MAC address.
+     *
+     * @param mac MAC address to change into.
+     * @return status WifiStatus of the operation.
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+     *         |WifiStatusCode.ERROR_UNKNOWN|
+     */
+    setMacAddress(MacAddress mac) generates (WifiStatus status);
 };
