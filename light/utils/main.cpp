@@ -26,6 +26,7 @@ void error(const std::string& msg) {
 }
 
 int main() {
+    using ::android::hardware::hidl_vec;
     using ::android::hardware::light::V2_0::Brightness;
     using ::android::hardware::light::V2_0::Flash;
     using ::android::hardware::light::V2_0::ILight;
@@ -44,9 +45,15 @@ int main() {
         .color = 0u, .flashMode = Flash::NONE, .brightnessMode = Brightness::USER,
     };
 
-    Status ret = service->setLight(Type::BACKLIGHT, off).withDefault(Status::UNKNOWN);
-    if (ret != Status::SUCCESS) {
-        error("Failed to shut off screen");
-    }
+    service->getSupportedTypes([&](const hidl_vec<Type>& types) {
+        for (Type type : types) {
+            Status ret = service->setLight(type, off);
+            if (ret != Status::SUCCESS) {
+                error("Failed to shut off screen for type " +
+                      std::to_string(static_cast<int>(type)));
+            }
+        }
+    });
+
     return 0;
 }
