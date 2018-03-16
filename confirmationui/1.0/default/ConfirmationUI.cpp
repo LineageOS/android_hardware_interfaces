@@ -43,7 +43,12 @@ Return<ResponseCode> ConfirmationUI::promptUserConfirmation(
     const hidl_vec<uint8_t>& extraData, const hidl_string& locale,
     const hidl_vec<UIOption>& uiOptions) {
     auto& operation = MyOperation::get();
-    return operation.init(resultCB, promptText, extraData, locale, uiOptions);
+    auto result = operation.init(resultCB, promptText, extraData, locale, uiOptions);
+    if (result == ResponseCode::OK) {
+        // This is where implementation start the UI and then call setPending on success.
+        operation.setPending();
+    }
+    return result;
 }
 
 Return<ResponseCode> ConfirmationUI::deliverSecureInputEvent(

@@ -101,6 +101,12 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
     };
 
     /*
+     * SetUpGnssCallback:
+     *   Set GnssCallback and verify the result.
+     */
+    void SetUpGnssCallback();
+
+    /*
      * StartAndGetSingleLocation:
      * Helper function to get one Location and check fields
      *

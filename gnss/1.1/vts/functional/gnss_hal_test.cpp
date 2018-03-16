@@ -33,6 +33,8 @@ void GnssHalTest::SetUp() {
         GnssHidlEnvironment::Instance()->getServiceName<IGnss>());
     list_gnss_sv_status_.clear();
     ASSERT_NE(gnss_hal_, nullptr);
+
+    SetUpGnssCallback();
 }
 
 void GnssHalTest::TearDown() {
@@ -42,6 +44,30 @@ void GnssHalTest::TearDown() {
     if (notify_count_ > 0) {
         ALOGW("%d unprocessed callbacks discarded", notify_count_);
     }
+}
+
+void GnssHalTest::SetUpGnssCallback() {
+    gnss_cb_ = new GnssCallback(*this);
+    ASSERT_NE(gnss_cb_, nullptr);
+
+    auto result = gnss_hal_->setCallback_1_1(gnss_cb_);
+    if (!result.isOk()) {
+        ALOGE("result of failed setCallback %s", result.description().c_str());
+    }
+
+    ASSERT_TRUE(result.isOk());
+    ASSERT_TRUE(result);
+
+    /*
+     * All capabilities, name and systemInfo callbacks should trigger
+     */
+    EXPECT_EQ(std::cv_status::no_timeout, wait(TIMEOUT_SEC));
+    EXPECT_EQ(std::cv_status::no_timeout, wait(TIMEOUT_SEC));
+    EXPECT_EQ(std::cv_status::no_timeout, wait(TIMEOUT_SEC));
+
+    EXPECT_EQ(capabilities_called_count_, 1);
+    EXPECT_EQ(info_called_count_, 1);
+    EXPECT_EQ(name_called_count_, 1);
 }
 
 void GnssHalTest::StopAndClearLocations() {

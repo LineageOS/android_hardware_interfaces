@@ -18,8 +18,8 @@
 #define WIFI_STA_IFACE_H_
 
 #include <android-base/macros.h>
-#include <android/hardware/wifi/1.0/IWifiStaIface.h>
 #include <android/hardware/wifi/1.0/IWifiStaIfaceEventCallback.h>
+#include <android/hardware/wifi/1.2/IWifiStaIface.h>
 
 #include "hidl_callback_util.h"
 #include "wifi_legacy_hal.h"
@@ -34,7 +34,7 @@ using namespace android::hardware::wifi::V1_0;
 /**
  * HIDL interface object used to control a STA Iface instance.
  */
-class WifiStaIface : public V1_0::IWifiStaIface {
+class WifiStaIface : public V1_2::IWifiStaIface {
    public:
     WifiStaIface(const std::string& ifname,
                  const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal);
@@ -56,6 +56,8 @@ class WifiStaIface : public V1_0::IWifiStaIface {
     Return<void> installApfPacketFilter(
         uint32_t cmd_id, const hidl_vec<uint8_t>& program,
         installApfPacketFilter_cb hidl_status_cb) override;
+    Return<void> readApfPacketFilterData(
+        readApfPacketFilterData_cb hidl_status_cb) override;
     Return<void> getBackgroundScanCapabilities(
         getBackgroundScanCapabilities_cb hidl_status_cb) override;
     Return<void> getValidFrequenciesForBand(
@@ -113,6 +115,8 @@ class WifiStaIface : public V1_0::IWifiStaIface {
     getApfPacketFilterCapabilitiesInternal();
     WifiStatus installApfPacketFilterInternal(
         uint32_t cmd_id, const std::vector<uint8_t>& program);
+    std::pair<WifiStatus, std::vector<uint8_t>>
+    readApfPacketFilterDataInternal();
     std::pair<WifiStatus, StaBackgroundScanCapabilities>
     getBackgroundScanCapabilitiesInternal();
     std::pair<WifiStatus, std::vector<WifiChannelInMhz>>
