@@ -40,6 +40,7 @@ rt_sigreturn: 1
 getrlimit: 1
 madvise: 1
 clock_gettime: 1
+getpid: 1
 
 # used during process crash by crash_dump to dump process info
 rt_sigprocmask: 1
