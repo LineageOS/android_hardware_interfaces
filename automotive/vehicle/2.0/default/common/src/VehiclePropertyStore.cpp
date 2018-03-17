@@ -52,6 +52,7 @@ bool VehiclePropertyStore::writeValue(const VehiclePropValue& propValue) {
     } else {
         valueToUpdate->timestamp = propValue.timestamp;
         valueToUpdate->value = propValue.value;
+        valueToUpdate->status = propValue.status;
     }
     return true;
 }
