@@ -329,14 +329,6 @@ const ConfigDeclaration kVehicleProperties[]{
 
     {.config =
          {
-             .prop = toInt(VehicleProperty::DRIVING_STATUS),
-             .access = VehiclePropertyAccess::READ,
-             .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-         },
-     .initialValue = {.int32Values = {toInt(VehicleDrivingStatus::UNRESTRICTED)}}},
-
-    {.config =
-         {
              .prop = toInt(VehicleProperty::GEAR_SELECTION),
              .access = VehiclePropertyAccess::READ,
              .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
