@@ -55,10 +55,27 @@ class Operation {
         (void)uiOptions;
         resultCB_ = resultCB;
         if (error_ != ResponseCode::Ignored) return ResponseCode::OperationPending;
-        // TODO make copy of promptText before using it may reside in shared buffer
-        auto state = write(
-            WriteState(formattedMessageBuffer_),
-            map(pair(text("prompt"), text(promptText)), pair(text("extra"), bytes(extraData))));
+
+        // We need to access the prompt text multiple times. Once for formatting the CBOR message
+        // and again for rendering the dialog. It is vital that the prompt does not change
+        // in the meantime. As of this point the prompt text is in a shared buffer and therefore
+        // susceptible to TOCTOU attacks. Note that promptText.size() resides on the stack and
+        // is safe to access multiple times. So now we copy the prompt string into the
+        // scratchpad promptStringBuffer_ from where we can format the CBOR message and then
+        // pass it to the renderer.
+        if (promptText.size() >= uint32_t(MessageSize::MAX))
+            return ResponseCode::UIErrorMessageTooLong;
+        auto pos = std::copy(promptText.c_str(), promptText.c_str() + promptText.size(),
+                             promptStringBuffer_);
+        *pos = 0;  // null-terminate the prompt for the renderer.
+
+        // Note the extra data is accessed only once for formating the CBOR message. So it is safe
+        // to read it from the shared buffer directly. Anyway we don't trust or interpret the
+        // extra data in any way so all we do is take a snapshot and we don't care if it is
+        // modified concurrently.
+        auto state = write(WriteState(formattedMessageBuffer_),
+                           map(pair(text("prompt"), text(promptStringBuffer_, promptText.size())),
+                               pair(text("extra"), bytes(extraData))));
         switch (state.error_) {
             case Error::OK:
                 break;
@@ -71,20 +88,20 @@ class Operation {
                 return ResponseCode::Unexpected;
         }
         formattedMessageLength_ = state.data_ - formattedMessageBuffer_;
-        // setup TUI and diagnose more UI errors here.
+
         // on success record the start time
         startTime_ = TimeStamper::now();
         if (!startTime_.isOk()) {
             return ResponseCode::SystemError;
         }
-        error_ = ResponseCode::OK;
         return ResponseCode::OK;
     }
+
+    void setPending() { error_ = ResponseCode::OK; }
 
     void setHmacKey(const uint8_t (&key)[32]) { hmacKey_ = {key}; }
 
     void abort() {
-        // tear down TUI here
         if (isPending()) {
             resultCB_->result(ResponseCode::Aborted, {}, {});
             error_ = ResponseCode::Ignored;
@@ -92,7 +109,6 @@ class Operation {
     }
 
     void userCancel() {
-        // tear down TUI here
         if (isPending()) error_ = ResponseCode::Canceled;
     }
 
@@ -104,10 +120,10 @@ class Operation {
     }
 
     bool isPending() const { return error_ != ResponseCode::Ignored; }
-
-    static Operation& get() {
-        static Operation operation;
-        return operation;
+    const hidl_string getPrompt() const {
+        hidl_string s;
+        s.setToExternal(promptStringBuffer_, strlen(promptStringBuffer_));
+        return s;
     }
 
     ResponseCode deliverSecureInputEvent(const HardwareAuthToken& secureInputToken) {
@@ -156,7 +172,6 @@ class Operation {
         return result;
     }
     hidl_vec<uint8_t> userConfirm(const uint8_t key[32]) {
-        // tear down TUI here
         if (error_ != ResponseCode::OK) return {};
         confirmationTokenScratchpad_ = HMacer::hmac256(key, "confirmation token", getMessage());
         if (!confirmationTokenScratchpad_.isOk()) {
@@ -169,9 +184,10 @@ class Operation {
         return result;
     }
 
-    ResponseCode error_;
+    ResponseCode error_ = ResponseCode::Ignored;
     uint8_t formattedMessageBuffer_[uint32_t(MessageSize::MAX)];
-    size_t formattedMessageLength_;
+    char promptStringBuffer_[uint32_t(MessageSize::MAX)];
+    size_t formattedMessageLength_ = 0;
     NullOr<array<uint8_t, 32>> confirmationTokenScratchpad_;
     Callback resultCB_;
     typename TimeStamper::TimeStamp startTime_;

@@ -138,6 +138,7 @@ StatusCode EmulatedVehicleHal::set(const VehiclePropValue& propValue) {
             return status;
         }
     } else if (mHvacPowerProps.count(propValue.prop)) {
+        // TODO(75328113): this should be handled by property status
         auto hvacPowerOn = mPropStore->readValueOrNull(
             toInt(VehicleProperty::HVAC_POWER_ON),
             (VehicleAreaZone::ROW_1_LEFT | VehicleAreaZone::ROW_1_RIGHT));
@@ -163,6 +164,22 @@ StatusCode EmulatedVehicleHal::set(const VehiclePropValue& propValue) {
                 // getEmulatorOrDie()->doSetValueFromClient(propValue);
                 return StatusCode::OK;
         }
+    }
+
+    if (propValue.status != VehiclePropertyStatus::AVAILABLE) {
+        // Android side cannot set property status - this value is the
+        // purview of the HAL implementation to reflect the state of
+        // its underlying hardware
+        return StatusCode::INVALID_ARG;
+    }
+    auto currentPropValue = mPropStore->readValueOrNull(propValue);
+
+    if (currentPropValue == nullptr) {
+        return StatusCode::INVALID_ARG;
+    }
+    if (currentPropValue->status != VehiclePropertyStatus::AVAILABLE) {
+        // do not allow Android side to set() a disabled/error property
+        return StatusCode::NOT_AVAILABLE;
     }
 
     if (!mPropStore->writeValue(propValue)) {
