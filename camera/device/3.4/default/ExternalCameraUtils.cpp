@@ -283,9 +283,8 @@ ExternalCameraConfig::ExternalCameraConfig() :
         numVideoBuffers(kDefaultNumVideoBuffer),
         numStillBuffers(kDefaultNumStillBuffer) {
     fpsLimits.push_back({/*Size*/{ 640,  480}, /*FPS upper bound*/30.0});
-    fpsLimits.push_back({/*Size*/{1280,  720}, /*FPS upper bound*/15.0});
-    fpsLimits.push_back({/*Size*/{1920, 1080}, /*FPS upper bound*/10.0});
-    fpsLimits.push_back({/*Size*/{4096, 3072}, /*FPS upper bound*/5.0});
+    fpsLimits.push_back({/*Size*/{1280,  720}, /*FPS upper bound*/7.5});
+    fpsLimits.push_back({/*Size*/{1920, 1080}, /*FPS upper bound*/5.0});
 }
 
 

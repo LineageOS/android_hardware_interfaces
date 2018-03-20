@@ -983,15 +983,15 @@ bool ExifUtilsImpl::setFromMetadata(const CameraMetadata& metadata,
     camera_metadata_ro_entry entry = metadata.find(ANDROID_LENS_FOCAL_LENGTH);
     if (entry.count) {
         focal_length = entry.data.f[0];
+
+        if (!setFocalLength(
+                        static_cast<uint32_t>(focal_length * kRationalPrecision),
+                        kRationalPrecision)) {
+            ALOGE("%s: setting focal length failed.", __FUNCTION__);
+            return false;
+        }
     } else {
-        ALOGE("%s: Cannot find focal length in metadata.", __FUNCTION__);
-        return false;
-    }
-    if (!setFocalLength(
-                    static_cast<uint32_t>(focal_length * kRationalPrecision),
-                    kRationalPrecision)) {
-        ALOGE("%s: setting focal length failed.", __FUNCTION__);
-        return false;
+        ALOGV("%s: Cannot find focal length in metadata.", __FUNCTION__);
     }
 
     if (metadata.exists(ANDROID_JPEG_GPS_COORDINATES)) {

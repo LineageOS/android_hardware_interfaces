@@ -284,13 +284,6 @@ status_t ExternalCameraDevice::initDefaultCharsKeys(
     const int32_t jpegMaxSize = mCfg.maxJpegBufSize;
     UPDATE(ANDROID_JPEG_MAX_SIZE, &jpegMaxSize, 1);
 
-    const uint8_t jpegQuality = 90;
-    UPDATE(ANDROID_JPEG_QUALITY, &jpegQuality, 1);
-    UPDATE(ANDROID_JPEG_THUMBNAIL_QUALITY, &jpegQuality, 1);
-
-    const int32_t jpegOrientation = 0;
-    UPDATE(ANDROID_JPEG_ORIENTATION, &jpegOrientation, 1);
-
     // android.lens
     const uint8_t focusDistanceCalibration =
             ANDROID_LENS_INFO_FOCUS_DISTANCE_CALIBRATION_UNCALIBRATED;
@@ -322,7 +315,6 @@ status_t ExternalCameraDevice::initDefaultCharsKeys(
     // This means pipeline latency of X frame intervals. The maximum number is 4.
     const uint8_t requestPipelineMaxDepth = 4;
     UPDATE(ANDROID_REQUEST_PIPELINE_MAX_DEPTH, &requestPipelineMaxDepth, 1);
-    UPDATE(ANDROID_REQUEST_PIPELINE_DEPTH, &requestPipelineMaxDepth, 1);
 
     // Three numbers represent the maximum numbers of different types of output
     // streams simultaneously. The types are raw sensor, processed (but not
@@ -355,7 +347,6 @@ status_t ExternalCameraDevice::initDefaultCharsKeys(
         ANDROID_SENSOR_TEST_PATTERN_MODE_OFF};
     UPDATE(ANDROID_SENSOR_AVAILABLE_TEST_PATTERN_MODES, testPatternModes,
            ARRAY_SIZE(testPatternModes));
-    UPDATE(ANDROID_SENSOR_TEST_PATTERN_MODE, &testPatternModes[0], 1);
 
     const uint8_t timestampSource = ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE_UNKNOWN;
     UPDATE(ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE, &timestampSource, 1);
@@ -576,7 +567,6 @@ status_t ExternalCameraDevice::initOutputCharsKeys(int fd,
     std::vector<int32_t> streamConfigurations;
     std::vector<int64_t> minFrameDurations;
     std::vector<int64_t> stallDurations;
-    int64_t maxFrameDuration = 0;
     int32_t maxFps = std::numeric_limits<int32_t>::min();
     int32_t minFps = std::numeric_limits<int32_t>::max();
     std::set<int32_t> framerates;
@@ -603,9 +593,6 @@ status_t ExternalCameraDevice::initOutputCharsKeys(int fd,
                     fr.durationDenominator;
             if (frameDuration < minFrameDuration) {
                 minFrameDuration = frameDuration;
-            }
-            if (frameDuration > maxFrameDuration) {
-                maxFrameDuration = frameDuration;
             }
             int32_t frameRateInt = static_cast<int32_t>(fr.getDouble());
             if (minFps > frameRateInt) {
@@ -639,14 +626,15 @@ status_t ExternalCameraDevice::initOutputCharsKeys(int fd,
     }
 
     std::vector<int32_t> fpsRanges;
-    // Variable range
-    fpsRanges.push_back(minFps);
-    fpsRanges.push_back(maxFps);
-    // Fixed ranges
+    // FPS ranges
     for (const auto& framerate : framerates) {
-        fpsRanges.push_back(framerate);
+        // Empirical: webcams often have close to 2x fps error and cannot support fixed fps range
+        fpsRanges.push_back(framerate / 2);
         fpsRanges.push_back(framerate);
     }
+    minFps /= 2;
+    int64_t maxFrameDuration = 1000000000LL / minFps;
+
     UPDATE(ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES, fpsRanges.data(),
            fpsRanges.size());
 
