@@ -182,7 +182,6 @@
         <interface>
             <name>IKeymasterDevice</name>
             <instance>default</instance>
-            <instance>strongbox</instance>
         </interface>
     </hal>
     <hal format="hidl" optional="true">
