@@ -48,6 +48,7 @@ hidl_interface {
         "VehicleHvacFanDirection",
         "VehicleHwKeyInputAction",
         "VehicleIgnitionState",
+        "VehicleOilLevel",
         "VehiclePropConfig",
         "VehiclePropValue",
         "VehicleProperty",
