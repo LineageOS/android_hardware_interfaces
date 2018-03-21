@@ -52,6 +52,12 @@ auto mkEnumConverter(Source source) {
     return EnumConverter<Source, Destination>{source};
 }
 
+/** Allows converting an enum to its bitfield or itself. */
+template <class Enum>
+EnumConverter<Enum> mkBitfield(Enum value) {
+    return EnumConverter<Enum>{value};
+}
+
 }  // namespace utils
 }  // namespace common
 }  // namespace audio

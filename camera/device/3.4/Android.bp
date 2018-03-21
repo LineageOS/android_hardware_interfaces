@@ -25,7 +25,6 @@ hidl_interface {
         "HalStreamConfiguration",
         "PhysicalCameraMetadata",
         "PhysicalCameraSetting",
-        "RequestTemplate",
         "Stream",
         "StreamConfiguration",
     ],
