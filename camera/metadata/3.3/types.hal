@@ -74,6 +74,17 @@ enum CameraMetadataTag : @3.2::CameraMetadataTag {
      */
     ANDROID_LENS_POSE_REFERENCE = android.hardware.camera.metadata@3.2::CameraMetadataTag:ANDROID_LENS_END,
 
+    /** android.lens.distortion [dynamic, float[], public]
+     *
+     * <p>The correction coefficients to correct for this camera device's
+     * radial and tangential lens distortion.</p>
+     * <p>Replaces the deprecated ANDROID_LENS_RADIAL_DISTORTION field, which was
+     * inconsistently defined.</p>
+     *
+     * @see ANDROID_LENS_RADIAL_DISTORTION
+     */
+    ANDROID_LENS_DISTORTION,
+
     ANDROID_LENS_END_3_3,
 
     /** android.request.availableSessionKeys [static, int32[], ndk_public]
