@@ -88,7 +88,7 @@ public:
 private:
     struct PluginHolder;
     sp<SharedLibrary> mLibrary;
-    sp<PluginHolder> mPluginHolder;
+    std::shared_ptr<CasPlugin> mPluginHolder;
     sp<ICasListener> mListener;
 
     DISALLOW_EVIL_CONSTRUCTORS(CasImpl);
