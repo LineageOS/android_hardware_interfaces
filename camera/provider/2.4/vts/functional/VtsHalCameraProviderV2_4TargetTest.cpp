@@ -1040,9 +1040,6 @@ TEST_F(CameraHidlTest, getCameraIdList) {
             ALOGI("Camera Id[%zu] is %s", i, idList[i].c_str());
         }
         ASSERT_EQ(Status::OK, status);
-        // This is true for internal camera provider.
-        // Not necessary hold for external cameras providers
-        ASSERT_GT(idList.size(), 0u);
     });
     ASSERT_TRUE(ret.isOk());
 }
