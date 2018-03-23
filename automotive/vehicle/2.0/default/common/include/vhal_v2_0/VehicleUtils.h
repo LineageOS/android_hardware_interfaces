@@ -33,10 +33,9 @@ namespace V2_0 {
 constexpr int32_t kAllSupportedAreas = 0;
 
 /** Returns underlying (integer) value for given enum. */
-template<typename ENUM>
-inline constexpr typename std::underlying_type<ENUM>::type toInt(
-        ENUM const value) {
-    return static_cast<typename std::underlying_type<ENUM>::type>(value);
+template<typename ENUM, typename U = typename std::underlying_type<ENUM>::type>
+inline constexpr U toInt(ENUM const value) {
+    return static_cast<U>(value);
 }
 
 inline constexpr VehiclePropertyType getPropType(int32_t prop) {
