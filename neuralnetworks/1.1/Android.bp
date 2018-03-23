@@ -15,6 +15,7 @@ hidl_interface {
         "android.hidl.base@1.0",
     ],
     types: [
+        "Capabilities",
         "Model",
         "Operation",
         "OperationType",

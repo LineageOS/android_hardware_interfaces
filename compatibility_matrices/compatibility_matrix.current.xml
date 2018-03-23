@@ -182,7 +182,14 @@
         <interface>
             <name>IKeymasterDevice</name>
             <instance>default</instance>
-	    <!-- TODO: strongbox here? -->
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
+        <name>android.hardware.keymaster</name>
+        <version>4.0</version>
+        <interface>
+            <name>IKeymasterDevice</name>
+            <instance>strongbox</instance>
         </interface>
     </hal>
     <hal format="hidl" optional="true">
