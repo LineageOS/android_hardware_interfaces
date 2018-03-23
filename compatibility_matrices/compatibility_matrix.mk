@@ -29,8 +29,13 @@ ifndef LOCAL_MODULE_STEM
 $(error LOCAL_MODULE_STEM must be defined.)
 endif
 
+ifndef LOCAL_MODULE
 LOCAL_MODULE := framework_$(LOCAL_MODULE_STEM)
+endif
+
+ifndef LOCAL_MODULE_CLASS
 LOCAL_MODULE_CLASS := ETC
+endif
 
 ifndef LOCAL_MODULE_PATH
 LOCAL_MODULE_PATH := $(TARGET_OUT)/etc/vintf
@@ -76,13 +81,19 @@ my_matrix_src_files := \
 	$(addprefix $(LOCAL_PATH)/,$(LOCAL_SRC_FILES)) \
 	$(LOCAL_GENERATED_SOURCES)
 
+ifneq (,$(strip $(LOCAL_WARN_REQUIRED_HALS)))
+$(GEN): PRIVATE_ADDITIONAL_ENV_VARS += PRODUCT_ENFORCE_VINTF_MANIFEST=true
+$(GEN): PRIVATE_COMMAND_TAIL := || (echo $(strip $(LOCAL_WARN_REQUIRED_HALS)) && false)
+endif
+
 $(GEN): PRIVATE_SRC_FILES := $(my_matrix_src_files)
 $(GEN): $(my_matrix_src_files) $(HOST_OUT_EXECUTABLES)/assemble_vintf
 	$(foreach varname,$(PRIVATE_ENV_VARS),$(varname)="$($(varname))") \
+		$(PRIVATE_ADDITIONAL_ENV_VARS) \
 		$(HOST_OUT_EXECUTABLES)/assemble_vintf \
 		-i $(call normalize-path-list,$(PRIVATE_SRC_FILES)) \
 		-o $@ \
-		$(PRIVATE_FLAGS)
+		$(PRIVATE_FLAGS) $(PRIVATE_COMMAND_TAIL)
 
 LOCAL_PREBUILT_MODULE_FILE := $(GEN)
 LOCAL_SRC_FILES :=
@@ -91,6 +102,7 @@ LOCAL_GENERATED_SOURCES :=
 LOCAL_ADD_VBMETA_VERSION :=
 LOCAL_ASSEMBLE_VINTF_ENV_VARS :=
 LOCAL_ASSEMBLE_VINTF_FLAGS :=
+LOCAL_WARN_REQUIRED_HALS :=
 LOCAL_KERNEL_VERSIONS :=
 LOCAL_GEN_FILE_DEPENDENCIES :=
 my_matrix_src_files :=

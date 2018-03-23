@@ -22,6 +22,7 @@ BUILD_FRAMEWORK_COMPATIBILITY_MATRIX := $(LOCAL_PATH)/compatibility_matrix.mk
 LOCAL_ADD_VBMETA_VERSION :=
 LOCAL_ASSEMBLE_VINTF_ENV_VARS :=
 LOCAL_ASSEMBLE_VINTF_FLAGS :=
+LOCAL_WARN_REQUIRED_HALS :=
 LOCAL_KERNEL_VERSIONS :=
 LOCAL_GEN_FILE_DEPENDENCIES :=
 
@@ -57,13 +58,45 @@ include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
 # Framework Compatibility Matrix (common to all FCM versions)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE_STEM := compatibility_matrix.empty.xml
-LOCAL_SRC_FILES := $(LOCAL_MODULE_STEM)
+LOCAL_MODULE_STEM := compatibility_matrix.device.xml
+# define LOCAL_MODULE and LOCAL_MODULE_CLASS for local-generated-sources-dir.
+LOCAL_MODULE := framework_compatibility_matrix.device.xml
+LOCAL_MODULE_CLASS := ETC
+
+ifndef DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE
+LOCAL_SRC_FILES := compatibility_matrix.empty.xml
+else
+
+# DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE specify an absolute path
+LOCAL_GENERATED_SOURCES := $(DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE)
+
+# Enforce that DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE does not specify required HALs
+# by checking it against an empty manifest. But the empty manifest needs to contain
+# BOARD_SEPOLICY_VERS to be compatible with DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE.
+my_manifest_src_file := $(LOCAL_PATH)/manifest.empty.xml
+my_gen_check_manifest := $(local-generated-sources-dir)/manifest.check.xml
+$(my_gen_check_manifest): PRIVATE_SRC_FILE := $(my_manifest_src_file)
+$(my_gen_check_manifest): $(my_manifest_src_file) $(HOST_OUT_EXECUTABLES)/assemble_vintf
+	BOARD_SEPOLICY_VERS=$(BOARD_SEPOLICY_VERS) \
+	IGNORE_TARGET_FCM_VERSION=true \
+		$(HOST_OUT_EXECUTABLES)/assemble_vintf -i $(PRIVATE_SRC_FILE) -o $@
+
+LOCAL_GEN_FILE_DEPENDENCIES += $(my_gen_check_manifest)
+LOCAL_ASSEMBLE_VINTF_FLAGS += -c "$(my_gen_check_manifest)"
+
+my_gen_check_manifest :=
+my_manifest_src_file :=
+
+endif # DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE
+
 LOCAL_ADD_VBMETA_VERSION := true
 LOCAL_ASSEMBLE_VINTF_ENV_VARS := \
     POLICYVERS \
     PLATFORM_SEPOLICY_VERSION \
     PLATFORM_SEPOLICY_COMPAT_VERSIONS
+
+LOCAL_WARN_REQUIRED_HALS := \
+    "Error: DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX cannot contain required HALs."
 
 include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
 
@@ -78,7 +111,7 @@ LOCAL_REQUIRED_MODULES := \
     framework_compatibility_matrix.1.xml \
     framework_compatibility_matrix.2.xml \
     framework_compatibility_matrix.current.xml \
-    framework_compatibility_matrix.empty.xml
+    framework_compatibility_matrix.device.xml
 LOCAL_GENERATED_SOURCES := $(call module-installed-files,$(LOCAL_REQUIRED_MODULES))
 
 ifdef BUILT_VENDOR_MANIFEST
