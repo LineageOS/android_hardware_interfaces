@@ -26,5 +26,5 @@ TEST(CheckConfig, audioPolicyConfigurationValidation) {
 
     std::vector<const char*> locations = {"/odm/etc", "/vendor/etc", "/system/etc"};
     EXPECT_ONE_VALID_XML_MULTIPLE_LOCATIONS("audio_policy_configuration.xml", locations,
-                                            "/data/local/tmp/audio_policy_configuration.xsd");
+                                            "/data/local/tmp/audio_policy_configuration_V4_0.xsd");
 }
