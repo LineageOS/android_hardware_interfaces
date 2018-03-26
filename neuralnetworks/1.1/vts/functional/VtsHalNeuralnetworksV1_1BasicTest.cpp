@@ -286,6 +286,169 @@ TEST_F(NeuralnetworksHidlTest, SimpleExecuteGraphNegativeTest2) {
     EXPECT_EQ(ErrorStatus::INVALID_ARGUMENT, executionReturnStatus);
 }
 
+class NeuralnetworksInputsOutputsTest
+    : public NeuralnetworksHidlTest,
+      public ::testing::WithParamInterface<std::tuple<bool, bool>> {
+   protected:
+    virtual void SetUp() { NeuralnetworksHidlTest::SetUp(); }
+    virtual void TearDown() { NeuralnetworksHidlTest::TearDown(); }
+    V1_1::Model createModel(const std::vector<uint32_t>& inputs,
+                            const std::vector<uint32_t>& outputs) {
+        // We set up the operands as floating-point with no designated
+        // model inputs and outputs, and then patch type and lifetime
+        // later on in this function.
+
+        std::vector<Operand> operands = {
+            {
+                .type = OperandType::TENSOR_FLOAT32,
+                .dimensions = {1},
+                .numberOfConsumers = 1,
+                .scale = 0.0f,
+                .zeroPoint = 0,
+                .lifetime = OperandLifeTime::TEMPORARY_VARIABLE,
+                .location = {.poolIndex = 0, .offset = 0, .length = 0},
+            },
+            {
+                .type = OperandType::TENSOR_FLOAT32,
+                .dimensions = {1},
+                .numberOfConsumers = 1,
+                .scale = 0.0f,
+                .zeroPoint = 0,
+                .lifetime = OperandLifeTime::TEMPORARY_VARIABLE,
+                .location = {.poolIndex = 0, .offset = 0, .length = 0},
+            },
+            {
+                .type = OperandType::INT32,
+                .dimensions = {},
+                .numberOfConsumers = 1,
+                .scale = 0.0f,
+                .zeroPoint = 0,
+                .lifetime = OperandLifeTime::CONSTANT_COPY,
+                .location = {.poolIndex = 0, .offset = 0, .length = sizeof(int32_t)},
+            },
+            {
+                .type = OperandType::TENSOR_FLOAT32,
+                .dimensions = {1},
+                .numberOfConsumers = 0,
+                .scale = 0.0f,
+                .zeroPoint = 0,
+                .lifetime = OperandLifeTime::TEMPORARY_VARIABLE,
+                .location = {.poolIndex = 0, .offset = 0, .length = 0},
+            },
+        };
+
+        const std::vector<Operation> operations = {{
+            .type = OperationType::ADD, .inputs = {0, 1, 2}, .outputs = {3},
+        }};
+
+        std::vector<uint8_t> operandValues;
+        int32_t activation[1] = {static_cast<int32_t>(FusedActivationFunc::NONE)};
+        operandValues.insert(operandValues.end(), reinterpret_cast<const uint8_t*>(&activation[0]),
+                             reinterpret_cast<const uint8_t*>(&activation[1]));
+
+        if (kQuantized) {
+            for (auto& operand : operands) {
+                if (operand.type == OperandType::TENSOR_FLOAT32) {
+                    operand.type = OperandType::TENSOR_QUANT8_ASYMM;
+                    operand.scale = 1.0f;
+                    operand.zeroPoint = 0;
+                }
+            }
+        }
+
+        auto patchLifetime = [&operands](const std::vector<uint32_t>& operandIndexes,
+                                         OperandLifeTime lifetime) {
+            for (uint32_t index : operandIndexes) {
+                operands[index].lifetime = lifetime;
+            }
+        };
+        if (kInputHasPrecedence) {
+            patchLifetime(outputs, OperandLifeTime::MODEL_OUTPUT);
+            patchLifetime(inputs, OperandLifeTime::MODEL_INPUT);
+        } else {
+            patchLifetime(inputs, OperandLifeTime::MODEL_INPUT);
+            patchLifetime(outputs, OperandLifeTime::MODEL_OUTPUT);
+        }
+
+        return {
+            .operands = operands,
+            .operations = operations,
+            .inputIndexes = inputs,
+            .outputIndexes = outputs,
+            .operandValues = operandValues,
+            .pools = {},
+        };
+    }
+    void check(const std::string& name,
+               bool expectation,  // true = success
+               const std::vector<uint32_t>& inputs, const std::vector<uint32_t>& outputs) {
+        SCOPED_TRACE(name + " (HAL calls should " + (expectation ? "succeed" : "fail") + ", " +
+                     (kInputHasPrecedence ? "input" : "output") + " precedence, " +
+                     (kQuantized ? "quantized" : "float"));
+
+        V1_1::Model model = createModel(inputs, outputs);
+
+        // ensure that getSupportedOperations_1_1() checks model validity
+        ErrorStatus supportedOpsErrorStatus = ErrorStatus::GENERAL_FAILURE;
+        Return<void> supportedOpsReturn = device->getSupportedOperations_1_1(
+            model, [&model, &supportedOpsErrorStatus](ErrorStatus status,
+                                                      const hidl_vec<bool>& supported) {
+                supportedOpsErrorStatus = status;
+                if (status == ErrorStatus::NONE) {
+                    ASSERT_EQ(supported.size(), model.operations.size());
+                }
+            });
+        ASSERT_TRUE(supportedOpsReturn.isOk());
+        ASSERT_EQ(supportedOpsErrorStatus,
+                  (expectation ? ErrorStatus::NONE : ErrorStatus::INVALID_ARGUMENT));
+
+        // ensure that prepareModel_1_1() checks model validity
+        sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback;
+        ASSERT_NE(preparedModelCallback.get(), nullptr);
+        Return<ErrorStatus> prepareLaunchReturn =
+            device->prepareModel_1_1(model, preparedModelCallback);
+        ASSERT_TRUE(prepareLaunchReturn.isOk());
+        ASSERT_TRUE(prepareLaunchReturn == ErrorStatus::NONE ||
+                    prepareLaunchReturn == ErrorStatus::INVALID_ARGUMENT);
+        bool preparationOk = (prepareLaunchReturn == ErrorStatus::NONE);
+        if (preparationOk) {
+            preparedModelCallback->wait();
+            preparationOk = (preparedModelCallback->getStatus() == ErrorStatus::NONE);
+        }
+
+        if (preparationOk) {
+            ASSERT_TRUE(expectation);
+        } else {
+            // Preparation can fail for reasons other than an invalid model --
+            // for example, perhaps not all operations are supported, or perhaps
+            // the device hit some kind of capacity limit.
+            bool invalid = prepareLaunchReturn == ErrorStatus::INVALID_ARGUMENT ||
+                           preparedModelCallback->getStatus() == ErrorStatus::INVALID_ARGUMENT;
+            ASSERT_NE(expectation, invalid);
+        }
+    }
+
+    // Indicates whether an operand that appears in both the inputs
+    // and outputs vector should have lifetime appropriate for input
+    // rather than for output.
+    const bool kInputHasPrecedence = std::get<0>(GetParam());
+
+    // Indicates whether we should test TENSOR_QUANT8_ASYMM rather
+    // than TENSOR_FLOAT32.
+    const bool kQuantized = std::get<1>(GetParam());
+};
+
+TEST_P(NeuralnetworksInputsOutputsTest, Validate) {
+    check("Ok", true, {0, 1}, {3});
+    check("InputIsOutput", false, {0, 1}, {3, 0});
+    check("OutputIsInput", false, {0, 1, 3}, {3});
+    check("DuplicateInputs", false, {0, 1, 0}, {3});
+    check("DuplicateOutputs", false, {0, 1}, {3, 3});
+}
+
+INSTANTIATE_TEST_CASE_P(Flavor, NeuralnetworksInputsOutputsTest,
+                        ::testing::Combine(::testing::Bool(), ::testing::Bool()));
+
 }  // namespace functional
 }  // namespace vts
 }  // namespace V1_1
