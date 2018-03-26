@@ -230,6 +230,7 @@ enum CameraMetadataEnumAndroidRequestAvailableCapabilities :
         @3.2::CameraMetadataEnumAndroidRequestAvailableCapabilities {
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MOTION_TRACKING,
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA,
+    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME,
 };
 
 /** android.statistics.oisDataMode enumeration values
