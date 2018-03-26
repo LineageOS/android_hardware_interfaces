@@ -105,6 +105,7 @@ enum class Command : uint32_t {
     PromptUserConfirmation,
     DeliverSecureInputEvent,
     Abort,
+    Vendor,
 };
 
 template <Command cmd>
@@ -115,6 +116,7 @@ struct Cmd {};
 DECLARE_COMMAND(PromptUserConfirmation);
 DECLARE_COMMAND(DeliverSecureInputEvent);
 DECLARE_COMMAND(Abort);
+DECLARE_COMMAND(Vendor);
 
 using PromptUserConfirmationMsg = Message<PromptUserConfirmation_t, hidl_string, hidl_vec<uint8_t>,
                                           hidl_string, hidl_vec<UIOption>>;
@@ -166,7 +168,7 @@ inline void zero(volatile uint8_t* begin, const volatile uint8_t* end) {
 }
 inline void zero(const volatile uint8_t*, const volatile uint8_t*) {}
 // This odd alignment function aligns the stream position to a 4byte and never 8byte boundary
-// It is to accommodate the 4 byte size field which is then followed by 8byte alligned data.
+// It is to accommodate the 4 byte size field which is then followed by 8byte aligned data.
 template <typename T>
 StreamState<T> unalign(StreamState<T> s) {
     uint8_t unalignment = uintptr_t(s.pos_) & 0x3;
