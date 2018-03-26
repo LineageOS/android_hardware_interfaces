@@ -429,7 +429,7 @@ const ConfigDeclaration kVehicleProperties[]{
 
     {.config = {.prop = toInt(VehicleProperty::AP_POWER_BOOTUP_REASON),
                 .access = VehiclePropertyAccess::READ,
-                .changeMode = VehiclePropertyChangeMode::ON_CHANGE},
+                .changeMode = VehiclePropertyChangeMode::STATIC},
      .initialValue = {.int32Values = {toInt(VehicleApPowerBootupReason::USER_POWER_ON)}}},
 
     {
