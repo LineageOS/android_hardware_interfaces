@@ -67,7 +67,7 @@ public:
 
     /* Stores provided value. Returns true if value was written returns false if config for
      * example wasn't registered. */
-    bool writeValue(const VehiclePropValue& propValue);
+    bool writeValue(const VehiclePropValue& propValue, bool updateStatus);
 
     void removeValue(const VehiclePropValue& propValue);
     void removeValuesForProperty(int32_t propId);
