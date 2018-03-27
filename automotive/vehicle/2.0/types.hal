@@ -510,6 +510,7 @@ enum VehicleProperty: int32_t {
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ
+     * @data_enum VehicleTurnSignal
      */
     TURN_SIGNAL_STATE = (
         0x0408
@@ -522,6 +523,7 @@ enum VehicleProperty: int32_t {
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ
+     * @data_enum VehicleIgnitionState
      */
     IGNITION_STATE = (
         0x0409
