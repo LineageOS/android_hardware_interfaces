@@ -23,20 +23,13 @@ cc_test {
         "FormatConvert.cpp"
     ],
 
-    defaults: [
-        "hidl_defaults",
-    ],
+    defaults: ["VtsHalTargetTestDefaults"],
 
     shared_libs: [
-        "android.hardware.automotive.evs@1.0",
-        "liblog",
-        "libutils",
         "libui",
-        "libhidlbase",
-        "libhidltransport",
     ],
 
-    static_libs: ["VtsHalHidlTargetTestBase"],
+    static_libs: ["android.hardware.automotive.evs@1.0"],
 
     cflags: [
         "-O0",
