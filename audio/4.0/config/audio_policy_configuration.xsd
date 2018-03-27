@@ -104,7 +104,7 @@
                         <xs:element name="devicePorts" type="devicePorts" minOccurs="0"/>
                         <xs:element name="routes" type="routes" minOccurs="0"/>
                     </xs:sequence>
-                    <xs:attribute name="name" type="xsd:string" use="required"/>
+                    <xs:attribute name="name" type="xs:string" use="required"/>
                     <xs:attribute name="halVersion" type="halVersion" use="required"/>
                 </xs:complexType>
                 <xs:unique name="mixPortNameUniqueness">
