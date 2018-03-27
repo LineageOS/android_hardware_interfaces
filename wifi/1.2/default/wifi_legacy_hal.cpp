@@ -492,6 +492,28 @@ wifi_error WifiLegacyHal::setPacketFilter(const std::string& iface_name,
         getIfaceHandle(iface_name), program.data(), program.size());
 }
 
+std::pair<wifi_error, std::vector<uint8_t>>
+WifiLegacyHal::readApfPacketFilterData(const std::string& iface_name) {
+    if (global_func_table_.wifi_read_packet_filter == nullptr) {
+        return {WIFI_ERROR_NOT_SUPPORTED, {}};
+    }
+
+    PacketFilterCapabilities caps;
+    wifi_error status = global_func_table_.wifi_get_packet_filter_capabilities(
+        getIfaceHandle(iface_name), &caps.version, &caps.max_len);
+    if (status != WIFI_SUCCESS) {
+        return {status, {}};
+    }
+
+    // Size the buffer to read the entire program & work memory.
+    std::vector<uint8_t> buffer(caps.max_len);
+
+    status = global_func_table_.wifi_read_packet_filter(
+        getIfaceHandle(iface_name), /*src_offset=*/0, buffer.data(),
+        buffer.size());
+    return {status, move(buffer)};
+}
+
 std::pair<wifi_error, wifi_gscan_capabilities>
 WifiLegacyHal::getGscanCapabilities(const std::string& iface_name) {
     wifi_gscan_capabilities caps;
