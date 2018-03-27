@@ -250,6 +250,8 @@ f4945e397b5dea41bb64518dfde59be71245d8a125fd1e0acffeb57ac7b08fed android.hardwar
 c8bc853546dd55584611def2a9fa1d99f657e3366c976d2f60fe6b8aa6d2cb87 android.hardware.thermal@1.1::IThermalCallback
 
 # ABI preserving changes to HALs during Android P
+eaeb3e4f3237430a7fdc206bffdf844713f5682990b2d49ea24392e15b5d343f android.hardware.broadcastradio@2.0::ITunerCallback
+2804120c1f8522ad15feb7695fe5eece527d399b406c671ea99618194118c316 android.hardware.broadcastradio@2.0::types
 cf72ff5a52bfa4d08e9e1000cf3ab5952a2d280c7f13cdad5ab7905c08050766 android.hardware.camera.metadata@3.2::types
 3902efc42097cba55f0655aa389e052ea70164e99ced1a6d1ef53dafc13f7650 android.hardware.camera.provider@2.4::ICameraProvider
 6fa9804a17a8bb7923a56bd10493a5483c20007e4c9026fd04287bee7c945a8c android.hardware.gnss@1.0::IGnssCallback
