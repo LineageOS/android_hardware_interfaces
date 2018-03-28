@@ -258,11 +258,11 @@
         <version>1.0-1</version>
         <interface>
             <name>IRadio</name>
-            <instance>slot1</instance>
+            <regex-instance>slot[0-9]+</regex-instance>
         </interface>
         <interface>
             <name>ISap</name>
-            <instance>slot1</instance>
+            <regex-instance>slot[0-9]+</regex-instance>
         </interface>
     </hal>
     <hal format="hidl" optional="true">
