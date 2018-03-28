@@ -18,10 +18,14 @@
 #define SUPPLICANT_HIDL_TEST_UTILS_1_1_H
 
 #include <android/hardware/wifi/supplicant/1.1/ISupplicant.h>
+#include <android/hardware/wifi/supplicant/1.1/ISupplicantStaIface.h>
 #include <android/hardware/wifi/supplicant/1.1/ISupplicantStaNetwork.h>
 
 android::sp<android::hardware::wifi::supplicant::V1_1::ISupplicant>
     getSupplicant_1_1();
+
+android::sp<android::hardware::wifi::supplicant::V1_1::ISupplicantStaIface>
+    getSupplicantStaIface_1_1();
 
 android::sp<android::hardware::wifi::supplicant::V1_1::ISupplicantStaNetwork>
     createSupplicantStaNetwork_1_1();

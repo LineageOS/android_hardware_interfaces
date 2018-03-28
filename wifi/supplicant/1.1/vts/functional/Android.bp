@@ -40,6 +40,7 @@ cc_test {
     srcs: [
         "VtsHalWifiSupplicantV1_1TargetTest.cpp",
         "supplicant_hidl_test.cpp",
+        "supplicant_sta_iface_hidl_test.cpp",
         "supplicant_sta_network_hidl_test.cpp",
     ],
     static_libs: [
