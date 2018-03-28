@@ -1,0 +1,48 @@
+/*
+ * Copyright 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi.supplicant@1.1;
+
+import @1.0::ISupplicantStaIface;
+import @1.1::ISupplicantStaIfaceCallback;
+import @1.0::SupplicantStatus;
+
+/**
+ * Interface exposed by the supplicant for each station mode network
+ * interface (e.g wlan0) it controls.
+ */
+interface ISupplicantStaIface extends @1.0::ISupplicantStaIface {
+
+    /**
+     * Register for callbacks from this interface.
+     *
+     * These callbacks are invoked for events that are specific to this interface.
+     * Registration of multiple callback objects is supported. These objects must
+     * be automatically deleted when the corresponding client process is dead or
+     * if this interface is removed.
+     *
+     * @param callback An instance of the |ISupplicantStaIfaceCallback| HIDL
+     *        interface object.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     */
+    registerCallback_1_1(ISupplicantStaIfaceCallback callback)
+        generates (SupplicantStatus status);
+};
+
