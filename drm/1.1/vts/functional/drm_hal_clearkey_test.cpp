@@ -43,7 +43,6 @@ using ::android::hardware::drm::V1_0::DestinationBuffer;
 using ::android::hardware::drm::V1_0::ICryptoPlugin;
 using ::android::hardware::drm::V1_0::KeyedVector;
 using ::android::hardware::drm::V1_0::KeyValue;
-using ::android::hardware::drm::V1_0::KeyRequestType;
 using ::android::hardware::drm::V1_0::KeyType;
 using ::android::hardware::drm::V1_0::Mode;
 using ::android::hardware::drm::V1_0::Pattern;
@@ -60,6 +59,8 @@ using ::android::hardware::drm::V1_1::HdcpLevel;
 using ::android::hardware::drm::V1_1::ICryptoFactory;
 using ::android::hardware::drm::V1_1::IDrmFactory;
 using ::android::hardware::drm::V1_1::IDrmPlugin;
+using ::android::hardware::drm::V1_1::KeyRequestType;
+using ::android::hardware::drm::V1_1::SecureStopRelease;
 using ::android::hardware::drm::V1_1::SecurityLevel;
 using ::android::hardware::drm::V1_1::SecurityLevel;
 
@@ -167,7 +168,6 @@ public:
     SessionId openSession(SecurityLevel level);
     void closeSession(const SessionId& sessionId);
     hidl_vec<uint8_t> loadKeys(const SessionId& sessionId, const KeyType& type);
-    sp<IMemory> getDecryptMemory(size_t size, size_t index);
 
   private:
     sp<IDrmPlugin> createDrmPlugin(sp<IDrmFactory> drmFactory) {
@@ -308,6 +308,125 @@ void DrmHalClearkeyTest::closeSession(const SessionId& sessionId) {
 }
 
 /**
+ * Helper method to load keys for subsequent decrypt tests.
+ * These tests use predetermined key request/response to
+ * avoid requiring a round trip to a license server.
+ */
+hidl_vec<uint8_t> DrmHalClearkeyTest::loadKeys(
+    const SessionId& sessionId, const KeyType& type = KeyType::STREAMING) {
+    hidl_vec<uint8_t> initData = {
+        // BMFF box header (4 bytes size + 'pssh')
+        0x00, 0x00, 0x00, 0x34, 0x70, 0x73, 0x73, 0x68,
+        // full box header (version = 1 flags = 0)
+        0x01, 0x00, 0x00, 0x00,
+        // system id
+        0x10, 0x77, 0xef, 0xec, 0xc0, 0xb2, 0x4d, 0x02, 0xac, 0xe3, 0x3c,
+        0x1e, 0x52, 0xe2, 0xfb, 0x4b,
+        // number of key ids
+        0x00, 0x00, 0x00, 0x01,
+        // key id
+        0x60, 0x06, 0x1e, 0x01, 0x7e, 0x47, 0x7e, 0x87, 0x7e, 0x57, 0xd0,
+        0x0d, 0x1e, 0xd0, 0x0d, 0x1e,
+        // size of data, must be zero
+        0x00, 0x00, 0x00, 0x00};
+
+    hidl_vec<uint8_t> expectedKeyRequest = {
+        0x7b, 0x22, 0x6b, 0x69, 0x64, 0x73, 0x22, 0x3a, 0x5b, 0x22, 0x59, 0x41, 0x59, 0x65,
+        0x41, 0x58, 0x35, 0x48, 0x66, 0x6f, 0x64, 0x2d, 0x56, 0x39, 0x41, 0x4e, 0x48, 0x74,
+        0x41, 0x4e, 0x48, 0x67, 0x22, 0x5d, 0x2c, 0x22, 0x74, 0x79, 0x70, 0x65, 0x22, 0x3a,
+        0x22, 0x74, 0x65, 0x6d, 0x70, 0x6f, 0x72, 0x61, 0x72, 0x79, 0x22, 0x7d};
+
+    hidl_vec<uint8_t> knownKeyResponse = {
+        0x7b, 0x22, 0x6b, 0x65, 0x79, 0x73, 0x22, 0x3a, 0x5b, 0x7b, 0x22, 0x6b, 0x74, 0x79, 0x22,
+        0x3a, 0x22, 0x6f, 0x63, 0x74, 0x22, 0x2c, 0x22, 0x6b, 0x69, 0x64, 0x22, 0x3a, 0x22, 0x59,
+        0x41, 0x59, 0x65, 0x41, 0x58, 0x35, 0x48, 0x66, 0x6f, 0x64, 0x2d, 0x56, 0x39, 0x41, 0x4e,
+        0x48, 0x74, 0x41, 0x4e, 0x48, 0x67, 0x22, 0x2c, 0x22, 0x6b, 0x22, 0x3a, 0x22, 0x47, 0x6f,
+        0x6f, 0x67, 0x6c, 0x65, 0x54, 0x65, 0x73, 0x74, 0x4b, 0x65, 0x79, 0x42, 0x61, 0x73, 0x65,
+        0x36, 0x34, 0x67, 0x67, 0x67, 0x22, 0x7d, 0x5d, 0x7d, 0x0a};
+
+    hidl_string mimeType = "video/mp4";
+    KeyedVector optionalParameters;
+    auto res = drmPlugin->getKeyRequest_1_1(
+        sessionId, initData, mimeType, type, optionalParameters,
+        [&](Status status, const hidl_vec<uint8_t>& request,
+            KeyRequestType requestType, const hidl_string&) {
+            EXPECT_EQ(Status::OK, status);
+            EXPECT_EQ(KeyRequestType::INITIAL, requestType);
+            EXPECT_EQ(request, expectedKeyRequest);
+        });
+    EXPECT_OK(res);
+
+    hidl_vec<uint8_t> keySetId;
+    res = drmPlugin->provideKeyResponse(
+        sessionId, knownKeyResponse,
+        [&](Status status, const hidl_vec<uint8_t>& myKeySetId) {
+            EXPECT_EQ(Status::OK, status);
+            EXPECT_EQ(0u, myKeySetId.size());
+            keySetId = myKeySetId;
+        });
+    EXPECT_OK(res);
+    return keySetId;
+}
+
+/**
+ * Test openSession negative case: security level higher than supported
+ */
+TEST_F(DrmHalClearkeyTest, OpenSessionBadLevel) {
+    auto res = drmPlugin->openSession_1_1(SecurityLevel::HW_SECURE_ALL,
+            [&](Status status, const SessionId& /* id */) {
+                EXPECT_EQ(Status::ERROR_DRM_CANNOT_HANDLE, status);
+            });
+    EXPECT_OK(res);
+}
+
+/**
+ * Test getKeyRequest_1_1 via loadKeys
+ */
+TEST_F(DrmHalClearkeyTest, GetKeyRequest) {
+    auto sessionId = openSession();
+    loadKeys(sessionId);
+    closeSession(sessionId);
+}
+
+/**
+ * A get key request should fail if no sessionId is provided
+ */
+TEST_F(DrmHalClearkeyTest, GetKeyRequestNoSession) {
+    SessionId invalidSessionId;
+    hidl_vec<uint8_t> initData;
+    hidl_string mimeType = "video/mp4";
+    KeyedVector optionalParameters;
+    auto res = drmPlugin->getKeyRequest_1_1(
+            invalidSessionId, initData, mimeType, KeyType::STREAMING,
+            optionalParameters,
+            [&](Status status, const hidl_vec<uint8_t>&, KeyRequestType,
+                const hidl_string&) { EXPECT_EQ(Status::BAD_VALUE, status); });
+    EXPECT_OK(res);
+}
+
+/**
+ * The clearkey plugin doesn't support offline key requests.
+ * Test that the plugin returns the expected error code in
+ * this case.
+ */
+TEST_F(DrmHalClearkeyTest, GetKeyRequestOfflineKeyTypeNotSupported) {
+    auto sessionId = openSession();
+    hidl_vec<uint8_t> initData;
+    hidl_string mimeType = "video/mp4";
+    KeyedVector optionalParameters;
+
+    auto res = drmPlugin->getKeyRequest_1_1(
+            sessionId, initData, mimeType, KeyType::OFFLINE, optionalParameters,
+            [&](Status status, const hidl_vec<uint8_t>&, KeyRequestType,
+                const hidl_string&) {
+                // Clearkey plugin doesn't support offline key type
+                EXPECT_EQ(Status::ERROR_DRM_CANNOT_HANDLE, status);
+            });
+    EXPECT_OK(res);
+    closeSession(sessionId);
+}
+
+/**
  * Test that the plugin returns valid connected and max HDCP levels
  */
 TEST_F(DrmHalClearkeyTest, GetHdcpLevels) {
@@ -320,6 +439,11 @@ TEST_F(DrmHalClearkeyTest, GetHdcpLevels) {
             });
     EXPECT_OK(res);
 }
+
+/**
+ * Since getHdcpLevels only queries information there are no
+ * negative cases.
+ */
 
 /**
  * Test that the plugin returns default open and max session counts
@@ -371,6 +495,11 @@ TEST_F(DrmHalClearkeyTest, GetOpenSessionCounts) {
             });
     EXPECT_OK(res);
 }
+
+/**
+ * Since getNumberOfSessions only queries information there are no
+ * negative cases.
+ */
 
 /**
  * Test that the plugin returns the same security level
@@ -428,7 +557,7 @@ TEST_F(DrmHalClearkeyTest, GetSecurityLevelInvalidSessionId) {
 /**
  * Test metrics are set appropriately for open and close operations.
  */
-TEST_F(DrmHalClearkeyTest, GetMetricsSuccess) {
+TEST_F(DrmHalClearkeyTest, GetMetricsOpenClose) {
     SessionId sessionId = openSession();
     // The first close should be successful.
     closeSession(sessionId);
@@ -449,7 +578,291 @@ TEST_F(DrmHalClearkeyTest, GetMetricsSuccess) {
                                                     (int64_t)Status::ERROR_DRM_SESSION_NOT_OPENED,
                                                     "count", (int64_t)1));
     });
+    EXPECT_OK(res);
 }
+
+/**
+ * Since getMetrics only queries information there are no
+ * negative cases.
+ */
+
+/**
+ * Test that there are no secure stop ids after clearing them
+ */
+TEST_F(DrmHalClearkeyTest, GetSecureStopIdsCleared) {
+    auto stat = drmPlugin->removeAllSecureStops();
+    EXPECT_OK(stat);
+
+    bool ok = drmPlugin->getSecureStopIds(
+            [&](Status status, const hidl_vec<SecureStopId>& ids) {
+                EXPECT_EQ(Status::OK, status);
+                EXPECT_EQ(0u, ids.size());
+            }).isOk();
+    EXPECT_TRUE(ok);
+}
+
+/**
+ * Test that there are secure stop ids after loading keys once
+ */
+TEST_F(DrmHalClearkeyTest, GetSecureStopIdsOnce) {
+    auto stat = drmPlugin->removeAllSecureStops();
+    EXPECT_OK(stat);
+
+    auto sessionId = openSession();
+    loadKeys(sessionId);
+    closeSession(sessionId);
+
+    auto res = drmPlugin->getSecureStopIds(
+            [&](Status status, const hidl_vec<SecureStopId>& ids) {
+                EXPECT_EQ(Status::OK, status);
+                EXPECT_EQ(1u, ids.size());
+            });
+    EXPECT_OK(res);
+
+    stat = drmPlugin->removeAllSecureStops();
+    EXPECT_OK(stat);
+
+    res = drmPlugin->getSecureStopIds(
+            [&](Status status, const hidl_vec<SecureStopId>& ids) {
+                EXPECT_EQ(Status::OK, status);
+                EXPECT_EQ(0u, ids.size());
+            });
+    EXPECT_OK(res);
+}
+
+/**
+ * Since getSecureStopIds only queries information there are no
+ * negative cases.
+ */
+
+/**
+ * Test that the clearkey plugin reports no secure stops when
+ * there are none.
+ */
+TEST_F(DrmHalClearkeyTest, GetNoSecureStops) {
+    auto stat = drmPlugin->removeAllSecureStops();
+    EXPECT_OK(stat);
+
+    auto res = drmPlugin->getSecureStops(
+            [&](Status status, const hidl_vec<SecureStop>& stops) {
+                EXPECT_EQ(Status::OK, status);
+                EXPECT_EQ(0u, stops.size());
+            });
+    EXPECT_OK(res);
+}
+
+/**
+ * Test get/remove of one secure stop
+ */
+TEST_F(DrmHalClearkeyTest, GetOneSecureStopAndRemoveIt) {
+    auto stat = drmPlugin->removeAllSecureStops();
+    EXPECT_OK(stat);
+
+    auto sessionId = openSession();
+    loadKeys(sessionId);
+    closeSession(sessionId);
+
+    auto res = drmPlugin->getSecureStops(
+            [&](Status status, const hidl_vec<SecureStop>& stops) {
+                EXPECT_EQ(Status::OK, status);
+                EXPECT_EQ(1u, stops.size());
+            });
+    EXPECT_OK(res);
+
+    stat = drmPlugin->removeAllSecureStops();
+    EXPECT_OK(stat);
+
+    res = drmPlugin->getSecureStops(
+            [&](Status status, const hidl_vec<SecureStop>& stops) {
+                EXPECT_EQ(Status::OK, status);
+                EXPECT_EQ(0u, stops.size());
+            });
+    EXPECT_OK(res);
+}
+
+/**
+ * Since getSecureStops only queries information there are no
+ * negative cases.
+ */
+
+/**
+ * Test that there are no secure stops after clearing them
+ */
+TEST_F(DrmHalClearkeyTest, GetSecureStopsCleared) {
+    auto stat = drmPlugin->removeAllSecureStops();
+    EXPECT_OK(stat);
+
+    auto res = drmPlugin->getSecureStops(
+            [&](Status status, const hidl_vec<SecureStop>& stops) {
+                EXPECT_EQ(Status::OK, status);
+                EXPECT_EQ(0u, stops.size());
+            });
+    EXPECT_OK(res);
+}
+
+/**
+ * Test that there are secure stops after loading keys once
+ */
+TEST_F(DrmHalClearkeyTest, GetSecureStopsOnce) {
+    auto stat = drmPlugin->removeAllSecureStops();
+    EXPECT_OK(stat);
+
+    auto sessionId = openSession();
+    loadKeys(sessionId);
+    closeSession(sessionId);
+
+    auto res = drmPlugin->getSecureStops(
+            [&](Status status, const hidl_vec<SecureStop>& stops) {
+                EXPECT_EQ(Status::OK, status);
+                EXPECT_EQ(1u, stops.size());
+            });
+    EXPECT_OK(res);
+
+    stat = drmPlugin->removeAllSecureStops();
+    EXPECT_OK(stat);
+
+    res = drmPlugin->getSecureStops(
+            [&](Status status, const hidl_vec<SecureStop>& stops) {
+                EXPECT_EQ(Status::OK, status);
+                EXPECT_EQ(0u, stops.size());
+            });
+    EXPECT_OK(res);
+}
+
+/**
+ * Since getSecureStops only queries information there are no
+ * negative cases.
+ */
+
+/**
+ * Test that releasing a secure stop with empty
+ * release message fails with the documented error
+ */
+TEST_F(DrmHalClearkeyTest, ReleaseEmptySecureStop) {
+    SecureStopRelease emptyRelease = {.opaqueData = hidl_vec<uint8_t>()};
+    Status status = drmPlugin->releaseSecureStops(emptyRelease);
+    EXPECT_EQ(Status::BAD_VALUE, status);
+}
+
+/**
+ * Helper function to create a secure release message for
+ * a secure stop. The clearkey secure stop release format
+ * is just a count followed by the secure stop opaque data.
+ */
+SecureStopRelease makeSecureRelease(const SecureStop &stop) {
+    std::vector<uint8_t> stopData = stop.opaqueData;
+    std::vector<uint8_t> buffer;
+    std::string count = "0001";
+
+    auto it = buffer.insert(buffer.begin(), count.begin(), count.end());
+    buffer.insert(it + count.size(), stopData.begin(), stopData.end());
+    SecureStopRelease release = { .opaqueData = hidl_vec<uint8_t>(buffer) };
+    return release;
+}
+
+/**
+ * Test that releasing one secure stop works
+ */
+TEST_F(DrmHalClearkeyTest, ReleaseOneSecureStop) {
+
+    auto stat = drmPlugin->removeAllSecureStops();
+    EXPECT_OK(stat);
+
+    auto sessionId = openSession();
+    loadKeys(sessionId);
+    closeSession(sessionId);
+
+    SecureStopRelease release;
+    auto res = drmPlugin->getSecureStops(
+            [&](Status status, const hidl_vec<SecureStop>& stops) {
+                EXPECT_EQ(Status::OK, status);
+                EXPECT_EQ(1u, stops.size());
+                release = makeSecureRelease(stops[0]);
+            });
+    EXPECT_OK(res);
+
+    stat = drmPlugin->releaseSecureStops(release);
+    EXPECT_OK(stat);
+
+    res = drmPlugin->getSecureStops(
+            [&](Status status, const hidl_vec<SecureStop>& stops) {
+                EXPECT_EQ(Status::OK, status);
+                EXPECT_EQ(0u, stops.size());
+            });
+    EXPECT_OK(res);
+}
+
+
+/**
+ * Test that removing a secure stop with an empty ID returns
+ * documented error
+ */
+TEST_F(DrmHalClearkeyTest, RemoveEmptySecureStopId) {
+    hidl_vec<uint8_t> emptyId;
+    auto stat = drmPlugin->removeSecureStop(emptyId);
+    EXPECT_OK(stat);
+    EXPECT_EQ(Status::BAD_VALUE, stat);
+}
+
+/**
+ * Test that removing a secure stop after it has already
+ * been removed fails with the documented error code.
+ */
+TEST_F(DrmHalClearkeyTest, RemoveRemovedSecureStopId) {
+    auto stat = drmPlugin->removeAllSecureStops();
+    EXPECT_OK(stat);
+
+    auto sessionId = openSession();
+    loadKeys(sessionId);
+    closeSession(sessionId);
+    SecureStopId ssid;
+
+    auto res = drmPlugin->getSecureStopIds(
+            [&](Status status, const hidl_vec<SecureStopId>& ids) {
+                EXPECT_EQ(Status::OK, status);
+                EXPECT_EQ(1u, ids.size());
+                ssid = ids[0];
+            });
+    EXPECT_OK(res);
+
+    stat = drmPlugin->removeAllSecureStops();
+    EXPECT_OK(stat);
+
+    Status status = drmPlugin->removeSecureStop(ssid);
+    EXPECT_EQ(Status::BAD_VALUE, status);
+}
+
+/**
+ * Test that removing a secure stop by id works
+ */
+TEST_F(DrmHalClearkeyTest, RemoveSecureStopById) {
+    auto stat = drmPlugin->removeAllSecureStops();
+    EXPECT_OK(stat);
+
+    auto sessionId = openSession();
+    loadKeys(sessionId);
+    closeSession(sessionId);
+    SecureStopId ssid;
+
+    auto res = drmPlugin->getSecureStopIds(
+            [&](Status status, const hidl_vec<SecureStopId>& ids) {
+                EXPECT_EQ(Status::OK, status);
+                EXPECT_EQ(1u, ids.size());
+                ssid = ids[0];
+            });
+    EXPECT_OK(res);
+
+    stat = drmPlugin->removeSecureStop(ssid);
+    EXPECT_OK(stat);
+
+    res = drmPlugin->getSecureStopIds(
+            [&](Status status, const hidl_vec<SecureStopId>& ids) {
+                EXPECT_EQ(Status::OK, status);
+                EXPECT_EQ(0u, ids.size());
+            });
+    EXPECT_OK(res);
+}
+
 
 int main(int argc, char** argv) {
     ::testing::AddGlobalTestEnvironment(DrmHidlEnvironment::Instance());
