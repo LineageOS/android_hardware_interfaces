@@ -28,9 +28,9 @@ namespace composer {
 namespace V2_2 {
 namespace hal {
 
-using common::V1_0::Dataspace;
-using common::V1_0::PixelFormat;
 using common::V1_1::ColorMode;
+using common::V1_1::Dataspace;
+using common::V1_1::PixelFormat;
 using common::V1_1::RenderIntent;
 using V2_1::Display;
 using V2_1::Error;
@@ -38,6 +38,17 @@ using V2_1::Layer;
 
 class ComposerHal : public V2_1::hal::ComposerHal {
    public:
+    Error createVirtualDisplay(uint32_t width, uint32_t height, common::V1_0::PixelFormat* format,
+                               Display* outDisplay) override {
+        return createVirtualDisplay_2_2(width, height, reinterpret_cast<PixelFormat*>(format),
+                                        outDisplay);
+    }
+    Error getClientTargetSupport(Display display, uint32_t width, uint32_t height,
+                                 common::V1_0::PixelFormat format,
+                                 common::V1_0::Dataspace dataspace) override {
+        return getClientTargetSupport_2_2(display, width, height, static_cast<PixelFormat>(format),
+                                          static_cast<Dataspace>(dataspace));
+    }
     // superceded by setPowerMode_2_2
     Error setPowerMode(Display display, V2_1::IComposerClient::PowerMode mode) override {
         return setPowerMode_2_2(display, static_cast<IComposerClient::PowerMode>(mode));
@@ -64,7 +75,10 @@ class ComposerHal : public V2_1::hal::ComposerHal {
     virtual Error setReadbackBuffer(Display display, const native_handle_t* bufferHandle,
                                     base::unique_fd fenceFd) = 0;
     virtual Error getReadbackBufferFence(Display display, base::unique_fd* outFenceFd) = 0;
-
+    virtual Error createVirtualDisplay_2_2(uint32_t width, uint32_t height, PixelFormat* format,
+                                           Display* outDisplay) = 0;
+    virtual Error getClientTargetSupport_2_2(Display display, uint32_t width, uint32_t height,
+                                             PixelFormat format, Dataspace dataspace) = 0;
     virtual Error setPowerMode_2_2(Display display, IComposerClient::PowerMode mode) = 0;
 
     virtual Error setLayerFloatColor(Display display, Layer layer,
