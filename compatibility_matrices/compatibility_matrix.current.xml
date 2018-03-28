@@ -225,8 +225,7 @@
         <version>1.0</version>
         <interface>
             <name>IDevice</name>
-            <!-- TODO(b/73738616): This should be * (match any) -->
-            <instance>hvx</instance>
+            <regex-instance>.*</regex-instance>
         </interface>
     </hal>
     <hal format="hidl" optional="true">
