@@ -234,6 +234,11 @@ TEST_F(WifiStaIfaceHidlTest, RoamingControl) {
  * status code.
  */
 TEST_F(WifiStaIfaceHidlTest, EnableNDOffload) {
+   if (!isCapabilitySupported(
+           IWifiStaIface::StaIfaceCapabilityMask::ND_OFFLOAD)) {
+        // No-op if nd offload is not supported.
+        return;
+    }
     EXPECT_EQ(WifiStatusCode::SUCCESS,
               HIDL_INVOKE(wifi_sta_iface_, enableNdOffload, true).code);
 }
@@ -256,6 +261,11 @@ TEST_F(WifiStaIfaceHidlTest, SetScanningMacOui) {
  * packets will return a success status code.
  */
 TEST_F(WifiStaIfaceHidlTest, PacketFateMonitoring) {
+   if (!isCapabilitySupported(
+           IWifiStaIface::StaIfaceCapabilityMask::DEBUG_PACKET_FATE)) {
+        // No-op if packet fate monitor is not supported.
+        return;
+    }
     // Start packet fate monitoring.
     EXPECT_EQ(
         WifiStatusCode::SUCCESS,
