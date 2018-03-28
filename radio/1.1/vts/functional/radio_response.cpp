@@ -25,7 +25,7 @@ Return<void> RadioResponse_v1_1::getIccCardStatusResponse(const RadioResponseInf
                                                           const CardStatus& card_status) {
     rspInfo = info;
     cardStatus = card_status;
-    parent_v1_1.notify();
+    parent_v1_1.notify(info.serial);
     return Void();
 }
 
@@ -661,25 +661,25 @@ Return<void> RadioResponse_v1_1::acknowledgeRequest(int32_t /*serial*/) {
 Return<void> RadioResponse_v1_1::setCarrierInfoForImsiEncryptionResponse(
     const RadioResponseInfo& info) {
     rspInfo = info;
-    parent_v1_1.notify();
+    parent_v1_1.notify(info.serial);
     return Void();
 }
 
 Return<void> RadioResponse_v1_1::setSimCardPowerResponse_1_1(const RadioResponseInfo& info) {
     rspInfo = info;
-    parent_v1_1.notify();
+    parent_v1_1.notify(info.serial);
     return Void();
 }
 
 Return<void> RadioResponse_v1_1::startNetworkScanResponse(const RadioResponseInfo& info) {
     rspInfo = info;
-    parent_v1_1.notify();
+    parent_v1_1.notify(info.serial);
     return Void();
 }
 
 Return<void> RadioResponse_v1_1::stopNetworkScanResponse(const RadioResponseInfo& info) {
     rspInfo = info;
-    parent_v1_1.notify();
+    parent_v1_1.notify(info.serial);
     return Void();
 }
 
@@ -687,12 +687,12 @@ Return<void> RadioResponse_v1_1::startKeepaliveResponse(const RadioResponseInfo&
                                                         const KeepaliveStatus& status) {
     rspInfo = info;
     keepaliveStatus = status;
-    parent_v1_1.notify();
+    parent_v1_1.notify(info.serial);
     return Void();
 }
 
 Return<void> RadioResponse_v1_1::stopKeepaliveResponse(const RadioResponseInfo& info) {
     rspInfo = info;
-    parent_v1_1.notify();
+    parent_v1_1.notify(info.serial);
     return Void();
 }
