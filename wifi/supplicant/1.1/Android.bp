@@ -8,6 +8,8 @@ hidl_interface {
     },
     srcs: [
         "ISupplicant.hal",
+        "ISupplicantStaIface.hal",
+        "ISupplicantStaIfaceCallback.hal",
         "ISupplicantStaNetwork.hal",
     ],
     interfaces: [
