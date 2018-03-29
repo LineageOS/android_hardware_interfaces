@@ -17,9 +17,12 @@
 cc_test {
     name: "VtsHalNeuralnetworksV1_1TargetTest",
     srcs: [
-        "VtsHalNeuralnetworksV1_1.cpp",
-        "VtsHalNeuralnetworksV1_1BasicTest.cpp",
-        "VtsHalNeuralnetworksV1_1GeneratedTest.cpp",
+        "BasicTests.cpp",
+        "GeneratedTests.cpp",
+        "ValidateModel.cpp",
+        "ValidateRequest.cpp",
+        "ValidationTests.cpp",
+        "VtsHalNeuralnetworks.cpp",
     ],
     defaults: ["VtsHalTargetTestDefaults"],
     static_libs: [

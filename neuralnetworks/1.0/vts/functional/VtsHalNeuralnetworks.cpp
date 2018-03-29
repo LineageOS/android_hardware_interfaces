@@ -16,15 +16,7 @@
 
 #define LOG_TAG "neuralnetworks_hidl_hal_test"
 
-#include "VtsHalNeuralnetworksV1_0.h"
-#include "Utils.h"
-
-#include <android-base/logging.h>
-
-using ::android::hardware::hidl_memory;
-using ::android::hidl::allocator::V1_0::IAllocator;
-using ::android::hidl::memory::V1_0::IMemory;
-using ::android::sp;
+#include "VtsHalNeuralnetworks.h"
 
 namespace android {
 namespace hardware {
@@ -32,11 +24,6 @@ namespace neuralnetworks {
 namespace V1_0 {
 namespace vts {
 namespace functional {
-
-// allocator helper
-hidl_memory allocateSharedMemory(int64_t size) {
-    return nn::allocateSharedMemory(size);
-}
 
 // A class for test environment setup
 NeuralnetworksHidlEnvironment::NeuralnetworksHidlEnvironment() {}
@@ -51,23 +38,49 @@ NeuralnetworksHidlEnvironment* NeuralnetworksHidlEnvironment::getInstance() {
 }
 
 void NeuralnetworksHidlEnvironment::registerTestServices() {
-    registerTestService<V1_0::IDevice>();
+    registerTestService<IDevice>();
 }
 
 // The main test class for NEURALNETWORK HIDL HAL.
+NeuralnetworksHidlTest::NeuralnetworksHidlTest() {}
+
 NeuralnetworksHidlTest::~NeuralnetworksHidlTest() {}
 
 void NeuralnetworksHidlTest::SetUp() {
-    device = ::testing::VtsHalHidlTargetTestBase::getService<V1_0::IDevice>(
+    ::testing::VtsHalHidlTargetTestBase::SetUp();
+    device = ::testing::VtsHalHidlTargetTestBase::getService<IDevice>(
         NeuralnetworksHidlEnvironment::getInstance());
     ASSERT_NE(nullptr, device.get());
 }
 
-void NeuralnetworksHidlTest::TearDown() {}
+void NeuralnetworksHidlTest::TearDown() {
+    device = nullptr;
+    ::testing::VtsHalHidlTargetTestBase::TearDown();
+}
 
 }  // namespace functional
 }  // namespace vts
+
+::std::ostream& operator<<(::std::ostream& os, ErrorStatus errorStatus) {
+    return os << toString(errorStatus);
+}
+
+::std::ostream& operator<<(::std::ostream& os, DeviceStatus deviceStatus) {
+    return os << toString(deviceStatus);
+}
+
 }  // namespace V1_0
 }  // namespace neuralnetworks
 }  // namespace hardware
 }  // namespace android
+
+using android::hardware::neuralnetworks::V1_0::vts::functional::NeuralnetworksHidlEnvironment;
+
+int main(int argc, char** argv) {
+    ::testing::AddGlobalTestEnvironment(NeuralnetworksHidlEnvironment::getInstance());
+    ::testing::InitGoogleTest(&argc, argv);
+    NeuralnetworksHidlEnvironment::getInstance()->init(&argc, argv);
+
+    int status = RUN_ALL_TESTS();
+    return status;
+}
