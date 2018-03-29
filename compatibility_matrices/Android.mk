@@ -82,7 +82,7 @@ my_gen_check_manifest := $(local-generated-sources-dir)/manifest.check.xml
 $(my_gen_check_manifest): PRIVATE_SRC_FILE := $(my_manifest_src_file)
 $(my_gen_check_manifest): $(my_manifest_src_file) $(HOST_OUT_EXECUTABLES)/assemble_vintf
 	BOARD_SEPOLICY_VERS=$(BOARD_SEPOLICY_VERS) \
-	IGNORE_TARGET_FCM_VERSION=true \
+	VINTF_IGNORE_TARGET_FCM_VERSION=true \
 		$(HOST_OUT_EXECUTABLES)/assemble_vintf -i $(PRIVATE_SRC_FILE) -o $@
 
 LOCAL_GEN_FILE_DEPENDENCIES += $(my_gen_check_manifest)
