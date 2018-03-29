@@ -86,6 +86,7 @@ void Tuner::setConfigurationInternalLocked(const BandConfig& config) {
 
     mIsAmfmConfigSet = true;
     mCallback->configChange(Result::OK, mAmfmConfig);
+    if (mCallback1_1 != nullptr) mCallback1_1->programListChanged();
 }
 
 bool Tuner::autoConfigureLocked(uint64_t frequency) {
