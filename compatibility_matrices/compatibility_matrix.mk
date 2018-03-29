@@ -25,12 +25,12 @@ endef
 
 # $(warning $(call remove-minor-revision,3.18.0))
 
-ifndef LOCAL_MODULE_STEM
-$(error LOCAL_MODULE_STEM must be defined.)
+ifndef LOCAL_MODULE
+$(error LOCAL_MODULE must be defined.)
 endif
 
-ifndef LOCAL_MODULE
-LOCAL_MODULE := framework_$(LOCAL_MODULE_STEM)
+ifndef LOCAL_MODULE_STEM
+LOCAL_MODULE_STEM := $(LOCAL_MODULE)
 endif
 
 ifndef LOCAL_MODULE_CLASS
