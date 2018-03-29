@@ -30,18 +30,21 @@ LOCAL_GEN_FILE_DEPENDENCIES :=
 
 
 include $(CLEAR_VARS)
+LOCAL_MODULE := framework_compatibility_matrix.legacy.xml
 LOCAL_MODULE_STEM := compatibility_matrix.legacy.xml
 LOCAL_SRC_FILES := $(LOCAL_MODULE_STEM)
 LOCAL_KERNEL_VERSIONS := 3.18.0 4.4.0 4.9.0
 include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
 
 include $(CLEAR_VARS)
+LOCAL_MODULE := framework_compatibility_matrix.1.xml
 LOCAL_MODULE_STEM := compatibility_matrix.1.xml
 LOCAL_SRC_FILES := $(LOCAL_MODULE_STEM)
 LOCAL_KERNEL_VERSIONS := 3.18.0 4.4.0 4.9.0
 include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
 
 include $(CLEAR_VARS)
+LOCAL_MODULE := framework_compatibility_matrix.2.xml
 LOCAL_MODULE_STEM := compatibility_matrix.2.xml
 LOCAL_SRC_FILES := $(LOCAL_MODULE_STEM)
 LOCAL_KERNEL_VERSIONS := 3.18.0 4.4.0 4.9.0
@@ -50,6 +53,7 @@ include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
 # TODO(b/72409164): STOPSHIP: update kernel version requirements
 
 include $(CLEAR_VARS)
+LOCAL_MODULE := framework_compatibility_matrix.current.xml
 LOCAL_MODULE_STEM := compatibility_matrix.current.xml
 LOCAL_SRC_FILES := $(LOCAL_MODULE_STEM)
 LOCAL_KERNEL_VERSIONS := 4.4.0 4.9.0
@@ -58,9 +62,9 @@ include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
 # Framework Compatibility Matrix (common to all FCM versions)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE_STEM := compatibility_matrix.device.xml
-# define LOCAL_MODULE and LOCAL_MODULE_CLASS for local-generated-sources-dir.
 LOCAL_MODULE := framework_compatibility_matrix.device.xml
+LOCAL_MODULE_STEM := compatibility_matrix.device.xml
+# define LOCAL_MODULE_CLASS for local-generated-sources-dir.
 LOCAL_MODULE_CLASS := ETC
 
 ifndef DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE
