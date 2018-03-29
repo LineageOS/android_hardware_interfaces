@@ -179,7 +179,7 @@ void EvaluatePreparedModel(sp<IPreparedModel>& preparedModel, std::function<bool
     }
 }
 
-void Execute(sp<V1_0::IDevice>& device, std::function<V1_0::Model(void)> create_model,
+void Execute(const sp<V1_0::IDevice>& device, std::function<V1_0::Model(void)> create_model,
              std::function<bool(int)> is_ignored,
              const std::vector<MixedTypedExampleType>& examples) {
     V1_0::Model model = create_model();
@@ -223,7 +223,7 @@ void Execute(sp<V1_0::IDevice>& device, std::function<V1_0::Model(void)> create_
     EvaluatePreparedModel(preparedModel, is_ignored, examples);
 }
 
-void Execute(sp<V1_1::IDevice>& device, std::function<V1_1::Model(void)> create_model,
+void Execute(const sp<V1_1::IDevice>& device, std::function<V1_1::Model(void)> create_model,
              std::function<bool(int)> is_ignored,
              const std::vector<MixedTypedExampleType>& examples) {
     V1_1::Model model = create_model();
