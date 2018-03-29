@@ -16,31 +16,15 @@
 
 #define LOG_TAG "neuralnetworks_hidl_hal_test"
 
-#include "VtsHalNeuralnetworksV1_0.h"
+#include "VtsHalNeuralnetworks.h"
 
 #include "Callbacks.h"
 #include "TestHarness.h"
+#include "Utils.h"
 
 #include <android-base/logging.h>
 #include <android/hidl/memory/1.0/IMemory.h>
 #include <hidlmemory/mapping.h>
-
-using ::android::hardware::neuralnetworks::V1_0::IDevice;
-using ::android::hardware::neuralnetworks::V1_0::IPreparedModel;
-using ::android::hardware::neuralnetworks::V1_0::Capabilities;
-using ::android::hardware::neuralnetworks::V1_0::DeviceStatus;
-using ::android::hardware::neuralnetworks::V1_0::FusedActivationFunc;
-using ::android::hardware::neuralnetworks::V1_0::Model;
-using ::android::hardware::neuralnetworks::V1_0::OperationType;
-using ::android::hardware::neuralnetworks::V1_0::PerformanceInfo;
-using ::android::hardware::Return;
-using ::android::hardware::Void;
-using ::android::hardware::hidl_memory;
-using ::android::hardware::hidl_string;
-using ::android::hardware::hidl_vec;
-using ::android::hidl::allocator::V1_0::IAllocator;
-using ::android::hidl::memory::V1_0::IMemory;
-using ::android::sp;
 
 namespace android {
 namespace hardware {
@@ -48,15 +32,17 @@ namespace neuralnetworks {
 
 namespace generated_tests {
 using ::generated_tests::MixedTypedExampleType;
-extern void Execute(sp<IDevice>&, std::function<Model(void)>, std::function<bool(int)>,
-                    const std::vector<MixedTypedExampleType>&);
+extern void Execute(const sp<V1_0::IDevice>&, std::function<V1_0::Model(void)>,
+                    std::function<bool(int)>, const std::vector<MixedTypedExampleType>&);
 }  // namespace generated_tests
 
 namespace V1_0 {
 namespace vts {
 namespace functional {
+
 using ::android::hardware::neuralnetworks::V1_0::implementation::ExecutionCallback;
 using ::android::hardware::neuralnetworks::V1_0::implementation::PreparedModelCallback;
+using ::android::nn::allocateSharedMemory;
 
 // Mixed-typed examples
 typedef generated_tests::MixedTypedExampleType MixedTypedExample;
