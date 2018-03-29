@@ -297,7 +297,8 @@
         <version>1.0</version>
         <interface>
             <name>ISecureElement</name>
-            <instance>eSE1</instance>
+            <regex-instance>eSE[1-9][0-9]*</regex-instance>
+            <regex-instance>SIM[1-9][0-9]*</regex-instance>
         </interface>
     </hal>
     <hal format="hidl" optional="true">
