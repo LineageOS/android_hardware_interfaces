@@ -33,7 +33,7 @@ interface IVehicleCallback {
 
     /**
      * This method gets called if the client was subscribed to a property using
-     * SubscribeFlags::SET_CALL flag and IVehicle#set(...) method was called.
+     * SubscribeFlags::EVENTS_FROM_ANDROID flag and IVehicle#set(...) method was called.
      *
      * These events must be delivered to subscriber immediately without any
      * batching.

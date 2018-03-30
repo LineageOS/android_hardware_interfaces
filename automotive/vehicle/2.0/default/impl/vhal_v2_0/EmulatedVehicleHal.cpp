@@ -138,7 +138,7 @@ StatusCode EmulatedVehicleHal::set(const VehiclePropValue& propValue) {
         // TODO(75328113): this should be handled by property status
         auto hvacPowerOn = mPropStore->readValueOrNull(
             toInt(VehicleProperty::HVAC_POWER_ON),
-            (VehicleAreaZone::ROW_1_LEFT | VehicleAreaZone::ROW_1_RIGHT));
+            (VehicleAreaSeat::ROW_1_LEFT | VehicleAreaSeat::ROW_1_RIGHT));
 
         if (hvacPowerOn && hvacPowerOn->value.int32Values.size() == 1
                 && hvacPowerOn->value.int32Values[0] == 0) {
@@ -153,7 +153,7 @@ StatusCode EmulatedVehicleHal::set(const VehiclePropValue& propValue) {
                 // Placeholder for future implementation of VMS property in the default hal. For
                 // now, just returns OK; otherwise, hal clients crash with property not supported.
                 return StatusCode::OK;
-            case AP_POWER_STATE:
+            case AP_POWER_STATE_REPORT:
                 // This property has different behavior between get/set.  When it is set, the value
                 //  goes to the vehicle but is NOT updated in the property store back to Android.
                 // Commented out for now, because it may mess up automated testing that use the
