@@ -332,8 +332,20 @@ Return<void> Device::debug(const hidl_handle& fd, const hidl_vec<hidl_string>& /
 
 #ifdef AUDIO_HAL_VERSION_4_0
 Return<void> Device::getMicrophones(getMicrophones_cb _hidl_cb) {
-    // TODO return device microphones
-    _hidl_cb(Result::NOT_SUPPORTED, {});
+    Result retval = Result::NOT_SUPPORTED;
+    size_t actual_mics = AUDIO_MICROPHONE_MAX_COUNT;
+    audio_microphone_characteristic_t mic_array[AUDIO_MICROPHONE_MAX_COUNT];
+
+    hidl_vec<MicrophoneInfo> microphones;
+    if (mDevice->get_microphones != NULL &&
+        mDevice->get_microphones(mDevice, &mic_array[0], &actual_mics) == 0) {
+        microphones.resize(actual_mics);
+        for (size_t i = 0; i < actual_mics; ++i) {
+            halToMicrophoneCharacteristics(&microphones[i], mic_array[i]);
+        }
+        retval = Result::OK;
+    }
+    _hidl_cb(retval, microphones);
     return Void();
 }
 
