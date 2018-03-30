@@ -34,14 +34,13 @@ using ::android::hardware::Void;
 using ::android::sp;
 using ::testing::VtsHalHidlTargetTestEnvBase;
 
-#define SELECT_ISD \
-    { 0x00, 0xA4, 0x04, 0x00, 0x00 }
-#define SEQUENCE_COUNTER \
-    { 0x80, 0xCA, 0x00, 0xC1, 0x00 }
-#define MANAGE_SELECT \
-    { 0x00, 0xA4, 0x04, 0x00, 0x00 }
-#define CRS_AID \
-    { 0xA0, 0x00, 0x00, 0x01, 0x51, 0x43, 0x52, 0x53, 0x00 }
+#define DATA_APDU \
+    { 0x00, 0x08, 0x00, 0x00, 0x00 }
+#define ANDROID_TEST_AID                                                                          \
+    {                                                                                             \
+        0xA0, 0x00, 0x00, 0x04, 0x76, 0x41, 0x6E, 0x64, 0x72, 0x6F, 0x69, 0x64, 0x43, 0x54, 0x53, \
+            0x31                                                                                  \
+    }
 
 constexpr char kCallbackNameOnStateChange[] = "onStateChange";
 
@@ -115,7 +114,7 @@ TEST_F(SecureElementHidlTest, isCardPresent) {
  * Check status word in the response
  */
 TEST_F(SecureElementHidlTest, transmit) {
-    std::vector<uint8_t> aid = CRS_AID;
+    std::vector<uint8_t> aid = ANDROID_TEST_AID;
     SecureElementStatus statusReturned;
     LogicalChannelResponse response;
     se_->openLogicalChannel(
@@ -132,20 +131,10 @@ TEST_F(SecureElementHidlTest, transmit) {
             }
         });
     EXPECT_EQ(SecureElementStatus::SUCCESS, statusReturned);
-    EXPECT_LE((unsigned int)3, response.selectResponse.size());
+    EXPECT_LE((unsigned int)2, response.selectResponse.size());
     EXPECT_LE(1, response.channelNumber);
-    std::vector<uint8_t> command = SELECT_ISD;
+    std::vector<uint8_t> command = DATA_APDU;
     std::vector<uint8_t> transmitResponse;
-    se_->transmit(command, [&transmitResponse](std::vector<uint8_t> res) {
-        transmitResponse.resize(res.size());
-        for (size_t i = 0; i < res.size(); i++) {
-            transmitResponse[i] = res[i];
-        }
-    });
-    EXPECT_LE((unsigned int)3, transmitResponse.size());
-    EXPECT_EQ(0x90, transmitResponse[transmitResponse.size() - 2]);
-    EXPECT_EQ(0x00, transmitResponse[transmitResponse.size() - 1]);
-    command = SEQUENCE_COUNTER;
     se_->transmit(command, [&transmitResponse](std::vector<uint8_t> res) {
         transmitResponse.resize(res.size());
         for (size_t i = 0; i < res.size(); i++) {
@@ -164,7 +153,7 @@ TEST_F(SecureElementHidlTest, transmit) {
  *  open channel, check the length of selectResponse and close the channel
  */
 TEST_F(SecureElementHidlTest, openBasicChannel) {
-    std::vector<uint8_t> aid = CRS_AID;
+    std::vector<uint8_t> aid = ANDROID_TEST_AID;
     SecureElementStatus statusReturned;
     std::vector<uint8_t> response;
     se_->openBasicChannel(aid, 0x00,
@@ -180,17 +169,6 @@ TEST_F(SecureElementHidlTest, openBasicChannel) {
                           });
     if (statusReturned == SecureElementStatus::SUCCESS) {
         EXPECT_LE((unsigned int)3, response.size());
-        std::vector<uint8_t> command = SELECT_ISD;
-        std::vector<uint8_t> transmitResponse;
-        se_->transmit(command, [&transmitResponse](std::vector<uint8_t> res) {
-            transmitResponse.resize(res.size());
-            for (size_t i = 0; i < res.size(); i++) {
-                transmitResponse[i] = res[i];
-            }
-        });
-        EXPECT_LE((unsigned int)3, transmitResponse.size());
-        EXPECT_EQ(0x90, transmitResponse[transmitResponse.size() - 2]);
-        EXPECT_EQ(0x00, transmitResponse[transmitResponse.size() - 1]);
         return;
     }
     EXPECT_EQ(SecureElementStatus::UNSUPPORTED_OPERATION, statusReturned);
@@ -221,7 +199,7 @@ TEST_F(SecureElementHidlTest, getAtr) {
  * Close Channel
  */
 TEST_F(SecureElementHidlTest, openCloseLogicalChannel) {
-    std::vector<uint8_t> aid = CRS_AID;
+    std::vector<uint8_t> aid = ANDROID_TEST_AID;
     SecureElementStatus statusReturned;
     LogicalChannelResponse response;
     se_->openLogicalChannel(
@@ -238,7 +216,7 @@ TEST_F(SecureElementHidlTest, openCloseLogicalChannel) {
             }
         });
     EXPECT_EQ(SecureElementStatus::SUCCESS, statusReturned);
-    EXPECT_LE((unsigned int)3, response.selectResponse.size());
+    EXPECT_LE((unsigned int)2, response.selectResponse.size());
     EXPECT_LE(1, response.channelNumber);
     EXPECT_EQ(SecureElementStatus::SUCCESS, se_->closeChannel(response.channelNumber));
 }
